@@ -927,7 +927,7 @@ def test_setup_only_available_in_subdir(testdir):
 
 
 def test_modulecol_roundtrip(testdir):
-    modcol = testdir.getmodulecol("pass", withinit=True)
+    modcol = testdir.getmodulecol("pass", withinit=False)
     trail = modcol.nodeid
     newcol = modcol.session.perform_collect([trail], genitems=0)[0]
     assert modcol.name == newcol.name

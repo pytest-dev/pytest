@@ -423,9 +423,12 @@ class Session(nodes.FSCollector):
         else:
             assert argpath.check(file=1)
             pkginit = argpath.dirpath().join('__init__.py')
-            if not self.isinitpath(argpath) and pkginit.exists():
+            if not self.isinitpath(pkginit):
+                self._initialpaths.add(pkginit)
+            if pkginit.exists():
                 for x in self._collectfile(pkginit):
-                    yield x
+                    for y in self.matchnodes(x._collectfile(argpath), names):
+                        yield y
             else:
                 for x in self.matchnodes(self._collectfile(argpath), names):
                     yield x

@@ -587,7 +587,7 @@ class Test_getinitialnodes(object):
         col = testdir.getnode(config, x)
         assert isinstance(col, pytest.Module)
         assert col.name == 'x.py'
-        assert col.parent.parent is None
+        assert col.parent.parent.parent is None
         for col in col.listchain():
             assert col.config is config
 
