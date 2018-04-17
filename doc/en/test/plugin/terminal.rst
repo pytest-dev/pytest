@@ -23,7 +23,7 @@ command line options
 ``--full-trace``
     don't cut any tracebacks (default is to cut).
 ``--fixtures``
-    show available function arguments, sorted by plugin
+    show available fixtures, sorted by plugin appearance (fixtures with leading ``_`` are only shown with '-v')
 
 Start improving this plugin in 30 seconds
 =========================================

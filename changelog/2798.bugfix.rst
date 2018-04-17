@@ -1,0 +1,3 @@
+Reset ``sys.last_type``, ``sys.last_value`` and ``sys.last_traceback`` before each test executes. Those attributes
+are added by pytest during the test run to aid debugging, but were never reset so they would create a leaking
+reference to the last failing test's frame which in turn could never be reclaimed by the garbage collector.

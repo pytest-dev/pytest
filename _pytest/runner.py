@@ -105,6 +105,7 @@ def pytest_runtest_setup(item):
 
 def pytest_runtest_call(item):
     _update_current_test_var(item, 'call')
+    sys.last_type, sys.last_value, sys.last_traceback = (None, None, None)
     try:
         item.runtest()
     except Exception:
@@ -114,7 +115,7 @@ def pytest_runtest_call(item):
         sys.last_type = type
         sys.last_value = value
         sys.last_traceback = tb
-        del tb  # Get rid of it in this namespace
+        del type, value, tb  # Get rid of these in this frame
         raise
 
 
