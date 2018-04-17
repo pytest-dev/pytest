@@ -289,9 +289,9 @@ def caplog(request):
 
     Captured logs are available through the following methods::
 
-    * caplog.text()          -> string containing formatted log output
-    * caplog.records()       -> list of logging.LogRecord instances
-    * caplog.record_tuples() -> list of (logger_name, level, message) tuples
+    * caplog.text            -> string containing formatted log output
+    * caplog.records         -> list of logging.LogRecord instances
+    * caplog.record_tuples   -> list of (logger_name, level, message) tuples
     * caplog.clear()         -> clear captured records and formatted log output string
     """
     result = LogCaptureFixture(request.node)
