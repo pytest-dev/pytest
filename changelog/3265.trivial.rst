@@ -1,1 +1,0 @@
-``pytest`` now depends on the `more_itertools <https://github.com/erikrose/more-itertools>`_ package.

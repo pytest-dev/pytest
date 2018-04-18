@@ -12,7 +12,9 @@ import struct
 import sys
 import types
 
+import atomicwrites
 import py
+
 from _pytest.assertion import util
 
 
@@ -140,7 +142,7 @@ class AssertionRewritingHook(object):
                 # Probably a SyntaxError in the test.
                 return None
             if write:
-                _make_rewritten_pyc(state, source_stat, pyc, co)
+                _write_pyc(state, co, source_stat, pyc)
         else:
             state.trace("found cached rewritten pyc for %r" % (fn,))
         self.modules[name] = co, pyc
@@ -258,22 +260,21 @@ def _write_pyc(state, co, source_stat, pyc):
     # sometime to be able to use imp.load_compiled to load them. (See
     # the comment in load_module above.)
     try:
-        fp = open(pyc, "wb")
-    except IOError:
-        err = sys.exc_info()[1].errno
-        state.trace("error writing pyc file at %s: errno=%s" % (pyc, err))
+        with atomicwrites.atomic_write(pyc, mode="wb", overwrite=True) as fp:
+            fp.write(imp.get_magic())
+            mtime = int(source_stat.mtime)
+            size = source_stat.size & 0xFFFFFFFF
+            fp.write(struct.pack("<ll", mtime, size))
+            if six.PY2:
+                marshal.dump(co, fp.file)
+            else:
+                marshal.dump(co, fp)
+    except EnvironmentError as e:
+        state.trace("error writing pyc file at %s: errno=%s" % (pyc, e.errno))
         # we ignore any failure to write the cache file
         # there are many reasons, permission-denied, __pycache__ being a
         # file etc.
         return False
-    try:
-        fp.write(imp.get_magic())
-        mtime = int(source_stat.mtime)
-        size = source_stat.size & 0xFFFFFFFF
-        fp.write(struct.pack("<ll", mtime, size))
-        marshal.dump(co, fp)
-    finally:
-        fp.close()
     return True
 
 
@@ -336,20 +337,6 @@ def _rewrite_test(config, fn):
         state.trace("failed to compile: %r" % (fn,))
         return None, None
     return stat, co
-
-
-def _make_rewritten_pyc(state, source_stat, pyc, co):
-    """Try to dump rewritten code to *pyc*."""
-    if sys.platform.startswith("win"):
-        # Windows grants exclusive access to open files and doesn't have atomic
-        # rename, so just write into the final file.
-        _write_pyc(state, co, source_stat, pyc)
-    else:
-        # When not on windows, assume rename is atomic. Dump the code object
-        # into a file specific to this process and atomically replace it.
-        proc_pyc = pyc + "." + str(os.getpid())
-        if _write_pyc(state, co, source_stat, proc_pyc):
-            os.rename(proc_pyc, pyc)
 
 
 def _read_pyc(source, pyc, trace=lambda x: None):

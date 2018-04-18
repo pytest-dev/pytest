@@ -1,12 +1,12 @@
-from collections import namedtuple, MutableMapping as MappingMixin
-import warnings
-from operator import attrgetter
 import inspect
+import warnings
+from collections import namedtuple
+from operator import attrgetter
 
 import attr
 
 from ..deprecated import MARK_PARAMETERSET_UNPACKING, MARK_INFO_ATTRIBUTE
-from ..compat import NOTSET, getfslineno
+from ..compat import NOTSET, getfslineno, MappingMixin
 from six.moves import map, reduce
 
 

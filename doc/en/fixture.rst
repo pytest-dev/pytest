@@ -294,7 +294,7 @@ The fixtures requested by ``test_foo`` will be instantiated in the following ord
 
 1. ``s1``: is the highest-scoped fixture (``session``).
 2. ``m1``: is the second highest-scoped fixture (``module``).
-3. ``tempdir``: is a ``function``-scoped fixture, required by ``f1``: it needs to be instantiated at this point
+3. ``tmpdir``: is a ``function``-scoped fixture, required by ``f1``: it needs to be instantiated at this point
    because it is a dependency of ``f1``.
 4. ``f1``: is the first ``function``-scoped fixture in ``test_foo`` parameter list.
 5. ``f2``: is the last ``function``-scoped fixture in ``test_foo`` parameter list.
@@ -622,6 +622,40 @@ Running the above tests results in the following test IDs being used::
      <Function 'test_noop[mail.python.org]'>
    
    ======================= no tests ran in 0.12 seconds =======================
+
+.. _`fixture-parametrize-marks`:
+
+Using marks with parametrized fixtures
+--------------------------------------
+
+:func:`pytest.param` can be used to apply marks in values sets of parametrized fixtures in the same way
+that they can be used with :ref:`@pytest.mark.parametrize <@pytest.mark.parametrize>`.
+
+Example::
+
+    # content of test_fixture_marks.py
+    import pytest
+    @pytest.fixture(params=[0, 1, pytest.param(2, marks=pytest.mark.skip)])
+    def data_set(request):
+        return request.param
+
+    def test_data(data_set):
+        pass
+
+Running this test will *skip* the invocation of ``data_set`` with value ``2``::
+
+    $ pytest test_fixture_marks.py -v
+    =========================== test session starts ============================
+    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.5
+    cachedir: .pytest_cache
+    rootdir: $REGENDOC_TMPDIR, inifile:
+    collecting ... collected 3 items
+    
+    test_fixture_marks.py::test_data[0] PASSED                           [ 33%]
+    test_fixture_marks.py::test_data[1] PASSED                           [ 66%]
+    test_fixture_marks.py::test_data[2] SKIPPED                          [100%]
+    
+    =================== 2 passed, 1 skipped in 0.12 seconds ====================
 
 .. _`interdependent fixtures`:
 

@@ -1,0 +1,1 @@
+A rare race-condition which might result in corrupted ``.pyc`` files on Windows has been hopefully solved.
