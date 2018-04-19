@@ -4,6 +4,8 @@ from __future__ import absolute_import, division, print_function
 import os
 import sys
 import re
+from contextlib import contextmanager
+
 import six
 from _pytest.fixtures import fixture
 
@@ -105,6 +107,29 @@ class MonkeyPatch(object):
         self._setitem = []
         self._cwd = None
         self._savesyspath = None
+
+    @contextmanager
+    def context(self):
+        """
+        Context manager that returns a new :class:`MonkeyPatch` object which
+        undoes any patching done inside the ``with`` block upon exit:
+
+        .. code-block:: python
+
+            import functools
+            def test_partial(monkeypatch):
+                with monkeypatch.context() as m:
+                    m.setattr(functools, "partial", 3)
+
+        Useful in situations where it is desired to undo some patches before the test ends,
+        such as mocking ``stdlib`` functions that might break pytest itself if mocked (for examples
+        of this see `#3290 <https://github.com/pytest-dev/pytest/issues/3290>`_.
+        """
+        m = MonkeyPatch()
+        try:
+            yield m
+        finally:
+            m.undo()
 
     def setattr(self, target, name, value=notset, raising=True):
         """ Set attribute value on target, memorizing the old value.
