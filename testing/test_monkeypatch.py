@@ -327,3 +327,15 @@ def test_issue1338_name_resolving():
         monkeypatch.delattr('requests.sessions.Session.request')
     finally:
         monkeypatch.undo()
+
+
+def test_context():
+    monkeypatch = MonkeyPatch()
+
+    import functools
+    import inspect
+
+    with monkeypatch.context() as m:
+        m.setattr(functools, "partial", 3)
+        assert not inspect.isclass(functools.partial)
+    assert inspect.isclass(functools.partial)
