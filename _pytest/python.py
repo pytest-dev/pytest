@@ -13,11 +13,11 @@ from itertools import count
 
 import py
 import six
+from _pytest.main import FSHookProxy
 from _pytest.mark import MarkerError
 from _pytest.config import hookimpl
 
 import _pytest
-from _pytest.main import Session
 import pluggy
 from _pytest import fixtures
 from _pytest import nodes
@@ -490,7 +490,7 @@ class Module(nodes.File, PyCollector):
             self.addfinalizer(teardown_module)
 
 
-class Package(Session, Module):
+class Package(Module):
 
     def __init__(self, fspath, parent=None, config=None, session=None, nodeid=None):
         session = parent.session
@@ -503,7 +503,38 @@ class Package(Session, Module):
         for path in list(session.config.pluginmanager._duplicatepaths):
             if path.dirname == fspath.dirname and path != fspath:
                 session.config.pluginmanager._duplicatepaths.remove(path)
-        pass
+
+    def _recurse(self, path):
+        ihook = self.gethookproxy(path.dirpath())
+        if ihook.pytest_ignore_collect(path=path, config=self.config):
+            return
+        for pat in self._norecursepatterns:
+            if path.check(fnmatch=pat):
+                return False
+        ihook = self.gethookproxy(path)
+        ihook.pytest_collect_directory(path=path, parent=self)
+        return True
+
+    def gethookproxy(self, fspath):
+        # check if we have the common case of running
+        # hooks with all conftest.py filesall conftest.py
+        pm = self.config.pluginmanager
+        my_conftestmodules = pm._getconftestmodules(fspath)
+        remove_mods = pm._conftest_plugins.difference(my_conftestmodules)
+        if remove_mods:
+            # one or more conftests are not in use at this fspath
+            proxy = FSHookProxy(fspath, pm, remove_mods)
+        else:
+            # all plugis are active for this fspath
+            proxy = self.config.hook
+        return proxy
+
+    def _collectfile(self, path):
+        ihook = self.gethookproxy(path)
+        if not self.isinitpath(path):
+            if ihook.pytest_ignore_collect(path=path, config=self.config):
+                return ()
+        return ihook.pytest_collect_file(path=path, parent=self)
 
     def isinitpath(self, path):
         return path in self.session._initialpaths

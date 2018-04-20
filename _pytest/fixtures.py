@@ -2,6 +2,7 @@ from __future__ import absolute_import, division, print_function
 
 import functools
 import inspect
+import os
 import sys
 import warnings
 from collections import OrderedDict, deque, defaultdict
@@ -68,6 +69,17 @@ def scopeproperty(name=None, doc=None):
 
         return property(provide, None, None, func.__doc__)
     return decoratescope
+
+
+def get_scope_package(node, fixturedef):
+    cls = node.Package
+    current = node
+    fixture_package_name = os.path.join(fixturedef.baseid, '__init__.py')
+    while current and type(current) is not cls or \
+            fixture_package_name != current.nodeid:
+        current = current.parent
+    assert current
+    return current
 
 
 def get_scope_node(node, scope):
@@ -558,7 +570,10 @@ class FixtureRequest(FuncargnamesCompatAttr):
         if scope == "function":
             # this might also be a non-function Item despite its attribute name
             return self._pyfuncitem
-        node = get_scope_node(self._pyfuncitem, scope)
+        if scope == 'package':
+            node = get_scope_package(self._pyfuncitem, self._fixturedef)
+        else:
+            node = get_scope_node(self._pyfuncitem, scope)
         if node is None and scope == "class":
             # fallback to function item itself
             node = self._pyfuncitem
