@@ -75,10 +75,11 @@ def get_scope_package(node, fixturedef):
     cls = node.Package
     current = node
     fixture_package_name = os.path.join(fixturedef.baseid, '__init__.py')
-    while current and type(current) is not cls or \
-            fixture_package_name != current.nodeid:
+    while current and (type(current) is not cls or \
+            fixture_package_name != current.nodeid):
         current = current.parent
-    assert current
+    if current is None:
+        return node.session
     return current
 
 
