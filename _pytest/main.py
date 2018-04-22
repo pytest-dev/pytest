@@ -308,6 +308,8 @@ class Session(nodes.FSCollector):
         self.trace = config.trace.root.get("collection")
         self._norecursepatterns = config.getini("norecursedirs")
         self.startdir = py.path.local()
+        # Keep track of any collected nodes in here, so we don't duplicate fixtures
+        self._node_cache = {}
 
         self.config.pluginmanager.register(self, name="session")
 
@@ -407,31 +409,58 @@ class Session(nodes.FSCollector):
         names = self._parsearg(arg)
         argpath = names.pop(0)
         paths = []
+
+        root = self
+        # Start with a Session root, and delve to argpath item (dir or file)
+        # and stack all Packages found on the way.
+        # No point in finding packages when collecting doctests
+        if not self.config.option.doctestmodules:
+            for parent in argpath.parts():
+                pm = self.config.pluginmanager
+                if pm._confcutdir and pm._confcutdir.relto(parent):
+                    continue
+
+                if parent.isdir():
+                    pkginit = parent.join("__init__.py")
+                    if pkginit.isfile():
+                        if pkginit in self._node_cache:
+                            root = self._node_cache[pkginit]
+                        else:
+                            col = root._collectfile(pkginit)
+                            if col:
+                                root = col[0]
+                                self._node_cache[root.fspath] = root
+
+        # If it's a directory argument, recurse and look for any Subpackages.
+        # Let the Package collector deal with subnodes, don't collect here.
         if argpath.check(dir=1):
             assert not names, "invalid arg %r" % (arg,)
             for path in argpath.visit(fil=lambda x: x.check(file=1),
                                       rec=self._recurse, bf=True, sort=True):
                 pkginit = path.dirpath().join('__init__.py')
                 if pkginit.exists() and not any(x in pkginit.parts() for x in paths):
-                    for x in self._collectfile(pkginit):
+                    for x in root._collectfile(pkginit):
                         yield x
                         paths.append(x.fspath.dirpath())
 
                 if not any(x in path.parts() for x in paths):
-                    for x in self._collectfile(path):
-                        yield x
+                    for x in root._collectfile(path):
+                        if (type(x), x.fspath) in self._node_cache:
+                            yield self._node_cache[(type(x), x.fspath)]
+                        else:
+                            yield x
+                            self._node_cache[(type(x), x.fspath)] = x
         else:
             assert argpath.check(file=1)
-            pkginit = argpath.dirpath().join('__init__.py')
-            if not self.isinitpath(pkginit):
-                self._initialpaths.add(pkginit)
-            if pkginit.exists():
-                for x in self._collectfile(pkginit):
-                    for y in self.matchnodes(x._collectfile(argpath), names):
-                        yield y
+
+            if argpath in self._node_cache:
+                col = self._node_cache[argpath]
             else:
-                for x in self.matchnodes(self._collectfile(argpath), names):
-                    yield x
+                col = root._collectfile(argpath)
+                if col:
+                    self._node_cache[argpath] = col
+            for y in self.matchnodes(col, names):
+                yield y
 
     def _collectfile(self, path):
         ihook = self.gethookproxy(path)
@@ -516,7 +545,11 @@ class Session(nodes.FSCollector):
                     resultnodes.append(node)
                 continue
             assert isinstance(node, nodes.Collector)
-            rep = collect_one_node(node)
+            if node.nodeid in self._node_cache:
+                rep = self._node_cache[node.nodeid]
+            else:
+                rep = collect_one_node(node)
+                self._node_cache[node.nodeid] = rep
             if rep.passed:
                 has_matched = False
                 for x in rep.result:
