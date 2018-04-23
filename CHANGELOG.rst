@@ -8,6 +8,61 @@
 
 .. towncrier release notes start
 
+Pytest 3.5.1 (2018-04-23)
+=========================
+
+Features
+--------
+
+- Added a more indicative error message when parametrizing a function whose
+  argument takes a default value. (`#3221
+  <https://github.com/pytest-dev/pytest/issues/3221>`_)
+
+
+Bug Fixes
+---------
+
+- Reset ``sys.last_type``, ``sys.last_value`` and ``sys.last_traceback`` before
+  each test executes. Those attributes are added by pytest during the test run
+  to aid debugging, but were never reset so they would create a leaking
+  reference to the last failing test's frame which in turn could never be
+  reclaimed by the garbage collector. (`#2798
+  <https://github.com/pytest-dev/pytest/issues/2798>`_)
+
+- ``pytest.raises`` now raises ``TypeError`` when receiving an unknown keyword
+  argument. (`#3348 <https://github.com/pytest-dev/pytest/issues/3348>`_)
+
+- ``pytest.raises`` now works with exception classes that look like iterables.
+  (`#3372 <https://github.com/pytest-dev/pytest/issues/3372>`_)
+
+
+Improved Documentation
+----------------------
+
+- Fix typo in ``caplog`` fixture documentation, which incorrectly identified
+  certain attributes as methods. (`#3406
+  <https://github.com/pytest-dev/pytest/issues/3406>`_)
+
+
+Trivial/Internal Changes
+------------------------
+
+- Remove internal ``_pytest.terminal.flatten`` function in favor of
+  ``more_itertools.collapse``. (`#3330
+  <https://github.com/pytest-dev/pytest/issues/3330>`_)
+
+- Import some modules from ``collections`` instead of ``collections.abc`` as
+  the former modules trigger ``DeprecationWarning`` in Python 3.7. (`#3339
+  <https://github.com/pytest-dev/pytest/issues/3339>`_)
+
+- record_property is no longer experimental, removing the warnings was
+  forgotten. (`#3360 <https://github.com/pytest-dev/pytest/issues/3360>`_)
+
+- Mention in documentation and CLI help that fixtures with leading ``_`` are
+  printed by ``pytest --fixtures`` only if the ``-v`` option is added. (`#3398
+  <https://github.com/pytest-dev/pytest/issues/3398>`_)
+
+
 Pytest 3.5.0 (2018-03-21)
 =========================
 
