@@ -466,6 +466,19 @@ class TestXFail(object):
         result.stdout.fnmatch_lines('*1 failed*' if strict else '*1 xpassed*')
         assert result.ret == (1 if strict else 0)
 
+    @pytest.mark.parametrize('ignore_xfail', [True, False])
+    def test_fail_ignore_xfail(self, testdir, ignore_xfail):
+        p = testdir.makepyfile("""
+            import pytest
+
+            @pytest.mark.xfail()
+            def test_foo():
+                pytest.fail(ignore_xfail = %s)
+        """ % ignore_xfail)
+        result = testdir.runpytest(p, '-rxf')
+        result.stdout.fnmatch_lines('*1 failed*' if ignore_xfail else '*1 xfailed*')
+        assert result.ret == (1 if ignore_xfail else 0)
+
 
 class TestXFailwithSetupTeardown(object):
     def test_failing_setup_issue9(self, testdir):
