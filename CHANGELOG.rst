@@ -11,13 +11,6 @@
 Pytest 3.5.1 (2018-04-23)
 =========================
 
-Features
---------
-
-- Added a more indicative error message when parametrizing a function whose
-  argument takes a default value. (`#3221
-  <https://github.com/pytest-dev/pytest/issues/3221>`_)
-
 
 Bug Fixes
 ---------
@@ -46,6 +39,10 @@ Improved Documentation
 
 Trivial/Internal Changes
 ------------------------
+
+- Added a more indicative error message when parametrizing a function whose
+  argument takes a default value. (`#3221
+  <https://github.com/pytest-dev/pytest/issues/3221>`_)
 
 - Remove internal ``_pytest.terminal.flatten`` function in favor of
   ``more_itertools.collapse``. (`#3330
