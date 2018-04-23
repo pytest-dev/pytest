@@ -126,6 +126,8 @@ def pytest_runtest_makereport(item, call):
         else:
             rep.outcome = "passed"
             rep.wasxfail = rep.longrepr
+    elif call.excinfo and call.excinfo.errisinstance(fail.Exception) and getattr(call.excinfo.value,'ignore_xfail',False):
+        rep.outcome = "failed"
     elif item.config.option.runxfail:
         pass  # don't interefere
     elif call.excinfo and call.excinfo.errisinstance(xfail.Exception):

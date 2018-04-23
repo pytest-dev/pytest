@@ -43,6 +43,9 @@ class Failed(OutcomeException):
     """ raised from an explicit call to pytest.fail() """
     __module__ = 'builtins'
 
+    def __init__(self, msg=None, pytrace=True, ignore_xfail=False):
+        OutcomeException.__init__(self, msg=msg, pytrace=pytrace)
+        self.ignore_xfail = ignore_xfail
 
 class Exit(KeyboardInterrupt):
     """ raised for immediate program exits (no tracebacks/summaries)"""
@@ -82,14 +85,15 @@ def skip(msg="", **kwargs):
 skip.Exception = Skipped
 
 
-def fail(msg="", pytrace=True):
+def fail(msg="", pytrace=True, ignore_xfail=False):
     """ explicitly fail an currently-executing test with the given Message.
 
     :arg pytrace: if false the msg represents the full failure information
                   and no python traceback will be reported.
+    :arg ignore_xfail: makes the test failing even if the test is marked as xfail.
     """
     __tracebackhide__ = True
-    raise Failed(msg=msg, pytrace=pytrace)
+    raise Failed(msg=msg, pytrace=pytrace, ignore_xfail=ignore_xfail)
 
 
 fail.Exception = Failed
