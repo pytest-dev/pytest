@@ -47,6 +47,7 @@ class Failed(OutcomeException):
         OutcomeException.__init__(self, msg=msg, pytrace=pytrace)
         self.ignore_xfail = ignore_xfail
 
+
 class Exit(KeyboardInterrupt):
     """ raised for immediate program exits (no tracebacks/summaries)"""
     def __init__(self, msg="unknown reason"):
