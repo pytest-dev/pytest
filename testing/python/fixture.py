@@ -1481,6 +1481,36 @@ class TestFixtureManagerParseFactories(object):
         reprec = testdir.inline_run()
         reprec.assertoutcome(passed=2)
 
+    def test_package_fixture_complex(self, testdir):
+        testdir.makepyfile(__init__="""\
+            values = []
+        """)
+        package = testdir.mkdir("package")
+        package.join("__init__.py").write("")
+        package.join("conftest.py").write(dedent("""\
+            import pytest
+            from .. import values
+            @pytest.fixture(scope="package")
+            def one():
+                values.append("package")
+                yield values
+                values.pop()
+            @pytest.fixture(scope="package", autouse=True)
+            def two():
+                values.append("package-auto")
+                yield values
+                values.pop()
+        """))
+        package.join("test_x.py").write(dedent("""\
+            from .. import values
+            def test_package_autouse():
+                assert values == ["package-auto"]
+            def test_package(one):
+                assert values == ["package-auto", "package"]
+        """))
+        reprec = testdir.inline_run()
+        reprec.assertoutcome(passed=2)
+
 
 class TestAutouseDiscovery(object):
 
@@ -3321,6 +3351,10 @@ class TestScopeOrdering(object):
             def s1():
                 FIXTURE_ORDER.append('s1')
 
+            @pytest.fixture(scope="package")
+            def p1():
+                FIXTURE_ORDER.append('p1')
+
             @pytest.fixture(scope="module")
             def m1():
                 FIXTURE_ORDER.append('m1')
@@ -3341,15 +3375,15 @@ class TestScopeOrdering(object):
             def f2():
                 FIXTURE_ORDER.append('f2')
 
-            def test_foo(f1, m1, f2, s1): pass
+            def test_foo(f1, p1, m1, f2, s1): pass
         """)
         items, _ = testdir.inline_genitems()
         request = FixtureRequest(items[0])
         # order of fixtures based on their scope and position in the parameter list
-        assert request.fixturenames == 's1 my_tmpdir_factory m1 f1 f2 my_tmpdir'.split()
+        assert request.fixturenames == 's1 my_tmpdir_factory p1 m1 f1 f2 my_tmpdir'.split()
         testdir.runpytest()
         # actual fixture execution differs: dependent fixtures must be created first ("my_tmpdir")
-        assert pytest.FIXTURE_ORDER == 's1 my_tmpdir_factory m1 my_tmpdir f1 f2'.split()
+        assert pytest.FIXTURE_ORDER == 's1 my_tmpdir_factory p1 m1 my_tmpdir f1 f2'.split()
 
     def test_func_closure_module(self, testdir):
         testdir.makepyfile("""
@@ -3411,9 +3445,13 @@ class TestScopeOrdering(object):
             'sub/conftest.py': """
                 import pytest
 
+                @pytest.fixture(scope='package', autouse=True)
+                def p_sub(): pass
+
                 @pytest.fixture(scope='module', autouse=True)
                 def m_sub(): pass
             """,
+            'sub/__init__.py': "",
             'sub/test_func.py': """
                 import pytest
 
@@ -3428,7 +3466,7 @@ class TestScopeOrdering(object):
         """})
         items, _ = testdir.inline_genitems()
         request = FixtureRequest(items[0])
-        assert request.fixturenames == 'm_conf m_sub m_test f1'.split()
+        assert request.fixturenames == 'p_sub m_conf m_sub m_test f1'.split()
 
     def test_func_closure_all_scopes_complex(self, testdir):
         """Complex test involving all scopes and mixing autouse with normal fixtures"""
@@ -3437,7 +3475,11 @@ class TestScopeOrdering(object):
 
             @pytest.fixture(scope='session')
             def s1(): pass
+
+            @pytest.fixture(scope='package', autouse=True)
+            def p1(): pass
         """)
+        testdir.makepyfile(**{"__init__.py": ""})
         testdir.makepyfile("""
             import pytest
 
@@ -3464,4 +3506,4 @@ class TestScopeOrdering(object):
         """)
         items, _ = testdir.inline_genitems()
         request = FixtureRequest(items[0])
-        assert request.fixturenames == 's1 m1 m2 c1 f2 f1'.split()
+        assert request.fixturenames == 's1 p1 m1 m2 c1 f2 f1'.split()
