@@ -2812,6 +2812,14 @@ class TestShowFixtures(object):
                 Hi from test module
         ''')
 
+    def test_fixture_disallow_twice(self):
+        """Test that applying @pytest.fixture twice generates an error (#2334)."""
+        with pytest.raises(ValueError):
+            @pytest.fixture
+            @pytest.fixture
+            def foo():
+                pass
+
 
 @pytest.mark.parametrize('flavor', ['fixture', 'yield_fixture'])
 class TestContextManagerFixtureFuncs(object):
