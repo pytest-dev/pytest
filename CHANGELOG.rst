@@ -48,7 +48,7 @@ Trivial/Internal Changes
   ``more_itertools.collapse``. (`#3330
   <https://github.com/pytest-dev/pytest/issues/3330>`_)
 
-- Import some modules from ``collections`` instead of ``collections.abc`` as
+- Import some modules from ``collections.abc`` instead of ``collections`` as
   the former modules trigger ``DeprecationWarning`` in Python 3.7. (`#3339
   <https://github.com/pytest-dev/pytest/issues/3339>`_)
 
