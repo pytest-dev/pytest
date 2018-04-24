@@ -145,9 +145,9 @@ class TestGeneralUsage(object):
             *warning*conftest.py*
         """)
         result = testdir.runpytest()
-        result.stderr.fnmatch_lines("""
-            *ERROR*could not load*conftest.py*
-        """)
+        result.stderr.fnmatch_lines(["*ImportError while importing conftest module*conftest.py*",
+                                    "E    *Error: No module named*qwerty*"]
+                                    )
 
     def test_early_skip(self, testdir):
         testdir.mkdir("xyz")
