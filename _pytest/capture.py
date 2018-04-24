@@ -329,7 +329,7 @@ def safe_text_dupfile(f, mode, default_encoding="UTF8"):
         newfd = os.dup(fd)
         if "b" not in mode:
             mode += "b"
-        f = os.fdopen(newfd, mode, 0)  # no buffering
+        f = io.open(newfd, mode)
     return EncodedFile(f, encoding or default_encoding)
 
 

@@ -1,0 +1,1 @@
+Fixed how files are opened in pytest/_pytest/capture.py to be compatible on Windows.
