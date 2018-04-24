@@ -4,8 +4,9 @@ from __future__ import absolute_import, division, print_function
 import os
 import sys
 import re
+from contextlib import contextmanager
 
-from py.builtin import _basestring
+import six
 from _pytest.fixtures import fixture
 
 RE_IMPORT_ERROR_NAME = re.compile("^No module named (.*)$")
@@ -71,15 +72,15 @@ def annotated_getattr(obj, name, ann):
         obj = getattr(obj, name)
     except AttributeError:
         raise AttributeError(
-                '%r object at %s has no attribute %r' % (
-                    type(obj).__name__, ann, name
-                )
+            '%r object at %s has no attribute %r' % (
+                type(obj).__name__, ann, name
+            )
         )
     return obj
 
 
 def derive_importpath(import_path, raising):
-    if not isinstance(import_path, _basestring) or "." not in import_path:
+    if not isinstance(import_path, six.string_types) or "." not in import_path:
         raise TypeError("must be absolute import path string, not %r" %
                         (import_path,))
     module, attr = import_path.rsplit('.', 1)
@@ -89,7 +90,7 @@ def derive_importpath(import_path, raising):
     return attr, target
 
 
-class Notset:
+class Notset(object):
     def __repr__(self):
         return "<notset>"
 
@@ -97,7 +98,7 @@ class Notset:
 notset = Notset()
 
 
-class MonkeyPatch:
+class MonkeyPatch(object):
     """ Object returned by the ``monkeypatch`` fixture keeping a record of setattr/item/env/syspath changes.
     """
 
@@ -107,6 +108,29 @@ class MonkeyPatch:
         self._cwd = None
         self._savesyspath = None
 
+    @contextmanager
+    def context(self):
+        """
+        Context manager that returns a new :class:`MonkeyPatch` object which
+        undoes any patching done inside the ``with`` block upon exit:
+
+        .. code-block:: python
+
+            import functools
+            def test_partial(monkeypatch):
+                with monkeypatch.context() as m:
+                    m.setattr(functools, "partial", 3)
+
+        Useful in situations where it is desired to undo some patches before the test ends,
+        such as mocking ``stdlib`` functions that might break pytest itself if mocked (for examples
+        of this see `#3290 <https://github.com/pytest-dev/pytest/issues/3290>`_.
+        """
+        m = MonkeyPatch()
+        try:
+            yield m
+        finally:
+            m.undo()
+
     def setattr(self, target, name, value=notset, raising=True):
         """ Set attribute value on target, memorizing the old value.
         By default raise AttributeError if the attribute did not exist.
@@ -114,7 +138,7 @@ class MonkeyPatch:
         For convenience you can specify a string as ``target`` which
         will be interpreted as a dotted import path, with the last part
         being the attribute name.  Example:
-        ``monkeypatch.setattr("os.getcwd", lambda x: "/")``
+        ``monkeypatch.setattr("os.getcwd", lambda: "/")``
         would set the ``getcwd`` function of the ``os`` module.
 
         The ``raising`` value determines if the setattr should fail
@@ -125,7 +149,7 @@ class MonkeyPatch:
         import inspect
 
         if value is notset:
-            if not isinstance(target, _basestring):
+            if not isinstance(target, six.string_types):
                 raise TypeError("use setattr(target, name, value) or "
                                 "setattr(target, value) with target being a dotted "
                                 "import string")
@@ -155,7 +179,7 @@ class MonkeyPatch:
         """
         __tracebackhide__ = True
         if name is notset:
-            if not isinstance(target, _basestring):
+            if not isinstance(target, six.string_types):
                 raise TypeError("use delattr(target, name) or "
                                 "delattr(target) with target being a dotted "
                                 "import string")

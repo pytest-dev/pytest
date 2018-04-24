@@ -1,3 +1,4 @@
+from _pytest.outcomes import Failed
 import pytest
 import sys
 
@@ -61,6 +62,11 @@ class TestRaises(object):
         with pytest.raises(TypeError):
             pytest.raises('wrong', lambda: None)
 
+    def test_invalid_arguments_to_raises(self):
+        with pytest.raises(TypeError, match='unknown'):
+            with pytest.raises(TypeError, unknown='bogus'):
+                raise ValueError()
+
     def test_tuple(self):
         with pytest.raises((KeyError, ValueError)):
             raise KeyError('oops')
@@ -118,7 +124,6 @@ class TestRaises(object):
         for o in gc.get_objects():
             assert type(o) is not T
 
-
     def test_raises_match(self):
         msg = r"with base \d+"
         with pytest.raises(ValueError, match=msg):
@@ -133,3 +138,30 @@ class TestRaises(object):
         with pytest.raises(AssertionError, match=expr):
             with pytest.raises(ValueError, match=msg):
                 int('asdf', base=10)
+
+    def test_raises_match_wrong_type(self):
+        """Raising an exception with the wrong type and match= given.
+
+        pytest should throw the unexpected exception - the pattern match is not
+        really relevant if we got a different exception.
+        """
+        with pytest.raises(ValueError):
+            with pytest.raises(IndexError, match='nomatch'):
+                int('asdf')
+
+    def test_raises_exception_looks_iterable(self):
+        from six import add_metaclass
+
+        class Meta(type(object)):
+            def __getitem__(self, item):
+                return 1/0
+
+            def __len__(self):
+                return 1
+
+        @add_metaclass(Meta)
+        class ClassLooksIterableException(Exception):
+            pass
+
+        with pytest.raises(Failed, match="DID NOT RAISE <class 'raises.ClassLooksIterableException'>"):
+            pytest.raises(ClassLooksIterableException, lambda: None)

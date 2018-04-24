@@ -61,15 +61,27 @@ so that any attempts within tests to create http requests will fail.
     ``compile``, etc., because it might break pytest's internals. If that's
     unavoidable, passing ``--tb=native``, ``--assert=plain`` and ``--capture=no`` might 
     help although there's no guarantee.
+
+.. note::
+
+    Mind that patching ``stdlib`` functions and some third-party libraries used by pytest
+    might break pytest itself, therefore in those cases it is recommended to use
+    :meth:`MonkeyPatch.context` to limit the patching to the block you want tested:
+
+    .. code-block:: python
+
+        import functools
+        def test_partial(monkeypatch):
+            with monkeypatch.context() as m:
+                m.setattr(functools, "partial", 3)
+                assert functools.partial == 3
+
+    See issue `#3290 <https://github.com/pytest-dev/pytest/issues/3290>`_ for details.
     
 
-Method reference of the monkeypatch fixture
--------------------------------------------
+.. currentmodule:: _pytest.monkeypatch
 
-.. autoclass:: MonkeyPatch
-    :members:
+API Reference
+-------------
 
-``monkeypatch.setattr/delattr/delitem/delenv()`` all
-by default raise an Exception if the target does not exist.
-Pass ``raising=False`` if you want to skip this check.
-
+Consult the docs for the :class:`MonkeyPatch` class.

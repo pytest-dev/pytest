@@ -2,6 +2,7 @@
 from __future__ import absolute_import, division, print_function
 
 import pytest
+import six
 import sys
 import tempfile
 
@@ -9,14 +10,13 @@ import tempfile
 def pytest_addoption(parser):
     group = parser.getgroup("terminal reporting")
     group._addoption('--pastebin', metavar="mode",
-        action='store', dest="pastebin", default=None,
-        choices=['failed', 'all'],
-        help="send failed|all info to bpaste.net pastebin service.")
+                     action='store', dest="pastebin", default=None,
+                     choices=['failed', 'all'],
+                     help="send failed|all info to bpaste.net pastebin service.")
 
 
 @pytest.hookimpl(trylast=True)
 def pytest_configure(config):
-    import py
     if config.option.pastebin == "all":
         tr = config.pluginmanager.getplugin('terminalreporter')
         # if no terminal reporter plugin is present, nothing we can do here;
@@ -29,7 +29,7 @@ def pytest_configure(config):
 
             def tee_write(s, **kwargs):
                 oldwrite(s, **kwargs)
-                if py.builtin._istext(s):
+                if isinstance(s, six.text_type):
                     s = s.encode('utf-8')
                 config._pastebinfile.write(s)
 
@@ -97,4 +97,4 @@ def pytest_terminal_summary(terminalreporter):
             s = tw.stringio.getvalue()
             assert len(s)
             pastebinurl = create_new_paste(s)
-            tr.write_line("%s --> %s" %(msg, pastebinurl))
+            tr.write_line("%s --> %s" % (msg, pastebinurl))

@@ -2,7 +2,14 @@
 from __future__ import absolute_import, division, print_function
 import pdb
 import sys
+import os
+from doctest import UnexpectedException
 
+try:
+    from builtins import breakpoint  # noqa
+    SUPPORTS_BREAKPOINT_BUILTIN = True
+except ImportError:
+    SUPPORTS_BREAKPOINT_BUILTIN = False
 
 
 def pytest_addoption(parser):
@@ -27,12 +34,20 @@ def pytest_configure(config):
     if config.getvalue("usepdb"):
         config.pluginmanager.register(PdbInvoke(), 'pdbinvoke')
 
+    # Use custom Pdb class set_trace instead of default Pdb on breakpoint() call
+    if SUPPORTS_BREAKPOINT_BUILTIN:
+        _environ_pythonbreakpoint = os.environ.get('PYTHONBREAKPOINT', '')
+        if _environ_pythonbreakpoint == '':
+            sys.breakpointhook = pytestPDB.set_trace
+
     old = (pdb.set_trace, pytestPDB._pluginmanager)
 
     def fin():
         pdb.set_trace, pytestPDB._pluginmanager = old
         pytestPDB._config = None
         pytestPDB._pdb_cls = pdb.Pdb
+        if SUPPORTS_BREAKPOINT_BUILTIN:
+            sys.breakpointhook = sys.__breakpointhook__
 
     pdb.set_trace = pytestPDB.set_trace
     pytestPDB._pluginmanager = config.pluginmanager
@@ -40,7 +55,8 @@ def pytest_configure(config):
     pytestPDB._pdb_cls = pdb_cls
     config._cleanup.append(fin)
 
-class pytestPDB:
+
+class pytestPDB(object):
     """ Pseudo PDB that defers to the real pdb. """
     _pluginmanager = None
     _config = None
@@ -54,7 +70,7 @@ class pytestPDB:
         if cls._pluginmanager is not None:
             capman = cls._pluginmanager.getplugin("capturemanager")
             if capman:
-                capman.suspendcapture(in_=True)
+                capman.suspend_global_capture(in_=True)
             tw = _pytest.config.create_terminal_writer(cls._config)
             tw.line()
             tw.sep(">", "PDB set_trace (IO-capturing turned off)")
@@ -62,11 +78,11 @@ class pytestPDB:
         cls._pdb_cls().set_trace(frame)
 
 
-class PdbInvoke:
+class PdbInvoke(object):
     def pytest_exception_interact(self, node, call, report):
         capman = node.config.pluginmanager.getplugin("capturemanager")
         if capman:
-            out, err = capman.suspendcapture(in_=True)
+            out, err = capman.suspend_global_capture(in_=True)
             sys.stdout.write(out)
             sys.stdout.write(err)
         _enter_pdb(node, call.excinfo, report)
@@ -85,6 +101,18 @@ def _enter_pdb(node, excinfo, rep):
     # for not completely clear reasons.
     tw = node.config.pluginmanager.getplugin("terminalreporter")._tw
     tw.line()
+
+    showcapture = node.config.option.showcapture
+
+    for sectionname, content in (('stdout', rep.capstdout),
+                                 ('stderr', rep.capstderr),
+                                 ('log', rep.caplog)):
+        if showcapture in (sectionname, 'all') and content:
+            tw.sep(">", "captured " + sectionname)
+            if content[-1:] == "\n":
+                content = content[:-1]
+            tw.line(content)
+
     tw.sep(">", "traceback")
     rep.toterminal(tw)
     tw.sep(">", "entering PDB")
@@ -95,10 +123,9 @@ def _enter_pdb(node, excinfo, rep):
 
 
 def _postmortem_traceback(excinfo):
-    # A doctest.UnexpectedException is not useful for post_mortem.
-    # Use the underlying exception instead:
-    from doctest import UnexpectedException
     if isinstance(excinfo.value, UnexpectedException):
+        # A doctest.UnexpectedException is not useful for post_mortem.
+        # Use the underlying exception instead:
         return excinfo.value.exc_info[2]
     else:
         return excinfo._excinfo[2]

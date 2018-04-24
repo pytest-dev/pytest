@@ -1,15 +1,11 @@
+.. _`cache_provider`:
+.. _cache:
+
+
 Cache: working with cross-testrun state
 =======================================
 
 .. versionadded:: 2.8
-
-.. warning::
-
-  The functionality of this core plugin was previously distributed
-  as a third party plugin named ``pytest-cache``.  The core plugin
-  is compatible regarding command line options and API usage except that you
-  can only store/receive data between test runs that is json-serializable.
-
 
 Usage
 ---------
@@ -50,9 +46,9 @@ First, let's create 50 test invocation of which only 2 fail::
 If you run this for the first time you will see two failures::
 
     $ pytest -q
-    .................F.......F........................
-    ======= FAILURES ========
-    _______ test_num[17] ________
+    .................F.......F........................                   [100%]
+    ================================= FAILURES =================================
+    _______________________________ test_num[17] _______________________________
     
     i = 17
     
@@ -63,7 +59,7 @@ If you run this for the first time you will see two failures::
     E          Failed: bad luck
     
     test_50.py:6: Failed
-    _______ test_num[25] ________
+    _______________________________ test_num[25] _______________________________
     
     i = 25
     
@@ -79,16 +75,16 @@ If you run this for the first time you will see two failures::
 If you then run it with ``--lf``::
 
     $ pytest --lf
-    ======= test session starts ========
+    =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
-    run-last-failure: rerun last 2 failures
     rootdir: $REGENDOC_TMPDIR, inifile:
-    collected 50 items
+    collected 50 items / 48 deselected
+    run-last-failure: rerun previous 2 failures
     
-    test_50.py FF
+    test_50.py FF                                                        [100%]
     
-    ======= FAILURES ========
-    _______ test_num[17] ________
+    ================================= FAILURES =================================
+    _______________________________ test_num[17] _______________________________
     
     i = 17
     
@@ -99,7 +95,7 @@ If you then run it with ``--lf``::
     E          Failed: bad luck
     
     test_50.py:6: Failed
-    _______ test_num[25] ________
+    _______________________________ test_num[25] _______________________________
     
     i = 25
     
@@ -110,8 +106,7 @@ If you then run it with ``--lf``::
     E          Failed: bad luck
     
     test_50.py:6: Failed
-    ======= 48 tests deselected ========
-    ======= 2 failed, 48 deselected in 0.12 seconds ========
+    ================= 2 failed, 48 deselected in 0.12 seconds ==================
 
 You have run only the two failing test from the last run, while 48 tests have
 not been run ("deselected").
@@ -121,16 +116,16 @@ previous failures will be executed first (as can be seen from the series
 of ``FF`` and dots)::
 
     $ pytest --ff
-    ======= test session starts ========
+    =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
-    run-last-failure: rerun last 2 failures first
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 50 items
+    run-last-failure: rerun previous 2 failures first
     
-    test_50.py FF................................................
+    test_50.py FF................................................        [100%]
     
-    ======= FAILURES ========
-    _______ test_num[17] ________
+    ================================= FAILURES =================================
+    _______________________________ test_num[17] _______________________________
     
     i = 17
     
@@ -141,7 +136,7 @@ of ``FF`` and dots)::
     E          Failed: bad luck
     
     test_50.py:6: Failed
-    _______ test_num[25] ________
+    _______________________________ test_num[25] _______________________________
     
     i = 25
     
@@ -152,9 +147,23 @@ of ``FF`` and dots)::
     E          Failed: bad luck
     
     test_50.py:6: Failed
-    ======= 2 failed, 48 passed in 0.12 seconds ========
+    =================== 2 failed, 48 passed in 0.12 seconds ====================
 
 .. _`config.cache`:
+
+New ``--nf``, ``--new-first`` options: run new tests first followed by the rest
+of the tests, in both cases tests are also sorted by the file modified time,
+with more recent files coming first.
+
+Behavior when no tests failed in the last run
+---------------------------------------------
+
+When no tests failed in the last run, or when no cached ``lastfailed`` data was
+found, ``pytest`` can be configured either to run all of the tests or no tests,
+using the ``--last-failed-no-failures`` option, which takes one of the following values::
+
+    pytest --last-failed-no-failures all    # run all tests (default behavior)
+    pytest --last-failed-no-failures none   # run no tests and exit
 
 The new config.cache object
 --------------------------------
@@ -186,9 +195,9 @@ If you run this command once, it will take a while because
 of the sleep::
 
     $ pytest -q
-    F
-    ======= FAILURES ========
-    _______ test_function ________
+    F                                                                    [100%]
+    ================================= FAILURES =================================
+    ______________________________ test_function _______________________________
     
     mydata = 42
     
@@ -203,9 +212,9 @@ If you run it a second time the value will be retrieved from
 the cache and this will be quick::
 
     $ pytest -q
-    F
-    ======= FAILURES ========
-    _______ test_function ________
+    F                                                                    [100%]
+    ================================= FAILURES =================================
+    ______________________________ test_function _______________________________
     
     mydata = 42
     
@@ -216,7 +225,7 @@ the cache and this will be quick::
     test_caching.py:14: AssertionError
     1 failed in 0.12 seconds
 
-See the `cache-api`_ for more details.
+See the :ref:`cache-api` for more details.
 
 
 Inspecting Cache content
@@ -226,17 +235,19 @@ You can always peek at the content of the cache using the
 ``--cache-show`` command line option::
 
     $ py.test --cache-show
-    ======= test session starts ========
+    =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
-    cachedir: $REGENDOC_TMPDIR/.cache
+    cachedir: $REGENDOC_TMPDIR/.pytest_cache
     ------------------------------- cache values -------------------------------
     cache/lastfailed contains:
       {'test_caching.py::test_function': True}
+    cache/nodeids contains:
+      ['test_caching.py::test_function']
     example/value contains:
       42
     
-    ======= no tests ran in 0.12 seconds ========
+    ======================= no tests ran in 0.12 seconds =======================
 
 Clearing Cache content
 -------------------------------
@@ -251,22 +262,3 @@ servers where isolation and correctness is more important
 than speed.
 
 
-.. _`cache-api`:
-
-config.cache API
-------------------
-
-The ``config.cache`` object allows other plugins,
-including ``conftest.py`` files,
-to safely and flexibly store and retrieve values across
-test runs because the ``config`` object is available
-in many places.
-
-Under the hood, the cache plugin uses the simple
-dumps/loads API of the json stdlib module
-
-.. currentmodule:: _pytest.cacheprovider
-
-.. automethod:: Cache.get
-.. automethod:: Cache.set
-.. automethod:: Cache.makedir

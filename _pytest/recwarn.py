@@ -7,15 +7,16 @@ import _pytest._code
 import py
 import sys
 import warnings
+
+import re
+
 from _pytest.fixtures import yield_fixture
+from _pytest.outcomes import fail
 
 
 @yield_fixture
 def recwarn():
-    """Return a WarningsRecorder instance that provides these methods:
-
-    * ``pop(category=None)``: return last warning matching the category.
-    * ``clear()``: clear list of warnings
+    """Return a :class:`WarningsRecorder` instance that records all warnings emitted by test functions.
 
     See http://docs.python.org/library/warnings.html for information
     on warning categories.
@@ -84,11 +85,11 @@ class _DeprecatedCallContext(object):
 def warns(expected_warning, *args, **kwargs):
     """Assert that code raises a particular class of warning.
 
-    Specifically, the input @expected_warning can be a warning class or
-    tuple of warning classes, and the code must return that warning
-    (if a single class) or one of those warnings (if a tuple).
+    Specifically, the parameter ``expected_warning`` can be a warning class or
+    sequence of warning classes, and the inside the ``with`` block must issue a warning of that class or
+    classes.
 
-    This helper produces a list of ``warnings.WarningMessage`` objects,
+    This helper produces a list of :class:`warnings.WarningMessage` objects,
     one for each warning raised.
 
     This function can be used as a context manager, or any of the other ways
@@ -96,10 +97,28 @@ def warns(expected_warning, *args, **kwargs):
 
         >>> with warns(RuntimeWarning):
         ...    warnings.warn("my warning", RuntimeWarning)
+
+    In the context manager form you may use the keyword argument ``match`` to assert
+    that the exception matches a text or regex::
+
+        >>> with warns(UserWarning, match='must be 0 or None'):
+        ...     warnings.warn("value must be 0 or None", UserWarning)
+
+        >>> with warns(UserWarning, match=r'must be \d+$'):
+        ...     warnings.warn("value must be 42", UserWarning)
+
+        >>> with warns(UserWarning, match=r'must be \d+$'):
+        ...     warnings.warn("this is not here", UserWarning)
+        Traceback (most recent call last):
+          ...
+        Failed: DID NOT WARN. No warnings of type ...UserWarning... was emitted...
+
     """
-    wcheck = WarningsChecker(expected_warning)
+    match_expr = None
     if not args:
-        return wcheck
+        if "match" in kwargs:
+            match_expr = kwargs.pop("match")
+        return WarningsChecker(expected_warning, match_expr=match_expr)
     elif isinstance(args[0], str):
         code, = args
         assert isinstance(code, str)
@@ -107,12 +126,12 @@ def warns(expected_warning, *args, **kwargs):
         loc = frame.f_locals.copy()
         loc.update(kwargs)
 
-        with wcheck:
+        with WarningsChecker(expected_warning, match_expr=match_expr):
             code = _pytest._code.Source(code).compile()
             py.builtin.exec_(code, frame.f_globals, loc)
     else:
         func = args[0]
-        with wcheck:
+        with WarningsChecker(expected_warning, match_expr=match_expr):
             return func(*args[1:], **kwargs)
 
 
@@ -172,7 +191,7 @@ class WarningsRecorder(warnings.catch_warnings):
 
 
 class WarningsChecker(WarningsRecorder):
-    def __init__(self, expected_warning=None):
+    def __init__(self, expected_warning=None, match_expr=None):
         super(WarningsChecker, self).__init__()
 
         msg = ("exceptions must be old-style classes or "
@@ -187,6 +206,7 @@ class WarningsChecker(WarningsRecorder):
             raise TypeError(msg % type(expected_warning))
 
         self.expected_warning = expected_warning
+        self.match_expr = match_expr
 
     def __exit__(self, *exc_info):
         super(WarningsChecker, self).__exit__(*exc_info)
@@ -197,8 +217,17 @@ class WarningsChecker(WarningsRecorder):
                 if not any(issubclass(r.category, self.expected_warning)
                            for r in self):
                     __tracebackhide__ = True
-                    from _pytest.runner import fail
                     fail("DID NOT WARN. No warnings of type {0} was emitted. "
                          "The list of emitted warnings is: {1}.".format(
-                            self.expected_warning,
-                            [each.message for each in self]))
+                             self.expected_warning,
+                             [each.message for each in self]))
+                elif self.match_expr is not None:
+                    for r in self:
+                        if issubclass(r.category, self.expected_warning):
+                            if re.compile(self.match_expr).search(str(r.message)):
+                                break
+                    else:
+                        fail("DID NOT WARN. No warnings of type {0} matching"
+                             " ('{1}') was emitted. The list of emitted warnings"
+                             " is: {2}.".format(self.expected_warning, self.match_expr,
+                                                [each.message for each in self]))

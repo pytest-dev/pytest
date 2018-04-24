@@ -19,7 +19,7 @@ class TestDoctests(object):
         """)
 
         for x in (testdir.tmpdir, checkfile):
-            #print "checking that %s returns custom items" % (x,)
+            # print "checking that %s returns custom items" % (x,)
             items, reprec = testdir.inline_genitems(x)
             assert len(items) == 1
             assert isinstance(items[0], DoctestItem)
@@ -32,14 +32,14 @@ class TestDoctests(object):
         path = testdir.makepyfile(whatever="#")
         for p in (path, testdir.tmpdir):
             items, reprec = testdir.inline_genitems(p,
-                '--doctest-modules')
+                                                    '--doctest-modules')
             assert len(items) == 0
 
     def test_collect_module_single_modulelevel_doctest(self, testdir):
         path = testdir.makepyfile(whatever='""">>> pass"""')
         for p in (path, testdir.tmpdir):
             items, reprec = testdir.inline_genitems(p,
-                '--doctest-modules')
+                                                    '--doctest-modules')
             assert len(items) == 1
             assert isinstance(items[0], DoctestItem)
             assert isinstance(items[0].parent, DoctestModule)
@@ -52,7 +52,7 @@ class TestDoctests(object):
         """)
         for p in (path, testdir.tmpdir):
             items, reprec = testdir.inline_genitems(p,
-                '--doctest-modules')
+                                                    '--doctest-modules')
             assert len(items) == 2
             assert isinstance(items[0], DoctestItem)
             assert isinstance(items[1], DoctestItem)
@@ -77,7 +77,7 @@ class TestDoctests(object):
         """)
         for p in (path, testdir.tmpdir):
             items, reprec = testdir.inline_genitems(p,
-                '--doctest-modules')
+                                                    '--doctest-modules')
             assert len(items) == 2
             assert isinstance(items[0], DoctestItem)
             assert isinstance(items[1], DoctestItem)
@@ -135,9 +135,9 @@ class TestDoctests(object):
     @pytest.mark.parametrize(
         '   test_string,    encoding',
         [
-            (u'foo',         'ascii'),
-            (u'öäü',         'latin1'),
-            (u'öäü',         'utf-8')
+            (u'foo', 'ascii'),
+            (u'öäü', 'latin1'),
+            (u'öäü', 'utf-8')
         ]
     )
     def test_encoding(self, testdir, test_string, encoding):
@@ -173,7 +173,7 @@ class TestDoctests(object):
             "*UNEXPECTED*ZeroDivision*",
         ])
 
-    def test_docstring_context_around_error(self, testdir):
+    def test_docstring_partial_context_around_error(self, testdir):
         """Test that we show some context before the actual line of a failing
         doctest.
         """
@@ -199,7 +199,7 @@ class TestDoctests(object):
         ''')
         result = testdir.runpytest('--doctest-modules')
         result.stdout.fnmatch_lines([
-            '*docstring_context_around_error*',
+            '*docstring_partial_context_around_error*',
             '005*text-line-3',
             '006*text-line-4',
             '013*text-line-11',
@@ -212,6 +212,32 @@ class TestDoctests(object):
         # lines below should be trimmed out
         assert 'text-line-2' not in result.stdout.str()
         assert 'text-line-after' not in result.stdout.str()
+
+    def test_docstring_full_context_around_error(self, testdir):
+        """Test that we show the whole context before the actual line of a failing
+        doctest, provided that the context is up to 10 lines long.
+        """
+        testdir.makepyfile('''
+            def foo():
+                """
+                text-line-1
+                text-line-2
+
+                >>> 1 + 1
+                3
+                """
+        ''')
+        result = testdir.runpytest('--doctest-modules')
+        result.stdout.fnmatch_lines([
+            '*docstring_full_context_around_error*',
+            '003*text-line-1',
+            '004*text-line-2',
+            '006*>>> 1 + 1',
+            'Expected:',
+            '    3',
+            'Got:',
+            '    2',
+        ])
 
     def test_doctest_linedata_missing(self, testdir):
         testdir.tmpdir.join('hello.py').write(_pytest._code.Source("""
@@ -293,7 +319,6 @@ class TestDoctests(object):
             "*    1",
             "*:5: DocTestFailure"
         ])
-
 
     def test_txtfile_failing(self, testdir):
         p = testdir.maketxtfile("""
@@ -535,7 +560,7 @@ class TestDoctests(object):
         p = testdir.makepyfile(test_unicode_doctest_module="""
             # -*- encoding: utf-8 -*-
             from __future__ import unicode_literals
-            
+
             def fix_bad_unicode(text):
                 '''
                     >>> print(fix_bad_unicode('Ãºnico'))
@@ -545,6 +570,50 @@ class TestDoctests(object):
         """)
         result = testdir.runpytest(p, '--doctest-modules')
         result.stdout.fnmatch_lines(['* 1 passed *'])
+
+    def test_reportinfo(self, testdir):
+        '''
+        Test case to make sure that DoctestItem.reportinfo() returns lineno.
+        '''
+        p = testdir.makepyfile(test_reportinfo="""
+            def foo(x):
+                '''
+                    >>> foo('a')
+                    'b'
+                '''
+                return 'c'
+        """)
+        items, reprec = testdir.inline_genitems(p, '--doctest-modules')
+        reportinfo = items[0].reportinfo()
+        assert reportinfo[1] == 1
+
+    def test_valid_setup_py(self, testdir):
+        '''
+        Test to make sure that pytest ignores valid setup.py files when ran
+        with --doctest-modules
+        '''
+        p = testdir.makepyfile(setup="""
+            from setuptools import setup, find_packages
+            setup(name='sample',
+                  version='0.0',
+                  description='description',
+                  packages=find_packages()
+            )
+        """)
+        result = testdir.runpytest(p, '--doctest-modules')
+        result.stdout.fnmatch_lines(['*collected 0 items*'])
+
+    def test_invalid_setup_py(self, testdir):
+        '''
+        Test to make sure that pytest reads setup.py files that are not used
+        for python packages when ran with --doctest-modules
+        '''
+        p = testdir.makepyfile(setup="""
+            def test_foo():
+                return 'bar'
+        """)
+        result = testdir.runpytest(p, '--doctest-modules')
+        result.stdout.fnmatch_lines(['*collected 1 item*'])
 
 
 class TestLiterals(object):
@@ -686,6 +755,27 @@ class TestDoctestSkips(object):
         makedoctest('')
         reprec = testdir.inline_run("--doctest-modules")
         reprec.assertoutcome(passed=0, skipped=0)
+
+    def test_continue_on_failure(self, testdir):
+        testdir.maketxtfile(test_something="""
+            >>> i = 5
+            >>> def foo():
+            ...     raise ValueError('error1')
+            >>> foo()
+            >>> i
+            >>> i + 2
+            7
+            >>> i + 1
+        """)
+        result = testdir.runpytest("--doctest-modules", "--doctest-continue-on-failure")
+        result.assert_outcomes(passed=0, failed=1)
+        # The lines that contains the failure are 4, 5, and 8.  The first one
+        # is a stack trace and the other two are mismatches.
+        result.stdout.fnmatch_lines([
+            "*4: UnexpectedException*",
+            "*5: DocTestFailure*",
+            "*8: DocTestFailure*",
+        ])
 
 
 class TestDoctestAutoUseFixtures(object):
@@ -932,4 +1022,3 @@ class TestDoctestReportingOption(object):
         result.stderr.fnmatch_lines([
             "*error: argument --doctest-report: invalid choice: 'obviously_invalid_format' (choose from*"
         ])
-

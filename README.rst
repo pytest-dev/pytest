@@ -23,6 +23,9 @@
 .. image:: https://ci.appveyor.com/api/projects/status/mrgbjaua7t33pg6b?svg=true
     :target: https://ci.appveyor.com/project/pytestbot/pytest
 
+.. image:: https://www.codetriage.com/pytest-dev/pytest/badges/users.svg
+    :target: https://www.codetriage.com/pytest-dev/pytest
+
 The ``pytest`` framework makes it easy to write small tests, yet
 scales to support complex functional testing for applications and libraries.
 
@@ -76,9 +79,9 @@ Features
 - Can run `unittest <http://docs.pytest.org/en/latest/unittest.html>`_ (or trial),
   `nose <http://docs.pytest.org/en/latest/nose.html>`_ test suites out of the box;
 
-- Python2.6+, Python3.3+, PyPy-2.3, Jython-2.5 (untested);
+- Python 2.7, Python 3.4+, PyPy 2.3, Jython 2.5 (untested);
 
-- Rich plugin architecture, with over 150+ `external plugins <http://docs.pytest.org/en/latest/plugins.html#installing-external-plugins-searching>`_ and thriving community;
+- Rich plugin architecture, with over 315+ `external plugins <http://plugincompat.herokuapp.com>`_ and thriving community;
 
 
 Documentation

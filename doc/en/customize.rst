@@ -1,5 +1,5 @@
-Basic test configuration
-===================================
+Configuration
+=============
 
 Command line options and configuration file settings
 -----------------------------------------------------------------
@@ -15,17 +15,35 @@ which were registered by installed plugins.
 .. _rootdir:
 .. _inifiles:
 
-initialization: determining rootdir and inifile
+Initialization: determining rootdir and inifile
 -----------------------------------------------
 
 .. versionadded:: 2.7
 
-pytest determines a "rootdir" for each test run which depends on
+pytest determines a ``rootdir`` for each test run which depends on
 the command line arguments (specified test files, paths) and on
-the existence of inifiles.  The determined rootdir and ini-file are
-printed as part of the pytest header.  The rootdir is used for constructing
-"nodeids" during collection and may also be used by plugins to store
-project/testrun-specific information.
+the existence of *ini-files*.  The determined ``rootdir`` and *ini-file* are
+printed as part of the pytest header during startup.
+
+Here's a summary what ``pytest`` uses ``rootdir`` for:
+
+* Construct *nodeids* during collection; each test is assigned
+  a unique *nodeid* which is rooted at the ``rootdir`` and takes in account full path,
+  class name, function name and parametrization (if any).
+
+* Is used by plugins as a stable location to store project/test run specific information;
+  for example, the internal :ref:`cache <cache>` plugin creates a ``.cache`` subdirectory
+  in ``rootdir`` to store its cross-test run state.
+
+Important to emphasize that ``rootdir`` is **NOT** used to modify ``sys.path``/``PYTHONPATH`` or
+influence how modules are imported. See :ref:`pythonpath` for more details.
+
+``--rootdir=path`` command-line option can be used to force a specific directory. 
+The directory passed may contain environment variables when it is used in conjunction
+with ``addopts`` in a ``pytest.ini`` file.
+
+Finding the ``rootdir``
+~~~~~~~~~~~~~~~~~~~~~~~
 
 Here is the algorithm which finds the rootdir from ``args``:
 
@@ -112,153 +130,30 @@ progress output, you can write it into a configuration file:
     # content of pytest.ini
     # (or tox.ini or setup.cfg)
     [pytest]
-    addopts = -rsxX -q
+    addopts = -ra -q
 
-Alternatively, you can set a PYTEST_ADDOPTS environment variable to add command
+Alternatively, you can set a ``PYTEST_ADDOPTS`` environment variable to add command
 line options while the environment is in use::
 
-    export PYTEST_ADDOPTS="-rsxX -q"
+    export PYTEST_ADDOPTS="-v"
 
-From now on, running ``pytest`` will add the specified options.
+Here's how the command-line is built in the presence of ``addopts`` or the environment variable::
 
+    <pytest.ini:addopts> $PYTEST_ADDOTPS <extra command-line arguments>
+
+So if the user executes in the command-line::
+
+    pytest -m slow
+
+The actual command line executed is::
+
+    pytest -ra -q -v -m slow
+
+Note that as usual for other command-line applications, in case of conflicting options the last one wins, so the example
+above will show verbose output because ``-v`` overwrites ``-q``.
 
 
 Builtin configuration file options
 ----------------------------------------------
 
-.. confval:: minversion
-
-   Specifies a minimal pytest version required for running tests.
-
-        minversion = 2.1  # will fail if we run with pytest-2.0
-
-.. confval:: addopts
-
-   Add the specified ``OPTS`` to the set of command line arguments as if they
-   had been specified by the user. Example: if you have this ini file content:
-
-   .. code-block:: ini
-
-        [pytest]
-        addopts = --maxfail=2 -rf  # exit after 2 failures, report fail info
-
-   issuing ``pytest test_hello.py`` actually means::
-
-        pytest --maxfail=2 -rf test_hello.py
-
-   Default is to add no options.
-
-.. confval:: norecursedirs
-
-   Set the directory basename patterns to avoid when recursing
-   for test discovery.  The individual (fnmatch-style) patterns are
-   applied to the basename of a directory to decide if to recurse into it.
-   Pattern matching characters::
-
-        *       matches everything
-        ?       matches any single character
-        [seq]   matches any character in seq
-        [!seq]  matches any char not in seq
-
-   Default patterns are ``'.*', 'build', 'dist', 'CVS', '_darcs', '{arch}', '*.egg', 'venv'``.
-   Setting a ``norecursedirs`` replaces the default.  Here is an example of
-   how to avoid certain directories:
-
-   .. code-block:: ini
-
-        # content of pytest.ini
-        [pytest]
-        norecursedirs = .svn _build tmp*
-
-   This would tell ``pytest`` to not look into typical subversion or
-   sphinx-build directories or into any ``tmp`` prefixed directory.
-
-.. confval:: testpaths
-
-   .. versionadded:: 2.8
-
-   Sets list of directories that should be searched for tests when
-   no specific directories, files or test ids are given in the command line when
-   executing pytest from the :ref:`rootdir <rootdir>` directory.
-   Useful when all project tests are in a known location to speed up
-   test collection and to avoid picking up undesired tests by accident.
-
-   .. code-block:: ini
-
-        # content of pytest.ini
-        [pytest]
-        testpaths = testing doc
-
-   This tells pytest to only look for tests in ``testing`` and ``doc``
-   directories when executing from the root directory.
-
-.. confval:: python_files
-
-   One or more Glob-style file patterns determining which python files
-   are considered as test modules.
-
-.. confval:: python_classes
-
-   One or more name prefixes or glob-style patterns determining which classes
-   are considered for test collection. Here is an example of how to collect
-   tests from classes that end in ``Suite``:
-
-   .. code-block:: ini
-
-        # content of pytest.ini
-        [pytest]
-        python_classes = *Suite
-
-   Note that ``unittest.TestCase`` derived classes are always collected
-   regardless of this option, as ``unittest``'s own collection framework is used
-   to collect those tests.
-
-.. confval:: python_functions
-
-   One or more name prefixes or glob-patterns determining which test functions
-   and methods are considered tests. Here is an example of how
-   to collect test functions and methods that end in ``_test``:
-
-   .. code-block:: ini
-
-        # content of pytest.ini
-        [pytest]
-        python_functions = *_test
-
-   Note that this has no effect on methods that live on a ``unittest
-   .TestCase`` derived class, as ``unittest``'s own collection framework is used
-   to collect those tests.
-
-   See :ref:`change naming conventions` for more detailed examples.
-
-.. confval:: doctest_optionflags
-
-   One or more doctest flag names from the standard ``doctest`` module.
-   :doc:`See how pytest handles doctests <doctest>`.
-
-.. confval:: confcutdir
-
-   Sets a directory where search upwards for ``conftest.py`` files stops.
-   By default, pytest will stop searching for ``conftest.py`` files upwards
-   from ``pytest.ini``/``tox.ini``/``setup.cfg`` of the project if any,
-   or up to the file-system root.
-
-
-.. confval:: filterwarnings
-
-   .. versionadded:: 3.1
-
-   Sets a list of filters and actions that should be taken for matched
-   warnings. By default all warnings emitted during the test session
-   will be displayed in a summary at the end of the test session.
-
-   .. code-block:: ini
-
-        # content of pytest.ini
-        [pytest]
-        filterwarnings =
-            error
-            ignore::DeprecationWarning
-
-   This tells pytest to ignore deprecation warnings and turn all other warnings
-   into errors. For more information please refer to :ref:`warnings`.
+For the full list of options consult the :ref:`reference documentation <ini options ref>`.

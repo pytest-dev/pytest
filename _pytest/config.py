@@ -5,15 +5,18 @@ import shlex
 import traceback
 import types
 import warnings
-
+import copy
+import six
 import py
 # DON't import pytest here because it causes import cycle troubles
 import sys
 import os
+from _pytest.outcomes import Skipped
+
 import _pytest._code
 import _pytest.hookspec  # the extension point definitions
 import _pytest.assertion
-from _pytest._pluggy import PluginManager, HookimplMarker, HookspecMarker
+from pluggy import PluginManager, HookimplMarker, HookspecMarker
 from _pytest.compat import safe_str
 
 hookimpl = HookimplMarker("pytest")
@@ -51,7 +54,7 @@ def main(args=None, plugins=None):
             tw = py.io.TerminalWriter(sys.stderr)
             for line in traceback.format_exception(*e.excinfo):
                 tw.line(line.rstrip(), red=True)
-            tw.line("ERROR: could not load %s\n" % (e.path), red=True)
+            tw.line("ERROR: could not load %s\n" % (e.path,), red=True)
             return 4
         else:
             try:
@@ -59,11 +62,13 @@ def main(args=None, plugins=None):
             finally:
                 config._ensure_unconfigure()
     except UsageError as e:
+        tw = py.io.TerminalWriter(sys.stderr)
         for msg in e.args:
-            sys.stderr.write("ERROR: %s\n" %(msg,))
+            tw.line("ERROR: {}\n".format(msg), red=True)
         return 4
 
-class cmdline:  # compatibility namespace
+
+class cmdline(object):  # NOQA compatibility namespace
     main = staticmethod(main)
 
 
@@ -99,32 +104,25 @@ def directory_arg(path, optname):
     return path
 
 
-_preinit = []
-
 default_plugins = (
-     "mark main terminal runner python fixtures debugging unittest capture skipping "
-     "tmpdir monkeypatch recwarn pastebin helpconfig nose assertion "
-     "junitxml resultlog doctest cacheprovider freeze_support "
-     "setuponly setupplan warnings").split()
+    "mark main terminal runner python fixtures debugging unittest capture skipping "
+    "tmpdir monkeypatch recwarn pastebin helpconfig nose assertion "
+    "junitxml resultlog doctest cacheprovider freeze_support "
+    "setuponly setupplan warnings logging").split()
 
 
 builtin_plugins = set(default_plugins)
 builtin_plugins.add("pytester")
 
 
-def _preloadplugins():
-    assert not _preinit
-    _preinit.append(get_config())
-
 def get_config():
-    if _preinit:
-        return _preinit.pop(0)
     # subsequent calls to main will create a fresh instance
     pluginmanager = PytestPluginManager()
     config = Config(pluginmanager)
     for spec in default_plugins:
         pluginmanager.import_plugin(spec)
     return config
+
 
 def get_plugin_manager():
     """
@@ -136,6 +134,7 @@ def get_plugin_manager():
     into pytest to run tests into an IDE.
     """
     return get_config().pluginmanager
+
 
 def _prepareconfig(args=None, plugins=None):
     warning = None
@@ -154,14 +153,14 @@ def _prepareconfig(args=None, plugins=None):
     try:
         if plugins:
             for plugin in plugins:
-                if isinstance(plugin, py.builtin._basestring):
+                if isinstance(plugin, six.string_types):
                     pluginmanager.consider_pluginarg(plugin)
                 else:
                     pluginmanager.register(plugin)
         if warning:
             config.warn('C1', warning)
         return pluginmanager.hook.pytest_cmdline_parse(
-                pluginmanager=pluginmanager, args=args)
+            pluginmanager=pluginmanager, args=args)
     except BaseException:
         config._ensure_unconfigure()
         raise
@@ -169,13 +168,14 @@ def _prepareconfig(args=None, plugins=None):
 
 class PytestPluginManager(PluginManager):
     """
-    Overwrites :py:class:`pluggy.PluginManager <_pytest.vendored_packages.pluggy.PluginManager>` to add pytest-specific
+    Overwrites :py:class:`pluggy.PluginManager <pluggy.PluginManager>` to add pytest-specific
     functionality:
 
-    * loading plugins from the command line, ``PYTEST_PLUGIN`` env variable and
+    * loading plugins from the command line, ``PYTEST_PLUGINS`` env variable and
       ``pytest_plugins`` global variables found in plugins being loaded;
     * ``conftest.py`` loading during start-up;
     """
+
     def __init__(self):
         super(PytestPluginManager, self).__init__("pytest", implprefix="pytest_")
         self._conftest_plugins = set()
@@ -201,12 +201,15 @@ class PytestPluginManager(PluginManager):
 
         # Config._consider_importhook will set a real object if required.
         self.rewrite_hook = _pytest.assertion.DummyRewriteHook()
+        # Used to know when we are importing conftests after the pytest_configure stage
+        self._configured = False
 
     def addhooks(self, module_or_class):
         """
         .. deprecated:: 2.8
 
-        Use :py:meth:`pluggy.PluginManager.add_hookspecs <_pytest.vendored_packages.pluggy.PluginManager.add_hookspecs>` instead.
+        Use :py:meth:`pluggy.PluginManager.add_hookspecs <PluginManager.add_hookspecs>`
+        instead.
         """
         warning = dict(code="I2",
                        fslocation=_pytest._code.getfslineno(sys._getframe(1)),
@@ -235,7 +238,7 @@ class PytestPluginManager(PluginManager):
 
     def parse_hookspec_opts(self, module_or_class, name):
         opts = super(PytestPluginManager, self).parse_hookspec_opts(
-                                                module_or_class, name)
+            module_or_class, name)
         if opts is None:
             method = getattr(module_or_class, name)
             if name.startswith("pytest_"):
@@ -243,22 +246,16 @@ class PytestPluginManager(PluginManager):
                         "historic": hasattr(method, "historic")}
         return opts
 
-    def _verify_hook(self, hook, hookmethod):
-        super(PytestPluginManager, self)._verify_hook(hook, hookmethod)
-        if "__multicall__" in hookmethod.argnames:
-            fslineno = _pytest._code.getfslineno(hookmethod.function)
-            warning = dict(code="I1",
-                           fslocation=fslineno,
-                           nodeid=None,
-                           message="%r hook uses deprecated __multicall__ "
-                                   "argument" % (hook.name))
-            self._warn(warning)
-
     def register(self, plugin, name=None):
+        if name in ['pytest_catchlog', 'pytest_capturelog']:
+            self._warn('{0} plugin has been merged into the core, '
+                       'please remove it from your requirements.'.format(
+                           name.replace('_', '-')))
+            return
         ret = super(PytestPluginManager, self).register(plugin, name)
         if ret:
             self.hook.pytest_plugin_registered.call_historic(
-                      kwargs=dict(plugin=plugin, manager=self))
+                kwargs=dict(plugin=plugin, manager=self))
 
             if isinstance(plugin, types.ModuleType):
                 self.consider_module(plugin)
@@ -276,11 +273,12 @@ class PytestPluginManager(PluginManager):
         # XXX now that the pluginmanager exposes hookimpl(tryfirst...)
         # we should remove tryfirst/trylast as markers
         config.addinivalue_line("markers",
-            "tryfirst: mark a hook implementation function such that the "
-            "plugin machinery will try to call it first/as early as possible.")
+                                "tryfirst: mark a hook implementation function such that the "
+                                "plugin machinery will try to call it first/as early as possible.")
         config.addinivalue_line("markers",
-            "trylast: mark a hook implementation function such that the "
-            "plugin machinery will try to call it last/as late as possible.")
+                                "trylast: mark a hook implementation function such that the "
+                                "plugin machinery will try to call it last/as late as possible.")
+        self._configured = True
 
     def _warn(self, message):
         kwargs = message if isinstance(message, dict) else {
@@ -304,7 +302,7 @@ class PytestPluginManager(PluginManager):
         """
         current = py.path.local()
         self._confcutdir = current.join(namespace.confcutdir, abs=True) \
-                                if namespace.confcutdir else None
+            if namespace.confcutdir else None
         self._noconftest = namespace.noconftest
         testpaths = namespace.file_or_dir
         foundanchor = False
@@ -315,7 +313,7 @@ class PytestPluginManager(PluginManager):
             if i != -1:
                 path = path[:i]
             anchor = current.join(path, abs=1)
-            if exists(anchor): # we found some file object
+            if exists(anchor):  # we found some file object
                 self._try_load_conftest(anchor)
                 foundanchor = True
         if not foundanchor:
@@ -371,6 +369,9 @@ class PytestPluginManager(PluginManager):
                 _ensure_removed_sysmodule(conftestpath.purebasename)
             try:
                 mod = conftestpath.pyimport()
+                if hasattr(mod, 'pytest_plugins') and self._configured:
+                    from _pytest.deprecated import PYTEST_PLUGINS_FROM_NON_TOP_LEVEL_CONFTEST
+                    warnings.warn(PYTEST_PLUGINS_FROM_NON_TOP_LEVEL_CONFTEST)
             except Exception:
                 raise ConftestImportFailure(conftestpath, sys.exc_info())
 
@@ -382,7 +383,7 @@ class PytestPluginManager(PluginManager):
                     if path and path.relto(dirpath) or path == dirpath:
                         assert mod not in mods
                         mods.append(mod)
-            self.trace("loaded conftestmodule %r" %(mod))
+            self.trace("loaded conftestmodule %r" % (mod))
             self.consider_conftest(mod)
             return mod
 
@@ -392,7 +393,7 @@ class PytestPluginManager(PluginManager):
     #
 
     def consider_preparse(self, args):
-        for opt1,opt2 in zip(args, args[1:]):
+        for opt1, opt2 in zip(args, args[1:]):
             if opt1 == "-p":
                 self.consider_pluginarg(opt2)
 
@@ -424,9 +425,9 @@ class PytestPluginManager(PluginManager):
         # "terminal" or "capture".  Those plugins are registered under their
         # basename for historic purposes but must be imported with the
         # _pytest prefix.
-        assert isinstance(modname, (py.builtin.text, str)), "module name as text required, got %r" % modname
+        assert isinstance(modname, (six.text_type, str)), "module name as text required, got %r" % modname
         modname = str(modname)
-        if self.get_plugin(modname) is not None:
+        if self.is_blocked(modname) or self.get_plugin(modname) is not None:
             return
         if modname in builtin_plugins:
             importspec = "_pytest." + modname
@@ -436,17 +437,14 @@ class PytestPluginManager(PluginManager):
         try:
             __import__(importspec)
         except ImportError as e:
-            new_exc = ImportError('Error importing plugin "%s": %s' % (modname, safe_str(e.args[0])))
-            # copy over name and path attributes
-            for attr in ('name', 'path'):
-                if hasattr(e, attr):
-                    setattr(new_exc, attr, getattr(e, attr))
-            raise new_exc
-        except Exception as e:
-            import pytest
-            if not hasattr(pytest, 'skip') or not isinstance(e, pytest.skip.Exception):
-                raise
-            self._warn("skipped plugin %r: %s" %((modname, e.msg)))
+            new_exc_type = ImportError
+            new_exc_message = 'Error importing plugin "%s": %s' % (modname, safe_str(e.args[0]))
+            new_exc = new_exc_type(new_exc_message)
+
+            six.reraise(new_exc_type, new_exc, sys.exc_info()[2])
+
+        except Skipped as e:
+            self._warn("skipped plugin %r: %s" % ((modname, e.msg)))
         else:
             mod = sys.modules[importspec]
             self.register(mod, modname)
@@ -470,7 +468,7 @@ def _get_plugin_specs_as_list(specs):
     return []
 
 
-class Parser:
+class Parser(object):
     """ Parser for command line arguments and ini-file values.
 
     :ivar extra_info: dict of generic param -> value to display in case
@@ -511,7 +509,7 @@ class Parser:
         for i, grp in enumerate(self._groups):
             if grp.name == after:
                 break
-        self._groups.insert(i+1, group)
+        self._groups.insert(i + 1, group)
         return group
 
     def addoption(self, *opts, **attrs):
@@ -549,7 +547,7 @@ class Parser:
                     a = option.attrs()
                     arggroup.add_argument(*n, **a)
         # bash like autocompletion for dirs (appending '/')
-        optparser.add_argument(FILE_OR_DIR, nargs='*').completer=filescompleter
+        optparser.add_argument(FILE_OR_DIR, nargs='*').completer = filescompleter
         return optparser
 
     def parse_setoption(self, args, option, namespace=None):
@@ -605,7 +603,7 @@ class ArgumentError(Exception):
             return self.msg
 
 
-class Argument:
+class Argument(object):
     """class that mimics the necessary behaviour of optparse.Option
 
     its currently a least effort implementation
@@ -637,7 +635,7 @@ class Argument:
             pass
         else:
             # this might raise a keyerror as well, don't want to catch that
-            if isinstance(typ, py.builtin._basestring):
+            if isinstance(typ, six.string_types):
                 if typ == 'choice':
                     warnings.warn(
                         'type argument to addoption() is a string %r.'
@@ -693,7 +691,7 @@ class Argument:
         if self._attrs.get('help'):
             a = self._attrs['help']
             a = a.replace('%default', '%(default)s')
-            #a = a.replace('%prog', '%(prog)s')
+            # a = a.replace('%prog', '%(prog)s')
             self._attrs['help'] = a
         return self._attrs
 
@@ -735,7 +733,7 @@ class Argument:
         return 'Argument({0})'.format(', '.join(args))
 
 
-class OptionGroup:
+class OptionGroup(object):
     def __init__(self, name, description="", parser=None):
         self.name = name
         self.description = description
@@ -777,7 +775,7 @@ class MyOptionParser(argparse.ArgumentParser):
             extra_info = {}
         self._parser = parser
         argparse.ArgumentParser.__init__(self, usage=parser._usage,
-            add_help=False, formatter_class=DropShorterLongHelpFormatter)
+                                         add_help=False, formatter_class=DropShorterLongHelpFormatter)
         # extra_info is a dict of (param -> value) to display if there's
         # an usage error to provide more contextual information to the user
         self.extra_info = extra_info
@@ -805,9 +803,10 @@ class DropShorterLongHelpFormatter(argparse.HelpFormatter):
     - shortcut if there are only two options and one of them is a short one
     - cache result on action object as this is called at least 2 times
     """
+
     def _format_action_invocation(self, action):
         orgstr = argparse.HelpFormatter._format_action_invocation(self, action)
-        if orgstr and orgstr[0] != '-': # only optional arguments
+        if orgstr and orgstr[0] != '-':  # only optional arguments
             return orgstr
         res = getattr(action, '_formatted_action_invocation', None)
         if res:
@@ -818,7 +817,7 @@ class DropShorterLongHelpFormatter(argparse.HelpFormatter):
             action._formatted_action_invocation = orgstr
             return orgstr
         return_list = []
-        option_map =  getattr(action, 'map_long_option', {})
+        option_map = getattr(action, 'map_long_option', {})
         if option_map is None:
             option_map = {}
         short_long = {}
@@ -836,7 +835,7 @@ class DropShorterLongHelpFormatter(argparse.HelpFormatter):
                     short_long[shortened] = xxoption
         # now short_long has been filled out to the longest with dashes
         # **and** we keep the right option ordering from add_argument
-        for option in options: #
+        for option in options:
             if len(option) == 2 or option[2] == ' ':
                 return_list.append(option)
             if option[2:] == short_long.get(option.replace('-', '')):
@@ -845,23 +844,14 @@ class DropShorterLongHelpFormatter(argparse.HelpFormatter):
         return action._formatted_action_invocation
 
 
-
 def _ensure_removed_sysmodule(modname):
     try:
         del sys.modules[modname]
     except KeyError:
         pass
 
-class CmdOptions(object):
-    """ holds cmdline options as attributes."""
-    def __init__(self, values=()):
-        self.__dict__.update(values)
-    def __repr__(self):
-        return "<CmdOptions %r>" %(self.__dict__,)
-    def copy(self):
-        return CmdOptions(self.__dict__)
 
-class Notset:
+class Notset(object):
     def __repr__(self):
         return "<NOTSET>"
 
@@ -870,13 +860,25 @@ notset = Notset()
 FILE_OR_DIR = 'file_or_dir'
 
 
+def _iter_rewritable_modules(package_files):
+    for fn in package_files:
+        is_simple_module = '/' not in fn and fn.endswith('.py')
+        is_package = fn.count('/') == 1 and fn.endswith('__init__.py')
+        if is_simple_module:
+            module_name, _ = os.path.splitext(fn)
+            yield module_name
+        elif is_package:
+            package_name = os.path.dirname(fn)
+            yield package_name
+
+
 class Config(object):
     """ access to configuration values, pluginmanager and plugin hooks.  """
 
     def __init__(self, pluginmanager):
         #: access to command line option as attributes.
         #: (deprecated), use :py:func:`getoption() <_pytest.config.Config.getoption>` instead
-        self.option = CmdOptions()
+        self.option = argparse.Namespace()
         _a = FILE_OR_DIR
         self._parser = Parser(
             usage="%%(prog)s [options] [%s] [%s] [...]" % (_a, _a),
@@ -940,14 +942,14 @@ class Config(object):
         else:
             style = "native"
         excrepr = excinfo.getrepr(funcargs=True,
-            showlocals=getattr(option, 'showlocals', False),
-            style=style,
-        )
+                                  showlocals=getattr(option, 'showlocals', False),
+                                  style=style,
+                                  )
         res = self.hook.pytest_internalerror(excrepr=excrepr,
                                              excinfo=excinfo)
-        if not py.builtin.any(res):
+        if not any(res):
             for line in str(excrepr).split("\n"):
-                sys.stderr.write("INTERNALERROR> %s\n" %line)
+                sys.stderr.write("INTERNALERROR> %s\n" % line)
                 sys.stderr.flush()
 
     def cwd_relative_nodeid(self, nodeid):
@@ -980,8 +982,9 @@ class Config(object):
         self.pluginmanager._set_initial_conftests(early_config.known_args_namespace)
 
     def _initini(self, args):
-        ns, unknown_args = self._parser.parse_known_and_unknown_args(args, namespace=self.option.copy())
-        r = determine_setup(ns.inifilename, ns.file_or_dir + unknown_args, warnfunc=self.warn)
+        ns, unknown_args = self._parser.parse_known_and_unknown_args(args, namespace=copy.copy(self.option))
+        r = determine_setup(ns.inifilename, ns.file_or_dir + unknown_args, warnfunc=self.warn,
+                            rootdir_cmd_arg=ns.rootdir or None)
         self.rootdir, self.inifile, self.inicfg = r
         self._parser.extra_info['rootdir'] = self.rootdir
         self._parser.extra_info['inifile'] = self.inifile
@@ -991,10 +994,10 @@ class Config(object):
         self._override_ini = ns.override_ini or ()
 
     def _consider_importhook(self, args):
-        """Install the PEP 302 import hook if using assertion re-writing.
+        """Install the PEP 302 import hook if using assertion rewriting.
 
         Needs to parse the --assert=<mode> option from the commandline
-        and find all the installed plugins to mark them for re-writing
+        and find all the installed plugins to mark them for rewriting
         by the importhook.
         """
         ns, unknown_args = self._parser.parse_known_and_unknown_args(args)
@@ -1006,7 +1009,7 @@ class Config(object):
                 mode = 'plain'
             else:
                 self._mark_plugins_for_rewrite(hook)
-        self._warn_about_missing_assertion(mode)
+        _warn_about_missing_assertion(mode)
 
     def _mark_plugins_for_rewrite(self, hook):
         """
@@ -1030,51 +1033,28 @@ class Config(object):
             for entry in entrypoint.dist._get_metadata(metadata)
         )
 
-        for fn in package_files:
-            is_simple_module = os.sep not in fn and fn.endswith('.py')
-            is_package = fn.count(os.sep) == 1 and fn.endswith('__init__.py')
-            if is_simple_module:
-                module_name, ext = os.path.splitext(fn)
-                hook.mark_rewrite(module_name)
-            elif is_package:
-                package_name = os.path.dirname(fn)
-                hook.mark_rewrite(package_name)
-
-    def _warn_about_missing_assertion(self, mode):
-        try:
-            assert False
-        except AssertionError:
-            pass
-        else:
-            if mode == 'plain':
-                sys.stderr.write("WARNING: ASSERTIONS ARE NOT EXECUTED"
-                                 " and FAILING TESTS WILL PASS.  Are you"
-                                 " using python -O?")
-            else:
-                sys.stderr.write("WARNING: assertions not in test modules or"
-                                 " plugins will be ignored"
-                                 " because assert statements are not executed "
-                                 "by the underlying Python interpreter "
-                                 "(are you using python -O?)\n")
+        for name in _iter_rewritable_modules(package_files):
+            hook.mark_rewrite(name)
 
     def _preparse(self, args, addopts=True):
-        self._initini(args)
         if addopts:
             args[:] = shlex.split(os.environ.get('PYTEST_ADDOPTS', '')) + args
+        self._initini(args)
+        if addopts:
             args[:] = self.getini("addopts") + args
         self._checkversion()
         self._consider_importhook(args)
         self.pluginmanager.consider_preparse(args)
         self.pluginmanager.load_setuptools_entrypoints('pytest11')
         self.pluginmanager.consider_env()
-        self.known_args_namespace = ns = self._parser.parse_known_args(args, namespace=self.option.copy())
-        confcutdir = self.known_args_namespace.confcutdir
+        self.known_args_namespace = ns = self._parser.parse_known_args(
+            args, namespace=copy.copy(self.option))
         if self.known_args_namespace.confcutdir is None and self.inifile:
             confcutdir = py.path.local(self.inifile).dirname
             self.known_args_namespace.confcutdir = confcutdir
         try:
             self.hook.pytest_load_initial_conftests(early_config=self,
-                    args=args, parser=self._parser)
+                                                    args=args, parser=self._parser)
         except ConftestImportFailure:
             e = sys.exc_info()[1]
             if ns.help or ns.version:
@@ -1092,17 +1072,17 @@ class Config(object):
             myver = pytest.__version__.split(".")
             if myver < ver:
                 raise pytest.UsageError(
-                    "%s:%d: requires pytest-%s, actual pytest-%s'" %(
-                    self.inicfg.config.path, self.inicfg.lineof('minversion'),
-                    minver, pytest.__version__))
+                    "%s:%d: requires pytest-%s, actual pytest-%s'" % (
+                        self.inicfg.config.path, self.inicfg.lineof('minversion'),
+                        minver, pytest.__version__))
 
     def parse(self, args, addopts=True):
         # parse given cmdline arguments into this config object.
         assert not hasattr(self, 'args'), (
-                "can only parse cmdline args at most once per Config object")
+            "can only parse cmdline args at most once per Config object")
         self._origargs = args
         self.hook.pytest_addhooks.call_historic(
-                                  kwargs=dict(pluginmanager=self.pluginmanager))
+            kwargs=dict(pluginmanager=self.pluginmanager))
         self._preparse(args, addopts=addopts)
         # XXX deprecated hook:
         self.hook.pytest_cmdline_preparse(config=self, args=args)
@@ -1125,7 +1105,7 @@ class Config(object):
         the first line in its value. """
         x = self.getini(name)
         assert isinstance(x, list)
-        x.append(line) # modifies the cached list inline
+        x.append(line)  # modifies the cached list inline
 
     def getini(self, name):
         """ return configuration value from an :ref:`ini file <inifiles>`. If the
@@ -1142,7 +1122,7 @@ class Config(object):
         try:
             description, type, default = self._parser._inidict[name]
         except KeyError:
-            raise ValueError("unknown configuration value: %r" %(name,))
+            raise ValueError("unknown configuration value: %r" % (name,))
         value = self._get_override_ini_value(name)
         if value is None:
             try:
@@ -1155,10 +1135,10 @@ class Config(object):
                 return []
         if type == "pathlist":
             dp = py.path.local(self.inicfg.config.path).dirpath()
-            l = []
+            values = []
             for relpath in shlex.split(value):
-                l.append(dp.join(relpath, abs=True))
-            return l
+                values.append(dp.join(relpath, abs=True))
+            return values
         elif type == "args":
             return shlex.split(value)
         elif type == "linelist":
@@ -1175,26 +1155,25 @@ class Config(object):
         except KeyError:
             return None
         modpath = py.path.local(mod.__file__).dirpath()
-        l = []
+        values = []
         for relroot in relroots:
             if not isinstance(relroot, py.path.local):
                 relroot = relroot.replace("/", py.path.local.sep)
                 relroot = modpath.join(relroot, abs=True)
-            l.append(relroot)
-        return l
+            values.append(relroot)
+        return values
 
     def _get_override_ini_value(self, name):
         value = None
-        # override_ini is a list of list, to support both -o foo1=bar1 foo2=bar2 and
-        # and -o foo1=bar1 -o foo2=bar2 options
-        # always use the last item if multiple value set for same ini-name,
+        # override_ini is a list of "ini=value" options
+        # always use the last item if multiple values are set for same ini-name,
         # e.g. -o foo=bar1 -o foo=bar2 will set foo to bar2
-        for ini_config_list in self._override_ini:
-            for ini_config in ini_config_list:
-                try:
-                    (key, user_ini_value) = ini_config.split("=", 1)
-                except ValueError:
-                    raise UsageError("-o/--override-ini expects option=value style.")
+        for ini_config in self._override_ini:
+            try:
+                key, user_ini_value = ini_config.split("=", 1)
+            except ValueError:
+                raise UsageError("-o/--override-ini expects option=value style.")
+            else:
                 if key == name:
                     value = user_ini_value
         return value
@@ -1219,7 +1198,7 @@ class Config(object):
                 return default
             if skip:
                 import pytest
-                pytest.skip("no %r option found" %(name,))
+                pytest.skip("no %r option found" % (name,))
             raise ValueError("no option named %r" % (name,))
 
     def getvalue(self, name, path=None):
@@ -1230,11 +1209,36 @@ class Config(object):
         """ (deprecated, use getoption(skip=True)) """
         return self.getoption(name, skip=True)
 
+
+def _assertion_supported():
+    try:
+        assert False
+    except AssertionError:
+        return True
+    else:
+        return False
+
+
+def _warn_about_missing_assertion(mode):
+    if not _assertion_supported():
+        if mode == 'plain':
+            sys.stderr.write("WARNING: ASSERTIONS ARE NOT EXECUTED"
+                             " and FAILING TESTS WILL PASS.  Are you"
+                             " using python -O?")
+        else:
+            sys.stderr.write("WARNING: assertions not in test modules or"
+                             " plugins will be ignored"
+                             " because assert statements are not executed "
+                             "by the underlying Python interpreter "
+                             "(are you using python -O?)\n")
+
+
 def exists(path, ignore=EnvironmentError):
     try:
         return path.check()
     except ignore:
         return False
+
 
 def getcfg(args, warnfunc=None):
     """
@@ -1246,7 +1250,7 @@ def getcfg(args, warnfunc=None):
         This parameter should be removed when pytest
         adopts standard deprecation warnings (#1804).
     """
-    from _pytest.deprecated import SETUP_CFG_PYTEST
+    from _pytest.deprecated import CFG_PYTEST_SECTION
     inibasenames = ["pytest.ini", "tox.ini", "setup.cfg"]
     args = [x for x in args if not str(x).startswith("-")]
     if not args:
@@ -1260,7 +1264,7 @@ def getcfg(args, warnfunc=None):
                     iniconfig = py.iniconfig.IniConfig(p)
                     if 'pytest' in iniconfig.sections:
                         if inibasename == 'setup.cfg' and warnfunc:
-                            warnfunc('C1', SETUP_CFG_PYTEST)
+                            warnfunc('C1', CFG_PYTEST_SECTION.format(filename=inibasename))
                         return base, p, iniconfig['pytest']
                     if inibasename == 'setup.cfg' and 'tool:pytest' in iniconfig.sections:
                         return base, p, iniconfig['tool:pytest']
@@ -1319,14 +1323,22 @@ def get_dirs_from_args(args):
     ]
 
 
-def determine_setup(inifile, args, warnfunc=None):
+def determine_setup(inifile, args, warnfunc=None, rootdir_cmd_arg=None):
     dirs = get_dirs_from_args(args)
     if inifile:
         iniconfig = py.iniconfig.IniConfig(inifile)
-        try:
-            inicfg = iniconfig["pytest"]
-        except KeyError:
-            inicfg = None
+        is_cfg_file = str(inifile).endswith('.cfg')
+        # TODO: [pytest] section in *.cfg files is depricated. Need refactoring.
+        sections = ['tool:pytest', 'pytest'] if is_cfg_file else ['pytest']
+        for section in sections:
+            try:
+                inicfg = iniconfig[section]
+                if is_cfg_file and section == 'pytest' and warnfunc:
+                    from _pytest.deprecated import CFG_PYTEST_SECTION
+                    warnfunc('C1', CFG_PYTEST_SECTION.format(filename=str(inifile)))
+                break
+            except KeyError:
+                inicfg = None
         rootdir = get_common_ancestor(dirs)
     else:
         ancestor = get_common_ancestor(dirs)
@@ -1339,9 +1351,14 @@ def determine_setup(inifile, args, warnfunc=None):
                 rootdir, inifile, inicfg = getcfg(dirs, warnfunc=warnfunc)
                 if rootdir is None:
                     rootdir = get_common_ancestor([py.path.local(), ancestor])
-                    is_fs_root = os.path.splitdrive(str(rootdir))[1] == os.sep
+                    is_fs_root = os.path.splitdrive(str(rootdir))[1] == '/'
                     if is_fs_root:
                         rootdir = ancestor
+    if rootdir_cmd_arg:
+        rootdir_abs_path = py.path.local(os.path.expandvars(rootdir_cmd_arg))
+        if not os.path.isdir(str(rootdir_abs_path)):
+            raise UsageError("Directory '{}' not found. Check your '--rootdir' option.".format(rootdir_abs_path))
+        rootdir = rootdir_abs_path
     return rootdir, inifile, inicfg or {}
 
 
@@ -1361,7 +1378,7 @@ def setns(obj, dic):
         else:
             setattr(obj, name, value)
             obj.__all__.append(name)
-            #if obj != pytest:
+            # if obj != pytest:
             #    pytest.__all__.append(name)
             setattr(pytest, name, value)
 

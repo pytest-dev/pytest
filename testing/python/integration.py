@@ -4,7 +4,7 @@ from _pytest import runner
 
 
 class TestOEJSKITSpecials(object):
-    def test_funcarg_non_pycollectobj(self, testdir): # rough jstests usage
+    def test_funcarg_non_pycollectobj(self, testdir):  # rough jstests usage
         testdir.makeconftest("""
             import pytest
             def pytest_pycollect_makeitem(collector, name, obj):
@@ -30,7 +30,7 @@ class TestOEJSKITSpecials(object):
         pytest._fillfuncargs(clscol)
         assert clscol.funcargs['arg1'] == 42
 
-    def test_autouse_fixture(self, testdir): # rough jstests usage
+    def test_autouse_fixture(self, testdir):  # rough jstests usage
         testdir.makeconftest("""
             import pytest
             def pytest_pycollect_makeitem(collector, name, obj):
@@ -76,6 +76,7 @@ def test_wrapped_getfslineno():
     fs2, lineno2 = python.getfslineno(wrap)
     assert lineno > lineno2, "getfslineno does not unwrap correctly"
 
+
 class TestMockDecoration(object):
     def test_wrapped_getfuncargnames(self):
         from _pytest.compat import getfuncargnames
@@ -92,8 +93,8 @@ class TestMockDecoration(object):
         def f(x):
             pass
 
-        l = getfuncargnames(f)
-        assert l == ("x",)
+        values = getfuncargnames(f)
+        assert values == ("x",)
 
     def test_wrapped_getfuncargnames_patching(self):
         from _pytest.compat import getfuncargnames
@@ -109,8 +110,8 @@ class TestMockDecoration(object):
         def f(x, y, z):
             pass
 
-        l = getfuncargnames(f)
-        assert l == ("y", "z")
+        values = getfuncargnames(f)
+        assert values == ("y", "z")
 
     def test_unittest_mock(self, testdir):
         pytest.importorskip("unittest.mock")
@@ -146,6 +147,28 @@ class TestMockDecoration(object):
         reprec = testdir.inline_run()
         reprec.assertoutcome(passed=1)
 
+    def test_unittest_mock_and_pypi_mock(self, testdir):
+        pytest.importorskip("unittest.mock")
+        pytest.importorskip("mock", "1.0.1")
+        testdir.makepyfile("""
+            import mock
+            import unittest.mock
+            class TestBoth(object):
+                @unittest.mock.patch("os.path.abspath")
+                def test_hello(self, abspath):
+                    import os
+                    os.path.abspath("hello")
+                    abspath.assert_any_call("hello")
+
+                @mock.patch("os.path.abspath")
+                def test_hello_mock(self, abspath):
+                    import os
+                    os.path.abspath("hello")
+                    abspath.assert_any_call("hello")
+        """)
+        reprec = testdir.inline_run()
+        reprec.assertoutcome(passed=2)
+
     def test_mock(self, testdir):
         pytest.importorskip("mock", "1.0.1")
         testdir.makepyfile("""
@@ -173,7 +196,7 @@ class TestMockDecoration(object):
         reprec.assertoutcome(passed=2)
         calls = reprec.getcalls("pytest_runtest_logreport")
         funcnames = [call.report.location[2] for call in calls
-                        if call.report.when == "call"]
+                     if call.report.when == "call"]
         assert funcnames == ["T.test_hello", "test_someting"]
 
     def test_mock_sorting(self, testdir):
@@ -245,6 +268,7 @@ class TestReRunTests(object):
         result.stdout.fnmatch_lines("""
             *2 passed*
         """)
+
 
 def test_pytestconfig_is_session_scoped():
     from _pytest.fixtures import pytestconfig

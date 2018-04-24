@@ -187,7 +187,7 @@ def test_dynamic_fixture_request(testdir):
             pass
         @pytest.fixture()
         def dependent_fixture(request):
-            request.getfuncargvalue('dynamically_requested_fixture')
+            request.getfixturevalue('dynamically_requested_fixture')
         def test_dyn(dependent_fixture):
             pass
     ''')
@@ -238,6 +238,6 @@ def test_show_fixtures_and_execute_test(testdir):
 
     result.stdout.fnmatch_lines([
         '*SETUP    F arg*',
-        '*test_arg (fixtures used: arg)F',
+        '*test_arg (fixtures used: arg)F*',
         '*TEARDOWN F arg*',
     ])

@@ -4,20 +4,20 @@ import os
 import _pytest._code
 import py
 import pytest
-from _pytest.main import Node, Item, FSCollector
+from _pytest.nodes import Node, Item, FSCollector
 from _pytest.resultlog import generic_path, ResultLog, \
-        pytest_configure, pytest_unconfigure
+    pytest_configure, pytest_unconfigure
 
 
 def test_generic_path(testdir):
     from _pytest.main import Session
     config = testdir.parseconfig()
     session = Session(config)
-    p1 = Node('a', config=config, session=session)
-    #assert p1.fspath is None
+    p1 = Node('a', config=config, session=session, nodeid='a')
+    # assert p1.fspath is None
     p2 = Node('B', parent=p1)
-    p3 = Node('()', parent = p2)
-    item = Item('c', parent = p3)
+    p3 = Node('()', parent=p2)
+    item = Item('c', parent=p3)
 
     res = generic_path(item)
     assert res == 'a.B().c'
@@ -25,12 +25,13 @@ def test_generic_path(testdir):
     p0 = FSCollector('proj/test', config=config, session=session)
     p1 = FSCollector('proj/test/a', parent=p0)
     p2 = Node('B', parent=p1)
-    p3 = Node('()', parent = p2)
+    p3 = Node('()', parent=p2)
     p4 = Node('c', parent=p3)
-    item = Item('[1]', parent = p4)
+    item = Item('[1]', parent=p4)
 
     res = generic_path(item)
     assert res == 'test/a:B().c[1]'
+
 
 def test_write_log_entry():
     reslog = ResultLog(None, None)
@@ -68,7 +69,7 @@ def test_write_log_entry():
     entry_lines = entry.splitlines()
     assert len(entry_lines) == 5
     assert entry_lines[0] == 'F name'
-    assert entry_lines[1:] == [' '+line for line in longrepr.splitlines()]
+    assert entry_lines[1:] == [' ' + line for line in longrepr.splitlines()]
 
 
 class TestWithFunctionIntegration(object):
@@ -144,7 +145,7 @@ class TestWithFunctionIntegration(object):
 
         assert entry_lines[0].startswith('! ')
         if style != "native":
-            assert os.path.basename(__file__)[:-9] in entry_lines[0] #.pyc/class
+            assert os.path.basename(__file__)[:-9] in entry_lines[0]  # .pyc/class
         assert entry_lines[-1][0] == ' '
         assert 'ValueError' in entry
 
@@ -175,6 +176,7 @@ def test_generic(testdir, LineMatcher):
         "x *:test_xfail",
         "x *:test_xfail_norun",
     ])
+
 
 def test_makedir_for_resultlog(testdir, LineMatcher):
     """--resultlog should automatically create directories for the log file"""
@@ -224,5 +226,3 @@ def test_failure_issue380(testdir):
     """)
     result = testdir.runpytest("--resultlog=log")
     assert result.ret == 2
-
-

@@ -14,7 +14,6 @@ Full pytest documentation
    usage
    existingtestsuite
    assert
-   builtin
    fixture
    monkeypatch
    tmpdir
@@ -30,15 +29,20 @@ Full pytest documentation
    xunit_setup
    plugins
    writing_plugins
+   logging
+   reference
 
-   example/index
    goodpractices
+   pythonpath
    customize
+   example/index
    bash-completion
 
    backwards-compatibility
+   historical-notes
    license
    contributing
+   development_guide
    talks
    projects
    faq

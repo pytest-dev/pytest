@@ -4,12 +4,11 @@ import sys
 from textwrap import dedent
 
 import _pytest._code
-import py
 import pytest
-from _pytest.main import (
-    Collector,
-    EXIT_NOTESTSCOLLECTED
-)
+from _pytest.main import EXIT_NOTESTSCOLLECTED
+from _pytest.nodes import Collector
+
+ignore_parametrized_marks = pytest.mark.filterwarnings('ignore:Applying marks directly to parameters')
 
 
 class TestModule(object):
@@ -22,7 +21,7 @@ class TestModule(object):
         b = testdir.mkdir("b")
         p = a.ensure("test_whatever.py")
         p.pyimport()
-        del py.std.sys.modules['test_whatever']
+        del sys.modules['test_whatever']
         b.ensure("test_whatever.py")
         result = testdir.runpytest()
         result.stdout.fnmatch_lines([
@@ -141,6 +140,29 @@ class TestClass(object):
         result = testdir.runpytest()
         result.stdout.fnmatch_lines([
             "*collected 0*",
+        ])
+
+    def test_static_method(self, testdir):
+        """Support for collecting staticmethod tests (#2528, #2699)"""
+        testdir.getmodulecol("""
+            import pytest
+            class Test(object):
+                @staticmethod
+                def test_something():
+                    pass
+
+                @pytest.fixture
+                def fix(self):
+                    return 1
+
+                @staticmethod
+                def test_fix(fix):
+                    assert fix == 1
+        """)
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines([
+            "*collected 2 items*",
+            "*2 passed in*",
         ])
 
     def test_setup_teardown_class_as_classmethod(self, testdir):
@@ -419,10 +441,10 @@ class TestFunction(object):
             pass
 
         f1 = pytest.Function(name="name", parent=session, config=config,
-                args=(1,), callobj=func1)
+                             args=(1,), callobj=func1)
         assert f1 == f1
-        f2 = pytest.Function(name="name",config=config,
-                callobj=func2, parent=session)
+        f2 = pytest.Function(name="name", config=config,
+                             callobj=func2, parent=session)
         assert f1 != f2
 
     def test_issue197_parametrize_emptyset(self, testdir):
@@ -476,7 +498,6 @@ class TestFunction(object):
         rec = testdir.inline_run()
         rec.assertoutcome(passed=2)
 
-
     def test_parametrize_with_non_hashable_values_indirect(self, testdir):
         """Test parametrization with non-hashable values with indirect parametrization."""
         testdir.makepyfile("""
@@ -503,7 +524,6 @@ class TestFunction(object):
         """)
         rec = testdir.inline_run()
         rec.assertoutcome(passed=2)
-
 
     def test_parametrize_overrides_fixture(self, testdir):
         """Test parametrization when parameter overrides existing fixture with same name."""
@@ -532,7 +552,6 @@ class TestFunction(object):
         rec = testdir.inline_run()
         rec.assertoutcome(passed=3)
 
-
     def test_parametrize_overrides_parametrized_fixture(self, testdir):
         """Test parametrization when parameter overrides existing parametrized fixture with same name."""
         testdir.makepyfile("""
@@ -550,7 +569,8 @@ class TestFunction(object):
         rec = testdir.inline_run()
         rec.assertoutcome(passed=1)
 
-    def test_parametrize_with_mark(selfself, testdir):
+    @ignore_parametrized_marks
+    def test_parametrize_with_mark(self, testdir):
         items = testdir.getitems("""
             import pytest
             @pytest.mark.foo
@@ -623,6 +643,7 @@ class TestFunction(object):
         assert colitems[2].name == 'test2[a-c]'
         assert colitems[3].name == 'test2[b-c]'
 
+    @ignore_parametrized_marks
     def test_parametrize_skipif(self, testdir):
         testdir.makepyfile("""
             import pytest
@@ -636,6 +657,7 @@ class TestFunction(object):
         result = testdir.runpytest()
         result.stdout.fnmatch_lines('* 2 passed, 1 skipped in *')
 
+    @ignore_parametrized_marks
     def test_parametrize_skip(self, testdir):
         testdir.makepyfile("""
             import pytest
@@ -649,6 +671,7 @@ class TestFunction(object):
         result = testdir.runpytest()
         result.stdout.fnmatch_lines('* 2 passed, 1 skipped in *')
 
+    @ignore_parametrized_marks
     def test_parametrize_skipif_no_skip(self, testdir):
         testdir.makepyfile("""
             import pytest
@@ -662,6 +685,7 @@ class TestFunction(object):
         result = testdir.runpytest()
         result.stdout.fnmatch_lines('* 1 failed, 2 passed in *')
 
+    @ignore_parametrized_marks
     def test_parametrize_xfail(self, testdir):
         testdir.makepyfile("""
             import pytest
@@ -675,6 +699,7 @@ class TestFunction(object):
         result = testdir.runpytest()
         result.stdout.fnmatch_lines('* 2 passed, 1 xfailed in *')
 
+    @ignore_parametrized_marks
     def test_parametrize_passed(self, testdir):
         testdir.makepyfile("""
             import pytest
@@ -688,6 +713,7 @@ class TestFunction(object):
         result = testdir.runpytest()
         result.stdout.fnmatch_lines('* 2 passed, 1 xpassed in *')
 
+    @ignore_parametrized_marks
     def test_parametrize_xfail_passed(self, testdir):
         testdir.makepyfile("""
             import pytest
@@ -724,7 +750,7 @@ class TestSorting(object):
 
         assert fn1 == fn2
         assert fn1 != modcol
-        if py.std.sys.version_info < (3, 0):
+        if sys.version_info < (3, 0):
             assert cmp(fn1, fn2) == 0
         assert hash(fn1) == hash(fn2)
 
@@ -733,11 +759,11 @@ class TestSorting(object):
         assert not (fn1 == fn3)
         assert fn1 != fn3
 
-        for fn in fn1,fn2,fn3:
+        for fn in fn1, fn2, fn3:
             assert fn != 3
             assert fn != modcol
-            assert fn != [1,2,3]
-            assert [1,2,3] != fn
+            assert fn != [1, 2, 3]
+            assert [1, 2, 3] != fn
             assert modcol != fn
 
     def test_allow_sane_sorting_for_decorators(self, testdir):
@@ -782,10 +808,12 @@ class TestConftestCustomization(object):
     def test_customized_pymakemodule_issue205_subdir(self, testdir):
         b = testdir.mkdir("a").mkdir("b")
         b.join("conftest.py").write(_pytest._code.Source("""
-            def pytest_pycollect_makemodule(__multicall__):
-                mod = __multicall__.execute()
+            import pytest
+            @pytest.hookimpl(hookwrapper=True)
+            def pytest_pycollect_makemodule():
+                outcome = yield
+                mod = outcome.get_result()
                 mod.obj.hello = "world"
-                return mod
         """))
         b.join("test_module.py").write(_pytest._code.Source("""
             def test_hello():
@@ -802,7 +830,7 @@ class TestConftestCustomization(object):
             def pytest_pycollect_makeitem():
                 outcome = yield
                 if outcome.excinfo is None:
-                    result = outcome.result
+                    result = outcome.get_result()
                     if result:
                         for func in result:
                             func._some123 = "world"
@@ -836,11 +864,11 @@ class TestConftestCustomization(object):
 
     def test_makeitem_non_underscore(self, testdir, monkeypatch):
         modcol = testdir.getmodulecol("def _hello(): pass")
-        l = []
+        values = []
         monkeypatch.setattr(pytest.Module, 'makeitem',
-            lambda self, name, obj: l.append(name))
-        l = modcol.collect()
-        assert '_hello' not in l
+                            lambda self, name, obj: values.append(name))
+        values = modcol.collect()
+        assert '_hello' not in values
 
     def test_issue2369_collect_module_fileext(self, testdir):
         """Ensure we can collect files with weird file extensions as Python
@@ -851,10 +879,10 @@ class TestConftestCustomization(object):
             import sys, os, imp
             from _pytest.python import Module
 
-            class Loader:
+            class Loader(object):
                 def load_module(self, name):
                     return imp.load_source(name, name + ".narf")
-            class Finder:
+            class Finder(object):
                 def find_module(self, name, path=None):
                     if os.path.exists(name + ".narf"):
                         return Loader()
@@ -869,6 +897,7 @@ class TestConftestCustomization(object):
         # Use runpytest_subprocess, since we're futzing with sys.meta_path.
         result = testdir.runpytest_subprocess()
         result.stdout.fnmatch_lines('*1 passed*')
+
 
 def test_setup_only_available_in_subdir(testdir):
     sub1 = testdir.mkpydir("sub1")
@@ -895,6 +924,7 @@ def test_setup_only_available_in_subdir(testdir):
     sub2.join("test_in_sub2.py").write("def test_2(): pass")
     result = testdir.runpytest("-v", "-s")
     result.assert_outcomes(passed=2)
+
 
 def test_modulecol_roundtrip(testdir):
     modcol = testdir.getmodulecol("pass", withinit=True)
@@ -923,13 +953,13 @@ class TestTracebackCutting(object):
         out = result.stdout.str()
         assert "xyz" in out
         assert "conftest.py:5: ValueError" in out
-        numentries = out.count("_ _ _") # separator for traceback entries
+        numentries = out.count("_ _ _")  # separator for traceback entries
         assert numentries == 0
 
         result = testdir.runpytest("--fulltrace", p)
         out = result.stdout.str()
         assert "conftest.py:5: ValueError" in out
-        numentries = out.count("_ _ _ _") # separator for traceback entries
+        numentries = out.count("_ _ _ _")  # separator for traceback entries
         assert numentries > 3
 
     def test_traceback_error_during_import(self, testdir):
@@ -1180,6 +1210,7 @@ def test_collector_attributes(testdir):
         "*1 passed*",
     ])
 
+
 def test_customize_through_attributes(testdir):
     testdir.makeconftest("""
         import pytest
@@ -1347,7 +1378,6 @@ def test_skip_duplicates_by_default(testdir):
     result.stdout.fnmatch_lines([
         '*collected 1 item*',
     ])
-
 
 
 def test_keep_duplicates(testdir):

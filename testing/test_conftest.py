@@ -19,10 +19,12 @@ def basedir(request, tmpdir_factory):
         tmpdir.ensure("adir/b/__init__.py")
     return tmpdir
 
+
 def ConftestWithSetinitial(path):
     conftest = PytestPluginManager()
     conftest_setinitial(conftest, [path])
     return conftest
+
 
 def conftest_setinitial(conftest, args, confcutdir=None):
     class Namespace(object):
@@ -31,6 +33,7 @@ def conftest_setinitial(conftest, args, confcutdir=None):
             self.confcutdir = str(confcutdir)
             self.noconftest = False
     conftest._set_initial_conftests(Namespace())
+
 
 class TestConftestValueAccessGlobal(object):
     def test_basic_init(self, basedir):
@@ -43,7 +46,7 @@ class TestConftestValueAccessGlobal(object):
         len(conftest._path2confmods)
         conftest._getconftestmodules(basedir)
         snap1 = len(conftest._path2confmods)
-        #assert len(conftest._path2confmods) == snap1 + 1
+        # assert len(conftest._path2confmods) == snap1 + 1
         conftest._getconftestmodules(basedir.join('adir'))
         assert len(conftest._path2confmods) == snap1 + 1
         conftest._getconftestmodules(basedir.join('b'))
@@ -65,10 +68,11 @@ class TestConftestValueAccessGlobal(object):
         startdir.ensure("xx", dir=True)
         conftest = ConftestWithSetinitial(startdir)
         mod, value = conftest._rget_with_confmod("a", startdir)
-        assert  value == 1.5
+        assert value == 1.5
         path = py.path.local(mod.__file__)
         assert path.dirpath() == basedir.join("adir", "b")
         assert path.purebasename.startswith("conftest")
+
 
 def test_conftest_in_nonpkg_with_init(tmpdir):
     tmpdir.ensure("adir-1.0/conftest.py").write("a=1 ; Directory = 3")
@@ -77,13 +81,15 @@ def test_conftest_in_nonpkg_with_init(tmpdir):
     tmpdir.ensure("adir-1.0/__init__.py")
     ConftestWithSetinitial(tmpdir.join("adir-1.0", "b"))
 
+
 def test_doubledash_considered(testdir):
     conf = testdir.mkdir("--option")
-    conf.join("conftest.py").ensure()
+    conf.ensure("conftest.py")
     conftest = PytestPluginManager()
     conftest_setinitial(conftest, [conf.basename, conf.basename])
-    l = conftest._getconftestmodules(conf)
-    assert len(l) == 1
+    values = conftest._getconftestmodules(conf)
+    assert len(values) == 1
+
 
 def test_issue151_load_all_conftests(testdir):
     names = "code proj src".split()
@@ -95,6 +101,7 @@ def test_issue151_load_all_conftests(testdir):
     conftest_setinitial(conftest, names)
     d = list(conftest._conftestpath2mod.values())
     assert len(d) == len(names)
+
 
 def test_conftest_global_import(testdir):
     testdir.makeconftest("x=3")
@@ -117,32 +124,35 @@ def test_conftest_global_import(testdir):
     res = testdir.runpython(p)
     assert res.ret == 0
 
+
 def test_conftestcutdir(testdir):
     conf = testdir.makeconftest("")
     p = testdir.mkdir("x")
     conftest = PytestPluginManager()
     conftest_setinitial(conftest, [testdir.tmpdir], confcutdir=p)
-    l = conftest._getconftestmodules(p)
-    assert len(l) == 0
-    l = conftest._getconftestmodules(conf.dirpath())
-    assert len(l) == 0
+    values = conftest._getconftestmodules(p)
+    assert len(values) == 0
+    values = conftest._getconftestmodules(conf.dirpath())
+    assert len(values) == 0
     assert conf not in conftest._conftestpath2mod
     # but we can still import a conftest directly
     conftest._importconftest(conf)
-    l = conftest._getconftestmodules(conf.dirpath())
-    assert l[0].__file__.startswith(str(conf))
+    values = conftest._getconftestmodules(conf.dirpath())
+    assert values[0].__file__.startswith(str(conf))
     # and all sub paths get updated properly
-    l = conftest._getconftestmodules(p)
-    assert len(l) == 1
-    assert l[0].__file__.startswith(str(conf))
+    values = conftest._getconftestmodules(p)
+    assert len(values) == 1
+    assert values[0].__file__.startswith(str(conf))
+
 
 def test_conftestcutdir_inplace_considered(testdir):
     conf = testdir.makeconftest("")
     conftest = PytestPluginManager()
     conftest_setinitial(conftest, [conf.dirpath()], confcutdir=conf.dirpath())
-    l = conftest._getconftestmodules(conf.dirpath())
-    assert len(l) == 1
-    assert l[0].__file__.startswith(str(conf))
+    values = conftest._getconftestmodules(conf.dirpath())
+    assert len(values) == 1
+    assert values[0].__file__.startswith(str(conf))
+
 
 @pytest.mark.parametrize("name", 'test tests whatever .dotdir'.split())
 def test_setinitial_conftest_subdirs(testdir, name):
@@ -151,11 +161,12 @@ def test_setinitial_conftest_subdirs(testdir, name):
     conftest = PytestPluginManager()
     conftest_setinitial(conftest, [sub.dirpath()], confcutdir=testdir.tmpdir)
     if name not in ('whatever', '.dotdir'):
-        assert  subconftest in conftest._conftestpath2mod
+        assert subconftest in conftest._conftestpath2mod
         assert len(conftest._conftestpath2mod) == 1
     else:
-        assert  subconftest not in conftest._conftestpath2mod
+        assert subconftest not in conftest._conftestpath2mod
         assert len(conftest._conftestpath2mod) == 0
+
 
 def test_conftest_confcutdir(testdir):
     testdir.makeconftest("assert 0")
@@ -168,6 +179,7 @@ def test_conftest_confcutdir(testdir):
     result.stdout.fnmatch_lines(["*--xyz*"])
     assert 'warning: could not load initial' not in result.stdout.str()
 
+
 def test_no_conftest(testdir):
     testdir.makeconftest("assert 0")
     result = testdir.runpytest("--noconftest")
@@ -175,6 +187,7 @@ def test_no_conftest(testdir):
 
     result = testdir.runpytest()
     assert result.ret == EXIT_USAGEERROR
+
 
 def test_conftest_existing_resultlog(testdir):
     x = testdir.mkdir("tests")
@@ -186,6 +199,7 @@ def test_conftest_existing_resultlog(testdir):
     result = testdir.runpytest("-h", "--resultlog", "result.log")
     result.stdout.fnmatch_lines(["*--xyz*"])
 
+
 def test_conftest_existing_junitxml(testdir):
     x = testdir.mkdir("tests")
     x.join("conftest.py").write(_pytest._code.Source("""
@@ -195,6 +209,7 @@ def test_conftest_existing_junitxml(testdir):
     testdir.makefile(ext=".xml", junit="")  # Writes junit.xml
     result = testdir.runpytest("-h", "--junitxml", "junit.xml")
     result.stdout.fnmatch_lines(["*--xyz*"])
+
 
 def test_conftest_import_order(testdir, monkeypatch):
     ct1 = testdir.makeconftest("")
@@ -217,7 +232,7 @@ def test_fixture_dependency(testdir, monkeypatch):
     ct1.write("")
     sub = testdir.mkdir("sub")
     sub.join("__init__.py").write("")
-    sub.join("conftest.py").write(py.std.textwrap.dedent("""
+    sub.join("conftest.py").write(dedent("""
         import pytest
 
         @pytest.fixture
@@ -234,7 +249,7 @@ def test_fixture_dependency(testdir, monkeypatch):
     """))
     subsub = sub.mkdir("subsub")
     subsub.join("__init__.py").write("")
-    subsub.join("test_bar.py").write(py.std.textwrap.dedent("""
+    subsub.join("test_bar.py").write(dedent("""
         import pytest
 
         @pytest.fixture
@@ -250,16 +265,12 @@ def test_fixture_dependency(testdir, monkeypatch):
 
 def test_conftest_found_with_double_dash(testdir):
     sub = testdir.mkdir("sub")
-    sub.join("conftest.py").write(py.std.textwrap.dedent("""
+    sub.join("conftest.py").write(dedent("""
         def pytest_addoption(parser):
             parser.addoption("--hello-world", action="store_true")
     """))
     p = sub.join("test_hello.py")
-    p.write(py.std.textwrap.dedent("""
-        import pytest
-        def test_hello(found):
-            assert found == 1
-    """))
+    p.write("def test_hello(): pass")
     result = testdir.runpytest(str(p) + "::test_hello", "-h")
     result.stdout.fnmatch_lines("""
         *--hello-world*
@@ -306,9 +317,9 @@ class TestConftestVisibility(object):
                                                 # use value from parent dir's
 
         """))
-        print ("created directory structure:")
+        print("created directory structure:")
         for x in testdir.tmpdir.visit():
-            print ("   " + x.relto(testdir.tmpdir))
+            print("   " + x.relto(testdir.tmpdir))
 
         return {
             "runner": runner,
@@ -319,38 +330,38 @@ class TestConftestVisibility(object):
     # N.B.: "swc" stands for "subdir with conftest.py"
     #       "snc" stands for "subdir no [i.e. without] conftest.py"
     @pytest.mark.parametrize("chdir,testarg,expect_ntests_passed", [
-	# Effective target: package/..
-        ("runner",  "..",               3),
-        ("package", "..",               3),
-        ("swc",     "../..",            3),
-        ("snc",     "../..",            3),
+        # Effective target: package/..
+        ("runner", "..", 3),
+        ("package", "..", 3),
+        ("swc", "../..", 3),
+        ("snc", "../..", 3),
 
-	# Effective target: package
-        ("runner",  "../package",       3),
-        ("package", ".",                3),
-        ("swc",     "..",               3),
-        ("snc",     "..",               3),
+        # Effective target: package
+        ("runner", "../package", 3),
+        ("package", ".", 3),
+        ("swc", "..", 3),
+        ("snc", "..", 3),
 
-	# Effective target: package/swc
-        ("runner",  "../package/swc",   1),
-        ("package", "./swc",            1),
-        ("swc",     ".",                1),
-        ("snc",     "../swc",           1),
+        # Effective target: package/swc
+        ("runner", "../package/swc", 1),
+        ("package", "./swc", 1),
+        ("swc", ".", 1),
+        ("snc", "../swc", 1),
 
-	# Effective target: package/snc
-        ("runner",  "../package/snc",   1),
-        ("package", "./snc",            1),
-        ("swc",     "../snc",           1),
-        ("snc",     ".",                1),
+        # Effective target: package/snc
+        ("runner", "../package/snc", 1),
+        ("package", "./snc", 1),
+        ("swc", "../snc", 1),
+        ("snc", ".", 1),
     ])
     @pytest.mark.issue616
     def test_parsefactories_relative_node_ids(
-            self, testdir, chdir,testarg, expect_ntests_passed):
+            self, testdir, chdir, testarg, expect_ntests_passed):
         dirs = self._setup_tree(testdir)
-        print("pytest run in cwd: %s" %(
+        print("pytest run in cwd: %s" % (
               dirs[chdir].relto(testdir.tmpdir)))
-        print("pytestarg        : %s" %(testarg))
-        print("expected pass    : %s" %(expect_ntests_passed))
+        print("pytestarg        : %s" % (testarg))
+        print("expected pass    : %s" % (expect_ntests_passed))
         with dirs[chdir].as_cwd():
             reprec = testdir.inline_run(testarg, "-q", "--traceconfig")
             reprec.assertoutcome(passed=expect_ntests_passed)

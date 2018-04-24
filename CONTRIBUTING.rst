@@ -34,13 +34,13 @@ If you are reporting a bug, please include:
 
 * Your operating system name and version.
 * Any details about your local setup that might be helpful in troubleshooting,
-  specifically Python interpreter version,
-  installed libraries and pytest version.
+  specifically the Python interpreter version, installed libraries, and pytest
+  version.
 * Detailed steps to reproduce the bug.
 
-If you can write a demonstration test that currently fails but should pass (xfail),
-that is a very useful commit to make as well, even if you can't find how
-to fix the bug yet.
+If you can write a demonstration test that currently fails but should pass
+(xfail), that is a very useful commit to make as well, even if you cannot
+fix the bug itself.
 
 
 .. _fixbugs:
@@ -49,7 +49,7 @@ Fix bugs
 --------
 
 Look through the GitHub issues for bugs.  Here is a filter you can use:
-https://github.com/pytest-dev/pytest/labels/bug
+https://github.com/pytest-dev/pytest/labels/type%3A%20bug
 
 :ref:`Talk <contact>` to developers to find out how you can fix specific bugs.
 
@@ -120,7 +120,7 @@ the following:
 - PyPI presence with a ``setup.py`` that contains a license, ``pytest-``
   prefixed name, version number, authors, short and long description.
 
-- a ``tox.ini`` for running tests using `tox <http://tox.testrun.org>`_.
+- a ``tox.ini`` for running tests using `tox <https://tox.readthedocs.io>`_.
 
 - a ``README.txt`` describing how to use the plugin and on which
   platforms it runs.
@@ -158,19 +158,41 @@ As stated, the objective is to share maintenance and avoid "plugin-abandon".
 .. _`pull requests`:
 .. _pull-requests:
 
-Preparing Pull Requests on GitHub
----------------------------------
+Preparing Pull Requests
+-----------------------
 
-.. note::
-  What is a "pull request"?  It informs project's core developers about the
-  changes you want to review and merge.  Pull requests are stored on
-  `GitHub servers <https://github.com/pytest-dev/pytest/pulls>`_.
-  Once you send a pull request, we can discuss its potential modifications and
-  even add more commits to it later on.
+Short version
+~~~~~~~~~~~~~
 
-There's an excellent tutorial on how Pull Requests work in the
-`GitHub Help Center <https://help.github.com/articles/using-pull-requests/>`_,
-but here is a simple overview:
+#. Fork the repository;
+#. Target ``master`` for bugfixes and doc changes;
+#. Target ``features`` for new features or functionality changes.
+#. Follow **PEP-8**. There's a ``tox`` command to help fixing it: ``tox -e fix-lint``.
+#. Tests are run using ``tox``::
+
+    tox -e linting,py27,py36
+
+   The test environments above are usually enough to cover most cases locally.
+
+#. Write a ``changelog`` entry: ``changelog/2574.bugfix``, use issue id number
+   and one of ``bugfix``, ``removal``, ``feature``, ``vendor``, ``doc`` or
+   ``trivial`` for the issue type.
+#. Unless your change is a trivial or a documentation fix (e.g., a typo or reword of a small section) please
+   add yourself to the ``AUTHORS`` file, in alphabetical order;
+
+
+Long version
+~~~~~~~~~~~~
+
+What is a "pull request"?  It informs the project's core developers about the
+changes you want to review and merge.  Pull requests are stored on
+`GitHub servers <https://github.com/pytest-dev/pytest/pulls>`_.
+Once you send a pull request, we can discuss its potential modifications and
+even add more commits to it later on. There's an excellent tutorial on how Pull
+Requests work in the
+`GitHub Help Center <https://help.github.com/articles/using-pull-requests/>`_.
+
+Here is a simple overview, with pytest-specific bits:
 
 #. Fork the
    `pytest GitHub repository <https://github.com/pytest-dev/pytest>`__.  It's
@@ -214,12 +236,18 @@ but here is a simple overview:
    This command will run tests via the "tox" tool against Python 2.7 and 3.6
    and also perform "lint" coding-style checks.
 
-#. You can now edit your local working copy.
+#. You can now edit your local working copy. Please follow PEP-8.
 
    You can now make the changes you want and run the tests again as necessary.
 
-   To run tests on Python 2.7 and pass options to pytest (e.g. enter pdb on
-   failure) to pytest you can do::
+   If you have too much linting errors, try running::
+
+    $ tox -e fix-lint
+
+   To fix pep8 related errors.
+
+   You can pass different options to ``tox``. For example, to run tests on Python 2.7 and pass options to pytest
+   (e.g. enter pdb on failure) to pytest you can do::
 
     $ tox -e py27 -- --pdb
 
@@ -232,9 +260,11 @@ but here is a simple overview:
     $ git commit -a -m "<commit message>"
     $ git push -u
 
-   Make sure you add a message to ``CHANGELOG.rst`` and add yourself to
-   ``AUTHORS``.  If you are unsure about either of these steps, submit your
-   pull request and we'll help you fix it up.
+#. Create a new changelog entry in ``changelog``. The file should be named ``<issueid>.<type>``,
+   where *issueid* is the number of the issue related to the change and *type* is one of
+   ``bugfix``, ``removal``, ``feature``, ``vendor``, ``doc`` or ``trivial``.
+
+#. Add yourself to ``AUTHORS`` file if not there yet, in alphabetical order.
 
 #. Finally, submit a pull request through the GitHub website using this data::
 
@@ -246,3 +276,15 @@ but here is a simple overview:
     base: features        # if it's a feature
 
 
+Joining the Development Team
+----------------------------
+
+Anyone who has successfully seen through a pull request which did not
+require any extra work from the development team to merge will
+themselves gain commit access if they so wish (if we forget to ask please send a friendly
+reminder).  This does not mean your workflow to contribute changes,
+everyone goes through the same pull-request-and-review process and
+no-one merges their own pull requests unless already approved.  It does however mean you can
+participate in the development process more fully since you can merge
+pull requests from other contributors yourself after having reviewed
+them.

@@ -7,9 +7,8 @@ import traceback
 # for transferring markers
 import _pytest._code
 from _pytest.config import hookimpl
-from _pytest.runner import fail, skip
+from _pytest.outcomes import fail, skip, xfail
 from _pytest.python import transfer_markers, Class, Module, Function
-from _pytest.skipping import MarkEvaluator, xfail
 
 
 def pytest_pycollect_makeitem(collector, name, obj):
@@ -109,13 +108,13 @@ class TestCaseFunction(Function):
         except TypeError:
             try:
                 try:
-                    l = traceback.format_exception(*rawexcinfo)
-                    l.insert(0, "NOTE: Incompatible Exception Representation, "
-                                "displaying natively:\n\n")
-                    fail("".join(l), pytrace=False)
+                    values = traceback.format_exception(*rawexcinfo)
+                    values.insert(0, "NOTE: Incompatible Exception Representation, "
+                                  "displaying natively:\n\n")
+                    fail("".join(values), pytrace=False)
                 except (fail.Exception, KeyboardInterrupt):
                     raise
-                except:
+                except:  # noqa
                     fail("ERROR: Unknown Incompatible Exception "
                          "representation:\n%r" % (rawexcinfo,), pytrace=False)
             except KeyboardInterrupt:
@@ -134,8 +133,7 @@ class TestCaseFunction(Function):
         try:
             skip(reason)
         except skip.Exception:
-            self._evalskip = MarkEvaluator(self, 'SkipTest')
-            self._evalskip.result = True
+            self._skipped_by_mark = True
             self._addexcinfo(sys.exc_info())
 
     def addExpectedFailure(self, testcase, rawexcinfo, reason=""):
@@ -158,7 +156,7 @@ class TestCaseFunction(Function):
         # analog to pythons Lib/unittest/case.py:run
         testMethod = getattr(self._testcase, self._testcase._testMethodName)
         if (getattr(self._testcase.__class__, "__unittest_skip__", False) or
-            getattr(testMethod, "__unittest_skip__", False)):
+                getattr(testMethod, "__unittest_skip__", False)):
             # If the class or method was skipped.
             skip_why = (getattr(self._testcase.__class__, '__unittest_skip_why__', '') or
                         getattr(testMethod, '__unittest_skip_why__', ''))
@@ -210,7 +208,7 @@ def pytest_runtest_protocol(item):
         check_testcase_implements_trial_reporter()
 
         def excstore(self, exc_value=None, exc_type=None, exc_tb=None,
-            captureVars=None):
+                     captureVars=None):
             if exc_value is None:
                 self._rawexcinfo = sys.exc_info()
             else:
@@ -219,7 +217,7 @@ def pytest_runtest_protocol(item):
                 self._rawexcinfo = (exc_type, exc_value, exc_tb)
             try:
                 Failure__init__(self, exc_value, exc_type, exc_tb,
-                    captureVars=captureVars)
+                                captureVars=captureVars)
             except TypeError:
                 Failure__init__(self, exc_value, exc_type, exc_tb)
 

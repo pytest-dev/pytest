@@ -328,23 +328,28 @@ class TestPython(object):
         fnode.assert_attr(message="internal error")
         assert "Division" in fnode.toxml()
 
-    def test_failure_function(self, testdir):
+    @pytest.mark.parametrize('junit_logging', ['no', 'system-out', 'system-err'])
+    def test_failure_function(self, testdir, junit_logging):
         testdir.makepyfile("""
+            import logging
             import sys
+
             def test_fail():
                 print ("hello-stdout")
                 sys.stderr.write("hello-stderr\\n")
+                logging.info('info msg')
+                logging.warning('warning msg')
                 raise ValueError(42)
         """)
 
-        result, dom = runandparse(testdir)
+        result, dom = runandparse(testdir, '-o', 'junit_logging=%s' % junit_logging)
         assert result.ret
         node = dom.find_first_by_tag("testsuite")
         node.assert_attr(failures=1, tests=1)
         tnode = node.find_first_by_tag("testcase")
         tnode.assert_attr(
             file="test_failure_function.py",
-            line="1",
+            line="3",
             classname="test_failure_function",
             name="test_fail")
         fnode = tnode.find_first_by_tag("failure")
@@ -353,9 +358,21 @@ class TestPython(object):
         systemout = fnode.next_siebling
         assert systemout.tag == "system-out"
         assert "hello-stdout" in systemout.toxml()
+        assert "info msg" not in systemout.toxml()
         systemerr = systemout.next_siebling
         assert systemerr.tag == "system-err"
         assert "hello-stderr" in systemerr.toxml()
+        assert "info msg" not in systemerr.toxml()
+
+        if junit_logging == 'system-out':
+            assert "warning msg" in systemout.toxml()
+            assert "warning msg" not in systemerr.toxml()
+        elif junit_logging == 'system-err':
+            assert "warning msg" not in systemout.toxml()
+            assert "warning msg" in systemerr.toxml()
+        elif junit_logging == 'no':
+            assert "warning msg" not in systemout.toxml()
+            assert "warning msg" not in systemerr.toxml()
 
     def test_failure_verbose_message(self, testdir):
         testdir.makepyfile("""
@@ -600,6 +617,7 @@ class TestPython(object):
         assert "hello-stdout call" in systemout.toxml()
         assert "hello-stdout teardown" in systemout.toxml()
 
+
 def test_mangle_test_address():
     from _pytest.junitxml import mangle_test_address
     address = '::'.join(
@@ -760,10 +778,12 @@ def test_logxml_makedir(testdir):
     assert result.ret == 0
     assert testdir.tmpdir.join("path/to/results.xml").check()
 
+
 def test_logxml_check_isdir(testdir):
     """Give an error if --junit-xml is a directory (#2089)"""
     result = testdir.runpytest("--junit-xml=.")
     result.stderr.fnmatch_lines(["*--junitxml must be a filename*"])
+
 
 def test_escaped_parametrized_names_xml(testdir):
     testdir.makepyfile("""
@@ -843,29 +863,25 @@ def test_record_property(testdir):
         import pytest
 
         @pytest.fixture
-        def other(record_xml_property):
-            record_xml_property("bar", 1)
-        def test_record(record_xml_property, other):
-            record_xml_property("foo", "<1");
+        def other(record_property):
+            record_property("bar", 1)
+        def test_record(record_property, other):
+            record_property("foo", "<1");
     """)
-    result, dom = runandparse(testdir, '-rw')
+    result, dom = runandparse(testdir, '-rwv')
     node = dom.find_first_by_tag("testsuite")
     tnode = node.find_first_by_tag("testcase")
     psnode = tnode.find_first_by_tag('properties')
     pnodes = psnode.find_by_tag('property')
     pnodes[0].assert_attr(name="bar", value="1")
     pnodes[1].assert_attr(name="foo", value="<1")
-    result.stdout.fnmatch_lines([
-        'test_record_property.py::test_record',
-        '*record_xml_property*experimental*',
-    ])
 
 
 def test_record_property_same_name(testdir):
     testdir.makepyfile("""
-        def test_record_with_same_name(record_xml_property):
-            record_xml_property("foo", "bar")
-            record_xml_property("foo", "baz")
+        def test_record_with_same_name(record_property):
+            record_property("foo", "bar")
+            record_property("foo", "baz")
     """)
     result, dom = runandparse(testdir, '-rw')
     node = dom.find_first_by_tag("testsuite")
@@ -874,6 +890,27 @@ def test_record_property_same_name(testdir):
     pnodes = psnode.find_by_tag('property')
     pnodes[0].assert_attr(name="foo", value="bar")
     pnodes[1].assert_attr(name="foo", value="baz")
+
+
+def test_record_attribute(testdir):
+    testdir.makepyfile("""
+        import pytest
+
+        @pytest.fixture
+        def other(record_xml_attribute):
+            record_xml_attribute("bar", 1)
+        def test_record(record_xml_attribute, other):
+            record_xml_attribute("foo", "<1");
+    """)
+    result, dom = runandparse(testdir, '-rw')
+    node = dom.find_first_by_tag("testsuite")
+    tnode = node.find_first_by_tag("testcase")
+    tnode.assert_attr(bar="1")
+    tnode.assert_attr(foo="<1")
+    result.stdout.fnmatch_lines([
+        'test_record_attribute.py::test_record',
+        '*record_xml_attribute*experimental*',
+    ])
 
 
 def test_random_report_log_xdist(testdir):
@@ -1057,4 +1094,3 @@ def test_set_suite_name(testdir, suite_name):
     assert result.ret == 0
     node = dom.find_first_by_tag("testsuite")
     node.assert_attr(name=expected)
-

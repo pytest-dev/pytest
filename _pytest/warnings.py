@@ -39,8 +39,9 @@ def pytest_addoption(parser):
         '-W', '--pythonwarnings', action='append',
         help="set which warnings to report, see -W option of python itself.")
     parser.addini("filterwarnings", type="linelist",
-                  help="Each line specifies warning filter pattern which would be passed"
-                  "to warnings.filterwarnings. Process after -W and --pythonwarnings.")
+                  help="Each line specifies a pattern for "
+                  "warnings.filterwarnings. "
+                  "Processed after -W and --pythonwarnings.")
 
 
 @contextmanager
@@ -59,6 +60,11 @@ def catch_warnings_for_item(item):
         for arg in inifilters:
             _setoption(warnings, arg)
 
+        for mark in item.iter_markers():
+            if mark.name == 'filterwarnings':
+                for arg in mark.args:
+                    warnings._setoption(arg)
+
         yield
 
         for warning in log:
@@ -66,8 +72,10 @@ def catch_warnings_for_item(item):
             unicode_warning = False
 
             if compat._PY2 and any(isinstance(m, compat.UNICODE_TYPES) for m in warn_msg.args):
-                new_args = [compat.safe_str(m) for m in warn_msg.args]
-                unicode_warning = warn_msg.args != new_args
+                new_args = []
+                for m in warn_msg.args:
+                    new_args.append(compat.ascii_escaped(m) if isinstance(m, compat.UNICODE_TYPES) else m)
+                unicode_warning = list(warn_msg.args) != new_args
                 warn_msg.args = new_args
 
             msg = warnings.formatwarning(
@@ -78,7 +86,7 @@ def catch_warnings_for_item(item):
             if unicode_warning:
                 warnings.warn(
                     "Warning is using unicode non convertible to ascii, "
-                    "converting to a safe representation:\n  %s"  % msg,
+                    "converting to a safe representation:\n  %s" % msg,
                     UnicodeWarning)
 
 

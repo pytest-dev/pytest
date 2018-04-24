@@ -26,7 +26,7 @@ Supported nose Idioms
 * setup and teardown at module/class/method level
 * SkipTest exceptions and markers
 * setup/teardown decorators
-* ``yield``-based tests and their setup
+* ``yield``-based tests and their setup (considered deprecated as of pytest 3.0)
 * ``__test__`` attribute on modules/classes/functions
 * general usage of nose utilities
 

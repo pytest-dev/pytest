@@ -1,28 +1,30 @@
 from __future__ import absolute_import, division, print_function
+
 import glob
 import os
 import py_compile
 import stat
 import sys
+import textwrap
 import zipfile
-
 import py
 import pytest
-
-ast = pytest.importorskip("ast")
-if sys.platform.startswith("java"):
-    # XXX should be xfail
-    pytest.skip("assert rewrite does currently not work on jython")
 
 import _pytest._code
 from _pytest.assertion import util
 from _pytest.assertion.rewrite import rewrite_asserts, PYTEST_TAG, AssertionRewritingHook
 from _pytest.main import EXIT_NOTESTSCOLLECTED
 
+ast = pytest.importorskip("ast")
+if sys.platform.startswith("java"):
+    # XXX should be xfail
+    pytest.skip("assert rewrite does currently not work on jython")
+
 
 def setup_module(mod):
     mod._old_reprcompare = util._reprcompare
     _pytest._code._reprcompare = None
+
 
 def teardown_module(mod):
     util._reprcompare = mod._old_reprcompare
@@ -33,6 +35,7 @@ def rewrite(src):
     tree = ast.parse(src)
     rewrite_asserts(tree)
     return tree
+
 
 def getmsg(f, extra_ns=None, must_pass=False):
     """Rewrite the assertions in f, run it, and get the failure message."""
@@ -63,13 +66,18 @@ class TestAssertionRewrite(object):
     def test_place_initial_imports(self):
         s = """'Doc string'\nother = stuff"""
         m = rewrite(s)
-        assert isinstance(m.body[0], ast.Expr)
-        assert isinstance(m.body[0].value, ast.Str)
-        for imp in m.body[1:3]:
+        # Module docstrings in 3.7 are part of Module node, it's not in the body
+        # so we remove it so the following body items have the same indexes on
+        # all Python versions
+        if sys.version_info < (3, 7):
+            assert isinstance(m.body[0], ast.Expr)
+            assert isinstance(m.body[0].value, ast.Str)
+            del m.body[0]
+        for imp in m.body[0:2]:
             assert isinstance(imp, ast.Import)
             assert imp.lineno == 2
             assert imp.col_offset == 0
-        assert isinstance(m.body[3], ast.Assign)
+        assert isinstance(m.body[2], ast.Assign)
         s = """from __future__ import with_statement\nother_stuff"""
         m = rewrite(s)
         assert isinstance(m.body[0], ast.ImportFrom)
@@ -78,16 +86,29 @@ class TestAssertionRewrite(object):
             assert imp.lineno == 2
             assert imp.col_offset == 0
         assert isinstance(m.body[3], ast.Expr)
+        s = """'doc string'\nfrom __future__ import with_statement"""
+        m = rewrite(s)
+        if sys.version_info < (3, 7):
+            assert isinstance(m.body[0], ast.Expr)
+            assert isinstance(m.body[0].value, ast.Str)
+            del m.body[0]
+        assert isinstance(m.body[0], ast.ImportFrom)
+        for imp in m.body[1:3]:
+            assert isinstance(imp, ast.Import)
+            assert imp.lineno == 2
+            assert imp.col_offset == 0
         s = """'doc string'\nfrom __future__ import with_statement\nother"""
         m = rewrite(s)
-        assert isinstance(m.body[0], ast.Expr)
-        assert isinstance(m.body[0].value, ast.Str)
-        assert isinstance(m.body[1], ast.ImportFrom)
-        for imp in m.body[2:4]:
+        if sys.version_info < (3, 7):
+            assert isinstance(m.body[0], ast.Expr)
+            assert isinstance(m.body[0].value, ast.Str)
+            del m.body[0]
+        assert isinstance(m.body[0], ast.ImportFrom)
+        for imp in m.body[1:3]:
             assert isinstance(imp, ast.Import)
             assert imp.lineno == 3
             assert imp.col_offset == 0
-        assert isinstance(m.body[4], ast.Expr)
+        assert isinstance(m.body[3], ast.Expr)
         s = """from . import relative\nother_stuff"""
         m = rewrite(s)
         for imp in m.body[0:2]:
@@ -99,10 +120,24 @@ class TestAssertionRewrite(object):
     def test_dont_rewrite(self):
         s = """'PYTEST_DONT_REWRITE'\nassert 14"""
         m = rewrite(s)
-        assert len(m.body) == 2
-        assert isinstance(m.body[0].value, ast.Str)
-        assert isinstance(m.body[1], ast.Assert)
-        assert m.body[1].msg is None
+        if sys.version_info < (3, 7):
+            assert len(m.body) == 2
+            assert isinstance(m.body[0], ast.Expr)
+            assert isinstance(m.body[0].value, ast.Str)
+            del m.body[0]
+        else:
+            assert len(m.body) == 1
+        assert m.body[0].msg is None
+
+    def test_dont_rewrite_plugin(self, testdir):
+        contents = {
+            "conftest.py": "pytest_plugins = 'plugin'; import plugin",
+            "plugin.py": "'PYTEST_DONT_REWRITE'",
+            "test_foo.py": "def test_foo(): pass",
+        }
+        testdir.makepyfile(**contents)
+        result = testdir.runpytest_subprocess()
+        assert "warnings" not in "".join(result.outlines)
 
     def test_name(self):
         def f():
@@ -118,12 +153,12 @@ class TestAssertionRewrite(object):
         def f():
             assert a_global  # noqa
 
-        assert getmsg(f, {"a_global" : False}) == "assert False"
+        assert getmsg(f, {"a_global": False}) == "assert False"
 
         def f():
             assert sys == 42
 
-        assert getmsg(f, {"sys" : sys}) == "assert sys == 42"
+        assert getmsg(f, {"sys": sys}) == "assert sys == 42"
 
         def f():
             assert cls == 42  # noqa
@@ -131,7 +166,7 @@ class TestAssertionRewrite(object):
         class X(object):
             pass
 
-        assert getmsg(f, {"cls" : X}) == "assert cls == 42"
+        assert getmsg(f, {"cls": X}) == "assert cls == 42"
 
     def test_assert_already_has_message(self):
         def f():
@@ -238,13 +273,13 @@ class TestAssertionRewrite(object):
         def f():
             assert x() and x()
 
-        assert getmsg(f, {"x" : x}) == """assert (False)
+        assert getmsg(f, {"x": x}) == """assert (False)
  +  where False = x()"""
 
         def f():
             assert False or x()
 
-        assert getmsg(f, {"x" : x}) == """assert (False or False)
+        assert getmsg(f, {"x": x}) == """assert (False or False)
  +  where False = x()"""
 
         def f():
@@ -255,7 +290,7 @@ class TestAssertionRewrite(object):
         def f():
             x = 1
             y = 2
-            assert x in {1 : None} and y in {}
+            assert x in {1: None} and y in {}
 
         assert getmsg(f) == "assert (1 in {1: None} and 2 in {})"
 
@@ -348,7 +383,7 @@ class TestAssertionRewrite(object):
         def g(a=42, *args, **kwargs):
             return False
 
-        ns = {"g" : g}
+        ns = {"g": g}
 
         def f():
             assert g()
@@ -389,7 +424,7 @@ class TestAssertionRewrite(object):
 
         def f():
             x = "a"
-            assert g(**{x : 2})
+            assert g(**{x: 2})
 
         assert getmsg(f, ns) == """assert False
  +  where False = g(**{'a': 2})"""
@@ -398,10 +433,10 @@ class TestAssertionRewrite(object):
         class X(object):
             g = 3
 
-        ns = {"x" : X}
+        ns = {"x": X}
 
         def f():
-            assert not x.g # noqa
+            assert not x.g  # noqa
 
         assert getmsg(f, ns) == """assert not 3
  +  where 3 = x.g"""
@@ -449,8 +484,8 @@ class TestAssertionRewrite(object):
     def test_len(self):
 
         def f():
-            l = list(range(10))
-            assert len(l) == 11
+            values = list(range(10))
+            assert len(values) == 11
 
         assert getmsg(f).startswith("""assert 10 == 11
  +  where 10 = len([""")
@@ -556,7 +591,7 @@ class TestRewriteOnImport(object):
     def test_readonly(self, testdir):
         sub = testdir.mkdir("testing")
         sub.join("test_readonly.py").write(
-        py.builtin._totext("""
+            py.builtin._totext("""
 def test_rewritten():
     assert "@py_builtins" in globals()
             """).encode("utf-8"), "wb")
@@ -609,7 +644,7 @@ def test_rewritten():
             def test_optimized():
                 "hello"
                 assert test_optimized.__doc__ is None"""
-        )
+                           )
         p = py.path.local.make_numbered_dir(prefix="runpytest-", keep=None,
                                             rootdir=testdir.tmpdir)
         tmp = "--basetemp=%s" % p
@@ -638,8 +673,8 @@ def test_rewritten():
         testdir.tmpdir.join("test_newlines.py").write(b, "wb")
         assert testdir.runpytest().ret == 0
 
-    @pytest.mark.skipif(sys.version_info < (3,3),
-            reason='packages without __init__.py not supported on python 2')
+    @pytest.mark.skipif(sys.version_info < (3, 4),
+                        reason='packages without __init__.py not supported on python 2')
     def test_package_without__init__py(self, testdir):
         pkg = testdir.mkdir('a_package_without_init_py')
         pkg.join('module.py').ensure()
@@ -804,22 +839,22 @@ class TestAssertionRewriteHookDetails(object):
     def test_write_pyc(self, testdir, tmpdir, monkeypatch):
         from _pytest.assertion.rewrite import _write_pyc
         from _pytest.assertion import AssertionState
-        try:
-            import __builtin__ as b
-        except ImportError:
-            import builtins as b
+        import atomicwrites
+        from contextlib import contextmanager
         config = testdir.parseconfig([])
         state = AssertionState(config, "rewrite")
         source_path = tmpdir.ensure("source.py")
         pycpath = tmpdir.join("pyc").strpath
         assert _write_pyc(state, [1], source_path.stat(), pycpath)
 
-        def open(*args):
+        @contextmanager
+        def atomic_write_failed(fn, mode='r', overwrite=False):
             e = IOError()
             e.errno = 10
             raise e
+            yield  # noqa
 
-        monkeypatch.setattr(b, "open", open)
+        monkeypatch.setattr(atomicwrites, "atomic_write", atomic_write_failed)
         assert not _write_pyc(state, [1], source_path.stat(), pycpath)
 
     def test_resources_provider_for_loader(self, testdir):
@@ -877,7 +912,7 @@ class TestAssertionRewriteHookDetails(object):
     def test_reload_is_same(self, testdir):
         # A file that will be picked up during collecting.
         testdir.tmpdir.join("file.py").ensure()
-        testdir.tmpdir.join("pytest.ini").write(py.std.textwrap.dedent("""
+        testdir.tmpdir.join("pytest.ini").write(textwrap.dedent("""
             [pytest]
             python_files = *.py
         """))
@@ -963,7 +998,7 @@ class TestIssue2121():
 def test_simple_failure():
     assert 1 + 1 == 3
 """)
-        testdir.tmpdir.join("pytest.ini").write(py.std.textwrap.dedent("""
+        testdir.tmpdir.join("pytest.ini").write(textwrap.dedent("""
             [pytest]
             python_files = tests/**.py
         """))

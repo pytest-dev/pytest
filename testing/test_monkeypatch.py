@@ -319,10 +319,23 @@ def test_issue156_undo_staticmethod(Sample):
     monkeypatch.undo()
     assert Sample.hello()
 
+
 def test_issue1338_name_resolving():
     pytest.importorskip('requests')
     monkeypatch = MonkeyPatch()
     try:
-         monkeypatch.delattr('requests.sessions.Session.request')
+        monkeypatch.delattr('requests.sessions.Session.request')
     finally:
         monkeypatch.undo()
+
+
+def test_context():
+    monkeypatch = MonkeyPatch()
+
+    import functools
+    import inspect
+
+    with monkeypatch.context() as m:
+        m.setattr(functools, "partial", 3)
+        assert not inspect.isclass(functools.partial)
+    assert inspect.isclass(functools.partial)

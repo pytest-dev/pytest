@@ -1,17 +1,16 @@
 from __future__ import absolute_import, division, generators, print_function
 
+import ast
+from ast import PyCF_ONLY_AST as _AST_FLAG
 from bisect import bisect_right
+import linecache
 import sys
-import inspect, tokenize
+import six
+import inspect
+import tokenize
 import py
-cpy_compile = compile
 
-try:
-    import _ast
-    from _ast import PyCF_ONLY_AST as _AST_FLAG
-except ImportError:
-    _AST_FLAG = 0
-    _ast = None
+cpy_compile = compile
 
 
 class Source(object):
@@ -19,6 +18,7 @@ class Source(object):
         possibly deindenting it.
     """
     _compilecounter = 0
+
     def __init__(self, *parts, **kwargs):
         self.lines = lines = []
         de = kwargs.get('deindent', True)
@@ -26,11 +26,11 @@ class Source(object):
         for part in parts:
             if not part:
                 partlines = []
-            if isinstance(part, Source):
+            elif isinstance(part, Source):
                 partlines = part.lines
             elif isinstance(part, (tuple, list)):
                 partlines = [x.rstrip("\n") for x in part]
-            elif isinstance(part, py.builtin._basestring):
+            elif isinstance(part, six.string_types):
                 partlines = part.split('\n')
                 if rstrip:
                     while partlines:
@@ -73,7 +73,7 @@ class Source(object):
         start, end = 0, len(self)
         while start < end and not self.lines[start].strip():
             start += 1
-        while end > start and not self.lines[end-1].strip():
+        while end > start and not self.lines[end - 1].strip():
             end -= 1
         source = Source()
         source.lines[:] = self.lines[start:end]
@@ -86,8 +86,8 @@ class Source(object):
         before = Source(before)
         after = Source(after)
         newsource = Source()
-        lines = [ (indent + line) for line in self.lines]
-        newsource.lines = before.lines + lines +  after.lines
+        lines = [(indent + line) for line in self.lines]
+        newsource.lines = before.lines + lines + after.lines
         return newsource
 
     def indent(self, indent=' ' * 4):
@@ -95,17 +95,17 @@ class Source(object):
             all lines indented by the given indent-string.
         """
         newsource = Source()
-        newsource.lines = [(indent+line) for line in self.lines]
+        newsource.lines = [(indent + line) for line in self.lines]
         return newsource
 
-    def getstatement(self, lineno, assertion=False):
+    def getstatement(self, lineno):
         """ return Source statement which contains the
             given linenumber (counted from 0).
         """
-        start, end = self.getstatementrange(lineno, assertion)
+        start, end = self.getstatementrange(lineno)
         return self[start:end]
 
-    def getstatementrange(self, lineno, assertion=False):
+    def getstatementrange(self, lineno):
         """ return (start, end) tuple which spans the minimal
             statement region which containing the given lineno.
         """
@@ -131,20 +131,15 @@ class Source(object):
         """ return True if source is parseable, heuristically
             deindenting it by default.
         """
-        try:
-            import parser
-        except ImportError:
-            syntax_checker = lambda x: compile(x, 'asd', 'exec')
-        else:
-            syntax_checker = parser.suite
+        from parser import suite as syntax_checker
 
         if deindent:
             source = str(self.deindent())
         else:
             source = str(self)
         try:
-            #compile(source+'\n', "x", "exec")
-            syntax_checker(source+'\n')
+            # compile(source+'\n', "x", "exec")
+            syntax_checker(source + '\n')
         except KeyboardInterrupt:
             raise
         except Exception:
@@ -164,8 +159,8 @@ class Source(object):
         """
         if not filename or py.path.local(filename).check(file=0):
             if _genframe is None:
-                _genframe = sys._getframe(1) # the caller
-            fn,lineno = _genframe.f_code.co_filename, _genframe.f_lineno
+                _genframe = sys._getframe(1)  # the caller
+            fn, lineno = _genframe.f_code.co_filename, _genframe.f_lineno
             base = "<%d-codegen " % self._compilecounter
             self.__class__._compilecounter += 1
             if not filename:
@@ -180,7 +175,7 @@ class Source(object):
             # re-represent syntax errors from parsing python strings
             msglines = self.lines[:ex.lineno]
             if ex.offset:
-                msglines.append(" "*ex.offset + '^')
+                msglines.append(" " * ex.offset + '^')
             msglines.append("(code was compiled probably from here: %s)" % filename)
             newex = SyntaxError('\n'.join(msglines))
             newex.offset = ex.offset
@@ -191,24 +186,24 @@ class Source(object):
             if flag & _AST_FLAG:
                 return co
             lines = [(x + "\n") for x in self.lines]
-            py.std.linecache.cache[filename] = (1, None, lines, filename)
+            linecache.cache[filename] = (1, None, lines, filename)
             return co
 
 #
 # public API shortcut functions
 #
 
-def compile_(source, filename=None, mode='exec', flags=
-            generators.compiler_flag, dont_inherit=0):
+
+def compile_(source, filename=None, mode='exec', flags=generators.compiler_flag, dont_inherit=0):
     """ compile the given source to a raw code object,
         and maintain an internal cache which allows later
         retrieval of the source code for the code object
         and any recursively created code objects.
     """
-    if _ast is not None and isinstance(source, _ast.AST):
+    if isinstance(source, ast.AST):
         # XXX should Source support having AST?
         return cpy_compile(source, filename, mode, flags, dont_inherit)
-    _genframe = sys._getframe(1) # the caller
+    _genframe = sys._getframe(1)  # the caller
     s = Source(source)
     co = s.compile(filename, mode, flags, _genframe=_genframe)
     return co
@@ -218,13 +213,12 @@ def getfslineno(obj):
     """ Return source location (path, lineno) for the given object.
     If the source cannot be determined return ("", -1)
     """
-    import _pytest._code
+    from .code import Code
     try:
-        code = _pytest._code.Code(obj)
+        code = Code(obj)
     except TypeError:
         try:
-            fn = (py.std.inspect.getsourcefile(obj) or
-                  py.std.inspect.getfile(obj))
+            fn = inspect.getsourcefile(obj) or inspect.getfile(obj)
         except TypeError:
             return "", -1
 
@@ -245,12 +239,13 @@ def getfslineno(obj):
 # helper functions
 #
 
+
 def findsource(obj):
     try:
-        sourcelines, lineno = py.std.inspect.findsource(obj)
+        sourcelines, lineno = inspect.findsource(obj)
     except py.builtin._sysex:
         raise
-    except:
+    except:  # noqa
         return None, -1
     source = Source()
     source.lines = [line.rstrip() for line in sourcelines]
@@ -258,8 +253,8 @@ def findsource(obj):
 
 
 def getsource(obj, **kwargs):
-    import _pytest._code
-    obj = _pytest._code.getrawcode(obj)
+    from .code import getrawcode
+    obj = getrawcode(obj)
     try:
         strsrc = inspect.getsource(obj)
     except IndentationError:
@@ -274,7 +269,7 @@ def deindent(lines, offset=None):
             line = line.expandtabs()
             s = line.lstrip()
             if s:
-                offset = len(line)-len(s)
+                offset = len(line) - len(s)
                 break
         else:
             offset = 0
@@ -285,19 +280,17 @@ def deindent(lines, offset=None):
     def readline_generator(lines):
         for line in lines:
             yield line + '\n'
-        while True:
-            yield ''
 
     it = readline_generator(lines)
 
     try:
         for _, _, (sline, _), (eline, _), _ in tokenize.generate_tokens(lambda: next(it)):
             if sline > len(lines):
-                break # End of input reached
+                break  # End of input reached
             if sline > len(newlines):
                 line = lines[sline - 1].expandtabs()
                 if line.lstrip() and line[:offset].isspace():
-                    line = line[offset:] # Deindent
+                    line = line[offset:]  # Deindent
                 newlines.append(line)
 
             for i in range(sline, eline):
@@ -315,35 +308,30 @@ def get_statement_startend2(lineno, node):
     import ast
     # flatten all statements and except handlers into one lineno-list
     # AST's line numbers start indexing at 1
-    l = []
+    values = []
     for x in ast.walk(node):
-        if isinstance(x, _ast.stmt) or isinstance(x, _ast.ExceptHandler):
-            l.append(x.lineno - 1)
-            for name in "finalbody", "orelse":
+        if isinstance(x, (ast.stmt, ast.ExceptHandler)):
+            values.append(x.lineno - 1)
+            for name in ("finalbody", "orelse"):
                 val = getattr(x, name, None)
                 if val:
                     # treat the finally/orelse part as its own statement
-                    l.append(val[0].lineno - 1 - 1)
-    l.sort()
-    insert_index = bisect_right(l, lineno)
-    start = l[insert_index - 1]
-    if insert_index >= len(l):
+                    values.append(val[0].lineno - 1 - 1)
+    values.sort()
+    insert_index = bisect_right(values, lineno)
+    start = values[insert_index - 1]
+    if insert_index >= len(values):
         end = None
     else:
-        end = l[insert_index]
+        end = values[insert_index]
     return start, end
 
 
 def getstatementrange_ast(lineno, source, assertion=False, astnode=None):
     if astnode is None:
         content = str(source)
-        if sys.version_info < (2,7):
-            content += "\n"
-        try:
-            astnode = compile(content, "source", "exec", 1024)  # 1024 for AST
-        except ValueError:
-            start, end = getstatementrange_old(lineno, source, assertion)
-            return None, start, end
+        astnode = compile(content, "source", "exec", 1024)  # 1024 for AST
+
     start, end = get_statement_startend2(lineno, astnode)
     # we need to correct the end:
     # - ast-parsing strips comments
@@ -375,40 +363,3 @@ def getstatementrange_ast(lineno, source, assertion=False, astnode=None):
         else:
             break
     return astnode, start, end
-
-
-def getstatementrange_old(lineno, source, assertion=False):
-    """ return (start, end) tuple which spans the minimal
-        statement region which containing the given lineno.
-        raise an IndexError if no such statementrange can be found.
-    """
-    # XXX this logic is only used on python2.4 and below
-    # 1. find the start of the statement
-    from codeop import compile_command
-    for start in range(lineno, -1, -1):
-        if assertion:
-            line = source.lines[start]
-            # the following lines are not fully tested, change with care
-            if 'super' in line and 'self' in line and '__init__' in line:
-                raise IndexError("likely a subclass")
-            if "assert" not in line and "raise" not in line:
-                continue
-        trylines = source.lines[start:lineno+1]
-        # quick hack to prepare parsing an indented line with
-        # compile_command() (which errors on "return" outside defs)
-        trylines.insert(0, 'def xxx():')
-        trysource = '\n '.join(trylines)
-        #              ^ space here
-        try:
-            compile_command(trysource)
-        except (SyntaxError, OverflowError, ValueError):
-            continue
-
-        # 2. find the end of the statement
-        for end in range(lineno+1, len(source)+1):
-            trysource = source[start:end]
-            if trysource.isparseable():
-                return start, end
-    raise SyntaxError("no valid source range around line %d " % (lineno,))
-
-

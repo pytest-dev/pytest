@@ -3,7 +3,6 @@ from __future__ import absolute_import, division, print_function
 
 import sys
 
-import py
 from _pytest import unittest, runner, python
 from _pytest.config import hookimpl
 
@@ -38,14 +37,15 @@ def pytest_runtest_setup(item):
         if not call_optional(item.obj, 'setup'):
             # call module level setup if there is no object level one
             call_optional(item.parent.obj, 'setup')
-        #XXX this implies we only call teardown when setup worked
+        # XXX this implies we only call teardown when setup worked
         item.session._setupstate.addfinalizer((lambda: teardown_nose(item)), item)
+
 
 def teardown_nose(item):
     if is_potential_nosetest(item):
         if not call_optional(item.obj, 'teardown'):
             call_optional(item.parent.obj, 'teardown')
-        #if hasattr(item.parent, '_nosegensetup'):
+        # if hasattr(item.parent, '_nosegensetup'):
         #    #call_optional(item._nosegensetup, 'teardown')
         #    del item.parent._nosegensetup
 
@@ -65,7 +65,7 @@ def is_potential_nosetest(item):
 def call_optional(obj, name):
     method = getattr(obj, name, None)
     isfixture = hasattr(method, "_pytestfixturefunction")
-    if method is not None and not isfixture and py.builtin.callable(method):
+    if method is not None and not isfixture and callable(method):
         # If there's any problems allow the exception to raise rather than
         # silently ignoring them
         method()

@@ -10,4 +10,3 @@ if __name__ == '__main__':
         hidden.extend(['--hidden-import', x])
     args = ['pyinstaller', '--noconfirm'] + hidden + ['runtests_script.py']
     subprocess.check_call(' '.join(args), shell=True)
-

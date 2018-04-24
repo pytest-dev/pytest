@@ -2,6 +2,8 @@
 from __future__ import absolute_import, division, print_function
 
 import traceback
+import sys
+import platform
 
 import pytest
 from _pytest._code.code import ExceptionInfo, ReprFileLocation, TerminalRepr
@@ -22,37 +24,52 @@ DOCTEST_REPORT_CHOICES = (
     DOCTEST_REPORT_CHOICE_ONLY_FIRST_FAILURE,
 )
 
+# Lazy definiton of runner class
+RUNNER_CLASS = None
+
+
 def pytest_addoption(parser):
     parser.addini('doctest_optionflags', 'option flags for doctests',
-        type="args", default=["ELLIPSIS"])
+                  type="args", default=["ELLIPSIS"])
     parser.addini("doctest_encoding", 'encoding used for doctest files', default="utf-8")
     group = parser.getgroup("collect")
     group.addoption("--doctest-modules",
-        action="store_true", default=False,
-        help="run doctests in all .py modules",
-        dest="doctestmodules")
+                    action="store_true", default=False,
+                    help="run doctests in all .py modules",
+                    dest="doctestmodules")
     group.addoption("--doctest-report",
-        type=str.lower, default="udiff",
-        help="choose another output format for diffs on doctest failure",
-        choices=DOCTEST_REPORT_CHOICES,
-        dest="doctestreport")
+                    type=str.lower, default="udiff",
+                    help="choose another output format for diffs on doctest failure",
+                    choices=DOCTEST_REPORT_CHOICES,
+                    dest="doctestreport")
     group.addoption("--doctest-glob",
-        action="append", default=[], metavar="pat",
-        help="doctests file matching pattern, default: test*.txt",
-        dest="doctestglob")
+                    action="append", default=[], metavar="pat",
+                    help="doctests file matching pattern, default: test*.txt",
+                    dest="doctestglob")
     group.addoption("--doctest-ignore-import-errors",
-        action="store_true", default=False,
-        help="ignore doctest ImportErrors",
-        dest="doctest_ignore_import_errors")
+                    action="store_true", default=False,
+                    help="ignore doctest ImportErrors",
+                    dest="doctest_ignore_import_errors")
+    group.addoption("--doctest-continue-on-failure",
+                    action="store_true", default=False,
+                    help="for a given doctest, continue to run after the first failure",
+                    dest="doctest_continue_on_failure")
 
 
 def pytest_collect_file(path, parent):
     config = parent.config
     if path.ext == ".py":
-        if config.option.doctestmodules:
+        if config.option.doctestmodules and not _is_setup_py(config, path, parent):
             return DoctestModule(path, parent)
     elif _is_doctest(config, path, parent):
         return DoctestTextfile(path, parent)
+
+
+def _is_setup_py(config, path, parent):
+    if path.basename != "setup.py":
+        return False
+    contents = path.read()
+    return 'setuptools' in contents or 'distutils' in contents
 
 
 def _is_doctest(config, path, parent):
@@ -67,14 +84,63 @@ def _is_doctest(config, path, parent):
 
 class ReprFailDoctest(TerminalRepr):
 
-    def __init__(self, reprlocation, lines):
-        self.reprlocation = reprlocation
-        self.lines = lines
+    def __init__(self, reprlocation_lines):
+        # List of (reprlocation, lines) tuples
+        self.reprlocation_lines = reprlocation_lines
 
     def toterminal(self, tw):
-        for line in self.lines:
-            tw.line(line)
-        self.reprlocation.toterminal(tw)
+        for reprlocation, lines in self.reprlocation_lines:
+            for line in lines:
+                tw.line(line)
+            reprlocation.toterminal(tw)
+
+
+class MultipleDoctestFailures(Exception):
+    def __init__(self, failures):
+        super(MultipleDoctestFailures, self).__init__()
+        self.failures = failures
+
+
+def _init_runner_class():
+    import doctest
+
+    class PytestDoctestRunner(doctest.DebugRunner):
+        """
+        Runner to collect failures.  Note that the out variable in this case is
+        a list instead of a stdout-like object
+        """
+        def __init__(self, checker=None, verbose=None, optionflags=0,
+                     continue_on_failure=True):
+            doctest.DebugRunner.__init__(
+                self, checker=checker, verbose=verbose, optionflags=optionflags)
+            self.continue_on_failure = continue_on_failure
+
+        def report_failure(self, out, test, example, got):
+            failure = doctest.DocTestFailure(test, example, got)
+            if self.continue_on_failure:
+                out.append(failure)
+            else:
+                raise failure
+
+        def report_unexpected_exception(self, out, test, example, exc_info):
+            failure = doctest.UnexpectedException(test, example, exc_info)
+            if self.continue_on_failure:
+                out.append(failure)
+            else:
+                raise failure
+
+    return PytestDoctestRunner
+
+
+def _get_runner(checker=None, verbose=None, optionflags=0,
+                continue_on_failure=True):
+    # We need this in order to do a lazy import on doctest
+    global RUNNER_CLASS
+    if RUNNER_CLASS is None:
+        RUNNER_CLASS = _init_runner_class()
+    return RUNNER_CLASS(
+        checker=checker, verbose=verbose, optionflags=optionflags,
+        continue_on_failure=continue_on_failure)
 
 
 class DoctestItem(pytest.Item):
@@ -95,51 +161,76 @@ class DoctestItem(pytest.Item):
 
     def runtest(self):
         _check_all_skipped(self.dtest)
-        self.runner.run(self.dtest)
+        self._disable_output_capturing_for_darwin()
+        failures = []
+        self.runner.run(self.dtest, out=failures)
+        if failures:
+            raise MultipleDoctestFailures(failures)
+
+    def _disable_output_capturing_for_darwin(self):
+        """
+        Disable output capturing. Otherwise, stdout is lost to doctest (#985)
+        """
+        if platform.system() != 'Darwin':
+            return
+        capman = self.config.pluginmanager.getplugin("capturemanager")
+        if capman:
+            out, err = capman.suspend_global_capture(in_=True)
+            sys.stdout.write(out)
+            sys.stderr.write(err)
 
     def repr_failure(self, excinfo):
         import doctest
+        failures = None
         if excinfo.errisinstance((doctest.DocTestFailure,
                                   doctest.UnexpectedException)):
-            doctestfailure = excinfo.value
-            example = doctestfailure.example
-            test = doctestfailure.test
-            filename = test.filename
-            if test.lineno is None:
-                lineno = None
-            else:
-                lineno = test.lineno + example.lineno + 1
-            message = excinfo.type.__name__
-            reprlocation = ReprFileLocation(filename, lineno, message)
-            checker = _get_checker()
-            report_choice = _get_report_choice(self.config.getoption("doctestreport"))
-            if lineno is not None:
-                lines = doctestfailure.test.docstring.splitlines(False)
-                # add line numbers to the left of the error message
-                lines = ["%03d %s" % (i + test.lineno + 1, x)
-                         for (i, x) in enumerate(lines)]
-                # trim docstring error lines to 10
-                lines = lines[example.lineno - 9:example.lineno + 1]
-            else:
-                lines = ['EXAMPLE LOCATION UNKNOWN, not showing all tests of that example']
-                indent = '>>>'
-                for line in example.source.splitlines():
-                    lines.append('??? %s %s' % (indent, line))
-                    indent = '...'
-            if excinfo.errisinstance(doctest.DocTestFailure):
-                lines += checker.output_difference(example,
-                        doctestfailure.got, report_choice).split("\n")
-            else:
-                inner_excinfo = ExceptionInfo(excinfo.value.exc_info)
-                lines += ["UNEXPECTED EXCEPTION: %s" %
-                            repr(inner_excinfo.value)]
-                lines += traceback.format_exception(*excinfo.value.exc_info)
-            return ReprFailDoctest(reprlocation, lines)
+            failures = [excinfo.value]
+        elif excinfo.errisinstance(MultipleDoctestFailures):
+            failures = excinfo.value.failures
+
+        if failures is not None:
+            reprlocation_lines = []
+            for failure in failures:
+                example = failure.example
+                test = failure.test
+                filename = test.filename
+                if test.lineno is None:
+                    lineno = None
+                else:
+                    lineno = test.lineno + example.lineno + 1
+                message = type(failure).__name__
+                reprlocation = ReprFileLocation(filename, lineno, message)
+                checker = _get_checker()
+                report_choice = _get_report_choice(self.config.getoption("doctestreport"))
+                if lineno is not None:
+                    lines = failure.test.docstring.splitlines(False)
+                    # add line numbers to the left of the error message
+                    lines = ["%03d %s" % (i + test.lineno + 1, x)
+                             for (i, x) in enumerate(lines)]
+                    # trim docstring error lines to 10
+                    lines = lines[max(example.lineno - 9, 0):example.lineno + 1]
+                else:
+                    lines = ['EXAMPLE LOCATION UNKNOWN, not showing all tests of that example']
+                    indent = '>>>'
+                    for line in example.source.splitlines():
+                        lines.append('??? %s %s' % (indent, line))
+                        indent = '...'
+                if isinstance(failure, doctest.DocTestFailure):
+                    lines += checker.output_difference(example,
+                                                       failure.got,
+                                                       report_choice).split("\n")
+                else:
+                    inner_excinfo = ExceptionInfo(failure.exc_info)
+                    lines += ["UNEXPECTED EXCEPTION: %s" %
+                              repr(inner_excinfo.value)]
+                    lines += traceback.format_exception(*failure.exc_info)
+                reprlocation_lines.append((reprlocation, lines))
+            return ReprFailDoctest(reprlocation_lines)
         else:
             return super(DoctestItem, self).repr_failure(excinfo)
 
     def reportinfo(self):
-        return self.fspath, None, "[doctest] %s" % self.name
+        return self.fspath, self.dtest.lineno, "[doctest] %s" % self.name
 
 
 def _get_flag_lookup():
@@ -163,6 +254,17 @@ def get_optionflags(parent):
         flag_acc |= flag_lookup_table[flag]
     return flag_acc
 
+
+def _get_continue_on_failure(config):
+    continue_on_failure = config.getvalue('doctest_continue_on_failure')
+    if continue_on_failure:
+        # We need to turn off this if we use pdb since we should stop at
+        # the first failure
+        if config.getvalue("usepdb"):
+            continue_on_failure = False
+    return continue_on_failure
+
+
 class DoctestTextfile(pytest.Module):
     obj = None
 
@@ -178,8 +280,11 @@ class DoctestTextfile(pytest.Module):
         globs = {'__name__': '__main__'}
 
         optionflags = get_optionflags(self)
-        runner = doctest.DebugRunner(verbose=0, optionflags=optionflags,
-                                     checker=_get_checker())
+
+        runner = _get_runner(
+            verbose=0, optionflags=optionflags,
+            checker=_get_checker(),
+            continue_on_failure=_get_continue_on_failure(self.config))
         _fix_spoof_python2(runner, encoding)
 
         parser = doctest.DocTestParser()
@@ -214,8 +319,10 @@ class DoctestModule(pytest.Module):
         # uses internal doctest module parsing mechanism
         finder = doctest.DocTestFinder()
         optionflags = get_optionflags(self)
-        runner = doctest.DebugRunner(verbose=0, optionflags=optionflags,
-                                     checker=_get_checker())
+        runner = _get_runner(
+            verbose=0, optionflags=optionflags,
+            checker=_get_checker(),
+            continue_on_failure=_get_continue_on_failure(self.config))
 
         for test in finder.find(module, module.__name__):
             if test.examples:  # skip empty doctests
@@ -332,7 +439,7 @@ def _fix_spoof_python2(runner, encoding):
     should patch only doctests for text files because they don't have a way to declare their
     encoding. Doctests in docstrings from Python modules don't have the same problem given that
     Python already decoded the strings.
-    
+
     This fixes the problem related in issue #2434.
     """
     from _pytest.compat import _PY2
@@ -355,6 +462,6 @@ def _fix_spoof_python2(runner, encoding):
 @pytest.fixture(scope='session')
 def doctest_namespace():
     """
-    Inject names into the doctest namespace.
+    Fixture that returns a :py:class:`dict` that will be injected into the namespace of doctests.
     """
     return dict()

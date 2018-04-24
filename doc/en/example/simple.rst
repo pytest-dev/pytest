@@ -3,6 +3,8 @@
 Basic patterns and examples
 ==========================================================
 
+.. _request example:
+
 Pass different values to a test function, depending on command line options
 ----------------------------------------------------------------------------
 
@@ -41,9 +43,9 @@ provide the ``cmdopt`` through a :ref:`fixture function <fixture function>`:
 Let's run this without supplying our new option::
 
     $ pytest -q test_sample.py
-    F
-    ======= FAILURES ========
-    _______ test_answer ________
+    F                                                                    [100%]
+    ================================= FAILURES =================================
+    _______________________________ test_answer ________________________________
     
     cmdopt = 'type1'
     
@@ -63,9 +65,9 @@ Let's run this without supplying our new option::
 And now with supplying a command line option::
 
     $ pytest -q --cmdopt=type2
-    F
-    ======= FAILURES ========
-    _______ test_answer ________
+    F                                                                    [100%]
+    ================================= FAILURES =================================
+    _______________________________ test_answer ________________________________
     
     cmdopt = 'type2'
     
@@ -112,12 +114,12 @@ of subprocesses close to your CPU. Running in an empty
 directory with the above conftest.py::
 
     $ pytest
-    ======= test session starts ========
+    =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 0 items
     
-    ======= no tests ran in 0.12 seconds ========
+    ======================= no tests ran in 0.12 seconds =======================
 
 .. _`excontrolskip`:
 
@@ -127,7 +129,7 @@ Control skipping of tests according to command line option
 .. regendoc:wipe
 
 Here is a ``conftest.py`` file adding a ``--runslow`` command
-line option to control skipping of ``slow`` marked tests:
+line option to control skipping of ``pytest.mark.slow`` marked tests:
 
 .. code-block:: python
 
@@ -136,7 +138,16 @@ line option to control skipping of ``slow`` marked tests:
     import pytest
     def pytest_addoption(parser):
         parser.addoption("--runslow", action="store_true",
-            help="run slow tests")
+                         default=False, help="run slow tests")
+
+    def pytest_collection_modifyitems(config, items):
+        if config.getoption("--runslow"):
+            # --runslow given in cli: do not skip slow tests
+            return
+        skip_slow = pytest.mark.skip(reason="need --runslow option to run")
+        for item in items:
+            if "slow" in item.keywords:
+                item.add_marker(skip_slow)
 
 We can now write a test module like this:
 
@@ -146,45 +157,39 @@ We can now write a test module like this:
     import pytest
 
 
-    slow = pytest.mark.skipif(
-        not pytest.config.getoption("--runslow"),
-        reason="need --runslow option to run"
-    )
-
-
     def test_func_fast():
         pass
 
 
-    @slow
+    @pytest.mark.slow
     def test_func_slow():
         pass
 
 and when running it will see a skipped "slow" test::
 
     $ pytest -rs    # "-rs" means report details on the little 's'
-    ======= test session starts ========
+    =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 2 items
     
-    test_module.py .s
-    ======= short test summary info ========
-    SKIP [1] test_module.py:13: need --runslow option to run
+    test_module.py .s                                                    [100%]
+    ========================= short test summary info ==========================
+    SKIP [1] test_module.py:8: need --runslow option to run
     
-    ======= 1 passed, 1 skipped in 0.12 seconds ========
+    =================== 1 passed, 1 skipped in 0.12 seconds ====================
 
 Or run it including the ``slow`` marked test::
 
     $ pytest --runslow
-    ======= test session starts ========
+    =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 2 items
     
-    test_module.py ..
+    test_module.py ..                                                    [100%]
     
-    ======= 2 passed in 0.12 seconds ========
+    ========================= 2 passed in 0.12 seconds =========================
 
 Writing well integrated assertion helpers
 --------------------------------------------------
@@ -215,9 +220,9 @@ unless the ``--full-trace`` command line option is specified.
 Let's run our little function::
 
     $ pytest -q test_checkconfig.py
-    F
-    ======= FAILURES ========
-    _______ test_something ________
+    F                                                                    [100%]
+    ================================= FAILURES =================================
+    ______________________________ test_something ______________________________
     
         def test_something():
     >       checkconfig(42)
@@ -302,13 +307,13 @@ It's easy to present extra information in a ``pytest`` run:
 which will add the string to the test header accordingly::
 
     $ pytest
-    ======= test session starts ========
+    =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     project deps: mylib-1.1
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 0 items
     
-    ======= no tests ran in 0.12 seconds ========
+    ======================= no tests ran in 0.12 seconds =======================
 
 .. regendoc:wipe
 
@@ -327,25 +332,25 @@ display more information if applicable:
 which will add info only when run with "--v"::
 
     $ pytest -v
-    ======= test session starts ========
+    =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.5
-    cachedir: .cache
+    cachedir: .pytest_cache
     info1: did you know that ...
     did you?
     rootdir: $REGENDOC_TMPDIR, inifile:
     collecting ... collected 0 items
     
-    ======= no tests ran in 0.12 seconds ========
+    ======================= no tests ran in 0.12 seconds =======================
 
 and nothing when run plainly::
 
     $ pytest
-    ======= test session starts ========
+    =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 0 items
     
-    ======= no tests ran in 0.12 seconds ========
+    ======================= no tests ran in 0.12 seconds =======================
 
 profiling test duration
 --------------------------
@@ -363,29 +368,29 @@ out which tests are the slowest. Let's make an artificial test suite:
     import time
 
     def test_funcfast():
-        pass
-
-    def test_funcslow1():
         time.sleep(0.1)
 
-    def test_funcslow2():
+    def test_funcslow1():
         time.sleep(0.2)
+
+    def test_funcslow2():
+        time.sleep(0.3)
 
 Now we can profile which test functions execute the slowest::
 
     $ pytest --durations=3
-    ======= test session starts ========
+    =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 3 items
     
-    test_some_are_slow.py ...
+    test_some_are_slow.py ...                                            [100%]
     
-    ======= slowest 3 test durations ========
-    0.20s call     test_some_are_slow.py::test_funcslow2
-    0.10s call     test_some_are_slow.py::test_funcslow1
-    0.00s setup    test_some_are_slow.py::test_funcfast
-    ======= 3 passed in 0.12 seconds ========
+    ========================= slowest 3 test durations =========================
+    0.30s call     test_some_are_slow.py::test_funcslow2
+    0.20s call     test_some_are_slow.py::test_funcslow1
+    0.10s call     test_some_are_slow.py::test_funcfast
+    ========================= 3 passed in 0.12 seconds =========================
 
 incremental testing - test steps
 ---------------------------------------------------
@@ -440,18 +445,15 @@ tests in a class.  Here is a test module example:
 If we run this::
 
     $ pytest -rx
-    ======= test session starts ========
+    =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 4 items
     
-    test_step.py .Fx.
-    ======= short test summary info ========
-    XFAIL test_step.py::TestUserHandling::()::test_deletion
-      reason: previous test failed (test_modification)
+    test_step.py .Fx.                                                    [100%]
     
-    ======= FAILURES ========
-    _______ TestUserHandling.test_modification ________
+    ================================= FAILURES =================================
+    ____________________ TestUserHandling.test_modification ____________________
     
     self = <test_step.TestUserHandling object at 0xdeadbeef>
     
@@ -460,7 +462,10 @@ If we run this::
     E       assert 0
     
     test_step.py:9: AssertionError
-    ======= 1 failed, 2 passed, 1 xfailed in 0.12 seconds ========
+    ========================= short test summary info ==========================
+    XFAIL test_step.py::TestUserHandling::()::test_deletion
+      reason: previous test failed (test_modification)
+    ============== 1 failed, 2 passed, 1 xfailed in 0.12 seconds ===============
 
 We'll see that ``test_deletion`` was not executed because ``test_modification``
 failed.  It is reported as an "expected failure".
@@ -519,27 +524,27 @@ the ``db`` fixture:
 We can run this::
 
     $ pytest
-    ======= test session starts ========
+    =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 7 items
     
-    test_step.py .Fx.
-    a/test_db.py F
-    a/test_db2.py F
-    b/test_error.py E
+    test_step.py .Fx.                                                    [ 57%]
+    a/test_db.py F                                                       [ 71%]
+    a/test_db2.py F                                                      [ 85%]
+    b/test_error.py E                                                    [100%]
     
-    ======= ERRORS ========
-    _______ ERROR at setup of test_root ________
+    ================================== ERRORS ==================================
+    _______________________ ERROR at setup of test_root ________________________
     file $REGENDOC_TMPDIR/b/test_error.py, line 1
       def test_root(db):  # no db here, will error out
     E       fixture 'db' not found
-    >       available fixtures: cache, capfd, capsys, doctest_namespace, monkeypatch, pytestconfig, record_xml_property, recwarn, tmpdir, tmpdir_factory
+    >       available fixtures: cache, capfd, capfdbinary, caplog, capsys, capsysbinary, doctest_namespace, monkeypatch, pytestconfig, record_property, record_xml_attribute, record_xml_property, recwarn, tmpdir, tmpdir_factory
     >       use 'pytest --fixtures [testpath]' for help on them.
     
     $REGENDOC_TMPDIR/b/test_error.py:1
-    ======= FAILURES ========
-    _______ TestUserHandling.test_modification ________
+    ================================= FAILURES =================================
+    ____________________ TestUserHandling.test_modification ____________________
     
     self = <test_step.TestUserHandling object at 0xdeadbeef>
     
@@ -548,7 +553,7 @@ We can run this::
     E       assert 0
     
     test_step.py:9: AssertionError
-    _______ test_a1 ________
+    _________________________________ test_a1 __________________________________
     
     db = <conftest.DB object at 0xdeadbeef>
     
@@ -558,7 +563,7 @@ We can run this::
     E       assert 0
     
     a/test_db.py:2: AssertionError
-    _______ test_a2 ________
+    _________________________________ test_a2 __________________________________
     
     db = <conftest.DB object at 0xdeadbeef>
     
@@ -568,7 +573,7 @@ We can run this::
     E       assert 0
     
     a/test_db2.py:2: AssertionError
-    ======= 3 failed, 2 passed, 1 xfailed, 1 error in 0.12 seconds ========
+    ========== 3 failed, 2 passed, 1 xfailed, 1 error in 0.12 seconds ==========
 
 The two test modules in the ``a`` directory see the same ``db`` fixture instance
 while the one test in the sister-directory ``b`` doesn't see it.  We could of course
@@ -627,15 +632,15 @@ if you then have failing tests:
 and run them::
 
     $ pytest test_module.py
-    ======= test session starts ========
+    =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 2 items
     
-    test_module.py FF
+    test_module.py FF                                                    [100%]
     
-    ======= FAILURES ========
-    _______ test_fail1 ________
+    ================================= FAILURES =================================
+    ________________________________ test_fail1 ________________________________
     
     tmpdir = local('PYTEST_TMPDIR/test_fail10')
     
@@ -644,14 +649,14 @@ and run them::
     E       assert 0
     
     test_module.py:2: AssertionError
-    _______ test_fail2 ________
+    ________________________________ test_fail2 ________________________________
     
         def test_fail2():
     >       assert 0
     E       assert 0
     
     test_module.py:4: AssertionError
-    ======= 2 failed in 0.12 seconds ========
+    ========================= 2 failed in 0.12 seconds =========================
 
 you will have a "failures" file which contains the failing test ids::
 
@@ -721,7 +726,7 @@ if you then have failing tests:
 and run it::
 
     $ pytest -s test_module.py
-    ======= test session starts ========
+    =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 3 items
@@ -730,8 +735,8 @@ and run it::
     Fexecuting test failed test_module.py::test_call_fails
     F
     
-    ======= ERRORS ========
-    _______ ERROR at setup of test_setup_fails ________
+    ================================== ERRORS ==================================
+    ____________________ ERROR at setup of test_setup_fails ____________________
     
         @pytest.fixture
         def other():
@@ -739,8 +744,8 @@ and run it::
     E       assert 0
     
     test_module.py:6: AssertionError
-    ======= FAILURES ========
-    _______ test_call_fails ________
+    ================================= FAILURES =================================
+    _____________________________ test_call_fails ______________________________
     
     something = None
     
@@ -749,17 +754,60 @@ and run it::
     E       assert 0
     
     test_module.py:12: AssertionError
-    _______ test_fail2 ________
+    ________________________________ test_fail2 ________________________________
     
         def test_fail2():
     >       assert 0
     E       assert 0
     
     test_module.py:15: AssertionError
-    ======= 2 failed, 1 error in 0.12 seconds ========
+    ==================== 2 failed, 1 error in 0.12 seconds =====================
 
 You'll see that the fixture finalizers could use the precise reporting
 information.
+
+.. _pytest current test env:
+
+``PYTEST_CURRENT_TEST`` environment variable
+--------------------------------------------
+
+.. versionadded:: 3.2
+
+Sometimes a test session might get stuck and there might be no easy way to figure out
+which test got stuck, for example if pytest was run in quiet mode (``-q``) or you don't have access to the console
+output. This is particularly a problem if the problem helps only sporadically, the famous "flaky" kind of tests.
+
+``pytest`` sets a ``PYTEST_CURRENT_TEST`` environment variable when running tests, which can be inspected
+by process monitoring utilities or libraries like `psutil <https://pypi.python.org/pypi/psutil>`_ to discover which
+test got stuck if necessary:
+
+.. code-block:: python
+
+    import psutil
+
+    for pid in psutil.pids():
+        environ = psutil.Process(pid).environ()
+        if 'PYTEST_CURRENT_TEST' in environ:
+            print(f'pytest process {pid} running: {environ["PYTEST_CURRENT_TEST"]}')
+
+During the test session pytest will set ``PYTEST_CURRENT_TEST`` to the current test
+:ref:`nodeid <nodeids>` and the current stage, which can be ``setup``, ``call``
+and ``teardown``.
+
+For example, when running a single test function named ``test_foo`` from ``foo_module.py``,
+``PYTEST_CURRENT_TEST`` will be set to:
+
+#. ``foo_module.py::test_foo (setup)``
+#. ``foo_module.py::test_foo (call)``
+#. ``foo_module.py::test_foo (teardown)``
+
+In that order.
+
+.. note::
+
+    The contents of ``PYTEST_CURRENT_TEST`` is meant to be human readable and the actual format
+    can be changed between releases (even bug fixes) so it shouldn't be relied on for scripting
+    or automation.
 
 Freezing pytest 
 ---------------
@@ -782,15 +830,20 @@ Instead of freezing the pytest runner as a separate executable, you can make
 your frozen program work as the pytest runner by some clever
 argument handling during program startup. This allows you to 
 have a single executable, which is usually more convenient.
+Please note that the mechanism for plugin discovery used by pytest
+(setupttools entry points) doesn't work with frozen executables so pytest
+can't find any third party plugins automatically. To include third party plugins 
+like ``pytest-timeout`` they must be imported explicitly and passed on to pytest.main.
 
 .. code-block:: python
 
     # contents of app_main.py
     import sys
+    import pytest_timeout  # Third party plugin
 
     if len(sys.argv) > 1 and sys.argv[1] == '--pytest':
         import pytest
-        sys.exit(pytest.main(sys.argv[2:]))
+        sys.exit(pytest.main(sys.argv[2:], plugins=[pytest_timeout]))
     else:
         # normal application execution: at this point argv can be parsed
         # by your argument-parsing library of choice as usual
@@ -801,3 +854,4 @@ This allows you to execute tests using the frozen
 application with standard ``pytest`` command-line options::
 
     ./app_main --pytest --verbose --tb=long --junitxml=results.xml test-suite/
+

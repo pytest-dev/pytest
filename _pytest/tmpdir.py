@@ -8,7 +8,7 @@ import py
 from _pytest.monkeypatch import MonkeyPatch
 
 
-class TempdirFactory:
+class TempdirFactory(object):
     """Factory for temporary directories under the common base temp directory.
 
     The base directory can be configured using the ``--basetemp`` option.
@@ -25,7 +25,7 @@ class TempdirFactory:
             provides an empty unique-per-test-invocation directory
             and is guaranteed to be empty.
         """
-        #py.log._apiwarn(">1.1", "use tmpdir function argument")
+        # py.log._apiwarn(">1.1", "use tmpdir function argument")
         return self.getbasetemp().ensure(string, dir=dir)
 
     def mktemp(self, basename, numbered=True):
@@ -38,7 +38,7 @@ class TempdirFactory:
             p = basetemp.mkdir(basename)
         else:
             p = py.path.local.make_numbered_dir(prefix=basename,
-                keep=0, rootdir=basetemp, lock_timeout=None)
+                                                keep=0, rootdir=basetemp, lock_timeout=None)
         self.trace("mktemp", p)
         return p
 
@@ -116,6 +116,8 @@ def tmpdir(request, tmpdir_factory):
     created as a sub directory of the base temporary
     directory.  The returned object is a `py.path.local`_
     path object.
+
+    .. _`py.path.local`: https://py.readthedocs.io/en/latest/path.html
     """
     name = request.node.name
     name = re.sub(r"[\W]", "_", name)

@@ -26,19 +26,19 @@ and if you installed `PyYAML`_ or a compatible YAML-parser you can
 now execute the test specification::
 
     nonpython $ pytest test_simple.yml
-    ======= test session starts ========
+    =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR/nonpython, inifile:
     collected 2 items
     
-    test_simple.yml F.
+    test_simple.yml F.                                                   [100%]
     
-    ======= FAILURES ========
-    _______ usecase: hello ________
+    ================================= FAILURES =================================
+    ______________________________ usecase: hello ______________________________
     usecase execution failed
        spec failed: 'some': 'other'
        no further details known at this point.
-    ======= 1 failed, 1 passed in 0.12 seconds ========
+    ==================== 1 failed, 1 passed in 0.12 seconds ====================
 
 .. regendoc:wipe
 
@@ -58,21 +58,21 @@ your own domain specific testing language this way.
 consulted when reporting in ``verbose`` mode::
 
     nonpython $ pytest -v
-    ======= test session starts ========
+    =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.5
-    cachedir: .cache
+    cachedir: .pytest_cache
     rootdir: $REGENDOC_TMPDIR/nonpython, inifile:
     collecting ... collected 2 items
     
-    test_simple.yml::hello FAILED
-    test_simple.yml::ok PASSED
+    test_simple.yml::hello FAILED                                        [ 50%]
+    test_simple.yml::ok PASSED                                           [100%]
     
-    ======= FAILURES ========
-    _______ usecase: hello ________
+    ================================= FAILURES =================================
+    ______________________________ usecase: hello ______________________________
     usecase execution failed
        spec failed: 'some': 'other'
        no further details known at this point.
-    ======= 1 failed, 1 passed in 0.12 seconds ========
+    ==================== 1 failed, 1 passed in 0.12 seconds ====================
 
 .. regendoc:wipe
 
@@ -80,7 +80,7 @@ While developing your custom test collection and execution it's also
 interesting to just look at the collection tree::
 
     nonpython $ pytest --collect-only
-    ======= test session starts ========
+    =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR/nonpython, inifile:
     collected 2 items
@@ -88,4 +88,4 @@ interesting to just look at the collection tree::
       <YamlItem 'hello'>
       <YamlItem 'ok'>
     
-    ======= no tests ran in 0.12 seconds ========
+    ======================= no tests ran in 0.12 seconds =======================

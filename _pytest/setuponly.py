@@ -44,7 +44,7 @@ def _show_fixture_action(fixturedef, msg):
     config = fixturedef._fixturemanager.config
     capman = config.pluginmanager.getplugin('capturemanager')
     if capman:
-        out, err = capman.suspendcapture()
+        out, err = capman.suspend_global_capture()
 
     tw = config.get_terminal_writer()
     tw.line()
@@ -63,7 +63,7 @@ def _show_fixture_action(fixturedef, msg):
         tw.write('[{0}]'.format(fixturedef.cached_param))
 
     if capman:
-        capman.resumecapture()
+        capman.resume_global_capture()
         sys.stdout.write(out)
         sys.stderr.write(err)
 

@@ -33,7 +33,7 @@ pytest enables test parametrization at several levels:
 .. versionchanged:: 2.4
     Several improvements.
 
-The builtin ``pytest.mark.parametrize`` decorator enables
+The builtin :ref:`pytest.mark.parametrize ref` decorator enables
 parametrization of arguments for a test function.  Here is a typical example
 of a test function that implements checking that a certain input leads
 to an expected output::
@@ -53,15 +53,15 @@ tuples so that the ``test_eval`` function will run three times using
 them in turn::
 
     $ pytest
-    ======= test session starts ========
+    =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 3 items
     
-    test_expectation.py ..F
+    test_expectation.py ..F                                              [100%]
     
-    ======= FAILURES ========
-    _______ test_eval[6*9-42] ________
+    ================================= FAILURES =================================
+    ____________________________ test_eval[6*9-42] _____________________________
     
     test_input = '6*9', expected = 42
     
@@ -76,7 +76,7 @@ them in turn::
     E        +  where 54 = eval('6*9')
     
     test_expectation.py:8: AssertionError
-    ======= 1 failed, 2 passed in 0.12 seconds ========
+    ==================== 1 failed, 2 passed in 0.12 seconds ====================
 
 As designed in this example, only one pair of input/output values fails
 the simple test function.  And as usual with test function arguments,
@@ -99,37 +99,17 @@ for example with the builtin ``mark.xfail``::
     def test_eval(test_input, expected):
         assert eval(test_input) == expected
 
-.. note::
-
-  prior to version 3.1 the supported mechanism for marking values
-  used the syntax::
-
-        import pytest
-        @pytest.mark.parametrize("test_input,expected", [
-            ("3+5", 8),
-            ("2+4", 6),
-            pytest.mark.xfail(("6*9", 42),),
-        ])
-        def test_eval(test_input, expected):
-            assert eval(test_input) == expected
-
-
-  This was an initial hack to support the feature but soon was demonstrated to be incomplete,
-  broken for passing functions or applying multiple marks with the same name but different parameters.
-  The old syntax will be removed in pytest-4.0.
-
-
 Let's run this::
 
     $ pytest
-    ======= test session starts ========
+    =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 3 items
     
-    test_expectation.py ..x
+    test_expectation.py ..x                                              [100%]
     
-    ======= 2 passed, 1 xfailed in 0.12 seconds ========
+    =================== 2 passed, 1 xfailed in 0.12 seconds ====================
 
 The one parameter set which caused a failure previously now
 shows up as an "xfailed (expected to fail)" test.
@@ -143,15 +123,8 @@ To get all combinations of multiple parametrized arguments you can stack
     def test_foo(x, y):
         pass
 
-This will run the test with the arguments set to x=0/y=2, x=0/y=3, x=1/y=2 and
-x=1/y=3.
-
-.. note::
-
-    In versions prior to 2.4 one needed to specify the argument
-    names as a tuple.  This remains valid but the simpler ``"name1,name2,..."``
-    comma-separated-string syntax is now advertised first because
-    it's easier to write and produces less line noise.
+This will run the test with the arguments set to ``x=0/y=2``, ``x=1/y=2``, 
+``x=0/y=3``, and ``x=1/y=3`` exhausting parameters in the order of the decorators.
 
 .. _`pytest_generate_tests`:
 
@@ -187,20 +160,20 @@ command line option and the parametrization of our test function::
     def pytest_generate_tests(metafunc):
         if 'stringinput' in metafunc.fixturenames:
             metafunc.parametrize("stringinput",
-                                 metafunc.config.option.stringinput)
+                                 metafunc.config.getoption('stringinput'))
 
 If we now pass two stringinput values, our test will run twice::
 
     $ pytest -q --stringinput="hello" --stringinput="world" test_strings.py
-    ..
+    ..                                                                   [100%]
     2 passed in 0.12 seconds
 
 Let's also run with a stringinput that will lead to a failing test::
 
     $ pytest -q --stringinput="!" test_strings.py
-    F
-    ======= FAILURES ========
-    _______ test_valid_string[!] ________
+    F                                                                    [100%]
+    ================================= FAILURES =================================
+    ___________________________ test_valid_string[!] ___________________________
     
     stringinput = '!'
     
@@ -220,19 +193,16 @@ If you don't specify a stringinput it will be skipped because
 list::
 
     $ pytest -q -rs test_strings.py
-    s
-    ======= short test summary info ========
-    SKIP [1] test_strings.py:1: got empty parameter set ['stringinput'], function test_valid_string at $REGENDOC_TMPDIR/test_strings.py:1
+    s                                                                    [100%]
+    ========================= short test summary info ==========================
+    SKIP [1] test_strings.py: got empty parameter set ['stringinput'], function test_valid_string at $REGENDOC_TMPDIR/test_strings.py:1
     1 skipped in 0.12 seconds
+
+Note that when calling ``metafunc.parametrize`` multiple times with different parameter sets, all parameter names across 
+those sets cannot be duplicated, otherwise an error will be raised.
+
+More examples
+-------------
 
 For further examples, you might want to look at :ref:`more
 parametrization examples <paramexamples>`.
-
-.. _`metafunc object`:
-
-The **metafunc** object
--------------------------------------------
-
-.. currentmodule:: _pytest.python
-.. autoclass:: Metafunc
-    :members:

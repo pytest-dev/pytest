@@ -1,4 +1,4 @@
-invoke
-tox
 gitpython
+invoke
 towncrier
+tox

@@ -5,7 +5,7 @@ from __future__ import absolute_import, division, print_function
 import collections
 import sys
 
-import _pytest._pluggy as pluggy
+import pluggy
 import _pytest._code
 import py
 import pytest
@@ -24,23 +24,27 @@ class Option(object):
 
     @property
     def args(self):
-        l = []
+        values = []
         if self.verbose:
-            l.append('-v')
+            values.append('-v')
         if self.fulltrace:
-            l.append('--fulltrace')
-        return l
+            values.append('--fulltrace')
+        return values
 
-def pytest_generate_tests(metafunc):
-    if "option" in metafunc.fixturenames:
-        metafunc.addcall(id="default",
-                         funcargs={'option': Option(verbose=False)})
-        metafunc.addcall(id="verbose",
-                         funcargs={'option': Option(verbose=True)})
-        metafunc.addcall(id="quiet",
-                         funcargs={'option': Option(verbose= -1)})
-        metafunc.addcall(id="fulltrace",
-                         funcargs={'option': Option(fulltrace=True)})
+
+@pytest.fixture(params=[
+    Option(verbose=False),
+    Option(verbose=True),
+    Option(verbose=-1),
+    Option(fulltrace=True),
+], ids=[
+    "default",
+    "verbose",
+    "quiet",
+    "fulltrace",
+])
+def option(request):
+    return request.param
 
 
 @pytest.mark.parametrize('input,expected', [
@@ -77,8 +81,8 @@ class TestTerminal(object):
             ])
         else:
             result.stdout.fnmatch_lines([
-            "*test_pass_skip_fail.py .sF"
-        ])
+                "*test_pass_skip_fail.py .sF*"
+            ])
         result.stdout.fnmatch_lines([
             "    def test_func():",
             ">       assert 0",
@@ -110,7 +114,7 @@ class TestTerminal(object):
         item.config.pluginmanager.register(tr)
         location = item.reportinfo()
         tr.config.hook.pytest_runtest_logstart(nodeid=item.nodeid,
-            location=location, fspath=str(item.fspath))
+                                               location=location, fspath=str(item.fspath))
         linecomp.assert_contains_lines([
             "*test_show_runtest_logstart.py*"
         ])
@@ -141,12 +145,12 @@ class TestTerminal(object):
         """)
         result = testdir.runpytest(p2)
         result.stdout.fnmatch_lines([
-            "*test_p2.py .",
+            "*test_p2.py .*",
             "*1 passed*",
         ])
         result = testdir.runpytest("-v", p2)
         result.stdout.fnmatch_lines([
-            "*test_p2.py::TestMore::test_p1* <- *test_p1.py*PASSED",
+            "*test_p2.py::TestMore::test_p1* <- *test_p1.py*PASSED*",
         ])
 
     def test_itemreport_directclasses_not_shown_as_subclasses(self, testdir):
@@ -213,6 +217,16 @@ class TestTerminal(object):
         result = testdir.runpytest()
         result.stdout.fnmatch_lines(['collected 1 item'])
 
+    def test_rewrite(self, testdir, monkeypatch):
+        config = testdir.parseconfig()
+        f = py.io.TextIO()
+        monkeypatch.setattr(f, 'isatty', lambda *args: True)
+        tr = TerminalReporter(config, f)
+        tr._tw.fullwidth = 10
+        tr.write('hello')
+        tr.rewrite('hey', erase=True)
+        assert f.getvalue() == 'hello' + '\r' + 'hey' + (6 * ' ')
+
 
 class TestCollectonly(object):
     def test_collectonly_basic(self, testdir):
@@ -222,8 +236,8 @@ class TestCollectonly(object):
         """)
         result = testdir.runpytest("--collect-only",)
         result.stdout.fnmatch_lines([
-           "<Module 'test_collectonly_basic.py'>",
-           "  <Function 'test_func'>",
+            "<Module 'test_collectonly_basic.py'>",
+            "  <Function 'test_func'>",
         ])
 
     def test_collectonly_skipped_module(self, testdir):
@@ -264,13 +278,13 @@ class TestCollectonly(object):
                     pass
         """)
         result = testdir.runpytest("--collect-only", p)
-        #assert stderr.startswith("inserting into sys.path")
+        # assert stderr.startswith("inserting into sys.path")
         assert result.ret == 0
         result.stdout.fnmatch_lines([
             "*<Module '*.py'>",
             "* <Function 'test_func1'*>",
             "* <Class 'TestClass'>",
-            #"*  <Instance '()'>",
+            # "*  <Instance '()'>",
             "*   <Function 'test_method'*>",
         ])
 
@@ -315,10 +329,11 @@ def test_repr_python_version(monkeypatch):
     try:
         monkeypatch.setattr(sys, 'version_info', (2, 5, 1, 'final', 0))
         assert repr_pythonversion() == "2.5.1-final-0"
-        py.std.sys.version_info = x = (2, 3)
+        sys.version_info = x = (2, 3)
         assert repr_pythonversion() == str(x)
     finally:
-        monkeypatch.undo() # do this early as pytest can get confused
+        monkeypatch.undo()  # do this early as pytest can get confused
+
 
 class TestFixtureReporting(object):
     def test_setup_fixture_error(self, testdir):
@@ -378,7 +393,7 @@ class TestFixtureReporting(object):
             "*def test_fail():",
             "*failingfunc*",
             "*1 failed*1 error*",
-         ])
+        ])
 
     def test_setup_teardown_output_and_test_failure(self, testdir):
         """ Test for issue #442 """
@@ -403,7 +418,8 @@ class TestFixtureReporting(object):
             "*teardown func*",
 
             "*1 failed*",
-         ])
+        ])
+
 
 class TestTerminalFunctional(object):
     def test_deselected(self, testdir):
@@ -415,12 +431,37 @@ class TestTerminalFunctional(object):
                 def test_three():
                     pass
            """
-        )
+                                      )
         result = testdir.runpytest("-k", "test_two:", testpath)
         result.stdout.fnmatch_lines([
-            "*test_deselected.py ..",
-            "=* 1 test*deselected *=",
+            "collected 3 items / 1 deselected",
+            "*test_deselected.py ..*",
         ])
+        assert result.ret == 0
+
+    def test_show_deselected_items_using_markexpr_before_test_execution(
+            self, testdir):
+        testdir.makepyfile("""
+            import pytest
+
+            @pytest.mark.foo
+            def test_foobar():
+                pass
+
+            @pytest.mark.bar
+            def test_bar():
+                pass
+
+            def test_pass():
+                pass
+        """)
+        result = testdir.runpytest('-m', 'not foo')
+        result.stdout.fnmatch_lines([
+            "collected 3 items / 1 deselected",
+            "*test_show_des*.py ..*",
+            "*= 2 passed, 1 deselected in * =*",
+        ])
+        assert "= 1 deselected =" not in result.stdout.str()
         assert result.ret == 0
 
     def test_no_skip_summary_if_failure(self, testdir):
@@ -451,7 +492,7 @@ class TestTerminalFunctional(object):
         finally:
             old.chdir()
         result.stdout.fnmatch_lines([
-            "test_passes.py ..",
+            "test_passes.py ..*",
             "* 2 pass*",
         ])
         assert result.ret == 0
@@ -462,13 +503,13 @@ class TestTerminalFunctional(object):
                 pass
         """)
         result = testdir.runpytest()
-        verinfo = ".".join(map(str, py.std.sys.version_info[:3]))
+        verinfo = ".".join(map(str, sys.version_info[:3]))
         result.stdout.fnmatch_lines([
             "*===== test session starts ====*",
             "platform %s -- Python %s*pytest-%s*py-%s*pluggy-%s" % (
-                py.std.sys.platform, verinfo,
+                sys.platform, verinfo,
                 pytest.__version__, py.__version__, pluggy.__version__),
-            "*test_header_trailer_info.py .",
+            "*test_header_trailer_info.py .*",
             "=* 1 passed*in *.[0-9][0-9] seconds *=",
         ])
         if pytest.config.pluginmanager.list_plugin_distinfo():
@@ -485,7 +526,7 @@ class TestTerminalFunctional(object):
         """)
         result = testdir.runpytest(p1, '-l')
         result.stdout.fnmatch_lines([
-            #"_ _ * Locals *",
+            # "_ _ * Locals *",
             "x* = 3",
             "y* = 'xxxxxx*"
         ])
@@ -541,6 +582,23 @@ class TestTerminalFunctional(object):
         assert "===" not in s
         assert "passed" not in s
 
+    def test_report_collectionfinish_hook(self, testdir):
+        testdir.makeconftest("""
+            def pytest_report_collectionfinish(config, startdir, items):
+                return ['hello from hook: {0} items'.format(len(items))]
+        """)
+        testdir.makepyfile("""
+            import pytest
+            @pytest.mark.parametrize('i', range(3))
+            def test(i):
+                pass
+        """)
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines([
+            "collected 3 items",
+            "hello from hook: 3 items",
+        ])
+
 
 def test_fail_extra_reporting(testdir):
     testdir.makepyfile("def test_this(): assert 0")
@@ -552,10 +610,12 @@ def test_fail_extra_reporting(testdir):
         "FAIL*test_fail_extra_reporting*",
     ])
 
+
 def test_fail_reporting_on_pass(testdir):
     testdir.makepyfile("def test_this(): assert 1")
     result = testdir.runpytest('-rf')
     assert 'short test summary' not in result.stdout.str()
+
 
 def test_pass_extra_reporting(testdir):
     testdir.makepyfile("def test_this(): assert 1")
@@ -567,10 +627,12 @@ def test_pass_extra_reporting(testdir):
         "PASS*test_pass_extra_reporting*",
     ])
 
+
 def test_pass_reporting_on_fail(testdir):
     testdir.makepyfile("def test_this(): assert 0")
     result = testdir.runpytest('-rp')
     assert 'short test summary' not in result.stdout.str()
+
 
 def test_pass_output_reporting(testdir):
     testdir.makepyfile("""
@@ -583,6 +645,7 @@ def test_pass_output_reporting(testdir):
     result.stdout.fnmatch_lines([
         "Four score and seven years ago...",
     ])
+
 
 def test_color_yes(testdir):
     testdir.makepyfile("def test_this(): assert 1")
@@ -622,10 +685,12 @@ def test_color_yes_collection_on_non_atty(testdir, verbose):
 
 
 def test_getreportopt():
-    class config(object):
-        class option(object):
+    class Config(object):
+        class Option(object):
             reportchars = ""
             disable_warnings = True
+        option = Option()
+    config = Config()
 
     config.option.reportchars = "sf"
     assert getreportopt(config) == "sf"
@@ -660,6 +725,7 @@ def test_terminalreporter_reportopt_addopts(testdir):
         "*1 passed*"
     ])
 
+
 def test_tbstyle_short(testdir):
     p = testdir.makepyfile("""
         import pytest
@@ -685,6 +751,7 @@ def test_tbstyle_short(testdir):
     assert 'x = 0' in s
     assert 'assert x' in s
 
+
 def test_traceconfig(testdir, monkeypatch):
     result = testdir.runpytest("--traceconfig")
     result.stdout.fnmatch_lines([
@@ -697,6 +764,7 @@ class TestGenericReporting(object):
     """ this test class can be subclassed with a different option
         provider to run e.g. distributed tests.
     """
+
     def test_collect_fail(self, testdir, option):
         testdir.makepyfile("import xyz\n")
         result = testdir.runpytest(*option.args)
@@ -719,10 +787,8 @@ class TestGenericReporting(object):
         result.stdout.fnmatch_lines([
             "*def test_1():*",
             "*def test_2():*",
-            "*!! Interrupted: stopping after 2 failures*!!*",
             "*2 failed*",
         ])
-
 
     def test_tb_option(self, testdir, option):
         testdir.makepyfile("""
@@ -787,6 +853,52 @@ def pytest_report_header(config, startdir):
             str(testdir.tmpdir),
         ])
 
+    def test_show_capture(self, testdir):
+        testdir.makepyfile("""
+            import sys
+            import logging
+            def test_one():
+                sys.stdout.write('!This is stdout!')
+                sys.stderr.write('!This is stderr!')
+                logging.warning('!This is a warning log msg!')
+                assert False, 'Something failed'
+        """)
+
+        result = testdir.runpytest("--tb=short")
+        result.stdout.fnmatch_lines(["!This is stdout!",
+                                     "!This is stderr!",
+                                     "*WARNING*!This is a warning log msg!"])
+
+        result = testdir.runpytest("--show-capture=all", "--tb=short")
+        result.stdout.fnmatch_lines(["!This is stdout!",
+                                     "!This is stderr!",
+                                     "*WARNING*!This is a warning log msg!"])
+
+        stdout = testdir.runpytest(
+            "--show-capture=stdout", "--tb=short").stdout.str()
+        assert "!This is stderr!" not in stdout
+        assert "!This is stdout!" in stdout
+        assert "!This is a warning log msg!" not in stdout
+
+        stdout = testdir.runpytest(
+            "--show-capture=stderr", "--tb=short").stdout.str()
+        assert "!This is stdout!" not in stdout
+        assert "!This is stderr!" in stdout
+        assert "!This is a warning log msg!" not in stdout
+
+        stdout = testdir.runpytest(
+            "--show-capture=log", "--tb=short").stdout.str()
+        assert "!This is stdout!" not in stdout
+        assert "!This is stderr!" not in stdout
+        assert "!This is a warning log msg!" in stdout
+
+        stdout = testdir.runpytest(
+            "--show-capture=no", "--tb=short").stdout.str()
+        assert "!This is stdout!" not in stdout
+        assert "!This is stderr!" not in stdout
+        assert "!This is a warning log msg!" not in stdout
+
+
 @pytest.mark.xfail("not hasattr(os, 'dup')")
 def test_fdopen_kept_alive_issue124(testdir):
     testdir.makepyfile("""
@@ -805,6 +917,7 @@ def test_fdopen_kept_alive_issue124(testdir):
         "*2 passed*"
     ])
 
+
 def test_tbstyle_native_setup_error(testdir):
     testdir.makepyfile("""
         import pytest
@@ -817,8 +930,9 @@ def test_tbstyle_native_setup_error(testdir):
     """)
     result = testdir.runpytest("--tb=native")
     result.stdout.fnmatch_lines([
-            '*File *test_tbstyle_native_setup_error.py", line *, in setup_error_fixture*'
-            ])
+        '*File *test_tbstyle_native_setup_error.py", line *, in setup_error_fixture*'
+    ])
+
 
 def test_terminal_summary(testdir):
     testdir.makeconftest("""
@@ -872,7 +986,7 @@ def test_terminal_summary_warnings_are_displayed(testdir):
     ("yellow", "1 passed, 1 warnings", {"warnings": (1,),
                                         "passed": (1,)}),
 
-    ("green", "5 passed", {"passed": (1,2,3,4,5)}),
+    ("green", "5 passed", {"passed": (1, 2, 3, 4, 5)}),
 
 
     # "Boring" statuses.  These have no effect on the color of the summary
@@ -901,13 +1015,13 @@ def test_terminal_summary_warnings_are_displayed(testdir):
 
     # A couple more complex combinations
     ("red", "1 failed, 2 passed, 3 xfailed",
-        {"passed": (1,2), "failed": (1,), "xfailed": (1,2,3)}),
+        {"passed": (1, 2), "failed": (1,), "xfailed": (1, 2, 3)}),
 
     ("green", "1 passed, 2 skipped, 3 deselected, 2 xfailed",
         {"passed": (1,),
-        "skipped": (1,2),
-        "deselected": (1,2,3),
-        "xfailed": (1,2)}),
+         "skipped": (1, 2),
+         "deselected": (1, 2, 3),
+         "xfailed": (1, 2)}),
 ])
 def test_summary_stats(exp_line, exp_color, stats_arg):
     print("Based on stats: %s" % stats_arg)
@@ -925,3 +1039,162 @@ def test_no_trailing_whitespace_after_inifile_word(testdir):
     testdir.makeini('[pytest]')
     result = testdir.runpytest('')
     assert 'inifile: tox.ini\n' in result.stdout.str()
+
+
+class TestProgress(object):
+
+    @pytest.fixture
+    def many_tests_files(self, testdir):
+        testdir.makepyfile(
+            test_bar="""
+                import pytest
+                @pytest.mark.parametrize('i', range(10))
+                def test_bar(i): pass
+            """,
+            test_foo="""
+                import pytest
+                @pytest.mark.parametrize('i', range(5))
+                def test_foo(i): pass
+            """,
+            test_foobar="""
+                import pytest
+                @pytest.mark.parametrize('i', range(5))
+                def test_foobar(i): pass
+            """,
+        )
+
+    def test_zero_tests_collected(self, testdir):
+        """Some plugins (testmon for example) might issue pytest_runtest_logreport without any tests being
+        actually collected (#2971)."""
+        testdir.makeconftest("""
+        def pytest_collection_modifyitems(items, config):
+            from _pytest.runner import CollectReport
+            for node_id in ('nodeid1', 'nodeid2'):
+                rep = CollectReport(node_id, 'passed', None, None)
+                rep.when = 'passed'
+                rep.duration = 0.1
+                config.hook.pytest_runtest_logreport(report=rep)
+        """)
+        output = testdir.runpytest()
+        assert 'ZeroDivisionError' not in output.stdout.str()
+        output.stdout.fnmatch_lines([
+            '=* 2 passed in *=',
+        ])
+
+    def test_normal(self, many_tests_files, testdir):
+        output = testdir.runpytest()
+        output.stdout.re_match_lines([
+            r'test_bar.py \.{10} \s+ \[ 50%\]',
+            r'test_foo.py \.{5} \s+ \[ 75%\]',
+            r'test_foobar.py \.{5} \s+ \[100%\]',
+        ])
+
+    def test_verbose(self, many_tests_files, testdir):
+        output = testdir.runpytest('-v')
+        output.stdout.re_match_lines([
+            r'test_bar.py::test_bar\[0\] PASSED \s+ \[  5%\]',
+            r'test_foo.py::test_foo\[4\] PASSED \s+ \[ 75%\]',
+            r'test_foobar.py::test_foobar\[4\] PASSED \s+ \[100%\]',
+        ])
+
+    def test_xdist_normal(self, many_tests_files, testdir):
+        pytest.importorskip('xdist')
+        output = testdir.runpytest('-n2')
+        output.stdout.re_match_lines([
+            r'\.{20} \s+ \[100%\]',
+        ])
+
+    def test_xdist_verbose(self, many_tests_files, testdir):
+        pytest.importorskip('xdist')
+        output = testdir.runpytest('-n2', '-v')
+        output.stdout.re_match_lines_random([
+            r'\[gw\d\] \[\s*\d+%\] PASSED test_bar.py::test_bar\[1\]',
+            r'\[gw\d\] \[\s*\d+%\] PASSED test_foo.py::test_foo\[1\]',
+            r'\[gw\d\] \[\s*\d+%\] PASSED test_foobar.py::test_foobar\[1\]',
+        ])
+
+    def test_capture_no(self, many_tests_files, testdir):
+        output = testdir.runpytest('-s')
+        output.stdout.re_match_lines([
+            r'test_bar.py \.{10}',
+            r'test_foo.py \.{5}',
+            r'test_foobar.py \.{5}',
+        ])
+
+        output = testdir.runpytest('--capture=no')
+        assert "%]" not in output.stdout.str()
+
+
+class TestProgressWithTeardown(object):
+    """Ensure we show the correct percentages for tests that fail during teardown (#3088)"""
+
+    @pytest.fixture
+    def contest_with_teardown_fixture(self, testdir):
+        testdir.makeconftest('''
+            import pytest
+
+            @pytest.fixture
+            def fail_teardown():
+                yield
+                assert False
+        ''')
+
+    @pytest.fixture
+    def many_files(self, testdir, contest_with_teardown_fixture):
+        testdir.makepyfile(
+            test_bar='''
+                import pytest
+                @pytest.mark.parametrize('i', range(5))
+                def test_bar(fail_teardown, i):
+                    pass
+            ''',
+            test_foo='''
+                import pytest
+                @pytest.mark.parametrize('i', range(15))
+                def test_foo(fail_teardown, i):
+                    pass
+            ''',
+        )
+
+    def test_teardown_simple(self, testdir, contest_with_teardown_fixture):
+        testdir.makepyfile('''
+            def test_foo(fail_teardown):
+                pass
+        ''')
+        output = testdir.runpytest()
+        output.stdout.re_match_lines([
+            r'test_teardown_simple.py \.E\s+\[100%\]',
+        ])
+
+    def test_teardown_with_test_also_failing(self, testdir, contest_with_teardown_fixture):
+        testdir.makepyfile('''
+            def test_foo(fail_teardown):
+                assert False
+        ''')
+        output = testdir.runpytest()
+        output.stdout.re_match_lines([
+            r'test_teardown_with_test_also_failing.py FE\s+\[100%\]',
+        ])
+
+    def test_teardown_many(self, testdir, many_files):
+        output = testdir.runpytest()
+        output.stdout.re_match_lines([
+            r'test_bar.py (\.E){5}\s+\[ 25%\]',
+            r'test_foo.py (\.E){15}\s+\[100%\]',
+        ])
+
+    def test_teardown_many_verbose(self, testdir, many_files):
+        output = testdir.runpytest('-v')
+        output.stdout.re_match_lines([
+            r'test_bar.py::test_bar\[0\] PASSED\s+\[  5%\]',
+            r'test_bar.py::test_bar\[0\] ERROR\s+\[  5%\]',
+            r'test_bar.py::test_bar\[4\] PASSED\s+\[ 25%\]',
+            r'test_bar.py::test_bar\[4\] ERROR\s+\[ 25%\]',
+        ])
+
+    def test_xdist_normal(self, many_files, testdir):
+        pytest.importorskip('xdist')
+        output = testdir.runpytest('-n2')
+        output.stdout.re_match_lines([
+            r'[\.E]{40} \s+ \[100%\]',
+        ])
