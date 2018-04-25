@@ -1,1 +1,0 @@
-Added a more indicative error message when parametrizing a function whose argument takes a default value.

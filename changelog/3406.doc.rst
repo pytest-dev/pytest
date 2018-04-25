@@ -1,1 +1,0 @@
-Fix typo in ``caplog`` fixture documentation, which incorrectly identified certain attributes as methods.

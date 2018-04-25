@@ -1,1 +1,0 @@
-``pytest.raises`` now raises ``TypeError`` when receiving an unknown keyword argument.
