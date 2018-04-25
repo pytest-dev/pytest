@@ -166,6 +166,8 @@ Find out what kind of builtin :ref:`pytest fixtures <fixtures>` exist with the c
 
     pytest --fixtures   # shows builtin and custom fixtures
 
+Note that this command omits fixtures with leading ``_`` unless the ``-v`` option is added.
+
 Continue reading
 -------------------------------------
 

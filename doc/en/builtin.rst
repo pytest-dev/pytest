@@ -12,7 +12,7 @@ For information on plugin hooks and objects, see :ref:`plugins`.
 
 For information on the ``pytest.mark`` mechanism, see :ref:`mark`.
 
-For information about fixtures, see :ref:`fixtures`. To see a complete list of available fixtures, type::
+For information about fixtures, see :ref:`fixtures`. To see a complete list of available fixtures (add ``-v`` to also see fixtures with leading ``_``), type ::
 
     $ pytest -q --fixtures
     cache
@@ -77,9 +77,9 @@ For information about fixtures, see :ref:`fixtures`. To see a complete list of a
         
         Captured logs are available through the following methods::
         
-        * caplog.text()          -> string containing formatted log output
-        * caplog.records()       -> list of logging.LogRecord instances
-        * caplog.record_tuples() -> list of (logger_name, level, message) tuples
+        * caplog.text            -> string containing formatted log output
+        * caplog.records         -> list of logging.LogRecord instances
+        * caplog.record_tuples   -> list of (logger_name, level, message) tuples
         * caplog.clear()         -> clear captured records and formatted log output string
     monkeypatch
         The returned ``monkeypatch`` fixture provides these
