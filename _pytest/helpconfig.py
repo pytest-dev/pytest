@@ -138,7 +138,8 @@ def showhelp(config):
     tw.line("to see available markers type: pytest --markers")
     tw.line("to see available fixtures type: pytest --fixtures")
     tw.line("(shown according to specified file_or_dir or current dir "
-            "if not specified)")
+            "if not specified; fixtures with leading '_' are only shown "
+            "with the '-v' option")
 
     for warningreport in reporter.stats.get('warnings', []):
         tw.line("warning : " + warningreport.message, red=True)

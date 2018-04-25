@@ -333,7 +333,7 @@ class Session(nodes.FSCollector):
 
     def gethookproxy(self, fspath):
         # check if we have the common case of running
-        # hooks with all conftest.py filesall conftest.py
+        # hooks with all conftest.py files
         pm = self.config.pluginmanager
         my_conftestmodules = pm._getconftestmodules(fspath)
         remove_mods = pm._conftest_plugins.difference(my_conftestmodules)
