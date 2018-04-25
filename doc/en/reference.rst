@@ -496,6 +496,14 @@ tmpdir_factory
 .. automethod:: TempdirFactory.mktemp
 .. automethod:: TempdirFactory.getbasetemp
 
+FixtureManager
+~~~~~~~~~~~~~~
+
+.. currentmodule:: _pytest.fixtures
+
+.. autoclass:: _pytest.fixtures.FixtureManager
+    :members:
+
 
 .. _`hook-reference`:
 
