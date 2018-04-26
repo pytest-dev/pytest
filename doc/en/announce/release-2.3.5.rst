@@ -14,7 +14,7 @@ few interesting new plugins saw the light last month:
 
 And several others like pytest-django saw maintenance releases.
 For a more complete list, check out 
-https://pypi.python.org/pypi?%3Aaction=search&term=pytest&submit=search.
+https://pypi.org/search/?q=pytest
 
 For general information see:
 

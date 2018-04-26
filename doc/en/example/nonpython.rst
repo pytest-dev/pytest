@@ -10,7 +10,7 @@ A basic example for specifying tests in Yaml files
 --------------------------------------------------------------
 
 .. _`pytest-yamlwsgi`: http://bitbucket.org/aafshar/pytest-yamlwsgi/src/tip/pytest_yamlwsgi.py
-.. _`PyYAML`: http://pypi.python.org/pypi/PyYAML/
+.. _`PyYAML`: https://pypi.org/project/PyYAML/
 
 Here is an example ``conftest.py`` (extracted from Ali Afshnars special purpose `pytest-yamlwsgi`_ plugin).   This ``conftest.py`` will  collect ``test*.yml`` files and will execute the yaml-formatted content as custom tests:
 

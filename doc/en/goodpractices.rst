@@ -168,9 +168,9 @@ Note that this layout also works in conjunction with the ``src`` layout mentione
     to avoid surprises such as a test module getting imported twice.
 
 
-.. _`virtualenv`: http://pypi.python.org/pypi/virtualenv
+.. _`virtualenv`: https://pypi.org/project/virtualenv/
 .. _`buildout`: http://www.buildout.org/
-.. _pip: http://pypi.python.org/pypi/pip
+.. _pip: https://pypi.org/project/pip/
 
 .. _`use tox`:
 
@@ -205,7 +205,7 @@ Integrating with setuptools / ``python setup.py test`` / ``pytest-runner``
 --------------------------------------------------------------------------
 
 You can integrate test runs into your setuptools based project
-with the `pytest-runner <https://pypi.python.org/pypi/pytest-runner>`_ plugin.
+with the `pytest-runner <https://pypi.org/project/pytest-runner/>`_ plugin.
 
 Add this to ``setup.py`` file:
 
