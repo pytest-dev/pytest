@@ -26,7 +26,7 @@ program source code to the remote place.  All test results
 are reported back and displayed to your local test session.
 You may specify different Python versions and interpreters.
 
-.. _`pytest-xdist`: http://pypi.python.org/pypi/pytest-xdist
+.. _`pytest-xdist`: https://pypi.org/project/pytest-xdist/
 
 Usage examples
 ---------------------
