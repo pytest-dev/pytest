@@ -88,6 +88,10 @@ def main():
             'write_to': '_pytest/_version.py',
         },
         url='http://pytest.org',
+        project_urls={
+            'Source': 'https://github.com/pytest-dev/pytest',
+            'Tracker': 'https://github.com/pytest-dev/pytest/issues',
+        },
         license='MIT license',
         platforms=['unix', 'linux', 'osx', 'cygwin', 'win32'],
         author=(

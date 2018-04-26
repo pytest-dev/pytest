@@ -622,6 +622,19 @@ class TestMetafunc(object):
             "*uses no argument 'y'*",
         ])
 
+    def test_parametrize_gives_indicative_error_on_function_with_default_argument(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+
+            @pytest.mark.parametrize('x, y', [('a', 'b')])
+            def test_simple(x, y=1):
+                assert len(x) == 1
+        """)
+        result = testdir.runpytest("--collect-only")
+        result.stdout.fnmatch_lines([
+            "*already takes an argument 'y' with a default value",
+        ])
+
     def test_addcalls_and_parametrize_indirect(self):
         def func(x, y):
             pass
