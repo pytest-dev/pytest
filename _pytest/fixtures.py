@@ -172,7 +172,7 @@ def get_parametrized_fixture_keys(item, scopenum):
             if scopenum == 0:    # session
                 key = (argname, param_index)
             elif scopenum == 1:  # package
-                key = (argname, param_index, item.fspath)
+                key = (argname, param_index, item.fspath.dirpath())
             elif scopenum == 2:  # module
                 key = (argname, param_index, item.fspath)
             elif scopenum == 3:  # class
