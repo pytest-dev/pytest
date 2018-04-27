@@ -498,7 +498,7 @@ class Package(Module):
         nodes.FSCollector.__init__(
             self, fspath, parent=parent,
             config=config, session=session, nodeid=nodeid)
-        self.name = fspath.pyimport().__name__
+        self.name = fspath.dirname
         self.trace = session.trace
         self._norecursepatterns = session._norecursepatterns
         for path in list(session.config.pluginmanager._duplicatepaths):
