@@ -1,0 +1,1 @@
+Added ``ignore_xfail`` argument to pytest.xfail. This could be useful if computation error is not small but the preparation needs to succeed.
