@@ -8,7 +8,7 @@
 .. image:: https://img.shields.io/pypi/v/pytest.svg
     :target: https://pypi.org/project/pytest/
 
-.. image:: https://anaconda.org/conda-forge/pytest/badges/version.svg
+.. image:: https://img.shields.io/conda/vn/conda-forge/pytest.svg
     :target: https://anaconda.org/conda-forge/pytest
 
 .. image:: https://img.shields.io/pypi/pyversions/pytest.svg
