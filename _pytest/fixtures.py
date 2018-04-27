@@ -72,7 +72,8 @@ def scopeproperty(name=None, doc=None):
 
 
 def get_scope_package(node, fixturedef):
-    cls = node.Package
+    import pytest
+    cls = pytest.Package
     current = node
     fixture_package_name = os.path.join(fixturedef.baseid, '__init__.py')
     while current and (type(current) is not cls or

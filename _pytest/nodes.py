@@ -116,7 +116,6 @@ class Node(object):
     Function = _CompatProperty("Function")
     File = _CompatProperty("File")
     Item = _CompatProperty("Item")
-    Package = _CompatProperty("Package")
 
     def _getcustomclass(self, name):
         maybe_compatprop = getattr(type(self), name)
