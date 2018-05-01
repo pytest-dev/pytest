@@ -2,7 +2,6 @@ from __future__ import absolute_import, division, print_function
 import sys
 import platform
 import os
-import signal
 
 import _pytest._code
 from _pytest.debugging import SUPPORTS_BREAKPOINT_BUILTIN
