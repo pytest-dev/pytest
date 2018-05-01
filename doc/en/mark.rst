@@ -34,8 +34,8 @@ which also serve as documentation.
 
 .. `marker-iteration`
 
-Marker iteration
-=================
+Marker revamp and iteration
+---------------------------
 
 .. versionadded:: 3.6
 
