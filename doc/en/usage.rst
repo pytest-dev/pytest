@@ -152,9 +152,9 @@ allows one to drop into the PDB_ prompt via a command line option::
 
     pytest --pdb
 
-This will invoke the Python debugger on every failure.  Often you might
-only want to do this for the first failing test to understand a certain
-failure situation::
+This will invoke the Python debugger on every failure (or KeyboardInterrupt).
+Often you might only want to do this for the first failing test to understand
+a certain failure situation::
 
     pytest -x --pdb   # drop to PDB on first failure, then end test session
     pytest --pdb --maxfail=3  # drop to PDB for first three failures

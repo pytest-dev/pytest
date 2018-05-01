@@ -1,0 +1,2 @@
+The ``--pdb`` option now causes KeyboardInterrupt to enter the debugger, instead of stopping the test session.
+On python 2.7, hitting CTRL+C again exits the debugger. On python 3.2 and higher, use CTRL+D.
