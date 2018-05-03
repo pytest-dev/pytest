@@ -108,7 +108,7 @@ the command line arguments before they get processed:
             num = max(multiprocessing.cpu_count() / 2, 1)
             args[:] = ["-n", str(num)] + args
 
-If you have the `xdist plugin <https://pypi.python.org/pypi/pytest-xdist>`_ installed
+If you have the `xdist plugin <https://pypi.org/project/pytest-xdist/>`_ installed
 you will now always perform test runs using a number
 of subprocesses close to your CPU. Running in an empty
 directory with the above conftest.py::
@@ -778,7 +778,7 @@ which test got stuck, for example if pytest was run in quiet mode (``-q``) or yo
 output. This is particularly a problem if the problem helps only sporadically, the famous "flaky" kind of tests.
 
 ``pytest`` sets a ``PYTEST_CURRENT_TEST`` environment variable when running tests, which can be inspected
-by process monitoring utilities or libraries like `psutil <https://pypi.python.org/pypi/psutil>`_ to discover which
+by process monitoring utilities or libraries like `psutil <https://pypi.org/project/psutil/>`_ to discover which
 test got stuck if necessary:
 
 .. code-block:: python

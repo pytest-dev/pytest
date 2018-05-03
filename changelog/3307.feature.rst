@@ -1,3 +1,0 @@
-pytest not longer changes the log level of the root logger when the
-``log-level`` parameter has greater numeric value than that of the level of
-the root logger, which makes it play better with custom logging configuration in user code.

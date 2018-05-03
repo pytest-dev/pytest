@@ -5,10 +5,10 @@ Installation and Getting Started
 
 **Platforms**: Unix/Posix and Windows
 
-**PyPI package name**: `pytest <http://pypi.python.org/pypi/pytest>`_
+**PyPI package name**: `pytest <https://pypi.org/project/pytest/>`_
 
-**Dependencies**: `py <http://pypi.python.org/pypi/py>`_,
-`colorama (Windows) <http://pypi.python.org/pypi/colorama>`_,
+**Dependencies**: `py <https://pypi.org/project/py/>`_,
+`colorama (Windows) <https://pypi.org/project/colorama/>`_,
 
 **Documentation as PDF**: `download latest <https://media.readthedocs.org/pdf/pytest/latest/pytest.pdf>`_
 

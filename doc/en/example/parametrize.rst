@@ -160,7 +160,7 @@ together with the actual data, instead of listing them separately.
 A quick port of "testscenarios"
 ------------------------------------
 
-.. _`test scenarios`: http://pypi.python.org/pypi/testscenarios/
+.. _`test scenarios`: https://pypi.org/project/testscenarios/
 
 Here is a quick port to run tests configured with `test scenarios`_,
 an add-on from Robert Collins for the standard unittest framework. We
