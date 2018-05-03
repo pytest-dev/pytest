@@ -16,7 +16,7 @@ def pytest_addoption(parser):
     group = parser.getgroup("general")
     group._addoption(
         '--pdb', dest="usepdb", action="store_true",
-        help="start the interactive Python debugger on errors.")
+        help="start the interactive Python debugger on errors or KeyboardInterrupt.")
     group._addoption(
         '--pdbcls', dest="usepdb_cls", metavar="modulename:classname",
         help="start a custom interactive Python debugger on errors. "

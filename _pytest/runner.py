@@ -176,7 +176,8 @@ def check_interactive_exception(call, report):
 def call_runtest_hook(item, when, **kwds):
     hookname = "pytest_runtest_" + when
     ihook = getattr(item.ihook, hookname)
-    return CallInfo(lambda: ihook(item=item, **kwds), when=when)
+    return CallInfo(lambda: ihook(item=item, **kwds), when=when,
+                    treat_keyboard_interrupt_as_exception=item.config.getvalue("usepdb"))
 
 
 class CallInfo(object):
@@ -184,7 +185,7 @@ class CallInfo(object):
     #: None or ExceptionInfo object.
     excinfo = None
 
-    def __init__(self, func, when):
+    def __init__(self, func, when, treat_keyboard_interrupt_as_exception=False):
         #: context of invocation: one of "setup", "call",
         #: "teardown", "memocollect"
         self.when = when
@@ -192,8 +193,11 @@ class CallInfo(object):
         try:
             self.result = func()
         except KeyboardInterrupt:
-            self.stop = time()
-            raise
+            if treat_keyboard_interrupt_as_exception:
+                self.excinfo = ExceptionInfo()
+            else:
+                self.stop = time()
+                raise
         except:  # noqa
             self.excinfo = ExceptionInfo()
         self.stop = time()

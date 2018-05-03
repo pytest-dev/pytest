@@ -114,6 +114,14 @@ class TestPDB(object):
         assert rep.failed
         assert len(pdblist) == 0
 
+    def test_pdb_on_KeyboardInterrupt(self, testdir, pdblist):
+        rep = runpdb_and_get_report(testdir, """
+            def test_func():
+                raise KeyboardInterrupt
+        """)
+        assert rep.failed
+        assert len(pdblist) == 1
+
     def test_pdb_interaction(self, testdir):
         p1 = testdir.makepyfile("""
             def test_1():
