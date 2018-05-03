@@ -5,8 +5,6 @@ we hope ot remove
 import attr
 import keyword
 
-from . import MarkInfo, MarkDecorator
-
 from _pytest.config import UsageError
 
 
@@ -18,11 +16,8 @@ class MarkMapping(object):
     own_mark_names = attr.ib()
 
     @classmethod
-    def from_keywords(cls, keywords):
-        mark_names = set()
-        for key, value in keywords.items():
-            if isinstance(value, MarkInfo) or isinstance(value, MarkDecorator):
-                mark_names.add(key)
+    def from_item(cls, item):
+        mark_names = set(mark.name for mark in item.iter_markers())
         return cls(mark_names)
 
     def __getitem__(self, name):
@@ -70,7 +65,7 @@ python_keywords_allowed_list = ["or", "and", "not"]
 
 def matchmark(colitem, markexpr):
     """Tries to match on any marker names, attached to the given colitem."""
-    return eval(markexpr, {}, MarkMapping.from_keywords(colitem.keywords))
+    return eval(markexpr, {}, MarkMapping.from_item(colitem))
 
 
 def matchkeyword(colitem, keywordexpr):
