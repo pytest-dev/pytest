@@ -295,7 +295,7 @@ def test_mark_option_custom(spec, testdir):
         def pytest_collection_modifyitems(items):
             for item in items:
                 if "interface" in item.nodeid:
-                    item.keywords["interface"] = pytest.mark.interface
+                    item.add_marker(pytest.mark.interface)
     """)
     testdir.makepyfile("""
         def test_interface():
