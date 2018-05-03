@@ -295,7 +295,7 @@ def test_mark_option_custom(spec, testdir):
         def pytest_collection_modifyitems(items):
             for item in items:
                 if "interface" in item.nodeid:
-                    item.keywords["interface"] = pytest.mark.interface
+                    item.add_marker(pytest.mark.interface)
     """)
     testdir.makepyfile("""
         def test_interface():
@@ -927,3 +927,35 @@ def test_parameterset_for_parametrize_marks(testdir, mark):
 def test_parameterset_for_parametrize_bad_markname(testdir):
     with pytest.raises(pytest.UsageError):
         test_parameterset_for_parametrize_marks(testdir, 'bad')
+
+
+def test_mark_expressions_no_smear(testdir):
+    testdir.makepyfile("""
+        import pytest
+
+        class BaseTests(object):
+            def test_something(self):
+                pass
+
+        @pytest.mark.FOO
+        class TestFooClass(BaseTests):
+            pass
+
+        @pytest.mark.BAR
+        class TestBarClass(BaseTests):
+            pass
+    """)
+
+    reprec = testdir.inline_run("-m", 'FOO')
+    passed, skipped, failed = reprec.countoutcomes()
+    dlist = reprec.getcalls("pytest_deselected")
+    assert passed == 1
+    assert skipped == failed == 0
+    deselected_tests = dlist[0].items
+    assert len(deselected_tests) == 1
+
+    # keywords smear - expected behaviour
+    reprec_keywords = testdir.inline_run("-k", 'FOO')
+    passed_k, skipped_k, failed_k = reprec_keywords.countoutcomes()
+    assert passed_k == 2
+    assert skipped_k == failed_k == 0
