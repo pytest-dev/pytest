@@ -8,6 +8,67 @@
 
 .. towncrier release notes start
 
+Pytest 3.6.0 (2018-05-03)
+=========================
+
+Features
+--------
+
+- Now when ``@pytest.fixture`` is applied more than once to the same function a
+  ``ValueError`` is raised. This buggy behavior would cause surprising problems
+  and if was working for a test suite it was mostly by accident. (`#2334
+  <https://github.com/pytest-dev/pytest/issues/2334>`_)
+
+- Support for Python 3.7's builtin ``breakpoint()`` method, see `Using the
+  builtin breakpoint function
+  <https://docs.pytest.org/en/latest/usage.html#breakpoint-builtin>`_ for
+  details. (`#3180 <https://github.com/pytest-dev/pytest/issues/3180>`_)
+
+- ``monkeypatch`` now supports a ``context()`` function which acts as a context
+  manager which undoes all patching done within the ``with`` block. (`#3290
+  <https://github.com/pytest-dev/pytest/issues/3290>`_)
+
+- The ``--pdb`` option now causes KeyboardInterrupt to enter the debugger,
+  instead of stopping the test session. On python 2.7, hitting CTRL+C again
+  exits the debugger. On python 3.2 and higher, use CTRL+D. (`#3299
+  <https://github.com/pytest-dev/pytest/issues/3299>`_)
+
+- pytest not longer changes the log level of the root logger when the
+  ``log-level`` parameter has greater numeric value than that of the level of
+  the root logger, which makes it play better with custom logging configuration
+  in user code. (`#3307 <https://github.com/pytest-dev/pytest/issues/3307>`_)
+
+- Revamp the internals of the ``pytest.mark`` implementation with correct per
+  node handling and introduce a new ``Node.iter_markers`` API for mark
+  iteration over nodes which fixes a number of long standing bugs caused by the
+  old approach. More details can be found in `the marks documentation
+  <https://docs.pytest.org/en/latest/mark.html#marker-revamp-and-iteration>`_.
+  (`#3317 <https://github.com/pytest-dev/pytest/issues/3317>`_)
+
+
+Bug Fixes
+---------
+
+- A rare race-condition which might result in corrupted ``.pyc`` files on
+  Windows has been hopefully solved. (`#3008
+  <https://github.com/pytest-dev/pytest/issues/3008>`_)
+
+- Also use iter_marker for discovering the marks applying for marker
+  expressions from the cli to avoid the bad data from the legacy mark storage.
+  (`#3441 <https://github.com/pytest-dev/pytest/issues/3441>`_)
+
+
+Trivial/Internal Changes
+------------------------
+
+- ``pytest`` now depends on the `python-atomicwrites
+  <https://github.com/untitaker/python-atomicwrites>`_ library. (`#3008
+  <https://github.com/pytest-dev/pytest/issues/3008>`_)
+
+- Update all pypi.python.org URLs to pypi.org. (`#3431
+  <https://github.com/pytest-dev/pytest/issues/3431>`_)
+
+
 Pytest 3.5.1 (2018-04-23)
 =========================
 
