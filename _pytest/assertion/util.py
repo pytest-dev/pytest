@@ -171,10 +171,22 @@ def _diff_text(left, right, verbose=False):
     """
     from difflib import ndiff
     explanation = []
+
+    def escape_for_readable_diff(binary_text):
+        """
+        Ensures that the internal string is always valid unicode, converting any bytes safely to valid unicode.
+        This is done using repr() which then needs post-processing to fix the encompassing quotes and un-escape
+        newlines and carriage returns (#429).
+        """
+        r = six.text_type(repr(binary_text)[1:-1])
+        r = r.replace(r'\n', '\n')
+        r = r.replace(r'\r', '\r')
+        return r
+
     if isinstance(left, six.binary_type):
-        left = u(repr(left)[1:-1]).replace(r'\n', '\n')
+        left = escape_for_readable_diff(left)
     if isinstance(right, six.binary_type):
-        right = u(repr(right)[1:-1]).replace(r'\n', '\n')
+        right = escape_for_readable_diff(right)
     if not verbose:
         i = 0  # just in case left or right has zero length
         for i in range(min(len(left), len(right))):
@@ -197,6 +209,10 @@ def _diff_text(left, right, verbose=False):
                 left = left[:-i]
                 right = right[:-i]
     keepends = True
+    if left.isspace() or right.isspace():
+        left = repr(str(left))
+        right = repr(str(right))
+        explanation += [u'Strings contain only whitespace, escaping them using repr()']
     explanation += [line.strip('\n')
                     for line in ndiff(left.splitlines(keepends),
                                       right.splitlines(keepends))]
