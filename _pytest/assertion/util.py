@@ -172,9 +172,9 @@ def _diff_text(left, right, verbose=False):
     from difflib import ndiff
     explanation = []
 
-    def to_unicode_text(binary_text):
+    def escape_for_readable_diff(binary_text):
         """
-        This ensures that the internal string is always valid unicode, converting any bytes safely to valid unicode.
+        Ensures that the internal string is always valid unicode, converting any bytes safely to valid unicode.
         This is done using repr() which then needs post-processing to fix the encompassing quotes and un-escape
         newlines and carriage returns (#429).
         """
@@ -184,9 +184,9 @@ def _diff_text(left, right, verbose=False):
         return r
 
     if isinstance(left, six.binary_type):
-        left = to_unicode_text(left)
+        left = escape_for_readable_diff(left)
     if isinstance(right, six.binary_type):
-        right = to_unicode_text(right)
+        right = escape_for_readable_diff(right)
     if not verbose:
         i = 0  # just in case left or right has zero length
         for i in range(min(len(left), len(right))):
