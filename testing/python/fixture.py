@@ -523,6 +523,7 @@ class TestRequestBasic(object):
         testdir.makepyfile("""
             import sys
             import pytest
+            from _pytest.compat import safe_str
             import gc
 
             @pytest.fixture(autouse=True)
@@ -539,7 +540,7 @@ class TestRequestBasic(object):
 
                     gc.collect()
                     leaked_types = sum(1 for _ in gc.garbage
-                                    if 'PseudoFixtureDef' in str(_))
+                                       if 'PseudoFixtureDef' in safe_str(_))
 
                     gc.garbage[:] = []
 
