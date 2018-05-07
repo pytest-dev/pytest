@@ -7,7 +7,7 @@ import sys
 import _pytest.pytester as pytester
 from _pytest.pytester import HookRecorder
 from _pytest.pytester import CwdSnapshot, SysModulesSnapshot, SysPathsSnapshot
-from _pytest.config import PytestPluginManager
+from _pytest.config.pluginmanager import PytestPluginManager
 from _pytest.main import EXIT_OK, EXIT_TESTSFAILED
 
 

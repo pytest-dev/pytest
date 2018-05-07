@@ -834,7 +834,8 @@ class Testdir(object):
         args = self._ensure_basetemp(args)
 
         import _pytest.config
-        config = _pytest.config._prepareconfig(args, self.plugins)
+        config = _pytest.config.get_config()
+        config = _pytest.config._prepareconfig(config, args, self.plugins)
         # we don't know what the test will do with this half-setup config
         # object and thus we make sure it gets unconfigured properly in any
         # case (otherwise capturing could still be active, for example)

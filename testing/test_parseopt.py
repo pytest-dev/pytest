@@ -4,55 +4,56 @@ import sys
 import os
 import py
 import pytest
-from _pytest import config as parseopt
+from _pytest.config import argument_parsing
 
 
 @pytest.fixture
 def parser():
-    return parseopt.Parser()
+    return argument_parsing.Parser()
 
 
 class TestParser(object):
     def test_no_help_by_default(self, capsys):
-        parser = parseopt.Parser(usage="xyz")
+        parser = argument_parsing.Parser(usage="xyz")
         pytest.raises(SystemExit, lambda: parser.parse(["-h"]))
         out, err = capsys.readouterr()
         assert err.find("error: unrecognized arguments") != -1
 
     def test_argument(self):
-        with pytest.raises(parseopt.ArgumentError):
+        with pytest.raises(argument_parsing.ArgumentError):
             # need a short or long option
-            argument = parseopt.Argument()
-        argument = parseopt.Argument('-t')
+            argument = argument_parsing.Argument()
+        argument = argument_parsing.Argument('-t')
         assert argument._short_opts == ['-t']
         assert argument._long_opts == []
         assert argument.dest == 't'
-        argument = parseopt.Argument('-t', '--test')
+        argument = argument_parsing.Argument('-t', '--test')
         assert argument._short_opts == ['-t']
         assert argument._long_opts == ['--test']
         assert argument.dest == 'test'
-        argument = parseopt.Argument('-t', '--test', dest='abc')
+        argument = argument_parsing.Argument('-t', '--test', dest='abc')
         assert argument.dest == 'abc'
         assert str(argument) == (
             "Argument(_short_opts: ['-t'], _long_opts: ['--test'], dest: 'abc')"
         )
 
     def test_argument_type(self):
-        argument = parseopt.Argument('-t', dest='abc', type=int)
+        argument = argument_parsing.Argument('-t', dest='abc', type=int)
         assert argument.type is int
-        argument = parseopt.Argument('-t', dest='abc', type=str)
+        argument = argument_parsing.Argument('-t', dest='abc', type=str)
         assert argument.type is str
-        argument = parseopt.Argument('-t', dest='abc', type=float)
+        argument = argument_parsing.Argument('-t', dest='abc', type=float)
         assert argument.type is float
         with pytest.warns(DeprecationWarning):
             with pytest.raises(KeyError):
-                argument = parseopt.Argument('-t', dest='abc', type='choice')
-        argument = parseopt.Argument('-t', dest='abc', type=str,
-                                     choices=['red', 'blue'])
+                argument = argument_parsing.Argument('-t', dest='abc', type='choice')
+        argument = argument_parsing.Argument(
+            '-t', dest='abc', type=str,
+            choices=['red', 'blue'])
         assert argument.type is str
 
     def test_argument_processopt(self):
-        argument = parseopt.Argument('-t', type=int)
+        argument = argument_parsing.Argument('-t', type=int)
         argument.default = 42
         argument.dest = 'abc'
         res = argument.attrs()
@@ -80,13 +81,13 @@ class TestParser(object):
         assert groups_names == list("132")
 
     def test_group_addoption(self):
-        group = parseopt.OptionGroup("hello")
+        group = argument_parsing.OptionGroup("hello")
         group.addoption("--option1", action="store_true")
         assert len(group.options) == 1
-        assert isinstance(group.options[0], parseopt.Argument)
+        assert isinstance(group.options[0], argument_parsing.Argument)
 
     def test_group_addoption_conflict(self):
-        group = parseopt.OptionGroup("hello again")
+        group = argument_parsing.OptionGroup("hello again")
         group.addoption("--option1", "--option-1", action="store_true")
         with pytest.raises(ValueError) as err:
             group.addoption("--option1", "--option-one", action="store_true")
@@ -111,11 +112,11 @@ class TestParser(object):
         parser.addoption("--hello", dest="hello", action="store")
         args = parser.parse(['--hello', 'world'])
         assert args.hello == "world"
-        assert not getattr(args, parseopt.FILE_OR_DIR)
+        assert not getattr(args, argument_parsing.FILE_OR_DIR)
 
     def test_parse2(self, parser):
         args = parser.parse([py.path.local()])
-        assert getattr(args, parseopt.FILE_OR_DIR)[0] == py.path.local()
+        assert getattr(args, argument_parsing.FILE_OR_DIR)[0] == py.path.local()
 
     def test_parse_known_args(self, parser):
         parser.parse_known_args([py.path.local()])
@@ -162,13 +163,13 @@ class TestParser(object):
         parser.addoption("-R", action='store_true')
         parser.addoption("-S", action='store_false')
         args = parser.parse(['-R', '4', '2', '-S'])
-        assert getattr(args, parseopt.FILE_OR_DIR) == ['4', '2']
+        assert getattr(args, argument_parsing.FILE_OR_DIR) == ['4', '2']
         args = parser.parse(['-R', '-S', '4', '2', '-R'])
-        assert getattr(args, parseopt.FILE_OR_DIR) == ['4', '2']
+        assert getattr(args, argument_parsing.FILE_OR_DIR) == ['4', '2']
         assert args.R is True
         assert args.S is False
         args = parser.parse(['-R', '4', '-S', '2'])
-        assert getattr(args, parseopt.FILE_OR_DIR) == ['4', '2']
+        assert getattr(args, argument_parsing.FILE_OR_DIR) == ['4', '2']
         assert args.R is True
         assert args.S is False
 
@@ -180,7 +181,7 @@ class TestParser(object):
                 option.default = 42
             elif option.type is str:
                 option.default = "world"
-        parser = parseopt.Parser(processopt=defaultget)
+        parser = argument_parsing.Parser(processopt=defaultget)
         parser.addoption("--this", dest="this", type=int, action="store")
         parser.addoption("--hello", dest="hello", type=str, action="store")
         parser.addoption("--no", dest="no", action="store_true")
@@ -190,7 +191,7 @@ class TestParser(object):
         assert option.no is False
 
     def test_drop_short_helper(self):
-        parser = argparse.ArgumentParser(formatter_class=parseopt.DropShorterLongHelpFormatter)
+        parser = argparse.ArgumentParser(formatter_class=argument_parsing.DropShorterLongHelpFormatter)
         parser.add_argument('-t', '--twoword', '--duo', '--two-word', '--two',
                             help='foo').map_long_option = {'two': 'two-word'}
         # throws error on --deux only!

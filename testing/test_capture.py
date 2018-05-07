@@ -60,7 +60,7 @@ def StdCapture(out=True, err=True, in_=True):
 class TestCaptureManager(object):
     def test_getmethod_default_no_fd(self, monkeypatch):
         from _pytest.capture import pytest_addoption
-        from _pytest.config import Parser
+        from _pytest.config.argument_parsing import Parser
         parser = Parser()
         pytest_addoption(parser)
         default = parser._groups[0].options[0].default
