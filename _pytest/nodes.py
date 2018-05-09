@@ -183,20 +183,32 @@ class Node(object):
         self.keywords[marker.name] = marker
         self.own_markers.append(marker)
 
-    def iter_markers(self):
+    def iter_markers(self, name=None):
         """
+        :param name: if given, filter the results by the name attribute
+
         iterate over all markers of the node
         """
-        return (x[1] for x in self.iter_markers_with_node())
+        return (x[1] for x in self.iter_markers_with_node(name=name))
 
-    def iter_markers_with_node(self):
+    def iter_markers_with_node(self, name=None):
         """
+        :param name: if given, filter the results by the name attribute
+
         iterate over all markers of the node
         returns sequence of tuples (node, mark)
         """
         for node in reversed(self.listchain()):
             for mark in node.own_markers:
-                yield node, mark
+                if name is None or getattr(mark, 'name', None) == name:
+                    yield node, mark
+
+    def get_closest_marker(self, name, default=None):
+        """return the first marker matching the name
+        :param default: fallback return value of no marker was found
+        :param name: name to filter by
+        """
+        return next(self.iter_markers(name=name), default)
 
     def get_marker(self, name):
         """ get a marker object from this node or None if
@@ -206,7 +218,7 @@ class Node(object):
 
           deprecated
         """
-        markers = [x for x in self.iter_markers() if x.name == name]
+        markers = list(self.iter_markers(name=name))
         if markers:
             return MarkInfo(markers)
 

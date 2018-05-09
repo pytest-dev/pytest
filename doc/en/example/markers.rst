@@ -330,7 +330,7 @@ specifies via named environments::
             "env(name): mark test to run only on named environment")
 
     def pytest_runtest_setup(item):
-        envnames = [mark.args[0] for mark in item.iter_markers() if mark.name == "env"]
+        envnames = [mark.args[0] for mark in item.iter_markers(name='env')]
         if envnames:
             if item.config.getoption("-E") not in envnames:
                 pytest.skip("test requires env in %r" % envnames)
@@ -402,10 +402,9 @@ Below is the config file that will be used in the next examples::
     import sys
 
     def pytest_runtest_setup(item):
-        for marker in item.iter_markers():
-            if marker.name == 'my_marker':
-                print(marker)
-                sys.stdout.flush()
+        for marker in item.iter_markers(name='my_marker'):
+            print(marker)
+            sys.stdout.flush()
 
 A custom marker can have its argument set, i.e. ``args`` and ``kwargs`` properties, defined by either invoking it as a callable or using ``pytest.mark.MARKER_NAME.with_args``. These two methods achieve the same effect most of the time.
 
@@ -458,10 +457,9 @@ test function.  From a conftest file we can read it like this::
     import sys
 
     def pytest_runtest_setup(item):
-        for mark in item.iter_markers():
-            if mark.name == 'glob':
-                print ("glob args=%s kwargs=%s" %(mark.args, mark.kwargs))
-                sys.stdout.flush()
+        for mark in item.iter_markers(name='glob'):
+            print ("glob args=%s kwargs=%s" %(mark.args, mark.kwargs))
+            sys.stdout.flush()
 
 Let's run this without capturing output and see what we get::
 

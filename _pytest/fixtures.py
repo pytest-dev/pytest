@@ -988,7 +988,7 @@ class FixtureManager(object):
             argnames = getfuncargnames(func, cls=cls)
         else:
             argnames = ()
-        usefixtures = flatten(mark.args for mark in node.iter_markers() if mark.name == "usefixtures")
+        usefixtures = flatten(mark.args for mark in node.iter_markers(name="usefixtures"))
         initialnames = argnames
         initialnames = tuple(usefixtures) + initialnames
         fm = node.session._fixturemanager

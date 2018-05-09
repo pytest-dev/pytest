@@ -64,9 +64,7 @@ def pytest_runtest_setup(item):
         item._skipped_by_mark = True
         skip(eval_skipif.getexplanation())
 
-    for skip_info in item.iter_markers():
-        if skip_info.name != 'skip':
-            continue
+    for skip_info in item.iter_markers(name='skip'):
         item._skipped_by_mark = True
         if 'reason' in skip_info.kwargs:
             skip(skip_info.kwargs['reason'])

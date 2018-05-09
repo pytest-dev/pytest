@@ -553,7 +553,6 @@ class TestFunctional(object):
         self.assert_markers(items, test_foo=('a', 'b'), test_bar=('a',))
 
     @pytest.mark.issue568
-    @pytest.mark.xfail(reason="markers smear on methods of base classes")
     def test_mark_should_not_pass_to_siebling_class(self, testdir):
         p = testdir.makepyfile("""
             import pytest
@@ -573,8 +572,16 @@ class TestFunctional(object):
         """)
         items, rec = testdir.inline_genitems(p)
         base_item, sub_item, sub_item_other = items
-        assert not hasattr(base_item.obj, 'b')
-        assert not hasattr(sub_item_other.obj, 'b')
+        print(items, [x.nodeid for x in items])
+        # legacy api smears
+        assert hasattr(base_item.obj, 'b')
+        assert hasattr(sub_item_other.obj, 'b')
+        assert hasattr(sub_item.obj, 'b')
+
+        # new api seregates
+        assert not list(base_item.iter_markers(name='b'))
+        assert not list(sub_item_other.iter_markers(name='b'))
+        assert list(sub_item.iter_markers(name='b'))
 
     def test_mark_decorator_baseclasses_merged(self, testdir):
         p = testdir.makepyfile("""
@@ -597,6 +604,26 @@ class TestFunctional(object):
         items, rec = testdir.inline_genitems(p)
         self.assert_markers(items, test_foo=('a', 'b', 'c'),
                             test_bar=('a', 'b', 'd'))
+
+    def test_mark_closest(self, testdir):
+        p = testdir.makepyfile("""
+            import pytest
+
+            @pytest.mark.c(location="class")
+            class Test:
+                @pytest.mark.c(location="function")
+                def test_has_own():
+                    pass
+
+                def test_has_inherited():
+                    pass
+
+        """)
+        items, rec = testdir.inline_genitems(p)
+        has_own, has_inherited = items
+        assert has_own.get_closest_marker('c').kwargs == {'location': 'function'}
+        assert has_inherited.get_closest_marker('c').kwargs == {'location': 'class'}
+        assert has_own.get_closest_marker('missing') is None
 
     def test_mark_with_wrong_marker(self, testdir):
         reprec = testdir.inline_runsource("""
