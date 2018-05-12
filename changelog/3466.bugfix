@@ -1,0 +1,1 @@
+Fix checking whether a function is a ``@staticmethod``. Now each of the classes in the MRO is checked, therefore allowing declaring ``@staticmethod`` tests in the superclasses.

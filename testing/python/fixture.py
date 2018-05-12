@@ -41,6 +41,17 @@ def test_getfuncargnames():
     assert fixtures.getfuncargnames(A().f) == ("arg1",)
     assert fixtures.getfuncargnames(A.static, cls=A) == ("arg1", "arg2")
 
+    class B:
+
+        @staticmethod
+        def static(arg1):
+            pass
+
+    class C(B):
+        pass
+
+    assert fixtures.getfuncargnames(C.static, cls=C) == ("arg1",)
+
 
 class TestFillFixtures(object):
 

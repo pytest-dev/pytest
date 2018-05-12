@@ -135,16 +135,32 @@ def getfuncargnames(function, is_method=False, cls=None):
         )
         and p.default is Parameter.empty
     )
+
+    def is_static_method(klass, func):
+        """Check if a function is a static method.
+
+        Example:
+            >>> class A:
+            ...     @staticmethod
+            ...     def static():
+            ...         ...
+            ...     def nonstatic(self):
+            ...         ...
+            >>> is_static_method(A, A.static)
+            True
+            >>> is_static_method(A, A.nonstatic)
+            False
+
+        """
+        return any(
+            isinstance(cls.__dict__.get(func.__name__), staticmethod)
+            for cls in inspect.getmro(klass)
+        )
+
     # If this function should be treated as a bound method even though
     # it's passed as an unbound method or function, remove the first
     # parameter name.
-    if (
-        is_method
-        or (
-            cls
-            and not isinstance(cls.__dict__.get(function.__name__, None), staticmethod)
-        )
-    ):
+    if is_method or (cls and not is_static_method(cls, function)):
         arg_names = arg_names[1:]
     # Remove any names that will be replaced with mocks.
     if hasattr(function, "__wrapped__"):
