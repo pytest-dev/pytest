@@ -54,7 +54,7 @@ Keeping duplicate paths specified from command line
 Default behavior of ``pytest`` is to ignore duplicate paths specified from the command line.
 Example::
 
-    py.test path_a path_a
+    pytest path_a path_a
 
     ...
     collected 1 item
@@ -65,7 +65,7 @@ Just collect tests once.
 To collect duplicate tests, use the ``--keep-duplicates`` option on the cli.
 Example::
 
-    py.test --keep-duplicates path_a path_a
+    pytest --keep-duplicates path_a path_a
 
     ...
     collected 2 items
@@ -75,7 +75,7 @@ As the collector just works on directories, if you specify twice a single test f
 still collect it twice, no matter if the ``--keep-duplicates`` is not specified.
 Example::
 
-    py.test test_a.py test_a.py
+    pytest test_a.py test_a.py
 
     ...
     collected 2 items

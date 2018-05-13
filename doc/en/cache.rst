@@ -234,7 +234,7 @@ Inspecting Cache content
 You can always peek at the content of the cache using the
 ``--cache-show`` command line option::
 
-    $ py.test --cache-show
+    $ pytest --cache-show
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
