@@ -290,7 +290,7 @@ class FixtureRequest(FuncargnamesCompatAttr):
     def _getnextfixturedef(self, argname):
         fixturedefs = self._arg2fixturedefs.get(argname, None)
         if fixturedefs is None:
-            # we arrive here because of a  a dynamic call to
+            # we arrive here because of a dynamic call to
             # getfixturevalue(argname) usage which was naturally
             # not known at parsing/collection time
             parentid = self._pyfuncitem.parent.nodeid
@@ -1026,7 +1026,7 @@ class FixtureManager(object):
     def getfixtureclosure(self, fixturenames, parentnode):
         # collect the closure of all fixtures , starting with the given
         # fixturenames as the initial set.  As we have to visit all
-        # factory definitions anyway, we also return a arg2fixturedefs
+        # factory definitions anyway, we also return an arg2fixturedefs
         # mapping so that the caller can reuse it and does not have
         # to re-discover fixturedefs again for each fixturename
         # (discovering matching fixtures for a given name/node is expensive)

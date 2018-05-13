@@ -1206,7 +1206,7 @@ Changes
 * Testcase reports with a ``url`` attribute will now properly write this to junitxml.
   Thanks `@fushi`_ for the PR (`#1874`_).
 
-* Remove common items from dict comparision output when verbosity=1. Also update
+* Remove common items from dict comparison output when verbosity=1. Also update
   the truncation message to make it clearer that pytest truncates all
   assertion messages if verbosity < 2 (`#1512`_).
   Thanks `@mattduck`_ for the PR
@@ -1218,7 +1218,7 @@ Changes
 * fix `#2013`_: turn RecordedWarning into ``namedtuple``,
   to give it a comprehensible repr while preventing unwarranted modification.
 
-* fix `#2208`_: ensure a iteration limit for _pytest.compat.get_real_func.
+* fix `#2208`_: ensure an iteration limit for _pytest.compat.get_real_func.
   Thanks `@RonnyPfannschmidt`_ for the report and PR.
 
 * Hooks are now verified after collection is complete, rather than right after loading installed plugins. This
@@ -1322,7 +1322,7 @@ Bug Fixes
   Notably, importing the ``anydbm`` module is fixed. (`#2248`_).
   Thanks `@pfhayes`_ for the PR.
 
-* junitxml: Fix problematic case where system-out tag occured twice per testcase
+* junitxml: Fix problematic case where system-out tag occurred twice per testcase
   element in the XML report. Thanks `@kkoukiou`_ for the PR.
 
 * Fix regression, pytest now skips unittest correctly if run with ``--pdb``
@@ -2918,7 +2918,7 @@ time or change existing behaviors in order to make them less surprising/more use
   "::" node id specifications (copy pasted from "-v" output)
 
 - fix issue544 by only removing "@NUM" at the end of "::" separated parts
-  and if the part has an ".py" extension
+  and if the part has a ".py" extension
 
 - don't use py.std import helper, rather import things directly.
   Thanks Bruno Oliveira.
@@ -3189,7 +3189,7 @@ time or change existing behaviors in order to make them less surprising/more use
 
   would not work correctly because pytest assumes @pytest.mark.some
   gets a function to be decorated already.  We now at least detect if this
-  arg is an lambda and thus the example will work.  Thanks Alex Gaynor
+  arg is a lambda and thus the example will work.  Thanks Alex Gaynor
   for bringing it up.
 
 - xfail a test on pypy that checks wrong encoding/ascii (pypy does
@@ -3502,7 +3502,7 @@ Bug fixes:
   rather use the post-2.0 parametrize features instead of yield, see:
   http://pytest.org/latest/example/parametrize.html
 - fix autouse-issue where autouse-fixtures would not be discovered
-  if defined in a a/conftest.py file and tests in a/tests/test_some.py
+  if defined in an a/conftest.py file and tests in a/tests/test_some.py
 - fix issue226 - LIFO ordering for fixture teardowns
 - fix issue224 - invocations with >256 char arguments now work
 - fix issue91 - add/discuss package/directory level setups in example
@@ -4072,7 +4072,7 @@ Bug fixes:
 - make path.bestrelpath(path) return ".", note that when calling
   X.bestrelpath the assumption is that X is a directory.
 - make initial conftest discovery ignore "--" prefixed arguments
-- fix resultlog plugin when used in an multicpu/multihost xdist situation
+- fix resultlog plugin when used in a multicpu/multihost xdist situation
   (thanks Jakub Gustak)
 - perform distributed testing related reporting in the xdist-plugin
   rather than having dist-related code in the generic py.test

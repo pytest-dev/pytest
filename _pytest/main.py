@@ -90,7 +90,7 @@ def pytest_addoption(parser):
 
 
 def pytest_configure(config):
-    __import__('pytest').config = config  # compatibiltiy
+    __import__('pytest').config = config  # compatibility
 
 
 def wrap_session(config, doit):
@@ -290,7 +290,7 @@ class Interrupted(KeyboardInterrupt):
 
 
 class Failed(Exception):
-    """ signals an stop as failed test run. """
+    """ signals a stop as failed test run. """
 
 
 class Session(nodes.FSCollector):

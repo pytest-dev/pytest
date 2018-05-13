@@ -145,7 +145,7 @@ Note that this layout also works in conjunction with the ``src`` layout mentione
 
 .. note::
 
-    If ``pytest`` finds a "a/b/test_module.py" test file while
+    If ``pytest`` finds an "a/b/test_module.py" test file while
     recursing into the filesystem it determines the import name
     as follows:
 

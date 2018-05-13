@@ -1198,7 +1198,7 @@ def test_cwd_deleted(testdir):
 def test_exception_repr_extraction_error_on_recursion():
     """
     Ensure we can properly detect a recursion error even
-    if some locals raise error on comparision (#2459).
+    if some locals raise error on comparison (#2459).
     """
     class numpy_like(object):
 
