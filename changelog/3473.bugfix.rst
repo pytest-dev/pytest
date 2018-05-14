@@ -1,2 +1,2 @@
 pytest.approx does not handle strings, but did not make that easily apparent.
-pytest.approx now raises TypeError when trying a string is passed in.
+pytest.approx now raises TypeError when a string is passed in as the expected argument.
