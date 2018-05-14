@@ -17,7 +17,7 @@ class MarkMapping(object):
 
     @classmethod
     def from_item(cls, item):
-        mark_names = set(mark.name for mark in item.iter_markers())
+        mark_names = {mark.name for mark in item.iter_markers()}
         return cls(mark_names)
 
     def __getitem__(self, name):

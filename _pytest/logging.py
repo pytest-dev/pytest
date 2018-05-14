@@ -318,8 +318,8 @@ def get_actual_log_level(config, *setting_names):
     except ValueError:
         # Python logging does not recognise this as a logging level
         raise pytest.UsageError(
-            "'{0}' is not recognized as a logging level name for "
-            "'{1}'. Please consider passing the "
+            "'{}' is not recognized as a logging level name for "
+            "'{}'. Please consider passing the "
             "logging level num instead.".format(
                 log_level,
                 setting_name))

@@ -118,7 +118,7 @@ def pytest_runtest_makereport(item, call):
     if hasattr(item, '_unexpectedsuccess') and rep.when == "call":
         from _pytest.compat import _is_unittest_unexpected_success_a_failure
         if item._unexpectedsuccess:
-            rep.longrepr = "Unexpected success: {0}".format(item._unexpectedsuccess)
+            rep.longrepr = "Unexpected success: {}".format(item._unexpectedsuccess)
         else:
             rep.longrepr = "Unexpected success"
         if _is_unittest_unexpected_success_a_failure():
@@ -145,7 +145,7 @@ def pytest_runtest_makereport(item, call):
             explanation = evalxfail.getexplanation()
             if is_strict_xfail:
                 rep.outcome = "failed"
-                rep.longrepr = "[XPASS(strict)] {0}".format(explanation)
+                rep.longrepr = "[XPASS(strict)] {}".format(explanation)
             else:
                 rep.outcome = "passed"
                 rep.wasxfail = explanation

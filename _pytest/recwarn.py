@@ -217,8 +217,8 @@ class WarningsChecker(WarningsRecorder):
                 if not any(issubclass(r.category, self.expected_warning)
                            for r in self):
                     __tracebackhide__ = True
-                    fail("DID NOT WARN. No warnings of type {0} was emitted. "
-                         "The list of emitted warnings is: {1}.".format(
+                    fail("DID NOT WARN. No warnings of type {} was emitted. "
+                         "The list of emitted warnings is: {}.".format(
                              self.expected_warning,
                              [each.message for each in self]))
                 elif self.match_expr is not None:
@@ -227,7 +227,7 @@ class WarningsChecker(WarningsRecorder):
                             if re.compile(self.match_expr).search(str(r.message)):
                                 break
                     else:
-                        fail("DID NOT WARN. No warnings of type {0} matching"
-                             " ('{1}') was emitted. The list of emitted warnings"
-                             " is: {2}.".format(self.expected_warning, self.match_expr,
+                        fail("DID NOT WARN. No warnings of type {} matching"
+                             " ('{}') was emitted. The list of emitted warnings"
+                             " is: {}.".format(self.expected_warning, self.match_expr,
                                                 [each.message for each in self]))

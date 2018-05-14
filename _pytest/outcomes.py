@@ -75,7 +75,7 @@ def skip(msg="", **kwargs):
     allow_module_level = kwargs.pop('allow_module_level', False)
     if kwargs:
         keys = [k for k in kwargs.keys()]
-        raise TypeError('unexpected keyword arguments: {0}'.format(keys))
+        raise TypeError('unexpected keyword arguments: {}'.format(keys))
     raise Skipped(msg=msg, allow_module_level=allow_module_level)
 
 
