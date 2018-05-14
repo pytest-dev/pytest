@@ -375,7 +375,7 @@ class TestApprox(object):
         expected = '4.0e-06'
         result = testdir.runpytest()
         result.stdout.fnmatch_lines([
-            '*At index 0 diff: 3 != 4 * {0}'.format(expected),
+            '*At index 0 diff: 3 != 4 * {}'.format(expected),
             '=* 1 failed in *=',
         ])
 

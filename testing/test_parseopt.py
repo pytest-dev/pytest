@@ -90,7 +90,7 @@ class TestParser(object):
         group.addoption("--option1", "--option-1", action="store_true")
         with pytest.raises(ValueError) as err:
             group.addoption("--option1", "--option-one", action="store_true")
-        assert str(set(["--option1"])) in str(err.value)
+        assert str({"--option1"}) in str(err.value)
 
     def test_group_shortopt_lowercase(self, parser):
         group = parser.getgroup("hello")

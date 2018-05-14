@@ -599,8 +599,8 @@ class TestInvocationVariants(object):
                 "__import__('pkg_resources').declare_namespace(__name__)")
             lib = ns.mkdir(dirname)
             lib.ensure("__init__.py")
-            lib.join("test_{0}.py".format(dirname)). \
-                write("def test_{0}(): pass\n"
+            lib.join("test_{}.py".format(dirname)). \
+                write("def test_{}(): pass\n"
                       "def test_other():pass".format(dirname))
 
         # The structure of the test directory is now:

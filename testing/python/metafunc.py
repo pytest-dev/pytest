@@ -305,7 +305,7 @@ class TestMetafunc(object):
             pytest.param(re.compile('foo'), re.compile('bar')),
             pytest.param(str, int),
             pytest.param(list("six"), [66, 66]),
-            pytest.param(set([7]), set("seven")),
+            pytest.param({7}, set("seven")),
             pytest.param(tuple("eight"), (8, -8, 8)),
             pytest.param(b'\xc3\xb4', b"name"),
             pytest.param(b'\xc3\xb4', totext("other")),
@@ -1213,14 +1213,14 @@ class TestMetafuncFunctional(object):
         testdir.makepyfile("""
             import pytest
 
-            @pytest.mark.{0}("x", range(2))
+            @pytest.mark.{}("x", range(2))
             def test_foo(x):
                 pass
         """.format(attr))
         reprec = testdir.inline_run('--collectonly')
         failures = reprec.getfailures()
         assert len(failures) == 1
-        expectederror = "MarkerError: test_foo has '{0}', spelling should be 'parametrize'".format(attr)
+        expectederror = "MarkerError: test_foo has '{}', spelling should be 'parametrize'".format(attr)
         assert expectederror in failures[0].longrepr.reprcrash.message
 
 

@@ -359,7 +359,7 @@ class TestAssert_reprcompare(object):
                 + {0: 2}
                 ?     ^
             """),
-            (set([0, 1]), set([0, 2]), """
+            ({0, 1}, {0, 2}, """
                 Full diff:
                 - set([0, 1])
                 ?         ^
@@ -417,11 +417,11 @@ class TestAssert_reprcompare(object):
         assert lines[2] == "{'b': 1}"
 
     def test_set(self):
-        expl = callequal(set([0, 1]), set([0, 2]))
+        expl = callequal({0, 1}, {0, 2})
         assert len(expl) > 1
 
     def test_frozenzet(self):
-        expl = callequal(frozenset([0, 1]), set([0, 2]))
+        expl = callequal(frozenset([0, 1]), {0, 2})
         assert len(expl) > 1
 
     def test_Sequence(self):
@@ -959,7 +959,7 @@ def test_set_with_unsortable_elements():
             raise RuntimeError()
 
         def __repr__(self):
-            return 'repr({0})'.format(self.name)
+            return 'repr({})'.format(self.name)
 
         def __eq__(self, other):
             return self.name == other.name
@@ -967,8 +967,8 @@ def test_set_with_unsortable_elements():
         def __hash__(self):
             return hash(self.name)
 
-    left_set = set(UnsortableKey(str(i)) for i in range(1, 3))
-    right_set = set(UnsortableKey(str(i)) for i in range(2, 4))
+    left_set = {UnsortableKey(str(i)) for i in range(1, 3)}
+    right_set = {UnsortableKey(str(i)) for i in range(2, 4)}
     expl = callequal(left_set, right_set, verbose=True)
     # skip first line because it contains the "construction" of the set, which does not have a guaranteed order
     expl = expl[1:]
