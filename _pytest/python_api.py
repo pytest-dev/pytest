@@ -443,8 +443,9 @@ def approx(expected, rel=None, abs=None, nan_ok=False):
     # This has the advantage that it made it easy to support mapping types
     # (i.e. dict).  The old code accepted mapping types, but would only compare
     # their keys, which is probably not what most people would expect.
-
-    if _is_numpy_array(expected):
+    if isinstance(expected, String):
+        raise TypeError("Strings can not be approximated")
+    elif _is_numpy_array(expected):
         cls = ApproxNumpy
     elif isinstance(expected, Mapping):
         cls = ApproxMapping
