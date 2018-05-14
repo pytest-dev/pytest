@@ -114,7 +114,7 @@ Features
 
 - Captured log messages are added to the ``<system-out>`` tag in the generated
   junit xml file if the ``junit_logging`` ini option is set to ``system-out``.
-  If the value of this ini option is ``system-err`, the logs are written to
+  If the value of this ini option is ``system-err``, the logs are written to
   ``<system-err>``. The default value for ``junit_logging`` is ``no``, meaning
   captured logs are not written to the output file. (`#3156
   <https://github.com/pytest-dev/pytest/issues/3156>`_)
