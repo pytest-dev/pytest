@@ -1,1 +1,1 @@
-change doc copyright year to range and auto update year
+Change documentation copyright year to a range which auto-updates itself each time it is published.
