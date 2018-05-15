@@ -1,2 +1,1 @@
-pytest.approx does not handle strings, but did not make that easily apparent.
-pytest.approx now raises TypeError when a string is passed in as the expected argument.
+``pytest.approx`` does not handle strings, but this was not easily apparent so it now raises a ``TypeError`` when a string is passed in as the expected argument.
