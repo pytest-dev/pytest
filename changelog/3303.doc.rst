@@ -1,0 +1,1 @@
+change doc copyright year to range and auto update year
