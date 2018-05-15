@@ -289,7 +289,7 @@ def test_nose_setup_ordering(testdir):
 
 
 def test_apiwrapper_problem_issue260(testdir):
-    # this would end up trying a call a optional teardown on the class
+    # this would end up trying a call an optional teardown on the class
     # for plain unittests we dont want nose behaviour
     testdir.makepyfile("""
         import unittest

@@ -204,7 +204,7 @@ class MarkDecorator(object):
 
 def get_unpacked_marks(obj):
     """
-    obtain the unpacked marks that are stored on a object
+    obtain the unpacked marks that are stored on an object
     """
     mark_list = getattr(obj, 'pytestmark', [])
 
@@ -217,7 +217,7 @@ def get_unpacked_marks(obj):
 
 
 def store_mark(obj, mark):
-    """store a Mark on a object
+    """store a Mark on an object
     this is used to implement the Mark declarations/decorators correctly
     """
     assert isinstance(mark, Mark), mark

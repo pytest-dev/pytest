@@ -469,7 +469,7 @@ If you run this with reporting for skips enabled::
     
     =================== 1 passed, 1 skipped in 0.12 seconds ====================
 
-You'll see that we don't have a ``opt2`` module and thus the second test run
+You'll see that we don't have an ``opt2`` module and thus the second test run
 of our ``test_func1`` was skipped.  A few notes:
 
 - the fixture functions in the ``conftest.py`` file are "session-scoped" because we

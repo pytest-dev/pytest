@@ -473,7 +473,7 @@ class TestAssert_reprcompare(object):
     def test_one_repr_empty(self):
         """
         the faulty empty string repr did trigger
-        a unbound local error in _diff_text
+        an unbound local error in _diff_text
         """
         class A(str):
             def __repr__(self):

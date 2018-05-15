@@ -1553,7 +1553,7 @@ class TestAutouseDiscovery(object):
 
     def test_callables_nocode(self, testdir):
         """
-        a imported mock.call would break setup/factory discovery
+        an imported mock.call would break setup/factory discovery
         due to it being callable and __code__ not being a code object
         """
         testdir.makepyfile("""

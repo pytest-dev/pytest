@@ -257,7 +257,7 @@ def safe_getattr(object, name, default):
 
 
 def _is_unittest_unexpected_success_a_failure():
-    """Return if the test suite should fail if a @expectedFailure unittest test PASSES.
+    """Return if the test suite should fail if an @expectedFailure unittest test PASSES.
 
     From https://docs.python.org/3/library/unittest.html?highlight=unittest#unittest.TestResult.wasSuccessful:
         Changed in version 3.4: Returns False if there were any
