@@ -51,6 +51,9 @@ in fact, markers where only accessible in functions, even if they where declared
 
 A new API to access markers has been introduced in pytest 3.6 in order to solve the problems with the initial design, providing :func:`_pytest.nodes.Node.iter_markers` method to iterate over markers in a consistent manner and reworking the internals, which solved great deal of problems with the initial design.
 
+
+.. _update marker code:
+
 Updating code
 ~~~~~~~~~~~~~
 

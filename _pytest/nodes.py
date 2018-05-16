@@ -204,7 +204,9 @@ class Node(object):
                     yield node, mark
 
     def get_closest_marker(self, name, default=None):
-        """return the first marker matching the name
+        """return the first marker matching the name, from closest (for example function) to farther level (for example
+        module level).
+
         :param default: fallback return value of no marker was found
         :param name: name to filter by
         """
@@ -214,9 +216,11 @@ class Node(object):
         """ get a marker object from this node or None if
         the node doesn't have a marker with that name.
 
-        ..warning::
-
-          deprecated
+        .. deprecated:: 3.6
+            This function has been deprecated in favor of
+            :meth:`Node.get_closest_marker <_pytest.nodes.Node.get_closest_marker>` and
+            :meth:`Node.iter_markers <_pytest.nodes.Node.iter_markers>`, see :ref:`update marker code`
+            for more details.
         """
         markers = list(self.iter_markers(name=name))
         if markers:
