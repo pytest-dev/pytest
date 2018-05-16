@@ -1,1 +1,1 @@
-Introduce optional name based filtering for iter_markers
+Introduce optional name-based filtering for ``Node.iter_markers``.
