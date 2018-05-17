@@ -93,7 +93,7 @@ order doesn't even matter. You probably want to think of your marks as a set her
                 # eval condition
 
         # by this:
-        for skipif in item.iter_markers('skipif):
+        for skipif in item.iter_markers('skipif'):
             condition = skipif.args[0]
             # eval condition
 
