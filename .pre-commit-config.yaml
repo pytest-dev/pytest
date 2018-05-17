@@ -1,0 +1,20 @@
+
+repos:
+-   repo: https://github.com/ambv/black
+    rev: 18.4a4
+    hooks:
+    - id: black
+      args: [--safe, --quiet]
+      python_version: python3.6
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v1.2.3
+    hooks:
+    -   id: trailing-whitespace
+    -   id: end-of-file-fixer
+    -   id: check-yaml
+    -   id: debug-statements
+    -   id: flake8
+-   repo: https://github.com/asottile/pyupgrade
+    rev: v1.2.0
+    hooks:
+    - id: pyupgrade
