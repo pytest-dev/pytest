@@ -148,7 +148,7 @@ Unconditionally skip a test function.
 pytest.mark.skipif
 ~~~~~~~~~~~~~~~~~~
 
-**Tutorial**: :ref:`xfail`.
+**Tutorial**: :ref:`skipif`.
 
 Skip a test function if a condition is ``True``.
 
