@@ -275,14 +275,14 @@ def _compare_eq_set(left, right, verbose=False):
 def _compare_eq_dict(left, right, verbose=False):
     explanation = []
     common = set(left).intersection(set(right))
-    same = dict((k, left[k]) for k in common if left[k] == right[k])
+    same = {k: left[k] for k in common if left[k] == right[k]}
     if same and verbose < 2:
         explanation += [u('Omitting %s identical items, use -vv to show') %
                         len(same)]
     elif same:
         explanation += [u('Common items:')]
         explanation += pprint.pformat(same).splitlines()
-    diff = set(k for k in common if left[k] != right[k])
+    diff = {k for k in common if left[k] != right[k]}
     if diff:
         explanation += [u('Differing items:')]
         for k in diff:
@@ -292,12 +292,12 @@ def _compare_eq_dict(left, right, verbose=False):
     if extra_left:
         explanation.append(u('Left contains more items:'))
         explanation.extend(pprint.pformat(
-            dict((k, left[k]) for k in extra_left)).splitlines())
+            {k: left[k] for k in extra_left}).splitlines())
     extra_right = set(right) - set(left)
     if extra_right:
         explanation.append(u('Right contains more items:'))
         explanation.extend(pprint.pformat(
-            dict((k, right[k]) for k in extra_right)).splitlines())
+            {k: right[k] for k in extra_right}).splitlines())
     return explanation
 
 

@@ -57,10 +57,10 @@ def _show_fixture_action(fixturedef, msg):
     if msg == 'SETUP':
         deps = sorted(arg for arg in fixturedef.argnames if arg != 'request')
         if deps:
-            tw.write(' (fixtures used: {0})'.format(', '.join(deps)))
+            tw.write(' (fixtures used: {})'.format(', '.join(deps)))
 
     if hasattr(fixturedef, 'cached_param'):
-        tw.write('[{0}]'.format(fixturedef.cached_param))
+        tw.write('[{}]'.format(fixturedef.cached_param))
 
     if capman:
         capman.resume_global_capture()

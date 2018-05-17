@@ -70,7 +70,7 @@ class TestSpecialisedExplanations(object):
         assert {'a': 0, 'b': 1, 'c': 0} == {'a': 0, 'b': 2, 'd': 0}
 
     def test_eq_set(self):
-        assert set([0, 10, 11, 12]) == set([0, 20, 21])
+        assert {0, 10, 11, 12} == {0, 20, 21}
 
     def test_eq_longer_list(self):
         assert [1,2] == [1,2,3]

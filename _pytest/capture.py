@@ -184,12 +184,12 @@ capture_fixtures = {'capfd', 'capfdbinary', 'capsys', 'capsysbinary'}
 
 
 def _ensure_only_one_capture_fixture(request, name):
-    fixtures = set(request.fixturenames) & capture_fixtures - set((name,))
+    fixtures = set(request.fixturenames) & capture_fixtures - {name}
     if fixtures:
         fixtures = sorted(fixtures)
         fixtures = fixtures[0] if len(fixtures) == 1 else fixtures
         raise request.raiseerror(
-            "cannot use {0} and {1} at the same time".format(
+            "cannot use {} and {} at the same time".format(
                 fixtures, name,
             ),
         )

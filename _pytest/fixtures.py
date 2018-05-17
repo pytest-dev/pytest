@@ -493,8 +493,8 @@ class FixtureRequest(FuncargnamesCompatAttr):
                     source_path = source_path.relto(funcitem.config.rootdir)
                 msg = (
                     "The requested fixture has no parameter defined for the "
-                    "current test.\n\nRequested fixture '{0}' defined in:\n{1}"
-                    "\n\nRequested here:\n{2}:{3}".format(
+                    "current test.\n\nRequested fixture '{}' defined in:\n{}"
+                    "\n\nRequested here:\n{}:{}".format(
                         fixturedef.argname,
                         getlocation(fixturedef.func, funcitem.config.rootdir),
                         source_path,
@@ -612,8 +612,8 @@ def scope2index(scope, descr, where=None):
         return scopes.index(scope)
     except ValueError:
         raise ValueError(
-            "{0} {1}has an unsupported scope value '{2}'".format(
-                descr, 'from {0} '.format(where) if where else '',
+            "{} {}has an unsupported scope value '{}'".format(
+                descr, 'from {} '.format(where) if where else '',
                 scope)
         )
 
@@ -681,10 +681,10 @@ class FixtureLookupErrorRepr(TerminalRepr):
             tw.line(tbline.rstrip())
         lines = self.errorstring.split("\n")
         if lines:
-            tw.line('{0}       {1}'.format(FormattedExcinfo.fail_marker,
+            tw.line('{}       {}'.format(FormattedExcinfo.fail_marker,
                                            lines[0].strip()), red=True)
             for line in lines[1:]:
-                tw.line('{0}       {1}'.format(FormattedExcinfo.flow_marker,
+                tw.line('{}       {}'.format(FormattedExcinfo.flow_marker,
                                                line.strip()), red=True)
         tw.line()
         tw.line("%s:%d" % (self.filename, self.firstlineno + 1))
@@ -732,7 +732,7 @@ class FixtureDef(object):
         self.scope = scope
         self.scopenum = scope2index(
             scope or "function",
-            descr='fixture {0}'.format(func.__name__),
+            descr='fixture {}'.format(func.__name__),
             where=baseid
         )
         self.params = params

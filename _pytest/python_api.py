@@ -79,7 +79,7 @@ class ApproxNumpy(ApproxBase):
         # shape of the array...
         import numpy as np
 
-        return "approx({0!r})".format(list(
+        return "approx({!r})".format(list(
             self._approx_scalar(x) for x in np.asarray(self.expected)))
 
     if sys.version_info[0] == 2:
@@ -94,7 +94,7 @@ class ApproxNumpy(ApproxBase):
             try:
                 actual = np.asarray(actual)
             except:  # noqa
-                raise TypeError("cannot compare '{0}' to numpy.ndarray".format(actual))
+                raise TypeError("cannot compare '{}' to numpy.ndarray".format(actual))
 
         if not np.isscalar(actual) and actual.shape != self.expected.shape:
             return False
@@ -123,9 +123,9 @@ class ApproxMapping(ApproxBase):
     """
 
     def __repr__(self):
-        return "approx({0!r})".format(dict(
-            (k, self._approx_scalar(v))
-            for k, v in self.expected.items()))
+        return "approx({!r})".format({
+            k: self._approx_scalar(v)
+            for k, v in self.expected.items()})
 
     def __eq__(self, actual):
         if set(actual.keys()) != set(self.expected.keys()):
@@ -147,7 +147,7 @@ class ApproxSequence(ApproxBase):
         seq_type = type(self.expected)
         if seq_type not in (tuple, list, set):
             seq_type = list
-        return "approx({0!r})".format(seq_type(
+        return "approx({!r})".format(seq_type(
             self._approx_scalar(x) for x in self.expected))
 
     def __eq__(self, actual):
@@ -189,9 +189,9 @@ class ApproxScalar(ApproxBase):
             vetted_tolerance = '???'
 
         if sys.version_info[0] == 2:
-            return '{0} +- {1}'.format(self.expected, vetted_tolerance)
+            return '{} +- {}'.format(self.expected, vetted_tolerance)
         else:
-            return u'{0} \u00b1 {1}'.format(self.expected, vetted_tolerance)
+            return u'{} \u00b1 {}'.format(self.expected, vetted_tolerance)
 
     def __eq__(self, actual):
         """
@@ -591,7 +591,7 @@ def raises(expected_exception, *args, **kwargs):
                " derived from BaseException, not %s")
         raise TypeError(msg % type(exc))
 
-    message = "DID NOT RAISE {0}".format(expected_exception)
+    message = "DID NOT RAISE {}".format(expected_exception)
     match_expr = None
 
     if not args:

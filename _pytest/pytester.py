@@ -97,7 +97,7 @@ class LsofFdLeakChecker(object):
             gc.collect()
         lines2 = self.get_open_files()
 
-        new_fds = set([t[0] for t in lines2]) - set([t[0] for t in lines1])
+        new_fds = {t[0] for t in lines2} - {t[0] for t in lines1}
         leaked_files = [t for t in lines2 if t[0] in new_fds]
         if leaked_files:
             error = []

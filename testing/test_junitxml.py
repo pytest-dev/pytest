@@ -23,8 +23,8 @@ def assert_attr(node, **kwargs):
         if anode is not None:
             return anode.value
 
-    expected = dict((name, str(value)) for name, value in kwargs.items())
-    on_node = dict((name, nodeval(node, name)) for name in expected)
+    expected = {name: str(value) for name, value in kwargs.items()}
+    on_node = {name: nodeval(node, name) for name in expected}
     assert on_node == expected
 
 
@@ -1079,7 +1079,7 @@ def test_set_suite_name(testdir, suite_name):
     if suite_name:
         testdir.makeini("""
             [pytest]
-            junit_suite_name={0}
+            junit_suite_name={}
         """.format(suite_name))
         expected = suite_name
     else:

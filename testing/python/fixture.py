@@ -1749,7 +1749,7 @@ class TestAutouseManagement(object):
                 def test_2(self):
                     pass
         """)
-        confcut = "--confcutdir={0}".format(testdir.tmpdir)
+        confcut = "--confcutdir={}".format(testdir.tmpdir)
         reprec = testdir.inline_run("-v", "-s", confcut)
         reprec.assertoutcome(passed=8)
         config = reprec.getcalls("pytest_unconfigure")[0].config
@@ -3132,9 +3132,9 @@ class TestParameterizedSubRequest(object):
             E*Failed: The requested fixture has no parameter defined for the current test.
             E*
             E*Requested fixture 'fix_with_param' defined in:
-            E*{0}:4
+            E*{}:4
             E*Requested here:
-            E*{1}:9
+            E*{}:9
             *1 error*
             """.format(testfile.basename, testfile.basename))
 
@@ -3154,9 +3154,9 @@ class TestParameterizedSubRequest(object):
             E*Failed: The requested fixture has no parameter defined for the current test.
             E*
             E*Requested fixture 'fix_with_param' defined in:
-            E*{0}:4
+            E*{}:4
             E*Requested here:
-            E*{1}:8
+            E*{}:8
             *1 failed*
             """.format(testfile.basename, testfile.basename))
 
@@ -3178,9 +3178,9 @@ class TestParameterizedSubRequest(object):
             E*Failed: The requested fixture has no parameter defined for the current test.
             E*
             E*Requested fixture 'fix_with_param' defined in:
-            E*{0}:4
+            E*{}:4
             E*Requested here:
-            E*{1}:2
+            E*{}:2
             *1 failed*
             """.format(conffile.basename, testfile.basename))
 
@@ -3211,9 +3211,9 @@ class TestParameterizedSubRequest(object):
             E*Failed: The requested fixture has no parameter defined for the current test.
             E*
             E*Requested fixture 'fix_with_param' defined in:
-            E*{0}:5
+            E*{}:5
             E*Requested here:
-            E*{1}:5
+            E*{}:5
             *1 failed*
             """.format(fixfile.strpath, testfile.basename))
 

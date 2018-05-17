@@ -95,7 +95,7 @@ def show_test_item(item):
     tw.write(item._nodeid)
     used_fixtures = sorted(item._fixtureinfo.name2fixturedefs.keys())
     if used_fixtures:
-        tw.write(' (fixtures used: {0})'.format(', '.join(used_fixtures)))
+        tw.write(' (fixtures used: {})'.format(', '.join(used_fixtures)))
 
 
 def pytest_runtest_setup(item):
@@ -133,7 +133,7 @@ def _update_current_test_var(item, when):
     """
     var_name = 'PYTEST_CURRENT_TEST'
     if when:
-        value = '{0} ({1})'.format(item.nodeid, when)
+        value = '{} ({})'.format(item.nodeid, when)
         # don't allow null bytes on environment variables (see #2644, #2957)
         value = value.replace('\x00', '(null)')
         os.environ[var_name] = value
@@ -297,7 +297,7 @@ class BaseReport(object):
 def pytest_runtest_makereport(item, call):
     when = call.when
     duration = call.stop - call.start
-    keywords = dict([(x, 1) for x in item.keywords])
+    keywords = {x: 1 for x in item.keywords}
     excinfo = call.excinfo
     sections = []
     if not call.excinfo:
