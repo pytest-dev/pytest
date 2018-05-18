@@ -139,7 +139,7 @@ Here's a rundown of how a repository transfer usually proceeds
 * ``joedoe`` transfers repository ownership to ``pytest-dev`` administrator ``calvin``.
 * ``calvin`` creates ``pytest-xyz-admin`` and ``pytest-xyz-developers`` teams, inviting ``joedoe`` to both as **maintainer**.
 * ``calvin`` transfers repository to ``pytest-dev`` and configures team access:
-  
+
   - ``pytest-xyz-admin`` **admin** access;
   - ``pytest-xyz-developers`` **write** access;
 
@@ -203,15 +203,15 @@ Here is a simple overview, with pytest-specific bits:
     $ git clone git@github.com:YOUR_GITHUB_USERNAME/pytest.git
     $ cd pytest
     # now, to fix a bug create your own branch off "master":
-    
+
         $ git checkout -b your-bugfix-branch-name master
 
     # or to instead add a feature create your own branch off "features":
-    
+
         $ git checkout -b your-feature-branch-name features
 
-   Given we have "major.minor.micro" version numbers, bugfixes will usually 
-   be released in micro releases whereas features will be released in 
+   Given we have "major.minor.micro" version numbers, bugfixes will usually
+   be released in micro releases whereas features will be released in
    minor releases and incompatible changes in major releases.
 
    If you need some help with Git, follow this quick start

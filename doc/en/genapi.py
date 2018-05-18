@@ -1,5 +1,7 @@
+from __future__ import print_function
 import textwrap
 import inspect
+
 
 class Writer(object):
     def __init__(self, clsname):
@@ -11,10 +13,10 @@ class Writer(object):
 
     def __exit__(self, *args):
         self.file.close()
-        print "wrote", self.file.name
+        print("wrote", self.file.name)
 
     def line(self, line):
-        self.file.write(line+"\n")
+        self.file.write(line + "\n")
 
     def docmethod(self, method):
         doc = " ".join(method.__doc__.split())
@@ -30,12 +32,14 @@ class Writer(object):
         self.line(w.fill(doc))
         self.line("")
 
+
 def pytest_funcarg__a(request):
     with Writer("request") as writer:
         writer.docmethod(request.getfixturevalue)
         writer.docmethod(request.cached_setup)
         writer.docmethod(request.addfinalizer)
         writer.docmethod(request.applymarker)
+
 
 def test_hello(a):
     pass

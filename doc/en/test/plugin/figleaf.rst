@@ -12,7 +12,7 @@ Install
 To install the plugin issue::
 
     easy_install pytest-figleaf  # or
-    pip install pytest-figleaf   
+    pip install pytest-figleaf
 
 and if you are using pip you can also uninstall::
 

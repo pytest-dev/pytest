@@ -111,9 +111,9 @@ For more information see :ref:`marks <mark>`.
 ::
 
     pytest --pyargs pkg.testing
-     
+
 This will import ``pkg.testing`` and use its filesystem location to find and run tests from.
-    
+
 
 Modifying Python traceback printing
 ----------------------------------------------
@@ -195,7 +195,7 @@ in your code and pytest automatically disables its output capture for that test:
 Using the builtin breakpoint function
 -------------------------------------
 
-Python 3.7 introduces a builtin ``breakpoint()`` function. 
+Python 3.7 introduces a builtin ``breakpoint()`` function.
 Pytest supports the use of ``breakpoint()`` with the following behaviours:
 
  - When ``breakpoint()`` is called and ``PYTHONBREAKPOINT`` is set to the default value, pytest will use the custom internal PDB trace UI instead of the system default ``Pdb``.
@@ -496,7 +496,7 @@ hook was invoked::
 
     $ python myinvoke.py
     .                                                                    [100%]*** test run reporting finishing
-    
+
 
 .. note::
 

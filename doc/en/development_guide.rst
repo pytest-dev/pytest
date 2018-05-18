@@ -40,7 +40,7 @@ avoid creating labels just for the sake of creating them.
 Each label should include a description in the GitHub's interface stating its purpose.
 
 Temporary labels
-~~~~~~~~~~~~~~~~ 
+~~~~~~~~~~~~~~~~
 
 To classify issues for a special event it is encouraged to create a temporary label. This helps those involved to find
 the relevant issues to work on. Examples of that are sprints in Python events or global hacking events.
