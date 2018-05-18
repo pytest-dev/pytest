@@ -218,7 +218,7 @@ def reorder_items_atscope(items, argkeys_cache, items_by_argkey, scopenum):
                 break
         if no_argkey_group:
             no_argkey_group = reorder_items_atscope(
-                                no_argkey_group, argkeys_cache, items_by_argkey, scopenum + 1)
+                no_argkey_group, argkeys_cache, items_by_argkey, scopenum + 1)
             for item in no_argkey_group:
                 items_done[item] = None
         ignore.add(slicing_argkey)
@@ -682,10 +682,10 @@ class FixtureLookupErrorRepr(TerminalRepr):
         lines = self.errorstring.split("\n")
         if lines:
             tw.line('{}       {}'.format(FormattedExcinfo.fail_marker,
-                                           lines[0].strip()), red=True)
+                                         lines[0].strip()), red=True)
             for line in lines[1:]:
                 tw.line('{}       {}'.format(FormattedExcinfo.flow_marker,
-                                               line.strip()), red=True)
+                                             line.strip()), red=True)
         tw.line()
         tw.line("%s:%d" % (self.filename, self.firstlineno + 1))
 
@@ -854,7 +854,7 @@ class FixtureFunctionMarker(object):
 
         if getattr(function, "_pytestfixturefunction", False):
             raise ValueError(
-                    "fixture is being applied more than once to the same function")
+                "fixture is being applied more than once to the same function")
 
         function._pytestfixturefunction = self
         return function

@@ -227,7 +227,9 @@ class WarningsChecker(WarningsRecorder):
                             if re.compile(self.match_expr).search(str(r.message)):
                                 break
                     else:
-                        fail("DID NOT WARN. No warnings of type {} matching"
-                             " ('{}') was emitted. The list of emitted warnings"
-                             " is: {}.".format(self.expected_warning, self.match_expr,
-                                                [each.message for each in self]))
+                        fail(
+                            "DID NOT WARN. No warnings of type {} matching"
+                            " ('{}') was emitted. The list of emitted warnings"
+                            " is: {}.".format(
+                                self.expected_warning, self.match_expr,
+                                [each.message for each in self]))

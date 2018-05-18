@@ -747,8 +747,10 @@ class TestFunctional(object):
         items = {x.name: x for x in items}
         for name, expected_markers in expected.items():
             markers = items[name].keywords._markers
-            marker_names = {name for (name, v) in markers.items()
-                                if isinstance(v, MarkInfo)}
+            marker_names = {
+                name for (name, v) in markers.items()
+                if isinstance(v, MarkInfo)
+            }
             assert marker_names == set(expected_markers)
 
     @pytest.mark.issue1540
