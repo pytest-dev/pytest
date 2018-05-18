@@ -46,9 +46,9 @@ in most cases without having to modify existing code:
 * :ref:`maxfail`;
 * :ref:`--pdb <pdb-option>` command-line option for debugging on test failures
   (see :ref:`note <pdb-unittest-note>` below);
-* Distribute tests to multiple CPUs using the `pytest-xdist <http://pypi.python.org/pypi/pytest-xdist>`_ plugin;
+* Distribute tests to multiple CPUs using the `pytest-xdist <https://pypi.org/project/pytest-xdist/>`_ plugin;
 * Use :ref:`plain assert-statements <assert>` instead of ``self.assert*`` functions (`unittest2pytest
-  <https://pypi.python.org/pypi/unittest2pytest/>`__ is immensely helpful in this);
+  <https://pypi.org/project/unittest2pytest/>`__ is immensely helpful in this);
 
 
 pytest features in ``unittest.TestCase`` subclasses

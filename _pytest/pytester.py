@@ -714,7 +714,7 @@ class Testdir(object):
         """
         finalizers = []
         try:
-            # When running py.test inline any plugins active in the main test
+            # When running pytest inline any plugins active in the main test
             # process are already imported.  So this disables the warning which
             # will trigger to say they can no longer be rewritten, which is
             # fine as they have already been rewritten.
@@ -725,7 +725,7 @@ class Testdir(object):
             finalizers.append(revert_warn_already_imported)
             AssertionRewritingHook._warn_already_imported = lambda *a: None
 
-            # Any sys.module or sys.path changes done while running py.test
+            # Any sys.module or sys.path changes done while running pytest
             # inline should be reverted after the test run completes to avoid
             # clashing with later inline tests run within the same pytest test,
             # e.g. just because they use matching test module names.

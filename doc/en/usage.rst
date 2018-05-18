@@ -421,7 +421,7 @@ Creating resultlog format files
     This option is rarely used and is scheduled for removal in 4.0.
 
     An alternative for users which still need similar functionality is to use the
-    `pytest-tap <https://pypi.python.org/pypi/pytest-tap>`_ plugin which provides
+    `pytest-tap <https://pypi.org/project/pytest-tap/>`_ plugin which provides
     a stream of test data.
 
     If you have any concerns, please don't hesitate to

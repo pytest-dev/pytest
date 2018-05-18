@@ -103,7 +103,7 @@ Here is how you might run it::
 Writing your own plugin
 -----------------------
 
-.. _`setuptools`: http://pypi.python.org/pypi/setuptools
+.. _`setuptools`: https://pypi.org/project/setuptools/
 
 If you want to write a plugin, there are many real-life examples
 you can copy from:

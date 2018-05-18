@@ -7,7 +7,7 @@ from __future__ import absolute_import, division, print_function
 
 def freeze_includes():
     """
-    Returns a list of module names used by py.test that should be
+    Returns a list of module names used by pytest that should be
     included by cx_freeze.
     """
     import py

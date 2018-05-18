@@ -24,7 +24,7 @@ DOCTEST_REPORT_CHOICES = (
     DOCTEST_REPORT_CHOICE_ONLY_FIRST_FAILURE,
 )
 
-# Lazy definiton of runner class
+# Lazy definition of runner class
 RUNNER_CLASS = None
 
 

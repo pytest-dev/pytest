@@ -523,6 +523,7 @@ class TestRequestBasic(object):
         testdir.makepyfile("""
             import sys
             import pytest
+            from _pytest.compat import safe_str
             import gc
 
             @pytest.fixture(autouse=True)
@@ -539,7 +540,7 @@ class TestRequestBasic(object):
 
                     gc.collect()
                     leaked_types = sum(1 for _ in gc.garbage
-                                    if 'PseudoFixtureDef' in str(_))
+                                       if 'PseudoFixtureDef' in safe_str(_))
 
                     gc.garbage[:] = []
 
@@ -1552,7 +1553,7 @@ class TestAutouseDiscovery(object):
 
     def test_callables_nocode(self, testdir):
         """
-        a imported mock.call would break setup/factory discovery
+        an imported mock.call would break setup/factory discovery
         due to it being callable and __code__ not being a code object
         """
         testdir.makepyfile("""

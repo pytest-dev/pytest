@@ -7,6 +7,6 @@ The approach enables to write integration tests such that the JavaScript code is
 For more info and download please visit the `oejskit PyPI`_ page.
 
 .. _`oejskit`:
-.. _`oejskit PyPI`: http://pypi.python.org/pypi/oejskit
+.. _`oejskit PyPI`: https://pypi.org/project/oejskit/
 
 .. source link 'http://bitbucket.org/pedronis/js-infrastructure/src/tip/pytest_jstests.py',

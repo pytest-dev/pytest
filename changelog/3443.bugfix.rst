@@ -1,0 +1,1 @@
+When showing diffs of failed assertions where the contents contain only whitespace, escape them using ``repr()`` first to make it easy to spot the differences.
