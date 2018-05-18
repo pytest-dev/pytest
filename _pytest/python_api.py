@@ -450,6 +450,9 @@ def approx(expected, rel=None, abs=None, nan_ok=False):
     elif isinstance(expected, Mapping):
         cls = ApproxMapping
     elif isinstance(expected, Sequence) and not isinstance(expected, String):
+        for value in expected:
+            if isinstance(value, (Sequence, String, Mapping)):
+                raise TypeError("Sequence contained a value that was not float or int")
         cls = ApproxSequence
     elif isinstance(expected, Decimal):
         cls = ApproxDecimal

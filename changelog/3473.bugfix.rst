@@ -1,1 +1,2 @@
 ``pytest.approx`` does not handle strings, but this was not easily apparent so it now raises a ``TypeError`` when a string is passed in as the expected argument.
+``pytest.approx`` did not check all elements in a sequence to make sure they were valid type, a ``TypeError`` is now raised when an invalid element is in a sequence.
