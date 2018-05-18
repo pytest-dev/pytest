@@ -839,22 +839,22 @@ class TestAssertionRewriteHookDetails(object):
     def test_write_pyc(self, testdir, tmpdir, monkeypatch):
         from _pytest.assertion.rewrite import _write_pyc
         from _pytest.assertion import AssertionState
-        try:
-            import __builtin__ as b
-        except ImportError:
-            import builtins as b
+        import atomicwrites
+        from contextlib import contextmanager
         config = testdir.parseconfig([])
         state = AssertionState(config, "rewrite")
         source_path = tmpdir.ensure("source.py")
         pycpath = tmpdir.join("pyc").strpath
         assert _write_pyc(state, [1], source_path.stat(), pycpath)
 
-        def open(*args):
+        @contextmanager
+        def atomic_write_failed(fn, mode='r', overwrite=False):
             e = IOError()
             e.errno = 10
             raise e
+            yield  # noqa
 
-        monkeypatch.setattr(b, "open", open)
+        monkeypatch.setattr(atomicwrites, "atomic_write", atomic_write_failed)
         assert not _write_pyc(state, [1], source_path.stat(), pycpath)
 
     def test_resources_provider_for_loader(self, testdir):

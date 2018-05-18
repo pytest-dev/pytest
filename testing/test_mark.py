@@ -8,11 +8,13 @@ from _pytest.mark import (
     EMPTY_PARAMETERSET_OPTION,
 )
 
+ignore_markinfo = pytest.mark.filterwarnings('ignore:MarkInfo objects:_pytest.deprecated.RemovedInPytest4Warning')
+
 
 class TestMark(object):
     def test_markinfo_repr(self):
         from _pytest.mark import MarkInfo, Mark
-        m = MarkInfo(Mark("hello", (1, 2), {}))
+        m = MarkInfo.for_mark(Mark("hello", (1, 2), {}))
         repr(m)
 
     @pytest.mark.parametrize('attr', ['mark', 'param'])
@@ -51,6 +53,7 @@ class TestMark(object):
         mark.hello(f)
         assert f.hello
 
+    @ignore_markinfo
     def test_pytest_mark_keywords(self):
         mark = Mark()
 
@@ -62,6 +65,7 @@ class TestMark(object):
         assert f.world.kwargs['x'] == 3
         assert f.world.kwargs['y'] == 4
 
+    @ignore_markinfo
     def test_apply_multiple_and_merge(self):
         mark = Mark()
 
@@ -78,6 +82,7 @@ class TestMark(object):
         assert f.world.kwargs['y'] == 1
         assert len(f.world.args) == 0
 
+    @ignore_markinfo
     def test_pytest_mark_positional(self):
         mark = Mark()
 
@@ -88,6 +93,7 @@ class TestMark(object):
         assert f.world.args[0] == "hello"
         mark.world("world")(f)
 
+    @ignore_markinfo
     def test_pytest_mark_positional_func_and_keyword(self):
         mark = Mark()
 
@@ -103,6 +109,7 @@ class TestMark(object):
         assert g.world.args[0] is f
         assert g.world.kwargs["omega"] == "hello"
 
+    @ignore_markinfo
     def test_pytest_mark_reuse(self):
         mark = Mark()
 
@@ -288,7 +295,7 @@ def test_mark_option_custom(spec, testdir):
         def pytest_collection_modifyitems(items):
             for item in items:
                 if "interface" in item.nodeid:
-                    item.keywords["interface"] = pytest.mark.interface
+                    item.add_marker(pytest.mark.interface)
     """)
     testdir.makepyfile("""
         def test_interface():
@@ -484,6 +491,7 @@ class TestFunctional(object):
         assert 'hello' in keywords
         assert 'world' in keywords
 
+    @ignore_markinfo
     def test_merging_markers(self, testdir):
         p = testdir.makepyfile("""
             import pytest
@@ -509,7 +517,6 @@ class TestFunctional(object):
         assert values[1].args == ()
         assert values[2].args == ("pos1", )
 
-    @pytest.mark.xfail(reason='unfixed')
     def test_merging_markers_deep(self, testdir):
         # issue 199 - propagate markers into nested classes
         p = testdir.makepyfile("""
@@ -526,7 +533,7 @@ class TestFunctional(object):
         items, rec = testdir.inline_genitems(p)
         for item in items:
             print(item, item.keywords)
-            assert 'a' in item.keywords
+            assert [x for x in item.iter_markers() if x.name == 'a']
 
     def test_mark_decorator_subclass_does_not_propagate_to_base(self, testdir):
         p = testdir.makepyfile("""
@@ -622,6 +629,7 @@ class TestFunctional(object):
             "keyword: *hello*"
         ])
 
+    @ignore_markinfo
     def test_merging_markers_two_functions(self, testdir):
         p = testdir.makepyfile("""
             import pytest
@@ -676,6 +684,7 @@ class TestFunctional(object):
         reprec = testdir.inline_run()
         reprec.assertoutcome(passed=1)
 
+    @ignore_markinfo
     def test_keyword_added_for_session(self, testdir):
         testdir.makeconftest("""
             import pytest
@@ -715,8 +724,8 @@ class TestFunctional(object):
                                 if isinstance(v, MarkInfo)])
             assert marker_names == set(expected_markers)
 
-    @pytest.mark.xfail(reason='callspec2.setmulti misuses keywords')
     @pytest.mark.issue1540
+    @pytest.mark.filterwarnings("ignore")
     def test_mark_from_parameters(self, testdir):
         testdir.makepyfile("""
             import pytest
@@ -918,3 +927,35 @@ def test_parameterset_for_parametrize_marks(testdir, mark):
 def test_parameterset_for_parametrize_bad_markname(testdir):
     with pytest.raises(pytest.UsageError):
         test_parameterset_for_parametrize_marks(testdir, 'bad')
+
+
+def test_mark_expressions_no_smear(testdir):
+    testdir.makepyfile("""
+        import pytest
+
+        class BaseTests(object):
+            def test_something(self):
+                pass
+
+        @pytest.mark.FOO
+        class TestFooClass(BaseTests):
+            pass
+
+        @pytest.mark.BAR
+        class TestBarClass(BaseTests):
+            pass
+    """)
+
+    reprec = testdir.inline_run("-m", 'FOO')
+    passed, skipped, failed = reprec.countoutcomes()
+    dlist = reprec.getcalls("pytest_deselected")
+    assert passed == 1
+    assert skipped == failed == 0
+    deselected_tests = dlist[0].items
+    assert len(deselected_tests) == 1
+
+    # keywords smear - expected behaviour
+    reprec_keywords = testdir.inline_run("-k", 'FOO')
+    passed_k, skipped_k, failed_k = reprec_keywords.countoutcomes()
+    assert passed_k == 2
+    assert skipped_k == failed_k == 0

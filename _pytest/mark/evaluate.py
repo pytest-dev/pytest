@@ -4,7 +4,6 @@ import sys
 import platform
 import traceback
 
-from . import MarkDecorator, MarkInfo
 from ..outcomes import fail, TEST_OUTCOME
 
 
@@ -28,22 +27,15 @@ class MarkEvaluator(object):
         self._mark_name = name
 
     def __bool__(self):
-        self._marks = self._get_marks()
-        return bool(self._marks)
+        # dont cache here to prevent staleness
+        return bool(self._get_marks())
     __nonzero__ = __bool__
 
     def wasvalid(self):
         return not hasattr(self, 'exc')
 
     def _get_marks(self):
-
-        keyword = self.item.keywords.get(self._mark_name)
-        if isinstance(keyword, MarkDecorator):
-            return [keyword.mark]
-        elif isinstance(keyword, MarkInfo):
-            return [x.combined for x in keyword]
-        else:
-            return []
+        return [x for x in self.item.iter_markers() if x.name == self._mark_name]
 
     def invalidraise(self, exc):
         raises = self.get('raises')

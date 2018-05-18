@@ -1,9 +1,14 @@
 from __future__ import absolute_import, division, print_function
 import sys
 import platform
+import os
 
 import _pytest._code
+from _pytest.debugging import SUPPORTS_BREAKPOINT_BUILTIN
 import pytest
+
+
+_ENVIRON_PYTHONBREAKPOINT = os.environ.get('PYTHONBREAKPOINT', '')
 
 
 def runpdb_and_get_report(testdir, source):
@@ -31,6 +36,30 @@ def custom_pdb_calls():
 
     _pytest._CustomPdb = _CustomPdb
     return called
+
+
+@pytest.fixture
+def custom_debugger_hook():
+    called = []
+
+    # install dummy debugger class and track which methods were called on it
+    class _CustomDebugger(object):
+        def __init__(self, *args, **kwargs):
+            called.append("init")
+
+        def reset(self):
+            called.append("reset")
+
+        def interaction(self, *args):
+            called.append("interaction")
+
+        def set_trace(self, frame):
+            print("**CustomDebugger**")
+            called.append("set_trace")
+
+    _pytest._CustomDebugger = _CustomDebugger
+    yield called
+    del _pytest._CustomDebugger
 
 
 class TestPDB(object):
@@ -84,6 +113,14 @@ class TestPDB(object):
         """)
         assert rep.failed
         assert len(pdblist) == 0
+
+    def test_pdb_on_KeyboardInterrupt(self, testdir, pdblist):
+        rep = runpdb_and_get_report(testdir, """
+            def test_func():
+                raise KeyboardInterrupt
+        """)
+        assert rep.failed
+        assert len(pdblist) == 1
 
     def test_pdb_interaction(self, testdir):
         p1 = testdir.makepyfile("""
@@ -470,3 +507,122 @@ class TestPDB(object):
 
         child.expect('custom set_trace>')
         self.flush(child)
+
+
+class TestDebuggingBreakpoints(object):
+
+    def test_supports_breakpoint_module_global(self):
+        """
+        Test that supports breakpoint global marks on Python 3.7+ and not on
+        CPython 3.5, 2.7
+        """
+        if sys.version_info.major == 3 and sys.version_info.minor >= 7:
+            assert SUPPORTS_BREAKPOINT_BUILTIN is True
+        if sys.version_info.major == 3 and sys.version_info.minor == 5:
+            assert SUPPORTS_BREAKPOINT_BUILTIN is False
+        if sys.version_info.major == 2 and sys.version_info.minor == 7:
+            assert SUPPORTS_BREAKPOINT_BUILTIN is False
+
+    @pytest.mark.skipif(not SUPPORTS_BREAKPOINT_BUILTIN, reason="Requires breakpoint() builtin")
+    @pytest.mark.parametrize('arg', ['--pdb', ''])
+    def test_sys_breakpointhook_configure_and_unconfigure(self, testdir, arg):
+        """
+        Test that sys.breakpointhook is set to the custom Pdb class once configured, test that
+        hook is reset to system value once pytest has been unconfigured
+        """
+        testdir.makeconftest("""
+            import sys
+            from pytest import hookimpl
+            from _pytest.debugging import pytestPDB
+
+            def pytest_configure(config):
+                config._cleanup.append(check_restored)
+
+            def check_restored():
+                assert sys.breakpointhook == sys.__breakpointhook__
+
+            def test_check():
+                assert sys.breakpointhook == pytestPDB.set_trace
+        """)
+        testdir.makepyfile("""
+            def test_nothing(): pass
+        """)
+        args = (arg,) if arg else ()
+        result = testdir.runpytest_subprocess(*args)
+        result.stdout.fnmatch_lines([
+            '*1 passed in *',
+        ])
+
+    @pytest.mark.skipif(not SUPPORTS_BREAKPOINT_BUILTIN, reason="Requires breakpoint() builtin")
+    def test_pdb_custom_cls(self, testdir, custom_debugger_hook):
+        p1 = testdir.makepyfile("""
+            def test_nothing():
+                breakpoint()
+        """)
+        result = testdir.runpytest_inprocess(
+            "--pdb", "--pdbcls=_pytest:_CustomDebugger", p1)
+        result.stdout.fnmatch_lines([
+            "*CustomDebugger*",
+            "*1 passed*",
+        ])
+        assert custom_debugger_hook == ["init", "set_trace"]
+
+    @pytest.mark.parametrize('arg', ['--pdb', ''])
+    @pytest.mark.skipif(not SUPPORTS_BREAKPOINT_BUILTIN, reason="Requires breakpoint() builtin")
+    def test_environ_custom_class(self, testdir, custom_debugger_hook, arg):
+        testdir.makeconftest("""
+            import os
+            import sys
+
+            os.environ['PYTHONBREAKPOINT'] = '_pytest._CustomDebugger.set_trace'
+
+            def pytest_configure(config):
+                config._cleanup.append(check_restored)
+
+            def check_restored():
+                assert sys.breakpointhook == sys.__breakpointhook__
+
+            def test_check():
+                import _pytest
+                assert sys.breakpointhook is _pytest._CustomDebugger.set_trace
+        """)
+        testdir.makepyfile("""
+            def test_nothing(): pass
+        """)
+        args = (arg,) if arg else ()
+        result = testdir.runpytest_subprocess(*args)
+        result.stdout.fnmatch_lines([
+            '*1 passed in *',
+        ])
+
+    @pytest.mark.skipif(not SUPPORTS_BREAKPOINT_BUILTIN, reason="Requires breakpoint() builtin")
+    @pytest.mark.skipif(not _ENVIRON_PYTHONBREAKPOINT == '', reason="Requires breakpoint() default value")
+    def test_sys_breakpoint_interception(self, testdir):
+        p1 = testdir.makepyfile("""
+            def test_1():
+                breakpoint()
+        """)
+        child = testdir.spawn_pytest(str(p1))
+        child.expect("test_1")
+        child.expect("(Pdb)")
+        child.sendeof()
+        rest = child.read().decode("utf8")
+        assert "1 failed" in rest
+        assert "reading from stdin while output" not in rest
+        TestPDB.flush(child)
+
+    @pytest.mark.skipif(not SUPPORTS_BREAKPOINT_BUILTIN, reason="Requires breakpoint() builtin")
+    def test_pdb_not_altered(self, testdir):
+        p1 = testdir.makepyfile("""
+            import pdb
+            def test_1():
+                pdb.set_trace()
+        """)
+        child = testdir.spawn_pytest(str(p1))
+        child.expect("test_1")
+        child.expect("(Pdb)")
+        child.sendeof()
+        rest = child.read().decode("utf8")
+        assert "1 failed" in rest
+        assert "reading from stdin while output" not in rest
+        TestPDB.flush(child)

@@ -49,6 +49,66 @@ def test_messages_logged(testdir):
                                  'text going to stderr'])
 
 
+def test_root_logger_affected(testdir):
+    testdir.makepyfile("""
+        import logging
+        logger = logging.getLogger()
+        def test_foo():
+            logger.info('info text ' + 'going to logger')
+            logger.warning('warning text ' + 'going to logger')
+            logger.error('error text ' + 'going to logger')
+
+            assert 0
+    """)
+    log_file = testdir.tmpdir.join('pytest.log').strpath
+    result = testdir.runpytest('--log-level=ERROR', '--log-file=pytest.log')
+    assert result.ret == 1
+
+    # the capture log calls in the stdout section only contain the
+    # logger.error msg, because --log-level=ERROR
+    result.stdout.fnmatch_lines(['*error text going to logger*'])
+    with pytest.raises(pytest.fail.Exception):
+        result.stdout.fnmatch_lines(['*warning text going to logger*'])
+    with pytest.raises(pytest.fail.Exception):
+        result.stdout.fnmatch_lines(['*info text going to logger*'])
+
+    # the log file should contain the warning and the error log messages and
+    # not the info one, because the default level of the root logger is
+    # WARNING.
+    assert os.path.isfile(log_file)
+    with open(log_file) as rfh:
+        contents = rfh.read()
+        assert "info text going to logger" not in contents
+        assert "warning text going to logger" in contents
+        assert "error text going to logger" in contents
+
+
+def test_log_cli_level_log_level_interaction(testdir):
+    testdir.makepyfile("""
+        import logging
+        logger = logging.getLogger()
+
+        def test_foo():
+            logger.debug('debug text ' + 'going to logger')
+            logger.info('info text ' + 'going to logger')
+            logger.warning('warning text ' + 'going to logger')
+            logger.error('error text ' + 'going to logger')
+            assert 0
+    """)
+
+    result = testdir.runpytest('--log-cli-level=INFO', '--log-level=ERROR')
+    assert result.ret == 1
+
+    result.stdout.fnmatch_lines([
+        '*-- live log call --*',
+        '*INFO*info text going to logger',
+        '*WARNING*warning text going to logger',
+        '*ERROR*error text going to logger',
+        '=* 1 failed in *=',
+    ])
+    assert 'DEBUG' not in result.stdout.str()
+
+
 def test_setup_logging(testdir):
     testdir.makepyfile('''
         import logging
@@ -61,7 +121,7 @@ def test_setup_logging(testdir):
         def test_foo():
             logger.info('text going to logger from call')
             assert False
-        ''')
+    ''')
     result = testdir.runpytest('--log-level=INFO')
     assert result.ret == 1
     result.stdout.fnmatch_lines(['*- Captured *log setup -*',

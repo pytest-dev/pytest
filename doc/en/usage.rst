@@ -152,9 +152,9 @@ allows one to drop into the PDB_ prompt via a command line option::
 
     pytest --pdb
 
-This will invoke the Python debugger on every failure.  Often you might
-only want to do this for the first failing test to understand a certain
-failure situation::
+This will invoke the Python debugger on every failure (or KeyboardInterrupt).
+Often you might only want to do this for the first failing test to understand
+a certain failure situation::
 
     pytest -x --pdb   # drop to PDB on first failure, then end test session
     pytest --pdb --maxfail=3  # drop to PDB for first three failures
@@ -188,6 +188,20 @@ in your code and pytest automatically disables its output capture for that test:
   instead get sent directly to ``sys.stdout``. Note that this holds true even
   for test output occurring after you exit the interactive PDB_ tracing session
   and continue with the regular test run.
+
+
+.. _`breakpoint-builtin`:
+
+Using the builtin breakpoint function
+-------------------------------------
+
+Python 3.7 introduces a builtin ``breakpoint()`` function. 
+Pytest supports the use of ``breakpoint()`` with the following behaviours:
+
+ - When ``breakpoint()`` is called and ``PYTHONBREAKPOINT`` is set to the default value, pytest will use the custom internal PDB trace UI instead of the system default ``Pdb``.
+ - When tests are complete, the system will default back to the system ``Pdb`` trace UI.
+ - If ``--pdb`` is called on execution of pytest, the custom internal Pdb trace UI is used on ``bothbreakpoint()`` and failed tests/unhandled exceptions.
+ - If ``--pdbcls`` is used, the custom class debugger will be executed when a test fails (as expected within existing behaviour), but also when ``breakpoint()`` is called from within a test, the custom class debugger will be instantiated.
 
 .. _durations:
 
@@ -260,10 +274,10 @@ Alternatively, you can integrate this functionality with custom markers:
 
     def pytest_collection_modifyitems(session, config, items):
         for item in items:
-            marker = item.get_marker('test_id')
-            if marker is not None:
-                test_id = marker.args[0]
-                item.user_properties.append(('test_id', test_id))
+            for marker in item.iter_markers():
+                if marker.name == 'test_id':
+                    test_id = marker.args[0]
+                    item.user_properties.append(('test_id', test_id))
 
 And in your tests:
 

@@ -94,6 +94,8 @@ Marks can be used apply meta data to *test functions* (but not fixtures), which 
 fixtures or plugins.
 
 
+
+
 .. _`pytest.mark.filterwarnings ref`:
 
 pytest.mark.filterwarnings
@@ -200,9 +202,9 @@ For example:
     def test_function():
         ...
 
-Will create and attach a :class:`MarkInfo <_pytest.mark.MarkInfo>` object to the collected
+Will create and attach a :class:`Mark <_pytest.mark.structures.Mark>` object to the collected
 :class:`Item <_pytest.nodes.Item>`, which can then be accessed by fixtures or hooks with
-:meth:`Node.get_marker <_pytest.nodes.Node.get_marker>`. The ``mark`` object will have the following attributes:
+:meth:`Node.iter_markers <_pytest.nodes.Node.iter_markers>`. The ``mark`` object will have the following attributes:
 
 .. code-block:: python
 
@@ -687,17 +689,27 @@ MarkDecorator
 .. autoclass:: _pytest.mark.MarkDecorator
     :members:
 
+
 MarkGenerator
 ~~~~~~~~~~~~~
 
 .. autoclass:: _pytest.mark.MarkGenerator
     :members:
 
+
 MarkInfo
 ~~~~~~~~
 
 .. autoclass:: _pytest.mark.MarkInfo
     :members:
+
+
+Mark
+~~~~
+
+.. autoclass:: _pytest.mark.structures.Mark
+    :members:
+
 
 Metafunc
 ~~~~~~~~

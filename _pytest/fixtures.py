@@ -5,6 +5,7 @@ import inspect
 import sys
 import warnings
 from collections import OrderedDict, deque, defaultdict
+from more_itertools import flatten
 
 import attr
 import py
@@ -371,10 +372,7 @@ class FixtureRequest(FuncargnamesCompatAttr):
         :arg marker: a :py:class:`_pytest.mark.MarkDecorator` object
             created by a call to ``pytest.mark.NAME(...)``.
         """
-        try:
-            self.node.keywords[marker.markname] = marker
-        except AttributeError:
-            raise ValueError(marker)
+        self.node.add_marker(marker)
 
     def raiseerror(self, msg):
         """ raise a FixtureLookupError with the given message. """
@@ -853,6 +851,11 @@ class FixtureFunctionMarker(object):
         if isclass(function):
             raise ValueError(
                 "class fixtures not supported (may be in the future)")
+
+        if getattr(function, "_pytestfixturefunction", False):
+            raise ValueError(
+                    "fixture is being applied more than once to the same function")
+
         function._pytestfixturefunction = self
         return function
 
@@ -985,10 +988,9 @@ class FixtureManager(object):
             argnames = getfuncargnames(func, cls=cls)
         else:
             argnames = ()
-        usefixtures = getattr(func, "usefixtures", None)
+        usefixtures = flatten(mark.args for mark in node.iter_markers() if mark.name == "usefixtures")
         initialnames = argnames
-        if usefixtures is not None:
-            initialnames = usefixtures.args + initialnames
+        initialnames = tuple(usefixtures) + initialnames
         fm = node.session._fixturemanager
         names_closure, arg2fixturedefs = fm.getfixtureclosure(initialnames,
                                                               node)
@@ -1070,6 +1072,8 @@ class FixtureManager(object):
                 fixturedef = faclist[-1]
                 if fixturedef.params is not None:
                     parametrize_func = getattr(metafunc.function, 'parametrize', None)
+                    if parametrize_func is not None:
+                        parametrize_func = parametrize_func.combined
                     func_params = getattr(parametrize_func, 'args', [[None]])
                     func_kwargs = getattr(parametrize_func, 'kwargs', {})
                     # skip directly parametrized arguments
