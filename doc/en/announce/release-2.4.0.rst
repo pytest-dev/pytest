@@ -222,4 +222,3 @@ Bug fixes:
 - pytest_terminal_summary(terminalreporter) hooks can now use
   ".section(title)" and ".line(msg)" methods to print extra 
   information at the end of a test run.
-

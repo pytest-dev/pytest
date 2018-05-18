@@ -62,4 +62,3 @@ Full pytest documentation
       :maxdepth: 1
 
       changelog
-

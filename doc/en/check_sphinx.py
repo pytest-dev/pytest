@@ -13,5 +13,3 @@ def test_linkcheck(tmpdir):
     subprocess.check_call(
         ["sphinx-build", "-blinkcheck",
           "-d", str(doctrees), ".", str(htmldir)])
-
-

@@ -59,4 +59,3 @@ Changes between 2.3.2 and 2.3.3
 
 - fix issue127 - improve documentation for pytest_addoption() and
   add a ``config.getoption(name)`` helper function for consistency.
-

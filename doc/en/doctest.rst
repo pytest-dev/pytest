@@ -168,5 +168,3 @@ by using one of standard doctest modules format in options
     pytest --doctest-modules --doctest-report cdiff
     pytest --doctest-modules --doctest-report ndiff
     pytest --doctest-modules --doctest-report only_first_failure
-
-

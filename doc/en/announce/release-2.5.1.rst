@@ -44,4 +44,3 @@ holger krekel
 
 - fix issue407: fix addoption docstring to point to argparse instead of
   optparse. Thanks Daniel D. Wright.
-

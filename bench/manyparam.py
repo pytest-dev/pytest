@@ -9,4 +9,3 @@ def test_it(foo):
     pass
 def test_it2(foo):
     pass
-

@@ -3,4 +3,3 @@ def test_something(setup):
 
 def test_something_more(setup):
     assert setup.timecostly == 1
-

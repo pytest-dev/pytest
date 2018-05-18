@@ -61,4 +61,3 @@ holger krekel
   expressions now work better.  Thanks Floris Bruynooghe.
 
 - make capfd/capsys.capture private, its unused and shouldn't be exposed
-

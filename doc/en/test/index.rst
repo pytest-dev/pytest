@@ -31,5 +31,3 @@ changelog_: history of changes covering last releases
 .. _features: features.html
 .. _funcargs: funcargs.html
 .. _customize: customize.html
-
-

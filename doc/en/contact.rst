@@ -47,4 +47,3 @@ Contact channels
 .. _`development mailing list`:
 .. _`pytest-dev at python.org (mailing list)`: http://mail.python.org/mailman/listinfo/pytest-dev
 .. _`pytest-commit at python.org (mailing list)`: http://mail.python.org/mailman/listinfo/pytest-commit
-

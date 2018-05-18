@@ -94,4 +94,3 @@ Changes between 2.3.4 and 2.3.5
 - fix issue134 - print the collect errors that prevent running specified test items
 
 - fix issue266 - accept unicode in MarkEvaluator expressions
-

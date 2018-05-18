@@ -37,4 +37,3 @@ Changes between 2.0.2 and 2.0.3
   internally)
 
 - fix issue37: avoid invalid characters in junitxml's output
-

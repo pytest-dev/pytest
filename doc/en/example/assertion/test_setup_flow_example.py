@@ -39,4 +39,3 @@ Note that ``setup_class(TestStateFullThing)`` is called and not
 to insert ``setup_class = classmethod(setup_class)`` to make
 your setup function callable.
 """
-

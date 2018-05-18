@@ -854,4 +854,3 @@ This allows you to execute tests using the frozen
 application with standard ``pytest`` command-line options::
 
     ./app_main --pytest --verbose --tb=long --junitxml=results.xml test-suite/
-

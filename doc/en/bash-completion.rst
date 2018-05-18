@@ -23,6 +23,3 @@ For permanent (but not global) ``pytest`` activation, use::
 For one-time activation of argcomplete for ``pytest`` only, use::
 
         eval "$(register-python-argcomplete pytest)"
-
-
-

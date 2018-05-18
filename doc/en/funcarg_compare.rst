@@ -214,5 +214,3 @@ fixtures:
   and simplify your fixture function code to use the :ref:`@pytest.fixture`
   decorator instead.  This will also allow to take advantage of 
   the automatic per-resource grouping of tests.
-
-

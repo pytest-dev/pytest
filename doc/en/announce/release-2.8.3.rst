@@ -56,4 +56,3 @@ The py.test Development Team
 - extend documentation on the --ignore cli option 
 - use pytest-runner for setuptools integration 
 - minor fixes for interaction with OS X El Capitan system integrity protection (thanks Florian)
-

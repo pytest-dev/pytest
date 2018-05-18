@@ -172,4 +172,3 @@ holger krekel
   does not duplicate the unittest-API into the "plain" namespace.
 
 - fix verbose reporting for @mock'd test functions
-
