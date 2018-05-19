@@ -998,7 +998,7 @@ class TestStdCapture(object):
                         reason='text output different for bytes on python3')
     def test_capturing_readouterr_decode_error_handling(self):
         with self.getcapture() as cap:
-            # triggered a internal error in pytest
+            # triggered an internal error in pytest
             print('\xa6')
             out, err = cap.readouterr()
         assert out == py.builtin._totext('\ufffd\n', 'unicode-escape')

@@ -10,7 +10,7 @@ Code Style
 ----------
 
 * `PEP-8 <https://www.python.org/dev/peps/pep-0008>`_
-* `flake8 <https://pypi.python.org/pypi/flake8>`_ for quality checks
+* `flake8 <https://pypi.org/project/flake8/>`_ for quality checks
 * `invoke <http://www.pyinvoke.org/>`_ to automate development tasks
 
 

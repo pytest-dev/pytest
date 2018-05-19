@@ -160,7 +160,7 @@ together with the actual data, instead of listing them separately.
 A quick port of "testscenarios"
 ------------------------------------
 
-.. _`test scenarios`: http://pypi.python.org/pypi/testscenarios/
+.. _`test scenarios`: https://pypi.org/project/testscenarios/
 
 Here is a quick port to run tests configured with `test scenarios`_,
 an add-on from Robert Collins for the standard unittest framework. We
@@ -469,7 +469,7 @@ If you run this with reporting for skips enabled::
     
     =================== 1 passed, 1 skipped in 0.12 seconds ====================
 
-You'll see that we don't have a ``opt2`` module and thus the second test run
+You'll see that we don't have an ``opt2`` module and thus the second test run
 of our ``test_func1`` was skipped.  A few notes:
 
 - the fixture functions in the ``conftest.py`` file are "session-scoped" because we

@@ -21,7 +21,7 @@ The `pytest-cov`_ package may be installed with pip or easy_install::
     pip install pytest-cov
     easy_install pytest-cov
 
-.. _`pytest-cov`: http://pypi.python.org/pypi/pytest-cov/
+.. _`pytest-cov`: https://pypi.org/project/pytest-cov/
 
 
 Uninstallation

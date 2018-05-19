@@ -83,7 +83,7 @@ skip.Exception = Skipped
 
 
 def fail(msg="", pytrace=True):
-    """ explicitly fail an currently-executing test with the given Message.
+    """ explicitly fail a currently-executing test with the given Message.
 
     :arg pytrace: if false the msg represents the full failure information
                   and no python traceback will be reported.

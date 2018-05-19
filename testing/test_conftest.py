@@ -373,7 +373,7 @@ class TestConftestVisibility(object):
     (None, 1, 1),
 ])
 def test_search_conftest_up_to_inifile(testdir, confcutdir, passed, error):
-    """Test that conftest files are detected only up to a ini file, unless
+    """Test that conftest files are detected only up to an ini file, unless
     an explicit --confcutdir option is given.
     """
     root = testdir.tmpdir

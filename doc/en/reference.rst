@@ -150,7 +150,7 @@ Unconditionally skip a test function.
 pytest.mark.skipif
 ~~~~~~~~~~~~~~~~~~
 
-**Tutorial**: :ref:`xfail`.
+**Tutorial**: :ref:`skipif`.
 
 Skip a test function if a condition is ``True``.
 
@@ -945,8 +945,8 @@ passed multiple times. The expected format is ``name=value``. For example::
 
     Allows to pick the action for empty parametersets in parameterization
 
-    * ``skip`` skips tests with a empty parameterset (default)
-    * ``xfail`` marks tests with a empty parameterset as xfail(run=False)
+    * ``skip`` skips tests with an empty parameterset (default)
+    * ``xfail`` marks tests with an empty parameterset as xfail(run=False)
 
     .. code-block:: ini
 

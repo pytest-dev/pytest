@@ -473,7 +473,7 @@ class TestAssert_reprcompare(object):
     def test_one_repr_empty(self):
         """
         the faulty empty string repr did trigger
-        a unbound local error in _diff_text
+        an unbound local error in _diff_text
         """
         class A(str):
             def __repr__(self):
@@ -744,6 +744,18 @@ def test_reprcompare_notin(mock_config):
     detail = plugin.pytest_assertrepr_compare(
         mock_config, 'not in', 'foo', 'aaafoobbb')[1:]
     assert detail == ["'foo' is contained here:", '  aaafoobbb', '?    +++']
+
+
+def test_reprcompare_whitespaces(mock_config):
+    detail = plugin.pytest_assertrepr_compare(
+        mock_config, '==', '\r\n', '\n')
+    assert detail == [
+        r"'\r\n' == '\n'",
+        r"Strings contain only whitespace, escaping them using repr()",
+        r"- '\r\n'",
+        r"?  --",
+        r"+ '\n'",
+    ]
 
 
 def test_pytest_assertrepr_compare_integration(testdir):

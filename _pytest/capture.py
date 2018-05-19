@@ -315,7 +315,7 @@ class CaptureFixture(object):
 
 
 def safe_text_dupfile(f, mode, default_encoding="UTF8"):
-    """ return a open text file object that's a duplicate of f on the
+    """ return an open text file object that's a duplicate of f on the
         FD-level if possible.
     """
     encoding = getattr(f, "encoding", None)

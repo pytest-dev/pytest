@@ -55,7 +55,7 @@ def filter_traceback(entry):
     is_generated = '<' in raw_filename and '>' in raw_filename
     if is_generated:
         return False
-    # entry.path might point to an non-existing file, in which case it will
+    # entry.path might point to a non-existing file, in which case it will
     # also return a str object. see #1133
     p = py.path.local(entry.path)
     return not p.relto(_pluggy_dir) and not p.relto(_pytest_dir) and not p.relto(_py_dir)

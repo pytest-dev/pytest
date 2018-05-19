@@ -20,6 +20,7 @@
 
 import os
 import sys
+import datetime
 
 from _pytest import __version__ as version
 
@@ -57,7 +58,8 @@ master_doc = 'contents'
 
 # General information about the project.
 project = u'pytest'
-copyright = u'2015, holger krekel and pytest-dev team'
+year = datetime.datetime.utcnow().year
+copyright = u'2015–{} , holger krekel and pytest-dev team'.format(year)
 
 
 
