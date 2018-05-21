@@ -35,7 +35,7 @@ class MarkEvaluator(object):
         return not hasattr(self, 'exc')
 
     def _get_marks(self):
-        return [x for x in self.item.iter_markers() if x.name == self._mark_name]
+        return list(self.item.iter_markers(name=self._mark_name))
 
     def invalidraise(self, exc):
         raises = self.get('raises')

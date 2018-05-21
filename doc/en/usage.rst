@@ -274,10 +274,9 @@ Alternatively, you can integrate this functionality with custom markers:
 
     def pytest_collection_modifyitems(session, config, items):
         for item in items:
-            for marker in item.iter_markers():
-                if marker.name == 'test_id':
-                    test_id = marker.args[0]
-                    item.user_properties.append(('test_id', test_id))
+            for marker in item.iter_markers(name='test_id'):
+                test_id = marker.args[0]
+                item.user_properties.append(('test_id', test_id))
 
 And in your tests:
 

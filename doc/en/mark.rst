@@ -28,8 +28,8 @@ which also serve as documentation.
 
 .. currentmodule:: _pytest.mark.structures
 .. autoclass:: Mark
-	:members:
-	:noindex:
+    :members:
+    :noindex:
 
 
 .. `marker-iteration`
@@ -51,8 +51,60 @@ in fact, markers where only accessible in functions, even if they where declared
 
 A new API to access markers has been introduced in pytest 3.6 in order to solve the problems with the initial design, providing :func:`_pytest.nodes.Node.iter_markers` method to iterate over markers in a consistent manner and reworking the internals, which solved great deal of problems with the initial design.
 
-Here is a non-exhaustive list of issues fixed by the new implementation:
 
+.. _update marker code:
+
+Updating code
+~~~~~~~~~~~~~
+
+The old ``Node.get_marker(name)`` function is considered deprecated because it returns an internal ``MarkerInfo`` object
+which contains the merged name, ``*args`` and ``**kwargs**`` of all the markers which apply to that node.
+
+In general there are two scenarios on how markers should be handled:
+
+1. Marks overwrite each other. Order matters but you only want to think of your mark as a single item. E.g.
+``log_level('info')`` at a module level can be overwritten by ``log_level('debug')`` for a specific test.
+
+    In this case replace use ``Node.get_closest_marker(name)``:
+
+    .. code-block:: python
+
+        # replace this:
+        marker = item.get_marker('log_level')
+        if marker:
+            level = marker.args[0]
+
+        # by this:
+        marker = item.get_closest_marker('log_level')
+        if marker:
+            level = marker.args[0]
+
+2. Marks compose additive. E.g. ``skipif(condition)`` marks means you just want to evaluate all of them,
+order doesn't even matter. You probably want to think of your marks as a set here.
+
+   In this case iterate over each mark and handle their ``*args`` and ``**kwargs`` individually.
+
+   .. code-block:: python
+
+        # replace this
+        skipif = item.get_marker('skipif')
+        if skipif:
+            for condition in skipif.args:
+                # eval condition
+
+        # by this:
+        for skipif in item.iter_markers('skipif'):
+            condition = skipif.args[0]
+            # eval condition
+
+
+If you are unsure or have any questions, please consider opening
+`an issue <https://github.com/pytest-dev/pytest/issues>`_.
+
+Related issues
+~~~~~~~~~~~~~~
+
+Here is a non-exhaustive list of issues fixed by the new implementation:
 
 * Marks don't pick up nested classes (`#199 <https://github.com/pytest-dev/pytest/issues/199>`_).
 

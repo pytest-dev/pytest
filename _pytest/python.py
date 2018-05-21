@@ -118,9 +118,8 @@ def pytest_generate_tests(metafunc):
         if hasattr(metafunc.function, attr):
             msg = "{0} has '{1}', spelling should be 'parametrize'"
             raise MarkerError(msg.format(metafunc.function.__name__, attr))
-    for marker in metafunc.definition.iter_markers():
-        if marker.name == 'parametrize':
-            metafunc.parametrize(*marker.args, **marker.kwargs)
+    for marker in metafunc.definition.iter_markers(name='parametrize'):
+        metafunc.parametrize(*marker.args, **marker.kwargs)
 
 
 def pytest_configure(config):
