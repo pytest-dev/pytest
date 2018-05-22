@@ -426,7 +426,7 @@ def approx(expected, rel=None, abs=None, nan_ok=False):
        __ https://docs.python.org/3/reference/datamodel.html#object.__ge__
     """
 
-    from collections import Mapping, Sequence
+    from _pytest.compat import Mapping, Sequence
     from _pytest.compat import STRING_TYPES as String
     from decimal import Decimal
 

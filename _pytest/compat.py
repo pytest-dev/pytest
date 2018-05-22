@@ -40,11 +40,11 @@ MODULE_NOT_FOUND_ERROR = 'ModuleNotFoundError' if PY36 else 'ImportError'
 
 if _PY3:
     from collections.abc import MutableMapping as MappingMixin  # noqa
-    from collections.abc import Sequence  # noqa
+    from collections.abc import Mapping, Sequence  # noqa
 else:
     # those raise DeprecationWarnings in Python >=3.7
     from collections import MutableMapping as MappingMixin  # noqa
-    from collections import Sequence  # noqa
+    from collections import Mapping, Sequence  # noqa
 
 
 def _format_args(func):
