@@ -14,6 +14,16 @@ Pytest 3.6.0 (2018-05-23)
 Features
 --------
 
+- Revamp the internals of the ``pytest.mark`` implementation with correct per
+  node handling which fixes a number of long standing bugs caused by the old
+  design. This introduces new ``Node.iter_markers(name)`` and
+  ``Node.get_closest_mark(name)`` APIs. Users are **strongly encouraged** to
+  read the `reasons for the revamp in the docs
+  <https://docs.pytest.org/en/latest/mark.html#marker-revamp-and-iteration>`_,
+  or jump over to details about `updating existing code to use the new APIs
+  <https://docs.pytest.org/en/latest/mark.html#updating-code>`_. (`#3317
+  <https://github.com/pytest-dev/pytest/issues/3317>`_)
+
 - Now when ``@pytest.fixture`` is applied more than once to the same function a
   ``ValueError`` is raised. This buggy behavior would cause surprising problems
   and if was working for a test suite it was mostly by accident. (`#2334
@@ -37,16 +47,6 @@ Features
   ``log-level`` parameter has greater numeric value than that of the level of
   the root logger, which makes it play better with custom logging configuration
   in user code. (`#3307 <https://github.com/pytest-dev/pytest/issues/3307>`_)
-
-- Revamp the internals of the ``pytest.mark`` implementation with correct per
-  node handling which fixes a number of long standing bugs caused by the old
-  design. This introduces new ``Node.iter_markers(name)`` and
-  ``Node.get_closest_mark(name)`` APIs. Users are **strongly encouraged** to
-  read the `reasons for the revamp in the docs
-  <https://docs.pytest.org/en/latest/mark.html#marker-revamp-and-iteration>`_,
-  or jump over to details about `updating existing code to use the new APIs
-  <https://docs.pytest.org/en/latest/mark.html#updating-code>`_. (`#3317
-  <https://github.com/pytest-dev/pytest/issues/3317>`_)
 
 
 Bug Fixes
