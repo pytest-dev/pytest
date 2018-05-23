@@ -177,7 +177,7 @@ class PytestPluginManager(PluginManager):
     """
 
     def __init__(self):
-        super(PytestPluginManager, self).__init__("pytest", implprefix="pytest_")
+        super(PytestPluginManager, self).__init__("pytest")
         self._conftest_plugins = set()
 
         # state related to local conftest plugins
@@ -231,6 +231,11 @@ class PytestPluginManager(PluginManager):
 
         method = getattr(plugin, name)
         opts = super(PytestPluginManager, self).parse_hookimpl_opts(plugin, name)
+
+        # collect unmarked hooks as long as they have the `pytest_' prefix
+        if opts is None and name.startswith("pytest_"):
+            opts = {}
+
         if opts is not None:
             for name in ("tryfirst", "trylast", "optionalhook", "hookwrapper"):
                 opts.setdefault(name, hasattr(method, name))

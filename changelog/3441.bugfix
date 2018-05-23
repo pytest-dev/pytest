@@ -1,1 +1,0 @@
-Also use iter_marker for discovering the marks applying for marker expressions from the cli to avoid the bad data from the legacy mark storage.

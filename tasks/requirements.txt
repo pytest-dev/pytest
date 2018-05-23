@@ -1,4 +1,6 @@
+-e .
 gitpython
 invoke
 towncrier
 tox
+wheel

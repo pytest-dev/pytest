@@ -1,1 +1,0 @@
-Change documentation copyright year to a range which auto-updates itself each time it is published.
