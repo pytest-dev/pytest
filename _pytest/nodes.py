@@ -30,7 +30,7 @@ def _splitnode(nodeid):
         ['testing', 'code', 'test_excinfo.py']
         ['testing', 'code', 'test_excinfo.py', 'TestFormattedExcinfo', '()']
     """
-    if nodeid == '':
+    if nodeid == "":
         # If there is no root node at all, return an empty list so the caller's logic can remain sane
         return []
     parts = nodeid.split(SEP)
@@ -64,14 +64,16 @@ class _CompatProperty(object):
         #     "usage of {owner!r}.{name} is deprecated, please use pytest.{name} instead".format(
         #         name=self.name, owner=type(owner).__name__),
         #     PendingDeprecationWarning, stacklevel=2)
-        return getattr(__import__('pytest'), self.name)
+        return getattr(__import__("pytest"), self.name)
 
 
 class Node(object):
     """ base class for Collector and Item the test collection tree.
     Collector subclasses have children, Items are terminal nodes."""
 
-    def __init__(self, name, parent=None, config=None, session=None, fspath=None, nodeid=None):
+    def __init__(
+        self, name, parent=None, config=None, session=None, fspath=None, nodeid=None
+    ):
         #: a unique name within the scope of the parent node
         self.name = name
 
@@ -85,7 +87,7 @@ class Node(object):
         self.session = session or parent.session
 
         #: filesystem path where this node was collected from (can be None)
-        self.fspath = fspath or getattr(parent, 'fspath', None)
+        self.fspath = fspath or getattr(parent, "fspath", None)
 
         #: keywords/markers collected from all scopes
         self.keywords = NodeKeywords(self)
@@ -120,7 +122,7 @@ class Node(object):
     def _getcustomclass(self, name):
         maybe_compatprop = getattr(type(self), name)
         if isinstance(maybe_compatprop, _CompatProperty):
-            return getattr(__import__('pytest'), name)
+            return getattr(__import__("pytest"), name)
         else:
             cls = getattr(self, name)
             # TODO: reenable in the features branch
@@ -130,8 +132,7 @@ class Node(object):
         return cls
 
     def __repr__(self):
-        return "<%s %r>" % (self.__class__.__name__,
-                            getattr(self, 'name', None))
+        return "<%s %r>" % (self.__class__.__name__, getattr(self, "name", None))
 
     def warn(self, code, message):
         """ generate a warning with the given code and message for this
@@ -140,9 +141,11 @@ class Node(object):
         fslocation = getattr(self, "location", None)
         if fslocation is None:
             fslocation = getattr(self, "fspath", None)
-        self.ihook.pytest_logwarning.call_historic(kwargs=dict(
-            code=code, message=message,
-            nodeid=self.nodeid, fslocation=fslocation))
+        self.ihook.pytest_logwarning.call_historic(
+            kwargs=dict(
+                code=code, message=message, nodeid=self.nodeid, fslocation=fslocation
+            )
+        )
 
     # methods for ordering nodes
     @property
@@ -176,6 +179,7 @@ class Node(object):
         ``marker`` can be a string or pytest.mark.* instance.
         """
         from _pytest.mark import MarkDecorator, MARK_GEN
+
         if isinstance(marker, six.string_types):
             marker = getattr(MARK_GEN, marker)
         elif not isinstance(marker, MarkDecorator):
@@ -200,7 +204,7 @@ class Node(object):
         """
         for node in reversed(self.listchain()):
             for mark in node.own_markers:
-                if name is None or getattr(mark, 'name', None) == name:
+                if name is None or getattr(mark, "name", None) == name:
                     yield node, mark
 
     def get_closest_marker(self, name, default=None):
@@ -283,9 +287,13 @@ class Node(object):
         except OSError:
             abspath = True
 
-        return excinfo.getrepr(funcargs=True, abspath=abspath,
-                               showlocals=self.config.option.showlocals,
-                               style=style, tbfilter=tbfilter)
+        return excinfo.getrepr(
+            funcargs=True,
+            abspath=abspath,
+            showlocals=self.config.option.showlocals,
+            style=style,
+            tbfilter=tbfilter,
+        )
 
     repr_failure = _repr_failure_py
 
@@ -312,7 +320,7 @@ class Collector(Node):
         return self._repr_failure_py(excinfo, style="short")
 
     def _prunetraceback(self, excinfo):
-        if hasattr(self, 'fspath'):
+        if hasattr(self, "fspath"):
             traceback = excinfo.traceback
             ntraceback = traceback.cut(path=self.fspath)
             if ntraceback == traceback:
@@ -327,6 +335,7 @@ def _check_initialpaths_for_relpath(session, fspath):
 
 
 class FSCollector(Collector):
+
     def __init__(self, fspath, parent=None, config=None, session=None, nodeid=None):
         fspath = py.path.local(fspath)  # xxx only for test_resultlog.py?
         name = fspath.basename
@@ -347,7 +356,9 @@ class FSCollector(Collector):
             if os.sep != SEP:
                 nodeid = nodeid.replace(os.sep, SEP)
 
-        super(FSCollector, self).__init__(name, parent, config, session, nodeid=nodeid, fspath=fspath)
+        super(FSCollector, self).__init__(
+            name, parent, config, session, nodeid=nodeid, fspath=fspath
+        )
 
 
 class File(FSCollector):

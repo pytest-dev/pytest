@@ -20,7 +20,9 @@ def _cmp_raises_type_error(self, other):
     other operators at all.
     """
     __tracebackhide__ = True
-    raise TypeError('Comparison operators other than == and != not supported by approx objects')
+    raise TypeError(
+        "Comparison operators other than == and != not supported by approx objects"
+    )
 
 
 # builtin pytest.approx helper
@@ -47,8 +49,8 @@ class ApproxBase(object):
 
     def __eq__(self, actual):
         return all(
-            a == self._approx_scalar(x)
-            for a, x in self._yield_comparisons(actual))
+            a == self._approx_scalar(x) for a, x in self._yield_comparisons(actual)
+        )
 
     __hash__ = None
 
@@ -79,8 +81,9 @@ class ApproxNumpy(ApproxBase):
         # shape of the array...
         import numpy as np
 
-        return "approx({!r})".format(list(
-            self._approx_scalar(x) for x in np.asarray(self.expected)))
+        return "approx({!r})".format(
+            list(self._approx_scalar(x) for x in np.asarray(self.expected))
+        )
 
     if sys.version_info[0] == 2:
         __cmp__ = _cmp_raises_type_error
@@ -123,9 +126,9 @@ class ApproxMapping(ApproxBase):
     """
 
     def __repr__(self):
-        return "approx({!r})".format({
-            k: self._approx_scalar(v)
-            for k, v in self.expected.items()})
+        return "approx({!r})".format(
+            {k: self._approx_scalar(v) for k, v in self.expected.items()}
+        )
 
     def __eq__(self, actual):
         if set(actual.keys()) != set(self.expected.keys()):
@@ -147,8 +150,9 @@ class ApproxSequence(ApproxBase):
         seq_type = type(self.expected)
         if seq_type not in (tuple, list, set):
             seq_type = list
-        return "approx({!r})".format(seq_type(
-            self._approx_scalar(x) for x in self.expected))
+        return "approx({!r})".format(
+            seq_type(self._approx_scalar(x) for x in self.expected)
+        )
 
     def __eq__(self, actual):
         if len(actual) != len(self.expected):
@@ -184,14 +188,14 @@ class ApproxScalar(ApproxBase):
         # If a sensible tolerance can't be calculated, self.tolerance will
         # raise a ValueError.  In this case, display '???'.
         try:
-            vetted_tolerance = '{:.1e}'.format(self.tolerance)
+            vetted_tolerance = "{:.1e}".format(self.tolerance)
         except ValueError:
-            vetted_tolerance = '???'
+            vetted_tolerance = "???"
 
         if sys.version_info[0] == 2:
-            return '{} +- {}'.format(self.expected, vetted_tolerance)
+            return "{} +- {}".format(self.expected, vetted_tolerance)
         else:
-            return u'{} \u00b1 {}'.format(self.expected, vetted_tolerance)
+            return u"{} \u00b1 {}".format(self.expected, vetted_tolerance)
 
     def __eq__(self, actual):
         """
@@ -232,6 +236,7 @@ class ApproxScalar(ApproxBase):
         absolute tolerance or a relative tolerance, depending on what the user
         specified or which would be larger.
         """
+
         def set_default(x, default):
             return x if x is not None else default
 
@@ -240,7 +245,9 @@ class ApproxScalar(ApproxBase):
         absolute_tolerance = set_default(self.abs, self.DEFAULT_ABSOLUTE_TOLERANCE)
 
         if absolute_tolerance < 0:
-            raise ValueError("absolute tolerance can't be negative: {}".format(absolute_tolerance))
+            raise ValueError(
+                "absolute tolerance can't be negative: {}".format(absolute_tolerance)
+            )
         if math.isnan(absolute_tolerance):
             raise ValueError("absolute tolerance can't be NaN.")
 
@@ -255,10 +262,16 @@ class ApproxScalar(ApproxBase):
         # we've made sure the user didn't ask for an absolute tolerance only,
         # because we don't want to raise errors about the relative tolerance if
         # we aren't even going to use it.
-        relative_tolerance = set_default(self.rel, self.DEFAULT_RELATIVE_TOLERANCE) * abs(self.expected)
+        relative_tolerance = set_default(
+            self.rel, self.DEFAULT_RELATIVE_TOLERANCE
+        ) * abs(
+            self.expected
+        )
 
         if relative_tolerance < 0:
-            raise ValueError("relative tolerance can't be negative: {}".format(absolute_tolerance))
+            raise ValueError(
+                "relative tolerance can't be negative: {}".format(absolute_tolerance)
+            )
         if math.isnan(relative_tolerance):
             raise ValueError("relative tolerance can't be NaN.")
 
@@ -269,8 +282,8 @@ class ApproxScalar(ApproxBase):
 class ApproxDecimal(ApproxScalar):
     from decimal import Decimal
 
-    DEFAULT_ABSOLUTE_TOLERANCE = Decimal('1e-12')
-    DEFAULT_RELATIVE_TOLERANCE = Decimal('1e-6')
+    DEFAULT_ABSOLUTE_TOLERANCE = Decimal("1e-12")
+    DEFAULT_RELATIVE_TOLERANCE = Decimal("1e-6")
 
 
 def approx(expected, rel=None, abs=None, nan_ok=False):
@@ -466,9 +479,10 @@ def _is_numpy_array(obj):
     import inspect
 
     for cls in inspect.getmro(type(obj)):
-        if cls.__module__ == 'numpy':
+        if cls.__module__ == "numpy":
             try:
                 import numpy as np
+
                 return isinstance(obj, np.ndarray)
             except ImportError:
                 pass
@@ -477,6 +491,7 @@ def _is_numpy_array(obj):
 
 
 # builtin pytest.raises helper
+
 
 def raises(expected_exception, *args, **kwargs):
     """
@@ -587,8 +602,10 @@ def raises(expected_exception, *args, **kwargs):
     __tracebackhide__ = True
     base_type = (type, text_type, binary_type)
     for exc in filterfalse(isclass, always_iterable(expected_exception, base_type)):
-        msg = ("exceptions must be old-style classes or"
-               " derived from BaseException, not %s")
+        msg = (
+            "exceptions must be old-style classes or"
+            " derived from BaseException, not %s"
+        )
         raise TypeError(msg % type(exc))
 
     message = "DID NOT RAISE {}".format(expected_exception)
@@ -600,8 +617,8 @@ def raises(expected_exception, *args, **kwargs):
         if "match" in kwargs:
             match_expr = kwargs.pop("match")
         if kwargs:
-            msg = 'Unexpected keyword arguments passed to pytest.raises: '
-            msg += ', '.join(kwargs.keys())
+            msg = "Unexpected keyword arguments passed to pytest.raises: "
+            msg += ", ".join(kwargs.keys())
             raise TypeError(msg)
         return RaisesContext(expected_exception, message, match_expr)
     elif isinstance(args[0], str):
@@ -631,6 +648,7 @@ raises.Exception = fail.Exception
 
 
 class RaisesContext(object):
+
     def __init__(self, expected_exception, message, match_expr):
         self.expected_exception = expected_exception
         self.message = message

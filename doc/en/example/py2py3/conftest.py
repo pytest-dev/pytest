@@ -3,9 +3,12 @@ import pytest
 
 py3 = sys.version_info[0] >= 3
 
+
 class DummyCollector(pytest.collect.File):
+
     def collect(self):
         return []
+
 
 def pytest_pycollect_makemodule(path, parent):
     bn = path.basename

@@ -29,9 +29,12 @@ def format_exception_only(etype, value):
     #
     # Clear these out first because issubtype(string1, SyntaxError)
     # would throw another exception and mask the original problem.
-    if (isinstance(etype, BaseException) or
-        isinstance(etype, types.InstanceType) or
-            etype is None or type(etype) is str):
+    if (
+        isinstance(etype, BaseException)
+        or isinstance(etype, types.InstanceType)
+        or etype is None
+        or type(etype) is str
+    ):
         return [_format_final_exc_line(etype, value)]
 
     stype = etype.__name__
@@ -50,14 +53,14 @@ def format_exception_only(etype, value):
         lines.append('  File "%s", line %d\n' % (filename, lineno))
         if badline is not None:
             if isinstance(badline, bytes):  # python 2 only
-                badline = badline.decode('utf-8', 'replace')
-            lines.append(u'    %s\n' % badline.strip())
+                badline = badline.decode("utf-8", "replace")
+            lines.append(u"    %s\n" % badline.strip())
             if offset is not None:
-                caretspace = badline.rstrip('\n')[:offset].lstrip()
+                caretspace = badline.rstrip("\n")[:offset].lstrip()
                 # non-space whitespace (likes tabs) must be kept for alignment
-                caretspace = ((c.isspace() and c or ' ') for c in caretspace)
+                caretspace = ((c.isspace() and c or " ") for c in caretspace)
                 # only three spaces to account for offset1 == pos 0
-                lines.append('   %s^\n' % ''.join(caretspace))
+                lines.append("   %s^\n" % "".join(caretspace))
         value = msg
 
     lines.append(_format_final_exc_line(stype, value))
@@ -82,4 +85,4 @@ def _some_str(value):
             return str(value)
         except Exception:
             pass
-    return '<unprintable %s object>' % type(value).__name__
+    return "<unprintable %s object>" % type(value).__name__

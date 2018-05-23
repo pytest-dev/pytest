@@ -12,13 +12,12 @@ def _setoption(wmod, arg):
     """
     Copy of the warning._setoption function but does not escape arguments.
     """
-    parts = arg.split(':')
+    parts = arg.split(":")
     if len(parts) > 5:
         raise wmod._OptionError("too many fields (max 5): %r" % (arg,))
     while len(parts) < 5:
-        parts.append('')
-    action, message, category, module, lineno = [s.strip()
-                                                 for s in parts]
+        parts.append("")
+    action, message, category, module, lineno = [s.strip() for s in parts]
     action = wmod._getaction(action)
     category = wmod._getcategory(category)
     if lineno:
@@ -36,12 +35,18 @@ def _setoption(wmod, arg):
 def pytest_addoption(parser):
     group = parser.getgroup("pytest-warnings")
     group.addoption(
-        '-W', '--pythonwarnings', action='append',
-        help="set which warnings to report, see -W option of python itself.")
-    parser.addini("filterwarnings", type="linelist",
-                  help="Each line specifies a pattern for "
-                  "warnings.filterwarnings. "
-                  "Processed after -W and --pythonwarnings.")
+        "-W",
+        "--pythonwarnings",
+        action="append",
+        help="set which warnings to report, see -W option of python itself.",
+    )
+    parser.addini(
+        "filterwarnings",
+        type="linelist",
+        help="Each line specifies a pattern for "
+        "warnings.filterwarnings. "
+        "Processed after -W and --pythonwarnings.",
+    )
 
 
 @contextmanager
@@ -51,7 +56,7 @@ def catch_warnings_for_item(item):
     of the given item and after it is done posts them as warnings to this
     item.
     """
-    args = item.config.getoption('pythonwarnings') or []
+    args = item.config.getoption("pythonwarnings") or []
     inifilters = item.config.getini("filterwarnings")
     with warnings.catch_warnings(record=True) as log:
         for arg in args:
@@ -60,7 +65,7 @@ def catch_warnings_for_item(item):
         for arg in inifilters:
             _setoption(warnings, arg)
 
-        for mark in item.iter_markers(name='filterwarnings'):
+        for mark in item.iter_markers(name="filterwarnings"):
             for arg in mark.args:
                 warnings._setoption(arg)
 
@@ -70,23 +75,35 @@ def catch_warnings_for_item(item):
             warn_msg = warning.message
             unicode_warning = False
 
-            if compat._PY2 and any(isinstance(m, compat.UNICODE_TYPES) for m in warn_msg.args):
+            if (
+                compat._PY2
+                and any(isinstance(m, compat.UNICODE_TYPES) for m in warn_msg.args)
+            ):
                 new_args = []
                 for m in warn_msg.args:
-                    new_args.append(compat.ascii_escaped(m) if isinstance(m, compat.UNICODE_TYPES) else m)
+                    new_args.append(
+                        compat.ascii_escaped(m)
+                        if isinstance(m, compat.UNICODE_TYPES)
+                        else m
+                    )
                 unicode_warning = list(warn_msg.args) != new_args
                 warn_msg.args = new_args
 
             msg = warnings.formatwarning(
-                warn_msg, warning.category,
-                warning.filename, warning.lineno, warning.line)
+                warn_msg,
+                warning.category,
+                warning.filename,
+                warning.lineno,
+                warning.line,
+            )
             item.warn("unused", msg)
 
             if unicode_warning:
                 warnings.warn(
                     "Warning is using unicode non convertible to ascii, "
                     "converting to a safe representation:\n  %s" % msg,
-                    UnicodeWarning)
+                    UnicodeWarning,
+                )
 
 
 @pytest.hookimpl(hookwrapper=True)

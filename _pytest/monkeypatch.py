@@ -38,12 +38,12 @@ def monkeypatch():
 
 def resolve(name):
     # simplified from zope.dottedname
-    parts = name.split('.')
+    parts = name.split(".")
 
     used = parts.pop(0)
     found = __import__(used)
     for part in parts:
-        used += '.' + part
+        used += "." + part
         try:
             found = getattr(found, part)
         except AttributeError:
@@ -60,9 +60,7 @@ def resolve(name):
             if expected == used:
                 raise
             else:
-                raise ImportError(
-                    'import error in %s: %s' % (used, ex)
-                )
+                raise ImportError("import error in %s: %s" % (used, ex))
         found = annotated_getattr(found, part, used)
     return found
 
@@ -72,18 +70,15 @@ def annotated_getattr(obj, name, ann):
         obj = getattr(obj, name)
     except AttributeError:
         raise AttributeError(
-            '%r object at %s has no attribute %r' % (
-                type(obj).__name__, ann, name
-            )
+            "%r object at %s has no attribute %r" % (type(obj).__name__, ann, name)
         )
     return obj
 
 
 def derive_importpath(import_path, raising):
     if not isinstance(import_path, six.string_types) or "." not in import_path:
-        raise TypeError("must be absolute import path string, not %r" %
-                        (import_path,))
-    module, attr = import_path.rsplit('.', 1)
+        raise TypeError("must be absolute import path string, not %r" % (import_path,))
+    module, attr = import_path.rsplit(".", 1)
     target = resolve(module)
     if raising:
         annotated_getattr(target, attr, ann=module)
@@ -91,6 +86,7 @@ def derive_importpath(import_path, raising):
 
 
 class Notset(object):
+
     def __repr__(self):
         return "<notset>"
 
@@ -150,9 +146,11 @@ class MonkeyPatch(object):
 
         if value is notset:
             if not isinstance(target, six.string_types):
-                raise TypeError("use setattr(target, name, value) or "
-                                "setattr(target, value) with target being a dotted "
-                                "import string")
+                raise TypeError(
+                    "use setattr(target, name, value) or "
+                    "setattr(target, value) with target being a dotted "
+                    "import string"
+                )
             value = name
             name, target = derive_importpath(target, raising)
 
@@ -180,9 +178,11 @@ class MonkeyPatch(object):
         __tracebackhide__ = True
         if name is notset:
             if not isinstance(target, six.string_types):
-                raise TypeError("use delattr(target, name) or "
-                                "delattr(target) with target being a dotted "
-                                "import string")
+                raise TypeError(
+                    "use delattr(target, name) or "
+                    "delattr(target) with target being a dotted "
+                    "import string"
+                )
             name, target = derive_importpath(target, raising)
 
         if not hasattr(target, name):

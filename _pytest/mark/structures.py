@@ -20,32 +20,35 @@ def alias(name, warning=None):
         warnings.warn(warning, stacklevel=2)
         return getter(self)
 
-    return property(getter if warning is None else warned, doc='alias for ' + name)
+    return property(getter if warning is None else warned, doc="alias for " + name)
 
 
 def istestfunc(func):
-    return hasattr(func, "__call__") and \
-        getattr(func, "__name__", "<lambda>") != "<lambda>"
+    return hasattr(func, "__call__") and getattr(
+        func, "__name__", "<lambda>"
+    ) != "<lambda>"
 
 
 def get_empty_parameterset_mark(config, argnames, func):
     requested_mark = config.getini(EMPTY_PARAMETERSET_OPTION)
-    if requested_mark in ('', None, 'skip'):
+    if requested_mark in ("", None, "skip"):
         mark = MARK_GEN.skip
-    elif requested_mark == 'xfail':
+    elif requested_mark == "xfail":
         mark = MARK_GEN.xfail(run=False)
     else:
         raise LookupError(requested_mark)
     fs, lineno = getfslineno(func)
     reason = "got empty parameter set %r, function %s at %s:%d" % (
-        argnames, func.__name__, fs, lineno)
+        argnames, func.__name__, fs, lineno
+    )
     return mark(reason=reason)
 
 
-class ParameterSet(namedtuple('ParameterSet', 'values, marks, id')):
+class ParameterSet(namedtuple("ParameterSet", "values, marks, id")):
+
     @classmethod
     def param(cls, *values, **kw):
-        marks = kw.pop('marks', ())
+        marks = kw.pop("marks", ())
         if isinstance(marks, MarkDecorator):
             marks = marks,
         else:
@@ -78,8 +81,9 @@ class ParameterSet(namedtuple('ParameterSet', 'values, marks, id')):
         newmarks = []
         argval = parameterset
         while isinstance(argval, MarkDecorator):
-            newmarks.append(MarkDecorator(Mark(
-                argval.markname, argval.args[:-1], argval.kwargs)))
+            newmarks.append(
+                MarkDecorator(Mark(argval.markname, argval.args[:-1], argval.kwargs))
+            )
             argval = argval.args[-1]
         assert not isinstance(argval, ParameterSet)
         if legacy_force_tuple:
@@ -99,16 +103,15 @@ class ParameterSet(namedtuple('ParameterSet', 'values, marks, id')):
             force_tuple = False
         parameters = [
             ParameterSet.extract_from(x, legacy_force_tuple=force_tuple)
-            for x in argvalues]
+            for x in argvalues
+        ]
         del argvalues
 
         if not parameters:
             mark = get_empty_parameterset_mark(config, argnames, func)
-            parameters.append(ParameterSet(
-                values=(NOTSET,) * len(argnames),
-                marks=[mark],
-                id=None,
-            ))
+            parameters.append(
+                ParameterSet(values=(NOTSET,) * len(argnames), marks=[mark], id=None)
+            )
         return argnames, parameters
 
 
@@ -131,8 +134,8 @@ class Mark(object):
         """
         assert self.name == other.name
         return Mark(
-            self.name, self.args + other.args,
-            dict(self.kwargs, **other.kwargs))
+            self.name, self.args + other.args, dict(self.kwargs, **other.kwargs)
+        )
 
 
 @attr.s
@@ -172,9 +175,9 @@ class MarkDecorator(object):
 
     mark = attr.ib(validator=attr.validators.instance_of(Mark))
 
-    name = alias('mark.name')
-    args = alias('mark.args')
-    kwargs = alias('mark.kwargs')
+    name = alias("mark.name")
+    args = alias("mark.args")
+    kwargs = alias("mark.kwargs")
 
     @property
     def markname(self):
@@ -217,14 +220,11 @@ def get_unpacked_marks(obj):
     """
     obtain the unpacked marks that are stored on an object
     """
-    mark_list = getattr(obj, 'pytestmark', [])
+    mark_list = getattr(obj, "pytestmark", [])
 
     if not isinstance(mark_list, list):
         mark_list = [mark_list]
-    return [
-        getattr(mark, 'mark', mark)  # unpack MarkDecorator
-        for mark in mark_list
-    ]
+    return [getattr(mark, "mark", mark) for mark in mark_list]  # unpack MarkDecorator
 
 
 def store_mark(obj, mark):
@@ -271,7 +271,7 @@ def _marked(func, mark):
     invoked more than once.
     """
     try:
-        func_mark = getattr(func, getattr(mark, 'combined', mark).name)
+        func_mark = getattr(func, getattr(mark, "combined", mark).name)
     except AttributeError:
         return False
     return any(mark == info.combined for info in func_mark)
@@ -284,12 +284,14 @@ class MarkInfo(object):
     _marks = attr.ib()
     combined = attr.ib(
         repr=False,
-        default=attr.Factory(lambda self: reduce(Mark.combined_with, self._marks),
-                             takes_self=True))
+        default=attr.Factory(
+            lambda self: reduce(Mark.combined_with, self._marks), takes_self=True
+        ),
+    )
 
-    name = alias('combined.name', warning=MARK_INFO_ATTRIBUTE)
-    args = alias('combined.args', warning=MARK_INFO_ATTRIBUTE)
-    kwargs = alias('combined.kwargs', warning=MARK_INFO_ATTRIBUTE)
+    name = alias("combined.name", warning=MARK_INFO_ATTRIBUTE)
+    args = alias("combined.args", warning=MARK_INFO_ATTRIBUTE)
+    kwargs = alias("combined.kwargs", warning=MARK_INFO_ATTRIBUTE)
 
     @classmethod
     def for_mark(cls, mark):
@@ -348,6 +350,7 @@ MARK_GEN = MarkGenerator()
 
 
 class NodeKeywords(MappingMixin):
+
     def __init__(self, node):
         self.node = node
         self.parent = node.parent
@@ -381,7 +384,7 @@ class NodeKeywords(MappingMixin):
         return len(self._seen())
 
     def __repr__(self):
-        return "<NodeKeywords for node %s>" % (self.node, )
+        return "<NodeKeywords for node %s>" % (self.node,)
 
 
 @attr.s(cmp=False, hash=False)

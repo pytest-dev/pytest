@@ -23,7 +23,7 @@ def recwarn():
     """
     wrec = WarningsRecorder()
     with wrec:
-        warnings.simplefilter('default')
+        warnings.simplefilter("default")
         yield wrec
 
 
@@ -76,7 +76,9 @@ class _DeprecatedCallContext(object):
 
         if exc_type is None:
             deprecation_categories = (DeprecationWarning, PendingDeprecationWarning)
-            if not any(issubclass(c, deprecation_categories) for c in self._captured_categories):
+            if not any(
+                issubclass(c, deprecation_categories) for c in self._captured_categories
+            ):
                 __tracebackhide__ = True
                 msg = "Did not produce DeprecationWarning or PendingDeprecationWarning"
                 raise AssertionError(msg)
@@ -180,7 +182,7 @@ class WarningsRecorder(warnings.catch_warnings):
             __tracebackhide__ = True
             raise RuntimeError("Cannot enter %r twice" % self)
         self._list = super(WarningsRecorder, self).__enter__()
-        warnings.simplefilter('always')
+        warnings.simplefilter("always")
         return self
 
     def __exit__(self, *exc_info):
@@ -191,11 +193,13 @@ class WarningsRecorder(warnings.catch_warnings):
 
 
 class WarningsChecker(WarningsRecorder):
+
     def __init__(self, expected_warning=None, match_expr=None):
         super(WarningsChecker, self).__init__()
 
-        msg = ("exceptions must be old-style classes or "
-               "derived from Warning, not %s")
+        msg = (
+            "exceptions must be old-style classes or " "derived from Warning, not %s"
+        )
         if isinstance(expected_warning, tuple):
             for exc in expected_warning:
                 if not inspect.isclass(exc):
@@ -214,13 +218,14 @@ class WarningsChecker(WarningsRecorder):
         # only check if we're not currently handling an exception
         if all(a is None for a in exc_info):
             if self.expected_warning is not None:
-                if not any(issubclass(r.category, self.expected_warning)
-                           for r in self):
+                if not any(issubclass(r.category, self.expected_warning) for r in self):
                     __tracebackhide__ = True
-                    fail("DID NOT WARN. No warnings of type {} was emitted. "
-                         "The list of emitted warnings is: {}.".format(
-                             self.expected_warning,
-                             [each.message for each in self]))
+                    fail(
+                        "DID NOT WARN. No warnings of type {} was emitted. "
+                        "The list of emitted warnings is: {}.".format(
+                            self.expected_warning, [each.message for each in self]
+                        )
+                    )
                 elif self.match_expr is not None:
                     for r in self:
                         if issubclass(r.category, self.expected_warning):
@@ -231,5 +236,8 @@ class WarningsChecker(WarningsRecorder):
                             "DID NOT WARN. No warnings of type {} matching"
                             " ('{}') was emitted. The list of emitted warnings"
                             " is: {}.".format(
-                                self.expected_warning, self.match_expr,
-                                [each.message for each in self]))
+                                self.expected_warning,
+                                self.match_expr,
+                                [each.message for each in self],
+                            )
+                        )

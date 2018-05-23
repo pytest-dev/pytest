@@ -36,7 +36,7 @@ NOTSET = object()
 
 PY35 = sys.version_info[:2] >= (3, 5)
 PY36 = sys.version_info[:2] >= (3, 6)
-MODULE_NOT_FOUND_ERROR = 'ModuleNotFoundError' if PY36 else 'ImportError'
+MODULE_NOT_FOUND_ERROR = "ModuleNotFoundError" if PY36 else "ImportError"
 
 if _PY3:
     from collections.abc import MutableMapping as MappingMixin  # noqa
@@ -54,9 +54,9 @@ def _format_args(func):
 isfunction = inspect.isfunction
 isclass = inspect.isclass
 # used to work around a python2 exception info leak
-exc_clear = getattr(sys, 'exc_clear', lambda: None)
+exc_clear = getattr(sys, "exc_clear", lambda: None)
 # The type of re.compile objects is not exposed in Python.
-REGEX_TYPE = type(re.compile(''))
+REGEX_TYPE = type(re.compile(""))
 
 
 def is_generator(func):
@@ -70,8 +70,13 @@ def iscoroutinefunction(func):
     Note: copied and modified from Python 3.5's builtin couroutines.py to avoid import asyncio directly,
     which in turns also initializes the "logging" module as side-effect (see issue #8).
     """
-    return (getattr(func, '_is_coroutine', False) or
-            (hasattr(inspect, 'iscoroutinefunction') and inspect.iscoroutinefunction(func)))
+    return (
+        getattr(func, "_is_coroutine", False)
+        or (
+            hasattr(inspect, "iscoroutinefunction")
+            and inspect.iscoroutinefunction(func)
+        )
+    )
 
 
 def getlocation(function, curdir):
@@ -90,8 +95,9 @@ def num_mock_patch_args(function):
     mock_modules = [sys.modules.get("mock"), sys.modules.get("unittest.mock")]
     if any(mock_modules):
         sentinels = [m.DEFAULT for m in mock_modules if m is not None]
-        return len([p for p in patchings
-                    if not p.attribute_name and p.new in sentinels])
+        return len(
+            [p for p in patchings if not p.attribute_name and p.new in sentinels]
+        )
     return len(patchings)
 
 
@@ -118,16 +124,25 @@ def getfuncargnames(function, is_method=False, cls=None):
     # ordered mapping of parameter names to Parameter instances.  This
     # creates a tuple of the names of the parameters that don't have
     # defaults.
-    arg_names = tuple(p.name for p in signature(function).parameters.values()
-                      if (p.kind is Parameter.POSITIONAL_OR_KEYWORD or
-                          p.kind is Parameter.KEYWORD_ONLY) and
-                      p.default is Parameter.empty)
+    arg_names = tuple(
+        p.name
+        for p in signature(function).parameters.values()
+        if (
+            p.kind is Parameter.POSITIONAL_OR_KEYWORD
+            or p.kind is Parameter.KEYWORD_ONLY
+        )
+        and p.default is Parameter.empty
+    )
     # If this function should be treated as a bound method even though
     # it's passed as an unbound method or function, remove the first
     # parameter name.
-    if (is_method or
-        (cls and not isinstance(cls.__dict__.get(function.__name__, None),
-                                staticmethod))):
+    if (
+        is_method
+        or (
+            cls
+            and not isinstance(cls.__dict__.get(function.__name__, None), staticmethod)
+        )
+    ):
         arg_names = arg_names[1:]
     # Remove any names that will be replaced with mocks.
     if hasattr(function, "__wrapped__"):
@@ -138,9 +153,12 @@ def getfuncargnames(function, is_method=False, cls=None):
 def get_default_arg_names(function):
     # Note: this code intentionally mirrors the code at the beginning of getfuncargnames,
     # to get the arguments which were excluded from its result because they had default values
-    return tuple(p.name for p in signature(function).parameters.values()
-                 if p.kind in (Parameter.POSITIONAL_OR_KEYWORD, Parameter.KEYWORD_ONLY) and
-                 p.default is not Parameter.empty)
+    return tuple(
+        p.name
+        for p in signature(function).parameters.values()
+        if p.kind in (Parameter.POSITIONAL_OR_KEYWORD, Parameter.KEYWORD_ONLY)
+        and p.default is not Parameter.empty
+    )
 
 
 if _PY3:
@@ -148,17 +166,20 @@ if _PY3:
     UNICODE_TYPES = str,
 
     if PY35:
+
         def _bytes_to_ascii(val):
-            return val.decode('ascii', 'backslashreplace')
+            return val.decode("ascii", "backslashreplace")
+
     else:
+
         def _bytes_to_ascii(val):
             if val:
                 # source: http://goo.gl/bGsnwC
                 encoded_bytes, _ = codecs.escape_encode(val)
-                return encoded_bytes.decode('ascii')
+                return encoded_bytes.decode("ascii")
             else:
                 # empty bytes crashes codecs.escape_encode (#1087)
-                return ''
+                return ""
 
     def ascii_escaped(val):
         """If val is pure ascii, returns it as a str().  Otherwise, escapes
@@ -181,7 +202,9 @@ if _PY3:
         if isinstance(val, bytes):
             return _bytes_to_ascii(val)
         else:
-            return val.encode('unicode_escape').decode('ascii')
+            return val.encode("unicode_escape").decode("ascii")
+
+
 else:
     STRING_TYPES = bytes, str, unicode
     UNICODE_TYPES = unicode,
@@ -197,11 +220,11 @@ else:
         """
         if isinstance(val, bytes):
             try:
-                return val.encode('ascii')
+                return val.encode("ascii")
             except UnicodeDecodeError:
-                return val.encode('string-escape')
+                return val.encode("string-escape")
         else:
-            return val.encode('unicode-escape')
+            return val.encode("unicode-escape")
 
 
 def get_real_func(obj):
@@ -210,16 +233,16 @@ def get_real_func(obj):
     """
     start_obj = obj
     for i in range(100):
-        new_obj = getattr(obj, '__wrapped__', None)
+        new_obj = getattr(obj, "__wrapped__", None)
         if new_obj is None:
             break
         obj = new_obj
     else:
         raise ValueError(
-            ("could not find real function of {start}"
-             "\nstopped at {current}").format(
-                start=py.io.saferepr(start_obj),
-                current=py.io.saferepr(obj)))
+            ("could not find real function of {start}" "\nstopped at {current}").format(
+                start=py.io.saferepr(start_obj), current=py.io.saferepr(obj)
+            )
+        )
     if isinstance(obj, functools.partial):
         obj = obj.func
     return obj
@@ -228,7 +251,7 @@ def get_real_func(obj):
 def getfslineno(obj):
     # xxx let decorators etc specify a sane ordering
     obj = get_real_func(obj)
-    if hasattr(obj, 'place_as'):
+    if hasattr(obj, "place_as"):
         obj = obj.place_as
     fslineno = _pytest._code.getfslineno(obj)
     assert isinstance(fslineno[1], int), obj
@@ -267,10 +290,14 @@ def _is_unittest_unexpected_success_a_failure():
 
 
 if _PY3:
+
     def safe_str(v):
         """returns v as string"""
         return str(v)
+
+
 else:
+
     def safe_str(v):
         """returns v as string, converting to ascii if necessary"""
         try:
@@ -278,28 +305,29 @@ else:
         except UnicodeError:
             if not isinstance(v, unicode):
                 v = unicode(v)
-            errors = 'replace'
-            return v.encode('utf-8', errors)
+            errors = "replace"
+            return v.encode("utf-8", errors)
 
 
 COLLECT_FAKEMODULE_ATTRIBUTES = (
-    'Collector',
-    'Module',
-    'Generator',
-    'Function',
-    'Instance',
-    'Session',
-    'Item',
-    'Class',
-    'File',
-    '_fillfuncargs',
+    "Collector",
+    "Module",
+    "Generator",
+    "Function",
+    "Instance",
+    "Session",
+    "Item",
+    "Class",
+    "File",
+    "_fillfuncargs",
 )
 
 
 def _setup_collect_fakemodule():
     from types import ModuleType
     import pytest
-    pytest.collect = ModuleType('pytest.collect')
+
+    pytest.collect = ModuleType("pytest.collect")
     pytest.collect.__all__ = []  # used for setns
     for attr in COLLECT_FAKEMODULE_ATTRIBUTES:
         setattr(pytest.collect, attr, getattr(pytest, attr))
@@ -313,26 +341,28 @@ if _PY2:
 
         @property
         def encoding(self):
-            return getattr(self, '_encoding', 'UTF-8')
+            return getattr(self, "_encoding", "UTF-8")
+
 
 else:
     import io
 
     class CaptureIO(io.TextIOWrapper):
+
         def __init__(self):
             super(CaptureIO, self).__init__(
-                io.BytesIO(),
-                encoding='UTF-8', newline='', write_through=True,
+                io.BytesIO(), encoding="UTF-8", newline="", write_through=True
             )
 
         def getvalue(self):
-            return self.buffer.getvalue().decode('UTF-8')
+            return self.buffer.getvalue().decode("UTF-8")
 
 
 class FuncargnamesCompatAttr(object):
     """ helper class so that Metafunc, Function and FixtureRequest
     don't need to each define the "funcargnames" compatibility attribute.
     """
+
     @property
     def funcargnames(self):
         """ alias attribute for ``fixturenames`` for pre-2.3 compatibility"""

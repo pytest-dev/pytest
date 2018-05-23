@@ -4,6 +4,7 @@ import inspect
 
 
 class Writer(object):
+
     def __init__(self, clsname):
         self.clsname = clsname
 
@@ -21,13 +22,11 @@ class Writer(object):
     def docmethod(self, method):
         doc = " ".join(method.__doc__.split())
         indent = "         "
-        w = textwrap.TextWrapper(initial_indent=indent,
-                                 subsequent_indent=indent)
+        w = textwrap.TextWrapper(initial_indent=indent, subsequent_indent=indent)
 
         spec = inspect.getargspec(method)
         del spec.args[0]
-        self.line(".. py:method:: " + method.__name__ +
-                  inspect.formatargspec(*spec))
+        self.line(".. py:method:: " + method.__name__ + inspect.formatargspec(*spec))
         self.line("")
         self.line(w.fill(doc))
         self.line("")

@@ -15,10 +15,16 @@ import _pytest
 from _pytest import nodes
 from _pytest._code.code import TerminalRepr
 from _pytest.compat import (
-    NOTSET, exc_clear, _format_args,
-    getfslineno, get_real_func,
-    is_generator, isclass, getimfunc,
-    getlocation, getfuncargnames,
+    NOTSET,
+    exc_clear,
+    _format_args,
+    getfslineno,
+    get_real_func,
+    is_generator,
+    isclass,
+    getimfunc,
+    getlocation,
+    getfuncargnames,
     safe_getattr,
     FuncargnamesCompatAttr,
 )
@@ -35,12 +41,14 @@ def pytest_sessionstart(session):
     import _pytest.python
     import _pytest.nodes
 
-    scopename2class.update({
-        'class': _pytest.python.Class,
-        'module': _pytest.python.Module,
-        'function': _pytest.nodes.Item,
-        'session': _pytest.main.Session,
-    })
+    scopename2class.update(
+        {
+            "class": _pytest.python.Class,
+            "module": _pytest.python.Module,
+            "function": _pytest.nodes.Item,
+            "session": _pytest.main.Session,
+        }
+    )
     session._fixturemanager = FixtureManager(session)
 
 
@@ -50,21 +58,24 @@ scopename2class = {}
 scope2props = dict(session=())
 scope2props["module"] = ("fspath", "module")
 scope2props["class"] = scope2props["module"] + ("cls",)
-scope2props["instance"] = scope2props["class"] + ("instance", )
+scope2props["instance"] = scope2props["class"] + ("instance",)
 scope2props["function"] = scope2props["instance"] + ("function", "keywords")
 
 
 def scopeproperty(name=None, doc=None):
+
     def decoratescope(func):
         scopename = name or func.__name__
 
         def provide(self):
             if func.__name__ in scope2props[self.scope]:
                 return func(self)
-            raise AttributeError("%s not available in %s-scoped context" % (
-                scopename, self.scope))
+            raise AttributeError(
+                "%s not available in %s-scoped context" % (scopename, self.scope)
+            )
 
         return property(provide, None, None, func.__doc__)
+
     return decoratescope
 
 
@@ -95,8 +106,7 @@ def add_funcarg_pseudo_fixture_def(collector, metafunc, fixturemanager):
             callspec.indices[argname] = len(arg2params_list)
             arg2params_list.append(argvalue)
             if argname not in arg2scope:
-                scopenum = callspec._arg2scopenum.get(argname,
-                                                      scopenum_function)
+                scopenum = callspec._arg2scopenum.get(argname, scopenum_function)
                 arg2scope[argname] = scopes[scopenum]
         callspec.funcargs.clear()
 
@@ -119,10 +129,16 @@ def add_funcarg_pseudo_fixture_def(collector, metafunc, fixturemanager):
         if node and argname in node._name2pseudofixturedef:
             arg2fixturedefs[argname] = [node._name2pseudofixturedef[argname]]
         else:
-            fixturedef = FixtureDef(fixturemanager, '', argname,
-                                    get_direct_param_fixture_func,
-                                    arg2scope[argname],
-                                    valuelist, False, False)
+            fixturedef = FixtureDef(
+                fixturemanager,
+                "",
+                argname,
+                get_direct_param_fixture_func,
+                arg2scope[argname],
+                valuelist,
+                False,
+                False,
+            )
             arg2fixturedefs[argname] = [fixturedef]
             if node is not None:
                 node._name2pseudofixturedef[argname] = fixturedef
@@ -154,7 +170,7 @@ def get_parametrized_fixture_keys(item, scopenum):
         for argname, param_index in sorted(cs.indices.items()):
             if cs._arg2scopenum[argname] != scopenum:
                 continue
-            if scopenum == 0:    # session
+            if scopenum == 0:  # session
                 key = (argname, param_index)
             elif scopenum == 1:  # module
                 key = (argname, param_index, item.fspath)
@@ -167,6 +183,7 @@ def get_parametrized_fixture_keys(item, scopenum):
 # it is called for scopenum==0 (session) first and performs sorting
 # down to the lower scopes such as to minimize number of "high scope"
 # setups and teardowns
+
 
 def reorder_items(items):
     argkeys_cache = {}
@@ -205,20 +222,25 @@ def reorder_items_atscope(items, argkeys_cache, items_by_argkey, scopenum):
             item = items_deque.popleft()
             if item in items_done or item in no_argkey_group:
                 continue
-            argkeys = OrderedDict.fromkeys(k for k in scoped_argkeys_cache.get(item, []) if k not in ignore)
+            argkeys = OrderedDict.fromkeys(
+                k for k in scoped_argkeys_cache.get(item, []) if k not in ignore
+            )
             if not argkeys:
                 no_argkey_group[item] = None
             else:
                 slicing_argkey, _ = argkeys.popitem()
                 # we don't have to remove relevant items from later in the deque because they'll just be ignored
-                matching_items = [i for i in scoped_items_by_argkey[slicing_argkey] if i in items]
+                matching_items = [
+                    i for i in scoped_items_by_argkey[slicing_argkey] if i in items
+                ]
                 for i in reversed(matching_items):
                     fix_cache_order(i, argkeys_cache, items_by_argkey)
                     items_deque.appendleft(i)
                 break
         if no_argkey_group:
             no_argkey_group = reorder_items_atscope(
-                no_argkey_group, argkeys_cache, items_by_argkey, scopenum + 1)
+                no_argkey_group, argkeys_cache, items_by_argkey, scopenum + 1
+            )
             for item in no_argkey_group:
                 items_done[item] = None
         ignore.add(slicing_argkey)
@@ -252,6 +274,7 @@ def get_direct_param_fixture_func(request):
 
 
 class FuncFixtureInfo(object):
+
     def __init__(self, argnames, names_closure, name2fixturedefs):
         self.argnames = argnames
         self.names_closure = names_closure
@@ -362,7 +385,8 @@ class FixtureRequest(FuncargnamesCompatAttr):
     def _addfinalizer(self, finalizer, scope):
         colitem = self._getscopeitem(scope)
         self._pyfuncitem.session._setupstate.addfinalizer(
-            finalizer=finalizer, colitem=colitem)
+            finalizer=finalizer, colitem=colitem
+        )
 
     def applymarker(self, marker):
         """ Apply a marker to a single test function invocation.
@@ -400,7 +424,7 @@ class FixtureRequest(FuncargnamesCompatAttr):
             or ``session`` indicating the caching lifecycle of the resource.
         :arg extrakey: added to internal caching key of (funcargname, scope).
         """
-        if not hasattr(self.config, '_setupcache'):
+        if not hasattr(self.config, "_setupcache"):
             self.config._setupcache = {}  # XXX weakref?
         cachekey = (self.fixturename, self._getscopeitem(scope), extrakey)
         cache = self.config._setupcache
@@ -411,9 +435,11 @@ class FixtureRequest(FuncargnamesCompatAttr):
             val = setup()
             cache[cachekey] = val
             if teardown is not None:
+
                 def finalizer():
                     del cache[cachekey]
                     teardown(val)
+
                 self._addfinalizer(finalizer, scope=scope)
         return val
 
@@ -430,10 +456,8 @@ class FixtureRequest(FuncargnamesCompatAttr):
     def getfuncargvalue(self, argname):
         """ Deprecated, use getfixturevalue. """
         from _pytest import deprecated
-        warnings.warn(
-            deprecated.GETFUNCARGVALUE,
-            DeprecationWarning,
-            stacklevel=2)
+
+        warnings.warn(deprecated.GETFUNCARGVALUE, DeprecationWarning, stacklevel=2)
         return self.getfixturevalue(argname)
 
     def _get_active_fixturedef(self, argname):
@@ -524,8 +548,10 @@ class FixtureRequest(FuncargnamesCompatAttr):
             fixturedef.execute(request=subrequest)
         finally:
             # if fixture function failed it might have registered finalizers
-            self.session._setupstate.addfinalizer(functools.partial(fixturedef.finish, request=subrequest),
-                                                  subrequest.node)
+            self.session._setupstate.addfinalizer(
+                functools.partial(fixturedef.finish, request=subrequest),
+                subrequest.node,
+            )
 
     def _check_scope(self, argname, invoking_scope, requested_scope):
         if argname == "request":
@@ -533,11 +559,13 @@ class FixtureRequest(FuncargnamesCompatAttr):
         if scopemismatch(invoking_scope, requested_scope):
             # try to report something helpful
             lines = self._factorytraceback()
-            fail("ScopeMismatch: You tried to access the %r scoped "
-                 "fixture %r with a %r scoped request object, "
-                 "involved factories\n%s" % (
-                     (requested_scope, argname, invoking_scope, "\n".join(lines))),
-                 pytrace=False)
+            fail(
+                "ScopeMismatch: You tried to access the %r scoped "
+                "fixture %r with a %r scoped request object, "
+                "involved factories\n%s"
+                % ((requested_scope, argname, invoking_scope, "\n".join(lines))),
+                pytrace=False,
+            )
 
     def _factorytraceback(self):
         lines = []
@@ -546,8 +574,7 @@ class FixtureRequest(FuncargnamesCompatAttr):
             fs, lineno = getfslineno(factory)
             p = self._pyfuncitem.session.fspath.bestrelpath(fs)
             args = _format_args(factory)
-            lines.append("%s:%d:  def %s%s" % (
-                p, lineno, factory.__name__, args))
+            lines.append("%s:%d:  def %s%s" % (p, lineno, factory.__name__, args))
         return lines
 
     def _getscopeitem(self, scope):
@@ -558,7 +585,9 @@ class FixtureRequest(FuncargnamesCompatAttr):
         if node is None and scope == "class":
             # fallback to function item itself
             node = self._pyfuncitem
-        assert node, 'Could not obtain a node for scope "{}" for function {!r}'.format(scope, self._pyfuncitem)
+        assert node, 'Could not obtain a node for scope "{}" for function {!r}'.format(
+            scope, self._pyfuncitem
+        )
         return node
 
     def __repr__(self):
@@ -613,8 +642,8 @@ def scope2index(scope, descr, where=None):
     except ValueError:
         raise ValueError(
             "{} {}has an unsupported scope value '{}'".format(
-                descr, 'from {} '.format(where) if where else '',
-                scope)
+                descr, "from {} ".format(where) if where else "", scope
+            )
         )
 
 
@@ -649,7 +678,7 @@ class FixtureLookupError(LookupError):
                 for i, line in enumerate(lines):
                     line = line.rstrip()
                     addline("  " + line)
-                    if line.lstrip().startswith('def'):
+                    if line.lstrip().startswith("def"):
                         break
 
         if msg is None:
@@ -668,6 +697,7 @@ class FixtureLookupError(LookupError):
 
 
 class FixtureLookupErrorRepr(TerminalRepr):
+
     def __init__(self, filename, firstlineno, tblines, errorstring, argname):
         self.tblines = tblines
         self.errorstring = errorstring
@@ -681,11 +711,15 @@ class FixtureLookupErrorRepr(TerminalRepr):
             tw.line(tbline.rstrip())
         lines = self.errorstring.split("\n")
         if lines:
-            tw.line('{}       {}'.format(FormattedExcinfo.fail_marker,
-                                         lines[0].strip()), red=True)
+            tw.line(
+                "{}       {}".format(FormattedExcinfo.fail_marker, lines[0].strip()),
+                red=True,
+            )
             for line in lines[1:]:
-                tw.line('{}       {}'.format(FormattedExcinfo.flow_marker,
-                                             line.strip()), red=True)
+                tw.line(
+                    "{}       {}".format(FormattedExcinfo.flow_marker, line.strip()),
+                    red=True,
+                )
         tw.line()
         tw.line("%s:%d" % (self.filename, self.firstlineno + 1))
 
@@ -694,8 +728,7 @@ def fail_fixturefunc(fixturefunc, msg):
     fs, lineno = getfslineno(fixturefunc)
     location = "%s:%s" % (fs, lineno + 1)
     source = _pytest._code.Source(fixturefunc)
-    fail(msg + ":\n\n" + str(source.indent()) + "\n" + location,
-         pytrace=False)
+    fail(msg + ":\n\n" + str(source.indent()) + "\n" + location, pytrace=False)
 
 
 def call_fixture_func(fixturefunc, request, kwargs):
@@ -710,8 +743,9 @@ def call_fixture_func(fixturefunc, request, kwargs):
             except StopIteration:
                 pass
             else:
-                fail_fixturefunc(fixturefunc,
-                                 "yield_fixture function has more than one 'yield'")
+                fail_fixturefunc(
+                    fixturefunc, "yield_fixture function has more than one 'yield'"
+                )
 
         request.addfinalizer(teardown)
     else:
@@ -722,18 +756,25 @@ def call_fixture_func(fixturefunc, request, kwargs):
 class FixtureDef(object):
     """ A container for a factory definition. """
 
-    def __init__(self, fixturemanager, baseid, argname, func, scope, params,
-                 unittest=False, ids=None):
+    def __init__(
+        self,
+        fixturemanager,
+        baseid,
+        argname,
+        func,
+        scope,
+        params,
+        unittest=False,
+        ids=None,
+    ):
         self._fixturemanager = fixturemanager
-        self.baseid = baseid or ''
+        self.baseid = baseid or ""
         self.has_location = baseid is not None
         self.func = func
         self.argname = argname
         self.scope = scope
         self.scopenum = scope2index(
-            scope or "function",
-            descr='fixture {}'.format(func.__name__),
-            where=baseid
+            scope or "function", descr="fixture {}".format(func.__name__), where=baseid
         )
         self.params = params
         self.argnames = getfuncargnames(func, is_method=unittest)
@@ -795,8 +836,10 @@ class FixtureDef(object):
         return hook.pytest_fixture_setup(fixturedef=self, request=request)
 
     def __repr__(self):
-        return ("<FixtureDef name=%r scope=%r baseid=%r >" %
-                (self.argname, self.scope, self.baseid))
+        return (
+            "<FixtureDef name=%r scope=%r baseid=%r >"
+            % (self.argname, self.scope, self.baseid)
+        )
 
 
 def pytest_fixture_setup(fixturedef, request):
@@ -849,12 +892,12 @@ class FixtureFunctionMarker(object):
 
     def __call__(self, function):
         if isclass(function):
-            raise ValueError(
-                "class fixtures not supported (may be in the future)")
+            raise ValueError("class fixtures not supported (may be in the future)")
 
         if getattr(function, "_pytestfixturefunction", False):
             raise ValueError(
-                "fixture is being applied more than once to the same function")
+                "fixture is being applied more than once to the same function"
+            )
 
         function._pytestfixturefunction = self
         return function
@@ -900,8 +943,7 @@ def fixture(scope="function", params=None, autouse=False, ids=None, name=None):
     """
     if callable(scope) and params is None and autouse is False:
         # direct decoration
-        return FixtureFunctionMarker(
-            "function", params, autouse, name=name)(scope)
+        return FixtureFunctionMarker("function", params, autouse, name=name)(scope)
     if params is not None and not isinstance(params, (list, tuple)):
         params = list(params)
     return FixtureFunctionMarker(scope, params, autouse, ids=ids, name=name)
@@ -915,8 +957,9 @@ def yield_fixture(scope="function", params=None, autouse=False, ids=None, name=N
     """
     if callable(scope) and params is None and not autouse:
         # direct decoration
-        return FixtureFunctionMarker(
-            "function", params, autouse, ids=ids, name=name)(scope)
+        return FixtureFunctionMarker("function", params, autouse, ids=ids, name=name)(
+            scope
+        )
     else:
         return FixtureFunctionMarker(scope, params, autouse, ids=ids, name=name)
 
@@ -988,12 +1031,13 @@ class FixtureManager(object):
             argnames = getfuncargnames(func, cls=cls)
         else:
             argnames = ()
-        usefixtures = flatten(mark.args for mark in node.iter_markers(name="usefixtures"))
+        usefixtures = flatten(
+            mark.args for mark in node.iter_markers(name="usefixtures")
+        )
         initialnames = argnames
         initialnames = tuple(usefixtures) + initialnames
         fm = node.session._fixturemanager
-        names_closure, arg2fixturedefs = fm.getfixtureclosure(initialnames,
-                                                              node)
+        names_closure, arg2fixturedefs = fm.getfixtureclosure(initialnames, node)
         return FuncFixtureInfo(argnames, names_closure, arg2fixturedefs)
 
     def pytest_plugin_registered(self, plugin):
@@ -1058,7 +1102,7 @@ class FixtureManager(object):
             try:
                 fixturedefs = arg2fixturedefs[arg_name]
             except KeyError:
-                return scopes.index('function')
+                return scopes.index("function")
             else:
                 return fixturedefs[-1].scopenum
 
@@ -1071,11 +1115,11 @@ class FixtureManager(object):
             if faclist:
                 fixturedef = faclist[-1]
                 if fixturedef.params is not None:
-                    parametrize_func = getattr(metafunc.function, 'parametrize', None)
+                    parametrize_func = getattr(metafunc.function, "parametrize", None)
                     if parametrize_func is not None:
                         parametrize_func = parametrize_func.combined
-                    func_params = getattr(parametrize_func, 'args', [[None]])
-                    func_kwargs = getattr(parametrize_func, 'kwargs', {})
+                    func_params = getattr(parametrize_func, "args", [[None]])
+                    func_kwargs = getattr(parametrize_func, "kwargs", {})
                     # skip directly parametrized arguments
                     if "argnames" in func_kwargs:
                         argnames = parametrize_func.kwargs["argnames"]
@@ -1084,9 +1128,13 @@ class FixtureManager(object):
                     if not isinstance(argnames, (tuple, list)):
                         argnames = [x.strip() for x in argnames.split(",") if x.strip()]
                     if argname not in func_params and argname not in argnames:
-                        metafunc.parametrize(argname, fixturedef.params,
-                                             indirect=True, scope=fixturedef.scope,
-                                             ids=fixturedef.ids)
+                        metafunc.parametrize(
+                            argname,
+                            fixturedef.params,
+                            indirect=True,
+                            scope=fixturedef.scope,
+                            ids=fixturedef.ids,
+                        )
             else:
                 continue  # will raise FixtureLookupError at setup time
 
@@ -1118,7 +1166,10 @@ class FixtureManager(object):
                     continue
                 marker = defaultfuncargprefixmarker
                 from _pytest import deprecated
-                self.config.warn('C1', deprecated.FUNCARG_PREFIX.format(name=name), nodeid=nodeid)
+
+                self.config.warn(
+                    "C1", deprecated.FUNCARG_PREFIX.format(name=name), nodeid=nodeid
+                )
                 name = name[len(self._argprefix):]
             elif not isinstance(marker, FixtureFunctionMarker):
                 # magic globals  with __getattr__ might have got us a wrong
@@ -1127,13 +1178,19 @@ class FixtureManager(object):
             else:
                 if marker.name:
                     name = marker.name
-                msg = 'fixtures cannot have "pytest_funcarg__" prefix ' \
-                      'and be decorated with @pytest.fixture:\n%s' % name
+                msg = 'fixtures cannot have "pytest_funcarg__" prefix ' "and be decorated with @pytest.fixture:\n%s" % name
                 assert not name.startswith(self._argprefix), msg
 
-            fixture_def = FixtureDef(self, nodeid, name, obj,
-                                     marker.scope, marker.params,
-                                     unittest=unittest, ids=marker.ids)
+            fixture_def = FixtureDef(
+                self,
+                nodeid,
+                name,
+                obj,
+                marker.scope,
+                marker.params,
+                unittest=unittest,
+                ids=marker.ids,
+            )
 
             faclist = self._arg2fixturedefs.setdefault(name, [])
             if fixture_def.has_location:
@@ -1149,7 +1206,7 @@ class FixtureManager(object):
                 autousenames.append(name)
 
         if autousenames:
-            self._nodeid_and_autousenames.append((nodeid or '', autousenames))
+            self._nodeid_and_autousenames.append((nodeid or "", autousenames))
 
     def getfixturedefs(self, argname, nodeid):
         """

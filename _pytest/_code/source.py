@@ -21,8 +21,8 @@ class Source(object):
 
     def __init__(self, *parts, **kwargs):
         self.lines = lines = []
-        de = kwargs.get('deindent', True)
-        rstrip = kwargs.get('rstrip', True)
+        de = kwargs.get("deindent", True)
+        rstrip = kwargs.get("rstrip", True)
         for part in parts:
             if not part:
                 partlines = []
@@ -31,7 +31,7 @@ class Source(object):
             elif isinstance(part, (tuple, list)):
                 partlines = [x.rstrip("\n") for x in part]
             elif isinstance(part, six.string_types):
-                partlines = part.split('\n')
+                partlines = part.split("\n")
                 if rstrip:
                     while partlines:
                         if partlines[-1].strip():
@@ -79,7 +79,7 @@ class Source(object):
         source.lines[:] = self.lines[start:end]
         return source
 
-    def putaround(self, before='', after='', indent=' ' * 4):
+    def putaround(self, before="", after="", indent=" " * 4):
         """ return a copy of the source object with
             'before' and 'after' wrapped around it.
         """
@@ -90,7 +90,7 @@ class Source(object):
         newsource.lines = before.lines + lines + after.lines
         return newsource
 
-    def indent(self, indent=' ' * 4):
+    def indent(self, indent=" " * 4):
         """ return a copy of the source object with
             all lines indented by the given indent-string.
         """
@@ -139,7 +139,7 @@ class Source(object):
             source = str(self)
         try:
             # compile(source+'\n', "x", "exec")
-            syntax_checker(source + '\n')
+            syntax_checker(source + "\n")
         except KeyboardInterrupt:
             raise
         except Exception:
@@ -150,9 +150,14 @@ class Source(object):
     def __str__(self):
         return "\n".join(self.lines)
 
-    def compile(self, filename=None, mode='exec',
-                flag=generators.compiler_flag,
-                dont_inherit=0, _genframe=None):
+    def compile(
+        self,
+        filename=None,
+        mode="exec",
+        flag=generators.compiler_flag,
+        dont_inherit=0,
+        _genframe=None,
+    ):
         """ return compiled code object. if filename is None
             invent an artificial filename which displays
             the source/line position of the caller frame.
@@ -164,10 +169,10 @@ class Source(object):
             base = "<%d-codegen " % self._compilecounter
             self.__class__._compilecounter += 1
             if not filename:
-                filename = base + '%s:%d>' % (fn, lineno)
+                filename = base + "%s:%d>" % (fn, lineno)
             else:
-                filename = base + '%r %s:%d>' % (filename, fn, lineno)
-        source = "\n".join(self.lines) + '\n'
+                filename = base + "%r %s:%d>" % (filename, fn, lineno)
+        source = "\n".join(self.lines) + "\n"
         try:
             co = cpy_compile(source, filename, mode, flag)
         except SyntaxError:
@@ -175,9 +180,9 @@ class Source(object):
             # re-represent syntax errors from parsing python strings
             msglines = self.lines[:ex.lineno]
             if ex.offset:
-                msglines.append(" " * ex.offset + '^')
+                msglines.append(" " * ex.offset + "^")
             msglines.append("(code was compiled probably from here: %s)" % filename)
-            newex = SyntaxError('\n'.join(msglines))
+            newex = SyntaxError("\n".join(msglines))
             newex.offset = ex.offset
             newex.lineno = ex.lineno
             newex.text = ex.text
@@ -189,12 +194,15 @@ class Source(object):
             linecache.cache[filename] = (1, None, lines, filename)
             return co
 
+
 #
 # public API shortcut functions
 #
 
 
-def compile_(source, filename=None, mode='exec', flags=generators.compiler_flag, dont_inherit=0):
+def compile_(
+    source, filename=None, mode="exec", flags=generators.compiler_flag, dont_inherit=0
+):
     """ compile the given source to a raw code object,
         and maintain an internal cache which allows later
         retrieval of the source code for the code object
@@ -214,6 +222,7 @@ def getfslineno(obj):
     If the source cannot be determined return ("", -1)
     """
     from .code import Code
+
     try:
         code = Code(obj)
     except TypeError:
@@ -235,6 +244,7 @@ def getfslineno(obj):
     assert isinstance(lineno, int)
     return fspath, lineno
 
+
 #
 # helper functions
 #
@@ -254,11 +264,12 @@ def findsource(obj):
 
 def getsource(obj, **kwargs):
     from .code import getrawcode
+
     obj = getrawcode(obj)
     try:
         strsrc = inspect.getsource(obj)
     except IndentationError:
-        strsrc = "\"Buggy python version consider upgrading, cannot get source\""
+        strsrc = '"Buggy python version consider upgrading, cannot get source"'
     assert isinstance(strsrc, str)
     return Source(strsrc, **kwargs)
 
@@ -279,12 +290,14 @@ def deindent(lines, offset=None):
 
     def readline_generator(lines):
         for line in lines:
-            yield line + '\n'
+            yield line + "\n"
 
     it = readline_generator(lines)
 
     try:
-        for _, _, (sline, _), (eline, _), _ in tokenize.generate_tokens(lambda: next(it)):
+        for _, _, (sline, _), (eline, _), _ in tokenize.generate_tokens(
+            lambda: next(it)
+        ):
             if sline > len(lines):
                 break  # End of input reached
             if sline > len(newlines):
@@ -306,6 +319,7 @@ def deindent(lines, offset=None):
 
 def get_statement_startend2(lineno, node):
     import ast
+
     # flatten all statements and except handlers into one lineno-list
     # AST's line numbers start indexing at 1
     values = []

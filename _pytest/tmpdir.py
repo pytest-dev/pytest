@@ -37,8 +37,9 @@ class TempdirFactory(object):
         if not numbered:
             p = basetemp.mkdir(basename)
         else:
-            p = py.path.local.make_numbered_dir(prefix=basename,
-                                                keep=0, rootdir=basetemp, lock_timeout=None)
+            p = py.path.local.make_numbered_dir(
+                prefix=basename, keep=0, rootdir=basetemp, lock_timeout=None
+            )
         self.trace("mktemp", p)
         return p
 
@@ -59,12 +60,13 @@ class TempdirFactory(object):
                 if user:
                     # use a sub-directory in the temproot to speed-up
                     # make_numbered_dir() call
-                    rootdir = temproot.join('pytest-of-%s' % user)
+                    rootdir = temproot.join("pytest-of-%s" % user)
                 else:
                     rootdir = temproot
                 rootdir.ensure(dir=1)
-                basetemp = py.path.local.make_numbered_dir(prefix='pytest-',
-                                                           rootdir=rootdir)
+                basetemp = py.path.local.make_numbered_dir(
+                    prefix="pytest-", rootdir=rootdir
+                )
             self._basetemp = t = basetemp.realpath()
             self.trace("new basetemp", t)
             return t
@@ -78,6 +80,7 @@ def get_user():
     in the current environment (see #1010).
     """
     import getpass
+
     try:
         return getpass.getuser()
     except (ImportError, KeyError):
@@ -98,11 +101,11 @@ def pytest_configure(config):
     mp = MonkeyPatch()
     t = TempdirFactory(config)
     config._cleanup.extend([mp.undo, t.finish])
-    mp.setattr(config, '_tmpdirhandler', t, raising=False)
-    mp.setattr(pytest, 'ensuretemp', t.ensuretemp, raising=False)
+    mp.setattr(config, "_tmpdirhandler", t, raising=False)
+    mp.setattr(pytest, "ensuretemp", t.ensuretemp, raising=False)
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture(scope="session")
 def tmpdir_factory(request):
     """Return a TempdirFactory instance for the test session.
     """

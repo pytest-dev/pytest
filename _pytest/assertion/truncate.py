@@ -34,7 +34,7 @@ def _should_truncate_item(item):
 
 def _running_on_ci():
     """Check if we're currently running on a CI system."""
-    env_vars = ['CI', 'BUILD_NUMBER']
+    env_vars = ["CI", "BUILD_NUMBER"]
     return any(var in os.environ for var in env_vars)
 
 
@@ -67,16 +67,13 @@ def _truncate_explanation(input_lines, max_lines=None, max_chars=None):
     # Append useful message to explanation
     truncated_line_count = len(input_lines) - len(truncated_explanation)
     truncated_line_count += 1  # Account for the part-truncated final line
-    msg = '...Full output truncated'
+    msg = "...Full output truncated"
     if truncated_line_count == 1:
-        msg += ' ({} line hidden)'.format(truncated_line_count)
+        msg += " ({} line hidden)".format(truncated_line_count)
     else:
-        msg += ' ({} lines hidden)'.format(truncated_line_count)
-    msg += ", {}" .format(USAGE_MSG)
-    truncated_explanation.extend([
-        six.text_type(""),
-        six.text_type(msg),
-    ])
+        msg += " ({} lines hidden)".format(truncated_line_count)
+    msg += ", {}".format(USAGE_MSG)
+    truncated_explanation.extend([six.text_type(""), six.text_type(msg)])
     return truncated_explanation
 
 

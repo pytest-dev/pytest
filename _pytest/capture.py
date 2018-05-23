@@ -17,19 +17,26 @@ import pytest
 from _pytest.compat import CaptureIO
 
 
-patchsysdict = {0: 'stdin', 1: 'stdout', 2: 'stderr'}
+patchsysdict = {0: "stdin", 1: "stdout", 2: "stderr"}
 
 
 def pytest_addoption(parser):
     group = parser.getgroup("general")
     group._addoption(
-        '--capture', action="store",
+        "--capture",
+        action="store",
         default="fd" if hasattr(os, "dup") else "sys",
-        metavar="method", choices=['fd', 'sys', 'no'],
-        help="per-test capturing method: one of fd|sys|no.")
+        metavar="method",
+        choices=["fd", "sys", "no"],
+        help="per-test capturing method: one of fd|sys|no.",
+    )
     group._addoption(
-        '-s', action="store_const", const="no", dest="capture",
-        help="shortcut for --capture=no.")
+        "-s",
+        action="store_const",
+        const="no",
+        dest="capture",
+        help="shortcut for --capture=no.",
+    )
 
 
 @pytest.hookimpl(hookwrapper=True)
@@ -50,6 +57,7 @@ def pytest_load_initial_conftests(early_config, parser, args):
     def silence_logging_at_shutdown():
         if "logging" in sys.modules:
             sys.modules["logging"].raiseExceptions = False
+
     early_config.add_cleanup(silence_logging_at_shutdown)
 
     # finally trigger conftest loading but while capturing (issue93)
@@ -180,7 +188,7 @@ class CaptureManager(object):
         item.add_report_section(when, "stderr", err)
 
 
-capture_fixtures = {'capfd', 'capfdbinary', 'capsys', 'capsysbinary'}
+capture_fixtures = {"capfd", "capfdbinary", "capsys", "capsysbinary"}
 
 
 def _ensure_only_one_capture_fixture(request, name):
@@ -189,9 +197,7 @@ def _ensure_only_one_capture_fixture(request, name):
         fixtures = sorted(fixtures)
         fixtures = fixtures[0] if len(fixtures) == 1 else fixtures
         raise request.raiseerror(
-            "cannot use {} and {} at the same time".format(
-                fixtures, name,
-            ),
+            "cannot use {} and {} at the same time".format(fixtures, name)
         )
 
 
@@ -202,7 +208,7 @@ def capsys(request):
     which return a ``(out, err)`` namedtuple.  ``out`` and ``err`` will be ``text``
     objects.
     """
-    _ensure_only_one_capture_fixture(request, 'capsys')
+    _ensure_only_one_capture_fixture(request, "capsys")
     with _install_capture_fixture_on_item(request, SysCapture) as fixture:
         yield fixture
 
@@ -214,11 +220,11 @@ def capsysbinary(request):
     which return a ``(out, err)`` tuple.  ``out`` and ``err`` will be ``bytes``
     objects.
     """
-    _ensure_only_one_capture_fixture(request, 'capsysbinary')
+    _ensure_only_one_capture_fixture(request, "capsysbinary")
     # Currently, the implementation uses the python3 specific `.buffer`
     # property of CaptureIO.
     if sys.version_info < (3,):
-        raise request.raiseerror('capsysbinary is only supported on python 3')
+        raise request.raiseerror("capsysbinary is only supported on python 3")
     with _install_capture_fixture_on_item(request, SysCaptureBinary) as fixture:
         yield fixture
 
@@ -230,9 +236,11 @@ def capfd(request):
     which return a ``(out, err)`` tuple.  ``out`` and ``err`` will be ``text``
     objects.
     """
-    _ensure_only_one_capture_fixture(request, 'capfd')
-    if not hasattr(os, 'dup'):
-        pytest.skip("capfd fixture needs os.dup function which is not available in this system")
+    _ensure_only_one_capture_fixture(request, "capfd")
+    if not hasattr(os, "dup"):
+        pytest.skip(
+            "capfd fixture needs os.dup function which is not available in this system"
+        )
     with _install_capture_fixture_on_item(request, FDCapture) as fixture:
         yield fixture
 
@@ -244,9 +252,11 @@ def capfdbinary(request):
     which return a ``(out, err)`` tuple.  ``out`` and ``err`` will be
     ``bytes`` objects.
     """
-    _ensure_only_one_capture_fixture(request, 'capfdbinary')
-    if not hasattr(os, 'dup'):
-        pytest.skip("capfdbinary fixture needs os.dup function which is not available in this system")
+    _ensure_only_one_capture_fixture(request, "capfdbinary")
+    if not hasattr(os, "dup"):
+        pytest.skip(
+            "capfdbinary fixture needs os.dup function which is not available in this system"
+        )
     with _install_capture_fixture_on_item(request, FDCaptureBinary) as fixture:
         yield fixture
 
@@ -261,7 +271,7 @@ def _install_capture_fixture_on_item(request, capture_class):
     by ``CaptureManager`` during its ``pytest_runtest_*`` hooks.
     """
     request.node._capture_fixture = fixture = CaptureFixture(capture_class, request)
-    capmanager = request.config.pluginmanager.getplugin('capturemanager')
+    capmanager = request.config.pluginmanager.getplugin("capturemanager")
     # need to active this fixture right away in case it is being used by another fixture (setup phase)
     # if this fixture is being used only by a test function (call phase), then we wouldn't need this
     # activation, but it doesn't hurt
@@ -276,13 +286,15 @@ class CaptureFixture(object):
     Object returned by :py:func:`capsys`, :py:func:`capsysbinary`, :py:func:`capfd` and :py:func:`capfdbinary`
     fixtures.
     """
+
     def __init__(self, captureclass, request):
         self.captureclass = captureclass
         self.request = request
 
     def _start(self):
-        self._capture = MultiCapture(out=True, err=True, in_=False,
-                                     Capture=self.captureclass)
+        self._capture = MultiCapture(
+            out=True, err=True, in_=False, Capture=self.captureclass
+        )
         self._capture.start_capturing()
 
     def close(self):
@@ -305,7 +317,7 @@ class CaptureFixture(object):
     def disabled(self):
         """Temporarily disables capture while inside the 'with' block."""
         self._capture.suspend_capturing()
-        capmanager = self.request.config.pluginmanager.getplugin('capturemanager')
+        capmanager = self.request.config.pluginmanager.getplugin("capturemanager")
         capmanager.suspend_global_capture(item=None, in_=False)
         try:
             yield
@@ -346,7 +358,7 @@ class EncodedFile(object):
         self.buffer.write(obj)
 
     def writelines(self, linelist):
-        data = ''.join(linelist)
+        data = "".join(linelist)
         self.write(data)
 
     @property
@@ -409,7 +421,7 @@ class MultiCapture(object):
 
     def stop_capturing(self):
         """ stop capturing and reset capturing streams """
-        if hasattr(self, '_reset'):
+        if hasattr(self, "_reset"):
             raise ValueError("was already stopped")
         self._reset = True
         if self.out:
@@ -421,8 +433,10 @@ class MultiCapture(object):
 
     def readouterr(self):
         """ return snapshot unicode value of stdout/stderr capturings. """
-        return CaptureResult(self.out.snap() if self.out is not None else "",
-                             self.err.snap() if self.err is not None else "")
+        return CaptureResult(
+            self.out.snap() if self.out is not None else "",
+            self.err.snap() if self.err is not None else "",
+        )
 
 
 class NoCapture(object):
@@ -507,6 +521,7 @@ class FDCapture(FDCaptureBinary):
 
     snap() produces text
     """
+
     def snap(self):
         res = FDCaptureBinary.snap(self)
         enc = getattr(self.tmpfile, "encoding", None)
@@ -516,6 +531,7 @@ class FDCapture(FDCaptureBinary):
 
 
 class SysCapture(object):
+
     def __init__(self, fd, tmpfile=None):
         name = patchsysdict[fd]
         self._old = getattr(sys, name)
@@ -553,6 +569,7 @@ class SysCapture(object):
 
 
 class SysCaptureBinary(SysCapture):
+
     def snap(self):
         res = self.tmpfile.buffer.getvalue()
         self.tmpfile.seek(0)
@@ -572,6 +589,7 @@ class DontReadFromInput(six.Iterator):
 
     def read(self, *args):
         raise IOError("reading from stdin while output is captured")
+
     readline = read
     readlines = read
     __next__ = read
@@ -580,8 +598,7 @@ class DontReadFromInput(six.Iterator):
         return self
 
     def fileno(self):
-        raise UnsupportedOperation("redirected stdin is pseudofile, "
-                                   "has no fileno()")
+        raise UnsupportedOperation("redirected stdin is pseudofile, " "has no fileno()")
 
     def isatty(self):
         return False
@@ -594,7 +611,7 @@ class DontReadFromInput(six.Iterator):
         if sys.version_info >= (3, 0):
             return self
         else:
-            raise AttributeError('redirected stdin has no attribute buffer')
+            raise AttributeError("redirected stdin has no attribute buffer")
 
 
 def _colorama_workaround():
@@ -607,7 +624,7 @@ def _colorama_workaround():
     fail in various ways.
     """
 
-    if not sys.platform.startswith('win32'):
+    if not sys.platform.startswith("win32"):
         return
     try:
         import colorama  # noqa
@@ -634,7 +651,7 @@ def _readline_workaround():
     See https://github.com/pytest-dev/pytest/pull/1281
     """
 
-    if not sys.platform.startswith('win32'):
+    if not sys.platform.startswith("win32"):
         return
     try:
         import readline  # noqa
@@ -664,21 +681,21 @@ def _py36_windowsconsoleio_workaround(stream):
 
     See https://github.com/pytest-dev/py/issues/103
     """
-    if not sys.platform.startswith('win32') or sys.version_info[:2] < (3, 6):
+    if not sys.platform.startswith("win32") or sys.version_info[:2] < (3, 6):
         return
 
     # bail out if ``stream`` doesn't seem like a proper ``io`` stream (#2666)
-    if not hasattr(stream, 'buffer'):
+    if not hasattr(stream, "buffer"):
         return
 
-    buffered = hasattr(stream.buffer, 'raw')
+    buffered = hasattr(stream.buffer, "raw")
     raw_stdout = stream.buffer.raw if buffered else stream.buffer
 
     if not isinstance(raw_stdout, io._WindowsConsoleIO):
         return
 
     def _reopen_stdio(f, mode):
-        if not buffered and mode[0] == 'w':
+        if not buffered and mode[0] == "w":
             buffering = 0
         else:
             buffering = -1
@@ -688,11 +705,12 @@ def _py36_windowsconsoleio_workaround(stream):
             f.encoding,
             f.errors,
             f.newlines,
-            f.line_buffering)
+            f.line_buffering,
+        )
 
-    sys.__stdin__ = sys.stdin = _reopen_stdio(sys.stdin, 'rb')
-    sys.__stdout__ = sys.stdout = _reopen_stdio(sys.stdout, 'wb')
-    sys.__stderr__ = sys.stderr = _reopen_stdio(sys.stderr, 'wb')
+    sys.__stdin__ = sys.stdin = _reopen_stdio(sys.stdin, "rb")
+    sys.__stdout__ = sys.stdout = _reopen_stdio(sys.stdout, "wb")
+    sys.__stderr__ = sys.stderr = _reopen_stdio(sys.stderr, "wb")
 
 
 def _attempt_to_close_capture_file(f):
