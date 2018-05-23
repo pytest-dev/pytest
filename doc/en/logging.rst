@@ -123,7 +123,7 @@ You can call ``caplog.clear()`` to reset the captured log records in a test::
         assert ['Foo'] == [rec.message for rec in caplog.records]
 
 
-The ``caplop.records`` attribute contains records from the current stage only, so
+The ``caplog.records`` attribute contains records from the current stage only, so
 inside the ``setup`` phase it contains only setup logs, same with the ``call`` and
 ``teardown`` phases.
 
