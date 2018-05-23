@@ -1,5 +1,0 @@
-Import ``Mapping`` and ``Sequence`` from ``_pytest.compat`` instead of directly
-from ``collections`` in ``python_api.py::approx``. Add ``Mapping`` to
-``_pytest.compat``, import it from ``collections`` on python 2, but from
-``collections.abc`` on Python 3 to avoid a ``DeprecationWarning`` on
-Python 3.7 or newer.

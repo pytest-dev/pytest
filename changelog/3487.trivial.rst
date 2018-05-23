@@ -1,3 +1,0 @@
-Detect `pytest_` prefixed hooks using the internal plugin
-manager since ``pluggy`` is deprecating the ``implprefix``
-argument to ``PluginManager``.
