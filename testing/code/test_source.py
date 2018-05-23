@@ -341,9 +341,9 @@ class TestSourceParsingAndCompiling(object):
         def check(comp, name):
             co = comp(self.source, name)
             if not name:
-                expected = "codegen %s:%d>" % (mypath, mylineno + 2 + 2)
+                expected = "codegen %s:%d>" % (mypath, mylineno + 2 + 3)
             else:
-                expected = "codegen %r %s:%d>" % (name, mypath, mylineno + 2 + 2)
+                expected = "codegen %r %s:%d>" % (name, mypath, mylineno + 2 + 3)
             fn = co.co_filename
             assert fn.endswith(expected)
 
@@ -414,7 +414,7 @@ def test_getfuncsource_with_multine_string():
 
     assert (
         str(_pytest._code.Source(f)).strip()
-        == "def f():\n    c = '''while True:\n    pass\n'''"
+        == 'def f():\n    c = """while True:\n    pass\n"""'
     )
 
 
@@ -429,7 +429,7 @@ def test_deindent():
 """
 
     lines = deindent(inspect.getsource(f).splitlines())
-    assert lines == ["def f():", "    c = '''while True:", "    pass", "'''"]
+    assert lines == ["def f():", '    c = """while True:', "    pass", '"""']
 
     source = """
         def f():
