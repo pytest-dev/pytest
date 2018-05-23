@@ -1,4 +1,5 @@
-import pytest, py
+import pytest
+import py
 
 mydir = py.path.local(__file__).dirpath()
 

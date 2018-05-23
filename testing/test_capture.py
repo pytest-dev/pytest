@@ -12,7 +12,7 @@ import _pytest._code
 import py
 import pytest
 import contextlib
-
+from six import binary_type, text_type
 from _pytest import capture
 from _pytest.capture import CaptureManager
 from _pytest.main import EXIT_NOTESTSCOLLECTED
@@ -20,34 +20,19 @@ from _pytest.main import EXIT_NOTESTSCOLLECTED
 
 needsosdup = pytest.mark.xfail("not hasattr(os, 'dup')")
 
-if sys.version_info >= (3, 0):
 
-    def tobytes(obj):
-        if isinstance(obj, str):
-            obj = obj.encode("UTF-8")
-        assert isinstance(obj, bytes)
-        return obj
-
-    def totext(obj):
-        if isinstance(obj, bytes):
-            obj = str(obj, "UTF-8")
-        assert isinstance(obj, str)
-        return obj
+def tobytes(obj):
+    if isinstance(obj, text_type):
+        obj = obj.encode("UTF-8")
+    assert isinstance(obj, binary_type)
+    return obj
 
 
-else:
-
-    def tobytes(obj):
-        if isinstance(obj, unicode):
-            obj = obj.encode("UTF-8")
-        assert isinstance(obj, str)
-        return obj
-
-    def totext(obj):
-        if isinstance(obj, str):
-            obj = unicode(obj, "UTF-8")
-        assert isinstance(obj, unicode)
-        return obj
+def totext(obj):
+    if isinstance(obj, binary_type):
+        obj = text_type(obj, "UTF-8")
+    assert isinstance(obj, text_type)
+    return obj
 
 
 def oswritebytes(fd, obj):
@@ -800,11 +785,11 @@ class TestCaptureIO(object):
             f.write("\u00f6")
             pytest.raises(TypeError, "f.write(bytes('hello', 'UTF-8'))")
         else:
-            f.write(unicode("\u00f6", "UTF-8"))
+            f.write(text_type("\u00f6", "UTF-8"))
             f.write("hello")  # bytes
             s = f.getvalue()
             f.close()
-            assert isinstance(s, unicode)
+            assert isinstance(s, text_type)
 
     @pytest.mark.skipif(sys.version_info[0] == 2, reason="python 3 only behaviour")
     def test_write_bytes_to_buffer(self):

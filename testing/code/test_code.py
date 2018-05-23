@@ -6,6 +6,7 @@ import _pytest._code
 import py
 import pytest
 from test_excinfo import TWMock
+from six import text_type
 
 
 def test_ne():
@@ -93,7 +94,7 @@ def test_unicode_handling():
     excinfo = pytest.raises(Exception, f)
     str(excinfo)
     if sys.version_info[0] < 3:
-        unicode(excinfo)
+        text_type(excinfo)
 
 
 @pytest.mark.skipif(sys.version_info[0] >= 3, reason="python 2 only issue")
@@ -106,7 +107,7 @@ def test_unicode_handling_syntax_error():
     excinfo = pytest.raises(Exception, f)
     str(excinfo)
     if sys.version_info[0] < 3:
-        unicode(excinfo)
+        text_type(excinfo)
 
 
 def test_code_getargs():

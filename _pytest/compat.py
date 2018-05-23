@@ -13,6 +13,8 @@ import py
 
 import _pytest
 from _pytest.outcomes import TEST_OUTCOME
+from six import text_type
+import six
 
 try:
     import enum
@@ -163,7 +165,7 @@ def get_default_arg_names(function):
 
 if _PY3:
     STRING_TYPES = bytes, str
-    UNICODE_TYPES = str,
+    UNICODE_TYPES = six.text_type
 
     if PY35:
 
@@ -206,8 +208,8 @@ if _PY3:
 
 
 else:
-    STRING_TYPES = bytes, str, unicode
-    UNICODE_TYPES = unicode,
+    STRING_TYPES = six.string_types
+    UNICODE_TYPES = six.text_type
 
     def ascii_escaped(val):
         """In py2 bytes and str are the same type, so return if it's a bytes
@@ -303,8 +305,8 @@ else:
         try:
             return str(v)
         except UnicodeError:
-            if not isinstance(v, unicode):
-                v = unicode(v)
+            if not isinstance(v, text_type):
+                v = text_type(v)
             errors = "replace"
             return v.encode("utf-8", errors)
 

@@ -153,7 +153,7 @@ def globf(x):
 class TestRaises(object):
 
     def test_raises(self):
-        s = "qwe"
+        s = "qwe"  # NOQA
         raises(TypeError, "int(s)")
 
     def test_raises_doesnt(self):
@@ -163,15 +163,15 @@ class TestRaises(object):
         raise ValueError("demo error")
 
     def test_tupleerror(self):
-        a, b = [1]
+        a, b = [1]  # NOQA
 
     def test_reinterpret_fails_with_print_for_the_fun_of_it(self):
-        l = [1, 2, 3]
-        print("l is %r" % l)
-        a, b = l.pop()
+        items = [1, 2, 3]
+        print("items is %r" % items)
+        a, b = items.pop()
 
     def test_some_error(self):
-        if namenotexi:
+        if namenotexi:  # NOQA
             pass
 
     def func1(self):
@@ -205,12 +205,12 @@ class TestMoreErrors(object):
         somefunc(f(), g())
 
     def test_z1_unpack_error(self):
-        l = []
-        a, b = l
+        items = []
+        a, b = items
 
     def test_z2_type_error(self):
-        l = 3
-        a, b = l
+        items = 3
+        a, b = items
 
     def test_startswith(self):
         s = "123"

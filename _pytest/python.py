@@ -343,7 +343,7 @@ class PyCollector(PyobjMixin, nodes.Collector):
                 obj = safe_getattr(obj, "__func__", False)
                 if obj is False:
                     # Python 2.6 wraps in a different way that we won't try to handle
-                    msg = "cannot collect static method %r because " "it is not a function (always the case in Python 2.6)"
+                    msg = "cannot collect static method %r because it is not a function"
                     self.warn(code="C2", message=msg % name)
                     return False
             return (

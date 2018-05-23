@@ -2,13 +2,18 @@ import math
 import sys
 
 import py
-from six import binary_type, text_type
 from six.moves import zip, filterfalse
 from more_itertools.more import always_iterable
 
 from _pytest.compat import isclass
+
+from _pytest.compat import Mapping, Sequence
+from _pytest.compat import STRING_TYPES
+
 from _pytest.outcomes import fail
 import _pytest._code
+
+BASE_TYPE = (type, STRING_TYPES)
 
 
 def _cmp_raises_type_error(self, other):
@@ -439,8 +444,6 @@ def approx(expected, rel=None, abs=None, nan_ok=False):
        __ https://docs.python.org/3/reference/datamodel.html#object.__ge__
     """
 
-    from _pytest.compat import Mapping, Sequence
-    from _pytest.compat import STRING_TYPES as String
     from decimal import Decimal
 
     # Delegate the comparison to a class that knows how to deal with the type
@@ -461,7 +464,7 @@ def approx(expected, rel=None, abs=None, nan_ok=False):
         cls = ApproxNumpy
     elif isinstance(expected, Mapping):
         cls = ApproxMapping
-    elif isinstance(expected, Sequence) and not isinstance(expected, String):
+    elif isinstance(expected, Sequence) and not isinstance(expected, STRING_TYPES):
         cls = ApproxSequence
     elif isinstance(expected, Decimal):
         cls = ApproxDecimal
@@ -600,8 +603,7 @@ def raises(expected_exception, *args, **kwargs):
 
     """
     __tracebackhide__ = True
-    base_type = (type, text_type, binary_type)
-    for exc in filterfalse(isclass, always_iterable(expected_exception, base_type)):
+    for exc in filterfalse(isclass, always_iterable(expected_exception, BASE_TYPE)):
         msg = (
             "exceptions must be old-style classes or"
             " derived from BaseException, not %s"

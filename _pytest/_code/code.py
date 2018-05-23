@@ -8,7 +8,7 @@ import attr
 import re
 from weakref import ref
 from _pytest.compat import _PY2, _PY3, PY35, safe_str
-
+from six import text_type
 import py
 
 builtin_repr = repr
@@ -479,7 +479,7 @@ class ExceptionInfo(object):
     def __unicode__(self):
         entry = self.traceback[-1]
         loc = ReprFileLocation(entry.path, entry.lineno + 1, self.exconly())
-        return unicode(loc)
+        return text_type(loc)
 
     def match(self, regexp):
         """

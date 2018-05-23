@@ -30,6 +30,8 @@ from _pytest.compat import (
 )
 from _pytest.outcomes import fail, TEST_OUTCOME
 
+FIXTURE_MSG = 'fixtures cannot have "pytest_funcarg__" prefix and be decorated with @pytest.fixture:\n{}'
+
 
 @attr.s(frozen=True)
 class PseudoFixtureDef(object):
@@ -1178,8 +1180,7 @@ class FixtureManager(object):
             else:
                 if marker.name:
                     name = marker.name
-                msg = 'fixtures cannot have "pytest_funcarg__" prefix ' "and be decorated with @pytest.fixture:\n%s" % name
-                assert not name.startswith(self._argprefix), msg
+                assert not name.startswith(self._argprefix), FIXTURE_MSG.format(name)
 
             fixture_def = FixtureDef(
                 self,

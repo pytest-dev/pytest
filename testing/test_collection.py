@@ -44,7 +44,7 @@ class TestCollector(object):
         assert fn1 == fn2
         assert fn1 != modcol
         if sys.version_info < (3, 0):
-            assert cmp(fn1, fn2) == 0
+            assert cmp(fn1, fn2) == 0  # NOQA
         assert hash(fn1) == hash(fn2)
 
         fn3 = testdir.collect_by_name(modcol, "test_fail")

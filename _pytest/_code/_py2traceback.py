@@ -4,6 +4,7 @@
 #
 from __future__ import absolute_import, division, print_function
 import types
+from six import text_type
 
 
 def format_exception_only(etype, value):
@@ -79,7 +80,7 @@ def _format_final_exc_line(etype, value):
 
 def _some_str(value):
     try:
-        return unicode(value)
+        return text_type(value)
     except Exception:
         try:
             return str(value)

@@ -1,9 +1,8 @@
 import json
 import py
+import requests
 
 issues_url = "https://api.github.com/repos/pytest-dev/pytest/issues"
-
-import requests
 
 
 def get_issues():
@@ -55,7 +54,7 @@ def _get_kind(issue):
 def report(issues):
     for issue in issues:
         title = issue["title"]
-        body = issue["body"]
+        # body = issue["body"]
         kind = _get_kind(issue)
         status = issue["state"]
         number = issue["number"]
