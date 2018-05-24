@@ -224,7 +224,7 @@ class _NodeReporter(object):
                 Junit.skipped("%s:%s: %s" % (filename, lineno, skipreason),
                               type="pytest.skip",
                               message=skipreason))
-        self.write_captured_output(report)
+            self.write_captured_output(report)
 
     def finalize(self):
         data = self.to_xml().unicode(indent=0)
