@@ -54,7 +54,7 @@ class UnitTestCase(Class):
                 continue
             funcobj = getattr(x, 'im_func', x)
             transfer_markers(funcobj, cls, module)
-            yield TestCaseFunction(name, parent=self)
+            yield TestCaseFunction(name, parent=self, callobj=funcobj)
             foundsomething = True
 
         if not foundsomething:
@@ -66,6 +66,7 @@ class UnitTestCase(Class):
 
 
 class TestCaseFunction(Function):
+    nofuncargs = True
     _excinfo = None
 
     def setup(self):
