@@ -474,7 +474,7 @@ class TestPython(object):
         tnode = node.find_first_by_tag("testcase")
         assert len(tnode.find_by_tag('system-err')) == 1
         assert len(tnode.find_by_tag('system-out')) == 1
-    
+
     def test_xfailure_xpass(self, testdir):
         testdir.makepyfile("""
             import pytest
