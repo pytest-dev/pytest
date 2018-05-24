@@ -13,7 +13,7 @@ env:
     # coveralls is not listed in tox's envlist, but should run in travis
     - TOXENV=coveralls
     # note: please use "tox --listenvs" to populate the build matrix below
-    - TOXENV=linting
+    # please remove the linting env in all cases
     - TOXENV=py27
     - TOXENV=py34
     - TOXENV=py36

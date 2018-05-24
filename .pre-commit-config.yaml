@@ -19,3 +19,11 @@ repos:
     rev: v1.2.0
     hooks:
     - id: pyupgrade
+-   repo: local
+    hooks:
+    -   id: rst
+        name: rst
+        entry: python scripts/check-rst.py
+        language: python
+        additional_dependencies: [pygments, restructuredtext_lint]
+        python_version: python3.6
