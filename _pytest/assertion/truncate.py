@@ -69,10 +69,10 @@ def _truncate_explanation(input_lines, max_lines=None, max_chars=None):
     truncated_line_count += 1  # Account for the part-truncated final line
     msg = '...Full output truncated'
     if truncated_line_count == 1:
-        msg += ' ({0} line hidden)'.format(truncated_line_count)
+        msg += ' ({} line hidden)'.format(truncated_line_count)
     else:
-        msg += ' ({0} lines hidden)'.format(truncated_line_count)
-    msg += ", {0}" .format(USAGE_MSG)
+        msg += ' ({} lines hidden)'.format(truncated_line_count)
+    msg += ", {}" .format(USAGE_MSG)
     truncated_explanation.extend([
         six.text_type(""),
         six.text_type(msg),

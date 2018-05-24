@@ -126,7 +126,7 @@ def test_terminal_reporter_writer_attr(pytestconfig):
 def test_pytest_catchlog_deprecated(testdir, plugin):
     testdir.makepyfile("""
         def test_func(pytestconfig):
-            pytestconfig.pluginmanager.register(None, 'pytest_{0}')
+            pytestconfig.pluginmanager.register(None, 'pytest_{}')
     """.format(plugin))
     res = testdir.runpytest()
     assert res.ret == 0

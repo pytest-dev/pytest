@@ -813,7 +813,7 @@ class Metafunc(fixtures.FuncargnamesCompatAttr):
         if scope is None:
             scope = _find_parametrized_scope(argnames, self._arg2fixturedefs, indirect)
 
-        scopenum = scope2index(scope, descr='call to {0}'.format(self.parametrize))
+        scopenum = scope2index(scope, descr='call to {}'.format(self.parametrize))
         valtypes = {}
         for arg in argnames:
             if arg not in self.fixturenames:
@@ -858,8 +858,8 @@ class Metafunc(fixtures.FuncargnamesCompatAttr):
             for a_id, param, param_index in elements:
                 if len(param.values) != len(argnames):
                     raise ValueError(
-                        'In "parametrize" the number of values ({0}) must be '
-                        'equal to the number of names ({1})'.format(
+                        'In "parametrize" the number of values ({}) must be '
+                        'equal to the number of names ({})'.format(
                             param.values, argnames))
                 newcallspec = callspec.copy(self)
                 newcallspec.setmulti2(valtypes, argnames, param.values, a_id,
@@ -1016,7 +1016,7 @@ def _show_fixtures_per_test(config, session):
             return
         if verbose > 0:
             bestrel = get_best_relpath(fixture_def.func)
-            funcargspec = "{0} -- {1}".format(argname, bestrel)
+            funcargspec = "{} -- {}".format(argname, bestrel)
         else:
             funcargspec = argname
         tw.line(funcargspec, green=True)
@@ -1036,8 +1036,8 @@ def _show_fixtures_per_test(config, session):
             # this test item does not use any fixtures
             return
         tw.line()
-        tw.sep('-', 'fixtures used by {0}'.format(item.name))
-        tw.sep('-', '({0})'.format(get_best_relpath(item.function)))
+        tw.sep('-', 'fixtures used by {}'.format(item.name))
+        tw.sep('-', '({})'.format(get_best_relpath(item.function)))
         # dict key not used in loop but needed for sorting
         for _, fixturedefs in sorted(info.name2fixturedefs.items()):
             assert fixturedefs is not None

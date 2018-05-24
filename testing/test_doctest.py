@@ -117,8 +117,8 @@ class TestDoctests(object):
             >>> 1
             1
         """)
-        expected = set(['xdoc.txt', 'test.foo', 'test_normal.txt'])
-        assert set(x.basename for x in testdir.tmpdir.listdir()) == expected
+        expected = {'xdoc.txt', 'test.foo', 'test_normal.txt'}
+        assert {x.basename for x in testdir.tmpdir.listdir()} == expected
         args = ["--doctest-glob=xdoc*.txt", "--doctest-glob=*.foo"]
         result = testdir.runpytest(*args)
         result.stdout.fnmatch_lines([
@@ -145,11 +145,11 @@ class TestDoctests(object):
         """
         testdir.makeini("""
             [pytest]
-            doctest_encoding={0}
+            doctest_encoding={}
         """.format(encoding))
         doctest = u"""
-            >>> u"{0}"
-            {1}
+            >>> u"{}"
+            {}
         """.format(test_string, repr(test_string))
         testdir._makefile(".txt", [doctest], {}, encoding=encoding)
 

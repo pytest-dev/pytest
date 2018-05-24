@@ -75,7 +75,7 @@ class TestRaises(object):
         try:
             pytest.raises(ValueError, int, '0')
         except pytest.raises.Exception as e:
-            assert e.msg == "DID NOT RAISE {0}".format(repr(ValueError))
+            assert e.msg == "DID NOT RAISE {}".format(repr(ValueError))
         else:
             assert False, "Expected pytest.raises.Exception"
 
@@ -83,7 +83,7 @@ class TestRaises(object):
             with pytest.raises(ValueError):
                 pass
         except pytest.raises.Exception as e:
-            assert e.msg == "DID NOT RAISE {0}".format(repr(ValueError))
+            assert e.msg == "DID NOT RAISE {}".format(repr(ValueError))
         else:
             assert False, "Expected pytest.raises.Exception"
 
@@ -134,7 +134,7 @@ class TestRaises(object):
             int('asdf')
 
         msg = "with base 16"
-        expr = r"Pattern '{0}' not found in 'invalid literal for int\(\) with base 10: 'asdf''".format(msg)
+        expr = r"Pattern '{}' not found in 'invalid literal for int\(\) with base 10: 'asdf''".format(msg)
         with pytest.raises(AssertionError, match=expr):
             with pytest.raises(ValueError, match=msg):
                 int('asdf', base=10)

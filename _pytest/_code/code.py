@@ -455,7 +455,7 @@ class ExceptionInfo(object):
         """
         __tracebackhide__ = True
         if not re.search(regexp, str(self.value)):
-            assert 0, "Pattern '{0!s}' not found in '{1!s}'".format(
+            assert 0, "Pattern '{!s}' not found in '{!s}'".format(
                 regexp, self.value)
         return True
 

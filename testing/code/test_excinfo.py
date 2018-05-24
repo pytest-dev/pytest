@@ -203,8 +203,8 @@ class TestTraceback_f_g_h(object):
         excinfo = pytest.raises(ValueError, h)
         traceback = excinfo.traceback
         ntraceback = traceback.filter()
-        print('old: {0!r}'.format(traceback))
-        print('new: {0!r}'.format(ntraceback))
+        print('old: {!r}'.format(traceback))
+        print('new: {!r}'.format(ntraceback))
 
         if matching:
             assert len(ntraceback) == len(traceback) - 2

@@ -89,7 +89,7 @@ def filename_arg(path, optname):
     :optname: name of the option
     """
     if os.path.isdir(path):
-        raise UsageError("{0} must be a filename, given: {1}".format(optname, path))
+        raise UsageError("{} must be a filename, given: {}".format(optname, path))
     return path
 
 
@@ -100,7 +100,7 @@ def directory_arg(path, optname):
     :optname: name of the option
     """
     if not os.path.isdir(path):
-        raise UsageError("{0} must be a directory, given: {1}".format(optname, path))
+        raise UsageError("{} must be a directory, given: {}".format(optname, path))
     return path
 
 
@@ -253,7 +253,7 @@ class PytestPluginManager(PluginManager):
 
     def register(self, plugin, name=None):
         if name in ['pytest_catchlog', 'pytest_capturelog']:
-            self._warn('{0} plugin has been merged into the core, '
+            self._warn('{} plugin has been merged into the core, '
                        'please remove it from your requirements.'.format(
                            name.replace('_', '-')))
             return
@@ -735,7 +735,7 @@ class Argument(object):
             args += ['type: ' + repr(self.type)]
         if hasattr(self, 'default'):
             args += ['default: ' + repr(self.default)]
-        return 'Argument({0})'.format(', '.join(args))
+        return 'Argument({})'.format(', '.join(args))
 
 
 class OptionGroup(object):

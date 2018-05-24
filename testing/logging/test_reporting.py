@@ -596,7 +596,7 @@ def test_log_file_cli(testdir):
 
     log_file = testdir.tmpdir.join('pytest.log').strpath
 
-    result = testdir.runpytest('-s', '--log-file={0}'.format(log_file), '--log-file-level=WARNING')
+    result = testdir.runpytest('-s', '--log-file={}'.format(log_file), '--log-file-level=WARNING')
 
     # fnmatch_lines does an assertion internally
     result.stdout.fnmatch_lines([
@@ -628,7 +628,7 @@ def test_log_file_cli_level(testdir):
     log_file = testdir.tmpdir.join('pytest.log').strpath
 
     result = testdir.runpytest('-s',
-                               '--log-file={0}'.format(log_file),
+                               '--log-file={}'.format(log_file),
                                '--log-file-level=INFO')
 
     # fnmatch_lines does an assertion internally
@@ -661,7 +661,7 @@ def test_log_file_ini(testdir):
     testdir.makeini(
         """
         [pytest]
-        log_file={0}
+        log_file={}
         log_file_level=WARNING
         """.format(log_file))
     testdir.makepyfile('''
@@ -697,7 +697,7 @@ def test_log_file_ini_level(testdir):
     testdir.makeini(
         """
         [pytest]
-        log_file={0}
+        log_file={}
         log_file_level = INFO
         """.format(log_file))
     testdir.makepyfile('''

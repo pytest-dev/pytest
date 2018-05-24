@@ -296,7 +296,7 @@ class MarkInfo(object):
         return cls([mark])
 
     def __repr__(self):
-        return "<MarkInfo {0!r}>".format(self.combined)
+        return "<MarkInfo {!r}>".format(self.combined)
 
     def add_mark(self, mark):
         """ add a MarkInfo with the given args and kwargs. """

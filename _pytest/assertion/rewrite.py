@@ -904,7 +904,7 @@ class AssertionRewriter(ast.NodeVisitor):
         self.push_format_context()
         left_res, left_expl = self.visit(comp.left)
         if isinstance(comp.left, (ast.Compare, ast.BoolOp)):
-            left_expl = "({0})".format(left_expl)
+            left_expl = "({})".format(left_expl)
         res_variables = [self.variable() for i in range(len(comp.ops))]
         load_names = [ast.Name(v, ast.Load()) for v in res_variables]
         store_names = [ast.Name(v, ast.Store()) for v in res_variables]
@@ -915,7 +915,7 @@ class AssertionRewriter(ast.NodeVisitor):
         for i, op, next_operand in it:
             next_res, next_expl = self.visit(next_operand)
             if isinstance(next_operand, (ast.Compare, ast.BoolOp)):
-                next_expl = "({0})".format(next_expl)
+                next_expl = "({})".format(next_expl)
             results.append(next_res)
             sym = binop_map[op.__class__]
             syms.append(ast.Str(sym))
