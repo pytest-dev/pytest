@@ -1,5 +1,9 @@
 sudo: false
 language: python
+stages:
+- linting
+- test
+- deploy
 python:
   - '3.6'
 install:
@@ -53,6 +57,13 @@ jobs:
         on:
           tags: true
           repo: pytest-dev/pytest
+    - stage: linting
+      python: '3.6'
+      install:
+      - pip install pre-commit
+      - pre-commit install-hooks
+      script:
+      - pre-commit run --all-files
 
 script: tox --recreate
 
