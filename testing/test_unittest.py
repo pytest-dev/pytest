@@ -828,3 +828,64 @@ def test_class_method_containing_test_issue1558(testdir):
     """)
     reprec = testdir.inline_run()
     reprec.assertoutcome(passed=1)
+
+
+@pytest.mark.issue(3498)
+@pytest.mark.parametrize("base", [
+    'six.moves.builtins.object',
+    'unittest.TestCase',
+    'unittest2.TestCase',
+])
+def test_usefixtures_marker_on_unittest(base, testdir):
+    module = base.rsplit('.', 1)[0]
+    pytest.importorskip(module)
+    testdir.makepyfile(conftest="""
+        import pytest
+
+        @pytest.fixture(scope='function')
+        def fixture1(request, monkeypatch):
+            monkeypatch.setattr(request.instance, 'fixture1', True )
+
+
+        @pytest.fixture(scope='function')
+        def fixture2(request, monkeypatch):
+            monkeypatch.setattr(request.instance, 'fixture2', True )
+
+        def node_and_marks(item):
+            print(item.nodeid)
+            for mark in item.iter_markers():
+                print("  ", mark)
+
+        @pytest.fixture(autouse=True)
+        def my_marks(request):
+            node_and_marks(request.node)
+
+        def pytest_collection_modifyitems(items):
+            for item in items:
+               node_and_marks(item)
+
+        """)
+
+    testdir.makepyfile("""
+        import pytest
+        import {module}
+
+        class Tests({base}):
+            fixture1 = False
+            fixture2 = False
+
+            @pytest.mark.usefixtures("fixture1")
+            def test_one(self):
+                assert self.fixture1
+                assert not self.fixture2
+
+            @pytest.mark.usefixtures("fixture1", "fixture2")
+            def test_two(self):
+                assert self.fixture1
+                assert self.fixture2
+
+
+    """.format(module=module, base=base))
+
+    result = testdir.runpytest('-s')
+    result.assert_outcomes(passed=2)

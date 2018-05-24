@@ -984,7 +984,7 @@ class FixtureManager(object):
         session.config.pluginmanager.register(self, "funcmanage")
 
     def getfixtureinfo(self, node, func, cls, funcargs=True):
-        if funcargs and not hasattr(node, "nofuncargs"):
+        if funcargs and not getattr(node, "nofuncargs", False):
             argnames = getfuncargnames(func, cls=cls)
         else:
             argnames = ()
