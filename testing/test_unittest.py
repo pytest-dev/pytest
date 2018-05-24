@@ -850,6 +850,20 @@ def test_usefixtures_marker_on_unittest(base, testdir):
         @pytest.fixture(scope='function')
         def fixture2(request, monkeypatch):
             monkeypatch.setattr(request.instance, 'fixture2', True )
+
+        def node_and_marks(item):
+            print(item.nodeid)
+            for mark in item.iter_markers():
+                print("  ", mark)
+
+        @pytest.fixture(autouse=True)
+        def my_marks(request):
+            node_and_marks(request.node)
+
+        def pytest_collection_modifyitems(items):
+            for item in items:
+               node_and_marks(item)
+
         """)
 
     testdir.makepyfile("""
@@ -873,5 +887,5 @@ def test_usefixtures_marker_on_unittest(base, testdir):
 
     """.format(module=module, base=base))
 
-    result = testdir.runpytest()
+    result = testdir.runpytest('-s')
     result.assert_outcomes(passed=2)
