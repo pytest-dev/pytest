@@ -174,7 +174,7 @@ Note that this layout also works in conjunction with the ``src`` layout mentione
 
 .. _`use tox`:
 
-Tox
+tox
 ------
 
 For development, we recommend to use virtualenv_ environments and pip_
@@ -194,7 +194,7 @@ Once you are done with your work and want to make sure that your actual
 package passes all tests you may want to look into `tox`_, the
 virtualenv test automation tool and its `pytest support
 <https://tox.readthedocs.io/en/latest/example/pytest.html>`_.
-Tox helps you to setup virtualenv environments with pre-defined
+tox helps you to setup virtualenv environments with pre-defined
 dependencies and then executing a pre-configured test command with
 options.  It will run tests against the installed package and not
 against your source code checkout, helping to detect packaging
