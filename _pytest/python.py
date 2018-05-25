@@ -1263,7 +1263,7 @@ class Function(FunctionMixin, nodes.Item, fixtures.FuncargnamesCompatAttr):
 
         if fixtureinfo is None:
             fixtureinfo = self.session._fixturemanager.getfixtureinfo(
-                self.parent, self.obj, self.cls, funcargs=not self._isyieldedfunction()
+                self, self.obj, self.cls, funcargs=not self._isyieldedfunction()
             )
         self._fixtureinfo = fixtureinfo
         self.fixturenames = fixtureinfo.names_closure

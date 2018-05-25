@@ -231,7 +231,8 @@ class _NodeReporter(object):
                     message=skipreason,
                 )
             )
-        self.write_captured_output(report)
+            self.write_captured_output(report)
+
 
     def finalize(self):
         data = self.to_xml().unicode(indent=0)
