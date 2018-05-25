@@ -1,5 +1,9 @@
 sudo: false
 language: python
+stages:
+- linting
+- test
+- deploy
 python:
   - '3.6'
 install:
@@ -9,7 +13,7 @@ env:
     # coveralls is not listed in tox's envlist, but should run in travis
     - TOXENV=coveralls
     # note: please use "tox --listenvs" to populate the build matrix below
-    - TOXENV=linting
+    # please remove the linting env in all cases
     - TOXENV=py27
     - TOXENV=py34
     - TOXENV=py36
@@ -53,6 +57,14 @@ jobs:
         on:
           tags: true
           repo: pytest-dev/pytest
+    - stage: linting
+      python: '3.6'
+      env:
+      install:
+      - pip install pre-commit
+      - pre-commit install-hooks
+      script:
+      - pre-commit run --all-files
 
 script: tox --recreate
 

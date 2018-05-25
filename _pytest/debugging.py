@@ -7,6 +7,7 @@ from doctest import UnexpectedException
 
 try:
     from builtins import breakpoint  # noqa
+
     SUPPORTS_BREAKPOINT_BUILTIN = True
 except ImportError:
     SUPPORTS_BREAKPOINT_BUILTIN = False
@@ -15,12 +16,18 @@ except ImportError:
 def pytest_addoption(parser):
     group = parser.getgroup("general")
     group._addoption(
-        '--pdb', dest="usepdb", action="store_true",
-        help="start the interactive Python debugger on errors or KeyboardInterrupt.")
+        "--pdb",
+        dest="usepdb",
+        action="store_true",
+        help="start the interactive Python debugger on errors or KeyboardInterrupt.",
+    )
     group._addoption(
-        '--pdbcls', dest="usepdb_cls", metavar="modulename:classname",
+        "--pdbcls",
+        dest="usepdb_cls",
+        metavar="modulename:classname",
         help="start a custom interactive Python debugger on errors. "
-             "For example: --pdbcls=IPython.terminal.debugger:TerminalPdb")
+        "For example: --pdbcls=IPython.terminal.debugger:TerminalPdb",
+    )
 
 
 def pytest_configure(config):
@@ -32,12 +39,12 @@ def pytest_configure(config):
         pdb_cls = pdb.Pdb
 
     if config.getvalue("usepdb"):
-        config.pluginmanager.register(PdbInvoke(), 'pdbinvoke')
+        config.pluginmanager.register(PdbInvoke(), "pdbinvoke")
 
     # Use custom Pdb class set_trace instead of default Pdb on breakpoint() call
     if SUPPORTS_BREAKPOINT_BUILTIN:
-        _environ_pythonbreakpoint = os.environ.get('PYTHONBREAKPOINT', '')
-        if _environ_pythonbreakpoint == '':
+        _environ_pythonbreakpoint = os.environ.get("PYTHONBREAKPOINT", "")
+        if _environ_pythonbreakpoint == "":
             sys.breakpointhook = pytestPDB.set_trace
 
     old = (pdb.set_trace, pytestPDB._pluginmanager)
@@ -66,6 +73,7 @@ class pytestPDB(object):
     def set_trace(cls):
         """ invoke PDB set_trace debugging, dropping any IO capturing. """
         import _pytest.config
+
         frame = sys._getframe().f_back
         if cls._pluginmanager is not None:
             capman = cls._pluginmanager.getplugin("capturemanager")
@@ -79,6 +87,7 @@ class pytestPDB(object):
 
 
 class PdbInvoke(object):
+
     def pytest_exception_interact(self, node, call, report):
         capman = node.config.pluginmanager.getplugin("capturemanager")
         if capman:
@@ -104,10 +113,10 @@ def _enter_pdb(node, excinfo, rep):
 
     showcapture = node.config.option.showcapture
 
-    for sectionname, content in (('stdout', rep.capstdout),
-                                 ('stderr', rep.capstderr),
-                                 ('log', rep.caplog)):
-        if showcapture in (sectionname, 'all') and content:
+    for sectionname, content in (
+        ("stdout", rep.capstdout), ("stderr", rep.capstderr), ("log", rep.caplog)
+    ):
+        if showcapture in (sectionname, "all") and content:
             tw.sep(">", "captured " + sectionname)
             if content[-1:] == "\n":
                 content = content[:-1]
@@ -139,12 +148,15 @@ def _find_last_non_hidden_frame(stack):
 
 
 def post_mortem(t):
+
     class Pdb(pytestPDB._pdb_cls):
+
         def get_stack(self, f, t):
             stack, i = pdb.Pdb.get_stack(self, f, t)
             if f is None:
                 i = _find_last_non_hidden_frame(stack)
             return stack, i
+
     p = Pdb()
     p.reset()
     p.interaction(None, t)

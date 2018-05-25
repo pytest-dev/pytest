@@ -17,7 +17,7 @@ class MarkMapping(object):
 
     @classmethod
     def from_item(cls, item):
-        mark_names = set(mark.name for mark in item.iter_markers())
+        mark_names = {mark.name for mark in item.iter_markers()}
         return cls(mark_names)
 
     def __getitem__(self, name):
@@ -38,6 +38,7 @@ class KeywordMapping(object):
 
         # Add the names of the current item and any parent items
         import pytest
+
         for item in item.listchain():
             if not isinstance(item, pytest.Instance):
                 mapped_names.add(item.name)
@@ -47,7 +48,7 @@ class KeywordMapping(object):
             mapped_names.add(name)
 
         # Add the names attached to the current function through direct assignment
-        if hasattr(item, 'function'):
+        if hasattr(item, "function"):
             for name in item.function.__dict__:
                 mapped_names.add(name)
 
@@ -85,7 +86,11 @@ def matchkeyword(colitem, keywordexpr):
         return not mapping[keywordexpr[4:]]
     for kwd in keywordexpr.split():
         if keyword.iskeyword(kwd) and kwd not in python_keywords_allowed_list:
-            raise UsageError("Python keyword '{}' not accepted in expressions passed to '-k'".format(kwd))
+            raise UsageError(
+                "Python keyword '{}' not accepted in expressions passed to '-k'".format(
+                    kwd
+                )
+            )
     try:
         return eval(keywordexpr, {}, mapping)
     except SyntaxError:

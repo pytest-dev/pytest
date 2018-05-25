@@ -61,7 +61,7 @@ from glob import glob
 
 
 class FastFilesCompleter(object):
-    'Fast file completer class'
+    "Fast file completer class"
 
     def __init__(self, directories=True):
         self.directories = directories
@@ -74,21 +74,21 @@ class FastFilesCompleter(object):
             prefix_dir = 0
         completion = []
         globbed = []
-        if '*' not in prefix and '?' not in prefix:
+        if "*" not in prefix and "?" not in prefix:
             # we are on unix, otherwise no bash
             if not prefix or prefix[-1] == os.path.sep:
-                globbed.extend(glob(prefix + '.*'))
-            prefix += '*'
+                globbed.extend(glob(prefix + ".*"))
+            prefix += "*"
         globbed.extend(glob(prefix))
         for x in sorted(globbed):
             if os.path.isdir(x):
-                x += '/'
+                x += "/"
             # append stripping the prefix (like bash, not like compgen)
             completion.append(x[prefix_dir:])
         return completion
 
 
-if os.environ.get('_ARGCOMPLETE'):
+if os.environ.get("_ARGCOMPLETE"):
     try:
         import argcomplete.completers
     except ImportError:
@@ -97,7 +97,11 @@ if os.environ.get('_ARGCOMPLETE'):
 
     def try_argcomplete(parser):
         argcomplete.autocomplete(parser, always_complete_options=False)
+
+
 else:
+
     def try_argcomplete(parser):
         pass
+
     filescompleter = None

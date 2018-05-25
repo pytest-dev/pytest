@@ -136,4 +136,3 @@ More details can be found in the `original PR <https://github.com/pytest-dev/pyt
 
 	in a future major relase of pytest we will introduce class based markers,
 	at which points markers will no longer be limited to instances of :py:class:`Mark`
-

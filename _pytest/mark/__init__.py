@@ -2,15 +2,25 @@
 from __future__ import absolute_import, division, print_function
 from _pytest.config import UsageError
 from .structures import (
-    ParameterSet, EMPTY_PARAMETERSET_OPTION, MARK_GEN,
-    Mark, MarkInfo, MarkDecorator, MarkGenerator,
-    transfer_markers, get_empty_parameterset_mark
+    ParameterSet,
+    EMPTY_PARAMETERSET_OPTION,
+    MARK_GEN,
+    Mark,
+    MarkInfo,
+    MarkDecorator,
+    MarkGenerator,
+    transfer_markers,
+    get_empty_parameterset_mark,
 )
 from .legacy import matchkeyword, matchmark
 
 __all__ = [
-    'Mark', 'MarkInfo', 'MarkDecorator', 'MarkGenerator',
-    'transfer_markers', 'get_empty_parameterset_mark'
+    "Mark",
+    "MarkInfo",
+    "MarkDecorator",
+    "MarkGenerator",
+    "transfer_markers",
+    "get_empty_parameterset_mark",
 ]
 
 
@@ -42,47 +52,53 @@ def param(*values, **kw):
 def pytest_addoption(parser):
     group = parser.getgroup("general")
     group._addoption(
-        '-k',
-        action="store", dest="keyword", default='', metavar="EXPRESSION",
+        "-k",
+        action="store",
+        dest="keyword",
+        default="",
+        metavar="EXPRESSION",
         help="only run tests which match the given substring expression. "
-             "An expression is a python evaluatable expression "
-             "where all names are substring-matched against test names "
-             "and their parent classes. Example: -k 'test_method or test_"
-             "other' matches all test functions and classes whose name "
-             "contains 'test_method' or 'test_other', while -k 'not test_method' "
-             "matches those that don't contain 'test_method' in their names. "
-             "Additionally keywords are matched to classes and functions "
-             "containing extra names in their 'extra_keyword_matches' set, "
-             "as well as functions which have names assigned directly to them."
+        "An expression is a python evaluatable expression "
+        "where all names are substring-matched against test names "
+        "and their parent classes. Example: -k 'test_method or test_"
+        "other' matches all test functions and classes whose name "
+        "contains 'test_method' or 'test_other', while -k 'not test_method' "
+        "matches those that don't contain 'test_method' in their names. "
+        "Additionally keywords are matched to classes and functions "
+        "containing extra names in their 'extra_keyword_matches' set, "
+        "as well as functions which have names assigned directly to them.",
     )
 
     group._addoption(
         "-m",
-        action="store", dest="markexpr", default="", metavar="MARKEXPR",
+        action="store",
+        dest="markexpr",
+        default="",
+        metavar="MARKEXPR",
         help="only run tests matching given mark expression.  "
-             "example: -m 'mark1 and not mark2'."
+        "example: -m 'mark1 and not mark2'.",
     )
 
     group.addoption(
-        "--markers", action="store_true",
-        help="show markers (builtin, plugin and per-project ones)."
+        "--markers",
+        action="store_true",
+        help="show markers (builtin, plugin and per-project ones).",
     )
 
-    parser.addini("markers", "markers for test functions", 'linelist')
-    parser.addini(
-        EMPTY_PARAMETERSET_OPTION,
-        "default marker for empty parametersets")
+    parser.addini("markers", "markers for test functions", "linelist")
+    parser.addini(EMPTY_PARAMETERSET_OPTION, "default marker for empty parametersets")
 
 
 def pytest_cmdline_main(config):
     import _pytest.config
+
     if config.option.markers:
         config._do_configure()
         tw = _pytest.config.create_terminal_writer(config)
         for line in config.getini("markers"):
             parts = line.split(":", 1)
             name = parts[0]
-            rest = parts[1] if len(parts) == 2 else ''
+            rest = parts[1] if len(parts) == 2 else ""
             tw.write("@pytest.mark.%s:" % name, bold=True)
             tw.line(rest)
             tw.line()
@@ -147,11 +163,12 @@ def pytest_configure(config):
 
     empty_parameterset = config.getini(EMPTY_PARAMETERSET_OPTION)
 
-    if empty_parameterset not in ('skip', 'xfail', None, ''):
+    if empty_parameterset not in ("skip", "xfail", None, ""):
         raise UsageError(
             "{!s} must be one of skip and xfail,"
-            " but it is {!r}".format(EMPTY_PARAMETERSET_OPTION, empty_parameterset))
+            " but it is {!r}".format(EMPTY_PARAMETERSET_OPTION, empty_parameterset)
+        )
 
 
 def pytest_unconfigure(config):
-    MARK_GEN._config = getattr(config, '_old_mark_config', None)
+    MARK_GEN._config = getattr(config, "_old_mark_config", None)

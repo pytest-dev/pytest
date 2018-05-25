@@ -70,6 +70,3 @@ Unsupported idioms / known issues
   There are no plans to fix this currently because ``yield``-tests
   are deprecated in pytest 3.0, with ``pytest.mark.parametrize``
   being the recommended alternative.
-
-
-

@@ -28,69 +28,140 @@ EXIT_NOTESTSCOLLECTED = 5
 
 
 def pytest_addoption(parser):
-    parser.addini("norecursedirs", "directory patterns to avoid for recursion",
-                  type="args", default=['.*', 'build', 'dist', 'CVS', '_darcs', '{arch}', '*.egg', 'venv'])
-    parser.addini("testpaths", "directories to search for tests when no files or directories are given in the "
-                               "command line.",
-                  type="args", default=[])
+    parser.addini(
+        "norecursedirs",
+        "directory patterns to avoid for recursion",
+        type="args",
+        default=[".*", "build", "dist", "CVS", "_darcs", "{arch}", "*.egg", "venv"],
+    )
+    parser.addini(
+        "testpaths",
+        "directories to search for tests when no files or directories are given in the "
+        "command line.",
+        type="args",
+        default=[],
+    )
     # parser.addini("dirpatterns",
     #    "patterns specifying possible locations of test files",
     #    type="linelist", default=["**/test_*.txt",
     #            "**/test_*.py", "**/*_test.py"]
     # )
     group = parser.getgroup("general", "running and selection options")
-    group._addoption('-x', '--exitfirst', action="store_const",
-                     dest="maxfail", const=1,
-                     help="exit instantly on first error or failed test."),
-    group._addoption('--maxfail', metavar="num",
-                     action="store", type=int, dest="maxfail", default=0,
-                     help="exit after first num failures or errors.")
-    group._addoption('--strict', action="store_true",
-                     help="marks not registered in configuration file raise errors.")
-    group._addoption("-c", metavar="file", type=str, dest="inifilename",
-                     help="load configuration from `file` instead of trying to locate one of the implicit "
-                          "configuration files.")
-    group._addoption("--continue-on-collection-errors", action="store_true",
-                     default=False, dest="continue_on_collection_errors",
-                     help="Force test execution even if collection errors occur.")
-    group._addoption("--rootdir", action="store",
-                     dest="rootdir",
-                     help="Define root directory for tests. Can be relative path: 'root_dir', './root_dir', "
-                          "'root_dir/another_dir/'; absolute path: '/home/user/root_dir'; path with variables: "
-                          "'$HOME/root_dir'.")
+    group._addoption(
+        "-x",
+        "--exitfirst",
+        action="store_const",
+        dest="maxfail",
+        const=1,
+        help="exit instantly on first error or failed test.",
+    ),
+    group._addoption(
+        "--maxfail",
+        metavar="num",
+        action="store",
+        type=int,
+        dest="maxfail",
+        default=0,
+        help="exit after first num failures or errors.",
+    )
+    group._addoption(
+        "--strict",
+        action="store_true",
+        help="marks not registered in configuration file raise errors.",
+    )
+    group._addoption(
+        "-c",
+        metavar="file",
+        type=str,
+        dest="inifilename",
+        help="load configuration from `file` instead of trying to locate one of the implicit "
+        "configuration files.",
+    )
+    group._addoption(
+        "--continue-on-collection-errors",
+        action="store_true",
+        default=False,
+        dest="continue_on_collection_errors",
+        help="Force test execution even if collection errors occur.",
+    )
+    group._addoption(
+        "--rootdir",
+        action="store",
+        dest="rootdir",
+        help="Define root directory for tests. Can be relative path: 'root_dir', './root_dir', "
+        "'root_dir/another_dir/'; absolute path: '/home/user/root_dir'; path with variables: "
+        "'$HOME/root_dir'.",
+    )
 
     group = parser.getgroup("collect", "collection")
-    group.addoption('--collectonly', '--collect-only', action="store_true",
-                    help="only collect tests, don't execute them."),
-    group.addoption('--pyargs', action="store_true",
-                    help="try to interpret all arguments as python packages.")
-    group.addoption("--ignore", action="append", metavar="path",
-                    help="ignore path during collection (multi-allowed).")
-    group.addoption("--deselect", action="append", metavar="nodeid_prefix",
-                    help="deselect item during collection (multi-allowed).")
+    group.addoption(
+        "--collectonly",
+        "--collect-only",
+        action="store_true",
+        help="only collect tests, don't execute them.",
+    ),
+    group.addoption(
+        "--pyargs",
+        action="store_true",
+        help="try to interpret all arguments as python packages.",
+    )
+    group.addoption(
+        "--ignore",
+        action="append",
+        metavar="path",
+        help="ignore path during collection (multi-allowed).",
+    )
+    group.addoption(
+        "--deselect",
+        action="append",
+        metavar="nodeid_prefix",
+        help="deselect item during collection (multi-allowed).",
+    )
     # when changing this to --conf-cut-dir, config.py Conftest.setinitial
     # needs upgrading as well
-    group.addoption('--confcutdir', dest="confcutdir", default=None,
-                    metavar="dir", type=functools.partial(directory_arg, optname="--confcutdir"),
-                    help="only load conftest.py's relative to specified dir.")
-    group.addoption('--noconftest', action="store_true",
-                    dest="noconftest", default=False,
-                    help="Don't load any conftest.py files.")
-    group.addoption('--keepduplicates', '--keep-duplicates', action="store_true",
-                    dest="keepduplicates", default=False,
-                    help="Keep duplicate tests.")
-    group.addoption('--collect-in-virtualenv', action='store_true',
-                    dest='collect_in_virtualenv', default=False,
-                    help="Don't ignore tests in a local virtualenv directory")
+    group.addoption(
+        "--confcutdir",
+        dest="confcutdir",
+        default=None,
+        metavar="dir",
+        type=functools.partial(directory_arg, optname="--confcutdir"),
+        help="only load conftest.py's relative to specified dir.",
+    )
+    group.addoption(
+        "--noconftest",
+        action="store_true",
+        dest="noconftest",
+        default=False,
+        help="Don't load any conftest.py files.",
+    )
+    group.addoption(
+        "--keepduplicates",
+        "--keep-duplicates",
+        action="store_true",
+        dest="keepduplicates",
+        default=False,
+        help="Keep duplicate tests.",
+    )
+    group.addoption(
+        "--collect-in-virtualenv",
+        action="store_true",
+        dest="collect_in_virtualenv",
+        default=False,
+        help="Don't ignore tests in a local virtualenv directory",
+    )
 
-    group = parser.getgroup("debugconfig",
-                            "test session debugging and configuration")
-    group.addoption('--basetemp', dest="basetemp", default=None, metavar="dir",
-                    help="base temporary directory for this test run.")
+    group = parser.getgroup("debugconfig", "test session debugging and configuration")
+    group.addoption(
+        "--basetemp",
+        dest="basetemp",
+        default=None,
+        metavar="dir",
+        help="base temporary directory for this test run.",
+    )
 
 
 def pytest_configure(config):
-    __import__('pytest').config = config  # compatibility
+    __import__("pytest").config = config  # compatibility
 
 
 def wrap_session(config, doit):
@@ -112,8 +183,7 @@ def wrap_session(config, doit):
         except KeyboardInterrupt:
             excinfo = _pytest._code.ExceptionInfo()
             if initstate < 2 and isinstance(excinfo.value, exit.Exception):
-                sys.stderr.write('{0}: {1}\n'.format(
-                    excinfo.typename, excinfo.value.msg))
+                sys.stderr.write("{}: {}\n".format(excinfo.typename, excinfo.value.msg))
             config.hook.pytest_keyboard_interrupt(excinfo=excinfo)
             session.exitstatus = EXIT_INTERRUPTED
         except:  # noqa
@@ -128,8 +198,8 @@ def wrap_session(config, doit):
         session.startdir.chdir()
         if initstate >= 2:
             config.hook.pytest_sessionfinish(
-                session=session,
-                exitstatus=session.exitstatus)
+                session=session, exitstatus=session.exitstatus
+            )
         config._ensure_unconfigure()
     return session.exitstatus
 
@@ -155,10 +225,8 @@ def pytest_collection(session):
 
 
 def pytest_runtestloop(session):
-    if (session.testsfailed and
-            not session.config.option.continue_on_collection_errors):
-        raise session.Interrupted(
-            "%d errors during collection" % session.testsfailed)
+    if session.testsfailed and not session.config.option.continue_on_collection_errors:
+        raise session.Interrupted("%d errors during collection" % session.testsfailed)
 
     if session.config.option.collectonly:
         return True
@@ -176,11 +244,17 @@ def pytest_runtestloop(session):
 def _in_venv(path):
     """Attempts to detect if ``path`` is the root of a Virtual Environment by
     checking for the existence of the appropriate activate script"""
-    bindir = path.join('Scripts' if sys.platform.startswith('win') else 'bin')
+    bindir = path.join("Scripts" if sys.platform.startswith("win") else "bin")
     if not bindir.isdir():
         return False
-    activates = ('activate', 'activate.csh', 'activate.fish',
-                 'Activate', 'Activate.bat', 'Activate.ps1')
+    activates = (
+        "activate",
+        "activate.csh",
+        "activate.fish",
+        "Activate",
+        "Activate.bat",
+        "Activate.ps1",
+    )
     return any([fname.basename in activates for fname in bindir.listdir()])
 
 
@@ -241,6 +315,7 @@ def _patched_find_module():
     The only supported python<3.4 by pytest is python 2.7.
     """
     if six.PY2:  # python 3.4+ uses importlib instead
+
         def find_module_patched(self, fullname, path=None):
             # Note: we ignore 'path' argument since it is only used via meta_path
             subname = fullname.split(".")[-1]
@@ -252,8 +327,7 @@ def _patched_find_module():
                 # original: path = [os.path.realpath(self.path)]
                 path = [self.path]
             try:
-                file, filename, etc = pkgutil.imp.find_module(subname,
-                                                              path)
+                file, filename, etc = pkgutil.imp.find_module(subname, path)
             except ImportError:
                 return None
             return pkgutil.ImpLoader(fullname, file, filename, etc)
@@ -269,6 +343,7 @@ def _patched_find_module():
 
 
 class FSHookProxy(object):
+
     def __init__(self, fspath, pm, remove_mods):
         self.fspath = fspath
         self.pm = pm
@@ -286,7 +361,7 @@ class NoMatch(Exception):
 
 class Interrupted(KeyboardInterrupt):
     """ signals an interrupted test run. """
-    __module__ = 'builtins'  # for py3
+    __module__ = "builtins"  # for py3
 
 
 class Failed(Exception):
@@ -299,8 +374,8 @@ class Session(nodes.FSCollector):
 
     def __init__(self, config):
         nodes.FSCollector.__init__(
-            self, config.rootdir, parent=None,
-            config=config, session=self, nodeid="")
+            self, config.rootdir, parent=None, config=config, session=self, nodeid=""
+        )
         self.testsfailed = 0
         self.testscollected = 0
         self.shouldstop = False
@@ -320,12 +395,12 @@ class Session(nodes.FSCollector):
 
     @hookimpl(tryfirst=True)
     def pytest_runtest_logreport(self, report):
-        if report.failed and not hasattr(report, 'wasxfail'):
+        if report.failed and not hasattr(report, "wasxfail"):
             self.testsfailed += 1
             maxfail = self.config.getvalue("maxfail")
             if maxfail and self.testsfailed >= maxfail:
-                self.shouldfail = "stopping after %d failures" % (
-                    self.testsfailed)
+                self.shouldfail = "stopping after %d failures" % (self.testsfailed)
+
     pytest_collectreport = pytest_runtest_logreport
 
     def isinitpath(self, path):
@@ -350,8 +425,9 @@ class Session(nodes.FSCollector):
         try:
             items = self._perform_collect(args, genitems)
             self.config.pluginmanager.check_pending()
-            hook.pytest_collection_modifyitems(session=self,
-                                               config=self.config, items=items)
+            hook.pytest_collection_modifyitems(
+                session=self, config=self.config, items=items
+            )
         finally:
             hook.pytest_collection_finish(session=self)
         self.testscollected = len(items)
@@ -408,8 +484,9 @@ class Session(nodes.FSCollector):
         path = names.pop(0)
         if path.check(dir=1):
             assert not names, "invalid arg %r" % (arg,)
-            for path in path.visit(fil=lambda x: x.check(file=1),
-                                   rec=self._recurse, bf=True, sort=True):
+            for path in path.visit(
+                fil=lambda x: x.check(file=1), rec=self._recurse, bf=True, sort=True
+            ):
                 for x in self._collectfile(path):
                     yield x
         else:
@@ -469,8 +546,8 @@ class Session(nodes.FSCollector):
         if not path.check():
             if self.config.option.pyargs:
                 raise UsageError(
-                    "file or package not found: " + arg +
-                    " (missing __init__.py?)")
+                    "file or package not found: " + arg + " (missing __init__.py?)"
+                )
             else:
                 raise UsageError("file not found: " + arg)
         parts[0] = path

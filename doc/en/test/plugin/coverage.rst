@@ -6,22 +6,22 @@ Write and report coverage data with the 'coverage' package.
 .. contents::
   :local:
 
-Note: Original code by Ross Lawley. 
+Note: Original code by Ross Lawley.
 
 Install
 --------------
 
 Use pip to (un)install::
 
-    pip install pytest-coverage 
-    pip uninstall pytest-coverage 
+    pip install pytest-coverage
+    pip uninstall pytest-coverage
 
 or alternatively use easy_install to install::
 
-    easy_install pytest-coverage 
+    easy_install pytest-coverage
 
 
-Usage 
+Usage
 -------------
 
 To get full test coverage reports for a particular package type::

@@ -139,7 +139,7 @@ Here's a rundown of how a repository transfer usually proceeds
 * ``joedoe`` transfers repository ownership to ``pytest-dev`` administrator ``calvin``.
 * ``calvin`` creates ``pytest-xyz-admin`` and ``pytest-xyz-developers`` teams, inviting ``joedoe`` to both as **maintainer**.
 * ``calvin`` transfers repository to ``pytest-dev`` and configures team access:
-  
+
   - ``pytest-xyz-admin`` **admin** access;
   - ``pytest-xyz-developers`` **write** access;
 
@@ -163,6 +163,7 @@ Short version
 ~~~~~~~~~~~~~
 
 #. Fork the repository;
+#. enable and install pre-commit https://pre-commit.com/ to ensure styleguides and codechecks are followed
 #. Target ``master`` for bugfixes and doc changes;
 #. Target ``features`` for new features or functionality changes.
 #. Follow **PEP-8**. There's a ``tox`` command to help fixing it: ``tox -e fix-lint``.
@@ -202,19 +203,29 @@ Here is a simple overview, with pytest-specific bits:
     $ git clone git@github.com:YOUR_GITHUB_USERNAME/pytest.git
     $ cd pytest
     # now, to fix a bug create your own branch off "master":
-    
+
         $ git checkout -b your-bugfix-branch-name master
 
     # or to instead add a feature create your own branch off "features":
-    
+
         $ git checkout -b your-feature-branch-name features
 
-   Given we have "major.minor.micro" version numbers, bugfixes will usually 
-   be released in micro releases whereas features will be released in 
+   Given we have "major.minor.micro" version numbers, bugfixes will usually
+   be released in micro releases whereas features will be released in
    minor releases and incompatible changes in major releases.
 
    If you need some help with Git, follow this quick start
    guide: https://git.wiki.kernel.org/index.php/QuickStart
+
+#. install pre-commit and install its hook on the pytest repo
+
+    https://pre-commit.com/ is a framework for managing and maintaining multi-language pre-commit hooks
+    pytest uses pre-commit to ensure code-style and code formatting is the same
+
+    $ pip install --user pre-commit
+    $ pre-commit install
+
+    Afterwards pre-commit will run whenever you commit.
 
 #. Install tox
 

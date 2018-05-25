@@ -98,6 +98,7 @@ def pytest_configure(config):
     :arg _pytest.config.Config config: pytest config object
     """
 
+
 # -------------------------------------------------------------------------
 # Bootstrapping hooks called for plugins registered early enough:
 # internal and 3rd party plugins.
@@ -163,6 +164,7 @@ def pytest_load_initial_conftests(early_config, parser, args):
 # collection hooks
 # -------------------------------------------------------------------------
 
+
 @hookspec(firstresult=True)
 def pytest_collection(session):
     """Perform the collection protocol for the given session.
@@ -220,6 +222,7 @@ def pytest_collect_file(path, parent):
     :param str path: the path to collect
     """
 
+
 # logging hooks for collection
 
 
@@ -244,6 +247,7 @@ def pytest_make_collect_report(collector):
     """ perform ``collector.collect()`` and return a CollectReport.
 
     Stops at first non-None result, see :ref:`firstresult` """
+
 
 # -------------------------------------------------------------------------
 # Python test function related hooks
@@ -290,6 +294,7 @@ def pytest_make_parametrize_id(config, val, argname):
     :param val: the parametrized value
     :param str argname: the automatic parameter name produced by pytest
     """
+
 
 # -------------------------------------------------------------------------
 # generic runtest related hooks
@@ -382,6 +387,7 @@ def pytest_runtest_logreport(report):
     """ process a test setup/call/teardown report relating to
     the respective phase of executing a test. """
 
+
 # -------------------------------------------------------------------------
 # Fixture related hooks
 # -------------------------------------------------------------------------
@@ -406,6 +412,7 @@ def pytest_fixture_post_finalizer(fixturedef, request):
     """ called after fixture teardown, but before the cache is cleared so
     the fixture result cache ``fixturedef.cached_result`` can
     still be accessed."""
+
 
 # -------------------------------------------------------------------------
 # test session related hooks
@@ -439,6 +446,7 @@ def pytest_unconfigure(config):
 # hooks for customizing the assert methods
 # -------------------------------------------------------------------------
 
+
 def pytest_assertrepr_compare(config, op, left, right):
     """return explanation for comparisons in failing assert expressions.
 
@@ -449,6 +457,7 @@ def pytest_assertrepr_compare(config, op, left, right):
 
     :param _pytest.config.Config config: pytest config object
     """
+
 
 # -------------------------------------------------------------------------
 # hooks for influencing reporting (invoked from _pytest_terminal)
@@ -511,6 +520,7 @@ def pytest_logwarning(message, code, nodeid, fslocation):
         This hook is incompatible with ``hookwrapper=True``.
     """
 
+
 # -------------------------------------------------------------------------
 # doctest hooks
 # -------------------------------------------------------------------------
@@ -521,6 +531,7 @@ def pytest_doctest_prepare_content(content):
     """ return processed content for a given doctest
 
     Stops at first non-None result, see :ref:`firstresult` """
+
 
 # -------------------------------------------------------------------------
 # error handling and internal debugging hooks

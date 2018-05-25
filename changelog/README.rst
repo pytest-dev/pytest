@@ -4,7 +4,7 @@ text that will be added to the next ``CHANGELOG``.
 The ``CHANGELOG`` will be read by users, so this description should be aimed to pytest users
 instead of describing internal changes which are only relevant to the developers.
 
-Make sure to use full sentences with correct case and punctuation, for example:: 
+Make sure to use full sentences with correct case and punctuation, for example::
 
     Fix issue with non-ascii messages from the ``warnings`` module.
 

@@ -592,8 +592,3 @@ declaring the hook functions directly in your plugin module, for example::
 
 This has the added benefit of allowing you to conditionally install hooks
 depending on which plugins are installed.
-
-
-
-
-
