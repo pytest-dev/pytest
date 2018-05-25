@@ -265,10 +265,7 @@ def _write_pyc(state, co, source_stat, pyc):
             mtime = int(source_stat.mtime)
             size = source_stat.size & 0xFFFFFFFF
             fp.write(struct.pack("<ll", mtime, size))
-            if six.PY2:
-                marshal.dump(co, fp.file)
-            else:
-                marshal.dump(co, fp)
+            fp.write(marshal.dumps(co))
     except EnvironmentError as e:
         state.trace("error writing pyc file at %s: errno=%s" % (pyc, e.errno))
         # we ignore any failure to write the cache file
