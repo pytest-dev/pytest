@@ -243,6 +243,10 @@ class TestApprox(object):
             assert approx(x, rel=5e-6, abs=0) == a
             assert approx(x, rel=5e-7, abs=0) != a
 
+    def test_string(self):
+        with pytest.raises(TypeError):
+            approx('abc')
+
     def test_decimal(self):
         within_1e6 = [
             (Decimal('1.000001'), Decimal('1.0')),
