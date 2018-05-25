@@ -928,15 +928,14 @@ def test_class_method_containing_test_issue1558(testdir):
 
 
 @pytest.mark.issue(3498)
-@pytest.mark.parametrize("base", [
-    'six.moves.builtins.object',
-    'unittest.TestCase',
-    'unittest2.TestCase',
-])
+@pytest.mark.parametrize(
+    "base", ["six.moves.builtins.object", "unittest.TestCase", "unittest2.TestCase"]
+)
 def test_usefixtures_marker_on_unittest(base, testdir):
-    module = base.rsplit('.', 1)[0]
+    module = base.rsplit(".", 1)[0]
     pytest.importorskip(module)
-    testdir.makepyfile(conftest="""
+    testdir.makepyfile(
+        conftest="""
         import pytest
 
         @pytest.fixture(scope='function')
@@ -961,9 +960,11 @@ def test_usefixtures_marker_on_unittest(base, testdir):
             for item in items:
                node_and_marks(item)
 
-        """)
+        """
+    )
 
-    testdir.makepyfile("""
+    testdir.makepyfile(
+        """
         import pytest
         import {module}
 
@@ -982,7 +983,10 @@ def test_usefixtures_marker_on_unittest(base, testdir):
                 assert self.fixture2
 
 
-    """.format(module=module, base=base))
+    """.format(
+            module=module, base=base
+        )
+    )
 
-    result = testdir.runpytest('-s')
+    result = testdir.runpytest("-s")
     result.assert_outcomes(passed=2)

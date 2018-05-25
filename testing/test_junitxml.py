@@ -504,7 +504,8 @@ class TestPython(object):
         # assert "ValueError" in fnode.toxml()
 
     def test_xfail_captures_output_once(self, testdir):
-        testdir.makepyfile("""
+        testdir.makepyfile(
+            """
             import sys
             import pytest
 
@@ -513,12 +514,13 @@ class TestPython(object):
                 sys.stdout.write('XFAIL This is stdout')
                 sys.stderr.write('XFAIL This is stderr')
                 assert 0
-        """)
+        """
+        )
         result, dom = runandparse(testdir)
         node = dom.find_first_by_tag("testsuite")
         tnode = node.find_first_by_tag("testcase")
-        assert len(tnode.find_by_tag('system-err')) == 1
-        assert len(tnode.find_by_tag('system-out')) == 1
+        assert len(tnode.find_by_tag("system-err")) == 1
+        assert len(tnode.find_by_tag("system-out")) == 1
 
     def test_xfailure_xpass(self, testdir):
         testdir.makepyfile(

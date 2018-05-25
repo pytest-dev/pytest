@@ -233,7 +233,6 @@ class _NodeReporter(object):
             )
             self.write_captured_output(report)
 
-
     def finalize(self):
         data = self.to_xml().unicode(indent=0)
         self.__dict__.clear()
