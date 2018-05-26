@@ -1,0 +1,1 @@
+Fix assertion rewriter compatibility with libraries that monkey patch ``file`` objects.
