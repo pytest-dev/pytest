@@ -1,7 +1,8 @@
 import os
 import sys
-import setuptools
+
 import pkg_resources
+import setuptools
 from setuptools import setup, Command
 
 classifiers = [
@@ -57,7 +58,9 @@ def get_environment_marker_support_level():
 
 
 def main():
-    extras_require = {}
+    extras_require = {
+        "dev": ["gitpython", "invoke", "pre-commit", "towncrier", "tox", "wheel"]
+    }
     install_requires = [
         "py>=1.5.0",
         "six>=1.10.0",
