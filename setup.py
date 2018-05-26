@@ -1,9 +1,10 @@
+import io
 import os
 import sys
 
 import pkg_resources
 import setuptools
-from setuptools import setup, Command
+from setuptools import setup
 
 classifiers = [
     "Development Status :: 6 - Mature",
@@ -20,8 +21,10 @@ classifiers = [
     for x in "2 2.7 3 3.4 3.5 3.6 3.7".split()
 ]
 
-with open("README.rst") as fd:
-    long_description = fd.read()
+
+def get_long_description():
+    with io.open("README.rst", encoding="UTF-8") as fd:
+        return fd.read()
 
 
 def get_environment_marker_support_level():
@@ -89,7 +92,7 @@ def main():
     setup(
         name="pytest",
         description="pytest: simple powerful testing with Python",
-        long_description=long_description,
+        long_description=get_long_description(),
         use_scm_version={"write_to": "src/_pytest/_version.py"},
         url="http://pytest.org",
         project_urls={
@@ -105,8 +108,6 @@ def main():
         entry_points={"console_scripts": ["pytest=pytest:main", "py.test=pytest:main"]},
         classifiers=classifiers,
         keywords="test unittest",
-        cmdclass={"test": PyTest},
-        # the following should be enabled for release
         setup_requires=["setuptools-scm"],
         package_dir={"": "src"},
         python_requires=">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*",
@@ -116,25 +117,6 @@ def main():
         py_modules=["pytest"],
         zip_safe=False,
     )
-
-
-class PyTest(Command):
-    user_options = []
-
-    def initialize_options(self):
-        pass
-
-    def finalize_options(self):
-        pass
-
-    def run(self):
-        import subprocess
-
-        python_path = [x for x in os.environ.get("PYTHONPATH", "").split(":") if x]
-        python_path.insert(0, os.getcwd())
-        os.environ["PYTHONPATH"] = ":".join(python_path)
-        errno = subprocess.call([sys.executable, "pytest.py", "--ignore=doc"])
-        raise SystemExit(errno)
 
 
 if __name__ == "__main__":
