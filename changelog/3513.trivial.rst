@@ -1,0 +1,1 @@
+Switch pytest to the src/ layout as we already suggested it for good practice - now we implement it as well.

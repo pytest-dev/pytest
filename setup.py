@@ -50,6 +50,9 @@ def get_environment_marker_support_level():
             return 1
     except Exception as exc:
         sys.stderr.write("Could not test setuptool's version: %s\n" % exc)
+
+    # as of testing on 2018-05-26 fedora was on version 37* and debian was on version 33+
+    # we should consider erroring on those
     return 0
 
 
@@ -84,7 +87,7 @@ def main():
         name="pytest",
         description="pytest: simple powerful testing with Python",
         long_description=long_description,
-        use_scm_version={"write_to": "_pytest/_version.py"},
+        use_scm_version={"write_to": "src/_pytest/_version.py"},
         url="http://pytest.org",
         project_urls={
             "Source": "https://github.com/pytest-dev/pytest",
@@ -102,6 +105,7 @@ def main():
         cmdclass={"test": PyTest},
         # the following should be enabled for release
         setup_requires=["setuptools-scm"],
+        package_dir={"": "src"},
         python_requires=">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*",
         install_requires=install_requires,
         extras_require=extras_require,
@@ -123,9 +127,9 @@ class PyTest(Command):
     def run(self):
         import subprocess
 
-        PPATH = [x for x in os.environ.get("PYTHONPATH", "").split(":") if x]
-        PPATH.insert(0, os.getcwd())
-        os.environ["PYTHONPATH"] = ":".join(PPATH)
+        python_path = [x for x in os.environ.get("PYTHONPATH", "").split(":") if x]
+        python_path.insert(0, os.getcwd())
+        os.environ["PYTHONPATH"] = ":".join(python_path)
         errno = subprocess.call([sys.executable, "pytest.py", "--ignore=doc"])
         raise SystemExit(errno)
 
