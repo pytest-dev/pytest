@@ -77,3 +77,7 @@ notifications:
     skip_join: true
   email:
     - pytest-commit@python.org
+cache:
+    directories:
+        - $HOME/.cache/pip
+        - $HOME/.cache/pre-commit
