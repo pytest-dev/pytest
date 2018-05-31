@@ -44,7 +44,7 @@ pytest's marker implementation traditionally worked by simply updating the ``__d
 This state of things made it technically next to impossible to use data from markers correctly without having a deep understanding of the internals, leading to subtle and hard to understand bugs in more advanced usages.
 
 Depending on how a marker got declared/changed one would get either a ``MarkerInfo`` which might contain markers from sibling classes,
-``MarkDecorators`` when marks came from parameterization or from a ``node.add_marker`` call, discarding prior marks. Also ``MarkerInfo`` acts like a single mark, when it in fact repressents a merged view on multiple marks with the same name.
+``MarkDecorators`` when marks came from parameterization or from a ``node.add_marker`` call, discarding prior marks. Also ``MarkerInfo`` acts like a single mark, when it in fact represents a merged view on multiple marks with the same name.
 
 On top of that markers where not accessible the same way for modules, classes, and functions/methods,
 in fact, markers where only accessible in functions, even if they where declared on classes/modules.
