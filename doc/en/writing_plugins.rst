@@ -150,7 +150,7 @@ it in your setuptools-invocation:
 
     setup(
         name="myproject",
-        packages = ['myproject']
+        packages = ['myproject'],
 
         # the following makes a plugin available to pytest
         entry_points = {
@@ -214,9 +214,9 @@ With the following typical ``setup.py`` extract:
 .. code-block:: python
 
    setup(
-      ...
+      ...,
       entry_points={'pytest11': ['foo = pytest_foo.plugin']},
-      ...
+      ...,
    )
 
 In this case only ``pytest_foo/plugin.py`` will be rewritten.  If the
@@ -425,6 +425,7 @@ Let's look at a possible implementation:
     def pytest_collection_modifyitems(config, items):
         # called after collection is completed
         # you can modify the ``items`` list
+        ...
 
 Here, ``pytest`` will pass in ``config`` (the pytest config object)
 and ``items`` (the list of collected test items) but will not pass
@@ -511,11 +512,13 @@ after others, i.e.  the position in the ``N``-sized list of functions:
     @pytest.hookimpl(tryfirst=True)
     def pytest_collection_modifyitems(items):
         # will execute as early as possible
+        ...
 
     # Plugin 2
     @pytest.hookimpl(trylast=True)
     def pytest_collection_modifyitems(items):
         # will execute as late as possible
+        ...
 
     # Plugin 3
     @pytest.hookimpl(hookwrapper=True)

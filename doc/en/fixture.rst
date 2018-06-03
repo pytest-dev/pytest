@@ -250,9 +250,10 @@ instance, you can simply declare it:
 .. code-block:: python
 
     @pytest.fixture(scope="session")
-    def smtp(...):
+    def smtp():
         # the returned fixture value will be shared for
         # all tests needing it
+        ...
 
 Finally, the ``class`` scope will invoke the fixture once per test *class*.
 
@@ -867,6 +868,7 @@ You can specify multiple fixtures like this:
 .. code-block:: python
 
     @pytest.mark.usefixtures("cleandir", "anotherfixture")
+    def test(): ...
 
 and you may specify fixture usage at the test module level, using
 a generic feature of the mark mechanism:

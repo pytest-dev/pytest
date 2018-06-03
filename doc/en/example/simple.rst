@@ -283,8 +283,10 @@ and then check for the ``sys._called_from_test`` flag:
 
     if hasattr(sys, '_called_from_test'):
         # called from within a test run
+        ...
     else:
         # called "normally"
+        ...
 
 accordingly in your application.  It's also a good idea
 to use your own application module rather than ``sys``

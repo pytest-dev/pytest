@@ -91,6 +91,7 @@ order doesn't even matter. You probably want to think of your marks as a set her
         if skipif:
             for condition in skipif.args:
                 # eval condition
+                ...
 
         # by this:
         for skipif in item.iter_markers('skipif'):
@@ -134,5 +135,5 @@ More details can be found in the `original PR <https://github.com/pytest-dev/pyt
 
 .. note::
 
-	in a future major relase of pytest we will introduce class based markers,
-	at which points markers will no longer be limited to instances of :py:class:`Mark`
+    in a future major relase of pytest we will introduce class based markers,
+    at which points markers will no longer be limited to instances of :py:class:`Mark`
