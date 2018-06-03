@@ -198,7 +198,7 @@ For example:
 
 .. code-block:: python
 
-    @pytest.mark.timeout(10, 'slow', method='thread')
+    @pytest.mark.timeout(10, "slow", method="thread")
     def test_function():
         ...
 
@@ -208,8 +208,8 @@ Will create and attach a :class:`Mark <_pytest.mark.structures.Mark>` object to 
 
 .. code-block:: python
 
-    mark.args == (10, 'slow')
-    mark.kwargs == {'method': 'thread'}
+    mark.args == (10, "slow")
+    mark.kwargs == {"method": "thread"}
 
 
 Fixtures
@@ -225,9 +225,9 @@ Example of a test requiring a fixture:
 .. code-block:: python
 
     def test_output(capsys):
-        print('hello')
+        print("hello")
         out, err = capsys.readouterr()
-        assert out == 'hello\n'
+        assert out == "hello\n"
 
 
 Example of a fixture requiring another fixture:
@@ -236,7 +236,7 @@ Example of a fixture requiring another fixture:
 
     @pytest.fixture
     def db_session(tmpdir):
-        fn = tmpdir / 'db.file'
+        fn = tmpdir / "db.file"
         return connect(str(fn))
 
 For more details, consult the full :ref:`fixtures docs <fixture>`.
@@ -368,7 +368,7 @@ doctest_namespace
 
         @pytest.fixture(autouse=True)
         def add_np(doctest_namespace):
-            doctest_namespace['np'] = numpy
+            doctest_namespace["np"] = numpy
 
     For more details: :ref:`doctest_namespace`.
 
@@ -805,12 +805,14 @@ test functions and methods. Can be either a single mark or a sequence of marks.
 .. code-block:: python
 
     import pytest
+
     pytestmark = pytest.mark.webtest
 
 
 .. code-block:: python
 
     import pytest
+
     pytestmark = (pytest.mark.integration, pytest.mark.slow)
 
 PYTEST_DONT_REWRITE (module docstring)

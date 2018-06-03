@@ -94,11 +94,13 @@ even module level:
 
     import warnings
 
+
     def api_v1():
         warnings.warn(UserWarning("api v1, should use functions from v2"))
         return 1
 
-    @pytest.mark.filterwarnings('ignore:api v1')
+
+    @pytest.mark.filterwarnings("ignore:api v1")
     def test_one():
         assert api_v1() == 1
 
@@ -112,7 +114,7 @@ decorator or to all tests in a module by setting the ``pytestmark`` variable:
 .. code-block:: python
 
     # turns all warnings into errors for this module
-    pytestmark = pytest.mark.filterwarnings('error')
+    pytestmark = pytest.mark.filterwarnings("error")
 
 
 .. note::

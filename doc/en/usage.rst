@@ -272,11 +272,12 @@ Alternatively, you can integrate this functionality with custom markers:
 
     # content of conftest.py
 
+
     def pytest_collection_modifyitems(session, config, items):
         for item in items:
-            for marker in item.iter_markers(name='test_id'):
+            for marker in item.iter_markers(name="test_id"):
                 test_id = marker.args[0]
-                item.user_properties.append(('test_id', test_id))
+                item.user_properties.append(("test_id", test_id))
 
 And in your tests:
 
@@ -284,6 +285,8 @@ And in your tests:
 
     # content of test_function.py
     import pytest
+
+
     @pytest.mark.test_id(1501)
     def test_function():
         assert True
@@ -318,7 +321,7 @@ To add an additional xml attribute to a testcase element, you can use
     def test_function(record_xml_attribute):
         record_xml_attribute("assertions", "REQ-1234")
         record_xml_attribute("classname", "custom_classname")
-        print('hello world')
+        print("hello world")
         assert True
 
 Unlike ``record_property``, this will not add a new child element.
@@ -377,18 +380,21 @@ to all testcases you can use ``LogXML.add_global_properties``
 
     import pytest
 
+
     @pytest.fixture(scope="session")
     def log_global_env_facts(f):
 
-        if pytest.config.pluginmanager.hasplugin('junitxml'):
-            my_junit = getattr(pytest.config, '_xml', None)
+        if pytest.config.pluginmanager.hasplugin("junitxml"):
+            my_junit = getattr(pytest.config, "_xml", None)
 
-        my_junit.add_global_property('ARCH', 'PPC')
-        my_junit.add_global_property('STORAGE_TYPE', 'CEPH')
+        my_junit.add_global_property("ARCH", "PPC")
+        my_junit.add_global_property("STORAGE_TYPE", "CEPH")
+
 
     @pytest.mark.usefixtures(log_global_env_facts.__name__)
     def start_and_prepare_env():
         pass
+
 
     class TestMe(object):
         def test_foo(self):

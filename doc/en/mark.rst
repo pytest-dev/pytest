@@ -70,12 +70,12 @@ In general there are two scenarios on how markers should be handled:
     .. code-block:: python
 
         # replace this:
-        marker = item.get_marker('log_level')
+        marker = item.get_marker("log_level")
         if marker:
             level = marker.args[0]
 
         # by this:
-        marker = item.get_closest_marker('log_level')
+        marker = item.get_closest_marker("log_level")
         if marker:
             level = marker.args[0]
 
@@ -87,13 +87,14 @@ order doesn't even matter. You probably want to think of your marks as a set her
    .. code-block:: python
 
         # replace this
-        skipif = item.get_marker('skipif')
+        skipif = item.get_marker("skipif")
         if skipif:
             for condition in skipif.args:
                 # eval condition
+                ...
 
         # by this:
-        for skipif in item.iter_markers('skipif'):
+        for skipif in item.iter_markers("skipif"):
             condition = skipif.args[0]
             # eval condition
 
@@ -134,5 +135,5 @@ More details can be found in the `original PR <https://github.com/pytest-dev/pyt
 
 .. note::
 
-	in a future major relase of pytest we will introduce class based markers,
-	at which points markers will no longer be limited to instances of :py:class:`Mark`
+    in a future major relase of pytest we will introduce class based markers,
+    at which points markers will no longer be limited to instances of :py:class:`Mark`

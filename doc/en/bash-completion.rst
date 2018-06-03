@@ -14,7 +14,7 @@ Install argcomplete using::
 
 For global activation of all argcomplete enabled python applications run::
 
-	sudo activate-global-python-argcomplete
+    sudo activate-global-python-argcomplete
 
 For permanent (but not global) ``pytest`` activation, use::
 

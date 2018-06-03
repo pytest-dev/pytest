@@ -192,19 +192,19 @@ Here's a quick guide on how to skip tests in a module in different situations:
 
   .. code-block:: python
 
-        pytestmark = pytest.mark.skip('all tests still WIP')
+        pytestmark = pytest.mark.skip("all tests still WIP")
 
 2. Skip all tests in a module based on some condition:
 
   .. code-block:: python
 
-        pytestmark = pytest.mark.skipif(sys.platform == 'win32', 'tests for linux only')
+        pytestmark = pytest.mark.skipif(sys.platform == "win32", "tests for linux only")
 
 3. Skip all tests in a module if some import is missing:
 
   .. code-block:: python
 
-        pexpect = pytest.importorskip('pexpect')
+        pexpect = pytest.importorskip("pexpect")
 
 
 .. _xfail:
@@ -364,14 +364,20 @@ test instances when using parametrize:
 
     import pytest
 
-    @pytest.mark.parametrize(("n", "expected"), [
-        (1, 2),
-    pytest.param(1, 0, marks=pytest.mark.xfail),
-	pytest.param(1, 3, marks=pytest.mark.xfail(reason="some bug")),
-        (2, 3),
-        (3, 4),
-        (4, 5),
-    pytest.param(10, 11, marks=pytest.mark.skipif(sys.version_info >= (3, 0), reason="py2k")),
-    ])
+
+    @pytest.mark.parametrize(
+        ("n", "expected"),
+        [
+            (1, 2),
+            pytest.param(1, 0, marks=pytest.mark.xfail),
+            pytest.param(1, 3, marks=pytest.mark.xfail(reason="some bug")),
+            (2, 3),
+            (3, 4),
+            (4, 5),
+            pytest.param(
+                10, 11, marks=pytest.mark.skipif(sys.version_info >= (3, 0), reason="py2k")
+            ),
+        ],
+    )
     def test_increment(n, expected):
         assert n + 1 == expected

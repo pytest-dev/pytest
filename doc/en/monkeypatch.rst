@@ -71,6 +71,8 @@ so that any attempts within tests to create http requests will fail.
     .. code-block:: python
 
         import functools
+
+
         def test_partial(monkeypatch):
             with monkeypatch.context() as m:
                 m.setattr(functools, "partial", 3)

@@ -92,7 +92,7 @@ an example test function that performs some output related checks:
 
 .. code-block:: python
 
-    def test_myoutput(capsys): # or use "capfd" for fd-level
+    def test_myoutput(capsys):  # or use "capfd" for fd-level
         print("hello")
         sys.stderr.write("world\n")
         captured = capsys.readouterr()
@@ -145,9 +145,9 @@ as a context manager, disabling capture inside the ``with`` block:
 .. code-block:: python
 
     def test_disabling_capturing(capsys):
-        print('this output is captured')
+        print("this output is captured")
         with capsys.disabled():
-            print('output not captured, going directly to sys.stdout')
-        print('this output is also captured')
+            print("output not captured, going directly to sys.stdout")
+        print("this output is also captured")
 
 .. include:: links.inc

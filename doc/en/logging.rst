@@ -138,10 +138,14 @@ the records for the ``setup`` and ``call`` stages during teardown like so:
     def window(caplog):
         window = create_window()
         yield window
-        for when in ('setup', 'call'):
-            messages = [x.message for x in caplog.get_records(when) if x.level == logging.WARNING]
+        for when in ("setup", "call"):
+            messages = [
+                x.message for x in caplog.get_records(when) if x.level == logging.WARNING
+            ]
             if messages:
-                pytest.fail('warning messages encountered during testing: {}'.format(messages))
+                pytest.fail(
+                    "warning messages encountered during testing: {}".format(messages)
+                )
 
 
 

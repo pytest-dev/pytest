@@ -214,10 +214,10 @@ Add this to ``setup.py`` file:
     from setuptools import setup
 
     setup(
-        #...,
-        setup_requires=['pytest-runner', ...],
-        tests_require=['pytest', ...],
-        #...,
+        # ...,
+        setup_requires=["pytest-runner", ...],
+        tests_require=["pytest", ...],
+        # ...,
     )
 
 
@@ -263,25 +263,27 @@ your own setuptools Test command for invoking pytest.
 
 
     class PyTest(TestCommand):
-        user_options = [('pytest-args=', 'a', "Arguments to pass to pytest")]
+        user_options = [("pytest-args=", "a", "Arguments to pass to pytest")]
 
         def initialize_options(self):
             TestCommand.initialize_options(self)
-            self.pytest_args = ''
+            self.pytest_args = ""
 
         def run_tests(self):
             import shlex
-            #import here, cause outside the eggs aren't loaded
+
+            # import here, cause outside the eggs aren't loaded
             import pytest
+
             errno = pytest.main(shlex.split(self.pytest_args))
             sys.exit(errno)
 
 
     setup(
-        #...,
-        tests_require=['pytest'],
-        cmdclass = {'test': PyTest},
-        )
+        # ...,
+        tests_require=["pytest"],
+        cmdclass={"test": PyTest},
+    )
 
 Now if you run::
 

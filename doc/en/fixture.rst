@@ -250,9 +250,10 @@ instance, you can simply declare it:
 .. code-block:: python
 
     @pytest.fixture(scope="session")
-    def smtp(...):
+    def smtp():
         # the returned fixture value will be shared for
         # all tests needing it
+        ...
 
 Finally, the ``class`` scope will invoke the fixture once per test *class*.
 
@@ -274,17 +275,21 @@ Consider the code below:
     def s1():
         pass
 
+
     @pytest.fixture(scope="module")
     def m1():
         pass
+
 
     @pytest.fixture
     def f1(tmpdir):
         pass
 
+
     @pytest.fixture
     def f2():
         pass
+
 
     def test_foo(f1, m1, f2, s1):
         ...
@@ -315,6 +320,7 @@ the code after the *yield* statement serves as the teardown code:
 
     import smtplib
     import pytest
+
 
     @pytest.fixture(scope="module")
     def smtp():
@@ -350,6 +356,7 @@ Note that we can also seamlessly use the ``yield`` syntax with ``with`` statemen
     import smtplib
     import pytest
 
+
     @pytest.fixture(scope="module")
     def smtp():
         with smtplib.SMTP("smtp.gmail.com", 587, timeout=5) as smtp:
@@ -375,12 +382,15 @@ Here's the ``smtp`` fixture changed to use ``addfinalizer`` for cleanup:
     import smtplib
     import pytest
 
+
     @pytest.fixture(scope="module")
     def smtp(request):
         smtp = smtplib.SMTP("smtp.gmail.com", 587, timeout=5)
+
         def fin():
-            print ("teardown smtp")
+            print("teardown smtp")
             smtp.close()
+
         request.addfinalizer(fin)
         return smtp  # provide the fixture value
 
@@ -867,6 +877,8 @@ You can specify multiple fixtures like this:
 .. code-block:: python
 
     @pytest.mark.usefixtures("cleandir", "anotherfixture")
+    def test():
+        ...
 
 and you may specify fixture usage at the test module level, using
 a generic feature of the mark mechanism:
