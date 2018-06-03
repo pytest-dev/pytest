@@ -3,9 +3,15 @@ repos:
 -   repo: https://github.com/ambv/black
     rev: 18.4a4
     hooks:
-    - id: black
-      args: [--safe, --quiet]
-      python_version: python3.6
+    -   id: black
+        args: [--safe, --quiet]
+        language_version: python3.6
+-   repo: https://github.com/asottile/blacken-docs
+    rev: v0.1.1
+    hooks:
+    -   id: blacken-docs
+        additional_dependencies: [black==18.5b1]
+        language_version: python3.6
 -   repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v1.2.3
     hooks:

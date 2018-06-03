@@ -18,10 +18,10 @@ Here is a basic pattern to achieve this:
     # content of test_sample.py
     def test_answer(cmdopt):
         if cmdopt == "type1":
-            print ("first")
+            print("first")
         elif cmdopt == "type2":
-            print ("second")
-        assert 0 # to see what was printed
+            print("second")
+        assert 0  # to see what was printed
 
 
 For this to work we need to add a command line option and
@@ -32,9 +32,12 @@ provide the ``cmdopt`` through a :ref:`fixture function <fixture function>`:
     # content of conftest.py
     import pytest
 
+
     def pytest_addoption(parser):
-        parser.addoption("--cmdopt", action="store", default="type1",
-            help="my option: type1 or type2")
+        parser.addoption(
+            "--cmdopt", action="store", default="type1", help="my option: type1 or type2"
+        )
+
 
     @pytest.fixture
     def cmdopt(request):
@@ -102,9 +105,12 @@ the command line arguments before they get processed:
 
     # content of conftest.py
     import sys
+
+
     def pytest_load_initial_conftests(args):
-        if 'xdist' in sys.modules: # pytest-xdist plugin
+        if "xdist" in sys.modules:  # pytest-xdist plugin
             import multiprocessing
+
             num = max(multiprocessing.cpu_count() / 2, 1)
             args[:] = ["-n", str(num)] + args
 
@@ -136,9 +142,13 @@ line option to control skipping of ``pytest.mark.slow`` marked tests:
     # content of conftest.py
 
     import pytest
+
+
     def pytest_addoption(parser):
-        parser.addoption("--runslow", action="store_true",
-                         default=False, help="run slow tests")
+        parser.addoption(
+            "--runslow", action="store_true", default=False, help="run slow tests"
+        )
+
 
     def pytest_collection_modifyitems(config, items):
         if config.getoption("--runslow"):
@@ -206,10 +216,13 @@ Example:
 
     # content of test_checkconfig.py
     import pytest
+
+
     def checkconfig(x):
         __tracebackhide__ = True
         if not hasattr(x, "config"):
-            pytest.fail("not configured: %s" %(x,))
+            pytest.fail("not configured: %s" % (x,))
+
 
     def test_something():
         checkconfig(42)
@@ -240,13 +253,16 @@ this to make sure unexpected exception types aren't hidden:
     import operator
     import pytest
 
+
     class ConfigException(Exception):
         pass
 
+
     def checkconfig(x):
-        __tracebackhide__ = operator.methodcaller('errisinstance', ConfigException)
+        __tracebackhide__ = operator.methodcaller("errisinstance", ConfigException)
         if not hasattr(x, "config"):
-            raise ConfigException("not configured: %s" %(x,))
+            raise ConfigException("not configured: %s" % (x,))
+
 
     def test_something():
         checkconfig(42)
@@ -269,19 +285,23 @@ running from a test you can do something like this:
 
     # content of conftest.py
 
+
     def pytest_configure(config):
         import sys
+
         sys._called_from_test = True
+
 
     def pytest_unconfigure(config):
         import sys
+
         del sys._called_from_test
 
 and then check for the ``sys._called_from_test`` flag:
 
 .. code-block:: python
 
-    if hasattr(sys, '_called_from_test'):
+    if hasattr(sys, "_called_from_test"):
         # called from within a test run
         ...
     else:
@@ -302,6 +322,7 @@ It's easy to present extra information in a ``pytest`` run:
 .. code-block:: python
 
     # content of conftest.py
+
 
     def pytest_report_header(config):
         return "project deps: mylib-1.1"
@@ -327,8 +348,9 @@ display more information if applicable:
 
     # content of conftest.py
 
+
     def pytest_report_header(config):
-        if config.getoption('verbose') > 0:
+        if config.getoption("verbose") > 0:
             return ["info1: did you know that ...", "did you?"]
 
 which will add info only when run with "--v"::
@@ -369,11 +391,14 @@ out which tests are the slowest. Let's make an artificial test suite:
     # content of test_some_are_slow.py
     import time
 
+
     def test_funcfast():
         time.sleep(0.1)
 
+
     def test_funcslow1():
         time.sleep(0.2)
+
 
     def test_funcslow2():
         time.sleep(0.3)
@@ -411,17 +436,19 @@ an ``incremental`` marker which is to be used on classes:
 
     import pytest
 
+
     def pytest_runtest_makereport(item, call):
         if "incremental" in item.keywords:
             if call.excinfo is not None:
                 parent = item.parent
                 parent._previousfailed = item
 
+
     def pytest_runtest_setup(item):
         if "incremental" in item.keywords:
             previousfailed = getattr(item.parent, "_previousfailed", None)
             if previousfailed is not None:
-                pytest.xfail("previous test failed (%s)" %previousfailed.name)
+                pytest.xfail("previous test failed (%s)" % previousfailed.name)
 
 These two hook implementations work together to abort incremental-marked
 tests in a class.  Here is a test module example:
@@ -432,14 +459,18 @@ tests in a class.  Here is a test module example:
 
     import pytest
 
+
     @pytest.mark.incremental
     class TestUserHandling(object):
         def test_login(self):
             pass
+
         def test_modification(self):
             assert 0
+
         def test_deletion(self):
             pass
+
 
     def test_normal():
         pass
@@ -491,8 +522,10 @@ Here is an example for making a ``db`` fixture available in a directory:
     # content of a/conftest.py
     import pytest
 
+
     class DB(object):
         pass
+
 
     @pytest.fixture(scope="session")
     def db():
@@ -602,6 +635,7 @@ case we just write some information out to a ``failures`` file:
     import pytest
     import os.path
 
+
     @pytest.hookimpl(tryfirst=True, hookwrapper=True)
     def pytest_runtest_makereport(item, call):
         # execute all other hooks to obtain the report object
@@ -628,6 +662,8 @@ if you then have failing tests:
     # content of test_module.py
     def test_fail1(tmpdir):
         assert 0
+
+
     def test_fail2():
         assert 0
 
@@ -680,6 +716,7 @@ here is a little example implemented via a local plugin:
 
     import pytest
 
+
     @pytest.hookimpl(tryfirst=True, hookwrapper=True)
     def pytest_runtest_makereport(item, call):
         # execute all other hooks to obtain the report object
@@ -698,10 +735,10 @@ here is a little example implemented via a local plugin:
         # request.node is an "item" because we use the default
         # "function" scope
         if request.node.rep_setup.failed:
-            print ("setting up a test failed!", request.node.nodeid)
+            print("setting up a test failed!", request.node.nodeid)
         elif request.node.rep_setup.passed:
             if request.node.rep_call.failed:
-                print ("executing test failed", request.node.nodeid)
+                print("executing test failed", request.node.nodeid)
 
 
 if you then have failing tests:
@@ -712,15 +749,19 @@ if you then have failing tests:
 
     import pytest
 
+
     @pytest.fixture
     def other():
         assert 0
 
+
     def test_setup_fails(something, other):
         pass
 
+
     def test_call_fails(something):
         assert 0
+
 
     def test_fail2():
         assert 0
@@ -789,7 +830,7 @@ test got stuck if necessary:
 
     for pid in psutil.pids():
         environ = psutil.Process(pid).environ()
-        if 'PYTEST_CURRENT_TEST' in environ:
+        if "PYTEST_CURRENT_TEST" in environ:
             print(f'pytest process {pid} running: {environ["PYTEST_CURRENT_TEST"]}')
 
 During the test session pytest will set ``PYTEST_CURRENT_TEST`` to the current test
@@ -843,8 +884,9 @@ like ``pytest-timeout`` they must be imported explicitly and passed on to pytest
     import sys
     import pytest_timeout  # Third party plugin
 
-    if len(sys.argv) > 1 and sys.argv[1] == '--pytest':
+    if len(sys.argv) > 1 and sys.argv[1] == "--pytest":
         import pytest
+
         sys.exit(pytest.main(sys.argv[2:], plugins=[pytest_timeout]))
     else:
         # normal application execution: at this point argv can be parsed

@@ -150,19 +150,11 @@ it in your setuptools-invocation:
 
     setup(
         name="myproject",
-        packages = ['myproject'],
-
+        packages=["myproject"],
         # the following makes a plugin available to pytest
-        entry_points = {
-            'pytest11': [
-                'name_of_plugin = myproject.pluginmodule',
-            ]
-        },
-
+        entry_points={"pytest11": ["name_of_plugin = myproject.pluginmodule"]},
         # custom PyPI classifier for pytest plugins
-        classifiers=[
-            "Framework :: Pytest",
-        ],
+        classifiers=["Framework :: Pytest"],
     )
 
 If a package is installed this way, ``pytest`` will load
@@ -213,11 +205,7 @@ With the following typical ``setup.py`` extract:
 
 .. code-block:: python
 
-   setup(
-      ...,
-      entry_points={'pytest11': ['foo = pytest_foo.plugin']},
-      ...,
-   )
+   setup(..., entry_points={"pytest11": ["foo = pytest_foo.plugin"]}, ...)
 
 In this case only ``pytest_foo/plugin.py`` will be rewritten.  If the
 helper module also contains assert statements which need to be
@@ -232,7 +220,7 @@ import ``helper.py`` normally.  The contents of
 
    import pytest
 
-   pytest.register_assert_rewrite('pytest_foo.helper')
+   pytest.register_assert_rewrite("pytest_foo.helper")
 
 
 
@@ -332,23 +320,25 @@ string value of ``Hello World!`` if we do not supply a value or ``Hello
 
     import pytest
 
+
     def pytest_addoption(parser):
-        group = parser.getgroup('helloworld')
+        group = parser.getgroup("helloworld")
         group.addoption(
-            '--name',
-            action='store',
-            dest='name',
-            default='World',
-            help='Default "name" for hello().'
+            "--name",
+            action="store",
+            dest="name",
+            default="World",
+            help='Default "name" for hello().',
         )
+
 
     @pytest.fixture
     def hello(request):
-        name = request.config.getoption('name')
+        name = request.config.getoption("name")
 
         def _hello(name=None):
             if not name:
-                name = request.config.getoption('name')
+                name = request.config.getoption("name")
             return "Hello {name}!".format(name=name)
 
         return _hello
@@ -364,7 +354,8 @@ return a result object, with which we can assert the tests' outcomes.
         """Make sure that our plugin works."""
 
         # create a temporary conftest.py file
-        testdir.makeconftest("""
+        testdir.makeconftest(
+            """
             import pytest
 
             @pytest.fixture(params=[
@@ -374,16 +365,19 @@ return a result object, with which we can assert the tests' outcomes.
             ])
             def name(request):
                 return request.param
-        """)
+        """
+        )
 
         # create a temporary pytest test file
-        testdir.makepyfile("""
+        testdir.makepyfile(
+            """
             def test_hello_default(hello):
                 assert hello() == "Hello World!"
 
             def test_hello_name(hello, name):
                 assert hello(name) == "Hello {0}!".format(name)
-        """)
+        """
+        )
 
         # run all tests with pytest
         result = testdir.runpytest()
@@ -514,11 +508,13 @@ after others, i.e.  the position in the ``N``-sized list of functions:
         # will execute as early as possible
         ...
 
+
     # Plugin 2
     @pytest.hookimpl(trylast=True)
     def pytest_collection_modifyitems(items):
         # will execute as late as possible
         ...
+
 
     # Plugin 3
     @pytest.hookimpl(hookwrapper=True)

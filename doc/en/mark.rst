@@ -70,12 +70,12 @@ In general there are two scenarios on how markers should be handled:
     .. code-block:: python
 
         # replace this:
-        marker = item.get_marker('log_level')
+        marker = item.get_marker("log_level")
         if marker:
             level = marker.args[0]
 
         # by this:
-        marker = item.get_closest_marker('log_level')
+        marker = item.get_closest_marker("log_level")
         if marker:
             level = marker.args[0]
 
@@ -87,14 +87,14 @@ order doesn't even matter. You probably want to think of your marks as a set her
    .. code-block:: python
 
         # replace this
-        skipif = item.get_marker('skipif')
+        skipif = item.get_marker("skipif")
         if skipif:
             for condition in skipif.args:
                 # eval condition
                 ...
 
         # by this:
-        for skipif in item.iter_markers('skipif'):
+        for skipif in item.iter_markers("skipif"):
             condition = skipif.args[0]
             # eval condition
 
