@@ -83,7 +83,7 @@ def iscoroutinefunction(func):
 
 def getlocation(function, curdir):
     fn = py.path.local(inspect.getfile(function))
-    lineno = py.builtin._getcode(function).co_firstlineno
+    lineno = function.__code__.co_firstlineno
     if fn.relto(curdir):
         fn = fn.relto(curdir)
     return "%s:%d" % (fn, lineno + 1)

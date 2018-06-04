@@ -13,6 +13,7 @@ from _pytest._code.code import (
     ReprExceptionInfo,
     ExceptionChainRepr,
 )
+from six.moves import queue
 
 from test_source import astonly
 
@@ -22,8 +23,6 @@ except ImportError:
     invalidate_import_caches = None
 else:
     invalidate_import_caches = getattr(importlib, "invalidate_caches", None)
-
-queue = py.builtin._tryimport("queue", "Queue")
 
 failsonjython = pytest.mark.xfail("sys.platform.startswith('java')")
 

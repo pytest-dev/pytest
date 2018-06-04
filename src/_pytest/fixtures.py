@@ -354,8 +354,7 @@ class FixtureRequest(FuncargnamesCompatAttr):
             return self._pyfuncitem._testcase
         except AttributeError:
             function = getattr(self, "function", None)
-            if function is not None:
-                return py.builtin._getimself(function)
+            return getattr(function, "__self__", None)
 
     @scopeproperty()
     def module(self):

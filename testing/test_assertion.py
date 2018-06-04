@@ -546,9 +546,9 @@ class TestAssert_reprcompare(object):
         # issue 429
         left = "e"
         right = "\xc3\xa9"
-        if not isinstance(left, py.builtin.bytes):
-            left = py.builtin.bytes(left, "utf-8")
-            right = py.builtin.bytes(right, "utf-8")
+        if not isinstance(left, bytes):
+            left = bytes(left, "utf-8")
+            right = bytes(right, "utf-8")
         expl = callequal(left, right)
         for line in expl:
             assert isinstance(line, py.builtin.text)

@@ -1,0 +1,1 @@
+Remove some python2.5 compatibility code.
