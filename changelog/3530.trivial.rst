@@ -1,0 +1,1 @@
+Fix if in tests to support 3.7.0b5, where a docstring handling in AST got reverted.

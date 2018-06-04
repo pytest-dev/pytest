@@ -65,15 +65,31 @@ def getmsg(f, extra_ns=None, must_pass=False):
             pytest.fail("function didn't raise at all")
 
 
+def python_version_has_docstring_in_module_node():
+    """Module docstrings in 3.8 are part of Module node.
+    This was briefly in 3.7 as well but got reverted in beta 5.
+
+    TODO:
+
+    We have a complicated sys.version_info if in here to ease testing on
+    various Python 3.7 versions, but we should remove the 3.7 check after
+    3.7 is released as stable to make this check more straightforward.
+    """
+    return (
+        sys.version_info < (3, 8)
+        and not ((3, 7) <= sys.version_info <= (3, 7, 0, "beta", 4))
+    )
+
+
 class TestAssertionRewrite(object):
 
     def test_place_initial_imports(self):
         s = """'Doc string'\nother = stuff"""
         m = rewrite(s)
-        # Module docstrings in 3.7 are part of Module node, it's not in the body
-        # so we remove it so the following body items have the same indexes on
-        # all Python versions
-        if sys.version_info < (3, 7):
+        # Module docstrings in some new Python versions are part of Module node
+        # It's not in the body so we remove it so the following body items have
+        # the same indexes on all Python versions:
+        if python_version_has_docstring_in_module_node():
             assert isinstance(m.body[0], ast.Expr)
             assert isinstance(m.body[0].value, ast.Str)
             del m.body[0]
@@ -92,7 +108,7 @@ class TestAssertionRewrite(object):
         assert isinstance(m.body[3], ast.Expr)
         s = """'doc string'\nfrom __future__ import with_statement"""
         m = rewrite(s)
-        if sys.version_info < (3, 7):
+        if python_version_has_docstring_in_module_node():
             assert isinstance(m.body[0], ast.Expr)
             assert isinstance(m.body[0].value, ast.Str)
             del m.body[0]
@@ -103,7 +119,7 @@ class TestAssertionRewrite(object):
             assert imp.col_offset == 0
         s = """'doc string'\nfrom __future__ import with_statement\nother"""
         m = rewrite(s)
-        if sys.version_info < (3, 7):
+        if python_version_has_docstring_in_module_node():
             assert isinstance(m.body[0], ast.Expr)
             assert isinstance(m.body[0].value, ast.Str)
             del m.body[0]
@@ -124,7 +140,7 @@ class TestAssertionRewrite(object):
     def test_dont_rewrite(self):
         s = """'PYTEST_DONT_REWRITE'\nassert 14"""
         m = rewrite(s)
-        if sys.version_info < (3, 7):
+        if python_version_has_docstring_in_module_node():
             assert len(m.body) == 2
             assert isinstance(m.body[0], ast.Expr)
             assert isinstance(m.body[0].value, ast.Str)
