@@ -845,7 +845,7 @@ Contains comma-separated list of modules that should be loaded as plugins:
 
 .. code-block:: bash
 
-    export PYTEST_PLUGINS=mymodule.plugin,xdisst
+    export PYTEST_PLUGINS=mymodule.plugin,xdist
 
 
 PYTEST_CURRENT_TEST
