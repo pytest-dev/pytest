@@ -54,10 +54,10 @@ Let's run this without supplying our new option::
 
         def test_answer(cmdopt):
             if cmdopt == "type1":
-                print ("first")
+                print("first")
             elif cmdopt == "type2":
-                print ("second")
-    >       assert 0 # to see what was printed
+                print("second")
+    >       assert 0  # to see what was printed
     E       assert 0
 
     test_sample.py:6: AssertionError
@@ -76,10 +76,10 @@ And now with supplying a command line option::
 
         def test_answer(cmdopt):
             if cmdopt == "type1":
-                print ("first")
+                print("first")
             elif cmdopt == "type2":
-                print ("second")
-    >       assert 0 # to see what was printed
+                print("second")
+    >       assert 0  # to see what was printed
     E       assert 0
 
     test_sample.py:6: AssertionError
@@ -241,7 +241,7 @@ Let's run our little function::
     >       checkconfig(42)
     E       Failed: not configured: 42
 
-    test_checkconfig.py:8: Failed
+    test_checkconfig.py:11: Failed
     1 failed in 0.12 seconds
 
 If you only want to hide certain exceptions, you can set ``__tracebackhide__``
@@ -416,7 +416,7 @@ Now we can profile which test functions execute the slowest::
     ========================= slowest 3 test durations =========================
     0.30s call     test_some_are_slow.py::test_funcslow2
     0.20s call     test_some_are_slow.py::test_funcslow1
-    0.11s call     test_some_are_slow.py::test_funcfast
+    0.10s call     test_some_are_slow.py::test_funcfast
     ========================= 3 passed in 0.12 seconds =========================
 
 incremental testing - test steps
@@ -494,7 +494,7 @@ If we run this::
     >       assert 0
     E       assert 0
 
-    test_step.py:9: AssertionError
+    test_step.py:11: AssertionError
     ========================= short test summary info ==========================
     XFAIL test_step.py::TestUserHandling::()::test_deletion
       reason: previous test failed (test_modification)
@@ -587,7 +587,7 @@ We can run this::
     >       assert 0
     E       assert 0
 
-    test_step.py:9: AssertionError
+    test_step.py:11: AssertionError
     _________________________________ test_a1 __________________________________
 
     db = <conftest.DB object at 0xdeadbeef>
@@ -693,7 +693,7 @@ and run them::
     >       assert 0
     E       assert 0
 
-    test_module.py:4: AssertionError
+    test_module.py:6: AssertionError
     ========================= 2 failed in 0.12 seconds =========================
 
 you will have a "failures" file which contains the failing test ids::
@@ -786,7 +786,7 @@ and run it::
     >       assert 0
     E       assert 0
 
-    test_module.py:6: AssertionError
+    test_module.py:7: AssertionError
     ================================= FAILURES =================================
     _____________________________ test_call_fails ______________________________
 
@@ -796,14 +796,14 @@ and run it::
     >       assert 0
     E       assert 0
 
-    test_module.py:12: AssertionError
+    test_module.py:15: AssertionError
     ________________________________ test_fail2 ________________________________
 
         def test_fail2():
     >       assert 0
     E       assert 0
 
-    test_module.py:15: AssertionError
+    test_module.py:19: AssertionError
     ==================== 2 failed, 1 error in 0.12 seconds =====================
 
 You'll see that the fixture finalizers could use the precise reporting

@@ -1,1 +1,0 @@
-Added a section on how to use fixtures as factories to the fixture documentation.

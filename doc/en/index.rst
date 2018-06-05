@@ -40,7 +40,7 @@ To execute it::
     E       assert 4 == 5
     E        +  where 4 = inc(3)
 
-    test_sample.py:5: AssertionError
+    test_sample.py:6: AssertionError
     ========================= 1 failed in 0.12 seconds =========================
 
 Due to ``pytest``'s detailed assertion introspection, only plain ``assert`` statements are used.
