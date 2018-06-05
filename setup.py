@@ -130,7 +130,7 @@ class PyTest(Command):
         python_path = [x for x in os.environ.get("PYTHONPATH", "").split(":") if x]
         python_path.insert(0, os.getcwd())
         os.environ["PYTHONPATH"] = ":".join(python_path)
-        errno = subprocess.call([sys.executable, "pytest.py", "--ignore=doc"])
+        errno = subprocess.call([sys.executable, "src/pytest.py", "--ignore=doc"])
         raise SystemExit(errno)
 
 
