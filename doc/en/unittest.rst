@@ -130,30 +130,30 @@ the ``self.db`` values in the traceback::
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 2 items
-
+    
     test_unittest_db.py FF                                               [100%]
-
+    
     ================================= FAILURES =================================
     ___________________________ MyTest.test_method1 ____________________________
-
+    
     self = <test_unittest_db.MyTest testMethod=test_method1>
-
+    
         def test_method1(self):
             assert hasattr(self, "db")
     >       assert 0, self.db   # fail for demo purposes
     E       AssertionError: <conftest.db_class.<locals>.DummyDB object at 0xdeadbeef>
     E       assert 0
-
+    
     test_unittest_db.py:9: AssertionError
     ___________________________ MyTest.test_method2 ____________________________
-
+    
     self = <test_unittest_db.MyTest testMethod=test_method2>
-
+    
         def test_method2(self):
     >       assert 0, self.db   # fail for demo purposes
     E       AssertionError: <conftest.db_class.<locals>.DummyDB object at 0xdeadbeef>
     E       assert 0
-
+    
     test_unittest_db.py:12: AssertionError
     ========================= 2 failed in 0.12 seconds =========================
 

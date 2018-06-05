@@ -8,6 +8,50 @@
 
 .. towncrier release notes start
 
+Pytest 3.6.1 (2018-06-05)
+=========================
+
+Bug Fixes
+---------
+
+- Fixed a bug where stdout and stderr were logged twice by junitxml when a test
+  was marked xfail. (`#3491
+  <https://github.com/pytest-dev/pytest/issues/3491>`_)
+
+- Fix ``usefixtures`` mark applyed to unittest tests by correctly instantiating
+  ``FixtureInfo``. (`#3498
+  <https://github.com/pytest-dev/pytest/issues/3498>`_)
+
+- Fix assertion rewriter compatibility with libraries that monkey patch
+  ``file`` objects. (`#3503
+  <https://github.com/pytest-dev/pytest/issues/3503>`_)
+
+
+Improved Documentation
+----------------------
+
+- Added a section on how to use fixtures as factories to the fixture
+  documentation. (`#3461 <https://github.com/pytest-dev/pytest/issues/3461>`_)
+
+
+Trivial/Internal Changes
+------------------------
+
+- Enable caching for pip/pre-commit in order to reduce build time on
+  travis/appveyor. (`#3502
+  <https://github.com/pytest-dev/pytest/issues/3502>`_)
+
+- Switch pytest to the src/ layout as we already suggested it for good practice
+  - now we implement it as well. (`#3513
+  <https://github.com/pytest-dev/pytest/issues/3513>`_)
+
+- Fix if in tests to support 3.7.0b5, where a docstring handling in AST got
+  reverted. (`#3530 <https://github.com/pytest-dev/pytest/issues/3530>`_)
+
+- Remove some python2.5 compatibility code. (`#3629
+  <https://github.com/pytest-dev/pytest/issues/3629>`_)
+
+
 Pytest 3.6.0 (2018-05-23)
 =========================
 

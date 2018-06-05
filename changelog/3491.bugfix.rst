@@ -1,1 +1,0 @@
-Fixed a bug where stdout and stderr were logged twice by junitxml when a test was marked xfail.

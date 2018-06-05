@@ -1,1 +1,0 @@
-Fix ``usefixtures`` mark applyed to unittest tests by correctly instantiating ``FixtureInfo``.

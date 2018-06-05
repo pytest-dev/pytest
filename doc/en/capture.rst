@@ -68,16 +68,16 @@ of the failing function and hide the other one::
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 2 items
-
+    
     test_module.py .F                                                    [100%]
-
+    
     ================================= FAILURES =================================
     ________________________________ test_func2 ________________________________
-
+    
         def test_func2():
     >       assert False
     E       assert False
-
+    
     test_module.py:9: AssertionError
     -------------------------- Captured stdout setup ---------------------------
     setting up <function test_func2 at 0xdeadbeef>
