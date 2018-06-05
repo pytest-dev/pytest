@@ -107,11 +107,33 @@ def directory_arg(path, optname):
 
 
 default_plugins = (
-    "mark main terminal runner python fixtures debugging unittest capture skipping "
-    "tmpdir monkeypatch recwarn pastebin helpconfig nose assertion "
-    "junitxml resultlog doctest cacheprovider freeze_support "
-    "setuponly setupplan warnings logging"
-).split()
+    "mark",
+    "main",
+    "terminal",
+    "runner",
+    "python",
+    "fixtures",
+    "debugging",
+    "unittest",
+    "capture",
+    "skipping",
+    "tmpdir",
+    "monkeypatch",
+    "recwarn",
+    "pastebin",
+    "helpconfig",
+    "nose",
+    "assertion",
+    "junitxml",
+    "resultlog",
+    "doctest",
+    "cacheprovider",
+    "freeze_support",
+    "setuponly",
+    "setupplan",
+    "warnings",
+    "logging",
+)
 
 
 builtin_plugins = set(default_plugins)
