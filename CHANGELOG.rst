@@ -48,8 +48,8 @@ Trivial/Internal Changes
 - Fix if in tests to support 3.7.0b5, where a docstring handling in AST got
   reverted. (`#3530 <https://github.com/pytest-dev/pytest/issues/3530>`_)
 
-- Remove some python2.5 compatibility code. (`#3629
-  <https://github.com/pytest-dev/pytest/issues/3629>`_)
+- Remove some python2.5 compatibility code. (`#3529
+  <https://github.com/pytest-dev/pytest/issues/3529>`_)
 
 
 Pytest 3.6.0 (2018-05-23)
