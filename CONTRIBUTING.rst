@@ -217,12 +217,18 @@ Here is a simple overview, with pytest-specific bits:
    If you need some help with Git, follow this quick start
    guide: https://git.wiki.kernel.org/index.php/QuickStart
 
-#. install pre-commit and install its hook on the pytest repo
+#. Create a virtual environment and install pytest in development mode::
+
+    $ python3 -m venv .env
+    $ source activate .env/bin/activate (on Linux)
+    $ .env\Scripts\activate (on Windows)
+    $ pip install -e .[dev]
+
+#. Install pre-commit hook on the pytest repo
 
     https://pre-commit.com/ is a framework for managing and maintaining multi-language pre-commit hooks
     pytest uses pre-commit to ensure code-style and code formatting is the same
 
-    $ pip install --user pre-commit
     $ pre-commit install
 
     Afterwards pre-commit will run whenever you commit.
@@ -245,15 +251,9 @@ Here is a simple overview, with pytest-specific bits:
    This command will run tests via the "tox" tool against Python 2.7 and 3.6
    and also perform "lint" coding-style checks.
 
-#. You can now edit your local working copy. Please follow PEP-8.
+#. You can now edit your local working copy.
 
    You can now make the changes you want and run the tests again as necessary.
-
-   If you have too much linting errors, try running::
-
-    $ tox -e fix-lint
-
-   To fix pep8 related errors.
 
    You can pass different options to ``tox``. For example, to run tests on Python 2.7 and pass options to pytest
    (e.g. enter pdb on failure) to pytest you can do::

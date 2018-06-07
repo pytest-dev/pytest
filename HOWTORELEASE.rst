@@ -10,9 +10,9 @@ taking a lot of time to make a new one.
     pytest releases must be prepared on **Linux** because the docs and examples expect
     to be executed in that platform.
 
-#. Install development dependencies in a virtual environment with::
+#. Install and update development dependencies in a virtual environment with::
 
-    pip3 install -U -r tasks/requirements.txt
+    pip3 install -U .[dev]
 
 #. Create a branch ``release-X.Y.Z`` with the version for the release.
 

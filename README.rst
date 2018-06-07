@@ -106,6 +106,12 @@ Changelog
 Consult the `Changelog <http://docs.pytest.org/en/latest/changelog.html>`__ page for fixes and enhancements of each version.
 
 
+Contributing
+------------
+
+Consult the `Contribution guide <https://docs.pytest.org/en/latest/contributing.html>`__ page.
+
+
 License
 -------
 
