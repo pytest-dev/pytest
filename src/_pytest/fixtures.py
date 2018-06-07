@@ -186,8 +186,15 @@ def get_parametrized_fixture_keys(item, scopenum):
 # down to the lower scopes such as to minimize number of "high scope"
 # setups and teardowns
 
+import pprint
+
 
 def reorder_items(items):
+    print("ITEMS")
+    pprint.pprint(items)
+
+    # import pdb; pdb.set_trace()
+
     argkeys_cache = {}
     items_by_argkey = {}
     for scopenum in range(0, scopenum_function):
@@ -199,8 +206,105 @@ def reorder_items(items):
                 d[item] = keys
                 for key in keys:
                     item_d[key].append(item)
-    items = OrderedDict.fromkeys(items)
-    return list(reorder_items_atscope(items, argkeys_cache, items_by_argkey, 0))
+
+    # Three-step process here.  First, figure out what fixtures exist
+    # and which items use which fixtures with what indices.  Second,
+    # create a digraph with items and using connections between the
+    # fixtures as keys.  Third, topological sort the digraph.
+    fixtures = OrderedDict()
+    fixtures_by_item = defaultdict(OrderedDict)
+    for item in items:
+        for scopenum in range(0, scopenum_function):
+            for key in get_parametrized_fixture_keys(item, scopenum):
+                fixture = key[:1] + key[2:]
+                fixtures[fixture] = scopenum
+                fixtures_by_item[item][fixture] = key[1]
+
+    # An item is earlier than another item iff, for the fixtures that
+    # these two items share, each param index of each fixture of the
+    # first is less than or equal to each param indiex of each fixture
+    # of the second.  Otherwise, the items are incomparable: either
+    # they don't share any fixtures, or different fixtures say they
+    # should be in different orders.
+
+    # print('FIXTURES')
+    # pprint.pprint(fixtures)
+    # print('FIXTURES_BY_ITEM')
+    # pprint.pprint(fixtures_by_item)
+
+    # The digraph to sort may not be connected, so there needs to be a
+    # list of incoming degree zero items to act as starting points.
+    digraph = OrderedDict((item, []) for item in items)
+    # OrderedDict used here as an ordered set.
+    starting_items = OrderedDict((item, None) for item in reversed(items))
+    for i, first_item in enumerate(items):
+        for second_item in items[i+1:]:
+            first_fixtures = fixtures_by_item[first_item]
+            second_fixtures = fixtures_by_item[second_item]
+            # print(first_fixtures)
+            # print(second_fixtures)
+            pprint.pprint(first_fixtures.keys() & second_fixtures.keys())
+            if all(first_fixtures[fixture] <= second_fixtures[fixture]
+                   for fixture in first_fixtures.keys() & second_fixtures.keys()):
+                digraph[first_item].append(second_item)
+                if second_item in starting_items:
+                    starting_items.pop(second_item)
+            elif all(second_fixtures[fixture] <= first_fixtures[fixture]
+                     for fixture in first_fixtures.keys() & second_fixtures.keys()):
+                digraph[second_item].append(first_item)
+                if first_item in starting_items:
+                    starting_items.pop(first_item)
+
+    print('DIGRAPH')
+    pprint.pprint(digraph)
+    print('STARTING ITEMS')
+    pprint.pprint(starting_items)
+
+    sorted_items = []
+    to_be_searched = list(starting_items)
+    to_be_ordered = []
+    seen = set()
+    while to_be_searched:
+        item = to_be_searched.pop()
+        if item not in seen:
+            seen.add(item)
+            print('NEW ITEMS')
+            print(list(digraph[item]))
+            to_be_searched.extend(digraph[item])
+
+            while to_be_ordered and item not in digraph[to_be_ordered[-1]]:
+                print('ITEM')
+                print(item)
+                print('NEXT')
+                pprint.pprint(digraph[to_be_ordered[-1]])
+                print('SEEN')
+                pprint.pprint(seen)
+                print('TO BE SEARCHED')
+                pprint.pprint(to_be_searched)
+                print('TO BE ORDERED')
+                pprint.pprint(to_be_ordered)
+                sorted_items.append(to_be_ordered.pop())
+            to_be_ordered.append(item)
+
+    sorted_items += to_be_ordered
+    assert len(sorted_items) == len(items)
+    print('LEFTOVERS')
+    print(to_be_ordered)
+    print('SORTED ITEMS')
+    pprint.pprint(sorted_items)
+
+    return sorted_items
+
+    # print('ARGKEYS CACHE')
+    # pprint.pprint(argkeys_cache)
+    # print('ITEMS BY ARGKEY')
+    # pprint.pprint(items_by_argkey)
+    # # print('SCOPENUM')
+    # # pprint.pprint(scopenum)
+    # reordered_items = list(reorder_items_atscope(items, argkeys_cache, items_by_argkey, 0))
+    # print('REORDERED ITEMS')
+    # pprint.pprint(reordered_items)
+    # return reordered_items
 
 
 def fix_cache_order(item, argkeys_cache, items_by_argkey):
