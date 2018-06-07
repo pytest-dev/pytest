@@ -203,7 +203,7 @@ class TestTerminal(object):
             )
         else:
             result.stdout.fnmatch_lines(
-                ["to show a full traceback on KeyboardInterrupt use --fulltrace"]
+                ["(to show a full traceback on KeyboardInterrupt use --fulltrace)"]
             )
         result.stdout.fnmatch_lines(["*KeyboardInterrupt*"])
 
