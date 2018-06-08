@@ -2,7 +2,7 @@ import os
 import sys
 import setuptools
 import pkg_resources
-from setuptools import setup, Command
+from setuptools import setup
 
 classifiers = [
     "Development Status :: 6 - Mature",
@@ -102,7 +102,6 @@ def main():
         entry_points={"console_scripts": ["pytest=pytest:main", "py.test=pytest:main"]},
         classifiers=classifiers,
         keywords="test unittest",
-        cmdclass={"test": PyTest},
         # the following should be enabled for release
         setup_requires=["setuptools-scm"],
         package_dir={"": "src"},
@@ -113,25 +112,6 @@ def main():
         py_modules=["pytest"],
         zip_safe=False,
     )
-
-
-class PyTest(Command):
-    user_options = []
-
-    def initialize_options(self):
-        pass
-
-    def finalize_options(self):
-        pass
-
-    def run(self):
-        import subprocess
-
-        python_path = [x for x in os.environ.get("PYTHONPATH", "").split(":") if x]
-        python_path.insert(0, os.getcwd())
-        os.environ["PYTHONPATH"] = ":".join(python_path)
-        errno = subprocess.call([sys.executable, "pytest.py", "--ignore=doc"])
-        raise SystemExit(errno)
 
 
 if __name__ == "__main__":
