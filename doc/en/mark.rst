@@ -29,7 +29,8 @@ which also serve as documentation.
 Raising errors on unknown marks: --strict
 -----------------------------------------
 
-The ``--strict`` command-line flag can be used to raise errors when marks not registered in the ``pytest.ini`` file.
+When the ``--strict`` command-line flag is passed, any marks not registered in the ``pytest.ini`` file will trigger an error.
+
 Marks can be registered like this:
 
 .. code-block:: ini
@@ -39,7 +40,7 @@ Marks can be registered like this:
         slow
         serial
 
-This can be used to prevent users mistyping mark names by accident. Test suites that want to enforce that this
+This can be used to prevent users mistyping mark names by accident. Test suites that want to enforce this
 should add ``--strict`` to ``addopts``:
 
 .. code-block:: ini
