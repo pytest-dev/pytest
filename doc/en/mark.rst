@@ -50,11 +50,6 @@ should add ``--strict`` to ``addopts``:
         slow
         serial
 
-.. currentmodule:: _pytest.mark.structures
-.. autoclass:: Mark
-    :members:
-    :noindex:
-
 
 .. `marker-iteration`
 
