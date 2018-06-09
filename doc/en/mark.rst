@@ -26,6 +26,30 @@ which also serve as documentation.
     :ref:`fixtures <fixtures>`.
 
 
+Raising errors on unknown marks: --strict
+-----------------------------------------
+
+The ``--strict`` command-line flag can be used to raise errors when marks not registered in the ``pytest.ini`` file.
+Marks can be registered like this:
+
+.. code-block:: ini
+
+    [pytest]
+    markers =
+        slow
+        serial
+
+This can be used to prevent users mistyping mark names by accident. Test suites that want to enforce that this
+should add ``--strict`` to ``addopts``:
+
+.. code-block:: ini
+
+    [pytest]
+    addopts = --strict
+    markers =
+        slow
+        serial
+
 .. currentmodule:: _pytest.mark.structures
 .. autoclass:: Mark
     :members:
