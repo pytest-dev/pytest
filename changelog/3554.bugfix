@@ -1,0 +1,1 @@
+Allow ``CallInfo`` to have an unfinished state represented by having a ``None`` value in the ``result`` attribute.

@@ -473,7 +473,7 @@ def test_callinfo():
     assert "result" in repr(ci)
     ci = runner.CallInfo(lambda: 0 / 0, "123")
     assert ci.when == "123"
-    assert not hasattr(ci, "result")
+    assert ci.result is None
     assert ci.excinfo
     assert "exc" in repr(ci)
 
