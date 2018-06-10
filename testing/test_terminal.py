@@ -1025,7 +1025,10 @@ def test_terminal_summary_warnings_are_displayed(testdir):
     """
     )
     result = testdir.runpytest("-rw")
-    result.stdout.fnmatch_lines(["*internal warning", "*== 1 warnings in *"])
+    result.stdout.fnmatch_lines(
+        ["<undetermined location>", "*internal warning", "*== 1 warnings in *"]
+    )
+    assert "None" not in result.stdout.str()
 
 
 @pytest.mark.parametrize(
