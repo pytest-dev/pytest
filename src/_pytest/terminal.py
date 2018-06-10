@@ -682,7 +682,7 @@ class TerminalReporter(object):
 
             self.write_sep("=", "warnings summary", yellow=True, bold=False)
             for location, warning_records in grouped:
-                self._tw.line(str(location) or "<undetermined location>")
+                self._tw.line(str(location) if location else "<undetermined location>")
                 for w in warning_records:
                     lines = w.message.splitlines()
                     indented = "\n".join("  " + x for x in lines)
