@@ -527,10 +527,19 @@ class SetupState(object):
         self._teardown_towards(needed_collectors)
 
     def _teardown_towards(self, needed_collectors):
+        exc = None
         while self.stack:
             if self.stack == needed_collectors[:len(self.stack)]:
                 break
-            self._pop_and_teardown()
+            try:
+                self._pop_and_teardown()
+            except TEST_OUTCOME:
+                # XXX Only first exception will be seen by user,
+                #     ideally all should be reported.
+                if exc is None:
+                    exc = sys.exc_info()
+        if exc:
+            py.builtin._reraise(*exc)
 
     def prepare(self, colitem):
         """ setup objects along the collector chain to the test-method

@@ -1,0 +1,1 @@
+Continue to call finalizers in the stack when a finalizer in a former scope raises an exception.
