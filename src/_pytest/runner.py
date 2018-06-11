@@ -194,7 +194,6 @@ class CallInfo(object):
         #: "teardown", "memocollect"
         self.when = when
         self.start = time()
-        self.result = None
         try:
             self.result = func()
         except KeyboardInterrupt:
