@@ -78,7 +78,7 @@ Updating code
 ~~~~~~~~~~~~~
 
 The old ``Node.get_marker(name)`` function is considered deprecated because it returns an internal ``MarkerInfo`` object
-which contains the merged name, ``*args`` and ``**kwargs**`` of all the markers which apply to that node.
+which contains the merged name, ``*args`` and ``**kwargs`` of all the markers which apply to that node.
 
 In general there are two scenarios on how markers should be handled:
 
