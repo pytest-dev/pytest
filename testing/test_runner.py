@@ -83,6 +83,7 @@ class TestSetupState(object):
 
     def test_teardown_multiple_scopes_one_fails(self, testdir):
         module_teardown = []
+
         def fin_func():
             raise Exception("oops1")
 
