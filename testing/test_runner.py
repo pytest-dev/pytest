@@ -95,7 +95,7 @@ class TestSetupState(object):
         ss.addfinalizer(fin_module, item.listchain()[-2])
         ss.addfinalizer(fin_func, item)
         ss.prepare(item)
-        with pytest.raises(Exception):
+        with pytest.raises(Exception, match="oops1"):
             ss.teardown_exact(item, None)
         assert module_teardown
 
