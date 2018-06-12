@@ -287,7 +287,11 @@ class MarkInfo(object):
     def validate_marks(self, attribute, value):
         for item in value:
             if not isinstance(item, Mark):
-                raise ValueError(item)
+                raise ValueError(
+                    "MarkInfo expects Mark instances, got {!r} ({!r})".format(
+                        item, type(item)
+                    )
+                )
 
     combined = attr.ib(
         repr=False,

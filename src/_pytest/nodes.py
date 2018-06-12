@@ -173,12 +173,10 @@ class Node(object):
         chain.reverse()
         return chain
 
-    def add_marker(self, marker, append=True):
-        """ dynamically add a marker object to the node.
+    def add_marker(self, marker):
+        """dynamically add a marker object to the node.
 
-        ``marker`` can be a string or pytest.mark.* instance.
-        ``append=True`` whether to append the marker,
-            if false insert at position 0
+        :type marker: str or pytest.mark.*
         """
         from _pytest.mark import MarkDecorator, MARK_GEN
 
