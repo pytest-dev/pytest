@@ -1132,3 +1132,12 @@ def test_addmarker_getmarker():
     node.add_marker("b")
     node.get_marker("a").combined
     node.get_marker("b").combined
+
+
+def test_addmarker_order():
+    node = Node("Test", config=mock.Mock(), session=mock.Mock(), nodeid="Test")
+    node.add_marker("a")
+    node.add_marker("b")
+    node.add_marker("c", append=False)
+    extracted = [x.name for x in node.iter_markers()]
+    assert extracted == ["c", "a", "b"]
