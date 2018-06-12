@@ -91,7 +91,7 @@ In the context manager form you may use the keyword argument
 ``message`` to specify a custom failure message::
 
      >>> with raises(ZeroDivisionError, message="Expecting ZeroDivisionError"):
-     ...    pass
+     ...     pass
      ... Failed: Expecting ZeroDivisionError
 
 If you want to write test code that works on Python 2.4 as well,
