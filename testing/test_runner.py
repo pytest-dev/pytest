@@ -81,6 +81,24 @@ class TestSetupState(object):
             ss._callfinalizers(item)
         assert err.value.args == ("oops2",)
 
+    def test_teardown_multiple_scopes_one_fails(self, testdir):
+        module_teardown = []
+
+        def fin_func():
+            raise Exception("oops1")
+
+        def fin_module():
+            module_teardown.append("fin_module")
+
+        item = testdir.getitem("def test_func(): pass")
+        ss = runner.SetupState()
+        ss.addfinalizer(fin_module, item.listchain()[-2])
+        ss.addfinalizer(fin_func, item)
+        ss.prepare(item)
+        with pytest.raises(Exception, match="oops1"):
+            ss.teardown_exact(item, None)
+        assert module_teardown
+
 
 class BaseFunctionalTests(object):
 
