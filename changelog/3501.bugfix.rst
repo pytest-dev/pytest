@@ -1,0 +1,1 @@
+Allow to insert ``pytest.mark.NAME`` (``MarkDecorator``) objects at the start of an item's marks.

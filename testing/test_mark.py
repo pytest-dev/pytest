@@ -136,6 +136,16 @@ class TestMark(object):
         assert "reason" not in g.some.kwargs
         assert g.some.kwargs["reason2"] == "456"
 
+    @ignore_markinfo
+    def test_pytest_mark_decorator_first_item(self):
+        """Check that inserting a MarkDecorator as the first element of MarkInfo works (#3501)"""
+        from _pytest.mark.structures import MarkInfo, Mark
+
+        mark_info = MarkInfo(
+            [pytest.mark.slow(3), Mark(name="slow", args=(1,), kwargs={})]
+        )
+        assert mark_info.args == (3, 1)
+
 
 def test_marked_class_run_twice(testdir, request):
     """Test fails file is run twice that contains marked class.

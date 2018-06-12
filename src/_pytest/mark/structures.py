@@ -4,6 +4,7 @@ from collections import namedtuple
 from operator import attrgetter
 
 import attr
+import six
 
 from ..deprecated import MARK_PARAMETERSET_UNPACKING, MARK_INFO_ATTRIBUTE
 from ..compat import NOTSET, getfslineno, MappingMixin
@@ -282,12 +283,17 @@ class MarkInfo(object):
     """ Marking object created by :class:`MarkDecorator` instances. """
 
     _marks = attr.ib()
-    combined = attr.ib(
-        repr=False,
-        default=attr.Factory(
-            lambda self: reduce(Mark.combined_with, self._marks), takes_self=True
-        ),
-    )
+    combined = attr.ib(repr=False)
+
+    @combined.default
+    def _combined_default(self):
+        if six.PY2:
+            marks = [
+                (x.mark if isinstance(x, MarkDecorator) else x) for x in self._marks
+            ]
+        else:
+            marks = self._marks
+        return reduce(Mark.combined_with, marks)
 
     name = alias("combined.name", warning=MARK_INFO_ATTRIBUTE)
     args = alias("combined.args", warning=MARK_INFO_ATTRIBUTE)
