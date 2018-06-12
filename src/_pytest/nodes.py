@@ -173,10 +173,12 @@ class Node(object):
         chain.reverse()
         return chain
 
-    def add_marker(self, marker):
+    def add_marker(self, marker, append=True):
         """ dynamically add a marker object to the node.
 
         ``marker`` can be a string or pytest.mark.* instance.
+        ``append=True`` whether to append the marker,
+            if false insert at position 0
         """
         from _pytest.mark import MarkDecorator, MARK_GEN
 
@@ -185,7 +187,7 @@ class Node(object):
         elif not isinstance(marker, MarkDecorator):
             raise ValueError("is not a string or pytest.mark.* Marker")
         self.keywords[marker.name] = marker
-        self.own_markers.append(marker)
+        self.own_markers.append(marker.mark)
 
     def iter_markers(self, name=None):
         """

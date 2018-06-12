@@ -281,7 +281,14 @@ def _marked(func, mark):
 class MarkInfo(object):
     """ Marking object created by :class:`MarkDecorator` instances. """
 
-    _marks = attr.ib()
+    _marks = attr.ib(convert=list)
+
+    @_marks.validator
+    def validate_marks(self, attribute, value):
+        for item in value:
+            if not isinstance(item, Mark):
+                raise ValueError(item)
+
     combined = attr.ib(
         repr=False,
         default=attr.Factory(
