@@ -1,7 +1,7 @@
 from __future__ import absolute_import, division, print_function
 import os
 import sys
-
+import mock
 import pytest
 from _pytest.mark import (
     MarkGenerator as Mark,
@@ -9,6 +9,7 @@ from _pytest.mark import (
     transfer_markers,
     EMPTY_PARAMETERSET_OPTION,
 )
+from _pytest.nodes import Node
 
 ignore_markinfo = pytest.mark.filterwarnings(
     "ignore:MarkInfo objects:_pytest.deprecated.RemovedInPytest4Warning"
@@ -1123,3 +1124,20 @@ def test_mark_expressions_no_smear(testdir):
     passed_k, skipped_k, failed_k = reprec_keywords.countoutcomes()
     assert passed_k == 2
     assert skipped_k == failed_k == 0
+
+
+def test_addmarker_getmarker():
+    node = Node("Test", config=mock.Mock(), session=mock.Mock(), nodeid="Test")
+    node.add_marker(pytest.mark.a(1))
+    node.add_marker("b")
+    node.get_marker("a").combined
+    node.get_marker("b").combined
+
+
+def test_addmarker_order():
+    node = Node("Test", config=mock.Mock(), session=mock.Mock(), nodeid="Test")
+    node.add_marker("a")
+    node.add_marker("b")
+    node.add_marker("c", append=False)
+    extracted = [x.name for x in node.iter_markers()]
+    assert extracted == ["c", "a", "b"]
