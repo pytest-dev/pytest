@@ -176,9 +176,10 @@ class Node(object):
     def add_marker(self, marker, append=True):
         """dynamically add a marker object to the node.
 
-        :type marker: str or pytest.mark.*
-        ``append=True`` whether to append the marker,
-            if false insert at position 0
+        :type marker: ``str`` or ``pytest.mark.*``  object
+        :param marker: 
+            ``append=True`` whether to append the marker,
+            if ``False`` insert at position ``0``.
         """
         from _pytest.mark import MarkDecorator, MARK_GEN
 
