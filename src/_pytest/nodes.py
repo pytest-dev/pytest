@@ -177,7 +177,7 @@ class Node(object):
         """dynamically add a marker object to the node.
 
         :type marker: ``str`` or ``pytest.mark.*``  object
-        :param marker: 
+        :param marker:
             ``append=True`` whether to append the marker,
             if ``False`` insert at position ``0``.
         """
