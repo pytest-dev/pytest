@@ -108,6 +108,9 @@ class TestMockDecoration(object):
         values = getfuncargnames(f)
         assert values == ("x",)
 
+    @pytest.mark.xfail(
+        strict=False, reason="getfuncargnames breaks if mock is imported"
+    )
     def test_wrapped_getfuncargnames_patching(self):
         from _pytest.compat import getfuncargnames
 

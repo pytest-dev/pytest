@@ -174,9 +174,9 @@ class Node(object):
         return chain
 
     def add_marker(self, marker):
-        """ dynamically add a marker object to the node.
+        """dynamically add a marker object to the node.
 
-        ``marker`` can be a string or pytest.mark.* instance.
+        :type marker: str or pytest.mark.*
         """
         from _pytest.mark import MarkDecorator, MARK_GEN
 
@@ -185,7 +185,7 @@ class Node(object):
         elif not isinstance(marker, MarkDecorator):
             raise ValueError("is not a string or pytest.mark.* Marker")
         self.keywords[marker.name] = marker
-        self.own_markers.append(marker)
+        self.own_markers.append(marker.mark)
 
     def iter_markers(self, name=None):
         """
