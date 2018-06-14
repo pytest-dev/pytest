@@ -270,6 +270,22 @@ class LogCaptureFixture(object):
         """
         return [(r.name, r.levelno, r.getMessage()) for r in self.records]
 
+    @property
+    def messages(self):
+        """Returns a list of format-interpolated log messages.
+
+        Unlike 'records', which contains the format string and parameters for interpolation, log messages in this list
+        are all interpolated.
+        Unlike 'text', which contains the output from the handler, log messages in this list are unadorned with
+        levels, timestamps, etc, making exact comparisions more reliable.
+
+        Note that traceback or stack info (from :func:`logging.exception` or the `exc_info` or `stack_info` arguments
+        to the logging functions) is not included, as this is added by the formatter in the handler.
+
+        .. versionadded:: 3.7
+        """
+        return [r.getMessage() for r in self.records]
+
     def clear(self):
         """Reset the list of log records and the captured log text."""
         self.handler.reset()
