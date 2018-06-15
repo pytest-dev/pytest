@@ -4,7 +4,7 @@ import sys
 import os
 import py
 import pytest
-from _pytest import config as parseopt
+from _pytest.config import argparsing as parseopt
 
 
 @pytest.fixture
