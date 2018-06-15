@@ -2,7 +2,8 @@ Example test scripts
 =====================
 
 
-the files in this folder are not direct tests, but rather example testsutes that demonstrate certain issues/behaviours
+The files in this folder are not direct tests, but rather example test suites that demonstrate certain issues/behaviours.
 
-in future we will move part of the content of the acceptance tests here in order to have directly testable code instead of writing out things and then running them in nested pytest sessions/subprocesses
-this will aid debugging and comprehension.
+In the future we will move part of the content of the acceptance tests here in order to have directly testable code instead of writing out things and then running them in nested pytest sessions/subprocesses.
+
+This will aid debugging and comprehension.
