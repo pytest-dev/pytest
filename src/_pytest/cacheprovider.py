@@ -85,6 +85,13 @@ class Cache(object):
                python types, including nested types
                like e. g. lists of dictionaries.
         """
+        content_readme = 'test'
+        if os.path.isdir(self._cachedir):
+            readme_path = os.path.join(self._cachedir, 'README.md')
+            if os.path.isfile(readme_path) is False:
+                readme = open(readme_path, 'w')
+                readme.write(content_readme)
+                readme.close()
         path = self._getvaluepath(key)
         try:
             path.dirpath().ensure_dir()
@@ -103,7 +110,6 @@ class Cache(object):
             with f:
                 self.trace("cache-write %s: %r" % (key, value))
                 json.dump(value, f, indent=2, sort_keys=True)
-
 
 class LFPlugin(object):
     """ Plugin which implements the --lf (run last-failing) option """
