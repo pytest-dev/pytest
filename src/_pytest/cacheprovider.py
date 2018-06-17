@@ -5,40 +5,41 @@ the name cache was not chosen to ensure pluggy automatically
 ignores the external pytest-cache
 """
 from __future__ import absolute_import, division, print_function
-
 from collections import OrderedDict
 
 import py
 import six
+import attr
 
 import pytest
 import json
-import os
 from os.path import sep as _sep, altsep as _altsep
 from textwrap import dedent
 
+from . import paths
 
+import logging
+
+
+log = logging.getLogger(__name__)
+
+
+@attr.s
 class Cache(object):
 
-    def __init__(self, config):
-        self.config = config
-        self._cachedir = Cache.cache_dir_from_config(config)
-        self.trace = config.trace.root.get("cache")
-        if config.getoption("cacheclear"):
-            self.trace("clearing cachedir")
-            if self._cachedir.check():
-                self._cachedir.remove()
-            self._cachedir.mkdir()
+    @classmethod
+    def for_config(cls, config):
+        cachedir = cls.cache_dir_from_config(config)
+        if config.getoption("cacheclear") and cachedir.exists():
+            shutil.rmtree(str(cachedir))
+            cachedir.mkdir()
+        return cls(cachedir)
+
+    _cachedir = attr.ib(repr=False)
 
     @staticmethod
     def cache_dir_from_config(config):
-        cache_dir = config.getini("cache_dir")
-        cache_dir = os.path.expanduser(cache_dir)
-        cache_dir = os.path.expandvars(cache_dir)
-        if os.path.isabs(cache_dir):
-            return py.path.local(cache_dir)
-        else:
-            return config.rootdir.join(cache_dir)
+        return paths.resolve_from_str(config.getini("cache_dir"), config.rootdir)
 
     def makedir(self, name):
         """ return a directory path object with the given name.  If the
@@ -52,10 +53,12 @@ class Cache(object):
         """
         if _sep in name or _altsep is not None and _altsep in name:
             raise ValueError("name is not allowed to contain path separators")
-        return self._cachedir.ensure_dir("d", name)
+        res = self._cachedir.joinpath("d", name)
+        res.mkdir(exist_ok=True, parents=True)
+        return py.path.local(res)
 
     def _getvaluepath(self, key):
-        return self._cachedir.join("v", *key.split("/"))
+        return self._cachedir.joinpath("v", *key.split("/"))
 
     def get(self, key, default):
         """ return cached value for the given key.  If no value
@@ -69,13 +72,11 @@ class Cache(object):
 
         """
         path = self._getvaluepath(key)
-        if path.check():
-            try:
-                with path.open("r") as f:
-                    return json.load(f)
-            except ValueError:
-                self.trace("cache-invalid at %s" % (path,))
-        return default
+        try:
+            with path.open("r") as f:
+                return json.load(f)
+        except (ValueError, IOError):
+            return default
 
     def set(self, key, value):
         """ save value for the given key.
@@ -88,21 +89,16 @@ class Cache(object):
         """
         path = self._getvaluepath(key)
         try:
-            path.dirpath().ensure_dir()
-        except (py.error.EEXIST, py.error.EACCES):
-            self.config.warn(
-                code="I9", message="could not create cache path %s" % (path,)
-            )
+            path.parent.mkdir(exist_ok=True, parents=True)
+        except IOError:
+            log.warning("could not create cache path %s", path)
             return
         try:
             f = path.open("w")
         except py.error.ENOTDIR:
-            self.config.warn(
-                code="I9", message="cache could not write path %s" % (path,)
-            )
+            log.warning("cache could not write path %s", path)
         else:
             with f:
-                self.trace("cache-write %s: %r" % (key, value))
                 json.dump(value, f, indent=2, sort_keys=True)
                 self._ensure_readme()
 
@@ -297,7 +293,7 @@ def pytest_cmdline_main(config):
 
 @pytest.hookimpl(tryfirst=True)
 def pytest_configure(config):
-    config.cache = Cache(config)
+    config.cache = Cache.for_config(config)
     config.pluginmanager.register(LFPlugin(config), "lfplugin")
     config.pluginmanager.register(NFPlugin(config), "nfplugin")
 
@@ -320,41 +316,40 @@ def cache(request):
 
 def pytest_report_header(config):
     if config.option.verbose:
-        relpath = py.path.local().bestrelpath(config.cache._cachedir)
-        return "cachedir: %s" % relpath
+        relpath = config.cache._cachedir.relative_to(config.rootdir)
+        return "cachedir: {}".format(relpath)
 
 
 def cacheshow(config, session):
-    from pprint import pprint
+    from pprint import pformat
 
     tw = py.io.TerminalWriter()
     tw.line("cachedir: " + str(config.cache._cachedir))
-    if not config.cache._cachedir.check():
+    if not config.cache._cachedir.is_dir():
         tw.line("cache is empty")
         return 0
     dummy = object()
     basedir = config.cache._cachedir
-    vdir = basedir.join("v")
+    vdir = basedir.joinpath("v")
     tw.sep("-", "cache values")
-    for valpath in sorted(vdir.visit(lambda x: x.isfile())):
-        key = valpath.relto(vdir).replace(valpath.sep, "/")
+    for valpath in sorted(x for x in vdir.rglob("*") if x.is_file()):
+        key = "/".join(valpath.relative_to(vdir).parts)
         val = config.cache.get(key, dummy)
         if val is dummy:
             tw.line("%s contains unreadable content, " "will be ignored" % key)
         else:
             tw.line("%s contains:" % key)
-            stream = py.io.TextIO()
-            pprint(val, stream=stream)
-            for line in stream.getvalue().splitlines():
+            for line in pformat(val).splitlines():
                 tw.line("  " + line)
 
-    ddir = basedir.join("d")
-    if ddir.isdir() and ddir.listdir():
+    ddir = basedir.joinpath("d")
+    if ddir.is_dir():
+        contents = sorted(ddir.rglob("*"))
         tw.sep("-", "cache directories")
-        for p in sorted(basedir.join("d").visit()):
+        for p in contents:
             # if p.check(dir=1):
             #    print("%s/" % p.relto(basedir))
-            if p.isfile():
-                key = p.relto(basedir)
-                tw.line("%s is a file of length %d" % (key, p.size()))
+            if p.is_file():
+                key = p.relative_to(basedir)
+                tw.line("{} is a file of length {:d}".format(key, p.stat().st_size))
     return 0

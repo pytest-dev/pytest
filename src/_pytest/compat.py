@@ -29,8 +29,11 @@ _PY2 = not _PY3
 
 if _PY3:
     from inspect import signature, Parameter as Parameter
+    from pathlib import Path
 else:
     from funcsigs import signature, Parameter as Parameter
+    from pathlib2 import Path
+Path
 
 
 NoneType = type(None)
