@@ -22,6 +22,7 @@ except ImportError:  # pragma: no cover
     # Only available in Python 3.4+ or as a backport
     enum = None
 
+__all__ = ["Path"]
 
 _PY3 = sys.version_info > (3, 0)
 _PY2 = not _PY3
@@ -33,7 +34,6 @@ if _PY3:
 else:
     from funcsigs import signature, Parameter as Parameter
     from pathlib2 import Path
-Path
 
 
 NoneType = type(None)
