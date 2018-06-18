@@ -4,12 +4,8 @@ import textwrap
 import pytest
 
 import _pytest._code
-from _pytest.config import (
-    getcfg,
-    get_common_ancestor,
-    determine_setup,
-    _iter_rewritable_modules,
-)
+from _pytest.config.findpaths import getcfg, get_common_ancestor, determine_setup
+from _pytest.config import _iter_rewritable_modules
 from _pytest.main import EXIT_NOTESTSCOLLECTED
 
 

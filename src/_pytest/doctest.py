@@ -505,7 +505,7 @@ def _fix_spoof_python2(runner, encoding):
 
         def getvalue(self):
             result = _SpoofOut.getvalue(self)
-            if encoding:
+            if encoding and isinstance(result, bytes):
                 result = result.decode(encoding)
             return result
 

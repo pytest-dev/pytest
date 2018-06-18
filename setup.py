@@ -108,7 +108,13 @@ def main():
         python_requires=">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*",
         install_requires=install_requires,
         extras_require=extras_require,
-        packages=["_pytest", "_pytest.assertion", "_pytest._code", "_pytest.mark"],
+        packages=[
+            "_pytest",
+            "_pytest.assertion",
+            "_pytest._code",
+            "_pytest.mark",
+            "_pytest.config",
+        ],
         py_modules=["pytest"],
         zip_safe=False,
     )
