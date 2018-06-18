@@ -1,0 +1,1 @@
+Fix encoding error with `print` statements in doctests
