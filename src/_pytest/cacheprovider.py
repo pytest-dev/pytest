@@ -27,6 +27,8 @@ log = logging.getLogger(__name__)
 @attr.s
 class Cache(object):
 
+    _cachedir = attr.ib(repr=False)
+
     @classmethod
     def for_config(cls, config):
         cachedir = cls.cache_dir_from_config(config)
@@ -34,8 +36,6 @@ class Cache(object):
             shutil.rmtree(str(cachedir))
             cachedir.mkdir()
         return cls(cachedir)
-
-    _cachedir = attr.ib(repr=False)
 
     @staticmethod
     def cache_dir_from_config(config):
