@@ -40,7 +40,7 @@ PY35 = sys.version_info[:2] >= (3, 5)
 PY36 = sys.version_info[:2] >= (3, 6)
 MODULE_NOT_FOUND_ERROR = "ModuleNotFoundError" if PY36 else "ImportError"
 
-if PY35:
+if PY36:
     from pathlib import Path
 else:
     from pathlib2 import Path
