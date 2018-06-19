@@ -1,3 +1,10 @@
+[build-system]
+requires = [
+  "setuptools",
+  "setuptools-scm",
+  "wheel",
+]
+
 [tool.towncrier]
 package = "pytest"
 package_dir = "src"
