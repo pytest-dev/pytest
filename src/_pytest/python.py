@@ -735,13 +735,12 @@ class CallSpec2(object):
         self._idlist = []
         self.params = {}
         self._globalid = NOTSET
-        self._globalid_args = set()
         self._globalparam = NOTSET
         self._arg2scopenum = {}  # used for sorting parametrized resources
         self.marks = []
         self.indices = {}
 
-    def copy(self, metafunc):
+    def copy(self):
         cs = CallSpec2(self.metafunc)
         cs.funcargs.update(self.funcargs)
         cs.params.update(self.params)
@@ -750,7 +749,6 @@ class CallSpec2(object):
         cs._arg2scopenum.update(self._arg2scopenum)
         cs._idlist = list(self._idlist)
         cs._globalid = self._globalid
-        cs._globalid_args = self._globalid_args
         cs._globalparam = self._globalparam
         return cs
 
@@ -933,7 +931,7 @@ class Metafunc(fixtures.FuncargnamesCompatAttr):
                             param.values, argnames
                         )
                     )
-                newcallspec = callspec.copy(self)
+                newcallspec = callspec.copy()
                 newcallspec.setmulti2(
                     valtypes,
                     argnames,
