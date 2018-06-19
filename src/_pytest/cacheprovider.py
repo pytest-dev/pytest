@@ -17,17 +17,14 @@ from os.path import sep as _sep, altsep as _altsep
 from textwrap import dedent
 
 from . import paths
-
-import logging
-
-
-log = logging.getLogger(__name__)
+from .compat import _PY2 as PY2
 
 
 @attr.s
 class Cache(object):
 
     _cachedir = attr.ib(repr=False)
+    _warn = attr.ib(repr=False)
 
     @classmethod
     def for_config(cls, config):
@@ -35,11 +32,14 @@ class Cache(object):
         if config.getoption("cacheclear") and cachedir.exists():
             shutil.rmtree(str(cachedir))
             cachedir.mkdir()
-        return cls(cachedir)
+        return cls(cachedir, config.warn)
 
     @staticmethod
     def cache_dir_from_config(config):
         return paths.resolve_from_str(config.getini("cache_dir"), config.rootdir)
+
+    def warn(self, fmt, **args):
+        self._warn(code="I9", message=fmt.format(**args) if args else fmt)
 
     def makedir(self, name):
         """ return a directory path object with the given name.  If the
@@ -75,7 +75,7 @@ class Cache(object):
         try:
             with path.open("r") as f:
                 return json.load(f)
-        except (ValueError, IOError):
+        except (ValueError, IOError, OSError):
             return default
 
     def set(self, key, value):
@@ -90,13 +90,13 @@ class Cache(object):
         path = self._getvaluepath(key)
         try:
             path.parent.mkdir(exist_ok=True, parents=True)
-        except IOError:
-            log.warning("could not create cache path %s", path)
+        except (IOError, OSError):
+            self.warn("could not create cache path {path}", path=path)
             return
         try:
-            f = path.open("w")
-        except py.error.ENOTDIR:
-            log.warning("cache could not write path %s", path)
+            f = path.open("wb" if PY2 else "w")
+        except (IOError, OSError):
+            self.warn("cache could not write path {path}", path=path)
         else:
             with f:
                 json.dump(value, f, indent=2, sort_keys=True)
