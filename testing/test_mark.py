@@ -1133,6 +1133,7 @@ def test_addmarker_getmarker():
 
 
 @pytest.mark.issue("https://github.com/pytest-dev/pytest/issues/3605")
+@pytest.mark.filterwarnings("ignore")
 def test_markers_from_parametrize(testdir):
     testdir.makepyfile(
         """
@@ -1167,4 +1168,4 @@ def test_markers_from_parametrize(testdir):
     )
 
     result = testdir.runpytest()
-    result.assertoutcome(failed=0)
+    result.assert_outcomes(failed=0)
