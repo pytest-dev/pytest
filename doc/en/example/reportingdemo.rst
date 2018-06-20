@@ -625,7 +625,7 @@ get on the terminal - we are working on that)::
 
     failure_demo.py:278: AssertionError
     ============================= warnings summary =============================
-    None
+    <undetermined location>
       Metafunc.addcall is deprecated and scheduled to be removed in pytest 4.0.
       Please use Metafunc.parametrize instead.
 
