@@ -1,1 +1,0 @@
-Warnings without ``location`` were reported as ``None``.  This is corrected to now report ``<undetermined location>``.

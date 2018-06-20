@@ -30,9 +30,9 @@ now execute the test specification::
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR/nonpython, inifile:
     collected 2 items
-
+    
     test_simple.yml F.                                                   [100%]
-
+    
     ================================= FAILURES =================================
     ______________________________ usecase: hello ______________________________
     usecase execution failed
@@ -63,10 +63,10 @@ consulted when reporting in ``verbose`` mode::
     cachedir: .pytest_cache
     rootdir: $REGENDOC_TMPDIR/nonpython, inifile:
     collecting ... collected 2 items
-
+    
     test_simple.yml::hello FAILED                                        [ 50%]
     test_simple.yml::ok PASSED                                           [100%]
-
+    
     ================================= FAILURES =================================
     ______________________________ usecase: hello ______________________________
     usecase execution failed
@@ -87,5 +87,5 @@ interesting to just look at the collection tree::
     <YamlFile 'test_simple.yml'>
       <YamlItem 'hello'>
       <YamlItem 'ok'>
-
+    
     ======================= no tests ran in 0.12 seconds =======================

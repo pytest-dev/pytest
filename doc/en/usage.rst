@@ -502,7 +502,7 @@ hook was invoked::
 
     $ python myinvoke.py
     .                                                                    [100%]*** test run reporting finishing
-
+    
 
 .. note::
 

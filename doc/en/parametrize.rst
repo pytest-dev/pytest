@@ -57,14 +57,14 @@ them in turn::
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 3 items
-
+    
     test_expectation.py ..F                                              [100%]
-
+    
     ================================= FAILURES =================================
     ____________________________ test_eval[6*9-42] _____________________________
-
+    
     test_input = '6*9', expected = 42
-
+    
         @pytest.mark.parametrize("test_input,expected", [
             ("3+5", 8),
             ("2+4", 6),
@@ -74,7 +74,7 @@ them in turn::
     >       assert eval(test_input) == expected
     E       AssertionError: assert 54 == 42
     E        +  where 54 = eval('6*9')
-
+    
     test_expectation.py:8: AssertionError
     ==================== 1 failed, 2 passed in 0.12 seconds ====================
 
@@ -106,9 +106,9 @@ Let's run this::
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 3 items
-
+    
     test_expectation.py ..x                                              [100%]
-
+    
     =================== 2 passed, 1 xfailed in 0.12 seconds ====================
 
 The one parameter set which caused a failure previously now
@@ -174,15 +174,15 @@ Let's also run with a stringinput that will lead to a failing test::
     F                                                                    [100%]
     ================================= FAILURES =================================
     ___________________________ test_valid_string[!] ___________________________
-
+    
     stringinput = '!'
-
+    
         def test_valid_string(stringinput):
     >       assert stringinput.isalpha()
     E       AssertionError: assert False
     E        +  where False = <built-in method isalpha of str object at 0xdeadbeef>()
     E        +    where <built-in method isalpha of str object at 0xdeadbeef> = '!'.isalpha
-
+    
     test_strings.py:3: AssertionError
     1 failed in 0.12 seconds
 
