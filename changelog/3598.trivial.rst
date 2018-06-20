@@ -1,0 +1,1 @@
+Internal refactoring: removed unused ``CallSpec2tox ._globalid_args`` attribute and ``metafunc`` parameter from ``CallSpec2.copy()``.
