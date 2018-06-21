@@ -6,7 +6,7 @@ import pytest
 import os
 import shutil
 
-pytest_plugins = "pytester",
+pytest_plugins = ("pytester",)
 
 
 class TestNewAPI(object):
@@ -818,3 +818,31 @@ class TestNewFirst(object):
                 "*test_1/test_1.py::test_1[2*",
             ]
         )
+
+
+class TestReadme(object):
+
+    def check_readme(self, testdir):
+        config = testdir.parseconfigure()
+        readme = config.cache._cachedir.join("README.md")
+        return readme.isfile()
+
+    def test_readme_passed(self, testdir):
+        testdir.makepyfile(
+            """
+            def test_always_passes():
+                assert 1
+        """
+        )
+        testdir.runpytest()
+        assert self.check_readme(testdir) is True
+
+    def test_readme_failed(self, testdir):
+        testdir.makepyfile(
+            """
+            def test_always_passes():
+                assert 0
+        """
+        )
+        testdir.runpytest()
+        assert self.check_readme(testdir) is True

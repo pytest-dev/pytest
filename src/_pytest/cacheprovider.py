@@ -15,6 +15,7 @@ import pytest
 import json
 import os
 from os.path import sep as _sep, altsep as _altsep
+from textwrap import dedent
 
 
 class Cache(object):
@@ -106,15 +107,19 @@ class Cache(object):
                 self._ensure_readme()
 
     def _ensure_readme(self):
-        content_readme = """# pytest cache directory #
 
-This directory contains data from the pytest's cache plugin, \
-which provides the `--lf` and `--ff` options, as well as the `cache` fixture.
+        content_readme = dedent(
+            """\
+        # pytest cache directory #
 
-**Do not** commit this to version control.
+        This directory contains data from the pytest's cache plugin,\
+        which provides the `--lf` and `--ff` options, as well as the `cache` fixture.
 
-See [the docs](https://docs.pytest.org/en/latest/cache.html) for more information.
+        **Do not** commit this to version control.
+
+        See [the docs](https://docs.pytest.org/en/latest/cache.html) for more information.
         """
+        )
         if self._cachedir.check(dir=True):
             readme_path = self._cachedir.join("README.md")
             if not readme_path.check(file=True):
