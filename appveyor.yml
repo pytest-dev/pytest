@@ -27,7 +27,7 @@ environment:
   - TOXENV: "py36-pluggymaster"
   - TOXENV: "py27-nobyte"
   - TOXENV: "doctesting"
-  - TOXENV: "py35-freeze"
+  - TOXENV: "py36-freeze"
   - TOXENV: "docs"
 
 install:
