@@ -1,0 +1,1 @@
+Silence usage of ``reduce`` warning in python 2
