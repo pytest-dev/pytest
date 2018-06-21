@@ -225,9 +225,12 @@ def get_unpacked_marks(obj):
     obtain the unpacked marks that are stored on an object
     """
     mark_list = getattr(obj, "pytestmark", [])
-
     if not isinstance(mark_list, list):
         mark_list = [mark_list]
+    return normalize_mark_list(mark_list)
+
+
+def normalize_mark_list(mark_list):
     return [getattr(mark, "mark", mark) for mark in mark_list]  # unpack MarkDecorator
 
 

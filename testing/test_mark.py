@@ -1168,4 +1168,4 @@ def test_markers_from_parametrize(testdir):
     )
 
     result = testdir.runpytest()
-    result.assert_outcomes(failed=0)
+    result.assert_outcomes(passed=4)
