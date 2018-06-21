@@ -18,6 +18,7 @@ from os.path import sep as _sep, altsep as _altsep
 
 
 class Cache(object):
+
     def __init__(self, config):
         self.config = config
         self._cachedir = Cache.cache_dir_from_config(config)
@@ -108,7 +109,7 @@ class Cache(object):
         content_readme = """# pytest cache directory #
 
 This directory contains data from the pytest's cache plugin, \
-which provides the `--lf` and `--ff` options, as well as the `cache` fixture. 
+which provides the `--lf` and `--ff` options, as well as the `cache` fixture.
 
 **Do not** commit this to version control.
 
@@ -214,7 +215,9 @@ class NFPlugin(object):
 
             items[:] = self._get_increasing_order(
                 six.itervalues(new_items)
-            ) + self._get_increasing_order(six.itervalues(other_items))
+            ) + self._get_increasing_order(
+                six.itervalues(other_items)
+            )
         self.cached_nodeids = [x.nodeid for x in items if isinstance(x, pytest.Item)]
 
     def _get_increasing_order(self, items):
