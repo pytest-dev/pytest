@@ -80,7 +80,7 @@ during import time.
 
 If you wish to skip something conditionally then you can use ``skipif`` instead.
 Here is an example of marking a test function to be skipped
-when run on a Python3.6 interpreter::
+when run on an interpreter earlier than Python3.6 ::
 
     import sys
     @pytest.mark.skipif(sys.version_info < (3,6),
