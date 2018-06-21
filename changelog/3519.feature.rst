@@ -1,1 +1,1 @@
-now ``.pytest_cache`` is created with a README.md to indicate it's usage,options etc.
+Now a ``README.md`` file is created in ``.pytest_cache`` to make it clear why the directory exists.
