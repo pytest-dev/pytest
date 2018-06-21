@@ -103,6 +103,14 @@ class Cache(object):
             with f:
                 self.trace("cache-write %s: %r" % (key, value))
                 json.dump(value, f, indent=2, sort_keys=True)
+        self._ensure_readme()
+
+    def _ensure_readme(self):
+        content_readme = "test"
+        if self._cachedir.check(dir=True):
+            readme_path = self._cachedir.join("README.md")
+            if not readme_path.check(file=True):
+                readme_path.write(content_readme)
 
 
 class LFPlugin(object):

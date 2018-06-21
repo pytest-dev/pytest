@@ -733,7 +733,7 @@ Node
 Parser
 ~~~~~~
 
-.. autoclass:: _pytest.config.argparsing.Parser()
+.. autoclass:: _pytest.config.Parser()
     :members:
 
 PluginManager

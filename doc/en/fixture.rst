@@ -165,7 +165,7 @@ Scope: sharing a fixture instance across tests in a class, module or session
 
 Fixtures requiring network access depend on connectivity and are
 usually time-expensive to create.  Extending the previous example, we
-can add a ``scope="module"`` parameter to the
+can add a ``scope='module'`` parameter to the
 :py:func:`@pytest.fixture <_pytest.python.fixture>` invocation
 to cause the decorated ``smtp`` fixture function to only be invoked once
 per test *module* (the default is to invoke once per test *function*).

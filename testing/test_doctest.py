@@ -655,22 +655,6 @@ class TestDoctests(object):
         result = testdir.runpytest(p, "--doctest-modules")
         result.stdout.fnmatch_lines(["* 1 passed *"])
 
-    def test_print_unicode_value(self, testdir):
-        """
-        Test case for issue 3583: Printing Unicode in doctest under Python 2.7
-        doesn't work
-        """
-        p = testdir.maketxtfile(
-            test_print_unicode_value=r"""
-            Here is a doctest::
-
-                >>> print(u'\xE5\xE9\xEE\xF8\xFC')
-                åéîøü
-        """
-        )
-        result = testdir.runpytest(p)
-        result.stdout.fnmatch_lines(["* 1 passed *"])
-
     def test_reportinfo(self, testdir):
         """
         Test case to make sure that DoctestItem.reportinfo() returns lineno.
