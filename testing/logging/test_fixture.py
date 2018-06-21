@@ -73,6 +73,27 @@ def test_log_access(caplog):
     assert "boo arg" in caplog.text
 
 
+def test_messages(caplog):
+    caplog.set_level(logging.INFO)
+    logger.info("boo %s", "arg")
+    logger.info("bar %s\nbaz %s", "arg1", "arg2")
+    assert "boo arg" == caplog.messages[0]
+    assert "bar arg1\nbaz arg2" == caplog.messages[1]
+    assert caplog.text.count("\n") > len(caplog.messages)
+    assert len(caplog.text.splitlines()) > len(caplog.messages)
+
+    try:
+        raise Exception("test")
+    except Exception:
+        logger.exception("oops")
+
+    assert "oops" in caplog.text
+    assert "oops" in caplog.messages[-1]
+    # Tracebacks are stored in the record and not added until the formatter or handler.
+    assert "Exception" in caplog.text
+    assert "Exception" not in caplog.messages[-1]
+
+
 def test_record_tuples(caplog):
     caplog.set_level(logging.INFO)
     logger.info("boo %s", "arg")
