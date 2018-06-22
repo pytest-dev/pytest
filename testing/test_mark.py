@@ -1,7 +1,11 @@
 from __future__ import absolute_import, division, print_function
 import os
 import sys
-import mock
+
+try:
+    import mock
+except ImportError:
+    import unittest.mock as mock
 import pytest
 from _pytest.mark import (
     MarkGenerator as Mark,
