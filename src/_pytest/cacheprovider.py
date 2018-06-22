@@ -14,10 +14,21 @@ import attr
 import pytest
 import json
 from os.path import sep as _sep, altsep as _altsep
-from textwrap import dedent
+import shutil
 
 from . import paths
 from .compat import _PY2 as PY2
+
+README_CONTENT = u"""\
+# pytest cache directory #
+
+This directory contains data from the pytest's cache plugin,
+which provides the `--lf` and `--ff` options, as well as the `cache` fixture.
+
+**Do not** commit this to version control.
+
+See [the docs](https://docs.pytest.org/en/latest/cache.html) for more information.
+"""
 
 
 @attr.s
@@ -104,22 +115,10 @@ class Cache(object):
 
     def _ensure_readme(self):
 
-        content_readme = dedent(
-            """\
-        # pytest cache directory #
-
-        This directory contains data from the pytest's cache plugin,
-        which provides the `--lf` and `--ff` options, as well as the `cache` fixture.
-
-        **Do not** commit this to version control.
-
-        See [the docs](https://docs.pytest.org/en/latest/cache.html) for more information.
-        """
-        )
-        if self._cachedir.check(dir=True):
-            readme_path = self._cachedir.join("README.md")
-            if not readme_path.check(file=True):
-                readme_path.write(content_readme)
+        if self._cachedir.is_dir():
+            readme_path = self._cachedir / "README.md"
+            if not readme_path.is_file():
+                readme_path.write_text(README_CONTENT)
 
 
 class LFPlugin(object):
@@ -330,7 +329,7 @@ def cacheshow(config, session):
         return 0
     dummy = object()
     basedir = config.cache._cachedir
-    vdir = basedir.joinpath("v")
+    vdir = basedir / "v"
     tw.sep("-", "cache values")
     for valpath in sorted(x for x in vdir.rglob("*") if x.is_file()):
         key = "/".join(valpath.relative_to(vdir).parts)
@@ -342,7 +341,7 @@ def cacheshow(config, session):
             for line in pformat(val).splitlines():
                 tw.line("  " + line)
 
-    ddir = basedir.joinpath("d")
+    ddir = basedir / "d"
     if ddir.is_dir():
         contents = sorted(ddir.rglob("*"))
         tw.sep("-", "cache directories")
