@@ -84,7 +84,7 @@ when run on an interpreter earlier than Python3.6 ::
 
     import sys
     @pytest.mark.skipif(sys.version_info < (3,6),
-                        reason="requires python3.6")
+                        reason="requires python3.6 or higher")
     def test_function():
         ...
 
