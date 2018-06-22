@@ -13,11 +13,10 @@ import attr
 
 import pytest
 import json
-from os.path import sep as _sep, altsep as _altsep
 import shutil
 
 from . import paths
-from .compat import _PY2 as PY2
+from .compat import _PY2 as PY2, Path
 
 README_CONTENT = u"""\
 # pytest cache directory #
@@ -62,14 +61,15 @@ class Cache(object):
              Make sure the name contains your plugin or application
              identifiers to prevent clashes with other cache users.
         """
-        if _sep in name or _altsep is not None and _altsep in name:
+        name = Path(name)
+        if len(name.parts) > 1:
             raise ValueError("name is not allowed to contain path separators")
         res = self._cachedir.joinpath("d", name)
         res.mkdir(exist_ok=True, parents=True)
         return py.path.local(res)
 
     def _getvaluepath(self, key):
-        return self._cachedir.joinpath("v", *key.split("/"))
+        return self._cachedir.joinpath("v", Path(key))
 
     def get(self, key, default):
         """ return cached value for the given key.  If no value
