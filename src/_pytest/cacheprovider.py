@@ -332,7 +332,7 @@ def cacheshow(config, session):
     vdir = basedir / "v"
     tw.sep("-", "cache values")
     for valpath in sorted(x for x in vdir.rglob("*") if x.is_file()):
-        key = "/".join(valpath.relative_to(vdir).parts)
+        key = valpath.relative_to(vdir)
         val = config.cache.get(key, dummy)
         if val is dummy:
             tw.line("%s contains unreadable content, " "will be ignored" % key)
