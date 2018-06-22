@@ -1,1 +1,0 @@
-Minor Doc Fix: The description above the example for ``@pytest.mark.skipif`` now matches the code
