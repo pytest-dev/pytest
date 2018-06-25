@@ -22,6 +22,7 @@ except ImportError:  # pragma: no cover
     # Only available in Python 3.4+ or as a backport
     enum = None
 
+__all__ = ["Path"]
 
 _PY3 = sys.version_info > (3, 0)
 _PY2 = not _PY3
@@ -32,13 +33,18 @@ if _PY3:
 else:
     from funcsigs import signature, Parameter as Parameter
 
-
 NoneType = type(None)
 NOTSET = object()
 
 PY35 = sys.version_info[:2] >= (3, 5)
 PY36 = sys.version_info[:2] >= (3, 6)
 MODULE_NOT_FOUND_ERROR = "ModuleNotFoundError" if PY36 else "ImportError"
+
+if PY36:
+    from pathlib import Path
+else:
+    from pathlib2 import Path
+
 
 if _PY3:
     from collections.abc import MutableMapping as MappingMixin  # noqa

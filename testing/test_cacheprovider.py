@@ -1,5 +1,7 @@
 from __future__ import absolute_import, division, print_function
+
 import sys
+
 import py
 import _pytest
 import pytest
@@ -26,7 +28,7 @@ class TestNewAPI(object):
         cache = config.cache
         pytest.raises(TypeError, lambda: cache.set("key/name", cache))
         config.cache.set("key/name", 0)
-        config.cache._getvaluepath("key/name").write("123invalid")
+        config.cache._getvaluepath("key/name").write_bytes(b"123invalid")
         val = config.cache.get("key/name", -2)
         assert val == -2
 
@@ -824,8 +826,8 @@ class TestReadme(object):
 
     def check_readme(self, testdir):
         config = testdir.parseconfigure()
-        readme = config.cache._cachedir.join("README.md")
-        return readme.isfile()
+        readme = config.cache._cachedir.joinpath("README.md")
+        return readme.is_file()
 
     def test_readme_passed(self, testdir):
         testdir.makepyfile(

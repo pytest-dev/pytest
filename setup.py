@@ -73,15 +73,19 @@ def main():
     environment_marker_support_level = get_environment_marker_support_level()
     if environment_marker_support_level >= 2:
         install_requires.append('funcsigs;python_version<"3.0"')
+        install_requires.append('pathlib2;python_version<"3.6"')
         install_requires.append('colorama;sys_platform=="win32"')
     elif environment_marker_support_level == 1:
         extras_require[':python_version<"3.0"'] = ["funcsigs"]
+        extras_require[':python_version<"3.6"'] = ["pathlib2"]
         extras_require[':sys_platform=="win32"'] = ["colorama"]
     else:
         if sys.platform == "win32":
             install_requires.append("colorama")
         if sys.version_info < (3, 0):
             install_requires.append("funcsigs")
+        if sys.version_info < (3, 6):
+            install_requires.append("pathlib2")
 
     setup(
         name="pytest",
