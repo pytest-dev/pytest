@@ -336,9 +336,9 @@ class TestSourceParsingAndCompiling(object):
         def check(comp, name):
             co = comp(self.source, name)
             if not name:
-                expected = "codegen %s:%d>" % (mypath, mylineno + 2 + 3)
+                expected = "codegen %s:%d>" % (mypath, mylineno + 2 + 2)
             else:
-                expected = "codegen %r %s:%d>" % (name, mypath, mylineno + 2 + 3)
+                expected = "codegen %r %s:%d>" % (name, mypath, mylineno + 2 + 2)
             fn = co.co_filename
             assert fn.endswith(expected)
 
