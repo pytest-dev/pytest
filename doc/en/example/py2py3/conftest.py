@@ -5,7 +5,6 @@ py3 = sys.version_info[0] >= 3
 
 
 class DummyCollector(pytest.collect.File):
-
     def collect(self):
         return []
 

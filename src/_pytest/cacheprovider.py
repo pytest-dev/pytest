@@ -32,7 +32,6 @@ See [the docs](https://docs.pytest.org/en/latest/cache.html) for more informatio
 
 @attr.s
 class Cache(object):
-
     _cachedir = attr.ib(repr=False)
     _warn = attr.ib(repr=False)
 
@@ -215,9 +214,7 @@ class NFPlugin(object):
 
             items[:] = self._get_increasing_order(
                 six.itervalues(new_items)
-            ) + self._get_increasing_order(
-                six.itervalues(other_items)
-            )
+            ) + self._get_increasing_order(six.itervalues(other_items))
         self.cached_nodeids = [x.nodeid for x in items if isinstance(x, pytest.Item)]
 
     def _get_increasing_order(self, items):

@@ -29,7 +29,6 @@ def assert_attr(node, **kwargs):
 
 
 class DomNode(object):
-
     def __init__(self, dom):
         self.__node = dom
 
@@ -81,7 +80,6 @@ class DomNode(object):
 
 
 class TestPython(object):
-
     def test_summing_simple(self, testdir):
         testdir.makepyfile(
             """
@@ -713,7 +711,6 @@ def test_dont_configure_on_slaves(tmpdir):
     gotten = []
 
     class FakeConfig(object):
-
         def __init__(self):
             self.pluginmanager = self
             self.option = self
@@ -737,7 +734,6 @@ def test_dont_configure_on_slaves(tmpdir):
 
 
 class TestNonPython(object):
-
     def test_summing_simple(self, testdir):
         testdir.makeconftest(
             """
@@ -1127,18 +1123,15 @@ def test_fancy_items_regression(testdir):
     import pprint
 
     pprint.pprint(items)
-    assert (
-        items
-        == [
-            u"conftest a conftest.py",
-            u"conftest a conftest.py",
-            u"conftest b conftest.py",
-            u"test_fancy_items_regression a test_fancy_items_regression.py",
-            u"test_fancy_items_regression a test_fancy_items_regression.py",
-            u"test_fancy_items_regression b test_fancy_items_regression.py",
-            u"test_fancy_items_regression test_pass" u" test_fancy_items_regression.py",
-        ]
-    )
+    assert items == [
+        u"conftest a conftest.py",
+        u"conftest a conftest.py",
+        u"conftest b conftest.py",
+        u"test_fancy_items_regression a test_fancy_items_regression.py",
+        u"test_fancy_items_regression a test_fancy_items_regression.py",
+        u"test_fancy_items_regression b test_fancy_items_regression.py",
+        u"test_fancy_items_regression test_pass" u" test_fancy_items_regression.py",
+    ]
 
 
 def test_global_properties(testdir):

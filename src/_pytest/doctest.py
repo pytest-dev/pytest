@@ -105,7 +105,6 @@ def _is_doctest(config, path, parent):
 
 
 class ReprFailDoctest(TerminalRepr):
-
     def __init__(self, reprlocation_lines):
         # List of (reprlocation, lines) tuples
         self.reprlocation_lines = reprlocation_lines
@@ -118,7 +117,6 @@ class ReprFailDoctest(TerminalRepr):
 
 
 class MultipleDoctestFailures(Exception):
-
     def __init__(self, failures):
         super(MultipleDoctestFailures, self).__init__()
         self.failures = failures
@@ -172,7 +170,6 @@ def _get_runner(checker=None, verbose=None, optionflags=0, continue_on_failure=T
 
 
 class DoctestItem(pytest.Item):
-
     def __init__(self, name, parent, runner=None, dtest=None):
         super(DoctestItem, self).__init__(name, parent)
         self.runner = runner
@@ -243,7 +240,7 @@ class DoctestItem(pytest.Item):
                         for (i, x) in enumerate(lines)
                     ]
                     # trim docstring error lines to 10
-                    lines = lines[max(example.lineno - 9, 0):example.lineno + 1]
+                    lines = lines[max(example.lineno - 9, 0) : example.lineno + 1]
                 else:
                     lines = [
                         "EXAMPLE LOCATION UNKNOWN, not showing all tests of that example"
@@ -255,9 +252,7 @@ class DoctestItem(pytest.Item):
                 if isinstance(failure, doctest.DocTestFailure):
                     lines += checker.output_difference(
                         example, failure.got, report_choice
-                    ).split(
-                        "\n"
-                    )
+                    ).split("\n")
                 else:
                     inner_excinfo = ExceptionInfo(failure.exc_info)
                     lines += ["UNEXPECTED EXCEPTION: %s" % repr(inner_excinfo.value)]
@@ -347,7 +342,6 @@ def _check_all_skipped(test):
 
 
 class DoctestModule(pytest.Module):
-
     def collect(self):
         import doctest
 
@@ -480,9 +474,7 @@ def _get_report_choice(key):
         DOCTEST_REPORT_CHOICE_NDIFF: doctest.REPORT_NDIFF,
         DOCTEST_REPORT_CHOICE_ONLY_FIRST_FAILURE: doctest.REPORT_ONLY_FIRST_FAILURE,
         DOCTEST_REPORT_CHOICE_NONE: 0,
-    }[
-        key
-    ]
+    }[key]
 
 
 def _fix_spoof_python2(runner, encoding):
@@ -502,10 +494,9 @@ def _fix_spoof_python2(runner, encoding):
     from doctest import _SpoofOut
 
     class UnicodeSpoof(_SpoofOut):
-
         def getvalue(self):
             result = _SpoofOut.getvalue(self)
-            if encoding:
+            if encoding and isinstance(result, bytes):
                 result = result.decode(encoding)
             return result
 

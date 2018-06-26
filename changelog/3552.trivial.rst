@@ -1,1 +1,0 @@
-pytest's testsuite is no longer runnable through ``python setup.py test`` -- instead invoke ``pytest`` or ``tox`` directly.

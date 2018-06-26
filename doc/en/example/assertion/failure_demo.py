@@ -25,9 +25,7 @@ def pytest_generate_tests(metafunc):
 
 
 class TestFailing(object):
-
     def test_simple(self):
-
         def f():
             return 42
 
@@ -40,7 +38,6 @@ class TestFailing(object):
         otherfunc_multi(42, 6 * 9)
 
     def test_not(self):
-
         def f():
             return 42
 
@@ -48,7 +45,6 @@ class TestFailing(object):
 
 
 class TestSpecialisedExplanations(object):
-
     def test_eq_text(self):
         assert "spam" == "eggs"
 
@@ -106,7 +102,6 @@ class TestSpecialisedExplanations(object):
 
 
 def test_attribute():
-
     class Foo(object):
         b = 1
 
@@ -115,7 +110,6 @@ def test_attribute():
 
 
 def test_attribute_instance():
-
     class Foo(object):
         b = 1
 
@@ -123,9 +117,7 @@ def test_attribute_instance():
 
 
 def test_attribute_failure():
-
     class Foo(object):
-
         def _get_b(self):
             raise Exception("Failed to get attrib")
 
@@ -136,7 +128,6 @@ def test_attribute_failure():
 
 
 def test_attribute_multiple():
-
     class Foo(object):
         b = 1
 
@@ -151,7 +142,6 @@ def globf(x):
 
 
 class TestRaises(object):
-
     def test_raises(self):
         s = "qwe"  # NOQA
         raises(TypeError, "int(s)")
@@ -193,9 +183,7 @@ def test_dynamic_compile_shows_nicely():
 
 
 class TestMoreErrors(object):
-
     def test_complex_error(self):
-
         def f():
             return 44
 
@@ -218,7 +206,6 @@ class TestMoreErrors(object):
         assert s.startswith(g)
 
     def test_startswith_nested(self):
-
         def f():
             return "123"
 
@@ -246,9 +233,7 @@ class TestMoreErrors(object):
 
 
 class TestCustomAssertMsg(object):
-
     def test_single_line(self):
-
         class A(object):
             a = 1
 
@@ -256,7 +241,6 @@ class TestCustomAssertMsg(object):
         assert A.a == b, "A.a appears not to be b"
 
     def test_multiline(self):
-
         class A(object):
             a = 1
 
@@ -266,7 +250,6 @@ class TestCustomAssertMsg(object):
         ), "A.a appears not to be b\n" "or does not appear to be b\none of those"
 
     def test_custom_repr(self):
-
         class JSON(object):
             a = 1
 

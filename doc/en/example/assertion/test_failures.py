@@ -2,7 +2,7 @@
 import py
 
 failure_demo = py.path.local(__file__).dirpath("failure_demo.py")
-pytest_plugins = "pytester",
+pytest_plugins = ("pytester",)
 
 
 def test_failure_demo_fails_properly(testdir):

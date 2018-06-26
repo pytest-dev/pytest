@@ -8,6 +8,52 @@
 
 .. towncrier release notes start
 
+Pytest 3.6.2 (2018-06-20)
+=========================
+
+Bug Fixes
+---------
+
+- Fix regression in ``Node.add_marker`` by extracting the mark object of a
+  ``MarkDecorator``. (`#3555
+  <https://github.com/pytest-dev/pytest/issues/3555>`_)
+
+- Warnings without ``location`` were reported as ``None``. This is corrected to
+  now report ``<undetermined location>``. (`#3563
+  <https://github.com/pytest-dev/pytest/issues/3563>`_)
+
+- Continue to call finalizers in the stack when a finalizer in a former scope
+  raises an exception. (`#3569
+  <https://github.com/pytest-dev/pytest/issues/3569>`_)
+
+- Fix encoding error with `print` statements in doctests (`#3583
+  <https://github.com/pytest-dev/pytest/issues/3583>`_)
+
+
+Improved Documentation
+----------------------
+
+- Add documentation for the ``--strict`` flag. (`#3549
+  <https://github.com/pytest-dev/pytest/issues/3549>`_)
+
+
+Trivial/Internal Changes
+------------------------
+
+- Update old quotation style to parens in fixture.rst documentation. (`#3525
+  <https://github.com/pytest-dev/pytest/issues/3525>`_)
+
+- Improve display of hint about ``--fulltrace`` with ``KeyboardInterrupt``.
+  (`#3545 <https://github.com/pytest-dev/pytest/issues/3545>`_)
+
+- pytest's testsuite is no longer runnable through ``python setup.py test`` --
+  instead invoke ``pytest`` or ``tox`` directly. (`#3552
+  <https://github.com/pytest-dev/pytest/issues/3552>`_)
+
+- Fix typo in documentation (`#3567
+  <https://github.com/pytest-dev/pytest/issues/3567>`_)
+
+
 Pytest 3.6.1 (2018-06-05)
 =========================
 

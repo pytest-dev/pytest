@@ -86,9 +86,11 @@ class ApproxNumpy(ApproxBase):
         # shape of the array...
         import numpy as np
 
-        return "approx({!r})".format(
-            list(self._approx_scalar(x) for x in np.asarray(self.expected))
-        )
+        list_scalars = []
+        for x in np.ndindex(self.expected.shape):
+            list_scalars.append(self._approx_scalar(np.asscalar(self.expected[x])))
+
+        return "approx({!r})".format(list_scalars)
 
     if sys.version_info[0] == 2:
         __cmp__ = _cmp_raises_type_error
@@ -172,6 +174,7 @@ class ApproxScalar(ApproxBase):
     """
     Perform approximate comparisons for single numbers only.
     """
+
     DEFAULT_ABSOLUTE_TOLERANCE = 1e-12
     DEFAULT_RELATIVE_TOLERANCE = 1e-6
 
@@ -269,9 +272,7 @@ class ApproxScalar(ApproxBase):
         # we aren't even going to use it.
         relative_tolerance = set_default(
             self.rel, self.DEFAULT_RELATIVE_TOLERANCE
-        ) * abs(
-            self.expected
-        )
+        ) * abs(self.expected)
 
         if relative_tolerance < 0:
             raise ValueError(
@@ -497,7 +498,7 @@ def _is_numpy_array(obj):
 
 
 def raises(expected_exception, *args, **kwargs):
-    """
+    r"""
     Assert that a code block/function call raises ``expected_exception``
     and raise a failure exception otherwise.
 
@@ -650,7 +651,6 @@ raises.Exception = fail.Exception
 
 
 class RaisesContext(object):
-
     def __init__(self, expected_exception, message, match_expr):
         self.expected_exception = expected_exception
         self.message = message

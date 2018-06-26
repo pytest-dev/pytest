@@ -21,7 +21,6 @@ def cached_eval(config, expr, d):
 
 
 class MarkEvaluator(object):
-
     def __init__(self, item, name):
         self.item = item
         self._marks = None

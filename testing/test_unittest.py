@@ -389,7 +389,6 @@ def test_module_level_pytestmark(testdir):
 
 
 class TestTrialUnittest(object):
-
     def setup_class(cls):
         cls.ut = pytest.importorskip("twisted.trial.unittest")
         # on windows trial uses a socket for a reactor and apparently doesn't close it properly

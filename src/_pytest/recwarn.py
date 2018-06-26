@@ -85,7 +85,7 @@ class _DeprecatedCallContext(object):
 
 
 def warns(expected_warning, *args, **kwargs):
-    """Assert that code raises a particular class of warning.
+    r"""Assert that code raises a particular class of warning.
 
     Specifically, the parameter ``expected_warning`` can be a warning class or
     sequence of warning classes, and the inside the ``with`` block must issue a warning of that class or
@@ -193,13 +193,10 @@ class WarningsRecorder(warnings.catch_warnings):
 
 
 class WarningsChecker(WarningsRecorder):
-
     def __init__(self, expected_warning=None, match_expr=None):
         super(WarningsChecker, self).__init__()
 
-        msg = (
-            "exceptions must be old-style classes or " "derived from Warning, not %s"
-        )
+        msg = "exceptions must be old-style classes or " "derived from Warning, not %s"
         if isinstance(expected_warning, tuple):
             for exc in expected_warning:
                 if not inspect.isclass(exc):
