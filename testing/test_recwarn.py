@@ -21,7 +21,6 @@ def test_recwarn_functional(testdir):
 
 
 class TestWarningsRecorderChecker(object):
-
     def test_recording(self):
         rec = WarningsRecorder()
         with rec:
@@ -188,7 +187,6 @@ class TestDeprecatedCall(object):
 
 
 class TestWarns(object):
-
     def test_strings(self):
         # different messages, b/c Python suppresses multiple identical warnings
         source1 = "warnings.warn('w1', RuntimeWarning)"

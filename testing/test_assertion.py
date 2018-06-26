@@ -14,7 +14,6 @@ PY3 = sys.version_info >= (3, 0)
 
 @pytest.fixture
 def mock_config():
-
     class Config(object):
         verbose = False
 
@@ -27,7 +26,6 @@ def mock_config():
 
 
 class TestImportHookInstallation(object):
-
     @pytest.mark.parametrize("initial_conftest", [True, False])
     @pytest.mark.parametrize("mode", ["plain", "rewrite"])
     def test_conftest_assertion_rewrite(self, testdir, initial_conftest, mode):
@@ -288,7 +286,6 @@ class TestImportHookInstallation(object):
 
 
 class TestBinReprIntegration(object):
-
     def test_pytest_assertrepr_compare_called(self, testdir):
         testdir.makeconftest(
             """
@@ -321,7 +318,6 @@ def callequal(left, right, verbose=False):
 
 
 class TestAssert_reprcompare(object):
-
     def test_different_types(self):
         assert callequal([0, 1], "foo") is None
 
@@ -459,7 +455,6 @@ class TestAssert_reprcompare(object):
         MutableSequence = col.MutableSequence
 
         class TestSequence(MutableSequence):  # works with a Sequence subclass
-
             def __init__(self, iterable):
                 self.elements = list(iterable)
 
@@ -488,9 +483,7 @@ class TestAssert_reprcompare(object):
         assert len(expl) > 1
 
     def test_list_bad_repr(self):
-
         class A(object):
-
             def __repr__(self):
                 raise ValueError(42)
 
@@ -506,7 +499,6 @@ class TestAssert_reprcompare(object):
         """
 
         class A(str):
-
             def __repr__(self):
                 return ""
 
@@ -532,7 +524,6 @@ class TestAssert_reprcompare(object):
         """
 
         class A(str):
-
             def __repr__(self):
                 return "\xff"
 
@@ -557,7 +548,6 @@ class TestAssert_reprcompare(object):
 
 
 class TestFormatExplanation(object):
-
     def test_special_chars_full(self, testdir):
         # Issue 453, for the bug this would raise IndexError
         testdir.makepyfile(
@@ -781,24 +771,19 @@ def test_rewritten(testdir):
 def test_reprcompare_notin(mock_config):
     detail = plugin.pytest_assertrepr_compare(
         mock_config, "not in", "foo", "aaafoobbb"
-    )[
-        1:
-    ]
+    )[1:]
     assert detail == ["'foo' is contained here:", "  aaafoobbb", "?    +++"]
 
 
 def test_reprcompare_whitespaces(mock_config):
     detail = plugin.pytest_assertrepr_compare(mock_config, "==", "\r\n", "\n")
-    assert (
-        detail
-        == [
-            r"'\r\n' == '\n'",
-            r"Strings contain only whitespace, escaping them using repr()",
-            r"- '\r\n'",
-            r"?  --",
-            r"+ '\n'",
-        ]
-    )
+    assert detail == [
+        r"'\r\n' == '\n'",
+        r"Strings contain only whitespace, escaping them using repr()",
+        r"- '\r\n'",
+        r"?  --",
+        r"+ '\n'",
+    ]
 
 
 def test_pytest_assertrepr_compare_integration(testdir):
@@ -1036,7 +1021,6 @@ def test_AssertionError_message(testdir):
 def test_set_with_unsortable_elements():
     # issue #718
     class UnsortableKey(object):
-
         def __init__(self, name):
             self.name = name
 
@@ -1169,4 +1153,7 @@ def test_issue_1944(testdir):
     )
     result = testdir.runpytest()
     result.stdout.fnmatch_lines(["*1 error*"])
-    assert "AttributeError: 'Module' object has no attribute '_obj'" not in result.stdout.str()
+    assert (
+        "AttributeError: 'Module' object has no attribute '_obj'"
+        not in result.stdout.str()
+    )

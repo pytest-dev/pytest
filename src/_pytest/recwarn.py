@@ -193,13 +193,10 @@ class WarningsRecorder(warnings.catch_warnings):
 
 
 class WarningsChecker(WarningsRecorder):
-
     def __init__(self, expected_warning=None, match_expr=None):
         super(WarningsChecker, self).__init__()
 
-        msg = (
-            "exceptions must be old-style classes or " "derived from Warning, not %s"
-        )
+        msg = "exceptions must be old-style classes or " "derived from Warning, not %s"
         if isinstance(expected_warning, tuple):
             for exc in expected_warning:
                 if not inspect.isclass(exc):

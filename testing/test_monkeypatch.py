@@ -17,7 +17,6 @@ def mp():
 
 
 def test_setattr():
-
     class A(object):
         x = 1
 
@@ -42,7 +41,6 @@ def test_setattr():
 
 
 class TestSetattrWithImportPath(object):
-
     def test_string_expression(self, monkeypatch):
         monkeypatch.setattr("os.path.abspath", lambda x: "hello2")
         assert os.path.abspath("123") == "hello2"
@@ -84,7 +82,6 @@ class TestSetattrWithImportPath(object):
 
 
 def test_delattr():
-
     class A(object):
         x = 1
 
@@ -311,7 +308,6 @@ def test_importerror(testdir):
 
 
 class SampleNew(object):
-
     @staticmethod
     def hello():
         return True

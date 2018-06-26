@@ -43,6 +43,7 @@ class Skipped(OutcomeException):
 
 class Failed(OutcomeException):
     """ raised from an explicit call to pytest.fail() """
+
     __module__ = "builtins"
 
 

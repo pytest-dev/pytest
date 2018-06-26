@@ -174,6 +174,7 @@ class ApproxScalar(ApproxBase):
     """
     Perform approximate comparisons for single numbers only.
     """
+
     DEFAULT_ABSOLUTE_TOLERANCE = 1e-12
     DEFAULT_RELATIVE_TOLERANCE = 1e-6
 
@@ -271,9 +272,7 @@ class ApproxScalar(ApproxBase):
         # we aren't even going to use it.
         relative_tolerance = set_default(
             self.rel, self.DEFAULT_RELATIVE_TOLERANCE
-        ) * abs(
-            self.expected
-        )
+        ) * abs(self.expected)
 
         if relative_tolerance < 0:
             raise ValueError(
@@ -652,7 +651,6 @@ raises.Exception = fail.Exception
 
 
 class RaisesContext(object):
-
     def __init__(self, expected_exception, message, match_expr):
         self.expected_exception = expected_exception
         self.message = message

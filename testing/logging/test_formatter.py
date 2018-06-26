@@ -18,7 +18,6 @@ def test_coloredlogformatter():
     )
 
     class ColorConfig(object):
-
         class option(object):
             pass
 
@@ -26,9 +25,8 @@ def test_coloredlogformatter():
     tw.hasmarkup = True
     formatter = ColoredLevelFormatter(tw, logfmt)
     output = formatter.format(record)
-    assert (
-        output
-        == ("dummypath                   10 " "\x1b[32mINFO    \x1b[0m Test Message")
+    assert output == (
+        "dummypath                   10 " "\x1b[32mINFO    \x1b[0m Test Message"
     )
 
     tw.hasmarkup = False

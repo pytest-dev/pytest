@@ -12,7 +12,6 @@ from _pytest import runner, main, outcomes
 
 
 class TestSetupState(object):
-
     def test_setup(self, testdir):
         ss = runner.SetupState()
         item = testdir.getitem("def test_func(): pass")
@@ -101,7 +100,6 @@ class TestSetupState(object):
 
 
 class BaseFunctionalTests(object):
-
     def test_passfunction(self, testdir):
         reports = testdir.runitem(
             """
@@ -253,10 +251,10 @@ class BaseFunctionalTests(object):
         """
         )
         reps = rec.getcalls("pytest_runtest_logstart pytest_runtest_logfinish")
-        assert (
-            [x._name for x in reps]
-            == ["pytest_runtest_logstart", "pytest_runtest_logfinish"]
-        )
+        assert [x._name for x in reps] == [
+            "pytest_runtest_logstart",
+            "pytest_runtest_logfinish",
+        ]
         for rep in reps:
             assert rep.nodeid == "test_logstart_logfinish_hooks.py::test_func"
             assert rep.location == ("test_logstart_logfinish_hooks.py", 1, "test_func")
@@ -395,9 +393,7 @@ class BaseFunctionalTests(object):
 
 
 class TestExecutionNonForked(BaseFunctionalTests):
-
     def getrunner(self):
-
         def f(item):
             return runner.runtestprotocol(item, log=False)
 
@@ -439,7 +435,6 @@ class TestExecutionForked(BaseFunctionalTests):
 
 
 class TestSessionReports(object):
-
     def test_collect_result(self, testdir):
         col = testdir.getmodulecol(
             """
@@ -869,14 +864,11 @@ def test_current_test_env_var(testdir, monkeypatch):
     result = testdir.runpytest_inprocess()
     assert result.ret == 0
     test_id = "test_current_test_env_var.py::test"
-    assert (
-        pytest_current_test_vars
-        == [
-            ("setup", test_id + " (setup)"),
-            ("call", test_id + " (call)"),
-            ("teardown", test_id + " (teardown)"),
-        ]
-    )
+    assert pytest_current_test_vars == [
+        ("setup", test_id + " (setup)"),
+        ("call", test_id + " (call)"),
+        ("teardown", test_id + " (teardown)"),
+    ]
     assert "PYTEST_CURRENT_TEST" not in os.environ
 
 

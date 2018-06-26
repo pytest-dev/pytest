@@ -274,6 +274,7 @@ class Traceback(list):
     """ Traceback objects encapsulate and offer higher level
         access to Traceback entries.
     """
+
     Entry = TracebackEntry
 
     def __init__(self, tb, excinfo=None):
@@ -382,8 +383,11 @@ class ExceptionInfo(object):
     """ wraps sys.exc_info() objects and offers
         help for navigating the traceback.
     """
+
     _striptext = ""
-    _assert_start_repr = "AssertionError(u'assert " if _PY2 else "AssertionError('assert "
+    _assert_start_repr = (
+        "AssertionError(u'assert " if _PY2 else "AssertionError('assert "
+    )
 
     def __init__(self, tup=None, exprinfo=None):
         import _pytest._code
@@ -424,7 +428,7 @@ class ExceptionInfo(object):
         text = text.rstrip()
         if tryshort:
             if text.startswith(self._striptext):
-                text = text[len(self._striptext):]
+                text = text[len(self._striptext) :]
         return text
 
     def errisinstance(self, exc):
@@ -497,6 +501,7 @@ class ExceptionInfo(object):
 @attr.s
 class FormattedExcinfo(object):
     """ presenting information about failing Functions and Generators. """
+
     # for traceback entries
     flow_marker = ">"
     fail_marker = "E"
@@ -556,7 +561,7 @@ class FormattedExcinfo(object):
             for line in source.lines[:line_index]:
                 lines.append(space_prefix + line)
             lines.append(self.flow_marker + "   " + source.lines[line_index])
-            for line in source.lines[line_index + 1:]:
+            for line in source.lines[line_index + 1 :]:
                 lines.append(space_prefix + line)
         if excinfo is not None:
             indent = 4 if short else self._getindent(source)
@@ -691,7 +696,7 @@ class FormattedExcinfo(object):
         else:
             if recursionindex is not None:
                 extraline = "!!! Recursion detected (same locals & position)"
-                traceback = traceback[:recursionindex + 1]
+                traceback = traceback[: recursionindex + 1]
             else:
                 extraline = None
 
@@ -722,15 +727,19 @@ class FormattedExcinfo(object):
                 repr_chain += [(reprtraceback, reprcrash, descr)]
                 if e.__cause__ is not None:
                     e = e.__cause__
-                    excinfo = ExceptionInfo(
-                        (type(e), e, e.__traceback__)
-                    ) if e.__traceback__ else None
+                    excinfo = (
+                        ExceptionInfo((type(e), e, e.__traceback__))
+                        if e.__traceback__
+                        else None
+                    )
                     descr = "The above exception was the direct cause of the following exception:"
-                elif (e.__context__ is not None and not e.__suppress_context__):
+                elif e.__context__ is not None and not e.__suppress_context__:
                     e = e.__context__
-                    excinfo = ExceptionInfo(
-                        (type(e), e, e.__traceback__)
-                    ) if e.__traceback__ else None
+                    excinfo = (
+                        ExceptionInfo((type(e), e, e.__traceback__))
+                        if e.__traceback__
+                        else None
+                    )
                     descr = "During handling of the above exception, another exception occurred:"
                 else:
                     e = None
@@ -739,7 +748,6 @@ class FormattedExcinfo(object):
 
 
 class TerminalRepr(object):
-
     def __str__(self):
         s = self.__unicode__()
         if _PY2:
@@ -759,7 +767,6 @@ class TerminalRepr(object):
 
 
 class ExceptionRepr(TerminalRepr):
-
     def __init__(self):
         self.sections = []
 
@@ -773,7 +780,6 @@ class ExceptionRepr(TerminalRepr):
 
 
 class ExceptionChainRepr(ExceptionRepr):
-
     def __init__(self, chain):
         super(ExceptionChainRepr, self).__init__()
         self.chain = chain
@@ -792,7 +798,6 @@ class ExceptionChainRepr(ExceptionRepr):
 
 
 class ReprExceptionInfo(ExceptionRepr):
-
     def __init__(self, reprtraceback, reprcrash):
         super(ReprExceptionInfo, self).__init__()
         self.reprtraceback = reprtraceback
@@ -831,7 +836,6 @@ class ReprTraceback(TerminalRepr):
 
 
 class ReprTracebackNative(ReprTraceback):
-
     def __init__(self, tblines):
         self.style = "native"
         self.reprentries = [ReprEntryNative(tblines)]
@@ -885,7 +889,6 @@ class ReprEntry(TerminalRepr):
 
 
 class ReprFileLocation(TerminalRepr):
-
     def __init__(self, path, lineno, message):
         self.path = str(path)
         self.lineno = lineno
@@ -903,7 +906,6 @@ class ReprFileLocation(TerminalRepr):
 
 
 class ReprLocals(TerminalRepr):
-
     def __init__(self, lines):
         self.lines = lines
 
@@ -913,7 +915,6 @@ class ReprLocals(TerminalRepr):
 
 
 class ReprFuncArgs(TerminalRepr):
-
     def __init__(self, args):
         self.args = args
 

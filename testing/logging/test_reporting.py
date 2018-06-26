@@ -520,16 +520,22 @@ def test_sections_single_new_line_after_test_outcome(testdir, request):
             "=* 1 passed in *=",
         ]
     )
-    assert re.search(
-        r"(.+)live log teardown(.+)\n(.+)WARNING(.+)\n(.+)WARNING(.+)",
-        result.stdout.str(),
-        re.MULTILINE,
-    ) is not None
-    assert re.search(
-        r"(.+)live log finish(.+)\n(.+)WARNING(.+)\n(.+)WARNING(.+)",
-        result.stdout.str(),
-        re.MULTILINE,
-    ) is not None
+    assert (
+        re.search(
+            r"(.+)live log teardown(.+)\n(.+)WARNING(.+)\n(.+)WARNING(.+)",
+            result.stdout.str(),
+            re.MULTILINE,
+        )
+        is not None
+    )
+    assert (
+        re.search(
+            r"(.+)live log finish(.+)\n(.+)WARNING(.+)\n(.+)WARNING(.+)",
+            result.stdout.str(),
+            re.MULTILINE,
+        )
+        is not None
+    )
 
 
 def test_log_cli_level(testdir):
@@ -850,7 +856,6 @@ def test_live_logging_suspends_capture(has_capture_manager, request):
     assert CaptureManager.resume_global_capture
 
     class DummyTerminal(six.StringIO):
-
         def section(self, *args, **kwargs):
             pass
 
@@ -865,10 +870,10 @@ def test_live_logging_suspends_capture(has_capture_manager, request):
 
     logger.critical("some message")
     if has_capture_manager:
-        assert (
-            MockCaptureManager.calls
-            == ["suspend_global_capture", "resume_global_capture"]
-        )
+        assert MockCaptureManager.calls == [
+            "suspend_global_capture",
+            "resume_global_capture",
+        ]
     else:
         assert MockCaptureManager.calls == []
     assert out_file.getvalue() == "\nsome message\n"

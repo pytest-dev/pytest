@@ -6,11 +6,10 @@ import pytest
 import os
 import shutil
 
-pytest_plugins = "pytester",
+pytest_plugins = ("pytester",)
 
 
 class TestNewAPI(object):
-
     def test_config_cache_makedir(self, testdir):
         testdir.makeini("[pytest]")
         config = testdir.parseconfigure()
@@ -182,7 +181,6 @@ def test_cache_show(testdir):
 
 
 class TestLastFailed(object):
-
     def test_lastfailed_usecase(self, testdir, monkeypatch):
         monkeypatch.setenv("PYTHONDONTWRITEBYTECODE", 1)
         p = testdir.makepyfile(
@@ -557,10 +555,9 @@ class TestLastFailed(object):
         )
         result = testdir.runpytest()
         result.stdout.fnmatch_lines("*1 failed*")
-        assert (
-            self.get_cached_last_failed(testdir)
-            == ["test_xfail_strict_considered_failure.py::test"]
-        )
+        assert self.get_cached_last_failed(testdir) == [
+            "test_xfail_strict_considered_failure.py::test"
+        ]
 
     @pytest.mark.parametrize("mark", ["mark.xfail", "mark.skip"])
     def test_failed_changed_to_xfail_or_skip(self, testdir, mark):
@@ -572,10 +569,9 @@ class TestLastFailed(object):
         """
         )
         result = testdir.runpytest()
-        assert (
-            self.get_cached_last_failed(testdir)
-            == ["test_failed_changed_to_xfail_or_skip.py::test"]
-        )
+        assert self.get_cached_last_failed(testdir) == [
+            "test_failed_changed_to_xfail_or_skip.py::test"
+        ]
         assert result.ret == 1
 
         testdir.makepyfile(
@@ -619,10 +615,10 @@ class TestLastFailed(object):
         """
         )
         testdir.runpytest()
-        assert (
-            self.get_cached_last_failed(testdir)
-            == ["test_bar.py::test_bar_2", "test_foo.py::test_foo_4"]
-        )
+        assert self.get_cached_last_failed(testdir) == [
+            "test_bar.py::test_bar_2",
+            "test_foo.py::test_foo_4",
+        ]
 
         # 2. fix test_bar_2, run only test_bar.py
         testdir.makepyfile(
@@ -695,7 +691,6 @@ class TestLastFailed(object):
 
 
 class TestNewFirst(object):
-
     def test_newfirst_usecase(self, testdir):
         testdir.makepyfile(
             **{

@@ -86,7 +86,6 @@ class FilesCompleter(object):
 
 
 class TestArgComplete(object):
-
     @pytest.mark.skipif("sys.platform in ('win32', 'darwin')")
     def test_compare_with_compgen(self):
         from _pytest._argcomplete import FastFilesCompleter

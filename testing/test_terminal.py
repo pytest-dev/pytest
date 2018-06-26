@@ -18,7 +18,6 @@ DistInfo = collections.namedtuple("DistInfo", ["project_name", "version"])
 
 
 class Option(object):
-
     def __init__(self, verbose=False, fulltrace=False):
         self.verbose = verbose
         self.fulltrace = fulltrace
@@ -68,7 +67,6 @@ def test_plugin_nameversion(input, expected):
 
 
 class TestTerminal(object):
-
     def test_pass_skip_fail(self, testdir, option):
         testdir.makepyfile(
             """
@@ -248,7 +246,6 @@ class TestTerminal(object):
 
 
 class TestCollectonly(object):
-
     def test_collectonly_basic(self, testdir):
         testdir.makepyfile(
             """
@@ -356,7 +353,6 @@ def test_repr_python_version(monkeypatch):
 
 
 class TestFixtureReporting(object):
-
     def test_setup_fixture_error(self, testdir):
         testdir.makepyfile(
             """
@@ -457,7 +453,6 @@ class TestFixtureReporting(object):
 
 
 class TestTerminalFunctional(object):
-
     def test_deselected(self, testdir):
         testpath = testdir.makepyfile(
             """
@@ -735,9 +730,7 @@ def test_color_yes_collection_on_non_atty(testdir, verbose):
 
 
 def test_getreportopt():
-
     class Config(object):
-
         class Option(object):
             reportchars = ""
             disable_warnings = True
@@ -1102,7 +1095,6 @@ def test_no_trailing_whitespace_after_inifile_word(testdir):
 
 
 class TestProgress(object):
-
     @pytest.fixture
     def many_tests_files(self, testdir):
         testdir.makepyfile(

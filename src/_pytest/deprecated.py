@@ -22,7 +22,9 @@ FUNCARG_PREFIX = (
     "Please remove the prefix and use the @pytest.fixture decorator instead."
 )
 
-CFG_PYTEST_SECTION = "[pytest] section in {filename} files is deprecated, use [tool:pytest] instead."
+CFG_PYTEST_SECTION = (
+    "[pytest] section in {filename} files is deprecated, use [tool:pytest] instead."
+)
 
 GETFUNCARGVALUE = "use of getfuncargvalue is deprecated, use getfixturevalue"
 

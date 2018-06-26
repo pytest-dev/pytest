@@ -7,7 +7,6 @@ def test_function():
 
 
 class TestClass(object):
-
     def test_method(self):
         pass
 

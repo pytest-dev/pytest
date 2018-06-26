@@ -14,7 +14,6 @@ def test_getstartingblock_multiline():
     """
 
     class A(object):
-
         def __init__(self, *args):
             frame = sys._getframe(1)
             self.source = _pytest._code.Frame(frame).statement

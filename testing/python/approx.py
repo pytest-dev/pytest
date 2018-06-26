@@ -13,7 +13,6 @@ inf, nan = float("inf"), float("nan")
 
 
 class MyDocTestRunner(doctest.DocTestRunner):
-
     def __init__(self):
         doctest.DocTestRunner.__init__(self)
 
@@ -26,7 +25,6 @@ class MyDocTestRunner(doctest.DocTestRunner):
 
 
 class TestApprox(object):
-
     @pytest.fixture
     def plus_minus(self):
         return u"\u00b1" if sys.version_info[0] > 2 else u"+-"
@@ -34,23 +32,20 @@ class TestApprox(object):
     def test_repr_string(self, plus_minus):
         tol1, tol2, infr = "1.0e-06", "2.0e-06", "inf"
         assert repr(approx(1.0)) == "1.0 {pm} {tol1}".format(pm=plus_minus, tol1=tol1)
-        assert (
-            repr(approx([1.0, 2.0]))
-            == "approx([1.0 {pm} {tol1}, 2.0 {pm} {tol2}])".format(
-                pm=plus_minus, tol1=tol1, tol2=tol2
-            )
+        assert repr(
+            approx([1.0, 2.0])
+        ) == "approx([1.0 {pm} {tol1}, 2.0 {pm} {tol2}])".format(
+            pm=plus_minus, tol1=tol1, tol2=tol2
         )
-        assert (
-            repr(approx((1.0, 2.0)))
-            == "approx((1.0 {pm} {tol1}, 2.0 {pm} {tol2}))".format(
-                pm=plus_minus, tol1=tol1, tol2=tol2
-            )
+        assert repr(
+            approx((1.0, 2.0))
+        ) == "approx((1.0 {pm} {tol1}, 2.0 {pm} {tol2}))".format(
+            pm=plus_minus, tol1=tol1, tol2=tol2
         )
         assert repr(approx(inf)) == "inf"
         assert repr(approx(1.0, rel=nan)) == "1.0 {pm} ???".format(pm=plus_minus)
-        assert (
-            repr(approx(1.0, rel=inf))
-            == "1.0 {pm} {infr}".format(pm=plus_minus, infr=infr)
+        assert repr(approx(1.0, rel=inf)) == "1.0 {pm} {infr}".format(
+            pm=plus_minus, infr=infr
         )
         assert repr(approx(1.0j, rel=inf)) == "1j"
 
