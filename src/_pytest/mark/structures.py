@@ -231,6 +231,12 @@ def get_unpacked_marks(obj):
 
 
 def normalize_mark_list(mark_list):
+    """
+    normalizes marker decorating helpers to mark objects
+
+    :type mark_list: List[Union[Mark, Markdecorator]]
+    :rtype: List[Mark]
+    """
     return [getattr(mark, "mark", mark) for mark in mark_list]  # unpack MarkDecorator
 
 

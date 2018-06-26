@@ -1,1 +1,1 @@
-unpack marks from parameterization to prevent the markdecorator missmatch bug.
+no longer ValueError when using the ``get_marker`` api.
