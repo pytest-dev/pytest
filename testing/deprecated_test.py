@@ -84,7 +84,6 @@ def test_str_args_deprecated(tmpdir, testdir):
     warnings = []
 
     class Collect(object):
-
         def pytest_logwarning(self, message):
             warnings.append(message)
 
@@ -260,6 +259,7 @@ def test_pytest_plugins_in_non_top_level_conftest_deprecated_no_false_positives(
     )
     res = testdir.runpytest_subprocess()
     assert res.ret == 0
-    assert str(PYTEST_PLUGINS_FROM_NON_TOP_LEVEL_CONFTEST).splitlines()[
-        0
-    ] not in res.stderr.str()
+    assert (
+        str(PYTEST_PLUGINS_FROM_NON_TOP_LEVEL_CONFTEST).splitlines()[0]
+        not in res.stderr.str()
+    )

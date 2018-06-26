@@ -1,13 +1,14 @@
 import inspect
 import warnings
 from collections import namedtuple
+from functools import reduce
 from operator import attrgetter
 
 import attr
 
 from ..deprecated import MARK_PARAMETERSET_UNPACKING, MARK_INFO_ATTRIBUTE
 from ..compat import NOTSET, getfslineno, MappingMixin
-from six.moves import map, reduce
+from six.moves import map
 
 
 EMPTY_PARAMETERSET_OPTION = "empty_parameter_set_mark"
@@ -24,9 +25,10 @@ def alias(name, warning=None):
 
 
 def istestfunc(func):
-    return hasattr(func, "__call__") and getattr(
-        func, "__name__", "<lambda>"
-    ) != "<lambda>"
+    return (
+        hasattr(func, "__call__")
+        and getattr(func, "__name__", "<lambda>") != "<lambda>"
+    )
 
 
 def get_empty_parameterset_mark(config, argnames, func):
@@ -39,18 +41,20 @@ def get_empty_parameterset_mark(config, argnames, func):
         raise LookupError(requested_mark)
     fs, lineno = getfslineno(func)
     reason = "got empty parameter set %r, function %s at %s:%d" % (
-        argnames, func.__name__, fs, lineno
+        argnames,
+        func.__name__,
+        fs,
+        lineno,
     )
     return mark(reason=reason)
 
 
 class ParameterSet(namedtuple("ParameterSet", "values, marks, id")):
-
     @classmethod
     def param(cls, *values, **kw):
         marks = kw.pop("marks", ())
         if isinstance(marks, MarkDecorator):
-            marks = marks,
+            marks = (marks,)
         else:
             assert isinstance(marks, (tuple, list, set))
 
@@ -87,7 +91,7 @@ class ParameterSet(namedtuple("ParameterSet", "values, marks, id")):
             argval = argval.args[-1]
         assert not isinstance(argval, ParameterSet)
         if legacy_force_tuple:
-            argval = argval,
+            argval = (argval,)
 
         if newmarks:
             warnings.warn(MARK_PARAMETERSET_UNPACKING)
@@ -332,6 +336,7 @@ class MarkGenerator(object):
 
     will set a 'slowtest' :class:`MarkInfo` object
     on the ``test_function`` object. """
+
     _config = None
 
     def __getattr__(self, name):
@@ -361,7 +366,6 @@ MARK_GEN = MarkGenerator()
 
 
 class NodeKeywords(MappingMixin):
-
     def __init__(self, node):
         self.node = node
         self.parent = node.parent
@@ -408,6 +412,7 @@ class NodeMarkers(object):
         unstable api
 
     """
+
     own_markers = attr.ib(default=attr.Factory(list))
 
     def update(self, add_markers):

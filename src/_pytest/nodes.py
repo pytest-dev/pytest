@@ -48,7 +48,7 @@ def ischildnode(baseid, nodeid):
     node_parts = _splitnode(nodeid)
     if len(node_parts) < len(base_parts):
         return False
-    return node_parts[:len(base_parts)] == base_parts
+    return node_parts[: len(base_parts)] == base_parts
 
 
 @attr.s
@@ -341,7 +341,6 @@ def _check_initialpaths_for_relpath(session, fspath):
 
 
 class FSCollector(Collector):
-
     def __init__(self, fspath, parent=None, config=None, session=None, nodeid=None):
         fspath = py.path.local(fspath)  # xxx only for test_resultlog.py?
         name = fspath.basename
@@ -375,6 +374,7 @@ class Item(Node):
     """ a basic test invocation item. Note that for a single function
     there might be multiple test invocation items.
     """
+
     nextitem = None
 
     def __init__(self, name, parent=None, config=None, session=None, nodeid=None):

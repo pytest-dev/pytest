@@ -10,7 +10,6 @@ def setup(request):
 
 
 class CostlySetup(object):
-
     def __init__(self):
         import time
 

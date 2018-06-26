@@ -8,7 +8,6 @@ from _pytest.main import Session, EXIT_NOTESTSCOLLECTED, _in_venv
 
 
 class TestCollector(object):
-
     def test_collect_versus_item(self):
         from pytest import Collector, Item
 
@@ -115,7 +114,6 @@ class TestCollector(object):
 
 
 class TestCollectFS(object):
-
     def test_ignored_certain_directories(self, testdir):
         tmpdir = testdir.tmpdir
         tmpdir.ensure("build", "test_notfound.py")
@@ -253,12 +251,10 @@ class TestCollectFS(object):
 
 
 class TestCollectPluginHookRelay(object):
-
     def test_pytest_collect_file(self, testdir):
         wascalled = []
 
         class Plugin(object):
-
             def pytest_collect_file(self, path, parent):
                 if not path.basename.startswith("."):
                     # Ignore hidden files, e.g. .testmondata.
@@ -273,7 +269,6 @@ class TestCollectPluginHookRelay(object):
         wascalled = []
 
         class Plugin(object):
-
             def pytest_collect_directory(self, path, parent):
                 wascalled.append(path.basename)
 
@@ -285,7 +280,6 @@ class TestCollectPluginHookRelay(object):
 
 
 class TestPrunetraceback(object):
-
     def test_custom_repr_failure(self, testdir):
         p = testdir.makepyfile(
             """
@@ -335,7 +329,6 @@ class TestPrunetraceback(object):
 
 
 class TestCustomConftests(object):
-
     def test_ignore_collect_path(self, testdir):
         testdir.makeconftest(
             """
@@ -437,7 +430,6 @@ class TestCustomConftests(object):
 
 
 class TestSession(object):
-
     def test_parsearg(self, testdir):
         p = testdir.makepyfile("def test_func(): pass")
         subdir = testdir.mkdir("sub")
@@ -634,7 +626,6 @@ class TestSession(object):
 
 
 class Test_getinitialnodes(object):
-
     def test_global_file(self, testdir, tmpdir):
         x = tmpdir.ensure("x.py")
         with tmpdir.as_cwd():
@@ -662,7 +653,6 @@ class Test_getinitialnodes(object):
 
 
 class Test_genitems(object):
-
     def test_check_collect_hashes(self, testdir):
         p = testdir.makepyfile(
             """
@@ -776,7 +766,6 @@ def test_matchnodes_two_collections_same_file(testdir):
 
 
 class TestNodekeywords(object):
-
     def test_no_under(self, testdir):
         modcol = testdir.getmodulecol(
             """

@@ -69,13 +69,12 @@ def filter_traceback(entry):
     # entry.path might point to a non-existing file, in which case it will
     # also return a str object. see #1133
     p = py.path.local(entry.path)
-    return not p.relto(_pluggy_dir) and not p.relto(_pytest_dir) and not p.relto(
-        _py_dir
+    return (
+        not p.relto(_pluggy_dir) and not p.relto(_pytest_dir) and not p.relto(_py_dir)
     )
 
 
 def pyobj_property(name):
-
     def get(self):
         node = self.getparent(getattr(__import__("pytest"), name))
         if node is not None:
@@ -258,7 +257,6 @@ class PyobjMixin(PyobjContext):
         super(PyobjMixin, self).__init__(*k, **kw)
 
     def obj():
-
         def fget(self):
             obj = getattr(self, "_obj", None)
             if obj is None:
@@ -320,7 +318,6 @@ class PyobjMixin(PyobjContext):
 
 
 class PyCollector(PyobjMixin, nodes.Collector):
-
     def funcnamefilter(self, name):
         return self._matches_prefix_or_glob_option("python_functions", name)
 
@@ -487,9 +484,11 @@ class Module(nodes.File, PyCollector):
             exc_info = ExceptionInfo()
             if self.config.getoption("verbose") < 2:
                 exc_info.traceback = exc_info.traceback.filter(filter_traceback)
-            exc_repr = exc_info.getrepr(
-                style="short"
-            ) if exc_info.traceback else exc_info.exconly()
+            exc_repr = (
+                exc_info.getrepr(style="short")
+                if exc_info.traceback
+                else exc_info.exconly()
+            )
             formatted_tb = safe_str(exc_repr)
             raise self.CollectError(
                 "ImportError while importing test module '{fspath}'.\n"
@@ -673,7 +672,6 @@ class FunctionMixin(PyobjMixin):
 
 
 class Generator(FunctionMixin, PyCollector):
-
     def collect(self):
         # test generators are seen as collectors but they also
         # invoke setup/teardown on popular request
@@ -728,20 +726,18 @@ def hasnew(obj):
 
 
 class CallSpec2(object):
-
     def __init__(self, metafunc):
         self.metafunc = metafunc
         self.funcargs = {}
         self._idlist = []
         self.params = {}
         self._globalid = NOTSET
-        self._globalid_args = set()
         self._globalparam = NOTSET
         self._arg2scopenum = {}  # used for sorting parametrized resources
         self.marks = []
         self.indices = {}
 
-    def copy(self, metafunc):
+    def copy(self):
         cs = CallSpec2(self.metafunc)
         cs.funcargs.update(self.funcargs)
         cs.params.update(self.params)
@@ -750,7 +746,6 @@ class CallSpec2(object):
         cs._arg2scopenum.update(self._arg2scopenum)
         cs._idlist = list(self._idlist)
         cs._globalid = self._globalid
-        cs._globalid_args = self._globalid_args
         cs._globalparam = self._globalparam
         return cs
 
@@ -933,7 +928,7 @@ class Metafunc(fixtures.FuncargnamesCompatAttr):
                             param.values, argnames
                         )
                     )
-                newcallspec = callspec.copy(self)
+                newcallspec = callspec.copy()
                 newcallspec.setmulti2(
                     valtypes,
                     argnames,
@@ -1004,9 +999,9 @@ def _find_parametrized_scope(argnames, arg2fixturedefs, indirect):
     from _pytest.fixtures import scopes
 
     indirect_as_list = isinstance(indirect, (list, tuple))
-    all_arguments_are_fixtures = indirect is True or indirect_as_list and len(
-        indirect
-    ) == argnames
+    all_arguments_are_fixtures = (
+        indirect is True or indirect_as_list and len(indirect) == argnames
+    )
     if all_arguments_are_fixtures:
         fixturedefs = arg2fixturedefs or {}
         used_scopes = [fixturedef[0].scope for name, fixturedef in fixturedefs.items()]
@@ -1028,8 +1023,9 @@ def _idval(val, argname, idx, idfn, config=None):
             # See issue https://github.com/pytest-dev/pytest/issues/2169
             import warnings
 
-            msg = "Raised while trying to determine id of parameter %s at position %d." % (
-                argname, idx
+            msg = (
+                "Raised while trying to determine id of parameter %s at position %d."
+                % (argname, idx)
             )
             msg += "\nUpdate your code as this will raise an error in pytest-4.0."
             warnings.warn(msg, DeprecationWarning)
@@ -1224,6 +1220,7 @@ class Function(FunctionMixin, nodes.Item, fixtures.FuncargnamesCompatAttr):
     """ a Function Item is responsible for setting up and executing a
     Python test function.
     """
+
     _genid = None
     # disable since functions handle it themselfes
     _ALLOW_MARKERS = False

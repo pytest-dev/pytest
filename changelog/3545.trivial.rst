@@ -1,1 +1,0 @@
-Improve display of hint about ``--fulltrace`` with ``KeyboardInterrupt``.

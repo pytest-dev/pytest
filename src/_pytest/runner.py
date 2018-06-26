@@ -186,6 +186,7 @@ def call_runtest_hook(item, when, **kwds):
 
 class CallInfo(object):
     """ Result/Exception info a function invocation. """
+
     #: None or ExceptionInfo object.
     excinfo = None
 
@@ -221,13 +222,15 @@ def getslaveinfoline(node):
         d = node.slaveinfo
         ver = "%s.%s.%s" % d["version_info"][:3]
         node._slaveinfocache = s = "[%s] %s -- Python %s %s" % (
-            d["id"], d["sysplatform"], ver, d["executable"]
+            d["id"],
+            d["sysplatform"],
+            ver,
+            d["executable"],
         )
         return s
 
 
 class BaseReport(object):
-
     def __init__(self, **kw):
         self.__dict__.update(kw)
 
@@ -401,7 +404,9 @@ class TestReport(BaseReport):
 
     def __repr__(self):
         return "<TestReport %r when=%r outcome=%r>" % (
-            self.nodeid, self.when, self.outcome
+            self.nodeid,
+            self.when,
+            self.outcome,
         )
 
 
@@ -442,7 +447,6 @@ def pytest_make_collect_report(collector):
 
 
 class CollectReport(BaseReport):
-
     def __init__(self, nodeid, outcome, longrepr, result, sections=(), **extra):
         self.nodeid = nodeid
         self.outcome = outcome
@@ -457,12 +461,13 @@ class CollectReport(BaseReport):
 
     def __repr__(self):
         return "<CollectReport %r lenresult=%s outcome=%r>" % (
-            self.nodeid, len(self.result), self.outcome
+            self.nodeid,
+            len(self.result),
+            self.outcome,
         )
 
 
 class CollectErrorRepr(TerminalRepr):
-
     def __init__(self, msg):
         self.longrepr = msg
 
@@ -529,7 +534,7 @@ class SetupState(object):
     def _teardown_towards(self, needed_collectors):
         exc = None
         while self.stack:
-            if self.stack == needed_collectors[:len(self.stack)]:
+            if self.stack == needed_collectors[: len(self.stack)]:
                 break
             try:
                 self._pop_and_teardown()
@@ -551,7 +556,7 @@ class SetupState(object):
         for col in self.stack:
             if hasattr(col, "_prepare_exc"):
                 py.builtin._reraise(*col._prepare_exc)
-        for col in needed_collectors[len(self.stack):]:
+        for col in needed_collectors[len(self.stack) :]:
             self.stack.append(col)
             try:
                 col.setup()

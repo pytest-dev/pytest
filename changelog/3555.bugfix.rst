@@ -1,1 +1,0 @@
-Fix regression in ``Node.add_marker`` by extracting the mark object of a ``MarkDecorator``.

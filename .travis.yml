@@ -37,8 +37,8 @@ jobs:
       python: 'pypy-5.4'
     - env: TOXENV=py35
       python: '3.5'
-    - env: TOXENV=py35-freeze
-      python: '3.5'
+    - env: TOXENV=py36-freeze
+      python: '3.6'
     - env: TOXENV=py37
       python: 'nightly'
 

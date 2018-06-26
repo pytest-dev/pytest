@@ -65,6 +65,7 @@ def pytest_configure(config):
 
 class pytestPDB(object):
     """ Pseudo PDB that defers to the real pdb. """
+
     _pluginmanager = None
     _config = None
     _pdb_cls = pdb.Pdb
@@ -87,7 +88,6 @@ class pytestPDB(object):
 
 
 class PdbInvoke(object):
-
     def pytest_exception_interact(self, node, call, report):
         capman = node.config.pluginmanager.getplugin("capturemanager")
         if capman:
@@ -114,7 +114,9 @@ def _enter_pdb(node, excinfo, rep):
     showcapture = node.config.option.showcapture
 
     for sectionname, content in (
-        ("stdout", rep.capstdout), ("stderr", rep.capstderr), ("log", rep.caplog)
+        ("stdout", rep.capstdout),
+        ("stderr", rep.capstderr),
+        ("log", rep.caplog),
     ):
         if showcapture in (sectionname, "all") and content:
             tw.sep(">", "captured " + sectionname)
@@ -148,9 +150,7 @@ def _find_last_non_hidden_frame(stack):
 
 
 def post_mortem(t):
-
     class Pdb(pytestPDB._pdb_cls):
-
         def get_stack(self, f, t):
             stack, i = pdb.Pdb.get_stack(self, f, t)
             if f is None:

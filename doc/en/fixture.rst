@@ -154,7 +154,7 @@ This makes use of the automatic caching mechanisms of pytest.
 Another good approach is by adding the data files in the ``tests`` folder.
 There are also community plugins available to help managing this aspect of
 testing, e.g. `pytest-datadir <https://github.com/gabrielcnr/pytest-datadir>`__
-and `pytest-datafiles <https://pypi.python.org/pypi/pytest-datafiles>`__.
+and `pytest-datafiles <https://pypi.org/project/pytest-datafiles/>`__.
 
 .. _smtpshared:
 
@@ -165,7 +165,7 @@ Scope: sharing a fixture instance across tests in a class, module or session
 
 Fixtures requiring network access depend on connectivity and are
 usually time-expensive to create.  Extending the previous example, we
-can add a ``scope='module'`` parameter to the
+can add a ``scope="module"`` parameter to the
 :py:func:`@pytest.fixture <_pytest.python.fixture>` invocation
 to cause the decorated ``smtp`` fixture function to only be invoked once
 per test *module* (the default is to invoke once per test *function*).

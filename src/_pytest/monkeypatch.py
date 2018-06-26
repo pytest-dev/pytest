@@ -86,7 +86,6 @@ def derive_importpath(import_path, raising):
 
 
 class Notset(object):
-
     def __repr__(self):
         return "<notset>"
 

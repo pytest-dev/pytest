@@ -42,7 +42,6 @@ def test_ensuretemp(recwarn):
 
 
 class TestTempdirHandler(object):
-
     def test_mktemp(self, testdir):
         from _pytest.tmpdir import TempdirFactory
 
@@ -59,7 +58,6 @@ class TestTempdirHandler(object):
 
 
 class TestConfigTmpdir(object):
-
     def test_getbasetemp_custom_removes_old(self, testdir):
         mytemp = testdir.tmpdir.join("xyz")
         p = testdir.makepyfile(

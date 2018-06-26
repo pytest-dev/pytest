@@ -5,7 +5,6 @@ import pytest
 
 
 class TestPasteCapture(object):
-
     @pytest.fixture
     def pastebinlist(self, monkeypatch, request):
         pastebinlist = []
@@ -85,7 +84,6 @@ class TestPasteCapture(object):
 
 
 class TestPaste(object):
-
     @pytest.fixture
     def pastebin(self, request):
         return request.config.pluginmanager.getplugin("pastebin")
@@ -102,7 +100,6 @@ class TestPaste(object):
             calls.append((url, data))
 
             class DummyFile(object):
-
                 def read(self):
                     # part of html of a normal response
                     return b'View <a href="/raw/3c0c6750bd">raw</a>.'

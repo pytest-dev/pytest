@@ -7,7 +7,6 @@ from _pytest.runner import runtestprotocol
 
 
 class TestEvaluator(object):
-
     def test_no_marker(self, testdir):
         item = testdir.getitem("def test_func(): pass")
         evalskipif = MarkEvaluator(item, "skipif")
@@ -126,7 +125,10 @@ class TestEvaluator(object):
         )
         ev = MarkEvaluator(item, "skipif")
         exc = pytest.raises(pytest.fail.Exception, ev.istrue)
-        assert """Failed: you need to specify reason=STRING when using booleans as conditions.""" in exc.value.msg
+        assert (
+            """Failed: you need to specify reason=STRING when using booleans as conditions."""
+            in exc.value.msg
+        )
 
     def test_skipif_class(self, testdir):
         item, = testdir.getitems(
@@ -146,7 +148,6 @@ class TestEvaluator(object):
 
 
 class TestXFail(object):
-
     @pytest.mark.parametrize("strict", [True, False])
     def test_xfail_simple(self, testdir, strict):
         item = testdir.getitem(
@@ -514,7 +515,6 @@ class TestXFail(object):
 
 
 class TestXFailwithSetupTeardown(object):
-
     def test_failing_setup_issue9(self, testdir):
         testdir.makepyfile(
             """
@@ -547,7 +547,6 @@ class TestXFailwithSetupTeardown(object):
 
 
 class TestSkip(object):
-
     def test_skip_class(self, testdir):
         testdir.makepyfile(
             """
@@ -645,7 +644,6 @@ class TestSkip(object):
 
 
 class TestSkipif(object):
-
     def test_skipif_conditional(self, testdir):
         item = testdir.getitem(
             """
@@ -1023,7 +1021,6 @@ def test_imperativeskip_on_xfail_test(testdir):
 
 
 class TestBooleanCondition(object):
-
     def test_skipif(self, testdir):
         testdir.makepyfile(
             """

@@ -6,7 +6,6 @@ from _pytest.main import EXIT_NOTESTSCOLLECTED
 
 
 class SessionTests(object):
-
     def test_basic_testitem_events(self, testdir):
         tfile = testdir.makepyfile(
             """
@@ -168,7 +167,6 @@ class SessionTests(object):
 
 
 class TestNewSession(SessionTests):
-
     def test_order_of_execution(self, testdir):
         reprec = testdir.inline_runsource(
             """
