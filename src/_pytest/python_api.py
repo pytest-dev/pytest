@@ -86,9 +86,11 @@ class ApproxNumpy(ApproxBase):
         # shape of the array...
         import numpy as np
 
-        return "approx({!r})".format(
-            list(self._approx_scalar(x) for x in np.asarray(self.expected))
-        )
+        list_scalars = []
+        for x in np.ndindex(self.expected.shape):
+            list_scalars.append(self._approx_scalar(np.asscalar(self.expected[x])))
+
+        return "approx({!r})".format(list_scalars)
 
     if sys.version_info[0] == 2:
         __cmp__ = _cmp_raises_type_error
