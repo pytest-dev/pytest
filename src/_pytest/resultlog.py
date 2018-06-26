@@ -68,7 +68,6 @@ def generic_path(item):
 
 
 class ResultLog(object):
-
     def __init__(self, config, logfile):
         self.config = config
         self.logfile = logfile  # preferably line buffered

@@ -3,7 +3,6 @@ def setup_module(module):
 
 
 class TestStateFullThing(object):
-
     def setup_class(cls):
         cls.classcount += 1
 

@@ -22,16 +22,16 @@ def announce(ctx, version):
 
     contributors = set(stdout.splitlines())
 
-    template_name = "release.minor.rst" if version.endswith(
-        ".0"
-    ) else "release.patch.rst"
-    template_text = Path(__file__).parent.joinpath(template_name).read_text(
-        encoding="UTF-8"
+    template_name = (
+        "release.minor.rst" if version.endswith(".0") else "release.patch.rst"
+    )
+    template_text = (
+        Path(__file__).parent.joinpath(template_name).read_text(encoding="UTF-8")
     )
 
-    contributors_text = "\n".join(
-        "* {}".format(name) for name in sorted(contributors)
-    ) + "\n"
+    contributors_text = (
+        "\n".join("* {}".format(name) for name in sorted(contributors)) + "\n"
+    )
     text = template_text.format(version=version, contributors=contributors_text)
 
     target = Path(__file__).parent.joinpath(

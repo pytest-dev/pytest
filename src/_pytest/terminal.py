@@ -220,7 +220,6 @@ class WarningReport(object):
 
 
 class TerminalReporter(object):
-
     def __init__(self, config, file=None):
         import _pytest.config
 
@@ -407,13 +406,16 @@ class TerminalReporter(object):
     def pytest_runtest_logfinish(self, nodeid):
         if self.verbosity <= 0 and self._show_progress_info:
             self._progress_nodeids_reported.add(nodeid)
-            last_item = len(
-                self._progress_nodeids_reported
-            ) == self._session.testscollected
+            last_item = (
+                len(self._progress_nodeids_reported) == self._session.testscollected
+            )
             if last_item:
                 self._write_progress_information_filling_space()
             else:
-                past_edge = self._tw.chars_on_current_line + self._PROGRESS_LENGTH + 1 >= self._screen_width
+                past_edge = (
+                    self._tw.chars_on_current_line + self._PROGRESS_LENGTH + 1
+                    >= self._screen_width
+                )
                 if past_edge:
                     msg = self._get_progress_information_message()
                     self._tw.write(msg + "\n", cyan=True)
@@ -462,8 +464,8 @@ class TerminalReporter(object):
             line = "collected "
         else:
             line = "collecting "
-        line += str(self._numcollected) + " item" + (
-            "" if self._numcollected == 1 else "s"
+        line += (
+            str(self._numcollected) + " item" + ("" if self._numcollected == 1 else "s")
         )
         if errors:
             line += " / %d errors" % errors
@@ -495,7 +497,9 @@ class TerminalReporter(object):
             verinfo = ".".join(map(str, sys.pypy_version_info[:3]))
             msg += "[pypy-%s-%s]" % (verinfo, sys.pypy_version_info[3])
         msg += ", pytest-%s, py-%s, pluggy-%s" % (
-            pytest.__version__, py.__version__, pluggy.__version__
+            pytest.__version__,
+            py.__version__,
+            pluggy.__version__,
         )
         if (
             self.verbosity > 0
@@ -563,10 +567,10 @@ class TerminalReporter(object):
         for item in items:
             needed_collectors = item.listchain()[1:]  # strip root node
             while stack:
-                if stack == needed_collectors[:len(stack)]:
+                if stack == needed_collectors[: len(stack)]:
                     break
                 stack.pop()
-            for col in needed_collectors[len(stack):]:
+            for col in needed_collectors[len(stack) :]:
                 stack.append(col)
                 # if col.name == "()":
                 #    continue
@@ -624,11 +628,10 @@ class TerminalReporter(object):
                 )
 
     def _locationline(self, nodeid, fspath, lineno, domain):
-
         def mkrel(nodeid):
             line = self.config.cwd_relative_nodeid(nodeid)
             if domain and line.endswith(domain):
-                line = line[:-len(domain)]
+                line = line[: -len(domain)]
                 values = domain.split("[")
                 values[0] = values[0].replace(".", "::")  # don't replace '.' in params
                 line += "[".join(values)

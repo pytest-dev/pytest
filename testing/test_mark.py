@@ -21,7 +21,6 @@ ignore_markinfo = pytest.mark.filterwarnings(
 
 
 class TestMark(object):
-
     def test_markinfo_repr(self):
         from _pytest.mark import MarkInfo, Mark
 
@@ -39,7 +38,6 @@ class TestMark(object):
         pytest.raises((AttributeError, TypeError), mark)
 
     def test_mark_with_param(self):
-
         def some_function(abc):
             pass
 
@@ -487,7 +485,6 @@ def test_parametrized_with_kwargs(testdir):
 
 
 class TestFunctional(object):
-
     def test_mark_per_function(self, testdir):
         p = testdir.makepyfile(
             """
@@ -884,7 +881,6 @@ class TestFunctional(object):
 
 
 class TestKeywordSelection(object):
-
     def test_select_simple(self, testdir):
         file_test = testdir.makepyfile(
             """
@@ -1037,7 +1033,6 @@ def test_parameterset_extractfrom(argval, expected):
 
 
 def test_legacy_transfer():
-
     class FakeModule(object):
         pytestmark = []
 
@@ -1058,7 +1053,6 @@ def test_legacy_transfer():
 
 
 class TestMarkDecorator(object):
-
     @pytest.mark.parametrize(
         "lhs, rhs, expected",
         [

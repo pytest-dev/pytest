@@ -16,7 +16,6 @@ def pytestpm():
 
 
 class TestPytestPluginInteractions(object):
-
     def test_addhooks_conftestplugin(self, testdir):
         testdir.makepyfile(
             newhooks="""
@@ -104,7 +103,6 @@ class TestPytestPluginInteractions(object):
         values = []
 
         class A(object):
-
             def pytest_configure(self, config):
                 values.append(self)
 
@@ -125,12 +123,10 @@ class TestPytestPluginInteractions(object):
         saveindent = []
 
         class api1(object):
-
             def pytest_plugin_registered(self):
                 saveindent.append(pytestpm.trace.root.indent)
 
         class api2(object):
-
             def pytest_plugin_registered(self):
                 saveindent.append(pytestpm.trace.root.indent)
                 raise ValueError()
@@ -175,12 +171,10 @@ class TestPytestPluginInteractions(object):
         warnings = []
 
         class get_warnings(object):
-
             def pytest_logwarning(self, code, fslocation, message, nodeid):
                 warnings.append(message)
 
         class Plugin(object):
-
             def pytest_testhook():
                 pass
 
@@ -232,7 +226,6 @@ def test_importplugin_error_message(testdir, pytestpm):
 
 
 class TestPytestPluginManager(object):
-
     def test_register_imported_modules(self):
         pm = PytestPluginManager()
         mod = types.ModuleType("x.y.pytest_hello")
@@ -363,7 +356,6 @@ class TestPytestPluginManager(object):
 
 
 class TestPytestPluginManagerBootstrapming(object):
-
     def test_preparse_args(self, pytestpm):
         pytest.raises(
             ImportError, lambda: pytestpm.consider_preparse(["xyz", "-p", "hello123"])

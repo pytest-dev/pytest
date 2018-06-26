@@ -55,7 +55,6 @@ _py_ext_re = re.compile(r"\.py$")
 
 
 def bin_xml_escape(arg):
-
     def repl(matchobj):
         i = ord(matchobj.group())
         if i <= 0xFF:
@@ -67,7 +66,6 @@ def bin_xml_escape(arg):
 
 
 class _NodeReporter(object):
-
     def __init__(self, nodeid, xml):
 
         self.id = nodeid
@@ -358,7 +356,6 @@ def mangle_test_address(address):
 
 
 class LogXML(object):
-
     def __init__(self, logfile, prefix, suite_name="pytest", logging="no"):
         logfile = os.path.expanduser(os.path.expandvars(logfile))
         self.logfile = os.path.normpath(os.path.abspath(logfile))
@@ -544,9 +541,7 @@ class LogXML(object):
                 skips=self.stats["skipped"],
                 tests=numtests,
                 time="%.3f" % suite_time_delta,
-            ).unicode(
-                indent=0
-            )
+            ).unicode(indent=0)
         )
         logfile.close()
 

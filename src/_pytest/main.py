@@ -343,7 +343,6 @@ def _patched_find_module():
 
 
 class FSHookProxy(object):
-
     def __init__(self, fspath, pm, remove_mods):
         self.fspath = fspath
         self.pm = pm
@@ -361,6 +360,7 @@ class NoMatch(Exception):
 
 class Interrupted(KeyboardInterrupt):
     """ signals an interrupted test run. """
+
     __module__ = "builtins"  # for py3
 
 

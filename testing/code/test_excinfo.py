@@ -65,7 +65,6 @@ def test_excinfo_simple():
 
 
 def test_excinfo_getstatement():
-
     def g():
         raise ValueError
 
@@ -112,7 +111,6 @@ def h():
 
 
 class TestTraceback_f_g_h(object):
-
     def setup_method(self, method):
         try:
             h()
@@ -194,7 +192,6 @@ class TestTraceback_f_g_h(object):
         ],
     )
     def test_traceback_filter_selective(self, tracebackhide, matching):
-
         def f():
             #
             raise ValueError
@@ -224,7 +221,6 @@ class TestTraceback_f_g_h(object):
             assert len(ntraceback) == len(traceback) - 1
 
     def test_traceback_recursion_index(self):
-
         def f(n):
             if n < 10:
                 n += 1
@@ -236,7 +232,6 @@ class TestTraceback_f_g_h(object):
         assert recindex == 3
 
     def test_traceback_only_specific_recursion_errors(self, monkeypatch):
-
         def f(n):
             if n == 0:
                 raise RuntimeError("hello")
@@ -248,7 +243,6 @@ class TestTraceback_f_g_h(object):
         assert "RuntimeError: hello" in str(repr.reprcrash)
 
     def test_traceback_no_recursion_index(self):
-
         def do_stuff():
             raise RuntimeError
 
@@ -288,7 +282,6 @@ class TestTraceback_f_g_h(object):
         assert excinfo.traceback.recursionindex() is None
 
     def test_traceback_getcrashentry(self):
-
         def i():
             __tracebackhide__ = True
             raise ValueError
@@ -312,7 +305,6 @@ class TestTraceback_f_g_h(object):
         assert entry.frame.code.name == "h"
 
     def test_traceback_getcrashentry_empty(self):
-
         def g():
             __tracebackhide__ = True
             raise ValueError
@@ -429,10 +421,8 @@ def test_match_raises_error(testdir):
 
 
 class TestFormattedExcinfo(object):
-
     @pytest.fixture
     def importasmod(self, request):
-
         def importasmod(source):
             source = _pytest._code.Source(source)
             tmpdir = request.getfixturevalue("tmpdir")
@@ -519,7 +509,6 @@ raise ValueError()
         pr = FormattedExcinfo()
 
         class FakeCode(object):
-
             class raw(object):
                 co_filename = "?"
 
@@ -537,7 +526,6 @@ raise ValueError()
             f_globals = {}
 
         class FakeTracebackEntry(_pytest._code.Traceback.Entry):
-
             def __init__(self, tb, excinfo=None):
                 self.lineno = 5 + 3
 
@@ -882,7 +870,6 @@ raise ValueError()
         from _pytest._code.code import TerminalRepr
 
         class MyRepr(TerminalRepr):
-
             def toterminal(self, tw):
                 tw.line(py.builtin._totext("я", "utf-8"))
 
@@ -1303,7 +1290,6 @@ def test_exception_repr_extraction_error_on_recursion():
     """
 
     class numpy_like(object):
-
         def __eq__(self, other):
             if type(other) is numpy_like:
                 raise ValueError(
@@ -1343,7 +1329,6 @@ def test_no_recursion_index_on_recursion_error():
     try:
 
         class RecursionDepthError(object):
-
             def __getattr__(self, attr):
                 return getattr(self, "_" + attr)
 

@@ -62,7 +62,6 @@ def pytest_configure(config):
 
 
 class LsofFdLeakChecker(object):
-
     def get_open_files(self):
         out = self._exec_lsof()
         open_files = self._parse_lsof_output(out)
@@ -73,7 +72,6 @@ class LsofFdLeakChecker(object):
         return py.process.cmdexec("lsof -Ffn0 -p %d" % pid)
 
     def _parse_lsof_output(self, out):
-
         def isopen(line):
             return line.startswith("f") and (
                 "deleted" not in line
@@ -195,7 +193,6 @@ def _pytest(request):
 
 
 class PytestArg(object):
-
     def __init__(self, request):
         self.request = request
 
@@ -211,7 +208,6 @@ def get_public_names(values):
 
 
 class ParsedCall(object):
-
     def __init__(self, name, kwargs):
         self.__dict__.update(kwargs)
         self._name = name
@@ -423,13 +419,12 @@ class RunResult(object):
             "failed": d.get("failed", 0),
             "error": d.get("error", 0),
         }
-        assert (
-            obtained == dict(passed=passed, skipped=skipped, failed=failed, error=error)
+        assert obtained == dict(
+            passed=passed, skipped=skipped, failed=failed, error=error
         )
 
 
 class CwdSnapshot(object):
-
     def __init__(self):
         self.__saved = os.getcwd()
 
@@ -438,7 +433,6 @@ class CwdSnapshot(object):
 
 
 class SysModulesSnapshot(object):
-
     def __init__(self, preserve=None):
         self.__preserve = preserve
         self.__saved = dict(sys.modules)
@@ -453,7 +447,6 @@ class SysModulesSnapshot(object):
 
 
 class SysPathsSnapshot(object):
-
     def __init__(self):
         self.__saved = list(sys.path), list(sys.meta_path)
 
@@ -778,7 +771,6 @@ class Testdir(object):
             rec = []
 
             class Collect(object):
-
                 def pytest_configure(x, config):
                     rec.append(self.make_hook_recorder(config.pluginmanager))
 
@@ -910,8 +902,10 @@ class Testdir(object):
         for item in items:
             if item.name == funcname:
                 return item
-        assert 0, (
-            "%r item not found in module:\n%s\nitems: %s" % (funcname, source, items)
+        assert 0, "%r item not found in module:\n%s\nitems: %s" % (
+            funcname,
+            source,
+            items,
         )
 
     def getitems(self, source):
@@ -1115,7 +1109,6 @@ def getdecoded(out):
 
 
 class LineComp(object):
-
     def __init__(self):
         self.stringio = py.io.TextIO()
 
@@ -1202,7 +1195,7 @@ class LineMatcher(object):
         """
         for i, line in enumerate(self.lines):
             if fnline == line or fnmatch(line, fnline):
-                return self.lines[i + 1:]
+                return self.lines[i + 1 :]
         raise ValueError("line %r not found in output" % fnline)
 
     def _log(self, *args):

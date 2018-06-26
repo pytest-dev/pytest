@@ -33,7 +33,6 @@ def test_setup_func_with_setup_decorator():
     values = []
 
     class A(object):
-
         @pytest.fixture(autouse=True)
         def f(self):
             values.append(1)

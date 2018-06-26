@@ -7,7 +7,6 @@ from _pytest.outcomes import OutcomeException
 
 
 def test_is_generator():
-
     def zap():
         yield
 
@@ -19,9 +18,7 @@ def test_is_generator():
 
 
 def test_real_func_loop_limit():
-
     class Evil(object):
-
         def __init__(self):
             self.left = 1000
 
@@ -86,7 +83,6 @@ def test_is_generator_async_syntax(testdir):
 
 
 class ErrorsHelper(object):
-
     @property
     def raise_exception(self):
         raise Exception("exception should be catched")

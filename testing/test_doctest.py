@@ -8,7 +8,6 @@ import pytest
 
 
 class TestDoctests(object):
-
     def test_collect_testtextfile(self, testdir):
         w = testdir.maketxtfile(whatever="")
         checkfile = testdir.maketxtfile(
@@ -723,7 +722,6 @@ class TestDoctests(object):
 
 
 class TestLiterals(object):
-
     @pytest.mark.parametrize("config_mode", ["ini", "comment"])
     def test_allow_unicode(self, testdir, config_mode):
         """Test that doctests which output unicode work in all python versions
@@ -841,7 +839,6 @@ class TestDoctestSkips(object):
 
     @pytest.fixture(params=["text", "module"])
     def makedoctest(self, testdir, request):
-
         def makeit(doctest):
             mode = request.param
             if mode == "text":
@@ -1122,7 +1119,6 @@ class TestDoctestNamespaceFixture(object):
 
 
 class TestDoctestReportingOption(object):
-
     def _run_doctest_report(self, testdir, format):
         testdir.makepyfile(
             """

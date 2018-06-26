@@ -409,9 +409,7 @@ class LoggingPlugin(object):
         """
         return self._config.getoption(
             "--log-cli-level"
-        ) is not None or self._config.getini(
-            "log_cli"
-        )
+        ) is not None or self._config.getini("log_cli")
 
     @contextmanager
     def _runtest_for(self, item, when):

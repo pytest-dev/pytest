@@ -58,9 +58,7 @@ def test_source_from_function():
 
 
 def test_source_from_method():
-
     class TestClass(object):
-
         def test_method(self):
             pass
 
@@ -75,7 +73,6 @@ def test_source_from_lines():
 
 
 def test_source_from_inner_function():
-
     def f():
         pass
 
@@ -199,7 +196,6 @@ class TestSourceParsingAndCompiling(object):
         assert str(source) == "x=3"
 
     def test_compile_and_getsource_through_same_function(self):
-
         def gensource(source):
             return _pytest._code.compile(source)
 
@@ -337,7 +333,6 @@ class TestSourceParsingAndCompiling(object):
 
     @pytest.mark.parametrize("name", ["", None, "my"])
     def test_compilefuncs_and_path_sanity(self, name):
-
         def check(comp, name):
             co = comp(self.source, name)
             if not name:
@@ -359,9 +354,7 @@ class TestSourceParsingAndCompiling(object):
 
 
 def test_getstartingblock_singleline():
-
     class A(object):
-
         def __init__(self, *args):
             frame = sys._getframe(1)
             self.source = _pytest._code.Frame(frame).statement
@@ -373,7 +366,6 @@ def test_getstartingblock_singleline():
 
 
 def test_getline_finally():
-
     def c():
         pass
 
@@ -406,7 +398,6 @@ def test_getfuncsource_dynamic():
 
 
 def test_getfuncsource_with_multine_string():
-
     def f():
         c = """while True:
     pass
@@ -538,14 +529,12 @@ def test_getfslineno():
 
 
 def test_code_of_object_instance_with_call():
-
     class A(object):
         pass
 
     pytest.raises(TypeError, lambda: _pytest._code.Source(A()))
 
     class WithCall(object):
-
         def __call__(self):
             pass
 
@@ -553,7 +542,6 @@ def test_code_of_object_instance_with_call():
     assert "pass" in str(code.source())
 
     class Hello(object):
-
         def __call__(self):
             pass
 
