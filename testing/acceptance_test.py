@@ -14,13 +14,7 @@ from _pytest.main import EXIT_NOTESTSCOLLECTED, EXIT_USAGEERROR
 
 class TestGeneralUsage(object):
     def test_config_error(self, testdir):
-        testdir.makeconftest(
-            """
-            def pytest_configure(config):
-                import pytest
-                raise pytest.UsageError("hello")
-        """
-        )
+        testdir.copy_example("conftest_usageerror/conftest.py")
         result = testdir.runpytest(testdir.tmpdir)
         assert result.ret != 0
         result.stderr.fnmatch_lines(["*ERROR: hello"])
@@ -170,18 +164,7 @@ class TestGeneralUsage(object):
         result.stdout.fnmatch_lines(["*1 skip*"])
 
     def test_issue88_initial_file_multinodes(self, testdir):
-        testdir.makeconftest(
-            """
-            import pytest
-            class MyFile(pytest.File):
-                def collect(self):
-                    return [MyItem("hello", parent=self)]
-            def pytest_collect_file(path, parent):
-                return MyFile(path, parent)
-            class MyItem(pytest.Item):
-                pass
-        """
-        )
+        testdir.copy_example("issue88_initial_file_multinodes")
         p = testdir.makepyfile("def test_hello(): pass")
         result = testdir.runpytest(p, "--collect-only")
         result.stdout.fnmatch_lines(["*MyFile*test_issue88*", "*Module*test_issue88*"])

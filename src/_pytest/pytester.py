@@ -635,7 +635,10 @@ class Testdir(object):
     def copy_example(self, name):
         example_dir = self.request.config.getini("pytester_example_dir")
         example_path = self.request.config.rootdir.join(example_dir, name)
-        example_path.copy(self.tmpdir.join(example_path.basename))
+        if example_path.isdir() and not example_path.join("__init__.py").isfile():
+            example_path.copy(self.tmpdir)
+        else:
+            example_path.copy(self.tmpdir.join(example_path.basename))
 
     Session = Session
 
