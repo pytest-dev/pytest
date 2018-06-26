@@ -9,13 +9,15 @@ def getslaveinfoline(node):
         d = node.slaveinfo
         ver = "%s.%s.%s" % d["version_info"][:3]
         node._slaveinfocache = s = "[%s] %s -- Python %s %s" % (
-            d["id"], d["sysplatform"], ver, d["executable"]
+            d["id"],
+            d["sysplatform"],
+            ver,
+            d["executable"],
         )
         return s
 
 
 class BaseReport(object):
-
     def __init__(self, **kw):
         self.__dict__.update(kw)
 
@@ -149,7 +151,9 @@ class TestReport(BaseReport):
 
     def __repr__(self):
         return "<TestReport %r when=%r outcome=%r>" % (
-            self.nodeid, self.when, self.outcome
+            self.nodeid,
+            self.when,
+            self.outcome,
         )
 
 
@@ -164,7 +168,6 @@ class TeardownErrorReport(BaseReport):
 
 
 class CollectReport(BaseReport):
-
     def __init__(self, nodeid, outcome, longrepr, result, sections=(), **extra):
         self.nodeid = nodeid
         self.outcome = outcome
@@ -179,12 +182,13 @@ class CollectReport(BaseReport):
 
     def __repr__(self):
         return "<CollectReport %r lenresult=%s outcome=%r>" % (
-            self.nodeid, len(self.result), self.outcome
+            self.nodeid,
+            len(self.result),
+            self.outcome,
         )
 
 
 class CollectErrorRepr(TerminalRepr):
-
     def __init__(self, msg):
         self.longrepr = msg
 
