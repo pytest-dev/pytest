@@ -75,9 +75,8 @@ def catch_warnings_for_item(item):
             warn_msg = warning.message
             unicode_warning = False
 
-            if (
-                compat._PY2
-                and any(isinstance(m, compat.UNICODE_TYPES) for m in warn_msg.args)
+            if compat._PY2 and any(
+                isinstance(m, compat.UNICODE_TYPES) for m in warn_msg.args
             ):
                 new_args = []
                 for m in warn_msg.args:

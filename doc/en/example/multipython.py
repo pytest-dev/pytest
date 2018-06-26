@@ -21,7 +21,6 @@ def python2(request, python1):
 
 
 class Python(object):
-
     def __init__(self, version, picklefile):
         self.pythonpath = py.path.local.sysfind(version)
         if not self.pythonpath:

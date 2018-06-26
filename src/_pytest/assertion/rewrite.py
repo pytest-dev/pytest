@@ -45,6 +45,14 @@ else:
         return ast.Call(a, b, c, None, None)
 
 
+if sys.version_info >= (3, 4):
+    from importlib.util import spec_from_file_location
+else:
+
+    def spec_from_file_location(*_, **__):
+        return None
+
+
 class AssertionRewritingHook(object):
     """PEP302 Import hook which rewrites asserts."""
 
@@ -213,6 +221,8 @@ class AssertionRewritingHook(object):
             # Normally, this attribute is 3.2+.
             mod.__cached__ = pyc
             mod.__loader__ = self
+            # Normally, this attribute is 3.4+
+            mod.__spec__ = spec_from_file_location(name, co.co_filename, loader=self)
             py.builtin.exec_(co, mod.__dict__)
         except:  # noqa
             if name in sys.modules:
@@ -309,7 +319,7 @@ def _rewrite_test(config, fn):
         if (
             not source.startswith(BOM_UTF8)
             and cookie_re.match(source[0:end1]) is None
-            and cookie_re.match(source[end1 + 1:end2]) is None
+            and cookie_re.match(source[end1 + 1 : end2]) is None
         ):
             if hasattr(state, "_indecode"):
                 # encodings imported us again, so don't rewrite.

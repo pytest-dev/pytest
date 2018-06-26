@@ -13,7 +13,6 @@ def parser():
 
 
 class TestParser(object):
-
     def test_no_help_by_default(self, capsys):
         parser = parseopt.Parser(usage="xyz")
         pytest.raises(SystemExit, lambda: parser.parse(["-h"]))
@@ -34,9 +33,8 @@ class TestParser(object):
         assert argument.dest == "test"
         argument = parseopt.Argument("-t", "--test", dest="abc")
         assert argument.dest == "abc"
-        assert (
-            str(argument)
-            == ("Argument(_short_opts: ['-t'], _long_opts: ['--test'], dest: 'abc')")
+        assert str(argument) == (
+            "Argument(_short_opts: ['-t'], _long_opts: ['--test'], dest: 'abc')"
         )
 
     def test_argument_type(self):
@@ -180,7 +178,6 @@ class TestParser(object):
         assert args.S is False
 
     def test_parse_defaultgetter(self):
-
         def defaultget(option):
             if not hasattr(option, "type"):
                 return
@@ -204,15 +201,11 @@ class TestParser(object):
         )
         parser.add_argument(
             "-t", "--twoword", "--duo", "--two-word", "--two", help="foo"
-        ).map_long_option = {
-            "two": "two-word"
-        }
+        ).map_long_option = {"two": "two-word"}
         # throws error on --deux only!
         parser.add_argument(
             "-d", "--deuxmots", "--deux-mots", action="store_true", help="foo"
-        ).map_long_option = {
-            "deux": "deux-mots"
-        }
+        ).map_long_option = {"deux": "deux-mots"}
         parser.add_argument("-s", action="store_true", help="single short")
         parser.add_argument("--abc", "-a", action="store_true", help="bar")
         parser.add_argument("--klm", "-k", "--kl-m", action="store_true", help="bar")
@@ -224,9 +217,7 @@ class TestParser(object):
         )
         parser.add_argument(
             "-x", "--exit-on-first", "--exitfirst", action="store_true", help="spam"
-        ).map_long_option = {
-            "exitfirst": "exit-on-first"
-        }
+        ).map_long_option = {"exitfirst": "exit-on-first"}
         parser.add_argument("files_and_dirs", nargs="*")
         args = parser.parse_args(["-k", "--duo", "hallo", "--exitfirst"])
         assert args.twoword == "hallo"

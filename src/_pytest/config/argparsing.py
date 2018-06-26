@@ -149,6 +149,7 @@ class Argument(object):
     and ignoring choices and integer prefixes
     https://docs.python.org/3/library/optparse.html#optparse-standard-option-types
     """
+
     _typ_map = {"int": int, "string": str, "float": float, "complex": complex}
 
     def __init__(self, *names, **attrs):
@@ -274,7 +275,6 @@ class Argument(object):
 
 
 class OptionGroup(object):
-
     def __init__(self, name, description="", parser=None):
         self.name = name
         self.description = description
@@ -312,7 +312,6 @@ class OptionGroup(object):
 
 
 class MyOptionParser(argparse.ArgumentParser):
-
     def __init__(self, parser, extra_info=None):
         if not extra_info:
             extra_info = {}
@@ -378,9 +377,8 @@ class DropShorterLongHelpFormatter(argparse.HelpFormatter):
             xxoption = option[2:]
             if xxoption.split()[0] not in option_map:
                 shortened = xxoption.replace("-", "")
-                if (
-                    shortened not in short_long
-                    or len(short_long[shortened]) < len(xxoption)
+                if shortened not in short_long or len(short_long[shortened]) < len(
+                    xxoption
                 ):
                     short_long[shortened] = xxoption
         # now short_long has been filled out to the longest with dashes

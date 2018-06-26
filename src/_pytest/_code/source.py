@@ -17,6 +17,7 @@ class Source(object):
     """ an immutable object holding a source code fragment,
         possibly deindenting it.
     """
+
     _compilecounter = 0
 
     def __init__(self, *parts, **kwargs):
@@ -60,7 +61,7 @@ class Source(object):
             if key.step not in (None, 1):
                 raise IndexError("cannot slice a Source with a step")
             newsource = Source()
-            newsource.lines = self.lines[key.start:key.stop]
+            newsource.lines = self.lines[key.start : key.stop]
             return newsource
 
     def __len__(self):
@@ -178,7 +179,7 @@ class Source(object):
         except SyntaxError:
             ex = sys.exc_info()[1]
             # re-represent syntax errors from parsing python strings
-            msglines = self.lines[:ex.lineno]
+            msglines = self.lines[: ex.lineno]
             if ex.offset:
                 msglines.append(" " * ex.offset + "^")
             msglines.append("(code was compiled probably from here: %s)" % filename)
@@ -313,7 +314,7 @@ def deindent(lines, offset=None):
     except (IndentationError, tokenize.TokenError):
         pass
     # Add any lines we didn't see. E.g. if an exception was raised.
-    newlines.extend(lines[len(newlines):])
+    newlines.extend(lines[len(newlines) :])
     return newlines
 
 

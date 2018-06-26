@@ -78,9 +78,8 @@ def adjust_body_for_new_docstring_in_module_node(m):
     various Python 3.7 versions, but we should remove the 3.7 check after
     3.7 is released as stable to make this check more straightforward.
     """
-    if (
-        sys.version_info < (3, 8)
-        and not ((3, 7) <= sys.version_info <= (3, 7, 0, "beta", 4))
+    if sys.version_info < (3, 8) and not (
+        (3, 7) <= sys.version_info <= (3, 7, 0, "beta", 4)
     ):
         assert len(m.body) > 1
         assert isinstance(m.body[0], ast.Expr)
@@ -89,7 +88,6 @@ def adjust_body_for_new_docstring_in_module_node(m):
 
 
 class TestAssertionRewrite(object):
-
     def test_place_initial_imports(self):
         s = """'Doc string'\nother = stuff"""
         m = rewrite(s)
@@ -150,7 +148,6 @@ class TestAssertionRewrite(object):
         assert "warnings" not in "".join(result.outlines)
 
     def test_name(self):
-
         def f():
             assert False
 
@@ -181,7 +178,6 @@ class TestAssertionRewrite(object):
         assert getmsg(f, {"cls": X}) == "assert cls == 42"
 
     def test_assert_already_has_message(self):
-
         def f():
             assert False, "something bad!"
 
@@ -251,7 +247,6 @@ class TestAssertionRewrite(object):
         )
 
     def test_boolop(self):
-
         def f():
             f = g = False
             assert f and g
@@ -331,7 +326,6 @@ class TestAssertionRewrite(object):
         getmsg(f, must_pass=True)
 
     def test_short_circuit_evaluation(self):
-
         def f():
             assert True or explode  # noqa
 
@@ -344,7 +338,6 @@ class TestAssertionRewrite(object):
         getmsg(f, must_pass=True)
 
     def test_unary_op(self):
-
         def f():
             x = True
             assert not x
@@ -370,7 +363,6 @@ class TestAssertionRewrite(object):
         assert getmsg(f) == "assert (+0 + 0)"
 
     def test_binary_op(self):
-
         def f():
             x = 1
             y = -1
@@ -384,7 +376,6 @@ class TestAssertionRewrite(object):
         assert getmsg(f) == "assert not (5 % 4)"
 
     def test_boolop_percent(self):
-
         def f():
             assert 3 % 2 and False
 
@@ -411,7 +402,6 @@ class TestAssertionRewrite(object):
         testdir.runpytest().assert_outcomes(passed=1)
 
     def test_call(self):
-
         def g(a=42, *args, **kwargs):
             return False
 
@@ -483,7 +473,6 @@ class TestAssertionRewrite(object):
         )
 
     def test_attribute(self):
-
         class X(object):
             g = 3
 
@@ -509,7 +498,6 @@ class TestAssertionRewrite(object):
         )
 
     def test_comparisons(self):
-
         def f():
             a, b = range(2)
             assert b < a
@@ -542,7 +530,6 @@ class TestAssertionRewrite(object):
         getmsg(f, must_pass=True)
 
     def test_len(self):
-
         def f():
             values = list(range(10))
             assert len(values) == 11
@@ -553,7 +540,6 @@ class TestAssertionRewrite(object):
         )
 
     def test_custom_reprcompare(self, monkeypatch):
-
         def my_reprcompare(op, left, right):
             return "42"
 
@@ -575,11 +561,8 @@ class TestAssertionRewrite(object):
         assert getmsg(f) == "assert 5 <= 4"
 
     def test_assert_raising_nonzero_in_comparison(self):
-
         def f():
-
             class A(object):
-
                 def __nonzero__(self):
                     raise ValueError(42)
 
@@ -597,16 +580,13 @@ class TestAssertionRewrite(object):
         assert "<MY42 object> < 0" in getmsg(f)
 
     def test_formatchar(self):
-
         def f():
             assert "%test" == "test"
 
         assert getmsg(f).startswith("assert '%test' == 'test'")
 
     def test_custom_repr(self):
-
         def f():
-
             class Foo(object):
                 a = 1
 
@@ -620,7 +600,6 @@ class TestAssertionRewrite(object):
 
 
 class TestRewriteOnImport(object):
-
     def test_pycache_is_a_file(self, testdir):
         testdir.tmpdir.join("__pycache__").write("Hello")
         testdir.makepyfile(
@@ -671,9 +650,7 @@ class TestRewriteOnImport(object):
 def test_rewritten():
     assert "@py_builtins" in globals()
             """
-            ).encode(
-                "utf-8"
-            ),
+            ).encode("utf-8"),
             "wb",
         )
         old_mode = sub.stat().mode
@@ -870,7 +847,6 @@ def test_rewritten():
 
 
 class TestAssertionRewriteHookDetails(object):
-
     def test_loader_is_package_false_for_module(self, testdir):
         testdir.makepyfile(
             test_fun="""
@@ -1090,7 +1066,6 @@ def test_issue731(testdir):
 
 
 class TestIssue925(object):
-
     def test_simple_case(self, testdir):
         testdir.makepyfile(
             """
@@ -1122,8 +1097,7 @@ class TestIssue925(object):
         result.stdout.fnmatch_lines("*E*assert True == ((False == True) == True)")
 
 
-class TestIssue2121():
-
+class TestIssue2121:
     def test_simple(self, testdir):
         testdir.tmpdir.join("tests/file.py").ensure().write(
             """

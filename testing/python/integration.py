@@ -4,7 +4,6 @@ from _pytest import runner
 
 
 class TestOEJSKITSpecials(object):
-
     def test_funcarg_non_pycollectobj(self, testdir):  # rough jstests usage
         testdir.makeconftest(
             """
@@ -70,7 +69,6 @@ class TestOEJSKITSpecials(object):
 
 
 def test_wrapped_getfslineno():
-
     def func():
         pass
 
@@ -89,12 +87,10 @@ def test_wrapped_getfslineno():
 
 
 class TestMockDecoration(object):
-
     def test_wrapped_getfuncargnames(self):
         from _pytest.compat import getfuncargnames
 
         def wrap(f):
-
             def func():
                 pass
 
@@ -115,7 +111,6 @@ class TestMockDecoration(object):
         from _pytest.compat import getfuncargnames
 
         def wrap(f):
-
             def func():
                 pass
 
@@ -269,7 +264,6 @@ class TestMockDecoration(object):
 
 
 class TestReRunTests(object):
-
     def test_rerun(self, testdir):
         testdir.makeconftest(
             """
@@ -316,7 +310,6 @@ def test_pytestconfig_is_session_scoped():
 
 
 class TestNoselikeTestAttribute(object):
-
     def test_module_with_global_test(self, testdir):
         testdir.makepyfile(
             """
@@ -402,7 +395,6 @@ class TestNoselikeTestAttribute(object):
 
 @pytest.mark.issue351
 class TestParameterize(object):
-
     def test_idfn_marker(self, testdir):
         testdir.makepyfile(
             """

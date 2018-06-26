@@ -8,7 +8,6 @@ from _pytest import fixtures
 
 
 def test_getfuncargnames():
-
     def f():
         pass
 
@@ -30,7 +29,6 @@ def test_getfuncargnames():
     assert fixtures.getfuncargnames(h) == ("arg1", "arg2")
 
     class A(object):
-
         def f(self, arg1, arg2="hello"):
             pass
 
@@ -54,7 +52,6 @@ def test_getfuncargnames():
 
 
 class TestFillFixtures(object):
-
     def test_fillfuncargs_exposed(self):
         # used by oejskit, kept for compatibility
         assert pytest._fillfuncargs == fixtures.fillfixtures
@@ -581,7 +578,6 @@ class TestFillFixtures(object):
 
 
 class TestRequestBasic(object):
-
     def test_request_attributes(self, testdir):
         item = testdir.getitem(
             """
@@ -1014,7 +1010,6 @@ class TestRequestBasic(object):
 
 
 class TestRequestMarking(object):
-
     def test_applymarker(self, testdir):
         item1, item2 = testdir.getitems(
             """
@@ -1084,7 +1079,6 @@ class TestRequestMarking(object):
 
 
 class TestRequestCachedSetup(object):
-
     def test_request_cachedsetup_defaultmodule(self, testdir):
         reprec = testdir.inline_runsource(
             """
@@ -1256,7 +1250,6 @@ class TestRequestCachedSetup(object):
 
 
 class TestFixtureUsages(object):
-
     def test_noargfixturedec(self, testdir):
         testdir.makepyfile(
             """
@@ -1551,7 +1544,6 @@ class TestFixtureUsages(object):
 
 
 class TestFixtureManagerParseFactories(object):
-
     @pytest.fixture
     def testdir(self, request):
         testdir = request.getfixturevalue("testdir")
@@ -1679,7 +1671,6 @@ class TestFixtureManagerParseFactories(object):
 
 
 class TestAutouseDiscovery(object):
-
     @pytest.fixture
     def testdir(self, testdir):
         testdir.makeconftest(
@@ -1856,7 +1847,6 @@ class TestAutouseDiscovery(object):
 
 
 class TestAutouseManagement(object):
-
     def test_autouse_conftest_mid_directory(self, testdir):
         pkgdir = testdir.mkpydir("xyz123")
         pkgdir.join("conftest.py").write(
@@ -2123,7 +2113,6 @@ class TestAutouseManagement(object):
 
 
 class TestFixtureMarker(object):
-
     def test_parametrize(self, testdir):
         testdir.makepyfile(
             """
@@ -2949,21 +2938,18 @@ class TestFixtureMarker(object):
         reprec = testdir.inline_run()
         reprec.assertoutcome(passed=6)
         values = reprec.getcalls("pytest_runtest_call")[0].item.module.values
-        assert (
-            values
-            == [
-                "test_hello",
-                "fin John",
-                "test_hello",
-                "fin Doe",
-                "test_name",
-                "test_population",
-                "fin John",
-                "test_name",
-                "test_population",
-                "fin Doe",
-            ]
-        )
+        assert values == [
+            "test_hello",
+            "fin John",
+            "test_hello",
+            "fin Doe",
+            "test_name",
+            "test_population",
+            "fin John",
+            "test_name",
+            "test_population",
+            "fin Doe",
+        ]
 
     def test_parametrize_setup_function(self, testdir):
         testdir.makepyfile(
@@ -3146,7 +3132,6 @@ class TestRequestScopeAccess(object):
 
 
 class TestErrors(object):
-
     def test_subfactory_missing_funcarg(self, testdir):
         testdir.makepyfile(
             """
@@ -3214,7 +3199,6 @@ class TestErrors(object):
 
 
 class TestShowFixtures(object):
-
     def test_funcarg_compat(self, testdir):
         config = testdir.parseconfigure("--funcargs")
         assert config.option.showfixtures
@@ -3491,7 +3475,6 @@ class TestShowFixtures(object):
 
 @pytest.mark.parametrize("flavor", ["fixture", "yield_fixture"])
 class TestContextManagerFixtureFuncs(object):
-
     def test_simple(self, testdir, flavor):
         testdir.makepyfile(
             """
@@ -3633,7 +3616,6 @@ class TestContextManagerFixtureFuncs(object):
 
 
 class TestParameterizedSubRequest(object):
-
     def test_call_from_fixture(self, testdir):
         testfile = testdir.makepyfile(
             """

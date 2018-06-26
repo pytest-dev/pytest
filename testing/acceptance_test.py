@@ -13,7 +13,6 @@ from _pytest.main import EXIT_NOTESTSCOLLECTED, EXIT_USAGEERROR
 
 
 class TestGeneralUsage(object):
-
     def test_config_error(self, testdir):
         testdir.makeconftest(
             """
@@ -458,7 +457,6 @@ class TestGeneralUsage(object):
 
 
 class TestInvocationVariants(object):
-
     def test_earlyinit(self, testdir):
         p = testdir.makepyfile(
             """
@@ -557,9 +555,7 @@ class TestInvocationVariants(object):
         out, err = capsys.readouterr()
 
     def test_invoke_plugin_api(self, testdir, capsys):
-
         class MyPlugin(object):
-
             def pytest_addoption(self, parser):
                 parser.addoption("--myopt")
 
@@ -798,9 +794,10 @@ class TestInvocationVariants(object):
         """Test backward compatibility for get_plugin_manager function. See #787."""
         import _pytest.config
 
-        assert type(
-            _pytest.config.get_plugin_manager()
-        ) is _pytest.config.PytestPluginManager
+        assert (
+            type(_pytest.config.get_plugin_manager())
+            is _pytest.config.PytestPluginManager
+        )
 
     def test_has_plugin(self, request):
         """Test hasplugin function of the plugin manager (#932)."""

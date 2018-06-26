@@ -149,7 +149,7 @@ def showhelp(config):
             type = "string"
         spec = "%s (%s)" % (name, type)
         line = "  %-24s %s" % (spec, help)
-        tw.line(line[:tw.fullwidth])
+        tw.line(line[: tw.fullwidth])
 
     tw.line()
     tw.line("environment variables:")

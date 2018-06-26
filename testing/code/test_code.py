@@ -26,7 +26,6 @@ def test_code_gives_back_name_for_not_existing_file():
 
 
 def test_code_with_class():
-
     class A(object):
         pass
 
@@ -54,7 +53,6 @@ def test_code_source():
 
 
 def test_frame_getsourcelineno_myself():
-
     def func():
         return sys._getframe(0)
 
@@ -65,7 +63,6 @@ def test_frame_getsourcelineno_myself():
 
 
 def test_getstatement_empty_fullsource():
-
     def func():
         return sys._getframe(0)
 
@@ -111,7 +108,6 @@ def test_unicode_handling_syntax_error():
 
 
 def test_code_getargs():
-
     def f1(x):
         pass
 
@@ -138,7 +134,6 @@ def test_code_getargs():
 
 
 def test_frame_getargs():
-
     def f1(x):
         return sys._getframe(0)
 
@@ -165,7 +160,6 @@ def test_frame_getargs():
 
 
 class TestExceptionInfo(object):
-
     def test_bad_getsource(self):
         try:
             if False:
@@ -178,7 +172,6 @@ class TestExceptionInfo(object):
 
 
 class TestTracebackEntry(object):
-
     def test_getsource(self):
         try:
             if False:
@@ -194,7 +187,6 @@ class TestTracebackEntry(object):
 
 
 class TestReprFuncArgs(object):
-
     def test_not_raise_exception_with_mixed_encoding(self):
         from _pytest._code.code import ReprFuncArgs
 

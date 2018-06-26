@@ -65,7 +65,6 @@ scope2props["function"] = scope2props["instance"] + ("function", "keywords")
 
 
 def scopeproperty(name=None, doc=None):
-
     def decoratescope(func):
         scopename = name or func.__name__
 
@@ -276,7 +275,6 @@ def get_direct_param_fixture_func(request):
 
 
 class FuncFixtureInfo(object):
-
     def __init__(self, argnames, names_closure, name2fixturedefs):
         self.argnames = argnames
         self.names_closure = names_closure
@@ -698,7 +696,6 @@ class FixtureLookupError(LookupError):
 
 
 class FixtureLookupErrorRepr(TerminalRepr):
-
     def __init__(self, filename, firstlineno, tblines, errorstring, argname):
         self.tblines = tblines
         self.errorstring = errorstring
@@ -837,9 +834,10 @@ class FixtureDef(object):
         return hook.pytest_fixture_setup(fixturedef=self, request=request)
 
     def __repr__(self):
-        return (
-            "<FixtureDef name=%r scope=%r baseid=%r >"
-            % (self.argname, self.scope, self.baseid)
+        return "<FixtureDef name=%r scope=%r baseid=%r >" % (
+            self.argname,
+            self.scope,
+            self.baseid,
         )
 
 
@@ -1064,7 +1062,7 @@ class FixtureManager(object):
             if nodeid.startswith(baseid):
                 if baseid:
                     i = len(baseid)
-                    nextchar = nodeid[i:i + 1]
+                    nextchar = nodeid[i : i + 1]
                     if nextchar and nextchar not in ":/":
                         continue
                 autousenames.extend(basenames)
@@ -1171,7 +1169,7 @@ class FixtureManager(object):
                 self.config.warn(
                     "C1", deprecated.FUNCARG_PREFIX.format(name=name), nodeid=nodeid
                 )
-                name = name[len(self._argprefix):]
+                name = name[len(self._argprefix) :]
             elif not isinstance(marker, FixtureFunctionMarker):
                 # magic globals  with __getattr__ might have got us a wrong
                 # fixture attribute

@@ -30,7 +30,6 @@ hookspec = HookspecMarker("pytest")
 
 
 class ConftestImportFailure(Exception):
-
     def __init__(self, path, excinfo):
         Exception.__init__(self, path, excinfo)
         self.path = path
@@ -318,9 +317,11 @@ class PytestPluginManager(PluginManager):
         self._configured = True
 
     def _warn(self, message):
-        kwargs = message if isinstance(message, dict) else {
-            "code": "I1", "message": message, "fslocation": None, "nodeid": None
-        }
+        kwargs = (
+            message
+            if isinstance(message, dict)
+            else {"code": "I1", "message": message, "fslocation": None, "nodeid": None}
+        )
         self.hook.pytest_logwarning.call_historic(kwargs=kwargs)
 
     #
@@ -335,9 +336,11 @@ class PytestPluginManager(PluginManager):
             here.
         """
         current = py.path.local()
-        self._confcutdir = current.join(
-            namespace.confcutdir, abs=True
-        ) if namespace.confcutdir else None
+        self._confcutdir = (
+            current.join(namespace.confcutdir, abs=True)
+            if namespace.confcutdir
+            else None
+        )
         self._noconftest = namespace.noconftest
         testpaths = namespace.file_or_dir
         foundanchor = False
@@ -405,7 +408,9 @@ class PytestPluginManager(PluginManager):
             try:
                 mod = conftestpath.pyimport()
                 if hasattr(mod, "pytest_plugins") and self._configured:
-                    from _pytest.deprecated import PYTEST_PLUGINS_FROM_NON_TOP_LEVEL_CONFTEST
+                    from _pytest.deprecated import (
+                        PYTEST_PLUGINS_FROM_NON_TOP_LEVEL_CONFTEST
+                    )
 
                     warnings.warn(PYTEST_PLUGINS_FROM_NON_TOP_LEVEL_CONFTEST)
             except Exception:
@@ -477,7 +482,8 @@ class PytestPluginManager(PluginManager):
         except ImportError as e:
             new_exc_type = ImportError
             new_exc_message = 'Error importing plugin "%s": %s' % (
-                modname, safe_str(e.args[0])
+                modname,
+                safe_str(e.args[0]),
             )
             new_exc = new_exc_type(new_exc_message)
 
@@ -518,7 +524,6 @@ def _ensure_removed_sysmodule(modname):
 
 
 class Notset(object):
-
     def __repr__(self):
         return "<NOTSET>"
 

@@ -531,7 +531,6 @@ class FDCapture(FDCaptureBinary):
 
 
 class SysCapture(object):
-
     def __init__(self, fd, tmpfile=None):
         name = patchsysdict[fd]
         self._old = getattr(sys, name)
@@ -569,7 +568,6 @@ class SysCapture(object):
 
 
 class SysCaptureBinary(SysCapture):
-
     def snap(self):
         res = self.tmpfile.buffer.getvalue()
         self.tmpfile.seek(0)

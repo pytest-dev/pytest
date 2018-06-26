@@ -74,7 +74,6 @@ def get_common_ancestor(paths):
 
 
 def get_dirs_from_args(args):
-
     def is_option(x):
         return str(x).startswith("-")
 

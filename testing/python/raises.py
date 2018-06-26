@@ -4,7 +4,6 @@ import sys
 
 
 class TestRaises(object):
-
     def test_raises(self):
         source = "int('qwe')"
         excinfo = pytest.raises(ValueError, source)
@@ -22,9 +21,7 @@ class TestRaises(object):
         pytest.raises(ValueError, int, "hello")
 
     def test_raises_callable_no_exception(self):
-
         class A(object):
-
             def __call__(self):
                 pass
 
@@ -109,7 +106,6 @@ class TestRaises(object):
         import gc
 
         class T(object):
-
             def __call__(self):
                 raise ValueError
 
@@ -160,7 +156,6 @@ class TestRaises(object):
         from six import add_metaclass
 
         class Meta(type(object)):
-
             def __getitem__(self, item):
                 return 1 / 0
 

@@ -14,7 +14,6 @@ ignore_parametrized_marks = pytest.mark.filterwarnings(
 
 
 class TestModule(object):
-
     def test_failing_import(self, testdir):
         modcol = testdir.getmodulecol("import alksdjalskdjalkjals")
         pytest.raises(Collector.CollectError, modcol.collect)
@@ -141,7 +140,6 @@ class TestModule(object):
 
 
 class TestClass(object):
-
     def test_class_with_init_warning(self, testdir):
         testdir.makepyfile(
             """
@@ -246,7 +244,6 @@ class TestClass(object):
 
 
 class TestGenerator(object):
-
     def test_generative_functions(self, testdir):
         modcol = testdir.getmodulecol(
             """
@@ -458,7 +455,6 @@ class TestGenerator(object):
 
 
 class TestFunction(object):
-
     def test_getmodulecollector(self, testdir):
         item = testdir.getitem("def test_func(): pass")
         modcol = item.getparent(pytest.Module)
@@ -673,12 +669,10 @@ class TestFunction(object):
         config = item.config
 
         class MyPlugin1(object):
-
             def pytest_pyfunc_call(self, pyfuncitem):
                 raise ValueError
 
         class MyPlugin2(object):
-
             def pytest_pyfunc_call(self, pyfuncitem):
                 return True
 
@@ -831,7 +825,6 @@ class TestFunction(object):
 
 
 class TestSorting(object):
-
     def test_check_equality(self, testdir):
         modcol = testdir.getmodulecol(
             """
@@ -886,7 +879,6 @@ class TestSorting(object):
 
 
 class TestConftestCustomization(object):
-
     def test_pytest_pycollect_module(self, testdir):
         testdir.makeconftest(
             """
@@ -1062,7 +1054,6 @@ def test_modulecol_roundtrip(testdir):
 
 
 class TestTracebackCutting(object):
-
     def test_skip_simple(self):
         excinfo = pytest.raises(pytest.skip.Exception, 'pytest.skip("xxx")')
         assert excinfo.traceback[-1].frame.code.name == "skip"
@@ -1191,7 +1182,6 @@ class TestTracebackCutting(object):
 
 
 class TestReportInfo(object):
-
     def test_itemreport_reportinfo(self, testdir, linecomp):
         testdir.makeconftest(
             """
@@ -1497,7 +1487,10 @@ def test_class_injection_does_not_break_collection(testdir):
     '''
     )
     result = testdir.runpytest()
-    assert "RuntimeError: dictionary changed size during iteration" not in result.stdout.str()
+    assert (
+        "RuntimeError: dictionary changed size during iteration"
+        not in result.stdout.str()
+    )
     result.stdout.fnmatch_lines(["*1 passed*"])
 
 

@@ -10,7 +10,6 @@ from _pytest.main import EXIT_NOTESTSCOLLECTED
 
 
 class TestParseIni(object):
-
     @pytest.mark.parametrize(
         "section, filename", [("pytest", "pytest.ini"), ("tool:pytest", "setup.cfg")]
     )
@@ -118,7 +117,6 @@ class TestParseIni(object):
 
 
 class TestConfigCmdlineParsing(object):
-
     def test_parsing_again_fails(self, testdir):
         config = testdir.parseconfig()
         pytest.raises(AssertionError, lambda: config.parse([]))
@@ -172,7 +170,6 @@ class TestConfigCmdlineParsing(object):
 
 
 class TestConfigAPI(object):
-
     def test_config_trace(self, testdir):
         config = testdir.parseconfig()
         values = []
@@ -412,7 +409,6 @@ class TestConfigAPI(object):
 
 
 class TestConfigFromdictargs(object):
-
     def test_basic_behavior(self):
         from _pytest.config import Config
 
@@ -479,7 +475,6 @@ class TestConfigFromdictargs(object):
 
 
 def test_options_on_small_file_do_not_blow_up(testdir):
-
     def runfiletest(opts):
         reprec = testdir.inline_run(*opts)
         passed, skipped, failed = reprec.countoutcomes()
@@ -526,7 +521,6 @@ def test_preparse_ordering_with_setuptools(testdir, monkeypatch):
             dist = Dist()
 
             def load(self):
-
                 class PseudoPlugin(object):
                     x = 42
 
@@ -606,9 +600,9 @@ def test_plugin_preparse_prevents_setuptools_loading(testdir, monkeypatch, block
         assert "mytestplugin" not in sys.modules
         assert config.pluginmanager.get_plugin("mytestplugin") is None
     else:
-        assert config.pluginmanager.get_plugin(
-            "mytestplugin"
-        ) is plugin_module_placeholder
+        assert (
+            config.pluginmanager.get_plugin("mytestplugin") is plugin_module_placeholder
+        )
 
 
 def test_cmdline_processargs_simple(testdir):
@@ -709,7 +703,6 @@ def test_notify_exception(testdir, capfd):
     assert "ValueError" in err
 
     class A(object):
-
         def pytest_internalerror(self, excrepr):
             return True
 
@@ -725,7 +718,6 @@ def test_load_initial_conftest_last_ordering(testdir):
     pm = get_config().pluginmanager
 
     class My(object):
-
         def pytest_load_initial_conftests(self):
             pass
 
@@ -754,7 +746,6 @@ def test_get_plugin_specs_as_list():
 
 
 class TestWarning(object):
-
     def test_warn_config(self, testdir):
         testdir.makeconftest(
             """
@@ -804,7 +795,6 @@ class TestWarning(object):
 
 
 class TestRootdir(object):
-
     def test_simple_noini(self, tmpdir):
         assert get_common_ancestor([tmpdir]) == tmpdir
         a = tmpdir.mkdir("a")
@@ -863,7 +853,6 @@ class TestRootdir(object):
 
 
 class TestOverrideIniArgs(object):
-
     @pytest.mark.parametrize("name", "setup.cfg tox.ini pytest.ini".split())
     def test_override_ini_names(self, testdir, name):
         testdir.tmpdir.join(name).write(

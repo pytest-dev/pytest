@@ -72,12 +72,8 @@ def iscoroutinefunction(func):
     Note: copied and modified from Python 3.5's builtin couroutines.py to avoid import asyncio directly,
     which in turns also initializes the "logging" module as side-effect (see issue #8).
     """
-    return (
-        getattr(func, "_is_coroutine", False)
-        or (
-            hasattr(inspect, "iscoroutinefunction")
-            and inspect.iscoroutinefunction(func)
-        )
+    return getattr(func, "_is_coroutine", False) or (
+        hasattr(inspect, "iscoroutinefunction") and inspect.iscoroutinefunction(func)
     )
 
 
@@ -164,7 +160,7 @@ def getfuncargnames(function, is_method=False, cls=None):
         arg_names = arg_names[1:]
     # Remove any names that will be replaced with mocks.
     if hasattr(function, "__wrapped__"):
-        arg_names = arg_names[num_mock_patch_args(function):]
+        arg_names = arg_names[num_mock_patch_args(function) :]
     return arg_names
 
 
@@ -356,7 +352,6 @@ if _PY2:
     from py.io import TextIO
 
     class CaptureIO(TextIO):
-
         @property
         def encoding(self):
             return getattr(self, "_encoding", "UTF-8")
@@ -366,7 +361,6 @@ else:
     import io
 
     class CaptureIO(io.TextIOWrapper):
-
         def __init__(self):
             super(CaptureIO, self).__init__(
                 io.BytesIO(), encoding="UTF-8", newline="", write_through=True
