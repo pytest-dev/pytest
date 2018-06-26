@@ -53,6 +53,10 @@ def pytest_addoption(parser):
         ),
     )
 
+    parser.addini(
+        "pytester_example_dir", help="directory to take the pytester example files from"
+    )
+
 
 def pytest_configure(config):
     if config.getvalue("lsof"):
@@ -627,6 +631,11 @@ class Testdir(object):
         p = self.mkdir(name)
         p.ensure("__init__.py")
         return p
+
+    def copy_example(self, name):
+        example_dir = self.request.config.getini("pytester_example_dir")
+        example_path = self.request.config.rootdir.join(example_dir, name)
+        example_path.copy(self.tmpdir.join(example_path.basename))
 
     Session = Session
 
