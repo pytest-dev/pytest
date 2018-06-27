@@ -53,6 +53,10 @@ def pytest_addoption(parser):
         ),
     )
 
+    parser.addini(
+        "pytester_example_dir", help="directory to take the pytester example files from"
+    )
+
 
 def pytest_configure(config):
     if config.getvalue("lsof"):
@@ -627,6 +631,22 @@ class Testdir(object):
         p = self.mkdir(name)
         p.ensure("__init__.py")
         return p
+
+    def copy_example(self, name):
+        from . import experiments
+        import warnings
+
+        warnings.warn(experiments.PYTESTER_COPY_EXAMPLE, stacklevel=2)
+        example_dir = self.request.config.getini("pytester_example_dir")
+        if example_dir is None:
+            raise ValueError("pytester_example_dir is unset, can't copy examples")
+        example_path = self.request.config.rootdir.join(example_dir, name)
+        if example_path.isdir() and not example_path.join("__init__.py").isfile():
+            example_path.copy(self.tmpdir)
+        elif example_path.isfile():
+            example_path.copy(self.tmpdir.join(example_path.basename))
+        else:
+            raise LookupError("example is not found as a file or directory")
 
     Session = Session
 
