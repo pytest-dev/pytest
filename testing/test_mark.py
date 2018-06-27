@@ -1130,3 +1130,42 @@ def test_addmarker_getmarker():
     node.add_marker("b")
     node.get_marker("a").combined
     node.get_marker("b").combined
+
+
+@pytest.mark.issue("https://github.com/pytest-dev/pytest/issues/3605")
+@pytest.mark.filterwarnings("ignore")
+def test_markers_from_parametrize(testdir):
+    testdir.makepyfile(
+        """
+        from __future__ import print_function
+        import pytest
+
+        first_custom_mark = pytest.mark.custom_marker
+        custom_mark = pytest.mark.custom_mark
+        @pytest.fixture(autouse=True)
+        def trigger(request):
+            custom_mark =request.node.get_marker('custom_mark')
+            print("Custom mark %s" % custom_mark)
+
+        @custom_mark("custom mark non parametrized")
+        def test_custom_mark_non_parametrized():
+            print("Hey from test")
+
+        @pytest.mark.parametrize(
+            "obj_type",
+            [
+                first_custom_mark("first custom mark")("template"),
+                pytest.param( # Think this should be recommended way?
+                    "disk",
+                    marks=custom_mark('custom mark1')
+                ),
+                custom_mark("custom mark2")("vm"),  # Tried also this
+            ]
+        )
+        def test_custom_mark_parametrized(obj_type):
+            print("obj_type is:", obj_type)
+    """
+    )
+
+    result = testdir.runpytest()
+    result.assert_outcomes(passed=4)
