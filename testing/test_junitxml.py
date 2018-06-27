@@ -7,6 +7,8 @@ import os
 from _pytest.junitxml import LogXML
 import pytest
 
+from _pytest.reports import BaseReport
+
 
 def runandparse(testdir, *args):
     resultpath = testdir.tmpdir.join("junit.xml")
@@ -940,7 +942,6 @@ def test_unicode_issue368(testdir):
     path = testdir.tmpdir.join("test.xml")
     log = LogXML(str(path), None)
     ustr = py.builtin._totext("ВНИ!", "utf-8")
-    from _pytest.runner import BaseReport
 
     class Report(BaseReport):
         longrepr = ustr
@@ -1137,7 +1138,6 @@ def test_fancy_items_regression(testdir):
 def test_global_properties(testdir):
     path = testdir.tmpdir.join("test_global_properties.xml")
     log = LogXML(str(path), None)
-    from _pytest.runner import BaseReport
 
     class Report(BaseReport):
         sections = []
@@ -1173,7 +1173,6 @@ def test_url_property(testdir):
     test_url = "http://www.github.com/pytest-dev"
     path = testdir.tmpdir.join("test_url_property.xml")
     log = LogXML(str(path), None)
-    from _pytest.runner import BaseReport
 
     class Report(BaseReport):
         longrepr = "FooBarBaz"

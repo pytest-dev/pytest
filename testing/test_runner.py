@@ -8,7 +8,7 @@ import py
 import pytest
 import sys
 import types
-from _pytest import runner, main, outcomes
+from _pytest import runner, main, outcomes, reports
 
 
 class TestSetupState(object):
@@ -459,10 +459,10 @@ class TestSessionReports(object):
 
 
 reporttypes = [
-    runner.BaseReport,
-    runner.TestReport,
-    runner.TeardownErrorReport,
-    runner.CollectReport,
+    reports.BaseReport,
+    reports.TestReport,
+    reports.TeardownErrorReport,
+    reports.CollectReport,
 ]
 
 
