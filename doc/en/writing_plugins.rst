@@ -386,9 +386,41 @@ return a result object, with which we can assert the tests' outcomes.
         result.assert_outcomes(passed=4)
 
 
+additionally it is possible to copy examples for a example folder before running pytest on it
+
+.. code:: ini
+
+  # contents of pytest.ini
+  [pytest]
+  pytester_example_dir = .
+
+
+.. code:: python
+
+    # contents of test_example.py
+
+
+    def test_plugin(testdir):
+      testdir.copy_example("test_example.py")
+      testdir.runpytest("-k 'not test_plugin'")
+
+    def test_example():
+      pass
+
+.. code::
+
+    $ pytest -k test_plugin
+    =========================== test session starts ============================
+    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
+    rootdir: $REGENDOC_TMPDIR, inifile:
+    collected 0 items
+
+    ======================= no tests ran in 0.12 seconds =======================
 For more information about the result object that ``runpytest()`` returns, and
 the methods that it provides please check out the :py:class:`RunResult
 <_pytest.pytester.RunResult>` documentation.
+
+
 
 
 .. _`writinghooks`:
