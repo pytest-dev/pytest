@@ -46,3 +46,7 @@ test_script:
 cache:
   - '%LOCALAPPDATA%\pip\cache'
   - '%USERPROFILE%\.cache\pre-commit'
+
+# We don't deploy anything on tags with AppVeyor, we use Travis instead, so we
+# might as well save resources
+skip_tags: true
