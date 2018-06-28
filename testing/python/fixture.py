@@ -3790,17 +3790,28 @@ def test_pytest_fixture_setup_and_post_finalizer_hook(testdir):
 class TestScopeOrdering(object):
     """Class of tests that ensure fixtures are ordered based on their scopes (#2405)"""
 
-    @pytest.mark.parametrize("use_mark", [True, False])
-    def test_func_closure_module_auto(self, testdir, use_mark):
+    @pytest.mark.parametrize("variant", ["mark", "autouse"])
+    @pytest.mark.issue(github="#2405")
+    def test_func_closure_module_auto(self, testdir, variant, monkeypatch):
         """Semantically identical to the example posted in #2405 when ``use_mark=True``"""
+        monkeypatch.setenv("FIXTURE_ACTIVATION_VARIANT", variant)
         testdir.makepyfile(
             """
+            import warnings
+            import os
             import pytest
+            VAR = 'FIXTURE_ACTIVATION_VARIANT'
+            VALID_VARS = ('autouse', 'mark')
 
-            @pytest.fixture(scope='module', autouse={autouse})
+            VARIANT = os.environ.get(VAR)
+            if VARIANT is None or VARIANT not in VALID_VARS:
+                warnings.warn(\"{!r}\" is not  in {}, assuming autouse".format(VARIANT, VALID_VARS) )
+                variant = 'mark'
+
+            @pytest.fixture(scope='module', autouse=VARIANT == 'autouse')
             def m1(): pass
 
-            if {use_mark}:
+            if VARIANT=='mark':
                 pytestmark = pytest.mark.usefixtures('m1')
 
             @pytest.fixture(scope='function', autouse=True)
@@ -3808,9 +3819,7 @@ class TestScopeOrdering(object):
 
             def test_func(m1):
                 pass
-        """.format(
-                autouse=not use_mark, use_mark=use_mark
-            )
+        """
         )
         items, _ = testdir.inline_genitems()
         request = FixtureRequest(items[0])
