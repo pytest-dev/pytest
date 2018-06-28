@@ -3585,9 +3585,7 @@ class TestContextManagerFixtureFuncs(object):
                 yield 2
             def test_1(arg1):
                 pass
-        """.format(
-                flavor=flavor
-            )
+        """
         )
         result = testdir.runpytest("-s")
         result.stdout.fnmatch_lines(
@@ -3614,8 +3612,8 @@ class TestContextManagerFixtureFuncs(object):
 
 class TestParameterizedSubRequest(object):
     def test_call_from_fixture(self, testdir):
-        testfile = testdir.makepyfile(
-            """
+        testdir.makepyfile(
+            test_call_from_fixture="""
             import pytest
 
             @pytest.fixture(params=[0, 1, 2])
@@ -3636,18 +3634,16 @@ class TestParameterizedSubRequest(object):
             E*Failed: The requested fixture has no parameter defined for the current test.
             E*
             E*Requested fixture 'fix_with_param' defined in:
-            E*{}:4
+            E*test_call_from_fixture.py:4
             E*Requested here:
-            E*{}:9
+            E*test_call_from_fixture.py:9
             *1 error*
-            """.format(
-                testfile.basename, testfile.basename
-            )
+            """
         )
 
     def test_call_from_test(self, testdir):
-        testfile = testdir.makepyfile(
-            """
+        testdir.makepyfile(
+            test_call_from_test="""
             import pytest
 
             @pytest.fixture(params=[0, 1, 2])
@@ -3664,17 +3660,15 @@ class TestParameterizedSubRequest(object):
             E*Failed: The requested fixture has no parameter defined for the current test.
             E*
             E*Requested fixture 'fix_with_param' defined in:
-            E*{}:4
+            E*test_call_from_test.py:4
             E*Requested here:
-            E*{}:8
+            E*test_call_from_test.py:8
             *1 failed*
-            """.format(
-                testfile.basename, testfile.basename
-            )
+            """
         )
 
     def test_external_fixture(self, testdir):
-        conffile = testdir.makeconftest(
+        testdir.makeconftest(
             """
             import pytest
 
@@ -3684,8 +3678,8 @@ class TestParameterizedSubRequest(object):
             """
         )
 
-        testfile = testdir.makepyfile(
-            """
+        testdir.makepyfile(
+            test_external_fixture="""
             def test_foo(request):
                 request.getfixturevalue('fix_with_param')
             """
@@ -3696,13 +3690,11 @@ class TestParameterizedSubRequest(object):
             E*Failed: The requested fixture has no parameter defined for the current test.
             E*
             E*Requested fixture 'fix_with_param' defined in:
-            E*{}:4
+            E*conftest.py:4
             E*Requested here:
-            E*{}:2
+            E*test_external_fixture.py:2
             *1 failed*
-            """.format(
-                conffile.basename, testfile.basename
-            )
+            """
         )
 
     def test_non_relative_path(self, testdir):
@@ -3741,13 +3733,11 @@ class TestParameterizedSubRequest(object):
             E*Failed: The requested fixture has no parameter defined for the current test.
             E*
             E*Requested fixture 'fix_with_param' defined in:
-            E*{}:5
+            E*fix.py:5
             E*Requested here:
-            E*{}:5
+            E*test_foos.py:5
             *1 failed*
-            """.format(
-                fixfile.strpath, testfile.basename
-            )
+            """
         )
 
 
