@@ -310,9 +310,7 @@ class FuncFixtureInfo(object):
                 if argname in self.name2fixturedefs:
                     working_set.update(self.name2fixturedefs[argname][-1].argnames)
 
-        self.names_closure[:] = sorted(
-            closure, key=lambda name: self.names_closure.index(name)
-        )
+        self.names_closure[:] = sorted(closure, key=self.names_closure.index)
 
 
 class FixtureRequest(FuncargnamesCompatAttr):
