@@ -39,7 +39,11 @@ from _pytest.compat import (
     get_default_arg_names,
 )
 from _pytest.outcomes import fail
-from _pytest.mark.structures import transfer_markers, get_unpacked_marks
+from _pytest.mark.structures import (
+    transfer_markers,
+    get_unpacked_marks,
+    normalize_mark_list,
+)
 
 
 # relative paths that we use to filter traceback entries from appearing to the user;
@@ -773,7 +777,7 @@ class CallSpec2(object):
             self.indices[arg] = param_index
             self._arg2scopenum[arg] = scopenum
         self._idlist.append(id)
-        self.marks.extend(marks)
+        self.marks.extend(normalize_mark_list(marks))
 
     def setall(self, funcargs, id, param):
         for x in funcargs:
@@ -1254,7 +1258,7 @@ class Function(FunctionMixin, nodes.Item, fixtures.FuncargnamesCompatAttr):
                 # feel free to cry, this was broken for years before
                 # and keywords cant fix it per design
                 self.keywords[mark.name] = mark
-            self.own_markers.extend(callspec.marks)
+            self.own_markers.extend(normalize_mark_list(callspec.marks))
         if keywords:
             self.keywords.update(keywords)
 
