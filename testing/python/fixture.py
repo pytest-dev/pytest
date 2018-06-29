@@ -3805,7 +3805,7 @@ class TestScopeOrdering(object):
 
             VARIANT = os.environ.get(VAR)
             if VARIANT is None or VARIANT not in VALID_VARS:
-                warnings.warn(\"{!r}\" is not  in {}, assuming autouse".format(VARIANT, VALID_VARS) )
+                warnings.warn("{!r} is not  in {}, assuming autouse".format(VARIANT, VALID_VARS) )
                 variant = 'mark'
 
             @pytest.fixture(scope='module', autouse=VARIANT == 'autouse')
