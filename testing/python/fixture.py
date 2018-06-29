@@ -5,6 +5,7 @@ import pytest
 from _pytest.pytester import get_public_names
 from _pytest.fixtures import FixtureLookupError, FixtureRequest
 from _pytest import fixtures
+from _pytest.compat import Path
 
 
 def test_getfuncargnames():
@@ -40,45 +41,27 @@ def test_getfuncargnames():
     assert fixtures.getfuncargnames(A.static, cls=A) == ("arg1", "arg2")
 
 
+@pytest.mark.pytester_example_path("fixtures/fill_fixtures")
 class TestFillFixtures(object):
     def test_fillfuncargs_exposed(self):
         # used by oejskit, kept for compatibility
         assert pytest._fillfuncargs == fixtures.fillfixtures
 
     def test_funcarg_lookupfails(self, testdir):
-        testdir.makepyfile(
-            """
-            import pytest
-
-            @pytest.fixture
-            def xyzsomething(request):
-                return 42
-
-            def test_func(some):
-                pass
-        """
-        )
+        testdir.copy_example()
         result = testdir.runpytest()  # "--collect-only")
         assert result.ret != 0
         result.stdout.fnmatch_lines(
-            ["*def test_func(some)*", "*fixture*some*not found*", "*xyzsomething*"]
+            """
+            *def test_func(some)*
+            *fixture*some*not found*
+            *xyzsomething*
+            """
         )
 
     def test_funcarg_basic(self, testdir):
-        item = testdir.getitem(
-            """
-            import pytest
-
-            @pytest.fixture
-            def some(request):
-                return request.function.__name__
-            @pytest.fixture
-            def other(request):
-                return 42
-            def test_func(some, other):
-                pass
-        """
-        )
+        testdir.copy_example()
+        item = testdir.getitem(Path("test_funcarg_basic.py"))
         fixtures.fillfixtures(item)
         del item.funcargs["request"]
         assert len(get_public_names(item.funcargs)) == 2
@@ -86,155 +69,39 @@ class TestFillFixtures(object):
         assert item.funcargs["other"] == 42
 
     def test_funcarg_lookup_modulelevel(self, testdir):
-        testdir.makepyfile(
-            """
-            import pytest
-
-            @pytest.fixture
-            def something(request):
-                return request.function.__name__
-
-            class TestClass(object):
-                def test_method(self, something):
-                    assert something == "test_method"
-            def test_func(something):
-                assert something == "test_func"
-        """
-        )
+        testdir.copy_example()
         reprec = testdir.inline_run()
         reprec.assertoutcome(passed=2)
 
     def test_funcarg_lookup_classlevel(self, testdir):
-        p = testdir.makepyfile(
-            """
-            import pytest
-            class TestClass(object):
-
-                @pytest.fixture
-                def something(self, request):
-                    return request.instance
-
-                def test_method(self, something):
-                    assert something is self
-        """
-        )
+        p = testdir.copy_example()
         result = testdir.runpytest(p)
         result.stdout.fnmatch_lines(["*1 passed*"])
 
     def test_conftest_funcargs_only_available_in_subdir(self, testdir):
-        sub1 = testdir.mkpydir("sub1")
-        sub2 = testdir.mkpydir("sub2")
-        sub1.join("conftest.py").write(
-            _pytest._code.Source(
-                """
-            import pytest
-            @pytest.fixture
-            def arg1(request):
-                pytest.raises(Exception, "request.getfixturevalue('arg2')")
-        """
-            )
-        )
-        sub2.join("conftest.py").write(
-            _pytest._code.Source(
-                """
-            import pytest
-            @pytest.fixture
-            def arg2(request):
-                pytest.raises(Exception, "request.getfixturevalue('arg1')")
-        """
-            )
-        )
-
-        sub1.join("test_in_sub1.py").write("def test_1(arg1): pass")
-        sub2.join("test_in_sub2.py").write("def test_2(arg2): pass")
+        testdir.copy_example()
         result = testdir.runpytest("-v")
         result.assert_outcomes(passed=2)
 
     def test_extend_fixture_module_class(self, testdir):
-        testfile = testdir.makepyfile(
-            """
-            import pytest
-
-            @pytest.fixture
-            def spam():
-                return 'spam'
-
-            class TestSpam(object):
-
-                 @pytest.fixture
-                 def spam(self, spam):
-                     return spam * 2
-
-                 def test_spam(self, spam):
-                     assert spam == 'spamspam'
-        """
-        )
+        testfile = testdir.copy_example()
         result = testdir.runpytest()
         result.stdout.fnmatch_lines(["*1 passed*"])
         result = testdir.runpytest(testfile)
         result.stdout.fnmatch_lines(["*1 passed*"])
 
     def test_extend_fixture_conftest_module(self, testdir):
-        testdir.makeconftest(
-            """
-            import pytest
-
-            @pytest.fixture
-            def spam():
-                return 'spam'
-        """
-        )
-        testfile = testdir.makepyfile(
-            """
-            import pytest
-
-            @pytest.fixture
-            def spam(spam):
-                return spam * 2
-
-            def test_spam(spam):
-                assert spam == 'spamspam'
-        """
-        )
+        p = testdir.copy_example()
         result = testdir.runpytest()
         result.stdout.fnmatch_lines(["*1 passed*"])
-        result = testdir.runpytest(testfile)
+        result = testdir.runpytest(next(p.visit("test_*.py")))
         result.stdout.fnmatch_lines(["*1 passed*"])
 
     def test_extend_fixture_conftest_conftest(self, testdir):
-        testdir.makeconftest(
-            """
-            import pytest
-
-            @pytest.fixture
-            def spam():
-                return 'spam'
-        """
-        )
-        pkg = testdir.mkpydir("pkg")
-        pkg.join("conftest.py").write(
-            _pytest._code.Source(
-                """
-            import pytest
-
-            @pytest.fixture
-            def spam(spam):
-                return spam * 2
-        """
-            )
-        )
-        testfile = pkg.join("test_spam.py")
-        testfile.write(
-            _pytest._code.Source(
-                """
-            def test_spam(spam):
-                assert spam == "spamspam"
-        """
-            )
-        )
+        p = testdir.copy_example()
         result = testdir.runpytest()
         result.stdout.fnmatch_lines(["*1 passed*"])
-        result = testdir.runpytest(testfile)
+        result = testdir.runpytest(next(p.visit("test_*.py")))
         result.stdout.fnmatch_lines(["*1 passed*"])
 
     def test_extend_fixture_conftest_plugin(self, testdir):

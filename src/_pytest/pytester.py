@@ -21,7 +21,7 @@ import py
 import pytest
 from _pytest.main import Session, EXIT_OK
 from _pytest.assertion.rewrite import AssertionRewritingHook
-
+from _pytest.compat import Path
 
 PYTEST_FULLPATH = os.path.abspath(pytest.__file__.rstrip("oc")).replace(
     "$py.class", ".py"
@@ -632,7 +632,7 @@ class Testdir(object):
         p.ensure("__init__.py")
         return p
 
-    def copy_example(self, name):
+    def copy_example(self, name=None):
         from . import experiments
         import warnings
 
@@ -640,11 +640,37 @@ class Testdir(object):
         example_dir = self.request.config.getini("pytester_example_dir")
         if example_dir is None:
             raise ValueError("pytester_example_dir is unset, can't copy examples")
-        example_path = self.request.config.rootdir.join(example_dir, name)
+        example_dir = self.request.config.rootdir.join(example_dir)
+
+        for extra_element in self.request.node.iter_markers("pytester_example_path"):
+            assert extra_element.args
+            example_dir = example_dir.join(*extra_element.args)
+
+        if name is None:
+            func_name = self.request.function.__name__
+            maybe_dir = example_dir / func_name
+            maybe_file = example_dir / (func_name + ".py")
+
+            if maybe_dir.isdir():
+                example_path = maybe_dir
+            elif maybe_file.isfile():
+                example_path = maybe_file
+            else:
+                raise LookupError(
+                    "{} cant be found as module or package in {}".format(
+                        func_name, example_dir.bestrelpath(self.request.confg.rootdir)
+                    )
+                )
+        else:
+            example_path = example_dir.join(name)
+
         if example_path.isdir() and not example_path.join("__init__.py").isfile():
             example_path.copy(self.tmpdir)
+            return self.tmpdir
         elif example_path.isfile():
-            example_path.copy(self.tmpdir.join(example_path.basename))
+            result = self.tmpdir.join(example_path.basename)
+            example_path.copy(result)
+            return result
         else:
             raise LookupError("example is not found as a file or directory")
 
@@ -954,14 +980,16 @@ class Testdir(object):
             same directory to ensure it is a package
 
         """
-        kw = {self.request.function.__name__: Source(source).strip()}
-        path = self.makepyfile(**kw)
+        if isinstance(source, Path):
+            path = self.tmpdir.join(str(source))
+            assert not withinit, "not supported for paths"
+        else:
+            kw = {self.request.function.__name__: Source(source).strip()}
+            path = self.makepyfile(**kw)
         if withinit:
             self.makepyfile(__init__="#")
         self.config = config = self.parseconfigure(path, *configargs)
-        node = self.getnode(config, path)
-
-        return node
+        return self.getnode(config, path)
 
     def collect_by_name(self, modcol, name):
         """Return the collection node for name from the module collection.
