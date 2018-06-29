@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import re
 import os
+from io import open
 
 import six
 
