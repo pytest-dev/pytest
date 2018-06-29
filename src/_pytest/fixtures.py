@@ -274,11 +274,43 @@ def get_direct_param_fixture_func(request):
     return request.param
 
 
+@attr.s(slots=True)
 class FuncFixtureInfo(object):
-    def __init__(self, argnames, names_closure, name2fixturedefs):
-        self.argnames = argnames
-        self.names_closure = names_closure
-        self.name2fixturedefs = name2fixturedefs
+    # original function argument names
+    argnames = attr.ib(type=tuple)
+    # argnames that function immediately requires. These include argnames +
+    # fixture names specified via usefixtures and via autouse=True in fixture
+    # definitions.
+    initialnames = attr.ib(type=tuple)
+    names_closure = attr.ib(type="List[str]")
+    name2fixturedefs = attr.ib(type="List[str, List[FixtureDef]]")
+
+    def prune_dependency_tree(self):
+        """Recompute names_closure from initialnames and name2fixturedefs
+
+        Can only reduce names_closure, which means that the new closure will
+        always be a subset of the old one. The order is preserved.
+
+        This method is needed because direct parametrization may shadow some
+        of the fixtures that were included in the originally built dependency
+        tree. In this way the dependency tree can get pruned, and the closure
+        of argnames may get reduced.
+        """
+        closure = set()
+        working_set = set(self.initialnames)
+        while working_set:
+            argname = working_set.pop()
+            # argname may be smth not included in the original names_closure,
+            # in which case we ignore it. This currently happens with pseudo
+            # FixtureDefs which wrap 'get_direct_param_fixture_func(request)'.
+            # So they introduce the new dependency 'request' which might have
+            # been missing in the original tree (closure).
+            if argname not in closure and argname in self.names_closure:
+                closure.add(argname)
+                if argname in self.name2fixturedefs:
+                    working_set.update(self.name2fixturedefs[argname][-1].argnames)
+
+        self.names_closure[:] = sorted(closure, key=self.names_closure.index)
 
 
 class FixtureRequest(FuncargnamesCompatAttr):
@@ -1033,11 +1065,12 @@ class FixtureManager(object):
         usefixtures = flatten(
             mark.args for mark in node.iter_markers(name="usefixtures")
         )
-        initialnames = argnames
-        initialnames = tuple(usefixtures) + initialnames
+        initialnames = tuple(usefixtures) + argnames
         fm = node.session._fixturemanager
-        names_closure, arg2fixturedefs = fm.getfixtureclosure(initialnames, node)
-        return FuncFixtureInfo(argnames, names_closure, arg2fixturedefs)
+        initialnames, names_closure, arg2fixturedefs = fm.getfixtureclosure(
+            initialnames, node
+        )
+        return FuncFixtureInfo(argnames, initialnames, names_closure, arg2fixturedefs)
 
     def pytest_plugin_registered(self, plugin):
         nodeid = None
@@ -1085,6 +1118,12 @@ class FixtureManager(object):
                     fixturenames_closure.append(arg)
 
         merge(fixturenames)
+
+        # at this point, fixturenames_closure contains what we call "initialnames",
+        # which is a set of fixturenames the function immediately requests. We
+        # need to return it as well, so save this.
+        initialnames = tuple(fixturenames_closure)
+
         arg2fixturedefs = {}
         lastlen = -1
         while lastlen != len(fixturenames_closure):
@@ -1106,7 +1145,7 @@ class FixtureManager(object):
                 return fixturedefs[-1].scopenum
 
         fixturenames_closure.sort(key=sort_by_scope)
-        return fixturenames_closure, arg2fixturedefs
+        return initialnames, fixturenames_closure, arg2fixturedefs
 
     def pytest_generate_tests(self, metafunc):
         for argname in metafunc.fixturenames:

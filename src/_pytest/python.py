@@ -439,6 +439,11 @@ class PyCollector(PyobjMixin, nodes.Collector):
             # add funcargs() as fixturedefs to fixtureinfo.arg2fixturedefs
             fixtures.add_funcarg_pseudo_fixture_def(self, metafunc, fm)
 
+            # add_funcarg_pseudo_fixture_def may have shadowed some fixtures
+            # with direct parametrization, so make sure we update what the
+            # function really needs.
+            fixtureinfo.prune_dependency_tree()
+
             for callspec in metafunc._calls:
                 subname = "%s[%s]" % (name, callspec.id)
                 yield Function(

@@ -630,6 +630,37 @@ class TestFunction(object):
         rec = testdir.inline_run()
         rec.assertoutcome(passed=1)
 
+    def test_parametrize_overrides_indirect_dependency_fixture(self, testdir):
+        """Test parametrization when parameter overrides a fixture that a test indirectly depends on"""
+        testdir.makepyfile(
+            """
+            import pytest
+
+            fix3_instantiated = False
+
+            @pytest.fixture
+            def fix1(fix2):
+               return fix2 + '1'
+
+            @pytest.fixture
+            def fix2(fix3):
+               return fix3 + '2'
+
+            @pytest.fixture
+            def fix3():
+               global fix3_instantiated
+               fix3_instantiated = True
+               return '3'
+
+            @pytest.mark.parametrize('fix2', ['2'])
+            def test_it(fix1):
+               assert fix1 == '21'
+               assert not fix3_instantiated
+        """
+        )
+        rec = testdir.inline_run()
+        rec.assertoutcome(passed=1)
+
     @ignore_parametrized_marks
     def test_parametrize_with_mark(self, testdir):
         items = testdir.getitems(
