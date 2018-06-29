@@ -63,6 +63,19 @@ class TestMark(object):
         mark.hello(f)
         assert f.hello
 
+    def test_mark_legacy_ignore_fail(self):
+        def add_attribute(func):
+            func.foo = 1
+            return func
+
+        @pytest.mark.foo
+        @add_attribute
+        def test_fun():
+            pass
+
+        assert test_fun.foo == 1
+        assert test_fun.pytestmark
+
     @ignore_markinfo
     def test_pytest_mark_keywords(self):
         mark = Mark()
