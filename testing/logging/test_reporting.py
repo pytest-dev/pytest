@@ -861,7 +861,7 @@ def test_log_file_unicode(testdir):
     with open(log_file, encoding="utf-8") as rfh:
         contents = rfh.read()
         assert "Normal message" in contents
-        assert six.unichr(0x251c) in contents
+        assert u"├" in contents
         assert "Another normal message" in contents
 
 
