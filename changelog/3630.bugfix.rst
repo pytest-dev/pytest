@@ -1,0 +1,1 @@
+Log messages with unicode characters would not appear in the output log file.

@@ -392,7 +392,9 @@ class LoggingPlugin(object):
                 config, "log_file_date_format", "log_date_format"
             )
             # Each pytest runtests session will write to a clean logfile
-            self.log_file_handler = logging.FileHandler(log_file, mode="w")
+            self.log_file_handler = logging.FileHandler(
+                log_file, mode="w", encoding="UTF-8"
+            )
             log_file_formatter = logging.Formatter(
                 log_file_format, datefmt=log_file_date_format
             )
