@@ -167,7 +167,7 @@ Fixtures requiring network access depend on connectivity and are
 usually time-expensive to create.  Extending the previous example, we
 can add a ``scope="module"`` parameter to the
 :py:func:`@pytest.fixture <_pytest.python.fixture>` invocation
-to cause the decorated ``smtp_connection`` fixture function to only be invoked 
+to cause the decorated ``smtp_connection`` fixture function to only be invoked
 once per test *module* (the default is to invoke once per test *function*).
 Multiple test functions in a test module will thus
 each receive the same ``smtp_connection`` fixture instance, thus saving time.
@@ -184,9 +184,9 @@ access the fixture function::
     def smtp_connection():
         return smtplib.SMTP("smtp.gmail.com", 587, timeout=5)
 
-The name of the fixture again is ``smtp_connection`` and you can access its 
-result by listing the name ``smtp_connection`` as an input parameter in any 
-test or fixture function (in or below the directory where ``conftest.py`` is 
+The name of the fixture again is ``smtp_connection`` and you can access its
+result by listing the name ``smtp_connection`` as an input parameter in any
+test or fixture function (in or below the directory where ``conftest.py`` is
 located)::
 
     # content of test_module.py
@@ -240,9 +240,9 @@ inspect what is going on and can now run the tests::
     ========================= 2 failed in 0.12 seconds =========================
 
 You see the two ``assert 0`` failing and more importantly you can also see
-that the same (module-scoped) ``smtp_connection`` object was passed into the 
+that the same (module-scoped) ``smtp_connection`` object was passed into the
 two test functions because pytest shows the incoming argument values in the
-traceback.  As a result, the two test functions using ``smtp_connection`` run 
+traceback.  As a result, the two test functions using ``smtp_connection`` run
 as quick as a single one because they reuse the same instance.
 
 If you decide that you rather want to have a session-scoped ``smtp_connection``
@@ -364,7 +364,7 @@ Note that we can also seamlessly use the ``yield`` syntax with ``with`` statemen
             yield smtp_connection  # provide the fixture value
 
 
-The ``smtp_connection`` connection will be closed after the test finished 
+The ``smtp_connection`` connection will be closed after the test finished
 execution because the ``smtp_connection`` object automatically closes when
 the ``with`` statement ends.
 
@@ -765,11 +765,11 @@ Here we declare an ``app`` fixture which receives the previously defined
 
 Due to the parametrization of ``smtp_connection`` the test will run twice with two
 different ``App`` instances and respective smtp servers.  There is no
-need for the ``app`` fixture to be aware of the ``smtp_connection`` 
+need for the ``app`` fixture to be aware of the ``smtp_connection``
 parametrization as pytest will fully analyse the fixture dependency graph.
 
 Note, that the ``app`` fixture has a scope of ``module`` and uses a
-module-scoped ``smtp_connection`` fixture.  The example would still work if 
+module-scoped ``smtp_connection`` fixture.  The example would still work if
 ``smtp_connection`` was cached on a ``session`` scope: it is fine for fixtures to use
 "broader" scoped fixtures but not the other way round:
 A session-scoped fixture could not use a module-scoped one in a
