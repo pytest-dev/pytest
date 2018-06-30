@@ -842,10 +842,13 @@ def test_log_file_unicode(testdir):
     )
     testdir.makepyfile(
         """
+        # -*- coding: utf-8 -*-
+        from __future__ import unicode_literals
         import logging
+
         def test_log_file():
             logging.getLogger('catchlog').info("Normal message")
-            logging.getLogger('catchlog').info("\u251c")
+            logging.getLogger('catchlog').info("├")
             logging.getLogger('catchlog').info("Another normal message")
     """
     )
@@ -858,7 +861,7 @@ def test_log_file_unicode(testdir):
     with open(log_file, encoding="utf-8") as rfh:
         contents = rfh.read()
         assert "Normal message" in contents
-        assert "\u251c" in contents
+        assert six.unichr(0x251c) in contents
         assert "Another normal message" in contents
 
 
