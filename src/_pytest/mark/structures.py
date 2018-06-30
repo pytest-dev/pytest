@@ -259,7 +259,7 @@ def store_legacy_markinfo(func, mark):
     if holder is None:
         holder = MarkInfo.for_mark(mark)
         setattr(func, mark.name, holder)
-    else:
+    elif isinstance(holder, MarkInfo):
         holder.add_mark(mark)
 
 
