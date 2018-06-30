@@ -3,6 +3,7 @@ from __future__ import absolute_import, division, print_function
 
 import codecs
 import gc
+import inspect
 import os
 import platform
 import re
@@ -583,6 +584,19 @@ class Testdir(object):
     def makepyfile(self, *args, **kwargs):
         """Shortcut for .makefile() with a .py extension."""
         return self._makefile(".py", args, kwargs)
+
+    def makepyfilefunc(self, func, *args, **kwargs):
+        """Make Python file from function"""
+        source = inspect.getsourcelines(func)[0][1:]
+        # Calculate whitespace from function and remove it.
+        pad = 0
+        for c in source[0]:
+            if c == ' ':
+                pad += 1
+            else:
+                break
+        unpadded_source = ''.join([line[pad:] for line in source])
+        return self.makepyfile(unpadded_source)
 
     def maketxtfile(self, *args, **kwargs):
         """Shortcut for .makefile() with a .txt extension."""

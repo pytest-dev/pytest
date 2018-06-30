@@ -140,6 +140,17 @@ def test_makepyfile_utf8(testdir):
     assert u"mixed_encoding = u'São Paulo'".encode("utf-8") in p.read("rb")
 
 
+def test_makepyfilefunc(testdir):
+    """Test makepyfilefunc against an inline function declaration"""
+    def tests():
+        def test_foo():
+            assert True
+    
+    test_mod = testdir.makepyfilefunc(tests)
+    result = testdir.inline_run(str(test_mod))
+    assert result.ret == EXIT_OK
+
+
 class TestInlineRunModulesCleanup(object):
     def test_inline_run_test_module_not_cleaned_up(self, testdir):
         test_mod = testdir.makepyfile("def test_foo(): assert True")
