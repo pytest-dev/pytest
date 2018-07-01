@@ -5,6 +5,8 @@ import sys
 import os
 from doctest import UnexpectedException
 
+from _pytest.config import hookimpl
+
 try:
     from builtins import breakpoint  # noqa
 
@@ -12,7 +14,7 @@ try:
 except ImportError:
     SUPPORTS_BREAKPOINT_BUILTIN = False
 
-
+immediately_break = False
 def pytest_addoption(parser):
     group = parser.getgroup("general")
     group._addoption(
@@ -27,6 +29,12 @@ def pytest_addoption(parser):
         metavar="modulename:classname",
         help="start a custom interactive Python debugger on errors. "
         "For example: --pdbcls=IPython.terminal.debugger:TerminalPdb",
+    )
+    group._addoption(
+        "--trace",
+        dest="trace",
+        action="store_true",
+        help="Immediately break when running each test.",
     )
 
 
@@ -63,6 +71,23 @@ def pytest_configure(config):
     config._cleanup.append(fin)
 
 
+
+@hookimpl(hookwrapper=True)
+def pytest_pyfunc_call(pyfuncitem):
+    if immediately_break:
+        pytestPDB.set_trace(set_break=False)
+        testfunction = pyfuncitem.obj
+        pyfuncitem.obj = pdb.runcall
+        if pyfuncitem._isyieldedfunction():
+            pyfuncitem.args = [testfunction, pyfuncitem._args]
+        else:
+            pyfuncitem.funcargs['func'] = testfunction
+            new_list = list(pyfuncitem._fixtureinfo.argnames)
+            new_list.append('func')
+            pyfuncitem._fixtureinfo.argnames = tuple(new_list)
+    outcome = yield
+
+
 class pytestPDB(object):
     """ Pseudo PDB that defers to the real pdb. """
 
@@ -71,7 +96,7 @@ class pytestPDB(object):
     _pdb_cls = pdb.Pdb
 
     @classmethod
-    def set_trace(cls):
+    def set_trace(cls, set_break=True):
         """ invoke PDB set_trace debugging, dropping any IO capturing. """
         import _pytest.config
 
@@ -84,7 +109,8 @@ class pytestPDB(object):
             tw.line()
             tw.sep(">", "PDB set_trace (IO-capturing turned off)")
             cls._pluginmanager.hook.pytest_enter_pdb(config=cls._config)
-        cls._pdb_cls().set_trace(frame)
+        if set_break:
+            cls._pdb_cls().set_trace(frame)
 
 
 class PdbInvoke(object):
