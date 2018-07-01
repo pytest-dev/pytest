@@ -46,6 +46,8 @@ def pytest_configure(config):
     else:
         pdb_cls = pdb.Pdb
 
+    global immediately_break
+    immediately_break = config.getvalue("trace")
     if config.getvalue("usepdb"):
         config.pluginmanager.register(PdbInvoke(), "pdbinvoke")
 
