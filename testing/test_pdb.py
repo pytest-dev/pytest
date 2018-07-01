@@ -696,3 +696,20 @@ class TestDebuggingBreakpoints(object):
         assert "1 failed" in rest
         assert "reading from stdin while output" not in rest
         TestPDB.flush(child)
+
+class TestTraceOption():
+    def test_trace_sets_breakpoint(self, testdir):
+        p1 = testdir.makepyfile(
+            """
+            def test_1():
+                assert 1
+            """
+        )
+        child = testdir.spawn_pytest("--trace " + str(p1))
+        child.expect("test_1")
+        child.expect("(Pdb)")
+        child.sendeof()
+        rest = child.read().decode("utf8")
+        assert "1 failed" in rest
+        assert "reading from stdin while output" not in rest
+        TestPDB.flush(child)
