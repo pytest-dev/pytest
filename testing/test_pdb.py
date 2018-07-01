@@ -702,7 +702,7 @@ class TestTraceOption():
         p1 = testdir.makepyfile(
             """
             def test_1():
-                assert 1
+                assert True
             """
         )
         child = testdir.spawn_pytest("--trace " + str(p1))
@@ -710,6 +710,6 @@ class TestTraceOption():
         child.expect("(Pdb)")
         child.sendeof()
         rest = child.read().decode("utf8")
-        assert "1 failed" in rest
+        assert "1 passed" in rest
         assert "reading from stdin while output" not in rest
         TestPDB.flush(child)
