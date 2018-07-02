@@ -14,7 +14,10 @@ try:
 except ImportError:
     SUPPORTS_BREAKPOINT_BUILTIN = False
 
+
 immediately_break = False
+
+
 def pytest_addoption(parser):
     group = parser.getgroup("general")
     group._addoption(
@@ -73,7 +76,6 @@ def pytest_configure(config):
     config._cleanup.append(fin)
 
 
-
 @hookimpl(hookwrapper=True)
 def pytest_pyfunc_call(pyfuncitem):
     if immediately_break:
@@ -83,11 +85,13 @@ def pytest_pyfunc_call(pyfuncitem):
         if pyfuncitem._isyieldedfunction():
             pyfuncitem.args = [testfunction, pyfuncitem._args]
         else:
+            if 'func' in pyfuncitem._fixtureinfo.argnames:
+                raise ValueError("--trace can't be used with a fixture named func!")
             pyfuncitem.funcargs['func'] = testfunction
             new_list = list(pyfuncitem._fixtureinfo.argnames)
             new_list.append('func')
             pyfuncitem._fixtureinfo.argnames = tuple(new_list)
-    outcome = yield
+    yield
 
 
 class pytestPDB(object):
