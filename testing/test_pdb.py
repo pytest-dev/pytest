@@ -697,6 +697,7 @@ class TestDebuggingBreakpoints(object):
         assert "reading from stdin while output" not in rest
         TestPDB.flush(child)
 
+
 class TestTraceOption:
     def test_trace_sets_breakpoint(self, testdir):
         p1 = testdir.makepyfile(
