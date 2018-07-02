@@ -171,6 +171,16 @@ for example::
     >>> sys.last_value
     AssertionError('assert result == "ok"',)
 
+.. _trace-option:
+
+Dropping to PDB_ (Python Debugger) at the start of a test
+
+``pytest`` allows one to drop into the PDB_ prompt immediately at the start of each test via a command line option::
+
+    pytest --trace
+
+    This will invoke the Python debugger at the start of every test.
+
 .. _breakpoints:
 
 Setting breakpoints
