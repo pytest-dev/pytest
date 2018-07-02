@@ -174,6 +174,8 @@ for example::
 .. _trace-option:
 
 Dropping to PDB_ (Python Debugger) at the start of a test
+-----------------------------------------------
+
 
 ``pytest`` allows one to drop into the PDB_ prompt immediately at the start of each test via a command line option::
 
