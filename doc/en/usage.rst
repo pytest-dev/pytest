@@ -181,7 +181,7 @@ Dropping to PDB_ (Python Debugger) at the start of a test
 
     pytest --trace
 
-    This will invoke the Python debugger at the start of every test.
+This will invoke the Python debugger at the start of every test.
 
 .. _breakpoints:
 
