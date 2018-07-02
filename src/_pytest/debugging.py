@@ -85,11 +85,11 @@ def pytest_pyfunc_call(pyfuncitem):
         if pyfuncitem._isyieldedfunction():
             pyfuncitem.args = [testfunction, pyfuncitem._args]
         else:
-            if 'func' in pyfuncitem._fixtureinfo.argnames:
+            if "func" in pyfuncitem._fixtureinfo.argnames:
                 raise ValueError("--trace can't be used with a fixture named func!")
-            pyfuncitem.funcargs['func'] = testfunction
+            pyfuncitem.funcargs["func"] = testfunction
             new_list = list(pyfuncitem._fixtureinfo.argnames)
-            new_list.append('func')
+            new_list.append("func")
             pyfuncitem._fixtureinfo.argnames = tuple(new_list)
     yield
 
