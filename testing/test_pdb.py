@@ -726,7 +726,7 @@ class TestTraceOption:
             """
         )
         child = testdir.spawn_pytest("--trace " + str(p1))
-        child.expect("test_1")
+        child.expect("is_equal")
         child.expect("(Pdb)")
         child.sendeof()
         rest = child.read().decode("utf8")
