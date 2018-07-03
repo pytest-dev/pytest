@@ -725,7 +725,7 @@ class TestTraceOption:
                 assert is_equal, 1, 1
             """
         )
-                child = testdir.spawn_pytest("--trace " + str(p1))
+        child = testdir.spawn_pytest("--trace " + str(p1))
         child.expect("test_1")
         child.expect("(Pdb)")
         child.sendline("c")
