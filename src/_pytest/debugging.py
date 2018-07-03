@@ -15,9 +15,6 @@ except ImportError:
     SUPPORTS_BREAKPOINT_BUILTIN = False
 
 
-immediately_break = False
-
-
 def pytest_addoption(parser):
     group = parser.getgroup("general")
     group._addoption(
@@ -49,8 +46,8 @@ def pytest_configure(config):
     else:
         pdb_cls = pdb.Pdb
 
-    global immediately_break
-    immediately_break = config.getvalue("trace")
+    if config.getvalue("trace"):
+        config.pluginmanager.register(PdbTrace(), "pdbtrace")
     if config.getvalue("usepdb"):
         config.pluginmanager.register(PdbInvoke(), "pdbinvoke")
 
@@ -74,24 +71,6 @@ def pytest_configure(config):
     pytestPDB._config = config
     pytestPDB._pdb_cls = pdb_cls
     config._cleanup.append(fin)
-
-
-@hookimpl(hookwrapper=True)
-def pytest_pyfunc_call(pyfuncitem):
-    if immediately_break:
-        pytestPDB.set_trace(set_break=False)
-        testfunction = pyfuncitem.obj
-        pyfuncitem.obj = pdb.runcall
-        if pyfuncitem._isyieldedfunction():
-            pyfuncitem._args = [testfunction, *pyfuncitem._args]
-        else:
-            if "func" in pyfuncitem._fixtureinfo.argnames:
-                raise ValueError("--trace can't be used with a fixture named func!")
-            pyfuncitem.funcargs["func"] = testfunction
-            new_list = list(pyfuncitem._fixtureinfo.argnames)
-            new_list.append("func")
-            pyfuncitem._fixtureinfo.argnames = tuple(new_list)
-    yield
 
 
 class pytestPDB(object):
@@ -134,6 +113,28 @@ class PdbInvoke(object):
             sys.stderr.flush()
         tb = _postmortem_traceback(excinfo)
         post_mortem(tb)
+
+
+class PdbTrace(object):
+    @hookimpl(hookwrapper=True)
+    def pytest_pyfunc_call(self, pyfuncitem):
+        _test_pytest_function(pyfuncitem)
+        yield
+
+
+def _test_pytest_function(pyfuncitem):
+    pytestPDB.set_trace(set_break=False)
+    testfunction = pyfuncitem.obj
+    pyfuncitem.obj = pdb.runcall
+    if pyfuncitem._isyieldedfunction():
+        pyfuncitem._args = [testfunction, *pyfuncitem._args]
+    else:
+        if "func" in pyfuncitem._fixtureinfo.argnames:
+            raise ValueError("--trace can't be used with a fixture named func!")
+        pyfuncitem.funcargs["func"] = testfunction
+        new_list = list(pyfuncitem._fixtureinfo.argnames)
+        new_list.append("func")
+        pyfuncitem._fixtureinfo.argnames = tuple(new_list)
 
 
 def _enter_pdb(node, excinfo, rep):

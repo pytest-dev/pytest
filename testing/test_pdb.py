@@ -714,3 +714,24 @@ class TestTraceOption:
         assert "1 passed" in rest
         assert "reading from stdin while output" not in rest
         TestPDB.flush(child)
+
+    def test_trace_against_yield_test(self, testdir):
+        p1 = testdir.makepyfile(
+            """
+            def is_equal(a, b):
+                assert a == b
+
+            def test_1():
+                assert is_equal, 1, 1
+            """
+        )
+                child = testdir.spawn_pytest("--trace " + str(p1))
+        child.expect("test_1")
+        child.expect("(Pdb)")
+        child.sendline("c")
+        child.expect("(Pdb)")
+        child.sendeof()
+        rest = child.read().decode("utf8")
+        assert "1 passed" in rest
+        assert "reading from stdin while output" not in rest
+        TestPDB.flush(child)
