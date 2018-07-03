@@ -83,7 +83,7 @@ def pytest_pyfunc_call(pyfuncitem):
         testfunction = pyfuncitem.obj
         pyfuncitem.obj = pdb.runcall
         if pyfuncitem._isyieldedfunction():
-            pyfuncitem.args = [testfunction, pyfuncitem._args]
+            pyfuncitem._args = [testfunction, *pyfuncitem._args]
         else:
             if "func" in pyfuncitem._fixtureinfo.argnames:
                 raise ValueError("--trace can't be used with a fixture named func!")
