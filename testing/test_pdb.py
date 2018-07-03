@@ -722,7 +722,7 @@ class TestTraceOption:
                 assert a == b
 
             def test_1():
-                assert is_equal, 1, 1
+                yield is_equal, 1, 1
             """
         )
         child = testdir.spawn_pytest("--trace " + str(p1))
