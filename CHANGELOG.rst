@@ -18,21 +18,18 @@ Bug Fixes
   assertion-rewritten package modules. (`#3061
   <https://github.com/pytest-dev/pytest/issues/3061>`_)
 
-- If the user pass as a expected value a numpy array created like
-  numpy.array(5); it will creates an array with one element without shape, when
-  used with approx it will raise an error for the `repr` 'TypeError: iteration
-  over a 0-d array'. With this PR pytest will iterate properly in the numpy
-  array even with 0 dimension. (`#3593
-  <https://github.com/pytest-dev/pytest/issues/3593>`_)
+- Fix error in ``pytest.approx`` when dealing with 0-dimension numpy
+  arrays. (`#3593 <https://github.com/pytest-dev/pytest/issues/3593>`_)
 
-- no longer ValueError when using the ``get_marker`` api. (`#3605
+- No longer raise ``ValueError`` when using the ``get_marker`` API. (`#3605
   <https://github.com/pytest-dev/pytest/issues/3605>`_)
 
-- Log messages with unicode characters would not appear in the output log file.
+- Fix problem where log messages with non-ascii characters would not
+  appear in the output log file.
   (`#3630 <https://github.com/pytest-dev/pytest/issues/3630>`_)
 
-- No longer raise AttributeError when legacy marks can't be stored. (`#3631
-  <https://github.com/pytest-dev/pytest/issues/3631>`_)
+- No longer raise ``AttributeError`` when legacy marks can't be stored in
+  functions. (`#3631 <https://github.com/pytest-dev/pytest/issues/3631>`_)
 
 
 Improved Documentation
@@ -50,7 +47,7 @@ Trivial/Internal Changes
   attribute and ``metafunc`` parameter from ``CallSpec2.copy()``. (`#3598
   <https://github.com/pytest-dev/pytest/issues/3598>`_)
 
-- Silence usage of ``reduce`` warning in python 2 (`#3609
+- Silence usage of ``reduce`` warning in Python 2 (`#3609
   <https://github.com/pytest-dev/pytest/issues/3609>`_)
 
 - Fix usage of ``attr.ib`` deprecated ``convert`` parameter. (`#3653
