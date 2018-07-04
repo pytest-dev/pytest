@@ -8,6 +8,55 @@
 
 .. towncrier release notes start
 
+Pytest 3.6.3 (2018-07-04)
+=========================
+
+Bug Fixes
+---------
+
+- Fix ``ImportWarning`` triggered by explicit relative imports in
+  assertion-rewritten package modules. (`#3061
+  <https://github.com/pytest-dev/pytest/issues/3061>`_)
+
+- If the user pass as a expected value a numpy array created like
+  numpy.array(5); it will creates an array with one element without shape, when
+  used with approx it will raise an error for the `repr` 'TypeError: iteration
+  over a 0-d array'. With this PR pytest will iterate properly in the numpy
+  array even with 0 dimension. (`#3593
+  <https://github.com/pytest-dev/pytest/issues/3593>`_)
+
+- no longer ValueError when using the ``get_marker`` api. (`#3605
+  <https://github.com/pytest-dev/pytest/issues/3605>`_)
+
+- Log messages with unicode characters would not appear in the output log file.
+  (`#3630 <https://github.com/pytest-dev/pytest/issues/3630>`_)
+
+- No longer raise AttributeError when legacy marks can't be stored. (`#3631
+  <https://github.com/pytest-dev/pytest/issues/3631>`_)
+
+
+Improved Documentation
+----------------------
+
+- The description above the example for ``@pytest.mark.skipif`` now better
+  matches the code. (`#3611
+  <https://github.com/pytest-dev/pytest/issues/3611>`_)
+
+
+Trivial/Internal Changes
+------------------------
+
+- Internal refactoring: removed unused ``CallSpec2tox ._globalid_args``
+  attribute and ``metafunc`` parameter from ``CallSpec2.copy()``. (`#3598
+  <https://github.com/pytest-dev/pytest/issues/3598>`_)
+
+- Silence usage of ``reduce`` warning in python 2 (`#3609
+  <https://github.com/pytest-dev/pytest/issues/3609>`_)
+
+- Fix usage of ``attr.ib`` deprecated ``convert`` parameter. (`#3653
+  <https://github.com/pytest-dev/pytest/issues/3653>`_)
+
+
 Pytest 3.6.2 (2018-06-20)
 =========================
 
