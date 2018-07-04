@@ -90,7 +90,7 @@ For information about fixtures, see :ref:`fixtures`. To see a complete list of a
             monkeypatch.setitem(mapping, name, value)
             monkeypatch.delitem(obj, name, raising=True)
             monkeypatch.setenv(name, value, prepend=False)
-            monkeypatch.delenv(name, value, raising=True)
+            monkeypatch.delenv(name, raising=True)
             monkeypatch.syspath_prepend(path)
             monkeypatch.chdir(path)
 
