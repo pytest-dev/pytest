@@ -35,9 +35,9 @@ You can then restrict a test run to only run tests marked with ``webtest``::
     cachedir: .pytest_cache
     rootdir: $REGENDOC_TMPDIR, inifile:
     collecting ... collected 4 items / 3 deselected
-    
+
     test_server.py::test_send_http PASSED                                [100%]
-    
+
     ================== 1 passed, 3 deselected in 0.12 seconds ==================
 
 Or the inverse, running all tests except the webtest ones::
@@ -48,11 +48,11 @@ Or the inverse, running all tests except the webtest ones::
     cachedir: .pytest_cache
     rootdir: $REGENDOC_TMPDIR, inifile:
     collecting ... collected 4 items / 1 deselected
-    
+
     test_server.py::test_something_quick PASSED                          [ 33%]
     test_server.py::test_another PASSED                                  [ 66%]
     test_server.py::TestClass::test_method PASSED                        [100%]
-    
+
     ================== 3 passed, 1 deselected in 0.12 seconds ==================
 
 Selecting tests based on their node ID
@@ -68,9 +68,9 @@ tests based on their module, class, method, or function name::
     cachedir: .pytest_cache
     rootdir: $REGENDOC_TMPDIR, inifile:
     collecting ... collected 1 item
-    
+
     test_server.py::TestClass::test_method PASSED                        [100%]
-    
+
     ========================= 1 passed in 0.12 seconds =========================
 
 You can also select on the class::
@@ -81,9 +81,9 @@ You can also select on the class::
     cachedir: .pytest_cache
     rootdir: $REGENDOC_TMPDIR, inifile:
     collecting ... collected 1 item
-    
+
     test_server.py::TestClass::test_method PASSED                        [100%]
-    
+
     ========================= 1 passed in 0.12 seconds =========================
 
 Or select multiple nodes::
@@ -94,10 +94,10 @@ Or select multiple nodes::
   cachedir: .pytest_cache
   rootdir: $REGENDOC_TMPDIR, inifile:
   collecting ... collected 2 items
-  
+
   test_server.py::TestClass::test_method PASSED                        [ 50%]
   test_server.py::test_send_http PASSED                                [100%]
-  
+
   ========================= 2 passed in 0.12 seconds =========================
 
 .. _node-id:
@@ -132,9 +132,9 @@ select tests based on their names::
     cachedir: .pytest_cache
     rootdir: $REGENDOC_TMPDIR, inifile:
     collecting ... collected 4 items / 3 deselected
-    
+
     test_server.py::test_send_http PASSED                                [100%]
-    
+
     ================== 1 passed, 3 deselected in 0.12 seconds ==================
 
 And you can also run all tests except the ones that match the keyword::
@@ -145,11 +145,11 @@ And you can also run all tests except the ones that match the keyword::
     cachedir: .pytest_cache
     rootdir: $REGENDOC_TMPDIR, inifile:
     collecting ... collected 4 items / 1 deselected
-    
+
     test_server.py::test_something_quick PASSED                          [ 33%]
     test_server.py::test_another PASSED                                  [ 66%]
     test_server.py::TestClass::test_method PASSED                        [100%]
-    
+
     ================== 3 passed, 1 deselected in 0.12 seconds ==================
 
 Or to select "http" and "quick" tests::
@@ -160,10 +160,10 @@ Or to select "http" and "quick" tests::
     cachedir: .pytest_cache
     rootdir: $REGENDOC_TMPDIR, inifile:
     collecting ... collected 4 items / 2 deselected
-    
+
     test_server.py::test_send_http PASSED                                [ 50%]
     test_server.py::test_something_quick PASSED                          [100%]
-    
+
     ================== 2 passed, 2 deselected in 0.12 seconds ==================
 
 .. note::
@@ -199,21 +199,21 @@ You can ask which markers exist for your test suite - the list includes our just
 
     $ pytest --markers
     @pytest.mark.webtest: mark a test as a webtest.
-    
+
     @pytest.mark.skip(reason=None): skip the given test function with an optional reason. Example: skip(reason="no way of currently testing this") skips the test.
-    
+
     @pytest.mark.skipif(condition): skip the given test function if eval(condition) results in a True value.  Evaluation happens within the module global context. Example: skipif('sys.platform == "win32"') skips the test if we are on the win32 platform. see http://pytest.org/latest/skipping.html
-    
+
     @pytest.mark.xfail(condition, reason=None, run=True, raises=None, strict=False): mark the test function as an expected failure if eval(condition) has a True value. Optionally specify a reason for better reporting and run=False if you don't even want to execute the test function. If only specific exception(s) are expected, you can list them in raises, and if the test fails in other ways, it will be reported as a true failure. See http://pytest.org/latest/skipping.html
-    
+
     @pytest.mark.parametrize(argnames, argvalues): call a test function multiple times passing in different arguments in turn. argvalues generally needs to be a list of values if argnames specifies only one name or a list of tuples of values if argnames specifies multiple names. Example: @parametrize('arg1', [1,2]) would lead to two calls of the decorated test function, one with arg1=1 and another with arg1=2.see http://pytest.org/latest/parametrize.html for more info and examples.
-    
-    @pytest.mark.usefixtures(fixturename1, fixturename2, ...): mark tests as needing all of the specified fixtures. see http://pytest.org/latest/fixture.html#usefixtures 
-    
+
+    @pytest.mark.usefixtures(fixturename1, fixturename2, ...): mark tests as needing all of the specified fixtures. see http://pytest.org/latest/fixture.html#usefixtures
+
     @pytest.mark.tryfirst: mark a hook implementation function such that the plugin machinery will try to call it first/as early as possible.
-    
+
     @pytest.mark.trylast: mark a hook implementation function such that the plugin machinery will try to call it last/as late as possible.
-    
+
 
 For an example on how to add and work with markers from a plugin, see
 :ref:`adding a custom marker from a plugin`.
@@ -352,9 +352,9 @@ the test needs::
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 1 item
-    
+
     test_someenv.py s                                                    [100%]
-    
+
     ======================== 1 skipped in 0.12 seconds =========================
 
 and here is one that specifies exactly the environment needed::
@@ -364,30 +364,30 @@ and here is one that specifies exactly the environment needed::
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 1 item
-    
+
     test_someenv.py .                                                    [100%]
-    
+
     ========================= 1 passed in 0.12 seconds =========================
 
 The ``--markers`` option always gives you a list of available markers::
 
     $ pytest --markers
     @pytest.mark.env(name): mark test to run only on named environment
-    
+
     @pytest.mark.skip(reason=None): skip the given test function with an optional reason. Example: skip(reason="no way of currently testing this") skips the test.
-    
+
     @pytest.mark.skipif(condition): skip the given test function if eval(condition) results in a True value.  Evaluation happens within the module global context. Example: skipif('sys.platform == "win32"') skips the test if we are on the win32 platform. see http://pytest.org/latest/skipping.html
-    
+
     @pytest.mark.xfail(condition, reason=None, run=True, raises=None, strict=False): mark the test function as an expected failure if eval(condition) has a True value. Optionally specify a reason for better reporting and run=False if you don't even want to execute the test function. If only specific exception(s) are expected, you can list them in raises, and if the test fails in other ways, it will be reported as a true failure. See http://pytest.org/latest/skipping.html
-    
+
     @pytest.mark.parametrize(argnames, argvalues): call a test function multiple times passing in different arguments in turn. argvalues generally needs to be a list of values if argnames specifies only one name or a list of tuples of values if argnames specifies multiple names. Example: @parametrize('arg1', [1,2]) would lead to two calls of the decorated test function, one with arg1=1 and another with arg1=2.see http://pytest.org/latest/parametrize.html for more info and examples.
-    
-    @pytest.mark.usefixtures(fixturename1, fixturename2, ...): mark tests as needing all of the specified fixtures. see http://pytest.org/latest/fixture.html#usefixtures 
-    
+
+    @pytest.mark.usefixtures(fixturename1, fixturename2, ...): mark tests as needing all of the specified fixtures. see http://pytest.org/latest/fixture.html#usefixtures
+
     @pytest.mark.tryfirst: mark a hook implementation function such that the plugin machinery will try to call it first/as early as possible.
-    
+
     @pytest.mark.trylast: mark a hook implementation function such that the plugin machinery will try to call it last/as late as possible.
-    
+
 
 .. _`passing callables to custom markers`:
 
@@ -523,11 +523,11 @@ then you will see two tests skipped and two executed tests as expected::
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 4 items
-    
+
     test_plat.py s.s.                                                    [100%]
     ========================= short test summary info ==========================
     SKIP [2] $REGENDOC_TMPDIR/conftest.py:12: cannot run on platform linux
-    
+
     =================== 2 passed, 2 skipped in 0.12 seconds ====================
 
 Note that if you specify a platform via the marker-command line option like this::
@@ -537,9 +537,9 @@ Note that if you specify a platform via the marker-command line option like this
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 4 items / 3 deselected
-    
+
     test_plat.py .                                                       [100%]
-    
+
     ================== 1 passed, 3 deselected in 0.12 seconds ==================
 
 then the unmarked-tests will not be run.  It is thus a way to restrict the run to the specific tests.
@@ -588,9 +588,9 @@ We can now use the ``-m option`` to select one set::
   platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
   rootdir: $REGENDOC_TMPDIR, inifile:
   collected 4 items / 2 deselected
-  
+
   test_module.py FF                                                    [100%]
-  
+
   ================================= FAILURES =================================
   __________________________ test_interface_simple ___________________________
   test_module.py:3: in test_interface_simple
@@ -609,9 +609,9 @@ or to select both "event" and "interface" tests::
   platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
   rootdir: $REGENDOC_TMPDIR, inifile:
   collected 4 items / 1 deselected
-  
+
   test_module.py FFF                                                   [100%]
-  
+
   ================================= FAILURES =================================
   __________________________ test_interface_simple ___________________________
   test_module.py:3: in test_interface_simple

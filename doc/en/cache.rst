@@ -49,26 +49,26 @@ If you run this for the first time you will see two failures::
     .................F.......F........................                   [100%]
     ================================= FAILURES =================================
     _______________________________ test_num[17] _______________________________
-    
+
     i = 17
-    
+
         @pytest.mark.parametrize("i", range(50))
         def test_num(i):
             if i in (17, 25):
     >          pytest.fail("bad luck")
     E          Failed: bad luck
-    
+
     test_50.py:6: Failed
     _______________________________ test_num[25] _______________________________
-    
+
     i = 25
-    
+
         @pytest.mark.parametrize("i", range(50))
         def test_num(i):
             if i in (17, 25):
     >          pytest.fail("bad luck")
     E          Failed: bad luck
-    
+
     test_50.py:6: Failed
     2 failed, 48 passed in 0.12 seconds
 
@@ -80,31 +80,31 @@ If you then run it with ``--lf``::
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 50 items / 48 deselected
     run-last-failure: rerun previous 2 failures
-    
+
     test_50.py FF                                                        [100%]
-    
+
     ================================= FAILURES =================================
     _______________________________ test_num[17] _______________________________
-    
+
     i = 17
-    
+
         @pytest.mark.parametrize("i", range(50))
         def test_num(i):
             if i in (17, 25):
     >          pytest.fail("bad luck")
     E          Failed: bad luck
-    
+
     test_50.py:6: Failed
     _______________________________ test_num[25] _______________________________
-    
+
     i = 25
-    
+
         @pytest.mark.parametrize("i", range(50))
         def test_num(i):
             if i in (17, 25):
     >          pytest.fail("bad luck")
     E          Failed: bad luck
-    
+
     test_50.py:6: Failed
     ================= 2 failed, 48 deselected in 0.12 seconds ==================
 
@@ -121,31 +121,31 @@ of ``FF`` and dots)::
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 50 items
     run-last-failure: rerun previous 2 failures first
-    
+
     test_50.py FF................................................        [100%]
-    
+
     ================================= FAILURES =================================
     _______________________________ test_num[17] _______________________________
-    
+
     i = 17
-    
+
         @pytest.mark.parametrize("i", range(50))
         def test_num(i):
             if i in (17, 25):
     >          pytest.fail("bad luck")
     E          Failed: bad luck
-    
+
     test_50.py:6: Failed
     _______________________________ test_num[25] _______________________________
-    
+
     i = 25
-    
+
         @pytest.mark.parametrize("i", range(50))
         def test_num(i):
             if i in (17, 25):
     >          pytest.fail("bad luck")
     E          Failed: bad luck
-    
+
     test_50.py:6: Failed
     =================== 2 failed, 48 passed in 0.12 seconds ====================
 
@@ -198,13 +198,13 @@ of the sleep::
     F                                                                    [100%]
     ================================= FAILURES =================================
     ______________________________ test_function _______________________________
-    
+
     mydata = 42
-    
+
         def test_function(mydata):
     >       assert mydata == 23
     E       assert 42 == 23
-    
+
     test_caching.py:14: AssertionError
     1 failed in 0.12 seconds
 
@@ -215,13 +215,13 @@ the cache and this will be quick::
     F                                                                    [100%]
     ================================= FAILURES =================================
     ______________________________ test_function _______________________________
-    
+
     mydata = 42
-    
+
         def test_function(mydata):
     >       assert mydata == 23
     E       assert 42 == 23
-    
+
     test_caching.py:14: AssertionError
     1 failed in 0.12 seconds
 
@@ -246,7 +246,7 @@ You can always peek at the content of the cache using the
       ['test_caching.py::test_function']
     example/value contains:
       42
-    
+
     ======================= no tests ran in 0.12 seconds =======================
 
 Clearing Cache content
