@@ -187,7 +187,7 @@ You can then install your package in "editable" mode::
      pip install -e .
 
 which lets you change your source code (both tests and application) and rerun tests at will.
-This is similar to running `python setup.py develop` or `conda develop` in that it installs
+This is similar to running ``python setup.py develop`` or ``conda develop`` in that it installs
 your package using a symlink to your development code.
 
 Once you are done with your work and want to make sure that your actual

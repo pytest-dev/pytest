@@ -299,10 +299,10 @@ Skip and xfail marks can also be applied in this way, see :ref:`skip/xfail with 
 .. note::
 
     If the data you are parametrizing happen to be single callables, you need to be careful
-    when marking these items. `pytest.mark.xfail(my_func)` won't work because it's also the
+    when marking these items. ``pytest.mark.xfail(my_func)`` won't work because it's also the
     signature of a function being decorated. To resolve this ambiguity, you need to pass a
     reason argument:
-    `pytest.mark.xfail(func_bar, reason="Issue#7")`.
+    ``pytest.mark.xfail(func_bar, reason="Issue#7")``.
 
 
 .. _`adding a custom marker from a plugin`:
