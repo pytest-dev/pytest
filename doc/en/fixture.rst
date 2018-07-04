@@ -73,20 +73,20 @@ marked ``smtp_connection`` fixture function.  Running the test looks like this::
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 1 item
-    
+
     test_smtpsimple.py F                                                 [100%]
-    
+
     ================================= FAILURES =================================
     ________________________________ test_ehlo _________________________________
-    
+
     smtp_connection = <smtplib.SMTP object at 0xdeadbeef>
-    
+
         def test_ehlo(smtp_connection):
             response, msg = smtp_connection.ehlo()
             assert response == 250
     >       assert 0 # for demo purposes
     E       assert 0
-    
+
     test_smtpsimple.py:11: AssertionError
     ========================= 1 failed in 0.12 seconds =========================
 
@@ -210,32 +210,32 @@ inspect what is going on and can now run the tests::
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 2 items
-    
+
     test_module.py FF                                                    [100%]
-    
+
     ================================= FAILURES =================================
     ________________________________ test_ehlo _________________________________
-    
+
     smtp_connection = <smtplib.SMTP object at 0xdeadbeef>
-    
+
         def test_ehlo(smtp_connection):
             response, msg = smtp_connection.ehlo()
             assert response == 250
             assert b"smtp.gmail.com" in msg
     >       assert 0  # for demo purposes
     E       assert 0
-    
+
     test_module.py:6: AssertionError
     ________________________________ test_noop _________________________________
-    
+
     smtp_connection = <smtplib.SMTP object at 0xdeadbeef>
-    
+
         def test_noop(smtp_connection):
             response, msg = smtp_connection.noop()
             assert response == 250
     >       assert 0  # for demo purposes
     E       assert 0
-    
+
     test_module.py:11: AssertionError
     ========================= 2 failed in 0.12 seconds =========================
 
@@ -338,7 +338,7 @@ Let's execute it::
 
     $ pytest -s -q --tb=no
     FFteardown smtp_connection
-    
+
     2 failed in 0.12 seconds
 
 We see that the ``smtp_connection`` instance is finalized after the two
@@ -447,7 +447,7 @@ again, nothing much has changed::
 
     $ pytest -s -q --tb=no
     FFfinalizing <smtplib.SMTP object at 0xdeadbeef> (smtp.gmail.com)
-    
+
     2 failed in 0.12 seconds
 
 Let's quickly create another test module that actually sets the
@@ -567,42 +567,42 @@ So let's just do another run::
     FFFF                                                                 [100%]
     ================================= FAILURES =================================
     ________________________ test_ehlo[smtp.gmail.com] _________________________
-    
+
     smtp_connection = <function smtp_connection at 0xdeadbeef>
-    
+
         def test_ehlo(smtp_connection):
     >       response, msg = smtp_connection.ehlo()
     E       AttributeError: 'function' object has no attribute 'ehlo'
-    
+
     test_module.py:3: AttributeError
     ________________________ test_noop[smtp.gmail.com] _________________________
-    
+
     smtp_connection = <function smtp_connection at 0xdeadbeef>
-    
+
         def test_noop(smtp_connection):
     >       response, msg = smtp_connection.noop()
     E       AttributeError: 'function' object has no attribute 'noop'
-    
+
     test_module.py:9: AttributeError
     ________________________ test_ehlo[mail.python.org] ________________________
-    
+
     smtp_connection = <function smtp_connection at 0xdeadbeef>
-    
+
         def test_ehlo(smtp_connection):
     >       response, msg = smtp_connection.ehlo()
     E       AttributeError: 'function' object has no attribute 'ehlo'
-    
+
     test_module.py:3: AttributeError
     -------------------------- Captured stdout setup ---------------------------
     finalizing <smtplib.SMTP object at 0xdeadbeef>
     ________________________ test_noop[mail.python.org] ________________________
-    
+
     smtp_connection = <function smtp_connection at 0xdeadbeef>
-    
+
         def test_noop(smtp_connection):
     >       response, msg = smtp_connection.noop()
     E       AttributeError: 'function' object has no attribute 'noop'
-    
+
     test_module.py:9: AttributeError
     ------------------------- Captured stdout teardown -------------------------
     finalizing <smtplib.SMTP object at 0xdeadbeef>
@@ -674,7 +674,7 @@ Running the above tests results in the following test IDs being used::
      <Function 'test_noop[smtp.gmail.com]'>
      <Function 'test_ehlo[mail.python.org]'>
      <Function 'test_noop[mail.python.org]'>
-   
+
    ======================= no tests ran in 0.12 seconds =======================
 
 .. _`fixture-parametrize-marks`:
@@ -704,11 +704,11 @@ Running this test will *skip* the invocation of ``data_set`` with value ``2``::
     cachedir: .pytest_cache
     rootdir: $REGENDOC_TMPDIR, inifile:
     collecting ... collected 3 items
-    
+
     test_fixture_marks.py::test_data[0] PASSED                           [ 33%]
     test_fixture_marks.py::test_data[1] PASSED                           [ 66%]
     test_fixture_marks.py::test_data[2] SKIPPED                          [100%]
-    
+
     =================== 2 passed, 1 skipped in 0.12 seconds ====================
 
 .. _`interdependent fixtures`:
@@ -747,10 +747,10 @@ Here we declare an ``app`` fixture which receives the previously defined
     cachedir: .pytest_cache
     rootdir: $REGENDOC_TMPDIR, inifile:
     collecting ... collected 2 items
-    
+
     test_appsetup.py::test_smtp_connection_exists[smtp.gmail.com] PASSED [ 50%]
     test_appsetup.py::test_smtp_connection_exists[mail.python.org] PASSED [100%]
-    
+
     ========================= 2 passed in 0.12 seconds =========================
 
 Due to the parametrization of ``smtp_connection`` the test will run twice with two
@@ -816,26 +816,26 @@ Let's run the tests in verbose mode and with looking at the print-output::
     cachedir: .pytest_cache
     rootdir: $REGENDOC_TMPDIR, inifile:
     collecting ... collected 8 items
-    
+
     test_module.py::test_0[1]   SETUP otherarg 1
       RUN test0 with otherarg 1
     PASSED  TEARDOWN otherarg 1
-    
+
     test_module.py::test_0[2]   SETUP otherarg 2
       RUN test0 with otherarg 2
     PASSED  TEARDOWN otherarg 2
-    
+
     test_module.py::test_1[mod1]   SETUP modarg mod1
       RUN test1 with modarg mod1
     PASSED
     test_module.py::test_2[mod1-1]   SETUP otherarg 1
       RUN test2 with otherarg 1 and modarg mod1
     PASSED  TEARDOWN otherarg 1
-    
+
     test_module.py::test_2[mod1-2]   SETUP otherarg 2
       RUN test2 with otherarg 2 and modarg mod1
     PASSED  TEARDOWN otherarg 2
-    
+
     test_module.py::test_1[mod2]   TEARDOWN modarg mod1
       SETUP modarg mod2
       RUN test1 with modarg mod2
@@ -843,13 +843,13 @@ Let's run the tests in verbose mode and with looking at the print-output::
     test_module.py::test_2[mod2-1]   SETUP otherarg 1
       RUN test2 with otherarg 1 and modarg mod2
     PASSED  TEARDOWN otherarg 1
-    
+
     test_module.py::test_2[mod2-2]   SETUP otherarg 2
       RUN test2 with otherarg 2 and modarg mod2
     PASSED  TEARDOWN otherarg 2
       TEARDOWN modarg mod2
-    
-    
+
+
     ========================= 8 passed in 0.12 seconds =========================
 
 You can see that the parametrized module-scoped ``modarg`` resource caused an
