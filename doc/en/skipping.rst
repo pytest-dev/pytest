@@ -80,11 +80,11 @@ during import time.
 
 If you wish to skip something conditionally then you can use ``skipif`` instead.
 Here is an example of marking a test function to be skipped
-when run on a Python3.6 interpreter::
+when run on an interpreter earlier than Python3.6 ::
 
     import sys
     @pytest.mark.skipif(sys.version_info < (3,6),
-                        reason="requires python3.6")
+                        reason="requires python3.6 or higher")
     def test_function():
         ...
 
@@ -192,19 +192,19 @@ Here's a quick guide on how to skip tests in a module in different situations:
 
   .. code-block:: python
 
-        pytestmark = pytest.mark.skip('all tests still WIP')
+        pytestmark = pytest.mark.skip("all tests still WIP")
 
 2. Skip all tests in a module based on some condition:
 
   .. code-block:: python
 
-        pytestmark = pytest.mark.skipif(sys.platform == 'win32', 'tests for linux only')
+        pytestmark = pytest.mark.skipif(sys.platform == "win32", "tests for linux only")
 
 3. Skip all tests in a module if some import is missing:
 
   .. code-block:: python
 
-        pexpect = pytest.importorskip('pexpect')
+        pexpect = pytest.importorskip("pexpect")
 
 
 .. _xfail:
@@ -334,12 +334,12 @@ Running it with the report-on-xfail option gives this output::
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR/example, inifile:
     collected 7 items
-    
+
     xfail_demo.py xxxxxxx                                                [100%]
     ========================= short test summary info ==========================
     XFAIL xfail_demo.py::test_hello
     XFAIL xfail_demo.py::test_hello2
-      reason: [NOTRUN] 
+      reason: [NOTRUN]
     XFAIL xfail_demo.py::test_hello3
       condition: hasattr(os, 'sep')
     XFAIL xfail_demo.py::test_hello4
@@ -349,7 +349,7 @@ Running it with the report-on-xfail option gives this output::
     XFAIL xfail_demo.py::test_hello6
       reason: reason
     XFAIL xfail_demo.py::test_hello7
-    
+
     ======================== 7 xfailed in 0.12 seconds =========================
 
 .. _`skip/xfail with parametrize`:
@@ -364,14 +364,20 @@ test instances when using parametrize:
 
     import pytest
 
-    @pytest.mark.parametrize(("n", "expected"), [
-        (1, 2),
-    pytest.param(1, 0, marks=pytest.mark.xfail),
-	pytest.param(1, 3, marks=pytest.mark.xfail(reason="some bug")),
-        (2, 3),
-        (3, 4),
-        (4, 5),
-    pytest.param(10, 11, marks=pytest.mark.skipif(sys.version_info >= (3, 0), reason="py2k")),
-    ])
+
+    @pytest.mark.parametrize(
+        ("n", "expected"),
+        [
+            (1, 2),
+            pytest.param(1, 0, marks=pytest.mark.xfail),
+            pytest.param(1, 3, marks=pytest.mark.xfail(reason="some bug")),
+            (2, 3),
+            (3, 4),
+            (4, 5),
+            pytest.param(
+                10, 11, marks=pytest.mark.skipif(sys.version_info >= (3, 0), reason="py2k")
+            ),
+        ],
+    )
     def test_increment(n, expected):
         assert n + 1 == expected

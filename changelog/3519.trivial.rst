@@ -1,0 +1,1 @@
+Now a ``README.md`` file is created in ``.pytest_cache`` to make it clear why the directory exists.

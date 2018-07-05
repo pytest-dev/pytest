@@ -103,7 +103,7 @@ Here is how you might run it::
 Writing your own plugin
 -----------------------
 
-.. _`setuptools`: http://pypi.python.org/pypi/setuptools
+.. _`setuptools`: https://pypi.org/project/setuptools/
 
 If you want to write a plugin, there are many real-life examples
 you can copy from:
@@ -150,19 +150,11 @@ it in your setuptools-invocation:
 
     setup(
         name="myproject",
-        packages = ['myproject']
-
+        packages=["myproject"],
         # the following makes a plugin available to pytest
-        entry_points = {
-            'pytest11': [
-                'name_of_plugin = myproject.pluginmodule',
-            ]
-        },
-
+        entry_points={"pytest11": ["name_of_plugin = myproject.pluginmodule"]},
         # custom PyPI classifier for pytest plugins
-        classifiers=[
-            "Framework :: Pytest",
-        ],
+        classifiers=["Framework :: Pytest"],
     )
 
 If a package is installed this way, ``pytest`` will load
@@ -213,11 +205,7 @@ With the following typical ``setup.py`` extract:
 
 .. code-block:: python
 
-   setup(
-      ...
-      entry_points={'pytest11': ['foo = pytest_foo.plugin']},
-      ...
-   )
+   setup(..., entry_points={"pytest11": ["foo = pytest_foo.plugin"]}, ...)
 
 In this case only ``pytest_foo/plugin.py`` will be rewritten.  If the
 helper module also contains assert statements which need to be
@@ -232,7 +220,7 @@ import ``helper.py`` normally.  The contents of
 
    import pytest
 
-   pytest.register_assert_rewrite('pytest_foo.helper')
+   pytest.register_assert_rewrite("pytest_foo.helper")
 
 
 
@@ -332,23 +320,25 @@ string value of ``Hello World!`` if we do not supply a value or ``Hello
 
     import pytest
 
+
     def pytest_addoption(parser):
-        group = parser.getgroup('helloworld')
+        group = parser.getgroup("helloworld")
         group.addoption(
-            '--name',
-            action='store',
-            dest='name',
-            default='World',
-            help='Default "name" for hello().'
+            "--name",
+            action="store",
+            dest="name",
+            default="World",
+            help='Default "name" for hello().',
         )
+
 
     @pytest.fixture
     def hello(request):
-        name = request.config.getoption('name')
+        name = request.config.getoption("name")
 
         def _hello(name=None):
             if not name:
-                name = request.config.getoption('name')
+                name = request.config.getoption("name")
             return "Hello {name}!".format(name=name)
 
         return _hello
@@ -364,7 +354,8 @@ return a result object, with which we can assert the tests' outcomes.
         """Make sure that our plugin works."""
 
         # create a temporary conftest.py file
-        testdir.makeconftest("""
+        testdir.makeconftest(
+            """
             import pytest
 
             @pytest.fixture(params=[
@@ -374,16 +365,19 @@ return a result object, with which we can assert the tests' outcomes.
             ])
             def name(request):
                 return request.param
-        """)
+        """
+        )
 
         # create a temporary pytest test file
-        testdir.makepyfile("""
+        testdir.makepyfile(
+            """
             def test_hello_default(hello):
                 assert hello() == "Hello World!"
 
             def test_hello_name(hello, name):
                 assert hello(name) == "Hello {0}!".format(name)
-        """)
+        """
+        )
 
         # run all tests with pytest
         result = testdir.runpytest()
@@ -392,9 +386,50 @@ return a result object, with which we can assert the tests' outcomes.
         result.assert_outcomes(passed=4)
 
 
+additionally it is possible to copy examples for a example folder before running pytest on it
+
+.. code:: ini
+
+  # content of pytest.ini
+  [pytest]
+  pytester_example_dir = .
+
+
+.. code:: python
+
+    # content of test_example.py
+
+
+    def test_plugin(testdir):
+      testdir.copy_example("test_example.py")
+      testdir.runpytest("-k", "test_example")
+
+    def test_example():
+      pass
+
+.. code::
+
+    $ pytest
+    =========================== test session starts ============================
+    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
+    rootdir: $REGENDOC_TMPDIR, inifile: pytest.ini
+    collected 2 items
+
+    test_example.py ..                                                   [100%]
+
+    ============================= warnings summary =============================
+    test_example.py::test_plugin
+      $REGENDOC_TMPDIR/test_example.py:4: PytestExerimentalApiWarning: testdir.copy_example is an experimental api that may change over time
+        testdir.copy_example("test_example.py")
+
+    -- Docs: http://doc.pytest.org/en/latest/warnings.html
+    =================== 2 passed, 1 warnings in 0.12 seconds ===================
+
 For more information about the result object that ``runpytest()`` returns, and
 the methods that it provides please check out the :py:class:`RunResult
 <_pytest.pytester.RunResult>` documentation.
+
+
 
 
 .. _`writinghooks`:
@@ -425,6 +460,7 @@ Let's look at a possible implementation:
     def pytest_collection_modifyitems(config, items):
         # called after collection is completed
         # you can modify the ``items`` list
+        ...
 
 Here, ``pytest`` will pass in ``config`` (the pytest config object)
 and ``items`` (the list of collected test items) but will not pass
@@ -511,11 +547,15 @@ after others, i.e.  the position in the ``N``-sized list of functions:
     @pytest.hookimpl(tryfirst=True)
     def pytest_collection_modifyitems(items):
         # will execute as early as possible
+        ...
+
 
     # Plugin 2
     @pytest.hookimpl(trylast=True)
     def pytest_collection_modifyitems(items):
         # will execute as late as possible
+        ...
+
 
     # Plugin 3
     @pytest.hookimpl(hookwrapper=True)
@@ -592,8 +632,3 @@ declaring the hook functions directly in your plugin module, for example::
 
 This has the added benefit of allowing you to conditionally install hooks
 depending on which plugins are installed.
-
-
-
-
-

@@ -1,6 +1,7 @@
 def setup_module(module):
     module.TestStateFullThing.classcount = 0
 
+
 class TestStateFullThing(object):
     def setup_class(cls):
         cls.classcount += 1
@@ -19,8 +20,10 @@ class TestStateFullThing(object):
         assert self.classcount == 1
         assert self.id == 23
 
+
 def teardown_module(module):
     assert module.TestStateFullThing.classcount == 0
+
 
 """ For this example the control flow happens as follows::
     import test_setup_flow_example
@@ -39,4 +42,3 @@ Note that ``setup_class(TestStateFullThing)`` is called and not
 to insert ``setup_class = classmethod(setup_class)`` to make
 your setup function callable.
 """
-

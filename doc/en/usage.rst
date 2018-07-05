@@ -111,9 +111,9 @@ For more information see :ref:`marks <mark>`.
 ::
 
     pytest --pyargs pkg.testing
-     
+
 This will import ``pkg.testing`` and use its filesystem location to find and run tests from.
-    
+
 
 Modifying Python traceback printing
 ----------------------------------------------
@@ -152,9 +152,9 @@ allows one to drop into the PDB_ prompt via a command line option::
 
     pytest --pdb
 
-This will invoke the Python debugger on every failure.  Often you might
-only want to do this for the first failing test to understand a certain
-failure situation::
+This will invoke the Python debugger on every failure (or KeyboardInterrupt).
+Often you might only want to do this for the first failing test to understand
+a certain failure situation::
 
     pytest -x --pdb   # drop to PDB on first failure, then end test session
     pytest --pdb --maxfail=3  # drop to PDB for first three failures
@@ -195,7 +195,7 @@ in your code and pytest automatically disables its output capture for that test:
 Using the builtin breakpoint function
 -------------------------------------
 
-Python 3.7 introduces a builtin ``breakpoint()`` function. 
+Python 3.7 introduces a builtin ``breakpoint()`` function.
 Pytest supports the use of ``breakpoint()`` with the following behaviours:
 
  - When ``breakpoint()`` is called and ``PYTHONBREAKPOINT`` is set to the default value, pytest will use the custom internal PDB trace UI instead of the system default ``Pdb``.
@@ -272,12 +272,12 @@ Alternatively, you can integrate this functionality with custom markers:
 
     # content of conftest.py
 
+
     def pytest_collection_modifyitems(session, config, items):
         for item in items:
-            for marker in item.iter_markers():
-                if marker.name == 'test_id':
-                    test_id = marker.args[0]
-                    item.user_properties.append(('test_id', test_id))
+            for marker in item.iter_markers(name="test_id"):
+                test_id = marker.args[0]
+                item.user_properties.append(("test_id", test_id))
 
 And in your tests:
 
@@ -285,6 +285,8 @@ And in your tests:
 
     # content of test_function.py
     import pytest
+
+
     @pytest.mark.test_id(1501)
     def test_function():
         assert True
@@ -319,7 +321,7 @@ To add an additional xml attribute to a testcase element, you can use
     def test_function(record_xml_attribute):
         record_xml_attribute("assertions", "REQ-1234")
         record_xml_attribute("classname", "custom_classname")
-        print('hello world')
+        print("hello world")
         assert True
 
 Unlike ``record_property``, this will not add a new child element.
@@ -378,18 +380,21 @@ to all testcases you can use ``LogXML.add_global_properties``
 
     import pytest
 
+
     @pytest.fixture(scope="session")
     def log_global_env_facts(f):
 
-        if pytest.config.pluginmanager.hasplugin('junitxml'):
-            my_junit = getattr(pytest.config, '_xml', None)
+        if pytest.config.pluginmanager.hasplugin("junitxml"):
+            my_junit = getattr(pytest.config, "_xml", None)
 
-        my_junit.add_global_property('ARCH', 'PPC')
-        my_junit.add_global_property('STORAGE_TYPE', 'CEPH')
+        my_junit.add_global_property("ARCH", "PPC")
+        my_junit.add_global_property("STORAGE_TYPE", "CEPH")
+
 
     @pytest.mark.usefixtures(log_global_env_facts.__name__)
     def start_and_prepare_env():
         pass
+
 
     class TestMe(object):
         def test_foo(self):
@@ -421,7 +426,7 @@ Creating resultlog format files
     This option is rarely used and is scheduled for removal in 4.0.
 
     An alternative for users which still need similar functionality is to use the
-    `pytest-tap <https://pypi.python.org/pypi/pytest-tap>`_ plugin which provides
+    `pytest-tap <https://pypi.org/project/pytest-tap/>`_ plugin which provides
     a stream of test data.
 
     If you have any concerns, please don't hesitate to
@@ -497,7 +502,7 @@ hook was invoked::
 
     $ python myinvoke.py
     .                                                                    [100%]*** test run reporting finishing
-    
+
 
 .. note::
 

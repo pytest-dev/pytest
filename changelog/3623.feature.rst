@@ -1,0 +1,1 @@
+introduce ``pytester.copy_example`` as helper to do acceptance tests against examples from the project

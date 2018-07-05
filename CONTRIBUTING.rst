@@ -139,7 +139,7 @@ Here's a rundown of how a repository transfer usually proceeds
 * ``joedoe`` transfers repository ownership to ``pytest-dev`` administrator ``calvin``.
 * ``calvin`` creates ``pytest-xyz-admin`` and ``pytest-xyz-developers`` teams, inviting ``joedoe`` to both as **maintainer**.
 * ``calvin`` transfers repository to ``pytest-dev`` and configures team access:
-  
+
   - ``pytest-xyz-admin`` **admin** access;
   - ``pytest-xyz-developers`` **write** access;
 
@@ -162,10 +162,11 @@ Preparing Pull Requests
 Short version
 ~~~~~~~~~~~~~
 
-#. Fork the repository;
-#. Target ``master`` for bugfixes and doc changes;
+#. Fork the repository.
+#. Enable and install `pre-commit <https://pre-commit.com>`_ to ensure style-guides and code checks are followed.
+#. Target ``master`` for bugfixes and doc changes.
 #. Target ``features`` for new features or functionality changes.
-#. Follow **PEP-8**. There's a ``tox`` command to help fixing it: ``tox -e fix-lint``.
+#. Follow **PEP-8** for naming and `black <https://github.com/ambv/black>`_ for formatting.
 #. Tests are run using ``tox``::
 
     tox -e linting,py27,py36
@@ -176,7 +177,7 @@ Short version
    and one of ``bugfix``, ``removal``, ``feature``, ``vendor``, ``doc`` or
    ``trivial`` for the issue type.
 #. Unless your change is a trivial or a documentation fix (e.g., a typo or reword of a small section) please
-   add yourself to the ``AUTHORS`` file, in alphabetical order;
+   add yourself to the ``AUTHORS`` file, in alphabetical order.
 
 
 Long version
@@ -202,19 +203,29 @@ Here is a simple overview, with pytest-specific bits:
     $ git clone git@github.com:YOUR_GITHUB_USERNAME/pytest.git
     $ cd pytest
     # now, to fix a bug create your own branch off "master":
-    
+
         $ git checkout -b your-bugfix-branch-name master
 
     # or to instead add a feature create your own branch off "features":
-    
+
         $ git checkout -b your-feature-branch-name features
 
-   Given we have "major.minor.micro" version numbers, bugfixes will usually 
-   be released in micro releases whereas features will be released in 
+   Given we have "major.minor.micro" version numbers, bugfixes will usually
+   be released in micro releases whereas features will be released in
    minor releases and incompatible changes in major releases.
 
    If you need some help with Git, follow this quick start
    guide: https://git.wiki.kernel.org/index.php/QuickStart
+
+#. Install `pre-commit <https://pre-commit.com>`_ and its hook on the pytest repo::
+
+     $ pip install --user pre-commit
+     $ pre-commit install
+
+   Afterwards ``pre-commit`` will run whenever you commit.
+
+   https://pre-commit.com/ is a framework for managing and maintaining multi-language pre-commit hooks
+   to ensure code-style and code formatting is consistent.
 
 #. Install tox
 
@@ -234,15 +245,7 @@ Here is a simple overview, with pytest-specific bits:
    This command will run tests via the "tox" tool against Python 2.7 and 3.6
    and also perform "lint" coding-style checks.
 
-#. You can now edit your local working copy. Please follow PEP-8.
-
-   You can now make the changes you want and run the tests again as necessary.
-
-   If you have too much linting errors, try running::
-
-    $ tox -e fix-lint
-
-   To fix pep8 related errors.
+#. You can now edit your local working copy and run the tests again as necessary. Please follow PEP-8 for naming.
 
    You can pass different options to ``tox``. For example, to run tests on Python 2.7 and pass options to pytest
    (e.g. enter pdb on failure) to pytest you can do::
@@ -252,6 +255,9 @@ Here is a simple overview, with pytest-specific bits:
    Or to only run tests in a particular test module on Python 3.6::
 
     $ tox -e py36 -- testing/test_config.py
+
+
+   When committing, ``pre-commit`` will re-format the files if necessary.
 
 #. Commit and push once your tests pass and you are happy with your change(s)::
 

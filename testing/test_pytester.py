@@ -37,6 +37,7 @@ def test_make_hook_recorder(testdir):
         failed = False
         skipped = True
         when = "call"
+
     rep.passed = False
     rep.skipped = True
     recorder.hook.pytest_runtest_logreport(report=rep)
@@ -71,11 +72,13 @@ def test_parseconfig(testdir):
 
 
 def test_testdir_runs_with_plugin(testdir):
-    testdir.makepyfile("""
+    testdir.makepyfile(
+        """
         pytest_plugins = "pytester"
         def test_hello(testdir):
             assert 1
-    """)
+    """
+    )
     result = testdir.runpytest()
     result.assert_outcomes(passed=1)
 
@@ -88,7 +91,7 @@ def make_holder():
         def pytest_xyz_noarg(self):
             "x"
 
-    apimod = type(os)('api')
+    apimod = type(os)("api")
 
     def pytest_xyz(arg):
         "x"
@@ -130,9 +133,11 @@ def test_makepyfile_utf8(testdir):
     utf8_contents = u"""
         def setup_function(function):
             mixed_encoding = u'São Paulo'
-    """.encode('utf-8')
+    """.encode(
+        "utf-8"
+    )
     p = testdir.makepyfile(utf8_contents)
-    assert u"mixed_encoding = u'São Paulo'".encode('utf-8') in p.read('rb')
+    assert u"mixed_encoding = u'São Paulo'".encode("utf-8") in p.read("rb")
 
 
 class TestInlineRunModulesCleanup(object):
@@ -158,19 +163,23 @@ class TestInlineRunModulesCleanup(object):
             def restore(self):
                 self._spy_restore_count += 1
                 return self.__snapshot.restore()
+
         return SysModulesSnapshotSpy
 
     def test_inline_run_taking_and_restoring_a_sys_modules_snapshot(
-            self, testdir, monkeypatch):
+        self, testdir, monkeypatch
+    ):
         spy_factory = self.spy_factory()
         monkeypatch.setattr(pytester, "SysModulesSnapshot", spy_factory)
         original = dict(sys.modules)
         testdir.syspathinsert()
         testdir.makepyfile(import1="# you son of a silly person")
         testdir.makepyfile(import2="# my hovercraft is full of eels")
-        test_mod = testdir.makepyfile("""
+        test_mod = testdir.makepyfile(
+            """
             import import1
-            def test_foo(): import import2""")
+            def test_foo(): import import2"""
+        )
         testdir.inline_run(str(test_mod))
         assert len(spy_factory.instances) == 1
         spy = spy_factory.instances[0]
@@ -179,7 +188,8 @@ class TestInlineRunModulesCleanup(object):
         assert all(sys.modules[x] is original[x] for x in sys.modules)
 
     def test_inline_run_sys_modules_snapshot_restore_preserving_modules(
-            self, testdir, monkeypatch):
+        self, testdir, monkeypatch
+    ):
         spy_factory = self.spy_factory()
         monkeypatch.setattr(pytester, "SysModulesSnapshot", spy_factory)
         test_mod = testdir.makepyfile("def test_foo(): pass")
@@ -194,10 +204,13 @@ class TestInlineRunModulesCleanup(object):
         testdir.syspathinsert()
         testdir.makepyfile(imported="data = 'you son of a silly person'")
         import imported
-        test_mod = testdir.makepyfile("""
+
+        test_mod = testdir.makepyfile(
+            """
             def test_foo():
                 import imported
-                imported.data = 42""")
+                imported.data = 42"""
+        )
         testdir.inline_run(str(test_mod))
         assert imported.data == 42
 
@@ -211,13 +224,17 @@ def test_inline_run_clean_sys_paths(testdir):
         sys.meta_path.append(test_path1)
         original_path = list(sys.path)
         original_meta_path = list(sys.meta_path)
-        test_mod = testdir.makepyfile("""
+        test_mod = testdir.makepyfile(
+            """
             import sys
             sys.path.append({:test_path2})
             sys.meta_path.append({:test_path2})
             def test_foo():
                 sys.path.append({:test_path3})
-                sys.meta_path.append({:test_path3})""".format(locals()))
+                sys.meta_path.append({:test_path3})""".format(
+                locals()
+            )
+        )
         testdir.inline_run(str(test_mod))
         assert sys.path == original_path
         assert sys.meta_path == original_meta_path
@@ -234,10 +251,12 @@ def test_inline_run_clean_sys_paths(testdir):
             def restore(self):
                 self._spy_restore_count += 1
                 return self.__snapshot.restore()
+
         return SysPathsSnapshotSpy
 
     def test_inline_run_taking_and_restoring_a_sys_paths_snapshot(
-            self, testdir, monkeypatch):
+        self, testdir, monkeypatch
+    ):
         spy_factory = self.spy_factory()
         monkeypatch.setattr(pytester, "SysPathsSnapshot", spy_factory)
         test_mod = testdir.makepyfile("def test_foo(): pass")
@@ -250,14 +269,14 @@ def test_inline_run_clean_sys_paths(testdir):
 def test_assert_outcomes_after_pytest_error(testdir):
     testdir.makepyfile("def test_foo(): assert True")
 
-    result = testdir.runpytest('--unexpected-argument')
+    result = testdir.runpytest("--unexpected-argument")
     with pytest.raises(ValueError, message="Pytest terminal report not found"):
         result.assert_outcomes(passed=0)
 
 
 def test_cwd_snapshot(tmpdir):
-    foo = tmpdir.ensure('foo', dir=1)
-    bar = tmpdir.ensure('bar', dir=1)
+    foo = tmpdir.ensure("foo", dir=1)
+    bar = tmpdir.ensure("bar", dir=1)
     foo.chdir()
     snapshot = CwdSnapshot()
     bar.chdir()
@@ -267,20 +286,20 @@ def test_cwd_snapshot(tmpdir):
 
 
 class TestSysModulesSnapshot(object):
-    key = 'my-test-module'
+    key = "my-test-module"
 
     def test_remove_added(self):
         original = dict(sys.modules)
         assert self.key not in sys.modules
         snapshot = SysModulesSnapshot()
-        sys.modules[self.key] = 'something'
+        sys.modules[self.key] = "something"
         assert self.key in sys.modules
         snapshot.restore()
         assert sys.modules == original
 
     def test_add_removed(self, monkeypatch):
         assert self.key not in sys.modules
-        monkeypatch.setitem(sys.modules, self.key, 'something')
+        monkeypatch.setitem(sys.modules, self.key, "something")
         assert self.key in sys.modules
         original = dict(sys.modules)
         snapshot = SysModulesSnapshot()
@@ -291,11 +310,11 @@ class TestSysModulesSnapshot(object):
 
     def test_restore_reloaded(self, monkeypatch):
         assert self.key not in sys.modules
-        monkeypatch.setitem(sys.modules, self.key, 'something')
+        monkeypatch.setitem(sys.modules, self.key, "something")
         assert self.key in sys.modules
         original = dict(sys.modules)
         snapshot = SysModulesSnapshot()
-        sys.modules[self.key] = 'something else'
+        sys.modules[self.key] = "something else"
         snapshot.restore()
         assert sys.modules == original
 
@@ -303,16 +322,16 @@ class TestSysModulesSnapshot(object):
         key = [self.key + str(i) for i in range(3)]
         assert not any(k in sys.modules for k in key)
         for i, k in enumerate(key):
-            monkeypatch.setitem(sys.modules, k, 'something' + str(i))
+            monkeypatch.setitem(sys.modules, k, "something" + str(i))
         original = dict(sys.modules)
 
         def preserve(name):
-            return name in (key[0], key[1], 'some-other-key')
+            return name in (key[0], key[1], "some-other-key")
 
         snapshot = SysModulesSnapshot(preserve=preserve)
-        sys.modules[key[0]] = original[key[0]] = 'something else0'
-        sys.modules[key[1]] = original[key[1]] = 'something else1'
-        sys.modules[key[2]] = 'something else2'
+        sys.modules[key[0]] = original[key[0]] = "something else0"
+        sys.modules[key[1]] = original[key[1]] = "something else1"
+        sys.modules[key[2]] = "something else2"
         snapshot.restore()
         assert sys.modules == original
 
@@ -320,23 +339,21 @@ class TestSysModulesSnapshot(object):
         original = dict(sys.modules)
         assert self.key not in original
         replacement = dict(sys.modules)
-        replacement[self.key] = 'life of brian'
+        replacement[self.key] = "life of brian"
         snapshot = SysModulesSnapshot()
-        monkeypatch.setattr(sys, 'modules', replacement)
+        monkeypatch.setattr(sys, "modules", replacement)
         snapshot.restore()
         assert sys.modules is replacement
         assert sys.modules == original
 
 
-@pytest.mark.parametrize('path_type', ('path', 'meta_path'))
+@pytest.mark.parametrize("path_type", ("path", "meta_path"))
 class TestSysPathsSnapshot(object):
-    other_path = {
-        'path': 'meta_path',
-        'meta_path': 'path'}
+    other_path = {"path": "meta_path", "meta_path": "path"}
 
     @staticmethod
     def path(n):
-        return 'my-dirty-little-secret-' + str(n)
+        return "my-dirty-little-secret-" + str(n)
 
     def test_restore(self, monkeypatch, path_type):
         other_path_type = self.other_path[path_type]
@@ -348,16 +365,17 @@ class TestSysPathsSnapshot(object):
         original_other = list(getattr(sys, other_path_type))
         snapshot = SysPathsSnapshot()
         transformation = {
-            'source': (0, 1, 2,    3, 4, 5),
-            'target': (   6, 2, 9, 7,    5, 8)}  # noqa: E201
-        assert sys_path == [self.path(x) for x in transformation['source']]
+            "source": (0, 1, 2, 3, 4, 5),
+            "target": (6, 2, 9, 7, 5, 8),
+        }  # noqa: E201
+        assert sys_path == [self.path(x) for x in transformation["source"]]
         sys_path[1] = self.path(6)
         sys_path[3] = self.path(7)
         sys_path.append(self.path(8))
         del sys_path[4]
         sys_path[3:3] = [self.path(9)]
         del sys_path[0]
-        assert sys_path == [self.path(x) for x in transformation['target']]
+        assert sys_path == [self.path(x) for x in transformation["target"]]
         snapshot.restore()
         assert getattr(sys, path_type) is sys_path
         assert getattr(sys, path_type) == original

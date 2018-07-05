@@ -15,12 +15,12 @@ Full pytest documentation
    existingtestsuite
    assert
    fixture
+   mark
    monkeypatch
    tmpdir
    capture
    warnings
    doctest
-   mark
    skipping
    parametrize
    cache
@@ -62,4 +62,3 @@ Full pytest documentation
       :maxdepth: 1
 
       changelog
-

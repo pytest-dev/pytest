@@ -150,7 +150,7 @@ Unconditionally skip a test function.
 pytest.mark.skipif
 ~~~~~~~~~~~~~~~~~~
 
-**Tutorial**: :ref:`xfail`.
+**Tutorial**: :ref:`skipif`.
 
 Skip a test function if a condition is ``True``.
 
@@ -198,7 +198,7 @@ For example:
 
 .. code-block:: python
 
-    @pytest.mark.timeout(10, 'slow', method='thread')
+    @pytest.mark.timeout(10, "slow", method="thread")
     def test_function():
         ...
 
@@ -208,8 +208,8 @@ Will create and attach a :class:`Mark <_pytest.mark.structures.Mark>` object to 
 
 .. code-block:: python
 
-    mark.args == (10, 'slow')
-    mark.kwargs == {'method': 'thread'}
+    mark.args == (10, "slow")
+    mark.kwargs == {"method": "thread"}
 
 
 Fixtures
@@ -225,9 +225,9 @@ Example of a test requiring a fixture:
 .. code-block:: python
 
     def test_output(capsys):
-        print('hello')
+        print("hello")
         out, err = capsys.readouterr()
-        assert out == 'hello\n'
+        assert out == "hello\n"
 
 
 Example of a fixture requiring another fixture:
@@ -236,7 +236,7 @@ Example of a fixture requiring another fixture:
 
     @pytest.fixture
     def db_session(tmpdir):
-        fn = tmpdir / 'db.file'
+        fn = tmpdir / "db.file"
         return connect(str(fn))
 
 For more details, consult the full :ref:`fixtures docs <fixture>`.
@@ -368,7 +368,7 @@ doctest_namespace
 
         @pytest.fixture(autouse=True)
         def add_np(doctest_namespace):
-            doctest_namespace['np'] = numpy
+            doctest_namespace["np"] = numpy
 
     For more details: :ref:`doctest_namespace`.
 
@@ -733,7 +733,7 @@ Node
 Parser
 ~~~~~~
 
-.. autoclass:: _pytest.config.Parser()
+.. autoclass:: _pytest.config.argparsing.Parser()
     :members:
 
 PluginManager
@@ -805,12 +805,14 @@ test functions and methods. Can be either a single mark or a sequence of marks.
 .. code-block:: python
 
     import pytest
+
     pytestmark = pytest.mark.webtest
 
 
 .. code-block:: python
 
     import pytest
+
     pytestmark = (pytest.mark.integration, pytest.mark.slow)
 
 PYTEST_DONT_REWRITE (module docstring)
@@ -843,7 +845,7 @@ Contains comma-separated list of modules that should be loaded as plugins:
 
 .. code-block:: bash
 
-    export PYTEST_PLUGINS=mymodule.plugin,xdisst
+    export PYTEST_PLUGINS=mymodule.plugin,xdist
 
 
 PYTEST_CURRENT_TEST
@@ -891,7 +893,7 @@ passed multiple times. The expected format is ``name=value``. For example::
    .. versionadded:: 3.2
 
    Sets a directory where stores content of cache plugin. Default directory is
-   ``.cache`` which is created in :ref:`rootdir <rootdir>`. Directory may be
+   ``.pytest_cache`` which is created in :ref:`rootdir <rootdir>`. Directory may be
    relative or absolute path. If setting relative path, then directory is created
    relative to :ref:`rootdir <rootdir>`. Additionally path may contain environment
    variables, that will be expanded. For more information about cache plugin
@@ -945,8 +947,8 @@ passed multiple times. The expected format is ``name=value``. For example::
 
     Allows to pick the action for empty parametersets in parameterization
 
-    * ``skip`` skips tests with a empty parameterset (default)
-    * ``xfail`` marks tests with a empty parameterset as xfail(run=False)
+    * ``skip`` skips tests with an empty parameterset (default)
+    * ``xfail`` marks tests with an empty parameterset as xfail(run=False)
 
     .. code-block:: ini
 

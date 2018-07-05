@@ -14,7 +14,7 @@ environment:
   - TOXENV: "py34"
   - TOXENV: "py35"
   - TOXENV: "py36"
-  - TOXENV: "pypy"
+#  - TOXENV: "pypy" reenable when we are able to provide a scandir wheel or build scandir
   - TOXENV: "py27-pexpect"
   - TOXENV: "py27-xdist"
   - TOXENV: "py27-trial"
@@ -27,7 +27,7 @@ environment:
   - TOXENV: "py36-pluggymaster"
   - TOXENV: "py27-nobyte"
   - TOXENV: "doctesting"
-  - TOXENV: "py35-freeze"
+  - TOXENV: "py36-freeze"
   - TOXENV: "docs"
 
 install:
@@ -42,3 +42,11 @@ build: false  # Not a C# project, build stuff at the test step instead.
 
 test_script:
   - call scripts\call-tox.bat
+
+cache:
+  - '%LOCALAPPDATA%\pip\cache'
+  - '%USERPROFILE%\.cache\pre-commit'
+
+# We don't deploy anything on tags with AppVeyor, we use Travis instead, so we
+# might as well save resources
+skip_tags: true
