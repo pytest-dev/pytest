@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import re
 import os
+from io import open
 
 import six
 
@@ -825,6 +826,43 @@ def test_log_file_ini_level(testdir):
         contents = rfh.read()
         assert "This log message will be shown" in contents
         assert "This log message won't be shown" not in contents
+
+
+def test_log_file_unicode(testdir):
+    log_file = testdir.tmpdir.join("pytest.log").strpath
+
+    testdir.makeini(
+        """
+        [pytest]
+        log_file={}
+        log_file_level = INFO
+        """.format(
+            log_file
+        )
+    )
+    testdir.makepyfile(
+        """
+        # -*- coding: utf-8 -*-
+        from __future__ import unicode_literals
+        import logging
+
+        def test_log_file():
+            logging.getLogger('catchlog').info("Normal message")
+            logging.getLogger('catchlog').info("├")
+            logging.getLogger('catchlog').info("Another normal message")
+    """
+    )
+
+    result = testdir.runpytest()
+
+    # make sure that that we get a '0' exit code for the testsuite
+    assert result.ret == 0
+    assert os.path.isfile(log_file)
+    with open(log_file, encoding="utf-8") as rfh:
+        contents = rfh.read()
+        assert "Normal message" in contents
+        assert u"├" in contents
+        assert "Another normal message" in contents
 
 
 @pytest.mark.parametrize("has_capture_manager", [True, False])
