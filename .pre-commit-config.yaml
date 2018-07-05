@@ -34,3 +34,8 @@ repos:
         language: python
         additional_dependencies: [pygments, restructuredtext_lint]
         python_version: python3.6
+    -   id: rst-backticks
+        name: rst ``code`` is two backticks
+        entry: ' `[^`]+[^_]`([^_]|$)'
+        language: pygrep
+        types: [rst]
