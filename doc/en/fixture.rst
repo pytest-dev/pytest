@@ -258,6 +258,22 @@ instance, you can simply declare it:
 Finally, the ``class`` scope will invoke the fixture once per test *class*.
 
 
+``package`` scope (experimental)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. versionadded:: 3.7
+
+In pytest 3.7 the ``package`` scope has been introduced. Package-scoped fixtures
+are finalized when the last test of a *package* finishes.
+
+.. warning::
+    This functionality is considered **experimental** and may be removed in future
+    versions if hidden corner-cases or serious problems with this functionality
+    are discovered after it gets more usage in the wild.
+
+    Use this new feature sparingly and please make sure to report any issues you find.
+
+
 Higher-scoped fixtures are instantiated first
 ---------------------------------------------
 
