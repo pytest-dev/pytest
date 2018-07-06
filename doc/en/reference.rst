@@ -161,6 +161,20 @@ Skip a test function if a condition is ``True``.
     :keyword str reason: Reason why the test function is being skipped.
 
 
+.. _`pytest.mark.usefixtures ref`:
+
+pytest.mark.usefixtures
+~~~~~~~~~~~~~~~~~~~~~~~
+
+**Tutorial**: :ref:`usefixtures`.
+
+Mark a test function as using the given fixture names.
+
+.. py:function:: pytest.mark.usefixtures(*names)
+
+    :param args: the names of the fixture to use as strings
+
+
 .. _`pytest.mark.xfail ref`:
 
 pytest.mark.xfail
