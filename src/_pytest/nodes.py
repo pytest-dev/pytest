@@ -358,7 +358,7 @@ class FSCollector(Collector):
 
             if not nodeid:
                 nodeid = _check_initialpaths_for_relpath(session, fspath)
-            if os.sep != SEP:
+            if nodeid and os.sep != SEP:
                 nodeid = nodeid.replace(os.sep, SEP)
 
         super(FSCollector, self).__init__(

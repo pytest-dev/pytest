@@ -2,6 +2,7 @@ from __future__ import absolute_import, division, print_function
 
 import functools
 import inspect
+import os
 import sys
 import warnings
 from collections import OrderedDict, deque, defaultdict
@@ -45,6 +46,7 @@ def pytest_sessionstart(session):
 
     scopename2class.update(
         {
+            "package": _pytest.python.Package,
             "class": _pytest.python.Class,
             "module": _pytest.python.Module,
             "function": _pytest.nodes.Item,
@@ -58,6 +60,7 @@ scopename2class = {}
 
 
 scope2props = dict(session=())
+scope2props["package"] = ("fspath",)
 scope2props["module"] = ("fspath", "module")
 scope2props["class"] = scope2props["module"] + ("cls",)
 scope2props["instance"] = scope2props["class"] + ("instance",)
@@ -78,6 +81,21 @@ def scopeproperty(name=None, doc=None):
         return property(provide, None, None, func.__doc__)
 
     return decoratescope
+
+
+def get_scope_package(node, fixturedef):
+    import pytest
+
+    cls = pytest.Package
+    current = node
+    fixture_package_name = os.path.join(fixturedef.baseid, "__init__.py")
+    while current and (
+        type(current) is not cls or fixture_package_name != current.nodeid
+    ):
+        current = current.parent
+    if current is None:
+        return node.session
+    return current
 
 
 def get_scope_node(node, scope):
@@ -173,9 +191,11 @@ def get_parametrized_fixture_keys(item, scopenum):
                 continue
             if scopenum == 0:  # session
                 key = (argname, param_index)
-            elif scopenum == 1:  # module
+            elif scopenum == 1:  # package
+                key = (argname, param_index, item.fspath.dirpath())
+            elif scopenum == 2:  # module
                 key = (argname, param_index, item.fspath)
-            elif scopenum == 2:  # class
+            elif scopenum == 3:  # class
                 key = (argname, param_index, item.fspath, item.cls)
             yield key
 
@@ -612,7 +632,10 @@ class FixtureRequest(FuncargnamesCompatAttr):
         if scope == "function":
             # this might also be a non-function Item despite its attribute name
             return self._pyfuncitem
-        node = get_scope_node(self._pyfuncitem, scope)
+        if scope == "package":
+            node = get_scope_package(self._pyfuncitem, self._fixturedef)
+        else:
+            node = get_scope_node(self._pyfuncitem, scope)
         if node is None and scope == "class":
             # fallback to function item itself
             node = self._pyfuncitem
@@ -656,7 +679,7 @@ class ScopeMismatchError(Exception):
     """
 
 
-scopes = "session module class function".split()
+scopes = "session package module class function".split()
 scopenum_function = scopes.index("function")
 
 
@@ -937,16 +960,27 @@ class FixtureFunctionMarker(object):
 def fixture(scope="function", params=None, autouse=False, ids=None, name=None):
     """Decorator to mark a fixture factory function.
 
-    This decorator can be used (with or without parameters) to define a
-    fixture function.  The name of the fixture function can later be
-    referenced to cause its invocation ahead of running tests: test
-    modules or classes can use the pytest.mark.usefixtures(fixturename)
-    marker.  Test functions can directly use fixture names as input
+    This decorator can be used, with or without parameters, to define a
+    fixture function.
+
+    The name of the fixture function can later be referenced to cause its
+    invocation ahead of running tests: test
+    modules or classes can use the ``pytest.mark.usefixtures(fixturename)``
+    marker.
+
+    Test functions can directly use fixture names as input
     arguments in which case the fixture instance returned from the fixture
     function will be injected.
 
+    Fixtures can provide their values to test functions using ``return`` or ``yield``
+    statements. When using ``yield`` the code block after the ``yield`` statement is executed
+    as teardown code regardless of the test outcome, and must yield exactly once.
+
     :arg scope: the scope for which this fixture is shared, one of
-                "function" (default), "class", "module" or "session".
+                ``"function"`` (default), ``"class"``, ``"module"``,
+                ``"package"`` or ``"session"``.
+
+                ``"package"`` is considered **experimental** at this time.
 
     :arg params: an optional list of parameters which will cause multiple
                 invocations of the fixture function and all of the tests
@@ -967,10 +1001,6 @@ def fixture(scope="function", params=None, autouse=False, ids=None, name=None):
                 to resolve this is to name the decorated function
                 ``fixture_<fixturename>`` and then use
                 ``@pytest.fixture(name='<fixturename>')``.
-
-    Fixtures can optionally provide their values to test functions using a ``yield`` statement,
-    instead of ``return``. In this case, the code block after the ``yield`` statement is executed
-    as teardown code regardless of the test outcome. A fixture function must yield exactly once.
     """
     if callable(scope) and params is None and autouse is False:
         # direct decoration

@@ -18,7 +18,7 @@ from _pytest.mark import MARK_GEN as mark, param
 from _pytest.main import Session
 from _pytest.nodes import Item, Collector, File
 from _pytest.fixtures import fillfixtures as _fillfuncargs
-from _pytest.python import Module, Class, Instance, Function, Generator
+from _pytest.python import Package, Module, Class, Instance, Function, Generator
 
 from _pytest.python_api import approx, raises
 
@@ -50,6 +50,7 @@ __all__ = [
     "Item",
     "File",
     "Collector",
+    "Package",
     "Session",
     "Module",
     "Class",

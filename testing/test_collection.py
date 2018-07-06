@@ -647,7 +647,7 @@ class Test_getinitialnodes(object):
         col = testdir.getnode(config, x)
         assert isinstance(col, pytest.Module)
         assert col.name == "x.py"
-        assert col.parent.parent is None
+        assert col.parent.parent.parent is None
         for col in col.listchain():
             assert col.config is config
 
@@ -904,7 +904,7 @@ def test_continue_on_collection_errors_maxfail(testdir):
 
 def test_fixture_scope_sibling_conftests(testdir):
     """Regression test case for https://github.com/pytest-dev/pytest/issues/2836"""
-    foo_path = testdir.mkpydir("foo")
+    foo_path = testdir.mkdir("foo")
     foo_path.join("conftest.py").write(
         _pytest._code.Source(
             """

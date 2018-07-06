@@ -13,6 +13,7 @@ from itertools import count
 
 import py
 import six
+from _pytest.main import FSHookProxy
 from _pytest.mark import MarkerError
 from _pytest.config import hookimpl
 
@@ -201,7 +202,7 @@ def pytest_collect_file(path, parent):
     ext = path.ext
     if ext == ".py":
         if not parent.session.isinitpath(path):
-            for pat in parent.config.getini("python_files"):
+            for pat in parent.config.getini("python_files") + ["__init__.py"]:
                 if path.fnmatch(pat):
                     break
             else:
@@ -211,7 +212,21 @@ def pytest_collect_file(path, parent):
 
 
 def pytest_pycollect_makemodule(path, parent):
+    if path.basename == "__init__.py":
+        return Package(path, parent)
     return Module(path, parent)
+
+
+def pytest_ignore_collect(path, config):
+    # Skip duplicate packages.
+    keepduplicates = config.getoption("keepduplicates")
+    if keepduplicates:
+        duplicate_paths = config.pluginmanager._duplicatepaths
+        if path.basename == "__init__.py":
+            if path in duplicate_paths:
+                return True
+            else:
+                duplicate_paths.add(path)
 
 
 @hookimpl(hookwrapper=True)
@@ -529,6 +544,66 @@ class Module(nodes.File, PyCollector):
             teardown_module = _get_xunit_setup_teardown(self.obj, "teardown_module")
         if teardown_module is not None:
             self.addfinalizer(teardown_module)
+
+
+class Package(Module):
+    def __init__(self, fspath, parent=None, config=None, session=None, nodeid=None):
+        session = parent.session
+        nodes.FSCollector.__init__(
+            self, fspath, parent=parent, config=config, session=session, nodeid=nodeid
+        )
+        self.name = fspath.dirname
+        self.trace = session.trace
+        self._norecursepatterns = session._norecursepatterns
+        for path in list(session.config.pluginmanager._duplicatepaths):
+            if path.dirname == fspath.dirname and path != fspath:
+                session.config.pluginmanager._duplicatepaths.remove(path)
+
+    def _recurse(self, path):
+        ihook = self.gethookproxy(path.dirpath())
+        if ihook.pytest_ignore_collect(path=path, config=self.config):
+            return
+        for pat in self._norecursepatterns:
+            if path.check(fnmatch=pat):
+                return False
+        ihook = self.gethookproxy(path)
+        ihook.pytest_collect_directory(path=path, parent=self)
+        return True
+
+    def gethookproxy(self, fspath):
+        # check if we have the common case of running
+        # hooks with all conftest.py filesall conftest.py
+        pm = self.config.pluginmanager
+        my_conftestmodules = pm._getconftestmodules(fspath)
+        remove_mods = pm._conftest_plugins.difference(my_conftestmodules)
+        if remove_mods:
+            # one or more conftests are not in use at this fspath
+            proxy = FSHookProxy(fspath, pm, remove_mods)
+        else:
+            # all plugis are active for this fspath
+            proxy = self.config.hook
+        return proxy
+
+    def _collectfile(self, path):
+        ihook = self.gethookproxy(path)
+        if not self.isinitpath(path):
+            if ihook.pytest_ignore_collect(path=path, config=self.config):
+                return ()
+        return ihook.pytest_collect_file(path=path, parent=self)
+
+    def isinitpath(self, path):
+        return path in self.session._initialpaths
+
+    def collect(self):
+        path = self.fspath.dirpath()
+        pkg_prefix = None
+        for path in path.visit(fil=lambda x: 1, rec=self._recurse, bf=True, sort=True):
+            if pkg_prefix and pkg_prefix in path.parts():
+                continue
+            for x in self._collectfile(path):
+                yield x
+                if isinstance(x, Package):
+                    pkg_prefix = path.dirpath()
 
 
 def _get_xunit_setup_teardown(holder, attr_name, param_obj=None):
