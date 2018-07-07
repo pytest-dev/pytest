@@ -26,7 +26,7 @@ changelog using that instead.
 
 If you are not sure what issue type to use, don't hesitate to ask in your PR.
 
-Note that the ``towncrier`` tool will automatically
-reflow your text, so it will work best if you stick to a single paragraph, but multiple sentences and links are OK
-and encouraged. You can install ``towncrier`` and then run ``towncrier --draft``
+``towncrier`` preserves multiple paragraphs and formatting (code blocks, lists, and so on), but for entries
+other than ``features`` it is usually better to stick to a single paragraph to keep it concise. You can install
+``towncrier`` and then run ``towncrier --draft``
 if you want to get a preview of how your change will look in the final release notes.
