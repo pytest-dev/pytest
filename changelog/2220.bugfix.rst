@@ -1,3 +1,1 @@
-Fix a bug where fixtures overriden by direct parameters (for example parametrization) were being instantiated
-even if they were not being used by a test.
-
+Fix a bug where fixtures overriden by direct parameters (for example parametrization) were being instantiated even if they were not being used by a test.
