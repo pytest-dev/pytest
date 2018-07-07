@@ -1,0 +1,1 @@
+Added the `--trace` option to enter the debugger at the start of a test.

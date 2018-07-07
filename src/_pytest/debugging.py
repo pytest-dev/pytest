@@ -5,6 +5,8 @@ import sys
 import os
 from doctest import UnexpectedException
 
+from _pytest.config import hookimpl
+
 try:
     from builtins import breakpoint  # noqa
 
@@ -28,6 +30,12 @@ def pytest_addoption(parser):
         help="start a custom interactive Python debugger on errors. "
         "For example: --pdbcls=IPython.terminal.debugger:TerminalPdb",
     )
+    group._addoption(
+        "--trace",
+        dest="trace",
+        action="store_true",
+        help="Immediately break when running each test.",
+    )
 
 
 def pytest_configure(config):
@@ -38,6 +46,8 @@ def pytest_configure(config):
     else:
         pdb_cls = pdb.Pdb
 
+    if config.getvalue("trace"):
+        config.pluginmanager.register(PdbTrace(), "pdbtrace")
     if config.getvalue("usepdb"):
         config.pluginmanager.register(PdbInvoke(), "pdbinvoke")
 
@@ -71,7 +81,7 @@ class pytestPDB(object):
     _pdb_cls = pdb.Pdb
 
     @classmethod
-    def set_trace(cls):
+    def set_trace(cls, set_break=True):
         """ invoke PDB set_trace debugging, dropping any IO capturing. """
         import _pytest.config
 
@@ -84,7 +94,8 @@ class pytestPDB(object):
             tw.line()
             tw.sep(">", "PDB set_trace (IO-capturing turned off)")
             cls._pluginmanager.hook.pytest_enter_pdb(config=cls._config)
-        cls._pdb_cls().set_trace(frame)
+        if set_break:
+            cls._pdb_cls().set_trace(frame)
 
 
 class PdbInvoke(object):
@@ -102,6 +113,30 @@ class PdbInvoke(object):
             sys.stderr.flush()
         tb = _postmortem_traceback(excinfo)
         post_mortem(tb)
+
+
+class PdbTrace(object):
+    @hookimpl(hookwrapper=True)
+    def pytest_pyfunc_call(self, pyfuncitem):
+        _test_pytest_function(pyfuncitem)
+        yield
+
+
+def _test_pytest_function(pyfuncitem):
+    pytestPDB.set_trace(set_break=False)
+    testfunction = pyfuncitem.obj
+    pyfuncitem.obj = pdb.runcall
+    if pyfuncitem._isyieldedfunction():
+        arg_list = list(pyfuncitem._args)
+        arg_list.insert(0, testfunction)
+        pyfuncitem._args = tuple(arg_list)
+    else:
+        if "func" in pyfuncitem._fixtureinfo.argnames:
+            raise ValueError("--trace can't be used with a fixture named func!")
+        pyfuncitem.funcargs["func"] = testfunction
+        new_list = list(pyfuncitem._fixtureinfo.argnames)
+        new_list.append("func")
+        pyfuncitem._fixtureinfo.argnames = tuple(new_list)
 
 
 def _enter_pdb(node, excinfo, rep):
