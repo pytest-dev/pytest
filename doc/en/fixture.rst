@@ -943,7 +943,7 @@ a generic feature of the mark mechanism:
 Note that the assigned variable *must* be called ``pytestmark``, assigning e.g.
 ``foomark`` will not activate the fixtures.
 
-Lastly you can put fixtures required by all tests in your project
+It is also possible to put fixtures required by all tests in your project
 into an ini-file:
 
 .. code-block:: ini
@@ -951,6 +951,22 @@ into an ini-file:
     # content of pytest.ini
     [pytest]
     usefixtures = cleandir
+
+
+.. warning::
+
+    Note this mark has no effect in **fixture functions**. For example,
+    this **will not work as expected**:
+
+    .. code-block:: python
+
+        @pytest.mark.usefixtures("my_other_fixture")
+        @pytest.fixture
+        def my_fixture_that_sadly_wont_use_my_other_fixture():
+            ...
+
+    Currently this will not generate any error or warning, but this is intended
+    to be handled by `#3664 <https://github.com/pytest-dev/pytest/issues/3664>`_.
 
 
 .. _`autouse`:

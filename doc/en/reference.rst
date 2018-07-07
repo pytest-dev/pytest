@@ -170,9 +170,14 @@ pytest.mark.usefixtures
 
 Mark a test function as using the given fixture names.
 
+.. warning::
+
+    This mark can be used with *test functions* only, having no affect when applied
+    to a **fixture** function.
+
 .. py:function:: pytest.mark.usefixtures(*names)
 
-    :param args: the names of the fixture to use as strings
+    :param args: the names of the fixture to use, as strings
 
 
 .. _`pytest.mark.xfail ref`:
