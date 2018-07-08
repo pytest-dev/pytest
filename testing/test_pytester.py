@@ -364,10 +364,7 @@ class TestSysPathsSnapshot(object):
         original = list(sys_path)
         original_other = list(getattr(sys, other_path_type))
         snapshot = SysPathsSnapshot()
-        transformation = {
-            "source": (0, 1, 2, 3, 4, 5),
-            "target": (6, 2, 9, 7, 5, 8),
-        }  # noqa: E201
+        transformation = {"source": (0, 1, 2, 3, 4, 5), "target": (6, 2, 9, 7, 5, 8)}
         assert sys_path == [self.path(x) for x in transformation["source"]]
         sys_path[1] = self.path(6)
         sys_path[3] = self.path(7)
