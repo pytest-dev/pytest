@@ -97,7 +97,7 @@ class TestAssertionRewrite(object):
             assert imp.lineno == 2
             assert imp.col_offset == 0
         assert isinstance(m.body[2], ast.Assign)
-        s = """from __future__ import with_statement\nother_stuff"""
+        s = """from __future__ import division\nother_stuff"""
         m = rewrite(s)
         assert isinstance(m.body[0], ast.ImportFrom)
         for imp in m.body[1:3]:
@@ -105,7 +105,7 @@ class TestAssertionRewrite(object):
             assert imp.lineno == 2
             assert imp.col_offset == 0
         assert isinstance(m.body[3], ast.Expr)
-        s = """'doc string'\nfrom __future__ import with_statement"""
+        s = """'doc string'\nfrom __future__ import division"""
         m = rewrite(s)
         adjust_body_for_new_docstring_in_module_node(m)
         assert isinstance(m.body[0], ast.ImportFrom)
@@ -113,7 +113,7 @@ class TestAssertionRewrite(object):
             assert isinstance(imp, ast.Import)
             assert imp.lineno == 2
             assert imp.col_offset == 0
-        s = """'doc string'\nfrom __future__ import with_statement\nother"""
+        s = """'doc string'\nfrom __future__ import division\nother"""
         m = rewrite(s)
         adjust_body_for_new_docstring_in_module_node(m)
         assert isinstance(m.body[0], ast.ImportFrom)
