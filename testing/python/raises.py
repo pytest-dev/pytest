@@ -33,8 +33,7 @@ class TestRaises(object):
     def test_raises_as_contextmanager(self, testdir):
         testdir.makepyfile(
             """
-            from __future__ import with_statement
-            import py, pytest
+            import pytest
             import _pytest._code
 
             def test_simple():

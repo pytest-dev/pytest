@@ -2,7 +2,6 @@ from __future__ import absolute_import, division, print_function
 
 # note: py.io capture tests where copied from
 # pylib 1.4.20.dev2 (rev 13d9af95547e)
-from __future__ import with_statement
 import pickle
 import os
 import sys
