@@ -394,3 +394,8 @@ class TestSysPathsSnapshot(object):
         assert getattr(sys, path_type) == original_data
         assert getattr(sys, other_path_type) is original_other
         assert getattr(sys, other_path_type) == original_other_data
+
+
+def test_testdir_subprocess(testdir):
+    testfile = testdir.makepyfile("def test_one(): pass")
+    assert testdir.runpytest_subprocess(testfile).ret == 0
