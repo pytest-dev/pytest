@@ -941,7 +941,7 @@ class TestAssertionRewriteHookDetails(object):
             e = IOError()
             e.errno = 10
             raise e
-            yield  # noqa
+            yield
 
         monkeypatch.setattr(atomicwrites, "atomic_write", atomic_write_failed)
         assert not _write_pyc(state, [1], source_path.stat(), pycpath)
