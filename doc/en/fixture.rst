@@ -337,7 +337,7 @@ tests.
 Let's execute it::
 
     $ pytest -s -q --tb=no
-    FFteardown smtp_connection
+    FFteardown smtp
 
     2 failed in 0.12 seconds
 
@@ -468,7 +468,8 @@ Running it::
     ______________________________ test_showhelo _______________________________
     test_anothersmtp.py:5: in test_showhelo
         assert 0, smtp_connection.helo()
-    E   NameError: name 'smtp_connection' is not defined
+    E   AssertionError: (250, b'mail.python.org')
+    E   assert 0
     ------------------------- Captured stdout teardown -------------------------
     finalizing <smtplib.SMTP object at 0xdeadbeef> (mail.python.org)
 
@@ -568,42 +569,51 @@ So let's just do another run::
     ================================= FAILURES =================================
     ________________________ test_ehlo[smtp.gmail.com] _________________________
 
-    smtp_connection = <function smtp_connection at 0xdeadbeef>
+    smtp_connection = <smtplib.SMTP object at 0xdeadbeef>
 
         def test_ehlo(smtp_connection):
-    >       response, msg = smtp_connection.ehlo()
-    E       AttributeError: 'function' object has no attribute 'ehlo'
+            response, msg = smtp_connection.ehlo()
+            assert response == 250
+            assert b"smtp.gmail.com" in msg
+    >       assert 0  # for demo purposes
+    E       assert 0
 
-    test_module.py:3: AttributeError
+    test_module.py:6: AssertionError
     ________________________ test_noop[smtp.gmail.com] _________________________
 
-    smtp_connection = <function smtp_connection at 0xdeadbeef>
+    smtp_connection = <smtplib.SMTP object at 0xdeadbeef>
 
         def test_noop(smtp_connection):
-    >       response, msg = smtp_connection.noop()
-    E       AttributeError: 'function' object has no attribute 'noop'
+            response, msg = smtp_connection.noop()
+            assert response == 250
+    >       assert 0  # for demo purposes
+    E       assert 0
 
-    test_module.py:9: AttributeError
+    test_module.py:11: AssertionError
     ________________________ test_ehlo[mail.python.org] ________________________
 
-    smtp_connection = <function smtp_connection at 0xdeadbeef>
+    smtp_connection = <smtplib.SMTP object at 0xdeadbeef>
 
         def test_ehlo(smtp_connection):
-    >       response, msg = smtp_connection.ehlo()
-    E       AttributeError: 'function' object has no attribute 'ehlo'
+            response, msg = smtp_connection.ehlo()
+            assert response == 250
+    >       assert b"smtp.gmail.com" in msg
+    E       AssertionError: assert b'smtp.gmail.com' in b'mail.python.org\nPIPELINING\nSIZE 51200000\nETRN\nSTARTTLS\nAUTH DIGEST-MD5 NTLM CRAM-MD5\nENHANCEDSTATUSCODES\n8BITMIME\nDSN\nSMTPUTF8'
 
-    test_module.py:3: AttributeError
+    test_module.py:5: AssertionError
     -------------------------- Captured stdout setup ---------------------------
     finalizing <smtplib.SMTP object at 0xdeadbeef>
     ________________________ test_noop[mail.python.org] ________________________
 
-    smtp_connection = <function smtp_connection at 0xdeadbeef>
+    smtp_connection = <smtplib.SMTP object at 0xdeadbeef>
 
         def test_noop(smtp_connection):
-    >       response, msg = smtp_connection.noop()
-    E       AttributeError: 'function' object has no attribute 'noop'
+            response, msg = smtp_connection.noop()
+            assert response == 250
+    >       assert 0  # for demo purposes
+    E       assert 0
 
-    test_module.py:9: AttributeError
+    test_module.py:11: AssertionError
     ------------------------- Captured stdout teardown -------------------------
     finalizing <smtplib.SMTP object at 0xdeadbeef>
     4 failed in 0.12 seconds
