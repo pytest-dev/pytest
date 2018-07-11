@@ -554,7 +554,7 @@ through the special :py:class:`request <FixtureRequest>` object::
     def smtp_connection(request):
         smtp_connection = smtplib.SMTP(request.param, 587, timeout=5)
         yield smtp_connection
-        print ("finalizing %s" % smtp)
+        print("finalizing %s" % smtp_connection)
         smtp_connection.close()
 
 The main change is the declaration of ``params`` with
