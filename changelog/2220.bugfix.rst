@@ -1,3 +1,1 @@
-In case a (direct) parameter of a test overrides some fixture upon which the
-test depends indirectly, do the pruning of the fixture dependency tree. That
-is, recompute the full set of fixtures the test function needs.
+Fix a bug where fixtures overriden by direct parameters (for example parametrization) were being instantiated even if they were not being used by a test.
