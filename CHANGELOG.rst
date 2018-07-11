@@ -8,6 +8,52 @@
 
 .. towncrier release notes start
 
+Pytest 3.6.3 (2018-07-04)
+=========================
+
+Bug Fixes
+---------
+
+- Fix ``ImportWarning`` triggered by explicit relative imports in
+  assertion-rewritten package modules. (`#3061
+  <https://github.com/pytest-dev/pytest/issues/3061>`_)
+
+- Fix error in ``pytest.approx`` when dealing with 0-dimension numpy
+  arrays. (`#3593 <https://github.com/pytest-dev/pytest/issues/3593>`_)
+
+- No longer raise ``ValueError`` when using the ``get_marker`` API. (`#3605
+  <https://github.com/pytest-dev/pytest/issues/3605>`_)
+
+- Fix problem where log messages with non-ascii characters would not
+  appear in the output log file.
+  (`#3630 <https://github.com/pytest-dev/pytest/issues/3630>`_)
+
+- No longer raise ``AttributeError`` when legacy marks can't be stored in
+  functions. (`#3631 <https://github.com/pytest-dev/pytest/issues/3631>`_)
+
+
+Improved Documentation
+----------------------
+
+- The description above the example for ``@pytest.mark.skipif`` now better
+  matches the code. (`#3611
+  <https://github.com/pytest-dev/pytest/issues/3611>`_)
+
+
+Trivial/Internal Changes
+------------------------
+
+- Internal refactoring: removed unused ``CallSpec2tox ._globalid_args``
+  attribute and ``metafunc`` parameter from ``CallSpec2.copy()``. (`#3598
+  <https://github.com/pytest-dev/pytest/issues/3598>`_)
+
+- Silence usage of ``reduce`` warning in Python 2 (`#3609
+  <https://github.com/pytest-dev/pytest/issues/3609>`_)
+
+- Fix usage of ``attr.ib`` deprecated ``convert`` parameter. (`#3653
+  <https://github.com/pytest-dev/pytest/issues/3653>`_)
+
+
 Pytest 3.6.2 (2018-06-20)
 =========================
 
@@ -26,7 +72,7 @@ Bug Fixes
   raises an exception. (`#3569
   <https://github.com/pytest-dev/pytest/issues/3569>`_)
 
-- Fix encoding error with `print` statements in doctests (`#3583
+- Fix encoding error with ``print`` statements in doctests (`#3583
   <https://github.com/pytest-dev/pytest/issues/3583>`_)
 
 
@@ -299,7 +345,7 @@ Features
   ``pytest_runtest_logfinish`` hooks when live logs are enabled. (`#3189
   <https://github.com/pytest-dev/pytest/issues/3189>`_)
 
-- Passing `--log-cli-level` in the command-line now automatically activates
+- Passing ``--log-cli-level`` in the command-line now automatically activates
   live logging. (`#3190 <https://github.com/pytest-dev/pytest/issues/3190>`_)
 
 - Add command line option ``--deselect`` to allow deselection of individual
@@ -651,8 +697,8 @@ Trivial/Internal Changes
 - Code cleanup. (`#3015 <https://github.com/pytest-dev/pytest/issues/3015>`_,
   `#3021 <https://github.com/pytest-dev/pytest/issues/3021>`_)
 
-- Clean up code by replacing imports and references of `_ast` to `ast`. (`#3018
-  <https://github.com/pytest-dev/pytest/issues/3018>`_)
+- Clean up code by replacing imports and references of ``_ast`` to ``ast``.
+  (`#3018 <https://github.com/pytest-dev/pytest/issues/3018>`_)
 
 
 Pytest 3.3.1 (2017-12-05)
@@ -980,7 +1026,7 @@ Pytest 3.2.2 (2017-09-06)
 Bug Fixes
 ---------
 
-- Calling the deprecated `request.getfuncargvalue()` now shows the source of
+- Calling the deprecated ``request.getfuncargvalue()`` now shows the source of
   the call. (`#2681 <https://github.com/pytest-dev/pytest/issues/2681>`_)
 
 - Allow tests declared as ``@staticmethod`` to use fixtures. (`#2699
@@ -1002,10 +1048,10 @@ Improved Documentation
   ``pytest.mark.MARKER_NAME.__call__`` (`#2604
   <https://github.com/pytest-dev/pytest/issues/2604>`_)
 
-- In one of the simple examples, use `pytest_collection_modifyitems()` to skip
+- In one of the simple examples, use ``pytest_collection_modifyitems()`` to skip
   tests based on a command-line option, allowing its sharing while preventing a
-  user error when acessing `pytest.config` before the argument parsing. (`#2653
-  <https://github.com/pytest-dev/pytest/issues/2653>`_)
+  user error when acessing ``pytest.config`` before the argument parsing.
+  (`#2653 <https://github.com/pytest-dev/pytest/issues/2653>`_)
 
 
 Trivial/Internal Changes
@@ -1083,7 +1129,7 @@ Features
   from parent classes or modules. (`#2516 <https://github.com/pytest-
   dev/pytest/issues/2516>`_)
 
-- Collection ignores local virtualenvs by default; `--collect-in-virtualenv`
+- Collection ignores local virtualenvs by default; ``--collect-in-virtualenv``
   overrides this behavior. (`#2518 <https://github.com/pytest-
   dev/pytest/issues/2518>`_)
 

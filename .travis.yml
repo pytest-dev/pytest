@@ -3,7 +3,8 @@ language: python
 stages:
 - linting
 - test
-- deploy
+- name: deploy
+  if: repo = pytest-dev/pytest AND tag IS present
 python:
   - '3.6'
 install:

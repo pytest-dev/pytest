@@ -1,5 +1,0 @@
-If the user pass as a expected value a numpy array created like
-numpy.array(5); it will creates an array with one element without shape,
-when used with approx it will raise an error for the `repr`
-'TypeError: iteration over a 0-d array'. With this PR pytest will iterate
-properly in the numpy array even with 0 dimension.
