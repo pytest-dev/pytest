@@ -8,7 +8,6 @@ import os
 import collections
 import warnings
 from textwrap import dedent
-from itertools import count
 
 
 import py
@@ -887,22 +886,14 @@ class Metafunc(fixtures.FuncargnamesCompatAttr):
         # of all calls
         newcalls = []
         for callspec in self._calls or [CallSpec2(self)]:
-            elements = zip(ids, parameters, count())
-            for a_id, param, param_index in elements:
-                if len(param.values) != len(argnames):
-                    raise ValueError(
-                        'In "parametrize" the number of values ({}) must be '
-                        "equal to the number of names ({})".format(
-                            param.values, argnames
-                        )
-                    )
+            for param_index, (param_id, param_set) in enumerate(zip(ids, parameters)):
                 newcallspec = callspec.copy()
                 newcallspec.setmulti2(
                     arg_values_types,
                     argnames,
-                    param.values,
-                    a_id,
-                    param.marks,
+                    param_set.values,
+                    param_id,
+                    param_set.marks,
                     scopenum,
                     param_index,
                 )
