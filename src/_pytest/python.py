@@ -8,7 +8,6 @@ import os
 import collections
 import warnings
 from textwrap import dedent
-from itertools import count
 
 
 import py
@@ -865,46 +864,54 @@ class Metafunc(fixtures.FuncargnamesCompatAttr):
         """
         from _pytest.fixtures import scope2index
         from _pytest.mark import ParameterSet
-        from py.io import saferepr
 
         argnames, parameters = ParameterSet._for_parametrize(
             argnames, argvalues, self.function, self.config
         )
         del argvalues
-        default_arg_names = set(get_default_arg_names(self.function))
 
         if scope is None:
             scope = _find_parametrized_scope(argnames, self._arg2fixturedefs, indirect)
 
-        scopenum = scope2index(scope, descr="call to {}".format(self.parametrize))
-        valtypes = {}
-        for arg in argnames:
-            if arg not in self.fixturenames:
-                if arg in default_arg_names:
-                    raise ValueError(
-                        "%r already takes an argument %r with a default value"
-                        % (self.function, arg)
-                    )
-                else:
-                    if isinstance(indirect, (tuple, list)):
-                        name = "fixture" if arg in indirect else "argument"
-                    else:
-                        name = "fixture" if indirect else "argument"
-                    raise ValueError("%r uses no %s %r" % (self.function, name, arg))
+        self._validate_if_using_arg_names(argnames, indirect)
 
-        if indirect is True:
-            valtypes = dict.fromkeys(argnames, "params")
-        elif indirect is False:
-            valtypes = dict.fromkeys(argnames, "funcargs")
-        elif isinstance(indirect, (tuple, list)):
-            valtypes = dict.fromkeys(argnames, "funcargs")
-            for arg in indirect:
-                if arg not in argnames:
-                    raise ValueError(
-                        "indirect given to %r: fixture %r doesn't exist"
-                        % (self.function, arg)
-                    )
-                valtypes[arg] = "params"
+        arg_values_types = self._resolve_arg_value_types(argnames, indirect)
+
+        ids = self._resolve_arg_ids(argnames, ids, parameters)
+
+        scopenum = scope2index(scope, descr="call to {}".format(self.parametrize))
+
+        # create the new calls: if we are parametrize() multiple times (by applying the decorator
+        # more than once) then we accumulate those calls generating the cartesian product
+        # of all calls
+        newcalls = []
+        for callspec in self._calls or [CallSpec2(self)]:
+            for param_index, (param_id, param_set) in enumerate(zip(ids, parameters)):
+                newcallspec = callspec.copy()
+                newcallspec.setmulti2(
+                    arg_values_types,
+                    argnames,
+                    param_set.values,
+                    param_id,
+                    param_set.marks,
+                    scopenum,
+                    param_index,
+                )
+                newcalls.append(newcallspec)
+        self._calls = newcalls
+
+    def _resolve_arg_ids(self, argnames, ids, parameters):
+        """Resolves the actual ids for the given argnames, based on the ``ids`` parameter given
+        to ``parametrize``.
+
+        :param List[str] argnames: list of argument names passed to ``parametrize()``.
+        :param ids: the ids parameter of the parametrized call (see docs).
+        :param List[ParameterSet] parameters: the list of parameter values, same size as ``argnames``.
+        :rtype: List[str]
+        :return: the list of ids for each argname given
+        """
+        from py.io import saferepr
+
         idfn = None
         if callable(ids):
             idfn = ids
@@ -921,29 +928,57 @@ class Metafunc(fixtures.FuncargnamesCompatAttr):
                         msg % (saferepr(id_value), type(id_value).__name__)
                     )
         ids = idmaker(argnames, parameters, idfn, ids, self.config)
-        newcalls = []
-        for callspec in self._calls or [CallSpec2(self)]:
-            elements = zip(ids, parameters, count())
-            for a_id, param, param_index in elements:
-                if len(param.values) != len(argnames):
+        return ids
+
+    def _resolve_arg_value_types(self, argnames, indirect):
+        """Resolves if each parametrized argument must be considered a parameter to a fixture or a "funcarg"
+        to the function, based on the ``indirect`` parameter of the parametrized() call.
+
+        :param List[str] argnames: list of argument names passed to ``parametrize()``.
+        :param indirect: same ``indirect`` parameter of ``parametrize()``.
+        :rtype: Dict[str, str]
+            A dict mapping each arg name to either:
+            * "params" if the argname should be the parameter of a fixture of the same name.
+            * "funcargs" if the argname should be a parameter to the parametrized test function.
+        """
+        valtypes = {}
+        if indirect is True:
+            valtypes = dict.fromkeys(argnames, "params")
+        elif indirect is False:
+            valtypes = dict.fromkeys(argnames, "funcargs")
+        elif isinstance(indirect, (tuple, list)):
+            valtypes = dict.fromkeys(argnames, "funcargs")
+            for arg in indirect:
+                if arg not in argnames:
                     raise ValueError(
-                        'In "parametrize" the number of values ({}) must be '
-                        "equal to the number of names ({})".format(
-                            param.values, argnames
-                        )
+                        "indirect given to %r: fixture %r doesn't exist"
+                        % (self.function, arg)
                     )
-                newcallspec = callspec.copy()
-                newcallspec.setmulti2(
-                    valtypes,
-                    argnames,
-                    param.values,
-                    a_id,
-                    param.marks,
-                    scopenum,
-                    param_index,
-                )
-                newcalls.append(newcallspec)
-        self._calls = newcalls
+                valtypes[arg] = "params"
+        return valtypes
+
+    def _validate_if_using_arg_names(self, argnames, indirect):
+        """
+        Check if all argnames are being used, by default values, or directly/indirectly.
+
+        :param List[str] argnames: list of argument names passed to ``parametrize()``.
+        :param indirect: same ``indirect`` parameter of ``parametrize()``.
+        :raise ValueError: if validation fails.
+        """
+        default_arg_names = set(get_default_arg_names(self.function))
+        for arg in argnames:
+            if arg not in self.fixturenames:
+                if arg in default_arg_names:
+                    raise ValueError(
+                        "%r already takes an argument %r with a default value"
+                        % (self.function, arg)
+                    )
+                else:
+                    if isinstance(indirect, (tuple, list)):
+                        name = "fixture" if arg in indirect else "argument"
+                    else:
+                        name = "fixture" if indirect else "argument"
+                    raise ValueError("%r uses no %s %r" % (self.function, name, arg))
 
     def addcall(self, funcargs=None, id=NOTSET, param=NOTSET):
         """ Add a new call to the underlying test function during the collection phase of a test run.
