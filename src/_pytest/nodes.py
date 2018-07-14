@@ -287,6 +287,11 @@ class Node(object):
             else:
                 style = "long"
 
+        if self.config.option.verbose > 1:
+            truncate_locals = False
+        else:
+            truncate_locals = True
+
         try:
             os.getcwd()
             abspath = False
@@ -299,6 +304,7 @@ class Node(object):
             showlocals=self.config.option.showlocals,
             style=style,
             tbfilter=tbfilter,
+            truncate_locals=truncate_locals,
         )
 
     repr_failure = _repr_failure_py
