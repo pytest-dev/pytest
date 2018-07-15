@@ -51,15 +51,15 @@ Here is the algorithm which finds the rootdir from ``args``:
   recognised as paths that exist in the file system. If no such paths are
   found, the common ancestor directory is set to the current working directory.
 
-- look for ``pytest.ini``, ``tox.ini`` and ``setup.cfg`` files in the ancestor
-  directory and upwards.  If one is matched, it becomes the ini-file and its
-  directory becomes the rootdir.
+- look for ``pytest.ini``, ``tox.ini``, ``setup.cfg`` and ``pyproject.toml``
+  files in the ancestor directory and upwards.  If one is matched, it becomes
+  the ini-file and its directory becomes the rootdir.
 
 - if no ini-file was found, look for ``setup.py`` upwards from the common
   ancestor directory to determine the ``rootdir``.
 
-- if no ``setup.py`` was found, look for ``pytest.ini``, ``tox.ini`` and
-  ``setup.cfg`` in each of the specified ``args`` and upwards. If one is
+- if no ``setup.py`` was found, look for ``pytest.ini``, ``tox.ini``, ``setup.cfg``
+  and ``pyproject.toml`` in each of the specified ``args`` and upwards. If one is
   matched, it becomes the ini-file and its directory becomes the rootdir.
 
 - if no ini-file was found, use the already determined common ancestor as root
@@ -77,10 +77,11 @@ directory and also starts determining the rootdir from there.
     possible.
 
 Note that an existing ``pytest.ini`` file will always be considered a match,
-whereas ``tox.ini`` and ``setup.cfg`` will only match if they contain a
-``[pytest]`` or ``[tool:pytest]`` section, respectively. Options from multiple ini-files candidates are never
-merged - the first one wins (``pytest.ini`` always wins, even if it does not
-contain a ``[pytest]`` section).
+whereas ``tox.ini``, ``setup.cfg`` and ``pyproject.toml`` will only match if
+they contain a ``[pytest]``, ``[tool:pytest]`` or ``[tool.pytest]`` section,
+respectively. Options from multiple ini-files candidates are never merged -
+the first one wins (``pytest.ini`` always wins, even if it does not contain
+a ``[pytest]`` section).
 
 The ``config`` object will subsequently carry these attributes:
 
@@ -101,6 +102,7 @@ check for ini-files as follows::
 
     # first look for pytest.ini files
     path/pytest.ini
+    path/pyproject.toml    # must also contain [tool.pytest] section to match
     path/setup.cfg  # must also contain [tool:pytest] section to match
     path/tox.ini    # must also contain [pytest] section to match
     pytest.ini
@@ -128,7 +130,7 @@ progress output, you can write it into a configuration file:
 .. code-block:: ini
 
     # content of pytest.ini
-    # (or tox.ini or setup.cfg)
+    # (or tox.ini or setup.cfg or pyproject.toml)
     [pytest]
     addopts = -ra -q
 

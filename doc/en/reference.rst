@@ -884,9 +884,9 @@ processes can inspect it, see :ref:`pytest current test env` for more informatio
 Configuration Options
 ---------------------
 
-Here is a list of builtin configuration options that may be written in a ``pytest.ini``, ``tox.ini`` or ``setup.cfg``
-file, usually located at the root of your repository. All options must be under a ``[pytest]`` section
-(``[tool:pytest]`` for ``setup.cfg`` files).
+Here is a list of builtin configuration options that may be written in a ``pytest.ini``, ``tox.ini``, ``setup.cfg``
+or ``pyproject.toml`` file, usually located at the root of your repository. All options must be under a ``[pytest]``
+section (``[tool:pytest]`` for ``setup.cfg`` or ``[tool.pytest]`` for ``pyproject.toml`` files).
 
 Configuration file options may be overwritten in the command-line by using ``-o/--override``, which can also be
 passed multiple times. The expected format is ``name=value``. For example::
@@ -928,7 +928,7 @@ passed multiple times. The expected format is ``name=value``. For example::
 
    Sets a directory where search upwards for ``conftest.py`` files stops.
    By default, pytest will stop searching for ``conftest.py`` files upwards
-   from ``pytest.ini``/``tox.ini``/``setup.cfg`` of the project if any,
+   from ``pytest.ini``/``tox.ini``/``setup.cfg``/``pyproject.toml`` of the project if any,
    or up to the file-system root.
 
 

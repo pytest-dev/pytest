@@ -103,8 +103,8 @@ the :confval:`python_files`, :confval:`python_classes` and
 :confval:`python_functions` configuration options.  Example::
 
     # content of pytest.ini
-    # can also be defined in tox.ini or setup.cfg file, although the section
-    # name in setup.cfg files should be "tool:pytest"
+    # can also be defined in tox.ini, setup.cfg or pyproject.toml file, although the section
+    # name in setup.cfg files should be "tool:pytest" or "tool.pytest" in pyproject.toml files
     [pytest]
     python_files=check_*.py
     python_classes=Check
