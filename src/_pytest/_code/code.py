@@ -1,5 +1,6 @@
 from __future__ import absolute_import, division, print_function
 import inspect
+import pprint
 import sys
 import traceback
 from inspect import CO_VARARGS, CO_VARKEYWORDS
@@ -448,6 +449,7 @@ class ExceptionInfo(object):
         abspath=False,
         tbfilter=True,
         funcargs=False,
+        truncate_locals=True,
     ):
         """ return str()able representation of this exception info.
             showlocals: show locals per traceback entry
@@ -472,6 +474,7 @@ class ExceptionInfo(object):
             abspath=abspath,
             tbfilter=tbfilter,
             funcargs=funcargs,
+            truncate_locals=truncate_locals,
         )
         return fmt.repr_excinfo(self)
 
@@ -511,6 +514,7 @@ class FormattedExcinfo(object):
     abspath = attr.ib(default=True)
     tbfilter = attr.ib(default=True)
     funcargs = attr.ib(default=False)
+    truncate_locals = attr.ib(default=True)
     astcache = attr.ib(default=attr.Factory(dict), init=False, repr=False)
 
     def _getindent(self, source):
@@ -593,7 +597,10 @@ class FormattedExcinfo(object):
                     # This formatting could all be handled by the
                     # _repr() function, which is only reprlib.Repr in
                     # disguise, so is very configurable.
-                    str_repr = self._saferepr(value)
+                    if self.truncate_locals:
+                        str_repr = self._saferepr(value)
+                    else:
+                        str_repr = pprint.pformat(value)
                     # if len(str_repr) < 70 or not isinstance(value,
                     #                            (list, tuple, dict)):
                     lines.append("%-10s = %s" % (name, str_repr))

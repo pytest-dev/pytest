@@ -579,6 +579,18 @@ raise ValueError()
         assert reprlocals.lines[2] == "y          = 5"
         assert reprlocals.lines[3] == "z          = 7"
 
+    def test_repr_local_truncated(self):
+        loc = {"l": [i for i in range(10)]}
+        p = FormattedExcinfo(showlocals=True)
+        truncated_reprlocals = p.repr_locals(loc)
+        assert truncated_reprlocals.lines
+        assert truncated_reprlocals.lines[0] == "l          = [0, 1, 2, 3, 4, 5, ...]"
+
+        q = FormattedExcinfo(showlocals=True, truncate_locals=False)
+        full_reprlocals = q.repr_locals(loc)
+        assert full_reprlocals.lines
+        assert full_reprlocals.lines[0] == "l          = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]"
+
     def test_repr_tracebackentry_lines(self, importasmod):
         mod = importasmod(
             """
