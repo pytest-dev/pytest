@@ -47,8 +47,8 @@ else:
 
 
 if _PY3:
-    from collections.abc import MutableMapping as MappingMixin  # noqa
-    from collections.abc import Mapping, Sequence  # noqa
+    from collections.abc import MutableMapping as MappingMixin
+    from collections.abc import Mapping, Sequence
 else:
     # those raise DeprecationWarnings in Python >=3.7
     from collections import MutableMapping as MappingMixin  # noqa

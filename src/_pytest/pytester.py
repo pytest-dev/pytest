@@ -23,11 +23,6 @@ from _pytest.main import Session, EXIT_OK
 from _pytest.assertion.rewrite import AssertionRewritingHook
 from _pytest.compat import Path
 
-PYTEST_FULLPATH = os.path.abspath(pytest.__file__.rstrip("oc")).replace(
-    "$py.class", ".py"
-)
-
-
 IGNORE_PAM = [  # filenames added when obtaining details about the current user
     u"/var/lib/sss/mc/passwd"
 ]
@@ -1077,9 +1072,7 @@ class Testdir(object):
             print("couldn't print to %s because of encoding" % (fp,))
 
     def _getpytestargs(self):
-        # we cannot use `(sys.executable, script)` because on Windows the
-        # script is e.g. `pytest.exe`
-        return (sys.executable, PYTEST_FULLPATH)  # noqa
+        return (sys.executable, "-mpytest")
 
     def runpython(self, script):
         """Run a python script using sys.executable as interpreter.

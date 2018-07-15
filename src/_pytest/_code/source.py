@@ -1,4 +1,4 @@
-from __future__ import absolute_import, division, generators, print_function
+from __future__ import absolute_import, division, print_function
 
 import ast
 from ast import PyCF_ONLY_AST as _AST_FLAG
@@ -152,12 +152,7 @@ class Source(object):
         return "\n".join(self.lines)
 
     def compile(
-        self,
-        filename=None,
-        mode="exec",
-        flag=generators.compiler_flag,
-        dont_inherit=0,
-        _genframe=None,
+        self, filename=None, mode="exec", flag=0, dont_inherit=0, _genframe=None
     ):
         """ return compiled code object. if filename is None
             invent an artificial filename which displays
@@ -201,9 +196,7 @@ class Source(object):
 #
 
 
-def compile_(
-    source, filename=None, mode="exec", flags=generators.compiler_flag, dont_inherit=0
-):
+def compile_(source, filename=None, mode="exec", flags=0, dont_inherit=0):
     """ compile the given source to a raw code object,
         and maintain an internal cache which allows later
         retrieval of the source code for the code object
