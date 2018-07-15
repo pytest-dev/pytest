@@ -1,0 +1,1 @@
+Replace broken type annotations with type comments.

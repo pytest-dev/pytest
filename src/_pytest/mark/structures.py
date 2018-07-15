@@ -111,7 +111,19 @@ class ParameterSet(namedtuple("ParameterSet", "values, marks, id")):
         ]
         del argvalues
 
-        if not parameters:
+        if parameters:
+            # check all parameter sets have the correct number of values
+            for param in parameters:
+                if len(param.values) != len(argnames):
+                    raise ValueError(
+                        'In "parametrize" the number of values ({}) must be '
+                        "equal to the number of names ({})".format(
+                            param.values, argnames
+                        )
+                    )
+        else:
+            # empty parameter set (likely computed at runtime): create a single
+            # parameter set with NOSET values, with the "empty parameter set" mark applied to it
             mark = get_empty_parameterset_mark(config, argnames, func)
             parameters.append(
                 ParameterSet(values=(NOTSET,) * len(argnames), marks=[mark], id=None)
@@ -124,9 +136,9 @@ class Mark(object):
     #: name of the mark
     name = attr.ib(type=str)
     #: positional arguments of the mark decorator
-    args = attr.ib(type="List[object]")
+    args = attr.ib()  # type: List[object]
     #: keyword arguments of the mark decorator
-    kwargs = attr.ib(type="Dict[str, object]")
+    kwargs = attr.ib()  # type: Dict[str, object]
 
     def combined_with(self, other):
         """

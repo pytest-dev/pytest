@@ -71,7 +71,7 @@ def main(args=None, plugins=None):
         return 4
 
 
-class cmdline(object):  # NOQA compatibility namespace
+class cmdline(object):  # compatibility namespace
     main = staticmethod(main)
 
 

@@ -18,19 +18,11 @@ taking a lot of time to make a new one.
 
    Ensure your are in a clean work tree.
 
-#. Install development dependencies in a virtual environment with::
+#. Using ``tox``, generate docs, changelog, announcements::
 
-    $ pip3 install -U -r tasks/requirements.txt
+    $ tox -e release -- <VERSION>
 
-#. Generate docs, changelog, announcements, and a **local** tag::
-
-    $ invoke generate.pre-release <VERSION>
-
-#. Execute pre-commit on all files to ensure the docs are conformant and commit your results::
-
-    $ pre-commit run --all-files
-    $ git commit -am "Fix files with pre-commit"
-
+   This will generate a commit with all the changes ready for pushing.
 
 #. Open a PR for this branch targeting ``master``.
 
