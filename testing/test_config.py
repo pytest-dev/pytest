@@ -11,7 +11,12 @@ from _pytest.main import EXIT_NOTESTSCOLLECTED
 
 class TestParseIni(object):
     @pytest.mark.parametrize(
-        "section, filename", [("pytest", "pytest.ini"), ("tool:pytest", "setup.cfg")]
+        "section, filename",
+        [
+            ("pytest", "pytest.ini"),
+            ("tool:pytest", "setup.cfg"),
+            ("tool.pytest", "pyproject.toml"),
+        ],
     )
     def test_getcfg_and_config(self, testdir, tmpdir, section, filename):
         sub = tmpdir.mkdir("sub")

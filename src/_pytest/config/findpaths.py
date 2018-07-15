@@ -22,7 +22,7 @@ def getcfg(args, warnfunc=None):
     """
     from _pytest.deprecated import CFG_PYTEST_SECTION
 
-    inibasenames = ["pytest.ini", "tox.ini", "setup.cfg"]
+    inibasenames = ["pytest.ini", "tox.ini", "setup.cfg", "pyproject.toml"]
     args = [x for x in args if not str(x).startswith("-")]
     if not args:
         args = [py.path.local()]
@@ -44,6 +44,11 @@ def getcfg(args, warnfunc=None):
                         and "tool:pytest" in iniconfig.sections
                     ):
                         return base, p, iniconfig["tool:pytest"]
+                    if (
+                        inibasename == "pyproject.toml"
+                        and "tool.pytest" in iniconfig.sections
+                    ):
+                        return base, p, iniconfig["tool.pytest"]
                     elif inibasename == "pytest.ini":
                         # allowed to be empty
                         return base, p, {}
