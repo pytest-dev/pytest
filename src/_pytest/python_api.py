@@ -211,7 +211,10 @@ class ApproxScalar(ApproxBase):
         the pre-specified tolerance.
         """
         if _is_numpy_array(actual):
-            return ApproxNumpy(actual, self.abs, self.rel, self.nan_ok) == self.expected
+            return (
+                ApproxNumpy(actual, rel=self.rel, abs=self.abs, nan_ok=self.nan_ok)
+                == self.expected
+            )
 
         # Short-circuit exact equality.
         if actual == self.expected:
