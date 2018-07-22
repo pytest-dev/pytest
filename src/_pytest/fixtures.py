@@ -789,21 +789,24 @@ def call_fixture_func(fixturefunc, request, kwargs):
     if yieldctx:
         it = fixturefunc(**kwargs)
         res = next(it)
-
-        def teardown():
-            try:
-                next(it)
-            except StopIteration:
-                pass
-            else:
-                fail_fixturefunc(
-                    fixturefunc, "yield_fixture function has more than one 'yield'"
-                )
-
-        request.addfinalizer(teardown)
+        finalizer = functools.partial(_teardown_yield_fixture, fixturefunc, it)
+        request.addfinalizer(finalizer)
     else:
         res = fixturefunc(**kwargs)
     return res
+
+
+def _teardown_yield_fixture(fixturefunc, it):
+    """Executes the teardown of a fixture function by advancing the iterator after the
+    yield and ensure the iteration ends (if not it means there is more than one yield in the function"""
+    try:
+        next(it)
+    except StopIteration:
+        pass
+    else:
+        fail_fixturefunc(
+            fixturefunc, "yield_fixture function has more than one 'yield'"
+        )
 
 
 class FixtureDef(object):
