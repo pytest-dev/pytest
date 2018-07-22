@@ -139,7 +139,7 @@ line options while the environment is in use::
 
 Here's how the command-line is built in the presence of ``addopts`` or the environment variable::
 
-    <pytest.ini:addopts> $PYTEST_ADDOTPS <extra command-line arguments>
+    <pytest.ini:addopts> $PYTEST_ADDOPTS <extra command-line arguments>
 
 So if the user executes in the command-line::
 
