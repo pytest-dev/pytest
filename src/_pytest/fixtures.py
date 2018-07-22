@@ -1027,13 +1027,7 @@ def yield_fixture(scope="function", params=None, autouse=False, ids=None, name=N
     .. deprecated:: 3.0
         Use :py:func:`pytest.fixture` directly instead.
     """
-    if callable(scope) and params is None and not autouse:
-        # direct decoration
-        return FixtureFunctionMarker("function", params, autouse, ids=ids, name=name)(
-            scope
-        )
-    else:
-        return FixtureFunctionMarker(scope, params, autouse, ids=ids, name=name)
+    return fixture(scope=scope, params=params, autouse=autouse, ids=ids, name=name)
 
 
 defaultfuncargprefixmarker = fixture()
