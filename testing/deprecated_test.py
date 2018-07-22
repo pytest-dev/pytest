@@ -1,4 +1,6 @@
 from __future__ import absolute_import, division, print_function
+
+
 import pytest
 
 
@@ -263,3 +265,15 @@ def test_pytest_plugins_in_non_top_level_conftest_deprecated_no_false_positives(
         str(PYTEST_PLUGINS_FROM_NON_TOP_LEVEL_CONFTEST).splitlines()[0]
         not in res.stderr.str()
     )
+
+
+# @pytest.mark.skipif(six.PY2, reason="We issue the warning in Python 3 only")
+def test_call_fixture_function_deprecated():
+    """Check if a warning is raised if a fixture function is called directly (#3661)"""
+
+    @pytest.fixture
+    def fix():
+        return 1
+
+    with pytest.deprecated_call():
+        assert fix() == 1

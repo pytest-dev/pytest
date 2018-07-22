@@ -3,35 +3,10 @@ import sys
 import py
 import pytest
 
-from _pytest.tmpdir import tmpdir
 
-
-def test_funcarg(testdir):
-    testdir.makepyfile(
-        """
-            def pytest_generate_tests(metafunc):
-                metafunc.addcall(id='a')
-                metafunc.addcall(id='b')
-            def test_func(tmpdir): pass
-    """
-    )
-    from _pytest.tmpdir import TempdirFactory
-
-    reprec = testdir.inline_run()
-    calls = reprec.getcalls("pytest_runtest_setup")
-    item = calls[0].item
-    config = item.config
-    tmpdirhandler = TempdirFactory(config)
-    item._initrequest()
-    p = tmpdir(item._request, tmpdirhandler)
-    assert p.check()
-    bn = p.basename.strip("0123456789")
-    assert bn.endswith("test_func_a_")
-    item.name = "qwe/\\abc"
-    p = tmpdir(item._request, tmpdirhandler)
-    assert p.check()
-    bn = p.basename.strip("0123456789")
-    assert bn == "qwe__abc"
+def test_tmpdir_fixture(testdir):
+    results = testdir.run_example("tmpdir/tmpdir_fixture.py")
+    results.stdout.fnmatch_lines("*1 passed*")
 
 
 def test_ensuretemp(recwarn):
