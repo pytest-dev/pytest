@@ -342,6 +342,20 @@ class TestApprox(object):
         assert actual == approx(list(expected), rel=5e-7, abs=0)
         assert actual != approx(list(expected), rel=5e-8, abs=0)
 
+    def test_numpy_tolerance_args(self):
+        """
+        quick check that numpy rel/abs args are handled correctly
+        for comparison against an np.array
+        """
+        np = pytest.importorskip("numpy")
+        expected = 100
+        actual = 99
+        assert actual != pytest.approx(expected, abs=0.1, rel=0)
+        assert np.array(actual) != pytest.approx(expected, abs=0.1, rel=0)
+
+        assert actual == pytest.approx(expected, abs=0, rel=0.01)
+        assert np.array(actual) == pytest.approx(expected, abs=0, rel=0.1)
+
     def test_numpy_array_wrong_shape(self):
         np = pytest.importorskip("numpy")
 
