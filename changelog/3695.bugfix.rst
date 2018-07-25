@@ -1,1 +1,1 @@
-Fix ApproxNumpy initialisation argument mixup. abs rel tolerances were previously flipped
+Fix ``ApproxNumpy`` initialisation argument mixup, ``abs`` and ``rel`` tolerances were flipped causing strange comparsion results.
