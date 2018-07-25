@@ -346,15 +346,22 @@ class TestApprox(object):
         """
         quick check that numpy rel/abs args are handled correctly
         for comparison against an np.array
+        - 3.6.4 would approx both actual / expected if np.array
+         regardless of which value was passed to approx()
+         Means tolerance could be calculated against bad test return
         """
         np = pytest.importorskip("numpy")
         expected = 100
         actual = 99
         assert actual != pytest.approx(expected, abs=0.1, rel=0)
         assert np.array(actual) != pytest.approx(expected, abs=0.1, rel=0)
+        assert actual != pytest.approx(np.array(expected), abs=0.1, rel=0)
+        assert np.array(actual) != pytest.approx(np.array(expected), abs=0.1, rel=0)
 
         assert actual == pytest.approx(expected, abs=0, rel=0.01)
-        assert np.array(actual) == pytest.approx(expected, abs=0, rel=0.1)
+        assert np.array(actual) == pytest.approx(expected, abs=0, rel=0.01)
+        assert actual == pytest.approx(np.array(expected), abs=0, rel=0.01)
+        assert np.array(actual) == pytest.approx(np.array(expected), abs=0, rel=0.01)
 
     def test_numpy_array_wrong_shape(self):
         np = pytest.importorskip("numpy")
