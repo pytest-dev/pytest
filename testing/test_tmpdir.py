@@ -5,7 +5,8 @@ import pytest
 
 
 def test_tmpdir_fixture(testdir):
-    results = testdir.run_example("tmpdir/tmpdir_fixture.py")
+    p = testdir.copy_example("tmpdir/tmpdir_fixture.py")
+    results = testdir.runpytest(p)
     results.stdout.fnmatch_lines("*1 passed*")
 
 

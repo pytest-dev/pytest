@@ -669,11 +669,6 @@ class Testdir(object):
         else:
             raise LookupError("example is not found as a file or directory")
 
-    def run_example(self, name=None, *pytest_args):
-        """Runs the given example and returns the results of the run"""
-        p = self.copy_example(name)
-        return self.runpytest(p, *pytest_args)
-
     Session = Session
 
     def getnode(self, config, arg):
