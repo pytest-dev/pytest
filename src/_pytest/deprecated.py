@@ -22,6 +22,12 @@ FUNCARG_PREFIX = (
     "Please remove the prefix and use the @pytest.fixture decorator instead."
 )
 
+FIXTURE_FUNCTION_CALL = (
+    "Fixture {name} called directly. Fixtures are not meant to be called directly, "
+    "are created automatically when test functions request them as parameters. "
+    "See https://docs.pytest.org/en/latest/fixture.html for more information."
+)
+
 CFG_PYTEST_SECTION = (
     "[pytest] section in {filename} files is deprecated, use [tool:pytest] instead."
 )

@@ -12,7 +12,6 @@ from _pytest.assertion import truncate
 PY3 = sys.version_info >= (3, 0)
 
 
-@pytest.fixture
 def mock_config():
     class Config(object):
         verbose = False
@@ -768,15 +767,15 @@ def test_rewritten(testdir):
     assert testdir.runpytest().ret == 0
 
 
-def test_reprcompare_notin(mock_config):
-    detail = plugin.pytest_assertrepr_compare(
-        mock_config, "not in", "foo", "aaafoobbb"
-    )[1:]
+def test_reprcompare_notin():
+    config = mock_config()
+    detail = plugin.pytest_assertrepr_compare(config, "not in", "foo", "aaafoobbb")[1:]
     assert detail == ["'foo' is contained here:", "  aaafoobbb", "?    +++"]
 
 
-def test_reprcompare_whitespaces(mock_config):
-    detail = plugin.pytest_assertrepr_compare(mock_config, "==", "\r\n", "\n")
+def test_reprcompare_whitespaces():
+    config = mock_config()
+    detail = plugin.pytest_assertrepr_compare(config, "==", "\r\n", "\n")
     assert detail == [
         r"'\r\n' == '\n'",
         r"Strings contain only whitespace, escaping them using repr()",

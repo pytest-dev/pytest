@@ -6,6 +6,8 @@ import os
 import sys
 import warnings
 from collections import OrderedDict, deque, defaultdict
+
+import six
 from more_itertools import flatten
 
 import attr
@@ -29,6 +31,7 @@ from _pytest.compat import (
     safe_getattr,
     FuncargnamesCompatAttr,
 )
+from _pytest.deprecated import FIXTURE_FUNCTION_CALL, RemovedInPytest4Warning
 from _pytest.outcomes import fail, TEST_OUTCOME
 
 FIXTURE_MSG = 'fixtures cannot have "pytest_funcarg__" prefix and be decorated with @pytest.fixture:\n{}'
@@ -798,7 +801,7 @@ def call_fixture_func(fixturefunc, request, kwargs):
 
 def _teardown_yield_fixture(fixturefunc, it):
     """Executes the teardown of a fixture function by advancing the iterator after the
-    yield and ensure the iteration ends (if not it means there is more than one yield in the function"""
+    yield and ensure the iteration ends (if not it means there is more than one yield in the function)"""
     try:
         next(it)
     except StopIteration:
@@ -928,6 +931,13 @@ def pytest_fixture_setup(fixturedef, request):
         request._check_scope(argname, request.scope, fixdef.scope)
         kwargs[argname] = result
 
+    # if function has been defined with @pytest.fixture, we want to
+    # pass the special __being_called_by_pytest parameter so we don't raise a warning
+    # this is an ugly hack, see #3720 for an opportunity to improve this
+    defined_using_fixture_decorator = hasattr(fixturedef.func, "_pytestfixturefunction")
+    if defined_using_fixture_decorator:
+        kwargs["__being_called_by_pytest"] = True
+
     fixturefunc = resolve_fixture_function(fixturedef, request)
     my_cache_key = request.param_index
     try:
@@ -947,6 +957,44 @@ def _ensure_immutable_ids(ids):
     return tuple(ids)
 
 
+def wrap_function_to_warning_if_called_directly(function, fixture_marker):
+    """Wrap the given fixture function so we can issue warnings about it being called directly, instead of
+    used as an argument in a test function.
+
+    The warning is emitted only in Python 3, because I didn't find a reliable way to make the wrapper function
+    keep the original signature, and we probably will drop Python 2 in Pytest 4 anyway.
+    """
+    is_yield_function = is_generator(function)
+    msg = FIXTURE_FUNCTION_CALL.format(name=fixture_marker.name or function.__name__)
+    warning = RemovedInPytest4Warning(msg)
+
+    if is_yield_function:
+
+        @functools.wraps(function)
+        def result(*args, **kwargs):
+            __tracebackhide__ = True
+            __being_called_by_pytest = kwargs.pop("__being_called_by_pytest", False)
+            if not __being_called_by_pytest:
+                warnings.warn(warning, stacklevel=3)
+            for x in function(*args, **kwargs):
+                yield x
+
+    else:
+
+        @functools.wraps(function)
+        def result(*args, **kwargs):
+            __tracebackhide__ = True
+            __being_called_by_pytest = kwargs.pop("__being_called_by_pytest", False)
+            if not __being_called_by_pytest:
+                warnings.warn(warning, stacklevel=3)
+            return function(*args, **kwargs)
+
+    if six.PY2:
+        result.__wrapped__ = function
+
+    return result
+
+
 @attr.s(frozen=True)
 class FixtureFunctionMarker(object):
     scope = attr.ib()
@@ -963,6 +1011,8 @@ class FixtureFunctionMarker(object):
             raise ValueError(
                 "fixture is being applied more than once to the same function"
             )
+
+        function = wrap_function_to_warning_if_called_directly(function, self)
 
         function._pytestfixturefunction = self
         return function

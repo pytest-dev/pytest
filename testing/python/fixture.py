@@ -1456,6 +1456,7 @@ class TestFixtureManagerParseFactories(object):
         testdir.makepyfile(
             """
             import pytest
+            import six
 
             @pytest.fixture
             def hello(request):
@@ -1468,9 +1469,11 @@ class TestFixtureManagerParseFactories(object):
                     faclist = fm.getfixturedefs("hello", item.nodeid)
                     print (faclist)
                     assert len(faclist) == 3
-                    assert faclist[0].func(item._request) == "conftest"
-                    assert faclist[1].func(item._request) == "module"
-                    assert faclist[2].func(item._request) == "class"
+
+                    kwargs = {'__being_called_by_pytest': True}
+                    assert faclist[0].func(item._request, **kwargs) == "conftest"
+                    assert faclist[1].func(item._request, **kwargs) == "module"
+                    assert faclist[2].func(item._request, **kwargs) == "class"
         """
         )
         reprec = testdir.inline_run("-s")

@@ -10,9 +10,7 @@ from _pytest.main import EXIT_NOTESTSCOLLECTED, EXIT_USAGEERROR
 
 @pytest.fixture(scope="module", params=["global", "inpackage"])
 def basedir(request, tmpdir_factory):
-    from _pytest.tmpdir import tmpdir
-
-    tmpdir = tmpdir(request, tmpdir_factory)
+    tmpdir = tmpdir_factory.mktemp("basedir", numbered=True)
     tmpdir.ensure("adir/conftest.py").write("a=1 ; Directory = 3")
     tmpdir.ensure("adir/b/conftest.py").write("b=2 ; a = 1.5")
     if request.param == "inpackage":
