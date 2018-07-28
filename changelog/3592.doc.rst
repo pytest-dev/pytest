@@ -1,1 +1,0 @@
-Use ``smtp_connection`` instead of ``smtp`` in fixtures documentation to avoid possible confusion.
