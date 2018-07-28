@@ -35,7 +35,7 @@ Trivial/Internal Changes
 - Pin ``pluggy`` to ``<0.8``. (`#3727 <https://github.com/pytest-dev/pytest/issues/3727>`_)
 
 
-Pytest 3.6.3 (2018-07-04)
+pytest 3.6.3 (2018-07-04)
 =========================
 
 Bug Fixes
@@ -81,7 +81,7 @@ Trivial/Internal Changes
   <https://github.com/pytest-dev/pytest/issues/3653>`_)
 
 
-Pytest 3.6.2 (2018-06-20)
+pytest 3.6.2 (2018-06-20)
 =========================
 
 Bug Fixes
@@ -127,7 +127,7 @@ Trivial/Internal Changes
   <https://github.com/pytest-dev/pytest/issues/3567>`_)
 
 
-Pytest 3.6.1 (2018-06-05)
+pytest 3.6.1 (2018-06-05)
 =========================
 
 Bug Fixes
@@ -171,7 +171,7 @@ Trivial/Internal Changes
   <https://github.com/pytest-dev/pytest/issues/3529>`_)
 
 
-Pytest 3.6.0 (2018-05-23)
+pytest 3.6.0 (2018-05-23)
 =========================
 
 Features
@@ -257,7 +257,7 @@ Trivial/Internal Changes
   3.7 or newer. (`#3497 <https://github.com/pytest-dev/pytest/issues/3497>`_)
 
 
-Pytest 3.5.1 (2018-04-23)
+pytest 3.5.1 (2018-04-23)
 =========================
 
 
@@ -309,7 +309,7 @@ Trivial/Internal Changes
   <https://github.com/pytest-dev/pytest/issues/3398>`_)
 
 
-Pytest 3.5.0 (2018-03-21)
+pytest 3.5.0 (2018-03-21)
 =========================
 
 Deprecations and Removals
@@ -461,7 +461,7 @@ Trivial/Internal Changes
   <https://github.com/pytest-dev/pytest/issues/3308>`_)
 
 
-Pytest 3.4.2 (2018-03-04)
+pytest 3.4.2 (2018-03-04)
 =========================
 
 Bug Fixes
@@ -498,7 +498,7 @@ Trivial/Internal Changes
   <https://github.com/pytest-dev/pytest/issues/3259>`_)
 
 
-Pytest 3.4.1 (2018-02-20)
+pytest 3.4.1 (2018-02-20)
 =========================
 
 Bug Fixes
@@ -559,7 +559,7 @@ Trivial/Internal Changes
   <https://github.com/pytest-dev/pytest/issues/985>`_)
 
 
-Pytest 3.4.0 (2018-01-30)
+pytest 3.4.0 (2018-01-30)
 =========================
 
 Deprecations and Removals
@@ -691,7 +691,7 @@ Trivial/Internal Changes
   <https://github.com/pytest-dev/pytest/issues/3129>`_)
 
 
-Pytest 3.3.2 (2017-12-25)
+pytest 3.3.2 (2017-12-25)
 =========================
 
 Bug Fixes
@@ -728,7 +728,7 @@ Trivial/Internal Changes
   (`#3018 <https://github.com/pytest-dev/pytest/issues/3018>`_)
 
 
-Pytest 3.3.1 (2017-12-05)
+pytest 3.3.1 (2017-12-05)
 =========================
 
 Bug Fixes
@@ -770,13 +770,13 @@ Trivial/Internal Changes
   <https://github.com/pytest-dev/pytest/issues/2949>`_)
 
 
-Pytest 3.3.0 (2017-11-23)
+pytest 3.3.0 (2017-11-23)
 =========================
 
 Deprecations and Removals
 -------------------------
 
-- Pytest no longer supports Python **2.6** and **3.3**. Those Python versions
+- pytest no longer supports Python **2.6** and **3.3**. Those Python versions
   are EOL for some time now and incur maintenance and compatibility costs on
   the pytest core team, and following up with the rest of the community we
   decided that they will no longer be supported starting on this version. Users
@@ -830,7 +830,7 @@ Features
 - Match ``warns`` signature to ``raises`` by adding ``match`` keyword. (`#2708
   <https://github.com/pytest-dev/pytest/issues/2708>`_)
 
-- Pytest now captures and displays output from the standard ``logging`` module.
+- pytest now captures and displays output from the standard ``logging`` module.
   The user can control the logging level to be captured by specifying options
   in ``pytest.ini``, the command line and also during individual tests using
   markers. Also, a ``caplog`` fixture is available that enables users to test
@@ -895,7 +895,7 @@ Bug Fixes
   avoids a number of potential problems. (`#2751
   <https://github.com/pytest-dev/pytest/issues/2751>`_)
 
-- Pytest no longer complains about warnings with unicode messages being
+- pytest no longer complains about warnings with unicode messages being
   non-ascii compatible even for ascii-compatible messages. As a result of this,
   warnings with unicode messages are converted first to an ascii representation
   for safety. (`#2809 <https://github.com/pytest-dev/pytest/issues/2809>`_)
@@ -947,7 +947,7 @@ Trivial/Internal Changes
   <https://github.com/pytest-dev/pytest/issues/2922>`_)
 
 
-Pytest 3.2.5 (2017-11-15)
+pytest 3.2.5 (2017-11-15)
 =========================
 
 Bug Fixes
@@ -958,7 +958,7 @@ Bug Fixes
   <https://github.com/pytest-dev/pytest/issues/2926>`_)
 
 
-Pytest 3.2.4 (2017-11-13)
+pytest 3.2.4 (2017-11-13)
 =========================
 
 Bug Fixes
@@ -1007,7 +1007,7 @@ Improved Documentation
   <https://github.com/pytest-dev/pytest/issues/911>`_)
 
 
-Pytest 3.2.3 (2017-10-03)
+pytest 3.2.3 (2017-10-03)
 =========================
 
 Bug Fixes
@@ -1047,7 +1047,7 @@ Trivial/Internal Changes
   (`#2765 <https://github.com/pytest-dev/pytest/issues/2765>`_)
 
 
-Pytest 3.2.2 (2017-09-06)
+pytest 3.2.2 (2017-09-06)
 =========================
 
 Bug Fixes
@@ -1094,7 +1094,7 @@ Trivial/Internal Changes
   <https://github.com/pytest-dev/pytest/issues/2739>`_)
 
 
-Pytest 3.2.1 (2017-08-08)
+pytest 3.2.1 (2017-08-08)
 =========================
 
 Bug Fixes
@@ -1124,7 +1124,7 @@ Improved Documentation
   <https://github.com/pytest-dev/pytest/issues/2626>`_)
 
 
-Pytest 3.2.0 (2017-07-30)
+pytest 3.2.0 (2017-07-30)
 =========================
 
 Deprecations and Removals
@@ -1290,7 +1290,7 @@ Trivial/Internal Changes
   <https://github.com/pytest-dev/pytest/issues/2620>`_)
 
 
-Pytest 3.1.3 (2017-07-03)
+pytest 3.1.3 (2017-07-03)
 =========================
 
 Bug Fixes
@@ -1336,7 +1336,7 @@ Trivial/Internal Changes
   (`#2499 <https://github.com/pytest-dev/pytest/issues/2499>`_)
 
 
-Pytest 3.1.2 (2017-06-08)
+pytest 3.1.2 (2017-06-08)
 =========================
 
 Bug Fixes
@@ -1368,7 +1368,7 @@ Improved Documentation
   and improve overall flow of the ``skipping`` docs. (#810)
 
 
-Pytest 3.1.1 (2017-05-30)
+pytest 3.1.1 (2017-05-30)
 =========================
 
 Bug Fixes
