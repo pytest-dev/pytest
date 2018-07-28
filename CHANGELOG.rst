@@ -8,6 +8,33 @@
 
 .. towncrier release notes start
 
+pytest 3.6.4 (2018-07-28)
+=========================
+
+Bug Fixes
+---------
+
+- Invoke pytest using ``-mpytest`` so ``sys.path`` does not get polluted by packages installed in ``site-packages``. (`#742 <https://github.com/pytest-dev/pytest/issues/742>`_)
+
+
+Improved Documentation
+----------------------
+
+- Use ``smtp_connection`` instead of ``smtp`` in fixtures documentation to avoid possible confusion. (`#3592 <https://github.com/pytest-dev/pytest/issues/3592>`_)
+
+
+Trivial/Internal Changes
+------------------------
+
+- Remove obsolete ``__future__`` imports. (`#2319 <https://github.com/pytest-dev/pytest/issues/2319>`_)
+
+- Add CITATION to provide information on how to formally cite pytest. (`#3402 <https://github.com/pytest-dev/pytest/issues/3402>`_)
+
+- Replace broken type annotations with type comments. (`#3635 <https://github.com/pytest-dev/pytest/issues/3635>`_)
+
+- Pin ``pluggy`` to ``<0.8``. (`#3727 <https://github.com/pytest-dev/pytest/issues/3727>`_)
+
+
 Pytest 3.6.3 (2018-07-04)
 =========================
 

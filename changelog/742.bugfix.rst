@@ -1,1 +1,0 @@
-Invoke pytest using ``-mpytest`` so ``sys.path`` does not get polluted by packages installed in ``site-packages``.

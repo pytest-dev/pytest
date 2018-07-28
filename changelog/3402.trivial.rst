@@ -1,1 +1,0 @@
-Add CITATION to provide information on how to formally cite pytest.
