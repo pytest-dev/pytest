@@ -14,6 +14,7 @@ environment:
   - TOXENV: "py34"
   - TOXENV: "py35"
   - TOXENV: "py36"
+  - TOXENV: "py37"
   - TOXENV: "pypy"
   - TOXENV: "py27-pexpect"
   - TOXENV: "py27-xdist"
