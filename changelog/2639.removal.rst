@@ -1,0 +1,3 @@
+``pytest_namespace`` has been deprecated.
+
+Plugins who need this feature are suggested to import ``pytest`` and set attributes explicitly during ``pytest_configure``.
