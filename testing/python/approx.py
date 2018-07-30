@@ -390,6 +390,20 @@ class TestApprox(object):
             assert op(np.array(a), approx(x, nan_ok=True))
             assert op(a, approx(np.array(x), nan_ok=True))
 
+    def test_numpy_expecting_inf(self):
+        np = pytest.importorskip("numpy")
+        examples = [
+            (eq, inf, inf),
+            (eq, -inf, -inf),
+            (ne, inf, -inf),
+            (ne, 0.0, inf),
+            (ne, nan, inf),
+        ]
+        for op, a, x in examples:
+            assert op(np.array(a), approx(x))
+            assert op(a, approx(np.array(x)))
+            assert op(np.array(a), approx(np.array(x)))
+
     def test_numpy_array_wrong_shape(self):
         np = pytest.importorskip("numpy")
 
