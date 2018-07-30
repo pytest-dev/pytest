@@ -1,3 +1,4 @@
 ``pytest_namespace`` has been deprecated.
 
-Plugins who need this feature are suggested to import ``pytest`` and set attributes explicitly during ``pytest_configure``.
+See the documentation for ``pytest_namespace`` hook for suggestions on how to deal
+with this in plugins which use this functionality.
