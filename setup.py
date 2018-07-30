@@ -69,7 +69,7 @@ def main():
     # if _PYTEST_SETUP_SKIP_PLUGGY_DEP is set, skip installing pluggy;
     # used by tox.ini to test with pluggy master
     if "_PYTEST_SETUP_SKIP_PLUGGY_DEP" not in os.environ:
-        install_requires.append("pluggy>=0.5,<0.7")
+        install_requires.append("pluggy>=0.5,<0.8")
     environment_marker_support_level = get_environment_marker_support_level()
     if environment_marker_support_level >= 2:
         install_requires.append('funcsigs;python_version<"3.0"')

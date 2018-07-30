@@ -552,7 +552,7 @@ Parametrizing fixtures
 
 Fixture functions can be parametrized in which case they will be called
 multiple times, each time executing the set of dependent tests, i. e. the
-tests that depend on this fixture.  Test functions do usually not need
+tests that depend on this fixture.  Test functions usually do not need
 to be aware of their re-running.  Fixture parametrization helps to
 write exhaustive functional tests for components which themselves can be
 configured in multiple ways.
@@ -779,10 +779,10 @@ Here we declare an ``app`` fixture which receives the previously defined
 
     ========================= 2 passed in 0.12 seconds =========================
 
-Due to the parametrization of ``smtp_connection`` the test will run twice with two
+Due to the parametrization of ``smtp_connection``, the test will run twice with two
 different ``App`` instances and respective smtp servers.  There is no
 need for the ``app`` fixture to be aware of the ``smtp_connection``
-parametrization as pytest will fully analyse the fixture dependency graph.
+parametrization because pytest will fully analyse the fixture dependency graph.
 
 Note, that the ``app`` fixture has a scope of ``module`` and uses a
 module-scoped ``smtp_connection`` fixture.  The example would still work if
@@ -805,7 +805,7 @@ first execute with one instance and then finalizers are called
 before the next fixture instance is created.  Among other things,
 this eases testing of applications which create and use global state.
 
-The following example uses two parametrized fixture, one of which is
+The following example uses two parametrized fixtures, one of which is
 scoped on a per-module basis, and all the functions perform ``print`` calls
 to show the setup/teardown flow::
 

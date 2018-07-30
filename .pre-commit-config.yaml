@@ -25,6 +25,10 @@ repos:
     rev: v1.2.0
     hooks:
     - id: pyupgrade
+-   repo: https://github.com/pre-commit/pygrep-hooks
+    rev: v1.0.0
+    hooks:
+    -   id: rst-backticks
 -   repo: local
     hooks:
     -   id: rst
@@ -34,8 +38,3 @@ repos:
         language: python
         additional_dependencies: [pygments, restructuredtext_lint]
         python_version: python3.6
-    -   id: rst-backticks
-        name: rst ``code`` is two backticks
-        entry: ' `[^`]+[^_]`([^_]|$)'
-        language: pygrep
-        types: [rst]
