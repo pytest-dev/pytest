@@ -344,24 +344,51 @@ class TestApprox(object):
 
     def test_numpy_tolerance_args(self):
         """
-        quick check that numpy rel/abs args are handled correctly
+        Check that numpy rel/abs args are handled correctly
         for comparison against an np.array
-        - 3.6.4 would approx both actual / expected if np.array
-         regardless of which value was passed to approx()
-         Means tolerance could be calculated against bad test return
+        Check both sides of the operator, hopefully it doesn't impact things.
+        Test all permutations of where the approx and np.array() can show up
         """
         np = pytest.importorskip("numpy")
-        expected = 100
-        actual = 99
-        assert actual != pytest.approx(expected, abs=0.1, rel=0)
-        assert np.array(actual) != pytest.approx(expected, abs=0.1, rel=0)
-        assert actual != pytest.approx(np.array(expected), abs=0.1, rel=0)
-        assert np.array(actual) != pytest.approx(np.array(expected), abs=0.1, rel=0)
+        expected = 100.
+        actual = 99.
+        abs_diff = expected - actual
+        rel_diff = (expected - actual) / expected
 
-        assert actual == pytest.approx(expected, abs=0, rel=0.01)
-        assert np.array(actual) == pytest.approx(expected, abs=0, rel=0.01)
-        assert actual == pytest.approx(np.array(expected), abs=0, rel=0.01)
-        assert np.array(actual) == pytest.approx(np.array(expected), abs=0, rel=0.01)
+        tests = [
+            (eq, abs_diff, 0),
+            (eq, 0, rel_diff),
+            (ne, 0, rel_diff / 2.),  # rel diff fail
+            (ne, abs_diff / 2., 0),  # abs diff fail
+        ]
+
+        for op, _abs, _rel in tests:
+            assert op(np.array(actual), approx(expected, abs=_abs, rel=_rel))  # a, b
+            assert op(approx(expected, abs=_abs, rel=_rel), np.array(actual))  # b, a
+
+            assert op(actual, approx(np.array(expected), abs=_abs, rel=_rel))  # a, b
+            assert op(approx(np.array(expected), abs=_abs, rel=_rel), actual)  # b, a
+
+            assert op(np.array(actual), approx(np.array(expected), abs=_abs, rel=_rel))
+            assert op(approx(np.array(expected), abs=_abs, rel=_rel), np.array(actual))
+
+    def test_numpy_expecting_nan(self):
+        np = pytest.importorskip("numpy")
+        examples = [
+            (eq, nan, nan),
+            (eq, -nan, -nan),
+            (eq, nan, -nan),
+            (ne, 0.0, nan),
+            (ne, inf, nan),
+        ]
+        for op, a, x in examples:
+            # Nothing is equal to NaN by default.
+            assert np.array(a) != approx(x)
+            assert a != approx(np.array(x))
+
+            # If ``nan_ok=True``, then NaN is equal to NaN.
+            assert op(np.array(a), approx(x, nan_ok=True))
+            assert op(a, approx(np.array(x), nan_ok=True))
 
     def test_numpy_array_wrong_shape(self):
         np = pytest.importorskip("numpy")
