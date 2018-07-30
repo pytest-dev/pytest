@@ -66,6 +66,7 @@ class TestPytestPluginInteractions(object):
         result = testdir.runpython(p)
         assert result.ret == 0
 
+    @pytest.mark.filterwarnings("ignore:pytest_namespace is deprecated")
     def test_do_ext_namespace(self, testdir):
         testdir.makeconftest(
             """

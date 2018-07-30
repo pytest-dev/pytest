@@ -42,8 +42,15 @@ def pytest_namespace():
     .. warning::
         This hook has been **deprecated** and will be removed in pytest 4.0.
 
-        Plugins who need this feature are suggested
-        to import ``pytest`` and set attributes explicitly during ``pytest_configure``.
+        Plugins whose users depend on the current namespace functionality should prepare to migrate to a
+        namespace they actually own.
+
+        To support the migration its suggested to trigger ``DeprecationWarnings`` for objects they put into the
+        pytest namespace.
+
+        An stopgap measure to avoid the warning is to monkeypatch the ``pytest`` module, but just as the
+        ``pytest_namespace`` hook this should be seen as a temporary measure to be removed in future versions after
+        an appropriate transition period.
     """
 
 
