@@ -41,7 +41,7 @@ jobs:
     - env: TOXENV=py36-freeze
       python: '3.6'
     - env: TOXENV=py37
-      python: 3.7
+      python: '3.7'
       sudo: required
       dist: xenial
 
