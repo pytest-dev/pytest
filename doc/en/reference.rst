@@ -787,7 +787,7 @@ TestReport
 _Result
 ~~~~~~~
 
-.. autoclass:: pluggy._Result
+.. autoclass:: pluggy.callers._Result
     :members:
 
 Special Variables
