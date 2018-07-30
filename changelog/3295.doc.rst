@@ -1,0 +1,1 @@
+Correct the usage documentation of ``--last-failed-no-failures`` by adding the missing ``--last-failed`` argument in the presented examples, for they are missleading and lead to think that the missing argument is not needed.
