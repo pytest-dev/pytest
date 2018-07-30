@@ -1,3 +1,0 @@
-Calling a fixture function directly, as opposed to request them in a test function, now issues a ``RemovedInPytest4Warning``. It will be changed into an error in pytest ``4.0``.
-
-This is a great source of confusion to new users, which will often call the fixture functions and request them from test functions interchangeably, which breaks the fixture resolution model.

@@ -27,7 +27,7 @@ Install ``pytest``
 2. Check that you installed the correct version::
 
     $ pytest --version
-    This is pytest version 3.x.y, imported from $PYTHON_PREFIX/lib/python3.5/site-packages/pytest.py
+    This is pytest version 3.x.y, imported from $PYTHON_PREFIX/lib/python3.6/site-packages/pytest.py
 
 .. _`simpletest`:
 
