@@ -1,4 +1,0 @@
-``pytest_namespace`` has been deprecated.
-
-See the documentation for ``pytest_namespace`` hook for suggestions on how to deal
-with this in plugins which use this functionality.

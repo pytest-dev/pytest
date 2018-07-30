@@ -1,1 +1,0 @@
-``Node.add_marker`` now supports an ``append=True/False`` parameter to determine whether the mark comes last (default) or first.

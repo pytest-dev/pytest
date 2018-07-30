@@ -41,7 +41,9 @@ jobs:
     - env: TOXENV=py36-freeze
       python: '3.6'
     - env: TOXENV=py37
-      python: 'nightly'
+      python: '3.7'
+      sudo: required
+      dist: xenial
 
     - stage: deploy
       python: '3.6'

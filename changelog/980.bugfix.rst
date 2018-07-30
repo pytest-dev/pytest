@@ -1,1 +1,0 @@
-Fix truncated locals output in verbose mode.
