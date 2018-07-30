@@ -71,3 +71,7 @@ PYTEST_PLUGINS_FROM_NON_TOP_LEVEL_CONFTEST = RemovedInPytest4Warning(
     "because it affects the entire directory tree in a non-explicit way.\n"
     "Please move it to the top level conftest file instead."
 )
+
+PYTEST_NAMESPACE = RemovedInPytest4Warning(
+    "pytest_namespace is deprecated and will be removed soon"
+)
