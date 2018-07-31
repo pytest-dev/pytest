@@ -59,17 +59,19 @@ class TestApprox(object):
             ),
         )
 
-    def test_repr_0d_array(self, plus_minus):
+    def test_repr_nd_array(self, plus_minus):
+        # Make sure that arrays of all different dimensions are repr'd 
+        # correctly.
         np = pytest.importorskip("numpy")
-        np_array = np.array(5.)
-        assert approx(np_array) == 5.0
-        string_expected = "approx([5.0 {} 5.0e-06])".format(plus_minus)
-
-        assert repr(approx(np_array)) == string_expected
-
-        np_array = np.array([5.])
-        assert approx(np_array) == 5.0
-        assert repr(approx(np_array)) == string_expected
+        examples = [
+                (np.array(5.), 'approx(5.0 {pm} 5.0e-06)'),
+                (np.array([5.]), 'approx([5.0 {pm} 5.0e-06])'),
+                (np.array([[5.]]), 'approx([[5.0 {pm} 5.0e-06]])'),
+                (np.array([[5., 6.]]), 'approx([[5.0 {pm} 5.0e-06, 6.0 {pm} 6.0e-06]])'),
+                (np.array([[5.], [6.]]), 'approx([[5.0 {pm} 5.0e-06], [6.0 {pm} 6.0e-06]])'),
+        ]
+        for np_array, repr_string in examples:
+            assert repr(approx(np_array)) == repr_string.format(pm=plus_minus)
 
     def test_operator_overloading(self):
         assert 1 == approx(1, rel=1e-6, abs=1e-12)
