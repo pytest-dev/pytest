@@ -31,8 +31,13 @@ def _cmp_raises_type_error(self, other):
         "Comparison operators other than == and != not supported by approx objects"
     )
 
+
 def _non_numeric_type_error(value):
-    return TypeError("cannot make approximate comparisons to non-numeric values, e.g. {}".format(value))
+    return TypeError(
+        "cannot make approximate comparisons to non-numeric values, e.g. {}".format(
+            value
+        )
+    )
 
 
 # builtin pytest.approx helper
@@ -85,10 +90,10 @@ class ApproxBase(object):
         """
         Raise a TypeError if the expected value is not a valid type.
         """
-        # This is only a concern if the expected value is a sequence.  In every 
-        # other case, the approx() function ensures that the expected value has 
-        # a numeric type.  For this reason, the default is to do nothing.  The 
-        # classes that deal with sequences should reimplement this method to 
+        # This is only a concern if the expected value is a sequence.  In every
+        # other case, the approx() function ensures that the expected value has
+        # a numeric type.  For this reason, the default is to do nothing.  The
+        # classes that deal with sequences should reimplement this method to
         # raise if there are any non-numeric elements in the sequence.
         pass
 
@@ -107,10 +112,8 @@ class ApproxNumpy(ApproxBase):
             else:
                 return f(x)
 
-        list_scalars = recursive_map(
-                self._approx_scalar,
-                self.expected.tolist())
-                
+        list_scalars = recursive_map(self._approx_scalar, self.expected.tolist())
+
         return "approx({!r})".format(list_scalars)
 
     if sys.version_info[0] == 2:
@@ -149,7 +152,7 @@ class ApproxNumpy(ApproxBase):
 
 class ApproxMapping(ApproxBase):
     """
-    Perform approximate comparisons where the expected value is a mapping with 
+    Perform approximate comparisons where the expected value is a mapping with
     numeric values (the keys can be anything).
     """
 
@@ -171,14 +174,18 @@ class ApproxMapping(ApproxBase):
     def _check_type(self):
         for x in self.expected.values():
             if isinstance(x, type(self.expected)):
-                raise TypeError("pytest.approx() does not support nested dictionaries, e.g. {}".format(self.expected))
+                raise TypeError(
+                    "pytest.approx() does not support nested dictionaries, e.g. {}".format(
+                        self.expected
+                    )
+                )
             elif not isinstance(x, Number):
                 raise _non_numeric_type_error(self.expected)
 
 
 class ApproxSequence(ApproxBase):
     """
-    Perform approximate comparisons where the expected value is a sequence of 
+    Perform approximate comparisons where the expected value is a sequence of
     numbers.
     """
 
@@ -201,7 +208,11 @@ class ApproxSequence(ApproxBase):
     def _check_type(self):
         for x in self.expected:
             if isinstance(x, type(self.expected)):
-                raise TypeError("pytest.approx() does not support nested data structures, e.g. {}".format(self.expected))
+                raise TypeError(
+                    "pytest.approx() does not support nested data structures, e.g. {}".format(
+                        self.expected
+                    )
+                )
             elif not isinstance(x, Number):
                 raise _non_numeric_type_error(self.expected)
 
@@ -325,6 +336,7 @@ class ApproxDecimal(ApproxScalar):
     """
     Perform approximate comparisons where the expected value is a decimal.
     """
+
     DEFAULT_ABSOLUTE_TOLERANCE = Decimal("1e-12")
     DEFAULT_RELATIVE_TOLERANCE = Decimal("1e-6")
 
@@ -485,17 +497,17 @@ def approx(expected, rel=None, abs=None, nan_ok=False):
     # Delegate the comparison to a class that knows how to deal with the type
     # of the expected value (e.g. int, float, list, dict, numpy.array, etc).
     #
-    # The primary responsibility of these classes is to implement ``__eq__()`` 
-    # and ``__repr__()``.  The former is used to actually check if some 
-    # "actual" value is equivalent to the given expected value within the 
-    # allowed tolerance.  The latter is used to show the user the expected 
+    # The primary responsibility of these classes is to implement ``__eq__()``
+    # and ``__repr__()``.  The former is used to actually check if some
+    # "actual" value is equivalent to the given expected value within the
+    # allowed tolerance.  The latter is used to show the user the expected
     # value and tolerance, in the case that a test failed.
     #
-    # The actual logic for making approximate comparisons can be found in 
-    # ApproxScalar, which is used to compare individual numbers.  All of the 
-    # other Approx classes eventually delegate to this class.  The ApproxBase 
-    # class provides some convenient methods and overloads, but isn't really 
-    # essential. 
+    # The actual logic for making approximate comparisons can be found in
+    # ApproxScalar, which is used to compare individual numbers.  All of the
+    # other Approx classes eventually delegate to this class.  The ApproxBase
+    # class provides some convenient methods and overloads, but isn't really
+    # essential.
 
     if isinstance(expected, Decimal):
         cls = ApproxDecimal

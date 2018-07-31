@@ -60,15 +60,18 @@ class TestApprox(object):
         )
 
     def test_repr_nd_array(self, plus_minus):
-        # Make sure that arrays of all different dimensions are repr'd 
+        # Make sure that arrays of all different dimensions are repr'd
         # correctly.
         np = pytest.importorskip("numpy")
         examples = [
-                (np.array(5.), 'approx(5.0 {pm} 5.0e-06)'),
-                (np.array([5.]), 'approx([5.0 {pm} 5.0e-06])'),
-                (np.array([[5.]]), 'approx([[5.0 {pm} 5.0e-06]])'),
-                (np.array([[5., 6.]]), 'approx([[5.0 {pm} 5.0e-06, 6.0 {pm} 6.0e-06]])'),
-                (np.array([[5.], [6.]]), 'approx([[5.0 {pm} 5.0e-06], [6.0 {pm} 6.0e-06]])'),
+            (np.array(5.), "approx(5.0 {pm} 5.0e-06)"),
+            (np.array([5.]), "approx([5.0 {pm} 5.0e-06])"),
+            (np.array([[5.]]), "approx([[5.0 {pm} 5.0e-06]])"),
+            (np.array([[5., 6.]]), "approx([[5.0 {pm} 5.0e-06, 6.0 {pm} 6.0e-06]])"),
+            (
+                np.array([[5.], [6.]]),
+                "approx([[5.0 {pm} 5.0e-06], [6.0 {pm} 6.0e-06]])",
+            ),
         ]
         for np_array, repr_string in examples:
             assert repr(approx(np_array)) == repr_string.format(pm=plus_minus)
@@ -442,7 +445,7 @@ class TestApprox(object):
         )
 
     @pytest.mark.parametrize(
-            'x', [None, 'string', ['string'], [[1]], {'key': 'string'}, {'key': {'key': 1}}]
+        "x", [None, "string", ["string"], [[1]], {"key": "string"}, {"key": {"key": 1}}]
     )
     def test_expected_value_type_error(self, x):
         with pytest.raises(TypeError):
