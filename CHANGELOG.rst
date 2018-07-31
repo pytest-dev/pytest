@@ -54,6 +54,9 @@ Bug Fixes
 - `#3695 <https://github.com/pytest-dev/pytest/issues/3695>`_: Fix ``ApproxNumpy`` initialisation argument mixup, ``abs`` and ``rel`` tolerances were flipped causing strange comparsion results.
   Add tests to check ``abs`` and ``rel`` tolerances for ``np.array`` and test for expecting ``nan`` with ``np.array()``
 
+- `#3712  <https://github.com/pytest-dev/pytest/issues/3712>`_: Correctly represent the dimensions of an numpy array when calling ``repr()`` on ``approx()``.
+
+- `#3473  <https://github.com/pytest-dev/pytest/issues/3473>`_: Raise immediately if ``approx()`` is given an expected value of a type it doesn't understand (e.g. strings, nested dicts, etc.)
 
 - `#980 <https://github.com/pytest-dev/pytest/issues/980>`_: Fix truncated locals output in verbose mode.
 
