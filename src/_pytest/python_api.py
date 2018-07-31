@@ -1,5 +1,7 @@
 import math
 import sys
+from numbers import Number
+from decimal import Decimal
 
 import py
 from six.moves import zip, filterfalse
@@ -29,6 +31,9 @@ def _cmp_raises_type_error(self, other):
         "Comparison operators other than == and != not supported by approx objects"
     )
 
+def _non_numeric_type_error(value):
+    return TypeError("cannot make approximate comparisons to non-numeric values, e.g. {}".format(value))
+
 
 # builtin pytest.approx helper
 
@@ -39,7 +44,7 @@ class ApproxBase(object):
     or sequences of numbers.
     """
 
-    # Tell numpy to use our `__eq__` operator instead of its
+    # Tell numpy to use our `__eq__` operator instead of its.
     __array_ufunc__ = None
     __array_priority__ = 100
 
@@ -48,6 +53,7 @@ class ApproxBase(object):
         self.abs = abs
         self.rel = rel
         self.nan_ok = nan_ok
+        self._check_type()
 
     def __repr__(self):
         raise NotImplementedError
@@ -74,6 +80,17 @@ class ApproxBase(object):
         implement the `__eq__` method.
         """
         raise NotImplementedError
+
+    def _check_type(self):
+        """
+        Raise a TypeError if the expected value is not a valid type.
+        """
+        # This is only a concern if the expected value is a sequence.  In every 
+        # other case, the approx() function ensures that the expected value has 
+        # a numeric type.  For this reason, the default is to do nothing.  The 
+        # classes that deal with sequences should reimplement this method to 
+        # raise if there are any non-numeric elements in the sequence.
+        pass
 
 
 class ApproxNumpy(ApproxBase):
@@ -151,6 +168,13 @@ class ApproxMapping(ApproxBase):
         for k in self.expected.keys():
             yield actual[k], self.expected[k]
 
+    def _check_type(self):
+        for x in self.expected.values():
+            if isinstance(x, type(self.expected)):
+                raise TypeError("pytest.approx() does not support nested dictionaries, e.g. {}".format(self.expected))
+            elif not isinstance(x, Number):
+                raise _non_numeric_type_error(self.expected)
+
 
 class ApproxSequence(ApproxBase):
     """
@@ -173,6 +197,13 @@ class ApproxSequence(ApproxBase):
 
     def _yield_comparisons(self, actual):
         return zip(actual, self.expected)
+
+    def _check_type(self):
+        for x in self.expected:
+            if isinstance(x, type(self.expected)):
+                raise TypeError("pytest.approx() does not support nested data structures, e.g. {}".format(self.expected))
+            elif not isinstance(x, Number):
+                raise _non_numeric_type_error(self.expected)
 
 
 class ApproxScalar(ApproxBase):
@@ -294,8 +325,6 @@ class ApproxDecimal(ApproxScalar):
     """
     Perform approximate comparisons where the expected value is a decimal.
     """
-    from decimal import Decimal
-
     DEFAULT_ABSOLUTE_TOLERANCE = Decimal("1e-12")
     DEFAULT_RELATIVE_TOLERANCE = Decimal("1e-6")
 
@@ -453,32 +482,33 @@ def approx(expected, rel=None, abs=None, nan_ok=False):
        __ https://docs.python.org/3/reference/datamodel.html#object.__ge__
     """
 
-    from decimal import Decimal
-
     # Delegate the comparison to a class that knows how to deal with the type
     # of the expected value (e.g. int, float, list, dict, numpy.array, etc).
     #
-    # This architecture is really driven by the need to support numpy arrays.
-    # The only way to override `==` for arrays without requiring that approx be
-    # the left operand is to inherit the approx object from `numpy.ndarray`.
-    # But that can't be a general solution, because it requires (1) numpy to be
-    # installed and (2) the expected value to be a numpy array.  So the general
-    # solution is to delegate each type of expected value to a different class.
+    # The primary responsibility of these classes is to implement ``__eq__()`` 
+    # and ``__repr__()``.  The former is used to actually check if some 
+    # "actual" value is equivalent to the given expected value within the 
+    # allowed tolerance.  The latter is used to show the user the expected 
+    # value and tolerance, in the case that a test failed.
     #
-    # This has the advantage that it made it easy to support mapping types
-    # (i.e. dict).  The old code accepted mapping types, but would only compare
-    # their keys, which is probably not what most people would expect.
+    # The actual logic for making approximate comparisons can be found in 
+    # ApproxScalar, which is used to compare individual numbers.  All of the 
+    # other Approx classes eventually delegate to this class.  The ApproxBase 
+    # class provides some convenient methods and overloads, but isn't really 
+    # essential. 
 
-    if _is_numpy_array(expected):
-        cls = ApproxNumpy
+    if isinstance(expected, Decimal):
+        cls = ApproxDecimal
+    elif isinstance(expected, Number):
+        cls = ApproxScalar
     elif isinstance(expected, Mapping):
         cls = ApproxMapping
     elif isinstance(expected, Sequence) and not isinstance(expected, STRING_TYPES):
         cls = ApproxSequence
-    elif isinstance(expected, Decimal):
-        cls = ApproxDecimal
+    elif _is_numpy_array(expected):
+        cls = ApproxNumpy
     else:
-        cls = ApproxScalar
+        raise _non_numeric_type_error(expected)
 
     return cls(expected, rel, abs, nan_ok)
 

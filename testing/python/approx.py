@@ -442,6 +442,13 @@ class TestApprox(object):
         )
 
     @pytest.mark.parametrize(
+            'x', [None, 'string', ['string'], [[1]], {'key': 'string'}, {'key': {'key': 1}}]
+    )
+    def test_expected_value_type_error(self, x):
+        with pytest.raises(TypeError):
+            approx(x)
+
+    @pytest.mark.parametrize(
         "op",
         [
             pytest.param(operator.le, id="<="),
