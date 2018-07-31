@@ -78,7 +78,7 @@ class ApproxBase(object):
 
 class ApproxNumpy(ApproxBase):
     """
-    Perform approximate comparisons for numpy arrays.
+    Perform approximate comparisons where the expected value is numpy array.
     """
 
     def __repr__(self):
@@ -132,8 +132,8 @@ class ApproxNumpy(ApproxBase):
 
 class ApproxMapping(ApproxBase):
     """
-    Perform approximate comparisons for mappings where the values are numbers
-    (the keys can be anything).
+    Perform approximate comparisons where the expected value is a mapping with 
+    numeric values (the keys can be anything).
     """
 
     def __repr__(self):
@@ -154,7 +154,8 @@ class ApproxMapping(ApproxBase):
 
 class ApproxSequence(ApproxBase):
     """
-    Perform approximate comparisons for sequences of numbers.
+    Perform approximate comparisons where the expected value is a sequence of 
+    numbers.
     """
 
     def __repr__(self):
@@ -176,7 +177,7 @@ class ApproxSequence(ApproxBase):
 
 class ApproxScalar(ApproxBase):
     """
-    Perform approximate comparisons for single numbers only.
+    Perform approximate comparisons where the expected value is a single number.
     """
 
     DEFAULT_ABSOLUTE_TOLERANCE = 1e-12
@@ -290,6 +291,9 @@ class ApproxScalar(ApproxBase):
 
 
 class ApproxDecimal(ApproxScalar):
+    """
+    Perform approximate comparisons where the expected value is a decimal.
+    """
     from decimal import Decimal
 
     DEFAULT_ABSOLUTE_TOLERANCE = Decimal("1e-12")
