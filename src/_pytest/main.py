@@ -482,6 +482,8 @@ class Session(nodes.FSCollector):
             self.trace.root.indent -= 1
 
     def _collect(self, arg):
+        from _pytest.python import Package
+
         names = self._parsearg(arg)
         argpath = names.pop(0)
         paths = []
@@ -503,7 +505,7 @@ class Session(nodes.FSCollector):
                             root = self._node_cache[pkginit]
                         else:
                             col = root._collectfile(pkginit)
-                            if col:
+                            if col and isinstance(col, Package):
                                 root = col[0]
                                 self._node_cache[root.fspath] = root
 
