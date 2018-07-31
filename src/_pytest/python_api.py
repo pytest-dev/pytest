@@ -104,8 +104,6 @@ class ApproxNumpy(ApproxBase):
     """
 
     def __repr__(self):
-        import numpy as np
-
         def recursive_map(f, x):
             if isinstance(x, list):
                 return list(recursive_map(f, xi) for xi in x)
