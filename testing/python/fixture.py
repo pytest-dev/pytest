@@ -1619,6 +1619,11 @@ class TestFixtureManagerParseFactories(object):
         reprec = testdir.inline_run()
         reprec.assertoutcome(passed=2)
 
+    def test_collect_custom_items(self, testdir):
+        testdir.copy_example("fixtures/custom_item")
+        result = testdir.runpytest("foo")
+        result.stdout.fnmatch_lines("*passed*")
+
 
 class TestAutouseDiscovery(object):
     @pytest.fixture
