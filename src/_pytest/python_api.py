@@ -34,7 +34,7 @@ def _cmp_raises_type_error(self, other):
 
 def _non_numeric_type_error(value):
     return TypeError(
-        "cannot make approximate comparisons to non-numeric values, e.g. {}".format(
+        "cannot make approximate comparisons to non-numeric values, e.g. {!r}".format(
             value
         )
     )
@@ -506,6 +506,8 @@ def approx(expected, rel=None, abs=None, nan_ok=False):
     # other Approx classes eventually delegate to this class.  The ApproxBase
     # class provides some convenient methods and overloads, but isn't really
     # essential.
+
+    __tracebackhide__ = True
 
     if isinstance(expected, Decimal):
         cls = ApproxDecimal
