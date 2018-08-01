@@ -34,9 +34,9 @@ def _cmp_raises_type_error(self, other):
 
 
 def _non_numeric_type_error(value, at):
-    at_str = "at {}".format(at) if at else ""
+    at_str = " at {}".format(at) if at else ""
     return TypeError(
-        "cannot make approximate comparisons to non-numeric values: {!r} ".format(
+        "cannot make approximate comparisons to non-numeric values: {!r} {}".format(
             value, at_str
         )
     )
