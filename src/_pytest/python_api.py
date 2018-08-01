@@ -173,7 +173,7 @@ class ApproxMapping(ApproxBase):
         for x in self.expected.values():
             if isinstance(x, type(self.expected)):
                 raise TypeError(
-                    "pytest.approx() does not support nested dictionaries, e.g. {}".format(
+                    "pytest.approx() does not support nested dictionaries, e.g. {!r}".format(
                         self.expected
                     )
                 )
@@ -207,7 +207,7 @@ class ApproxSequence(ApproxBase):
         for x in self.expected:
             if isinstance(x, type(self.expected)):
                 raise TypeError(
-                    "pytest.approx() does not support nested data structures, e.g. {}".format(
+                    "pytest.approx() does not support nested data structures, e.g. {!r}".format(
                         self.expected
                     )
                 )
