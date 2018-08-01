@@ -211,7 +211,9 @@ class ApproxScalar(ApproxBase):
         the pre-specified tolerance.
         """
         if _is_numpy_array(actual):
-            return all(self == a for a in actual.flat)
+            # Call ``__eq__()`` manually to prevent infinite-recursion with
+            # numpy<1.13.  See #3748.
+            return all(self.__eq__(a) for a in actual.flat)
 
         # Short-circuit exact equality.
         if actual == self.expected:
