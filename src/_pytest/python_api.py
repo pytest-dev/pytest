@@ -531,17 +531,11 @@ def _is_numpy_array(obj):
     Return true if the given object is a numpy array.  Make a special effort to
     avoid importing numpy unless it's really necessary.
     """
-    import inspect
+    import sys
 
-    for cls in inspect.getmro(type(obj)):
-        if cls.__module__ == "numpy":
-            try:
-                import numpy as np
-
-                return isinstance(obj, np.ndarray)
-            except ImportError:
-                pass
-
+    np = sys.modules.get("numpy")
+    if np is not None:
+        return isinstance(obj, np.ndarray)
     return False
 
 
