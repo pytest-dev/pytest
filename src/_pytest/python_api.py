@@ -101,20 +101,20 @@ class ApproxBase(object):
         pass
 
 
+def recursive_map(f, x):
+    if isinstance(x, list):
+        return list(recursive_map(f, xi) for xi in x)
+    else:
+        return f(x)
+
+
 class ApproxNumpy(ApproxBase):
     """
     Perform approximate comparisons where the expected value is numpy array.
     """
 
     def __repr__(self):
-        def recursive_map(f, x):
-            if isinstance(x, list):
-                return list(recursive_map(f, xi) for xi in x)
-            else:
-                return f(x)
-
         list_scalars = recursive_map(self._approx_scalar, self.expected.tolist())
-
         return "approx({!r})".format(list_scalars)
 
     if sys.version_info[0] == 2:
