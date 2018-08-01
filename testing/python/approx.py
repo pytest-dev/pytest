@@ -444,7 +444,15 @@ class TestApprox(object):
         )
 
     @pytest.mark.parametrize(
-        "x", [None, "string", ["string"], [[1]], {"key": "string"}, {"key": {"key": 1}}]
+        "x",
+        [
+            pytest.param(None),
+            pytest.param("string"),
+            pytest.param(["string"], id="nested-str"),
+            pytest.param([[1]], id="nested-list"),
+            pytest.param({"key": "string"}, id="dict-with-string"),
+            pytest.param({"key": {"key": 1}}, id="nested-dict"),
+        ],
     )
     def test_expected_value_type_error(self, x):
         with pytest.raises(TypeError):
