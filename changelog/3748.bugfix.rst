@@ -1,0 +1,1 @@
+Fix infinite recursion in ``pytest.approx`` with arrays in ``numpy<1.13``.
