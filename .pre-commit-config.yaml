@@ -38,3 +38,8 @@ repos:
         language: python
         additional_dependencies: [pygments, restructuredtext_lint]
         python_version: python3.6
+    -   id: changelogs-rst
+        name: changelog files must end in .rst
+        entry: ./scripts/fail
+        language: script
+        files: 'changelog/.*(?<!\.rst)$'
