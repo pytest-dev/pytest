@@ -132,4 +132,7 @@ def test_stop_on_collection_errors(broken_testdir):
     result = broken_testdir.runpytest('-v', '--strict', '--stepwise', 'working_testfile.py', 'broken_testfile.py')
 
     stdout = result.stdout.str()
-    assert 'Error when collecting test' in stdout
+    if pytest.__version__ < '3.0.0':
+        assert 'Error when collecting test' in stdout
+    else:
+        assert 'errors during collection' in stdout
