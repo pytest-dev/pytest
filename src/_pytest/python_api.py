@@ -101,9 +101,9 @@ class ApproxBase(object):
         pass
 
 
-def recursive_map(f, x):
+def _recursive_list_map(f, x):
     if isinstance(x, list):
-        return list(recursive_map(f, xi) for xi in x)
+        return list(_recursive_list_map(f, xi) for xi in x)
     else:
         return f(x)
 
@@ -114,7 +114,7 @@ class ApproxNumpy(ApproxBase):
     """
 
     def __repr__(self):
-        list_scalars = recursive_map(self._approx_scalar, self.expected.tolist())
+        list_scalars = _recursive_list_map(self._approx_scalar, self.expected.tolist())
         return "approx({!r})".format(list_scalars)
 
     if sys.version_info[0] == 2:
