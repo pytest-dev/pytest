@@ -1,4 +1,5 @@
 import math
+import pprint
 import sys
 from numbers import Number
 from decimal import Decimal
@@ -32,10 +33,11 @@ def _cmp_raises_type_error(self, other):
     )
 
 
-def _non_numeric_type_error(value):
+def _non_numeric_type_error(value, at):
+    at_str = "at {}".format(at) if at else ""
     return TypeError(
-        "cannot make approximate comparisons to non-numeric values, e.g. {!r}".format(
-            value
+        "cannot make approximate comparisons to non-numeric values: {!r} ".format(
+            value, at_str
         )
     )
 
@@ -54,6 +56,7 @@ class ApproxBase(object):
     __array_priority__ = 100
 
     def __init__(self, expected, rel=None, abs=None, nan_ok=False):
+        __tracebackhide__ = True
         self.expected = expected
         self.abs = abs
         self.rel = rel
@@ -170,15 +173,13 @@ class ApproxMapping(ApproxBase):
             yield actual[k], self.expected[k]
 
     def _check_type(self):
-        for x in self.expected.values():
-            if isinstance(x, type(self.expected)):
-                raise TypeError(
-                    "pytest.approx() does not support nested dictionaries, e.g. {!r}".format(
-                        self.expected
-                    )
-                )
-            elif not isinstance(x, Number):
-                raise _non_numeric_type_error(self.expected)
+        __tracebackhide__ = True
+        for key, value in self.expected.items():
+            if isinstance(value, type(self.expected)):
+                msg = "pytest.approx() does not support nested dictionaries: key={!r} value={!r}\n  full mapping={}"
+                raise TypeError(msg.format(key, value, pprint.pformat(self.expected)))
+            elif not isinstance(value, Number):
+                raise _non_numeric_type_error(self.expected, at="key={!r}".format(key))
 
 
 class ApproxSequence(ApproxBase):
@@ -204,15 +205,15 @@ class ApproxSequence(ApproxBase):
         return zip(actual, self.expected)
 
     def _check_type(self):
-        for x in self.expected:
+        __tracebackhide__ = True
+        for index, x in enumerate(self.expected):
             if isinstance(x, type(self.expected)):
-                raise TypeError(
-                    "pytest.approx() does not support nested data structures, e.g. {!r}".format(
-                        self.expected
-                    )
-                )
+                msg = "pytest.approx() does not support nested data structures: {!r} at index {}\n  full sequence: {}"
+                raise TypeError(msg.format(x, index, pprint.pformat(self.expected)))
             elif not isinstance(x, Number):
-                raise _non_numeric_type_error(self.expected)
+                raise _non_numeric_type_error(
+                    self.expected, at="index {}".format(index)
+                )
 
 
 class ApproxScalar(ApproxBase):
@@ -520,7 +521,7 @@ def approx(expected, rel=None, abs=None, nan_ok=False):
     elif _is_numpy_array(expected):
         cls = ApproxNumpy
     else:
-        raise _non_numeric_type_error(expected)
+        raise _non_numeric_type_error(expected, at=None)
 
     return cls(expected, rel, abs, nan_ok)
 
