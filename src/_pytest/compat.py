@@ -249,6 +249,21 @@ def get_real_func(obj):
     return obj
 
 
+def get_real_method(obj, holder):
+    """
+    Attempts to obtain the real function object that might be wrapping ``obj``, while at the same time
+    returning a bound method to ``holder`` if the original object was a bound method.
+    """
+    try:
+        is_method = hasattr(obj, "__func__")
+        obj = get_real_func(obj)
+    except Exception:
+        return obj
+    if is_method and hasattr(obj, "__get__") and callable(obj.__get__):
+        obj = obj.__get__(holder)
+    return obj
+
+
 def getfslineno(obj):
     # xxx let decorators etc specify a sane ordering
     obj = get_real_func(obj)

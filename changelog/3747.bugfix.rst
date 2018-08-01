@@ -1,0 +1,1 @@
+Fix compatibility problem with plugins and the the warning code issued by fixture functions when they are called directly.
