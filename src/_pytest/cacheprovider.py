@@ -312,8 +312,15 @@ def cache(request):
 
 def pytest_report_header(config):
     if config.option.verbose:
-        relpath = config.cache._cachedir.relative_to(config.rootdir)
-        return "cachedir: {}".format(relpath)
+        cachedir = config.cache._cachedir
+        # TODO: evaluate generating upward relative paths
+        # starting with .., ../.. if sensible
+
+        try:
+            displaypath = cachedir.relative_to(config.rootdir)
+        except ValueError:
+            displaypath = cachedir
+        return "cachedir: {}".format(displaypath)
 
 
 def cacheshow(config, session):

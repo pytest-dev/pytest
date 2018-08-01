@@ -150,6 +150,32 @@ def test_cache_reportheader(testdir):
     result.stdout.fnmatch_lines(["cachedir: .pytest_cache"])
 
 
+def test_cache_reportheader_external_abspath(testdir, tmpdir_factory):
+    external_cache = tmpdir_factory.mktemp(
+        "test_cache_reportheader_external_abspath_abs"
+    )
+
+    testdir.makepyfile(
+        """
+        def test_hello():
+            pass
+    """
+    )
+    testdir.makeini(
+        """
+    [pytest]
+    cache_dir = {abscache}
+    """.format(
+            abscache=external_cache
+        )
+    )
+
+    result = testdir.runpytest("-v")
+    result.stdout.fnmatch_lines(
+        ["cachedir: {abscache}".format(abscache=external_cache)]
+    )
+
+
 def test_cache_show(testdir):
     result = testdir.runpytest("--cache-show")
     assert result.ret == 0
