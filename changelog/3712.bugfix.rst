@@ -1,1 +1,0 @@
-Correctly represent the dimensions of an numpy array when calling ``repr()`` on ``approx()``.
