@@ -59,17 +59,21 @@ class TestApprox(object):
             ),
         )
 
-    def test_repr_0d_array(self, plus_minus):
+    @pytest.mark.parametrize(
+        "value, repr_string",
+        [
+            (5., "approx(5.0 {pm} 5.0e-06)"),
+            ([5.], "approx([5.0 {pm} 5.0e-06])"),
+            ([[5.]], "approx([[5.0 {pm} 5.0e-06]])"),
+            ([[5., 6.]], "approx([[5.0 {pm} 5.0e-06, 6.0 {pm} 6.0e-06]])"),
+            ([[5.], [6.]], "approx([[5.0 {pm} 5.0e-06], [6.0 {pm} 6.0e-06]])"),
+        ],
+    )
+    def test_repr_nd_array(self, plus_minus, value, repr_string):
+        """Make sure that arrays of all different dimensions are repr'd correctly."""
         np = pytest.importorskip("numpy")
-        np_array = np.array(5.)
-        assert approx(np_array) == 5.0
-        string_expected = "approx([5.0 {} 5.0e-06])".format(plus_minus)
-
-        assert repr(approx(np_array)) == string_expected
-
-        np_array = np.array([5.])
-        assert approx(np_array) == 5.0
-        assert repr(approx(np_array)) == string_expected
+        np_array = np.array(value)
+        assert repr(approx(np_array)) == repr_string.format(pm=plus_minus)
 
     def test_operator_overloading(self):
         assert 1 == approx(1, rel=1e-6, abs=1e-12)
@@ -438,6 +442,21 @@ class TestApprox(object):
         result.stdout.fnmatch_lines(
             ["*At index 0 diff: 3 != 4 * {}".format(expected), "=* 1 failed in *="]
         )
+
+    @pytest.mark.parametrize(
+        "x",
+        [
+            pytest.param(None),
+            pytest.param("string"),
+            pytest.param(["string"], id="nested-str"),
+            pytest.param([[1]], id="nested-list"),
+            pytest.param({"key": "string"}, id="dict-with-string"),
+            pytest.param({"key": {"key": 1}}, id="nested-dict"),
+        ],
+    )
+    def test_expected_value_type_error(self, x):
+        with pytest.raises(TypeError):
+            approx(x)
 
     @pytest.mark.parametrize(
         "op",
