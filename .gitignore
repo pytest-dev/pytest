@@ -44,3 +44,5 @@ coverage.xml
 .pydevproject
 .project
 .settings
+.vscode
+.envrc

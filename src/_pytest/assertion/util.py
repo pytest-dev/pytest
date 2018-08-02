@@ -122,6 +122,12 @@ def assertrepr_compare(config, op, left, right):
     def isset(x):
         return isinstance(x, (set, frozenset))
 
+    def isdatacls(obj):
+        return hasattr(obj, "__dataclass_fields__")
+
+    def isattrs(obj):
+        return hasattr(obj, "__attrs_attrs__")
+
     def isiterable(obj):
         try:
             iter(obj)
@@ -142,6 +148,10 @@ def assertrepr_compare(config, op, left, right):
                     explanation = _compare_eq_set(left, right, verbose)
                 elif isdict(left) and isdict(right):
                     explanation = _compare_eq_dict(left, right, verbose)
+                elif type(left) == type(right) and isdatacls(left) and isdatacls(right):
+                    explanation = _compare_eq_class(left, right, verbose, type="data")
+                elif type(left) == type(right) and isattrs(left) and isattrs(right):
+                    explanation = _compare_eq_class(left, right, verbose, type="attrs")
                 if isiterable(left) and isiterable(right):
                     expl = _compare_eq_iterable(left, right, verbose)
                     if explanation is not None:
@@ -312,6 +322,42 @@ def _compare_eq_dict(left, right, verbose=False):
         explanation.extend(
             pprint.pformat({k: right[k] for k in extra_right}).splitlines()
         )
+    return explanation
+
+
+def _compare_eq_class(left, right, verbose, type=None):
+    # TODO account for verbose
+    # TODO write tests
+
+    if type == "data":
+        all_fields = left.__dataclass_fields__
+        fields_to_check = [field for field, info in all_fields.items() if info.compare]
+    elif type == "attrs":
+        all_fields = left.__attrs_attrs__
+        fields_to_check = [field.name for field in all_fields if field.cmp]
+    else:
+        raise RuntimeError  # TODO figure out what to raise
+
+    same = []
+    diff = []
+    for field in fields_to_check:
+        if getattr(left, field) == getattr(right, field):
+            same.append(field)
+        else:
+            diff.append(field)
+
+    explanation = []
+    if same:
+        explanation += [("Common attributes:")]
+        explanation += pprint.pformat(same).splitlines()
+    if diff:
+        explanation += [("Differing attributes:")]
+        for k in diff:
+            class_name = left.__class__.__name__
+            explanation += [
+                u("%s(%s=%r) != %s(%s=%r)")
+                % (class_name, k, getattr(left, k), class_name, k, getattr(right, k))
+            ]
     return explanation
 
 
