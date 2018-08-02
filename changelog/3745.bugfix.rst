@@ -1,1 +1,0 @@
-Display the absolute path if ``cache_dir`` is not relative to the ``rootdir`` instead of failing.

@@ -1,1 +1,0 @@
-Pin pathlib2 to ``>=2.2.0`` as we require ``__fspath__`` support.
