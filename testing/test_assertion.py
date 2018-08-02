@@ -6,6 +6,7 @@ from __future__ import print_function
 import sys
 import textwrap
 
+import attr
 import py
 import six
 
@@ -546,6 +547,144 @@ class TestAssert_reprcompare(object):
             assert isinstance(line, six.text_type)
         msg = u"\n".join(expl)
         assert msg
+
+
+class TestAssert_reprcompare_dataclass(object):
+    @pytest.mark.skipif(sys.version_info < (3, 7), reason="Dataclasses in Python3.7+")
+    def test_dataclasses(self):
+        from dataclasses import dataclass
+
+        @dataclass
+        class SimpleDataObject:
+            field_a: int
+            field_b: str
+
+        left = SimpleDataObject(1, "b")
+        right = SimpleDataObject(1, "c")
+
+        lines = callequal(left, right)
+        assert lines[1].startswith("Omitting 1 identical item")
+        assert "Common items" not in lines
+        for line in lines[1:]:
+            assert "field_a" not in line
+
+    @pytest.mark.skipif(sys.version_info < (3, 7), reason="Dataclasses in Python3.7+")
+    def test_dataclasses_verbose(self):
+        from dataclasses import dataclass
+
+        @dataclass
+        class SimpleDataObject:
+            field_a: int
+            field_b: str
+
+        left = SimpleDataObject(1, "b")
+        right = SimpleDataObject(1, "c")
+
+        lines = callequal(left, right, verbose=2)
+        assert lines[1].startswith("Common items:")
+        assert "Omitting" not in lines[1]
+        assert lines[2] == "['field_a']"
+
+    def test_dataclasses_with_attribute_comparison_off(self):
+        from dataclasses import dataclass, field
+
+        @dataclass
+        class SimpleDataObject:
+            field_a: int
+            field_b: str = field(compare=False)
+
+        left = SimpleDataObject(1, "b")
+        right = SimpleDataObject(1, "b")
+
+        lines = callequal(left, right, verbose=2)
+        assert lines[1].startswith("Common items:")
+        assert "Omitting" not in lines[1]
+        assert lines[2] == "['field_a']"
+        for line in lines[2:]:
+            assert "field_b" not in line
+
+    def test_comparing_different_data_classes(self):
+        from dataclasses import dataclass
+
+        @dataclass
+        class SimpleDataObjectOne:
+            field_a: int
+            field_b: str
+
+        @dataclass
+        class SimpleDataObjectTwo:
+            field_a: int
+            field_b: str
+
+        left = SimpleDataObjectOne(1, "b")
+        right = SimpleDataObjectTwo(1, "c")
+
+        lines = callequal(left, right)
+        assert lines is None
+
+
+class TestAssert_reprcompare_attrsclass(object):
+    def test_attrs(self):
+        @attr.s
+        class SimpleDataObject:
+            field_a = attr.ib()
+            field_b = attr.ib()
+
+        left = SimpleDataObject(1, "b")
+        right = SimpleDataObject(1, "c")
+
+        lines = callequal(left, right)
+        assert lines[1].startswith("Omitting 1 identical item")
+        assert "Common items" not in lines
+        for line in lines[1:]:
+            assert "field_a" not in line
+
+    def test_attrs_verbose(self):
+        @attr.s
+        class SimpleDataObject:
+            field_a = attr.ib()
+            field_b = attr.ib()
+
+        left = SimpleDataObject(1, "b")
+        right = SimpleDataObject(1, "c")
+
+        lines = callequal(left, right, verbose=2)
+        assert lines[1].startswith("Common items:")
+        assert "Omitting" not in lines[1]
+        assert lines[2] == "['field_a']"
+
+    def test_attrs_with_attribute_comparison_off(self):
+        @attr.s
+        class SimpleDataObject:
+            field_a = attr.ib()
+            field_b = attr.ib(cmp=False)
+
+        left = SimpleDataObject(1, "b")
+        right = SimpleDataObject(1, "b")
+
+        lines = callequal(left, right, verbose=2)
+        assert lines[1].startswith("Common items:")
+        assert "Omitting" not in lines[1]
+        assert lines[2] == "['field_a']"
+        for line in lines[2:]:
+            assert "field_b" not in line
+
+    def test_comparing_different_attrs(self):
+        @attr.s
+        class SimpleDataObjectOne:
+            field_a = attr.ib()
+            field_b = attr.ib()
+
+        @attr.s
+        class SimpleDataObjectTwo:
+            field_a = attr.ib()
+            field_b = attr.ib()
+
+        left = SimpleDataObjectOne(1, "b")
+        right = SimpleDataObjectTwo(1, "c")
+
+        lines = callequal(left, right)
+        assert lines is None
 
 
 class TestFormatExplanation(object):

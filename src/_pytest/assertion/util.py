@@ -326,9 +326,6 @@ def _compare_eq_dict(left, right, verbose=False):
 
 
 def _compare_eq_class(left, right, verbose, type=None):
-    # TODO account for verbose
-    # TODO write tests
-
     if type == "data":
         all_fields = left.__dataclass_fields__
         fields_to_check = [field for field, info in all_fields.items() if info.compare]
@@ -336,7 +333,7 @@ def _compare_eq_class(left, right, verbose, type=None):
         all_fields = left.__attrs_attrs__
         fields_to_check = [field.name for field in all_fields if field.cmp]
     else:
-        raise RuntimeError  # TODO figure out what to raise
+        raise RuntimeError
 
     same = []
     diff = []
@@ -347,8 +344,10 @@ def _compare_eq_class(left, right, verbose, type=None):
             diff.append(field)
 
     explanation = []
-    if same:
-        explanation += [("Common attributes:")]
+    if same and verbose < 2:
+        explanation += [u("Omitting %s identical items, use -vv to show") % len(same)]
+    elif same:
+        explanation += [u("Common items:")]
         explanation += pprint.pformat(same).splitlines()
     if diff:
         explanation += [("Differing attributes:")]
