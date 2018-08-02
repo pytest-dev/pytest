@@ -1,0 +1,1 @@
+Fix ``TypeError`` when the assertion message is ``bytes`` in python 3.

@@ -246,6 +246,15 @@ class TestAssertionRewrite(object):
             ["*AssertionError: To be escaped: %", "*assert 1 == 2"]
         )
 
+    @pytest.mark.skipif(
+        sys.version_info < (3,), reason="bytes is a string type in python 2"
+    )
+    def test_assertion_messages_bytes(self, testdir):
+        testdir.makepyfile("def test_bytes_assertion():\n    assert False, b'ohai!'\n")
+        result = testdir.runpytest()
+        assert result.ret == 1
+        result.stdout.fnmatch_lines(["*AssertionError: b'ohai!'", "*assert False"])
+
     def test_boolop(self):
         def f():
             f = g = False

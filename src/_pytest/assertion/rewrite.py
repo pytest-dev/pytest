@@ -425,20 +425,18 @@ def _format_assertmsg(obj):
     # contains a newline it gets escaped, however if an object has a
     # .__repr__() which contains newlines it does not get escaped.
     # However in either case we want to preserve the newline.
-    if isinstance(obj, six.text_type) or isinstance(obj, six.binary_type):
-        s = obj
-        is_repr = False
-    else:
-        s = py.io.saferepr(obj)
-        is_repr = True
-    if isinstance(s, six.text_type):
-        t = six.text_type
-    else:
-        t = six.binary_type
-    s = s.replace(t("\n"), t("\n~")).replace(t("%"), t("%%"))
-    if is_repr:
-        s = s.replace(t("\\n"), t("\n~"))
-    return s
+    replaces = [(u"\n", u"\n~"), (u"%", u"%%")]
+    if not isinstance(obj, six.string_types):
+        obj = py.io.saferepr(obj)
+        replaces.append((u"\\n", u"\n~"))
+
+    if isinstance(obj, bytes):
+        replaces = [(r1.encode(), r2.encode()) for r1, r2 in replaces]
+
+    for r1, r2 in replaces:
+        obj = obj.replace(r1, r2)
+
+    return obj
 
 
 def _should_repr_global_name(obj):
