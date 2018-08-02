@@ -585,6 +585,7 @@ class TestAssert_reprcompare_dataclass(object):
         assert "Omitting" not in lines[1]
         assert lines[2] == "['field_a']"
 
+    @pytest.mark.skipif(sys.version_info < (3, 7), reason="Dataclasses in Python3.7+")
     def test_dataclasses_with_attribute_comparison_off(self):
         from dataclasses import dataclass, field
 
@@ -603,6 +604,7 @@ class TestAssert_reprcompare_dataclass(object):
         for line in lines[2:]:
             assert "field_b" not in line
 
+    @pytest.mark.skipif(sys.version_info < (3, 7), reason="Dataclasses in Python3.7+")
     def test_comparing_different_data_classes(self):
         from dataclasses import dataclass
 

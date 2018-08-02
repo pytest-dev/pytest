@@ -1,1 +1,1 @@
-Provide richer comparison on ``AssertionError`` for objects created using `dataclasses <https://docs.python.org/3/library/dataclasses.html>`_ (Python 3.7+) or `attrs package <http://www.attrs.org/en/stable/>`_.
+Richer comparison information on ``AssertionError`` for objects created using `attrs <http://www.attrs.org/en/stable/>`_ or `dataclasses <https://docs.python.org/3/library/dataclasses.html>`_ (Python 3.7+).
