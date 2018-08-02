@@ -1,0 +1,7 @@
+#!/usr/bin/env python
+"""Used by .pre-commit-config.yaml"""
+import sys
+
+if __name__ == "__main__":
+    print(" ".join(sys.argv[1:]))
+    sys.exit(1)
