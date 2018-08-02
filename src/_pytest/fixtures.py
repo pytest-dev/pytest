@@ -30,6 +30,7 @@ from _pytest.compat import (
     getfuncargnames,
     safe_getattr,
     FuncargnamesCompatAttr,
+    get_real_method,
 )
 from _pytest.deprecated import FIXTURE_FUNCTION_CALL, RemovedInPytest4Warning
 from _pytest.outcomes import fail, TEST_OUTCOME
@@ -931,13 +932,6 @@ def pytest_fixture_setup(fixturedef, request):
         request._check_scope(argname, request.scope, fixdef.scope)
         kwargs[argname] = result
 
-    # if function has been defined with @pytest.fixture, we want to
-    # pass the special __being_called_by_pytest parameter so we don't raise a warning
-    # this is an ugly hack, see #3720 for an opportunity to improve this
-    defined_using_fixture_decorator = hasattr(fixturedef.func, "_pytestfixturefunction")
-    if defined_using_fixture_decorator:
-        kwargs["__being_called_by_pytest"] = True
-
     fixturefunc = resolve_fixture_function(fixturedef, request)
     my_cache_key = request.param_index
     try:
@@ -973,9 +967,7 @@ def wrap_function_to_warning_if_called_directly(function, fixture_marker):
         @functools.wraps(function)
         def result(*args, **kwargs):
             __tracebackhide__ = True
-            __being_called_by_pytest = kwargs.pop("__being_called_by_pytest", False)
-            if not __being_called_by_pytest:
-                warnings.warn(warning, stacklevel=3)
+            warnings.warn(warning, stacklevel=3)
             for x in function(*args, **kwargs):
                 yield x
 
@@ -984,9 +976,7 @@ def wrap_function_to_warning_if_called_directly(function, fixture_marker):
         @functools.wraps(function)
         def result(*args, **kwargs):
             __tracebackhide__ = True
-            __being_called_by_pytest = kwargs.pop("__being_called_by_pytest", False)
-            if not __being_called_by_pytest:
-                warnings.warn(warning, stacklevel=3)
+            warnings.warn(warning, stacklevel=3)
             return function(*args, **kwargs)
 
     if six.PY2:
@@ -1279,9 +1269,9 @@ class FixtureManager(object):
             # The attribute can be an arbitrary descriptor, so the attribute
             # access below can raise. safe_getatt() ignores such exceptions.
             obj = safe_getattr(holderobj, name, None)
+            marker = getfixturemarker(obj)
             # fixture functions have a pytest_funcarg__ prefix (pre-2.3 style)
             # or are "@pytest.fixture" marked
-            marker = getfixturemarker(obj)
             if marker is None:
                 if not name.startswith(self._argprefix):
                     continue
@@ -1302,6 +1292,15 @@ class FixtureManager(object):
                 if marker.name:
                     name = marker.name
                 assert not name.startswith(self._argprefix), FIXTURE_MSG.format(name)
+
+            # during fixture definition we wrap the original fixture function
+            # to issue a warning if called directly, so here we unwrap it in order to not emit the warning
+            # when pytest itself calls the fixture function
+            if six.PY2 and unittest:
+                # hack on Python 2 because of the unbound methods
+                obj = get_real_func(obj)
+            else:
+                obj = get_real_method(obj, holderobj)
 
             fixture_def = FixtureDef(
                 self,
