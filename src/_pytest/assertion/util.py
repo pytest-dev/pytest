@@ -333,7 +333,7 @@ def _compare_eq_class(left, right, verbose, type=None):
         all_fields = left.__attrs_attrs__
         fields_to_check = [field.name for field in all_fields if field.cmp]
     else:
-        raise RuntimeError
+        raise RuntimeError("Unexpected value for `type` paramater")
 
     same = []
     diff = []
