@@ -347,12 +347,12 @@ def _compare_eq_class(left, right, verbose, type=None):
     if same and verbose < 2:
         explanation += [u("Omitting %s identical items, use -vv to show") % len(same)]
     elif same:
-        explanation += [u("Common items:")]
+        explanation += [u("Common attributes:")]
         explanation += pprint.pformat(same).splitlines()
     if diff:
+        class_name = left.__class__.__name__
         explanation += [("Differing attributes:")]
         for k in diff:
-            class_name = left.__class__.__name__
             explanation += [
                 u("%s(%s=%r) != %s(%s=%r)")
                 % (class_name, k, getattr(left, k), class_name, k, getattr(right, k))

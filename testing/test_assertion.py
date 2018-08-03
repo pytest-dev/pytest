@@ -564,7 +564,7 @@ class TestAssert_reprcompare_dataclass(object):
 
         lines = callequal(left, right)
         assert lines[1].startswith("Omitting 1 identical item")
-        assert "Common items" not in lines
+        assert "Common attributes" not in lines
         for line in lines[1:]:
             assert "field_a" not in line
 
@@ -581,7 +581,7 @@ class TestAssert_reprcompare_dataclass(object):
         right = SimpleDataObject(1, "c")
 
         lines = callequal(left, right, verbose=2)
-        assert lines[1].startswith("Common items:")
+        assert lines[1].startswith("Common attributes:")
         assert "Omitting" not in lines[1]
         assert lines[2] == "['field_a']"
 
@@ -598,14 +598,14 @@ class TestAssert_reprcompare_dataclass(object):
         right = SimpleDataObject(1, "b")
 
         lines = callequal(left, right, verbose=2)
-        assert lines[1].startswith("Common items:")
+        assert lines[1].startswith("Common attributes:")
         assert "Omitting" not in lines[1]
         assert lines[2] == "['field_a']"
         for line in lines[2:]:
             assert "field_b" not in line
 
     @pytest.mark.skipif(sys.version_info < (3, 7), reason="Dataclasses in Python3.7+")
-    def test_comparing_different_data_classes(self):
+    def test_comparing_two_different_data_classes(self):
         from dataclasses import dataclass
 
         @dataclass
@@ -637,7 +637,7 @@ class TestAssert_reprcompare_attrsclass(object):
 
         lines = callequal(left, right)
         assert lines[1].startswith("Omitting 1 identical item")
-        assert "Common items" not in lines
+        assert "Common attributes" not in lines
         for line in lines[1:]:
             assert "field_a" not in line
 
@@ -651,7 +651,7 @@ class TestAssert_reprcompare_attrsclass(object):
         right = SimpleDataObject(1, "c")
 
         lines = callequal(left, right, verbose=2)
-        assert lines[1].startswith("Common items:")
+        assert lines[1].startswith("Common attributes:")
         assert "Omitting" not in lines[1]
         assert lines[2] == "['field_a']"
 
@@ -665,13 +665,13 @@ class TestAssert_reprcompare_attrsclass(object):
         right = SimpleDataObject(1, "b")
 
         lines = callequal(left, right, verbose=2)
-        assert lines[1].startswith("Common items:")
+        assert lines[1].startswith("Common attributes:")
         assert "Omitting" not in lines[1]
         assert lines[2] == "['field_a']"
         for line in lines[2:]:
             assert "field_b" not in line
 
-    def test_comparing_different_attrs(self):
+    def test_comparing_two_different_attrs_classes(self):
         @attr.s
         class SimpleDataObjectOne:
             field_a = attr.ib()

@@ -1,1 +1,1 @@
-Richer comparison information on ``AssertionError`` for objects created using `attrs <http://www.attrs.org/en/stable/>`_ or `dataclasses <https://docs.python.org/3/library/dataclasses.html>`_ (Python 3.7+).
+Richer comparison introspection on ``AssertionError`` for objects created using `attrs <http://www.attrs.org/en/stable/>`_ or `dataclasses <https://docs.python.org/3/library/dataclasses.html>`_ (Python 3.7+).
