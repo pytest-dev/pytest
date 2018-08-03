@@ -552,12 +552,12 @@ class TestAssert_reprcompare(object):
 class TestAssert_reprcompare_dataclass(object):
     @pytest.mark.skipif(sys.version_info < (3, 7), reason="Dataclasses in Python3.7+")
     def test_dataclasses(self):
-        from dataclasses import dataclass
+        from dataclasses import dataclass, field
 
         @dataclass
-        class SimpleDataObject:
-            field_a: int
-            field_b: str
+        class SimpleDataObject(object):
+            field_a = field()
+            field_b = field()
 
         left = SimpleDataObject(1, "b")
         right = SimpleDataObject(1, "c")
@@ -570,12 +570,12 @@ class TestAssert_reprcompare_dataclass(object):
 
     @pytest.mark.skipif(sys.version_info < (3, 7), reason="Dataclasses in Python3.7+")
     def test_dataclasses_verbose(self):
-        from dataclasses import dataclass
+        from dataclasses import dataclass, field
 
         @dataclass
-        class SimpleDataObject:
-            field_a: int
-            field_b: str
+        class SimpleDataObject(object):
+            field_a = field()
+            field_b = field()
 
         left = SimpleDataObject(1, "b")
         right = SimpleDataObject(1, "c")
@@ -590,9 +590,9 @@ class TestAssert_reprcompare_dataclass(object):
         from dataclasses import dataclass, field
 
         @dataclass
-        class SimpleDataObject:
-            field_a: int
-            field_b: str = field(compare=False)
+        class SimpleDataObject(object):
+            field_a = field()
+            field_b = field(compare=False)
 
         left = SimpleDataObject(1, "b")
         right = SimpleDataObject(1, "b")
@@ -606,17 +606,17 @@ class TestAssert_reprcompare_dataclass(object):
 
     @pytest.mark.skipif(sys.version_info < (3, 7), reason="Dataclasses in Python3.7+")
     def test_comparing_two_different_data_classes(self):
-        from dataclasses import dataclass
+        from dataclasses import dataclass, field
 
         @dataclass
-        class SimpleDataObjectOne:
-            field_a: int
-            field_b: str
+        class SimpleDataObjectOne(object):
+            field_a = field()
+            field_b = field()
 
         @dataclass
-        class SimpleDataObjectTwo:
-            field_a: int
-            field_b: str
+        class SimpleDataObjectTwo(object):
+            field_a = field()
+            field_b = field()
 
         left = SimpleDataObjectOne(1, "b")
         right = SimpleDataObjectTwo(1, "c")
@@ -628,7 +628,7 @@ class TestAssert_reprcompare_dataclass(object):
 class TestAssert_reprcompare_attrsclass(object):
     def test_attrs(self):
         @attr.s
-        class SimpleDataObject:
+        class SimpleDataObject(object):
             field_a = attr.ib()
             field_b = attr.ib()
 
@@ -643,7 +643,7 @@ class TestAssert_reprcompare_attrsclass(object):
 
     def test_attrs_verbose(self):
         @attr.s
-        class SimpleDataObject:
+        class SimpleDataObject(object):
             field_a = attr.ib()
             field_b = attr.ib()
 
@@ -657,7 +657,7 @@ class TestAssert_reprcompare_attrsclass(object):
 
     def test_attrs_with_attribute_comparison_off(self):
         @attr.s
-        class SimpleDataObject:
+        class SimpleDataObject(object):
             field_a = attr.ib()
             field_b = attr.ib(cmp=False)
 
@@ -673,12 +673,12 @@ class TestAssert_reprcompare_attrsclass(object):
 
     def test_comparing_two_different_attrs_classes(self):
         @attr.s
-        class SimpleDataObjectOne:
+        class SimpleDataObjectOne(object):
             field_a = attr.ib()
             field_b = attr.ib()
 
         @attr.s
-        class SimpleDataObjectTwo:
+        class SimpleDataObjectTwo(object):
             field_a = attr.ib()
             field_b = attr.ib()
 
