@@ -1,0 +1,1 @@
+Fix infinite recursion during collection if a ``pytest_ignore_collect`` returns ``False`` instead of ``None``.
