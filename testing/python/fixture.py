@@ -371,6 +371,11 @@ class TestFillFixtures(object):
         result = testdir.runpytest()
         assert result.ret == 0
 
+    def test_class_variable_auto_use(self, testdir):
+        p = testdir.copy_example("class_variable_auto_use.py")
+        result = testdir.runpytest(p)
+        result.stdout.fnmatch_lines("* 1 passed *")
+
     def test_funcarg_lookup_error(self, testdir):
         testdir.makeconftest(
             """
