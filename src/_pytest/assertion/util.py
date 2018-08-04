@@ -123,10 +123,10 @@ def assertrepr_compare(config, op, left, right):
         return isinstance(x, (set, frozenset))
 
     def isdatacls(obj):
-        return hasattr(obj, "__dataclass_fields__")
+        return getattr(obj, "__dataclass_fields__", None) is not None
 
     def isattrs(obj):
-        return hasattr(obj, "__attrs_attrs__")
+        return getattr(obj, "__attrs_attrs__", None) is not None
 
     def isiterable(obj):
         try:
