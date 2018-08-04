@@ -954,9 +954,6 @@ def _ensure_immutable_ids(ids):
 def wrap_function_to_warning_if_called_directly(function, fixture_marker):
     """Wrap the given fixture function so we can issue warnings about it being called directly, instead of
     used as an argument in a test function.
-
-    The warning is emitted only in Python 3, because I didn't find a reliable way to make the wrapper function
-    keep the original signature, and we probably will drop Python 2 in Pytest 4 anyway.
     """
     is_yield_function = is_generator(function)
     msg = FIXTURE_FUNCTION_CALL.format(name=fixture_marker.name or function.__name__)
@@ -981,6 +978,10 @@ def wrap_function_to_warning_if_called_directly(function, fixture_marker):
 
     if six.PY2:
         result.__wrapped__ = function
+
+    # keep reference to the original function in our own custom attribute so we don't unwrap
+    # further than this point and lose useful wrappings like @mock.patch (#3774)
+    result.__pytest_wrapped__ = function
 
     return result
 

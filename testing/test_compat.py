@@ -1,5 +1,8 @@
 from __future__ import absolute_import, division, print_function
 import sys
+from functools import wraps
+
+import six
 
 import pytest
 from _pytest.compat import is_generator, get_real_func, safe_getattr
@@ -26,6 +29,8 @@ def test_real_func_loop_limit():
             return "<Evil left={left}>".format(left=self.left)
 
         def __getattr__(self, attr):
+            if attr == "__pytest_wrapped__":
+                raise AttributeError
             if not self.left:
                 raise RuntimeError("its over")
             self.left -= 1
@@ -36,6 +41,33 @@ def test_real_func_loop_limit():
     with pytest.raises(ValueError):
         res = get_real_func(evil)
         print(res)
+
+
+def test_get_real_func():
+    """Check that get_real_func correctly unwraps decorators until reaching the real function"""
+
+    def decorator(f):
+        @wraps(f)
+        def inner():
+            pass
+
+        if six.PY2:
+            inner.__wrapped__ = f
+        return inner
+
+    def func():
+        pass
+
+    wrapped_func = decorator(decorator(func))
+    assert get_real_func(wrapped_func) is func
+
+    wrapped_func2 = decorator(decorator(wrapped_func))
+    assert get_real_func(wrapped_func2) is func
+
+    # special case for __pytest_wrapped__ attribute: used to obtain the function up until the point
+    # a function was wrapped by pytest itself
+    wrapped_func2.__pytest_wrapped__ = wrapped_func
+    assert get_real_func(wrapped_func2) is wrapped_func
 
 
 @pytest.mark.skipif(

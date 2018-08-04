@@ -234,6 +234,13 @@ def get_real_func(obj):
     """
     start_obj = obj
     for i in range(100):
+        # __pytest_wrapped__ is set by @pytest.fixture when wrapping the fixture function
+        # to trigger a warning if it gets called directly instead of by pytest: we don't
+        # want to unwrap further than this otherwise we lose useful wrappings like @mock.patch (#3774)
+        new_obj = getattr(obj, "__pytest_wrapped__", None)
+        if new_obj is not None:
+            obj = new_obj
+            break
         new_obj = getattr(obj, "__wrapped__", None)
         if new_obj is None:
             break
