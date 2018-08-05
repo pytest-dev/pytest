@@ -745,6 +745,24 @@ def test_get_plugin_specs_as_list():
     assert _get_plugin_specs_as_list(("foo", "bar")) == ["foo", "bar"]
 
 
+def test_collect_pytest_prefix_bug_integration(testdir):
+    """Integration test for issue #3775"""
+    p = testdir.copy_example("config/collect_pytest_prefix")
+    result = testdir.runpytest(p)
+    result.stdout.fnmatch_lines("* 1 passed *")
+
+
+def test_collect_pytest_prefix_bug(pytestconfig):
+    """Ensure we collect only actual functions from conftest files (#3775)"""
+
+    class Dummy(object):
+        class pytest_something(object):
+            pass
+
+    pm = pytestconfig.pluginmanager
+    assert pm.parse_hookimpl_opts(Dummy(), "pytest_something") is None
+
+
 class TestWarning(object):
     def test_warn_config(self, testdir):
         testdir.makeconftest(
