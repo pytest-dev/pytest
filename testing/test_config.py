@@ -605,6 +605,26 @@ def test_plugin_preparse_prevents_setuptools_loading(testdir, monkeypatch, block
         )
 
 
+@pytest.mark.parametrize(
+    "parse_args,should_load", [(("-p", "mytestplugin"), True), ((), False)]
+)
+def test_disable_plugin_autoload(testdir, monkeypatch, parse_args, should_load):
+    pkg_resources = pytest.importorskip("pkg_resources")
+
+    def my_iter(name):
+        raise AssertionError("Should not be called")
+
+    class PseudoPlugin(object):
+        x = 42
+
+    monkeypatch.setenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD", "1")
+    monkeypatch.setattr(pkg_resources, "iter_entry_points", my_iter)
+    monkeypatch.setitem(sys.modules, "mytestplugin", PseudoPlugin())
+    config = testdir.parseconfig(*parse_args)
+    has_loaded = config.pluginmanager.get_plugin("mytestplugin") is not None
+    assert has_loaded == should_load
+
+
 def test_cmdline_processargs_simple(testdir):
     testdir.makeconftest(
         """

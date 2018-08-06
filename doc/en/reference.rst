@@ -866,6 +866,11 @@ Contains comma-separated list of modules that should be loaded as plugins:
 
     export PYTEST_PLUGINS=mymodule.plugin,xdist
 
+PYTEST_DISABLE_PLUGIN_AUTOLOAD
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+When set, disables plugin auto-loading through setuptools entrypoints. Only explicitly specified plugins will be
+loaded.
 
 PYTEST_CURRENT_TEST
 ~~~~~~~~~~~~~~~~~~~
