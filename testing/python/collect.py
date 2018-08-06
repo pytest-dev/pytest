@@ -1577,3 +1577,9 @@ def test_keep_duplicates(testdir):
     )
     result = testdir.runpytest("--keep-duplicates", a.strpath, a.strpath)
     result.stdout.fnmatch_lines(["*collected 2 item*"])
+
+
+def test_package_collection_infinite_recursion(testdir):
+    testdir.copy_example("collect/package_infinite_recursion")
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines("*1 passed*")

@@ -561,7 +561,7 @@ class Package(Module):
     def _recurse(self, path):
         ihook = self.gethookproxy(path.dirpath())
         if ihook.pytest_ignore_collect(path=path, config=self.config):
-            return
+            return False
         for pat in self._norecursepatterns:
             if path.check(fnmatch=pat):
                 return False
@@ -594,9 +594,12 @@ class Package(Module):
         return path in self.session._initialpaths
 
     def collect(self):
-        path = self.fspath.dirpath()
+        this_path = self.fspath.dirpath()
         pkg_prefix = None
-        for path in path.visit(fil=lambda x: 1, rec=self._recurse, bf=True, sort=True):
+        for path in this_path.visit(rec=self._recurse, bf=True, sort=True):
+            # we will visit our own __init__.py file, in which case we skip it
+            if path.basename == "__init__.py" and path.dirpath() == this_path:
+                continue
             if pkg_prefix and pkg_prefix in path.parts():
                 continue
             for x in self._collectfile(path):
