@@ -1,0 +1,1 @@
+Fix AttributeError bug in TestCaseFunction.teardown by creating TestCaseFunction._testcase as attribute of class with a None default.
