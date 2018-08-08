@@ -1002,7 +1002,7 @@ def test_testcase_handles_init_exceptions(testdir):
         import pytest
         class MyTestCase(TestCase):
             def __init__(self, *args, **kwargs):
-                raise Exception("should raise this exception")            
+                raise Exception("should raise this exception")
             def test_hello(self):
                 pass
     """
