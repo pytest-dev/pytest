@@ -31,6 +31,7 @@ from _pytest.compat import (
     safe_getattr,
     FuncargnamesCompatAttr,
     get_real_method,
+    _PytestWrapper,
 )
 from _pytest.deprecated import FIXTURE_FUNCTION_CALL, RemovedInPytest4Warning
 from _pytest.outcomes import fail, TEST_OUTCOME
@@ -981,7 +982,7 @@ def wrap_function_to_warning_if_called_directly(function, fixture_marker):
 
     # keep reference to the original function in our own custom attribute so we don't unwrap
     # further than this point and lose useful wrappings like @mock.patch (#3774)
-    result.__pytest_wrapped__ = function
+    result.__pytest_wrapped__ = _PytestWrapper(function)
 
     return result
 
