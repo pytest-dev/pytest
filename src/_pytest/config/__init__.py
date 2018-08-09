@@ -701,6 +701,10 @@ class Config(object):
 
         self.pluginmanager.rewrite_hook = hook
 
+        if os.environ.get("PYTEST_DISABLE_PLUGIN_AUTOLOAD"):
+            # We don't autoload from setuptools entry points, no need to continue.
+            return
+
         # 'RECORD' available for plugins installed normally (pip install)
         # 'SOURCES.txt' available for plugins installed in dev mode (pip install -e)
         # for installed plugins 'SOURCES.txt' returns an empty list, and vice-versa
@@ -726,7 +730,10 @@ class Config(object):
         self._checkversion()
         self._consider_importhook(args)
         self.pluginmanager.consider_preparse(args)
-        self.pluginmanager.load_setuptools_entrypoints("pytest11")
+        if not os.environ.get("PYTEST_DISABLE_PLUGIN_AUTOLOAD"):
+            # Don't autoload from setuptools entry point. Only explicitly specified
+            # plugins are going to be loaded.
+            self.pluginmanager.load_setuptools_entrypoints("pytest11")
         self.pluginmanager.consider_env()
         self.known_args_namespace = ns = self._parser.parse_known_args(
             args, namespace=copy.copy(self.option)
