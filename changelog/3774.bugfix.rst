@@ -1,0 +1,1 @@
+Fix bug where decorated fixtures would lose functionality (for example ``@mock.patch``).
