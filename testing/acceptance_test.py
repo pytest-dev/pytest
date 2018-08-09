@@ -1044,3 +1044,10 @@ def test_frame_leak_on_failing_test(testdir):
     )
     result = testdir.runpytest_subprocess()
     result.stdout.fnmatch_lines(["*1 failed, 1 passed in*"])
+
+
+def test_fixture_mock_integration(testdir):
+    """Test that decorators applied to fixture are left working (#3774)"""
+    p = testdir.copy_example("acceptance/fixture_mock_integration.py")
+    result = testdir.runpytest(p)
+    result.stdout.fnmatch_lines("*1 passed*")
