@@ -638,6 +638,10 @@ class Test_getinitialnodes(object):
             assert col.config is config
 
     def test_pkgfile(self, testdir):
+        """Verify nesting when a module is within a package.
+	The parent chain should match: Module<x.py> -> Package<subdir> -> Session.
+        Session's parent should always be None.
+	"""
         tmpdir = testdir.tmpdir
         subdir = tmpdir.join("subdir")
         x = subdir.ensure("x.py")
