@@ -596,6 +596,7 @@ class Package(Module):
     def collect(self):
         this_path = self.fspath.dirpath()
         pkg_prefix = None
+        yield Module(this_path.join("__init__.py"), self)
         for path in this_path.visit(rec=self._recurse, bf=True, sort=True):
             # we will visit our own __init__.py file, in which case we skip it
             if path.basename == "__init__.py" and path.dirpath() == this_path:
