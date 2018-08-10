@@ -174,23 +174,23 @@ class Argument(object):
             if isinstance(typ, six.string_types):
                 if typ == "choice":
                     warnings.warn(
-                        "type argument to addoption() is a string %r."
-                        " For parsearg this is optional and when supplied"
-                        " should be a type."
+                        "`type` argument to addoption() is the string %r."
+                        " For choices this is optional and can be omitted, "
+                        " but when supplied should be a type (for example `str` or `int`)."
                         " (options: %s)" % (typ, names),
                         DeprecationWarning,
-                        stacklevel=3,
+                        stacklevel=4,
                     )
                     # argparse expects a type here take it from
                     # the type of the first element
                     attrs["type"] = type(attrs["choices"][0])
                 else:
                     warnings.warn(
-                        "type argument to addoption() is a string %r."
-                        " For parsearg this should be a type."
+                        "`type` argument to addoption() is the string %r, "
+                        " but when supplied should be a type (for example `str` or `int`)."
                         " (options: %s)" % (typ, names),
                         DeprecationWarning,
-                        stacklevel=3,
+                        stacklevel=4,
                     )
                     attrs["type"] = Argument._typ_map[typ]
                 # used in test_parseopt -> test_parse_defaultgetter
