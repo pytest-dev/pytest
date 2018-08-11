@@ -719,7 +719,9 @@ class FormattedExcinfo(object):
             repr_chain = []
             e = excinfo.value
             descr = None
-            while e is not None:
+            seen = set()
+            while e is not None and id(e) not in seen:
+                seen.add(id(e))
                 if excinfo:
                     reprtraceback = self.repr_traceback(excinfo)
                     reprcrash = excinfo._getreprcrash()
