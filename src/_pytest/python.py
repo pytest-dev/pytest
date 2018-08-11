@@ -883,12 +883,13 @@ class Metafunc(fixtures.FuncargnamesCompatAttr):
     """
 
     def __init__(self, definition, fixtureinfo, config, cls=None, module=None):
-        #: access to the :class:`_pytest.config.Config` object for the test session
         assert (
             isinstance(definition, FunctionDefinition)
             or type(definition).__name__ == "DefinitionMock"
         )
         self.definition = definition
+
+        #: access to the :class:`_pytest.config.Config` object for the test session
         self.config = config
 
         #: the module object where the test function is defined in.
