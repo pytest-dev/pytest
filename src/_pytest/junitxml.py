@@ -109,10 +109,11 @@ class _NodeReporter(object):
         attrs = {
             "classname": ".".join(classnames),
             "name": bin_xml_escape(names[-1]),
-            "file": testreport.location[0],
+            #"file": testreport.location[0],  # file is not valid in testcase
         }
         if testreport.location[1] is not None:
-            attrs["line"] = testreport.location[1]
+            #attrs["line"] = testreport.location[1]  # line is not a valid attr in testcase
+            pass
         if hasattr(testreport, "url"):
             attrs["url"] = testreport.url
         self.attrs = attrs
@@ -538,7 +539,7 @@ class LogXML(object):
                 name=self.suite_name,
                 errors=self.stats["error"],
                 failures=self.stats["failure"],
-                skips=self.stats["skipped"],
+                skipped=self.stats["skipped"],
                 tests=numtests,
                 time="%.3f" % suite_time_delta,
             ).unicode(indent=0)

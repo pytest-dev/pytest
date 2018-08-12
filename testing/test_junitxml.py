@@ -103,7 +103,7 @@ class TestPython(object):
         result, dom = runandparse(testdir)
         assert result.ret
         node = dom.find_first_by_tag("testsuite")
-        node.assert_attr(name="pytest", errors=0, failures=1, skips=2, tests=5)
+        node.assert_attr(name="pytest", errors=0, failures=1, skipped=2, tests=5)
 
     def test_summing_simple_with_errors(self, testdir):
         testdir.makepyfile(
@@ -129,7 +129,7 @@ class TestPython(object):
         result, dom = runandparse(testdir)
         assert result.ret
         node = dom.find_first_by_tag("testsuite")
-        node.assert_attr(name="pytest", errors=1, failures=2, skips=1, tests=5)
+        node.assert_attr(name="pytest", errors=1, failures=2, skipped=1, tests=5)
 
     def test_timing_function(self, testdir):
         testdir.makepyfile(
@@ -167,8 +167,6 @@ class TestPython(object):
         node.assert_attr(errors=1, tests=1)
         tnode = node.find_first_by_tag("testcase")
         tnode.assert_attr(
-            file="test_setup_error.py",
-            line="5",
             classname="test_setup_error",
             name="test_function",
         )
@@ -194,8 +192,6 @@ class TestPython(object):
         node = dom.find_first_by_tag("testsuite")
         tnode = node.find_first_by_tag("testcase")
         tnode.assert_attr(
-            file="test_teardown_error.py",
-            line="6",
             classname="test_teardown_error",
             name="test_function",
         )
@@ -239,11 +235,9 @@ class TestPython(object):
         result, dom = runandparse(testdir)
         assert result.ret == 0
         node = dom.find_first_by_tag("testsuite")
-        node.assert_attr(skips=1)
+        node.assert_attr(skipped=1)
         tnode = node.find_first_by_tag("testcase")
         tnode.assert_attr(
-            file="test_skip_contains_name_reason.py",
-            line="1",
             classname="test_skip_contains_name_reason",
             name="test_skip",
         )
@@ -262,11 +256,9 @@ class TestPython(object):
         result, dom = runandparse(testdir)
         assert result.ret == 0
         node = dom.find_first_by_tag("testsuite")
-        node.assert_attr(skips=1)
+        node.assert_attr(skipped=1)
         tnode = node.find_first_by_tag("testcase")
         tnode.assert_attr(
-            file="test_mark_skip_contains_name_reason.py",
-            line="1",
             classname="test_mark_skip_contains_name_reason",
             name="test_skip",
         )
@@ -286,11 +278,9 @@ class TestPython(object):
         result, dom = runandparse(testdir)
         assert result.ret == 0
         node = dom.find_first_by_tag("testsuite")
-        node.assert_attr(skips=1)
+        node.assert_attr(skipped=1)
         tnode = node.find_first_by_tag("testcase")
         tnode.assert_attr(
-            file="test_mark_skipif_contains_name_reason.py",
-            line="2",
             classname="test_mark_skipif_contains_name_reason",
             name="test_skip",
         )
@@ -325,8 +315,6 @@ class TestPython(object):
         node.assert_attr(failures=1)
         tnode = node.find_first_by_tag("testcase")
         tnode.assert_attr(
-            file="test_classname_instance.py",
-            line="1",
             classname="test_classname_instance.TestClass",
             name="test_method",
         )
@@ -340,8 +328,6 @@ class TestPython(object):
         node.assert_attr(failures=1)
         tnode = node.find_first_by_tag("testcase")
         tnode.assert_attr(
-            file=os.path.join("sub", "test_hello.py"),
-            line="0",
             classname="sub.test_hello",
             name="test_func",
         )
@@ -381,8 +367,6 @@ class TestPython(object):
         node.assert_attr(failures=1, tests=1)
         tnode = node.find_first_by_tag("testcase")
         tnode.assert_attr(
-            file="test_failure_function.py",
-            line="3",
             classname="test_failure_function",
             name="test_fail",
         )
@@ -442,8 +426,6 @@ class TestPython(object):
 
             tnode = node.find_nth_by_tag("testcase", index)
             tnode.assert_attr(
-                file="test_failure_escape.py",
-                line="1",
                 classname="test_failure_escape",
                 name="test_func[%s]" % char,
             )
@@ -467,15 +449,11 @@ class TestPython(object):
         node.assert_attr(failures=1, tests=2)
         tnode = node.find_first_by_tag("testcase")
         tnode.assert_attr(
-            file="test_junit_prefixing.py",
-            line="0",
             classname="xyz.test_junit_prefixing",
             name="test_func",
         )
         tnode = node.find_nth_by_tag("testcase", 1)
         tnode.assert_attr(
-            file="test_junit_prefixing.py",
-            line="3",
             classname="xyz.test_junit_prefixing." "TestHello",
             name="test_hello",
         )
@@ -491,11 +469,9 @@ class TestPython(object):
         result, dom = runandparse(testdir)
         assert not result.ret
         node = dom.find_first_by_tag("testsuite")
-        node.assert_attr(skips=1, tests=1)
+        node.assert_attr(skipped=1, tests=1)
         tnode = node.find_first_by_tag("testcase")
         tnode.assert_attr(
-            file="test_xfailure_function.py",
-            line="1",
             classname="test_xfailure_function",
             name="test_xfail",
         )
@@ -534,11 +510,9 @@ class TestPython(object):
         result, dom = runandparse(testdir)
         # assert result.ret
         node = dom.find_first_by_tag("testsuite")
-        node.assert_attr(skips=0, tests=1)
+        node.assert_attr(skipped=0, tests=1)
         tnode = node.find_first_by_tag("testcase")
         tnode.assert_attr(
-            file="test_xfailure_xpass.py",
-            line="1",
             classname="test_xfailure_xpass",
             name="test_xpass",
         )
@@ -555,11 +529,9 @@ class TestPython(object):
         result, dom = runandparse(testdir)
         # assert result.ret
         node = dom.find_first_by_tag("testsuite")
-        node.assert_attr(skips=0, tests=1)
+        node.assert_attr(skipped=0, tests=1)
         tnode = node.find_first_by_tag("testcase")
         tnode.assert_attr(
-            file="test_xfailure_xpass_strict.py",
-            line="1",
             classname="test_xfailure_xpass_strict",
             name="test_xpass",
         )
@@ -573,7 +545,7 @@ class TestPython(object):
         node = dom.find_first_by_tag("testsuite")
         node.assert_attr(errors=1, tests=1)
         tnode = node.find_first_by_tag("testcase")
-        tnode.assert_attr(file="test_collect_error.py", name="test_collect_error")
+        tnode.assert_attr(name="test_collect_error")
         assert tnode["line"] is None
         fnode = tnode.find_first_by_tag("error")
         fnode.assert_attr(message="collection failure")
@@ -757,7 +729,7 @@ class TestNonPython(object):
         result, dom = runandparse(testdir)
         assert result.ret
         node = dom.find_first_by_tag("testsuite")
-        node.assert_attr(errors=0, failures=1, skips=0, tests=1)
+        node.assert_attr(errors=0, failures=1, skipped=0, tests=1)
         tnode = node.find_first_by_tag("testcase")
         tnode.assert_attr(name="myfile.xyz")
         fnode = tnode.find_first_by_tag("failure")
@@ -1119,19 +1091,19 @@ def test_fancy_items_regression(testdir):
     assert "INTERNALERROR" not in result.stdout.str()
 
     items = sorted(
-        "%(classname)s %(name)s %(file)s" % x for x in dom.find_by_tag("testcase")
+        "%(classname)s %(name)s" % x for x in dom.find_by_tag("testcase")
     )
     import pprint
 
     pprint.pprint(items)
     assert items == [
-        u"conftest a conftest.py",
-        u"conftest a conftest.py",
-        u"conftest b conftest.py",
-        u"test_fancy_items_regression a test_fancy_items_regression.py",
-        u"test_fancy_items_regression a test_fancy_items_regression.py",
-        u"test_fancy_items_regression b test_fancy_items_regression.py",
-        u"test_fancy_items_regression test_pass" u" test_fancy_items_regression.py",
+        u"conftest a",
+        u"conftest a",
+        u"conftest b",
+        u"test_fancy_items_regression a",
+        u"test_fancy_items_regression a",
+        u"test_fancy_items_regression b",
+        u"test_fancy_items_regression test_pass" u"",
     ]
 
 
