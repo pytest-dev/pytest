@@ -287,3 +287,18 @@ def test_non_string_warning_argument(testdir):
     )
     result = testdir.runpytest("-W", "always")
     result.stdout.fnmatch_lines(["*= 1 passed, 1 warnings in *"])
+
+
+def test_filterwarnings_mark_registration(testdir):
+    """Ensure filterwarnings mark is registered"""
+    testdir.makepyfile(
+        """
+        import pytest
+
+        @pytest.mark.filterwarnings('error')
+        def test_error():
+            assert True
+    """
+    )
+    result = testdir.runpytest("--strict")
+    assert result.ret == 0
