@@ -296,8 +296,8 @@ def test_filterwarnings_mark_registration(testdir):
         import pytest
 
         @pytest.mark.filterwarnings('error')
-        def test_error():
-            assert True
+        def test_func():
+            pass
     """
     )
     result = testdir.runpytest("--strict")
