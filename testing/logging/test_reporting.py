@@ -889,6 +889,12 @@ def test_live_logging_suspends_capture(has_capture_manager, request):
         def resume_global_capture(self):
             self.calls.append("resume_global_capture")
 
+        def activate_fixture(self, item=None):
+            self.calls.append("activate_fixture")
+
+        def deactivate_fixture(self, item=None):
+            self.calls.append("deactivate_fixture")
+
     # sanity check
     assert CaptureManager.suspend_capture_item
     assert CaptureManager.resume_global_capture
@@ -909,8 +915,10 @@ def test_live_logging_suspends_capture(has_capture_manager, request):
     logger.critical("some message")
     if has_capture_manager:
         assert MockCaptureManager.calls == [
+            "deactivate_fixture",
             "suspend_global_capture",
             "resume_global_capture",
+            "activate_fixture",
         ]
     else:
         assert MockCaptureManager.calls == []
