@@ -1,0 +1,1 @@
+Fix ``filterwarnings`` mark not registered
