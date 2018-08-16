@@ -638,6 +638,10 @@ class Test_getinitialnodes(object):
             assert col.config is config
 
     def test_pkgfile(self, testdir):
+        """Verify nesting when a module is within a package.
+        The parent chain should match: Module<x.py> -> Package<subdir> -> Session.
+            Session's parent should always be None.
+        """
         tmpdir = testdir.tmpdir
         subdir = tmpdir.join("subdir")
         x = subdir.ensure("x.py")
@@ -645,9 +649,12 @@ class Test_getinitialnodes(object):
         with subdir.as_cwd():
             config = testdir.parseconfigure(x)
         col = testdir.getnode(config, x)
-        assert isinstance(col, pytest.Module)
         assert col.name == "x.py"
-        assert col.parent.parent is None
+        assert isinstance(col, pytest.Module)
+        assert isinstance(col.parent, pytest.Package)
+        assert isinstance(col.parent.parent, pytest.Session)
+        # session is batman (has no parents)
+        assert col.parent.parent.parent is None
         for col in col.listchain():
             assert col.config is config
 
