@@ -85,6 +85,7 @@ class CaptureManager(object):
     def __init__(self, method):
         self._method = method
         self._global_capturing = None
+        self._current_item = None
 
     def _getcapture(self, method):
         if method == "fd":
@@ -121,15 +122,23 @@ class CaptureManager(object):
                 cap.suspend_capturing(in_=in_)
             return outerr
 
-    def activate_fixture(self, item):
+    def activate_fixture(self, item=None):
         """If the current item is using ``capsys`` or ``capfd``, activate them so they take precedence over
         the global capture.
         """
+        if item is None:
+            if self._current_item is None:
+                return
+            item = self._current_item
         fixture = getattr(item, "_capture_fixture", None)
         if fixture is not None:
             fixture._start()
 
-    def deactivate_fixture(self, item):
+    def deactivate_fixture(self, item=None):
+        if item is None:
+            if self._current_item is None:
+                return
+            item = self._current_item
         """Deactivates the ``capsys`` or ``capfd`` fixture of this item, if any."""
         fixture = getattr(item, "_capture_fixture", None)
         if fixture is not None:
@@ -151,6 +160,7 @@ class CaptureManager(object):
 
     @pytest.hookimpl(hookwrapper=True)
     def pytest_runtest_setup(self, item):
+        self._current_item = item
         self.resume_global_capture()
         # no need to activate a capture fixture because they activate themselves during creation; this
         # only makes sense when a fixture uses a capture fixture, otherwise the capture fixture will
@@ -160,6 +170,7 @@ class CaptureManager(object):
 
     @pytest.hookimpl(hookwrapper=True)
     def pytest_runtest_call(self, item):
+        self._current_item = item
         self.resume_global_capture()
         # it is important to activate this fixture during the call phase so it overwrites the "global"
         # capture
@@ -169,6 +180,7 @@ class CaptureManager(object):
 
     @pytest.hookimpl(hookwrapper=True)
     def pytest_runtest_teardown(self, item):
+        self._current_item = item
         self.resume_global_capture()
         self.activate_fixture(item)
         yield

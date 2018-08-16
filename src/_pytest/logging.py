@@ -573,6 +573,7 @@ class _LiveLoggingStreamHandler(logging.StreamHandler):
 
     def emit(self, record):
         if self.capture_manager is not None:
+            self.capture_manager.deactivate_fixture()
             self.capture_manager.suspend_global_capture()
         try:
             if not self._first_record_emitted:
@@ -589,3 +590,4 @@ class _LiveLoggingStreamHandler(logging.StreamHandler):
         finally:
             if self.capture_manager is not None:
                 self.capture_manager.resume_global_capture()
+                self.capture_manager.activate_fixture()
