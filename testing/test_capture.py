@@ -1385,3 +1385,31 @@ def test_pickling_and_unpickling_encoded_file():
     ef = capture.EncodedFile(None, None)
     ef_as_str = pickle.dumps(ef)
     pickle.loads(ef_as_str)
+
+
+def test_capsys_with_cli_logging(testdir):
+    # Issue 3819
+    # capsys should work with real-time cli logging
+    testdir.makepyfile(
+        """
+        import logging
+        import sys
+
+        logger = logging.getLogger(__name__)
+
+        def test_myoutput(capsys):  # or use "capfd" for fd-level
+            print("hello")
+            sys.stderr.write("world\\n")
+            captured = capsys.readouterr()
+            assert captured.out == "hello\\n"
+            assert captured.err == "world\\n"
+
+            logging.info("something")
+
+            print("next")
+            captured = capsys.readouterr()
+            assert captured.out == "next\\n"
+        """
+    )
+    result = testdir.runpytest_subprocess("--log-cli-level=INFO")
+    assert result.ret == 0
