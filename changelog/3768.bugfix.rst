@@ -1,0 +1,1 @@
+Fix test collection from packages mixed with normal directories.
