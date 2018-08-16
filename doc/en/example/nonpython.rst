@@ -84,8 +84,9 @@ interesting to just look at the collection tree::
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR/nonpython, inifile:
     collected 2 items
-    <YamlFile 'test_simple.yml'>
-      <YamlItem 'hello'>
-      <YamlItem 'ok'>
+    <Package '$REGENDOC_TMPDIR/nonpython'>
+      <YamlFile 'test_simple.yml'>
+        <YamlItem 'hello'>
+        <YamlItem 'ok'>
 
     ======================= no tests ran in 0.12 seconds =======================
