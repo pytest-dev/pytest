@@ -122,23 +122,34 @@ class CaptureManager(object):
                 cap.suspend_capturing(in_=in_)
             return outerr
 
-    def activate_fixture(self, item=None):
+    @contextlib.contextmanager
+    def disabled(self):
+        """Temporarily disables capture while inside the 'with' block."""
+        if self._current_item is None:
+            yield
+        else:
+            item = self._current_item
+            fixture = getattr(item, "_capture_fixture", None)
+            if fixture is None:
+                yield
+            else:
+                fixture._capture.suspend_capturing()
+                self.suspend_global_capture(item=None, in_=False)
+                try:
+                    yield
+                finally:
+                    self.resume_global_capture()
+                    fixture._capture.resume_capturing()
+
+    def activate_fixture(self, item):
         """If the current item is using ``capsys`` or ``capfd``, activate them so they take precedence over
         the global capture.
         """
-        if item is None:
-            if self._current_item is None:
-                return
-            item = self._current_item
         fixture = getattr(item, "_capture_fixture", None)
         if fixture is not None:
             fixture._start()
 
-    def deactivate_fixture(self, item=None):
-        if item is None:
-            if self._current_item is None:
-                return
-            item = self._current_item
+    def deactivate_fixture(self, item):
         """Deactivates the ``capsys`` or ``capfd`` fixture of this item, if any."""
         fixture = getattr(item, "_capture_fixture", None)
         if fixture is not None:

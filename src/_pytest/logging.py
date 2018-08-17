@@ -573,9 +573,11 @@ class _LiveLoggingStreamHandler(logging.StreamHandler):
 
     def emit(self, record):
         if self.capture_manager is not None:
-            self.capture_manager.deactivate_fixture()
-            self.capture_manager.suspend_global_capture()
-        try:
+            ctx_manager = self.capture_manager.disabled()
+        else:
+            ctx_manager = _dummy_context_manager()
+
+        with ctx_manager:
             if not self._first_record_emitted:
                 self.stream.write("\n")
                 self._first_record_emitted = True
@@ -587,7 +589,3 @@ class _LiveLoggingStreamHandler(logging.StreamHandler):
                 self.stream.section("live log " + self._when, sep="-", bold=True)
                 self._section_name_shown = True
             logging.StreamHandler.emit(self, record)
-        finally:
-            if self.capture_manager is not None:
-                self.capture_manager.resume_global_capture()
-                self.capture_manager.activate_fixture()

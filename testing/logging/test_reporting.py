@@ -876,6 +876,7 @@ def test_live_logging_suspends_capture(has_capture_manager, request):
     is installed.
     """
     import logging
+    import contextlib
     from functools import partial
     from _pytest.capture import CaptureManager
     from _pytest.logging import _LiveLoggingStreamHandler
@@ -883,17 +884,11 @@ def test_live_logging_suspends_capture(has_capture_manager, request):
     class MockCaptureManager:
         calls = []
 
-        def suspend_global_capture(self):
-            self.calls.append("suspend_global_capture")
-
-        def resume_global_capture(self):
-            self.calls.append("resume_global_capture")
-
-        def activate_fixture(self, item=None):
-            self.calls.append("activate_fixture")
-
-        def deactivate_fixture(self, item=None):
-            self.calls.append("deactivate_fixture")
+        @contextlib.contextmanager
+        def disabled(self):
+            self.calls.append("enter disabled")
+            yield
+            self.calls.append("exit disabled")
 
     # sanity check
     assert CaptureManager.suspend_capture_item
@@ -914,12 +909,7 @@ def test_live_logging_suspends_capture(has_capture_manager, request):
 
     logger.critical("some message")
     if has_capture_manager:
-        assert MockCaptureManager.calls == [
-            "deactivate_fixture",
-            "suspend_global_capture",
-            "resume_global_capture",
-            "activate_fixture",
-        ]
+        assert MockCaptureManager.calls == ["enter disabled", "exit disabled"]
     else:
         assert MockCaptureManager.calls == []
     assert out_file.getvalue() == "\nsome message\n"
