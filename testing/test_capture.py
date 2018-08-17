@@ -1407,6 +1407,9 @@ def test_capsys_with_cli_logging(testdir):
             logging.info("something")
 
             print("next")
+
+            logging.info("something")
+
             captured = capsys.readouterr()
             assert captured.out == "next\\n"
         """
