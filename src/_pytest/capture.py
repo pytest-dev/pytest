@@ -176,6 +176,7 @@ class CaptureManager(object):
         # be activated during pytest_runtest_call
         yield
         self.suspend_capture_item(item, "setup")
+        self._current_item = None
 
     @pytest.hookimpl(hookwrapper=True)
     def pytest_runtest_call(self, item):
@@ -186,6 +187,7 @@ class CaptureManager(object):
         self.activate_fixture(item)
         yield
         self.suspend_capture_item(item, "call")
+        self._current_item = None
 
     @pytest.hookimpl(hookwrapper=True)
     def pytest_runtest_teardown(self, item):
@@ -194,6 +196,7 @@ class CaptureManager(object):
         self.activate_fixture(item)
         yield
         self.suspend_capture_item(item, "teardown")
+        self._current_item = None
 
     @pytest.hookimpl(tryfirst=True)
     def pytest_keyboard_interrupt(self, excinfo):
