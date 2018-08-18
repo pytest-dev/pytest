@@ -69,6 +69,7 @@ class UnitTestCase(Class):
 class TestCaseFunction(Function):
     nofuncargs = True
     _excinfo = None
+    _testcase = None
 
     def setup(self):
         self._testcase = self.parent.obj(self.name)

@@ -1,6 +1,7 @@
 """ command line options, ini-file and conftest.py processing. """
 from __future__ import absolute_import, division, print_function
 import argparse
+import inspect
 import shlex
 import traceback
 import types
@@ -251,6 +252,10 @@ class PytestPluginManager(PluginManager):
 
         method = getattr(plugin, name)
         opts = super(PytestPluginManager, self).parse_hookimpl_opts(plugin, name)
+
+        # consider only actual functions for hooks (#3775)
+        if not inspect.isroutine(method):
+            return
 
         # collect unmarked hooks as long as they have the `pytest_' prefix
         if opts is None and name.startswith("pytest_"):

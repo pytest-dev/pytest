@@ -31,6 +31,7 @@ from _pytest.compat import (
     safe_getattr,
     FuncargnamesCompatAttr,
     get_real_method,
+    _PytestWrapper,
 )
 from _pytest.deprecated import FIXTURE_FUNCTION_CALL, RemovedInPytest4Warning
 from _pytest.outcomes import fail, TEST_OUTCOME
@@ -306,8 +307,8 @@ class FuncFixtureInfo(object):
     # fixture names specified via usefixtures and via autouse=True in fixture
     # definitions.
     initialnames = attr.ib(type=tuple)
-    names_closure = attr.ib(type="List[str]")
-    name2fixturedefs = attr.ib(type="List[str, List[FixtureDef]]")
+    names_closure = attr.ib()  # type: List[str]
+    name2fixturedefs = attr.ib()  # type: List[str, List[FixtureDef]]
 
     def prune_dependency_tree(self):
         """Recompute names_closure from initialnames and name2fixturedefs
@@ -954,9 +955,6 @@ def _ensure_immutable_ids(ids):
 def wrap_function_to_warning_if_called_directly(function, fixture_marker):
     """Wrap the given fixture function so we can issue warnings about it being called directly, instead of
     used as an argument in a test function.
-
-    The warning is emitted only in Python 3, because I didn't find a reliable way to make the wrapper function
-    keep the original signature, and we probably will drop Python 2 in Pytest 4 anyway.
     """
     is_yield_function = is_generator(function)
     msg = FIXTURE_FUNCTION_CALL.format(name=fixture_marker.name or function.__name__)
@@ -981,6 +979,10 @@ def wrap_function_to_warning_if_called_directly(function, fixture_marker):
 
     if six.PY2:
         result.__wrapped__ = function
+
+    # keep reference to the original function in our own custom attribute so we don't unwrap
+    # further than this point and lose useful wrappings like @mock.patch (#3774)
+    result.__pytest_wrapped__ = _PytestWrapper(function)
 
     return result
 
