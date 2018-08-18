@@ -6,6 +6,7 @@ from contextlib import closing, contextmanager
 import re
 import six
 
+from _pytest.compat import dummy_context_manager
 from _pytest.config import create_terminal_writer
 import pytest
 import py
@@ -369,11 +370,6 @@ def pytest_configure(config):
     config.pluginmanager.register(LoggingPlugin(config), "logging-plugin")
 
 
-@contextmanager
-def _dummy_context_manager():
-    yield
-
-
 class LoggingPlugin(object):
     """Attaches to the logging module and captures log messages for each test.
     """
@@ -537,7 +533,7 @@ class LoggingPlugin(object):
                 log_cli_handler, formatter=log_cli_formatter, level=log_cli_level
             )
         else:
-            self.live_logs_context = _dummy_context_manager()
+            self.live_logs_context = dummy_context_manager()
 
 
 class _LiveLoggingStreamHandler(logging.StreamHandler):
@@ -575,7 +571,7 @@ class _LiveLoggingStreamHandler(logging.StreamHandler):
         ctx_manager = (
             self.capture_manager.disabled()
             if self.capture_manager
-            else _dummy_context_manager()
+            else dummy_context_manager()
         )
         with ctx_manager:
             if not self._first_record_emitted:

@@ -14,8 +14,7 @@ from tempfile import TemporaryFile
 
 import six
 import pytest
-from _pytest.compat import CaptureIO
-
+from _pytest.compat import CaptureIO, dummy_context_manager
 
 patchsysdict = {0: "stdin", 1: "stdout", 2: "stderr"}
 
@@ -123,15 +122,11 @@ class CaptureManager(object):
             return outerr
 
     @contextlib.contextmanager
-    def _dummy_context_manager(self):
-        yield
-
-    @contextlib.contextmanager
     def disabled(self):
         """Context manager to temporarily disables capture."""
         # Need to undo local capsys-et-al if exists before disabling global capture
         fixture = getattr(self._current_item, "_capture_fixture", None)
-        ctx_manager = fixture.suspend() if fixture else self._dummy_context_manager()
+        ctx_manager = fixture.suspend() if fixture else dummy_context_manager()
         with ctx_manager:
             self.suspend_global_capture(item=None, in_=False)
             try:
