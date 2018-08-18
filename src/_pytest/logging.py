@@ -569,7 +569,7 @@ class _LiveLoggingStreamHandler(logging.StreamHandler):
 
     def emit(self, record):
         ctx_manager = (
-            self.capture_manager.disabled()
+            self.capture_manager.global_and_fixture_disabled()
             if self.capture_manager
             else dummy_context_manager()
         )

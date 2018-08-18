@@ -885,7 +885,7 @@ def test_live_logging_suspends_capture(has_capture_manager, request):
         calls = []
 
         @contextlib.contextmanager
-        def disabled(self):
+        def global_and_fixture_disabled(self):
             self.calls.append("enter disabled")
             yield
             self.calls.append("exit disabled")

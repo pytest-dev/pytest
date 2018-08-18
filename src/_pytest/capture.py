@@ -122,11 +122,11 @@ class CaptureManager(object):
             return outerr
 
     @contextlib.contextmanager
-    def disabled(self):
-        """Context manager to temporarily disables capture."""
+    def global_and_fixture_disabled(self):
+        """Context manager to temporarily disables global and current fixture capturing."""
         # Need to undo local capsys-et-al if exists before disabling global capture
         fixture = getattr(self._current_item, "_capture_fixture", None)
-        ctx_manager = fixture.suspend() if fixture else dummy_context_manager()
+        ctx_manager = fixture._suspend() if fixture else dummy_context_manager()
         with ctx_manager:
             self.suspend_global_capture(item=None, in_=False)
             try:
@@ -333,8 +333,8 @@ class CaptureFixture(object):
             return self._outerr
 
     @contextlib.contextmanager
-    def suspend(self):
-        """Temporarily disables capture while inside the 'with' block."""
+    def _suspend(self):
+        """Suspends this fixture's own capturing temporarily."""
         self._capture.suspend_capturing()
         try:
             yield
@@ -343,8 +343,9 @@ class CaptureFixture(object):
 
     @contextlib.contextmanager
     def disabled(self):
+        """Temporarily disables capture while inside the 'with' block."""
         capmanager = self.request.config.pluginmanager.getplugin("capturemanager")
-        with capmanager.disabled():
+        with capmanager.global_and_fixture_disabled():
             yield
 
 
