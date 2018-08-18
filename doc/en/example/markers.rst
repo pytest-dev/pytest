@@ -200,6 +200,8 @@ You can ask which markers exist for your test suite - the list includes our just
     $ pytest --markers
     @pytest.mark.webtest: mark a test as a webtest.
 
+    @pytest.mark.filterwarnings(warning): add a warning filter to the given test. see http://pytest.org/latest/warnings.html#pytest-mark-filterwarnings
+
     @pytest.mark.skip(reason=None): skip the given test function with an optional reason. Example: skip(reason="no way of currently testing this") skips the test.
 
     @pytest.mark.skipif(condition): skip the given test function if eval(condition) results in a True value.  Evaluation happens within the module global context. Example: skipif('sys.platform == "win32"') skips the test if we are on the win32 platform. see http://pytest.org/latest/skipping.html
@@ -373,6 +375,8 @@ The ``--markers`` option always gives you a list of available markers::
 
     $ pytest --markers
     @pytest.mark.env(name): mark test to run only on named environment
+
+    @pytest.mark.filterwarnings(warning): add a warning filter to the given test. see http://pytest.org/latest/warnings.html#pytest-mark-filterwarnings
 
     @pytest.mark.skip(reason=None): skip the given test function with an optional reason. Example: skip(reason="no way of currently testing this") skips the test.
 
