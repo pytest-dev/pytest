@@ -121,25 +121,28 @@ class CaptureManager(object):
             finally:
                 cap.suspend_capturing(in_=in_)
             return outerr
+    
+    @contextlib.contextmanager
+    def _dummy_context_manager(self):
+        yield
 
     @contextlib.contextmanager
     def disabled(self):
-        """Temporarily disables capture while inside the 'with' block."""
-        if self._current_item is None:
-            yield
+        """Context manager to temporarily disables capture."""
+
+        # Need to undo local capsys-et-al if exists before disabling global capture
+        fixture = getattr(self._current_item, "_capture_fixture", None)
+        if fixture:
+            ctx_manager = fixture.disabled()
         else:
-            item = self._current_item
-            fixture = getattr(item, "_capture_fixture", None)
-            if fixture is None:
+            ctx_manager = self._dummy_context_manager()
+
+        with ctx_manager:
+            self.suspend_global_capture(item=None, in_=False)
+            try:
                 yield
-            else:
-                fixture._capture.suspend_capturing()
-                self.suspend_global_capture(item=None, in_=False)
-                try:
-                    yield
-                finally:
-                    self.resume_global_capture()
-                    fixture._capture.resume_capturing()
+            finally:
+                self.resume_global_capture()
 
     def activate_fixture(self, item):
         """If the current item is using ``capsys`` or ``capfd``, activate them so they take precedence over
@@ -340,12 +343,9 @@ class CaptureFixture(object):
     def disabled(self):
         """Temporarily disables capture while inside the 'with' block."""
         self._capture.suspend_capturing()
-        capmanager = self.request.config.pluginmanager.getplugin("capturemanager")
-        capmanager.suspend_global_capture(item=None, in_=False)
         try:
             yield
         finally:
-            capmanager.resume_global_capture()
             self._capture.resume_capturing()
 
 
