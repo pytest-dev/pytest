@@ -572,7 +572,11 @@ class _LiveLoggingStreamHandler(logging.StreamHandler):
             self._test_outcome_written = False
 
     def emit(self, record):
-        ctx_manager = self.capture_manager.disabled() if self.capture_manager else _dummy_context_manager()
+        ctx_manager = (
+            self.capture_manager.disabled()
+            if self.capture_manager
+            else _dummy_context_manager()
+        )
         with ctx_manager:
             if not self._first_record_emitted:
                 self.stream.write("\n")

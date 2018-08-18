@@ -121,7 +121,7 @@ class CaptureManager(object):
             finally:
                 cap.suspend_capturing(in_=in_)
             return outerr
-    
+
     @contextlib.contextmanager
     def _dummy_context_manager(self):
         yield
