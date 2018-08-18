@@ -49,6 +49,14 @@ def pytest_addoption(parser):
     )
 
 
+def pytest_configure(config):
+    config.addinivalue_line(
+        "markers",
+        "filterwarnings(warning): add a warning filter to the given test. "
+        "see http://pytest.org/latest/warnings.html#pytest-mark-filterwarnings ",
+    )
+
+
 @contextmanager
 def catch_warnings_for_item(item):
     """

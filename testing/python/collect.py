@@ -1577,3 +1577,49 @@ def test_keep_duplicates(testdir):
     )
     result = testdir.runpytest("--keep-duplicates", a.strpath, a.strpath)
     result.stdout.fnmatch_lines(["*collected 2 item*"])
+
+
+def test_package_collection_infinite_recursion(testdir):
+    testdir.copy_example("collect/package_infinite_recursion")
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines("*1 passed*")
+
+
+def test_package_with_modules(testdir):
+    """
+    .
+    └── root
+        ├── __init__.py
+        ├── sub1
+        │   ├── __init__.py
+        │   └── sub1_1
+        │       ├── __init__.py
+        │       └── test_in_sub1.py
+        └── sub2
+            └── test
+                └── test_in_sub2.py
+
+    """
+    root = testdir.mkpydir("root")
+    sub1 = root.mkdir("sub1")
+    sub1.ensure("__init__.py")
+    sub1_test = sub1.mkdir("sub1_1")
+    sub1_test.ensure("__init__.py")
+    sub2 = root.mkdir("sub2")
+    sub2_test = sub2.mkdir("sub2")
+
+    sub1_test.join("test_in_sub1.py").write("def test_1(): pass")
+    sub2_test.join("test_in_sub2.py").write("def test_2(): pass")
+
+    # Execute from .
+    result = testdir.runpytest("-v", "-s")
+    result.assert_outcomes(passed=2)
+
+    # Execute from . with one argument "root"
+    result = testdir.runpytest("-v", "-s", "root")
+    result.assert_outcomes(passed=2)
+
+    # Chdir into package's root and execute with no args
+    root.chdir()
+    result = testdir.runpytest("-v", "-s")
+    result.assert_outcomes(passed=2)

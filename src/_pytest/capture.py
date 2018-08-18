@@ -14,8 +14,7 @@ from tempfile import TemporaryFile
 
 import six
 import pytest
-from _pytest.compat import CaptureIO
-
+from _pytest.compat import CaptureIO, dummy_context_manager
 
 patchsysdict = {0: "stdin", 1: "stdout", 2: "stderr"}
 
@@ -85,6 +84,7 @@ class CaptureManager(object):
     def __init__(self, method):
         self._method = method
         self._global_capturing = None
+        self._current_item = None
 
     def _getcapture(self, method):
         if method == "fd":
@@ -121,6 +121,19 @@ class CaptureManager(object):
                 cap.suspend_capturing(in_=in_)
             return outerr
 
+    @contextlib.contextmanager
+    def global_and_fixture_disabled(self):
+        """Context manager to temporarily disables global and current fixture capturing."""
+        # Need to undo local capsys-et-al if exists before disabling global capture
+        fixture = getattr(self._current_item, "_capture_fixture", None)
+        ctx_manager = fixture._suspend() if fixture else dummy_context_manager()
+        with ctx_manager:
+            self.suspend_global_capture(item=None, in_=False)
+            try:
+                yield
+            finally:
+                self.resume_global_capture()
+
     def activate_fixture(self, item):
         """If the current item is using ``capsys`` or ``capfd``, activate them so they take precedence over
         the global capture.
@@ -151,28 +164,34 @@ class CaptureManager(object):
 
     @pytest.hookimpl(hookwrapper=True)
     def pytest_runtest_setup(self, item):
+        self._current_item = item
         self.resume_global_capture()
         # no need to activate a capture fixture because they activate themselves during creation; this
         # only makes sense when a fixture uses a capture fixture, otherwise the capture fixture will
         # be activated during pytest_runtest_call
         yield
         self.suspend_capture_item(item, "setup")
+        self._current_item = None
 
     @pytest.hookimpl(hookwrapper=True)
     def pytest_runtest_call(self, item):
+        self._current_item = item
         self.resume_global_capture()
         # it is important to activate this fixture during the call phase so it overwrites the "global"
         # capture
         self.activate_fixture(item)
         yield
         self.suspend_capture_item(item, "call")
+        self._current_item = None
 
     @pytest.hookimpl(hookwrapper=True)
     def pytest_runtest_teardown(self, item):
+        self._current_item = item
         self.resume_global_capture()
         self.activate_fixture(item)
         yield
         self.suspend_capture_item(item, "teardown")
+        self._current_item = None
 
     @pytest.hookimpl(tryfirst=True)
     def pytest_keyboard_interrupt(self, excinfo):
@@ -314,16 +333,20 @@ class CaptureFixture(object):
             return self._outerr
 
     @contextlib.contextmanager
-    def disabled(self):
-        """Temporarily disables capture while inside the 'with' block."""
+    def _suspend(self):
+        """Suspends this fixture's own capturing temporarily."""
         self._capture.suspend_capturing()
-        capmanager = self.request.config.pluginmanager.getplugin("capturemanager")
-        capmanager.suspend_global_capture(item=None, in_=False)
         try:
             yield
         finally:
-            capmanager.resume_global_capture()
             self._capture.resume_capturing()
+
+    @contextlib.contextmanager
+    def disabled(self):
+        """Temporarily disables capture while inside the 'with' block."""
+        capmanager = self.request.config.pluginmanager.getplugin("capturemanager")
+        with capmanager.global_and_fixture_disabled():
+            yield
 
 
 def safe_text_dupfile(f, mode, default_encoding="UTF8"):
