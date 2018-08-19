@@ -70,19 +70,23 @@ class TestCaptureManager(object):
         try:
             capman = CaptureManager(method)
             capman.start_global_capturing()
-            outerr = capman.suspend_global_capture()
+            capman.suspend_global_capture()
+            outerr = capman.snap_global_capture()
             assert outerr == ("", "")
-            outerr = capman.suspend_global_capture()
+            capman.suspend_global_capture()
+            outerr = capman.snap_global_capture()
             assert outerr == ("", "")
             print("hello")
-            out, err = capman.suspend_global_capture()
+            capman.suspend_global_capture()
+            out, err = capman.snap_global_capture()
             if method == "no":
                 assert old == (sys.stdout, sys.stderr, sys.stdin)
             else:
                 assert not out
             capman.resume_global_capture()
             print("hello")
-            out, err = capman.suspend_global_capture()
+            capman.suspend_global_capture()
+            out, err = capman.snap_global_capture()
             if method != "no":
                 assert out == "hello\n"
             capman.stop_global_capturing()

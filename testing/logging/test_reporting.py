@@ -890,10 +890,6 @@ def test_live_logging_suspends_capture(has_capture_manager, request):
             yield
             self.calls.append("exit disabled")
 
-    # sanity check
-    assert CaptureManager.suspend_capture_item
-    assert CaptureManager.resume_global_capture
-
     class DummyTerminal(six.StringIO):
         def section(self, *args, **kwargs):
             pass
