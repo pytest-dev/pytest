@@ -193,12 +193,10 @@ class CaptureManager(object):
             yield
 
     @pytest.hookimpl(hookwrapper=True)
-    def pytest_runtest_logstart(self, item):
+    def pytest_runtest_protocol(self, item):
         self._current_item = item
-
-    @pytest.hookimpl(hookwrapper=True)
-    def pytest_runtest_logfinish(self, item):
-        self._current_item = item
+        yield
+        self._current_item = None
 
     @pytest.hookimpl(hookwrapper=True)
     def pytest_runtest_setup(self, item):
@@ -329,7 +327,7 @@ class CaptureFixture(object):
 
     def _start(self):
         # Start if not started yet
-        if getattr(self, "_capture", None) is not None:
+        if getattr(self, "_capture", None) is None:
             self._capture = MultiCapture(
                 out=True, err=True, in_=False, Capture=self.captureclass
             )
