@@ -1396,7 +1396,8 @@ def test_capture_with_live_logging(testdir):
     # capture should work with live cli logging
 
     # Teardown report seems to have the capture for the whole process (setup, capture, teardown)
-    testdir.makeconftest("""
+    testdir.makeconftest(
+        """
         def pytest_runtest_logreport(report):
             if "test_global" in report.nodeid:
                 if report.when == "teardown":
@@ -1404,7 +1405,8 @@ def test_capture_with_live_logging(testdir):
                         f.write(report.caplog)
                     with open("capstdout", "w") as f:
                         f.write(report.capstdout)
-    """)
+    """
+    )
 
     testdir.makepyfile(
         """
@@ -1413,7 +1415,7 @@ def test_capture_with_live_logging(testdir):
         import pytest
 
         logger = logging.getLogger(__name__)
-        
+
         @pytest.fixture
         def fix1():
             print("fix setup")

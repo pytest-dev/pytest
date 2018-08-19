@@ -878,7 +878,6 @@ def test_live_logging_suspends_capture(has_capture_manager, request):
     import logging
     import contextlib
     from functools import partial
-    from _pytest.capture import CaptureManager
     from _pytest.logging import _LiveLoggingStreamHandler
 
     class MockCaptureManager:

@@ -14,7 +14,7 @@ from tempfile import TemporaryFile
 
 import six
 import pytest
-from _pytest.compat import CaptureIO, dummy_context_manager
+from _pytest.compat import CaptureIO
 
 patchsysdict = {0: "stdin", 1: "stdout", 2: "stderr"}
 
@@ -759,4 +759,3 @@ def _attempt_to_close_capture_file(f):
             pass
     else:
         f.close()
-
