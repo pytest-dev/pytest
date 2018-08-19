@@ -1387,17 +1387,46 @@ def test_pickling_and_unpickling_encoded_file():
     pickle.loads(ef_as_str)
 
 
-def test_capsys_with_cli_logging(testdir):
+def test_capture_with_live_logging(testdir):
     # Issue 3819
-    # capsys should work with real-time cli logging
+    # capture should work with live cli logging
+
+    # Teardown report seems to have the capture for the whole process (setup, capture, teardown)
+    testdir.makeconftest("""
+        def pytest_runtest_logreport(report):
+            if "test_global" in report.nodeid:
+                if report.when == "teardown":
+                    assert "fix setup" in report.caplog
+                    assert "something in test" in report.caplog
+                    assert "fix teardown" in report.caplog
+                    
+                    assert "fix setup" in report.capstdout
+                    assert "begin test" in report.capstdout
+                    assert "end test" in report.capstdout
+                    assert "fix teardown" in report.capstdout
+    """)
+
     testdir.makepyfile(
         """
         import logging
         import sys
 
         logger = logging.getLogger(__name__)
+        
+        @pytest.fixture
+        def fix1():
+            print("fix setup")
+            logging("fix setup")
+            yield
+            logging("fix teardown")
+            print("fix teardown")
+        
+        def test_global():
+            print("begin test")
+            logging.info("something in test")
+            print("end test")
 
-        def test_myoutput(capsys):  # or use "capfd" for fd-level
+        def test_capsys(capsys):  # or use "capfd" for fd-level
             print("hello")
             sys.stderr.write("world\\n")
             captured = capsys.readouterr()
