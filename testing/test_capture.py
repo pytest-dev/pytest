@@ -1396,32 +1396,29 @@ def test_capture_with_live_logging(testdir):
         def pytest_runtest_logreport(report):
             if "test_global" in report.nodeid:
                 if report.when == "teardown":
-                    assert "fix setup" in report.caplog
-                    assert "something in test" in report.caplog
-                    assert "fix teardown" in report.caplog
-                    
-                    assert "fix setup" in report.capstdout
-                    assert "begin test" in report.capstdout
-                    assert "end test" in report.capstdout
-                    assert "fix teardown" in report.capstdout
+                    with open("caplog", "w") as f:
+                        f.write(report.caplog)
+                    with open("capstdout", "w") as f:
+                        f.write(report.capstdout)
     """)
 
     testdir.makepyfile(
         """
         import logging
         import sys
+        import pytest
 
         logger = logging.getLogger(__name__)
         
         @pytest.fixture
         def fix1():
             print("fix setup")
-            logging("fix setup")
+            logging.info("fix setup")
             yield
-            logging("fix teardown")
+            logging.info("fix teardown")
             print("fix teardown")
-        
-        def test_global():
+
+        def test_global(fix1):
             print("begin test")
             logging.info("something in test")
             print("end test")
@@ -1434,9 +1431,7 @@ def test_capture_with_live_logging(testdir):
             assert captured.err == "world\\n"
 
             logging.info("something")
-
             print("next")
-
             logging.info("something")
 
             captured = capsys.readouterr()
@@ -1445,3 +1440,18 @@ def test_capture_with_live_logging(testdir):
     )
     result = testdir.runpytest_subprocess("--log-cli-level=INFO")
     assert result.ret == 0
+
+    with open("caplog", "r") as f:
+        caplog = f.read()
+
+    assert "fix setup" in caplog
+    assert "something in test" in caplog
+    assert "fix teardown" in caplog
+
+    with open("capstdout", "r") as f:
+        capstdout = f.read()
+
+    assert "fix setup" in capstdout
+    assert "begin test" in capstdout
+    assert "end test" in capstdout
+    assert "fix teardown" in capstdout
