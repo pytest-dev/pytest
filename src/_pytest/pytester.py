@@ -406,7 +406,9 @@ class RunResult(object):
                     return d
         raise ValueError("Pytest terminal report not found")
 
-    def assert_outcomes(self, passed=0, skipped=0, failed=0, error=0):
+    def assert_outcomes(
+        self, passed=0, skipped=0, failed=0, error=0, xpassed=0, xfailed=0
+    ):
         """Assert that the specified outcomes appear with the respective
         numbers (0 means it didn't occur) in the text output from a test run.
 
@@ -417,10 +419,18 @@ class RunResult(object):
             "skipped": d.get("skipped", 0),
             "failed": d.get("failed", 0),
             "error": d.get("error", 0),
+            "xpassed": d.get("xpassed", 0),
+            "xfailed": d.get("xfailed", 0),
         }
-        assert obtained == dict(
-            passed=passed, skipped=skipped, failed=failed, error=error
-        )
+        expected = {
+            "passed": passed,
+            "skipped": skipped,
+            "failed": failed,
+            "error": error,
+            "xpassed": xpassed,
+            "xfailed": xfailed,
+        }
+        assert obtained == expected
 
 
 class CwdSnapshot(object):

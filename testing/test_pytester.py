@@ -83,6 +83,57 @@ def test_testdir_runs_with_plugin(testdir):
     result.assert_outcomes(passed=1)
 
 
+def test_runresult_assertion_on_xfail(testdir):
+    testdir.makepyfile(
+        """
+        import pytest
+
+        pytest_plugins = "pytester"
+
+        @pytest.mark.xfail
+        def test_potato():
+            assert False
+    """
+    )
+    result = testdir.runpytest()
+    result.assert_outcomes(xfailed=1)
+    assert result.ret == 0
+
+
+def test_runresult_assertion_on_xpassed(testdir):
+    testdir.makepyfile(
+        """
+        import pytest
+
+        pytest_plugins = "pytester"
+
+        @pytest.mark.xfail
+        def test_potato():
+            assert True
+    """
+    )
+    result = testdir.runpytest()
+    result.assert_outcomes(xpassed=1)
+    assert result.ret == 0
+
+
+def test_xpassed_with_strict_is_considered_a_failure(testdir):
+    testdir.makepyfile(
+        """
+        import pytest
+
+        pytest_plugins = "pytester"
+
+        @pytest.mark.xfail(strict=True)
+        def test_potato():
+            assert True
+    """
+    )
+    result = testdir.runpytest()
+    result.assert_outcomes(failed=1)
+    assert result.ret != 0
+
+
 def make_holder():
     class apiclass(object):
         def pytest_xyz(self, arg):
