@@ -309,6 +309,9 @@ class CaptureFixture(object):
     def __init__(self, captureclass, request):
         self.captureclass = captureclass
         self.request = request
+        self._capture = None
+        self._captured_out = self.captureclass.EMPTY_BUFFER
+        self._captured_err = self.captureclass.EMPTY_BUFFER
 
     def _start(self):
         self._capture = MultiCapture(
@@ -317,20 +320,26 @@ class CaptureFixture(object):
         self._capture.start_capturing()
 
     def close(self):
-        cap = self.__dict__.pop("_capture", None)
-        if cap is not None:
-            self._outerr = cap.pop_outerr_to_orig()
-            cap.stop_capturing()
+        if self._capture is not None:
+            out, err = self._capture.pop_outerr_to_orig()
+            self._captured_out += out
+            self._captured_err += err
+            self._capture.stop_capturing()
+            self._capture = None
 
     def readouterr(self):
         """Read and return the captured output so far, resetting the internal buffer.
 
         :return: captured content as a namedtuple with  ``out`` and ``err`` string attributes
         """
-        try:
-            return self._capture.readouterr()
-        except AttributeError:
-            return self._outerr
+        captured_out, captured_err = self._captured_out, self._captured_err
+        if self._capture is not None:
+            out, err = self._capture.readouterr()
+            captured_out += out
+            captured_err += err
+        self._captured_out = self.captureclass.EMPTY_BUFFER
+        self._captured_err = self.captureclass.EMPTY_BUFFER
+        return CaptureResult(captured_out, captured_err)
 
     @contextlib.contextmanager
     def _suspend(self):
@@ -463,6 +472,7 @@ class MultiCapture(object):
 
 
 class NoCapture(object):
+    EMPTY_BUFFER = None
     __init__ = start = done = suspend = resume = lambda *args: None
 
 
@@ -471,6 +481,8 @@ class FDCaptureBinary(object):
 
     snap() produces `bytes`
     """
+
+    EMPTY_BUFFER = bytes()
 
     def __init__(self, targetfd, tmpfile=None):
         self.targetfd = targetfd
@@ -545,6 +557,8 @@ class FDCapture(FDCaptureBinary):
     snap() produces text
     """
 
+    EMPTY_BUFFER = str()
+
     def snap(self):
         res = FDCaptureBinary.snap(self)
         enc = getattr(self.tmpfile, "encoding", None)
@@ -554,6 +568,9 @@ class FDCapture(FDCaptureBinary):
 
 
 class SysCapture(object):
+
+    EMPTY_BUFFER = str()
+
     def __init__(self, fd, tmpfile=None):
         name = patchsysdict[fd]
         self._old = getattr(sys, name)
@@ -591,6 +608,8 @@ class SysCapture(object):
 
 
 class SysCaptureBinary(SysCapture):
+    EMPTY_BUFFER = bytes()
+
     def snap(self):
         res = self.tmpfile.buffer.getvalue()
         self.tmpfile.seek(0)

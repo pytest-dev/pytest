@@ -647,6 +647,34 @@ class TestCaptureFixture(object):
         assert "stdout contents begin" not in result.stdout.str()
         assert "stderr contents begin" not in result.stdout.str()
 
+    @pytest.mark.parametrize("cap", ["capsys", "capfd"])
+    def test_fixture_use_by_other_fixtures_teardown(self, testdir, cap):
+        """Ensure we can access setup and teardown buffers from teardown when using capsys/capfd (##3033)"""
+        testdir.makepyfile(
+            """
+            import sys
+            import pytest
+            import os
+
+            @pytest.fixture()
+            def fix({cap}):
+                print("setup out")
+                sys.stderr.write("setup err\\n")
+                yield
+                out, err = {cap}.readouterr()
+                assert out == 'setup out\\ncall out\\n'
+                assert err == 'setup err\\ncall err\\n'
+
+            def test_a(fix):
+                print("call out")
+                sys.stderr.write("call err\\n")
+        """.format(
+                cap=cap
+            )
+        )
+        reprec = testdir.inline_run()
+        reprec.assertoutcome(passed=1)
+
 
 def test_setup_failure_does_not_kill_capturing(testdir):
     sub1 = testdir.mkpydir("sub1")
