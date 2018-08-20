@@ -460,7 +460,7 @@ To use it, include in your top-most ``conftest.py`` file::
 
 
 .. autoclass:: Testdir()
-    :members: runpytest,runpytest_subprocess,runpytest_inprocess,makeconftest,makepyfile
+    :members:
 
 .. autoclass:: RunResult()
     :members:
