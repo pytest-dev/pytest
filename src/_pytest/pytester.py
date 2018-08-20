@@ -550,18 +550,22 @@ class Testdir(object):
         return ret
 
     def makefile(self, ext, *args, **kwargs):
-        """Create a new file in the testdir.
+        r"""Create new file(s) in the testdir.
 
-        ext: The extension the file should use, including the dot, e.g. `.py`.
-
-        args: All args will be treated as strings and joined using newlines.
+        :param str ext: The extension the file(s) should use, including the dot, e.g. `.py`.
+        :param list[str] args: All args will be treated as strings and joined using newlines.
            The result will be written as contents to the file.  The name of the
            file will be based on the test function requesting this fixture.
-           E.g. "testdir.makefile('.txt', 'line1', 'line2')"
-
-        kwargs: Each keyword is the name of a file, while the value of it will
+        :param kwargs: Each keyword is the name of a file, while the value of it will
            be written as contents of the file.
-           E.g. "testdir.makefile('.ini', pytest='[pytest]\naddopts=-rs\n')"
+
+        Examples:
+
+        .. code-block:: python
+
+            testdir.makefile(".txt", "line1", "line2")
+
+            testdir.makefile(".ini", pytest="[pytest]\naddopts=-rs\n")
 
         """
         return self._makefile(ext, args, kwargs)
