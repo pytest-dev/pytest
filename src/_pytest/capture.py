@@ -64,7 +64,7 @@ def pytest_load_initial_conftests(early_config, parser, args):
     outcome = yield
     capman.suspend_global_capture()
     if outcome.excinfo is not None:
-        out, err = capman.snap_global_capture()
+        out, err = capman.read_global_capture()
         sys.stdout.write(out)
         sys.stderr.write(err)
 
@@ -118,7 +118,7 @@ class CaptureManager(object):
         if cap is not None:
             cap.suspend_capturing(in_=in_)
 
-    def snap_global_capture(self):
+    def read_global_capture(self):
         return self._global_capturing.readouterr()
 
     # Fixture Control (its just forwarding, think about removing this later)
@@ -171,7 +171,7 @@ class CaptureManager(object):
             self.deactivate_fixture(item)
             self.suspend_global_capture(in_=False)
 
-        out, err = self.snap_global_capture()
+        out, err = self.read_global_capture()
         item.add_report_section(when, "stdout", out)
         item.add_report_section(when, "stderr", err)
 
@@ -183,7 +183,7 @@ class CaptureManager(object):
             self.resume_global_capture()
             outcome = yield
             self.suspend_global_capture()
-            out, err = self.snap_global_capture()
+            out, err = self.read_global_capture()
             rep = outcome.get_result()
             if out:
                 rep.sections.append(("Captured stdout", out))
