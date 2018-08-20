@@ -948,6 +948,46 @@ def pytest_report_header(config, startdir):
         assert "!This is stderr!" not in stdout
         assert "!This is a warning log msg!" not in stdout
 
+    def test_show_capture_with_teardown_logs(self, testdir):
+        """Ensure that the capturing of teardown logs honor --show-capture setting"""
+        testdir.makepyfile(
+            """
+            import logging
+            import sys
+            import pytest
+
+            @pytest.fixture(scope="function", autouse="True")
+            def hook_each_test(request):
+                yield
+                sys.stdout.write("!stdout!")
+                sys.stderr.write("!stderr!")
+                logging.warning("!log!")
+
+            def test_func():
+                assert False
+        """
+        )
+
+        result = testdir.runpytest("--show-capture=stdout", "--tb=short").stdout.str()
+        assert "!stdout!" in result
+        assert "!stderr!" not in result
+        assert "!log!" not in result
+
+        result = testdir.runpytest("--show-capture=stderr", "--tb=short").stdout.str()
+        assert "!stdout!" not in result
+        assert "!stderr!" in result
+        assert "!log!" not in result
+
+        result = testdir.runpytest("--show-capture=log", "--tb=short").stdout.str()
+        assert "!stdout!" not in result
+        assert "!stderr!" not in result
+        assert "!log!" in result
+
+        result = testdir.runpytest("--show-capture=no", "--tb=short").stdout.str()
+        assert "!stdout!" not in result
+        assert "!stderr!" not in result
+        assert "!log!" not in result
+
 
 @pytest.mark.xfail("not hasattr(os, 'dup')")
 def test_fdopen_kept_alive_issue124(testdir):
