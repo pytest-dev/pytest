@@ -1391,7 +1391,7 @@ def test_pickling_and_unpickling_encoded_file():
     pickle.loads(ef_as_str)
 
 
-def test_capture_with_live_logging(testdir):
+def test_global_capture_with_live_logging(testdir):
     # Issue 3819
     # capture should work with live cli logging
 
@@ -1405,7 +1405,7 @@ def test_capture_with_live_logging(testdir):
                         f.write(report.caplog)
                     with open("capstdout", "w") as f:
                         f.write(report.capstdout)
-    """
+        """
     )
 
     testdir.makepyfile(
@@ -1428,20 +1428,6 @@ def test_capture_with_live_logging(testdir):
             print("begin test")
             logging.info("something in test")
             print("end test")
-
-        def test_capsys(capsys):  # or use "capfd" for fd-level
-            print("hello")
-            sys.stderr.write("world\\n")
-            captured = capsys.readouterr()
-            assert captured.out == "hello\\n"
-            assert captured.err == "world\\n"
-
-            logging.info("something")
-            print("next")
-            logging.info("something")
-
-            captured = capsys.readouterr()
-            assert captured.out == "next\\n"
         """
     )
     result = testdir.runpytest_subprocess("--log-cli-level=INFO")
@@ -1461,3 +1447,37 @@ def test_capture_with_live_logging(testdir):
     assert "begin test" in capstdout
     assert "end test" in capstdout
     assert "fix teardown" in capstdout
+
+
+@pytest.mark.parametrize("capture_fixture", ["capsys", "capfd"])
+def test_capture_with_live_logging(testdir, capture_fixture):
+    # Issue 3819
+    # capture should work with live cli logging
+
+    testdir.makepyfile(
+        """
+        import logging
+        import sys
+
+        logger = logging.getLogger(__name__)
+
+        def test_capture({0}):
+            print("hello")
+            sys.stderr.write("world\\n")
+            captured = {0}.readouterr()
+            assert captured.out == "hello\\n"
+            assert captured.err == "world\\n"
+
+            logging.info("something")
+            print("next")
+            logging.info("something")
+
+            captured = {0}.readouterr()
+            assert captured.out == "next\\n"
+        """.format(
+            capture_fixture
+        )
+    )
+
+    result = testdir.runpytest_subprocess("--log-cli-level=INFO")
+    assert result.ret == 0
