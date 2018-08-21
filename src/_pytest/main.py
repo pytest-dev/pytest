@@ -625,11 +625,12 @@ class Session(nodes.FSCollector):
                     resultnodes.append(node)
                 continue
             assert isinstance(node, nodes.Collector)
-            if node.nodeid in self._node_cache:
-                rep = self._node_cache[node.nodeid]
+            key = (type(node), node.nodeid)
+            if key in self._node_cache:
+                rep = self._node_cache[key]
             else:
                 rep = collect_one_node(node)
-                self._node_cache[node.nodeid] = rep
+                self._node_cache[key] = rep
             if rep.passed:
                 has_matched = False
                 for x in rep.result:
