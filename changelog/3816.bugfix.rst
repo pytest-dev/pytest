@@ -1,1 +1,1 @@
-Fix ``--show-capture=no`` option still capture teardown logs.
+Fix bug where ``--show-capture=no`` option would still show logs printed during fixture teardown.
