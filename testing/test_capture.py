@@ -70,19 +70,23 @@ class TestCaptureManager(object):
         try:
             capman = CaptureManager(method)
             capman.start_global_capturing()
-            outerr = capman.suspend_global_capture()
+            capman.suspend_global_capture()
+            outerr = capman.read_global_capture()
             assert outerr == ("", "")
-            outerr = capman.suspend_global_capture()
+            capman.suspend_global_capture()
+            outerr = capman.read_global_capture()
             assert outerr == ("", "")
             print("hello")
-            out, err = capman.suspend_global_capture()
+            capman.suspend_global_capture()
+            out, err = capman.read_global_capture()
             if method == "no":
                 assert old == (sys.stdout, sys.stderr, sys.stdin)
             else:
                 assert not out
             capman.resume_global_capture()
             print("hello")
-            out, err = capman.suspend_global_capture()
+            capman.suspend_global_capture()
+            out, err = capman.read_global_capture()
             if method != "no":
                 assert out == "hello\n"
             capman.stop_global_capturing()
@@ -1415,9 +1419,69 @@ def test_pickling_and_unpickling_encoded_file():
     pickle.loads(ef_as_str)
 
 
-def test_capsys_with_cli_logging(testdir):
+def test_global_capture_with_live_logging(testdir):
     # Issue 3819
-    # capsys should work with real-time cli logging
+    # capture should work with live cli logging
+
+    # Teardown report seems to have the capture for the whole process (setup, capture, teardown)
+    testdir.makeconftest(
+        """
+        def pytest_runtest_logreport(report):
+            if "test_global" in report.nodeid:
+                if report.when == "teardown":
+                    with open("caplog", "w") as f:
+                        f.write(report.caplog)
+                    with open("capstdout", "w") as f:
+                        f.write(report.capstdout)
+        """
+    )
+
+    testdir.makepyfile(
+        """
+        import logging
+        import sys
+        import pytest
+
+        logger = logging.getLogger(__name__)
+
+        @pytest.fixture
+        def fix1():
+            print("fix setup")
+            logging.info("fix setup")
+            yield
+            logging.info("fix teardown")
+            print("fix teardown")
+
+        def test_global(fix1):
+            print("begin test")
+            logging.info("something in test")
+            print("end test")
+        """
+    )
+    result = testdir.runpytest_subprocess("--log-cli-level=INFO")
+    assert result.ret == 0
+
+    with open("caplog", "r") as f:
+        caplog = f.read()
+
+    assert "fix setup" in caplog
+    assert "something in test" in caplog
+    assert "fix teardown" in caplog
+
+    with open("capstdout", "r") as f:
+        capstdout = f.read()
+
+    assert "fix setup" in capstdout
+    assert "begin test" in capstdout
+    assert "end test" in capstdout
+    assert "fix teardown" in capstdout
+
+
+@pytest.mark.parametrize("capture_fixture", ["capsys", "capfd"])
+def test_capture_with_live_logging(testdir, capture_fixture):
+    # Issue 3819
+    # capture should work with live cli logging
+
     testdir.makepyfile(
         """
         import logging
@@ -1425,22 +1489,23 @@ def test_capsys_with_cli_logging(testdir):
 
         logger = logging.getLogger(__name__)
 
-        def test_myoutput(capsys):  # or use "capfd" for fd-level
+        def test_capture({0}):
             print("hello")
             sys.stderr.write("world\\n")
-            captured = capsys.readouterr()
+            captured = {0}.readouterr()
             assert captured.out == "hello\\n"
             assert captured.err == "world\\n"
 
             logging.info("something")
-
             print("next")
-
             logging.info("something")
 
-            captured = capsys.readouterr()
+            captured = {0}.readouterr()
             assert captured.out == "next\\n"
-        """
+        """.format(
+            capture_fixture
+        )
     )
+
     result = testdir.runpytest_subprocess("--log-cli-level=INFO")
     assert result.ret == 0

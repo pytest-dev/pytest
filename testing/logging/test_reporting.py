@@ -878,7 +878,6 @@ def test_live_logging_suspends_capture(has_capture_manager, request):
     import logging
     import contextlib
     from functools import partial
-    from _pytest.capture import CaptureManager
     from _pytest.logging import _LiveLoggingStreamHandler
 
     class MockCaptureManager:
@@ -889,10 +888,6 @@ def test_live_logging_suspends_capture(has_capture_manager, request):
             self.calls.append("enter disabled")
             yield
             self.calls.append("exit disabled")
-
-    # sanity check
-    assert CaptureManager.suspend_capture_item
-    assert CaptureManager.resume_global_capture
 
     class DummyTerminal(six.StringIO):
         def section(self, *args, **kwargs):
