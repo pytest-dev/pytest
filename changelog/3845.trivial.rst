@@ -1,0 +1,2 @@
+Remove a reference to issue #568 from the documentation, which has since been
+fixed.
