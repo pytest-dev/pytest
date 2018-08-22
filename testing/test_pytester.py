@@ -8,7 +8,7 @@ import _pytest.pytester as pytester
 from _pytest.pytester import HookRecorder
 from _pytest.pytester import CwdSnapshot, SysModulesSnapshot, SysPathsSnapshot
 from _pytest.config import PytestPluginManager
-from _pytest.main import EXIT_OK, EXIT_TESTSFAILED
+from _pytest.main import EXIT_OK, EXIT_TESTSFAILED, EXIT_NOTESTSCOLLECTED
 
 
 def test_make_hook_recorder(testdir):
@@ -396,3 +396,8 @@ class TestSysPathsSnapshot(object):
 def test_testdir_subprocess(testdir):
     testfile = testdir.makepyfile("def test_one(): pass")
     assert testdir.runpytest_subprocess(testfile).ret == 0
+
+    
+def test_unicode_args(testdir):
+    result = testdir.runpytest("-k", u"💩")
+    assert result.ret == EXIT_NOTESTSCOLLECTED
