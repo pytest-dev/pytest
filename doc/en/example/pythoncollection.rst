@@ -100,8 +100,10 @@ Changing naming conventions
 
 You can configure different naming conventions by setting
 the :confval:`python_files`, :confval:`python_classes` and
-:confval:`python_functions` configuration options.  Example::
+:confval:`python_functions` configuration options.
+Here is an example::
 
+    # Example 1: have pytest look for "check" instead of "test"
     # content of pytest.ini
     # can also be defined in tox.ini or setup.cfg file, although the section
     # name in setup.cfg files should be "tool:pytest"
@@ -112,7 +114,7 @@ the :confval:`python_files`, :confval:`python_classes` and
 
 This would make ``pytest`` look for tests in files that match the ``check_*
 .py`` glob-pattern, ``Check`` prefixes in classes, and functions and methods
-that match ``*_check``.  For example, if we have::
+that match ``*_check``. For example, if we have::
 
     # content of check_myapp.py
     class CheckMyApp(object):
@@ -121,7 +123,7 @@ that match ``*_check``.  For example, if we have::
         def complex_check(self):
             pass
 
-then the test collection looks like this::
+The test collection would look like this::
 
     $ pytest --collect-only
     =========================== test session starts ============================
@@ -135,6 +137,14 @@ then the test collection looks like this::
           <Function 'complex_check'>
 
     ======================= no tests ran in 0.12 seconds =======================
+
+You can check for multiple glob patterns by adding a space between the patterns::
+
+    # Example 2: have pytest look for files with "test" and "example"
+    # content of pytest.ini, tox.ini, or setup.cfg file (replace "pytest"
+    # with "tool:pytest" for setup.cfg)
+    [pytest]
+    python_files=test_*.py example_*.py
 
 .. note::
 

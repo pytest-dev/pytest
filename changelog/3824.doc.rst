@@ -1,0 +1,1 @@
+Added example for multiple glob pattern matches in ``python_files``.
