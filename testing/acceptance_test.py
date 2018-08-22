@@ -660,6 +660,16 @@ class TestInvocationVariants(object):
             ["*test_world.py::test_other*PASSED*", "*1 passed*"]
         )
 
+    def test_invoke_test_and_doctestmodules(self, testdir):
+        p = testdir.makepyfile(
+            """
+            def test():
+                pass
+        """
+        )
+        result = testdir.runpytest(str(p) + "::test", "--doctest-modules")
+        result.stdout.fnmatch_lines(["*1 passed*"])
+
     @pytest.mark.skipif(not hasattr(os, "symlink"), reason="requires symlinks")
     def test_cmdline_python_package_symlink(self, testdir, monkeypatch):
         """
