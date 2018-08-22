@@ -2,6 +2,8 @@ import six
 import warnings
 import argparse
 
+import py
+
 FILE_OR_DIR = "file_or_dir"
 
 
@@ -70,7 +72,8 @@ class Parser(object):
 
         self.optparser = self._getparser()
         try_argcomplete(self.optparser)
-        return self.optparser.parse_args([str(x) for x in args], namespace=namespace)
+        args = [str(x) if isinstance(x, py.path.local) else x for x in args]
+        return self.optparser.parse_args(args, namespace=namespace)
 
     def _getparser(self):
         from _pytest._argcomplete import filescompleter
@@ -106,7 +109,7 @@ class Parser(object):
         the remaining arguments unknown at this point.
         """
         optparser = self._getparser()
-        args = [str(x) for x in args]
+        args = [str(x) if isinstance(x, py.path.local) else x for x in args]
         return optparser.parse_known_args(args, namespace=namespace)
 
     def addini(self, name, help, type=None, default=None):
