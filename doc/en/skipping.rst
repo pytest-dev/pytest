@@ -136,12 +136,6 @@ You can use the ``skipif`` marker (as any other marker) on classes::
 If the condition is ``True``, this marker will produce a skip result for
 each of the test methods of that class.
 
-.. warning::
-
-   The use of ``skipif`` on classes that use inheritance is strongly
-   discouraged. `A Known bug <https://github.com/pytest-dev/pytest/issues/568>`_
-   in pytest's markers may cause unexpected behavior in super classes.
-
 If you want to skip all test functions of a module, you may use
 the ``pytestmark`` name on the global level:
 
