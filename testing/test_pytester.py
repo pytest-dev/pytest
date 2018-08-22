@@ -397,7 +397,7 @@ def test_testdir_subprocess(testdir):
     testfile = testdir.makepyfile("def test_one(): pass")
     assert testdir.runpytest_subprocess(testfile).ret == 0
 
-    
+
 def test_unicode_args(testdir):
     result = testdir.runpytest("-k", u"💩")
     assert result.ret == EXIT_NOTESTSCOLLECTED
