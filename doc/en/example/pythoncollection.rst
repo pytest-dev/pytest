@@ -108,9 +108,9 @@ Here is an example::
     # can also be defined in tox.ini or setup.cfg file, although the section
     # name in setup.cfg files should be "tool:pytest"
     [pytest]
-    python_files=check_*.py
-    python_classes=Check
-    python_functions=*_check
+    python_files = check_*.py
+    python_classes = Check
+    python_functions = *_check
 
 This would make ``pytest`` look for tests in files that match the ``check_*
 .py`` glob-pattern, ``Check`` prefixes in classes, and functions and methods
@@ -144,13 +144,13 @@ You can check for multiple glob patterns by adding a space between the patterns:
     # content of pytest.ini, tox.ini, or setup.cfg file (replace "pytest"
     # with "tool:pytest" for setup.cfg)
     [pytest]
-    python_files=test_*.py example_*.py
+    python_files = test_*.py example_*.py
 
 .. note::
 
    the ``python_functions`` and ``python_classes`` options has no effect
    for ``unittest.TestCase`` test discovery because pytest delegates
-   detection of test case methods to unittest code.
+   discovery of test case methods to unittest code.
 
 Interpreting cmdline arguments as Python packages
 -----------------------------------------------------

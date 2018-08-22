@@ -1255,7 +1255,7 @@ passed multiple times. The expected format is ``name=value``. For example::
         [pytest]
         python_files = test_*.py check_*.py example_*.py
 
-   By default, pytest will consider any file matching with ``test_*.py`` 
+   By default, pytest will consider any file matching with ``test_*.py``
    and ``*_test.py`` globs as a test module.
 
 
