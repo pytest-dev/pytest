@@ -9,6 +9,7 @@ import textwrap
 import zipfile
 import py
 import pytest
+import six
 
 import _pytest._code
 from _pytest.assertion import util
@@ -49,7 +50,7 @@ def getmsg(f, extra_ns=None, must_pass=False):
     ns = {}
     if extra_ns is not None:
         ns.update(extra_ns)
-    py.builtin.exec_(code, ns)
+    six.exec_(code, ns)
     func = ns[f.__name__]
     try:
         func()

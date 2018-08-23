@@ -1,6 +1,6 @@
 from pytest import raises
 import _pytest._code
-import py
+import six
 
 
 def otherfunc(a, b):
@@ -177,7 +177,7 @@ def test_dynamic_compile_shows_nicely():
     name = "abc-123"
     module = imp.new_module(name)
     code = _pytest._code.compile(src, name, "exec")
-    py.builtin.exec_(code, module.__dict__)
+    six.exec_(code, module.__dict__)
     sys.modules[name] = module
     module.foo()
 

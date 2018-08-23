@@ -4,7 +4,7 @@ import sys
 from numbers import Number
 from decimal import Decimal
 
-import py
+import six
 from six.moves import zip, filterfalse
 from more_itertools.more import always_iterable
 
@@ -680,8 +680,8 @@ def raises(expected_exception, *args, **kwargs):
         # print "raises frame scope: %r" % frame.f_locals
         try:
             code = _pytest._code.Source(code).compile()
-            py.builtin.exec_(code, frame.f_globals, loc)
-            # XXX didn'T mean f_globals == f_locals something special?
+            six.exec_(code, frame.f_globals, loc)
+            # XXX didn't mean f_globals == f_locals something special?
             #     this is destroyed here ...
         except expected_exception:
             return _pytest._code.ExceptionInfo()
