@@ -1,6 +1,9 @@
 """Reproduces issue #3774"""
 
-import mock
+try:
+    import mock
+except ImportError:
+    import unittest.mock as mock
 
 import pytest
 
