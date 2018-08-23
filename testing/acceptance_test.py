@@ -131,7 +131,7 @@ class TestGeneralUsage(object):
         p2 = testdir.makefile(".pyc", "123")
         result = testdir.runpytest(p1, p2)
         assert result.ret
-        result.stderr.fnmatch_lines(["*ERROR: not found:*%s" % (p2.basename,)])
+        result.stderr.fnmatch_lines(["*ERROR: not found:*{}".format(p2.basename)])
 
     def test_issue486_better_reporting_on_conftest_load_failure(self, testdir):
         testdir.makepyfile("")
@@ -453,7 +453,7 @@ class TestInvocationVariants(object):
     @pytest.mark.xfail("sys.platform.startswith('java')")
     def test_pydoc(self, testdir):
         for name in ("py.test", "pytest"):
-            result = testdir.runpython_c("import %s;help(%s)" % (name, name))
+            result = testdir.runpython_c("import {};help({})".format(name, name))
             assert result.ret == 0
             s = result.stdout.str()
             assert "MarkGenerator" in s
@@ -836,7 +836,7 @@ class TestDurations(object):
                     if ("test_%s" % x) in line and y in line:
                         break
                 else:
-                    raise AssertionError("not found %s %s" % (x, y))
+                    raise AssertionError("not found {} {}".format(x, y))
 
     def test_with_deselected(self, testdir):
         testdir.makepyfile(self.source)

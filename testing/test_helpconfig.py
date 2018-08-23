@@ -7,7 +7,9 @@ def test_version(testdir, pytestconfig):
     result = testdir.runpytest("--version")
     assert result.ret == 0
     # p = py.path.local(py.__file__).dirpath()
-    result.stderr.fnmatch_lines(["*pytest*%s*imported from*" % (pytest.__version__,)])
+    result.stderr.fnmatch_lines(
+        ["*pytest*{}*imported from*".format(pytest.__version__)]
+    )
     if pytestconfig.pluginmanager.list_plugin_distinfo():
         result.stderr.fnmatch_lines(["*setuptools registered plugins:", "*at*"])
 
