@@ -252,7 +252,7 @@ class TestTraceback_f_g_h(object):
             import sys
 
             exc, val, tb = sys.exc_info()
-            py.builtin._reraise(exc, val, tb)
+            six.reraise(exc, val, tb)
 
         def f(n):
             try:
