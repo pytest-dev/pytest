@@ -460,7 +460,7 @@ To use it, include in your top-most ``conftest.py`` file::
 
 
 .. autoclass:: Testdir()
-    :members: runpytest,runpytest_subprocess,runpytest_inprocess,makeconftest,makepyfile
+    :members:
 
 .. autoclass:: RunResult()
     :members:
@@ -1229,7 +1229,8 @@ passed multiple times. The expected format is ``name=value``. For example::
 .. confval:: python_classes
 
    One or more name prefixes or glob-style patterns determining which classes
-   are considered for test collection. By default, pytest will consider any
+   are considered for test collection. Search for multiple glob patterns by
+   adding a space between patterns. By default, pytest will consider any
    class prefixed with ``Test`` as a test collection.  Here is an example of how
    to collect tests from classes that end in ``Suite``:
 
@@ -1246,15 +1247,23 @@ passed multiple times. The expected format is ``name=value``. For example::
 .. confval:: python_files
 
    One or more Glob-style file patterns determining which python files
-   are considered as test modules. By default, pytest will consider
-   any file matching with ``test_*.py`` and ``*_test.py`` globs as a test
-   module.
+   are considered as test modules. Search for multiple glob patterns by
+   adding a space between patterns::
+
+   .. code-block:: ini
+
+        [pytest]
+        python_files = test_*.py check_*.py example_*.py
+
+   By default, pytest will consider any file matching with ``test_*.py``
+   and ``*_test.py`` globs as a test module.
 
 
 .. confval:: python_functions
 
    One or more name prefixes or glob-patterns determining which test functions
-   and methods are considered tests. By default, pytest will consider any
+   and methods are considered tests. Search for multiple glob patterns by
+   adding a space between patterns. By default, pytest will consider any
    function prefixed with ``test`` as a test.  Here is an example of how
    to collect test functions and methods that end in ``_test``:
 

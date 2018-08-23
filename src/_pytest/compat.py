@@ -8,6 +8,7 @@ import functools
 import inspect
 import re
 import sys
+from contextlib import contextmanager
 
 import py
 
@@ -149,6 +150,13 @@ def getfuncargnames(function, is_method=False, cls=None):
     if hasattr(function, "__wrapped__"):
         arg_names = arg_names[num_mock_patch_args(function) :]
     return arg_names
+
+
+@contextmanager
+def dummy_context_manager():
+    """Context manager that does nothing, useful in situations where you might need an actual context manager or not
+    depending on some condition. Using this allow to keep the same code"""
+    yield
 
 
 def get_default_arg_names(function):

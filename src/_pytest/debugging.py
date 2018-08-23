@@ -102,7 +102,8 @@ class PdbInvoke(object):
     def pytest_exception_interact(self, node, call, report):
         capman = node.config.pluginmanager.getplugin("capturemanager")
         if capman:
-            out, err = capman.suspend_global_capture(in_=True)
+            capman.suspend_global_capture(in_=True)
+            out, err = capman.read_global_capture()
             sys.stdout.write(out)
             sys.stdout.write(err)
         _enter_pdb(node, call.excinfo, report)

@@ -1,1 +1,0 @@
-Fix ``AttributeError`` during teardown of ``TestCase`` subclasses which raise an exception during ``__init__``.

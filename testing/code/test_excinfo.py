@@ -4,6 +4,7 @@ from __future__ import absolute_import, division, print_function
 import operator
 import os
 import sys
+import textwrap
 import _pytest
 import py
 import pytest
@@ -1264,6 +1265,50 @@ raise ValueError()
                 "E *RuntimeError: runtime problem",
             ]
         )
+
+    @pytest.mark.skipif("sys.version_info[0] < 3")
+    def test_exc_chain_repr_cycle(self, importasmod):
+        mod = importasmod(
+            """
+            class Err(Exception):
+                pass
+            def fail():
+                return 0 / 0
+            def reraise():
+                try:
+                    fail()
+                except ZeroDivisionError as e:
+                    raise Err() from e
+            def unreraise():
+                try:
+                    reraise()
+                except Err as e:
+                    raise e.__cause__
+        """
+        )
+        excinfo = pytest.raises(ZeroDivisionError, mod.unreraise)
+        r = excinfo.getrepr(style="short")
+        tw = TWMock()
+        r.toterminal(tw)
+        out = "\n".join(line for line in tw.lines if isinstance(line, str))
+        expected_out = textwrap.dedent(
+            """\
+            :13: in unreraise
+                reraise()
+            :10: in reraise
+                raise Err() from e
+            E   test_exc_chain_repr_cycle0.mod.Err
+
+            During handling of the above exception, another exception occurred:
+            :15: in unreraise
+                raise e.__cause__
+            :8: in reraise
+                fail()
+            :5: in fail
+                return 0 / 0
+            E   ZeroDivisionError: division by zero"""
+        )
+        assert out == expected_out
 
 
 @pytest.mark.parametrize("style", ["short", "long"])

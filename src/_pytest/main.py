@@ -505,8 +505,9 @@ class Session(nodes.FSCollector):
                             root = self._node_cache[pkginit]
                         else:
                             col = root._collectfile(pkginit)
-                            if col and isinstance(col, Package):
-                                root = col[0]
+                            if col:
+                                if isinstance(col[0], Package):
+                                    root = col[0]
                                 self._node_cache[root.fspath] = root
 
         # If it's a directory argument, recurse and look for any Subpackages.
@@ -624,11 +625,12 @@ class Session(nodes.FSCollector):
                     resultnodes.append(node)
                 continue
             assert isinstance(node, nodes.Collector)
-            if node.nodeid in self._node_cache:
-                rep = self._node_cache[node.nodeid]
+            key = (type(node), node.nodeid)
+            if key in self._node_cache:
+                rep = self._node_cache[key]
             else:
                 rep = collect_one_node(node)
-                self._node_cache[node.nodeid] = rep
+                self._node_cache[key] = rep
             if rep.passed:
                 has_matched = False
                 for x in rep.result:

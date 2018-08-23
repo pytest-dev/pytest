@@ -6,6 +6,7 @@ from contextlib import closing, contextmanager
 import re
 import six
 
+from _pytest.compat import dummy_context_manager
 from _pytest.config import create_terminal_writer
 import pytest
 import py
@@ -369,11 +370,6 @@ def pytest_configure(config):
     config.pluginmanager.register(LoggingPlugin(config), "logging-plugin")
 
 
-@contextmanager
-def _dummy_context_manager():
-    yield
-
-
 class LoggingPlugin(object):
     """Attaches to the logging module and captures log messages for each test.
     """
@@ -537,7 +533,7 @@ class LoggingPlugin(object):
                 log_cli_handler, formatter=log_cli_formatter, level=log_cli_level
             )
         else:
-            self.live_logs_context = _dummy_context_manager()
+            self.live_logs_context = dummy_context_manager()
 
 
 class _LiveLoggingStreamHandler(logging.StreamHandler):
@@ -572,9 +568,12 @@ class _LiveLoggingStreamHandler(logging.StreamHandler):
             self._test_outcome_written = False
 
     def emit(self, record):
-        if self.capture_manager is not None:
-            self.capture_manager.suspend_global_capture()
-        try:
+        ctx_manager = (
+            self.capture_manager.global_and_fixture_disabled()
+            if self.capture_manager
+            else dummy_context_manager()
+        )
+        with ctx_manager:
             if not self._first_record_emitted:
                 self.stream.write("\n")
                 self._first_record_emitted = True
@@ -586,6 +585,3 @@ class _LiveLoggingStreamHandler(logging.StreamHandler):
                 self.stream.section("live log " + self._when, sep="-", bold=True)
                 self._section_name_shown = True
             logging.StreamHandler.emit(self, record)
-        finally:
-            if self.capture_manager is not None:
-                self.capture_manager.resume_global_capture()

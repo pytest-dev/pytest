@@ -216,18 +216,6 @@ def pytest_pycollect_makemodule(path, parent):
     return Module(path, parent)
 
 
-def pytest_ignore_collect(path, config):
-    # Skip duplicate packages.
-    keepduplicates = config.getoption("keepduplicates")
-    if keepduplicates:
-        duplicate_paths = config.pluginmanager._duplicatepaths
-        if path.basename == "__init__.py":
-            if path in duplicate_paths:
-                return True
-            else:
-                duplicate_paths.add(path)
-
-
 @hookimpl(hookwrapper=True)
 def pytest_pycollect_makeitem(collector, name, obj):
     outcome = yield
@@ -554,9 +542,7 @@ class Package(Module):
         self.name = fspath.dirname
         self.trace = session.trace
         self._norecursepatterns = session._norecursepatterns
-        for path in list(session.config.pluginmanager._duplicatepaths):
-            if path.dirname == fspath.dirname and path != fspath:
-                session.config.pluginmanager._duplicatepaths.remove(path)
+        self.fspath = fspath
 
     def _recurse(self, path):
         ihook = self.gethookproxy(path.dirpath())
@@ -594,6 +580,15 @@ class Package(Module):
         return path in self.session._initialpaths
 
     def collect(self):
+        # XXX: HACK!
+        # Before starting to collect any files from this package we need
+        # to cleanup the duplicate paths added by the session's collect().
+        # Proper fix is to not track these as duplicates in the first place.
+        for path in list(self.session.config.pluginmanager._duplicatepaths):
+            # if path.parts()[:len(self.fspath.dirpath().parts())] == self.fspath.dirpath().parts():
+            if path.dirname.startswith(self.name):
+                self.session.config.pluginmanager._duplicatepaths.remove(path)
+
         this_path = self.fspath.dirpath()
         pkg_prefix = None
         yield Module(this_path.join("__init__.py"), self)
@@ -884,12 +879,13 @@ class Metafunc(fixtures.FuncargnamesCompatAttr):
     """
 
     def __init__(self, definition, fixtureinfo, config, cls=None, module=None):
-        #: access to the :class:`_pytest.config.Config` object for the test session
         assert (
             isinstance(definition, FunctionDefinition)
             or type(definition).__name__ == "DefinitionMock"
         )
         self.definition = definition
+
+        #: access to the :class:`_pytest.config.Config` object for the test session
         self.config = config
 
         #: the module object where the test function is defined in.

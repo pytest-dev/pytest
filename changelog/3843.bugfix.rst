@@ -1,0 +1,1 @@
+Fix collection error when specifying test functions directly in the command line using ``test.py::test`` syntax together with ``--doctest-module``.

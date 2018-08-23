@@ -876,22 +876,18 @@ def test_live_logging_suspends_capture(has_capture_manager, request):
     is installed.
     """
     import logging
+    import contextlib
     from functools import partial
-    from _pytest.capture import CaptureManager
     from _pytest.logging import _LiveLoggingStreamHandler
 
     class MockCaptureManager:
         calls = []
 
-        def suspend_global_capture(self):
-            self.calls.append("suspend_global_capture")
-
-        def resume_global_capture(self):
-            self.calls.append("resume_global_capture")
-
-    # sanity check
-    assert CaptureManager.suspend_capture_item
-    assert CaptureManager.resume_global_capture
+        @contextlib.contextmanager
+        def global_and_fixture_disabled(self):
+            self.calls.append("enter disabled")
+            yield
+            self.calls.append("exit disabled")
 
     class DummyTerminal(six.StringIO):
         def section(self, *args, **kwargs):
@@ -908,10 +904,7 @@ def test_live_logging_suspends_capture(has_capture_manager, request):
 
     logger.critical("some message")
     if has_capture_manager:
-        assert MockCaptureManager.calls == [
-            "suspend_global_capture",
-            "resume_global_capture",
-        ]
+        assert MockCaptureManager.calls == ["enter disabled", "exit disabled"]
     else:
         assert MockCaptureManager.calls == []
     assert out_file.getvalue() == "\nsome message\n"
