@@ -22,6 +22,7 @@ import pytest
 from _pytest.main import Session, EXIT_OK
 from _pytest.assertion.rewrite import AssertionRewritingHook
 from _pytest.compat import Path
+from _pytest.compat import safe_str
 
 IGNORE_PAM = [  # filenames added when obtaining details about the current user
     u"/var/lib/sss/mc/passwd"
@@ -34,7 +35,7 @@ def pytest_addoption(parser):
         action="store_true",
         dest="lsof",
         default=False,
-        help=("run FD checks if lsof is available"),
+        help="run FD checks if lsof is available",
     )
 
     parser.addoption(
@@ -273,7 +274,7 @@ class HookRecorder(object):
                 del self.calls[i]
                 return call
         lines = ["could not find call %r, in:" % (name,)]
-        lines.extend(["  %s" % str(x) for x in self.calls])
+        lines.extend(["  %s" % x for x in self.calls])
         pytest.fail("\n".join(lines))
 
     def getcall(self, name):
@@ -885,14 +886,12 @@ class Testdir(object):
         return self._runpytest_method(*args, **kwargs)
 
     def _ensure_basetemp(self, args):
-        args = [str(x) for x in args]
+        args = list(args)
         for x in args:
-            if str(x).startswith("--basetemp"):
-                # print("basedtemp exists: %s" %(args,))
+            if safe_str(x).startswith("--basetemp"):
                 break
         else:
             args.append("--basetemp=%s" % self.tmpdir.dirpath("basetemp"))
-            # print("added basetemp: %s" %(args,))
         return args
 
     def parseconfig(self, *args):
@@ -1018,7 +1017,7 @@ class Testdir(object):
         """
         env = os.environ.copy()
         env["PYTHONPATH"] = os.pathsep.join(
-            filter(None, [str(os.getcwd()), env.get("PYTHONPATH", "")])
+            filter(None, [os.getcwd(), env.get("PYTHONPATH", "")])
         )
         kw["env"] = env
 
@@ -1037,14 +1036,13 @@ class Testdir(object):
         Returns a :py:class:`RunResult`.
 
         """
-        return self._run(*cmdargs)
-
-    def _run(self, *cmdargs):
-        cmdargs = [str(x) for x in cmdargs]
+        cmdargs = [
+            str(arg) if isinstance(arg, py.path.local) else arg for arg in cmdargs
+        ]
         p1 = self.tmpdir.join("stdout")
         p2 = self.tmpdir.join("stderr")
-        print("running:", " ".join(cmdargs))
-        print("     in:", str(py.path.local()))
+        print("running:", *cmdargs)
+        print("     in:", py.path.local())
         f1 = codecs.open(str(p1), "w", encoding="utf8")
         f2 = codecs.open(str(p2), "w", encoding="utf8")
         try:
@@ -1076,7 +1074,7 @@ class Testdir(object):
             print("couldn't print to %s because of encoding" % (fp,))
 
     def _getpytestargs(self):
-        return (sys.executable, "-mpytest")
+        return sys.executable, "-mpytest"
 
     def runpython(self, script):
         """Run a python script using sys.executable as interpreter.
