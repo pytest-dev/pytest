@@ -4,6 +4,7 @@ import sys
 
 import _pytest._code
 import pytest
+import mock
 from test_excinfo import TWMock
 from six import text_type
 
@@ -67,12 +68,8 @@ def test_getstatement_empty_fullsource():
 
     f = func()
     f = _pytest._code.Frame(f)
-    prop = f.code.__class__.fullsource
-    try:
-        f.code.__class__.fullsource = None
-        assert f.statement == _pytest._code.Source("")
-    finally:
-        f.code.__class__.fullsource = prop
+    with mock.patch.object(f.code.__class__, "fullsource", None):
+        assert f.statement == ""
 
 
 def test_code_from_func():

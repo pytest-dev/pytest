@@ -6,9 +6,9 @@ from __future__ import absolute_import, division, print_function
 import pickle
 import os
 import sys
+import textwrap
 from io import UnsupportedOperation
 
-import _pytest._code
 import py
 import pytest
 import contextlib
@@ -269,7 +269,7 @@ class TestPerTestCapturing(object):
 
     def test_capturing_outerr(self, testdir):
         p1 = testdir.makepyfile(
-            """
+            """\
             import sys
             def test_capturing():
                 print (42)
@@ -278,7 +278,7 @@ class TestPerTestCapturing(object):
                 print (1)
                 sys.stderr.write(str(2))
                 raise ValueError
-        """
+            """
         )
         result = testdir.runpytest(p1)
         result.stdout.fnmatch_lines(
@@ -298,21 +298,21 @@ class TestPerTestCapturing(object):
 class TestLoggingInteraction(object):
     def test_logging_stream_ownership(self, testdir):
         p = testdir.makepyfile(
-            """
+            """\
             def test_logging():
                 import logging
                 import pytest
                 stream = capture.CaptureIO()
                 logging.basicConfig(stream=stream)
                 stream.close() # to free memory/release resources
-        """
+            """
         )
         result = testdir.runpytest_subprocess(p)
         assert result.stderr.str().find("atexit") == -1
 
     def test_logging_and_immediate_setupteardown(self, testdir):
         p = testdir.makepyfile(
-            """
+            """\
             import logging
             def setup_function(function):
                 logging.warn("hello1")
@@ -324,7 +324,7 @@ class TestLoggingInteraction(object):
             def teardown_function(function):
                 logging.warn("hello3")
                 assert 0
-        """
+            """
         )
         for optargs in (("--capture=sys",), ("--capture=fd",)):
             print(optargs)
@@ -338,7 +338,7 @@ class TestLoggingInteraction(object):
 
     def test_logging_and_crossscope_fixtures(self, testdir):
         p = testdir.makepyfile(
-            """
+            """\
             import logging
             def setup_module(function):
                 logging.warn("hello1")
@@ -350,7 +350,7 @@ class TestLoggingInteraction(object):
             def teardown_module(function):
                 logging.warn("hello3")
                 assert 0
-        """
+            """
         )
         for optargs in (("--capture=sys",), ("--capture=fd",)):
             print(optargs)
@@ -364,11 +364,11 @@ class TestLoggingInteraction(object):
 
     def test_conftestlogging_is_shown(self, testdir):
         testdir.makeconftest(
-            """
+            """\
                 import logging
                 logging.basicConfig()
                 logging.warn("hello435")
-        """
+            """
         )
         # make sure that logging is still captured in tests
         result = testdir.runpytest_subprocess("-s", "-p", "no:capturelog")
@@ -378,19 +378,19 @@ class TestLoggingInteraction(object):
 
     def test_conftestlogging_and_test_logging(self, testdir):
         testdir.makeconftest(
-            """
+            """\
                 import logging
                 logging.basicConfig()
-        """
+            """
         )
         # make sure that logging is still captured in tests
         p = testdir.makepyfile(
-            """
+            """\
             def test_hello():
                 import logging
                 logging.warn("hello433")
                 assert 0
-        """
+            """
         )
         result = testdir.runpytest_subprocess(p, "-p", "no:capturelog")
         assert result.ret != 0
@@ -403,24 +403,24 @@ class TestCaptureFixture(object):
     @pytest.mark.parametrize("opt", [[], ["-s"]])
     def test_std_functional(self, testdir, opt):
         reprec = testdir.inline_runsource(
-            """
+            """\
             def test_hello(capsys):
                 print (42)
                 out, err = capsys.readouterr()
                 assert out.startswith("42")
-        """,
+            """,
             *opt
         )
         reprec.assertoutcome(passed=1)
 
     def test_capsyscapfd(self, testdir):
         p = testdir.makepyfile(
-            """
+            """\
             def test_one(capsys, capfd):
                 pass
             def test_two(capfd, capsys):
                 pass
-        """
+            """
         )
         result = testdir.runpytest(p)
         result.stdout.fnmatch_lines(
@@ -438,12 +438,12 @@ class TestCaptureFixture(object):
         in the same test is an error.
         """
         testdir.makepyfile(
-            """
+            """\
             def test_one(capsys, request):
                 request.getfixturevalue("capfd")
             def test_two(capfd, request):
                 request.getfixturevalue("capsys")
-        """
+            """
         )
         result = testdir.runpytest()
         result.stdout.fnmatch_lines(
@@ -458,10 +458,10 @@ class TestCaptureFixture(object):
 
     def test_capsyscapfdbinary(self, testdir):
         p = testdir.makepyfile(
-            """
+            """\
             def test_one(capsys, capfdbinary):
                 pass
-        """
+            """
         )
         result = testdir.runpytest(p)
         result.stdout.fnmatch_lines(
@@ -471,12 +471,13 @@ class TestCaptureFixture(object):
     @pytest.mark.parametrize("method", ["sys", "fd"])
     def test_capture_is_represented_on_failure_issue128(self, testdir, method):
         p = testdir.makepyfile(
-            """
-            def test_hello(cap%s):
+            """\
+            def test_hello(cap{}):
                 print ("xxx42xxx")
                 assert 0
-        """
-            % method
+            """.format(
+                method
+            )
         )
         result = testdir.runpytest(p)
         result.stdout.fnmatch_lines(["xxx42xxx"])
@@ -484,21 +485,21 @@ class TestCaptureFixture(object):
     @needsosdup
     def test_stdfd_functional(self, testdir):
         reprec = testdir.inline_runsource(
-            """
+            """\
             def test_hello(capfd):
                 import os
                 os.write(1, "42".encode('ascii'))
                 out, err = capfd.readouterr()
                 assert out.startswith("42")
                 capfd.close()
-        """
+            """
         )
         reprec.assertoutcome(passed=1)
 
     @needsosdup
     def test_capfdbinary(self, testdir):
         reprec = testdir.inline_runsource(
-            """
+            """\
             def test_hello(capfdbinary):
                 import os
                 # some likely un-decodable bytes
@@ -506,7 +507,7 @@ class TestCaptureFixture(object):
                 out, err = capfdbinary.readouterr()
                 assert out == b'\\xfe\\x98\\x20'
                 assert err == b''
-        """
+            """
         )
         reprec.assertoutcome(passed=1)
 
@@ -515,7 +516,7 @@ class TestCaptureFixture(object):
     )
     def test_capsysbinary(self, testdir):
         reprec = testdir.inline_runsource(
-            """
+            """\
             def test_hello(capsysbinary):
                 import sys
                 # some likely un-decodable bytes
@@ -523,7 +524,7 @@ class TestCaptureFixture(object):
                 out, err = capsysbinary.readouterr()
                 assert out == b'\\xfe\\x98\\x20'
                 assert err == b''
-        """
+            """
         )
         reprec.assertoutcome(passed=1)
 
@@ -532,10 +533,10 @@ class TestCaptureFixture(object):
     )
     def test_capsysbinary_forbidden_in_python2(self, testdir):
         testdir.makepyfile(
-            """
+            """\
             def test_hello(capsysbinary):
                 pass
-        """
+            """
         )
         result = testdir.runpytest()
         result.stdout.fnmatch_lines(
@@ -548,10 +549,10 @@ class TestCaptureFixture(object):
 
     def test_partial_setup_failure(self, testdir):
         p = testdir.makepyfile(
-            """
+            """\
             def test_hello(capsys, missingarg):
                 pass
-        """
+            """
         )
         result = testdir.runpytest(p)
         result.stdout.fnmatch_lines(["*test_partial_setup_failure*", "*1 error*"])
@@ -559,12 +560,12 @@ class TestCaptureFixture(object):
     @needsosdup
     def test_keyboardinterrupt_disables_capturing(self, testdir):
         p = testdir.makepyfile(
-            """
+            """\
             def test_hello(capfd):
                 import os
                 os.write(1, str(42).encode('ascii'))
                 raise KeyboardInterrupt()
-        """
+            """
         )
         result = testdir.runpytest_subprocess(p)
         result.stdout.fnmatch_lines(["*KeyboardInterrupt*"])
@@ -573,7 +574,7 @@ class TestCaptureFixture(object):
     @pytest.mark.issue14
     def test_capture_and_logging(self, testdir):
         p = testdir.makepyfile(
-            """
+            """\
             import logging
             def test_log(capsys):
                 logging.error('x')
@@ -586,7 +587,7 @@ class TestCaptureFixture(object):
     @pytest.mark.parametrize("no_capture", [True, False])
     def test_disabled_capture_fixture(self, testdir, fixture, no_capture):
         testdir.makepyfile(
-            """
+            """\
             def test_disabled({fixture}):
                 print('captured before')
                 with {fixture}.disabled():
@@ -620,7 +621,7 @@ class TestCaptureFixture(object):
         Ensure that capsys and capfd can be used by other fixtures during setup and teardown.
         """
         testdir.makepyfile(
-            """
+            """\
             from __future__ import print_function
             import sys
             import pytest
@@ -656,7 +657,7 @@ class TestCaptureFixture(object):
     def test_fixture_use_by_other_fixtures_teardown(self, testdir, cap):
         """Ensure we can access setup and teardown buffers from teardown when using capsys/capfd (##3033)"""
         testdir.makepyfile(
-            """
+            """\
             import sys
             import pytest
             import os
@@ -684,11 +685,11 @@ class TestCaptureFixture(object):
 def test_setup_failure_does_not_kill_capturing(testdir):
     sub1 = testdir.mkpydir("sub1")
     sub1.join("conftest.py").write(
-        _pytest._code.Source(
+        textwrap.dedent(
+            """\
+            def pytest_runtest_setup(item):
+                raise ValueError(42)
             """
-        def pytest_runtest_setup(item):
-            raise ValueError(42)
-    """
         )
     )
     sub1.join("test_mod.py").write("def test_func1(): pass")

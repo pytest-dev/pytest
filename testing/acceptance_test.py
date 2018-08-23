@@ -2,11 +2,11 @@
 from __future__ import absolute_import, division, print_function
 import os
 import sys
+import textwrap
 import types
 
 import six
 
-import _pytest._code
 import py
 import pytest
 from _pytest.main import EXIT_NOTESTSCOLLECTED, EXIT_USAGEERROR
@@ -201,16 +201,16 @@ class TestGeneralUsage(object):
         testdir.tmpdir.join("py").mksymlinkto(py._pydir)
         p = testdir.tmpdir.join("main.py")
         p.write(
-            _pytest._code.Source(
+            textwrap.dedent(
+                """\
+                import sys, os
+                sys.path.insert(0, '')
+                import py
+                print(py.__file__)
+                print(py.__path__)
+                os.chdir(os.path.dirname(os.getcwd()))
+                print(py.log)
                 """
-            import sys, os
-            sys.path.insert(0, '')
-            import py
-            print (py.__file__)
-            print (py.__path__)
-            os.chdir(os.path.dirname(os.getcwd()))
-            print (py.log)
-        """
             )
         )
         result = testdir.runpython(p)

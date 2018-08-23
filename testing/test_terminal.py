@@ -4,9 +4,9 @@ terminal reporting of the full testing process.
 from __future__ import absolute_import, division, print_function
 import collections
 import sys
+import textwrap
 
 import pluggy
-import _pytest._code
 import py
 import pytest
 from _pytest.main import EXIT_NOTESTSCOLLECTED
@@ -161,12 +161,12 @@ class TestTerminal(object):
     def test_itemreport_directclasses_not_shown_as_subclasses(self, testdir):
         a = testdir.mkpydir("a123")
         a.join("test_hello123.py").write(
-            _pytest._code.Source(
+            textwrap.dedent(
+                """\
+                class TestClass(object):
+                    def test_method(self):
+                        pass
                 """
-            class TestClass(object):
-                def test_method(self):
-                    pass
-        """
             )
         )
         result = testdir.runpytest("-v")
@@ -312,13 +312,13 @@ class TestCollectonly(object):
         result = testdir.runpytest("--collect-only", p)
         assert result.ret == 2
         result.stdout.fnmatch_lines(
-            _pytest._code.Source(
+            textwrap.dedent(
+                """\
+                *ERROR*
+                *ImportError*
+                *No module named *Errlk*
+                *1 error*
                 """
-            *ERROR*
-            *ImportError*
-            *No module named *Errlk*
-            *1 error*
-        """
             ).strip()
         )
 

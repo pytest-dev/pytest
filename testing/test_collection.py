@@ -1,9 +1,9 @@
 from __future__ import absolute_import, division, print_function
 import pprint
 import sys
+import textwrap
 import pytest
 
-import _pytest._code
 from _pytest.main import Session, EXIT_NOTESTSCOLLECTED, _in_venv
 
 
@@ -913,13 +913,13 @@ def test_fixture_scope_sibling_conftests(testdir):
     """Regression test case for https://github.com/pytest-dev/pytest/issues/2836"""
     foo_path = testdir.mkdir("foo")
     foo_path.join("conftest.py").write(
-        _pytest._code.Source(
+        textwrap.dedent(
+            """\
+            import pytest
+            @pytest.fixture
+            def fix():
+                return 1
             """
-        import pytest
-        @pytest.fixture
-        def fix():
-            return 1
-    """
         )
     )
     foo_path.join("test_foo.py").write("def test_foo(fix): assert fix == 1")

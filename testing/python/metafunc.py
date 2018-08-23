@@ -2,7 +2,7 @@
 import re
 import sys
 import attr
-import _pytest._code
+import textwrap
 import pytest
 from _pytest import python, fixtures
 
@@ -1271,19 +1271,19 @@ class TestMetafuncFunctional(object):
         sub1 = testdir.mkpydir("sub1")
         sub2 = testdir.mkpydir("sub2")
         sub1.join("conftest.py").write(
-            _pytest._code.Source(
+            textwrap.dedent(
+                """\
+                def pytest_generate_tests(metafunc):
+                    assert metafunc.function.__name__ == "test_1"
                 """
-            def pytest_generate_tests(metafunc):
-                assert metafunc.function.__name__ == "test_1"
-        """
             )
         )
         sub2.join("conftest.py").write(
-            _pytest._code.Source(
+            textwrap.dedent(
+                """\
+                def pytest_generate_tests(metafunc):
+                    assert metafunc.function.__name__ == "test_2"
                 """
-            def pytest_generate_tests(metafunc):
-                assert metafunc.function.__name__ == "test_2"
-        """
             )
         )
         sub1.join("test_in_sub1.py").write("def test_1(): pass")

@@ -1039,14 +1039,14 @@ class TestAssertionRewriteHookDetails(object):
         """
         path = testdir.mkpydir("foo")
         path.join("test_foo.py").write(
-            _pytest._code.Source(
+            textwrap.dedent(
+                """\
+                class Test(object):
+                    def test_foo(self):
+                        import pkgutil
+                        data = pkgutil.get_data('foo.test_foo', 'data.txt')
+                        assert data == b'Hey'
                 """
-            class Test(object):
-                def test_foo(self):
-                    import pkgutil
-                    data = pkgutil.get_data('foo.test_foo', 'data.txt')
-                    assert data == b'Hey'
-        """
             )
         )
         path.join("data.txt").write("Hey")
