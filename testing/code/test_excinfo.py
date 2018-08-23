@@ -8,6 +8,7 @@ import textwrap
 import _pytest
 import py
 import pytest
+import six
 from _pytest._code.code import (
     ExceptionInfo,
     FormattedExcinfo,
@@ -251,7 +252,7 @@ class TestTraceback_f_g_h(object):
             import sys
 
             exc, val, tb = sys.exc_info()
-            py.builtin._reraise(exc, val, tb)
+            six.reraise(exc, val, tb)
 
         def f(n):
             try:
@@ -884,10 +885,10 @@ raise ValueError()
 
         class MyRepr(TerminalRepr):
             def toterminal(self, tw):
-                tw.line(py.builtin._totext("я", "utf-8"))
+                tw.line(u"я")
 
-        x = py.builtin._totext(MyRepr())
-        assert x == py.builtin._totext("я", "utf-8")
+        x = six.text_type(MyRepr())
+        assert x == u"я"
 
     def test_toterminal_long(self, importasmod):
         mod = importasmod(

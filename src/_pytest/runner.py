@@ -6,7 +6,7 @@ import os
 import sys
 from time import time
 
-import py
+import six
 from _pytest._code.code import ExceptionInfo
 from _pytest.outcomes import skip, Skipped, TEST_OUTCOME
 
@@ -317,7 +317,7 @@ class SetupState(object):
                 if exc is None:
                     exc = sys.exc_info()
         if exc:
-            py.builtin._reraise(*exc)
+            six.reraise(*exc)
 
     def _teardown_with_finalization(self, colitem):
         self._callfinalizers(colitem)
@@ -352,7 +352,7 @@ class SetupState(object):
                 if exc is None:
                     exc = sys.exc_info()
         if exc:
-            py.builtin._reraise(*exc)
+            six.reraise(*exc)
 
     def prepare(self, colitem):
         """ setup objects along the collector chain to the test-method
@@ -363,7 +363,7 @@ class SetupState(object):
         # check if the last collection node has raised an error
         for col in self.stack:
             if hasattr(col, "_prepare_exc"):
-                py.builtin._reraise(*col._prepare_exc)
+                six.reraise(*col._prepare_exc)
         for col in needed_collectors[len(self.stack) :]:
             self.stack.append(col)
             try:

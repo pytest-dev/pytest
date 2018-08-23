@@ -223,7 +223,7 @@ class AssertionRewritingHook(object):
             mod.__loader__ = self
             # Normally, this attribute is 3.4+
             mod.__spec__ = spec_from_file_location(name, co.co_filename, loader=self)
-            py.builtin.exec_(co, mod.__dict__)
+            six.exec_(co, mod.__dict__)
         except:  # noqa
             if name in sys.modules:
                 del sys.modules[name]

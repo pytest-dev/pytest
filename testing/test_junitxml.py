@@ -941,7 +941,7 @@ def test_double_colon_split_method_issue469(testdir):
 def test_unicode_issue368(testdir):
     path = testdir.tmpdir.join("test.xml")
     log = LogXML(str(path), None)
-    ustr = py.builtin._totext("ВНИ!", "utf-8")
+    ustr = u"ВНИ!"
 
     class Report(BaseReport):
         longrepr = ustr
