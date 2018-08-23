@@ -654,12 +654,10 @@ class TestRewriteOnImport(object):
     def test_readonly(self, testdir):
         sub = testdir.mkdir("testing")
         sub.join("test_readonly.py").write(
-            py.builtin._totext(
-                """
+            b"""
 def test_rewritten():
     assert "@py_builtins" in globals()
-            """
-            ).encode("utf-8"),
+            """,
             "wb",
         )
         old_mode = sub.stat().mode

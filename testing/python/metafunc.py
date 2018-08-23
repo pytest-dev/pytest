@@ -3,7 +3,6 @@ import re
 import sys
 import attr
 import _pytest._code
-import py
 import pytest
 from _pytest import python, fixtures
 
@@ -295,9 +294,7 @@ class TestMetafunc(object):
         )
         assert result == ["a0-1.0", "a1-b1"]
         # unicode mixing, issue250
-        result = idmaker(
-            (py.builtin._totext("a"), "b"), [pytest.param({}, b"\xc3\xb4")]
-        )
+        result = idmaker((u"a", "b"), [pytest.param({}, b"\xc3\xb4")])
         assert result == ["a0-\\xc3\\xb4"]
 
     def test_idmaker_with_bytes_regex(self):
@@ -309,7 +306,6 @@ class TestMetafunc(object):
     def test_idmaker_native_strings(self):
         from _pytest.python import idmaker
 
-        totext = py.builtin._totext
         result = idmaker(
             ("a", "b"),
             [
@@ -324,7 +320,7 @@ class TestMetafunc(object):
                 pytest.param({7}, set("seven")),
                 pytest.param(tuple("eight"), (8, -8, 8)),
                 pytest.param(b"\xc3\xb4", b"name"),
-                pytest.param(b"\xc3\xb4", totext("other")),
+                pytest.param(b"\xc3\xb4", u"other"),
             ],
         )
         assert result == [

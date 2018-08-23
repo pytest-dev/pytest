@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from __future__ import absolute_import, division, print_function
 
 # note: py.io capture tests where copied from
@@ -1083,9 +1084,9 @@ class TestStdCapture(object):
 
     def test_capturing_readouterr_unicode(self):
         with self.getcapture() as cap:
-            print("hx\xc4\x85\xc4\x87")
+            print("hxąć")
             out, err = cap.readouterr()
-        assert out == py.builtin._totext("hx\xc4\x85\xc4\x87\n", "utf8")
+        assert out == u"hxąć\n"
 
     @pytest.mark.skipif(
         "sys.version_info >= (3,)", reason="text output different for bytes on python3"
@@ -1095,7 +1096,7 @@ class TestStdCapture(object):
             # triggered an internal error in pytest
             print("\xa6")
             out, err = cap.readouterr()
-        assert out == py.builtin._totext("\ufffd\n", "unicode-escape")
+        assert out == u"\ufffd\n"
 
     def test_reset_twice_error(self):
         with self.getcapture() as cap:
