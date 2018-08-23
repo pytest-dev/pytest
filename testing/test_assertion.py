@@ -6,6 +6,7 @@ import textwrap
 import _pytest.assertion as plugin
 import py
 import pytest
+import six
 from _pytest.assertion import util
 from _pytest.assertion import truncate
 
@@ -541,7 +542,7 @@ class TestAssert_reprcompare(object):
             right = bytes(right, "utf-8")
         expl = callequal(left, right)
         for line in expl:
-            assert isinstance(line, py.builtin.text)
+            assert isinstance(line, six.text_type)
         msg = u"\n".join(expl)
         assert msg
 
