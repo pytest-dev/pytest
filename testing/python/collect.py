@@ -1623,3 +1623,40 @@ def test_package_with_modules(testdir):
     root.chdir()
     result = testdir.runpytest("-v", "-s")
     result.assert_outcomes(passed=2)
+
+
+def test_package_ordering(testdir):
+    """
+    .
+    └── root
+        ├── TestRoot.py
+        ├── __init__.py
+        ├── sub1
+        │   ├── TestSub1.py
+        │   └── __init__.py
+        └── sub2
+            └── test
+                ├── TestSub2.py
+                └── test_in_sub2.py
+
+    """
+    testdir.makeini(
+        """
+        [pytest]
+        python_files=Test*.py
+    """
+    )
+    root = testdir.mkpydir("root")
+    sub1 = root.mkdir("sub1")
+    sub1.ensure("__init__.py")
+    sub2 = root.mkdir("sub2")
+    sub2_test = sub2.mkdir("sub2")
+
+    root.join("TestRoot.py").write("def test_1(): pass")
+    sub1.join("TestSub1.py").write("def test_2(): pass")
+    sub2_test.join("TestSub2.py").write("def test_3(): pass")
+    sub2_test.join("test_in_sub2.py").write("def test_4(): pass")
+
+    # Execute from .
+    result = testdir.runpytest("-v", "-s")
+    result.assert_outcomes(passed=3)
