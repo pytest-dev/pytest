@@ -149,7 +149,7 @@ class TestTraceback_f_g_h(object):
                 except somenoname:
                     pass
             xyz()
-        """
+            """
         )
         try:
             exec(source.compile())
@@ -426,7 +426,7 @@ class TestFormattedExcinfo(object):
     @pytest.fixture
     def importasmod(self, request):
         def importasmod(source):
-            source = _pytest._code.Source(source)
+            source = textwrap.dedent(source)
             tmpdir = request.getfixturevalue("tmpdir")
             modpath = tmpdir.join("mod.py")
             tmpdir.ensure("__init__.py")
@@ -450,10 +450,10 @@ class TestFormattedExcinfo(object):
     def test_repr_source(self):
         pr = FormattedExcinfo()
         source = _pytest._code.Source(
-            """
+            """\
             def f(x):
                 pass
-        """
+            """
         ).strip()
         pr.flow_marker = "|"
         lines = pr.get_source(source, 0)

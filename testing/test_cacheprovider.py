@@ -1,9 +1,9 @@
 from __future__ import absolute_import, division, print_function
 
 import sys
+import textwrap
 
 import py
-import _pytest
 import pytest
 import os
 import shutil
@@ -224,17 +224,17 @@ class TestLastFailed(object):
         result = testdir.runpytest()
         result.stdout.fnmatch_lines(["*2 failed*"])
         p.write(
-            _pytest._code.Source(
+            textwrap.dedent(
+                """\
+                def test_1():
+                    assert 1
+
+                def test_2():
+                    assert 1
+
+                def test_3():
+                    assert 0
                 """
-            def test_1():
-                assert 1
-
-            def test_2():
-                assert 1
-
-            def test_3():
-                assert 0
-        """
             )
         )
         result = testdir.runpytest("--lf")
@@ -252,19 +252,19 @@ class TestLastFailed(object):
 
     def test_failedfirst_order(self, testdir):
         testdir.tmpdir.join("test_a.py").write(
-            _pytest._code.Source(
+            textwrap.dedent(
+                """\
+                def test_always_passes():
+                    assert 1
                 """
-            def test_always_passes():
-                assert 1
-        """
             )
         )
         testdir.tmpdir.join("test_b.py").write(
-            _pytest._code.Source(
+            textwrap.dedent(
+                """\
+                def test_always_fails():
+                    assert 0
                 """
-            def test_always_fails():
-                assert 0
-        """
             )
         )
         result = testdir.runpytest()
@@ -277,14 +277,14 @@ class TestLastFailed(object):
     def test_lastfailed_failedfirst_order(self, testdir):
         testdir.makepyfile(
             **{
-                "test_a.py": """
+                "test_a.py": """\
                 def test_always_passes():
                     assert 1
-            """,
-                "test_b.py": """
+                """,
+                "test_b.py": """\
                 def test_always_fails():
                     assert 0
-            """,
+                """,
             }
         )
         result = testdir.runpytest()
@@ -298,16 +298,16 @@ class TestLastFailed(object):
     def test_lastfailed_difference_invocations(self, testdir, monkeypatch):
         monkeypatch.setenv("PYTHONDONTWRITEBYTECODE", 1)
         testdir.makepyfile(
-            test_a="""
+            test_a="""\
             def test_a1():
                 assert 0
             def test_a2():
                 assert 1
-        """,
-            test_b="""
+            """,
+            test_b="""\
             def test_b1():
                 assert 0
-        """,
+            """,
         )
         p = testdir.tmpdir.join("test_a.py")
         p2 = testdir.tmpdir.join("test_b.py")
@@ -317,11 +317,11 @@ class TestLastFailed(object):
         result = testdir.runpytest("--lf", p2)
         result.stdout.fnmatch_lines(["*1 failed*"])
         p2.write(
-            _pytest._code.Source(
+            textwrap.dedent(
+                """\
+                def test_b1():
+                    assert 1
                 """
-            def test_b1():
-                assert 1
-        """
             )
         )
         result = testdir.runpytest("--lf", p2)
@@ -332,18 +332,18 @@ class TestLastFailed(object):
     def test_lastfailed_usecase_splice(self, testdir, monkeypatch):
         monkeypatch.setenv("PYTHONDONTWRITEBYTECODE", 1)
         testdir.makepyfile(
-            """
+            """\
             def test_1():
                 assert 0
-        """
+            """
         )
         p2 = testdir.tmpdir.join("test_something.py")
         p2.write(
-            _pytest._code.Source(
+            textwrap.dedent(
+                """\
+                def test_2():
+                    assert 0
                 """
-            def test_2():
-                assert 0
-        """
             )
         )
         result = testdir.runpytest()

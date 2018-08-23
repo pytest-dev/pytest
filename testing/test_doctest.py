@@ -1,7 +1,7 @@
 # encoding: utf-8
 from __future__ import absolute_import, division, print_function
 import sys
-import _pytest._code
+import textwrap
 from _pytest.compat import MODULE_NOT_FOUND_ERROR
 from _pytest.doctest import DoctestItem, DoctestModule, DoctestTextfile
 import pytest
@@ -258,16 +258,16 @@ class TestDoctests(object):
 
     def test_doctest_linedata_missing(self, testdir):
         testdir.tmpdir.join("hello.py").write(
-            _pytest._code.Source(
+            textwrap.dedent(
+                """\
+                class Fun(object):
+                    @property
+                    def test(self):
+                        '''
+                        >>> a = 1
+                        >>> 1/0
+                        '''
                 """
-            class Fun(object):
-                @property
-                def test(self):
-                    '''
-                    >>> a = 1
-                    >>> 1/0
-                    '''
-            """
             )
         )
         result = testdir.runpytest("--doctest-modules")
@@ -300,10 +300,10 @@ class TestDoctests(object):
 
     def test_doctest_unex_importerror_with_module(self, testdir):
         testdir.tmpdir.join("hello.py").write(
-            _pytest._code.Source(
+            textwrap.dedent(
+                """\
+                import asdalsdkjaslkdjasd
                 """
-            import asdalsdkjaslkdjasd
-        """
             )
         )
         testdir.maketxtfile(
@@ -339,27 +339,27 @@ class TestDoctests(object):
     def test_doctestmodule_external_and_issue116(self, testdir):
         p = testdir.mkpydir("hello")
         p.join("__init__.py").write(
-            _pytest._code.Source(
+            textwrap.dedent(
+                """\
+                def somefunc():
+                    '''
+                        >>> i = 0
+                        >>> i + 1
+                        2
+                    '''
                 """
-            def somefunc():
-                '''
-                    >>> i = 0
-                    >>> i + 1
-                    2
-                '''
-        """
             )
         )
         result = testdir.runpytest(p, "--doctest-modules")
         result.stdout.fnmatch_lines(
             [
-                "004 *>>> i = 0",
-                "005 *>>> i + 1",
+                "003 *>>> i = 0",
+                "004 *>>> i + 1",
                 "*Expected:",
                 "*    2",
                 "*Got:",
                 "*    1",
-                "*:5: DocTestFailure",
+                "*:4: DocTestFailure",
             ]
         )
 
