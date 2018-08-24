@@ -12,7 +12,7 @@ from io import UnsupportedOperation
 import py
 import pytest
 import contextlib
-from six import binary_type, text_type
+from six import text_type
 from _pytest import capture
 from _pytest.capture import CaptureManager
 from _pytest.main import EXIT_NOTESTSCOLLECTED
@@ -24,12 +24,12 @@ needsosdup = pytest.mark.xfail("not hasattr(os, 'dup')")
 def tobytes(obj):
     if isinstance(obj, text_type):
         obj = obj.encode("UTF-8")
-    assert isinstance(obj, binary_type)
+    assert isinstance(obj, bytes)
     return obj
 
 
 def totext(obj):
-    if isinstance(obj, binary_type):
+    if isinstance(obj, bytes):
         obj = text_type(obj, "UTF-8")
     assert isinstance(obj, text_type)
     return obj
