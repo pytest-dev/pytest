@@ -858,7 +858,7 @@ class FixtureDef(object):
             if exceptions:
                 e = exceptions[0]
                 del exceptions  # ensure we don't keep all frames alive because of the traceback
-                py.builtin._reraise(*e)
+                six.reraise(*e)
 
         finally:
             hook = self._fixturemanager.session.gethookproxy(request.node.fspath)
@@ -885,7 +885,7 @@ class FixtureDef(object):
             result, cache_key, err = cached_result
             if my_cache_key == cache_key:
                 if err is not None:
-                    py.builtin._reraise(*err)
+                    six.reraise(*err)
                 else:
                     return result
             # we have a previous but differently parametrized fixture instance

@@ -4,11 +4,11 @@ from __future__ import absolute_import, division, print_function
 import inspect
 
 import _pytest._code
-import py
+import re
 import sys
 import warnings
 
-import re
+import six
 
 from _pytest.fixtures import yield_fixture
 from _pytest.outcomes import fail
@@ -130,7 +130,7 @@ def warns(expected_warning, *args, **kwargs):
 
         with WarningsChecker(expected_warning, match_expr=match_expr):
             code = _pytest._code.Source(code).compile()
-            py.builtin.exec_(code, frame.f_globals, loc)
+            six.exec_(code, frame.f_globals, loc)
     else:
         func = args[0]
         with WarningsChecker(expected_warning, match_expr=match_expr):

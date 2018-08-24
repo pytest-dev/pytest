@@ -2,11 +2,11 @@
 from __future__ import absolute_import, division, print_function
 import os
 import sys
+import textwrap
 import types
 
 import six
 
-import _pytest._code
 import py
 import pytest
 from _pytest.main import EXIT_NOTESTSCOLLECTED, EXIT_USAGEERROR
@@ -131,7 +131,7 @@ class TestGeneralUsage(object):
         p2 = testdir.makefile(".pyc", "123")
         result = testdir.runpytest(p1, p2)
         assert result.ret
-        result.stderr.fnmatch_lines(["*ERROR: not found:*%s" % (p2.basename,)])
+        result.stderr.fnmatch_lines(["*ERROR: not found:*{}".format(p2.basename)])
 
     def test_issue486_better_reporting_on_conftest_load_failure(self, testdir):
         testdir.makepyfile("")
@@ -201,16 +201,16 @@ class TestGeneralUsage(object):
         testdir.tmpdir.join("py").mksymlinkto(py._pydir)
         p = testdir.tmpdir.join("main.py")
         p.write(
-            _pytest._code.Source(
+            textwrap.dedent(
+                """\
+                import sys, os
+                sys.path.insert(0, '')
+                import py
+                print(py.__file__)
+                print(py.__path__)
+                os.chdir(os.path.dirname(os.getcwd()))
+                print(py.log)
                 """
-            import sys, os
-            sys.path.insert(0, '')
-            import py
-            print (py.__file__)
-            print (py.__path__)
-            os.chdir(os.path.dirname(os.getcwd()))
-            print (py.log)
-        """
             )
         )
         result = testdir.runpython(p)
@@ -453,7 +453,7 @@ class TestInvocationVariants(object):
     @pytest.mark.xfail("sys.platform.startswith('java')")
     def test_pydoc(self, testdir):
         for name in ("py.test", "pytest"):
-            result = testdir.runpython_c("import %s;help(%s)" % (name, name))
+            result = testdir.runpython_c("import {};help({})".format(name, name))
             assert result.ret == 0
             s = result.stdout.str()
             assert "MarkGenerator" in s
@@ -836,7 +836,7 @@ class TestDurations(object):
                     if ("test_%s" % x) in line and y in line:
                         break
                 else:
-                    raise AssertionError("not found %s %s" % (x, y))
+                    raise AssertionError("not found {} {}".format(x, y))
 
     def test_with_deselected(self, testdir):
         testdir.makepyfile(self.source)

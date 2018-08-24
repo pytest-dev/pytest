@@ -187,9 +187,9 @@ def _diff_text(left, right, verbose=False):
         r = r.replace(r"\r", "\r")
         return r
 
-    if isinstance(left, six.binary_type):
+    if isinstance(left, bytes):
         left = escape_for_readable_diff(left)
-    if isinstance(right, six.binary_type):
+    if isinstance(right, bytes):
         right = escape_for_readable_diff(right)
     if not verbose:
         i = 0  # just in case left or right has zero length
