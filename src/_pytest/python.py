@@ -597,14 +597,16 @@ class Package(Module):
             if path.basename == "__init__.py" and path.dirpath() == this_path:
                 continue
 
+            for pkg_prefix in pkg_prefixes:
+                if pkg_prefix in path.parts() and pkg_prefix.join('__init__.py') != path:
+                    skip = True
+
+            if skip:
+                continue
+
             if path.isdir() and path.join('__init__.py').check(file=1):
                 pkg_prefixes.add(path)
 
-            for pkg_prefix in pkg_prefixes:
-                if pkg_prefix in path.parts() and pkg_prefix.join('__init__.py') == path:
-                    skip = True
-            if skip:
-                continue
             for x in self._collectfile(path):
                 yield x
 
