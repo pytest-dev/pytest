@@ -1148,7 +1148,8 @@ class TestProgress(object):
             """
             [pytest]
             progress_display_mode = count
-        """)
+        """
+        )
         output = testdir.runpytest()
         output.stdout.re_match_lines(
             [
@@ -1173,7 +1174,8 @@ class TestProgress(object):
             """
             [pytest]
             progress_display_mode = count
-        """)
+        """
+        )
         output = testdir.runpytest("-v")
         output.stdout.re_match_lines(
             [
@@ -1188,7 +1190,7 @@ class TestProgress(object):
         output = testdir.runpytest("-n2")
         output.stdout.re_match_lines([r"\.{20} \s+ \[100%\]"])
 
-    def test_xdist_normal(self, many_tests_files, testdir):
+    def test_xdist_normal_count(self, many_tests_files, testdir):
         pytest.importorskip("xdist")
         output = testdir.runpytest("-n2")
         output.stdout.re_match_lines([r"\.{20} \s+ \[ 20 / 20 \]"])
