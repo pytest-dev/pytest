@@ -1630,21 +1630,20 @@ def test_package_ordering(testdir):
     """
     .
     └── root
-        ├── check_root.py
+        ├── Test_root.py
         ├── __init__.py
         ├── sub1
-        │   ├── check_sub1.py
+        │   ├── Test_sub1.py
         │   └── __init__.py
         └── sub2
             └── test
-                ├── check_sub2.py
-                └── test_in_sub2.py
+                └── test_sub2.py
 
     """
     testdir.makeini(
         """
         [pytest]
-        python_files=check_*.py
+        python_files=*.py
     """
     )
     root = testdir.mkpydir("root")
@@ -1653,10 +1652,9 @@ def test_package_ordering(testdir):
     sub2 = root.mkdir("sub2")
     sub2_test = sub2.mkdir("sub2")
 
-    root.join("check_root.py").write("def test_1(): pass")
-    sub1.join("check_sub1.py").write("def test_2(): pass")
-    sub2_test.join("check_sub2.py").write("def test_3(): pass")
-    sub2_test.join("test_in_sub2.py").write("def test_4(): pass")
+    root.join("Test_root.py").write("def test_1(): pass")
+    sub1.join("Test_sub1.py").write("def test_2(): pass")
+    sub2_test.join("test_sub2.py").write("def test_3(): pass")
 
     # Execute from .
     result = testdir.runpytest("-v", "-s")
