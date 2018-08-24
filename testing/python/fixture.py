@@ -4007,7 +4007,7 @@ class TestScopeOrdering(object):
             def fix():
                 values.append("pre-sub1")
                 yield values
-                values.pop()
+                assert values.pop() == "pre-sub1"
         """
             )
         )
@@ -4031,7 +4031,7 @@ class TestScopeOrdering(object):
             def fix():
                 values.append("pre-sub2")
                 yield values
-                values.pop()
+                assert values.pop() == "pre-sub2"
         """
             )
         )

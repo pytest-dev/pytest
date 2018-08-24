@@ -1,0 +1,1 @@
+Fixes double collection of tests within packages when the filename starts with a capital letter.
