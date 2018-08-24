@@ -143,6 +143,12 @@ def pytest_addoption(parser):
         default="progress",
     )
 
+    parser.addini(
+        "progress_display_mode",
+        help="Controls how to show the test progress (percentage|count)",
+        default="percentage",
+    )
+
 
 def pytest_configure(config):
     reporter = TerminalReporter(config, sys.stdout)
@@ -426,10 +432,18 @@ class TerminalReporter(object):
         if self.config.getoption("capture") == "no":
             return ""
         collected = self._session.testscollected
-        if collected:
-            progress = len(self._progress_nodeids_reported) * 100 // collected
-            return " [{:3d}%]".format(progress)
-        return " [100%]"
+        if self.config.getini("progress_display_mode") == "count":
+            if collected:
+                progress = self._progress_nodeids_reported
+                counter_format = "{{:{}d}}".format(len(str(collected)))
+                format_string = "[ {} / {{}} ]".format(counter_format)
+                return format_string.format(len(progress), collected)
+            return " [ {} / {} ]".format(collected, collected)
+        else:
+            if collected:
+                progress = len(self._progress_nodeids_reported) * 100 // collected
+                return " [{:3d}%]".format(progress)
+            return " [100%]"
 
     def _write_progress_information_filling_space(self):
         msg = self._get_progress_information_message()
