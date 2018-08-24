@@ -12,13 +12,14 @@ for installing your application and any dependencies
 as well as the ``pytest`` package itself. This ensures your code and
 dependencies are isolated from the system Python installation.
 
-First you need to place a `setup.py` file in the root of your package with the following minimum content:
+First you need to place a ``setup.py`` file in the root of your package with the following minimum content:
 
      from setuptools import setup, find_packages
-     
+
+
      setup(name="PACKAGENAME", packages=find_packages())
 
-Where `PACKAGENAME` is the name of your package. You can then install your package in "editable" mode by running from the same directory::
+Where ``PACKAGENAME`` is the name of your package. You can then install your package in "editable" mode by running from the same directory::
 
      pip install -e .
 
