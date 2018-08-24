@@ -270,7 +270,7 @@ class TestTraceback_f_g_h(object):
         decorator = pytest.importorskip("decorator").decorator
 
         def log(f, *k, **kw):
-            print("%s %s" % (k, kw))
+            print("{} {}".format(k, kw))
             f(*k, **kw)
 
         log = decorator(log)

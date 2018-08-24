@@ -11,7 +11,7 @@ def equal_with_bash(prefix, ffc, fc, out=None):
     res_bash = set(fc(prefix))
     retval = set(res) == res_bash
     if out:
-        out.write("equal_with_bash %s %s\n" % (retval, res))
+        out.write("equal_with_bash {} {}\n".format(retval, res))
         if not retval:
             out.write(" python - bash: %s\n" % (set(res) - res_bash))
             out.write(" bash - python: %s\n" % (res_bash - set(res)))

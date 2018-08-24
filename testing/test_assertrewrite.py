@@ -561,7 +561,7 @@ class TestAssertionRewrite(object):
         assert getmsg(f) == "assert 42"
 
         def my_reprcompare(op, left, right):
-            return "%s %s %s" % (left, op, right)
+            return "{} {} {}".format(left, op, right)
 
         monkeypatch.setattr(util, "_reprcompare", my_reprcompare)
 

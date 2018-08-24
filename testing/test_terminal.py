@@ -1118,9 +1118,9 @@ def test_terminal_summary_warnings_are_displayed(testdir):
 )
 def test_summary_stats(exp_line, exp_color, stats_arg):
     print("Based on stats: %s" % stats_arg)
-    print('Expect summary: "%s"; with color "%s"' % (exp_line, exp_color))
+    print('Expect summary: "{}"; with color "{}"'.format(exp_line, exp_color))
     (line, color) = build_summary_stats_line(stats_arg)
-    print('Actually got:   "%s"; with color "%s"' % (line, color))
+    print('Actually got:   "{}"; with color "{}"'.format(line, color))
     assert line == exp_line
     assert color == exp_color
 
