@@ -291,7 +291,7 @@ your own setuptools Test command for invoking pytest.
     setup(
         # ...,
         tests_require=["pytest"],
-        cmdclass={"test": PyTest},
+        cmdclass={"pytest": PyTest},
     )
 
 Now if you run::
