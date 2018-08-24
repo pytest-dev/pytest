@@ -4,6 +4,28 @@
 Good Integration Practices
 =================================================
 
+Install package with pip
+-------------------------------------------------
+
+For development, we recommend to use virtualenv_ environments and pip_
+for installing your application and any dependencies
+as well as the ``pytest`` package itself. This ensures your code and
+dependencies are isolated from the system Python installation.
+
+First you need to place a ``setup.py`` file in the root of your package with the following minimum content:
+
+     from setuptools import setup, find_packages
+
+
+     setup(name="PACKAGENAME", packages=find_packages())
+
+Where ``PACKAGENAME`` is the name of your package. You can then install your package in "editable" mode by running from the same directory::
+
+     pip install -e .
+
+which lets you change your source code (both tests and application) and rerun tests at will.
+This is similar to running ``python setup.py develop`` or ``conda develop`` in that it installs
+your package using a symlink to your development code.
 
 .. _`test discovery`:
 .. _`Python test discovery`:
@@ -176,19 +198,6 @@ Note that this layout also works in conjunction with the ``src`` layout mentione
 
 tox
 ------
-
-For development, we recommend to use virtualenv_ environments and pip_
-for installing your application and any dependencies
-as well as the ``pytest`` package itself. This ensures your code and
-dependencies are isolated from the system Python installation.
-
-You can then install your package in "editable" mode::
-
-     pip install -e .
-
-which lets you change your source code (both tests and application) and rerun tests at will.
-This is similar to running ``python setup.py develop`` or ``conda develop`` in that it installs
-your package using a symlink to your development code.
 
 Once you are done with your work and want to make sure that your actual
 package passes all tests you may want to look into `tox`_, the
