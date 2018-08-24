@@ -3998,7 +3998,7 @@ class TestScopeOrdering(object):
         sub1 = root.mkdir("sub1")
         sub1.ensure("__init__.py")
         sub1.join("conftest.py").write(
-            dedent(
+            textwrap.dedent(
                 """\
             import pytest
             from .. import values
@@ -4011,7 +4011,7 @@ class TestScopeOrdering(object):
             )
         )
         sub1.join("test_1.py").write(
-            dedent(
+            textwrap.dedent(
                 """\
             from .. import values
             def test_1(fix):
@@ -4022,7 +4022,7 @@ class TestScopeOrdering(object):
         sub2 = root.mkdir("sub2")
         sub2.ensure("__init__.py")
         sub2.join("conftest.py").write(
-            dedent(
+            textwrap.dedent(
                 """\
             import pytest
             from .. import values
@@ -4035,7 +4035,7 @@ class TestScopeOrdering(object):
             )
         )
         sub2.join("test_2.py").write(
-            dedent(
+            textwrap.dedent(
                 """\
             from .. import values
             def test_2(fix):
