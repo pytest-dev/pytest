@@ -525,7 +525,6 @@ class Testdir(object):
 
     def make_hook_recorder(self, pluginmanager):
         """Create a new :py:class:`HookRecorder` for a PluginManager."""
-        assert not hasattr(pluginmanager, "reprec")
         pluginmanager.reprec = reprec = HookRecorder(pluginmanager)
         self.request.addfinalizer(reprec.finish_recording)
         return reprec
