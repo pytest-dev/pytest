@@ -2,7 +2,6 @@ from __future__ import absolute_import, division, print_function
 
 import functools
 import inspect
-import os
 import sys
 import warnings
 from collections import OrderedDict, deque, defaultdict
@@ -93,7 +92,7 @@ def get_scope_package(node, fixturedef):
 
     cls = pytest.Package
     current = node
-    fixture_package_name = os.path.join(fixturedef.baseid, "__init__.py")
+    fixture_package_name = "%s/%s" % (fixturedef.baseid, "__init__.py")
     while current and (
         type(current) is not cls or fixture_package_name != current.nodeid
     ):

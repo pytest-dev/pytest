@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import textwrap
 
 import pytest
@@ -3977,3 +3978,71 @@ class TestScopeOrdering(object):
         items, _ = testdir.inline_genitems()
         request = FixtureRequest(items[0])
         assert request.fixturenames == "s1 p1 m1 m2 c1 f2 f1".split()
+
+    def test_multiple_packages(self, testdir):
+        """Complex test involving multiple package fixtures. Make sure teardowns
+        are executed in order.
+        .
+        └── root
+            ├── __init__.py
+            ├── sub1
+            │   ├── __init__.py
+            │   ├── conftest.py
+            │   └── test_1.py
+            └── sub2
+                ├── __init__.py
+                ├── conftest.py
+                └── test_2.py
+        """
+        root = testdir.mkdir("root")
+        root.join("__init__.py").write("values = []")
+        sub1 = root.mkdir("sub1")
+        sub1.ensure("__init__.py")
+        sub1.join("conftest.py").write(
+            textwrap.dedent(
+                """\
+            import pytest
+            from .. import values
+            @pytest.fixture(scope="package")
+            def fix():
+                values.append("pre-sub1")
+                yield values
+                assert values.pop() == "pre-sub1"
+        """
+            )
+        )
+        sub1.join("test_1.py").write(
+            textwrap.dedent(
+                """\
+            from .. import values
+            def test_1(fix):
+                assert values == ["pre-sub1"]
+        """
+            )
+        )
+        sub2 = root.mkdir("sub2")
+        sub2.ensure("__init__.py")
+        sub2.join("conftest.py").write(
+            textwrap.dedent(
+                """\
+            import pytest
+            from .. import values
+            @pytest.fixture(scope="package")
+            def fix():
+                values.append("pre-sub2")
+                yield values
+                assert values.pop() == "pre-sub2"
+        """
+            )
+        )
+        sub2.join("test_2.py").write(
+            textwrap.dedent(
+                """\
+            from .. import values
+            def test_2(fix):
+                assert values == ["pre-sub2"]
+        """
+            )
+        )
+        reprec = testdir.inline_run()
+        reprec.assertoutcome(passed=2)

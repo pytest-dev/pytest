@@ -1,0 +1,2 @@
+Fixed an issue where teardown of fixtures of consecutive sub-packages were executed once, at the end of the outer
+package.
