@@ -302,3 +302,22 @@ def test_filterwarnings_mark_registration(testdir):
     )
     result = testdir.runpytest("--strict")
     assert result.ret == 0
+
+
+@pytest.mark.filterwarnings("always")
+def test_warning_captured_hook(testdir, pyfile_with_warnings):
+
+    collected = []
+
+    class WarningCollector:
+        def pytest_warning_captured(self, warning, when, item):
+            collected.append((warning.category, when, item.name))
+
+    result = testdir.runpytest(plugins=[WarningCollector()])
+    result.stdout.fnmatch_lines(["*1 passed*"])
+
+    expected = [
+        (UserWarning, "runtest", "test_func"),
+        (RuntimeWarning, "runtest", "test_func"),
+    ]
+    assert collected == expected

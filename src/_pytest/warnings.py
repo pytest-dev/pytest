@@ -58,7 +58,7 @@ def pytest_configure(config):
 
 
 @contextmanager
-def catch_warnings_for_item(item):
+def deprecated_catch_warnings_for_item(item):
     """
     catches the warnings generated during setup/call/teardown execution
     of the given item and after it is done posts them as warnings to this
@@ -80,40 +80,40 @@ def catch_warnings_for_item(item):
         yield
 
         for warning in log:
-            warn_msg = warning.message
-            unicode_warning = False
-
-            if compat._PY2 and any(
-                isinstance(m, compat.UNICODE_TYPES) for m in warn_msg.args
-            ):
-                new_args = []
-                for m in warn_msg.args:
-                    new_args.append(
-                        compat.ascii_escaped(m)
-                        if isinstance(m, compat.UNICODE_TYPES)
-                        else m
-                    )
-                unicode_warning = list(warn_msg.args) != new_args
-                warn_msg.args = new_args
-
-            msg = warnings.formatwarning(
-                warn_msg,
-                warning.category,
-                warning.filename,
-                warning.lineno,
-                warning.line,
+            item.ihook.pytest_warning_captured.call_historic(
+                kwargs=dict(warning=warning, when="runtest", item=item)
             )
-            item.warn("unused", msg)
+            deprecated_emit_warning(item, warning)
 
-            if unicode_warning:
-                warnings.warn(
-                    "Warning is using unicode non convertible to ascii, "
-                    "converting to a safe representation:\n  %s" % msg,
-                    UnicodeWarning,
-                )
+
+def deprecated_emit_warning(item, warning):
+    """
+    Emits the deprecated ``pytest_logwarning`` for the given warning and item.
+    """
+    warn_msg = warning.message
+    unicode_warning = False
+    if compat._PY2 and any(isinstance(m, compat.UNICODE_TYPES) for m in warn_msg.args):
+        new_args = []
+        for m in warn_msg.args:
+            new_args.append(
+                compat.ascii_escaped(m) if isinstance(m, compat.UNICODE_TYPES) else m
+            )
+        unicode_warning = list(warn_msg.args) != new_args
+        warn_msg.args = new_args
+
+    msg = warnings.formatwarning(
+        warn_msg, warning.category, warning.filename, warning.lineno, warning.line
+    )
+    item.warn("unused", msg)
+    if unicode_warning:
+        warnings.warn(
+            "Warning is using unicode non convertible to ascii, "
+            "converting to a safe representation:\n  %s" % msg,
+            UnicodeWarning,
+        )
 
 
 @pytest.hookimpl(hookwrapper=True)
 def pytest_runtest_protocol(item):
-    with catch_warnings_for_item(item):
+    with deprecated_catch_warnings_for_item(item):
         yield

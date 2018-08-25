@@ -535,6 +535,25 @@ def pytest_logwarning(message, code, nodeid, fslocation):
     """
 
 
+@hookspec(historic=True)
+def pytest_warning_captured(warning, when, item):
+    """
+    Process a warning captured by the internal pytest plugin.
+
+    :param warnings.WarningMessage warning:
+        The captured warning. This is the same object produced by :py:func:`warnings.catch_warnings`, and contains
+        the same attributes as :py:func:`warnings.showwarning`.
+
+    :param str when:
+        Indicates when the warning was captured. Possible values:
+        * ``"collect"``: during test collection.
+        * ``"runtest"``: during test execution.
+
+    :param pytest.Item|None item:
+        The item being executed if ``when == "runtest"``, else ``None``.
+    """
+
+
 # -------------------------------------------------------------------------
 # doctest hooks
 # -------------------------------------------------------------------------
