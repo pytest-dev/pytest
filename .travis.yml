@@ -62,12 +62,7 @@ jobs:
           repo: pytest-dev/pytest
     - stage: linting
       python: '3.6'
-      env:
-      install:
-      - pip install pre-commit
-      - pre-commit install-hooks
-      script:
-      - pre-commit run --all-files
+      env: TOXENV=linting
 
 script: tox --recreate
 
