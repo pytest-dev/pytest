@@ -24,7 +24,7 @@ pytest 3.7.3 (2018-08-26)
 Bug Fixes
 ---------
 
-- `#3033 <https://github.com/pytest-dev/pytest/issues/3033>`_: Fixtures during teardown can again use ``capsys`` and ``cafd`` to inspect output captured during tests.
+- `#3033 <https://github.com/pytest-dev/pytest/issues/3033>`_: Fixtures during teardown can again use ``capsys`` and ``capfd`` to inspect output captured during tests.
 
 
 - `#3773 <https://github.com/pytest-dev/pytest/issues/3773>`_: Fix collection of tests from ``__init__.py`` files if they match the ``python_files`` configuration option.
