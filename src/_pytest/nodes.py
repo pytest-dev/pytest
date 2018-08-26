@@ -138,9 +138,7 @@ class Node(object):
         """ generate a warning with the given code and message for this
         item. """
         assert isinstance(code, str)
-        fslocation = getattr(self, "location", None)
-        if fslocation is None:
-            fslocation = getattr(self, "fspath", None)
+        fslocation = get_fslocation_from_item(self)
         self.ihook.pytest_logwarning.call_historic(
             kwargs=dict(
                 code=code, message=message, nodeid=self.nodeid, fslocation=fslocation
@@ -308,6 +306,18 @@ class Node(object):
         )
 
     repr_failure = _repr_failure_py
+
+
+def get_fslocation_from_item(item):
+    """Tries to extract the actual location from an item, depending on available attributes:
+
+    * "fslocation": a pair (path, lineno)
+    * "fspath": just a path
+    """
+    fslocation = getattr(item, "location", None)
+    if fslocation is None:
+        fslocation = getattr(item, "fspath", None)
+    return fslocation
 
 
 class Collector(Node):

@@ -9,6 +9,7 @@ import platform
 import sys
 import time
 
+import attr
 import pluggy
 import py
 import six
@@ -184,23 +185,20 @@ def pytest_report_teststatus(report):
     return report.outcome, letter, report.outcome.upper()
 
 
+@attr.s
 class WarningReport(object):
     """
     Simple structure to hold warnings information captured by ``pytest_logwarning``.
+
+    :ivar str message: user friendly message about the warning
+    :ivar str|None nodeid: node id that generated the warning (see ``get_location``).
+    :ivar tuple|py.path.local fslocation:
+        file system location of the source of the warning (see ``get_location``).
     """
 
-    def __init__(self, code, message, nodeid=None, fslocation=None):
-        """
-        :param code: unused
-        :param str message: user friendly message about the warning
-        :param str|None nodeid: node id that generated the warning (see ``get_location``).
-        :param tuple|py.path.local fslocation:
-            file system location of the source of the warning (see ``get_location``).
-        """
-        self.code = code
-        self.message = message
-        self.nodeid = nodeid
-        self.fslocation = fslocation
+    message = attr.ib()
+    nodeid = attr.ib(default=None)
+    fslocation = attr.ib(default=None)
 
     def get_location(self, config):
         """
@@ -327,12 +325,24 @@ class TerminalReporter(object):
             self.write_line("INTERNALERROR> " + line)
         return 1
 
-    def pytest_logwarning(self, code, fslocation, message, nodeid):
+    def pytest_logwarning(self, fslocation, message, nodeid):
         warnings = self.stats.setdefault("warnings", [])
-        warning = WarningReport(
-            code=code, fslocation=fslocation, message=message, nodeid=nodeid
-        )
+        warning = WarningReport(fslocation=fslocation, message=message, nodeid=nodeid)
         warnings.append(warning)
+
+    def pytest_warning_captured(self, warning_message, item):
+        from _pytest.nodes import get_fslocation_from_item
+        from _pytest.warnings import warning_record_to_str
+
+        warnings = self.stats.setdefault("warnings", [])
+
+        fslocation = get_fslocation_from_item(item)
+        message = warning_record_to_str(warning_message)
+
+        warning_report = WarningReport(
+            fslocation=fslocation, message=message, nodeid=item.nodeid
+        )
+        warnings.append(warning_report)
 
     def pytest_plugin_registered(self, plugin):
         if self.config.option.traceconfig:

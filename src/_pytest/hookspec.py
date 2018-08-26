@@ -536,13 +536,13 @@ def pytest_logwarning(message, code, nodeid, fslocation):
 
 
 @hookspec(historic=True)
-def pytest_warning_captured(warning, when, item):
+def pytest_warning_captured(warning_message, when, item):
     """
     Process a warning captured by the internal pytest plugin.
 
-    :param warnings.WarningMessage warning:
+    :param warnings.WarningMessage warning_message:
         The captured warning. This is the same object produced by :py:func:`warnings.catch_warnings`, and contains
-        the same attributes as :py:func:`warnings.showwarning`.
+        the same attributes as the parameters of :py:func:`warnings.showwarning`.
 
     :param str when:
         Indicates when the warning was captured. Possible values:

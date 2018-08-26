@@ -58,7 +58,7 @@ def pytest_configure(config):
 
 
 @contextmanager
-def deprecated_catch_warnings_for_item(item):
+def catch_warnings_for_item(item):
     """
     catches the warnings generated during setup/call/teardown execution
     of the given item and after it is done posts them as warnings to this
@@ -79,18 +79,18 @@ def deprecated_catch_warnings_for_item(item):
 
         yield
 
-        for warning in log:
+        for warning_message in log:
             item.ihook.pytest_warning_captured.call_historic(
-                kwargs=dict(warning=warning, when="runtest", item=item)
+                kwargs=dict(warning_message=warning_message, when="runtest", item=item)
             )
-            deprecated_emit_warning(item, warning)
 
 
-def deprecated_emit_warning(item, warning):
+def warning_record_to_str(warning_message):
+    """Convert a warnings.WarningMessage to a string, taking in account a lot of unicode shenaningans in Python 2.
+
+    When Python 2 support is tropped this function can be greatly simplified.
     """
-    Emits the deprecated ``pytest_logwarning`` for the given warning and item.
-    """
-    warn_msg = warning.message
+    warn_msg = warning_message.message
     unicode_warning = False
     if compat._PY2 and any(isinstance(m, compat.UNICODE_TYPES) for m in warn_msg.args):
         new_args = []
@@ -102,18 +102,22 @@ def deprecated_emit_warning(item, warning):
         warn_msg.args = new_args
 
     msg = warnings.formatwarning(
-        warn_msg, warning.category, warning.filename, warning.lineno, warning.line
+        warn_msg,
+        warning_message.category,
+        warning_message.filename,
+        warning_message.lineno,
+        warning_message.line,
     )
-    item.warn("unused", msg)
     if unicode_warning:
         warnings.warn(
             "Warning is using unicode non convertible to ascii, "
             "converting to a safe representation:\n  %s" % msg,
             UnicodeWarning,
         )
+    return msg
 
 
 @pytest.hookimpl(hookwrapper=True)
 def pytest_runtest_protocol(item):
-    with deprecated_catch_warnings_for_item(item):
+    with catch_warnings_for_item(item):
         yield

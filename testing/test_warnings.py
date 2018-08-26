@@ -310,8 +310,8 @@ def test_warning_captured_hook(testdir, pyfile_with_warnings):
     collected = []
 
     class WarningCollector:
-        def pytest_warning_captured(self, warning, when, item):
-            collected.append((warning.category, when, item.name))
+        def pytest_warning_captured(self, warning_message, when, item):
+            collected.append((warning_message.category, when, item.name))
 
     result = testdir.runpytest(plugins=[WarningCollector()])
     result.stdout.fnmatch_lines(["*1 passed*"])
