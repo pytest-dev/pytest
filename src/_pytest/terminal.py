@@ -339,8 +339,9 @@ class TerminalReporter(object):
         fslocation = get_fslocation_from_item(item)
         message = warning_record_to_str(warning_message)
 
+        nodeid = item.nodeid if item is not None else ""
         warning_report = WarningReport(
-            fslocation=fslocation, message=message, nodeid=item.nodeid
+            fslocation=fslocation, message=message, nodeid=nodeid
         )
         warnings.append(warning_report)
 
@@ -707,7 +708,8 @@ class TerminalReporter(object):
 
             self.write_sep("=", "warnings summary", yellow=True, bold=False)
             for location, warning_records in grouped:
-                self._tw.line(str(location) if location else "<undetermined location>")
+                if location:
+                    self._tw.line(str(location))
                 for w in warning_records:
                     lines = w.message.splitlines()
                     indented = "\n".join("  " + x for x in lines)

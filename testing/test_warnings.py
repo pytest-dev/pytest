@@ -321,3 +321,28 @@ def test_warning_captured_hook(testdir, pyfile_with_warnings):
         (RuntimeWarning, "runtest", "test_func"),
     ]
     assert collected == expected
+
+
+@pytest.mark.filterwarnings("always")
+def test_collection_warnings(testdir):
+    """
+    """
+    testdir.makepyfile(
+        """
+        import warnings
+
+        warnings.warn(UserWarning("collection warning"))
+
+        def test_foo():
+            pass
+    """
+    )
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines(
+        [
+            "*== %s ==*" % WARNINGS_SUMMARY_HEADER,
+            "*collection_warnings.py:3: UserWarning: collection warning",
+            '    warnings.warn(UserWarning("collection warning"))',
+            "* 1 passed, 1 warnings*",
+        ]
+    )

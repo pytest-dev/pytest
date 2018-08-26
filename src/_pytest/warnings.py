@@ -58,14 +58,16 @@ def pytest_configure(config):
 
 
 @contextmanager
-def catch_warnings_for_item(item):
+def catch_warnings_for_item(config, ihook, item):
     """
-    catches the warnings generated during setup/call/teardown execution
-    of the given item and after it is done posts them as warnings to this
-    item.
+    Context manager that catches warnings generated in the contained execution block.
+
+    ``item`` can be None if we are not in the context of an item execution.
+
+    Each warning captured triggers the ``pytest_warning_captured`` hook.
     """
-    args = item.config.getoption("pythonwarnings") or []
-    inifilters = item.config.getini("filterwarnings")
+    args = config.getoption("pythonwarnings") or []
+    inifilters = config.getini("filterwarnings")
     with warnings.catch_warnings(record=True) as log:
         for arg in args:
             warnings._setoption(arg)
@@ -73,14 +75,15 @@ def catch_warnings_for_item(item):
         for arg in inifilters:
             _setoption(warnings, arg)
 
-        for mark in item.iter_markers(name="filterwarnings"):
-            for arg in mark.args:
-                warnings._setoption(arg)
+        if item is not None:
+            for mark in item.iter_markers(name="filterwarnings"):
+                for arg in mark.args:
+                    warnings._setoption(arg)
 
         yield
 
         for warning_message in log:
-            item.ihook.pytest_warning_captured.call_historic(
+            ihook.pytest_warning_captured.call_historic(
                 kwargs=dict(warning_message=warning_message, when="runtest", item=item)
             )
 
@@ -119,5 +122,12 @@ def warning_record_to_str(warning_message):
 
 @pytest.hookimpl(hookwrapper=True)
 def pytest_runtest_protocol(item):
-    with catch_warnings_for_item(item):
+    with catch_warnings_for_item(config=item.config, ihook=item.ihook, item=item):
+        yield
+
+
+@pytest.hookimpl(hookwrapper=True)
+def pytest_collection(session):
+    config = session.config
+    with catch_warnings_for_item(config=config, ihook=config.hook, item=None):
         yield
