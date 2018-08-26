@@ -1,2 +1,0 @@
-Remove a reference to issue `#568 <https://github.com/pytest-dev/pytest/issues/568>`_ from the documentation, which has since been
-fixed.

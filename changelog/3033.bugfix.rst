@@ -1,1 +1,0 @@
-Fixtures during teardown can again use ``capsys`` and ``cafd`` to inspect output captured during tests.

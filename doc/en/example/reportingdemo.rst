@@ -423,7 +423,7 @@ get on the terminal - we are working on that)::
             name = "abc-123"
             module = imp.new_module(name)
             code = _pytest._code.compile(src, name, "exec")
-            py.builtin.exec_(code, module.__dict__)
+            six.exec_(code, module.__dict__)
             sys.modules[name] = module
     >       module.foo()
 
