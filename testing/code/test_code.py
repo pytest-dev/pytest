@@ -32,10 +32,8 @@ def test_code_with_class():
     pytest.raises(TypeError, "_pytest._code.Code(A)")
 
 
-if True:
-
-    def x():
-        pass
+def x():
+    raise NotImplementedError()
 
 
 def test_code_fullsource():
@@ -48,7 +46,7 @@ def test_code_source():
     code = _pytest._code.Code(x)
     src = code.source()
     expected = """def x():
-    pass"""
+    raise NotImplementedError()"""
     assert str(src) == expected
 
 
@@ -85,9 +83,9 @@ def test_unicode_handling():
         raise Exception(value)
 
     excinfo = pytest.raises(Exception, f)
-    str(excinfo)
-    if sys.version_info[0] < 3:
-        text_type(excinfo)
+    text_type(excinfo)
+    if sys.version_info < (3,):
+        bytes(excinfo)
 
 
 @pytest.mark.skipif(sys.version_info[0] >= 3, reason="python 2 only issue")
@@ -105,25 +103,25 @@ def test_unicode_handling_syntax_error():
 
 def test_code_getargs():
     def f1(x):
-        pass
+        raise NotImplementedError()
 
     c1 = _pytest._code.Code(f1)
     assert c1.getargs(var=True) == ("x",)
 
     def f2(x, *y):
-        pass
+        raise NotImplementedError()
 
     c2 = _pytest._code.Code(f2)
     assert c2.getargs(var=True) == ("x", "y")
 
     def f3(x, **z):
-        pass
+        raise NotImplementedError()
 
     c3 = _pytest._code.Code(f3)
     assert c3.getargs(var=True) == ("x", "z")
 
     def f4(x, *y, **z):
-        pass
+        raise NotImplementedError()
 
     c4 = _pytest._code.Code(f4)
     assert c4.getargs(var=True) == ("x", "y", "z")
@@ -188,11 +186,14 @@ class TestReprFuncArgs(object):
 
         tw = TWMock()
 
-        args = [("unicode_string", u"São Paulo"), ("utf8_string", "S\xc3\xa3o Paulo")]
+        args = [("unicode_string", u"São Paulo"), ("utf8_string", b"S\xc3\xa3o Paulo")]
 
         r = ReprFuncArgs(args)
         r.toterminal(tw)
         if sys.version_info[0] >= 3:
-            assert tw.lines[0] == "unicode_string = São Paulo, utf8_string = SÃ£o Paulo"
+            assert (
+                tw.lines[0]
+                == r"unicode_string = São Paulo, utf8_string = b'S\xc3\xa3o Paulo'"
+            )
         else:
             assert tw.lines[0] == "unicode_string = São Paulo, utf8_string = São Paulo"
