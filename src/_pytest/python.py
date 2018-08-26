@@ -201,13 +201,17 @@ def pytest_collect_file(path, parent):
     ext = path.ext
     if ext == ".py":
         if not parent.session.isinitpath(path):
-            for pat in parent.config.getini("python_files") + ["__init__.py"]:
-                if path.fnmatch(pat):
-                    break
-            else:
+            if not path_matches_patterns(
+                path, parent.config.getini("python_files") + ["__init__.py"]
+            ):
                 return
         ihook = parent.session.gethookproxy(path)
         return ihook.pytest_pycollect_makemodule(path=path, parent=parent)
+
+
+def path_matches_patterns(path, patterns):
+    """Returns True if the given py.path.local matches one of the patterns in the list of globs given"""
+    return any(path.fnmatch(pattern) for pattern in patterns)
 
 
 def pytest_pycollect_makemodule(path, parent):
@@ -590,6 +594,11 @@ class Package(Module):
                 self.session.config.pluginmanager._duplicatepaths.remove(path)
 
         this_path = self.fspath.dirpath()
+        init_module = this_path.join("__init__.py")
+        if init_module.check(file=1) and path_matches_patterns(
+            init_module, self.config.getini("python_files")
+        ):
+            yield Module(init_module, self)
         pkg_prefixes = set()
         for path in this_path.visit(rec=self._recurse, bf=True, sort=True):
             # we will visit our own __init__.py file, in which case we skip it

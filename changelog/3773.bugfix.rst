@@ -1,0 +1,1 @@
+Fix collection of tests from ``__init__.py`` files if they match the ``python_files`` configuration option.

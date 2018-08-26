@@ -672,7 +672,9 @@ class Testdir(object):
             example_path.copy(result)
             return result
         else:
-            raise LookupError("example is not found as a file or directory")
+            raise LookupError(
+                'example "{}" is not found as a file or directory'.format(example_path)
+            )
 
     Session = Session
 
