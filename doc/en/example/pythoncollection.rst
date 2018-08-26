@@ -103,8 +103,8 @@ the :confval:`python_files`, :confval:`python_classes` and
 :confval:`python_functions` configuration options.
 Here is an example::
 
-    # Example 1: have pytest look for "check" instead of "test"
     # content of pytest.ini
+    # Example 1: have pytest look for "check" instead of "test"
     # can also be defined in tox.ini or setup.cfg file, although the section
     # name in setup.cfg files should be "tool:pytest"
     [pytest]
