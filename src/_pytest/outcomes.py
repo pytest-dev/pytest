@@ -3,7 +3,6 @@ exception classes and constants handling test outcomes
 as well as functions creating them
 """
 from __future__ import absolute_import, division, print_function
-import py
 import sys
 
 
@@ -21,7 +20,7 @@ class OutcomeException(BaseException):
         if self.msg:
             val = self.msg
             if isinstance(val, bytes):
-                val = py._builtin._totext(val, errors="replace")
+                val = val.decode("UTF-8", errors="replace")
             return val
         return "<%s instance>" % (self.__class__.__name__,)
 

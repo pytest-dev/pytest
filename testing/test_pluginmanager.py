@@ -25,7 +25,6 @@ class TestPytestPluginInteractions(object):
         )
         conf = testdir.makeconftest(
             """
-            import sys ; sys.path.insert(0, '.')
             import newhooks
             def pytest_addhooks(pluginmanager):
                 pluginmanager.addhooks(newhooks)
@@ -263,8 +262,7 @@ class TestPytestPluginManager(object):
         mod.pytest_plugins = "pytest_a"
         aplugin = testdir.makepyfile(pytest_a="#")
         reprec = testdir.make_hook_recorder(pytestpm)
-        # syspath.prepend(aplugin.dirpath())
-        sys.path.insert(0, str(aplugin.dirpath()))
+        testdir.syspathinsert(aplugin.dirpath())
         pytestpm.consider_module(mod)
         call = reprec.getcall(pytestpm.hook.pytest_plugin_registered.name)
         assert call.plugin.__name__ == "pytest_a"

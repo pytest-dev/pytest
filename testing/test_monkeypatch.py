@@ -228,11 +228,15 @@ def test_syspath_prepend(mp):
 
 
 def test_syspath_prepend_double_undo(mp):
-    mp.syspath_prepend("hello world")
-    mp.undo()
-    sys.path.append("more hello world")
-    mp.undo()
-    assert sys.path[-1] == "more hello world"
+    old_syspath = sys.path[:]
+    try:
+        mp.syspath_prepend("hello world")
+        mp.undo()
+        sys.path.append("more hello world")
+        mp.undo()
+        assert sys.path[-1] == "more hello world"
+    finally:
+        sys.path[:] = old_syspath
 
 
 def test_chdir_with_path_local(mp, tmpdir):

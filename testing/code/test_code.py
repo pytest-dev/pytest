@@ -3,8 +3,8 @@ from __future__ import absolute_import, division, print_function
 import sys
 
 import _pytest._code
-import py
 import pytest
+import mock
 from test_excinfo import TWMock
 from six import text_type
 
@@ -68,12 +68,8 @@ def test_getstatement_empty_fullsource():
 
     f = func()
     f = _pytest._code.Frame(f)
-    prop = f.code.__class__.fullsource
-    try:
-        f.code.__class__.fullsource = None
-        assert f.statement == _pytest._code.Source("")
-    finally:
-        f.code.__class__.fullsource = prop
+    with mock.patch.object(f.code.__class__, "fullsource", None):
+        assert f.statement == ""
 
 
 def test_code_from_func():
@@ -83,7 +79,7 @@ def test_code_from_func():
 
 
 def test_unicode_handling():
-    value = py.builtin._totext("\xc4\x85\xc4\x87\n", "utf-8").encode("utf8")
+    value = u"ąć".encode("UTF-8")
 
     def f():
         raise Exception(value)
@@ -96,7 +92,7 @@ def test_unicode_handling():
 
 @pytest.mark.skipif(sys.version_info[0] >= 3, reason="python 2 only issue")
 def test_unicode_handling_syntax_error():
-    value = py.builtin._totext("\xc4\x85\xc4\x87\n", "utf-8").encode("utf8")
+    value = u"ąć".encode("UTF-8")
 
     def f():
         raise SyntaxError("invalid syntax", (None, 1, 3, value))

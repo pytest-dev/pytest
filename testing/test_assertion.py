@@ -6,6 +6,7 @@ import textwrap
 import _pytest.assertion as plugin
 import py
 import pytest
+import six
 from _pytest.assertion import util
 from _pytest.assertion import truncate
 
@@ -509,12 +510,12 @@ class TestAssert_reprcompare(object):
         assert "raised in repr()" not in expl
 
     def test_unicode(self):
-        left = py.builtin._totext("£€", "utf-8")
-        right = py.builtin._totext("£", "utf-8")
+        left = u"£€"
+        right = u"£"
         expl = callequal(left, right)
-        assert expl[0] == py.builtin._totext("'£€' == '£'", "utf-8")
-        assert expl[1] == py.builtin._totext("- £€", "utf-8")
-        assert expl[2] == py.builtin._totext("+ £", "utf-8")
+        assert expl[0] == u"'£€' == '£'"
+        assert expl[1] == u"- £€"
+        assert expl[2] == u"+ £"
 
     def test_nonascii_text(self):
         """
@@ -541,8 +542,8 @@ class TestAssert_reprcompare(object):
             right = bytes(right, "utf-8")
         expl = callequal(left, right)
         for line in expl:
-            assert isinstance(line, py.builtin.text)
-        msg = py.builtin._totext("\n").join(expl)
+            assert isinstance(line, six.text_type)
+        msg = u"\n".join(expl)
         assert msg
 
 

@@ -4,9 +4,9 @@ terminal reporting of the full testing process.
 from __future__ import absolute_import, division, print_function
 import collections
 import sys
+import textwrap
 
 import pluggy
-import _pytest._code
 import py
 import pytest
 from _pytest.main import EXIT_NOTESTSCOLLECTED
@@ -161,12 +161,12 @@ class TestTerminal(object):
     def test_itemreport_directclasses_not_shown_as_subclasses(self, testdir):
         a = testdir.mkpydir("a123")
         a.join("test_hello123.py").write(
-            _pytest._code.Source(
+            textwrap.dedent(
+                """\
+                class TestClass(object):
+                    def test_method(self):
+                        pass
                 """
-            class TestClass(object):
-                def test_method(self):
-                    pass
-        """
             )
         )
         result = testdir.runpytest("-v")
@@ -312,13 +312,13 @@ class TestCollectonly(object):
         result = testdir.runpytest("--collect-only", p)
         assert result.ret == 2
         result.stdout.fnmatch_lines(
-            _pytest._code.Source(
+            textwrap.dedent(
+                """\
+                *ERROR*
+                *ImportError*
+                *No module named *Errlk*
+                *1 error*
                 """
-            *ERROR*
-            *ImportError*
-            *No module named *Errlk*
-            *1 error*
-        """
             ).strip()
         )
 
@@ -948,6 +948,46 @@ def pytest_report_header(config, startdir):
         assert "!This is stderr!" not in stdout
         assert "!This is a warning log msg!" not in stdout
 
+    def test_show_capture_with_teardown_logs(self, testdir):
+        """Ensure that the capturing of teardown logs honor --show-capture setting"""
+        testdir.makepyfile(
+            """
+            import logging
+            import sys
+            import pytest
+
+            @pytest.fixture(scope="function", autouse="True")
+            def hook_each_test(request):
+                yield
+                sys.stdout.write("!stdout!")
+                sys.stderr.write("!stderr!")
+                logging.warning("!log!")
+
+            def test_func():
+                assert False
+        """
+        )
+
+        result = testdir.runpytest("--show-capture=stdout", "--tb=short").stdout.str()
+        assert "!stdout!" in result
+        assert "!stderr!" not in result
+        assert "!log!" not in result
+
+        result = testdir.runpytest("--show-capture=stderr", "--tb=short").stdout.str()
+        assert "!stdout!" not in result
+        assert "!stderr!" in result
+        assert "!log!" not in result
+
+        result = testdir.runpytest("--show-capture=log", "--tb=short").stdout.str()
+        assert "!stdout!" not in result
+        assert "!stderr!" not in result
+        assert "!log!" in result
+
+        result = testdir.runpytest("--show-capture=no", "--tb=short").stdout.str()
+        assert "!stdout!" not in result
+        assert "!stderr!" not in result
+        assert "!log!" not in result
+
 
 @pytest.mark.xfail("not hasattr(os, 'dup')")
 def test_fdopen_kept_alive_issue124(testdir):
@@ -1078,9 +1118,9 @@ def test_terminal_summary_warnings_are_displayed(testdir):
 )
 def test_summary_stats(exp_line, exp_color, stats_arg):
     print("Based on stats: %s" % stats_arg)
-    print('Expect summary: "%s"; with color "%s"' % (exp_line, exp_color))
+    print('Expect summary: "{}"; with color "{}"'.format(exp_line, exp_color))
     (line, color) = build_summary_stats_line(stats_arg)
-    print('Actually got:   "%s"; with color "%s"' % (line, color))
+    print('Actually got:   "{}"; with color "{}"'.format(line, color))
     assert line == exp_line
     assert color == exp_color
 

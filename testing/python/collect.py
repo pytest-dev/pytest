@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import os
 import sys
-from textwrap import dedent
+import textwrap
 
 import _pytest._code
 import pytest
@@ -47,13 +47,14 @@ class TestModule(object):
         p = root2.join("test_x456.py")
         monkeypatch.syspath_prepend(str(root1))
         p.write(
-            dedent(
+            textwrap.dedent(
                 """\
-            import x456
-            def test():
-                assert x456.__file__.startswith(%r)
-        """
-                % str(root2)
+                import x456
+                def test():
+                    assert x456.__file__.startswith({!r})
+                """.format(
+                    str(root2)
+                )
             )
         )
         with root2.as_cwd():
@@ -929,23 +930,23 @@ class TestConftestCustomization(object):
     def test_customized_pymakemodule_issue205_subdir(self, testdir):
         b = testdir.mkdir("a").mkdir("b")
         b.join("conftest.py").write(
-            _pytest._code.Source(
+            textwrap.dedent(
+                """\
+                import pytest
+                @pytest.hookimpl(hookwrapper=True)
+                def pytest_pycollect_makemodule():
+                    outcome = yield
+                    mod = outcome.get_result()
+                    mod.obj.hello = "world"
                 """
-            import pytest
-            @pytest.hookimpl(hookwrapper=True)
-            def pytest_pycollect_makemodule():
-                outcome = yield
-                mod = outcome.get_result()
-                mod.obj.hello = "world"
-        """
             )
         )
         b.join("test_module.py").write(
-            _pytest._code.Source(
+            textwrap.dedent(
+                """\
+                def test_hello():
+                    assert hello == "world"
                 """
-            def test_hello():
-                assert hello == "world"
-        """
             )
         )
         reprec = testdir.inline_run()
@@ -954,31 +955,31 @@ class TestConftestCustomization(object):
     def test_customized_pymakeitem(self, testdir):
         b = testdir.mkdir("a").mkdir("b")
         b.join("conftest.py").write(
-            _pytest._code.Source(
+            textwrap.dedent(
+                """\
+                import pytest
+                @pytest.hookimpl(hookwrapper=True)
+                def pytest_pycollect_makeitem():
+                    outcome = yield
+                    if outcome.excinfo is None:
+                        result = outcome.get_result()
+                        if result:
+                            for func in result:
+                                func._some123 = "world"
                 """
-            import pytest
-            @pytest.hookimpl(hookwrapper=True)
-            def pytest_pycollect_makeitem():
-                outcome = yield
-                if outcome.excinfo is None:
-                    result = outcome.get_result()
-                    if result:
-                        for func in result:
-                            func._some123 = "world"
-        """
             )
         )
         b.join("test_module.py").write(
-            _pytest._code.Source(
-                """
-            import pytest
+            textwrap.dedent(
+                """\
+                import pytest
 
-            @pytest.fixture()
-            def obj(request):
-                return request.node._some123
-            def test_hello(obj):
-                assert obj == "world"
-        """
+                @pytest.fixture()
+                def obj(request):
+                    return request.node._some123
+                def test_hello(obj):
+                    assert obj == "world"
+                """
             )
         )
         reprec = testdir.inline_run()
@@ -1033,7 +1034,7 @@ class TestConftestCustomization(object):
         )
         testdir.makefile(
             ".narf",
-            """
+            """\
             def test_something():
                 assert 1 + 1 == 2""",
         )
@@ -1046,29 +1047,29 @@ def test_setup_only_available_in_subdir(testdir):
     sub1 = testdir.mkpydir("sub1")
     sub2 = testdir.mkpydir("sub2")
     sub1.join("conftest.py").write(
-        _pytest._code.Source(
+        textwrap.dedent(
+            """\
+            import pytest
+            def pytest_runtest_setup(item):
+                assert item.fspath.purebasename == "test_in_sub1"
+            def pytest_runtest_call(item):
+                assert item.fspath.purebasename == "test_in_sub1"
+            def pytest_runtest_teardown(item):
+                assert item.fspath.purebasename == "test_in_sub1"
             """
-        import pytest
-        def pytest_runtest_setup(item):
-            assert item.fspath.purebasename == "test_in_sub1"
-        def pytest_runtest_call(item):
-            assert item.fspath.purebasename == "test_in_sub1"
-        def pytest_runtest_teardown(item):
-            assert item.fspath.purebasename == "test_in_sub1"
-    """
         )
     )
     sub2.join("conftest.py").write(
-        _pytest._code.Source(
+        textwrap.dedent(
+            """\
+            import pytest
+            def pytest_runtest_setup(item):
+                assert item.fspath.purebasename == "test_in_sub2"
+            def pytest_runtest_call(item):
+                assert item.fspath.purebasename == "test_in_sub2"
+            def pytest_runtest_teardown(item):
+                assert item.fspath.purebasename == "test_in_sub2"
             """
-        import pytest
-        def pytest_runtest_setup(item):
-            assert item.fspath.purebasename == "test_in_sub2"
-        def pytest_runtest_call(item):
-            assert item.fspath.purebasename == "test_in_sub2"
-        def pytest_runtest_teardown(item):
-            assert item.fspath.purebasename == "test_in_sub2"
-    """
         )
     )
     sub1.join("test_in_sub1.py").write("def test_1(): pass")
@@ -1547,12 +1548,12 @@ def test_skip_duplicates_by_default(testdir):
     a = testdir.mkdir("a")
     fh = a.join("test_a.py")
     fh.write(
-        _pytest._code.Source(
+        textwrap.dedent(
+            """\
+            import pytest
+            def test_real():
+                pass
             """
-        import pytest
-        def test_real():
-            pass
-    """
         )
     )
     result = testdir.runpytest(a.strpath, a.strpath)
@@ -1567,12 +1568,12 @@ def test_keep_duplicates(testdir):
     a = testdir.mkdir("a")
     fh = a.join("test_a.py")
     fh.write(
-        _pytest._code.Source(
+        textwrap.dedent(
+            """\
+            import pytest
+            def test_real():
+                pass
             """
-        import pytest
-        def test_real():
-            pass
-    """
         )
     )
     result = testdir.runpytest("--keep-duplicates", a.strpath, a.strpath)
@@ -1623,3 +1624,38 @@ def test_package_with_modules(testdir):
     root.chdir()
     result = testdir.runpytest("-v", "-s")
     result.assert_outcomes(passed=2)
+
+
+def test_package_ordering(testdir):
+    """
+    .
+    └── root
+        ├── Test_root.py
+        ├── __init__.py
+        ├── sub1
+        │   ├── Test_sub1.py
+        │   └── __init__.py
+        └── sub2
+            └── test
+                └── test_sub2.py
+
+    """
+    testdir.makeini(
+        """
+        [pytest]
+        python_files=*.py
+    """
+    )
+    root = testdir.mkpydir("root")
+    sub1 = root.mkdir("sub1")
+    sub1.ensure("__init__.py")
+    sub2 = root.mkdir("sub2")
+    sub2_test = sub2.mkdir("sub2")
+
+    root.join("Test_root.py").write("def test_1(): pass")
+    sub1.join("Test_sub1.py").write("def test_2(): pass")
+    sub2_test.join("test_sub2.py").write("def test_3(): pass")
+
+    # Execute from .
+    result = testdir.runpytest("-v", "-s")
+    result.assert_outcomes(passed=3)

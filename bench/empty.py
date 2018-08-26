@@ -1,4 +1,4 @@
-import py
+import six
 
 for i in range(1000):
-    py.builtin.exec_("def test_func_%d(): pass" % i)
+    six.exec_("def test_func_%d(): pass" % i)

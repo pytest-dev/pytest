@@ -9,6 +9,7 @@ import textwrap
 import zipfile
 import py
 import pytest
+import six
 
 import _pytest._code
 from _pytest.assertion import util
@@ -49,7 +50,7 @@ def getmsg(f, extra_ns=None, must_pass=False):
     ns = {}
     if extra_ns is not None:
         ns.update(extra_ns)
-    py.builtin.exec_(code, ns)
+    six.exec_(code, ns)
     func = ns[f.__name__]
     try:
         func()
@@ -560,7 +561,7 @@ class TestAssertionRewrite(object):
         assert getmsg(f) == "assert 42"
 
         def my_reprcompare(op, left, right):
-            return "%s %s %s" % (left, op, right)
+            return "{} {} {}".format(left, op, right)
 
         monkeypatch.setattr(util, "_reprcompare", my_reprcompare)
 
@@ -654,12 +655,10 @@ class TestRewriteOnImport(object):
     def test_readonly(self, testdir):
         sub = testdir.mkdir("testing")
         sub.join("test_readonly.py").write(
-            py.builtin._totext(
-                """
+            b"""
 def test_rewritten():
     assert "@py_builtins" in globals()
-            """
-            ).encode("utf-8"),
+            """,
             "wb",
         )
         old_mode = sub.stat().mode
@@ -1040,14 +1039,14 @@ class TestAssertionRewriteHookDetails(object):
         """
         path = testdir.mkpydir("foo")
         path.join("test_foo.py").write(
-            _pytest._code.Source(
+            textwrap.dedent(
+                """\
+                class Test(object):
+                    def test_foo(self):
+                        import pkgutil
+                        data = pkgutil.get_data('foo.test_foo', 'data.txt')
+                        assert data == b'Hey'
                 """
-            class Test(object):
-                def test_foo(self):
-                    import pkgutil
-                    data = pkgutil.get_data('foo.test_foo', 'data.txt')
-                    assert data == b'Hey'
-        """
             )
         )
         path.join("data.txt").write("Hey")
