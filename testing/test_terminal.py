@@ -1188,7 +1188,6 @@ class TestProgress(object):
     def test_xdist_normal(self, many_tests_files, testdir):
         pytest.importorskip("xdist")
         output = testdir.runpytest("-n2")
-        sys.stderr.write(output.stdout)
         output.stdout.re_match_lines([r"\.{20} \s+ \[100%\]"])
 
     def test_xdist_normal_count(self, many_tests_files, testdir):
