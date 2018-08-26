@@ -349,11 +349,6 @@ class PyCollector(PyobjMixin, nodes.Collector):
             if isinstance(obj, staticmethod):
                 # static methods need to be unwrapped
                 obj = safe_getattr(obj, "__func__", False)
-                if obj is False:
-                    # Python 2.6 wraps in a different way that we won't try to handle
-                    msg = "cannot collect static method %r because it is not a function"
-                    self.warn(code="C2", message=msg % name)
-                    return False
             return (
                 safe_getattr(obj, "__call__", False)
                 and fixtures.getfixturemarker(obj) is None
