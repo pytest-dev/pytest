@@ -201,13 +201,17 @@ def pytest_collect_file(path, parent):
     ext = path.ext
     if ext == ".py":
         if not parent.session.isinitpath(path):
-            for pat in parent.config.getini("python_files") + ["__init__.py"]:
-                if path.fnmatch(pat):
-                    break
-            else:
+            if not path_matches_patterns(
+                path, parent.config.getini("python_files") + ["__init__.py"]
+            ):
                 return
         ihook = parent.session.gethookproxy(path)
         return ihook.pytest_pycollect_makemodule(path=path, parent=parent)
+
+
+def path_matches_patterns(path, patterns):
+    """Returns True if the given py.path.local matches one of the patterns in the list of globs given"""
+    return any(path.fnmatch(pattern) for pattern in patterns)
 
 
 def pytest_pycollect_makemodule(path, parent):
@@ -590,17 +594,33 @@ class Package(Module):
                 self.session.config.pluginmanager._duplicatepaths.remove(path)
 
         this_path = self.fspath.dirpath()
-        pkg_prefix = None
+        init_module = this_path.join("__init__.py")
+        if init_module.check(file=1) and path_matches_patterns(
+            init_module, self.config.getini("python_files")
+        ):
+            yield Module(init_module, self)
+        pkg_prefixes = set()
         for path in this_path.visit(rec=self._recurse, bf=True, sort=True):
             # we will visit our own __init__.py file, in which case we skip it
+            skip = False
             if path.basename == "__init__.py" and path.dirpath() == this_path:
                 continue
-            if pkg_prefix and pkg_prefix in path.parts():
+
+            for pkg_prefix in pkg_prefixes:
+                if (
+                    pkg_prefix in path.parts()
+                    and pkg_prefix.join("__init__.py") != path
+                ):
+                    skip = True
+
+            if skip:
                 continue
+
+            if path.isdir() and path.join("__init__.py").check(file=1):
+                pkg_prefixes.add(path)
+
             for x in self._collectfile(path):
                 yield x
-                if isinstance(x, Package):
-                    pkg_prefix = path.dirpath()
 
 
 def _get_xunit_setup_teardown(holder, attr_name, param_obj=None):
@@ -741,7 +761,7 @@ class FunctionMixin(PyobjMixin):
     def _repr_failure_py(self, excinfo, style="long"):
         if excinfo.errisinstance(fail.Exception):
             if not excinfo.value.pytrace:
-                return py._builtin._totext(excinfo.value)
+                return six.text_type(excinfo.value)
         return super(FunctionMixin, self)._repr_failure_py(excinfo, style=style)
 
     def repr_failure(self, excinfo, outerr=None):

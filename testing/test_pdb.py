@@ -260,7 +260,9 @@ class TestPDB(object):
                 assert False
         """
         )
-        child = testdir.spawn_pytest("--show-capture=%s --pdb %s" % (showcapture, p1))
+        child = testdir.spawn_pytest(
+            "--show-capture={} --pdb {}".format(showcapture, p1)
+        )
         if showcapture in ("all", "log"):
             child.expect("captured log")
             child.expect("get rekt")
@@ -473,7 +475,7 @@ class TestPDB(object):
             x = 5
         """
         )
-        child = testdir.spawn("%s %s" % (sys.executable, p1))
+        child = testdir.spawn("{} {}".format(sys.executable, p1))
         child.expect("x = 5")
         child.sendeof()
         self.flush(child)

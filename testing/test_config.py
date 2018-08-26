@@ -17,11 +17,11 @@ class TestParseIni(object):
         sub = tmpdir.mkdir("sub")
         sub.chdir()
         tmpdir.join(filename).write(
-            _pytest._code.Source(
-                """
-            [{section}]
-            name = value
-        """.format(
+            textwrap.dedent(
+                """\
+                [{section}]
+                name = value
+                """.format(
                     section=section
                 )
             )
@@ -38,11 +38,11 @@ class TestParseIni(object):
     def test_append_parse_args(self, testdir, tmpdir, monkeypatch):
         monkeypatch.setenv("PYTEST_ADDOPTS", '--color no -rs --tb="short"')
         tmpdir.join("pytest.ini").write(
-            _pytest._code.Source(
+            textwrap.dedent(
+                """\
+                [pytest]
+                addopts = --verbose
                 """
-            [pytest]
-            addopts = --verbose
-        """
             )
         )
         config = testdir.parseconfig(tmpdir)
@@ -438,11 +438,11 @@ class TestConfigFromdictargs(object):
 
     def test_inifilename(self, tmpdir):
         tmpdir.join("foo/bar.ini").ensure().write(
-            _pytest._code.Source(
+            textwrap.dedent(
+                """\
+                [pytest]
+                name = value
                 """
-            [pytest]
-            name = value
-        """
             )
         )
 
@@ -453,12 +453,12 @@ class TestConfigFromdictargs(object):
 
         cwd = tmpdir.join("a/b")
         cwd.join("pytest.ini").ensure().write(
-            _pytest._code.Source(
+            textwrap.dedent(
+                """\
+                [pytest]
+                name = wrong-value
+                should_not_be_set = true
                 """
-            [pytest]
-            name = wrong-value
-            should_not_be_set = true
-        """
             )
         )
         with cwd.ensure(dir=True).as_cwd():

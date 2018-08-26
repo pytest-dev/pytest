@@ -223,7 +223,7 @@ class AssertionRewritingHook(object):
             mod.__loader__ = self
             # Normally, this attribute is 3.4+
             mod.__spec__ = spec_from_file_location(name, co.co_filename, loader=self)
-            py.builtin.exec_(co, mod.__dict__)
+            six.exec_(co, mod.__dict__)
         except:  # noqa
             if name in sys.modules:
                 del sys.modules[name]
@@ -402,12 +402,11 @@ def _saferepr(obj):
     JSON reprs.
 
     """
-    repr = py.io.saferepr(obj)
-    if isinstance(repr, six.text_type):
-        t = six.text_type
+    r = py.io.saferepr(obj)
+    if isinstance(r, six.text_type):
+        return r.replace(u"\n", u"\\n")
     else:
-        t = six.binary_type
-    return repr.replace(t("\n"), t("\\n"))
+        return r.replace(b"\n", b"\\n")
 
 
 from _pytest.assertion.util import format_explanation as _format_explanation  # noqa
@@ -446,10 +445,9 @@ def _should_repr_global_name(obj):
 def _format_boolop(explanations, is_or):
     explanation = "(" + (is_or and " or " or " and ").join(explanations) + ")"
     if isinstance(explanation, six.text_type):
-        t = six.text_type
+        return explanation.replace(u"%", u"%%")
     else:
-        t = six.binary_type
-    return explanation.replace(t("%"), t("%%"))
+        return explanation.replace(b"%", b"%%")
 
 
 def _call_reprcompare(ops, results, expls, each_obj):

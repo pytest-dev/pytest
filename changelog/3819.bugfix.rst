@@ -1,1 +1,0 @@
-Fix ``stdout/stderr`` not getting captured when real-time cli logging is active.

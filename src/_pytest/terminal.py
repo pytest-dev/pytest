@@ -706,7 +706,12 @@ class TerminalReporter(object):
                     self._outrep_summary(rep)
 
     def print_teardown_sections(self, rep):
+        showcapture = self.config.option.showcapture
+        if showcapture == "no":
+            return
         for secname, content in rep.sections:
+            if showcapture != "all" and showcapture not in secname:
+                continue
             if "teardown" in secname:
                 self._tw.sep("-", secname)
                 if content[-1:] == "\n":
