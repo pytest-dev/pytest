@@ -103,8 +103,8 @@ the :confval:`python_files`, :confval:`python_classes` and
 :confval:`python_functions` configuration options.
 Here is an example::
 
-    # Example 1: have pytest look for "check" instead of "test"
     # content of pytest.ini
+    # Example 1: have pytest look for "check" instead of "test"
     # can also be defined in tox.ini or setup.cfg file, although the section
     # name in setup.cfg files should be "tool:pytest"
     [pytest]
@@ -129,7 +129,12 @@ The test collection would look like this::
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile: pytest.ini
-    collected 0 items
+    collected 2 items
+    <Module 'check_myapp.py'>
+      <Class 'CheckMyApp'>
+        <Instance '()'>
+          <Function 'simple_check'>
+          <Function 'complex_check'>
 
     ======================= no tests ran in 0.12 seconds =======================
 
