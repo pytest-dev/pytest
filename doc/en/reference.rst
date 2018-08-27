@@ -917,6 +917,7 @@ passed multiple times. The expected format is ``name=value``. For example::
    * ``classic``: classic pytest output.
    * ``progress``: like classic pytest output, but with a progress indicator.
    * ``count``: like progress, but shows progress as the number of tests completed instead of a percent.
+
    The default is ``progress``, but you can fallback to ``classic`` if you prefer or
    the new mode is causing unexpected problems:
 
