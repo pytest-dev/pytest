@@ -51,7 +51,6 @@ jobs:
       sudo: required
       install:
         - python -m pip install --pre tox
-    - <<: *test-macos
       env: TOXENV=py27
     - <<: *test-macos
       env: TOXENV=py37
