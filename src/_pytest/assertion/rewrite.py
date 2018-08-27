@@ -64,11 +64,16 @@ class AssertionRewritingHook(object):
         self._rewritten_names = set()
         self._register_with_pkg_resources()
         self._must_rewrite = set()
+        # flag to guard against trying to rewrite a pyc file while we are already writing another pyc file,
+        # which might result in infinite recursion (#3506)
+        self._writing_pyc = False
 
     def set_session(self, session):
         self.session = session
 
     def find_module(self, name, path=None):
+        if self._writing_pyc:
+            return None
         state = self.config._assertstate
         state.trace("find_module called for: %s" % name)
         names = name.rsplit(".", 1)
@@ -151,7 +156,11 @@ class AssertionRewritingHook(object):
                 # Probably a SyntaxError in the test.
                 return None
             if write:
-                _write_pyc(state, co, source_stat, pyc)
+                self._writing_pyc = True
+                try:
+                    _write_pyc(state, co, source_stat, pyc)
+                finally:
+                    self._writing_pyc = False
         else:
             state.trace("found cached rewritten pyc for %r" % (fn,))
         self.modules[name] = co, pyc
