@@ -263,7 +263,7 @@ class TerminalReporter(object):
     def write_fspath_result(self, nodeid, res):
         fspath = self.config.rootdir.join(nodeid.split("::")[0])
         if fspath != self.currentfspath:
-            if self.currentfspath is not None:
+            if self.currentfspath is not None and self._show_progress_info:
                 self._write_progress_information_filling_space()
             self.currentfspath = fspath
             fspath = self.startdir.bestrelpath(fspath)
@@ -358,12 +358,12 @@ class TerminalReporter(object):
     def pytest_runtest_logreport(self, report):
         rep = report
         res = self.config.hook.pytest_report_teststatus(report=rep)
-        cat, letter, word = res
+        category, letter, word = res
         if isinstance(word, tuple):
             word, markup = word
         else:
             markup = None
-        self.stats.setdefault(cat, []).append(rep)
+        self.stats.setdefault(category, []).append(rep)
         self._tests_ran = True
         if not letter and not word:
             # probably passed setup/teardown
