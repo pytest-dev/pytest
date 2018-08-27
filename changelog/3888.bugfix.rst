@@ -1,0 +1,1 @@
+Fix macOS specific code using ``capturemanager`` plugin in doctests.
