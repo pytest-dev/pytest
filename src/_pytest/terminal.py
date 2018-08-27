@@ -260,7 +260,10 @@ class TerminalReporter(object):
         # do not show progress if we are showing fixture setup/teardown
         if self.config.getoption("setupshow"):
             return False
-        return self.config.getini("console_output_style") == "progress"
+        return (
+            self.config.getini("console_output_style") == "progress"
+            or self.config.getini("console_output_style") == "count"
+        )
 
     def hasopt(self, char):
         char = {"xfailed": "x", "skipped": "s"}.get(char, char)
@@ -410,6 +413,14 @@ class TerminalReporter(object):
                 self.currentfspath = -2
 
     def pytest_runtest_logfinish(self, nodeid):
+        if self.config.getini("console_output_style") == "count":
+            num_tests = self._session.testscollected
+            _PROGRESS_LENGTH = len(
+                " [ {} / {} ]".format(str(num_tests), str(num_tests))
+            )
+        else:
+            _PROGRESS_LENGTH = len(" [100%]")
+
         if self.verbosity <= 0 and self._show_progress_info:
             self._progress_nodeids_reported.add(nodeid)
             last_item = (
@@ -419,24 +430,22 @@ class TerminalReporter(object):
                 self._write_progress_information_filling_space()
             else:
                 past_edge = (
-                    self._tw.chars_on_current_line + self._PROGRESS_LENGTH + 1
+                    self._tw.chars_on_current_line + _PROGRESS_LENGTH + 1
                     >= self._screen_width
                 )
                 if past_edge:
                     msg = self._get_progress_information_message()
                     self._tw.write(msg + "\n", cyan=True)
 
-    _PROGRESS_LENGTH = len(" [100%]")
-
     def _get_progress_information_message(self):
         if self.config.getoption("capture") == "no":
             return ""
         collected = self._session.testscollected
-        if self.config.getini("progress_display_mode") == "count":
+        if self.config.getini("console_output_style") == "count":
             if collected:
                 progress = self._progress_nodeids_reported
                 counter_format = "{{:{}d}}".format(len(str(collected)))
-                format_string = "[ {} / {{}} ]".format(counter_format)
+                format_string = " [ {} / {{}} ]".format(counter_format)
                 return format_string.format(len(progress), collected)
             return " [ {} / {} ]".format(collected, collected)
         else:

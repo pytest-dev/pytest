@@ -1147,7 +1147,7 @@ class TestProgress(object):
         testdir.makeini(
             """
             [pytest]
-            progress_display_mode = count
+            console_output_style = count
         """
         )
         output = testdir.runpytest()
@@ -1173,7 +1173,7 @@ class TestProgress(object):
         testdir.makeini(
             """
             [pytest]
-            progress_display_mode = count
+            console_output_style = count
         """
         )
         output = testdir.runpytest("-v")
@@ -1195,7 +1195,7 @@ class TestProgress(object):
         testdir.makeini(
             """
             [pytest]
-            progress_display_mode = count
+            console_output_style = count
         """
         )
         output = testdir.runpytest("-n2")
