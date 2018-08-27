@@ -49,13 +49,12 @@ jobs:
       os: osx
       osx_image: xcode9.4
       sudo: required
-      env: TOXENV=py27
       install:
-        - python -m pip install --upgrade --pre tox
+        - python -m pip install --pre tox
+    - <<: *test-macos
+      env: TOXENV=py27
     - <<: *test-macos
       env: TOXENV=py36
-      install:
-        - python3 -m pip install --upgrade --pre tox
     - <<: *test-macos
       env: TOXENV=py37
       before_install:
