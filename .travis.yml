@@ -54,8 +54,6 @@ jobs:
     - <<: *test-macos
       env: TOXENV=py27
     - <<: *test-macos
-      env: TOXENV=py36
-    - <<: *test-macos
       env: TOXENV=py37
       before_install:
         - brew update
