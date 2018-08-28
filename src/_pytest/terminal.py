@@ -691,7 +691,7 @@ class TerminalReporter(object):
                     indented = "\n".join("  " + x for x in lines)
                     self._tw.line(indented)
                 self._tw.line()
-            self._tw.line("-- Docs: http://doc.pytest.org/en/latest/warnings.html")
+            self._tw.line("-- Docs: https://docs.pytest.org/en/latest/warnings.html")
 
     def summary_passes(self):
         if self.config.option.tbstyle != "no":
