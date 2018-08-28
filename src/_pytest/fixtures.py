@@ -582,8 +582,8 @@ class FixtureRequest(FuncargnamesCompatAttr):
                 )
                 fail(msg)
             else:
-                if fixturedef.is_autouse and hasattr(funcitem, "callspec"):
-                    # fixture should be impacted by any parametrization of the
+                if hasattr(funcitem, "callspec"):
+                    # fixture can be impacted by any parametrization of the
                     # scope
                     param_fix_argnames = funcitem.callspec.indices.keys()
                     relevant_fixture_names = []
