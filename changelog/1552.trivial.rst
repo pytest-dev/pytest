@@ -1,0 +1,1 @@
+Parametrized fixtures with ``autouse`` now cause the re-activation of all fixtures of that scope for each param set, instead of just the fixtures that get activated after the parametrized autouse ones.
