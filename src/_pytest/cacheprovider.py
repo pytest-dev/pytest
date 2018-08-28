@@ -132,7 +132,7 @@ class LFPlugin(object):
         self._no_failures_behavior = self.config.getoption("last_failed_no_failures")
 
     def pytest_report_collectionfinish(self):
-        if self.active:
+        if self.active and self.config.getoption("verbose") >= 0:
             if not self._previously_failed_count:
                 mode = "run {} (no recorded failures)".format(
                     self._no_failures_behavior

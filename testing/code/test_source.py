@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # flake8: noqa
 # disable flake check on this file because some constructs are strange
 # or redundant on purpose and can't be disable on a line-by-line basis
@@ -41,15 +42,11 @@ def test_source_str_function():
 
 
 def test_unicode():
-    try:
-        unicode
-    except NameError:
-        return
-    x = Source(unicode("4"))
+    x = Source(u"4")
     assert str(x) == "4"
-    co = _pytest._code.compile(unicode('u"\xc3\xa5"', "utf8"), mode="eval")
+    co = _pytest._code.compile(u'u"å"', mode="eval")
     val = eval(co)
-    assert isinstance(val, unicode)
+    assert isinstance(val, six.text_type)
 
 
 def test_source_from_function():
@@ -632,7 +629,7 @@ def test_issue55():
     assert str(s) == '  round_trip("""\n""")'
 
 
-def XXXtest_multiline():
+def test_multiline():
     source = getstatement(
         0,
         """\
