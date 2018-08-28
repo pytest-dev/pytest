@@ -561,7 +561,7 @@ class FixtureRequest(FuncargnamesCompatAttr):
             param = funcitem.callspec.getparam(argname)
         except (AttributeError, ValueError):
             param = NOTSET
-            param_index = 0
+            param_index = "0"
             if fixturedef.params is not None:
                 frame = inspect.stack()[3]
                 frameinfo = inspect.getframeinfo(frame[0])
@@ -581,6 +581,37 @@ class FixtureRequest(FuncargnamesCompatAttr):
                     )
                 )
                 fail(msg)
+            else:
+                if fixturedef.is_autouse and hasattr(funcitem, "callspec"):
+                    # fixture should be impacted by any parametrization of the
+                    # scope
+                    param_fix_argnames = funcitem.callspec.indices.keys()
+                    relevant_fixture_names = []
+                    for name in param_fix_argnames:
+                        num = funcitem.callspec._arg2scopenum.get(name)
+                        fix_scope = scopes[num]
+                        if fix_scope == scope:
+                            # they share the same scope
+                            fm = fixturedef._fixturemanager
+                            if name not in fm._arg2fixturedefs.keys():
+                                # must be parametrized through
+                                # pytest.mark.parametrize, which means it should
+                                # be considered autouse
+                                relevant_fixture_names.append(name)
+                            elif fm._arg2fixturedefs[name][-1].is_autouse:
+                                # the fixture is autouse
+                                relevant_fixture_names.append(name)
+
+                    # keep them in order to keep param_index consistent
+                    relevant_fixture_names.sort()
+                    for name in relevant_fixture_names:
+                        # create a param_index that combines all the param_index
+                        # values of all the relevant parametrized fixtures so
+                        # the fixture will be executed again when stepping to
+                        # the next param set.
+                        pi = str(funcitem.callspec.indices.get(name, 0))
+                        param_index += pi
+            param_index = int(param_index)
         else:
             # indices might not be set if old-style metafunc.addcall() was used
             param_index = funcitem.callspec.indices.get(argname, 0)
@@ -894,6 +925,11 @@ class FixtureDef(object):
 
         hook = self._fixturemanager.session.gethookproxy(request.node.fspath)
         return hook.pytest_fixture_setup(fixturedef=self, request=request)
+
+    @property
+    def is_autouse(self):
+        autousenames = self._fixturemanager._getautousenames(self.baseid)
+        return self.argname in autousenames
 
     def __repr__(self):
         return "<FixtureDef name=%r scope=%r baseid=%r >" % (
