@@ -245,6 +245,8 @@ class TerminalReporter(object):
         self.isatty = file.isatty()
         self._progress_nodeids_reported = set()
         self._show_progress_info = self._determine_show_progress_info()
+        self.rewrite_lines = 0
+        self.width_adjust = 1 if sys.platform == "win32" else 0
 
     def _determine_show_progress_info(self):
         """Return True if we should display progress information based on the current config"""
@@ -281,11 +283,13 @@ class TerminalReporter(object):
             self.currentfspath = -2
 
     def ensure_newline(self):
+        self.rewrite_lines = 0
         if self.currentfspath:
             self._tw.line()
             self.currentfspath = None
 
     def write(self, content, **markup):
+        self.rewrite_lines = 0
         self._tw.write(content, **markup)
 
     def write_line(self, line, **markup):
@@ -303,14 +307,38 @@ class TerminalReporter(object):
 
         The rest of the keyword arguments are markup instructions.
         """
+        if not line:
+            return
+
         erase = markup.pop("erase", False)
-        if erase:
-            fill_count = self._tw.fullwidth - len(line) - 1
-            fill = " " * fill_count
-        else:
-            fill = ""
+        width = self._tw.fullwidth - self.width_adjust
         line = str(line)
-        self._tw.write("\r" + line + fill, **markup)
+
+        if self.hasmarkup:
+            lines = [line[i : i + width] for i in range(0, len(line), width)]
+            if erase:
+                fill_line = "\x1b[0K"
+                lines[-1] += fill_line
+            else:
+                fill_line = ""
+
+            prefix = "\r"
+            if self.rewrite_lines > 1:
+                prefix += "\x1b[%dA" % (self.rewrite_lines - 1)
+            self.rewrite_lines = max(self.rewrite_lines, len(lines))
+            lines += [fill_line] * (self.rewrite_lines - len(lines))
+
+            self._tw.write(prefix)
+            for line in lines[:-1]:
+                self._tw.line(line, **markup)
+            self._tw.write(lines[-1], **markup)
+        else:
+            if erase:
+                fill_count = width - len(line)
+                fill = " " * fill_count
+            else:
+                fill = ""
+            self._tw.write("\r" + line + fill, **markup)
 
     def write_sep(self, sep, title=None, **markup):
         self.ensure_newline()
@@ -318,9 +346,11 @@ class TerminalReporter(object):
 
     def section(self, title, sep="=", **kw):
         self._tw.sep(sep, title, **kw)
+        self.rewrite_lines = 0
 
     def line(self, msg, **kw):
         self._tw.line(msg, **kw)
+        self.rewrite_lines = 0
 
     def pytest_internalerror(self, excrepr):
         for line in six.text_type(excrepr).split("\n"):

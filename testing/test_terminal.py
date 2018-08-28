@@ -241,9 +241,64 @@ class TestTerminal(object):
         monkeypatch.setattr(f, "isatty", lambda *args: True)
         tr = TerminalReporter(config, f)
         tr._tw.fullwidth = 10
+        tr.width_adjust = 1
+        tr.hasmarkup = False
         tr.write("hello")
         tr.rewrite("hey", erase=True)
         assert f.getvalue() == "hello" + "\r" + "hey" + (6 * " ")
+
+    def test_rewrite_multi_line_no_markup(self, testdir, monkeypatch):
+        config = testdir.parseconfig()
+        f = py.io.TextIO()
+        monkeypatch.setattr(f, "isatty", lambda *args: True)
+        tr = TerminalReporter(config, f)
+        tr._tw.fullwidth = 11
+        tr.width_adjust = 1
+        tr.hasmarkup = False
+        tr.write("hello")
+        tr.rewrite("", erase=True)
+        tr.rewrite("hey mom how you been?", erase=True)
+        tr.rewrite("hello mom", erase=True)
+
+        assert f.getvalue() == (
+            "hello" + "\r" + "hey mom how you been?" + "\r" + "hello mom "
+        )
+
+    def test_rewrite_multi_line(self, testdir, monkeypatch):
+        config = testdir.parseconfig()
+        f = py.io.TextIO()
+        monkeypatch.setattr(f, "isatty", lambda *args: True)
+        tr = TerminalReporter(config, f)
+        tr._tw.fullwidth = 11
+        tr.width_adjust = 1
+        tr.write("hello")
+        tr.rewrite("hey mom how you been?", erase=True)
+        tr.rewrite("hello mom", erase=True)
+
+        assert f.getvalue() == (
+            "hello"
+            + "\r"
+            + "hey mom ho\nw you been\n?\x1b[0K"
+            + "\r\x1b[2A"
+            + "hello mom"
+            + "\x1b[0K\n"
+            + "\x1b[0K\n"
+            + "\x1b[0K"
+        )
+
+    def test_rewrite_multi_line_no_erase(self, testdir, monkeypatch):
+        config = testdir.parseconfig()
+        f = py.io.TextIO()
+        monkeypatch.setattr(f, "isatty", lambda *args: True)
+        tr = TerminalReporter(config, f)
+        tr._tw.fullwidth = 11
+        tr.width_adjust = 1
+        tr.write("hello")
+        tr.rewrite("hey mom how you been?", erase=False)
+        tr.rewrite("hello mom", erase=False)
+        assert f.getvalue() == (
+            "hello" + "\r" + "hey mom ho\nw you been\n?" + "\r\x1b[2A" + "hello mom\n\n"
+        )
 
 
 class TestCollectonly(object):
