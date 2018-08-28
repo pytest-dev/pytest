@@ -1183,6 +1183,22 @@ class TestProgress(object):
             ]
         )
 
+    def test_count(self, many_tests_files, testdir):
+        testdir.makeini(
+            """
+            [pytest]
+            console_output_style = count
+        """
+        )
+        output = testdir.runpytest()
+        output.stdout.re_match_lines(
+            [
+                r"test_bar.py \.{10} \s+ \[10/20\]",
+                r"test_foo.py \.{5} \s+ \[15/20\]",
+                r"test_foobar.py \.{5} \s+ \[20/20\]",
+            ]
+        )
+
     def test_verbose(self, many_tests_files, testdir):
         output = testdir.runpytest("-v")
         output.stdout.re_match_lines(
@@ -1193,10 +1209,37 @@ class TestProgress(object):
             ]
         )
 
+    def test_verbose_count(self, many_tests_files, testdir):
+        testdir.makeini(
+            """
+            [pytest]
+            console_output_style = count
+        """
+        )
+        output = testdir.runpytest("-v")
+        output.stdout.re_match_lines(
+            [
+                r"test_bar.py::test_bar\[0\] PASSED \s+ \[ 1/20\]",
+                r"test_foo.py::test_foo\[4\] PASSED \s+ \[15/20\]",
+                r"test_foobar.py::test_foobar\[4\] PASSED \s+ \[20/20\]",
+            ]
+        )
+
     def test_xdist_normal(self, many_tests_files, testdir):
         pytest.importorskip("xdist")
         output = testdir.runpytest("-n2")
         output.stdout.re_match_lines([r"\.{20} \s+ \[100%\]"])
+
+    def test_xdist_normal_count(self, many_tests_files, testdir):
+        pytest.importorskip("xdist")
+        testdir.makeini(
+            """
+            [pytest]
+            console_output_style = count
+        """
+        )
+        output = testdir.runpytest("-n2")
+        output.stdout.re_match_lines([r"\.{20} \s+ \[20/20\]"])
 
     def test_xdist_verbose(self, many_tests_files, testdir):
         pytest.importorskip("xdist")
