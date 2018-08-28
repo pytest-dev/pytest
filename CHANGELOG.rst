@@ -18,6 +18,24 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+pytest 3.7.4 (2018-08-28)
+=========================
+
+Bug Fixes
+---------
+
+- `#3506 <https://github.com/pytest-dev/pytest/issues/3506>`_: Fix possible infinite recursion when writing ``.pyc`` files.
+
+
+- `#3853 <https://github.com/pytest-dev/pytest/issues/3853>`_: Cache plugin now obeys the ``-q`` flag when ``--last-failed`` and ``--failed-first`` flags are used.
+
+
+- `#3883 <https://github.com/pytest-dev/pytest/issues/3883>`_: Fix bad console output when using ``console_output_style=classic``.
+
+
+- `#3888 <https://github.com/pytest-dev/pytest/issues/3888>`_: Fix macOS specific code using ``capturemanager`` plugin in doctests.
+
+
 pytest 3.7.3 (2018-08-26)
 =========================
 
