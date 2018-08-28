@@ -1153,9 +1153,9 @@ class TestProgress(object):
         output = testdir.runpytest()
         output.stdout.re_match_lines(
             [
-                r"test_bar.py \.{10} \s+ \[ 10 / 20 \]",
-                r"test_foo.py \.{5} \s+ \[ 15 / 20 \]",
-                r"test_foobar.py \.{5} \s+ \[ 20 / 20 \]",
+                r"test_bar.py \.{10} \s+ \[10/20\]",
+                r"test_foo.py \.{5} \s+ \[15/20\]",
+                r"test_foobar.py \.{5} \s+ \[20/20\]",
             ]
         )
 
@@ -1179,9 +1179,9 @@ class TestProgress(object):
         output = testdir.runpytest("-v")
         output.stdout.re_match_lines(
             [
-                r"test_bar.py::test_bar\[0\] PASSED \s+ \[  1 / 20 \]",
-                r"test_foo.py::test_foo\[4\] PASSED \s+ \[ 15 / 20 \]",
-                r"test_foobar.py::test_foobar\[4\] PASSED \s+ \[ 20 / 20 \]",
+                r"test_bar.py::test_bar\[0\] PASSED \s+ \[ 1/20\]",
+                r"test_foo.py::test_foo\[4\] PASSED \s+ \[15/20\]",
+                r"test_foobar.py::test_foobar\[4\] PASSED \s+ \[20/20\]",
             ]
         )
 
@@ -1199,7 +1199,7 @@ class TestProgress(object):
         """
         )
         output = testdir.runpytest("-n2")
-        output.stdout.re_match_lines([r"\.{20} \s+ \[ 20 / 20 \]"])
+        output.stdout.re_match_lines([r"\.{20} \s+ \[20/20\]"])
 
     def test_xdist_verbose(self, many_tests_files, testdir):
         pytest.importorskip("xdist")

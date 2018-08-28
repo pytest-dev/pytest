@@ -1,1 +1,1 @@
-Added the ``progress_display_mode`` ini option to enable displaying the progress as a count instead of a percentage.
+Added the ``count`` option to ``console_output_style`` to enable displaying the progress as a count instead of a percentage.
