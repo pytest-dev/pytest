@@ -53,7 +53,7 @@ def pytest_configure(config):
     config.addinivalue_line(
         "markers",
         "filterwarnings(warning): add a warning filter to the given test. "
-        "see http://pytest.org/latest/warnings.html#pytest-mark-filterwarnings ",
+        "see https://docs.pytest.org/en/latest/warnings.html#pytest-mark-filterwarnings ",
     )
 
 
