@@ -21,20 +21,6 @@ class TestCollector(object):
         assert not issubclass(Collector, Item)
         assert not issubclass(Item, Collector)
 
-    def test_compat_attributes(self, testdir, recwarn):
-        modcol = testdir.getmodulecol(
-            """
-            def test_pass(): pass
-            def test_fail(): assert 0
-        """
-        )
-        recwarn.clear()
-        assert modcol.Module == pytest.Module
-        assert modcol.Class == pytest.Class
-        assert modcol.Item == pytest.Item
-        assert modcol.File == pytest.File
-        assert modcol.Function == pytest.Function
-
     def test_check_equality(self, testdir):
         modcol = testdir.getmodulecol(
             """

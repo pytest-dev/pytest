@@ -1,0 +1,1 @@
+Remove support for yield tests - they are fundamentally broken since collection and test execution were separated.

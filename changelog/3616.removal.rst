@@ -1,0 +1,1 @@
+Remove the deprecated compat properties for node.Class/Function/Module - use pytest... now.

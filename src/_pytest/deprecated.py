@@ -22,26 +22,11 @@ MAIN_STR_ARGS = RemovedInPytest4Warning(
     "pass a list of arguments instead."
 )
 
-YIELD_TESTS = RemovedInPytest4Warning(
-    "yield tests are deprecated, and scheduled to be removed in pytest 4.0"
-)
+YIELD_TESTS = "yield tests were removed in pytest 4.0 - {name} will be ignored"
 
 CACHED_SETUP = RemovedInPytest4Warning(
     "cached_setup is deprecated and will be removed in a future release. "
     "Use standard fixture functions instead."
-)
-
-COMPAT_PROPERTY = UnformattedWarning(
-    RemovedInPytest4Warning,
-    "usage of {owner}.{name} is deprecated, please use pytest.{name} instead",
-)
-
-CUSTOM_CLASS = UnformattedWarning(
-    RemovedInPytest4Warning,
-    'use of special named "{name}" objects in collectors of type "{type_name}" to '
-    "customize the created nodes is deprecated. "
-    "Use pytest_pycollect_makeitem(...) to create custom "
-    "collection nodes instead.",
 )
 
 FUNCARG_PREFIX = UnformattedWarning(

@@ -20,7 +20,6 @@ from _pytest.terminal import build_summary_stats_line
 from _pytest.terminal import getreportopt
 from _pytest.terminal import repr_pythonversion
 from _pytest.terminal import TerminalReporter
-from _pytest.warnings import SHOW_PYTEST_WARNINGS_ARG
 
 DistInfo = collections.namedtuple("DistInfo", ["project_name", "version"])
 
@@ -585,8 +584,9 @@ class TestTerminalFunctional(object):
             ]
         )
 
-    def test_verbose_reporting(self, testdir, pytestconfig):
-        p1 = testdir.makepyfile(
+    @pytest.fixture
+    def verbose_testfile(self, testdir):
+        return testdir.makepyfile(
             """
             import pytest
             def test_fail():
@@ -602,22 +602,32 @@ class TestTerminalFunctional(object):
                 yield check, 0
         """
         )
-        result = testdir.runpytest(p1, "-v", SHOW_PYTEST_WARNINGS_ARG)
+
+    def test_verbose_reporting(self, verbose_testfile, testdir, pytestconfig):
+
+        result = testdir.runpytest(
+            verbose_testfile, "-v", "-Walways::pytest.PytestWarning"
+        )
         result.stdout.fnmatch_lines(
             [
                 "*test_verbose_reporting.py::test_fail *FAIL*",
                 "*test_verbose_reporting.py::test_pass *PASS*",
                 "*test_verbose_reporting.py::TestClass::test_skip *SKIP*",
-                "*test_verbose_reporting.py::test_gen*0* *FAIL*",
+                "*test_verbose_reporting.py::test_gen *xfail*",
             ]
         )
         assert result.ret == 1
 
+    def test_verbose_reporting_xdist(self, verbose_testfile, testdir, pytestconfig):
         if not pytestconfig.pluginmanager.get_plugin("xdist"):
             pytest.skip("xdist plugin not installed")
 
-        result = testdir.runpytest(p1, "-v", "-n 1", SHOW_PYTEST_WARNINGS_ARG)
-        result.stdout.fnmatch_lines(["*FAIL*test_verbose_reporting.py::test_fail*"])
+        result = testdir.runpytest(
+            verbose_testfile, "-v", "-n 1", "-Walways::pytest.PytestWarning"
+        )
+        result.stdout.fnmatch_lines(
+            ["*FAIL*test_verbose_reporting_xdist.py::test_fail*"]
+        )
         assert result.ret == 1
 
     def test_quiet_reporting(self, testdir):
