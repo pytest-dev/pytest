@@ -44,6 +44,21 @@ jobs:
       python: '3.7'
       sudo: required
       dist: xenial
+    - &test-macos
+      language: generic
+      os: osx
+      osx_image: xcode9.4
+      sudo: required
+      install:
+        - python -m pip install --pre tox
+      env: TOXENV=py27
+    - <<: *test-macos
+      env: TOXENV=py37
+      before_install:
+        - brew update
+        - brew upgrade python
+        - brew unlink python
+        - brew link python
 
     - stage: deploy
       python: '3.6'

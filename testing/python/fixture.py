@@ -1584,6 +1584,7 @@ class TestFixtureManagerParseFactories(object):
             values = []
         """
         )
+        testdir.syspathinsert(testdir.tmpdir.dirname)
         package = testdir.mkdir("package")
         package.join("__init__.py").write("")
         package.join("conftest.py").write(
