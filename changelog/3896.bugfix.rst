@@ -1,0 +1,1 @@
+Better handle rewrite lines wider than the terminal.  EG: xdist with 16+ cores and 1k+ testcases will no longer scroll manically while gathering testcases.
