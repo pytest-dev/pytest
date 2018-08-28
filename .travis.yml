@@ -1,7 +1,7 @@
 sudo: false
 language: python
 stages:
-- linting
+- baseline
 - test
 - name: deploy
   if: repo = pytest-dev/pytest AND tag IS present
@@ -15,9 +15,6 @@ env:
     - TOXENV=coveralls
     # note: please use "tox --listenvs" to populate the build matrix below
     # please remove the linting env in all cases
-    - TOXENV=py27
-    - TOXENV=py34
-    - TOXENV=py36
     - TOXENV=py27-pexpect
     - TOXENV=py27-xdist
     - TOXENV=py27-trial
@@ -60,6 +57,12 @@ jobs:
         - brew unlink python
         - brew link python
 
+    - stage: baseline
+      env: TOXENV=py27
+    - env: TOXENV=py34
+    - env: TOXENV=py36
+    - env: TOXENV=linting
+
     - stage: deploy
       python: '3.6'
       env:
@@ -75,9 +78,6 @@ jobs:
         on:
           tags: true
           repo: pytest-dev/pytest
-    - stage: linting
-      python: '3.6'
-      env: TOXENV=linting
 
 script: tox --recreate
 
