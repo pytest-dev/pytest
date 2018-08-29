@@ -15,9 +15,9 @@ import six
 
 builtin_repr = repr
 
-if _PY3:
+if _PY3:  # pragma: no cover
     from traceback import format_exception_only
-else:
+else:  # pragma: no cover
     from ._py2traceback import format_exception_only
 
 
@@ -125,7 +125,7 @@ class Frame(object):
     def exec_(self, code, **vars):
         """ exec 'code' in the frame
 
-            'vars' are optiona; additional local variables
+            'vars' are optional; additional local variables
         """
         f_locals = self.f_locals.copy()
         f_locals.update(vars)

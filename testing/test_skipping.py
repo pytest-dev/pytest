@@ -351,21 +351,6 @@ class TestXFail(object):
         """
         )
 
-    def xtest_dynamic_xfail_set_during_setup(self, testdir):
-        p = testdir.makepyfile(
-            """
-            import pytest
-            def setup_function(function):
-                pytest.mark.xfail(function)
-            def test_this():
-                assert 0
-            def test_that():
-                assert 1
-        """
-        )
-        result = testdir.runpytest(p, "-rxX")
-        result.stdout.fnmatch_lines(["*XFAIL*test_this*", "*XPASS*test_that*"])
-
     def test_dynamic_xfail_no_run(self, testdir):
         p = testdir.makepyfile(
             """

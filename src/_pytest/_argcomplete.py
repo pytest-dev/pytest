@@ -88,7 +88,7 @@ class FastFilesCompleter(object):
         return completion
 
 
-if os.environ.get("_ARGCOMPLETE"):
+if os.environ.get("_ARGCOMPLETE"):  # pragma: no cover
     try:
         import argcomplete.completers
     except ImportError:
@@ -99,7 +99,7 @@ if os.environ.get("_ARGCOMPLETE"):
         argcomplete.autocomplete(parser, always_complete_options=False)
 
 
-else:
+else:  # pragma: no cover
 
     def try_argcomplete(parser):
         pass
