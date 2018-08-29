@@ -4047,3 +4047,50 @@ class TestScopeOrdering(object):
         )
         reprec = testdir.inline_run()
         reprec.assertoutcome(passed=2)
+
+
+class TestFixtureParametrizationAndAutouseUsages(object):
+    """Make sure parameterized autouse fixtures tigger re-execution of other
+    fixtures for the same scope.
+     test_module (module)
+    ├── TestIt["a"] (class)
+    |   └── before_param
+    |       └── param_fix (is parametrized)
+    |           └── other_fix
+    |               └── test_stuff (function)
+    └── TestIt["b"] (class)
+        └── before_param
+            └── param_fix (is parametrized)
+                └── other_fix
+                    └── test_stuff (function)
+    """
+
+    def test_combined_parametrizations(self, testdir):
+        testdir.makepyfile(
+            """
+            import pytest
+
+            data = {}
+
+            @pytest.fixture(autouse=True)
+            def clear_data():
+                data.clear()
+
+            @pytest.fixture(autouse=True, params=["a", "b"])
+            def data_param(request, clear_data):
+                return request.param
+
+            @pytest.fixture(autouse=True)
+            def add_data(data_param):
+                data.setdefault("value", []).append(data_param)
+
+            def test_fixture(data_param):
+                assert data == {"value": [data_param]}
+
+            @pytest.mark.parametrize("foo", range(3))
+            def test_mark_parametrize(foo, data_param):
+                assert data == {"value": [data_param]}
+        """
+        )
+        reprec = testdir.inline_run()
+        reprec.assertoutcome(passed=8)
