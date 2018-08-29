@@ -277,7 +277,7 @@ on a particular platform::
 ~~~~~~~~~~~~~~~~~~~~
 
 If you want to be more specific as to why the test is failing, you can specify
-a single exception, or a list of exceptions, in the ``raises`` argument.
+a single exception, or a tuple of exceptions, in the ``raises`` argument.
 
 .. code-block:: python
 
