@@ -2,7 +2,8 @@ sudo: false
 language: python
 stages:
 - baseline
-- test
+- name: test
+  if: repo = pytest-dev/pytest AND tag IS NOT present
 - name: deploy
   if: repo = pytest-dev/pytest AND tag IS present
 python:
