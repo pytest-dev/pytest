@@ -7,10 +7,7 @@ be removed when the time comes.
 """
 from __future__ import absolute_import, division, print_function
 
-
-class RemovedInPytest4Warning(DeprecationWarning):
-    """warning class for features removed in pytest 4.0"""
-
+from _pytest.warning_types import RemovedInPytest4Warning
 
 MAIN_STR_ARGS = "passing a string to pytest.main() is deprecated, " "pass a list of arguments instead."
 

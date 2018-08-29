@@ -331,12 +331,11 @@ class TerminalReporter(object):
         warnings.append(warning)
 
     def pytest_warning_captured(self, warning_message, item):
-        from _pytest.nodes import get_fslocation_from_item
+        # from _pytest.nodes import get_fslocation_from_item
         from _pytest.warnings import warning_record_to_str
 
         warnings = self.stats.setdefault("warnings", [])
-
-        fslocation = get_fslocation_from_item(item)
+        fslocation = warning_message.filename, warning_message.lineno
         message = warning_record_to_str(warning_message)
 
         nodeid = item.nodeid if item is not None else ""
@@ -713,7 +712,7 @@ class TerminalReporter(object):
                 for w in warning_records:
                     lines = w.message.splitlines()
                     indented = "\n".join("  " + x for x in lines)
-                    self._tw.line(indented)
+                    self._tw.line(indented.rstrip())
                 self._tw.line()
             self._tw.line("-- Docs: https://docs.pytest.org/en/latest/warnings.html")
 

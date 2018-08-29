@@ -1,5 +1,6 @@
 from __future__ import absolute_import, division, print_function
 import os
+import warnings
 
 import six
 import py
@@ -7,6 +8,7 @@ import attr
 
 import _pytest
 import _pytest._code
+from _pytest.compat import getfslineno
 
 from _pytest.mark.structures import NodeKeywords, MarkInfo
 
@@ -144,6 +146,14 @@ class Node(object):
                 code=code, message=message, nodeid=self.nodeid, fslocation=fslocation
             )
         )
+
+    def std_warn(self, message, category=None):
+        from _pytest.warning_types import PytestWarning
+
+        if category is None:
+            assert isinstance(message, PytestWarning)
+        path, lineno = get_fslocation_from_item(self)
+        warnings.warn_explicit(message, category, filename=str(path), lineno=lineno)
 
     # methods for ordering nodes
     @property
@@ -314,10 +324,13 @@ def get_fslocation_from_item(item):
     * "fslocation": a pair (path, lineno)
     * "fspath": just a path
     """
-    fslocation = getattr(item, "location", None)
-    if fslocation is None:
-        fslocation = getattr(item, "fspath", None)
-    return fslocation
+    result = getattr(item, "location", None)
+    if result is not None:
+        return result
+    obj = getattr(item, "obj", None)
+    if obj is not None:
+        return getfslineno(obj)
+    return getattr(item, "fspath", None), None
 
 
 class Collector(Node):

@@ -44,7 +44,7 @@ from _pytest.mark.structures import (
     get_unpacked_marks,
     normalize_mark_list,
 )
-
+from _pytest.warning_types import PytestUsageWarning
 
 # relative paths that we use to filter traceback entries from appearing to the user;
 # see filter_traceback
@@ -656,17 +656,23 @@ class Class(PyCollector):
         if not safe_getattr(self.obj, "__test__", True):
             return []
         if hasinit(self.obj):
-            self.warn(
-                "C1",
+            # self.warn(
+            #     "C1",
+            #     "cannot collect test class %r because it has a "
+            #     "__init__ constructor" % self.obj.__name__,
+            # )
+            self.std_warn(
                 "cannot collect test class %r because it has a "
                 "__init__ constructor" % self.obj.__name__,
+                PytestUsageWarning,
             )
             return []
         elif hasnew(self.obj):
-            self.warn(
-                "C1",
-                "cannot collect test class %r because it has a "
-                "__new__ constructor" % self.obj.__name__,
+            self.std_warn(
+                PytestUsageWarning(
+                    "cannot collect test class %r because it has a "
+                    "__new__ constructor" % self.obj.__name__
+                )
             )
             return []
         return [self._getcustomclass("Instance")(name="()", parent=self)]
