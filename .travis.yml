@@ -81,9 +81,8 @@ jobs:
 before_script:
   - |
     if [[ "$PYTEST_NO_COVERAGE" != 1 ]]; then
-      export _PYTEST_TOX_COVERAGE_RUN="env COVERAGE_FILE=$PWD/.coverage coverage run --source {envsitepackagesdir}/_pytest/,$PWD/testing -m"
+      export _PYTEST_TOX_COVERAGE_RUN="env COVERAGE_FILE=$PWD/.coverage COVERAGE_PROCESS_START=$PWD/.coveragerc coverage run --source {envsitepackagesdir}/_pytest/,$PWD/testing -m"
       export _PYTEST_TOX_EXTRA_DEP=coverage-enable-subprocess
-      export COVERAGE_PROCESS_START="$PWD/.coveragerc"
     fi
 
 script: tox --recreate
