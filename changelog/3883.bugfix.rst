@@ -1,1 +1,0 @@
-Fix bad console output when using ``console_output_style=classic``.
