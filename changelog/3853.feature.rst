@@ -1,2 +1,0 @@
-Removed the Needless message printed with --failed-first,--last-failed and no failed tests.
-Also added the test in test_cacheprovider.py file and removed 1 option from test which was explictily checking the needless message (run-last-failure: run all (no recorded failures)).
