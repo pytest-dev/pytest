@@ -414,13 +414,7 @@ class TestLastFailed(object):
         )
 
         result = testdir.runpytest(test_a, "--lf")
-        result.stdout.fnmatch_lines(
-            [
-                "collected 2 items",
-                "run-last-failure: run all (no recorded failures)",
-                "*2 passed in*",
-            ]
-        )
+        result.stdout.fnmatch_lines(["collected 2 items", "*2 passed in*"])
 
         result = testdir.runpytest(test_b, "--lf")
         result.stdout.fnmatch_lines(
@@ -616,6 +610,17 @@ class TestLastFailed(object):
         assert result.ret == 0
         assert self.get_cached_last_failed(testdir) == []
         assert result.ret == 0
+
+    @pytest.mark.parametrize("quiet", [True, False])
+    @pytest.mark.parametrize("opt", ["--ff", "--lf"])
+    def test_lf_and_ff_prints_no_needless_message(self, quiet, opt, testdir):
+        # Issue 3853
+        testdir.makepyfile("def test(): pass")
+        args = [opt]
+        if quiet:
+            args.append("-q")
+        result = testdir.runpytest(*args)
+        assert "run all" not in result.stdout.str()
 
     def get_cached_last_failed(self, testdir):
         config = testdir.parseconfigure()
