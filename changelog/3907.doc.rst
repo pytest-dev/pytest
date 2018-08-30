@@ -1,0 +1,1 @@
+Corrected type of the exceptions collection passed to ``xfail``: ``raises`` argument accepts a ``tuple`` instead of ``list``.

@@ -617,5 +617,5 @@ get on the terminal - we are working on that)::
       Metafunc.addcall is deprecated and scheduled to be removed in pytest 4.0.
       Please use Metafunc.parametrize instead.
 
-    -- Docs: http://doc.pytest.org/en/latest/warnings.html
+    -- Docs: https://docs.pytest.org/en/latest/warnings.html
     ================== 42 failed, 1 warnings in 0.12 seconds ===================

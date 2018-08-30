@@ -28,9 +28,12 @@ taking a lot of time to make a new one.
 
 #. After all tests pass and the PR has been approved, publish to PyPI by pushing the tag::
 
+     git tag <VERSION>
      git push git@github.com:pytest-dev/pytest.git <VERSION>
 
    Wait for the deploy to complete, then make sure it is `available on PyPI <https://pypi.org/project/pytest>`_.
+
+#. Merge the PR into ``master``.
 
 #. Send an email announcement with the contents from::
 

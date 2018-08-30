@@ -1,7 +1,7 @@
-pytest-{version}
+pytest-3.7.4
 =======================================
 
-pytest {version} has just been released to PyPI.
+pytest 3.7.4 has just been released to PyPI.
 
 This is a bug-fix release, being a drop-in replacement. To upgrade::
 
@@ -11,7 +11,12 @@ The full changelog is available at https://docs.pytest.org/en/latest/changelog.h
 
 Thanks to all who contributed to this release, among them:
 
-{contributors}
+* Anthony Sottile
+* Bruno Oliveira
+* Daniel Hahler
+* Jiri Kuncar
+* Steve Piercy
+
 
 Happy testing,
 The pytest Development Team
