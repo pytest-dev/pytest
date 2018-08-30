@@ -134,15 +134,12 @@ class LFPlugin(object):
     def pytest_report_collectionfinish(self):
         if self.active:
             if not self._previously_failed_count:
-                mode = "run {} (no recorded failures)".format(
-                    self._no_failures_behavior
-                )
-            else:
-                noun = "failure" if self._previously_failed_count == 1 else "failures"
-                suffix = " first" if self.config.getoption("failedfirst") else ""
-                mode = "rerun previous {count} {noun}{suffix}".format(
-                    count=self._previously_failed_count, suffix=suffix, noun=noun
-                )
+                return None
+            noun = "failure" if self._previously_failed_count == 1 else "failures"
+            suffix = " first" if self.config.getoption("failedfirst") else ""
+            mode = "rerun previous {count} {noun}{suffix}".format(
+                count=self._previously_failed_count, suffix=suffix, noun=noun
+            )
             return "run-last-failure: %s" % mode
 
     def pytest_runtest_logreport(self, report):
