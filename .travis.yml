@@ -12,8 +12,6 @@ install:
   - pip install --upgrade --pre tox
 env:
   matrix:
-    # coveralls is not listed in tox's envlist, but should run in travis
-    - TOXENV=coveralls
     # note: please use "tox --listenvs" to populate the build matrix below
     # please remove the linting env in all cases
     - TOXENV=py27-pexpect
@@ -28,15 +26,16 @@ env:
     - TOXENV=py36-pluggymaster
     - TOXENV=py27-nobyte
     - TOXENV=doctesting
-    - TOXENV=docs
+    - TOXENV=docs PYTEST_NO_COVERAGE=1
 
 jobs:
   include:
-    - env: TOXENV=pypy
+    # Coverage tracking is slow with pypy, skip it.
+    - env: TOXENV=pypy PYTEST_NO_COVERAGE=1
       python: 'pypy-5.4'
     - env: TOXENV=py35
       python: '3.5'
-    - env: TOXENV=py36-freeze
+    - env: TOXENV=py36-freeze PYTEST_NO_COVERAGE=1
       python: '3.6'
     - env: TOXENV=py37
       python: '3.7'
@@ -62,7 +61,7 @@ jobs:
       env: TOXENV=py27
     - env: TOXENV=py34
     - env: TOXENV=py36
-    - env: TOXENV=linting
+    - env: TOXENV=linting PYTEST_NO_COVERAGE=1
 
     - stage: deploy
       python: '3.6'
@@ -80,7 +79,31 @@ jobs:
           tags: true
           repo: pytest-dev/pytest
 
+before_script:
+  - |
+    if [[ "$PYTEST_NO_COVERAGE" != 1 ]]; then
+      export _PYTEST_TOX_COVERAGE_RUN="env COVERAGE_FILE=$PWD/.coverage COVERAGE_PROCESS_START=$PWD/.coveragerc coverage run --source {envsitepackagesdir}/_pytest/,$PWD/testing -m"
+      export _PYTEST_TOX_EXTRA_DEP=coverage-enable-subprocess
+    fi
+
 script: tox --recreate
+
+after_success:
+  - |
+    if [[ "$PYTEST_NO_COVERAGE" != 1 ]]; then
+      set -e
+      pip install codecov
+      coverage combine
+      coverage xml
+      coverage report -m
+      codecov --required -X gcov pycov search -f coverage.xml --flags ${TOXENV//-/ }
+
+      # Coveralls does not support merged reports.
+      if [[ "$TOXENV" = py37 ]]; then
+        pip install coveralls
+        coveralls
+      fi
+    fi
 
 notifications:
   irc:
