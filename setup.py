@@ -59,7 +59,7 @@ def get_environment_marker_support_level():
 def main():
     extras_require = {}
     install_requires = [
-        "py>=1.5.0",
+        "py>=1.6.0",
         "six>=1.10.0",
         "setuptools",
         "attrs>=17.4.0",
