@@ -412,10 +412,12 @@ class TerminalReporter(object):
             if last_item:
                 self._write_progress_information_filling_space()
             else:
-                past_edge = (
-                    self._tw.width_of_current_line + self._PROGRESS_LENGTH + 1
-                    >= self._screen_width
-                )
+                try:
+                    w = self._tw.width_of_current_line
+                except AttributeError:
+                    # py < 1.6.0
+                    w = self._tw.chars_on_current_line
+                past_edge = w + self._PROGRESS_LENGTH + 1 >= self._screen_width
                 if past_edge:
                     msg = self._get_progress_information_message()
                     self._tw.write(msg + "\n", cyan=True)
@@ -433,7 +435,12 @@ class TerminalReporter(object):
 
     def _write_progress_information_filling_space(self):
         msg = self._get_progress_information_message()
-        fill = self._tw.fullwidth - self._tw.width_of_current_line - 1
+        try:
+            w = self._tw.width_of_current_line
+        except AttributeError:
+            # py < 1.6.0
+            w = self._tw.chars_on_current_line
+        fill = self._tw.fullwidth - w - 1
         self.write(msg.rjust(fill), cyan=True)
 
     def pytest_collection(self):
