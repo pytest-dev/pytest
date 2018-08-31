@@ -38,3 +38,6 @@ env/
 .ropeproject
 .idea
 .hypothesis
+.pydevproject
+.project
+.settings
