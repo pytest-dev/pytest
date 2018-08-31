@@ -527,3 +527,40 @@ hook was invoked::
 
 
 .. include:: links.inc
+
+.. _`pytest.detailed_failed_tests_usage`:
+
+Detailed Summary Report of Failed,Skipped,xfailed tests
+--------------------------------------------------------
+
+.. versionadded:: 2.9
+
+When there are more than 200 tests in a file and pytest is run and many tests are failing,then it is difficult to find which tests
+are failing and the person just doesn't wants to scroll and see each and every failed test.
+
+
+This way the failed test can be missed,so pytest has a flag known as -r to denote the failed,skipped,xfailed tests.
+
+To create an extra summary report at the end of the output, use this invocation::
+
+    python -r chars
+
+where chars are :
+ - (f)ailed,
+ - (E)error,
+ - (s)skipped,
+ - (x)failed,
+ - (X)passed,
+ - (p)passed,
+ - (P)passed with output,
+ - (a)all except pP.
+
+**Examples:**
+
+- To show extra info on xfailed, xpassed, and skipped tests::
+
+   pytest -r xXs
+
+- To show extra info on all tests  except (p)assed and (P)assed with output ,this is the most commonly used command::
+
+   pytest -r a
