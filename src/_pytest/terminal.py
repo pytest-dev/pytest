@@ -412,11 +412,7 @@ class TerminalReporter(object):
             if last_item:
                 self._write_progress_information_filling_space()
             else:
-                try:
-                    w = self._tw.width_of_current_line
-                except AttributeError:
-                    # py < 1.6.0
-                    w = self._tw.chars_on_current_line
+                w = self._width_of_current_line
                 past_edge = w + self._PROGRESS_LENGTH + 1 >= self._screen_width
                 if past_edge:
                     msg = self._get_progress_information_message()
@@ -435,13 +431,18 @@ class TerminalReporter(object):
 
     def _write_progress_information_filling_space(self):
         msg = self._get_progress_information_message()
-        try:
-            w = self._tw.width_of_current_line
-        except AttributeError:
-            # py < 1.6.0
-            w = self._tw.chars_on_current_line
+        w = self._width_of_current_line
         fill = self._tw.fullwidth - w - 1
         self.write(msg.rjust(fill), cyan=True)
+
+    @property
+    def _width_of_current_line(self):
+        """Return the width of current line, using the superior implementation of py-1.6 when available"""
+        try:
+            return self._tw.width_of_current_line
+        except AttributeError:
+            # py < 1.6.0
+            return self._tw.chars_on_current_line
 
     def pytest_collection(self):
         if not self.isatty and self.config.option.verbose >= 1:
