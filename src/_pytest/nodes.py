@@ -326,7 +326,7 @@ def get_fslocation_from_item(item):
     """
     result = getattr(item, "location", None)
     if result is not None:
-        return result
+        return result[:2]
     obj = getattr(item, "obj", None)
     if obj is not None:
         return getfslineno(obj)

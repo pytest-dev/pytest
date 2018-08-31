@@ -967,7 +967,11 @@ class Metafunc(fixtures.FuncargnamesCompatAttr):
         from _pytest.mark import ParameterSet
 
         argnames, parameters = ParameterSet._for_parametrize(
-            argnames, argvalues, self.function, self.config
+            argnames,
+            argvalues,
+            self.function,
+            self.config,
+            function_definition=self.definition,
         )
         del argvalues
 
