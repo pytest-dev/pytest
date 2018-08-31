@@ -33,7 +33,7 @@ Running pytest now produces this output::
       $REGENDOC_TMPDIR/test_show_warnings.py:4: UserWarning: api v1, should use functions from v2
         warnings.warn(UserWarning("api v1, should use functions from v2"))
 
-    -- Docs: http://doc.pytest.org/en/latest/warnings.html
+    -- Docs: https://docs.pytest.org/en/latest/warnings.html
     =================== 1 passed, 1 warnings in 0.12 seconds ===================
 
 Pytest by default catches all warnings except for ``DeprecationWarning`` and ``PendingDeprecationWarning``.

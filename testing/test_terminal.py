@@ -3,6 +3,7 @@ terminal reporting of the full testing process.
 """
 from __future__ import absolute_import, division, print_function
 import collections
+import os
 import sys
 import textwrap
 
@@ -472,7 +473,7 @@ class TestTerminalFunctional(object):
 
     def test_show_deselected_items_using_markexpr_before_test_execution(self, testdir):
         testdir.makepyfile(
-            """
+            test_show_deselected="""
             import pytest
 
             @pytest.mark.foo
@@ -491,7 +492,7 @@ class TestTerminalFunctional(object):
         result.stdout.fnmatch_lines(
             [
                 "collected 3 items / 1 deselected",
-                "*test_show_des*.py ..*",
+                "*test_show_deselected.py ..*",
                 "*= 2 passed, 1 deselected in * =*",
             ]
         )
@@ -1134,7 +1135,53 @@ def test_no_trailing_whitespace_after_inifile_word(testdir):
     assert "inifile: tox.ini\n" in result.stdout.str()
 
 
-class TestProgress(object):
+class TestClassicOutputStyle(object):
+    """Ensure classic output style works as expected (#3883)"""
+
+    @pytest.fixture
+    def test_files(self, testdir):
+        testdir.makepyfile(
+            **{
+                "test_one.py": "def test_one(): pass",
+                "test_two.py": "def test_two(): assert 0",
+                "sub/test_three.py": """
+                    def test_three_1(): pass
+                    def test_three_2(): assert 0
+                    def test_three_3(): pass
+                """,
+            }
+        )
+
+    def test_normal_verbosity(self, testdir, test_files):
+        result = testdir.runpytest("-o", "console_output_style=classic")
+        result.stdout.fnmatch_lines(
+            [
+                "test_one.py .",
+                "test_two.py F",
+                "sub{}test_three.py .F.".format(os.sep),
+                "*2 failed, 3 passed in*",
+            ]
+        )
+
+    def test_verbose(self, testdir, test_files):
+        result = testdir.runpytest("-o", "console_output_style=classic", "-v")
+        result.stdout.fnmatch_lines(
+            [
+                "test_one.py::test_one PASSED",
+                "test_two.py::test_two FAILED",
+                "sub{}test_three.py::test_three_1 PASSED".format(os.sep),
+                "sub{}test_three.py::test_three_2 FAILED".format(os.sep),
+                "sub{}test_three.py::test_three_3 PASSED".format(os.sep),
+                "*2 failed, 3 passed in*",
+            ]
+        )
+
+    def test_quiet(self, testdir, test_files):
+        result = testdir.runpytest("-o", "console_output_style=classic", "-q")
+        result.stdout.fnmatch_lines([".F.F.", "*2 failed, 3 passed in*"])
+
+
+class TestProgressOutputStyle(object):
     @pytest.fixture
     def many_tests_files(self, testdir):
         testdir.makepyfile(

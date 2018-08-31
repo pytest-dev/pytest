@@ -615,12 +615,18 @@ class TestLastFailed(object):
     @pytest.mark.parametrize("opt", ["--ff", "--lf"])
     def test_lf_and_ff_prints_no_needless_message(self, quiet, opt, testdir):
         # Issue 3853
-        testdir.makepyfile("def test(): pass")
+        testdir.makepyfile("def test(): assert 0")
         args = [opt]
         if quiet:
             args.append("-q")
         result = testdir.runpytest(*args)
         assert "run all" not in result.stdout.str()
+
+        result = testdir.runpytest(*args)
+        if quiet:
+            assert "run all" not in result.stdout.str()
+        else:
+            assert "rerun previous" in result.stdout.str()
 
     def get_cached_last_failed(self, testdir):
         config = testdir.parseconfigure()

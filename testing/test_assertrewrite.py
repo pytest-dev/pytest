@@ -1124,3 +1124,32 @@ def test_simple_failure():
 
         result = testdir.runpytest()
         result.stdout.fnmatch_lines("*E*assert (1 + 1) == 3")
+
+
+def test_rewrite_infinite_recursion(testdir, pytestconfig, monkeypatch):
+    """Fix infinite recursion when writing pyc files: if an import happens to be triggered when writing the pyc
+    file, this would cause another call to the hook, which would trigger another pyc writing, which could
+    trigger another import, and so on. (#3506)"""
+    from _pytest.assertion import rewrite
+
+    testdir.syspathinsert()
+    testdir.makepyfile(test_foo="def test_foo(): pass")
+    testdir.makepyfile(test_bar="def test_bar(): pass")
+
+    original_write_pyc = rewrite._write_pyc
+
+    write_pyc_called = []
+
+    def spy_write_pyc(*args, **kwargs):
+        # make a note that we have called _write_pyc
+        write_pyc_called.append(True)
+        # try to import a module at this point: we should not try to rewrite this module
+        assert hook.find_module("test_bar") is None
+        return original_write_pyc(*args, **kwargs)
+
+    monkeypatch.setattr(rewrite, "_write_pyc", spy_write_pyc)
+    monkeypatch.setattr(sys, "dont_write_bytecode", False)
+
+    hook = AssertionRewritingHook(pytestconfig)
+    assert hook.find_module("test_foo") is not None
+    assert len(write_pyc_called) == 1
