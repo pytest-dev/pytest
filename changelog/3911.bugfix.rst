@@ -1,1 +1,1 @@
-the terminal writer now takes into account unicode character width when writing out progress
+Terminal writer now takes into account unicode character width when writing out progress.
