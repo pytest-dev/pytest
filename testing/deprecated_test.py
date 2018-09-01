@@ -1,5 +1,6 @@
 from __future__ import absolute_import, division, print_function
 
+import os
 
 import pytest
 
@@ -197,8 +198,11 @@ def test_pytest_plugins_in_non_top_level_conftest_deprecated(testdir):
     )
     res = testdir.runpytest_subprocess()
     assert res.ret == 0
-    res.stderr.fnmatch_lines(
-        "*" + str(PYTEST_PLUGINS_FROM_NON_TOP_LEVEL_CONFTEST).splitlines()[0]
+    msg = PYTEST_PLUGINS_FROM_NON_TOP_LEVEL_CONFTEST.splitlines()[0]
+    res.stdout.fnmatch_lines(
+        "*subdirectory{sep}conftest.py:0: RemovedInPytest4Warning: {msg}*".format(
+            sep=os.sep, msg=msg
+        )
     )
 
 
@@ -227,8 +231,11 @@ def test_pytest_plugins_in_non_top_level_conftest_deprecated_no_top_level_confte
 
     res = testdir.runpytest_subprocess()
     assert res.ret == 0
-    res.stderr.fnmatch_lines(
-        "*" + str(PYTEST_PLUGINS_FROM_NON_TOP_LEVEL_CONFTEST).splitlines()[0]
+    msg = PYTEST_PLUGINS_FROM_NON_TOP_LEVEL_CONFTEST.splitlines()[0]
+    res.stdout.fnmatch_lines(
+        "*subdirectory{sep}conftest.py:0: RemovedInPytest4Warning: {msg}*".format(
+            sep=os.sep, msg=msg
+        )
     )
 
 
@@ -261,10 +268,8 @@ def test_pytest_plugins_in_non_top_level_conftest_deprecated_no_false_positives(
     )
     res = testdir.runpytest_subprocess()
     assert res.ret == 0
-    assert (
-        str(PYTEST_PLUGINS_FROM_NON_TOP_LEVEL_CONFTEST).splitlines()[0]
-        not in res.stderr.str()
-    )
+    msg = PYTEST_PLUGINS_FROM_NON_TOP_LEVEL_CONFTEST.splitlines()[0]
+    assert msg not in res.stdout.str()
 
 
 def test_call_fixture_function_deprecated():
@@ -276,3 +281,22 @@ def test_call_fixture_function_deprecated():
 
     with pytest.deprecated_call():
         assert fix() == 1
+
+
+def test_pycollector_makeitem_is_deprecated():
+    from _pytest.python import PyCollector
+
+    class PyCollectorMock(PyCollector):
+        """evil hack"""
+
+        def __init__(self):
+            self.called = False
+
+        def _makeitem(self, *k):
+            """hack to disable the actual behaviour"""
+            self.called = True
+
+    collector = PyCollectorMock()
+    with pytest.deprecated_call():
+        collector.makeitem("foo", "bar")
+    assert collector.called

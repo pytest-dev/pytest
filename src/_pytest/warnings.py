@@ -91,7 +91,7 @@ def catch_warnings_for_item(config, ihook, item):
 def warning_record_to_str(warning_message):
     """Convert a warnings.WarningMessage to a string, taking in account a lot of unicode shenaningans in Python 2.
 
-    When Python 2 support is tropped this function can be greatly simplified.
+    When Python 2 support is dropped this function can be greatly simplified.
     """
     warn_msg = warning_message.message
     unicode_warning = False
@@ -129,5 +129,12 @@ def pytest_runtest_protocol(item):
 @pytest.hookimpl(hookwrapper=True)
 def pytest_collection(session):
     config = session.config
+    with catch_warnings_for_item(config=config, ihook=config.hook, item=None):
+        yield
+
+
+@pytest.hookimpl(hookwrapper=True)
+def pytest_terminal_summary(terminalreporter):
+    config = terminalreporter.config
     with catch_warnings_for_item(config=config, ihook=config.hook, item=None):
         yield

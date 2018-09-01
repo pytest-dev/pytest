@@ -44,7 +44,7 @@ from _pytest.mark.structures import (
     get_unpacked_marks,
     normalize_mark_list,
 )
-from _pytest.warning_types import PytestUsageWarning
+from _pytest.warning_types import PytestUsageWarning, RemovedInPytest4Warning
 
 # relative paths that we use to filter traceback entries from appearing to the user;
 # see filter_traceback
@@ -982,7 +982,7 @@ class Metafunc(fixtures.FuncargnamesCompatAttr):
 
         arg_values_types = self._resolve_arg_value_types(argnames, indirect)
 
-        ids = self._resolve_arg_ids(argnames, ids, parameters)
+        ids = self._resolve_arg_ids(argnames, ids, parameters, item=self.definition)
 
         scopenum = scope2index(scope, descr="call to {}".format(self.parametrize))
 
@@ -1005,13 +1005,14 @@ class Metafunc(fixtures.FuncargnamesCompatAttr):
                 newcalls.append(newcallspec)
         self._calls = newcalls
 
-    def _resolve_arg_ids(self, argnames, ids, parameters):
+    def _resolve_arg_ids(self, argnames, ids, parameters, item):
         """Resolves the actual ids for the given argnames, based on the ``ids`` parameter given
         to ``parametrize``.
 
         :param List[str] argnames: list of argument names passed to ``parametrize()``.
         :param ids: the ids parameter of the parametrized call (see docs).
         :param List[ParameterSet] parameters: the list of parameter values, same size as ``argnames``.
+        :param Item item: the item that generated this parametrized call.
         :rtype: List[str]
         :return: the list of ids for each argname given
         """
@@ -1032,7 +1033,7 @@ class Metafunc(fixtures.FuncargnamesCompatAttr):
                     raise ValueError(
                         msg % (saferepr(id_value), type(id_value).__name__)
                     )
-        ids = idmaker(argnames, parameters, idfn, ids, self.config)
+        ids = idmaker(argnames, parameters, idfn, ids, self.config, item=item)
         return ids
 
     def _resolve_arg_value_types(self, argnames, indirect):
@@ -1158,21 +1159,22 @@ def _find_parametrized_scope(argnames, arg2fixturedefs, indirect):
     return "function"
 
 
-def _idval(val, argname, idx, idfn, config=None):
+def _idval(val, argname, idx, idfn, config=None, item=None):
     if idfn:
         s = None
         try:
             s = idfn(val)
-        except Exception:
+        except Exception as e:
             # See issue https://github.com/pytest-dev/pytest/issues/2169
-            import warnings
-
-            msg = (
-                "Raised while trying to determine id of parameter %s at position %d."
-                % (argname, idx)
-            )
-            msg += "\nUpdate your code as this will raise an error in pytest-4.0."
-            warnings.warn(msg, DeprecationWarning)
+            if item is not None:
+                # should really be None only when unit-testing this function!
+                msg = (
+                    "While trying to determine id of parameter {} at position "
+                    "{} the following exception was raised:\n".format(argname, idx)
+                )
+                msg += "  {}: {}\n".format(type(e).__name__, e)
+                msg += "This warning will be an error error in pytest-4.0."
+                item.std_warn(msg, RemovedInPytest4Warning)
         if s:
             return ascii_escaped(s)
 
@@ -1196,12 +1198,12 @@ def _idval(val, argname, idx, idfn, config=None):
     return str(argname) + str(idx)
 
 
-def _idvalset(idx, parameterset, argnames, idfn, ids, config=None):
+def _idvalset(idx, parameterset, argnames, idfn, ids, config=None, item=None):
     if parameterset.id is not None:
         return parameterset.id
     if ids is None or (idx >= len(ids) or ids[idx] is None):
         this_id = [
-            _idval(val, argname, idx, idfn, config)
+            _idval(val, argname, idx, idfn, config, item)
             for val, argname in zip(parameterset.values, argnames)
         ]
         return "-".join(this_id)
@@ -1209,9 +1211,9 @@ def _idvalset(idx, parameterset, argnames, idfn, ids, config=None):
         return ascii_escaped(ids[idx])
 
 
-def idmaker(argnames, parametersets, idfn=None, ids=None, config=None):
+def idmaker(argnames, parametersets, idfn=None, ids=None, config=None, item=None):
     ids = [
-        _idvalset(valindex, parameterset, argnames, idfn, ids, config)
+        _idvalset(valindex, parameterset, argnames, idfn, ids, config, item)
         for valindex, parameterset in enumerate(parametersets)
     ]
     if len(set(ids)) != len(ids):

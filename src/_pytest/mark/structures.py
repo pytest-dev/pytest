@@ -94,7 +94,7 @@ class ParameterSet(namedtuple("ParameterSet", "values, marks, id")):
         if legacy_force_tuple:
             argval = (argval,)
 
-        if newmarks:
+        if newmarks and item is not None:
             item.std_warn(MARK_PARAMETERSET_UNPACKING)
 
         return cls(argval, marks=newmarks, id=None)

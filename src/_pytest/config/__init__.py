@@ -417,7 +417,14 @@ class PytestPluginManager(PluginManager):
                         PYTEST_PLUGINS_FROM_NON_TOP_LEVEL_CONFTEST
                     )
 
-                    warnings.warn(PYTEST_PLUGINS_FROM_NON_TOP_LEVEL_CONFTEST)
+                    from _pytest.warning_types import RemovedInPytest4Warning
+
+                    warnings.warn_explicit(
+                        PYTEST_PLUGINS_FROM_NON_TOP_LEVEL_CONFTEST,
+                        RemovedInPytest4Warning,
+                        filename=str(conftestpath),
+                        lineno=0,
+                    )
             except Exception:
                 raise ConftestImportFailure(conftestpath, sys.exc_info())
 
