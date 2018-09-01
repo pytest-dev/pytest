@@ -322,6 +322,126 @@ The fixtures requested by ``test_foo`` will be instantiated in the following ord
 5. ``f2``: is the last ``function``-scoped fixture in ``test_foo`` parameter list.
 
 
+.. _autoparam:
+
+Combining parametrization and autouse: how to parametrize entire scopes
+-----------------------------------------------------------------------
+
+.. versionadded:: 3.8
+
+Parametrization is a powerful tool for running tests multiple ways with
+different sets of data. But without ``autouse``, they will only be parametrizing
+the fixtures and tests that depend on them; anything the parametrized fixtures
+depended on wouldn't be impacted by the parameter sets, even if they shared the
+same scope. By have a parametrized fixture be autouse, you are telling pytest
+that you want that fixture to impact everything in its designated scope, even
+the fixtures of the same scope that happen before it.
+
+Here's a simple example:
+
+.. code-block:: python
+
+    @pytest.fixture(scope="module", autouse=True)
+    def data():
+        return {}
+
+
+    @pytest.fixture(scope="class", autouse=True)
+    def clear_data(data):
+        data.clear()
+
+
+    class TestData:
+        @pytest.fixture(scope="class", autouse=True, params=["a", "b"])
+        def data_value(self, request, clear_data):
+            return request.param
+
+        @pytest.fixture(scope="class", autouse=True)
+        def add_data(self, data, data_value):
+            data[data_value] = True
+
+        def test_was_cleared(self, data, data_value):
+            assert data == {data_value: True}
+
+
+    class TestMoreData:
+        @pytest.fixture(scope="class", autouse=True)
+        def data_value(self, request, clear_data):
+            return "c"
+
+        @pytest.fixture(scope="class", autouse=True)
+        def add_data(self, data, data_value):
+            data[data_value] = True
+
+        def test_was_cleared(self, data, data_value):
+            assert data == {data_value: True}
+
+The ``data`` fixture will only happen once, and the object it returns will be
+shared across every fixture and test in the ``module``. The ``clear_data``
+fixture is responsible for emptying out the ``dict`` provided by ``data``, but
+will only happen once per ``class``. However, the ``data_value`` fixture is an
+autoparam fixture with a scope of ``class``, so that means it wants every
+fixture for the ``class`` to be run once per set of parameters. Since
+``clear_data`` has a scope of ``class``, it will also be executed once per param
+set. But since the ``data`` fixture has a scope of ``module``, it won't be
+impacted  by the parametrization, and will only be executed once.
+
+The flow looks something like this:
+
+.. code-block:: none
+
+    test_module (module)
+    └── data
+        ├── TestData (class)
+        |   └── clear_data
+        |       └── data_value["a"](is parametrized)
+        |           └── add_data
+        |               └── test_was_cleared (function)
+        ├── TestData (class)
+        |   └── clear_data
+        |       └── data_value["b"](is parametrized)
+        |           └── add_data
+        |               └── test_was_cleared (function)
+        └── TestMoreData (class)
+            └── clear_data
+                └── data_value (is parametrized)
+                    └── add_data
+                        └── test_was_cleared (function)
+
+Without autouse, the flow would look more like this:
+
+.. code-block:: none
+
+    test_module (module)
+    └── data
+        ├── TestData (class)
+        |   └── clear_data
+        |       └── data_value["a"](is parametrized)
+        |           └── add_data
+        |               └── test_was_cleared (function)
+        ├── TestData (class)
+        |   └── data_value["b"](is parametrized)
+        |       └── add_data
+        |           └── test_was_cleared (function)
+        └── TestMoreData (class)
+            └── clear_data
+                └── data_value (is parametrized)
+                    └── add_data
+                        └── test_was_cleared (function)
+
+and in this case, the 2nd test would fail, because the ``clear_data`` fixture
+was never run in order to clear the data ``dict``. The 3rd test would still be
+fine, though, as it's another ``class`` entirely. Autoparam fixtures allow you
+to treat a scope as though it's multiple individual scopes to take advantage of
+fixture flows you would normally define without parametrization.
+
+This system scales to any scope (i.e. ``session``, ``package``, ``module``,
+``class``, and ``function``), and in the case of
+:ref:`@pytest.mark.parametrize <@pytest.mark.parametrize>`, the parametrization
+is considered to be autouse for the scope of the test function it was applied
+to.
+
+
 .. _`finalization`:
 
 Fixture finalization / executing teardown code
@@ -1082,6 +1202,13 @@ and then e.g. have a TestClass using it by declaring the need::
 All test methods in this TestClass will use the transaction fixture while
 other test classes or functions in the module will not use it unless
 they also add a ``transact`` reference.
+
+.. note::
+
+    When paired with parametrization, autouse tells pytest to run the entirety
+    of each affected scope once for each set of parameters, including fixtures
+    for the designated scope that happen before the autoparam fixture. For more
+    info, see :ref:`autoparam`.
 
 Overriding fixtures on various levels
 -------------------------------------
