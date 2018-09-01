@@ -67,13 +67,17 @@ class AssertionRewritingHook(object):
         # flag to guard against trying to rewrite a pyc file while we are already writing another pyc file,
         # which might result in infinite recursion (#3506)
         self._writing_pyc = False
-        self._basenames_to_check_rewrite = set('conftest',)
+        self._basenames_to_check_rewrite = {"conftest"}
         self._marked_for_rewrite_cache = {}
         self._session_paths_checked = False
 
     def set_session(self, session):
         self.session = session
         self._session_paths_checked = False
+
+    def _imp_find_module(self, name, path=None):
+        """Indirection so we can mock calls to find_module originated from the hook during testing"""
+        return imp.find_module(name, path)
 
     def find_module(self, name, path=None):
         if self._writing_pyc:
@@ -93,7 +97,7 @@ class AssertionRewritingHook(object):
                 pth = path[0]
         if pth is None:
             try:
-                fd, fn, desc = imp.find_module(lastname, path)
+                fd, fn, desc = self._imp_find_module(lastname, path)
             except ImportError:
                 return None
             if fd is not None:
@@ -179,8 +183,7 @@ class AssertionRewritingHook(object):
         from this class) is a major slowdown, so, this method tries to
         filter what we're sure won't be rewritten before getting to it.
         """
-        if not self._session_paths_checked and self.session is not None \
-                and hasattr(self.session, '_initialpaths'):
+        if self.session is not None and not self._session_paths_checked:
             self._session_paths_checked = True
             for path in self.session._initialpaths:
                 # Make something as c:/projects/my_project/path.py ->
@@ -190,14 +193,18 @@ class AssertionRewritingHook(object):
                 self._basenames_to_check_rewrite.add(os.path.splitext(parts[-1])[0])
 
         # Note: conftest already by default in _basenames_to_check_rewrite.
-        parts = name.split('.')
+        parts = name.split(".")
         if parts[-1] in self._basenames_to_check_rewrite:
             return False
 
         # For matching the name it must be as if it was a filename.
-        parts[-1] = parts[-1] + '.py'
+        parts[-1] = parts[-1] + ".py"
         fn_pypath = py.path.local(os.path.sep.join(parts))
         for pat in self.fnpats:
+            # if the pattern contains subdirectories ("tests/**.py" for example) we can't bail out based
+            # on the name alone because we need to match against the full path
+            if os.path.dirname(pat):
+                return False
             if fn_pypath.fnmatch(pat):
                 return False
 
@@ -237,7 +244,7 @@ class AssertionRewritingHook(object):
                     state.trace("matched marked file %r (from %r)" % (name, marked))
                     self._marked_for_rewrite_cache[name] = True
                     return True
-    
+
             self._marked_for_rewrite_cache[name] = False
             return False
 
@@ -288,6 +295,16 @@ class AssertionRewritingHook(object):
                 del sys.modules[name]
             raise
         return sys.modules[name]
+
+    def is_package(self, name):
+        try:
+            fd, fn, desc = imp.find_module(name)
+        except ImportError:
+            return False
+        if fd is not None:
+            fd.close()
+        tp = desc[2]
+        return tp == imp.PKG_DIRECTORY
 
     @classmethod
     def _register_with_pkg_resources(cls):

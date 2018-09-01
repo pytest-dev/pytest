@@ -383,6 +383,7 @@ class Session(nodes.FSCollector):
         self.trace = config.trace.root.get("collection")
         self._norecursepatterns = config.getini("norecursedirs")
         self.startdir = py.path.local()
+        self._initialpaths = frozenset()
         # Keep track of any collected nodes in here, so we don't duplicate fixtures
         self._node_cache = {}
 
@@ -565,7 +566,6 @@ class Session(nodes.FSCollector):
         """Convert a dotted module name to path.
 
         """
-
         try:
             with _patched_find_module():
                 loader = pkgutil.find_loader(x)
