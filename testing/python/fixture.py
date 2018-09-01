@@ -4049,10 +4049,12 @@ class TestScopeOrdering(object):
         reprec.assertoutcome(passed=2)
 
 
+@pytest.mark.issue("https://github.com/pytest-dev/pytest/issues/1552")
 class TestFixtureParametrizationAndAutouseUsages(object):
-    """Make sure parameterized autouse fixtures tigger re-execution of other
-    fixtures for the same scope.
-     test_module (module)
+    """Make sure parameterized autouse fixtures trigger re-execution of other
+    fixtures for the same scope (#1552).
+
+    test_module (module)
     ├── TestIt["a"] (class)
     |   └── before_param
     |       └── param_fix (is parametrized)
@@ -4065,15 +4067,17 @@ class TestFixtureParametrizationAndAutouseUsages(object):
                     └── test_stuff (function)
     """
 
-    def test_combined_parametrizations(self, testdir):
+    def test_combined_functions_parametrizations(self, testdir):
         testdir.makepyfile(
             """
             import pytest
 
-            data = {}
+            @pytest.fixture(autouse=True, scope="module")
+            def data():
+                return {}
 
             @pytest.fixture(autouse=True)
-            def clear_data():
+            def clear_data(data):
                 data.clear()
 
             @pytest.fixture(autouse=True, params=["a", "b"])
@@ -4081,16 +4085,249 @@ class TestFixtureParametrizationAndAutouseUsages(object):
                 return request.param
 
             @pytest.fixture(autouse=True)
-            def add_data(data_param):
+            def add_data(data, data_param):
                 data.setdefault("value", []).append(data_param)
 
-            def test_fixture(data_param):
+            def test_fixture(data, data_param):
                 assert data == {"value": [data_param]}
 
             @pytest.mark.parametrize("foo", range(3))
-            def test_mark_parametrize(foo, data_param):
+            def test_mark_parametrize(data, foo, data_param):
                 assert data == {"value": [data_param]}
         """
         )
         reprec = testdir.inline_run()
         reprec.assertoutcome(passed=8)
+
+    def test_class_parametrization_of_outer_fixtures(self, testdir):
+        testdir.makepyfile(
+            """
+            import pytest
+
+            @pytest.fixture(scope="module", autouse=True)
+            def data():
+                return {}
+
+            @pytest.fixture(scope="class", autouse=True)
+            def clear_data(data):
+                data.clear()
+
+            @pytest.fixture(scope="class", autouse=True, params=["a", "b"])
+            def data_value(request, clear_data):
+                return request.param
+
+            @pytest.fixture(scope="class", autouse=True)
+            def add_data(data, data_value):
+                data[data_value] = True
+
+            class TestData():
+                def test_was_cleared(self, data, data_value):
+                    assert data == {data_value: True}
+        """
+        )
+        reprec = testdir.inline_run()
+        reprec.assertoutcome(passed=2)
+
+    def test_class_parametrization_of_inner_fixtures(self, testdir):
+        testdir.makepyfile(
+            """
+            import pytest
+
+            @pytest.fixture(scope="module", autouse=True)
+            def data():
+                return {}
+
+            class TestData():
+                @pytest.fixture(scope="class", autouse=True)
+                def clear_data(self, data):
+                    data.clear()
+
+                @pytest.fixture(scope="class", autouse=True, params=["a", "b"])
+                def data_value(self, request, clear_data):
+                    return request.param
+
+                @pytest.fixture(scope="class", autouse=True)
+                def add_data(self, data, data_value):
+                    data[data_value] = True
+
+                def test_was_cleared(self, data, data_value):
+                    assert data == {data_value: True}
+        """
+        )
+        reprec = testdir.inline_run()
+        reprec.assertoutcome(passed=2)
+
+    def test_class_param_of_inner_fixtures_with_outer_repair(self, testdir):
+        """All fixtures for the scope should be re-executed, no matter where they're defined."""
+        testdir.makepyfile(
+            """
+            import pytest
+
+            @pytest.fixture(scope="module", autouse=True)
+            def data():
+                return {}
+
+            @pytest.fixture(scope="class", autouse=True)
+            def clear_data(data):
+                data.clear()
+
+            class TestData():
+
+                @pytest.fixture(scope="class", autouse=True, params=["a", "b"])
+                def data_value(self, request, clear_data):
+                    return request.param
+
+                @pytest.fixture(scope="class", autouse=True)
+                def add_data(self, data, data_value):
+                    data[data_value] = True
+
+                def test_was_cleared(self, data, data_value):
+                    assert data == {data_value: True}
+        """
+        )
+        reprec = testdir.inline_run()
+        reprec.assertoutcome(passed=2)
+
+    def test_module_parametrization(self, testdir):
+        testdir.makepyfile(
+            """
+            import pytest
+
+            @pytest.fixture(scope="session", autouse=True)
+            def data():
+                return {}
+
+            @pytest.fixture(scope="module", autouse=True)
+            def clear_data(data):
+                data.clear()
+
+            @pytest.fixture(scope="module", autouse=True, params=["a", "b"])
+            def data_value(request, clear_data):
+                return request.param
+
+            @pytest.fixture(scope="module", autouse=True)
+            def add_data(data, data_value):
+                data[data_value] = True
+
+            class TestData():
+
+                def test_was_cleared(self, data, data_value):
+                    assert data == {data_value: True}
+
+            def test_was_cleared(data, data_value):
+                assert data == {data_value: True}
+        """
+        )
+        reprec = testdir.inline_run()
+        reprec.assertoutcome(passed=2)
+
+    def test_scope_is_respected(self, testdir):
+        """Test ensures the module level fixtures are still only run once when class is parametrized."""
+        testdir.makepyfile(
+            """
+            import pytest
+
+            @pytest.fixture(scope="module", autouse=True)
+            def data():
+                return {}
+
+            @pytest.fixture(scope="module", autouse=True)
+            def clear_data(data):
+                data.clear()
+
+            class TestData():
+
+                @pytest.fixture(scope="class", autouse=True, params=["a", "b"])
+                def data_value(self, request, clear_data):
+                    return request.param
+
+                @pytest.fixture(scope="class", autouse=True)
+                def add_data(self, data, data_value):
+                    data[data_value] = True
+
+                def test_was_cleared(self, data, data_value):
+                    assert data == {data_value: True}
+        """
+        )
+        reprec = testdir.inline_run()
+        reprec.assertoutcome(passed=1, failed=1)
+
+    def test_nested_parametrization_of_same_scope(self, testdir):
+        testdir.makepyfile(
+            """
+            import pytest
+
+            @pytest.fixture(scope="module", autouse=True)
+            def data():
+                return {}
+
+            class TestData():
+                @pytest.fixture(scope="class", autouse=True)
+                def clear_data(self, data):
+                    data.clear()
+
+                @pytest.fixture(scope="class", autouse=True, params=["a", "b"])
+                def data_value(self, request, clear_data):
+                    return request.param
+
+                @pytest.fixture(scope="class", autouse=True, params=["x", "y"])
+                def data_value2(self, request, clear_data):
+                    return request.param
+
+                @pytest.fixture(scope="class", autouse=True)
+                def add_data(self, data, data_value, data_value2):
+                    data[data_value] = True
+                    data[data_value2] = True
+
+                def test_was_cleared(self, data, data_value, data_value2):
+                    assert data == {data_value: True, data_value2: True}
+        """
+        )
+        reprec = testdir.inline_run()
+        reprec.assertoutcome(passed=2)
+
+    def test_nested_parametrization_of_different_scopes(self, testdir):
+        testdir.makepyfile(
+            """
+            import pytest
+
+            @pytest.fixture(scope="session", autouse=True)
+            def data():
+                return []
+
+            @pytest.fixture(scope="module", autouse=True)
+            def clear_data_module(data):
+                while data:
+                    data.pop()
+
+            @pytest.fixture(scope="module", autouse=True, params=["a", "b"])
+            def data_value_module(request, clear_data_module):
+                return request.param
+
+            @pytest.fixture(scope="module", autouse=True)
+            def add_data_module(data, data_value_module):
+                data.append(data_value_module)
+
+            class TestData():
+
+                @pytest.fixture(scope="class", autouse=True, params=["x", "y"])
+                def data_value_class(self, request):
+                    return request.param
+
+                @pytest.fixture(scope="class", autouse=True)
+                def add_data(self, data, data_value_class):
+                    data.append(data_value_class)
+
+                def test_was_cleared(self, data, data_value_module, data_value_class):
+                    assert data == [data_value_module, data_value_class]
+
+        """
+        )
+        reprec = testdir.inline_run()
+        reprec.assertoutcome(passed=2, failed=2)
+        reprec.stdout.fnmatch_lines(
+            """
+            E*assert ['a', 'x', 'y'] == ['a', 'y']
+            E*assert ['b', 'x', 'y'] == ['b', 'y']
+            """
+        )
