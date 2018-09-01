@@ -4219,7 +4219,7 @@ class TestFixtureParametrizationAndAutouseUsages(object):
         """
         )
         reprec = testdir.inline_run()
-        reprec.assertoutcome(passed=2)
+        reprec.assertoutcome(passed=4)
 
     def test_scope_is_respected(self, testdir):
         """Test ensures the module level fixtures are still only run once when class is parametrized."""
@@ -4284,7 +4284,7 @@ class TestFixtureParametrizationAndAutouseUsages(object):
         """
         )
         reprec = testdir.inline_run()
-        reprec.assertoutcome(passed=2)
+        reprec.assertoutcome(passed=4)
 
     def test_nested_parametrization_of_different_scopes(self, testdir):
         testdir.makepyfile(
@@ -4321,13 +4321,9 @@ class TestFixtureParametrizationAndAutouseUsages(object):
                 def test_was_cleared(self, data, data_value_module, data_value_class):
                     assert data == [data_value_module, data_value_class]
 
+                def test_data_length(self, data, data_value_module, data_value_class):
+                    assert len(data) == 2
         """
         )
         reprec = testdir.inline_run()
-        reprec.assertoutcome(passed=2, failed=2)
-        reprec.stdout.fnmatch_lines(
-            """
-            E*assert ['a', 'x', 'y'] == ['a', 'y']
-            E*assert ['b', 'x', 'y'] == ['b', 'y']
-            """
-        )
+        reprec.assertoutcome(passed=4, failed=4)
