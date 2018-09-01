@@ -381,10 +381,11 @@ shared across every fixture and test in the ``module``. The ``clear_data``
 fixture is responsible for emptying out the ``dict`` provided by ``data``, but
 will only happen once per ``class``. However, the ``data_value`` fixture is an
 autoparam fixture with a scope of ``class``, so that means it wants every
-fixture for the ``class`` to be run once per set of parameters. Since
+``class``-scoped fixture to be run once per set of parameters. Since
 ``clear_data`` has a scope of ``class``, it will also be executed once per param
-set. But since the ``data`` fixture has a scope of ``module``, it won't be
-impacted  by the parametrization, and will only be executed once.
+set declared by ``data_value``. But since the ``data`` fixture has a scope of
+``module``, it won't be impacted by the parametrization, and will only be
+executed once.
 
 The flow looks something like this:
 
@@ -408,7 +409,8 @@ The flow looks something like this:
                     └── add_data
                         └── test_was_cleared (function)
 
-Without autouse, the flow would look more like this:
+If we remove the autouse declaration from all fixtures, the flow would look more
+like this:
 
 .. code-block:: none
 
