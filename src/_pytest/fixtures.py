@@ -613,7 +613,7 @@ class FixtureRequest(FuncargnamesCompatAttr):
 
         The effective ``param_index`` of a fixture will be used to determine
         whether or not the value of the fixture needs to be computed again, and
-        is based on the ``param_index`` values of the autouse, parameterized
+        is based on the ``param_index`` values of the autouse, parametrized
         fixtures of the same scope. If the fixture's effective ``param_index``
         does not match the one found in its ``cached_result``, or the fixture
         does not have a ``cached_result``, then the value of the fixture will be
