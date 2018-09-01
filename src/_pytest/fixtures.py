@@ -561,7 +561,6 @@ class FixtureRequest(FuncargnamesCompatAttr):
             param = funcitem.callspec.getparam(argname)
         except (AttributeError, ValueError):
             param = NOTSET
-            param_index = "0"
             if fixturedef.params is not None:
                 frame = inspect.stack()[3]
                 frameinfo = inspect.getframeinfo(frame[0])
@@ -581,36 +580,7 @@ class FixtureRequest(FuncargnamesCompatAttr):
                     )
                 )
                 fail(msg)
-            else:
-                if hasattr(funcitem, "callspec"):
-                    # fixture can be impacted by any parametrization of the
-                    # scope
-                    param_fix_argnames = funcitem.callspec.indices.keys()
-                    relevant_fixture_names = []
-                    for name in param_fix_argnames:
-                        num = funcitem.callspec._arg2scopenum.get(name)
-                        fix_scope = scopes[num]
-                        if fix_scope == scope:
-                            # they share the same scope
-                            fm = fixturedef._fixturemanager
-                            if name not in fm._arg2fixturedefs.keys():
-                                # must be parametrized through
-                                # pytest.mark.parametrize, which means it should
-                                # be considered autouse
-                                relevant_fixture_names.append(name)
-                            elif fm._arg2fixturedefs[name][-1].is_autouse:
-                                # the fixture is autouse
-                                relevant_fixture_names.append(name)
-                    # keep them in order to keep param_index consistent
-                    relevant_fixture_names.sort()
-                    for name in relevant_fixture_names:
-                        # create a param_index that combines all the param_index
-                        # values of all the relevant parametrized fixtures so
-                        # the fixture will be executed again when stepping to
-                        # the next param set.
-                        pi = str(funcitem.callspec.indices.get(name, 0))
-                        param_index += pi
-            param_index = int(param_index)
+            param_index = self._compute_param_index(funcitem, fixturedef)
         else:
             # indices might not be set if old-style metafunc.addcall() was used
             param_index = funcitem.callspec.indices.get(argname, 0)
@@ -637,6 +607,78 @@ class FixtureRequest(FuncargnamesCompatAttr):
                 functools.partial(fixturedef.finish, request=subrequest),
                 subrequest.node,
             )
+
+    def _compute_param_index(self, funcitem, fixturedef):
+        """Calculate the fixture's effective ``param_index``.
+
+        The effective ``param_index`` of a fixture will be used to determine
+        whether or not the value of the fixture needs to be computed again, and
+        is based on the ``param_index`` values of the autouse, parameterized
+        fixtures of the same scope. If the fixture's effective ``param_index``
+        does not match the one found in its ``cached_result``, or the fixture
+        does not have a ``cached_result``, then the value of the fixture will be
+        calculated again, rather than just using the cached value.
+
+        Autoparam fixtures should parametrize the entirety of whatever scope
+        they are applied to. In order to make sure that happens for fixtures of
+        that scope that happen before the autoparam fixtures (rather than using
+        the same cached value for each param set), they need to have their
+        effective ``param_index`` be based on each of the ``param_index`` of all
+        the autoparam fixtures of the same scope.
+
+        The names of the parametrized fixtures are found through
+        ``funcitem.callspec.indices``, and their current ``param_index`` is also
+        in that dict. The parametrized fixtures are then checked one by one to
+        make sure they are 1) of the same scope as the ``fixturedef`` currently
+        being evaluated, and 2) that they are autouse. The names of those that
+        meet the criteria are stored in a list, sorted alphabetically (in order
+        to keep the order of the ``param_index`` values consistent), and then a
+        new ``param_index`` for the current ``fixturedef`` is generated based on
+        those fixtures' current ``param_index`` values.
+
+        :param Function funcitem:
+        :param FixtureDef fixturedef:
+        :return: the effective ``param_index`` of the ``fixturedef``
+        :rtype: int
+        """
+        if not hasattr(funcitem, "callspec"):
+            # test function is not dependant on anything that is parametrized,
+            # so this fixture will only ever need to be run once for it.
+            return 0
+
+        # fixture can be impacted by any parametrization of the scope
+        param_index = "0"
+        # get the names of all the parametrized fixtures this test function
+        # depends on.
+        param_fix_argnames = funcitem.callspec.indices.keys()
+
+        # find all of the parametrized fixtures that are autouse
+        relevant_fixture_names = []
+        for name in param_fix_argnames:
+            num = funcitem.callspec._arg2scopenum.get(name)
+            fix_scope = scopes[num]
+            if fix_scope == fixturedef.scope:
+                # they share the same scope
+                fm = fixturedef._fixturemanager
+                if name not in fm._arg2fixturedefs.keys():
+                    # must be parametrized through
+                    # pytest.mark.parametrize, which means it should
+                    # be considered autouse
+                    relevant_fixture_names.append(name)
+                elif fm._arg2fixturedefs[name][-1].is_autouse:
+                    # the fixture is autouse
+                    relevant_fixture_names.append(name)
+        # keep the fixture names in order to keep param_index consistent
+        relevant_fixture_names.sort()
+        for name in relevant_fixture_names:
+            # create a param_index that combines all the param_index
+            # values of all the relevant parametrized fixtures so
+            # the fixture will be executed again when stepping to
+            # the next param set.
+            pi = str(funcitem.callspec.indices.get(name, 0))
+            param_index += pi
+        param_index = int(param_index)
+        return param_index
 
     def _check_scope(self, argname, invoking_scope, requested_scope):
         if argname == "request":
