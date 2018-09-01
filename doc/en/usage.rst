@@ -140,6 +140,48 @@ will be shown (because KeyboardInterrupt is caught by pytest). By using this
 option you make sure a trace is shown.
 
 
+.. _`pytest.detailed_failed_tests_usage`:
+
+Detailed summary report
+-----------------------
+
+.. versionadded:: 2.9
+
+The ``-r`` flag can be used to display test results summary at the end of the test session,
+making it easy in large test suites to get a clear picture of all failures, skips, xfails, etc.
+
+Example::
+
+    $ pytest -ra
+    ======================== test session starts ========================
+    ...
+    ====================== short test summary info ======================
+    FAIL summary\test_foo.py::test_1
+    SKIP [1] summary\test_foo.py:12: not supported in this platform
+    XPASS summary\test_bar.py::test_4 flaky
+
+    ===== 1 failed, 1 passed, 1 skipped, 1 xpassed in 0.08 seconds ======
+
+
+The ``-r`` options accepts a number of characters after it, with ``a`` used above meaning "all except passes".
+
+Here is the full list of available characters that can be used:
+
+ - ``f`` - failed
+ - ``E`` - error
+ - ``s`` - skipped
+ - ``x`` - xfailed
+ - ``X`` - xpassed
+ - ``p`` - passed
+ - ``P`` - passed with output
+ - ``a`` - all except ``pP``
+
+More than one character can be used, so for example to only see failed and skipped tests, you can execute::
+
+    $ pytest -rfs
+
+
+
 .. _pdb-option:
 
 Dropping to PDB_ (Python Debugger) on failures
@@ -527,40 +569,3 @@ hook was invoked::
 
 
 .. include:: links.inc
-
-.. _`pytest.detailed_failed_tests_usage`:
-
-Detailed Summary Report of Failed,Skipped,xfailed tests
---------------------------------------------------------
-
-.. versionadded:: 2.9
-
-When there are more than 200 tests in a file and pytest is run and many tests are failing,then it is difficult to find which tests
-are failing and the person just doesn't wants to scroll and see each and every failed test.
-
-
-This way the failed test can be missed,so pytest has a flag known as -r to denote the failed,skipped,xfailed tests.
-
-To create an extra summary report at the end of the output, use this invocation::
-
-    python -r chars
-
-where chars are :
- - (f)ailed,
- - (E)error,
- - (s)skipped,
- - (x)failed,
- - (X)passed,
- - (p)passed,
- - (P)passed with output,
- - (a)all except pP.
-
-**Examples:**
-
-- To show extra info on xfailed, xpassed, and skipped tests::
-
-   pytest -r xXs
-
-- To show extra info on all tests  except (p)assed and (P)assed with output ,this is the most commonly used command::
-
-   pytest -r a
