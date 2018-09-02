@@ -2,7 +2,12 @@ import six
 import warnings
 import argparse
 
+from gettext import gettext as _
+import sys as _sys
+
 import py
+
+from ..main import EXIT_USAGEERROR
 
 FILE_OR_DIR = "file_or_dir"
 
@@ -328,6 +333,16 @@ class MyOptionParser(argparse.ArgumentParser):
         # extra_info is a dict of (param -> value) to display if there's
         # an usage error to provide more contextual information to the user
         self.extra_info = extra_info
+
+    def error(self, message):
+        """error(message: string)
+
+        Prints a usage message incorporating the message to stderr and
+        exits.
+        Overrides the method in parent class to change exit code"""
+        self.print_usage(_sys.stderr)
+        args = {"prog": self.prog, "message": message}
+        self.exit(EXIT_USAGEERROR, _("%(prog)s: error: %(message)s\n") % args)
 
     def parse_args(self, args=None, namespace=None):
         """allow splitting of positional arguments"""
