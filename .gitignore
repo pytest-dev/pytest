@@ -35,6 +35,8 @@ env/
 .cache
 .pytest_cache
 .coverage
+.coverage.*
+coverage.xml
 .ropeproject
 .idea
 .hypothesis
