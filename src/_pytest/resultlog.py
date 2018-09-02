@@ -31,8 +31,10 @@ def pytest_configure(config):
         config.pluginmanager.register(config._resultlog)
 
         from _pytest.deprecated import RESULT_LOG
+        import warnings
+        from _pytest.warning_types import RemovedInPytest4Warning
 
-        config.warn("C1", RESULT_LOG)
+        warnings.warn(RESULT_LOG, RemovedInPytest4Warning)
 
 
 def pytest_unconfigure(config):

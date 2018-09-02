@@ -462,6 +462,7 @@ class TestFunction(object):
         assert isinstance(modcol, pytest.Module)
         assert hasattr(modcol.obj, "test_func")
 
+    @pytest.mark.filterwarnings("default")
     def test_function_as_object_instance_ignored(self, testdir):
         testdir.makepyfile(
             """
@@ -472,8 +473,14 @@ class TestFunction(object):
             test_a = A()
         """
         )
-        reprec = testdir.inline_run()
-        reprec.assertoutcome()
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines(
+            [
+                "collected 0 items",
+                "*test_function_as_object_instance_ignored.py:2: "
+                "*cannot collect 'test_a' because it is not a function.",
+            ]
+        )
 
     def test_function_equality(self, testdir, tmpdir):
         from _pytest.fixtures import FixtureManager
@@ -1468,6 +1475,7 @@ def test_collect_functools_partial(testdir):
     result.assertoutcome(passed=6, failed=2)
 
 
+@pytest.mark.filterwarnings("default")
 def test_dont_collect_non_function_callable(testdir):
     """Test for issue https://github.com/pytest-dev/pytest/issues/331
 
@@ -1490,7 +1498,7 @@ def test_dont_collect_non_function_callable(testdir):
     result.stdout.fnmatch_lines(
         [
             "*collected 1 item*",
-            "*cannot collect 'test_a' because it is not a function*",
+            "*test_dont_collect_non_function_callable.py:2: *cannot collect 'test_a' because it is not a function*",
             "*1 passed, 1 warnings in *",
         ]
     )

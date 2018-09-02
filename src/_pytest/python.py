@@ -44,7 +44,11 @@ from _pytest.mark.structures import (
     get_unpacked_marks,
     normalize_mark_list,
 )
-from _pytest.warning_types import PytestUsageWarning, RemovedInPytest4Warning
+from _pytest.warning_types import (
+    PytestUsageWarning,
+    RemovedInPytest4Warning,
+    PytestWarning,
+)
 
 # relative paths that we use to filter traceback entries from appearing to the user;
 # see filter_traceback
@@ -239,9 +243,12 @@ def pytest_pycollect_makeitem(collector, name, obj):
         # or a funtools.wrapped.
         # We musn't if it's been wrapped with mock.patch (python 2 only)
         if not (isfunction(obj) or isfunction(get_real_func(obj))):
-            collector.warn(
-                code="C2",
+            filename, lineno = getfslineno(obj)
+            warnings.warn_explicit(
                 message="cannot collect %r because it is not a function." % name,
+                category=PytestWarning,
+                filename=str(filename),
+                lineno=lineno + 1,
             )
         elif getattr(obj, "__test__", True):
             if is_generator(obj):
@@ -800,7 +807,7 @@ class Generator(FunctionMixin, PyCollector):
                 )
             seen[name] = True
             values.append(self.Function(name, self, args=args, callobj=call))
-        self.warn("C1", deprecated.YIELD_TESTS)
+        self.std_warn(deprecated.YIELD_TESTS, RemovedInPytest4Warning)
         return values
 
     def getcallargs(self, obj):
@@ -1107,9 +1114,10 @@ class Metafunc(fixtures.FuncargnamesCompatAttr):
             invocation through the ``request.param`` attribute.
         """
         if self.config:
-            self.config.warn(
-                "C1", message=deprecated.METAFUNC_ADD_CALL, fslocation=None
+            self.definition.std_warn(
+                deprecated.METAFUNC_ADD_CALL, RemovedInPytest4Warning
             )
+
         assert funcargs is None or isinstance(funcargs, dict)
         if funcargs is not None:
             for name in funcargs:

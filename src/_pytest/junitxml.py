@@ -274,8 +274,11 @@ def record_xml_attribute(request):
     The fixture is callable with ``(name, value)``, with value being
     automatically xml-encoded
     """
-    request.node.warn(
-        code="C3", message="record_xml_attribute is an experimental feature"
+    from _pytest.warning_types import PytestWarning
+
+    request.node.std_warn(
+        message="record_xml_attribute is an experimental feature",
+        category=PytestWarning,
     )
     xml = getattr(request.config, "_xml", None)
     if xml is not None:

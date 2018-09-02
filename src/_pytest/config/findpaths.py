@@ -10,7 +10,7 @@ def exists(path, ignore=EnvironmentError):
         return False
 
 
-def getcfg(args, warnfunc=None):
+def getcfg(args):
     """
     Search the list of arguments for a valid ini-file for pytest,
     and return a tuple of (rootdir, inifile, cfg-dict).
@@ -34,9 +34,13 @@ def getcfg(args, warnfunc=None):
                 if exists(p):
                     iniconfig = py.iniconfig.IniConfig(p)
                     if "pytest" in iniconfig.sections:
-                        if inibasename == "setup.cfg" and warnfunc:
-                            warnfunc(
-                                "C1", CFG_PYTEST_SECTION.format(filename=inibasename)
+                        if inibasename == "setup.cfg":
+                            import warnings
+                            from _pytest.warning_types import RemovedInPytest4Warning
+
+                            warnings.warn(
+                                CFG_PYTEST_SECTION.format(filename=inibasename),
+                                RemovedInPytest4Warning,
                             )
                         return base, p, iniconfig["pytest"]
                     if (
@@ -95,7 +99,7 @@ def get_dirs_from_args(args):
     return [get_dir_from_path(path) for path in possible_paths if path.exists()]
 
 
-def determine_setup(inifile, args, warnfunc=None, rootdir_cmd_arg=None):
+def determine_setup(inifile, args, rootdir_cmd_arg=None):
     dirs = get_dirs_from_args(args)
     if inifile:
         iniconfig = py.iniconfig.IniConfig(inifile)
@@ -105,23 +109,28 @@ def determine_setup(inifile, args, warnfunc=None, rootdir_cmd_arg=None):
         for section in sections:
             try:
                 inicfg = iniconfig[section]
-                if is_cfg_file and section == "pytest" and warnfunc:
+                if is_cfg_file and section == "pytest":
+                    from _pytest.warning_types import RemovedInPytest4Warning
                     from _pytest.deprecated import CFG_PYTEST_SECTION
+                    import warnings
 
-                    warnfunc("C1", CFG_PYTEST_SECTION.format(filename=str(inifile)))
+                    warnings.warn(
+                        CFG_PYTEST_SECTION.format(filename=str(inifile)),
+                        RemovedInPytest4Warning,
+                    )
                 break
             except KeyError:
                 inicfg = None
         rootdir = get_common_ancestor(dirs)
     else:
         ancestor = get_common_ancestor(dirs)
-        rootdir, inifile, inicfg = getcfg([ancestor], warnfunc=warnfunc)
+        rootdir, inifile, inicfg = getcfg([ancestor])
         if rootdir is None:
             for rootdir in ancestor.parts(reverse=True):
                 if rootdir.join("setup.py").exists():
                     break
             else:
-                rootdir, inifile, inicfg = getcfg(dirs, warnfunc=warnfunc)
+                rootdir, inifile, inicfg = getcfg(dirs)
                 if rootdir is None:
                     rootdir = get_common_ancestor([py.path.local(), ancestor])
                     is_fs_root = os.path.splitdrive(str(rootdir))[1] == "/"

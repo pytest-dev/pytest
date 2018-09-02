@@ -526,7 +526,7 @@ class TestInvocationVariants(object):
         assert pytest.main == py.test.cmdline.main
 
     def test_invoke_with_string(self, capsys):
-        retcode = pytest.main("-h")
+        retcode = pytest.main(["-h"])
         assert not retcode
         out, err = capsys.readouterr()
         assert "--help" in out

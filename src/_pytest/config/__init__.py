@@ -176,7 +176,9 @@ def _prepareconfig(args=None, plugins=None):
                 else:
                     pluginmanager.register(plugin)
         if warning:
-            config.warn("C1", warning)
+            from _pytest.warning_types import PytestUsageWarning
+
+            warnings.warn(warning, PytestUsageWarning)
         return pluginmanager.hook.pytest_cmdline_parse(
             pluginmanager=pluginmanager, args=args
         )
@@ -609,7 +611,26 @@ class Config(object):
             fin()
 
     def warn(self, code, message, fslocation=None, nodeid=None):
-        """ generate a warning for this test session. """
+        """
+        .. deprecated:: 3.8
+
+            Use :py:func:`warnings.warn` or :py:func:`warnings.warn_explicit` directly instead.
+
+        Generate a warning for this test session.
+        """
+        from _pytest.warning_types import RemovedInPytest4Warning
+
+        if isinstance(fslocation, (tuple, list)) and len(fslocation) > 2:
+            filename, lineno = fslocation[:2]
+        else:
+            filename = "unknown file"
+            lineno = 0
+        msg = "config.warn has been deprecated, use warnings.warn instead"
+        if nodeid:
+            msg = "{}: {}".format(nodeid, msg)
+        warnings.warn_explicit(
+            msg, RemovedInPytest4Warning, filename=filename, lineno=lineno
+        )
         self.hook.pytest_logwarning.call_historic(
             kwargs=dict(
                 code=code, message=message, fslocation=fslocation, nodeid=nodeid
@@ -674,7 +695,6 @@ class Config(object):
         r = determine_setup(
             ns.inifilename,
             ns.file_or_dir + unknown_args,
-            warnfunc=self.warn,
             rootdir_cmd_arg=ns.rootdir or None,
         )
         self.rootdir, self.inifile, self.inicfg = r

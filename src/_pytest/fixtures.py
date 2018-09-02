@@ -1281,8 +1281,12 @@ class FixtureManager(object):
                 marker = defaultfuncargprefixmarker
                 from _pytest import deprecated
 
-                self.config.warn(
-                    "C1", deprecated.FUNCARG_PREFIX.format(name=name), nodeid=nodeid
+                filename, lineno = getfslineno(obj)
+                warnings.warn_explicit(
+                    deprecated.FUNCARG_PREFIX.format(name=name),
+                    RemovedInPytest4Warning,
+                    filename=str(filename),
+                    lineno=lineno + 1,
                 )
                 name = name[len(self._argprefix) :]
             elif not isinstance(marker, FixtureFunctionMarker):

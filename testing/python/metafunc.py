@@ -407,8 +407,8 @@ class TestMetafunc(object):
                 "<Module 'test_parametrize_ids_exception.py'>",
                 "  <Function 'test_foo[a]'>",
                 "  <Function 'test_foo[b]'>",
-                "*test_parametrize_ids_exception.py:5: *parameter arg at position 0*",
-                "*test_parametrize_ids_exception.py:5: *parameter arg at position 1*",
+                "*test_parametrize_ids_exception.py:6: *parameter arg at position 0*",
+                "*test_parametrize_ids_exception.py:6: *parameter arg at position 1*",
             ]
         )
 

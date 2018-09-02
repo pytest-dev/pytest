@@ -137,8 +137,20 @@ class Node(object):
         return "<%s %r>" % (self.__class__.__name__, getattr(self, "name", None))
 
     def warn(self, code, message):
-        """ generate a warning with the given code and message for this
-        item. """
+        """
+        .. deprecated:: 3.8
+
+            Use :meth:`Node.std_warn <_pytest.nodes.Node.std_warn>` instead.
+
+        Generate a warning with the given code and message for this item.
+        """
+        from _pytest.warning_types import RemovedInPytest4Warning
+
+        self.std_warn(
+            "Node.warn has been deprecated, use Node.std_warn instead",
+            RemovedInPytest4Warning,
+        )
+
         assert isinstance(code, str)
         fslocation = get_fslocation_from_item(self)
         self.ihook.pytest_logwarning.call_historic(
@@ -148,12 +160,24 @@ class Node(object):
         )
 
     def std_warn(self, message, category=None):
+        """Issue a warning for this item.
+
+        Warnings will be displayed after the test session, unless explicitly suppressed
+
+        :param Union[str,Warning] message: text message of the warning or ``Warning`` instance.
+        :param Type[Warning] category: warning category.
+        """
         from _pytest.warning_types import PytestWarning
 
         if category is None:
             assert isinstance(message, PytestWarning)
         path, lineno = get_fslocation_from_item(self)
-        warnings.warn_explicit(message, category, filename=str(path), lineno=lineno)
+        warnings.warn_explicit(
+            message,
+            category,
+            filename=str(path),
+            lineno=lineno + 1 if lineno is not None else None,
+        )
 
     # methods for ordering nodes
     @property
@@ -323,6 +347,8 @@ def get_fslocation_from_item(item):
 
     * "fslocation": a pair (path, lineno)
     * "fspath": just a path
+
+    :rtype: a tuple of (str|LocalPath, int) with filename and line number.
     """
     result = getattr(item, "location", None)
     if result is not None:
@@ -330,7 +356,7 @@ def get_fslocation_from_item(item):
     obj = getattr(item, "obj", None)
     if obj is not None:
         return getfslineno(obj)
-    return getattr(item, "fspath", None), None
+    return getattr(item, "fspath", "unknown location"), -1
 
 
 class Collector(Node):

@@ -31,6 +31,7 @@ class TestNewAPI(object):
         val = config.cache.get("key/name", -2)
         assert val == -2
 
+    @pytest.mark.filterwarnings("default")
     def test_cache_writefail_cachfile_silent(self, testdir):
         testdir.makeini("[pytest]")
         testdir.tmpdir.join(".pytest_cache").write("gone wrong")

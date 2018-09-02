@@ -1075,6 +1075,7 @@ def test_diff_newline_at_end(monkeypatch, testdir):
     )
 
 
+@pytest.mark.filterwarnings("default")
 def test_assert_tuple_warning(testdir):
     testdir.makepyfile(
         """
@@ -1084,7 +1085,7 @@ def test_assert_tuple_warning(testdir):
     )
     result = testdir.runpytest("-rw")
     result.stdout.fnmatch_lines(
-        ["*test_assert_tuple_warning.py:2", "*assertion is always true*"]
+        ["*test_assert_tuple_warning.py:2:*assertion is always true*"]
     )
 
 

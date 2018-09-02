@@ -759,16 +759,12 @@ def test_rewritten():
         testdir.makepyfile("import a_package_without_init_py.module")
         assert testdir.runpytest().ret == EXIT_NOTESTSCOLLECTED
 
-    def test_rewrite_warning(self, pytestconfig, monkeypatch):
+    def test_rewrite_warning(self, pytestconfig):
         hook = AssertionRewritingHook(pytestconfig)
-        warnings = []
+        from _pytest.warning_types import PytestWarning
 
-        def mywarn(code, msg):
-            warnings.append((code, msg))
-
-        monkeypatch.setattr(hook.config, "warn", mywarn)
-        hook.mark_rewrite("_pytest")
-        assert "_pytest" in warnings[0][1]
+        with pytest.warns(PytestWarning):
+            hook.mark_rewrite("_pytest")
 
     def test_rewrite_module_imported_from_conftest(self, testdir):
         testdir.makeconftest(

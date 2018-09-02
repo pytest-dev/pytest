@@ -1005,6 +1005,7 @@ def test_record_property_same_name(testdir):
     pnodes[1].assert_attr(name="foo", value="baz")
 
 
+@pytest.mark.filterwarnings("default")
 def test_record_attribute(testdir):
     testdir.makepyfile(
         """
@@ -1023,7 +1024,10 @@ def test_record_attribute(testdir):
     tnode.assert_attr(bar="1")
     tnode.assert_attr(foo="<1")
     result.stdout.fnmatch_lines(
-        ["test_record_attribute.py::test_record", "*record_xml_attribute*experimental*"]
+        [
+            "test_record_attribute.py::test_record",
+            "*test_record_attribute.py:6:*record_xml_attribute is an experimental feature",
+        ]
     )
 
 

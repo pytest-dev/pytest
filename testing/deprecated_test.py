@@ -5,6 +5,7 @@ import os
 import pytest
 
 
+@pytest.mark.filterwarnings("default")
 def test_yield_tests_deprecation(testdir):
     testdir.makepyfile(
         """
@@ -18,16 +19,18 @@ def test_yield_tests_deprecation(testdir):
                 yield func1, 1, 1
     """
     )
-    result = testdir.runpytest("-ra")
+    result = testdir.runpytest()
     result.stdout.fnmatch_lines(
         [
-            "*yield tests are deprecated, and scheduled to be removed in pytest 4.0*",
+            "*test_yield_tests_deprecation.py:3:*yield tests are deprecated*",
+            "*test_yield_tests_deprecation.py:6:*yield tests are deprecated*",
             "*2 passed*",
         ]
     )
     assert result.stdout.str().count("yield tests are deprecated") == 2
 
 
+@pytest.mark.filterwarnings("default")
 def test_funcarg_prefix_deprecation(testdir):
     testdir.makepyfile(
         """
@@ -42,16 +45,18 @@ def test_funcarg_prefix_deprecation(testdir):
     result.stdout.fnmatch_lines(
         [
             (
-                "*pytest_funcarg__value: "
-                'declaring fixtures using "pytest_funcarg__" prefix is deprecated '
-                "and scheduled to be removed in pytest 4.0.  "
-                "Please remove the prefix and use the @pytest.fixture decorator instead."
+                "*test_funcarg_prefix_deprecation.py:1: *pytest_funcarg__value: "
+                'declaring fixtures using "pytest_funcarg__" prefix is deprecated*'
             ),
             "*1 passed*",
         ]
     )
 
 
+@pytest.mark.filterwarnings("default")
+@pytest.mark.xfail(
+    reason="#2891 need to handle warnings during pre-config", strict=True
+)
 def test_pytest_setup_cfg_deprecated(testdir):
     testdir.makefile(
         ".cfg",
@@ -66,6 +71,10 @@ def test_pytest_setup_cfg_deprecated(testdir):
     )
 
 
+@pytest.mark.filterwarnings("default")
+@pytest.mark.xfail(
+    reason="#2891 need to handle warnings during pre-config", strict=True
+)
 def test_pytest_custom_cfg_deprecated(testdir):
     testdir.makefile(
         ".cfg",
@@ -80,6 +89,9 @@ def test_pytest_custom_cfg_deprecated(testdir):
     )
 
 
+@pytest.mark.xfail(
+    reason="#2891 need to handle warnings during pre-config", strict=True
+)
 def test_str_args_deprecated(tmpdir, testdir):
     """Deprecate passing strings to pytest.main(). Scheduled for removal in pytest-4.0."""
     from _pytest.main import EXIT_NOTESTSCOLLECTED
@@ -103,6 +115,10 @@ def test_getfuncargvalue_is_deprecated(request):
     pytest.deprecated_call(request.getfuncargvalue, "tmpdir")
 
 
+@pytest.mark.filterwarnings("default")
+@pytest.mark.xfail(
+    reason="#2891 need to handle warnings during pre-config", strict=True
+)
 def test_resultlog_is_deprecated(testdir):
     result = testdir.runpytest("--help")
     result.stdout.fnmatch_lines(["*DEPRECATED path for machine-readable result log*"])

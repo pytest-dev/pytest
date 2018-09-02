@@ -37,7 +37,7 @@ def pyfile_with_warnings(testdir, request):
     )
 
 
-@pytest.mark.filterwarnings("always")
+@pytest.mark.filterwarnings("default")
 def test_normal_flow(testdir, pyfile_with_warnings):
     """
     Check that the warnings section is displayed, containing test node ids followed by
