@@ -67,13 +67,19 @@ exit.Exception = Exit
 
 
 def skip(msg="", **kwargs):
-    """ skip an executing test with the given message.  Note: it's usually
-    better to use the pytest.mark.skipif marker to declare a test to be
-    skipped under certain conditions like mismatching platforms or
-    dependencies.  See the pytest_skipping plugin for details.
+    """
+    Skip an executing test with the given message.
+
+    This function should be called only during testing (setup, call or teardown) or
+    during collection by using the ``allow_module_level`` flag.
 
     :kwarg bool allow_module_level: allows this function to be called at
         module level, skipping the rest of the module. Default to False.
+
+    .. note::
+        It is better to use the :ref:`pytest.mark.skipif ref` marker when possible to declare a test to be
+        skipped under certain conditions like mismatching platforms or
+        dependencies.
     """
     __tracebackhide__ = True
     allow_module_level = kwargs.pop("allow_module_level", False)
@@ -87,10 +93,12 @@ skip.Exception = Skipped
 
 
 def fail(msg="", pytrace=True):
-    """ explicitly fail a currently-executing test with the given Message.
+    """
+    Explicitly fail an executing test with the given message.
 
-    :arg pytrace: if false the msg represents the full failure information
-                  and no python traceback will be reported.
+    :param str msg: the message to show the user as reason for the failure.
+    :param bool pytrace: if false the msg represents the full failure information and no
+        python traceback will be reported.
     """
     __tracebackhide__ = True
     raise Failed(msg=msg, pytrace=pytrace)
@@ -104,7 +112,15 @@ class XFailed(fail.Exception):
 
 
 def xfail(reason=""):
-    """ xfail an executing test or setup functions with the given reason."""
+    """
+    Imperatively xfail an executing test or setup functions with the given reason.
+
+    This function should be called only during testing (setup, call or teardown).
+
+    .. note::
+        It is better to use the :ref:`pytest.mark.xfail ref` marker when possible to declare a test to be
+        xfailed under certain conditions like known bugs or missing features.
+    """
     __tracebackhide__ = True
     raise XFailed(reason)
 
