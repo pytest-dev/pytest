@@ -20,7 +20,7 @@ FUNCARG_PREFIX = (
 )
 
 FIXTURE_FUNCTION_CALL = (
-    "Fixture {name} called directly. Fixtures are not meant to be called directly, "
+    'Fixture "{name}" called directly. Fixtures are not meant to be called directly, '
     "are created automatically when test functions request them as parameters. "
     "See https://docs.pytest.org/en/latest/fixture.html for more information."
 )
@@ -29,7 +29,7 @@ CFG_PYTEST_SECTION = (
     "[pytest] section in {filename} files is deprecated, use [tool:pytest] instead."
 )
 
-GETFUNCARGVALUE = "use of getfuncargvalue is deprecated, use getfixturevalue"
+GETFUNCARGVALUE = "getfuncargvalue is deprecated, use getfixturevalue"
 
 RESULT_LOG = (
     "--result-log is deprecated and scheduled for removal in pytest 4.0.\n"

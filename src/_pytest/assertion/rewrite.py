@@ -209,11 +209,12 @@ class AssertionRewritingHook(object):
         self._must_rewrite.update(names)
 
     def _warn_already_imported(self, name):
-        import warnings
         from _pytest.warning_types import PytestWarning
+        from _pytest.warnings import _issue_config_warning
 
-        warnings.warn(
-            "Module already imported so cannot be rewritten: %s" % name, PytestWarning
+        _issue_config_warning(
+            PytestWarning("Module already imported so cannot be rewritten: %s" % name),
+            self.config,
         )
 
     def load_module(self, name):

@@ -258,12 +258,11 @@ def record_property(request):
 
 
 @pytest.fixture
-def record_xml_property(record_property):
+def record_xml_property(record_property, request):
     """(Deprecated) use record_property."""
-    import warnings
     from _pytest import deprecated
 
-    warnings.warn(deprecated.RECORD_XML_PROPERTY, DeprecationWarning, stacklevel=2)
+    request.node.std_warn(deprecated.RECORD_XML_PROPERTY, DeprecationWarning)
 
     return record_property
 

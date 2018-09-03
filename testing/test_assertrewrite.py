@@ -759,11 +759,16 @@ def test_rewritten():
         testdir.makepyfile("import a_package_without_init_py.module")
         assert testdir.runpytest().ret == EXIT_NOTESTSCOLLECTED
 
-    def test_rewrite_warning(self, pytestconfig):
-        hook = AssertionRewritingHook(pytestconfig)
-
-        with pytest.warns(pytest.PytestWarning):
-            hook.mark_rewrite("_pytest")
+    def test_rewrite_warning(self, testdir):
+        testdir.makeconftest(
+            """
+            import pytest
+            pytest.register_assert_rewrite("_pytest")
+        """
+        )
+        # needs to be a subprocess because pytester explicitly disables this warning
+        result = testdir.runpytest_subprocess()
+        result.stdout.fnmatch_lines("*Module already imported*: _pytest")
 
     def test_rewrite_module_imported_from_conftest(self, testdir):
         testdir.makeconftest(

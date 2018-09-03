@@ -188,17 +188,20 @@ def pytest_report_teststatus(report):
 @attr.s
 class WarningReport(object):
     """
-    Simple structure to hold warnings information captured by ``pytest_logwarning``.
+    Simple structure to hold warnings information captured by ``pytest_logwarning`` and ``pytest_warning_captured``.
 
     :ivar str message: user friendly message about the warning
     :ivar str|None nodeid: node id that generated the warning (see ``get_location``).
     :ivar tuple|py.path.local fslocation:
         file system location of the source of the warning (see ``get_location``).
+
+    :ivar bool legacy: if this warning report was generated from the deprecated ``pytest_logwarning`` hook.
     """
 
     message = attr.ib()
     nodeid = attr.ib(default=None)
     fslocation = attr.ib(default=None)
+    legacy = attr.ib(default=False)
 
     def get_location(self, config):
         """
@@ -211,6 +214,8 @@ class WarningReport(object):
             if isinstance(self.fslocation, tuple) and len(self.fslocation) >= 2:
                 filename, linenum = self.fslocation[:2]
                 relpath = py.path.local(filename).relto(config.invocation_dir)
+                if not relpath:
+                    relpath = str(filename)
                 return "%s:%s" % (relpath, linenum)
             else:
                 return str(self.fslocation)
@@ -327,7 +332,9 @@ class TerminalReporter(object):
 
     def pytest_logwarning(self, fslocation, message, nodeid):
         warnings = self.stats.setdefault("warnings", [])
-        warning = WarningReport(fslocation=fslocation, message=message, nodeid=nodeid)
+        warning = WarningReport(
+            fslocation=fslocation, message=message, nodeid=nodeid, legacy=True
+        )
         warnings.append(warning)
 
     def pytest_warning_captured(self, warning_message, item):
@@ -707,12 +714,20 @@ class TerminalReporter(object):
 
             self.write_sep("=", "warnings summary", yellow=True, bold=False)
             for location, warning_records in grouped:
-                if location:
+                # legacy warnings show their location explicitly, while standard warnings look better without
+                # it because the location is already formatted into the message
+                warning_records = list(warning_records)
+                is_legacy = warning_records[0].legacy
+                if location and is_legacy:
                     self._tw.line(str(location))
                 for w in warning_records:
-                    lines = w.message.splitlines()
-                    indented = "\n".join("  " + x for x in lines)
-                    self._tw.line(indented.rstrip())
+                    if is_legacy:
+                        lines = w.message.splitlines()
+                        indented = "\n".join("  " + x for x in lines)
+                        message = indented.rstrip()
+                    else:
+                        message = w.message.rstrip()
+                    self._tw.line(message)
                 self._tw.line()
             self._tw.line("-- Docs: https://docs.pytest.org/en/latest/warnings.html")
 
