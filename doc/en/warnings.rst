@@ -36,8 +36,6 @@ Running pytest now produces this output::
     -- Docs: https://docs.pytest.org/en/latest/warnings.html
     =================== 1 passed, 1 warnings in 0.12 seconds ===================
 
-Pytest by default catches all warnings except for ``DeprecationWarning`` and ``PendingDeprecationWarning``.
-
 The ``-W`` flag can be passed to control which warnings will be displayed or even turn
 them into errors::
 
@@ -77,6 +75,32 @@ is performed.
 Both ``-W`` command-line option and ``filterwarnings`` ini option are based on Python's own
 `-W option`_ and `warnings.simplefilter`_, so please refer to those sections in the Python
 documentation for other examples and advanced usage.
+
+Disabling warning summary
+-------------------------
+
+Although not recommended, you can use the ``--disable-warnings`` command-line option to suppress the
+warning summary entirely from the test run output.
+
+
+DeprecationWarning and PendingDeprecationWarning
+------------------------------------------------
+
+.. versionadded:: 3.8
+
+By default pytest will display ``DeprecationWarning`` and ``PendingDeprecationWarning`` if no other warning filters
+are configured. This complies with `PEP-0506 <https://www.python.org/dev/peps/pep-0565/#recommended-filter-settings-for-test-runners>`_ which suggests that those warnings should
+be shown by default by test runners.
+
+To disable this behavior, you might define any warnings filter either in the command-line or in the ini file, but
+if you don't have any other warnings to filter you can use:
+
+.. code-block:: ini
+
+    [pytest]
+    filterwarnings =
+        ignore::DeprecationWarning
+        ignore::PendingDeprecationWarning
 
 
 .. _`filterwarnings`:

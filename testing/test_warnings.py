@@ -326,6 +326,7 @@ def test_warning_captured_hook(testdir, pyfile_with_warnings):
 @pytest.mark.filterwarnings("always")
 def test_collection_warnings(testdir):
     """
+    Check that we also capture warnings issued during test collection (#3251).
     """
     testdir.makepyfile(
         """
@@ -346,3 +347,75 @@ def test_collection_warnings(testdir):
             "* 1 passed, 1 warnings*",
         ]
     )
+
+
+class TestDeprecationWarningsByDefault:
+    """
+    Note: all pytest runs are executed in a subprocess so we don't inherit warning filters
+    from pytest's own test suite
+    """
+
+    def create_file(self, testdir, mark=""):
+        testdir.makepyfile(
+            """
+            import pytest, warnings
+
+            warnings.warn(DeprecationWarning("collection"))
+
+            {mark}
+            def test_foo():
+                warnings.warn(PendingDeprecationWarning("test run"))
+        """.format(
+                mark=mark
+            )
+        )
+
+    def test_shown_by_default(self, testdir):
+        self.create_file(testdir)
+        result = testdir.runpytest_subprocess()
+        result.stdout.fnmatch_lines(
+            [
+                "*== %s ==*" % WARNINGS_SUMMARY_HEADER,
+                "*test_shown_by_default.py:3: DeprecationWarning: collection",
+                "*test_shown_by_default.py:7: PendingDeprecationWarning: test run",
+                "* 1 passed, 2 warnings*",
+            ]
+        )
+
+    def test_hidden_by_ini(self, testdir):
+        self.create_file(testdir)
+        testdir.makeini(
+            """
+            [pytest]
+            filterwarnings = once::UserWarning
+        """
+        )
+        result = testdir.runpytest_subprocess()
+        assert WARNINGS_SUMMARY_HEADER not in result.stdout.str()
+
+    def test_hidden_by_mark(self, testdir):
+        """Should hide the deprecation warning from the function, but the warning during collection should
+        be displayed normally.
+        """
+        self.create_file(
+            testdir, mark='@pytest.mark.filterwarnings("once::UserWarning")'
+        )
+        result = testdir.runpytest_subprocess()
+        result.stdout.fnmatch_lines(
+            [
+                "*== %s ==*" % WARNINGS_SUMMARY_HEADER,
+                "*test_hidden_by_mark.py:3: DeprecationWarning: collection",
+                "* 1 passed, 1 warnings*",
+            ]
+        )
+
+    def test_hidden_by_cmdline(self, testdir):
+        self.create_file(testdir)
+        result = testdir.runpytest_subprocess("-W", "once::UserWarning")
+        assert WARNINGS_SUMMARY_HEADER not in result.stdout.str()
+
+    def test_hidden_by_system(self, testdir, monkeypatch):
+        self.create_file(testdir)
+        monkeypatch.setenv(str("PYTHONWARNINGS"), str("once::UserWarning"))
+        result = testdir.runpytest_subprocess()
+        assert WARNINGS_SUMMARY_HEADER not in result.stdout.str()

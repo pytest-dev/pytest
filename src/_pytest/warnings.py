@@ -1,5 +1,6 @@
 from __future__ import absolute_import, division, print_function
 
+import sys
 import warnings
 from contextlib import contextmanager
 
@@ -69,6 +70,8 @@ def catch_warnings_for_item(config, ihook, item):
     args = config.getoption("pythonwarnings") or []
     inifilters = config.getini("filterwarnings")
     with warnings.catch_warnings(record=True) as log:
+        filters_configured = args or inifilters or sys.warnoptions
+
         for arg in args:
             warnings._setoption(arg)
 
@@ -79,6 +82,11 @@ def catch_warnings_for_item(config, ihook, item):
             for mark in item.iter_markers(name="filterwarnings"):
                 for arg in mark.args:
                     warnings._setoption(arg)
+                    filters_configured = True
+
+        if not filters_configured:
+            warnings.filterwarnings("always", category=DeprecationWarning)
+            warnings.filterwarnings("always", category=PendingDeprecationWarning)
 
         yield
 
