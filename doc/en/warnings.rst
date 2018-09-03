@@ -296,3 +296,52 @@ You can also use it as a contextmanager::
     def test_global():
         with pytest.deprecated_call():
             myobject.deprecated_method()
+
+
+Internal pytest warnings
+------------------------
+
+.. versionadded:: 3.8
+
+pytest may generate its own warnings in some situations, such as improper usage or deprecated features.
+
+For example, pytest will emit a warning if it encounters a class that matches :confval:`python_classes` but also
+defines an ``__init__`` constructor, as this prevents the class from being instantiated:
+
+.. code-block:: python
+
+    # content of test_pytest_warnings.py
+    class Test:
+        def __init__(self):
+            pass
+
+        def test_foo(self):
+            assert 1 == 1
+
+::
+
+    $ pytest test_pytest_warnings.py -q
+    ======================================== warnings summary =========================================
+    test_pytest_warnings.py:1
+      $REGENDOC_TMPDIR/test_pytest_warnings.py:1: PytestWarning: cannot collect test class 'Test' because it has a __init__ constructor
+        class Test:
+
+    -- Docs: http://doc.pytest.org/en/latest/warnings.html
+    1 warnings in 0.01 seconds
+
+
+
+These warnings might be filtered using the same builtin mechanisms used to filter other types of warnings.
+
+Following our :ref:`backwards-compatibility`, deprecated features will be kept *at least* two minor releases. After that,
+they will changed so they by default raise errors instead of just warnings, so users can adapt to it on their own time
+if not having done so until now. In a later release the deprecated feature will be removed completely.
+
+The following warning types ares used by pytest and are part of the public API:
+
+.. autoclass:: pytest.PytestWarning
+
+.. autoclass:: pytest.PytestDeprecationWarning
+
+.. autoclass:: pytest.RemovedInPytest4Warning
+

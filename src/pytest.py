@@ -20,7 +20,11 @@ from _pytest.nodes import Item, Collector, File
 from _pytest.fixtures import fillfixtures as _fillfuncargs
 from _pytest.python import Package, Module, Class, Instance, Function, Generator
 from _pytest.python_api import approx, raises
-from _pytest.warning_types import PytestWarning, RemovedInPytest4Warning
+from _pytest.warning_types import (
+    PytestWarning,
+    PytestDeprecationWarning,
+    RemovedInPytest4Warning,
+)
 
 set_trace = __pytestPDB.set_trace
 
@@ -50,6 +54,7 @@ __all__ = [
     "Package",
     "param",
     "PytestWarning",
+    "PytestDeprecationWarning",
     "raises",
     "register_assert_rewrite",
     "RemovedInPytest4Warning",
