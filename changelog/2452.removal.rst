@@ -1,0 +1,2 @@
+The functions ``Node.warn`` and ``Config.warn`` have been deprecated. Instead of ``Node.warn`` users should now use
+``Node.std_warn``, while ``Config.warn`` should be replaced by the standard ``warnings.warn``.
