@@ -10,15 +10,12 @@ def exists(path, ignore=EnvironmentError):
         return False
 
 
-def getcfg(args):
+def getcfg(args, config=None):
     """
     Search the list of arguments for a valid ini-file for pytest,
     and return a tuple of (rootdir, inifile, cfg-dict).
 
-    note: warnfunc is an optional function used to warn
-        about ini-files that use deprecated features.
-        This parameter should be removed when pytest
-        adopts standard deprecation warnings (#1804).
+    note: config is optional and used only to issue warnings explicitly (#2891).
     """
     from _pytest.deprecated import CFG_PYTEST_SECTION
 
@@ -34,13 +31,15 @@ def getcfg(args):
                 if exists(p):
                     iniconfig = py.iniconfig.IniConfig(p)
                     if "pytest" in iniconfig.sections:
-                        if inibasename == "setup.cfg":
-                            import warnings
+                        if inibasename == "setup.cfg" and config is not None:
+                            from _pytest.warnings import _issue_config_warning
                             from _pytest.warning_types import RemovedInPytest4Warning
 
-                            warnings.warn(
-                                CFG_PYTEST_SECTION.format(filename=inibasename),
-                                RemovedInPytest4Warning,
+                            _issue_config_warning(
+                                RemovedInPytest4Warning(
+                                    CFG_PYTEST_SECTION.format(filename=inibasename)
+                                ),
+                                config=config,
                             )
                         return base, p, iniconfig["pytest"]
                     if (
@@ -99,7 +98,7 @@ def get_dirs_from_args(args):
     return [get_dir_from_path(path) for path in possible_paths if path.exists()]
 
 
-def determine_setup(inifile, args, rootdir_cmd_arg=None):
+def determine_setup(inifile, args, rootdir_cmd_arg=None, config=None):
     dirs = get_dirs_from_args(args)
     if inifile:
         iniconfig = py.iniconfig.IniConfig(inifile)
@@ -109,14 +108,16 @@ def determine_setup(inifile, args, rootdir_cmd_arg=None):
         for section in sections:
             try:
                 inicfg = iniconfig[section]
-                if is_cfg_file and section == "pytest":
-                    from _pytest.warning_types import RemovedInPytest4Warning
+                if is_cfg_file and section == "pytest" and config is not None:
                     from _pytest.deprecated import CFG_PYTEST_SECTION
-                    import warnings
+                    from _pytest.warning_types import RemovedInPytest4Warning
+                    from _pytest.warnings import _issue_config_warning
 
-                    warnings.warn(
-                        CFG_PYTEST_SECTION.format(filename=str(inifile)),
-                        RemovedInPytest4Warning,
+                    _issue_config_warning(
+                        RemovedInPytest4Warning(
+                            CFG_PYTEST_SECTION.format(filename=str(inifile))
+                        ),
+                        config,
                     )
                 break
             except KeyError:
@@ -124,13 +125,13 @@ def determine_setup(inifile, args, rootdir_cmd_arg=None):
         rootdir = get_common_ancestor(dirs)
     else:
         ancestor = get_common_ancestor(dirs)
-        rootdir, inifile, inicfg = getcfg([ancestor])
+        rootdir, inifile, inicfg = getcfg([ancestor], config=config)
         if rootdir is None:
             for rootdir in ancestor.parts(reverse=True):
                 if rootdir.join("setup.py").exists():
                     break
             else:
-                rootdir, inifile, inicfg = getcfg(dirs)
+                rootdir, inifile, inicfg = getcfg(dirs, config=config)
                 if rootdir is None:
                     rootdir = get_common_ancestor([py.path.local(), ancestor])
                     is_fs_root = os.path.splitdrive(str(rootdir))[1] == "/"

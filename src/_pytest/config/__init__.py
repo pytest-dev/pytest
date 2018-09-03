@@ -154,7 +154,7 @@ def get_plugin_manager():
 
 
 def _prepareconfig(args=None, plugins=None):
-    warning = None
+    warning_msg = None
     if args is None:
         args = sys.argv[1:]
     elif isinstance(args, py.path.local):
@@ -165,7 +165,7 @@ def _prepareconfig(args=None, plugins=None):
         args = shlex.split(args, posix=sys.platform != "win32")
         from _pytest import deprecated
 
-        warning = deprecated.MAIN_STR_ARGS
+        warning_msg = deprecated.MAIN_STR_ARGS
     config = get_config()
     pluginmanager = config.pluginmanager
     try:
@@ -175,10 +175,11 @@ def _prepareconfig(args=None, plugins=None):
                     pluginmanager.consider_pluginarg(plugin)
                 else:
                     pluginmanager.register(plugin)
-        if warning:
+        if warning_msg:
             from _pytest.warning_types import PytestWarning
+            from _pytest.warnings import _issue_config_warning
 
-            warnings.warn(warning, PytestWarning)
+            _issue_config_warning(PytestWarning(warning_msg), config=config)
         return pluginmanager.hook.pytest_cmdline_parse(
             pluginmanager=pluginmanager, args=args
         )
@@ -696,6 +697,7 @@ class Config(object):
             ns.inifilename,
             ns.file_or_dir + unknown_args,
             rootdir_cmd_arg=ns.rootdir or None,
+            config=self,
         )
         self.rootdir, self.inifile, self.inicfg = r
         self._parser.extra_info["rootdir"] = self.rootdir

@@ -54,9 +54,6 @@ def test_funcarg_prefix_deprecation(testdir):
 
 
 @pytest.mark.filterwarnings("default")
-@pytest.mark.xfail(
-    reason="#2891 need to handle warnings during pre-config", strict=True
-)
 def test_pytest_setup_cfg_deprecated(testdir):
     testdir.makefile(
         ".cfg",
@@ -72,9 +69,6 @@ def test_pytest_setup_cfg_deprecated(testdir):
 
 
 @pytest.mark.filterwarnings("default")
-@pytest.mark.xfail(
-    reason="#2891 need to handle warnings during pre-config", strict=True
-)
 def test_pytest_custom_cfg_deprecated(testdir):
     testdir.makefile(
         ".cfg",
@@ -89,18 +83,15 @@ def test_pytest_custom_cfg_deprecated(testdir):
     )
 
 
-@pytest.mark.xfail(
-    reason="#2891 need to handle warnings during pre-config", strict=True
-)
-def test_str_args_deprecated(tmpdir, testdir):
+def test_str_args_deprecated(tmpdir):
     """Deprecate passing strings to pytest.main(). Scheduled for removal in pytest-4.0."""
     from _pytest.main import EXIT_NOTESTSCOLLECTED
 
     warnings = []
 
     class Collect(object):
-        def pytest_logwarning(self, message):
-            warnings.append(message)
+        def pytest_warning_captured(self, warning_message):
+            warnings.append(str(warning_message.message))
 
     ret = pytest.main("%s -x" % tmpdir, plugins=[Collect()])
     msg = (
@@ -116,9 +107,6 @@ def test_getfuncargvalue_is_deprecated(request):
 
 
 @pytest.mark.filterwarnings("default")
-@pytest.mark.xfail(
-    reason="#2891 need to handle warnings during pre-config", strict=True
-)
 def test_resultlog_is_deprecated(testdir):
     result = testdir.runpytest("--help")
     result.stdout.fnmatch_lines(["*DEPRECATED path for machine-readable result log*"])
