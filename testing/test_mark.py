@@ -16,7 +16,7 @@ from _pytest.mark import (
 from _pytest.nodes import Node
 
 ignore_markinfo = pytest.mark.filterwarnings(
-    "ignore:MarkInfo objects:_pytest.warning_types.RemovedInPytest4Warning"
+    "ignore:MarkInfo objects:pytest.RemovedInPytest4Warning"
 )
 
 

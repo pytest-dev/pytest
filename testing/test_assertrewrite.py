@@ -761,9 +761,8 @@ def test_rewritten():
 
     def test_rewrite_warning(self, pytestconfig):
         hook = AssertionRewritingHook(pytestconfig)
-        from _pytest.warning_types import PytestWarning
 
-        with pytest.warns(PytestWarning):
+        with pytest.warns(pytest.PytestWarning):
             hook.mark_rewrite("_pytest")
 
     def test_rewrite_module_imported_from_conftest(self, testdir):

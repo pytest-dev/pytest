@@ -176,9 +176,9 @@ def _prepareconfig(args=None, plugins=None):
                 else:
                     pluginmanager.register(plugin)
         if warning:
-            from _pytest.warning_types import PytestUsageWarning
+            from _pytest.warning_types import PytestWarning
 
-            warnings.warn(warning, PytestUsageWarning)
+            warnings.warn(warning, PytestWarning)
         return pluginmanager.hook.pytest_cmdline_parse(
             pluginmanager=pluginmanager, args=args
         )
