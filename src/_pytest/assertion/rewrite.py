@@ -298,7 +298,7 @@ class AssertionRewritingHook(object):
 
     def is_package(self, name):
         try:
-            fd, fn, desc = imp.find_module(name)
+            fd, fn, desc = self._imp_find_module(name)
         except ImportError:
             return False
         if fd is not None:
