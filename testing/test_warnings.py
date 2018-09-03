@@ -349,6 +349,46 @@ def test_collection_warnings(testdir):
     )
 
 
+@pytest.mark.filterwarnings("default")
+@pytest.mark.parametrize("ignore_pytest_warnings", ["no", "ini", "cmdline"])
+def test_hide_pytest_internal_warnings(testdir, ignore_pytest_warnings):
+    """Make sure we can ignore internal pytest warnings using a warnings filter."""
+    testdir.makepyfile(
+        """
+        import pytest
+        import warnings
+
+        warnings.warn(pytest.PytestWarning("some internal warning"))
+
+        def test_bar():
+            pass
+    """
+    )
+    if ignore_pytest_warnings == "ini":
+        testdir.makeini(
+            """
+            [pytest]
+            filterwarnings = ignore::pytest.PytestWarning
+        """
+        )
+    args = (
+        ["-W", "ignore::pytest.PytestWarning"]
+        if ignore_pytest_warnings == "cmdline"
+        else []
+    )
+    result = testdir.runpytest(*args)
+    if ignore_pytest_warnings != "no":
+        assert WARNINGS_SUMMARY_HEADER not in result.stdout.str()
+    else:
+        result.stdout.fnmatch_lines(
+            [
+                "*== %s ==*" % WARNINGS_SUMMARY_HEADER,
+                "*test_hide_pytest_internal_warnings.py:4: PytestWarning: some internal warning",
+                "* 1 passed, 1 warnings *",
+            ]
+        )
+
+
 class TestDeprecationWarningsByDefault:
     """
     Note: all pytest runs are executed in a subprocess so we don't inherit warning filters
