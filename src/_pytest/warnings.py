@@ -59,7 +59,7 @@ def pytest_configure(config):
 
 
 @contextmanager
-def catch_warnings_for_item(config, ihook, item):
+def catch_warnings_for_item(config, ihook, when, item):
     """
     Context manager that catches warnings generated in the contained execution block.
 
@@ -93,7 +93,7 @@ def catch_warnings_for_item(config, ihook, item):
 
         for warning_message in log:
             ihook.pytest_warning_captured.call_historic(
-                kwargs=dict(warning_message=warning_message, when="runtest", item=item)
+                kwargs=dict(warning_message=warning_message, when=when, item=item)
             )
 
 
@@ -130,22 +130,44 @@ def warning_record_to_str(warning_message):
 
 
 @pytest.hookimpl(hookwrapper=True, tryfirst=True)
-def pytest_runtest_protocol(item):
-    with catch_warnings_for_item(config=item.config, ihook=item.ihook, item=item):
+def pytest_runtest_setup(item):
+    with catch_warnings_for_item(
+        config=item.config, ihook=item.ihook, when="setup", item=item
+    ):
+        yield
+
+
+@pytest.hookimpl(hookwrapper=True, tryfirst=True)
+def pytest_runtest_call(item):
+    with catch_warnings_for_item(
+        config=item.config, ihook=item.ihook, when="call", item=item
+    ):
+        yield
+
+
+@pytest.hookimpl(hookwrapper=True, tryfirst=True)
+def pytest_runtest_teardown(item):
+    with catch_warnings_for_item(
+        config=item.config, ihook=item.ihook, when="teardown", item=item
+    ):
         yield
 
 
 @pytest.hookimpl(hookwrapper=True, tryfirst=True)
 def pytest_collection(session):
     config = session.config
-    with catch_warnings_for_item(config=config, ihook=config.hook, item=None):
+    with catch_warnings_for_item(
+        config=config, ihook=config.hook, when="collect", item=None
+    ):
         yield
 
 
 @pytest.hookimpl(hookwrapper=True)
 def pytest_terminal_summary(terminalreporter):
     config = terminalreporter.config
-    with catch_warnings_for_item(config=config, ihook=config.hook, item=None):
+    with catch_warnings_for_item(
+        config=config, ihook=config.hook, when="config", item=None
+    ):
         yield
 
 

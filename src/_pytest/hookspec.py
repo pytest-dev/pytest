@@ -559,10 +559,13 @@ def pytest_warning_captured(warning_message, when, item):
 
         * ``"config"``: during pytest configuration/initialization stage.
         * ``"collect"``: during test collection.
-        * ``"runtest"``: during test execution.
+        * ``"setup"``: during test setup.
+        * ``"call"``: during test call.
+        * ``"teardown"``: during test teardown.
 
     :param pytest.Item|None item:
-        The item being executed if ``when == "runtest"``, else ``None``.
+        The item being executed if ``when`` is ``"setup"``, ``"call"`` or ``"teardown"``, otherwise
+        ``None``.
     """
 
 

@@ -302,20 +302,48 @@ def test_filterwarnings_mark_registration(testdir):
 
 
 @pytest.mark.filterwarnings("always")
-def test_warning_captured_hook(testdir, pyfile_with_warnings):
+def test_warning_captured_hook(testdir):
+    testdir.makeconftest(
+        """
+        from _pytest.warnings import _issue_config_warning
+        def pytest_configure(config):
+            _issue_config_warning(UserWarning("config warning"), config)
+    """
+    )
+    testdir.makepyfile(
+        """
+        import pytest, warnings
+
+        warnings.warn(UserWarning("collect warning"))
+
+        @pytest.fixture
+        def fix():
+            warnings.warn(UserWarning("setup warning"))
+            yield 1
+            warnings.warn(UserWarning("teardown warning"))
+
+        def test_func(fix):
+            warnings.warn(UserWarning("call warning"))
+            assert fix == 1
+        """
+    )
 
     collected = []
 
     class WarningCollector:
         def pytest_warning_captured(self, warning_message, when, item):
-            collected.append((warning_message.category, when, item.name))
+            imge_name = item.name if item is not None else ""
+            collected.append((str(warning_message.message), when, imge_name))
 
     result = testdir.runpytest(plugins=[WarningCollector()])
     result.stdout.fnmatch_lines(["*1 passed*"])
 
     expected = [
-        (UserWarning, "runtest", "test_func"),
-        (RuntimeWarning, "runtest", "test_func"),
+        ("config warning", "config", ""),
+        ("collect warning", "collect", ""),
+        ("setup warning", "setup", "test_func"),
+        ("call warning", "call", "test_func"),
+        ("teardown warning", "teardown", "test_func"),
     ]
     assert collected == expected
 
