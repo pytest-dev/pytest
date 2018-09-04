@@ -217,7 +217,7 @@ class TestMetafunc(object):
     def test_idval_hypothesis(self, value):
         from _pytest.python import _idval
 
-        escaped = _idval(value, "a", 6, None, item=None)
+        escaped = _idval(value, "a", 6, None, item=None, config=None)
         assert isinstance(escaped, str)
         if PY3:
             escaped.encode("ascii")
