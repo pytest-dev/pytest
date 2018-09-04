@@ -642,10 +642,12 @@ class Testdir(object):
         return p
 
     def copy_example(self, name=None):
-        from . import experiments
         import warnings
 
-        warnings.warn(experiments.PYTESTER_COPY_EXAMPLE, stacklevel=2)
+        warnings.warn(
+            pytest.PytestExerimentalApiWarning.simple("testdir.copy_example"),
+            stacklevel=2,
+        )
         example_dir = self.request.config.getini("pytester_example_dir")
         if example_dir is None:
             raise ValueError("pytester_example_dir is unset, can't copy examples")

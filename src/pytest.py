@@ -24,6 +24,7 @@ from _pytest.warning_types import (
     PytestWarning,
     PytestDeprecationWarning,
     RemovedInPytest4Warning,
+    PytestExerimentalApiWarning,
 )
 
 set_trace = __pytestPDB.set_trace
@@ -53,8 +54,9 @@ __all__ = [
     "Module",
     "Package",
     "param",
-    "PytestWarning",
     "PytestDeprecationWarning",
+    "PytestExerimentalApiWarning",
+    "PytestWarning",
     "raises",
     "register_assert_rewrite",
     "RemovedInPytest4Warning",

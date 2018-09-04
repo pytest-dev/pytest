@@ -20,3 +20,20 @@ class RemovedInPytest4Warning(PytestDeprecationWarning):
 
     Warning class for features scheduled to be removed in pytest 4.0.
     """
+
+
+class PytestExerimentalApiWarning(PytestWarning, FutureWarning):
+    """
+    Bases: :class:`pytest.PytestWarning`, :class:`FutureWarning`.
+
+    Warning category used to denote experiments in pytest. Use sparingly as the API might change or even be
+    removed completely in future version
+    """
+
+    @classmethod
+    def simple(cls, apiname):
+        return cls(
+            "{apiname} is an experimental api that may change over time".format(
+                apiname=apiname
+            )
+        )
