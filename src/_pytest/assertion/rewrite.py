@@ -755,7 +755,7 @@ class AssertionRewriter(ast.NodeVisitor):
             import warnings
 
             warnings.warn_explicit(
-                "assertion is always true, perhaps " "remove parentheses?",
+                "assertion is always true, perhaps remove parentheses?",
                 PytestWarning,
                 filename=str(self.module_path),
                 lineno=assert_.lineno,
