@@ -85,6 +85,7 @@ def catch_warnings_for_item(config, ihook, item):
                     filters_configured = True
 
         if not filters_configured:
+            # if user is not explicitly configuring warning filters, show deprecation warnings by default (#2908)
             warnings.filterwarnings("always", category=DeprecationWarning)
             warnings.filterwarnings("always", category=PendingDeprecationWarning)
 
