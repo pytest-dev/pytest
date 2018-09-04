@@ -6,7 +6,6 @@ ignores the external pytest-cache
 """
 from __future__ import absolute_import, division, print_function
 from collections import OrderedDict
-import warnings
 
 import py
 import six
@@ -34,6 +33,7 @@ See [the docs](https://docs.pytest.org/en/latest/cache.html) for more informatio
 @attr.s
 class Cache(object):
     _cachedir = attr.ib(repr=False)
+    _config = attr.ib(repr=False)
 
     @classmethod
     def for_config(cls, config):
@@ -41,17 +41,18 @@ class Cache(object):
         if config.getoption("cacheclear") and cachedir.exists():
             shutil.rmtree(str(cachedir))
             cachedir.mkdir()
-        return cls(cachedir)
+        return cls(cachedir, config)
 
     @staticmethod
     def cache_dir_from_config(config):
         return paths.resolve_from_str(config.getini("cache_dir"), config.rootdir)
 
     def warn(self, fmt, **args):
+        from _pytest.warnings import _issue_config_warning
         from _pytest.warning_types import PytestWarning
 
-        warnings.warn(
-            message=fmt.format(**args) if args else fmt, category=PytestWarning
+        _issue_config_warning(
+            PytestWarning(fmt.format(**args) if args else fmt), self._config
         )
 
     def makedir(self, name):
