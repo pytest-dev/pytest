@@ -142,7 +142,7 @@ def pytest_collection(session):
         yield
 
 
-@pytest.hookimpl(hookwrapper=True, tryfirst=True)
+@pytest.hookimpl(hookwrapper=True)
 def pytest_terminal_summary(terminalreporter):
     config = terminalreporter.config
     with catch_warnings_for_item(config=config, ihook=config.hook, item=None):
