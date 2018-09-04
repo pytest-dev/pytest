@@ -1158,7 +1158,7 @@ def _find_parametrized_scope(argnames, arg2fixturedefs, indirect):
     return "function"
 
 
-def _idval(val, argname, idx, idfn, item, config=None):
+def _idval(val, argname, idx, idfn, item, config):
     if idfn:
         s = None
         try:
@@ -1195,7 +1195,7 @@ def _idval(val, argname, idx, idfn, item, config=None):
     return str(argname) + str(idx)
 
 
-def _idvalset(idx, parameterset, argnames, idfn, ids, config=None, item=None):
+def _idvalset(idx, parameterset, argnames, idfn, ids, item, config):
     if parameterset.id is not None:
         return parameterset.id
     if ids is None or (idx >= len(ids) or ids[idx] is None):
@@ -1210,7 +1210,7 @@ def _idvalset(idx, parameterset, argnames, idfn, ids, config=None, item=None):
 
 def idmaker(argnames, parametersets, idfn=None, ids=None, config=None, item=None):
     ids = [
-        _idvalset(valindex, parameterset, argnames, idfn, ids, config, item)
+        _idvalset(valindex, parameterset, argnames, idfn, ids, config=config, item=item)
         for valindex, parameterset in enumerate(parametersets)
     ]
     if len(set(ids)) != len(ids):

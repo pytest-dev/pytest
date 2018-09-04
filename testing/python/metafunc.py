@@ -244,7 +244,7 @@ class TestMetafunc(object):
             ),
         ]
         for val, expected in values:
-            assert _idval(val, "a", 6, None, item=None) == expected
+            assert _idval(val, "a", 6, None, item=None, config=None) == expected
 
     def test_bytes_idval(self):
         """unittest for the expected behavior to obtain ids for parametrized
@@ -278,7 +278,7 @@ class TestMetafunc(object):
 
         values = [(TestClass, "TestClass"), (test_function, "test_function")]
         for val, expected in values:
-            assert _idval(val, "a", 6, None, item=None) == expected
+            assert _idval(val, "a", 6, None, item=None, config=None) == expected
 
     @pytest.mark.issue250
     def test_idmaker_autoname(self):
