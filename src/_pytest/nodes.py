@@ -136,7 +136,7 @@ class Node(object):
     def __repr__(self):
         return "<%s %r>" % (self.__class__.__name__, getattr(self, "name", None))
 
-    def warn(self, code_or_warning=None, message=None, code=None):
+    def warn(self, _code_or_warning=None, message=None, code=None):
         """Issue a warning for this item.
 
         Warnings will be displayed after the test session, unless explicitly suppressed.
@@ -162,21 +162,25 @@ class Node(object):
 
             node.warn("CI", "some message")
 
-        :param Union[Warning,str] code_or_warning: warning instance or warning code (legacy).
+        :param Union[Warning,str] _code_or_warning:
+            warning instance or warning code (legacy). This parameter receives an underscore for backward
+            compatibility with the legacy code/message form, and will be replaced for something
+            more usual when the legacy form is removed.
+
         :param Union[str,None] message: message to display when called in the legacy form.
         :param str code: code for the warning, in legacy form when using keyword arguments.
         :return:
         """
         if message is None:
-            if code_or_warning is None:
+            if _code_or_warning is None:
                 raise ValueError("code_or_warning must be given")
-            self._std_warn(code_or_warning)
+            self._std_warn(_code_or_warning)
         else:
-            if code_or_warning and code:
+            if _code_or_warning and code:
                 raise ValueError(
                     "code_or_warning and code cannot both be passed to this function"
                 )
-            code = code_or_warning or code
+            code = _code_or_warning or code
             self._legacy_warn(code, message)
 
     def _legacy_warn(self, code, message):
