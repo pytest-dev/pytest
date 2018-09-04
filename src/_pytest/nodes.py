@@ -346,6 +346,7 @@ def get_fslocation_from_item(item):
     """Tries to extract the actual location from an item, depending on available attributes:
 
     * "fslocation": a pair (path, lineno)
+    * "obj": a Python object that the item wraps.
     * "fspath": just a path
 
     :rtype: a tuple of (str|LocalPath, int) with filename and line number.
