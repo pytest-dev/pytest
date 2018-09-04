@@ -6,6 +6,7 @@ ignores the external pytest-cache
 """
 from __future__ import absolute_import, division, print_function
 from collections import OrderedDict
+import warnings
 
 import py
 import six
@@ -47,7 +48,6 @@ class Cache(object):
         return paths.resolve_from_str(config.getini("cache_dir"), config.rootdir)
 
     def warn(self, fmt, **args):
-        import warnings
         from _pytest.warning_types import PytestWarning
 
         warnings.warn(
