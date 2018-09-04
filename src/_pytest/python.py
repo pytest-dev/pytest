@@ -659,11 +659,6 @@ class Class(PyCollector):
         if not safe_getattr(self.obj, "__test__", True):
             return []
         if hasinit(self.obj):
-            # self.warn(
-            #     "C1",
-            #     "cannot collect test class %r because it has a "
-            #     "__init__ constructor" % self.obj.__name__,
-            # )
             self.std_warn(
                 "cannot collect test class %r because it has a "
                 "__init__ constructor" % self.obj.__name__,
