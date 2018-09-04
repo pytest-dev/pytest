@@ -22,7 +22,7 @@ class RemovedInPytest4Warning(PytestDeprecationWarning):
     """
 
 
-class PytestExerimentalApiWarning(PytestWarning, FutureWarning):
+class PytestExperimentalApiWarning(PytestWarning, FutureWarning):
     """
     Bases: :class:`pytest.PytestWarning`, :class:`FutureWarning`.
 

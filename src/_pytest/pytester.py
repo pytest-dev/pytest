@@ -645,7 +645,7 @@ class Testdir(object):
         import warnings
 
         warnings.warn(
-            pytest.PytestExerimentalApiWarning.simple("testdir.copy_example"),
+            pytest.PytestExperimentalApiWarning.simple("testdir.copy_example"),
             stacklevel=2,
         )
         example_dir = self.request.config.getini("pytester_example_dir")
