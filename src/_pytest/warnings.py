@@ -130,25 +130,9 @@ def warning_record_to_str(warning_message):
 
 
 @pytest.hookimpl(hookwrapper=True, tryfirst=True)
-def pytest_runtest_setup(item):
+def pytest_runtest_protocol(item):
     with catch_warnings_for_item(
-        config=item.config, ihook=item.ihook, when="setup", item=item
-    ):
-        yield
-
-
-@pytest.hookimpl(hookwrapper=True, tryfirst=True)
-def pytest_runtest_call(item):
-    with catch_warnings_for_item(
-        config=item.config, ihook=item.ihook, when="call", item=item
-    ):
-        yield
-
-
-@pytest.hookimpl(hookwrapper=True, tryfirst=True)
-def pytest_runtest_teardown(item):
-    with catch_warnings_for_item(
-        config=item.config, ihook=item.ihook, when="teardown", item=item
+        config=item.config, ihook=item.ihook, when="runtest", item=item
     ):
         yield
 

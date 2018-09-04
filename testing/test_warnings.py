@@ -341,9 +341,9 @@ def test_warning_captured_hook(testdir):
     expected = [
         ("config warning", "config", ""),
         ("collect warning", "collect", ""),
-        ("setup warning", "setup", "test_func"),
-        ("call warning", "call", "test_func"),
-        ("teardown warning", "teardown", "test_func"),
+        ("setup warning", "runtest", "test_func"),
+        ("call warning", "runtest", "test_func"),
+        ("teardown warning", "runtest", "test_func"),
     ]
     assert collected == expected
 
