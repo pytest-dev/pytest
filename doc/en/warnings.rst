@@ -82,6 +82,21 @@ Disabling warning summary
 Although not recommended, you can use the ``--disable-warnings`` command-line option to suppress the
 warning summary entirely from the test run output.
 
+Disabling warning capture entirely
+----------------------------------
+
+This plugin is enabled by default but can be disabled entirely in your ``pytest.ini`` file with:
+
+    .. code-block:: ini
+
+        [pytest]
+        addopts = -p no:warnings
+
+Or passing ``-p no:warnings`` in the command-line. This might be useful if your test suites handles warnings
+using an external system.
+
+
+.. _`deprecation-warnings`:
 
 DeprecationWarning and PendingDeprecationWarning
 ------------------------------------------------
@@ -89,11 +104,10 @@ DeprecationWarning and PendingDeprecationWarning
 .. versionadded:: 3.8
 
 By default pytest will display ``DeprecationWarning`` and ``PendingDeprecationWarning`` if no other warning filters
-are configured. This complies with `PEP-0506 <https://www.python.org/dev/peps/pep-0565/#recommended-filter-settings-for-test-runners>`_ which suggests that those warnings should
-be shown by default by test runners.
+are configured.
 
-To disable this behavior, you might define any warnings filter either in the command-line or in the ini file, but
-if you don't have any other warnings to filter you can use:
+To disable showing ``DeprecationWarning`` and ``PendingDeprecationWarning`` warnings, you might define any warnings
+filter either in the command-line or in the ini file, or you can use:
 
 .. code-block:: ini
 
@@ -101,6 +115,13 @@ if you don't have any other warnings to filter you can use:
     filterwarnings =
         ignore::DeprecationWarning
         ignore::PendingDeprecationWarning
+
+.. note::
+    This makes pytest more compliant with `PEP-0506 <https://www.python.org/dev/peps/pep-0565/#recommended-filter-settings-for-test-runners>`_ which suggests that those warnings should
+    be shown by default by test runners, but pytest doesn't follow ``PEP-0506`` completely because resetting all
+    warning filters like suggested in the PEP will break existing test suites that configure warning filters themselves
+    by calling ``warnings.simplefilter`` (see issue `#2430 <https://github.com/pytest-dev/pytest/issues/2430>`_
+    for an example of that).
 
 
 .. _`filterwarnings`:
@@ -167,18 +188,6 @@ decorator or to all tests in a module by setting the ``pytestmark`` variable:
 .. _warnings.simplefilter: https://docs.python.org/3/library/warnings.html#warnings.simplefilter
 .. _`pytest-warnings`: https://github.com/fschulze/pytest-warnings
 
-
-Disabling warning capture
--------------------------
-
-This feature is enabled by default but can be disabled entirely in your ``pytest.ini`` file with:
-
-    .. code-block:: ini
-
-        [pytest]
-        addopts = -p no:warnings
-
-Or passing ``-p no:warnings`` in the command-line.
 
 .. _`asserting warnings`:
 

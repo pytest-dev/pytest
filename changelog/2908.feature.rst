@@ -1,3 +1,5 @@
 ``DeprecationWarning`` and ``PendingDeprecationWarning`` are now shown by default if no other warning filter is
-configured. This makes pytest compliant with
-`PEP-0506 <https://www.python.org/dev/peps/pep-0565/#recommended-filter-settings-for-test-runners>`_.
+configured. This makes pytest more compliant with
+`PEP-0506 <https://www.python.org/dev/peps/pep-0565/#recommended-filter-settings-for-test-runners>`_. See
+`the docs <https://docs.pytest.org/en/latest/warnings.html#deprecationwarning-and-pendingdeprecationwarning>`_ for
+more info.
