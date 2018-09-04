@@ -211,9 +211,6 @@ class TestMetafunc(object):
     @hypothesis.settings(
         deadline=400.0
     )  # very close to std deadline and CI boxes are not reliable in CPU power
-    @pytest.mark.xfail(
-        sys.platform.startswith("win32"), reason="flaky #3707", strict=False
-    )
     def test_idval_hypothesis(self, value):
         from _pytest.python import _idval
 
