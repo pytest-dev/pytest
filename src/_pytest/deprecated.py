@@ -72,7 +72,7 @@ METAFUNC_ADD_CALL = RemovedInPytest4Warning(
     "Please use Metafunc.parametrize instead."
 )
 
-PYTEST_PLUGINS_FROM_NON_TOP_LEVEL_CONFTEST = (
+PYTEST_PLUGINS_FROM_NON_TOP_LEVEL_CONFTEST = RemovedInPytest4Warning(
     "Defining pytest_plugins in a non-top-level conftest is deprecated, "
     "because it affects the entire directory tree in a non-explicit way.\n"
     "Please move it to the top level conftest file instead."

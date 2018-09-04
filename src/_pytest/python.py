@@ -241,8 +241,10 @@ def pytest_pycollect_makeitem(collector, name, obj):
         if not (isfunction(obj) or isfunction(get_real_func(obj))):
             filename, lineno = getfslineno(obj)
             warnings.warn_explicit(
-                message="cannot collect %r because it is not a function." % name,
-                category=PytestWarning,
+                message=PytestWarning(
+                    "cannot collect %r because it is not a function." % name
+                ),
+                category=None,
                 filename=str(filename),
                 lineno=lineno + 1,
             )

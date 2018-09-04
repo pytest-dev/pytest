@@ -419,11 +419,9 @@ class PytestPluginManager(PluginManager):
                         PYTEST_PLUGINS_FROM_NON_TOP_LEVEL_CONFTEST
                     )
 
-                    from _pytest.warning_types import RemovedInPytest4Warning
-
                     warnings.warn_explicit(
                         PYTEST_PLUGINS_FROM_NON_TOP_LEVEL_CONFTEST,
-                        RemovedInPytest4Warning,
+                        category=None,
                         filename=str(conftestpath),
                         lineno=0,
                     )
@@ -629,7 +627,10 @@ class Config(object):
         if nodeid:
             msg = "{}: {}".format(nodeid, msg)
         warnings.warn_explicit(
-            msg, RemovedInPytest4Warning, filename=filename, lineno=lineno
+            RemovedInPytest4Warning(msg),
+            category=None,
+            filename=filename,
+            lineno=lineno,
         )
         self.hook.pytest_logwarning.call_historic(
             kwargs=dict(

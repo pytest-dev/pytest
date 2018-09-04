@@ -1284,8 +1284,10 @@ class FixtureManager(object):
 
                 filename, lineno = getfslineno(obj)
                 warnings.warn_explicit(
-                    deprecated.FUNCARG_PREFIX.format(name=name),
-                    RemovedInPytest4Warning,
+                    RemovedInPytest4Warning(
+                        deprecated.FUNCARG_PREFIX.format(name=name)
+                    ),
+                    category=None,
                     filename=str(filename),
                     lineno=lineno + 1,
                 )
