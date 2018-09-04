@@ -29,4 +29,4 @@ def test_std_warn_not_pytestwarning(testdir):
     """
     )
     with pytest.raises(ValueError, match=".*instance of PytestWarning.*"):
-        items[0].std_warn(UserWarning("some warning"))
+        items[0].warn(UserWarning("some warning"))

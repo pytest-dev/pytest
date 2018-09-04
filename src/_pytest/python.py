@@ -659,7 +659,7 @@ class Class(PyCollector):
         if not safe_getattr(self.obj, "__test__", True):
             return []
         if hasinit(self.obj):
-            self.std_warn(
+            self.warn(
                 PytestWarning(
                     "cannot collect test class %r because it has a "
                     "__init__ constructor" % self.obj.__name__
@@ -667,7 +667,7 @@ class Class(PyCollector):
             )
             return []
         elif hasnew(self.obj):
-            self.std_warn(
+            self.warn(
                 PytestWarning(
                     "cannot collect test class %r because it has a "
                     "__new__ constructor" % self.obj.__name__
@@ -799,7 +799,7 @@ class Generator(FunctionMixin, PyCollector):
                 )
             seen[name] = True
             values.append(self.Function(name, self, args=args, callobj=call))
-        self.std_warn(deprecated.YIELD_TESTS)
+        self.warn(deprecated.YIELD_TESTS)
         return values
 
     def getcallargs(self, obj):
@@ -1106,7 +1106,7 @@ class Metafunc(fixtures.FuncargnamesCompatAttr):
             invocation through the ``request.param`` attribute.
         """
         if self.config:
-            self.definition.std_warn(deprecated.METAFUNC_ADD_CALL)
+            self.definition.warn(deprecated.METAFUNC_ADD_CALL)
 
         assert funcargs is None or isinstance(funcargs, dict)
         if funcargs is not None:
@@ -1170,7 +1170,7 @@ def _idval(val, argname, idx, idfn, item, config=None):
             )
             msg += "  {}: {}\n".format(type(e).__name__, e)
             msg += "This warning will be an error error in pytest-4.0."
-            item.std_warn(RemovedInPytest4Warning(msg))
+            item.warn(RemovedInPytest4Warning(msg))
         if s:
             return ascii_escaped(s)
 

@@ -136,7 +136,42 @@ class Node(object):
     def __repr__(self):
         return "<%s %r>" % (self.__class__.__name__, getattr(self, "name", None))
 
-    def warn(self, code, message):
+    def warn(self, code_or_warning, message=None):
+        """Issue a warning for this item.
+
+        Warnings will be displayed after the test session, unless explicitly suppressed.
+
+        This can be called in two forms:
+
+        **Warning instance**
+
+        This was introduced in pytest 3.8 and uses the standard warning mechanism to issue warnings.
+
+        .. code-block:: python
+
+            node.warn(PytestWarning("some message"))
+
+        The warning instance must be a subclass of :class:`pytest.PytestWarning`.
+
+        **code/message (deprecated)**
+
+        This form was used in pytest prior to 3.8 and is considered deprecated. Using this form will emit another
+        warning about the deprecation:
+
+        .. code-block:: python
+
+            node.warn("CI", "some message")
+
+        :param Union[Warning,str] code_or_warning: warning instance or warning code (legacy).
+        :param Union[str,None] message: message to display when called in the legacy form.
+        :return:
+        """
+        if message is None:
+            self._std_warn(code_or_warning)
+        else:
+            self._legacy_warn(code_or_warning, message)
+
+    def _legacy_warn(self, code, message):
         """
         .. deprecated:: 3.8
 
@@ -146,7 +181,7 @@ class Node(object):
         """
         from _pytest.deprecated import NODE_WARN
 
-        self.std_warn(NODE_WARN)
+        self._std_warn(NODE_WARN)
 
         assert isinstance(code, str)
         fslocation = get_fslocation_from_item(self)
@@ -156,7 +191,7 @@ class Node(object):
             )
         )
 
-    def std_warn(self, warning):
+    def _std_warn(self, warning):
         """Issue a warning for this item.
 
         Warnings will be displayed after the test session, unless explicitly suppressed
@@ -175,8 +210,8 @@ class Node(object):
             )
         path, lineno = get_fslocation_from_item(self)
         warnings.warn_explicit(
-            six.text_type(warning),
-            type(warning),
+            warning,
+            category=None,
             filename=str(path),
             lineno=lineno + 1 if lineno is not None else None,
         )

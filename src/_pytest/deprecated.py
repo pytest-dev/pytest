@@ -54,7 +54,7 @@ MARK_PARAMETERSET_UNPACKING = RemovedInPytest4Warning(
 )
 
 NODE_WARN = RemovedInPytest4Warning(
-    "Node.warn has been deprecated, use Node.std_warn instead"
+    "Node.warn(code, message) form has been deprecated, use Node.warn(warning_instance) instead."
 )
 
 RECORD_XML_PROPERTY = RemovedInPytest4Warning(

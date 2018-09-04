@@ -95,7 +95,7 @@ class ParameterSet(namedtuple("ParameterSet", "values, marks, id")):
             argval = (argval,)
 
         if newmarks and belonging_definition is not None:
-            belonging_definition.std_warn(MARK_PARAMETERSET_UNPACKING)
+            belonging_definition.warn(MARK_PARAMETERSET_UNPACKING)
 
         return cls(argval, marks=newmarks, id=None)
 

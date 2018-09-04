@@ -1,5 +1,12 @@
-The functions ``Node.warn`` and ``Config.warn`` have been deprecated. Instead of ``Node.warn`` users should now use
-``Node.std_warn``, while ``Config.warn`` should be replaced by the standard ``warnings.warn``.
+``Config.warn`` has been deprecated, it should be replaced by calls to the standard ``warnings.warn``.
+
+``Node.warn`` now supports two signatures:
+
+* ``node.warn(PytestWarning("some message"))``: is now the recommended way to call this function. The warning
+  instance must be a ``PytestWarning`` or subclass  instance.
+
+* ``node.warn("CI", "some message")``: this code/message form is now deprecated and should be converted to
+  the warning instance form above.
 
 ``RemovedInPytest4Warning`` and ``PytestExperimentalApiWarning`` are now part of the public API and should be accessed
 using ``pytest.RemovedInPytest4Warning`` and ``pytest.PytestExperimentalApiWarning``.

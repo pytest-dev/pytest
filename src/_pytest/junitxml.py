@@ -262,7 +262,7 @@ def record_xml_property(record_property, request):
     """(Deprecated) use record_property."""
     from _pytest import deprecated
 
-    request.node.std_warn(deprecated.RECORD_XML_PROPERTY)
+    request.node.warn(deprecated.RECORD_XML_PROPERTY)
 
     return record_property
 
@@ -275,9 +275,7 @@ def record_xml_attribute(request):
     """
     from _pytest.warning_types import PytestWarning
 
-    request.node.std_warn(
-        PytestWarning("record_xml_attribute is an experimental feature")
-    )
+    request.node.warn(PytestWarning("record_xml_attribute is an experimental feature"))
     xml = getattr(request.config, "_xml", None)
     if xml is not None:
         node_reporter = xml.node_reporter(request.node.nodeid)

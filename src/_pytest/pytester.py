@@ -126,7 +126,7 @@ class LsofFdLeakChecker(object):
             error.append(error[0])
             error.append("*** function %s:%s: %s " % item.location)
             error.append("See issue #2366")
-            item.std_warn(pytest.PytestWarning("\n".join(error)))
+            item.warn(pytest.PytestWarning("\n".join(error)))
 
 
 # XXX copied from execnet's conftest.py - needs to be merged

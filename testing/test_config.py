@@ -831,7 +831,7 @@ class TestLegacyWarning(object):
             ===*warnings summary*===
             *test_warn_on_test_item_from_request.py::test_hello*
             *hello*
-            *test_warn_on_test_item_from_request.py:7:*Node.warn has been deprecated, use Node.std_warn instead*
+            *test_warn_on_test_item_from_request.py:7:*Node.warn(code, message) form has been deprecated*
         """
         )
 
