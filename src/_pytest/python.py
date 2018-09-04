@@ -1107,8 +1107,7 @@ class Metafunc(fixtures.FuncargnamesCompatAttr):
         :arg param: a parameter which will be exposed to a later fixture function
             invocation through the ``request.param`` attribute.
         """
-        if self.config:
-            self.definition.warn(deprecated.METAFUNC_ADD_CALL)
+        warnings.warn(deprecated.METAFUNC_ADD_CALL, stacklevel=2)
 
         assert funcargs is None or isinstance(funcargs, dict)
         if funcargs is not None:
