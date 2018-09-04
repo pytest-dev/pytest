@@ -1077,16 +1077,25 @@ def test_diff_newline_at_end(monkeypatch, testdir):
 
 @pytest.mark.filterwarnings("default")
 def test_assert_tuple_warning(testdir):
+    msg = "assertion is always true"
     testdir.makepyfile(
         """
         def test_tuple():
             assert(False, 'you shall not pass')
     """
     )
-    result = testdir.runpytest("-rw")
-    result.stdout.fnmatch_lines(
-        ["*test_assert_tuple_warning.py:2:*assertion is always true*"]
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines(["*test_assert_tuple_warning.py:2:*{}*".format(msg)])
+
+    # tuples with size != 2 should not trigger the warning
+    testdir.makepyfile(
+        """
+        def test_tuple():
+            assert ()
+    """
     )
+    result = testdir.runpytest()
+    assert msg not in result.stdout.str()
 
 
 def test_assert_indirect_tuple_no_warning(testdir):

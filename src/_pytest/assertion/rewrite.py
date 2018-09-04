@@ -750,7 +750,7 @@ class AssertionRewriter(ast.NodeVisitor):
         the expression is false.
 
         """
-        if isinstance(assert_.test, ast.Tuple):
+        if isinstance(assert_.test, ast.Tuple) and len(assert_.test.elts) == 2:
             from _pytest.warning_types import PytestWarning
             import warnings
 
