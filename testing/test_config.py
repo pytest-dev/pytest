@@ -809,18 +809,23 @@ class TestLegacyWarning(object):
         )
 
     @pytest.mark.filterwarnings("default")
-    def test_warn_on_test_item_from_request(self, testdir, request):
+    @pytest.mark.parametrize("use_kw", [True, False])
+    def test_warn_on_test_item_from_request(self, testdir, use_kw):
+        code_kw = "code=" if use_kw else ""
+        message_kw = "message=" if use_kw else ""
         testdir.makepyfile(
             """
             import pytest
 
             @pytest.fixture
             def fix(request):
-                request.node.warn("T1", "hello")
+                request.node.warn({code_kw}"T1", {message_kw}"hello")
 
             def test_hello(fix):
                 pass
-        """
+        """.format(
+                code_kw=code_kw, message_kw=message_kw
+            )
         )
         result = testdir.runpytest("--disable-pytest-warnings")
         assert "hello" not in result.stdout.str()
