@@ -660,9 +660,10 @@ class Class(PyCollector):
             return []
         if hasinit(self.obj):
             self.std_warn(
-                "cannot collect test class %r because it has a "
-                "__init__ constructor" % self.obj.__name__,
-                PytestWarning,
+                PytestWarning(
+                    "cannot collect test class %r because it has a "
+                    "__init__ constructor" % self.obj.__name__
+                )
             )
             return []
         elif hasnew(self.obj):
@@ -798,7 +799,7 @@ class Generator(FunctionMixin, PyCollector):
                 )
             seen[name] = True
             values.append(self.Function(name, self, args=args, callobj=call))
-        self.std_warn(deprecated.YIELD_TESTS, RemovedInPytest4Warning)
+        self.std_warn(deprecated.YIELD_TESTS)
         return values
 
     def getcallargs(self, obj):
@@ -1105,9 +1106,7 @@ class Metafunc(fixtures.FuncargnamesCompatAttr):
             invocation through the ``request.param`` attribute.
         """
         if self.config:
-            self.definition.std_warn(
-                deprecated.METAFUNC_ADD_CALL, RemovedInPytest4Warning
-            )
+            self.definition.std_warn(deprecated.METAFUNC_ADD_CALL)
 
         assert funcargs is None or isinstance(funcargs, dict)
         if funcargs is not None:
@@ -1158,22 +1157,20 @@ def _find_parametrized_scope(argnames, arg2fixturedefs, indirect):
     return "function"
 
 
-def _idval(val, argname, idx, idfn, config=None, item=None):
+def _idval(val, argname, idx, idfn, item, config=None):
     if idfn:
         s = None
         try:
             s = idfn(val)
         except Exception as e:
             # See issue https://github.com/pytest-dev/pytest/issues/2169
-            if item is not None:
-                # should really be None only when unit-testing this function!
-                msg = (
-                    "While trying to determine id of parameter {} at position "
-                    "{} the following exception was raised:\n".format(argname, idx)
-                )
-                msg += "  {}: {}\n".format(type(e).__name__, e)
-                msg += "This warning will be an error error in pytest-4.0."
-                item.std_warn(msg, RemovedInPytest4Warning)
+            msg = (
+                "While trying to determine id of parameter {} at position "
+                "{} the following exception was raised:\n".format(argname, idx)
+            )
+            msg += "  {}: {}\n".format(type(e).__name__, e)
+            msg += "This warning will be an error error in pytest-4.0."
+            item.std_warn(RemovedInPytest4Warning(msg))
         if s:
             return ascii_escaped(s)
 
@@ -1202,7 +1199,7 @@ def _idvalset(idx, parameterset, argnames, idfn, ids, config=None, item=None):
         return parameterset.id
     if ids is None or (idx >= len(ids) or ids[idx] is None):
         this_id = [
-            _idval(val, argname, idx, idfn, config, item)
+            _idval(val, argname, idx, idfn, item=item, config=config)
             for val, argname in zip(parameterset.values, argnames)
         ]
         return "-".join(this_id)

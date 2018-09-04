@@ -1041,7 +1041,11 @@ class TestKeywordSelection(object):
 )
 @pytest.mark.filterwarnings("ignore")
 def test_parameterset_extractfrom(argval, expected):
-    extracted = ParameterSet.extract_from(argval)
+    class DummyItem:
+        def std_warn(self, warning):
+            pass
+
+    extracted = ParameterSet.extract_from(argval, belonging_definition=DummyItem())
     assert extracted == expected
 
 

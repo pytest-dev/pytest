@@ -65,7 +65,7 @@ class ParameterSet(namedtuple("ParameterSet", "values, marks, id")):
         return cls(values, marks, id_)
 
     @classmethod
-    def extract_from(cls, parameterset, legacy_force_tuple=False, item=None):
+    def extract_from(cls, parameterset, belonging_definition, legacy_force_tuple=False):
         """
         :param parameterset:
             a legacy style parameterset that may or may not be a tuple,
@@ -75,7 +75,7 @@ class ParameterSet(namedtuple("ParameterSet", "values, marks, id")):
             enforce tuple wrapping so single argument tuple values
             don't get decomposed and break tests
 
-        :param item: the item that we will be extracting the parameters from.
+        :param belonging_definition: the item that we will be extracting the parameters from.
         """
 
         if isinstance(parameterset, cls):
@@ -94,8 +94,8 @@ class ParameterSet(namedtuple("ParameterSet", "values, marks, id")):
         if legacy_force_tuple:
             argval = (argval,)
 
-        if newmarks and item is not None:
-            item.std_warn(MARK_PARAMETERSET_UNPACKING)
+        if newmarks and belonging_definition is not None:
+            belonging_definition.std_warn(MARK_PARAMETERSET_UNPACKING)
 
         return cls(argval, marks=newmarks, id=None)
 
@@ -108,7 +108,9 @@ class ParameterSet(namedtuple("ParameterSet", "values, marks, id")):
             force_tuple = False
         parameters = [
             ParameterSet.extract_from(
-                x, legacy_force_tuple=force_tuple, item=function_definition
+                x,
+                legacy_force_tuple=force_tuple,
+                belonging_definition=function_definition,
             )
             for x in argvalues
         ]

@@ -289,6 +289,7 @@ def test_call_fixture_function_deprecated():
 
 def test_pycollector_makeitem_is_deprecated():
     from _pytest.python import PyCollector
+    from _pytest.warning_types import RemovedInPytest4Warning
 
     class PyCollectorMock(PyCollector):
         """evil hack"""
@@ -301,6 +302,6 @@ def test_pycollector_makeitem_is_deprecated():
             self.called = True
 
     collector = PyCollectorMock()
-    with pytest.deprecated_call():
+    with pytest.warns(RemovedInPytest4Warning):
         collector.makeitem("foo", "bar")
     assert collector.called

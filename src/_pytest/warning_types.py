@@ -37,3 +37,6 @@ class PytestExperimentalApiWarning(PytestWarning, FutureWarning):
                 apiname=apiname
             )
         )
+
+
+PYTESTER_COPY_EXAMPLE = PytestExperimentalApiWarning.simple("testdir.copy_example")

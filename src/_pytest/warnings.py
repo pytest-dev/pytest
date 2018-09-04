@@ -129,20 +129,20 @@ def warning_record_to_str(warning_message):
     return msg
 
 
-@pytest.hookimpl(hookwrapper=True)
+@pytest.hookimpl(hookwrapper=True, tryfirst=True)
 def pytest_runtest_protocol(item):
     with catch_warnings_for_item(config=item.config, ihook=item.ihook, item=item):
         yield
 
 
-@pytest.hookimpl(hookwrapper=True)
+@pytest.hookimpl(hookwrapper=True, tryfirst=True)
 def pytest_collection(session):
     config = session.config
     with catch_warnings_for_item(config=config, ihook=config.hook, item=None):
         yield
 
 
-@pytest.hookimpl(hookwrapper=True)
+@pytest.hookimpl(hookwrapper=True, tryfirst=True)
 def pytest_terminal_summary(terminalreporter):
     config = terminalreporter.config
     with catch_warnings_for_item(config=config, ihook=config.hook, item=None):

@@ -1257,6 +1257,8 @@ class FixtureManager(object):
         items[:] = reorder_items(items)
 
     def parsefactories(self, node_or_obj, nodeid=NOTSET, unittest=False):
+        from _pytest import deprecated
+
         if nodeid is not NOTSET:
             holderobj = node_or_obj
         else:
@@ -1279,7 +1281,6 @@ class FixtureManager(object):
                 if not callable(obj):
                     continue
                 marker = defaultfuncargprefixmarker
-                from _pytest import deprecated
 
                 filename, lineno = getfslineno(obj)
                 warnings.warn_explicit(

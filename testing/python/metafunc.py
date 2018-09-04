@@ -217,7 +217,7 @@ class TestMetafunc(object):
     def test_idval_hypothesis(self, value):
         from _pytest.python import _idval
 
-        escaped = _idval(value, "a", 6, None)
+        escaped = _idval(value, "a", 6, None, item=None)
         assert isinstance(escaped, str)
         if PY3:
             escaped.encode("ascii")
@@ -244,7 +244,7 @@ class TestMetafunc(object):
             ),
         ]
         for val, expected in values:
-            assert _idval(val, "a", 6, None) == expected
+            assert _idval(val, "a", 6, None, item=None) == expected
 
     def test_bytes_idval(self):
         """unittest for the expected behavior to obtain ids for parametrized
@@ -262,7 +262,7 @@ class TestMetafunc(object):
             (u"αρά".encode("utf-8"), "\\xce\\xb1\\xcf\\x81\\xce\\xac"),
         ]
         for val, expected in values:
-            assert _idval(val, "a", 6, None) == expected
+            assert _idval(val, "a", 6, idfn=None, item=None, config=None) == expected
 
     def test_class_or_function_idval(self):
         """unittest for the expected behavior to obtain ids for parametrized
@@ -278,7 +278,7 @@ class TestMetafunc(object):
 
         values = [(TestClass, "TestClass"), (test_function, "test_function")]
         for val, expected in values:
-            assert _idval(val, "a", 6, None) == expected
+            assert _idval(val, "a", 6, None, item=None) == expected
 
     @pytest.mark.issue250
     def test_idmaker_autoname(self):

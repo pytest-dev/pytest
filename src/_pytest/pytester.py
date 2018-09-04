@@ -126,7 +126,7 @@ class LsofFdLeakChecker(object):
             error.append(error[0])
             error.append("*** function %s:%s: %s " % item.location)
             error.append("See issue #2366")
-            item.std_warn("", "\n".join(error), pytest.PytestWarning)
+            item.std_warn(pytest.PytestWarning("\n".join(error)))
 
 
 # XXX copied from execnet's conftest.py - needs to be merged
@@ -643,11 +643,9 @@ class Testdir(object):
 
     def copy_example(self, name=None):
         import warnings
+        from _pytest.warning_types import PYTESTER_COPY_EXAMPLE
 
-        warnings.warn(
-            pytest.PytestExperimentalApiWarning.simple("testdir.copy_example"),
-            stacklevel=2,
-        )
+        warnings.warn(PYTESTER_COPY_EXAMPLE, stacklevel=2)
         example_dir = self.request.config.getini("pytester_example_dir")
         if example_dir is None:
             raise ValueError("pytester_example_dir is unset, can't copy examples")

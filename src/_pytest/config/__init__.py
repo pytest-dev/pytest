@@ -154,7 +154,7 @@ def get_plugin_manager():
 
 
 def _prepareconfig(args=None, plugins=None):
-    warning_msg = None
+    warning = None
     if args is None:
         args = sys.argv[1:]
     elif isinstance(args, py.path.local):
@@ -165,7 +165,7 @@ def _prepareconfig(args=None, plugins=None):
         args = shlex.split(args, posix=sys.platform != "win32")
         from _pytest import deprecated
 
-        warning_msg = deprecated.MAIN_STR_ARGS
+        warning = deprecated.MAIN_STR_ARGS
     config = get_config()
     pluginmanager = config.pluginmanager
     try:
@@ -175,11 +175,10 @@ def _prepareconfig(args=None, plugins=None):
                     pluginmanager.consider_pluginarg(plugin)
                 else:
                     pluginmanager.register(plugin)
-        if warning_msg:
-            from _pytest.warning_types import PytestWarning
+        if warning:
             from _pytest.warnings import _issue_config_warning
 
-            _issue_config_warning(PytestWarning(warning_msg), config=config)
+            _issue_config_warning(warning, config=config)
         return pluginmanager.hook.pytest_cmdline_parse(
             pluginmanager=pluginmanager, args=args
         )

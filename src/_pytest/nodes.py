@@ -144,12 +144,9 @@ class Node(object):
 
         Generate a warning with the given code and message for this item.
         """
-        from _pytest.warning_types import RemovedInPytest4Warning
+        from _pytest.deprecated import NODE_WARN
 
-        self.std_warn(
-            "Node.warn has been deprecated, use Node.std_warn instead",
-            RemovedInPytest4Warning,
-        )
+        self.std_warn(NODE_WARN)
 
         assert isinstance(code, str)
         fslocation = get_fslocation_from_item(self)
@@ -159,22 +156,27 @@ class Node(object):
             )
         )
 
-    def std_warn(self, message, category=None):
+    def std_warn(self, warning):
         """Issue a warning for this item.
 
         Warnings will be displayed after the test session, unless explicitly suppressed
 
-        :param Union[str,Warning] message: text message of the warning or ``Warning`` instance.
-        :param Type[Warning] category: warning category.
+        :param Warning warning: the warning instance to issue. Must be a subclass of PytestWarning.
+
+        :raise ValueError: if ``warning`` instance is not a subclass of PytestWarning.
         """
         from _pytest.warning_types import PytestWarning
 
-        if category is None:
-            assert isinstance(message, PytestWarning)
+        if not isinstance(warning, PytestWarning):
+            raise ValueError(
+                "warning must be an instance of PytestWarning or subclass, got {!r}".format(
+                    warning
+                )
+            )
         path, lineno = get_fslocation_from_item(self)
         warnings.warn_explicit(
-            message,
-            category,
+            six.text_type(warning),
+            type(warning),
             filename=str(path),
             lineno=lineno + 1 if lineno is not None else None,
         )
