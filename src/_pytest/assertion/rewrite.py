@@ -209,8 +209,12 @@ class AssertionRewritingHook(object):
         self._must_rewrite.update(names)
 
     def _warn_already_imported(self, name):
-        self.config.warn(
-            "P1", "Module already imported so cannot be rewritten: %s" % name
+        from _pytest.warning_types import PytestWarning
+        from _pytest.warnings import _issue_config_warning
+
+        _issue_config_warning(
+            PytestWarning("Module already imported so cannot be rewritten: %s" % name),
+            self.config,
         )
 
     def load_module(self, name):
@@ -746,13 +750,17 @@ class AssertionRewriter(ast.NodeVisitor):
         the expression is false.
 
         """
-        if isinstance(assert_.test, ast.Tuple) and self.config is not None:
-            fslocation = (self.module_path, assert_.lineno)
-            self.config.warn(
-                "R1",
-                "assertion is always true, perhaps " "remove parentheses?",
-                fslocation=fslocation,
+        if isinstance(assert_.test, ast.Tuple) and len(assert_.test.elts) >= 1:
+            from _pytest.warning_types import PytestWarning
+            import warnings
+
+            warnings.warn_explicit(
+                PytestWarning("assertion is always true, perhaps remove parentheses?"),
+                category=None,
+                filename=str(self.module_path),
+                lineno=assert_.lineno,
             )
+
         self.statements = []
         self.variables = []
         self.variable_counter = itertools.count()

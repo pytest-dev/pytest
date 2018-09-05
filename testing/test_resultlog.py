@@ -13,6 +13,9 @@ from _pytest.resultlog import (
 )
 
 
+pytestmark = pytest.mark.filterwarnings("ignore:--result-log is deprecated")
+
+
 def test_generic_path(testdir):
     from _pytest.main import Session
 

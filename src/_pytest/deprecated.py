@@ -7,14 +7,16 @@ be removed when the time comes.
 """
 from __future__ import absolute_import, division, print_function
 
+from _pytest.warning_types import RemovedInPytest4Warning
 
-class RemovedInPytest4Warning(DeprecationWarning):
-    """warning class for features removed in pytest 4.0"""
+MAIN_STR_ARGS = RemovedInPytest4Warning(
+    "passing a string to pytest.main() is deprecated, "
+    "pass a list of arguments instead."
+)
 
-
-MAIN_STR_ARGS = "passing a string to pytest.main() is deprecated, " "pass a list of arguments instead."
-
-YIELD_TESTS = "yield tests are deprecated, and scheduled to be removed in pytest 4.0"
+YIELD_TESTS = RemovedInPytest4Warning(
+    "yield tests are deprecated, and scheduled to be removed in pytest 4.0"
+)
 
 FUNCARG_PREFIX = (
     '{name}: declaring fixtures using "pytest_funcarg__" prefix is deprecated '
@@ -23,7 +25,7 @@ FUNCARG_PREFIX = (
 )
 
 FIXTURE_FUNCTION_CALL = (
-    "Fixture {name} called directly. Fixtures are not meant to be called directly, "
+    'Fixture "{name}" called directly. Fixtures are not meant to be called directly, '
     "are created automatically when test functions request them as parameters. "
     "See https://docs.pytest.org/en/latest/fixture.html for more information."
 )
@@ -32,7 +34,7 @@ CFG_PYTEST_SECTION = (
     "[pytest] section in {filename} files is deprecated, use [tool:pytest] instead."
 )
 
-GETFUNCARGVALUE = "use of getfuncargvalue is deprecated, use getfixturevalue"
+GETFUNCARGVALUE = "getfuncargvalue is deprecated, use getfixturevalue"
 
 RESULT_LOG = (
     "--result-log is deprecated and scheduled for removal in pytest 4.0.\n"
@@ -51,7 +53,11 @@ MARK_PARAMETERSET_UNPACKING = RemovedInPytest4Warning(
     "For more details, see: https://docs.pytest.org/en/latest/parametrize.html"
 )
 
-RECORD_XML_PROPERTY = (
+NODE_WARN = RemovedInPytest4Warning(
+    "Node.warn(code, message) form has been deprecated, use Node.warn(warning_instance) instead."
+)
+
+RECORD_XML_PROPERTY = RemovedInPytest4Warning(
     'Fixture renamed from "record_xml_property" to "record_property" as user '
     "properties are now available to all reporters.\n"
     '"record_xml_property" is now deprecated.'
@@ -61,7 +67,7 @@ COLLECTOR_MAKEITEM = RemovedInPytest4Warning(
     "pycollector makeitem was removed " "as it is an accidentially leaked internal api"
 )
 
-METAFUNC_ADD_CALL = (
+METAFUNC_ADD_CALL = RemovedInPytest4Warning(
     "Metafunc.addcall is deprecated and scheduled to be removed in pytest 4.0.\n"
     "Please use Metafunc.parametrize instead."
 )

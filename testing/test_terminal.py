@@ -1047,20 +1047,21 @@ def test_terminal_summary(testdir):
     )
 
 
+@pytest.mark.filterwarnings("default")
 def test_terminal_summary_warnings_are_displayed(testdir):
     """Test that warnings emitted during pytest_terminal_summary are displayed.
     (#1305).
     """
     testdir.makeconftest(
         """
+        import warnings
         def pytest_terminal_summary(terminalreporter):
-            config = terminalreporter.config
-            config.warn('C1', 'internal warning')
+            warnings.warn(UserWarning('internal warning'))
     """
     )
-    result = testdir.runpytest("-rw")
+    result = testdir.runpytest()
     result.stdout.fnmatch_lines(
-        ["<undetermined location>", "*internal warning", "*== 1 warnings in *"]
+        ["*conftest.py:3:*internal warning", "*== 1 warnings in *"]
     )
     assert "None" not in result.stdout.str()
 

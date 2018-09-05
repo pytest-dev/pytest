@@ -31,6 +31,7 @@ class TestNewAPI(object):
         val = config.cache.get("key/name", -2)
         assert val == -2
 
+    @pytest.mark.filterwarnings("default")
     def test_cache_writefail_cachfile_silent(self, testdir):
         testdir.makeini("[pytest]")
         testdir.tmpdir.join(".pytest_cache").write("gone wrong")
@@ -39,6 +40,9 @@ class TestNewAPI(object):
         cache.set("test/broken", [])
 
     @pytest.mark.skipif(sys.platform.startswith("win"), reason="no chmod on windows")
+    @pytest.mark.filterwarnings(
+        "ignore:could not create cache path:pytest.PytestWarning"
+    )
     def test_cache_writefail_permissions(self, testdir):
         testdir.makeini("[pytest]")
         testdir.tmpdir.ensure_dir(".pytest_cache").chmod(0)
@@ -47,6 +51,7 @@ class TestNewAPI(object):
         cache.set("test/broken", [])
 
     @pytest.mark.skipif(sys.platform.startswith("win"), reason="no chmod on windows")
+    @pytest.mark.filterwarnings("default")
     def test_cache_failure_warns(self, testdir):
         testdir.tmpdir.ensure_dir(".pytest_cache").chmod(0)
         testdir.makepyfile(

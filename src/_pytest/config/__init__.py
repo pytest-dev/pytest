@@ -176,7 +176,9 @@ def _prepareconfig(args=None, plugins=None):
                 else:
                     pluginmanager.register(plugin)
         if warning:
-            config.warn("C1", warning)
+            from _pytest.warnings import _issue_config_warning
+
+            _issue_config_warning(warning, config=config)
         return pluginmanager.hook.pytest_cmdline_parse(
             pluginmanager=pluginmanager, args=args
         )
@@ -417,7 +419,12 @@ class PytestPluginManager(PluginManager):
                         PYTEST_PLUGINS_FROM_NON_TOP_LEVEL_CONFTEST
                     )
 
-                    warnings.warn(PYTEST_PLUGINS_FROM_NON_TOP_LEVEL_CONFTEST)
+                    warnings.warn_explicit(
+                        PYTEST_PLUGINS_FROM_NON_TOP_LEVEL_CONFTEST,
+                        category=None,
+                        filename=str(conftestpath),
+                        lineno=0,
+                    )
             except Exception:
                 raise ConftestImportFailure(conftestpath, sys.exc_info())
 
@@ -602,7 +609,29 @@ class Config(object):
             fin()
 
     def warn(self, code, message, fslocation=None, nodeid=None):
-        """ generate a warning for this test session. """
+        """
+        .. deprecated:: 3.8
+
+            Use :py:func:`warnings.warn` or :py:func:`warnings.warn_explicit` directly instead.
+
+        Generate a warning for this test session.
+        """
+        from _pytest.warning_types import RemovedInPytest4Warning
+
+        if isinstance(fslocation, (tuple, list)) and len(fslocation) > 2:
+            filename, lineno = fslocation[:2]
+        else:
+            filename = "unknown file"
+            lineno = 0
+        msg = "config.warn has been deprecated, use warnings.warn instead"
+        if nodeid:
+            msg = "{}: {}".format(nodeid, msg)
+        warnings.warn_explicit(
+            RemovedInPytest4Warning(msg),
+            category=None,
+            filename=filename,
+            lineno=lineno,
+        )
         self.hook.pytest_logwarning.call_historic(
             kwargs=dict(
                 code=code, message=message, fslocation=fslocation, nodeid=nodeid
@@ -667,8 +696,8 @@ class Config(object):
         r = determine_setup(
             ns.inifilename,
             ns.file_or_dir + unknown_args,
-            warnfunc=self.warn,
             rootdir_cmd_arg=ns.rootdir or None,
+            config=self,
         )
         self.rootdir, self.inifile, self.inicfg = r
         self._parser.extra_info["rootdir"] = self.rootdir
