@@ -14,6 +14,9 @@ Talks and Tutorials
 Books
 ---------------------------------------------
 
+- `pytest Quick Start Guide, by Bruno Oliveira (2018)
+  <https://www.packtpub.com/web-development/pytest-quick-start-guide>`_.
+
 - `Python Testing with pytest, by Brian Okken (2017)
   <https://pragprog.com/book/bopytest/python-testing-with-pytest>`_.
 
