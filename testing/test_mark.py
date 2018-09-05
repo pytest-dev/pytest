@@ -1039,14 +1039,19 @@ class TestKeywordSelection(object):
         ),
     ],
 )
-@pytest.mark.filterwarnings("ignore")
+@pytest.mark.filterwarnings("default")
 def test_parameterset_extractfrom(argval, expected):
+    from _pytest.deprecated import MARK_PARAMETERSET_UNPACKING
+
+    warn_called = []
+
     class DummyItem:
         def warn(self, warning):
-            pass
+            warn_called.append(warning)
 
     extracted = ParameterSet.extract_from(argval, belonging_definition=DummyItem())
     assert extracted == expected
+    assert warn_called == [MARK_PARAMETERSET_UNPACKING]
 
 
 def test_legacy_transfer():
