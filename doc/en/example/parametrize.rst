@@ -411,10 +411,32 @@ is to be run with different sets of arguments for its three arguments:
 Running it results in some skips if we don't have all the python interpreters installed and otherwise runs all combinations (5 interpreters times 5 interpreters times 3 objects to serialize/deserialize)::
 
    . $ pytest -rs -q multipython.py
-   ...sss...sssssssss...sss...                                          [100%]
-   ========================= short test summary info ==========================
-   SKIP [15] $REGENDOC_TMPDIR/CWD/multipython.py:29: 'python3.4' not found
-   12 passed, 15 skipped in 0.12 seconds
+   Traceback (most recent call last):
+     File "$PYTHON_PREFIX/lib/python3.6/site-packages/_pytest/config/__init__.py", line 381, in _getconftestmodules
+       return self._path2confmods[path]
+   KeyError: local('$REGENDOC_TMPDIR/CWD/multipython.py')
+
+   During handling of the above exception, another exception occurred:
+   Traceback (most recent call last):
+     File "$PYTHON_PREFIX/lib/python3.6/site-packages/_pytest/config/__init__.py", line 381, in _getconftestmodules
+       return self._path2confmods[path]
+   KeyError: local('$REGENDOC_TMPDIR/CWD')
+
+   During handling of the above exception, another exception occurred:
+   Traceback (most recent call last):
+     File "$PYTHON_PREFIX/lib/python3.6/site-packages/_pytest/config/__init__.py", line 412, in _importconftest
+       return self._conftestpath2mod[conftestpath]
+   KeyError: local('$REGENDOC_TMPDIR/CWD/conftest.py')
+
+   During handling of the above exception, another exception occurred:
+   Traceback (most recent call last):
+     File "$PYTHON_PREFIX/lib/python3.6/site-packages/_pytest/config/__init__.py", line 418, in _importconftest
+       mod = conftestpath.pyimport()
+     File "$PYTHON_PREFIX/lib/python3.6/site-packages/py/_path/local.py", line 686, in pyimport
+       raise self.ImportMismatchError(modname, modfile, self)
+   py._path.local.LocalPath.ImportMismatchError: ('conftest', '$PWD/example/conftest.py', local('$REGENDOC_TMPDIR/CWD/conftest.py'))
+   ERROR: could not load $REGENDOC_TMPDIR/CWD/conftest.py
+
 
 Indirect parametrization of optional implementations/imports
 --------------------------------------------------------------------

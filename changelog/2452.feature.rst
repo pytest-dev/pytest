@@ -1,5 +1,0 @@
-Internal pytest warnings are now issued using the standard ``warnings`` module, making it possible to use
-the standard warnings filters to manage those warnings. This introduces ``PytestWarning``,
-``PytestDeprecationWarning`` and ``RemovedInPytest4Warning`` warning types as part of the public API.
-
-Consult `the documentation <https://docs.pytest.org/en/latest/warnings.html#internal-pytest-warnings>`_ for more info.
