@@ -1,1 +1,0 @@
-Terminal writer now takes into account unicode character width when writing out progress.

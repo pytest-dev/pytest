@@ -1,1 +1,0 @@
-Pytest now returns with correct exit code (EXIT_USAGEERROR, 4) when called with unknown arguments.
