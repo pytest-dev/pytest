@@ -81,7 +81,7 @@ def catch_warnings_for_item(config, ihook, when, item):
         if item is not None:
             for mark in item.iter_markers(name="filterwarnings"):
                 for arg in mark.args:
-                    warnings._setoption(arg)
+                    _setoption(warnings, arg)
                     filters_configured = True
 
         if not filters_configured:

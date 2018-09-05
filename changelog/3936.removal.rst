@@ -1,0 +1,5 @@
+``@pytest.mark.filterwarnings`` second parameter is no longer regex-escaped,
+making it possible to actually use regular expressions to check the warning message.
+
+**Note**: regex-escaping the match string was an implementation oversight that might break test suites which depend
+on the old behavior.

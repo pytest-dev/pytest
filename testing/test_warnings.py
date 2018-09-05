@@ -374,6 +374,22 @@ def test_collection_warnings(testdir):
     )
 
 
+@pytest.mark.filterwarnings("always")
+def test_mark_regex_escape(testdir):
+    """@pytest.mark.filterwarnings should not try to escape regex characters (#3936)"""
+    testdir.makepyfile(
+        r"""
+        import pytest, warnings
+
+        @pytest.mark.filterwarnings(r"ignore:some \(warning\)")
+        def test_foo():
+            warnings.warn(UserWarning("some (warning)"))
+    """
+    )
+    result = testdir.runpytest()
+    assert WARNINGS_SUMMARY_HEADER not in result.stdout.str()
+
+
 @pytest.mark.filterwarnings("default")
 @pytest.mark.parametrize("ignore_pytest_warnings", ["no", "ini", "cmdline"])
 def test_hide_pytest_internal_warnings(testdir, ignore_pytest_warnings):
