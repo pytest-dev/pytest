@@ -33,7 +33,7 @@ See [the docs](https://docs.pytest.org/en/latest/cache.html) for more informatio
 @attr.s
 class Cache(object):
     _cachedir = attr.ib(repr=False)
-    _warn = attr.ib(repr=False)
+    _config = attr.ib(repr=False)
 
     @classmethod
     def for_config(cls, config):
@@ -41,14 +41,19 @@ class Cache(object):
         if config.getoption("cacheclear") and cachedir.exists():
             shutil.rmtree(str(cachedir))
             cachedir.mkdir()
-        return cls(cachedir, config.warn)
+        return cls(cachedir, config)
 
     @staticmethod
     def cache_dir_from_config(config):
         return paths.resolve_from_str(config.getini("cache_dir"), config.rootdir)
 
     def warn(self, fmt, **args):
-        self._warn(code="I9", message=fmt.format(**args) if args else fmt)
+        from _pytest.warnings import _issue_config_warning
+        from _pytest.warning_types import PytestWarning
+
+        _issue_config_warning(
+            PytestWarning(fmt.format(**args) if args else fmt), self._config
+        )
 
     def makedir(self, name):
         """ return a directory path object with the given name.  If the
@@ -134,15 +139,12 @@ class LFPlugin(object):
     def pytest_report_collectionfinish(self):
         if self.active and self.config.getoption("verbose") >= 0:
             if not self._previously_failed_count:
-                mode = "run {} (no recorded failures)".format(
-                    self._no_failures_behavior
-                )
-            else:
-                noun = "failure" if self._previously_failed_count == 1 else "failures"
-                suffix = " first" if self.config.getoption("failedfirst") else ""
-                mode = "rerun previous {count} {noun}{suffix}".format(
-                    count=self._previously_failed_count, suffix=suffix, noun=noun
-                )
+                return None
+            noun = "failure" if self._previously_failed_count == 1 else "failures"
+            suffix = " first" if self.config.getoption("failedfirst") else ""
+            mode = "rerun previous {count} {noun}{suffix}".format(
+                count=self._previously_failed_count, suffix=suffix, noun=noun
+            )
             return "run-last-failure: %s" % mode
 
     def pytest_runtest_logreport(self, report):

@@ -217,7 +217,7 @@ class TestMetafunc(object):
     def test_idval_hypothesis(self, value):
         from _pytest.python import _idval
 
-        escaped = _idval(value, "a", 6, None)
+        escaped = _idval(value, "a", 6, None, item=None, config=None)
         assert isinstance(escaped, str)
         if PY3:
             escaped.encode("ascii")
@@ -244,7 +244,7 @@ class TestMetafunc(object):
             ),
         ]
         for val, expected in values:
-            assert _idval(val, "a", 6, None) == expected
+            assert _idval(val, "a", 6, None, item=None, config=None) == expected
 
     def test_bytes_idval(self):
         """unittest for the expected behavior to obtain ids for parametrized
@@ -262,7 +262,7 @@ class TestMetafunc(object):
             (u"αρά".encode("utf-8"), "\\xce\\xb1\\xcf\\x81\\xce\\xac"),
         ]
         for val, expected in values:
-            assert _idval(val, "a", 6, None) == expected
+            assert _idval(val, "a", 6, idfn=None, item=None, config=None) == expected
 
     def test_class_or_function_idval(self):
         """unittest for the expected behavior to obtain ids for parametrized
@@ -278,7 +278,7 @@ class TestMetafunc(object):
 
         values = [(TestClass, "TestClass"), (test_function, "test_function")]
         for val, expected in values:
-            assert _idval(val, "a", 6, None) == expected
+            assert _idval(val, "a", 6, None, item=None, config=None) == expected
 
     @pytest.mark.issue250
     def test_idmaker_autoname(self):
@@ -383,44 +383,7 @@ class TestMetafunc(object):
         )
         assert result == ["a-a0", "a-a1", "a-a2"]
 
-    @pytest.mark.issue351
-    def test_idmaker_idfn_exception(self):
-        from _pytest.python import idmaker
-        from _pytest.recwarn import WarningsRecorder
-
-        class BadIdsException(Exception):
-            pass
-
-        def ids(val):
-            raise BadIdsException("ids raised")
-
-        rec = WarningsRecorder()
-        with rec:
-            idmaker(
-                ("a", "b"),
-                [
-                    pytest.param(10.0, IndexError()),
-                    pytest.param(20, KeyError()),
-                    pytest.param("three", [1, 2, 3]),
-                ],
-                idfn=ids,
-            )
-
-        assert [str(i.message) for i in rec.list] == [
-            "Raised while trying to determine id of parameter a at position 0."
-            "\nUpdate your code as this will raise an error in pytest-4.0.",
-            "Raised while trying to determine id of parameter b at position 0."
-            "\nUpdate your code as this will raise an error in pytest-4.0.",
-            "Raised while trying to determine id of parameter a at position 1."
-            "\nUpdate your code as this will raise an error in pytest-4.0.",
-            "Raised while trying to determine id of parameter b at position 1."
-            "\nUpdate your code as this will raise an error in pytest-4.0.",
-            "Raised while trying to determine id of parameter a at position 2."
-            "\nUpdate your code as this will raise an error in pytest-4.0.",
-            "Raised while trying to determine id of parameter b at position 2."
-            "\nUpdate your code as this will raise an error in pytest-4.0.",
-        ]
-
+    @pytest.mark.filterwarnings("default")
     def test_parametrize_ids_exception(self, testdir):
         """
         :param testdir: the instance of Testdir class, a temporary
@@ -438,13 +401,14 @@ class TestMetafunc(object):
                     pass
             """
         )
-        with pytest.warns(DeprecationWarning):
-            result = testdir.runpytest("--collect-only")
+        result = testdir.runpytest("--collect-only")
         result.stdout.fnmatch_lines(
             [
                 "<Module 'test_parametrize_ids_exception.py'>",
                 "  <Function 'test_foo[a]'>",
                 "  <Function 'test_foo[b]'>",
+                "*test_parametrize_ids_exception.py:6: *parameter arg at position 0*",
+                "*test_parametrize_ids_exception.py:6: *parameter arg at position 1*",
             ]
         )
 

@@ -7,7 +7,7 @@ from _pytest.recwarn import WarningsRecorder
 
 
 def test_recwarn_functional(testdir):
-    reprec = testdir.inline_runsource(
+    testdir.makepyfile(
         """
         import warnings
         def test_method(recwarn):
@@ -16,8 +16,8 @@ def test_recwarn_functional(testdir):
             assert isinstance(warn.message, UserWarning)
     """
     )
-    res = reprec.countoutcomes()
-    assert tuple(res) == (1, 0, 0), res
+    reprec = testdir.inline_run()
+    reprec.assertoutcome(passed=1)
 
 
 class TestWarningsRecorderChecker(object):

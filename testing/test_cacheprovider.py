@@ -31,6 +31,7 @@ class TestNewAPI(object):
         val = config.cache.get("key/name", -2)
         assert val == -2
 
+    @pytest.mark.filterwarnings("default")
     def test_cache_writefail_cachfile_silent(self, testdir):
         testdir.makeini("[pytest]")
         testdir.tmpdir.join(".pytest_cache").write("gone wrong")
@@ -39,6 +40,9 @@ class TestNewAPI(object):
         cache.set("test/broken", [])
 
     @pytest.mark.skipif(sys.platform.startswith("win"), reason="no chmod on windows")
+    @pytest.mark.filterwarnings(
+        "ignore:could not create cache path:pytest.PytestWarning"
+    )
     def test_cache_writefail_permissions(self, testdir):
         testdir.makeini("[pytest]")
         testdir.tmpdir.ensure_dir(".pytest_cache").chmod(0)
@@ -47,6 +51,7 @@ class TestNewAPI(object):
         cache.set("test/broken", [])
 
     @pytest.mark.skipif(sys.platform.startswith("win"), reason="no chmod on windows")
+    @pytest.mark.filterwarnings("default")
     def test_cache_failure_warns(self, testdir):
         testdir.tmpdir.ensure_dir(".pytest_cache").chmod(0)
         testdir.makepyfile(
@@ -414,13 +419,7 @@ class TestLastFailed(object):
         )
 
         result = testdir.runpytest(test_a, "--lf")
-        result.stdout.fnmatch_lines(
-            [
-                "collected 2 items",
-                "run-last-failure: run all (no recorded failures)",
-                "*2 passed in*",
-            ]
-        )
+        result.stdout.fnmatch_lines(["collected 2 items", "*2 passed in*"])
 
         result = testdir.runpytest(test_b, "--lf")
         result.stdout.fnmatch_lines(
@@ -559,19 +558,6 @@ class TestLastFailed(object):
         testdir.runpytest("-q", "--lf")
         assert os.path.exists(".pytest_cache/v/cache/lastfailed")
 
-    @pytest.mark.parametrize("quiet", [True, False])
-    @pytest.mark.parametrize("opt", ["--ff", "--lf"])
-    def test_lf_and_ff_obey_verbosity(self, quiet, opt, testdir):
-        testdir.makepyfile("def test(): pass")
-        args = [opt]
-        if quiet:
-            args.append("-q")
-        result = testdir.runpytest(*args)
-        if quiet:
-            assert "run all" not in result.stdout.str()
-        else:
-            assert "run all" in result.stdout.str()
-
     def test_xfail_not_considered_failure(self, testdir):
         testdir.makepyfile(
             """
@@ -629,6 +615,23 @@ class TestLastFailed(object):
         assert result.ret == 0
         assert self.get_cached_last_failed(testdir) == []
         assert result.ret == 0
+
+    @pytest.mark.parametrize("quiet", [True, False])
+    @pytest.mark.parametrize("opt", ["--ff", "--lf"])
+    def test_lf_and_ff_prints_no_needless_message(self, quiet, opt, testdir):
+        # Issue 3853
+        testdir.makepyfile("def test(): assert 0")
+        args = [opt]
+        if quiet:
+            args.append("-q")
+        result = testdir.runpytest(*args)
+        assert "run all" not in result.stdout.str()
+
+        result = testdir.runpytest(*args)
+        if quiet:
+            assert "run all" not in result.stdout.str()
+        else:
+            assert "rerun previous" in result.stdout.str()
 
     def get_cached_last_failed(self, testdir):
         config = testdir.parseconfigure()

@@ -1,0 +1,1 @@
+Warnings are now captured and displayed during test collection.

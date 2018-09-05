@@ -135,13 +135,13 @@ class TestConfigCmdlineParsing(object):
         """
         )
         testdir.makefile(
-            ".cfg",
+            ".ini",
             custom="""
             [pytest]
             custom = 1
         """,
         )
-        config = testdir.parseconfig("-c", "custom.cfg")
+        config = testdir.parseconfig("-c", "custom.ini")
         assert config.getini("custom") == "1"
 
         testdir.makefile(
@@ -155,8 +155,8 @@ class TestConfigCmdlineParsing(object):
         assert config.getini("custom") == "1"
 
     def test_absolute_win32_path(self, testdir):
-        temp_cfg_file = testdir.makefile(
-            ".cfg",
+        temp_ini_file = testdir.makefile(
+            ".ini",
             custom="""
             [pytest]
             addopts = --version
@@ -164,8 +164,8 @@ class TestConfigCmdlineParsing(object):
         )
         from os.path import normpath
 
-        temp_cfg_file = normpath(str(temp_cfg_file))
-        ret = pytest.main("-c " + temp_cfg_file)
+        temp_ini_file = normpath(str(temp_ini_file))
+        ret = pytest.main(["-c", temp_ini_file])
         assert ret == _pytest.main.EXIT_OK
 
 
@@ -605,6 +605,26 @@ def test_plugin_preparse_prevents_setuptools_loading(testdir, monkeypatch, block
         )
 
 
+@pytest.mark.parametrize(
+    "parse_args,should_load", [(("-p", "mytestplugin"), True), ((), False)]
+)
+def test_disable_plugin_autoload(testdir, monkeypatch, parse_args, should_load):
+    pkg_resources = pytest.importorskip("pkg_resources")
+
+    def my_iter(name):
+        raise AssertionError("Should not be called")
+
+    class PseudoPlugin(object):
+        x = 42
+
+    monkeypatch.setenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD", "1")
+    monkeypatch.setattr(pkg_resources, "iter_entry_points", my_iter)
+    monkeypatch.setitem(sys.modules, "mytestplugin", PseudoPlugin())
+    config = testdir.parseconfig(*parse_args)
+    has_loaded = config.pluginmanager.get_plugin("mytestplugin") is not None
+    assert has_loaded == should_load
+
+
 def test_cmdline_processargs_simple(testdir):
     testdir.makeconftest(
         """
@@ -763,13 +783,14 @@ def test_collect_pytest_prefix_bug(pytestconfig):
     assert pm.parse_hookimpl_opts(Dummy(), "pytest_something") is None
 
 
-class TestWarning(object):
+class TestLegacyWarning(object):
+    @pytest.mark.filterwarnings("default")
     def test_warn_config(self, testdir):
         testdir.makeconftest(
             """
             values = []
-            def pytest_configure(config):
-                config.warn("C1", "hello")
+            def pytest_runtest_setup(item):
+                item.config.warn("C1", "hello")
             def pytest_logwarning(code, message):
                 if message == "hello" and code == "C1":
                     values.append(1)
@@ -782,24 +803,31 @@ class TestWarning(object):
                 assert conftest.values == [1]
         """
         )
-        reprec = testdir.inline_run()
-        reprec.assertoutcome(passed=1)
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines(
+            ["*hello", "*config.warn has been deprecated*", "*1 passed*"]
+        )
 
-    def test_warn_on_test_item_from_request(self, testdir, request):
+    @pytest.mark.filterwarnings("default")
+    @pytest.mark.parametrize("use_kw", [True, False])
+    def test_warn_on_test_item_from_request(self, testdir, use_kw):
+        code_kw = "code=" if use_kw else ""
+        message_kw = "message=" if use_kw else ""
         testdir.makepyfile(
             """
             import pytest
 
             @pytest.fixture
             def fix(request):
-                request.node.warn("T1", "hello")
+                request.node.warn({code_kw}"T1", {message_kw}"hello")
 
             def test_hello(fix):
                 pass
-        """
+        """.format(
+                code_kw=code_kw, message_kw=message_kw
+            )
         )
         result = testdir.runpytest("--disable-pytest-warnings")
-        assert result.parseoutcomes()["warnings"] > 0
         assert "hello" not in result.stdout.str()
 
         result = testdir.runpytest()
@@ -808,6 +836,7 @@ class TestWarning(object):
             ===*warnings summary*===
             *test_warn_on_test_item_from_request.py::test_hello*
             *hello*
+            *test_warn_on_test_item_from_request.py:7:*Node.warn(code, message) form has been deprecated*
         """
         )
 
@@ -827,7 +856,7 @@ class TestRootdir(object):
     @pytest.mark.parametrize("name", "setup.cfg tox.ini pytest.ini".split())
     def test_with_ini(self, tmpdir, name):
         inifile = tmpdir.join(name)
-        inifile.write("[pytest]\n")
+        inifile.write("[pytest]\n" if name != "setup.cfg" else "[tool:pytest]\n")
 
         a = tmpdir.mkdir("a")
         b = a.mkdir("b")
@@ -873,11 +902,14 @@ class TestRootdir(object):
 class TestOverrideIniArgs(object):
     @pytest.mark.parametrize("name", "setup.cfg tox.ini pytest.ini".split())
     def test_override_ini_names(self, testdir, name):
+        section = "[pytest]" if name != "setup.cfg" else "[tool:pytest]"
         testdir.tmpdir.join(name).write(
             textwrap.dedent(
                 """
-            [pytest]
-            custom = 1.0"""
+            {section}
+            custom = 1.0""".format(
+                    section=section
+                )
             )
         )
         testdir.makeconftest(

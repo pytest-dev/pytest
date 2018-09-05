@@ -526,12 +526,43 @@ def pytest_terminal_summary(terminalreporter, exitstatus):
 
 @hookspec(historic=True)
 def pytest_logwarning(message, code, nodeid, fslocation):
-    """ process a warning specified by a message, a code string,
+    """
+    .. deprecated:: 3.8
+
+        This hook is will stop working in a future release.
+
+        pytest no longer triggers this hook, but the
+        terminal writer still implements it to display warnings issued by
+        :meth:`_pytest.config.Config.warn` and :meth:`_pytest.nodes.Node.warn`. Calling those functions will be
+        an error in future releases.
+
+    process a warning specified by a message, a code string,
     a nodeid and fslocation (both of which may be None
     if the warning is not tied to a particular node/location).
 
     .. note::
         This hook is incompatible with ``hookwrapper=True``.
+    """
+
+
+@hookspec(historic=True)
+def pytest_warning_captured(warning_message, when, item):
+    """
+    Process a warning captured by the internal pytest warnings plugin.
+
+    :param warnings.WarningMessage warning_message:
+        The captured warning. This is the same object produced by :py:func:`warnings.catch_warnings`, and contains
+        the same attributes as the parameters of :py:func:`warnings.showwarning`.
+
+    :param str when:
+        Indicates when the warning was captured. Possible values:
+
+        * ``"config"``: during pytest configuration/initialization stage.
+        * ``"collect"``: during test collection.
+        * ``"runtest"``: during test execution.
+
+    :param pytest.Item|None item:
+        The item being executed if ``when`` is ``"runtest"``, otherwise ``None``.
     """
 
 

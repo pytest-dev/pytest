@@ -153,15 +153,12 @@ making it easy in large test suites to get a clear picture of all failures, skip
 Example::
 
     $ pytest -ra
-    ======================== test session starts ========================
-    ...
-    ====================== short test summary info ======================
-    FAIL summary\test_foo.py::test_1
-    SKIP [1] summary\test_foo.py:12: not supported in this platform
-    XPASS summary\test_bar.py::test_4 flaky
+    =========================== test session starts ============================
+    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
+    rootdir: $REGENDOC_TMPDIR, inifile:
+    collected 0 items
 
-    ===== 1 failed, 1 passed, 1 skipped, 1 xpassed in 0.08 seconds ======
-
+    ======================= no tests ran in 0.12 seconds =======================
 
 The ``-r`` options accepts a number of characters after it, with ``a`` used above meaning "all except passes".
 
@@ -179,8 +176,12 @@ Here is the full list of available characters that can be used:
 More than one character can be used, so for example to only see failed and skipped tests, you can execute::
 
     $ pytest -rfs
+    =========================== test session starts ============================
+    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
+    rootdir: $REGENDOC_TMPDIR, inifile:
+    collected 0 items
 
-
+    ======================= no tests ran in 0.12 seconds =======================
 
 .. _pdb-option:
 

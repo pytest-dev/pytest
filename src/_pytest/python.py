@@ -44,7 +44,7 @@ from _pytest.mark.structures import (
     get_unpacked_marks,
     normalize_mark_list,
 )
-
+from _pytest.warning_types import RemovedInPytest4Warning, PytestWarning
 
 # relative paths that we use to filter traceback entries from appearing to the user;
 # see filter_traceback
@@ -239,9 +239,14 @@ def pytest_pycollect_makeitem(collector, name, obj):
         # or a funtools.wrapped.
         # We musn't if it's been wrapped with mock.patch (python 2 only)
         if not (isfunction(obj) or isfunction(get_real_func(obj))):
-            collector.warn(
-                code="C2",
-                message="cannot collect %r because it is not a function." % name,
+            filename, lineno = getfslineno(obj)
+            warnings.warn_explicit(
+                message=PytestWarning(
+                    "cannot collect %r because it is not a function." % name
+                ),
+                category=None,
+                filename=str(filename),
+                lineno=lineno + 1,
             )
         elif getattr(obj, "__test__", True):
             if is_generator(obj):
@@ -349,11 +354,6 @@ class PyCollector(PyobjMixin, nodes.Collector):
             if isinstance(obj, staticmethod):
                 # static methods need to be unwrapped
                 obj = safe_getattr(obj, "__func__", False)
-                if obj is False:
-                    # Python 2.6 wraps in a different way that we won't try to handle
-                    msg = "cannot collect static method %r because it is not a function"
-                    self.warn(code="C2", message=msg % name)
-                    return False
             return (
                 safe_getattr(obj, "__call__", False)
                 and fixtures.getfixturemarker(obj) is None
@@ -662,16 +662,18 @@ class Class(PyCollector):
             return []
         if hasinit(self.obj):
             self.warn(
-                "C1",
-                "cannot collect test class %r because it has a "
-                "__init__ constructor" % self.obj.__name__,
+                PytestWarning(
+                    "cannot collect test class %r because it has a "
+                    "__init__ constructor" % self.obj.__name__
+                )
             )
             return []
         elif hasnew(self.obj):
             self.warn(
-                "C1",
-                "cannot collect test class %r because it has a "
-                "__new__ constructor" % self.obj.__name__,
+                PytestWarning(
+                    "cannot collect test class %r because it has a "
+                    "__new__ constructor" % self.obj.__name__
+                )
             )
             return []
         return [self._getcustomclass("Instance")(name="()", parent=self)]
@@ -799,7 +801,7 @@ class Generator(FunctionMixin, PyCollector):
                 )
             seen[name] = True
             values.append(self.Function(name, self, args=args, callobj=call))
-        self.warn("C1", deprecated.YIELD_TESTS)
+        self.warn(deprecated.YIELD_TESTS)
         return values
 
     def getcallargs(self, obj):
@@ -966,7 +968,11 @@ class Metafunc(fixtures.FuncargnamesCompatAttr):
         from _pytest.mark import ParameterSet
 
         argnames, parameters = ParameterSet._for_parametrize(
-            argnames, argvalues, self.function, self.config
+            argnames,
+            argvalues,
+            self.function,
+            self.config,
+            function_definition=self.definition,
         )
         del argvalues
 
@@ -977,7 +983,7 @@ class Metafunc(fixtures.FuncargnamesCompatAttr):
 
         arg_values_types = self._resolve_arg_value_types(argnames, indirect)
 
-        ids = self._resolve_arg_ids(argnames, ids, parameters)
+        ids = self._resolve_arg_ids(argnames, ids, parameters, item=self.definition)
 
         scopenum = scope2index(scope, descr="call to {}".format(self.parametrize))
 
@@ -1000,13 +1006,14 @@ class Metafunc(fixtures.FuncargnamesCompatAttr):
                 newcalls.append(newcallspec)
         self._calls = newcalls
 
-    def _resolve_arg_ids(self, argnames, ids, parameters):
+    def _resolve_arg_ids(self, argnames, ids, parameters, item):
         """Resolves the actual ids for the given argnames, based on the ``ids`` parameter given
         to ``parametrize``.
 
         :param List[str] argnames: list of argument names passed to ``parametrize()``.
         :param ids: the ids parameter of the parametrized call (see docs).
         :param List[ParameterSet] parameters: the list of parameter values, same size as ``argnames``.
+        :param Item item: the item that generated this parametrized call.
         :rtype: List[str]
         :return: the list of ids for each argname given
         """
@@ -1027,7 +1034,7 @@ class Metafunc(fixtures.FuncargnamesCompatAttr):
                     raise ValueError(
                         msg % (saferepr(id_value), type(id_value).__name__)
                     )
-        ids = idmaker(argnames, parameters, idfn, ids, self.config)
+        ids = idmaker(argnames, parameters, idfn, ids, self.config, item=item)
         return ids
 
     def _resolve_arg_value_types(self, argnames, indirect):
@@ -1100,10 +1107,8 @@ class Metafunc(fixtures.FuncargnamesCompatAttr):
         :arg param: a parameter which will be exposed to a later fixture function
             invocation through the ``request.param`` attribute.
         """
-        if self.config:
-            self.config.warn(
-                "C1", message=deprecated.METAFUNC_ADD_CALL, fslocation=None
-            )
+        warnings.warn(deprecated.METAFUNC_ADD_CALL, stacklevel=2)
+
         assert funcargs is None or isinstance(funcargs, dict)
         if funcargs is not None:
             for name in funcargs:
@@ -1153,21 +1158,20 @@ def _find_parametrized_scope(argnames, arg2fixturedefs, indirect):
     return "function"
 
 
-def _idval(val, argname, idx, idfn, config=None):
+def _idval(val, argname, idx, idfn, item, config):
     if idfn:
         s = None
         try:
             s = idfn(val)
-        except Exception:
+        except Exception as e:
             # See issue https://github.com/pytest-dev/pytest/issues/2169
-            import warnings
-
             msg = (
-                "Raised while trying to determine id of parameter %s at position %d."
-                % (argname, idx)
+                "While trying to determine id of parameter {} at position "
+                "{} the following exception was raised:\n".format(argname, idx)
             )
-            msg += "\nUpdate your code as this will raise an error in pytest-4.0."
-            warnings.warn(msg, DeprecationWarning)
+            msg += "  {}: {}\n".format(type(e).__name__, e)
+            msg += "This warning will be an error error in pytest-4.0."
+            item.warn(RemovedInPytest4Warning(msg))
         if s:
             return ascii_escaped(s)
 
@@ -1191,12 +1195,12 @@ def _idval(val, argname, idx, idfn, config=None):
     return str(argname) + str(idx)
 
 
-def _idvalset(idx, parameterset, argnames, idfn, ids, config=None):
+def _idvalset(idx, parameterset, argnames, idfn, ids, item, config):
     if parameterset.id is not None:
         return parameterset.id
     if ids is None or (idx >= len(ids) or ids[idx] is None):
         this_id = [
-            _idval(val, argname, idx, idfn, config)
+            _idval(val, argname, idx, idfn, item=item, config=config)
             for val, argname in zip(parameterset.values, argnames)
         ]
         return "-".join(this_id)
@@ -1204,9 +1208,9 @@ def _idvalset(idx, parameterset, argnames, idfn, ids, config=None):
         return ascii_escaped(ids[idx])
 
 
-def idmaker(argnames, parametersets, idfn=None, ids=None, config=None):
+def idmaker(argnames, parametersets, idfn=None, ids=None, config=None, item=None):
     ids = [
-        _idvalset(valindex, parameterset, argnames, idfn, ids, config)
+        _idvalset(valindex, parameterset, argnames, idfn, ids, config=config, item=item)
         for valindex, parameterset in enumerate(parametersets)
     ]
     if len(set(ids)) != len(ids):

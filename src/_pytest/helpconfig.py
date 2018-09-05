@@ -156,6 +156,7 @@ def showhelp(config):
     vars = [
         ("PYTEST_ADDOPTS", "extra command line options"),
         ("PYTEST_PLUGINS", "comma-separated plugins to load during startup"),
+        ("PYTEST_DISABLE_PLUGIN_AUTOLOAD", "set to disable plugin auto-loading"),
         ("PYTEST_DEBUG", "set to enable debug tracing of pytest's internals"),
     ]
     for name, help in vars:
