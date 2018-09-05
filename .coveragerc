@@ -1,3 +1,4 @@
 [run]
 source = _pytest,testing
 parallel = 1
+branch = 1

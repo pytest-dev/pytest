@@ -1106,22 +1106,21 @@ class TestIssue925(object):
 
 
 class TestIssue2121:
-    def test_simple(self, testdir):
-        testdir.tmpdir.join("tests/file.py").ensure().write(
-            """
-def test_simple_failure():
-    assert 1 + 1 == 3
-"""
-        )
-        testdir.tmpdir.join("pytest.ini").write(
-            textwrap.dedent(
+    def test_rewrite_python_files_contain_subdirs(self, testdir):
+        testdir.makepyfile(
+            **{
+                "tests/file.py": """
+                def test_simple_failure():
+                    assert 1 + 1 == 3
                 """
-            [pytest]
-            python_files = tests/**.py
-        """
-            )
+            }
         )
-
+        testdir.makeini(
+            """
+                [pytest]
+                python_files = tests/**.py
+            """
+        )
         result = testdir.runpytest()
         result.stdout.fnmatch_lines("*E*assert (1 + 1) == 3")
 
@@ -1153,3 +1152,83 @@ def test_rewrite_infinite_recursion(testdir, pytestconfig, monkeypatch):
     hook = AssertionRewritingHook(pytestconfig)
     assert hook.find_module("test_foo") is not None
     assert len(write_pyc_called) == 1
+
+
+class TestEarlyRewriteBailout(object):
+    @pytest.fixture
+    def hook(self, pytestconfig, monkeypatch, testdir):
+        """Returns a patched AssertionRewritingHook instance so we can configure its initial paths and track
+        if imp.find_module has been called.
+        """
+        import imp
+
+        self.find_module_calls = []
+        self.initial_paths = set()
+
+        class StubSession(object):
+            _initialpaths = self.initial_paths
+
+            def isinitpath(self, p):
+                return p in self._initialpaths
+
+        def spy_imp_find_module(name, path):
+            self.find_module_calls.append(name)
+            return imp.find_module(name, path)
+
+        hook = AssertionRewritingHook(pytestconfig)
+        # use default patterns, otherwise we inherit pytest's testing config
+        hook.fnpats[:] = ["test_*.py", "*_test.py"]
+        monkeypatch.setattr(hook, "_imp_find_module", spy_imp_find_module)
+        hook.set_session(StubSession())
+        testdir.syspathinsert()
+        return hook
+
+    def test_basic(self, testdir, hook):
+        """
+        Ensure we avoid calling imp.find_module when we know for sure a certain module will not be rewritten
+        to optimize assertion rewriting (#3918).
+        """
+        testdir.makeconftest(
+            """
+            import pytest
+            @pytest.fixture
+            def fix(): return 1
+        """
+        )
+        testdir.makepyfile(test_foo="def test_foo(): pass")
+        testdir.makepyfile(bar="def bar(): pass")
+        foobar_path = testdir.makepyfile(foobar="def foobar(): pass")
+        self.initial_paths.add(foobar_path)
+
+        # conftest files should always be rewritten
+        assert hook.find_module("conftest") is not None
+        assert self.find_module_calls == ["conftest"]
+
+        # files matching "python_files" mask should always be rewritten
+        assert hook.find_module("test_foo") is not None
+        assert self.find_module_calls == ["conftest", "test_foo"]
+
+        # file does not match "python_files": early bailout
+        assert hook.find_module("bar") is None
+        assert self.find_module_calls == ["conftest", "test_foo"]
+
+        # file is an initial path (passed on the command-line): should be rewritten
+        assert hook.find_module("foobar") is not None
+        assert self.find_module_calls == ["conftest", "test_foo", "foobar"]
+
+    def test_pattern_contains_subdirectories(self, testdir, hook):
+        """If one of the python_files patterns contain subdirectories ("tests/**.py") we can't bailout early
+        because we need to match with the full path, which can only be found by calling imp.find_module.
+        """
+        p = testdir.makepyfile(
+            **{
+                "tests/file.py": """
+                        def test_simple_failure():
+                            assert 1 + 1 == 3
+                        """
+            }
+        )
+        testdir.syspathinsert(p.dirpath())
+        hook.fnpats[:] = ["tests/**.py"]
+        assert hook.find_module("file") is not None
+        assert self.find_module_calls == ["file"]

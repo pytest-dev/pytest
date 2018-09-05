@@ -383,6 +383,7 @@ class Session(nodes.FSCollector):
         self.trace = config.trace.root.get("collection")
         self._norecursepatterns = config.getini("norecursedirs")
         self.startdir = py.path.local()
+        self._initialpaths = frozenset()
         # Keep track of any collected nodes in here, so we don't duplicate fixtures
         self._node_cache = {}
 
@@ -441,13 +442,14 @@ class Session(nodes.FSCollector):
         self.trace("perform_collect", self, args)
         self.trace.root.indent += 1
         self._notfound = []
-        self._initialpaths = set()
+        initialpaths = []
         self._initialparts = []
         self.items = items = []
         for arg in args:
             parts = self._parsearg(arg)
             self._initialparts.append(parts)
-            self._initialpaths.add(parts[0])
+            initialpaths.append(parts[0])
+        self._initialpaths = frozenset(initialpaths)
         rep = collect_one_node(self)
         self.ihook.pytest_collectreport(report=rep)
         self.trace.root.indent -= 1
@@ -564,7 +566,6 @@ class Session(nodes.FSCollector):
         """Convert a dotted module name to path.
 
         """
-
         try:
             with _patched_find_module():
                 loader = pkgutil.find_loader(x)
