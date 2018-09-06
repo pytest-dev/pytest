@@ -1047,20 +1047,21 @@ def test_terminal_summary(testdir):
     )
 
 
+@pytest.mark.filterwarnings("default")
 def test_terminal_summary_warnings_are_displayed(testdir):
     """Test that warnings emitted during pytest_terminal_summary are displayed.
     (#1305).
     """
     testdir.makeconftest(
         """
+        import warnings
         def pytest_terminal_summary(terminalreporter):
-            config = terminalreporter.config
-            config.warn('C1', 'internal warning')
+            warnings.warn(UserWarning('internal warning'))
     """
     )
-    result = testdir.runpytest("-rw")
+    result = testdir.runpytest()
     result.stdout.fnmatch_lines(
-        ["<undetermined location>", "*internal warning", "*== 1 warnings in *"]
+        ["*conftest.py:3:*internal warning", "*== 1 warnings in *"]
     )
     assert "None" not in result.stdout.str()
 
@@ -1230,6 +1231,22 @@ class TestProgressOutputStyle(object):
             ]
         )
 
+    def test_count(self, many_tests_files, testdir):
+        testdir.makeini(
+            """
+            [pytest]
+            console_output_style = count
+        """
+        )
+        output = testdir.runpytest()
+        output.stdout.re_match_lines(
+            [
+                r"test_bar.py \.{10} \s+ \[10/20\]",
+                r"test_foo.py \.{5} \s+ \[15/20\]",
+                r"test_foobar.py \.{5} \s+ \[20/20\]",
+            ]
+        )
+
     def test_verbose(self, many_tests_files, testdir):
         output = testdir.runpytest("-v")
         output.stdout.re_match_lines(
@@ -1240,10 +1257,37 @@ class TestProgressOutputStyle(object):
             ]
         )
 
+    def test_verbose_count(self, many_tests_files, testdir):
+        testdir.makeini(
+            """
+            [pytest]
+            console_output_style = count
+        """
+        )
+        output = testdir.runpytest("-v")
+        output.stdout.re_match_lines(
+            [
+                r"test_bar.py::test_bar\[0\] PASSED \s+ \[ 1/20\]",
+                r"test_foo.py::test_foo\[4\] PASSED \s+ \[15/20\]",
+                r"test_foobar.py::test_foobar\[4\] PASSED \s+ \[20/20\]",
+            ]
+        )
+
     def test_xdist_normal(self, many_tests_files, testdir):
         pytest.importorskip("xdist")
         output = testdir.runpytest("-n2")
         output.stdout.re_match_lines([r"\.{20} \s+ \[100%\]"])
+
+    def test_xdist_normal_count(self, many_tests_files, testdir):
+        pytest.importorskip("xdist")
+        testdir.makeini(
+            """
+            [pytest]
+            console_output_style = count
+        """
+        )
+        output = testdir.runpytest("-n2")
+        output.stdout.re_match_lines([r"\.{20} \s+ \[20/20\]"])
 
     def test_xdist_verbose(self, many_tests_files, testdir):
         pytest.importorskip("xdist")

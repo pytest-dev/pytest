@@ -8,10 +8,6 @@ import pytest
 from _pytest.main import EXIT_NOTESTSCOLLECTED
 from _pytest.nodes import Collector
 
-ignore_parametrized_marks = pytest.mark.filterwarnings(
-    "ignore:Applying marks directly to parameters"
-)
-
 
 class TestModule(object):
     def test_failing_import(self, testdir):
@@ -456,12 +452,20 @@ class TestGenerator(object):
 
 
 class TestFunction(object):
+    @pytest.fixture
+    def ignore_parametrized_marks_args(self):
+        """Provides arguments to pytester.runpytest() to ignore the warning about marks being applied directly
+        to parameters.
+        """
+        return ("-W", "ignore:Applying marks directly to parameters")
+
     def test_getmodulecollector(self, testdir):
         item = testdir.getitem("def test_func(): pass")
         modcol = item.getparent(pytest.Module)
         assert isinstance(modcol, pytest.Module)
         assert hasattr(modcol.obj, "test_func")
 
+    @pytest.mark.filterwarnings("default")
     def test_function_as_object_instance_ignored(self, testdir):
         testdir.makepyfile(
             """
@@ -472,8 +476,14 @@ class TestFunction(object):
             test_a = A()
         """
         )
-        reprec = testdir.inline_run()
-        reprec.assertoutcome()
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines(
+            [
+                "collected 0 items",
+                "*test_function_as_object_instance_ignored.py:2: "
+                "*cannot collect 'test_a' because it is not a function.",
+            ]
+        )
 
     def test_function_equality(self, testdir, tmpdir):
         from _pytest.fixtures import FixtureManager
@@ -662,7 +672,7 @@ class TestFunction(object):
         rec = testdir.inline_run()
         rec.assertoutcome(passed=1)
 
-    @ignore_parametrized_marks
+    @pytest.mark.filterwarnings("ignore:Applying marks directly to parameters")
     def test_parametrize_with_mark(self, testdir):
         items = testdir.getitems(
             """
@@ -748,8 +758,7 @@ class TestFunction(object):
         assert colitems[2].name == "test2[a-c]"
         assert colitems[3].name == "test2[b-c]"
 
-    @ignore_parametrized_marks
-    def test_parametrize_skipif(self, testdir):
+    def test_parametrize_skipif(self, testdir, ignore_parametrized_marks_args):
         testdir.makepyfile(
             """
             import pytest
@@ -761,11 +770,10 @@ class TestFunction(object):
                 assert x < 2
         """
         )
-        result = testdir.runpytest()
+        result = testdir.runpytest(*ignore_parametrized_marks_args)
         result.stdout.fnmatch_lines("* 2 passed, 1 skipped in *")
 
-    @ignore_parametrized_marks
-    def test_parametrize_skip(self, testdir):
+    def test_parametrize_skip(self, testdir, ignore_parametrized_marks_args):
         testdir.makepyfile(
             """
             import pytest
@@ -777,11 +785,10 @@ class TestFunction(object):
                 assert x < 2
         """
         )
-        result = testdir.runpytest()
+        result = testdir.runpytest(*ignore_parametrized_marks_args)
         result.stdout.fnmatch_lines("* 2 passed, 1 skipped in *")
 
-    @ignore_parametrized_marks
-    def test_parametrize_skipif_no_skip(self, testdir):
+    def test_parametrize_skipif_no_skip(self, testdir, ignore_parametrized_marks_args):
         testdir.makepyfile(
             """
             import pytest
@@ -793,11 +800,10 @@ class TestFunction(object):
                 assert x < 2
         """
         )
-        result = testdir.runpytest()
+        result = testdir.runpytest(*ignore_parametrized_marks_args)
         result.stdout.fnmatch_lines("* 1 failed, 2 passed in *")
 
-    @ignore_parametrized_marks
-    def test_parametrize_xfail(self, testdir):
+    def test_parametrize_xfail(self, testdir, ignore_parametrized_marks_args):
         testdir.makepyfile(
             """
             import pytest
@@ -809,11 +815,10 @@ class TestFunction(object):
                 assert x < 2
         """
         )
-        result = testdir.runpytest()
+        result = testdir.runpytest(*ignore_parametrized_marks_args)
         result.stdout.fnmatch_lines("* 2 passed, 1 xfailed in *")
 
-    @ignore_parametrized_marks
-    def test_parametrize_passed(self, testdir):
+    def test_parametrize_passed(self, testdir, ignore_parametrized_marks_args):
         testdir.makepyfile(
             """
             import pytest
@@ -825,11 +830,10 @@ class TestFunction(object):
                 pass
         """
         )
-        result = testdir.runpytest()
+        result = testdir.runpytest(*ignore_parametrized_marks_args)
         result.stdout.fnmatch_lines("* 2 passed, 1 xpassed in *")
 
-    @ignore_parametrized_marks
-    def test_parametrize_xfail_passed(self, testdir):
+    def test_parametrize_xfail_passed(self, testdir, ignore_parametrized_marks_args):
         testdir.makepyfile(
             """
             import pytest
@@ -841,7 +845,7 @@ class TestFunction(object):
                 pass
         """
         )
-        result = testdir.runpytest()
+        result = testdir.runpytest(*ignore_parametrized_marks_args)
         result.stdout.fnmatch_lines("* 3 passed in *")
 
     def test_function_original_name(self, testdir):
@@ -1468,6 +1472,7 @@ def test_collect_functools_partial(testdir):
     result.assertoutcome(passed=6, failed=2)
 
 
+@pytest.mark.filterwarnings("default")
 def test_dont_collect_non_function_callable(testdir):
     """Test for issue https://github.com/pytest-dev/pytest/issues/331
 
@@ -1490,7 +1495,7 @@ def test_dont_collect_non_function_callable(testdir):
     result.stdout.fnmatch_lines(
         [
             "*collected 1 item*",
-            "*cannot collect 'test_a' because it is not a function*",
+            "*test_dont_collect_non_function_callable.py:2: *cannot collect 'test_a' because it is not a function*",
             "*1 passed, 1 warnings in *",
         ]
     )

@@ -1,1 +1,0 @@
-Added a blurb in usage.rst for the usage of -r flag which is used to show an extra test summary info.

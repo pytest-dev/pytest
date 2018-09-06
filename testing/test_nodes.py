@@ -19,3 +19,14 @@ from _pytest import nodes
 def test_ischildnode(baseid, nodeid, expected):
     result = nodes.ischildnode(baseid, nodeid)
     assert result is expected
+
+
+def test_std_warn_not_pytestwarning(testdir):
+    items = testdir.getitems(
+        """
+        def test():
+            pass
+    """
+    )
+    with pytest.raises(ValueError, match=".*instance of PytestWarning.*"):
+        items[0].warn(UserWarning("some warning"))
