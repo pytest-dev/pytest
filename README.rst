@@ -15,8 +15,9 @@
 .. image:: https://img.shields.io/pypi/pyversions/pytest.svg
     :target: https://pypi.org/project/pytest/
 
-.. image:: https://img.shields.io/coveralls/pytest-dev/pytest/master.svg
-    :target: https://coveralls.io/r/pytest-dev/pytest
+.. image:: https://codecov.io/gh/pytest-dev/pytest/branch/master/graph/badge.svg
+    :target: https://codecov.io/gh/pytest-dev/pytest
+    :alt: Code coverage Status
 
 .. image:: https://travis-ci.org/pytest-dev/pytest.svg?branch=master
     :target: https://travis-ci.org/pytest-dev/pytest
@@ -25,7 +26,7 @@
     :target: https://ci.appveyor.com/project/pytestbot/pytest
 
 .. image:: https://img.shields.io/badge/code%20style-black-000000.svg
-  :target: https://github.com/ambv/black
+    :target: https://github.com/ambv/black
 
 .. image:: https://www.codetriage.com/pytest-dev/pytest/badges/users.svg
     :target: https://www.codetriage.com/pytest-dev/pytest
