@@ -18,6 +18,90 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+pytest 3.8.0 (2018-09-05)
+=========================
+
+Deprecations and Removals
+-------------------------
+
+- `#2452 <https://github.com/pytest-dev/pytest/issues/2452>`_: ``Config.warn`` has been deprecated, it should be replaced by calls to the standard ``warnings.warn``.
+
+  ``Node.warn`` now supports two signatures:
+
+  * ``node.warn(PytestWarning("some message"))``: is now the recommended way to call this function. The warning
+    instance must be a ``PytestWarning`` or subclass  instance.
+
+  * ``node.warn("CI", "some message")``: this code/message form is now deprecated and should be converted to
+    the warning instance form above.
+
+  ``RemovedInPytest4Warning`` and ``PytestExperimentalApiWarning`` are now part of the public API and should be accessed
+  using ``pytest.RemovedInPytest4Warning`` and ``pytest.PytestExperimentalApiWarning``.
+
+
+- `#3936 <https://github.com/pytest-dev/pytest/issues/3936>`_: ``@pytest.mark.filterwarnings`` second parameter is no longer regex-escaped,
+  making it possible to actually use regular expressions to check the warning message.
+
+  **Note**: regex-escaping the match string was an implementation oversight that might break test suites which depend
+  on the old behavior.
+
+
+
+Features
+--------
+
+- `#2452 <https://github.com/pytest-dev/pytest/issues/2452>`_: Internal pytest warnings are now issued using the standard ``warnings`` module, making it possible to use
+  the standard warnings filters to manage those warnings. This introduces ``PytestWarning``,
+  ``PytestDeprecationWarning`` and ``RemovedInPytest4Warning`` warning types as part of the public API.
+
+  Consult `the documentation <https://docs.pytest.org/en/latest/warnings.html#internal-pytest-warnings>`_ for more info.
+
+
+- `#2908 <https://github.com/pytest-dev/pytest/issues/2908>`_: ``DeprecationWarning`` and ``PendingDeprecationWarning`` are now shown by default if no other warning filter is
+  configured. This makes pytest more compliant with
+  `PEP-0506 <https://www.python.org/dev/peps/pep-0565/#recommended-filter-settings-for-test-runners>`_. See
+  `the docs <https://docs.pytest.org/en/latest/warnings.html#deprecationwarning-and-pendingdeprecationwarning>`_ for
+  more info.
+
+
+- `#3784 <https://github.com/pytest-dev/pytest/issues/3784>`_: Add option to disable plugin auto-loading.
+
+
+- `#3829 <https://github.com/pytest-dev/pytest/issues/3829>`_: Added the ``count`` option to ``console_output_style`` to enable displaying the progress as a count instead of a percentage.
+
+
+- `#3837 <https://github.com/pytest-dev/pytest/issues/3837>`_: Added support for 'xfailed' and 'xpassed' outcomes to the ``pytester.RunResult.assert_outcomes`` signature.
+
+
+
+Bug Fixes
+---------
+
+- `#3911 <https://github.com/pytest-dev/pytest/issues/3911>`_: Terminal writer now takes into account unicode character width when writing out progress.
+
+
+- `#3913 <https://github.com/pytest-dev/pytest/issues/3913>`_: Pytest now returns with correct exit code (EXIT_USAGEERROR, 4) when called with unknown arguments.
+
+
+- `#3918 <https://github.com/pytest-dev/pytest/issues/3918>`_: Improve performance of assertion rewriting.
+
+
+
+Improved Documentation
+----------------------
+
+- `#3566 <https://github.com/pytest-dev/pytest/issues/3566>`_: Added a blurb in usage.rst for the usage of -r flag which is used to show an extra test summary info.
+
+
+- `#3907 <https://github.com/pytest-dev/pytest/issues/3907>`_: Corrected type of the exceptions collection passed to ``xfail``: ``raises`` argument accepts a ``tuple`` instead of ``list``.
+
+
+
+Trivial/Internal Changes
+------------------------
+
+- `#3853 <https://github.com/pytest-dev/pytest/issues/3853>`_: Removed ``"run all (no recorded failures)"`` message printed with ``--failed-first`` and ``--last-failed`` when there are no failed tests.
+
+
 pytest 3.7.4 (2018-08-29)
 =========================
 

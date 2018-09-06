@@ -140,6 +140,49 @@ will be shown (because KeyboardInterrupt is caught by pytest). By using this
 option you make sure a trace is shown.
 
 
+.. _`pytest.detailed_failed_tests_usage`:
+
+Detailed summary report
+-----------------------
+
+.. versionadded:: 2.9
+
+The ``-r`` flag can be used to display test results summary at the end of the test session,
+making it easy in large test suites to get a clear picture of all failures, skips, xfails, etc.
+
+Example::
+
+    $ pytest -ra
+    =========================== test session starts ============================
+    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
+    rootdir: $REGENDOC_TMPDIR, inifile:
+    collected 0 items
+
+    ======================= no tests ran in 0.12 seconds =======================
+
+The ``-r`` options accepts a number of characters after it, with ``a`` used above meaning "all except passes".
+
+Here is the full list of available characters that can be used:
+
+ - ``f`` - failed
+ - ``E`` - error
+ - ``s`` - skipped
+ - ``x`` - xfailed
+ - ``X`` - xpassed
+ - ``p`` - passed
+ - ``P`` - passed with output
+ - ``a`` - all except ``pP``
+
+More than one character can be used, so for example to only see failed and skipped tests, you can execute::
+
+    $ pytest -rfs
+    =========================== test session starts ============================
+    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
+    rootdir: $REGENDOC_TMPDIR, inifile:
+    collected 0 items
+
+    ======================= no tests ran in 0.12 seconds =======================
+
 .. _pdb-option:
 
 Dropping to PDB_ (Python Debugger) on failures

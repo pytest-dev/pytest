@@ -51,6 +51,8 @@ def main(args=None, plugins=None):
     :arg plugins: list of plugin objects to be auto-registered during
                   initialization.
     """
+    from _pytest.main import EXIT_USAGEERROR
+
     try:
         try:
             config = _prepareconfig(args, plugins)
@@ -69,7 +71,7 @@ def main(args=None, plugins=None):
         tw = py.io.TerminalWriter(sys.stderr)
         for msg in e.args:
             tw.line("ERROR: {}\n".format(msg), red=True)
-        return 4
+        return EXIT_USAGEERROR
 
 
 class cmdline(object):  # compatibility namespace

@@ -418,9 +418,8 @@ additionally it is possible to copy examples for a example folder before running
     test_example.py ..                                                   [100%]
 
     ============================= warnings summary =============================
-    test_example.py::test_plugin
-      $REGENDOC_TMPDIR/test_example.py:4: PytestExperimentalApiWarning: testdir.copy_example is an experimental api that may change over time
-        testdir.copy_example("test_example.py")
+    $REGENDOC_TMPDIR/test_example.py:4: PytestExperimentalApiWarning: testdir.copy_example is an experimental api that may change over time
+      testdir.copy_example("test_example.py")
 
     -- Docs: https://docs.pytest.org/en/latest/warnings.html
     =================== 2 passed, 1 warnings in 0.12 seconds ===================
