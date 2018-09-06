@@ -65,7 +65,7 @@ jobs:
 
     - stage: deploy
       python: '3.6'
-      env:
+      env: PYTEST_NO_COVERAGE=1
       install: pip install -U setuptools setuptools_scm
       script: skip
       deploy:
