@@ -67,16 +67,18 @@ def catch_warnings_for_item(config, ihook, when, item):
 
     Each warning captured triggers the ``pytest_warning_captured`` hook.
     """
-    args = config.getoption("pythonwarnings") or []
+    cmdline_filters = config.getoption("pythonwarnings") or []
     inifilters = config.getini("filterwarnings")
     with warnings.catch_warnings(record=True) as log:
-        filters_configured = args or inifilters or sys.warnoptions
+        filters_configured = bool(cmdline_filters or inifilters or sys.warnoptions)
 
-        for arg in args:
-            warnings._setoption(arg)
-
+        # filters should have this precedence: mark, cmdline options, ini
+        # filters should be applied in the inverse order of precedence
         for arg in inifilters:
             _setoption(warnings, arg)
+
+        for arg in cmdline_filters:
+            warnings._setoption(arg)
 
         if item is not None:
             for mark in item.iter_markers(name="filterwarnings"):
