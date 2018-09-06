@@ -63,7 +63,10 @@ Features
   more info.
 
 
-- `#3784 <https://github.com/pytest-dev/pytest/issues/3784>`_: Add option to disable plugin auto-loading.
+- `#3251 <https://github.com/pytest-dev/pytest/issues/3251>`_: Warnings are now captured and displayed during test collection.
+
+
+- `#3784 <https://github.com/pytest-dev/pytest/issues/3784>`_: ``PYTEST_DISABLE_PLUGIN_AUTOLOAD`` environment variable disables plugin auto-loading when set.
 
 
 - `#3829 <https://github.com/pytest-dev/pytest/issues/3829>`_: Added the ``count`` option to ``console_output_style`` to enable displaying the progress as a count instead of a percentage.
