@@ -1061,3 +1061,8 @@ def test_fixture_mock_integration(testdir):
     p = testdir.copy_example("acceptance/fixture_mock_integration.py")
     result = testdir.runpytest(p)
     result.stdout.fnmatch_lines("*1 passed*")
+
+
+def test_usage_error_code(testdir):
+    result = testdir.runpytest("-unknown-option-")
+    assert result.ret == EXIT_USAGEERROR

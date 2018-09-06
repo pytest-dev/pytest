@@ -18,7 +18,9 @@ from _pytest.capture import CaptureManager
 from _pytest.main import EXIT_NOTESTSCOLLECTED
 
 
-needsosdup = pytest.mark.xfail("not hasattr(os, 'dup')")
+needsosdup = pytest.mark.skipif(
+    not hasattr(os, "dup"), reason="test needs os.dup, not available on this platform"
+)
 
 
 def tobytes(obj):
@@ -61,9 +63,8 @@ class TestCaptureManager(object):
         pytest_addoption(parser)
         assert parser._groups[0].options[0].default == "sys"
 
-    @needsosdup
     @pytest.mark.parametrize(
-        "method", ["no", "sys", pytest.mark.skipif('not hasattr(os, "dup")', "fd")]
+        "method", ["no", "sys", pytest.param("fd", marks=needsosdup)]
     )
     def test_capturing_basic_api(self, method):
         capouter = StdCaptureFD()

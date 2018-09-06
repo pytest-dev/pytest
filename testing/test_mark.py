@@ -16,7 +16,7 @@ from _pytest.mark import (
 from _pytest.nodes import Node
 
 ignore_markinfo = pytest.mark.filterwarnings(
-    "ignore:MarkInfo objects:_pytest.deprecated.RemovedInPytest4Warning"
+    "ignore:MarkInfo objects:pytest.RemovedInPytest4Warning"
 )
 
 
@@ -1039,10 +1039,19 @@ class TestKeywordSelection(object):
         ),
     ],
 )
-@pytest.mark.filterwarnings("ignore")
+@pytest.mark.filterwarnings("default")
 def test_parameterset_extractfrom(argval, expected):
-    extracted = ParameterSet.extract_from(argval)
+    from _pytest.deprecated import MARK_PARAMETERSET_UNPACKING
+
+    warn_called = []
+
+    class DummyItem:
+        def warn(self, warning):
+            warn_called.append(warning)
+
+    extracted = ParameterSet.extract_from(argval, belonging_definition=DummyItem())
     assert extracted == expected
+    assert warn_called == [MARK_PARAMETERSET_UNPACKING]
 
 
 def test_legacy_transfer():

@@ -611,6 +611,8 @@ Session related reporting hooks:
 .. autofunction:: pytest_terminal_summary
 .. autofunction:: pytest_fixture_setup
 .. autofunction:: pytest_fixture_post_finalizer
+.. autofunction:: pytest_logwarning
+.. autofunction:: pytest_warning_captured
 
 And here is the central hook for reporting about
 test execution:
@@ -866,6 +868,11 @@ Contains comma-separated list of modules that should be loaded as plugins:
 
     export PYTEST_PLUGINS=mymodule.plugin,xdist
 
+PYTEST_DISABLE_PLUGIN_AUTOLOAD
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+When set, disables plugin auto-loading through setuptools entrypoints. Only explicitly specified plugins will be
+loaded.
 
 PYTEST_CURRENT_TEST
 ~~~~~~~~~~~~~~~~~~~
@@ -935,6 +942,7 @@ passed multiple times. The expected format is ``name=value``. For example::
 
    * ``classic``: classic pytest output.
    * ``progress``: like classic pytest output, but with a progress indicator.
+   * ``count``: like progress, but shows progress as the number of tests completed instead of a percent.
 
    The default is ``progress``, but you can fallback to ``classic`` if you prefer or
    the new mode is causing unexpected problems:
