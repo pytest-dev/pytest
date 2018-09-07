@@ -637,8 +637,8 @@ class TerminalReporter(object):
     def pytest_terminal_summary(self):
         self.summary_errors()
         self.summary_failures()
-        yield
         self.summary_warnings()
+        yield
         self.summary_passes()
 
     def pytest_keyboard_interrupt(self, excinfo):
