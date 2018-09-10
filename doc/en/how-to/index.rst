@@ -6,7 +6,7 @@ How-to guides
 ..  toctree::
     :maxdepth: 2
 
-    Set up Bash completetion <bash-completion>
+    Set up Bash completion <bash-completion>
     Use plugins <plugins>
     Write plugins <writing_plugins>
     assert
