@@ -148,10 +148,9 @@ def assertrepr_compare(config, op, left, right):
                     explanation = _compare_eq_set(left, right, verbose)
                 elif isdict(left) and isdict(right):
                     explanation = _compare_eq_dict(left, right, verbose)
-                elif type(left) == type(right) and isdatacls(left) and isdatacls(right):
-                    explanation = _compare_eq_class(left, right, verbose, type="data")
-                elif type(left) == type(right) and isattrs(left) and isattrs(right):
-                    explanation = _compare_eq_class(left, right, verbose, type="attrs")
+                elif type(left) == type(right) and (isdatacls(left) or isattrs(left)):
+                    type_fn = (isdatacls, isattrs)
+                    explanation = _compare_eq_cls(left, right, verbose, type_fn)
                 if isiterable(left) and isiterable(right):
                     expl = _compare_eq_iterable(left, right, verbose)
                     if explanation is not None:
@@ -325,15 +324,14 @@ def _compare_eq_dict(left, right, verbose=False):
     return explanation
 
 
-def _compare_eq_class(left, right, verbose, type=None):
-    if type == "data":
+def _compare_eq_cls(left, right, verbose, type_fns):
+    isdatacls, isattrs = type_fns
+    if isdatacls(left):
         all_fields = left.__dataclass_fields__
         fields_to_check = [field for field, info in all_fields.items() if info.compare]
-    elif type == "attrs":
+    elif isattrs(left):
         all_fields = left.__attrs_attrs__
         fields_to_check = [field.name for field in all_fields if field.cmp]
-    else:
-        raise RuntimeError("Unexpected value for `type` paramater")
 
     same = []
     diff = []
