@@ -11,6 +11,7 @@ import _pytest._code
 from _pytest.compat import getfslineno
 
 from _pytest.mark.structures import NodeKeywords, MarkInfo
+from _pytest.warning_types import RemovedInPytest4Warning
 
 SEP = "/"
 
@@ -61,11 +62,13 @@ class _CompatProperty(object):
         if obj is None:
             return self
 
-        # TODO: reenable in the features branch
-        # warnings.warn(
-        #     "usage of {owner!r}.{name} is deprecated, please use pytest.{name} instead".format(
-        #         name=self.name, owner=type(owner).__name__),
-        #     PendingDeprecationWarning, stacklevel=2)
+        warnings.warn(
+            "usage of {owner}.{name} is deprecated, please use pytest.{name} instead".format(
+                name=self.name, owner=owner.__name__
+            ),
+            RemovedInPytest4Warning,
+            stacklevel=2,
+        )
         return getattr(__import__("pytest"), self.name)
 
 

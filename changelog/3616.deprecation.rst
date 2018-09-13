@@ -1,0 +1,8 @@
+The following accesses have been documented as deprecated for years, but are now actually emitting deprecation warnings.
+
+* Access of ``Module``, ``Function``, ``Class``, ``Instance``, ``File`` and ``Item`` through ``Node`` instances. Now
+  users will this warning::
+
+        usage of Function.Module is deprecated, please use pytest.Module instead
+
+  Users should just ``import pytest`` and access those objects using the ``pytest`` module.

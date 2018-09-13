@@ -30,6 +30,23 @@ def test_yield_tests_deprecation(testdir):
     assert result.stdout.str().count("yield tests are deprecated") == 2
 
 
+def test_compat_properties_deprecation(testdir):
+    testdir.makepyfile(
+        """
+        def test_foo(request):
+            print(request.node.Module)
+    """
+    )
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines(
+        [
+            "*test_compat_properties_deprecation.py:2:*usage of Function.Module is deprecated, "
+            "please use pytest.Module instead*",
+            "*1 passed, 1 warnings in*",
+        ]
+    )
+
+
 @pytest.mark.filterwarnings("default")
 def test_funcarg_prefix_deprecation(testdir):
     testdir.makepyfile(
