@@ -18,6 +18,22 @@ YIELD_TESTS = RemovedInPytest4Warning(
     "yield tests are deprecated, and scheduled to be removed in pytest 4.0"
 )
 
+CACHED_SETUP = RemovedInPytest4Warning(
+    "cached_setup is deprecated and will be removed in a future release. "
+    "Use standard fixture functions instead."
+)
+
+COMPAT_PROPERTY = (
+    "usage of {owner}.{name} is deprecated, please use pytest.{name} instead"
+)
+
+CUSTOM_CLASS = (
+    'use of special named "{name}" objects in collectors of type "{type_name}" to '
+    "customize the created nodes is deprecated. "
+    "Use pytest_pycollect_makeitem(...) to create custom "
+    "collection nodes instead."
+)
+
 FUNCARG_PREFIX = (
     '{name}: declaring fixtures using "pytest_funcarg__" prefix is deprecated '
     "and scheduled to be removed in pytest 4.0.  "
