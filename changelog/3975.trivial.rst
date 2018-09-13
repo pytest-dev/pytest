@@ -1,0 +1,1 @@
+Remove legacy code around im_func as that was python2 only
