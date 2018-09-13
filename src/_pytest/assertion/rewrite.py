@@ -199,7 +199,11 @@ class AssertionRewritingHook(object):
 
         # For matching the name it must be as if it was a filename.
         parts[-1] = parts[-1] + ".py"
-        fn_pypath = py.path.local(os.path.sep.join(parts))
+        try:
+            fn_pypath = py.path.local(os.path.sep.join(parts))
+        except EnvironmentError:
+            return False
+
         for pat in self.fnpats:
             # if the pattern contains subdirectories ("tests/**.py" for example) we can't bail out based
             # on the name alone because we need to match against the full path
