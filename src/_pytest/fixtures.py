@@ -479,6 +479,11 @@ class FixtureRequest(FuncargnamesCompatAttr):
             or ``session`` indicating the caching lifecycle of the resource.
         :arg extrakey: added to internal caching key of (funcargname, scope).
         """
+        msg = (
+            "cached_setup is deprecated and will be removed in a future release. "
+            "Use standard fixture functions instead."
+        )
+        warnings.warn(RemovedInPytest4Warning(msg), stacklevel=2)
         if not hasattr(self.config, "_setupcache"):
             self.config._setupcache = {}  # XXX weakref?
         cachekey = (self.fixturename, self._getscopeitem(scope), extrakey)

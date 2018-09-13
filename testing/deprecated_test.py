@@ -47,6 +47,27 @@ def test_compat_properties_deprecation(testdir):
     )
 
 
+def test_cached_setup_deprecation(testdir):
+    testdir.makepyfile(
+        """
+        import pytest
+        @pytest.fixture
+        def fix(request):
+            return request.cached_setup(lambda: 1)
+
+        def test_foo(fix):
+            assert fix == 1
+    """
+    )
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines(
+        [
+            "*test_cached_setup_deprecation.py:4:*cached_setup is deprecated*",
+            "*1 passed, 1 warnings in*",
+        ]
+    )
+
+
 @pytest.mark.filterwarnings("default")
 def test_funcarg_prefix_deprecation(testdir):
     testdir.makepyfile(

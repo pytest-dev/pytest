@@ -6,3 +6,6 @@ The following accesses have been documented as deprecated for years, but are now
         usage of Function.Module is deprecated, please use pytest.Module instead
 
   Users should just ``import pytest`` and access those objects using the ``pytest`` module.
+
+* ``request.cached_setup``, this was the precursor of the setup/teardown mechanism available to fixtures. You can
+  consult `funcarg comparision section in the docs <https://docs.pytest.org/en/latest/funcarg_compare.html>`_.
