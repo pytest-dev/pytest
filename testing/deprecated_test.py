@@ -68,6 +68,36 @@ def test_cached_setup_deprecation(testdir):
     )
 
 
+def test_custom_class_deprecation(testdir):
+    testdir.makeconftest(
+        """
+        import pytest
+
+        class MyModule(pytest.Module):
+
+            class Class(pytest.Class):
+                pass
+
+        def pytest_pycollect_makemodule(path, parent):
+            return MyModule(path, parent)
+    """
+    )
+    testdir.makepyfile(
+        """
+        class Test:
+            def test_foo(self):
+                pass
+    """
+    )
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines(
+        [
+            '*test_custom_class_deprecation.py:1:*"Class" objects in collectors of type "MyModule*',
+            "*1 passed, 1 warnings in*",
+        ]
+    )
+
+
 @pytest.mark.filterwarnings("default")
 def test_funcarg_prefix_deprecation(testdir):
     testdir.makepyfile(

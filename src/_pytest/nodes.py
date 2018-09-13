@@ -130,10 +130,13 @@ class Node(object):
             return getattr(__import__("pytest"), name)
         else:
             cls = getattr(self, name)
-            # TODO: reenable in the features branch
-            # warnings.warn("use of node.%s is deprecated, "
-            #    "use pytest_pycollect_makeitem(...) to create custom "
-            #    "collection nodes" % name, category=DeprecationWarning)
+            msg = (
+                'use of special named "%s" objects in collectors of type "%s" to '
+                "customize the created nodes is deprecated. "
+                "Use pytest_pycollect_makeitem(...) to create custom "
+                "collection nodes instead." % (name, type(self).__name__)
+            )
+            self.warn(RemovedInPytest4Warning(msg))
         return cls
 
     def __repr__(self):
