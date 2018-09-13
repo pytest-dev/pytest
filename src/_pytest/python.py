@@ -37,6 +37,7 @@ from _pytest.compat import (
     getlocation,
     enum,
     get_default_arg_names,
+    getimfunc,
 )
 from _pytest.outcomes import fail
 from _pytest.mark.structures import (
@@ -681,14 +682,12 @@ class Class(PyCollector):
     def setup(self):
         setup_class = _get_xunit_func(self.obj, "setup_class")
         if setup_class is not None:
-            setup_class = getattr(setup_class, "im_func", setup_class)
-            setup_class = getattr(setup_class, "__func__", setup_class)
+            setup_class = getimfunc(setup_class)
             setup_class(self.obj)
 
         fin_class = getattr(self.obj, "teardown_class", None)
         if fin_class is not None:
-            fin_class = getattr(fin_class, "im_func", fin_class)
-            fin_class = getattr(fin_class, "__func__", fin_class)
+            fin_class = getimfunc(fin_class)
             self.addfinalizer(lambda: fin_class(self.obj))
 
 
@@ -1433,7 +1432,7 @@ class Function(FunctionMixin, nodes.Item, fixtures.FuncargnamesCompatAttr):
     @property
     def function(self):
         "underlying python 'function' object"
-        return getattr(self.obj, "im_func", self.obj)
+        return getimfunc(self.obj)
 
     def _getobj(self):
         name = self.name
