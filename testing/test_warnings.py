@@ -430,6 +430,50 @@ def test_hide_pytest_internal_warnings(testdir, ignore_pytest_warnings):
         )
 
 
+@pytest.mark.parametrize("ignore_on_cmdline", [True, False])
+def test_option_precedence_cmdline_over_ini(testdir, ignore_on_cmdline):
+    """filters defined in the command-line should take precedence over filters in ini files (#3946)."""
+    testdir.makeini(
+        """
+        [pytest]
+        filterwarnings = error
+    """
+    )
+    testdir.makepyfile(
+        """
+        import warnings
+        def test():
+            warnings.warn(UserWarning('hello'))
+    """
+    )
+    args = ["-W", "ignore"] if ignore_on_cmdline else []
+    result = testdir.runpytest(*args)
+    if ignore_on_cmdline:
+        result.stdout.fnmatch_lines(["* 1 passed in*"])
+    else:
+        result.stdout.fnmatch_lines(["* 1 failed in*"])
+
+
+def test_option_precedence_mark(testdir):
+    """Filters defined by marks should always take precedence (#3946)."""
+    testdir.makeini(
+        """
+        [pytest]
+        filterwarnings = ignore
+    """
+    )
+    testdir.makepyfile(
+        """
+        import pytest, warnings
+        @pytest.mark.filterwarnings('error')
+        def test():
+            warnings.warn(UserWarning('hello'))
+    """
+    )
+    result = testdir.runpytest("-W", "ignore")
+    result.stdout.fnmatch_lines(["* 1 failed in*"])
+
+
 class TestDeprecationWarningsByDefault:
     """
     Note: all pytest runs are executed in a subprocess so we don't inherit warning filters

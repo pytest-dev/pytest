@@ -1,0 +1,2 @@
+Warning filters passed as command line options using ``-W`` now take precedence over filters defined in ``ini``
+configuration files.
