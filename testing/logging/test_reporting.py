@@ -908,3 +908,23 @@ def test_live_logging_suspends_capture(has_capture_manager, request):
     else:
         assert MockCaptureManager.calls == []
     assert out_file.getvalue() == "\nsome message\n"
+
+
+def test_collection_live_logging(testdir):
+    testdir.makepyfile(
+        """
+        import logging
+
+        logging.getLogger().info("Normal message")
+    """
+    )
+
+    result = testdir.runpytest("--log-cli-level=INFO")
+    result.stdout.fnmatch_lines(
+        [
+            "collecting*",
+            "*--- live log collection ---*",
+            "*Normal message*",
+            "collected 0 items",
+        ]
+    )

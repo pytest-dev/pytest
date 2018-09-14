@@ -1,0 +1,2 @@
+Log messages generated in the collection phase are now shown when
+live-logging is enabled.

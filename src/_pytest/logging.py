@@ -2,7 +2,7 @@
 from __future__ import absolute_import, division, print_function
 
 import logging
-from contextlib import closing, contextmanager
+from contextlib import contextmanager
 import re
 import six
 
@@ -414,7 +414,6 @@ class LoggingPlugin(object):
         else:
             self.log_file_handler = None
 
-        # initialized during pytest_runtestloop
         self.log_cli_handler = None
 
     def _log_cli_enabled(self):
@@ -424,6 +423,22 @@ class LoggingPlugin(object):
         return self._config.getoption(
             "--log-cli-level"
         ) is not None or self._config.getini("log_cli")
+
+    @pytest.hookimpl(hookwrapper=True, tryfirst=True)
+    def pytest_collection(self):
+        # This has to be called before the first log message is logged,
+        # so we can access the terminal reporter plugin.
+        self._setup_cli_logging()
+
+        with self.live_logs_context():
+            if self.log_cli_handler:
+                self.log_cli_handler.set_when("collection")
+
+            if self.log_file_handler is not None:
+                with catching_logs(self.log_file_handler, level=self.log_file_level):
+                    yield  # run all the tests
+            else:
+                yield
 
     @contextmanager
     def _runtest_for(self, item, when):
@@ -484,22 +499,15 @@ class LoggingPlugin(object):
     @pytest.hookimpl(hookwrapper=True)
     def pytest_runtestloop(self, session):
         """Runs all collected test items."""
-        self._setup_cli_logging()
-        with self.live_logs_context:
+        with self.live_logs_context():
             if self.log_file_handler is not None:
-                with closing(self.log_file_handler):
-                    with catching_logs(
-                        self.log_file_handler, level=self.log_file_level
-                    ):
-                        yield  # run all the tests
+                with catching_logs(self.log_file_handler, level=self.log_file_level):
+                    yield  # run all the tests
             else:
                 yield  # run all the tests
 
     def _setup_cli_logging(self):
-        """Sets up the handler and logger for the Live Logs feature, if enabled.
-
-        This must be done right before starting the loop so we can access the terminal reporter plugin.
-        """
+        """Sets up the handler and logger for the Live Logs feature, if enabled."""
         terminal_reporter = self._config.pluginmanager.get_plugin("terminalreporter")
         if self._log_cli_enabled() and terminal_reporter is not None:
             capture_manager = self._config.pluginmanager.get_plugin("capturemanager")
@@ -529,11 +537,14 @@ class LoggingPlugin(object):
                 self._config, "log_cli_level", "log_level"
             )
             self.log_cli_handler = log_cli_handler
-            self.live_logs_context = catching_logs(
+            self.live_logs_context = lambda: catching_logs(
                 log_cli_handler, formatter=log_cli_formatter, level=log_cli_level
             )
         else:
-            self.live_logs_context = dummy_context_manager()
+            self.live_logs_context = lambda: dummy_context_manager()
+        # Note that the lambda for the live_logs_context is needed because
+        # live_logs_context can otherwise not be entered multiple times due
+        # to limitations of contextlib.contextmanager
 
 
 class _LiveLoggingStreamHandler(logging.StreamHandler):
