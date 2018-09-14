@@ -884,3 +884,14 @@ class TestReadme(object):
         )
         testdir.runpytest()
         assert self.check_readme(testdir) is True
+
+
+def test_gitignore(testdir):
+    """Ensure we automatically create .gitignore file in the pytest_cache directory (#3286)."""
+    from _pytest.cacheprovider import Cache
+
+    config = testdir.parseconfig()
+    cache = Cache.for_config(config)
+    cache.set("foo", "bar")
+    msg = "# created by pytest automatically, do not change\n*"
+    assert cache._cachedir.joinpath(".gitignore").read_text(encoding="UTF-8") == msg

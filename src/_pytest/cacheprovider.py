@@ -115,14 +115,17 @@ class Cache(object):
         else:
             with f:
                 json.dump(value, f, indent=2, sort_keys=True)
-                self._ensure_readme()
+                self._ensure_supporting_files()
 
-    def _ensure_readme(self):
-
+    def _ensure_supporting_files(self):
+        """Create supporting files in the cache dir that are not really part of the cache."""
         if self._cachedir.is_dir():
             readme_path = self._cachedir / "README.md"
             if not readme_path.is_file():
                 readme_path.write_text(README_CONTENT)
+
+            msg = u"# created by pytest automatically, do not change\n*"
+            self._cachedir.joinpath(".gitignore").write_text(msg, encoding="UTF-8")
 
 
 class LFPlugin(object):
