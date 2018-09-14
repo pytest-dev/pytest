@@ -330,6 +330,9 @@ You can also use it as a contextmanager::
             myobject.deprecated_method()
 
 
+
+.. _internal-warnings:
+
 Internal pytest warnings
 ------------------------
 
@@ -363,9 +366,8 @@ defines an ``__init__`` constructor, as this prevents the class from being insta
 
 These warnings might be filtered using the same builtin mechanisms used to filter other types of warnings.
 
-Following our :ref:`backwards-compatibility`, deprecated features will be kept *at least* two minor releases. After that,
-they will changed so they by default raise errors instead of just warnings, so users can adapt to it on their own time
-if not having done so until now. In a later release the deprecated feature will be removed completely.
+Please read our :ref:`backwards-compatibility` to learn how we proceed about deprecating and eventually removing
+features.
 
 The following warning types ares used by pytest and are part of the public API:
 
