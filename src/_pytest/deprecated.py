@@ -10,24 +10,8 @@ in case of warnings which need to format their messages.
 """
 from __future__ import absolute_import, division, print_function
 
-import attr
 
-from _pytest.warning_types import RemovedInPytest4Warning
-
-
-@attr.s
-class UnformattedWarning(object):
-    """Used to hold warnings that need to format their message at runtime, as opposed to a direct message.
-
-    Using this class avoids to keep all the warning types and messages in this module, avoiding misuse.
-    """
-
-    category = attr.ib()
-    template = attr.ib()
-
-    def format(self, **kwargs):
-        """Returns an instance of the warning category, formatted with given kwargs"""
-        return self.category(self.template.format(**kwargs))
+from _pytest.warning_types import UnformattedWarning, RemovedInPytest4Warning
 
 
 MAIN_STR_ARGS = RemovedInPytest4Warning(
