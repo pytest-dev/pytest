@@ -11,7 +11,6 @@ import _pytest._code
 from _pytest.compat import getfslineno
 
 from _pytest.mark.structures import NodeKeywords, MarkInfo
-from _pytest.warning_types import RemovedInPytest4Warning
 
 SEP = "/"
 
@@ -65,10 +64,7 @@ class _CompatProperty(object):
         from _pytest.deprecated import COMPAT_PROPERTY
 
         warnings.warn(
-            RemovedInPytest4Warning(
-                COMPAT_PROPERTY.format(name=self.name, owner=owner.__name__)
-            ),
-            stacklevel=2,
+            COMPAT_PROPERTY.format(name=self.name, owner=owner.__name__), stacklevel=2
         )
         return getattr(__import__("pytest"), self.name)
 
@@ -133,11 +129,7 @@ class Node(object):
             from _pytest.deprecated import CUSTOM_CLASS
 
             cls = getattr(self, name)
-            self.warn(
-                RemovedInPytest4Warning(
-                    CUSTOM_CLASS.format(name=name, type_name=type(self).__name__)
-                )
-            )
+            self.warn(CUSTOM_CLASS.format(name=name, type_name=type(self).__name__))
         return cls
 
     def __repr__(self):

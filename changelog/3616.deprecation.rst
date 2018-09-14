@@ -16,3 +16,7 @@ The following accesses have been documented as deprecated for years, but are now
 
   This issue should affect only advanced plugins who create new collection types, so if you see this warning
   message please contact the authors so they can change the code.
+
+* The warning that produces the message below has changed to ``RemovedInPytest4Warning``::
+
+        getfuncargvalue is deprecated, use getfixturevalue

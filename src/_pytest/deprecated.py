@@ -4,10 +4,31 @@ that is planned to be removed in the next pytest release.
 
 Keeping it in a central location makes it easy to track what is deprecated and should
 be removed when the time comes.
+
+All constants defined in this module should be either PytestWarning instances or UnformattedWarning
+in case of warnings which need to format their messages.
 """
 from __future__ import absolute_import, division, print_function
 
+import attr
+
 from _pytest.warning_types import RemovedInPytest4Warning
+
+
+@attr.s
+class UnformattedWarning(object):
+    """Used to hold warnings that need to format their message at runtime, as opposed to a direct message.
+
+    Using this class avoids to keep all the warning types and messages in this module, avoiding misuse.
+    """
+
+    category = attr.ib()
+    template = attr.ib()
+
+    def format(self, **kwargs):
+        """Returns an instance of the warning category, formatted with given kwargs"""
+        return self.category(self.template.format(**kwargs))
+
 
 MAIN_STR_ARGS = RemovedInPytest4Warning(
     "passing a string to pytest.main() is deprecated, "
@@ -23,36 +44,43 @@ CACHED_SETUP = RemovedInPytest4Warning(
     "Use standard fixture functions instead."
 )
 
-COMPAT_PROPERTY = (
-    "usage of {owner}.{name} is deprecated, please use pytest.{name} instead"
+COMPAT_PROPERTY = UnformattedWarning(
+    RemovedInPytest4Warning,
+    "usage of {owner}.{name} is deprecated, please use pytest.{name} instead",
 )
 
-CUSTOM_CLASS = (
+CUSTOM_CLASS = UnformattedWarning(
+    RemovedInPytest4Warning,
     'use of special named "{name}" objects in collectors of type "{type_name}" to '
     "customize the created nodes is deprecated. "
     "Use pytest_pycollect_makeitem(...) to create custom "
-    "collection nodes instead."
+    "collection nodes instead.",
 )
 
-FUNCARG_PREFIX = (
+FUNCARG_PREFIX = UnformattedWarning(
+    RemovedInPytest4Warning,
     '{name}: declaring fixtures using "pytest_funcarg__" prefix is deprecated '
     "and scheduled to be removed in pytest 4.0.  "
-    "Please remove the prefix and use the @pytest.fixture decorator instead."
+    "Please remove the prefix and use the @pytest.fixture decorator instead.",
 )
 
-FIXTURE_FUNCTION_CALL = (
+FIXTURE_FUNCTION_CALL = UnformattedWarning(
+    RemovedInPytest4Warning,
     'Fixture "{name}" called directly. Fixtures are not meant to be called directly, '
     "are created automatically when test functions request them as parameters. "
-    "See https://docs.pytest.org/en/latest/fixture.html for more information."
+    "See https://docs.pytest.org/en/latest/fixture.html for more information.",
 )
 
-CFG_PYTEST_SECTION = (
-    "[pytest] section in {filename} files is deprecated, use [tool:pytest] instead."
+CFG_PYTEST_SECTION = UnformattedWarning(
+    RemovedInPytest4Warning,
+    "[pytest] section in {filename} files is deprecated, use [tool:pytest] instead.",
 )
 
-GETFUNCARGVALUE = "getfuncargvalue is deprecated, use getfixturevalue"
+GETFUNCARGVALUE = RemovedInPytest4Warning(
+    "getfuncargvalue is deprecated, use getfixturevalue"
+)
 
-RESULT_LOG = (
+RESULT_LOG = RemovedInPytest4Warning(
     "--result-log is deprecated and scheduled for removal in pytest 4.0.\n"
     "See https://docs.pytest.org/en/latest/usage.html#creating-resultlog-format-files for more information."
 )
