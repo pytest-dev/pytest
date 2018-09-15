@@ -977,6 +977,7 @@ class TestRequestCachedSetup(object):
         )
         reprec.assertoutcome(passed=4)
 
+    @pytest.mark.filterwarnings("ignore:cached_setup is deprecated")
     def test_request_cachedsetup_extrakey(self, testdir):
         item1 = testdir.getitem("def test_func(): pass")
         req1 = fixtures.FixtureRequest(item1)
@@ -994,6 +995,7 @@ class TestRequestCachedSetup(object):
         assert ret1 == ret1b
         assert ret2 == ret2b
 
+    @pytest.mark.filterwarnings("ignore:cached_setup is deprecated")
     def test_request_cachedsetup_cache_deletion(self, testdir):
         item1 = testdir.getitem("def test_func(): pass")
         req1 = fixtures.FixtureRequest(item1)

@@ -800,7 +800,10 @@ class Generator(FunctionMixin, PyCollector):
                     "%r generated tests with non-unique name %r" % (self, name)
                 )
             seen[name] = True
-            values.append(self.Function(name, self, args=args, callobj=call))
+            with warnings.catch_warnings():
+                # ignore our own deprecation warning
+                function_class = self.Function
+            values.append(function_class(name, self, args=args, callobj=call))
         self.warn(deprecated.YIELD_TESTS)
         return values
 

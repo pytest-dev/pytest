@@ -61,11 +61,11 @@ class _CompatProperty(object):
         if obj is None:
             return self
 
-        # TODO: reenable in the features branch
-        # warnings.warn(
-        #     "usage of {owner!r}.{name} is deprecated, please use pytest.{name} instead".format(
-        #         name=self.name, owner=type(owner).__name__),
-        #     PendingDeprecationWarning, stacklevel=2)
+        from _pytest.deprecated import COMPAT_PROPERTY
+
+        warnings.warn(
+            COMPAT_PROPERTY.format(name=self.name, owner=owner.__name__), stacklevel=2
+        )
         return getattr(__import__("pytest"), self.name)
 
 
@@ -126,11 +126,10 @@ class Node(object):
         if isinstance(maybe_compatprop, _CompatProperty):
             return getattr(__import__("pytest"), name)
         else:
+            from _pytest.deprecated import CUSTOM_CLASS
+
             cls = getattr(self, name)
-            # TODO: reenable in the features branch
-            # warnings.warn("use of node.%s is deprecated, "
-            #    "use pytest_pycollect_makeitem(...) to create custom "
-            #    "collection nodes" % name, category=DeprecationWarning)
+            self.warn(CUSTOM_CLASS.format(name=name, type_name=type(self).__name__))
         return cls
 
     def __repr__(self):

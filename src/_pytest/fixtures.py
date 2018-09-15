@@ -32,7 +32,7 @@ from _pytest.compat import (
     get_real_method,
     _PytestWrapper,
 )
-from _pytest.deprecated import FIXTURE_FUNCTION_CALL, RemovedInPytest4Warning
+from _pytest.deprecated import FIXTURE_FUNCTION_CALL
 from _pytest.outcomes import fail, TEST_OUTCOME
 
 FIXTURE_MSG = 'fixtures cannot have "pytest_funcarg__" prefix and be decorated with @pytest.fixture:\n{}'
@@ -479,6 +479,9 @@ class FixtureRequest(FuncargnamesCompatAttr):
             or ``session`` indicating the caching lifecycle of the resource.
         :arg extrakey: added to internal caching key of (funcargname, scope).
         """
+        from _pytest.deprecated import CACHED_SETUP
+
+        warnings.warn(CACHED_SETUP, stacklevel=2)
         if not hasattr(self.config, "_setupcache"):
             self.config._setupcache = {}  # XXX weakref?
         cachekey = (self.fixturename, self._getscopeitem(scope), extrakey)
@@ -512,7 +515,7 @@ class FixtureRequest(FuncargnamesCompatAttr):
         """ Deprecated, use getfixturevalue. """
         from _pytest import deprecated
 
-        warnings.warn(deprecated.GETFUNCARGVALUE, DeprecationWarning, stacklevel=2)
+        warnings.warn(deprecated.GETFUNCARGVALUE, stacklevel=2)
         return self.getfixturevalue(argname)
 
     def _get_active_fixturedef(self, argname):
@@ -956,8 +959,9 @@ def wrap_function_to_warning_if_called_directly(function, fixture_marker):
     used as an argument in a test function.
     """
     is_yield_function = is_generator(function)
-    msg = FIXTURE_FUNCTION_CALL.format(name=fixture_marker.name or function.__name__)
-    warning = RemovedInPytest4Warning(msg)
+    warning = FIXTURE_FUNCTION_CALL.format(
+        name=fixture_marker.name or function.__name__
+    )
 
     if is_yield_function:
 
@@ -1284,9 +1288,7 @@ class FixtureManager(object):
 
                 filename, lineno = getfslineno(obj)
                 warnings.warn_explicit(
-                    RemovedInPytest4Warning(
-                        deprecated.FUNCARG_PREFIX.format(name=name)
-                    ),
+                    deprecated.FUNCARG_PREFIX.format(name=name),
                     category=None,
                     filename=str(filename),
                     lineno=lineno + 1,

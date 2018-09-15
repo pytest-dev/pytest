@@ -1,3 +1,6 @@
+import attr
+
+
 class PytestWarning(UserWarning):
     """
     Bases: :class:`UserWarning`.
@@ -37,6 +40,21 @@ class PytestExperimentalApiWarning(PytestWarning, FutureWarning):
                 apiname=apiname
             )
         )
+
+
+@attr.s
+class UnformattedWarning(object):
+    """Used to hold warnings that need to format their message at runtime, as opposed to a direct message.
+
+    Using this class avoids to keep all the warning types and messages in this module, avoiding misuse.
+    """
+
+    category = attr.ib()
+    template = attr.ib()
+
+    def format(self, **kwargs):
+        """Returns an instance of the warning category, formatted with given kwargs"""
+        return self.category(self.template.format(**kwargs))
 
 
 PYTESTER_COPY_EXAMPLE = PytestExperimentalApiWarning.simple("testdir.copy_example")
