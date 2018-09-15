@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import sys
 import textwrap
 
 import pytest
@@ -488,6 +489,10 @@ class TestRequestBasic(object):
         assert len(arg2fixturedefs) == 1
         assert arg2fixturedefs["something"][0].argname == "something"
 
+    @pytest.mark.skipif(
+        hasattr(sys, "pypy_version_info"),
+        reason="this method of test doesn't work on pypy",
+    )
     def test_request_garbage(self, testdir):
         testdir.makepyfile(
             """
@@ -498,33 +503,32 @@ class TestRequestBasic(object):
 
             @pytest.fixture(autouse=True)
             def something(request):
-                # this method of test doesn't work on pypy
-                if hasattr(sys, "pypy_version_info"):
-                    yield
-                else:
-                    original = gc.get_debug()
-                    gc.set_debug(gc.DEBUG_SAVEALL)
-                    gc.collect()
+                original = gc.get_debug()
+                gc.set_debug(gc.DEBUG_SAVEALL)
+                gc.collect()
 
-                    yield
+                yield
 
+                try:
                     gc.collect()
                     leaked_types = sum(1 for _ in gc.garbage
                                        if isinstance(_, PseudoFixtureDef))
 
+                    # debug leaked types if the test fails
+                    print(leaked_types)
+
                     gc.garbage[:] = []
 
-                    try:
-                        assert leaked_types == 0
-                    finally:
-                        gc.set_debug(original)
+                    assert leaked_types == 0
+                finally:
+                    gc.set_debug(original)
 
             def test_func():
                 pass
         """
         )
-        reprec = testdir.inline_run()
-        reprec.assertoutcome(passed=1)
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines("* 1 passed in *")
 
     def test_getfixturevalue_recursive(self, testdir):
         testdir.makeconftest(
