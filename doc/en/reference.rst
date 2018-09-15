@@ -1256,15 +1256,25 @@ passed multiple times. The expected format is ``name=value``. For example::
 
    One or more Glob-style file patterns determining which python files
    are considered as test modules. Search for multiple glob patterns by
-   adding a space between patterns::
+   adding a space between patterns:
 
    .. code-block:: ini
 
         [pytest]
         python_files = test_*.py check_*.py example_*.py
 
-   By default, pytest will consider any file matching with ``test_*.py``
-   and ``*_test.py`` globs as a test module.
+   Or one per line:
+
+   .. code-block:: ini
+
+        [pytest]
+        python_files =
+            test_*.py
+            check_*.py
+            example_*.py
+
+   By default, files matching ``test_*.py`` and ``*_test.py`` will be considered
+   test modules.
 
 
 .. confval:: python_functions
