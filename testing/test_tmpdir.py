@@ -19,11 +19,11 @@ def test_ensuretemp(recwarn):
 
 class TestTempdirHandler(object):
     def test_mktemp(self, testdir):
-        from _pytest.tmpdir import TempdirFactory
+        from _pytest.tmpdir import TempdirFactory, TempPathFactory
 
         config = testdir.parseconfig()
         config.option.basetemp = testdir.mkdir("hello")
-        t = TempdirFactory(config)
+        t = TempdirFactory(TempPathFactory.from_config(config))
         tmp = t.mktemp("world")
         assert tmp.relto(t.getbasetemp()) == "world0"
         tmp = t.mktemp("this")

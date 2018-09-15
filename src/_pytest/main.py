@@ -156,7 +156,10 @@ def pytest_addoption(parser):
         dest="basetemp",
         default=None,
         metavar="dir",
-        help="base temporary directory for this test run.",
+        help=(
+            "base temporary directory for this test run."
+            "(warning: this directory is removed if it exists)"
+        ),
     )
 
 

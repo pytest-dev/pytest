@@ -6,17 +6,110 @@ import re
 import pytest
 import py
 from _pytest.monkeypatch import MonkeyPatch
+from .compat import Path
+import attr
+import shutil
+import tempfile
 
 
+def make_numbered_dir(root, prefix):
+    l_prefix = prefix.lower()
+
+    def parse_num(p, cut=len(l_prefix)):
+        maybe_num = p.name[cut:]
+        try:
+            return int(maybe_num)
+        except ValueError:
+            return -1
+
+    for i in range(10):
+        # try up to 10 times to create the folder
+        max_existing = max(
+            (
+                parse_num(x)
+                for x in root.iterdir()
+                if x.name.lower().startswith(l_prefix)
+            ),
+            default=-1,
+        )
+        new_number = max_existing + 1
+        new_path = root.joinpath("{}{}".format(prefix, new_number))
+        try:
+            new_path.mkdir()
+        except Exception:
+            pass
+        else:
+            return new_path
+
+
+def make_numbered_dir_with_cleanup(root, prefix, keep, consider_lock_dead_after):
+    p = make_numbered_dir(root, prefix)
+    # todo cleanup
+    return p
+
+
+@attr.s
+class TempPathFactory(object):
+    """docstring for ClassName"""
+
+    given_basetemp = attr.ib()
+    trace = attr.ib()
+    _basetemp = attr.ib(default=None)
+
+    @classmethod
+    def from_config(cls, config):
+        return cls(
+            given_basetemp=config.option.basetemp, trace=config.trace.get("tmpdir")
+        )
+
+    def mktemp(self, basename, numbered=True):
+        if not numbered:
+            p = self.getbasetemp().joinpath(basename)
+            p.mkdir()
+        else:
+            p = make_numbered_dir(root=self.getbasetemp(), prefix=basename)
+            self.trace("mktemp", p)
+        return p
+
+    def getbasetemp(self):
+        """ return base temporary directory. """
+        if self._basetemp is None:
+            if self.given_basetemp:
+                basetemp = Path(self.given_basetemp)
+                if basetemp.exists():
+                    shutil.rmtree(str(basetemp))
+                basetemp.mkdir()
+            else:
+                temproot = Path(tempfile.gettempdir())
+                user = get_user()
+                if user:
+                    # use a sub-directory in the temproot to speed-up
+                    # make_numbered_dir() call
+                    rootdir = temproot.joinpath("pytest-of-{}".format(user))
+                else:
+                    rootdir = temproot
+                rootdir.mkdir(exist_ok=True)
+                basetemp = make_numbered_dir_with_cleanup(
+                    prefix="pytest-",
+                    root=rootdir,
+                    keep=None,
+                    consider_lock_dead_after=None,
+                )
+            self._basetemp = t = basetemp
+            self.trace("new basetemp", t)
+            return t
+        else:
+            return self._basetemp
+
+
+@attr.s
 class TempdirFactory(object):
     """Factory for temporary directories under the common base temp directory.
 
     The base directory can be configured using the ``--basetemp`` option.
     """
 
-    def __init__(self, config):
-        self.config = config
-        self.trace = config.trace.get("tmpdir")
+    tmppath_factory = attr.ib()
 
     def ensuretemp(self, string, dir=1):
         """ (deprecated) return temporary directory path with
@@ -33,46 +126,13 @@ class TempdirFactory(object):
         If ``numbered``, ensure the directory is unique by adding a number
         prefix greater than any existing one.
         """
-        basetemp = self.getbasetemp()
-        if not numbered:
-            p = basetemp.mkdir(basename)
-        else:
-            p = py.path.local.make_numbered_dir(
-                prefix=basename, keep=0, rootdir=basetemp, lock_timeout=None
-            )
-        self.trace("mktemp", p)
-        return p
+        return py.path.local(self.tmppath_factory.mktemp(basename, numbered).resolve())
 
     def getbasetemp(self):
-        """ return base temporary directory. """
-        try:
-            return self._basetemp
-        except AttributeError:
-            basetemp = self.config.option.basetemp
-            if basetemp:
-                basetemp = py.path.local(basetemp)
-                if basetemp.check():
-                    basetemp.remove()
-                basetemp.mkdir()
-            else:
-                temproot = py.path.local.get_temproot()
-                user = get_user()
-                if user:
-                    # use a sub-directory in the temproot to speed-up
-                    # make_numbered_dir() call
-                    rootdir = temproot.join("pytest-of-%s" % user)
-                else:
-                    rootdir = temproot
-                rootdir.ensure(dir=1)
-                basetemp = py.path.local.make_numbered_dir(
-                    prefix="pytest-", rootdir=rootdir
-                )
-            self._basetemp = t = basetemp.realpath()
-            self.trace("new basetemp", t)
-            return t
+        return py.path.local(self.tmppath_factory.getbasetemp().resolve())
 
     def finish(self):
-        self.trace("finish")
+        self.tmppath_factory.trace("finish")
 
 
 def get_user():
@@ -87,10 +147,6 @@ def get_user():
         return None
 
 
-# backward compatibility
-TempdirHandler = TempdirFactory
-
-
 def pytest_configure(config):
     """Create a TempdirFactory and attach it to the config object.
 
@@ -99,7 +155,8 @@ def pytest_configure(config):
     to the tmpdir_factory session fixture.
     """
     mp = MonkeyPatch()
-    t = TempdirFactory(config)
+    tmppath_handler = TempPathFactory.from_config(config)
+    t = TempdirFactory(tmppath_handler)
     config._cleanup.extend([mp.undo, t.finish])
     mp.setattr(config, "_tmpdirhandler", t, raising=False)
     mp.setattr(pytest, "ensuretemp", t.ensuretemp, raising=False)
