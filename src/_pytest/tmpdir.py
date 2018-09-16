@@ -2,6 +2,7 @@
 from __future__ import absolute_import, division, print_function
 
 import re
+from six.moves import reduce
 
 import pytest
 import py
@@ -24,13 +25,14 @@ def make_numbered_dir(root, prefix):
 
     for i in range(10):
         # try up to 10 times to create the folder
-        max_existing = max(
+        max_existing = reduce(
+            max,
             (
                 parse_num(x)
                 for x in root.iterdir()
                 if x.name.lower().startswith(l_prefix)
             ),
-            default=-1,
+            -1,
         )
         new_number = max_existing + 1
         new_path = root.joinpath("{}{}".format(prefix, new_number))
