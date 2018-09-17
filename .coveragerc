@@ -1,4 +1,9 @@
 [run]
-source = _pytest,testing
+source = pytest,_pytest,testing/
 parallel = 1
 branch = 1
+
+[paths]
+source = src/
+  .tox/*/lib/python*/site-packages/
+  .tox\*\Lib\site-packages\

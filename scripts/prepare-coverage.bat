@@ -2,7 +2,7 @@ REM scripts called by AppVeyor to setup the environment variables to enable cove
 if not defined PYTEST_NO_COVERAGE (
     set "COVERAGE_FILE=%CD%\.coverage"
     set "COVERAGE_PROCESS_START=%CD%\.coveragerc"
-    set "_PYTEST_TOX_COVERAGE_RUN=coverage run --source {envsitepackagesdir}/_pytest/,{toxinidir}/testing -m"
+    set "_PYTEST_TOX_COVERAGE_RUN=coverage run -m"
     set "_PYTEST_TOX_EXTRA_DEP=coverage-enable-subprocess"
     echo Coverage setup completed
 ) else (
