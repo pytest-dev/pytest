@@ -16,7 +16,8 @@ import atomicwrites
 import py
 
 from _pytest.assertion import util
-
+from _pytest.compat import PurePath, spec_from_file_location
+from _pytest.paths import fnmatch_ex
 
 # pytest caches rewritten pycs in __pycache__.
 if hasattr(imp, "get_tag"):
@@ -43,14 +44,6 @@ else:
 
     def ast_Call(a, b, c):
         return ast.Call(a, b, c, None, None)
-
-
-if sys.version_info >= (3, 4):
-    from importlib.util import spec_from_file_location
-else:
-
-    def spec_from_file_location(*_, **__):
-        return None
 
 
 class AssertionRewritingHook(object):
@@ -198,18 +191,14 @@ class AssertionRewritingHook(object):
             return False
 
         # For matching the name it must be as if it was a filename.
-        parts[-1] = parts[-1] + ".py"
-        try:
-            fn_pypath = py.path.local(os.path.sep.join(parts))
-        except EnvironmentError:
-            return False
+        path = PurePath(os.path.sep.join(parts) + ".py")
 
         for pat in self.fnpats:
             # if the pattern contains subdirectories ("tests/**.py" for example) we can't bail out based
             # on the name alone because we need to match against the full path
             if os.path.dirname(pat):
                 return False
-            if fn_pypath.fnmatch(pat):
+            if fnmatch_ex(pat, path):
                 return False
 
         if self._is_marked_for_rewrite(name, state):
