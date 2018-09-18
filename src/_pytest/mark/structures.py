@@ -32,11 +32,19 @@ def istestfunc(func):
 
 
 def get_empty_parameterset_mark(config, argnames, func):
+    from ..nodes import Collector
+
     requested_mark = config.getini(EMPTY_PARAMETERSET_OPTION)
     if requested_mark in ("", None, "skip"):
         mark = MARK_GEN.skip
     elif requested_mark == "xfail":
         mark = MARK_GEN.xfail(run=False)
+    elif requested_mark == "fail_at_collect":
+        f_name = func.__name__
+        _, lineno = getfslineno(func)
+        raise Collector.CollectError(
+            "Empty parameter set in '%s' at line %d" % (f_name, lineno)
+        )
     else:
         raise LookupError(requested_mark)
     fs, lineno = getfslineno(func)
