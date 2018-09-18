@@ -2,8 +2,13 @@
 from __future__ import absolute_import, division, print_function
 
 import re
-from six.moves import reduce
+import os
+import atexit
 
+import six
+from functools import reduce
+
+from six.moves import map
 import pytest
 import py
 from _pytest.monkeypatch import MonkeyPatch
@@ -13,10 +18,21 @@ import shutil
 import tempfile
 
 
-def make_numbered_dir(root, prefix):
+def find_prefixed(root, prefix):
     l_prefix = prefix.lower()
+    for x in root.iterdir():
+        if x.name.lower().startswith(l_prefix):
+            yield x
 
-    def parse_num(p, cut=len(l_prefix)):
+
+def _max(iterable, default):
+    # needed due to python2.7 lacking the default argument for max
+    return reduce(max, iterable, default)
+
+
+def make_numbered_dir(root, prefix):
+
+    def parse_num(p, cut=len(prefix)):
         maybe_num = p.name[cut:]
         try:
             return int(maybe_num)
@@ -25,15 +41,7 @@ def make_numbered_dir(root, prefix):
 
     for i in range(10):
         # try up to 10 times to create the folder
-        max_existing = reduce(
-            max,
-            (
-                parse_num(x)
-                for x in root.iterdir()
-                if x.name.lower().startswith(l_prefix)
-            ),
-            -1,
-        )
+        max_existing = _max(map(parse_num, find_prefixed(root, prefix)), -1)
         new_number = max_existing + 1
         new_path = root.joinpath("{}{}".format(prefix, new_number))
         try:
@@ -42,13 +50,60 @@ def make_numbered_dir(root, prefix):
             pass
         else:
             return new_path
+    else:
+        raise EnvironmentError(
+            "could not create numbered dir with prefix {prefix} in {root})".format(
+                prefix=prefix, root=root))
+
+
+def create_cleanup_lock(p):
+    lock_path = p.joinpath('.lock')
+    fd = os.open(str(lock_path), os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o644)
+    pid = os.getpid()
+    spid = str(pid)
+    if not isinstance(spid, six.binary_type):
+        spid = spid.encode("ascii")
+    os.write(fd, spid)
+    os.close(fd)
+    if not lock_path.is_file():
+        raise EnvironmentError("lock path got renamed after sucessfull creation")
+    return lock_path
+
+
+def register_cleanup_lock_removal(lock_path):
+    pid = os.getpid()
+
+    def cleanup_on_exit(lock_path=lock_path, original_pid=pid):
+        current_pid = os.getpid()
+        if current_pid != original_pid:
+            # fork
+            return
+        try:
+            lock_path.unlink()
+        except (OSError, IOError):
+            pass
+    return atexit.register(cleanup_on_exit)
+
+
+def cleanup_numbered_dir(root, prefix, keep):
+    # todo
+    pass
 
 
 def make_numbered_dir_with_cleanup(root, prefix, keep, consider_lock_dead_after):
-    p = make_numbered_dir(root, prefix)
-    # todo cleanup
-    return p
+    for i in range(10):
+        try:
+            p = make_numbered_dir(root, prefix)
+            lock_path = create_cleanup_lock(p)
+            register_cleanup_lock_removal(lock_path)
+        except Exception as e:
+            raise
+        else:
+            cleanup_numbered_dir(root=root, prefix=prefix, keep=keep)
+            return p
 
+    else:
+        raise e
 
 @attr.s
 class TempPathFactory(object):
@@ -76,7 +131,7 @@ class TempPathFactory(object):
     def getbasetemp(self):
         """ return base temporary directory. """
         if self._basetemp is None:
-            if self.given_basetemp:
+            if self.given_basetemp is not None:
                 basetemp = Path(self.given_basetemp)
                 if basetemp.exists():
                     shutil.rmtree(str(basetemp))
@@ -94,9 +149,10 @@ class TempPathFactory(object):
                 basetemp = make_numbered_dir_with_cleanup(
                     prefix="pytest-",
                     root=rootdir,
-                    keep=None,
-                    consider_lock_dead_after=None,
+                    keep=3,
+                    consider_lock_dead_after=10000,
                 )
+            assert basetemp is not None
             self._basetemp = t = basetemp
             self.trace("new basetemp", t)
             return t
