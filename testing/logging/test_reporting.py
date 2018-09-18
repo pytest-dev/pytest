@@ -928,3 +928,41 @@ def test_collection_live_logging(testdir):
             "collected 0 items",
         ]
     )
+
+
+def test_collection_logging_to_file(testdir):
+    log_file = testdir.tmpdir.join("pytest.log").strpath
+
+    testdir.makeini(
+        """
+        [pytest]
+        log_file={}
+        log_file_level = INFO
+        """.format(
+            log_file
+        )
+    )
+
+    testdir.makepyfile(
+        """
+        import logging
+
+        logging.getLogger().info("Normal message")
+
+        def test_simple():
+            logging.getLogger().debug("debug message in test_simple")
+            logging.getLogger().info("info message in test_simple")
+    """
+    )
+
+    result = testdir.runpytest()
+
+    assert "--- live log collection ---" not in result.stdout.str()
+
+    assert result.ret == 0
+    assert os.path.isfile(log_file)
+    with open(log_file, encoding="utf-8") as rfh:
+        contents = rfh.read()
+        assert "Normal message" in contents
+        assert "debug message in test_simple" not in contents
+        assert "info message in test_simple" in contents
