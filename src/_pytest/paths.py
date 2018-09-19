@@ -31,6 +31,10 @@ def fnmatch_ex(pattern, path):
 
     This algorithm was ported to keep backward-compatibility with existing settings which assume paths match according
     this logic.
+    
+    References:
+    * https://bugs.python.org/issue29249
+    * https://bugs.python.org/issue34731
     """
     path = PurePath(path)
     iswin32 = sys.platform.startswith("win")
