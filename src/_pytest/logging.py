@@ -436,7 +436,7 @@ class LoggingPlugin(object):
 
             if self.log_file_handler is not None:
                 with catching_logs(self.log_file_handler, level=self.log_file_level):
-                    yield  # run all the tests
+                    yield
             else:
                 yield
 
