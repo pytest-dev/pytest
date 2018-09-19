@@ -32,7 +32,7 @@ Here's a summary what ``pytest`` uses ``rootdir`` for:
   class name, function name and parametrization (if any).
 
 * Is used by plugins as a stable location to store project/test run specific information;
-  for example, the internal :ref:`cache <cache>` plugin creates a ``.cache`` subdirectory
+  for example, the internal :ref:`cache <cache>` plugin creates a ``.pytest_cache`` subdirectory
   in ``rootdir`` to store its cross-test run state.
 
 Important to emphasize that ``rootdir`` is **NOT** used to modify ``sys.path``/``PYTHONPATH`` or
