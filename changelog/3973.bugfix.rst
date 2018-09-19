@@ -1,0 +1,1 @@
+Fix crash of the assertion rewriter if a test changed the current working directory without restoring it afterwards.

@@ -1232,3 +1232,27 @@ class TestEarlyRewriteBailout(object):
         hook.fnpats[:] = ["tests/**.py"]
         assert hook.find_module("file") is not None
         assert self.find_module_calls == ["file"]
+
+    @pytest.mark.skipif(
+        sys.platform.startswith("win32"), reason="cannot remove cwd on Windows"
+    )
+    def test_cwd_changed(self, testdir):
+        testdir.makepyfile(
+            **{
+                "test_bar.py": """
+                import os
+                import shutil
+                import tempfile
+
+                d = tempfile.mkdtemp()
+                os.chdir(d)
+                shutil.rmtree(d)
+            """,
+                "test_foo.py": """
+                def test():
+                    pass
+            """,
+            }
+        )
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines("* 1 passed in *")

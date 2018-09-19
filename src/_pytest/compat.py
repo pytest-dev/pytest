@@ -23,7 +23,7 @@ except ImportError:  # pragma: no cover
     # Only available in Python 3.4+ or as a backport
     enum = None
 
-__all__ = ["Path"]
+__all__ = ["Path", "PurePath"]
 
 _PY3 = sys.version_info > (3, 0)
 _PY2 = not _PY3
@@ -42,9 +42,9 @@ PY36 = sys.version_info[:2] >= (3, 6)
 MODULE_NOT_FOUND_ERROR = "ModuleNotFoundError" if PY36 else "ImportError"
 
 if PY36:
-    from pathlib import Path
+    from pathlib import Path, PurePath
 else:
-    from pathlib2 import Path
+    from pathlib2 import Path, PurePath
 
 
 if _PY3:
@@ -54,6 +54,14 @@ else:
     # those raise DeprecationWarnings in Python >=3.7
     from collections import MutableMapping as MappingMixin  # noqa
     from collections import Mapping, Sequence  # noqa
+
+
+if sys.version_info >= (3, 4):
+    from importlib.util import spec_from_file_location
+else:
+
+    def spec_from_file_location(*_, **__):
+        return None
 
 
 def _format_args(func):
