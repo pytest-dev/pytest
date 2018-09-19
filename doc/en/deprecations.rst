@@ -3,13 +3,16 @@
 Deprecations and Removals
 =========================
 
-This page lists all pytest features that are currently deprecated or have been removed in previous major releases.
-The objective is to give users a clear rationale why a certain feature has been removed, and what alternatives can be
-used instead.
+This page lists all pytest features that are currently deprecated or have been removed in past major releases.
+The objective is to give users a clear rationale why a certain feature has been removed, and what alternatives
+should be used instead.
 
 Deprecated Features
 -------------------
 
+Below is a complete list of all pytest features which are considered deprecated. Using those features will issue
+:class:`_pytest.warning_types.PytestWarning` or subclasses, which can be filtered using
+:ref:`standard warning filters <warnings>`.
 
 ``Config.warn`` and ``Node.warn``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -101,6 +104,14 @@ In those cases just request the function directly in the dependent fixture:
         cell.make_full()
         return cell
 
+``Node.get_marker``
+~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 3.6
+
+As part of a large :ref:`marker-revamp`, :meth:`_pytest.nodes.Node.get_marker` is deprecated. See
+:ref:`the documentation <update marker code>` on tips on how to update your code.
+
 
 record_xml_property
 ~~~~~~~~~~~~~~~~~~~
@@ -133,6 +144,134 @@ Defining ``pytest_plugins`` is now deprecated in non-top-level conftest.py
 files because they will activate referenced plugins *globally*, which is surprising because for all other pytest
 features ``conftest.py`` files are only *active* for tests at or below it.
 
+Metafunc.addcall
+~~~~~~~~~~~~~~~~
+
+.. deprecated:: 3.3
+
+:meth:`_pytest.python.Metafunc.addcall` was a precursor to the current parametrized mechanism. Users should use
+:meth:`_pytest.python.Metafunc.parametrize` instead.
+
+marks in ``pytest.mark.parametrize``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 3.2
+
+Applying marks to values of a ``pytest.mark.parametrize`` call is now deprecated. For example:
+
+.. code-block:: python
+
+    @pytest.mark.parametrize(
+        "a, b", [(3, 9), pytest.mark.xfail(reason="flaky")(6, 36), (10, 100)]
+    )
+    def test_foo(a, b):
+        ...
+
+This code applies the ``pytest.mark.xfail(reason="flaky")`` mark to the ``(6, 36)`` value of the above parametrization
+call.
+
+This was considered hard to read and understand, and also its implementation presented problems to the code preventing
+further internal improvements in the marks architecture.
+
+To update the code, use ``pytest.param``:
+
+.. code-block:: python
+
+    @pytest.mark.parametrize(
+        "a, b",
+        [(3, 9), pytest.param((6, 36), marks=pytest.mark.xfail(reason="flaky")), (10, 100)],
+    )
+    def test_foo(a, b):
+        ...
+
+
+
+Passing command-line string to ``pytest.main()``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 3.0
+
+Passing a command-line string to ``pytest.main()`` is deprecated:
+
+.. code-block:: python
+
+    pytest.main("-v -s")
+
+Pass a list instead:
+
+.. code-block:: python
+
+    pytest.main(["-v", "-s"])
+
+
+By passing a string, users expect that pytest will interpret that command-line using the shell rules they are working
+on (for example ``bash`` or ``Powershell``), but this is very hard/impossible to do in a portable way.
+
+
+``yield`` tests
+~~~~~~~~~~~~~~~
+
+.. deprecated:: 3.0
+
+pytest supports ``yield``-style tests, where a test function actually ``yield`` functions and values
+that are then turned into proper test methods. Example:
+
+.. code-block:: python
+
+    def check(x, y):
+        assert x ** x == y
+
+
+    def test_squared():
+        yield check, 2, 4
+        yield check, 3, 9
+
+This would result into two actual test functions being generated.
+
+This form of test function doesn't support fixtures properly, and users should switch to ``pytest.mark.parametrize``:
+
+.. code-block:: python
+
+    @pytest.mark.parametrize("x, y", [(2, 4), (3, 9)])
+    def test_squared():
+        assert x ** x == y
+
+
+``pytest_funcarg__`` prefix
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 3.0
+
+In very early pytest versions fixtures could be defined using the ``pytest_funcarg__`` prefix:
+
+.. code-block:: python
+
+    def pytest_funcarg__data():
+        return SomeData()
+
+Switch over to the ``@pytest.fixture`` decorator:
+
+.. code-block:: python
+
+    @pytest.fixture
+    def data():
+        return SomeData()
+
+[pytest] section in setup.cfg files
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 3.0
+
+``[pytest]`` sections in ``setup.cfg`` files should now be named ``[tool:pytest]``
+to avoid conflicts with other distutils commands.
+
+Result log (``--result-log``)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 3.0
+
+The ``--resultlog`` command line option has been deprecated: it is little used
+and there are more modern and better alternatives, for example `pytest-tap <https://tappy.readthedocs.io/en/latest/>`_.
 
 Removed Features
 ----------------
