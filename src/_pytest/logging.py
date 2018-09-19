@@ -445,8 +445,8 @@ class LoggingPlugin(object):
             try:
                 yield  # run test
             finally:
-                del item.catch_log_handler
                 if when == "teardown":
+                    del item.catch_log_handler
                     del item.catch_log_handlers
 
             if self.print_logs:

@@ -1,0 +1,1 @@
+Fix caplog's catch_log_handler not being available with --pdb

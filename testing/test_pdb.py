@@ -397,6 +397,24 @@ class TestPDB(object):
         child.read()
         self.flush(child)
 
+    def test_pdb_with_caplog_on_pdb_invocation(self, testdir):
+        p1 = testdir.makepyfile(
+            """
+            def test_1(capsys, caplog):
+                import logging
+                logging.getLogger(__name__).warning("some_warning")
+                assert 0
+        """
+        )
+        child = testdir.spawn_pytest("--pdb %s" % str(p1))
+        child.send("caplog.record_tuples\n")
+        child.expect_exact(
+            "[('test_pdb_with_caplog_on_pdb_invocation', 30, 'some_warning')]"
+        )
+        child.sendeof()
+        child.read()
+        self.flush(child)
+
     def test_set_trace_capturing_afterwards(self, testdir):
         p1 = testdir.makepyfile(
             """
