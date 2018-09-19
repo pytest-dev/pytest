@@ -31,7 +31,6 @@ def _max(iterable, default):
 
 
 def make_numbered_dir(root, prefix):
-
     def parse_num(p, cut=len(prefix)):
         maybe_num = p.name[cut:]
         try:
@@ -53,11 +52,13 @@ def make_numbered_dir(root, prefix):
     else:
         raise EnvironmentError(
             "could not create numbered dir with prefix {prefix} in {root})".format(
-                prefix=prefix, root=root))
+                prefix=prefix, root=root
+            )
+        )
 
 
 def create_cleanup_lock(p):
-    lock_path = p.joinpath('.lock')
+    lock_path = p.joinpath(".lock")
     fd = os.open(str(lock_path), os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o644)
     pid = os.getpid()
     spid = str(pid)
@@ -82,6 +83,7 @@ def register_cleanup_lock_removal(lock_path):
             lock_path.unlink()
         except (OSError, IOError):
             pass
+
     return atexit.register(cleanup_on_exit)
 
 
@@ -96,14 +98,12 @@ def make_numbered_dir_with_cleanup(root, prefix, keep, consider_lock_dead_after)
             p = make_numbered_dir(root, prefix)
             lock_path = create_cleanup_lock(p)
             register_cleanup_lock_removal(lock_path)
-        except Exception as e:
+        except Exception:
             raise
         else:
             cleanup_numbered_dir(root=root, prefix=prefix, keep=keep)
             return p
 
-    else:
-        raise e
 
 @attr.s
 class TempPathFactory(object):
