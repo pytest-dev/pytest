@@ -26,6 +26,7 @@ from _pytest.warning_types import (
     RemovedInPytest4Warning,
     PytestExperimentalApiWarning,
 )
+from _pytest.compat import Path, PurePath
 
 set_trace = __pytestPDB.set_trace
 
@@ -67,6 +68,8 @@ __all__ = [
     "warns",
     "xfail",
     "yield_fixture",
+    "Path",
+    "PurePath",
 ]
 
 if __name__ == "__main__":

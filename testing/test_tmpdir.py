@@ -111,7 +111,7 @@ def test_tmpdir_factory(testdir):
         def session_dir(tmpdir_factory):
             return tmpdir_factory.mktemp('data', numbered=False)
         def test_some(session_dir):
-            session_dir.isdir()
+            assert session_dir.isdir()
     """
     )
     reprec = testdir.inline_run()
