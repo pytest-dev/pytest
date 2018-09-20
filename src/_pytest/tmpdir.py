@@ -3,11 +3,12 @@ from __future__ import absolute_import, division, print_function
 
 import re
 import os
+import errno
 import atexit
-
+import operator
 import six
 from functools import reduce
-
+import uuid
 from six.moves import map
 import pytest
 import py
@@ -16,6 +17,10 @@ from .compat import Path
 import attr
 import shutil
 import tempfile
+import itertools
+
+
+get_lock_path = operator.methodcaller("joinpath", ".lock")
 
 
 def find_prefixed(root, prefix):
@@ -25,22 +30,32 @@ def find_prefixed(root, prefix):
             yield x
 
 
+def extract_suffixees(iter, prefix):
+    p_len = len(prefix)
+    for p in iter:
+        yield p.name[p_len:]
+
+
+def find_suffixes(root, prefix):
+    return extract_suffixees(find_prefixed(root, prefix), prefix)
+
+
+def parse_num(maybe_num):
+    try:
+        return int(maybe_num)
+    except ValueError:
+        return -1
+
+
 def _max(iterable, default):
     # needed due to python2.7 lacking the default argument for max
     return reduce(max, iterable, default)
 
 
 def make_numbered_dir(root, prefix):
-    def parse_num(p, cut=len(prefix)):
-        maybe_num = p.name[cut:]
-        try:
-            return int(maybe_num)
-        except ValueError:
-            return -1
-
     for i in range(10):
         # try up to 10 times to create the folder
-        max_existing = _max(map(parse_num, find_prefixed(root, prefix)), -1)
+        max_existing = _max(map(parse_num, find_suffixes(root, prefix)), -1)
         new_number = max_existing + 1
         new_path = root.joinpath("{}{}".format(prefix, new_number))
         try:
@@ -58,20 +73,29 @@ def make_numbered_dir(root, prefix):
 
 
 def create_cleanup_lock(p):
-    lock_path = p.joinpath(".lock")
-    fd = os.open(str(lock_path), os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o644)
-    pid = os.getpid()
-    spid = str(pid)
-    if not isinstance(spid, six.binary_type):
-        spid = spid.encode("ascii")
-    os.write(fd, spid)
-    os.close(fd)
-    if not lock_path.is_file():
-        raise EnvironmentError("lock path got renamed after sucessfull creation")
-    return lock_path
+    lock_path = get_lock_path(p)
+    try:
+        fd = os.open(str(lock_path), os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o644)
+    except OSError as e:
+        if e.errno == errno.EEXIST:
+            six.raise_from(
+                EnvironmentError("cannot create lockfile in {path}".format(path=p)), e
+            )
+        else:
+            raise
+    else:
+        pid = os.getpid()
+        spid = str(pid)
+        if not isinstance(spid, six.binary_type):
+            spid = spid.encode("ascii")
+        os.write(fd, spid)
+        os.close(fd)
+        if not lock_path.is_file():
+            raise EnvironmentError("lock path got renamed after sucessfull creation")
+        return lock_path
 
 
-def register_cleanup_lock_removal(lock_path):
+def register_cleanup_lock_removal(lock_path, register=atexit.register):
     pid = os.getpid()
 
     def cleanup_on_exit(lock_path=lock_path, original_pid=pid):
@@ -84,12 +108,33 @@ def register_cleanup_lock_removal(lock_path):
         except (OSError, IOError):
             pass
 
-    return atexit.register(cleanup_on_exit)
+    return register(cleanup_on_exit)
 
 
-def cleanup_numbered_dir(root, prefix, keep):
-    # todo
-    pass
+def delete_a_numbered_dir(path):
+    create_cleanup_lock(path)
+    parent = path.parent
+
+    garbage = parent.joinpath("garbage-{}".format(uuid.uuid4()))
+    path.rename(garbage)
+    shutil.rmtree(str(garbage))
+
+
+def is_deletable(path, consider_lock_dead_after):
+    lock = get_lock_path(path)
+    if not lock.exists():
+        return True
+
+
+def cleanup_numbered_dir(root, prefix, keep, consider_lock_dead_after):
+    max_existing = _max(map(parse_num, find_suffixes(root, prefix)), -1)
+    max_delete = max_existing - keep
+    paths = find_prefixed(root, prefix)
+    paths, paths2 = itertools.tee(paths)
+    numbers = map(parse_num, extract_suffixees(paths2, prefix))
+    for path, number in zip(paths, numbers):
+        if number <= max_delete and is_deletable(path, consider_lock_dead_after):
+            delete_a_numbered_dir(path)
 
 
 def make_numbered_dir_with_cleanup(root, prefix, keep, consider_lock_dead_after):
@@ -101,7 +146,12 @@ def make_numbered_dir_with_cleanup(root, prefix, keep, consider_lock_dead_after)
         except Exception:
             raise
         else:
-            cleanup_numbered_dir(root=root, prefix=prefix, keep=keep)
+            cleanup_numbered_dir(
+                root=root,
+                prefix=prefix,
+                keep=keep,
+                consider_lock_dead_after=consider_lock_dead_after,
+            )
             return p
 
 
@@ -244,3 +294,8 @@ def tmpdir(request, tmpdir_factory):
         name = name[:MAXVAL]
     x = tmpdir_factory.mktemp(name, numbered=True)
     return x
+
+
+@pytest.fixture
+def tmp_path(tmpdir):
+    return Path(tmpdir)
