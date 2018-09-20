@@ -8,6 +8,7 @@ import marshal
 import os
 import re
 import six
+import string
 import struct
 import sys
 import types
@@ -466,10 +467,14 @@ def _saferepr(obj):
 
     """
     r = py.io.saferepr(obj)
-    if isinstance(r, six.text_type):
-        return r.replace(u"\n", u"\\n")
-    else:
-        return r.replace(b"\n", b"\\n")
+    # only occurs in python2.x, repr must return text in python3+
+    if isinstance(r, bytes):
+        # Represent unprintable bytes as `\x##`
+        r = u"".join(
+            u"\\x{:x}".format(ord(c)) if c not in string.printable else c.decode()
+            for c in r
+        )
+    return r.replace(u"\n", u"\\n")
 
 
 from _pytest.assertion.util import format_explanation as _format_explanation  # noqa
