@@ -39,6 +39,7 @@ Full pytest documentation
    bash-completion
 
    backwards-compatibility
+   deprecations
    historical-notes
    license
    contributing

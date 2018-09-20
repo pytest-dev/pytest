@@ -17,4 +17,6 @@ When the deprecation expires (e.g. 4.0 is released), we won't remove the depreca
 Deprecation Roadmap
 -------------------
 
-We track deprecation and removal of features using milestones and the `deprecation <https://github.com/pytest-dev/pytest/issues?q=label%3A%22type%3A+deprecation%22>`_ and `removal <https://github.com/pytest-dev/pytest/labels/type%3A%20removal>`_ labels on GitHub.
+Features currently deprecated and removed in previous releases can be found in :ref:`deprecations`.
+
+We track future deprecation and removal of features using milestones and the `deprecation <https://github.com/pytest-dev/pytest/issues?q=label%3A%22type%3A+deprecation%22>`_ and `removal <https://github.com/pytest-dev/pytest/labels/type%3A%20removal>`_ labels on GitHub.
