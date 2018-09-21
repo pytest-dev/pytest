@@ -1591,6 +1591,13 @@ def test_package_collection_infinite_recursion(testdir):
     result.stdout.fnmatch_lines("*1 passed*")
 
 
+def test_package_collection_init_given_as_argument(testdir):
+    """Regression test for #3749"""
+    p = testdir.copy_example("collect/package_init_given_as_arg")
+    result = testdir.runpytest(p / "pkg" / "__init__.py")
+    result.stdout.fnmatch_lines("*1 passed*")
+
+
 def test_package_with_modules(testdir):
     """
     .
