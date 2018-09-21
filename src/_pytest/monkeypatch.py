@@ -219,8 +219,8 @@ class MonkeyPatch(object):
         self.setitem(os.environ, name, value)
 
     def delenv(self, name, raising=True):
-        """ Delete ``name`` from the environment. Raise KeyError it does not
-        exist.
+        """ Delete ``name`` from the environment. Raise KeyError if it does
+        not exist.
 
         If ``raising`` is set to False, no exception will be raised if the
         environment variable is missing.
