@@ -30,14 +30,14 @@ def find_prefixed(root, prefix):
             yield x
 
 
-def extract_suffixees(iter, prefix):
+def extract_suffixes(iter, prefix):
     p_len = len(prefix)
     for p in iter:
         yield p.name[p_len:]
 
 
 def find_suffixes(root, prefix):
-    return extract_suffixees(find_prefixed(root, prefix), prefix)
+    return extract_suffixes(find_prefixed(root, prefix), prefix)
 
 
 def parse_num(maybe_num):
@@ -111,7 +111,7 @@ def register_cleanup_lock_removal(lock_path, register=atexit.register):
     return register(cleanup_on_exit)
 
 
-def delete_a_numbered_dir(path):
+def delete_a_numbered_dir(path, consider_lock_dead_after):
     create_cleanup_lock(path)
     parent = path.parent
 
@@ -131,10 +131,10 @@ def cleanup_numbered_dir(root, prefix, keep, consider_lock_dead_after):
     max_delete = max_existing - keep
     paths = find_prefixed(root, prefix)
     paths, paths2 = itertools.tee(paths)
-    numbers = map(parse_num, extract_suffixees(paths2, prefix))
+    numbers = map(parse_num, extract_suffixes(paths2, prefix))
     for path, number in zip(paths, numbers):
         if number <= max_delete and is_deletable(path, consider_lock_dead_after):
-            delete_a_numbered_dir(path)
+            delete_a_numbered_dir(path, consider_lock_dead_after)
 
 
 def make_numbered_dir_with_cleanup(root, prefix, keep, consider_lock_dead_after):
