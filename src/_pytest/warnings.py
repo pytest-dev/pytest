@@ -70,7 +70,11 @@ def catch_warnings_for_item(config, ihook, when, item):
     cmdline_filters = config.getoption("pythonwarnings") or []
     inifilters = config.getini("filterwarnings")
     with warnings.catch_warnings(record=True) as log:
-        filters_configured = bool(cmdline_filters or inifilters or sys.warnoptions)
+
+        if not sys.warnoptions:
+            # if user is not explicitly configuring warning filters, show deprecation warnings by default (#2908)
+            warnings.filterwarnings("always", category=DeprecationWarning)
+            warnings.filterwarnings("always", category=PendingDeprecationWarning)
 
         # filters should have this precedence: mark, cmdline options, ini
         # filters should be applied in the inverse order of precedence
@@ -84,12 +88,6 @@ def catch_warnings_for_item(config, ihook, when, item):
             for mark in item.iter_markers(name="filterwarnings"):
                 for arg in mark.args:
                     _setoption(warnings, arg)
-                    filters_configured = True
-
-        if not filters_configured:
-            # if user is not explicitly configuring warning filters, show deprecation warnings by default (#2908)
-            warnings.filterwarnings("always", category=DeprecationWarning)
-            warnings.filterwarnings("always", category=PendingDeprecationWarning)
 
         yield
 
