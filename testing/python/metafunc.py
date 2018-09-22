@@ -132,6 +132,52 @@ class TestMetafunc(object):
         except ValueError as ve:
             assert "has an unsupported scope value 'doggy'" in str(ve)
 
+    def test_find_parametrized_scope(self):
+        """unittest for _find_parametrized_scope (#3941)"""
+        from _pytest.python import _find_parametrized_scope
+
+        @attr.s
+        class DummyFixtureDef(object):
+            scope = attr.ib()
+
+        fixtures_defs = dict(
+            session_fix=[DummyFixtureDef("session")],
+            package_fix=[DummyFixtureDef("package")],
+            module_fix=[DummyFixtureDef("module")],
+            class_fix=[DummyFixtureDef("class")],
+            func_fix=[DummyFixtureDef("function")],
+        )
+
+        # use arguments to determine narrow scope; the cause of the bug is that it would look on all
+        # fixture defs given to the method
+        def find_scope(argnames, indirect):
+            return _find_parametrized_scope(argnames, fixtures_defs, indirect=indirect)
+
+        assert find_scope(["func_fix"], indirect=True) == "function"
+        assert find_scope(["class_fix"], indirect=True) == "class"
+        assert find_scope(["module_fix"], indirect=True) == "module"
+        assert find_scope(["package_fix"], indirect=True) == "package"
+        assert find_scope(["session_fix"], indirect=True) == "session"
+
+        assert find_scope(["class_fix", "func_fix"], indirect=True) == "function"
+        assert find_scope(["func_fix", "session_fix"], indirect=True) == "function"
+        assert find_scope(["session_fix", "class_fix"], indirect=True) == "class"
+        assert find_scope(["package_fix", "session_fix"], indirect=True) == "package"
+        assert find_scope(["module_fix", "session_fix"], indirect=True) == "module"
+
+        # when indirect is False or is not for all scopes, always use function
+        assert find_scope(["session_fix", "module_fix"], indirect=False) == "function"
+        assert (
+            find_scope(["session_fix", "module_fix"], indirect=["module_fix"])
+            == "function"
+        )
+        assert (
+            find_scope(
+                ["session_fix", "module_fix"], indirect=["session_fix", "module_fix"]
+            )
+            == "module"
+        )
+
     def test_parametrize_and_id(self):
         def func(x, y):
             pass
@@ -796,7 +842,7 @@ class TestMetafuncFunctional(object):
         p = testdir.makepyfile(
             """
             # assumes that generate/provide runs in the same process
-            import sys, pytest
+            import sys, pytest, six
             def pytest_generate_tests(metafunc):
                 metafunc.addcall(param=metafunc)
 
@@ -815,11 +861,7 @@ class TestMetafuncFunctional(object):
                 def test_method(self, metafunc, pytestconfig):
                     assert metafunc.config == pytestconfig
                     assert metafunc.module.__name__ == __name__
-                    if sys.version_info > (3, 0):
-                        unbound = TestClass.test_method
-                    else:
-                        unbound = TestClass.test_method.im_func
-                    # XXX actually have an unbound test function here?
+                    unbound = six.get_unbound_function(TestClass.test_method)
                     assert metafunc.function == unbound
                     assert metafunc.cls == TestClass
         """
@@ -1386,6 +1428,39 @@ class TestMetafuncFunctionalAuto(object):
         )
         result = testdir.runpytest()
         result.stdout.fnmatch_lines(["* 3 passed *"])
+
+    def test_parametrize_some_arguments_auto_scope(self, testdir, monkeypatch):
+        """Integration test for (#3941)"""
+        class_fix_setup = []
+        monkeypatch.setattr(sys, "class_fix_setup", class_fix_setup, raising=False)
+        func_fix_setup = []
+        monkeypatch.setattr(sys, "func_fix_setup", func_fix_setup, raising=False)
+
+        testdir.makepyfile(
+            """
+            import pytest
+            import sys
+
+            @pytest.fixture(scope='class', autouse=True)
+            def class_fix(request):
+                sys.class_fix_setup.append(request.param)
+
+            @pytest.fixture(autouse=True)
+            def func_fix():
+                sys.func_fix_setup.append(True)
+
+            @pytest.mark.parametrize('class_fix', [10, 20], indirect=True)
+            class Test:
+                def test_foo(self):
+                    pass
+                def test_bar(self):
+                    pass
+            """
+        )
+        result = testdir.runpytest_inprocess()
+        result.stdout.fnmatch_lines(["* 4 passed in *"])
+        assert func_fix_setup == [True] * 4
+        assert class_fix_setup == [10, 20]
 
     def test_parametrize_issue634(self, testdir):
         testdir.makepyfile(

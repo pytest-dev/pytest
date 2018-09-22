@@ -1,12 +1,18 @@
 # coding: utf-8
 from __future__ import absolute_import, division, print_function
+
 import sys
 
 import _pytest._code
 import pytest
-import mock
-from test_excinfo import TWMock
 from six import text_type
+
+from test_excinfo import TWMock
+
+try:
+    import mock
+except ImportError:
+    import unittest.mock as mock
 
 
 def test_ne():

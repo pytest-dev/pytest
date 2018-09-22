@@ -8,6 +8,7 @@ import marshal
 import os
 import re
 import six
+import string
 import struct
 import sys
 import types
@@ -16,7 +17,8 @@ import atomicwrites
 import py
 
 from _pytest.assertion import util
-
+from _pytest.compat import PurePath, spec_from_file_location
+from _pytest.paths import fnmatch_ex
 
 # pytest caches rewritten pycs in __pycache__.
 if hasattr(imp, "get_tag"):
@@ -43,14 +45,6 @@ else:
 
     def ast_Call(a, b, c):
         return ast.Call(a, b, c, None, None)
-
-
-if sys.version_info >= (3, 4):
-    from importlib.util import spec_from_file_location
-else:
-
-    def spec_from_file_location(*_, **__):
-        return None
 
 
 class AssertionRewritingHook(object):
@@ -198,14 +192,14 @@ class AssertionRewritingHook(object):
             return False
 
         # For matching the name it must be as if it was a filename.
-        parts[-1] = parts[-1] + ".py"
-        fn_pypath = py.path.local(os.path.sep.join(parts))
+        path = PurePath(os.path.sep.join(parts) + ".py")
+
         for pat in self.fnpats:
             # if the pattern contains subdirectories ("tests/**.py" for example) we can't bail out based
             # on the name alone because we need to match against the full path
             if os.path.dirname(pat):
                 return False
-            if fn_pypath.fnmatch(pat):
+            if fnmatch_ex(pat, path):
                 return False
 
         if self._is_marked_for_rewrite(name, state):
@@ -473,10 +467,14 @@ def _saferepr(obj):
 
     """
     r = py.io.saferepr(obj)
-    if isinstance(r, six.text_type):
-        return r.replace(u"\n", u"\\n")
-    else:
-        return r.replace(b"\n", b"\\n")
+    # only occurs in python2.x, repr must return text in python3+
+    if isinstance(r, bytes):
+        # Represent unprintable bytes as `\x##`
+        r = u"".join(
+            u"\\x{:x}".format(ord(c)) if c not in string.printable else c.decode()
+            for c in r
+        )
+    return r.replace(u"\n", u"\\n")
 
 
 from _pytest.assertion.util import format_explanation as _format_explanation  # noqa
