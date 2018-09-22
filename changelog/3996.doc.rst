@@ -1,3 +1,0 @@
-New `Deprecations and Removals <https://docs.pytest.org/en/latest/deprecations.html>`_ page shows all currently
-deprecated features, the rationale to do so, and alternatives to update your code. It also list features removed
-from pytest in past major releases to help those with ancient pytest versions to upgrade.

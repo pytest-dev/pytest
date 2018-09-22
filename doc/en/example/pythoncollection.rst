@@ -180,18 +180,32 @@ Finding out what is collected
 You can always peek at the collection tree without running tests like this::
 
     . $ pytest --collect-only pythoncollection.py
-    =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
-    rootdir: $REGENDOC_TMPDIR, inifile: pytest.ini
-    collected 3 items
-    <Module 'CWD/pythoncollection.py'>
-      <Function 'test_function'>
-      <Class 'TestClass'>
-        <Instance '()'>
-          <Function 'test_method'>
-          <Function 'test_anothermethod'>
+    Traceback (most recent call last):
+      File "$PYTHON_PREFIX/lib/python3.6/site-packages/_pytest/config/__init__.py", line 381, in _getconftestmodules
+        return self._path2confmods[path]
+    KeyError: local('$REGENDOC_TMPDIR/CWD/pythoncollection.py')
 
-    ======================= no tests ran in 0.12 seconds =======================
+    During handling of the above exception, another exception occurred:
+    Traceback (most recent call last):
+      File "$PYTHON_PREFIX/lib/python3.6/site-packages/_pytest/config/__init__.py", line 381, in _getconftestmodules
+        return self._path2confmods[path]
+    KeyError: local('$REGENDOC_TMPDIR/CWD')
+
+    During handling of the above exception, another exception occurred:
+    Traceback (most recent call last):
+      File "$PYTHON_PREFIX/lib/python3.6/site-packages/_pytest/config/__init__.py", line 412, in _importconftest
+        return self._conftestpath2mod[conftestpath]
+    KeyError: local('$REGENDOC_TMPDIR/CWD/conftest.py')
+
+    During handling of the above exception, another exception occurred:
+    Traceback (most recent call last):
+      File "$PYTHON_PREFIX/lib/python3.6/site-packages/_pytest/config/__init__.py", line 418, in _importconftest
+        mod = conftestpath.pyimport()
+      File "$PYTHON_PREFIX/lib/python3.6/site-packages/py/_path/local.py", line 686, in pyimport
+        raise self.ImportMismatchError(modname, modfile, self)
+    py._path.local.LocalPath.ImportMismatchError: ('conftest', '$PWD/example/conftest.py', local('$REGENDOC_TMPDIR/CWD/conftest.py'))
+    ERROR: could not load $REGENDOC_TMPDIR/CWD/conftest.py
+
 
 .. _customizing-test-collection:
 
