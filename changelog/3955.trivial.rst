@@ -1,1 +1,0 @@
-Improve pre-commit detection for changelog filenames
