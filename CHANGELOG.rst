@@ -18,6 +18,51 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+pytest 3.8.1 (2018-09-22)
+=========================
+
+Bug Fixes
+---------
+
+- `#3286 <https://github.com/pytest-dev/pytest/issues/3286>`_: ``.pytest_cache`` directory is now automatically ignored by Git. Users who would like to contribute a solution for other SCMs please consult/comment on this issue.
+
+
+- `#3749 <https://github.com/pytest-dev/pytest/issues/3749>`_: Fix the following error during collection of tests inside packages::
+
+      TypeError: object of type 'Package' has no len()
+
+
+- `#3941 <https://github.com/pytest-dev/pytest/issues/3941>`_: Fix bug where indirect parametrization would consider the scope of all fixtures used by the test function to determine the parametrization scope, and not only the scope of the fixtures being parametrized.
+
+
+- `#3973 <https://github.com/pytest-dev/pytest/issues/3973>`_: Fix crash of the assertion rewriter if a test changed the current working directory without restoring it afterwards.
+
+
+- `#3998 <https://github.com/pytest-dev/pytest/issues/3998>`_: Fix issue that prevented some caplog properties (for example ``record_tuples``) from being available when entering the debugger with ``--pdb``.
+
+
+- `#3999 <https://github.com/pytest-dev/pytest/issues/3999>`_: Fix ``UnicodeDecodeError`` in python2.x when a class returns a non-ascii binary ``__repr__`` in an assertion which also contains non-ascii text.
+
+
+
+Improved Documentation
+----------------------
+
+- `#3996 <https://github.com/pytest-dev/pytest/issues/3996>`_: New `Deprecations and Removals <https://docs.pytest.org/en/latest/deprecations.html>`_ page shows all currently
+  deprecated features, the rationale to do so, and alternatives to update your code. It also list features removed
+  from pytest in past major releases to help those with ancient pytest versions to upgrade.
+
+
+
+Trivial/Internal Changes
+------------------------
+
+- `#3955 <https://github.com/pytest-dev/pytest/issues/3955>`_: Improve pre-commit detection for changelog filenames
+
+
+- `#3975 <https://github.com/pytest-dev/pytest/issues/3975>`_: Remove legacy code around im_func as that was python2 only
+
+
 pytest 3.8.0 (2018-09-05)
 =========================
 

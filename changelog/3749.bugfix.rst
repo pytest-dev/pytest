@@ -1,3 +1,0 @@
-Fix the following error during collection of tests inside packages::
-
-    TypeError: object of type 'Package' has no len()
