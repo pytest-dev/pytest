@@ -14,6 +14,67 @@ Below is a complete list of all pytest features which are considered deprecated.
 :class:`_pytest.warning_types.PytestWarning` or subclasses, which can be filtered using
 :ref:`standard warning filters <warnings>`.
 
+Internal classes accessed through ``Node``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 3.9
+
+Access of ``Module``, ``Function``, ``Class``, ``Instance``, ``File`` and ``Item`` through ``Node`` instances now issue
+this warning::
+
+    usage of Function.Module is deprecated, please use pytest.Module instead
+
+Users should just ``import pytest`` and access those objects using the ``pytest`` module.
+
+This has been documented as deprecated for years, but only now we are actually emitting deprecation warnings.
+
+``cached_setup``
+~~~~~~~~~~~~~~~~
+
+.. deprecated:: 3.9
+
+``request.cached_setup`` was the precursor of the setup/teardown mechanism available to fixtures.
+
+Example:
+
+.. code-block:: python
+
+    @pytest.fixture
+    def db_session():
+        return request.cached_setup(
+            setup=Session.create, teardown=lambda session: session.close(), scope="module"
+        )
+
+This should be updated to make use of standard fixture mechanisms:
+
+.. code-block:: python
+
+    @pytest.fixture(scope="module")
+    def db_session():
+        session = Session.create()
+        yield session
+        session.close()
+
+
+You can consult `funcarg comparision section in the docs <https://docs.pytest.org/en/latest/funcarg_compare.html>`_ for
+more information.
+
+This has been documented as deprecated for years, but only now we are actually emitting deprecation warnings.
+
+
+Using ``Class`` in custom Collectors
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 3.9
+
+Using objects named ``"Class"`` as a way to customize the type of nodes that are collected in ``Collector``
+subclasses has been deprecated. Users instead should use ``pytest_collect_make_item`` to customize node types during
+collection.
+
+This issue should affect only advanced plugins who create new collection types, so if you see this warning
+message please contact the authors so they can change the code.
+
+
 ``Config.warn`` and ``Node.warn``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
