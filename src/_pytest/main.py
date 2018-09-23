@@ -504,13 +504,14 @@ class Session(nodes.FSCollector):
                     pkginit = parent.join("__init__.py")
                     if pkginit.isfile():
                         if pkginit in self._node_cache:
-                            root = self._node_cache[pkginit]
+                            root = self._node_cache[pkginit][0]
                         else:
                             col = root._collectfile(pkginit)
                             if col:
                                 if isinstance(col[0], Package):
                                     root = col[0]
-                                self._node_cache[root.fspath] = root
+                                # always store a list in the cache, matchnodes expects it
+                                self._node_cache[root.fspath] = [root]
 
         # If it's a directory argument, recurse and look for any Subpackages.
         # Let the Package collector deal with subnodes, don't collect here.
@@ -530,8 +531,8 @@ class Session(nodes.FSCollector):
                         if (type(x), x.fspath) in self._node_cache:
                             yield self._node_cache[(type(x), x.fspath)]
                         else:
-                            yield x
                             self._node_cache[(type(x), x.fspath)] = x
+                            yield x
         else:
             assert argpath.check(file=1)
 

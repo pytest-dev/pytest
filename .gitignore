@@ -24,6 +24,7 @@ src/_pytest/_version.py
 .eggs/
 
 doc/*/_build
+doc/*/.doctrees
 build/
 dist/
 *.egg-info

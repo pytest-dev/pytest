@@ -9,6 +9,7 @@ import _pytest._code
 from _pytest.config import hookimpl
 from _pytest.outcomes import fail, skip, xfail
 from _pytest.python import transfer_markers, Class, Module, Function
+from _pytest.compat import getimfunc
 
 
 def pytest_pycollect_makeitem(collector, name, obj):
@@ -53,7 +54,7 @@ class UnitTestCase(Class):
             x = getattr(self.obj, name)
             if not getattr(x, "__test__", True):
                 continue
-            funcobj = getattr(x, "im_func", x)
+            funcobj = getimfunc(x)
             transfer_markers(funcobj, cls, module)
             yield TestCaseFunction(name, parent=self, callobj=funcobj)
             foundsomething = True

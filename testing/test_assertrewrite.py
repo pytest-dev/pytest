@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from __future__ import absolute_import, division, print_function
 
 import glob
@@ -57,7 +58,7 @@ def getmsg(f, extra_ns=None, must_pass=False):
     except AssertionError:
         if must_pass:
             pytest.fail("shouldn't have raised")
-        s = str(sys.exc_info()[1])
+        s = six.text_type(sys.exc_info()[1])
         if not s.startswith("assert"):
             return "AssertionError: " + s
         return s
@@ -607,6 +608,21 @@ class TestAssertionRewrite(object):
             assert 0 == f.a
 
         assert r"where 1 = \n{ \n~ \n}.a" in util._format_lines([getmsg(f)])[0]
+
+    def test_custom_repr_non_ascii(self):
+        def f():
+            class A(object):
+                name = u"ä"
+
+                def __repr__(self):
+                    return self.name.encode("UTF-8")  # only legal in python2
+
+            a = A()
+            assert not a.name
+
+        msg = getmsg(f)
+        assert "UnicodeDecodeError" not in msg
+        assert "UnicodeEncodeError" not in msg
 
 
 class TestRewriteOnImport(object):
@@ -1232,3 +1248,27 @@ class TestEarlyRewriteBailout(object):
         hook.fnpats[:] = ["tests/**.py"]
         assert hook.find_module("file") is not None
         assert self.find_module_calls == ["file"]
+
+    @pytest.mark.skipif(
+        sys.platform.startswith("win32"), reason="cannot remove cwd on Windows"
+    )
+    def test_cwd_changed(self, testdir):
+        testdir.makepyfile(
+            **{
+                "test_bar.py": """
+                import os
+                import shutil
+                import tempfile
+
+                d = tempfile.mkdtemp()
+                os.chdir(d)
+                shutil.rmtree(d)
+            """,
+                "test_foo.py": """
+                def test():
+                    pass
+            """,
+            }
+        )
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines("* 1 passed in *")

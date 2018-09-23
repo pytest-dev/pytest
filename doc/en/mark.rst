@@ -52,6 +52,8 @@ should add ``--strict`` to ``addopts``:
         serial
 
 
+.. _marker-revamp:
+
 Marker revamp and iteration
 ---------------------------
 

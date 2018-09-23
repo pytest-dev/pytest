@@ -37,6 +37,7 @@ from _pytest.compat import (
     getlocation,
     enum,
     get_default_arg_names,
+    getimfunc,
 )
 from _pytest.outcomes import fail
 from _pytest.mark.structures import (
@@ -681,14 +682,12 @@ class Class(PyCollector):
     def setup(self):
         setup_class = _get_xunit_func(self.obj, "setup_class")
         if setup_class is not None:
-            setup_class = getattr(setup_class, "im_func", setup_class)
-            setup_class = getattr(setup_class, "__func__", setup_class)
+            setup_class = getimfunc(setup_class)
             setup_class(self.obj)
 
         fin_class = getattr(self.obj, "teardown_class", None)
         if fin_class is not None:
-            fin_class = getattr(fin_class, "im_func", fin_class)
-            fin_class = getattr(fin_class, "__func__", fin_class)
+            fin_class = getimfunc(fin_class)
             self.addfinalizer(lambda: fin_class(self.obj))
 
 
@@ -1145,13 +1144,18 @@ def _find_parametrized_scope(argnames, arg2fixturedefs, indirect):
     """
     from _pytest.fixtures import scopes
 
-    indirect_as_list = isinstance(indirect, (list, tuple))
-    all_arguments_are_fixtures = (
-        indirect is True or indirect_as_list and len(indirect) == argnames
-    )
+    if isinstance(indirect, (list, tuple)):
+        all_arguments_are_fixtures = len(indirect) == len(argnames)
+    else:
+        all_arguments_are_fixtures = bool(indirect)
+
     if all_arguments_are_fixtures:
         fixturedefs = arg2fixturedefs or {}
-        used_scopes = [fixturedef[0].scope for name, fixturedef in fixturedefs.items()]
+        used_scopes = [
+            fixturedef[0].scope
+            for name, fixturedef in fixturedefs.items()
+            if name in argnames
+        ]
         if used_scopes:
             # Takes the most narrow scope from used fixtures
             for scope in reversed(scopes):
@@ -1436,7 +1440,7 @@ class Function(FunctionMixin, nodes.Item, fixtures.FuncargnamesCompatAttr):
     @property
     def function(self):
         "underlying python 'function' object"
-        return getattr(self.obj, "im_func", self.obj)
+        return getimfunc(self.obj)
 
     def _getobj(self):
         name = self.name

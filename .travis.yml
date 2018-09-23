@@ -18,12 +18,12 @@ env:
     - TOXENV=py27-xdist
     - TOXENV=py27-trial
     - TOXENV=py27-numpy
-    - TOXENV=py27-pluggymaster
+    - TOXENV=py27-pluggymaster PYTEST_NO_COVERAGE=1
     - TOXENV=py36-pexpect
     - TOXENV=py36-xdist
     - TOXENV=py36-trial
     - TOXENV=py36-numpy
-    - TOXENV=py36-pluggymaster
+    - TOXENV=py36-pluggymaster PYTEST_NO_COVERAGE=1
     - TOXENV=py27-nobyte
     - TOXENV=doctesting
     - TOXENV=docs PYTEST_NO_COVERAGE=1
@@ -84,7 +84,7 @@ before_script:
     if [[ "$PYTEST_NO_COVERAGE" != 1 ]]; then
       export COVERAGE_FILE="$PWD/.coverage"
       export COVERAGE_PROCESS_START="$PWD/.coveragerc"
-      export _PYTEST_TOX_COVERAGE_RUN="coverage run --source {envsitepackagesdir}/_pytest/,{toxinidir}/testing -m"
+      export _PYTEST_TOX_COVERAGE_RUN="coverage run -m"
       export _PYTEST_TOX_EXTRA_DEP=coverage-enable-subprocess
     fi
 
@@ -94,11 +94,11 @@ after_success:
   - |
     if [[ "$PYTEST_NO_COVERAGE" != 1 ]]; then
       set -e
-      pip install codecov
+      pip install coverage
       coverage combine
       coverage xml --ignore-errors
       coverage report -m --ignore-errors
-      codecov --required -X gcov pycov search -f coverage.xml --flags ${TOXENV//-/ } linux
+      bash <(curl -s https://codecov.io/bash) -Z -X gcov -X coveragepy -X search -X xcode -X gcovout -X fix -f coverage.xml -F "${TOXENV//-/,},linux"
 
       # Coveralls does not support merged reports.
       if [[ "$TOXENV" = py37 ]]; then
