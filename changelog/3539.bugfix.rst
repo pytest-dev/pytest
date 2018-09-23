@@ -1,0 +1,1 @@
+Fix reload on assertion rewritten modules.
