@@ -123,11 +123,11 @@ new features:
   "node.addfinalizer()" helper which can only be called during the setup
   phase of a node.
 
-- simplify pytest.mark.parametrize() signature: allow to pass a
+- simplify pytest.mark.parameterize() signature: allow to pass a
   CSV-separated string to specify argnames.  For example:
-  ``pytest.mark.parametrize("input,expected",  [(1,2), (2,3)])``
+  ``pytest.mark.parameterize("input,expected",  [(1,2), (2,3)])``
   works as well as the previous:
-  ``pytest.mark.parametrize(("input", "expected"), ...)``.
+  ``pytest.mark.parameterize(("input", "expected"), ...)``.
 
 - add support for setUpModule/tearDownModule detection, thanks Brian Okken.
 
@@ -217,7 +217,7 @@ Bug fixes:
 
 - fix issue307 - use yaml.safe_load in example, thanks Mark Eichin.
 
-- better parametrize error messages, thanks Brianna Laugher
+- better parameterize error messages, thanks Brianna Laugher
 
 - pytest_terminal_summary(terminalreporter) hooks can now use
   ".section(title)" and ".line(msg)" methods to print extra

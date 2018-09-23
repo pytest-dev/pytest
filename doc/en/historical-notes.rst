@@ -51,7 +51,7 @@ Note that for ``pytest.ini`` and ``tox.ini`` files the section
 name is ``[pytest]``.
 
 
-Applying marks to ``@pytest.mark.parametrize`` parameters
+Applying marks to ``@pytest.mark.parameterize`` parameters
 ---------------------------------------------------------
 
 .. versionchanged:: 3.1
@@ -60,7 +60,7 @@ Prior to version 3.1 the supported mechanism for marking values
 used the syntax::
 
     import pytest
-    @pytest.mark.parametrize("test_input,expected", [
+    @pytest.mark.parameterize("test_input,expected", [
         ("3+5", 8),
         ("2+4", 6),
         pytest.mark.xfail(("6*9", 42),),
@@ -75,7 +75,7 @@ broken for passing functions or applying multiple marks with the same name but d
 The old syntax is planned to be removed in pytest-4.0.
 
 
-``@pytest.mark.parametrize`` argument names as a tuple
+``@pytest.mark.parameterize`` argument names as a tuple
 ------------------------------------------------------
 
 .. versionchanged:: 2.4

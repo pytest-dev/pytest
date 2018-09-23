@@ -21,7 +21,7 @@ The ideal pytest helper
 -----------------------------------------
 
  - will be able to commit 2-4 hours a week to working with their particular project (this might involve joining their mailing list, installing the software and exploring any existing tests, offering advice, writing some example tests)
- - feels confident in using pytest (e.g. has explored command line options, knows how to write parametrized tests, has an idea about conftest contents)
+ - feels confident in using pytest (e.g. has explored command line options, knows how to write parameterized tests, has an idea about conftest contents)
  - does not need to be an expert in every aspect!
 
 `Pytest helpers, sign up here`_! (preferably in February, hard deadline 22 March)

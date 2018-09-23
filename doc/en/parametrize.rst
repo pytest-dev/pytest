@@ -1,30 +1,30 @@
 
 .. _`test generators`:
 .. _`parametrizing-tests`:
-.. _`parametrized test functions`:
-.. _`parametrize`:
+.. _`parameterized test functions`:
+.. _`parameterize`:
 
-.. _`parametrize-basics`:
+.. _`parameterize-basics`:
 
 Parametrizing fixtures and test functions
 ==========================================================================
 
 pytest enables test parametrization at several levels:
 
-- :py:func:`pytest.fixture` allows one to :ref:`parametrize fixture
-  functions <fixture-parametrize>`.
+- :py:func:`pytest.fixture` allows one to :ref:`parameterize fixture
+  functions <fixture-parameterize>`.
 
-* `@pytest.mark.parametrize`_ allows one to define multiple sets of
+* `@pytest.mark.parameterize`_ allows one to define multiple sets of
   arguments and fixtures at the test function or class.
 
 * `pytest_generate_tests`_ allows one to define custom parametrization
   schemes or extensions.
 
-.. _parametrizemark:
-.. _`@pytest.mark.parametrize`:
+.. _parameterizemark:
+.. _`@pytest.mark.parameterize`:
 
 
-``@pytest.mark.parametrize``: parametrizing test functions
+``@pytest.mark.parameterize``: parametrizing test functions
 ---------------------------------------------------------------------
 
 .. regendoc: wipe
@@ -33,14 +33,14 @@ pytest enables test parametrization at several levels:
 .. versionchanged:: 2.4
     Several improvements.
 
-The builtin :ref:`pytest.mark.parametrize ref` decorator enables
+The builtin :ref:`pytest.mark.parameterize ref` decorator enables
 parametrization of arguments for a test function.  Here is a typical example
 of a test function that implements checking that a certain input leads
 to an expected output::
 
     # content of test_expectation.py
     import pytest
-    @pytest.mark.parametrize("test_input,expected", [
+    @pytest.mark.parameterize("test_input,expected", [
         ("3+5", 8),
         ("2+4", 6),
         ("6*9", 42),
@@ -48,7 +48,7 @@ to an expected output::
     def test_eval(test_input, expected):
         assert eval(test_input) == expected
 
-Here, the ``@parametrize`` decorator defines three different ``(test_input,expected)``
+Here, the ``@parameterize`` decorator defines three different ``(test_input,expected)``
 tuples so that the ``test_eval`` function will run three times using
 them in turn::
 
@@ -65,7 +65,7 @@ them in turn::
 
     test_input = '6*9', expected = 42
 
-        @pytest.mark.parametrize("test_input,expected", [
+        @pytest.mark.parameterize("test_input,expected", [
             ("3+5", 8),
             ("2+4", 6),
             ("6*9", 42),
@@ -82,15 +82,15 @@ As designed in this example, only one pair of input/output values fails
 the simple test function.  And as usual with test function arguments,
 you can see the ``input`` and ``output`` values in the traceback.
 
-Note that you could also use the parametrize marker on a class or a module
+Note that you could also use the parameterize marker on a class or a module
 (see :ref:`mark`) which would invoke several functions with the argument sets.
 
-It is also possible to mark individual test instances within parametrize,
+It is also possible to mark individual test instances within parameterize,
 for example with the builtin ``mark.xfail``::
 
     # content of test_expectation.py
     import pytest
-    @pytest.mark.parametrize("test_input,expected", [
+    @pytest.mark.parameterize("test_input,expected", [
         ("3+5", 8),
         ("2+4", 6),
         pytest.param("6*9", 42,
@@ -114,12 +114,12 @@ Let's run this::
 The one parameter set which caused a failure previously now
 shows up as an "xfailed (expected to fail)" test.
 
-To get all combinations of multiple parametrized arguments you can stack
-``parametrize`` decorators::
+To get all combinations of multiple parameterized arguments you can stack
+``parameterize`` decorators::
 
     import pytest
-    @pytest.mark.parametrize("x", [0, 1])
-    @pytest.mark.parametrize("y", [2, 3])
+    @pytest.mark.parameterize("x", [0, 1])
+    @pytest.mark.parameterize("y", [2, 3])
     def test_foo(x, y):
         pass
 
@@ -136,7 +136,7 @@ or implement some dynamism for determining the parameters or scope
 of a fixture.   For this, you can use the ``pytest_generate_tests`` hook
 which is called when collecting a test function.  Through the passed in
 ``metafunc`` object you can inspect the requesting test context and, most
-importantly, you can call ``metafunc.parametrize()`` to cause
+importantly, you can call ``metafunc.parameterize()`` to cause
 parametrization.
 
 For example, let's say we want to run a test taking string inputs which
@@ -159,7 +159,7 @@ command line option and the parametrization of our test function::
 
     def pytest_generate_tests(metafunc):
         if 'stringinput' in metafunc.fixturenames:
-            metafunc.parametrize("stringinput",
+            metafunc.parameterize("stringinput",
                                  metafunc.config.getoption('stringinput'))
 
 If we now pass two stringinput values, our test will run twice::
@@ -189,7 +189,7 @@ Let's also run with a stringinput that will lead to a failing test::
 As expected our test function fails.
 
 If you don't specify a stringinput it will be skipped because
-``metafunc.parametrize()`` will be called with an empty parameter
+``metafunc.parameterize()`` will be called with an empty parameter
 list::
 
     $ pytest -q -rs test_strings.py
@@ -198,7 +198,7 @@ list::
     SKIP [1] test_strings.py: got empty parameter set ['stringinput'], function test_valid_string at $REGENDOC_TMPDIR/test_strings.py:1
     1 skipped in 0.12 seconds
 
-Note that when calling ``metafunc.parametrize`` multiple times with different parameter sets, all parameter names across
+Note that when calling ``metafunc.parameterize`` multiple times with different parameter sets, all parameter names across
 those sets cannot be duplicated, otherwise an error will be raised.
 
 More examples

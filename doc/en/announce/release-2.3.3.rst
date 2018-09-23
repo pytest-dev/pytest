@@ -35,7 +35,7 @@ Changes between 2.3.2 and 2.3.3
   flask's request object which blows up on getattr access if no request
   is active. thanks Thomas Waldmann.
 
-- fix issue213 - allow to parametrize with values like numpy arrays that
+- fix issue213 - allow to parameterize with values like numpy arrays that
   do not support an __eq__ operator
 
 - fix issue215 - split test_python.org into multiple files

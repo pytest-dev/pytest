@@ -298,7 +298,7 @@ def test_setup_class(testdir):
     reprec.assertoutcome(passed=3)
 
 
-@pytest.mark.parametrize("type", ["Error", "Failure"])
+@pytest.mark.parameterize("type", ["Error", "Failure"])
 def test_testcase_adderrorandfailure_defers(testdir, type):
     testdir.makepyfile(
         """
@@ -322,7 +322,7 @@ def test_testcase_adderrorandfailure_defers(testdir, type):
     assert "should not raise" not in result.stdout.str()
 
 
-@pytest.mark.parametrize("type", ["Error", "Failure"])
+@pytest.mark.parameterize("type", ["Error", "Failure"])
 def test_testcase_custom_exception_info(testdir, type):
     testdir.makepyfile(
         """
@@ -703,7 +703,7 @@ def test_unittest_typerror_traceback(testdir):
     assert result.ret == 1
 
 
-@pytest.mark.parametrize("runner", ["pytest", "unittest"])
+@pytest.mark.parameterize("runner", ["pytest", "unittest"])
 def test_unittest_expected_failure_for_failing_test_is_xfail(testdir, runner):
     script = testdir.makepyfile(
         """
@@ -727,7 +727,7 @@ def test_unittest_expected_failure_for_failing_test_is_xfail(testdir, runner):
     assert result.ret == 0
 
 
-@pytest.mark.parametrize("runner", ["pytest", "unittest"])
+@pytest.mark.parameterize("runner", ["pytest", "unittest"])
 def test_unittest_expected_failure_for_passing_test_is_fail(testdir, runner):
     script = testdir.makepyfile(
         """
@@ -758,7 +758,7 @@ def test_unittest_expected_failure_for_passing_test_is_fail(testdir, runner):
     assert result.ret == (1 if should_fail else 0)
 
 
-@pytest.mark.parametrize(
+@pytest.mark.parameterize(
     "fix_type, stmt", [("fixture", "return"), ("yield_fixture", "yield")]
 )
 def test_unittest_setup_interaction(testdir, fix_type, stmt):
@@ -927,7 +927,7 @@ def test_class_method_containing_test_issue1558(testdir):
 
 
 @pytest.mark.issue(3498)
-@pytest.mark.parametrize(
+@pytest.mark.parameterize(
     "base", ["six.moves.builtins.object", "unittest.TestCase", "unittest2.TestCase"]
 )
 def test_usefixtures_marker_on_unittest(base, testdir):

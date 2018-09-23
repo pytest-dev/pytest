@@ -137,7 +137,7 @@ class TestDoctests(object):
         result = testdir.runpytest()
         result.stdout.fnmatch_lines(["*test_normal.txt *", "*1 passed*"])
 
-    @pytest.mark.parametrize(
+    @pytest.mark.parameterize(
         "   test_string,    encoding",
         [(u"foo", "ascii"), (u"öäü", "latin1"), (u"öäü", "utf-8")],
     )
@@ -722,7 +722,7 @@ class TestDoctests(object):
 
 
 class TestLiterals(object):
-    @pytest.mark.parametrize("config_mode", ["ini", "comment"])
+    @pytest.mark.parameterize("config_mode", ["ini", "comment"])
     def test_allow_unicode(self, testdir, config_mode):
         """Test that doctests which output unicode work in all python versions
         tested by pytest when the ALLOW_UNICODE option is used (either in
@@ -761,7 +761,7 @@ class TestLiterals(object):
         reprec = testdir.inline_run("--doctest-modules")
         reprec.assertoutcome(passed=2)
 
-    @pytest.mark.parametrize("config_mode", ["ini", "comment"])
+    @pytest.mark.parameterize("config_mode", ["ini", "comment"])
     def test_allow_bytes(self, testdir, config_mode):
         """Test that doctests which output bytes work in all python versions
         tested by pytest when the ALLOW_BYTES option is used (either in
@@ -952,8 +952,8 @@ class TestDoctestAutoUseFixtures(object):
         result = testdir.runpytest("--doctest-modules")
         result.stdout.fnmatch_lines("*2 passed*")
 
-    @pytest.mark.parametrize("scope", SCOPES)
-    @pytest.mark.parametrize("enable_doctest", [True, False])
+    @pytest.mark.parameterize("scope", SCOPES)
+    @pytest.mark.parameterize("enable_doctest", [True, False])
     def test_fixture_scopes(self, testdir, scope, enable_doctest):
         """Test that auto-use fixtures work properly with doctest modules.
         See #1057 and #1100.
@@ -985,9 +985,9 @@ class TestDoctestAutoUseFixtures(object):
         result = testdir.runpytest(*params)
         result.stdout.fnmatch_lines(["*=== %d passed in *" % passes])
 
-    @pytest.mark.parametrize("scope", SCOPES)
-    @pytest.mark.parametrize("autouse", [True, False])
-    @pytest.mark.parametrize("use_fixture_in_doctest", [True, False])
+    @pytest.mark.parameterize("scope", SCOPES)
+    @pytest.mark.parameterize("autouse", [True, False])
+    @pytest.mark.parameterize("use_fixture_in_doctest", [True, False])
     def test_fixture_module_doctest_scopes(
         self, testdir, scope, autouse, use_fixture_in_doctest
     ):
@@ -1023,7 +1023,7 @@ class TestDoctestAutoUseFixtures(object):
         assert "FAILURES" not in str(result.stdout.str())
         result.stdout.fnmatch_lines(["*=== 1 passed in *"])
 
-    @pytest.mark.parametrize("scope", SCOPES)
+    @pytest.mark.parameterize("scope", SCOPES)
     def test_auto_use_request_attributes(self, testdir, scope):
         """Check that all attributes of a request in an autouse fixture
         behave as expected when requested for a doctest item.
@@ -1060,7 +1060,7 @@ class TestDoctestNamespaceFixture(object):
 
     SCOPES = ["module", "session", "class", "function"]
 
-    @pytest.mark.parametrize("scope", SCOPES)
+    @pytest.mark.parameterize("scope", SCOPES)
     def test_namespace_doctestfile(self, testdir, scope):
         """
         Check that inserting something into the namespace works in a
@@ -1087,7 +1087,7 @@ class TestDoctestNamespaceFixture(object):
         reprec = testdir.inline_run(p)
         reprec.assertoutcome(passed=1)
 
-    @pytest.mark.parametrize("scope", SCOPES)
+    @pytest.mark.parameterize("scope", SCOPES)
     def test_namespace_pyfile(self, testdir, scope):
         """
         Check that inserting something into the namespace works in a
@@ -1138,7 +1138,7 @@ class TestDoctestReportingOption(object):
         )
         return testdir.runpytest("--doctest-modules", "--doctest-report", format)
 
-    @pytest.mark.parametrize("format", ["udiff", "UDIFF", "uDiFf"])
+    @pytest.mark.parameterize("format", ["udiff", "UDIFF", "uDiFf"])
     def test_doctest_report_udiff(self, testdir, format):
         result = self._run_doctest_report(testdir, format)
         result.stdout.fnmatch_lines(
@@ -1175,7 +1175,7 @@ class TestDoctestReportingOption(object):
             ]
         )
 
-    @pytest.mark.parametrize("format", ["none", "only_first_failure"])
+    @pytest.mark.parameterize("format", ["none", "only_first_failure"])
     def test_doctest_report_none_or_only_first_failure(self, testdir, format):
         result = self._run_doctest_report(testdir, format)
         result.stdout.fnmatch_lines(

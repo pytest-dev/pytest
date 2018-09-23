@@ -323,7 +323,7 @@ class TestGeneralUsage(object):
         result.stderr.fnmatch_lines(["INTERNAL*pytest_configure*", "INTERNAL*x*"])
         assert "sessionstarttime" not in result.stderr.str()
 
-    @pytest.mark.parametrize("lookfor", ["test_fun.py::test_a"])
+    @pytest.mark.parameterize("lookfor", ["test_fun.py::test_a"])
     def test_issue134_report_error_when_collecting_member(self, testdir, lookfor):
         testdir.makepyfile(
             test_fun="""
@@ -410,12 +410,12 @@ class TestGeneralUsage(object):
         monkeypatch.setitem(sys.modules, "myplugin", mod)
         assert pytest.main(args=[str(tmpdir)], plugins=["myplugin"]) == 0
 
-    def test_parametrized_with_bytes_regex(self, testdir):
+    def test_parameterized_with_bytes_regex(self, testdir):
         p = testdir.makepyfile(
             """
             import re
             import pytest
-            @pytest.mark.parametrize('r', [re.compile(b'foo')])
+            @pytest.mark.parameterize('r', [re.compile(b'foo')])
             def test_stuff(r):
                 pass
         """
@@ -423,14 +423,14 @@ class TestGeneralUsage(object):
         res = testdir.runpytest(p)
         res.stdout.fnmatch_lines(["*1 passed*"])
 
-    def test_parametrized_with_null_bytes(self, testdir):
+    def test_parameterized_with_null_bytes(self, testdir):
         """Test parametrization with values that contain null bytes and unicode characters (#2644, #2957)"""
         p = testdir.makepyfile(
             u"""
             # encoding: UTF-8
             import pytest
 
-            @pytest.mark.parametrize("data", [b"\\x00", "\\x00", u'ação'])
+            @pytest.mark.parameterize("data", [b"\\x00", "\\x00", u'ação'])
             def test_foo(data):
                 assert data
         """

@@ -31,7 +31,7 @@ holger krekel
 
 - merge new documentation styling PR from Tobias Bieniek.
 
-- fix issue403: allow parametrize of multiple same-name functions within
+- fix issue403: allow parameterize of multiple same-name functions within
   a collection node.  Thanks Andreas Kloeckner and Alex Gaynor for reporting
   and analysis.
 

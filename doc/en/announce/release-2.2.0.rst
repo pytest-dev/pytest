@@ -7,10 +7,10 @@ with these improvements:
 
 * easier and more powerful parametrization of tests:
 
-  - new @pytest.mark.parametrize decorator to run tests with different arguments
-  - new metafunc.parametrize() API for parametrizing arguments independently
-  - see examples at http://pytest.org/latest/example/parametrize.html
-  - NOTE that parametrize() related APIs are still a bit experimental
+  - new @pytest.mark.parameterize decorator to run tests with different arguments
+  - new metafunc.parameterize() API for parametrizing arguments independently
+  - see examples at http://pytest.org/latest/example/parameterize.html
+  - NOTE that parameterize() related APIs are still a bit experimental
     and might change in future releases.
 
 * improved handling of test markers and refined marking mechanism:
@@ -67,13 +67,13 @@ Changes between 2.1.3 and 2.2.0
 
 - fix issue90: introduce eager tearing down of test items so that
   teardown function are called earlier.
-- add an all-powerful metafunc.parametrize function which allows to
-  parametrize test function arguments in multiple steps and therefore
+- add an all-powerful metafunc.parameterize function which allows to
+  parameterize test function arguments in multiple steps and therefore
   from independent plugins and places.
-- add a @pytest.mark.parametrize helper which allows to easily
+- add a @pytest.mark.parameterize helper which allows to easily
   call a test function with different argument values.
-- Add examples to the "parametrize" example page, including a quick port
-  of Test scenarios and the new parametrize function and decorator.
+- Add examples to the "parameterize" example page, including a quick port
+  of Test scenarios and the new parameterize function and decorator.
 - introduce registration for "pytest.mark.*" helpers via ini-files
   or through plugin hooks.  Also introduce a "--strict" option which
   will treat unregistered markers as errors

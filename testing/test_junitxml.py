@@ -359,7 +359,7 @@ class TestPython(object):
         fnode.assert_attr(message="internal error")
         assert "Division" in fnode.toxml()
 
-    @pytest.mark.parametrize("junit_logging", ["no", "system-out", "system-err"])
+    @pytest.mark.parameterize("junit_logging", ["no", "system-out", "system-err"])
     def test_failure_function(self, testdir, junit_logging):
         testdir.makepyfile(
             """
@@ -427,7 +427,7 @@ class TestPython(object):
         testdir.makepyfile(
             """
             import pytest
-            @pytest.mark.parametrize('arg1', "<&'", ids="<&'")
+            @pytest.mark.parameterize('arg1', "<&'", ids="<&'")
             def test_func(arg1):
                 print(arg1)
                 assert 0
@@ -890,11 +890,11 @@ def test_logxml_check_isdir(testdir):
     result.stderr.fnmatch_lines(["*--junitxml must be a filename*"])
 
 
-def test_escaped_parametrized_names_xml(testdir):
+def test_escaped_parameterized_names_xml(testdir):
     testdir.makepyfile(
         """
         import pytest
-        @pytest.mark.parametrize('char', [u"\\x00"])
+        @pytest.mark.parameterize('char', [u"\\x00"])
         def test_func(char):
             assert char
     """
@@ -909,7 +909,7 @@ def test_double_colon_split_function_issue469(testdir):
     testdir.makepyfile(
         """
         import pytest
-        @pytest.mark.parametrize('param', ["double::colon"])
+        @pytest.mark.parameterize('param', ["double::colon"])
         def test_func(param):
             pass
     """
@@ -926,7 +926,7 @@ def test_double_colon_split_method_issue469(testdir):
         """
         import pytest
         class TestClass(object):
-            @pytest.mark.parametrize('param', ["double::colon"])
+            @pytest.mark.parameterize('param', ["double::colon"])
             def test_func(self, param):
                 pass
     """
@@ -1037,7 +1037,7 @@ def test_random_report_log_xdist(testdir):
     testdir.makepyfile(
         """
         import pytest, time
-        @pytest.mark.parametrize('i', list(range(30)))
+        @pytest.mark.parameterize('i', list(range(30)))
         def test_x(i):
             assert i != 22
     """
@@ -1196,7 +1196,7 @@ def test_url_property(testdir):
     ), "The URL did not get written to the xml"
 
 
-@pytest.mark.parametrize("suite_name", ["my_suite", ""])
+@pytest.mark.parameterize("suite_name", ["my_suite", ""])
 def test_set_suite_name(testdir, suite_name):
     if suite_name:
         testdir.makeini(

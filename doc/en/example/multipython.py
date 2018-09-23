@@ -1,5 +1,5 @@
 """
-module containing a parametrized tests testing cross-python
+module containing a parameterized tests testing cross-python
 serialization via the pickle module.
 """
 import textwrap
@@ -65,7 +65,7 @@ class Python(object):
         py.process.cmdexec("{} {}".format(self.pythonpath, loadfile))
 
 
-@pytest.mark.parametrize("obj", [42, {}, {1: 3}])
+@pytest.mark.parameterize("obj", [42, {}, {1: 3}])
 def test_basic_objects(python1, python2, obj):
     python1.dumps(obj)
     python2.load_and_is_true("obj == %s" % obj)

@@ -32,7 +32,7 @@ Bug Fixes
       TypeError: object of type 'Package' has no len()
 
 
-- `#3941 <https://github.com/pytest-dev/pytest/issues/3941>`_: Fix bug where indirect parametrization would consider the scope of all fixtures used by the test function to determine the parametrization scope, and not only the scope of the fixtures being parametrized.
+- `#3941 <https://github.com/pytest-dev/pytest/issues/3941>`_: Fix bug where indirect parametrization would consider the scope of all fixtures used by the test function to determine the parametrization scope, and not only the scope of the fixtures being parameterized.
 
 
 - `#3973 <https://github.com/pytest-dev/pytest/issues/3973>`_: Fix crash of the assertion rewriter if a test changed the current working directory without restoring it afterwards.
@@ -845,7 +845,7 @@ Bug Fixes
   test which was giving false negatives about output capturing. (`#3052
   <https://github.com/pytest-dev/pytest/issues/3052>`_)
 
-- Fix ordering of tests using parametrized fixtures which can lead to fixtures
+- Fix ordering of tests using parameterized fixtures which can lead to fixtures
   being created more than necessary. (`#3161
   <https://github.com/pytest-dev/pytest/issues/3161>`_)
 
@@ -884,7 +884,7 @@ Trivial/Internal Changes
   PyPI directly from Travis. (`#3060
   <https://github.com/pytest-dev/pytest/issues/3060>`_)
 
-- Rename ``ParameterSet._for_parameterize()`` to ``_for_parametrize()`` in
+- Rename ``ParameterSet._for_parameterize()`` to ``_for_parameterize()`` in
   order to comply with the naming convention. (`#3166
   <https://github.com/pytest-dev/pytest/issues/3166>`_)
 
@@ -907,7 +907,7 @@ Features
 --------
 
 - Introduce ``empty_parameter_set_mark`` ini option to select which mark to
-  apply when ``@pytest.mark.parametrize`` is given an empty set of parameters.
+  apply when ``@pytest.mark.parameterize`` is given an empty set of parameters.
   Valid options are ``skip`` (default) and ``xfail``. Note that it is planned
   to change the default to ``xfail`` in future releases as this is considered
   less error prone. (`#2527
@@ -1013,7 +1013,7 @@ Trivial/Internal Changes
   the ``import`` keyword in expressions). (`#2953
   <https://github.com/pytest-dev/pytest/issues/2953>`_)
 
-- Change parametrized automatic test id generation to use the ``__name__``
+- Change parameterized automatic test id generation to use the ``__name__``
   attribute of functions instead of the fallback argument name plus counter.
   (`#2976 <https://github.com/pytest-dev/pytest/issues/2976>`_)
 
@@ -1047,7 +1047,7 @@ Bug Fixes
 Improved Documentation
 ----------------------
 
-- Add clarifying note about behavior of multiple parametrized arguments (`#3001
+- Add clarifying note about behavior of multiple parameterized arguments (`#3001
   <https://github.com/pytest-dev/pytest/issues/3001>`_)
 
 
@@ -1301,7 +1301,7 @@ Bug Fixes
   empty ``parent.nodeid`` if run from a different root directory. (`#2775
   <https://github.com/pytest-dev/pytest/issues/2775>`_)
 
-- Fix issue with ``@pytest.parametrize`` if argnames was specified as keyword arguments.
+- Fix issue with ``@pytest.parameterize`` if argnames was specified as keyword arguments.
   (`#2819 <https://github.com/pytest-dev/pytest/issues/2819>`_)
 
 - Strip whitespace from marker names when reading them from INI config. (`#2856
@@ -1323,7 +1323,7 @@ Improved Documentation
 - Explicitly mention ``xpass`` in the documentation of ``xfail``. (`#1997
   <https://github.com/pytest-dev/pytest/issues/1997>`_)
 
-- Append example for pytest.param in the example/parametrize document. (`#2658
+- Append example for pytest.param in the example/parameterize document. (`#2658
   <https://github.com/pytest-dev/pytest/issues/2658>`_)
 
 - Clarify language of proposal for fixtures parameters (`#2893
@@ -1365,7 +1365,7 @@ Improved Documentation
   certain tests whose names match the provided expression. (`#1442
   <https://github.com/pytest-dev/pytest/issues/1442>`_)
 
-- Add note in ``parametrize.rst`` about calling ``metafunc.parametrize``
+- Add note in ``parameterize.rst`` about calling ``metafunc.parameterize``
   multiple times. (`#1548 <https://github.com/pytest-dev/pytest/issues/1548>`_)
 
 
@@ -1474,7 +1474,7 @@ Deprecations and Removals
   <https://github.com/pytest-dev/pytest/issues/2147>`_)
 
 - A deprecation warning is now raised when using marks for parameters
-  in ``pytest.mark.parametrize``. Use ``pytest.param`` to apply marks to
+  in ``pytest.mark.parameterize``. Use ``pytest.param`` to apply marks to
   parameters instead. (`#2427 <https://github.com/pytest-dev/pytest/issues/2427>`_)
 
 
@@ -1774,7 +1774,7 @@ Changes
   this is to prepare the removal of preloadconfig in pytest 4.0
   Thanks to `@RonnyPfannschmidt`_ for the PR.
 
-* pytest now warns when a callable ids raises in a parametrized test. Thanks `@fogo`_ for the PR.
+* pytest now warns when a callable ids raises in a parameterized test. Thanks `@fogo`_ for the PR.
 
 * It is now possible to skip test classes from being collected by setting a
   ``__test__`` attribute to ``False`` in the class body (`#2007`_). Thanks
@@ -1808,7 +1808,7 @@ Changes
   ``pytest_plugins`` special variable (`#1821`_).
   Thanks `@nicoddemus`_ for the PR.
 
-* Modify ``pytest_make_parametrize_id()`` hook to accept ``argname`` as an
+* Modify ``pytest_make_parameterize_id()`` hook to accept ``argname`` as an
   additional parameter.
   Thanks `@unsignedint`_ for the PR.
 
@@ -1851,7 +1851,7 @@ Bug Fixes
 * Allow collecting files with any file extension as Python modules (`#2369`_).
   Thanks `@Kodiologist`_ for the PR.
 
-* Show the correct error message when collect "parametrize" func with wrong args (`#2383`_).
+* Show the correct error message when collect "parameterize" func with wrong args (`#2383`_).
   Thanks `@The-Compiler`_ for the report and `@robin0371`_ for the PR.
 
 
@@ -2127,7 +2127,7 @@ Bug Fixes
 3.0.3 (2016-09-28)
 ==================
 
-* The ``ids`` argument to ``parametrize`` again accepts ``unicode`` strings
+* The ``ids`` argument to ``parameterize`` again accepts ``unicode`` strings
   in Python 2 (`#1905`_).
   Thanks `@philpep`_ for the report and `@nicoddemus`_ for the PR.
 
@@ -2143,7 +2143,7 @@ Bug Fixes
   Thanks `@axil`_ for the PR.
 
 * Explain a bad scope value passed to ``@fixture`` declarations or
-  a ``MetaFunc.parametrize()`` call. Thanks `@tgoodlet`_ for the PR.
+  a ``MetaFunc.parameterize()`` call. Thanks `@tgoodlet`_ for the PR.
 
 * This version includes ``pluggy-0.4.0``, which correctly handles
   ``VersionConflict`` errors in plugins (`#704`_).
@@ -2168,7 +2168,7 @@ Bug Fixes
 3.0.2 (2016-09-01)
 ==================
 
-* Improve error message when passing non-string ids to ``pytest.mark.parametrize`` (`#1857`_).
+* Improve error message when passing non-string ids to ``pytest.mark.parameterize`` (`#1857`_).
   Thanks `@okken`_ for the report and `@nicoddemus`_ for the PR.
 
 * Add ``buffer`` attribute to stdin stub class ``pytest.capture.DontReadFromInput``
@@ -2280,7 +2280,7 @@ time or change existing behaviors in order to make them less surprising/more use
 
 * Renamed the pytest ``pdb`` module (plugin) into ``debugging`` to avoid clashes with the builtin ``pdb`` module.
 
-* Raise a helpful failure message when requesting a parametrized fixture at runtime,
+* Raise a helpful failure message when requesting a parameterized fixture at runtime,
   e.g. with ``request.getfixturevalue``. Previously these parameters were simply
   never defined, so a fixture decorated like ``@pytest.fixture(params=[0, 1, 2])``
   only ran once (`#460`_).
@@ -2327,7 +2327,7 @@ time or change existing behaviors in order to make them less surprising/more use
   whether to filter the traceback based on the ``ExceptionInfo`` object passed
   to it. Thanks `@The-Compiler`_ for the complete PR (`#1526`_).
 
-* New ``pytest_make_parametrize_id(config, val)`` hook which can be used by plugins to provide
+* New ``pytest_make_parameterize_id(config, val)`` hook which can be used by plugins to provide
   friendly strings for custom types.
   Thanks `@palaviv`_ for the PR.
 
@@ -2402,7 +2402,7 @@ time or change existing behaviors in order to make them less surprising/more use
   the preferred way to write teardown code (`#1461`_).
   Thanks `@csaftoiu`_ for bringing this to attention and `@nicoddemus`_ for the PR.
 
-* Explicitly passed parametrize ids do not get escaped to ascii (`#1351`_).
+* Explicitly passed parameterize ids do not get escaped to ascii (`#1351`_).
   Thanks `@ceridwen`_ for the PR.
 
 * Fixtures are now sorted in the error message displayed when an unknown
@@ -2421,7 +2421,7 @@ time or change existing behaviors in order to make them less surprising/more use
   Thanks `@okken`_ for bringing this to attention and `@nicoddemus`_ for the PR.
 
 * Improved automatic id generation selection in case of duplicate ids in
-  parametrize.
+  parameterize.
   Thanks `@palaviv`_ for the complete PR (`#1474`_).
 
 * Now pytest warnings summary is shown up by default. Added a new flag
@@ -2493,7 +2493,7 @@ time or change existing behaviors in order to make them less surprising/more use
   Thanks `@bagerard`_ for reporting (`#1503`_). Thanks to `@davehunt`_ and
   `@tomviner`_ for PR.
 
-* Better message in case of not using parametrized variable (see `#1539`_).
+* Better message in case of not using parameterized variable (see `#1539`_).
   Thanks to `@tramwaj29`_ for the PR.
 
 * Updated docstrings with a more uniform style.
@@ -2543,7 +2543,7 @@ time or change existing behaviors in order to make them less surprising/more use
 * Fixed collection of classes with custom ``__new__`` method.
   Fixes `#1579`_. Thanks to `@Stranger6667`_ for the PR.
 
-* Fixed scope overriding inside metafunc.parametrize (`#634`_).
+* Fixed scope overriding inside metafunc.parameterize (`#634`_).
   Thanks to `@Stranger6667`_ for the PR.
 
 * Fixed the total tests tally in junit xml output (`#1798`_).
@@ -2719,7 +2719,7 @@ time or change existing behaviors in order to make them less surprising/more use
 * Fix (`#1437`_): When passing in a bytestring regex pattern to parameterize
   attempt to decode it as utf-8 ignoring errors.
 
-* Fix (`#649`_): parametrized test nodes cannot be specified to run on the command line.
+* Fix (`#649`_): parameterized test nodes cannot be specified to run on the command line.
 
 * Fix (`#138`_): better reporting for python 3.3+ chained exceptions
 
@@ -2960,11 +2960,11 @@ time or change existing behaviors in order to make them less surprising/more use
 ==================
 
 - fix #1085: proper handling of encoding errors when passing encoded byte
-  strings to pytest.parametrize in Python 2.
+  strings to pytest.parameterize in Python 2.
   Thanks Themanwithoutaplan for the report and Bruno Oliveira for the PR.
 
 - fix #1087: handling SystemError when passing empty byte strings to
-  pytest.parametrize in Python 3.
+  pytest.parameterize in Python 3.
   Thanks Paul Kehrer for the report and Bruno Oliveira for the PR.
 
 - fix #995: fixed internal error when filtering tracebacks where one entry
@@ -3011,7 +3011,7 @@ time or change existing behaviors in order to make them less surprising/more use
   to make them always serializable.
   Thanks Andy Freeland for the report and Bruno Oliveira for the PR.
 
-- Python 2: if unicode parametrized values are convertible to ascii, their
+- Python 2: if unicode parameterized values are convertible to ascii, their
   ascii representation is used for the node id.
 
 - Fix issue #411: Add __eq__ method to assertion comparison example.
@@ -3055,7 +3055,7 @@ time or change existing behaviors in order to make them less surprising/more use
   allows doctests which use unicode to run in Python 2 and 3 unchanged.
   Thanks Jason R. Coombs for the report and Bruno Oliveira for the PR.
 
-- parametrize now also generates meaningful test IDs for enum, regex and class
+- parameterize now also generates meaningful test IDs for enum, regex and class
   objects (as opposed to class instances).
   Thanks to Florian Bruhin for the PR.
 
@@ -3070,7 +3070,7 @@ time or change existing behaviors in order to make them less surprising/more use
 - fix issue730: deprecate and warn about the --genscript option.
   Thanks Ronny Pfannschmidt for the report and Christian Pommranz for the PR.
 
-- fix issue751: multiple parametrize with ids bug if it parametrizes class with
+- fix issue751: multiple parameterize with ids bug if it parameterizes class with
   two or more test methods. Thanks Sergey Chipiga for reporting and Jan
   Bednarik for PR.
 
@@ -3356,7 +3356,7 @@ time or change existing behaviors in order to make them less surprising/more use
   booleans with modulo operators.  Thanks to Tom Viner for the report,
   triaging and fix.
 
-- implement issue351: add ability to specify parametrize ids as a callable
+- implement issue351: add ability to specify parameterize ids as a callable
   to generate custom test ids.  Thanks Brianna Laugher for the idea and
   implementation.
 
@@ -3380,7 +3380,7 @@ time or change existing behaviors in order to make them less surprising/more use
 - "python_classes" and "python_functions" options now support glob-patterns
   for test discovery, as discussed in issue600. Thanks Ldiary Translations.
 
-- allow to override parametrized fixtures with non-parametrized ones and vice versa (bubenkoff).
+- allow to override parameterized fixtures with non-parameterized ones and vice versa (bubenkoff).
 
 - fix issue463: raise specific error for 'parameterize' misspelling (pfctdayelise).
 
@@ -3402,7 +3402,7 @@ time or change existing behaviors in order to make them less surprising/more use
 
 - fix issue557: with "-k" we only allow the old style "-" for negation
   at the beginning of strings and even that is deprecated.  Use "not" instead.
-  This should allow to pick parametrized tests where "-" appeared in the parameter.
+  This should allow to pick parameterized tests where "-" appeared in the parameter.
 
 - fix issue604: Escape % character in the assertion message.
 
@@ -3643,7 +3643,7 @@ time or change existing behaviors in order to make them less surprising/more use
 
 - merge new documentation styling PR from Tobias Bieniek.
 
-- fix issue403: allow parametrize of multiple same-name functions within
+- fix issue403: allow parameterize of multiple same-name functions within
   a collection node.  Thanks Andreas Kloeckner and Alex Gaynor for reporting
   and analysis.
 
@@ -3667,7 +3667,7 @@ time or change existing behaviors in order to make them less surprising/more use
   with this release we believe).
 
 - simplified and fixed implementation for calling finalizers when
-  parametrized fixtures or function arguments are involved.  finalization
+  parameterized fixtures or function arguments are involved.  finalization
   is now performed lazily at setup time instead of in the "teardown phase".
   While this might sound odd at first, it helps to ensure that we are
   correctly handling setup/teardown even in complex code.  User-level code
@@ -3682,7 +3682,7 @@ time or change existing behaviors in order to make them less surprising/more use
   thanks to Floris Bruynooghe for the complete PR.  Also means
   we depend on py>=1.4.19 now.
 
-- fix issue396 - correctly sort and finalize class-scoped parametrized
+- fix issue396 - correctly sort and finalize class-scoped parameterized
   tests independently from number of methods on the class.
 
 - refix issue323 in a better way -- parametrization should now never
@@ -3700,7 +3700,7 @@ time or change existing behaviors in order to make them less surprising/more use
   interacts with PEP420-namespace packages.
 
 - fix issue246 fix finalizer order to be LIFO on independent fixtures
-  depending on a parametrized higher-than-function scoped fixture.
+  depending on a parameterized higher-than-function scoped fixture.
   (was quite some effort so please bear with the complexity of this sentence :)
   Thanks Ralph Schmitt for the precise failure example.
 
@@ -3719,7 +3719,7 @@ time or change existing behaviors in order to make them less surprising/more use
 
 - fix issue357 - special case "-k" expressions to allow for
   filtering with simple strings that are not valid python expressions.
-  Examples: "-k 1.3" matches all tests parametrized with 1.3.
+  Examples: "-k 1.3" matches all tests parameterized with 1.3.
   "-k None" filters all tests that have "None" in their name
   and conversely "-k 'not None'".
   Previously these examples would raise syntax errors.
@@ -3743,7 +3743,7 @@ time or change existing behaviors in order to make them less surprising/more use
 - fix pexpect-3.0 compatibility for pytest's own tests.
   (fixes issue386)
 
-- allow nested parametrize-value markers, thanks James Lan for the PR.
+- allow nested parameterize-value markers, thanks James Lan for the PR.
 
 - fix unicode handling with new monkeypatch.setattr(import_path, value)
   API.  Thanks Rob Dennis.  Fixes issue371.
@@ -3911,11 +3911,11 @@ new features:
   "node.addfinalizer()" helper which can only be called during the setup
   phase of a node.
 
-- simplify pytest.mark.parametrize() signature: allow to pass a
+- simplify pytest.mark.parameterize() signature: allow to pass a
   CSV-separated string to specify argnames.  For example:
-  ``pytest.mark.parametrize("input,expected",  [(1,2), (2,3)])``
+  ``pytest.mark.parameterize("input,expected",  [(1,2), (2,3)])``
   works as well as the previous:
-  ``pytest.mark.parametrize(("input", "expected"), ...)``.
+  ``pytest.mark.parameterize(("input", "expected"), ...)``.
 
 - add support for setUpModule/tearDownModule detection, thanks Brian Okken.
 
@@ -4005,7 +4005,7 @@ Bug fixes:
 
 - fix issue307 - use yaml.safe_load in example, thanks Mark Eichin.
 
-- better parametrize error messages, thanks Brianna Laugher
+- better parameterize error messages, thanks Brianna Laugher
 
 - pytest_terminal_summary(terminalreporter) hooks can now use
   ".section(title)" and ".line(msg)" methods to print extra
@@ -4057,7 +4057,7 @@ Bug fixes:
 
 - move long description of distribution into README.rst
 
-- improve docstring for metafunc.parametrize()
+- improve docstring for metafunc.parameterize()
 
 - fix bug where using capsys with pytest.set_trace() in a test
   function would break when looking at capsys.readouterr()
@@ -4081,8 +4081,8 @@ Bug fixes:
 
 - yielded test functions will now have autouse-fixtures active but
   cannot accept fixtures as funcargs - it's anyway recommended to
-  rather use the post-2.0 parametrize features instead of yield, see:
-  http://pytest.org/latest/example/parametrize.html
+  rather use the post-2.0 parameterize features instead of yield, see:
+  http://pytest.org/latest/example/parameterize.html
 - fix autouse-issue where autouse-fixtures would not be discovered
   if defined in an a/conftest.py file and tests in a/tests/test_some.py
 - fix issue226 - LIFO ordering for fixture teardowns
@@ -4103,7 +4103,7 @@ Bug fixes:
   flask's request object which blows up on getattr access if no request
   is active. thanks Thomas Waldmann.
 
-- fix issue213 - allow to parametrize with values like numpy arrays that
+- fix issue213 - allow to parameterize with values like numpy arrays that
   do not support an __eq__ operator
 
 - fix issue215 - split test_python.org into multiple files
@@ -4138,7 +4138,7 @@ Bug fixes:
   pytest_pycollect_makemodule and pytest_pycollect_makeitem
   now work properly
 
-- fix teardown-ordering for parametrized setups
+- fix teardown-ordering for parameterized setups
 
 - fix issue127 - better documentation for pytest_addoption
   and related objects.
@@ -4177,12 +4177,12 @@ Bug fixes:
 2.3.0 (2012-10-19)
 ==================
 
-- fix issue202 - better automatic names for parametrized test functions
+- fix issue202 - better automatic names for parameterized test functions
 - fix issue139 - introduce @pytest.fixture which allows direct scoping
   and parametrization of funcarg factories.
 - fix issue198 - conftest fixtures were not found on windows32 in some
   circumstances with nested directory structures due to path manipulation issues
-- fix issue193 skip test functions with were parametrized with empty
+- fix issue193 skip test functions with were parameterized with empty
   parameter sets
 - fix python3.3 compat, mostly reporting bits that previously depended
   on dict ordering
@@ -4282,10 +4282,10 @@ Bug fixes:
   produce better output
 - fix issue102: report more useful errors and hints for when a
   test directory was renamed and some pyc/__pycache__ remain
-- fix issue106: allow parametrize to be applied multiple times
+- fix issue106: allow parameterize to be applied multiple times
   e.g. from module, class and at function level.
 - fix issue107: actually perform session scope finalization
-- don't check in parametrize if indirect parameters are funcarg names
+- don't check in parameterize if indirect parameters are funcarg names
 - add chdir method to monkeypatch funcarg
 - fix crash resulting from calling monkeypatch undo a second time
 - fix issue115: make --collectonly robust against early failure
@@ -4317,13 +4317,13 @@ Bug fixes:
 
 - fix issue90: introduce eager tearing down of test items so that
   teardown function are called earlier.
-- add an all-powerful metafunc.parametrize function which allows to
-  parametrize test function arguments in multiple steps and therefore
+- add an all-powerful metafunc.parameterize function which allows to
+  parameterize test function arguments in multiple steps and therefore
   from independent plugins and places.
-- add a @pytest.mark.parametrize helper which allows to easily
+- add a @pytest.mark.parameterize helper which allows to easily
   call a test function with different argument values
-- Add examples to the "parametrize" example page, including a quick port
-  of Test scenarios and the new parametrize function and decorator.
+- Add examples to the "parameterize" example page, including a quick port
+  of Test scenarios and the new parameterize function and decorator.
 - introduce registration for "pytest.mark.*" helpers via ini-files
   or through plugin hooks.  Also introduce a "--strict" option which
   will treat unregistered markers as errors
@@ -4670,7 +4670,7 @@ Bug fixes:
 - issue91: introduce new py.test.xfail(reason) helper
   to imperatively mark a test as expected to fail. Can
   be used from within setup and test functions. This is
-  useful especially for parametrized tests when certain
+  useful especially for parameterized tests when certain
   configurations are expected-to-fail.  In this case the
   declarative approach with the @py.test.mark.xfail cannot
   be used as it would mark all configurations as xfail.

@@ -614,7 +614,7 @@ get on the terminal - we are working on that)::
     failure_demo.py:261: AssertionError
     ============================= warnings summary =============================
     $REGENDOC_TMPDIR/assertion/failure_demo.py:24: RemovedInPytest4Warning: Metafunc.addcall is deprecated and scheduled to be removed in pytest 4.0.
-    Please use Metafunc.parametrize instead.
+    Please use Metafunc.parameterize instead.
       metafunc.addcall(funcargs=dict(param1=3, param2=6))
 
     -- Docs: https://docs.pytest.org/en/latest/warnings.html

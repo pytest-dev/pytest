@@ -6,8 +6,8 @@ Parametrizing tests
 
 .. currentmodule:: _pytest.python
 
-``pytest`` allows to easily parametrize test functions.
-For basic docs, see :ref:`parametrize-basics`.
+``pytest`` allows to easily parameterize test functions.
+For basic docs, see :ref:`parameterize-basics`.
 
 In the following we provide some examples using
 the builtin mechanisms.
@@ -40,7 +40,7 @@ Now we add a test configuration like this::
                 end = 5
             else:
                 end = 2
-            metafunc.parametrize("param1", range(end))
+            metafunc.parameterize("param1", range(end))
 
 This means that we only run 2 tests if we do not pass ``--all``::
 
@@ -73,7 +73,7 @@ Different options for test IDs
 ------------------------------------
 
 pytest will build a string that is the test ID for each set of values in a
-parametrized test. These IDs can be used with ``-k`` to select specific cases
+parameterized test. These IDs can be used with ``-k`` to select specific cases
 to run, and they will also identify the specific case when one is failing.
 Running pytest with ``--collect-only`` will show the generated IDs.
 
@@ -93,13 +93,13 @@ the argument name::
     ]
 
 
-    @pytest.mark.parametrize("a,b,expected", testdata)
+    @pytest.mark.parameterize("a,b,expected", testdata)
     def test_timedistance_v0(a, b, expected):
         diff = a - b
         assert diff == expected
 
 
-    @pytest.mark.parametrize("a,b,expected", testdata, ids=["forward", "backward"])
+    @pytest.mark.parameterize("a,b,expected", testdata, ids=["forward", "backward"])
     def test_timedistance_v1(a, b, expected):
         diff = a - b
         assert diff == expected
@@ -111,12 +111,12 @@ the argument name::
             return val.strftime('%Y%m%d')
 
 
-    @pytest.mark.parametrize("a,b,expected", testdata, ids=idfn)
+    @pytest.mark.parameterize("a,b,expected", testdata, ids=idfn)
     def test_timedistance_v2(a, b, expected):
         diff = a - b
         assert diff == expected
 
-    @pytest.mark.parametrize("a,b,expected", [
+    @pytest.mark.parameterize("a,b,expected", [
         pytest.param(datetime(2001, 12, 12), datetime(2001, 12, 11),
                      timedelta(1), id='forward'),
         pytest.param(datetime(2001, 12, 11), datetime(2001, 12, 12),
@@ -165,7 +165,7 @@ A quick port of "testscenarios"
 Here is a quick port to run tests configured with `test scenarios`_,
 an add-on from Robert Collins for the standard unittest framework. We
 only have to work a bit to construct the correct arguments for pytest's
-:py:func:`Metafunc.parametrize`::
+:py:func:`Metafunc.parameterize`::
 
     # content of test_scenarios.py
 
@@ -177,7 +177,7 @@ only have to work a bit to construct the correct arguments for pytest's
             items = scenario[1].items()
             argnames = [x[0] for x in items]
             argvalues.append(([x[1] for x in items]))
-        metafunc.parametrize(argnames, argvalues, ids=idlist, scope="class")
+        metafunc.parameterize(argnames, argvalues, ids=idlist, scope="class")
 
     scenario1 = ('basic', {'attribute': 'value'})
     scenario2 = ('advanced', {'attribute': 'value2'})
@@ -221,11 +221,11 @@ If you just collect tests you'll also nicely see 'advanced' and 'basic' as varia
 
     ======================= no tests ran in 0.12 seconds =======================
 
-Note that we told ``metafunc.parametrize()`` that your scenario values
+Note that we told ``metafunc.parameterize()`` that your scenario values
 should be considered class-scoped.  With pytest-2.3 this leads to a
 resource-based ordering.
 
-Deferring the setup of parametrized resources
+Deferring the setup of parameterized resources
 ---------------------------------------------------
 
 .. regendoc:wipe
@@ -253,7 +253,7 @@ creates a database object for the actual test invocations::
 
     def pytest_generate_tests(metafunc):
         if 'db' in metafunc.fixturenames:
-            metafunc.parametrize("db", ['d1', 'd2'], indirect=True)
+            metafunc.parameterize("db", ['d1', 'd2'], indirect=True)
 
     class DB1(object):
         "one database object"
@@ -325,7 +325,7 @@ will be passed to respective fixture function::
     def y(request):
         return request.param * 2
 
-    @pytest.mark.parametrize('x, y', [('a', 'b')], indirect=['x'])
+    @pytest.mark.parameterize('x, y', [('a', 'b')], indirect=['x'])
     def test_indirect(x,y):
         assert x == 'aaa'
         assert y == 'b'
@@ -347,21 +347,21 @@ The result of this test will be successful::
 Parametrizing test methods through per-class configuration
 --------------------------------------------------------------
 
-.. _`unittest parametrizer`: https://github.com/testing-cabal/unittest-ext/blob/master/params.py
+.. _`unittest parameterizer`: https://github.com/testing-cabal/unittest-ext/blob/master/params.py
 
 
 Here is an example ``pytest_generate_tests`` function implementing a
 parametrization scheme similar to Michael Foord's `unittest
-parametrizer`_ but in a lot less code::
+parameterizer`_ but in a lot less code::
 
-    # content of ./test_parametrize.py
+    # content of ./test_parameterize.py
     import pytest
 
     def pytest_generate_tests(metafunc):
         # called once per each test function
         funcarglist = metafunc.cls.params[metafunc.function.__name__]
         argnames = sorted(funcarglist[0])
-        metafunc.parametrize(argnames, [[funcargs[name] for name in argnames]
+        metafunc.parameterize(argnames, [[funcargs[name] for name in argnames]
                 for funcargs in funcarglist])
 
     class TestClass(object):
@@ -385,19 +385,19 @@ argument sets to use for each test function.  Let's run it::
     ================================= FAILURES =================================
     ________________________ TestClass.test_equals[1-2] ________________________
 
-    self = <test_parametrize.TestClass object at 0xdeadbeef>, a = 1, b = 2
+    self = <test_parameterize.TestClass object at 0xdeadbeef>, a = 1, b = 2
 
         def test_equals(self, a, b):
     >       assert a == b
     E       assert 1 == 2
 
-    test_parametrize.py:18: AssertionError
+    test_parameterize.py:18: AssertionError
     1 failed, 2 passed in 0.12 seconds
 
 Indirect parametrization with multiple fixtures
 --------------------------------------------------------------
 
-Here is a stripped down real-life example of using parametrized
+Here is a stripped down real-life example of using parameterized
 testing for testing serialization of objects between different python
 interpreters.  We define a ``test_basic_objects`` function which
 is to be run with different sets of arguments for its three arguments:
@@ -481,20 +481,20 @@ of our ``test_func1`` was skipped.  A few notes:
 - if you have multiple test functions and a skipped import, you will see
   the ``[1]`` count increasing in the report
 
-- you can put :ref:`@pytest.mark.parametrize <@pytest.mark.parametrize>` style
-  parametrization on the test functions to parametrize input/output
+- you can put :ref:`@pytest.mark.parameterize <@pytest.mark.parameterize>` style
+  parametrization on the test functions to parameterize input/output
   values as well.
 
 
-Set marks or test ID for individual parametrized test
+Set marks or test ID for individual parameterized test
 --------------------------------------------------------------------
 
-Use ``pytest.param`` to apply marks or set test ID to individual parametrized test.
+Use ``pytest.param`` to apply marks or set test ID to individual parameterized test.
 For example::
 
     # content of test_pytest_param_example.py
     import pytest
-    @pytest.mark.parametrize('test_input,expected', [
+    @pytest.mark.parameterize('test_input,expected', [
         ('3+5', 8),
         pytest.param('1+7', 8,
                      marks=pytest.mark.basic),
@@ -508,8 +508,8 @@ For example::
     def test_eval(test_input, expected):
         assert eval(test_input) == expected
 
-In this example, we have 4 parametrized tests. Except for the first test,
-we mark the rest three parametrized tests with the custom marker ``basic``,
+In this example, we have 4 parameterized tests. Except for the first test,
+we mark the rest three parameterized tests with the custom marker ``basic``,
 and for the fourth test we also use the built-in mark ``xfail`` to indicate this
 test is expected to fail. For explicitness, we set test ids for some tests.
 

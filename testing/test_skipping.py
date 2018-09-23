@@ -148,7 +148,7 @@ class TestEvaluator(object):
 
 
 class TestXFail(object):
-    @pytest.mark.parametrize("strict", [True, False])
+    @pytest.mark.parameterize("strict", [True, False])
     def test_xfail_simple(self, testdir, strict):
         item = testdir.getitem(
             """
@@ -394,7 +394,7 @@ class TestXFail(object):
         result = testdir.runpytest(p)
         result.stdout.fnmatch_lines(["*1 xfailed*"])
 
-    @pytest.mark.parametrize(
+    @pytest.mark.parameterize(
         "expected, actual, matchline",
         [
             ("TypeError", "TypeError", "*1 xfailed*"),
@@ -432,7 +432,7 @@ class TestXFail(object):
         result.stdout.fnmatch_lines(["*XFAIL*", "*unsupported feature*"])
         assert result.ret == 0
 
-    @pytest.mark.parametrize("strict", [True, False])
+    @pytest.mark.parameterize("strict", [True, False])
     def test_strict_xfail(self, testdir, strict):
         p = testdir.makepyfile(
             """
@@ -459,7 +459,7 @@ class TestXFail(object):
         assert result.ret == (1 if strict else 0)
         assert testdir.tmpdir.join("foo_executed").isfile()
 
-    @pytest.mark.parametrize("strict", [True, False])
+    @pytest.mark.parameterize("strict", [True, False])
     def test_strict_xfail_condition(self, testdir, strict):
         p = testdir.makepyfile(
             """
@@ -475,7 +475,7 @@ class TestXFail(object):
         result.stdout.fnmatch_lines("*1 passed*")
         assert result.ret == 0
 
-    @pytest.mark.parametrize("strict", [True, False])
+    @pytest.mark.parameterize("strict", [True, False])
     def test_xfail_condition_keyword(self, testdir, strict):
         p = testdir.makepyfile(
             """
@@ -491,7 +491,7 @@ class TestXFail(object):
         result.stdout.fnmatch_lines("*1 passed*")
         assert result.ret == 0
 
-    @pytest.mark.parametrize("strict_val", ["true", "false"])
+    @pytest.mark.parameterize("strict_val", ["true", "false"])
     def test_strict_xfail_default_from_file(self, testdir, strict_val):
         testdir.makeini(
             """
@@ -656,7 +656,7 @@ class TestSkipif(object):
         x = pytest.raises(pytest.skip.Exception, lambda: pytest_runtest_setup(item))
         assert x.value.msg == "condition: hasattr(os, 'sep')"
 
-    @pytest.mark.parametrize(
+    @pytest.mark.parameterize(
         "params", ["\"hasattr(sys, 'platform')\"", 'True, reason="invalid platform"']
     )
     def test_skipif_reporting(self, testdir, params):
@@ -684,7 +684,7 @@ class TestSkipif(object):
         )
         pytest.raises(pytest.skip.Exception, lambda: pytest_runtest_setup(item))
 
-    @pytest.mark.parametrize(
+    @pytest.mark.parameterize(
         "marker, msg1, msg2",
         [("skipif", "SKIP", "skipped"), ("xfail", "XPASS", "xpassed")],
     )

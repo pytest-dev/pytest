@@ -5,10 +5,10 @@ import pprint
 
 def pytest_generate_tests(metafunc):
     if "arg1" in metafunc.fixturenames:
-        metafunc.parametrize("arg1", ["arg1v1", "arg1v2"], scope="module")
+        metafunc.parameterize("arg1", ["arg1v1", "arg1v2"], scope="module")
 
     if "arg2" in metafunc.fixturenames:
-        metafunc.parametrize("arg2", ["arg2v1", "arg2v2"], scope="function")
+        metafunc.parameterize("arg2", ["arg2v1", "arg2v2"], scope="function")
 
 
 @pytest.fixture(scope="session")

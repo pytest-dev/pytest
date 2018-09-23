@@ -7,7 +7,7 @@ PROPOSAL: Parametrize with fixtures
 .. warning::
 
     This document outlines a proposal around using fixtures as input
-    of parametrized tests or fixtures.
+    of parameterized tests or fixtures.
 
 Problem
 -------
@@ -77,7 +77,7 @@ Issues
 * By using ``request.getfuncargvalue()`` we rely on actual fixture function
   execution to know what fixtures are involved, due to it's dynamic nature
 * More importantly, ``request.getfuncargvalue()`` cannot be combined with
-  parametrized fixtures, such as ``extra_context``
+  parameterized fixtures, such as ``extra_context``
 * This is very inconvenient if you wish to extend an existing test suite by
   certain parameters for fixtures that are already used by tests
 
@@ -143,12 +143,12 @@ all parameters marked as a fixture.
         """
         return request.param
 
-The same helper can be used in combination with ``pytest.mark.parametrize``.
+The same helper can be used in combination with ``pytest.mark.parameterize``.
 
 .. code-block:: python
 
 
-    @pytest.mark.parametrize(
+    @pytest.mark.parameterize(
         "context, expected_response_code",
         [
             (pytest.fixture_request("default_context"), 0),

@@ -46,7 +46,7 @@ def option(request):
     return request.param
 
 
-@pytest.mark.parametrize(
+@pytest.mark.parameterize(
     "input,expected",
     [
         ([DistInfo(project_name="test", version=1)], ["test-1"]),
@@ -641,7 +641,7 @@ class TestTerminalFunctional(object):
         testdir.makepyfile(
             """
             import pytest
-            @pytest.mark.parametrize('i', range(3))
+            @pytest.mark.parameterize('i', range(3))
             def test(i):
                 pass
         """
@@ -705,7 +705,7 @@ def test_color_no(testdir):
     assert "\x1b[1m" not in result.stdout.str()
 
 
-@pytest.mark.parametrize("verbose", [True, False])
+@pytest.mark.parameterize("verbose", [True, False])
 def test_color_yes_collection_on_non_atty(testdir, verbose):
     """skip collect progress report when working on non-terminals.
     #1397
@@ -713,7 +713,7 @@ def test_color_yes_collection_on_non_atty(testdir, verbose):
     testdir.makepyfile(
         """
         import pytest
-        @pytest.mark.parametrize('i', range(10))
+        @pytest.mark.parameterize('i', range(10))
         def test_this(i):
             assert 1
     """
@@ -1066,7 +1066,7 @@ def test_terminal_summary_warnings_are_displayed(testdir):
     assert "None" not in result.stdout.str()
 
 
-@pytest.mark.parametrize(
+@pytest.mark.parameterize(
     "exp_color, exp_line, stats_arg",
     [
         # The method under test only cares about the length of each
@@ -1188,17 +1188,17 @@ class TestProgressOutputStyle(object):
         testdir.makepyfile(
             test_bar="""
                 import pytest
-                @pytest.mark.parametrize('i', range(10))
+                @pytest.mark.parameterize('i', range(10))
                 def test_bar(i): pass
             """,
             test_foo="""
                 import pytest
-                @pytest.mark.parametrize('i', range(5))
+                @pytest.mark.parameterize('i', range(5))
                 def test_foo(i): pass
             """,
             test_foobar="""
                 import pytest
-                @pytest.mark.parametrize('i', range(5))
+                @pytest.mark.parameterize('i', range(5))
                 def test_foobar(i): pass
             """,
         )
@@ -1331,13 +1331,13 @@ class TestProgressWithTeardown(object):
         testdir.makepyfile(
             test_bar="""
                 import pytest
-                @pytest.mark.parametrize('i', range(5))
+                @pytest.mark.parameterize('i', range(5))
                 def test_bar(fail_teardown, i):
                     pass
             """,
             test_foo="""
                 import pytest
-                @pytest.mark.parametrize('i', range(15))
+                @pytest.mark.parameterize('i', range(15))
                 def test_foo(fail_teardown, i):
                     pass
             """,

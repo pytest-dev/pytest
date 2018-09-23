@@ -108,7 +108,7 @@ Or select multiple nodes::
     ``module.py::function``.  Node IDs control which tests are
     collected, so ``module.py::class`` will select all test methods
     on the class.  Nodes are also created for each parameter of a
-    parametrized fixture or test, so selecting a parametrized test
+    parameterized fixture or test, so selecting a parameterized test
     must include the parameter value, e.g.
     ``module.py::function[param]``.
 
@@ -178,7 +178,7 @@ Or to select "http" and "quick" tests::
 
     However, if the ``"-k"`` argument is a simple string, no such restrictions
     apply. Also ``"-k 'not STRING'"`` has no restrictions.  You can also
-    specify numbers like ``"-k 1.3"`` to match tests which are parametrized
+    specify numbers like ``"-k 1.3"`` to match tests which are parameterized
     with the float ``"1.3"``.
 
 Registering markers
@@ -208,7 +208,7 @@ You can ask which markers exist for your test suite - the list includes our just
 
     @pytest.mark.xfail(condition, reason=None, run=True, raises=None, strict=False): mark the test function as an expected failure if eval(condition) has a True value. Optionally specify a reason for better reporting and run=False if you don't even want to execute the test function. If only specific exception(s) are expected, you can list them in raises, and if the test fails in other ways, it will be reported as a true failure. See https://docs.pytest.org/en/latest/skipping.html
 
-    @pytest.mark.parametrize(argnames, argvalues): call a test function multiple times passing in different arguments in turn. argvalues generally needs to be a list of values if argnames specifies only one name or a list of tuples of values if argnames specifies multiple names. Example: @parametrize('arg1', [1,2]) would lead to two calls of the decorated test function, one with arg1=1 and another with arg1=2.see https://docs.pytest.org/en/latest/parametrize.html for more info and examples.
+    @pytest.mark.parameterize(argnames, argvalues): call a test function multiple times passing in different arguments in turn. argvalues generally needs to be a list of values if argnames specifies only one name or a list of tuples of values if argnames specifies multiple names. Example: @parameterize('arg1', [1,2]) would lead to two calls of the decorated test function, one with arg1=1 and another with arg1=2.see https://docs.pytest.org/en/latest/parameterize.html for more info and examples.
 
     @pytest.mark.usefixtures(fixturename1, fixturename2, ...): mark tests as needing all of the specified fixtures. see https://docs.pytest.org/en/latest/fixture.html#usefixtures
 
@@ -274,19 +274,19 @@ You can also set a module level marker::
 in which case it will be applied to all functions and
 methods defined in the module.
 
-.. _`marking individual tests when using parametrize`:
+.. _`marking individual tests when using parameterize`:
 
-Marking individual tests when using parametrize
+Marking individual tests when using parameterize
 -----------------------------------------------
 
-When using parametrize, applying a mark will make it apply
+When using parameterize, applying a mark will make it apply
 to each individual test. However it is also possible to
 apply a marker to an individual test instance::
 
     import pytest
 
     @pytest.mark.foo
-    @pytest.mark.parametrize(("n", "expected"), [
+    @pytest.mark.parameterize(("n", "expected"), [
         (1, 2),
         pytest.mark.bar((1, 3)),
         (2, 3),
@@ -296,7 +296,7 @@ apply a marker to an individual test instance::
 
 In this example the mark "foo" will apply to each of the three
 tests, whereas the "bar" mark is only applied to the second test.
-Skip and xfail marks can also be applied in this way, see :ref:`skip/xfail with parametrize`.
+Skip and xfail marks can also be applied in this way, see :ref:`skip/xfail with parameterize`.
 
 .. note::
 
@@ -316,7 +316,7 @@ Custom marker and command line option to control test runs
 
 Plugins can provide custom markers and implement specific behaviour
 based on it. This is a self-contained example which adds a command
-line option and a parametrized test function marker to run tests
+line option and a parameterized test function marker to run tests
 specifies via named environments::
 
     # content of conftest.py
@@ -384,7 +384,7 @@ The ``--markers`` option always gives you a list of available markers::
 
     @pytest.mark.xfail(condition, reason=None, run=True, raises=None, strict=False): mark the test function as an expected failure if eval(condition) has a True value. Optionally specify a reason for better reporting and run=False if you don't even want to execute the test function. If only specific exception(s) are expected, you can list them in raises, and if the test fails in other ways, it will be reported as a true failure. See https://docs.pytest.org/en/latest/skipping.html
 
-    @pytest.mark.parametrize(argnames, argvalues): call a test function multiple times passing in different arguments in turn. argvalues generally needs to be a list of values if argnames specifies only one name or a list of tuples of values if argnames specifies multiple names. Example: @parametrize('arg1', [1,2]) would lead to two calls of the decorated test function, one with arg1=1 and another with arg1=2.see https://docs.pytest.org/en/latest/parametrize.html for more info and examples.
+    @pytest.mark.parameterize(argnames, argvalues): call a test function multiple times passing in different arguments in turn. argvalues generally needs to be a list of values if argnames specifies only one name or a list of tuples of values if argnames specifies multiple names. Example: @parameterize('arg1', [1,2]) would lead to two calls of the decorated test function, one with arg1=1 and another with arg1=2.see https://docs.pytest.org/en/latest/parameterize.html for more info and examples.
 
     @pytest.mark.usefixtures(fixturename1, fixturename2, ...): mark tests as needing all of the specified fixtures. see https://docs.pytest.org/en/latest/fixture.html#usefixtures
 

@@ -100,7 +100,7 @@ class ParameterSet(namedtuple("ParameterSet", "values, marks, id")):
         return cls(argval, marks=newmarks, id=None)
 
     @classmethod
-    def _for_parametrize(cls, argnames, argvalues, func, config, function_definition):
+    def _for_parameterize(cls, argnames, argvalues, func, config, function_definition):
         if not isinstance(argnames, (tuple, list)):
             argnames = [x.strip() for x in argnames.split(",") if x.strip()]
             force_tuple = len(argnames) == 1
@@ -121,7 +121,7 @@ class ParameterSet(namedtuple("ParameterSet", "values, marks, id")):
             for param in parameters:
                 if len(param.values) != len(argnames):
                     raise ValueError(
-                        'In "parametrize" the number of values ({}) must be '
+                        'In "parameterize" the number of values ({}) must be '
                         "equal to the number of names ({})".format(
                             param.values, argnames
                         )
@@ -167,7 +167,7 @@ class MarkDecorator(object):
     MarkDecorator instances are often created like this::
 
         mark1 = pytest.mark.NAME              # simple MarkDecorator
-        mark2 = pytest.mark.NAME(name1=value) # parametrized MarkDecorator
+        mark2 = pytest.mark.NAME(name1=value) # parameterized MarkDecorator
 
     and can then be applied as decorators to test functions::
 

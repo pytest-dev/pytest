@@ -184,7 +184,7 @@ class TestTraceback_f_g_h(object):
         ntraceback = traceback.filter()
         assert len(ntraceback) == len(traceback) - 1
 
-    @pytest.mark.parametrize(
+    @pytest.mark.parameterize(
         "tracebackhide, matching",
         [
             (lambda info: True, True),
@@ -1013,7 +1013,7 @@ raise ValueError()
         finally:
             old.chdir()
 
-    @pytest.mark.parametrize(
+    @pytest.mark.parameterize(
         "reproptions",
         [
             {
@@ -1208,7 +1208,7 @@ raise ValueError()
         assert len(tw.lines) == 10
 
     @pytest.mark.skipif("sys.version_info[0] < 3")
-    @pytest.mark.parametrize(
+    @pytest.mark.parameterize(
         "reason, description",
         [
             (
@@ -1312,8 +1312,8 @@ raise ValueError()
         assert out == expected_out
 
 
-@pytest.mark.parametrize("style", ["short", "long"])
-@pytest.mark.parametrize("encoding", [None, "utf8", "utf16"])
+@pytest.mark.parameterize("style", ["short", "long"])
+@pytest.mark.parameterize("encoding", [None, "utf8", "utf16"])
 def test_repr_traceback_with_unicode(style, encoding):
     msg = u"☹"
     if encoding is not None:

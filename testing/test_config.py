@@ -10,7 +10,7 @@ from _pytest.main import EXIT_NOTESTSCOLLECTED
 
 
 class TestParseIni(object):
-    @pytest.mark.parametrize(
+    @pytest.mark.parameterize(
         "section, filename", [("pytest", "pytest.ini"), ("tool:pytest", "setup.cfg")]
     )
     def test_getcfg_and_config(self, testdir, tmpdir, section, filename):
@@ -63,7 +63,7 @@ class TestParseIni(object):
         assert result.ret != 0
         result.stderr.fnmatch_lines(["*tox.ini:2*requires*9.0*actual*"])
 
-    @pytest.mark.parametrize(
+    @pytest.mark.parameterize(
         "section, name",
         [("tool:pytest", "setup.cfg"), ("pytest", "tox.ini"), ("pytest", "pytest.ini")],
     )
@@ -320,7 +320,7 @@ class TestConfigAPI(object):
         values = config.getini("a2")
         assert values == []
 
-    @pytest.mark.parametrize(
+    @pytest.mark.parameterize(
         "str_val, bool_val", [("True", True), ("no", False), ("no-ini", True)]
     )
     def test_addini_bool(self, testdir, str_val, bool_val):
@@ -394,7 +394,7 @@ class TestConfigAPI(object):
         )
         assert config.getoption("confcutdir") == str(testdir.tmpdir.join("dir"))
 
-    @pytest.mark.parametrize(
+    @pytest.mark.parameterize(
         "names, expected",
         [
             (["bar.py"], ["bar"]),
@@ -567,7 +567,7 @@ def test_setuptools_importerror_issue1479(testdir, monkeypatch):
         testdir.parseconfig()
 
 
-@pytest.mark.parametrize("block_it", [True, False])
+@pytest.mark.parameterize("block_it", [True, False])
 def test_plugin_preparse_prevents_setuptools_loading(testdir, monkeypatch, block_it):
     pkg_resources = pytest.importorskip("pkg_resources")
 
@@ -605,7 +605,7 @@ def test_plugin_preparse_prevents_setuptools_loading(testdir, monkeypatch, block
         )
 
 
-@pytest.mark.parametrize(
+@pytest.mark.parameterize(
     "parse_args,should_load", [(("-p", "mytestplugin"), True), ((), False)]
 )
 def test_disable_plugin_autoload(testdir, monkeypatch, parse_args, should_load):
@@ -655,7 +655,7 @@ def test_invalid_options_show_extra_information(testdir):
     )
 
 
-@pytest.mark.parametrize(
+@pytest.mark.parameterize(
     "args",
     [
         ["dir1", "dir2", "-v"],
@@ -809,7 +809,7 @@ class TestLegacyWarning(object):
         )
 
     @pytest.mark.filterwarnings("default")
-    @pytest.mark.parametrize("use_kw", [True, False])
+    @pytest.mark.parameterize("use_kw", [True, False])
     def test_warn_on_test_item_from_request(self, testdir, use_kw):
         code_kw = "code=" if use_kw else ""
         message_kw = "message=" if use_kw else ""
@@ -853,7 +853,7 @@ class TestRootdir(object):
             assert get_common_ancestor([no_path]) == tmpdir
             assert get_common_ancestor([no_path.join("a")]) == tmpdir
 
-    @pytest.mark.parametrize("name", "setup.cfg tox.ini pytest.ini".split())
+    @pytest.mark.parameterize("name", "setup.cfg tox.ini pytest.ini".split())
     def test_with_ini(self, tmpdir, name):
         inifile = tmpdir.join(name)
         inifile.write("[pytest]\n" if name != "setup.cfg" else "[tool:pytest]\n")
@@ -868,7 +868,7 @@ class TestRootdir(object):
         assert rootdir == tmpdir
         assert inifile == inifile
 
-    @pytest.mark.parametrize("name", "setup.cfg tox.ini".split())
+    @pytest.mark.parameterize("name", "setup.cfg tox.ini".split())
     def test_pytestini_overides_empty_other(self, tmpdir, name):
         inifile = tmpdir.ensure("pytest.ini")
         a = tmpdir.mkdir("a")
@@ -900,7 +900,7 @@ class TestRootdir(object):
 
 
 class TestOverrideIniArgs(object):
-    @pytest.mark.parametrize("name", "setup.cfg tox.ini pytest.ini".split())
+    @pytest.mark.parameterize("name", "setup.cfg tox.ini pytest.ini".split())
     def test_override_ini_names(self, testdir, name):
         section = "[pytest]" if name != "setup.cfg" else "[tool:pytest]"
         testdir.tmpdir.join(name).write(
@@ -1015,7 +1015,7 @@ class TestOverrideIniArgs(object):
         result = testdir.runpytest("--override-ini", "xdist_strict True", "-s")
         result.stderr.fnmatch_lines(["*ERROR* *expects option=value*"])
 
-    @pytest.mark.parametrize("with_ini", [True, False])
+    @pytest.mark.parameterize("with_ini", [True, False])
     def test_override_ini_handled_asap(self, testdir, with_ini):
         """-o should be handled as soon as possible and always override what's in ini files (#2238)"""
         if with_ini:
@@ -1050,7 +1050,7 @@ class TestOverrideIniArgs(object):
         assert rootdir == a
         assert inifile == parsed_inifile
 
-    @pytest.mark.parametrize("dirs", ([], ["does-not-exist"], ["a/does-not-exist"]))
+    @pytest.mark.parameterize("dirs", ([], ["does-not-exist"], ["a/does-not-exist"]))
     def test_with_non_dir_arg(self, dirs, tmpdir):
         with tmpdir.ensure(dir=True).as_cwd():
             rootdir, inifile, inicfg = determine_setup(None, dirs)

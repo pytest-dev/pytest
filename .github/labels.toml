@@ -133,10 +133,10 @@ color = "b60205"
 description = "related to marks, either the general marks or builtin"
 name = "topic: marks"
 
-["topic: parametrize"]
+["topic: parameterize"]
 color = "fbca04"
-description = "related to @pytest.mark.parametrize"
-name = "topic: parametrize"
+description = "related to @pytest.mark.parameterize"
+name = "topic: parameterize"
 
 ["topic: reporting"]
 color = "fef2c0"

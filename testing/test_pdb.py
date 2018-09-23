@@ -250,7 +250,7 @@ class TestPDB(object):
         assert "captured stderr" not in output
         self.flush(child)
 
-    @pytest.mark.parametrize("showcapture", ["all", "no", "log"])
+    @pytest.mark.parameterize("showcapture", ["all", "no", "log"])
     def test_pdb_print_captured_logs(self, testdir, showcapture):
         p1 = testdir.makepyfile(
             """
@@ -595,7 +595,7 @@ class TestDebuggingBreakpoints(object):
     @pytest.mark.skipif(
         not SUPPORTS_BREAKPOINT_BUILTIN, reason="Requires breakpoint() builtin"
     )
-    @pytest.mark.parametrize("arg", ["--pdb", ""])
+    @pytest.mark.parameterize("arg", ["--pdb", ""])
     def test_sys_breakpointhook_configure_and_unconfigure(self, testdir, arg):
         """
         Test that sys.breakpointhook is set to the custom Pdb class once configured, test that
@@ -642,7 +642,7 @@ class TestDebuggingBreakpoints(object):
         result.stdout.fnmatch_lines(["*CustomDebugger*", "*1 passed*"])
         assert custom_debugger_hook == ["init", "set_trace"]
 
-    @pytest.mark.parametrize("arg", ["--pdb", ""])
+    @pytest.mark.parameterize("arg", ["--pdb", ""])
     @pytest.mark.skipif(
         not SUPPORTS_BREAKPOINT_BUILTIN, reason="Requires breakpoint() builtin"
     )

@@ -140,7 +140,7 @@ class TestWithFunctionIntegration(object):
         assert lines[14].startswith("X ")
         assert len(lines) == 15
 
-    @pytest.mark.parametrize("style", ("native", "long", "short"))
+    @pytest.mark.parameterize("style", ("native", "long", "short"))
     def test_internal_exception(self, style):
         # they are produced for example by a teardown failing
         # at the end of the run or a failing hook invocation

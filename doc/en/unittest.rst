@@ -63,7 +63,7 @@ The following pytest features **do not** work, and probably
 never will due to different design philosophies:
 
 * :ref:`Fixtures <fixture>` (except for ``autouse`` fixtures, see :ref:`below <mixing-fixtures>`);
-* :ref:`Parametrization <parametrize>`;
+* :ref:`Parametrization <parameterize>`;
 * :ref:`Custom hooks <writing-plugins>`;
 
 

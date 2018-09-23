@@ -3,7 +3,7 @@ import pytest
 from _pytest import nodes
 
 
-@pytest.mark.parametrize(
+@pytest.mark.parameterize(
     "baseid, nodeid, expected",
     (
         ("", "", True),

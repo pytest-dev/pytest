@@ -29,10 +29,10 @@ Changes between 2.2.1 and 2.2.2
   produce better output
 - fix issue102: report more useful errors and hints for when a
   test directory was renamed and some pyc/__pycache__ remain
-- fix issue106: allow parametrize to be applied multiple times
+- fix issue106: allow parameterize to be applied multiple times
   e.g. from module, class and at function level.
 - fix issue107: actually perform session scope finalization
-- don't check in parametrize if indirect parameters are funcarg names
+- don't check in parameterize if indirect parameters are funcarg names
 - add chdir method to monkeypatch funcarg
 - fix crash resulting from calling monkeypatch undo a second time
 - fix issue115: make --collectonly robust against early failure

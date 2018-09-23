@@ -132,7 +132,7 @@ class TestCollectFS(object):
         assert "test_notfound" not in s
         assert "test_found" in s
 
-    @pytest.mark.parametrize(
+    @pytest.mark.parameterize(
         "fname",
         (
             "activate",
@@ -159,7 +159,7 @@ class TestCollectFS(object):
         result = testdir.runpytest("virtual")
         assert "test_invenv" in result.stdout.str()
 
-    @pytest.mark.parametrize(
+    @pytest.mark.parameterize(
         "fname",
         (
             "activate",
@@ -182,7 +182,7 @@ class TestCollectFS(object):
         result = testdir.runpytest("--collect-in-virtualenv", ".virtual")
         assert "test_invenv" in result.stdout.str()
 
-    @pytest.mark.parametrize(
+    @pytest.mark.parameterize(
         "fname",
         (
             "activate",

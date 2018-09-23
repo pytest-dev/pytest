@@ -80,7 +80,7 @@ Features
   of test modules and functions;
 
 - `Modular fixtures <https://docs.pytest.org/en/latest/fixture.html>`_ for
-  managing small or parametrized long-lived test resources;
+  managing small or parameterized long-lived test resources;
 
 - Can run `unittest <https://docs.pytest.org/en/latest/unittest.html>`_ (or trial),
   `nose <https://docs.pytest.org/en/latest/nose.html>`_ test suites out of the box;

@@ -31,11 +31,11 @@ The py.test Development Team
 -----------------------------
 
 - fix #1085: proper handling of encoding errors when passing encoded byte
-  strings to pytest.parametrize in Python 2.
+  strings to pytest.parameterize in Python 2.
   Thanks Themanwithoutaplan for the report and Bruno Oliveira for the PR.
 
 - fix #1087: handling SystemError when passing empty byte strings to
-  pytest.parametrize in Python 3.
+  pytest.parameterize in Python 3.
   Thanks Paul Kehrer for the report and Bruno Oliveira for the PR.
 
 - fix #995: fixed internal error when filtering tracebacks where one entry

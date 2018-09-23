@@ -346,20 +346,20 @@ Running it with the report-on-xfail option gives this output::
 
     ======================== 7 xfailed in 0.12 seconds =========================
 
-.. _`skip/xfail with parametrize`:
+.. _`skip/xfail with parameterize`:
 
-Skip/xfail with parametrize
+Skip/xfail with parameterize
 ---------------------------
 
 It is possible to apply markers like skip and xfail to individual
-test instances when using parametrize:
+test instances when using parameterize:
 
 .. code-block:: python
 
     import pytest
 
 
-    @pytest.mark.parametrize(
+    @pytest.mark.parameterize(
         ("n", "expected"),
         [
             (1, 2),

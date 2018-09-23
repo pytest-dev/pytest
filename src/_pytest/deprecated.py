@@ -50,7 +50,7 @@ MARK_INFO_ATTRIBUTE = RemovedInPytest4Warning(
 MARK_PARAMETERSET_UNPACKING = RemovedInPytest4Warning(
     "Applying marks directly to parameters is deprecated,"
     " please use pytest.param(..., marks=...) instead.\n"
-    "For more details, see: https://docs.pytest.org/en/latest/parametrize.html"
+    "For more details, see: https://docs.pytest.org/en/latest/parameterize.html"
 )
 
 NODE_WARN = RemovedInPytest4Warning(
@@ -69,7 +69,7 @@ COLLECTOR_MAKEITEM = RemovedInPytest4Warning(
 
 METAFUNC_ADD_CALL = RemovedInPytest4Warning(
     "Metafunc.addcall is deprecated and scheduled to be removed in pytest 4.0.\n"
-    "Please use Metafunc.parametrize instead."
+    "Please use Metafunc.parameterize instead."
 )
 
 PYTEST_PLUGINS_FROM_NON_TOP_LEVEL_CONFTEST = RemovedInPytest4Warning(

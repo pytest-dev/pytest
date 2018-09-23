@@ -22,7 +22,7 @@ Full pytest documentation
    warnings
    doctest
    skipping
-   parametrize
+   parameterize
    cache
    unittest
    nose

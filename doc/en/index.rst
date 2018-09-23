@@ -54,7 +54,7 @@ Features
 
 - :ref:`Auto-discovery <test discovery>` of test modules and functions;
 
-- :ref:`Modular fixtures <fixture>` for managing small or parametrized long-lived test resources;
+- :ref:`Modular fixtures <fixture>` for managing small or parameterized long-lived test resources;
 
 - Can run :ref:`unittest <unittest>` (including trial) and :ref:`nose <noseintegration>` test suites out of the box;
 

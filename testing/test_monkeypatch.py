@@ -128,7 +128,7 @@ def test_setitem_deleted_meanwhile():
     assert not d
 
 
-@pytest.mark.parametrize("before", [True, False])
+@pytest.mark.parameterize("before", [True, False])
 def test_setenv_deleted_meanwhile(before):
     key = "qwpeoip123"
     if before:
@@ -332,7 +332,7 @@ class SampleOldInherit(SampleOld):
     pass
 
 
-@pytest.mark.parametrize(
+@pytest.mark.parameterize(
     "Sample",
     [SampleNew, SampleNewInherit, SampleOld, SampleOldInherit],
     ids=["new", "new-inherit", "old", "old-inherit"],
