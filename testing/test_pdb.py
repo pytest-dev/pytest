@@ -4,8 +4,14 @@ import platform
 import os
 
 import _pytest._code
-from _pytest.debugging import SUPPORTS_BREAKPOINT_BUILTIN
 import pytest
+
+try:
+    breakpoint
+except NameError:
+    SUPPORTS_BREAKPOINT_BUILTIN = False
+else:
+    SUPPORTS_BREAKPOINT_BUILTIN = True
 
 
 _ENVIRON_PYTHONBREAKPOINT = os.environ.get("PYTHONBREAKPOINT", "")

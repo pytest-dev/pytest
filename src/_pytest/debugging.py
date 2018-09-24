@@ -2,17 +2,9 @@
 from __future__ import absolute_import, division, print_function
 import pdb
 import sys
-import os
 from doctest import UnexpectedException
 
 from _pytest.config import hookimpl
-
-try:
-    from builtins import breakpoint  # noqa
-
-    SUPPORTS_BREAKPOINT_BUILTIN = True
-except ImportError:
-    SUPPORTS_BREAKPOINT_BUILTIN = False
 
 
 def pytest_addoption(parser):
@@ -51,20 +43,12 @@ def pytest_configure(config):
     if config.getvalue("usepdb"):
         config.pluginmanager.register(PdbInvoke(), "pdbinvoke")
 
-    # Use custom Pdb class set_trace instead of default Pdb on breakpoint() call
-    if SUPPORTS_BREAKPOINT_BUILTIN:
-        _environ_pythonbreakpoint = os.environ.get("PYTHONBREAKPOINT", "")
-        if _environ_pythonbreakpoint == "":
-            sys.breakpointhook = pytestPDB.set_trace
-
     old = (pdb.set_trace, pytestPDB._pluginmanager)
 
     def fin():
         pdb.set_trace, pytestPDB._pluginmanager = old
         pytestPDB._config = None
         pytestPDB._pdb_cls = pdb.Pdb
-        if SUPPORTS_BREAKPOINT_BUILTIN:
-            sys.breakpointhook = sys.__breakpointhook__
 
     pdb.set_trace = pytestPDB.set_trace
     pytestPDB._pluginmanager = config.pluginmanager
