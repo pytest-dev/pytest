@@ -268,7 +268,7 @@ modules directly discovered by its test collection process, so **asserts in
 supporting modules which are not themselves test modules will not be rewritten**.
 
 You can manually enable assertion rewriting for an imported module by calling 
-`register_assert_rewrite<https://docs.pytest.org/en/latest/writing_plugins.html#assertion-rewriting>`_
+`register_assert_rewrite <https://docs.pytest.org/en/latest/writing_plugins.html#assertion-rewriting>`_
 before you import it (a good place to do that is in ``conftest.py``).
 
 .. note::
