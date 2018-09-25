@@ -562,6 +562,9 @@ def pytest_warning_captured(warning_message, when, item):
         * ``"runtest"``: during test execution.
 
     :param pytest.Item|None item:
+        **DEPRECATED**: This parameter is incompatible with ``pytest-xdist``, and will always receive ``None``
+        in a future release.
+
         The item being executed if ``when`` is ``"runtest"``, otherwise ``None``.
     """
 
