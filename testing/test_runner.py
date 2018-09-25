@@ -466,7 +466,7 @@ reporttypes = [
 ]
 
 
-@pytest.mark.parametrize(
+@pytest.mark.parameterize(
     "reporttype", reporttypes, ids=[x.__name__ for x in reporttypes]
 )
 def test_report_extra_parameters(reporttype):
@@ -585,7 +585,7 @@ def test_pytest_fail_notrace(testdir):
     assert "def teardown_function" not in result.stdout.str()
 
 
-@pytest.mark.parametrize("str_prefix", ["u", ""])
+@pytest.mark.parameterize("str_prefix", ["u", ""])
 def test_pytest_fail_notrace_non_ascii(testdir, str_prefix):
     """Fix pytest.fail with pytrace=False with non-ascii characters (#1178).
 

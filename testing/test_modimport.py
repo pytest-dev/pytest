@@ -11,7 +11,7 @@ MODSET = [
 ]
 
 
-@pytest.mark.parametrize("modfile", MODSET, ids=lambda x: x.purebasename)
+@pytest.mark.parameterize("modfile", MODSET, ids=lambda x: x.purebasename)
 def test_fileimport(modfile):
     # this test ensures all internal packages can import
     # without needing the pytest namespace being set

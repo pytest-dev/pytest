@@ -59,7 +59,7 @@ class TestApprox(object):
             ),
         )
 
-    @pytest.mark.parametrize(
+    @pytest.mark.parameterize(
         "value, repr_string",
         [
             (5., "approx(5.0 {pm} 5.0e-06)"),
@@ -443,7 +443,7 @@ class TestApprox(object):
             ["*At index 0 diff: 3 != 4 * {}".format(expected), "=* 1 failed in *="]
         )
 
-    @pytest.mark.parametrize(
+    @pytest.mark.parameterize(
         "x",
         [
             pytest.param(None),
@@ -458,7 +458,7 @@ class TestApprox(object):
         with pytest.raises(TypeError):
             approx(x)
 
-    @pytest.mark.parametrize(
+    @pytest.mark.parameterize(
         "op",
         [
             pytest.param(operator.le, id="<="),

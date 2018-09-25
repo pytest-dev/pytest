@@ -68,5 +68,5 @@ Unsupported idioms / known issues
 - ``yield``-based methods don't support ``setup`` properly because
   the ``setup`` method is always called in the same class instance.
   There are no plans to fix this currently because ``yield``-tests
-  are deprecated in pytest 3.0, with ``pytest.mark.parametrize``
+  are deprecated in pytest 3.0, with ``pytest.mark.parameterize``
   being the recommended alternative.

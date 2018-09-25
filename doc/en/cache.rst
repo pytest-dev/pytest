@@ -38,7 +38,7 @@ First, let's create 50 test invocation of which only 2 fail::
     # content of test_50.py
     import pytest
 
-    @pytest.mark.parametrize("i", range(50))
+    @pytest.mark.parameterize("i", range(50))
     def test_num(i):
         if i in (17, 25):
            pytest.fail("bad luck")
@@ -52,7 +52,7 @@ If you run this for the first time you will see two failures::
 
     i = 17
 
-        @pytest.mark.parametrize("i", range(50))
+        @pytest.mark.parameterize("i", range(50))
         def test_num(i):
             if i in (17, 25):
     >          pytest.fail("bad luck")
@@ -63,7 +63,7 @@ If you run this for the first time you will see two failures::
 
     i = 25
 
-        @pytest.mark.parametrize("i", range(50))
+        @pytest.mark.parameterize("i", range(50))
         def test_num(i):
             if i in (17, 25):
     >          pytest.fail("bad luck")
@@ -88,7 +88,7 @@ If you then run it with ``--lf``::
 
     i = 17
 
-        @pytest.mark.parametrize("i", range(50))
+        @pytest.mark.parameterize("i", range(50))
         def test_num(i):
             if i in (17, 25):
     >          pytest.fail("bad luck")
@@ -99,7 +99,7 @@ If you then run it with ``--lf``::
 
     i = 25
 
-        @pytest.mark.parametrize("i", range(50))
+        @pytest.mark.parameterize("i", range(50))
         def test_num(i):
             if i in (17, 25):
     >          pytest.fail("bad luck")
@@ -129,7 +129,7 @@ of ``FF`` and dots)::
 
     i = 17
 
-        @pytest.mark.parametrize("i", range(50))
+        @pytest.mark.parameterize("i", range(50))
         def test_num(i):
             if i in (17, 25):
     >          pytest.fail("bad luck")
@@ -140,7 +140,7 @@ of ``FF`` and dots)::
 
     i = 25
 
-        @pytest.mark.parametrize("i", range(50))
+        @pytest.mark.parameterize("i", range(50))
         def test_num(i):
             if i in (17, 25):
     >          pytest.fail("bad luck")

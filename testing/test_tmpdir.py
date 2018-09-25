@@ -94,7 +94,7 @@ def test_tmpdir_too_long_on_parametrization(testdir):
     testdir.makepyfile(
         """
         import pytest
-        @pytest.mark.parametrize("arg", ["1"*1000])
+        @pytest.mark.parameterize("arg", ["1"*1000])
         def test_some(arg, tmpdir):
             tmpdir.ensure("hello")
     """

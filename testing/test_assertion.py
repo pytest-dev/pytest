@@ -26,8 +26,8 @@ def mock_config():
 
 
 class TestImportHookInstallation(object):
-    @pytest.mark.parametrize("initial_conftest", [True, False])
-    @pytest.mark.parametrize("mode", ["plain", "rewrite"])
+    @pytest.mark.parameterize("initial_conftest", [True, False])
+    @pytest.mark.parameterize("mode", ["plain", "rewrite"])
     def test_conftest_assertion_rewrite(self, testdir, initial_conftest, mode):
         """Test that conftest files are using assertion rewrite on import.
         (#1619)
@@ -75,7 +75,7 @@ class TestImportHookInstallation(object):
         result = testdir.runpytest_subprocess()
         result.stdout.fnmatch_lines(["*assert 1 == 0*"])
 
-    @pytest.mark.parametrize("mode", ["plain", "rewrite"])
+    @pytest.mark.parameterize("mode", ["plain", "rewrite"])
     def test_pytest_plugins_rewrite(self, testdir, mode):
         contents = {
             "conftest.py": """
@@ -104,7 +104,7 @@ class TestImportHookInstallation(object):
             assert 0
         result.stdout.fnmatch_lines([expected])
 
-    @pytest.mark.parametrize("mode", ["str", "list"])
+    @pytest.mark.parameterize("mode", ["str", "list"])
     def test_pytest_plugins_rewrite_module_names(self, testdir, mode):
         """Test that pluginmanager correct marks pytest_plugins variables
         for assertion rewriting if they are defined as plain strings or
@@ -147,8 +147,8 @@ class TestImportHookInstallation(object):
         result = testdir.runpytest_subprocess("--assert=rewrite")
         assert result.ret == 0
 
-    @pytest.mark.parametrize("mode", ["plain", "rewrite"])
-    @pytest.mark.parametrize("plugin_state", ["development", "installed"])
+    @pytest.mark.parameterize("mode", ["plain", "rewrite"])
+    @pytest.mark.parameterize("plugin_state", ["development", "installed"])
     def test_installed_plugin_rewrite(self, testdir, mode, plugin_state):
         # Make sure the hook is installed early enough so that plugins
         # installed via setuptools are rewritten.
@@ -352,7 +352,7 @@ class TestAssert_reprcompare(object):
         expl = callequal([0, 1], [0, 2])
         assert len(expl) > 1
 
-    @pytest.mark.parametrize(
+    @pytest.mark.parameterize(
         ["left", "right", "expected"],
         [
             (

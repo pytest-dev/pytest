@@ -63,7 +63,7 @@ class TestCaptureManager(object):
         pytest_addoption(parser)
         assert parser._groups[0].options[0].default == "sys"
 
-    @pytest.mark.parametrize(
+    @pytest.mark.parameterize(
         "method", ["no", "sys", pytest.param("fd", marks=needsosdup)]
     )
     def test_capturing_basic_api(self, method):
@@ -107,7 +107,7 @@ class TestCaptureManager(object):
             capouter.stop_capturing()
 
 
-@pytest.mark.parametrize("method", ["fd", "sys"])
+@pytest.mark.parameterize("method", ["fd", "sys"])
 def test_capturing_unicode(testdir, method):
     if hasattr(sys, "pypy_version_info") and sys.pypy_version_info < (2, 2):
         pytest.xfail("does not work on pypy < 2.2")
@@ -130,7 +130,7 @@ def test_capturing_unicode(testdir, method):
     result.stdout.fnmatch_lines(["*1 passed*"])
 
 
-@pytest.mark.parametrize("method", ["fd", "sys"])
+@pytest.mark.parameterize("method", ["fd", "sys"])
 def test_capturing_bytes_in_utf8_encoding(testdir, method):
     testdir.makepyfile(
         """
@@ -401,7 +401,7 @@ class TestLoggingInteraction(object):
 
 
 class TestCaptureFixture(object):
-    @pytest.mark.parametrize("opt", [[], ["-s"]])
+    @pytest.mark.parameterize("opt", [[], ["-s"]])
     def test_std_functional(self, testdir, opt):
         reprec = testdir.inline_runsource(
             """\
@@ -469,7 +469,7 @@ class TestCaptureFixture(object):
             ["*ERROR*setup*test_one*", "E*capfdbinary*capsys*same*time*", "*1 error*"]
         )
 
-    @pytest.mark.parametrize("method", ["sys", "fd"])
+    @pytest.mark.parameterize("method", ["sys", "fd"])
     def test_capture_is_represented_on_failure_issue128(self, testdir, method):
         p = testdir.makepyfile(
             """\
@@ -584,8 +584,8 @@ class TestCaptureFixture(object):
         result = testdir.runpytest_subprocess(p)
         assert "closed" not in result.stderr.str()
 
-    @pytest.mark.parametrize("fixture", ["capsys", "capfd"])
-    @pytest.mark.parametrize("no_capture", [True, False])
+    @pytest.mark.parameterize("fixture", ["capsys", "capfd"])
+    @pytest.mark.parameterize("no_capture", [True, False])
     def test_disabled_capture_fixture(self, testdir, fixture, no_capture):
         testdir.makepyfile(
             """\
@@ -616,7 +616,7 @@ class TestCaptureFixture(object):
         else:
             assert "test_normal executed" not in result.stdout.str()
 
-    @pytest.mark.parametrize("fixture", ["capsys", "capfd"])
+    @pytest.mark.parameterize("fixture", ["capsys", "capfd"])
     def test_fixture_use_by_other_fixtures(self, testdir, fixture):
         """
         Ensure that capsys and capfd can be used by other fixtures during setup and teardown.
@@ -654,7 +654,7 @@ class TestCaptureFixture(object):
         assert "stdout contents begin" not in result.stdout.str()
         assert "stderr contents begin" not in result.stdout.str()
 
-    @pytest.mark.parametrize("cap", ["capsys", "capfd"])
+    @pytest.mark.parameterize("cap", ["capsys", "capfd"])
     def test_fixture_use_by_other_fixtures_teardown(self, testdir, cap):
         """Ensure we can access setup and teardown buffers from teardown when using capsys/capfd (##3033)"""
         testdir.makepyfile(
@@ -1261,7 +1261,7 @@ def test_capsys_results_accessible_by_attribute(capsys):
 
 
 @needsosdup
-@pytest.mark.parametrize("use", [True, False])
+@pytest.mark.parameterize("use", [True, False])
 def test_fdcapture_tmpfile_remains_the_same(tmpfile, use):
     if not use:
         tmpfile = True
@@ -1299,7 +1299,7 @@ def test_close_and_capture_again(testdir):
     )
 
 
-@pytest.mark.parametrize("method", ["SysCapture", "FDCapture"])
+@pytest.mark.parameterize("method", ["SysCapture", "FDCapture"])
 def test_capturing_and_logging_fundamentals(testdir, method):
     if method == "StdCaptureFD" and not hasattr(os, "dup"):
         pytest.skip("need os.dup")
@@ -1480,7 +1480,7 @@ def test_global_capture_with_live_logging(testdir):
     assert "fix teardown" in capstdout
 
 
-@pytest.mark.parametrize("capture_fixture", ["capsys", "capfd"])
+@pytest.mark.parameterize("capture_fixture", ["capsys", "capfd"])
 def test_capture_with_live_logging(testdir, capture_fixture):
     # Issue 3819
     # capture should work with live cli logging

@@ -41,22 +41,22 @@ There are several limitations and difficulties with this approach:
    understand the intricate cached_setup() method mechanics.
 
 2. parametrizing the "db" resource is not straight forward:
-   you need to apply a "parametrize" decorator or implement a
+   you need to apply a "parameterize" decorator or implement a
    :py:func:`~hookspec.pytest_generate_tests` hook
-   calling :py:func:`~python.Metafunc.parametrize` which
+   calling :py:func:`~python.Metafunc.parameterize` which
    performs parametrization at the places where the resource
    is used.  Moreover, you need to modify the factory to use an
    ``extrakey`` parameter containing ``request.param`` to the
    :py:func:`~python.Request.cached_setup` call.
 
-3. Multiple parametrized session-scoped resources will be active
+3. Multiple parameterized session-scoped resources will be active
    at the same time, making it hard for them to affect global state
    of the application under test.
 
 4. there is no way how you can make use of funcarg factories
    in xUnit setup methods.
 
-5. A non-parametrized fixture function cannot use a parametrized
+5. A non-parameterized fixture function cannot use a parameterized
    funcarg resource if it isn't stated in the test function signature.
 
 All of these limitations are addressed with pytest-2.3 and its
@@ -87,7 +87,7 @@ Direct parametrization of funcarg resource factories
 ----------------------------------------------------------
 
 Previously, funcarg factories could not directly cause parametrization.
-You needed to specify a ``@parametrize`` decorator on your test function
+You needed to specify a ``@parameterize`` decorator on your test function
 or implement a ``pytest_generate_tests`` hook to perform
 parametrization, i.e. calling a test multiple times with different value
 sets.  pytest-2.3 introduces a decorator for use on the factory itself::
@@ -104,8 +104,8 @@ the tests requiring "db" will run twice as well.  The "mysql" and
 This new way of parametrizing funcarg factories should in many cases
 allow to re-use already written factories because effectively
 ``request.param`` was already used when test functions/classes were
-parametrized via
-:py:func:`~_pytest.python.Metafunc.parametrize(indirect=True)` calls.
+parameterized via
+:py:func:`~_pytest.python.Metafunc.parameterize(indirect=True)` calls.
 
 Of course it's perfectly fine to combine parametrization and scoping::
 

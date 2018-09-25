@@ -297,7 +297,7 @@ def test_setup_funcarg_setup_when_outer_scope_fails(testdir):
     assert "xyz43" not in result.stdout.str()
 
 
-@pytest.mark.parametrize("arg", ["", "arg"])
+@pytest.mark.parameterize("arg", ["", "arg"])
 def test_setup_teardown_function_level_with_optional_argument(
     testdir, monkeypatch, arg
 ):

@@ -30,12 +30,12 @@ class MarkerError(Exception):
 
 
 def param(*values, **kw):
-    """Specify a parameter in `pytest.mark.parametrize`_ calls or
-    :ref:`parametrized fixtures <fixture-parametrize-marks>`.
+    """Specify a parameter in `pytest.mark.parameterize`_ calls or
+    :ref:`parameterized fixtures <fixture-parameterize-marks>`.
 
     .. code-block:: python
 
-        @pytest.mark.parametrize("test_input,expected", [
+        @pytest.mark.parameterize("test_input,expected", [
             ("3+5", 8),
             pytest.param("6*9", 42, marks=pytest.mark.xfail),
         ])

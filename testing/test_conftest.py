@@ -155,7 +155,7 @@ def test_conftestcutdir_inplace_considered(testdir):
     assert values[0].__file__.startswith(str(conf))
 
 
-@pytest.mark.parametrize("name", "test tests whatever .dotdir".split())
+@pytest.mark.parameterize("name", "test tests whatever .dotdir".split())
 def test_setinitial_conftest_subdirs(testdir, name):
     sub = testdir.mkdir(name)
     subconftest = sub.ensure("conftest.py")
@@ -370,7 +370,7 @@ class TestConftestVisibility(object):
 
     # N.B.: "swc" stands for "subdir with conftest.py"
     #       "snc" stands for "subdir no [i.e. without] conftest.py"
-    @pytest.mark.parametrize(
+    @pytest.mark.parameterize(
         "chdir,testarg,expect_ntests_passed",
         [
             # Effective target: package/..
@@ -408,7 +408,7 @@ class TestConftestVisibility(object):
             reprec.assertoutcome(passed=expect_ntests_passed)
 
 
-@pytest.mark.parametrize(
+@pytest.mark.parameterize(
     "confcutdir,passed,error", [(".", 2, 0), ("src", 1, 1), (None, 1, 1)]
 )
 def test_search_conftest_up_to_inifile(testdir, confcutdir, passed, error):

@@ -34,7 +34,7 @@ class TestPort:
         drv1 = "/c"
         drv2 = "/d"
 
-    @pytest.mark.parametrize(
+    @pytest.mark.parameterize(
         "pattern, path",
         [
             ("*.py", "foo.py"),
@@ -51,7 +51,7 @@ class TestPort:
     def test_matching(self, match, pattern, path):
         assert match(pattern, path)
 
-    @pytest.mark.parametrize(
+    @pytest.mark.parameterize(
         "pattern, path",
         [
             ("*.py", "foo.pyc"),

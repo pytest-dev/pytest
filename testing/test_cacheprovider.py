@@ -371,15 +371,15 @@ class TestLastFailed(object):
         lastfailed = config.cache.get("cache/lastfailed", -1)
         assert lastfailed == -1
 
-    def test_non_serializable_parametrize(self, testdir):
-        """Test that failed parametrized tests with unmarshable parameters
+    def test_non_serializable_parameterize(self, testdir):
+        """Test that failed parameterized tests with unmarshable parameters
         don't break pytest-cache.
         """
         testdir.makepyfile(
             r"""
             import pytest
 
-            @pytest.mark.parametrize('val', [
+            @pytest.mark.parameterize('val', [
                 b'\xac\x10\x02G',
             ])
             def test_fail(val):
@@ -586,7 +586,7 @@ class TestLastFailed(object):
             "test_xfail_strict_considered_failure.py::test"
         ]
 
-    @pytest.mark.parametrize("mark", ["mark.xfail", "mark.skip"])
+    @pytest.mark.parameterize("mark", ["mark.xfail", "mark.skip"])
     def test_failed_changed_to_xfail_or_skip(self, testdir, mark):
         testdir.makepyfile(
             """
@@ -616,8 +616,8 @@ class TestLastFailed(object):
         assert self.get_cached_last_failed(testdir) == []
         assert result.ret == 0
 
-    @pytest.mark.parametrize("quiet", [True, False])
-    @pytest.mark.parametrize("opt", ["--ff", "--lf"])
+    @pytest.mark.parameterize("quiet", [True, False])
+    @pytest.mark.parameterize("opt", ["--ff", "--lf"])
     def test_lf_and_ff_prints_no_needless_message(self, quiet, opt, testdir):
         # Issue 3853
         testdir.makepyfile("def test(): assert 0")
@@ -800,17 +800,17 @@ class TestNewFirst(object):
             ]
         )
 
-    def test_newfirst_parametrize(self, testdir):
+    def test_newfirst_parameterize(self, testdir):
         testdir.makepyfile(
             **{
                 "test_1/test_1.py": """
                 import pytest
-                @pytest.mark.parametrize('num', [1, 2])
+                @pytest.mark.parameterize('num', [1, 2])
                 def test_1(num): assert num
             """,
                 "test_2/test_2.py": """
                 import pytest
-                @pytest.mark.parametrize('num', [1, 2])
+                @pytest.mark.parameterize('num', [1, 2])
                 def test_1(num): assert num
             """,
             }
@@ -841,7 +841,7 @@ class TestNewFirst(object):
 
         testdir.tmpdir.join("test_1/test_1.py").write(
             "import pytest\n"
-            "@pytest.mark.parametrize('num', [1, 2, 3])\n"
+            "@pytest.mark.parameterize('num', [1, 2, 3])\n"
             "def test_1(num): assert num\n"
         )
         testdir.tmpdir.join("test_1/test_1.py").setmtime(1)

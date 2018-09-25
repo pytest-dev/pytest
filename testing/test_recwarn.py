@@ -107,7 +107,7 @@ class TestDeprecatedCall(object):
         pytest.deprecated_call(self.dep_explicit, 0)
         pytest.deprecated_call(self.dep_explicit, 0)
 
-    @pytest.mark.parametrize("mode", ["context_manager", "call"])
+    @pytest.mark.parameterize("mode", ["context_manager", "call"])
     def test_deprecated_call_no_warning(self, mode):
         """Ensure deprecated_call() raises the expected failure when its block/function does
         not raise a deprecation warning.
@@ -124,11 +124,11 @@ class TestDeprecatedCall(object):
                 with pytest.deprecated_call():
                     f()
 
-    @pytest.mark.parametrize(
+    @pytest.mark.parameterize(
         "warning_type", [PendingDeprecationWarning, DeprecationWarning]
     )
-    @pytest.mark.parametrize("mode", ["context_manager", "call"])
-    @pytest.mark.parametrize("call_f_first", [True, False])
+    @pytest.mark.parameterize("mode", ["context_manager", "call"])
+    @pytest.mark.parameterize("call_f_first", [True, False])
     @pytest.mark.filterwarnings("ignore")
     def test_deprecated_call_modes(self, warning_type, mode, call_f_first):
         """Ensure deprecated_call() captures a deprecation warning as expected inside its
@@ -148,7 +148,7 @@ class TestDeprecatedCall(object):
             with pytest.deprecated_call():
                 assert f() == 10
 
-    @pytest.mark.parametrize("mode", ["context_manager", "call"])
+    @pytest.mark.parameterize("mode", ["context_manager", "call"])
     def test_deprecated_call_exception_is_raised(self, mode):
         """If the block of the code being tested by deprecated_call() raises an exception,
         it must raise the exception undisturbed.
@@ -311,7 +311,7 @@ class TestWarns(object):
             import pytest
             import warnings
 
-            @pytest.mark.parametrize('run', [1, 2])
+            @pytest.mark.parameterize('run', [1, 2])
             def test(run):
                 with pytest.warns(RuntimeWarning):
                     warnings.warn("runtime", RuntimeWarning)

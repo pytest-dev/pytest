@@ -328,7 +328,7 @@ class TestSourceParsingAndCompiling(object):
         # print "block", str(block)
         assert str(stmt).strip().startswith("assert")
 
-    @pytest.mark.parametrize("name", ["", None, "my"])
+    @pytest.mark.parameterize("name", ["", None, "my"])
     def test_compilefuncs_and_path_sanity(self, name):
         def check(comp, name):
             co = comp(self.source, name)

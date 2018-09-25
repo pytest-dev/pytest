@@ -274,7 +274,7 @@ def test_deselect(testdir):
         test_a="""
         import pytest
         def test_a1(): pass
-        @pytest.mark.parametrize('b', range(3))
+        @pytest.mark.parameterize('b', range(3))
         def test_a2(b): pass
     """
     )
@@ -305,7 +305,7 @@ def test_sessionfinish_with_start(testdir):
     assert res.ret == EXIT_NOTESTSCOLLECTED
 
 
-@pytest.mark.parametrize("path", ["root", "{relative}/root", "{environment}/root"])
+@pytest.mark.parameterize("path", ["root", "{relative}/root", "{environment}/root"])
 def test_rootdir_option_arg(testdir, monkeypatch, path):
     monkeypatch.setenv("PY_ROOTDIR_PATH", str(testdir.tmpdir))
     path = path.format(relative=str(testdir.tmpdir), environment="$PY_ROOTDIR_PATH")

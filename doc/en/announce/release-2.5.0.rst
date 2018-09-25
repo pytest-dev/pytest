@@ -45,7 +45,7 @@ holger krekel
   with this release we believe).
 
 - simplified and fixed implementation for calling finalizers when
-  parametrized fixtures or function arguments are involved.  finalization
+  parameterized fixtures or function arguments are involved.  finalization
   is now performed lazily at setup time instead of in the "teardown phase".
   While this might sound odd at first, it helps to ensure that we are
   correctly handling setup/teardown even in complex code.  User-level code
@@ -60,7 +60,7 @@ holger krekel
   thanks to Floris Bruynooghe for the complete PR.  Also means
   we depend on py>=1.4.19 now.
 
-- fix issue396 - correctly sort and finalize class-scoped parametrized
+- fix issue396 - correctly sort and finalize class-scoped parameterized
   tests independently from number of methods on the class.
 
 - refix issue323 in a better way -- parametrization should now never
@@ -78,7 +78,7 @@ holger krekel
   interacts with PEP420-namespace packages.
 
 - fix issue246 fix finalizer order to be LIFO on independent fixtures
-  depending on a parametrized higher-than-function scoped fixture.
+  depending on a parameterized higher-than-function scoped fixture.
   (was quite some effort so please bear with the complexity of this sentence :)
   Thanks Ralph Schmitt for the precise failure example.
 
@@ -97,7 +97,7 @@ holger krekel
 
 - fix issue357 - special case "-k" expressions to allow for
   filtering with simple strings that are not valid python expressions.
-  Examples: "-k 1.3" matches all tests parametrized with 1.3.
+  Examples: "-k 1.3" matches all tests parameterized with 1.3.
   "-k None" filters all tests that have "None" in their name
   and conversely "-k 'not None'".
   Previously these examples would raise syntax errors.
@@ -121,7 +121,7 @@ holger krekel
 - fix pexpect-3.0 compatibility for pytest's own tests.
   (fixes issue386)
 
-- allow nested parametrize-value markers, thanks James Lan for the PR.
+- allow nested parameterize-value markers, thanks James Lan for the PR.
 
 - fix unicode handling with new monkeypatch.setattr(import_path, value)
   API.  Thanks Rob Dennis.  Fixes issue371.

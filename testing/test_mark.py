@@ -27,8 +27,8 @@ class TestMark(object):
         m = MarkInfo.for_mark(Mark("hello", (1, 2), {}))
         repr(m)
 
-    @pytest.mark.parametrize("attr", ["mark", "param"])
-    @pytest.mark.parametrize("modulename", ["py.test", "pytest"])
+    @pytest.mark.parameterize("attr", ["mark", "param"])
+    @pytest.mark.parameterize("modulename", ["py.test", "pytest"])
     def test_pytest_exists_in_namespace_all(self, attr, modulename):
         module = sys.modules[modulename]
         assert attr in module.__all__
@@ -160,7 +160,7 @@ def test_marked_class_run_twice(testdir, request):
     py_file = testdir.makepyfile(
         """
     import pytest
-    @pytest.mark.parametrize('abc', [1, 2, 3])
+    @pytest.mark.parameterize('abc', [1, 2, 3])
     class Test1(object):
         def test_1(self, abc):
             assert abc in [1, 2, 3]
@@ -263,7 +263,7 @@ def test_markers_option_with_plugin_in_current_dir(testdir):
                 mark = metafunc.function.flipper
             except AttributeError:
                 return
-            metafunc.parametrize("x", (10, 20))"""
+            metafunc.parameterize("x", (10, 20))"""
     )
     testdir.makepyfile(
         """\
@@ -305,7 +305,7 @@ def test_strict_prohibits_unregistered_markers(testdir):
     result.stdout.fnmatch_lines(["*unregisteredmark*not*registered*"])
 
 
-@pytest.mark.parametrize(
+@pytest.mark.parameterize(
     "spec",
     [
         ("xyz", ("test_one",)),
@@ -334,7 +334,7 @@ def test_mark_option(spec, testdir):
     assert list(passed) == list(passed_result)
 
 
-@pytest.mark.parametrize(
+@pytest.mark.parameterize(
     "spec", [("interface", ("test_interface",)), ("not interface", ("test_nointer",))]
 )
 def test_mark_option_custom(spec, testdir):
@@ -363,7 +363,7 @@ def test_mark_option_custom(spec, testdir):
     assert list(passed) == list(passed_result)
 
 
-@pytest.mark.parametrize(
+@pytest.mark.parameterize(
     "spec",
     [
         ("interface", ("test_interface",)),
@@ -391,7 +391,7 @@ def test_keyword_option_custom(spec, testdir):
     assert list(passed) == list(passed_result)
 
 
-@pytest.mark.parametrize(
+@pytest.mark.parameterize(
     "spec",
     [
         ("None", ("test_func[None]",)),
@@ -399,11 +399,11 @@ def test_keyword_option_custom(spec, testdir):
         ("2-3", ("test_func[2-3]",)),
     ],
 )
-def test_keyword_option_parametrize(spec, testdir):
+def test_keyword_option_parameterize(spec, testdir):
     testdir.makepyfile(
         """
         import pytest
-        @pytest.mark.parametrize("arg", [None, 1.3, "2-3"])
+        @pytest.mark.parameterize("arg", [None, 1.3, "2-3"])
         def test_func(arg):
             pass
     """
@@ -416,7 +416,7 @@ def test_keyword_option_parametrize(spec, testdir):
     assert list(passed) == list(passed_result)
 
 
-@pytest.mark.parametrize(
+@pytest.mark.parameterize(
     "spec",
     [
         (
@@ -439,14 +439,14 @@ def test_keyword_option_wrong_arguments(spec, testdir, capsys):
     assert expected_result in out
 
 
-def test_parametrized_collected_from_command_line(testdir):
+def test_parameterized_collected_from_command_line(testdir):
     """Parametrized test not collected if test named specified
        in command line issue#649.
     """
     py_file = testdir.makepyfile(
         """
         import pytest
-        @pytest.mark.parametrize("arg", [None, 1.3, "2-3"])
+        @pytest.mark.parameterize("arg", [None, 1.3, "2-3"])
         def test_func(arg):
             pass
     """
@@ -456,13 +456,13 @@ def test_parametrized_collected_from_command_line(testdir):
     rec.assertoutcome(passed=3)
 
 
-def test_parametrized_collect_with_wrong_args(testdir):
-    """Test collect parametrized func with wrong number of args."""
+def test_parameterized_collect_with_wrong_args(testdir):
+    """Test collect parameterized func with wrong number of args."""
     py_file = testdir.makepyfile(
         """
         import pytest
 
-        @pytest.mark.parametrize('foo, bar', [(1, 2, 3)])
+        @pytest.mark.parameterize('foo, bar', [(1, 2, 3)])
         def test_func(foo, bar):
             pass
     """
@@ -471,14 +471,14 @@ def test_parametrized_collect_with_wrong_args(testdir):
     result = testdir.runpytest(py_file)
     result.stdout.fnmatch_lines(
         [
-            'E   ValueError: In "parametrize" the number of values ((1, 2, 3)) '
+            'E   ValueError: In "parameterize" the number of values ((1, 2, 3)) '
             "must be equal to the number of names (['foo', 'bar'])"
         ]
     )
 
 
-def test_parametrized_with_kwargs(testdir):
-    """Test collect parametrized func with wrong number of args."""
+def test_parameterized_with_kwargs(testdir):
+    """Test collect parameterized func with wrong number of args."""
     py_file = testdir.makepyfile(
         """
         import pytest
@@ -487,7 +487,7 @@ def test_parametrized_with_kwargs(testdir):
         def a(request):
             return request.param
 
-        @pytest.mark.parametrize(argnames='b', argvalues=[1, 2])
+        @pytest.mark.parameterize(argnames='b', argvalues=[1, 2])
         def test_func(a, b):
             pass
     """
@@ -916,7 +916,7 @@ class TestKeywordSelection(object):
             check(keyword, "test_one")
         check("TestClass and test", "test_method_one")
 
-    @pytest.mark.parametrize(
+    @pytest.mark.parameterize(
         "keyword",
         [
             "xxx",
@@ -1024,7 +1024,7 @@ class TestKeywordSelection(object):
         assert_test_is_not_selected("()")
 
 
-@pytest.mark.parametrize(
+@pytest.mark.parameterize(
     "argval, expected",
     [
         (
@@ -1075,7 +1075,7 @@ def test_legacy_transfer():
 
 
 class TestMarkDecorator(object):
-    @pytest.mark.parametrize(
+    @pytest.mark.parameterize(
         "lhs, rhs, expected",
         [
             (pytest.mark.foo(), pytest.mark.foo(), True),
@@ -1088,8 +1088,8 @@ class TestMarkDecorator(object):
         assert (lhs == rhs) == expected
 
 
-@pytest.mark.parametrize("mark", [None, "", "skip", "xfail"])
-def test_parameterset_for_parametrize_marks(testdir, mark):
+@pytest.mark.parameterize("mark", [None, "", "skip", "xfail"])
+def test_parameterset_for_parameterize_marks(testdir, mark):
     if mark is not None:
         testdir.makeini("[pytest]\n{}={}".format(EMPTY_PARAMETERSET_OPTION, mark))
 
@@ -1107,9 +1107,9 @@ def test_parameterset_for_parametrize_marks(testdir, mark):
         assert result_mark.kwargs.get("run") is False
 
 
-def test_parameterset_for_parametrize_bad_markname(testdir):
+def test_parameterset_for_parameterize_bad_markname(testdir):
     with pytest.raises(pytest.UsageError):
-        test_parameterset_for_parametrize_marks(testdir, "bad")
+        test_parameterset_for_parameterize_marks(testdir, "bad")
 
 
 def test_mark_expressions_no_smear(testdir):
@@ -1165,7 +1165,7 @@ def test_addmarker_order():
 
 @pytest.mark.issue("https://github.com/pytest-dev/pytest/issues/3605")
 @pytest.mark.filterwarnings("ignore")
-def test_markers_from_parametrize(testdir):
+def test_markers_from_parameterize(testdir):
     testdir.makepyfile(
         """
         from __future__ import print_function
@@ -1178,11 +1178,11 @@ def test_markers_from_parametrize(testdir):
             custom_mark =request.node.get_marker('custom_mark')
             print("Custom mark %s" % custom_mark)
 
-        @custom_mark("custom mark non parametrized")
-        def test_custom_mark_non_parametrized():
+        @custom_mark("custom mark non parameterized")
+        def test_custom_mark_non_parameterized():
             print("Hey from test")
 
-        @pytest.mark.parametrize(
+        @pytest.mark.parameterize(
             "obj_type",
             [
                 first_custom_mark("first custom mark")("template"),
@@ -1193,7 +1193,7 @@ def test_markers_from_parametrize(testdir):
                 custom_mark("custom mark2")("vm"),  # Tried also this
             ]
         )
-        def test_custom_mark_parametrized(obj_type):
+        def test_custom_mark_parameterized(obj_type):
             print("obj_type is:", obj_type)
     """
     )

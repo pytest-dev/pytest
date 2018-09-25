@@ -159,22 +159,22 @@ def pytest_generate_tests(metafunc):
     alt_spellings = ["parameterize", "parametrise", "parameterise"]
     for attr in alt_spellings:
         if hasattr(metafunc.function, attr):
-            msg = "{0} has '{1}', spelling should be 'parametrize'"
+            msg = "{0} has '{1}', spelling should be 'parameterize'"
             raise MarkerError(msg.format(metafunc.function.__name__, attr))
-    for marker in metafunc.definition.iter_markers(name="parametrize"):
-        metafunc.parametrize(*marker.args, **marker.kwargs)
+    for marker in metafunc.definition.iter_markers(name="parameterize"):
+        metafunc.parameterize(*marker.args, **marker.kwargs)
 
 
 def pytest_configure(config):
     config.addinivalue_line(
         "markers",
-        "parametrize(argnames, argvalues): call a test function multiple "
+        "parameterize(argnames, argvalues): call a test function multiple "
         "times passing in different arguments in turn. argvalues generally "
         "needs to be a list of values if argnames specifies only one name "
         "or a list of tuples of values if argnames specifies multiple names. "
-        "Example: @parametrize('arg1', [1,2]) would lead to two calls of the "
+        "Example: @parameterize('arg1', [1,2]) would lead to two calls of the "
         "decorated test function, one with arg1=1 and another with arg1=2."
-        "see https://docs.pytest.org/en/latest/parametrize.html for more info "
+        "see https://docs.pytest.org/en/latest/parameterize.html for more info "
         "and examples.",
     )
     config.addinivalue_line(
@@ -257,7 +257,7 @@ def pytest_pycollect_makeitem(collector, name, obj):
             outcome.force_result(res)
 
 
-def pytest_make_parametrize_id(config, val, argname=None):
+def pytest_make_parameterize_id(config, val, argname=None):
     return None
 
 
@@ -836,7 +836,7 @@ class CallSpec2(object):
         self.params = {}
         self._globalid = NOTSET
         self._globalparam = NOTSET
-        self._arg2scopenum = {}  # used for sorting parametrized resources
+        self._arg2scopenum = {}  # used for sorting parameterized resources
         self.marks = []
         self.indices = {}
 
@@ -925,7 +925,7 @@ class Metafunc(fixtures.FuncargnamesCompatAttr):
         self._ids = set()
         self._arg2fixturedefs = fixtureinfo.name2fixturedefs
 
-    def parametrize(self, argnames, argvalues, indirect=False, ids=None, scope=None):
+    def parameterize(self, argnames, argvalues, indirect=False, ids=None, scope=None):
         """ Add new invocations to the underlying test function using the list
         of argvalues for the given argnames.  Parametrization is performed
         during the collection phase.  If you need to setup expensive resources
@@ -966,7 +966,7 @@ class Metafunc(fixtures.FuncargnamesCompatAttr):
         from _pytest.fixtures import scope2index
         from _pytest.mark import ParameterSet
 
-        argnames, parameters = ParameterSet._for_parametrize(
+        argnames, parameters = ParameterSet._for_parameterize(
             argnames,
             argvalues,
             self.function,
@@ -976,7 +976,7 @@ class Metafunc(fixtures.FuncargnamesCompatAttr):
         del argvalues
 
         if scope is None:
-            scope = _find_parametrized_scope(argnames, self._arg2fixturedefs, indirect)
+            scope = _find_parameterized_scope(argnames, self._arg2fixturedefs, indirect)
 
         self._validate_if_using_arg_names(argnames, indirect)
 
@@ -984,9 +984,9 @@ class Metafunc(fixtures.FuncargnamesCompatAttr):
 
         ids = self._resolve_arg_ids(argnames, ids, parameters, item=self.definition)
 
-        scopenum = scope2index(scope, descr="call to {}".format(self.parametrize))
+        scopenum = scope2index(scope, descr="call to {}".format(self.parameterize))
 
-        # create the new calls: if we are parametrize() multiple times (by applying the decorator
+        # create the new calls: if we are parameterize() multiple times (by applying the decorator
         # more than once) then we accumulate those calls generating the cartesian product
         # of all calls
         newcalls = []
@@ -1007,12 +1007,12 @@ class Metafunc(fixtures.FuncargnamesCompatAttr):
 
     def _resolve_arg_ids(self, argnames, ids, parameters, item):
         """Resolves the actual ids for the given argnames, based on the ``ids`` parameter given
-        to ``parametrize``.
+        to ``parameterize``.
 
-        :param List[str] argnames: list of argument names passed to ``parametrize()``.
-        :param ids: the ids parameter of the parametrized call (see docs).
+        :param List[str] argnames: list of argument names passed to ``parameterize()``.
+        :param ids: the ids parameter of the parameterized call (see docs).
         :param List[ParameterSet] parameters: the list of parameter values, same size as ``argnames``.
-        :param Item item: the item that generated this parametrized call.
+        :param Item item: the item that generated this parameterized call.
         :rtype: List[str]
         :return: the list of ids for each argname given
         """
@@ -1037,15 +1037,15 @@ class Metafunc(fixtures.FuncargnamesCompatAttr):
         return ids
 
     def _resolve_arg_value_types(self, argnames, indirect):
-        """Resolves if each parametrized argument must be considered a parameter to a fixture or a "funcarg"
-        to the function, based on the ``indirect`` parameter of the parametrized() call.
+        """Resolves if each parameterized argument must be considered a parameter to a fixture or a "funcarg"
+        to the function, based on the ``indirect`` parameter of the parameterized() call.
 
-        :param List[str] argnames: list of argument names passed to ``parametrize()``.
-        :param indirect: same ``indirect`` parameter of ``parametrize()``.
+        :param List[str] argnames: list of argument names passed to ``parameterize()``.
+        :param indirect: same ``indirect`` parameter of ``parameterize()``.
         :rtype: Dict[str, str]
             A dict mapping each arg name to either:
             * "params" if the argname should be the parameter of a fixture of the same name.
-            * "funcargs" if the argname should be a parameter to the parametrized test function.
+            * "funcargs" if the argname should be a parameter to the parameterized test function.
         """
         valtypes = {}
         if indirect is True:
@@ -1067,8 +1067,8 @@ class Metafunc(fixtures.FuncargnamesCompatAttr):
         """
         Check if all argnames are being used, by default values, or directly/indirectly.
 
-        :param List[str] argnames: list of argument names passed to ``parametrize()``.
-        :param indirect: same ``indirect`` parameter of ``parametrize()``.
+        :param List[str] argnames: list of argument names passed to ``parameterize()``.
+        :param indirect: same ``indirect`` parameter of ``parameterize()``.
         :raise ValueError: if validation fails.
         """
         default_arg_names = set(get_default_arg_names(self.function))
@@ -1091,7 +1091,7 @@ class Metafunc(fixtures.FuncargnamesCompatAttr):
 
         .. deprecated:: 3.3
 
-            Use :meth:`parametrize` instead.
+            Use :meth:`parameterize` instead.
 
         Note that request.addcall() is called during the test collection phase prior and
         independently to actual test execution.  You should only use addcall()
@@ -1129,12 +1129,12 @@ class Metafunc(fixtures.FuncargnamesCompatAttr):
         self._calls.append(cs)
 
 
-def _find_parametrized_scope(argnames, arg2fixturedefs, indirect):
-    """Find the most appropriate scope for a parametrized call based on its arguments.
+def _find_parameterized_scope(argnames, arg2fixturedefs, indirect):
+    """Find the most appropriate scope for a parameterized call based on its arguments.
 
     When there's at least one direct argument, always use "function" scope.
 
-    When a test function is parametrized and all its arguments are indirect
+    When a test function is parameterized and all its arguments are indirect
     (e.g. fixtures), return the most narrow scope based on the fixtures used.
 
     Related to issue #1832, based on code posted by @Kingdread.
@@ -1180,7 +1180,7 @@ def _idval(val, argname, idx, idfn, item, config):
             return ascii_escaped(s)
 
     if config:
-        hook_id = config.hook.pytest_make_parametrize_id(
+        hook_id = config.hook.pytest_make_parameterize_id(
             config=config, val=val, argname=argname
         )
         if hook_id:

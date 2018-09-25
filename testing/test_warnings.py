@@ -85,7 +85,7 @@ def test_setup_teardown_warnings(testdir, pyfile_with_warnings):
     )
 
 
-@pytest.mark.parametrize("method", ["cmdline", "ini"])
+@pytest.mark.parameterize("method", ["cmdline", "ini"])
 def test_as_errors(testdir, pyfile_with_warnings, method):
     args = ("-W", "error") if method == "cmdline" else ()
     if method == "ini":
@@ -105,7 +105,7 @@ def test_as_errors(testdir, pyfile_with_warnings, method):
     )
 
 
-@pytest.mark.parametrize("method", ["cmdline", "ini"])
+@pytest.mark.parameterize("method", ["cmdline", "ini"])
 def test_ignore(testdir, pyfile_with_warnings, method):
     args = ("-W", "ignore") if method == "cmdline" else ()
     if method == "ini":
@@ -238,7 +238,7 @@ def test_works_with_filterwarnings(testdir):
     result.stdout.fnmatch_lines(["*== 1 passed in *"])
 
 
-@pytest.mark.parametrize("default_config", ["ini", "cmdline"])
+@pytest.mark.parameterize("default_config", ["ini", "cmdline"])
 def test_filterwarnings_mark(testdir, default_config):
     """
     Test ``filterwarnings`` mark works and takes precedence over command line and ini options.
@@ -391,7 +391,7 @@ def test_mark_regex_escape(testdir):
 
 
 @pytest.mark.filterwarnings("default")
-@pytest.mark.parametrize("ignore_pytest_warnings", ["no", "ini", "cmdline"])
+@pytest.mark.parameterize("ignore_pytest_warnings", ["no", "ini", "cmdline"])
 def test_hide_pytest_internal_warnings(testdir, ignore_pytest_warnings):
     """Make sure we can ignore internal pytest warnings using a warnings filter."""
     testdir.makepyfile(

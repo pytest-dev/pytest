@@ -159,19 +159,19 @@ Metafunc.addcall
 
 .. deprecated:: 3.3
 
-:meth:`_pytest.python.Metafunc.addcall` was a precursor to the current parametrized mechanism. Users should use
-:meth:`_pytest.python.Metafunc.parametrize` instead.
+:meth:`_pytest.python.Metafunc.addcall` was a precursor to the current parameterized mechanism. Users should use
+:meth:`_pytest.python.Metafunc.parameterize` instead.
 
-marks in ``pytest.mark.parametrize``
+marks in ``pytest.mark.parameterize``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. deprecated:: 3.2
 
-Applying marks to values of a ``pytest.mark.parametrize`` call is now deprecated. For example:
+Applying marks to values of a ``pytest.mark.parameterize`` call is now deprecated. For example:
 
 .. code-block:: python
 
-    @pytest.mark.parametrize(
+    @pytest.mark.parameterize(
         "a, b", [(3, 9), pytest.mark.xfail(reason="flaky")(6, 36), (10, 100)]
     )
     def test_foo(a, b):
@@ -187,7 +187,7 @@ To update the code, use ``pytest.param``:
 
 .. code-block:: python
 
-    @pytest.mark.parametrize(
+    @pytest.mark.parameterize(
         "a, b",
         [(3, 9), pytest.param((6, 36), marks=pytest.mark.xfail(reason="flaky")), (10, 100)],
     )
@@ -238,11 +238,11 @@ that are then turned into proper test methods. Example:
 
 This would result into two actual test functions being generated.
 
-This form of test function doesn't support fixtures properly, and users should switch to ``pytest.mark.parametrize``:
+This form of test function doesn't support fixtures properly, and users should switch to ``pytest.mark.parameterize``:
 
 .. code-block:: python
 
-    @pytest.mark.parametrize("x, y", [(2, 4), (3, 9)])
+    @pytest.mark.parameterize("x, y", [(2, 4), (3, 9)])
     def test_squared():
         assert x ** x == y
 

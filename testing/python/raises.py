@@ -97,7 +97,7 @@ class TestRaises(object):
         else:
             assert False, "Expected pytest.raises.Exception"
 
-    @pytest.mark.parametrize("method", ["function", "with"])
+    @pytest.mark.parameterize("method", ["function", "with"])
     def test_raises_cyclic_reference(self, method):
         """
         Ensure pytest.raises does not leave a reference cycle (#1965).

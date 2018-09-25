@@ -76,7 +76,7 @@ Changes between 2.3.4 and 2.3.5
 
 - move long description of distribution into README.rst
 
-- improve docstring for metafunc.parametrize()
+- improve docstring for metafunc.parameterize()
 
 - fix bug where using capsys with pytest.set_trace() in a test
   function would break when looking at capsys.readouterr()

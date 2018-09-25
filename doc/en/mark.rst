@@ -13,7 +13,7 @@ some builtin markers, for example:
 * :ref:`skipif <skipif>` - skip a test function if a certain condition is met
 * :ref:`xfail <xfail>` - produce an "expected failure" outcome if a certain
   condition is met
-* :ref:`parametrize <parametrizemark>` to perform multiple calls
+* :ref:`parameterize <parameterizemark>` to perform multiple calls
   to the same test function.
 
 It's easy to create custom markers or to apply markers
@@ -135,7 +135,7 @@ Here is a non-exhaustive list of issues fixed by the new implementation:
 
 * ``request.node.get_marker('name')`` returns ``None`` for markers applied in classes (`#902 <https://github.com/pytest-dev/pytest/issues/902>`_).
 
-* Marks applied in parametrize are stored as markdecorator (`#2400 <https://github.com/pytest-dev/pytest/issues/2400>`_).
+* Marks applied in parameterize are stored as markdecorator (`#2400 <https://github.com/pytest-dev/pytest/issues/2400>`_).
 
 * Fix marker interaction in a backward incompatible way (`#1670 <https://github.com/pytest-dev/pytest/issues/1670>`_).
 
@@ -145,9 +145,9 @@ Here is a non-exhaustive list of issues fixed by the new implementation:
 
 * Remove named marker attributes and collect markers in items (`#891 <https://github.com/pytest-dev/pytest/issues/891>`_).
 
-* skipif mark from parametrize hides module level skipif mark (`#1540 <https://github.com/pytest-dev/pytest/issues/1540>`_).
+* skipif mark from parameterize hides module level skipif mark (`#1540 <https://github.com/pytest-dev/pytest/issues/1540>`_).
 
-* skipif + parametrize not skipping tests (`#1296 <https://github.com/pytest-dev/pytest/issues/1296>`_).
+* skipif + parameterize not skipping tests (`#1296 <https://github.com/pytest-dev/pytest/issues/1296>`_).
 
 * Marker transfer incompatible with inheritance (`#535 <https://github.com/pytest-dev/pytest/issues/535>`_).
 

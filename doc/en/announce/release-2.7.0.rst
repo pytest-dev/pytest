@@ -67,7 +67,7 @@ holger krekel
   booleans with modulo operators.  Thanks to Tom Viner for the report,
   triaging and fix.
 
-- implement issue351: add ability to specify parametrize ids as a callable
+- implement issue351: add ability to specify parameterize ids as a callable
   to generate custom test ids.  Thanks Brianna Laugher for the idea and
   implementation.
 
@@ -91,7 +91,7 @@ holger krekel
 - "python_classes" and "python_functions" options now support glob-patterns
   for test discovery, as discussed in issue600. Thanks Ldiary Translations.
 
-- allow to override parametrized fixtures with non-parametrized ones and vice versa (bubenkoff).
+- allow to override parameterized fixtures with non-parameterized ones and vice versa (bubenkoff).
 
 - fix issue463: raise specific error for 'parameterize' misspelling (pfctdayelise).
 

@@ -79,7 +79,7 @@ class TestModule(object):
             ]
         )
 
-    @pytest.mark.parametrize("verbose", [0, 1, 2])
+    @pytest.mark.parameterize("verbose", [0, 1, 2])
     def test_show_traceback_import_error(self, testdir, verbose):
         """Import errors when collecting modules should display the traceback (#1976).
 
@@ -453,7 +453,7 @@ class TestGenerator(object):
 
 class TestFunction(object):
     @pytest.fixture
-    def ignore_parametrized_marks_args(self):
+    def ignore_parameterized_marks_args(self):
         """Provides arguments to pytester.runpytest() to ignore the warning about marks being applied directly
         to parameters.
         """
@@ -505,11 +505,11 @@ class TestFunction(object):
         f2 = pytest.Function(name="name", config=config, callobj=func2, parent=session)
         assert f1 != f2
 
-    def test_issue197_parametrize_emptyset(self, testdir):
+    def test_issue197_parameterize_emptyset(self, testdir):
         testdir.makepyfile(
             """
             import pytest
-            @pytest.mark.parametrize('arg', [])
+            @pytest.mark.parameterize('arg', [])
             def test_function(arg):
                 pass
         """
@@ -521,7 +521,7 @@ class TestFunction(object):
         testdir.makepyfile(
             """
             import pytest
-            @pytest.mark.parametrize(('arg',), [(1,)])
+            @pytest.mark.parameterize(('arg',), [(1,)])
             def test_function(arg):
                 assert arg == 1
         """
@@ -529,14 +529,14 @@ class TestFunction(object):
         reprec = testdir.inline_run()
         reprec.assertoutcome(passed=1)
 
-    def test_issue213_parametrize_value_no_equal(self, testdir):
+    def test_issue213_parameterize_value_no_equal(self, testdir):
         testdir.makepyfile(
             """
             import pytest
             class A(object):
                 def __eq__(self, other):
                     raise ValueError("not possible")
-            @pytest.mark.parametrize('arg', [A()])
+            @pytest.mark.parameterize('arg', [A()])
             def test_function(arg):
                 assert arg.__class__.__name__ == "A"
         """
@@ -544,7 +544,7 @@ class TestFunction(object):
         reprec = testdir.inline_run("--fulltrace")
         reprec.assertoutcome(passed=1)
 
-    def test_parametrize_with_non_hashable_values(self, testdir):
+    def test_parameterize_with_non_hashable_values(self, testdir):
         """Test parametrization with non-hashable values."""
         testdir.makepyfile(
             """
@@ -554,7 +554,7 @@ class TestFunction(object):
             }
 
             import pytest
-            @pytest.mark.parametrize('key value'.split(),
+            @pytest.mark.parameterize('key value'.split(),
                                      archival_mapping.items())
             def test_archival_to_version(key, value):
                 assert key in archival_mapping
@@ -564,7 +564,7 @@ class TestFunction(object):
         rec = testdir.inline_run()
         rec.assertoutcome(passed=2)
 
-    def test_parametrize_with_non_hashable_values_indirect(self, testdir):
+    def test_parameterize_with_non_hashable_values_indirect(self, testdir):
         """Test parametrization with non-hashable values with indirect parametrization."""
         testdir.makepyfile(
             """
@@ -583,7 +583,7 @@ class TestFunction(object):
             def value(request):
                 return request.param
 
-            @pytest.mark.parametrize('key value'.split(),
+            @pytest.mark.parameterize('key value'.split(),
                                      archival_mapping.items(), indirect=True)
             def test_archival_to_version(key, value):
                 assert key in archival_mapping
@@ -593,7 +593,7 @@ class TestFunction(object):
         rec = testdir.inline_run()
         rec.assertoutcome(passed=2)
 
-    def test_parametrize_overrides_fixture(self, testdir):
+    def test_parameterize_overrides_fixture(self, testdir):
         """Test parametrization when parameter overrides existing fixture with same name."""
         testdir.makepyfile(
             """
@@ -603,17 +603,17 @@ class TestFunction(object):
             def value():
                 return 'value'
 
-            @pytest.mark.parametrize('value',
+            @pytest.mark.parameterize('value',
                                      ['overridden'])
             def test_overridden_via_param(value):
                 assert value == 'overridden'
 
-            @pytest.mark.parametrize('somevalue', ['overridden'])
+            @pytest.mark.parameterize('somevalue', ['overridden'])
             def test_not_overridden(value, somevalue):
                 assert value == 'value'
                 assert somevalue == 'overridden'
 
-            @pytest.mark.parametrize('other,value', [('foo', 'overridden')])
+            @pytest.mark.parameterize('other,value', [('foo', 'overridden')])
             def test_overridden_via_multiparam(other, value):
                 assert other == 'foo'
                 assert value == 'overridden'
@@ -622,8 +622,8 @@ class TestFunction(object):
         rec = testdir.inline_run()
         rec.assertoutcome(passed=3)
 
-    def test_parametrize_overrides_parametrized_fixture(self, testdir):
-        """Test parametrization when parameter overrides existing parametrized fixture with same name."""
+    def test_parameterize_overrides_parameterized_fixture(self, testdir):
+        """Test parametrization when parameter overrides existing parameterized fixture with same name."""
         testdir.makepyfile(
             """
             import pytest
@@ -632,7 +632,7 @@ class TestFunction(object):
             def value(request):
                 return request.param
 
-            @pytest.mark.parametrize('value',
+            @pytest.mark.parameterize('value',
                                      ['overridden'])
             def test_overridden_via_param(value):
                 assert value == 'overridden'
@@ -641,7 +641,7 @@ class TestFunction(object):
         rec = testdir.inline_run()
         rec.assertoutcome(passed=1)
 
-    def test_parametrize_overrides_indirect_dependency_fixture(self, testdir):
+    def test_parameterize_overrides_indirect_dependency_fixture(self, testdir):
         """Test parametrization when parameter overrides a fixture that a test indirectly depends on"""
         testdir.makepyfile(
             """
@@ -663,7 +663,7 @@ class TestFunction(object):
                fix3_instantiated = True
                return '3'
 
-            @pytest.mark.parametrize('fix2', ['2'])
+            @pytest.mark.parameterize('fix2', ['2'])
             def test_it(fix1):
                assert fix1 == '21'
                assert not fix3_instantiated
@@ -673,12 +673,12 @@ class TestFunction(object):
         rec.assertoutcome(passed=1)
 
     @pytest.mark.filterwarnings("ignore:Applying marks directly to parameters")
-    def test_parametrize_with_mark(self, testdir):
+    def test_parameterize_with_mark(self, testdir):
         items = testdir.getitems(
             """
             import pytest
             @pytest.mark.foo
-            @pytest.mark.parametrize('arg', [
+            @pytest.mark.parameterize('arg', [
                 1,
                 pytest.mark.bar(pytest.mark.baz(2))
             ])
@@ -698,7 +698,7 @@ class TestFunction(object):
         items = testdir.getitems(
             """
             import pytest
-            @pytest.mark.parametrize('arg', [1,2])
+            @pytest.mark.parameterize('arg', [1,2])
             def test_function(arg):
                 pass
         """
@@ -723,12 +723,12 @@ class TestFunction(object):
         config.hook.pytest_runtest_setup(item=item)
         config.hook.pytest_pyfunc_call(pyfuncitem=item)
 
-    def test_multiple_parametrize(self, testdir):
+    def test_multiple_parameterize(self, testdir):
         modcol = testdir.getmodulecol(
             """
             import pytest
-            @pytest.mark.parametrize('x', [0, 1])
-            @pytest.mark.parametrize('y', [2, 3])
+            @pytest.mark.parameterize('x', [0, 1])
+            @pytest.mark.parameterize('y', [2, 3])
             def test1(x, y):
                 pass
         """
@@ -739,12 +739,12 @@ class TestFunction(object):
         assert colitems[2].name == "test1[3-0]"
         assert colitems[3].name == "test1[3-1]"
 
-    def test_issue751_multiple_parametrize_with_ids(self, testdir):
+    def test_issue751_multiple_parameterize_with_ids(self, testdir):
         modcol = testdir.getmodulecol(
             """
             import pytest
-            @pytest.mark.parametrize('x', [0], ids=['c'])
-            @pytest.mark.parametrize('y', [0, 1], ids=['a', 'b'])
+            @pytest.mark.parameterize('x', [0], ids=['c'])
+            @pytest.mark.parameterize('y', [0, 1], ids=['a', 'b'])
             class Test(object):
                 def test1(self, x, y):
                     pass
@@ -758,101 +758,101 @@ class TestFunction(object):
         assert colitems[2].name == "test2[a-c]"
         assert colitems[3].name == "test2[b-c]"
 
-    def test_parametrize_skipif(self, testdir, ignore_parametrized_marks_args):
+    def test_parameterize_skipif(self, testdir, ignore_parameterized_marks_args):
         testdir.makepyfile(
             """
             import pytest
 
             m = pytest.mark.skipif('True')
 
-            @pytest.mark.parametrize('x', [0, 1, m(2)])
+            @pytest.mark.parameterize('x', [0, 1, m(2)])
             def test_skip_if(x):
                 assert x < 2
         """
         )
-        result = testdir.runpytest(*ignore_parametrized_marks_args)
+        result = testdir.runpytest(*ignore_parameterized_marks_args)
         result.stdout.fnmatch_lines("* 2 passed, 1 skipped in *")
 
-    def test_parametrize_skip(self, testdir, ignore_parametrized_marks_args):
+    def test_parameterize_skip(self, testdir, ignore_parameterized_marks_args):
         testdir.makepyfile(
             """
             import pytest
 
             m = pytest.mark.skip('')
 
-            @pytest.mark.parametrize('x', [0, 1, m(2)])
+            @pytest.mark.parameterize('x', [0, 1, m(2)])
             def test_skip(x):
                 assert x < 2
         """
         )
-        result = testdir.runpytest(*ignore_parametrized_marks_args)
+        result = testdir.runpytest(*ignore_parameterized_marks_args)
         result.stdout.fnmatch_lines("* 2 passed, 1 skipped in *")
 
-    def test_parametrize_skipif_no_skip(self, testdir, ignore_parametrized_marks_args):
+    def test_parameterize_skipif_no_skip(self, testdir, ignore_parameterized_marks_args):
         testdir.makepyfile(
             """
             import pytest
 
             m = pytest.mark.skipif('False')
 
-            @pytest.mark.parametrize('x', [0, 1, m(2)])
+            @pytest.mark.parameterize('x', [0, 1, m(2)])
             def test_skipif_no_skip(x):
                 assert x < 2
         """
         )
-        result = testdir.runpytest(*ignore_parametrized_marks_args)
+        result = testdir.runpytest(*ignore_parameterized_marks_args)
         result.stdout.fnmatch_lines("* 1 failed, 2 passed in *")
 
-    def test_parametrize_xfail(self, testdir, ignore_parametrized_marks_args):
+    def test_parameterize_xfail(self, testdir, ignore_parameterized_marks_args):
         testdir.makepyfile(
             """
             import pytest
 
             m = pytest.mark.xfail('True')
 
-            @pytest.mark.parametrize('x', [0, 1, m(2)])
+            @pytest.mark.parameterize('x', [0, 1, m(2)])
             def test_xfail(x):
                 assert x < 2
         """
         )
-        result = testdir.runpytest(*ignore_parametrized_marks_args)
+        result = testdir.runpytest(*ignore_parameterized_marks_args)
         result.stdout.fnmatch_lines("* 2 passed, 1 xfailed in *")
 
-    def test_parametrize_passed(self, testdir, ignore_parametrized_marks_args):
+    def test_parameterize_passed(self, testdir, ignore_parameterized_marks_args):
         testdir.makepyfile(
             """
             import pytest
 
             m = pytest.mark.xfail('True')
 
-            @pytest.mark.parametrize('x', [0, 1, m(2)])
+            @pytest.mark.parameterize('x', [0, 1, m(2)])
             def test_xfail(x):
                 pass
         """
         )
-        result = testdir.runpytest(*ignore_parametrized_marks_args)
+        result = testdir.runpytest(*ignore_parameterized_marks_args)
         result.stdout.fnmatch_lines("* 2 passed, 1 xpassed in *")
 
-    def test_parametrize_xfail_passed(self, testdir, ignore_parametrized_marks_args):
+    def test_parameterize_xfail_passed(self, testdir, ignore_parameterized_marks_args):
         testdir.makepyfile(
             """
             import pytest
 
             m = pytest.mark.xfail('False')
 
-            @pytest.mark.parametrize('x', [0, 1, m(2)])
+            @pytest.mark.parameterize('x', [0, 1, m(2)])
             def test_passed(x):
                 pass
         """
         )
-        result = testdir.runpytest(*ignore_parametrized_marks_args)
+        result = testdir.runpytest(*ignore_parameterized_marks_args)
         result.stdout.fnmatch_lines("* 3 passed in *")
 
     def test_function_original_name(self, testdir):
         items = testdir.getitems(
             """
             import pytest
-            @pytest.mark.parametrize('arg', [1,2])
+            @pytest.mark.parameterize('arg', [1,2])
             def test_func(arg):
                 pass
         """
@@ -1519,7 +1519,7 @@ def test_class_injection_does_not_break_collection(testdir):
         test_inject='''
          class TestClass(object):
             def test_injection(self):
-                """Test being parametrized."""
+                """Test being parameterized."""
                 pass
     '''
     )

@@ -71,7 +71,7 @@ Talks and blog postings
 
 Test parametrization:
 
-- `generating parametrized tests with fixtures`_.
+- `generating parameterized tests with fixtures`_.
 - `test generators and cached setup`_
 - `parametrizing tests, generalized`_ (blog post)
 - `putting test-hooks into local or global plugins`_ (blog post)
@@ -99,5 +99,5 @@ Plugin specific examples:
 .. _`monkey patching done right`: http://tetamap.wordpress.com/2009/03/03/monkeypatching-in-unit-tests-done-right/
 .. _`putting test-hooks into local or global plugins`: http://tetamap.wordpress.com/2009/05/14/putting-test-hooks-into-local-and-global-plugins/
 .. _`parametrizing tests, generalized`: http://tetamap.wordpress.com/2009/05/13/parametrizing-python-tests-generalized/
-.. _`generating parametrized tests with fixtures`: parametrize.html#test-generators
+.. _`generating parameterized tests with fixtures`: parameterize.html#test-generators
 .. _`test generators and cached setup`: http://bruynooghe.blogspot.com/2010/06/pytest-test-generators-and-cached-setup.html

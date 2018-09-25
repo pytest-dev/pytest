@@ -54,7 +54,7 @@ The py.test Development Team
 * Fix (`#1437`_): When passing in a bytestring regex pattern to parameterize
   attempt to decode it as utf-8 ignoring errors.
 
-* Fix (`#649`_): parametrized test nodes cannot be specified to run on the command line.
+* Fix (`#649`_): parameterized test nodes cannot be specified to run on the command line.
 
 
 .. _#1437: https://github.com/pytest-dev/pytest/issues/1437

@@ -223,7 +223,7 @@ def test_disable_log_capturing_ini(testdir):
         result.stdout.fnmatch_lines(["*- Captured *log call -*"])
 
 
-@pytest.mark.parametrize("enabled", [True, False])
+@pytest.mark.parameterize("enabled", [True, False])
 def test_log_cli_enabled_disabled(testdir, enabled):
     msg = "critical message logged by test"
     testdir.makepyfile(
@@ -625,7 +625,7 @@ def test_log_cli_ini_level(testdir):
     assert result.ret == 0
 
 
-@pytest.mark.parametrize(
+@pytest.mark.parameterize(
     "cli_args",
     ["", "--log-level=WARNING", "--log-file-level=WARNING", "--log-cli-level=WARNING"],
 )
@@ -865,14 +865,14 @@ def test_log_file_unicode(testdir):
         assert "Another normal message" in contents
 
 
-@pytest.mark.parametrize("has_capture_manager", [True, False])
+@pytest.mark.parameterize("has_capture_manager", [True, False])
 def test_live_logging_suspends_capture(has_capture_manager, request):
     """Test that capture manager is suspended when we emitting messages for live logging.
 
     This tests the implementation calls instead of behavior because it is difficult/impossible to do it using
     ``testdir`` facilities because they do their own capturing.
 
-    We parametrize the test to also make sure _LiveLoggingStreamHandler works correctly if no capture manager plugin
+    We parameterize the test to also make sure _LiveLoggingStreamHandler works correctly if no capture manager plugin
     is installed.
     """
     import logging

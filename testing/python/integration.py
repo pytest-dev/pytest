@@ -408,7 +408,7 @@ class TestParameterize(object):
                 else:
                     return None
 
-            @pytest.mark.parametrize('a,b', [(0, 2), (1, 2)], ids=idfn)
+            @pytest.mark.parameterize('a,b', [(0, 2), (1, 2)], ids=idfn)
             def test_params(a, b):
                 pass
         """

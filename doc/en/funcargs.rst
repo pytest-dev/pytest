@@ -9,5 +9,5 @@ a core part.  The documentation has been refactored as well
 and you can read on here:
 
 - :ref:`fixtures`
-- :ref:`parametrize`
+- :ref:`parameterize`
 - :ref:`funcargcompare`

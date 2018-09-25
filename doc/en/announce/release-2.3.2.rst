@@ -5,7 +5,7 @@ pytest-2.3.2 is another stabilization release:
 
 - issue 205: fixes a regression with conftest detection
 - issue 208/29: fixes traceback-printing speed in some bad cases
-- fix teardown-ordering for parametrized setups
+- fix teardown-ordering for parameterized setups
 - fix unittest and trial compat behaviour with respect  to runTest() methods
 - issue 206 and others: some improvements to packaging
 - fix issue127 and others: improve some docs
@@ -33,7 +33,7 @@ Changes between 2.3.1 and 2.3.2
   pytest_pycollect_makemodule and pytest_pycollect_makeitem
   now work properly
 
-- fix teardown-ordering for parametrized setups
+- fix teardown-ordering for parameterized setups
 
 - fix issue127 - better documentation for pytest_addoption
   and related objects.

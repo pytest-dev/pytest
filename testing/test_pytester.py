@@ -155,7 +155,7 @@ def make_holder():
     return apiclass, apimod
 
 
-@pytest.mark.parametrize("holder", make_holder())
+@pytest.mark.parameterize("holder", make_holder())
 def test_hookrecorder_basic(holder):
     pm = PytestPluginManager()
     pm.addhooks(holder)
@@ -347,7 +347,7 @@ class TestSysModulesSnapshot(object):
         assert sys.modules == original
 
 
-@pytest.mark.parametrize("path_type", ("path", "meta_path"))
+@pytest.mark.parameterize("path_type", ("path", "meta_path"))
 class TestSysPathsSnapshot(object):
     other_path = {"path": "meta_path", "meta_path": "path"}
 

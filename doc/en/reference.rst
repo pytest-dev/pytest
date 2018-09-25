@@ -121,14 +121,14 @@ Add warning filters to marked test items.
                 ...
 
 
-.. _`pytest.mark.parametrize ref`:
+.. _`pytest.mark.parameterize ref`:
 
-pytest.mark.parametrize
+pytest.mark.parameterize
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-**Tutorial**: :doc:`parametrize`.
+**Tutorial**: :doc:`parameterize`.
 
-.. automethod:: _pytest.python.Metafunc.parametrize
+.. automethod:: _pytest.python.Metafunc.parameterize
 
 
 .. _`pytest.mark.skip ref`:
@@ -589,7 +589,7 @@ you can use the following hook:
 
 .. autofunction:: pytest_pycollect_makeitem
 .. autofunction:: pytest_generate_tests
-.. autofunction:: pytest_make_parametrize_id
+.. autofunction:: pytest_make_parameterize_id
 
 After collection is complete, you can modify the order of
 items, delete or otherwise amend the test items:

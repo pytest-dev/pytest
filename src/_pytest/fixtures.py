@@ -178,8 +178,8 @@ def getfixturemarker(obj):
         return None
 
 
-def get_parametrized_fixture_keys(item, scopenum):
-    """ return list of keys for all parametrized arguments which match
+def get_parameterized_fixture_keys(item, scopenum):
+    """ return list of keys for all parameterized arguments which match
     the specified scope. """
     assert scopenum < scopenum_function  # function
     try:
@@ -189,7 +189,7 @@ def get_parametrized_fixture_keys(item, scopenum):
     else:
         # cs.indices.items() is random order of argnames.  Need to
         # sort this so that different calls to
-        # get_parametrized_fixture_keys will be deterministic.
+        # get_parameterized_fixture_keys will be deterministic.
         for argname, param_index in sorted(cs.indices.items()):
             if cs._arg2scopenum[argname] != scopenum:
                 continue
@@ -204,7 +204,7 @@ def get_parametrized_fixture_keys(item, scopenum):
             yield key
 
 
-# algorithm for sorting on a per-parametrized resource setup basis
+# algorithm for sorting on a per-parameterized resource setup basis
 # it is called for scopenum==0 (session) first and performs sorting
 # down to the lower scopes such as to minimize number of "high scope"
 # setups and teardowns
@@ -217,7 +217,7 @@ def reorder_items(items):
         argkeys_cache[scopenum] = d = {}
         items_by_argkey[scopenum] = item_d = defaultdict(deque)
         for item in items:
-            keys = OrderedDict.fromkeys(get_parametrized_fixture_keys(item, scopenum))
+            keys = OrderedDict.fromkeys(get_parameterized_fixture_keys(item, scopenum))
             if keys:
                 d[item] = keys
                 for key in keys:
@@ -342,7 +342,7 @@ class FixtureRequest(FuncargnamesCompatAttr):
 
     A request object gives access to the requesting test context
     and has an optional ``param`` attribute in case
-    the fixture is parametrized indirectly.
+    the fixture is parameterized indirectly.
     """
 
     def __init__(self, pyfuncitem):
@@ -584,7 +584,7 @@ class FixtureRequest(FuncargnamesCompatAttr):
         else:
             # indices might not be set if old-style metafunc.addcall() was used
             param_index = funcitem.callspec.indices.get(argname, 0)
-            # if a parametrize invocation set a scope it will override
+            # if a parameterize invocation set a scope it will override
             # the static scope defined with the fixture function
             paramscopenum = funcitem.callspec._arg2scopenum.get(argname)
             if paramscopenum is not None:
@@ -887,7 +887,7 @@ class FixtureDef(object):
                     six.reraise(*err)
                 else:
                     return result
-            # we have a previous but differently parametrized fixture instance
+            # we have a previous but differently parameterized fixture instance
             # so we need to tear it down before creating a new one
             self.finish(request)
             assert not hasattr(self, "cached_result")
@@ -1229,20 +1229,20 @@ class FixtureManager(object):
             if faclist:
                 fixturedef = faclist[-1]
                 if fixturedef.params is not None:
-                    parametrize_func = getattr(metafunc.function, "parametrize", None)
-                    if parametrize_func is not None:
-                        parametrize_func = parametrize_func.combined
-                    func_params = getattr(parametrize_func, "args", [[None]])
-                    func_kwargs = getattr(parametrize_func, "kwargs", {})
-                    # skip directly parametrized arguments
+                    parameterize_func = getattr(metafunc.function, "parameterize", None)
+                    if parameterize_func is not None:
+                        parameterize_func = parameterize_func.combined
+                    func_params = getattr(parameterize_func, "args", [[None]])
+                    func_kwargs = getattr(parameterize_func, "kwargs", {})
+                    # skip directly parameterized arguments
                     if "argnames" in func_kwargs:
-                        argnames = parametrize_func.kwargs["argnames"]
+                        argnames = parameterize_func.kwargs["argnames"]
                     else:
                         argnames = func_params[0]
                     if not isinstance(argnames, (tuple, list)):
                         argnames = [x.strip() for x in argnames.split(",") if x.strip()]
                     if argname not in func_params and argname not in argnames:
-                        metafunc.parametrize(
+                        metafunc.parameterize(
                             argname,
                             fixturedef.params,
                             indirect=True,
@@ -1253,7 +1253,7 @@ class FixtureManager(object):
                 continue  # will raise FixtureLookupError at setup time
 
     def pytest_collection_modifyitems(self, items):
-        # separate parametrized setups
+        # separate parameterized setups
         items[:] = reorder_items(items)
 
     def parsefactories(self, node_or_obj, nodeid=NOTSET, unittest=False):

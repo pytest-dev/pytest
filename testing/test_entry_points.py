@@ -4,7 +4,7 @@ import pkg_resources
 import pytest
 
 
-@pytest.mark.parametrize("entrypoint", ["py.test", "pytest"])
+@pytest.mark.parameterize("entrypoint", ["py.test", "pytest"])
 def test_entry_point_exist(entrypoint):
     assert entrypoint in pkg_resources.get_entry_map("pytest")["console_scripts"]
 

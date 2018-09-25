@@ -1,12 +1,12 @@
 
 .. _`test generators`:
-.. _`parametrizing-tests`:
+.. _`parameterizing-tests`:
 .. _`parameterized test functions`:
 .. _`parameterize`:
 
 .. _`parameterize-basics`:
 
-Parametrizing fixtures and test functions
+Parameterizing fixtures and test functions
 ==========================================================================
 
 pytest enables test parametrization at several levels:

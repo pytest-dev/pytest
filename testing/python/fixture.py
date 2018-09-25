@@ -168,8 +168,8 @@ class TestFillFixtures(object):
         result = testdir.runpytest()
         assert result.ret == 0
 
-    def test_override_parametrized_fixture_conftest_module(self, testdir):
-        """Test override of the parametrized fixture with non-parametrized one on the test module level."""
+    def test_override_parameterized_fixture_conftest_module(self, testdir):
+        """Test override of the parameterized fixture with non-parameterized one on the test module level."""
         testdir.makeconftest(
             """
             import pytest
@@ -196,8 +196,8 @@ class TestFillFixtures(object):
         result = testdir.runpytest(testfile)
         result.stdout.fnmatch_lines(["*1 passed*"])
 
-    def test_override_parametrized_fixture_conftest_conftest(self, testdir):
-        """Test override of the parametrized fixture with non-parametrized one on the conftest level."""
+    def test_override_parameterized_fixture_conftest_conftest(self, testdir):
+        """Test override of the parameterized fixture with non-parameterized one on the conftest level."""
         testdir.makeconftest(
             """
             import pytest
@@ -233,8 +233,8 @@ class TestFillFixtures(object):
         result = testdir.runpytest(testfile)
         result.stdout.fnmatch_lines(["*1 passed*"])
 
-    def test_override_non_parametrized_fixture_conftest_module(self, testdir):
-        """Test override of the non-parametrized fixture with parametrized one on the test module level."""
+    def test_override_non_parameterized_fixture_conftest_module(self, testdir):
+        """Test override of the non-parameterized fixture with parameterized one on the test module level."""
         testdir.makeconftest(
             """
             import pytest
@@ -264,8 +264,8 @@ class TestFillFixtures(object):
         result = testdir.runpytest(testfile)
         result.stdout.fnmatch_lines(["*3 passed*"])
 
-    def test_override_non_parametrized_fixture_conftest_conftest(self, testdir):
-        """Test override of the non-parametrized fixture with parametrized one on the conftest level."""
+    def test_override_non_parameterized_fixture_conftest_conftest(self, testdir):
+        """Test override of the non-parameterized fixture with parameterized one on the conftest level."""
         testdir.makeconftest(
             """
             import pytest
@@ -304,10 +304,10 @@ class TestFillFixtures(object):
         result = testdir.runpytest(testfile)
         result.stdout.fnmatch_lines(["*3 passed*"])
 
-    def test_override_autouse_fixture_with_parametrized_fixture_conftest_conftest(
+    def test_override_autouse_fixture_with_parameterized_fixture_conftest_conftest(
         self, testdir
     ):
-        """Test override of the autouse fixture with parametrized one on the conftest level.
+        """Test override of the autouse fixture with parameterized one on the conftest level.
         This test covers the issue explained in issue 1601
         """
         testdir.makeconftest(
@@ -554,7 +554,7 @@ class TestRequestBasic(object):
         reprec = testdir.inline_run()
         reprec.assertoutcome(passed=1)
 
-    @pytest.mark.parametrize("getfixmethod", ("getfixturevalue", "getfuncargvalue"))
+    @pytest.mark.parameterize("getfixmethod", ("getfixturevalue", "getfuncargvalue"))
     def test_getfixturevalue(self, testdir, getfixmethod):
         item = testdir.getitem(
             """
@@ -1214,7 +1214,7 @@ class TestFixtureUsages(object):
             )
         )
 
-    def test_funcarg_parametrized_and_used_twice(self, testdir):
+    def test_funcarg_parameterized_and_used_twice(self, testdir):
         testdir.makepyfile(
             """
             import pytest
@@ -1373,7 +1373,7 @@ class TestFixtureUsages(object):
         reprec = testdir.inline_run()
         reprec.assertoutcome(passed=1)
 
-    def test_fixture_parametrized_with_iterator(self, testdir):
+    def test_fixture_parameterized_with_iterator(self, testdir):
         testdir.makepyfile(
             """
             import pytest
@@ -1877,7 +1877,7 @@ class TestAutouseManagement(object):
         reprec = testdir.inline_run()
         reprec.assertoutcome(passed=2)
 
-    def test_uses_parametrized_resource(self, testdir):
+    def test_uses_parameterized_resource(self, testdir):
         testdir.makepyfile(
             """
             import pytest
@@ -1903,7 +1903,7 @@ class TestAutouseManagement(object):
         reprec = testdir.inline_run("-s")
         reprec.assertoutcome(passed=2)
 
-    def test_session_parametrized_function(self, testdir):
+    def test_session_parameterized_function(self, testdir):
         testdir.makepyfile(
             """
             import pytest
@@ -2004,7 +2004,7 @@ class TestAutouseManagement(object):
                 if metafunc.cls is None:
                     assert metafunc.function is test_finish
                 if metafunc.cls is not None:
-                    metafunc.parametrize("item", [1,2], scope="class")
+                    metafunc.parameterize("item", [1,2], scope="class")
             class TestClass(object):
                 @pytest.fixture(scope="class", autouse=True)
                 def addteardown(self, item, request):
@@ -2044,8 +2044,8 @@ class TestAutouseManagement(object):
         reprec.assertoutcome(passed=1)
 
     @pytest.mark.issue226
-    @pytest.mark.parametrize("param1", ["", "params=[1]"], ids=["p00", "p01"])
-    @pytest.mark.parametrize("param2", ["", "params=[1]"], ids=["p10", "p11"])
+    @pytest.mark.parameterize("param1", ["", "params=[1]"], ids=["p00", "p01"])
+    @pytest.mark.parameterize("param2", ["", "params=[1]"], ids=["p10", "p11"])
     def test_ordering_dependencies_torndown_first(self, testdir, param1, param2):
         testdir.makepyfile(
             """
@@ -2072,7 +2072,7 @@ class TestAutouseManagement(object):
 
 
 class TestFixtureMarker(object):
-    def test_parametrize(self, testdir):
+    def test_parameterize(self, testdir):
         testdir.makepyfile(
             """
             import pytest
@@ -2098,7 +2098,7 @@ class TestFixtureMarker(object):
             def foo(request):
                 return request.param
 
-            @pytest.mark.parametrize('foobar', [4,5,6])
+            @pytest.mark.parameterize('foobar', [4,5,6])
             def test_issue(foo, foobar):
                 assert foo in [1,2,3]
                 assert foobar in [4,5,6]
@@ -2107,12 +2107,12 @@ class TestFixtureMarker(object):
         reprec = testdir.inline_run()
         reprec.assertoutcome(passed=9)
 
-    @pytest.mark.parametrize(
+    @pytest.mark.parameterize(
         "param_args",
         ["'fixt, val'", "'fixt,val'", "['fixt', 'val']", "('fixt', 'val')"],
     )
-    def test_override_parametrized_fixture_issue_979(self, testdir, param_args):
-        """Make sure a parametrized argument can override a parametrized fixture.
+    def test_override_parameterized_fixture_issue_979(self, testdir, param_args):
+        """Make sure a parameterized argument can override a parameterized fixture.
 
         This was a regression introduced in the fix for #736.
         """
@@ -2124,7 +2124,7 @@ class TestFixtureMarker(object):
             def fixt(request):
                 return request.param
 
-            @pytest.mark.parametrize(%s, [(3, 'x'), (4, 'x')])
+            @pytest.mark.parameterize(%s, [(3, 'x'), (4, 'x')])
             def test_foo(fixt, val):
                 pass
         """
@@ -2297,7 +2297,7 @@ class TestFixtureMarker(object):
         reprec = testdir.inline_run()
         reprec.assertoutcome(passed=4)
 
-    @pytest.mark.parametrize(
+    @pytest.mark.parameterize(
         "method",
         [
             'request.getfixturevalue("arg")',
@@ -2355,7 +2355,7 @@ class TestFixtureMarker(object):
         reprec = testdir.inline_run()
         reprec.assertoutcome(passed=1)
 
-    def test_parametrize_and_scope(self, testdir):
+    def test_parameterize_and_scope(self, testdir):
         testdir.makepyfile(
             """
             import pytest
@@ -2397,7 +2397,7 @@ class TestFixtureMarker(object):
         result = testdir.runpytest()
         result.stdout.fnmatch_lines(["*ScopeMismatch*", "*1 error*"])
 
-    def test_parametrize_separated_order(self, testdir):
+    def test_parameterize_separated_order(self, testdir):
         testdir.makepyfile(
             """
             import pytest
@@ -2418,7 +2418,7 @@ class TestFixtureMarker(object):
         values = reprec.getcalls("pytest_runtest_call")[0].item.module.values
         assert values == [1, 1, 2, 2]
 
-    def test_module_parametrized_ordering(self, testdir):
+    def test_module_parameterized_ordering(self, testdir):
         testdir.makeini(
             """
             [pytest]
@@ -2477,7 +2477,7 @@ class TestFixtureMarker(object):
         """
         )
 
-    def test_dynamic_parametrized_ordering(self, testdir):
+    def test_dynamic_parameterized_ordering(self, testdir):
         testdir.makeini(
             """
             [pytest]
@@ -2515,14 +2515,14 @@ class TestFixtureMarker(object):
         result = testdir.runpytest("-v")
         result.stdout.fnmatch_lines(
             """
-            test_dynamic_parametrized_ordering.py::test[flavor1-vxlan] PASSED
-            test_dynamic_parametrized_ordering.py::test2[flavor1-vxlan] PASSED
-            test_dynamic_parametrized_ordering.py::test[flavor2-vxlan] PASSED
-            test_dynamic_parametrized_ordering.py::test2[flavor2-vxlan] PASSED
-            test_dynamic_parametrized_ordering.py::test[flavor2-vlan] PASSED
-            test_dynamic_parametrized_ordering.py::test2[flavor2-vlan] PASSED
-            test_dynamic_parametrized_ordering.py::test[flavor1-vlan] PASSED
-            test_dynamic_parametrized_ordering.py::test2[flavor1-vlan] PASSED
+            test_dynamic_parameterized_ordering.py::test[flavor1-vxlan] PASSED
+            test_dynamic_parameterized_ordering.py::test2[flavor1-vxlan] PASSED
+            test_dynamic_parameterized_ordering.py::test[flavor2-vxlan] PASSED
+            test_dynamic_parameterized_ordering.py::test2[flavor2-vxlan] PASSED
+            test_dynamic_parameterized_ordering.py::test[flavor2-vlan] PASSED
+            test_dynamic_parameterized_ordering.py::test2[flavor2-vlan] PASSED
+            test_dynamic_parameterized_ordering.py::test[flavor1-vlan] PASSED
+            test_dynamic_parameterized_ordering.py::test2[flavor1-vlan] PASSED
         """
         )
 
@@ -2586,7 +2586,7 @@ class TestFixtureMarker(object):
         """
         )
 
-    def test_parametrize_separated_order_higher_scope_first(self, testdir):
+    def test_parameterize_separated_order_higher_scope_first(self, testdir):
         testdir.makepyfile(
             """
             import pytest
@@ -2662,7 +2662,7 @@ class TestFixtureMarker(object):
         pprint.pprint(list(zip(values, expected)))
         assert values == expected
 
-    def test_parametrized_fixture_teardown_order(self, testdir):
+    def test_parameterized_fixture_teardown_order(self, testdir):
         testdir.makepyfile(
             """
             import pytest
@@ -2781,7 +2781,7 @@ class TestFixtureMarker(object):
         values = reprec.getcalls("pytest_runtest_call")[0].item.module.values
         assert values == [1, 2]
 
-    def test_parametrize_separated_lifecycle(self, testdir):
+    def test_parameterize_separated_lifecycle(self, testdir):
         testdir.makepyfile(
             """
             import pytest
@@ -2810,7 +2810,7 @@ class TestFixtureMarker(object):
         assert values[3] == values[4] == 2
         assert values[5] == "fin2"
 
-    def test_parametrize_function_scoped_finalizers_called(self, testdir):
+    def test_parameterize_function_scoped_finalizers_called(self, testdir):
         testdir.makepyfile(
             """
             import pytest
@@ -2835,7 +2835,7 @@ class TestFixtureMarker(object):
         reprec.assertoutcome(passed=5)
 
     @pytest.mark.issue246
-    @pytest.mark.parametrize("scope", ["session", "function", "module"])
+    @pytest.mark.parameterize("scope", ["session", "function", "module"])
     def test_finalizer_order_on_parametrization(self, scope, testdir):
         testdir.makepyfile(
             """
@@ -2910,7 +2910,7 @@ class TestFixtureMarker(object):
             "fin Doe",
         ]
 
-    def test_parametrize_setup_function(self, testdir):
+    def test_parameterize_setup_function(self, testdir):
         testdir.makepyfile(
             """
             import pytest
@@ -3037,7 +3037,7 @@ class TestFixtureMarker(object):
 
 
 class TestRequestScopeAccess(object):
-    pytestmark = pytest.mark.parametrize(
+    pytestmark = pytest.mark.parameterize(
         ("scope", "ok", "error"),
         [
             ["session", "", "fspath class function module"],
@@ -3193,7 +3193,7 @@ class TestShowFixtures(object):
         )
         assert "arg0" not in result.stdout.str()
 
-    @pytest.mark.parametrize("testmod", [True, False])
+    @pytest.mark.parameterize("testmod", [True, False])
     def test_show_fixtures_conftest(self, testdir, testmod):
         testdir.makeconftest(
             '''
@@ -3759,7 +3759,7 @@ def test_pytest_fixture_setup_and_post_finalizer_hook(testdir):
 class TestScopeOrdering(object):
     """Class of tests that ensure fixtures are ordered based on their scopes (#2405)"""
 
-    @pytest.mark.parametrize("variant", ["mark", "autouse"])
+    @pytest.mark.parameterize("variant", ["mark", "autouse"])
     @pytest.mark.issue(github="#2405")
     def test_func_closure_module_auto(self, testdir, variant, monkeypatch):
         """Semantically identical to the example posted in #2405 when ``use_mark=True``"""

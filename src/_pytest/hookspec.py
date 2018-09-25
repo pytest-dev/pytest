@@ -293,19 +293,19 @@ def pytest_pyfunc_call(pyfuncitem):
 
 
 def pytest_generate_tests(metafunc):
-    """ generate (multiple) parametrized calls to a test function."""
+    """ generate (multiple) parameterized calls to a test function."""
 
 
 @hookspec(firstresult=True)
-def pytest_make_parametrize_id(config, val, argname):
+def pytest_make_parameterize_id(config, val, argname):
     """Return a user-friendly string representation of the given ``val`` that will be used
-    by @pytest.mark.parametrize calls. Return None if the hook doesn't know about ``val``.
+    by @pytest.mark.parameterize calls. Return None if the hook doesn't know about ``val``.
     The parameter name is available as ``argname``, if required.
 
     Stops at first non-None result, see :ref:`firstresult`
 
     :param _pytest.config.Config config: pytest config object
-    :param val: the parametrized value
+    :param val: the parameterized value
     :param str argname: the automatic parameter name produced by pytest
     """
 
