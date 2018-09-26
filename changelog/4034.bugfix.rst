@@ -1,0 +1,3 @@
+The ``.user_properties`` attribute of ``TestReport`` objects is a list
+of (name, value) tuples, but could sometimes be instantiated as a tuple
+of tuples.  It is now always a list.
