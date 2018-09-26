@@ -143,6 +143,7 @@ def break_getuser(monkeypatch):
         monkeypatch.delenv(envvar, raising=False)
 
 
+@pytest.mark.skip(reason="creates random tmpdirs as part of a system level test")
 @pytest.mark.usefixtures("break_getuser")
 @pytest.mark.skipif(sys.platform.startswith("win"), reason="no os.getuid on windows")
 def test_tmpdir_fallback_uid_not_found(testdir):
@@ -161,6 +162,7 @@ def test_tmpdir_fallback_uid_not_found(testdir):
     reprec.assertoutcome(passed=1)
 
 
+@pytest.mark.skip(reason="creates random tmpdirs as part of a system level test")
 @pytest.mark.usefixtures("break_getuser")
 @pytest.mark.skipif(sys.platform.startswith("win"), reason="no os.getuid on windows")
 def test_get_user_uid_not_found():
@@ -241,3 +243,13 @@ class TestNumberedDir(object):
         )
         a, b = tmp_path.iterdir()
         print(a, b)
+
+    def test_cleanup_locked(self, tmp_path):
+
+        from _pytest import tmpdir
+
+        p = tmpdir.make_numbered_dir(root=tmp_path, prefix=self.PREFIX)
+
+        tmpdir.create_cleanup_lock(p)
+        assert not tmpdir.ensure_deletable(p, p.stat().st_mtime + 1)
+        assert tmpdir.ensure_deletable(p, p.stat().st_mtime - 1)

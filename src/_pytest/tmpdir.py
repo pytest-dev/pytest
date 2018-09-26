@@ -111,7 +111,7 @@ def register_cleanup_lock_removal(lock_path, register=atexit.register):
     return register(cleanup_on_exit)
 
 
-def delete_a_numbered_dir(path, consider_lock_dead_after):
+def delete_a_numbered_dir(path):
     create_cleanup_lock(path)
     parent = path.parent
 
@@ -120,24 +120,47 @@ def delete_a_numbered_dir(path, consider_lock_dead_after):
     shutil.rmtree(str(garbage))
 
 
-def is_deletable(path, consider_lock_dead_after):
+def ensure_deletable(path, consider_lock_dead_after):
     lock = get_lock_path(path)
     if not lock.exists():
         return True
+    try:
+        lock_time = lock.stat().st_mtime
+    except Exception:
+        return False
+    else:
+        if lock_time > consider_lock_dead_after:
+            lock.unlink()
+            return True
+        else:
+            return False
 
 
-def cleanup_numbered_dir(root, prefix, keep, consider_lock_dead_after):
+def try_cleanup(path, consider_lock_dead_after):
+    if ensure_deletable(path, consider_lock_dead_after):
+        delete_a_numbered_dir(path)
+
+
+def cleanup_candidates(root, prefix, keep):
     max_existing = _max(map(parse_num, find_suffixes(root, prefix)), -1)
     max_delete = max_existing - keep
     paths = find_prefixed(root, prefix)
     paths, paths2 = itertools.tee(paths)
     numbers = map(parse_num, extract_suffixes(paths2, prefix))
     for path, number in zip(paths, numbers):
-        if number <= max_delete and is_deletable(path, consider_lock_dead_after):
-            delete_a_numbered_dir(path, consider_lock_dead_after)
+        if number <= max_delete:
+            yield path
 
 
-def make_numbered_dir_with_cleanup(root, prefix, keep, consider_lock_dead_after):
+def cleanup_numbered_dir(root, prefix, keep, consider_lock_dead_after):
+    for path in cleanup_candidates(root, prefix, keep):
+        try_cleanup(path, consider_lock_dead_after)
+    known_garbage = list(root.glob("garbage-*"))
+    for path in known_garbage:
+        try_cleanup(path, consider_lock_dead_after)
+
+
+def make_numbered_dir_with_cleanup(root, prefix, keep, lock_timeout):
     for i in range(10):
         try:
             p = make_numbered_dir(root, prefix)
@@ -146,6 +169,7 @@ def make_numbered_dir_with_cleanup(root, prefix, keep, consider_lock_dead_after)
         except Exception:
             raise
         else:
+            consider_lock_dead_after = p.stat().st_mtime + lock_timeout
             cleanup_numbered_dir(
                 root=root,
                 prefix=prefix,
@@ -188,19 +212,13 @@ class TempPathFactory(object):
                 basetemp.mkdir()
             else:
                 temproot = Path(tempfile.gettempdir())
-                user = get_user()
-                if user:
-                    # use a sub-directory in the temproot to speed-up
-                    # make_numbered_dir() call
-                    rootdir = temproot.joinpath("pytest-of-{}".format(user))
-                else:
-                    rootdir = temproot
+                user = get_user() or "unknown"
+                # use a sub-directory in the temproot to speed-up
+                # make_numbered_dir() call
+                rootdir = temproot.joinpath("pytest-of-{}".format(user))
                 rootdir.mkdir(exist_ok=True)
                 basetemp = make_numbered_dir_with_cleanup(
-                    prefix="pytest-",
-                    root=rootdir,
-                    keep=3,
-                    consider_lock_dead_after=10000,
+                    prefix="pytest-", root=rootdir, keep=3, lock_timeout=10000
                 )
             assert basetemp is not None
             self._basetemp = t = basetemp
