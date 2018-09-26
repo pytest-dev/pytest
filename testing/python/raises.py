@@ -87,6 +87,16 @@ class TestRaises(object):
         else:
             assert False, "Expected pytest.raises.Exception"
 
+    @pytest.mark.parametrize('example_input,expectation', [
+        (3, do_not_raise),
+        (2, do_not_raise),
+        (1, do_not_raise),
+        (0, raises(ZeroDivisionError))])
+    def test_do_not_raise(example_input, expectation):
+        """Test do_not_raise."""
+        with expectation:
+            assert (6 / example_input) is not None
+
     def test_custom_raise_message(self):
         message = "TEST_MESSAGE"
         try:
