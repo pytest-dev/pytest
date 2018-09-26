@@ -136,12 +136,7 @@ class TestReport(BaseReport):
 
         #: user properties is a list of tuples (name, value) that holds user
         #: defined properties of the test
-        if user_properties is None:
-            user_properties = []
-        elif not isinstance(user_properties, list):
-            # This used to be a tuple; so cast for backwards-compatibility
-            user_properties = list(user_properties)
-        self.user_properties = user_properties
+        self.user_properties = list(user_properties or [])
 
         #: list of pairs ``(str, str)`` of extra information which needs to
         #: marshallable. Used by pytest to add captured text
