@@ -120,7 +120,7 @@ def delete_a_numbered_dir(path):
     shutil.rmtree(str(garbage))
 
 
-def ensure_deletable(path, consider_lock_dead_after):
+def ensure_deletable(path, consider_lock_dead_if_created_before):
     lock = get_lock_path(path)
     if not lock.exists():
         return True
@@ -129,15 +129,15 @@ def ensure_deletable(path, consider_lock_dead_after):
     except Exception:
         return False
     else:
-        if lock_time > consider_lock_dead_after:
+        if lock_time < consider_lock_dead_if_created_before:
             lock.unlink()
             return True
         else:
             return False
 
 
-def try_cleanup(path, consider_lock_dead_after):
-    if ensure_deletable(path, consider_lock_dead_after):
+def try_cleanup(path, consider_lock_dead_if_created_before):
+    if ensure_deletable(path, consider_lock_dead_if_created_before):
         delete_a_numbered_dir(path)
 
 
@@ -152,12 +152,12 @@ def cleanup_candidates(root, prefix, keep):
             yield path
 
 
-def cleanup_numbered_dir(root, prefix, keep, consider_lock_dead_after):
+def cleanup_numbered_dir(root, prefix, keep, consider_lock_dead_if_created_before):
     for path in cleanup_candidates(root, prefix, keep):
-        try_cleanup(path, consider_lock_dead_after)
+        try_cleanup(path, consider_lock_dead_if_created_before)
     known_garbage = list(root.glob("garbage-*"))
     for path in known_garbage:
-        try_cleanup(path, consider_lock_dead_after)
+        try_cleanup(path, consider_lock_dead_if_created_before)
 
 
 def make_numbered_dir_with_cleanup(root, prefix, keep, lock_timeout):
@@ -169,12 +169,12 @@ def make_numbered_dir_with_cleanup(root, prefix, keep, lock_timeout):
         except Exception:
             raise
         else:
-            consider_lock_dead_after = p.stat().st_mtime + lock_timeout
+            consider_lock_dead_if_created_before = p.stat().st_mtime + lock_timeout
             cleanup_numbered_dir(
                 root=root,
                 prefix=prefix,
                 keep=keep,
-                consider_lock_dead_after=consider_lock_dead_after,
+                consider_lock_dead_if_created_before=consider_lock_dead_if_created_before,
             )
             return p
 
