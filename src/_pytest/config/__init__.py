@@ -351,6 +351,7 @@ class PytestPluginManager(PluginManager):
             else None
         )
         self._noconftest = namespace.noconftest
+        self._using_pyargs = namespace.pyargs
         testpaths = namespace.file_or_dir
         foundanchor = False
         for path in testpaths:
@@ -416,7 +417,11 @@ class PytestPluginManager(PluginManager):
                 _ensure_removed_sysmodule(conftestpath.purebasename)
             try:
                 mod = conftestpath.pyimport()
-                if hasattr(mod, "pytest_plugins") and self._configured:
+                if (
+                    hasattr(mod, "pytest_plugins")
+                    and self._configured
+                    and not self._using_pyargs
+                ):
                     from _pytest.deprecated import (
                         PYTEST_PLUGINS_FROM_NON_TOP_LEVEL_CONFTEST
                     )

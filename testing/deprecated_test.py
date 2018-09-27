@@ -178,21 +178,12 @@ def test_pytest_catchlog_deprecated(testdir, plugin):
 def test_pytest_plugins_in_non_top_level_conftest_deprecated(testdir):
     from _pytest.deprecated import PYTEST_PLUGINS_FROM_NON_TOP_LEVEL_CONFTEST
 
-    subdirectory = testdir.tmpdir.join("subdirectory")
-    subdirectory.mkdir()
-    # create the inner conftest with makeconftest and then move it to the subdirectory
-    testdir.makeconftest(
-        """
+    testdir.makepyfile(
+        **{
+            "subdirectory/conftest.py": """
         pytest_plugins=['capture']
     """
-    )
-    testdir.tmpdir.join("conftest.py").move(subdirectory.join("conftest.py"))
-    # make the top level conftest
-    testdir.makeconftest(
-        """
-        import warnings
-        warnings.filterwarnings('always', category=DeprecationWarning)
-    """
+        }
     )
     testdir.makepyfile(
         """
@@ -200,7 +191,7 @@ def test_pytest_plugins_in_non_top_level_conftest_deprecated(testdir):
             pass
     """
     )
-    res = testdir.runpytest_subprocess()
+    res = testdir.runpytest()
     assert res.ret == 0
     msg = str(PYTEST_PLUGINS_FROM_NON_TOP_LEVEL_CONFTEST).splitlines()[0]
     res.stdout.fnmatch_lines(
@@ -208,6 +199,34 @@ def test_pytest_plugins_in_non_top_level_conftest_deprecated(testdir):
             sep=os.sep, msg=msg
         )
     )
+
+
+@pytest.mark.parametrize("use_pyargs", [True, False])
+def test_pytest_plugins_in_non_top_level_conftest_deprecated_pyargs(
+    testdir, use_pyargs
+):
+    """When using --pyargs, do not emit the warning about non-top-level conftest warnings (#4039, #4044)"""
+    from _pytest.deprecated import PYTEST_PLUGINS_FROM_NON_TOP_LEVEL_CONFTEST
+
+    files = {
+        "src/pkg/__init__.py": "",
+        "src/pkg/conftest.py": "",
+        "src/pkg/test_root.py": "def test(): pass",
+        "src/pkg/sub/__init__.py": "",
+        "src/pkg/sub/conftest.py": "pytest_plugins=['capture']",
+        "src/pkg/sub/test_bar.py": "def test(): pass",
+    }
+    testdir.makepyfile(**files)
+    testdir.syspathinsert(testdir.tmpdir.join("src"))
+
+    args = ("--pyargs", "pkg") if use_pyargs else ()
+    res = testdir.runpytest(*args)
+    assert res.ret == 0
+    msg = str(PYTEST_PLUGINS_FROM_NON_TOP_LEVEL_CONFTEST).splitlines()[0]
+    if use_pyargs:
+        assert msg not in res.stdout.str()
+    else:
+        res.stdout.fnmatch_lines("*{msg}*".format(msg=msg))
 
 
 def test_pytest_plugins_in_non_top_level_conftest_deprecated_no_top_level_conftest(
