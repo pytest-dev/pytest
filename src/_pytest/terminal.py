@@ -745,9 +745,10 @@ class TerminalReporter(object):
                     return
                 self.write_sep("=", "PASSES")
                 for rep in reports:
-                    msg = self._getfailureheadline(rep)
-                    self.write_sep("_", msg)
-                    self._outrep_summary(rep)
+                    if rep.sections:
+                        msg = self._getfailureheadline(rep)
+                        self.write_sep("_", msg)
+                        self._outrep_summary(rep)
 
     def print_teardown_sections(self, rep):
         showcapture = self.config.option.showcapture
