@@ -290,7 +290,7 @@ class TestImportHookInstallation(object):
         )
 
 
-class TestBinReprIntegration(object):
+class TestAssertHooksIntegration(object):
     def test_pytest_assertrepr_compare_called(self, testdir):
         testdir.makeconftest(
             """
@@ -310,6 +310,30 @@ class TestBinReprIntegration(object):
                 assert 0 == 1
             def test_check(list):
                 assert list == [("==", 0, 1)]
+        """
+        )
+        result = testdir.runpytest("-v")
+        result.stdout.fnmatch_lines(["*test_hello*FAIL*", "*test_check*PASS*"])
+
+    def test_pytest_before_assert_called(self, testdir):
+        testdir.makeconftest(
+            """
+            import pytest
+            values = []
+            def pytest_before_assert():
+                values.append(True)
+
+            @pytest.fixture
+            def list(request):
+                return values
+        """
+        )
+        testdir.makepyfile(
+            """
+            def test_hello():
+                assert 0 == 1
+            def test_check(list):
+                assert list == [True, True]  # The hook is run before the assert
         """
         )
         result = testdir.runpytest("-v")
@@ -962,18 +986,24 @@ def test_sequence_comparison_uses_repr(testdir):
     )
 
 
-def test_assertrepr_loaded_per_dir(testdir):
+def test_assert_hooks_loaded_per_dir(testdir):
     testdir.makepyfile(test_base=["def test_base(): assert 1 == 2"])
     a = testdir.mkdir("a")
     a_test = a.join("test_a.py")
     a_test.write("def test_a(): assert 1 == 2")
     a_conftest = a.join("conftest.py")
-    a_conftest.write('def pytest_assertrepr_compare(): return ["summary a"]')
+    a_conftest.write(
+        'def pytest_before_assert(): print("assert hook a")\n'
+        + 'def pytest_assertrepr_compare(): return ["summary a"]'
+    )
     b = testdir.mkdir("b")
     b_test = b.join("test_b.py")
     b_test.write("def test_b(): assert 1 == 2")
     b_conftest = b.join("conftest.py")
-    b_conftest.write('def pytest_assertrepr_compare(): return ["summary b"]')
+    b_conftest.write(
+        'def pytest_before_assert(): print("assert hook b")\n'
+        + 'def pytest_assertrepr_compare(): return ["summary b"]'
+    )
     result = testdir.runpytest()
     result.stdout.fnmatch_lines(
         [
@@ -981,8 +1011,12 @@ def test_assertrepr_loaded_per_dir(testdir):
             "*E*assert 1 == 2*",
             "*def test_a():*",
             "*E*assert summary a*",
+            "*Captured stdout call*",
+            "*assert hook a*",
             "*def test_b():*",
             "*E*assert summary b*",
+            "*Captured stdout call*",
+            "*assert hook b*",
         ]
     )
 

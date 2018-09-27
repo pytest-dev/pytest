@@ -651,9 +651,10 @@ test execution:
 
 .. autofunction:: pytest_runtest_logreport
 
-You can also use this hook to customize assertion representation for some
-types:
+You can also use these hooks to output assertion information or customize
+assertion representation for some types:
 
+.. autofunction:: pytest_before_assert
 .. autofunction:: pytest_assertrepr_compare
 
 

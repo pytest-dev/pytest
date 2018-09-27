@@ -252,6 +252,33 @@ the conftest file:
 .. _assert-details:
 .. _`assert introspection`:
 
+Collecting information about passing assertions
+-----------------------------------------------
+
+The ``pytest_assertrepr_compare`` hook only runs for failing assertions. Information
+about passing assertions can be collected with the ``pytest_before_assert`` hook.
+
+.. autofunction:: _pytest.hookspec.pytest_before_assert
+   :noindex:
+
+For example, to report every encountered assertion, the following hook
+needs to be added to :ref:`conftest.py <conftest.py>`::
+
+    # content of conftest.py
+    def pytest_before_assert():
+        print("Before-assert hook is executed.")
+
+now, given this test module::
+
+    # content of test_sample.py
+    def test_answer():
+        assert 1 == 1
+
+the following stdout is captured, e.g. in an HTML report::
+
+    ----------------------------- Captured stdout call -----------------------------
+    Before-assert hook is executed.
+
 Assertion introspection details
 -------------------------------
 

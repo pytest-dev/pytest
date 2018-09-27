@@ -545,6 +545,11 @@ def _call_reprcompare(ops, results, expls, each_obj):
     return expl
 
 
+def _call_before_assert():
+    if util._before_assert is not None:
+        util._before_assert()
+
+
 unary_map = {ast.Not: "not %s", ast.Invert: "~%s", ast.USub: "-%s", ast.UAdd: "+%s"}
 
 binop_map = {
@@ -833,6 +838,8 @@ class AssertionRewriter(ast.NodeVisitor):
         self.stack = []
         self.on_failure = []
         self.push_format_context()
+        # Run before assert hook.
+        self.statements.append(ast.Expr(self.helper("call_before_assert")))
         # Rewrite assert into a bunch of statements.
         top_condition, explanation = self.visit(assert_.test)
         # If in a test module, check if directly asserting None, in order to warn [Issue #3191]

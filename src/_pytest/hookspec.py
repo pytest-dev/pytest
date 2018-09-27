@@ -446,6 +446,13 @@ def pytest_assertrepr_compare(config, op, left, right):
     """
 
 
+def pytest_before_assert(config):
+    """ called before every assertion is evaluated.
+
+    :param _pytest.config.Config config: pytest config object
+    """
+
+
 # -------------------------------------------------------------------------
 # hooks for influencing reporting (invoked from _pytest_terminal)
 # -------------------------------------------------------------------------

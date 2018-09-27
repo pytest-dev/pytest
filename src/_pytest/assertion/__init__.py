@@ -102,12 +102,14 @@ def pytest_collection(session):
 
 
 def pytest_runtest_setup(item):
-    """Setup the pytest_assertrepr_compare hook
+    """Setup the pytest_assertrepr_compare and pytest_before_assert hooks.
 
-    The newinterpret and rewrite modules will use util._reprcompare if
-    it exists to use custom reporting via the
-    pytest_assertrepr_compare hook.  This sets up this custom
-    comparison for the test.
+    The rewrite module will use util._reprcompare and util._before_assert
+    if they exist to enable custom reporting. Comparison representation is
+    customized via the pytest_assertrepr_compare hook. Before every assert,
+    the pytest_before_assert hook is run.
+
+    This sets up the custom assert hooks for the test.
     """
 
     def callbinrepr(op, left, right):
@@ -137,11 +139,16 @@ def pytest_runtest_setup(item):
                     res = res.replace("%", "%%")
                 return res
 
+    def call_before_assert():
+        item.ihook.pytest_before_assert(config=item.config)
+
     util._reprcompare = callbinrepr
+    util._before_assert = call_before_assert
 
 
 def pytest_runtest_teardown(item):
     util._reprcompare = None
+    util._before_assert = None
 
 
 def pytest_sessionfinish(session):
