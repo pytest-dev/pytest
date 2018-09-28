@@ -368,15 +368,17 @@ class SetupState(object):
             elif colitem in self._finalizers.keys():
                 for finalizer_index in range(len(self._finalizers[colitem])-1,-1,-1):
                     finalizer = self._finalizers[colitem][finalizer_index]
+                    if 'request' not in finalizer.keywords.keys(): continue
                     finalizer_fix_name = finalizer.keywords['request'].fixturename
+                    if 'tmpdir_factory' == finalizer_fix_name: continue
                     if finalizer_fix_name not in nextitem.fixturenames:
                         self._teardown_to_finalizer(colitem_index,finalizer_index)
                     elif finalizer_fix_name in nextitem.fixturenames:
                         if not hasattr(item,'callspec') and not hasattr(nextitem,'callspec'):
                             pass
                         elif ( hasattr(item,'callspec') and not hasattr(nextitem,'callspec') ) or \
-                             ( not hasattr(item,'callspec') and hasattr(nextitem,'callspec') ) or \
-                             ( item.callspec.indices[finalizer_fix_name] != nextitem.callspec.indices[finalizer_fix_name] ):
+                            ( not hasattr(item,'callspec') and hasattr(nextitem,'callspec') ) or \
+                            ( item.callspec.indices[finalizer_fix_name] != nextitem.callspec.indices[finalizer_fix_name] ):
                             self._teardown_to_finalizer(colitem_index,finalizer_index)
 
     def _teardown_towards(self, needed_collectors):
