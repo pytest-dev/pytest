@@ -20,6 +20,8 @@ import tempfile
 import itertools
 
 
+LOCK_TIMEOUT = 60 * 60 * 3
+
 get_lock_path = operator.methodcaller("joinpath", ".lock")
 
 
@@ -155,21 +157,21 @@ def cleanup_candidates(root, prefix, keep):
 def cleanup_numbered_dir(root, prefix, keep, consider_lock_dead_if_created_before):
     for path in cleanup_candidates(root, prefix, keep):
         try_cleanup(path, consider_lock_dead_if_created_before)
-    known_garbage = list(root.glob("garbage-*"))
-    for path in known_garbage:
+    for path in root.glob("garbage-*"):
         try_cleanup(path, consider_lock_dead_if_created_before)
 
 
 def make_numbered_dir_with_cleanup(root, prefix, keep, lock_timeout):
+    e = None
     for i in range(10):
         try:
             p = make_numbered_dir(root, prefix)
             lock_path = create_cleanup_lock(p)
             register_cleanup_lock_removal(lock_path)
-        except Exception:
-            raise
+        except Exception as e:
+            pass
         else:
-            consider_lock_dead_if_created_before = p.stat().st_mtime + lock_timeout
+            consider_lock_dead_if_created_before = p.stat().st_mtime - lock_timeout
             cleanup_numbered_dir(
                 root=root,
                 prefix=prefix,
@@ -177,6 +179,8 @@ def make_numbered_dir_with_cleanup(root, prefix, keep, lock_timeout):
                 consider_lock_dead_if_created_before=consider_lock_dead_if_created_before,
             )
             return p
+    assert e is not None
+    raise e
 
 
 @attr.s

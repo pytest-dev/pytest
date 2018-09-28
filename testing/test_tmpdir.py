@@ -239,7 +239,10 @@ class TestNumberedDir(object):
         from _pytest.tmpdir import cleanup_numbered_dir
 
         cleanup_numbered_dir(
-            root=tmp_path, prefix=self.PREFIX, keep=2, consider_lock_dead_after=0
+            root=tmp_path,
+            prefix=self.PREFIX,
+            keep=2,
+            consider_lock_dead_if_created_before=0,
         )
         a, b = tmp_path.iterdir()
         print(a, b)
@@ -251,5 +254,10 @@ class TestNumberedDir(object):
         p = tmpdir.make_numbered_dir(root=tmp_path, prefix=self.PREFIX)
 
         tmpdir.create_cleanup_lock(p)
-        assert not tmpdir.ensure_deletable(p, p.stat().st_mtime + 1)
-        assert tmpdir.ensure_deletable(p, p.stat().st_mtime - 1)
+
+        assert not tmpdir.ensure_deletable(
+            p, consider_lock_dead_if_created_before=p.stat().st_mtime - 1
+        )
+        assert tmpdir.ensure_deletable(
+            p, consider_lock_dead_if_created_before=p.stat().st_mtime + 1
+        )
