@@ -371,8 +371,13 @@ class SetupState(object):
                     finalizer_fix_name = finalizer.keywords['request'].fixturename
                     if finalizer_fix_name not in nextitem.fixturenames:
                         self._teardown_to_finalizer(colitem_index,finalizer_index)
-                    elif finalizer_fix_name in nextitem.fixturenames and item.callspec.indices[finalizer_fix_name] != nextitem.callspec.indices[finalizer_fix_name]:
-                        self._teardown_to_finalizer(colitem_index,finalizer_index)
+                    elif finalizer_fix_name in nextitem.fixturenames:
+                        if not hasattr(item,'callspec') and not hasattr(item,'callspec'):
+                            pass
+                        if ( hasattr(item,'callspec') and not hasattr(item,'callspec') ) or \
+                           ( not hasattr(item,'callspec') and hasattr(item,'callspec') ) or \
+                           ( item.callspec.indices[finalizer_fix_name] != nextitem.callspec.indices[finalizer_fix_name] ):
+                            self._teardown_to_finalizer(colitem_index,finalizer_index)
 
     def _teardown_towards(self, needed_collectors):
         exc = None
