@@ -119,7 +119,7 @@ def delete_a_numbered_dir(path):
 
     garbage = parent.joinpath("garbage-{}".format(uuid.uuid4()))
     path.rename(garbage)
-    shutil.rmtree(str(garbage))
+    shutil.rmtree(str(garbage), ignore_errors=True)
 
 
 def ensure_deletable(path, consider_lock_dead_if_created_before):
