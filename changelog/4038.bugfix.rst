@@ -1,0 +1,5 @@
+Changes teardown behavior for parameterized fixtures as follows:
+
+1. Teardown code will be called from within the pytest_runtest_teardown hook.
+2. If a fixture is parameterized and the next item requires the next index, all lower scoped fixtures are torn down.
+3. If a fixture of equal scope needs to be torn down and the next item requires the next index, all fixtures that were setup after the fixture are torn down, but not fixtures of equal scope that were set up earlier.
