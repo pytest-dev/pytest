@@ -334,6 +334,7 @@ class SetupState(object):
         for key in list(self._finalizers):
             self._teardown_with_finalization(key)
         assert not self._finalizers
+        
     def _callfinalizer(self, colitem, finalizer_index):
         fin = self._finalizers[colitem].pop(finalizer_index)
         try:
@@ -394,7 +395,7 @@ class SetupState(object):
                         ) != self._get_fixture_index(nextitem, finalizer_fix_name):
                             self._teardown_to_finalizer(colitem_index, finalizer_index)
         if self.exc:
-            six.reaise(*self.exc)
+            six.reraise(*self.exc)
             
     def _teardown_towards(self, needed_collectors):
         exc = None
