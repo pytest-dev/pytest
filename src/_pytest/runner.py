@@ -339,7 +339,7 @@ class SetupState(object):
         fin = self._finalizers[colitem].pop(finalizer_index)
         try:
             fin()
-        except TEST_OUTCOM:
+        except TEST_OUTCOME:
             if self.exc is None:
                 self.exc = sys.exc_info()
 
