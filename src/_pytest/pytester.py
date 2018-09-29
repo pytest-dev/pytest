@@ -17,12 +17,13 @@ from weakref import WeakKeyDictionary
 
 from _pytest.capture import MultiCapture, SysCapture
 from _pytest._code import Source
-import py
-import pytest
 from _pytest.main import Session, EXIT_OK
 from _pytest.assertion.rewrite import AssertionRewritingHook
-from _pytest.compat import Path
+from _pytest.pathlib import Path
 from _pytest.compat import safe_str
+
+import py
+import pytest
 
 IGNORE_PAM = [  # filenames added when obtaining details about the current user
     u"/var/lib/sss/mc/passwd"

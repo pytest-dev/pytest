@@ -16,7 +16,8 @@ import json
 import shutil
 
 from . import paths
-from .compat import _PY2 as PY2, Path
+from .compat import _PY2 as PY2
+from .pathlib import Path
 
 README_CONTENT = u"""\
 # pytest cache directory #

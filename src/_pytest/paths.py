@@ -5,7 +5,7 @@ import sys
 
 import six
 
-from .compat import Path, PurePath
+from .pathlib import Path, PurePath
 
 
 def resolve_from_str(input, root):

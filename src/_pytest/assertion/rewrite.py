@@ -17,7 +17,8 @@ import atomicwrites
 import py
 
 from _pytest.assertion import util
-from _pytest.compat import PurePath, spec_from_file_location
+from _pytest.pathlib import PurePath
+from _pytest.compat import spec_from_file_location
 from _pytest.paths import fnmatch_ex
 
 # pytest caches rewritten pycs in __pycache__.

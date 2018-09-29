@@ -192,7 +192,7 @@ class TestNumberedDir(object):
     PREFIX = "fun-"
 
     def test_make(self, tmp_path):
-        from _pytest.tmpdir import make_numbered_dir
+        from _pytest.pathlib import make_numbered_dir
 
         for i in range(10):
             d = make_numbered_dir(root=tmp_path, prefix=self.PREFIX)
@@ -202,7 +202,7 @@ class TestNumberedDir(object):
     def test_cleanup_lock_create(self, tmp_path):
         d = tmp_path.joinpath("test")
         d.mkdir()
-        from _pytest.tmpdir import create_cleanup_lock
+        from _pytest.pathlib import create_cleanup_lock
 
         lockfile = create_cleanup_lock(d)
         with pytest.raises(EnvironmentError, match="cannot create lockfile in .*"):
@@ -211,7 +211,7 @@ class TestNumberedDir(object):
         lockfile.unlink()
 
     def test_lock_register_cleanup_removal(self, tmp_path):
-        from _pytest.tmpdir import create_cleanup_lock, register_cleanup_lock_removal
+        from _pytest.pathlib import create_cleanup_lock, register_cleanup_lock_removal
 
         lock = create_cleanup_lock(tmp_path)
 
@@ -236,7 +236,7 @@ class TestNumberedDir(object):
 
     def test_cleanup_keep(self, tmp_path):
         self.test_make(tmp_path)
-        from _pytest.tmpdir import cleanup_numbered_dir
+        from _pytest.pathlib import cleanup_numbered_dir
 
         cleanup_numbered_dir(
             root=tmp_path,
@@ -249,15 +249,15 @@ class TestNumberedDir(object):
 
     def test_cleanup_locked(self, tmp_path):
 
-        from _pytest import tmpdir
+        from _pytest import pathlib
 
-        p = tmpdir.make_numbered_dir(root=tmp_path, prefix=self.PREFIX)
+        p = pathlib.make_numbered_dir(root=tmp_path, prefix=self.PREFIX)
 
-        tmpdir.create_cleanup_lock(p)
+        pathlib.create_cleanup_lock(p)
 
-        assert not tmpdir.ensure_deletable(
+        assert not pathlib.ensure_deletable(
             p, consider_lock_dead_if_created_before=p.stat().st_mtime - 1
         )
-        assert tmpdir.ensure_deletable(
+        assert pathlib.ensure_deletable(
             p, consider_lock_dead_if_created_before=p.stat().st_mtime + 1
         )
