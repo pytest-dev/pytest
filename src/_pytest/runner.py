@@ -334,8 +334,7 @@ class SetupState(object):
         for key in list(self._finalizers):
             self._teardown_with_finalization(key)
         assert not self._finalizers
-
-    def _callfinalizer(self,colitem,finalizer_index):
+    def _callfinalizer(self, colitem, finalizer_index):
         fin = self._finalizers[colitem].pop(finalizer_index)
         try:
             fin()
@@ -343,20 +342,20 @@ class SetupState(object):
             if self.exc is None:
                 self.exc = sys.exc_info()
 
-    def _teardown_to_finalizer(self,colitem_index,finalizer_index):
+    def _teardown_to_finalizer(self, colitem_index, finalizer_index):
         colitem = self.stack[colitem_index]
         finalizer = self._finalizers[colitem][finalizer_index]
-        while self.stack[colitem_index+1:] != []:
+        while self.stack[colitem_index + 1 :] != []:
             self._pop_and_teardown()
         while finalizer in self._finalizers[colitem]:
-            self._callfinalizer(colitem,finalizer_index)
+            self._callfinalizer(colitem, finalizer_index)
         if len(self._finalizers[colitem]) == 0:
             self._teardown_with_finalization(colitem)
 
-    def _get_fixture_index(self,item_object,finalizer_fix_name):
-        if not hasattr(item_object,'callspec'):
+    def _get_fixture_index(self, item_object, finalizer_fix_name):
+        if not hasattr(item_object, "callspec"):
             return None
-        if not hasattr(item_object.callspec,'indices'):
+        if not hasattr(item_object.callspec, "indices"):
             return None
         if finalizer_fix_name not in item_object.callspec.indices:
             return None
@@ -364,7 +363,7 @@ class SetupState(object):
 
     def teardown_exact(self, item, nextitem):
         self.exc = None
-        for colitem_index in range(len(item.listchain())-1,-1,-1):
+        for colitem_index in range(len(item.listchain()) - 1, -1, -1):
             colitem = item.listchain()[colitem_index]
             if nextitem is None:
                 self._teardown_towards([])
@@ -373,18 +372,29 @@ class SetupState(object):
                 while colitem in self.stack:
                     self._pop_and_teardown()
             elif colitem in self._finalizers.keys():
-                for finalizer_index in range(len(self._finalizers[colitem])-1,-1,-1):
+                for finalizer_index in range(
+                    len(self._finalizers[colitem]) - 1, -1, -1
+                ):
                     finalizer = self._finalizers[colitem][finalizer_index]
-                    if not hasattr(finalizer,'keywords') or 'request' not in finalizer.keywords.keys() or not hasattr(finalizer.keywords['request'],'fixturename'):
+                    if (
+                        not hasattr(finalizer, "keywords")
+                        or "request" not in finalizer.keywords.keys()
+                        or not hasattr(finalizer.keywords["request"], "fixturename")
+                    ):
                         continue
-                    finalizer_fix_name = finalizer.keywords['request'].fixturename
-                    if not hasattr(nextitem,'fixturenames') or finalizer_fix_name not in nextitem.fixturenames:
-                        self._teardown_to_finalizer(colitem_index,finalizer_index)
+                    finalizer_fix_name = finalizer.keywords["request"].fixturename
+                    if (
+                        not hasattr(nextitem, "fixturenames")
+                        or finalizer_fix_name not in nextitem.fixturenames
+                    ):
+                        self._teardown_to_finalizer(colitem_index, finalizer_index)
                     elif finalizer_fix_name in nextitem.fixturenames:
-                        if self._get_fixture_index(item,finalizer_fix_name) != self._get_fixture_index(nextitem,finalizer_fix_name):
-                            self._teardown_to_finalizer(colitem_index,finalizer_index)
+                        if self._get_fixture_index(
+                            item, finalizer_fix_name
+                        ) != self._get_fixture_index(nextitem, finalizer_fix_name):
+                            self._teardown_to_finalizer(colitem_index, finalizer_index)
         if self.exc:
-            six.reraise(*self.exc)
+            six.reaise(*self.exc)
             
     def _teardown_towards(self, needed_collectors):
         exc = None
