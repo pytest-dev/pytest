@@ -336,15 +336,12 @@ class SetupState(object):
         assert not self._finalizers
 
     def _callfinalizer(self,colitem,finalizer_index):
-        exc = None
         fin = self._finalizers[colitem].pop(finalizer_index)
         try:
             fin()
         except TEST_OUTCOM:
-            if exc is None:
-                exc = sys.exc_info()
-        if exc:
-            six.reaise(*exc)
+            if self.exc is None:
+                self.exc = sys.exc_info()
 
     def _teardown_to_finalizer(self,colitem_index,finalizer_index):
         colitem = self.stack[colitem_index]
@@ -366,10 +363,11 @@ class SetupState(object):
         return item_object.callspec.indices[finalizer_fix_name]
 
     def teardown_exact(self, item, nextitem):
+        self.exc = None
         for colitem_index in range(len(item.listchain())-1,-1,-1):
             colitem = item.listchain()[colitem_index]
             if nextitem is None:
-                self.teardown_all()
+                self._teardown_towards([])
                 break
             elif colitem not in nextitem.listchain():
                 while colitem in self.stack:
@@ -385,7 +383,9 @@ class SetupState(object):
                     elif finalizer_fix_name in nextitem.fixturenames:
                         if self._get_fixture_index(item,finalizer_fix_name) != self._get_fixture_index(nextitem,finalizer_fix_name):
                             self._teardown_to_finalizer(colitem_index,finalizer_index)
-
+        if self.exc:
+            six.reraise(*self.exc)
+            
     def _teardown_towards(self, needed_collectors):
         exc = None
         while self.stack:
