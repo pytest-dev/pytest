@@ -368,7 +368,7 @@ class SetupState(object):
             elif colitem in self._finalizers.keys():
                 for finalizer_index in range(len(self._finalizers[colitem])-1,-1,-1):
                     finalizer = self._finalizers[colitem][finalizer_index]
-                    if not hasattr(finalizer,'keywords') or 'request' not in finalizer.keywords.keys(): continue
+                    if not hasattr(finalizer,'keywords') or 'request' not in finalizer.keywords.keys() or not hasattr(finalizer.keywords['request'],'fixturename'): continue
                     finalizer_fix_name = finalizer.keywords['request'].fixturename
                     if finalizer_fix_name not in nextitem.fixturenames:
                         self._teardown_to_finalizer(colitem_index,finalizer_index)
