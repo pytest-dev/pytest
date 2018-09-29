@@ -6,7 +6,7 @@ import pytest
 from _pytest.pytester import get_public_names
 from _pytest.fixtures import FixtureLookupError, FixtureRequest
 from _pytest import fixtures
-from _pytest.compat import Path
+from _pytest.pathlib import Path
 
 
 def test_getfuncargnames():
