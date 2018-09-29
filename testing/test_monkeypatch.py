@@ -3,6 +3,8 @@ import os
 import sys
 import textwrap
 
+import six
+
 import pytest
 from _pytest.monkeypatch import MonkeyPatch
 
@@ -190,6 +192,30 @@ def test_delenv():
     finally:
         if name in os.environ:
             del os.environ[name]
+
+
+@pytest.mark.skipif(six.PY3, reason="Python 2 only test")
+class TestEnvironKeysWarning(object):
+    """
+    os.environ needs keys to be native strings, otherwise it will cause problems with other modules (notably
+    subprocess). We only test this behavior on Python 2, because Python 3 raises an error right away.
+    """
+
+    VAR_NAME = u"PYTEST_INTERNAL_MY_VAR"
+
+    def test_setenv_unicode_key(self, monkeypatch):
+        with pytest.warns(
+            pytest.PytestWarning,
+            match="Environment variable name {!r} should be str".format(self.VAR_NAME),
+        ):
+            monkeypatch.setenv(self.VAR_NAME, "2")
+
+    def test_delenv_unicode_key(self, monkeypatch):
+        with pytest.warns(
+            pytest.PytestWarning,
+            match="Environment variable name {!r} should be str".format(self.VAR_NAME),
+        ):
+            monkeypatch.delenv(self.VAR_NAME, raising=False)
 
 
 def test_setenv_prepend():
