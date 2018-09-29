@@ -327,7 +327,7 @@ class SetupState(object):
             assert (
                 colitem is None or colitem in self.stack or isinstance(colitem, tuple)
             )
-            
+
     def teardown_all(self):
         while self.stack:
             self._pop_and_teardown()
