@@ -359,7 +359,7 @@ class SetupState(object):
     def teardown_exact(self, item, nextitem):
         for colitem_index in range(len(item.listchain())-1,-1,-1):
             colitem = item.listchain()[colitem_index]
-            if nextitem is None:
+            if nextitem is None or not hasattr(nextitem,'fixturenames'):
                 self.teardown_all()
                 break
             elif colitem not in nextitem.listchain():
