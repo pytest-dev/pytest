@@ -356,10 +356,19 @@ class SetupState(object):
         if len(self._finalizers[colitem]) == 0:
             self._teardown_with_finalization(colitem)
 
+    def _get_fixture_index(self,item_object,finalizer_fix_name):
+        if not hasattr(item_object,'callspec'):
+            return None
+        if not hasattr(item_object.callspec,'indices'):
+            return None
+        if finalizer_fix_name not in item_object.callspec.indices:
+            return None
+        return item_object.callspec.indices[finalizer_fix_name]
+
     def teardown_exact(self, item, nextitem):
         for colitem_index in range(len(item.listchain())-1,-1,-1):
             colitem = item.listchain()[colitem_index]
-            if nextitem is None or not hasattr(nextitem,'fixturenames'):
+            if nextitem is None:
                 self.teardown_all()
                 break
             elif colitem not in nextitem.listchain():
@@ -368,18 +377,13 @@ class SetupState(object):
             elif colitem in self._finalizers.keys():
                 for finalizer_index in range(len(self._finalizers[colitem])-1,-1,-1):
                     finalizer = self._finalizers[colitem][finalizer_index]
-                    if not hasattr(finalizer,'keywords') or 'request' not in finalizer.keywords.keys() or not hasattr(finalizer.keywords['request'],'fixturename'): continue
+                    if not hasattr(finalizer,'keywords') or 'request' not in finalizer.keywords.keys() or not hasattr(finalizer.keywords['request'],'fixturename'):
+                        continue
                     finalizer_fix_name = finalizer.keywords['request'].fixturename
                     if finalizer_fix_name not in nextitem.fixturenames:
                         self._teardown_to_finalizer(colitem_index,finalizer_index)
                     elif finalizer_fix_name in nextitem.fixturenames:
-                        if not hasattr(item,'callspec') and not hasattr(nextitem,'callspec'):
-                            pass
-                        elif 'tmpdir_factory' == finalizer_fix_name:
-                            continue
-                        elif ( hasattr(item,'callspec') and not hasattr(nextitem,'callspec') ) or \
-                            ( not hasattr(item,'callspec') and hasattr(nextitem,'callspec') ) or \
-                            ( item.callspec.indices[finalizer_fix_name] != nextitem.callspec.indices[finalizer_fix_name] ):
+                        if self._get_fixture_index(item,finalizer_fix_name) != self._get_fixture_index(nextitem,finalizer_fix_name):
                             self._teardown_to_finalizer(colitem_index,finalizer_index)
 
     def _teardown_towards(self, needed_collectors):
