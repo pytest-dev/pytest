@@ -327,14 +327,14 @@ class SetupState(object):
             assert (
                 colitem is None or colitem in self.stack or isinstance(colitem, tuple)
             )
-
+            
     def teardown_all(self):
         while self.stack:
             self._pop_and_teardown()
         for key in list(self._finalizers):
             self._teardown_with_finalization(key)
         assert not self._finalizers
-        
+
     def _callfinalizer(self, colitem, finalizer_index):
         fin = self._finalizers[colitem].pop(finalizer_index)
         try:
@@ -396,7 +396,7 @@ class SetupState(object):
                             self._teardown_to_finalizer(colitem_index, finalizer_index)
         if self.exc:
             six.reraise(*self.exc)
-            
+
     def _teardown_towards(self, needed_collectors):
         exc = None
         while self.stack:
