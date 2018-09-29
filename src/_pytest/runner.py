@@ -380,7 +380,7 @@ class SetupState(object):
                     if not hasattr(finalizer,'keywords') or 'request' not in finalizer.keywords.keys() or not hasattr(finalizer.keywords['request'],'fixturename'):
                         continue
                     finalizer_fix_name = finalizer.keywords['request'].fixturename
-                    if finalizer_fix_name not in nextitem.fixturenames:
+                    if not hasattr(nextitem,'fixturenames') or finalizer_fix_name not in nextitem.fixturenames:
                         self._teardown_to_finalizer(colitem_index,finalizer_index)
                     elif finalizer_fix_name in nextitem.fixturenames:
                         if self._get_fixture_index(item,finalizer_fix_name) != self._get_fixture_index(nextitem,finalizer_fix_name):
