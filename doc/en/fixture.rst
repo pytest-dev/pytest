@@ -171,6 +171,7 @@ to cause the decorated ``smtp_connection`` fixture function to only be invoked
 once per test *module* (the default is to invoke once per test *function*).
 Multiple test functions in a test module will thus
 each receive the same ``smtp_connection`` fixture instance, thus saving time.
+Possible values for ``scope`` are: ``function``, ``class``, ``module``, ``package`` or ``session``.
 
 The next example puts the fixture function into a separate ``conftest.py`` file
 so that tests from multiple test modules in the directory can
