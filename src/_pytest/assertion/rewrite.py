@@ -19,7 +19,7 @@ import py
 from _pytest.assertion import util
 from _pytest.pathlib import PurePath
 from _pytest.compat import spec_from_file_location
-from _pytest.paths import fnmatch_ex
+from _pytest.pathlib import fnmatch_ex
 
 # pytest caches rewritten pycs in __pycache__.
 if hasattr(imp, "get_tag"):

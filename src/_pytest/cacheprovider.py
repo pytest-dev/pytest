@@ -15,9 +15,8 @@ import pytest
 import json
 import shutil
 
-from . import paths
 from .compat import _PY2 as PY2
-from .pathlib import Path
+from .pathlib import Path, resolve_from_str
 
 README_CONTENT = u"""\
 # pytest cache directory #
@@ -46,7 +45,7 @@ class Cache(object):
 
     @staticmethod
     def cache_dir_from_config(config):
-        return paths.resolve_from_str(config.getini("cache_dir"), config.rootdir)
+        return resolve_from_str(config.getini("cache_dir"), config.rootdir)
 
     def warn(self, fmt, **args):
         from _pytest.warnings import _issue_config_warning
