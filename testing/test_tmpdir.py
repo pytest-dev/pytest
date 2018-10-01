@@ -261,3 +261,19 @@ class TestNumberedDir(object):
         assert pathlib.ensure_deletable(
             p, consider_lock_dead_if_created_before=p.stat().st_mtime + 1
         )
+
+    def test_rmtree(self, tmp_path):
+        from _pytest.pathlib import rmtree
+
+        adir = tmp_path / "adir"
+        adir.mkdir()
+        rmtree(adir)
+
+        assert not adir.exists()
+
+        adir.mkdir()
+        afile = adir / "afile"
+        afile.write_bytes(b"aa")
+
+        rmtree(adir, force=True)
+        assert not adir.exists()

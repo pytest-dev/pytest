@@ -13,6 +13,7 @@ import shutil
 from os.path import expanduser, expandvars, isabs, sep
 from posixpath import sep as posix_sep
 import fnmatch
+import stat
 
 from .compat import PY36
 
@@ -30,7 +31,33 @@ LOCK_TIMEOUT = 60 * 60 * 3
 get_lock_path = operator.methodcaller("joinpath", ".lock")
 
 
+def ensure_reset_dir(path):
+    """
+    ensures the given path is a empty directory
+    """
+    if path.exists():
+        rmtree(path, force=True)
+    path.mkdir()
+
+
+def _shutil_rmtree_remove_writable(func, fspath, _):
+    "Clear the readonly bit and reattempt the removal"
+    os.chmod(fspath, stat.S_IWRITE)
+    func(fspath)
+
+
+def rmtree(path, force=False):
+    if force:
+        # ignore_errors leaves dead folders around
+        # python needs a rm -rf as a followup
+        # the trick with _shutil_rmtree_remove_writable is unreliable
+        shutil.rmtree(str(path), ignore_errors=True)
+    else:
+        shutil.rmtree(str(path))
+
+
 def find_prefixed(root, prefix):
+    """finds all elements in root that begin with the prefix, case insensitive"""
     l_prefix = prefix.lower()
     for x in root.iterdir():
         if x.name.lower().startswith(l_prefix):
@@ -38,16 +65,24 @@ def find_prefixed(root, prefix):
 
 
 def extract_suffixes(iter, prefix):
+    """
+    :param iter: iterator over path names
+    :param prefix: expected prefix of the path names
+    :returns: the parts of the paths following the prefix
+    """
     p_len = len(prefix)
     for p in iter:
         yield p.name[p_len:]
 
 
 def find_suffixes(root, prefix):
+    """combines find_prefixes and extract_suffixes
+    """
     return extract_suffixes(find_prefixed(root, prefix), prefix)
 
 
 def parse_num(maybe_num):
+    """parses number path suffixes, returns -1 on error"""
     try:
         return int(maybe_num)
     except ValueError:
@@ -55,11 +90,12 @@ def parse_num(maybe_num):
 
 
 def _max(iterable, default):
-    # needed due to python2.7 lacking the default argument for max
+    """needed due to python2.7 lacking the default argument for max"""
     return reduce(max, iterable, default)
 
 
 def make_numbered_dir(root, prefix):
+    """create a directory with a increased number as suffix for the given prefix"""
     for i in range(10):
         # try up to 10 times to create the folder
         max_existing = _max(map(parse_num, find_suffixes(root, prefix)), -1)
@@ -80,6 +116,7 @@ def make_numbered_dir(root, prefix):
 
 
 def create_cleanup_lock(p):
+    """crates a lock to prevent premature folder cleanup"""
     lock_path = get_lock_path(p)
     try:
         fd = os.open(str(lock_path), os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o644)
@@ -103,6 +140,7 @@ def create_cleanup_lock(p):
 
 
 def register_cleanup_lock_removal(lock_path, register=atexit.register):
+    """registers a cleanup function for removing a lock, by default on atexit"""
     pid = os.getpid()
 
     def cleanup_on_exit(lock_path=lock_path, original_pid=pid):
@@ -119,15 +157,17 @@ def register_cleanup_lock_removal(lock_path, register=atexit.register):
 
 
 def delete_a_numbered_dir(path):
+    """removes a numbered directory"""
     create_cleanup_lock(path)
     parent = path.parent
 
     garbage = parent.joinpath("garbage-{}".format(uuid.uuid4()))
     path.rename(garbage)
-    shutil.rmtree(str(garbage), ignore_errors=True)
+    rmtree(garbage, force=True)
 
 
 def ensure_deletable(path, consider_lock_dead_if_created_before):
+    """checks if a lock exists and breaks it if its considered dead"""
     lock = get_lock_path(path)
     if not lock.exists():
         return True
@@ -144,11 +184,13 @@ def ensure_deletable(path, consider_lock_dead_if_created_before):
 
 
 def try_cleanup(path, consider_lock_dead_if_created_before):
+    """tries to cleanup a folder if we can ensure its deletable"""
     if ensure_deletable(path, consider_lock_dead_if_created_before):
         delete_a_numbered_dir(path)
 
 
 def cleanup_candidates(root, prefix, keep):
+    """lists candidates for numbered directories to be removed - follows py.path"""
     max_existing = _max(map(parse_num, find_suffixes(root, prefix)), -1)
     max_delete = max_existing - keep
     paths = find_prefixed(root, prefix)
@@ -160,6 +202,7 @@ def cleanup_candidates(root, prefix, keep):
 
 
 def cleanup_numbered_dir(root, prefix, keep, consider_lock_dead_if_created_before):
+    """cleanup for lock driven numbered directories"""
     for path in cleanup_candidates(root, prefix, keep):
         try_cleanup(path, consider_lock_dead_if_created_before)
     for path in root.glob("garbage-*"):
@@ -167,6 +210,7 @@ def cleanup_numbered_dir(root, prefix, keep, consider_lock_dead_if_created_befor
 
 
 def make_numbered_dir_with_cleanup(root, prefix, keep, lock_timeout):
+    """creates a numbered dir with a cleanup lock and removes old ones"""
     e = None
     for i in range(10):
         try:

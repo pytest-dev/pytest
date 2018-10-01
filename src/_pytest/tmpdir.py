@@ -6,9 +6,13 @@ import pytest
 import py
 from _pytest.monkeypatch import MonkeyPatch
 import attr
-import shutil
 import tempfile
-from .pathlib import Path, make_numbered_dir, make_numbered_dir_with_cleanup
+from .pathlib import (
+    Path,
+    make_numbered_dir,
+    make_numbered_dir_with_cleanup,
+    ensure_reset_dir,
+)
 
 
 @attr.s
@@ -39,9 +43,7 @@ class TempPathFactory(object):
         if self._basetemp is None:
             if self.given_basetemp is not None:
                 basetemp = Path(self.given_basetemp)
-                if basetemp.exists():
-                    shutil.rmtree(str(basetemp))
-                basetemp.mkdir()
+                ensure_reset_dir(basetemp)
             else:
                 temproot = Path(tempfile.gettempdir())
                 user = get_user() or "unknown"

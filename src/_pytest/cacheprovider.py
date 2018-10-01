@@ -13,10 +13,9 @@ import attr
 
 import pytest
 import json
-import shutil
 
 from .compat import _PY2 as PY2
-from .pathlib import Path, resolve_from_str
+from .pathlib import Path, resolve_from_str, rmtree
 
 README_CONTENT = u"""\
 # pytest cache directory #
@@ -39,7 +38,7 @@ class Cache(object):
     def for_config(cls, config):
         cachedir = cls.cache_dir_from_config(config)
         if config.getoption("cacheclear") and cachedir.exists():
-            shutil.rmtree(str(cachedir))
+            rmtree(cachedir, force=True)
             cachedir.mkdir()
         return cls(cachedir, config)
 
