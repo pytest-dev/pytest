@@ -1,1 +1,0 @@
-Imrpove Error messaging when Invalid Python Syntax is passed through the ``-m`` option to limit what marks to run against.
