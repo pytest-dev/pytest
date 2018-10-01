@@ -212,6 +212,8 @@ class WarningsChecker(WarningsRecorder):
     def __exit__(self, *exc_info):
         super(WarningsChecker, self).__exit__(*exc_info)
 
+        __tracebackhide__ = True
+
         # only check if we're not currently handling an exception
         if all(a is None for a in exc_info):
             if self.expected_warning is not None:
