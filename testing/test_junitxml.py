@@ -850,7 +850,7 @@ def test_logxml_path_expansion(tmpdir, monkeypatch):
     assert xml_tilde.logfile == home_tilde
 
     # this is here for when $HOME is not set correct
-    monkeypatch.setenv("HOME", tmpdir)
+    monkeypatch.setenv("HOME", str(tmpdir))
     home_var = os.path.normpath(os.path.expandvars("$HOME/test.xml"))
 
     xml_var = LogXML("$HOME%stest.xml" % tmpdir.sep, None)

@@ -165,7 +165,8 @@ def test_delitem():
 
 def test_setenv():
     monkeypatch = MonkeyPatch()
-    monkeypatch.setenv("XYZ123", 2)
+    with pytest.warns(pytest.PytestWarning):
+        monkeypatch.setenv("XYZ123", 2)
     import os
 
     assert os.environ["XYZ123"] == "2"
@@ -194,15 +195,16 @@ def test_delenv():
             del os.environ[name]
 
 
-@pytest.mark.skipif(six.PY3, reason="Python 2 only test")
-class TestEnvironKeysWarning(object):
+class TestEnvironWarnings(object):
     """
-    os.environ needs keys to be native strings, otherwise it will cause problems with other modules (notably
-    subprocess). We only test this behavior on Python 2, because Python 3 raises an error right away.
+    os.environ keys and values should be native strings, otherwise it will cause problems with other modules (notably
+    subprocess). On Python 2 os.environ accepts anything without complaining, while Python 3 does the right thing
+    and raises an error.
     """
 
     VAR_NAME = u"PYTEST_INTERNAL_MY_VAR"
 
+    @pytest.mark.skipif(six.PY3, reason="Python 2 only test")
     def test_setenv_unicode_key(self, monkeypatch):
         with pytest.warns(
             pytest.PytestWarning,
@@ -210,6 +212,7 @@ class TestEnvironKeysWarning(object):
         ):
             monkeypatch.setenv(self.VAR_NAME, "2")
 
+    @pytest.mark.skipif(six.PY3, reason="Python 2 only test")
     def test_delenv_unicode_key(self, monkeypatch):
         with pytest.warns(
             pytest.PytestWarning,
@@ -217,14 +220,24 @@ class TestEnvironKeysWarning(object):
         ):
             monkeypatch.delenv(self.VAR_NAME, raising=False)
 
+    def test_setenv_non_str_warning(self, monkeypatch):
+        value = 2
+        msg = (
+            "Environment variable value {!r} should be str, converted to str implicitly"
+        )
+        with pytest.warns(pytest.PytestWarning, match=msg.format(value)):
+            monkeypatch.setenv(str(self.VAR_NAME), value)
+
 
 def test_setenv_prepend():
     import os
 
     monkeypatch = MonkeyPatch()
-    monkeypatch.setenv("XYZ123", 2, prepend="-")
+    with pytest.warns(pytest.PytestWarning):
+        monkeypatch.setenv("XYZ123", 2, prepend="-")
     assert os.environ["XYZ123"] == "2"
-    monkeypatch.setenv("XYZ123", 3, prepend="-")
+    with pytest.warns(pytest.PytestWarning):
+        monkeypatch.setenv("XYZ123", 3, prepend="-")
     assert os.environ["XYZ123"] == "3-2"
     monkeypatch.undo()
     assert "XYZ123" not in os.environ

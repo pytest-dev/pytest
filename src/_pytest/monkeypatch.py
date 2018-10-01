@@ -225,7 +225,15 @@ class MonkeyPatch(object):
         """ Set environment variable ``name`` to ``value``.  If ``prepend``
         is a character, read the current environment variable value
         and prepend the ``value`` adjoined with the ``prepend`` character."""
-        value = str(value)
+        if not isinstance(value, str):
+            warnings.warn(
+                pytest.PytestWarning(
+                    "Environment variable value {!r} should be str, converted to str implicitly".format(
+                        value
+                    )
+                )
+            )
+            value = str(value)
         if prepend and name in os.environ:
             value = value + prepend + os.environ[name]
         self._warn_if_env_name_is_not_str(name)

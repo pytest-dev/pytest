@@ -577,7 +577,7 @@ class TestInvocationVariants(object):
             return what
 
         empty_package = testdir.mkpydir("empty_package")
-        monkeypatch.setenv("PYTHONPATH", join_pythonpath(empty_package))
+        monkeypatch.setenv("PYTHONPATH", str(join_pythonpath(empty_package)))
         # the path which is not a package raises a warning on pypy;
         # no idea why only pypy and not normal python warn about it here
         with warnings.catch_warnings():
@@ -586,7 +586,7 @@ class TestInvocationVariants(object):
         assert result.ret == 0
         result.stdout.fnmatch_lines(["*2 passed*"])
 
-        monkeypatch.setenv("PYTHONPATH", join_pythonpath(testdir))
+        monkeypatch.setenv("PYTHONPATH", str(join_pythonpath(testdir)))
         result = testdir.runpytest("--pyargs", "tpkg.test_missing", syspathinsert=True)
         assert result.ret != 0
         result.stderr.fnmatch_lines(["*not*found*test_missing*"])
