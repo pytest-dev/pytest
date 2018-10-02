@@ -27,16 +27,7 @@ def test_source_str_function():
     x = Source(
         """
         3
-    """,
-        rstrip=False,
-    )
-    assert str(x) == "\n3\n    "
-
-    x = Source(
         """
-        3
-    """,
-        rstrip=True,
     )
     assert str(x) == "\n3"
 
@@ -400,10 +391,13 @@ def test_getfuncsource_with_multine_string():
     pass
 """
 
-    assert (
-        str(_pytest._code.Source(f)).strip()
-        == 'def f():\n    c = """while True:\n    pass\n"""'
-    )
+    expected = '''\
+    def f():
+        c = """while True:
+    pass
+"""
+'''
+    assert str(_pytest._code.Source(f)) == expected.rstrip()
 
 
 def test_deindent():
@@ -417,7 +411,7 @@ def test_deindent():
 """
 
     lines = deindent(inspect.getsource(f).splitlines())
-    assert lines == ["def f():", '    c = """while True:', "    pass", '"""']
+    assert lines == ["    def f():", '        c = """while True:', "    pass", '"""']
 
     source = """
         def f():
@@ -425,7 +419,7 @@ def test_deindent():
                 pass
     """
     lines = deindent(source.splitlines())
-    assert lines == ["", "def f():", "    def g():", "        pass", "    "]
+    assert lines == ["", "def f():", "    def g():", "        pass"]
 
 
 def test_source_of_class_at_eof_without_newline(tmpdir):
