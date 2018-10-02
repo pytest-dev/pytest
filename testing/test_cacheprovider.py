@@ -215,7 +215,7 @@ def test_cache_show(testdir):
 
 class TestLastFailed(object):
     def test_lastfailed_usecase(self, testdir, monkeypatch):
-        monkeypatch.setenv("PYTHONDONTWRITEBYTECODE", 1)
+        monkeypatch.setenv("PYTHONDONTWRITEBYTECODE", "1")
         p = testdir.makepyfile(
             """
             def test_1():
@@ -301,7 +301,7 @@ class TestLastFailed(object):
         assert "test_a.py" not in result.stdout.str()
 
     def test_lastfailed_difference_invocations(self, testdir, monkeypatch):
-        monkeypatch.setenv("PYTHONDONTWRITEBYTECODE", 1)
+        monkeypatch.setenv("PYTHONDONTWRITEBYTECODE", "1")
         testdir.makepyfile(
             test_a="""\
             def test_a1():
@@ -335,7 +335,7 @@ class TestLastFailed(object):
         result.stdout.fnmatch_lines(["*1 failed*1 desel*"])
 
     def test_lastfailed_usecase_splice(self, testdir, monkeypatch):
-        monkeypatch.setenv("PYTHONDONTWRITEBYTECODE", 1)
+        monkeypatch.setenv("PYTHONDONTWRITEBYTECODE", "1")
         testdir.makepyfile(
             """\
             def test_1():
@@ -474,8 +474,8 @@ class TestLastFailed(object):
         )
 
         def rlf(fail_import, fail_run):
-            monkeypatch.setenv("FAILIMPORT", fail_import)
-            monkeypatch.setenv("FAILTEST", fail_run)
+            monkeypatch.setenv("FAILIMPORT", str(fail_import))
+            monkeypatch.setenv("FAILTEST", str(fail_run))
 
             testdir.runpytest("-q")
             config = testdir.parseconfigure()
@@ -519,8 +519,8 @@ class TestLastFailed(object):
         )
 
         def rlf(fail_import, fail_run, args=()):
-            monkeypatch.setenv("FAILIMPORT", fail_import)
-            monkeypatch.setenv("FAILTEST", fail_run)
+            monkeypatch.setenv("FAILIMPORT", str(fail_import))
+            monkeypatch.setenv("FAILTEST", str(fail_run))
 
             result = testdir.runpytest("-q", "--lf", *args)
             config = testdir.parseconfigure()

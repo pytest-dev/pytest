@@ -1,0 +1,4 @@
+``MonkeyPatch.setenv`` and ``MonkeyPatch.delenv`` issue a warning if the environment variable name is not ``str`` on Python 2.
+
+In Python 2, adding ``unicode`` keys to ``os.environ`` causes problems with ``subprocess`` (and possible other modules),
+making this a subtle bug specially susceptible when used with ``from __future__ import unicode_literals``.
