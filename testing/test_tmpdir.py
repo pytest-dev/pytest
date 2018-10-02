@@ -143,7 +143,6 @@ def break_getuser(monkeypatch):
         monkeypatch.delenv(envvar, raising=False)
 
 
-@pytest.mark.skip(reason="creates random tmpdirs as part of a system level test")
 @pytest.mark.usefixtures("break_getuser")
 @pytest.mark.skipif(sys.platform.startswith("win"), reason="no os.getuid on windows")
 def test_tmpdir_fallback_uid_not_found(testdir):
@@ -162,7 +161,6 @@ def test_tmpdir_fallback_uid_not_found(testdir):
     reprec.assertoutcome(passed=1)
 
 
-@pytest.mark.skip(reason="creates random tmpdirs as part of a system level test")
 @pytest.mark.usefixtures("break_getuser")
 @pytest.mark.skipif(sys.platform.startswith("win"), reason="no os.getuid on windows")
 def test_get_user_uid_not_found():

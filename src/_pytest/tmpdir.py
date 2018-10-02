@@ -1,6 +1,7 @@
 """ support for providing temporary directories to test functions.  """
 from __future__ import absolute_import, division, print_function
 
+import os
 import re
 import pytest
 import py
@@ -51,7 +52,8 @@ class TempPathFactory(object):
                 basetemp = Path(self.given_basetemp)
                 ensure_reset_dir(basetemp)
             else:
-                temproot = Path(tempfile.gettempdir())
+                from_env = os.environ.get("PYTEST_DEBUG_TEMPROOT")
+                temproot = Path(from_env or tempfile.gettempdir())
                 user = get_user() or "unknown"
                 # use a sub-directory in the temproot to speed-up
                 # make_numbered_dir() call

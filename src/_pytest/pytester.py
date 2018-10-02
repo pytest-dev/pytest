@@ -496,6 +496,8 @@ class Testdir(object):
         self._mod_collections = WeakKeyDictionary()
         name = request.function.__name__
         self.tmpdir = tmpdir_factory.mktemp(name, numbered=True)
+        self.test_tmproot = tmpdir_factory.mktemp("tmp-" + name, numbered=True)
+        os.environ["PYTEST_DEBUG_TEMPROOT"] = str(self.test_tmproot)
         self.plugins = []
         self._cwd_snapshot = CwdSnapshot()
         self._sys_path_snapshot = SysPathsSnapshot()
@@ -522,6 +524,7 @@ class Testdir(object):
         self._sys_modules_snapshot.restore()
         self._sys_path_snapshot.restore()
         self._cwd_snapshot.restore()
+        del os.environ["PYTEST_DEBUG_TEMPROOT"]
 
     def __take_sys_modules_snapshot(self):
         # some zope modules used by twisted-related tests keep internal state
