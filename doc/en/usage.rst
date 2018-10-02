@@ -255,7 +255,7 @@ Pytest supports the use of ``breakpoint()`` with the following behaviours:
 
  - When ``breakpoint()`` is called and ``PYTHONBREAKPOINT`` is set to the default value, pytest will use the custom internal PDB trace UI instead of the system default ``Pdb``.
  - When tests are complete, the system will default back to the system ``Pdb`` trace UI.
- - If ``--pdb`` is called on execution of pytest, the custom internal Pdb trace UI is used on ``bothbreakpoint()`` and failed tests/unhandled exceptions.
+ - If ``--pdb`` is called on execution of pytest, the custom internal Pdb trace UI is used on both ``breakpoint()`` and failed tests/unhandled exceptions.
  - If ``--pdbcls`` is used, the custom class debugger will be executed when a test fails (as expected within existing behaviour), but also when ``breakpoint()`` is called from within a test, the custom class debugger will be instantiated.
 
 .. _durations:

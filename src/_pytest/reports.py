@@ -110,7 +110,7 @@ class TestReport(BaseReport):
         when,
         sections=(),
         duration=0,
-        user_properties=(),
+        user_properties=None,
         **extra
     ):
         #: normalized collection node id
@@ -136,7 +136,7 @@ class TestReport(BaseReport):
 
         #: user properties is a list of tuples (name, value) that holds user
         #: defined properties of the test
-        self.user_properties = user_properties
+        self.user_properties = list(user_properties or [])
 
         #: list of pairs ``(str, str)`` of extra information which needs to
         #: marshallable. Used by pytest to add captured text

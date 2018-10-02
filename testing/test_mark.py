@@ -799,6 +799,18 @@ class TestFunctional(object):
         deselected_tests = dlist[0].items
         assert len(deselected_tests) == 2
 
+    def test_invalid_m_option(self, testdir):
+        testdir.makepyfile(
+            """
+            def test_a():
+                pass
+        """
+        )
+        result = testdir.runpytest("-m bogus/")
+        result.stdout.fnmatch_lines(
+            ["INTERNALERROR> Marker expression must be valid Python!"]
+        )
+
     def test_keywords_at_node_level(self, testdir):
         testdir.makepyfile(
             """
