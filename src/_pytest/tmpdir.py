@@ -13,6 +13,7 @@ from .pathlib import (
     make_numbered_dir,
     make_numbered_dir_with_cleanup,
     ensure_reset_dir,
+    LOCK_TIMEOUT,
 )
 
 
@@ -60,7 +61,7 @@ class TempPathFactory(object):
                 rootdir = temproot.joinpath("pytest-of-{}".format(user))
                 rootdir.mkdir(exist_ok=True)
                 basetemp = make_numbered_dir_with_cleanup(
-                    prefix="pytest-", root=rootdir, keep=3, lock_timeout=10000
+                    prefix="pytest-", root=rootdir, keep=3, lock_timeout=LOCK_TIMEOUT
                 )
             assert basetemp is not None
             self._basetemp = t = basetemp
