@@ -524,7 +524,7 @@ class Testdir(object):
         self._sys_modules_snapshot.restore()
         self._sys_path_snapshot.restore()
         self._cwd_snapshot.restore()
-        del os.environ["PYTEST_DEBUG_TEMPROOT"]
+        os.environ.pop("PYTEST_DEBUG_TEMPROOT", None)
 
     def __take_sys_modules_snapshot(self):
         # some zope modules used by twisted-related tests keep internal state
