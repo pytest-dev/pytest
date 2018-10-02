@@ -18,6 +18,58 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+pytest 3.8.2 (2018-10-02)
+=========================
+
+Deprecations and Removals
+-------------------------
+
+- `#4036 <https://github.com/pytest-dev/pytest/issues/4036>`_: The ``item`` parameter of ``pytest_warning_captured`` hook is now documented as deprecated. We realized only after
+  the ``3.8`` release that this parameter is incompatible with ``pytest-xdist``.
+
+  Our policy is to not deprecate features during bugfix releases, but in this case we believe it makes sense as we are
+  only documenting it as deprecated, without issuing warnings which might potentially break test suites. This will get
+  the word out that hook implementers should not use this parameter at all.
+
+  In a future release ``item`` will always be ``None`` and will emit a proper warning when a hook implementation
+  makes use of it.
+
+
+
+Bug Fixes
+---------
+
+- `#3539 <https://github.com/pytest-dev/pytest/issues/3539>`_: Fix reload on assertion rewritten modules.
+
+
+- `#4034 <https://github.com/pytest-dev/pytest/issues/4034>`_: The ``.user_properties`` attribute of ``TestReport`` objects is a list
+  of (name, value) tuples, but could sometimes be instantiated as a tuple
+  of tuples.  It is now always a list.
+
+
+- `#4039 <https://github.com/pytest-dev/pytest/issues/4039>`_: No longer issue warnings about using ``pytest_plugins`` in non-top-level directories when using ``--pyargs``: the
+  current ``--pyargs`` mechanism is not reliable and might give false negatives.
+
+
+- `#4040 <https://github.com/pytest-dev/pytest/issues/4040>`_: Exclude empty reports for passed tests when ``-rP`` option is used.
+
+
+- `#4051 <https://github.com/pytest-dev/pytest/issues/4051>`_: Improve error message when an invalid Python expression is passed to the ``-m`` option.
+
+
+- `#4056 <https://github.com/pytest-dev/pytest/issues/4056>`_: ``MonkeyPatch.setenv`` and ``MonkeyPatch.delenv`` issue a warning if the environment variable name is not ``str`` on Python 2.
+
+  In Python 2, adding ``unicode`` keys to ``os.environ`` causes problems with ``subprocess`` (and possible other modules),
+  making this a subtle bug specially susceptible when used with ``from __future__ import unicode_literals``.
+
+
+
+Improved Documentation
+----------------------
+
+- `#3928 <https://github.com/pytest-dev/pytest/issues/3928>`_: Add possible values for fixture scope to docs.
+
+
 pytest 3.8.1 (2018-09-22)
 =========================
 

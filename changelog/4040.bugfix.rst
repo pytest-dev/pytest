@@ -1,1 +1,0 @@
-Exclude empty reports for passed tests when ``-rP`` option is used.

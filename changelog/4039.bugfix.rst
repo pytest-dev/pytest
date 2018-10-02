@@ -1,2 +1,0 @@
-No longer issue warnings about using ``pytest_plugins`` in non-top-level directories when using ``--pyargs``: the
-current ``--pyargs`` mechanism is not reliable and might give false negatives.
