@@ -98,6 +98,7 @@ class TempdirFactory(object):
         return py.path.local(self._tmppath_factory.mktemp(basename, numbered).resolve())
 
     def getbasetemp(self):
+        """backward compat wrapper for ``_tmppath_factory.getbasetemp``"""
         return py.path.local(self._tmppath_factory.getbasetemp().resolve())
 
     def finish(self):
