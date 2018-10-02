@@ -89,16 +89,22 @@ def parse_num(maybe_num):
         return -1
 
 
-def _max(iterable, default):
-    """needed due to python2.7 lacking the default argument for max"""
-    return reduce(max, iterable, default)
+if six.PY2:
+
+    def _max(iterable, default):
+        """needed due to python2.7 lacking the default argument for max"""
+        return reduce(max, iterable, default)
+
+
+else:
+    _max = max
 
 
 def make_numbered_dir(root, prefix):
     """create a directory with a increased number as suffix for the given prefix"""
     for i in range(10):
         # try up to 10 times to create the folder
-        max_existing = _max(map(parse_num, find_suffixes(root, prefix)), -1)
+        max_existing = _max(map(parse_num, find_suffixes(root, prefix)), default=-1)
         new_number = max_existing + 1
         new_path = root.joinpath("{}{}".format(prefix, new_number))
         try:
@@ -109,9 +115,8 @@ def make_numbered_dir(root, prefix):
             return new_path
     else:
         raise EnvironmentError(
-            "could not create numbered dir with prefix {prefix} in {root})".format(
-                prefix=prefix, root=root
-            )
+            "could not create numbered dir with prefix "
+            "{prefix} in {root} after 10 tries".format(prefix=prefix, root=root)
         )
 
 
@@ -191,7 +196,7 @@ def try_cleanup(path, consider_lock_dead_if_created_before):
 
 def cleanup_candidates(root, prefix, keep):
     """lists candidates for numbered directories to be removed - follows py.path"""
-    max_existing = _max(map(parse_num, find_suffixes(root, prefix)), -1)
+    max_existing = _max(map(parse_num, find_suffixes(root, prefix)), default=-1)
     max_delete = max_existing - keep
     paths = find_prefixed(root, prefix)
     paths, paths2 = itertools.tee(paths)

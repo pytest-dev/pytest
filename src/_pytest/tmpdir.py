@@ -17,7 +17,9 @@ from .pathlib import (
 
 @attr.s
 class TempPathFactory(object):
-    """docstring for ClassName"""
+    """Factory for temporary directories under the common base temp directory.
+
+    The base directory can be configured using the ``--basetemp`` option."""
 
     given_basetemp = attr.ib()
     trace = attr.ib()
@@ -25,11 +27,15 @@ class TempPathFactory(object):
 
     @classmethod
     def from_config(cls, config):
+        """
+        :param config: a pytest configuration
+        """
         return cls(
             given_basetemp=config.option.basetemp, trace=config.trace.get("tmpdir")
         )
 
     def mktemp(self, basename, numbered=True):
+        """makes a temporary directory managed by the factory"""
         if not numbered:
             p = self.getbasetemp().joinpath(basename)
             p.mkdir()
@@ -64,12 +70,12 @@ class TempPathFactory(object):
 
 @attr.s
 class TempdirFactory(object):
-    """Factory for temporary directories under the common base temp directory.
-
-    The base directory can be configured using the ``--basetemp`` option.
+    """
+    backward comptibility wrapper that implements
+    :class:``py.path.local`` for :class:``TempPathFactory``
     """
 
-    tmppath_factory = attr.ib()
+    _tmppath_factory = attr.ib()
 
     def ensuretemp(self, string, dir=1):
         """ (deprecated) return temporary directory path with
@@ -86,13 +92,13 @@ class TempdirFactory(object):
         If ``numbered``, ensure the directory is unique by adding a number
         prefix greater than any existing one.
         """
-        return py.path.local(self.tmppath_factory.mktemp(basename, numbered).resolve())
+        return py.path.local(self._tmppath_factory.mktemp(basename, numbered).resolve())
 
     def getbasetemp(self):
-        return py.path.local(self.tmppath_factory.getbasetemp().resolve())
+        return py.path.local(self._tmppath_factory.getbasetemp().resolve())
 
     def finish(self):
-        self.tmppath_factory.trace("finish")
+        self._tmppath_factory.trace("finish")
 
 
 def get_user():
@@ -150,4 +156,15 @@ def tmpdir(request, tmpdir_factory):
 
 @pytest.fixture
 def tmp_path(tmpdir):
+    """Return a temporary directory path object
+    which is unique to each test function invocation,
+    created as a sub directory of the base temporary
+    directory.  The returned object is a :class:`pathlib.Path`
+    object.
+
+    .. note::
+
+        in python < 3.6 this is a pathlib2.Path
+    """
+
     return Path(tmpdir)
