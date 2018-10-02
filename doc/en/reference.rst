@@ -84,6 +84,12 @@ pytest.warns
 .. autofunction:: pytest.warns(expected_warning: Exception, [match])
     :with:
 
+pytest.freeze_includes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**Tutorial**: :ref:`freezing-pytest`.
+
+.. autofunction:: pytest.freeze_includes
 
 .. _`marks ref`:
 
