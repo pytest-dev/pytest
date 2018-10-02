@@ -1,1 +1,0 @@
-Add possible values for fixture scope to docs.

@@ -1,9 +1,0 @@
-The ``item`` parameter of ``pytest_warning_captured`` hook is now documented as deprecated. We realized only after
-the ``3.8`` release that this parameter is incompatible with ``pytest-xdist``.
-
-Our policy is to not deprecate features during bugfix releases, but in this case we believe it makes sense as we are
-only documenting it as deprecated, without issuing warnings which might potentially break test suites. This will get
-the word out that hook implementers should not use this parameter at all.
-
-In a future release ``item`` will always be ``None`` and will emit a proper warning when a hook implementation
-makes use of it.
