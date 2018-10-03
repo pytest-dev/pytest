@@ -405,21 +405,13 @@ def test_deindent():
 
     assert deindent(["\tfoo", "\tbar"]) == ["foo", "bar"]
 
-    def f():
-        c = """while True:
-    pass
-"""
-
-    lines = deindent(inspect.getsource(f).splitlines())
-    assert lines == ["    def f():", '        c = """while True:', "    pass", '"""']
-
-    source = """
+    source = """\
         def f():
             def g():
                 pass
     """
     lines = deindent(source.splitlines())
-    assert lines == ["", "def f():", "    def g():", "        pass"]
+    assert lines == ["def f():", "    def g():", "        pass"]
 
 
 def test_source_of_class_at_eof_without_newline(tmpdir):
