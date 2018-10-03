@@ -359,8 +359,10 @@ class FixtureRequest(FuncargnamesCompatAttr):
 
     @property
     def fixturenames(self):
-        # backward incompatible note: now a readonly property
-        return list(self._pyfuncitem._fixtureinfo.names_closure)
+        """names of all active fixtures in this request"""
+        result = list(self._pyfuncitem._fixtureinfo.names_closure)
+        result.extend(set(self._fixture_defs).difference(result))
+        return result
 
     @property
     def node(self):
