@@ -24,11 +24,6 @@ __all__ = [
 ]
 
 
-class MarkerError(Exception):
-
-    """Error in use of a pytest marker/attribute."""
-
-
 def param(*values, **kw):
     """Specify a parameter in `pytest.mark.parametrize`_ calls or
     :ref:`parametrized fixtures <fixture-parametrize-marks>`.

@@ -9,6 +9,7 @@ import attr
 import _pytest
 import _pytest._code
 from _pytest.compat import getfslineno
+from _pytest.outcomes import fail
 
 from _pytest.mark.structures import NodeKeywords, MarkInfo
 
@@ -346,6 +347,9 @@ class Node(object):
         pass
 
     def _repr_failure_py(self, excinfo, style=None):
+        if excinfo.errisinstance(fail.Exception):
+            if not excinfo.value.pytrace:
+                return six.text_type(excinfo.value)
         fm = self.session._fixturemanager
         if excinfo.errisinstance(fm.FixtureLookupError):
             return excinfo.value.formatrepr()

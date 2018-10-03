@@ -570,7 +570,8 @@ def test_pytest_exit_msg(testdir):
     result.stderr.fnmatch_lines(["Exit: oh noes"])
 
 
-def test_pytest_fail_notrace(testdir):
+def test_pytest_fail_notrace_runtest(testdir):
+    """Test pytest.fail(..., pytrace=False) does not show tracebacks during test run."""
     testdir.makepyfile(
         """
         import pytest
@@ -583,6 +584,21 @@ def test_pytest_fail_notrace(testdir):
     result = testdir.runpytest()
     result.stdout.fnmatch_lines(["world", "hello"])
     assert "def teardown_function" not in result.stdout.str()
+
+
+def test_pytest_fail_notrace_collection(testdir):
+    """Test pytest.fail(..., pytrace=False) does not show tracebacks during collection."""
+    testdir.makepyfile(
+        """
+        import pytest
+        def some_internal_function():
+            pytest.fail("hello", pytrace=False)
+        some_internal_function()
+    """
+    )
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines(["hello"])
+    assert "def some_internal_function()" not in result.stdout.str()
 
 
 @pytest.mark.parametrize("str_prefix", ["u", ""])

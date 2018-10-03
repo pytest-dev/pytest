@@ -13,7 +13,6 @@ from textwrap import dedent
 import py
 import six
 from _pytest.main import FSHookProxy
-from _pytest.mark import MarkerError
 from _pytest.config import hookimpl
 
 import _pytest
@@ -159,8 +158,8 @@ def pytest_generate_tests(metafunc):
     alt_spellings = ["parameterize", "parametrise", "parameterise"]
     for attr in alt_spellings:
         if hasattr(metafunc.function, attr):
-            msg = "{0} has '{1}', spelling should be 'parametrize'"
-            raise MarkerError(msg.format(metafunc.function.__name__, attr))
+            msg = "{0} has '{1}' mark, spelling should be 'parametrize'"
+            fail(msg.format(metafunc.function.__name__, attr), pytrace=False)
     for marker in metafunc.definition.iter_markers(name="parametrize"):
         metafunc.parametrize(*marker.args, **marker.kwargs)
 
@@ -760,12 +759,6 @@ class FunctionMixin(PyobjMixin):
                     for entry in excinfo.traceback[1:-1]:
                         entry.set_repr_style("short")
 
-    def _repr_failure_py(self, excinfo, style="long"):
-        if excinfo.errisinstance(fail.Exception):
-            if not excinfo.value.pytrace:
-                return six.text_type(excinfo.value)
-        return super(FunctionMixin, self)._repr_failure_py(excinfo, style=style)
-
     def repr_failure(self, excinfo, outerr=None):
         assert outerr is None, "XXX outerr usage is deprecated"
         style = self.config.option.tbstyle
@@ -987,7 +980,9 @@ class Metafunc(fixtures.FuncargnamesCompatAttr):
 
         ids = self._resolve_arg_ids(argnames, ids, parameters, item=self.definition)
 
-        scopenum = scope2index(scope, descr="call to {}".format(self.parametrize))
+        scopenum = scope2index(
+            scope, descr="parametrize() call in {}".format(self.function.__name__)
+        )
 
         # create the new calls: if we are parametrize() multiple times (by applying the decorator
         # more than once) then we accumulate those calls generating the cartesian product
@@ -1026,15 +1021,16 @@ class Metafunc(fixtures.FuncargnamesCompatAttr):
             idfn = ids
             ids = None
         if ids:
+            func_name = self.function.__name__
             if len(ids) != len(parameters):
-                raise ValueError(
-                    "%d tests specified with %d ids" % (len(parameters), len(ids))
-                )
+                msg = "In {}: {} parameter sets specified, with different number of ids: {}"
+                fail(msg.format(func_name, len(parameters), len(ids)), pytrace=False)
             for id_value in ids:
                 if id_value is not None and not isinstance(id_value, six.string_types):
-                    msg = "ids must be list of strings, found: %s (type: %s)"
-                    raise ValueError(
-                        msg % (saferepr(id_value), type(id_value).__name__)
+                    msg = "In {}: ids must be list of strings, found: {} (type: {!r})"
+                    fail(
+                        msg.format(func_name, saferepr(id_value), type(id_value)),
+                        pytrace=False,
                     )
         ids = idmaker(argnames, parameters, idfn, ids, self.config, item=item)
         return ids
@@ -1059,9 +1055,11 @@ class Metafunc(fixtures.FuncargnamesCompatAttr):
             valtypes = dict.fromkeys(argnames, "funcargs")
             for arg in indirect:
                 if arg not in argnames:
-                    raise ValueError(
-                        "indirect given to %r: fixture %r doesn't exist"
-                        % (self.function, arg)
+                    fail(
+                        "In {}: indirect fixture '{}' doesn't exist".format(
+                            self.function.__name__, arg
+                        ),
+                        pytrace=False,
                     )
                 valtypes[arg] = "params"
         return valtypes
@@ -1075,19 +1073,25 @@ class Metafunc(fixtures.FuncargnamesCompatAttr):
         :raise ValueError: if validation fails.
         """
         default_arg_names = set(get_default_arg_names(self.function))
+        func_name = self.function.__name__
         for arg in argnames:
             if arg not in self.fixturenames:
                 if arg in default_arg_names:
-                    raise ValueError(
-                        "%r already takes an argument %r with a default value"
-                        % (self.function, arg)
+                    fail(
+                        "In {}: function already takes an argument '{}' with a default value".format(
+                            func_name, arg
+                        ),
+                        pytrace=False,
                     )
                 else:
                     if isinstance(indirect, (tuple, list)):
                         name = "fixture" if arg in indirect else "argument"
                     else:
                         name = "fixture" if indirect else "argument"
-                    raise ValueError("%r uses no %s %r" % (self.function, name, arg))
+                    fail(
+                        "In {}: function uses no {} '{}'".format(func_name, name, arg),
+                        pytrace=False,
+                    )
 
     def addcall(self, funcargs=None, id=NOTSET, param=NOTSET):
         """ Add a new call to the underlying test function during the collection phase of a test run.

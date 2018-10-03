@@ -6,6 +6,7 @@ from operator import attrgetter
 
 import attr
 
+from _pytest.outcomes import fail
 from ..deprecated import MARK_PARAMETERSET_UNPACKING, MARK_INFO_ATTRIBUTE
 from ..compat import NOTSET, getfslineno, MappingMixin
 from six.moves import map
@@ -393,7 +394,7 @@ class MarkGenerator(object):
             x = marker.split("(", 1)[0]
             values.add(x)
         if name not in self._markers:
-            raise AttributeError("%r not a registered marker" % (name,))
+            fail("{!r} not a registered marker".format(name), pytrace=False)
 
 
 MARK_GEN = MarkGenerator()

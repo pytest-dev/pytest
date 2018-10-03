@@ -1217,8 +1217,7 @@ class TestFixtureUsages(object):
         result = testdir.runpytest_inprocess()
         result.stdout.fnmatch_lines(
             (
-                "*ValueError: fixture badscope from test_invalid_scope.py has an unsupported"
-                " scope value 'functions'"
+                "*Fixture 'badscope' from test_invalid_scope.py got an unexpected scope value 'functions'"
             )
         )
 
@@ -3607,16 +3606,15 @@ class TestParameterizedSubRequest(object):
         )
         result = testdir.runpytest()
         result.stdout.fnmatch_lines(
-            """
-            E*Failed: The requested fixture has no parameter defined for test:
-            E*    test_call_from_fixture.py::test_foo
-            E*
-            E*Requested fixture 'fix_with_param' defined in:
-            E*test_call_from_fixture.py:4
-            E*Requested here:
-            E*test_call_from_fixture.py:9
-            *1 error*
-            """
+            [
+                "The requested fixture has no parameter defined for test:",
+                "    test_call_from_fixture.py::test_foo",
+                "Requested fixture 'fix_with_param' defined in:",
+                "test_call_from_fixture.py:4",
+                "Requested here:",
+                "test_call_from_fixture.py:9",
+                "*1 error in*",
+            ]
         )
 
     def test_call_from_test(self, testdir):
@@ -3634,16 +3632,15 @@ class TestParameterizedSubRequest(object):
         )
         result = testdir.runpytest()
         result.stdout.fnmatch_lines(
-            """
-            E*Failed: The requested fixture has no parameter defined for test:
-            E*    test_call_from_test.py::test_foo
-            E*
-            E*Requested fixture 'fix_with_param' defined in:
-            E*test_call_from_test.py:4
-            E*Requested here:
-            E*test_call_from_test.py:8
-            *1 failed*
-            """
+            [
+                "The requested fixture has no parameter defined for test:",
+                "    test_call_from_test.py::test_foo",
+                "Requested fixture 'fix_with_param' defined in:",
+                "test_call_from_test.py:4",
+                "Requested here:",
+                "test_call_from_test.py:8",
+                "*1 failed*",
+            ]
         )
 
     def test_external_fixture(self, testdir):
@@ -3665,16 +3662,16 @@ class TestParameterizedSubRequest(object):
         )
         result = testdir.runpytest()
         result.stdout.fnmatch_lines(
-            """
-            E*Failed: The requested fixture has no parameter defined for test:
-            E*    test_external_fixture.py::test_foo
-            E*
-            E*Requested fixture 'fix_with_param' defined in:
-            E*conftest.py:4
-            E*Requested here:
-            E*test_external_fixture.py:2
-            *1 failed*
-            """
+            [
+                "The requested fixture has no parameter defined for test:",
+                "    test_external_fixture.py::test_foo",
+                "",
+                "Requested fixture 'fix_with_param' defined in:",
+                "conftest.py:4",
+                "Requested here:",
+                "test_external_fixture.py:2",
+                "*1 failed*",
+            ]
         )
 
     def test_non_relative_path(self, testdir):
@@ -3709,16 +3706,16 @@ class TestParameterizedSubRequest(object):
         testdir.syspathinsert(fixdir)
         result = testdir.runpytest()
         result.stdout.fnmatch_lines(
-            """
-            E*Failed: The requested fixture has no parameter defined for test:
-            E*    test_foos.py::test_foo
-            E*
-            E*Requested fixture 'fix_with_param' defined in:
-            E*fix.py:4
-            E*Requested here:
-            E*test_foos.py:4
-            *1 failed*
-            """
+            [
+                "The requested fixture has no parameter defined for test:",
+                "    test_foos.py::test_foo",
+                "",
+                "Requested fixture 'fix_with_param' defined in:",
+                "*fix.py:4",
+                "Requested here:",
+                "test_foos.py:4",
+                "*1 failed*",
+            ]
         )
 
 
