@@ -30,6 +30,7 @@ def conftest_setinitial(conftest, args, confcutdir=None):
             self.file_or_dir = args
             self.confcutdir = str(confcutdir)
             self.noconftest = False
+            self.pyargs = False
 
     conftest._set_initial_conftests(Namespace())
 

@@ -681,14 +681,22 @@ def test_pass_reporting_on_fail(testdir):
 def test_pass_output_reporting(testdir):
     testdir.makepyfile(
         """
-        def test_pass_output():
+        def test_pass_has_output():
             print("Four score and seven years ago...")
+        def test_pass_no_output():
+            pass
     """
     )
     result = testdir.runpytest()
-    assert "Four score and seven years ago..." not in result.stdout.str()
+    s = result.stdout.str()
+    assert "test_pass_has_output" not in s
+    assert "Four score and seven years ago..." not in s
+    assert "test_pass_no_output" not in s
     result = testdir.runpytest("-rP")
-    result.stdout.fnmatch_lines(["Four score and seven years ago..."])
+    result.stdout.fnmatch_lines(
+        ["*test_pass_has_output*", "Four score and seven years ago..."]
+    )
+    assert "test_pass_no_output" not in result.stdout.str()
 
 
 def test_color_yes(testdir):

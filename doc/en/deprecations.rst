@@ -83,14 +83,24 @@ message please contact the authors so they can change the code.
 Those methods were part of the internal pytest warnings system, but since ``3.8`` pytest is using the builtin warning
 system for its own warnings, so those two functions are now deprecated.
 
-``Config.warn`` should be replaced by calls to the standard ``warnings.warn``.
+``Config.warn`` should be replaced by calls to the standard ``warnings.warn``, example:
+
+.. code-block:: python
+
+    config.warn("C1", "some warning")
+
+Becomes:
+
+.. code-block:: python
+
+    warnings.warn(pytest.PytestWarning("some warning"))
 
 ``Node.warn`` now supports two signatures:
 
-* ``node.warn(PytestWarning("some message"))``: is now the recommended way to call this function.
+* ``node.warn(PytestWarning("some message"))``: is now the **recommended** way to call this function.
   The warning instance must be a PytestWarning or subclass.
 
-* ``node.warn("CI", "some message")``: this code/message form is now deprecated and should be converted to the warning instance form above.
+* ``node.warn("CI", "some message")``: this code/message form is now **deprecated** and should be converted to the warning instance form above.
 
 
 ``pytest_namespace``

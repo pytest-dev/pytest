@@ -269,17 +269,17 @@ class AssertionRewritingHook(object):
         )
 
     def load_module(self, name):
-        # If there is an existing module object named 'fullname' in
-        # sys.modules, the loader must use that existing module. (Otherwise,
-        # the reload() builtin will not work correctly.)
-        if name in sys.modules:
-            return sys.modules[name]
-
         co, pyc = self.modules.pop(name)
-        # I wish I could just call imp.load_compiled here, but __file__ has to
-        # be set properly. In Python 3.2+, this all would be handled correctly
-        # by load_compiled.
-        mod = sys.modules[name] = imp.new_module(name)
+        if name in sys.modules:
+            # If there is an existing module object named 'fullname' in
+            # sys.modules, the loader must use that existing module. (Otherwise,
+            # the reload() builtin will not work correctly.)
+            mod = sys.modules[name]
+        else:
+            # I wish I could just call imp.load_compiled here, but __file__ has to
+            # be set properly. In Python 3.2+, this all would be handled correctly
+            # by load_compiled.
+            mod = sys.modules[name] = imp.new_module(name)
         try:
             mod.__file__ = co.co_filename
             # Normally, this attribute is 3.2+.

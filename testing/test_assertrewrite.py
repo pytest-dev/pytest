@@ -1050,6 +1050,48 @@ class TestAssertionRewriteHookDetails(object):
         result = testdir.runpytest("-s")
         result.stdout.fnmatch_lines(["* 1 passed*"])
 
+    def test_reload_reloads(self, testdir):
+        """Reloading a module after change picks up the change."""
+        testdir.tmpdir.join("file.py").write(
+            textwrap.dedent(
+                """
+            def reloaded():
+                return False
+
+            def rewrite_self():
+                with open(__file__, 'w') as self:
+                    self.write('def reloaded(): return True')
+        """
+            )
+        )
+        testdir.tmpdir.join("pytest.ini").write(
+            textwrap.dedent(
+                """
+            [pytest]
+            python_files = *.py
+        """
+            )
+        )
+
+        testdir.makepyfile(
+            test_fun="""
+            import sys
+            try:
+                from imp import reload
+            except ImportError:
+                pass
+
+            def test_loader():
+                import file
+                assert not file.reloaded()
+                file.rewrite_self()
+                reload(file)
+                assert file.reloaded()
+            """
+        )
+        result = testdir.runpytest("-s")
+        result.stdout.fnmatch_lines(["* 1 passed*"])
+
     def test_get_data_support(self, testdir):
         """Implement optional PEP302 api (#808).
         """
