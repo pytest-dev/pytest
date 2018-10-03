@@ -262,7 +262,7 @@ Finally, the ``class`` scope will invoke the fixture once per test *class*.
 .. note::
 
     Pytest will only cache one instance of a fixture at a time.
-    This means that when using a parametrized fixture, it may need to be invoked more than once in the scope it's defined for.
+    This means that when using a parametrized fixture, pytest may invoke a fixture more than once in the given scope.
 
 
 ``package`` scope (experimental)
