@@ -110,17 +110,10 @@ class Source(object):
         ast, start, end = getstatementrange_ast(lineno, self)
         return start, end
 
-    def deindent(self, offset=None):
-        """ return a new source object deindented by offset.
-            If offset is None then guess an indentation offset from
-            the first non-blank line.  Subsequent lines which have a
-            lower indentation offset will be copied verbatim as
-            they are assumed to be part of multilines.
-        """
-        # XXX maybe use the tokenizer to properly handle multiline
-        #     strings etc.pp?
+    def deindent(self):
+        """return a new source object deindented."""
         newsource = Source()
-        newsource.lines[:] = deindent(self.lines, offset)
+        newsource.lines[:] = deindent(self.lines)
         return newsource
 
     def isparseable(self, deindent=True):
@@ -263,7 +256,7 @@ def getsource(obj, **kwargs):
     return Source(strsrc, **kwargs)
 
 
-def deindent(lines, offset=None):
+def deindent(lines):
     return textwrap.dedent("\n".join(lines)).splitlines()
 
 
