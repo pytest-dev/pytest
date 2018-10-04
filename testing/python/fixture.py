@@ -756,6 +756,12 @@ class TestRequestBasic(object):
         reprec = testdir.inline_run()
         reprec.assertoutcome(passed=1)
 
+    def test_request_fixturenames_dynamic_fixture(self, testdir):
+        """Regression test for #3057"""
+        testdir.copy_example("fixtures/test_getfixturevalue_dynamic.py")
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines("*1 passed*")
+
     def test_funcargnames_compatattr(self, testdir):
         testdir.makepyfile(
             """
