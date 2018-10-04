@@ -1072,7 +1072,7 @@ class Testdir(object):
                 try:
                     ret = popen.wait(timeout)
                 except subprocess.TimeoutExpired:
-                    raise self.TimeoutExpired
+                    raise self.TimeoutExpired()
             else:
                 end = monotonic.monotonic() + timeout
 
