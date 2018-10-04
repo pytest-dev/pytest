@@ -3,6 +3,7 @@ from __future__ import absolute_import, division, print_function
 import os
 import py.path
 import pytest
+import subprocess
 import sys
 import _pytest.pytester as pytester
 from _pytest.pytester import HookRecorder
@@ -401,3 +402,20 @@ def test_testdir_subprocess(testdir):
 def test_unicode_args(testdir):
     result = testdir.runpytest("-k", u"💩")
     assert result.ret == EXIT_NOTESTSCOLLECTED
+
+
+def test_testdir_run_no_timeout(testdir):
+    testfile = testdir.makepyfile("def test_no_timeout(): pass")
+    assert testdir.runpytest_subprocess(testfile).ret == EXIT_OK
+
+
+def test_testdir_run_timeout_expires(testdir):
+    testfile = testdir.makepyfile(
+        """
+        import time
+        
+        def test_timeout():
+            time.sleep(10)"""
+    )
+    with pytest.raises(testdir.TimeoutExpired):
+        testdir.runpytest_subprocess(testfile, timeout=0.5)

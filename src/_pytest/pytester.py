@@ -3,6 +3,7 @@ from __future__ import absolute_import, division, print_function
 
 import codecs
 import gc
+import monotonic
 import os
 import platform
 import re
@@ -481,6 +482,9 @@ class Testdir(object):
        the method using them so refer to them for details.
 
     """
+
+    class TimeoutExpired(Exception):
+        pass
 
     def __init__(self, request, tmpdir_factory):
         self.request = request
@@ -1039,7 +1043,7 @@ class Testdir(object):
 
         return popen
 
-    def run(self, *cmdargs):
+    def run(self, *cmdargs, **kwargs):
         """Run a command with arguments.
 
         Run a process using subprocess.Popen saving the stdout and stderr.
@@ -1061,7 +1065,27 @@ class Testdir(object):
             popen = self.popen(
                 cmdargs, stdout=f1, stderr=f2, close_fds=(sys.platform != "win32")
             )
-            ret = popen.wait()
+            timeout = kwargs.get('timeout')
+            if timeout is None:
+                ret = popen.wait()
+            elif six.PY3:
+                try:
+                    ret = popen.wait(timeout)
+                except subprocess.TimeoutExpired:
+                    raise self.TimeoutExpired
+            else:
+                end = monotonic.monotonic() + timeout
+
+                while True:
+                    ret = popen.poll()
+                    if ret is not None:
+                        break
+
+                    remaining = end - monotonic.monotonic()
+                    if remaining <= 0:
+                        raise self.TimeoutExpired()
+
+                    time.sleep(remaining * 0.9)
         finally:
             f1.close()
             f2.close()
@@ -1119,7 +1143,13 @@ class Testdir(object):
         if plugins:
             args = ("-p", plugins[0]) + args
         args = self._getpytestargs() + args
-        return self.run(*args)
+
+        if "timeout" in kwargs:
+            timeout = {"timeout": kwargs["timeout"]}
+        else:
+            timeout = {}
+
+        return self.run(*args, **timeout)
 
     def spawn_pytest(self, string, expect_timeout=10.0):
         """Run pytest using pexpect.
