@@ -1065,7 +1065,7 @@ class Testdir(object):
             popen = self.popen(
                 cmdargs, stdout=f1, stderr=f2, close_fds=(sys.platform != "win32")
             )
-            timeout = kwargs.get('timeout')
+            timeout = kwargs.get("timeout")
             if timeout is None:
                 ret = popen.wait()
             elif six.PY3:

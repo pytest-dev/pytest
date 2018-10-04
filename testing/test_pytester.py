@@ -3,7 +3,6 @@ from __future__ import absolute_import, division, print_function
 import os
 import py.path
 import pytest
-import subprocess
 import sys
 import _pytest.pytester as pytester
 from _pytest.pytester import HookRecorder
@@ -413,7 +412,7 @@ def test_testdir_run_timeout_expires(testdir):
     testfile = testdir.makepyfile(
         """
         import time
-        
+
         def test_timeout():
             time.sleep(10)"""
     )
