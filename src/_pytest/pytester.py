@@ -1086,6 +1086,8 @@ class Testdir(object):
             else:
                 end = time.time() + timeout
 
+                resolution = min(0.1, timeout / 10)
+
                 while True:
                     ret = popen.poll()
                     if ret is not None:
@@ -1095,7 +1097,7 @@ class Testdir(object):
                     if remaining <= 0:
                         handle_timeout()
 
-                    time.sleep(remaining * 0.9)
+                    time.sleep(resolution)
         finally:
             f1.close()
             f2.close()
