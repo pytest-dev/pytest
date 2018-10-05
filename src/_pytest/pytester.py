@@ -1154,9 +1154,6 @@ class Testdir(object):
         Returns a :py:class:`RunResult`.
 
         """
-        timeout = kwargs.pop("timeout", None)
-        raise_on_kwargs(kwargs)
-
         p = py.path.local.make_numbered_dir(
             prefix="runpytest-", keep=None, rootdir=self.tmpdir
         )
@@ -1165,7 +1162,7 @@ class Testdir(object):
         if plugins:
             args = ("-p", plugins[0]) + args
         args = self._getpytestargs() + args
-        return self.run(*args, timeout=timeout)
+        return self.run(*args, timeout=kwargs.get("timeout"))
 
     def spawn_pytest(self, string, expect_timeout=10.0):
         """Run pytest using pexpect.
