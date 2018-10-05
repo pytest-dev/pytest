@@ -1065,13 +1065,19 @@ class Testdir(object):
                 cmdargs, stdout=f1, stderr=f2, close_fds=(sys.platform != "win32")
             )
             timeout = kwargs.get("timeout")
+
+            timeout_message = (
+                "{seconds} second timeout expired running:"
+                " {command}".format(seconds=timeout, command=cmdargs)
+            )
+
             if timeout is None:
                 ret = popen.wait()
             elif six.PY3:
                 try:
                     ret = popen.wait(timeout)
                 except subprocess.TimeoutExpired:
-                    raise self.TimeoutExpired()
+                    raise self.TimeoutExpired(timeout_message)
             else:
                 end = time.time() + timeout
 
@@ -1082,7 +1088,7 @@ class Testdir(object):
 
                     remaining = end - time.time()
                     if remaining <= 0:
-                        raise self.TimeoutExpired()
+                        raise self.TimeoutExpired(timeout_message)
 
                     time.sleep(remaining * 0.9)
         finally:
