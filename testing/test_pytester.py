@@ -430,4 +430,4 @@ def test_testdir_run_timeout_expires(testdir):
             time.sleep(10)"""
     )
     with pytest.raises(testdir.TimeoutExpired):
-        testdir.runpytest_subprocess(testfile, timeout=0.5)
+        testdir.runpytest_subprocess(testfile, timeout=1)
