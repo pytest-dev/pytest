@@ -1163,12 +1163,7 @@ class Testdir(object):
             args = ("-p", plugins[0]) + args
         args = self._getpytestargs() + args
 
-        if "timeout" in kwargs:
-            timeout = {"timeout": kwargs["timeout"]}
-        else:
-            timeout = {}
-
-        return self.run(*args, **timeout)
+        return self.run(*args, timeout=kwargs.get("timeout"))
 
     def spawn_pytest(self, string, expect_timeout=10.0):
         """Run pytest using pexpect.
