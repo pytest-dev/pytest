@@ -1066,10 +1066,15 @@ class Testdir(object):
             )
             timeout = kwargs.get("timeout")
 
-            timeout_message = (
-                "{seconds} second timeout expired running:"
-                " {command}".format(seconds=timeout, command=cmdargs)
-            )
+            def handle_timeout():
+                timeout_message = (
+                    "{seconds} second timeout expired running:"
+                    " {command}".format(seconds=timeout, command=cmdargs)
+                )
+
+                popen.kill()
+                popen.wait()
+                raise self.TimeoutExpired(timeout_message)
 
             if timeout is None:
                 ret = popen.wait()
@@ -1077,7 +1082,7 @@ class Testdir(object):
                 try:
                     ret = popen.wait(timeout)
                 except subprocess.TimeoutExpired:
-                    raise self.TimeoutExpired(timeout_message)
+                    handle_timeout()
             else:
                 end = time.time() + timeout
 
@@ -1088,7 +1093,7 @@ class Testdir(object):
 
                     remaining = end - time.time()
                     if remaining <= 0:
-                        raise self.TimeoutExpired(timeout_message)
+                        handle_timeout()
 
                     time.sleep(remaining * 0.9)
         finally:
