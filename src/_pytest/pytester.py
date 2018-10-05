@@ -63,6 +63,11 @@ def pytest_configure(config):
             config.pluginmanager.register(checker)
 
 
+def raise_on_kwargs(kwargs):
+    if kwargs:
+        raise TypeError("Unexpected arguments: {}".format(", ".join(sorted(kwargs))))
+
+
 class LsofFdLeakChecker(object):
     def get_open_files(self):
         out = self._exec_lsof()
@@ -1052,6 +1057,9 @@ class Testdir(object):
         Returns a :py:class:`RunResult`.
 
         """
+        timeout = kwargs.pop("timeout", None)
+        raise_on_kwargs(kwargs)
+
         cmdargs = [
             str(arg) if isinstance(arg, py.path.local) else arg for arg in cmdargs
         ]
@@ -1066,7 +1074,6 @@ class Testdir(object):
             popen = self.popen(
                 cmdargs, stdout=f1, stderr=f2, close_fds=(sys.platform != "win32")
             )
-            timeout = kwargs.get("timeout")
 
             def handle_timeout():
                 timeout_message = (
@@ -1154,6 +1161,9 @@ class Testdir(object):
         Returns a :py:class:`RunResult`.
 
         """
+        timeout = kwargs.pop("timeout", None)
+        raise_on_kwargs(kwargs)
+
         p = py.path.local.make_numbered_dir(
             prefix="runpytest-", keep=None, rootdir=self.tmpdir
         )
@@ -1163,7 +1173,7 @@ class Testdir(object):
             args = ("-p", plugins[0]) + args
         args = self._getpytestargs() + args
 
-        return self.run(*args, timeout=kwargs.get("timeout"))
+        return self.run(*args, timeout=timeout)
 
     def spawn_pytest(self, string, expect_timeout=10.0):
         """Run pytest using pexpect.
