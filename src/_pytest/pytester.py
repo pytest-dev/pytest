@@ -1104,8 +1104,7 @@ class Testdir(object):
                     if ret is not None:
                         break
 
-                    remaining = end - time.time()
-                    if remaining <= 0:
+                    if time.time() > end:
                         handle_timeout()
 
                     time.sleep(resolution)
