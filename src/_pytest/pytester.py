@@ -3,7 +3,6 @@ from __future__ import absolute_import, division, print_function
 
 import codecs
 import gc
-import monotonic
 import os
 import platform
 import re
@@ -1074,14 +1073,14 @@ class Testdir(object):
                 except subprocess.TimeoutExpired:
                     raise self.TimeoutExpired()
             else:
-                end = monotonic.monotonic() + timeout
+                end = time.time() + timeout
 
                 while True:
                     ret = popen.poll()
                     if ret is not None:
                         break
 
-                    remaining = end - monotonic.monotonic()
+                    remaining = end - time.time()
                     if remaining <= 0:
                         raise self.TimeoutExpired()
 
