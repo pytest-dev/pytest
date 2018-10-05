@@ -1,0 +1,1 @@
+avoid "RemovedInPytest4Warning: usage of Session... is deprecated, please use pytest... instead" warnings.:w
