@@ -1052,6 +1052,10 @@ class Testdir(object):
 
         Run a process using subprocess.Popen saving the stdout and stderr.
 
+        :param args: the sequence of arguments to pass to `subprocess.Popen()`
+        :param timeout: the period in seconds after which to timeout and raise
+            :py:class:`Testdir.TimeoutExpired`
+
         Returns a :py:class:`RunResult`.
 
         """
@@ -1150,6 +1154,10 @@ class Testdir(object):
         any temporary files and directories in a numbered directory prefixed
         with "runpytest-" so they do not conflict with the normal numbered
         pytest location for temporary files and directories.
+
+        :param args: the sequence of arguments to pass to the pytest subprocess
+        :param timeout: the period in seconds after which to timeout and raise
+            :py:class:`Testdir.TimeoutExpired`
 
         Returns a :py:class:`RunResult`.
 
