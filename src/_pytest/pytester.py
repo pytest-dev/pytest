@@ -2,11 +2,13 @@
 from __future__ import absolute_import, division, print_function
 
 import codecs
+import contextlib
 import gc
 import os
 import platform
 import re
 import subprocess
+import signal
 import six
 import sys
 import time
@@ -1076,6 +1078,21 @@ class Testdir(object):
                 popen.wait()
                 raise self.TimeoutExpired(timeout_message)
 
+            @contextlib.contextmanager
+            def timeout_manager(handler, timeout):
+                original_handler = signal.getsignal(signal.SIGALRM)
+                if original_handler != signal.SIG_DFL:
+                    # TODO: use an informative exception
+                    raise Exception()
+
+                signal.signal(signal.SIGALRM, handler)
+                signal.alarm(timeout)
+
+                yield
+
+                signal.alarm(0)
+                signal.signal(signal.SIGALRM, original_handler)
+
             if timeout is None:
                 ret = popen.wait()
             elif six.PY3:
@@ -1084,20 +1101,10 @@ class Testdir(object):
                 except subprocess.TimeoutExpired:
                     handle_timeout()
             else:
-                end = time.time() + timeout
-
-                resolution = min(0.1, timeout / 10)
-
-                while True:
-                    ret = popen.poll()
-                    if ret is not None:
-                        break
-
-                    remaining = end - time.time()
-                    if remaining <= 0:
-                        handle_timeout()
-
-                    time.sleep(resolution)
+                with timeout_manager(
+                    handler=lambda _1, _2: handle_timeout(), timeout=timeout
+                ):
+                    ret = popen.wait()
         finally:
             f1.close()
             f2.close()
