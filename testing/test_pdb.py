@@ -753,3 +753,21 @@ class TestTraceOption:
         assert "1 passed" in rest
         assert "reading from stdin while output" not in rest
         TestPDB.flush(child)
+
+    def test_unittest_using_trace_invokes_pdb(self, testdir):
+        p1 = testdir.makepyfile(
+            """
+            import unittest
+            class Test1(unittest.TestCase):
+                def test_1(self):
+                    assert True
+            """
+        )
+        child = testdir.spawn_pytest("--trace " + str(p1))
+        child.expect("test_1")
+        child.expect("(Pdb)")
+        child.sendeof()
+        rest = child.read().decode("utf8")
+        assert "1 passed" in rest
+        assert "reading from stdin while output" not in rest
+        TestPDB.flush(child)

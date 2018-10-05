@@ -182,6 +182,8 @@ class TestCaseFunction(Function):
         return False
 
     def runtest(self):
+        if self.config.pluginmanager.get_plugin("pdbtrace"):
+            self.ihook.pytest_pyfunc_call(pyfuncitem=self)
         if self.config.pluginmanager.get_plugin("pdbinvoke") is None:
             self._testcase(result=self)
         else:
