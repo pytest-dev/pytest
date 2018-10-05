@@ -418,7 +418,7 @@ def test_testdir_run_with_timeout(testdir):
     duration = end - start
 
     assert result.ret == EXIT_OK
-    assert duration < 1
+    assert duration < 5
 
 
 def test_testdir_run_timeout_expires(testdir):
