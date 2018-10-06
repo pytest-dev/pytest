@@ -3606,7 +3606,8 @@ class TestParameterizedSubRequest(object):
         result = testdir.runpytest()
         result.stdout.fnmatch_lines(
             """
-            E*Failed: The requested fixture has no parameter defined for the current test.
+            E*Failed: The requested fixture has no parameter defined for test:
+            E*    test_call_from_fixture.py::test_foo
             E*
             E*Requested fixture 'fix_with_param' defined in:
             E*test_call_from_fixture.py:4
@@ -3632,7 +3633,8 @@ class TestParameterizedSubRequest(object):
         result = testdir.runpytest()
         result.stdout.fnmatch_lines(
             """
-            E*Failed: The requested fixture has no parameter defined for the current test.
+            E*Failed: The requested fixture has no parameter defined for test:
+            E*    test_call_from_test.py::test_foo
             E*
             E*Requested fixture 'fix_with_param' defined in:
             E*test_call_from_test.py:4
@@ -3662,7 +3664,8 @@ class TestParameterizedSubRequest(object):
         result = testdir.runpytest()
         result.stdout.fnmatch_lines(
             """
-            E*Failed: The requested fixture has no parameter defined for the current test.
+            E*Failed: The requested fixture has no parameter defined for test:
+            E*    test_external_fixture.py::test_foo
             E*
             E*Requested fixture 'fix_with_param' defined in:
             E*conftest.py:4
@@ -3705,7 +3708,8 @@ class TestParameterizedSubRequest(object):
         result = testdir.runpytest()
         result.stdout.fnmatch_lines(
             """
-            E*Failed: The requested fixture has no parameter defined for the current test.
+            E*Failed: The requested fixture has no parameter defined for test:
+            E*    test_foos.py::test_foo
             E*
             E*Requested fixture 'fix_with_param' defined in:
             E*fix.py:4
