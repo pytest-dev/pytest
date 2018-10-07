@@ -61,6 +61,11 @@ def pytest_configure(config):
             config.pluginmanager.register(checker)
 
 
+def raise_on_kwargs(kwargs):
+    if kwargs:
+        raise TypeError("Unexpected arguments: {}".format(", ".join(sorted(kwargs))))
+
+
 class LsofFdLeakChecker(object):
     def get_open_files(self):
         out = self._exec_lsof()
@@ -481,6 +486,9 @@ class Testdir(object):
        the method using them so refer to them for details.
 
     """
+
+    class TimeoutExpired(Exception):
+        pass
 
     def __init__(self, request, tmpdir_factory):
         self.request = request
@@ -1039,14 +1047,23 @@ class Testdir(object):
 
         return popen
 
-    def run(self, *cmdargs):
+    def run(self, *cmdargs, **kwargs):
         """Run a command with arguments.
 
         Run a process using subprocess.Popen saving the stdout and stderr.
 
+        :param args: the sequence of arguments to pass to `subprocess.Popen()`
+        :param timeout: the period in seconds after which to timeout and raise
+            :py:class:`Testdir.TimeoutExpired`
+
         Returns a :py:class:`RunResult`.
 
         """
+        __tracebackhide__ = True
+
+        timeout = kwargs.pop("timeout", None)
+        raise_on_kwargs(kwargs)
+
         cmdargs = [
             str(arg) if isinstance(arg, py.path.local) else arg for arg in cmdargs
         ]
@@ -1061,7 +1078,40 @@ class Testdir(object):
             popen = self.popen(
                 cmdargs, stdout=f1, stderr=f2, close_fds=(sys.platform != "win32")
             )
-            ret = popen.wait()
+
+            def handle_timeout():
+                __tracebackhide__ = True
+
+                timeout_message = (
+                    "{seconds} second timeout expired running:"
+                    " {command}".format(seconds=timeout, command=cmdargs)
+                )
+
+                popen.kill()
+                popen.wait()
+                raise self.TimeoutExpired(timeout_message)
+
+            if timeout is None:
+                ret = popen.wait()
+            elif six.PY3:
+                try:
+                    ret = popen.wait(timeout)
+                except subprocess.TimeoutExpired:
+                    handle_timeout()
+            else:
+                end = time.time() + timeout
+
+                resolution = min(0.1, timeout / 10)
+
+                while True:
+                    ret = popen.poll()
+                    if ret is not None:
+                        break
+
+                    if time.time() > end:
+                        handle_timeout()
+
+                    time.sleep(resolution)
         finally:
             f1.close()
             f2.close()
@@ -1108,9 +1158,15 @@ class Testdir(object):
         with "runpytest-" so they do not conflict with the normal numbered
         pytest location for temporary files and directories.
 
+        :param args: the sequence of arguments to pass to the pytest subprocess
+        :param timeout: the period in seconds after which to timeout and raise
+            :py:class:`Testdir.TimeoutExpired`
+
         Returns a :py:class:`RunResult`.
 
         """
+        __tracebackhide__ = True
+
         p = py.path.local.make_numbered_dir(
             prefix="runpytest-", keep=None, rootdir=self.tmpdir
         )
@@ -1119,7 +1175,7 @@ class Testdir(object):
         if plugins:
             args = ("-p", plugins[0]) + args
         args = self._getpytestargs() + args
-        return self.run(*args)
+        return self.run(*args, timeout=kwargs.get("timeout"))
 
     def spawn_pytest(self, string, expect_timeout=10.0):
         """Run pytest using pexpect.

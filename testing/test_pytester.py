@@ -4,6 +4,7 @@ import os
 import py.path
 import pytest
 import sys
+import time
 import _pytest.pytester as pytester
 from _pytest.pytester import HookRecorder
 from _pytest.pytester import CwdSnapshot, SysModulesSnapshot, SysPathsSnapshot
@@ -401,3 +402,32 @@ def test_testdir_subprocess(testdir):
 def test_unicode_args(testdir):
     result = testdir.runpytest("-k", u"💩")
     assert result.ret == EXIT_NOTESTSCOLLECTED
+
+
+def test_testdir_run_no_timeout(testdir):
+    testfile = testdir.makepyfile("def test_no_timeout(): pass")
+    assert testdir.runpytest_subprocess(testfile).ret == EXIT_OK
+
+
+def test_testdir_run_with_timeout(testdir):
+    testfile = testdir.makepyfile("def test_no_timeout(): pass")
+
+    start = time.time()
+    result = testdir.runpytest_subprocess(testfile, timeout=120)
+    end = time.time()
+    duration = end - start
+
+    assert result.ret == EXIT_OK
+    assert duration < 5
+
+
+def test_testdir_run_timeout_expires(testdir):
+    testfile = testdir.makepyfile(
+        """
+        import time
+
+        def test_timeout():
+            time.sleep(10)"""
+    )
+    with pytest.raises(testdir.TimeoutExpired):
+        testdir.runpytest_subprocess(testfile, timeout=1)
