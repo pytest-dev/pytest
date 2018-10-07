@@ -1059,6 +1059,8 @@ class Testdir(object):
         Returns a :py:class:`RunResult`.
 
         """
+        __tracebackhide__ = True
+
         timeout = kwargs.pop("timeout", None)
         raise_on_kwargs(kwargs)
 
@@ -1078,6 +1080,8 @@ class Testdir(object):
             )
 
             def handle_timeout():
+                __tracebackhide__ = True
+
                 timeout_message = (
                     "{seconds} second timeout expired running:"
                     " {command}".format(seconds=timeout, command=cmdargs)
@@ -1161,6 +1165,8 @@ class Testdir(object):
         Returns a :py:class:`RunResult`.
 
         """
+        __tracebackhide__ = True
+
         p = py.path.local.make_numbered_dir(
             prefix="runpytest-", keep=None, rootdir=self.tmpdir
         )
