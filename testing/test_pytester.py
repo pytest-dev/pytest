@@ -413,7 +413,7 @@ def test_testdir_run_with_timeout(testdir):
     testfile = testdir.makepyfile("def test_no_timeout(): pass")
 
     start = time.time()
-    result = testdir.runpytest_subprocess(testfile, timeout=10)
+    result = testdir.runpytest_subprocess(testfile, timeout=120)
     end = time.time()
     duration = end - start
 
