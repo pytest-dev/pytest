@@ -412,13 +412,15 @@ def test_testdir_run_no_timeout(testdir):
 def test_testdir_run_with_timeout(testdir):
     testfile = testdir.makepyfile("def test_no_timeout(): pass")
 
+    timeout = 120
+
     start = time.time()
-    result = testdir.runpytest_subprocess(testfile, timeout=120)
+    result = testdir.runpytest_subprocess(testfile, timeout=timeout)
     end = time.time()
     duration = end - start
 
     assert result.ret == EXIT_OK
-    assert duration < 5
+    assert duration < timeout
 
 
 def test_testdir_run_timeout_expires(testdir):
