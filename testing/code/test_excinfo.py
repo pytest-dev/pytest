@@ -1371,7 +1371,7 @@ def test_exception_repr_extraction_error_on_recursion():
     def b(x):
         return a(numpy_like())
 
-    with pytest.raises(RecursionError) as excinfo:
+    with pytest.raises(RuntimeError) as excinfo:
         a(numpy_like())
 
     matcher = LineMatcher(str(excinfo.getrepr()).splitlines())
@@ -1395,6 +1395,6 @@ def test_no_recursion_index_on_recursion_error():
         def __getattr__(self, attr):
             return getattr(self, "_" + attr)
 
-    with pytest.raises(RecursionError) as excinfo:
+    with pytest.raises(RuntimeError) as excinfo:
         RecursionDepthError().trigger
     assert "maximum recursion" in str(excinfo.getrepr())
