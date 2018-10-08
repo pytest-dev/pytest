@@ -176,7 +176,7 @@ def test_makepyfile_unicode(testdir):
         unichr(65)
     except NameError:
         unichr = chr
-    testdir.makepyfile(unichr(0xfffd))
+    testdir.makepyfile(unichr(0xFFFD))
 
 
 def test_makepyfile_utf8(testdir):
