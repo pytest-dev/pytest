@@ -22,10 +22,9 @@ Thanks to all who contributed to this release, among them:
 * Ronny Pfannschmidt
 * Sankt Petersbug
 * Tyler Richard
-* Victor
+* Victor Maryama
 * Vlad Shcherbina
 * turturica
-* victor
 * wim glenn
 
 
