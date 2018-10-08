@@ -30,6 +30,7 @@ def pytest_addoption(parser):
 
 def pytest_terminal_summary(terminalreporter):
     durations = terminalreporter.config.option.durations
+    verbose = terminalreporter.config.getvalue("verbose")
     if durations is None:
         return
     tr = terminalreporter
@@ -49,6 +50,8 @@ def pytest_terminal_summary(terminalreporter):
         dlist = dlist[:durations]
 
     for rep in dlist:
+        if verbose < 2 and rep.duration < 0.01:
+            break
         nodeid = rep.nodeid.replace("::()::", "::")
         tr.write_line("%02.2fs %-8s %s" % (rep.duration, rep.when, nodeid))
 
