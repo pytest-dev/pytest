@@ -34,7 +34,7 @@ pytest_version_info = tuple(map(int, pytest.__version__.split(".")[:3]))
 @pytest.fixture
 def limited_recursion_depth():
     before = sys.getrecursionlimit()
-    sys.setrecursionlimit(100)
+    sys.setrecursionlimit(150)
     yield
     sys.setrecursionlimit(before)
 
