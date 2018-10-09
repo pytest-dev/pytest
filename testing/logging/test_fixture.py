@@ -45,7 +45,7 @@ def test_change_level_undo(testdir):
             assert 0
     """
     )
-    result = testdir.runpytest_subprocess()
+    result = testdir.runpytest()
     result.stdout.fnmatch_lines(["*log from test1*", "*2 failed in *"])
     assert "log from test2" not in result.stdout.str()
 

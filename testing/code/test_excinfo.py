@@ -31,6 +31,14 @@ failsonjython = pytest.mark.xfail("sys.platform.startswith('java')")
 pytest_version_info = tuple(map(int, pytest.__version__.split(".")[:3]))
 
 
+@pytest.fixture
+def limited_recursion_depth():
+    before = sys.getrecursionlimit()
+    sys.setrecursionlimit(150)
+    yield
+    sys.setrecursionlimit(before)
+
+
 class TWMock(object):
     WRITE = object()
 
@@ -239,7 +247,7 @@ class TestTraceback_f_g_h(object):
                 raise RuntimeError("hello")
             f(n - 1)
 
-        excinfo = pytest.raises(RuntimeError, f, 100)
+        excinfo = pytest.raises(RuntimeError, f, 25)
         monkeypatch.delattr(excinfo.traceback.__class__, "recursionindex")
         repr = excinfo.getrepr()
         assert "RuntimeError: hello" in str(repr.reprcrash)
@@ -1341,11 +1349,13 @@ def test_cwd_deleted(testdir):
     assert "INTERNALERROR" not in result.stdout.str() + result.stderr.str()
 
 
+@pytest.mark.usefixtures("limited_recursion_depth")
 def test_exception_repr_extraction_error_on_recursion():
     """
     Ensure we can properly detect a recursion error even
     if some locals raise error on comparison (#2459).
     """
+    from _pytest.pytester import LineMatcher
 
     class numpy_like(object):
         def __eq__(self, other):
@@ -1361,40 +1371,30 @@ def test_exception_repr_extraction_error_on_recursion():
     def b(x):
         return a(numpy_like())
 
-    try:
+    with pytest.raises(RuntimeError) as excinfo:
         a(numpy_like())
-    except:  # noqa
-        from _pytest._code.code import ExceptionInfo
-        from _pytest.pytester import LineMatcher
 
-        exc_info = ExceptionInfo()
-
-        matcher = LineMatcher(str(exc_info.getrepr()).splitlines())
-        matcher.fnmatch_lines(
-            [
-                "!!! Recursion error detected, but an error occurred locating the origin of recursion.",
-                "*The following exception happened*",
-                "*ValueError: The truth value of an array*",
-            ]
-        )
+    matcher = LineMatcher(str(excinfo.getrepr()).splitlines())
+    matcher.fnmatch_lines(
+        [
+            "!!! Recursion error detected, but an error occurred locating the origin of recursion.",
+            "*The following exception happened*",
+            "*ValueError: The truth value of an array*",
+        ]
+    )
 
 
+@pytest.mark.usefixtures("limited_recursion_depth")
 def test_no_recursion_index_on_recursion_error():
     """
     Ensure that we don't break in case we can't find the recursion index
     during a recursion error (#2486).
     """
-    try:
 
-        class RecursionDepthError(object):
-            def __getattr__(self, attr):
-                return getattr(self, "_" + attr)
+    class RecursionDepthError(object):
+        def __getattr__(self, attr):
+            return getattr(self, "_" + attr)
 
+    with pytest.raises(RuntimeError) as excinfo:
         RecursionDepthError().trigger
-    except:  # noqa
-        from _pytest._code.code import ExceptionInfo
-
-        exc_info = ExceptionInfo()
-        assert "maximum recursion" in str(exc_info.getrepr())
-    else:
-        assert 0
+    assert "maximum recursion" in str(excinfo.getrepr())
