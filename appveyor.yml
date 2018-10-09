@@ -1,5 +1,7 @@
 environment:
   matrix:
+  - TOXENV: "linting"
+    PYTEST_NO_COVERAGE: "1"
   - TOXENV: "py27"
   - TOXENV: "py34"
   - TOXENV: "py35"
