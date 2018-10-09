@@ -852,6 +852,8 @@ In that order.
     can be changed between releases (even bug fixes) so it shouldn't be relied on for scripting
     or automation.
 
+.. _freezing-pytest:
+
 Freezing pytest
 ---------------
 

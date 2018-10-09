@@ -1010,3 +1010,15 @@ def test_testcase_handles_init_exceptions(testdir):
     result = testdir.runpytest()
     assert "should raise this exception" in result.stdout.str()
     assert "ERROR at teardown of MyTestCase.test_hello" not in result.stdout.str()
+
+
+def test_error_message_with_parametrized_fixtures(testdir):
+    testdir.copy_example("unittest/test_parametrized_fixture_error_message.py")
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines(
+        [
+            "*test_two does not support fixtures*",
+            "*TestSomethingElse::test_two",
+            "*Function type: TestCaseFunction",
+        ]
+    )

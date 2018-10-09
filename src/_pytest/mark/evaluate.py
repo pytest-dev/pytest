@@ -90,7 +90,10 @@ class MarkEvaluator(object):
                     else:
                         if "reason" not in mark.kwargs:
                             # XXX better be checked at collection time
-                            msg = "you need to specify reason=STRING " "when using booleans as conditions."
+                            msg = (
+                                "you need to specify reason=STRING "
+                                "when using booleans as conditions."
+                            )
                             fail(msg)
                         result = bool(expr)
                     if result:

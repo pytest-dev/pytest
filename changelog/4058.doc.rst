@@ -1,0 +1,1 @@
+Update fixture documentation to specify that a fixture can be invoked twice in the scope it's defined for.

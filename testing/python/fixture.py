@@ -756,6 +756,12 @@ class TestRequestBasic(object):
         reprec = testdir.inline_run()
         reprec.assertoutcome(passed=1)
 
+    def test_request_fixturenames_dynamic_fixture(self, testdir):
+        """Regression test for #3057"""
+        testdir.copy_example("fixtures/test_getfixturevalue_dynamic.py")
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines("*1 passed*")
+
     def test_funcargnames_compatattr(self, testdir):
         testdir.makepyfile(
             """
@@ -3602,7 +3608,8 @@ class TestParameterizedSubRequest(object):
         result = testdir.runpytest()
         result.stdout.fnmatch_lines(
             """
-            E*Failed: The requested fixture has no parameter defined for the current test.
+            E*Failed: The requested fixture has no parameter defined for test:
+            E*    test_call_from_fixture.py::test_foo
             E*
             E*Requested fixture 'fix_with_param' defined in:
             E*test_call_from_fixture.py:4
@@ -3628,7 +3635,8 @@ class TestParameterizedSubRequest(object):
         result = testdir.runpytest()
         result.stdout.fnmatch_lines(
             """
-            E*Failed: The requested fixture has no parameter defined for the current test.
+            E*Failed: The requested fixture has no parameter defined for test:
+            E*    test_call_from_test.py::test_foo
             E*
             E*Requested fixture 'fix_with_param' defined in:
             E*test_call_from_test.py:4
@@ -3658,7 +3666,8 @@ class TestParameterizedSubRequest(object):
         result = testdir.runpytest()
         result.stdout.fnmatch_lines(
             """
-            E*Failed: The requested fixture has no parameter defined for the current test.
+            E*Failed: The requested fixture has no parameter defined for test:
+            E*    test_external_fixture.py::test_foo
             E*
             E*Requested fixture 'fix_with_param' defined in:
             E*conftest.py:4
@@ -3701,7 +3710,8 @@ class TestParameterizedSubRequest(object):
         result = testdir.runpytest()
         result.stdout.fnmatch_lines(
             """
-            E*Failed: The requested fixture has no parameter defined for the current test.
+            E*Failed: The requested fixture has no parameter defined for test:
+            E*    test_foos.py::test_foo
             E*
             E*Requested fixture 'fix_with_param' defined in:
             E*fix.py:4
