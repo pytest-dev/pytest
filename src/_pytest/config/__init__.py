@@ -423,7 +423,7 @@ class PytestPluginManager(PluginManager):
                     and not self._using_pyargs
                 ):
                     from _pytest.deprecated import (
-                        PYTEST_PLUGINS_FROM_NON_TOP_LEVEL_CONFTEST
+                        PYTEST_PLUGINS_FROM_NON_TOP_LEVEL_CONFTEST,
                     )
 
                     warnings.warn_explicit(
