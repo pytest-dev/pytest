@@ -1,7 +1,7 @@
 exclude: doc/en/example/py2py3/test_py2.py
 repos:
 -   repo: https://github.com/ambv/black
-    rev: 18.9b0
+    rev: 18.6b4
     hooks:
     -   id: black
         args: [--safe, --quiet]
