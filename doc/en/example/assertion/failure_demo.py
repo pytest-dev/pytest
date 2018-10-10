@@ -246,7 +246,7 @@ class TestCustomAssertMsg(object):
 
         b = 2
         assert A.a == b, (
-            "A.a appears not to be b\n" "or does not appear to be b\none of those"
+            "A.a appears not to be b\nor does not appear to be b\none of those"
         )
 
     def test_custom_repr(self):

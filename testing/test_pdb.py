@@ -282,7 +282,7 @@ class TestPDB(object):
         """
         )
         child = testdir.spawn_pytest(
-            "--show-capture=all --pdb " "-p no:logging %s" % p1
+            "--show-capture=all --pdb -p no:logging %s" % p1
         )
         child.expect("get rekt")
         output = child.before.decode("utf8")

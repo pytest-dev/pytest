@@ -836,7 +836,7 @@ def repr_pythonversion(v=None):
 
 def build_summary_stats_line(stats):
     keys = (
-        "failed passed skipped deselected " "xfailed xpassed warnings error"
+        "failed passed skipped deselected xfailed xpassed warnings error"
     ).split()
     unknown_key_seen = False
     for key in stats.keys():

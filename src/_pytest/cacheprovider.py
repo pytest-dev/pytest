@@ -344,7 +344,7 @@ def cacheshow(config, session):
         key = valpath.relative_to(vdir)
         val = config.cache.get(key, dummy)
         if val is dummy:
-            tw.line("%s contains unreadable content, " "will be ignored" % key)
+            tw.line("%s contains unreadable content, will be ignored" % key)
         else:
             tw.line("%s contains:" % key)
             for line in pformat(val).splitlines():
