@@ -477,6 +477,7 @@ class TestPDB(object):
         child.expect("Pdb")
         child.sendline("c")
         child.expect("x = 4")
+        child.expect("Pdb")
         child.sendeof()
         rest = child.read().decode("utf8")
         assert "1 failed" in rest
@@ -495,6 +496,7 @@ class TestPDB(object):
         )
         child = testdir.spawn("{} {}".format(sys.executable, p1))
         child.expect("x = 5")
+        child.expect("Pdb")
         child.sendeof()
         self.flush(child)
 
@@ -511,6 +513,7 @@ class TestPDB(object):
         )
         child = testdir.spawn_pytest(str(p1))
         child.expect("x = 5")
+        child.expect("Pdb")
         child.sendeof()
         self.flush(child)
 
