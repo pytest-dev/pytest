@@ -315,7 +315,7 @@ def _marked(func, mark):
     return any(mark == info.combined for info in func_mark)
 
 
-@attr.s
+@attr.s(repr=False)
 class MarkInfo(object):
     """ Marking object created by :class:`MarkDecorator` instances. """
 
