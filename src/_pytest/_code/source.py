@@ -286,7 +286,10 @@ def get_statement_startend2(lineno, node):
 
 def getstatementrange_ast(lineno, source, assertion=False, astnode=None):
     if astnode is None:
-        content = str(source)
+        if six.PY2:
+            content = unicode(source)
+        else:
+            content = str(source)
         astnode = compile(content, "source", "exec", 1024)  # 1024 for AST
 
     start, end = get_statement_startend2(lineno, astnode)
