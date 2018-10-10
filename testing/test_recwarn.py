@@ -76,9 +76,8 @@ class TestDeprecatedCall(object):
             )
 
     def test_deprecated_call_raises(self):
-        with pytest.raises(AssertionError) as excinfo:
+        with pytest.raises(pytest.fail.Exception, match="No warnings of type"):
             pytest.deprecated_call(self.dep, 3, 5)
-        assert "Did not produce" in str(excinfo)
 
     def test_deprecated_call(self):
         pytest.deprecated_call(self.dep, 0, 5)
@@ -100,7 +99,7 @@ class TestDeprecatedCall(object):
         assert warn_explicit is warnings.warn_explicit
 
     def test_deprecated_explicit_call_raises(self):
-        with pytest.raises(AssertionError):
+        with pytest.raises(pytest.fail.Exception):
             pytest.deprecated_call(self.dep_explicit, 3)
 
     def test_deprecated_explicit_call(self):
@@ -116,8 +115,8 @@ class TestDeprecatedCall(object):
         def f():
             pass
 
-        msg = "Did not produce DeprecationWarning or PendingDeprecationWarning"
-        with pytest.raises(AssertionError, match=msg):
+        msg = "No warnings of type (.*DeprecationWarning.*, .*PendingDeprecationWarning.*)"
+        with pytest.raises(pytest.fail.Exception, match=msg):
             if mode == "call":
                 pytest.deprecated_call(f)
             else:
@@ -179,11 +178,19 @@ class TestDeprecatedCall(object):
             def f():
                 warnings.warn(warning("hi"))
 
-            with pytest.raises(AssertionError):
+            with pytest.raises(pytest.fail.Exception):
                 pytest.deprecated_call(f)
-            with pytest.raises(AssertionError):
+            with pytest.raises(pytest.fail.Exception):
                 with pytest.deprecated_call():
                     f()
+
+    def test_deprecated_call_supports_match(self):
+        with pytest.deprecated_call(match=r"must be \d+$"):
+            warnings.warn("value must be 42", DeprecationWarning)
+
+        with pytest.raises(pytest.fail.Exception):
+            with pytest.deprecated_call(match=r"must be \d+$"):
+                warnings.warn("this is not here", DeprecationWarning)
 
 
 class TestWarns(object):
