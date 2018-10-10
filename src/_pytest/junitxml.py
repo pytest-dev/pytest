@@ -38,7 +38,7 @@ class Junit(py.xml.Namespace):
 # this dynamically instead of hardcoding it.  The spec range of valid
 # chars is: Char ::= #x9 | #xA | #xD | [#x20-#xD7FF] | [#xE000-#xFFFD]
 #                    | [#x10000-#x10FFFF]
-_legal_chars = (0x09, 0x0A, 0x0d)
+_legal_chars = (0x09, 0x0A, 0x0D)
 _legal_ranges = ((0x20, 0x7E), (0x80, 0xD7FF), (0xE000, 0xFFFD), (0x10000, 0x10FFFF))
 _legal_xml_re = [
     unicode("%s-%s") % (unichr(low), unichr(high))

@@ -359,8 +359,10 @@ class FixtureRequest(FuncargnamesCompatAttr):
 
     @property
     def fixturenames(self):
-        # backward incompatible note: now a readonly property
-        return list(self._pyfuncitem._fixtureinfo.names_closure)
+        """names of all active fixtures in this request"""
+        result = list(self._pyfuncitem._fixtureinfo.names_closure)
+        result.extend(set(self._fixture_defs).difference(result))
+        return result
 
     @property
     def node(self):
@@ -565,7 +567,20 @@ class FixtureRequest(FuncargnamesCompatAttr):
         except (AttributeError, ValueError):
             param = NOTSET
             param_index = 0
-            if fixturedef.params is not None:
+            has_params = fixturedef.params is not None
+            fixtures_not_supported = getattr(funcitem, "nofuncargs", False)
+            if has_params and fixtures_not_supported:
+                msg = (
+                    "{name} does not support fixtures, maybe unittest.TestCase subclass?\n"
+                    "Node id: {nodeid}\n"
+                    "Function type: {typename}"
+                ).format(
+                    name=funcitem.name,
+                    nodeid=funcitem.nodeid,
+                    typename=type(funcitem).__name__,
+                )
+                fail(msg)
+            if has_params:
                 frame = inspect.stack()[3]
                 frameinfo = inspect.getframeinfo(frame[0])
                 source_path = frameinfo.filename
@@ -574,9 +589,11 @@ class FixtureRequest(FuncargnamesCompatAttr):
                 if source_path.relto(funcitem.config.rootdir):
                     source_path = source_path.relto(funcitem.config.rootdir)
                 msg = (
-                    "The requested fixture has no parameter defined for the "
-                    "current test.\n\nRequested fixture '{}' defined in:\n{}"
+                    "The requested fixture has no parameter defined for test:\n"
+                    "    {}\n\n"
+                    "Requested fixture '{}' defined in:\n{}"
                     "\n\nRequested here:\n{}:{}".format(
+                        funcitem.nodeid,
                         fixturedef.argname,
                         getlocation(fixturedef.func, funcitem.config.rootdir),
                         source_path,

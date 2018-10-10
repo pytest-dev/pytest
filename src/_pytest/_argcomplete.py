@@ -1,4 +1,3 @@
-
 """allow bash-completion for argparse with argcomplete if installed
 needs argcomplete>=0.5.6 for python 3.2/3.3 (older versions fail
 to find the magic string, so _ARGCOMPLETE env. var is never set, and
