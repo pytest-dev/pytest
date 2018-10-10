@@ -899,7 +899,7 @@ class FixtureDef(object):
         return hook.pytest_fixture_setup(fixturedef=self, request=request)
 
     def __repr__(self):
-        return "<FixtureDef name=%r scope=%r baseid=%r >" % (
+        return "<FixtureDef name=%r scope=%r baseid=%r>" % (
             self.argname,
             self.scope,
             self.baseid,
