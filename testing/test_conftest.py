@@ -4,7 +4,7 @@ import textwrap
 import py
 import pytest
 from _pytest.config import PytestPluginManager
-from _pytest.main import EXIT_NOTESTSCOLLECTED, EXIT_USAGEERROR
+from _pytest.main import EXIT_NOTESTSCOLLECTED, EXIT_OK, EXIT_USAGEERROR
 
 
 @pytest.fixture(scope="module", params=["global", "inpackage"])
@@ -184,6 +184,52 @@ def test_conftest_confcutdir(testdir):
     result = testdir.runpytest("-h", "--confcutdir=%s" % x, x)
     result.stdout.fnmatch_lines(["*--xyz*"])
     assert "warning: could not load initial" not in result.stdout.str()
+
+
+@pytest.mark.skipif(
+    not hasattr(py.path.local, "mksymlinkto"),
+    reason="symlink not available on this platform",
+)
+def test_conftest_symlink(testdir):
+    """Ensure that conftest.py is used for resolved symlinks."""
+    realtests = testdir.tmpdir.mkdir("real").mkdir("app").mkdir("tests")
+    testdir.tmpdir.join("symlinktests").mksymlinkto(realtests)
+    testdir.makepyfile(
+        **{
+            "real/app/tests/test_foo.py": "def test1(fixture): pass",
+            "real/conftest.py": textwrap.dedent(
+                """
+                import pytest
+
+                print("conftest_loaded")
+
+                @pytest.fixture
+                def fixture():
+                    print("fixture_used")
+                """
+            ),
+        }
+    )
+    result = testdir.runpytest("-vs", "symlinktests")
+    result.stdout.fnmatch_lines(
+        [
+            "*conftest_loaded*",
+            "real/app/tests/test_foo.py::test1 fixture_used",
+            "PASSED",
+        ]
+    )
+    assert result.ret == EXIT_OK
+
+    realtests.ensure("__init__.py")
+    result = testdir.runpytest("-vs", "symlinktests/test_foo.py::test1")
+    result.stdout.fnmatch_lines(
+        [
+            "*conftest_loaded*",
+            "real/app/tests/test_foo.py::test1 fixture_used",
+            "PASSED",
+        ]
+    )
+    assert result.ret == EXIT_OK
 
 
 def test_no_conftest(testdir):

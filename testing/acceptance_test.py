@@ -753,16 +753,26 @@ class TestInvocationVariants(object):
             monkeypatch.syspath_prepend(p)
 
         # module picked up in symlink-ed directory:
+        # It picks up local/lib/foo/bar (symlink) via sys.path.
         result = testdir.runpytest("--pyargs", "-v", "foo.bar")
         testdir.chdir()
         assert result.ret == 0
-        result.stdout.fnmatch_lines(
-            [
-                "*lib/foo/bar/test_bar.py::test_bar*PASSED*",
-                "*lib/foo/bar/test_bar.py::test_other*PASSED*",
-                "*2 passed*",
-            ]
-        )
+        if hasattr(py.path.local, "mksymlinkto"):
+            result.stdout.fnmatch_lines(
+                [
+                    "lib/foo/bar/test_bar.py::test_bar <- local/lib/foo/bar/test_bar.py PASSED*",
+                    "lib/foo/bar/test_bar.py::test_other <- local/lib/foo/bar/test_bar.py PASSED*",
+                    "*2 passed*",
+                ]
+            )
+        else:
+            result.stdout.fnmatch_lines(
+                [
+                    "local/lib/foo/bar/test_bar.py::test_bar PASSED*",
+                    "local/lib/foo/bar/test_bar.py::test_other PASSED*",
+                    "*2 passed*",
+                ]
+            )
 
     def test_cmdline_python_package_not_exists(self, testdir):
         result = testdir.runpytest("--pyargs", "tpkgwhatv")
