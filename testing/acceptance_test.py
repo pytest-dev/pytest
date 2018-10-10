@@ -688,8 +688,6 @@ class TestInvocationVariants(object):
                 pytest.skip(six.text_type(e.args[0]))
         monkeypatch.delenv("PYTHONDONTWRITEBYTECODE", raising=False)
 
-        search_path = ["lib", os.path.join("local", "lib")]
-
         dirname = "lib"
         d = testdir.mkdir(dirname)
         foo = d.mkdir("foo")
@@ -728,8 +726,9 @@ class TestInvocationVariants(object):
                 dirs += (cur,)
             return os.pathsep.join(str(p) for p in dirs)
 
+        search_path = ["lib", os.path.join("local", "lib")]
         monkeypatch.setenv("PYTHONPATH", join_pythonpath(*search_path))
-        for p in search_path:
+        for p in reversed(search_path):
             monkeypatch.syspath_prepend(p)
 
         # module picked up in symlink-ed directory:
