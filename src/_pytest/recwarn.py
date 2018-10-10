@@ -156,18 +156,18 @@ class WarningsRecorder(warnings.catch_warnings):
         if six.PY2:
 
             def warn(*args, **kwargs):
-                return self._warn(*args, **kwargs)
+                return self._saved_warn(*args, **kwargs)
 
-            warnings.warn, self._warn = warn, warnings.warn
+            warnings.warn, self._saved_warn = warn, warnings.warn
         return self
 
     def __exit__(self, *exc_info):
         if not self._entered:
             __tracebackhide__ = True
             raise RuntimeError("Cannot exit %r without entering first" % self)
-        # see above where `self.mp` is assigned
+        # see above where `self._saved_warn` is assigned
         if six.PY2:
-            warnings.warn = self._warn
+            warnings.warn = self._saved_warn
         super(WarningsRecorder, self).__exit__(*exc_info)
 
 

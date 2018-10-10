@@ -1,0 +1,1 @@
+``pytest.warn`` will capture previously-warned warnings in Python 2. Previously they were never raised.
