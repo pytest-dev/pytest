@@ -245,9 +245,9 @@ class TestCustomAssertMsg(object):
             a = 1
 
         b = 2
-        assert A.a == b, (
-            "A.a appears not to be b\nor does not appear to be b\none of those"
-        )
+        assert (
+            A.a == b
+        ), "A.a appears not to be b\nor does not appear to be b\none of those"
 
     def test_custom_repr(self):
         class JSON(object):
