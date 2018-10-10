@@ -1323,6 +1323,7 @@ class LineMatcher(object):
         matches and non-matches are also printed on stdout.
 
         """
+        __tracebackhide__ = True
         self._match_lines(lines2, fnmatch, "fnmatch")
 
     def re_match_lines(self, lines2):
@@ -1334,6 +1335,7 @@ class LineMatcher(object):
         The matches and non-matches are also printed on stdout.
 
         """
+        __tracebackhide__ = True
         self._match_lines(lines2, lambda name, pat: re.match(pat, name), "re.match")
 
     def _match_lines(self, lines2, match_func, match_nickname):
