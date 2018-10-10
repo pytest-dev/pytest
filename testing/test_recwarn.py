@@ -350,3 +350,13 @@ class TestWarns(object):
             with pytest.warns(UserWarning, match=r"aaa"):
                 warnings.warn("bbbbbbbbbb", UserWarning)
                 warnings.warn("cccccccccc", UserWarning)
+
+    @pytest.mark.filterwarnings("ignore")
+    def test_can_capture_previously_warned(self):
+        def f():
+            warnings.warn(UserWarning("ohai"))
+            return 10
+
+        assert f() == 10
+        assert pytest.warns(UserWarning, f) == 10
+        assert pytest.warns(UserWarning, f) == 10

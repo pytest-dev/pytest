@@ -149,12 +149,25 @@ class WarningsRecorder(warnings.catch_warnings):
             raise RuntimeError("Cannot enter %r twice" % self)
         self._list = super(WarningsRecorder, self).__enter__()
         warnings.simplefilter("always")
+        # python3 keeps track of a "filter version", when the filters are
+        # updated previously seen warnings can be re-warned.  python2 has no
+        # concept of this so we must reset the warnings registry manually.
+        # trivial patching of `warnings.warn` seems to be enough somehow?
+        if six.PY2:
+
+            def warn(*args, **kwargs):
+                return self._warn(*args, **kwargs)
+
+            warnings.warn, self._warn = warn, warnings.warn
         return self
 
     def __exit__(self, *exc_info):
         if not self._entered:
             __tracebackhide__ = True
             raise RuntimeError("Cannot exit %r without entering first" % self)
+        # see above where `self.mp` is assigned
+        if six.PY2:
+            warnings.warn = self._warn
         super(WarningsRecorder, self).__exit__(*exc_info)
 
 
