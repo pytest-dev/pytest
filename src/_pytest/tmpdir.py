@@ -25,8 +25,8 @@ class TempPathFactory(object):
 
     The base directory can be configured using the ``--basetemp`` option."""
 
-    given_basetemp = attr.ib()
-    trace = attr.ib()
+    _given_basetemp = attr.ib()
+    _trace = attr.ib()
     _basetemp = attr.ib(default=None)
 
     @classmethod
@@ -45,14 +45,14 @@ class TempPathFactory(object):
             p.mkdir()
         else:
             p = make_numbered_dir(root=self.getbasetemp(), prefix=basename)
-            self.trace("mktemp", p)
+            self._trace("mktemp", p)
         return p
 
     def getbasetemp(self):
         """ return base temporary directory. """
         if self._basetemp is None:
-            if self.given_basetemp is not None:
-                basetemp = Path(self.given_basetemp)
+            if self._given_basetemp is not None:
+                basetemp = Path(self._given_basetemp)
                 ensure_reset_dir(basetemp)
             else:
                 from_env = os.environ.get("PYTEST_DEBUG_TEMPROOT")
@@ -67,7 +67,7 @@ class TempPathFactory(object):
                 )
             assert basetemp is not None
             self._basetemp = t = basetemp
-            self.trace("new basetemp", t)
+            self._trace("new basetemp", t)
             return t
         else:
             return self._basetemp

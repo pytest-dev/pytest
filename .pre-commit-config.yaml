@@ -43,6 +43,6 @@ repos:
     -   id: changelogs-rst
         name: changelog filenames
         language: fail
-        entry: 'changelog files must be named ####.(feature|bugfix|doc|removal|vendor|trivial).rst'
+        entry: 'changelog files must be named ####.(feature|bugfix|doc|deprecation|removal|vendor|trivial).rst'
         exclude: changelog/(\d+\.(feature|bugfix|doc|deprecation|removal|vendor|trivial).rst|README.rst|_template.rst)
         files: ^changelog/

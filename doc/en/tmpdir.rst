@@ -6,7 +6,7 @@ Temporary directories and files
 ================================================
 
 The ``tmp_path`` fixture
-----------------------
+------------------------
 
 .. versionadded:: 3.9
 
@@ -15,11 +15,15 @@ You can use the ``tmpdir`` fixture which will
 provide a temporary directory unique to the test invocation,
 created in the `base temporary directory`_.
 
-``tmpdir`` is a `pathlib/pathlib2.Path`_ object. Here is an example test usage::
+``tmpdir`` is a ``pathlib/pathlib2.Path`` object. Here is an example test usage:
+
+.. code-block:: python
 
     # content of test_tmp_path.py
     import os
+
     CONTENT = u"content"
+
 
     def test_create_file(tmp_path):
         d = tmp_path / "sub"
@@ -38,8 +42,8 @@ Running this would result in a passed test except for the last
 
 
 
-The ``tmp_path_facotry`` fixture
-------------------------------
+The ``tmp_path_factory`` fixture
+--------------------------------
 
 .. versionadded:: 3.9
 
@@ -47,7 +51,7 @@ The ``tmp_path_facotry`` fixture
 The ``tmp_path_facotry`` is a session-scoped fixture which can be used
 to create arbitrary temporary directories from any other fixture or test.
 
-its intended to replace ``tmpdir_factory``
+its intended to replace ``tmpdir_factory`` and returns :class:`pathlib.Path` instances.
 
 
 The 'tmpdir' fixture
