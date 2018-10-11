@@ -26,10 +26,10 @@ def test_coloredlogformatter():
     formatter = ColoredLevelFormatter(tw, logfmt)
     output = formatter.format(record)
     assert output == (
-        "dummypath                   10 " "\x1b[32mINFO    \x1b[0m Test Message"
+        "dummypath                   10 \x1b[32mINFO    \x1b[0m Test Message"
     )
 
     tw.hasmarkup = False
     formatter = ColoredLevelFormatter(tw, logfmt)
     output = formatter.format(record)
-    assert output == ("dummypath                   10 " "INFO     Test Message")
+    assert output == ("dummypath                   10 INFO     Test Message")

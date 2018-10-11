@@ -139,7 +139,7 @@ def showhelp(config):
     tw.line()
     tw.line()
     tw.line(
-        "[pytest] ini-options in the first " "pytest.ini|tox.ini|setup.cfg file found:"
+        "[pytest] ini-options in the first pytest.ini|tox.ini|setup.cfg file found:"
     )
     tw.line()
 

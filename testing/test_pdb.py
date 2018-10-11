@@ -281,9 +281,7 @@ class TestPDB(object):
                 assert False
         """
         )
-        child = testdir.spawn_pytest(
-            "--show-capture=all --pdb " "-p no:logging %s" % p1
-        )
+        child = testdir.spawn_pytest("--show-capture=all --pdb -p no:logging %s" % p1)
         child.expect("get rekt")
         output = child.before.decode("utf8")
         assert "captured log" not in output

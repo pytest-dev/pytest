@@ -275,7 +275,7 @@ def get_real_func(obj):
         obj = new_obj
     else:
         raise ValueError(
-            ("could not find real function of {start}" "\nstopped at {current}").format(
+            ("could not find real function of {start}\nstopped at {current}").format(
                 start=py.io.saferepr(start_obj), current=py.io.saferepr(obj)
             )
         )
