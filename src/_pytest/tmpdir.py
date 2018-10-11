@@ -8,6 +8,8 @@ import py
 from _pytest.monkeypatch import MonkeyPatch
 import attr
 import tempfile
+import warnings
+
 from .pathlib import (
     Path,
     make_numbered_dir,
@@ -88,6 +90,9 @@ class TempdirFactory(object):
             and is guaranteed to be empty.
         """
         # py.log._apiwarn(">1.1", "use tmpdir function argument")
+        from .deprecated import PYTEST_ENSURETEMP
+
+        warnings.warn(PYTEST_ENSURETEMP, stacklevel=2)
         return self.getbasetemp().ensure(string, dir=dir)
 
     def mktemp(self, basename, numbered=True):
@@ -100,9 +105,6 @@ class TempdirFactory(object):
     def getbasetemp(self):
         """backward compat wrapper for ``_tmppath_factory.getbasetemp``"""
         return py.path.local(self._tmppath_factory.getbasetemp().resolve())
-
-    def finish(self):
-        self._tmppath_factory.trace("finish")
 
 
 def get_user():
@@ -127,16 +129,32 @@ def pytest_configure(config):
     mp = MonkeyPatch()
     tmppath_handler = TempPathFactory.from_config(config)
     t = TempdirFactory(tmppath_handler)
-    config._cleanup.extend([mp.undo, t.finish])
+    config._cleanup.append(mp.undo)
+    mp.setattr(config, "_tmp_path_factory", tmppath_handler, raising=False)
     mp.setattr(config, "_tmpdirhandler", t, raising=False)
     mp.setattr(pytest, "ensuretemp", t.ensuretemp, raising=False)
 
 
 @pytest.fixture(scope="session")
 def tmpdir_factory(request):
-    """Return a TempdirFactory instance for the test session.
+    """Return a :class:`_pytest.tmpdir.TempdirFactory` instance for the test session.
     """
     return request.config._tmpdirhandler
+
+
+@pytest.fixture(scope="session")
+def tmp_path_factory(request):
+    """Return a :class:`_pytest.tmpdir.TempPathFactory` instance for the test session.
+    """
+    return request.config._tmp_path_factory
+
+
+def _mk_tmp(request, factory):
+    name = request.node.name
+    name = re.sub(r"[\W]", "_", name)
+    MAXVAL = 30
+    name = name[:MAXVAL]
+    return factory.mktemp(name, numbered=True)
 
 
 @pytest.fixture
@@ -149,17 +167,11 @@ def tmpdir(request, tmpdir_factory):
 
     .. _`py.path.local`: https://py.readthedocs.io/en/latest/path.html
     """
-    name = request.node.name
-    name = re.sub(r"[\W]", "_", name)
-    MAXVAL = 30
-    if len(name) > MAXVAL:
-        name = name[:MAXVAL]
-    x = tmpdir_factory.mktemp(name, numbered=True)
-    return x
+    return _mk_tmp(request, tmpdir_factory)
 
 
 @pytest.fixture
-def tmp_path(tmpdir):
+def tmp_path(request, tmp_path_factory):
     """Return a temporary directory path object
     which is unique to each test function invocation,
     created as a sub directory of the base temporary
@@ -171,4 +183,4 @@ def tmp_path(tmpdir):
         in python < 3.6 this is a pathlib2.Path
     """
 
-    return Path(tmpdir)
+    return _mk_tmp(request, tmp_path_factory)
