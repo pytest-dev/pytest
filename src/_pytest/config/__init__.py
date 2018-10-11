@@ -378,25 +378,27 @@ class PytestPluginManager(PluginManager):
     def _getconftestmodules(self, path):
         if self._noconftest:
             return []
-        try:
-            return self._path2confmods[path]
-        except KeyError:
-            if path.isfile():
-                clist = self._getconftestmodules(path.dirpath())
-            else:
-                # XXX these days we may rather want to use config.rootdir
-                # and allow users to opt into looking into the rootdir parent
-                # directories instead of requiring to specify confcutdir
-                clist = []
-                for parent in path.parts():
-                    if self._confcutdir and self._confcutdir.relto(parent):
-                        continue
-                    conftestpath = parent.join("conftest.py")
-                    if conftestpath.isfile():
-                        mod = self._importconftest(conftestpath)
-                        clist.append(mod)
 
-            self._path2confmods[path] = clist
+        if path.isfile():
+            directory = path.dirpath()
+        else:
+            directory = path
+        try:
+            return self._path2confmods[directory]
+        except KeyError:
+            # XXX these days we may rather want to use config.rootdir
+            # and allow users to opt into looking into the rootdir parent
+            # directories instead of requiring to specify confcutdir
+            clist = []
+            for parent in directory.parts():
+                if self._confcutdir and self._confcutdir.relto(parent):
+                    continue
+                conftestpath = parent.join("conftest.py")
+                if conftestpath.isfile():
+                    mod = self._importconftest(conftestpath)
+                    clist.append(mod)
+
+            self._path2confmods[directory] = clist
             return clist
 
     def _rget_with_confmod(self, name, path):
