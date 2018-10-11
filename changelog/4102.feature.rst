@@ -1,0 +1,4 @@
+Reimplement ``pytest.deprecated_call`` using ``pytest.warns`` so it supports the ``match='...'`` keyword argument.
+
+This has the side effect that ``pytest.deprecated_call`` now raises ``pytest.fail.Exception`` instead
+of ``AssertionError``.
