@@ -1,0 +1,4 @@
+Improve usage errors messages by hiding internal details which can be distracting and noisy.
+
+This has the side effect that some error conditions that previously raised generic errors (such as
+``ValueError`` for unregistered marks) are now raising ``Failed`` exceptions.

@@ -247,7 +247,7 @@ def test_marker_without_description(testdir):
     )
     ftdir = testdir.mkdir("ft1_dummy")
     testdir.tmpdir.join("conftest.py").move(ftdir.join("conftest.py"))
-    rec = testdir.runpytest_subprocess("--strict")
+    rec = testdir.runpytest("--strict")
     rec.assert_outcomes()
 
 
@@ -302,7 +302,7 @@ def test_strict_prohibits_unregistered_markers(testdir):
     )
     result = testdir.runpytest("--strict")
     assert result.ret != 0
-    result.stdout.fnmatch_lines(["*unregisteredmark*not*registered*"])
+    result.stdout.fnmatch_lines(["'unregisteredmark' not a registered marker"])
 
 
 @pytest.mark.parametrize(
