@@ -451,13 +451,35 @@ class ExceptionInfo(object):
         tbfilter=True,
         funcargs=False,
         truncate_locals=True,
+        chain=True,
     ):
-        """ return str()able representation of this exception info.
-            showlocals: show locals per traceback entry
-            style: long|short|no|native traceback style
-            tbfilter: hide entries (where __tracebackhide__ is true)
+        """
+        Return str()able representation of this exception info.
 
-            in case of style==native, tbfilter and showlocals is ignored.
+        :param bool showlocals:
+            Show locals per traceback entry.
+            Ignored if ``style=="native"``.
+
+        :param str style: long|short|no|native traceback style
+
+        :param bool abspath:
+            If paths should be changed to absolute or left unchanged.
+
+        :param bool tbfilter:
+            Hide entries that contain a local variable ``__tracebackhide__==True``.
+            Ignored if ``style=="native"``.
+
+        :param bool funcargs:
+            Show fixtures ("funcargs" for legacy purposes) per traceback entry.
+
+        :param bool truncate_locals:
+            With ``showlocals==True``, make sure locals can be safely represented as strings.
+
+        :param bool chain: if chained exceptions in Python 3 should be shown.
+
+        .. versionchanged:: 3.9
+
+            Added the ``chain`` parameter.
         """
         if style == "native":
             return ReprExceptionInfo(
@@ -476,6 +498,7 @@ class ExceptionInfo(object):
             tbfilter=tbfilter,
             funcargs=funcargs,
             truncate_locals=truncate_locals,
+            chain=chain,
         )
         return fmt.repr_excinfo(self)
 
@@ -516,6 +539,7 @@ class FormattedExcinfo(object):
     tbfilter = attr.ib(default=True)
     funcargs = attr.ib(default=False)
     truncate_locals = attr.ib(default=True)
+    chain = attr.ib(default=True)
     astcache = attr.ib(default=attr.Factory(dict), init=False, repr=False)
 
     def _getindent(self, source):
@@ -735,7 +759,7 @@ class FormattedExcinfo(object):
                     reprcrash = None
 
                 repr_chain += [(reprtraceback, reprcrash, descr)]
-                if e.__cause__ is not None:
+                if e.__cause__ is not None and self.chain:
                     e = e.__cause__
                     excinfo = (
                         ExceptionInfo((type(e), e, e.__traceback__))
@@ -743,7 +767,11 @@ class FormattedExcinfo(object):
                         else None
                     )
                     descr = "The above exception was the direct cause of the following exception:"
-                elif e.__context__ is not None and not e.__suppress_context__:
+                elif (
+                    e.__context__ is not None
+                    and not e.__suppress_context__
+                    and self.chain
+                ):
                     e = e.__context__
                     excinfo = (
                         ExceptionInfo((type(e), e, e.__traceback__))
