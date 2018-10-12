@@ -19,11 +19,11 @@ def test_ensuretemp(recwarn):
 
 class TestTempdirHandler(object):
     def test_mktemp(self, testdir):
-        from _pytest.tmpdir import TempdirFactory
+        from _pytest.tmpdir import TempdirFactory, TempPathFactory
 
         config = testdir.parseconfig()
         config.option.basetemp = testdir.mkdir("hello")
-        t = TempdirFactory(config)
+        t = TempdirFactory(TempPathFactory.from_config(config))
         tmp = t.mktemp("world")
         assert tmp.relto(t.getbasetemp()) == "world0"
         tmp = t.mktemp("this")
@@ -111,7 +111,7 @@ def test_tmpdir_factory(testdir):
         def session_dir(tmpdir_factory):
             return tmpdir_factory.mktemp('data', numbered=False)
         def test_some(session_dir):
-            session_dir.isdir()
+            assert session_dir.isdir()
     """
     )
     reprec = testdir.inline_run()
@@ -184,3 +184,94 @@ def test_get_user(monkeypatch):
     monkeypatch.delenv("USER", raising=False)
     monkeypatch.delenv("USERNAME", raising=False)
     assert get_user() is None
+
+
+class TestNumberedDir(object):
+    PREFIX = "fun-"
+
+    def test_make(self, tmp_path):
+        from _pytest.pathlib import make_numbered_dir
+
+        for i in range(10):
+            d = make_numbered_dir(root=tmp_path, prefix=self.PREFIX)
+            assert d.name.startswith(self.PREFIX)
+            assert d.name.endswith(str(i))
+
+    def test_cleanup_lock_create(self, tmp_path):
+        d = tmp_path.joinpath("test")
+        d.mkdir()
+        from _pytest.pathlib import create_cleanup_lock
+
+        lockfile = create_cleanup_lock(d)
+        with pytest.raises(EnvironmentError, match="cannot create lockfile in .*"):
+            create_cleanup_lock(d)
+
+        lockfile.unlink()
+
+    def test_lock_register_cleanup_removal(self, tmp_path):
+        from _pytest.pathlib import create_cleanup_lock, register_cleanup_lock_removal
+
+        lock = create_cleanup_lock(tmp_path)
+
+        registry = []
+        register_cleanup_lock_removal(lock, register=registry.append)
+
+        cleanup_func, = registry
+
+        assert lock.is_file()
+
+        cleanup_func(original_pid="intentionally_different")
+
+        assert lock.is_file()
+
+        cleanup_func()
+
+        assert not lock.exists()
+
+        cleanup_func()
+
+        assert not lock.exists()
+
+    def test_cleanup_keep(self, tmp_path):
+        self.test_make(tmp_path)
+        from _pytest.pathlib import cleanup_numbered_dir
+
+        cleanup_numbered_dir(
+            root=tmp_path,
+            prefix=self.PREFIX,
+            keep=2,
+            consider_lock_dead_if_created_before=0,
+        )
+        a, b = tmp_path.iterdir()
+        print(a, b)
+
+    def test_cleanup_locked(self, tmp_path):
+
+        from _pytest import pathlib
+
+        p = pathlib.make_numbered_dir(root=tmp_path, prefix=self.PREFIX)
+
+        pathlib.create_cleanup_lock(p)
+
+        assert not pathlib.ensure_deletable(
+            p, consider_lock_dead_if_created_before=p.stat().st_mtime - 1
+        )
+        assert pathlib.ensure_deletable(
+            p, consider_lock_dead_if_created_before=p.stat().st_mtime + 1
+        )
+
+    def test_rmtree(self, tmp_path):
+        from _pytest.pathlib import rmtree
+
+        adir = tmp_path / "adir"
+        adir.mkdir()
+        rmtree(adir)
+
+        assert not adir.exists()
+
+        adir.mkdir()
+        afile = adir / "afile"
+        afile.write_bytes(b"aa")
+
+        rmtree(adir, force=True)
+        assert not adir.exists()

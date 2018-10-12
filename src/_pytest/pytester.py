@@ -17,12 +17,13 @@ from weakref import WeakKeyDictionary
 
 from _pytest.capture import MultiCapture, SysCapture
 from _pytest._code import Source
-import py
-import pytest
 from _pytest.main import Session, EXIT_OK
 from _pytest.assertion.rewrite import AssertionRewritingHook
-from _pytest.compat import Path
+from _pytest.pathlib import Path
 from _pytest.compat import safe_str
+
+import py
+import pytest
 
 IGNORE_PAM = [  # filenames added when obtaining details about the current user
     u"/var/lib/sss/mc/passwd"
@@ -495,6 +496,8 @@ class Testdir(object):
         self._mod_collections = WeakKeyDictionary()
         name = request.function.__name__
         self.tmpdir = tmpdir_factory.mktemp(name, numbered=True)
+        self.test_tmproot = tmpdir_factory.mktemp("tmp-" + name, numbered=True)
+        os.environ["PYTEST_DEBUG_TEMPROOT"] = str(self.test_tmproot)
         self.plugins = []
         self._cwd_snapshot = CwdSnapshot()
         self._sys_path_snapshot = SysPathsSnapshot()
@@ -521,6 +524,7 @@ class Testdir(object):
         self._sys_modules_snapshot.restore()
         self._sys_path_snapshot.restore()
         self._cwd_snapshot.restore()
+        os.environ.pop("PYTEST_DEBUG_TEMPROOT", None)
 
     def __take_sys_modules_snapshot(self):
         # some zope modules used by twisted-related tests keep internal state

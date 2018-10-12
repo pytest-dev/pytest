@@ -4,7 +4,7 @@ import py
 
 import pytest
 
-from _pytest.paths import fnmatch_ex
+from _pytest.pathlib import fnmatch_ex
 
 
 class TestPort:

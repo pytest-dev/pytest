@@ -20,7 +20,9 @@ repos:
     -   id: check-yaml
     -   id: debug-statements
         exclude: _pytest/debugging.py
+        language_version: python3
     -   id: flake8
+        language_version: python3
 -   repo: https://github.com/asottile/pyupgrade
     rev: v1.8.0
     hooks:
@@ -41,6 +43,6 @@ repos:
     -   id: changelogs-rst
         name: changelog filenames
         language: fail
-        entry: 'changelog files must be named ####.(feature|bugfix|doc|removal|vendor|trivial).rst'
+        entry: 'changelog files must be named ####.(feature|bugfix|doc|deprecation|removal|vendor|trivial).rst'
         exclude: changelog/(\d+\.(feature|bugfix|doc|deprecation|removal|vendor|trivial).rst|README.rst|_template.rst)
         files: ^changelog/
