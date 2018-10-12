@@ -1,0 +1,1 @@
+Update usefixtures documentation to clarify that it can't be used with fixture functions.
