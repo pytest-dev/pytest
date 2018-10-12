@@ -16,7 +16,7 @@ from _pytest.main import FSHookProxy
 from _pytest.config import hookimpl
 
 import _pytest
-import pluggy
+from _pytest._code import filter_traceback
 from _pytest import fixtures
 from _pytest import nodes
 from _pytest import deprecated
@@ -45,37 +45,6 @@ from _pytest.mark.structures import (
     normalize_mark_list,
 )
 from _pytest.warning_types import RemovedInPytest4Warning, PytestWarning
-
-# relative paths that we use to filter traceback entries from appearing to the user;
-# see filter_traceback
-# note: if we need to add more paths than what we have now we should probably use a list
-# for better maintenance
-_pluggy_dir = py.path.local(pluggy.__file__.rstrip("oc"))
-# pluggy is either a package or a single module depending on the version
-if _pluggy_dir.basename == "__init__.py":
-    _pluggy_dir = _pluggy_dir.dirpath()
-_pytest_dir = py.path.local(_pytest.__file__).dirpath()
-_py_dir = py.path.local(py.__file__).dirpath()
-
-
-def filter_traceback(entry):
-    """Return True if a TracebackEntry instance should be removed from tracebacks:
-    * dynamically generated code (no code to show up for it);
-    * internal traceback from pytest or its internal libraries, py and pluggy.
-    """
-    # entry.path might sometimes return a str object when the entry
-    # points to dynamically generated code
-    # see https://bitbucket.org/pytest-dev/py/issues/71
-    raw_filename = entry.frame.code.raw.co_filename
-    is_generated = "<" in raw_filename and ">" in raw_filename
-    if is_generated:
-        return False
-    # entry.path might point to a non-existing file, in which case it will
-    # also return a str object. see #1133
-    p = py.path.local(entry.path)
-    return (
-        not p.relto(_pluggy_dir) and not p.relto(_pytest_dir) and not p.relto(_py_dir)
-    )
 
 
 def pyobj_property(name):

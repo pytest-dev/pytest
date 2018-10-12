@@ -19,6 +19,7 @@ import _pytest._code
 import _pytest.hookspec  # the extension point definitions
 import _pytest.assertion
 from pluggy import PluginManager, HookimplMarker, HookspecMarker
+from _pytest._code import ExceptionInfo, filter_traceback
 from _pytest.compat import safe_str
 from .exceptions import UsageError, PrintHelp
 from .findpaths import determine_setup, exists
@@ -57,15 +58,11 @@ def main(args=None, plugins=None):
         try:
             config = _prepareconfig(args, plugins)
         except ConftestImportFailure as e:
-            from _pytest._code import ExceptionInfo
-
             exc_info = ExceptionInfo(e.excinfo)
             tw = py.io.TerminalWriter(sys.stderr)
             tw.line(
                 "ImportError while loading conftest '{e.path}'.".format(e=e), red=True
             )
-            from _pytest.python import filter_traceback
-
             exc_info.traceback = exc_info.traceback.filter(filter_traceback)
             exc_repr = (
                 exc_info.getrepr(style="short", chain=False)
