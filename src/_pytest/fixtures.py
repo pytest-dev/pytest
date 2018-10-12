@@ -956,6 +956,8 @@ def pytest_fixture_setup(fixturedef, request):
         kwargs[argname] = result
 
     fixturefunc = resolve_fixture_function(fixturedef, request)
+    if hasattr(fixturefunc,'pytestmark'):
+        fail('nono', pytrace=False)
     my_cache_key = request.param_index
     try:
         result = call_fixture_func(fixturefunc, request, kwargs)
