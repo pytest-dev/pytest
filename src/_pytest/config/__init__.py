@@ -57,10 +57,24 @@ def main(args=None, plugins=None):
         try:
             config = _prepareconfig(args, plugins)
         except ConftestImportFailure as e:
+            from _pytest._code import ExceptionInfo
+
+            exc_info = ExceptionInfo(e.excinfo)
             tw = py.io.TerminalWriter(sys.stderr)
-            for line in traceback.format_exception(*e.excinfo):
+            tw.line(
+                "ImportError while loading conftest '{e.path}'.".format(e=e), red=True
+            )
+            from _pytest.python import filter_traceback
+
+            exc_info.traceback = exc_info.traceback.filter(filter_traceback)
+            exc_repr = (
+                exc_info.getrepr(style="short", chain=False)
+                if exc_info.traceback
+                else exc_info.exconly()
+            )
+            formatted_tb = safe_str(exc_repr)
+            for line in formatted_tb.splitlines():
                 tw.line(line.rstrip(), red=True)
-            tw.line("ERROR: could not load %s\n" % (e.path,), red=True)
             return 4
         else:
             try:
