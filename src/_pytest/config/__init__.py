@@ -3,7 +3,6 @@ from __future__ import absolute_import, division, print_function
 import argparse
 import inspect
 import shlex
-import traceback
 import types
 import warnings
 import copy
@@ -27,21 +26,12 @@ from .findpaths import determine_setup, exists
 hookimpl = HookimplMarker("pytest")
 hookspec = HookspecMarker("pytest")
 
-# pytest startup
-#
-
 
 class ConftestImportFailure(Exception):
     def __init__(self, path, excinfo):
         Exception.__init__(self, path, excinfo)
         self.path = path
         self.excinfo = excinfo
-
-    def __str__(self):
-        etype, evalue, etb = self.excinfo
-        formatted = traceback.format_tb(etb)
-        # The level of the tracebacks we want to print is hand crafted :(
-        return repr(evalue) + "\n" + "".join(formatted[2:])
 
 
 def main(args=None, plugins=None):
