@@ -564,9 +564,7 @@ class Session(nodes.FSCollector):
         return True
 
     def _tryconvertpyarg(self, x):
-        """Convert a dotted module name to path.
-
-        """
+        """Convert a dotted module name to path."""
         try:
             with _patched_find_module():
                 loader = pkgutil.find_loader(x)
@@ -598,8 +596,7 @@ class Session(nodes.FSCollector):
                 raise UsageError(
                     "file or package not found: " + arg + " (missing __init__.py?)"
                 )
-            else:
-                raise UsageError("file not found: " + arg)
+            raise UsageError("file not found: " + arg)
         parts[0] = path
         return parts
 
