@@ -334,8 +334,12 @@ class TestPDB(object):
         )
         p1 = testdir.makepyfile("def test_func(): pass")
         child = testdir.spawn_pytest("--pdb %s" % p1)
-        # child.expect(".*import pytest.*")
         child.expect("Pdb")
+
+        # INTERNALERROR is only displayed once via terminal reporter.
+        assert len([x for x in child.before.decode().splitlines()
+                    if x.startswith("INTERNALERROR> Traceback")]) == 1
+
         child.sendeof()
         self.flush(child)
 
