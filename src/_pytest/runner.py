@@ -50,7 +50,7 @@ def pytest_terminal_summary(terminalreporter):
         dlist = dlist[:durations]
 
     for rep in dlist:
-        if verbose < 2 and rep.duration < 0.01:
+        if verbose < 2 and rep.duration < 0.005:
             tr.write_line("0.00 durations hidden.  Use -vv to show these durations.")
             break
         nodeid = rep.nodeid.replace("::()::", "::")
