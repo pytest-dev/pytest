@@ -1184,20 +1184,28 @@ raise ValueError()
         assert tw.lines[47] == ":15: AttributeError"
 
     @pytest.mark.skipif("sys.version_info[0] < 3")
-    def test_exc_repr_with_raise_from_none_chain_suppression(self, importasmod):
+    @pytest.mark.parametrize("mode", ["from_none", "explicit_suppress"])
+    def test_exc_repr_chain_suppression(self, importasmod, mode):
+        """Check that exc repr does not show chained exceptions in Python 3.
+        - When the exception is raised with "from None"
+        - Explicitly suppressed with "chain=False" to ExceptionInfo.getrepr().
+        """
+        raise_suffix = " from None" if mode == "from_none" else ""
         mod = importasmod(
             """
             def f():
                 try:
                     g()
                 except Exception:
-                    raise AttributeError() from None
+                    raise AttributeError(){raise_suffix}
             def g():
                 raise ValueError()
-        """
+        """.format(
+                raise_suffix=raise_suffix
+            )
         )
         excinfo = pytest.raises(AttributeError, mod.f)
-        r = excinfo.getrepr(style="long")
+        r = excinfo.getrepr(style="long", chain=mode != "explicit_suppress")
         tw = TWMock()
         r.toterminal(tw)
         for line in tw.lines:
@@ -1207,7 +1215,9 @@ raise ValueError()
         assert tw.lines[2] == "        try:"
         assert tw.lines[3] == "            g()"
         assert tw.lines[4] == "        except Exception:"
-        assert tw.lines[5] == ">           raise AttributeError() from None"
+        assert tw.lines[5] == ">           raise AttributeError(){}".format(
+            raise_suffix
+        )
         assert tw.lines[6] == "E           AttributeError"
         assert tw.lines[7] == ""
         line = tw.get_write_msg(8)

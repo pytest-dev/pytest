@@ -1,0 +1,4 @@
+Improve the error displayed when a ``conftest.py`` file could not be imported.
+
+In order to implement this, a new ``chain`` parameter was added to ``ExceptionInfo.getrepr``
+to show or hide chained tracebacks in Python 3 (defaults to ``True``).
