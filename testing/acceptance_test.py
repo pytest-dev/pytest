@@ -818,6 +818,10 @@ class TestDurations(object):
         result.stdout.fnmatch_lines_random(
             ["*durations*", "*call*test_3*", "*call*test_2*"]
         )
+        assert "test_something" not in result.stdout.str()
+        result.stdout.fnmatch_lines(
+            ["(0.00 durations hidden.  Use -vv to show these durations.)"]
+        )
 
     def test_calls_show_2(self, testdir):
         testdir.makepyfile(self.source)
