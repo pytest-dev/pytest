@@ -654,7 +654,7 @@ class DontReadFromInput(six.Iterator):
         return self
 
     def fileno(self):
-        raise UnsupportedOperation("redirected stdin is pseudofile, " "has no fileno()")
+        raise UnsupportedOperation("redirected stdin is pseudofile, has no fileno()")
 
     def isatty(self):
         return False

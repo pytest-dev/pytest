@@ -92,7 +92,7 @@ RECORD_XML_PROPERTY = RemovedInPytest4Warning(
 )
 
 COLLECTOR_MAKEITEM = RemovedInPytest4Warning(
-    "pycollector makeitem was removed " "as it is an accidentially leaked internal api"
+    "pycollector makeitem was removed as it is an accidentially leaked internal api"
 )
 
 METAFUNC_ADD_CALL = RemovedInPytest4Warning(

@@ -1,6 +1,6 @@
 environment:
   matrix:
-  - TOXENV: "linting"
+  - TOXENV: "linting,docs,doctesting"
     PYTEST_NO_COVERAGE: "1"
   - TOXENV: "py27"
   - TOXENV: "py34"
@@ -20,10 +20,7 @@ environment:
   - TOXENV: "py36-pluggymaster"
     PYTEST_NO_COVERAGE: "1"
   - TOXENV: "py27-nobyte"
-  - TOXENV: "doctesting"
   - TOXENV: "py36-freeze"
-    PYTEST_NO_COVERAGE: "1"
-  - TOXENV: "docs"
     PYTEST_NO_COVERAGE: "1"
 
 install:

@@ -582,7 +582,7 @@ get on the terminal - we are working on that)::
             b = 2
     >       assert (
                 A.a == b
-            ), "A.a appears not to be b\n" "or does not appear to be b\none of those"
+            ), "A.a appears not to be b\nor does not appear to be b\none of those"
     E       AssertionError: A.a appears not to be b
     E         or does not appear to be b
     E         one of those

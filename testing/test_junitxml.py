@@ -476,7 +476,7 @@ class TestPython(object):
         tnode.assert_attr(
             file="test_junit_prefixing.py",
             line="3",
-            classname="xyz.test_junit_prefixing." "TestHello",
+            classname="xyz.test_junit_prefixing.TestHello",
             name="test_hello",
         )
 

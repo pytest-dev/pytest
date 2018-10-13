@@ -130,7 +130,7 @@ def pytest_addoption(parser):
         "python_functions",
         type="args",
         default=["test"],
-        help="prefixes or glob names for Python test function and " "method discovery",
+        help="prefixes or glob names for Python test function and method discovery",
     )
 
     group.addoption(

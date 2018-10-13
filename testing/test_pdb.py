@@ -147,7 +147,7 @@ class TestPDB(object):
         child = testdir.spawn_pytest("--pdb %s" % p1)
         child.expect(".*def test_1")
         child.expect(".*i = 0")
-        child.expect("(Pdb)")
+        child.expect("Pdb")
         child.sendeof()
         rest = child.read().decode("utf8")
         assert "1 failed" in rest
@@ -174,7 +174,7 @@ class TestPDB(object):
         """
         )
         child = testdir.spawn_pytest("--pdb %s" % p1)
-        child.expect("(Pdb)")
+        child.expect("Pdb")
         child.sendline("p self.filename")
         child.sendeof()
         rest = child.read().decode("utf8")
@@ -209,7 +209,7 @@ class TestPDB(object):
         child = testdir.spawn_pytest("--pdb %s" % p1)
         child.expect("captured stdout")
         child.expect("get rekt")
-        child.expect("(Pdb)")
+        child.expect("Pdb")
         child.sendeof()
         rest = child.read().decode("utf8")
         assert "1 failed" in rest
@@ -228,7 +228,7 @@ class TestPDB(object):
         child = testdir.spawn_pytest("--pdb %s" % p1)
         child.expect("captured stderr")
         child.expect("get rekt")
-        child.expect("(Pdb)")
+        child.expect("Pdb")
         child.sendeof()
         rest = child.read().decode("utf8")
         assert "1 failed" in rest
@@ -243,7 +243,7 @@ class TestPDB(object):
         """
         )
         child = testdir.spawn_pytest("--pdb %s" % p1)
-        child.expect("(Pdb)")
+        child.expect("Pdb")
         output = child.before.decode("utf8")
         child.sendeof()
         assert "captured stdout" not in output
@@ -266,7 +266,7 @@ class TestPDB(object):
         if showcapture in ("all", "log"):
             child.expect("captured log")
             child.expect("get rekt")
-        child.expect("(Pdb)")
+        child.expect("Pdb")
         child.sendeof()
         rest = child.read().decode("utf8")
         assert "1 failed" in rest
@@ -281,13 +281,11 @@ class TestPDB(object):
                 assert False
         """
         )
-        child = testdir.spawn_pytest(
-            "--show-capture=all --pdb " "-p no:logging %s" % p1
-        )
+        child = testdir.spawn_pytest("--show-capture=all --pdb -p no:logging %s" % p1)
         child.expect("get rekt")
         output = child.before.decode("utf8")
         assert "captured log" not in output
-        child.expect("(Pdb)")
+        child.expect("Pdb")
         child.sendeof()
         rest = child.read().decode("utf8")
         assert "1 failed" in rest
@@ -306,7 +304,7 @@ class TestPDB(object):
         child = testdir.spawn_pytest("--pdb %s" % p1)
         child.expect(".*def test_1")
         child.expect(".*pytest.raises.*globalfunc")
-        child.expect("(Pdb)")
+        child.expect("Pdb")
         child.sendline("globalfunc")
         child.expect(".*function")
         child.sendeof()
@@ -322,7 +320,7 @@ class TestPDB(object):
         )
         child = testdir.spawn_pytest("--pdb %s" % p1)
         # child.expect(".*import pytest.*")
-        child.expect("(Pdb)")
+        child.expect("Pdb")
         child.sendeof()
         child.expect("1 error")
         self.flush(child)
@@ -337,7 +335,7 @@ class TestPDB(object):
         p1 = testdir.makepyfile("def test_func(): pass")
         child = testdir.spawn_pytest("--pdb %s" % p1)
         # child.expect(".*import pytest.*")
-        child.expect("(Pdb)")
+        child.expect("Pdb")
         child.sendeof()
         self.flush(child)
 
@@ -355,7 +353,7 @@ class TestPDB(object):
         child = testdir.spawn_pytest(str(p1))
         child.expect("test_1")
         child.expect("x = 3")
-        child.expect("(Pdb)")
+        child.expect("Pdb")
         child.sendeof()
         rest = child.read().decode("utf-8")
         assert "1 failed" in rest
@@ -373,7 +371,7 @@ class TestPDB(object):
         )
         child = testdir.spawn_pytest(str(p1))
         child.expect("test_1")
-        child.expect("(Pdb)")
+        child.expect("Pdb")
         child.sendeof()
         rest = child.read().decode("utf8")
         assert "1 failed" in rest
@@ -448,10 +446,10 @@ class TestPDB(object):
         """
         )
         child = testdir.spawn_pytest("--doctest-modules --pdb %s" % p1)
-        child.expect("(Pdb)")
+        child.expect("Pdb")
         child.sendline("i")
         child.expect("0")
-        child.expect("(Pdb)")
+        child.expect("Pdb")
         child.sendeof()
         rest = child.read().decode("utf8")
         assert "1 failed" in rest
@@ -474,9 +472,10 @@ class TestPDB(object):
         child = testdir.spawn_pytest(str(p1))
         child.expect("test_1")
         child.expect("x = 3")
-        child.expect("(Pdb)")
+        child.expect("Pdb")
         child.sendline("c")
         child.expect("x = 4")
+        child.expect("Pdb")
         child.sendeof()
         rest = child.read().decode("utf8")
         assert "1 failed" in rest
@@ -495,6 +494,7 @@ class TestPDB(object):
         )
         child = testdir.spawn("{} {}".format(sys.executable, p1))
         child.expect("x = 5")
+        child.expect("Pdb")
         child.sendeof()
         self.flush(child)
 
@@ -511,6 +511,7 @@ class TestPDB(object):
         )
         child = testdir.spawn_pytest(str(p1))
         child.expect("x = 5")
+        child.expect("Pdb")
         child.sendeof()
         self.flush(child)
 
@@ -690,7 +691,7 @@ class TestDebuggingBreakpoints(object):
         )
         child = testdir.spawn_pytest(str(p1))
         child.expect("test_1")
-        child.expect("(Pdb)")
+        child.expect("Pdb")
         child.sendeof()
         rest = child.read().decode("utf8")
         assert "1 failed" in rest
@@ -710,7 +711,7 @@ class TestDebuggingBreakpoints(object):
         )
         child = testdir.spawn_pytest(str(p1))
         child.expect("test_1")
-        child.expect("(Pdb)")
+        child.expect("Pdb")
         child.sendeof()
         rest = child.read().decode("utf8")
         assert "1 failed" in rest
@@ -728,7 +729,7 @@ class TestTraceOption:
         )
         child = testdir.spawn_pytest("--trace " + str(p1))
         child.expect("test_1")
-        child.expect("(Pdb)")
+        child.expect("Pdb")
         child.sendeof()
         rest = child.read().decode("utf8")
         assert "1 passed" in rest
@@ -747,7 +748,7 @@ class TestTraceOption:
         )
         child = testdir.spawn_pytest("--trace " + str(p1))
         child.expect("is_equal")
-        child.expect("(Pdb)")
+        child.expect("Pdb")
         child.sendeof()
         rest = child.read().decode("utf8")
         assert "1 passed" in rest
