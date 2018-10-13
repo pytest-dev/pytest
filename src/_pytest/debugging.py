@@ -1,10 +1,12 @@
 """ interactive debugging with PDB, the Python Debugger. """
 from __future__ import absolute_import, division, print_function
+
+import os
 import pdb
 import sys
-import os
 from doctest import UnexpectedException
 
+from _pytest import outcomes
 from _pytest.config import hookimpl
 
 try:
@@ -164,8 +166,9 @@ def _enter_pdb(node, excinfo, rep):
     rep.toterminal(tw)
     tw.sep(">", "entering PDB")
     tb = _postmortem_traceback(excinfo)
-    post_mortem(tb)
     rep._pdbshown = True
+    if post_mortem(tb):
+        outcomes.exit("Quitting debugger")
     return rep
 
 
@@ -196,3 +199,4 @@ def post_mortem(t):
     p = Pdb()
     p.reset()
     p.interaction(None, t)
+    return p.quitting

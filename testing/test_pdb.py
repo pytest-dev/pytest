@@ -25,6 +25,8 @@ def custom_pdb_calls():
 
     # install dummy debugger class and track which methods were called on it
     class _CustomPdb(object):
+        quitting = False
+
         def __init__(self, *args, **kwargs):
             called.append("init")
 
@@ -142,6 +144,9 @@ class TestPDB(object):
             def test_1():
                 i = 0
                 assert i == 1
+
+            def test_not_called_due_to_quit():
+                pass
         """
         )
         child = testdir.spawn_pytest("--pdb %s" % p1)
@@ -150,8 +155,9 @@ class TestPDB(object):
         child.expect("Pdb")
         child.sendeof()
         rest = child.read().decode("utf8")
-        assert "1 failed" in rest
+        assert "= 1 failed in" in rest
         assert "def test_1" not in rest
+        assert "Exit: Quitting debugger" in rest
         self.flush(child)
 
     @staticmethod
@@ -321,7 +327,7 @@ class TestPDB(object):
         child = testdir.spawn_pytest("--pdb %s" % p1)
         # child.expect(".*import pytest.*")
         child.expect("Pdb")
-        child.sendeof()
+        child.sendline("c")
         child.expect("1 error")
         self.flush(child)
 
@@ -376,6 +382,7 @@ class TestPDB(object):
         rest = child.read().decode("utf8")
         assert "1 failed" in rest
         assert "reading from stdin while output" not in rest
+        assert "BdbQuit" in rest
         self.flush(child)
 
     def test_pdb_and_capsys(self, testdir):
@@ -518,7 +525,9 @@ class TestPDB(object):
     def test_pdb_collection_failure_is_shown(self, testdir):
         p1 = testdir.makepyfile("xxx")
         result = testdir.runpytest_subprocess("--pdb", p1)
-        result.stdout.fnmatch_lines(["*NameError*xxx*", "*1 error*"])
+        result.stdout.fnmatch_lines(
+            ["E   NameError: *xxx*", "*! *Exit: Quitting debugger !*"]  # due to EOF
+        )
 
     def test_enter_pdb_hook_is_called(self, testdir):
         testdir.makeconftest(
