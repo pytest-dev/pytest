@@ -345,7 +345,7 @@ class TestPDB(object):
             import pytest
             def test_1():
                 i = 0
-                print ("hello17")
+                print("hello17")
                 pytest.set_trace()
                 x = 3
         """
@@ -383,7 +383,7 @@ class TestPDB(object):
             """
             import pytest
             def test_1(capsys):
-                print ("hello1")
+                print("hello1")
                 pytest.set_trace()
         """
         )
@@ -420,7 +420,7 @@ class TestPDB(object):
             def test_1():
                 pdb.set_trace()
             def test_2():
-                print ("hello")
+                print("hello")
                 assert 0
         """
         )
@@ -461,10 +461,10 @@ class TestPDB(object):
             import pytest
             def test_1():
                 i = 0
-                print ("hello17")
+                print("hello17")
                 pytest.set_trace()
                 x = 3
-                print ("hello18")
+                print("hello18")
                 pytest.set_trace()
                 x = 4
         """
@@ -525,7 +525,7 @@ class TestPDB(object):
             """
             def pytest_enter_pdb(config):
                 assert config.testing_verification == 'configured'
-                print 'enter_pdb_hook'
+                print('enter_pdb_hook')
 
             def pytest_configure(config):
                 config.testing_verification = 'configured'
@@ -562,7 +562,7 @@ class TestPDB(object):
             custom_pdb="""
             class CustomPdb(object):
                 def set_trace(*args, **kwargs):
-                    print 'custom set_trace>'
+                    print('custom set_trace>')
          """
         )
         p1 = testdir.makepyfile(
