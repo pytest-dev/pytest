@@ -178,7 +178,7 @@ Mark a test function as using the given fixture names.
 
 .. warning::
 
-    This mark can be used with *test functions* only, having no affect when applied
+    This mark has no effect when applied
     to a **fixture** function.
 
 .. py:function:: pytest.mark.usefixtures(*names)

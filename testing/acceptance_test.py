@@ -628,7 +628,7 @@ class TestInvocationVariants(object):
             lib = ns.mkdir(dirname)
             lib.ensure("__init__.py")
             lib.join("test_{}.py".format(dirname)).write(
-                "def test_{}(): pass\n" "def test_other():pass".format(dirname)
+                "def test_{}(): pass\ndef test_other():pass".format(dirname)
             )
 
         # The structure of the test directory is now:
@@ -717,10 +717,10 @@ class TestInvocationVariants(object):
         lib = foo.mkdir("bar")
         lib.ensure("__init__.py")
         lib.join("test_bar.py").write(
-            "def test_bar(): pass\n" "def test_other(a_fixture):pass"
+            "def test_bar(): pass\ndef test_other(a_fixture):pass"
         )
         lib.join("conftest.py").write(
-            "import pytest\n" "@pytest.fixture\n" "def a_fixture():pass"
+            "import pytest\n@pytest.fixture\ndef a_fixture():pass"
         )
 
         d_local = testdir.mkdir("local")

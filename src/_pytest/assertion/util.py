@@ -199,7 +199,7 @@ def _diff_text(left, right, verbose=False):
         if i > 42:
             i -= 10  # Provide some context
             explanation = [
-                u("Skipping %s identical leading " "characters in diff, use -v to show")
+                u("Skipping %s identical leading characters in diff, use -v to show")
                 % i
             ]
             left = left[i:]
