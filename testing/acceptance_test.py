@@ -806,7 +806,11 @@ class TestDurations(object):
         result = testdir.runpytest("--durations=10")
         assert result.ret == 0
         result.stdout.fnmatch_lines_random(
-            ["*durations*", "*call*test_3*", "*call*test_2*", "*call*test_1*"]
+            ["*durations*", "*call*test_3*", "*call*test_2*"]
+        )
+        assert "test_something" not in result.stdout.str()
+        result.stdout.fnmatch_lines(
+            ["(0.00 durations hidden.  Use -vv to show these durations.)"]
         )
 
     def test_calls_show_2(self, testdir):
@@ -820,6 +824,18 @@ class TestDurations(object):
         testdir.makepyfile(self.source)
         result = testdir.runpytest("--durations=0")
         assert result.ret == 0
+        for x in "23":
+            for y in ("call",):  # 'setup', 'call', 'teardown':
+                for line in result.stdout.lines:
+                    if ("test_%s" % x) in line and y in line:
+                        break
+                else:
+                    raise AssertionError("not found {} {}".format(x, y))
+
+    def test_calls_showall_verbose(self, testdir):
+        testdir.makepyfile(self.source)
+        result = testdir.runpytest("--durations=0", "-vv")
+        assert result.ret == 0
         for x in "123":
             for y in ("call",):  # 'setup', 'call', 'teardown':
                 for line in result.stdout.lines:
@@ -830,9 +846,9 @@ class TestDurations(object):
 
     def test_with_deselected(self, testdir):
         testdir.makepyfile(self.source)
-        result = testdir.runpytest("--durations=2", "-k test_1")
+        result = testdir.runpytest("--durations=2", "-k test_2")
         assert result.ret == 0
-        result.stdout.fnmatch_lines(["*durations*", "*call*test_1*"])
+        result.stdout.fnmatch_lines(["*durations*", "*call*test_2*"])
 
     def test_with_failing_collection(self, testdir):
         testdir.makepyfile(self.source)
@@ -852,13 +868,15 @@ class TestDurations(object):
 
 class TestDurationWithFixture(object):
     source = """
+        import pytest
         import time
-        frag = 0.001
-        def setup_function(func):
-            time.sleep(frag * 3)
-        def test_1():
-            time.sleep(frag*2)
-        def test_2():
+        frag = 0.01
+
+        @pytest.fixture
+        def setup_fixt():
+            time.sleep(frag)
+
+        def test_1(setup_fixt):
             time.sleep(frag)
     """
 
