@@ -188,7 +188,8 @@ def wrap_session(config, doit):
             exitstatus = EXIT_INTERRUPTED
             if initstate <= 2 and isinstance(excinfo.value, exit.Exception):
                 sys.stderr.write("{}: {}\n".format(excinfo.typename, excinfo.value.msg))
-                exitstatus = excinfo.value.returncode
+                if excinfo.value.returncode is not None:
+                    exitstatus = excinfo.value.returncode
             config.hook.pytest_keyboard_interrupt(excinfo=excinfo)
             session.exitstatus = exitstatus
         except:  # noqa
