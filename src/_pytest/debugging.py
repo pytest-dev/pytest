@@ -109,9 +109,6 @@ class PdbInvoke(object):
         _enter_pdb(node, call.excinfo, report)
 
     def pytest_internalerror(self, excrepr, excinfo):
-        for line in str(excrepr).split("\n"):
-            sys.stderr.write("INTERNALERROR> %s\n" % line)
-            sys.stderr.flush()
         tb = _postmortem_traceback(excinfo)
         post_mortem(tb)
 
