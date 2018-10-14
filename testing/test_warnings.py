@@ -623,3 +623,38 @@ def test_removed_in_pytest4_warning_as_error(testdir, change_default):
     else:
         assert change_default in ("ini", "cmdline")
         result.stdout.fnmatch_lines(["* 1 passed in *"])
+class TestAssertionWarnings:
+    def test_tuple_warning(self, testdir):
+        testdir.makepyfile(
+            """
+            def test_foo():
+                assert (1,2)
+            """
+        )
+        with pytest.warns(pytest.PytestWarning):
+            testdir.runpytest_subprocess()
+
+    def create_file(self, testdir, return_none):
+        testdir.makepyfile(
+            """
+            def foo(return_none):
+                if return_none:
+                    return None
+                else:
+                    return False
+
+            def test_foo():
+                assert foo({return_none})
+            """.format(
+                return_none=return_none
+            )
+        )
+
+    def test_none_function_warns(self, testdir):
+        self.create_file(testdir, True)
+        with pytest.warns(pytest.PytestWarning):
+            testdir.runpytest_subprocess()
+
+    def test_false_function_no_warn(self, testdir):
+        self.create_file(testdir, False)
+        testdir.runpytest_subprocess("-W error:PytestWarning")
