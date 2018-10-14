@@ -45,7 +45,7 @@ class StepwisePlugin:
         already_passed = []
         found = False
 
-        # Make a list of all tests that has been runned before the last failing one.
+        # Make a list of all tests that have been run before the last failing one.
         for item in items:
             if item.nodeid == self.lastfailed:
                 found = True
