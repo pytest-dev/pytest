@@ -3,28 +3,37 @@ import pytest
 
 
 def pytest_addoption(parser):
-    group = parser.getgroup('general')
-    group.addoption('--sw', '--stepwise', action='store_true', dest='stepwise',
-                    help='exit on test fail and continue from last failing test next time')
-    group.addoption('--stepwise-skip', action='store_true', dest='stepwise_skip',
-                    help='ignore the first failing test but stop on the next failing test')
+    group = parser.getgroup("general")
+    group.addoption(
+        "--sw",
+        "--stepwise",
+        action="store_true",
+        dest="stepwise",
+        help="exit on test fail and continue from last failing test next time",
+    )
+    group.addoption(
+        "--stepwise-skip",
+        action="store_true",
+        dest="stepwise_skip",
+        help="ignore the first failing test but stop on the next failing test",
+    )
 
 
 @pytest.hookimpl(tryfirst=True)
 def pytest_configure(config):
     config.cache = Cache.for_config(config)
-    config.pluginmanager.register(StepwisePlugin(config), 'stepwiseplugin')
+    config.pluginmanager.register(StepwisePlugin(config), "stepwiseplugin")
 
 
 class StepwisePlugin:
     def __init__(self, config):
         self.config = config
-        self.active = config.getvalue('stepwise')
+        self.active = config.getvalue("stepwise")
         self.session = None
 
         if self.active:
-            self.lastfailed = config.cache.get('cache/stepwise', None)
-            self.skip = config.getvalue('stepwise_skip')
+            self.lastfailed = config.cache.get("cache/stepwise", None)
+            self.skip = config.getvalue("stepwise_skip")
 
     def pytest_sessionstart(self, session):
         self.session = session
@@ -56,11 +65,13 @@ class StepwisePlugin:
 
     def pytest_collectreport(self, report):
         if self.active and report.failed:
-            self.session.shouldstop = 'Error when collecting test, stopping test execution.'
+            self.session.shouldstop = (
+                "Error when collecting test, stopping test execution."
+            )
 
     def pytest_runtest_logreport(self, report):
         # Skip this hook if plugin is not active or the test is xfailed.
-        if not self.active or 'xfail' in report.keywords:
+        if not self.active or "xfail" in report.keywords:
             return
 
         if report.failed:
@@ -74,18 +85,20 @@ class StepwisePlugin:
             else:
                 # Mark test as the last failing and interrupt the test session.
                 self.lastfailed = report.nodeid
-                self.session.shouldstop = 'Test failed, continuing from this test next run.'
+                self.session.shouldstop = (
+                    "Test failed, continuing from this test next run."
+                )
 
         else:
             # If the test was actually run and did pass.
-            if report.when == 'call':
+            if report.when == "call":
                 # Remove test from the failed ones, if exists.
                 if report.nodeid == self.lastfailed:
                     self.lastfailed = None
 
     def pytest_sessionfinish(self, session):
         if self.active:
-            self.config.cache.set('cache/stepwise', self.lastfailed)
+            self.config.cache.set("cache/stepwise", self.lastfailed)
         else:
             # Clear the list of failing tests if the plugin is not active.
-            self.config.cache.set('cache/stepwise', [])
+            self.config.cache.set("cache/stepwise", [])
