@@ -62,7 +62,8 @@ def exit(msg, returncode=None):
     """
     Exit testing process as if KeyboardInterrupt was triggered.
 
-    :param int returncode: return code to be used when exiting pytest..
+    :param str msg: message to display upon exit.
+    :param int returncode: return code to be used when exiting pytest.
     """
     __tracebackhide__ = True
     raise Exit(returncode, msg)
