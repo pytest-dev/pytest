@@ -1,7 +1,10 @@
 from __future__ import absolute_import, division, print_function
 import sys
-import py
+
+import six
+
 import pytest
+from _pytest.pathlib import Path
 
 
 def test_tmpdir_fixture(testdir):
@@ -65,10 +68,6 @@ def test_basetemp(testdir):
     assert mytemp.join("hello").check()
 
 
-@pytest.mark.skipif(
-    not hasattr(py.path.local, "mksymlinkto"),
-    reason="symlink not available on this platform",
-)
 def test_tmpdir_always_is_realpath(testdir):
     # the reason why tmpdir should be a realpath is that
     # when you cd to it and do "os.getcwd()" you will anyway
@@ -78,7 +77,7 @@ def test_tmpdir_always_is_realpath(testdir):
     # os.environ["PWD"]
     realtemp = testdir.tmpdir.mkdir("myrealtemp")
     linktemp = testdir.tmpdir.join("symlinktemp")
-    linktemp.mksymlinkto(realtemp)
+    attempt_symlink_to(linktemp, str(realtemp))
     p = testdir.makepyfile(
         """
         def test_1(tmpdir):
@@ -281,5 +280,16 @@ class TestNumberedDir(object):
 
     def test_cleanup_symlink(self, tmp_path):
         the_symlink = tmp_path / (self.PREFIX + "current")
-        the_symlink.symlink_to(tmp_path / (self.PREFIX + "5"))
+        attempt_symlink_to(the_symlink, tmp_path / (self.PREFIX + "5"))
         self._do_cleanup(tmp_path)
+
+
+def attempt_symlink_to(path, to_path):
+    """Try to make a symlink from "path" to "to_path", skipping in case this platform
+    does not support it or we don't have sufficient privileges (common on Windows)."""
+    if sys.platform.startswith("win") and six.PY2:
+        pytest.skip("pathlib for some reason cannot make symlinks on Python 2")
+    try:
+        Path(path).symlink_to(Path(to_path))
+    except OSError:
+        pytest.skip("could not create symbolic link")
