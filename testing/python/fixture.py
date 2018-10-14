@@ -494,6 +494,12 @@ class TestRequestBasic(object):
         reason="this method of test doesn't work on pypy",
     )
     def test_request_garbage(self, testdir):
+        try:
+            import xdist  # noqa
+        except ImportError:
+            pass
+        else:
+            pytest.xfail("this test is flaky when executed with xdist")
         testdir.makepyfile(
             """
             import sys
