@@ -570,6 +570,15 @@ def test_pytest_exit_msg(testdir):
     result.stderr.fnmatch_lines(["Exit: oh noes"])
 
 
+def test_pytest_exit_returncode():
+    try:
+        pytest.exit("hello", returncode=2)
+    except SystemExit as exc:
+        excinfo = _pytest._code.ExceptionInfo()
+        assert excinfo.errisinstance(SystemExit)
+        assert excinfo.value.code == 2
+
+
 def test_pytest_fail_notrace_runtest(testdir):
     """Test pytest.fail(..., pytrace=False) does not show tracebacks during test run."""
     testdir.makepyfile(
