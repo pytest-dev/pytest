@@ -1,10 +1,12 @@
 environment:
   matrix:
   - TOXENV: "py27"
-  - TOXENV: "py34"
-  - TOXENV: "py35"
-  - TOXENV: "py36"
   - TOXENV: "py37"
+    PYTEST_NO_COVERAGE: "1"
+  - TOXENV: "linting,docs,doctesting"
+  - TOXENV: "py36"
+  - TOXENV: "py35"
+  - TOXENV: "py34"
   - TOXENV: "pypy"
     PYTEST_NO_COVERAGE: "1"
   # Specialized factors for py27.
@@ -19,6 +21,9 @@ environment:
   - TOXENV: "py36-freeze"
     PYTEST_NO_COVERAGE: "1"
   - TOXENV: "py36-xdist"
+
+matrix:
+  fast_finish: true
 
 install:
   - echo Installed Pythons
