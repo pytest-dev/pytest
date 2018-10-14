@@ -490,7 +490,7 @@ class Session(nodes.FSCollector):
         from _pytest.python import Package
 
         names = self._parsearg(arg)
-        argpath = names.pop(0)
+        argpath = names.pop(0).realpath()
         paths = []
 
         root = self
