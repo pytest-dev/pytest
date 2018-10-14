@@ -570,13 +570,16 @@ def test_pytest_exit_msg(testdir):
     result.stderr.fnmatch_lines(["Exit: oh noes"])
 
 
-def test_pytest_exit_returncode():
-    try:
-        pytest.exit("hello", returncode=2)
-    except SystemExit as exc:
-        excinfo = _pytest._code.ExceptionInfo()
-        assert excinfo.errisinstance(SystemExit)
-        assert excinfo.value.code == 2
+def test_pytest_exit_returncode(testdir):
+    testdir.makepyfile(
+        """
+        import pytest
+        def test_foo():
+            pytest.exit("some exit msg", 99)
+    """
+    )
+    result = testdir.runpytest()
+    assert result.ret == 99
 
 
 def test_pytest_fail_notrace_runtest(testdir):
