@@ -49,8 +49,9 @@ class Failed(OutcomeException):
 class Exit(KeyboardInterrupt):
     """ raised for immediate program exits (no tracebacks/summaries)"""
 
-    def __init__(self, msg="unknown reason"):
+    def __init__(self, returncode=None, msg="unknown reason"):
         self.msg = msg
+        self.returncode = returncode
         KeyboardInterrupt.__init__(self, msg)
 
 
@@ -60,10 +61,7 @@ class Exit(KeyboardInterrupt):
 def exit(msg, returncode=None):
     """ exit testing process as if KeyboardInterrupt was triggered. """
     __tracebackhide__ = True
-    if returncode:
-        raise SystemExit(returncode)
-    else:
-        raise Exit(msg)
+    raise Exit(returncode, msg)
 
 
 exit.Exception = Exit
