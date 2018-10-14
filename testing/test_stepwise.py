@@ -13,7 +13,7 @@ def pytest_addoption(parser):
 ''')
 
     # Create a simple test suite.
-    testdir.makepyfile(test_stepwise='''
+    testdir.makepyfile(test_a='''
 def test_success_before_fail():
     assert 1
 
@@ -30,7 +30,7 @@ def test_success_after_last_fail():
     assert 1
 ''')
 
-    testdir.makepyfile(testfile_b='''
+    testdir.makepyfile(test_b='''
 def test_success():
     assert 1
 ''')
@@ -40,7 +40,7 @@ def test_success():
 
 @pytest.fixture
 def error_testdir(testdir):
-    testdir.makepyfile(test_stepwise='''
+    testdir.makepyfile(test_a='''
 def test_error(nonexisting_fixture):
     assert 1
 
@@ -88,7 +88,7 @@ def test_fail_and_continue_with_stepwise(stepwise_testdir):
 
 
 def test_run_with_skip_option(stepwise_testdir):
-    result = stepwise_testdir.runpytest('-v', '--strict', '--stepwise', '--skip',
+    result = stepwise_testdir.runpytest('-v', '--strict', '--stepwise', '--stepwise-skip',
                                         '--fail', '--fail-last')
     assert not result.stderr.str()
 
@@ -112,7 +112,7 @@ def test_fail_on_errors(error_testdir):
 
 def test_change_testfile(stepwise_testdir):
     result = stepwise_testdir.runpytest('-v', '--strict', '--stepwise', '--fail',
-                                        'test_stepwise.py')
+                                        'test_a.py')
     assert not result.stderr.str()
 
     stdout = result.stdout.str()
@@ -121,7 +121,7 @@ def test_change_testfile(stepwise_testdir):
     # Make sure the second test run starts from the beginning, since the
     # test to continue from does not exist in testfile_b.
     result = stepwise_testdir.runpytest('-v', '--strict', '--stepwise',
-                                        'testfile_b.py')
+                                        'test_b.py')
     assert not result.stderr.str()
 
     stdout = result.stdout.str()

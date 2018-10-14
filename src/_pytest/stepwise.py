@@ -1,19 +1,18 @@
-from .compat import Cache, tryfirst
+from _pytest.cacheprovider import Cache
+import pytest
 
 
 def pytest_addoption(parser):
     group = parser.getgroup('general')
-    group.addoption('--sw', action='store_true', dest='stepwise',
-                    help='alias for --stepwise')
-    group.addoption('--stepwise', action='store_true', dest='stepwise',
+    group.addoption('--sw', '--stepwise', action='store_true', dest='stepwise',
                     help='exit on test fail and continue from last failing test next time')
-    group.addoption('--skip', action='store_true', dest='skip',
+    group.addoption('--stepwise-skip', action='store_true', dest='stepwise_skip',
                     help='ignore the first failing test but stop on the next failing test')
 
 
-@tryfirst
+@pytest.hookimpl(tryfirst=True)
 def pytest_configure(config):
-    config.cache = Cache(config)
+    config.cache = Cache.for_config(config)
     config.pluginmanager.register(StepwisePlugin(config), 'stepwiseplugin')
 
 
@@ -25,7 +24,7 @@ class StepwisePlugin:
 
         if self.active:
             self.lastfailed = config.cache.get('cache/stepwise', None)
-            self.skip = config.getvalue('skip')
+            self.skip = config.getvalue('stepwise_skip')
 
     def pytest_sessionstart(self, session):
         self.session = session
