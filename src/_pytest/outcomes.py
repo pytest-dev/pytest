@@ -66,7 +66,7 @@ def exit(msg, returncode=None):
     :param int returncode: return code to be used when exiting pytest.
     """
     __tracebackhide__ = True
-    raise Exit(returncode, msg)
+    raise Exit(msg, returncode)
 
 
 exit.Exception = Exit
