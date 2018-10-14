@@ -57,10 +57,13 @@ class Exit(KeyboardInterrupt):
 # exposed helper methods
 
 
-def exit(msg):
+def exit(msg, returncode=None):
     """ exit testing process as if KeyboardInterrupt was triggered. """
     __tracebackhide__ = True
-    raise Exit(msg)
+    if returncode:
+        raise SystemExit(returncode)
+    else:
+        raise Exit(msg)
 
 
 exit.Exception = Exit
