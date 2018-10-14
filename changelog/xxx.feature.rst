@@ -1,0 +1,1 @@
+Add ``-sw``, ``--stepwise`` as an alternative to ``--lf -x`` for stopping at the first failure, but starting the next test invocation from that test.  See `the documentation <https://docs.pytest.org/en/latest/cache.html#stepwise>`_ for more info.
