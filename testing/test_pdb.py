@@ -337,8 +337,16 @@ class TestPDB(object):
         child.expect("Pdb")
 
         # INTERNALERROR is only displayed once via terminal reporter.
-        assert len([x for x in child.before.decode().splitlines()
-                    if x.startswith("INTERNALERROR> Traceback")]) == 1
+        assert (
+            len(
+                [
+                    x
+                    for x in child.before.decode().splitlines()
+                    if x.startswith("INTERNALERROR> Traceback")
+                ]
+            )
+            == 1
+        )
 
         child.sendeof()
         self.flush(child)
