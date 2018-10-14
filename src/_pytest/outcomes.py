@@ -59,7 +59,11 @@ class Exit(KeyboardInterrupt):
 
 
 def exit(msg, returncode=None):
-    """ exit testing process as if KeyboardInterrupt was triggered. """
+    """
+    Exit testing process as if KeyboardInterrupt was triggered.
+
+    :param int returncode: return code to be used when exiting pytest..
+    """
     __tracebackhide__ = True
     raise Exit(returncode, msg)
 
