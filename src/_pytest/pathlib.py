@@ -173,6 +173,8 @@ def delete_a_numbered_dir(path):
 
 def ensure_deletable(path, consider_lock_dead_if_created_before):
     """checks if a lock exists and breaks it if its considered dead"""
+    if path.is_symlink():
+        return False
     lock = get_lock_path(path)
     if not lock.exists():
         return True

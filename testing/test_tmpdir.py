@@ -232,7 +232,7 @@ class TestNumberedDir(object):
 
         assert not lock.exists()
 
-    def test_cleanup_keep(self, tmp_path):
+    def _do_cleanup(self, tmp_path):
         self.test_make(tmp_path)
         from _pytest.pathlib import cleanup_numbered_dir
 
@@ -242,6 +242,9 @@ class TestNumberedDir(object):
             keep=2,
             consider_lock_dead_if_created_before=0,
         )
+
+    def test_cleanup_keep(self, tmp_path):
+        self._do_cleanup(tmp_path)
         a, b = tmp_path.iterdir()
         print(a, b)
 
@@ -275,3 +278,8 @@ class TestNumberedDir(object):
 
         rmtree(adir, force=True)
         assert not adir.exists()
+
+    def test_cleanup_symlink(self, tmp_path):
+        the_symlink = tmp_path / (self.PREFIX + "current")
+        the_symlink.symlink_to(tmp_path / (self.PREFIX + "5"))
+        self._do_cleanup(tmp_path)
