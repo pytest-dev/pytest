@@ -17,7 +17,7 @@ from weakref import WeakKeyDictionary
 
 from _pytest.capture import MultiCapture, SysCapture
 from _pytest._code import Source
-from _pytest.main import Session, EXIT_OK
+from _pytest.main import Session, EXIT_INTERRUPTED, EXIT_OK
 from _pytest.assertion.rewrite import AssertionRewritingHook
 from _pytest.pathlib import Path
 from _pytest.compat import safe_str
@@ -857,7 +857,7 @@ class Testdir(object):
 
             # typically we reraise keyboard interrupts from the child run
             # because it's our user requesting interruption of the testing
-            if ret == 2 and not kwargs.get("no_reraise_ctrlc"):
+            if ret == EXIT_INTERRUPTED and not kwargs.get("no_reraise_ctrlc"):
                 calls = reprec.getcalls("pytest_keyboard_interrupt")
                 if calls and calls[-1].excinfo.type == KeyboardInterrupt:
                     raise KeyboardInterrupt()

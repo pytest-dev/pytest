@@ -304,7 +304,7 @@ This form of test function doesn't support fixtures properly, and users should s
 .. code-block:: python
 
     @pytest.mark.parametrize("x, y", [(2, 4), (3, 9)])
-    def test_squared():
+    def test_squared(x, y):
         assert x ** x == y
 
 

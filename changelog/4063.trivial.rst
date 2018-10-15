@@ -1,0 +1,1 @@
+Exclude 0.00 second entries from ``--duration`` output unless ``-vv`` is passed on the command-line.
