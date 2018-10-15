@@ -1,1 +1,0 @@
-Add tempir testing example to CONTRIBUTING.rst guide
