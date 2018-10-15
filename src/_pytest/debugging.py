@@ -1,10 +1,12 @@
 """ interactive debugging with PDB, the Python Debugger. """
 from __future__ import absolute_import, division, print_function
+
+import os
 import pdb
 import sys
-import os
 from doctest import UnexpectedException
 
+from _pytest import outcomes
 from _pytest.config import hookimpl
 
 try:
@@ -109,9 +111,6 @@ class PdbInvoke(object):
         _enter_pdb(node, call.excinfo, report)
 
     def pytest_internalerror(self, excrepr, excinfo):
-        for line in str(excrepr).split("\n"):
-            sys.stderr.write("INTERNALERROR> %s\n" % line)
-            sys.stderr.flush()
         tb = _postmortem_traceback(excinfo)
         post_mortem(tb)
 
@@ -164,8 +163,9 @@ def _enter_pdb(node, excinfo, rep):
     rep.toterminal(tw)
     tw.sep(">", "entering PDB")
     tb = _postmortem_traceback(excinfo)
-    post_mortem(tb)
     rep._pdbshown = True
+    if post_mortem(tb):
+        outcomes.exit("Quitting debugger")
     return rep
 
 
@@ -196,3 +196,4 @@ def post_mortem(t):
     p = Pdb()
     p.reset()
     p.interaction(None, t)
+    return p.quitting

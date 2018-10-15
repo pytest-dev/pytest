@@ -1,27 +1,29 @@
 environment:
   matrix:
-  - TOXENV: "linting,docs,doctesting"
-    PYTEST_NO_COVERAGE: "1"
   - TOXENV: "py27"
-  - TOXENV: "py34"
-  - TOXENV: "py35"
-  - TOXENV: "py36"
   - TOXENV: "py37"
+    PYTEST_NO_COVERAGE: "1"
+  - TOXENV: "linting,docs,doctesting"
+  - TOXENV: "py36"
+  - TOXENV: "py35"
+  - TOXENV: "py34"
   - TOXENV: "pypy"
     PYTEST_NO_COVERAGE: "1"
-  - TOXENV: "py27-xdist"
-  - TOXENV: "py27-trial"
-  - TOXENV: "py27-numpy"
+  # Specialized factors for py27.
+  - TOXENV: "py27-trial,py27-numpy,py27-nobyte"
   - TOXENV: "py27-pluggymaster"
     PYTEST_NO_COVERAGE: "1"
-  - TOXENV: "py36-xdist"
-  - TOXENV: "py36-trial"
-  - TOXENV: "py36-numpy"
+  - TOXENV: "py27-xdist"
+  # Specialized factors for py36.
+  - TOXENV: "py36-trial,py36-numpy"
   - TOXENV: "py36-pluggymaster"
     PYTEST_NO_COVERAGE: "1"
-  - TOXENV: "py27-nobyte"
   - TOXENV: "py36-freeze"
     PYTEST_NO_COVERAGE: "1"
+  - TOXENV: "py36-xdist"
+
+matrix:
+  fast_finish: true
 
 install:
   - echo Installed Pythons
