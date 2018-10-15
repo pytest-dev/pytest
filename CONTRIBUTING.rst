@@ -280,6 +280,47 @@ Here is a simple overview, with pytest-specific bits:
     base: features        # if it's a feature
 
 
+Writing Tests
+----------------------------
+
+Writing tests for plugins or for pytest itself is often done using the `testdir fixture <https://docs.pytest.org/en/latest/reference.html#testdir>`_, as a "black-box" test.
+
+For example, to ensure a simple test passes you can write:
+
+.. code-block:: python
+
+    def test_true_assertion(testdir):
+        testdir.makepyfile(
+            """
+            def test_foo():
+                assert True
+        """
+        )
+        result = testdir.runpytest()
+        result.assert_outcomes(failed=0, passed=1)
+
+
+Alternatively, it is possible to make checks based on the actual output of the termal using
+*glob-like* expressions:
+
+.. code-block:: python
+
+    def test_true_assertion(testdir):
+        testdir.makepyfile(
+            """
+            def test_foo():
+                assert False
+        """
+        )
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines(["*assert False*", "*1 failed*"])
+
+When choosing a file where to write a new test, take a look at the existing files and see if there's
+one file which looks like a good fit. For example, a regression test about a bug in the ``--lf`` option
+should go into ``test_cacheprovider.py``, given that this option is implemented in ``cacheprovider.py``.
+If in doubt, go ahead and open a PR with your best guess and we can discuss this over the code.
+
+
 Joining the Development Team
 ----------------------------
 
