@@ -313,8 +313,8 @@ Alternatively, it is possible to make checks based on the actual output of the t
         """
         )
         result = testdir.runpytest()
-        result.stdout.fnmatch_lines(["*assert False*, "*1 failed*"])
-        
+        result.stdout.fnmatch_lines(["*assert False*", "*1 failed*"])
+
 When choosing a file where to write a new test, take a look at the existing files and see if there's
 one file which looks like a good fit. For example, a regression test about a bug in the ``--lf`` option
 should go into ``test_cacheprovider.py``, given that this option is implemented in ``cacheprovider.py``.
