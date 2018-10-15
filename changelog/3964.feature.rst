@@ -1,2 +1,0 @@
-Log messages generated in the collection phase are shown when
-live-logging is enabled and/or when they are logged to a file.

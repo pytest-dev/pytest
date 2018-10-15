@@ -104,7 +104,9 @@ For information about fixtures, see :ref:`fixtures`. To see a complete list of a
         See http://docs.python.org/library/warnings.html for information
         on warning categories.
     tmpdir_factory
-        Return a TempdirFactory instance for the test session.
+        Return a :class:`_pytest.tmpdir.TempdirFactory` instance for the test session.
+    tmp_path_factory
+        Return a :class:`_pytest.tmpdir.TempPathFactory` instance for the test session.
     tmpdir
         Return a temporary directory path object
         which is unique to each test function invocation,
@@ -113,6 +115,16 @@ For information about fixtures, see :ref:`fixtures`. To see a complete list of a
         path object.
 
         .. _`py.path.local`: https://py.readthedocs.io/en/latest/path.html
+    tmp_path
+        Return a temporary directory path object
+        which is unique to each test function invocation,
+        created as a sub directory of the base temporary
+        directory.  The returned object is a :class:`pathlib.Path`
+        object.
+
+        .. note::
+
+            in python < 3.6 this is a pathlib2.Path
 
     no tests ran in 0.12 seconds
 
