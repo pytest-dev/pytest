@@ -1,0 +1,3 @@
+For test-suites containing test classes, the information about the subclassed
+module is now output only if a higher verbosity level is specified (at least
+"-vv").
