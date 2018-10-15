@@ -31,7 +31,7 @@ created in the `base temporary directory`_.
         p = d / "hello.txt"
         p.write_text(CONTENT)
         assert p.read_text() == CONTENT
-        assert len(tmpdir.listdir()) == 1
+        assert len(list(tmp_path.iterdir())) == 1
         assert 0
 
 Running this would result in a passed test except for the last
