@@ -1,0 +1,1 @@
+Add returncode argument to pytest.exit() to exit pytest with a specific return code.
