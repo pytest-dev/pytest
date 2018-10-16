@@ -18,6 +18,17 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+pytest 3.9.1 (2018-10-16)
+=========================
+
+Features
+--------
+
+- `#4159 <https://github.com/pytest-dev/pytest/issues/4159>`_: For test-suites containing test classes, the information about the subclassed
+  module is now output only if a higher verbosity level is specified (at least
+  "-vv").
+
+
 pytest 3.9.0 (2018-10-15)
 =========================
 
