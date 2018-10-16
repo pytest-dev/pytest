@@ -1222,3 +1222,19 @@ def test_set_suite_name(testdir, suite_name):
     assert result.ret == 0
     node = dom.find_first_by_tag("testsuite")
     node.assert_attr(name=expected)
+
+
+def test_escaped_skipreason_issue3533(testdir):
+    testdir.makepyfile(
+        """
+        import pytest
+        @pytest.mark.skip(reason='1 <> 2')
+        def test_skip():
+            pass
+    """
+    )
+    _, dom = runandparse(testdir)
+    node = dom.find_first_by_tag("testcase")
+    snode = node.find_first_by_tag("skipped")
+    assert "1 <> 2" in snode.text
+    snode.assert_attr(message="1 <> 2")
