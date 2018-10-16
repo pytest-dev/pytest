@@ -750,8 +750,8 @@ class TestInvocationVariants(object):
         if hasattr(py.path.local, "mksymlinkto"):
             result.stdout.fnmatch_lines(
                 [
-                    "lib/foo/bar/test_bar.py::test_bar <- local/lib/foo/bar/test_bar.py PASSED*",
-                    "lib/foo/bar/test_bar.py::test_other <- local/lib/foo/bar/test_bar.py PASSED*",
+                    "lib/foo/bar/test_bar.py::test_bar PASSED*",
+                    "lib/foo/bar/test_bar.py::test_other PASSED*",
                     "*2 passed*",
                 ]
             )
