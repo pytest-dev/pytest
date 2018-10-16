@@ -3,7 +3,6 @@ from __future__ import absolute_import, division, print_function
 import argparse
 import inspect
 import shlex
-import traceback
 import types
 import warnings
 import copy
@@ -19,6 +18,7 @@ import _pytest._code
 import _pytest.hookspec  # the extension point definitions
 import _pytest.assertion
 from pluggy import PluginManager, HookimplMarker, HookspecMarker
+from _pytest._code import ExceptionInfo, filter_traceback
 from _pytest.compat import safe_str
 from .exceptions import UsageError, PrintHelp
 from .findpaths import determine_setup, exists
@@ -26,21 +26,12 @@ from .findpaths import determine_setup, exists
 hookimpl = HookimplMarker("pytest")
 hookspec = HookspecMarker("pytest")
 
-# pytest startup
-#
-
 
 class ConftestImportFailure(Exception):
     def __init__(self, path, excinfo):
         Exception.__init__(self, path, excinfo)
         self.path = path
         self.excinfo = excinfo
-
-    def __str__(self):
-        etype, evalue, etb = self.excinfo
-        formatted = traceback.format_tb(etb)
-        # The level of the tracebacks we want to print is hand crafted :(
-        return repr(evalue) + "\n" + "".join(formatted[2:])
 
 
 def main(args=None, plugins=None):
@@ -57,10 +48,20 @@ def main(args=None, plugins=None):
         try:
             config = _prepareconfig(args, plugins)
         except ConftestImportFailure as e:
+            exc_info = ExceptionInfo(e.excinfo)
             tw = py.io.TerminalWriter(sys.stderr)
-            for line in traceback.format_exception(*e.excinfo):
+            tw.line(
+                "ImportError while loading conftest '{e.path}'.".format(e=e), red=True
+            )
+            exc_info.traceback = exc_info.traceback.filter(filter_traceback)
+            exc_repr = (
+                exc_info.getrepr(style="short", chain=False)
+                if exc_info.traceback
+                else exc_info.exconly()
+            )
+            formatted_tb = safe_str(exc_repr)
+            for line in formatted_tb.splitlines():
                 tw.line(line.rstrip(), red=True)
-            tw.line("ERROR: could not load %s\n" % (e.path,), red=True)
             return 4
         else:
             try:
@@ -378,25 +379,27 @@ class PytestPluginManager(PluginManager):
     def _getconftestmodules(self, path):
         if self._noconftest:
             return []
-        try:
-            return self._path2confmods[path]
-        except KeyError:
-            if path.isfile():
-                clist = self._getconftestmodules(path.dirpath())
-            else:
-                # XXX these days we may rather want to use config.rootdir
-                # and allow users to opt into looking into the rootdir parent
-                # directories instead of requiring to specify confcutdir
-                clist = []
-                for parent in path.parts():
-                    if self._confcutdir and self._confcutdir.relto(parent):
-                        continue
-                    conftestpath = parent.join("conftest.py")
-                    if conftestpath.isfile():
-                        mod = self._importconftest(conftestpath)
-                        clist.append(mod)
 
-            self._path2confmods[path] = clist
+        if path.isfile():
+            directory = path.dirpath()
+        else:
+            directory = path
+        try:
+            return self._path2confmods[directory]
+        except KeyError:
+            # XXX these days we may rather want to use config.rootdir
+            # and allow users to opt into looking into the rootdir parent
+            # directories instead of requiring to specify confcutdir
+            clist = []
+            for parent in directory.parts():
+                if self._confcutdir and self._confcutdir.relto(parent):
+                    continue
+                conftestpath = parent.join("conftest.py")
+                if conftestpath.isfile():
+                    mod = self._importconftest(conftestpath)
+                    clist.append(mod)
+
+            self._path2confmods[directory] = clist
             return clist
 
     def _rget_with_confmod(self, name, path):

@@ -17,12 +17,13 @@ from weakref import WeakKeyDictionary
 
 from _pytest.capture import MultiCapture, SysCapture
 from _pytest._code import Source
-import py
-import pytest
 from _pytest.main import Session, EXIT_INTERRUPTED, EXIT_OK
 from _pytest.assertion.rewrite import AssertionRewritingHook
-from _pytest.compat import Path
+from _pytest.pathlib import Path
 from _pytest.compat import safe_str
+
+import py
+import pytest
 
 IGNORE_PAM = [  # filenames added when obtaining details about the current user
     u"/var/lib/sss/mc/passwd"
@@ -59,6 +60,11 @@ def pytest_configure(config):
         checker = LsofFdLeakChecker()
         if checker.matching_platform():
             config.pluginmanager.register(checker)
+
+
+def raise_on_kwargs(kwargs):
+    if kwargs:
+        raise TypeError("Unexpected arguments: {}".format(", ".join(sorted(kwargs))))
 
 
 class LsofFdLeakChecker(object):
@@ -482,11 +488,16 @@ class Testdir(object):
 
     """
 
+    class TimeoutExpired(Exception):
+        pass
+
     def __init__(self, request, tmpdir_factory):
         self.request = request
         self._mod_collections = WeakKeyDictionary()
         name = request.function.__name__
         self.tmpdir = tmpdir_factory.mktemp(name, numbered=True)
+        self.test_tmproot = tmpdir_factory.mktemp("tmp-" + name, numbered=True)
+        os.environ["PYTEST_DEBUG_TEMPROOT"] = str(self.test_tmproot)
         self.plugins = []
         self._cwd_snapshot = CwdSnapshot()
         self._sys_path_snapshot = SysPathsSnapshot()
@@ -513,6 +524,7 @@ class Testdir(object):
         self._sys_modules_snapshot.restore()
         self._sys_path_snapshot.restore()
         self._cwd_snapshot.restore()
+        os.environ.pop("PYTEST_DEBUG_TEMPROOT", None)
 
     def __take_sys_modules_snapshot(self):
         # some zope modules used by twisted-related tests keep internal state
@@ -1039,14 +1051,23 @@ class Testdir(object):
 
         return popen
 
-    def run(self, *cmdargs):
+    def run(self, *cmdargs, **kwargs):
         """Run a command with arguments.
 
         Run a process using subprocess.Popen saving the stdout and stderr.
 
+        :param args: the sequence of arguments to pass to `subprocess.Popen()`
+        :param timeout: the period in seconds after which to timeout and raise
+            :py:class:`Testdir.TimeoutExpired`
+
         Returns a :py:class:`RunResult`.
 
         """
+        __tracebackhide__ = True
+
+        timeout = kwargs.pop("timeout", None)
+        raise_on_kwargs(kwargs)
+
         cmdargs = [
             str(arg) if isinstance(arg, py.path.local) else arg for arg in cmdargs
         ]
@@ -1061,7 +1082,40 @@ class Testdir(object):
             popen = self.popen(
                 cmdargs, stdout=f1, stderr=f2, close_fds=(sys.platform != "win32")
             )
-            ret = popen.wait()
+
+            def handle_timeout():
+                __tracebackhide__ = True
+
+                timeout_message = (
+                    "{seconds} second timeout expired running:"
+                    " {command}".format(seconds=timeout, command=cmdargs)
+                )
+
+                popen.kill()
+                popen.wait()
+                raise self.TimeoutExpired(timeout_message)
+
+            if timeout is None:
+                ret = popen.wait()
+            elif six.PY3:
+                try:
+                    ret = popen.wait(timeout)
+                except subprocess.TimeoutExpired:
+                    handle_timeout()
+            else:
+                end = time.time() + timeout
+
+                resolution = min(0.1, timeout / 10)
+
+                while True:
+                    ret = popen.poll()
+                    if ret is not None:
+                        break
+
+                    if time.time() > end:
+                        handle_timeout()
+
+                    time.sleep(resolution)
         finally:
             f1.close()
             f2.close()
@@ -1108,9 +1162,15 @@ class Testdir(object):
         with "runpytest-" so they do not conflict with the normal numbered
         pytest location for temporary files and directories.
 
+        :param args: the sequence of arguments to pass to the pytest subprocess
+        :param timeout: the period in seconds after which to timeout and raise
+            :py:class:`Testdir.TimeoutExpired`
+
         Returns a :py:class:`RunResult`.
 
         """
+        __tracebackhide__ = True
+
         p = py.path.local.make_numbered_dir(
             prefix="runpytest-", keep=None, rootdir=self.tmpdir
         )
@@ -1119,7 +1179,7 @@ class Testdir(object):
         if plugins:
             args = ("-p", plugins[0]) + args
         args = self._getpytestargs() + args
-        return self.run(*args)
+        return self.run(*args, timeout=kwargs.get("timeout"))
 
     def spawn_pytest(self, string, expect_timeout=10.0):
         """Run pytest using pexpect.
@@ -1267,6 +1327,7 @@ class LineMatcher(object):
         matches and non-matches are also printed on stdout.
 
         """
+        __tracebackhide__ = True
         self._match_lines(lines2, fnmatch, "fnmatch")
 
     def re_match_lines(self, lines2):
@@ -1278,6 +1339,7 @@ class LineMatcher(object):
         The matches and non-matches are also printed on stdout.
 
         """
+        __tracebackhide__ = True
         self._match_lines(lines2, lambda name, pat: re.match(pat, name), "re.match")
 
     def _match_lines(self, lines2, match_func, match_nickname):

@@ -1,6 +1,7 @@
 [build-system]
 requires = [
-  "setuptools",
+  # sync with setup.py until we discard non-pep-517/518
+  "setuptools>=30.3",
   "setuptools-scm",
   "wheel",
 ]
@@ -15,7 +16,12 @@ template = "changelog/_template.rst"
 
   [[tool.towncrier.type]]
   directory = "removal"
-  name = "Deprecations and Removals"
+  name = "Removals"
+  showcontent = true
+
+  [[tool.towncrier.type]]
+  directory = "deprecation"
+  name = "Deprecations"
   showcontent = true
 
   [[tool.towncrier.type]]

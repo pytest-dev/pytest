@@ -430,6 +430,50 @@ def test_hide_pytest_internal_warnings(testdir, ignore_pytest_warnings):
         )
 
 
+@pytest.mark.parametrize("ignore_on_cmdline", [True, False])
+def test_option_precedence_cmdline_over_ini(testdir, ignore_on_cmdline):
+    """filters defined in the command-line should take precedence over filters in ini files (#3946)."""
+    testdir.makeini(
+        """
+        [pytest]
+        filterwarnings = error
+    """
+    )
+    testdir.makepyfile(
+        """
+        import warnings
+        def test():
+            warnings.warn(UserWarning('hello'))
+    """
+    )
+    args = ["-W", "ignore"] if ignore_on_cmdline else []
+    result = testdir.runpytest(*args)
+    if ignore_on_cmdline:
+        result.stdout.fnmatch_lines(["* 1 passed in*"])
+    else:
+        result.stdout.fnmatch_lines(["* 1 failed in*"])
+
+
+def test_option_precedence_mark(testdir):
+    """Filters defined by marks should always take precedence (#3946)."""
+    testdir.makeini(
+        """
+        [pytest]
+        filterwarnings = ignore
+    """
+    )
+    testdir.makepyfile(
+        """
+        import pytest, warnings
+        @pytest.mark.filterwarnings('error')
+        def test():
+            warnings.warn(UserWarning('hello'))
+    """
+    )
+    result = testdir.runpytest("-W", "ignore")
+    result.stdout.fnmatch_lines(["* 1 failed in*"])
+
+
 class TestDeprecationWarningsByDefault:
     """
     Note: all pytest runs are executed in a subprocess so we don't inherit warning filters
@@ -451,8 +495,18 @@ class TestDeprecationWarningsByDefault:
             )
         )
 
-    def test_shown_by_default(self, testdir):
+    @pytest.mark.parametrize("customize_filters", [True, False])
+    def test_shown_by_default(self, testdir, customize_filters):
+        """Show deprecation warnings by default, even if user has customized the warnings filters (#4013)."""
         self.create_file(testdir)
+        if customize_filters:
+            testdir.makeini(
+                """
+                [pytest]
+                filterwarnings =
+                    once::UserWarning
+            """
+            )
         result = testdir.runpytest_subprocess()
         result.stdout.fnmatch_lines(
             [
@@ -468,7 +522,9 @@ class TestDeprecationWarningsByDefault:
         testdir.makeini(
             """
             [pytest]
-            filterwarnings = once::UserWarning
+            filterwarnings =
+                ignore::DeprecationWarning
+                ignore::PendingDeprecationWarning
         """
         )
         result = testdir.runpytest_subprocess()
@@ -479,7 +535,8 @@ class TestDeprecationWarningsByDefault:
         be displayed normally.
         """
         self.create_file(
-            testdir, mark='@pytest.mark.filterwarnings("once::UserWarning")'
+            testdir,
+            mark='@pytest.mark.filterwarnings("ignore::PendingDeprecationWarning")',
         )
         result = testdir.runpytest_subprocess()
         result.stdout.fnmatch_lines(
@@ -492,7 +549,12 @@ class TestDeprecationWarningsByDefault:
 
     def test_hidden_by_cmdline(self, testdir):
         self.create_file(testdir)
-        result = testdir.runpytest_subprocess("-W", "once::UserWarning")
+        result = testdir.runpytest_subprocess(
+            "-W",
+            "ignore::DeprecationWarning",
+            "-W",
+            "ignore::PendingDeprecationWarning",
+        )
         assert WARNINGS_SUMMARY_HEADER not in result.stdout.str()
 
     def test_hidden_by_system(self, testdir, monkeypatch):

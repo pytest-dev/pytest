@@ -140,9 +140,16 @@ class TestGeneralUsage(object):
         assert result.ret
         result.stderr.fnmatch_lines(["*ERROR: not found:*{}".format(p2.basename)])
 
-    def test_issue486_better_reporting_on_conftest_load_failure(self, testdir):
+    def test_better_reporting_on_conftest_load_failure(self, testdir, request):
+        """Show a user-friendly traceback on conftest import failures (#486, #3332)"""
         testdir.makepyfile("")
-        testdir.makeconftest("import qwerty")
+        testdir.makeconftest(
+            """
+            def foo():
+                import qwerty
+            foo()
+        """
+        )
         result = testdir.runpytest("--help")
         result.stdout.fnmatch_lines(
             """
@@ -151,10 +158,23 @@ class TestGeneralUsage(object):
         """
         )
         result = testdir.runpytest()
+        dirname = request.node.name + "0"
+        exc_name = (
+            "ModuleNotFoundError" if sys.version_info >= (3, 6) else "ImportError"
+        )
         result.stderr.fnmatch_lines(
-            """
-            *ERROR*could not load*conftest.py*
-        """
+            [
+                "ImportError while loading conftest '*{sep}{dirname}{sep}conftest.py'.".format(
+                    dirname=dirname, sep=os.sep
+                ),
+                "conftest.py:3: in <module>",
+                "    foo()",
+                "conftest.py:2: in foo",
+                "    import qwerty",
+                "E   {}: No module named {q}qwerty{q}".format(
+                    exc_name, q="'" if six.PY3 else ""
+                ),
+            ]
         )
 
     def test_early_skip(self, testdir):
@@ -723,16 +743,26 @@ class TestInvocationVariants(object):
             monkeypatch.syspath_prepend(p)
 
         # module picked up in symlink-ed directory:
+        # It picks up local/lib/foo/bar (symlink) via sys.path.
         result = testdir.runpytest("--pyargs", "-v", "foo.bar")
         testdir.chdir()
         assert result.ret == 0
-        result.stdout.fnmatch_lines(
-            [
-                "*lib/foo/bar/test_bar.py::test_bar PASSED*",
-                "*lib/foo/bar/test_bar.py::test_other PASSED*",
-                "*2 passed*",
-            ]
-        )
+        if hasattr(py.path.local, "mksymlinkto"):
+            result.stdout.fnmatch_lines(
+                [
+                    "lib/foo/bar/test_bar.py::test_bar PASSED*",
+                    "lib/foo/bar/test_bar.py::test_other PASSED*",
+                    "*2 passed*",
+                ]
+            )
+        else:
+            result.stdout.fnmatch_lines(
+                [
+                    "*lib/foo/bar/test_bar.py::test_bar PASSED*",
+                    "*lib/foo/bar/test_bar.py::test_other PASSED*",
+                    "*2 passed*",
+                ]
+            )
 
     def test_cmdline_python_package_not_exists(self, testdir):
         result = testdir.runpytest("--pyargs", "tpkgwhatv")
