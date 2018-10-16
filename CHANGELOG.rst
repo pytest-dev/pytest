@@ -18,6 +18,152 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+pytest 3.9.0 (2018-10-15)
+=========================
+
+Deprecations
+------------
+
+- `#3616 <https://github.com/pytest-dev/pytest/issues/3616>`_: The following accesses have been documented as deprecated for years, but are now actually emitting deprecation warnings.
+
+  * Access of ``Module``, ``Function``, ``Class``, ``Instance``, ``File`` and ``Item`` through ``Node`` instances. Now
+    users will this warning::
+
+          usage of Function.Module is deprecated, please use pytest.Module instead
+
+    Users should just ``import pytest`` and access those objects using the ``pytest`` module.
+
+  * ``request.cached_setup``, this was the precursor of the setup/teardown mechanism available to fixtures. You can
+    consult `funcarg comparision section in the docs <https://docs.pytest.org/en/latest/funcarg_compare.html>`_.
+
+  * Using objects named ``"Class"`` as a way to customize the type of nodes that are collected in ``Collector``
+    subclasses has been deprecated. Users instead should use ``pytest_collect_make_item`` to customize node types during
+    collection.
+
+    This issue should affect only advanced plugins who create new collection types, so if you see this warning
+    message please contact the authors so they can change the code.
+
+  * The warning that produces the message below has changed to ``RemovedInPytest4Warning``::
+
+          getfuncargvalue is deprecated, use getfixturevalue
+
+
+- `#3988 <https://github.com/pytest-dev/pytest/issues/3988>`_: Add a Deprecation warning for pytest.ensuretemp as it was deprecated since a while.
+
+
+
+Features
+--------
+
+- `#2293 <https://github.com/pytest-dev/pytest/issues/2293>`_: Improve usage errors messages by hiding internal details which can be distracting and noisy.
+
+  This has the side effect that some error conditions that previously raised generic errors (such as
+  ``ValueError`` for unregistered marks) are now raising ``Failed`` exceptions.
+
+
+- `#3332 <https://github.com/pytest-dev/pytest/issues/3332>`_: Improve the error displayed when a ``conftest.py`` file could not be imported.
+
+  In order to implement this, a new ``chain`` parameter was added to ``ExceptionInfo.getrepr``
+  to show or hide chained tracebacks in Python 3 (defaults to ``True``).
+
+
+- `#3849 <https://github.com/pytest-dev/pytest/issues/3849>`_: Add ``empty_parameter_set_mark=fail_at_collect`` ini option for raising an exception when parametrize collects an empty set.
+
+
+- `#3964 <https://github.com/pytest-dev/pytest/issues/3964>`_: Log messages generated in the collection phase are shown when
+  live-logging is enabled and/or when they are logged to a file.
+
+
+- `#3985 <https://github.com/pytest-dev/pytest/issues/3985>`_: Introduce ``tmp_path`` as a fixture providing a Path object.
+
+
+- `#4013 <https://github.com/pytest-dev/pytest/issues/4013>`_: Deprecation warnings are now shown even if you customize the warnings filters yourself. In the previous version
+  any customization would override pytest's filters and deprecation warnings would fall back to being hidden by default.
+
+
+- `#4073 <https://github.com/pytest-dev/pytest/issues/4073>`_: Allow specification of timeout for ``Testdir.runpytest_subprocess()`` and ``Testdir.run()``.
+
+
+- `#4098 <https://github.com/pytest-dev/pytest/issues/4098>`_: Add returncode argument to pytest.exit() to exit pytest with a specific return code.
+
+
+- `#4102 <https://github.com/pytest-dev/pytest/issues/4102>`_: Reimplement ``pytest.deprecated_call`` using ``pytest.warns`` so it supports the ``match='...'`` keyword argument.
+
+  This has the side effect that ``pytest.deprecated_call`` now raises ``pytest.fail.Exception`` instead
+  of ``AssertionError``.
+
+
+- `#4149 <https://github.com/pytest-dev/pytest/issues/4149>`_: Require setuptools>=30.3 and move most of the metadata to ``setup.cfg``.
+
+
+
+Bug Fixes
+---------
+
+- `#2535 <https://github.com/pytest-dev/pytest/issues/2535>`_: Improve error message when test functions of ``unittest.TestCase`` subclasses use a parametrized fixture.
+
+
+- `#3057 <https://github.com/pytest-dev/pytest/issues/3057>`_: ``request.fixturenames`` now correctly returns the name of fixtures created by ``request.getfixturevalue()``.
+
+
+- `#3946 <https://github.com/pytest-dev/pytest/issues/3946>`_: Warning filters passed as command line options using ``-W`` now take precedence over filters defined in ``ini``
+  configuration files.
+
+
+- `#4066 <https://github.com/pytest-dev/pytest/issues/4066>`_: Fix source reindenting by using ``textwrap.dedent`` directly.
+
+
+- `#4102 <https://github.com/pytest-dev/pytest/issues/4102>`_: ``pytest.warn`` will capture previously-warned warnings in Python 2. Previously they were never raised.
+
+
+- `#4108 <https://github.com/pytest-dev/pytest/issues/4108>`_: Resolve symbolic links for args.
+
+  This fixes running ``pytest tests/test_foo.py::test_bar``, where ``tests``
+  is a symlink to ``project/app/tests``:
+  previously ``project/app/conftest.py`` would be ignored for fixtures then.
+
+
+- `#4132 <https://github.com/pytest-dev/pytest/issues/4132>`_: Fix duplicate printing of internal errors when using ``--pdb``.
+
+
+- `#4135 <https://github.com/pytest-dev/pytest/issues/4135>`_: pathlib based tmpdir cleanup now correctly handles symlinks in the folder.
+
+
+- `#4152 <https://github.com/pytest-dev/pytest/issues/4152>`_: Display the filename when encountering ``SyntaxWarning``.
+
+
+
+Improved Documentation
+----------------------
+
+- `#3713 <https://github.com/pytest-dev/pytest/issues/3713>`_: Update usefixtures documentation to clarify that it can't be used with fixture functions.
+
+
+- `#4058 <https://github.com/pytest-dev/pytest/issues/4058>`_: Update fixture documentation to specify that a fixture can be invoked twice in the scope it's defined for.
+
+
+- `#4064 <https://github.com/pytest-dev/pytest/issues/4064>`_: According to unittest.rst, setUpModule and tearDownModule were not implemented, but it turns out they are. So updated the documentation for unittest.
+
+
+- `#4151 <https://github.com/pytest-dev/pytest/issues/4151>`_: Add tempir testing example to CONTRIBUTING.rst guide
+
+
+
+Trivial/Internal Changes
+------------------------
+
+- `#2293 <https://github.com/pytest-dev/pytest/issues/2293>`_: The internal ``MarkerError`` exception has been removed.
+
+
+- `#3988 <https://github.com/pytest-dev/pytest/issues/3988>`_: Port the implementation of tmpdir to pathlib.
+
+
+- `#4063 <https://github.com/pytest-dev/pytest/issues/4063>`_: Exclude 0.00 second entries from ``--duration`` output unless ``-vv`` is passed on the command-line.
+
+
+- `#4093 <https://github.com/pytest-dev/pytest/issues/4093>`_: Fixed formatting of string literals in internal tests.
+
+
 pytest 3.8.2 (2018-10-02)
 =========================
 

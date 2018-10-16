@@ -1,1 +1,0 @@
-Require setuptools>=30.3 and move most of the metadata to ``setup.cfg``.

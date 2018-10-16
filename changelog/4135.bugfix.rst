@@ -1,1 +1,0 @@
-pathlib based tmpdir cleanup now correctly handles symlinks in the folder.
