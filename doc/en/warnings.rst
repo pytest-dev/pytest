@@ -101,22 +101,28 @@ DeprecationWarning and PendingDeprecationWarning
 ------------------------------------------------
 
 .. versionadded:: 3.8
+.. versionchanged:: 3.9
 
-By default pytest will display ``DeprecationWarning`` and ``PendingDeprecationWarning`` if no other warning filters
-are configured.
+By default pytest will display ``DeprecationWarning`` and ``PendingDeprecationWarning``.
 
-To disable showing ``DeprecationWarning`` and ``PendingDeprecationWarning`` warnings, you might define any warnings
-filter either in the command-line or in the ini file, or you can use:
+Sometimes it is useful to hide some specific deprecation warnings that happen in code that you have no control over
+(such as third-party libraries), in which case you might use the standard warning filters options (ini or marks).
+For example:
 
 .. code-block:: ini
 
     [pytest]
     filterwarnings =
-        ignore::DeprecationWarning
-        ignore::PendingDeprecationWarning
+        ignore:.*U.*mode is deprecated:DeprecationWarning
+
 
 .. note::
-    This makes pytest more compliant with `PEP-0506 <https://www.python.org/dev/peps/pep-0565/#recommended-filter-settings-for-test-runners>`_ which suggests that those warnings should
+    If warnings are configured at the interpreter level, using
+    the `PYTHONWARNINGS <https://docs.python.org/3/using/cmdline.html#envvar-PYTHONWARNINGS>`_ environment variable or the
+    ``-W`` command-line option, pytest will not configure any filters by default.
+
+.. note::
+    This feature makes pytest more compliant with `PEP-0506 <https://www.python.org/dev/peps/pep-0565/#recommended-filter-settings-for-test-runners>`_ which suggests that those warnings should
     be shown by default by test runners, but pytest doesn't follow ``PEP-0506`` completely because resetting all
     warning filters like suggested in the PEP will break existing test suites that configure warning filters themselves
     by calling ``warnings.simplefilter`` (see issue `#2430 <https://github.com/pytest-dev/pytest/issues/2430>`_

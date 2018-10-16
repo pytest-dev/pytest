@@ -5,6 +5,76 @@
 Temporary directories and files
 ================================================
 
+The ``tmp_path`` fixture
+------------------------
+
+.. versionadded:: 3.9
+
+
+You can use the ``tmpdir`` fixture which will
+provide a temporary directory unique to the test invocation,
+created in the `base temporary directory`_.
+
+``tmpdir`` is a ``pathlib/pathlib2.Path`` object. Here is an example test usage:
+
+.. code-block:: python
+
+    # content of test_tmp_path.py
+    import os
+
+    CONTENT = u"content"
+
+
+    def test_create_file(tmp_path):
+        d = tmp_path / "sub"
+        d.mkdir()
+        p = d / "hello.txt"
+        p.write_text(CONTENT)
+        assert p.read_text() == CONTENT
+        assert len(list(tmp_path.iterdir())) == 1
+        assert 0
+
+Running this would result in a passed test except for the last
+``assert 0`` line which we use to look at values::
+
+    $ pytest test_tmp_path.py
+    =========================== test session starts ============================
+    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
+    rootdir: $REGENDOC_TMPDIR, inifile:
+    collected 1 item
+
+    test_tmp_path.py F                                                   [100%]
+
+    ================================= FAILURES =================================
+    _____________________________ test_create_file _____________________________
+
+    tmp_path = PosixPath('PYTEST_TMPDIR/test_create_file0')
+
+        def test_create_file(tmp_path):
+            d = tmp_path / "sub"
+            d.mkdir()
+            p = d / "hello.txt"
+            p.write_text(CONTENT)
+            assert p.read_text() == CONTENT
+            assert len(list(tmp_path.iterdir())) == 1
+    >       assert 0
+    E       assert 0
+
+    test_tmp_path.py:13: AssertionError
+    ========================= 1 failed in 0.12 seconds =========================
+
+The ``tmp_path_factory`` fixture
+--------------------------------
+
+.. versionadded:: 3.9
+
+
+The ``tmp_path_facotry`` is a session-scoped fixture which can be used
+to create arbitrary temporary directories from any other fixture or test.
+
+its intended to replace ``tmpdir_factory`` and returns :class:`pathlib.Path` instances.
+
+
 The 'tmpdir' fixture
 --------------------
 

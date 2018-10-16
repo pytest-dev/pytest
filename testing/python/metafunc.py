@@ -127,10 +127,11 @@ class TestMetafunc(object):
             pass
 
         metafunc = self.Metafunc(func)
-        try:
+        with pytest.raises(
+            pytest.fail.Exception,
+            match=r"parametrize\(\) call in func got an unexpected scope value 'doggy'",
+        ):
             metafunc.parametrize("x", [1], scope="doggy")
-        except ValueError as ve:
-            assert "has an unsupported scope value 'doggy'" in str(ve)
 
     def test_find_parametrized_scope(self):
         """unittest for _find_parametrized_scope (#3941)"""
@@ -206,16 +207,13 @@ class TestMetafunc(object):
 
         metafunc = self.Metafunc(func)
 
-        pytest.raises(
-            ValueError, lambda: metafunc.parametrize("x", [1, 2], ids=["basic"])
-        )
+        with pytest.raises(pytest.fail.Exception):
+            metafunc.parametrize("x", [1, 2], ids=["basic"])
 
-        pytest.raises(
-            ValueError,
-            lambda: metafunc.parametrize(
+        with pytest.raises(pytest.fail.Exception):
+            metafunc.parametrize(
                 ("x", "y"), [("abc", "def"), ("ghi", "jkl")], ids=["one"]
-            ),
-        )
+            )
 
     @pytest.mark.issue510
     def test_parametrize_empty_list(self):
@@ -573,7 +571,7 @@ class TestMetafunc(object):
             pass
 
         metafunc = self.Metafunc(func)
-        with pytest.raises(ValueError):
+        with pytest.raises(pytest.fail.Exception):
             metafunc.parametrize("x, y", [("a", "b")], indirect=["x", "z"])
 
     @pytest.mark.issue714
@@ -1189,7 +1187,9 @@ class TestMetafuncFunctional(object):
         )
         result = testdir.runpytest()
         result.stdout.fnmatch_lines(
-            ["*ids must be list of strings, found: 2 (type: int)*"]
+            [
+                "*In test_ids_numbers: ids must be list of strings, found: 2 (type: *'int'>)*"
+            ]
         )
 
     def test_parametrize_with_identical_ids_get_unique_names(self, testdir):
@@ -1326,13 +1326,13 @@ class TestMetafuncFunctional(object):
                 attr
             )
         )
-        reprec = testdir.inline_run("--collectonly")
-        failures = reprec.getfailures()
-        assert len(failures) == 1
-        expectederror = "MarkerError: test_foo has '{}', spelling should be 'parametrize'".format(
-            attr
+        result = testdir.runpytest("--collectonly")
+        result.stdout.fnmatch_lines(
+            [
+                "test_foo has '{}' mark, spelling should be 'parametrize'".format(attr),
+                "*1 error in*",
+            ]
         )
-        assert expectederror in failures[0].longrepr.reprcrash.message
 
 
 class TestMetafuncFunctionalAuto(object):

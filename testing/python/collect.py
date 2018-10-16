@@ -240,6 +240,9 @@ class TestClass(object):
         assert result.ret == EXIT_NOTESTSCOLLECTED
 
 
+@pytest.mark.filterwarnings(
+    "ignore:usage of Generator.Function is deprecated, please use pytest.Function instead"
+)
 class TestGenerator(object):
     def test_generative_functions(self, testdir):
         modcol = testdir.getmodulecol(
@@ -1255,6 +1258,9 @@ class TestReportInfo(object):
         assert lineno == 1
         assert msg == "TestClass"
 
+    @pytest.mark.filterwarnings(
+        "ignore:usage of Generator.Function is deprecated, please use pytest.Function instead"
+    )
     def test_generator_reportinfo(self, testdir):
         modcol = testdir.getmodulecol(
             """

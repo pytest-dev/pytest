@@ -13,7 +13,7 @@ from _pytest.mark import (
     transfer_markers,
     EMPTY_PARAMETERSET_OPTION,
 )
-from _pytest.nodes import Node
+from _pytest.nodes import Node, Collector
 
 ignore_markinfo = pytest.mark.filterwarnings(
     "ignore:MarkInfo objects:pytest.RemovedInPytest4Warning"
@@ -247,7 +247,7 @@ def test_marker_without_description(testdir):
     )
     ftdir = testdir.mkdir("ft1_dummy")
     testdir.tmpdir.join("conftest.py").move(ftdir.join("conftest.py"))
-    rec = testdir.runpytest_subprocess("--strict")
+    rec = testdir.runpytest("--strict")
     rec.assert_outcomes()
 
 
@@ -302,7 +302,7 @@ def test_strict_prohibits_unregistered_markers(testdir):
     )
     result = testdir.runpytest("--strict")
     assert result.ret != 0
-    result.stdout.fnmatch_lines(["*unregisteredmark*not*registered*"])
+    result.stdout.fnmatch_lines(["'unregisteredmark' not a registered marker"])
 
 
 @pytest.mark.parametrize(
@@ -1103,7 +1103,14 @@ class TestMarkDecorator(object):
 @pytest.mark.parametrize("mark", [None, "", "skip", "xfail"])
 def test_parameterset_for_parametrize_marks(testdir, mark):
     if mark is not None:
-        testdir.makeini("[pytest]\n{}={}".format(EMPTY_PARAMETERSET_OPTION, mark))
+        testdir.makeini(
+            """
+        [pytest]
+        {}={}
+        """.format(
+                EMPTY_PARAMETERSET_OPTION, mark
+            )
+        )
 
     config = testdir.parseconfig()
     from _pytest.mark import pytest_configure, get_empty_parameterset_mark
@@ -1117,6 +1124,34 @@ def test_parameterset_for_parametrize_marks(testdir, mark):
     assert result_mark.kwargs["reason"].startswith("got empty parameter set ")
     if mark == "xfail":
         assert result_mark.kwargs.get("run") is False
+
+
+def test_parameterset_for_fail_at_collect(testdir):
+    testdir.makeini(
+        """
+    [pytest]
+    {}=fail_at_collect
+    """.format(
+            EMPTY_PARAMETERSET_OPTION
+        )
+    )
+
+    config = testdir.parseconfig()
+    from _pytest.mark import pytest_configure, get_empty_parameterset_mark
+    from _pytest.compat import getfslineno
+
+    pytest_configure(config)
+
+    test_func = all
+    func_name = test_func.__name__
+    _, func_lineno = getfslineno(test_func)
+    expected_errmsg = r"Empty parameter set in '%s' at line %d" % (
+        func_name,
+        func_lineno,
+    )
+
+    with pytest.raises(Collector.CollectError, match=expected_errmsg):
+        get_empty_parameterset_mark(config, ["a"], test_func)
 
 
 def test_parameterset_for_parametrize_bad_markname(testdir):

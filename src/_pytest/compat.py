@@ -23,8 +23,6 @@ except ImportError:  # pragma: no cover
     # Only available in Python 3.4+ or as a backport
     enum = None
 
-__all__ = ["Path", "PurePath"]
-
 _PY3 = sys.version_info > (3, 0)
 _PY2 = not _PY3
 
@@ -40,11 +38,6 @@ NOTSET = object()
 PY35 = sys.version_info[:2] >= (3, 5)
 PY36 = sys.version_info[:2] >= (3, 6)
 MODULE_NOT_FOUND_ERROR = "ModuleNotFoundError" if PY36 else "ImportError"
-
-if PY36:
-    from pathlib import Path, PurePath
-else:
-    from pathlib2 import Path, PurePath
 
 
 if _PY3:

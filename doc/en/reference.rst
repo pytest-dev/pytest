@@ -982,6 +982,7 @@ passed multiple times. The expected format is ``name=value``. For example::
 
     * ``skip`` skips tests with an empty parameterset (default)
     * ``xfail`` marks tests with an empty parameterset as xfail(run=False)
+    * ``fail_at_collect`` raises an exception if parametrize collects an empty parameter set
 
     .. code-block:: ini
 

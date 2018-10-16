@@ -32,7 +32,7 @@ from _pytest.compat import (
     get_real_method,
     _PytestWrapper,
 )
-from _pytest.deprecated import FIXTURE_FUNCTION_CALL, RemovedInPytest4Warning
+from _pytest.deprecated import FIXTURE_FUNCTION_CALL
 from _pytest.outcomes import fail, TEST_OUTCOME
 
 FIXTURE_MSG = 'fixtures cannot have "pytest_funcarg__" prefix and be decorated with @pytest.fixture:\n{}'
@@ -481,6 +481,9 @@ class FixtureRequest(FuncargnamesCompatAttr):
             or ``session`` indicating the caching lifecycle of the resource.
         :arg extrakey: added to internal caching key of (funcargname, scope).
         """
+        from _pytest.deprecated import CACHED_SETUP
+
+        warnings.warn(CACHED_SETUP, stacklevel=2)
         if not hasattr(self.config, "_setupcache"):
             self.config._setupcache = {}  # XXX weakref?
         cachekey = (self.fixturename, self._getscopeitem(scope), extrakey)
@@ -514,7 +517,7 @@ class FixtureRequest(FuncargnamesCompatAttr):
         """ Deprecated, use getfixturevalue. """
         from _pytest import deprecated
 
-        warnings.warn(deprecated.GETFUNCARGVALUE, DeprecationWarning, stacklevel=2)
+        warnings.warn(deprecated.GETFUNCARGVALUE, stacklevel=2)
         return self.getfixturevalue(argname)
 
     def _get_active_fixturedef(self, argname):
@@ -576,7 +579,7 @@ class FixtureRequest(FuncargnamesCompatAttr):
                     nodeid=funcitem.nodeid,
                     typename=type(funcitem).__name__,
                 )
-                fail(msg)
+                fail(msg, pytrace=False)
             if has_params:
                 frame = inspect.stack()[3]
                 frameinfo = inspect.getframeinfo(frame[0])
@@ -597,7 +600,7 @@ class FixtureRequest(FuncargnamesCompatAttr):
                         source_lineno,
                     )
                 )
-                fail(msg)
+                fail(msg, pytrace=False)
         else:
             # indices might not be set if old-style metafunc.addcall() was used
             param_index = funcitem.callspec.indices.get(argname, 0)
@@ -715,10 +718,11 @@ def scope2index(scope, descr, where=None):
     try:
         return scopes.index(scope)
     except ValueError:
-        raise ValueError(
-            "{} {}has an unsupported scope value '{}'".format(
+        fail(
+            "{} {}got an unexpected scope value '{}'".format(
                 descr, "from {} ".format(where) if where else "", scope
-            )
+            ),
+            pytrace=False,
         )
 
 
@@ -851,7 +855,9 @@ class FixtureDef(object):
         self.argname = argname
         self.scope = scope
         self.scopenum = scope2index(
-            scope or "function", descr="fixture {}".format(func.__name__), where=baseid
+            scope or "function",
+            descr="Fixture '{}'".format(func.__name__),
+            where=baseid,
         )
         self.params = params
         self.argnames = getfuncargnames(func, is_method=unittest)
@@ -913,7 +919,7 @@ class FixtureDef(object):
         return hook.pytest_fixture_setup(fixturedef=self, request=request)
 
     def __repr__(self):
-        return "<FixtureDef name=%r scope=%r baseid=%r >" % (
+        return "<FixtureDef name=%r scope=%r baseid=%r>" % (
             self.argname,
             self.scope,
             self.baseid,
@@ -973,8 +979,9 @@ def wrap_function_to_warning_if_called_directly(function, fixture_marker):
     used as an argument in a test function.
     """
     is_yield_function = is_generator(function)
-    msg = FIXTURE_FUNCTION_CALL.format(name=fixture_marker.name or function.__name__)
-    warning = RemovedInPytest4Warning(msg)
+    warning = FIXTURE_FUNCTION_CALL.format(
+        name=fixture_marker.name or function.__name__
+    )
 
     if is_yield_function:
 
@@ -1168,7 +1175,7 @@ class FixtureManager(object):
     def pytest_plugin_registered(self, plugin):
         nodeid = None
         try:
-            p = py.path.local(plugin.__file__)
+            p = py.path.local(plugin.__file__).realpath()
         except AttributeError:
             pass
         else:
@@ -1301,9 +1308,7 @@ class FixtureManager(object):
 
                 filename, lineno = getfslineno(obj)
                 warnings.warn_explicit(
-                    RemovedInPytest4Warning(
-                        deprecated.FUNCARG_PREFIX.format(name=name)
-                    ),
+                    deprecated.FUNCARG_PREFIX.format(name=name),
                     category=None,
                     filename=str(filename),
                     lineno=lineno + 1,

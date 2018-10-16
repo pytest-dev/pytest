@@ -156,7 +156,10 @@ def pytest_addoption(parser):
         dest="basetemp",
         default=None,
         metavar="dir",
-        help="base temporary directory for this test run.",
+        help=(
+            "base temporary directory for this test run."
+            "(warning: this directory is removed if it exists)"
+        ),
     )
 
 
@@ -182,10 +185,13 @@ def wrap_session(config, doit):
             session.exitstatus = EXIT_TESTSFAILED
         except KeyboardInterrupt:
             excinfo = _pytest._code.ExceptionInfo()
-            if initstate < 2 and isinstance(excinfo.value, exit.Exception):
+            exitstatus = EXIT_INTERRUPTED
+            if initstate <= 2 and isinstance(excinfo.value, exit.Exception):
                 sys.stderr.write("{}: {}\n".format(excinfo.typename, excinfo.value.msg))
+                if excinfo.value.returncode is not None:
+                    exitstatus = excinfo.value.returncode
             config.hook.pytest_keyboard_interrupt(excinfo=excinfo)
-            session.exitstatus = EXIT_INTERRUPTED
+            session.exitstatus = exitstatus
         except:  # noqa
             excinfo = _pytest._code.ExceptionInfo()
             config.notify_exception(excinfo, config.option)
@@ -487,7 +493,7 @@ class Session(nodes.FSCollector):
         from _pytest.python import Package
 
         names = self._parsearg(arg)
-        argpath = names.pop(0)
+        argpath = names.pop(0).realpath()
         paths = []
 
         root = self

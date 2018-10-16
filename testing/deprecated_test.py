@@ -30,6 +30,74 @@ def test_yield_tests_deprecation(testdir):
     assert result.stdout.str().count("yield tests are deprecated") == 2
 
 
+def test_compat_properties_deprecation(testdir):
+    testdir.makepyfile(
+        """
+        def test_foo(request):
+            print(request.node.Module)
+    """
+    )
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines(
+        [
+            "*test_compat_properties_deprecation.py:2:*usage of Function.Module is deprecated, "
+            "please use pytest.Module instead*",
+            "*1 passed, 1 warnings in*",
+        ]
+    )
+
+
+def test_cached_setup_deprecation(testdir):
+    testdir.makepyfile(
+        """
+        import pytest
+        @pytest.fixture
+        def fix(request):
+            return request.cached_setup(lambda: 1)
+
+        def test_foo(fix):
+            assert fix == 1
+    """
+    )
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines(
+        [
+            "*test_cached_setup_deprecation.py:4:*cached_setup is deprecated*",
+            "*1 passed, 1 warnings in*",
+        ]
+    )
+
+
+def test_custom_class_deprecation(testdir):
+    testdir.makeconftest(
+        """
+        import pytest
+
+        class MyModule(pytest.Module):
+
+            class Class(pytest.Class):
+                pass
+
+        def pytest_pycollect_makemodule(path, parent):
+            return MyModule(path, parent)
+    """
+    )
+    testdir.makepyfile(
+        """
+        class Test:
+            def test_foo(self):
+                pass
+    """
+    )
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines(
+        [
+            '*test_custom_class_deprecation.py:1:*"Class" objects in collectors of type "MyModule*',
+            "*1 passed, 1 warnings in*",
+        ]
+    )
+
+
 @pytest.mark.filterwarnings("default")
 def test_funcarg_prefix_deprecation(testdir):
     testdir.makepyfile(

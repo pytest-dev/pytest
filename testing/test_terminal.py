@@ -154,7 +154,7 @@ class TestTerminal(object):
         )
         result = testdir.runpytest(p2)
         result.stdout.fnmatch_lines(["*test_p2.py .*", "*1 passed*"])
-        result = testdir.runpytest("-v", p2)
+        result = testdir.runpytest("-vv", p2)
         result.stdout.fnmatch_lines(
             ["*test_p2.py::TestMore::test_p1* <- *test_p1.py*PASSED*"]
         )
@@ -170,7 +170,7 @@ class TestTerminal(object):
                 """
             )
         )
-        result = testdir.runpytest("-v")
+        result = testdir.runpytest("-vv")
         assert result.ret == 0
         result.stdout.fnmatch_lines(["*a123/test_hello123.py*PASS*"])
         assert " <- " not in result.stdout.str()
