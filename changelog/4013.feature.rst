@@ -1,2 +1,0 @@
-Deprecation warnings are now shown even if you customize the warnings filters yourself. In the previous version
-any customization would override pytest's filters and deprecation warnings would fall back to being hidden by default.

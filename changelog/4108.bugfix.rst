@@ -1,5 +1,0 @@
-Resolve symbolic links for args.
-
-This fixes running ``pytest tests/test_foo.py::test_bar``, where ``tests``
-is a symlink to ``project/app/tests``:
-previously ``project/app/conftest.py`` would be ignored for fixtures then.
