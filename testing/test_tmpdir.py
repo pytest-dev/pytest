@@ -197,8 +197,10 @@ class TestNumberedDir(object):
             assert d.name.endswith(str(i))
 
         symlink = tmp_path.joinpath(self.PREFIX + "current")
-        assert symlink.is_symlink()
-        assert symlink.resolve() == d.resolve()
+        if symlink.exists():
+            # unix
+            assert symlink.is_symlink()
+            assert symlink.resolve() == d.resolve()
 
     def test_cleanup_lock_create(self, tmp_path):
         d = tmp_path.joinpath("test")
@@ -248,7 +250,7 @@ class TestNumberedDir(object):
 
     def test_cleanup_keep(self, tmp_path):
         self._do_cleanup(tmp_path)
-        a, b = tmp_path.iterdir()
+        a, b = (x for x in tmp_path.iterdir() if not x.is_symlink())
         print(a, b)
 
     def test_cleanup_locked(self, tmp_path):
