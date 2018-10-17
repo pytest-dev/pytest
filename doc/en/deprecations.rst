@@ -68,7 +68,7 @@ Using ``Class`` in custom Collectors
 .. deprecated:: 3.9
 
 Using objects named ``"Class"`` as a way to customize the type of nodes that are collected in ``Collector``
-subclasses has been deprecated. Users instead should use ``pytest_collect_make_item`` to customize node types during
+subclasses has been deprecated. Users instead should use ``pytest_pycollect_makeitem`` to customize node types during
 collection.
 
 This issue should affect only advanced plugins who create new collection types, so if you see this warning
