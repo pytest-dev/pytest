@@ -56,7 +56,7 @@ This should be updated to make use of standard fixture mechanisms:
         session.close()
 
 
-You can consult `funcarg comparision section in the docs <https://docs.pytest.org/en/latest/funcarg_compare.html>`_ for
+You can consult `funcarg comparison section in the docs <https://docs.pytest.org/en/latest/funcarg_compare.html>`_ for
 more information.
 
 This has been documented as deprecated for years, but only now we are actually emitting deprecation warnings.

@@ -45,7 +45,7 @@ Deprecations
     Users should just ``import pytest`` and access those objects using the ``pytest`` module.
 
   * ``request.cached_setup``, this was the precursor of the setup/teardown mechanism available to fixtures. You can
-    consult `funcarg comparision section in the docs <https://docs.pytest.org/en/latest/funcarg_compare.html>`_.
+    consult `funcarg comparison section in the docs <https://docs.pytest.org/en/latest/funcarg_compare.html>`_.
 
   * Using objects named ``"Class"`` as a way to customize the type of nodes that are collected in ``Collector``
     subclasses has been deprecated. Users instead should use ``pytest_collect_make_item`` to customize node types during
