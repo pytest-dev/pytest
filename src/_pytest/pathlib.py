@@ -100,6 +100,26 @@ else:
     _max = max
 
 
+def _force_symlink(root, target, link_to):
+    """helper to create the current symlink
+
+    its full of race conditions that are reasonably ok to ignore
+    for the contex of best effort linking to the latest testrun
+
+    the presumption being thatin case of much parallelism
+    the inaccuracy is going to be acceptable
+    """
+    current_symlink = root.joinpath(target)
+    try:
+        current_symlink.unlink()
+    except OSError:
+        pass
+    try:
+        current_symlink.symlink_to(link_to)
+    except Exception:
+        pass
+
+
 def make_numbered_dir(root, prefix):
     """create a directory with a increased number as suffix for the given prefix"""
     for i in range(10):
@@ -112,6 +132,7 @@ def make_numbered_dir(root, prefix):
         except Exception:
             pass
         else:
+            _force_symlink(root, prefix + "current", new_path)
             return new_path
     else:
         raise EnvironmentError(
