@@ -1,4 +1,3 @@
-from _pytest.cacheprovider import Cache
 import pytest
 
 
@@ -19,9 +18,8 @@ def pytest_addoption(parser):
     )
 
 
-@pytest.hookimpl(tryfirst=True)
+@pytest.hookimpl
 def pytest_configure(config):
-    config.cache = Cache.for_config(config)
     config.pluginmanager.register(StepwisePlugin(config), "stepwiseplugin")
 
 
