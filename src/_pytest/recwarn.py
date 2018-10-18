@@ -156,6 +156,8 @@ class WarningsRecorder(warnings.catch_warnings):
         if six.PY2:
 
             def warn(*args, **kwargs):
+                kwargs.setdefault("stacklevel", 1)
+                kwargs["stacklevel"] += 1
                 return self._saved_warn(*args, **kwargs)
 
             warnings.warn, self._saved_warn = warn, warnings.warn
