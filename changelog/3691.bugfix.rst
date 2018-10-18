@@ -1,0 +1,2 @@
+Python 2: safely format warning message about passing unicode strings to ``warnings.warn``, which may cause
+surprising ``MemoryError`` exception when monkey patching ``warnings.warn`` itself.
