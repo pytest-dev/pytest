@@ -1,0 +1,1 @@
+Fix filename reported by ``warnings.warn`` when using ``recwarn`` under python2.
