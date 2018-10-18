@@ -26,7 +26,7 @@ if "_PYTEST_SETUP_SKIP_PLUGGY_DEP" not in os.environ:
 def main():
     setup(
         use_scm_version={"write_to": "src/_pytest/_version.py"},
-        setup_requires=["setuptools-scm", "setuptools>=30.3"],
+        setup_requires=["setuptools-scm", "setuptools>=40.0"],
         package_dir={"": "src"},
         install_requires=INSTALL_REQUIRES,
     )

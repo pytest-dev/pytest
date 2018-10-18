@@ -279,7 +279,7 @@ class LogCaptureFixture(object):
         Unlike 'records', which contains the format string and parameters for interpolation, log messages in this list
         are all interpolated.
         Unlike 'text', which contains the output from the handler, log messages in this list are unadorned with
-        levels, timestamps, etc, making exact comparisions more reliable.
+        levels, timestamps, etc, making exact comparisons more reliable.
 
         Note that traceback or stack info (from :func:`logging.exception` or the `exc_info` or `stack_info` arguments
         to the logging functions) is not included, as this is added by the formatter in the handler.
