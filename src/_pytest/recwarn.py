@@ -158,7 +158,18 @@ class WarningsRecorder(warnings.catch_warnings):
             def warn(*args, **kwargs):
                 kwargs.setdefault("stacklevel", 1)
                 kwargs["stacklevel"] += 1
-                return self._saved_warn(*args, **kwargs)
+
+                # emulate resetting the warn registry
+                f_globals = sys._getframe(kwargs["stacklevel"] - 1).f_globals
+                if "__warningregistry__" in f_globals:
+                    orig = f_globals["__warningregistry__"]
+                    f_globals["__warningregistry__"] = None
+                    try:
+                        return self._saved_warn(*args, **kwargs)
+                    finally:
+                        f_globals["__warningregistry__"] = orig
+                else:
+                    return self._saved_warn(*args, **kwargs)
 
             warnings.warn, self._saved_warn = warn, warnings.warn
         return self
