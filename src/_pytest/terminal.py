@@ -263,7 +263,7 @@ class TerminalReporter(object):
         char = {"xfailed": "x", "skipped": "s"}.get(char, char)
         return char in self.reportchars
 
-    def write_fspath_result(self, nodeid, res):
+    def write_fspath_result(self, nodeid, res, **markup):
         fspath = self.config.rootdir.join(nodeid.split("::")[0])
         if fspath != self.currentfspath:
             if self.currentfspath is not None and self._show_progress_info:
@@ -272,7 +272,7 @@ class TerminalReporter(object):
             fspath = self.startdir.bestrelpath(fspath)
             self._tw.line()
             self._tw.write(fspath + " ")
-        self._tw.write(res)
+        self._tw.write(res, **markup)
 
     def write_ensure_prefix(self, prefix, extra="", **kwargs):
         if self.currentfspath != prefix:
@@ -386,22 +386,22 @@ class TerminalReporter(object):
             # probably passed setup/teardown
             return
         running_xdist = hasattr(rep, "node")
+        if markup is None:
+            if rep.passed:
+                markup = {"green": True}
+            elif rep.failed:
+                markup = {"red": True}
+            elif rep.skipped:
+                markup = {"yellow": True}
+            else:
+                markup = {}
         if self.verbosity <= 0:
             if not running_xdist and self.showfspath:
-                self.write_fspath_result(rep.nodeid, letter)
+                self.write_fspath_result(rep.nodeid, letter, **markup)
             else:
-                self._tw.write(letter)
+                self._tw.write(letter, **markup)
         else:
             self._progress_nodeids_reported.add(rep.nodeid)
-            if markup is None:
-                if rep.passed:
-                    markup = {"green": True}
-                elif rep.failed:
-                    markup = {"red": True}
-                elif rep.skipped:
-                    markup = {"yellow": True}
-                else:
-                    markup = {}
             line = self._locationline(rep.nodeid, *rep.location)
             if not running_xdist:
                 self.write_ensure_prefix(line, word, **markup)
