@@ -3,6 +3,8 @@ from __future__ import unicode_literals
 
 import sys
 
+import six
+
 import pytest
 
 
@@ -562,3 +564,30 @@ class TestDeprecationWarningsByDefault:
         monkeypatch.setenv(str("PYTHONWARNINGS"), str("once::UserWarning"))
         result = testdir.runpytest_subprocess()
         assert WARNINGS_SUMMARY_HEADER not in result.stdout.str()
+
+
+@pytest.mark.skipif(six.PY3, reason="Python 2 only issue")
+def test_infinite_loop_warning_against_unicode_usage_py2(testdir):
+    """
+    We need to be careful when raising the warning about unicode usage with "warnings.warn"
+    because it might be overwritten by users and this itself causes another warning (#3691).
+    """
+    testdir.makepyfile(
+        """
+        # -*- coding: utf8 -*-
+        from __future__ import unicode_literals
+        import warnings
+        import pytest
+
+        def _custom_showwarning(message, *a, **b):
+            return "WARNING: {}".format(message)
+
+        warnings.formatwarning = _custom_showwarning
+
+        @pytest.mark.filterwarnings("default")
+        def test_custom_warning_formatter():
+            warnings.warn("¥")
+    """
+    )
+    result = testdir.runpytest_subprocess()
+    result.stdout.fnmatch_lines(["*1 passed, * warnings in*"])

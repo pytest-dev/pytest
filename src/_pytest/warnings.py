@@ -123,7 +123,7 @@ def warning_record_to_str(warning_message):
     if unicode_warning:
         warnings.warn(
             "Warning is using unicode non convertible to ascii, "
-            "converting to a safe representation:\n  %s" % msg,
+            "converting to a safe representation:\n  {!r}".format(compat.safe_str(msg)),
             UnicodeWarning,
         )
     return msg
