@@ -392,6 +392,8 @@ class Session(nodes.FSCollector):
         self._initialpaths = frozenset()
         # Keep track of any collected nodes in here, so we don't duplicate fixtures
         self._node_cache = {}
+        # Keep track of visited directories in here, so we don't end up in a symlink-induced loop.
+        self._visited = set()
 
         self.config.pluginmanager.register(self, name="session")
 
@@ -558,7 +560,17 @@ class Session(nodes.FSCollector):
                 return ()
         return ihook.pytest_collect_file(path=path, parent=self)
 
+    def _check_visited(self, path):
+        st = path.stat()
+        key = (st.dev, st.ino)
+        if key in self._visited:
+            return True
+        self._visited.add(key)
+        return False
+
     def _recurse(self, path):
+        if self._check_visited(path):
+            return False
         ihook = self.gethookproxy(path.dirpath())
         if ihook.pytest_ignore_collect(path=path, config=self.config):
             return
