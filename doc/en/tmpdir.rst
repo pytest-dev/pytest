@@ -72,7 +72,7 @@ The ``tmp_path_factory`` fixture
 The ``tmp_path_facotry`` is a session-scoped fixture which can be used
 to create arbitrary temporary directories from any other fixture or test.
 
-It is intended to replace ``tmpdir_factory``, and returns :class:`pathlib.Path` instances. 
+It is intended to replace ``tmpdir_factory``, and returns :class:`pathlib.Path` instances.
 
 
 The 'tmpdir' fixture
