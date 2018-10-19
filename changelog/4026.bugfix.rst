@@ -1,0 +1,1 @@
+Improve error message when it is not possible to determine a function's signature.

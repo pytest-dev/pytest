@@ -952,3 +952,23 @@ def test_collect_init_tests(testdir):
             "*<Function 'test_foo'>",
         ]
     )
+
+
+def test_collect_invalid_signature_message(testdir):
+    """Check that we issue a proper message when we can't determine the signature of a test
+    function (#4026).
+    """
+    testdir.makepyfile(
+        """
+        import pytest
+
+        class TestCase:
+            @pytest.fixture
+            def fix():
+                pass
+    """
+    )
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines(
+        ["Could not determine arguments of *.fix *: invalid method signature"]
+    )
