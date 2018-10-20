@@ -32,7 +32,7 @@ from _pytest.compat import (
     get_real_method,
     _PytestWrapper,
 )
-from _pytest.deprecated import FIXTURE_FUNCTION_CALL
+from _pytest.deprecated import FIXTURE_FUNCTION_CALL, FIXTURE_NAMED_REQUEST
 from _pytest.outcomes import fail, TEST_OUTCOME
 
 FIXTURE_MSG = 'fixtures cannot have "pytest_funcarg__" prefix and be decorated with @pytest.fixture:\n{}'
@@ -1029,6 +1029,9 @@ class FixtureFunctionMarker(object):
 
         function = wrap_function_to_warning_if_called_directly(function, self)
 
+        name = self.name or function.__name__
+        if name == "request":
+            warnings.warn(FIXTURE_NAMED_REQUEST)
         function._pytestfixturefunction = self
         return function
 

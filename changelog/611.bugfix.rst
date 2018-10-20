@@ -1,0 +1,2 @@
+Naming a fixture ``request`` will now raise a warning: the ``request`` fixture is internal and
+should not be overwritten as it will lead to internal errors.
