@@ -399,7 +399,7 @@ def _rewrite_test(config, fn):
             finally:
                 del state._indecode
     try:
-        tree = ast.parse(source)
+        tree = ast.parse(source, filename=fn.strpath)
     except SyntaxError:
         # Let this pop up again in the real import.
         state.trace("failed to parse: %r" % (fn,))

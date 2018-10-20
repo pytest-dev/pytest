@@ -12,6 +12,13 @@ import pytest
 from _pytest.main import EXIT_NOTESTSCOLLECTED, EXIT_USAGEERROR
 
 
+def prepend_pythonpath(*dirs):
+    cur = os.getenv("PYTHONPATH")
+    if cur:
+        dirs += (cur,)
+    return os.pathsep.join(str(p) for p in dirs)
+
+
 class TestGeneralUsage(object):
     def test_config_error(self, testdir):
         testdir.copy_example("conftest_usageerror/conftest.py")
@@ -590,14 +597,8 @@ class TestInvocationVariants(object):
         assert result.ret == 0
         result.stdout.fnmatch_lines(["*1 passed*"])
 
-        def join_pythonpath(what):
-            cur = os.environ.get("PYTHONPATH")
-            if cur:
-                return str(what) + os.pathsep + cur
-            return what
-
         empty_package = testdir.mkpydir("empty_package")
-        monkeypatch.setenv("PYTHONPATH", str(join_pythonpath(empty_package)))
+        monkeypatch.setenv("PYTHONPATH", str(empty_package), prepend=os.pathsep)
         # the path which is not a package raises a warning on pypy;
         # no idea why only pypy and not normal python warn about it here
         with warnings.catch_warnings():
@@ -606,7 +607,7 @@ class TestInvocationVariants(object):
         assert result.ret == 0
         result.stdout.fnmatch_lines(["*2 passed*"])
 
-        monkeypatch.setenv("PYTHONPATH", str(join_pythonpath(testdir)))
+        monkeypatch.setenv("PYTHONPATH", str(testdir), prepend=os.pathsep)
         result = testdir.runpytest("--pyargs", "tpkg.test_missing", syspathinsert=True)
         assert result.ret != 0
         result.stderr.fnmatch_lines(["*not*found*test_missing*"])
@@ -646,18 +647,13 @@ class TestInvocationVariants(object):
         #             ├── __init__.py
         #             └── test_world.py
 
-        def join_pythonpath(*dirs):
-            cur = os.environ.get("PYTHONPATH")
-            if cur:
-                dirs += (cur,)
-            return os.pathsep.join(str(p) for p in dirs)
-
-        monkeypatch.setenv("PYTHONPATH", join_pythonpath(*search_path))
+        # NOTE: the different/reversed ordering is intentional here.
+        monkeypatch.setenv("PYTHONPATH", prepend_pythonpath(*search_path))
         for p in search_path:
             monkeypatch.syspath_prepend(p)
 
         # mixed module and filenames:
-        os.chdir("world")
+        monkeypatch.chdir("world")
         result = testdir.runpytest("--pyargs", "-v", "ns_pkg.hello", "ns_pkg/world")
         assert result.ret == 0
         result.stdout.fnmatch_lines(
@@ -708,8 +704,6 @@ class TestInvocationVariants(object):
                 pytest.skip(six.text_type(e.args[0]))
         monkeypatch.delenv("PYTHONDONTWRITEBYTECODE", raising=False)
 
-        search_path = ["lib", os.path.join("local", "lib")]
-
         dirname = "lib"
         d = testdir.mkdir(dirname)
         foo = d.mkdir("foo")
@@ -742,13 +736,9 @@ class TestInvocationVariants(object):
         #             ├── conftest.py
         #             └── test_bar.py
 
-        def join_pythonpath(*dirs):
-            cur = os.getenv("PYTHONPATH")
-            if cur:
-                dirs += (cur,)
-            return os.pathsep.join(str(p) for p in dirs)
-
-        monkeypatch.setenv("PYTHONPATH", join_pythonpath(*search_path))
+        # NOTE: the different/reversed ordering is intentional here.
+        search_path = ["lib", os.path.join("local", "lib")]
+        monkeypatch.setenv("PYTHONPATH", prepend_pythonpath(*search_path))
         for p in search_path:
             monkeypatch.syspath_prepend(p)
 
@@ -760,16 +750,16 @@ class TestInvocationVariants(object):
         if hasattr(py.path.local, "mksymlinkto"):
             result.stdout.fnmatch_lines(
                 [
-                    "lib/foo/bar/test_bar.py::test_bar <- local/lib/foo/bar/test_bar.py PASSED*",
-                    "lib/foo/bar/test_bar.py::test_other <- local/lib/foo/bar/test_bar.py PASSED*",
+                    "lib/foo/bar/test_bar.py::test_bar PASSED*",
+                    "lib/foo/bar/test_bar.py::test_other PASSED*",
                     "*2 passed*",
                 ]
             )
         else:
             result.stdout.fnmatch_lines(
                 [
-                    "local/lib/foo/bar/test_bar.py::test_bar PASSED*",
-                    "local/lib/foo/bar/test_bar.py::test_other PASSED*",
+                    "*lib/foo/bar/test_bar.py::test_bar PASSED*",
+                    "*lib/foo/bar/test_bar.py::test_other PASSED*",
                     "*2 passed*",
                 ]
             )
@@ -846,7 +836,10 @@ class TestDurations(object):
         result = testdir.runpytest("--durations=10")
         assert result.ret == 0
         result.stdout.fnmatch_lines_random(
-            ["*durations*", "*call*test_3*", "*call*test_2*", "*call*test_1*"]
+            ["*durations*", "*call*test_3*", "*call*test_2*"]
+        )
+        result.stdout.fnmatch_lines(
+            ["(0.00 durations hidden.  Use -vv to show these durations.)"]
         )
 
     def test_calls_show_2(self, testdir):
@@ -860,6 +853,18 @@ class TestDurations(object):
         testdir.makepyfile(self.source)
         result = testdir.runpytest("--durations=0")
         assert result.ret == 0
+        for x in "23":
+            for y in ("call",):  # 'setup', 'call', 'teardown':
+                for line in result.stdout.lines:
+                    if ("test_%s" % x) in line and y in line:
+                        break
+                else:
+                    raise AssertionError("not found {} {}".format(x, y))
+
+    def test_calls_showall_verbose(self, testdir):
+        testdir.makepyfile(self.source)
+        result = testdir.runpytest("--durations=0", "-vv")
+        assert result.ret == 0
         for x in "123":
             for y in ("call",):  # 'setup', 'call', 'teardown':
                 for line in result.stdout.lines:
@@ -870,9 +875,9 @@ class TestDurations(object):
 
     def test_with_deselected(self, testdir):
         testdir.makepyfile(self.source)
-        result = testdir.runpytest("--durations=2", "-k test_1")
+        result = testdir.runpytest("--durations=2", "-k test_2")
         assert result.ret == 0
-        result.stdout.fnmatch_lines(["*durations*", "*call*test_1*"])
+        result.stdout.fnmatch_lines(["*durations*", "*call*test_2*"])
 
     def test_with_failing_collection(self, testdir):
         testdir.makepyfile(self.source)
@@ -892,13 +897,15 @@ class TestDurations(object):
 
 class TestDurationWithFixture(object):
     source = """
+        import pytest
         import time
-        frag = 0.001
-        def setup_function(func):
-            time.sleep(frag * 3)
-        def test_1():
-            time.sleep(frag*2)
-        def test_2():
+        frag = 0.01
+
+        @pytest.fixture
+        def setup_fixt():
+            time.sleep(frag)
+
+        def test_1(setup_fixt):
             time.sleep(frag)
     """
 

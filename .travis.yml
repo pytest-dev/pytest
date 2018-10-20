@@ -12,19 +12,15 @@ install:
   - pip install --upgrade --pre tox
 env:
   matrix:
-    # note: please use "tox --listenvs" to populate the build matrix below
-    # please remove the linting env in all cases
-    - TOXENV=py27-pexpect
-    - TOXENV=py27-xdist
-    - TOXENV=py27-trial
-    - TOXENV=py27-numpy
-    - TOXENV=py27-pluggymaster PYTEST_NO_COVERAGE=1
-    - TOXENV=py36-pexpect
-    - TOXENV=py36-xdist
-    - TOXENV=py36-trial
-    - TOXENV=py36-numpy
-    - TOXENV=py36-pluggymaster PYTEST_NO_COVERAGE=1
+    # Specialized factors for py27.
+    - TOXENV=py27-pexpect,py27-trial,py27-numpy
     - TOXENV=py27-nobyte
+    - TOXENV=py27-xdist
+    - TOXENV=py27-pluggymaster PYTEST_NO_COVERAGE=1
+    # Specialized factors for py36.
+    - TOXENV=py36-pexpect,py36-trial,py36-numpy
+    - TOXENV=py36-xdist
+    - TOXENV=py36-pluggymaster PYTEST_NO_COVERAGE=1
 
 jobs:
   include:
@@ -97,12 +93,6 @@ after_success:
       coverage xml --ignore-errors
       coverage report -m --ignore-errors
       bash <(curl -s https://codecov.io/bash) -Z -X gcov -X coveragepy -X search -X xcode -X gcovout -X fix -f coverage.xml -F "${TOXENV//-/,},linux"
-
-      # Coveralls does not support merged reports.
-      if [[ "$TOXENV" = py37 ]]; then
-        pip install coveralls
-        coveralls
-      fi
     fi
 
 notifications:

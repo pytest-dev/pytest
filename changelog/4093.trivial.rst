@@ -1,1 +1,0 @@
-Fixed formatting of string literals in internal tests.

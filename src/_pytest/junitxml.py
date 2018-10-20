@@ -221,12 +221,14 @@ class _NodeReporter(object):
         else:
             filename, lineno, skipreason = report.longrepr
             if skipreason.startswith("Skipped: "):
-                skipreason = bin_xml_escape(skipreason[9:])
+                skipreason = skipreason[9:]
+            details = "%s:%s: %s" % (filename, lineno, skipreason)
+
             self.append(
                 Junit.skipped(
-                    "%s:%s: %s" % (filename, lineno, skipreason),
+                    bin_xml_escape(details),
                     type="pytest.skip",
-                    message=skipreason,
+                    message=bin_xml_escape(skipreason),
                 )
             )
             self.write_captured_output(report)

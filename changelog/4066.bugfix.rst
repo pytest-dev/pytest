@@ -1,1 +1,0 @@
-Fix source reindenting by using ``textwrap.dedent`` directly.

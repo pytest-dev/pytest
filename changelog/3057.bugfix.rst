@@ -1,1 +1,0 @@
-``request.fixturenames`` now correctly returns the name of fixtures created by ``request.getfixturevalue()``.

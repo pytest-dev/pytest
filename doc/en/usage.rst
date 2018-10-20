@@ -269,6 +269,7 @@ To get a list of the slowest 10 test durations::
 
     pytest --durations=10
 
+By default, pytest will not show test durations that are too small (<0.01s) unless ``-vv`` is passed on the command-line.
 
 Creating JUnitXML format files
 ----------------------------------------------------

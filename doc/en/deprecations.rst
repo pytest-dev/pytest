@@ -56,7 +56,7 @@ This should be updated to make use of standard fixture mechanisms:
         session.close()
 
 
-You can consult `funcarg comparision section in the docs <https://docs.pytest.org/en/latest/funcarg_compare.html>`_ for
+You can consult `funcarg comparison section in the docs <https://docs.pytest.org/en/latest/funcarg_compare.html>`_ for
 more information.
 
 This has been documented as deprecated for years, but only now we are actually emitting deprecation warnings.
@@ -68,7 +68,7 @@ Using ``Class`` in custom Collectors
 .. deprecated:: 3.9
 
 Using objects named ``"Class"`` as a way to customize the type of nodes that are collected in ``Collector``
-subclasses has been deprecated. Users instead should use ``pytest_collect_make_item`` to customize node types during
+subclasses has been deprecated. Users instead should use ``pytest_pycollect_makeitem`` to customize node types during
 collection.
 
 This issue should affect only advanced plugins who create new collection types, so if you see this warning
@@ -304,7 +304,7 @@ This form of test function doesn't support fixtures properly, and users should s
 .. code-block:: python
 
     @pytest.mark.parametrize("x, y", [(2, 4), (3, 9)])
-    def test_squared():
+    def test_squared(x, y):
         assert x ** x == y
 
 
