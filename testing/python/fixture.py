@@ -60,6 +60,13 @@ class TestFillFixtures(object):
             """
         )
 
+    def test_detect_recursive_dependency_error(self, testdir):
+        testdir.copy_example()
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines(
+            ["*recursive dependency involving fixture 'fix1' detected*"]
+        )
+
     def test_funcarg_basic(self, testdir):
         testdir.copy_example()
         item = testdir.getitem(Path("test_funcarg_basic.py"))
