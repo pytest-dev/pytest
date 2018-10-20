@@ -966,3 +966,39 @@ def test_collection_logging_to_file(testdir):
         assert "Normal message" in contents
         assert "debug message in test_simple" not in contents
         assert "info message in test_simple" in contents
+
+
+def test_log_in_hooks(testdir):
+    log_file = testdir.tmpdir.join("pytest.log").strpath
+
+    testdir.makeini(
+        """
+        [pytest]
+        log_file={}
+        log_file_level = INFO
+        log_cli=true
+        """.format(
+            log_file
+        )
+    )
+    testdir.makeconftest(
+        """
+        import logging
+
+        def pytest_runtestloop(session):
+            logging.info('runtestloop')
+
+        def pytest_sessionstart(session):
+            logging.info('sessionstart')
+
+        def pytest_sessionfinish(session, exitstatus):
+            logging.info('sessionfinish')
+    """
+    )
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines(["*sessionstart*", "*runtestloop*", "*sessionfinish*"])
+    with open(log_file) as rfh:
+        contents = rfh.read()
+        assert "sessionstart" in contents
+        assert "runtestloop" in contents
+        assert "sessionfinish" in contents

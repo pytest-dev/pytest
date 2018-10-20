@@ -497,6 +497,29 @@ class LoggingPlugin(object):
         with self._runtest_for(None, "finish"):
             yield
 
+    @pytest.hookimpl(hookwrapper=True, tryfirst=True)
+    def pytest_sessionfinish(self):
+        with self.live_logs_context():
+            if self.log_cli_handler:
+                self.log_cli_handler.set_when("sessionfinish")
+            if self.log_file_handler is not None:
+                with catching_logs(self.log_file_handler, level=self.log_file_level):
+                    yield
+            else:
+                yield
+
+    @pytest.hookimpl(hookwrapper=True, tryfirst=True)
+    def pytest_sessionstart(self):
+        self._setup_cli_logging()
+        with self.live_logs_context():
+            if self.log_cli_handler:
+                self.log_cli_handler.set_when("sessionstart")
+            if self.log_file_handler is not None:
+                with catching_logs(self.log_file_handler, level=self.log_file_level):
+                    yield
+            else:
+                yield
+
     @pytest.hookimpl(hookwrapper=True)
     def pytest_runtestloop(self, session):
         """Runs all collected test items."""
