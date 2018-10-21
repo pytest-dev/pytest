@@ -11,7 +11,11 @@ in case of warnings which need to format their messages.
 from __future__ import absolute_import, division, print_function
 
 
-from _pytest.warning_types import UnformattedWarning, RemovedInPytest4Warning
+from _pytest.warning_types import (
+    UnformattedWarning,
+    RemovedInPytest4Warning,
+    PytestDeprecationWarning,
+)
 
 
 MAIN_STR_ARGS = RemovedInPytest4Warning(
@@ -53,6 +57,10 @@ FIXTURE_FUNCTION_CALL = UnformattedWarning(
     'Fixture "{name}" called directly. Fixtures are not meant to be called directly, '
     "are created automatically when test functions request them as parameters. "
     "See https://docs.pytest.org/en/latest/fixture.html for more information.",
+)
+
+FIXTURE_NAMED_REQUEST = PytestDeprecationWarning(
+    "'request' is a reserved name for fixtures and will raise an error in future versions"
 )
 
 CFG_PYTEST_SECTION = UnformattedWarning(
