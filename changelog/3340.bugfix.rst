@@ -1,1 +1,0 @@
-Fix logging messages not shown in hooks ``pytest_sessionstart()`` and ``pytest_sessionfinish()``.

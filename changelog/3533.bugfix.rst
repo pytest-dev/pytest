@@ -1,1 +1,0 @@
-Fix unescaped XML raw objects in JUnit report for skipped tests

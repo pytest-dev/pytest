@@ -1,1 +1,0 @@
-Restore the tmpdir behaviour of symlinking the current test run.

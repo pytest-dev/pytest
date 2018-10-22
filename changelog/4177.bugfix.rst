@@ -1,1 +1,0 @@
-Pin ``setuptools>=40.0`` to support ``py_modules`` in ``setup.cfg``
