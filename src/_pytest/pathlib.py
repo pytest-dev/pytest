@@ -245,8 +245,8 @@ def make_numbered_dir_with_cleanup(root, prefix, keep, lock_timeout):
             p = make_numbered_dir(root, prefix)
             lock_path = create_cleanup_lock(p)
             register_cleanup_lock_removal(lock_path)
-        except Exception as e:
-            pass
+        except Exception as exc:
+            e = exc
         else:
             consider_lock_dead_if_created_before = p.stat().st_mtime - lock_timeout
             cleanup_numbered_dir(
