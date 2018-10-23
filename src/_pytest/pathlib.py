@@ -13,7 +13,6 @@ import shutil
 from os.path import expanduser, expandvars, isabs, sep
 from posixpath import sep as posix_sep
 import fnmatch
-import stat
 
 from .compat import PY36
 
@@ -40,17 +39,10 @@ def ensure_reset_dir(path):
     path.mkdir()
 
 
-def _shutil_rmtree_remove_writable(func, fspath, _):
-    "Clear the readonly bit and reattempt the removal"
-    os.chmod(fspath, stat.S_IWRITE)
-    func(fspath)
-
-
 def rmtree(path, force=False):
     if force:
-        # ignore_errors leaves dead folders around
-        # python needs a rm -rf as a followup
-        # the trick with _shutil_rmtree_remove_writable is unreliable
+        # NOTE: ignore_errors might leave dead folders around.
+        #       Python needs a rm -rf as a followup.
         shutil.rmtree(str(path), ignore_errors=True)
     else:
         shutil.rmtree(str(path))
