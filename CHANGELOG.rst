@@ -18,6 +18,37 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+pytest 3.9.2 (2018-10-22)
+=========================
+
+Bug Fixes
+---------
+
+- `#2909 <https://github.com/pytest-dev/pytest/issues/2909>`_: Improve error message when a recursive dependency between fixtures is detected.
+
+
+- `#3340 <https://github.com/pytest-dev/pytest/issues/3340>`_: Fix logging messages not shown in hooks ``pytest_sessionstart()`` and ``pytest_sessionfinish()``.
+
+
+- `#3533 <https://github.com/pytest-dev/pytest/issues/3533>`_: Fix unescaped XML raw objects in JUnit report for skipped tests
+
+
+- `#3691 <https://github.com/pytest-dev/pytest/issues/3691>`_: Python 2: safely format warning message about passing unicode strings to ``warnings.warn``, which may cause
+  surprising ``MemoryError`` exception when monkey patching ``warnings.warn`` itself.
+
+
+- `#4026 <https://github.com/pytest-dev/pytest/issues/4026>`_: Improve error message when it is not possible to determine a function's signature.
+
+
+- `#4177 <https://github.com/pytest-dev/pytest/issues/4177>`_: Pin ``setuptools>=40.0`` to support ``py_modules`` in ``setup.cfg``
+
+
+- `#4179 <https://github.com/pytest-dev/pytest/issues/4179>`_: Restore the tmpdir behaviour of symlinking the current test run.
+
+
+- `#4192 <https://github.com/pytest-dev/pytest/issues/4192>`_: Fix filename reported by ``warnings.warn`` when using ``recwarn`` under python2.
+
+
 pytest 3.9.1 (2018-10-16)
 =========================
 
