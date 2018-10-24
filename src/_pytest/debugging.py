@@ -1,7 +1,6 @@
 """ interactive debugging with PDB, the Python Debugger. """
 from __future__ import absolute_import, division, print_function
 
-import os
 import pdb
 import sys
 from doctest import UnexpectedException
