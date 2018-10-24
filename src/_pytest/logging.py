@@ -263,7 +263,7 @@ class LogCaptureFixture(object):
 
     @property
     def record_tuples(self):
-        """Returns a list of a striped down version of log records intended
+        """Returns a list of a stripped down version of log records intended
         for use in assertion comparison.
 
         The format of the tuple is:
@@ -330,7 +330,7 @@ class LogCaptureFixture(object):
 def caplog(request):
     """Access and control log capturing.
 
-    Captured logs are available through the following methods::
+    Captured logs are available through the following properties/methods::
 
     * caplog.text            -> string containing formatted log output
     * caplog.records         -> list of logging.LogRecord instances
