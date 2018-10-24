@@ -391,7 +391,7 @@ class PytestPluginManager(PluginManager):
             # and allow users to opt into looking into the rootdir parent
             # directories instead of requiring to specify confcutdir
             clist = []
-            for parent in directory.parts():
+            for parent in directory.realpath().parts():
                 if self._confcutdir and self._confcutdir.relto(parent):
                     continue
                 conftestpath = parent.join("conftest.py")

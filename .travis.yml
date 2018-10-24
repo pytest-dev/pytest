@@ -47,6 +47,11 @@ jobs:
       env: TOXENV=py37
       before_install:
         - brew update
+        # remove c++ include files because upgrading python as of 2018-10-23, also
+        # attempts to upgrade gcc, and it fails because the include files already
+        # exist. removing the include files is one of the solutions recommended by brew
+        # this workaround might not be necessary in the future
+        - rm '/usr/local/include/c++'
         - brew upgrade python
         - brew unlink python
         - brew link python

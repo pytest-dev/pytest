@@ -13,7 +13,7 @@ from contextlib import contextmanager
 import py
 
 import _pytest
-from _pytest.outcomes import TEST_OUTCOME
+from _pytest.outcomes import TEST_OUTCOME, fail
 from six import text_type
 import six
 
@@ -131,9 +131,17 @@ def getfuncargnames(function, is_method=False, cls=None):
     # ordered mapping of parameter names to Parameter instances.  This
     # creates a tuple of the names of the parameters that don't have
     # defaults.
+    try:
+        parameters = signature(function).parameters
+    except (ValueError, TypeError) as e:
+        fail(
+            "Could not determine arguments of {!r}: {}".format(function, e),
+            pytrace=False,
+        )
+
     arg_names = tuple(
         p.name
-        for p in signature(function).parameters.values()
+        for p in parameters.values()
         if (
             p.kind is Parameter.POSITIONAL_OR_KEYWORD
             or p.kind is Parameter.KEYWORD_ONLY

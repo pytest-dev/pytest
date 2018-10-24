@@ -11,11 +11,11 @@ The ``tmp_path`` fixture
 .. versionadded:: 3.9
 
 
-You can use the ``tmpdir`` fixture which will
+You can use the ``tmp_path`` fixture which will
 provide a temporary directory unique to the test invocation,
 created in the `base temporary directory`_.
 
-``tmpdir`` is a ``pathlib/pathlib2.Path`` object. Here is an example test usage:
+``tmp_path`` is a ``pathlib/pathlib2.Path`` object. Here is an example test usage:
 
 .. code-block:: python
 
@@ -69,10 +69,10 @@ The ``tmp_path_factory`` fixture
 .. versionadded:: 3.9
 
 
-The ``tmp_path_facotry`` is a session-scoped fixture which can be used
+The ``tmp_path_factory`` is a session-scoped fixture which can be used
 to create arbitrary temporary directories from any other fixture or test.
 
-its intended to replace ``tmpdir_factory`` and returns :class:`pathlib.Path` instances.
+It is intended to replace ``tmpdir_factory``, and returns :class:`pathlib.Path` instances.
 
 
 The 'tmpdir' fixture

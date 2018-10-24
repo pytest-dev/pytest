@@ -6,6 +6,12 @@ import pytest
 from _pytest.recwarn import WarningsRecorder
 
 
+def test_recwarn_stacklevel(recwarn):
+    warnings.warn("hello")
+    warn = recwarn.pop()
+    assert warn.filename == __file__
+
+
 def test_recwarn_functional(testdir):
     testdir.makepyfile(
         """
