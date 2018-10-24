@@ -1,6 +1,7 @@
 """ command line options, ini-file and conftest.py processing. """
 from __future__ import absolute_import, division, print_function
 import argparse
+import functools
 import inspect
 import shlex
 import types
@@ -893,6 +894,7 @@ class Config(object):
             assert type is None
             return value
 
+    @functools.lru_cache(maxsize=None)
     def _getconftest_pathlist(self, name, path):
         try:
             mod, relroots = self.pluginmanager._rget_with_confmod(name, path)
