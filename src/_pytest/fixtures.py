@@ -762,14 +762,19 @@ class FixtureLookupError(LookupError):
 
         if msg is None:
             fm = self.request._fixturemanager
-            available = []
+            available = set()
             parentid = self.request._pyfuncitem.parent.nodeid
             for name, fixturedefs in fm._arg2fixturedefs.items():
                 faclist = list(fm._matchfactories(fixturedefs, parentid))
-                if faclist and name not in available:
-                    available.append(name)
-            msg = "fixture %r not found" % (self.argname,)
-            msg += "\n available fixtures: %s" % (", ".join(sorted(available)),)
+                if faclist:
+                    available.add(name)
+            if self.argname in available:
+                msg = " recursive dependency involving fixture '{}' detected".format(
+                    self.argname
+                )
+            else:
+                msg = "fixture '{}' not found".format(self.argname)
+            msg += "\n available fixtures: {}".format(", ".join(sorted(available)))
             msg += "\n use 'pytest --fixtures [testpath]' for help on them."
 
         return FixtureLookupErrorRepr(fspath, lineno, tblines, msg, self.argname)

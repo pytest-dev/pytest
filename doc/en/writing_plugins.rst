@@ -420,17 +420,17 @@ additionally it is possible to copy examples for a example folder before running
     ============================= warnings summary =============================
     $REGENDOC_TMPDIR/test_example.py:4: PytestExperimentalApiWarning: testdir.copy_example is an experimental api that may change over time
       testdir.copy_example("test_example.py")
-    $PYTHON_PREFIX/lib/python3.6/site-packages/_pytest/compat.py:321: RemovedInPytest4Warning: usage of Session.Class is deprecated, please use pytest.Class instead
+    $PYTHON_PREFIX/lib/python3.6/site-packages/_pytest/compat.py:329: RemovedInPytest4Warning: usage of Session.Class is deprecated, please use pytest.Class instead
       return getattr(object, name, default)
-    $PYTHON_PREFIX/lib/python3.6/site-packages/_pytest/compat.py:321: RemovedInPytest4Warning: usage of Session.File is deprecated, please use pytest.File instead
+    $PYTHON_PREFIX/lib/python3.6/site-packages/_pytest/compat.py:329: RemovedInPytest4Warning: usage of Session.File is deprecated, please use pytest.File instead
       return getattr(object, name, default)
-    $PYTHON_PREFIX/lib/python3.6/site-packages/_pytest/compat.py:321: RemovedInPytest4Warning: usage of Session.Function is deprecated, please use pytest.Function instead
+    $PYTHON_PREFIX/lib/python3.6/site-packages/_pytest/compat.py:329: RemovedInPytest4Warning: usage of Session.Function is deprecated, please use pytest.Function instead
       return getattr(object, name, default)
-    $PYTHON_PREFIX/lib/python3.6/site-packages/_pytest/compat.py:321: RemovedInPytest4Warning: usage of Session.Instance is deprecated, please use pytest.Instance instead
+    $PYTHON_PREFIX/lib/python3.6/site-packages/_pytest/compat.py:329: RemovedInPytest4Warning: usage of Session.Instance is deprecated, please use pytest.Instance instead
       return getattr(object, name, default)
-    $PYTHON_PREFIX/lib/python3.6/site-packages/_pytest/compat.py:321: RemovedInPytest4Warning: usage of Session.Item is deprecated, please use pytest.Item instead
+    $PYTHON_PREFIX/lib/python3.6/site-packages/_pytest/compat.py:329: RemovedInPytest4Warning: usage of Session.Item is deprecated, please use pytest.Item instead
       return getattr(object, name, default)
-    $PYTHON_PREFIX/lib/python3.6/site-packages/_pytest/compat.py:321: RemovedInPytest4Warning: usage of Session.Module is deprecated, please use pytest.Module instead
+    $PYTHON_PREFIX/lib/python3.6/site-packages/_pytest/compat.py:329: RemovedInPytest4Warning: usage of Session.Module is deprecated, please use pytest.Module instead
       return getattr(object, name, default)
 
     -- Docs: https://docs.pytest.org/en/latest/warnings.html

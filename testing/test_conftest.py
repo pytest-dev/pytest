@@ -192,8 +192,10 @@ def test_conftest_confcutdir(testdir):
 )
 def test_conftest_symlink(testdir):
     """Ensure that conftest.py is used for resolved symlinks."""
-    realtests = testdir.tmpdir.mkdir("real").mkdir("app").mkdir("tests")
+    real = testdir.tmpdir.mkdir("real")
+    realtests = real.mkdir("app").mkdir("tests")
     testdir.tmpdir.join("symlinktests").mksymlinkto(realtests)
+    testdir.tmpdir.join("symlink").mksymlinkto(real)
     testdir.makepyfile(
         **{
             "real/app/tests/test_foo.py": "def test1(fixture): pass",
@@ -218,6 +220,10 @@ def test_conftest_symlink(testdir):
             "PASSED",
         ]
     )
+    assert result.ret == EXIT_OK
+
+    # Should not cause "ValueError: Plugin already registered" (#4174).
+    result = testdir.runpytest("-vs", "symlink")
     assert result.ret == EXIT_OK
 
     realtests.ensure("__init__.py")

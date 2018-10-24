@@ -706,10 +706,9 @@ class AssertionRewriter(ast.NodeVisitor):
                     setattr(node, name, new)
                 elif (
                     isinstance(field, ast.AST)
-                    and
                     # Don't recurse into expressions as they can't contain
                     # asserts.
-                    not isinstance(field, ast.expr)
+                    and not isinstance(field, ast.expr)
                 ):
                     nodes.append(field)
 
