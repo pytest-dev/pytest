@@ -603,19 +603,21 @@ def pytest_exception_interact(node, call, report):
     """
 
 
-def pytest_enter_pdb(config):
+def pytest_enter_pdb(config, pdb):
     """ called upon pdb.set_trace(), can be used by plugins to take special
     action just before the python debugger enters in interactive mode.
 
     :param _pytest.config.Config config: pytest config object
+    :param pdb.Pdb pdb: Pdb instance
     """
 
 
-def pytest_leave_pdb(config):
+def pytest_leave_pdb(config, pdb):
     """ called when leaving pdb (e.g. with continue after pdb.set_trace()).
 
     Can be used by plugins to take special action just after the python
     debugger leaves interactive mode.
 
     :param _pytest.config.Config config: pytest config object
+    :param pdb.Pdb pdb: Pdb instance
     """

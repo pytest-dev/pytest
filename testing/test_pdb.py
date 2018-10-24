@@ -550,16 +550,26 @@ class TestPDB(object):
     def test_enter_leave_pdb_hooks_are_called(self, testdir):
         testdir.makeconftest(
             """
+            mypdb = None
+
             def pytest_configure(config):
                 config.testing_verification = 'configured'
 
-            def pytest_enter_pdb(config):
+            def pytest_enter_pdb(config, pdb):
                 assert config.testing_verification == 'configured'
                 print('enter_pdb_hook')
 
-            def pytest_leave_pdb(config):
+                global mypdb
+                mypdb = pdb
+                mypdb.set_attribute = "bar"
+
+            def pytest_leave_pdb(config, pdb):
                 assert config.testing_verification == 'configured'
                 print('leave_pdb_hook')
+
+                global mypdb
+                assert mypdb is pdb
+                assert mypdb.set_attribute == "bar"
         """
         )
         p1 = testdir.makepyfile(
