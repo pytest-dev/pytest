@@ -894,7 +894,6 @@ class Config(object):
             assert type is None
             return value
 
-    @functools.lru_cache(maxsize=None)
     def _getconftest_pathlist(self, name, path):
         try:
             mod, relroots = self.pluginmanager._rget_with_confmod(name, path)
@@ -908,6 +907,10 @@ class Config(object):
                 relroot = modpath.join(relroot, abs=True)
             values.append(relroot)
         return values
+
+    if six.PY3:
+        # once we drop Python 2, please change this to use the normal decorator syntax (#4227)
+        _getconftest_pathlist = functools.lru_cache(maxsize=None)(_getconftest_pathlist)
 
     def _get_override_ini_value(self, name):
         value = None
