@@ -51,6 +51,19 @@ else:
         return ast.Call(a, b, c, None, None)
 
 
+def ast_Call_helper(func_name, *args, **kwargs):
+    """
+    func_name: str
+    args: Iterable[ast.expr]
+    kwargs: Dict[str,ast.expr]
+    """
+    return ast.Call(
+        ast.Name(func_name, ast.Load()),
+        list(args),
+        [ast.keyword(key, val) for key, val in kwargs.items()],
+    )
+
+
 class AssertionRewritingHook(object):
     """PEP302 Import hook which rewrites asserts."""
 
@@ -828,6 +841,12 @@ class AssertionRewriter(ast.NodeVisitor):
         self.push_format_context()
         # Rewrite assert into a bunch of statements.
         top_condition, explanation = self.visit(assert_.test)
+        # Check if directly asserting None, in order to warn [Issue #3191]
+        self.statements.append(
+            self.warn_about_none_ast(
+                top_condition, module_path=self.module_path, lineno=assert_.lineno
+            )
+        )
         # Create failure message.
         body = self.on_failure
         negation = ast.UnaryOp(ast.Not(), top_condition)
@@ -857,6 +876,45 @@ class AssertionRewriter(ast.NodeVisitor):
         for stmt in self.statements:
             set_location(stmt, assert_.lineno, assert_.col_offset)
         return self.statements
+
+    def warn_about_none_ast(self, node, module_path, lineno):
+        """Returns an ast warning if node is None with the following statement:
+        if node is None:
+            from _pytest.warning_types import PytestWarning
+            import warnings
+            warnings.warn_explicit(
+                PytestWarning('assertion the value None, Please use "assert is None"'),
+                category=None,
+                # filename=str(self.module_path),
+                filename=__file__
+                lineno=node.lineno,
+            )
+        """
+
+        warning_msg = ast.Str(
+            'Asserting the value None directly, Please use "assert is None" to eliminate ambiguity'
+        )
+        AST_NONE = ast.NameConstant(None)
+        val_is_none = ast.Compare(node, [ast.Is()], [AST_NONE])
+        import_warnings = ast.ImportFrom(
+            module="warnings", names=[ast.alias("warn_explicit", None)], level=0
+        )
+        import_pytest_warning = ast.ImportFrom(
+            module="pytest", names=[ast.alias("PytestWarning", None)], level=0
+        )
+        pytest_warning = ast_Call_helper("PytestWarning", warning_msg)
+        # This won't work because this isn't the same "self" as an AssertionRewriter!
+        # ast_filename = improved_ast_Call('str',ast.Attribute('self','module_path',ast.Load).module_path)
+        warn = ast_Call_helper(
+            "warn_explicit",
+            pytest_warning,
+            category=AST_NONE,
+            filename=ast.Str(str(module_path)),
+            lineno=ast.Num(lineno),
+        )
+        return ast.If(
+            val_is_none, [import_warnings, import_pytest_warning, ast.Expr(warn)], []
+        )
 
     def visit_Name(self, name):
         # Display the repr of the name if it's a local variable or
