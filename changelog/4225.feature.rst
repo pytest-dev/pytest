@@ -1,0 +1,3 @@
+Improve performance with collection reporting in non-quiet mode with terminals.
+
+The "collecting …" message is only printed/updated every 0.5s.

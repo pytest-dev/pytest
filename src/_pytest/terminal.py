@@ -248,6 +248,7 @@ class TerminalReporter(object):
         self.isatty = file.isatty()
         self._progress_nodeids_reported = set()
         self._show_progress_info = self._determine_show_progress_info()
+        self._collect_report_last_write = None
 
     def _determine_show_progress_info(self):
         """Return True if we should display progress information based on the current config"""
@@ -474,7 +475,11 @@ class TerminalReporter(object):
             return self._tw.chars_on_current_line
 
     def pytest_collection(self):
-        if not self.isatty and self.config.option.verbose >= 1:
+        if self.isatty:
+            if self.config.option.verbose >= 0:
+                self.write("collecting ... ", bold=True)
+                self._collect_report_last_write = time.time()
+        elif self.config.option.verbose >= 1:
             self.write("collecting ... ", bold=True)
 
     def pytest_collectreport(self, report):
@@ -485,12 +490,18 @@ class TerminalReporter(object):
         items = [x for x in report.result if isinstance(x, pytest.Item)]
         self._numcollected += len(items)
         if self.isatty:
-            # self.write_fspath_result(report.nodeid, 'E')
             self.report_collect()
 
     def report_collect(self, final=False):
         if self.config.option.verbose < 0:
             return
+
+        if not final:
+            # Only write "collecting" report every 0.5s.
+            t = time.time()
+            if self._collect_report_last_write > t - 0.5:
+                return
+            self._collect_report_last_write = t
 
         errors = len(self.stats.get("error", []))
         skipped = len(self.stats.get("skipped", []))
