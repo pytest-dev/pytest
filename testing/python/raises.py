@@ -1,6 +1,7 @@
-from _pytest.outcomes import Failed
-import pytest
 import sys
+
+import pytest
+from _pytest.outcomes import Failed
 
 
 class TestRaises(object):

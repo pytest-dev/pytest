@@ -1,13 +1,15 @@
 # -*- coding: utf-8 -*-
 import re
 import sys
-import attr
 import textwrap
-import pytest
-from _pytest import python, fixtures
 
+import attr
 import hypothesis
 from hypothesis import strategies
+
+import pytest
+from _pytest import fixtures
+from _pytest import python
 
 PY3 = sys.version_info >= (3, 0)
 

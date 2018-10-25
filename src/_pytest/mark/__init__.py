@@ -1,18 +1,20 @@
 """ generic mechanism for marking and selecting python functions. """
-from __future__ import absolute_import, division, print_function
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+
+from .legacy import matchkeyword
+from .legacy import matchmark
+from .structures import EMPTY_PARAMETERSET_OPTION
+from .structures import get_empty_parameterset_mark
+from .structures import Mark
+from .structures import MARK_GEN
+from .structures import MarkDecorator
+from .structures import MarkGenerator
+from .structures import MarkInfo
+from .structures import ParameterSet
+from .structures import transfer_markers
 from _pytest.config import UsageError
-from .structures import (
-    ParameterSet,
-    EMPTY_PARAMETERSET_OPTION,
-    MARK_GEN,
-    Mark,
-    MarkInfo,
-    MarkDecorator,
-    MarkGenerator,
-    transfer_markers,
-    get_empty_parameterset_mark,
-)
-from .legacy import matchkeyword, matchmark
 
 __all__ = [
     "Mark",

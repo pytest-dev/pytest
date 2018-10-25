@@ -2,13 +2,17 @@
 # flake8: noqa
 # disable flake check on this file because some constructs are strange
 # or redundant on purpose and can't be disable on a line-by-line basis
-from __future__ import absolute_import, division, print_function
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+
 import inspect
 import sys
 
+import six
+
 import _pytest._code
 import pytest
-import six
 from _pytest._code import Source
 from _pytest._code.source import ast
 

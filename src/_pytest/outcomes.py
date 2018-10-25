@@ -2,7 +2,10 @@
 exception classes and constants handling test outcomes
 as well as functions creating them
 """
-from __future__ import absolute_import, division, print_function
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+
 import sys
 
 

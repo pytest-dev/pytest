@@ -1,16 +1,20 @@
-from __future__ import absolute_import, division, print_function
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+
 import os
 
-import _pytest._code
 import py
+
+import _pytest._code
 import pytest
-from _pytest.nodes import Node, Item, FSCollector
-from _pytest.resultlog import (
-    generic_path,
-    ResultLog,
-    pytest_configure,
-    pytest_unconfigure,
-)
+from _pytest.nodes import FSCollector
+from _pytest.nodes import Item
+from _pytest.nodes import Node
+from _pytest.resultlog import generic_path
+from _pytest.resultlog import pytest_configure
+from _pytest.resultlog import pytest_unconfigure
+from _pytest.resultlog import ResultLog
 
 
 pytestmark = pytest.mark.filterwarnings("ignore:--result-log is deprecated")

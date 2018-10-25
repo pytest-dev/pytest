@@ -1,10 +1,12 @@
 import os
-import six
-import sys
 import platform
+import sys
 import traceback
 
-from ..outcomes import fail, TEST_OUTCOME
+import six
+
+from ..outcomes import fail
+from ..outcomes import TEST_OUTCOME
 
 
 def cached_eval(config, expr, d):

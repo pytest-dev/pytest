@@ -1,7 +1,10 @@
 """
 terminal reporting of the full testing process.
 """
-from __future__ import absolute_import, division, print_function
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+
 import collections
 import os
 import sys
@@ -9,10 +12,14 @@ import textwrap
 
 import pluggy
 import py
+
 import pytest
 from _pytest.main import EXIT_NOTESTSCOLLECTED
-from _pytest.terminal import TerminalReporter, repr_pythonversion, getreportopt
-from _pytest.terminal import build_summary_stats_line, _plugin_nameversions
+from _pytest.terminal import _plugin_nameversions
+from _pytest.terminal import build_summary_stats_line
+from _pytest.terminal import getreportopt
+from _pytest.terminal import repr_pythonversion
+from _pytest.terminal import TerminalReporter
 
 
 DistInfo = collections.namedtuple("DistInfo", ["project_name", "version"])

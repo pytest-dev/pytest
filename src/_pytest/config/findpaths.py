@@ -1,5 +1,7 @@
-import py
 import os
+
+import py
+
 from .exceptions import UsageError
 
 

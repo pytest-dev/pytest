@@ -1,50 +1,48 @@
 """ Python test discovery, setup and run of test functions. """
-from __future__ import absolute_import, division, print_function
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 
+import collections
 import fnmatch
 import inspect
-import sys
 import os
-import collections
+import sys
 import warnings
 from textwrap import dedent
 
-
 import py
 import six
-from _pytest.main import FSHookProxy
-from _pytest.config import hookimpl
 
 import _pytest
-from _pytest._code import filter_traceback
+from _pytest import deprecated
 from _pytest import fixtures
 from _pytest import nodes
-from _pytest import deprecated
-from _pytest.compat import (
-    isclass,
-    isfunction,
-    is_generator,
-    ascii_escaped,
-    REGEX_TYPE,
-    STRING_TYPES,
-    NoneType,
-    NOTSET,
-    get_real_func,
-    getfslineno,
-    safe_getattr,
-    safe_str,
-    getlocation,
-    enum,
-    get_default_arg_names,
-    getimfunc,
-)
+from _pytest._code import filter_traceback
+from _pytest.compat import ascii_escaped
+from _pytest.compat import enum
+from _pytest.compat import get_default_arg_names
+from _pytest.compat import get_real_func
+from _pytest.compat import getfslineno
+from _pytest.compat import getimfunc
+from _pytest.compat import getlocation
+from _pytest.compat import is_generator
+from _pytest.compat import isclass
+from _pytest.compat import isfunction
+from _pytest.compat import NoneType
+from _pytest.compat import NOTSET
+from _pytest.compat import REGEX_TYPE
+from _pytest.compat import safe_getattr
+from _pytest.compat import safe_str
+from _pytest.compat import STRING_TYPES
+from _pytest.config import hookimpl
+from _pytest.main import FSHookProxy
+from _pytest.mark.structures import get_unpacked_marks
+from _pytest.mark.structures import normalize_mark_list
+from _pytest.mark.structures import transfer_markers
 from _pytest.outcomes import fail
-from _pytest.mark.structures import (
-    transfer_markers,
-    get_unpacked_marks,
-    normalize_mark_list,
-)
-from _pytest.warning_types import RemovedInPytest4Warning, PytestWarning
+from _pytest.warning_types import PytestWarning
+from _pytest.warning_types import RemovedInPytest4Warning
 
 
 def pyobj_property(name):

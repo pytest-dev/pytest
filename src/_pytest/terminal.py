@@ -2,8 +2,11 @@
 
 This is a good source for looking at the various reporting hooks.
 """
-from __future__ import absolute_import, division, print_function
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 
+import argparse
 import itertools
 import platform
 import sys
@@ -17,16 +20,11 @@ from more_itertools import collapse
 
 import pytest
 from _pytest import nodes
-from _pytest.main import (
-    EXIT_OK,
-    EXIT_TESTSFAILED,
-    EXIT_INTERRUPTED,
-    EXIT_USAGEERROR,
-    EXIT_NOTESTSCOLLECTED,
-)
-
-
-import argparse
+from _pytest.main import EXIT_INTERRUPTED
+from _pytest.main import EXIT_NOTESTSCOLLECTED
+from _pytest.main import EXIT_OK
+from _pytest.main import EXIT_TESTSFAILED
+from _pytest.main import EXIT_USAGEERROR
 
 
 class MoreQuietAction(argparse.Action):

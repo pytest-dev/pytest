@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
-from __future__ import absolute_import, division, print_function
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 
 import glob
 import os
@@ -8,17 +10,16 @@ import stat
 import sys
 import textwrap
 import zipfile
+
 import py
-import pytest
 import six
 
 import _pytest._code
+import pytest
 from _pytest.assertion import util
-from _pytest.assertion.rewrite import (
-    rewrite_asserts,
-    PYTEST_TAG,
-    AssertionRewritingHook,
-)
+from _pytest.assertion.rewrite import AssertionRewritingHook
+from _pytest.assertion.rewrite import PYTEST_TAG
+from _pytest.assertion.rewrite import rewrite_asserts
 from _pytest.main import EXIT_NOTESTSCOLLECTED
 
 ast = pytest.importorskip("ast")

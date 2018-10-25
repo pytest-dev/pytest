@@ -1,39 +1,41 @@
-from __future__ import absolute_import, division, print_function
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 
 import functools
 import inspect
 import sys
 import warnings
-from collections import OrderedDict, deque, defaultdict
-
-import six
-from more_itertools import flatten
+from collections import defaultdict
+from collections import deque
+from collections import OrderedDict
 
 import attr
 import py
+import six
+from more_itertools import flatten
 from py._code.code import FormattedExcinfo
 
 import _pytest
 from _pytest import nodes
 from _pytest._code.code import TerminalRepr
-from _pytest.compat import (
-    NOTSET,
-    exc_clear,
-    _format_args,
-    getfslineno,
-    get_real_func,
-    is_generator,
-    isclass,
-    getimfunc,
-    getlocation,
-    getfuncargnames,
-    safe_getattr,
-    FuncargnamesCompatAttr,
-    get_real_method,
-    _PytestWrapper,
-)
+from _pytest.compat import _format_args
+from _pytest.compat import _PytestWrapper
+from _pytest.compat import exc_clear
+from _pytest.compat import FuncargnamesCompatAttr
+from _pytest.compat import get_real_func
+from _pytest.compat import get_real_method
+from _pytest.compat import getfslineno
+from _pytest.compat import getfuncargnames
+from _pytest.compat import getimfunc
+from _pytest.compat import getlocation
+from _pytest.compat import is_generator
+from _pytest.compat import isclass
+from _pytest.compat import NOTSET
+from _pytest.compat import safe_getattr
 from _pytest.deprecated import FIXTURE_FUNCTION_CALL
-from _pytest.outcomes import fail, TEST_OUTCOME
+from _pytest.outcomes import fail
+from _pytest.outcomes import TEST_OUTCOME
 
 FIXTURE_MSG = 'fixtures cannot have "pytest_funcarg__" prefix and be decorated with @pytest.fixture:\n{}'
 

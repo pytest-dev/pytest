@@ -1,19 +1,22 @@
-
-import os
-import errno
 import atexit
-import operator
-import six
-import sys
-from functools import reduce
-import uuid
-from six.moves import map
-import itertools
-import shutil
-from os.path import expanduser, expandvars, isabs, sep
-from posixpath import sep as posix_sep
+import errno
 import fnmatch
+import itertools
+import operator
+import os
+import shutil
 import stat
+import sys
+import uuid
+from functools import reduce
+from os.path import expanduser
+from os.path import expandvars
+from os.path import isabs
+from os.path import sep
+from posixpath import sep as posix_sep
+
+import six
+from six.moves import map
 
 from .compat import PY36
 

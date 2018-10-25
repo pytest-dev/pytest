@@ -1,5 +1,6 @@
-import pytest
 import pprint
+
+import pytest
 
 
 def pytest_generate_tests(metafunc):
