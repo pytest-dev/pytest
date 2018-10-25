@@ -517,8 +517,19 @@ class Session(nodes.FSCollector):
         # Let the Package collector deal with subnodes, don't collect here.
         if argpath.check(dir=1):
             assert not names, "invalid arg %r" % (arg,)
+
+            if six.PY2:
+
+                def filter_(f):
+                    return f.check(file=1) and not f.strpath.endswith("*.pyc")
+
+            else:
+
+                def filter_(f):
+                    return f.check(file=1)
+
             for path in argpath.visit(
-                fil=lambda x: x.check(file=1), rec=self._recurse, bf=True, sort=True
+                fil=filter_, rec=self._recurse, bf=True, sort=True
             ):
                 pkginit = path.dirpath().join("__init__.py")
                 if pkginit.exists() and not any(x in pkginit.parts() for x in paths):
@@ -562,15 +573,17 @@ class Session(nodes.FSCollector):
 
         return ihook.pytest_collect_file(path=path, parent=self)
 
-    def _recurse(self, path):
-        ihook = self.gethookproxy(path.dirpath())
-        if ihook.pytest_ignore_collect(path=path, config=self.config):
-            return
+    def _recurse(self, dirpath):
+        if dirpath.basename == "__pycache__":
+            return False
+        ihook = self.gethookproxy(dirpath.dirpath())
+        if ihook.pytest_ignore_collect(path=dirpath, config=self.config):
+            return False
         for pat in self._norecursepatterns:
-            if path.check(fnmatch=pat):
+            if dirpath.check(fnmatch=pat):
                 return False
-        ihook = self.gethookproxy(path)
-        ihook.pytest_collect_directory(path=path, parent=self)
+        ihook = self.gethookproxy(dirpath)
+        ihook.pytest_collect_directory(path=dirpath, parent=self)
         return True
 
     def _tryconvertpyarg(self, x):
