@@ -489,7 +489,7 @@ class Session(nodes.FSCollector):
 
         names = self._parsearg(arg)
         argpath = names.pop(0).realpath()
-        paths = []
+        paths = set()
 
         root = self
         # Start with a Session root, and delve to argpath item (dir or file)
@@ -537,14 +537,12 @@ class Session(nodes.FSCollector):
                 if dirpath not in seen_dirs:
                     seen_dirs.add(dirpath)
                     pkginit = dirpath.join("__init__.py")
-                    if pkginit.exists() and not any(
-                        x in parts(pkginit.strpath) for x in paths
-                    ):
+                    if pkginit.exists() and parts(pkginit.strpath).isdisjoint(paths):
                         for x in root._collectfile(pkginit):
                             yield x
-                            paths.append(x.fspath.dirpath())
+                            paths.add(x.fspath.dirpath())
 
-                if not any(x in parts(path.strpath) for x in paths):
+                if parts(path.strpath).isdisjoint(paths):
                     for x in root._collectfile(path):
                         key = (type(x), x.fspath)
                         if key in self._node_cache:

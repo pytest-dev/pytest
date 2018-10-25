@@ -307,4 +307,4 @@ def fnmatch_ex(pattern, path):
 
 def parts(s):
     parts = s.split(sep)
-    return [sep.join(parts[:i+1]) or sep for i in range(len(parts))]
+    return {sep.join(parts[: i + 1]) or sep for i in range(len(parts))}
