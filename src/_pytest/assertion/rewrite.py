@@ -891,30 +891,24 @@ class AssertionRewriter(ast.NodeVisitor):
             )
         """
 
-        warning_msg = ast.Str(
-            'Asserting the value None directly, Please use "assert is None" to eliminate ambiguity'
-        )
-        AST_NONE = ast.NameConstant(None)
+        # using parse because it's different between py2 py3
+        AST_NONE = ast.parse("None").body[0].value
         val_is_none = ast.Compare(node, [ast.Is()], [AST_NONE])
-        import_warnings = ast.ImportFrom(
-            module="warnings", names=[ast.alias("warn_explicit", None)], level=0
-        )
-        import_pytest_warning = ast.ImportFrom(
-            module="pytest", names=[ast.alias("PytestWarning", None)], level=0
-        )
-        pytest_warning = ast_Call_helper("PytestWarning", warning_msg)
-        # This won't work because this isn't the same "self" as an AssertionRewriter!
-        # ast_filename = improved_ast_Call('str',ast.Attribute('self','module_path',ast.Load).module_path)
-        warn = ast_Call_helper(
-            "warn_explicit",
-            pytest_warning,
-            category=AST_NONE,
-            filename=ast.Str(str(module_path)),
-            lineno=ast.Num(lineno),
-        )
-        return ast.If(
-            val_is_none, [import_warnings, import_pytest_warning, ast.Expr(warn)], []
-        )
+        send_warning = ast.parse(
+            """
+from _pytest.warning_types import PytestWarning
+from warnings import warn_explicit
+warn_explicit(
+    PytestWarning('assertion the value None, Please use "assert is None"'),
+    category=None,
+    filename='{filename}',
+    lineno={lineno},
+)
+            """.format(
+                filename=str(module_path), lineno=lineno
+            )
+        ).body
+        return ast.If(val_is_none, send_warning, [])
 
     def visit_Name(self, name):
         # Display the repr of the name if it's a local variable or
