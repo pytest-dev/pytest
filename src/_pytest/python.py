@@ -563,6 +563,10 @@ class Package(Module):
             yield Module(init_module, self)
         pkg_prefixes = set()
         for path in this_path.visit(rec=self._recurse, bf=True, sort=True):
+            # We will visit our own __init__.py file, in which case we skip it.
+            if path.isfile():
+                if path.basename == "__init__.py" and path.dirpath() == this_path:
+                    continue
 
             parts_ = parts(path.strpath)
             if any(

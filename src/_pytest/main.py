@@ -533,17 +533,20 @@ class Session(nodes.FSCollector):
                 fil=filter_, rec=self._recurse, bf=True, sort=True
             ):
                 pkginit = path.dirpath().join("__init__.py")
-                if pkginit.exists() and not any(x in parts(pkginit.strpath) for x in paths):
+                if pkginit.exists() and not any(
+                    x in parts(pkginit.strpath) for x in paths
+                ):
                     for x in root._collectfile(pkginit):
                         yield x
                         paths.append(x.fspath.dirpath())
 
                 if not any(x in parts(path.strpath) for x in paths):
                     for x in root._collectfile(path):
-                        if (type(x), x.fspath) in self._node_cache:
-                            yield self._node_cache[(type(x), x.fspath)]
+                        key = (type(x), x.fspath)
+                        if key in self._node_cache:
+                            yield self._node_cache[key]
                         else:
-                            self._node_cache[(type(x), x.fspath)] = x
+                            self._node_cache[key] = x
                             yield x
         else:
             assert argpath.check(file=1)
