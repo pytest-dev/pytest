@@ -725,11 +725,10 @@ class TerminalReporter(object):
                 # legacy warnings show their location explicitly, while standard warnings look better without
                 # it because the location is already formatted into the message
                 warning_records = list(warning_records)
-                is_legacy = warning_records[0].legacy
-                if location and is_legacy:
+                if location:
                     self._tw.line(str(location))
                 for w in warning_records:
-                    if is_legacy:
+                    if location:
                         lines = w.message.splitlines()
                         indented = "\n".join("  " + x for x in lines)
                         message = indented.rstrip()
