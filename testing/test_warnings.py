@@ -625,8 +625,8 @@ def test_removed_in_pytest4_warning_as_error(testdir, change_default):
         result.stdout.fnmatch_lines(["* 1 passed in *"])
 class TestAssertionWarnings:
     @staticmethod
-    def result_warns(result):
-        return result.stdout.fnmatch_lines(["*PytestWarning*"])
+    def assert_result_warns(result):
+        result.stdout.fnmatch_lines(["*PytestWarning*"])
 
     def test_tuple_warning(self, testdir):
         testdir.makepyfile(
@@ -636,7 +636,7 @@ class TestAssertionWarnings:
             """
         )
         result = testdir.runpytest()
-        assert self.result_warns(result)
+        self.assert_result_warns(result)
 
     @staticmethod
     def create_file(testdir, return_none):
@@ -658,26 +658,25 @@ class TestAssertionWarnings:
     def test_none_function_warns(self, testdir):
         self.create_file(testdir, True)
         result = testdir.runpytest()
-        assert self.result_warns(result)
+        self.assert_result_warns(result)
 
+    @pytest.mark.xfail(strict=True)
     def test_assert_is_none_no_warn(self, testdir):
         """Tests a more simple case of `test_none_function_warns` where `assert None` is explicitly called"""
         testdir.makepyfile(
             """
-            def foo(return_none):
-                if return_none:
-                    return None
-                else:
-                    return False
+            def foo():
+                return None
 
             def test_foo():
-                assert foo(True) is None
+                assert foo() is None
             """
         )
         result = testdir.runpytest()
-        assert not self.result_warns(result)
+        self.assert_result_warns(result)
 
+    @pytest.mark.xfail(strict=True)
     def test_false_function_no_warn(self, testdir):
         self.create_file(testdir, False)
         result = testdir.runpytest()
-        assert not self.result_warns(result)
+        self.assert_result_warns(result)
