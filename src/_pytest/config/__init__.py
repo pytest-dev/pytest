@@ -1,6 +1,7 @@
 """ command line options, ini-file and conftest.py processing. """
 from __future__ import absolute_import, division, print_function
 import argparse
+import functools
 import inspect
 import shlex
 import types
@@ -906,6 +907,10 @@ class Config(object):
                 relroot = modpath.join(relroot, abs=True)
             values.append(relroot)
         return values
+
+    if six.PY3:
+        # once we drop Python 2, please change this to use the normal decorator syntax (#4227)
+        _getconftest_pathlist = functools.lru_cache(maxsize=None)(_getconftest_pathlist)
 
     def _get_override_ini_value(self, name):
         value = None
