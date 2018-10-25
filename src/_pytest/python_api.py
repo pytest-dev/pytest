@@ -1,20 +1,20 @@
 import math
 import pprint
 import sys
-from numbers import Number
 from decimal import Decimal
+from numbers import Number
 
 import six
-from six.moves import zip, filterfalse
 from more_itertools.more import always_iterable
+from six.moves import filterfalse
+from six.moves import zip
 
-from _pytest.compat import isclass
-
-from _pytest.compat import Mapping, Sequence
-from _pytest.compat import STRING_TYPES
-
-from _pytest.outcomes import fail
 import _pytest._code
+from _pytest.compat import isclass
+from _pytest.compat import Mapping
+from _pytest.compat import Sequence
+from _pytest.compat import STRING_TYPES
+from _pytest.outcomes import fail
 
 BASE_TYPE = (type, STRING_TYPES)
 

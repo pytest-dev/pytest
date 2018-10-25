@@ -1,5 +1,6 @@
-import pytest
 import unittest
+
+import pytest
 
 
 @pytest.fixture(params=[1, 2])

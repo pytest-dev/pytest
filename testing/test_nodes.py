@@ -1,5 +1,4 @@
 import pytest
-
 from _pytest import nodes
 
 

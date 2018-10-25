@@ -1,10 +1,16 @@
 # encoding: utf-8
-from __future__ import absolute_import, division, print_function
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+
 import sys
 import textwrap
-from _pytest.compat import MODULE_NOT_FOUND_ERROR
-from _pytest.doctest import DoctestItem, DoctestModule, DoctestTextfile
+
 import pytest
+from _pytest.compat import MODULE_NOT_FOUND_ERROR
+from _pytest.doctest import DoctestItem
+from _pytest.doctest import DoctestModule
+from _pytest.doctest import DoctestTextfile
 
 
 class TestDoctests(object):

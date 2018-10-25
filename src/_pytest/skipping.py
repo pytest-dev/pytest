@@ -1,9 +1,13 @@
 """ support for skip/xfail functions and markers. """
-from __future__ import absolute_import, division, print_function
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 
 from _pytest.config import hookimpl
 from _pytest.mark.evaluate import MarkEvaluator
-from _pytest.outcomes import fail, skip, xfail
+from _pytest.outcomes import fail
+from _pytest.outcomes import skip
+from _pytest.outcomes import xfail
 
 
 def pytest_addoption(parser):

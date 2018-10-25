@@ -1,15 +1,21 @@
 """ discovery and running of std-library "unittest" style tests. """
-from __future__ import absolute_import, division, print_function
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 
 import sys
 import traceback
 
-# for transferring markers
 import _pytest._code
-from _pytest.config import hookimpl
-from _pytest.outcomes import fail, skip, xfail
-from _pytest.python import transfer_markers, Class, Module, Function
 from _pytest.compat import getimfunc
+from _pytest.config import hookimpl
+from _pytest.outcomes import fail
+from _pytest.outcomes import skip
+from _pytest.outcomes import xfail
+from _pytest.python import Class
+from _pytest.python import Function
+from _pytest.python import Module
+from _pytest.python import transfer_markers
 
 
 def pytest_pycollect_makeitem(collector, name, obj):

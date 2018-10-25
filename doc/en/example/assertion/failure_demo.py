@@ -1,6 +1,7 @@
-from pytest import raises
-import _pytest._code
 import six
+
+import _pytest._code
+from pytest import raises
 
 
 def otherfunc(a, b):

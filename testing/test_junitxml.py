@@ -1,12 +1,16 @@
 # -*- coding: utf-8 -*-
-from __future__ import absolute_import, division, print_function
-from xml.dom import minidom
-import py
-import sys
-import os
-from _pytest.junitxml import LogXML
-import pytest
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 
+import os
+import sys
+from xml.dom import minidom
+
+import py
+
+import pytest
+from _pytest.junitxml import LogXML
 from _pytest.reports import BaseReport
 
 

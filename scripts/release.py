@@ -2,9 +2,13 @@
 Invoke development tasks.
 """
 import argparse
-from colorama import init, Fore
 from pathlib import Path
-from subprocess import check_output, check_call, call
+from subprocess import call
+from subprocess import check_call
+from subprocess import check_output
+
+from colorama import Fore
+from colorama import init
 
 
 def announce(version):

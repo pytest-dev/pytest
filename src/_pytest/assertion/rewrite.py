@@ -1,13 +1,15 @@
 """Rewrite assertion AST to produce nice error messages"""
-from __future__ import absolute_import, division, print_function
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+
 import ast
 import errno
-import itertools
 import imp
+import itertools
 import marshal
 import os
 import re
-import six
 import string
 import struct
 import sys
@@ -15,11 +17,12 @@ import types
 
 import atomicwrites
 import py
+import six
 
 from _pytest.assertion import util
-from _pytest.pathlib import PurePath
 from _pytest.compat import spec_from_file_location
 from _pytest.pathlib import fnmatch_ex
+from _pytest.pathlib import PurePath
 
 # pytest caches rewritten pycs in __pycache__.
 if hasattr(imp, "get_tag"):

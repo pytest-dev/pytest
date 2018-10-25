@@ -1,6 +1,9 @@
-from __future__ import absolute_import, division, print_function
-import warnings
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+
 import re
+import warnings
 
 import pytest
 from _pytest.recwarn import WarningsRecorder

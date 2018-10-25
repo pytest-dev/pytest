@@ -1,11 +1,10 @@
-import six
-import warnings
 import argparse
-
-from gettext import gettext as _
 import sys as _sys
+import warnings
+from gettext import gettext as _
 
 import py
+import six
 
 from ..main import EXIT_USAGEERROR
 

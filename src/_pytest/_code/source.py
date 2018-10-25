@@ -1,15 +1,18 @@
-from __future__ import absolute_import, division, print_function
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 
 import ast
-from ast import PyCF_ONLY_AST as _AST_FLAG
-from bisect import bisect_right
+import inspect
 import linecache
 import sys
-import six
-import inspect
 import textwrap
 import tokenize
+from ast import PyCF_ONLY_AST as _AST_FLAG
+from bisect import bisect_right
+
 import py
+import six
 
 cpy_compile = compile
 

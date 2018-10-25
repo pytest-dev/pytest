@@ -1,19 +1,22 @@
 """ core implementation of testing process: init, session, runtest loop. """
-from __future__ import absolute_import, division, print_function
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 
 import contextlib
 import functools
 import os
 import pkgutil
-import six
 import sys
 
-import _pytest
-from _pytest import nodes
-import _pytest._code
 import py
+import six
 
-from _pytest.config import directory_arg, UsageError, hookimpl
+import _pytest._code
+from _pytest import nodes
+from _pytest.config import directory_arg
+from _pytest.config import hookimpl
+from _pytest.config import UsageError
 from _pytest.outcomes import exit
 from _pytest.runner import collect_one_node
 

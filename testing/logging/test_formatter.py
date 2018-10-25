@@ -1,6 +1,7 @@
 import logging
 
 import py.io
+
 from _pytest.logging import ColoredLevelFormatter
 
 

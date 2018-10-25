@@ -1,8 +1,10 @@
-import py
 import subprocess
 import sys
-import pytest
+
+import py
+
 import _pytest
+import pytest
 
 MODSET = [
     x

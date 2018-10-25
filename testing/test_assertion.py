@@ -1,14 +1,18 @@
 # -*- coding: utf-8 -*-
-from __future__ import absolute_import, division, print_function
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+
 import sys
 import textwrap
 
-import _pytest.assertion as plugin
 import py
-import pytest
 import six
-from _pytest.assertion import util
+
+import _pytest.assertion as plugin
+import pytest
 from _pytest.assertion import truncate
+from _pytest.assertion import util
 
 PY3 = sys.version_info >= (3, 0)
 

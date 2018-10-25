@@ -1,9 +1,13 @@
 """ run test suites written for nose. """
-from __future__ import absolute_import, division, print_function
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 
 import sys
 
-from _pytest import unittest, runner, python
+from _pytest import python
+from _pytest import runner
+from _pytest import unittest
 from _pytest.config import hookimpl
 
 

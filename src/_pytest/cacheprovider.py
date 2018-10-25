@@ -4,18 +4,22 @@ merged implementation of the cache provider
 the name cache was not chosen to ensure pluggy automatically
 ignores the external pytest-cache
 """
-from __future__ import absolute_import, division, print_function
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+
+import json
 from collections import OrderedDict
 
+import attr
 import py
 import six
-import attr
 
 import pytest
-import json
-
 from .compat import _PY2 as PY2
-from .pathlib import Path, resolve_from_str, rmtree
+from .pathlib import Path
+from .pathlib import resolve_from_str
+from .pathlib import rmtree
 
 README_CONTENT = u"""\
 # pytest cache directory #

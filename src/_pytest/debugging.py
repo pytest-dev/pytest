@@ -1,5 +1,7 @@
 """ interactive debugging with PDB, the Python Debugger. """
-from __future__ import absolute_import, division, print_function
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 
 import pdb
 import sys

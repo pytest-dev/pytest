@@ -8,10 +8,12 @@ be removed when the time comes.
 All constants defined in this module should be either PytestWarning instances or UnformattedWarning
 in case of warnings which need to format their messages.
 """
-from __future__ import absolute_import, division, print_function
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 
-
-from _pytest.warning_types import UnformattedWarning, RemovedInPytest4Warning
+from _pytest.warning_types import RemovedInPytest4Warning
+from _pytest.warning_types import UnformattedWarning
 
 
 MAIN_STR_ARGS = RemovedInPytest4Warning(
