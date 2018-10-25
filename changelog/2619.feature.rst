@@ -1,0 +1,4 @@
+Resume capturing output after ``continue`` with ``__import__("pdb").set_trace()``.
+
+This also adds a new ``pytest_leave_pdb`` hook, and passes in ``pdb`` to the
+existing ``pytest_enter_pdb`` hook.
