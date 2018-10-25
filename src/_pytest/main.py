@@ -18,6 +18,7 @@ from _pytest.config import directory_arg
 from _pytest.config import hookimpl
 from _pytest.config import UsageError
 from _pytest.outcomes import exit
+from _pytest.pathlib import parts
 from _pytest.runner import collect_one_node
 
 
@@ -469,8 +470,8 @@ class Session(nodes.FSCollector):
             return items
 
     def collect(self):
-        for parts in self._initialparts:
-            arg = "::".join(map(str, parts))
+        for initialpart in self._initialparts:
+            arg = "::".join(map(str, initialpart))
             self.trace("processing argument", arg)
             self.trace.root.indent += 1
             try:
@@ -532,12 +533,12 @@ class Session(nodes.FSCollector):
                 fil=filter_, rec=self._recurse, bf=True, sort=True
             ):
                 pkginit = path.dirpath().join("__init__.py")
-                if pkginit.exists() and not any(x in pkginit.parts() for x in paths):
+                if pkginit.exists() and not any(x in parts(pkginit.strpath) for x in paths):
                     for x in root._collectfile(pkginit):
                         yield x
                         paths.append(x.fspath.dirpath())
 
-                if not any(x in path.parts() for x in paths):
+                if not any(x in parts(path.strpath) for x in paths):
                     for x in root._collectfile(path):
                         if (type(x), x.fspath) in self._node_cache:
                             yield self._node_cache[(type(x), x.fspath)]
