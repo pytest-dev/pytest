@@ -554,15 +554,6 @@ class Package(Module):
         return path in self.session._initialpaths
 
     def collect(self):
-        # XXX: HACK!
-        # Before starting to collect any files from this package we need
-        # to cleanup the duplicate paths added by the session's collect().
-        # Proper fix is to not track these as duplicates in the first place.
-        for path in list(self.session.config.pluginmanager._duplicatepaths):
-            # if path.parts()[:len(self.fspath.dirpath().parts())] == self.fspath.dirpath().parts():
-            if path.dirname.startswith(self.name):
-                self.session.config.pluginmanager._duplicatepaths.remove(path)
-
         this_path = self.fspath.dirpath()
         init_module = this_path.join("__init__.py")
         if init_module.check(file=1) and path_matches_patterns(
