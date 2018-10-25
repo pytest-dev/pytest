@@ -1,0 +1,1 @@
+Fix collecting tests from packages ``__init__.py`` files.
