@@ -281,15 +281,6 @@ def pytest_ignore_collect(path, config):
     if _in_venv(path) and not allow_in_venv:
         return True
 
-    # Skip duplicate paths.
-    keepduplicates = config.getoption("keepduplicates")
-    duplicate_paths = config.pluginmanager._duplicatepaths
-    if not keepduplicates:
-        if path in duplicate_paths:
-            return True
-        else:
-            duplicate_paths.add(path)
-
     return False
 
 
@@ -559,6 +550,16 @@ class Session(nodes.FSCollector):
         if not self.isinitpath(path):
             if ihook.pytest_ignore_collect(path=path, config=self.config):
                 return ()
+
+        # Skip duplicate paths.
+        keepduplicates = self.config.getoption("keepduplicates")
+        if not keepduplicates:
+            duplicate_paths = self.config.pluginmanager._duplicatepaths
+            if path in duplicate_paths:
+                return ()
+            else:
+                duplicate_paths.add(path)
+
         return ihook.pytest_collect_file(path=path, parent=self)
 
     def _recurse(self, path):
