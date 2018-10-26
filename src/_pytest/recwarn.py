@@ -156,21 +156,27 @@ class WarningsRecorder(warnings.catch_warnings):
         # trivial patching of `warnings.warn` seems to be enough somehow?
         if six.PY2:
 
-            def warn(*args, **kwargs):
-                kwargs.setdefault("stacklevel", 1)
-                kwargs["stacklevel"] += 1
+            def warn(message, category=None, stacklevel=1):
+                # duplicate the stdlib logic due to
+                # bad handing in the c version of warnings
+                if isinstance(message, Warning):
+                    category = message.__class__
+                # Check category argument
+                if category is None:
+                    category = UserWarning
+                assert issubclass(category, Warning)
 
                 # emulate resetting the warn registry
-                f_globals = sys._getframe(kwargs["stacklevel"] - 1).f_globals
+                f_globals = sys._getframe(stacklevel).f_globals
                 if "__warningregistry__" in f_globals:
                     orig = f_globals["__warningregistry__"]
                     f_globals["__warningregistry__"] = None
                     try:
-                        return self._saved_warn(*args, **kwargs)
+                        return self._saved_warn(message, category, stacklevel + 1)
                     finally:
                         f_globals["__warningregistry__"] = orig
                 else:
-                    return self._saved_warn(*args, **kwargs)
+                    return self._saved_warn(message, category, stacklevel + 1)
 
             warnings.warn, self._saved_warn = warn, warnings.warn
         return self
