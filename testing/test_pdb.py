@@ -1,11 +1,20 @@
-from __future__ import absolute_import, division, print_function
-import sys
-import platform
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+
 import os
+import platform
+import sys
 
 import _pytest._code
-from _pytest.debugging import SUPPORTS_BREAKPOINT_BUILTIN
 import pytest
+
+try:
+    breakpoint
+except NameError:
+    SUPPORTS_BREAKPOINT_BUILTIN = False
+else:
+    SUPPORTS_BREAKPOINT_BUILTIN = True
 
 
 _ENVIRON_PYTHONBREAKPOINT = os.environ.get("PYTHONBREAKPOINT", "")

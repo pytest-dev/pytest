@@ -48,6 +48,7 @@ def test_normal_flow(testdir, pyfile_with_warnings):
     result.stdout.fnmatch_lines(
         [
             "*== %s ==*" % WARNINGS_SUMMARY_HEADER,
+            "test_normal_flow.py::test_func",
             "*normal_flow_module.py:3: UserWarning: user warning",
             '*  warnings.warn(UserWarning("user warning"))',
             "*normal_flow_module.py:4: RuntimeWarning: runtime warning",
@@ -369,8 +370,8 @@ def test_collection_warnings(testdir):
     result.stdout.fnmatch_lines(
         [
             "*== %s ==*" % WARNINGS_SUMMARY_HEADER,
-            "*collection_warnings.py:3: UserWarning: collection warning",
-            '  warnings.warn(UserWarning("collection warning"))',
+            "  *collection_warnings.py:3: UserWarning: collection warning",
+            '    warnings.warn(UserWarning("collection warning"))',
             "* 1 passed, 1 warnings*",
         ]
     )

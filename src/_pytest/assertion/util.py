@@ -1,10 +1,14 @@
 """Utilities for assertion debugging"""
-from __future__ import absolute_import, division, print_function
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+
 import pprint
 
-import _pytest._code
 import py
 import six
+
+import _pytest._code
 from ..compat import Sequence
 
 u = six.text_type

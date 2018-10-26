@@ -1,12 +1,16 @@
 """ version info, help messages, tracing configuration.  """
-from __future__ import absolute_import, division, print_function
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 
-import py
-import pytest
-from _pytest.config import PrintHelp
 import os
 import sys
 from argparse import Action
+
+import py
+
+import pytest
+from _pytest.config import PrintHelp
 
 
 class HelpAction(Action):

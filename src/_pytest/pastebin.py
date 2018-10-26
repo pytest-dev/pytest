@@ -1,10 +1,14 @@
 """ submit failure or test session information to a pastebin service. """
-from __future__ import absolute_import, division, print_function
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 
-import pytest
-import six
 import sys
 import tempfile
+
+import six
+
+import pytest
 
 
 def pytest_addoption(parser):

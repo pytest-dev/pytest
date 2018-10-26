@@ -1,15 +1,19 @@
 # -*- coding: utf-8 -*-
-from __future__ import absolute_import, division, print_function
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+
 import os
 import sys
 import textwrap
 import types
 
+import py
 import six
 
-import py
 import pytest
-from _pytest.main import EXIT_NOTESTSCOLLECTED, EXIT_USAGEERROR
+from _pytest.main import EXIT_NOTESTSCOLLECTED
+from _pytest.main import EXIT_USAGEERROR
 
 
 def prepend_pythonpath(*dirs):

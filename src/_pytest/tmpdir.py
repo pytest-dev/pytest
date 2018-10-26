@@ -1,22 +1,23 @@
 """ support for providing temporary directories to test functions.  """
-from __future__ import absolute_import, division, print_function
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 
 import os
 import re
-import pytest
-import py
-from _pytest.monkeypatch import MonkeyPatch
-import attr
 import tempfile
 import warnings
 
-from .pathlib import (
-    Path,
-    make_numbered_dir,
-    make_numbered_dir_with_cleanup,
-    ensure_reset_dir,
-    LOCK_TIMEOUT,
-)
+import attr
+import py
+
+import pytest
+from .pathlib import ensure_reset_dir
+from .pathlib import LOCK_TIMEOUT
+from .pathlib import make_numbered_dir
+from .pathlib import make_numbered_dir_with_cleanup
+from .pathlib import Path
+from _pytest.monkeypatch import MonkeyPatch
 
 
 @attr.s

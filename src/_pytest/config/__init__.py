@@ -1,28 +1,35 @@
 """ command line options, ini-file and conftest.py processing. """
-from __future__ import absolute_import, division, print_function
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+
 import argparse
+import copy
 import inspect
+import os
 import shlex
+import sys
 import types
 import warnings
-import copy
-import six
-import py
 
-# DON't import pytest here because it causes import cycle troubles
-import sys
-import os
-from _pytest.outcomes import Skipped
+import py
+import six
+from pluggy import HookimplMarker
+from pluggy import HookspecMarker
+from pluggy import PluginManager
 
 import _pytest._code
-import _pytest.hookspec  # the extension point definitions
 import _pytest.assertion
-from pluggy import PluginManager, HookimplMarker, HookspecMarker
-from _pytest._code import ExceptionInfo, filter_traceback
+import _pytest.hookspec  # the extension point definitions
+from .exceptions import PrintHelp
+from .exceptions import UsageError
+from .findpaths import determine_setup
+from .findpaths import exists
+from _pytest._code import ExceptionInfo
+from _pytest._code import filter_traceback
 from _pytest.compat import lru_cache
 from _pytest.compat import safe_str
-from .exceptions import UsageError, PrintHelp
-from .findpaths import determine_setup, exists
+from _pytest.outcomes import Skipped
 
 hookimpl = HookimplMarker("pytest")
 hookspec = HookspecMarker("pytest")

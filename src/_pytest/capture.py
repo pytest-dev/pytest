@@ -2,17 +2,20 @@
 per-test stdout/stderr capturing mechanism.
 
 """
-from __future__ import absolute_import, division, print_function
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 
 import collections
 import contextlib
-import sys
-import os
 import io
+import os
+import sys
 from io import UnsupportedOperation
 from tempfile import TemporaryFile
 
 import six
+
 import pytest
 from _pytest.compat import CaptureIO
 

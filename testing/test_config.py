@@ -1,11 +1,16 @@
-from __future__ import absolute_import, division, print_function
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+
 import sys
 import textwrap
-import pytest
 
 import _pytest._code
-from _pytest.config.findpaths import getcfg, get_common_ancestor, determine_setup
+import pytest
 from _pytest.config import _iter_rewritable_modules
+from _pytest.config.findpaths import determine_setup
+from _pytest.config.findpaths import get_common_ancestor
+from _pytest.config.findpaths import getcfg
 from _pytest.main import EXIT_NOTESTSCOLLECTED
 
 

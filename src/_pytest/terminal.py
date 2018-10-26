@@ -2,8 +2,11 @@
 
 This is a good source for looking at the various reporting hooks.
 """
-from __future__ import absolute_import, division, print_function
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 
+import argparse
 import itertools
 import platform
 import sys
@@ -17,16 +20,11 @@ from more_itertools import collapse
 
 import pytest
 from _pytest import nodes
-from _pytest.main import (
-    EXIT_OK,
-    EXIT_TESTSFAILED,
-    EXIT_INTERRUPTED,
-    EXIT_USAGEERROR,
-    EXIT_NOTESTSCOLLECTED,
-)
-
-
-import argparse
+from _pytest.main import EXIT_INTERRUPTED
+from _pytest.main import EXIT_NOTESTSCOLLECTED
+from _pytest.main import EXIT_OK
+from _pytest.main import EXIT_TESTSFAILED
+from _pytest.main import EXIT_USAGEERROR
 
 
 class MoreQuietAction(argparse.Action):
@@ -736,11 +734,10 @@ class TerminalReporter(object):
                 # legacy warnings show their location explicitly, while standard warnings look better without
                 # it because the location is already formatted into the message
                 warning_records = list(warning_records)
-                is_legacy = warning_records[0].legacy
-                if location and is_legacy:
+                if location:
                     self._tw.line(str(location))
                 for w in warning_records:
-                    if is_legacy:
+                    if location:
                         lines = w.message.splitlines()
                         indented = "\n".join("  " + x for x in lines)
                         message = indented.rstrip()

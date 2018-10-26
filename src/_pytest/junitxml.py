@@ -8,14 +8,18 @@ Based on initial code from Ross Lawley.
 Output conforms to https://github.com/jenkinsci/xunit-plugin/blob/master/
 src/main/resources/org/jenkinsci/plugins/xunit/types/model/xsd/junit-10.xsd
 """
-from __future__ import absolute_import, division, print_function
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 
 import functools
-import py
 import os
 import re
 import sys
 import time
+
+import py
+
 import pytest
 from _pytest import nodes
 from _pytest.config import filename_arg

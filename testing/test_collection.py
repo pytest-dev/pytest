@@ -1,10 +1,15 @@
-from __future__ import absolute_import, division, print_function
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+
 import pprint
 import sys
 import textwrap
-import pytest
 
-from _pytest.main import Session, EXIT_NOTESTSCOLLECTED, _in_venv
+import pytest
+from _pytest.main import _in_venv
+from _pytest.main import EXIT_NOTESTSCOLLECTED
+from _pytest.main import Session
 
 
 class TestCollector(object):

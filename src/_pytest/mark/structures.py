@@ -5,11 +5,14 @@ from functools import reduce
 from operator import attrgetter
 
 import attr
-
-from _pytest.outcomes import fail
-from ..deprecated import MARK_PARAMETERSET_UNPACKING, MARK_INFO_ATTRIBUTE
-from ..compat import NOTSET, getfslineno, MappingMixin
 from six.moves import map
+
+from ..compat import getfslineno
+from ..compat import MappingMixin
+from ..compat import NOTSET
+from ..deprecated import MARK_INFO_ATTRIBUTE
+from ..deprecated import MARK_PARAMETERSET_UNPACKING
+from _pytest.outcomes import fail
 
 
 EMPTY_PARAMETERSET_OPTION = "empty_parameter_set_mark"

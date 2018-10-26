@@ -1,0 +1,1 @@
+Revert patching of ``sys.breakpointhook`` since it appears to do nothing.

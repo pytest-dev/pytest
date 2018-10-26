@@ -1,11 +1,17 @@
-from __future__ import absolute_import, division, print_function
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+
 import sys
 from functools import wraps
 
 import six
 
 import pytest
-from _pytest.compat import is_generator, get_real_func, safe_getattr, _PytestWrapper
+from _pytest.compat import _PytestWrapper
+from _pytest.compat import get_real_func
+from _pytest.compat import is_generator
+from _pytest.compat import safe_getattr
 from _pytest.outcomes import OutcomeException
 
 

@@ -1,17 +1,19 @@
-from __future__ import absolute_import, division, print_function
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+
 import os
 import warnings
 
-import six
-import py
 import attr
+import py
+import six
 
-import _pytest
 import _pytest._code
 from _pytest.compat import getfslineno
+from _pytest.mark.structures import MarkInfo
+from _pytest.mark.structures import NodeKeywords
 from _pytest.outcomes import fail
-
-from _pytest.mark.structures import NodeKeywords, MarkInfo
 
 SEP = "/"
 

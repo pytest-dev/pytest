@@ -1,10 +1,16 @@
-from __future__ import absolute_import, division, print_function
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+
 import textwrap
 
 import py
+
 import pytest
 from _pytest.config import PytestPluginManager
-from _pytest.main import EXIT_NOTESTSCOLLECTED, EXIT_OK, EXIT_USAGEERROR
+from _pytest.main import EXIT_NOTESTSCOLLECTED
+from _pytest.main import EXIT_OK
+from _pytest.main import EXIT_USAGEERROR
 
 
 @pytest.fixture(scope="module", params=["global", "inpackage"])

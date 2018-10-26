@@ -5,6 +5,7 @@ serialization via the pickle module.
 import textwrap
 
 import py
+
 import pytest
 
 pythonlist = ["python2.7", "python3.4", "python3.5"]

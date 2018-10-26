@@ -1,15 +1,16 @@
 """ recording warnings during test function execution. """
-from __future__ import absolute_import, division, print_function
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 
 import inspect
-
-import _pytest._code
 import re
 import sys
 import warnings
 
 import six
 
+import _pytest._code
 from _pytest.fixtures import yield_fixture
 from _pytest.outcomes import fail
 

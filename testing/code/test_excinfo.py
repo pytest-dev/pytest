@@ -1,23 +1,24 @@
 # -*- coding: utf-8 -*-
-from __future__ import absolute_import, division, print_function
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 
 import operator
 import os
 import sys
 import textwrap
-import _pytest
-import py
-import pytest
-import six
-from _pytest._code.code import (
-    ExceptionInfo,
-    FormattedExcinfo,
-    ReprExceptionInfo,
-    ExceptionChainRepr,
-)
-from six.moves import queue
 
+import py
+import six
+from six.moves import queue
 from test_source import astonly
+
+import _pytest
+import pytest
+from _pytest._code.code import ExceptionChainRepr
+from _pytest._code.code import ExceptionInfo
+from _pytest._code.code import FormattedExcinfo
+from _pytest._code.code import ReprExceptionInfo
 
 try:
     import importlib

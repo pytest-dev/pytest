@@ -1,13 +1,18 @@
 # encoding: UTF-8
-from __future__ import absolute_import, division, print_function
-import pytest
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+
 import os
 import re
 import sys
 import types
 
-from _pytest.config import get_config, PytestPluginManager
-from _pytest.main import EXIT_NOTESTSCOLLECTED, Session
+import pytest
+from _pytest.config import get_config
+from _pytest.config import PytestPluginManager
+from _pytest.main import EXIT_NOTESTSCOLLECTED
+from _pytest.main import Session
 
 
 @pytest.fixture

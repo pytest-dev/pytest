@@ -2,8 +2,9 @@
 this is a place where we put datastructures used by legacy apis
 we hope ot remove
 """
-import attr
 import keyword
+
+import attr
 
 from _pytest.config import UsageError
 
