@@ -1,9 +1,14 @@
-from __future__ import absolute_import, division, print_function
-import pytest
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+
 import sys
 
-from _pytest.skipping import MarkEvaluator, folded_skips, pytest_runtest_setup
+import pytest
 from _pytest.runner import runtestprotocol
+from _pytest.skipping import folded_skips
+from _pytest.skipping import MarkEvaluator
+from _pytest.skipping import pytest_runtest_setup
 
 
 class TestEvaluator(object):

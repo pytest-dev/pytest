@@ -1,15 +1,24 @@
 # -*- coding: utf-8 -*-
-from __future__ import absolute_import, division, print_function
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+
 import os
-import py.path
-import pytest
 import sys
 import time
+
+import py.path
+
 import _pytest.pytester as pytester
-from _pytest.pytester import HookRecorder
-from _pytest.pytester import CwdSnapshot, SysModulesSnapshot, SysPathsSnapshot
+import pytest
 from _pytest.config import PytestPluginManager
-from _pytest.main import EXIT_OK, EXIT_TESTSFAILED, EXIT_NOTESTSCOLLECTED
+from _pytest.main import EXIT_NOTESTSCOLLECTED
+from _pytest.main import EXIT_OK
+from _pytest.main import EXIT_TESTSFAILED
+from _pytest.pytester import CwdSnapshot
+from _pytest.pytester import HookRecorder
+from _pytest.pytester import SysModulesSnapshot
+from _pytest.pytester import SysPathsSnapshot
 
 
 def test_make_hook_recorder(testdir):

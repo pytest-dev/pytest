@@ -1,12 +1,16 @@
 """ discover and run doctests in modules and test files."""
-from __future__ import absolute_import, division, print_function
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 
-import traceback
-import sys
 import platform
+import sys
+import traceback
 
 import pytest
-from _pytest._code.code import ExceptionInfo, ReprFileLocation, TerminalRepr
+from _pytest._code.code import ExceptionInfo
+from _pytest._code.code import ReprFileLocation
+from _pytest._code.code import TerminalRepr
 from _pytest.fixtures import FixtureRequest
 
 

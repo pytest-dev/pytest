@@ -1,13 +1,15 @@
 # coding: utf-8
-from __future__ import absolute_import, division, print_function
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 
 import sys
 
+from six import text_type
+from test_excinfo import TWMock
+
 import _pytest._code
 import pytest
-from six import text_type
-
-from test_excinfo import TWMock
 
 try:
     import mock

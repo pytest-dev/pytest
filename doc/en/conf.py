@@ -10,17 +10,15 @@
 #
 # All configuration values have a default; values that are commented out
 # serve to show the default.
-
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
 # built documents.
 #
 # The full version, including alpha/beta/rc tags.
 # The short X.Y version.
-
+import datetime
 import os
 import sys
-import datetime
 
 from _pytest import __version__ as version
 

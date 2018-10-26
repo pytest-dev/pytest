@@ -1,5 +1,7 @@
 """(disabled by default) support for testing pytest and pytest plugins."""
-from __future__ import absolute_import, division, print_function
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 
 import codecs
 import gc
@@ -7,23 +9,25 @@ import os
 import platform
 import re
 import subprocess
-import six
 import sys
 import time
 import traceback
 from fnmatch import fnmatch
-
 from weakref import WeakKeyDictionary
 
-from _pytest.capture import MultiCapture, SysCapture
-from _pytest._code import Source
-from _pytest.main import Session, EXIT_INTERRUPTED, EXIT_OK
-from _pytest.assertion.rewrite import AssertionRewritingHook
-from _pytest.pathlib import Path
-from _pytest.compat import safe_str
-
 import py
+import six
+
 import pytest
+from _pytest._code import Source
+from _pytest.assertion.rewrite import AssertionRewritingHook
+from _pytest.capture import MultiCapture
+from _pytest.capture import SysCapture
+from _pytest.compat import safe_str
+from _pytest.main import EXIT_INTERRUPTED
+from _pytest.main import EXIT_OK
+from _pytest.main import Session
+from _pytest.pathlib import Path
 
 IGNORE_PAM = [  # filenames added when obtaining details about the current user
     u"/var/lib/sss/mc/passwd"

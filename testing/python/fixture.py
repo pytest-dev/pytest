@@ -3,10 +3,11 @@ import sys
 import textwrap
 
 import pytest
-from _pytest.pytester import get_public_names
-from _pytest.fixtures import FixtureLookupError, FixtureRequest
 from _pytest import fixtures
+from _pytest.fixtures import FixtureLookupError
+from _pytest.fixtures import FixtureRequest
 from _pytest.pathlib import Path
+from _pytest.pytester import get_public_names
 
 
 def test_getfuncargnames():

@@ -1,13 +1,14 @@
 # encoding: utf-8
+import doctest
 import operator
 import sys
-import pytest
-import doctest
-
-from pytest import approx
-from operator import eq, ne
 from decimal import Decimal
 from fractions import Fraction
+from operator import eq
+from operator import ne
+
+import pytest
+from pytest import approx
 
 inf, nan = float("inf"), float("nan")
 

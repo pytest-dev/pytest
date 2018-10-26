@@ -1,15 +1,18 @@
 """ Access and control log capturing. """
-from __future__ import absolute_import, division, print_function
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 
 import logging
-from contextlib import contextmanager
 import re
+from contextlib import contextmanager
+
+import py
 import six
 
+import pytest
 from _pytest.compat import dummy_context_manager
 from _pytest.config import create_terminal_writer
-import pytest
-import py
 
 
 DEFAULT_LOG_FORMAT = "%(filename)-25s %(lineno)4d %(levelname)-8s %(message)s"
@@ -263,7 +266,7 @@ class LogCaptureFixture(object):
 
     @property
     def record_tuples(self):
-        """Returns a list of a striped down version of log records intended
+        """Returns a list of a stripped down version of log records intended
         for use in assertion comparison.
 
         The format of the tuple is:
@@ -330,7 +333,7 @@ class LogCaptureFixture(object):
 def caplog(request):
     """Access and control log capturing.
 
-    Captured logs are available through the following methods::
+    Captured logs are available through the following properties/methods::
 
     * caplog.text            -> string containing formatted log output
     * caplog.records         -> list of logging.LogRecord instances

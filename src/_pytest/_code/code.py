@@ -1,19 +1,27 @@
-from __future__ import absolute_import, division, print_function
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+
 import inspect
 import pprint
+import re
 import sys
 import traceback
-from inspect import CO_VARARGS, CO_VARKEYWORDS
+from inspect import CO_VARARGS
+from inspect import CO_VARKEYWORDS
+from weakref import ref
 
 import attr
 import pluggy
-import re
-from weakref import ref
-import _pytest
-from _pytest.compat import _PY2, _PY3, PY35, safe_str
-from six import text_type
 import py
 import six
+from six import text_type
+
+import _pytest
+from _pytest.compat import _PY2
+from _pytest.compat import _PY3
+from _pytest.compat import PY35
+from _pytest.compat import safe_str
 
 builtin_repr = repr
 

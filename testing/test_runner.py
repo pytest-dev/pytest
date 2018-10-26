@@ -1,14 +1,21 @@
 # -*- coding: utf-8 -*-
-from __future__ import absolute_import, division, print_function
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 
-import _pytest._code
 import inspect
 import os
-import py
-import pytest
 import sys
 import types
-from _pytest import runner, main, outcomes, reports
+
+import py
+
+import _pytest._code
+import pytest
+from _pytest import main
+from _pytest import outcomes
+from _pytest import reports
+from _pytest import runner
 
 
 class TestSetupState(object):

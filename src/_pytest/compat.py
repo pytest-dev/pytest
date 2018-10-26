@@ -1,7 +1,9 @@
 """
 python version compatibility code
 """
-from __future__ import absolute_import, division, print_function
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 
 import codecs
 import functools
@@ -11,11 +13,12 @@ import sys
 from contextlib import contextmanager
 
 import py
+import six
+from six import text_type
 
 import _pytest
-from _pytest.outcomes import TEST_OUTCOME, fail
-from six import text_type
-import six
+from _pytest.outcomes import fail
+from _pytest.outcomes import TEST_OUTCOME
 
 try:
     import enum

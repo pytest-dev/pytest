@@ -1,0 +1,1 @@
+Fix bug where the warning summary at the end of the test session was not showing the test where the warning was originated.

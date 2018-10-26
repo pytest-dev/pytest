@@ -3,7 +3,6 @@ import sys
 import py
 
 import pytest
-
 from _pytest.pathlib import fnmatch_ex
 
 

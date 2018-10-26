@@ -1,5 +1,7 @@
 """ basic collect and runtest protocol implementations """
-from __future__ import absolute_import, division, print_function
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 
 import bdb
 import os
@@ -7,10 +9,14 @@ import sys
 from time import time
 
 import six
-from _pytest._code.code import ExceptionInfo
-from _pytest.outcomes import skip, Skipped, TEST_OUTCOME
 
-from .reports import TestReport, CollectReport, CollectErrorRepr
+from .reports import CollectErrorRepr
+from .reports import CollectReport
+from .reports import TestReport
+from _pytest._code.code import ExceptionInfo
+from _pytest.outcomes import skip
+from _pytest.outcomes import Skipped
+from _pytest.outcomes import TEST_OUTCOME
 
 #
 # pytest plugin hooks
