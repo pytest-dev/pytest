@@ -159,7 +159,7 @@ def create_cleanup_lock(p):
     else:
         pid = os.getpid()
         spid = str(pid)
-        if not isinstance(spid, six.binary_type):
+        if not isinstance(spid, bytes):
             spid = spid.encode("ascii")
         os.write(fd, spid)
         os.close(fd)

@@ -1,0 +1,1 @@
+Remove use of unnecessary compat shim, six.binary_type
