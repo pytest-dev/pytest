@@ -560,19 +560,16 @@ class Package(Module):
             yield Module(init_module, self)
         pkg_prefixes = set()
         for path in this_path.visit(rec=self._recurse, bf=True, sort=True):
-            # we will visit our own __init__.py file, in which case we skip it
-            skip = False
-            if path.basename == "__init__.py" and path.dirpath() == this_path:
-                continue
+            # We will visit our own __init__.py file, in which case we skip it.
+            if path.isfile():
+                if path.basename == "__init__.py" and path.dirpath() == this_path:
+                    continue
 
-            for pkg_prefix in pkg_prefixes:
-                if (
-                    pkg_prefix in path.parts()
-                    and pkg_prefix.join("__init__.py") != path
-                ):
-                    skip = True
-
-            if skip:
+            parts = path.parts()
+            if any(
+                pkg_prefix in parts and pkg_prefix.join("__init__.py") != path
+                for pkg_prefix in pkg_prefixes
+            ):
                 continue
 
             if path.isdir() and path.join("__init__.py").check(file=1):
