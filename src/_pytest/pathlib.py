@@ -151,7 +151,7 @@ def create_cleanup_lock(p):
     else:
         pid = os.getpid()
         spid = str(pid)
-        if not isinstance(spid, six.binary_type):
+        if not isinstance(spid, bytes):
             spid = spid.encode("ascii")
         os.write(fd, spid)
         os.close(fd)
@@ -177,9 +177,15 @@ def register_cleanup_lock_removal(lock_path, register=atexit.register):
     return register(cleanup_on_exit)
 
 
-def delete_a_numbered_dir(path):
-    """removes a numbered directory"""
-    create_cleanup_lock(path)
+def maybe_delete_a_numbered_dir(path):
+    """removes a numbered directory if its lock can be obtained"""
+    try:
+        create_cleanup_lock(path)
+    except (OSError, EnvironmentError):
+        #  known races:
+        #  * other process did a cleanup at the same time
+        #  * deletable folder was found
+        return
     parent = path.parent
 
     garbage = parent.joinpath("garbage-{}".format(uuid.uuid4()))
@@ -209,7 +215,7 @@ def ensure_deletable(path, consider_lock_dead_if_created_before):
 def try_cleanup(path, consider_lock_dead_if_created_before):
     """tries to cleanup a folder if we can ensure its deletable"""
     if ensure_deletable(path, consider_lock_dead_if_created_before):
-        delete_a_numbered_dir(path)
+        maybe_delete_a_numbered_dir(path)
 
 
 def cleanup_candidates(root, prefix, keep):

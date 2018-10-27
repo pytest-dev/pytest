@@ -1,1 +1,0 @@
-Apply an import sorter (``reorder-python-imports``) to the codebase.

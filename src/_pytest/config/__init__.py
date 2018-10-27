@@ -389,13 +389,13 @@ class PytestPluginManager(PluginManager):
         if self._noconftest:
             return []
 
-        if path.isfile():
-            directory = path.dirpath()
-        else:
-            directory = path
         try:
-            return self._path2confmods[directory]
+            return self._path2confmods[path]
         except KeyError:
+            if path.isfile():
+                directory = path.dirpath()
+            else:
+                directory = path
             # XXX these days we may rather want to use config.rootdir
             # and allow users to opt into looking into the rootdir parent
             # directories instead of requiring to specify confcutdir
@@ -408,7 +408,7 @@ class PytestPluginManager(PluginManager):
                     mod = self._importconftest(conftestpath)
                     clist.append(mod)
 
-            self._path2confmods[directory] = clist
+            self._path2confmods[path] = clist
             return clist
 
     def _rget_with_confmod(self, name, path):
