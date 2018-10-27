@@ -1,1 +1,0 @@
-Handle race condition between creation and deletion of temporary folders.
