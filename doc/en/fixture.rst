@@ -153,7 +153,7 @@ This makes use of the automatic caching mechanisms of pytest.
 
 Another good approach is by adding the data files in the ``tests`` folder.
 There are also community plugins available to help managing this aspect of
-testing, e.g. `pytest-datadir <https://github.com/gabrielcnr/pytest-datadir>`__
+testing, e.g. `pytest-datadir <https://pypi.org/project/pytest-datadir/>`__
 and `pytest-datafiles <https://pypi.org/project/pytest-datafiles/>`__.
 
 .. _smtpshared:
