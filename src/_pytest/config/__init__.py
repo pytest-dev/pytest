@@ -134,6 +134,7 @@ default_plugins = (
     "freeze_support",
     "setuponly",
     "setupplan",
+    "stepwise",
     "warnings",
     "logging",
 )
