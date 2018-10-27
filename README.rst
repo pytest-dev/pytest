@@ -3,7 +3,6 @@
    :align: center
    :alt: pytest
 
-
 ------
 
 .. image:: https://img.shields.io/pypi/v/pytest.svg
@@ -45,7 +44,6 @@ An example of a simple test:
 
     def test_answer():
         assert inc(3) == 5
-
 
 To execute it::
 
