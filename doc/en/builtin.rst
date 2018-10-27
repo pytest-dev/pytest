@@ -75,7 +75,7 @@ For information about fixtures, see :ref:`fixtures`. To see a complete list of a
     caplog
         Access and control log capturing.
 
-        Captured logs are available through the following methods::
+        Captured logs are available through the following properties/methods::
 
         * caplog.text            -> string containing formatted log output
         * caplog.records         -> list of logging.LogRecord instances

@@ -1,1 +1,0 @@
-Add reference to ``empty_parameter_set_mark`` ini option in documentation of ``@pytest.mark.parametrize``
