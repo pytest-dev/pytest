@@ -1,0 +1,1 @@
+Added missing documentation about the fact that module names passed to filter warnings are not regex-escaped.
