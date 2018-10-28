@@ -18,6 +18,44 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+pytest 3.9.3 (2018-10-27)
+=========================
+
+Bug Fixes
+---------
+
+- `#4174 <https://github.com/pytest-dev/pytest/issues/4174>`_: Fix "ValueError: Plugin already registered" with conftest plugins via symlink.
+
+
+- `#4181 <https://github.com/pytest-dev/pytest/issues/4181>`_: Handle race condition between creation and deletion of temporary folders.
+
+
+- `#4221 <https://github.com/pytest-dev/pytest/issues/4221>`_: Fix bug where the warning summary at the end of the test session was not showing the test where the warning was originated.
+
+
+- `#4243 <https://github.com/pytest-dev/pytest/issues/4243>`_: Fix regression when ``stacklevel`` for warnings was passed as positional argument on python2.
+
+
+
+Improved Documentation
+----------------------
+
+- `#3851 <https://github.com/pytest-dev/pytest/issues/3851>`_: Add reference to ``empty_parameter_set_mark`` ini option in documentation of ``@pytest.mark.parametrize``
+
+
+
+Trivial/Internal Changes
+------------------------
+
+- `#4028 <https://github.com/pytest-dev/pytest/issues/4028>`_: Revert patching of ``sys.breakpointhook`` since it appears to do nothing.
+
+
+- `#4233 <https://github.com/pytest-dev/pytest/issues/4233>`_: Apply an import sorter (``reorder-python-imports``) to the codebase.
+
+
+- `#4248 <https://github.com/pytest-dev/pytest/issues/4248>`_: Remove use of unnecessary compat shim, six.binary_type
+
+
 pytest 3.9.2 (2018-10-22)
 =========================
 

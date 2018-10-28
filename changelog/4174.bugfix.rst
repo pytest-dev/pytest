@@ -1,1 +1,0 @@
-Fix "ValueError: Plugin already registered" with conftest plugins via symlink.

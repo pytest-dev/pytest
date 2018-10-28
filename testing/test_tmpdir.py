@@ -7,6 +7,7 @@ import sys
 import six
 
 import pytest
+from _pytest import pathlib
 from _pytest.pathlib import Path
 
 
@@ -287,10 +288,16 @@ class TestNumberedDir(object):
         rmtree(adir, force=True)
         assert not adir.exists()
 
-    def test_cleanup_symlink(self, tmp_path):
+    def test_cleanup_ignores_symlink(self, tmp_path):
         the_symlink = tmp_path / (self.PREFIX + "current")
         attempt_symlink_to(the_symlink, tmp_path / (self.PREFIX + "5"))
         self._do_cleanup(tmp_path)
+
+    def test_removal_accepts_lock(self, tmp_path):
+        folder = pathlib.make_numbered_dir(root=tmp_path, prefix=self.PREFIX)
+        pathlib.create_cleanup_lock(folder)
+        pathlib.maybe_delete_a_numbered_dir(folder)
+        assert folder.is_dir()
 
 
 def attempt_symlink_to(path, to_path):

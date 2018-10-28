@@ -29,8 +29,9 @@ Running pytest now produces this output::
     test_show_warnings.py .                                              [100%]
 
     ============================= warnings summary =============================
-    $REGENDOC_TMPDIR/test_show_warnings.py:4: UserWarning: api v1, should use functions from v2
-      warnings.warn(UserWarning("api v1, should use functions from v2"))
+    test_show_warnings.py::test_one
+      $REGENDOC_TMPDIR/test_show_warnings.py:4: UserWarning: api v1, should use functions from v2
+        warnings.warn(UserWarning("api v1, should use functions from v2"))
 
     -- Docs: https://docs.pytest.org/en/latest/warnings.html
     =================== 1 passed, 1 warnings in 0.12 seconds ===================
@@ -351,8 +352,9 @@ defines an ``__init__`` constructor, as this prevents the class from being insta
     $ pytest test_pytest_warnings.py -q
 
     ============================= warnings summary =============================
-    $REGENDOC_TMPDIR/test_pytest_warnings.py:1: PytestWarning: cannot collect test class 'Test' because it has a __init__ constructor
-      class Test:
+    test_pytest_warnings.py:1
+      $REGENDOC_TMPDIR/test_pytest_warnings.py:1: PytestWarning: cannot collect test class 'Test' because it has a __init__ constructor
+        class Test:
 
     -- Docs: https://docs.pytest.org/en/latest/warnings.html
     1 warnings in 0.12 seconds
