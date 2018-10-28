@@ -14,8 +14,6 @@ from bisect import bisect_right
 import py
 import six
 
-cpy_compile = compile
-
 
 class Source(object):
     """ an immutable object holding a source code fragment,
@@ -161,7 +159,7 @@ class Source(object):
                 filename = base + "%r %s:%d>" % (filename, fn, lineno)
         source = "\n".join(self.lines) + "\n"
         try:
-            co = cpy_compile(source, filename, mode, flag)
+            co = compile(source, filename, mode, flag)
         except SyntaxError:
             ex = sys.exc_info()[1]
             # re-represent syntax errors from parsing python strings
@@ -195,7 +193,7 @@ def compile_(source, filename=None, mode="exec", flags=0, dont_inherit=0):
     """
     if isinstance(source, ast.AST):
         # XXX should Source support having AST?
-        return cpy_compile(source, filename, mode, flags, dont_inherit)
+        return compile(source, filename, mode, flags, dont_inherit)
     _genframe = sys._getframe(1)  # the caller
     s = Source(source)
     co = s.compile(filename, mode, flags, _genframe=_genframe)
@@ -290,7 +288,7 @@ def get_statement_startend2(lineno, node):
 def getstatementrange_ast(lineno, source, assertion=False, astnode=None):
     if astnode is None:
         content = str(source)
-        astnode = compile(content, "source", "exec", 1024)  # 1024 for AST
+        astnode = compile(content, "source", "exec", _AST_FLAG)
 
     start, end = get_statement_startend2(lineno, astnode)
     # we need to correct the end:
