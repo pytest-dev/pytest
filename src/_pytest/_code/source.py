@@ -8,6 +8,7 @@ import linecache
 import sys
 import textwrap
 import tokenize
+import warnings
 from ast import PyCF_ONLY_AST as _AST_FLAG
 from bisect import bisect_right
 
@@ -288,7 +289,11 @@ def get_statement_startend2(lineno, node):
 def getstatementrange_ast(lineno, source, assertion=False, astnode=None):
     if astnode is None:
         content = str(source)
-        astnode = compile(content, "source", "exec", _AST_FLAG)
+        # See #4260:
+        # don't produce duplicate warnings when compiling source to find ast
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            astnode = compile(content, "source", "exec", _AST_FLAG)
 
     start, end = get_statement_startend2(lineno, astnode)
     # we need to correct the end:

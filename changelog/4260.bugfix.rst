@@ -1,0 +1,1 @@
+Swallow warnings during anonymous compilation of source.
