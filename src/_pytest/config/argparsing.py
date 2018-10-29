@@ -152,7 +152,7 @@ class ArgumentError(Exception):
 class Argument(object):
     """class that mimics the necessary behaviour of optparse.Option
 
-    its currently a least effort implementation
+    it's currently a least effort implementation
     and ignoring choices and integer prefixes
     https://docs.python.org/3/library/optparse.html#optparse-standard-option-types
     """

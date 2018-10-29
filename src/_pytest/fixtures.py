@@ -618,7 +618,7 @@ class FixtureRequest(FuncargnamesCompatAttr):
         subrequest._check_scope(argname, self.scope, scope)
 
         # clear sys.exc_info before invoking the fixture (python bug?)
-        # if its not explicitly cleared it will leak into the call
+        # if it's not explicitly cleared it will leak into the call
         exc_clear()
         try:
             # call the fixture function

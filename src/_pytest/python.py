@@ -661,7 +661,7 @@ class Instance(PyCollector):
     _ALLOW_MARKERS = False  # hack, destroy later
     # instances share the object with their parents in a way
     # that duplicates markers instances if not taken out
-    # can be removed at node strucutre reorganization time
+    # can be removed at node structure reorganization time
 
     def _getobj(self):
         return self.parent.obj()
@@ -1343,7 +1343,7 @@ class Function(FunctionMixin, nodes.Item, fixtures.FuncargnamesCompatAttr):
     """
 
     _genid = None
-    # disable since functions handle it themselfes
+    # disable since functions handle it themselves
     _ALLOW_MARKERS = False
 
     def __init__(
