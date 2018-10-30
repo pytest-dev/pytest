@@ -1,0 +1,1 @@
+Fix access denied error when deleting stale directories created by ``tmpdir`` / ``tmp_path``.

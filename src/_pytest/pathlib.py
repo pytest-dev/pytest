@@ -186,19 +186,29 @@ def register_cleanup_lock_removal(lock_path, register=atexit.register):
 
 
 def maybe_delete_a_numbered_dir(path):
-    """removes a numbered directory if its lock can be obtained"""
+    """removes a numbered directory if its lock can be obtained and it does not seem to be in use"""
+    lock_path = None
     try:
-        create_cleanup_lock(path)
+        lock_path = create_cleanup_lock(path)
+        parent = path.parent
+
+        garbage = parent.joinpath("garbage-{}".format(uuid.uuid4()))
+        path.rename(garbage)
+        rmtree(garbage, force=True)
     except (OSError, EnvironmentError):
         #  known races:
         #  * other process did a cleanup at the same time
         #  * deletable folder was found
+        #  * process cwd (Windows)
         return
-    parent = path.parent
-
-    garbage = parent.joinpath("garbage-{}".format(uuid.uuid4()))
-    path.rename(garbage)
-    rmtree(garbage, force=True)
+    finally:
+        # if we created the lock, ensure we remove it even if we failed
+        # to properly remove the numbered dir
+        if lock_path is not None:
+            try:
+                lock_path.unlink()
+            except (OSError, IOError):
+                pass
 
 
 def ensure_deletable(path, consider_lock_dead_if_created_before):
