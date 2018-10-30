@@ -1,1 +1,11 @@
-Add warning when asserting ``None`` directly
+A warning is now issued when assertions are made directly against ``None``.
+
+This is a common source of confusion among new users, which write::
+
+    assert mocked_object.assert_called_with(3, 4, 5, key='value')
+    
+When they should write::     
+
+    mocked_object.assert_called_with(3, 4, 5, key='value')
+
+Because the ``assert_called_with`` method of mock objects already executes an assertion.
