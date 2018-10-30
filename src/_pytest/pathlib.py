@@ -36,7 +36,7 @@ get_lock_path = operator.methodcaller("joinpath", ".lock")
 
 def ensure_reset_dir(path):
     """
-    ensures the given path is a empty directory
+    ensures the given path is an empty directory
     """
     if path.exists():
         rmtree(path, force=True)
@@ -106,8 +106,8 @@ else:
 def _force_symlink(root, target, link_to):
     """helper to create the current symlink
 
-    its full of race conditions that are reasonably ok to ignore
-    for the contex of best effort linking to the latest testrun
+    it's full of race conditions that are reasonably ok to ignore
+    for the context of best effort linking to the latest testrun
 
     the presumption being thatin case of much parallelism
     the inaccuracy is going to be acceptable
@@ -124,7 +124,7 @@ def _force_symlink(root, target, link_to):
 
 
 def make_numbered_dir(root, prefix):
-    """create a directory with a increased number as suffix for the given prefix"""
+    """create a directory with an increased number as suffix for the given prefix"""
     for i in range(10):
         # try up to 10 times to create the folder
         max_existing = _max(map(parse_num, find_suffixes(root, prefix)), default=-1)
@@ -164,7 +164,7 @@ def create_cleanup_lock(p):
         os.write(fd, spid)
         os.close(fd)
         if not lock_path.is_file():
-            raise EnvironmentError("lock path got renamed after sucessfull creation")
+            raise EnvironmentError("lock path got renamed after successful creation")
         return lock_path
 
 
@@ -221,7 +221,7 @@ def ensure_deletable(path, consider_lock_dead_if_created_before):
 
 
 def try_cleanup(path, consider_lock_dead_if_created_before):
-    """tries to cleanup a folder if we can ensure its deletable"""
+    """tries to cleanup a folder if we can ensure it's deletable"""
     if ensure_deletable(path, consider_lock_dead_if_created_before):
         maybe_delete_a_numbered_dir(path)
 

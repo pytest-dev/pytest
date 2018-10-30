@@ -541,7 +541,7 @@ Bug Fixes
 - `#3473 <https://github.com/pytest-dev/pytest/issues/3473>`_: Raise immediately if ``approx()`` is given an expected value of a type it doesn't understand (e.g. strings, nested dicts, etc.).
 
 
-- `#3712 <https://github.com/pytest-dev/pytest/issues/3712>`_: Correctly represent the dimensions of an numpy array when calling ``repr()`` on ``approx()``.
+- `#3712 <https://github.com/pytest-dev/pytest/issues/3712>`_: Correctly represent the dimensions of a numpy array when calling ``repr()`` on ``approx()``.
 
 - `#3742 <https://github.com/pytest-dev/pytest/issues/3742>`_: Fix incompatibility with third party plugins during collection, which produced the error ``object has no attribute '_collectfile'``.
 
