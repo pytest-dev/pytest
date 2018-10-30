@@ -4,6 +4,9 @@ import py
 
 import pytest
 from _pytest.pathlib import fnmatch_ex
+from _pytest.pathlib import get_lock_path
+from _pytest.pathlib import maybe_delete_a_numbered_dir
+from _pytest.pathlib import Path
 
 
 class TestPort:
@@ -66,3 +69,18 @@ class TestPort:
     )
     def test_not_matching(self, match, pattern, path):
         assert not match(pattern, path)
+
+
+def test_access_denied_during_cleanup(tmp_path, monkeypatch):
+    """Ensure that deleting a numbered dir does not fail because of OSErrors (#4262)."""
+    path = tmp_path / "temp-1"
+    path.mkdir()
+
+    def renamed_failed(*args):
+        raise OSError("access denied")
+
+    monkeypatch.setattr(Path, "rename", renamed_failed)
+
+    lock_path = get_lock_path(path)
+    maybe_delete_a_numbered_dir(path)
+    assert not lock_path.is_file()
