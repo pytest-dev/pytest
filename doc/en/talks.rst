@@ -69,6 +69,8 @@ Talks and blog postings
 
 - `monkey patching done right`_ (blog post, consult `monkeypatch plugin`_ for up-to-date API)
 
+- pytest: recommendations, basic packages for testing in Python and Django, Andreu Vallbona, PyconES 2017 (`slides <http://talks.apsl.io/testing-pycones-2017/>`_, `video in spanish <https://www.youtube.com/watch?v=K20GeR-lXDk>`_)
+
 Test parametrization:
 
 - `generating parametrized tests with fixtures`_.
