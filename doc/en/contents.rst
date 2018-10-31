@@ -33,11 +33,11 @@ Full pytest documentation
    reference
 
    goodpractices
+   flaky
    pythonpath
    customize
    example/index
    bash-completion
-   flaky
 
    backwards-compatibility
    deprecations

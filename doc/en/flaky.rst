@@ -1,4 +1,3 @@
-.. _flaky:
 
 Flaky tests
 -----------
@@ -25,7 +24,7 @@ Flaky tests sometimes appear when a test suite is run in parallel (such as use o
 - The flaky test is reliant on data from a previous test that doesn't clean up after itself, and in parallel runs that previous test is not always present
 - Tests that modify global state typically cannot be run in parallel.
 
-  
+
 Overly strict assertion
 ~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -44,7 +43,7 @@ Xfail strict
 PYTEST_CURRENT_TEST
 ~~~~~~~~~~~~~~~~~~~
 
-:ref:`pytest current test env ref` may be useful for figuring out "which test got stuck".
+:ref:`pytest current test env` may be useful for figuring out "which test got stuck".
 
 
 Plugins
@@ -62,7 +61,7 @@ Plugins to deliberately randomize tests can help expose tests with state problem
 * `pytest-random-order <https://github.com/jbasko/pytest-random-order>`_
 * `pytest-randomly <https://github.com/pytest-dev/pytest-randomly>`_
 
-  
+
 Other general strategies
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -81,7 +80,7 @@ For UI tests these are important for understanding what the state of the UI was 
 Delete or rewrite the test
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-If the functionality is covered by other tests, perhaps the test can be removed. If not, perhaps it can be rewritten at a lower level which will remove the flakiness or make its source more apparent. 
+If the functionality is covered by other tests, perhaps the test can be removed. If not, perhaps it can be rewritten at a lower level which will remove the flakiness or make its source more apparent.
 
 
 Quarantine
@@ -103,9 +102,9 @@ Research
 
 This is a limited list, please submit an issue or pull request to expand it!
 
-* Gao, Zebao, Yalan Liang, Myra B. Cohen, Atif M. Memon, and Zhen Wang. "Making system user interactive tests repeatable: When and what should we control?." In *Software Engineering (ICSE), 2015 IEEE/ACM 37th IEEE International Conference on*, vol. 1, pp. 55-65. IEEE, 2015.  `PDF <http://www.cs.umd.edu/~atif/pubs/gao-icse15.pdf>`_ 
-* Palomba, Fabio, and Andy Zaidman. "Does refactoring of test smells induce fixing flaky tests?." In *Software Maintenance and Evolution (ICSME), 2017 IEEE International Conference on*, pp. 1-12. IEEE, 2017. `PDF in Google Drive <https://drive.google.com/file/d/10HdcCQiuQVgW3yYUJD-TSTq1NbYEprl0/view>`_
-*  Bell, Jonathan, Owolabi Legunsen, Michael Hilton, Lamyaa Eloussi, Tifany Yung, and Darko Marinov. "DeFlaker: Automatically detecting flaky tests." In *Proceedings of the 2018 International Conference on Software Engineering*. 2018. `PDF <https://www.jonbell.net/icse18-deflaker.pdf>`_
+* Gao, Zebao, Yalan Liang, Myra B. Cohen, Atif M. Memon, and Zhen Wang. "Making system user interactive tests repeatable: When and what should we control?." In *Software Engineering (ICSE), 2015 IEEE/ACM 37th IEEE International Conference on*, vol. 1, pp. 55-65. IEEE, 2015.  `PDF <http://www.cs.umd.edu/~atif/pubs/gao-icse15.pdf>`__
+* Palomba, Fabio, and Andy Zaidman. "Does refactoring of test smells induce fixing flaky tests?." In *Software Maintenance and Evolution (ICSME), 2017 IEEE International Conference on*, pp. 1-12. IEEE, 2017. `PDF in Google Drive <https://drive.google.com/file/d/10HdcCQiuQVgW3yYUJD-TSTq1NbYEprl0/view>`__
+*  Bell, Jonathan, Owolabi Legunsen, Michael Hilton, Lamyaa Eloussi, Tifany Yung, and Darko Marinov. "DeFlaker: Automatically detecting flaky tests." In *Proceedings of the 2018 International Conference on Software Engineering*. 2018. `PDF <https://www.jonbell.net/icse18-deflaker.pdf>`__
 
 
 Resources
@@ -124,5 +123,5 @@ Resources
 
   * `Flaky Tests at Google and How We Mitigate Them <https://testing.googleblog.com/2016/05/flaky-tests-at-google-and-how-we.html>`_ by John Micco, 2016
   * `Where do Google's flaky tests come from? <https://docs.google.com/document/d/1mZ0-Kc97DI_F3tf_GBW_NB_aqka-P1jVOsFfufxqUUM/edit#heading=h.ec0r4fypsleh>`_  by Jeff Listfield, 2017
-    
+
 
