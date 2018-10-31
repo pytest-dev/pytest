@@ -518,6 +518,22 @@ class TestPDB(object):
         assert "1 failed" in rest
         self.flush(child)
 
+    def test_pdb_without_capture(self, testdir):
+        p1 = testdir.makepyfile(
+            """
+            import pytest
+            def test_1():
+                pytest.set_trace()
+        """
+        )
+        child = testdir.spawn_pytest("-s %s" % p1)
+        child.expect(r">>> PDB set_trace >>>")
+        child.expect("Pdb")
+        child.sendline("c")
+        child.expect(r">>> PDB continue >>>")
+        child.expect("1 passed")
+        self.flush(child)
+
     def test_pdb_used_outside_test(self, testdir):
         p1 = testdir.makepyfile(
             """
