@@ -33,6 +33,7 @@ Full pytest documentation
    reference
 
    goodpractices
+   flaky
    pythonpath
    customize
    example/index
