@@ -1,5 +1,7 @@
 import sys
 
+import six
+
 import pytest
 from _pytest.outcomes import Failed
 
@@ -170,3 +172,25 @@ class TestRaises(object):
             Failed, match="DID NOT RAISE <class 'raises.ClassLooksIterableException'>"
         ):
             pytest.raises(ClassLooksIterableException, lambda: None)
+
+    def test_raises_with_raising_dunder_class(self):
+        """Test current behavior with regard to exceptions via __class__ (#4284)."""
+
+        class CrappyClass(Exception):
+            @property
+            def __class__(self):
+                assert False, "via __class__"
+
+        if six.PY2:
+            with pytest.raises(pytest.fail.Exception) as excinfo:
+                with pytest.raises(CrappyClass()):
+                    pass
+            assert "DID NOT RAISE" in excinfo.value.args[0]
+
+            with pytest.raises(CrappyClass) as excinfo:
+                raise CrappyClass()
+        else:
+            with pytest.raises(AssertionError) as excinfo:
+                with pytest.raises(CrappyClass()):
+                    pass
+            assert "via __class__" in excinfo.value.args[0]

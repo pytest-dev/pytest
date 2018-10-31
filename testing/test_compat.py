@@ -12,6 +12,7 @@ from _pytest.compat import _PytestWrapper
 from _pytest.compat import get_real_func
 from _pytest.compat import is_generator
 from _pytest.compat import safe_getattr
+from _pytest.compat import safe_isclass
 from _pytest.outcomes import OutcomeException
 
 
@@ -140,3 +141,14 @@ def test_safe_getattr():
     helper = ErrorsHelper()
     assert safe_getattr(helper, "raise_exception", "default") == "default"
     assert safe_getattr(helper, "raise_fail", "default") == "default"
+
+
+def test_safe_isclass():
+    assert safe_isclass(type) is True
+
+    class CrappyClass(Exception):
+        @property
+        def __class__(self):
+            assert False, "Should be ignored"
+
+    assert safe_isclass(CrappyClass()) is False

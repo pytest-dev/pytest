@@ -33,6 +33,7 @@ from _pytest.compat import NoneType
 from _pytest.compat import NOTSET
 from _pytest.compat import REGEX_TYPE
 from _pytest.compat import safe_getattr
+from _pytest.compat import safe_isclass
 from _pytest.compat import safe_str
 from _pytest.compat import STRING_TYPES
 from _pytest.config import hookimpl
@@ -195,7 +196,7 @@ def pytest_pycollect_makeitem(collector, name, obj):
     if res is not None:
         return
     # nothing was collected elsewhere, let's do it here
-    if isclass(obj):
+    if safe_isclass(obj):
         if collector.istestclass(obj, name):
             Class = collector._getcustomclass("Class")
             outcome.force_result(Class(name, parent=collector))

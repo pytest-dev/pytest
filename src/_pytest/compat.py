@@ -334,6 +334,14 @@ def safe_getattr(object, name, default):
         return default
 
 
+def safe_isclass(obj):
+    """Ignore any exception via isinstance on Python 3."""
+    try:
+        return isclass(obj)
+    except Exception:
+        return False
+
+
 def _is_unittest_unexpected_success_a_failure():
     """Return if the test suite should fail if an @expectedFailure unittest test PASSES.
 
