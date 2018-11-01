@@ -23,6 +23,8 @@ Books
 Talks and blog postings
 ---------------------------------------------
 
+- pytest: recommendations, basic packages for testing in Python and Django, Andreu Vallbona, PyconES 2017 (`slides in english <http://talks.apsl.io/testing-pycones-2017/>`_, `video in spanish <https://www.youtube.com/watch?v=K20GeR-lXDk>`_)
+
 - `Pythonic testing, Igor Starikov (Russian, PyNsk, November 2016)
   <https://www.youtube.com/watch?v=_92nfdd5nK8>`_.
 
