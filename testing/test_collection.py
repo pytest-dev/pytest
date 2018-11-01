@@ -966,6 +966,12 @@ def test_collect_init_tests(testdir):
             "*<Function 'test_foo'>",
         ]
     )
+    result = testdir.runpytest("./tests/test_foo.py", "--collect-only")
+    result.stdout.fnmatch_lines(["*<Module 'test_foo.py'>", "*<Function 'test_foo'>"])
+    assert "test_init" not in result.stdout.str()
+    result = testdir.runpytest("./tests/__init__.py", "--collect-only")
+    result.stdout.fnmatch_lines(["*<Module '__init__.py'>", "*<Function 'test_init'>"])
+    assert "test_foo" not in result.stdout.str()
 
 
 def test_collect_invalid_signature_message(testdir):
