@@ -542,7 +542,15 @@ class Session(nodes.FSCollector):
                 col = root._collectfile(argpath)
                 if col:
                     self._node_cache[argpath] = col
-            for y in self.matchnodes(col, names):
+            m = self.matchnodes(col, names)
+            # If __init__.py was the only file requested, then the matched node will be
+            # the corresponding Package, and the first yielded item will be the __init__
+            # Module itself, so just use that. If this special case isn't taken, then all
+            # the files in the package will be yielded.
+            if argpath.basename == "__init__.py":
+                yield next(m[0].collect())
+                return
+            for y in m:
                 yield y
 
     def _collectfile(self, path):
