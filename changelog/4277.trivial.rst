@@ -1,0 +1,4 @@
+pdb: improve message about output capturing with ``set_trace``.
+
+Do not display "IO-capturing turned off/on" when ``-s`` is used to avoid
+confusion.

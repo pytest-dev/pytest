@@ -80,7 +80,10 @@ class pytestPDB(object):
                 capman.suspend_global_capture(in_=True)
             tw = _pytest.config.create_terminal_writer(cls._config)
             tw.line()
-            tw.sep(">", "PDB set_trace (IO-capturing turned off)")
+            if capman and capman.is_globally_capturing():
+                tw.sep(">", "PDB set_trace (IO-capturing turned off)")
+            else:
+                tw.sep(">", "PDB set_trace")
 
             class _PdbWrapper(cls._pdb_cls, object):
                 _pytest_capman = capman
@@ -91,7 +94,10 @@ class pytestPDB(object):
                     if self._pytest_capman:
                         tw = _pytest.config.create_terminal_writer(cls._config)
                         tw.line()
-                        tw.sep(">", "PDB continue (IO-capturing resumed)")
+                        if self._pytest_capman.is_globally_capturing():
+                            tw.sep(">", "PDB continue (IO-capturing resumed)")
+                        else:
+                            tw.sep(">", "PDB continue")
                         self._pytest_capman.resume_global_capture()
                     cls._pluginmanager.hook.pytest_leave_pdb(
                         config=cls._config, pdb=self
