@@ -339,7 +339,7 @@ def test_importerror(testdir):
     )
     testdir.tmpdir.join("test_importerror.py").write(
         textwrap.dedent(
-            r"""\
+            """\
         def test_importerror(monkeypatch):
             monkeypatch.setattr('package.a.x', 2)
     """
