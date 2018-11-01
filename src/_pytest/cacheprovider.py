@@ -319,7 +319,8 @@ def cache(request):
 
 
 def pytest_report_header(config):
-    if config.option.verbose:
+    """Display cachedir with --cache-show and if non-default."""
+    if config.option.verbose or config.getini("cache_dir") != ".pytest_cache":
         cachedir = config.cache._cachedir
         # TODO: evaluate generating upward relative paths
         # starting with .., ../.. if sensible
