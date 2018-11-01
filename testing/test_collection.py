@@ -977,3 +977,30 @@ def test_collect_invalid_signature_message(testdir):
     result.stdout.fnmatch_lines(
         ["Could not determine arguments of *.fix *: invalid method signature"]
     )
+
+
+def test_collect_handles_raising_on_dunder_class(testdir):
+    """Handle proxy classes like Django's LazySettings that might raise on
+    ``isinstance`` (#4266).
+    """
+    testdir.makepyfile(
+        """
+        class ImproperlyConfigured(Exception):
+            pass
+
+        class RaisesOnGetAttr(object):
+            def raises(self):
+                raise ImproperlyConfigured
+
+            __class__ = property(raises)
+
+        raises = RaisesOnGetAttr()
+
+
+        def test_1():
+            pass
+    """
+    )
+    result = testdir.runpytest()
+    assert result.ret == 0
+    result.stdout.fnmatch_lines(["*1 passed in*"])
