@@ -1,0 +1,1 @@
+Fix problems with running tests in package ``__init__.py`` files.
