@@ -219,7 +219,7 @@ class TestNewSession(SessionTests):
         started = reprec.getcalls("pytest_collectstart")
         finished = reprec.getreports("pytest_collectreport")
         assert len(started) == len(finished)
-        assert len(started) == 7  # XXX extra TopCollector
+        assert len(started) == 8
         colfail = [x for x in finished if x.failed]
         assert len(colfail) == 1
 

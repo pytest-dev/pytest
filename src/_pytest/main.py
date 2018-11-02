@@ -281,15 +281,6 @@ def pytest_ignore_collect(path, config):
     if _in_venv(path) and not allow_in_venv:
         return True
 
-    # Skip duplicate paths.
-    keepduplicates = config.getoption("keepduplicates")
-    duplicate_paths = config.pluginmanager._duplicatepaths
-    if not keepduplicates:
-        if path in duplicate_paths:
-            return True
-        else:
-            duplicate_paths.add(path)
-
     return False
 
 
@@ -551,7 +542,15 @@ class Session(nodes.FSCollector):
                 col = root._collectfile(argpath)
                 if col:
                     self._node_cache[argpath] = col
-            for y in self.matchnodes(col, names):
+            m = self.matchnodes(col, names)
+            # If __init__.py was the only file requested, then the matched node will be
+            # the corresponding Package, and the first yielded item will be the __init__
+            # Module itself, so just use that. If this special case isn't taken, then all
+            # the files in the package will be yielded.
+            if argpath.basename == "__init__.py":
+                yield next(m[0].collect())
+                return
+            for y in m:
                 yield y
 
     def _collectfile(self, path):
@@ -559,6 +558,16 @@ class Session(nodes.FSCollector):
         if not self.isinitpath(path):
             if ihook.pytest_ignore_collect(path=path, config=self.config):
                 return ()
+
+        # Skip duplicate paths.
+        keepduplicates = self.config.getoption("keepduplicates")
+        if not keepduplicates:
+            duplicate_paths = self.config.pluginmanager._duplicatepaths
+            if path in duplicate_paths:
+                return ()
+            else:
+                duplicate_paths.add(path)
+
         return ihook.pytest_collect_file(path=path, parent=self)
 
     def _recurse(self, path):
