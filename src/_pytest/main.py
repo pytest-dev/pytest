@@ -205,7 +205,7 @@ def wrap_session(config, doit):
             raise
         except Failed:
             session.exitstatus = EXIT_TESTSFAILED
-        except KeyboardInterrupt:
+        except (KeyboardInterrupt, exit.Exception):
             excinfo = _pytest._code.ExceptionInfo.from_current()
             exitstatus = EXIT_INTERRUPTED
             if initstate <= 2 and isinstance(excinfo.value, exit.Exception):

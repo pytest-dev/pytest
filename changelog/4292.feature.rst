@@ -1,0 +1,1 @@
+``pytest.outcomes.Exit`` is derived from ``SystemExit`` instead of ``KeyboardInterrupt``.

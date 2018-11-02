@@ -553,7 +553,7 @@ def test_outcomeexception_passes_except_Exception():
 def test_pytest_exit():
     with pytest.raises(pytest.exit.Exception) as excinfo:
         pytest.exit("hello")
-    assert excinfo.errisinstance(KeyboardInterrupt)
+    assert excinfo.errisinstance(pytest.exit.Exception)
 
 
 def test_pytest_fail():

@@ -49,13 +49,13 @@ class Failed(OutcomeException):
     __module__ = "builtins"
 
 
-class Exit(KeyboardInterrupt):
+class Exit(SystemExit):
     """ raised for immediate program exits (no tracebacks/summaries)"""
 
     def __init__(self, msg="unknown reason", returncode=None):
         self.msg = msg
         self.returncode = returncode
-        KeyboardInterrupt.__init__(self, msg)
+        SystemExit.__init__(self, msg)
 
 
 # exposed helper methods
@@ -63,7 +63,7 @@ class Exit(KeyboardInterrupt):
 
 def exit(msg, returncode=None):
     """
-    Exit testing process as if KeyboardInterrupt was triggered.
+    Exit testing process as if SystemExit was triggered.
 
     :param str msg: message to display upon exit.
     :param int returncode: return code to be used when exiting pytest.

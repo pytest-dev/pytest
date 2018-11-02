@@ -15,6 +15,7 @@ from .reports import CollectErrorRepr
 from .reports import CollectReport
 from .reports import TestReport
 from _pytest._code.code import ExceptionInfo
+from _pytest.outcomes import Exit
 from _pytest.outcomes import skip
 from _pytest.outcomes import Skipped
 from _pytest.outcomes import TEST_OUTCOME
@@ -190,10 +191,11 @@ def check_interactive_exception(call, report):
 def call_runtest_hook(item, when, **kwds):
     hookname = "pytest_runtest_" + when
     ihook = getattr(item.ihook, hookname)
+    reraise = (Exit,)
+    if not item.config.getvalue("usepdb"):
+        reraise += (KeyboardInterrupt,)
     return CallInfo.from_call(
-        lambda: ihook(item=item, **kwds),
-        when=when,
-        reraise=KeyboardInterrupt if not item.config.getvalue("usepdb") else (),
+        lambda: ihook(item=item, **kwds), when=when, reraise=reraise
     )
 
 
