@@ -386,7 +386,7 @@ return a result object, with which we can assert the tests' outcomes.
         result.assert_outcomes(passed=4)
 
 
-additionally it is possible to copy examples for a example folder before running pytest on it
+additionally it is possible to copy examples for an example folder before running pytest on it
 
 .. code:: ini
 

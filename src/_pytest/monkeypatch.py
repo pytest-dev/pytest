@@ -230,10 +230,12 @@ class MonkeyPatch(object):
         if not isinstance(value, str):
             warnings.warn(
                 pytest.PytestWarning(
-                    "Environment variable value {!r} should be str, converted to str implicitly".format(
-                        value
+                    "Value of environment variable {name} type should be str, but got "
+                    "{value!r} (type: {type}); converted to str implicitly".format(
+                        name=name, value=value, type=type(value).__name__
                     )
-                )
+                ),
+                stacklevel=2,
             )
             value = str(value)
         if prepend and name in os.environ:

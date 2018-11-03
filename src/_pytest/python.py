@@ -33,6 +33,7 @@ from _pytest.compat import NoneType
 from _pytest.compat import NOTSET
 from _pytest.compat import REGEX_TYPE
 from _pytest.compat import safe_getattr
+from _pytest.compat import safe_isclass
 from _pytest.compat import safe_str
 from _pytest.compat import STRING_TYPES
 from _pytest.config import hookimpl
@@ -196,7 +197,7 @@ def pytest_pycollect_makeitem(collector, name, obj):
     if res is not None:
         return
     # nothing was collected elsewhere, let's do it here
-    if isclass(obj):
+    if safe_isclass(obj):
         if collector.istestclass(obj, name):
             Class = collector._getcustomclass("Class")
             outcome.force_result(Class(name, parent=collector))
@@ -652,7 +653,7 @@ class Instance(PyCollector):
     _ALLOW_MARKERS = False  # hack, destroy later
     # instances share the object with their parents in a way
     # that duplicates markers instances if not taken out
-    # can be removed at node strucutre reorganization time
+    # can be removed at node structure reorganization time
 
     def _getobj(self):
         return self.parent.obj()
@@ -1334,7 +1335,7 @@ class Function(FunctionMixin, nodes.Item, fixtures.FuncargnamesCompatAttr):
     """
 
     _genid = None
-    # disable since functions handle it themselfes
+    # disable since functions handle it themselves
     _ALLOW_MARKERS = False
 
     def __init__(

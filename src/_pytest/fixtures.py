@@ -619,7 +619,7 @@ class FixtureRequest(FuncargnamesCompatAttr):
         subrequest._check_scope(argname, self.scope, scope)
 
         # clear sys.exc_info before invoking the fixture (python bug?)
-        # if its not explicitly cleared it will leak into the call
+        # if it's not explicitly cleared it will leak into the call
         exc_clear()
         try:
             # call the fixture function
@@ -1197,6 +1197,7 @@ class FixtureManager(object):
                 nodeid = p.dirpath().relto(self.config.rootdir)
                 if p.sep != nodes.SEP:
                     nodeid = nodeid.replace(p.sep, nodes.SEP)
+
         self.parsefactories(plugin, nodeid)
 
     def _getautousenames(self, nodeid):
@@ -1301,11 +1302,18 @@ class FixtureManager(object):
             nodeid = node_or_obj.nodeid
         if holderobj in self._holderobjseen:
             return
+
+        from _pytest.nodes import _CompatProperty
+
         self._holderobjseen.add(holderobj)
         autousenames = []
         for name in dir(holderobj):
             # The attribute can be an arbitrary descriptor, so the attribute
             # access below can raise. safe_getatt() ignores such exceptions.
+            maybe_property = safe_getattr(type(holderobj), name, None)
+            if isinstance(maybe_property, _CompatProperty):
+                # deprecated
+                continue
             obj = safe_getattr(holderobj, name, None)
             marker = getfixturemarker(obj)
             # fixture functions have a pytest_funcarg__ prefix (pre-2.3 style)

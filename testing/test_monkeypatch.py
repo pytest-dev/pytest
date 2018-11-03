@@ -3,6 +3,7 @@ from __future__ import division
 from __future__ import print_function
 
 import os
+import re
 import sys
 import textwrap
 
@@ -226,9 +227,10 @@ class TestEnvironWarnings(object):
     def test_setenv_non_str_warning(self, monkeypatch):
         value = 2
         msg = (
-            "Environment variable value {!r} should be str, converted to str implicitly"
+            "Value of environment variable PYTEST_INTERNAL_MY_VAR type should be str, "
+            "but got 2 (type: int); converted to str implicitly"
         )
-        with pytest.warns(pytest.PytestWarning, match=msg.format(value)):
+        with pytest.warns(pytest.PytestWarning, match=re.escape(msg)):
             monkeypatch.setenv(str(self.VAR_NAME), value)
 
 
