@@ -41,6 +41,7 @@ from _pytest.mark.structures import get_unpacked_marks
 from _pytest.mark.structures import normalize_mark_list
 from _pytest.mark.structures import transfer_markers
 from _pytest.outcomes import fail
+from _pytest.pathlib import parts
 from _pytest.warning_types import PytestWarning
 from _pytest.warning_types import RemovedInPytest4Warning
 
@@ -567,9 +568,9 @@ class Package(Module):
                 if path.basename == "__init__.py" and path.dirpath() == this_path:
                     continue
 
-            parts = path.parts()
+            parts_ = parts(path.strpath)
             if any(
-                pkg_prefix in parts and pkg_prefix.join("__init__.py") != path
+                pkg_prefix in parts_ and pkg_prefix.join("__init__.py") != path
                 for pkg_prefix in pkg_prefixes
             ):
                 continue

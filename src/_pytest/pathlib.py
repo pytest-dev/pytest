@@ -303,3 +303,8 @@ def fnmatch_ex(pattern, path):
     else:
         name = six.text_type(path)
     return fnmatch.fnmatch(name, pattern)
+
+
+def parts(s):
+    parts = s.split(sep)
+    return {sep.join(parts[: i + 1]) or sep for i in range(len(parts))}

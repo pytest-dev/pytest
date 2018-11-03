@@ -18,6 +18,7 @@ from _pytest.config import directory_arg
 from _pytest.config import hookimpl
 from _pytest.config import UsageError
 from _pytest.outcomes import exit
+from _pytest.pathlib import parts
 from _pytest.runner import collect_one_node
 
 
@@ -469,8 +470,8 @@ class Session(nodes.FSCollector):
             return items
 
     def collect(self):
-        for parts in self._initialparts:
-            arg = "::".join(map(str, parts))
+        for initialpart in self._initialparts:
+            arg = "::".join(map(str, initialpart))
             self.trace("processing argument", arg)
             self.trace.root.indent += 1
             try:
@@ -488,7 +489,7 @@ class Session(nodes.FSCollector):
 
         names = self._parsearg(arg)
         argpath = names.pop(0).realpath()
-        paths = []
+        paths = set()
 
         root = self
         # Start with a Session root, and delve to argpath item (dir or file)
@@ -528,21 +529,26 @@ class Session(nodes.FSCollector):
                 def filter_(f):
                     return f.check(file=1)
 
+            seen_dirs = set()
             for path in argpath.visit(
                 fil=filter_, rec=self._recurse, bf=True, sort=True
             ):
-                pkginit = path.dirpath().join("__init__.py")
-                if pkginit.exists() and not any(x in pkginit.parts() for x in paths):
-                    for x in root._collectfile(pkginit):
-                        yield x
-                        paths.append(x.fspath.dirpath())
+                dirpath = path.dirpath()
+                if dirpath not in seen_dirs:
+                    seen_dirs.add(dirpath)
+                    pkginit = dirpath.join("__init__.py")
+                    if pkginit.exists() and parts(pkginit.strpath).isdisjoint(paths):
+                        for x in root._collectfile(pkginit):
+                            yield x
+                            paths.add(x.fspath.dirpath())
 
-                if not any(x in path.parts() for x in paths):
+                if parts(path.strpath).isdisjoint(paths):
                     for x in root._collectfile(path):
-                        if (type(x), x.fspath) in self._node_cache:
-                            yield self._node_cache[(type(x), x.fspath)]
+                        key = (type(x), x.fspath)
+                        if key in self._node_cache:
+                            yield self._node_cache[key]
                         else:
-                            self._node_cache[(type(x), x.fspath)] = x
+                            self._node_cache[key] = x
                             yield x
         else:
             assert argpath.check(file=1)
