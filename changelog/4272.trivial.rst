@@ -1,1 +1,0 @@
-Display cachedir also in non-verbose mode if non-default.
