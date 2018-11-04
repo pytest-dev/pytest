@@ -957,6 +957,21 @@ def test_collect_init_tests(testdir):
             "*<Function 'test_foo'>",
         ]
     )
+    result = testdir.runpytest("./tests", "--collect-only")
+    result.stdout.fnmatch_lines(
+        [
+            "*<Module '__init__.py'>",
+            "*<Function 'test_init'>",
+            "*<Module 'test_foo.py'>",
+            "*<Function 'test_foo'>",
+        ]
+    )
+    result = testdir.runpytest("./tests/test_foo.py", "--collect-only")
+    result.stdout.fnmatch_lines(["*<Module 'test_foo.py'>", "*<Function 'test_foo'>"])
+    assert "test_init" not in result.stdout.str()
+    result = testdir.runpytest("./tests/__init__.py", "--collect-only")
+    result.stdout.fnmatch_lines(["*<Module '__init__.py'>", "*<Function 'test_init'>"])
+    assert "test_foo" not in result.stdout.str()
 
 
 def test_collect_invalid_signature_message(testdir):
@@ -977,3 +992,30 @@ def test_collect_invalid_signature_message(testdir):
     result.stdout.fnmatch_lines(
         ["Could not determine arguments of *.fix *: invalid method signature"]
     )
+
+
+def test_collect_handles_raising_on_dunder_class(testdir):
+    """Handle proxy classes like Django's LazySettings that might raise on
+    ``isinstance`` (#4266).
+    """
+    testdir.makepyfile(
+        """
+        class ImproperlyConfigured(Exception):
+            pass
+
+        class RaisesOnGetAttr(object):
+            def raises(self):
+                raise ImproperlyConfigured
+
+            __class__ = property(raises)
+
+        raises = RaisesOnGetAttr()
+
+
+        def test_1():
+            pass
+    """
+    )
+    result = testdir.runpytest()
+    assert result.ret == 0
+    result.stdout.fnmatch_lines(["*1 passed in*"])

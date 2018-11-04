@@ -117,6 +117,7 @@ Add warning filters to marked test items.
         A *warning specification string*, which is composed of contents of the tuple ``(action, message, category, module, lineno)``
         as specified in `The Warnings filter <https://docs.python.org/3/library/warnings.html#warning-filter>`_ section of
         the Python documentation, separated by ``":"``. Optional fields can be omitted.
+        Module names passed for filtering are not regex-escaped.
 
         For example:
 

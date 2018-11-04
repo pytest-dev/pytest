@@ -443,7 +443,7 @@ class NodeKeywords(MappingMixin):
 @attr.s(cmp=False, hash=False)
 class NodeMarkers(object):
     """
-    internal strucutre for storing marks belongong to a node
+    internal structure for storing marks belonging to a node
 
     ..warning::
 

@@ -244,6 +244,8 @@ You can always peek at the content of the cache using the
       {'test_caching.py::test_function': True}
     cache/nodeids contains:
       ['test_caching.py::test_function']
+    cache/stepwise contains:
+      []
     example/value contains:
       42
 

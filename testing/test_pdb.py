@@ -826,3 +826,30 @@ class TestTraceOption:
         assert "1 passed" in rest
         assert "reading from stdin while output" not in rest
         TestPDB.flush(child)
+
+
+def test_trace_after_runpytest(testdir):
+    """Test that debugging's pytest_configure is re-entrant."""
+    p1 = testdir.makepyfile(
+        """
+        from _pytest.debugging import pytestPDB
+
+        def test_outer(testdir):
+            from _pytest.debugging import pytestPDB
+
+            assert len(pytestPDB._saved) == 1
+
+            testdir.runpytest("-k test_inner")
+
+            __import__('pdb').set_trace()
+
+        def test_inner(testdir):
+            assert len(pytestPDB._saved) == 2
+    """
+    )
+    child = testdir.spawn_pytest("-p pytester %s -k test_outer" % p1)
+    child.expect(r"\(Pdb")
+    child.sendline("c")
+    rest = child.read().decode("utf8")
+    TestPDB.flush(child)
+    assert child.exitstatus == 0, rest

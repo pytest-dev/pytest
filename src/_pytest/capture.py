@@ -127,7 +127,7 @@ class CaptureManager(object):
     def read_global_capture(self):
         return self._global_capturing.readouterr()
 
-    # Fixture Control (its just forwarding, think about removing this later)
+    # Fixture Control (it's just forwarding, think about removing this later)
 
     def activate_fixture(self, item):
         """If the current item is using ``capsys`` or ``capfd``, activate them so they take precedence over

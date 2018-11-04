@@ -33,7 +33,7 @@ class Python(object):
         dumpfile = self.picklefile.dirpath("dump.py")
         dumpfile.write(
             textwrap.dedent(
-                """\
+                r"""
                 import pickle
                 f = open({!r}, 'wb')
                 s = pickle.dump({!r}, f, protocol=2)
@@ -49,7 +49,7 @@ class Python(object):
         loadfile = self.picklefile.dirpath("load.py")
         loadfile.write(
             textwrap.dedent(
-                """\
+                r"""
                 import pickle
                 f = open({!r}, 'rb')
                 obj = pickle.load(f)

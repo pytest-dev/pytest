@@ -41,10 +41,10 @@ def pytest_namespace():
         Plugins whose users depend on the current namespace functionality should prepare to migrate to a
         namespace they actually own.
 
-        To support the migration its suggested to trigger ``DeprecationWarnings`` for objects they put into the
+        To support the migration it's suggested to trigger ``DeprecationWarnings`` for objects they put into the
         pytest namespace.
 
-        An stopgap measure to avoid the warning is to monkeypatch the ``pytest`` module, but just as the
+        A stopgap measure to avoid the warning is to monkeypatch the ``pytest`` module, but just as the
         ``pytest_namespace`` hook this should be seen as a temporary measure to be removed in future versions after
         an appropriate transition period.
     """
