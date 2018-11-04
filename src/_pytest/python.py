@@ -42,6 +42,7 @@ from _pytest.mark.structures import get_unpacked_marks
 from _pytest.mark.structures import normalize_mark_list
 from _pytest.mark.structures import transfer_markers
 from _pytest.outcomes import fail
+from _pytest.pathlib import parts
 from _pytest.warning_types import PytestWarning
 from _pytest.warning_types import RemovedInPytest4Warning
 
@@ -517,15 +518,17 @@ class Package(Module):
         self._norecursepatterns = session._norecursepatterns
         self.fspath = fspath
 
-    def _recurse(self, path):
-        ihook = self.gethookproxy(path.dirpath())
-        if ihook.pytest_ignore_collect(path=path, config=self.config):
+    def _recurse(self, dirpath):
+        if dirpath.basename == "__pycache__":
             return False
+        ihook = self.gethookproxy(dirpath.dirpath())
+        if ihook.pytest_ignore_collect(path=dirpath, config=self.config):
+            return
         for pat in self._norecursepatterns:
-            if path.check(fnmatch=pat):
+            if dirpath.check(fnmatch=pat):
                 return False
-        ihook = self.gethookproxy(path)
-        ihook.pytest_collect_directory(path=path, parent=self)
+        ihook = self.gethookproxy(dirpath)
+        ihook.pytest_collect_directory(path=dirpath, parent=self)
         return True
 
     def gethookproxy(self, fspath):
@@ -561,19 +564,16 @@ class Package(Module):
             yield Module(init_module, self)
         pkg_prefixes = set()
         for path in this_path.visit(rec=self._recurse, bf=True, sort=True):
-            # we will visit our own __init__.py file, in which case we skip it
-            skip = False
-            if path.basename == "__init__.py" and path.dirpath() == this_path:
-                continue
+            # We will visit our own __init__.py file, in which case we skip it.
+            if path.isfile():
+                if path.basename == "__init__.py" and path.dirpath() == this_path:
+                    continue
 
-            for pkg_prefix in pkg_prefixes:
-                if (
-                    pkg_prefix in path.parts()
-                    and pkg_prefix.join("__init__.py") != path
-                ):
-                    skip = True
-
-            if skip:
+            parts_ = parts(path.strpath)
+            if any(
+                pkg_prefix in parts_ and pkg_prefix.join("__init__.py") != path
+                for pkg_prefix in pkg_prefixes
+            ):
                 continue
 
             if path.isdir() and path.join("__init__.py").check(file=1):

@@ -12,6 +12,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+from _pytest.warning_types import PytestDeprecationWarning
 from _pytest.warning_types import RemovedInPytest4Warning
 from _pytest.warning_types import UnformattedWarning
 
@@ -55,6 +56,10 @@ FIXTURE_FUNCTION_CALL = UnformattedWarning(
     'Fixture "{name}" called directly. Fixtures are not meant to be called directly, '
     "are created automatically when test functions request them as parameters. "
     "See https://docs.pytest.org/en/latest/fixture.html for more information.",
+)
+
+FIXTURE_NAMED_REQUEST = PytestDeprecationWarning(
+    "'request' is a reserved name for fixtures and will raise an error in future versions"
 )
 
 CFG_PYTEST_SECTION = UnformattedWarning(

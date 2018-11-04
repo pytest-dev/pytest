@@ -34,6 +34,7 @@ from _pytest.compat import isclass
 from _pytest.compat import NOTSET
 from _pytest.compat import safe_getattr
 from _pytest.deprecated import FIXTURE_FUNCTION_CALL
+from _pytest.deprecated import FIXTURE_NAMED_REQUEST
 from _pytest.outcomes import fail
 from _pytest.outcomes import TEST_OUTCOME
 
@@ -1036,6 +1037,9 @@ class FixtureFunctionMarker(object):
 
         function = wrap_function_to_warning_if_called_directly(function, self)
 
+        name = self.name or function.__name__
+        if name == "request":
+            warnings.warn(FIXTURE_NAMED_REQUEST)
         function._pytestfixturefunction = self
         return function
 

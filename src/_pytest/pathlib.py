@@ -5,7 +5,6 @@ import itertools
 import operator
 import os
 import shutil
-import stat
 import sys
 import uuid
 from functools import reduce
@@ -43,17 +42,10 @@ def ensure_reset_dir(path):
     path.mkdir()
 
 
-def _shutil_rmtree_remove_writable(func, fspath, _):
-    "Clear the readonly bit and reattempt the removal"
-    os.chmod(fspath, stat.S_IWRITE)
-    func(fspath)
-
-
 def rmtree(path, force=False):
     if force:
-        # ignore_errors leaves dead folders around
-        # python needs a rm -rf as a followup
-        # the trick with _shutil_rmtree_remove_writable is unreliable
+        # NOTE: ignore_errors might leave dead folders around.
+        #       Python needs a rm -rf as a followup.
         shutil.rmtree(str(path), ignore_errors=True)
     else:
         shutil.rmtree(str(path))
@@ -321,3 +313,8 @@ def fnmatch_ex(pattern, path):
     else:
         name = six.text_type(path)
     return fnmatch.fnmatch(name, pattern)
+
+
+def parts(s):
+    parts = s.split(sep)
+    return {sep.join(parts[: i + 1]) or sep for i in range(len(parts))}

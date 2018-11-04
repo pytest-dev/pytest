@@ -1,1 +1,0 @@
-Fix false ``RemovedInPytest4Warning: usage of Session... is deprecated, please use pytest`` warnings.

@@ -167,6 +167,7 @@ class TestPDB(object):
         assert "= 1 failed in" in rest
         assert "def test_1" not in rest
         assert "Exit: Quitting debugger" in rest
+        assert "PDB continue (IO-capturing resumed)" not in rest
         self.flush(child)
 
     @staticmethod
@@ -498,18 +499,39 @@ class TestPDB(object):
         """
         )
         child = testdir.spawn_pytest(str(p1))
+        child.expect(r"PDB set_trace \(IO-capturing turned off\)")
         child.expect("test_1")
         child.expect("x = 3")
         child.expect("Pdb")
         child.sendline("c")
+        child.expect(r"PDB continue \(IO-capturing resumed\)")
+        child.expect(r"PDB set_trace \(IO-capturing turned off\)")
         child.expect("x = 4")
         child.expect("Pdb")
         child.sendeof()
+        child.expect("_ test_1 _")
+        child.expect("def test_1")
+        child.expect("Captured stdout call")
         rest = child.read().decode("utf8")
-        assert "1 failed" in rest
-        assert "def test_1" in rest
         assert "hello17" in rest  # out is captured
         assert "hello18" in rest  # out is captured
+        assert "1 failed" in rest
+        self.flush(child)
+
+    def test_pdb_without_capture(self, testdir):
+        p1 = testdir.makepyfile(
+            """
+            import pytest
+            def test_1():
+                pytest.set_trace()
+        """
+        )
+        child = testdir.spawn_pytest("-s %s" % p1)
+        child.expect(r">>> PDB set_trace >>>")
+        child.expect("Pdb")
+        child.sendline("c")
+        child.expect(r">>> PDB continue >>>")
+        child.expect("1 passed")
         self.flush(child)
 
     def test_pdb_used_outside_test(self, testdir):
@@ -550,15 +572,29 @@ class TestPDB(object):
             ["E   NameError: *xxx*", "*! *Exit: Quitting debugger !*"]  # due to EOF
         )
 
-    def test_enter_pdb_hook_is_called(self, testdir):
+    def test_enter_leave_pdb_hooks_are_called(self, testdir):
         testdir.makeconftest(
             """
-            def pytest_enter_pdb(config):
-                assert config.testing_verification == 'configured'
-                print('enter_pdb_hook')
+            mypdb = None
 
             def pytest_configure(config):
                 config.testing_verification = 'configured'
+
+            def pytest_enter_pdb(config, pdb):
+                assert config.testing_verification == 'configured'
+                print('enter_pdb_hook')
+
+                global mypdb
+                mypdb = pdb
+                mypdb.set_attribute = "bar"
+
+            def pytest_leave_pdb(config, pdb):
+                assert config.testing_verification == 'configured'
+                print('leave_pdb_hook')
+
+                global mypdb
+                assert mypdb is pdb
+                assert mypdb.set_attribute == "bar"
         """
         )
         p1 = testdir.makepyfile(
@@ -567,11 +603,17 @@ class TestPDB(object):
 
             def test_foo():
                 pytest.set_trace()
+                assert 0
         """
         )
         child = testdir.spawn_pytest(str(p1))
         child.expect("enter_pdb_hook")
-        child.send("c\n")
+        child.sendline("c")
+        child.expect(r"PDB continue \(IO-capturing resumed\)")
+        child.expect("Captured stdout call")
+        rest = child.read().decode("utf8")
+        assert "leave_pdb_hook" in rest
+        assert "1 failed" in rest
         child.sendeof()
         self.flush(child)
 

@@ -102,6 +102,9 @@ class CaptureManager(object):
 
     # Global capturing control
 
+    def is_globally_capturing(self):
+        return self._method != "no"
+
     def start_global_capturing(self):
         assert self._global_capturing is None
         self._global_capturing = self._getcapture(self._method)

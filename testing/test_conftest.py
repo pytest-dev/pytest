@@ -49,14 +49,14 @@ class TestConftestValueAccessGlobal(object):
 
     def test_immediate_initialiation_and_incremental_are_the_same(self, basedir):
         conftest = PytestPluginManager()
-        len(conftest._path2confmods)
+        len(conftest._dirpath2confmods)
         conftest._getconftestmodules(basedir)
-        snap1 = len(conftest._path2confmods)
-        # assert len(conftest._path2confmods) == snap1 + 1
+        snap1 = len(conftest._dirpath2confmods)
+        # assert len(conftest._dirpath2confmods) == snap1 + 1
         conftest._getconftestmodules(basedir.join("adir"))
-        assert len(conftest._path2confmods) == snap1 + 1
+        assert len(conftest._dirpath2confmods) == snap1 + 1
         conftest._getconftestmodules(basedir.join("b"))
-        assert len(conftest._path2confmods) == snap1 + 2
+        assert len(conftest._dirpath2confmods) == snap1 + 2
 
     def test_value_access_not_existing(self, basedir):
         conftest = ConftestWithSetinitial(basedir)

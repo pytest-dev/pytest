@@ -27,6 +27,7 @@ from .findpaths import determine_setup
 from .findpaths import exists
 from _pytest._code import ExceptionInfo
 from _pytest._code import filter_traceback
+from _pytest.compat import lru_cache
 from _pytest.compat import safe_str
 from _pytest.outcomes import Skipped
 
@@ -133,6 +134,7 @@ default_plugins = (
     "freeze_support",
     "setuponly",
     "setupplan",
+    "stepwise",
     "warnings",
     "logging",
 )
@@ -212,7 +214,7 @@ class PytestPluginManager(PluginManager):
         self._conftest_plugins = set()
 
         # state related to local conftest plugins
-        self._path2confmods = {}
+        self._dirpath2confmods = {}
         self._conftestpath2mod = {}
         self._confcutdir = None
         self._noconftest = False
@@ -383,31 +385,35 @@ class PytestPluginManager(PluginManager):
                 if x.check(dir=1):
                     self._getconftestmodules(x)
 
+    @lru_cache(maxsize=128)
     def _getconftestmodules(self, path):
         if self._noconftest:
             return []
 
-        try:
-            return self._path2confmods[path]
-        except KeyError:
-            if path.isfile():
-                directory = path.dirpath()
-            else:
-                directory = path
-            # XXX these days we may rather want to use config.rootdir
-            # and allow users to opt into looking into the rootdir parent
-            # directories instead of requiring to specify confcutdir
-            clist = []
-            for parent in directory.realpath().parts():
-                if self._confcutdir and self._confcutdir.relto(parent):
-                    continue
-                conftestpath = parent.join("conftest.py")
-                if conftestpath.isfile():
-                    mod = self._importconftest(conftestpath)
-                    clist.append(mod)
+        if path.isfile():
+            directory = path.dirpath()
+        else:
+            directory = path
 
-            self._path2confmods[path] = clist
-            return clist
+        if six.PY2:  # py2 is not using lru_cache.
+            try:
+                return self._dirpath2confmods[directory]
+            except KeyError:
+                pass
+
+        # XXX these days we may rather want to use config.rootdir
+        # and allow users to opt into looking into the rootdir parent
+        # directories instead of requiring to specify confcutdir
+        clist = []
+        for parent in directory.realpath().parts():
+            if self._confcutdir and self._confcutdir.relto(parent):
+                continue
+            conftestpath = parent.join("conftest.py")
+            if conftestpath.isfile():
+                mod = self._importconftest(conftestpath)
+                clist.append(mod)
+        self._dirpath2confmods[directory] = clist
+        return clist
 
     def _rget_with_confmod(self, name, path):
         modules = self._getconftestmodules(path)
@@ -448,8 +454,8 @@ class PytestPluginManager(PluginManager):
             self._conftest_plugins.add(mod)
             self._conftestpath2mod[conftestpath] = mod
             dirpath = conftestpath.dirpath()
-            if dirpath in self._path2confmods:
-                for path, mods in self._path2confmods.items():
+            if dirpath in self._dirpath2confmods:
+                for path, mods in self._dirpath2confmods.items():
                     if path and path.relto(dirpath) or path == dirpath:
                         assert mod not in mods
                         mods.append(mod)

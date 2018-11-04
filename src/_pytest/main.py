@@ -18,6 +18,7 @@ from _pytest.config import directory_arg
 from _pytest.config import hookimpl
 from _pytest.config import UsageError
 from _pytest.outcomes import exit
+from _pytest.pathlib import parts
 from _pytest.runner import collect_one_node
 
 
@@ -469,8 +470,8 @@ class Session(nodes.FSCollector):
             return items
 
     def collect(self):
-        for parts in self._initialparts:
-            arg = "::".join(map(str, parts))
+        for initialpart in self._initialparts:
+            arg = "::".join(map(str, initialpart))
             self.trace("processing argument", arg)
             self.trace.root.indent += 1
             try:
@@ -488,7 +489,7 @@ class Session(nodes.FSCollector):
 
         names = self._parsearg(arg)
         argpath = names.pop(0).realpath()
-        paths = []
+        paths = set()
 
         root = self
         # Start with a Session root, and delve to argpath item (dir or file)
@@ -517,21 +518,37 @@ class Session(nodes.FSCollector):
         # Let the Package collector deal with subnodes, don't collect here.
         if argpath.check(dir=1):
             assert not names, "invalid arg %r" % (arg,)
-            for path in argpath.visit(
-                fil=lambda x: x.check(file=1), rec=self._recurse, bf=True, sort=True
-            ):
-                pkginit = path.dirpath().join("__init__.py")
-                if pkginit.exists() and not any(x in pkginit.parts() for x in paths):
-                    for x in root._collectfile(pkginit):
-                        yield x
-                        paths.append(x.fspath.dirpath())
 
-                if not any(x in path.parts() for x in paths):
+            if six.PY2:
+
+                def filter_(f):
+                    return f.check(file=1) and not f.strpath.endswith("*.pyc")
+
+            else:
+
+                def filter_(f):
+                    return f.check(file=1)
+
+            seen_dirs = set()
+            for path in argpath.visit(
+                fil=filter_, rec=self._recurse, bf=True, sort=True
+            ):
+                dirpath = path.dirpath()
+                if dirpath not in seen_dirs:
+                    seen_dirs.add(dirpath)
+                    pkginit = dirpath.join("__init__.py")
+                    if pkginit.exists() and parts(pkginit.strpath).isdisjoint(paths):
+                        for x in root._collectfile(pkginit):
+                            yield x
+                            paths.add(x.fspath.dirpath())
+
+                if parts(path.strpath).isdisjoint(paths):
                     for x in root._collectfile(path):
-                        if (type(x), x.fspath) in self._node_cache:
-                            yield self._node_cache[(type(x), x.fspath)]
+                        key = (type(x), x.fspath)
+                        if key in self._node_cache:
+                            yield self._node_cache[key]
                         else:
-                            self._node_cache[(type(x), x.fspath)] = x
+                            self._node_cache[key] = x
                             yield x
         else:
             assert argpath.check(file=1)
@@ -570,15 +587,17 @@ class Session(nodes.FSCollector):
 
         return ihook.pytest_collect_file(path=path, parent=self)
 
-    def _recurse(self, path):
-        ihook = self.gethookproxy(path.dirpath())
-        if ihook.pytest_ignore_collect(path=path, config=self.config):
-            return
+    def _recurse(self, dirpath):
+        if dirpath.basename == "__pycache__":
+            return False
+        ihook = self.gethookproxy(dirpath.dirpath())
+        if ihook.pytest_ignore_collect(path=dirpath, config=self.config):
+            return False
         for pat in self._norecursepatterns:
-            if path.check(fnmatch=pat):
+            if dirpath.check(fnmatch=pat):
                 return False
-        ihook = self.gethookproxy(path)
-        ihook.pytest_collect_directory(path=path, parent=self)
+        ihook = self.gethookproxy(dirpath)
+        ihook.pytest_collect_directory(path=dirpath, parent=self)
         return True
 
     def _tryconvertpyarg(self, x):

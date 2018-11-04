@@ -428,3 +428,16 @@ class FuncargnamesCompatAttr(object):
     def funcargnames(self):
         """ alias attribute for ``fixturenames`` for pre-2.3 compatibility"""
         return self.fixturenames
+
+
+if six.PY2:
+
+    def lru_cache(*_, **__):
+        def dec(fn):
+            return fn
+
+        return dec
+
+
+else:
+    from functools import lru_cache  # noqa: F401

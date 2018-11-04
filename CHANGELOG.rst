@@ -18,6 +18,72 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+pytest 3.10.0 (2018-11-03)
+==========================
+
+Features
+--------
+
+- `#2619 <https://github.com/pytest-dev/pytest/issues/2619>`_: Resume capturing output after ``continue`` with ``__import__("pdb").set_trace()``.
+
+  This also adds a new ``pytest_leave_pdb`` hook, and passes in ``pdb`` to the
+  existing ``pytest_enter_pdb`` hook.
+
+
+- `#4147 <https://github.com/pytest-dev/pytest/issues/4147>`_: Add ``-sw``, ``--stepwise`` as an alternative to ``--lf -x`` for stopping at the first failure, but starting the next test invocation from that test.  See `the documentation <https://docs.pytest.org/en/latest/cache.html#stepwise>`__ for more info.
+
+
+- `#4188 <https://github.com/pytest-dev/pytest/issues/4188>`_: Make ``--color`` emit colorful dots when not running in verbose mode. Earlier, it would only colorize the test-by-test output if ``--verbose`` was also passed.
+
+
+- `#4225 <https://github.com/pytest-dev/pytest/issues/4225>`_: Improve performance with collection reporting in non-quiet mode with terminals.
+
+  The "collecting …" message is only printed/updated every 0.5s.
+
+
+
+Bug Fixes
+---------
+
+- `#2701 <https://github.com/pytest-dev/pytest/issues/2701>`_: Fix false ``RemovedInPytest4Warning: usage of Session... is deprecated, please use pytest`` warnings.
+
+
+- `#4046 <https://github.com/pytest-dev/pytest/issues/4046>`_: Fix problems with running tests in package ``__init__.py`` files.
+
+
+- `#4260 <https://github.com/pytest-dev/pytest/issues/4260>`_: Swallow warnings during anonymous compilation of source.
+
+
+- `#4262 <https://github.com/pytest-dev/pytest/issues/4262>`_: Fix access denied error when deleting stale directories created by ``tmpdir`` / ``tmp_path``.
+
+
+- `#611 <https://github.com/pytest-dev/pytest/issues/611>`_: Naming a fixture ``request`` will now raise a warning: the ``request`` fixture is internal and
+  should not be overwritten as it will lead to internal errors.
+
+
+
+Improved Documentation
+----------------------
+
+- `#4255 <https://github.com/pytest-dev/pytest/issues/4255>`_: Added missing documentation about the fact that module names passed to filter warnings are not regex-escaped.
+
+
+
+Trivial/Internal Changes
+------------------------
+
+- `#4272 <https://github.com/pytest-dev/pytest/issues/4272>`_: Display cachedir also in non-verbose mode if non-default.
+
+
+- `#4277 <https://github.com/pytest-dev/pytest/issues/4277>`_: pdb: improve message about output capturing with ``set_trace``.
+
+  Do not display "IO-capturing turned off/on" when ``-s`` is used to avoid
+  confusion.
+
+
+- `#4279 <https://github.com/pytest-dev/pytest/issues/4279>`_: Improve message and stack level of warnings issued by ``monkeypatch.setenv`` when the value of the environment variable is not a ``str``.
+
+
 pytest 3.9.3 (2018-10-27)
 =========================
 
@@ -366,7 +432,7 @@ Features
   the standard warnings filters to manage those warnings. This introduces ``PytestWarning``,
   ``PytestDeprecationWarning`` and ``RemovedInPytest4Warning`` warning types as part of the public API.
 
-  Consult `the documentation <https://docs.pytest.org/en/latest/warnings.html#internal-pytest-warnings>`_ for more info.
+  Consult `the documentation <https://docs.pytest.org/en/latest/warnings.html#internal-pytest-warnings>`__ for more info.
 
 
 - `#2908 <https://github.com/pytest-dev/pytest/issues/2908>`_: ``DeprecationWarning`` and ``PendingDeprecationWarning`` are now shown by default if no other warning filter is
