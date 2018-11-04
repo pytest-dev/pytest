@@ -1,1 +1,0 @@
-Handle (ignore) exceptions raised during collection, e.g. with Django's LazySettings proxy class.

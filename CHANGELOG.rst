@@ -60,6 +60,8 @@ Bug Fixes
 - `#611 <https://github.com/pytest-dev/pytest/issues/611>`_: Naming a fixture ``request`` will now raise a warning: the ``request`` fixture is internal and
   should not be overwritten as it will lead to internal errors.
 
+- `#4266 <https://github.com/pytest-dev/pytest/issues/4266>`_: Handle (ignore) exceptions raised during collection, e.g. with Django's LazySettings proxy class.
+
 
 
 Improved Documentation
