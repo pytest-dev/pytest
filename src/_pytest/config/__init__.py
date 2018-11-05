@@ -478,7 +478,9 @@ class PytestPluginManager(PluginManager):
             name = arg[3:]
             # PR #4304 : remove stepwise if cacheprovider is blocked
             if name == "cacheprovider":
-                self.consider_pluginarg("no:stepwise")
+                self.set_blocked("stepwise")
+                self.set_blocked("pytest_stepwise")
+
             self.set_blocked(name)
             if not name.startswith("pytest_"):
                 self.set_blocked("pytest_" + name)
