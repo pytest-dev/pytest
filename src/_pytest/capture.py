@@ -504,7 +504,7 @@ class FDCaptureBinary(object):
     snap() produces `bytes`
     """
 
-    EMPTY_BUFFER = bytes()
+    EMPTY_BUFFER = b""
 
     def __init__(self, targetfd, tmpfile=None):
         self.targetfd = targetfd
@@ -630,7 +630,7 @@ class SysCapture(object):
 
 
 class SysCaptureBinary(SysCapture):
-    EMPTY_BUFFER = bytes()
+    EMPTY_BUFFER = b""
 
     def snap(self):
         res = self.tmpfile.buffer.getvalue()
