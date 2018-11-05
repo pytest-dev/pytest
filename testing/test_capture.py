@@ -27,24 +27,6 @@ needsosdup = pytest.mark.skipif(
 )
 
 
-def tobytes(obj):
-    if isinstance(obj, text_type):
-        obj = obj.encode("UTF-8")
-    assert isinstance(obj, bytes)
-    return obj
-
-
-def totext(obj):
-    if isinstance(obj, bytes):
-        obj = text_type(obj, "UTF-8")
-    assert isinstance(obj, text_type)
-    return obj
-
-
-def oswritebytes(fd, obj):
-    os.write(fd, tobytes(obj))
-
-
 def StdCaptureFD(out=True, err=True, in_=True):
     return capture.MultiCapture(out, err, in_, Capture=capture.FDCapture)
 
@@ -836,10 +818,11 @@ class TestCaptureIO(object):
 
 def test_bytes_io():
     f = py.io.BytesIO()
-    f.write(tobytes("hello"))
-    pytest.raises(TypeError, "f.write(totext('hello'))")
+    f.write(b"hello")
+    with pytest.raises(TypeError):
+        f.write(u"hello")
     s = f.getvalue()
-    assert s == tobytes("hello")
+    assert s == b"hello"
 
 
 def test_dontreadfrominput():
@@ -952,7 +935,7 @@ class TestFDCapture(object):
     def test_simple(self, tmpfile):
         fd = tmpfile.fileno()
         cap = capture.FDCapture(fd)
-        data = tobytes("hello")
+        data = b"hello"
         os.write(fd, data)
         s = cap.snap()
         cap.done()
@@ -992,10 +975,10 @@ class TestFDCapture(object):
         cap.start()
         x = os.read(0, 100).strip()
         cap.done()
-        assert x == tobytes("")
+        assert x == b""
 
     def test_writeorg(self, tmpfile):
-        data1, data2 = tobytes("foo"), tobytes("bar")
+        data1, data2 = b"foo", b"bar"
         cap = capture.FDCapture(tmpfile.fileno())
         cap.start()
         tmpfile.write(data1)
@@ -1003,7 +986,7 @@ class TestFDCapture(object):
         cap.writeorg(data2)
         scap = cap.snap()
         cap.done()
-        assert scap == totext(data1)
+        assert scap == data1.decode("ascii")
         with open(tmpfile.name, "rb") as stmp_file:
             stmp = stmp_file.read()
             assert stmp == data2
@@ -1012,17 +995,17 @@ class TestFDCapture(object):
         with saved_fd(1):
             cap = capture.FDCapture(1)
             cap.start()
-            data = tobytes("hello")
+            data = b"hello"
             os.write(1, data)
             sys.stdout.write("whatever")
             s = cap.snap()
             assert s == "hellowhatever"
             cap.suspend()
-            os.write(1, tobytes("world"))
+            os.write(1, b"world")
             sys.stdout.write("qlwkej")
             assert not cap.snap()
             cap.resume()
-            os.write(1, tobytes("but now"))
+            os.write(1, b"but now")
             sys.stdout.write(" yes\n")
             s = cap.snap()
             assert s == "but now yes\n"
@@ -1193,14 +1176,14 @@ class TestStdCaptureFD(TestStdCapture):
 
     def test_intermingling(self):
         with self.getcapture() as cap:
-            oswritebytes(1, "1")
+            os.write(1, b"1")
             sys.stdout.write(str(2))
             sys.stdout.flush()
-            oswritebytes(1, "3")
-            oswritebytes(2, "a")
+            os.write(1, b"3")
+            os.write(2, b"a")
             sys.stderr.write("b")
             sys.stderr.flush()
-            oswritebytes(2, "c")
+            os.write(2, b"c")
             out, err = cap.readouterr()
         assert out == "123"
         assert err == "abc"
