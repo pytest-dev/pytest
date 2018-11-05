@@ -623,6 +623,8 @@ def test_removed_in_pytest4_warning_as_error(testdir, change_default):
     else:
         assert change_default in ("ini", "cmdline")
         result.stdout.fnmatch_lines(["* 1 passed in *"])
+
+
 class TestAssertionWarnings:
     @staticmethod
     def assert_result_warns(result):
@@ -660,7 +662,6 @@ class TestAssertionWarnings:
         result = testdir.runpytest()
         self.assert_result_warns(result)
 
-    @pytest.mark.xfail(strict=True)
     def test_assert_is_none_no_warn(self, testdir):
         """Tests a more simple case of `test_none_function_warns` where `assert None` is explicitly called"""
         testdir.makepyfile(
@@ -673,10 +674,9 @@ class TestAssertionWarnings:
             """
         )
         result = testdir.runpytest()
-        self.assert_result_warns(result)
+        result.stdout.fnmatch_lines(["*1 passed in*"])
 
-    @pytest.mark.xfail(strict=True)
     def test_false_function_no_warn(self, testdir):
         self.create_file(testdir, False)
         result = testdir.runpytest()
-        self.assert_result_warns(result)
+        result.stdout.fnmatch_lines(["*1 failed in*"])

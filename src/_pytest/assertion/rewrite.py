@@ -901,7 +901,7 @@ from warnings import warn_explicit
 warn_explicit(
     PytestWarning('assertion the value None, Please use "assert is None"'),
     category=None,
-    filename='{filename}',
+    filename={filename!r},
     lineno={lineno},
 )
             """.format(
