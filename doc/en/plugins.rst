@@ -59,9 +59,9 @@ To see a complete list of all plugins with their latest testing
 status against different pytest and Python versions, please visit
 `plugincompat <http://plugincompat.herokuapp.com/>`_.
 
-You may also discover more plugins through a `pytest- pypi.python.org search`_.
+You may also discover more plugins through a `pytest- pypi.org search`_.
 
-.. _`pytest- pypi.python.org search`: https://pypi.org/search/?q=pytest-
+.. _`pytest- pypi.org search`: https://pypi.org/search/?q=pytest-
 
 
 .. _`available installable plugins`:
