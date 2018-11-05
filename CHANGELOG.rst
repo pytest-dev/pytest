@@ -30,7 +30,7 @@ Features
   existing ``pytest_enter_pdb`` hook.
 
 
-- `#4147 <https://github.com/pytest-dev/pytest/issues/4147>`_: Add ``-sw``, ``--stepwise`` as an alternative to ``--lf -x`` for stopping at the first failure, but starting the next test invocation from that test.  See `the documentation <https://docs.pytest.org/en/latest/cache.html#stepwise>`__ for more info.
+- `#4147 <https://github.com/pytest-dev/pytest/issues/4147>`_: Add ``--sw``, ``--stepwise`` as an alternative to ``--lf -x`` for stopping at the first failure, but starting the next test invocation from that test.  See `the documentation <https://docs.pytest.org/en/latest/cache.html#stepwise>`__ for more info.
 
 
 - `#4188 <https://github.com/pytest-dev/pytest/issues/4188>`_: Make ``--color`` emit colorful dots when not running in verbose mode. Earlier, it would only colorize the test-by-test output if ``--verbose`` was also passed.
