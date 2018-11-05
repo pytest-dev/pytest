@@ -11,6 +11,7 @@ import shlex
 import sys
 import types
 import warnings
+from distutils.version import LooseVersion
 
 import py
 import six
@@ -816,9 +817,7 @@ class Config(object):
 
         minver = self.inicfg.get("minversion", None)
         if minver:
-            ver = minver.split(".")
-            myver = pytest.__version__.split(".")
-            if myver < ver:
+            if LooseVersion(minver) > LooseVersion(pytest.__version__):
                 raise pytest.UsageError(
                     "%s:%d: requires pytest-%s, actual pytest-%s'"
                     % (
