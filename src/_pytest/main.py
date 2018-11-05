@@ -9,6 +9,7 @@ import os
 import pkgutil
 import sys
 
+import attr
 import py
 import six
 
@@ -369,6 +370,16 @@ class Failed(Exception):
     """ signals a stop as failed test run. """
 
 
+@attr.s
+class _bestrelpath_cache(dict):
+    path = attr.ib()
+
+    def __missing__(self, path):
+        r = self.path.bestrelpath(path)
+        self[path] = r
+        return r
+
+
 class Session(nodes.FSCollector):
     Interrupted = Interrupted
     Failed = Failed
@@ -387,8 +398,13 @@ class Session(nodes.FSCollector):
         self._initialpaths = frozenset()
         # Keep track of any collected nodes in here, so we don't duplicate fixtures
         self._node_cache = {}
+        self._bestrelpathcache = _bestrelpath_cache(config.rootdir)
 
         self.config.pluginmanager.register(self, name="session")
+
+    def _node_location_to_relpath(self, node_path):
+        # bestrelpath is a quite slow function
+        return self._bestrelpathcache[node_path]
 
     @hookimpl(tryfirst=True)
     def pytest_collectstart(self):
