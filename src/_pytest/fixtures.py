@@ -1303,7 +1303,7 @@ class FixtureManager(object):
         if holderobj in self._holderobjseen:
             return
 
-        from _pytest.nodes import _CompatProperty
+        from _pytest.python import _CompatProperty
 
         self._holderobjseen.add(holderobj)
         autousenames = []

@@ -5,7 +5,6 @@ from __future__ import print_function
 import os
 import warnings
 
-import attr
 import py
 import six
 
@@ -56,22 +55,6 @@ def ischildnode(baseid, nodeid):
     return node_parts[: len(base_parts)] == base_parts
 
 
-@attr.s
-class _CompatProperty(object):
-    name = attr.ib()
-
-    def __get__(self, obj, owner):
-        if obj is None:
-            return self
-
-        from _pytest.deprecated import COMPAT_PROPERTY
-
-        warnings.warn(
-            COMPAT_PROPERTY.format(name=self.name, owner=owner.__name__), stacklevel=2
-        )
-        return getattr(__import__("pytest"), self.name)
-
-
 class Node(object):
     """ base class for Collector and Item the test collection tree.
     Collector subclasses have children, Items are terminal nodes."""
@@ -116,24 +99,6 @@ class Node(object):
     def ihook(self):
         """ fspath sensitive hook proxy used to call pytest hooks"""
         return self.session.gethookproxy(self.fspath)
-
-    Module = _CompatProperty("Module")
-    Class = _CompatProperty("Class")
-    Instance = _CompatProperty("Instance")
-    Function = _CompatProperty("Function")
-    File = _CompatProperty("File")
-    Item = _CompatProperty("Item")
-
-    def _getcustomclass(self, name):
-        maybe_compatprop = getattr(type(self), name)
-        if isinstance(maybe_compatprop, _CompatProperty):
-            return getattr(__import__("pytest"), name)
-        else:
-            from _pytest.deprecated import CUSTOM_CLASS
-
-            cls = getattr(self, name)
-            self.warn(CUSTOM_CLASS.format(name=name, type_name=type(self).__name__))
-        return cls
 
     def __repr__(self):
         return "<%s %r>" % (self.__class__.__name__, getattr(self, "name", None))
