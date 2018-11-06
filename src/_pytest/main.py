@@ -387,6 +387,7 @@ class Session(nodes.FSCollector):
         self._initialpaths = frozenset()
         # Keep track of any collected nodes in here, so we don't duplicate fixtures
         self._node_cache = {}
+        self._collect_seen_pkgdirs = set()
 
         self.config.pluginmanager.register(self, name="session")
 
@@ -496,18 +497,19 @@ class Session(nodes.FSCollector):
         # and stack all Packages found on the way.
         # No point in finding packages when collecting doctests
         if not self.config.option.doctestmodules:
+            pm = self.config.pluginmanager
             for parent in argpath.parts():
-                pm = self.config.pluginmanager
                 if pm._confcutdir and pm._confcutdir.relto(parent):
                     continue
 
                 if parent.isdir():
                     pkginit = parent.join("__init__.py")
                     if pkginit.isfile():
+                        self._collect_seen_pkgdirs.add(parent)
                         if pkginit in self._node_cache:
                             root = self._node_cache[pkginit][0]
                         else:
-                            col = root._collectfile(pkginit)
+                            col = root._collectfile(pkginit, handle_dupes=False)
                             if col:
                                 if isinstance(col[0], Package):
                                     root = col[0]
@@ -529,13 +531,12 @@ class Session(nodes.FSCollector):
                 def filter_(f):
                     return f.check(file=1)
 
-            seen_dirs = set()
             for path in argpath.visit(
                 fil=filter_, rec=self._recurse, bf=True, sort=True
             ):
                 dirpath = path.dirpath()
-                if dirpath not in seen_dirs:
-                    seen_dirs.add(dirpath)
+                if dirpath not in self._collect_seen_pkgdirs:
+                    self._collect_seen_pkgdirs.add(dirpath)
                     pkginit = dirpath.join("__init__.py")
                     if pkginit.exists() and parts(pkginit.strpath).isdisjoint(paths):
                         for x in root._collectfile(pkginit):
@@ -570,20 +571,20 @@ class Session(nodes.FSCollector):
             for y in m:
                 yield y
 
-    def _collectfile(self, path):
+    def _collectfile(self, path, handle_dupes=True):
         ihook = self.gethookproxy(path)
         if not self.isinitpath(path):
             if ihook.pytest_ignore_collect(path=path, config=self.config):
                 return ()
 
-        # Skip duplicate paths.
-        keepduplicates = self.config.getoption("keepduplicates")
-        if not keepduplicates:
-            duplicate_paths = self.config.pluginmanager._duplicatepaths
-            if path in duplicate_paths:
-                return ()
-            else:
-                duplicate_paths.add(path)
+        if handle_dupes:
+            keepduplicates = self.config.getoption("keepduplicates")
+            if not keepduplicates:
+                duplicate_paths = self.config.pluginmanager._duplicatepaths
+                if path in duplicate_paths:
+                    return ()
+                else:
+                    duplicate_paths.add(path)
 
         return ihook.pytest_collect_file(path=path, parent=self)
 

@@ -951,19 +951,35 @@ def test_collect_init_tests(testdir):
     result = testdir.runpytest(p, "--collect-only")
     result.stdout.fnmatch_lines(
         [
-            "*<Module '__init__.py'>",
-            "*<Function 'test_init'>",
-            "*<Module 'test_foo.py'>",
-            "*<Function 'test_foo'>",
+            "collected 2 items",
+            "<Package *",
+            "  <Module '__init__.py'>",
+            "    <Function 'test_init'>",
+            "  <Module 'test_foo.py'>",
+            "    <Function 'test_foo'>",
         ]
     )
     result = testdir.runpytest("./tests", "--collect-only")
     result.stdout.fnmatch_lines(
         [
-            "*<Module '__init__.py'>",
-            "*<Function 'test_init'>",
-            "*<Module 'test_foo.py'>",
-            "*<Function 'test_foo'>",
+            "collected 2 items",
+            "<Package *",
+            "  <Module '__init__.py'>",
+            "    <Function 'test_init'>",
+            "  <Module 'test_foo.py'>",
+            "    <Function 'test_foo'>",
+        ]
+    )
+    # Ignores duplicates with "." and pkginit (#4310).
+    result = testdir.runpytest("./tests", ".", "--collect-only")
+    result.stdout.fnmatch_lines(
+        [
+            "collected 2 items",
+            "<Package *",
+            "  <Module '__init__.py'>",
+            "    <Function 'test_init'>",
+            "  <Module 'test_foo.py'>",
+            "    <Function 'test_foo'>",
         ]
     )
     result = testdir.runpytest("./tests/test_foo.py", "--collect-only")
