@@ -28,10 +28,12 @@ class StepwisePlugin:
         self.config = config
         self.active = config.getvalue("stepwise")
         self.session = None
-
-        if self.active:
-            self.lastfailed = config.cache.get("cache/stepwise", None)
-            self.skip = config.getvalue("stepwise_skip")
+        self.lastfailed = None
+        self.skip = None
+        if hasattr(self.config, "cache"):
+            if self.active:
+                self.lastfailed = config.cache.get("cache/stepwise", None)
+                self.skip = config.getvalue("stepwise_skip")
 
     def pytest_sessionstart(self, session):
         self.session = session
@@ -95,8 +97,9 @@ class StepwisePlugin:
                     self.lastfailed = None
 
     def pytest_sessionfinish(self, session):
-        if self.active:
-            self.config.cache.set("cache/stepwise", self.lastfailed)
-        else:
-            # Clear the list of failing tests if the plugin is not active.
-            self.config.cache.set("cache/stepwise", [])
+        if hasattr(self.config, "cache"):
+            if self.active:
+                self.config.cache.set("cache/stepwise", self.lastfailed)
+            else:
+                # Clear the list of failing tests if the plugin is not active.
+                self.config.cache.set("cache/stepwise", [])
