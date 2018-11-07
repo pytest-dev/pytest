@@ -1017,5 +1017,29 @@ def test_collect_handles_raising_on_dunder_class(testdir):
     """
     )
     result = testdir.runpytest()
-    assert result.ret == 0
     result.stdout.fnmatch_lines(["*1 passed in*"])
+    assert result.ret == 0
+
+
+def test_collect_with_chdir_during_import(testdir):
+    subdir = testdir.tmpdir.mkdir("sub")
+    testdir.tmpdir.join("conftest.py").write(
+        textwrap.dedent(
+            """
+            import os
+            os.chdir(%r)
+            """
+            % (str(subdir),)
+        )
+    )
+    testdir.makepyfile(
+        """
+        def test_1():
+            import os
+            assert os.getcwd() == %r
+        """
+        % (str(subdir),)
+    )
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines(["*1 passed in*"])
+    assert result.ret == 0
