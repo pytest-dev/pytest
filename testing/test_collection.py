@@ -98,6 +98,14 @@ class TestCollector(object):
         node = testdir.getpathnode(hello)
         assert isinstance(node, pytest.File)
         assert node.name == "hello.xxx"
+
+        # HACK: unset _duplicatepaths, which appears to be necessary for this
+        #       specific test setup?!
+        assert node.session.config.pluginmanager._duplicatepaths == {
+            (type(node), hello)
+        }
+        node.session.config.pluginmanager._duplicatepaths = set()
+
         nodes = node.session.perform_collect([node.nodeid], genitems=False)
         assert len(nodes) == 1
         assert isinstance(nodes[0], pytest.File)

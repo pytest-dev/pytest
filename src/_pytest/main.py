@@ -474,8 +474,18 @@ class Session(nodes.FSCollector):
             arg = "::".join(map(str, initialpart))
             self.trace("processing argument", arg)
             self.trace.root.indent += 1
+
+            keepduplicates = self.config.getoption("keepduplicates")
+            if not keepduplicates:
+                duplicate_paths = self.config.pluginmanager._duplicatepaths
+
             try:
                 for x in self._collect(arg):
+                    if not keepduplicates:
+                        dupe_key = (type(x), x.fspath)
+                        if dupe_key in duplicate_paths:
+                            continue
+                        duplicate_paths.add(dupe_key)
                     yield x
             except NoMatch:
                 # we are inside a make_report hook so
@@ -503,7 +513,7 @@ class Session(nodes.FSCollector):
                     pkginit = parent.join("__init__.py")
                     if pkginit.isfile():
                         if pkginit not in self._node_cache:
-                            col = self._collectfile(pkginit, handle_dupes=False)
+                            col = self._collectfile(pkginit)
                             if col:
                                 if isinstance(col[0], Package):
                                     self._pkg_roots[parent] = col[0]
@@ -572,21 +582,11 @@ class Session(nodes.FSCollector):
             for y in m:
                 yield y
 
-    def _collectfile(self, path, handle_dupes=True):
+    def _collectfile(self, path):
         ihook = self.gethookproxy(path)
         if not self.isinitpath(path):
             if ihook.pytest_ignore_collect(path=path, config=self.config):
                 return ()
-
-        if handle_dupes:
-            keepduplicates = self.config.getoption("keepduplicates")
-            if not keepduplicates:
-                duplicate_paths = self.config.pluginmanager._duplicatepaths
-                if path in duplicate_paths:
-                    return ()
-                else:
-                    duplicate_paths.add(path)
-
         return ihook.pytest_collect_file(path=path, parent=self)
 
     def _recurse(self, dirpath):
