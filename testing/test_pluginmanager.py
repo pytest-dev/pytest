@@ -380,11 +380,13 @@ class TestPytestPluginManagerBootstrapming(object):
         pytestpm.consider_preparse(["xyz", "-p", "no:abc"])
         l2 = pytestpm.get_plugins()
         assert 42 not in l2
-    
-    def test_plugin_prevent_register_stepwise_on_cacheprovider_unregister(self, pytestpm):
+
+    def test_plugin_prevent_register_stepwise_on_cacheprovider_unregister(
+        self, pytestpm
+    ):
         """ From PR #4304 : The only way to unregister a module is documented at
         the end of https://docs.pytest.org/en/latest/plugins.html.
-        
+
         When unregister cacheprovider, then unregister stepwise too
         """
         pytestpm.register(42, name="cacheprovider")
@@ -396,4 +398,3 @@ class TestPytestPluginManagerBootstrapming(object):
         l2 = pytestpm.get_plugins()
         assert 42 not in l2
         assert 43 not in l2
-        
