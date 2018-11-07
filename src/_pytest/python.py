@@ -545,11 +545,24 @@ class Package(Module):
             proxy = self.config.hook
         return proxy
 
-    def _collectfile(self, path):
+    def _collectfile(self, path, handle_dupes=True):
         ihook = self.gethookproxy(path)
         if not self.isinitpath(path):
             if ihook.pytest_ignore_collect(path=path, config=self.config):
                 return ()
+
+        if handle_dupes:
+            keepduplicates = self.config.getoption("keepduplicates")
+            if not keepduplicates:
+                duplicate_paths = self.config.pluginmanager._duplicatepaths
+                if path in duplicate_paths:
+                    return ()
+                else:
+                    duplicate_paths.add(path)
+
+        if self.fspath == path:  # __init__.py
+            return [self]
+
         return ihook.pytest_collect_file(path=path, parent=self)
 
     def isinitpath(self, path):
