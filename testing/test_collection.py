@@ -1072,6 +1072,19 @@ def test_collect_with_chdir_during_import(testdir):
         """
         % (str(subdir),)
     )
-    result = testdir.runpytest()
+    with testdir.tmpdir.as_cwd():
+        result = testdir.runpytest()
     result.stdout.fnmatch_lines(["*1 passed in*"])
+    assert result.ret == 0
+
+    # Handles relative testpaths.
+    testdir.makeini(
+        """
+        [pytest]
+        testpaths = .
+    """
+    )
+    with testdir.tmpdir.as_cwd():
+        result = testdir.runpytest("--collect-only")
+    result.stdout.fnmatch_lines(["collected 1 item"])
     assert result.ret == 0
