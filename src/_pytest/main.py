@@ -18,7 +18,6 @@ from _pytest.config import directory_arg
 from _pytest.config import hookimpl
 from _pytest.config import UsageError
 from _pytest.outcomes import exit
-from _pytest.pathlib import parts
 from _pytest.runner import collect_one_node
 
 
@@ -489,7 +488,6 @@ class Session(nodes.FSCollector):
 
         names = self._parsearg(arg)
         argpath = names.pop(0).realpath()
-        paths = set()
         pkg_roots = {}
 
         root = self
@@ -539,21 +537,19 @@ class Session(nodes.FSCollector):
                 if dirpath not in seen_dirs:
                     seen_dirs.add(dirpath)
                     pkginit = dirpath.join("__init__.py")
-                    if pkginit.exists() and parts(pkginit.strpath).isdisjoint(paths):
+                    if pkginit.exists():
                         for x in collect_root._collectfile(pkginit):
                             yield x
                             if isinstance(x, Package):
                                 pkg_roots[dirpath] = x
-                            paths.add(x.fspath.dirpath())
 
-                if True or parts(path.strpath).isdisjoint(paths):
-                    for x in collect_root._collectfile(path):
-                        key = (type(x), x.fspath)
-                        if key in self._node_cache:
-                            yield self._node_cache[key]
-                        else:
-                            self._node_cache[key] = x
-                            yield x
+                for x in collect_root._collectfile(path):
+                    key = (type(x), x.fspath)
+                    if key in self._node_cache:
+                        yield self._node_cache[key]
+                    else:
+                        self._node_cache[key] = x
+                        yield x
         else:
             assert argpath.check(file=1)
 
