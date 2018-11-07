@@ -496,3 +496,13 @@ class TestApprox(object):
         assert actual != approx(expected, rel=5e-8, abs=0)
         assert approx(expected, rel=5e-7, abs=0) == actual
         assert approx(expected, rel=5e-8, abs=0) != actual
+
+    def test_generic_iterable_sized_object(self):
+        class newIterable(object):
+            def __iter__(self):
+                return iter([1, 2, 3, 4])
+
+            def __len__(self):
+                return 4
+
+        assert [1, 2, 3, 4] == approx(newIterable())

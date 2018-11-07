@@ -1,0 +1,1 @@
+Loosen the definition of what ``approx`` considers a sequence

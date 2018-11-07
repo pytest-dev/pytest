@@ -11,8 +11,9 @@ from six.moves import zip
 
 import _pytest._code
 from _pytest.compat import isclass
+from _pytest.compat import Iterable
 from _pytest.compat import Mapping
-from _pytest.compat import Sequence
+from _pytest.compat import Sized
 from _pytest.compat import STRING_TYPES
 from _pytest.outcomes import fail
 
@@ -182,7 +183,7 @@ class ApproxMapping(ApproxBase):
                 raise _non_numeric_type_error(self.expected, at="key={!r}".format(key))
 
 
-class ApproxSequence(ApproxBase):
+class ApproxSequencelike(ApproxBase):
     """
     Perform approximate comparisons where the expected value is a sequence of
     numbers.
@@ -518,10 +519,14 @@ def approx(expected, rel=None, abs=None, nan_ok=False):
         cls = ApproxScalar
     elif isinstance(expected, Mapping):
         cls = ApproxMapping
-    elif isinstance(expected, Sequence) and not isinstance(expected, STRING_TYPES):
-        cls = ApproxSequence
     elif _is_numpy_array(expected):
         cls = ApproxNumpy
+    elif (
+        isinstance(expected, Iterable)
+        and isinstance(expected, Sized)
+        and not isinstance(expected, STRING_TYPES)
+    ):
+        cls = ApproxSequencelike
     else:
         raise _non_numeric_type_error(expected, at=None)
 
