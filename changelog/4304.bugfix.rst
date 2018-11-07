@@ -1,1 +1,1 @@
-The stepwise plugin must be blocked on cacheprovider plugin block request 
+Block the ``stepwise`` plugin if ``cacheprovider`` is also blocked, as one depends on the other.
