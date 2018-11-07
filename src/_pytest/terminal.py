@@ -497,7 +497,10 @@ class TerminalReporter(object):
         if not final:
             # Only write "collecting" report every 0.5s.
             t = time.time()
-            if self._collect_report_last_write > t - 0.5:
+            if (
+                self._collect_report_last_write is not None
+                and self._collect_report_last_write > t - 0.5
+            ):
                 return
             self._collect_report_last_write = t
 
