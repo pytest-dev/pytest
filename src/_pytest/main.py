@@ -387,7 +387,6 @@ class Session(nodes.FSCollector):
         self._initialpaths = frozenset()
         # Keep track of any collected nodes in here, so we don't duplicate fixtures
         self._node_cache = {}
-        self._collect_seen_pkgdirs = set()
 
         self.config.pluginmanager.register(self, name="session")
 
@@ -505,7 +504,6 @@ class Session(nodes.FSCollector):
                 if parent.isdir():
                     pkginit = parent.join("__init__.py")
                     if pkginit.isfile():
-                        self._collect_seen_pkgdirs.add(parent)
                         if pkginit in self._node_cache:
                             root = self._node_cache[pkginit][0]
                         else:
@@ -531,12 +529,13 @@ class Session(nodes.FSCollector):
                 def filter_(f):
                     return f.check(file=1)
 
+            seen_dirs = set()
             for path in argpath.visit(
                 fil=filter_, rec=self._recurse, bf=True, sort=True
             ):
                 dirpath = path.dirpath()
-                if dirpath not in self._collect_seen_pkgdirs:
-                    self._collect_seen_pkgdirs.add(dirpath)
+                if dirpath not in seen_dirs:
+                    seen_dirs.add(dirpath)
                     pkginit = dirpath.join("__init__.py")
                     if pkginit.exists() and parts(pkginit.strpath).isdisjoint(paths):
                         for x in root._collectfile(pkginit):

@@ -978,6 +978,19 @@ def test_collect_init_tests(testdir):
             "<Package *",
             "  <Module '__init__.py'>",
             "    <Function 'test_init'>",
+            "<Module 'tests/test_foo.py'>",
+            "  <Function 'test_foo'>",
+        ]
+    )
+    # XXX: Same as before, but different order.
+    result = testdir.runpytest(".", "tests", "--collect-only")
+    result.stdout.fnmatch_lines(
+        [
+            "collected 2 items",
+            "<Package *",
+            "  <Module '__init__.py'>",
+            "    <Function 'test_init'>",
+            "<Package *",
             "  <Module 'test_foo.py'>",
             "    <Function 'test_foo'>",
         ]
