@@ -975,31 +975,34 @@ def test_collect_init_tests(testdir):
     result.stdout.fnmatch_lines(
         [
             "collected 2 items",
-            "<Package *",
+            "<Package */tests'>",
             "  <Module '__init__.py'>",
             "    <Function 'test_init'>",
-            "<Module 'tests/test_foo.py'>",
-            "  <Function 'test_foo'>",
+            "  <Module 'test_foo.py'>",
+            "    <Function 'test_foo'>",
         ]
     )
-    # XXX: Same as before, but different order.
+    # Same as before, but different order.
     result = testdir.runpytest(".", "tests", "--collect-only")
     result.stdout.fnmatch_lines(
         [
             "collected 2 items",
-            "<Package *",
+            "<Package */tests'>",
             "  <Module '__init__.py'>",
             "    <Function 'test_init'>",
-            "<Package *",
             "  <Module 'test_foo.py'>",
             "    <Function 'test_foo'>",
         ]
     )
     result = testdir.runpytest("./tests/test_foo.py", "--collect-only")
-    result.stdout.fnmatch_lines(["*<Module 'test_foo.py'>", "*<Function 'test_foo'>"])
+    result.stdout.fnmatch_lines(
+        ["<Package */tests'>", "  <Module 'test_foo.py'>", "    <Function 'test_foo'>"]
+    )
     assert "test_init" not in result.stdout.str()
     result = testdir.runpytest("./tests/__init__.py", "--collect-only")
-    result.stdout.fnmatch_lines(["*<Module '__init__.py'>", "*<Function 'test_init'>"])
+    result.stdout.fnmatch_lines(
+        ["<Package */tests'>", "  <Module '__init__.py'>", "    <Function 'test_init'>"]
+    )
     assert "test_foo" not in result.stdout.str()
 
 
