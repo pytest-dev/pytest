@@ -490,7 +490,6 @@ class Session(nodes.FSCollector):
         names = self._parsearg(arg)
         argpath = names.pop(0).realpath()
 
-        root = self
         # Start with a Session root, and delve to argpath item (dir or file)
         # and stack all Packages found on the way.
         # No point in finding packages when collecting doctests
@@ -503,10 +502,8 @@ class Session(nodes.FSCollector):
                 if parent.isdir():
                     pkginit = parent.join("__init__.py")
                     if pkginit.isfile():
-                        if pkginit in self._node_cache:
-                            root = self._node_cache[pkginit][0]
-                        else:
-                            col = root._collectfile(pkginit, handle_dupes=False)
+                        if pkginit not in self._node_cache:
+                            col = self._collectfile(pkginit, handle_dupes=False)
                             if col:
                                 if isinstance(col[0], Package):
                                     self._pkg_roots[parent] = col[0]
@@ -533,27 +530,21 @@ class Session(nodes.FSCollector):
                 fil=filter_, rec=self._recurse, bf=True, sort=True
             ):
                 dirpath = path.dirpath()
-                collect_root = self._pkg_roots.get(dirpath, root)
                 if dirpath not in seen_dirs:
                     # Collect packages first.
                     seen_dirs.add(dirpath)
                     pkginit = dirpath.join("__init__.py")
                     if pkginit.exists():
-                        got_pkg = False
+                        collect_root = self._pkg_roots.get(dirpath, self)
                         for x in collect_root._collectfile(pkginit):
                             yield x
                             if isinstance(x, Package):
                                 self._pkg_roots[dirpath] = x
-                                got_pkg = True
-                        if got_pkg:
-                            continue
-                if path.basename == "__init__.py":
-                    continue
-
                 if dirpath in self._pkg_roots:
+                    # Do not collect packages here.
                     continue
 
-                for x in collect_root._collectfile(path):
+                for x in self._collectfile(path):
                     key = (type(x), x.fspath)
                     if key in self._node_cache:
                         yield self._node_cache[key]
@@ -566,7 +557,7 @@ class Session(nodes.FSCollector):
             if argpath in self._node_cache:
                 col = self._node_cache[argpath]
             else:
-                collect_root = self._pkg_roots.get(argpath.dirname, root)
+                collect_root = self._pkg_roots.get(argpath.dirname, self)
                 col = collect_root._collectfile(argpath)
                 if col:
                     self._node_cache[argpath] = col
