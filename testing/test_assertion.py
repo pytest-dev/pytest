@@ -539,11 +539,8 @@ class TestAssert_reprcompare(object):
 
     def test_mojibake(self):
         # issue 429
-        left = "e"
-        right = "\xc3\xa9"
-        if not isinstance(left, bytes):
-            left = bytes(left, "utf-8")
-            right = bytes(right, "utf-8")
+        left = b"e"
+        right = b"\xc3\xa9"
         expl = callequal(left, right)
         for line in expl:
             assert isinstance(line, six.text_type)

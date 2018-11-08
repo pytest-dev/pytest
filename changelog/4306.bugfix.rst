@@ -1,0 +1,1 @@
+Parse ``minversion`` as an actual version and not as dot-separated strings.

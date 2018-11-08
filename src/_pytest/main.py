@@ -19,7 +19,6 @@ from _pytest.config import directory_arg
 from _pytest.config import hookimpl
 from _pytest.config import UsageError
 from _pytest.outcomes import exit
-from _pytest.pathlib import parts
 from _pytest.runner import collect_one_node
 
 
@@ -399,6 +398,7 @@ class Session(nodes.FSCollector):
         # Keep track of any collected nodes in here, so we don't duplicate fixtures
         self._node_cache = {}
         self._bestrelpathcache = _bestrelpath_cache(config.rootdir)
+        self._pkg_roots = {}
 
         self.config.pluginmanager.register(self, name="session")
 
@@ -505,30 +505,26 @@ class Session(nodes.FSCollector):
 
         names = self._parsearg(arg)
         argpath = names.pop(0).realpath()
-        paths = set()
 
-        root = self
         # Start with a Session root, and delve to argpath item (dir or file)
         # and stack all Packages found on the way.
         # No point in finding packages when collecting doctests
         if not self.config.option.doctestmodules:
+            pm = self.config.pluginmanager
             for parent in argpath.parts():
-                pm = self.config.pluginmanager
                 if pm._confcutdir and pm._confcutdir.relto(parent):
                     continue
 
                 if parent.isdir():
                     pkginit = parent.join("__init__.py")
                     if pkginit.isfile():
-                        if pkginit in self._node_cache:
-                            root = self._node_cache[pkginit][0]
-                        else:
-                            col = root._collectfile(pkginit)
+                        if pkginit not in self._node_cache:
+                            col = self._collectfile(pkginit, handle_dupes=False)
                             if col:
                                 if isinstance(col[0], Package):
-                                    root = col[0]
+                                    self._pkg_roots[parent] = col[0]
                                 # always store a list in the cache, matchnodes expects it
-                                self._node_cache[root.fspath] = [root]
+                                self._node_cache[col[0].fspath] = [col[0]]
 
         # If it's a directory argument, recurse and look for any Subpackages.
         # Let the Package collector deal with subnodes, don't collect here.
@@ -551,28 +547,34 @@ class Session(nodes.FSCollector):
             ):
                 dirpath = path.dirpath()
                 if dirpath not in seen_dirs:
+                    # Collect packages first.
                     seen_dirs.add(dirpath)
                     pkginit = dirpath.join("__init__.py")
-                    if pkginit.exists() and parts(pkginit.strpath).isdisjoint(paths):
-                        for x in root._collectfile(pkginit):
+                    if pkginit.exists():
+                        collect_root = self._pkg_roots.get(dirpath, self)
+                        for x in collect_root._collectfile(pkginit):
                             yield x
-                            paths.add(x.fspath.dirpath())
+                            if isinstance(x, Package):
+                                self._pkg_roots[dirpath] = x
+                if dirpath in self._pkg_roots:
+                    # Do not collect packages here.
+                    continue
 
-                if parts(path.strpath).isdisjoint(paths):
-                    for x in root._collectfile(path):
-                        key = (type(x), x.fspath)
-                        if key in self._node_cache:
-                            yield self._node_cache[key]
-                        else:
-                            self._node_cache[key] = x
-                            yield x
+                for x in self._collectfile(path):
+                    key = (type(x), x.fspath)
+                    if key in self._node_cache:
+                        yield self._node_cache[key]
+                    else:
+                        self._node_cache[key] = x
+                        yield x
         else:
             assert argpath.check(file=1)
 
             if argpath in self._node_cache:
                 col = self._node_cache[argpath]
             else:
-                col = root._collectfile(argpath)
+                collect_root = self._pkg_roots.get(argpath.dirname, self)
+                col = collect_root._collectfile(argpath)
                 if col:
                     self._node_cache[argpath] = col
             m = self.matchnodes(col, names)
@@ -586,20 +588,20 @@ class Session(nodes.FSCollector):
             for y in m:
                 yield y
 
-    def _collectfile(self, path):
+    def _collectfile(self, path, handle_dupes=True):
         ihook = self.gethookproxy(path)
         if not self.isinitpath(path):
             if ihook.pytest_ignore_collect(path=path, config=self.config):
                 return ()
 
-        # Skip duplicate paths.
-        keepduplicates = self.config.getoption("keepduplicates")
-        if not keepduplicates:
-            duplicate_paths = self.config.pluginmanager._duplicatepaths
-            if path in duplicate_paths:
-                return ()
-            else:
-                duplicate_paths.add(path)
+        if handle_dupes:
+            keepduplicates = self.config.getoption("keepduplicates")
+            if not keepduplicates:
+                duplicate_paths = self.config.pluginmanager._duplicatepaths
+                if path in duplicate_paths:
+                    return ()
+                else:
+                    duplicate_paths.add(path)
 
         return ihook.pytest_collect_file(path=path, parent=self)
 
