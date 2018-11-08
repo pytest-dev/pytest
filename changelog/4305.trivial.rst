@@ -1,0 +1,1 @@
+Replace byte/unicode helpers in test_capture with python level syntax.
