@@ -1,0 +1,1 @@
+Fix TypeError in report_collect with _collect_report_last_write.
