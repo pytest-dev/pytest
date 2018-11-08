@@ -186,8 +186,8 @@ def path_matches_patterns(path, patterns):
 
 def pytest_pycollect_makemodule(path, parent):
     if path.basename == "__init__.py":
-        return Package(path, parent)
-    return Module(path, parent)
+        return Package.legacy_object(path, parent)
+    return Module.legacy_object(path, parent)
 
 
 @hookimpl(hookwrapper=True)
@@ -200,7 +200,7 @@ def pytest_pycollect_makeitem(collector, name, obj):
     if safe_isclass(obj):
         if collector.istestclass(obj, name):
             Class = collector._getcustomclass("Class")
-            outcome.force_result(Class(name, parent=collector))
+            outcome.force_result(Class.legacy_object(name, parent=collector))
     elif collector.istestfunction(obj, name):
         # mock seems to store unbound methods (issue473), normalize it
         obj = getattr(obj, "__func__", obj)
@@ -390,7 +390,9 @@ class PyCollector(PyobjMixin, nodes.Collector):
         transfer_markers(funcobj, cls, module)
         fm = self.session._fixturemanager
 
-        definition = FunctionDefinition(name=name, parent=self, callobj=funcobj)
+        definition = FunctionDefinition.legacy_object(
+            name=name, parent=self, callobj=funcobj
+        )
         fixtureinfo = fm.getfixtureinfo(definition, funcobj, cls)
 
         metafunc = Metafunc(
@@ -410,7 +412,7 @@ class PyCollector(PyobjMixin, nodes.Collector):
 
         Function = self._getcustomclass("Function")
         if not metafunc._calls:
-            yield Function(name, parent=self, fixtureinfo=fixtureinfo)
+            yield Function.legacy_object(name, parent=self, fixtureinfo=fixtureinfo)
         else:
             # add funcargs() as fixturedefs to fixtureinfo.arg2fixturedefs
             fixtures.add_funcarg_pseudo_fixture_def(self, metafunc, fm)
@@ -422,7 +424,7 @@ class PyCollector(PyobjMixin, nodes.Collector):
 
             for callspec in metafunc._calls:
                 subname = "%s[%s]" % (name, callspec.id)
-                yield Function(
+                yield Function.legacy_object(
                     name=subname,
                     parent=self,
                     callspec=callspec,
@@ -635,7 +637,7 @@ class Class(PyCollector):
                 )
             )
             return []
-        return [self._getcustomclass("Instance")(name="()", parent=self)]
+        return [self._getcustomclass("Instance").legacy_object(name="()", parent=self)]
 
     def setup(self):
         setup_class = _get_xunit_func(self.obj, "setup_class")

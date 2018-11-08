@@ -121,3 +121,10 @@ PYTEST_ENSURETEMP = RemovedInPytest4Warning(
     "pytest/tmpdir_factory.ensuretemp is deprecated, \n"
     "please use the tmp_path fixture or tmp_path_factory.mktemp"
 )
+
+
+NODE_CONSTRUCTION = UnformattedWarning(
+    RemovedInPytest4Warning,
+    "creating a node via {klass}(...) is deprecated, \n"
+    "please use {klass}.from_parent(...) or {klass}.legacy_object(...)",
+)

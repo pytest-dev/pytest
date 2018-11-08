@@ -86,9 +86,9 @@ def pytest_collect_file(path, parent):
     config = parent.config
     if path.ext == ".py":
         if config.option.doctestmodules and not _is_setup_py(config, path, parent):
-            return DoctestModule(path, parent)
+            return DoctestModule.legacy_object(path, parent)
     elif _is_doctest(config, path, parent):
-        return DoctestTextfile(path, parent)
+        return DoctestTextfile.legacy_object(path, parent)
 
 
 def _is_setup_py(config, path, parent):
@@ -332,7 +332,7 @@ class DoctestTextfile(pytest.Module):
         parser = doctest.DocTestParser()
         test = parser.get_doctest(text, globs, name, filename, 0)
         if test.examples:
-            yield DoctestItem(test.name, self, runner, test)
+            yield DoctestItem.legacy_object(test.name, self, runner, test)
 
 
 def _check_all_skipped(test):

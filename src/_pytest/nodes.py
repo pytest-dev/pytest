@@ -11,6 +11,7 @@ import six
 
 import _pytest._code
 from _pytest.compat import getfslineno
+from _pytest.deprecated import NODE_CONSTRUCTION
 from _pytest.mark.structures import MarkInfo
 from _pytest.mark.structures import NodeKeywords
 from _pytest.outcomes import fail
@@ -72,7 +73,17 @@ class _CompatProperty(object):
         return getattr(__import__("pytest"), self.name)
 
 
-class Node(object):
+class NodeMeta(type):
+    def __call__(self, *k, **kw):
+        warnings.warn(NODE_CONSTRUCTION.format(klass=self.__name__), stacklevel=2)
+        return super(NodeMeta, self).__call__(*k, **kw)
+
+    def legacy_object(self, *k, **kw):
+        # todo: alternative implementation
+        return super(NodeMeta, self).__call__(*k, **kw)
+
+
+class Node(six.with_metaclass(NodeMeta)):
     """ base class for Collector and Item the test collection tree.
     Collector subclasses have children, Items are terminal nodes."""
 
