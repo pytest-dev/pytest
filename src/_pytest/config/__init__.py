@@ -604,7 +604,6 @@ class Config(object):
         self._warn = self.pluginmanager._warn
         self.pluginmanager.register(self, "pytestconfig")
         self._configured = False
-        self.cwd = os.getcwd()
 
         def do_setns(dic):
             import pytest
@@ -847,10 +846,13 @@ class Config(object):
                 args, self.option, namespace=self.option
             )
             if not args:
-                if self.cwd == self.rootdir:
-                    args = self.getini("testpaths")
+                if self.invocation_dir == self.rootdir:
+                    args = [
+                        str(self.invocation_dir.join(x, abs=True))
+                        for x in self.getini("testpaths")
+                    ]
                 if not args:
-                    args = [self.cwd]
+                    args = [str(self.invocation_dir)]
             self.args = args
         except PrintHelp:
             pass
