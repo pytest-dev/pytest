@@ -9,6 +9,8 @@ from contextlib import contextmanager
 import pytest
 from _pytest import compat
 
+SHOW_PYTEST_WARNINGS_ARG = "-Walways::pytest.RemovedInPytest4Warning"
+
 
 def _setoption(wmod, arg):
     """
@@ -76,6 +78,8 @@ def catch_warnings_for_item(config, ihook, when, item):
             # if user is not explicitly configuring warning filters, show deprecation warnings by default (#2908)
             warnings.filterwarnings("always", category=DeprecationWarning)
             warnings.filterwarnings("always", category=PendingDeprecationWarning)
+
+        warnings.filterwarnings("error", category=pytest.RemovedInPytest4Warning)
 
         # filters should have this precedence: mark, cmdline options, ini
         # filters should be applied in the inverse order of precedence
