@@ -14,3 +14,5 @@ it was not really possible to detect when the functionality was being used expli
 The extra ``::()`` might have been removed in some places internally already,
 which then led to confusion in places where it was expected, e.g. with
 ``--deselect`` (`#4127 <https://github.com/pytest-dev/pytest/issues/4127>`_).
+
+Test class instances are also not listed with ``--collect-only`` anymore.

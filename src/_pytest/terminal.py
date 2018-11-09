@@ -617,8 +617,8 @@ class TerminalReporter(object):
                 stack.pop()
             for col in needed_collectors[len(stack) :]:
                 stack.append(col)
-                # if col.name == "()":
-                #    continue
+                if col.name == "()":  # Skip Instances.
+                    continue
                 indent = (len(stack) - 1) * "  "
                 self._tw.line("%s%s" % (indent, col))
 
