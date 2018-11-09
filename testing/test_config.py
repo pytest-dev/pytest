@@ -874,7 +874,7 @@ class TestRootdir(object):
         assert inifile == inifile
 
     @pytest.mark.parametrize("name", "setup.cfg tox.ini".split())
-    def test_pytestini_overides_empty_other(self, tmpdir, name):
+    def test_pytestini_overrides_empty_other(self, tmpdir, name):
         inifile = tmpdir.ensure("pytest.ini")
         a = tmpdir.mkdir("a")
         a.ensure(name)
