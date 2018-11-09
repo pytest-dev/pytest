@@ -1160,11 +1160,11 @@ class Testdir(object):
     def runpytest_subprocess(self, *args, **kwargs):
         """Run pytest as a subprocess with given arguments.
 
-        Any plugins added to the :py:attr:`plugins` list will added using the
-        ``-p`` command line option.  Additionally ``--basetemp`` is used put
+        Any plugins added to the :py:attr:`plugins` list will be added using the
+        ``-p`` command line option.  Additionally ``--basetemp`` is used to put
         any temporary files and directories in a numbered directory prefixed
-        with "runpytest-" so they do not conflict with the normal numbered
-        pytest location for temporary files and directories.
+        with "runpytest-" to not conflict with the normal numbered pytest
+        location for temporary files and directories.
 
         :param args: the sequence of arguments to pass to the pytest subprocess
         :param timeout: the period in seconds after which to timeout and raise
