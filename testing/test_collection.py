@@ -510,13 +510,8 @@ class TestSession(object):
                     pass
         """
         )
-        normid = p.basename + "::TestClass::()::test_method"
-        for id in [
-            p.basename,
-            p.basename + "::TestClass",
-            p.basename + "::TestClass::()",
-            normid,
-        ]:
+        normid = p.basename + "::TestClass::test_method"
+        for id in [p.basename, p.basename + "::TestClass", normid]:
             items, hookrec = testdir.inline_genitems(id)
             assert len(items) == 1
             assert items[0].name == "test_method"
@@ -625,7 +620,7 @@ class TestSession(object):
         items, hookrec = testdir.inline_genitems(arg)
         assert len(items) == 1
         item, = items
-        assert item.nodeid.endswith("TestClass::()::test_method")
+        assert item.nodeid.endswith("TestClass::test_method")
         # ensure we are reporting the collection of the single test item (#2464)
         assert [x.name for x in self.get_reported_items(hookrec)] == ["test_method"]
 
