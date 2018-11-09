@@ -1,5 +1,6 @@
 sudo: false
 language: python
+dist: xenial
 stages:
 - baseline
 - name: test
@@ -33,8 +34,6 @@ jobs:
       python: '3.6'
     - env: TOXENV=py37
       python: '3.7'
-      sudo: required
-      dist: xenial
     - &test-macos
       language: generic
       os: osx
