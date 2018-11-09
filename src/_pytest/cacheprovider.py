@@ -9,6 +9,7 @@ from __future__ import division
 from __future__ import print_function
 
 import json
+import os
 from collections import OrderedDict
 
 import attr
@@ -275,7 +276,10 @@ def pytest_addoption(parser):
         dest="cacheclear",
         help="remove all cache contents at start of test run.",
     )
-    parser.addini("cache_dir", default=".pytest_cache", help="cache directory path.")
+    cache_dir_default = ".pytest_cache"
+    if "TOX_ENV_DIR" in os.environ:
+        cache_dir_default = os.path.join(os.environ["TOX_ENV_DIR"], cache_dir_default)
+    parser.addini("cache_dir", default=cache_dir_default, help="cache directory path.")
     group.addoption(
         "--lfnf",
         "--last-failed-no-failures",
