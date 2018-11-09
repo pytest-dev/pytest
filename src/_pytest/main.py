@@ -495,9 +495,9 @@ class Session(nodes.FSCollector):
         # No point in finding packages when collecting doctests
         if not self.config.option.doctestmodules:
             pm = self.config.pluginmanager
-            for parent in argpath.parts():
+            for parent in reversed(argpath.parts()):
                 if pm._confcutdir and pm._confcutdir.relto(parent):
-                    continue
+                    break
 
                 if parent.isdir():
                     pkginit = parent.join("__init__.py")
