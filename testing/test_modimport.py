@@ -19,13 +19,19 @@ def test_fileimport(modfile):
     # without needing the pytest namespace being set
     # this is critical for the initialization of xdist
 
-    res = subprocess.call(
+    p = subprocess.Popen(
         [
             sys.executable,
             "-c",
             "import sys, py; py.path.local(sys.argv[1]).pyimport()",
             modfile.strpath,
-        ]
+        ],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
     )
-    if res:
-        pytest.fail("command result %s" % res)
+    (out, err) = p.communicate()
+    if p.returncode != 0:
+        pytest.fail(
+            "importing %s failed (exitcode %d): out=%r, err=%r"
+            % (modfile, p.returncode, out, err)
+        )
