@@ -38,11 +38,8 @@ class KeywordMapping(object):
         mapped_names = set()
 
         # Add the names of the current item and any parent items
-        import pytest
-
         for item in item.listchain():
-            if not isinstance(item, pytest.Instance):
-                mapped_names.add(item.name)
+            mapped_names.add(item.name)
 
         # Add the names added as extra keywords to current or parent items
         for name in item.listextrakeywords():

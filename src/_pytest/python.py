@@ -232,7 +232,6 @@ def pytest_make_parametrize_id(config, val, argname=None):
 class PyobjContext(object):
     module = pyobj_property("Module")
     cls = pyobj_property("Class")
-    instance = pyobj_property("Instance")
 
 
 class PyobjMixin(PyobjContext):
@@ -268,8 +267,6 @@ class PyobjMixin(PyobjContext):
         chain.reverse()
         parts = []
         for node in chain:
-            if isinstance(node, Instance):
-                continue
             name = node.name
             if isinstance(node, Module):
                 name = os.path.splitext(name)[0]
@@ -629,10 +626,13 @@ def _get_xunit_func(obj, name):
 class Class(PyCollector):
     """ Collector for test methods. """
 
+    def _getobj(self):
+        return getattr(self.parent.obj, self.name)()
+
     def collect(self):
         if not safe_getattr(self.obj, "__test__", True):
             return []
-        if hasinit(self.obj):
+        if hasinit(self.obj.__class__):
             self.warn(
                 PytestWarning(
                     "cannot collect test class %r because it has a "
@@ -640,7 +640,7 @@ class Class(PyCollector):
                 )
             )
             return []
-        elif hasnew(self.obj):
+        elif hasnew(self.obj.__class__):
             self.warn(
                 PytestWarning(
                     "cannot collect test class %r because it has a "
@@ -648,7 +648,8 @@ class Class(PyCollector):
                 )
             )
             return []
-        return [self._getcustomclass("Instance")(name="()", parent=self)]
+        self.session._fixturemanager.parsefactories(self)
+        return super(Class, self).collect()
 
     def setup(self):
         setup_class = _get_xunit_func(self.obj, "setup_class")
@@ -662,24 +663,6 @@ class Class(PyCollector):
             self.addfinalizer(lambda: fin_class(self.obj))
 
 
-class Instance(PyCollector):
-    _ALLOW_MARKERS = False  # hack, destroy later
-    # instances share the object with their parents in a way
-    # that duplicates markers instances if not taken out
-    # can be removed at node structure reorganization time
-
-    def _getobj(self):
-        return self.parent.obj()
-
-    def collect(self):
-        self.session._fixturemanager.parsefactories(self)
-        return super(Instance, self).collect()
-
-    def newinstance(self):
-        self.obj = self._getobj()
-        return self.obj
-
-
 class FunctionMixin(PyobjMixin):
     """ mixin for the code common to Function and Generator.
     """
@@ -688,9 +671,6 @@ class FunctionMixin(PyobjMixin):
         """ perform setup for this test function. """
         if hasattr(self, "_preservedparent"):
             obj = self._preservedparent
-        elif isinstance(self.parent, Instance):
-            obj = self.parent.newinstance()
-            self.obj = self._getobj()
         else:
             obj = self.parent.obj
         if inspect.ismethod(self.obj):

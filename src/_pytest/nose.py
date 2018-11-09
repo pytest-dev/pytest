@@ -34,8 +34,9 @@ def pytest_runtest_setup(item):
             gen = item.parent
             if not hasattr(gen, "_nosegensetup"):
                 call_optional(gen.obj, "setup")
-                if isinstance(gen.parent, python.Instance):
-                    call_optional(gen.parent.obj, "setup")
+                # XXX
+                # if isinstance(gen.parent, python.Instance):
+                #     call_optional(gen.parent.obj, "setup")
                 gen._nosegensetup = True
         if not call_optional(item.obj, "setup"):
             # call module level setup if there is no object level one

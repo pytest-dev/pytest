@@ -119,7 +119,6 @@ class Node(object):
 
     Module = _CompatProperty("Module")
     Class = _CompatProperty("Class")
-    Instance = _CompatProperty("Instance")
     Function = _CompatProperty("Function")
     File = _CompatProperty("File")
     Item = _CompatProperty("Item")

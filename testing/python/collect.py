@@ -1370,7 +1370,6 @@ def test_collector_attributes(testdir):
         def pytest_pycollect_makeitem(collector):
             assert collector.Function == pytest.Function
             assert collector.Class == pytest.Class
-            assert collector.Instance == pytest.Instance
             assert collector.Module == pytest.Module
     """
     )
@@ -1390,10 +1389,8 @@ def test_customize_through_attributes(testdir):
         import pytest
         class MyFunction(pytest.Function):
             pass
-        class MyInstance(pytest.Instance):
-            Function = MyFunction
         class MyClass(pytest.Class):
-            Instance = MyInstance
+            Function = MyFunction
 
         def pytest_pycollect_makeitem(collector, name, obj):
             if name.startswith("MyTestClass"):
@@ -1408,9 +1405,7 @@ def test_customize_through_attributes(testdir):
     """
     )
     result = testdir.runpytest("--collect-only")
-    result.stdout.fnmatch_lines(
-        ["*MyClass*", "*MyInstance*", "*MyFunction*test_hello*"]
-    )
+    result.stdout.fnmatch_lines(["*MyClass*", "*MyFunction*test_hello*"])
 
 
 def test_unorderable_types(testdir):

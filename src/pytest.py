@@ -29,7 +29,6 @@ from _pytest.outcomes import xfail
 from _pytest.python import Class
 from _pytest.python import Function
 from _pytest.python import Generator
-from _pytest.python import Instance
 from _pytest.python import Module
 from _pytest.python import Package
 from _pytest.python_api import approx
@@ -61,7 +60,6 @@ __all__ = [
     "hookimpl",
     "hookspec",
     "importorskip",
-    "Instance",
     "Item",
     "main",
     "mark",
