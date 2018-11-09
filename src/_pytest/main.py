@@ -279,7 +279,7 @@ def pytest_ignore_collect(path, config):
         return True
 
     allow_in_venv = config.getoption("collect_in_virtualenv")
-    if _in_venv(path) and not allow_in_venv:
+    if not allow_in_venv and _in_venv(path):
         return True
 
     return False
@@ -511,9 +511,9 @@ class Session(nodes.FSCollector):
         # No point in finding packages when collecting doctests
         if not self.config.option.doctestmodules:
             pm = self.config.pluginmanager
-            for parent in argpath.parts():
+            for parent in reversed(argpath.parts()):
                 if pm._confcutdir and pm._confcutdir.relto(parent):
-                    continue
+                    break
 
                 if parent.isdir():
                     pkginit = parent.join("__init__.py")

@@ -27,8 +27,9 @@ class TestGeneralUsage(object):
     def test_config_error(self, testdir):
         testdir.copy_example("conftest_usageerror/conftest.py")
         result = testdir.runpytest(testdir.tmpdir)
-        assert result.ret != 0
+        assert result.ret == EXIT_USAGEERROR
         result.stderr.fnmatch_lines(["*ERROR: hello"])
+        result.stdout.fnmatch_lines(["*pytest_unconfigure_called"])
 
     def test_root_conftest_syntax_error(self, testdir):
         testdir.makepyfile(conftest="raise SyntaxError\n")

@@ -1,0 +1,1 @@
+Block the ``stepwise`` plugin if ``cacheprovider`` is also blocked, as one depends on the other.
