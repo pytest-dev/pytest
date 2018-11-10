@@ -28,6 +28,7 @@ jobs:
     # Coverage tracking is slow with pypy, skip it.
     - env: TOXENV=pypy PYTEST_NO_COVERAGE=1
       python: 'pypy'
+      dist: trusty
 #    - env: TOXENV=py35
 #      python: '3.5'
 #    - env: TOXENV=py36-freeze PYTEST_NO_COVERAGE=1
