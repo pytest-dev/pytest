@@ -88,7 +88,8 @@ after_success:
   - |
     if [[ "$PYTEST_NO_COVERAGE" != 1 ]]; then
       set -e
-      pip install coverage
+      # Add first TOXENV to $PATH.
+      PATH="$PWD/.tox/${TOXENV%%,*}/bin:$PATH"
       coverage combine
       coverage xml --ignore-errors
       coverage report -m --ignore-errors
