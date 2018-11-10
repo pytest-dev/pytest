@@ -1408,9 +1408,7 @@ def test_customize_through_attributes(testdir):
     """
     )
     result = testdir.runpytest("--collect-only")
-    result.stdout.fnmatch_lines(
-        ["*MyClass*", "*MyInstance*", "*MyFunction*test_hello*"]
-    )
+    result.stdout.fnmatch_lines(["*MyClass*", "*MyFunction*test_hello*"])
 
 
 def test_unorderable_types(testdir):

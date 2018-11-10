@@ -274,16 +274,26 @@ def test_deselect(testdir):
     testdir.makepyfile(
         test_a="""
         import pytest
+
         def test_a1(): pass
+
         @pytest.mark.parametrize('b', range(3))
         def test_a2(b): pass
+
+        class TestClass:
+            def test_c1(self): pass
+
+            def test_c2(self): pass
     """
     )
     result = testdir.runpytest(
-        "-v", "--deselect=test_a.py::test_a2[1]", "--deselect=test_a.py::test_a2[2]"
+        "-v",
+        "--deselect=test_a.py::test_a2[1]",
+        "--deselect=test_a.py::test_a2[2]",
+        "--deselect=test_a.py::TestClass::test_c1",
     )
     assert result.ret == 0
-    result.stdout.fnmatch_lines(["*2 passed, 2 deselected*"])
+    result.stdout.fnmatch_lines(["*3 passed, 3 deselected*"])
     for line in result.stdout.lines:
         assert not line.startswith(("test_a.py::test_a2[1]", "test_a.py::test_a2[2]"))
 

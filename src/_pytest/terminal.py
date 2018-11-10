@@ -605,9 +605,7 @@ class TerminalReporter(object):
                     self._tw.line("%s: %d" % (name, count))
             else:
                 for item in items:
-                    nodeid = item.nodeid
-                    nodeid = nodeid.replace("::()::", "::")
-                    self._tw.line(nodeid)
+                    self._tw.line(item.nodeid)
             return
         stack = []
         indent = ""
@@ -619,8 +617,8 @@ class TerminalReporter(object):
                 stack.pop()
             for col in needed_collectors[len(stack) :]:
                 stack.append(col)
-                # if col.name == "()":
-                #    continue
+                if col.name == "()":  # Skip Instances.
+                    continue
                 indent = (len(stack) - 1) * "  "
                 self._tw.line("%s%s" % (indent, col))
 
@@ -687,7 +685,7 @@ class TerminalReporter(object):
         # collect_fspath comes from testid which has a "/"-normalized path
 
         if fspath:
-            res = mkrel(nodeid).replace("::()", "")  # parens-normalization
+            res = mkrel(nodeid)
             if self.verbosity >= 2 and nodeid.split("::")[0] != fspath.replace(
                 "\\", nodes.SEP
             ):
