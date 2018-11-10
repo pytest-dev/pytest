@@ -11,53 +11,53 @@ python:
   - '3.6'
 install:
   - pip install --upgrade --pre tox
-env:
-  matrix:
-    # Specialized factors for py27.
-    - TOXENV=py27-pexpect,py27-trial,py27-numpy
-    - TOXENV=py27-nobyte
-    - TOXENV=py27-xdist
-    - TOXENV=py27-pluggymaster PYTEST_NO_COVERAGE=1
-    # Specialized factors for py36.
-    - TOXENV=py36-pexpect,py36-trial,py36-numpy
-    - TOXENV=py36-xdist
-    - TOXENV=py36-pluggymaster PYTEST_NO_COVERAGE=1
+#env:
+#  matrix:
+#    # Specialized factors for py27.
+#    - TOXENV=py27-pexpect,py27-trial,py27-numpy
+#    - TOXENV=py27-nobyte
+#    - TOXENV=py27-xdist
+#    - TOXENV=py27-pluggymaster PYTEST_NO_COVERAGE=1
+#    # Specialized factors for py36.
+#    - TOXENV=py36-pexpect,py36-trial,py36-numpy
+#    - TOXENV=py36-xdist
+#    - TOXENV=py36-pluggymaster PYTEST_NO_COVERAGE=1
 
 jobs:
   include:
     # Coverage tracking is slow with pypy, skip it.
     - env: TOXENV=pypy PYTEST_NO_COVERAGE=1
       python: 'pypy-5.4'
-    - env: TOXENV=py35
-      python: '3.5'
-    - env: TOXENV=py36-freeze PYTEST_NO_COVERAGE=1
-      python: '3.6'
-    - env: TOXENV=py37
-      python: '3.7'
-    - &test-macos
-      language: generic
-      os: osx
-      osx_image: xcode9.4
-      sudo: required
-      install:
-        - python -m pip install --pre tox
-      env: TOXENV=py27
-    - <<: *test-macos
-      env: TOXENV=py37
-      before_install:
-        - brew update
-        - brew upgrade python
-        - brew unlink python
-        - brew link python
-
-    - stage: baseline
-      env: TOXENV=py27
-      python: '2.7'
-    - env: TOXENV=py34
-      python: '3.4'
-    - env: TOXENV=py36
-      python: '3.6'
-    - env: TOXENV=linting,docs,doctesting PYTEST_NO_COVERAGE=1
+#    - env: TOXENV=py35
+#      python: '3.5'
+#    - env: TOXENV=py36-freeze PYTEST_NO_COVERAGE=1
+#      python: '3.6'
+#    - env: TOXENV=py37
+#      python: '3.7'
+#    - &test-macos
+#      language: generic
+#      os: osx
+#      osx_image: xcode9.4
+#      sudo: required
+#      install:
+#        - python -m pip install --pre tox
+#      env: TOXENV=py27
+#    - <<: *test-macos
+#      env: TOXENV=py37
+#      before_install:
+#        - brew update
+#        - brew upgrade python
+#        - brew unlink python
+#        - brew link python
+#
+#    - stage: baseline
+#      env: TOXENV=py27
+#      python: '2.7'
+#    - env: TOXENV=py34
+#      python: '3.4'
+#    - env: TOXENV=py36
+#      python: '3.6'
+#    - env: TOXENV=linting,docs,doctesting PYTEST_NO_COVERAGE=1
 
     - stage: deploy
       python: '3.6'
