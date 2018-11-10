@@ -1,3 +1,5 @@
+import py
+
 import pytest
 from _pytest import nodes
 
@@ -29,3 +31,23 @@ def test_std_warn_not_pytestwarning(testdir):
     )
     with pytest.raises(ValueError, match=".*instance of PytestWarning.*"):
         items[0].warn(UserWarning("some warning"))
+
+
+def test__check_initialpaths_for_relpath():
+    """Ensure that it handles dirs, and does not always use dirname."""
+    cwd = py.path.local()
+
+    class FakeSession:
+        _initialpaths = [cwd]
+
+    assert nodes._check_initialpaths_for_relpath(FakeSession, cwd) == ""
+
+    sub = cwd.join("file")
+
+    class FakeSession:
+        _initialpaths = [cwd]
+
+    assert nodes._check_initialpaths_for_relpath(FakeSession, sub) == "file"
+
+    outside = py.path.local("/outside")
+    assert nodes._check_initialpaths_for_relpath(FakeSession, outside) is None

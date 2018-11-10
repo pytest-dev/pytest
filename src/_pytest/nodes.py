@@ -447,7 +447,7 @@ class Collector(Node):
 def _check_initialpaths_for_relpath(session, fspath):
     for initial_path in session._initialpaths:
         if fspath.common(initial_path) == initial_path:
-            return fspath.relto(initial_path.dirname)
+            return fspath.relto(initial_path)
 
 
 class FSCollector(Collector):
