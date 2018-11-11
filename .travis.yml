@@ -1,5 +1,6 @@
 sudo: false
 language: python
+dist: xenial
 stages:
 - baseline
 - name: test
@@ -27,14 +28,13 @@ jobs:
     # Coverage tracking is slow with pypy, skip it.
     - env: TOXENV=pypy PYTEST_NO_COVERAGE=1
       python: 'pypy-5.4'
+      dist: trusty
     - env: TOXENV=py35
       python: '3.5'
     - env: TOXENV=py36-freeze PYTEST_NO_COVERAGE=1
       python: '3.6'
     - env: TOXENV=py37
       python: '3.7'
-      sudo: required
-      dist: xenial
     - &test-macos
       language: generic
       os: osx
@@ -54,6 +54,7 @@ jobs:
     - stage: baseline
       env: TOXENV=py27
     - env: TOXENV=py34
+      python: '3.4'
     - env: TOXENV=py36
     - env: TOXENV=linting,docs,doctesting PYTEST_NO_COVERAGE=1
 
