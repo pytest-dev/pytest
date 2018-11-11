@@ -1,1 +1,0 @@
-Fix collection of direct symlinked files, where the target does not match ``python_files``.

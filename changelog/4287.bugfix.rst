@@ -1,1 +1,0 @@
-Fix nested usage of debugging plugin (pdb), e.g. with pytester's ``testdir.runpytest``.
