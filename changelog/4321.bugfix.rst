@@ -1,1 +1,0 @@
-Fix ``item.nodeid`` with resolved symlinks.
