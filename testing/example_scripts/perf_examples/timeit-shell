@@ -1,0 +1,37 @@
+#!/usr/bin/python
+import contextlib
+import io
+import re
+import sys
+import timeit
+
+out = io.StringIO()
+with contextlib.redirect_stdout(out):
+    ret = timeit.main(
+        [
+            "--verbose",
+            "--unit=msec",
+            "--setup",
+            "import subprocess",
+            "--",
+            "subprocess.Popen(%r, stdout=subprocess.PIPE).communicate()"
+            % (sys.argv[1:],),
+        ]
+    )
+
+lines = out.getvalue().splitlines()
+for line in lines:
+    print("> %s" % line, file=sys.stderr)
+
+if ret is not None:
+    sys.exit(ret)
+
+summary = lines[-1]
+
+m = re.match(r"\d+ loops?, best of \d+: (\S+) msec per loop", summary)
+if not m:
+    print("Failed to match time in %r." % summary, file=sys.stderr)
+    sys.exit(1)
+
+msec = float(m[1])
+print(msec)
