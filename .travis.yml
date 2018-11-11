@@ -56,7 +56,7 @@ jobs:
     - env: TOXENV=py34
       python: '3.4'
     - env: TOXENV=py36
-    - env: TOXENV=linting,docs,doctesting PYTEST_NO_COVERAGE=1
+    - env: TOXENV=linting,docs,doctesting
 
     - stage: deploy
       python: '3.6'
