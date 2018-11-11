@@ -89,8 +89,8 @@ after_success:
   - |
     if [[ "$PYTEST_NO_COVERAGE" != 1 ]]; then
       set -e
-      # Add first TOXENV to $PATH.
-      PATH="$PWD/.tox/${TOXENV%%,*}/bin:$PATH"
+      # Add last TOXENV to $PATH.
+      PATH="$PWD/.tox/${TOXENV##*,}/bin:$PATH"
       coverage combine
       coverage xml --ignore-errors
       coverage report -m --ignore-errors
