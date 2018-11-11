@@ -386,6 +386,7 @@ class Session(nodes.FSCollector):
         self._initialpaths = frozenset()
         # Keep track of any collected nodes in here, so we don't duplicate fixtures
         self._node_cache = {}
+        # Dirnames of pkgs with dunder-init files.
         self._pkg_roots = {}
 
         self.config.pluginmanager.register(self, name="session")
@@ -535,8 +536,7 @@ class Session(nodes.FSCollector):
                     seen_dirs.add(dirpath)
                     pkginit = dirpath.join("__init__.py")
                     if pkginit.exists():
-                        collect_root = self._pkg_roots.get(dirpath, self)
-                        for x in collect_root._collectfile(pkginit):
+                        for x in self._collectfile(pkginit):
                             yield x
                             if isinstance(x, Package):
                                 self._pkg_roots[dirpath] = x
