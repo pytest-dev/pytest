@@ -488,7 +488,7 @@ class Session(nodes.FSCollector):
         from _pytest.python import Package
 
         names = self._parsearg(arg)
-        argpath = names.pop(0).realpath()
+        argpath = names.pop(0)
 
         # Start with a Session root, and delve to argpath item (dir or file)
         # and stack all Packages found on the way.
@@ -636,7 +636,7 @@ class Session(nodes.FSCollector):
                     "file or package not found: " + arg + " (missing __init__.py?)"
                 )
             raise UsageError("file not found: " + arg)
-        parts[0] = path
+        parts[0] = path.realpath()
         return parts
 
     def matchnodes(self, matching, names):
