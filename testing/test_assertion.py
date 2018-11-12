@@ -556,8 +556,8 @@ class TestAssert_reprcompare_dataclass(object):
 
         @dataclass
         class SimpleDataObject(object):
-            field_a = field()
-            field_b = field()
+            field_a: int = field()
+            field_b: int = field()
 
         left = SimpleDataObject(1, "b")
         right = SimpleDataObject(1, "c")
@@ -574,8 +574,8 @@ class TestAssert_reprcompare_dataclass(object):
 
         @dataclass
         class SimpleDataObject(object):
-            field_a = field()
-            field_b = field()
+            field_a: int = field()
+            field_b: int = field()
 
         left = SimpleDataObject(1, "b")
         right = SimpleDataObject(1, "c")
@@ -591,8 +591,8 @@ class TestAssert_reprcompare_dataclass(object):
 
         @dataclass
         class SimpleDataObject(object):
-            field_a = field()
-            field_b = field(compare=False)
+            field_a: int = field()
+            field_b: int = field(compare=False)
 
         left = SimpleDataObject(1, "b")
         right = SimpleDataObject(1, "b")
@@ -610,13 +610,13 @@ class TestAssert_reprcompare_dataclass(object):
 
         @dataclass
         class SimpleDataObjectOne(object):
-            field_a = field()
-            field_b = field()
+            field_a: int = field()
+            field_b: int = field()
 
         @dataclass
         class SimpleDataObjectTwo(object):
-            field_a = field()
-            field_b = field()
+            field_a: int = field()
+            field_b: int = field()
 
         left = SimpleDataObjectOne(1, "b")
         right = SimpleDataObjectTwo(1, "c")
