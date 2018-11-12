@@ -1,0 +1,1 @@
+Use ``pkg_resources.parse_version`` instead of ``LooseVersion`` in minversion check.
