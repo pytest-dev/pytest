@@ -551,78 +551,47 @@ class TestAssert_reprcompare(object):
 
 class TestAssert_reprcompare_dataclass(object):
     @pytest.mark.skipif(sys.version_info < (3, 7), reason="Dataclasses in Python3.7+")
-    def test_dataclasses(self):
-        from dataclasses import dataclass, field
-
-        @dataclass
-        class SimpleDataObject(object):
-            field_a: int = field()
-            field_b: int = field()
-
-        left = SimpleDataObject(1, "b")
-        right = SimpleDataObject(1, "c")
-
-        lines = callequal(left, right)
-        assert lines[1].startswith("Omitting 1 identical item")
-        assert "Common attributes" not in lines
-        for line in lines[1:]:
-            assert "field_a" not in line
+    def test_dataclasses(self, testdir):
+        p = testdir.copy_example("dataclasses/test_compare_dataclasses.py")
+        result = testdir.runpytest(p)
+        result.assert_outcomes(failed=1, passed=0)
+        result.stdout.fnmatch_lines(
+            [
+                "*Omitting 1 identical items, use -vv to show*",
+                "*Differing attributes:*",
+                "*SimpleDataObject(field_b='b') != SimpleDataObject(field_b='c')*",
+            ]
+        )
 
     @pytest.mark.skipif(sys.version_info < (3, 7), reason="Dataclasses in Python3.7+")
-    def test_dataclasses_verbose(self):
-        from dataclasses import dataclass, field
-
-        @dataclass
-        class SimpleDataObject(object):
-            field_a: int = field()
-            field_b: int = field()
-
-        left = SimpleDataObject(1, "b")
-        right = SimpleDataObject(1, "c")
-
-        lines = callequal(left, right, verbose=2)
-        assert lines[1].startswith("Common attributes:")
-        assert "Omitting" not in lines[1]
-        assert lines[2] == "['field_a']"
+    def test_dataclasses_verbose(self, testdir):
+        p = testdir.copy_example("dataclasses/test_compare_dataclasses_verbose.py")
+        result = testdir.runpytest(p, "-vv")
+        result.assert_outcomes(failed=1, passed=0)
+        result.stdout.fnmatch_lines(
+            [
+                "*Common attributes:*",
+                "*['field_a']*",
+                "*Differing attributes:*",
+                "*SimpleDataObject(field_b='b') != SimpleDataObject(field_b='c')*",
+            ]
+        )
 
     @pytest.mark.skipif(sys.version_info < (3, 7), reason="Dataclasses in Python3.7+")
-    def test_dataclasses_with_attribute_comparison_off(self):
-        from dataclasses import dataclass, field
-
-        @dataclass
-        class SimpleDataObject(object):
-            field_a: int = field()
-            field_b: int = field(compare=False)
-
-        left = SimpleDataObject(1, "b")
-        right = SimpleDataObject(1, "b")
-
-        lines = callequal(left, right, verbose=2)
-        assert lines[1].startswith("Common attributes:")
-        assert "Omitting" not in lines[1]
-        assert lines[2] == "['field_a']"
-        for line in lines[2:]:
-            assert "field_b" not in line
+    def test_dataclasses_with_attribute_comparison_off(self, testdir):
+        p = testdir.copy_example(
+            "dataclasses/test_compare_dataclasses_field_comparison_off.py"
+        )
+        result = testdir.runpytest(p, "-vv")
+        result.assert_outcomes(failed=0, passed=1)
 
     @pytest.mark.skipif(sys.version_info < (3, 7), reason="Dataclasses in Python3.7+")
-    def test_comparing_two_different_data_classes(self):
-        from dataclasses import dataclass, field
-
-        @dataclass
-        class SimpleDataObjectOne(object):
-            field_a: int = field()
-            field_b: int = field()
-
-        @dataclass
-        class SimpleDataObjectTwo(object):
-            field_a: int = field()
-            field_b: int = field()
-
-        left = SimpleDataObjectOne(1, "b")
-        right = SimpleDataObjectTwo(1, "c")
-
-        lines = callequal(left, right)
-        assert lines is None
+    def test_comparing_two_different_data_classes(self, testdir):
+        p = testdir.copy_example(
+            "dataclasses/test_compare_two_different_dataclasses.py"
+        )
+        result = testdir.runpytest(p, "-vv")
+        result.assert_outcomes(failed=0, passed=1)
 
 
 class TestAssert_reprcompare_attrsclass(object):
