@@ -559,7 +559,7 @@ class TestAssert_reprcompare_dataclass(object):
             [
                 "*Omitting 1 identical items, use -vv to show*",
                 "*Differing attributes:*",
-                "*SimpleDataObject(field_b='b') != SimpleDataObject(field_b='c')*",
+                "*field_b: 'b' != 'c'*",
             ]
         )
 
@@ -570,10 +570,10 @@ class TestAssert_reprcompare_dataclass(object):
         result.assert_outcomes(failed=1, passed=0)
         result.stdout.fnmatch_lines(
             [
-                "*Common attributes:*",
+                "*Matching attributes:*",
                 "*['field_a']*",
                 "*Differing attributes:*",
-                "*SimpleDataObject(field_b='b') != SimpleDataObject(field_b='c')*",
+                "*field_b: 'b' != 'c'*",
             ]
         )
 
@@ -606,7 +606,7 @@ class TestAssert_reprcompare_attrsclass(object):
 
         lines = callequal(left, right)
         assert lines[1].startswith("Omitting 1 identical item")
-        assert "Common attributes" not in lines
+        assert "Matching attributes" not in lines
         for line in lines[1:]:
             assert "field_a" not in line
 
@@ -620,7 +620,7 @@ class TestAssert_reprcompare_attrsclass(object):
         right = SimpleDataObject(1, "c")
 
         lines = callequal(left, right, verbose=2)
-        assert lines[1].startswith("Common attributes:")
+        assert lines[1].startswith("Matching attributes:")
         assert "Omitting" not in lines[1]
         assert lines[2] == "['field_a']"
 
@@ -634,7 +634,7 @@ class TestAssert_reprcompare_attrsclass(object):
         right = SimpleDataObject(1, "b")
 
         lines = callequal(left, right, verbose=2)
-        assert lines[1].startswith("Common attributes:")
+        assert lines[1].startswith("Matching attributes:")
         assert "Omitting" not in lines[1]
         assert lines[2] == "['field_a']"
         for line in lines[2:]:
