@@ -592,3 +592,34 @@ def test_infinite_loop_warning_against_unicode_usage_py2(testdir):
     )
     result = testdir.runpytest_subprocess()
     result.stdout.fnmatch_lines(["*1 passed, * warnings in*"])
+
+
+@pytest.mark.parametrize("change_default", [None, "ini", "cmdline"])
+def test_removed_in_pytest4_warning_as_error(testdir, change_default):
+    testdir.makepyfile(
+        """
+        import warnings, pytest
+        def test():
+            warnings.warn(pytest.RemovedInPytest4Warning("some warning"))
+    """
+    )
+    if change_default == "ini":
+        testdir.makeini(
+            """
+            [pytest]
+            filterwarnings =
+                ignore::pytest.RemovedInPytest4Warning
+        """
+        )
+
+    args = (
+        ("-Wignore::pytest.RemovedInPytest4Warning",)
+        if change_default == "cmdline"
+        else ()
+    )
+    result = testdir.runpytest(*args)
+    if change_default is None:
+        result.stdout.fnmatch_lines(["* 1 failed in *"])
+    else:
+        assert change_default in ("ini", "cmdline")
+        result.stdout.fnmatch_lines(["* 1 passed in *"])

@@ -41,6 +41,14 @@ def test_success():
 """
     )
 
+    # customize cache directory so we don't use the tox's cache directory, which makes tests in this module flaky
+    testdir.makeini(
+        """
+        [pytest]
+        cache_dir = .cache
+    """
+    )
+
     return testdir
 
 

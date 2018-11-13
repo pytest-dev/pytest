@@ -5,6 +5,8 @@ from __future__ import print_function
 import os
 import sys
 
+from _pytest.warnings import SHOW_PYTEST_WARNINGS_ARG
+
 try:
     import mock
 except ImportError:
@@ -862,7 +864,7 @@ class TestFunctional(object):
                 assert marker.kwargs == {}
         """
         )
-        reprec = testdir.inline_run("-m", "mark1")
+        reprec = testdir.inline_run("-m", "mark1", SHOW_PYTEST_WARNINGS_ARG)
         reprec.assertoutcome(passed=1)
 
     def assert_markers(self, items, **expected):
@@ -904,7 +906,7 @@ class TestFunctional(object):
                 assert True
         """
         )
-        reprec = testdir.inline_run()
+        reprec = testdir.inline_run(SHOW_PYTEST_WARNINGS_ARG)
         reprec.assertoutcome(skipped=1)
 
 
@@ -1248,5 +1250,5 @@ def test_markers_from_parametrize(testdir):
     """
     )
 
-    result = testdir.runpytest()
+    result = testdir.runpytest(SHOW_PYTEST_WARNINGS_ARG)
     result.assert_outcomes(passed=4)

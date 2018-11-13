@@ -8,6 +8,7 @@ from _pytest.fixtures import FixtureLookupError
 from _pytest.fixtures import FixtureRequest
 from _pytest.pathlib import Path
 from _pytest.pytester import get_public_names
+from _pytest.warnings import SHOW_PYTEST_WARNINGS_ARG
 
 
 def test_getfuncargnames():
@@ -975,7 +976,8 @@ class TestRequestCachedSetup(object):
             class TestClass(object):
                 def test_func1a(self, something):
                     assert something == "hello"
-        """
+        """,
+            SHOW_PYTEST_WARNINGS_ARG,
         )
         reprec.assertoutcome(passed=2)
 
@@ -997,7 +999,8 @@ class TestRequestCachedSetup(object):
                     assert something == "hello"
                 def test_func2b(self, something):
                     assert something == "hello"
-        """
+        """,
+            SHOW_PYTEST_WARNINGS_ARG,
         )
         reprec.assertoutcome(passed=4)
 
@@ -1057,7 +1060,7 @@ class TestRequestCachedSetup(object):
                 assert arg1 != arg2
         """
         )
-        result = testdir.runpytest("-v")
+        result = testdir.runpytest("-v", SHOW_PYTEST_WARNINGS_ARG)
         result.stdout.fnmatch_lines(["*1 passed*"])
 
     def test_request_cached_setup_getfixturevalue(self, testdir):
@@ -1076,7 +1079,7 @@ class TestRequestCachedSetup(object):
                 assert arg1 == 11
         """
         )
-        result = testdir.runpytest("-v")
+        result = testdir.runpytest("-v", SHOW_PYTEST_WARNINGS_ARG)
         result.stdout.fnmatch_lines(["*1 passed*"])
 
     def test_request_cached_setup_functional(self, testdir):
@@ -1107,7 +1110,7 @@ class TestRequestCachedSetup(object):
                 assert test_0.values == [2]
         """
         )
-        result = testdir.runpytest("-v")
+        result = testdir.runpytest("-v", SHOW_PYTEST_WARNINGS_ARG)
         result.stdout.fnmatch_lines(["*3 passed*"])
 
     def test_issue117_sessionscopeteardown(self, testdir):
@@ -1126,7 +1129,7 @@ class TestRequestCachedSetup(object):
                 pass
         """
         )
-        result = testdir.runpytest()
+        result = testdir.runpytest(SHOW_PYTEST_WARNINGS_ARG)
         assert result.ret != 0
         result.stdout.fnmatch_lines(["*3/x*", "*ZeroDivisionError*"])
 
@@ -1868,7 +1871,7 @@ class TestAutouseManagement(object):
                 yield f, -3
         """
         )
-        reprec = testdir.inline_run()
+        reprec = testdir.inline_run(SHOW_PYTEST_WARNINGS_ARG)
         reprec.assertoutcome(passed=2)
 
     def test_funcarg_and_setup(self, testdir):
@@ -2348,7 +2351,7 @@ class TestFixtureMarker(object):
             """
             % method
         )
-        result = testdir.runpytest()
+        result = testdir.runpytest(SHOW_PYTEST_WARNINGS_ARG)
         assert result.ret != 0
         result.stdout.fnmatch_lines(
             ["*ScopeMismatch*You tried*function*session*request*"]

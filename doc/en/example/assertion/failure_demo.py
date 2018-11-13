@@ -1,6 +1,7 @@
 import six
 
 import _pytest._code
+import pytest
 from pytest import raises
 
 
@@ -16,13 +17,9 @@ def otherfunc_multi(a, b):
     assert a == b
 
 
+@pytest.mark.parametrize("param1, param2", [(3, 6)])
 def test_generative(param1, param2):
     assert param1 * 2 < param2
-
-
-def pytest_generate_tests(metafunc):
-    if "param1" in metafunc.fixturenames:
-        metafunc.addcall(funcargs=dict(param1=3, param2=6))
 
 
 class TestFailing(object):

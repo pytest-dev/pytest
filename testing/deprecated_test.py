@@ -5,11 +5,11 @@ from __future__ import print_function
 import os
 
 import pytest
+from _pytest.warnings import SHOW_PYTEST_WARNINGS_ARG
 
 pytestmark = pytest.mark.pytester_example_path("deprecated")
 
 
-@pytest.mark.filterwarnings("default")
 def test_yield_tests_deprecation(testdir):
     testdir.makepyfile(
         """
@@ -23,7 +23,7 @@ def test_yield_tests_deprecation(testdir):
                 yield func1, 1, 1
     """
     )
-    result = testdir.runpytest()
+    result = testdir.runpytest(SHOW_PYTEST_WARNINGS_ARG)
     result.stdout.fnmatch_lines(
         [
             "*test_yield_tests_deprecation.py:3:*yield tests are deprecated*",
@@ -41,7 +41,7 @@ def test_compat_properties_deprecation(testdir):
             print(request.node.Module)
     """
     )
-    result = testdir.runpytest()
+    result = testdir.runpytest(SHOW_PYTEST_WARNINGS_ARG)
     result.stdout.fnmatch_lines(
         [
             "*test_compat_properties_deprecation.py:2:*usage of Function.Module is deprecated, "
@@ -63,7 +63,7 @@ def test_cached_setup_deprecation(testdir):
             assert fix == 1
     """
     )
-    result = testdir.runpytest()
+    result = testdir.runpytest(SHOW_PYTEST_WARNINGS_ARG)
     result.stdout.fnmatch_lines(
         [
             "*test_cached_setup_deprecation.py:4:*cached_setup is deprecated*",
@@ -93,7 +93,7 @@ def test_custom_class_deprecation(testdir):
                 pass
     """
     )
-    result = testdir.runpytest()
+    result = testdir.runpytest(SHOW_PYTEST_WARNINGS_ARG)
     result.stdout.fnmatch_lines(
         [
             '*test_custom_class_deprecation.py:1:*"Class" objects in collectors of type "MyModule*',
@@ -102,7 +102,6 @@ def test_custom_class_deprecation(testdir):
     )
 
 
-@pytest.mark.filterwarnings("default")
 def test_funcarg_prefix_deprecation(testdir):
     testdir.makepyfile(
         """
@@ -113,7 +112,7 @@ def test_funcarg_prefix_deprecation(testdir):
             assert value == 10
     """
     )
-    result = testdir.runpytest("-ra")
+    result = testdir.runpytest("-ra", SHOW_PYTEST_WARNINGS_ARG)
     result.stdout.fnmatch_lines(
         [
             (
@@ -198,7 +197,6 @@ def test_resultlog_is_deprecated(testdir):
     )
 
 
-@pytest.mark.filterwarnings("always:Metafunc.addcall is deprecated")
 def test_metafunc_addcall_deprecated(testdir):
     testdir.makepyfile(
         """
@@ -209,7 +207,7 @@ def test_metafunc_addcall_deprecated(testdir):
             pass
     """
     )
-    res = testdir.runpytest("-s")
+    res = testdir.runpytest("-s", SHOW_PYTEST_WARNINGS_ARG)
     assert res.ret == 0
     res.stdout.fnmatch_lines(
         ["*Metafunc.addcall is deprecated*", "*2 passed, 2 warnings*"]
@@ -263,7 +261,7 @@ def test_pytest_plugins_in_non_top_level_conftest_deprecated(testdir):
             pass
     """
     )
-    res = testdir.runpytest()
+    res = testdir.runpytest(SHOW_PYTEST_WARNINGS_ARG)
     assert res.ret == 0
     msg = str(PYTEST_PLUGINS_FROM_NON_TOP_LEVEL_CONFTEST).splitlines()[0]
     res.stdout.fnmatch_lines(
@@ -292,6 +290,7 @@ def test_pytest_plugins_in_non_top_level_conftest_deprecated_pyargs(
     testdir.syspathinsert(testdir.tmpdir.join("src"))
 
     args = ("--pyargs", "pkg") if use_pyargs else ()
+    args += (SHOW_PYTEST_WARNINGS_ARG,)
     res = testdir.runpytest(*args)
     assert res.ret == 0
     msg = str(PYTEST_PLUGINS_FROM_NON_TOP_LEVEL_CONFTEST).splitlines()[0]

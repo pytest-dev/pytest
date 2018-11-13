@@ -8,6 +8,7 @@ import sys
 
 import _pytest._code
 import pytest
+from _pytest.warnings import SHOW_PYTEST_WARNINGS_ARG
 
 try:
     breakpoint
@@ -818,7 +819,9 @@ class TestTraceOption:
                 yield is_equal, 1, 1
             """
         )
-        child = testdir.spawn_pytest("--trace " + str(p1))
+        child = testdir.spawn_pytest(
+            "{} --trace {}".format(SHOW_PYTEST_WARNINGS_ARG, str(p1))
+        )
         child.expect("is_equal")
         child.expect("Pdb")
         child.sendeof()

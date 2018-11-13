@@ -12,6 +12,7 @@ from _pytest.config.findpaths import determine_setup
 from _pytest.config.findpaths import get_common_ancestor
 from _pytest.config.findpaths import getcfg
 from _pytest.main import EXIT_NOTESTSCOLLECTED
+from _pytest.warnings import SHOW_PYTEST_WARNINGS_ARG
 
 
 class TestParseIni(object):
@@ -808,7 +809,7 @@ class TestLegacyWarning(object):
                 assert conftest.values == [1]
         """
         )
-        result = testdir.runpytest()
+        result = testdir.runpytest(SHOW_PYTEST_WARNINGS_ARG)
         result.stdout.fnmatch_lines(
             ["*hello", "*config.warn has been deprecated*", "*1 passed*"]
         )
@@ -832,10 +833,12 @@ class TestLegacyWarning(object):
                 code_kw=code_kw, message_kw=message_kw
             )
         )
-        result = testdir.runpytest("--disable-pytest-warnings")
+        result = testdir.runpytest(
+            "--disable-pytest-warnings", SHOW_PYTEST_WARNINGS_ARG
+        )
         assert "hello" not in result.stdout.str()
 
-        result = testdir.runpytest()
+        result = testdir.runpytest(SHOW_PYTEST_WARNINGS_ARG)
         result.stdout.fnmatch_lines(
             """
             ===*warnings summary*===

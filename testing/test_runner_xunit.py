@@ -7,6 +7,7 @@ from __future__ import division
 from __future__ import print_function
 
 import pytest
+from _pytest.warnings import SHOW_PYTEST_WARNINGS_ARG
 
 
 def test_module_and_function_setup(testdir):
@@ -189,7 +190,8 @@ def test_method_generator_setup(testdir):
                 assert self.classsetup
                 assert self.methsetup == self.test_generate
                 assert value == 5
-    """
+    """,
+        SHOW_PYTEST_WARNINGS_ARG,
     )
     reprec.assertoutcome(passed=1, failed=1)
 
@@ -219,7 +221,8 @@ def test_func_generator_setup(testdir):
                 assert x == [1]
             yield check
             assert x == [1]
-    """
+    """,
+        SHOW_PYTEST_WARNINGS_ARG,
     )
     rep = reprec.matchreport("test_one", names="pytest_runtest_logreport")
     assert rep.passed
