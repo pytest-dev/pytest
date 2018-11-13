@@ -398,6 +398,7 @@ class Session(nodes.FSCollector):
         # Keep track of any collected nodes in here, so we don't duplicate fixtures
         self._node_cache = {}
         self._bestrelpathcache = _bestrelpath_cache(config.rootdir)
+        # Dirnames of pkgs with dunder-init files.
         self._pkg_roots = {}
 
         self.config.pluginmanager.register(self, name="session")
@@ -504,7 +505,7 @@ class Session(nodes.FSCollector):
         from _pytest.python import Package
 
         names = self._parsearg(arg)
-        argpath = names.pop(0).realpath()
+        argpath = names.pop(0)
 
         # Start with a Session root, and delve to argpath item (dir or file)
         # and stack all Packages found on the way.
@@ -551,8 +552,7 @@ class Session(nodes.FSCollector):
                     seen_dirs.add(dirpath)
                     pkginit = dirpath.join("__init__.py")
                     if pkginit.exists():
-                        collect_root = self._pkg_roots.get(dirpath, self)
-                        for x in collect_root._collectfile(pkginit):
+                        for x in self._collectfile(pkginit):
                             yield x
                             if isinstance(x, Package):
                                 self._pkg_roots[dirpath] = x
@@ -652,7 +652,7 @@ class Session(nodes.FSCollector):
                     "file or package not found: " + arg + " (missing __init__.py?)"
                 )
             raise UsageError("file not found: " + arg)
-        parts[0] = path
+        parts[0] = path.realpath()
         return parts
 
     def matchnodes(self, matching, names):

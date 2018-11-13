@@ -85,9 +85,8 @@ interesting to just look at the collection tree::
     rootdir: $REGENDOC_TMPDIR/nonpython, inifile:
     collected 2 items
     <Package '$REGENDOC_TMPDIR/nonpython'>
-      <Package '$REGENDOC_TMPDIR/nonpython'>
-        <YamlFile 'test_simple.yml'>
-          <YamlItem 'hello'>
-          <YamlItem 'ok'>
+      <YamlFile 'test_simple.yml'>
+        <YamlItem 'hello'>
+        <YamlItem 'ok'>
 
     ======================= no tests ran in 0.12 seconds =======================

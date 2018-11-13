@@ -169,7 +169,7 @@ Short version
 #. Follow **PEP-8** for naming and `black <https://github.com/ambv/black>`_ for formatting.
 #. Tests are run using ``tox``::
 
-    tox -e linting,py27,py36
+    tox -e linting,py27,py37
 
    The test environments above are usually enough to cover most cases locally.
 
@@ -237,12 +237,12 @@ Here is a simple overview, with pytest-specific bits:
 
 #. Run all the tests
 
-   You need to have Python 2.7 and 3.6 available in your system.  Now
+   You need to have Python 2.7 and 3.7 available in your system.  Now
    running tests is as simple as issuing this command::
 
-    $ tox -e linting,py27,py36
+    $ tox -e linting,py27,py37
 
-   This command will run tests via the "tox" tool against Python 2.7 and 3.6
+   This command will run tests via the "tox" tool against Python 2.7 and 3.7
    and also perform "lint" coding-style checks.
 
 #. You can now edit your local working copy and run the tests again as necessary. Please follow PEP-8 for naming.
@@ -252,9 +252,9 @@ Here is a simple overview, with pytest-specific bits:
 
     $ tox -e py27 -- --pdb
 
-   Or to only run tests in a particular test module on Python 3.6::
+   Or to only run tests in a particular test module on Python 3.7::
 
-    $ tox -e py36 -- testing/test_config.py
+    $ tox -e py37 -- testing/test_config.py
 
 
    When committing, ``pre-commit`` will re-format the files if necessary.
