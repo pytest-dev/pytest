@@ -14,17 +14,6 @@ import pytest
 pytest_plugins = ("pytester",)
 
 
-@pytest.fixture(scope="module", autouse=True)
-def handle_env():
-    """Ensure env is like most of the tests expect it, i.e. not using tox."""
-    orig_env = os.environ.pop("TOX_ENV_DIR", None)
-
-    yield
-
-    if orig_env is not None:
-        os.environ["TOX_ENV_DIR"] = orig_env
-
-
 class TestNewAPI(object):
     def test_config_cache_makedir(self, testdir):
         testdir.makeini("[pytest]")
