@@ -1,1 +1,0 @@
-Fix ``CallInfo.__repr__`` for when the call is not finished yet.

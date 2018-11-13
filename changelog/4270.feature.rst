@@ -1,3 +1,0 @@
-The ``cache_dir`` option uses ``$TOX_ENV_DIR`` as prefix (if set in the environment).
-
-This uses a different cache per tox environment by default.
