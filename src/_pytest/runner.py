@@ -224,7 +224,8 @@ class CallInfo(object):
         if self.excinfo:
             status = "exception: %s" % str(self.excinfo.value)
         else:
-            status = "result: %r" % (self.result,)
+            result = getattr(self, "result", "<NOTSET>")
+            status = "result: %r" % (result,)
         return "<CallInfo when=%r %s>" % (self.when, status)
 
 
