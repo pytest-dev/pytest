@@ -491,11 +491,24 @@ def test_callinfo():
     assert ci.when == "123"
     assert ci.result == 0
     assert "result" in repr(ci)
+    assert repr(ci) == "<CallInfo when='123' result: 0>"
+
     ci = runner.CallInfo(lambda: 0 / 0, "123")
     assert ci.when == "123"
     assert not hasattr(ci, "result")
+    assert repr(ci) == "<CallInfo when='123' exception: division by zero>"
     assert ci.excinfo
     assert "exc" in repr(ci)
+
+
+def test_callinfo_repr_while_running():
+    def repr_while_running():
+        f = sys._getframe().f_back
+        assert "func" in f.f_locals
+        assert repr(f.f_locals["self"]) == "<CallInfo when='when' result: '<NOTSET>'>"
+
+    ci = runner.CallInfo(repr_while_running, "when")
+    assert repr(ci) == "<CallInfo when='when' result: None>"
 
 
 # design question: do we want general hooks in python files?
