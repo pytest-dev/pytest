@@ -15,7 +15,7 @@ def equal_with_bash(prefix, ffc, fc, out=None):
     res_bash = set(fc(prefix))
     retval = set(res) == res_bash
     if out:
-        out.write("equal_with_bash {} {}\n".format(retval, res))
+        out.write("equal_with_bash({}) {} {}\n".format(prefix, retval, res))
         if not retval:
             out.write(" python - bash: %s\n" % (set(res) - res_bash))
             out.write(" bash - python: %s\n" % (res_bash - set(res)))
@@ -91,13 +91,19 @@ class FilesCompleter(object):
 
 class TestArgComplete(object):
     @pytest.mark.skipif("sys.platform in ('win32', 'darwin')")
-    def test_compare_with_compgen(self):
+    def test_compare_with_compgen(self, tmpdir):
         from _pytest._argcomplete import FastFilesCompleter
 
         ffc = FastFilesCompleter()
         fc = FilesCompleter()
-        for x in ["/", "/d", "/data", "qqq", ""]:
-            assert equal_with_bash(x, ffc, fc, out=sys.stdout)
+
+        with tmpdir.as_cwd():
+            assert equal_with_bash("", ffc, fc, out=sys.stdout)
+
+            tmpdir.ensure("data")
+
+            for x in ["d", "data", "doesnotexist", ""]:
+                assert equal_with_bash(x, ffc, fc, out=sys.stdout)
 
     @pytest.mark.skipif("sys.platform in ('win32', 'darwin')")
     def test_remove_dir_prefix(self):

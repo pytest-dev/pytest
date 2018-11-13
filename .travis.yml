@@ -1,5 +1,6 @@
 sudo: false
 language: python
+dist: xenial
 stages:
 - baseline
 - name: test
@@ -7,7 +8,7 @@ stages:
 - name: deploy
   if: repo = pytest-dev/pytest AND tag IS present
 python:
-  - '3.6'
+  - '3.7'
 install:
   - pip install --upgrade --pre tox
 env:
@@ -17,24 +18,21 @@ env:
     - TOXENV=py27-nobyte
     - TOXENV=py27-xdist
     - TOXENV=py27-pluggymaster PYTEST_NO_COVERAGE=1
-    # Specialized factors for py36.
-    - TOXENV=py36-pexpect,py36-trial,py36-numpy
-    - TOXENV=py36-xdist
-    - TOXENV=py36-pluggymaster PYTEST_NO_COVERAGE=1
+    # Specialized factors for py37.
+    - TOXENV=py37-pexpect,py37-trial,py37-numpy
+    - TOXENV=py37-xdist
+    - TOXENV=py37-pluggymaster PYTEST_NO_COVERAGE=1
+    - TOXENV=py37-freeze PYTEST_NO_COVERAGE=1
 
 jobs:
   include:
     # Coverage tracking is slow with pypy, skip it.
     - env: TOXENV=pypy PYTEST_NO_COVERAGE=1
       python: 'pypy-5.4'
+      dist: trusty
     - env: TOXENV=py35
       python: '3.5'
-    - env: TOXENV=py36-freeze PYTEST_NO_COVERAGE=1
-      python: '3.6'
     - env: TOXENV=py37
-      python: '3.7'
-      sudo: required
-      dist: xenial
     - &test-macos
       language: generic
       os: osx
@@ -54,8 +52,11 @@ jobs:
     - stage: baseline
       env: TOXENV=py27
     - env: TOXENV=py34
+      python: '3.4'
     - env: TOXENV=py36
-    - env: TOXENV=linting,docs,doctesting PYTEST_NO_COVERAGE=1
+      python: '3.6'
+    - env: TOXENV=linting,docs,doctesting
+      python: '3.7'
 
     - stage: deploy
       python: '3.6'
@@ -88,7 +89,8 @@ after_success:
   - |
     if [[ "$PYTEST_NO_COVERAGE" != 1 ]]; then
       set -e
-      pip install coverage
+      # Add last TOXENV to $PATH.
+      PATH="$PWD/.tox/${TOXENV##*,}/bin:$PATH"
       coverage combine
       coverage xml --ignore-errors
       coverage report -m --ignore-errors

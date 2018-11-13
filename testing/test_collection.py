@@ -6,6 +6,8 @@ import pprint
 import sys
 import textwrap
 
+import py
+
 import pytest
 from _pytest.main import _in_venv
 from _pytest.main import EXIT_NOTESTSCOLLECTED
@@ -1082,4 +1084,55 @@ def test_collect_with_chdir_during_import(testdir):
     with testdir.tmpdir.as_cwd():
         result = testdir.runpytest("--collect-only")
     result.stdout.fnmatch_lines(["collected 1 item"])
+
+
+@pytest.mark.skipif(
+    not hasattr(py.path.local, "mksymlinkto"),
+    reason="symlink not available on this platform",
+)
+def test_collect_symlink_file_arg(testdir):
+    """Test that collecting a direct symlink, where the target does not match python_files works (#4325)."""
+    real = testdir.makepyfile(
+        real="""
+        def test_nodeid(request):
+            assert request.node.nodeid == "real.py::test_nodeid"
+        """
+    )
+    symlink = testdir.tmpdir.join("symlink.py")
+    symlink.mksymlinkto(real)
+    result = testdir.runpytest("-v", symlink)
+    result.stdout.fnmatch_lines(["real.py::test_nodeid PASSED*", "*1 passed in*"])
+    assert result.ret == 0
+
+
+@pytest.mark.skipif(
+    not hasattr(py.path.local, "mksymlinkto"),
+    reason="symlink not available on this platform",
+)
+def test_collect_symlink_out_of_tree(testdir):
+    """Test collection of symlink via out-of-tree rootdir."""
+    sub = testdir.tmpdir.join("sub")
+    real = sub.join("test_real.py")
+    real.write(
+        textwrap.dedent(
+            """
+        def test_nodeid(request):
+            # Should not contain sub/ prefix.
+            assert request.node.nodeid == "test_real.py::test_nodeid"
+        """
+        ),
+        ensure=True,
+    )
+
+    out_of_tree = testdir.tmpdir.join("out_of_tree").ensure(dir=True)
+    symlink_to_sub = out_of_tree.join("symlink_to_sub")
+    symlink_to_sub.mksymlinkto(sub)
+    sub.chdir()
+    result = testdir.runpytest("-vs", "--rootdir=%s" % sub, symlink_to_sub)
+    result.stdout.fnmatch_lines(
+        [
+            # Should not contain "sub/"!
+            "test_real.py::test_nodeid PASSED"
+        ]
+    )
     assert result.ret == 0
