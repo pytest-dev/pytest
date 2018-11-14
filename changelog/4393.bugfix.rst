@@ -1,0 +1,1 @@
+Do not create ``.gitignore``/``README.md`` files in existing cache directories.

@@ -108,6 +108,10 @@ class Cache(object):
         """
         path = self._getvaluepath(key)
         try:
+            if path.parent.is_dir():
+                cache_dir_exists_already = True
+            else:
+                cache_dir_exists_already = self._cachedir.exists()
             path.parent.mkdir(exist_ok=True, parents=True)
         except (IOError, OSError):
             self.warn("could not create cache path {path}", path=path)
@@ -119,6 +123,7 @@ class Cache(object):
         else:
             with f:
                 json.dump(value, f, indent=2, sort_keys=True)
+            if not cache_dir_exists_already:
                 self._ensure_supporting_files()
 
     def _ensure_supporting_files(self):
@@ -128,8 +133,10 @@ class Cache(object):
             if not readme_path.is_file():
                 readme_path.write_text(README_CONTENT)
 
-            msg = u"# created by pytest automatically, do not change\n*"
-            self._cachedir.joinpath(".gitignore").write_text(msg, encoding="UTF-8")
+            gitignore_path = self._cachedir.joinpath(".gitignore")
+            if not gitignore_path.is_file():
+                msg = u"# Created by pytest automatically.\n*"
+                gitignore_path.write_text(msg, encoding="UTF-8")
 
 
 class LFPlugin(object):
