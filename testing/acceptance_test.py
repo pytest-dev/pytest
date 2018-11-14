@@ -14,6 +14,7 @@ import six
 import pytest
 from _pytest.main import EXIT_NOTESTSCOLLECTED
 from _pytest.main import EXIT_USAGEERROR
+from _pytest.warnings import SHOW_PYTEST_WARNINGS_ARG
 
 
 def prepend_pythonpath(*dirs):
@@ -307,7 +308,7 @@ class TestGeneralUsage(object):
         """
         )
         p = testdir.makepyfile("""def test_func(x): pass""")
-        res = testdir.runpytest(p)
+        res = testdir.runpytest(p, SHOW_PYTEST_WARNINGS_ARG)
         assert res.ret == 0
         res.stdout.fnmatch_lines(["*1 skipped*"])
 
@@ -321,7 +322,9 @@ class TestGeneralUsage(object):
                 pass
         """
         )
-        res = testdir.runpytest(p.basename + "::" + "test_func[1]")
+        res = testdir.runpytest(
+            p.basename + "::" + "test_func[1]", SHOW_PYTEST_WARNINGS_ARG
+        )
         assert res.ret == 0
         res.stdout.fnmatch_lines(["*1 passed*"])
 

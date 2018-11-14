@@ -213,7 +213,6 @@ If you just collect tests you'll also nicely see 'advanced' and 'basic' as varia
     collected 4 items
     <Module 'test_scenarios.py'>
       <Class 'TestSampleWithScenarios'>
-        <Instance '()'>
           <Function 'test_demo1[basic]'>
           <Function 'test_demo2[basic]'>
           <Function 'test_demo1[advanced]'>

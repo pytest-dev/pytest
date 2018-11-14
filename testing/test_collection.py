@@ -512,13 +512,8 @@ class TestSession(object):
                     pass
         """
         )
-        normid = p.basename + "::TestClass::()::test_method"
-        for id in [
-            p.basename,
-            p.basename + "::TestClass",
-            p.basename + "::TestClass::()",
-            normid,
-        ]:
+        normid = p.basename + "::TestClass::test_method"
+        for id in [p.basename, p.basename + "::TestClass", normid]:
             items, hookrec = testdir.inline_genitems(id)
             assert len(items) == 1
             assert items[0].name == "test_method"
@@ -627,7 +622,7 @@ class TestSession(object):
         items, hookrec = testdir.inline_genitems(arg)
         assert len(items) == 1
         item, = items
-        assert item.nodeid.endswith("TestClass::()::test_method")
+        assert item.nodeid.endswith("TestClass::test_method")
         # ensure we are reporting the collection of the single test item (#2464)
         assert [x.name for x in self.get_reported_items(hookrec)] == ["test_method"]
 
@@ -1051,8 +1046,44 @@ def test_collect_handles_raising_on_dunder_class(testdir):
     """
     )
     result = testdir.runpytest()
-    assert result.ret == 0
     result.stdout.fnmatch_lines(["*1 passed in*"])
+    assert result.ret == 0
+
+
+def test_collect_with_chdir_during_import(testdir):
+    subdir = testdir.tmpdir.mkdir("sub")
+    testdir.tmpdir.join("conftest.py").write(
+        textwrap.dedent(
+            """
+            import os
+            os.chdir(%r)
+            """
+            % (str(subdir),)
+        )
+    )
+    testdir.makepyfile(
+        """
+        def test_1():
+            import os
+            assert os.getcwd() == %r
+        """
+        % (str(subdir),)
+    )
+    with testdir.tmpdir.as_cwd():
+        result = testdir.runpytest()
+    result.stdout.fnmatch_lines(["*1 passed in*"])
+    assert result.ret == 0
+
+    # Handles relative testpaths.
+    testdir.makeini(
+        """
+        [pytest]
+        testpaths = .
+    """
+    )
+    with testdir.tmpdir.as_cwd():
+        result = testdir.runpytest("--collect-only")
+    result.stdout.fnmatch_lines(["collected 1 item"])
 
 
 @pytest.mark.skipif(

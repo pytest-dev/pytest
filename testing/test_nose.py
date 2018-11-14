@@ -3,6 +3,7 @@ from __future__ import division
 from __future__ import print_function
 
 import pytest
+from _pytest.warnings import SHOW_PYTEST_WARNINGS_ARG
 
 
 def setup_module(mod):
@@ -224,7 +225,7 @@ def test_nose_test_generator_fixtures(testdir):
                 eq_(self.called, expect)
     """
     )
-    result = testdir.runpytest(p, "-p", "nose")
+    result = testdir.runpytest(p, "-p", "nose", SHOW_PYTEST_WARNINGS_ARG)
     result.stdout.fnmatch_lines(["*10 passed*"])
 
 

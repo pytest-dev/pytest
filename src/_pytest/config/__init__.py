@@ -851,11 +851,13 @@ class Config(object):
                 args, self.option, namespace=self.option
             )
             if not args:
-                cwd = os.getcwd()
-                if cwd == self.rootdir:
-                    args = self.getini("testpaths")
+                if self.invocation_dir == self.rootdir:
+                    args = [
+                        str(self.invocation_dir.join(x, abs=True))
+                        for x in self.getini("testpaths")
+                    ]
                 if not args:
-                    args = [cwd]
+                    args = [str(self.invocation_dir)]
             self.args = args
         except PrintHelp:
             pass

@@ -7,6 +7,7 @@ import _pytest._code
 import pytest
 from _pytest.main import EXIT_NOTESTSCOLLECTED
 from _pytest.nodes import Collector
+from _pytest.warnings import SHOW_PYTEST_WARNINGS_ARG
 
 
 class TestModule(object):
@@ -370,7 +371,7 @@ class TestGenerator(object):
                 yield assert_order_of_execution
         """
         )
-        reprec = testdir.inline_run(o)
+        reprec = testdir.inline_run(o, SHOW_PYTEST_WARNINGS_ARG)
         passed, skipped, failed = reprec.countoutcomes()
         assert passed == 7
         assert not skipped and not failed
@@ -404,7 +405,7 @@ class TestGenerator(object):
                 yield assert_order_of_execution
         """
         )
-        reprec = testdir.inline_run(o)
+        reprec = testdir.inline_run(o, SHOW_PYTEST_WARNINGS_ARG)
         passed, skipped, failed = reprec.countoutcomes()
         assert passed == 4
         assert not skipped and not failed
@@ -448,7 +449,7 @@ class TestGenerator(object):
                 assert setuplist[1] != setuplist[2], setuplist
         """
         )
-        reprec = testdir.inline_run(o, "-v")
+        reprec = testdir.inline_run(o, "-v", SHOW_PYTEST_WARNINGS_ARG)
         passed, skipped, failed = reprec.countoutcomes()
         assert passed == 4
         assert not skipped and not failed
@@ -1380,7 +1381,7 @@ def test_collector_attributes(testdir):
             pass
     """
     )
-    result = testdir.runpytest()
+    result = testdir.runpytest(SHOW_PYTEST_WARNINGS_ARG)
     result.stdout.fnmatch_lines(["*1 passed*"])
 
 
@@ -1407,10 +1408,8 @@ def test_customize_through_attributes(testdir):
                 pass
     """
     )
-    result = testdir.runpytest("--collect-only")
-    result.stdout.fnmatch_lines(
-        ["*MyClass*", "*MyInstance*", "*MyFunction*test_hello*"]
-    )
+    result = testdir.runpytest("--collect-only", SHOW_PYTEST_WARNINGS_ARG)
+    result.stdout.fnmatch_lines(["*MyClass*", "*MyFunction*test_hello*"])
 
 
 def test_unorderable_types(testdir):

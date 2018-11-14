@@ -148,15 +148,17 @@ class TestNewAPI(object):
         assert testdir.tmpdir.join("custom_cache_dir").isdir()
 
 
-def test_cache_reportheader(testdir):
-    testdir.makepyfile(
-        """
-        def test_hello():
-            pass
-    """
-    )
+@pytest.mark.parametrize("env", ((), ("TOX_ENV_DIR", "/tox_env_dir")))
+def test_cache_reportheader(env, testdir, monkeypatch):
+    testdir.makepyfile("""def test_foo(): pass""")
+    if env:
+        monkeypatch.setenv(*env)
+        expected = os.path.join(env[1], ".pytest_cache")
+    else:
+        monkeypatch.delenv("TOX_ENV_DIR", raising=False)
+        expected = ".pytest_cache"
     result = testdir.runpytest("-v")
-    result.stdout.fnmatch_lines(["cachedir: .pytest_cache"])
+    result.stdout.fnmatch_lines(["cachedir: %s" % expected])
 
 
 def test_cache_reportheader_external_abspath(testdir, tmpdir_factory):
