@@ -1,0 +1,1 @@
+Keep encoding of sys file descriptors with output capturing.

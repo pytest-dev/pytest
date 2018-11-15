@@ -704,6 +704,31 @@ class TestCaptureFixture(object):
         reprec = testdir.inline_run()
         reprec.assertoutcome(passed=1)
 
+    def test_keeps_sys_fd_encoding(self, testdir, monkeypatch):
+        import subprocess
+
+        # Get the real encoding, without any outer pytest.
+        p = subprocess.Popen(
+            [sys.executable, "-c", "import sys; print(sys.stdout.encoding, end='')"],
+            stdout=subprocess.PIPE,
+            encoding="UTF-8",
+        )
+        real_encoding, _ = p.communicate()
+
+        assert real_encoding == sys.stdout.encoding
+
+        testdir.makepyfile(
+            """
+            def test_encoding():
+                import sys
+                assert sys.stdout.encoding == %r
+            """
+            % (real_encoding,)
+        )
+
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines(["*1 passed in*"])
+
 
 def test_setup_failure_does_not_kill_capturing(testdir):
     sub1 = testdir.mkpydir("sub1")

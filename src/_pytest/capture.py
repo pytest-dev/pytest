@@ -524,8 +524,21 @@ class FDCaptureBinary(object):
             else:
                 if tmpfile is None:
                     f = TemporaryFile()
+                    if targetfd in patchsysdict:
+                        encoding = (
+                            getattr(
+                                getattr(sys, patchsysdict[targetfd]),
+                                "encoding",
+                                "UTF-8",
+                            )
+                            or "UTF-8"
+                        )
+                    else:
+                        encoding = "UTF-8"
                     with f:
-                        tmpfile = safe_text_dupfile(f, mode="wb+")
+                        tmpfile = safe_text_dupfile(
+                            f, mode="wb+", default_encoding=encoding
+                        )
                 if targetfd in patchsysdict:
                     self.syscapture = SysCapture(targetfd, tmpfile)
                 else:
