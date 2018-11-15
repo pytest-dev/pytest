@@ -1074,11 +1074,27 @@ def test_terminal_summary_warnings_are_displayed(testdir):
             warnings.warn(UserWarning('internal warning'))
     """
     )
-    result = testdir.runpytest()
+    testdir.makepyfile(
+        """
+        def test_failure():
+            import warnings
+            warnings.warn("warning_from_" + "test")
+            assert 0
+    """
+    )
+    result = testdir.runpytest("-ra")
     result.stdout.fnmatch_lines(
-        ["*conftest.py:3:*internal warning", "*== 1 warnings in *"]
+        [
+            "*= warnings summary =*",
+            "*warning_from_test*",
+            "*= short test summary info =*",
+            "*= warnings summary (final) =*",
+            "*conftest.py:3:*internal warning",
+            "*== 1 failed, 2 warnings in *",
+        ]
     )
     assert "None" not in result.stdout.str()
+    assert result.stdout.str().count("warning_from_test") == 1
 
 
 @pytest.mark.parametrize(
