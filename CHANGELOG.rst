@@ -18,6 +18,73 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+pytest 4.0.0 (2018-11-13)
+=========================
+
+Removals
+--------
+
+- `#3737 <https://github.com/pytest-dev/pytest/issues/3737>`_: **RemovedInPytest4Warnings are now errors by default.**
+
+  Following our plan to remove deprecated features with as little disruption as
+  possible, all warnings of type ``RemovedInPytest4Warnings`` now generate errors
+  instead of warning messages.
+
+  **The affected features will be effectively removed in pytest 4.1**, so please consult the
+  `Deprecations and Removals <https://docs.pytest.org/en/latest/deprecations.html>`__
+  section in the docs for directions on how to update existing code.
+
+  In the pytest ``4.0.X`` series, it is possible to change the errors back into warnings as a stop
+  gap measure by adding this to your ``pytest.ini`` file:
+
+  .. code-block:: ini
+
+      [pytest]
+      filterwarnings =
+          ignore::pytest.RemovedInPytest4Warning
+
+  But this will stop working when pytest ``4.1`` is released.
+
+  **If you have concerns** about the removal of a specific feature, please add a
+  comment to `#4348 <https://github.com/pytest-dev/pytest/issues/4348>`__.
+
+
+- `#4358 <https://github.com/pytest-dev/pytest/issues/4358>`_: Remove the ``::()`` notation to denote a test class instance in node ids.
+
+  Previously, node ids that contain test instances would use ``::()`` to denote the instance like this::
+
+      test_foo.py::Test::()::test_bar
+
+  The extra ``::()`` was puzzling to most users and has been removed, so that the test id becomes now::
+
+      test_foo.py::Test::test_bar
+
+  This change could not accompany a deprecation period as is usual when user-facing functionality changes because
+  it was not really possible to detect when the functionality was being used explicitly.
+
+  The extra ``::()`` might have been removed in some places internally already,
+  which then led to confusion in places where it was expected, e.g. with
+  ``--deselect`` (`#4127 <https://github.com/pytest-dev/pytest/issues/4127>`_).
+
+  Test class instances are also not listed with ``--collect-only`` anymore.
+
+
+
+Features
+--------
+
+- `#4270 <https://github.com/pytest-dev/pytest/issues/4270>`_: The ``cache_dir`` option uses ``$TOX_ENV_DIR`` as prefix (if set in the environment).
+
+  This uses a different cache per tox environment by default.
+
+
+
+Bug Fixes
+---------
+
+- `#3554 <https://github.com/pytest-dev/pytest/issues/3554>`_: Fix ``CallInfo.__repr__`` for when the call is not finished yet.
+
+
 pytest 3.10.1 (2018-11-11)
 ==========================
 

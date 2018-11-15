@@ -132,7 +132,6 @@ The test collection would look like this::
     collected 2 items
     <Module 'check_myapp.py'>
       <Class 'CheckMyApp'>
-        <Instance '()'>
           <Function 'simple_check'>
           <Function 'complex_check'>
 
@@ -187,7 +186,6 @@ You can always peek at the collection tree without running tests like this::
     <Module 'CWD/pythoncollection.py'>
       <Function 'test_function'>
       <Class 'TestClass'>
-        <Instance '()'>
           <Function 'test_method'>
           <Function 'test_anothermethod'>
 
