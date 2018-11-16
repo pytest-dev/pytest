@@ -387,7 +387,7 @@ def safe_text_dupfile(f, mode, default_encoding="UTF8"):
     """ return an open text file object that's a duplicate of f on the
         FD-level if possible.
     """
-    encoding = getattr(f, "encoding", default_encoding)
+    encoding = getattr(f, "encoding", None)
     try:
         fd = f.fileno()
     except Exception:
@@ -399,9 +399,7 @@ def safe_text_dupfile(f, mode, default_encoding="UTF8"):
         if "b" not in mode:
             mode += "b"
         f = os.fdopen(newfd, mode, 0)  # no buffering
-    if encoding:
-        return EncodedFile(f, encoding)
-    return f
+    return EncodedFile(f, encoding or default_encoding)
 
 
 class EncodedFile(object):
@@ -527,8 +525,13 @@ class FDCaptureBinary(object):
                 if tmpfile is None:
                     f = TemporaryFile()
                     if targetfd in patchsysdict:
-                        encoding = getattr(
-                            getattr(sys, patchsysdict[targetfd]), "encoding"
+                        encoding = (
+                            getattr(
+                                getattr(sys, patchsysdict[targetfd]),
+                                "encoding",
+                                "UTF-8",
+                            )
+                            or "UTF-8"
                         )
                     else:
                         encoding = "UTF-8"

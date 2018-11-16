@@ -13,6 +13,7 @@ import textwrap
 from io import UnsupportedOperation
 
 import py
+import six
 from six import text_type
 
 import pytest
@@ -718,16 +719,17 @@ class TestCaptureFixture(object):
         real_encoding = real_encoding.rstrip().decode("ascii")
 
         if real_encoding == "None":
-            expected_encoding = "is None"
-            assert sys.stdout.encoding is None
+            assert six.PY2
+            expected_encoding = "UTF-8"
+            assert sys.stdout.encoding == expected_encoding
         else:
-            expected_encoding = "== %r" % real_encoding
+            expected_encoding = real_encoding
             assert real_encoding == sys.stdout.encoding
         testdir.makepyfile(
             """
             def test_encoding():
                 import sys
-                assert sys.stdout.encoding %s
+                assert sys.stdout.encoding == %r
             """
             % expected_encoding
         )
