@@ -708,22 +708,28 @@ class TestCaptureFixture(object):
         import subprocess
 
         # Get the real encoding, without any outer pytest.
+        # NOTE: py27: "None" with shell=False, "" with shell=True!?
         p = subprocess.Popen(
-            [sys.executable, "-c", "import sys; print(sys.stdout.encoding, end='')"],
+            [sys.executable, "-c", "import sys; print(sys.stdout.encoding)"],
             stdout=subprocess.PIPE,
-            encoding="UTF-8",
         )
         real_encoding, _ = p.communicate()
+        assert p.returncode == 0
+        real_encoding = real_encoding.rstrip().decode("ascii")
 
-        assert real_encoding == sys.stdout.encoding
-
+        if real_encoding == "None":
+            expected_encoding = "is None"
+            assert sys.stdout.encoding is None
+        else:
+            expected_encoding = "== %r" % real_encoding
+            assert real_encoding == sys.stdout.encoding
         testdir.makepyfile(
             """
             def test_encoding():
                 import sys
-                assert sys.stdout.encoding == %r
+                assert sys.stdout.encoding %s
             """
-            % (real_encoding,)
+            % expected_encoding
         )
 
         result = testdir.runpytest()
