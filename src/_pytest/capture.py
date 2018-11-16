@@ -383,11 +383,12 @@ class CaptureFixture(object):
             yield
 
 
-def safe_text_dupfile(f, mode, default_encoding="UTF8"):
+def safe_text_dupfile(f, mode, encoding=None):
     """ return an open text file object that's a duplicate of f on the
         FD-level if possible.
     """
-    encoding = getattr(f, "encoding", None)
+    if not encoding:
+        encoding = getattr(f, "encoding", None)
     try:
         fd = f.fileno()
     except Exception:
@@ -399,7 +400,7 @@ def safe_text_dupfile(f, mode, default_encoding="UTF8"):
         if "b" not in mode:
             mode += "b"
         f = os.fdopen(newfd, mode, 0)  # no buffering
-    return EncodedFile(f, encoding or default_encoding)
+    return EncodedFile(f, encoding or "UTF8")
 
 
 class EncodedFile(object):
@@ -524,15 +525,13 @@ class FDCaptureBinary(object):
             else:
                 if tmpfile is None:
                     f = TemporaryFile()
-                    encoding = None  # TODO: set on f directly once py27 is dropped.
+                    encoding = None
                     if targetfd in patchsysdict:
                         encoding = getattr(
                             getattr(sys, patchsysdict[targetfd]), "encoding"
                         )
                     with f:
-                        tmpfile = safe_text_dupfile(
-                            f, mode="wb+", default_encoding=encoding or "UTF-8"
-                        )
+                        tmpfile = safe_text_dupfile(f, mode="wb+", encoding=encoding)
                 if targetfd in patchsysdict:
                     self.syscapture = SysCapture(targetfd, tmpfile)
                 else:
