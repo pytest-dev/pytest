@@ -524,20 +524,14 @@ class FDCaptureBinary(object):
             else:
                 if tmpfile is None:
                     f = TemporaryFile()
+                    encoding = None  # TODO: set on f directly once py27 is dropped.
                     if targetfd in patchsysdict:
-                        encoding = (
-                            getattr(
-                                getattr(sys, patchsysdict[targetfd]),
-                                "encoding",
-                                "UTF-8",
-                            )
-                            or "UTF-8"
+                        encoding = getattr(
+                            getattr(sys, patchsysdict[targetfd]), "encoding"
                         )
-                    else:
-                        encoding = "UTF-8"
                     with f:
                         tmpfile = safe_text_dupfile(
-                            f, mode="wb+", default_encoding=encoding
+                            f, mode="wb+", default_encoding=encoding or "UTF-8"
                         )
                 if targetfd in patchsysdict:
                     self.syscapture = SysCapture(targetfd, tmpfile)
