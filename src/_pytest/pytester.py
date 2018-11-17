@@ -518,6 +518,9 @@ class Testdir(object):
     def __repr__(self):
         return "<Testdir %r>" % (self.tmpdir,)
 
+    def __str__(self):
+        return str(self.tmpdir)
+
     def finalize(self):
         """Clean up global state artifacts.
 
