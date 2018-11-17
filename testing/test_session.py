@@ -4,6 +4,7 @@ from __future__ import print_function
 
 import pytest
 from _pytest.main import EXIT_NOTESTSCOLLECTED
+from _pytest.warnings import SHOW_PYTEST_WARNINGS_ARG
 
 
 class SessionTests(object):
@@ -77,7 +78,8 @@ class SessionTests(object):
             """
             def test_1():
                 yield None
-        """
+        """,
+            SHOW_PYTEST_WARNINGS_ARG,
         )
         failures = reprec.getfailedcollections()
         out = failures[0].longrepr.reprcrash.message

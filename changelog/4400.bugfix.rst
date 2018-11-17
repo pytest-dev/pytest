@@ -1,0 +1,1 @@
+Rearrange warning handling for the yield test errors so the opt-out in 4.0.x correctly works.
