@@ -13,7 +13,6 @@ import textwrap
 from io import UnsupportedOperation
 
 import py
-import six
 from six import text_type
 
 import pytest
@@ -706,40 +705,17 @@ class TestCaptureFixture(object):
         reprec.assertoutcome(passed=1)
 
     def test_keeps_sys_fd_encoding(self, testdir, monkeypatch):
-        import subprocess
-
-        # Get the real encoding, without any outer pytest.
-        # NOTE: py27: "None" with shell=False, "" with shell=True!?
-        p = subprocess.Popen(
-            [sys.executable, "-c", "import sys; print(sys.stdout.encoding)"],
-            stdout=subprocess.PIPE,
-        )
-        real_encoding, _ = p.communicate()
-        assert p.returncode == 0
-        real_encoding = real_encoding.rstrip().decode("ascii")
-
-        if real_encoding == "None":
-            assert six.PY2
-            expected_encoding = "UTF-8"
-            assert sys.stdout.encoding == expected_encoding
-        else:
-            expected_encoding = real_encoding
-            # assert real_encoding == sys.stdout.encoding
-            if real_encoding != sys.stdout.encoding:
-                import warnings
-
-                warnings.warn(
-                    "real_encoding != stdout.encoding (%r, %r)"
-                    % (real_encoding, sys.stdout.encoding)
-                )
-
         testdir.makepyfile(
             """
             def test_encoding():
                 import sys
-                assert sys.stdout.encoding == %r
+
+                assert (sys.stdin.encoding, sys.stdout.encoding, sys.stderr.encoding) == (
+                    None,
+                    sys.__stdout__.encoding,
+                    sys.__stderr__.encoding,
+                )
             """
-            % expected_encoding
         )
 
         result = testdir.runpytest()
