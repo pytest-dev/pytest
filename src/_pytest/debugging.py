@@ -77,18 +77,21 @@ class pytestPDB(object):
     _saved = []
 
     @classmethod
-    def set_trace(cls, set_break=True):
-        """ invoke PDB set_trace debugging, dropping any IO capturing. """
+    def _init_pdb(cls, *args, **kwargs):
+        """ Initialize PDB debugging, dropping any IO capturing. """
         import _pytest.config
 
-        frame = sys._getframe().f_back
         if cls._pluginmanager is not None:
             capman = cls._pluginmanager.getplugin("capturemanager")
             if capman:
                 capman.suspend_global_capture(in_=True)
             tw = _pytest.config.create_terminal_writer(cls._config)
             tw.line()
-            if capman and capman.is_globally_capturing():
+            # Handle header similar to pdb.set_trace in py37+.
+            header = kwargs.pop("header", None)
+            if header is not None:
+                tw.sep(">", header)
+            elif capman and capman.is_globally_capturing():
                 tw.sep(">", "PDB set_trace (IO-capturing turned off)")
             else:
                 tw.sep(">", "PDB set_trace")
@@ -129,13 +132,18 @@ class pytestPDB(object):
                             self._pytest_capman.suspend_global_capture(in_=True)
                     return ret
 
-            _pdb = _PdbWrapper()
+            _pdb = _PdbWrapper(**kwargs)
             cls._pluginmanager.hook.pytest_enter_pdb(config=cls._config, pdb=_pdb)
         else:
-            _pdb = cls._pdb_cls()
+            _pdb = cls._pdb_cls(**kwargs)
+        return _pdb
 
-        if set_break:
-            _pdb.set_trace(frame)
+    @classmethod
+    def set_trace(cls, *args, **kwargs):
+        """Invoke debugging via ``Pdb.set_trace``, dropping any IO capturing."""
+        frame = sys._getframe().f_back
+        _pdb = cls._init_pdb(*args, **kwargs)
+        _pdb.set_trace(frame)
 
 
 class PdbInvoke(object):
@@ -161,9 +169,9 @@ class PdbTrace(object):
 
 
 def _test_pytest_function(pyfuncitem):
-    pytestPDB.set_trace(set_break=False)
+    _pdb = pytestPDB._init_pdb()
     testfunction = pyfuncitem.obj
-    pyfuncitem.obj = pdb.runcall
+    pyfuncitem.obj = _pdb.runcall
     if pyfuncitem._isyieldedfunction():
         arg_list = list(pyfuncitem._args)
         arg_list.insert(0, testfunction)
