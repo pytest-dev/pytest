@@ -5,20 +5,21 @@ from __future__ import print_function
 import os
 import sys
 
+import six
+
+import pytest
+from _pytest.mark import EMPTY_PARAMETERSET_OPTION
+from _pytest.mark import MarkGenerator as Mark
+from _pytest.mark import ParameterSet
+from _pytest.mark import transfer_markers
+from _pytest.nodes import Collector
+from _pytest.nodes import Node
 from _pytest.warnings import SHOW_PYTEST_WARNINGS_ARG
 
 try:
     import mock
 except ImportError:
     import unittest.mock as mock
-import pytest
-from _pytest.mark import (
-    MarkGenerator as Mark,
-    ParameterSet,
-    transfer_markers,
-    EMPTY_PARAMETERSET_OPTION,
-)
-from _pytest.nodes import Node, Collector
 
 ignore_markinfo = pytest.mark.filterwarnings(
     "ignore:MarkInfo objects:pytest.RemovedInPytest4Warning"
@@ -1252,3 +1253,18 @@ def test_markers_from_parametrize(testdir):
 
     result = testdir.runpytest(SHOW_PYTEST_WARNINGS_ARG)
     result.assert_outcomes(passed=4)
+
+
+def test_pytest_param_id_requires_string():
+    with pytest.raises(TypeError) as excinfo:
+        pytest.param(id=True)
+    msg, = excinfo.value.args
+    if six.PY2:
+        assert msg == "Expected id to be a string, got <type 'bool'>: True"
+    else:
+        assert msg == "Expected id to be a string, got <class 'bool'>: True"
+
+
+@pytest.mark.parametrize("s", (None, "hello world"))
+def test_pytest_param_id_allows_none_or_string(s):
+    assert pytest.param(id=s)
