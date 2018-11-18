@@ -390,9 +390,11 @@ class TestMetafunc(object):
                 pytest.param("\x05", 2),
                 pytest.param(b"\x00", 3),
                 pytest.param(b"\x05", 4),
+                pytest.param("\t", 5),
+                pytest.param(b"\t", 6),
             ],
         )
-        assert result == ["\\x00-1", "\\x05-2", "\\x00-3", "\\x05-4"]
+        assert result == ["\\x00-1", "\\x05-2", "\\x00-3", "\\x05-4", "\\t-5", "\\t-6"]
 
     def test_idmaker_manual_ids_must_be_printable(self):
         from _pytest.python import idmaker

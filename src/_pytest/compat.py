@@ -185,6 +185,9 @@ def get_default_arg_names(function):
 _non_printable_ascii_translate_table = {
     i: u"\\x{:02x}".format(i) for i in range(128) if i not in range(32, 127)
 }
+_non_printable_ascii_translate_table.update(
+    {ord("\t"): u"\\t", ord("\r"): u"\\r", ord("\n"): u"\\n"}
+)
 
 
 def _translate_non_printable(s):
