@@ -182,6 +182,15 @@ def get_default_arg_names(function):
     )
 
 
+_non_printable_ascii_translate_table = {
+    i: u"\\x{:02x}".format(i) for i in range(128) if i not in range(32, 127)
+}
+
+
+def _translate_non_printable(s):
+    return s.translate(_non_printable_ascii_translate_table)
+
+
 if _PY3:
     STRING_TYPES = bytes, str
     UNICODE_TYPES = six.text_type
@@ -221,9 +230,10 @@ if _PY3:
 
         """
         if isinstance(val, bytes):
-            return _bytes_to_ascii(val)
+            ret = _bytes_to_ascii(val)
         else:
-            return val.encode("unicode_escape").decode("ascii")
+            ret = val.encode("unicode_escape").decode("ascii")
+        return _translate_non_printable(ret)
 
 
 else:
@@ -241,11 +251,12 @@ else:
         """
         if isinstance(val, bytes):
             try:
-                return val.encode("ascii")
+                ret = val.decode("ascii")
             except UnicodeDecodeError:
-                return val.encode("string-escape")
+                ret = val.encode("string-escape").decode("ascii")
         else:
-            return val.encode("unicode-escape")
+            ret = val.encode("unicode-escape").decode("ascii")
+        return _translate_non_printable(ret)
 
 
 class _PytestWrapper(object):

@@ -5,6 +5,7 @@ import textwrap
 
 import attr
 import hypothesis
+import six
 from hypothesis import strategies
 
 import pytest
@@ -262,11 +263,8 @@ class TestMetafunc(object):
         from _pytest.python import _idval
 
         escaped = _idval(value, "a", 6, None, item=None, config=None)
-        assert isinstance(escaped, str)
-        if PY3:
-            escaped.encode("ascii")
-        else:
-            escaped.decode("ascii")
+        assert isinstance(escaped, six.text_type)
+        escaped.encode("ascii")
 
     def test_unicode_idval(self):
         """This tests that Unicode strings outside the ASCII character set get
@@ -381,6 +379,20 @@ class TestMetafunc(object):
             "\\xc3\\xb4-name",
             "\\xc3\\xb4-other",
         ]
+
+    def test_idmaker_non_printable_characters(self):
+        from _pytest.python import idmaker
+
+        result = idmaker(
+            ("s", "n"),
+            [
+                pytest.param("\x00", 1),
+                pytest.param("\x05", 2),
+                pytest.param(b"\x00", 3),
+                pytest.param(b"\x05", 4),
+            ],
+        )
+        assert result == ["\\x00-1", "\\x05-2", "\\x00-3", "\\x05-4"]
 
     def test_idmaker_enum(self):
         from _pytest.python import idmaker
