@@ -394,6 +394,18 @@ class TestMetafunc(object):
         )
         assert result == ["\\x00-1", "\\x05-2", "\\x00-3", "\\x05-4"]
 
+    def test_idmaker_manual_ids_must_be_printable(self):
+        from _pytest.python import idmaker
+
+        result = idmaker(
+            ("s",),
+            [
+                pytest.param("x00", id="hello \x00"),
+                pytest.param("x05", id="hello \x05"),
+            ],
+        )
+        assert result == ["hello \\x00", "hello \\x05"]
+
     def test_idmaker_enum(self):
         from _pytest.python import idmaker
 
