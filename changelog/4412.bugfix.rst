@@ -1,0 +1,1 @@
+Fix assertion rewriting involving ``Starred`` + side-effects.

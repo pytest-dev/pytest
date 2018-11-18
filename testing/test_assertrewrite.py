@@ -413,6 +413,19 @@ class TestAssertionRewrite(object):
         )
         testdir.runpytest().assert_outcomes(passed=1)
 
+    @pytest.mark.skipif("sys.version_info < (3,5)")
+    def test_starred_with_side_effect(self, testdir):
+        """See #4412"""
+        testdir.makepyfile(
+            """\
+            def test():
+                f = lambda x: x
+                x = iter([1, 2, 3])
+                assert 2 * next(x) == f(*[next(x)])
+            """
+        )
+        testdir.runpytest().assert_outcomes(passed=1)
+
     def test_call(self):
         def g(a=42, *args, **kwargs):
             return False
