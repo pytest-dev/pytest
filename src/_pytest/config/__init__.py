@@ -609,6 +609,7 @@ class Config(object):
         self._warn = self.pluginmanager._warn
         self.pluginmanager.register(self, "pytestconfig")
         self._configured = False
+        self.invocation_dir = py.path.local()
 
         def do_setns(dic):
             import pytest
@@ -731,7 +732,6 @@ class Config(object):
         self.rootdir, self.inifile, self.inicfg = r
         self._parser.extra_info["rootdir"] = self.rootdir
         self._parser.extra_info["inifile"] = self.inifile
-        self.invocation_dir = py.path.local()
         self._parser.addini("addopts", "extra command line options", "args")
         self._parser.addini("minversion", "minimally required pytest version")
         self._override_ini = ns.override_ini or ()
