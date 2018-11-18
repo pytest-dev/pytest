@@ -1,1 +1,1 @@
-Loosen the definition of what ``approx`` considers a sequence
+``approx`` again works with more generic containers, more precisely instances of ``Iterable`` and ``Sized`` instead of more restrictive ``Sequence``.
