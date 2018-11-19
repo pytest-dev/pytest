@@ -59,37 +59,6 @@ class TestPytestPluginInteractions(object):
         assert res.ret != 0
         res.stderr.fnmatch_lines(["*did not find*sys*"])
 
-    def test_namespace_early_from_import(self, testdir):
-        p = testdir.makepyfile(
-            """
-            from pytest import Item
-            from pytest import Item as Item2
-            assert Item is Item2
-        """
-        )
-        result = testdir.runpython(p)
-        assert result.ret == 0
-
-    @pytest.mark.filterwarnings("ignore:pytest_namespace is deprecated")
-    def test_do_ext_namespace(self, testdir):
-        testdir.makeconftest(
-            """
-            def pytest_namespace():
-                return {'hello': 'world'}
-        """
-        )
-        p = testdir.makepyfile(
-            """
-            from pytest import hello
-            import pytest
-            def test_hello():
-                assert hello == "world"
-                assert 'hello' in pytest.__all__
-        """
-        )
-        reprec = testdir.inline_run(p)
-        reprec.assertoutcome(passed=1)
-
     def test_do_option_postinitialize(self, testdir):
         config = testdir.parseconfigure()
         assert not hasattr(config.option, "test123")
@@ -188,17 +157,6 @@ class TestPytestPluginInteractions(object):
         pytestpm.addhooks(Plugin())
         assert len(warnings) == len(before) + 1
         assert "deprecated" in warnings[-1]
-
-
-def test_namespace_has_default_and_env_plugins(testdir):
-    p = testdir.makepyfile(
-        """
-        import pytest
-        pytest.mark
-    """
-    )
-    result = testdir.runpython(p)
-    assert result.ret == 0
 
 
 def test_default_markers(testdir):

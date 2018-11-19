@@ -610,13 +610,6 @@ class Config(object):
         self.pluginmanager.register(self, "pytestconfig")
         self._configured = False
         self.invocation_dir = py.path.local()
-
-        def do_setns(dic):
-            import pytest
-
-            setns(pytest, dic)
-
-        self.hook.pytest_namespace.call_historic(do_setns, {})
         self.hook.pytest_addoption.call_historic(kwargs=dict(parser=self._parser))
 
     def add_cleanup(self, func):
