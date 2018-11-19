@@ -113,9 +113,6 @@ PYTEST_PLUGINS_FROM_NON_TOP_LEVEL_CONFTEST = RemovedInPytest4Warning(
     "Please move it to the top level conftest file instead."
 )
 
-PYTEST_NAMESPACE = RemovedInPytest4Warning(
-    "pytest_namespace is deprecated and will be removed soon"
-)
 
 PYTEST_ENSURETEMP = RemovedInPytest4Warning(
     "pytest/tmpdir_factory.ensuretemp is deprecated, \n"

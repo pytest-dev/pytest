@@ -1,0 +1,1 @@
+Remove the implementation of the pytest_namespace hook.
