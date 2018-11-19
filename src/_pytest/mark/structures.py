@@ -5,8 +5,10 @@ from functools import reduce
 from operator import attrgetter
 
 import attr
+import six
 from six.moves import map
 
+from ..compat import ascii_escaped
 from ..compat import getfslineno
 from ..compat import MappingMixin
 from ..compat import NOTSET
@@ -70,10 +72,13 @@ class ParameterSet(namedtuple("ParameterSet", "values, marks, id")):
         else:
             assert isinstance(marks, (tuple, list, set))
 
-        def param_extract_id(id=None):
-            return id
-
-        id_ = param_extract_id(**kw)
+        id_ = kw.pop("id", None)
+        if id_ is not None:
+            if not isinstance(id_, six.string_types):
+                raise TypeError(
+                    "Expected id to be a string, got {}: {!r}".format(type(id_), id_)
+                )
+            id_ = ascii_escaped(id_)
         return cls(values, marks, id_)
 
     @classmethod
