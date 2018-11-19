@@ -852,10 +852,7 @@ class Config(object):
             )
             if not args:
                 if self.invocation_dir == self.rootdir:
-                    args = [
-                        str(self.invocation_dir.join(x, abs=True))
-                        for x in self.getini("testpaths")
-                    ]
+                    args = self.getini("testpaths")
                 if not args:
                     args = [str(self.invocation_dir)]
             self.args = args

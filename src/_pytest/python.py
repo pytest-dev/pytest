@@ -741,16 +741,20 @@ class FunctionMixin(PyobjMixin):
 
 class Generator(FunctionMixin, PyCollector):
     def collect(self):
+
         # test generators are seen as collectors but they also
         # invoke setup/teardown on popular request
         # (induced by the common "test_*" naming shared with normal tests)
         from _pytest import deprecated
+
+        self.warn(deprecated.YIELD_TESTS)
 
         self.session._setupstate.prepare(self)
         # see FunctionMixin.setup and test_setupstate_is_preserved_134
         self._preservedparent = self.parent.obj
         values = []
         seen = {}
+        _Function = self._getcustomclass("Function")
         for i, x in enumerate(self.obj()):
             name, call, args = self.getcallargs(x)
             if not callable(call):
@@ -764,11 +768,7 @@ class Generator(FunctionMixin, PyCollector):
                     "%r generated tests with non-unique name %r" % (self, name)
                 )
             seen[name] = True
-            with warnings.catch_warnings():
-                # ignore our own deprecation warning
-                function_class = self.Function
-            values.append(function_class(name, self, args=args, callobj=call))
-        self.warn(deprecated.YIELD_TESTS)
+            values.append(_Function(name, self, args=args, callobj=call))
         return values
 
     def getcallargs(self, obj):
