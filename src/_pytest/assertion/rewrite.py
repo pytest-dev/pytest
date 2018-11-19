@@ -946,7 +946,8 @@ class AssertionRewriter(ast.NodeVisitor):
     def visit_Starred(self, starred):
         # From Python 3.5, a Starred node can appear in a function call
         res, expl = self.visit(starred.value)
-        return starred, "*" + expl
+        new_starred = ast.Starred(res, starred.ctx)
+        return new_starred, "*" + expl
 
     def visit_Call_legacy(self, call):
         """

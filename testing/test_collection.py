@@ -1086,6 +1086,28 @@ def test_collect_with_chdir_during_import(testdir):
     result.stdout.fnmatch_lines(["collected 1 item"])
 
 
+def test_collect_pyargs_with_testpaths(testdir, monkeypatch):
+    testmod = testdir.mkdir("testmod")
+    # NOTE: __init__.py is not collected since it does not match python_files.
+    testmod.ensure("__init__.py").write("def test_func(): pass")
+    testmod.ensure("test_file.py").write("def test_func(): pass")
+
+    root = testdir.mkdir("root")
+    root.ensure("pytest.ini").write(
+        textwrap.dedent(
+            """
+        [pytest]
+        addopts = --pyargs
+        testpaths = testmod
+    """
+        )
+    )
+    monkeypatch.setenv("PYTHONPATH", str(testdir.tmpdir))
+    with root.as_cwd():
+        result = testdir.runpytest_subprocess()
+    result.stdout.fnmatch_lines(["*1 passed in*"])
+
+
 @pytest.mark.skipif(
     not hasattr(py.path.local, "mksymlinkto"),
     reason="symlink not available on this platform",
