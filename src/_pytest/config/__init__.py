@@ -11,10 +11,10 @@ import shlex
 import sys
 import types
 import warnings
-from distutils.version import LooseVersion
 
 import py
 import six
+from pkg_resources import parse_version
 from pluggy import HookimplMarker
 from pluggy import HookspecMarker
 from pluggy import PluginManager
@@ -822,7 +822,7 @@ class Config(object):
 
         minver = self.inicfg.get("minversion", None)
         if minver:
-            if LooseVersion(minver) > LooseVersion(pytest.__version__):
+            if parse_version(minver) > parse_version(pytest.__version__):
                 raise pytest.UsageError(
                     "%s:%d: requires pytest-%s, actual pytest-%s'"
                     % (
