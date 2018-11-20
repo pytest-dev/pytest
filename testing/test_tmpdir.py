@@ -4,6 +4,7 @@ from __future__ import print_function
 
 import sys
 
+import attr
 import six
 
 import pytest
@@ -25,12 +26,29 @@ def test_ensuretemp(recwarn):
     assert d1.check(dir=1)
 
 
+@attr.s
+class FakeConfig(object):
+    basetemp = attr.ib()
+    trace = attr.ib(default=None)
+
+    @property
+    def trace(self):
+        return self
+
+    def get(self, key):
+        return lambda *k: None
+
+    @property
+    def option(self):
+        return self
+
+
 class TestTempdirHandler(object):
-    def test_mktemp(self, testdir):
+    def test_mktemp(self, tmp_path):
+
         from _pytest.tmpdir import TempdirFactory, TempPathFactory
 
-        config = testdir.parseconfig()
-        config.option.basetemp = testdir.mkdir("hello")
+        config = FakeConfig(tmp_path)
         t = TempdirFactory(TempPathFactory.from_config(config))
         tmp = t.mktemp("world")
         assert tmp.relto(t.getbasetemp()) == "world0"
@@ -39,6 +57,15 @@ class TestTempdirHandler(object):
         tmp2 = t.mktemp("this")
         assert tmp2.relto(t.getbasetemp()).startswith("this")
         assert tmp2 != tmp
+
+    @pytest.mark.issue(4425)
+    def test_tmppath_relative_basetemp_absolute(self, tmp_path, monkeypatch):
+        from _pytest.tmpdir import TempPathFactory
+
+        monkeypatch.chdir(tmp_path)
+        config = FakeConfig("hello")
+        t = TempPathFactory.from_config(config)
+        assert t.getbasetemp() == (tmp_path / "hello")
 
 
 class TestConfigTmpdir(object):
