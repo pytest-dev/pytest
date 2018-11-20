@@ -27,7 +27,9 @@ class TempPathFactory(object):
     The base directory can be configured using the ``--basetemp`` option."""
 
     _given_basetemp = attr.ib(
-        convert=attr.converters.optional(lambda p: Path(p).resolve())
+        # using os.path.abspath() to get absolute path instead of resolve() as it
+        # does not work the same in all platforms
+        convert=attr.converters.optional(lambda p: Path(os.path.abspath(p)))
     )
     _trace = attr.ib()
     _basetemp = attr.ib(default=None)
