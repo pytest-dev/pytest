@@ -271,8 +271,12 @@ You can also set a module level marker::
     import pytest
     pytestmark = pytest.mark.webtest
 
-in which case it will be applied to all functions and
-methods defined in the module.
+or multiple markers::
+
+    pytestmark = [pytest.mark.webtest, pytest.mark.slowtest]
+
+in which case markers will be applied (in left-to-right order) to
+all functions and methods defined in the module.
 
 .. _`marking individual tests when using parametrize`:
 
