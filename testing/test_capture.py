@@ -718,7 +718,7 @@ class TestCaptureFixture(object):
             """
         )
 
-        result = testdir.runpytest()
+        result = testdir.runpytest_subprocess()
         result.stdout.fnmatch_lines(["*1 passed in*"])
 
 
