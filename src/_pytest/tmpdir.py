@@ -10,6 +10,7 @@ import warnings
 
 import attr
 import py
+import six
 
 import pytest
 from .pathlib import ensure_reset_dir
@@ -28,8 +29,11 @@ class TempPathFactory(object):
 
     _given_basetemp = attr.ib(
         # using os.path.abspath() to get absolute path instead of resolve() as it
-        # does not work the same in all platforms
-        convert=attr.converters.optional(lambda p: Path(os.path.abspath(p)))
+        # does not work the same in all platforms; there's Path.absolute(), but it is not
+        # public (see https://bugs.python.org/issue25012)
+        convert=attr.converters.optional(
+            lambda p: Path(os.path.abspath(six.text_type(p)))
+        )
     )
     _trace = attr.ib()
     _basetemp = attr.ib(default=None)
