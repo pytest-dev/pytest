@@ -70,11 +70,11 @@ class TestMetafunc(object):
             pass
 
         metafunc = self.Metafunc(func)
-        pytest.raises(ValueError, "metafunc.addcall(id=None)")
+        pytest.raises(ValueError, metafunc.addcall, id=None)
 
         metafunc.addcall(id=1)
-        pytest.raises(ValueError, "metafunc.addcall(id=1)")
-        pytest.raises(ValueError, "metafunc.addcall(id='1')")
+        pytest.raises(ValueError, metafunc.addcall, id=1)
+        pytest.raises(ValueError, metafunc.addcall, id="1")
         metafunc.addcall(id=2)
         assert len(metafunc._calls) == 2
         assert metafunc._calls[0].id == "1"
@@ -108,7 +108,7 @@ class TestMetafunc(object):
 
         metafunc.addcall(funcargs={"x": 2})
         metafunc.addcall(funcargs={"x": 3})
-        pytest.raises(pytest.fail.Exception, "metafunc.addcall({'xyz': 0})")
+        pytest.raises(pytest.fail.Exception, metafunc.addcall, {"xyz": 0})
         assert len(metafunc._calls) == 2
         assert metafunc._calls[0].funcargs == {"x": 2}
         assert metafunc._calls[1].funcargs == {"x": 3}

@@ -388,7 +388,8 @@ parametrizer`_ but in a lot less code::
             assert a == b
 
         def test_zerodivision(self, a, b):
-            pytest.raises(ZeroDivisionError, "a/b")
+            with pytest.raises(ZeroDivisionError):
+                a / b
 
 Our test generator looks up a class-level definition which specifies which
 argument sets to use for each test function.  Let's run it:

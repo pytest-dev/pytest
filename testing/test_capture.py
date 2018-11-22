@@ -87,7 +87,7 @@ class TestCaptureManager(object):
         try:
             capman = CaptureManager("fd")
             capman.start_global_capturing()
-            pytest.raises(AssertionError, "capman.start_global_capturing()")
+            pytest.raises(AssertionError, capman.start_global_capturing)
             capman.stop_global_capturing()
         finally:
             capouter.stop_capturing()
@@ -798,10 +798,10 @@ class TestCaptureIO(object):
         f = capture.CaptureIO()
         if sys.version_info >= (3, 0):
             f.write("\u00f6")
-            pytest.raises(TypeError, "f.write(bytes('hello', 'UTF-8'))")
+            pytest.raises(TypeError, f.write, b"hello")
         else:
-            f.write(text_type("\u00f6", "UTF-8"))
-            f.write("hello")  # bytes
+            f.write(u"\u00f6")
+            f.write(b"hello")
             s = f.getvalue()
             f.close()
             assert isinstance(s, text_type)
@@ -1149,7 +1149,7 @@ class TestStdCapture(object):
         print("XXX which indicates an error in the underlying capturing")
         print("XXX mechanisms")
         with self.getcapture():
-            pytest.raises(IOError, "sys.stdin.read()")
+            pytest.raises(IOError, sys.stdin.read)
 
 
 class TestStdCaptureFD(TestStdCapture):

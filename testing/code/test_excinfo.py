@@ -180,7 +180,8 @@ class TestTraceback_f_g_h(object):
 
     def test_traceback_cut_excludepath(self, testdir):
         p = testdir.makepyfile("def f(): raise ValueError")
-        excinfo = pytest.raises(ValueError, "p.pyimport().f()")
+        with pytest.raises(ValueError) as excinfo:
+            p.pyimport().f()
         basedir = py.path.local(pytest.__file__).dirpath()
         newtraceback = excinfo.traceback.cut(excludepath=basedir)
         for x in newtraceback:
@@ -336,7 +337,8 @@ class TestTraceback_f_g_h(object):
 def test_excinfo_exconly():
     excinfo = pytest.raises(ValueError, h)
     assert excinfo.exconly().startswith("ValueError")
-    excinfo = pytest.raises(ValueError, "raise ValueError('hello\\nworld')")
+    with pytest.raises(ValueError) as excinfo:
+        raise ValueError("hello\nworld")
     msg = excinfo.exconly(tryshort=True)
     assert msg.startswith("ValueError")
     assert msg.endswith("world")

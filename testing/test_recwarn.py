@@ -7,6 +7,7 @@ import warnings
 
 import pytest
 from _pytest.recwarn import WarningsRecorder
+from _pytest.warning_types import PytestDeprecationWarning
 
 
 def test_recwarn_stacklevel(recwarn):
@@ -44,7 +45,7 @@ class TestWarningsRecorderChecker(object):
             rec.clear()
             assert len(rec.list) == 0
             assert values is rec.list
-            pytest.raises(AssertionError, "rec.pop()")
+            pytest.raises(AssertionError, rec.pop)
 
     @pytest.mark.issue(4243)
     def test_warn_stacklevel(self):
@@ -214,9 +215,17 @@ class TestWarns(object):
         source1 = "warnings.warn('w1', RuntimeWarning)"
         source2 = "warnings.warn('w2', RuntimeWarning)"
         source3 = "warnings.warn('w3', RuntimeWarning)"
-        pytest.warns(RuntimeWarning, source1)
-        pytest.raises(pytest.fail.Exception, lambda: pytest.warns(UserWarning, source2))
-        pytest.warns(RuntimeWarning, source3)
+        with pytest.warns(PytestDeprecationWarning) as warninfo:  # yo dawg
+            pytest.warns(RuntimeWarning, source1)
+            pytest.raises(
+                pytest.fail.Exception, lambda: pytest.warns(UserWarning, source2)
+            )
+            pytest.warns(RuntimeWarning, source3)
+        assert len(warninfo) == 3
+        for w in warninfo:
+            assert w.filename == __file__
+            msg, = w.message.args
+            assert msg.startswith("warns(..., 'code(as_a_string)') is deprecated")
 
     def test_function(self):
         pytest.warns(

@@ -906,7 +906,8 @@ class TestRequestMarking(object):
         assert "skipif" not in item1.keywords
         req1.applymarker(pytest.mark.skipif)
         assert "skipif" in item1.keywords
-        pytest.raises(ValueError, "req1.applymarker(42)")
+        with pytest.raises(ValueError):
+            req1.applymarker(42)
 
     def test_accesskeywords(self, testdir):
         testdir.makepyfile(

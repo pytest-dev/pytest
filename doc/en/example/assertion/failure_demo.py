@@ -165,11 +165,11 @@ def globf(x):
 
 class TestRaises(object):
     def test_raises(self):
-        s = "qwe"  # NOQA
-        raises(TypeError, "int(s)")
+        s = "qwe"
+        raises(TypeError, int, s)
 
     def test_raises_doesnt(self):
-        raises(IOError, "int('3')")
+        raises(IOError, int, "3")
 
     def test_raise(self):
         raise ValueError("demo error")

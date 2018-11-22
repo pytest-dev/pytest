@@ -71,7 +71,7 @@ def test_make_hook_recorder(testdir):
     recorder.unregister()
     recorder.clear()
     recorder.hook.pytest_runtest_logreport(report=rep)
-    pytest.raises(ValueError, "recorder.getfailures()")
+    pytest.raises(ValueError, recorder.getfailures)
 
 
 def test_parseconfig(testdir):
@@ -174,7 +174,7 @@ def test_hookrecorder_basic(holder):
     call = rec.popcall("pytest_xyz")
     assert call.arg == 123
     assert call._name == "pytest_xyz"
-    pytest.raises(pytest.fail.Exception, "rec.popcall('abc')")
+    pytest.raises(pytest.fail.Exception, rec.popcall, "abc")
     pm.hook.pytest_xyz_noarg()
     call = rec.popcall("pytest_xyz_noarg")
     assert call._name == "pytest_xyz_noarg"

@@ -37,7 +37,7 @@ def test_code_with_class():
     class A(object):
         pass
 
-    pytest.raises(TypeError, "_pytest._code.Code(A)")
+    pytest.raises(TypeError, _pytest._code.Code, A)
 
 
 def x():

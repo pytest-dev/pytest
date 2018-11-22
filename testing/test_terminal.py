@@ -105,7 +105,8 @@ class TestTerminal(object):
     def test_internalerror(self, testdir, linecomp):
         modcol = testdir.getmodulecol("def test_one(): pass")
         rep = TerminalReporter(modcol.config, file=linecomp.stringio)
-        excinfo = pytest.raises(ValueError, "raise ValueError('hello')")
+        with pytest.raises(ValueError) as excinfo:
+            raise ValueError("hello")
         rep.pytest_internalerror(excinfo.getrepr())
         linecomp.assert_contains_lines(["INTERNALERROR> *ValueError*hello*"])
 
