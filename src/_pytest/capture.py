@@ -770,9 +770,9 @@ def _py36_windowsconsoleio_workaround(stream):
             f.line_buffering,
         )
 
-    sys.__stdin__ = sys.stdin = _reopen_stdio(sys.stdin, "rb")
-    sys.__stdout__ = sys.stdout = _reopen_stdio(sys.stdout, "wb")
-    sys.__stderr__ = sys.stderr = _reopen_stdio(sys.stderr, "wb")
+    sys.stdin = _reopen_stdio(sys.stdin, "rb")
+    sys.stdout = _reopen_stdio(sys.stdout, "wb")
+    sys.stderr = _reopen_stdio(sys.stderr, "wb")
 
 
 def _attempt_to_close_capture_file(f):
