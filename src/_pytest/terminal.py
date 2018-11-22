@@ -786,8 +786,7 @@ class TerminalReporter(object):
                     self.write_line(line)
                 else:
                     msg = self._getfailureheadline(rep)
-                    markup = {"red": True, "bold": True}
-                    self.write_sep("_", msg, **markup)
+                    self.write_sep("_", msg, red=True, bold=True)
                     self._outrep_summary(rep)
                     for report in self.getreports(""):
                         if report.nodeid == rep.nodeid and report.when == "teardown":
@@ -808,7 +807,7 @@ class TerminalReporter(object):
                     msg = "ERROR at setup of " + msg
                 elif rep.when == "teardown":
                     msg = "ERROR at teardown of " + msg
-                self.write_sep("_", msg)
+                self.write_sep("_", msg, red=True, bold=True)
                 self._outrep_summary(rep)
 
     def _outrep_summary(self, rep):
