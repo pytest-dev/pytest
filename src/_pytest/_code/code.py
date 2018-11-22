@@ -407,17 +407,16 @@ class ExceptionInfo(object):
 
     @classmethod
     def from_current(cls, exprinfo=None):
-        """returns a exceptioninfo matching the current traceback
+        """returns an ExceptionInfo matching the current traceback
 
         .. warning::
 
-            experimental api
+            Experimental API
 
 
-        :param exprinfo: an text string helping to determine if we should
-                         strip assertionerror from the output, defaults
-                        to the exception message/__str__()
-
+        :param exprinfo: a text string helping to determine if we should
+                         strip ``AssertionError`` from the output, defaults
+                         to the exception message/``__str__()``
         """
         tup = sys.exc_info()
         _striptext = ""
