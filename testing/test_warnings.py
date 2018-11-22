@@ -310,7 +310,7 @@ def test_warning_captured_hook(testdir):
         """
         from _pytest.warnings import _issue_config_warning
         def pytest_configure(config):
-            _issue_config_warning(UserWarning("config warning"), config)
+            _issue_config_warning(UserWarning("config warning"), config, stacklevel=2)
     """
     )
     testdir.makepyfile(
