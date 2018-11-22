@@ -34,7 +34,12 @@ class TestRaises(object):
             pass
 
     def test_raises_repr_inflight(self):
-        with pytest.raises(RuntimeError) as excinfo:
+        """Ensure repr() on an exception info inside a pytest.raises with block works (#4386)"""
+
+        class E(Exception):
+            pass
+
+        with pytest.raises(E) as excinfo:
             # this test prints the inflight uninitialized object
             # using repr and str as well as pprint to demonstrate
             # it works
@@ -43,7 +48,7 @@ class TestRaises(object):
             import pprint
 
             pprint.pprint(excinfo)
-            raise RuntimeError(1)
+            raise E()
 
     def test_raises_as_contextmanager(self, testdir):
         testdir.makepyfile(
