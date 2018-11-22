@@ -14,19 +14,6 @@ Below is a complete list of all pytest features which are considered deprecated.
 :class:`_pytest.warning_types.PytestWarning` or subclasses, which can be filtered using
 :ref:`standard warning filters <warnings>`.
 
-Internal classes accessed through ``Node``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. deprecated:: 3.9
-
-Access of ``Module``, ``Function``, ``Class``, ``Instance``, ``File`` and ``Item`` through ``Node`` instances now issue
-this warning::
-
-    usage of Function.Module is deprecated, please use pytest.Module instead
-
-Users should just ``import pytest`` and access those objects using the ``pytest`` module.
-
-This has been documented as deprecated for years, but only now we are actually emitting deprecation warnings.
 
 ``cached_setup``
 ~~~~~~~~~~~~~~~~
@@ -101,40 +88,6 @@ Becomes:
   The warning instance must be a PytestWarning or subclass.
 
 * ``node.warn("CI", "some message")``: this code/message form is now **deprecated** and should be converted to the warning instance form above.
-
-
-``pytest_namespace``
-~~~~~~~~~~~~~~~~~~~~
-
-.. deprecated:: 3.7
-
-This hook is deprecated because it greatly complicates the pytest internals regarding configuration and initialization, making some
-bug fixes and refactorings impossible.
-
-Example of usage:
-
-.. code-block:: python
-
-    class MySymbol:
-        ...
-
-
-    def pytest_namespace():
-        return {"my_symbol": MySymbol()}
-
-
-Plugin authors relying on this hook should instead require that users now import the plugin modules directly (with an appropriate public API).
-
-As a stopgap measure, plugin authors may still inject their names into pytest's namespace, usually during ``pytest_configure``:
-
-.. code-block:: python
-
-    import pytest
-
-
-    def pytest_configure():
-        pytest.my_symbol = MySymbol()
-
 
 
 Calling fixtures directly
@@ -279,35 +232,6 @@ By passing a string, users expect that pytest will interpret that command-line u
 on (for example ``bash`` or ``Powershell``), but this is very hard/impossible to do in a portable way.
 
 
-``yield`` tests
-~~~~~~~~~~~~~~~
-
-.. deprecated:: 3.0
-
-pytest supports ``yield``-style tests, where a test function actually ``yield`` functions and values
-that are then turned into proper test methods. Example:
-
-.. code-block:: python
-
-    def check(x, y):
-        assert x ** x == y
-
-
-    def test_squared():
-        yield check, 2, 4
-        yield check, 3, 9
-
-This would result into two actual test functions being generated.
-
-This form of test function doesn't support fixtures properly, and users should switch to ``pytest.mark.parametrize``:
-
-.. code-block:: python
-
-    @pytest.mark.parametrize("x, y", [(2, 4), (3, 9)])
-    def test_squared(x, y):
-        assert x ** x == y
-
-
 ``pytest_funcarg__`` prefix
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -349,6 +273,82 @@ Removed Features
 
 As stated in our :ref:`backwards-compatibility` policy, deprecated features are removed only in major releases after
 an appropriate period of deprecation has passed.
+
+``yield`` tests
+~~~~~~~~~~~~~~~
+
+*Removed in version 4.0.*
+
+pytest supports ``yield``-style tests, where a test function actually ``yield`` functions and values
+that are then turned into proper test methods. Example:
+
+.. code-block:: python
+
+    def check(x, y):
+        assert x ** x == y
+
+
+    def test_squared():
+        yield check, 2, 4
+        yield check, 3, 9
+
+This would result into two actual test functions being generated.
+
+This form of test function doesn't support fixtures properly, and users should switch to ``pytest.mark.parametrize``:
+
+.. code-block:: python
+
+    @pytest.mark.parametrize("x, y", [(2, 4), (3, 9)])
+    def test_squared(x, y):
+        assert x ** x == y
+
+Internal classes accessed through ``Node``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+*Removed in version 4.0.*
+
+Access of ``Module``, ``Function``, ``Class``, ``Instance``, ``File`` and ``Item`` through ``Node`` instances now issue
+this warning::
+
+    usage of Function.Module is deprecated, please use pytest.Module instead
+
+Users should just ``import pytest`` and access those objects using the ``pytest`` module.
+
+This has been documented as deprecated for years, but only now we are actually emitting deprecation warnings.
+
+``pytest_namespace``
+~~~~~~~~~~~~~~~~~~~~
+
+*Removed in version 4.0.*
+
+This hook is deprecated because it greatly complicates the pytest internals regarding configuration and initialization, making some
+bug fixes and refactorings impossible.
+
+Example of usage:
+
+.. code-block:: python
+
+    class MySymbol:
+        ...
+
+
+    def pytest_namespace():
+        return {"my_symbol": MySymbol()}
+
+
+Plugin authors relying on this hook should instead require that users now import the plugin modules directly (with an appropriate public API).
+
+As a stopgap measure, plugin authors may still inject their names into pytest's namespace, usually during ``pytest_configure``:
+
+.. code-block:: python
+
+    import pytest
+
+
+    def pytest_configure():
+        pytest.my_symbol = MySymbol()
+
+
 
 
 Reinterpretation mode (``--assert=reinterp``)
