@@ -33,6 +33,18 @@ class TestRaises(object):
         except pytest.raises.Exception:
             pass
 
+    def test_raises_repr_inflight(self):
+        with pytest.raises(RuntimeError) as excinfo:
+            # this test prints the inflight uninitialized object
+            # using repr and str as well as pprint to demonstrate
+            # it works
+            print(str(excinfo))
+            print(repr(excinfo))
+            import pprint
+
+            pprint.pprint(excinfo)
+            raise RuntimeError(1)
+
     def test_raises_as_contextmanager(self, testdir):
         testdir.makepyfile(
             """
