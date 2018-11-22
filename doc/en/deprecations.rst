@@ -303,6 +303,10 @@ Result log (``--result-log``)
 The ``--resultlog`` command line option has been deprecated: it is little used
 and there are more modern and better alternatives, for example `pytest-tap <https://tappy.readthedocs.io/en/latest/>`_.
 
+This feature will be effectively removed in pytest 4.0 as the team intends to include a better alternative in the core.
+
+If you have any concerns, please don't hesitate to `open an issue <https://github.com/pytest-dev/pytest/issues>`__.
+
 Removed Features
 ----------------
 
