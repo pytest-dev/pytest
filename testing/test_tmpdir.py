@@ -65,7 +65,7 @@ class TestTempdirHandler(object):
         monkeypatch.chdir(tmp_path)
         config = FakeConfig("hello")
         t = TempPathFactory.from_config(config)
-        assert t.getbasetemp() == (tmp_path / "hello")
+        assert t.getbasetemp().resolve() == (tmp_path / "hello").resolve()
 
 
 class TestConfigTmpdir(object):
