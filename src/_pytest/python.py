@@ -450,7 +450,7 @@ class Module(nodes.File, PyCollector):
             mod = self.fspath.pyimport(ensuresyspath=importmode)
         except SyntaxError:
             raise self.CollectError(
-                _pytest._code.ExceptionInfo().getrepr(style="short")
+                _pytest._code.ExceptionInfo.from_current().getrepr(style="short")
             )
         except self.fspath.ImportMismatchError:
             e = sys.exc_info()[1]
@@ -466,7 +466,7 @@ class Module(nodes.File, PyCollector):
         except ImportError:
             from _pytest._code.code import ExceptionInfo
 
-            exc_info = ExceptionInfo()
+            exc_info = ExceptionInfo.from_current()
             if self.config.getoption("verbose") < 2:
                 exc_info.traceback = exc_info.traceback.filter(filter_traceback)
             exc_repr = (

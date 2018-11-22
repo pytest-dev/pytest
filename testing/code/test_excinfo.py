@@ -71,7 +71,7 @@ def test_excinfo_simple():
     try:
         raise ValueError
     except ValueError:
-        info = _pytest._code.ExceptionInfo()
+        info = _pytest._code.ExceptionInfo.from_current()
     assert info.type == ValueError
 
 
@@ -85,7 +85,7 @@ def test_excinfo_getstatement():
     try:
         f()
     except ValueError:
-        excinfo = _pytest._code.ExceptionInfo()
+        excinfo = _pytest._code.ExceptionInfo.from_current()
     linenumbers = [
         _pytest._code.getrawcode(f).co_firstlineno - 1 + 4,
         _pytest._code.getrawcode(f).co_firstlineno - 1 + 1,
@@ -126,7 +126,7 @@ class TestTraceback_f_g_h(object):
         try:
             h()
         except ValueError:
-            self.excinfo = _pytest._code.ExceptionInfo()
+            self.excinfo = _pytest._code.ExceptionInfo.from_current()
 
     def test_traceback_entries(self):
         tb = self.excinfo.traceback
@@ -163,7 +163,7 @@ class TestTraceback_f_g_h(object):
         try:
             exec(source.compile())
         except NameError:
-            tb = _pytest._code.ExceptionInfo().traceback
+            tb = _pytest._code.ExceptionInfo.from_current().traceback
             print(tb[-1].getsource())
             s = str(tb[-1].getsource())
             assert s.startswith("def xyz():\n    try:")
@@ -356,6 +356,12 @@ def test_excinfo_str():
     assert len(s.split(":")) >= 3  # on windows it's 4
 
 
+def test_excinfo_for_later():
+    e = ExceptionInfo.for_later()
+    assert "for raises" in repr(e)
+    assert "for raises" in str(e)
+
+
 def test_excinfo_errisinstance():
     excinfo = pytest.raises(ValueError, h)
     assert excinfo.errisinstance(ValueError)
@@ -365,7 +371,7 @@ def test_excinfo_no_sourcecode():
     try:
         exec("raise ValueError()")
     except ValueError:
-        excinfo = _pytest._code.ExceptionInfo()
+        excinfo = _pytest._code.ExceptionInfo.from_current()
     s = str(excinfo.traceback[-1])
     assert s == "  File '<string>':1 in <module>\n  ???\n"
 
@@ -390,7 +396,7 @@ def test_entrysource_Queue_example():
     try:
         queue.Queue().get(timeout=0.001)
     except queue.Empty:
-        excinfo = _pytest._code.ExceptionInfo()
+        excinfo = _pytest._code.ExceptionInfo.from_current()
     entry = excinfo.traceback[-1]
     source = entry.getsource()
     assert source is not None
@@ -402,7 +408,7 @@ def test_codepath_Queue_example():
     try:
         queue.Queue().get(timeout=0.001)
     except queue.Empty:
-        excinfo = _pytest._code.ExceptionInfo()
+        excinfo = _pytest._code.ExceptionInfo.from_current()
     entry = excinfo.traceback[-1]
     path = entry.path
     assert isinstance(path, py.path.local)
@@ -453,7 +459,7 @@ class TestFormattedExcinfo(object):
         except KeyboardInterrupt:
             raise
         except:  # noqa
-            return _pytest._code.ExceptionInfo()
+            return _pytest._code.ExceptionInfo.from_current()
         assert 0, "did not raise"
 
     def test_repr_source(self):
@@ -491,7 +497,7 @@ class TestFormattedExcinfo(object):
         try:
             exec(co)
         except ValueError:
-            excinfo = _pytest._code.ExceptionInfo()
+            excinfo = _pytest._code.ExceptionInfo.from_current()
         repr = pr.repr_excinfo(excinfo)
         assert repr.reprtraceback.reprentries[1].lines[0] == ">   ???"
         if sys.version_info[0] >= 3:
@@ -510,7 +516,7 @@ raise ValueError()
         try:
             exec(co)
         except ValueError:
-            excinfo = _pytest._code.ExceptionInfo()
+            excinfo = _pytest._code.ExceptionInfo.from_current()
         repr = pr.repr_excinfo(excinfo)
         assert repr.reprtraceback.reprentries[1].lines[0] == ">   ???"
         if sys.version_info[0] >= 3:
@@ -1340,7 +1346,7 @@ def test_repr_traceback_with_unicode(style, encoding):
     try:
         raise RuntimeError(msg)
     except RuntimeError:
-        e_info = ExceptionInfo()
+        e_info = ExceptionInfo.from_current()
     formatter = FormattedExcinfo(style=style)
     repr_traceback = formatter.repr_traceback(e_info)
     assert repr_traceback is not None

@@ -561,20 +561,16 @@ def test_outcomeexception_passes_except_Exception():
 
 
 def test_pytest_exit():
-    try:
+    with pytest.raises(pytest.exit.Exception) as excinfo:
         pytest.exit("hello")
-    except pytest.exit.Exception:
-        excinfo = _pytest._code.ExceptionInfo()
-        assert excinfo.errisinstance(KeyboardInterrupt)
+    assert excinfo.errisinstance(KeyboardInterrupt)
 
 
 def test_pytest_fail():
-    try:
+    with pytest.raises(pytest.fail.Exception) as excinfo:
         pytest.fail("hello")
-    except pytest.fail.Exception:
-        excinfo = _pytest._code.ExceptionInfo()
-        s = excinfo.exconly(tryshort=True)
-        assert s.startswith("Failed")
+    s = excinfo.exconly(tryshort=True)
+    assert s.startswith("Failed")
 
 
 def test_pytest_exit_msg(testdir):
@@ -683,7 +679,7 @@ def test_exception_printing_skip():
     try:
         pytest.skip("hello")
     except pytest.skip.Exception:
-        excinfo = _pytest._code.ExceptionInfo()
+        excinfo = _pytest._code.ExceptionInfo.from_current()
         s = excinfo.exconly(tryshort=True)
         assert s.startswith("Skipped")
 
@@ -718,7 +714,7 @@ def test_importorskip(monkeypatch):
         mod2 = pytest.importorskip("hello123", minversion="1.3")
         assert mod2 == mod
     except pytest.skip.Exception:
-        print(_pytest._code.ExceptionInfo())
+        print(_pytest._code.ExceptionInfo.from_current())
         pytest.fail("spurious skip")
 
 
@@ -740,7 +736,7 @@ def test_importorskip_dev_module(monkeypatch):
             pytest.importorskip('mockmodule1', minversion='0.14.0')""",
         )
     except pytest.skip.Exception:
-        print(_pytest._code.ExceptionInfo())
+        print(_pytest._code.ExceptionInfo.from_current())
         pytest.fail("spurious skip")
 
 

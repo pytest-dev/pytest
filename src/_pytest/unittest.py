@@ -115,6 +115,10 @@ class TestCaseFunction(Function):
         rawexcinfo = getattr(rawexcinfo, "_rawexcinfo", rawexcinfo)
         try:
             excinfo = _pytest._code.ExceptionInfo(rawexcinfo)
+            # invoke the attributes to trigger storing the traceback
+            # trial causes some issue there
+            excinfo.value
+            excinfo.traceback
         except TypeError:
             try:
                 try:
@@ -136,7 +140,7 @@ class TestCaseFunction(Function):
             except KeyboardInterrupt:
                 raise
             except fail.Exception:
-                excinfo = _pytest._code.ExceptionInfo()
+                excinfo = _pytest._code.ExceptionInfo.from_current()
         self.__dict__.setdefault("_excinfo", []).append(excinfo)
 
     def addError(self, testcase, rawexcinfo):

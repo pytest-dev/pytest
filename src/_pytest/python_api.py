@@ -684,13 +684,13 @@ def raises(expected_exception, *args, **kwargs):
             # XXX didn't mean f_globals == f_locals something special?
             #     this is destroyed here ...
         except expected_exception:
-            return _pytest._code.ExceptionInfo()
+            return _pytest._code.ExceptionInfo.from_current()
     else:
         func = args[0]
         try:
             func(*args[1:], **kwargs)
         except expected_exception:
-            return _pytest._code.ExceptionInfo()
+            return _pytest._code.ExceptionInfo.from_current()
     fail(message)
 
 
@@ -705,7 +705,7 @@ class RaisesContext(object):
         self.excinfo = None
 
     def __enter__(self):
-        self.excinfo = object.__new__(_pytest._code.ExceptionInfo)
+        self.excinfo = _pytest._code.ExceptionInfo.for_later()
         return self.excinfo
 
     def __exit__(self, *tp):

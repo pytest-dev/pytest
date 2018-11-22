@@ -155,7 +155,7 @@ def assertrepr_compare(config, op, left, right):
         explanation = [
             u"(pytest_assertion plugin: representation of details failed.  "
             u"Probably an object has a faulty __repr__.)",
-            six.text_type(_pytest._code.ExceptionInfo()),
+            six.text_type(_pytest._code.ExceptionInfo.from_current()),
         ]
 
     if not explanation:

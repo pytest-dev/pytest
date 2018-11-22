@@ -1,0 +1,1 @@
+Restructure ExceptionInfo object construction and ensure incomplete instances have a ``repr``/``str``.

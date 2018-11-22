@@ -188,7 +188,7 @@ def wrap_session(config, doit):
         except Failed:
             session.exitstatus = EXIT_TESTSFAILED
         except KeyboardInterrupt:
-            excinfo = _pytest._code.ExceptionInfo()
+            excinfo = _pytest._code.ExceptionInfo.from_current()
             exitstatus = EXIT_INTERRUPTED
             if initstate <= 2 and isinstance(excinfo.value, exit.Exception):
                 sys.stderr.write("{}: {}\n".format(excinfo.typename, excinfo.value.msg))
@@ -197,7 +197,7 @@ def wrap_session(config, doit):
             config.hook.pytest_keyboard_interrupt(excinfo=excinfo)
             session.exitstatus = exitstatus
         except:  # noqa
-            excinfo = _pytest._code.ExceptionInfo()
+            excinfo = _pytest._code.ExceptionInfo.from_current()
             config.notify_exception(excinfo, config.option)
             session.exitstatus = EXIT_INTERNALERROR
             if excinfo.errisinstance(SystemExit):

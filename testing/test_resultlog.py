@@ -151,7 +151,7 @@ class TestWithFunctionIntegration(object):
         try:
             raise ValueError
         except ValueError:
-            excinfo = _pytest._code.ExceptionInfo()
+            excinfo = _pytest._code.ExceptionInfo.from_current()
         reslog = ResultLog(None, py.io.TextIO())
         reslog.pytest_internalerror(excinfo.getrepr(style=style))
         entry = reslog.logfile.getvalue()
