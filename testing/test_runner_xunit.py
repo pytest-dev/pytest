@@ -202,21 +202,21 @@ def test_func_generator_setup(testdir):
         import sys
 
         def setup_module(mod):
-            print ("setup_module")
+            print("setup_module")
             mod.x = []
 
         def setup_function(fun):
-            print ("setup_function")
+            print("setup_function")
             x.append(1)
 
         def teardown_function(fun):
-            print ("teardown_function")
+            print("teardown_function")
             x.pop()
 
         def test_one():
             assert x == [1]
             def check():
-                print ("check")
+                print("check")
                 sys.stderr.write("e\\n")
                 assert x == [1]
             yield check

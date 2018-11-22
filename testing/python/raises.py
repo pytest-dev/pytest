@@ -43,7 +43,7 @@ class TestRaises(object):
                 with pytest.raises(ZeroDivisionError) as excinfo:
                     assert isinstance(excinfo, _pytest._code.ExceptionInfo)
                     1/0
-                print (excinfo)
+                print(excinfo)
                 assert excinfo.type == ZeroDivisionError
                 assert isinstance(excinfo.value, ZeroDivisionError)
 

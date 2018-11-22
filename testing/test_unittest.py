@@ -244,7 +244,7 @@ def test_setup_failure_is_shown(testdir):
             def setUp(self):
                 assert 0, "down1"
             def test_method(self):
-                print ("never42")
+                print("never42")
                 xyz
     """
     )
@@ -610,14 +610,14 @@ def test_djangolike_testcase(testdir):
         class DjangoLikeTestCase(TestCase):
 
             def setUp(self):
-                print ("setUp()")
+                print("setUp()")
 
             def test_presetup_has_been_run(self):
-                print ("test_thing()")
+                print("test_thing()")
                 self.assertTrue(hasattr(self, 'was_presetup'))
 
             def tearDown(self):
-                print ("tearDown()")
+                print("tearDown()")
 
             def __call__(self, result=None):
                 try:
@@ -639,11 +639,11 @@ def test_djangolike_testcase(testdir):
                     return
 
             def _pre_setup(self):
-                print ("_pre_setup()")
+                print("_pre_setup()")
                 self.was_presetup = True
 
             def _post_teardown(self):
-                print ("_post_teardown()")
+                print("_post_teardown()")
     """
     )
     result = testdir.runpytest("-s")

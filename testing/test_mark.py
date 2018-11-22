@@ -189,7 +189,7 @@ def test_ini_markers(testdir):
         """
         def test_markers(pytestconfig):
             markers = pytestconfig.getini("markers")
-            print (markers)
+            print(markers)
             assert len(markers) >= 2
             assert markers[0].startswith("a1:")
             assert markers[1].startswith("a2:")
