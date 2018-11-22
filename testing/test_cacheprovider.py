@@ -904,9 +904,9 @@ def test_gitignore(testdir):
     assert gitignore_path.read_text(encoding="UTF-8") == msg
 
     # Does not overwrite existing/custom one.
-    gitignore_path.write_text("")
+    gitignore_path.write_text(u"custom")
     cache.set("something", "else")
-    assert gitignore_path.read_text(encoding="UTF-8") == ""
+    assert gitignore_path.read_text(encoding="UTF-8") == "custom"
 
 
 def test_does_not_create_boilerplate_in_existing_dirs(testdir):
@@ -922,5 +922,6 @@ def test_does_not_create_boilerplate_in_existing_dirs(testdir):
     cache = Cache.for_config(config)
     cache.set("foo", "bar")
 
+    assert os.path.isdir("v")  # cache contents
     assert not os.path.exists(".gitignore")
     assert not os.path.exists("README.md")
