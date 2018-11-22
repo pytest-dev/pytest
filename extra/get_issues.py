@@ -65,9 +65,9 @@ def report(issues):
         print(title)
         # print()
         # lines = body.split("\n")
-        # print ("\n".join(lines[:3]))
+        # print("\n".join(lines[:3]))
         # if len(lines) > 3 or len(body) > 240:
-        #    print ("...")
+        #    print("...")
     print("\n\nFound %s open issues" % len(issues))
 
 

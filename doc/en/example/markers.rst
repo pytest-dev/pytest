@@ -466,7 +466,7 @@ test function.  From a conftest file we can read it like this::
 
     def pytest_runtest_setup(item):
         for mark in item.iter_markers(name='glob'):
-            print ("glob args=%s kwargs=%s" %(mark.args, mark.kwargs))
+            print("glob args=%s kwargs=%s" % (mark.args, mark.kwargs))
             sys.stdout.flush()
 
 Let's run this without capturing output and see what we get::

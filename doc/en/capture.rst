@@ -52,7 +52,7 @@ is that you can use print statements for debugging::
     # content of test_module.py
 
     def setup_function(function):
-        print ("setting up %s" % function)
+        print("setting up %s" % function)
 
     def test_func1():
         assert True

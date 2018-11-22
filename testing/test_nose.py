@@ -71,11 +71,11 @@ def test_nose_setup_func(testdir):
 
         @with_setup(my_setup, my_teardown)
         def test_hello():
-            print (values)
+            print(values)
             assert values == [1]
 
         def test_world():
-            print (values)
+            print(values)
             assert values == [1,2]
 
     """
@@ -95,11 +95,11 @@ def test_nose_setup_func_failure(testdir):
 
         @with_setup(my_setup, my_teardown)
         def test_hello():
-            print (values)
+            print(values)
             assert values == [1]
 
         def test_world():
-            print (values)
+            print(values)
             assert values == [1,2]
 
     """
@@ -147,11 +147,11 @@ def test_nose_setup_partial(testdir):
         my_teardown_partial = partial(my_teardown, 2)
 
         def test_hello():
-            print (values)
+            print(values)
             assert values == [1]
 
         def test_world():
-            print (values)
+            print(values)
             assert values == [1,2]
 
         test_hello.setup = my_setup_partial
@@ -202,21 +202,21 @@ def test_nose_test_generator_fixtures(testdir):
 
         class TestClass(object):
             def setup(self):
-                print ("setup called in %s" % self)
+                print("setup called in %s" % self)
                 self.called = ['setup']
 
             def teardown(self):
-                print ("teardown called in %s" % self)
+                print("teardown called in %s" % self)
                 eq_(self.called, ['setup'])
                 self.called.append('teardown')
 
             def test(self):
-                print ("test called in %s" % self)
+                print("test called in %s" % self)
                 for i in range(0, 5):
                     yield self.check, i
 
             def check(self, i):
-                print ("check called in %s" % self)
+                print("check called in %s" % self)
                 expect = ['setup']
                 #for x in range(0, i):
                 #    expect.append('setup')
