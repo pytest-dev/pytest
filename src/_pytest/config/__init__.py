@@ -191,7 +191,7 @@ def _prepareconfig(args=None, plugins=None):
         if warning:
             from _pytest.warnings import _issue_config_warning
 
-            _issue_config_warning(warning, config=config)
+            _issue_config_warning(warning, config=config, stacklevel=4)
         return pluginmanager.hook.pytest_cmdline_parse(
             pluginmanager=pluginmanager, args=args
         )

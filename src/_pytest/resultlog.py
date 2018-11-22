@@ -36,7 +36,7 @@ def pytest_configure(config):
         from _pytest.deprecated import RESULT_LOG
         from _pytest.warnings import _issue_config_warning
 
-        _issue_config_warning(RESULT_LOG, config)
+        _issue_config_warning(RESULT_LOG, config, stacklevel=2)
 
 
 def pytest_unconfigure(config):

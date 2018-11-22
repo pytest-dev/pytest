@@ -56,7 +56,9 @@ class Cache(object):
         from _pytest.warning_types import PytestWarning
 
         _issue_config_warning(
-            PytestWarning(fmt.format(**args) if args else fmt), self._config
+            PytestWarning(fmt.format(**args) if args else fmt),
+            self._config,
+            stacklevel=3,
         )
 
     def makedir(self, name):
