@@ -1094,7 +1094,34 @@ def test_terminal_summary_warnings_are_displayed(testdir):
         ]
     )
     assert "None" not in result.stdout.str()
-    assert result.stdout.str().count("warning_from_test") == 1
+    stdout = result.stdout.str()
+    assert stdout.count("warning_from_test") == 1
+    assert stdout.count("=== warnings summary ") == 2
+
+
+@pytest.mark.filterwarnings("default")
+def test_terminal_summary_warnings_header_once(testdir):
+    testdir.makepyfile(
+        """
+        def test_failure():
+            import warnings
+            warnings.warn("warning_from_" + "test")
+            assert 0
+    """
+    )
+    result = testdir.runpytest("-ra")
+    result.stdout.fnmatch_lines(
+        [
+            "*= warnings summary =*",
+            "*warning_from_test*",
+            "*= short test summary info =*",
+            "*== 1 failed, 1 warnings in *",
+        ]
+    )
+    assert "None" not in result.stdout.str()
+    stdout = result.stdout.str()
+    assert stdout.count("warning_from_test") == 1
+    assert stdout.count("=== warnings summary ") == 1
 
 
 @pytest.mark.parametrize(

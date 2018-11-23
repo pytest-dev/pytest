@@ -423,8 +423,6 @@ additionally it is possible to copy examples for an example folder before runnin
         testdir.copy_example("test_example.py")
 
     -- Docs: https://docs.pytest.org/en/latest/warnings.html
-    ========================= warnings summary (final) =========================
-    -- Docs: https://docs.pytest.org/en/latest/warnings.html
     =================== 2 passed, 1 warnings in 0.12 seconds ===================
 
 For more information about the result object that ``runpytest()`` returns, and
