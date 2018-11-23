@@ -425,7 +425,10 @@ class ExceptionInfo(object):
         self.traceback = _pytest._code.Traceback(self.tb, excinfo=ref(self))
 
     def __repr__(self):
-        return "<ExceptionInfo %s tblen=%d>" % (self.typename, len(self.traceback))
+        try:
+            return "<ExceptionInfo %s tblen=%d>" % (self.typename, len(self.traceback))
+        except AttributeError:
+            return "<ExceptionInfo uninitialized>"
 
     def exconly(self, tryshort=False):
         """ return the exception as a string
@@ -513,9 +516,13 @@ class ExceptionInfo(object):
         return fmt.repr_excinfo(self)
 
     def __str__(self):
-        entry = self.traceback[-1]
-        loc = ReprFileLocation(entry.path, entry.lineno + 1, self.exconly())
-        return str(loc)
+        try:
+            entry = self.traceback[-1]
+        except AttributeError:
+            return repr(self)
+        else:
+            loc = ReprFileLocation(entry.path, entry.lineno + 1, self.exconly())
+            return str(loc)
 
     def __unicode__(self):
         entry = self.traceback[-1]
