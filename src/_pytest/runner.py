@@ -211,12 +211,12 @@ class CallInfo(object):
             self.result = func()
         except KeyboardInterrupt:
             if treat_keyboard_interrupt_as_exception:
-                self.excinfo = ExceptionInfo()
+                self.excinfo = ExceptionInfo.from_current()
             else:
                 self.stop = time()
                 raise
         except:  # noqa
-            self.excinfo = ExceptionInfo()
+            self.excinfo = ExceptionInfo.from_current()
         self.stop = time()
 
     def __repr__(self):
