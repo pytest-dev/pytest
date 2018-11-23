@@ -899,5 +899,29 @@ def test_gitignore(testdir):
     config = testdir.parseconfig()
     cache = Cache.for_config(config)
     cache.set("foo", "bar")
-    msg = "# created by pytest automatically, do not change\n*"
-    assert cache._cachedir.joinpath(".gitignore").read_text(encoding="UTF-8") == msg
+    msg = "# Created by pytest automatically.\n*"
+    gitignore_path = cache._cachedir.joinpath(".gitignore")
+    assert gitignore_path.read_text(encoding="UTF-8") == msg
+
+    # Does not overwrite existing/custom one.
+    gitignore_path.write_text(u"custom")
+    cache.set("something", "else")
+    assert gitignore_path.read_text(encoding="UTF-8") == "custom"
+
+
+def test_does_not_create_boilerplate_in_existing_dirs(testdir):
+    from _pytest.cacheprovider import Cache
+
+    testdir.makeini(
+        """
+        [pytest]
+        cache_dir = .
+        """
+    )
+    config = testdir.parseconfig()
+    cache = Cache.for_config(config)
+    cache.set("foo", "bar")
+
+    assert os.path.isdir("v")  # cache contents
+    assert not os.path.exists(".gitignore")
+    assert not os.path.exists("README.md")
