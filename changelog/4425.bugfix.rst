@@ -1,1 +1,0 @@
-Ensure we resolve the absolute path when the given ``--basetemp`` is a relative path.

@@ -1,1 +1,0 @@
-Display warnings before "short test summary info" again, but still later warnings in the end.

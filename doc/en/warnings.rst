@@ -22,7 +22,7 @@ Running pytest now produces this output::
 
     $ pytest test_show_warnings.py
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
+    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 1 item
 
@@ -33,6 +33,8 @@ Running pytest now produces this output::
       $REGENDOC_TMPDIR/test_show_warnings.py:4: UserWarning: api v1, should use functions from v2
         warnings.warn(UserWarning("api v1, should use functions from v2"))
 
+    -- Docs: https://docs.pytest.org/en/latest/warnings.html
+    ========================= warnings summary (final) =========================
     -- Docs: https://docs.pytest.org/en/latest/warnings.html
     =================== 1 passed, 1 warnings in 0.12 seconds ===================
 
@@ -356,6 +358,8 @@ defines an ``__init__`` constructor, as this prevents the class from being insta
       $REGENDOC_TMPDIR/test_pytest_warnings.py:1: PytestWarning: cannot collect test class 'Test' because it has a __init__ constructor
         class Test:
 
+    -- Docs: https://docs.pytest.org/en/latest/warnings.html
+    ========================= warnings summary (final) =========================
     -- Docs: https://docs.pytest.org/en/latest/warnings.html
     1 warnings in 0.12 seconds
 

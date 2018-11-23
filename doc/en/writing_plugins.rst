@@ -411,7 +411,7 @@ additionally it is possible to copy examples for an example folder before runnin
 
     $ pytest
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
+    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile: pytest.ini
     collected 2 items
 
@@ -422,6 +422,8 @@ additionally it is possible to copy examples for an example folder before runnin
       $REGENDOC_TMPDIR/test_example.py:4: PytestExperimentalApiWarning: testdir.copy_example is an experimental api that may change over time
         testdir.copy_example("test_example.py")
 
+    -- Docs: https://docs.pytest.org/en/latest/warnings.html
+    ========================= warnings summary (final) =========================
     -- Docs: https://docs.pytest.org/en/latest/warnings.html
     =================== 2 passed, 1 warnings in 0.12 seconds ===================
 
