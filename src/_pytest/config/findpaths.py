@@ -42,6 +42,7 @@ def getcfg(args, config=None):
                                     CFG_PYTEST_SECTION.format(filename=inibasename)
                                 ),
                                 config=config,
+                                stacklevel=2,
                             )
                         return base, p, iniconfig["pytest"]
                     if (
@@ -116,7 +117,9 @@ def determine_setup(inifile, args, rootdir_cmd_arg=None, config=None):
                     # TODO: [pytest] section in *.cfg files is deprecated. Need refactoring once
                     # the deprecation expires.
                     _issue_config_warning(
-                        CFG_PYTEST_SECTION.format(filename=str(inifile)), config
+                        CFG_PYTEST_SECTION.format(filename=str(inifile)),
+                        config,
+                        stacklevel=2,
                     )
                 break
             except KeyError:

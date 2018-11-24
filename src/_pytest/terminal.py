@@ -647,9 +647,11 @@ class TerminalReporter(object):
     def pytest_terminal_summary(self):
         self.summary_errors()
         self.summary_failures()
-        yield
         self.summary_warnings()
+        yield
         self.summary_passes()
+        # Display any extra warnings from teardown here (if any).
+        self.summary_warnings()
 
     def pytest_keyboard_interrupt(self, excinfo):
         self._keyboardinterrupt_memo = excinfo.getrepr(funcargs=True)
@@ -726,11 +728,21 @@ class TerminalReporter(object):
             if not all_warnings:
                 return
 
+            final = hasattr(self, "_already_displayed_warnings")
+            if final:
+                warnings = all_warnings[self._already_displayed_warnings :]
+            else:
+                warnings = all_warnings
+            self._already_displayed_warnings = len(warnings)
+            if not warnings:
+                return
+
             grouped = itertools.groupby(
-                all_warnings, key=lambda wr: wr.get_location(self.config)
+                warnings, key=lambda wr: wr.get_location(self.config)
             )
 
-            self.write_sep("=", "warnings summary", yellow=True, bold=False)
+            title = "warnings summary (final)" if final else "warnings summary"
+            self.write_sep("=", title, yellow=True, bold=False)
             for location, warning_records in grouped:
                 # legacy warnings show their location explicitly, while standard warnings look better without
                 # it because the location is already formatted into the message
@@ -786,8 +798,7 @@ class TerminalReporter(object):
                     self.write_line(line)
                 else:
                     msg = self._getfailureheadline(rep)
-                    markup = {"red": True, "bold": True}
-                    self.write_sep("_", msg, **markup)
+                    self.write_sep("_", msg, red=True, bold=True)
                     self._outrep_summary(rep)
                     for report in self.getreports(""):
                         if report.nodeid == rep.nodeid and report.when == "teardown":
@@ -808,7 +819,7 @@ class TerminalReporter(object):
                     msg = "ERROR at setup of " + msg
                 elif rep.when == "teardown":
                     msg = "ERROR at teardown of " + msg
-                self.write_sep("_", msg)
+                self.write_sep("_", msg, red=True, bold=True)
                 self._outrep_summary(rep)
 
     def _outrep_summary(self, rep):

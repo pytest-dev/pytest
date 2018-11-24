@@ -371,7 +371,7 @@ class TestPython(object):
             import sys
 
             def test_fail():
-                print ("hello-stdout")
+                print("hello-stdout")
                 sys.stderr.write("hello-stderr\\n")
                 logging.info('info msg')
                 logging.warning('warning msg')
@@ -589,7 +589,7 @@ class TestPython(object):
             """
             # coding: latin1
             def test_hello():
-                print (%r)
+                print(%r)
                 assert 0
         """
             % value

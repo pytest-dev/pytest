@@ -365,7 +365,7 @@ class TestFixtureReporting(object):
         testdir.makepyfile(
             """
             def setup_function(function):
-                print ("setup func")
+                print("setup func")
                 assert 0
             def test_nada():
                 pass
@@ -389,7 +389,7 @@ class TestFixtureReporting(object):
             def test_nada():
                 pass
             def teardown_function(function):
-                print ("teardown func")
+                print("teardown func")
                 assert 0
         """
         )
@@ -412,7 +412,7 @@ class TestFixtureReporting(object):
                 assert 0, "failingfunc"
 
             def teardown_function(function):
-                print ("teardown func")
+                print("teardown func")
                 assert False
         """
         )
@@ -436,13 +436,13 @@ class TestFixtureReporting(object):
         testdir.makepyfile(
             """
             def setup_function(function):
-                print ("setup func")
+                print("setup func")
 
             def test_fail():
                 assert 0, "failingfunc"
 
             def teardown_function(function):
-                print ("teardown func")
+                print("teardown func")
         """
         )
         result = testdir.runpytest()
@@ -854,7 +854,7 @@ class TestGenericReporting(object):
             def g():
                 raise IndexError
             def test_func():
-                print (6*7)
+                print(6*7)
                 g()  # --calling--
         """
         )
@@ -863,9 +863,9 @@ class TestGenericReporting(object):
             result = testdir.runpytest("--tb=%s" % tbopt)
             s = result.stdout.str()
             if tbopt == "long":
-                assert "print (6*7)" in s
+                assert "print(6*7)" in s
             else:
-                assert "print (6*7)" not in s
+                assert "print(6*7)" not in s
             if tbopt != "no":
                 assert "--calling--" in s
                 assert "IndexError" in s
@@ -881,7 +881,7 @@ class TestGenericReporting(object):
             def g():
                 raise IndexError
             def test_func1():
-                print (6*7)
+                print(6*7)
                 g()  # --calling--
             def test_func2():
                 assert 0, "hello"
@@ -1074,11 +1074,54 @@ def test_terminal_summary_warnings_are_displayed(testdir):
             warnings.warn(UserWarning('internal warning'))
     """
     )
-    result = testdir.runpytest()
+    testdir.makepyfile(
+        """
+        def test_failure():
+            import warnings
+            warnings.warn("warning_from_" + "test")
+            assert 0
+    """
+    )
+    result = testdir.runpytest("-ra")
     result.stdout.fnmatch_lines(
-        ["*conftest.py:3:*internal warning", "*== 1 warnings in *"]
+        [
+            "*= warnings summary =*",
+            "*warning_from_test*",
+            "*= short test summary info =*",
+            "*= warnings summary (final) =*",
+            "*conftest.py:3:*internal warning",
+            "*== 1 failed, 2 warnings in *",
+        ]
     )
     assert "None" not in result.stdout.str()
+    stdout = result.stdout.str()
+    assert stdout.count("warning_from_test") == 1
+    assert stdout.count("=== warnings summary ") == 2
+
+
+@pytest.mark.filterwarnings("default")
+def test_terminal_summary_warnings_header_once(testdir):
+    testdir.makepyfile(
+        """
+        def test_failure():
+            import warnings
+            warnings.warn("warning_from_" + "test")
+            assert 0
+    """
+    )
+    result = testdir.runpytest("-ra")
+    result.stdout.fnmatch_lines(
+        [
+            "*= warnings summary =*",
+            "*warning_from_test*",
+            "*= short test summary info =*",
+            "*== 1 failed, 1 warnings in *",
+        ]
+    )
+    assert "None" not in result.stdout.str()
+    stdout = result.stdout.str()
+    assert stdout.count("warning_from_test") == 1
+    assert stdout.count("=== warnings summary ") == 1
 
 
 @pytest.mark.parametrize(

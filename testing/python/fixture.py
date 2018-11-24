@@ -1495,7 +1495,7 @@ class TestFixtureManagerParseFactories(object):
                     return "class"
                 def test_hello(self, item, fm):
                     faclist = fm.getfixturedefs("hello", item.nodeid)
-                    print (faclist)
+                    print(faclist)
                     assert len(faclist) == 3
 
                     assert faclist[0].func(item._request) == "conftest"
@@ -2040,7 +2040,7 @@ class TestAutouseManagement(object):
                     values.append("step2-%d" % item)
 
             def test_finish():
-                print (values)
+                print(values)
                 assert values == ["setup-1", "step1-1", "step2-1", "teardown-1",
                              "setup-2", "step1-2", "step2-2", "teardown-2",]
         """
@@ -2880,7 +2880,7 @@ class TestFixtureMarker(object):
             def base(request, fix1):
                 def cleanup_base():
                     values.append("fin_base")
-                    print ("finalizing base")
+                    print("finalizing base")
                 request.addfinalizer(cleanup_base)
 
             def test_begin():
@@ -3480,13 +3480,13 @@ class TestContextManagerFixtureFuncs(object):
             from test_context import fixture
             @fixture
             def arg1():
-                print ("setup")
+                print("setup")
                 yield 1
-                print ("teardown")
+                print("teardown")
             def test_1(arg1):
-                print ("test1", arg1)
+                print("test1", arg1)
             def test_2(arg1):
-                print ("test2", arg1)
+                print("test2", arg1)
                 assert 0
         """
         )
@@ -3509,13 +3509,13 @@ class TestContextManagerFixtureFuncs(object):
             from test_context import fixture
             @fixture(scope="module")
             def arg1():
-                print ("setup")
+                print("setup")
                 yield 1
-                print ("teardown")
+                print("teardown")
             def test_1(arg1):
-                print ("test1", arg1)
+                print("test1", arg1)
             def test_2(arg1):
-                print ("test2", arg1)
+                print("test2", arg1)
         """
         )
         result = testdir.runpytest("-s")

@@ -107,8 +107,8 @@ def test_capturing_unicode(testdir, method):
         # taken from issue 227 from nosetests
         def test_unicode():
             import sys
-            print (sys.stdout)
-            print (%s)
+            print(sys.stdout)
+            print(%s)
     """
         % obj
     )
@@ -121,7 +121,7 @@ def test_capturing_bytes_in_utf8_encoding(testdir, method):
     testdir.makepyfile(
         """
         def test_unicode():
-            print ('b\\u00f6y')
+            print('b\\u00f6y')
     """
     )
     result = testdir.runpytest("--capture=%s" % method)
@@ -131,7 +131,7 @@ def test_capturing_bytes_in_utf8_encoding(testdir, method):
 def test_collect_capturing(testdir):
     p = testdir.makepyfile(
         """
-        print ("collect %s failure" % 13)
+        print("collect %s failure" % 13)
         import xyz42123
     """
     )
@@ -144,14 +144,14 @@ class TestPerTestCapturing(object):
         p = testdir.makepyfile(
             """
             def setup_module(mod):
-                print ("setup module")
+                print("setup module")
             def setup_function(function):
-                print ("setup " + function.__name__)
+                print("setup " + function.__name__)
             def test_func1():
-                print ("in func1")
+                print("in func1")
                 assert 0
             def test_func2():
-                print ("in func2")
+                print("in func2")
                 assert 0
         """
         )
@@ -172,14 +172,14 @@ class TestPerTestCapturing(object):
             """
             import sys
             def setup_module(func):
-                print ("module-setup")
+                print("module-setup")
             def setup_function(func):
-                print ("function-setup")
+                print("function-setup")
             def test_func():
-                print ("in function")
+                print("in function")
                 assert 0
             def teardown_function(func):
-                print ("in teardown")
+                print("in teardown")
         """
         )
         result = testdir.runpytest(p)
@@ -198,9 +198,9 @@ class TestPerTestCapturing(object):
         p = testdir.makepyfile(
             """
             def test_func1():
-                print ("in func1")
+                print("in func1")
             def test_func2():
-                print ("in func2")
+                print("in func2")
                 assert 0
         """
         )
@@ -213,12 +213,12 @@ class TestPerTestCapturing(object):
         p = testdir.makepyfile(
             """
             def setup_function(function):
-                print ("setup func1")
+                print("setup func1")
             def teardown_function(function):
-                print ("teardown func1")
+                print("teardown func1")
                 assert 0
             def test_func1():
-                print ("in func1")
+                print("in func1")
                 pass
         """
         )
@@ -238,7 +238,7 @@ class TestPerTestCapturing(object):
         p = testdir.makepyfile(
             """
             def teardown_module(mod):
-                print ("teardown module")
+                print("teardown module")
                 assert 0
             def test_func():
                 pass
@@ -259,10 +259,10 @@ class TestPerTestCapturing(object):
             """\
             import sys
             def test_capturing():
-                print (42)
+                print(42)
                 sys.stderr.write(str(23))
             def test_capturing_error():
-                print (1)
+                print(1)
                 sys.stderr.write(str(2))
                 raise ValueError
             """
@@ -392,7 +392,7 @@ class TestCaptureFixture(object):
         reprec = testdir.inline_runsource(
             """\
             def test_hello(capsys):
-                print (42)
+                print(42)
                 out, err = capsys.readouterr()
                 assert out.startswith("42")
             """,
@@ -460,7 +460,7 @@ class TestCaptureFixture(object):
         p = testdir.makepyfile(
             """\
             def test_hello(cap{}):
-                print ("xxx42xxx")
+                print("xxx42xxx")
                 assert 0
             """.format(
                 method
@@ -702,7 +702,7 @@ def test_capture_conftest_runtest_setup(testdir):
     testdir.makeconftest(
         """
         def pytest_runtest_setup():
-            print ("hello19")
+            print("hello19")
     """
     )
     testdir.makepyfile("def test_func(): pass")
@@ -737,7 +737,7 @@ def test_capture_early_option_parsing(testdir):
     testdir.makeconftest(
         """
         def pytest_runtest_setup():
-            print ("hello19")
+            print("hello19")
     """
     )
     testdir.makepyfile("def test_func(): pass")
@@ -1302,14 +1302,14 @@ def test_capturing_and_logging_fundamentals(testdir, method):
 
         logging.warn("hello1")
         outerr = cap.readouterr()
-        print ("suspend, captured %%s" %%(outerr,))
+        print("suspend, captured %%s" %%(outerr,))
         logging.warn("hello2")
 
         cap.pop_outerr_to_orig()
         logging.warn("hello3")
 
         outerr = cap.readouterr()
-        print ("suspend2, captured %%s" %% (outerr,))
+        print("suspend2, captured %%s" %% (outerr,))
     """
         % (method,)
     )

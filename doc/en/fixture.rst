@@ -70,7 +70,7 @@ marked ``smtp_connection`` fixture function.  Running the test looks like this::
 
     $ pytest test_smtpsimple.py
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
+    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 1 item
 
@@ -208,7 +208,7 @@ inspect what is going on and can now run the tests::
 
     $ pytest test_module.py
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
+    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 2 items
 
@@ -460,7 +460,7 @@ read an optional server URL from the test module which uses our fixture::
         server = getattr(request.module, "smtpserver", "smtp.gmail.com")
         smtp_connection = smtplib.SMTP(server, 587, timeout=5)
         yield smtp_connection
-        print ("finalizing %s (%s)" % (smtp_connection, server))
+        print("finalizing %s (%s)" % (smtp_connection, server))
         smtp_connection.close()
 
 We use the ``request.module`` attribute to optionally obtain an
@@ -690,7 +690,7 @@ Running the above tests results in the following test IDs being used::
 
    $ pytest --collect-only
    =========================== test session starts ============================
-   platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
+   platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
    rootdir: $REGENDOC_TMPDIR, inifile:
    collected 10 items
    <Module 'test_anothersmtp.py'>
@@ -732,7 +732,7 @@ Running this test will *skip* the invocation of ``data_set`` with value ``2``::
 
     $ pytest test_fixture_marks.py -v
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.6
+    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.6
     cachedir: .pytest_cache
     rootdir: $REGENDOC_TMPDIR, inifile:
     collecting ... collected 3 items
@@ -775,7 +775,7 @@ Here we declare an ``app`` fixture which receives the previously defined
 
     $ pytest -v test_appsetup.py
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.6
+    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.6
     cachedir: .pytest_cache
     rootdir: $REGENDOC_TMPDIR, inifile:
     collecting ... collected 2 items
@@ -821,30 +821,30 @@ to show the setup/teardown flow::
     @pytest.fixture(scope="module", params=["mod1", "mod2"])
     def modarg(request):
         param = request.param
-        print ("  SETUP modarg %s" % param)
+        print("  SETUP modarg %s" % param)
         yield param
-        print ("  TEARDOWN modarg %s" % param)
+        print("  TEARDOWN modarg %s" % param)
 
     @pytest.fixture(scope="function", params=[1,2])
     def otherarg(request):
         param = request.param
-        print ("  SETUP otherarg %s" % param)
+        print("  SETUP otherarg %s" % param)
         yield param
-        print ("  TEARDOWN otherarg %s" % param)
+        print("  TEARDOWN otherarg %s" % param)
 
     def test_0(otherarg):
-        print ("  RUN test0 with otherarg %s" % otherarg)
+        print("  RUN test0 with otherarg %s" % otherarg)
     def test_1(modarg):
-        print ("  RUN test1 with modarg %s" % modarg)
+        print("  RUN test1 with modarg %s" % modarg)
     def test_2(otherarg, modarg):
-        print ("  RUN test2 with otherarg %s and modarg %s" % (otherarg, modarg))
+        print("  RUN test2 with otherarg %s and modarg %s" % (otherarg, modarg))
 
 
 Let's run the tests in verbose mode and with looking at the print-output::
 
     $ pytest -v -s test_module.py
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.6
+    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.6
     cachedir: .pytest_cache
     rootdir: $REGENDOC_TMPDIR, inifile:
     collecting ... collected 8 items
