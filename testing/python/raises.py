@@ -17,6 +17,10 @@ class TestRaises(object):
     def test_raises_exec(self):
         pytest.raises(ValueError, "a,x = []")
 
+    def test_raises_exec_correct_filename(self):
+        excinfo = pytest.raises(ValueError, 'int("s")')
+        assert __file__ in excinfo.traceback[-1].path
+
     def test_raises_syntax_error(self):
         pytest.raises(SyntaxError, "qwe qwe qwe")
 
