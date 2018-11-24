@@ -526,15 +526,8 @@ class TestRequestBasic(object):
 
                 try:
                     gc.collect()
-                    leaked_types = sum(1 for _ in gc.garbage
-                                       if isinstance(_, PseudoFixtureDef))
-
-                    # debug leaked types if the test fails
-                    print(leaked_types)
-
-                    gc.garbage[:] = []
-
-                    assert leaked_types == 0
+                    leaked = [x for _ in gc.garbage if isinstance(_, PseudoFixtureDef)]
+                    assert leaked == []
                 finally:
                     gc.set_debug(original)
 
@@ -542,7 +535,7 @@ class TestRequestBasic(object):
                 pass
         """
         )
-        result = testdir.runpytest()
+        result = testdir.runpytest_subprocess()
         result.stdout.fnmatch_lines("* 1 passed in *")
 
     def test_getfixturevalue_recursive(self, testdir):
