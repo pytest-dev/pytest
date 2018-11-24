@@ -12,53 +12,13 @@ python:
 install:
   - pip install --upgrade --pre tox
 env:
-  matrix:
-    - TOXENV=py27
-    # Specialized factors for py27.
-    - TOXENV=py27-nobyte
-    - TOXENV=py27-xdist
-    - TOXENV=py27-pluggymaster PYTEST_NO_COVERAGE=1
-    # Specialized factors for py37.
-    - TOXENV=py37-pexpect,py37-trial,py37-numpy
-    - TOXENV=py37-pluggymaster PYTEST_NO_COVERAGE=1
-    - TOXENV=py37-freeze PYTEST_NO_COVERAGE=1
   global:
     CC_TEST_REPORTER_ID=17da631beaabf819740e82ef7edee551fe9a4e41409ffdd81284ad6544a51782
 
 jobs:
   include:
-    # Coverage tracking is slow with pypy, skip it.
-    - env: TOXENV=pypy PYTEST_NO_COVERAGE=1
-      python: 'pypy-5.4'
-      dist: trusty
-    - env: TOXENV=py34
-      python: '3.4'
-    - env: TOXENV=py35
-      python: '3.5'
-    - env: TOXENV=py36
-      python: '3.6'
-    - env: TOXENV=py37
-    - &test-macos
-      language: generic
-      os: osx
-      osx_image: xcode9.4
-      sudo: required
-      install:
-        - python -m pip install --pre tox
-      env: TOXENV=py27
-    - <<: *test-macos
-      env: TOXENV=py37
-      before_install:
-        - brew update
-        - brew upgrade python
-        - brew unlink python
-        - brew link python
-
-    - stage: baseline
-      env: TOXENV=py27-pexpect,py27-trial,py27-numpy
+    - env: TOXENV=py27-xdist
     - env: TOXENV=py37-xdist
-    - env: TOXENV=linting,docs,doctesting
-      python: '3.7'
 
     - stage: deploy
       python: '3.6'
