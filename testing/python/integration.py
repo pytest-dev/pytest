@@ -283,7 +283,7 @@ class TestReRunTests(object):
                 global count, req
                 assert request != req
                 req = request
-                print ("fix count %s" % count)
+                print("fix count %s" % count)
                 count += 1
             def test_fix(fix):
                 pass

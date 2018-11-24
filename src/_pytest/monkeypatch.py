@@ -13,8 +13,9 @@ import six
 
 import pytest
 from _pytest.fixtures import fixture
+from _pytest.pathlib import Path
 
-RE_IMPORT_ERROR_NAME = re.compile("^No module named (.*)$")
+RE_IMPORT_ERROR_NAME = re.compile(r"^No module named (.*)$")
 
 
 @fixture
@@ -267,6 +268,9 @@ class MonkeyPatch(object):
             self._cwd = os.getcwd()
         if hasattr(path, "chdir"):
             path.chdir()
+        elif isinstance(path, Path):
+            # modern python uses the fspath protocol here LEGACY
+            os.chdir(str(path))
         else:
             os.chdir(path)
 

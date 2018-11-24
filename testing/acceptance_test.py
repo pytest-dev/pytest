@@ -206,7 +206,7 @@ class TestGeneralUsage(object):
         testdir.makeconftest(
             """
             import sys
-            print ("should not be seen")
+            print("should not be seen")
             sys.stderr.write("stder42\\n")
         """
         )
@@ -218,7 +218,7 @@ class TestGeneralUsage(object):
     def test_conftest_printing_shows_if_error(self, testdir):
         testdir.makeconftest(
             """
-            print ("should be seen")
+            print("should be seen")
             assert 0
         """
         )
@@ -301,7 +301,7 @@ class TestGeneralUsage(object):
             def pytest_generate_tests(metafunc):
                 metafunc.addcall({'x': 3}, id='hello-123')
             def pytest_runtest_setup(item):
-                print (item.keywords)
+                print(item.keywords)
                 if 'hello-123' in item.keywords:
                     pytest.skip("hello")
                 assert 0

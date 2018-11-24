@@ -27,7 +27,7 @@ Install ``pytest``
 2. Check that you installed the correct version::
 
     $ pytest --version
-    This is pytest version 3.x.y, imported from $PYTHON_PREFIX/lib/python3.6/site-packages/pytest.py
+    This is pytest version 4.x.y, imported from $PYTHON_PREFIX/lib/python3.6/site-packages/pytest.py
 
 .. _`simpletest`:
 
@@ -47,7 +47,7 @@ That’s it. You can now execute the test function::
 
     $ pytest
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
+    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 1 item
 
@@ -138,7 +138,7 @@ Request a unique temporary directory for functional tests
 
     # content of test_tmpdir.py
     def test_needsfiles(tmpdir):
-        print (tmpdir)
+        print(tmpdir)
         assert 0
 
 List the name ``tmpdir`` in the test function signature and ``pytest`` will lookup and call a fixture factory to create the resource before performing the test function call. Before the test runs, ``pytest`` creates a unique-per-test-invocation temporary directory::
@@ -151,7 +151,7 @@ List the name ``tmpdir`` in the test function signature and ``pytest`` will look
     tmpdir = local('PYTEST_TMPDIR/test_needsfiles0')
 
         def test_needsfiles(tmpdir):
-            print (tmpdir)
+            print(tmpdir)
     >       assert 0
     E       assert 0
 

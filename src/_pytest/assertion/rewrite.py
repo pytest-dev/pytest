@@ -270,6 +270,7 @@ class AssertionRewritingHook(object):
         _issue_config_warning(
             PytestWarning("Module already imported so cannot be rewritten: %s" % name),
             self.config,
+            stacklevel=5,
         )
 
     def load_module(self, name):
