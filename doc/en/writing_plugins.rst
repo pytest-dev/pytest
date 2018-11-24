@@ -388,26 +388,27 @@ return a result object, with which we can assert the tests' outcomes.
 
 additionally it is possible to copy examples for an example folder before running pytest on it
 
-.. code:: ini
+.. code-block:: ini
 
   # content of pytest.ini
   [pytest]
   pytester_example_dir = .
 
 
-.. code:: python
+.. code-block:: python
 
     # content of test_example.py
 
 
     def test_plugin(testdir):
-      testdir.copy_example("test_example.py")
-      testdir.runpytest("-k", "test_example")
+        testdir.copy_example("test_example.py")
+        testdir.runpytest("-k", "test_example")
+
 
     def test_example():
-      pass
+        pass
 
-.. code::
+.. code-block:: pytest
 
     $ pytest
     =========================== test session starts ============================

@@ -50,7 +50,9 @@ to an expected output::
 
 Here, the ``@parametrize`` decorator defines three different ``(test_input,expected)``
 tuples so that the ``test_eval`` function will run three times using
-them in turn::
+them in turn:
+
+.. code-block:: pytest
 
     $ pytest
     =========================== test session starts ============================
@@ -99,7 +101,9 @@ for example with the builtin ``mark.xfail``::
     def test_eval(test_input, expected):
         assert eval(test_input) == expected
 
-Let's run this::
+Let's run this:
+
+.. code-block:: pytest
 
     $ pytest
     =========================== test session starts ============================
@@ -172,7 +176,9 @@ If we now pass two stringinput values, our test will run twice::
     ..                                                                   [100%]
     2 passed in 0.12 seconds
 
-Let's also run with a stringinput that will lead to a failing test::
+Let's also run with a stringinput that will lead to a failing test:
+
+.. code-block:: pytest
 
     $ pytest -q --stringinput="!" test_strings.py
     F                                                                    [100%]
@@ -194,7 +200,9 @@ As expected our test function fails.
 
 If you don't specify a stringinput it will be skipped because
 ``metafunc.parametrize()`` will be called with an empty parameter
-list::
+list:
+
+.. code-block:: pytest
 
     $ pytest -q -rs test_strings.py
     s                                                                    [100%]

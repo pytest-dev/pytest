@@ -22,7 +22,9 @@ following::
         assert f() == 4
 
 to assert that your function returns a certain value. If this assertion fails
-you will see the return value of the function call::
+you will see the return value of the function call:
+
+.. code-block:: pytest
 
     $ pytest test_assert1.py
     =========================== test session starts ============================
@@ -165,7 +167,9 @@ when it encounters comparisons.  For example::
         set2 = set("8035")
         assert set1 == set2
 
-if you run this module::
+if you run this module:
+
+.. code-block:: pytest
 
     $ pytest test_assert2.py
     =========================== test session starts ============================
@@ -235,7 +239,9 @@ now, given this test module::
        assert f1 == f2
 
 you can run the test module and get the custom output defined in
-the conftest file::
+the conftest file:
+
+.. code-block:: pytest
 
    $ pytest -q test_foocompare.py
    F                                                                    [100%]
