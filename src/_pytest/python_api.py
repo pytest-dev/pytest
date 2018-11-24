@@ -679,7 +679,7 @@ def raises(expected_exception, *args, **kwargs):
         loc.update(kwargs)
         # print "raises frame scope: %r" % frame.f_locals
         try:
-            code = _pytest._code.Source(code).compile()
+            code = _pytest._code.Source(code).compile(_genframe=frame)
             six.exec_(code, frame.f_globals, loc)
             # XXX didn't mean f_globals == f_locals something special?
             #     this is destroyed here ...
