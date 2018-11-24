@@ -734,6 +734,8 @@ class TerminalReporter(object):
             else:
                 warnings = all_warnings
             self._already_displayed_warnings = len(warnings)
+            if not warnings:
+                return
 
             grouped = itertools.groupby(
                 warnings, key=lambda wr: wr.get_location(self.config)
