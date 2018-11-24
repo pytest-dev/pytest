@@ -57,7 +57,9 @@ will be called ahead of running any tests::
         def test_unit1(self):
             print("test_unit1 method called")
 
-If you run this without output capturing::
+If you run this without output capturing:
+
+.. code-block:: pytest
 
     $ pytest -q -s test_module.py
     callattr_ahead_of_alltests called

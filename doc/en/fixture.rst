@@ -66,7 +66,9 @@ using it::
 
 Here, the ``test_ehlo`` needs the ``smtp_connection`` fixture value.  pytest
 will discover and call the :py:func:`@pytest.fixture <_pytest.python.fixture>`
-marked ``smtp_connection`` fixture function.  Running the test looks like this::
+marked ``smtp_connection`` fixture function.  Running the test looks like this:
+
+.. code-block:: pytest
 
     $ pytest test_smtpsimple.py
     =========================== test session starts ============================
@@ -204,7 +206,9 @@ located)::
         assert 0  # for demo purposes
 
 We deliberately insert failing ``assert 0`` statements in order to
-inspect what is going on and can now run the tests::
+inspect what is going on and can now run the tests:
+
+.. code-block:: pytest
 
     $ pytest test_module.py
     =========================== test session starts ============================
@@ -482,7 +486,9 @@ server URL in its module namespace::
     def test_showhelo(smtp_connection):
         assert 0, smtp_connection.helo()
 
-Running it::
+Running it:
+
+.. code-block:: pytest
 
     $ pytest -qq --tb=short test_anothersmtp.py
     F                                                                    [100%]
@@ -584,7 +590,9 @@ The main change is the declaration of ``params`` with
 :py:func:`@pytest.fixture <_pytest.python.fixture>`, a list of values
 for each of which the fixture function will execute and can access
 a value via ``request.param``.  No test function code needs to change.
-So let's just do another run::
+So let's just do another run:
+
+.. code-block:: pytest
 
     $ pytest -q test_module.py
     FFFF                                                                 [100%]
@@ -686,7 +694,9 @@ a function which will be called with the fixture value and then
 has to return a string to use.  In the latter case if the function
 return ``None`` then pytest's auto-generated ID will be used.
 
-Running the above tests results in the following test IDs being used::
+Running the above tests results in the following test IDs being used:
+
+.. code-block:: pytest
 
    $ pytest --collect-only
    =========================== test session starts ============================
@@ -728,7 +738,9 @@ Example::
     def test_data(data_set):
         pass
 
-Running this test will *skip* the invocation of ``data_set`` with value ``2``::
+Running this test will *skip* the invocation of ``data_set`` with value ``2``:
+
+.. code-block:: pytest
 
     $ pytest test_fixture_marks.py -v
     =========================== test session starts ============================
@@ -771,7 +783,9 @@ and instantiate an object ``app`` where we stick the already defined
         assert app.smtp_connection
 
 Here we declare an ``app`` fixture which receives the previously defined
-``smtp_connection`` fixture and instantiates an ``App`` object with it.  Let's run it::
+``smtp_connection`` fixture and instantiates an ``App`` object with it.  Let's run it:
+
+.. code-block:: pytest
 
     $ pytest -v test_appsetup.py
     =========================== test session starts ============================
@@ -840,7 +854,9 @@ to show the setup/teardown flow::
         print("  RUN test2 with otherarg %s and modarg %s" % (otherarg, modarg))
 
 
-Let's run the tests in verbose mode and with looking at the print-output::
+Let's run the tests in verbose mode and with looking at the print-output:
+
+.. code-block:: pytest
 
     $ pytest -v -s test_module.py
     =========================== test session starts ============================
@@ -942,7 +958,9 @@ and declare its use in a test module via a ``usefixtures`` marker::
 Due to the ``usefixtures`` marker, the ``cleandir`` fixture
 will be required for the execution of each test method, just as if
 you specified a "cleandir" function argument to each of them.  Let's run it
-to verify our fixture is activated and the tests pass::
+to verify our fixture is activated and the tests pass:
+
+.. code-block:: pytest
 
     $ pytest -q
     ..                                                                   [100%]
@@ -1041,7 +1059,9 @@ which implies that all test methods in the class will use this fixture
 without a need to state it in the test function signature or with a
 class-level ``usefixtures`` decorator.
 
-If we run it, we get two passing tests::
+If we run it, we get two passing tests:
+
+.. code-block:: pytest
 
     $ pytest -q
     ..                                                                   [100%]

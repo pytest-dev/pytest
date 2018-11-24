@@ -43,7 +43,9 @@ First, let's create 50 test invocation of which only 2 fail::
         if i in (17, 25):
            pytest.fail("bad luck")
 
-If you run this for the first time you will see two failures::
+If you run this for the first time you will see two failures:
+
+.. code-block:: pytest
 
     $ pytest -q
     .................F.......F........................                   [100%]
@@ -72,7 +74,9 @@ If you run this for the first time you will see two failures::
     test_50.py:6: Failed
     2 failed, 48 passed in 0.12 seconds
 
-If you then run it with ``--lf``::
+If you then run it with ``--lf``:
+
+.. code-block:: pytest
 
     $ pytest --lf
     =========================== test session starts ============================
@@ -113,7 +117,9 @@ not been run ("deselected").
 
 Now, if you run with the ``--ff`` option, all tests will be run but the first
 previous failures will be executed first (as can be seen from the series
-of ``FF`` and dots)::
+of ``FF`` and dots):
+
+.. code-block:: pytest
 
     $ pytest --ff
     =========================== test session starts ============================
@@ -192,7 +198,9 @@ across pytest invocations::
         assert mydata == 23
 
 If you run this command once, it will take a while because
-of the sleep::
+of the sleep:
+
+.. code-block:: pytest
 
     $ pytest -q
     F                                                                    [100%]
@@ -209,7 +217,9 @@ of the sleep::
     1 failed in 0.12 seconds
 
 If you run it a second time the value will be retrieved from
-the cache and this will be quick::
+the cache and this will be quick:
+
+.. code-block:: pytest
 
     $ pytest -q
     F                                                                    [100%]
@@ -232,7 +242,9 @@ Inspecting Cache content
 -------------------------------
 
 You can always peek at the content of the cache using the
-``--cache-show`` command line option::
+``--cache-show`` command line option:
+
+.. code-block:: pytest
 
     $ pytest --cache-show
     =========================== test session starts ============================

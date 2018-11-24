@@ -61,7 +61,9 @@ is that you can use print statements for debugging::
         assert False
 
 and running this module will show you precisely the output
-of the failing function and hide the other one::
+of the failing function and hide the other one:
+
+.. code-block:: pytest
 
     $ pytest
     =========================== test session starts ============================
