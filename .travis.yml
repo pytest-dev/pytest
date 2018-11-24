@@ -23,6 +23,8 @@ env:
     - TOXENV=py37-pexpect,py37-trial,py37-numpy
     - TOXENV=py37-pluggymaster
     - TOXENV=py37-freeze PYTEST_NO_COVERAGE=1
+  global:
+    CC_TEST_REPORTER_ID=17da631beaabf819740e82ef7edee551fe9a4e41409ffdd81284ad6544a51782
 
 matrix:
   allow_failures:
@@ -91,6 +93,15 @@ before_script:
       export COVERAGE_PROCESS_START="$PWD/.coveragerc"
       export _PYTEST_TOX_COVERAGE_RUN="coverage run -m"
       export _PYTEST_TOX_EXTRA_DEP=coverage-enable-subprocess
+
+      # Codeclimate.
+      if [[ "$TRAVIS_OS_NAME" == osx ]]; then
+        curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-darwin-amd64 > ./cc-test-reporter
+      else
+        curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
+      fi
+      chmod +x ./cc-test-reporter
+      ./cc-test-reporter before-build
     fi
 
 script: tox --recreate
@@ -105,6 +116,9 @@ after_success:
       coverage xml --ignore-errors
       coverage report -m --ignore-errors
       bash <(curl -s https://codecov.io/bash) -Z -X gcov -X coveragepy -X search -X xcode -X gcovout -X fix -f coverage.xml -F "${TOXENV//-/,},linux"
+
+      ./cc-test-reporter format-coverage -t coverage.py -o codeclimate.json coverage.xml
+      ./cc-test-reporter upload-coverage -i codeclimate.json
     fi
 
 notifications:
