@@ -474,9 +474,9 @@ class TestMetafunc(object):
         result = testdir.runpytest("--collect-only", SHOW_PYTEST_WARNINGS_ARG)
         result.stdout.fnmatch_lines(
             [
-                "<Module 'test_parametrize_ids_exception.py'>",
-                "  <Function 'test_foo[a]'>",
-                "  <Function 'test_foo[b]'>",
+                "<Module test_parametrize_ids_exception.py>",
+                "  <Function test_foo[a]>",
+                "  <Function test_foo[b]>",
                 "*test_parametrize_ids_exception.py:6: *parameter arg at position 0*",
                 "*test_parametrize_ids_exception.py:6: *parameter arg at position 1*",
             ]

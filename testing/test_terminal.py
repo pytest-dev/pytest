@@ -263,7 +263,7 @@ class TestCollectonly(object):
         )
         result = testdir.runpytest("--collect-only")
         result.stdout.fnmatch_lines(
-            ["<Module 'test_collectonly_basic.py'>", "  <Function 'test_func'>"]
+            ["<Module test_collectonly_basic.py>", "  <Function test_func>"]
         )
 
     def test_collectonly_skipped_module(self, testdir):
@@ -307,11 +307,10 @@ class TestCollectonly(object):
         assert result.ret == 0
         result.stdout.fnmatch_lines(
             [
-                "*<Module '*.py'>",
-                "* <Function 'test_func1'*>",
-                "* <Class 'TestClass'>",
-                # "*  <Instance '()'>",
-                "*   <Function 'test_method'*>",
+                "*<Module *.py>",
+                "* <Function test_func1>",
+                "* <Class TestClass>",
+                "*   <Function test_method>",
             ]
         )
 

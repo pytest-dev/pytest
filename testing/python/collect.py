@@ -489,25 +489,33 @@ class TestFunction(object):
             ]
         )
 
-    def test_function_equality(self, testdir, tmpdir):
+    @staticmethod
+    def make_function(testdir, **kwargs):
         from _pytest.fixtures import FixtureManager
 
         config = testdir.parseconfigure()
         session = testdir.Session(config)
         session._fixturemanager = FixtureManager(session)
 
+        return pytest.Function(config=config, parent=session, **kwargs)
+
+    def test_function_equality(self, testdir, tmpdir):
         def func1():
             pass
 
         def func2():
             pass
 
-        f1 = pytest.Function(
-            name="name", parent=session, config=config, args=(1,), callobj=func1
-        )
+        f1 = self.make_function(testdir, name="name", args=(1,), callobj=func1)
         assert f1 == f1
-        f2 = pytest.Function(name="name", config=config, callobj=func2, parent=session)
+        f2 = self.make_function(testdir, name="name", callobj=func2)
         assert f1 != f2
+
+    def test_repr_produces_actual_test_id(self, testdir):
+        f = self.make_function(
+            testdir, name=r"test[\xe5]", callobj=self.test_repr_produces_actual_test_id
+        )
+        assert repr(f) == r"<Function test[\xe5]>"
 
     def test_issue197_parametrize_emptyset(self, testdir):
         testdir.makepyfile(
