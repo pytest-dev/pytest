@@ -138,7 +138,7 @@ class Node(object):
         return cls
 
     def __repr__(self):
-        return "<%s %r>" % (self.__class__.__name__, getattr(self, "name", None))
+        return "<%s %s>" % (self.__class__.__name__, getattr(self, "name", None))
 
     def warn(self, _code_or_warning=None, message=None, code=None):
         """Issue a warning for this item.
