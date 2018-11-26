@@ -23,7 +23,9 @@ You can create a simple example file:
     :literal:
 
 and if you installed `PyYAML`_ or a compatible YAML-parser you can
-now execute the test specification::
+now execute the test specification:
+
+.. code-block:: pytest
 
     nonpython $ pytest test_simple.yml
     =========================== test session starts ============================
@@ -55,7 +57,9 @@ your own domain specific testing language this way.
     will be reported as a (red) string.
 
 ``reportinfo()`` is used for representing the test location and is also
-consulted when reporting in ``verbose`` mode::
+consulted when reporting in ``verbose`` mode:
+
+.. code-block:: pytest
 
     nonpython $ pytest -v
     =========================== test session starts ============================
@@ -77,7 +81,9 @@ consulted when reporting in ``verbose`` mode::
 .. regendoc:wipe
 
 While developing your custom test collection and execution it's also
-interesting to just look at the collection tree::
+interesting to just look at the collection tree:
+
+.. code-block:: pytest
 
     nonpython $ pytest --collect-only
     =========================== test session starts ============================

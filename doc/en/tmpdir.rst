@@ -35,7 +35,9 @@ created in the `base temporary directory`_.
         assert 0
 
 Running this would result in a passed test except for the last
-``assert 0`` line which we use to look at values::
+``assert 0`` line which we use to look at values:
+
+.. code-block:: pytest
 
     $ pytest test_tmp_path.py
     =========================== test session starts ============================
@@ -95,7 +97,9 @@ and more.  Here is an example test usage::
         assert 0
 
 Running this would result in a passed test except for the last
-``assert 0`` line which we use to look at values::
+``assert 0`` line which we use to look at values:
+
+.. code-block:: pytest
 
     $ pytest test_tmpdir.py
     =========================== test session starts ============================

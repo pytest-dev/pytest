@@ -323,7 +323,9 @@ Here is a simple test file with the several usages:
 
 .. literalinclude:: example/xfail_demo.py
 
-Running it with the report-on-xfail option gives this output::
+Running it with the report-on-xfail option gives this output:
+
+.. code-block:: pytest
 
     example $ pytest -rx xfail_demo.py
     =========================== test session starts ============================

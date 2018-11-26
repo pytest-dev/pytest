@@ -22,7 +22,9 @@ An example of a simple test:
         assert inc(3) == 5
 
 
-To execute it::
+To execute it:
+
+.. code-block:: pytest
 
     $ pytest
     =========================== test session starts ============================
