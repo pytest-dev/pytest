@@ -150,7 +150,9 @@ Detailed summary report
 The ``-r`` flag can be used to display test results summary at the end of the test session,
 making it easy in large test suites to get a clear picture of all failures, skips, xfails, etc.
 
-Example::
+Example:
+
+.. code-block:: pytest
 
     $ pytest -ra
     =========================== test session starts ============================
@@ -173,7 +175,9 @@ Here is the full list of available characters that can be used:
  - ``P`` - passed with output
  - ``a`` - all except ``pP``
 
-More than one character can be used, so for example to only see failed and skipped tests, you can execute::
+More than one character can be used, so for example to only see failed and skipped tests, you can execute:
+
+.. code-block:: pytest
 
     $ pytest -rfs
     =========================== test session starts ============================

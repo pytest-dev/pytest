@@ -58,7 +58,9 @@ and another like this::
         """
         return 42
 
-then you can just invoke ``pytest`` without command line options::
+then you can just invoke ``pytest`` without command line options:
+
+.. code-block:: pytest
 
     $ pytest
     =========================== test session starts ============================
