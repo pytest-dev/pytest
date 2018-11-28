@@ -894,7 +894,15 @@ class Metafunc(fixtures.FuncargnamesCompatAttr):
         self._arg2fixturedefs = fixtureinfo.name2fixturedefs
         self._invalidates = []
 
-    def parametrize(self, argnames, argvalues, indirect=False, ids=None, scope=None, invalidates=None):
+    def parametrize(
+        self,
+        argnames,
+        argvalues,
+        indirect=False,
+        ids=None,
+        scope=None,
+        invalidates=None,
+    ):
         """ Add new invocations to the underlying test function using the list
         of argvalues for the given argnames.  Parametrization is performed
         during the collection phase.  If you need to setup expensive resources

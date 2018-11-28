@@ -1326,7 +1326,9 @@ class FixtureManager(object):
                     if invalidates is None:
                         invalidates = []
                     elif not isinstance(invalidates, (tuple, list)):
-                        invalidates = [x.strip() for x in invalidates.split(",") if x.strip()]
+                        invalidates = [
+                            x.strip() for x in invalidates.split(",") if x.strip()
+                        ]
                     # skip directly parametrized arguments
                     if "argnames" in func_kwargs:
                         argnames = parametrize_func.kwargs["argnames"]

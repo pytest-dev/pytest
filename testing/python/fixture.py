@@ -4201,7 +4201,7 @@ class TestFixtureInvalidation(object):
     # @pytest.mark.issue(github="#2405")
     def test_single_invalidatee_as_string_in_tuple(self, testdir):
         testpath = testdir.makepyfile(
-            self.single_test_template.format("(\"fresh_object\",)"),
+            self.single_test_template.format('("fresh_object",)')
         )
         reprec = testdir.inline_run(testpath)
         for test in [
@@ -4217,7 +4217,7 @@ class TestFixtureInvalidation(object):
 
     def test_single_invalidatee_as_string_in_list(self, testdir):
         testpath = testdir.makepyfile(
-            self.single_test_template.format("[\"fresh_object\",]"),
+            self.single_test_template.format('["fresh_object",]')
         )
         reprec = testdir.inline_run(testpath)
         for test in [
@@ -4233,7 +4233,7 @@ class TestFixtureInvalidation(object):
 
     def test_single_invalidatee_as_string_no_list(self, testdir):
         testpath = testdir.makepyfile(
-            self.single_test_template.format("\"fresh_object\""),
+            self.single_test_template.format('"fresh_object"')
         )
         reprec = testdir.inline_run(testpath)
         for test in [
@@ -4249,7 +4249,7 @@ class TestFixtureInvalidation(object):
 
     def test_single_invalidatee_as_comma_separated_string(self, testdir):
         testpath = testdir.makepyfile(
-            self.single_test_template.format("\"fresh_object,\""),
+            self.single_test_template.format('"fresh_object,"')
         )
         reprec = testdir.inline_run(testpath)
         for test in [
@@ -4265,7 +4265,7 @@ class TestFixtureInvalidation(object):
 
     def test_multi_invalidatee_as_comma_separated_string(self, testdir):
         testpath = testdir.makepyfile(
-            self.multi_test_template.format("\"fresh_object,another_fresh_object\""),
+            self.multi_test_template.format('"fresh_object,another_fresh_object"')
         )
         reprec = testdir.inline_run(testpath)
         for test in [
@@ -4281,7 +4281,7 @@ class TestFixtureInvalidation(object):
 
     def test_multi_invalidatee_as_comma_and_space_separated_str(self, testdir):
         testpath = testdir.makepyfile(
-            self.multi_test_template.format("\"fresh_object, another_fresh_object\""),
+            self.multi_test_template.format('"fresh_object, another_fresh_object"')
         )
         reprec = testdir.inline_run(testpath)
         for test in [
@@ -4297,7 +4297,7 @@ class TestFixtureInvalidation(object):
 
     def test_multi_invalidatee_as_strings_in_list(self, testdir):
         testpath = testdir.makepyfile(
-            self.multi_test_template.format("[\"fresh_object\",\"another_fresh_object\"]"),
+            self.multi_test_template.format('["fresh_object","another_fresh_object"]')
         )
         reprec = testdir.inline_run(testpath)
         for test in [
@@ -4313,7 +4313,7 @@ class TestFixtureInvalidation(object):
 
     def test_multi_invalidatee_as_strings_in_tuple(self, testdir):
         testpath = testdir.makepyfile(
-            self.multi_test_template.format("(\"fresh_object\",\"another_fresh_object\")"),
+            self.multi_test_template.format('("fresh_object","another_fresh_object")')
         )
         reprec = testdir.inline_run(testpath)
         for test in [
@@ -4438,7 +4438,5 @@ class TestFixtureInvalidation(object):
             "test_mark_parametrize_test_fail[data0]",
         ]:
             assert reprec.matchreport(test).passed
-        for test in [
-            "test_mark_parametrize_test_fail[data1]",
-        ]:
+        for test in ["test_mark_parametrize_test_fail[data1]"]:
             assert reprec.matchreport(test).failed
