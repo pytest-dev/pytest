@@ -1089,6 +1089,81 @@ All test methods in this TestClass will use the transaction fixture while
 other test classes or functions in the module will not use it unless
 they also add a ``transact`` reference.
 
+.. _`invalidating`:
+
+Invalidating Fixtures
+---------------------
+
+.. versionadded:: 4.1
+
+Often, you may face a scenario where you need to use a fixture that provides a
+resource that's utilized in many places in your test suite, and you will be
+altering it in some way that would cause a conflict for any other test or
+fixture that also depends on it. In order to avoid this conflict, the original
+state of that resource must be restored. Usually, the scope of the
+fixture providing that resource is relied on for this, either by undoing what
+was done to the resource as the fixture goes through it's teardown flow, or by
+just having the fixture provide a fresh instance of that resource for each
+scope that depends on it.
+
+However, this approach can sometimes make your fixtures overcomplicated, or
+have them performing extra steps unnecessarily. In order to avoid this, you can
+use the ``invalidates`` argument in ``pytest.fixture`` to explicitly specify
+which fixtures should be considered invalidated once the fixture you're passing
+it to runs. This ties the finalization/teardown of the "invalidated" fixtures to
+that of the fixture that's invalidating them.
+
+Consider the following::
+
+    import pytest
+
+    class Something(object):
+        def __init__(self):
+            self.data = []
+
+    @pytest.fixture(scope="module")
+    def fresh_object():
+        return Something()
+
+    def test_empty(fresh_object):
+        assert fresh_object.data == []
+
+    @pytest.fixture(params=["a", "b"])
+    def data(request):
+        return request.param
+
+    @pytest.fixture(invalidates="fresh_object")
+    def append_data(fresh_object, data):
+        fresh_object.data.append(data)
+
+    @pytest.mark.usefixtures("append_data")
+    def test_with_data_appended(fresh_object, data):
+        assert fresh_object.data == [data]
+
+    def test_with_data_not_appended(fresh_object, data):
+        assert fresh_object.data == []
+
+    def test_empty_again(fresh_object):
+        assert fresh_object.data == []
+
+    def test_still_empty(fresh_object):
+        assert fresh_object.data == []
+
+
+Every test, including those impacted by parametrization, is able to assume it
+will be given an unaltered instance of the ``Something`` class, so it doesn't
+have to worry about what order it will be executed in. For the fixture that
+altered the instance's state (``append_data``), it is able to ensure that
+everything goes back to normal once it's done by having ``fresh_object`` torn
+down every time it (``append_data``) is torn down. The fixture creating and
+providing the resource (``fresh_object``) is also only run once at the beginning
+and then again for each time it is invalidated and then requested again.
+
+The `invalidates` argument accepts one or more fixtures much like how similar
+arguments are provided, i.e. either a list/tuple of strings of fixture names
+(e.g. `invalidates=["fixture_a", "fixture_b"]`), or a comma separated string of
+fixture names (e.g. `invalidates="fixture_a,fixture_b"`).
+
 Overriding fixtures on various levels
 -------------------------------------
 

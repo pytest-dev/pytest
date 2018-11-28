@@ -892,8 +892,9 @@ class Metafunc(fixtures.FuncargnamesCompatAttr):
         self._calls = []
         self._ids = set()
         self._arg2fixturedefs = fixtureinfo.name2fixturedefs
+        self._invalidates = []
 
-    def parametrize(self, argnames, argvalues, indirect=False, ids=None, scope=None):
+    def parametrize(self, argnames, argvalues, indirect=False, ids=None, scope=None, invalidates=None):
         """ Add new invocations to the underlying test function using the list
         of argvalues for the given argnames.  Parametrization is performed
         during the collection phase.  If you need to setup expensive resources
@@ -930,6 +931,13 @@ class Metafunc(fixtures.FuncargnamesCompatAttr):
             The scope is used for grouping tests by parameter instances.
             It will also override any fixture-function defined scope, allowing
             to set a dynamic scope using test context or configuration.
+
+        :arg invalidates: an optional list of strings corresponding to the names of
+                fixtures that should be invalidated and finalized (torn down)
+                each time this fixture is finalized (including each time it's
+                finalized for a new param set). Any fixtures that depend on the
+                invalidated fixtures will also be considered invalidated and
+                finalized.
         """
         from _pytest.fixtures import scope2index
         from _pytest.mark import ParameterSet
@@ -942,6 +950,10 @@ class Metafunc(fixtures.FuncargnamesCompatAttr):
             function_definition=self.definition,
         )
         del argvalues
+        if invalidates is None:
+            self._invalidates = []
+        elif not isinstance(invalidates, (list, tuple)):
+            self._invalidates = [x.strip() for x in invalidates.split(",") if x.strip()]
 
         if scope is None:
             scope = _find_parametrized_scope(argnames, self._arg2fixturedefs, indirect)

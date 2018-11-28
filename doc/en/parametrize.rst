@@ -130,6 +130,15 @@ To get all combinations of multiple parametrized arguments you can stack
 This will run the test with the arguments set to ``x=0/y=2``, ``x=1/y=2``,
 ``x=0/y=3``, and ``x=1/y=3`` exhausting parameters in the order of the decorators.
 
+.. _`parametrize_invalidating`:
+
+Invalidating fixtures
+---------------------
+
+Just like with fixtures, you can have ``pytest.mark.parametrize`` invalidate
+specific fixtures using the ``invalidates`` argument. For more information,
+check out :ref:`how it's done with normal fixtures <invalidating>`.
+
 .. _`pytest_generate_tests`:
 
 Basic ``pytest_generate_tests`` example

@@ -1,0 +1,1 @@
+``pytest.fixture`` and ``pytest.mark.parametrize`` now support the ``invalidates`` argument, which allows you to explicitely tie the finalization of one or more fixtures to that of the invalidating fixture/marked object.

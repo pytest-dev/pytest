@@ -156,14 +156,15 @@ def add_funcarg_pseudo_fixture_def(collector, metafunc, fixturemanager):
             arg2fixturedefs[argname] = [node._name2pseudofixturedef[argname]]
         else:
             fixturedef = FixtureDef(
-                fixturemanager,
-                "",
-                argname,
-                get_direct_param_fixture_func,
-                arg2scope[argname],
-                valuelist,
-                False,
-                False,
+                fixturemanager=fixturemanager,
+                baseid="",
+                argname=argname,
+                func=get_direct_param_fixture_func,
+                scope=arg2scope[argname],
+                params=valuelist,
+                unittest=False,
+                ids=False,
+                invalidates=metafunc._invalidates,
             )
             arg2fixturedefs[argname] = [fixturedef]
             if node is not None:
@@ -469,6 +470,14 @@ class FixtureRequest(FuncargnamesCompatAttr):
             if argname not in item.funcargs:
                 item.funcargs[argname] = self.getfixturevalue(argname)
 
+        # Make a second pass to account for any fixtures that were invalidated.
+        # All fixtures should be cached at this point, and attempting to figure
+        # out which of the fixtures requested were invalidated, or even whether
+        # or not invalidation occurred would be fairly complicated and
+        # expensive, so this is the cheapest option.
+        for argname in fixturenames:
+            item.funcargs[argname] = self.getfixturevalue(argname)
+
     def cached_setup(self, setup, teardown=None, scope="module", extrakey=None):
         """ (deprecated) Return a testing resource managed by ``setup`` &
         ``teardown`` calls.  ``scope`` and ``extrakey`` determine when the
@@ -525,7 +534,11 @@ class FixtureRequest(FuncargnamesCompatAttr):
 
     def _get_active_fixturedef(self, argname):
         try:
-            return self._fixture_defs[argname]
+            fixturedef = self._fixture_defs[argname]
+            # If it has a cached results, return it. But if it doesn't, one
+            # must be created.
+            if hasattr(fixturedef, "cached_result"):
+                return fixturedef
         except KeyError:
             try:
                 fixturedef = self._getnextfixturedef(argname)
@@ -853,6 +866,7 @@ class FixtureDef(object):
         func,
         scope,
         params,
+        invalidates,
         unittest=False,
         ids=None,
     ):
@@ -868,6 +882,7 @@ class FixtureDef(object):
             where=baseid,
         )
         self.params = params
+        self.invalidates = invalidates
         self.argnames = getfuncargnames(func, is_method=unittest)
         self.unittest = unittest
         self.ids = ids
@@ -883,7 +898,7 @@ class FixtureDef(object):
                 try:
                     func = self._finalizers.pop()
                     func()
-                except:  # noqa
+                except:  # noqax
                     exceptions.append(sys.exc_info())
             if exceptions:
                 e = exceptions[0]
@@ -908,6 +923,13 @@ class FixtureDef(object):
             fixturedef = request._get_active_fixturedef(argname)
             if argname != "request":
                 fixturedef.addfinalizer(functools.partial(self.finish, request=request))
+
+        if self.invalidates is not None:
+            for argname in self.invalidates:
+                # Couple the finalization of the fixtures this fixture
+                # invalidates to the finalization of this fixture.
+                fixturedef = request._get_active_fixturedef(argname)
+                self.addfinalizer(functools.partial(fixturedef.finish, request=request))
 
         my_cache_key = request.param_index
         cached_result = getattr(self, "cached_result", None)
@@ -1022,6 +1044,7 @@ def wrap_function_to_warning_if_called_directly(function, fixture_marker):
 class FixtureFunctionMarker(object):
     scope = attr.ib()
     params = attr.ib(converter=attr.converters.optional(tuple))
+    invalidates = attr.ib(converter=attr.converters.optional(tuple))
     autouse = attr.ib(default=False)
     ids = attr.ib(default=None, converter=_ensure_immutable_ids)
     name = attr.ib(default=None)
@@ -1044,7 +1067,9 @@ class FixtureFunctionMarker(object):
         return function
 
 
-def fixture(scope="function", params=None, autouse=False, ids=None, name=None):
+def fixture(
+    scope="function", params=None, invalidates=None, autouse=False, ids=None, name=None
+):
     """Decorator to mark a fixture factory function.
 
     This decorator can be used, with or without parameters, to define a
@@ -1073,6 +1098,13 @@ def fixture(scope="function", params=None, autouse=False, ids=None, name=None):
                 invocations of the fixture function and all of the tests
                 using it.
 
+    :arg invalidates: an optional list of strings corresponding to the names of
+                fixtures that should be invalidated and finalized (torn down)
+                each time this fixture is finalized (including each time it's
+                finalized for a new param set). Any fixtures that depend on the
+                invalidated fixtures will also be considered invalidated and
+                finalized.
+
     :arg autouse: if True, the fixture func is activated for all tests that
                 can see it.  If False (the default) then an explicit
                 reference is needed to activate the fixture.
@@ -1091,19 +1123,36 @@ def fixture(scope="function", params=None, autouse=False, ids=None, name=None):
     """
     if callable(scope) and params is None and autouse is False:
         # direct decoration
-        return FixtureFunctionMarker("function", params, autouse, name=name)(scope)
+        return FixtureFunctionMarker(
+            "function", params, invalidates, autouse, name=name
+        )(scope)
     if params is not None and not isinstance(params, (list, tuple)):
         params = list(params)
-    return FixtureFunctionMarker(scope, params, autouse, ids=ids, name=name)
+    if invalidates is None:
+        invalidates = []
+    elif not isinstance(invalidates, (list, tuple)):
+        invalidates = [x.strip() for x in invalidates.split(",") if x.strip()]
+    return FixtureFunctionMarker(
+        scope, params, invalidates, autouse, ids=ids, name=name
+    )
 
 
-def yield_fixture(scope="function", params=None, autouse=False, ids=None, name=None):
+def yield_fixture(
+    scope="function", params=None, invalidates=None, autouse=False, ids=None, name=None
+):
     """ (return a) decorator to mark a yield-fixture factory function.
 
     .. deprecated:: 3.0
         Use :py:func:`pytest.fixture` directly instead.
     """
-    return fixture(scope=scope, params=params, autouse=autouse, ids=ids, name=name)
+    return fixture(
+        scope=scope,
+        params=params,
+        invalidates=invalidates,
+        autouse=autouse,
+        ids=ids,
+        name=name,
+    )
 
 
 defaultfuncargprefixmarker = fixture()
@@ -1270,6 +1319,14 @@ class FixtureManager(object):
                         parametrize_func = parametrize_func.combined
                     func_params = getattr(parametrize_func, "args", [[None]])
                     func_kwargs = getattr(parametrize_func, "kwargs", {})
+                    if "invalidates" in func_kwargs:
+                        invalidates = parametrize_func.kwargs["invalidates"]
+                    else:
+                        invalidates = None
+                    if invalidates is None:
+                        invalidates = []
+                    elif not isinstance(invalidates, (tuple, list)):
+                        invalidates = [x.strip() for x in invalidates.split(",") if x.strip()]
                     # skip directly parametrized arguments
                     if "argnames" in func_kwargs:
                         argnames = parametrize_func.kwargs["argnames"]
@@ -1281,6 +1338,7 @@ class FixtureManager(object):
                         metafunc.parametrize(
                             argname,
                             fixturedef.params,
+                            invalidates=invalidates,
                             indirect=True,
                             scope=fixturedef.scope,
                             ids=fixturedef.ids,
@@ -1358,6 +1416,7 @@ class FixtureManager(object):
                 obj,
                 marker.scope,
                 marker.params,
+                marker.invalidates,
                 unittest=unittest,
                 ids=marker.ids,
             )

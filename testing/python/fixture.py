@@ -4077,3 +4077,368 @@ class TestScopeOrdering(object):
         )
         reprec = testdir.inline_run()
         reprec.assertoutcome(passed=2)
+
+
+class TestFixtureInvalidation(object):
+    """Make sure fixtures can be invalidated.
+
+    Make sure that when a fixture is "invalidated", as the invalidating fixture
+    is finalized, the invalidated fixture and all fixtures dependant on it are
+    forced to run again the next time they are requested, as though they had
+    never been requested before.
+    """
+
+    single_test_template = """
+    import pytest
+
+    class Something(object):
+        def __init__(self):
+            self.untouched = True
+
+    @pytest.fixture(scope="module")
+    def fresh_object():
+        return Something()
+
+    def test_is_fresh(fresh_object):
+        assert fresh_object.untouched is True
+
+    @pytest.fixture(scope="module")
+    def touch_object(fresh_object):
+        fresh_object.untouched = False
+
+    @pytest.fixture(scope="module")
+    def not_so_fresh_object(fresh_object, touch_object):
+        return fresh_object
+
+    def test_touched(not_so_fresh_object):
+        assert not_so_fresh_object.untouched is False
+
+    def test_fresh_but_touched(fresh_object):
+        assert fresh_object.untouched is False
+
+    @pytest.fixture(scope="function", invalidates={})
+    def invalidate_it(not_so_fresh_object):
+        pass
+
+    def test_still_touched(not_so_fresh_object, invalidate_it):
+        assert not_so_fresh_object.untouched is False
+
+    def test_fresh_again(fresh_object):
+        assert fresh_object.untouched is True
+
+    def test_not_so_fresh_again(not_so_fresh_object):
+        assert not_so_fresh_object.untouched is False
+
+    def test_still_not_so_fresh(fresh_object):
+        assert fresh_object.untouched is False
+    """
+
+    multi_test_template = """
+    import pytest
+
+    class Something(object):
+        def __init__(self):
+            self.untouched = True
+
+    class SomethingElse(object):
+        def __init__(self):
+            self.is_fresh = True
+
+    @pytest.fixture(scope="module")
+    def fresh_object():
+        return Something()
+
+    @pytest.fixture(scope="module")
+    def another_fresh_object():
+        return SomethingElse()
+
+    def test_is_fresh(fresh_object, another_fresh_object):
+        assert fresh_object.untouched is True
+        assert another_fresh_object.is_fresh is True
+
+    @pytest.fixture(scope="module")
+    def touch_objects(fresh_object, another_fresh_object):
+        fresh_object.untouched = False
+        another_fresh_object.is_fresh = False
+
+    @pytest.fixture(scope="module")
+    def not_so_fresh_object(fresh_object, touch_objects):
+        return fresh_object
+
+    @pytest.fixture(scope="module")
+    def another_not_so_fresh_object(another_fresh_object, touch_objects):
+        return another_fresh_object
+
+    def test_touched(not_so_fresh_object, another_not_so_fresh_object):
+        assert not_so_fresh_object.untouched is False
+        assert another_not_so_fresh_object.is_fresh is False
+
+    def test_fresh_but_touched(fresh_object, another_fresh_object):
+        assert fresh_object.untouched is False
+        assert another_fresh_object.is_fresh is False
+
+    @pytest.fixture(scope="function", invalidates={})
+    def invalidate_them(not_so_fresh_object, another_not_so_fresh_object):
+        pass
+
+    def test_still_touched(not_so_fresh_object, another_not_so_fresh_object, invalidate_them):
+        assert not_so_fresh_object.untouched is False
+        assert another_not_so_fresh_object.is_fresh is False
+
+    def test_fresh_again(fresh_object, another_fresh_object):
+        assert fresh_object.untouched is True
+        assert another_fresh_object.is_fresh is True
+
+    def test_not_so_fresh_again(not_so_fresh_object, another_not_so_fresh_object):
+        assert not_so_fresh_object.untouched is False
+        assert another_not_so_fresh_object.is_fresh is False
+
+    def test_still_not_so_fresh(fresh_object, another_fresh_object):
+        assert fresh_object.untouched is False
+        assert another_fresh_object.is_fresh is False
+    """
+
+    # @pytest.mark.issue(github="#2405")
+    def test_single_invalidatee_as_string_in_tuple(self, testdir):
+        testpath = testdir.makepyfile(
+            self.single_test_template.format("(\"fresh_object\",)"),
+        )
+        reprec = testdir.inline_run(testpath)
+        for test in [
+            "test_is_fresh",
+            "test_touched",
+            "test_fresh_but_touched",
+            "test_still_touched",
+            "test_fresh_again",
+            "test_not_so_fresh_again",
+            "test_still_not_so_fresh",
+        ]:
+            assert reprec.matchreport(test).passed
+
+    def test_single_invalidatee_as_string_in_list(self, testdir):
+        testpath = testdir.makepyfile(
+            self.single_test_template.format("[\"fresh_object\",]"),
+        )
+        reprec = testdir.inline_run(testpath)
+        for test in [
+            "test_is_fresh",
+            "test_touched",
+            "test_fresh_but_touched",
+            "test_still_touched",
+            "test_fresh_again",
+            "test_not_so_fresh_again",
+            "test_still_not_so_fresh",
+        ]:
+            assert reprec.matchreport(test).passed
+
+    def test_single_invalidatee_as_string_no_list(self, testdir):
+        testpath = testdir.makepyfile(
+            self.single_test_template.format("\"fresh_object\""),
+        )
+        reprec = testdir.inline_run(testpath)
+        for test in [
+            "test_is_fresh",
+            "test_touched",
+            "test_fresh_but_touched",
+            "test_still_touched",
+            "test_fresh_again",
+            "test_not_so_fresh_again",
+            "test_still_not_so_fresh",
+        ]:
+            assert reprec.matchreport(test).passed
+
+    def test_single_invalidatee_as_comma_separated_string(self, testdir):
+        testpath = testdir.makepyfile(
+            self.single_test_template.format("\"fresh_object,\""),
+        )
+        reprec = testdir.inline_run(testpath)
+        for test in [
+            "test_is_fresh",
+            "test_touched",
+            "test_fresh_but_touched",
+            "test_still_touched",
+            "test_fresh_again",
+            "test_not_so_fresh_again",
+            "test_still_not_so_fresh",
+        ]:
+            assert reprec.matchreport(test).passed
+
+    def test_multi_invalidatee_as_comma_separated_string(self, testdir):
+        testpath = testdir.makepyfile(
+            self.multi_test_template.format("\"fresh_object,another_fresh_object\""),
+        )
+        reprec = testdir.inline_run(testpath)
+        for test in [
+            "test_is_fresh",
+            "test_touched",
+            "test_fresh_but_touched",
+            "test_still_touched",
+            "test_fresh_again",
+            "test_not_so_fresh_again",
+            "test_still_not_so_fresh",
+        ]:
+            assert reprec.matchreport(test).passed
+
+    def test_multi_invalidatee_as_comma_and_space_separated_str(self, testdir):
+        testpath = testdir.makepyfile(
+            self.multi_test_template.format("\"fresh_object, another_fresh_object\""),
+        )
+        reprec = testdir.inline_run(testpath)
+        for test in [
+            "test_is_fresh",
+            "test_touched",
+            "test_fresh_but_touched",
+            "test_still_touched",
+            "test_fresh_again",
+            "test_not_so_fresh_again",
+            "test_still_not_so_fresh",
+        ]:
+            assert reprec.matchreport(test).passed
+
+    def test_multi_invalidatee_as_strings_in_list(self, testdir):
+        testpath = testdir.makepyfile(
+            self.multi_test_template.format("[\"fresh_object\",\"another_fresh_object\"]"),
+        )
+        reprec = testdir.inline_run(testpath)
+        for test in [
+            "test_is_fresh",
+            "test_touched",
+            "test_fresh_but_touched",
+            "test_still_touched",
+            "test_fresh_again",
+            "test_not_so_fresh_again",
+            "test_still_not_so_fresh",
+        ]:
+            assert reprec.matchreport(test).passed
+
+    def test_multi_invalidatee_as_strings_in_tuple(self, testdir):
+        testpath = testdir.makepyfile(
+            self.multi_test_template.format("(\"fresh_object\",\"another_fresh_object\")"),
+        )
+        reprec = testdir.inline_run(testpath)
+        for test in [
+            "test_is_fresh",
+            "test_touched",
+            "test_fresh_but_touched",
+            "test_still_touched",
+            "test_fresh_again",
+            "test_not_so_fresh_again",
+            "test_still_not_so_fresh",
+        ]:
+            assert reprec.matchreport(test).passed
+
+    def test_parametrized_classes(self, testdir):
+        testpath = testdir.makepyfile(
+            """
+            import pytest
+
+            class Something(object):
+                def __init__(self):
+                    self.data = []
+
+            @pytest.fixture(scope="class", autouse=True)
+            def fresh_object():
+                return Something()
+
+            class TestSomething():
+                @pytest.fixture(
+                    scope="class",
+                    autouse=True,
+                    params=["a", "b"],
+                    invalidates=("fresh_object",),
+                )
+                def data(self, request):
+                    return request.param
+
+                @pytest.fixture(
+                    scope="class",
+                    autouse=True,
+                )
+                def touch_object(self, data, fresh_object):
+                    fresh_object.data.append(data)
+
+                def test_touch_isolation(self, fresh_object, data):
+                    assert fresh_object.data == [data]
+        """
+        )
+        reprec = testdir.inline_run(testpath)
+        for test in ["test_touch_isolation[a]", "test_touch_isolation[b]"]:
+            assert reprec.matchreport(test).passed
+
+    def test_yield_fixture(self, testdir):
+        testpath = testdir.makepyfile(
+            """
+            import pytest
+
+            class Something(object):
+                def __init__(self):
+                    self.untouched = True
+
+            @pytest.fixture(scope="module")
+            def fresh_data():
+                return Something()
+
+            @pytest.fixture(scope="module")
+            def other_fresh_data():
+                return Something()
+
+            @pytest.fixture(invalidates="fresh_data")
+            def yielding_fix(fresh_data, other_fresh_data):
+                fresh_data.untouched = False
+                yield
+                other_fresh_data.untouched = False
+
+            def test_fresh_is_touched_and_other_is_untouched(fresh_data,
+                                                             other_fresh_data,
+                                                             yielding_fix):
+                assert fresh_data.untouched is False
+                assert other_fresh_data.untouched is True
+
+            def test_other_is_touched_and_fresh_is_untouched(fresh_data,
+                                                             other_fresh_data):
+                assert other_fresh_data.untouched is False
+                assert fresh_data.untouched is True
+        """
+        )
+        reprec = testdir.inline_run(testpath)
+        for test in [
+            "test_fresh_is_touched_and_other_is_untouched",
+            "test_other_is_touched_and_fresh_is_untouched",
+        ]:
+            assert reprec.matchreport(test).passed
+
+    def test_mark_parametrize_test(self, testdir):
+        testpath = testdir.makepyfile(
+            """
+            import pytest
+
+            class Something(object):
+                def __init__(self):
+                    self.data = []
+
+            @pytest.fixture(scope="module")
+            def fresh_obj():
+                return Something()
+
+            @pytest.mark.parametrize("data", [["a"], ["b"]], invalidates="fresh_obj")
+            def test_mark_parametrize_test(fresh_obj, data):
+                fresh_obj.data.append(data)
+                assert fresh_obj.data == [data]
+
+            @pytest.mark.parametrize("data", [["a"], ["b"]])
+            def test_mark_parametrize_test_fail(fresh_obj, data):
+                fresh_obj.data.append(data)
+                assert fresh_obj.data == [data]
+        """
+        )
+        reprec = testdir.inline_run(testpath)
+        for test in [
+            "test_mark_parametrize_test[data0]",
+            "test_mark_parametrize_test[data1]",
+            "test_mark_parametrize_test_fail[data0]",
+        ]:
+            assert reprec.matchreport(test).passed
+        for test in [
+            "test_mark_parametrize_test_fail[data1]",
+        ]:
+            assert reprec.matchreport(test).failed
