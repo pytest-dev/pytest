@@ -1159,10 +1159,10 @@ down every time it (``append_data``) is torn down. The fixture creating and
 providing the resource (``fresh_object``) is also only run once at the beginning
 and then again for each time it is invalidated and then requested again.
 
-The `invalidates` argument accepts one or more fixtures much like how similar
+The ``invalidates`` argument accepts one or more fixtures much like how similar
 arguments are provided, i.e. either a list/tuple of strings of fixture names
-(e.g. `invalidates=["fixture_a", "fixture_b"]`), or a comma separated string of
-fixture names (e.g. `invalidates="fixture_a,fixture_b"`).
+(e.g. ``invalidates=["fixture_a", "fixture_b"]``), or a comma separated string
+of fixture names (e.g. ``invalidates="fixture_a,fixture_b"``).
 
 Overriding fixtures on various levels
 -------------------------------------
