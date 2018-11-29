@@ -196,7 +196,7 @@ class TestPytestPluginManager(object):
         assert pm.is_registered(mod)
         values = pm.get_plugins()
         assert mod in values
-        pytest.raises(ValueError, "pm.register(mod)")
+        pytest.raises(ValueError, pm.register, mod)
         pytest.raises(ValueError, lambda: pm.register(mod))
         # assert not pm.is_registered(mod2)
         assert pm.get_plugins() == values
@@ -284,8 +284,8 @@ class TestPytestPluginManager(object):
         result.stdout.fnmatch_lines(["*1 passed*"])
 
     def test_import_plugin_importname(self, testdir, pytestpm):
-        pytest.raises(ImportError, 'pytestpm.import_plugin("qweqwex.y")')
-        pytest.raises(ImportError, 'pytestpm.import_plugin("pytest_qweqwx.y")')
+        pytest.raises(ImportError, pytestpm.import_plugin, "qweqwex.y")
+        pytest.raises(ImportError, pytestpm.import_plugin, "pytest_qweqwx.y")
 
         testdir.syspathinsert()
         pluginname = "pytest_hello"
@@ -301,8 +301,8 @@ class TestPytestPluginManager(object):
         assert plugin2 is plugin1
 
     def test_import_plugin_dotted_name(self, testdir, pytestpm):
-        pytest.raises(ImportError, 'pytestpm.import_plugin("qweqwex.y")')
-        pytest.raises(ImportError, 'pytestpm.import_plugin("pytest_qweqwex.y")')
+        pytest.raises(ImportError, pytestpm.import_plugin, "qweqwex.y")
+        pytest.raises(ImportError, pytestpm.import_plugin, "pytest_qweqwex.y")
 
         testdir.syspathinsert()
         testdir.mkpydir("pkg").join("plug.py").write("x=3")

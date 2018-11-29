@@ -700,17 +700,13 @@ def test_importorskip(monkeypatch):
         # check that importorskip reports the actual call
         # in this test the test_runner.py file
         assert path.purebasename == "test_runner"
-        pytest.raises(SyntaxError, "pytest.importorskip('x y z')")
-        pytest.raises(SyntaxError, "pytest.importorskip('x=y')")
+        pytest.raises(SyntaxError, pytest.importorskip, "x y z")
+        pytest.raises(SyntaxError, pytest.importorskip, "x=y")
         mod = types.ModuleType("hello123")
         mod.__version__ = "1.3"
         monkeypatch.setitem(sys.modules, "hello123", mod)
-        pytest.raises(
-            pytest.skip.Exception,
-            """
+        with pytest.raises(pytest.skip.Exception):
             pytest.importorskip("hello123", minversion="1.3.1")
-        """,
-        )
         mod2 = pytest.importorskip("hello123", minversion="1.3")
         assert mod2 == mod
     except pytest.skip.Exception:
@@ -730,11 +726,8 @@ def test_importorskip_dev_module(monkeypatch):
         monkeypatch.setitem(sys.modules, "mockmodule", mod)
         mod2 = pytest.importorskip("mockmodule", minversion="0.12.0")
         assert mod2 == mod
-        pytest.raises(
-            pytest.skip.Exception,
-            """
-            pytest.importorskip('mockmodule1', minversion='0.14.0')""",
-        )
+        with pytest.raises(pytest.skip.Exception):
+            pytest.importorskip("mockmodule1", minversion="0.14.0")
     except pytest.skip.Exception:
         print(_pytest._code.ExceptionInfo.from_current())
         pytest.fail("spurious skip")

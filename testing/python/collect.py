@@ -325,7 +325,7 @@ class TestGenerator(object):
         assert len(colitems) == 1
         gencol = colitems[0]
         assert isinstance(gencol, pytest.Generator)
-        pytest.raises(ValueError, "gencol.collect()")
+        pytest.raises(ValueError, gencol.collect)
 
     def test_generative_methods_with_explicit_names(self, testdir):
         modcol = testdir.getmodulecol(
@@ -1103,7 +1103,8 @@ def test_modulecol_roundtrip(testdir):
 
 class TestTracebackCutting(object):
     def test_skip_simple(self):
-        excinfo = pytest.raises(pytest.skip.Exception, 'pytest.skip("xxx")')
+        with pytest.raises(pytest.skip.Exception) as excinfo:
+            pytest.skip("xxx")
         assert excinfo.traceback[-1].frame.code.name == "skip"
         assert excinfo.traceback[-1].ishidden()
 

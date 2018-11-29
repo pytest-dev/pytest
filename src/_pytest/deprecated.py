@@ -92,6 +92,15 @@ NODE_WARN = RemovedInPytest4Warning(
     "Node.warn(code, message) form has been deprecated, use Node.warn(warning_instance) instead."
 )
 
+RAISES_EXEC = PytestDeprecationWarning(
+    "raises(..., 'code(as_a_string)') is deprecated, use the context manager form or use `exec()` directly\n\n"
+    "See https://docs.pytest.org/en/latest/deprecations.html#raises-warns-exec"
+)
+WARNS_EXEC = PytestDeprecationWarning(
+    "warns(..., 'code(as_a_string)') is deprecated, use the context manager form or use `exec()` directly.\n\n"
+    "See https://docs.pytest.org/en/latest/deprecations.html#raises-warns-exec"
+)
+
 RECORD_XML_PROPERTY = RemovedInPytest4Warning(
     'Fixture renamed from "record_xml_property" to "record_property" as user '
     "properties are now available to all reporters.\n"
