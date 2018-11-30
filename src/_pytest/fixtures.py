@@ -1303,17 +1303,11 @@ class FixtureManager(object):
         if holderobj in self._holderobjseen:
             return
 
-        from _pytest.nodes import _CompatProperty
-
         self._holderobjseen.add(holderobj)
         autousenames = []
         for name in dir(holderobj):
             # The attribute can be an arbitrary descriptor, so the attribute
             # access below can raise. safe_getatt() ignores such exceptions.
-            maybe_property = safe_getattr(type(holderobj), name, None)
-            if isinstance(maybe_property, _CompatProperty):
-                # deprecated
-                continue
             obj = safe_getattr(holderobj, name, None)
             marker = getfixturemarker(obj)
             # fixture functions have a pytest_funcarg__ prefix (pre-2.3 style)

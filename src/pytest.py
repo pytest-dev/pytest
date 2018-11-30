@@ -28,7 +28,6 @@ from _pytest.outcomes import skip
 from _pytest.outcomes import xfail
 from _pytest.python import Class
 from _pytest.python import Function
-from _pytest.python import Generator
 from _pytest.python import Instance
 from _pytest.python import Module
 from _pytest.python import Package
@@ -57,7 +56,6 @@ __all__ = [
     "fixture",
     "freeze_includes",
     "Function",
-    "Generator",
     "hookimpl",
     "hookspec",
     "importorskip",

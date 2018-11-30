@@ -10,47 +10,6 @@ from _pytest.warnings import SHOW_PYTEST_WARNINGS_ARG
 pytestmark = pytest.mark.pytester_example_path("deprecated")
 
 
-def test_yield_tests_deprecation(testdir):
-    testdir.makepyfile(
-        """
-        def func1(arg, arg2):
-            assert arg == arg2
-        def test_gen():
-            yield "m1", func1, 15, 3*5
-            yield "m2", func1, 42, 6*7
-        def test_gen2():
-            for k in range(10):
-                yield func1, 1, 1
-    """
-    )
-    result = testdir.runpytest(SHOW_PYTEST_WARNINGS_ARG)
-    result.stdout.fnmatch_lines(
-        [
-            "*test_yield_tests_deprecation.py:3:*yield tests are deprecated*",
-            "*test_yield_tests_deprecation.py:6:*yield tests are deprecated*",
-            "*2 passed*",
-        ]
-    )
-    assert result.stdout.str().count("yield tests are deprecated") == 2
-
-
-def test_compat_properties_deprecation(testdir):
-    testdir.makepyfile(
-        """
-        def test_foo(request):
-            print(request.node.Module)
-    """
-    )
-    result = testdir.runpytest(SHOW_PYTEST_WARNINGS_ARG)
-    result.stdout.fnmatch_lines(
-        [
-            "*test_compat_properties_deprecation.py:2:*usage of Function.Module is deprecated, "
-            "please use pytest.Module instead*",
-            "*1 passed, 1 warnings in*",
-        ]
-    )
-
-
 def test_cached_setup_deprecation(testdir):
     testdir.makepyfile(
         """
@@ -67,36 +26,6 @@ def test_cached_setup_deprecation(testdir):
     result.stdout.fnmatch_lines(
         [
             "*test_cached_setup_deprecation.py:4:*cached_setup is deprecated*",
-            "*1 passed, 1 warnings in*",
-        ]
-    )
-
-
-def test_custom_class_deprecation(testdir):
-    testdir.makeconftest(
-        """
-        import pytest
-
-        class MyModule(pytest.Module):
-
-            class Class(pytest.Class):
-                pass
-
-        def pytest_pycollect_makemodule(path, parent):
-            return MyModule(path, parent)
-    """
-    )
-    testdir.makepyfile(
-        """
-        class Test:
-            def test_foo(self):
-                pass
-    """
-    )
-    result = testdir.runpytest(SHOW_PYTEST_WARNINGS_ARG)
-    result.stdout.fnmatch_lines(
-        [
-            '*test_custom_class_deprecation.py:1:*"Class" objects in collectors of type "MyModule*',
             "*1 passed, 1 warnings in*",
         ]
     )

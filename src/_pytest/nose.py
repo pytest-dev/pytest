@@ -30,13 +30,6 @@ def pytest_runtest_makereport(item, call):
 @hookimpl(trylast=True)
 def pytest_runtest_setup(item):
     if is_potential_nosetest(item):
-        if isinstance(item.parent, python.Generator):
-            gen = item.parent
-            if not hasattr(gen, "_nosegensetup"):
-                call_optional(gen.obj, "setup")
-                if isinstance(gen.parent, python.Instance):
-                    call_optional(gen.parent.obj, "setup")
-                gen._nosegensetup = True
         if not call_optional(item.obj, "setup"):
             # call module level setup if there is no object level one
             call_optional(item.parent.obj, "setup")
@@ -51,11 +44,6 @@ def teardown_nose(item):
         # if hasattr(item.parent, '_nosegensetup'):
         #    #call_optional(item._nosegensetup, 'teardown')
         #    del item.parent._nosegensetup
-
-
-def pytest_make_collect_report(collector):
-    if isinstance(collector, python.Generator):
-        call_optional(collector.obj, "setup")
 
 
 def is_potential_nosetest(item):
