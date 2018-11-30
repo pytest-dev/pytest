@@ -23,7 +23,9 @@ def get_skip_exceptions():
 def pytest_runtest_makereport(item, call):
     if call.excinfo and call.excinfo.errisinstance(get_skip_exceptions()):
         # let's substitute the excinfo with a pytest.skip one
-        call2 = call.__class__(lambda: runner.skip(str(call.excinfo.value)), call.when)
+        call2 = runner.CallInfo.from_call(
+            lambda: runner.skip(str(call.excinfo.value)), call.when
+        )
         call.excinfo = call2.excinfo
 
 
