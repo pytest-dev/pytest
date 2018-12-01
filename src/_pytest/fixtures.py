@@ -568,8 +568,7 @@ class FixtureRequest(FuncargnamesCompatAttr):
                 )
                 fail(msg, pytrace=False)
         else:
-            # indices might not be set if old-style metafunc.addcall() was used
-            param_index = funcitem.callspec.indices.get(argname, 0)
+            param_index = funcitem.callspec.indices[argname]
             # if a parametrize invocation set a scope it will override
             # the static scope defined with the fixture function
             paramscopenum = funcitem.callspec._arg2scopenum.get(argname)

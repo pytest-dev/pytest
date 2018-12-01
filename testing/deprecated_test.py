@@ -105,23 +105,6 @@ def test_resultlog_is_deprecated(testdir):
     )
 
 
-def test_metafunc_addcall_deprecated(testdir):
-    testdir.makepyfile(
-        """
-        def pytest_generate_tests(metafunc):
-            metafunc.addcall({'i': 1})
-            metafunc.addcall({'i': 2})
-        def test_func(i):
-            pass
-    """
-    )
-    res = testdir.runpytest("-s", SHOW_PYTEST_WARNINGS_ARG)
-    assert res.ret == 0
-    res.stdout.fnmatch_lines(
-        ["*Metafunc.addcall is deprecated*", "*2 passed, 2 warnings*"]
-    )
-
-
 def test_terminal_reporter_writer_attr(pytestconfig):
     """Check that TerminalReporter._tw is also available as 'writer' (#2984)
     This attribute is planned to be deprecated in 3.4.

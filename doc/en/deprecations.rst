@@ -168,13 +168,6 @@ Defining ``pytest_plugins`` is now deprecated in non-top-level conftest.py
 files because they will activate referenced plugins *globally*, which is surprising because for all other pytest
 features ``conftest.py`` files are only *active* for tests at or below it.
 
-Metafunc.addcall
-~~~~~~~~~~~~~~~~
-
-.. deprecated:: 3.3
-
-:meth:`_pytest.python.Metafunc.addcall` was a precursor to the current parametrized mechanism. Users should use
-:meth:`_pytest.python.Metafunc.parametrize` instead.
 
 marks in ``pytest.mark.parametrize``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -273,6 +266,30 @@ Removed Features
 
 As stated in our :ref:`backwards-compatibility` policy, deprecated features are removed only in major releases after
 an appropriate period of deprecation has passed.
+
+Metafunc.addcall
+~~~~~~~~~~~~~~~~
+
+*Removed in version 4.0.*
+
+:meth:`_pytest.python.Metafunc.addcall` was a precursor to the current parametrized mechanism. Users should use
+:meth:`_pytest.python.Metafunc.parametrize` instead.
+
+Example:
+
+.. code-block:: python
+
+    def pytest_generate_tests(metafunc):
+        metafunc.addcall({"i": 1}, id="1")
+        metafunc.addcall({"i": 2}, id="2")
+
+Becomes:
+
+.. code-block:: python
+
+    def pytest_generate_tests(metafunc):
+        metafunc.parametrize("i", [1, 2], ids=["1", "2"])
+
 
 ``cached_setup``
 ~~~~~~~~~~~~~~~~

@@ -299,7 +299,7 @@ class TestGeneralUsage(object):
             """
             import pytest
             def pytest_generate_tests(metafunc):
-                metafunc.addcall({'x': 3}, id='hello-123')
+                metafunc.parametrize('x', [3], ids=['hello-123'])
             def pytest_runtest_setup(item):
                 print(item.keywords)
                 if 'hello-123' in item.keywords:
@@ -316,8 +316,7 @@ class TestGeneralUsage(object):
         p = testdir.makepyfile(
             """
             def pytest_generate_tests(metafunc):
-                metafunc.addcall({'i': 1}, id="1")
-                metafunc.addcall({'i': 2}, id="2")
+                metafunc.parametrize('i', [1, 2], ids=["1", "2"])
             def test_func(i):
                 pass
         """
