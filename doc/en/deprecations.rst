@@ -49,41 +49,6 @@ Becomes:
         exec("assert(1, 2)")  # exec is used to avoid a top-level warning
 
 
-
-``cached_setup``
-~~~~~~~~~~~~~~~~
-
-.. deprecated:: 3.9
-
-``request.cached_setup`` was the precursor of the setup/teardown mechanism available to fixtures.
-
-Example:
-
-.. code-block:: python
-
-    @pytest.fixture
-    def db_session():
-        return request.cached_setup(
-            setup=Session.create, teardown=lambda session: session.close(), scope="module"
-        )
-
-This should be updated to make use of standard fixture mechanisms:
-
-.. code-block:: python
-
-    @pytest.fixture(scope="module")
-    def db_session():
-        session = Session.create()
-        yield session
-        session.close()
-
-
-You can consult `funcarg comparison section in the docs <https://docs.pytest.org/en/latest/funcarg_compare.html>`_ for
-more information.
-
-This has been documented as deprecated for years, but only now we are actually emitting deprecation warnings.
-
-
 Using ``Class`` in custom Collectors
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -203,13 +168,6 @@ Defining ``pytest_plugins`` is now deprecated in non-top-level conftest.py
 files because they will activate referenced plugins *globally*, which is surprising because for all other pytest
 features ``conftest.py`` files are only *active* for tests at or below it.
 
-Metafunc.addcall
-~~~~~~~~~~~~~~~~
-
-.. deprecated:: 3.3
-
-:meth:`_pytest.python.Metafunc.addcall` was a precursor to the current parametrized mechanism. Users should use
-:meth:`_pytest.python.Metafunc.parametrize` instead.
 
 marks in ``pytest.mark.parametrize``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -312,6 +270,63 @@ Removed Features
 
 As stated in our :ref:`backwards-compatibility` policy, deprecated features are removed only in major releases after
 an appropriate period of deprecation has passed.
+
+Metafunc.addcall
+~~~~~~~~~~~~~~~~
+
+*Removed in version 4.0.*
+
+:meth:`_pytest.python.Metafunc.addcall` was a precursor to the current parametrized mechanism. Users should use
+:meth:`_pytest.python.Metafunc.parametrize` instead.
+
+Example:
+
+.. code-block:: python
+
+    def pytest_generate_tests(metafunc):
+        metafunc.addcall({"i": 1}, id="1")
+        metafunc.addcall({"i": 2}, id="2")
+
+Becomes:
+
+.. code-block:: python
+
+    def pytest_generate_tests(metafunc):
+        metafunc.parametrize("i", [1, 2], ids=["1", "2"])
+
+
+``cached_setup``
+~~~~~~~~~~~~~~~~
+
+*Removed in version 4.0.*
+
+``request.cached_setup`` was the precursor of the setup/teardown mechanism available to fixtures.
+
+Example:
+
+.. code-block:: python
+
+    @pytest.fixture
+    def db_session():
+        return request.cached_setup(
+            setup=Session.create, teardown=lambda session: session.close(), scope="module"
+        )
+
+This should be updated to make use of standard fixture mechanisms:
+
+.. code-block:: python
+
+    @pytest.fixture(scope="module")
+    def db_session():
+        session = Session.create()
+        yield session
+        session.close()
+
+
+You can consult `funcarg comparison section in the docs <https://docs.pytest.org/en/latest/funcarg_compare.html>`_ for
+more information.
+
+This has been documented as deprecated for years, but only now we are actually emitting deprecation warnings.
 
 ``yield`` tests
 ~~~~~~~~~~~~~~~

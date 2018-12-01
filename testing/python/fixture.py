@@ -953,181 +953,6 @@ class TestRequestMarking(object):
         reprec.assertoutcome(passed=2)
 
 
-class TestRequestCachedSetup(object):
-    def test_request_cachedsetup_defaultmodule(self, testdir):
-        reprec = testdir.inline_runsource(
-            """
-            mysetup = ["hello",].pop
-
-            import pytest
-
-            @pytest.fixture
-            def something(request):
-                return request.cached_setup(mysetup, scope="module")
-
-            def test_func1(something):
-                assert something == "hello"
-            class TestClass(object):
-                def test_func1a(self, something):
-                    assert something == "hello"
-        """,
-            SHOW_PYTEST_WARNINGS_ARG,
-        )
-        reprec.assertoutcome(passed=2)
-
-    def test_request_cachedsetup_class(self, testdir):
-        reprec = testdir.inline_runsource(
-            """
-            mysetup = ["hello", "hello2", "hello3"].pop
-
-            import pytest
-            @pytest.fixture
-            def something(request):
-                return request.cached_setup(mysetup, scope="class")
-            def test_func1(something):
-                assert something == "hello3"
-            def test_func2(something):
-                assert something == "hello2"
-            class TestClass(object):
-                def test_func1a(self, something):
-                    assert something == "hello"
-                def test_func2b(self, something):
-                    assert something == "hello"
-        """,
-            SHOW_PYTEST_WARNINGS_ARG,
-        )
-        reprec.assertoutcome(passed=4)
-
-    @pytest.mark.filterwarnings("ignore:cached_setup is deprecated")
-    def test_request_cachedsetup_extrakey(self, testdir):
-        item1 = testdir.getitem("def test_func(): pass")
-        req1 = fixtures.FixtureRequest(item1)
-        values = ["hello", "world"]
-
-        def setup():
-            return values.pop()
-
-        ret1 = req1.cached_setup(setup, extrakey=1)
-        ret2 = req1.cached_setup(setup, extrakey=2)
-        assert ret2 == "hello"
-        assert ret1 == "world"
-        ret1b = req1.cached_setup(setup, extrakey=1)
-        ret2b = req1.cached_setup(setup, extrakey=2)
-        assert ret1 == ret1b
-        assert ret2 == ret2b
-
-    @pytest.mark.filterwarnings("ignore:cached_setup is deprecated")
-    def test_request_cachedsetup_cache_deletion(self, testdir):
-        item1 = testdir.getitem("def test_func(): pass")
-        req1 = fixtures.FixtureRequest(item1)
-        values = []
-
-        def setup():
-            values.append("setup")
-
-        def teardown(val):
-            values.append("teardown")
-
-        req1.cached_setup(setup, teardown, scope="function")
-        assert values == ["setup"]
-        # artificial call of finalizer
-        setupstate = req1._pyfuncitem.session._setupstate
-        setupstate._callfinalizers(item1)
-        assert values == ["setup", "teardown"]
-        req1.cached_setup(setup, teardown, scope="function")
-        assert values == ["setup", "teardown", "setup"]
-        setupstate._callfinalizers(item1)
-        assert values == ["setup", "teardown", "setup", "teardown"]
-
-    def test_request_cached_setup_two_args(self, testdir):
-        testdir.makepyfile(
-            """
-            import pytest
-
-            @pytest.fixture
-            def arg1(request):
-                return request.cached_setup(lambda: 42)
-            @pytest.fixture
-            def arg2(request):
-                return request.cached_setup(lambda: 17)
-            def test_two_different_setups(arg1, arg2):
-                assert arg1 != arg2
-        """
-        )
-        result = testdir.runpytest("-v", SHOW_PYTEST_WARNINGS_ARG)
-        result.stdout.fnmatch_lines(["*1 passed*"])
-
-    def test_request_cached_setup_getfixturevalue(self, testdir):
-        testdir.makepyfile(
-            """
-            import pytest
-
-            @pytest.fixture
-            def arg1(request):
-                arg1 = request.getfixturevalue("arg2")
-                return request.cached_setup(lambda: arg1 + 1)
-            @pytest.fixture
-            def arg2(request):
-                return request.cached_setup(lambda: 10)
-            def test_two_funcarg(arg1):
-                assert arg1 == 11
-        """
-        )
-        result = testdir.runpytest("-v", SHOW_PYTEST_WARNINGS_ARG)
-        result.stdout.fnmatch_lines(["*1 passed*"])
-
-    def test_request_cached_setup_functional(self, testdir):
-        testdir.makepyfile(
-            test_0="""
-            import pytest
-            values = []
-            @pytest.fixture
-            def something(request):
-                val = request.cached_setup(fsetup, fteardown)
-                return val
-            def fsetup(mycache=[1]):
-                values.append(mycache.pop())
-                return values
-            def fteardown(something):
-                values.remove(something[0])
-                values.append(2)
-            def test_list_once(something):
-                assert something == [1]
-            def test_list_twice(something):
-                assert something == [1]
-        """
-        )
-        testdir.makepyfile(
-            test_1="""
-            import test_0 # should have run already
-            def test_check_test0_has_teardown_correct():
-                assert test_0.values == [2]
-        """
-        )
-        result = testdir.runpytest("-v", SHOW_PYTEST_WARNINGS_ARG)
-        result.stdout.fnmatch_lines(["*3 passed*"])
-
-    def test_issue117_sessionscopeteardown(self, testdir):
-        testdir.makepyfile(
-            """
-            import pytest
-
-            @pytest.fixture
-            def app(request):
-                app = request.cached_setup(
-                    scope='session',
-                    setup=lambda: 0,
-                    teardown=lambda x: 3/x)
-                return app
-            def test_func(app):
-                pass
-        """
-        )
-        result = testdir.runpytest(SHOW_PYTEST_WARNINGS_ARG)
-        assert result.ret != 0
-        result.stdout.fnmatch_lines(["*3/x*", "*ZeroDivisionError*"])
-
-
 class TestFixtureUsages(object):
     def test_noargfixturedec(self, testdir):
         testdir.makepyfile(
@@ -2297,15 +2122,7 @@ class TestFixtureMarker(object):
         reprec = testdir.inline_run()
         reprec.assertoutcome(passed=4)
 
-    @pytest.mark.parametrize(
-        "method",
-        [
-            'request.getfixturevalue("arg")',
-            'request.cached_setup(lambda: None, scope="function")',
-        ],
-        ids=["getfixturevalue", "cached_setup"],
-    )
-    def test_scope_mismatch_various(self, testdir, method):
+    def test_scope_mismatch_various(self, testdir):
         testdir.makeconftest(
             """
             import pytest
@@ -2321,11 +2138,10 @@ class TestFixtureMarker(object):
                 import pytest
                 @pytest.fixture(scope="session")
                 def arg(request):
-                    %s
+                    request.getfixturevalue("arg")
                 def test_1(arg):
                     pass
             """
-            % method
         )
         result = testdir.runpytest(SHOW_PYTEST_WARNINGS_ARG)
         assert result.ret != 0

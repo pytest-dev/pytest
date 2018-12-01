@@ -24,11 +24,6 @@ MAIN_STR_ARGS = RemovedInPytest4Warning(
 
 YIELD_TESTS = "yield tests were removed in pytest 4.0 - {name} will be ignored"
 
-CACHED_SETUP = RemovedInPytest4Warning(
-    "cached_setup is deprecated and will be removed in a future release. "
-    "Use standard fixture functions instead."
-)
-
 FUNCARG_PREFIX = UnformattedWarning(
     RemovedInPytest4Warning,
     '{name}: declaring fixtures using "pytest_funcarg__" prefix is deprecated '
@@ -94,11 +89,6 @@ RECORD_XML_PROPERTY = RemovedInPytest4Warning(
 
 COLLECTOR_MAKEITEM = RemovedInPytest4Warning(
     "pycollector makeitem was removed as it is an accidentially leaked internal api"
-)
-
-METAFUNC_ADD_CALL = RemovedInPytest4Warning(
-    "Metafunc.addcall is deprecated and scheduled to be removed in pytest 4.0.\n"
-    "Please use Metafunc.parametrize instead."
 )
 
 PYTEST_PLUGINS_FROM_NON_TOP_LEVEL_CONFTEST = RemovedInPytest4Warning(

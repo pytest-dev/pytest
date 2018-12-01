@@ -10,27 +10,6 @@ from _pytest.warnings import SHOW_PYTEST_WARNINGS_ARG
 pytestmark = pytest.mark.pytester_example_path("deprecated")
 
 
-def test_cached_setup_deprecation(testdir):
-    testdir.makepyfile(
-        """
-        import pytest
-        @pytest.fixture
-        def fix(request):
-            return request.cached_setup(lambda: 1)
-
-        def test_foo(fix):
-            assert fix == 1
-    """
-    )
-    result = testdir.runpytest(SHOW_PYTEST_WARNINGS_ARG)
-    result.stdout.fnmatch_lines(
-        [
-            "*test_cached_setup_deprecation.py:4:*cached_setup is deprecated*",
-            "*1 passed, 1 warnings in*",
-        ]
-    )
-
-
 def test_funcarg_prefix_deprecation(testdir):
     testdir.makepyfile(
         """
@@ -123,23 +102,6 @@ def test_resultlog_is_deprecated(testdir):
             "*--result-log is deprecated and scheduled for removal in pytest 5.0*",
             "*See https://docs.pytest.org/en/latest/deprecations.html#result-log-result-log for more information*",
         ]
-    )
-
-
-def test_metafunc_addcall_deprecated(testdir):
-    testdir.makepyfile(
-        """
-        def pytest_generate_tests(metafunc):
-            metafunc.addcall({'i': 1})
-            metafunc.addcall({'i': 2})
-        def test_func(i):
-            pass
-    """
-    )
-    res = testdir.runpytest("-s", SHOW_PYTEST_WARNINGS_ARG)
-    assert res.ret == 0
-    res.stdout.fnmatch_lines(
-        ["*Metafunc.addcall is deprecated*", "*2 passed, 2 warnings*"]
     )
 
 

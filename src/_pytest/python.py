@@ -1022,48 +1022,6 @@ class Metafunc(fixtures.FuncargnamesCompatAttr):
                         pytrace=False,
                     )
 
-    def addcall(self, funcargs=None, id=NOTSET, param=NOTSET):
-        """ Add a new call to the underlying test function during the collection phase of a test run.
-
-        .. deprecated:: 3.3
-
-            Use :meth:`parametrize` instead.
-
-        Note that request.addcall() is called during the test collection phase prior and
-        independently to actual test execution.  You should only use addcall()
-        if you need to specify multiple arguments of a test function.
-
-        :arg funcargs: argument keyword dictionary used when invoking
-            the test function.
-
-        :arg id: used for reporting and identification purposes.  If you
-            don't supply an `id` an automatic unique id will be generated.
-
-        :arg param: a parameter which will be exposed to a later fixture function
-            invocation through the ``request.param`` attribute.
-        """
-        warnings.warn(deprecated.METAFUNC_ADD_CALL, stacklevel=2)
-
-        assert funcargs is None or isinstance(funcargs, dict)
-        if funcargs is not None:
-            for name in funcargs:
-                if name not in self.fixturenames:
-                    fail("funcarg %r not used in this function." % name)
-        else:
-            funcargs = {}
-        if id is None:
-            raise ValueError("id=None not allowed")
-        if id is NOTSET:
-            id = len(self._calls)
-        id = str(id)
-        if id in self._ids:
-            raise ValueError("duplicate id %r" % id)
-        self._ids.add(id)
-
-        cs = CallSpec2(self)
-        cs.setall(funcargs, id, param)
-        self._calls.append(cs)
-
 
 def _find_parametrized_scope(argnames, arg2fixturedefs, indirect):
     """Find the most appropriate scope for a parametrized call based on its arguments.
