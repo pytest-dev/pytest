@@ -7,11 +7,13 @@ Demo of Python failure reports with pytest
 Here is a nice run of several tens of failures
 and how ``pytest`` presents things (unfortunately
 not showing the nice colors here in the HTML that you
-get on the terminal - we are working on that)::
+get on the terminal - we are working on that):
+
+.. code-block:: pytest
 
     assertion $ pytest failure_demo.py
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
+    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR/assertion, inifile:
     collected 42 items
 
@@ -364,7 +366,7 @@ get on the terminal - we are working on that)::
     >   int(s)
     E   ValueError: invalid literal for int() with base 10: 'qwe'
 
-    <0-codegen $PYTHON_PREFIX/lib/python3.6/site-packages/_pytest/python_api.py:682>:1: ValueError
+    <0-codegen $REGENDOC_TMPDIR/assertion/failure_demo.py:145>:1: ValueError
     ______________________ TestRaises.test_raises_doesnt _______________________
 
     self = <failure_demo.TestRaises object at 0xdeadbeef>

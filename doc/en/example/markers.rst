@@ -27,11 +27,13 @@ You can "mark" a test function with custom metadata like this::
 
 .. versionadded:: 2.2
 
-You can then restrict a test run to only run tests marked with ``webtest``::
+You can then restrict a test run to only run tests marked with ``webtest``:
+
+.. code-block:: pytest
 
     $ pytest -v -m webtest
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.6
+    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.6
     cachedir: .pytest_cache
     rootdir: $REGENDOC_TMPDIR, inifile:
     collecting ... collected 4 items / 3 deselected
@@ -40,11 +42,13 @@ You can then restrict a test run to only run tests marked with ``webtest``::
 
     ================== 1 passed, 3 deselected in 0.12 seconds ==================
 
-Or the inverse, running all tests except the webtest ones::
+Or the inverse, running all tests except the webtest ones:
+
+.. code-block:: pytest
 
     $ pytest -v -m "not webtest"
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.6
+    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.6
     cachedir: .pytest_cache
     rootdir: $REGENDOC_TMPDIR, inifile:
     collecting ... collected 4 items / 1 deselected
@@ -60,11 +64,13 @@ Selecting tests based on their node ID
 
 You can provide one or more :ref:`node IDs <node-id>` as positional
 arguments to select only specified tests. This makes it easy to select
-tests based on their module, class, method, or function name::
+tests based on their module, class, method, or function name:
+
+.. code-block:: pytest
 
     $ pytest -v test_server.py::TestClass::test_method
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.6
+    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.6
     cachedir: .pytest_cache
     rootdir: $REGENDOC_TMPDIR, inifile:
     collecting ... collected 1 item
@@ -73,11 +79,13 @@ tests based on their module, class, method, or function name::
 
     ========================= 1 passed in 0.12 seconds =========================
 
-You can also select on the class::
+You can also select on the class:
+
+.. code-block:: pytest
 
     $ pytest -v test_server.py::TestClass
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.6
+    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.6
     cachedir: .pytest_cache
     rootdir: $REGENDOC_TMPDIR, inifile:
     collecting ... collected 1 item
@@ -86,19 +94,21 @@ You can also select on the class::
 
     ========================= 1 passed in 0.12 seconds =========================
 
-Or select multiple nodes::
+Or select multiple nodes:
 
-  $ pytest -v test_server.py::TestClass test_server.py::test_send_http
-  =========================== test session starts ============================
-  platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.6
-  cachedir: .pytest_cache
-  rootdir: $REGENDOC_TMPDIR, inifile:
-  collecting ... collected 2 items
+.. code-block:: pytest
 
-  test_server.py::TestClass::test_method PASSED                        [ 50%]
-  test_server.py::test_send_http PASSED                                [100%]
+    $ pytest -v test_server.py::TestClass test_server.py::test_send_http
+    =========================== test session starts ============================
+    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.6
+    cachedir: .pytest_cache
+    rootdir: $REGENDOC_TMPDIR, inifile:
+    collecting ... collected 2 items
 
-  ========================= 2 passed in 0.12 seconds =========================
+    test_server.py::TestClass::test_method PASSED                        [ 50%]
+    test_server.py::test_send_http PASSED                                [100%]
+
+    ========================= 2 passed in 0.12 seconds =========================
 
 .. _node-id:
 
@@ -124,11 +134,13 @@ Using ``-k expr`` to select tests based on their name
 You can use the ``-k`` command line option to specify an expression
 which implements a substring match on the test names instead of the
 exact match on markers that ``-m`` provides.  This makes it easy to
-select tests based on their names::
+select tests based on their names:
+
+.. code-block:: pytest
 
     $ pytest -v -k http  # running with the above defined example module
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.6
+    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.6
     cachedir: .pytest_cache
     rootdir: $REGENDOC_TMPDIR, inifile:
     collecting ... collected 4 items / 3 deselected
@@ -137,11 +149,13 @@ select tests based on their names::
 
     ================== 1 passed, 3 deselected in 0.12 seconds ==================
 
-And you can also run all tests except the ones that match the keyword::
+And you can also run all tests except the ones that match the keyword:
+
+.. code-block:: pytest
 
     $ pytest -k "not send_http" -v
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.6
+    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.6
     cachedir: .pytest_cache
     rootdir: $REGENDOC_TMPDIR, inifile:
     collecting ... collected 4 items / 1 deselected
@@ -152,11 +166,13 @@ And you can also run all tests except the ones that match the keyword::
 
     ================== 3 passed, 1 deselected in 0.12 seconds ==================
 
-Or to select "http" and "quick" tests::
+Or to select "http" and "quick" tests:
+
+.. code-block:: pytest
 
     $ pytest -k "http or quick" -v
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.6
+    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.6
     cachedir: .pytest_cache
     rootdir: $REGENDOC_TMPDIR, inifile:
     collecting ... collected 4 items / 2 deselected
@@ -271,8 +287,12 @@ You can also set a module level marker::
     import pytest
     pytestmark = pytest.mark.webtest
 
-in which case it will be applied to all functions and
-methods defined in the module.
+or multiple markers::
+
+    pytestmark = [pytest.mark.webtest, pytest.mark.slowtest]
+
+in which case markers will be applied (in left-to-right order) to
+all functions and methods defined in the module.
 
 .. _`marking individual tests when using parametrize`:
 
@@ -347,11 +367,13 @@ A test file using this local plugin::
         pass
 
 and an example invocations specifying a different environment than what
-the test needs::
+the test needs:
+
+.. code-block:: pytest
 
     $ pytest -E stage2
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
+    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 1 item
 
@@ -359,11 +381,13 @@ the test needs::
 
     ======================== 1 skipped in 0.12 seconds =========================
 
-and here is one that specifies exactly the environment needed::
+and here is one that specifies exactly the environment needed:
+
+.. code-block:: pytest
 
     $ pytest -E stage1
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
+    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 1 item
 
@@ -424,7 +448,9 @@ However, if there is a callable as the single positional argument with no keywor
     def test_with_args():
         pass
 
-The output is as follows::
+The output is as follows:
+
+.. code-block:: pytest
 
     $ pytest -q -s
     Mark(name='my_marker', args=(<function hello_world at 0xdeadbeef>,), kwargs={})
@@ -462,10 +488,12 @@ test function.  From a conftest file we can read it like this::
 
     def pytest_runtest_setup(item):
         for mark in item.iter_markers(name='glob'):
-            print ("glob args=%s kwargs=%s" %(mark.args, mark.kwargs))
+            print("glob args=%s kwargs=%s" % (mark.args, mark.kwargs))
             sys.stdout.flush()
 
-Let's run this without capturing output and see what we get::
+Let's run this without capturing output and see what we get:
+
+.. code-block:: pytest
 
     $ pytest -q -s
     glob args=('function',) kwargs={'x': 3}
@@ -520,11 +548,13 @@ Let's do a little test file to show how this looks like::
     def test_runs_everywhere():
         pass
 
-then you will see two tests skipped and two executed tests as expected::
+then you will see two tests skipped and two executed tests as expected:
+
+.. code-block:: pytest
 
     $ pytest -rs # this option reports skip reasons
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
+    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 4 items
 
@@ -534,11 +564,13 @@ then you will see two tests skipped and two executed tests as expected::
 
     =================== 2 passed, 2 skipped in 0.12 seconds ====================
 
-Note that if you specify a platform via the marker-command line option like this::
+Note that if you specify a platform via the marker-command line option like this:
+
+.. code-block:: pytest
 
     $ pytest -m linux
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
+    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 4 items / 3 deselected
 
@@ -585,48 +617,52 @@ We want to dynamically define two markers and can do it in a
             elif "event" in item.nodeid:
                 item.add_marker(pytest.mark.event)
 
-We can now use the ``-m option`` to select one set::
+We can now use the ``-m option`` to select one set:
 
-  $ pytest -m interface --tb=short
-  =========================== test session starts ============================
-  platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
-  rootdir: $REGENDOC_TMPDIR, inifile:
-  collected 4 items / 2 deselected
+.. code-block:: pytest
 
-  test_module.py FF                                                    [100%]
+    $ pytest -m interface --tb=short
+    =========================== test session starts ============================
+    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
+    rootdir: $REGENDOC_TMPDIR, inifile:
+    collected 4 items / 2 deselected
 
-  ================================= FAILURES =================================
-  __________________________ test_interface_simple ___________________________
-  test_module.py:3: in test_interface_simple
-      assert 0
-  E   assert 0
-  __________________________ test_interface_complex __________________________
-  test_module.py:6: in test_interface_complex
-      assert 0
-  E   assert 0
-  ================== 2 failed, 2 deselected in 0.12 seconds ==================
+    test_module.py FF                                                    [100%]
 
-or to select both "event" and "interface" tests::
+    ================================= FAILURES =================================
+    __________________________ test_interface_simple ___________________________
+    test_module.py:3: in test_interface_simple
+        assert 0
+    E   assert 0
+    __________________________ test_interface_complex __________________________
+    test_module.py:6: in test_interface_complex
+        assert 0
+    E   assert 0
+    ================== 2 failed, 2 deselected in 0.12 seconds ==================
 
-  $ pytest -m "interface or event" --tb=short
-  =========================== test session starts ============================
-  platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
-  rootdir: $REGENDOC_TMPDIR, inifile:
-  collected 4 items / 1 deselected
+or to select both "event" and "interface" tests:
 
-  test_module.py FFF                                                   [100%]
+.. code-block:: pytest
 
-  ================================= FAILURES =================================
-  __________________________ test_interface_simple ___________________________
-  test_module.py:3: in test_interface_simple
-      assert 0
-  E   assert 0
-  __________________________ test_interface_complex __________________________
-  test_module.py:6: in test_interface_complex
-      assert 0
-  E   assert 0
-  ____________________________ test_event_simple _____________________________
-  test_module.py:9: in test_event_simple
-      assert 0
-  E   assert 0
-  ================== 3 failed, 1 deselected in 0.12 seconds ==================
+    $ pytest -m "interface or event" --tb=short
+    =========================== test session starts ============================
+    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
+    rootdir: $REGENDOC_TMPDIR, inifile:
+    collected 4 items / 1 deselected
+
+    test_module.py FFF                                                   [100%]
+
+    ================================= FAILURES =================================
+    __________________________ test_interface_simple ___________________________
+    test_module.py:3: in test_interface_simple
+        assert 0
+    E   assert 0
+    __________________________ test_interface_complex __________________________
+    test_module.py:6: in test_interface_complex
+        assert 0
+    E   assert 0
+    ____________________________ test_event_simple _____________________________
+    test_module.py:9: in test_event_simple
+        assert 0
+    E   assert 0
+    ================== 3 failed, 1 deselected in 0.12 seconds ==================

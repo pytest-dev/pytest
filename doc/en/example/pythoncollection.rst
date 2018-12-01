@@ -24,20 +24,22 @@ by passing the ``--ignore=path`` option on the cli. ``pytest`` allows multiple
             '-- test_world_03.py
 
 Now if you invoke ``pytest`` with ``--ignore=tests/foobar/test_foobar_03.py --ignore=tests/hello/``,
-you will see that ``pytest`` only collects test-modules, which do not match the patterns specified::
+you will see that ``pytest`` only collects test-modules, which do not match the patterns specified:
 
-    ========= test session starts ==========
-    platform darwin -- Python 2.7.10, pytest-2.8.2, py-1.4.30, pluggy-0.3.1
+.. code-block:: pytest
+
+    =========================== test session starts ============================
+    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 5 items
 
-    tests/example/test_example_01.py .
-    tests/example/test_example_02.py .
-    tests/example/test_example_03.py .
-    tests/foobar/test_foobar_01.py .
-    tests/foobar/test_foobar_02.py .
+    tests/example/test_example_01.py .                                   [ 20%]
+    tests/example/test_example_02.py .                                   [ 40%]
+    tests/example/test_example_03.py .                                   [ 60%]
+    tests/foobar/test_foobar_01.py .                                     [ 80%]
+    tests/foobar/test_foobar_02.py .                                     [100%]
 
-    ======= 5 passed in 0.02 seconds =======
+    ========================= 5 passed in 0.02 seconds =========================
 
 Deselect tests during test collection
 -------------------------------------
@@ -123,11 +125,13 @@ that match ``*_check``. For example, if we have::
         def complex_check(self):
             pass
 
-The test collection would look like this::
+The test collection would look like this:
+
+.. code-block:: pytest
 
     $ pytest --collect-only
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
+    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile: pytest.ini
     collected 2 items
     <Module 'check_myapp.py'>
@@ -176,11 +180,13 @@ treat it as a filesystem path.
 Finding out what is collected
 -----------------------------------------------
 
-You can always peek at the collection tree without running tests like this::
+You can always peek at the collection tree without running tests like this:
+
+.. code-block:: pytest
 
     . $ pytest --collect-only pythoncollection.py
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
+    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile: pytest.ini
     collected 3 items
     <Module 'CWD/pythoncollection.py'>
@@ -231,7 +237,9 @@ and a ``setup.py`` dummy file like this::
     0/0  # will raise exception if imported
 
 If you run with a Python 2 interpreter then you will find the one test and will
-leave out the ``setup.py`` file::
+leave out the ``setup.py`` file:
+
+.. code-block:: pytest
 
     #$ pytest --collect-only
     ====== test session starts ======
@@ -244,11 +252,13 @@ leave out the ``setup.py`` file::
     ====== no tests ran in 0.04 seconds ======
 
 If you run with a Python 3 interpreter both the one test and the ``setup.py``
-file will be left out::
+file will be left out:
+
+.. code-block:: pytest
 
     $ pytest --collect-only
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
+    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile: pytest.ini
     collected 0 items
 

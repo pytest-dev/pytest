@@ -1,6 +1,9 @@
+from __future__ import absolute_import
+
 import math
 import pprint
 import sys
+import warnings
 from decimal import Decimal
 from numbers import Number
 
@@ -14,6 +17,7 @@ from _pytest.compat import isclass
 from _pytest.compat import Mapping
 from _pytest.compat import Sequence
 from _pytest.compat import STRING_TYPES
+from _pytest.deprecated import RAISES_EXEC
 from _pytest.outcomes import fail
 
 BASE_TYPE = (type, STRING_TYPES)
@@ -604,9 +608,9 @@ def raises(expected_exception, *args, **kwargs):
         >>> with raises(ValueError, match=r'must be \d+$'):
         ...     raise ValueError("value must be 42")
 
-    **Legacy forms**
+    **Legacy form**
 
-    The forms below are fully supported but are discouraged for new code because the
+    The form below is fully supported but discouraged for new code because the
     context manager form is regarded as more readable and less error-prone.
 
     It is possible to specify a callable by passing a to-be-called lambda::
@@ -622,14 +626,6 @@ def raises(expected_exception, *args, **kwargs):
         <ExceptionInfo ...>
         >>> raises(ZeroDivisionError, f, x=0)
         <ExceptionInfo ...>
-
-    It is also possible to pass a string to be evaluated at runtime::
-
-        >>> raises(ZeroDivisionError, "f(0)")
-        <ExceptionInfo ...>
-
-    The string will be evaluated using the same ``locals()`` and ``globals()``
-    at the moment of the ``raises`` call.
 
     .. currentmodule:: _pytest._code
 
@@ -672,6 +668,7 @@ def raises(expected_exception, *args, **kwargs):
             raise TypeError(msg)
         return RaisesContext(expected_exception, message, match_expr)
     elif isinstance(args[0], str):
+        warnings.warn(RAISES_EXEC, stacklevel=2)
         code, = args
         assert isinstance(code, str)
         frame = sys._getframe(1)
@@ -679,18 +676,18 @@ def raises(expected_exception, *args, **kwargs):
         loc.update(kwargs)
         # print "raises frame scope: %r" % frame.f_locals
         try:
-            code = _pytest._code.Source(code).compile()
+            code = _pytest._code.Source(code).compile(_genframe=frame)
             six.exec_(code, frame.f_globals, loc)
             # XXX didn't mean f_globals == f_locals something special?
             #     this is destroyed here ...
         except expected_exception:
-            return _pytest._code.ExceptionInfo()
+            return _pytest._code.ExceptionInfo.from_current()
     else:
         func = args[0]
         try:
             func(*args[1:], **kwargs)
         except expected_exception:
-            return _pytest._code.ExceptionInfo()
+            return _pytest._code.ExceptionInfo.from_current()
     fail(message)
 
 
@@ -705,7 +702,7 @@ class RaisesContext(object):
         self.excinfo = None
 
     def __enter__(self):
-        self.excinfo = object.__new__(_pytest._code.ExceptionInfo)
+        self.excinfo = _pytest._code.ExceptionInfo.for_later()
         return self.excinfo
 
     def __exit__(self, *tp):

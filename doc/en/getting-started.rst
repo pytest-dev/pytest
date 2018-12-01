@@ -27,7 +27,7 @@ Install ``pytest``
 2. Check that you installed the correct version::
 
     $ pytest --version
-    This is pytest version 3.x.y, imported from $PYTHON_PREFIX/lib/python3.6/site-packages/pytest.py
+    This is pytest version 4.x.y, imported from $PYTHON_PREFIX/lib/python3.6/site-packages/pytest.py
 
 .. _`simpletest`:
 
@@ -43,11 +43,13 @@ Create a simple test function with just four lines of code::
     def test_answer():
         assert func(3) == 5
 
-That’s it. You can now execute the test function::
+That’s it. You can now execute the test function:
+
+.. code-block:: pytest
 
     $ pytest
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
+    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 1 item
 
@@ -90,7 +92,9 @@ Use the ``raises`` helper to assert that some code raises an exception::
         with pytest.raises(SystemExit):
             f()
 
-Execute the test function with “quiet” reporting mode::
+Execute the test function with “quiet” reporting mode:
+
+.. code-block:: pytest
 
     $ pytest -q test_sysexit.py
     .                                                                    [100%]
@@ -111,7 +115,9 @@ Once you develop multiple tests, you may want to group them into a class. pytest
             x = "hello"
             assert hasattr(x, 'check')
 
-``pytest`` discovers all tests following its :ref:`Conventions for Python test discovery <test discovery>`, so it finds both ``test_`` prefixed functions. There is no need to subclass anything. We can simply run the module by passing its filename::
+``pytest`` discovers all tests following its :ref:`Conventions for Python test discovery <test discovery>`, so it finds both ``test_`` prefixed functions. There is no need to subclass anything. We can simply run the module by passing its filename:
+
+.. code-block:: pytest
 
     $ pytest -q test_class.py
     .F                                                                   [100%]
@@ -138,10 +144,12 @@ Request a unique temporary directory for functional tests
 
     # content of test_tmpdir.py
     def test_needsfiles(tmpdir):
-        print (tmpdir)
+        print(tmpdir)
         assert 0
 
-List the name ``tmpdir`` in the test function signature and ``pytest`` will lookup and call a fixture factory to create the resource before performing the test function call. Before the test runs, ``pytest`` creates a unique-per-test-invocation temporary directory::
+List the name ``tmpdir`` in the test function signature and ``pytest`` will lookup and call a fixture factory to create the resource before performing the test function call. Before the test runs, ``pytest`` creates a unique-per-test-invocation temporary directory:
+
+.. code-block:: pytest
 
     $ pytest -q test_tmpdir.py
     F                                                                    [100%]
@@ -151,7 +159,7 @@ List the name ``tmpdir`` in the test function signature and ``pytest`` will look
     tmpdir = local('PYTEST_TMPDIR/test_needsfiles0')
 
         def test_needsfiles(tmpdir):
-            print (tmpdir)
+            print(tmpdir)
     >       assert 0
     E       assert 0
 

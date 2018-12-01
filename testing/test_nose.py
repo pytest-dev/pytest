@@ -3,7 +3,6 @@ from __future__ import division
 from __future__ import print_function
 
 import pytest
-from _pytest.warnings import SHOW_PYTEST_WARNINGS_ARG
 
 
 def setup_module(mod):
@@ -71,11 +70,11 @@ def test_nose_setup_func(testdir):
 
         @with_setup(my_setup, my_teardown)
         def test_hello():
-            print (values)
+            print(values)
             assert values == [1]
 
         def test_world():
-            print (values)
+            print(values)
             assert values == [1,2]
 
     """
@@ -95,11 +94,11 @@ def test_nose_setup_func_failure(testdir):
 
         @with_setup(my_setup, my_teardown)
         def test_hello():
-            print (values)
+            print(values)
             assert values == [1]
 
         def test_world():
-            print (values)
+            print(values)
             assert values == [1,2]
 
     """
@@ -147,11 +146,11 @@ def test_nose_setup_partial(testdir):
         my_teardown_partial = partial(my_teardown, 2)
 
         def test_hello():
-            print (values)
+            print(values)
             assert values == [1]
 
         def test_world():
-            print (values)
+            print(values)
             assert values == [1,2]
 
         test_hello.setup = my_setup_partial
@@ -160,73 +159,6 @@ def test_nose_setup_partial(testdir):
     )
     result = testdir.runpytest(p, "-p", "nose")
     result.stdout.fnmatch_lines(["*2 passed*"])
-
-
-def test_nose_test_generator_fixtures(testdir):
-    p = testdir.makepyfile(
-        """
-        # taken from nose-0.11.1 unit_tests/test_generator_fixtures.py
-        from nose.tools import eq_
-        called = []
-
-        def outer_setup():
-            called.append('outer_setup')
-
-        def outer_teardown():
-            called.append('outer_teardown')
-
-        def inner_setup():
-            called.append('inner_setup')
-
-        def inner_teardown():
-            called.append('inner_teardown')
-
-        def test_gen():
-            called[:] = []
-            for i in range(0, 5):
-                yield check, i
-
-        def check(i):
-            expect = ['outer_setup']
-            for x in range(0, i):
-                expect.append('inner_setup')
-                expect.append('inner_teardown')
-            expect.append('inner_setup')
-            eq_(called, expect)
-
-
-        test_gen.setup = outer_setup
-        test_gen.teardown = outer_teardown
-        check.setup = inner_setup
-        check.teardown = inner_teardown
-
-        class TestClass(object):
-            def setup(self):
-                print ("setup called in %s" % self)
-                self.called = ['setup']
-
-            def teardown(self):
-                print ("teardown called in %s" % self)
-                eq_(self.called, ['setup'])
-                self.called.append('teardown')
-
-            def test(self):
-                print ("test called in %s" % self)
-                for i in range(0, 5):
-                    yield self.check, i
-
-            def check(self, i):
-                print ("check called in %s" % self)
-                expect = ['setup']
-                #for x in range(0, i):
-                #    expect.append('setup')
-                #    expect.append('teardown')
-                #expect.append('setup')
-                eq_(self.called, expect)
-    """
-    )
-    result = testdir.runpytest(p, "-p", "nose", SHOW_PYTEST_WARNINGS_ARG)
-    result.stdout.fnmatch_lines(["*10 passed*"])
 
 
 def test_module_level_setup(testdir):

@@ -100,12 +100,8 @@ class TestParser(object):
 
     def test_group_shortopt_lowercase(self, parser):
         group = parser.getgroup("hello")
-        pytest.raises(
-            ValueError,
-            """
+        with pytest.raises(ValueError):
             group.addoption("-x", action="store_true")
-        """,
-        )
         assert len(group.options) == 0
         group._addoption("-x", action="store_true")
         assert len(group.options) == 1

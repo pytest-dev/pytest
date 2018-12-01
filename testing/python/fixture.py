@@ -526,15 +526,8 @@ class TestRequestBasic(object):
 
                 try:
                     gc.collect()
-                    leaked_types = sum(1 for _ in gc.garbage
-                                       if isinstance(_, PseudoFixtureDef))
-
-                    # debug leaked types if the test fails
-                    print(leaked_types)
-
-                    gc.garbage[:] = []
-
-                    assert leaked_types == 0
+                    leaked = [x for _ in gc.garbage if isinstance(_, PseudoFixtureDef)]
+                    assert leaked == []
                 finally:
                     gc.set_debug(original)
 
@@ -542,7 +535,7 @@ class TestRequestBasic(object):
                 pass
         """
         )
-        result = testdir.runpytest()
+        result = testdir.runpytest_subprocess()
         result.stdout.fnmatch_lines("* 1 passed in *")
 
     def test_getfixturevalue_recursive(self, testdir):
@@ -913,7 +906,8 @@ class TestRequestMarking(object):
         assert "skipif" not in item1.keywords
         req1.applymarker(pytest.mark.skipif)
         assert "skipif" in item1.keywords
-        pytest.raises(ValueError, "req1.applymarker(42)")
+        with pytest.raises(ValueError):
+            req1.applymarker(42)
 
     def test_accesskeywords(self, testdir):
         testdir.makepyfile(
@@ -1495,7 +1489,7 @@ class TestFixtureManagerParseFactories(object):
                     return "class"
                 def test_hello(self, item, fm):
                     faclist = fm.getfixturedefs("hello", item.nodeid)
-                    print (faclist)
+                    print(faclist)
                     assert len(faclist) == 3
 
                     assert faclist[0].func(item._request) == "conftest"
@@ -1856,24 +1850,6 @@ class TestAutouseManagement(object):
         reprec = testdir.inline_run("-s")
         reprec.assertoutcome(passed=1)
 
-    def test_autouse_honored_for_yield(self, testdir):
-        testdir.makepyfile(
-            """
-            import pytest
-            @pytest.fixture(autouse=True)
-            def tst():
-                global x
-                x = 3
-            def test_gen():
-                def f(hello):
-                    assert x == abs(hello)
-                yield f, 3
-                yield f, -3
-        """
-        )
-        reprec = testdir.inline_run(SHOW_PYTEST_WARNINGS_ARG)
-        reprec.assertoutcome(passed=2)
-
     def test_funcarg_and_setup(self, testdir):
         testdir.makepyfile(
             """
@@ -2040,7 +2016,7 @@ class TestAutouseManagement(object):
                     values.append("step2-%d" % item)
 
             def test_finish():
-                print (values)
+                print(values)
                 assert values == ["setup-1", "step1-1", "step2-1", "teardown-1",
                              "setup-2", "step1-2", "step2-2", "teardown-2",]
         """
@@ -2880,7 +2856,7 @@ class TestFixtureMarker(object):
             def base(request, fix1):
                 def cleanup_base():
                     values.append("fin_base")
-                    print ("finalizing base")
+                    print("finalizing base")
                 request.addfinalizer(cleanup_base)
 
             def test_begin():
@@ -3480,13 +3456,13 @@ class TestContextManagerFixtureFuncs(object):
             from test_context import fixture
             @fixture
             def arg1():
-                print ("setup")
+                print("setup")
                 yield 1
-                print ("teardown")
+                print("teardown")
             def test_1(arg1):
-                print ("test1", arg1)
+                print("test1", arg1)
             def test_2(arg1):
-                print ("test2", arg1)
+                print("test2", arg1)
                 assert 0
         """
         )
@@ -3509,13 +3485,13 @@ class TestContextManagerFixtureFuncs(object):
             from test_context import fixture
             @fixture(scope="module")
             def arg1():
-                print ("setup")
+                print("setup")
                 yield 1
-                print ("teardown")
+                print("teardown")
             def test_1(arg1):
-                print ("test1", arg1)
+                print("test1", arg1)
             def test_2(arg1):
-                print ("test2", arg1)
+                print("test2", arg1)
         """
         )
         result = testdir.runpytest("-s")

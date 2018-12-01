@@ -122,11 +122,13 @@ fixture definition::
 The ``@pytest.mark.usefixtures("db_class")`` class-decorator makes sure that
 the pytest fixture function ``db_class`` is called once per class.
 Due to the deliberately failing assert statements, we can take a look at
-the ``self.db`` values in the traceback::
+the ``self.db`` values in the traceback:
+
+.. code-block:: pytest
 
     $ pytest test_unittest_db.py
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
+    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 2 items
 
@@ -199,7 +201,9 @@ used for all methods of the class where it is defined.  This is a
 shortcut for using a ``@pytest.mark.usefixtures("initdir")`` marker
 on the class like in the previous example.
 
-Running this test module ...::
+Running this test module ...:
+
+.. code-block:: pytest
 
     $ pytest -q test_unittest_cleandir.py
     .                                                                    [100%]

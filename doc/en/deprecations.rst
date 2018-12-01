@@ -14,6 +14,41 @@ Below is a complete list of all pytest features which are considered deprecated.
 :class:`_pytest.warning_types.PytestWarning` or subclasses, which can be filtered using
 :ref:`standard warning filters <warnings>`.
 
+.. _raises-warns-exec:
+
+``raises`` / ``warns`` with a string as the second argument
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 4.1
+
+Use the context manager form of these instead.  When necessary, invoke ``exec``
+directly.
+
+Example:
+
+.. code-block:: python
+
+    pytest.raises(ZeroDivisionError, "1 / 0")
+    pytest.raises(SyntaxError, "a $ b")
+
+    pytest.warns(DeprecationWarning, "my_function()")
+    pytest.warns(SyntaxWarning, "assert(1, 2)")
+
+Becomes:
+
+.. code-block:: python
+
+    with pytest.raises(ZeroDivisionError):
+        1 / 0
+    with pytest.raises(SyntaxError):
+        exec("a $ b")  # exec is required for invalid syntax
+
+    with pytest.warns(DeprecationWarning):
+        my_function()
+    with pytest.warns(SyntaxWarning):
+        exec("assert(1, 2)")  # exec is used to avoid a top-level warning
+
+
 
 ``cached_setup``
 ~~~~~~~~~~~~~~~~
@@ -279,7 +314,7 @@ an appropriate period of deprecation has passed.
 
 *Removed in version 4.0.*
 
-pytest supports ``yield``-style tests, where a test function actually ``yield`` functions and values
+pytest supported ``yield``-style tests, where a test function actually ``yield`` functions and values
 that are then turned into proper test methods. Example:
 
 .. code-block:: python

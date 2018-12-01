@@ -38,6 +38,7 @@ from _pytest.compat import safe_str
 from _pytest.compat import STRING_TYPES
 from _pytest.config import hookimpl
 from _pytest.main import FSHookProxy
+from _pytest.mark import MARK_GEN
 from _pytest.mark.structures import get_unpacked_marks
 from _pytest.mark.structures import normalize_mark_list
 from _pytest.mark.structures import transfer_markers
@@ -199,7 +200,6 @@ def pytest_pycollect_makeitem(collector, name, obj):
     # nothing was collected elsewhere, let's do it here
     if safe_isclass(obj):
         if collector.istestclass(obj, name):
-            Class = collector._getcustomclass("Class")
             outcome.force_result(Class(name, parent=collector))
     elif collector.istestfunction(obj, name):
         # mock seems to store unbound methods (issue473), normalize it
@@ -219,7 +219,10 @@ def pytest_pycollect_makeitem(collector, name, obj):
             )
         elif getattr(obj, "__test__", True):
             if is_generator(obj):
-                res = Generator(name, parent=collector)
+                res = Function(name, parent=collector)
+                reason = deprecated.YIELD_TESTS.format(name=name)
+                res.add_marker(MARK_GEN.xfail(run=False, reason=reason))
+                res.warn(PytestWarning(reason))
             else:
                 res = list(collector._genfunctions(name, obj))
             outcome.force_result(res)
@@ -408,7 +411,6 @@ class PyCollector(PyobjMixin, nodes.Collector):
         else:
             self.ihook.pytest_generate_tests(metafunc=metafunc)
 
-        Function = self._getcustomclass("Function")
         if not metafunc._calls:
             yield Function(name, parent=self, fixtureinfo=fixtureinfo)
         else:
@@ -450,7 +452,7 @@ class Module(nodes.File, PyCollector):
             mod = self.fspath.pyimport(ensuresyspath=importmode)
         except SyntaxError:
             raise self.CollectError(
-                _pytest._code.ExceptionInfo().getrepr(style="short")
+                _pytest._code.ExceptionInfo.from_current().getrepr(style="short")
             )
         except self.fspath.ImportMismatchError:
             e = sys.exc_info()[1]
@@ -466,7 +468,7 @@ class Module(nodes.File, PyCollector):
         except ImportError:
             from _pytest._code.code import ExceptionInfo
 
-            exc_info = ExceptionInfo()
+            exc_info = ExceptionInfo.from_current()
             if self.config.getoption("verbose") < 2:
                 exc_info.traceback = exc_info.traceback.filter(filter_traceback)
             exc_repr = (
@@ -648,7 +650,7 @@ class Class(PyCollector):
                 )
             )
             return []
-        return [self._getcustomclass("Instance")(name="()", parent=self)]
+        return [Instance(name="()", parent=self)]
 
     def setup(self):
         setup_class = _get_xunit_func(self.obj, "setup_class")
@@ -737,51 +739,6 @@ class FunctionMixin(PyobjMixin):
         if style == "auto":
             style = "long"
         return self._repr_failure_py(excinfo, style=style)
-
-
-class Generator(FunctionMixin, PyCollector):
-    def collect(self):
-
-        # test generators are seen as collectors but they also
-        # invoke setup/teardown on popular request
-        # (induced by the common "test_*" naming shared with normal tests)
-        from _pytest import deprecated
-
-        self.warn(deprecated.YIELD_TESTS)
-
-        self.session._setupstate.prepare(self)
-        # see FunctionMixin.setup and test_setupstate_is_preserved_134
-        self._preservedparent = self.parent.obj
-        values = []
-        seen = {}
-        _Function = self._getcustomclass("Function")
-        for i, x in enumerate(self.obj()):
-            name, call, args = self.getcallargs(x)
-            if not callable(call):
-                raise TypeError("%r yielded non callable test %r" % (self.obj, call))
-            if name is None:
-                name = "[%d]" % i
-            else:
-                name = "['%s']" % name
-            if name in seen:
-                raise ValueError(
-                    "%r generated tests with non-unique name %r" % (self, name)
-                )
-            seen[name] = True
-            values.append(_Function(name, self, args=args, callobj=call))
-        return values
-
-    def getcallargs(self, obj):
-        if not isinstance(obj, (tuple, list)):
-            obj = (obj,)
-        # explicit naming
-        if isinstance(obj[0], six.string_types):
-            name = obj[0]
-            obj = obj[1:]
-        else:
-            name = None
-        call, args = obj[0], obj[1:]
-        return name, call, args
 
 
 def hasinit(obj):
@@ -1326,8 +1283,7 @@ def _showfixtures_main(config, session):
             tw.line("    %s: no docstring available" % (loc,), red=True)
 
 
-def write_docstring(tw, doc):
-    INDENT = "    "
+def write_docstring(tw, doc, indent="    "):
     doc = doc.rstrip()
     if "\n" in doc:
         firstline, rest = doc.split("\n", 1)
@@ -1335,11 +1291,11 @@ def write_docstring(tw, doc):
         firstline, rest = doc, ""
 
     if firstline.strip():
-        tw.line(INDENT + firstline.strip())
+        tw.line(indent + firstline.strip())
 
     if rest:
         for line in dedent(rest).split("\n"):
-            tw.write(INDENT + line + "\n")
+            tw.write(indent + line + "\n")
 
 
 class Function(FunctionMixin, nodes.Item, fixtures.FuncargnamesCompatAttr):

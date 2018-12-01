@@ -194,7 +194,7 @@ class TestConfigAPI(object):
         config = testdir.parseconfig("--hello=this")
         for x in ("hello", "--hello", "-X"):
             assert config.getoption(x) == "this"
-        pytest.raises(ValueError, "config.getoption('qweqwe')")
+        pytest.raises(ValueError, config.getoption, "qweqwe")
 
     @pytest.mark.skipif("sys.version_info[0] < 3")
     def test_config_getoption_unicode(self, testdir):
@@ -211,7 +211,7 @@ class TestConfigAPI(object):
 
     def test_config_getvalueorskip(self, testdir):
         config = testdir.parseconfig()
-        pytest.raises(pytest.skip.Exception, "config.getvalueorskip('hello')")
+        pytest.raises(pytest.skip.Exception, config.getvalueorskip, "hello")
         verbose = config.getvalueorskip("verbose")
         assert verbose == config.option.verbose
 
@@ -723,7 +723,8 @@ def test_config_in_subdirectory_colon_command_line_issue2148(testdir):
 
 def test_notify_exception(testdir, capfd):
     config = testdir.parseconfig()
-    excinfo = pytest.raises(ValueError, "raise ValueError(1)")
+    with pytest.raises(ValueError) as excinfo:
+        raise ValueError(1)
     config.notify_exception(excinfo)
     out, err = capfd.readouterr()
     assert "ValueError" in err

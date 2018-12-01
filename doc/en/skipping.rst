@@ -323,11 +323,13 @@ Here is a simple test file with the several usages:
 
 .. literalinclude:: example/xfail_demo.py
 
-Running it with the report-on-xfail option gives this output::
+Running it with the report-on-xfail option gives this output:
+
+.. code-block:: pytest
 
     example $ pytest -rx xfail_demo.py
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
+    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR/example, inifile:
     collected 7 items
 

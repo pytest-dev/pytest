@@ -18,11 +18,13 @@ and displays them at the end of the session::
     def test_one():
         assert api_v1() == 1
 
-Running pytest now produces this output::
+Running pytest now produces this output:
+
+.. code-block:: pytest
 
     $ pytest test_show_warnings.py
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
+    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 1 item
 
@@ -37,7 +39,9 @@ Running pytest now produces this output::
     =================== 1 passed, 1 warnings in 0.12 seconds ===================
 
 The ``-W`` flag can be passed to control which warnings will be displayed or even turn
-them into errors::
+them into errors:
+
+.. code-block:: pytest
 
     $ pytest -q test_show_warnings.py -W error::UserWarning
     F                                                                    [100%]
@@ -347,7 +351,7 @@ defines an ``__init__`` constructor, as this prevents the class from being insta
         def test_foo(self):
             assert 1 == 1
 
-::
+.. code-block:: pytest
 
     $ pytest test_pytest_warnings.py -q
 

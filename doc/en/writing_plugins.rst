@@ -73,7 +73,7 @@ sub directory but not for other directories::
     a/conftest.py:
         def pytest_runtest_setup(item):
             # called for running each test in 'a' directory
-            print ("setting up", item)
+            print("setting up", item)
 
     a/test_sub.py:
         def test_sub():
@@ -388,30 +388,31 @@ return a result object, with which we can assert the tests' outcomes.
 
 additionally it is possible to copy examples for an example folder before running pytest on it
 
-.. code:: ini
+.. code-block:: ini
 
   # content of pytest.ini
   [pytest]
   pytester_example_dir = .
 
 
-.. code:: python
+.. code-block:: python
 
     # content of test_example.py
 
 
     def test_plugin(testdir):
-      testdir.copy_example("test_example.py")
-      testdir.runpytest("-k", "test_example")
+        testdir.copy_example("test_example.py")
+        testdir.runpytest("-k", "test_example")
+
 
     def test_example():
-      pass
+        pass
 
-.. code::
+.. code-block:: pytest
 
     $ pytest
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
+    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile: pytest.ini
     collected 2 items
 

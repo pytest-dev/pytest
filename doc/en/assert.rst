@@ -22,11 +22,13 @@ following::
         assert f() == 4
 
 to assert that your function returns a certain value. If this assertion fails
-you will see the return value of the function call::
+you will see the return value of the function call:
+
+.. code-block:: pytest
 
     $ pytest test_assert1.py
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
+    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 1 item
 
@@ -98,10 +100,9 @@ If you want to write test code that works on Python 2.4 as well,
 you may also use two other ways to test for an expected exception::
 
     pytest.raises(ExpectedException, func, *args, **kwargs)
-    pytest.raises(ExpectedException, "func(*args, **kwargs)")
 
-both of which execute the specified function with args and kwargs and
-asserts that the given ``ExpectedException`` is raised.  The reporter will
+which will execute the specified function with args and kwargs and
+assert that the given ``ExpectedException`` is raised.  The reporter will
 provide you with helpful output in case of failures such as *no
 exception* or *wrong exception*.
 
@@ -165,11 +166,13 @@ when it encounters comparisons.  For example::
         set2 = set("8035")
         assert set1 == set2
 
-if you run this module::
+if you run this module:
+
+.. code-block:: pytest
 
     $ pytest test_assert2.py
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
+    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 1 item
 
@@ -235,7 +238,9 @@ now, given this test module::
        assert f1 == f2
 
 you can run the test module and get the custom output defined in
-the conftest file::
+the conftest file:
+
+.. code-block:: pytest
 
    $ pytest -q test_foocompare.py
    F                                                                    [100%]

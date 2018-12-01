@@ -389,7 +389,6 @@ else:
 COLLECT_FAKEMODULE_ATTRIBUTES = (
     "Collector",
     "Module",
-    "Generator",
     "Function",
     "Instance",
     "Session",

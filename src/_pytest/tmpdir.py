@@ -10,6 +10,7 @@ import warnings
 
 import attr
 import py
+import six
 
 import pytest
 from .pathlib import ensure_reset_dir
@@ -26,7 +27,14 @@ class TempPathFactory(object):
 
     The base directory can be configured using the ``--basetemp`` option."""
 
-    _given_basetemp = attr.ib()
+    _given_basetemp = attr.ib(
+        # using os.path.abspath() to get absolute path instead of resolve() as it
+        # does not work the same in all platforms (see #4427)
+        # Path.absolute() exists, but it is not public (see https://bugs.python.org/issue25012)
+        convert=attr.converters.optional(
+            lambda p: Path(os.path.abspath(six.text_type(p)))
+        )
+    )
     _trace = attr.ib()
     _basetemp = attr.ib(default=None)
 
@@ -53,7 +61,7 @@ class TempPathFactory(object):
         """ return base temporary directory. """
         if self._basetemp is None:
             if self._given_basetemp is not None:
-                basetemp = Path(self._given_basetemp)
+                basetemp = self._given_basetemp
                 ensure_reset_dir(basetemp)
             else:
                 from_env = os.environ.get("PYTEST_DEBUG_TEMPROOT")

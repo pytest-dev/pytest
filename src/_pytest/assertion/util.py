@@ -122,6 +122,12 @@ def assertrepr_compare(config, op, left, right):
     def isset(x):
         return isinstance(x, (set, frozenset))
 
+    def isdatacls(obj):
+        return getattr(obj, "__dataclass_fields__", None) is not None
+
+    def isattrs(obj):
+        return getattr(obj, "__attrs_attrs__", None) is not None
+
     def isiterable(obj):
         try:
             iter(obj)
@@ -142,6 +148,9 @@ def assertrepr_compare(config, op, left, right):
                     explanation = _compare_eq_set(left, right, verbose)
                 elif isdict(left) and isdict(right):
                     explanation = _compare_eq_dict(left, right, verbose)
+                elif type(left) == type(right) and (isdatacls(left) or isattrs(left)):
+                    type_fn = (isdatacls, isattrs)
+                    explanation = _compare_eq_cls(left, right, verbose, type_fn)
                 if isiterable(left) and isiterable(right):
                     expl = _compare_eq_iterable(left, right, verbose)
                     if explanation is not None:
@@ -155,7 +164,7 @@ def assertrepr_compare(config, op, left, right):
         explanation = [
             u"(pytest_assertion plugin: representation of details failed.  "
             u"Probably an object has a faulty __repr__.)",
-            six.text_type(_pytest._code.ExceptionInfo()),
+            six.text_type(_pytest._code.ExceptionInfo.from_current()),
         ]
 
     if not explanation:
@@ -312,6 +321,38 @@ def _compare_eq_dict(left, right, verbose=False):
         explanation.extend(
             pprint.pformat({k: right[k] for k in extra_right}).splitlines()
         )
+    return explanation
+
+
+def _compare_eq_cls(left, right, verbose, type_fns):
+    isdatacls, isattrs = type_fns
+    if isdatacls(left):
+        all_fields = left.__dataclass_fields__
+        fields_to_check = [field for field, info in all_fields.items() if info.compare]
+    elif isattrs(left):
+        all_fields = left.__attrs_attrs__
+        fields_to_check = [field.name for field in all_fields if field.cmp]
+
+    same = []
+    diff = []
+    for field in fields_to_check:
+        if getattr(left, field) == getattr(right, field):
+            same.append(field)
+        else:
+            diff.append(field)
+
+    explanation = []
+    if same and verbose < 2:
+        explanation.append(u"Omitting %s identical items, use -vv to show" % len(same))
+    elif same:
+        explanation += [u"Matching attributes:"]
+        explanation += pprint.pformat(same).splitlines()
+    if diff:
+        explanation += [u"Differing attributes:"]
+        for field in diff:
+            explanation += [
+                (u"%s: %r != %r") % (field, getattr(left, field), getattr(right, field))
+            ]
     return explanation
 
 

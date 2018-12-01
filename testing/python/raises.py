@@ -4,21 +4,32 @@ import six
 
 import pytest
 from _pytest.outcomes import Failed
+from _pytest.warning_types import PytestDeprecationWarning
 
 
 class TestRaises(object):
     def test_raises(self):
         source = "int('qwe')"
-        excinfo = pytest.raises(ValueError, source)
+        with pytest.warns(PytestDeprecationWarning):
+            excinfo = pytest.raises(ValueError, source)
         code = excinfo.traceback[-1].frame.code
         s = str(code.fullsource)
         assert s == source
 
     def test_raises_exec(self):
-        pytest.raises(ValueError, "a,x = []")
+        with pytest.warns(PytestDeprecationWarning) as warninfo:
+            pytest.raises(ValueError, "a,x = []")
+        assert warninfo[0].filename == __file__
+
+    def test_raises_exec_correct_filename(self):
+        with pytest.warns(PytestDeprecationWarning):
+            excinfo = pytest.raises(ValueError, 'int("s")')
+            assert __file__ in excinfo.traceback[-1].path
 
     def test_raises_syntax_error(self):
-        pytest.raises(SyntaxError, "qwe qwe qwe")
+        with pytest.warns(PytestDeprecationWarning) as warninfo:
+            pytest.raises(SyntaxError, "qwe qwe qwe")
+        assert warninfo[0].filename == __file__
 
     def test_raises_function(self):
         pytest.raises(ValueError, int, "hello")
@@ -33,6 +44,23 @@ class TestRaises(object):
         except pytest.raises.Exception:
             pass
 
+    def test_raises_repr_inflight(self):
+        """Ensure repr() on an exception info inside a pytest.raises with block works (#4386)"""
+
+        class E(Exception):
+            pass
+
+        with pytest.raises(E) as excinfo:
+            # this test prints the inflight uninitialized object
+            # using repr and str as well as pprint to demonstrate
+            # it works
+            print(str(excinfo))
+            print(repr(excinfo))
+            import pprint
+
+            pprint.pprint(excinfo)
+            raise E()
+
     def test_raises_as_contextmanager(self, testdir):
         testdir.makepyfile(
             """
@@ -43,7 +71,7 @@ class TestRaises(object):
                 with pytest.raises(ZeroDivisionError) as excinfo:
                     assert isinstance(excinfo, _pytest._code.ExceptionInfo)
                     1/0
-                print (excinfo)
+                print(excinfo)
                 assert excinfo.type == ZeroDivisionError
                 assert isinstance(excinfo.value, ZeroDivisionError)
 

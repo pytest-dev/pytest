@@ -98,6 +98,30 @@ class TestSpecialisedExplanations(object):
         text = "head " * 50 + "f" * 70 + "tail " * 20
         assert "f" * 70 not in text
 
+    def test_eq_dataclass(self):
+        from dataclasses import dataclass
+
+        @dataclass
+        class Foo(object):
+            a: int
+            b: str
+
+        left = Foo(1, "b")
+        right = Foo(1, "c")
+        assert left == right
+
+    def test_eq_attrs(self):
+        import attr
+
+        @attr.s
+        class Foo(object):
+            a = attr.ib()
+            b = attr.ib()
+
+        left = Foo(1, "b")
+        right = Foo(1, "c")
+        assert left == right
+
 
 def test_attribute():
     class Foo(object):
@@ -141,11 +165,11 @@ def globf(x):
 
 class TestRaises(object):
     def test_raises(self):
-        s = "qwe"  # NOQA
-        raises(TypeError, "int(s)")
+        s = "qwe"
+        raises(TypeError, int, s)
 
     def test_raises_doesnt(self):
-        raises(IOError, "int('3')")
+        raises(IOError, int, "3")
 
     def test_raise(self):
         raise ValueError("demo error")
