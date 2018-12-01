@@ -1,0 +1,1 @@
+During teardown of the python process, and on rare occasions, capture attributes can be ``None`` while trying to resume global capture.
