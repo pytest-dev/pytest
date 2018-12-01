@@ -56,9 +56,9 @@ GETFUNCARGVALUE = RemovedInPytest4Warning(
     "getfuncargvalue is deprecated, use getfixturevalue"
 )
 
-RESULT_LOG = RemovedInPytest4Warning(
-    "--result-log is deprecated and scheduled for removal in pytest 4.0.\n"
-    "See https://docs.pytest.org/en/latest/usage.html#creating-resultlog-format-files for more information."
+RESULT_LOG = PytestDeprecationWarning(
+    "--result-log is deprecated and scheduled for removal in pytest 5.0.\n"
+    "See https://docs.pytest.org/en/latest/deprecations.html#result-log-result-log for more information."
 )
 
 MARK_INFO_ATTRIBUTE = RemovedInPytest4Warning(

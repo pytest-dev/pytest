@@ -483,14 +483,10 @@ Creating resultlog format files
 
 .. deprecated:: 3.0
 
-    This option is rarely used and is scheduled for removal in 4.0.
+    This option is rarely used and is scheduled for removal in 5.0.
 
-    An alternative for users which still need similar functionality is to use the
-    `pytest-tap <https://pypi.org/project/pytest-tap/>`_ plugin which provides
-    a stream of test data.
-
-    If you have any concerns, please don't hesitate to
-    `open an issue <https://github.com/pytest-dev/pytest/issues>`_.
+    See `the deprecation docs <https://docs.pytest.org/en/latest/deprecations.html#result-log-result-log>`__
+    for more information.
 
 To create plain-text machine-readable result files you can issue::
 
