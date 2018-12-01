@@ -469,43 +469,6 @@ class FixtureRequest(FuncargnamesCompatAttr):
             if argname not in item.funcargs:
                 item.funcargs[argname] = self.getfixturevalue(argname)
 
-    def cached_setup(self, setup, teardown=None, scope="module", extrakey=None):
-        """ (deprecated) Return a testing resource managed by ``setup`` &
-        ``teardown`` calls.  ``scope`` and ``extrakey`` determine when the
-        ``teardown`` function will be called so that subsequent calls to
-        ``setup`` would recreate the resource.  With pytest-2.3 you often
-        do not need ``cached_setup()`` as you can directly declare a scope
-        on a fixture function and register a finalizer through
-        ``request.addfinalizer()``.
-
-        :arg teardown: function receiving a previously setup resource.
-        :arg setup: a no-argument function creating a resource.
-        :arg scope: a string value out of ``function``, ``class``, ``module``
-            or ``session`` indicating the caching lifecycle of the resource.
-        :arg extrakey: added to internal caching key of (funcargname, scope).
-        """
-        from _pytest.deprecated import CACHED_SETUP
-
-        warnings.warn(CACHED_SETUP, stacklevel=2)
-        if not hasattr(self.config, "_setupcache"):
-            self.config._setupcache = {}  # XXX weakref?
-        cachekey = (self.fixturename, self._getscopeitem(scope), extrakey)
-        cache = self.config._setupcache
-        try:
-            val = cache[cachekey]
-        except KeyError:
-            self._check_scope(self.fixturename, self.scope, scope)
-            val = setup()
-            cache[cachekey] = val
-            if teardown is not None:
-
-                def finalizer():
-                    del cache[cachekey]
-                    teardown(val)
-
-                self._addfinalizer(finalizer, scope=scope)
-        return val
-
     def getfixturevalue(self, argname):
         """ Dynamically run a named fixture function.
 
