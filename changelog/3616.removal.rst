@@ -1,1 +1,3 @@
-Remove the deprecated compat properties for node.Class/Function/Module - use pytest... now.
+Remove the deprecated compat properties for ``node.Class/Function/Module`` - use ``pytest.Class/Function/Module`` now.
+
+See our `docs <https://docs.pytest.org/en/latest/deprecations.html#internal-classes-accessed-through-node>`__ on information on how to update your code.
