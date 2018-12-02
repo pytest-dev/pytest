@@ -107,20 +107,14 @@ class _NodeReporter(object):
         classnames = names[:-1]
         if self.xml.prefix:
             classnames.insert(0, self.xml.prefix)
-        attrs = {
-            "classname": ".".join(classnames),
-            "name": bin_xml_escape(names[-1]),
-            "file": testreport.location[0],
-        }
-        if testreport.location[1] is not None:
-            attrs["line"] = testreport.location[1]
+        attrs = {"classname": ".".join(classnames), "name": bin_xml_escape(names[-1])}
         if hasattr(testreport, "url"):
             attrs["url"] = testreport.url
         self.attrs = attrs
         self.attrs.update(existing_attrs)  # restore any user-defined attributes
 
     def to_xml(self):
-        testcase = Junit.testcase(time=self.duration, **self.attrs)
+        testcase = Junit.testcase(time="%.3f" % self.duration, **self.attrs)
         testcase.append(self.make_properties_node())
         for node in self.nodes:
             testcase.append(node)
@@ -545,7 +539,7 @@ class LogXML(object):
                 name=self.suite_name,
                 errors=self.stats["error"],
                 failures=self.stats["failure"],
-                skips=self.stats["skipped"],
+                skipped=self.stats["skipped"],
                 tests=numtests,
                 time="%.3f" % suite_time_delta,
             ).unicode(indent=0)
