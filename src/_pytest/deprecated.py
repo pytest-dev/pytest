@@ -97,6 +97,10 @@ PYTEST_PLUGINS_FROM_NON_TOP_LEVEL_CONFTEST = RemovedInPytest4Warning(
     "Please move it to the top level conftest file instead."
 )
 
+PYTEST_CONFIG_GLOBAL = PytestDeprecationWarning(
+    "the `pytest.config` global is deprecated.  Please use `request.config` "
+    "or `pytest_configure` (if you're a pytest plugin) instead."
+)
 
 PYTEST_ENSURETEMP = RemovedInPytest4Warning(
     "pytest/tmpdir_factory.ensuretemp is deprecated, \n"
