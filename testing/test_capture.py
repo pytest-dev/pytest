@@ -411,8 +411,13 @@ class TestLoggingInteraction(object):
         )
         result = testdir.runpytest_subprocess(p, "--log-cli-level", "info")
         assert result.ret != 0
-        result.stdout.fnmatch_lines(["*WARNING*hello433*", "*WARNING*Logging on teardown*"])
-        assert "AttributeError: 'NoneType' object has no attribute 'resume_capturing'" not in result.stderr.str()
+        result.stdout.fnmatch_lines(
+            ["*WARNING*hello433*", "*WARNING*Logging on teardown*"]
+        )
+        assert (
+            "AttributeError: 'NoneType' object has no attribute 'resume_capturing'"
+            not in result.stderr.str()
+        )
 
 
 class TestCaptureFixture(object):
