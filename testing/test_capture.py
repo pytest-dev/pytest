@@ -385,6 +385,35 @@ class TestLoggingInteraction(object):
         assert "something" not in result.stderr.str()
         assert "operation on closed file" not in result.stderr.str()
 
+    def test_logging_after_cap_stopped(self, testdir):
+        testdir.makeconftest(
+            """\
+                import pytest
+                import logging
+
+                log = logging.getLogger(__name__)
+
+                @pytest.fixture
+                def log_on_teardown():
+                    yield
+                    log.warning('Logging on teardown')
+            """
+        )
+        # make sure that logging is still captured in tests
+        p = testdir.makepyfile(
+            """\
+            def test_hello(log_on_teardown):
+                import logging
+                logging.warning("hello433")
+                assert 1
+                raise KeyboardInterrupt()
+            """
+        )
+        result = testdir.runpytest_subprocess(p, "--log-cli-level", "info")
+        assert result.ret != 0
+        result.stdout.fnmatch_lines(["*WARNING*hello433*", "*WARNING*Logging on teardown*"])
+        assert "AttributeError: 'NoneType' object has no attribute 'resume_capturing'" not in result.stderr.str()
+
 
 class TestCaptureFixture(object):
     @pytest.mark.parametrize("opt", [[], ["-s"]])
