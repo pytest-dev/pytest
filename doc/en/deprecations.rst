@@ -14,6 +14,15 @@ Below is a complete list of all pytest features which are considered deprecated.
 :class:`_pytest.warning_types.PytestWarning` or subclasses, which can be filtered using
 :ref:`standard warning filters <warnings>`.
 
+``pytest.config`` global
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 4.1
+
+The ``pytest.config`` global object is deprecated.  Instead use
+``request.config`` (via the ``request`` fixture) or if you are a plugin author
+use the ``pytest_configure(config)`` hook.
+
 .. _raises-warns-exec:
 
 ``raises`` / ``warns`` with a string as the second argument

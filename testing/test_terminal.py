@@ -539,7 +539,7 @@ class TestTerminalFunctional(object):
         result.stdout.fnmatch_lines(["test_passes.py ..*", "* 2 pass*"])
         assert result.ret == 0
 
-    def test_header_trailer_info(self, testdir):
+    def test_header_trailer_info(self, testdir, request):
         testdir.makepyfile(
             """
             def test_passes():
@@ -563,7 +563,7 @@ class TestTerminalFunctional(object):
                 "=* 1 passed*in *.[0-9][0-9] seconds *=",
             ]
         )
-        if pytest.config.pluginmanager.list_plugin_distinfo():
+        if request.config.pluginmanager.list_plugin_distinfo():
             result.stdout.fnmatch_lines(["plugins: *"])
 
     def test_showlocals(self, testdir):
