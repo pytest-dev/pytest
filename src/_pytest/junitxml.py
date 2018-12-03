@@ -309,6 +309,9 @@ def pytest_addoption(parser):
         "Duration time to report: one of total|call",
         default="total",
     )  # choices=['total', 'call'])
+    parser.addini(
+        "junit_family", "Emit XML for schema: one of old|xunit1|xunit2", default="old"
+    )
 
 
 def pytest_configure(config):
@@ -321,6 +324,7 @@ def pytest_configure(config):
             config.getini("junit_suite_name"),
             config.getini("junit_logging"),
             config.getini("junit_duration_report"),
+            config.getini("junit_family"),
         )
         config.pluginmanager.register(config._xml)
 
