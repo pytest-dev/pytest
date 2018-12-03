@@ -302,14 +302,14 @@ class TestLoggingInteraction(object):
             """\
             import logging
             def setup_function(function):
-                logging.warn("hello1")
+                logging.warning("hello1")
 
             def test_logging():
-                logging.warn("hello2")
+                logging.warning("hello2")
                 assert 0
 
             def teardown_function(function):
-                logging.warn("hello3")
+                logging.warning("hello3")
                 assert 0
             """
         )
@@ -328,14 +328,14 @@ class TestLoggingInteraction(object):
             """\
             import logging
             def setup_module(function):
-                logging.warn("hello1")
+                logging.warning("hello1")
 
             def test_logging():
-                logging.warn("hello2")
+                logging.warning("hello2")
                 assert 0
 
             def teardown_module(function):
-                logging.warn("hello3")
+                logging.warning("hello3")
                 assert 0
             """
         )
@@ -354,7 +354,7 @@ class TestLoggingInteraction(object):
             """\
                 import logging
                 logging.basicConfig()
-                logging.warn("hello435")
+                logging.warning("hello435")
             """
         )
         # make sure that logging is still captured in tests
@@ -375,7 +375,7 @@ class TestLoggingInteraction(object):
             """\
             def test_hello():
                 import logging
-                logging.warn("hello433")
+                logging.warning("hello433")
                 assert 0
             """
         )
@@ -1300,13 +1300,13 @@ def test_capturing_and_logging_fundamentals(testdir, method):
                                      Capture=capture.%s)
         cap.start_capturing()
 
-        logging.warn("hello1")
+        logging.warning("hello1")
         outerr = cap.readouterr()
         print("suspend, captured %%s" %%(outerr,))
-        logging.warn("hello2")
+        logging.warning("hello2")
 
         cap.pop_outerr_to_orig()
-        logging.warn("hello3")
+        logging.warning("hello3")
 
         outerr = cap.readouterr()
         print("suspend2, captured %%s" %% (outerr,))
