@@ -66,12 +66,37 @@ def bin_xml_escape(arg):
     return py.xml.raw(illegal_xml_re.sub(repl, py.xml.escape(arg)))
 
 
+def merge_family(left, right):
+    result = {}
+    for kl, vl in left.items():
+        for kr, vr in right.items():
+            if not isinstance(vl, list):
+                raise NotImplementedError(type(vl))
+            result[kl] = vl + vr
+    left.update(result)
+
+
+families = {}
+families["_base"] = {"testcase": ["classname", "name"]}
+families["_base_old"] = {"testcase": ["file", "line", "url"]}
+
+# xUnit 1.x inherits old attributes
+families["xunit1"] = families["_base"].copy()
+merge_family(families["xunit1"], families["_base_old"])
+
+# Alias "old" to xUnit 1.x
+families["old"] = families["xunit1"]
+
+# xUnit 2.x uses strict base attributes
+families["xunit2"] = families["_base"]
+
+
 class _NodeReporter(object):
     def __init__(self, nodeid, xml):
-
         self.id = nodeid
         self.xml = xml
         self.add_stats = self.xml.add_stats
+        self.family = self.xml.family
         self.duration = 0
         self.properties = []
         self.nodes = []
@@ -107,11 +132,30 @@ class _NodeReporter(object):
         classnames = names[:-1]
         if self.xml.prefix:
             classnames.insert(0, self.xml.prefix)
-        attrs = {"classname": ".".join(classnames), "name": bin_xml_escape(names[-1])}
+        attrs = {
+            "classname": ".".join(classnames),
+            "name": bin_xml_escape(names[-1]),
+            "file": testreport.location[0],
+        }
+        if testreport.location[1] is not None:
+            attrs["line"] = testreport.location[1]
         if hasattr(testreport, "url"):
             attrs["url"] = testreport.url
         self.attrs = attrs
         self.attrs.update(existing_attrs)  # restore any user-defined attributes
+
+        # Preserve old testcase behavior
+        if self.family == "old":
+            return
+
+        # Purge attributes not permitted by this test family
+        # This includes custom attributes, because they are not valid here.
+        # TODO: Convert invalid attributes to properties to preserve "something"
+        temp_attrs = {}
+        for key in self.attrs.keys():
+            if key in families[self.family]["testcase"]:
+                temp_attrs[key] = self.attrs[key]
+        self.attrs = temp_attrs
 
     def to_xml(self):
         testcase = Junit.testcase(time="%.3f" % self.duration, **self.attrs)
@@ -231,7 +275,7 @@ class _NodeReporter(object):
     def finalize(self):
         data = self.to_xml().unicode(indent=0)
         self.__dict__.clear()
-        self.to_xml = lambda: py.xml.raw(data)
+        self.raw = lambda: py.xml.raw(data)
 
 
 @pytest.fixture
@@ -353,12 +397,7 @@ def mangle_test_address(address):
 
 class LogXML(object):
     def __init__(
-        self,
-        logfile,
-        prefix,
-        suite_name="pytest",
-        logging="no",
-        report_duration="total",
+        self, logfile, prefix, suite_name="pytest", logging="no", report_duration="total", family="old"
     ):
         logfile = os.path.expanduser(os.path.expandvars(logfile))
         self.logfile = os.path.normpath(os.path.abspath(logfile))
@@ -366,6 +405,7 @@ class LogXML(object):
         self.suite_name = suite_name
         self.logging = logging
         self.report_duration = report_duration
+        self.family = family
         self.stats = dict.fromkeys(["error", "passed", "failure", "skipped"], 0)
         self.node_reporters = {}  # nodeid -> _NodeReporter
         self.node_reporters_ordered = []
@@ -539,7 +579,7 @@ class LogXML(object):
         logfile.write(
             Junit.testsuite(
                 self._get_global_properties_node(),
-                [x.to_xml() for x in self.node_reporters_ordered],
+                [x.raw() for x in self.node_reporters_ordered],
                 name=self.suite_name,
                 errors=self.stats["error"],
                 failures=self.stats["failure"],
@@ -549,6 +589,10 @@ class LogXML(object):
             ).unicode(indent=0)
         )
         logfile.close()
+
+        # TODO: GET RID OF
+        with open(self.logfile) as logfile:
+            print(logfile.read())
 
     def pytest_terminal_summary(self, terminalreporter):
         terminalreporter.write_sep("-", "generated xml file: %s" % (self.logfile))
