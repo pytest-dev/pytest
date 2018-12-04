@@ -1,0 +1,1 @@
+Added a CACHEDIR.TAG file to the cache directory
