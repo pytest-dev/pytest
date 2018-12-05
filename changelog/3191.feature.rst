@@ -1,4 +1,4 @@
-A warning is now issued when assertions are made directly against ``None``.
+A warning is now issued when assertions are made for ``None``.
 
 This is a common source of confusion among new users, which write::
 
@@ -14,4 +14,4 @@ This warning will not be issued when ``None`` is explicitly checked. An assertio
 
     assert variable is None
 
-will not issue the warning
+will not issue the warning.
