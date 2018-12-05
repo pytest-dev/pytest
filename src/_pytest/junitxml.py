@@ -20,9 +20,9 @@ import time
 
 import py
 
-import pytest
 from _pytest import nodes
 from _pytest.config import filename_arg
+from _pytest.fixtures import fixture
 
 # Python 2.X and 3.X compatibility
 if sys.version_info[0] < 3:
@@ -243,7 +243,7 @@ class _NodeReporter(object):
         self.to_xml = lambda: py.xml.raw(data)
 
 
-@pytest.fixture
+@fixture
 def record_property(request):
     """Add an extra properties the calling test.
     User properties become part of the test report and are available to the
@@ -263,7 +263,7 @@ def record_property(request):
     return append_property
 
 
-@pytest.fixture
+@fixture
 def record_xml_property(record_property, request):
     """(Deprecated) use record_property."""
     from _pytest import deprecated
@@ -273,7 +273,7 @@ def record_xml_property(record_property, request):
     return record_property
 
 
-@pytest.fixture
+@fixture
 def record_xml_attribute(request):
     """Add extra xml attributes to the tag for the calling test.
     The fixture is callable with ``(name, value)``, with value being

@@ -11,7 +11,7 @@ from contextlib import contextmanager
 
 import six
 
-import pytest
+from .warning_types import PytestWarning
 from _pytest.fixtures import fixture
 from _pytest.pathlib import Path
 
@@ -219,7 +219,7 @@ class MonkeyPatch(object):
         """On Python 2, warn if the given environment variable name is not a native str (#4056)"""
         if six.PY2 and not isinstance(name, str):
             warnings.warn(
-                pytest.PytestWarning(
+                PytestWarning(
                     "Environment variable name {!r} should be str".format(name)
                 )
             )
@@ -230,7 +230,7 @@ class MonkeyPatch(object):
         and prepend the ``value`` adjoined with the ``prepend`` character."""
         if not isinstance(value, str):
             warnings.warn(
-                pytest.PytestWarning(
+                PytestWarning(
                     "Value of environment variable {name} type should be str, but got "
                     "{value!r} (type: {type}); converted to str implicitly".format(
                         name=name, value=value, type=type(value).__name__

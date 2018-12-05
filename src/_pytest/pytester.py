@@ -18,16 +18,21 @@ from weakref import WeakKeyDictionary
 import py
 import six
 
-import pytest
 from _pytest._code import Source
-from _pytest.assertion.rewrite import AssertionRewritingHook
 from _pytest.capture import MultiCapture
 from _pytest.capture import SysCapture
 from _pytest.compat import safe_str
+from _pytest.config import hookimpl
+from _pytest.fixtures import fixture
 from _pytest.main import EXIT_INTERRUPTED
 from _pytest.main import EXIT_OK
 from _pytest.main import Session
+from _pytest.outcomes import fail
+from _pytest.outcomes import importorskip
+from _pytest.outcomes import skip
+from _pytest.outcomes import xfail
 from _pytest.pathlib import Path
+from _pytest.warning_types import PytestWarning
 
 IGNORE_PAM = [  # filenames added when obtaining details about the current user
     u"/var/lib/sss/mc/passwd"
@@ -115,7 +120,7 @@ class LsofFdLeakChecker(object):
         else:
             return True
 
-    @pytest.hookimpl(hookwrapper=True, tryfirst=True)
+    @hookimpl(hookwrapper=True, tryfirst=True)
     def pytest_runtest_protocol(self, item):
         lines1 = self.get_open_files()
         yield
@@ -136,7 +141,7 @@ class LsofFdLeakChecker(object):
             error.append(error[0])
             error.append("*** function %s:%s: %s " % item.location)
             error.append("See issue #2366")
-            item.warn(pytest.PytestWarning("\n".join(error)))
+            item.warn(PytestWarning("\n".join(error)))
 
 
 # XXX copied from execnet's conftest.py - needs to be merged
@@ -174,7 +179,7 @@ def getexecutable(name, cache={}):
         return executable
 
 
-@pytest.fixture(params=["python2.7", "python3.4", "pypy", "pypy3"])
+@fixture(params=["python2.7", "python3.4", "pypy", "pypy3"])
 def anypython(request):
     name = request.param
     executable = getexecutable(name)
@@ -185,14 +190,14 @@ def anypython(request):
                 executable = py.path.local(executable)
                 if executable.check():
                     return executable
-        pytest.skip("no suitable %s found" % (name,))
+        skip("no suitable %s found" % (name,))
     return executable
 
 
 # used at least by pytest-xdist plugin
 
 
-@pytest.fixture
+@fixture
 def _pytest(request):
     """Return a helper which offers a gethookrecorder(hook) method which
     returns a HookRecorder instance which helps to make assertions about called
@@ -275,7 +280,7 @@ class HookRecorder(object):
                     break
                 print("NONAMEMATCH", name, "with", call)
             else:
-                pytest.fail("could not find %r check %r" % (name, check))
+                fail("could not find %r check %r" % (name, check))
 
     def popcall(self, name):
         __tracebackhide__ = True
@@ -285,7 +290,7 @@ class HookRecorder(object):
                 return call
         lines = ["could not find call %r, in:" % (name,)]
         lines.extend(["  %s" % x for x in self.calls])
-        pytest.fail("\n".join(lines))
+        fail("\n".join(lines))
 
     def getcall(self, name):
         values = self.getcalls(name)
@@ -360,17 +365,17 @@ class HookRecorder(object):
         self.calls[:] = []
 
 
-@pytest.fixture
+@fixture
 def linecomp(request):
     return LineComp()
 
 
-@pytest.fixture(name="LineMatcher")
+@fixture(name="LineMatcher")
 def LineMatcher_fixture(request):
     return LineMatcher
 
 
-@pytest.fixture
+@fixture
 def testdir(request, tmpdir_factory):
     return Testdir(request, tmpdir_factory)
 
@@ -820,6 +825,8 @@ class Testdir(object):
         """
         finalizers = []
         try:
+            from _pytest.assertion.rewrite import AssertionRewritingHook
+
             # When running pytest inline any plugins active in the main test
             # process are already imported.  So this disables the warning which
             # will trigger to say they can no longer be rewritten, which is
@@ -853,7 +860,7 @@ class Testdir(object):
 
             plugins = kwargs.get("plugins") or []
             plugins.append(Collect())
-            ret = pytest.main(list(args), plugins=plugins)
+            ret = _pytest.config.main(list(args), plugins=plugins)
             if len(rec) == 1:
                 reprec = rec.pop()
             else:
@@ -1209,11 +1216,11 @@ class Testdir(object):
         The pexpect child is returned.
 
         """
-        pexpect = pytest.importorskip("pexpect", "3.0")
+        pexpect = importorskip("pexpect", "3.0")
         if hasattr(sys, "pypy_version_info") and "64" in platform.machine():
-            pytest.skip("pypy-64 bit not supported")
+            skip("pypy-64 bit not supported")
         if sys.platform.startswith("freebsd"):
-            pytest.xfail("pexpect does not work reliably on freebsd")
+            xfail("pexpect does not work reliably on freebsd")
         logfile = self.tmpdir.join("spawn.out").open("wb")
         child = pexpect.spawn(cmd, logfile=logfile)
         self.request.addfinalizer(logfile.close)
@@ -1386,4 +1393,4 @@ class LineMatcher(object):
                 extralines.append(nextline)
             else:
                 self._log("remains unmatched: %r" % (line,))
-                pytest.fail(self._log_text)
+                fail(self._log_text)

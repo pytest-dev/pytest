@@ -1,4 +1,4 @@
-import pytest
+from _pytest.config import hookimpl
 
 
 def pytest_addoption(parser):
@@ -18,7 +18,7 @@ def pytest_addoption(parser):
     )
 
 
-@pytest.hookimpl
+@hookimpl
 def pytest_configure(config):
     config.pluginmanager.register(StepwisePlugin(config), "stepwiseplugin")
 

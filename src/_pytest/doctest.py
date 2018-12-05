@@ -7,11 +7,14 @@ import platform
 import sys
 import traceback
 
-import pytest
 from _pytest._code.code import ExceptionInfo
 from _pytest._code.code import ReprFileLocation
 from _pytest._code.code import TerminalRepr
+from _pytest.fixtures import fixture
 from _pytest.fixtures import FixtureRequest
+from _pytest.nodes import Item
+from _pytest.outcomes import skip
+from _pytest.python import Module
 
 
 DOCTEST_REPORT_CHOICE_NONE = "none"
@@ -173,7 +176,7 @@ def _get_runner(checker=None, verbose=None, optionflags=0, continue_on_failure=T
     )
 
 
-class DoctestItem(pytest.Item):
+class DoctestItem(Item):
     def __init__(self, name, parent, runner=None, dtest=None):
         super(DoctestItem, self).__init__(name, parent)
         self.runner = runner
@@ -305,7 +308,7 @@ def _get_continue_on_failure(config):
     return continue_on_failure
 
 
-class DoctestTextfile(pytest.Module):
+class DoctestTextfile(Module):
     obj = None
 
     def collect(self):
@@ -343,10 +346,10 @@ def _check_all_skipped(test):
 
     all_skipped = all(x.options.get(doctest.SKIP, False) for x in test.examples)
     if all_skipped:
-        pytest.skip("all tests skipped by +SKIP option")
+        skip("all tests skipped by +SKIP option")
 
 
-class DoctestModule(pytest.Module):
+class DoctestModule(Module):
     def collect(self):
         import doctest
 
@@ -357,7 +360,7 @@ class DoctestModule(pytest.Module):
                 module = self.fspath.pyimport()
             except ImportError:
                 if self.config.getvalue("doctest_ignore_import_errors"):
-                    pytest.skip("unable to import module %r" % self.fspath)
+                    skip("unable to import module %r" % self.fspath)
                 else:
                     raise
         # uses internal doctest module parsing mechanism
@@ -508,7 +511,7 @@ def _fix_spoof_python2(runner, encoding):
     runner._fakeout = UnicodeSpoof()
 
 
-@pytest.fixture(scope="session")
+@fixture(scope="session")
 def doctest_namespace():
     """
     Fixture that returns a :py:class:`dict` that will be injected into the namespace of doctests.

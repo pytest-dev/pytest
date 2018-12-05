@@ -16,7 +16,10 @@ from tempfile import TemporaryFile
 
 import six
 
-import pytest
+from .config import hookimpl
+from .fixtures import fixture
+from .nodes import File
+from .outcomes import skip
 from _pytest.compat import CaptureIO
 
 patchsysdict = {0: "stdin", 1: "stdout", 2: "stderr"}
@@ -41,7 +44,7 @@ def pytest_addoption(parser):
     )
 
 
-@pytest.hookimpl(hookwrapper=True)
+@hookimpl(hookwrapper=True)
 def pytest_load_initial_conftests(early_config, parser, args):
     ns = early_config.known_args_namespace
     if ns.capture == "fd":
@@ -186,9 +189,9 @@ class CaptureManager(object):
 
     # Hooks
 
-    @pytest.hookimpl(hookwrapper=True)
+    @hookimpl(hookwrapper=True)
     def pytest_make_collect_report(self, collector):
-        if isinstance(collector, pytest.File):
+        if isinstance(collector, File):
             self.resume_global_capture()
             outcome = yield
             self.suspend_global_capture()
@@ -201,32 +204,32 @@ class CaptureManager(object):
         else:
             yield
 
-    @pytest.hookimpl(hookwrapper=True)
+    @hookimpl(hookwrapper=True)
     def pytest_runtest_protocol(self, item):
         self._current_item = item
         yield
         self._current_item = None
 
-    @pytest.hookimpl(hookwrapper=True)
+    @hookimpl(hookwrapper=True)
     def pytest_runtest_setup(self, item):
         with self.item_capture("setup", item):
             yield
 
-    @pytest.hookimpl(hookwrapper=True)
+    @hookimpl(hookwrapper=True)
     def pytest_runtest_call(self, item):
         with self.item_capture("call", item):
             yield
 
-    @pytest.hookimpl(hookwrapper=True)
+    @hookimpl(hookwrapper=True)
     def pytest_runtest_teardown(self, item):
         with self.item_capture("teardown", item):
             yield
 
-    @pytest.hookimpl(tryfirst=True)
+    @hookimpl(tryfirst=True)
     def pytest_keyboard_interrupt(self, excinfo):
         self.stop_global_capturing()
 
-    @pytest.hookimpl(tryfirst=True)
+    @hookimpl(tryfirst=True)
     def pytest_internalerror(self, excinfo):
         self.stop_global_capturing()
 
@@ -244,7 +247,7 @@ def _ensure_only_one_capture_fixture(request, name):
         )
 
 
-@pytest.fixture
+@fixture
 def capsys(request):
     """Enable capturing of writes to ``sys.stdout`` and ``sys.stderr`` and make
     captured output available via ``capsys.readouterr()`` method calls
@@ -256,7 +259,7 @@ def capsys(request):
         yield fixture
 
 
-@pytest.fixture
+@fixture
 def capsysbinary(request):
     """Enable capturing of writes to ``sys.stdout`` and ``sys.stderr`` and make
     captured output available via ``capsys.readouterr()`` method calls
@@ -272,7 +275,7 @@ def capsysbinary(request):
         yield fixture
 
 
-@pytest.fixture
+@fixture
 def capfd(request):
     """Enable capturing of writes to file descriptors ``1`` and ``2`` and make
     captured output available via ``capfd.readouterr()`` method calls
@@ -281,14 +284,14 @@ def capfd(request):
     """
     _ensure_only_one_capture_fixture(request, "capfd")
     if not hasattr(os, "dup"):
-        pytest.skip(
+        skip(
             "capfd fixture needs os.dup function which is not available in this system"
         )
     with _install_capture_fixture_on_item(request, FDCapture) as fixture:
         yield fixture
 
 
-@pytest.fixture
+@fixture
 def capfdbinary(request):
     """Enable capturing of write to file descriptors 1 and 2 and make
     captured output available via ``capfdbinary.readouterr`` method calls
@@ -297,7 +300,7 @@ def capfdbinary(request):
     """
     _ensure_only_one_capture_fixture(request, "capfdbinary")
     if not hasattr(os, "dup"):
-        pytest.skip(
+        skip(
             "capfdbinary fixture needs os.dup function which is not available in this system"
         )
     with _install_capture_fixture_on_item(request, FDCaptureBinary) as fixture:

@@ -18,7 +18,8 @@ import py
 import six
 from more_itertools import collapse
 
-import pytest
+from .config import hookimpl
+from .nodes import Item
 from _pytest import nodes
 from _pytest.main import EXIT_INTERRUPTED
 from _pytest.main import EXIT_NOTESTSCOLLECTED
@@ -485,7 +486,7 @@ class TerminalReporter(object):
             self.stats.setdefault("error", []).append(report)
         elif report.skipped:
             self.stats.setdefault("skipped", []).append(report)
-        items = [x for x in report.result if isinstance(x, pytest.Item)]
+        items = [x for x in report.result if isinstance(x, Item)]
         self._numcollected += len(items)
         if self.isatty:
             self.report_collect()
@@ -527,11 +528,11 @@ class TerminalReporter(object):
         else:
             self.write_line(line)
 
-    @pytest.hookimpl(trylast=True)
+    @hookimpl(trylast=True)
     def pytest_collection_modifyitems(self):
         self.report_collect(True)
 
-    @pytest.hookimpl(trylast=True)
+    @hookimpl(trylast=True)
     def pytest_sessionstart(self, session):
         self._session = session
         self._sessionstarttime = time.time()
@@ -543,6 +544,8 @@ class TerminalReporter(object):
         if hasattr(sys, "pypy_version_info"):
             verinfo = ".".join(map(str, sys.pypy_version_info[:3]))
             msg += "[pypy-%s-%s]" % (verinfo, sys.pypy_version_info[3])
+        import pytest
+
         msg += ", pytest-%s, py-%s, pluggy-%s" % (
             pytest.__version__,
             py.__version__,
@@ -622,7 +625,7 @@ class TerminalReporter(object):
                 indent = (len(stack) - 1) * "  "
                 self._tw.line("%s%s" % (indent, col))
 
-    @pytest.hookimpl(hookwrapper=True)
+    @hookimpl(hookwrapper=True)
     def pytest_sessionfinish(self, exitstatus):
         outcome = yield
         outcome.get_result()
@@ -643,7 +646,7 @@ class TerminalReporter(object):
             del self._keyboardinterrupt_memo
         self.summary_stats()
 
-    @pytest.hookimpl(hookwrapper=True)
+    @hookimpl(hookwrapper=True)
     def pytest_terminal_summary(self):
         self.summary_errors()
         self.summary_failures()

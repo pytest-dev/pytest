@@ -10,10 +10,11 @@ from contextlib import contextmanager
 import py
 import six
 
-import pytest
+from .config import hookimpl
+from .fixtures import fixture
 from _pytest.compat import dummy_context_manager
 from _pytest.config import create_terminal_writer
-
+from _pytest.config import UsageError
 
 DEFAULT_LOG_FORMAT = "%(filename)-25s %(lineno)4d %(levelname)-8s %(message)s"
 DEFAULT_LOG_DATE_FORMAT = "%H:%M:%S"
@@ -329,7 +330,7 @@ class LogCaptureFixture(object):
             logger.setLevel(orig_level)
 
 
-@pytest.fixture
+@fixture
 def caplog(request):
     """Access and control log capturing.
 
@@ -363,7 +364,7 @@ def get_actual_log_level(config, *setting_names):
         return int(getattr(logging, log_level, log_level))
     except ValueError:
         # Python logging does not recognise this as a logging level
-        raise pytest.UsageError(
+        raise UsageError(
             "'{}' is not recognized as a logging level name for "
             "'{}'. Please consider passing the "
             "logging level num instead.".format(log_level, setting_name)
@@ -428,7 +429,7 @@ class LoggingPlugin(object):
             "--log-cli-level"
         ) is not None or self._config.getini("log_cli")
 
-    @pytest.hookimpl(hookwrapper=True, tryfirst=True)
+    @hookimpl(hookwrapper=True, tryfirst=True)
     def pytest_collection(self):
         # This has to be called before the first log message is logged,
         # so we can access the terminal reporter plugin.
@@ -473,34 +474,34 @@ class LoggingPlugin(object):
                 log = log_handler.stream.getvalue().strip()
                 item.add_report_section(when, "log", log)
 
-    @pytest.hookimpl(hookwrapper=True)
+    @hookimpl(hookwrapper=True)
     def pytest_runtest_setup(self, item):
         with self._runtest_for(item, "setup"):
             yield
 
-    @pytest.hookimpl(hookwrapper=True)
+    @hookimpl(hookwrapper=True)
     def pytest_runtest_call(self, item):
         with self._runtest_for(item, "call"):
             yield
 
-    @pytest.hookimpl(hookwrapper=True)
+    @hookimpl(hookwrapper=True)
     def pytest_runtest_teardown(self, item):
         with self._runtest_for(item, "teardown"):
             yield
 
-    @pytest.hookimpl(hookwrapper=True)
+    @hookimpl(hookwrapper=True)
     def pytest_runtest_logstart(self):
         if self.log_cli_handler:
             self.log_cli_handler.reset()
         with self._runtest_for(None, "start"):
             yield
 
-    @pytest.hookimpl(hookwrapper=True)
+    @hookimpl(hookwrapper=True)
     def pytest_runtest_logfinish(self):
         with self._runtest_for(None, "finish"):
             yield
 
-    @pytest.hookimpl(hookwrapper=True, tryfirst=True)
+    @hookimpl(hookwrapper=True, tryfirst=True)
     def pytest_sessionfinish(self):
         with self.live_logs_context():
             if self.log_cli_handler:
@@ -511,7 +512,7 @@ class LoggingPlugin(object):
             else:
                 yield
 
-    @pytest.hookimpl(hookwrapper=True, tryfirst=True)
+    @hookimpl(hookwrapper=True, tryfirst=True)
     def pytest_sessionstart(self):
         self._setup_cli_logging()
         with self.live_logs_context():
@@ -523,7 +524,7 @@ class LoggingPlugin(object):
             else:
                 yield
 
-    @pytest.hookimpl(hookwrapper=True)
+    @hookimpl(hookwrapper=True)
     def pytest_runtestloop(self, session):
         """Runs all collected test items."""
         with self.live_logs_context():

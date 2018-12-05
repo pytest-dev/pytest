@@ -2,7 +2,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import pytest
+from _pytest.config import hookimpl
 
 
 def pytest_addoption(parser):
@@ -16,7 +16,7 @@ def pytest_addoption(parser):
     )
 
 
-@pytest.hookimpl(tryfirst=True)
+@hookimpl(tryfirst=True)
 def pytest_fixture_setup(fixturedef, request):
     # Will return a dummy fixture if the setuponly option is provided.
     if request.config.option.setupplan:
@@ -24,7 +24,7 @@ def pytest_fixture_setup(fixturedef, request):
         return fixturedef.cached_result
 
 
-@pytest.hookimpl(tryfirst=True)
+@hookimpl(tryfirst=True)
 def pytest_cmdline_main(config):
     if config.option.setupplan:
         config.option.setuponly = True

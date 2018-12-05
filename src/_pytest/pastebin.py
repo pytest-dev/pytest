@@ -8,7 +8,7 @@ import tempfile
 
 import six
 
-import pytest
+from _pytest.config import hookimpl
 
 
 def pytest_addoption(parser):
@@ -24,7 +24,7 @@ def pytest_addoption(parser):
     )
 
 
-@pytest.hookimpl(trylast=True)
+@hookimpl(trylast=True)
 def pytest_configure(config):
     if config.option.pastebin == "all":
         tr = config.pluginmanager.getplugin("terminalreporter")

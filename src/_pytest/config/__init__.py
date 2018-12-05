@@ -20,7 +20,6 @@ from pluggy import HookspecMarker
 from pluggy import PluginManager
 
 import _pytest._code
-import _pytest.assertion
 import _pytest.hookspec  # the extension point definitions
 from .exceptions import PrintHelp
 from .exceptions import UsageError
@@ -234,7 +233,9 @@ class PytestPluginManager(PluginManager):
             self.enable_tracing()
 
         # Config._consider_importhook will set a real object if required.
-        self.rewrite_hook = _pytest.assertion.DummyRewriteHook()
+        from _pytest.assertion import DummyRewriteHook
+
+        self.rewrite_hook = DummyRewriteHook()
         # Used to know when we are importing conftests after the pytest_configure stage
         self._configured = False
 

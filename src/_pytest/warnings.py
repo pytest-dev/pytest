@@ -6,8 +6,9 @@ import sys
 import warnings
 from contextlib import contextmanager
 
-import pytest
 from _pytest import compat
+from _pytest.config import hookimpl
+from _pytest.warning_types import RemovedInPytest4Warning
 
 SHOW_PYTEST_WARNINGS_ARG = "-Walways::pytest.RemovedInPytest4Warning"
 
@@ -79,7 +80,7 @@ def catch_warnings_for_item(config, ihook, when, item):
             warnings.filterwarnings("always", category=DeprecationWarning)
             warnings.filterwarnings("always", category=PendingDeprecationWarning)
 
-        warnings.filterwarnings("error", category=pytest.RemovedInPytest4Warning)
+        warnings.filterwarnings("error", category=RemovedInPytest4Warning)
 
         # filters should have this precedence: mark, cmdline options, ini
         # filters should be applied in the inverse order of precedence
@@ -134,7 +135,7 @@ def warning_record_to_str(warning_message):
     return msg
 
 
-@pytest.hookimpl(hookwrapper=True, tryfirst=True)
+@hookimpl(hookwrapper=True, tryfirst=True)
 def pytest_runtest_protocol(item):
     with catch_warnings_for_item(
         config=item.config, ihook=item.ihook, when="runtest", item=item
@@ -142,7 +143,7 @@ def pytest_runtest_protocol(item):
         yield
 
 
-@pytest.hookimpl(hookwrapper=True, tryfirst=True)
+@hookimpl(hookwrapper=True, tryfirst=True)
 def pytest_collection(session):
     config = session.config
     with catch_warnings_for_item(
@@ -151,7 +152,7 @@ def pytest_collection(session):
         yield
 
 
-@pytest.hookimpl(hookwrapper=True)
+@hookimpl(hookwrapper=True)
 def pytest_terminal_summary(terminalreporter):
     config = terminalreporter.config
     with catch_warnings_for_item(
