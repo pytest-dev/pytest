@@ -18,7 +18,9 @@ from _pytest._io.saferepr import saferepr
 from _pytest.capture import MultiCapture
 from _pytest.capture import SysCapture
 from _pytest.main import ExitCode
+from _pytest.config import _prepareconfig
 from _pytest.config import hookimpl
+from _pytest.config import main
 from _pytest.fixtures import fixture
 from _pytest.main import Session
 from _pytest.monkeypatch import MonkeyPatch
@@ -833,7 +835,7 @@ class Testdir:
                     rec.append(self.make_hook_recorder(config.pluginmanager))
 
             plugins.append(Collect())
-            ret = _pytest.config.main(list(args), plugins=plugins)
+            ret = main(list(args), plugins=plugins)
             if len(rec) == 1:
                 reprec = rec.pop()
             else:
@@ -920,9 +922,7 @@ class Testdir:
         """
         args = self._ensure_basetemp(args)
 
-        import _pytest.config
-
-        config = _pytest.config._prepareconfig(args, self.plugins)
+        config = _prepareconfig(args, self.plugins)
         # we don't know what the test will do with this half-setup config
         # object and thus we make sure it gets unconfigured properly in any
         # case (otherwise capturing could still be active, for example)
