@@ -885,8 +885,7 @@ class AssertionRewriter(ast.NodeVisitor):
             warnings.warn_explicit(
                 PytestWarning('assertion the value None, Please use "assert is None"'),
                 category=None,
-                # filename=str(self.module_path),
-                filename=__file__
+                filename=str,
                 lineno=node.lineno,
             )
         """
@@ -905,7 +904,7 @@ warn_explicit(
     lineno={lineno},
 )
             """.format(
-                filename=str(module_path), lineno=lineno
+                filename=module_path.strpath, lineno=lineno
             )
         ).body
         return ast.If(val_is_none, send_warning, [])

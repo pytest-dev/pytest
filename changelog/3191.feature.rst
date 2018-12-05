@@ -10,7 +10,8 @@ When they should write::
 
 Because the ``assert_called_with`` method of mock objects already executes an assertion.
 
-This warning will not be issued when ``None`` is explicitly checked
-    assert none_returning_fun() is None
+This warning will not be issued when ``None`` is explicitly checked. An assertion like::
+
+    assert variable is None
 
 will not issue the warning
