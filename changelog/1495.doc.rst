@@ -1,0 +1,1 @@
+Document common doctest fixture directory tree structure pitfalls
