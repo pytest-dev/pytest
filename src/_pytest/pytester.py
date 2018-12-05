@@ -22,7 +22,9 @@ from _pytest._code import Source
 from _pytest.capture import MultiCapture
 from _pytest.capture import SysCapture
 from _pytest.compat import safe_str
+from _pytest.config import _prepareconfig
 from _pytest.config import hookimpl
+from _pytest.config import main
 from _pytest.fixtures import fixture
 from _pytest.main import EXIT_INTERRUPTED
 from _pytest.main import EXIT_OK
@@ -860,7 +862,7 @@ class Testdir(object):
 
             plugins = kwargs.get("plugins") or []
             plugins.append(Collect())
-            ret = _pytest.config.main(list(args), plugins=plugins)
+            ret = main(list(args), plugins=plugins)
             if len(rec) == 1:
                 reprec = rec.pop()
             else:
@@ -946,9 +948,7 @@ class Testdir(object):
         """
         args = self._ensure_basetemp(args)
 
-        import _pytest.config
-
-        config = _pytest.config._prepareconfig(args, self.plugins)
+        config = _prepareconfig(args, self.plugins)
         # we don't know what the test will do with this half-setup config
         # object and thus we make sure it gets unconfigured properly in any
         # case (otherwise capturing could still be active, for example)
