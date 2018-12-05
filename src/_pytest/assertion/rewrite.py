@@ -841,12 +841,13 @@ class AssertionRewriter(ast.NodeVisitor):
         self.push_format_context()
         # Rewrite assert into a bunch of statements.
         top_condition, explanation = self.visit(assert_.test)
-        # Check if directly asserting None, in order to warn [Issue #3191]
-        self.statements.append(
-            self.warn_about_none_ast(
-                top_condition, module_path=self.module_path, lineno=assert_.lineno
+        # If in a test module, check if directly asserting None, in order to warn [Issue #3191]
+        if self.module_path is not None:
+            self.statements.append(
+                self.warn_about_none_ast(
+                    top_condition, module_path=self.module_path, lineno=assert_.lineno
+                )
             )
-        )
         # Create failure message.
         body = self.on_failure
         negation = ast.UnaryOp(ast.Not(), top_condition)
