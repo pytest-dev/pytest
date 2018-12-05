@@ -14,7 +14,8 @@ import pluggy
 import py
 from more_itertools import collapse
 
-import pytest
+from .config import hookimpl
+from .nodes import Item
 from _pytest import nodes
 from _pytest.main import ExitCode
 
@@ -498,7 +499,7 @@ class TerminalReporter:
             self.stats.setdefault("error", []).append(report)
         elif report.skipped:
             self.stats.setdefault("skipped", []).append(report)
-        items = [x for x in report.result if isinstance(x, pytest.Item)]
+        items = [x for x in report.result if isinstance(x, Item)]
         self._numcollected += len(items)
         if self.isatty:
             self.report_collect()
@@ -543,7 +544,7 @@ class TerminalReporter:
         else:
             self.write_line(line)
 
-    @pytest.hookimpl(trylast=True)
+    @hookimpl(trylast=True)
     def pytest_sessionstart(self, session):
         self._session = session
         self._sessionstarttime = time.time()
@@ -644,7 +645,7 @@ class TerminalReporter:
                         for line in col._obj.__doc__.strip().splitlines():
                             self._tw.line("{}{}".format(indent + "  ", line.strip()))
 
-    @pytest.hookimpl(hookwrapper=True)
+    @hookimpl(hookwrapper=True)
     def pytest_sessionfinish(self, exitstatus):
         outcome = yield
         outcome.get_result()
@@ -665,7 +666,7 @@ class TerminalReporter:
             del self._keyboardinterrupt_memo
         self.summary_stats()
 
-    @pytest.hookimpl(hookwrapper=True)
+    @hookimpl(hookwrapper=True)
     def pytest_terminal_summary(self):
         self.summary_errors()
         self.summary_failures()

@@ -1,6 +1,6 @@
 import sys
 
-import pytest
+from _pytest.config import hookimpl
 
 
 def pytest_addoption(parser):
@@ -19,7 +19,7 @@ def pytest_addoption(parser):
     )
 
 
-@pytest.hookimpl(hookwrapper=True)
+@hookimpl(hookwrapper=True)
 def pytest_fixture_setup(fixturedef, request):
     yield
     config = request.config
@@ -78,7 +78,7 @@ def _show_fixture_action(fixturedef, msg):
         sys.stderr.write(err)
 
 
-@pytest.hookimpl(tryfirst=True)
+@hookimpl(tryfirst=True)
 def pytest_cmdline_main(config):
     if config.option.setuponly:
         config.option.setupshow = True

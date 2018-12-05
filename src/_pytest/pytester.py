@@ -13,16 +13,21 @@ from weakref import WeakKeyDictionary
 
 import py
 
-import pytest
 from _pytest._code import Source
 from _pytest._io.saferepr import saferepr
-from _pytest.assertion.rewrite import AssertionRewritingHook
 from _pytest.capture import MultiCapture
 from _pytest.capture import SysCapture
 from _pytest.main import ExitCode
+from _pytest.config import hookimpl
+from _pytest.fixtures import fixture
 from _pytest.main import Session
 from _pytest.monkeypatch import MonkeyPatch
+from _pytest.outcomes import fail
+from _pytest.outcomes import importorskip
+from _pytest.outcomes import skip
+from _pytest.outcomes import xfail
 from _pytest.pathlib import Path
+from _pytest.warning_types import PytestWarning
 
 IGNORE_PAM = [  # filenames added when obtaining details about the current user
     "/var/lib/sss/mc/passwd"
@@ -112,7 +117,7 @@ class LsofFdLeakChecker:
         else:
             return True
 
-    @pytest.hookimpl(hookwrapper=True, tryfirst=True)
+    @hookimpl(hookwrapper=True, tryfirst=True)
     def pytest_runtest_protocol(self, item):
         lines1 = self.get_open_files()
         yield
@@ -133,13 +138,13 @@ class LsofFdLeakChecker:
             error.append(error[0])
             error.append("*** function %s:%s: %s " % item.location)
             error.append("See issue #2366")
-            item.warn(pytest.PytestWarning("\n".join(error)))
+            item.warn(PytestWarning("\n".join(error)))
 
 
 # used at least by pytest-xdist plugin
 
 
-@pytest.fixture
+@fixture
 def _pytest(request):
     """Return a helper which offers a gethookrecorder(hook) method which
     returns a HookRecorder instance which helps to make assertions about called
@@ -232,7 +237,7 @@ class HookRecorder:
                 return call
         lines = ["could not find call {!r}, in:".format(name)]
         lines.extend(["  %s" % x for x in self.calls])
-        pytest.fail("\n".join(lines))
+        fail("\n".join(lines))
 
     def getcall(self, name):
         values = self.getcalls(name)
@@ -307,17 +312,17 @@ class HookRecorder:
         self.calls[:] = []
 
 
-@pytest.fixture
+@fixture
 def linecomp(request):
     return LineComp()
 
 
-@pytest.fixture(name="LineMatcher")
+@fixture(name="LineMatcher")
 def LineMatcher_fixture(request):
     return LineMatcher
 
 
-@pytest.fixture
+@fixture
 def testdir(request, tmpdir_factory):
     return Testdir(request, tmpdir_factory)
 
@@ -828,7 +833,7 @@ class Testdir:
                     rec.append(self.make_hook_recorder(config.pluginmanager))
 
             plugins.append(Collect())
-            ret = pytest.main(list(args), plugins=plugins)
+            ret = _pytest.config.main(list(args), plugins=plugins)
             if len(rec) == 1:
                 reprec = rec.pop()
             else:
@@ -1190,11 +1195,11 @@ class Testdir:
         The pexpect child is returned.
 
         """
-        pexpect = pytest.importorskip("pexpect", "3.0")
+        pexpect = importorskip("pexpect", "3.0")
         if hasattr(sys, "pypy_version_info") and "64" in platform.machine():
-            pytest.skip("pypy-64 bit not supported")
+            skip("pypy-64 bit not supported")
         if sys.platform.startswith("freebsd"):
-            pytest.xfail("pexpect does not work reliably on freebsd")
+            xfail("pexpect does not work reliably on freebsd")
         logfile = self.tmpdir.join("spawn.out").open("wb")
 
         # Do not load user config.
@@ -1373,4 +1378,4 @@ class LineMatcher:
                 extralines.append(nextline)
             else:
                 self._log("remains unmatched: {!r}".format(line))
-                pytest.fail(self._log_text)
+                fail(self._log_text)

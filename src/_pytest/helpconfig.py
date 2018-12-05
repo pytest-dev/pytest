@@ -5,7 +5,7 @@ from argparse import Action
 
 import py
 
-import pytest
+from _pytest.config import hookimpl
 from _pytest.config import PrintHelp
 
 
@@ -83,11 +83,13 @@ def pytest_addoption(parser):
     )
 
 
-@pytest.hookimpl(hookwrapper=True)
+@hookimpl(hookwrapper=True)
 def pytest_cmdline_parse():
     outcome = yield
     config = outcome.get_result()
     if config.option.debug:
+        import pytest
+
         path = os.path.abspath("pytestdebug.log")
         debugfile = open(path, "w")
         debugfile.write(
@@ -115,6 +117,8 @@ def pytest_cmdline_parse():
 
 
 def showversion(config):
+        import pytest
+
     p = py.path.local(pytest.__file__)
     sys.stderr.write(
         "This is pytest version {}, imported from {}\n".format(pytest.__version__, p)
@@ -223,6 +227,8 @@ def getpluginversioninfo(config):
 
 def pytest_report_header(config):
     lines = []
+    import pytest
+
     if config.option.debug or config.option.traceconfig:
         lines.append(
             "using: pytest-{} pylib-{}".format(pytest.__version__, py.__version__)

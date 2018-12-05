@@ -11,7 +11,9 @@ from collections import OrderedDict
 import attr
 import py
 
-import pytest
+from .config import hookimpl
+from .fixtures import fixture
+from .nodes import Item
 from .pathlib import Path
 from .pathlib import resolve_from_str
 from .pathlib import rmtree
@@ -276,7 +278,7 @@ class NFPlugin:
             items[:] = self._get_increasing_order(
                 new_items.values()
             ) + self._get_increasing_order(other_items.values())
-        self.cached_nodeids = [x.nodeid for x in items if isinstance(x, pytest.Item)]
+        self.cached_nodeids = [x.nodeid for x in items if isinstance(x, Item)]
 
     def _get_increasing_order(self, items):
         return sorted(items, key=lambda item: item.fspath.mtime(), reverse=True)
@@ -354,14 +356,14 @@ def pytest_cmdline_main(config):
         return wrap_session(config, cacheshow)
 
 
-@pytest.hookimpl(tryfirst=True)
+@hookimpl(tryfirst=True)
 def pytest_configure(config):
     config.cache = Cache.for_config(config)
     config.pluginmanager.register(LFPlugin(config), "lfplugin")
     config.pluginmanager.register(NFPlugin(config), "nfplugin")
 
 
-@pytest.fixture
+@fixture
 def cache(request):
     """
     Return a cache object that can persist state between testing sessions.

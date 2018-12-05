@@ -16,9 +16,9 @@ import time
 
 import py
 
-import pytest
 from _pytest import nodes
 from _pytest.config import filename_arg
+from _pytest.fixtures import fixture
 
 
 class Junit(py.xml.Namespace):
@@ -290,7 +290,6 @@ def _warn_incompatibility_with_xunit2(request, fixture_name):
         )
 
 
-@pytest.fixture
 def record_property(request):
     """Add an extra properties the calling test.
     User properties become part of the test report and are available to the
@@ -311,7 +310,17 @@ def record_property(request):
     return append_property
 
 
-@pytest.fixture
+@fixture
+def record_xml_property(record_property, request):
+    """(Deprecated) use record_property."""
+    from _pytest import deprecated
+
+    request.node.warn(deprecated.RECORD_XML_PROPERTY)
+
+    return record_property
+
+
+@fixture
 def record_xml_attribute(request):
     """Add extra xml attributes to the tag for the calling test.
     The fixture is callable with ``(name, value)``, with value being

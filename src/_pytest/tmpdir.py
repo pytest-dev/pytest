@@ -7,13 +7,13 @@ import warnings
 import attr
 import py
 
-import pytest
+from .fixtures import fixture
+from .monkeypatch import MonkeyPatch
 from .pathlib import ensure_reset_dir
 from .pathlib import LOCK_TIMEOUT
 from .pathlib import make_numbered_dir
 from .pathlib import make_numbered_dir_with_cleanup
 from .pathlib import Path
-from _pytest.monkeypatch import MonkeyPatch
 
 
 @attr.s
@@ -129,23 +129,24 @@ def pytest_configure(config):
     available at pytest_configure time, but ideally should be moved entirely
     to the tmpdir_factory session fixture.
     """
+
     mp = MonkeyPatch()
     tmppath_handler = TempPathFactory.from_config(config)
     t = TempdirFactory(tmppath_handler)
     config._cleanup.append(mp.undo)
     mp.setattr(config, "_tmp_path_factory", tmppath_handler, raising=False)
     mp.setattr(config, "_tmpdirhandler", t, raising=False)
-    mp.setattr(pytest, "ensuretemp", t.ensuretemp, raising=False)
+    mp.setattr("pytest.ensuretemp", t.ensuretemp, raising=False)
 
 
-@pytest.fixture(scope="session")
+@fixture(scope="session")
 def tmpdir_factory(request):
     """Return a :class:`_pytest.tmpdir.TempdirFactory` instance for the test session.
     """
     return request.config._tmpdirhandler
 
 
-@pytest.fixture(scope="session")
+@fixture(scope="session")
 def tmp_path_factory(request):
     """Return a :class:`_pytest.tmpdir.TempPathFactory` instance for the test session.
     """
@@ -160,7 +161,7 @@ def _mk_tmp(request, factory):
     return factory.mktemp(name, numbered=True)
 
 
-@pytest.fixture
+@fixture
 def tmpdir(tmp_path):
     """Return a temporary directory path object
     which is unique to each test function invocation,
@@ -173,7 +174,7 @@ def tmpdir(tmp_path):
     return py.path.local(tmp_path)
 
 
-@pytest.fixture
+@fixture
 def tmp_path(request, tmp_path_factory):
     """Return a temporary directory path object
     which is unique to each test function invocation,
