@@ -18,6 +18,13 @@ def _get_modules():
 
 @pytest.mark.parametrize("module_name", sorted(_get_modules()))
 def test_module_warning_free(module_name):
-    subprocess.check_call(
-        [sys.executable, "-W", "error", "-c", "import " + module_name]
-    )
+    # fmt: off
+    subprocess.check_call([
+        sys.executable,
+        "-W", "error",
+        # from virtualenv on appveyor
+        "-W", "ignore:.*mode is deprecated.*:DeprecationWarning",
+        # from bruno testing in a venv
+        "-W", "ignore:.*Not importing directory.*:ImportWarning",
+        "-c", "import " + module_name,
+    ])
