@@ -1,1 +1,1 @@
-Added a CACHEDIR.TAG file to the cache directory
+A CACHEDIR.TAG file gets added to the cache directory.
