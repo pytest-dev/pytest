@@ -627,8 +627,8 @@ def test_removed_in_pytest4_warning_as_error(testdir, change_default):
 
 class TestAssertionWarnings:
     @staticmethod
-    def assert_result_warns(result):
-        result.stdout.fnmatch_lines(["*PytestWarning*"])
+    def assert_result_warns(result, msg):
+        result.stdout.fnmatch_lines(["*PytestWarning: %s*" % msg])
 
     def test_tuple_warning(self, testdir):
         testdir.makepyfile(
@@ -638,7 +638,9 @@ class TestAssertionWarnings:
             """
         )
         result = testdir.runpytest()
-        self.assert_result_warns(result)
+        self.assert_result_warns(
+            result, "assertion is always true, perhaps remove parentheses?"
+        )
 
     @staticmethod
     def create_file(testdir, return_none):
@@ -660,10 +662,11 @@ class TestAssertionWarnings:
     def test_none_function_warns(self, testdir):
         self.create_file(testdir, True)
         result = testdir.runpytest()
-        self.assert_result_warns(result)
+        self.assert_result_warns(
+            result, 'asserting the value None, please use "assert is None"'
+        )
 
     def test_assert_is_none_no_warn(self, testdir):
-        """Tests a more simple case of `test_none_function_warns` where `assert None` is explicitly called"""
         testdir.makepyfile(
             """
             def foo():

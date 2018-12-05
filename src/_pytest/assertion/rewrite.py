@@ -880,12 +880,13 @@ class AssertionRewriter(ast.NodeVisitor):
 
     def warn_about_none_ast(self, node, module_path, lineno):
         """
-        Returns an ast issuing a warning if the value of node is `None`
-        This is used to warn the user when asserting a function that asserts internally.
-        See issue #3191 for more details
+        Returns an AST issuing a warning if the value of node is `None`.
+        This is used to warn the user when asserting a function that asserts
+        internally already.
+        See issue #3191 for more details.
         """
 
-        # using parse because it's different between py2 py3
+        # Using parse because it is different between py2 and py3.
         AST_NONE = ast.parse("None").body[0].value
         val_is_none = ast.Compare(node, [ast.Is()], [AST_NONE])
         send_warning = ast.parse(
@@ -893,7 +894,7 @@ class AssertionRewriter(ast.NodeVisitor):
 from _pytest.warning_types import PytestWarning
 from warnings import warn_explicit
 warn_explicit(
-    PytestWarning('assertion the value None, Please use "assert is None"'),
+    PytestWarning('asserting the value None, please use "assert is None"'),
     category=None,
     filename={filename!r},
     lineno={lineno},
