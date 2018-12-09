@@ -1082,6 +1082,33 @@ class TestOverrideIniArgs(object):
         config._preparse([], addopts=True)
         assert config._override_ini == ["cache_dir=%s" % cache_dir]
 
+    def test_addopts_from_env_not_concatenated(self, monkeypatch):
+        """PYTEST_ADDOPTS should not take values from normal args (#4265)."""
+        from _pytest.config import get_config
+
+        monkeypatch.setenv("PYTEST_ADDOPTS", "-o")
+        config = get_config()
+        with pytest.raises(SystemExit) as excinfo:
+            config._preparse(["cache_dir=ignored"], addopts=True)
+        assert excinfo.value.args[0] == _pytest.main.EXIT_USAGEERROR
+
+    def test_addopts_from_ini_not_concatenated(self, testdir):
+        """addopts from ini should not take values from normal args (#4265)."""
+        testdir.makeini(
+            """
+            [pytest]
+            addopts=-o
+        """
+        )
+        result = testdir.runpytest("cache_dir=ignored")
+        result.stderr.fnmatch_lines(
+            [
+                "%s: error: argument -o/--override-ini: expected one argument"
+                % (testdir.request.config._parser.optparser.prog,)
+            ]
+        )
+        assert result.ret == _pytest.main.EXIT_USAGEERROR
+
     def test_override_ini_does_not_contain_paths(self):
         """Check that -o no longer swallows all options after it (#3103)"""
         from _pytest.config import get_config
