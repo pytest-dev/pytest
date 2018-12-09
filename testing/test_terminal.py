@@ -1331,13 +1331,15 @@ class TestProgressOutputStyle(object):
             ]
         )
 
-    def test_xdist_normal(self, many_tests_files, testdir):
+    def test_xdist_normal(self, many_tests_files, testdir, monkeypatch):
         pytest.importorskip("xdist")
+        monkeypatch.delenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD", raising=False)
         output = testdir.runpytest("-n2")
         output.stdout.re_match_lines([r"\.{20} \s+ \[100%\]"])
 
-    def test_xdist_normal_count(self, many_tests_files, testdir):
+    def test_xdist_normal_count(self, many_tests_files, testdir, monkeypatch):
         pytest.importorskip("xdist")
+        monkeypatch.delenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD", raising=False)
         testdir.makeini(
             """
             [pytest]
@@ -1347,8 +1349,9 @@ class TestProgressOutputStyle(object):
         output = testdir.runpytest("-n2")
         output.stdout.re_match_lines([r"\.{20} \s+ \[20/20\]"])
 
-    def test_xdist_verbose(self, many_tests_files, testdir):
+    def test_xdist_verbose(self, many_tests_files, testdir, monkeypatch):
         pytest.importorskip("xdist")
+        monkeypatch.delenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD", raising=False)
         output = testdir.runpytest("-n2", "-v")
         output.stdout.re_match_lines_random(
             [
@@ -1442,7 +1445,8 @@ class TestProgressWithTeardown(object):
             ]
         )
 
-    def test_xdist_normal(self, many_files, testdir):
+    def test_xdist_normal(self, many_files, testdir, monkeypatch):
         pytest.importorskip("xdist")
+        monkeypatch.delenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD", raising=False)
         output = testdir.runpytest("-n2")
         output.stdout.re_match_lines([r"[\.E]{40} \s+ \[100%\]"])

@@ -1032,12 +1032,13 @@ def test_record_attribute(testdir):
     )
 
 
-def test_random_report_log_xdist(testdir):
+def test_random_report_log_xdist(testdir, monkeypatch):
     """xdist calls pytest_runtest_logreport as they are executed by the slaves,
     with nodes from several nodes overlapping, so junitxml must cope with that
     to produce correct reports. #1064
     """
     pytest.importorskip("xdist")
+    monkeypatch.delenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD", raising=False)
     testdir.makepyfile(
         """
         import pytest, time

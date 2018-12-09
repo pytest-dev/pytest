@@ -153,7 +153,8 @@ class TestImportHookInstallation(object):
 
     @pytest.mark.parametrize("mode", ["plain", "rewrite"])
     @pytest.mark.parametrize("plugin_state", ["development", "installed"])
-    def test_installed_plugin_rewrite(self, testdir, mode, plugin_state):
+    def test_installed_plugin_rewrite(self, testdir, mode, plugin_state, monkeypatch):
+        monkeypatch.delenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD", raising=False)
         # Make sure the hook is installed early enough so that plugins
         # installed via setuptools are rewritten.
         testdir.tmpdir.join("hampkg").ensure(dir=1)
