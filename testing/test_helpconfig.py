@@ -6,14 +6,19 @@ import pytest
 from _pytest.main import EXIT_NOTESTSCOLLECTED
 
 
-def test_version(testdir, pytestconfig):
+@pytest.mark.parametrize("disable_plugin_autoload", (True, False))
+def test_version(disable_plugin_autoload, testdir, pytestconfig, monkeypatch):
+    if not disable_plugin_autoload:
+        monkeypatch.delenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD")
     result = testdir.runpytest("--version")
     assert result.ret == 0
-    # p = py.path.local(py.__file__).dirpath()
     result.stderr.fnmatch_lines(
         ["*pytest*{}*imported from*".format(pytest.__version__)]
     )
-    if pytestconfig.pluginmanager.list_plugin_distinfo():
+    if (
+        not disable_plugin_autoload
+        and pytestconfig.pluginmanager.list_plugin_distinfo()
+    ):
         result.stderr.fnmatch_lines(["*setuptools registered plugins:", "*at*"])
 
 

@@ -616,7 +616,9 @@ class TestTerminalFunctional(object):
         if not pytestconfig.pluginmanager.get_plugin("xdist"):
             pytest.skip("xdist plugin not installed")
 
-        result = testdir.runpytest(p1, "-v", "-n 1", SHOW_PYTEST_WARNINGS_ARG)
+        result = testdir.runpytest(
+            p1, "-v", "-p", "xdist.plugin", "-n 1", SHOW_PYTEST_WARNINGS_ARG
+        )
         result.stdout.fnmatch_lines(["*FAIL*test_verbose_reporting.py::test_fail*"])
         assert result.ret == 1
 
@@ -1333,7 +1335,7 @@ class TestProgressOutputStyle(object):
 
     def test_xdist_normal(self, many_tests_files, testdir):
         pytest.importorskip("xdist")
-        output = testdir.runpytest("-n2")
+        output = testdir.runpytest("-p", "xdist.plugin", "-n2")
         output.stdout.re_match_lines([r"\.{20} \s+ \[100%\]"])
 
     def test_xdist_normal_count(self, many_tests_files, testdir):
@@ -1344,12 +1346,12 @@ class TestProgressOutputStyle(object):
             console_output_style = count
         """
         )
-        output = testdir.runpytest("-n2")
+        output = testdir.runpytest("-p", "xdist.plugin", "-n2")
         output.stdout.re_match_lines([r"\.{20} \s+ \[20/20\]"])
 
     def test_xdist_verbose(self, many_tests_files, testdir):
         pytest.importorskip("xdist")
-        output = testdir.runpytest("-n2", "-v")
+        output = testdir.runpytest("-p", "xdist.plugin", "-n2", "-v")
         output.stdout.re_match_lines_random(
             [
                 r"\[gw\d\] \[\s*\d+%\] PASSED test_bar.py::test_bar\[1\]",
@@ -1444,5 +1446,5 @@ class TestProgressWithTeardown(object):
 
     def test_xdist_normal(self, many_files, testdir):
         pytest.importorskip("xdist")
-        output = testdir.runpytest("-n2")
+        output = testdir.runpytest("-p", "xdist.plugin", "-n2")
         output.stdout.re_match_lines([r"[\.E]{40} \s+ \[100%\]"])

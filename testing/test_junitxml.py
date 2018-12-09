@@ -1046,7 +1046,9 @@ def test_random_report_log_xdist(testdir):
             assert i != 22
     """
     )
-    _, dom = runandparse(testdir, "-n2")
+    # XXX: why does "-p xdist" work here, but xdist.plugin is required with
+    # other tests (to recognize the pytest_configure hook in there)?!
+    _, dom = runandparse(testdir, "-p xdist -n2")
     suite_node = dom.find_first_by_tag("testsuite")
     failed = []
     for case_node in suite_node.find_by_tag("testcase"):
