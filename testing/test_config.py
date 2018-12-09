@@ -612,18 +612,36 @@ def test_plugin_preparse_prevents_setuptools_loading(testdir, monkeypatch, block
 
 
 @pytest.mark.parametrize(
-    "parse_args,should_load", [(("-p", "mytestplugin"), True), ((), False)]
+    "env,parse_args,should_load",
+    [("1", ("-p", "mytestplugin"), True), ("1", (), False), ("0", (), True)],
 )
-def test_disable_plugin_autoload(testdir, monkeypatch, parse_args, should_load):
+def test_disable_plugin_autoload(testdir, monkeypatch, env, parse_args, should_load):
     pkg_resources = pytest.importorskip("pkg_resources")
-
-    def my_iter(name):
-        raise AssertionError("Should not be called")
 
     class PseudoPlugin(object):
         x = 42
 
-    monkeypatch.setenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD", "1")
+    def my_iter(name):
+        if env == "1":
+            raise AssertionError("Should not be called")
+
+        class Dist(object):
+            project_name = "spam"
+            version = "1.0"
+
+            def _get_metadata(self, name):
+                return ["foo.txt,sha256=abc,123"]
+
+        class EntryPoint(object):
+            name = "mytestplugin"
+            dist = Dist()
+
+            def load(self):
+                return PseudoPlugin()
+
+        return iter([EntryPoint()])
+
+    monkeypatch.setenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD", env)
     monkeypatch.setattr(pkg_resources, "iter_entry_points", my_iter)
     monkeypatch.setitem(sys.modules, "mytestplugin", PseudoPlugin())
     config = testdir.parseconfig(*parse_args)

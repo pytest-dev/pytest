@@ -878,8 +878,8 @@ Contains comma-separated list of modules that should be loaded as plugins:
 PYTEST_DISABLE_PLUGIN_AUTOLOAD
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-When set, disables plugin auto-loading through setuptools entrypoints. Only explicitly specified plugins will be
-loaded.
+Set to "1" to disable plugin auto-loading through setuptools entrypoints.
+Only explicitly specified plugins will be loaded then.
 
 PYTEST_CURRENT_TEST
 ~~~~~~~~~~~~~~~~~~~
