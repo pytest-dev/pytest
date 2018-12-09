@@ -470,9 +470,20 @@ class PytestPluginManager(PluginManager):
     #
 
     def consider_preparse(self, args):
-        for opt1, opt2 in zip(args, args[1:]):
-            if opt1 == "-p":
-                self.consider_pluginarg(opt2)
+        i = 0
+        n = len(args)
+        while i < n:
+            opt = args[i]
+            i += 1
+            if isinstance(opt, six.string_types):
+                if opt == "-p":
+                    parg = args[i]
+                    i += 1
+                elif opt.startswith("-p"):
+                    parg = opt[2:]
+                else:
+                    continue
+                self.consider_pluginarg(parg)
 
     def consider_pluginarg(self, arg):
         if arg.startswith("no:"):
@@ -507,7 +518,7 @@ class PytestPluginManager(PluginManager):
         # "terminal" or "capture".  Those plugins are registered under their
         # basename for historic purposes but must be imported with the
         # _pytest prefix.
-        assert isinstance(modname, (six.text_type, str)), (
+        assert isinstance(modname, six.string_types), (
             "module name as text required, got %r" % modname
         )
         modname = str(modname)

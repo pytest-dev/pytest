@@ -323,6 +323,12 @@ class TestPytestPluginManagerBootstrapming(object):
             ImportError, lambda: pytestpm.consider_preparse(["xyz", "-p", "hello123"])
         )
 
+        # Handles -p without space (#3532).
+        with pytest.raises(ImportError) as excinfo:
+            pytestpm.consider_preparse(["-phello123"])
+        assert '"hello123"' in excinfo.value.args[0]
+        pytestpm.consider_preparse(["-pno:hello123"])
+
     def test_plugin_prevent_register(self, pytestpm):
         pytestpm.consider_preparse(["xyz", "-p", "no:abc"])
         l1 = pytestpm.get_plugins()
