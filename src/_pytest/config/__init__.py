@@ -154,7 +154,9 @@ builtin_plugins.add("pytester")
 def get_config(args=None):
     # subsequent calls to main will create a fresh instance
     pluginmanager = PytestPluginManager()
-    config = Config(pluginmanager)
+    # XXX: storing it on the instance is required to make it available in
+    # is_blocked, which is the callback used with load_entrypoint_plugins.
+    pluginmanager.config = Config(pluginmanager)
 
     if args is not None:
         # Handle any "-p no:plugin" args.
@@ -162,7 +164,7 @@ def get_config(args=None):
 
     for spec in default_plugins:
         pluginmanager.import_plugin(spec)
-    return config
+    return pluginmanager.config
 
 
 def get_plugin_manager():
@@ -245,6 +247,19 @@ class PytestPluginManager(PluginManager):
         self.rewrite_hook = _pytest.assertion.DummyRewriteHook()
         # Used to know when we are importing conftests after the pytest_configure stage
         self._configured = False
+
+    def is_blocked(self, name):
+        ret = super(PytestPluginManager, self).is_blocked(name)
+        if not ret:
+            try:
+                load_entrypoint_plugins = self.config.getini("load_entrypoint_plugins")
+            except (AttributeError, ValueError):
+                pass
+            else:
+                if load_entrypoint_plugins is not notset:
+                    if name not in load_entrypoint_plugins:
+                        return True
+        return ret
 
     def addhooks(self, module_or_class):
         """
@@ -334,6 +349,13 @@ class PytestPluginManager(PluginManager):
         """Return True if the plugin with the given name is registered."""
         return bool(self.get_plugin(name))
 
+    def pytest_addoption(self, parser):
+        parser.addini(
+            "load_entrypoint_plugins",
+            help="only load specified plugins via entrypoint",
+            default=notset,
+        )
+
     def pytest_configure(self, config):
         # XXX now that the pluginmanager exposes hookimpl(tryfirst...)
         # we should remove tryfirst/trylast as markers
@@ -346,6 +368,9 @@ class PytestPluginManager(PluginManager):
             "markers",
             "trylast: mark a hook implementation function such that the "
             "plugin machinery will try to call it last/as late as possible.",
+        )
+        config.addinivalue_line(
+            "markers", "load_entrypoint_plugins: only load the given entrypoint plugins"
         )
         self._configured = True
 
@@ -792,6 +817,11 @@ class Config(object):
 
         self.pluginmanager.rewrite_hook = hook
 
+        load_entrypoint_plugins = self.getini("load_entrypoint_plugins")
+        if load_entrypoint_plugins is not notset and not len(load_entrypoint_plugins):
+            assert isinstance(load_entrypoint_plugins, list)
+            return
+
         if os.environ.get("PYTEST_DISABLE_PLUGIN_AUTOLOAD"):
             # We don't autoload from setuptools entry points, no need to continue.
             return
@@ -810,7 +840,8 @@ class Config(object):
         )
 
         for name in _iter_rewritable_modules(package_files):
-            hook.mark_rewrite(name)
+            if load_entrypoint_plugins is notset or name in load_entrypoint_plugins:
+                hook.mark_rewrite(name)
 
     def _validate_args(self, args, via):
         """Validate known args."""
