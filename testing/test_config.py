@@ -696,6 +696,61 @@ def test_plugin_loading_order(testdir):
     assert result.ret == 0
 
 
+@pytest.mark.parametrize(
+    "parse_args,should_load",
+    [
+        pytest.param(("-p", "mytestplugin"), True, id="0"),
+        pytest.param(
+            ("-p", "mytestplugin", "-o", "load_entrypoint_plugins="), False, id="1"
+        ),
+        pytest.param(
+            ("-p", "mytestplugin", "-o", "load_entrypoint_plugins=mytestplugin"),
+            True,
+            id="2",
+        ),
+        pytest.param(
+            ("-p", "no:mytestplugin", "-o", "load_entrypoint_plugins=mytestplugin"),
+            False,
+            id="3",
+        ),
+    ],
+)
+def test_load_entrypoint_plugins(testdir, monkeypatch, parse_args, should_load):
+    loaded = False
+
+    class PseudoPlugin:
+        x = 42
+
+    class DummyEntryPoint:
+        project_name = name = "mytestplugin"
+        group = "pytest11"
+        version = "1.0"
+
+        def load(self):
+            nonlocal loaded
+            assert should_load
+            loaded = True
+            return PseudoPlugin()
+
+    class Distribution:
+        entry_points = (DummyEntryPoint(),)
+        files = ()
+
+    def distributions():
+        return (Distribution(),)
+
+    monkeypatch.setattr(importlib_metadata, "distributions", distributions)
+
+    config = testdir.parseconfig(*parse_args)
+    assert loaded is should_load
+
+    plugin = config.pluginmanager.get_plugin("mytestplugin")
+    if should_load:
+        assert isinstance(plugin, PseudoPlugin)
+    else:
+        assert plugin is None
+
+
 def test_cmdline_processargs_simple(testdir):
     testdir.makeconftest(
         """

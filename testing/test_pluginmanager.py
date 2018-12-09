@@ -11,7 +11,11 @@ from _pytest.main import Session
 
 @pytest.fixture
 def pytestpm():
-    return PytestPluginManager()
+    class PytestPluginManagerWithConfig(PytestPluginManager):
+        class config:
+            pass
+
+    return PytestPluginManagerWithConfig()
 
 
 class TestPytestPluginInteractions:
@@ -195,8 +199,8 @@ def test_importplugin_error_message(testdir, pytestpm):
 
 
 class TestPytestPluginManager:
-    def test_register_imported_modules(self):
-        pm = PytestPluginManager()
+    def test_register_imported_modules(self, pytestpm):
+        pm = pytestpm
         mod = types.ModuleType("x.y.pytest_hello")
         pm.register(mod)
         assert pm.is_registered(mod)
@@ -207,10 +211,10 @@ class TestPytestPluginManager:
         # assert not pm.is_registered(mod2)
         assert pm.get_plugins() == values
 
-    def test_canonical_import(self, monkeypatch):
+    def test_canonical_import(self, monkeypatch, pytestpm):
         mod = types.ModuleType("pytest_xyz")
         monkeypatch.setitem(sys.modules, "pytest_xyz", mod)
-        pm = PytestPluginManager()
+        pm = pytestpm
         pm.import_plugin("pytest_xyz")
         assert pm.get_plugin("pytest_xyz") == mod
         assert pm.is_registered(mod)

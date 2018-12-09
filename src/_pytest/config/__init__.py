@@ -182,7 +182,7 @@ builtin_plugins.add("pytester")
 def get_config(args=None, plugins=None):
     # subsequent calls to main will create a fresh instance
     pluginmanager = PytestPluginManager()
-    config = Config(
+    pluginmanager.config = config = Config(
         pluginmanager,
         invocation_params=Config.InvocationParams(
             args=args or (), plugins=plugins, dir=Path().resolve()
@@ -291,6 +291,22 @@ class PytestPluginManager(PluginManager):
         # Used to know when we are importing conftests after the pytest_configure stage
         self._configured = False
 
+    def is_blocked(self, name: str) -> bool:
+        ret = super(PytestPluginManager, self).is_blocked(name)  # type: bool
+        if ret:
+            return ret
+
+        config = self.config
+        try:
+            load_entrypoint_plugins = config.getini("load_entrypoint_plugins")
+        except AttributeError:  # 'Config' object has no attribute 'inicfg'
+            assert not hasattr(config, "inicfg")
+            return False
+        return (
+            load_entrypoint_plugins is not notset
+            and name not in load_entrypoint_plugins
+        )
+
     def parse_hookimpl_opts(self, plugin, name):
         # pytest hooks are always prefixed with pytest_
         # so we avoid accessing possibly non-readable attributes
@@ -365,6 +381,14 @@ class PytestPluginManager(PluginManager):
     def hasplugin(self, name):
         """Return True if the plugin with the given name is registered."""
         return bool(self.get_plugin(name))
+
+    def pytest_addoption(self, parser):
+        parser.addini(
+            "load_entrypoint_plugins",
+            help="only load specified plugins via entrypoint",
+            default=notset,
+            type="args",
+        )
 
     def pytest_configure(self, config):
         # XXX now that the pluginmanager exposes hookimpl(tryfirst...)
@@ -907,6 +931,10 @@ class Config:
         """
         self.pluginmanager.rewrite_hook = hook
 
+        load_entrypoint_plugins = self.getini("load_entrypoint_plugins")
+        if load_entrypoint_plugins is not notset and not len(load_entrypoint_plugins):
+            return
+
         if os.environ.get("PYTEST_DISABLE_PLUGIN_AUTOLOAD"):
             # We don't autoload from setuptools entry points, no need to continue.
             return
@@ -919,7 +947,8 @@ class Config:
         )
 
         for name in _iter_rewritable_modules(package_files):
-            hook.mark_rewrite(name)
+            if load_entrypoint_plugins is notset or name in load_entrypoint_plugins:
+                hook.mark_rewrite(name)
 
     def _validate_args(self, args, via):
         """Validate known args."""
