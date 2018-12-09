@@ -369,9 +369,6 @@ class PytestPluginManager(PluginManager):
             "trylast: mark a hook implementation function such that the "
             "plugin machinery will try to call it last/as late as possible.",
         )
-        config.addinivalue_line(
-            "markers", "load_entrypoint_plugins: only load the given entrypoint plugins"
-        )
         self._configured = True
 
     #
