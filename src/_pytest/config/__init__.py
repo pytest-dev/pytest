@@ -784,12 +784,21 @@ class Config(object):
         for name in _iter_rewritable_modules(package_files):
             hook.mark_rewrite(name)
 
+    def _validate_args(self, args):
+        """Validate known args."""
+        self._parser.parse_known_and_unknown_args(
+            args, namespace=copy.copy(self.option)
+        )
+        return args
+
     def _preparse(self, args, addopts=True):
         if addopts:
-            args[:] = shlex.split(os.environ.get("PYTEST_ADDOPTS", "")) + args
+            env_addopts = os.environ.get("PYTEST_ADDOPTS", "")
+            if len(env_addopts):
+                args[:] = self._validate_args(shlex.split(env_addopts)) + args
         self._initini(args)
         if addopts:
-            args[:] = self.getini("addopts") + args
+            args[:] = self._validate_args(self.getini("addopts")) + args
         self._checkversion()
         self._consider_importhook(args)
         self.pluginmanager.consider_preparse(args)
