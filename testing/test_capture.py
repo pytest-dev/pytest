@@ -302,14 +302,14 @@ class TestLoggingInteraction(object):
             """\
             import logging
             def setup_function(function):
-                logging.warn("hello1")
+                logging.warning("hello1")
 
             def test_logging():
-                logging.warn("hello2")
+                logging.warning("hello2")
                 assert 0
 
             def teardown_function(function):
-                logging.warn("hello3")
+                logging.warning("hello3")
                 assert 0
             """
         )
@@ -328,14 +328,14 @@ class TestLoggingInteraction(object):
             """\
             import logging
             def setup_module(function):
-                logging.warn("hello1")
+                logging.warning("hello1")
 
             def test_logging():
-                logging.warn("hello2")
+                logging.warning("hello2")
                 assert 0
 
             def teardown_module(function):
-                logging.warn("hello3")
+                logging.warning("hello3")
                 assert 0
             """
         )
@@ -354,7 +354,7 @@ class TestLoggingInteraction(object):
             """\
                 import logging
                 logging.basicConfig()
-                logging.warn("hello435")
+                logging.warning("hello435")
             """
         )
         # make sure that logging is still captured in tests
@@ -375,7 +375,7 @@ class TestLoggingInteraction(object):
             """\
             def test_hello():
                 import logging
-                logging.warn("hello433")
+                logging.warning("hello433")
                 assert 0
             """
         )
@@ -384,6 +384,40 @@ class TestLoggingInteraction(object):
         result.stdout.fnmatch_lines(["WARNING*hello433*"])
         assert "something" not in result.stderr.str()
         assert "operation on closed file" not in result.stderr.str()
+
+    def test_logging_after_cap_stopped(self, testdir):
+        testdir.makeconftest(
+            """\
+                import pytest
+                import logging
+
+                log = logging.getLogger(__name__)
+
+                @pytest.fixture
+                def log_on_teardown():
+                    yield
+                    log.warning('Logging on teardown')
+            """
+        )
+        # make sure that logging is still captured in tests
+        p = testdir.makepyfile(
+            """\
+            def test_hello(log_on_teardown):
+                import logging
+                logging.warning("hello433")
+                assert 1
+                raise KeyboardInterrupt()
+            """
+        )
+        result = testdir.runpytest_subprocess(p, "--log-cli-level", "info")
+        assert result.ret != 0
+        result.stdout.fnmatch_lines(
+            ["*WARNING*hello433*", "*WARNING*Logging on teardown*"]
+        )
+        assert (
+            "AttributeError: 'NoneType' object has no attribute 'resume_capturing'"
+            not in result.stderr.str()
+        )
 
 
 class TestCaptureFixture(object):
@@ -1300,13 +1334,13 @@ def test_capturing_and_logging_fundamentals(testdir, method):
                                      Capture=capture.%s)
         cap.start_capturing()
 
-        logging.warn("hello1")
+        logging.warning("hello1")
         outerr = cap.readouterr()
         print("suspend, captured %%s" %%(outerr,))
-        logging.warn("hello2")
+        logging.warning("hello2")
 
         cap.pop_outerr_to_orig()
-        logging.warn("hello3")
+        logging.warning("hello3")
 
         outerr = cap.readouterr()
         print("suspend2, captured %%s" %% (outerr,))
