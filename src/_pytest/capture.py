@@ -117,7 +117,10 @@ class CaptureManager(object):
             self._global_capturing = None
 
     def resume_global_capture(self):
-        self._global_capturing.resume_capturing()
+        # During teardown of the python process, and on rare occasions, capture
+        # attributes can be `None` while trying to resume global capture.
+        if self._global_capturing is not None:
+            self._global_capturing.resume_capturing()
 
     def suspend_global_capture(self, in_=False):
         cap = getattr(self, "_global_capturing", None)

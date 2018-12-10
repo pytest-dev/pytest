@@ -154,6 +154,9 @@ which can then be used in your doctests directly::
         """
         pass
 
+Note that like the normal ``conftest.py``, the fixtures are discovered in the directory tree conftest is in.
+Meaning that if you put your doctest with your source code, the relevant conftest.py needs to be in the same directory tree.
+Fixtures will not be discovered in a sibling directory tree!
 
 Output format
 -------------
