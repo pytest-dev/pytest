@@ -197,7 +197,8 @@ class TestRaises(object):
             pass
 
         with pytest.raises(
-            Failed, match="DID NOT RAISE <class 'raises.ClassLooksIterableException'>"
+            Failed,
+            match=r"DID NOT RAISE <class 'raises(\..*)*ClassLooksIterableException'>",
         ):
             pytest.raises(ClassLooksIterableException, lambda: None)
 
