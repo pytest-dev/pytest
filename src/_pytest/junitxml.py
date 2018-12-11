@@ -314,6 +314,15 @@ def pytest_addoption(parser):
         default=None,
         help="prepend prefix to classnames in junit-xml output",
     )
+    group.addoption(
+        "--junittime",
+        "--junit-time",
+        action="store",
+        metavar="str",
+        default="total",
+        # choices=["total", "call"],
+        help='duration time to report: "total" (default), "call"',
+    )
     parser.addini(
         "junit_suite_name", "Test suite name for JUnit report", default="pytest"
     )
@@ -334,6 +343,7 @@ def pytest_configure(config):
             config.option.junitprefix,
             config.getini("junit_suite_name"),
             config.getini("junit_logging"),
+            config.option.junittime,
         )
         config.pluginmanager.register(config._xml)
 
@@ -361,12 +371,14 @@ def mangle_test_address(address):
 
 
 class LogXML(object):
-    def __init__(self, logfile, prefix, suite_name="pytest", logging="no"):
+    def __init__(self, logfile, prefix, suite_name="pytest", logging="no",
+                 report_duration=None):
         logfile = os.path.expanduser(os.path.expandvars(logfile))
         self.logfile = os.path.normpath(os.path.abspath(logfile))
         self.prefix = prefix
         self.suite_name = suite_name
         self.logging = logging
+        self.report_duration = report_duration
         self.stats = dict.fromkeys(["error", "passed", "failure", "skipped"], 0)
         self.node_reporters = {}  # nodeid -> _NodeReporter
         self.node_reporters_ordered = []
@@ -500,8 +512,10 @@ class LogXML(object):
         """accumulates total duration for nodeid from given report and updates
         the Junit.testcase with the new total if already created.
         """
-        reporter = self.node_reporter(report)
-        reporter.duration += getattr(report, "duration", 0.0)
+        if not self.report_duration or self.report_duration == "total" or \
+           report.when == self.report_duration:
+            reporter = self.node_reporter(report)
+            reporter.duration += getattr(report, "duration", 0.0)
 
     def pytest_collectreport(self, report):
         if not report.passed:

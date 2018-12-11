@@ -153,6 +153,24 @@ class TestPython(object):
         val = tnode["time"]
         assert round(float(val), 2) >= 0.03
 
+    def test_call_time(self, testdir):
+        testdir.makepyfile(
+            """
+            import time, pytest
+            def setup_module():
+                time.sleep(0.01)
+            def teardown_module():
+                time.sleep(0.01)
+            def test_sleep():
+                time.sleep(0.01)
+        """
+        )
+        result, dom = runandparse(testdir, "--junit-time=call")
+        node = dom.find_first_by_tag("testsuite")
+        tnode = node.find_first_by_tag("testcase")
+        val = tnode["time"]
+        assert 0.01 <= round(float(val), 2) < 0.02
+
     def test_setup_error(self, testdir):
         testdir.makepyfile(
             """
@@ -727,6 +745,7 @@ def test_dont_configure_on_slaves(tmpdir):
         junitprefix = None
         # XXX: shouldnt need tmpdir ?
         xmlpath = str(tmpdir.join("junix.xml"))
+        junittime = None
         register = gotten.append
 
     fake_config = FakeConfig()
