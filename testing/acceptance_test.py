@@ -146,6 +146,7 @@ class TestGeneralUsage(object):
         assert result.ret
         result.stderr.fnmatch_lines(["*ERROR: not found:*{}".format(p2.basename)])
 
+    @pytest.mark.filterwarnings("default")
     def test_better_reporting_on_conftest_load_failure(self, testdir, request):
         """Show a user-friendly traceback on conftest import failures (#486, #3332)"""
         testdir.makepyfile("")

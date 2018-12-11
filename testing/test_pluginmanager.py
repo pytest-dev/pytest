@@ -32,7 +32,7 @@ class TestPytestPluginInteractions(object):
             """
             import newhooks
             def pytest_addhooks(pluginmanager):
-                pluginmanager.addhooks(newhooks)
+                pluginmanager.add_hookspecs(newhooks)
             def pytest_myhook(xyz):
                 return xyz + 1
         """
@@ -52,7 +52,7 @@ class TestPytestPluginInteractions(object):
             """
             import sys
             def pytest_addhooks(pluginmanager):
-                pluginmanager.addhooks(sys)
+                pluginmanager.add_hookspecs(sys)
         """
         )
         res = testdir.runpytest()
@@ -141,23 +141,6 @@ class TestPytestPluginInteractions(object):
         ihook_b = session.gethookproxy(testdir.tmpdir.join("tests"))
         assert ihook_a is not ihook_b
 
-    def test_warn_on_deprecated_addhooks(self, pytestpm):
-        warnings = []
-
-        class get_warnings(object):
-            def pytest_logwarning(self, code, fslocation, message, nodeid):
-                warnings.append(message)
-
-        class Plugin(object):
-            def pytest_testhook():
-                pass
-
-        pytestpm.register(get_warnings())
-        before = list(warnings)
-        pytestpm.addhooks(Plugin())
-        assert len(warnings) == len(before) + 1
-        assert "deprecated" in warnings[-1]
-
 
 def test_default_markers(testdir):
     result = testdir.runpytest("--markers")
@@ -240,11 +223,12 @@ class TestPytestPluginManager(object):
         with pytest.raises(ImportError):
             pytestpm.consider_env()
 
+    @pytest.mark.filterwarnings("always")
     def test_plugin_skip(self, testdir, monkeypatch):
         p = testdir.makepyfile(
             skipping1="""
             import pytest
-            pytest.skip("hello")
+            pytest.skip("hello", allow_module_level=True)
         """
         )
         p.copy(p.dirpath("skipping2.py"))

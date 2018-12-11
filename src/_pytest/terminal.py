@@ -186,20 +186,17 @@ def pytest_report_teststatus(report):
 @attr.s
 class WarningReport(object):
     """
-    Simple structure to hold warnings information captured by ``pytest_logwarning`` and ``pytest_warning_captured``.
+    Simple structure to hold warnings information captured by ``pytest_warning_captured``.
 
     :ivar str message: user friendly message about the warning
     :ivar str|None nodeid: node id that generated the warning (see ``get_location``).
     :ivar tuple|py.path.local fslocation:
         file system location of the source of the warning (see ``get_location``).
-
-    :ivar bool legacy: if this warning report was generated from the deprecated ``pytest_logwarning`` hook.
     """
 
     message = attr.ib()
     nodeid = attr.ib(default=None)
     fslocation = attr.ib(default=None)
-    legacy = attr.ib(default=False)
 
     def get_location(self, config):
         """
@@ -328,13 +325,6 @@ class TerminalReporter(object):
         for line in six.text_type(excrepr).split("\n"):
             self.write_line("INTERNALERROR> " + line)
         return 1
-
-    def pytest_logwarning(self, fslocation, message, nodeid):
-        warnings = self.stats.setdefault("warnings", [])
-        warning = WarningReport(
-            fslocation=fslocation, message=message, nodeid=nodeid, legacy=True
-        )
-        warnings.append(warning)
 
     def pytest_warning_captured(self, warning_message, item):
         # from _pytest.nodes import get_fslocation_from_item

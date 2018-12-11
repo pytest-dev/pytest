@@ -12,7 +12,6 @@ from _pytest.config.findpaths import determine_setup
 from _pytest.config.findpaths import get_common_ancestor
 from _pytest.config.findpaths import getcfg
 from _pytest.main import EXIT_NOTESTSCOLLECTED
-from _pytest.warnings import SHOW_PYTEST_WARNINGS_ARG
 
 
 class TestParseIni(object):
@@ -788,66 +787,6 @@ def test_collect_pytest_prefix_bug(pytestconfig):
 
     pm = pytestconfig.pluginmanager
     assert pm.parse_hookimpl_opts(Dummy(), "pytest_something") is None
-
-
-class TestLegacyWarning(object):
-    @pytest.mark.filterwarnings("default")
-    def test_warn_config(self, testdir):
-        testdir.makeconftest(
-            """
-            values = []
-            def pytest_runtest_setup(item):
-                item.config.warn("C1", "hello")
-            def pytest_logwarning(code, message):
-                if message == "hello" and code == "C1":
-                    values.append(1)
-        """
-        )
-        testdir.makepyfile(
-            """
-            def test_proper(pytestconfig):
-                import conftest
-                assert conftest.values == [1]
-        """
-        )
-        result = testdir.runpytest(SHOW_PYTEST_WARNINGS_ARG)
-        result.stdout.fnmatch_lines(
-            ["*hello", "*config.warn has been deprecated*", "*1 passed*"]
-        )
-
-    @pytest.mark.filterwarnings("default")
-    @pytest.mark.parametrize("use_kw", [True, False])
-    def test_warn_on_test_item_from_request(self, testdir, use_kw):
-        code_kw = "code=" if use_kw else ""
-        message_kw = "message=" if use_kw else ""
-        testdir.makepyfile(
-            """
-            import pytest
-
-            @pytest.fixture
-            def fix(request):
-                request.node.warn({code_kw}"T1", {message_kw}"hello")
-
-            def test_hello(fix):
-                pass
-        """.format(
-                code_kw=code_kw, message_kw=message_kw
-            )
-        )
-        result = testdir.runpytest(
-            "--disable-pytest-warnings", SHOW_PYTEST_WARNINGS_ARG
-        )
-        assert "hello" not in result.stdout.str()
-
-        result = testdir.runpytest(SHOW_PYTEST_WARNINGS_ARG)
-        result.stdout.fnmatch_lines(
-            """
-            ===*warnings summary*===
-            *test_warn_on_test_item_from_request.py::test_hello*
-            *hello*
-            *test_warn_on_test_item_from_request.py:7:*Node.warn(code, message) form has been deprecated*
-        """
-        )
 
 
 class TestRootdir(object):
