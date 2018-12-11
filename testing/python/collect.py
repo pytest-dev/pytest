@@ -808,7 +808,7 @@ class TestConftestCustomization(object):
         modcol = testdir.getmodulecol("def _hello(): pass")
         values = []
         monkeypatch.setattr(
-            pytest.Module, "makeitem", lambda self, name, obj: values.append(name)
+            pytest.Module, "_makeitem", lambda self, name, obj: values.append(name)
         )
         values = modcol.collect()
         assert "_hello" not in values

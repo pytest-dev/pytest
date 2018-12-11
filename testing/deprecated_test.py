@@ -268,26 +268,6 @@ def test_call_fixture_function_deprecated():
         assert fix() == 1
 
 
-def test_pycollector_makeitem_is_deprecated():
-    from _pytest.python import PyCollector
-    from _pytest.warning_types import RemovedInPytest4Warning
-
-    class PyCollectorMock(PyCollector):
-        """evil hack"""
-
-        def __init__(self):
-            self.called = False
-
-        def _makeitem(self, *k):
-            """hack to disable the actual behaviour"""
-            self.called = True
-
-    collector = PyCollectorMock()
-    with pytest.warns(RemovedInPytest4Warning):
-        collector.makeitem("foo", "bar")
-    assert collector.called
-
-
 def test_fixture_named_request(testdir):
     testdir.copy_example()
     result = testdir.runpytest()

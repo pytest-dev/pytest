@@ -87,9 +87,6 @@ RECORD_XML_PROPERTY = RemovedInPytest4Warning(
     '"record_xml_property" is now deprecated.'
 )
 
-COLLECTOR_MAKEITEM = RemovedInPytest4Warning(
-    "pycollector makeitem was removed as it is an accidentially leaked internal api"
-)
 
 PYTEST_PLUGINS_FROM_NON_TOP_LEVEL_CONFTEST = RemovedInPytest4Warning(
     "Defining pytest_plugins in a non-top-level conftest is deprecated, "
