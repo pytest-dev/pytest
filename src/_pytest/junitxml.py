@@ -371,8 +371,9 @@ def mangle_test_address(address):
 
 
 class LogXML(object):
-    def __init__(self, logfile, prefix, suite_name="pytest", logging="no",
-                 report_duration=None):
+    def __init__(
+        self, logfile, prefix, suite_name="pytest", logging="no", report_duration=None
+    ):
         logfile = os.path.expanduser(os.path.expandvars(logfile))
         self.logfile = os.path.normpath(os.path.abspath(logfile))
         self.prefix = prefix
@@ -512,8 +513,11 @@ class LogXML(object):
         """accumulates total duration for nodeid from given report and updates
         the Junit.testcase with the new total if already created.
         """
-        if not self.report_duration or self.report_duration == "total" or \
-           report.when == self.report_duration:
+        if (
+            not self.report_duration
+            or self.report_duration == "total"
+            or report.when == self.report_duration
+        ):
             reporter = self.node_reporter(report)
             reporter.duration += getattr(report, "duration", 0.0)
 
