@@ -167,7 +167,7 @@ def getreportopt(config):
             if char not in reportopts and char != "a":
                 reportopts += char
             elif char == "a":
-                reportopts = "fEsxXw"
+                reportopts = "sxXwEf"
     return reportopts
 
 
