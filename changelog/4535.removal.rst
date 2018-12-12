@@ -1,0 +1,1 @@
+Removed deprecated ``PyCollector.makeitem`` method. This method was made public by mistake a long time ago.

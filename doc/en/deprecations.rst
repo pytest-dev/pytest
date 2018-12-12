@@ -58,17 +58,7 @@ Becomes:
         exec("assert(1, 2)")  # exec is used to avoid a top-level warning
 
 
-Using ``Class`` in custom Collectors
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. deprecated:: 3.9
-
-Using objects named ``"Class"`` as a way to customize the type of nodes that are collected in ``Collector``
-subclasses has been deprecated. Users instead should use ``pytest_pycollect_makeitem`` to customize node types during
-collection.
-
-This issue should affect only advanced plugins who create new collection types, so if you see this warning
-message please contact the authors so they can change the code.
 
 
 ``Config.warn`` and ``Node.warn``
@@ -279,6 +269,18 @@ Removed Features
 
 As stated in our :ref:`backwards-compatibility` policy, deprecated features are removed only in major releases after
 an appropriate period of deprecation has passed.
+
+Using ``Class`` in custom Collectors
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+*Removed in version 4.0.*
+
+Using objects named ``"Class"`` as a way to customize the type of nodes that are collected in ``Collector``
+subclasses has been deprecated. Users instead should use ``pytest_pycollect_makeitem`` to customize node types during
+collection.
+
+This issue should affect only advanced plugins who create new collection types, so if you see this warning
+message please contact the authors so they can change the code.
 
 Metafunc.addcall
 ~~~~~~~~~~~~~~~~

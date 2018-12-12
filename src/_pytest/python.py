@@ -378,10 +378,6 @@ class PyCollector(PyobjMixin, nodes.Collector):
         values.sort(key=lambda item: item.reportinfo()[:2])
         return values
 
-    def makeitem(self, name, obj):
-        warnings.warn(deprecated.COLLECTOR_MAKEITEM, stacklevel=2)
-        self._makeitem(name, obj)
-
     def _makeitem(self, name, obj):
         # assert self.ihook.fspath == self.fspath, self
         return self.ihook.pytest_pycollect_makeitem(collector=self, name=name, obj=obj)
