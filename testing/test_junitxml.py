@@ -158,18 +158,18 @@ class TestPython(object):
             """
             import time, pytest
             def setup_module():
-                time.sleep(0.01)
+                time.sleep(0.1)
             def teardown_module():
-                time.sleep(0.01)
+                time.sleep(0.1)
             def test_sleep():
-                time.sleep(0.01)
+                time.sleep(0.1)
         """
         )
         result, dom = runandparse(testdir, "-o", "junit_time=call")
         node = dom.find_first_by_tag("testsuite")
         tnode = node.find_first_by_tag("testcase")
         val = tnode["time"]
-        assert 0.01 <= round(float(val), 3) < 0.02
+        assert 0.1 <= round(float(val), 2) < 0.2
 
     def test_setup_error(self, testdir):
         testdir.makepyfile(
