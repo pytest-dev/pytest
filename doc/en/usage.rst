@@ -294,6 +294,20 @@ To set the name of the root test suite xml item, you can configure the ``junit_s
     [pytest]
     junit_suite_name = my_suite
 
+.. versionadded:: 4.0
+
+JUnit XML specification seems to indicate that ``"time"`` attribute
+should report total test execution times, including setup and teardown
+(`1<http://windyroad.com.au/dl/Open%20Source/JUnit.xsd>`_,
+`2<https://www.ibm.com/support/knowledgecenter/en/SSQ2R2_14.1.0/com.ibm.rsar.analysis.codereview.cobol.doc/topics/cac_useresults_junit.html>`_).
+It is the default pytest behavior. To report just call durations
+instead, configure the ``junit_time`` option like this:
+
+.. code-block:: ini
+
+    [pytest]
+    junit_time = call
+
 .. _record_property example:
 
 record_property
