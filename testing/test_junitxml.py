@@ -165,7 +165,7 @@ class TestPython(object):
                 time.sleep(0.01)
         """
         )
-        result, dom = runandparse(testdir, "--junit-time=call")
+        result, dom = runandparse(testdir, "-o", "junit_time=call")
         node = dom.find_first_by_tag("testsuite")
         tnode = node.find_first_by_tag("testcase")
         val = tnode["time"]
@@ -745,7 +745,6 @@ def test_dont_configure_on_slaves(tmpdir):
         junitprefix = None
         # XXX: shouldnt need tmpdir ?
         xmlpath = str(tmpdir.join("junix.xml"))
-        junittime = None
         register = gotten.append
 
     fake_config = FakeConfig()

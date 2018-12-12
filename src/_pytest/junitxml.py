@@ -314,15 +314,6 @@ def pytest_addoption(parser):
         default=None,
         help="prepend prefix to classnames in junit-xml output",
     )
-    group.addoption(
-        "--junittime",
-        "--junit-time",
-        action="store",
-        metavar="str",
-        default="total",
-        # choices=["total", "call"],
-        help='duration time to report: "total" (default), "call"',
-    )
     parser.addini(
         "junit_suite_name", "Test suite name for JUnit report", default="pytest"
     )
@@ -332,6 +323,9 @@ def pytest_addoption(parser):
         "one of no|system-out|system-err",
         default="no",
     )  # choices=['no', 'stdout', 'stderr'])
+    parser.addini(
+        "junit_time", "Duration time to report: one of total|call", default="total"
+    )  # choices=['total', 'call'])
 
 
 def pytest_configure(config):
@@ -343,7 +337,7 @@ def pytest_configure(config):
             config.option.junitprefix,
             config.getini("junit_suite_name"),
             config.getini("junit_logging"),
-            config.option.junittime,
+            config.getini("junit_time"),
         )
         config.pluginmanager.register(config._xml)
 
@@ -372,7 +366,12 @@ def mangle_test_address(address):
 
 class LogXML(object):
     def __init__(
-        self, logfile, prefix, suite_name="pytest", logging="no", report_duration=None
+        self,
+        logfile,
+        prefix,
+        suite_name="pytest",
+        logging="no",
+        report_duration="total",
     ):
         logfile = os.path.expanduser(os.path.expandvars(logfile))
         self.logfile = os.path.normpath(os.path.abspath(logfile))
@@ -513,11 +512,7 @@ class LogXML(object):
         """accumulates total duration for nodeid from given report and updates
         the Junit.testcase with the new total if already created.
         """
-        if (
-            not self.report_duration
-            or self.report_duration == "total"
-            or report.when == self.report_duration
-        ):
+        if self.report_duration == "total" or report.when == self.report_duration:
             reporter = self.node_reporter(report)
             reporter.duration += getattr(report, "duration", 0.0)
 
