@@ -1,0 +1,1 @@
+monkeypatch.delattr handles class descriptors like staticmethod/classmethod

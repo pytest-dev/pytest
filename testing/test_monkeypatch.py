@@ -391,6 +391,33 @@ def test_issue156_undo_staticmethod(Sample):
     assert Sample.hello()
 
 
+def test_undo_class_descriptors_delattr():
+    class SampleParent(object):
+        @classmethod
+        def hello(_cls):
+            pass
+
+        @staticmethod
+        def world():
+            pass
+
+    class SampleChild(SampleParent):
+        pass
+
+    monkeypatch = MonkeyPatch()
+
+    original_hello = SampleChild.hello
+    original_world = SampleChild.world
+    monkeypatch.delattr(SampleParent, "hello")
+    monkeypatch.delattr(SampleParent, "world")
+    assert getattr(SampleParent, "hello", None) is None
+    assert getattr(SampleParent, "world", None) is None
+
+    monkeypatch.undo()
+    assert original_hello == SampleChild.hello
+    assert original_world == SampleChild.world
+
+
 def test_issue1338_name_resolving():
     pytest.importorskip("requests")
     monkeypatch = MonkeyPatch()
