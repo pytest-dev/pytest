@@ -14,6 +14,19 @@ Below is a complete list of all pytest features which are considered deprecated.
 :class:`_pytest.warning_types.PytestWarning` or subclasses, which can be filtered using
 :ref:`standard warning filters <warnings>`.
 
+``"message"`` parameter of ``pytest.raises``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 4.1
+
+It is a common mistake to think this parameter will match the exception message, while in fact
+it only serves to provide a custom message in case the ``pytest.raises`` check fails. To avoid this
+mistake and because it is believed to be little used, pytest is deprecating it without providing
+an alternative for the moment.
+
+If you have concerns about this, please comment on `issue #3974 <https://github.com/pytest-dev/pytest/issues/3974>`__.
+
+
 ``pytest.config`` global
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
