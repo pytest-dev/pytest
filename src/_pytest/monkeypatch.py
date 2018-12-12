@@ -197,7 +197,7 @@ class MonkeyPatch(object):
                 raise AttributeError(name)
         else:
             oldval = getattr(target, name, notset)
-            # avoid class descriptors like staticmethod/classmethod
+            # Avoid class descriptors like staticmethod/classmethod.
             if inspect.isclass(target):
                 oldval = target.__dict__.get(name, notset)
             self._setattr.append((target, name, oldval))
