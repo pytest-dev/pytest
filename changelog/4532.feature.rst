@@ -1,0 +1,3 @@
+``-ra`` now will show errors and failures last, instead of as the first items in the summary.
+
+This makes it easier to obtain a list of errors and failures to run tests selectively.
