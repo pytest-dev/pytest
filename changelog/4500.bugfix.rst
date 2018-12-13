@@ -1,1 +1,0 @@
-When a fixture yields and a log call is made after the test runs, and, if the test is interrupted, capture attributes are ``None``.
