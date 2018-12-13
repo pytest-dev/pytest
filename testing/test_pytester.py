@@ -280,7 +280,7 @@ def test_assert_outcomes_after_pytest_error(testdir):
     testdir.makepyfile("def test_foo(): assert True")
 
     result = testdir.runpytest("--unexpected-argument")
-    with pytest.raises(ValueError, message="Pytest terminal report not found"):
+    with pytest.raises(ValueError, match="Pytest terminal report not found"):
         result.assert_outcomes(passed=0)
 
 

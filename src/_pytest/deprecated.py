@@ -51,6 +51,13 @@ GETFUNCARGVALUE = RemovedInPytest4Warning(
     "getfuncargvalue is deprecated, use getfixturevalue"
 )
 
+RAISES_MESSAGE_PARAMETER = PytestDeprecationWarning(
+    "The 'message' parameter is deprecated.\n"
+    "(did you mean to use `match='some regex'` to check the exception message?)\n"
+    "Please comment on https://github.com/pytest-dev/pytest/issues/3974 "
+    "if you have concerns about removal of this parameter."
+)
+
 RESULT_LOG = PytestDeprecationWarning(
     "--result-log is deprecated and scheduled for removal in pytest 5.0.\n"
     "See https://docs.pytest.org/en/latest/deprecations.html#result-log-result-log for more information."

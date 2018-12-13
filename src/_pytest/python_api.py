@@ -13,11 +13,11 @@ from six.moves import filterfalse
 from six.moves import zip
 
 import _pytest._code
+from _pytest import deprecated
 from _pytest.compat import isclass
 from _pytest.compat import Mapping
 from _pytest.compat import Sequence
 from _pytest.compat import STRING_TYPES
-from _pytest.deprecated import RAISES_EXEC
 from _pytest.outcomes import fail
 
 BASE_TYPE = (type, STRING_TYPES)
@@ -551,29 +551,47 @@ def _is_numpy_array(obj):
 def raises(expected_exception, *args, **kwargs):
     r"""
     Assert that a code block/function call raises ``expected_exception``
-    and raise a failure exception otherwise.
+    or raise a failure exception otherwise.
 
-    :arg message: if specified, provides a custom failure message if the
-        exception is not raised
-    :arg match: if specified, asserts that the exception matches a text or regex
+    :kwparam match: if specified, asserts that the exception matches a text or regex
 
-    This helper produces a ``ExceptionInfo()`` object (see below).
+    :kwparam message: **(deprecated since 4.1)** if specified, provides a custom failure message
+        if the exception is not raised
 
-    You may use this function as a context manager::
+    .. currentmodule:: _pytest._code
+
+    Use ``pytest.raises`` as a context manager, which will capture the exception of the given
+    type::
 
         >>> with raises(ZeroDivisionError):
         ...    1/0
 
-    .. versionchanged:: 2.10
+    If the code block does not raise the expected exception (``ZeroDivisionError`` in the example
+    above), or no exception at all, the check will fail instead.
 
-    In the context manager form you may use the keyword argument
-    ``message`` to specify a custom failure message::
+    You can also use the keyword argument ``match`` to assert that the
+    exception matches a text or regex::
 
-        >>> with raises(ZeroDivisionError, message="Expecting ZeroDivisionError"):
-        ...    pass
-        Traceback (most recent call last):
-          ...
-        Failed: Expecting ZeroDivisionError
+        >>> with raises(ValueError, match='must be 0 or None'):
+        ...     raise ValueError("value must be 0 or None")
+
+        >>> with raises(ValueError, match=r'must be \d+$'):
+        ...     raise ValueError("value must be 42")
+
+    The context manager produces an :class:`ExceptionInfo` object which can be used to inspect the
+    details of the captured exception::
+
+        >>> with raises(ValueError) as exc_info:
+        ...     raise ValueError("value must be 42")
+        >>> assert exc_info.type is ValueError
+        >>> assert exc_info.value.args[0] == "value must be 42"
+
+    .. deprecated:: 4.1
+
+        In the context manager form you may use the keyword argument
+        ``message`` to specify a custom failure message that will be displayed
+        in case the ``pytest.raises`` check fails. This has been deprecated as it
+        is considered error prone as users often mean to use ``match`` instead.
 
     .. note::
 
@@ -587,7 +605,7 @@ def raises(expected_exception, *args, **kwargs):
            >>> with raises(ValueError) as exc_info:
            ...     if value > 10:
            ...         raise ValueError("value must be <= 10")
-           ...     assert exc_info.type == ValueError  # this will not execute
+           ...     assert exc_info.type is ValueError  # this will not execute
 
        Instead, the following approach must be taken (note the difference in
        scope)::
@@ -596,22 +614,9 @@ def raises(expected_exception, *args, **kwargs):
            ...     if value > 10:
            ...         raise ValueError("value must be <= 10")
            ...
-           >>> assert exc_info.type == ValueError
-
-
-    Since version ``3.1`` you can use the keyword argument ``match`` to assert that the
-    exception matches a text or regex::
-
-        >>> with raises(ValueError, match='must be 0 or None'):
-        ...     raise ValueError("value must be 0 or None")
-
-        >>> with raises(ValueError, match=r'must be \d+$'):
-        ...     raise ValueError("value must be 42")
+           >>> assert exc_info.type is ValueError
 
     **Legacy form**
-
-    The form below is fully supported but discouraged for new code because the
-    context manager form is regarded as more readable and less error-prone.
 
     It is possible to specify a callable by passing a to-be-called lambda::
 
@@ -627,9 +632,8 @@ def raises(expected_exception, *args, **kwargs):
         >>> raises(ZeroDivisionError, f, x=0)
         <ExceptionInfo ...>
 
-    .. currentmodule:: _pytest._code
-
-    Consult the API of ``excinfo`` objects: :class:`ExceptionInfo`.
+    The form above is fully supported but discouraged for new code because the
+    context manager form is regarded as more readable and less error-prone.
 
     .. note::
         Similar to caught exception objects in Python, explicitly clearing
@@ -660,6 +664,7 @@ def raises(expected_exception, *args, **kwargs):
     if not args:
         if "message" in kwargs:
             message = kwargs.pop("message")
+            warnings.warn(deprecated.RAISES_MESSAGE_PARAMETER, stacklevel=2)
         if "match" in kwargs:
             match_expr = kwargs.pop("match")
         if kwargs:
@@ -668,7 +673,7 @@ def raises(expected_exception, *args, **kwargs):
             raise TypeError(msg)
         return RaisesContext(expected_exception, message, match_expr)
     elif isinstance(args[0], str):
-        warnings.warn(RAISES_EXEC, stacklevel=2)
+        warnings.warn(deprecated.RAISES_EXEC, stacklevel=2)
         code, = args
         assert isinstance(code, str)
         frame = sys._getframe(1)

@@ -121,8 +121,9 @@ class TestRaises(object):
     def test_custom_raise_message(self):
         message = "TEST_MESSAGE"
         try:
-            with pytest.raises(ValueError, message=message):
-                pass
+            with pytest.warns(PytestDeprecationWarning):
+                with pytest.raises(ValueError, message=message):
+                    pass
         except pytest.raises.Exception as e:
             assert e.msg == message
         else:
