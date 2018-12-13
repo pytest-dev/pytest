@@ -24,12 +24,6 @@ MAIN_STR_ARGS = RemovedInPytest4Warning(
 
 YIELD_TESTS = "yield tests were removed in pytest 4.0 - {name} will be ignored"
 
-FUNCARG_PREFIX = UnformattedWarning(
-    RemovedInPytest4Warning,
-    '{name}: declaring fixtures using "pytest_funcarg__" prefix is deprecated '
-    "and scheduled to be removed in pytest 4.0.  "
-    "Please remove the prefix and use the @pytest.fixture decorator instead.",
-)
 
 FIXTURE_FUNCTION_CALL = UnformattedWarning(
     RemovedInPytest4Warning,
