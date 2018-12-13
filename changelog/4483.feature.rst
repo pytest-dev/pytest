@@ -1,0 +1,2 @@
+Add ini parameter ``junit_time`` to optionally report test call
+durations less setup and teardown times.
