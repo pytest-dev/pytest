@@ -393,7 +393,6 @@ class TestMetafunc(object):
         )
         assert result == ["a-a0", "a-a1", "a-a2"]
 
-    @pytest.mark.filterwarnings("default")
     def test_parametrize_ids_exception(self, testdir):
         """
         :param testdir: the instance of Testdir class, a temporary
@@ -411,14 +410,11 @@ class TestMetafunc(object):
                     pass
             """
         )
-        result = testdir.runpytest("--collect-only", SHOW_PYTEST_WARNINGS_ARG)
+        result = testdir.runpytest()
         result.stdout.fnmatch_lines(
             [
-                "<Module test_parametrize_ids_exception.py>",
-                "  <Function test_foo[a]>",
-                "  <Function test_foo[b]>",
-                "*test_parametrize_ids_exception.py:6: *parameter arg at position 0*",
-                "*test_parametrize_ids_exception.py:6: *parameter arg at position 1*",
+                "*test_foo: error raised while trying to determine id of parameter 'arg' at position 0",
+                "*Exception: bad ids",
             ]
         )
 
