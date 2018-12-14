@@ -44,6 +44,11 @@ class TestRaises(object):
         except pytest.raises.Exception:
             pass
 
+    def test_raises_falsey_type_error(self):
+        with pytest.raises(TypeError):
+            with pytest.raises(AssertionError, match=0):
+                raise AssertionError("ohai")
+
     def test_raises_repr_inflight(self):
         """Ensure repr() on an exception info inside a pytest.raises with block works (#4386)"""
 
