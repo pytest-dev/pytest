@@ -237,26 +237,6 @@ By passing a string, users expect that pytest will interpret that command-line u
 on (for example ``bash`` or ``Powershell``), but this is very hard/impossible to do in a portable way.
 
 
-``pytest_funcarg__`` prefix
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. deprecated:: 3.0
-
-In very early pytest versions fixtures could be defined using the ``pytest_funcarg__`` prefix:
-
-.. code-block:: python
-
-    def pytest_funcarg__data():
-        return SomeData()
-
-Switch over to the ``@pytest.fixture`` decorator:
-
-.. code-block:: python
-
-    @pytest.fixture
-    def data():
-        return SomeData()
-
 [pytest] section in setup.cfg files
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -294,6 +274,27 @@ collection.
 
 This issue should affect only advanced plugins who create new collection types, so if you see this warning
 message please contact the authors so they can change the code.
+
+``pytest_funcarg__`` prefix
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+*Removed in version 4.0.*
+
+In very early pytest versions fixtures could be defined using the ``pytest_funcarg__`` prefix:
+
+.. code-block:: python
+
+    def pytest_funcarg__data():
+        return SomeData()
+
+Switch over to the ``@pytest.fixture`` decorator:
+
+.. code-block:: python
+
+    @pytest.fixture
+    def data():
+        return SomeData()
+
 
 Metafunc.addcall
 ~~~~~~~~~~~~~~~~

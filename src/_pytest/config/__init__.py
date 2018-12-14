@@ -261,8 +261,8 @@ class PytestPluginManager(PluginManager):
         # (see issue #1073)
         if not name.startswith("pytest_"):
             return
-        # ignore some historic special names which can not be hooks anyway
-        if name == "pytest_plugins" or name.startswith("pytest_funcarg__"):
+        # ignore names which can not be hooks
+        if name == "pytest_plugins":
             return
 
         method = getattr(plugin, name)
