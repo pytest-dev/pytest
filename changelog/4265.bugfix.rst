@@ -1,1 +1,0 @@
-Validate arguments from the ``PYTEST_ADDOPTS`` environment variable and the ``addopts`` ini option separately.
