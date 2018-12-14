@@ -1,1 +1,3 @@
-Deprecate ``raises(..., 'code(as_a_string)')`` and ``warns(..., 'code(as_a_string)')``.  See https://docs.pytest.org/en/latest/deprecations.html#raises-warns-exec
+Deprecated ``raises(..., 'code(as_a_string)')`` and ``warns(..., 'code(as_a_string)')``.
+
+See https://docs.pytest.org/en/latest/deprecations.html#raises-warns-exec for rationale and examples.
