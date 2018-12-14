@@ -82,12 +82,6 @@ WARNS_EXEC = PytestDeprecationWarning(
     "See https://docs.pytest.org/en/latest/deprecations.html#raises-warns-exec"
 )
 
-RECORD_XML_PROPERTY = RemovedInPytest4Warning(
-    'Fixture renamed from "record_xml_property" to "record_property" as user '
-    "properties are now available to all reporters.\n"
-    '"record_xml_property" is now deprecated.'
-)
-
 
 PYTEST_PLUGINS_FROM_NON_TOP_LEVEL_CONFTEST = RemovedInPytest4Warning(
     "Defining pytest_plugins in a non-top-level conftest is deprecated, "

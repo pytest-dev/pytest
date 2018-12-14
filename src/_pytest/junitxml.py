@@ -264,16 +264,6 @@ def record_property(request):
 
 
 @pytest.fixture
-def record_xml_property(record_property, request):
-    """(Deprecated) use record_property."""
-    from _pytest import deprecated
-
-    request.node.warn(deprecated.RECORD_XML_PROPERTY)
-
-    return record_property
-
-
-@pytest.fixture
 def record_xml_attribute(request):
     """Add extra xml attributes to the tag for the calling test.
     The fixture is callable with ``(name, value)``, with value being

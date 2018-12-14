@@ -149,28 +149,6 @@ As part of a large :ref:`marker-revamp`, :meth:`_pytest.nodes.Node.get_marker` i
 :ref:`the documentation <update marker code>` on tips on how to update your code.
 
 
-record_xml_property
-~~~~~~~~~~~~~~~~~~~
-
-.. deprecated:: 3.5
-
-The ``record_xml_property`` fixture is now deprecated in favor of the more generic ``record_property``, which
-can be used by other consumers (for example ``pytest-html``) to obtain custom information about the test run.
-
-This is just a matter of renaming the fixture as the API is the same:
-
-.. code-block:: python
-
-    def test_foo(record_xml_property):
-        ...
-
-Change to:
-
-.. code-block:: python
-
-    def test_foo(record_property):
-        ...
-
 pytest_plugins in non-top-level conftest files
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -352,6 +330,28 @@ You can consult `funcarg comparison section in the docs <https://docs.pytest.org
 more information.
 
 This has been documented as deprecated for years, but only now we are actually emitting deprecation warnings.
+
+record_xml_property
+~~~~~~~~~~~~~~~~~~~
+
+*Removed in version 4.0.*
+
+The ``record_xml_property`` fixture is now deprecated in favor of the more generic ``record_property``, which
+can be used by other consumers (for example ``pytest-html``) to obtain custom information about the test run.
+
+This is just a matter of renaming the fixture as the API is the same:
+
+.. code-block:: python
+
+    def test_foo(record_xml_property):
+        ...
+
+Change to:
+
+.. code-block:: python
+
+    def test_foo(record_property):
+        ...
 
 ``yield`` tests
 ~~~~~~~~~~~~~~~
