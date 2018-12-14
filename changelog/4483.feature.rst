@@ -1,4 +1,4 @@
-Added ini parameter ``junit_time`` to optionally report test call durations, excluding setup and teardown times.
+Added ini parameter ``junit_duration_report`` to optionally report test call durations, excluding setup and teardown times.
 
 The JUnit XML specification and the default pytest behavior is to include setup and teardown times in the test duration
 report. You can include just the call durations instead (excluding setup and teardown) by adding this to your ``pytest.ini`` file:
@@ -6,4 +6,4 @@ report. You can include just the call durations instead (excluding setup and tea
 .. code-block:: ini
 
     [pytest]
-    junit_time = call
+    junit_duration_report = call
