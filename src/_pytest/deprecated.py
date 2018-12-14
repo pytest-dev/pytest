@@ -17,11 +17,6 @@ from _pytest.warning_types import RemovedInPytest4Warning
 from _pytest.warning_types import UnformattedWarning
 
 
-MAIN_STR_ARGS = RemovedInPytest4Warning(
-    "passing a string to pytest.main() is deprecated, "
-    "pass a list of arguments instead."
-)
-
 YIELD_TESTS = "yield tests were removed in pytest 4.0 - {name} will be ignored"
 
 

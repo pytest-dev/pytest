@@ -193,27 +193,6 @@ To update the code, use ``pytest.param``:
 
 
 
-Passing command-line string to ``pytest.main()``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. deprecated:: 3.0
-
-Passing a command-line string to ``pytest.main()`` is deprecated:
-
-.. code-block:: python
-
-    pytest.main("-v -s")
-
-Pass a list instead:
-
-.. code-block:: python
-
-    pytest.main(["-v", "-s"])
-
-
-By passing a string, users expect that pytest will interpret that command-line using the shell rules they are working
-on (for example ``bash`` or ``Powershell``), but this is very hard/impossible to do in a portable way.
-
 
 [pytest] section in setup.cfg files
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -352,6 +331,30 @@ Change to:
 
     def test_foo(record_property):
         ...
+
+
+Passing command-line string to ``pytest.main()``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+*Removed in version 4.0.*
+
+Passing a command-line string to ``pytest.main()`` is deprecated:
+
+.. code-block:: python
+
+    pytest.main("-v -s")
+
+Pass a list instead:
+
+.. code-block:: python
+
+    pytest.main(["-v", "-s"])
+
+
+By passing a string, users expect that pytest will interpret that command-line using the shell rules they are working
+on (for example ``bash`` or ``Powershell``), but this is very hard/impossible to do in a portable way.
+
+
 
 ``yield`` tests
 ~~~~~~~~~~~~~~~

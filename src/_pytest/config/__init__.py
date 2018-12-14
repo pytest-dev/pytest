@@ -173,12 +173,9 @@ def _prepareconfig(args=None, plugins=None):
     elif isinstance(args, py.path.local):
         args = [str(args)]
     elif not isinstance(args, (tuple, list)):
-        if not isinstance(args, str):
-            raise ValueError("not a string or argument list: %r" % (args,))
-        args = shlex.split(args, posix=sys.platform != "win32")
-        from _pytest import deprecated
+        msg = "`args` parameter expected to be a list or tuple of strings, got: {!r} (type: {})"
+        raise TypeError(msg.format(args, type(args)))
 
-        warning = deprecated.MAIN_STR_ARGS
     config = get_config()
     pluginmanager = config.pluginmanager
     try:
