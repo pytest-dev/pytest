@@ -1,3 +1,3 @@
-Remove ``Metafunc.addcall``. This was the predecessor mechanism to ``@pytest.mark.parametrize``.
+Removed ``Metafunc.addcall``. This was the predecessor mechanism to ``@pytest.mark.parametrize``.
 
 See our `docs <https://docs.pytest.org/en/latest/deprecations.html#metafunc-addcall>`__ on information on how to update your code.

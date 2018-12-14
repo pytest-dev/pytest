@@ -1,1 +1,1 @@
-Fix ``raises(..., 'code(string)')`` frame filename.
+Fixed ``raises(..., 'code(string)')`` frame filename.
