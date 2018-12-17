@@ -45,11 +45,11 @@ MODULE_NOT_FOUND_ERROR = "ModuleNotFoundError" if PY36 else "ImportError"
 
 if _PY3:
     from collections.abc import MutableMapping as MappingMixin
-    from collections.abc import Mapping, Sequence
+    from collections.abc import Iterable, Mapping, Sequence, Sized
 else:
     # those raise DeprecationWarnings in Python >=3.7
     from collections import MutableMapping as MappingMixin  # noqa
-    from collections import Mapping, Sequence  # noqa
+    from collections import Iterable, Mapping, Sequence, Sized  # noqa
 
 
 if sys.version_info >= (3, 4):
