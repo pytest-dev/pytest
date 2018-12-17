@@ -40,25 +40,6 @@ def test_pytest_custom_cfg_deprecated(testdir):
     )
 
 
-def test_str_args_deprecated(tmpdir):
-    """Deprecate passing strings to pytest.main(). Scheduled for removal in pytest-4.0."""
-    from _pytest.main import EXIT_NOTESTSCOLLECTED
-
-    warnings = []
-
-    class Collect(object):
-        def pytest_warning_captured(self, warning_message):
-            warnings.append(str(warning_message.message))
-
-    ret = pytest.main("%s -x" % tmpdir, plugins=[Collect()])
-    msg = (
-        "passing a string to pytest.main() is deprecated, "
-        "pass a list of arguments instead."
-    )
-    assert msg in warnings
-    assert ret == EXIT_NOTESTSCOLLECTED
-
-
 def test_getfuncargvalue_is_deprecated(request):
     pytest.deprecated_call(request.getfuncargvalue, "tmpdir")
 

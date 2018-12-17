@@ -17,11 +17,6 @@ from _pytest.warning_types import RemovedInPytest4Warning
 from _pytest.warning_types import UnformattedWarning
 
 
-MAIN_STR_ARGS = RemovedInPytest4Warning(
-    "passing a string to pytest.main() is deprecated, "
-    "pass a list of arguments instead."
-)
-
 YIELD_TESTS = "yield tests were removed in pytest 4.0 - {name} will be ignored"
 
 
@@ -80,12 +75,6 @@ RAISES_EXEC = PytestDeprecationWarning(
 WARNS_EXEC = PytestDeprecationWarning(
     "warns(..., 'code(as_a_string)') is deprecated, use the context manager form or use `exec()` directly.\n\n"
     "See https://docs.pytest.org/en/latest/deprecations.html#raises-warns-exec"
-)
-
-RECORD_XML_PROPERTY = RemovedInPytest4Warning(
-    'Fixture renamed from "record_xml_property" to "record_property" as user '
-    "properties are now available to all reporters.\n"
-    '"record_xml_property" is now deprecated.'
 )
 
 
