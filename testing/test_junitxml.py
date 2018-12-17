@@ -153,7 +153,7 @@ class TestPython(object):
         val = tnode["time"]
         assert round(float(val), 2) >= 0.03
 
-    def test_call_time(self, testdir):
+    def test_junit_duration_report(self, testdir):
         testdir.makepyfile(
             """
             import time, pytest
@@ -165,7 +165,7 @@ class TestPython(object):
                 time.sleep(0.1)
         """
         )
-        result, dom = runandparse(testdir, "-o", "junit_time=call")
+        result, dom = runandparse(testdir, "-o", "junit_duration_report=call")
         node = dom.find_first_by_tag("testsuite")
         tnode = node.find_first_by_tag("testcase")
         val = tnode["time"]

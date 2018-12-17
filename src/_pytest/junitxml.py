@@ -324,7 +324,9 @@ def pytest_addoption(parser):
         default="no",
     )  # choices=['no', 'stdout', 'stderr'])
     parser.addini(
-        "junit_time", "Duration time to report: one of total|call", default="total"
+        "junit_duration_report",
+        "Duration time to report: one of total|call",
+        default="total",
     )  # choices=['total', 'call'])
 
 
@@ -337,7 +339,7 @@ def pytest_configure(config):
             config.option.junitprefix,
             config.getini("junit_suite_name"),
             config.getini("junit_logging"),
-            config.getini("junit_time"),
+            config.getini("junit_duration_report"),
         )
         config.pluginmanager.register(config._xml)
 
