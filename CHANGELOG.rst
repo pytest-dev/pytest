@@ -18,6 +18,31 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+pytest 4.0.2 (2018-12-13)
+=========================
+
+Bug Fixes
+---------
+
+- `#4265 <https://github.com/pytest-dev/pytest/issues/4265>`_: Validate arguments from the ``PYTEST_ADDOPTS`` environment variable and the ``addopts`` ini option separately.
+
+
+- `#4435 <https://github.com/pytest-dev/pytest/issues/4435>`_: Fix ``raises(..., 'code(string)')`` frame filename.
+
+
+- `#4500 <https://github.com/pytest-dev/pytest/issues/4500>`_: When a fixture yields and a log call is made after the test runs, and, if the test is interrupted, capture attributes are ``None``.
+
+
+- `#4538 <https://github.com/pytest-dev/pytest/issues/4538>`_: Raise ``TypeError`` for ``with raises(..., match=<non-None falsey value>)``.
+
+
+
+Improved Documentation
+----------------------
+
+- `#1495 <https://github.com/pytest-dev/pytest/issues/1495>`_: Document common doctest fixture directory tree structure pitfalls
+
+
 pytest 4.0.1 (2018-11-23)
 =========================
 

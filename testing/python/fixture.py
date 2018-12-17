@@ -627,25 +627,6 @@ class TestRequestBasic(object):
         print(ss.stack)
         assert teardownlist == [1]
 
-    def test_mark_as_fixture_with_prefix_and_decorator_fails(self, testdir):
-        testdir.makeconftest(
-            """
-            import pytest
-
-            @pytest.fixture
-            def pytest_funcarg__marked_with_prefix_and_decorator():
-                pass
-        """
-        )
-        result = testdir.runpytest_subprocess()
-        assert result.ret != 0
-        result.stdout.fnmatch_lines(
-            [
-                "*AssertionError: fixtures cannot have*@pytest.fixture*",
-                "*pytest_funcarg__marked_with_prefix_and_decorator*",
-            ]
-        )
-
     def test_request_addfinalizer_failing_setup(self, testdir):
         testdir.makepyfile(
             """

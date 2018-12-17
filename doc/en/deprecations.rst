@@ -121,28 +121,6 @@ As part of a large :ref:`marker-revamp`, :meth:`_pytest.nodes.Node.get_marker` i
 :ref:`the documentation <update marker code>` on tips on how to update your code.
 
 
-record_xml_property
-~~~~~~~~~~~~~~~~~~~
-
-.. deprecated:: 3.5
-
-The ``record_xml_property`` fixture is now deprecated in favor of the more generic ``record_property``, which
-can be used by other consumers (for example ``pytest-html``) to obtain custom information about the test run.
-
-This is just a matter of renaming the fixture as the API is the same:
-
-.. code-block:: python
-
-    def test_foo(record_xml_property):
-        ...
-
-Change to:
-
-.. code-block:: python
-
-    def test_foo(record_property):
-        ...
-
 pytest_plugins in non-top-level conftest files
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -187,47 +165,6 @@ To update the code, use ``pytest.param``:
 
 
 
-Passing command-line string to ``pytest.main()``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. deprecated:: 3.0
-
-Passing a command-line string to ``pytest.main()`` is deprecated:
-
-.. code-block:: python
-
-    pytest.main("-v -s")
-
-Pass a list instead:
-
-.. code-block:: python
-
-    pytest.main(["-v", "-s"])
-
-
-By passing a string, users expect that pytest will interpret that command-line using the shell rules they are working
-on (for example ``bash`` or ``Powershell``), but this is very hard/impossible to do in a portable way.
-
-
-``pytest_funcarg__`` prefix
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. deprecated:: 3.0
-
-In very early pytest versions fixtures could be defined using the ``pytest_funcarg__`` prefix:
-
-.. code-block:: python
-
-    def pytest_funcarg__data():
-        return SomeData()
-
-Switch over to the ``@pytest.fixture`` decorator:
-
-.. code-block:: python
-
-    @pytest.fixture
-    def data():
-        return SomeData()
 
 [pytest] section in setup.cfg files
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -266,6 +203,27 @@ collection.
 
 This issue should affect only advanced plugins who create new collection types, so if you see this warning
 message please contact the authors so they can change the code.
+
+``pytest_funcarg__`` prefix
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+*Removed in version 4.0.*
+
+In very early pytest versions fixtures could be defined using the ``pytest_funcarg__`` prefix:
+
+.. code-block:: python
+
+    def pytest_funcarg__data():
+        return SomeData()
+
+Switch over to the ``@pytest.fixture`` decorator:
+
+.. code-block:: python
+
+    @pytest.fixture
+    def data():
+        return SomeData()
+
 
 Metafunc.addcall
 ~~~~~~~~~~~~~~~~
@@ -349,6 +307,52 @@ Becomes:
   The warning instance must be a PytestWarning or subclass.
 
 * ``node.warn("CI", "some message")``: this code/message form has been **removed** and should be converted to the warning instance form above.
+
+record_xml_property
+~~~~~~~~~~~~~~~~~~~
+
+*Removed in version 4.0.*
+
+The ``record_xml_property`` fixture is now deprecated in favor of the more generic ``record_property``, which
+can be used by other consumers (for example ``pytest-html``) to obtain custom information about the test run.
+
+This is just a matter of renaming the fixture as the API is the same:
+
+.. code-block:: python
+
+    def test_foo(record_xml_property):
+        ...
+
+Change to:
+
+.. code-block:: python
+
+    def test_foo(record_property):
+        ...
+
+
+Passing command-line string to ``pytest.main()``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+*Removed in version 4.0.*
+
+Passing a command-line string to ``pytest.main()`` is deprecated:
+
+.. code-block:: python
+
+    pytest.main("-v -s")
+
+Pass a list instead:
+
+.. code-block:: python
+
+    pytest.main(["-v", "-s"])
+
+
+By passing a string, users expect that pytest will interpret that command-line using the shell rules they are working
+on (for example ``bash`` or ``Powershell``), but this is very hard/impossible to do in a portable way.
+
+
 
 ``yield`` tests
 ~~~~~~~~~~~~~~~

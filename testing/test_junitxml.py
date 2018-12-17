@@ -153,7 +153,7 @@ class TestPython(object):
         val = tnode["time"]
         assert round(float(val), 2) >= 0.03
 
-    def test_call_time(self, testdir):
+    def test_junit_duration_report(self, testdir):
         testdir.makepyfile(
             """
             import time, pytest
@@ -165,7 +165,7 @@ class TestPython(object):
                 time.sleep(0.1)
         """
         )
-        result, dom = runandparse(testdir, "-o", "junit_time=call")
+        result, dom = runandparse(testdir, "-o", "junit_duration_report=call")
         node = dom.find_first_by_tag("testsuite")
         tnode = node.find_first_by_tag("testcase")
         val = tnode["time"]
@@ -1050,12 +1050,13 @@ def test_record_attribute(testdir):
     )
 
 
-def test_random_report_log_xdist(testdir):
+def test_random_report_log_xdist(testdir, monkeypatch):
     """xdist calls pytest_runtest_logreport as they are executed by the slaves,
     with nodes from several nodes overlapping, so junitxml must cope with that
     to produce correct reports. #1064
     """
     pytest.importorskip("xdist")
+    monkeypatch.delenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD", raising=False)
     testdir.makepyfile(
         """
         import pytest, time

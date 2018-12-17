@@ -1,4 +1,4 @@
-pdb: support keyword arguments with ``pdb.set_trace``
+pdb: added support for keyword arguments with ``pdb.set_trace``.
 
 It handles ``header`` similar to Python 3.7 does it, and forwards any
 other keyword arguments to the ``Pdb`` constructor.

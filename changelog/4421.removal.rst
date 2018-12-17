@@ -1,3 +1,3 @@
-Remove the implementation of the ``pytest_namespace`` hook.
+Removed the implementation of the ``pytest_namespace`` hook.
 
 See our `docs <https://docs.pytest.org/en/latest/deprecations.html#pytest-namespace>`__ on information on how to update your code.

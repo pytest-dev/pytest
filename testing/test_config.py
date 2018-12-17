@@ -510,6 +510,7 @@ def test_options_on_small_file_do_not_blow_up(testdir):
 
 def test_preparse_ordering_with_setuptools(testdir, monkeypatch):
     pkg_resources = pytest.importorskip("pkg_resources")
+    monkeypatch.delenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD", raising=False)
 
     def my_iter(name):
         assert name == "pytest11"
@@ -547,6 +548,7 @@ def test_preparse_ordering_with_setuptools(testdir, monkeypatch):
 
 def test_setuptools_importerror_issue1479(testdir, monkeypatch):
     pkg_resources = pytest.importorskip("pkg_resources")
+    monkeypatch.delenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD", raising=False)
 
     def my_iter(name):
         assert name == "pytest11"
@@ -575,6 +577,7 @@ def test_setuptools_importerror_issue1479(testdir, monkeypatch):
 @pytest.mark.parametrize("block_it", [True, False])
 def test_plugin_preparse_prevents_setuptools_loading(testdir, monkeypatch, block_it):
     pkg_resources = pytest.importorskip("pkg_resources")
+    monkeypatch.delenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD", raising=False)
 
     plugin_module_placeholder = object()
 

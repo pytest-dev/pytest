@@ -38,8 +38,6 @@ from _pytest.deprecated import FIXTURE_NAMED_REQUEST
 from _pytest.outcomes import fail
 from _pytest.outcomes import TEST_OUTCOME
 
-FIXTURE_MSG = 'fixtures cannot have "pytest_funcarg__" prefix and be decorated with @pytest.fixture:\n{}'
-
 
 @attr.s(frozen=True)
 class PseudoFixtureDef(object):
@@ -1117,7 +1115,6 @@ class FixtureManager(object):
     by a lookup of their FuncFixtureInfo.
     """
 
-    _argprefix = "pytest_funcarg__"
     FixtureLookupError = FixtureLookupError
     FixtureLookupErrorRepr = FixtureLookupErrorRepr
 
@@ -1255,8 +1252,6 @@ class FixtureManager(object):
         items[:] = reorder_items(items)
 
     def parsefactories(self, node_or_obj, nodeid=NOTSET, unittest=False):
-        from _pytest import deprecated
-
         if nodeid is not NOTSET:
             holderobj = node_or_obj
         else:
@@ -1272,31 +1267,13 @@ class FixtureManager(object):
             # access below can raise. safe_getatt() ignores such exceptions.
             obj = safe_getattr(holderobj, name, None)
             marker = getfixturemarker(obj)
-            # fixture functions have a pytest_funcarg__ prefix (pre-2.3 style)
-            # or are "@pytest.fixture" marked
-            if marker is None:
-                if not name.startswith(self._argprefix):
-                    continue
-                if not callable(obj):
-                    continue
-                marker = defaultfuncargprefixmarker
-
-                filename, lineno = getfslineno(obj)
-                warnings.warn_explicit(
-                    deprecated.FUNCARG_PREFIX.format(name=name),
-                    category=None,
-                    filename=str(filename),
-                    lineno=lineno + 1,
-                )
-                name = name[len(self._argprefix) :]
-            elif not isinstance(marker, FixtureFunctionMarker):
+            if not isinstance(marker, FixtureFunctionMarker):
                 # magic globals  with __getattr__ might have got us a wrong
                 # fixture attribute
                 continue
-            else:
-                if marker.name:
-                    name = marker.name
-                assert not name.startswith(self._argprefix), FIXTURE_MSG.format(name)
+
+            if marker.name:
+                name = marker.name
 
             # during fixture definition we wrap the original fixture function
             # to issue a warning if called directly, so here we unwrap it in order to not emit the warning

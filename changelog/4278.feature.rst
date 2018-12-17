@@ -1,0 +1,4 @@
+``CACHEDIR.TAG`` files are now created inside cache directories.
+
+Those files are part of the `Cache Directory Tagging Standard <http://www.bford.info/cachedir/spec.html>`__, and can
+be used by backup or synchronization programs to identify pytest's cache directory as such.

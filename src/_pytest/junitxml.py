@@ -264,16 +264,6 @@ def record_property(request):
 
 
 @pytest.fixture
-def record_xml_property(record_property, request):
-    """(Deprecated) use record_property."""
-    from _pytest import deprecated
-
-    request.node.warn(deprecated.RECORD_XML_PROPERTY)
-
-    return record_property
-
-
-@pytest.fixture
 def record_xml_attribute(request):
     """Add extra xml attributes to the tag for the calling test.
     The fixture is callable with ``(name, value)``, with value being
@@ -324,7 +314,9 @@ def pytest_addoption(parser):
         default="no",
     )  # choices=['no', 'stdout', 'stderr'])
     parser.addini(
-        "junit_time", "Duration time to report: one of total|call", default="total"
+        "junit_duration_report",
+        "Duration time to report: one of total|call",
+        default="total",
     )  # choices=['total', 'call'])
 
 
@@ -337,7 +329,7 @@ def pytest_configure(config):
             config.option.junitprefix,
             config.getini("junit_suite_name"),
             config.getini("junit_logging"),
-            config.getini("junit_time"),
+            config.getini("junit_duration_report"),
         )
         config.pluginmanager.register(config._xml)
 

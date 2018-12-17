@@ -45,7 +45,6 @@ from _pytest.mark.structures import transfer_markers
 from _pytest.outcomes import fail
 from _pytest.pathlib import parts
 from _pytest.warning_types import PytestWarning
-from _pytest.warning_types import RemovedInPytest4Warning
 
 
 def pyobj_property(name):
@@ -1059,13 +1058,11 @@ def _idval(val, argname, idx, idfn, item, config):
             s = idfn(val)
         except Exception as e:
             # See issue https://github.com/pytest-dev/pytest/issues/2169
-            msg = (
-                "While trying to determine id of parameter {} at position "
-                "{} the following exception was raised:\n".format(argname, idx)
-            )
+            msg = "{}: error raised while trying to determine id of parameter '{}' at position {}\n"
+            msg = msg.format(item.nodeid, argname, idx)
+            # we only append the exception type and message because on Python 2 reraise does nothing
             msg += "  {}: {}\n".format(type(e).__name__, e)
-            msg += "This warning will be an error error in pytest-4.0."
-            item.warn(RemovedInPytest4Warning(msg))
+            six.raise_from(ValueError(msg), e)
         if s:
             return ascii_escaped(s)
 
