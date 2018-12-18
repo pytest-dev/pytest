@@ -34,14 +34,14 @@ def getcfg(args, config=None):
                     iniconfig = py.iniconfig.IniConfig(p)
                     if "pytest" in iniconfig.sections:
                         if inibasename == "setup.cfg" and config is not None:
-                            from _pytest.warnings import _issue_config_warning
+                            from _pytest.warnings import _issue_warning_captured
                             from _pytest.warning_types import RemovedInPytest4Warning
 
-                            _issue_config_warning(
+                            _issue_warning_captured(
                                 RemovedInPytest4Warning(
                                     CFG_PYTEST_SECTION.format(filename=inibasename)
                                 ),
-                                config=config,
+                                hook=config.hook,
                                 stacklevel=2,
                             )
                         return base, p, iniconfig["pytest"]
@@ -112,13 +112,13 @@ def determine_setup(inifile, args, rootdir_cmd_arg=None, config=None):
                 inicfg = iniconfig[section]
                 if is_cfg_file and section == "pytest" and config is not None:
                     from _pytest.deprecated import CFG_PYTEST_SECTION
-                    from _pytest.warnings import _issue_config_warning
+                    from _pytest.warnings import _issue_warning_captured
 
                     # TODO: [pytest] section in *.cfg files is deprecated. Need refactoring once
                     # the deprecation expires.
-                    _issue_config_warning(
+                    _issue_warning_captured(
                         CFG_PYTEST_SECTION.format(filename=str(inifile)),
-                        config,
+                        config.hook,
                         stacklevel=2,
                     )
                 break

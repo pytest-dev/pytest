@@ -64,10 +64,6 @@ MARK_PARAMETERSET_UNPACKING = RemovedInPytest4Warning(
     "For more details, see: https://docs.pytest.org/en/latest/parametrize.html"
 )
 
-NODE_WARN = RemovedInPytest4Warning(
-    "Node.warn(code, message) form has been deprecated, use Node.warn(warning_instance) instead."
-)
-
 RAISES_EXEC = PytestDeprecationWarning(
     "raises(..., 'code(as_a_string)') is deprecated, use the context manager form or use `exec()` directly\n\n"
     "See https://docs.pytest.org/en/latest/deprecations.html#raises-warns-exec"
@@ -76,7 +72,6 @@ WARNS_EXEC = PytestDeprecationWarning(
     "warns(..., 'code(as_a_string)') is deprecated, use the context manager form or use `exec()` directly.\n\n"
     "See https://docs.pytest.org/en/latest/deprecations.html#raises-warns-exec"
 )
-
 
 PYTEST_PLUGINS_FROM_NON_TOP_LEVEL_CONFTEST = RemovedInPytest4Warning(
     "Defining pytest_plugins in a non-top-level conftest is deprecated, "
@@ -92,4 +87,9 @@ PYTEST_CONFIG_GLOBAL = PytestDeprecationWarning(
 PYTEST_ENSURETEMP = RemovedInPytest4Warning(
     "pytest/tmpdir_factory.ensuretemp is deprecated, \n"
     "please use the tmp_path fixture or tmp_path_factory.mktemp"
+)
+
+PYTEST_LOGWARNING = PytestDeprecationWarning(
+    "pytest_logwarning is deprecated, no longer being called, and will be removed soon\n"
+    "please use pytest_warning_captured instead"
 )

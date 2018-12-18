@@ -79,6 +79,7 @@ def test_terminal_reporter_writer_attr(pytestconfig):
 
 
 @pytest.mark.parametrize("plugin", ["catchlog", "capturelog"])
+@pytest.mark.filterwarnings("default")
 def test_pytest_catchlog_deprecated(testdir, plugin):
     testdir.makepyfile(
         """

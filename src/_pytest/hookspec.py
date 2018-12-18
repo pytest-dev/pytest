@@ -1,6 +1,8 @@
 """ hook specifications for pytest plugins, invoked from main.py and builtin plugins.  """
 from pluggy import HookspecMarker
 
+from _pytest.deprecated import PYTEST_LOGWARNING
+
 
 hookspec = HookspecMarker("pytest")
 
@@ -496,7 +498,7 @@ def pytest_terminal_summary(terminalreporter, exitstatus):
     """
 
 
-@hookspec(historic=True)
+@hookspec(historic=True, warn_on_impl=PYTEST_LOGWARNING)
 def pytest_logwarning(message, code, nodeid, fslocation):
     """
     .. deprecated:: 3.8

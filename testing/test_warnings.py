@@ -308,9 +308,9 @@ def test_filterwarnings_mark_registration(testdir):
 def test_warning_captured_hook(testdir):
     testdir.makeconftest(
         """
-        from _pytest.warnings import _issue_config_warning
+        from _pytest.warnings import _issue_warning_captured
         def pytest_configure(config):
-            _issue_config_warning(UserWarning("config warning"), config, stacklevel=2)
+            _issue_warning_captured(UserWarning("config warning"), config.hook, stacklevel=2)
     """
     )
     testdir.makepyfile(

@@ -74,34 +74,6 @@ Becomes:
 
 
 
-``Config.warn`` and ``Node.warn``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. deprecated:: 3.8
-
-Those methods were part of the internal pytest warnings system, but since ``3.8`` pytest is using the builtin warning
-system for its own warnings, so those two functions are now deprecated.
-
-``Config.warn`` should be replaced by calls to the standard ``warnings.warn``, example:
-
-.. code-block:: python
-
-    config.warn("C1", "some warning")
-
-Becomes:
-
-.. code-block:: python
-
-    warnings.warn(pytest.PytestWarning("some warning"))
-
-``Node.warn`` now supports two signatures:
-
-* ``node.warn(PytestWarning("some message"))``: is now the **recommended** way to call this function.
-  The warning instance must be a PytestWarning or subclass.
-
-* ``node.warn("CI", "some message")``: this code/message form is now **deprecated** and should be converted to the warning instance form above.
-
-
 Calling fixtures directly
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -308,7 +280,33 @@ This should be updated to make use of standard fixture mechanisms:
 You can consult `funcarg comparison section in the docs <https://docs.pytest.org/en/latest/funcarg_compare.html>`_ for
 more information.
 
-This has been documented as deprecated for years, but only now we are actually emitting deprecation warnings.
+
+``Config.warn`` and ``Node.warn``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+*Removed in version 4.0.*
+
+Those methods were part of the internal pytest warnings system, but since ``3.8`` pytest is using the builtin warning
+system for its own warnings, so those two functions are now deprecated.
+
+``Config.warn`` should be replaced by calls to the standard ``warnings.warn``, example:
+
+.. code-block:: python
+
+    config.warn("C1", "some warning")
+
+Becomes:
+
+.. code-block:: python
+
+    warnings.warn(pytest.PytestWarning("some warning"))
+
+``Node.warn`` now supports two signatures:
+
+* ``node.warn(PytestWarning("some message"))``: is now the **recommended** way to call this function.
+  The warning instance must be a PytestWarning or subclass.
+
+* ``node.warn("CI", "some message")``: this code/message form has been **removed** and should be converted to the warning instance form above.
 
 record_xml_property
 ~~~~~~~~~~~~~~~~~~~

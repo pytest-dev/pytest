@@ -160,19 +160,19 @@ def pytest_terminal_summary(terminalreporter):
         yield
 
 
-def _issue_config_warning(warning, config, stacklevel):
+def _issue_warning_captured(warning, hook, stacklevel):
     """
     This function should be used instead of calling ``warnings.warn`` directly when we are in the "configure" stage:
     at this point the actual options might not have been set, so we manually trigger the pytest_warning_captured
     hook so we can display this warnings in the terminal. This is a hack until we can sort out #2891.
 
     :param warning: the warning instance.
-    :param config:
+    :param hook: the hook caller
     :param stacklevel: stacklevel forwarded to warnings.warn
     """
     with warnings.catch_warnings(record=True) as records:
         warnings.simplefilter("always", type(warning))
         warnings.warn(warning, stacklevel=stacklevel)
-    config.hook.pytest_warning_captured.call_historic(
+    hook.pytest_warning_captured.call_historic(
         kwargs=dict(warning_message=records[0], when="config", item=None)
     )

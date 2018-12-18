@@ -105,74 +105,7 @@ class Node(object):
     def __repr__(self):
         return "<%s %s>" % (self.__class__.__name__, getattr(self, "name", None))
 
-    def warn(self, _code_or_warning=None, message=None, code=None):
-        """Issue a warning for this item.
-
-        Warnings will be displayed after the test session, unless explicitly suppressed.
-
-        This can be called in two forms:
-
-        **Warning instance**
-
-        This was introduced in pytest 3.8 and uses the standard warning mechanism to issue warnings.
-
-        .. code-block:: python
-
-            node.warn(PytestWarning("some message"))
-
-        The warning instance must be a subclass of :class:`pytest.PytestWarning`.
-
-        **code/message (deprecated)**
-
-        This form was used in pytest prior to 3.8 and is considered deprecated. Using this form will emit another
-        warning about the deprecation:
-
-        .. code-block:: python
-
-            node.warn("CI", "some message")
-
-        :param Union[Warning,str] _code_or_warning:
-            warning instance or warning code (legacy). This parameter receives an underscore for backward
-            compatibility with the legacy code/message form, and will be replaced for something
-            more usual when the legacy form is removed.
-
-        :param Union[str,None] message: message to display when called in the legacy form.
-        :param str code: code for the warning, in legacy form when using keyword arguments.
-        :return:
-        """
-        if message is None:
-            if _code_or_warning is None:
-                raise ValueError("code_or_warning must be given")
-            self._std_warn(_code_or_warning)
-        else:
-            if _code_or_warning and code:
-                raise ValueError(
-                    "code_or_warning and code cannot both be passed to this function"
-                )
-            code = _code_or_warning or code
-            self._legacy_warn(code, message)
-
-    def _legacy_warn(self, code, message):
-        """
-        .. deprecated:: 3.8
-
-            Use :meth:`Node.std_warn <_pytest.nodes.Node.std_warn>` instead.
-
-        Generate a warning with the given code and message for this item.
-        """
-        from _pytest.deprecated import NODE_WARN
-
-        self._std_warn(NODE_WARN)
-
-        assert isinstance(code, str)
-        fslocation = get_fslocation_from_item(self)
-        self.ihook.pytest_logwarning.call_historic(
-            kwargs=dict(
-                code=code, message=message, nodeid=self.nodeid, fslocation=fslocation
-            )
-        )
-
-    def _std_warn(self, warning):
+    def warn(self, warning):
         """Issue a warning for this item.
 
         Warnings will be displayed after the test session, unless explicitly suppressed
@@ -180,6 +113,12 @@ class Node(object):
         :param Warning warning: the warning instance to issue. Must be a subclass of PytestWarning.
 
         :raise ValueError: if ``warning`` instance is not a subclass of PytestWarning.
+
+        Example usage::
+
+        .. code-block:: python
+
+            node.warn(PytestWarning("some message"))
         """
         from _pytest.warning_types import PytestWarning
 
