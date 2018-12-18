@@ -72,46 +72,6 @@ Becomes:
 
 
 
-
-
-Calling fixtures directly
-~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. deprecated:: 3.7
-
-Calling a fixture function directly, as opposed to request them in a test function, is deprecated.
-
-For example:
-
-.. code-block:: python
-
-    @pytest.fixture
-    def cell():
-        return ...
-
-
-    @pytest.fixture
-    def full_cell():
-        cell = cell()
-        cell.make_full()
-        return cell
-
-This is a great source of confusion to new users, which will often call the fixture functions and request them from test functions interchangeably, which breaks the fixture resolution model.
-
-In those cases just request the function directly in the dependent fixture:
-
-.. code-block:: python
-
-    @pytest.fixture
-    def cell():
-        return ...
-
-
-    @pytest.fixture
-    def full_cell(cell):
-        cell.make_full()
-        return cell
-
 ``Node.get_marker``
 ~~~~~~~~~~~~~~~~~~~
 
@@ -352,6 +312,58 @@ Pass a list instead:
 By passing a string, users expect that pytest will interpret that command-line using the shell rules they are working
 on (for example ``bash`` or ``Powershell``), but this is very hard/impossible to do in a portable way.
 
+
+Calling fixtures directly
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+*Removed in version 4.0.*
+
+Calling a fixture function directly, as opposed to request them in a test function, is deprecated.
+
+For example:
+
+.. code-block:: python
+
+    @pytest.fixture
+    def cell():
+        return ...
+
+
+    @pytest.fixture
+    def full_cell():
+        cell = cell()
+        cell.make_full()
+        return cell
+
+This is a great source of confusion to new users, which will often call the fixture functions and request them from test functions interchangeably, which breaks the fixture resolution model.
+
+In those cases just request the function directly in the dependent fixture:
+
+.. code-block:: python
+
+    @pytest.fixture
+    def cell():
+        return ...
+
+
+    @pytest.fixture
+    def full_cell(cell):
+        cell.make_full()
+        return cell
+
+Alternatively if the fixture function is called multiple times inside a test (making it hard to apply the above pattern) or
+if you would like to make minimal changes to the code, you can create a fixture which calls the original function together
+with the ``name`` parameter:
+
+.. code-block:: python
+
+    def cell():
+        return ...
+
+
+    @pytest.fixture(name="cell")
+    def cell_fixture():
+        return cell()
 
 
 ``yield`` tests
