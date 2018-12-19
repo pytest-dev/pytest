@@ -153,23 +153,36 @@ class TestPython(object):
         val = tnode["time"]
         assert round(float(val), 2) >= 0.03
 
-    def test_junit_duration_report(self, testdir):
+    @pytest.mark.parametrize("duration_report", ["call", "total"])
+    def test_junit_duration_report(self, testdir, monkeypatch, duration_report):
+
+        # mock LogXML.node_reporter so it always sets a known duration to each test report object
+        original_node_reporter = LogXML.node_reporter
+
+        def node_reporter_wrapper(s, report):
+            report.duration = 1.0
+            reporter = original_node_reporter(s, report)
+            return reporter
+
+        monkeypatch.setattr(LogXML, "node_reporter", node_reporter_wrapper)
+
         testdir.makepyfile(
             """
-            import time, pytest
-            def setup_module():
-                time.sleep(0.1)
-            def teardown_module():
-                time.sleep(0.1)
-            def test_sleep():
-                time.sleep(0.1)
+            def test_foo():
+                pass
         """
         )
-        result, dom = runandparse(testdir, "-o", "junit_duration_report=call")
+        result, dom = runandparse(
+            testdir, "-o", "junit_duration_report={}".format(duration_report)
+        )
         node = dom.find_first_by_tag("testsuite")
         tnode = node.find_first_by_tag("testcase")
-        val = tnode["time"]
-        assert 0.1 <= round(float(val), 2) < 0.2
+        val = float(tnode["time"])
+        if duration_report == "total":
+            assert val == 3.0
+        else:
+            assert duration_report == "call"
+            assert val == 1.0
 
     def test_setup_error(self, testdir):
         testdir.makepyfile(
