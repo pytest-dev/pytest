@@ -1,0 +1,3 @@
+Calling fixtures directly is now always an error instead of a warning.
+
+See our `docs <https://docs.pytest.org/en/latest/deprecations.html#calling-fixtures-directly>`__ on information on how to update your code.

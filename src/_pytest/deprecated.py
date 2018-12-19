@@ -20,11 +20,11 @@ from _pytest.warning_types import UnformattedWarning
 YIELD_TESTS = "yield tests were removed in pytest 4.0 - {name} will be ignored"
 
 
-FIXTURE_FUNCTION_CALL = UnformattedWarning(
-    RemovedInPytest4Warning,
-    'Fixture "{name}" called directly. Fixtures are not meant to be called directly, '
-    "are created automatically when test functions request them as parameters. "
-    "See https://docs.pytest.org/en/latest/fixture.html for more information.",
+FIXTURE_FUNCTION_CALL = (
+    'Fixture "{name}" called directly. Fixtures are not meant to be called directly,\n'
+    "but are created automatically when test functions request them as parameters.\n"
+    "See https://docs.pytest.org/en/latest/fixture.html for more information about fixtures, and\n"
+    "https://docs.pytest.org/en/latest/deprecations.html#calling-fixtures-directly about how to update your code."
 )
 
 FIXTURE_NAMED_REQUEST = PytestDeprecationWarning(

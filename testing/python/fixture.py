@@ -3850,3 +3850,14 @@ class TestScopeOrdering(object):
         )
         reprec = testdir.inline_run()
         reprec.assertoutcome(passed=2)
+
+
+def test_call_fixture_function_error():
+    """Check if an error is raised if a fixture function is called directly (#4545)"""
+
+    @pytest.fixture
+    def fix():
+        return 1
+
+    with pytest.raises(pytest.fail.Exception):
+        assert fix() == 1

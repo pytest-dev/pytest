@@ -942,34 +942,17 @@ def _ensure_immutable_ids(ids):
     return tuple(ids)
 
 
-def wrap_function_to_warning_if_called_directly(function, fixture_marker):
-    """Wrap the given fixture function so we can issue warnings about it being called directly, instead of
-    used as an argument in a test function.
+def wrap_function_to_error_out_if_called_directly(function, fixture_marker):
+    """Wrap the given fixture function so we can raise an error about it being called directly,
+    instead of used as an argument in a test function.
     """
-    is_yield_function = is_generator(function)
-    warning = FIXTURE_FUNCTION_CALL.format(
+    message = FIXTURE_FUNCTION_CALL.format(
         name=fixture_marker.name or function.__name__
     )
 
-    if is_yield_function:
-
-        @functools.wraps(function)
-        def result(*args, **kwargs):
-            __tracebackhide__ = True
-            warnings.warn(warning, stacklevel=3)
-            for x in function(*args, **kwargs):
-                yield x
-
-    else:
-
-        @functools.wraps(function)
-        def result(*args, **kwargs):
-            __tracebackhide__ = True
-            warnings.warn(warning, stacklevel=3)
-            return function(*args, **kwargs)
-
-    if six.PY2:
-        result.__wrapped__ = function
+    @six.wraps(function)
+    def result(*args, **kwargs):
+        fail(message, pytrace=False)
 
     # keep reference to the original function in our own custom attribute so we don't unwrap
     # further than this point and lose useful wrappings like @mock.patch (#3774)
@@ -995,7 +978,7 @@ class FixtureFunctionMarker(object):
                 "fixture is being applied more than once to the same function"
             )
 
-        function = wrap_function_to_warning_if_called_directly(function, self)
+        function = wrap_function_to_error_out_if_called_directly(function, self)
 
         name = self.name or function.__name__
         if name == "request":

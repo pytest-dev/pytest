@@ -223,17 +223,6 @@ def test_pytest_plugins_in_non_top_level_conftest_deprecated_no_false_positives(
     assert msg not in res.stdout.str()
 
 
-def test_call_fixture_function_deprecated():
-    """Check if a warning is raised if a fixture function is called directly (#3661)"""
-
-    @pytest.fixture
-    def fix():
-        return 1
-
-    with pytest.deprecated_call():
-        assert fix() == 1
-
-
 def test_fixture_named_request(testdir):
     testdir.copy_example()
     result = testdir.runpytest()
