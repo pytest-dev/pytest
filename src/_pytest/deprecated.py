@@ -14,7 +14,6 @@ from __future__ import print_function
 
 from _pytest.warning_types import PytestDeprecationWarning
 from _pytest.warning_types import RemovedInPytest4Warning
-from _pytest.warning_types import UnformattedWarning
 
 
 YIELD_TESTS = "yield tests were removed in pytest 4.0 - {name} will be ignored"
@@ -31,10 +30,7 @@ FIXTURE_NAMED_REQUEST = PytestDeprecationWarning(
     "'request' is a reserved name for fixtures and will raise an error in future versions"
 )
 
-CFG_PYTEST_SECTION = UnformattedWarning(
-    RemovedInPytest4Warning,
-    "[pytest] section in {filename} files is deprecated, use [tool:pytest] instead.",
-)
+CFG_PYTEST_SECTION = "[pytest] section in {filename} files is no longer supported, change to [tool:pytest] instead."
 
 GETFUNCARGVALUE = RemovedInPytest4Warning(
     "getfuncargvalue is deprecated, use getfixturevalue"

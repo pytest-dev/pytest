@@ -10,8 +10,7 @@ from _pytest.warnings import SHOW_PYTEST_WARNINGS_ARG
 pytestmark = pytest.mark.pytester_example_path("deprecated")
 
 
-@pytest.mark.filterwarnings("default")
-def test_pytest_setup_cfg_deprecated(testdir):
+def test_pytest_setup_cfg_unsupported(testdir):
     testdir.makefile(
         ".cfg",
         setup="""
@@ -19,14 +18,11 @@ def test_pytest_setup_cfg_deprecated(testdir):
         addopts = --verbose
     """,
     )
-    result = testdir.runpytest()
-    result.stdout.fnmatch_lines(
-        ["*pytest*section in setup.cfg files is deprecated*use*tool:pytest*instead*"]
-    )
+    with pytest.raises(pytest.fail.Exception):
+        testdir.runpytest()
 
 
-@pytest.mark.filterwarnings("default")
-def test_pytest_custom_cfg_deprecated(testdir):
+def test_pytest_custom_cfg_unsupported(testdir):
     testdir.makefile(
         ".cfg",
         custom="""
@@ -34,10 +30,8 @@ def test_pytest_custom_cfg_deprecated(testdir):
         addopts = --verbose
     """,
     )
-    result = testdir.runpytest("-c", "custom.cfg")
-    result.stdout.fnmatch_lines(
-        ["*pytest*section in custom.cfg files is deprecated*use*tool:pytest*instead*"]
-    )
+    with pytest.raises(pytest.fail.Exception):
+        testdir.runpytest("-c", "custom.cfg")
 
 
 def test_getfuncargvalue_is_deprecated(request):

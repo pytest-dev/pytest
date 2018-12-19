@@ -125,15 +125,6 @@ To update the code, use ``pytest.param``:
 
 
 
-
-[pytest] section in setup.cfg files
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. deprecated:: 3.0
-
-``[pytest]`` sections in ``setup.cfg`` files should now be named ``[tool:pytest]``
-to avoid conflicts with other distutils commands.
-
 Result log (``--result-log``)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -183,6 +174,16 @@ Switch over to the ``@pytest.fixture`` decorator:
     @pytest.fixture
     def data():
         return SomeData()
+
+
+
+[pytest] section in setup.cfg files
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+*Removed in version 4.0.*
+
+``[pytest]`` sections in ``setup.cfg`` files should now be named ``[tool:pytest]``
+to avoid conflicts with other distutils commands.
 
 
 Metafunc.addcall

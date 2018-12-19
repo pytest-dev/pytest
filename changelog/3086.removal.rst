@@ -1,0 +1,4 @@
+``[pytest]`` section in **setup.cfg** files is not longer supported, use ``[tool:pytest]`` instead. ``setup.cfg`` files
+are meant for use with ``distutils``, and a section named ``pytest`` has notoriously been a source of conflicts and bugs.
+
+Note that for **pytest.ini** and **tox.ini** files the section remains ``[pytest]``.
