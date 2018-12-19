@@ -724,13 +724,6 @@ MarkGenerator
     :members:
 
 
-MarkInfo
-~~~~~~~~
-
-.. autoclass:: _pytest.mark.MarkInfo
-    :members:
-
-
 Mark
 ~~~~
 
