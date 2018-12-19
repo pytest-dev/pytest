@@ -41,7 +41,6 @@ from _pytest.main import FSHookProxy
 from _pytest.mark import MARK_GEN
 from _pytest.mark.structures import get_unpacked_marks
 from _pytest.mark.structures import normalize_mark_list
-from _pytest.mark.structures import transfer_markers
 from _pytest.outcomes import fail
 from _pytest.pathlib import parts
 from _pytest.warning_types import PytestWarning
@@ -125,10 +124,10 @@ def pytest_generate_tests(metafunc):
     # those alternative spellings are common - raise a specific error to alert
     # the user
     alt_spellings = ["parameterize", "parametrise", "parameterise"]
-    for attr in alt_spellings:
-        if hasattr(metafunc.function, attr):
+    for mark_name in alt_spellings:
+        if metafunc.definition.get_closest_marker(mark_name):
             msg = "{0} has '{1}' mark, spelling should be 'parametrize'"
-            fail(msg.format(metafunc.function.__name__, attr), pytrace=False)
+            fail(msg.format(metafunc.function.__name__, mark_name), pytrace=False)
     for marker in metafunc.definition.iter_markers(name="parametrize"):
         metafunc.parametrize(*marker.args, **marker.kwargs)
 
@@ -385,7 +384,6 @@ class PyCollector(PyobjMixin, nodes.Collector):
         module = self.getparent(Module).obj
         clscol = self.getparent(Class)
         cls = clscol and clscol.obj or None
-        transfer_markers(funcobj, cls, module)
         fm = self.session._fixturemanager
 
         definition = FunctionDefinition(name=name, parent=self, callobj=funcobj)
@@ -1290,6 +1288,18 @@ class Function(FunctionMixin, nodes.Item, fixtures.FuncargnamesCompatAttr):
             self.own_markers.extend(normalize_mark_list(callspec.marks))
         if keywords:
             self.keywords.update(keywords)
+
+        # todo: this is a hell of a hack
+        self.keywords.update(
+            dict.fromkeys(
+                [
+                    mark.name
+                    for mark in self.iter_markers()
+                    if mark.name not in self.keywords
+                ],
+                True,
+            )
+        )
 
         if fixtureinfo is None:
             fixtureinfo = self.session._fixturemanager.getfixtureinfo(

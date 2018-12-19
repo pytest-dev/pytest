@@ -270,8 +270,11 @@ class PytestPluginManager(PluginManager):
             opts = {}
 
         if opts is not None:
+            # TODO: DeprecationWarning, people should use hookimpl
+            known_marks = {m.name for m in getattr(method, "pytestmark", [])}
             for name in ("tryfirst", "trylast", "optionalhook", "hookwrapper"):
-                opts.setdefault(name, hasattr(method, name))
+
+                opts.setdefault(name, hasattr(method, name) or name in known_marks)
         return opts
 
     def parse_hookspec_opts(self, module_or_class, name):
