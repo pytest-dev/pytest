@@ -69,10 +69,14 @@ WARNS_EXEC = PytestDeprecationWarning(
     "See https://docs.pytest.org/en/latest/deprecations.html#raises-warns-exec"
 )
 
-PYTEST_PLUGINS_FROM_NON_TOP_LEVEL_CONFTEST = RemovedInPytest4Warning(
-    "Defining pytest_plugins in a non-top-level conftest is deprecated, "
+PYTEST_PLUGINS_FROM_NON_TOP_LEVEL_CONFTEST = (
+    "Defining 'pytest_plugins' in a non-top-level conftest is no longer supported "
     "because it affects the entire directory tree in a non-explicit way.\n"
-    "Please move it to the top level conftest file instead."
+    "  {}\n"
+    "Please move it to a top level conftest file at the rootdir:\n"
+    "  {}\n"
+    "For more information, visit:\n"
+    "  https://docs.pytest.org/en/latest/deprecations.html#pytest-plugins-in-non-top-level-conftest-files"
 )
 
 PYTEST_CONFIG_GLOBAL = PytestDeprecationWarning(
