@@ -80,7 +80,8 @@ class Node(object):
         self, name, parent=None, config=None, session=None, fspath=None, nodeid=None
     ):
         #: a unique name within the scope of the parent node
-        self.name = name
+        # self.name = name
+        self.name = name.encode("utf-8").decode("unicode_escape") 
 
         #: the parent collector node.
         self.parent = parent
