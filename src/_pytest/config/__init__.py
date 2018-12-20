@@ -270,6 +270,7 @@ class PytestPluginManager(PluginManager):
             opts = {}
         if opts is not None:
             # TODO: DeprecationWarning, people should use hookimpl
+            # https://github.com/pytest-dev/pytest/issues/4562
             known_marks = {m.name for m in getattr(method, "pytestmark", [])}
 
             for name in ("tryfirst", "trylast", "optionalhook", "hookwrapper"):
@@ -286,6 +287,7 @@ class PytestPluginManager(PluginManager):
 
             if name.startswith("pytest_"):
                 # todo: deprecate hookspec hacks
+                # https://github.com/pytest-dev/pytest/issues/4562
                 known_marks = {m.name for m in getattr(method, "pytestmark", [])}
                 opts = {
                     "firstresult": hasattr(method, "firstresult")

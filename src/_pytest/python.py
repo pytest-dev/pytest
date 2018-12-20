@@ -1290,6 +1290,8 @@ class Function(FunctionMixin, nodes.Item, fixtures.FuncargnamesCompatAttr):
             self.keywords.update(keywords)
 
         # todo: this is a hell of a hack
+        # https://github.com/pytest-dev/pytest/issues/4569
+
         self.keywords.update(
             dict.fromkeys(
                 [
