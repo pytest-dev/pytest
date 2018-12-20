@@ -10,7 +10,6 @@ import six
 import pytest
 from _pytest.mark import EMPTY_PARAMETERSET_OPTION
 from _pytest.mark import MarkGenerator as Mark
-from _pytest.mark import ParameterSet
 from _pytest.mark import transfer_markers
 from _pytest.nodes import Collector
 from _pytest.nodes import Node
@@ -477,8 +476,10 @@ def test_parametrized_collect_with_wrong_args(testdir):
     result = testdir.runpytest(py_file)
     result.stdout.fnmatch_lines(
         [
-            'E   ValueError: In "parametrize" the number of values ((1, 2, 3)) '
-            "must be equal to the number of names (['foo', 'bar'])"
+            'test_parametrized_collect_with_wrong_args.py::test_func: in "parametrize" the number of names (2):',
+            "  ['foo', 'bar']",
+            "must be equal to the number of values (3):",
+            "  (1, 2, 3)",
         ]
     )
 
@@ -1040,36 +1041,6 @@ class TestKeywordSelection(object):
 
         assert_test_is_not_selected("__")
         assert_test_is_not_selected("()")
-
-
-@pytest.mark.parametrize(
-    "argval, expected",
-    [
-        (
-            pytest.mark.skip()((1, 2)),
-            ParameterSet(values=(1, 2), marks=[pytest.mark.skip], id=None),
-        ),
-        (
-            pytest.mark.xfail(pytest.mark.skip()((1, 2))),
-            ParameterSet(
-                values=(1, 2), marks=[pytest.mark.xfail, pytest.mark.skip], id=None
-            ),
-        ),
-    ],
-)
-@pytest.mark.filterwarnings("default")
-def test_parameterset_extractfrom(argval, expected):
-    from _pytest.deprecated import MARK_PARAMETERSET_UNPACKING
-
-    warn_called = []
-
-    class DummyItem:
-        def warn(self, warning):
-            warn_called.append(warning)
-
-    extracted = ParameterSet.extract_from(argval, belonging_definition=DummyItem())
-    assert extracted == expected
-    assert warn_called == [MARK_PARAMETERSET_UNPACKING]
 
 
 def test_legacy_transfer():
