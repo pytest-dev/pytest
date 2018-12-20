@@ -496,16 +496,16 @@ removes a source of confusion for users.
 ``Node.get_marker``
 ~~~~~~~~~~~~~~~~~~~
 
-*removed in version 4.1*
+*Removed in version 4.0*
 
 As part of a large :ref:`marker-revamp`, :meth:`_pytest.nodes.Node.get_marker` is deprecated. See
 :ref:`the documentation <update marker code>` on tips on how to update your code.
 
 
 ``somefunction.markname``
-~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
-* Removed in version 4.1
+*Removed in version 4.0*
 
 As part of a large :ref:`marker-revamp` we already deprecated using ``MarkInfo``
-the only correct way to get markers of an element is via ``node.iter_markers([name]``.
+the only correct way to get markers of an element is via ``node.iter_markers(name)``.
