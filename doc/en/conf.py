@@ -42,10 +42,11 @@ todo_include_todos = 1
 extensions = [
     "pygments_pytest",
     "sphinx.ext.autodoc",
-    "sphinx.ext.todo",
     "sphinx.ext.autosummary",
     "sphinx.ext.intersphinx",
+    "sphinx.ext.todo",
     "sphinx.ext.viewcode",
+    "sphinx_removed_in",
     "sphinxcontrib_trio",
 ]
 
