@@ -14,7 +14,6 @@ from __future__ import print_function
 
 from _pytest.warning_types import PytestDeprecationWarning
 from _pytest.warning_types import RemovedInPytest4Warning
-from _pytest.warning_types import UnformattedWarning
 
 
 YIELD_TESTS = "yield tests were removed in pytest 4.0 - {name} will be ignored"
@@ -31,10 +30,7 @@ FIXTURE_NAMED_REQUEST = PytestDeprecationWarning(
     "'request' is a reserved name for fixtures and will raise an error in future versions"
 )
 
-CFG_PYTEST_SECTION = UnformattedWarning(
-    RemovedInPytest4Warning,
-    "[pytest] section in {filename} files is deprecated, use [tool:pytest] instead.",
-)
+CFG_PYTEST_SECTION = "[pytest] section in {filename} files is no longer supported, change to [tool:pytest] instead."
 
 GETFUNCARGVALUE = RemovedInPytest4Warning(
     "getfuncargvalue is deprecated, use getfixturevalue"
@@ -73,10 +69,14 @@ WARNS_EXEC = PytestDeprecationWarning(
     "See https://docs.pytest.org/en/latest/deprecations.html#raises-warns-exec"
 )
 
-PYTEST_PLUGINS_FROM_NON_TOP_LEVEL_CONFTEST = RemovedInPytest4Warning(
-    "Defining pytest_plugins in a non-top-level conftest is deprecated, "
+PYTEST_PLUGINS_FROM_NON_TOP_LEVEL_CONFTEST = (
+    "Defining 'pytest_plugins' in a non-top-level conftest is no longer supported "
     "because it affects the entire directory tree in a non-explicit way.\n"
-    "Please move it to the top level conftest file instead."
+    "  {}\n"
+    "Please move it to a top level conftest file at the rootdir:\n"
+    "  {}\n"
+    "For more information, visit:\n"
+    "  https://docs.pytest.org/en/latest/deprecations.html#pytest-plugins-in-non-top-level-conftest-files"
 )
 
 PYTEST_CONFIG_GLOBAL = PytestDeprecationWarning(

@@ -81,16 +81,6 @@ As part of a large :ref:`marker-revamp`, :meth:`_pytest.nodes.Node.get_marker` i
 :ref:`the documentation <update marker code>` on tips on how to update your code.
 
 
-pytest_plugins in non-top-level conftest files
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. deprecated:: 3.5
-
-Defining ``pytest_plugins`` is now deprecated in non-top-level conftest.py
-files because they will activate referenced plugins *globally*, which is surprising because for all other pytest
-features ``conftest.py`` files are only *active* for tests at or below it.
-
-
 marks in ``pytest.mark.parametrize``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -124,15 +114,6 @@ To update the code, use ``pytest.param``:
         ...
 
 
-
-
-[pytest] section in setup.cfg files
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. deprecated:: 3.0
-
-``[pytest]`` sections in ``setup.cfg`` files should now be named ``[tool:pytest]``
-to avoid conflicts with other distutils commands.
 
 Result log (``--result-log``)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -183,6 +164,16 @@ Switch over to the ``@pytest.fixture`` decorator:
     @pytest.fixture
     def data():
         return SomeData()
+
+
+
+[pytest] section in setup.cfg files
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+*Removed in version 4.0.*
+
+``[pytest]`` sections in ``setup.cfg`` files should now be named ``[tool:pytest]``
+to avoid conflicts with other distutils commands.
 
 
 Metafunc.addcall
@@ -239,6 +230,16 @@ This should be updated to make use of standard fixture mechanisms:
 
 You can consult `funcarg comparison section in the docs <https://docs.pytest.org/en/latest/funcarg_compare.html>`_ for
 more information.
+
+
+pytest_plugins in non-top-level conftest files
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+*Removed in version 4.0.*
+
+Defining ``pytest_plugins`` is now deprecated in non-top-level conftest.py
+files because they will activate referenced plugins *globally*, which is surprising because for all other pytest
+features ``conftest.py`` files are only *active* for tests at or below it.
 
 
 ``Config.warn`` and ``Node.warn``

@@ -31,6 +31,7 @@ from _pytest._code import ExceptionInfo
 from _pytest._code import filter_traceback
 from _pytest.compat import lru_cache
 from _pytest.compat import safe_str
+from _pytest.outcomes import fail
 from _pytest.outcomes import Skipped
 from _pytest.warning_types import PytestWarning
 
@@ -429,11 +430,11 @@ class PytestPluginManager(PluginManager):
                         PYTEST_PLUGINS_FROM_NON_TOP_LEVEL_CONFTEST
                     )
 
-                    warnings.warn_explicit(
-                        PYTEST_PLUGINS_FROM_NON_TOP_LEVEL_CONFTEST,
-                        category=None,
-                        filename=str(conftestpath),
-                        lineno=0,
+                    fail(
+                        PYTEST_PLUGINS_FROM_NON_TOP_LEVEL_CONFTEST.format(
+                            conftestpath, self._confcutdir
+                        ),
+                        pytrace=False,
                     )
             except Exception:
                 raise ConftestImportFailure(conftestpath, sys.exc_info())
