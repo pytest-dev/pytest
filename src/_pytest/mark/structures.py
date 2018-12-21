@@ -13,7 +13,6 @@ from ..compat import getfslineno
 from ..compat import MappingMixin
 from ..compat import NOTSET
 from ..deprecated import MARK_INFO_ATTRIBUTE
-from ..deprecated import MARK_PARAMETERSET_UNPACKING
 from _pytest.outcomes import fail
 
 
@@ -82,39 +81,23 @@ class ParameterSet(namedtuple("ParameterSet", "values, marks, id")):
         return cls(values, marks, id_)
 
     @classmethod
-    def extract_from(cls, parameterset, belonging_definition, legacy_force_tuple=False):
+    def extract_from(cls, parameterset, force_tuple=False):
         """
         :param parameterset:
             a legacy style parameterset that may or may not be a tuple,
             and may or may not be wrapped into a mess of mark objects
 
-        :param legacy_force_tuple:
+        :param force_tuple:
             enforce tuple wrapping so single argument tuple values
             don't get decomposed and break tests
-
-        :param belonging_definition: the item that we will be extracting the parameters from.
         """
 
         if isinstance(parameterset, cls):
             return parameterset
-        if not isinstance(parameterset, MarkDecorator) and legacy_force_tuple:
+        if force_tuple:
             return cls.param(parameterset)
-
-        newmarks = []
-        argval = parameterset
-        while isinstance(argval, MarkDecorator):
-            newmarks.append(
-                MarkDecorator(Mark(argval.markname, argval.args[:-1], argval.kwargs))
-            )
-            argval = argval.args[-1]
-        assert not isinstance(argval, ParameterSet)
-        if legacy_force_tuple:
-            argval = (argval,)
-
-        if newmarks and belonging_definition is not None:
-            belonging_definition.warn(MARK_PARAMETERSET_UNPACKING)
-
-        return cls(argval, marks=newmarks, id=None)
+        else:
+            return cls(parameterset, marks=[], id=None)
 
     @classmethod
     def _for_parametrize(cls, argnames, argvalues, func, config, function_definition):
@@ -124,12 +107,7 @@ class ParameterSet(namedtuple("ParameterSet", "values, marks, id")):
         else:
             force_tuple = False
         parameters = [
-            ParameterSet.extract_from(
-                x,
-                legacy_force_tuple=force_tuple,
-                belonging_definition=function_definition,
-            )
-            for x in argvalues
+            ParameterSet.extract_from(x, force_tuple=force_tuple) for x in argvalues
         ]
         del argvalues
 
@@ -137,11 +115,21 @@ class ParameterSet(namedtuple("ParameterSet", "values, marks, id")):
             # check all parameter sets have the correct number of values
             for param in parameters:
                 if len(param.values) != len(argnames):
-                    raise ValueError(
-                        'In "parametrize" the number of values ({}) must be '
-                        "equal to the number of names ({})".format(
-                            param.values, argnames
-                        )
+                    msg = (
+                        '{nodeid}: in "parametrize" the number of names ({names_len}):\n'
+                        "  {names}\n"
+                        "must be equal to the number of values ({values_len}):\n"
+                        "  {values}"
+                    )
+                    fail(
+                        msg.format(
+                            nodeid=function_definition.nodeid,
+                            values=param.values,
+                            names=argnames,
+                            names_len=len(argnames),
+                            values_len=len(param.values),
+                        ),
+                        pytrace=False,
                     )
         else:
             # empty parameter set (likely computed at runtime): create a single

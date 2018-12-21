@@ -7,6 +7,11 @@ This page lists all pytest features that are currently deprecated or have been r
 The objective is to give users a clear rationale why a certain feature has been removed, and what alternatives
 should be used instead.
 
+.. contents::
+    :depth: 3
+    :local:
+
+
 Deprecated Features
 -------------------
 
@@ -81,40 +86,6 @@ As part of a large :ref:`marker-revamp`, :meth:`_pytest.nodes.Node.get_marker` i
 :ref:`the documentation <update marker code>` on tips on how to update your code.
 
 
-marks in ``pytest.mark.parametrize``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. deprecated:: 3.2
-
-Applying marks to values of a ``pytest.mark.parametrize`` call is now deprecated. For example:
-
-.. code-block:: python
-
-    @pytest.mark.parametrize(
-        "a, b", [(3, 9), pytest.mark.xfail(reason="flaky")(6, 36), (10, 100)]
-    )
-    def test_foo(a, b):
-        ...
-
-This code applies the ``pytest.mark.xfail(reason="flaky")`` mark to the ``(6, 36)`` value of the above parametrization
-call.
-
-This was considered hard to read and understand, and also its implementation presented problems to the code preventing
-further internal improvements in the marks architecture.
-
-To update the code, use ``pytest.param``:
-
-.. code-block:: python
-
-    @pytest.mark.parametrize(
-        "a, b",
-        [(3, 9), pytest.param((6, 36), marks=pytest.mark.xfail(reason="flaky")), (10, 100)],
-    )
-    def test_foo(a, b):
-        ...
-
-
-
 Result log (``--result-log``)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -144,6 +115,55 @@ collection.
 
 This issue should affect only advanced plugins who create new collection types, so if you see this warning
 message please contact the authors so they can change the code.
+
+
+marks in ``pytest.mark.parametrize``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+*Removed in version 4.0.*
+
+Applying marks to values of a ``pytest.mark.parametrize`` call is now deprecated. For example:
+
+.. code-block:: python
+
+    @pytest.mark.parametrize(
+        "a, b",
+        [
+            (3, 9),
+            pytest.mark.xfail(reason="flaky")(6, 36),
+            (10, 100),
+            (20, 200),
+            (40, 400),
+            (50, 500),
+        ],
+    )
+    def test_foo(a, b):
+        ...
+
+This code applies the ``pytest.mark.xfail(reason="flaky")`` mark to the ``(6, 36)`` value of the above parametrization
+call.
+
+This was considered hard to read and understand, and also its implementation presented problems to the code preventing
+further internal improvements in the marks architecture.
+
+To update the code, use ``pytest.param``:
+
+.. code-block:: python
+
+    @pytest.mark.parametrize(
+        "a, b",
+        [
+            (3, 9),
+            pytest.param(6, 36, marks=pytest.mark.xfail(reason="flaky")),
+            (10, 100),
+            (20, 200),
+            (40, 400),
+            (50, 500),
+        ],
+    )
+    def test_foo(a, b):
+        ...
+
 
 ``pytest_funcarg__`` prefix
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~

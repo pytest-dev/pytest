@@ -54,12 +54,6 @@ MARK_INFO_ATTRIBUTE = RemovedInPytest4Warning(
     "Docs: https://docs.pytest.org/en/latest/mark.html#updating-code"
 )
 
-MARK_PARAMETERSET_UNPACKING = RemovedInPytest4Warning(
-    "Applying marks directly to parameters is deprecated,"
-    " please use pytest.param(..., marks=...) instead.\n"
-    "For more details, see: https://docs.pytest.org/en/latest/parametrize.html"
-)
-
 RAISES_EXEC = PytestDeprecationWarning(
     "raises(..., 'code(as_a_string)') is deprecated, use the context manager form or use `exec()` directly\n\n"
     "See https://docs.pytest.org/en/latest/deprecations.html#raises-warns-exec"
