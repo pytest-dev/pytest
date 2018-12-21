@@ -1,18 +1,15 @@
 import inspect
 import warnings
 from collections import namedtuple
-from functools import reduce
 from operator import attrgetter
 
 import attr
 import six
-from six.moves import map
 
 from ..compat import ascii_escaped
 from ..compat import getfslineno
 from ..compat import MappingMixin
 from ..compat import NOTSET
-from ..deprecated import MARK_INFO_ATTRIBUTE
 from _pytest.outcomes import fail
 
 
@@ -233,11 +230,7 @@ class MarkDecorator(object):
             func = args[0]
             is_class = inspect.isclass(func)
             if len(args) == 1 and (istestfunc(func) or is_class):
-                if is_class:
-                    store_mark(func, self.mark)
-                else:
-                    store_legacy_markinfo(func, self.mark)
-                    store_mark(func, self.mark)
+                store_mark(func, self.mark)
                 return func
         return self.with_args(*args, **kwargs)
 
@@ -259,7 +252,13 @@ def normalize_mark_list(mark_list):
     :type mark_list: List[Union[Mark, Markdecorator]]
     :rtype: List[Mark]
     """
-    return [getattr(mark, "mark", mark) for mark in mark_list]  # unpack MarkDecorator
+    extracted = [
+        getattr(mark, "mark", mark) for mark in mark_list
+    ]  # unpack MarkDecorator
+    for mark in extracted:
+        if not isinstance(mark, Mark):
+            raise TypeError("got {!r} instead of Mark".format(mark))
+    return [x for x in extracted if isinstance(x, Mark)]
 
 
 def store_mark(obj, mark):
@@ -270,90 +269,6 @@ def store_mark(obj, mark):
     # always reassign name to avoid updating pytestmark
     # in a reference that was only borrowed
     obj.pytestmark = get_unpacked_marks(obj) + [mark]
-
-
-def store_legacy_markinfo(func, mark):
-    """create the legacy MarkInfo objects and put them onto the function
-    """
-    if not isinstance(mark, Mark):
-        raise TypeError("got {mark!r} instead of a Mark".format(mark=mark))
-    holder = getattr(func, mark.name, None)
-    if holder is None:
-        holder = MarkInfo.for_mark(mark)
-        setattr(func, mark.name, holder)
-    elif isinstance(holder, MarkInfo):
-        holder.add_mark(mark)
-
-
-def transfer_markers(funcobj, cls, mod):
-    """
-    this function transfers class level markers and module level markers
-    into function level markinfo objects
-
-    this is the main reason why marks are so broken
-    the resolution will involve phasing out function level MarkInfo objects
-
-    """
-    for obj in (cls, mod):
-        for mark in get_unpacked_marks(obj):
-            if not _marked(funcobj, mark):
-                store_legacy_markinfo(funcobj, mark)
-
-
-def _marked(func, mark):
-    """ Returns True if :func: is already marked with :mark:, False otherwise.
-    This can happen if marker is applied to class and the test file is
-    invoked more than once.
-    """
-    try:
-        func_mark = getattr(func, getattr(mark, "combined", mark).name)
-    except AttributeError:
-        return False
-    return any(mark == info.combined for info in func_mark)
-
-
-@attr.s(repr=False)
-class MarkInfo(object):
-    """ Marking object created by :class:`MarkDecorator` instances. """
-
-    _marks = attr.ib(converter=list)
-
-    @_marks.validator
-    def validate_marks(self, attribute, value):
-        for item in value:
-            if not isinstance(item, Mark):
-                raise ValueError(
-                    "MarkInfo expects Mark instances, got {!r} ({!r})".format(
-                        item, type(item)
-                    )
-                )
-
-    combined = attr.ib(
-        repr=False,
-        default=attr.Factory(
-            lambda self: reduce(Mark.combined_with, self._marks), takes_self=True
-        ),
-    )
-
-    name = alias("combined.name", warning=MARK_INFO_ATTRIBUTE)
-    args = alias("combined.args", warning=MARK_INFO_ATTRIBUTE)
-    kwargs = alias("combined.kwargs", warning=MARK_INFO_ATTRIBUTE)
-
-    @classmethod
-    def for_mark(cls, mark):
-        return cls([mark])
-
-    def __repr__(self):
-        return "<MarkInfo {!r}>".format(self.combined)
-
-    def add_mark(self, mark):
-        """ add a MarkInfo with the given args and kwargs. """
-        self._marks.append(mark)
-        self.combined = self.combined.combined_with(mark)
-
-    def __iter__(self):
-        """ yield MarkInfo objects each relating to a marking-call. """
-        return map(MarkInfo.for_mark, self._marks)
 
 
 class MarkGenerator(object):

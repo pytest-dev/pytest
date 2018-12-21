@@ -1207,19 +1207,20 @@ class FixtureManager(object):
             if faclist:
                 fixturedef = faclist[-1]
                 if fixturedef.params is not None:
-                    parametrize_func = getattr(metafunc.function, "parametrize", None)
-                    if parametrize_func is not None:
-                        parametrize_func = parametrize_func.combined
-                    func_params = getattr(parametrize_func, "args", [[None]])
-                    func_kwargs = getattr(parametrize_func, "kwargs", {})
-                    # skip directly parametrized arguments
-                    if "argnames" in func_kwargs:
-                        argnames = parametrize_func.kwargs["argnames"]
+                    markers = list(metafunc.definition.iter_markers("parametrize"))
+                    for parametrize_mark in markers:
+                        if "argnames" in parametrize_mark.kwargs:
+                            argnames = parametrize_mark.kwargs["argnames"]
+                        else:
+                            argnames = parametrize_mark.args[0]
+
+                        if not isinstance(argnames, (tuple, list)):
+                            argnames = [
+                                x.strip() for x in argnames.split(",") if x.strip()
+                            ]
+                        if argname in argnames:
+                            break
                     else:
-                        argnames = func_params[0]
-                    if not isinstance(argnames, (tuple, list)):
-                        argnames = [x.strip() for x in argnames.split(",") if x.strip()]
-                    if argname not in func_params and argname not in argnames:
                         metafunc.parametrize(
                             argname,
                             fixturedef.params,

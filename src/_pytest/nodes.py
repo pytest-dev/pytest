@@ -10,7 +10,6 @@ import six
 
 import _pytest._code
 from _pytest.compat import getfslineno
-from _pytest.mark.structures import MarkInfo
 from _pytest.mark.structures import NodeKeywords
 from _pytest.outcomes import fail
 
@@ -210,20 +209,6 @@ class Node(object):
         :param name: name to filter by
         """
         return next(self.iter_markers(name=name), default)
-
-    def get_marker(self, name):
-        """ get a marker object from this node or None if
-        the node doesn't have a marker with that name.
-
-        .. deprecated:: 3.6
-            This function has been deprecated in favor of
-            :meth:`Node.get_closest_marker <_pytest.nodes.Node.get_closest_marker>` and
-            :meth:`Node.iter_markers <_pytest.nodes.Node.iter_markers>`, see :ref:`update marker code`
-            for more details.
-        """
-        markers = list(self.iter_markers(name=name))
-        if markers:
-            return MarkInfo(markers)
 
     def listextrakeywords(self):
         """ Return a set of all extra keywords in self and any parents."""

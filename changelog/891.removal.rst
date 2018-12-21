@@ -1,0 +1,1 @@
+Remove ``testfunction.markername`` attributes - use ``Node.iter_markers(name=None)`` to iterate them.

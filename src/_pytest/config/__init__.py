@@ -268,10 +268,14 @@ class PytestPluginManager(PluginManager):
         # collect unmarked hooks as long as they have the `pytest_' prefix
         if opts is None and name.startswith("pytest_"):
             opts = {}
-
         if opts is not None:
+            # TODO: DeprecationWarning, people should use hookimpl
+            # https://github.com/pytest-dev/pytest/issues/4562
+            known_marks = {m.name for m in getattr(method, "pytestmark", [])}
+
             for name in ("tryfirst", "trylast", "optionalhook", "hookwrapper"):
-                opts.setdefault(name, hasattr(method, name))
+
+                opts.setdefault(name, hasattr(method, name) or name in known_marks)
         return opts
 
     def parse_hookspec_opts(self, module_or_class, name):
@@ -280,10 +284,16 @@ class PytestPluginManager(PluginManager):
         )
         if opts is None:
             method = getattr(module_or_class, name)
+
             if name.startswith("pytest_"):
+                # todo: deprecate hookspec hacks
+                # https://github.com/pytest-dev/pytest/issues/4562
+                known_marks = {m.name for m in getattr(method, "pytestmark", [])}
                 opts = {
-                    "firstresult": hasattr(method, "firstresult"),
-                    "historic": hasattr(method, "historic"),
+                    "firstresult": hasattr(method, "firstresult")
+                    or "firstresult" in known_marks,
+                    "historic": hasattr(method, "historic")
+                    or "historic" in known_marks,
                 }
         return opts
 
