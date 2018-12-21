@@ -1,0 +1,1 @@
+Update cache documentation example to correctly show cache hit and miss.
