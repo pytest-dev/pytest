@@ -611,6 +611,10 @@ class TerminalReporter(object):
                     continue
                 indent = (len(stack) - 1) * "  "
                 self._tw.line("%s%s" % (indent, col))
+                if self.config.option.verbose >= 1:
+                    if hasattr(col, "_obj") and col._obj.__doc__:
+                        for line in col._obj.__doc__.strip().splitlines():
+                            self._tw.line("%s%s" % (indent + "  ", line.strip()))
 
     @pytest.hookimpl(hookwrapper=True)
     def pytest_sessionfinish(self, exitstatus):
