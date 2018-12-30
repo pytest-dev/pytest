@@ -276,6 +276,18 @@ class TestCollectonly(object):
         result = testdir.runpytest("--collect-only", "-rs")
         result.stdout.fnmatch_lines(["*ERROR collecting*"])
 
+    def test_collectonly_display_test_description(self, testdir):
+        testdir.makepyfile(
+            """
+            def test_with_description():
+                \""" This test has a description.
+                \"""
+                assert True
+        """
+        )
+        result = testdir.runpytest("--collect-only", "--verbose")
+        result.stdout.fnmatch_lines(["    This test has a description."])
+
     def test_collectonly_failed_module(self, testdir):
         testdir.makepyfile("""raise ValueError(0)""")
         result = testdir.runpytest("--collect-only")
