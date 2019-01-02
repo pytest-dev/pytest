@@ -423,6 +423,24 @@ Users should just ``import pytest`` and access those objects using the ``pytest`
 
 This has been documented as deprecated for years, but only now we are actually emitting deprecation warnings.
 
+``Node.get_marker``
+~~~~~~~~~~~~~~~~~~~
+
+.. versionremoved:: 4.0
+
+As part of a large :ref:`marker-revamp`, :meth:`_pytest.nodes.Node.get_marker` is deprecated. See
+:ref:`the documentation <update marker code>` on tips on how to update your code.
+
+
+``somefunction.markname``
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. versionremoved:: 4.0
+
+As part of a large :ref:`marker-revamp` we already deprecated using ``MarkInfo``
+the only correct way to get markers of an element is via ``node.iter_markers(name)``.
+
+
 ``pytest_namespace``
 ~~~~~~~~~~~~~~~~~~~~
 
@@ -491,21 +509,3 @@ Removed all ``py.test-X*`` entry points. The versioned, suffixed entry points
 were never documented and a leftover from a pre-virtualenv era. These entry
 points also created broken entry points in wheels, so removing them also
 removes a source of confusion for users.
-
-
-``Node.get_marker``
-~~~~~~~~~~~~~~~~~~~
-
-.. versionremoved:: 4.0
-
-As part of a large :ref:`marker-revamp`, :meth:`_pytest.nodes.Node.get_marker` is deprecated. See
-:ref:`the documentation <update marker code>` on tips on how to update your code.
-
-
-``somefunction.markname``
-~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. versionremoved:: 4.0
-
-As part of a large :ref:`marker-revamp` we already deprecated using ``MarkInfo``
-the only correct way to get markers of an element is via ``node.iter_markers(name)``.
