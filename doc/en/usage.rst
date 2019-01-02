@@ -147,7 +147,7 @@ Detailed summary report
 
 .. versionadded:: 2.9
 
-The ``-r`` flag can be used to display test results summary at the end of the test session,
+The ``-r`` flag can be used to display a "short test summary info" at the end of the test session,
 making it easy in large test suites to get a clear picture of all failures, skips, xfails, etc.
 
 Example:
@@ -158,9 +158,34 @@ Example:
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
-    collected 0 items
+    collected 7 items
 
-    ======================= no tests ran in 0.12 seconds =======================
+    test_examples.py ..FEsxX                                                 [100%]
+
+    ==================================== ERRORS ====================================
+    _________________________ ERROR at setup of test_error _________________________
+    file /Users/chainz/tmp/pytestratest/test_examples.py, line 17
+      def test_error(unknown_fixture):
+    E       fixture 'unknown_fixture' not found
+    >       available fixtures: cache, capfd, capfdbinary, caplog, capsys, capsysbinary, doctest_namespace, monkeypatch, pytestconfig, record_property, record_xml_attribute, record_xml_property, recwarn, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
+    >       use 'pytest --fixtures [testpath]' for help on them.
+
+    /Users/chainz/tmp/pytestratest/test_examples.py:17
+    =================================== FAILURES ===================================
+    __________________________________ test_fail ___________________________________
+
+        def test_fail():
+    >       assert 0
+    E       assert 0
+
+    test_examples.py:14: AssertionError
+    =========================== short test summary info ============================
+    FAIL test_examples.py::test_fail
+    ERROR test_examples.py::test_error
+    SKIP [1] test_examples.py:21: Example
+    XFAIL test_examples.py::test_xfail
+    XPASS test_examples.py::test_xpass
+    = 1 failed, 2 passed, 1 skipped, 1 xfailed, 1 xpassed, 1 error in 0.07 seconds =
 
 The ``-r`` options accepts a number of characters after it, with ``a`` used above meaning "all except passes".
 
@@ -183,9 +208,44 @@ More than one character can be used, so for example to only see failed and skipp
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
-    collected 0 items
+    collected 2 items
 
-    ======================= no tests ran in 0.12 seconds =======================
+    test_examples.py Fs                                                      [100%]
+
+    =================================== FAILURES ===================================
+    __________________________________ test_fail ___________________________________
+
+        def test_fail():
+    >       assert 0
+    E       assert 0
+
+    test_examples.py:14: AssertionError
+    =========================== short test summary info ============================
+    FAIL test_examples.py::test_fail
+    SKIP [1] test_examples.py:21: Example
+    ===================== 1 failed, 1 skipped in 0.09 seconds ======================
+
+Using ``p`` lists the passing tests, whilst ``P`` adds an extra section "PASSES" with those tests that passed but had
+captured output:
+
+.. code-block:: pytest
+
+    $ pytest -rpP
+    =========================== test session starts ============================
+    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
+    rootdir: $REGENDOC_TMPDIR, inifile:
+    collected 2 items
+
+    test_examples.py ..                                                      [100%]
+    =========================== short test summary info ============================
+    PASSED test_examples.py::test_pass
+    PASSED test_examples.py::test_pass_with_output
+
+    ==================================== PASSES ====================================
+    ____________________________ test_pass_with_output _____________________________
+    ----------------------------- Captured stdout call -----------------------------
+    Passing test
+    =========================== 2 passed in 0.04 seconds ===========================
 
 .. _pdb-option:
 
