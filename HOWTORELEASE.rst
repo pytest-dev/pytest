@@ -24,7 +24,14 @@ taking a lot of time to make a new one.
 
    This will generate a commit with all the changes ready for pushing.
 
-#. Open a PR for this branch targeting ``master``.
+#. Open a PR for this branch:
+
+   * **patch releases**: target ``master``;
+
+   * **minor releases**: target ``features``;
+
+   The reasoning here is to get the smallest diff possible of what will be effectively released,
+   making review easier.
 
 #. After all tests pass and the PR has been approved, publish to PyPI by pushing the tag::
 
@@ -33,7 +40,7 @@ taking a lot of time to make a new one.
 
    Wait for the deploy to complete, then make sure it is `available on PyPI <https://pypi.org/project/pytest>`_.
 
-#. Merge the PR into ``master``.
+#. Merge the PR. For **minor releases**, also open a new PR merging ``features`` back to ``master``.
 
 #. Send an email announcement with the contents from::
 
