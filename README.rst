@@ -111,7 +111,7 @@ Consult the `Changelog <https://docs.pytest.org/en/latest/changelog.html>`__ pag
 License
 -------
 
-Copyright Holger Krekel and others, 2004-2018.
+Copyright Holger Krekel and others, 2004-2019.
 
 Distributed under the terms of the `MIT`_ license, pytest is free and open source software.
 
