@@ -804,7 +804,7 @@ different ``App`` instances and respective smtp servers.  There is no
 need for the ``app`` fixture to be aware of the ``smtp_connection``
 parametrization because pytest will fully analyse the fixture dependency graph.
 
-Note, that the ``app`` fixture has a scope of ``module`` and uses a
+Note that the ``app`` fixture has a scope of ``module`` and uses a
 module-scoped ``smtp_connection`` fixture.  The example would still work if
 ``smtp_connection`` was cached on a ``session`` scope: it is fine for fixtures to use
 "broader" scoped fixtures but not the other way round:

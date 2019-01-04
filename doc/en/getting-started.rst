@@ -7,9 +7,6 @@ Installation and Getting Started
 
 **PyPI package name**: `pytest <https://pypi.org/project/pytest/>`_
 
-**Dependencies**: `py <https://pypi.org/project/py/>`_,
-`colorama (Windows) <https://pypi.org/project/colorama/>`_,
-
 **Documentation as PDF**: `download latest <https://media.readthedocs.org/pdf/pytest/latest/pytest.pdf>`_
 
 ``pytest`` is a framework that makes building simple and scalable tests easy. Tests are expressive and readable—no boilerplate code required. Get started in minutes with a small unit test or complex functional test for your application or library.
