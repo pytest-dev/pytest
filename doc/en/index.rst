@@ -27,15 +27,17 @@ To execute it:
 .. code-block:: pytest
 
     $ pytest
-    =========================== test session starts ============================
+    ================================ test session starts =================================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
+    hypothesis profile 'default' -> database=DirectoryBasedExampleDatabase('$REGENDOC_TMPDIR/.hypothesis/examples')
     rootdir: $REGENDOC_TMPDIR, inifile:
+    plugins: hypothesis-3.x.y
     collected 1 item
 
-    test_sample.py F                                                     [100%]
+    test_sample.py F                                                               [100%]
 
-    ================================= FAILURES =================================
-    _______________________________ test_answer ________________________________
+    ====================================== FAILURES ======================================
+    ____________________________________ test_answer _____________________________________
 
         def test_answer():
     >       assert inc(3) == 5
@@ -43,7 +45,7 @@ To execute it:
     E        +  where 4 = inc(3)
 
     test_sample.py:6: AssertionError
-    ========================= 1 failed in 0.12 seconds =========================
+    ============================== 1 failed in 0.12 seconds ==============================
 
 Due to ``pytest``'s detailed assertion introspection, only plain ``assert`` statements are used.
 See :ref:`Getting Started <getstarted>` for more examples.

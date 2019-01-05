@@ -155,12 +155,14 @@ Example:
 .. code-block:: pytest
 
     $ pytest -ra
-    =========================== test session starts ============================
+    ================================ test session starts =================================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
+    hypothesis profile 'default' -> database=DirectoryBasedExampleDatabase('$REGENDOC_TMPDIR/.hypothesis/examples')
     rootdir: $REGENDOC_TMPDIR, inifile:
+    plugins: hypothesis-3.x.y
     collected 0 items
 
-    ======================= no tests ran in 0.12 seconds =======================
+    ============================ no tests ran in 0.12 seconds ============================
 
 The ``-r`` options accepts a number of characters after it, with ``a`` used above meaning "all except passes".
 
@@ -180,12 +182,14 @@ More than one character can be used, so for example to only see failed and skipp
 .. code-block:: pytest
 
     $ pytest -rfs
-    =========================== test session starts ============================
+    ================================ test session starts =================================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
+    hypothesis profile 'default' -> database=DirectoryBasedExampleDatabase('$REGENDOC_TMPDIR/.hypothesis/examples')
     rootdir: $REGENDOC_TMPDIR, inifile:
+    plugins: hypothesis-3.x.y
     collected 0 items
 
-    ======================= no tests ran in 0.12 seconds =======================
+    ============================ no tests ran in 0.12 seconds ============================
 
 Using ``p`` lists the passing tests, whilst ``P`` adds an extra section "PASSES" with those tests that passed but had
 captured output:
@@ -193,12 +197,14 @@ captured output:
 .. code-block:: pytest
 
     $ pytest -rpP
-    =========================== test session starts ============================
+    ================================ test session starts =================================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
+    hypothesis profile 'default' -> database=DirectoryBasedExampleDatabase('$REGENDOC_TMPDIR/.hypothesis/examples')
     rootdir: $REGENDOC_TMPDIR, inifile:
+    plugins: hypothesis-3.x.y
     collected 0 items
 
-    ======================= no tests ran in 0.12 seconds =======================
+    ============================ no tests ran in 0.12 seconds ============================
 
 .. _pdb-option:
 
@@ -584,7 +590,7 @@ Running it will show that ``MyPlugin`` was added and its
 hook was invoked::
 
     $ python myinvoke.py
-    .                                                                    [100%]*** test run reporting finishing
+    .                                                                              [100%]*** test run reporting finishing
 
 
 .. note::

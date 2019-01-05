@@ -127,15 +127,17 @@ the ``self.db`` values in the traceback:
 .. code-block:: pytest
 
     $ pytest test_unittest_db.py
-    =========================== test session starts ============================
+    ================================ test session starts =================================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
+    hypothesis profile 'default' -> database=DirectoryBasedExampleDatabase('$REGENDOC_TMPDIR/.hypothesis/examples')
     rootdir: $REGENDOC_TMPDIR, inifile:
+    plugins: hypothesis-3.x.y
     collected 2 items
 
-    test_unittest_db.py FF                                               [100%]
+    test_unittest_db.py FF                                                         [100%]
 
-    ================================= FAILURES =================================
-    ___________________________ MyTest.test_method1 ____________________________
+    ====================================== FAILURES ======================================
+    ________________________________ MyTest.test_method1 _________________________________
 
     self = <test_unittest_db.MyTest testMethod=test_method1>
 
@@ -146,7 +148,7 @@ the ``self.db`` values in the traceback:
     E       assert 0
 
     test_unittest_db.py:9: AssertionError
-    ___________________________ MyTest.test_method2 ____________________________
+    ________________________________ MyTest.test_method2 _________________________________
 
     self = <test_unittest_db.MyTest testMethod=test_method2>
 
@@ -156,7 +158,7 @@ the ``self.db`` values in the traceback:
     E       assert 0
 
     test_unittest_db.py:12: AssertionError
-    ========================= 2 failed in 0.12 seconds =========================
+    ============================== 2 failed in 0.12 seconds ==============================
 
 This default pytest traceback shows that the two test methods
 share the same ``self.db`` instance which was our intention
@@ -206,7 +208,7 @@ Running this test module ...:
 .. code-block:: pytest
 
     $ pytest -q test_unittest_cleandir.py
-    .                                                                    [100%]
+    .                                                                              [100%]
     1 passed in 0.12 seconds
 
 ... gives us one passed test because the ``initdir`` fixture function

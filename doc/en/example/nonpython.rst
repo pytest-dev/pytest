@@ -28,19 +28,21 @@ now execute the test specification:
 .. code-block:: pytest
 
     nonpython $ pytest test_simple.yml
-    =========================== test session starts ============================
+    ================================ test session starts =================================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
+    hypothesis profile 'default' -> database=DirectoryBasedExampleDatabase('$REGENDOC_TMPDIR/nonpython/.hypothesis/examples')
     rootdir: $REGENDOC_TMPDIR/nonpython, inifile:
+    plugins: hypothesis-3.x.y
     collected 2 items
 
-    test_simple.yml F.                                                   [100%]
+    test_simple.yml F.                                                             [100%]
 
-    ================================= FAILURES =================================
-    ______________________________ usecase: hello ______________________________
+    ====================================== FAILURES ======================================
+    ___________________________________ usecase: hello ___________________________________
     usecase execution failed
        spec failed: 'some': 'other'
        no further details known at this point.
-    ==================== 1 failed, 1 passed in 0.12 seconds ====================
+    ========================= 1 failed, 1 passed in 0.12 seconds =========================
 
 .. regendoc:wipe
 
@@ -62,21 +64,23 @@ consulted when reporting in ``verbose`` mode:
 .. code-block:: pytest
 
     nonpython $ pytest -v
-    =========================== test session starts ============================
+    ================================ test session starts =================================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.6
     cachedir: .pytest_cache
+    hypothesis profile 'default' -> database=DirectoryBasedExampleDatabase('$REGENDOC_TMPDIR/nonpython/.hypothesis/examples')
     rootdir: $REGENDOC_TMPDIR/nonpython, inifile:
+    plugins: hypothesis-3.x.y
     collecting ... collected 2 items
 
-    test_simple.yml::hello FAILED                                        [ 50%]
-    test_simple.yml::ok PASSED                                           [100%]
+    test_simple.yml::hello FAILED                                                  [ 50%]
+    test_simple.yml::ok PASSED                                                     [100%]
 
-    ================================= FAILURES =================================
-    ______________________________ usecase: hello ______________________________
+    ====================================== FAILURES ======================================
+    ___________________________________ usecase: hello ___________________________________
     usecase execution failed
        spec failed: 'some': 'other'
        no further details known at this point.
-    ==================== 1 failed, 1 passed in 0.12 seconds ====================
+    ========================= 1 failed, 1 passed in 0.12 seconds =========================
 
 .. regendoc:wipe
 
@@ -86,13 +90,15 @@ interesting to just look at the collection tree:
 .. code-block:: pytest
 
     nonpython $ pytest --collect-only
-    =========================== test session starts ============================
+    ================================ test session starts =================================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
+    hypothesis profile 'default' -> database=DirectoryBasedExampleDatabase('$REGENDOC_TMPDIR/nonpython/.hypothesis/examples')
     rootdir: $REGENDOC_TMPDIR/nonpython, inifile:
+    plugins: hypothesis-3.x.y
     collected 2 items
     <Package $REGENDOC_TMPDIR/nonpython>
       <YamlFile test_simple.yml>
         <YamlItem hello>
         <YamlItem ok>
 
-    ======================= no tests ran in 0.12 seconds =======================
+    ============================ no tests ran in 0.12 seconds ============================

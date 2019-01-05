@@ -411,20 +411,22 @@ additionally it is possible to copy examples for an example folder before runnin
 .. code-block:: pytest
 
     $ pytest
-    =========================== test session starts ============================
+    ================================ test session starts =================================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
+    hypothesis profile 'default' -> database=DirectoryBasedExampleDatabase('$REGENDOC_TMPDIR/.hypothesis/examples')
     rootdir: $REGENDOC_TMPDIR, inifile: pytest.ini
+    plugins: hypothesis-3.x.y
     collected 2 items
 
-    test_example.py ..                                                   [100%]
+    test_example.py ..                                                             [100%]
 
-    ============================= warnings summary =============================
+    ================================== warnings summary ==================================
     test_example.py::test_plugin
       $REGENDOC_TMPDIR/test_example.py:4: PytestExperimentalApiWarning: testdir.copy_example is an experimental api that may change over time
         testdir.copy_example("test_example.py")
 
     -- Docs: https://docs.pytest.org/en/latest/warnings.html
-    =================== 2 passed, 1 warnings in 0.12 seconds ===================
+    ======================== 2 passed, 1 warnings in 0.12 seconds ========================
 
 For more information about the result object that ``runpytest()`` returns, and
 the methods that it provides please check out the :py:class:`RunResult

@@ -47,7 +47,7 @@ This means that we only run 2 tests if we do not pass ``--all``:
 .. code-block:: pytest
 
     $ pytest -q test_compute.py
-    ..                                                                   [100%]
+    ..                                                                             [100%]
     2 passed in 0.12 seconds
 
 We run only two computations, so we see two dots.
@@ -56,9 +56,9 @@ let's run the full monty:
 .. code-block:: pytest
 
     $ pytest -q --all
-    ....F                                                                [100%]
-    ================================= FAILURES =================================
-    _____________________________ test_compute[4] ______________________________
+    ....F                                                                          [100%]
+    ====================================== FAILURES ======================================
+    __________________________________ test_compute[4] ___________________________________
 
     param1 = 4
 
@@ -143,9 +143,11 @@ objects, they are still using the default pytest representation:
 .. code-block:: pytest
 
     $ pytest test_time.py --collect-only
-    =========================== test session starts ============================
+    ================================ test session starts =================================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
+    hypothesis profile 'default' -> database=DirectoryBasedExampleDatabase('$REGENDOC_TMPDIR/.hypothesis/examples')
     rootdir: $REGENDOC_TMPDIR, inifile:
+    plugins: hypothesis-3.x.y
     collected 8 items
     <Module test_time.py>
       <Function test_timedistance_v0[a0-b0-expected0]>
@@ -157,7 +159,7 @@ objects, they are still using the default pytest representation:
       <Function test_timedistance_v3[forward]>
       <Function test_timedistance_v3[backward]>
 
-    ======================= no tests ran in 0.12 seconds =======================
+    ============================ no tests ran in 0.12 seconds ============================
 
 In ``test_timedistance_v3``, we used ``pytest.param`` to specify the test IDs
 together with the actual data, instead of listing them separately.
@@ -201,23 +203,27 @@ this is a fully self-contained example which you can run with:
 .. code-block:: pytest
 
     $ pytest test_scenarios.py
-    =========================== test session starts ============================
+    ================================ test session starts =================================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
+    hypothesis profile 'default' -> database=DirectoryBasedExampleDatabase('$REGENDOC_TMPDIR/.hypothesis/examples')
     rootdir: $REGENDOC_TMPDIR, inifile:
+    plugins: hypothesis-3.x.y
     collected 4 items
 
-    test_scenarios.py ....                                               [100%]
+    test_scenarios.py ....                                                         [100%]
 
-    ========================= 4 passed in 0.12 seconds =========================
+    ============================== 4 passed in 0.12 seconds ==============================
 
 If you just collect tests you'll also nicely see 'advanced' and 'basic' as variants for the test function:
 
 .. code-block:: pytest
 
     $ pytest --collect-only test_scenarios.py
-    =========================== test session starts ============================
+    ================================ test session starts =================================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
+    hypothesis profile 'default' -> database=DirectoryBasedExampleDatabase('$REGENDOC_TMPDIR/.hypothesis/examples')
     rootdir: $REGENDOC_TMPDIR, inifile:
+    plugins: hypothesis-3.x.y
     collected 4 items
     <Module test_scenarios.py>
       <Class TestSampleWithScenarios>
@@ -226,7 +232,7 @@ If you just collect tests you'll also nicely see 'advanced' and 'basic' as varia
           <Function test_demo1[advanced]>
           <Function test_demo2[advanced]>
 
-    ======================= no tests ran in 0.12 seconds =======================
+    ============================ no tests ran in 0.12 seconds ============================
 
 Note that we told ``metafunc.parametrize()`` that your scenario values
 should be considered class-scoped.  With pytest-2.3 this leads to a
@@ -281,24 +287,26 @@ Let's first see how it looks like at collection time:
 .. code-block:: pytest
 
     $ pytest test_backends.py --collect-only
-    =========================== test session starts ============================
+    ================================ test session starts =================================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
+    hypothesis profile 'default' -> database=DirectoryBasedExampleDatabase('$REGENDOC_TMPDIR/.hypothesis/examples')
     rootdir: $REGENDOC_TMPDIR, inifile:
+    plugins: hypothesis-3.x.y
     collected 2 items
     <Module test_backends.py>
       <Function test_db_initialized[d1]>
       <Function test_db_initialized[d2]>
 
-    ======================= no tests ran in 0.12 seconds =======================
+    ============================ no tests ran in 0.12 seconds ============================
 
 And then when we run the test:
 
 .. code-block:: pytest
 
     $ pytest -q test_backends.py
-    .F                                                                   [100%]
-    ================================= FAILURES =================================
-    _________________________ test_db_initialized[d2] __________________________
+    .F                                                                             [100%]
+    ====================================== FAILURES ======================================
+    ______________________________ test_db_initialized[d2] _______________________________
 
     db = <conftest.DB2 object at 0xdeadbeef>
 
@@ -346,14 +354,16 @@ The result of this test will be successful:
 .. code-block:: pytest
 
     $ pytest test_indirect_list.py --collect-only
-    =========================== test session starts ============================
+    ================================ test session starts =================================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
+    hypothesis profile 'default' -> database=DirectoryBasedExampleDatabase('$REGENDOC_TMPDIR/.hypothesis/examples')
     rootdir: $REGENDOC_TMPDIR, inifile:
+    plugins: hypothesis-3.x.y
     collected 1 item
     <Module test_indirect_list.py>
       <Function test_indirect[a-b]>
 
-    ======================= no tests ran in 0.12 seconds =======================
+    ============================ no tests ran in 0.12 seconds ============================
 
 .. regendoc:wipe
 
@@ -397,9 +407,9 @@ argument sets to use for each test function.  Let's run it:
 .. code-block:: pytest
 
     $ pytest -q
-    F..                                                                  [100%]
-    ================================= FAILURES =================================
-    ________________________ TestClass.test_equals[1-2] ________________________
+    F..                                                                            [100%]
+    ====================================== FAILURES ======================================
+    _____________________________ TestClass.test_equals[1-2] _____________________________
 
     self = <test_parametrize.TestClass object at 0xdeadbeef>, a = 1, b = 2
 
@@ -429,8 +439,8 @@ Running it results in some skips if we don't have all the python interpreters in
 .. code-block:: pytest
 
    . $ pytest -rs -q multipython.py
-   ...sss...sssssssss...sss...                                          [100%]
-   ========================= short test summary info ==========================
+   ...sss...sssssssss...sss...                                                    [100%]
+   ============================== short test summary info ===============================
    SKIP [15] $REGENDOC_TMPDIR/CWD/multipython.py:30: 'python3.4' not found
    12 passed, 15 skipped in 0.12 seconds
 
@@ -480,16 +490,18 @@ If you run this with reporting for skips enabled:
 .. code-block:: pytest
 
     $ pytest -rs test_module.py
-    =========================== test session starts ============================
+    ================================ test session starts =================================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
+    hypothesis profile 'default' -> database=DirectoryBasedExampleDatabase('$REGENDOC_TMPDIR/.hypothesis/examples')
     rootdir: $REGENDOC_TMPDIR, inifile:
+    plugins: hypothesis-3.x.y
     collected 2 items
 
-    test_module.py .s                                                    [100%]
-    ========================= short test summary info ==========================
+    test_module.py .s                                                              [100%]
+    ============================== short test summary info ===============================
     SKIP [1] $REGENDOC_TMPDIR/conftest.py:11: could not import 'opt2'
 
-    =================== 1 passed, 1 skipped in 0.12 seconds ====================
+    ======================== 1 passed, 1 skipped in 0.12 seconds =========================
 
 You'll see that we don't have an ``opt2`` module and thus the second test run
 of our ``test_func1`` was skipped.  A few notes:
@@ -537,17 +549,19 @@ Then run ``pytest`` with verbose mode and with only the ``basic`` marker:
 .. code-block:: pytest
 
     $ pytest -v -m basic
-    =========================== test session starts ============================
+    ================================ test session starts =================================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.6
     cachedir: .pytest_cache
+    hypothesis profile 'default' -> database=DirectoryBasedExampleDatabase('$REGENDOC_TMPDIR/.hypothesis/examples')
     rootdir: $REGENDOC_TMPDIR, inifile:
+    plugins: hypothesis-3.x.y
     collecting ... collected 17 items / 14 deselected
 
-    test_pytest_param_example.py::test_eval[1+7-8] PASSED                [ 33%]
-    test_pytest_param_example.py::test_eval[basic_2+4] PASSED            [ 66%]
-    test_pytest_param_example.py::test_eval[basic_6*9] xfail             [100%]
+    test_pytest_param_example.py::test_eval[1+7-8] PASSED                          [ 33%]
+    test_pytest_param_example.py::test_eval[basic_2+4] PASSED                      [ 66%]
+    test_pytest_param_example.py::test_eval[basic_6*9] xfail                       [100%]
 
-    ============ 2 passed, 14 deselected, 1 xfailed in 0.12 seconds ============
+    ================= 2 passed, 14 deselected, 1 xfailed in 0.12 seconds =================
 
 As the result:
 

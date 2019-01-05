@@ -25,6 +25,8 @@ Install ``pytest``
 
     $ pytest --version
     This is pytest version 4.x.y, imported from $PYTHON_PREFIX/lib/python3.6/site-packages/pytest.py
+    setuptools registered plugins:
+      hypothesis-3.x.y at $PYTHON_PREFIX/lib/python3.6/site-packages/hypothesis/extra/pytestplugin.py
 
 .. _`simpletest`:
 
@@ -45,15 +47,17 @@ That’s it. You can now execute the test function:
 .. code-block:: pytest
 
     $ pytest
-    =========================== test session starts ============================
+    ================================ test session starts =================================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
+    hypothesis profile 'default' -> database=DirectoryBasedExampleDatabase('$REGENDOC_TMPDIR/.hypothesis/examples')
     rootdir: $REGENDOC_TMPDIR, inifile:
+    plugins: hypothesis-3.x.y
     collected 1 item
 
-    test_sample.py F                                                     [100%]
+    test_sample.py F                                                               [100%]
 
-    ================================= FAILURES =================================
-    _______________________________ test_answer ________________________________
+    ====================================== FAILURES ======================================
+    ____________________________________ test_answer _____________________________________
 
         def test_answer():
     >       assert func(3) == 5
@@ -61,7 +65,7 @@ That’s it. You can now execute the test function:
     E        +  where 4 = func(3)
 
     test_sample.py:5: AssertionError
-    ========================= 1 failed in 0.12 seconds =========================
+    ============================== 1 failed in 0.12 seconds ==============================
 
 This test returns a failure report because ``func(3)`` does not return ``5``.
 
@@ -94,7 +98,7 @@ Execute the test function with “quiet” reporting mode:
 .. code-block:: pytest
 
     $ pytest -q test_sysexit.py
-    .                                                                    [100%]
+    .                                                                              [100%]
     1 passed in 0.12 seconds
 
 Group multiple tests in a class
@@ -117,9 +121,9 @@ Once you develop multiple tests, you may want to group them into a class. pytest
 .. code-block:: pytest
 
     $ pytest -q test_class.py
-    .F                                                                   [100%]
-    ================================= FAILURES =================================
-    ____________________________ TestClass.test_two ____________________________
+    .F                                                                             [100%]
+    ====================================== FAILURES ======================================
+    _________________________________ TestClass.test_two _________________________________
 
     self = <test_class.TestClass object at 0xdeadbeef>
 
@@ -149,9 +153,9 @@ List the name ``tmpdir`` in the test function signature and ``pytest`` will look
 .. code-block:: pytest
 
     $ pytest -q test_tmpdir.py
-    F                                                                    [100%]
-    ================================= FAILURES =================================
-    _____________________________ test_needsfiles ______________________________
+    F                                                                              [100%]
+    ====================================== FAILURES ======================================
+    __________________________________ test_needsfiles ___________________________________
 
     tmpdir = local('PYTEST_TMPDIR/test_needsfiles0')
 
@@ -161,7 +165,7 @@ List the name ``tmpdir`` in the test function signature and ``pytest`` will look
     E       assert 0
 
     test_tmpdir.py:3: AssertionError
-    --------------------------- Captured stdout call ---------------------------
+    -------------------------------- Captured stdout call --------------------------------
     PYTEST_TMPDIR/test_needsfiles0
     1 failed in 0.12 seconds
 

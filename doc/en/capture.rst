@@ -66,24 +66,26 @@ of the failing function and hide the other one:
 .. code-block:: pytest
 
     $ pytest
-    =========================== test session starts ============================
+    ================================ test session starts =================================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
+    hypothesis profile 'default' -> database=DirectoryBasedExampleDatabase('$REGENDOC_TMPDIR/.hypothesis/examples')
     rootdir: $REGENDOC_TMPDIR, inifile:
+    plugins: hypothesis-3.x.y
     collected 2 items
 
-    test_module.py .F                                                    [100%]
+    test_module.py .F                                                              [100%]
 
-    ================================= FAILURES =================================
-    ________________________________ test_func2 ________________________________
+    ====================================== FAILURES ======================================
+    _____________________________________ test_func2 _____________________________________
 
         def test_func2():
     >       assert False
     E       assert False
 
     test_module.py:9: AssertionError
-    -------------------------- Captured stdout setup ---------------------------
+    ------------------------------- Captured stdout setup --------------------------------
     setting up <function test_func2 at 0xdeadbeef>
-    ==================== 1 failed, 1 passed in 0.12 seconds ====================
+    ========================= 1 failed, 1 passed in 0.12 seconds =========================
 
 Accessing captured output from a test function
 ---------------------------------------------------

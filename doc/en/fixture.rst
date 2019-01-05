@@ -71,15 +71,17 @@ marked ``smtp_connection`` fixture function.  Running the test looks like this:
 .. code-block:: pytest
 
     $ pytest test_smtpsimple.py
-    =========================== test session starts ============================
+    ================================ test session starts =================================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
+    hypothesis profile 'default' -> database=DirectoryBasedExampleDatabase('$REGENDOC_TMPDIR/.hypothesis/examples')
     rootdir: $REGENDOC_TMPDIR, inifile:
+    plugins: hypothesis-3.x.y
     collected 1 item
 
-    test_smtpsimple.py F                                                 [100%]
+    test_smtpsimple.py F                                                           [100%]
 
-    ================================= FAILURES =================================
-    ________________________________ test_ehlo _________________________________
+    ====================================== FAILURES ======================================
+    _____________________________________ test_ehlo ______________________________________
 
     smtp_connection = <smtplib.SMTP object at 0xdeadbeef>
 
@@ -90,7 +92,7 @@ marked ``smtp_connection`` fixture function.  Running the test looks like this:
     E       assert 0
 
     test_smtpsimple.py:11: AssertionError
-    ========================= 1 failed in 0.12 seconds =========================
+    ============================== 1 failed in 0.12 seconds ==============================
 
 In the failure traceback we see that the test function was called with a
 ``smtp_connection`` argument, the ``smtplib.SMTP()`` instance created by the fixture
@@ -211,15 +213,17 @@ inspect what is going on and can now run the tests:
 .. code-block:: pytest
 
     $ pytest test_module.py
-    =========================== test session starts ============================
+    ================================ test session starts =================================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
+    hypothesis profile 'default' -> database=DirectoryBasedExampleDatabase('$REGENDOC_TMPDIR/.hypothesis/examples')
     rootdir: $REGENDOC_TMPDIR, inifile:
+    plugins: hypothesis-3.x.y
     collected 2 items
 
-    test_module.py FF                                                    [100%]
+    test_module.py FF                                                              [100%]
 
-    ================================= FAILURES =================================
-    ________________________________ test_ehlo _________________________________
+    ====================================== FAILURES ======================================
+    _____________________________________ test_ehlo ______________________________________
 
     smtp_connection = <smtplib.SMTP object at 0xdeadbeef>
 
@@ -231,7 +235,7 @@ inspect what is going on and can now run the tests:
     E       assert 0
 
     test_module.py:6: AssertionError
-    ________________________________ test_noop _________________________________
+    _____________________________________ test_noop ______________________________________
 
     smtp_connection = <smtplib.SMTP object at 0xdeadbeef>
 
@@ -242,7 +246,7 @@ inspect what is going on and can now run the tests:
     E       assert 0
 
     test_module.py:11: AssertionError
-    ========================= 2 failed in 0.12 seconds =========================
+    ============================== 2 failed in 0.12 seconds ==============================
 
 You see the two ``assert 0`` failing and more importantly you can also see
 that the same (module-scoped) ``smtp_connection`` object was passed into the
@@ -491,14 +495,14 @@ Running it:
 .. code-block:: pytest
 
     $ pytest -qq --tb=short test_anothersmtp.py
-    F                                                                    [100%]
-    ================================= FAILURES =================================
-    ______________________________ test_showhelo _______________________________
+    F                                                                              [100%]
+    ====================================== FAILURES ======================================
+    ___________________________________ test_showhelo ____________________________________
     test_anothersmtp.py:5: in test_showhelo
         assert 0, smtp_connection.helo()
     E   AssertionError: (250, b'mail.python.org')
     E   assert 0
-    ------------------------- Captured stdout teardown -------------------------
+    ------------------------------ Captured stdout teardown ------------------------------
     finalizing <smtplib.SMTP object at 0xdeadbeef> (mail.python.org)
 
 voila! The ``smtp_connection`` fixture function picked up our mail server name
@@ -595,9 +599,9 @@ So let's just do another run:
 .. code-block:: pytest
 
     $ pytest -q test_module.py
-    FFFF                                                                 [100%]
-    ================================= FAILURES =================================
-    ________________________ test_ehlo[smtp.gmail.com] _________________________
+    FFFF                                                                           [100%]
+    ====================================== FAILURES ======================================
+    _____________________________ test_ehlo[smtp.gmail.com] ______________________________
 
     smtp_connection = <smtplib.SMTP object at 0xdeadbeef>
 
@@ -609,7 +613,7 @@ So let's just do another run:
     E       assert 0
 
     test_module.py:6: AssertionError
-    ________________________ test_noop[smtp.gmail.com] _________________________
+    _____________________________ test_noop[smtp.gmail.com] ______________________________
 
     smtp_connection = <smtplib.SMTP object at 0xdeadbeef>
 
@@ -620,7 +624,7 @@ So let's just do another run:
     E       assert 0
 
     test_module.py:11: AssertionError
-    ________________________ test_ehlo[mail.python.org] ________________________
+    _____________________________ test_ehlo[mail.python.org] _____________________________
 
     smtp_connection = <smtplib.SMTP object at 0xdeadbeef>
 
@@ -631,9 +635,9 @@ So let's just do another run:
     E       AssertionError: assert b'smtp.gmail.com' in b'mail.python.org\nPIPELINING\nSIZE 51200000\nETRN\nSTARTTLS\nAUTH DIGEST-MD5 NTLM CRAM-MD5\nENHANCEDSTATUSCODES\n8BITMIME\nDSN\nSMTPUTF8\nCHUNKING'
 
     test_module.py:5: AssertionError
-    -------------------------- Captured stdout setup ---------------------------
+    ------------------------------- Captured stdout setup --------------------------------
     finalizing <smtplib.SMTP object at 0xdeadbeef>
-    ________________________ test_noop[mail.python.org] ________________________
+    _____________________________ test_noop[mail.python.org] _____________________________
 
     smtp_connection = <smtplib.SMTP object at 0xdeadbeef>
 
@@ -644,7 +648,7 @@ So let's just do another run:
     E       assert 0
 
     test_module.py:11: AssertionError
-    ------------------------- Captured stdout teardown -------------------------
+    ------------------------------ Captured stdout teardown ------------------------------
     finalizing <smtplib.SMTP object at 0xdeadbeef>
     4 failed in 0.12 seconds
 
@@ -699,9 +703,11 @@ Running the above tests results in the following test IDs being used:
 .. code-block:: pytest
 
    $ pytest --collect-only
-   =========================== test session starts ============================
+   ================================ test session starts =================================
    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
+   hypothesis profile 'default' -> database=DirectoryBasedExampleDatabase('$REGENDOC_TMPDIR/.hypothesis/examples')
    rootdir: $REGENDOC_TMPDIR, inifile:
+   plugins: hypothesis-3.x.y
    collected 10 items
    <Module test_anothersmtp.py>
      <Function test_showhelo[smtp.gmail.com]>
@@ -717,7 +723,7 @@ Running the above tests results in the following test IDs being used:
      <Function test_ehlo[mail.python.org]>
      <Function test_noop[mail.python.org]>
 
-   ======================= no tests ran in 0.12 seconds =======================
+   ============================ no tests ran in 0.12 seconds ============================
 
 .. _`fixture-parametrize-marks`:
 
@@ -743,17 +749,19 @@ Running this test will *skip* the invocation of ``data_set`` with value ``2``:
 .. code-block:: pytest
 
     $ pytest test_fixture_marks.py -v
-    =========================== test session starts ============================
+    ================================ test session starts =================================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.6
     cachedir: .pytest_cache
+    hypothesis profile 'default' -> database=DirectoryBasedExampleDatabase('$REGENDOC_TMPDIR/.hypothesis/examples')
     rootdir: $REGENDOC_TMPDIR, inifile:
+    plugins: hypothesis-3.x.y
     collecting ... collected 3 items
 
-    test_fixture_marks.py::test_data[0] PASSED                           [ 33%]
-    test_fixture_marks.py::test_data[1] PASSED                           [ 66%]
-    test_fixture_marks.py::test_data[2] SKIPPED                          [100%]
+    test_fixture_marks.py::test_data[0] PASSED                                     [ 33%]
+    test_fixture_marks.py::test_data[1] PASSED                                     [ 66%]
+    test_fixture_marks.py::test_data[2] SKIPPED                                    [100%]
 
-    =================== 2 passed, 1 skipped in 0.12 seconds ====================
+    ======================== 2 passed, 1 skipped in 0.12 seconds =========================
 
 .. _`interdependent fixtures`:
 
@@ -788,16 +796,18 @@ Here we declare an ``app`` fixture which receives the previously defined
 .. code-block:: pytest
 
     $ pytest -v test_appsetup.py
-    =========================== test session starts ============================
+    ================================ test session starts =================================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.6
     cachedir: .pytest_cache
+    hypothesis profile 'default' -> database=DirectoryBasedExampleDatabase('$REGENDOC_TMPDIR/.hypothesis/examples')
     rootdir: $REGENDOC_TMPDIR, inifile:
+    plugins: hypothesis-3.x.y
     collecting ... collected 2 items
 
-    test_appsetup.py::test_smtp_connection_exists[smtp.gmail.com] PASSED [ 50%]
-    test_appsetup.py::test_smtp_connection_exists[mail.python.org] PASSED [100%]
+    test_appsetup.py::test_smtp_connection_exists[smtp.gmail.com] PASSED           [ 50%]
+    test_appsetup.py::test_smtp_connection_exists[mail.python.org] PASSED          [100%]
 
-    ========================= 2 passed in 0.12 seconds =========================
+    ============================== 2 passed in 0.12 seconds ==============================
 
 Due to the parametrization of ``smtp_connection``, the test will run twice with two
 different ``App`` instances and respective smtp servers.  There is no
@@ -859,10 +869,12 @@ Let's run the tests in verbose mode and with looking at the print-output:
 .. code-block:: pytest
 
     $ pytest -v -s test_module.py
-    =========================== test session starts ============================
+    ================================ test session starts =================================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.6
     cachedir: .pytest_cache
+    hypothesis profile 'default' -> database=DirectoryBasedExampleDatabase('$REGENDOC_TMPDIR/.hypothesis/examples')
     rootdir: $REGENDOC_TMPDIR, inifile:
+    plugins: hypothesis-3.x.y
     collecting ... collected 8 items
 
     test_module.py::test_0[1]   SETUP otherarg 1
@@ -898,7 +910,7 @@ Let's run the tests in verbose mode and with looking at the print-output:
       TEARDOWN modarg mod2
 
 
-    ========================= 8 passed in 0.12 seconds =========================
+    ============================== 8 passed in 0.12 seconds ==============================
 
 You can see that the parametrized module-scoped ``modarg`` resource caused an
 ordering of test execution that lead to the fewest possible "active" resources.
@@ -963,7 +975,7 @@ to verify our fixture is activated and the tests pass:
 .. code-block:: pytest
 
     $ pytest -q
-    ..                                                                   [100%]
+    ..                                                                             [100%]
     2 passed in 0.12 seconds
 
 You can specify multiple fixtures like this:
@@ -1064,7 +1076,7 @@ If we run it, we get two passing tests:
 .. code-block:: pytest
 
     $ pytest -q
-    ..                                                                   [100%]
+    ..                                                                             [100%]
     2 passed in 0.12 seconds
 
 Here is how autouse fixtures work in other scopes:

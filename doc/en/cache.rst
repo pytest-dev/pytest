@@ -48,9 +48,9 @@ If you run this for the first time you will see two failures:
 .. code-block:: pytest
 
     $ pytest -q
-    .................F.......F........................                   [100%]
-    ================================= FAILURES =================================
-    _______________________________ test_num[17] _______________________________
+    .................F.......F........................                             [100%]
+    ====================================== FAILURES ======================================
+    ____________________________________ test_num[17] ____________________________________
 
     i = 17
 
@@ -61,7 +61,7 @@ If you run this for the first time you will see two failures:
     E          Failed: bad luck
 
     test_50.py:6: Failed
-    _______________________________ test_num[25] _______________________________
+    ____________________________________ test_num[25] ____________________________________
 
     i = 25
 
@@ -79,16 +79,18 @@ If you then run it with ``--lf``:
 .. code-block:: pytest
 
     $ pytest --lf
-    =========================== test session starts ============================
+    ================================ test session starts =================================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
+    hypothesis profile 'default' -> database=DirectoryBasedExampleDatabase('$REGENDOC_TMPDIR/.hypothesis/examples')
     rootdir: $REGENDOC_TMPDIR, inifile:
+    plugins: hypothesis-3.x.y
     collected 50 items / 48 deselected
     run-last-failure: rerun previous 2 failures
 
-    test_50.py FF                                                        [100%]
+    test_50.py FF                                                                  [100%]
 
-    ================================= FAILURES =================================
-    _______________________________ test_num[17] _______________________________
+    ====================================== FAILURES ======================================
+    ____________________________________ test_num[17] ____________________________________
 
     i = 17
 
@@ -99,7 +101,7 @@ If you then run it with ``--lf``:
     E          Failed: bad luck
 
     test_50.py:6: Failed
-    _______________________________ test_num[25] _______________________________
+    ____________________________________ test_num[25] ____________________________________
 
     i = 25
 
@@ -110,7 +112,7 @@ If you then run it with ``--lf``:
     E          Failed: bad luck
 
     test_50.py:6: Failed
-    ================= 2 failed, 48 deselected in 0.12 seconds ==================
+    ====================== 2 failed, 48 deselected in 0.12 seconds =======================
 
 You have run only the two failing test from the last run, while 48 tests have
 not been run ("deselected").
@@ -122,16 +124,18 @@ of ``FF`` and dots):
 .. code-block:: pytest
 
     $ pytest --ff
-    =========================== test session starts ============================
+    ================================ test session starts =================================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
+    hypothesis profile 'default' -> database=DirectoryBasedExampleDatabase('$REGENDOC_TMPDIR/.hypothesis/examples')
     rootdir: $REGENDOC_TMPDIR, inifile:
+    plugins: hypothesis-3.x.y
     collected 50 items
     run-last-failure: rerun previous 2 failures first
 
-    test_50.py FF................................................        [100%]
+    test_50.py FF................................................                  [100%]
 
-    ================================= FAILURES =================================
-    _______________________________ test_num[17] _______________________________
+    ====================================== FAILURES ======================================
+    ____________________________________ test_num[17] ____________________________________
 
     i = 17
 
@@ -142,7 +146,7 @@ of ``FF`` and dots):
     E          Failed: bad luck
 
     test_50.py:6: Failed
-    _______________________________ test_num[25] _______________________________
+    ____________________________________ test_num[25] ____________________________________
 
     i = 25
 
@@ -153,7 +157,7 @@ of ``FF`` and dots):
     E          Failed: bad luck
 
     test_50.py:6: Failed
-    =================== 2 failed, 48 passed in 0.12 seconds ====================
+    ======================== 2 failed, 48 passed in 0.12 seconds =========================
 
 .. _`config.cache`:
 
@@ -205,9 +209,9 @@ If you run this command for the first time, you can see the print statement:
 .. code-block:: pytest
 
     $ pytest -q
-    F                                                                    [100%]
-    ================================= FAILURES =================================
-    ______________________________ test_function _______________________________
+    F                                                                              [100%]
+    ====================================== FAILURES ======================================
+    ___________________________________ test_function ____________________________________
 
     mydata = 42
 
@@ -216,7 +220,7 @@ If you run this command for the first time, you can see the print statement:
     E       assert 42 == 23
 
     test_caching.py:17: AssertionError
-    -------------------------- Captured stdout setup ---------------------------
+    ------------------------------- Captured stdout setup --------------------------------
     running expensive computation...
     1 failed in 0.12 seconds
 
@@ -226,9 +230,9 @@ the cache and nothing will be printed:
 .. code-block:: pytest
 
     $ pytest -q
-    F                                                                    [100%]
-    ================================= FAILURES =================================
-    ______________________________ test_function _______________________________
+    F                                                                              [100%]
+    ====================================== FAILURES ======================================
+    ___________________________________ test_function ____________________________________
 
     mydata = 42
 
@@ -251,11 +255,13 @@ You can always peek at the content of the cache using the
 .. code-block:: pytest
 
     $ pytest --cache-show
-    =========================== test session starts ============================
+    ================================ test session starts =================================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
+    hypothesis profile 'default' -> database=DirectoryBasedExampleDatabase('$REGENDOC_TMPDIR/.hypothesis/examples')
     rootdir: $REGENDOC_TMPDIR, inifile:
+    plugins: hypothesis-3.x.y
     cachedir: $REGENDOC_TMPDIR/.pytest_cache
-    ------------------------------- cache values -------------------------------
+    ------------------------------------ cache values ------------------------------------
     cache/lastfailed contains:
       {'test_caching.py::test_function': True}
     cache/nodeids contains:
@@ -265,7 +271,7 @@ You can always peek at the content of the cache using the
     example/value contains:
       42
 
-    ======================= no tests ran in 0.12 seconds =======================
+    ============================ no tests ran in 0.12 seconds ============================
 
 Clearing Cache content
 -------------------------------
