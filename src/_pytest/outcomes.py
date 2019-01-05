@@ -138,9 +138,14 @@ xfail.Exception = XFailed
 
 
 def importorskip(modname, minversion=None, reason=None):
-    """ return imported module if it has at least "minversion" as its
-    __version__ attribute.  If no minversion is specified the a skip
-    is only triggered if the module can not be imported.
+    """Imports and returns the requested module ``modname``, or skip the current test
+    if the module cannot be imported.
+
+    :param str modname: the name of the module to import
+    :param str minversion: if given, the imported module ``__version__`` attribute must be
+        at least this minimal version, otherwise the test is still skipped.
+    :param str reason: if given, this reason is shown as the message when the module
+        cannot be imported.
     """
     import warnings
 
