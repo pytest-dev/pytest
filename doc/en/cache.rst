@@ -81,9 +81,7 @@ If you then run it with ``--lf``:
     $ pytest --lf
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
-    hypothesis profile 'default' -> database=DirectoryBasedExampleDatabase('$REGENDOC_TMPDIR/.hypothesis/examples')
     rootdir: $REGENDOC_TMPDIR, inifile:
-    plugins: hypothesis-3.x.y
     collected 50 items / 48 deselected
     run-last-failure: rerun previous 2 failures
 
@@ -126,9 +124,7 @@ of ``FF`` and dots):
     $ pytest --ff
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
-    hypothesis profile 'default' -> database=DirectoryBasedExampleDatabase('$REGENDOC_TMPDIR/.hypothesis/examples')
     rootdir: $REGENDOC_TMPDIR, inifile:
-    plugins: hypothesis-3.x.y
     collected 50 items
     run-last-failure: rerun previous 2 failures first
 
@@ -257,9 +253,7 @@ You can always peek at the content of the cache using the
     $ pytest --cache-show
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
-    hypothesis profile 'default' -> database=DirectoryBasedExampleDatabase('$REGENDOC_TMPDIR/.hypothesis/examples')
     rootdir: $REGENDOC_TMPDIR, inifile:
-    plugins: hypothesis-3.x.y
     cachedir: $REGENDOC_TMPDIR/.pytest_cache
     ------------------------------- cache values -------------------------------
     cache/lastfailed contains:

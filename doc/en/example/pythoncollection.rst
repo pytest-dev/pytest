@@ -132,9 +132,7 @@ The test collection would look like this:
     $ pytest --collect-only
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
-    hypothesis profile 'default' -> database=DirectoryBasedExampleDatabase('$REGENDOC_TMPDIR/.hypothesis/examples')
     rootdir: $REGENDOC_TMPDIR, inifile: pytest.ini
-    plugins: hypothesis-3.x.y
     collected 2 items
     <Module check_myapp.py>
       <Class CheckMyApp>
@@ -189,9 +187,7 @@ You can always peek at the collection tree without running tests like this:
     . $ pytest --collect-only pythoncollection.py
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
-    hypothesis profile 'default' -> database=DirectoryBasedExampleDatabase('$REGENDOC_TMPDIR/CWD/.hypothesis/examples')
     rootdir: $REGENDOC_TMPDIR, inifile: pytest.ini
-    plugins: hypothesis-3.x.y
     collected 3 items
     <Module CWD/pythoncollection.py>
       <Function test_function>
@@ -263,9 +259,7 @@ file will be left out:
     $ pytest --collect-only
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
-    hypothesis profile 'default' -> database=DirectoryBasedExampleDatabase('$REGENDOC_TMPDIR/.hypothesis/examples')
     rootdir: $REGENDOC_TMPDIR, inifile: pytest.ini
-    plugins: hypothesis-3.x.y
     collected 0 items
 
     ======================= no tests ran in 0.12 seconds =======================

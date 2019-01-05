@@ -128,9 +128,7 @@ directory with the above conftest.py:
     $ pytest
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
-    hypothesis profile 'default' -> database=DirectoryBasedExampleDatabase('$REGENDOC_TMPDIR/.hypothesis/examples')
     rootdir: $REGENDOC_TMPDIR, inifile:
-    plugins: hypothesis-3.x.y
     collected 0 items
 
     ======================= no tests ran in 0.12 seconds =======================
@@ -190,9 +188,7 @@ and when running it will see a skipped "slow" test:
     $ pytest -rs    # "-rs" means report details on the little 's'
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
-    hypothesis profile 'default' -> database=DirectoryBasedExampleDatabase('$REGENDOC_TMPDIR/.hypothesis/examples')
     rootdir: $REGENDOC_TMPDIR, inifile:
-    plugins: hypothesis-3.x.y
     collected 2 items
 
     test_module.py .s                                                    [100%]
@@ -208,9 +204,7 @@ Or run it including the ``slow`` marked test:
     $ pytest --runslow
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
-    hypothesis profile 'default' -> database=DirectoryBasedExampleDatabase('$REGENDOC_TMPDIR/.hypothesis/examples')
     rootdir: $REGENDOC_TMPDIR, inifile:
-    plugins: hypothesis-3.x.y
     collected 2 items
 
     test_module.py ..                                                    [100%]
@@ -352,10 +346,8 @@ which will add the string to the test header accordingly:
     $ pytest
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
-    hypothesis profile 'default' -> database=DirectoryBasedExampleDatabase('$REGENDOC_TMPDIR/.hypothesis/examples')
     project deps: mylib-1.1
     rootdir: $REGENDOC_TMPDIR, inifile:
-    plugins: hypothesis-3.x.y
     collected 0 items
 
     ======================= no tests ran in 0.12 seconds =======================
@@ -383,11 +375,9 @@ which will add info only when run with "--v":
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.6
     cachedir: .pytest_cache
-    hypothesis profile 'default' -> database=DirectoryBasedExampleDatabase('$REGENDOC_TMPDIR/.hypothesis/examples')
     info1: did you know that ...
     did you?
     rootdir: $REGENDOC_TMPDIR, inifile:
-    plugins: hypothesis-3.x.y
     collecting ... collected 0 items
 
     ======================= no tests ran in 0.12 seconds =======================
@@ -399,9 +389,7 @@ and nothing when run plainly:
     $ pytest
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
-    hypothesis profile 'default' -> database=DirectoryBasedExampleDatabase('$REGENDOC_TMPDIR/.hypothesis/examples')
     rootdir: $REGENDOC_TMPDIR, inifile:
-    plugins: hypothesis-3.x.y
     collected 0 items
 
     ======================= no tests ran in 0.12 seconds =======================
@@ -440,9 +428,7 @@ Now we can profile which test functions execute the slowest:
     $ pytest --durations=3
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
-    hypothesis profile 'default' -> database=DirectoryBasedExampleDatabase('$REGENDOC_TMPDIR/.hypothesis/examples')
     rootdir: $REGENDOC_TMPDIR, inifile:
-    plugins: hypothesis-3.x.y
     collected 3 items
 
     test_some_are_slow.py ...                                            [100%]
@@ -516,9 +502,7 @@ If we run this:
     $ pytest -rx
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
-    hypothesis profile 'default' -> database=DirectoryBasedExampleDatabase('$REGENDOC_TMPDIR/.hypothesis/examples')
     rootdir: $REGENDOC_TMPDIR, inifile:
-    plugins: hypothesis-3.x.y
     collected 4 items
 
     test_step.py .Fx.                                                    [100%]
@@ -601,9 +585,7 @@ We can run this:
     $ pytest
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
-    hypothesis profile 'default' -> database=DirectoryBasedExampleDatabase('$REGENDOC_TMPDIR/.hypothesis/examples')
     rootdir: $REGENDOC_TMPDIR, inifile:
-    plugins: hypothesis-3.x.y
     collected 7 items
 
     test_step.py .Fx.                                                    [ 57%]
@@ -716,9 +698,7 @@ and run them:
     $ pytest test_module.py
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
-    hypothesis profile 'default' -> database=DirectoryBasedExampleDatabase('$REGENDOC_TMPDIR/.hypothesis/examples')
     rootdir: $REGENDOC_TMPDIR, inifile:
-    plugins: hypothesis-3.x.y
     collected 2 items
 
     test_module.py FF                                                    [100%]
@@ -819,9 +799,7 @@ and run it:
     $ pytest -s test_module.py
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
-    hypothesis profile 'default' -> database=DirectoryBasedExampleDatabase('$REGENDOC_TMPDIR/.hypothesis/examples')
     rootdir: $REGENDOC_TMPDIR, inifile:
-    plugins: hypothesis-3.x.y
     collected 3 items
 
     test_module.py Esetting up a test failed! test_module.py::test_setup_fails

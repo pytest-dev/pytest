@@ -413,9 +413,7 @@ additionally it is possible to copy examples for an example folder before runnin
     $ pytest
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
-    hypothesis profile 'default' -> database=DirectoryBasedExampleDatabase('$REGENDOC_TMPDIR/.hypothesis/examples')
     rootdir: $REGENDOC_TMPDIR, inifile: pytest.ini
-    plugins: hypothesis-3.x.y
     collected 2 items
 
     test_example.py ..                                                   [100%]

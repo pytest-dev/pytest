@@ -25,8 +25,6 @@ Install ``pytest``
 
     $ pytest --version
     This is pytest version 4.x.y, imported from $PYTHON_PREFIX/lib/python3.6/site-packages/pytest.py
-    setuptools registered plugins:
-      hypothesis-3.x.y at $PYTHON_PREFIX/lib/python3.6/site-packages/hypothesis/extra/pytestplugin.py
 
 .. _`simpletest`:
 
@@ -49,9 +47,7 @@ That’s it. You can now execute the test function:
     $ pytest
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
-    hypothesis profile 'default' -> database=DirectoryBasedExampleDatabase('$REGENDOC_TMPDIR/.hypothesis/examples')
     rootdir: $REGENDOC_TMPDIR, inifile:
-    plugins: hypothesis-3.x.y
     collected 1 item
 
     test_sample.py F                                                     [100%]

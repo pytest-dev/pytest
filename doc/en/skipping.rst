@@ -330,9 +330,7 @@ Running it with the report-on-xfail option gives this output:
     example $ pytest -rx xfail_demo.py
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
-    hypothesis profile 'default' -> database=DirectoryBasedExampleDatabase('$REGENDOC_TMPDIR/example/.hypothesis/examples')
     rootdir: $REGENDOC_TMPDIR/example, inifile:
-    plugins: hypothesis-3.x.y
     collected 7 items
 
     xfail_demo.py xxxxxxx                                                [100%]

@@ -65,9 +65,7 @@ then you can just invoke ``pytest`` without command line options:
     $ pytest
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
-    hypothesis profile 'default' -> database=DirectoryBasedExampleDatabase('$REGENDOC_TMPDIR/.hypothesis/examples')
     rootdir: $REGENDOC_TMPDIR, inifile: pytest.ini
-    plugins: hypothesis-3.x.y
     collected 1 item
 
     mymodule.py .                                                        [100%]
