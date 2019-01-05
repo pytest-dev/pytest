@@ -1,3 +1,0 @@
-The deprecated ``record_xml_property`` fixture has been removed, use the more generic ``record_property`` instead.
-
-See our `docs <https://docs.pytest.org/en/latest/deprecations.html#record-xml-property>`__ for more information.

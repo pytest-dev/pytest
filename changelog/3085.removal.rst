@@ -1,3 +1,0 @@
-Removed support for passing strings to ``pytest.main``. Now, always pass a list of strings instead.
-
-See our `docs <https://docs.pytest.org/en/latest/deprecations.html#passing-command-line-string-to-pytest-main>`__ on information on how to update your code.

@@ -1,3 +1,0 @@
-Deprecated the ``pytest.config`` global.
-
-See https://docs.pytest.org/en/latest/deprecations.html#pytest-config-global for rationale.

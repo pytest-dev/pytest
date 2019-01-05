@@ -1,2 +1,0 @@
-``pytest.importorskip`` now supports a ``reason`` parameter, which will be shown when the
-requested module cannot be imported.

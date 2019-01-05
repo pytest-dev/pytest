@@ -1,3 +1,0 @@
-Removed support for yield tests - they are fundamentally broken because they don't support fixtures properly since collection and test execution were separated.
-
-See our `docs <https://docs.pytest.org/en/latest/deprecations.html#yield-tests>`__ on information on how to update your code.
