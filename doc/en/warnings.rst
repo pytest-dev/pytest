@@ -23,22 +23,22 @@ Running pytest now produces this output:
 .. code-block:: pytest
 
     $ pytest test_show_warnings.py
-    ================================ test session starts =================================
+    =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     hypothesis profile 'default' -> database=DirectoryBasedExampleDatabase('$REGENDOC_TMPDIR/.hypothesis/examples')
     rootdir: $REGENDOC_TMPDIR, inifile:
     plugins: hypothesis-3.x.y
     collected 1 item
 
-    test_show_warnings.py .                                                        [100%]
+    test_show_warnings.py .                                              [100%]
 
-    ================================== warnings summary ==================================
+    ============================= warnings summary =============================
     test_show_warnings.py::test_one
       $REGENDOC_TMPDIR/test_show_warnings.py:4: UserWarning: api v1, should use functions from v2
         warnings.warn(UserWarning("api v1, should use functions from v2"))
 
     -- Docs: https://docs.pytest.org/en/latest/warnings.html
-    ======================== 1 passed, 1 warnings in 0.12 seconds ========================
+    =================== 1 passed, 1 warnings in 0.12 seconds ===================
 
 The ``-W`` flag can be passed to control which warnings will be displayed or even turn
 them into errors:
@@ -46,15 +46,15 @@ them into errors:
 .. code-block:: pytest
 
     $ pytest -q test_show_warnings.py -W error::UserWarning
-    F                                                                              [100%]
-    ====================================== FAILURES ======================================
-    ______________________________________ test_one ______________________________________
+    F                                                                    [100%]
+    ================================= FAILURES =================================
+    _________________________________ test_one _________________________________
 
         def test_one():
     >       assert api_v1() == 1
 
     test_show_warnings.py:8:
-    _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+    _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 
         def api_v1():
     >       warnings.warn(UserWarning("api v1, should use functions from v2"))
@@ -357,7 +357,7 @@ defines an ``__init__`` constructor, as this prevents the class from being insta
 
     $ pytest test_pytest_warnings.py -q
 
-    ================================== warnings summary ==================================
+    ============================= warnings summary =============================
     test_pytest_warnings.py:1
       $REGENDOC_TMPDIR/test_pytest_warnings.py:1: PytestWarning: cannot collect test class 'Test' because it has a __init__ constructor
         class Test:

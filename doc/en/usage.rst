@@ -191,14 +191,40 @@ Example:
 .. code-block:: pytest
 
     $ pytest -ra
-    ================================ test session starts =================================
+    =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     hypothesis profile 'default' -> database=DirectoryBasedExampleDatabase('$REGENDOC_TMPDIR/.hypothesis/examples')
     rootdir: $REGENDOC_TMPDIR, inifile:
     plugins: hypothesis-3.x.y
-    collected 0 items
+    collected 6 items
 
-    ============================ no tests ran in 0.12 seconds ============================
+    test_example.py .FEsxX                                               [100%]
+
+    ================================== ERRORS ==================================
+    _______________________ ERROR at setup of test_error _______________________
+
+        @pytest.fixture
+        def error_fixture():
+    >       assert 0
+    E       assert 0
+
+    test_example.py:6: AssertionError
+    ================================= FAILURES =================================
+    ________________________________ test_fail _________________________________
+
+        def test_fail():
+    >       assert 0
+    E       assert 0
+
+    test_example.py:14: AssertionError
+    ========================= short test summary info ==========================
+    SKIP [1] $REGENDOC_TMPDIR/test_example.py:23: skipping this test
+    XFAIL test_example.py::test_xfail
+      reason: xfailing this test
+    XPASS test_example.py::test_xpass always xfail
+    ERROR test_example.py::test_error
+    FAIL test_example.py::test_fail
+     1 failed, 1 passed, 1 skipped, 1 xfailed, 1 xpassed, 1 error in 0.12 seconds
 
 The ``-r`` options accepts a number of characters after it, with ``a`` used above meaning "all except passes".
 
@@ -218,14 +244,36 @@ More than one character can be used, so for example to only see failed and skipp
 .. code-block:: pytest
 
     $ pytest -rfs
-    ================================ test session starts =================================
+    =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     hypothesis profile 'default' -> database=DirectoryBasedExampleDatabase('$REGENDOC_TMPDIR/.hypothesis/examples')
     rootdir: $REGENDOC_TMPDIR, inifile:
     plugins: hypothesis-3.x.y
-    collected 0 items
+    collected 6 items
 
-    ============================ no tests ran in 0.12 seconds ============================
+    test_example.py .FEsxX                                               [100%]
+
+    ================================== ERRORS ==================================
+    _______________________ ERROR at setup of test_error _______________________
+
+        @pytest.fixture
+        def error_fixture():
+    >       assert 0
+    E       assert 0
+
+    test_example.py:6: AssertionError
+    ================================= FAILURES =================================
+    ________________________________ test_fail _________________________________
+
+        def test_fail():
+    >       assert 0
+    E       assert 0
+
+    test_example.py:14: AssertionError
+    ========================= short test summary info ==========================
+    FAIL test_example.py::test_fail
+    SKIP [1] $REGENDOC_TMPDIR/test_example.py:23: skipping this test
+     1 failed, 1 passed, 1 skipped, 1 xfailed, 1 xpassed, 1 error in 0.12 seconds
 
 Using ``p`` lists the passing tests, whilst ``P`` adds an extra section "PASSES" with those tests that passed but had
 captured output:
@@ -233,14 +281,39 @@ captured output:
 .. code-block:: pytest
 
     $ pytest -rpP
-    ================================ test session starts =================================
+    =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     hypothesis profile 'default' -> database=DirectoryBasedExampleDatabase('$REGENDOC_TMPDIR/.hypothesis/examples')
     rootdir: $REGENDOC_TMPDIR, inifile:
     plugins: hypothesis-3.x.y
-    collected 0 items
+    collected 6 items
 
-    ============================ no tests ran in 0.12 seconds ============================
+    test_example.py .FEsxX                                               [100%]
+
+    ================================== ERRORS ==================================
+    _______________________ ERROR at setup of test_error _______________________
+
+        @pytest.fixture
+        def error_fixture():
+    >       assert 0
+    E       assert 0
+
+    test_example.py:6: AssertionError
+    ================================= FAILURES =================================
+    ________________________________ test_fail _________________________________
+
+        def test_fail():
+    >       assert 0
+    E       assert 0
+
+    test_example.py:14: AssertionError
+    ========================= short test summary info ==========================
+    PASSED test_example.py::test_ok
+    ================================== PASSES ==================================
+    _________________________________ test_ok __________________________________
+    --------------------------- Captured stdout call ---------------------------
+    ok
+     1 failed, 1 passed, 1 skipped, 1 xfailed, 1 xpassed, 1 error in 0.12 seconds
 
 .. _pdb-option:
 
@@ -626,8 +699,25 @@ Running it will show that ``MyPlugin`` was added and its
 hook was invoked::
 
     $ python myinvoke.py
-    .                                                                              [100%]*** test run reporting finishing
+    .FEsxX.                                                              [100%]*** test run reporting finishing
 
+    ================================== ERRORS ==================================
+    _______________________ ERROR at setup of test_error _______________________
+
+        @pytest.fixture
+        def error_fixture():
+    >       assert 0
+    E       assert 0
+
+    test_example.py:6: AssertionError
+    ================================= FAILURES =================================
+    ________________________________ test_fail _________________________________
+
+        def test_fail():
+    >       assert 0
+    E       assert 0
+
+    test_example.py:14: AssertionError
 
 .. note::
 

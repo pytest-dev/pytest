@@ -27,17 +27,17 @@ you will see the return value of the function call:
 .. code-block:: pytest
 
     $ pytest test_assert1.py
-    ================================ test session starts =================================
+    =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     hypothesis profile 'default' -> database=DirectoryBasedExampleDatabase('$REGENDOC_TMPDIR/.hypothesis/examples')
     rootdir: $REGENDOC_TMPDIR, inifile:
     plugins: hypothesis-3.x.y
     collected 1 item
 
-    test_assert1.py F                                                              [100%]
+    test_assert1.py F                                                    [100%]
 
-    ====================================== FAILURES ======================================
-    ___________________________________ test_function ____________________________________
+    ================================= FAILURES =================================
+    ______________________________ test_function _______________________________
 
         def test_function():
     >       assert f() == 4
@@ -45,7 +45,7 @@ you will see the return value of the function call:
     E        +  where 3 = f()
 
     test_assert1.py:5: AssertionError
-    ============================== 1 failed in 0.12 seconds ==============================
+    ========================= 1 failed in 0.12 seconds =========================
 
 ``pytest`` has support for showing the values of the most common subexpressions
 including calls, attributes, comparisons, and binary and unary
@@ -173,17 +173,17 @@ if you run this module:
 .. code-block:: pytest
 
     $ pytest test_assert2.py
-    ================================ test session starts =================================
+    =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     hypothesis profile 'default' -> database=DirectoryBasedExampleDatabase('$REGENDOC_TMPDIR/.hypothesis/examples')
     rootdir: $REGENDOC_TMPDIR, inifile:
     plugins: hypothesis-3.x.y
     collected 1 item
 
-    test_assert2.py F                                                              [100%]
+    test_assert2.py F                                                    [100%]
 
-    ====================================== FAILURES ======================================
-    ________________________________ test_set_comparison _________________________________
+    ================================= FAILURES =================================
+    ___________________________ test_set_comparison ____________________________
 
         def test_set_comparison():
             set1 = set("1308")
@@ -197,7 +197,7 @@ if you run this module:
     E         Use -v to get the full diff
 
     test_assert2.py:5: AssertionError
-    ============================== 1 failed in 0.12 seconds ==============================
+    ========================= 1 failed in 0.12 seconds =========================
 
 Special comparisons are done for a number of cases:
 
@@ -247,9 +247,9 @@ the conftest file:
 .. code-block:: pytest
 
    $ pytest -q test_foocompare.py
-   F                                                                              [100%]
-   ====================================== FAILURES ======================================
-   ____________________________________ test_compare ____________________________________
+   F                                                                    [100%]
+   ================================= FAILURES =================================
+   _______________________________ test_compare _______________________________
 
        def test_compare():
            f1 = Foo(1)

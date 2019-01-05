@@ -63,16 +63,16 @@ then you can just invoke ``pytest`` without command line options:
 .. code-block:: pytest
 
     $ pytest
-    ================================ test session starts =================================
+    =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     hypothesis profile 'default' -> database=DirectoryBasedExampleDatabase('$REGENDOC_TMPDIR/.hypothesis/examples')
     rootdir: $REGENDOC_TMPDIR, inifile: pytest.ini
     plugins: hypothesis-3.x.y
     collected 1 item
 
-    mymodule.py .                                                                  [100%]
+    mymodule.py .                                                        [100%]
 
-    ============================== 1 passed in 0.12 seconds ==============================
+    ========================= 1 passed in 0.12 seconds =========================
 
 It is possible to use fixtures using the ``getfixture`` helper::
 

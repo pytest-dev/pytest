@@ -48,9 +48,9 @@ Let's run this without supplying our new option:
 .. code-block:: pytest
 
     $ pytest -q test_sample.py
-    F                                                                              [100%]
-    ====================================== FAILURES ======================================
-    ____________________________________ test_answer _____________________________________
+    F                                                                    [100%]
+    ================================= FAILURES =================================
+    _______________________________ test_answer ________________________________
 
     cmdopt = 'type1'
 
@@ -63,7 +63,7 @@ Let's run this without supplying our new option:
     E       assert 0
 
     test_sample.py:6: AssertionError
-    -------------------------------- Captured stdout call --------------------------------
+    --------------------------- Captured stdout call ---------------------------
     first
     1 failed in 0.12 seconds
 
@@ -72,9 +72,9 @@ And now with supplying a command line option:
 .. code-block:: pytest
 
     $ pytest -q --cmdopt=type2
-    F                                                                              [100%]
-    ====================================== FAILURES ======================================
-    ____________________________________ test_answer _____________________________________
+    F                                                                    [100%]
+    ================================= FAILURES =================================
+    _______________________________ test_answer ________________________________
 
     cmdopt = 'type2'
 
@@ -87,7 +87,7 @@ And now with supplying a command line option:
     E       assert 0
 
     test_sample.py:6: AssertionError
-    -------------------------------- Captured stdout call --------------------------------
+    --------------------------- Captured stdout call ---------------------------
     second
     1 failed in 0.12 seconds
 
@@ -126,14 +126,14 @@ directory with the above conftest.py:
 .. code-block:: pytest
 
     $ pytest
-    ================================ test session starts =================================
+    =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     hypothesis profile 'default' -> database=DirectoryBasedExampleDatabase('$REGENDOC_TMPDIR/.hypothesis/examples')
     rootdir: $REGENDOC_TMPDIR, inifile:
     plugins: hypothesis-3.x.y
     collected 0 items
 
-    ============================ no tests ran in 0.12 seconds ============================
+    ======================= no tests ran in 0.12 seconds =======================
 
 .. _`excontrolskip`:
 
@@ -188,34 +188,34 @@ and when running it will see a skipped "slow" test:
 .. code-block:: pytest
 
     $ pytest -rs    # "-rs" means report details on the little 's'
-    ================================ test session starts =================================
+    =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     hypothesis profile 'default' -> database=DirectoryBasedExampleDatabase('$REGENDOC_TMPDIR/.hypothesis/examples')
     rootdir: $REGENDOC_TMPDIR, inifile:
     plugins: hypothesis-3.x.y
     collected 2 items
 
-    test_module.py .s                                                              [100%]
-    ============================== short test summary info ===============================
+    test_module.py .s                                                    [100%]
+    ========================= short test summary info ==========================
     SKIP [1] test_module.py:8: need --runslow option to run
 
-    ======================== 1 passed, 1 skipped in 0.12 seconds =========================
+    =================== 1 passed, 1 skipped in 0.12 seconds ====================
 
 Or run it including the ``slow`` marked test:
 
 .. code-block:: pytest
 
     $ pytest --runslow
-    ================================ test session starts =================================
+    =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     hypothesis profile 'default' -> database=DirectoryBasedExampleDatabase('$REGENDOC_TMPDIR/.hypothesis/examples')
     rootdir: $REGENDOC_TMPDIR, inifile:
     plugins: hypothesis-3.x.y
     collected 2 items
 
-    test_module.py ..                                                              [100%]
+    test_module.py ..                                                    [100%]
 
-    ============================== 2 passed in 0.12 seconds ==============================
+    ========================= 2 passed in 0.12 seconds =========================
 
 Writing well integrated assertion helpers
 --------------------------------------------------
@@ -251,9 +251,9 @@ Let's run our little function:
 .. code-block:: pytest
 
     $ pytest -q test_checkconfig.py
-    F                                                                              [100%]
-    ====================================== FAILURES ======================================
-    ___________________________________ test_something ___________________________________
+    F                                                                    [100%]
+    ================================= FAILURES =================================
+    ______________________________ test_something ______________________________
 
         def test_something():
     >       checkconfig(42)
@@ -350,7 +350,7 @@ which will add the string to the test header accordingly:
 .. code-block:: pytest
 
     $ pytest
-    ================================ test session starts =================================
+    =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     hypothesis profile 'default' -> database=DirectoryBasedExampleDatabase('$REGENDOC_TMPDIR/.hypothesis/examples')
     project deps: mylib-1.1
@@ -358,7 +358,7 @@ which will add the string to the test header accordingly:
     plugins: hypothesis-3.x.y
     collected 0 items
 
-    ============================ no tests ran in 0.12 seconds ============================
+    ======================= no tests ran in 0.12 seconds =======================
 
 .. regendoc:wipe
 
@@ -380,7 +380,7 @@ which will add info only when run with "--v":
 .. code-block:: pytest
 
     $ pytest -v
-    ================================ test session starts =================================
+    =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.6
     cachedir: .pytest_cache
     hypothesis profile 'default' -> database=DirectoryBasedExampleDatabase('$REGENDOC_TMPDIR/.hypothesis/examples')
@@ -390,21 +390,21 @@ which will add info only when run with "--v":
     plugins: hypothesis-3.x.y
     collecting ... collected 0 items
 
-    ============================ no tests ran in 0.12 seconds ============================
+    ======================= no tests ran in 0.12 seconds =======================
 
 and nothing when run plainly:
 
 .. code-block:: pytest
 
     $ pytest
-    ================================ test session starts =================================
+    =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     hypothesis profile 'default' -> database=DirectoryBasedExampleDatabase('$REGENDOC_TMPDIR/.hypothesis/examples')
     rootdir: $REGENDOC_TMPDIR, inifile:
     plugins: hypothesis-3.x.y
     collected 0 items
 
-    ============================ no tests ran in 0.12 seconds ============================
+    ======================= no tests ran in 0.12 seconds =======================
 
 profiling test duration
 --------------------------
@@ -438,20 +438,20 @@ Now we can profile which test functions execute the slowest:
 .. code-block:: pytest
 
     $ pytest --durations=3
-    ================================ test session starts =================================
+    =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     hypothesis profile 'default' -> database=DirectoryBasedExampleDatabase('$REGENDOC_TMPDIR/.hypothesis/examples')
     rootdir: $REGENDOC_TMPDIR, inifile:
     plugins: hypothesis-3.x.y
     collected 3 items
 
-    test_some_are_slow.py ...                                                      [100%]
+    test_some_are_slow.py ...                                            [100%]
 
-    ============================== slowest 3 test durations ==============================
+    ========================= slowest 3 test durations =========================
     0.30s call     test_some_are_slow.py::test_funcslow2
     0.20s call     test_some_are_slow.py::test_funcslow1
     0.10s call     test_some_are_slow.py::test_funcfast
-    ============================== 3 passed in 0.12 seconds ==============================
+    ========================= 3 passed in 0.12 seconds =========================
 
 incremental testing - test steps
 ---------------------------------------------------
@@ -514,17 +514,17 @@ If we run this:
 .. code-block:: pytest
 
     $ pytest -rx
-    ================================ test session starts =================================
+    =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     hypothesis profile 'default' -> database=DirectoryBasedExampleDatabase('$REGENDOC_TMPDIR/.hypothesis/examples')
     rootdir: $REGENDOC_TMPDIR, inifile:
     plugins: hypothesis-3.x.y
     collected 4 items
 
-    test_step.py .Fx.                                                              [100%]
+    test_step.py .Fx.                                                    [100%]
 
-    ====================================== FAILURES ======================================
-    _________________________ TestUserHandling.test_modification _________________________
+    ================================= FAILURES =================================
+    ____________________ TestUserHandling.test_modification ____________________
 
     self = <test_step.TestUserHandling object at 0xdeadbeef>
 
@@ -533,10 +533,10 @@ If we run this:
     E       assert 0
 
     test_step.py:11: AssertionError
-    ============================== short test summary info ===============================
+    ========================= short test summary info ==========================
     XFAIL test_step.py::TestUserHandling::test_deletion
       reason: previous test failed (test_modification)
-    =================== 1 failed, 2 passed, 1 xfailed in 0.12 seconds ====================
+    ============== 1 failed, 2 passed, 1 xfailed in 0.12 seconds ===============
 
 We'll see that ``test_deletion`` was not executed because ``test_modification``
 failed.  It is reported as an "expected failure".
@@ -599,20 +599,20 @@ We can run this:
 .. code-block:: pytest
 
     $ pytest
-    ================================ test session starts =================================
+    =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     hypothesis profile 'default' -> database=DirectoryBasedExampleDatabase('$REGENDOC_TMPDIR/.hypothesis/examples')
     rootdir: $REGENDOC_TMPDIR, inifile:
     plugins: hypothesis-3.x.y
     collected 7 items
 
-    test_step.py .Fx.                                                              [ 57%]
-    a/test_db.py F                                                                 [ 71%]
-    a/test_db2.py F                                                                [ 85%]
-    b/test_error.py E                                                              [100%]
+    test_step.py .Fx.                                                    [ 57%]
+    a/test_db.py F                                                       [ 71%]
+    a/test_db2.py F                                                      [ 85%]
+    b/test_error.py E                                                    [100%]
 
-    ======================================= ERRORS =======================================
-    ____________________________ ERROR at setup of test_root _____________________________
+    ================================== ERRORS ==================================
+    _______________________ ERROR at setup of test_root ________________________
     file $REGENDOC_TMPDIR/b/test_error.py, line 1
       def test_root(db):  # no db here, will error out
     E       fixture 'db' not found
@@ -620,8 +620,8 @@ We can run this:
     >       use 'pytest --fixtures [testpath]' for help on them.
 
     $REGENDOC_TMPDIR/b/test_error.py:1
-    ====================================== FAILURES ======================================
-    _________________________ TestUserHandling.test_modification _________________________
+    ================================= FAILURES =================================
+    ____________________ TestUserHandling.test_modification ____________________
 
     self = <test_step.TestUserHandling object at 0xdeadbeef>
 
@@ -630,7 +630,7 @@ We can run this:
     E       assert 0
 
     test_step.py:11: AssertionError
-    ______________________________________ test_a1 _______________________________________
+    _________________________________ test_a1 __________________________________
 
     db = <conftest.DB object at 0xdeadbeef>
 
@@ -640,7 +640,7 @@ We can run this:
     E       assert 0
 
     a/test_db.py:2: AssertionError
-    ______________________________________ test_a2 _______________________________________
+    _________________________________ test_a2 __________________________________
 
     db = <conftest.DB object at 0xdeadbeef>
 
@@ -650,7 +650,7 @@ We can run this:
     E       assert 0
 
     a/test_db2.py:2: AssertionError
-    =============== 3 failed, 2 passed, 1 xfailed, 1 error in 0.12 seconds ===============
+    ========== 3 failed, 2 passed, 1 xfailed, 1 error in 0.12 seconds ==========
 
 The two test modules in the ``a`` directory see the same ``db`` fixture instance
 while the one test in the sister-directory ``b`` doesn't see it.  We could of course
@@ -714,17 +714,17 @@ and run them:
 .. code-block:: pytest
 
     $ pytest test_module.py
-    ================================ test session starts =================================
+    =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     hypothesis profile 'default' -> database=DirectoryBasedExampleDatabase('$REGENDOC_TMPDIR/.hypothesis/examples')
     rootdir: $REGENDOC_TMPDIR, inifile:
     plugins: hypothesis-3.x.y
     collected 2 items
 
-    test_module.py FF                                                              [100%]
+    test_module.py FF                                                    [100%]
 
-    ====================================== FAILURES ======================================
-    _____________________________________ test_fail1 _____________________________________
+    ================================= FAILURES =================================
+    ________________________________ test_fail1 ________________________________
 
     tmpdir = local('PYTEST_TMPDIR/test_fail10')
 
@@ -733,14 +733,14 @@ and run them:
     E       assert 0
 
     test_module.py:2: AssertionError
-    _____________________________________ test_fail2 _____________________________________
+    ________________________________ test_fail2 ________________________________
 
         def test_fail2():
     >       assert 0
     E       assert 0
 
     test_module.py:6: AssertionError
-    ============================== 2 failed in 0.12 seconds ==============================
+    ========================= 2 failed in 0.12 seconds =========================
 
 you will have a "failures" file which contains the failing test ids::
 
@@ -817,7 +817,7 @@ and run it:
 .. code-block:: pytest
 
     $ pytest -s test_module.py
-    ================================ test session starts =================================
+    =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     hypothesis profile 'default' -> database=DirectoryBasedExampleDatabase('$REGENDOC_TMPDIR/.hypothesis/examples')
     rootdir: $REGENDOC_TMPDIR, inifile:
@@ -828,8 +828,8 @@ and run it:
     Fexecuting test failed test_module.py::test_call_fails
     F
 
-    ======================================= ERRORS =======================================
-    _________________________ ERROR at setup of test_setup_fails _________________________
+    ================================== ERRORS ==================================
+    ____________________ ERROR at setup of test_setup_fails ____________________
 
         @pytest.fixture
         def other():
@@ -837,8 +837,8 @@ and run it:
     E       assert 0
 
     test_module.py:7: AssertionError
-    ====================================== FAILURES ======================================
-    __________________________________ test_call_fails ___________________________________
+    ================================= FAILURES =================================
+    _____________________________ test_call_fails ______________________________
 
     something = None
 
@@ -847,14 +847,14 @@ and run it:
     E       assert 0
 
     test_module.py:15: AssertionError
-    _____________________________________ test_fail2 _____________________________________
+    ________________________________ test_fail2 ________________________________
 
         def test_fail2():
     >       assert 0
     E       assert 0
 
     test_module.py:19: AssertionError
-    ========================= 2 failed, 1 error in 0.12 seconds ==========================
+    ==================== 2 failed, 1 error in 0.12 seconds =====================
 
 You'll see that the fixture finalizers could use the precise reporting
 information.
