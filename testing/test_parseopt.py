@@ -24,6 +24,12 @@ class TestParser(object):
         out, err = capsys.readouterr()
         assert err.find("error: unrecognized arguments") != -1
 
+    def test_custom_prog(self, parser):
+        """Custom prog can be set for `argparse.ArgumentParser`."""
+        assert parser._getparser().prog == os.path.basename(sys.argv[0])
+        parser.prog = "custom-prog"
+        assert parser._getparser().prog == "custom-prog"
+
     def test_argument(self):
         with pytest.raises(parseopt.ArgumentError):
             # need a short or long option
@@ -100,12 +106,8 @@ class TestParser(object):
 
     def test_group_shortopt_lowercase(self, parser):
         group = parser.getgroup("hello")
-        pytest.raises(
-            ValueError,
-            """
+        with pytest.raises(ValueError):
             group.addoption("-x", action="store_true")
-        """,
-        )
         assert len(group.options) == 0
         group._addoption("-x", action="store_true")
         assert len(group.options) == 1

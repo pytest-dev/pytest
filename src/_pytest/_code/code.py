@@ -391,44 +391,85 @@ co_equal = compile(
 )
 
 
+@attr.s(repr=False)
 class ExceptionInfo(object):
     """ wraps sys.exc_info() objects and offers
         help for navigating the traceback.
     """
 
-    _striptext = ""
     _assert_start_repr = (
         "AssertionError(u'assert " if _PY2 else "AssertionError('assert "
     )
 
-    def __init__(self, tup=None, exprinfo=None):
-        import _pytest._code
+    _excinfo = attr.ib()
+    _striptext = attr.ib(default="")
+    _traceback = attr.ib(default=None)
 
-        if tup is None:
-            tup = sys.exc_info()
-            if exprinfo is None and isinstance(tup[1], AssertionError):
-                exprinfo = getattr(tup[1], "msg", None)
-                if exprinfo is None:
-                    exprinfo = py.io.saferepr(tup[1])
-                if exprinfo and exprinfo.startswith(self._assert_start_repr):
-                    self._striptext = "AssertionError: "
-        self._excinfo = tup
-        #: the exception class
-        self.type = tup[0]
-        #: the exception instance
-        self.value = tup[1]
-        #: the exception raw traceback
-        self.tb = tup[2]
-        #: the exception type name
-        self.typename = self.type.__name__
-        #: the exception traceback (_pytest._code.Traceback instance)
-        self.traceback = _pytest._code.Traceback(self.tb, excinfo=ref(self))
+    @classmethod
+    def from_current(cls, exprinfo=None):
+        """returns an ExceptionInfo matching the current traceback
+
+        .. warning::
+
+            Experimental API
+
+
+        :param exprinfo: a text string helping to determine if we should
+                         strip ``AssertionError`` from the output, defaults
+                         to the exception message/``__str__()``
+        """
+        tup = sys.exc_info()
+        _striptext = ""
+        if exprinfo is None and isinstance(tup[1], AssertionError):
+            exprinfo = getattr(tup[1], "msg", None)
+            if exprinfo is None:
+                exprinfo = py.io.saferepr(tup[1])
+            if exprinfo and exprinfo.startswith(cls._assert_start_repr):
+                _striptext = "AssertionError: "
+
+        return cls(tup, _striptext)
+
+    @classmethod
+    def for_later(cls):
+        """return an unfilled ExceptionInfo
+        """
+        return cls(None)
+
+    @property
+    def type(self):
+        """the exception class"""
+        return self._excinfo[0]
+
+    @property
+    def value(self):
+        """the exception value"""
+        return self._excinfo[1]
+
+    @property
+    def tb(self):
+        """the exception raw traceback"""
+        return self._excinfo[2]
+
+    @property
+    def typename(self):
+        """the type name of the exception"""
+        return self.type.__name__
+
+    @property
+    def traceback(self):
+        """the traceback"""
+        if self._traceback is None:
+            self._traceback = Traceback(self.tb, excinfo=ref(self))
+        return self._traceback
+
+    @traceback.setter
+    def traceback(self, value):
+        self._traceback = value
 
     def __repr__(self):
-        try:
-            return "<ExceptionInfo %s tblen=%d>" % (self.typename, len(self.traceback))
-        except AttributeError:
-            return "<ExceptionInfo uninitialized>"
+        if self._excinfo is None:
+            return "<ExceptionInfo for raises contextmanager>"
+        return "<ExceptionInfo %s tblen=%d>" % (self.typename, len(self.traceback))
 
     def exconly(self, tryshort=False):
         """ return the exception as a string
@@ -516,13 +557,11 @@ class ExceptionInfo(object):
         return fmt.repr_excinfo(self)
 
     def __str__(self):
-        try:
-            entry = self.traceback[-1]
-        except AttributeError:
+        if self._excinfo is None:
             return repr(self)
-        else:
-            loc = ReprFileLocation(entry.path, entry.lineno + 1, self.exconly())
-            return str(loc)
+        entry = self.traceback[-1]
+        loc = ReprFileLocation(entry.path, entry.lineno + 1, self.exconly())
+        return str(loc)
 
     def __unicode__(self):
         entry = self.traceback[-1]

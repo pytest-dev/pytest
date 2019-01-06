@@ -1,1 +1,0 @@
-Markers example documentation page updated to support latest pytest version.

@@ -823,7 +823,9 @@ def test_rewritten():
         testdir.makepyfile(test_remember_rewritten_modules="")
         warnings = []
         hook = AssertionRewritingHook(pytestconfig)
-        monkeypatch.setattr(hook.config, "warn", lambda code, msg: warnings.append(msg))
+        monkeypatch.setattr(
+            hook, "_warn_already_imported", lambda code, msg: warnings.append(msg)
+        )
         hook.find_module("test_remember_rewritten_modules")
         hook.load_module("test_remember_rewritten_modules")
         hook.mark_rewrite("test_remember_rewritten_modules")

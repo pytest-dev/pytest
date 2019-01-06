@@ -8,7 +8,6 @@ import sys
 
 import _pytest._code
 import pytest
-from _pytest.warnings import SHOW_PYTEST_WARNINGS_ARG
 
 try:
     breakpoint
@@ -390,6 +389,28 @@ class TestPDB(object):
         assert "hello17" in rest  # out is captured
         self.flush(child)
 
+    def test_pdb_set_trace_kwargs(self, testdir):
+        p1 = testdir.makepyfile(
+            """
+            import pytest
+            def test_1():
+                i = 0
+                print("hello17")
+                pytest.set_trace(header="== my_header ==")
+                x = 3
+        """
+        )
+        child = testdir.spawn_pytest(str(p1))
+        child.expect("== my_header ==")
+        assert "PDB set_trace" not in child.before.decode()
+        child.expect("Pdb")
+        child.sendeof()
+        rest = child.read().decode("utf-8")
+        assert "1 failed" in rest
+        assert "def test_1" in rest
+        assert "hello17" in rest  # out is captured
+        self.flush(child)
+
     def test_pdb_set_trace_interception(self, testdir):
         p1 = testdir.makepyfile(
             """
@@ -634,6 +655,12 @@ class TestPDB(object):
         testdir.makepyfile(
             custom_pdb="""
             class CustomPdb(object):
+                def __init__(self, *args, **kwargs):
+                    skip = kwargs.pop("skip")
+                    assert skip == ["foo.*"]
+                    print("__init__")
+                    super(CustomPdb, self).__init__(*args, **kwargs)
+
                 def set_trace(*args, **kwargs):
                     print('custom set_trace>')
          """
@@ -643,12 +670,13 @@ class TestPDB(object):
             import pytest
 
             def test_foo():
-                pytest.set_trace()
+                pytest.set_trace(skip=['foo.*'])
         """
         )
         monkeypatch.setenv("PYTHONPATH", str(testdir.tmpdir))
         child = testdir.spawn_pytest("--pdbcls=custom_pdb:CustomPdb %s" % str(p1))
 
+        child.expect("__init__")
         child.expect("custom set_trace>")
         self.flush(child)
 
@@ -802,27 +830,6 @@ class TestTraceOption:
         )
         child = testdir.spawn_pytest("--trace " + str(p1))
         child.expect("test_1")
-        child.expect("Pdb")
-        child.sendeof()
-        rest = child.read().decode("utf8")
-        assert "1 passed" in rest
-        assert "reading from stdin while output" not in rest
-        TestPDB.flush(child)
-
-    def test_trace_against_yield_test(self, testdir):
-        p1 = testdir.makepyfile(
-            """
-            def is_equal(a, b):
-                assert a == b
-
-            def test_1():
-                yield is_equal, 1, 1
-            """
-        )
-        child = testdir.spawn_pytest(
-            "{} --trace {}".format(SHOW_PYTEST_WARNINGS_ARG, str(p1))
-        )
-        child.expect("is_equal")
         child.expect("Pdb")
         child.sendeof()
         rest = child.read().decode("utf8")

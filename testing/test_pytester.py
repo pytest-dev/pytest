@@ -71,7 +71,7 @@ def test_make_hook_recorder(testdir):
     recorder.unregister()
     recorder.clear()
     recorder.hook.pytest_runtest_logreport(report=rep)
-    pytest.raises(ValueError, "recorder.getfailures()")
+    pytest.raises(ValueError, recorder.getfailures)
 
 
 def test_parseconfig(testdir):
@@ -168,13 +168,13 @@ def make_holder():
 @pytest.mark.parametrize("holder", make_holder())
 def test_hookrecorder_basic(holder):
     pm = PytestPluginManager()
-    pm.addhooks(holder)
+    pm.add_hookspecs(holder)
     rec = HookRecorder(pm)
     pm.hook.pytest_xyz(arg=123)
     call = rec.popcall("pytest_xyz")
     assert call.arg == 123
     assert call._name == "pytest_xyz"
-    pytest.raises(pytest.fail.Exception, "rec.popcall('abc')")
+    pytest.raises(pytest.fail.Exception, rec.popcall, "abc")
     pm.hook.pytest_xyz_noarg()
     call = rec.popcall("pytest_xyz_noarg")
     assert call._name == "pytest_xyz_noarg"
@@ -280,7 +280,7 @@ def test_assert_outcomes_after_pytest_error(testdir):
     testdir.makepyfile("def test_foo(): assert True")
 
     result = testdir.runpytest("--unexpected-argument")
-    with pytest.raises(ValueError, message="Pytest terminal report not found"):
+    with pytest.raises(ValueError, match="Pytest terminal report not found"):
         result.assert_outcomes(passed=0)
 
 

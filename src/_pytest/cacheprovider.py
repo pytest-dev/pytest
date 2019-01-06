@@ -33,6 +33,13 @@ which provides the `--lf` and `--ff` options, as well as the `cache` fixture.
 See [the docs](https://docs.pytest.org/en/latest/cache.html) for more information.
 """
 
+CACHEDIR_TAG_CONTENT = b"""\
+Signature: 8a477f597d28d172789f06886806bc55
+# This file is a cache directory tag created by pytest.
+# For information about cache directory tags, see:
+#	http://www.bford.info/cachedir/spec.html
+"""
+
 
 @attr.s
 class Cache(object):
@@ -52,12 +59,12 @@ class Cache(object):
         return resolve_from_str(config.getini("cache_dir"), config.rootdir)
 
     def warn(self, fmt, **args):
-        from _pytest.warnings import _issue_config_warning
+        from _pytest.warnings import _issue_warning_captured
         from _pytest.warning_types import PytestWarning
 
-        _issue_config_warning(
+        _issue_warning_captured(
             PytestWarning(fmt.format(**args) if args else fmt),
-            self._config,
+            self._config.hook,
             stacklevel=3,
         )
 
@@ -139,6 +146,10 @@ class Cache(object):
             if not gitignore_path.is_file():
                 msg = u"# Created by pytest automatically.\n*"
                 gitignore_path.write_text(msg, encoding="UTF-8")
+
+            cachedir_tag_path = self._cachedir.joinpath("CACHEDIR.TAG")
+            if not cachedir_tag_path.is_file():
+                cachedir_tag_path.write_bytes(CACHEDIR_TAG_CONTENT)
 
 
 class LFPlugin(object):

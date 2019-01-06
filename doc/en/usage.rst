@@ -152,40 +152,77 @@ making it easy in large test suites to get a clear picture of all failures, skip
 
 Example:
 
+.. code-block:: python
+
+    # content of test_example.py
+    import pytest
+
+
+    @pytest.fixture
+    def error_fixture():
+        assert 0
+
+
+    def test_ok():
+        print("ok")
+
+
+    def test_fail():
+        assert 0
+
+
+    def test_error(error_fixture):
+        pass
+
+
+    def test_skip():
+        pytest.skip("skipping this test")
+
+
+    def test_xfail():
+        pytest.xfail("xfailing this test")
+
+
+    @pytest.mark.xfail(reason="always xfail")
+    def test_xpass():
+        pass
+
+
 .. code-block:: pytest
 
     $ pytest -ra
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
-    collected 7 items
+    collected 6 items
 
-    test_examples.py ..FEsxX                                                 [100%]
+    test_example.py .FEsxX                                               [100%]
 
-    ==================================== ERRORS ====================================
-    _________________________ ERROR at setup of test_error _________________________
-    file /Users/chainz/tmp/pytestratest/test_examples.py, line 17
-      def test_error(unknown_fixture):
-    E       fixture 'unknown_fixture' not found
-    >       available fixtures: cache, capfd, capfdbinary, caplog, capsys, capsysbinary, doctest_namespace, monkeypatch, pytestconfig, record_property, record_xml_attribute, record_xml_property, recwarn, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
-    >       use 'pytest --fixtures [testpath]' for help on them.
+    ================================== ERRORS ==================================
+    _______________________ ERROR at setup of test_error _______________________
 
-    /Users/chainz/tmp/pytestratest/test_examples.py:17
-    =================================== FAILURES ===================================
-    __________________________________ test_fail ___________________________________
+        @pytest.fixture
+        def error_fixture():
+    >       assert 0
+    E       assert 0
+
+    test_example.py:6: AssertionError
+    ================================= FAILURES =================================
+    ________________________________ test_fail _________________________________
 
         def test_fail():
     >       assert 0
     E       assert 0
 
-    test_examples.py:14: AssertionError
-    =========================== short test summary info ============================
-    FAIL test_examples.py::test_fail
-    ERROR test_examples.py::test_error
-    SKIP [1] test_examples.py:21: Example
-    XFAIL test_examples.py::test_xfail
-    XPASS test_examples.py::test_xpass
-    = 1 failed, 2 passed, 1 skipped, 1 xfailed, 1 xpassed, 1 error in 0.07 seconds =
+    test_example.py:14: AssertionError
+    ========================= short test summary info ==========================
+    SKIP [1] $REGENDOC_TMPDIR/test_example.py:23: skipping this test
+    XFAIL test_example.py::test_xfail
+      reason: xfailing this test
+    XPASS test_example.py::test_xpass always xfail
+    ERROR test_example.py::test_error
+    FAIL test_example.py::test_fail
+     1 failed, 1 passed, 1 skipped, 1 xfailed, 1 xpassed, 1 error in 0.12 seconds
 
 The ``-r`` options accepts a number of characters after it, with ``a`` used above meaning "all except passes".
 
@@ -208,22 +245,31 @@ More than one character can be used, so for example to only see failed and skipp
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
-    collected 2 items
+    collected 6 items
 
-    test_examples.py Fs                                                      [100%]
+    test_example.py .FEsxX                                               [100%]
 
-    =================================== FAILURES ===================================
-    __________________________________ test_fail ___________________________________
+    ================================== ERRORS ==================================
+    _______________________ ERROR at setup of test_error _______________________
+
+        @pytest.fixture
+        def error_fixture():
+    >       assert 0
+    E       assert 0
+
+    test_example.py:6: AssertionError
+    ================================= FAILURES =================================
+    ________________________________ test_fail _________________________________
 
         def test_fail():
     >       assert 0
     E       assert 0
 
-    test_examples.py:14: AssertionError
-    =========================== short test summary info ============================
-    FAIL test_examples.py::test_fail
-    SKIP [1] test_examples.py:21: Example
-    ===================== 1 failed, 1 skipped in 0.09 seconds ======================
+    test_example.py:14: AssertionError
+    ========================= short test summary info ==========================
+    FAIL test_example.py::test_fail
+    SKIP [1] $REGENDOC_TMPDIR/test_example.py:23: skipping this test
+     1 failed, 1 passed, 1 skipped, 1 xfailed, 1 xpassed, 1 error in 0.12 seconds
 
 Using ``p`` lists the passing tests, whilst ``P`` adds an extra section "PASSES" with those tests that passed but had
 captured output:
@@ -234,18 +280,34 @@ captured output:
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
-    collected 2 items
+    collected 6 items
 
-    test_examples.py ..                                                      [100%]
-    =========================== short test summary info ============================
-    PASSED test_examples.py::test_pass
-    PASSED test_examples.py::test_pass_with_output
+    test_example.py .FEsxX                                               [100%]
 
-    ==================================== PASSES ====================================
-    ____________________________ test_pass_with_output _____________________________
-    ----------------------------- Captured stdout call -----------------------------
-    Passing test
-    =========================== 2 passed in 0.04 seconds ===========================
+    ================================== ERRORS ==================================
+    _______________________ ERROR at setup of test_error _______________________
+
+        @pytest.fixture
+        def error_fixture():
+    >       assert 0
+    E       assert 0
+
+    test_example.py:6: AssertionError
+    ================================= FAILURES =================================
+    ________________________________ test_fail _________________________________
+
+        def test_fail():
+    >       assert 0
+    E       assert 0
+
+    test_example.py:14: AssertionError
+    ========================= short test summary info ==========================
+    PASSED test_example.py::test_ok
+    ================================== PASSES ==================================
+    _________________________________ test_ok __________________________________
+    --------------------------- Captured stdout call ---------------------------
+    ok
+     1 failed, 1 passed, 1 skipped, 1 xfailed, 1 xpassed, 1 error in 0.12 seconds
 
 .. _pdb-option:
 
@@ -353,6 +415,20 @@ To set the name of the root test suite xml item, you can configure the ``junit_s
 
     [pytest]
     junit_suite_name = my_suite
+
+.. versionadded:: 4.0
+
+JUnit XML specification seems to indicate that ``"time"`` attribute
+should report total test execution times, including setup and teardown
+(`1 <http://windyroad.com.au/dl/Open%20Source/JUnit.xsd>`_, `2
+<https://www.ibm.com/support/knowledgecenter/en/SSQ2R2_14.1.0/com.ibm.rsar.analysis.codereview.cobol.doc/topics/cac_useresults_junit.html>`_).
+It is the default pytest behavior. To report just call durations
+instead, configure the ``junit_duration_report`` option like this:
+
+.. code-block:: ini
+
+    [pytest]
+    junit_duration_report = call
 
 .. _record_property example:
 
@@ -543,14 +619,10 @@ Creating resultlog format files
 
 .. deprecated:: 3.0
 
-    This option is rarely used and is scheduled for removal in 4.0.
+    This option is rarely used and is scheduled for removal in 5.0.
 
-    An alternative for users which still need similar functionality is to use the
-    `pytest-tap <https://pypi.org/project/pytest-tap/>`_ plugin which provides
-    a stream of test data.
-
-    If you have any concerns, please don't hesitate to
-    `open an issue <https://github.com/pytest-dev/pytest/issues>`_.
+    See `the deprecation docs <https://docs.pytest.org/en/latest/deprecations.html#result-log-result-log>`__
+    for more information.
 
 To create plain-text machine-readable result files you can issue::
 
@@ -621,8 +693,25 @@ Running it will show that ``MyPlugin`` was added and its
 hook was invoked::
 
     $ python myinvoke.py
-    .                                                                    [100%]*** test run reporting finishing
+    .FEsxX.                                                              [100%]*** test run reporting finishing
 
+    ================================== ERRORS ==================================
+    _______________________ ERROR at setup of test_error _______________________
+
+        @pytest.fixture
+        def error_fixture():
+    >       assert 0
+    E       assert 0
+
+    test_example.py:6: AssertionError
+    ================================= FAILURES =================================
+    ________________________________ test_fail _________________________________
+
+        def test_fail():
+    >       assert 0
+    E       assert 0
+
+    test_example.py:14: AssertionError
 
 .. note::
 

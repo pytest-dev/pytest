@@ -215,7 +215,9 @@ If you run this command for the first time, you can see the print statement:
     >       assert mydata == 23
     E       assert 42 == 23
 
-    test_caching.py:14: AssertionError
+    test_caching.py:17: AssertionError
+    -------------------------- Captured stdout setup ---------------------------
+    running expensive computation...
     1 failed in 0.12 seconds
 
 If you run it a second time the value will be retrieved from
@@ -234,7 +236,7 @@ the cache and nothing will be printed:
     >       assert mydata == 23
     E       assert 42 == 23
 
-    test_caching.py:14: AssertionError
+    test_caching.py:17: AssertionError
     1 failed in 0.12 seconds
 
 See the :ref:`cache-api` for more details.

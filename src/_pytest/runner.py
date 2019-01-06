@@ -8,12 +8,14 @@ import os
 import sys
 from time import time
 
+import attr
 import six
 
 from .reports import CollectErrorRepr
 from .reports import CollectReport
 from .reports import TestReport
 from _pytest._code.code import ExceptionInfo
+from _pytest.outcomes import Exit
 from _pytest.outcomes import skip
 from _pytest.outcomes import Skipped
 from _pytest.outcomes import TEST_OUTCOME
@@ -189,43 +191,58 @@ def check_interactive_exception(call, report):
 def call_runtest_hook(item, when, **kwds):
     hookname = "pytest_runtest_" + when
     ihook = getattr(item.ihook, hookname)
-    return CallInfo(
-        lambda: ihook(item=item, **kwds),
-        when=when,
-        treat_keyboard_interrupt_as_exception=item.config.getvalue("usepdb"),
+    reraise = (Exit,)
+    if not item.config.getvalue("usepdb"):
+        reraise += (KeyboardInterrupt,)
+    return CallInfo.from_call(
+        lambda: ihook(item=item, **kwds), when=when, reraise=reraise
     )
 
 
+@attr.s(repr=False)
 class CallInfo(object):
     """ Result/Exception info a function invocation. """
 
-    #: None or ExceptionInfo object.
-    excinfo = None
+    _result = attr.ib()
+    # type: Optional[ExceptionInfo]
+    excinfo = attr.ib()
+    start = attr.ib()
+    stop = attr.ib()
+    when = attr.ib()
 
-    def __init__(self, func, when, treat_keyboard_interrupt_as_exception=False):
+    @property
+    def result(self):
+        if self.excinfo is not None:
+            raise AttributeError("{!r} has no valid result".format(self))
+        return self._result
+
+    @classmethod
+    def from_call(cls, func, when, reraise=None):
         #: context of invocation: one of "setup", "call",
         #: "teardown", "memocollect"
-        self.when = when
-        self.start = time()
+        start = time()
+        excinfo = None
         try:
-            self.result = func()
-        except KeyboardInterrupt:
-            if treat_keyboard_interrupt_as_exception:
-                self.excinfo = ExceptionInfo()
-            else:
-                self.stop = time()
-                raise
+            result = func()
         except:  # noqa
-            self.excinfo = ExceptionInfo()
-        self.stop = time()
+            excinfo = ExceptionInfo.from_current()
+            if reraise is not None and excinfo.errisinstance(reraise):
+                raise
+            result = None
+        stop = time()
+        return cls(start=start, stop=stop, when=when, result=result, excinfo=excinfo)
 
     def __repr__(self):
-        if self.excinfo:
-            status = "exception: %s" % str(self.excinfo.value)
+        if self.excinfo is not None:
+            status = "exception"
+            value = self.excinfo.value
         else:
-            result = getattr(self, "result", "<NOTSET>")
-            status = "result: %r" % (result,)
-        return "<CallInfo when=%r %s>" % (self.when, status)
+            # TODO: investigate unification
+            value = repr(self._result)
+            status = "result"
+        return "<CallInfo when={when!r} {status}: {value}>".format(
+            when=self.when, value=value, status=status
+        )
 
 
 def pytest_runtest_makereport(item, call):
@@ -269,7 +286,7 @@ def pytest_runtest_makereport(item, call):
 
 
 def pytest_make_collect_report(collector):
-    call = CallInfo(lambda: list(collector.collect()), "collect")
+    call = CallInfo.from_call(lambda: list(collector.collect()), "collect")
     longrepr = None
     if not call.excinfo:
         outcome = "passed"

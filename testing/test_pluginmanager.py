@@ -32,7 +32,7 @@ class TestPytestPluginInteractions(object):
             """
             import newhooks
             def pytest_addhooks(pluginmanager):
-                pluginmanager.addhooks(newhooks)
+                pluginmanager.add_hookspecs(newhooks)
             def pytest_myhook(xyz):
                 return xyz + 1
         """
@@ -52,43 +52,12 @@ class TestPytestPluginInteractions(object):
             """
             import sys
             def pytest_addhooks(pluginmanager):
-                pluginmanager.addhooks(sys)
+                pluginmanager.add_hookspecs(sys)
         """
         )
         res = testdir.runpytest()
         assert res.ret != 0
         res.stderr.fnmatch_lines(["*did not find*sys*"])
-
-    def test_namespace_early_from_import(self, testdir):
-        p = testdir.makepyfile(
-            """
-            from pytest import Item
-            from pytest import Item as Item2
-            assert Item is Item2
-        """
-        )
-        result = testdir.runpython(p)
-        assert result.ret == 0
-
-    @pytest.mark.filterwarnings("ignore:pytest_namespace is deprecated")
-    def test_do_ext_namespace(self, testdir):
-        testdir.makeconftest(
-            """
-            def pytest_namespace():
-                return {'hello': 'world'}
-        """
-        )
-        p = testdir.makepyfile(
-            """
-            from pytest import hello
-            import pytest
-            def test_hello():
-                assert hello == "world"
-                assert 'hello' in pytest.__all__
-        """
-        )
-        reprec = testdir.inline_run(p)
-        reprec.assertoutcome(passed=1)
 
     def test_do_option_postinitialize(self, testdir):
         config = testdir.parseconfigure()
@@ -172,34 +141,6 @@ class TestPytestPluginInteractions(object):
         ihook_b = session.gethookproxy(testdir.tmpdir.join("tests"))
         assert ihook_a is not ihook_b
 
-    def test_warn_on_deprecated_addhooks(self, pytestpm):
-        warnings = []
-
-        class get_warnings(object):
-            def pytest_logwarning(self, code, fslocation, message, nodeid):
-                warnings.append(message)
-
-        class Plugin(object):
-            def pytest_testhook():
-                pass
-
-        pytestpm.register(get_warnings())
-        before = list(warnings)
-        pytestpm.addhooks(Plugin())
-        assert len(warnings) == len(before) + 1
-        assert "deprecated" in warnings[-1]
-
-
-def test_namespace_has_default_and_env_plugins(testdir):
-    p = testdir.makepyfile(
-        """
-        import pytest
-        pytest.mark
-    """
-    )
-    result = testdir.runpython(p)
-    assert result.ret == 0
-
 
 def test_default_markers(testdir):
     result = testdir.runpytest("--markers")
@@ -238,7 +179,7 @@ class TestPytestPluginManager(object):
         assert pm.is_registered(mod)
         values = pm.get_plugins()
         assert mod in values
-        pytest.raises(ValueError, "pm.register(mod)")
+        pytest.raises(ValueError, pm.register, mod)
         pytest.raises(ValueError, lambda: pm.register(mod))
         # assert not pm.is_registered(mod2)
         assert pm.get_plugins() == values
@@ -282,11 +223,12 @@ class TestPytestPluginManager(object):
         with pytest.raises(ImportError):
             pytestpm.consider_env()
 
+    @pytest.mark.filterwarnings("always")
     def test_plugin_skip(self, testdir, monkeypatch):
         p = testdir.makepyfile(
             skipping1="""
             import pytest
-            pytest.skip("hello")
+            pytest.skip("hello", allow_module_level=True)
         """
         )
         p.copy(p.dirpath("skipping2.py"))
@@ -326,8 +268,8 @@ class TestPytestPluginManager(object):
         result.stdout.fnmatch_lines(["*1 passed*"])
 
     def test_import_plugin_importname(self, testdir, pytestpm):
-        pytest.raises(ImportError, 'pytestpm.import_plugin("qweqwex.y")')
-        pytest.raises(ImportError, 'pytestpm.import_plugin("pytest_qweqwx.y")')
+        pytest.raises(ImportError, pytestpm.import_plugin, "qweqwex.y")
+        pytest.raises(ImportError, pytestpm.import_plugin, "pytest_qweqwx.y")
 
         testdir.syspathinsert()
         pluginname = "pytest_hello"
@@ -343,8 +285,8 @@ class TestPytestPluginManager(object):
         assert plugin2 is plugin1
 
     def test_import_plugin_dotted_name(self, testdir, pytestpm):
-        pytest.raises(ImportError, 'pytestpm.import_plugin("qweqwex.y")')
-        pytest.raises(ImportError, 'pytestpm.import_plugin("pytest_qweqwex.y")')
+        pytest.raises(ImportError, pytestpm.import_plugin, "qweqwex.y")
+        pytest.raises(ImportError, pytestpm.import_plugin, "pytest_qweqwex.y")
 
         testdir.syspathinsert()
         testdir.mkpydir("pkg").join("plug.py").write("x=3")
@@ -364,6 +306,12 @@ class TestPytestPluginManagerBootstrapming(object):
         pytest.raises(
             ImportError, lambda: pytestpm.consider_preparse(["xyz", "-p", "hello123"])
         )
+
+        # Handles -p without space (#3532).
+        with pytest.raises(ImportError) as excinfo:
+            pytestpm.consider_preparse(["-phello123"])
+        assert '"hello123"' in excinfo.value.args[0]
+        pytestpm.consider_preparse(["-pno:hello123"])
 
     def test_plugin_prevent_register(self, pytestpm):
         pytestpm.consider_preparse(["xyz", "-p", "no:abc"])

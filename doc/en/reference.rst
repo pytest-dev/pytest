@@ -618,7 +618,6 @@ Session related reporting hooks:
 .. autofunction:: pytest_terminal_summary
 .. autofunction:: pytest_fixture_setup
 .. autofunction:: pytest_fixture_post_finalizer
-.. autofunction:: pytest_logwarning
 .. autofunction:: pytest_warning_captured
 
 And here is the central hook for reporting about
@@ -722,13 +721,6 @@ MarkGenerator
 ~~~~~~~~~~~~~
 
 .. autoclass:: _pytest.mark.MarkGenerator
-    :members:
-
-
-MarkInfo
-~~~~~~~~
-
-.. autoclass:: _pytest.mark.MarkInfo
     :members:
 
 

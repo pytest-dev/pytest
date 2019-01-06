@@ -146,6 +146,7 @@ class TestGeneralUsage(object):
         assert result.ret
         result.stderr.fnmatch_lines(["*ERROR: not found:*{}".format(p2.basename)])
 
+    @pytest.mark.filterwarnings("default")
     def test_better_reporting_on_conftest_load_failure(self, testdir, request):
         """Show a user-friendly traceback on conftest import failures (#486, #3332)"""
         testdir.makepyfile("")
@@ -299,7 +300,7 @@ class TestGeneralUsage(object):
             """
             import pytest
             def pytest_generate_tests(metafunc):
-                metafunc.addcall({'x': 3}, id='hello-123')
+                metafunc.parametrize('x', [3], ids=['hello-123'])
             def pytest_runtest_setup(item):
                 print(item.keywords)
                 if 'hello-123' in item.keywords:
@@ -316,8 +317,7 @@ class TestGeneralUsage(object):
         p = testdir.makepyfile(
             """
             def pytest_generate_tests(metafunc):
-                metafunc.addcall({'i': 1}, id="1")
-                metafunc.addcall({'i': 2}, id="2")
+                metafunc.parametrize('i', [1, 2], ids=["1", "2"])
             def test_func(i):
                 pass
         """
@@ -560,12 +560,11 @@ class TestInvocationVariants(object):
     def test_equivalence_pytest_pytest(self):
         assert pytest.main == py.test.cmdline.main
 
-    def test_invoke_with_string(self, capsys):
-        retcode = pytest.main("-h")
-        assert not retcode
-        out, err = capsys.readouterr()
-        assert "--help" in out
-        pytest.raises(ValueError, lambda: pytest.main(0))
+    def test_invoke_with_invalid_type(self, capsys):
+        with pytest.raises(
+            TypeError, match="expected to be a list or tuple of strings, got: '-h'"
+        ):
+            pytest.main("-h")
 
     def test_invoke_with_path(self, tmpdir, capsys):
         retcode = pytest.main(tmpdir)

@@ -18,6 +18,232 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+pytest 4.1.0 (2019-01-05)
+=========================
+
+Removals
+--------
+
+- `#2169 <https://github.com/pytest-dev/pytest/issues/2169>`_: ``pytest.mark.parametrize``: in previous versions, errors raised by id functions were suppressed and changed into warnings. Now the exceptions are propagated, along with a pytest message informing the node, parameter value and index where the exception occurred.
+
+
+- `#3078 <https://github.com/pytest-dev/pytest/issues/3078>`_: Remove legacy internal warnings system: ``config.warn``, ``Node.warn``. The ``pytest_logwarning`` now issues a warning when implemented.
+
+  See our `docs <https://docs.pytest.org/en/latest/deprecations.html#config-warn-and-node-warn>`__ on information on how to update your code.
+
+
+- `#3079 <https://github.com/pytest-dev/pytest/issues/3079>`_: Removed support for yield tests - they are fundamentally broken because they don't support fixtures properly since collection and test execution were separated.
+
+  See our `docs <https://docs.pytest.org/en/latest/deprecations.html#yield-tests>`__ on information on how to update your code.
+
+
+- `#3082 <https://github.com/pytest-dev/pytest/issues/3082>`_: Removed support for applying marks directly to values in ``@pytest.mark.parametrize``. Use ``pytest.param`` instead.
+
+  See our `docs <https://docs.pytest.org/en/latest/deprecations.html#marks-in-pytest-mark-parametrize>`__ on information on how to update your code.
+
+
+- `#3083 <https://github.com/pytest-dev/pytest/issues/3083>`_: Removed ``Metafunc.addcall``. This was the predecessor mechanism to ``@pytest.mark.parametrize``.
+
+  See our `docs <https://docs.pytest.org/en/latest/deprecations.html#metafunc-addcall>`__ on information on how to update your code.
+
+
+- `#3085 <https://github.com/pytest-dev/pytest/issues/3085>`_: Removed support for passing strings to ``pytest.main``. Now, always pass a list of strings instead.
+
+  See our `docs <https://docs.pytest.org/en/latest/deprecations.html#passing-command-line-string-to-pytest-main>`__ on information on how to update your code.
+
+
+- `#3086 <https://github.com/pytest-dev/pytest/issues/3086>`_: ``[pytest]`` section in **setup.cfg** files is not longer supported, use ``[tool:pytest]`` instead. ``setup.cfg`` files
+  are meant for use with ``distutils``, and a section named ``pytest`` has notoriously been a source of conflicts and bugs.
+
+  Note that for **pytest.ini** and **tox.ini** files the section remains ``[pytest]``.
+
+
+- `#3616 <https://github.com/pytest-dev/pytest/issues/3616>`_: Removed the deprecated compat properties for ``node.Class/Function/Module`` - use ``pytest.Class/Function/Module`` now.
+
+  See our `docs <https://docs.pytest.org/en/latest/deprecations.html#internal-classes-accessed-through-node>`__ on information on how to update your code.
+
+
+- `#4421 <https://github.com/pytest-dev/pytest/issues/4421>`_: Removed the implementation of the ``pytest_namespace`` hook.
+
+  See our `docs <https://docs.pytest.org/en/latest/deprecations.html#pytest-namespace>`__ on information on how to update your code.
+
+
+- `#4489 <https://github.com/pytest-dev/pytest/issues/4489>`_: Removed ``request.cached_setup``. This was the predecessor mechanism to modern fixtures.
+
+  See our `docs <https://docs.pytest.org/en/latest/deprecations.html#cached-setup>`__ on information on how to update your code.
+
+
+- `#4535 <https://github.com/pytest-dev/pytest/issues/4535>`_: Removed the deprecated ``PyCollector.makeitem`` method. This method was made public by mistake a long time ago.
+
+
+- `#4543 <https://github.com/pytest-dev/pytest/issues/4543>`_: Removed support to define fixtures using the ``pytest_funcarg__`` prefix. Use the ``@pytest.fixture`` decorator instead.
+
+  See our `docs <https://docs.pytest.org/en/latest/deprecations.html#pytest-funcarg-prefix>`__ on information on how to update your code.
+
+
+- `#4545 <https://github.com/pytest-dev/pytest/issues/4545>`_: Calling fixtures directly is now always an error instead of a warning.
+
+  See our `docs <https://docs.pytest.org/en/latest/deprecations.html#calling-fixtures-directly>`__ on information on how to update your code.
+
+
+- `#4546 <https://github.com/pytest-dev/pytest/issues/4546>`_: Remove ``Node.get_marker(name)`` the return value was not usable for more than a existence check.
+
+  Use ``Node.get_closest_marker(name)`` as a replacement.
+
+
+- `#4547 <https://github.com/pytest-dev/pytest/issues/4547>`_: The deprecated ``record_xml_property`` fixture has been removed, use the more generic ``record_property`` instead.
+
+  See our `docs <https://docs.pytest.org/en/latest/deprecations.html#record-xml-property>`__ for more information.
+
+
+- `#4548 <https://github.com/pytest-dev/pytest/issues/4548>`_: An error is now raised if the ``pytest_plugins`` variable is defined in a non-top-level ``conftest.py`` file (i.e., not residing in the ``rootdir``).
+
+  See our `docs <https://docs.pytest.org/en/latest/deprecations.html#pytest-plugins-in-non-top-level-conftest-files>`__ for more information.
+
+
+- `#891 <https://github.com/pytest-dev/pytest/issues/891>`_: Remove ``testfunction.markername`` attributes - use ``Node.iter_markers(name=None)`` to iterate them.
+
+
+
+Deprecations
+------------
+
+- `#3050 <https://github.com/pytest-dev/pytest/issues/3050>`_: Deprecated the ``pytest.config`` global.
+
+  See https://docs.pytest.org/en/latest/deprecations.html#pytest-config-global for rationale.
+
+
+- `#3974 <https://github.com/pytest-dev/pytest/issues/3974>`_: Passing the ``message`` parameter of ``pytest.raises`` now issues a ``DeprecationWarning``.
+
+  It is a common mistake to think this parameter will match the exception message, while in fact
+  it only serves to provide a custom message in case the ``pytest.raises`` check fails. To avoid this
+  mistake and because it is believed to be little used, pytest is deprecating it without providing
+  an alternative for the moment.
+
+  If you have concerns about this, please comment on `issue #3974 <https://github.com/pytest-dev/pytest/issues/3974>`__.
+
+
+- `#4435 <https://github.com/pytest-dev/pytest/issues/4435>`_: Deprecated ``raises(..., 'code(as_a_string)')`` and ``warns(..., 'code(as_a_string)')``.
+
+  See https://docs.pytest.org/en/latest/deprecations.html#raises-warns-exec for rationale and examples.
+
+
+
+Features
+--------
+
+- `#3191 <https://github.com/pytest-dev/pytest/issues/3191>`_: A warning is now issued when assertions are made for ``None``.
+
+  This is a common source of confusion among new users, which write:
+
+  .. code-block:: python
+
+      assert mocked_object.assert_called_with(3, 4, 5, key="value")
+
+  When they should write:
+
+  .. code-block:: python
+
+      mocked_object.assert_called_with(3, 4, 5, key="value")
+
+  Because the ``assert_called_with`` method of mock objects already executes an assertion.
+
+  This warning will not be issued when ``None`` is explicitly checked. An assertion like:
+
+  .. code-block:: python
+
+      assert variable is None
+
+  will not issue the warning.
+
+
+- `#3632 <https://github.com/pytest-dev/pytest/issues/3632>`_: Richer equality comparison introspection on ``AssertionError`` for objects created using `attrs <http://www.attrs.org/en/stable/>`__ or `dataclasses <https://docs.python.org/3/library/dataclasses.html>`_ (Python 3.7+, `backported to 3.6 <https://pypi.org/project/dataclasses>`__).
+
+
+- `#4278 <https://github.com/pytest-dev/pytest/issues/4278>`_: ``CACHEDIR.TAG`` files are now created inside cache directories.
+
+  Those files are part of the `Cache Directory Tagging Standard <http://www.bford.info/cachedir/spec.html>`__, and can
+  be used by backup or synchronization programs to identify pytest's cache directory as such.
+
+
+- `#4292 <https://github.com/pytest-dev/pytest/issues/4292>`_: ``pytest.outcomes.Exit`` is derived from ``SystemExit`` instead of ``KeyboardInterrupt``. This allows us to better handle ``pdb`` exiting.
+
+
+- `#4371 <https://github.com/pytest-dev/pytest/issues/4371>`_: Updated the ``--collect-only`` option to display test descriptions when ran using ``--verbose``.
+
+
+- `#4386 <https://github.com/pytest-dev/pytest/issues/4386>`_: Restructured ``ExceptionInfo`` object construction and ensure incomplete instances have a ``repr``/``str``.
+
+
+- `#4416 <https://github.com/pytest-dev/pytest/issues/4416>`_: pdb: added support for keyword arguments with ``pdb.set_trace``.
+
+  It handles ``header`` similar to Python 3.7 does it, and forwards any
+  other keyword arguments to the ``Pdb`` constructor.
+
+  This allows for ``__import__("pdb").set_trace(skip=["foo.*"])``.
+
+
+- `#4483 <https://github.com/pytest-dev/pytest/issues/4483>`_: Added ini parameter ``junit_duration_report`` to optionally report test call durations, excluding setup and teardown times.
+
+  The JUnit XML specification and the default pytest behavior is to include setup and teardown times in the test duration
+  report. You can include just the call durations instead (excluding setup and teardown) by adding this to your ``pytest.ini`` file:
+
+  .. code-block:: ini
+
+      [pytest]
+      junit_duration_report = call
+
+
+- `#4532 <https://github.com/pytest-dev/pytest/issues/4532>`_: ``-ra`` now will show errors and failures last, instead of as the first items in the summary.
+
+  This makes it easier to obtain a list of errors and failures to run tests selectively.
+
+
+- `#4599 <https://github.com/pytest-dev/pytest/issues/4599>`_: ``pytest.importorskip`` now supports a ``reason`` parameter, which will be shown when the
+  requested module cannot be imported.
+
+
+
+Bug Fixes
+---------
+
+- `#3532 <https://github.com/pytest-dev/pytest/issues/3532>`_: ``-p`` now accepts its argument without a space between the value, for example ``-pmyplugin``.
+
+
+- `#4327 <https://github.com/pytest-dev/pytest/issues/4327>`_: ``approx`` again works with more generic containers, more precisely instances of ``Iterable`` and ``Sized`` instead of more restrictive ``Sequence``.
+
+
+- `#4397 <https://github.com/pytest-dev/pytest/issues/4397>`_: Ensure that node ids are printable.
+
+
+- `#4435 <https://github.com/pytest-dev/pytest/issues/4435>`_: Fixed ``raises(..., 'code(string)')`` frame filename.
+
+
+- `#4458 <https://github.com/pytest-dev/pytest/issues/4458>`_: Display actual test ids in ``--collect-only``.
+
+
+
+Improved Documentation
+----------------------
+
+- `#4557 <https://github.com/pytest-dev/pytest/issues/4557>`_: Markers example documentation page updated to support latest pytest version.
+
+
+- `#4558 <https://github.com/pytest-dev/pytest/issues/4558>`_: Update cache documentation example to correctly show cache hit and miss.
+
+
+- `#4580 <https://github.com/pytest-dev/pytest/issues/4580>`_: Improved detailed summary report documentation.
+
+
+
+Trivial/Internal Changes
+------------------------
+
+- `#4447 <https://github.com/pytest-dev/pytest/issues/4447>`_: Changed the deprecation type of ``--result-log`` to ``PytestDeprecationWarning``.
+
+  It was decided to remove this feature at the next major revision.
+
+
 pytest 4.0.2 (2018-12-13)
 =========================
 
@@ -1757,7 +1983,7 @@ Bug Fixes
 Trivial/Internal Changes
 ------------------------
 
-- pytest now depends on `attrs <https://pypi.org/project/attrs/>`_ for internal
+- pytest now depends on `attrs <https://pypi.org/project/attrs/>`__ for internal
   structures to ease code maintainability. (`#2641
   <https://github.com/pytest-dev/pytest/issues/2641>`_)
 

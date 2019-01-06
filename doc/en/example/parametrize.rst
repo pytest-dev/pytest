@@ -147,15 +147,15 @@ objects, they are still using the default pytest representation:
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 8 items
-    <Module 'test_time.py'>
-      <Function 'test_timedistance_v0[a0-b0-expected0]'>
-      <Function 'test_timedistance_v0[a1-b1-expected1]'>
-      <Function 'test_timedistance_v1[forward]'>
-      <Function 'test_timedistance_v1[backward]'>
-      <Function 'test_timedistance_v2[20011212-20011211-expected0]'>
-      <Function 'test_timedistance_v2[20011211-20011212-expected1]'>
-      <Function 'test_timedistance_v3[forward]'>
-      <Function 'test_timedistance_v3[backward]'>
+    <Module test_time.py>
+      <Function test_timedistance_v0[a0-b0-expected0]>
+      <Function test_timedistance_v0[a1-b1-expected1]>
+      <Function test_timedistance_v1[forward]>
+      <Function test_timedistance_v1[backward]>
+      <Function test_timedistance_v2[20011212-20011211-expected0]>
+      <Function test_timedistance_v2[20011211-20011212-expected1]>
+      <Function test_timedistance_v3[forward]>
+      <Function test_timedistance_v3[backward]>
 
     ======================= no tests ran in 0.12 seconds =======================
 
@@ -219,12 +219,12 @@ If you just collect tests you'll also nicely see 'advanced' and 'basic' as varia
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 4 items
-    <Module 'test_scenarios.py'>
-      <Class 'TestSampleWithScenarios'>
-          <Function 'test_demo1[basic]'>
-          <Function 'test_demo2[basic]'>
-          <Function 'test_demo1[advanced]'>
-          <Function 'test_demo2[advanced]'>
+    <Module test_scenarios.py>
+      <Class TestSampleWithScenarios>
+          <Function test_demo1[basic]>
+          <Function test_demo2[basic]>
+          <Function test_demo1[advanced]>
+          <Function test_demo2[advanced]>
 
     ======================= no tests ran in 0.12 seconds =======================
 
@@ -285,9 +285,9 @@ Let's first see how it looks like at collection time:
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 2 items
-    <Module 'test_backends.py'>
-      <Function 'test_db_initialized[d1]'>
-      <Function 'test_db_initialized[d2]'>
+    <Module test_backends.py>
+      <Function test_db_initialized[d1]>
+      <Function test_db_initialized[d2]>
 
     ======================= no tests ran in 0.12 seconds =======================
 
@@ -350,8 +350,8 @@ The result of this test will be successful:
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 1 item
-    <Module 'test_indirect_list.py'>
-      <Function 'test_indirect[a-b]'>
+    <Module test_indirect_list.py>
+      <Function test_indirect[a-b]>
 
     ======================= no tests ran in 0.12 seconds =======================
 
@@ -388,7 +388,8 @@ parametrizer`_ but in a lot less code::
             assert a == b
 
         def test_zerodivision(self, a, b):
-            pytest.raises(ZeroDivisionError, "a/b")
+            with pytest.raises(ZeroDivisionError):
+                a / b
 
 Our test generator looks up a class-level definition which specifies which
 argument sets to use for each test function.  Let's run it:

@@ -4,7 +4,6 @@ from __future__ import print_function
 
 import pytest
 from _pytest.main import EXIT_NOTESTSCOLLECTED
-from _pytest.warnings import SHOW_PYTEST_WARNINGS_ARG
 
 
 class SessionTests(object):
@@ -72,19 +71,6 @@ class SessionTests(object):
         if not out.find("DID NOT RAISE") != -1:
             print(out)
             pytest.fail("incorrect raises() output")
-
-    def test_generator_yields_None(self, testdir):
-        reprec = testdir.inline_runsource(
-            """
-            def test_1():
-                yield None
-        """,
-            SHOW_PYTEST_WARNINGS_ARG,
-        )
-        failures = reprec.getfailedcollections()
-        out = failures[0].longrepr.reprcrash.message
-        i = out.find("TypeError")
-        assert i != -1
 
     def test_syntax_error_module(self, testdir):
         reprec = testdir.inline_runsource("this is really not python")
@@ -243,12 +229,8 @@ class TestNewSession(SessionTests):
 
 
 def test_plugin_specify(testdir):
-    pytest.raises(
-        ImportError,
-        """
-            testdir.parseconfig("-p", "nqweotexistent")
-    """,
-    )
+    with pytest.raises(ImportError):
+        testdir.parseconfig("-p", "nqweotexistent")
     # pytest.raises(ImportError,
     #    "config.do_configure(config)"
     # )
