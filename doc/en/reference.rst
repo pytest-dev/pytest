@@ -889,6 +889,9 @@ Here is a list of builtin configuration options that may be written in a ``pytes
 file, usually located at the root of your repository. All options must be under a ``[pytest]`` section
 (``[tool:pytest]`` for ``setup.cfg`` files).
 
+.. warning:: usage of configuration file different than the canonical, i.e. ``pytest.ini``
+   can break other tools configurations.
+
 Configuration file options may be overwritten in the command-line by using ``-o/--override``, which can also be
 passed multiple times. The expected format is ``name=value``. For example::
 
