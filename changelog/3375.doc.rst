@@ -1,0 +1,1 @@
+document that not using the canonical configfile may crash other tools
