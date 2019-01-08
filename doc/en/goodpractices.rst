@@ -68,6 +68,7 @@ to keep tests separate from actual application code (often a good idea)::
         app.py
         view.py
     tests/
+        __init__.py
         test_app.py
         test_view.py
         ...
