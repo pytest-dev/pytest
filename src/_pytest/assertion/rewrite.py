@@ -51,19 +51,6 @@ else:
         return ast.Call(a, b, c, None, None)
 
 
-def ast_Call_helper(func_name, *args, **kwargs):
-    """
-    func_name: str
-    args: Iterable[ast.expr]
-    kwargs: Dict[str,ast.expr]
-    """
-    return ast.Call(
-        ast.Name(func_name, ast.Load()),
-        list(args),
-        [ast.keyword(key, val) for key, val in kwargs.items()],
-    )
-
-
 class AssertionRewritingHook(object):
     """PEP302 Import hook which rewrites asserts."""
 

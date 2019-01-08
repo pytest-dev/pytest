@@ -841,15 +841,6 @@ class TerminalReporter(object):
             self.write_line(msg, **markup)
 
 
-def repr_pythonversion(v=None):
-    if v is None:
-        v = sys.version_info
-    try:
-        return "%s.%s.%s-%s-%s" % v
-    except (TypeError, ValueError):
-        return str(v)
-
-
 def build_summary_stats_line(stats):
     keys = ("failed passed skipped deselected xfailed xpassed warnings error").split()
     unknown_key_seen = False

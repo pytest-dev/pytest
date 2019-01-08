@@ -23,8 +23,6 @@ from _pytest.compat import _PY3
 from _pytest.compat import PY35
 from _pytest.compat import safe_str
 
-builtin_repr = repr
-
 if _PY3:
     from traceback import format_exception_only
 else:
@@ -947,8 +945,6 @@ class ReprEntryNative(TerminalRepr):
 
 
 class ReprEntry(TerminalRepr):
-    localssep = "_ "
-
     def __init__(self, lines, reprfuncargs, reprlocals, filelocrepr, style):
         self.lines = lines
         self.reprfuncargs = reprfuncargs
@@ -970,7 +966,6 @@ class ReprEntry(TerminalRepr):
             red = line.startswith("E   ")
             tw.line(line, bold=True, red=red)
         if self.reprlocals:
-            # tw.sep(self.localssep, "Locals")
             tw.line("")
             self.reprlocals.toterminal(tw)
         if self.reprfileloc:

@@ -784,7 +784,6 @@ class TestMetafuncFunctional(object):
 
             @pytest.fixture
             def metafunc(request):
-                assert request._pyfuncitem._genid == "0"
                 return request.param
 
             def test_function(metafunc, pytestconfig):

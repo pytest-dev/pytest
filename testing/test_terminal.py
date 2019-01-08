@@ -18,7 +18,6 @@ from _pytest.main import EXIT_NOTESTSCOLLECTED
 from _pytest.terminal import _plugin_nameversions
 from _pytest.terminal import build_summary_stats_line
 from _pytest.terminal import getreportopt
-from _pytest.terminal import repr_pythonversion
 from _pytest.terminal import TerminalReporter
 
 DistInfo = collections.namedtuple("DistInfo", ["project_name", "version"])
@@ -359,16 +358,6 @@ class TestCollectonly(object):
         testdir.makepyfile(test_fun="def test_foo(): pass")
         result = testdir.runpytest("--collect-only", "-qq")
         result.stdout.fnmatch_lines(["*test_fun.py: 1*"])
-
-
-def test_repr_python_version(monkeypatch):
-    try:
-        monkeypatch.setattr(sys, "version_info", (2, 5, 1, "final", 0))
-        assert repr_pythonversion() == "2.5.1-final-0"
-        sys.version_info = x = (2, 3)
-        assert repr_pythonversion() == str(x)
-    finally:
-        monkeypatch.undo()  # do this early as pytest can get confused
 
 
 class TestFixtureReporting(object):

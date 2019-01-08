@@ -8,41 +8,12 @@ import py
 
 import _pytest._code
 import pytest
-from _pytest.nodes import FSCollector
-from _pytest.nodes import Item
-from _pytest.nodes import Node
-from _pytest.resultlog import generic_path
 from _pytest.resultlog import pytest_configure
 from _pytest.resultlog import pytest_unconfigure
 from _pytest.resultlog import ResultLog
 
 
 pytestmark = pytest.mark.filterwarnings("ignore:--result-log is deprecated")
-
-
-def test_generic_path(testdir):
-    from _pytest.main import Session
-
-    config = testdir.parseconfig()
-    session = Session(config)
-    p1 = Node("a", config=config, session=session, nodeid="a")
-    # assert p1.fspath is None
-    p2 = Node("B", parent=p1)
-    p3 = Node("()", parent=p2)
-    item = Item("c", parent=p3)
-
-    res = generic_path(item)
-    assert res == "a.B().c"
-
-    p0 = FSCollector("proj/test", config=config, session=session)
-    p1 = FSCollector("proj/test/a", parent=p0)
-    p2 = Node("B", parent=p1)
-    p3 = Node("()", parent=p2)
-    p4 = Node("c", parent=p3)
-    item = Item("[1]", parent=p4)
-
-    res = generic_path(item)
-    assert res == "test/a:B().c[1]"
 
 
 def test_write_log_entry():
