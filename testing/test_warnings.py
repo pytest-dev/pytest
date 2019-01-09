@@ -683,3 +683,27 @@ class TestAssertionWarnings:
         self.create_file(testdir, False)
         result = testdir.runpytest()
         result.stdout.fnmatch_lines(["*1 failed in*"])
+
+
+def test_warningschecker_twice(testdir):
+    """Issue #4617"""
+
+    testdir.makepyfile(
+        """
+        import pytest
+        import warnings
+
+        @pytest.mark.parametrize("other", [1, 2])
+        @pytest.mark.parametrize("expectation", [
+            pytest.warns(DeprecationWarning,
+                          match="Message A"),
+            pytest.warns(DeprecationWarning,
+                          match="Message A"),
+        ])
+        def test_parametrized_warnings(other, expectation):
+            with expectation:
+                warnings.warn("Message A", DeprecationWarning)
+        """
+    )
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines(["* 4 passed in *"])
