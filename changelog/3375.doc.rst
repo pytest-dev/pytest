@@ -1,1 +1,1 @@
-document that not using the canonical configfile may crash other tools
+Document that using ``setup.cfg`` may crash other tools or cause hard to track down problems because it uses a different parser than ``pytest.ini`` or ``tox.ini`` files.
