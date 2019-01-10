@@ -1,0 +1,1 @@
+Show full repr with ``assert a==b`` and ``-vv``.

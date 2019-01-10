@@ -151,6 +151,8 @@ def assertrepr_compare(config, op, left, right):
                 elif type(left) == type(right) and (isdatacls(left) or isattrs(left)):
                     type_fn = (isdatacls, isattrs)
                     explanation = _compare_eq_cls(left, right, verbose, type_fn)
+                elif verbose:
+                    explanation = _compare_eq_verbose(left, right)
                 if isiterable(left) and isiterable(right):
                     expl = _compare_eq_iterable(left, right, verbose)
                     if explanation is not None:
@@ -233,6 +235,18 @@ def _diff_text(left, right, verbose=False):
         line.strip("\n")
         for line in ndiff(left.splitlines(keepends), right.splitlines(keepends))
     ]
+    return explanation
+
+
+def _compare_eq_verbose(left, right):
+    keepends = True
+    left_lines = repr(left).splitlines(keepends)
+    right_lines = repr(right).splitlines(keepends)
+
+    explanation = []
+    explanation += [u"-" + line for line in left_lines]
+    explanation += [u"+" + line for line in right_lines]
+
     return explanation
 
 
