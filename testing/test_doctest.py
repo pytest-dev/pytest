@@ -1206,3 +1206,22 @@ class TestDoctestReportingOption(object):
                 "*error: argument --doctest-report: invalid choice: 'obviously_invalid_format' (choose from*"
             ]
         )
+
+
+@pytest.mark.parametrize("mock_module", ["mock", "unittest.mock"])
+def test_doctest_mock_objects_dont_recurse_missbehaved(mock_module, testdir):
+    pytest.importorskip(mock_module)
+    testdir.makepyfile(
+        """
+        from {mock_module} import call
+        class Example(object):
+            '''
+            >>> 1 + 1
+            2
+            '''
+        """.format(
+            mock_module=mock_module
+        )
+    )
+    result = testdir.runpytest("--doctest-modules")
+    result.stdout.fnmatch_lines(["* 1 passed *"])
