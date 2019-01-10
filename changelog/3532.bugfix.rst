@@ -1,1 +1,0 @@
-``-p`` now accepts its argument without a space between the value, for example ``-pmyplugin``.

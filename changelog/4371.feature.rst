@@ -1,1 +1,0 @@
-Updated the ``--collect-only`` option to display test descriptions when ran using ``--verbose``.

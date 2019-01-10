@@ -1,3 +1,0 @@
-Remove ``Node.get_marker(name)`` the return value was not usable for more than a existence check.
-
-Use ``Node.get_closest_marker(name)`` as a replacement.

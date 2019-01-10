@@ -192,6 +192,10 @@ class WarningsRecorder(warnings.catch_warnings):
             warnings.warn = self._saved_warn
         super(WarningsRecorder, self).__exit__(*exc_info)
 
+        # Built-in catch_warnings does not reset entered state so we do it
+        # manually here for this context manager to become reusable.
+        self._entered = False
+
 
 class WarningsChecker(WarningsRecorder):
     def __init__(self, expected_warning=None, match_expr=None):
