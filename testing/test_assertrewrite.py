@@ -180,6 +180,27 @@ class TestAssertionRewrite(object):
 
         assert getmsg(f, {"cls": X}) == "assert cls == 42"
 
+    def test_dont_rewrite_if_hasattr_fails(self):
+        class Y(object):
+            """ A class whos getattr fails, but not with `AttributeError` """
+
+            def __getattr__(self, attribute_name):
+                raise KeyError()
+
+            def __repr__(self):
+                return "Y"
+
+            def __init__(self):
+                self.foo = 3
+
+        def f():
+            assert cls().foo == 2  # noqa
+
+        message = getmsg(f, {"cls": Y})
+        assert "assert 3 == 2" in message
+        assert "+  where 3 = Y.foo" in message
+        assert "+    where Y = cls()" in message
+
     def test_assert_already_has_message(self):
         def f():
             assert False, "something bad!"

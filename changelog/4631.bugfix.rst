@@ -1,0 +1,1 @@
+Don't rewrite assertion when ``__getattr__`` is broken

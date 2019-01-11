@@ -525,7 +525,13 @@ def _format_assertmsg(obj):
 
 
 def _should_repr_global_name(obj):
-    return not hasattr(obj, "__name__") and not callable(obj)
+    if callable(obj):
+        return False
+
+    try:
+        return not hasattr(obj, "__name__")
+    except Exception:
+        return True
 
 
 def _format_boolop(explanations, is_or):
