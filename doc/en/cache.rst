@@ -214,6 +214,8 @@ If you run this command for the first time, you can see the print statement:
         def test_function(mydata):
     >       assert mydata == 23
     E       assert 42 == 23
+    E         -42
+    E         +23
 
     test_caching.py:17: AssertionError
     -------------------------- Captured stdout setup ---------------------------
@@ -235,6 +237,8 @@ the cache and nothing will be printed:
         def test_function(mydata):
     >       assert mydata == 23
     E       assert 42 == 23
+    E         -42
+    E         +23
 
     test_caching.py:17: AssertionError
     1 failed in 0.12 seconds
