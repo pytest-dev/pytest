@@ -101,7 +101,7 @@ an appropriate period of deprecation has passed.
 Using ``Class`` in custom Collectors
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-*Removed in version 4.0.*
+.. versionremoved:: 4.0
 
 Using objects named ``"Class"`` as a way to customize the type of nodes that are collected in ``Collector``
 subclasses has been deprecated. Users instead should use ``pytest_pycollect_makeitem`` to customize node types during
@@ -114,7 +114,7 @@ message please contact the authors so they can change the code.
 marks in ``pytest.mark.parametrize``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-*Removed in version 4.0.*
+.. versionremoved:: 4.0
 
 Applying marks to values of a ``pytest.mark.parametrize`` call is now deprecated. For example:
 
@@ -162,7 +162,7 @@ To update the code, use ``pytest.param``:
 ``pytest_funcarg__`` prefix
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-*Removed in version 4.0.*
+.. versionremoved:: 4.0
 
 In very early pytest versions fixtures could be defined using the ``pytest_funcarg__`` prefix:
 
@@ -184,7 +184,7 @@ Switch over to the ``@pytest.fixture`` decorator:
 [pytest] section in setup.cfg files
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-*Removed in version 4.0.*
+.. versionremoved:: 4.0
 
 ``[pytest]`` sections in ``setup.cfg`` files should now be named ``[tool:pytest]``
 to avoid conflicts with other distutils commands.
@@ -193,7 +193,7 @@ to avoid conflicts with other distutils commands.
 Metafunc.addcall
 ~~~~~~~~~~~~~~~~
 
-*Removed in version 4.0.*
+.. versionremoved:: 4.0
 
 :meth:`_pytest.python.Metafunc.addcall` was a precursor to the current parametrized mechanism. Users should use
 :meth:`_pytest.python.Metafunc.parametrize` instead.
@@ -217,7 +217,7 @@ Becomes:
 ``cached_setup``
 ~~~~~~~~~~~~~~~~
 
-*Removed in version 4.0.*
+.. versionremoved:: 4.0
 
 ``request.cached_setup`` was the precursor of the setup/teardown mechanism available to fixtures.
 
@@ -249,7 +249,7 @@ more information.
 pytest_plugins in non-top-level conftest files
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-*Removed in version 4.0.*
+.. versionremoved:: 4.0
 
 Defining ``pytest_plugins`` is now deprecated in non-top-level conftest.py
 files because they will activate referenced plugins *globally*, which is surprising because for all other pytest
@@ -259,7 +259,7 @@ features ``conftest.py`` files are only *active* for tests at or below it.
 ``Config.warn`` and ``Node.warn``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-*Removed in version 4.0.*
+.. versionremoved:: 4.0
 
 Those methods were part of the internal pytest warnings system, but since ``3.8`` pytest is using the builtin warning
 system for its own warnings, so those two functions are now deprecated.
@@ -286,7 +286,7 @@ Becomes:
 record_xml_property
 ~~~~~~~~~~~~~~~~~~~
 
-*Removed in version 4.0.*
+.. versionremoved:: 4.0
 
 The ``record_xml_property`` fixture is now deprecated in favor of the more generic ``record_property``, which
 can be used by other consumers (for example ``pytest-html``) to obtain custom information about the test run.
@@ -309,7 +309,7 @@ Change to:
 Passing command-line string to ``pytest.main()``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-*Removed in version 4.0.*
+.. versionremoved:: 4.0
 
 Passing a command-line string to ``pytest.main()`` is deprecated:
 
@@ -331,7 +331,7 @@ on (for example ``bash`` or ``Powershell``), but this is very hard/impossible to
 Calling fixtures directly
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-*Removed in version 4.0.*
+.. versionremoved:: 4.0
 
 Calling a fixture function directly, as opposed to request them in a test function, is deprecated.
 
@@ -384,7 +384,7 @@ with the ``name`` parameter:
 ``yield`` tests
 ~~~~~~~~~~~~~~~
 
-*Removed in version 4.0.*
+.. versionremoved:: 4.0
 
 pytest supported ``yield``-style tests, where a test function actually ``yield`` functions and values
 that are then turned into proper test methods. Example:
@@ -412,7 +412,7 @@ This form of test function doesn't support fixtures properly, and users should s
 Internal classes accessed through ``Node``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-*Removed in version 4.0.*
+.. versionremoved:: 4.0
 
 Access of ``Module``, ``Function``, ``Class``, ``Instance``, ``File`` and ``Item`` through ``Node`` instances now issue
 this warning::
@@ -423,10 +423,28 @@ Users should just ``import pytest`` and access those objects using the ``pytest`
 
 This has been documented as deprecated for years, but only now we are actually emitting deprecation warnings.
 
+``Node.get_marker``
+~~~~~~~~~~~~~~~~~~~
+
+.. versionremoved:: 4.0
+
+As part of a large :ref:`marker-revamp`, :meth:`_pytest.nodes.Node.get_marker` is deprecated. See
+:ref:`the documentation <update marker code>` on tips on how to update your code.
+
+
+``somefunction.markname``
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. versionremoved:: 4.0
+
+As part of a large :ref:`marker-revamp` we already deprecated using ``MarkInfo``
+the only correct way to get markers of an element is via ``node.iter_markers(name)``.
+
+
 ``pytest_namespace``
 ~~~~~~~~~~~~~~~~~~~~
 
-*Removed in version 4.0.*
+.. versionremoved:: 4.0
 
 This hook is deprecated because it greatly complicates the pytest internals regarding configuration and initialization, making some
 bug fixes and refactorings impossible.
@@ -461,7 +479,7 @@ As a stopgap measure, plugin authors may still inject their names into pytest's 
 Reinterpretation mode (``--assert=reinterp``)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-*Removed in version 3.0.*
+.. versionremoved:: 3.0
 
 Reinterpretation mode has now been removed and only plain and rewrite
 mode are available, consequently the ``--assert=reinterp`` option is
@@ -473,7 +491,7 @@ explicitly turn on assertion rewriting for those files.
 Removed command-line options
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-*Removed in version 3.0.*
+.. versionremoved:: 3.0
 
 The following deprecated commandline options were removed:
 
@@ -485,27 +503,9 @@ The following deprecated commandline options were removed:
 py.test-X* entry points
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-*Removed in version 3.0.*
+.. versionremoved:: 3.0
 
 Removed all ``py.test-X*`` entry points. The versioned, suffixed entry points
 were never documented and a leftover from a pre-virtualenv era. These entry
 points also created broken entry points in wheels, so removing them also
 removes a source of confusion for users.
-
-
-``Node.get_marker``
-~~~~~~~~~~~~~~~~~~~
-
-*Removed in version 4.0*
-
-As part of a large :ref:`marker-revamp`, :meth:`_pytest.nodes.Node.get_marker` is deprecated. See
-:ref:`the documentation <update marker code>` on tips on how to update your code.
-
-
-``somefunction.markname``
-~~~~~~~~~~~~~~~~~~~~~~~~~
-
-*Removed in version 4.0*
-
-As part of a large :ref:`marker-revamp` we already deprecated using ``MarkInfo``
-the only correct way to get markers of an element is via ``node.iter_markers(name)``.
