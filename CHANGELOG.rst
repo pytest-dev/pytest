@@ -18,6 +18,38 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+pytest 4.1.1 (2019-01-12)
+=========================
+
+Bug Fixes
+---------
+
+- `#2256 <https://github.com/pytest-dev/pytest/issues/2256>`_: Show full repr with ``assert a==b`` and ``-vv``.
+
+
+- `#3456 <https://github.com/pytest-dev/pytest/issues/3456>`_: Extend Doctest-modules to ignore mock objects.
+
+
+- `#4617 <https://github.com/pytest-dev/pytest/issues/4617>`_: Fixed ``pytest.warns`` bug when context manager is reused (e.g. multiple parametrization).
+
+
+- `#4631 <https://github.com/pytest-dev/pytest/issues/4631>`_: Don't rewrite assertion when ``__getattr__`` is broken
+
+
+
+Improved Documentation
+----------------------
+
+- `#3375 <https://github.com/pytest-dev/pytest/issues/3375>`_: Document that using ``setup.cfg`` may crash other tools or cause hard to track down problems because it uses a different parser than ``pytest.ini`` or ``tox.ini`` files.
+
+
+
+Trivial/Internal Changes
+------------------------
+
+- `#4602 <https://github.com/pytest-dev/pytest/issues/4602>`_: Uninstall ``hypothesis`` in regen tox env.
+
+
 pytest 4.1.0 (2019-01-05)
 =========================
 
