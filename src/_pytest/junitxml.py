@@ -78,14 +78,14 @@ def merge_family(left, right):
 
 families = {}
 families["_base"] = {"testcase": ["classname", "name"]}
-families["_base_old"] = {"testcase": ["file", "line", "url"]}
+families["_base_legacy"] = {"testcase": ["file", "line", "url"]}
 
-# xUnit 1.x inherits old attributes
+# xUnit 1.x inherits legacy attributes
 families["xunit1"] = families["_base"].copy()
-merge_family(families["xunit1"], families["_base_old"])
+merge_family(families["xunit1"], families["_base_legacy"])
 
-# Alias "old" to xUnit 1.x
-families["old"] = families["xunit1"]
+# Alias "legacy" to xUnit 1.x
+families["legacy"] = families["xunit1"]
 
 # xUnit 2.x uses strict base attributes
 families["xunit2"] = families["_base"]
@@ -144,8 +144,8 @@ class _NodeReporter(object):
         self.attrs = attrs
         self.attrs.update(existing_attrs)  # restore any user-defined attributes
 
-        # Preserve old testcase behavior
-        if self.family == "old":
+        # Preserve legacy testcase behavior
+        if self.family == "legacy":
             return
 
         # Purge attributes not permitted by this test family
@@ -354,7 +354,9 @@ def pytest_addoption(parser):
         default="total",
     )  # choices=['total', 'call'])
     parser.addini(
-        "junit_family", "Emit XML for schema: one of old|xunit1|xunit2", default="old"
+        "junit_family",
+        "Emit XML for schema: one of legacy|xunit1|xunit2",
+        default="legacy",
     )
 
 
@@ -397,7 +399,13 @@ def mangle_test_address(address):
 
 class LogXML(object):
     def __init__(
-        self, logfile, prefix, suite_name="pytest", logging="no", report_duration="total", family="old"
+        self,
+        logfile,
+        prefix,
+        suite_name="pytest",
+        logging="no",
+        report_duration="total",
+        family="legacy",
     ):
         logfile = os.path.expanduser(os.path.expandvars(logfile))
         self.logfile = os.path.normpath(os.path.abspath(logfile))
