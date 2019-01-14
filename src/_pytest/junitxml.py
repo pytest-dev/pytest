@@ -71,7 +71,7 @@ def merge_family(left, right):
     for kl, vl in left.items():
         for kr, vr in right.items():
             if not isinstance(vl, list):
-                raise NotImplementedError(type(vl))
+                raise TypeError(type(vl))
             result[kl] = vl + vr
     left.update(result)
 
