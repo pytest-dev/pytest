@@ -1,1 +1,2 @@
-``--junitxml`` emits XML data compatible with Jenkins xUnit schemas via ``junit_family`` INI config option
+``--junitxml`` can emit XML compatible with Jenkins xUnit.
+``junit_family`` INI option accepts ``legacy|xunit1``, which produces old style output, and ``xunit2`` that conforms more strictly to https://github.com/jenkinsci/xunit-plugin/blob/xunit-2.3.2/src/main/resources/org/jenkinsci/plugins/xunit/types/model/xsd/junit-10.xsd
