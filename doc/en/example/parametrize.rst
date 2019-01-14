@@ -406,6 +406,8 @@ argument sets to use for each test function.  Let's run it:
         def test_equals(self, a, b):
     >       assert a == b
     E       assert 1 == 2
+    E         -1
+    E         +2
 
     test_parametrize.py:18: AssertionError
     1 failed, 2 passed in 0.12 seconds

@@ -1,1 +1,0 @@
-Fixed ``pytest.warns`` bug when context manager is reused (e.g. multiple parametrization).

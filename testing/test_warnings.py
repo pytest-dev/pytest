@@ -2,6 +2,7 @@
 from __future__ import unicode_literals
 
 import sys
+import warnings
 
 import six
 
@@ -685,25 +686,10 @@ class TestAssertionWarnings:
         result.stdout.fnmatch_lines(["*1 failed in*"])
 
 
-def test_warningschecker_twice(testdir):
+def test_warnings_checker_twice():
     """Issue #4617"""
-
-    testdir.makepyfile(
-        """
-        import pytest
-        import warnings
-
-        @pytest.mark.parametrize("other", [1, 2])
-        @pytest.mark.parametrize("expectation", [
-            pytest.warns(DeprecationWarning,
-                          match="Message A"),
-            pytest.warns(DeprecationWarning,
-                          match="Message A"),
-        ])
-        def test_parametrized_warnings(other, expectation):
-            with expectation:
-                warnings.warn("Message A", DeprecationWarning)
-        """
-    )
-    result = testdir.runpytest()
-    result.stdout.fnmatch_lines(["* 4 passed in *"])
+    expectation = pytest.warns(UserWarning)
+    with expectation:
+        warnings.warn("Message A", UserWarning)
+    with expectation:
+        warnings.warn("Message B", UserWarning)
