@@ -283,9 +283,6 @@ class PyobjMixin(PyobjContext):
         s = ".".join(parts)
         return s.replace(".[", "[")
 
-    def _getfslineno(self):
-        return getfslineno(self.obj)
-
     def reportinfo(self):
         # XXX caching?
         obj = self.obj
@@ -1252,7 +1249,6 @@ class Function(FunctionMixin, nodes.Item, fixtures.FuncargnamesCompatAttr):
     Python test function.
     """
 
-    _genid = None
     # disable since functions handle it themselves
     _ALLOW_MARKERS = False
 
@@ -1327,7 +1323,6 @@ class Function(FunctionMixin, nodes.Item, fixtures.FuncargnamesCompatAttr):
             if hasattr(self, "callspec"):
                 callspec = self.callspec
                 assert not callspec.funcargs
-                self._genid = callspec.id
                 if hasattr(callspec, "param"):
                     self.param = callspec.param
         self._request = fixtures.FixtureRequest(self)

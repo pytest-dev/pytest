@@ -158,16 +158,6 @@ class TestReport(BaseReport):
         )
 
 
-class TeardownErrorReport(BaseReport):
-    outcome = "failed"
-    when = "teardown"
-
-    def __init__(self, longrepr, **extra):
-        self.longrepr = longrepr
-        self.sections = []
-        self.__dict__.update(extra)
-
-
 class CollectReport(BaseReport):
     def __init__(self, nodeid, outcome, longrepr, result, sections=(), **extra):
         self.nodeid = nodeid
