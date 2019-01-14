@@ -150,10 +150,10 @@ class ApproxNumpy(ApproxBase):
 
         if np.isscalar(actual):
             for i in np.ndindex(self.expected.shape):
-                yield actual, np.asscalar(self.expected[i])
+                yield actual, self.expected[i].item()
         else:
             for i in np.ndindex(self.expected.shape):
-                yield np.asscalar(actual[i]), np.asscalar(self.expected[i])
+                yield actual[i].item(), self.expected[i].item()
 
 
 class ApproxMapping(ApproxBase):

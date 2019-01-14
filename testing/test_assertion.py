@@ -488,6 +488,30 @@ class TestAssert_reprcompare(object):
         expl = callequal([(1, 2)], [])
         assert len(expl) > 1
 
+    def test_repr_verbose(self):
+        class Nums:
+            def __init__(self, nums):
+                self.nums = nums
+
+            def __repr__(self):
+                return str(self.nums)
+
+        list_x = list(range(5000))
+        list_y = list(range(5000))
+        list_y[len(list_y) // 2] = 3
+        nums_x = Nums(list_x)
+        nums_y = Nums(list_y)
+
+        assert callequal(nums_x, nums_y) is None
+
+        expl = callequal(nums_x, nums_y, verbose=1)
+        assert "-" + repr(nums_x) in expl
+        assert "+" + repr(nums_y) in expl
+
+        expl = callequal(nums_x, nums_y, verbose=2)
+        assert "-" + repr(nums_x) in expl
+        assert "+" + repr(nums_y) in expl
+
     def test_list_bad_repr(self):
         class A(object):
             def __repr__(self):

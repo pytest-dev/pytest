@@ -1,1 +1,0 @@
-Uninstall ``hypothesis`` in regen tox env.
