@@ -311,7 +311,7 @@ def record_xml_attribute(request):
     attr_func = add_attr_noop
     xml = getattr(request.config, "_xml", None)
 
-    if xml.family != "xunit1":
+    if xml is not None and xml.family != "xunit1":
         request.node.warn(
             PytestWarning(
                 "record_xml_attribute is incompatible with junit_family: "
