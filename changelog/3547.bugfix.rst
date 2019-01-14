@@ -1,1 +1,1 @@
-``--junitxml`` emits XML data compatible with JUnit's offical schema releases.
+``--junitxml`` emits XML data compatible with Jenkins xUnit schemas via ``junit_family`` INI config option

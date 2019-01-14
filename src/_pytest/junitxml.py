@@ -145,9 +145,8 @@ class _NodeReporter(object):
         if self.family == "xunit1":
             return
 
-        # Purge attributes not permitted by this test family
-        # This includes custom attributes, because they are not valid here.
-        # TODO: Convert invalid attributes to properties to preserve "something"
+        # Filter out attributes not permitted by this test family.
+        # Including custom attributes because they are not valid here.
         temp_attrs = {}
         for key in self.attrs.keys():
             if key in families[self.family]["testcase"]:
