@@ -980,6 +980,12 @@ def test_record_property_same_name(testdir):
 
 @pytest.mark.filterwarnings("default")
 def test_record_attribute(testdir):
+    testdir.makeini(
+        """
+        [pytest]
+        junit_family = xunit1
+    """
+    )
     testdir.makepyfile(
         """
         import pytest
@@ -998,6 +1004,38 @@ def test_record_attribute(testdir):
     tnode.assert_attr(foo="<1")
     result.stdout.fnmatch_lines(
         ["*test_record_attribute.py:6:*record_xml_attribute is an experimental feature"]
+    )
+
+
+@pytest.mark.filterwarnings("default")
+def test_record_attribute_xunit2(testdir):
+    """Ensure record_xml_attribute drops values when outside of legacy family
+    """
+    testdir.makeini(
+        """
+        [pytest]
+        junit_family = xunit2
+    """
+    )
+    testdir.makepyfile(
+        """
+        import pytest
+
+        @pytest.fixture
+        def other(record_xml_attribute):
+            record_xml_attribute("bar", 1)
+        def test_record(record_xml_attribute, other):
+            record_xml_attribute("foo", "<1");
+    """
+    )
+
+    result, dom = runandparse(testdir, "-rw")
+    result.stdout.fnmatch_lines(
+        [
+            "*test_record_attribute_xunit2.py:6:*record_xml_attribute is an experimental feature",
+            "*test_record_attribute_xunit2.py:6:*record_xml_attribute is incompatible with "
+            "junit_family: xunit2 (use: legacy|xunit1)",
+        ]
     )
 
 
