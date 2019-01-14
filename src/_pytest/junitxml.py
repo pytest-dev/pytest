@@ -84,9 +84,6 @@ families["_base_legacy"] = {"testcase": ["file", "line", "url"]}
 families["xunit1"] = families["_base"].copy()
 merge_family(families["xunit1"], families["_base_legacy"])
 
-# Alias "legacy" to xUnit 1.x
-families["legacy"] = families["xunit1"]
-
 # xUnit 2.x uses strict base attributes
 families["xunit2"] = families["_base"]
 
@@ -145,7 +142,7 @@ class _NodeReporter(object):
         self.attrs.update(existing_attrs)  # restore any user-defined attributes
 
         # Preserve legacy testcase behavior
-        if self.family == "legacy":
+        if self.family == "xunit1":
             return
 
         # Purge attributes not permitted by this test family
@@ -275,7 +272,7 @@ class _NodeReporter(object):
     def finalize(self):
         data = self.to_xml().unicode(indent=0)
         self.__dict__.clear()
-        self.raw = lambda: py.xml.raw(data)
+        self.to_xml = lambda: py.xml.raw(data)
 
 
 @pytest.fixture
@@ -307,16 +304,26 @@ def record_xml_attribute(request):
     from _pytest.warning_types import PytestWarning
 
     request.node.warn(PytestWarning("record_xml_attribute is an experimental feature"))
+
+    # Declare noop
+    def add_attr_noop(name, value):
+        pass
+
+    attr_func = add_attr_noop
     xml = getattr(request.config, "_xml", None)
-    if xml is not None:
+
+    if xml.family != "xunit1":
+        request.node.warn(
+            PytestWarning(
+                "record_xml_attribute is incompatible with junit_family: "
+                "%s (use: legacy|xunit1)" % xml.family
+            )
+        )
+    elif xml is not None:
         node_reporter = xml.node_reporter(request.node.nodeid)
-        return node_reporter.add_attribute
-    else:
+        attr_func = node_reporter.add_attribute
 
-        def add_attr_noop(name, value):
-            pass
-
-        return add_attr_noop
+    return attr_func
 
 
 def pytest_addoption(parser):
@@ -356,7 +363,7 @@ def pytest_addoption(parser):
     parser.addini(
         "junit_family",
         "Emit XML for schema: one of legacy|xunit1|xunit2",
-        default="legacy",
+        default="xunit1",
     )
 
 
@@ -405,7 +412,7 @@ class LogXML(object):
         suite_name="pytest",
         logging="no",
         report_duration="total",
-        family="legacy",
+        family="xunit1",
     ):
         logfile = os.path.expanduser(os.path.expandvars(logfile))
         self.logfile = os.path.normpath(os.path.abspath(logfile))
@@ -421,6 +428,10 @@ class LogXML(object):
         # List of reports that failed on call but teardown is pending.
         self.open_reports = []
         self.cnt_double_fail_tests = 0
+
+        # Replaces convenience family with real family
+        if self.family == "legacy":
+            self.family = "xunit1"
 
     def finalize(self, report):
         nodeid = getattr(report, "nodeid", report)
@@ -587,7 +598,7 @@ class LogXML(object):
         logfile.write(
             Junit.testsuite(
                 self._get_global_properties_node(),
-                [x.raw() for x in self.node_reporters_ordered],
+                [x.to_xml() for x in self.node_reporters_ordered],
                 name=self.suite_name,
                 errors=self.stats["error"],
                 failures=self.stats["failure"],
@@ -597,10 +608,6 @@ class LogXML(object):
             ).unicode(indent=0)
         )
         logfile.close()
-
-        # TODO: GET RID OF
-        with open(self.logfile) as logfile:
-            print(logfile.read())
 
     def pytest_terminal_summary(self, terminalreporter):
         terminalreporter.write_sep("-", "generated xml file: %s" % (self.logfile))
