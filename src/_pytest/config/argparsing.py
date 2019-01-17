@@ -1,12 +1,10 @@
 import argparse
-import sys as _sys
 import warnings
-from gettext import gettext as _
 
 import py
 import six
 
-from ..main import EXIT_USAGEERROR
+from _pytest.config.exceptions import UsageError
 
 FILE_OR_DIR = "file_or_dir"
 
@@ -337,14 +335,13 @@ class MyOptionParser(argparse.ArgumentParser):
         self.extra_info = extra_info
 
     def error(self, message):
-        """error(message: string)
+        """Transform argparse error message into UsageError."""
+        msg = "%s: error: %s" % (self.prog, message)
 
-        Prints a usage message incorporating the message to stderr and
-        exits.
-        Overrides the method in parent class to change exit code"""
-        self.print_usage(_sys.stderr)
-        args = {"prog": self.prog, "message": message}
-        self.exit(EXIT_USAGEERROR, _("%(prog)s: error: %(message)s\n") % args)
+        if hasattr(self._parser, "_config_source_hint"):
+            msg = "%s (%s)" % (msg, self._parser._config_source_hint)
+
+        raise UsageError(self.format_usage() + msg)
 
     def parse_args(self, args=None, namespace=None):
         """allow splitting of positional arguments"""

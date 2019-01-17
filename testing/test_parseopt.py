@@ -11,6 +11,7 @@ import py
 
 import pytest
 from _pytest.config import argparsing as parseopt
+from _pytest.config.exceptions import UsageError
 
 
 @pytest.fixture
@@ -19,11 +20,9 @@ def parser():
 
 
 class TestParser(object):
-    def test_no_help_by_default(self, capsys):
+    def test_no_help_by_default(self):
         parser = parseopt.Parser(usage="xyz")
-        pytest.raises(SystemExit, lambda: parser.parse(["-h"]))
-        out, err = capsys.readouterr()
-        assert err.find("error: unrecognized arguments") != -1
+        pytest.raises(UsageError, lambda: parser.parse(["-h"]))
 
     def test_custom_prog(self, parser):
         """Custom prog can be set for `argparse.ArgumentParser`."""
