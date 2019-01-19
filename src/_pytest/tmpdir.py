@@ -65,7 +65,7 @@ class TempPathFactory(object):
                 ensure_reset_dir(basetemp)
             else:
                 from_env = os.environ.get("PYTEST_DEBUG_TEMPROOT")
-                temproot = Path(from_env or tempfile.gettempdir())
+                temproot = Path(from_env or tempfile.gettempdir()).resolve()
                 user = get_user() or "unknown"
                 # use a sub-directory in the temproot to speed-up
                 # make_numbered_dir() call

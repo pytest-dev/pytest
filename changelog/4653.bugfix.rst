@@ -1,0 +1,1 @@
+``tmp_path`` fixture and other related ones provides resolved path (a.k.a real path)
