@@ -51,3 +51,8 @@ repos:
         entry: 'changelog files must be named ####.(feature|bugfix|doc|deprecation|removal|vendor|trivial).rst'
         exclude: changelog/(\d+\.(feature|bugfix|doc|deprecation|removal|vendor|trivial).rst|README.rst|_template.rst)
         files: ^changelog/
+    -   id: py-deprecated
+        name: py library is deprecated
+        language: pygrep
+        entry: '\bpy\.(builtin\.|code\.|std\.)'
+        types: [python]
