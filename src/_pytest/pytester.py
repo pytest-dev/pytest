@@ -20,6 +20,7 @@ import six
 
 import pytest
 from _pytest._code import Source
+from _pytest._io.saferepr import saferepr
 from _pytest.assertion.rewrite import AssertionRewritingHook
 from _pytest.capture import MultiCapture
 from _pytest.capture import SysCapture
@@ -1225,9 +1226,7 @@ def getdecoded(out):
     try:
         return out.decode("utf-8")
     except UnicodeDecodeError:
-        return "INTERNAL not-utf8-decodeable, truncated string:\n%s" % (
-            py.io.saferepr(out),
-        )
+        return "INTERNAL not-utf8-decodeable, truncated string:\n%s" % (saferepr(out),)
 
 
 class LineComp(object):

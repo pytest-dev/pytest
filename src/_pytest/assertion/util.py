@@ -5,11 +5,11 @@ from __future__ import print_function
 
 import pprint
 
-import py
 import six
 
 import _pytest._code
 from ..compat import Sequence
+from _pytest._io.saferepr import saferepr
 
 # The _reprcompare attribute on the util module is used by the new assertion
 # interpretation code and assertion rewriter to detect this plugin was
@@ -105,8 +105,8 @@ except NameError:
 def assertrepr_compare(config, op, left, right):
     """Return specialised explanations for some operators/operands"""
     width = 80 - 15 - len(op) - 2  # 15 chars indentation, 1 space around op
-    left_repr = py.io.saferepr(left, maxsize=int(width // 2))
-    right_repr = py.io.saferepr(right, maxsize=width - len(left_repr))
+    left_repr = saferepr(left, maxsize=int(width // 2))
+    right_repr = saferepr(right, maxsize=width - len(left_repr))
 
     summary = u"%s %s %s" % (ecu(left_repr), op, ecu(right_repr))
 
@@ -282,12 +282,12 @@ def _compare_eq_sequence(left, right, verbose=False):
     if len(left) > len(right):
         explanation += [
             u"Left contains more items, first extra item: %s"
-            % py.io.saferepr(left[len(right)])
+            % saferepr(left[len(right)])
         ]
     elif len(left) < len(right):
         explanation += [
             u"Right contains more items, first extra item: %s"
-            % py.io.saferepr(right[len(left)])
+            % saferepr(right[len(left)])
         ]
     return explanation
 
@@ -299,11 +299,11 @@ def _compare_eq_set(left, right, verbose=False):
     if diff_left:
         explanation.append(u"Extra items in the left set:")
         for item in diff_left:
-            explanation.append(py.io.saferepr(item))
+            explanation.append(saferepr(item))
     if diff_right:
         explanation.append(u"Extra items in the right set:")
         for item in diff_right:
-            explanation.append(py.io.saferepr(item))
+            explanation.append(saferepr(item))
     return explanation
 
 
@@ -320,9 +320,7 @@ def _compare_eq_dict(left, right, verbose=False):
     if diff:
         explanation += [u"Differing items:"]
         for k in diff:
-            explanation += [
-                py.io.saferepr({k: left[k]}) + " != " + py.io.saferepr({k: right[k]})
-            ]
+            explanation += [saferepr({k: left[k]}) + " != " + saferepr({k: right[k]})]
     extra_left = set(left) - set(right)
     if extra_left:
         explanation.append(u"Left contains more items:")
@@ -376,7 +374,7 @@ def _notin_text(term, text, verbose=False):
     tail = text[index + len(term) :]
     correct_text = head + tail
     diff = _diff_text(correct_text, text, verbose)
-    newdiff = [u"%s is contained here:" % py.io.saferepr(term, maxsize=42)]
+    newdiff = [u"%s is contained here:" % saferepr(term, maxsize=42)]
     for line in diff:
         if line.startswith(u"Skipping"):
             continue
