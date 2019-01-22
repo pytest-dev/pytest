@@ -3,6 +3,7 @@ from __future__ import division
 from __future__ import print_function
 
 import argparse
+import distutils.spawn
 import os
 import sys
 
@@ -296,7 +297,7 @@ class TestParser(object):
 
 
 def test_argcomplete(testdir, monkeypatch):
-    if not py.path.local.sysfind("bash"):
+    if not distutils.spawn.find_executable("bash"):
         pytest.skip("bash not available")
     script = str(testdir.tmpdir.join("test_argcomplete"))
     pytest_bin = sys.argv[0]

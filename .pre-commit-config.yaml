@@ -54,5 +54,14 @@ repos:
     -   id: py-deprecated
         name: py library is deprecated
         language: pygrep
-        entry: '\bpy\.(builtin\.|code\.|std\.|io\.saferepr)'
+        entry: >
+            (?x)\bpy\.(
+                _code\.|
+                builtin\.|
+                code\.|
+                io\.(BytesIO|saferepr)|
+                path\.local\.sysfind|
+                process\.|
+                std\.
+            )
         types: [python]

@@ -4,8 +4,10 @@ from __future__ import division
 from __future__ import print_function
 
 import contextlib
+import io
 import os
 import pickle
+import subprocess
 import sys
 import textwrap
 from io import UnsupportedOperation
@@ -851,7 +853,7 @@ class TestCaptureIO(object):
 
 
 def test_bytes_io():
-    f = py.io.BytesIO()
+    f = io.BytesIO()
     f.write(b"hello")
     with pytest.raises(TypeError):
         f.write(u"hello")
@@ -933,18 +935,18 @@ def test_dupfile(tmpfile):
 
 
 def test_dupfile_on_bytesio():
-    io = py.io.BytesIO()
-    f = capture.safe_text_dupfile(io, "wb")
+    bio = io.BytesIO()
+    f = capture.safe_text_dupfile(bio, "wb")
     f.write("hello")
-    assert io.getvalue() == b"hello"
+    assert bio.getvalue() == b"hello"
     assert "BytesIO object" in f.name
 
 
 def test_dupfile_on_textio():
-    io = py.io.TextIO()
-    f = capture.safe_text_dupfile(io, "wb")
+    tio = py.io.TextIO()
+    f = capture.safe_text_dupfile(tio, "wb")
     f.write("hello")
-    assert io.getvalue() == "hello"
+    assert tio.getvalue() == "hello"
     assert not hasattr(f, "name")
 
 
@@ -952,12 +954,12 @@ def test_dupfile_on_textio():
 def lsof_check():
     pid = os.getpid()
     try:
-        out = py.process.cmdexec("lsof -p %d" % pid)
-    except (py.process.cmdexec.Error, UnicodeDecodeError):
+        out = subprocess.check_output(("lsof", "-p", str(pid))).decode()
+    except (OSError, subprocess.CalledProcessError, UnicodeDecodeError):
         # about UnicodeDecodeError, see note on pytester
         pytest.skip("could not run 'lsof'")
     yield
-    out2 = py.process.cmdexec("lsof -p %d" % pid)
+    out2 = subprocess.check_output(("lsof", "-p", str(pid))).decode()
     len1 = len([x for x in out.split("\n") if "REG" in x])
     len2 = len([x for x in out2.split("\n") if "REG" in x])
     assert len2 < len1 + 3, out2

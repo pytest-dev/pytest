@@ -14,10 +14,10 @@ import attr
 import py
 import six
 from more_itertools import flatten
-from py._code.code import FormattedExcinfo
 
 import _pytest
 from _pytest import nodes
+from _pytest._code.code import FormattedExcinfo
 from _pytest._code.code import TerminalRepr
 from _pytest.compat import _format_args
 from _pytest.compat import _PytestWrapper
