@@ -936,7 +936,7 @@ class Metafunc(fixtures.FuncargnamesCompatAttr):
         :rtype: List[str]
         :return: the list of ids for each argname given
         """
-        from py.io import saferepr
+        from _pytest._io.saferepr import saferepr
 
         idfn = None
         if callable(ids):

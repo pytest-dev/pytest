@@ -4,6 +4,7 @@ from __future__ import division
 from __future__ import print_function
 
 import codecs
+import distutils.spawn
 import gc
 import os
 import platform
@@ -80,7 +81,7 @@ class LsofFdLeakChecker(object):
 
     def _exec_lsof(self):
         pid = os.getpid()
-        return py.process.cmdexec("lsof -Ffn0 -p %d" % pid)
+        return subprocess.check_output(("lsof", "-Ffn0", "-p", str(pid))).decode()
 
     def _parse_lsof_output(self, out):
         def isopen(line):
@@ -107,11 +108,8 @@ class LsofFdLeakChecker(object):
 
     def matching_platform(self):
         try:
-            py.process.cmdexec("lsof -v")
-        except (py.process.cmdexec.Error, UnicodeDecodeError):
-            # cmdexec may raise UnicodeDecodeError on Windows systems with
-            # locale other than English:
-            # https://bitbucket.org/pytest-dev/py/issues/66
+            subprocess.check_output(("lsof", "-v"))
+        except (OSError, subprocess.CalledProcessError):
             return False
         else:
             return True
@@ -153,7 +151,7 @@ def getexecutable(name, cache={}):
     try:
         return cache[name]
     except KeyError:
-        executable = py.path.local.sysfind(name)
+        executable = distutils.spawn.find_executable(name)
         if executable:
             import subprocess
 
