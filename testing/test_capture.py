@@ -852,15 +852,6 @@ class TestCaptureIO(object):
         assert f.getvalue() == "foo\r\n"
 
 
-def test_bytes_io():
-    f = io.BytesIO()
-    f.write(b"hello")
-    with pytest.raises(TypeError):
-        f.write(u"hello")
-    s = f.getvalue()
-    assert s == b"hello"
-
-
 def test_dontreadfrominput():
     from _pytest.capture import DontReadFromInput
 
