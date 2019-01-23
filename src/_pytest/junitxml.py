@@ -273,6 +273,27 @@ def record_xml_property(record_property, request):
     return record_property
 
 
+@fixture
+def record_xml_attribute(request):
+    """Add extra xml attributes to the tag for the calling test.
+    The fixture is callable with ``(name, value)``, with value being
+    automatically xml-encoded
+    """
+    from _pytest.warning_types import PytestWarning
+
+    request.node.warn(PytestWarning("record_xml_attribute is an experimental feature"))
+    xml = getattr(request.config, "_xml", None)
+    if xml is not None:
+        node_reporter = xml.node_reporter(request.node.nodeid)
+        return node_reporter.add_attribute
+    else:
+
+        def add_attr_noop(name, value):
+            pass
+
+        return add_attr_noop
+
+
 def pytest_addoption(parser):
     group = parser.getgroup("terminal reporting")
     group.addoption(
