@@ -326,21 +326,21 @@ def record_xml_attribute(request):
     The fixture is callable with ``(name, value)``, with value being
     automatically xml-encoded
     """
-    from _pytest.warning_types import PytestExperimentalApiWarning
+    from _pytest.warning_types import PytestWarning
 
-    request.node.warn(
-        PytestExperimentalApiWarning("record_xml_attribute is an experimental feature")
-    )
-
-    _warn_incompatibility_with_xunit2(request, "record_xml_attribute")
-
-    # Declare noop
-    def add_attr_noop(name, value):
-        pass
-
-    attr_func = add_attr_noop
-
+    request.node.warn(PytestWarning("record_xml_attribute is an experimental feature"))
     xml = getattr(request.config, "_xml", None)
+    if xml is not None:
+        node_reporter = xml.node_reporter(request.node.nodeid)
+        return node_reporter.add_attribute
+    else:
+
+        def add_attr_noop(name, value):
+            pass
+
+        return add_attr_noop
+
+
     if xml is not None:
         node_reporter = xml.node_reporter(request.node.nodeid)
         attr_func = node_reporter.add_attribute
