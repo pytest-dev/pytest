@@ -1202,6 +1202,6 @@ def test_summary_list_after_errors(testdir):
         [
             "=* FAILURES *=",
             "*= short test summary info =*",
-            "FAIL test_summary_list_after_errors.py::test_fail",
+            "FAILED test_summary_list_after_errors.py::test_fail",
         ]
     )

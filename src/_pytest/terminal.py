@@ -376,8 +376,11 @@ class TerminalReporter(object):
             return
         running_xdist = hasattr(rep, "node")
         if markup is None:
-            if rep.passed:
+            was_xfail = hasattr(report, "wasxfail")
+            if rep.passed and not was_xfail:
                 markup = {"green": True}
+            elif rep.passed and was_xfail:
+                markup = {"yellow": True}
             elif rep.failed:
                 markup = {"red": True}
             elif rep.skipped:
@@ -806,8 +809,7 @@ class TerminalReporter(object):
             self.write_sep("=", "ERRORS")
             for rep in self.stats["error"]:
                 msg = self._getfailureheadline(rep)
-                if not hasattr(rep, "when"):
-                    # collect
+                if rep.when == "collect":
                     msg = "ERROR collecting " + msg
                 elif rep.when == "setup":
                     msg = "ERROR at setup of " + msg
