@@ -474,7 +474,7 @@ class TestTerminalFunctional(object):
         )
         result = testdir.runpytest("-k", "test_two:", testpath)
         result.stdout.fnmatch_lines(
-            ["collected 3 items / 1 deselected", "*test_deselected.py ..*"]
+            ["collected 3 items / 1 deselected / 2 selected", "*test_deselected.py ..*"]
         )
         assert result.ret == 0
 
@@ -498,7 +498,7 @@ class TestTerminalFunctional(object):
         result = testdir.runpytest("-m", "not foo")
         result.stdout.fnmatch_lines(
             [
-                "collected 3 items / 1 deselected",
+                "collected 3 items / 1 deselected / 2 selected",
                 "*test_show_deselected.py ..*",
                 "*= 2 passed, 1 deselected in * =*",
             ]
