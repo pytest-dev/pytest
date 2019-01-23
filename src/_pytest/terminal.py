@@ -511,7 +511,7 @@ class TerminalReporter(object):
             line += " / %d deselected" % deselected
         if skipped:
             line += " / %d skipped" % skipped
-        if self._numcollected > selected:
+        if self._numcollected > selected > 0:
             line += " / %d selected" % selected
         if self.isatty:
             self.rewrite(line, bold=True, erase=True)
