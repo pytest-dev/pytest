@@ -7,6 +7,11 @@ This page lists all pytest features that are currently deprecated or have been r
 The objective is to give users a clear rationale why a certain feature has been removed, and what alternatives
 should be used instead.
 
+.. contents::
+    :depth: 3
+    :local:
+
+
 Deprecated Features
 -------------------
 
@@ -14,24 +19,205 @@ Below is a complete list of all pytest features which are considered deprecated.
 :class:`_pytest.warning_types.PytestWarning` or subclasses, which can be filtered using
 :ref:`standard warning filters <warnings>`.
 
-Internal classes accessed through ``Node``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``"message"`` parameter of ``pytest.raises``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. deprecated:: 3.9
+.. deprecated:: 4.1
 
-Access of ``Module``, ``Function``, ``Class``, ``Instance``, ``File`` and ``Item`` through ``Node`` instances now issue
-this warning::
+It is a common mistake to think this parameter will match the exception message, while in fact
+it only serves to provide a custom message in case the ``pytest.raises`` check fails. To avoid this
+mistake and because it is believed to be little used, pytest is deprecating it without providing
+an alternative for the moment.
 
-    usage of Function.Module is deprecated, please use pytest.Module instead
+If you have concerns about this, please comment on `issue #3974 <https://github.com/pytest-dev/pytest/issues/3974>`__.
 
-Users should just ``import pytest`` and access those objects using the ``pytest`` module.
 
-This has been documented as deprecated for years, but only now we are actually emitting deprecation warnings.
+``pytest.config`` global
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 4.1
+
+The ``pytest.config`` global object is deprecated.  Instead use
+``request.config`` (via the ``request`` fixture) or if you are a plugin author
+use the ``pytest_configure(config)`` hook.
+
+.. _raises-warns-exec:
+
+``raises`` / ``warns`` with a string as the second argument
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 4.1
+
+Use the context manager form of these instead.  When necessary, invoke ``exec``
+directly.
+
+Example:
+
+.. code-block:: python
+
+    pytest.raises(ZeroDivisionError, "1 / 0")
+    pytest.raises(SyntaxError, "a $ b")
+
+    pytest.warns(DeprecationWarning, "my_function()")
+    pytest.warns(SyntaxWarning, "assert(1, 2)")
+
+Becomes:
+
+.. code-block:: python
+
+    with pytest.raises(ZeroDivisionError):
+        1 / 0
+    with pytest.raises(SyntaxError):
+        exec("a $ b")  # exec is required for invalid syntax
+
+    with pytest.warns(DeprecationWarning):
+        my_function()
+    with pytest.warns(SyntaxWarning):
+        exec("assert(1, 2)")  # exec is used to avoid a top-level warning
+
+
+
+
+
+
+Result log (``--result-log``)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 3.0
+
+The ``--resultlog`` command line option has been deprecated: it is little used
+and there are more modern and better alternatives, for example `pytest-tap <https://tappy.readthedocs.io/en/latest/>`_.
+
+This feature will be effectively removed in pytest 4.0 as the team intends to include a better alternative in the core.
+
+If you have any concerns, please don't hesitate to `open an issue <https://github.com/pytest-dev/pytest/issues>`__.
+
+Removed Features
+----------------
+
+As stated in our :ref:`backwards-compatibility` policy, deprecated features are removed only in major releases after
+an appropriate period of deprecation has passed.
+
+Using ``Class`` in custom Collectors
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. versionremoved:: 4.0
+
+Using objects named ``"Class"`` as a way to customize the type of nodes that are collected in ``Collector``
+subclasses has been deprecated. Users instead should use ``pytest_pycollect_makeitem`` to customize node types during
+collection.
+
+This issue should affect only advanced plugins who create new collection types, so if you see this warning
+message please contact the authors so they can change the code.
+
+
+marks in ``pytest.mark.parametrize``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. versionremoved:: 4.0
+
+Applying marks to values of a ``pytest.mark.parametrize`` call is now deprecated. For example:
+
+.. code-block:: python
+
+    @pytest.mark.parametrize(
+        "a, b",
+        [
+            (3, 9),
+            pytest.mark.xfail(reason="flaky")(6, 36),
+            (10, 100),
+            (20, 200),
+            (40, 400),
+            (50, 500),
+        ],
+    )
+    def test_foo(a, b):
+        ...
+
+This code applies the ``pytest.mark.xfail(reason="flaky")`` mark to the ``(6, 36)`` value of the above parametrization
+call.
+
+This was considered hard to read and understand, and also its implementation presented problems to the code preventing
+further internal improvements in the marks architecture.
+
+To update the code, use ``pytest.param``:
+
+.. code-block:: python
+
+    @pytest.mark.parametrize(
+        "a, b",
+        [
+            (3, 9),
+            pytest.param(6, 36, marks=pytest.mark.xfail(reason="flaky")),
+            (10, 100),
+            (20, 200),
+            (40, 400),
+            (50, 500),
+        ],
+    )
+    def test_foo(a, b):
+        ...
+
+
+``pytest_funcarg__`` prefix
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. versionremoved:: 4.0
+
+In very early pytest versions fixtures could be defined using the ``pytest_funcarg__`` prefix:
+
+.. code-block:: python
+
+    def pytest_funcarg__data():
+        return SomeData()
+
+Switch over to the ``@pytest.fixture`` decorator:
+
+.. code-block:: python
+
+    @pytest.fixture
+    def data():
+        return SomeData()
+
+
+
+[pytest] section in setup.cfg files
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. versionremoved:: 4.0
+
+``[pytest]`` sections in ``setup.cfg`` files should now be named ``[tool:pytest]``
+to avoid conflicts with other distutils commands.
+
+
+Metafunc.addcall
+~~~~~~~~~~~~~~~~
+
+.. versionremoved:: 4.0
+
+:meth:`_pytest.python.Metafunc.addcall` was a precursor to the current parametrized mechanism. Users should use
+:meth:`_pytest.python.Metafunc.parametrize` instead.
+
+Example:
+
+.. code-block:: python
+
+    def pytest_generate_tests(metafunc):
+        metafunc.addcall({"i": 1}, id="1")
+        metafunc.addcall({"i": 2}, id="2")
+
+Becomes:
+
+.. code-block:: python
+
+    def pytest_generate_tests(metafunc):
+        metafunc.parametrize("i", [1, 2], ids=["1", "2"])
+
 
 ``cached_setup``
 ~~~~~~~~~~~~~~~~
 
-.. deprecated:: 3.9
+.. versionremoved:: 4.0
 
 ``request.cached_setup`` was the precursor of the setup/teardown mechanism available to fixtures.
 
@@ -59,26 +245,21 @@ This should be updated to make use of standard fixture mechanisms:
 You can consult `funcarg comparison section in the docs <https://docs.pytest.org/en/latest/funcarg_compare.html>`_ for
 more information.
 
-This has been documented as deprecated for years, but only now we are actually emitting deprecation warnings.
 
+pytest_plugins in non-top-level conftest files
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Using ``Class`` in custom Collectors
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. versionremoved:: 4.0
 
-.. deprecated:: 3.9
-
-Using objects named ``"Class"`` as a way to customize the type of nodes that are collected in ``Collector``
-subclasses has been deprecated. Users instead should use ``pytest_pycollect_makeitem`` to customize node types during
-collection.
-
-This issue should affect only advanced plugins who create new collection types, so if you see this warning
-message please contact the authors so they can change the code.
+Defining ``pytest_plugins`` is now deprecated in non-top-level conftest.py
+files because they will activate referenced plugins *globally*, which is surprising because for all other pytest
+features ``conftest.py`` files are only *active* for tests at or below it.
 
 
 ``Config.warn`` and ``Node.warn``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. deprecated:: 3.8
+.. versionremoved:: 4.0
 
 Those methods were part of the internal pytest warnings system, but since ``3.8`` pytest is using the builtin warning
 system for its own warnings, so those two functions are now deprecated.
@@ -100,47 +281,57 @@ Becomes:
 * ``node.warn(PytestWarning("some message"))``: is now the **recommended** way to call this function.
   The warning instance must be a PytestWarning or subclass.
 
-* ``node.warn("CI", "some message")``: this code/message form is now **deprecated** and should be converted to the warning instance form above.
+* ``node.warn("CI", "some message")``: this code/message form has been **removed** and should be converted to the warning instance form above.
 
+record_xml_property
+~~~~~~~~~~~~~~~~~~~
 
-``pytest_namespace``
-~~~~~~~~~~~~~~~~~~~~
+.. versionremoved:: 4.0
 
-.. deprecated:: 3.7
+The ``record_xml_property`` fixture is now deprecated in favor of the more generic ``record_property``, which
+can be used by other consumers (for example ``pytest-html``) to obtain custom information about the test run.
 
-This hook is deprecated because it greatly complicates the pytest internals regarding configuration and initialization, making some
-bug fixes and refactorings impossible.
-
-Example of usage:
+This is just a matter of renaming the fixture as the API is the same:
 
 .. code-block:: python
 
-    class MySymbol:
+    def test_foo(record_xml_property):
+        ...
+
+Change to:
+
+.. code-block:: python
+
+    def test_foo(record_property):
         ...
 
 
-    def pytest_namespace():
-        return {"my_symbol": MySymbol()}
+Passing command-line string to ``pytest.main()``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+.. versionremoved:: 4.0
 
-Plugin authors relying on this hook should instead require that users now import the plugin modules directly (with an appropriate public API).
-
-As a stopgap measure, plugin authors may still inject their names into pytest's namespace, usually during ``pytest_configure``:
+Passing a command-line string to ``pytest.main()`` is deprecated:
 
 .. code-block:: python
 
-    import pytest
+    pytest.main("-v -s")
+
+Pass a list instead:
+
+.. code-block:: python
+
+    pytest.main(["-v", "-s"])
 
 
-    def pytest_configure():
-        pytest.my_symbol = MySymbol()
-
+By passing a string, users expect that pytest will interpret that command-line using the shell rules they are working
+on (for example ``bash`` or ``Powershell``), but this is very hard/impossible to do in a portable way.
 
 
 Calling fixtures directly
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. deprecated:: 3.7
+.. versionremoved:: 4.0
 
 Calling a fixture function directly, as opposed to request them in a test function, is deprecated.
 
@@ -175,116 +366,27 @@ In those cases just request the function directly in the dependent fixture:
         cell.make_full()
         return cell
 
-``Node.get_marker``
-~~~~~~~~~~~~~~~~~~~
-
-.. deprecated:: 3.6
-
-As part of a large :ref:`marker-revamp`, :meth:`_pytest.nodes.Node.get_marker` is deprecated. See
-:ref:`the documentation <update marker code>` on tips on how to update your code.
-
-
-record_xml_property
-~~~~~~~~~~~~~~~~~~~
-
-.. deprecated:: 3.5
-
-The ``record_xml_property`` fixture is now deprecated in favor of the more generic ``record_property``, which
-can be used by other consumers (for example ``pytest-html``) to obtain custom information about the test run.
-
-This is just a matter of renaming the fixture as the API is the same:
+Alternatively if the fixture function is called multiple times inside a test (making it hard to apply the above pattern) or
+if you would like to make minimal changes to the code, you can create a fixture which calls the original function together
+with the ``name`` parameter:
 
 .. code-block:: python
 
-    def test_foo(record_xml_property):
-        ...
-
-Change to:
-
-.. code-block:: python
-
-    def test_foo(record_property):
-        ...
-
-pytest_plugins in non-top-level conftest files
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. deprecated:: 3.5
-
-Defining ``pytest_plugins`` is now deprecated in non-top-level conftest.py
-files because they will activate referenced plugins *globally*, which is surprising because for all other pytest
-features ``conftest.py`` files are only *active* for tests at or below it.
-
-Metafunc.addcall
-~~~~~~~~~~~~~~~~
-
-.. deprecated:: 3.3
-
-:meth:`_pytest.python.Metafunc.addcall` was a precursor to the current parametrized mechanism. Users should use
-:meth:`_pytest.python.Metafunc.parametrize` instead.
-
-marks in ``pytest.mark.parametrize``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. deprecated:: 3.2
-
-Applying marks to values of a ``pytest.mark.parametrize`` call is now deprecated. For example:
-
-.. code-block:: python
-
-    @pytest.mark.parametrize(
-        "a, b", [(3, 9), pytest.mark.xfail(reason="flaky")(6, 36), (10, 100)]
-    )
-    def test_foo(a, b):
-        ...
-
-This code applies the ``pytest.mark.xfail(reason="flaky")`` mark to the ``(6, 36)`` value of the above parametrization
-call.
-
-This was considered hard to read and understand, and also its implementation presented problems to the code preventing
-further internal improvements in the marks architecture.
-
-To update the code, use ``pytest.param``:
-
-.. code-block:: python
-
-    @pytest.mark.parametrize(
-        "a, b",
-        [(3, 9), pytest.param((6, 36), marks=pytest.mark.xfail(reason="flaky")), (10, 100)],
-    )
-    def test_foo(a, b):
-        ...
+    def cell():
+        return ...
 
 
-
-Passing command-line string to ``pytest.main()``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. deprecated:: 3.0
-
-Passing a command-line string to ``pytest.main()`` is deprecated:
-
-.. code-block:: python
-
-    pytest.main("-v -s")
-
-Pass a list instead:
-
-.. code-block:: python
-
-    pytest.main(["-v", "-s"])
-
-
-By passing a string, users expect that pytest will interpret that command-line using the shell rules they are working
-on (for example ``bash`` or ``Powershell``), but this is very hard/impossible to do in a portable way.
+    @pytest.fixture(name="cell")
+    def cell_fixture():
+        return cell()
 
 
 ``yield`` tests
 ~~~~~~~~~~~~~~~
 
-.. deprecated:: 3.0
+.. versionremoved:: 4.0
 
-pytest supports ``yield``-style tests, where a test function actually ``yield`` functions and values
+pytest supported ``yield``-style tests, where a test function actually ``yield`` functions and values
 that are then turned into proper test methods. Example:
 
 .. code-block:: python
@@ -307,54 +409,77 @@ This form of test function doesn't support fixtures properly, and users should s
     def test_squared(x, y):
         assert x ** x == y
 
+Internal classes accessed through ``Node``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-``pytest_funcarg__`` prefix
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. versionremoved:: 4.0
 
-.. deprecated:: 3.0
+Access of ``Module``, ``Function``, ``Class``, ``Instance``, ``File`` and ``Item`` through ``Node`` instances now issue
+this warning::
 
-In very early pytest versions fixtures could be defined using the ``pytest_funcarg__`` prefix:
+    usage of Function.Module is deprecated, please use pytest.Module instead
+
+Users should just ``import pytest`` and access those objects using the ``pytest`` module.
+
+This has been documented as deprecated for years, but only now we are actually emitting deprecation warnings.
+
+``Node.get_marker``
+~~~~~~~~~~~~~~~~~~~
+
+.. versionremoved:: 4.0
+
+As part of a large :ref:`marker-revamp`, :meth:`_pytest.nodes.Node.get_marker` is deprecated. See
+:ref:`the documentation <update marker code>` on tips on how to update your code.
+
+
+``somefunction.markname``
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. versionremoved:: 4.0
+
+As part of a large :ref:`marker-revamp` we already deprecated using ``MarkInfo``
+the only correct way to get markers of an element is via ``node.iter_markers(name)``.
+
+
+``pytest_namespace``
+~~~~~~~~~~~~~~~~~~~~
+
+.. versionremoved:: 4.0
+
+This hook is deprecated because it greatly complicates the pytest internals regarding configuration and initialization, making some
+bug fixes and refactorings impossible.
+
+Example of usage:
 
 .. code-block:: python
 
-    def pytest_funcarg__data():
-        return SomeData()
+    class MySymbol:
+        ...
 
-Switch over to the ``@pytest.fixture`` decorator:
+
+    def pytest_namespace():
+        return {"my_symbol": MySymbol()}
+
+
+Plugin authors relying on this hook should instead require that users now import the plugin modules directly (with an appropriate public API).
+
+As a stopgap measure, plugin authors may still inject their names into pytest's namespace, usually during ``pytest_configure``:
 
 .. code-block:: python
 
-    @pytest.fixture
-    def data():
-        return SomeData()
+    import pytest
 
-[pytest] section in setup.cfg files
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. deprecated:: 3.0
+    def pytest_configure():
+        pytest.my_symbol = MySymbol()
 
-``[pytest]`` sections in ``setup.cfg`` files should now be named ``[tool:pytest]``
-to avoid conflicts with other distutils commands.
 
-Result log (``--result-log``)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. deprecated:: 3.0
-
-The ``--resultlog`` command line option has been deprecated: it is little used
-and there are more modern and better alternatives, for example `pytest-tap <https://tappy.readthedocs.io/en/latest/>`_.
-
-Removed Features
-----------------
-
-As stated in our :ref:`backwards-compatibility` policy, deprecated features are removed only in major releases after
-an appropriate period of deprecation has passed.
 
 
 Reinterpretation mode (``--assert=reinterp``)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-*Removed in version 3.0.*
+.. versionremoved:: 3.0
 
 Reinterpretation mode has now been removed and only plain and rewrite
 mode are available, consequently the ``--assert=reinterp`` option is
@@ -366,7 +491,7 @@ explicitly turn on assertion rewriting for those files.
 Removed command-line options
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-*Removed in version 3.0.*
+.. versionremoved:: 3.0
 
 The following deprecated commandline options were removed:
 
@@ -378,7 +503,7 @@ The following deprecated commandline options were removed:
 py.test-X* entry points
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-*Removed in version 3.0.*
+.. versionremoved:: 3.0
 
 Removed all ``py.test-X*`` entry points. The versioned, suffixed entry points
 were never documented and a leftover from a pre-virtualenv era. These entry

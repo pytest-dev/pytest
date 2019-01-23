@@ -18,6 +18,8 @@ class Parser(object):
         there's an error processing the command line arguments.
     """
 
+    prog = None
+
     def __init__(self, usage=None, processopt=None):
         self._anonymous = OptionGroup("custom options", parser=self)
         self._groups = []
@@ -82,7 +84,7 @@ class Parser(object):
     def _getparser(self):
         from _pytest._argcomplete import filescompleter
 
-        optparser = MyOptionParser(self, self.extra_info)
+        optparser = MyOptionParser(self, self.extra_info, prog=self.prog)
         groups = self._groups + [self._anonymous]
         for group in groups:
             if group.options:
@@ -319,12 +321,13 @@ class OptionGroup(object):
 
 
 class MyOptionParser(argparse.ArgumentParser):
-    def __init__(self, parser, extra_info=None):
+    def __init__(self, parser, extra_info=None, prog=None):
         if not extra_info:
             extra_info = {}
         self._parser = parser
         argparse.ArgumentParser.__init__(
             self,
+            prog=prog,
             usage=parser._usage,
             add_help=False,
             formatter_class=DropShorterLongHelpFormatter,

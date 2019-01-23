@@ -4,8 +4,10 @@ from __future__ import division
 from __future__ import print_function
 
 import contextlib
+import io
 import os
 import pickle
+import subprocess
 import sys
 import textwrap
 from io import UnsupportedOperation
@@ -87,7 +89,7 @@ class TestCaptureManager(object):
         try:
             capman = CaptureManager("fd")
             capman.start_global_capturing()
-            pytest.raises(AssertionError, "capman.start_global_capturing()")
+            pytest.raises(AssertionError, capman.start_global_capturing)
             capman.stop_global_capturing()
         finally:
             capouter.stop_capturing()
@@ -832,10 +834,10 @@ class TestCaptureIO(object):
         f = capture.CaptureIO()
         if sys.version_info >= (3, 0):
             f.write("\u00f6")
-            pytest.raises(TypeError, "f.write(bytes('hello', 'UTF-8'))")
+            pytest.raises(TypeError, f.write, b"hello")
         else:
-            f.write(text_type("\u00f6", "UTF-8"))
-            f.write("hello")  # bytes
+            f.write(u"\u00f6")
+            f.write(b"hello")
             s = f.getvalue()
             f.close()
             assert isinstance(s, text_type)
@@ -848,15 +850,6 @@ class TestCaptureIO(object):
         f = capture.CaptureIO()
         f.buffer.write(b"foo\r\n")
         assert f.getvalue() == "foo\r\n"
-
-
-def test_bytes_io():
-    f = py.io.BytesIO()
-    f.write(b"hello")
-    with pytest.raises(TypeError):
-        f.write(u"hello")
-    s = f.getvalue()
-    assert s == b"hello"
 
 
 def test_dontreadfrominput():
@@ -933,18 +926,18 @@ def test_dupfile(tmpfile):
 
 
 def test_dupfile_on_bytesio():
-    io = py.io.BytesIO()
-    f = capture.safe_text_dupfile(io, "wb")
+    bio = io.BytesIO()
+    f = capture.safe_text_dupfile(bio, "wb")
     f.write("hello")
-    assert io.getvalue() == b"hello"
+    assert bio.getvalue() == b"hello"
     assert "BytesIO object" in f.name
 
 
 def test_dupfile_on_textio():
-    io = py.io.TextIO()
-    f = capture.safe_text_dupfile(io, "wb")
+    tio = py.io.TextIO()
+    f = capture.safe_text_dupfile(tio, "wb")
     f.write("hello")
-    assert io.getvalue() == "hello"
+    assert tio.getvalue() == "hello"
     assert not hasattr(f, "name")
 
 
@@ -952,12 +945,12 @@ def test_dupfile_on_textio():
 def lsof_check():
     pid = os.getpid()
     try:
-        out = py.process.cmdexec("lsof -p %d" % pid)
-    except (py.process.cmdexec.Error, UnicodeDecodeError):
+        out = subprocess.check_output(("lsof", "-p", str(pid))).decode()
+    except (OSError, subprocess.CalledProcessError, UnicodeDecodeError):
         # about UnicodeDecodeError, see note on pytester
         pytest.skip("could not run 'lsof'")
     yield
-    out2 = py.process.cmdexec("lsof -p %d" % pid)
+    out2 = subprocess.check_output(("lsof", "-p", str(pid))).decode()
     len1 = len([x for x in out.split("\n") if "REG" in x])
     len2 = len([x for x in out2.split("\n") if "REG" in x])
     assert len2 < len1 + 3, out2
@@ -1183,7 +1176,7 @@ class TestStdCapture(object):
         print("XXX which indicates an error in the underlying capturing")
         print("XXX mechanisms")
         with self.getcapture():
-            pytest.raises(IOError, "sys.stdin.read()")
+            pytest.raises(IOError, sys.stdin.read)
 
 
 class TestStdCaptureFD(TestStdCapture):

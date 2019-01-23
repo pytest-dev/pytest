@@ -5,20 +5,19 @@ from __future__ import print_function
 import os
 import sys
 
+import six
+
+import pytest
+from _pytest.mark import EMPTY_PARAMETERSET_OPTION
+from _pytest.mark import MarkGenerator as Mark
+from _pytest.nodes import Collector
+from _pytest.nodes import Node
 from _pytest.warnings import SHOW_PYTEST_WARNINGS_ARG
 
 try:
     import mock
 except ImportError:
     import unittest.mock as mock
-import pytest
-from _pytest.mark import (
-    MarkGenerator as Mark,
-    ParameterSet,
-    transfer_markers,
-    EMPTY_PARAMETERSET_OPTION,
-)
-from _pytest.nodes import Node, Collector
 
 ignore_markinfo = pytest.mark.filterwarnings(
     "ignore:MarkInfo objects:pytest.RemovedInPytest4Warning"
@@ -26,12 +25,6 @@ ignore_markinfo = pytest.mark.filterwarnings(
 
 
 class TestMark(object):
-    def test_markinfo_repr(self):
-        from _pytest.mark import MarkInfo, Mark
-
-        m = MarkInfo.for_mark(Mark("hello", (1, 2), {}))
-        repr(m)
-
     @pytest.mark.parametrize("attr", ["mark", "param"])
     @pytest.mark.parametrize("modulename", ["py.test", "pytest"])
     def test_pytest_exists_in_namespace_all(self, attr, modulename):
@@ -57,105 +50,8 @@ class TestMark(object):
 
     def test_pytest_mark_name_starts_with_underscore(self):
         mark = Mark()
-        pytest.raises(AttributeError, getattr, mark, "_some_name")
-
-    def test_pytest_mark_bare(self):
-        mark = Mark()
-
-        def f():
-            pass
-
-        mark.hello(f)
-        assert f.hello
-
-    def test_mark_legacy_ignore_fail(self):
-        def add_attribute(func):
-            func.foo = 1
-            return func
-
-        @pytest.mark.foo
-        @add_attribute
-        def test_fun():
-            pass
-
-        assert test_fun.foo == 1
-        assert test_fun.pytestmark
-
-    @ignore_markinfo
-    def test_pytest_mark_keywords(self):
-        mark = Mark()
-
-        def f():
-            pass
-
-        mark.world(x=3, y=4)(f)
-        assert f.world
-        assert f.world.kwargs["x"] == 3
-        assert f.world.kwargs["y"] == 4
-
-    @ignore_markinfo
-    def test_apply_multiple_and_merge(self):
-        mark = Mark()
-
-        def f():
-            pass
-
-        mark.world
-        mark.world(x=3)(f)
-        assert f.world.kwargs["x"] == 3
-        mark.world(y=4)(f)
-        assert f.world.kwargs["x"] == 3
-        assert f.world.kwargs["y"] == 4
-        mark.world(y=1)(f)
-        assert f.world.kwargs["y"] == 1
-        assert len(f.world.args) == 0
-
-    @ignore_markinfo
-    def test_pytest_mark_positional(self):
-        mark = Mark()
-
-        def f():
-            pass
-
-        mark.world("hello")(f)
-        assert f.world.args[0] == "hello"
-        mark.world("world")(f)
-
-    @ignore_markinfo
-    def test_pytest_mark_positional_func_and_keyword(self):
-        mark = Mark()
-
-        def f():
-            raise Exception
-
-        m = mark.world(f, omega="hello")
-
-        def g():
-            pass
-
-        assert m(g) == g
-        assert g.world.args[0] is f
-        assert g.world.kwargs["omega"] == "hello"
-
-    @ignore_markinfo
-    def test_pytest_mark_reuse(self):
-        mark = Mark()
-
-        def f():
-            pass
-
-        w = mark.some
-        w("hello", reason="123")(f)
-        assert f.some.args[0] == "hello"
-        assert f.some.kwargs["reason"] == "123"
-
-        def g():
-            pass
-
-        w("world", reason2="456")(g)
-        assert g.some.args[0] == "world"
-        assert "reason" not in g.some.kwargs
-        assert g.some.kwargs["reason2"] == "456"
+        with pytest.raises(AttributeError):
+            mark._some_name
 
 
 def test_marked_class_run_twice(testdir, request):
@@ -396,6 +292,13 @@ def test_keyword_option_custom(spec, testdir):
     assert list(passed) == list(passed_result)
 
 
+def test_keyword_option_considers_mark(testdir):
+    testdir.copy_example("marks/marks_considered_keywords")
+    rec = testdir.inline_run("-k", "foo")
+    passed = rec.listoutcomes()[0]
+    assert len(passed) == 1
+
+
 @pytest.mark.parametrize(
     "spec",
     [
@@ -476,8 +379,10 @@ def test_parametrized_collect_with_wrong_args(testdir):
     result = testdir.runpytest(py_file)
     result.stdout.fnmatch_lines(
         [
-            'E   ValueError: In "parametrize" the number of values ((1, 2, 3)) '
-            "must be equal to the number of names (['foo', 'bar'])"
+            'test_parametrized_collect_with_wrong_args.py::test_func: in "parametrize" the number of names (2):',
+            "  ['foo', 'bar']",
+            "must be equal to the number of values (3):",
+            "  (1, 2, 3)",
         ]
     )
 
@@ -503,116 +408,6 @@ def test_parametrized_with_kwargs(testdir):
 
 
 class TestFunctional(object):
-    def test_mark_per_function(self, testdir):
-        p = testdir.makepyfile(
-            """
-            import pytest
-            @pytest.mark.hello
-            def test_hello():
-                assert hasattr(test_hello, 'hello')
-        """
-        )
-        result = testdir.runpytest(p)
-        result.stdout.fnmatch_lines(["*1 passed*"])
-
-    def test_mark_per_module(self, testdir):
-        item = testdir.getitem(
-            """
-            import pytest
-            pytestmark = pytest.mark.hello
-            def test_func():
-                pass
-        """
-        )
-        keywords = item.keywords
-        assert "hello" in keywords
-
-    def test_marklist_per_class(self, testdir):
-        item = testdir.getitem(
-            """
-            import pytest
-            class TestClass(object):
-                pytestmark = [pytest.mark.hello, pytest.mark.world]
-                def test_func(self):
-                    assert TestClass.test_func.hello
-                    assert TestClass.test_func.world
-        """
-        )
-        keywords = item.keywords
-        assert "hello" in keywords
-
-    def test_marklist_per_module(self, testdir):
-        item = testdir.getitem(
-            """
-            import pytest
-            pytestmark = [pytest.mark.hello, pytest.mark.world]
-            class TestClass(object):
-                def test_func(self):
-                    assert TestClass.test_func.hello
-                    assert TestClass.test_func.world
-        """
-        )
-        keywords = item.keywords
-        assert "hello" in keywords
-        assert "world" in keywords
-
-    def test_mark_per_class_decorator(self, testdir):
-        item = testdir.getitem(
-            """
-            import pytest
-            @pytest.mark.hello
-            class TestClass(object):
-                def test_func(self):
-                    assert TestClass.test_func.hello
-        """
-        )
-        keywords = item.keywords
-        assert "hello" in keywords
-
-    def test_mark_per_class_decorator_plus_existing_dec(self, testdir):
-        item = testdir.getitem(
-            """
-            import pytest
-            @pytest.mark.hello
-            class TestClass(object):
-                pytestmark = pytest.mark.world
-                def test_func(self):
-                    assert TestClass.test_func.hello
-                    assert TestClass.test_func.world
-        """
-        )
-        keywords = item.keywords
-        assert "hello" in keywords
-        assert "world" in keywords
-
-    @ignore_markinfo
-    def test_merging_markers(self, testdir):
-        p = testdir.makepyfile(
-            """
-            import pytest
-            pytestmark = pytest.mark.hello("pos1", x=1, y=2)
-            class TestClass(object):
-                # classlevel overrides module level
-                pytestmark = pytest.mark.hello(x=3)
-                @pytest.mark.hello("pos0", z=4)
-                def test_func(self):
-                    pass
-        """
-        )
-        items, rec = testdir.inline_genitems(p)
-        item, = items
-        keywords = item.keywords
-        marker = keywords["hello"]
-        assert marker.args == ("pos0", "pos1")
-        assert marker.kwargs == {"x": 1, "y": 2, "z": 4}
-
-        # test the new __iter__ interface
-        values = list(marker)
-        assert len(values) == 3
-        assert values[0].args == ("pos0",)
-        assert values[1].args == ()
-        assert values[2].args == ("pos1",)
-
     def test_merging_markers_deep(self, testdir):
         # issue 199 - propagate markers into nested classes
         p = testdir.makepyfile(
@@ -675,11 +470,6 @@ class TestFunctional(object):
         items, rec = testdir.inline_genitems(p)
         base_item, sub_item, sub_item_other = items
         print(items, [x.nodeid for x in items])
-        # legacy api smears
-        assert hasattr(base_item.obj, "b")
-        assert hasattr(sub_item_other.obj, "b")
-        assert hasattr(sub_item.obj, "b")
-
         # new api seregates
         assert not list(base_item.iter_markers(name="b"))
         assert not list(sub_item_other.iter_markers(name="b"))
@@ -765,26 +555,6 @@ class TestFunctional(object):
         result = testdir.runpytest()
         result.stdout.fnmatch_lines(["keyword: *hello*"])
 
-    @ignore_markinfo
-    def test_merging_markers_two_functions(self, testdir):
-        p = testdir.makepyfile(
-            """
-            import pytest
-            @pytest.mark.hello("pos1", z=4)
-            @pytest.mark.hello("pos0", z=3)
-            def test_func():
-                pass
-        """
-        )
-        items, rec = testdir.inline_genitems(p)
-        item, = items
-        keywords = item.keywords
-        marker = keywords["hello"]
-        values = list(marker)
-        assert len(values) == 2
-        assert values[0].args == ("pos0",)
-        assert values[1].args == ("pos1",)
-
     def test_no_marker_match_on_unmarked_names(self, testdir):
         p = testdir.makepyfile(
             """
@@ -858,7 +628,7 @@ class TestFunctional(object):
                 assert "mark2" in request.keywords
                 assert "mark3" in request.keywords
                 assert 10 not in request.keywords
-                marker = request.node.get_marker("mark1")
+                marker = request.node.get_closest_marker("mark1")
                 assert marker.name == "mark1"
                 assert marker.args == ()
                 assert marker.kwargs == {}
@@ -874,15 +644,11 @@ class TestFunctional(object):
         .. note:: this could be moved to ``testdir`` if proven to be useful
         to other modules.
         """
-        from _pytest.mark import MarkInfo
 
         items = {x.name: x for x in items}
         for name, expected_markers in expected.items():
-            markers = items[name].keywords._markers
-            marker_names = {
-                name for (name, v) in markers.items() if isinstance(v, MarkInfo)
-            }
-            assert marker_names == set(expected_markers)
+            markers = {m.name for m in items[name].iter_markers()}
+            assert markers == set(expected_markers)
 
     @pytest.mark.issue1540
     @pytest.mark.filterwarnings("ignore")
@@ -1041,56 +807,6 @@ class TestKeywordSelection(object):
         assert_test_is_not_selected("()")
 
 
-@pytest.mark.parametrize(
-    "argval, expected",
-    [
-        (
-            pytest.mark.skip()((1, 2)),
-            ParameterSet(values=(1, 2), marks=[pytest.mark.skip], id=None),
-        ),
-        (
-            pytest.mark.xfail(pytest.mark.skip()((1, 2))),
-            ParameterSet(
-                values=(1, 2), marks=[pytest.mark.xfail, pytest.mark.skip], id=None
-            ),
-        ),
-    ],
-)
-@pytest.mark.filterwarnings("default")
-def test_parameterset_extractfrom(argval, expected):
-    from _pytest.deprecated import MARK_PARAMETERSET_UNPACKING
-
-    warn_called = []
-
-    class DummyItem:
-        def warn(self, warning):
-            warn_called.append(warning)
-
-    extracted = ParameterSet.extract_from(argval, belonging_definition=DummyItem())
-    assert extracted == expected
-    assert warn_called == [MARK_PARAMETERSET_UNPACKING]
-
-
-def test_legacy_transfer():
-    class FakeModule(object):
-        pytestmark = []
-
-    class FakeClass(object):
-        pytestmark = pytest.mark.nofun
-
-    @pytest.mark.fun
-    def fake_method(self):
-        pass
-
-    transfer_markers(fake_method, FakeClass, FakeModule)
-
-    # legacy marks transfer smeared
-    assert fake_method.nofun
-    assert fake_method.fun
-    # pristine marks dont transfer
-    assert fake_method.pytestmark == [pytest.mark.fun.mark]
-
-
 class TestMarkDecorator(object):
     @pytest.mark.parametrize(
         "lhs, rhs, expected",
@@ -1191,19 +907,12 @@ def test_mark_expressions_no_smear(testdir):
     deselected_tests = dlist[0].items
     assert len(deselected_tests) == 1
 
+    # todo: fixed
     # keywords smear - expected behaviour
-    reprec_keywords = testdir.inline_run("-k", "FOO")
-    passed_k, skipped_k, failed_k = reprec_keywords.countoutcomes()
-    assert passed_k == 2
-    assert skipped_k == failed_k == 0
-
-
-def test_addmarker_getmarker():
-    node = Node("Test", config=mock.Mock(), session=mock.Mock(), nodeid="Test")
-    node.add_marker(pytest.mark.a(1))
-    node.add_marker("b")
-    node.get_marker("a").combined
-    node.get_marker("b").combined
+    # reprec_keywords = testdir.inline_run("-k", "FOO")
+    # passed_k, skipped_k, failed_k = reprec_keywords.countoutcomes()
+    # assert passed_k == 2
+    # assert skipped_k == failed_k == 0
 
 
 def test_addmarker_order():
@@ -1227,7 +936,7 @@ def test_markers_from_parametrize(testdir):
         custom_mark = pytest.mark.custom_mark
         @pytest.fixture(autouse=True)
         def trigger(request):
-            custom_mark =request.node.get_marker('custom_mark')
+            custom_mark = list(request.node.iter_markers('custom_mark'))
             print("Custom mark %s" % custom_mark)
 
         @custom_mark("custom mark non parametrized")
@@ -1252,3 +961,18 @@ def test_markers_from_parametrize(testdir):
 
     result = testdir.runpytest(SHOW_PYTEST_WARNINGS_ARG)
     result.assert_outcomes(passed=4)
+
+
+def test_pytest_param_id_requires_string():
+    with pytest.raises(TypeError) as excinfo:
+        pytest.param(id=True)
+    msg, = excinfo.value.args
+    if six.PY2:
+        assert msg == "Expected id to be a string, got <type 'bool'>: True"
+    else:
+        assert msg == "Expected id to be a string, got <class 'bool'>: True"
+
+
+@pytest.mark.parametrize("s", (None, "hello world"))
+def test_pytest_param_id_allows_none_or_string(s):
+    assert pytest.param(id=s)

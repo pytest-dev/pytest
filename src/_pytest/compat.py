@@ -17,6 +17,7 @@ import six
 from six import text_type
 
 import _pytest
+from _pytest._io.saferepr import saferepr
 from _pytest.outcomes import fail
 from _pytest.outcomes import TEST_OUTCOME
 
@@ -45,11 +46,11 @@ MODULE_NOT_FOUND_ERROR = "ModuleNotFoundError" if PY36 else "ImportError"
 
 if _PY3:
     from collections.abc import MutableMapping as MappingMixin
-    from collections.abc import Mapping, Sequence
+    from collections.abc import Iterable, Mapping, Sequence, Sized
 else:
     # those raise DeprecationWarnings in Python >=3.7
     from collections import MutableMapping as MappingMixin  # noqa
-    from collections import Mapping, Sequence  # noqa
+    from collections import Iterable, Mapping, Sequence, Sized  # noqa
 
 
 if sys.version_info >= (3, 4):
@@ -182,6 +183,18 @@ def get_default_arg_names(function):
     )
 
 
+_non_printable_ascii_translate_table = {
+    i: u"\\x{:02x}".format(i) for i in range(128) if i not in range(32, 127)
+}
+_non_printable_ascii_translate_table.update(
+    {ord("\t"): u"\\t", ord("\r"): u"\\r", ord("\n"): u"\\n"}
+)
+
+
+def _translate_non_printable(s):
+    return s.translate(_non_printable_ascii_translate_table)
+
+
 if _PY3:
     STRING_TYPES = bytes, str
     UNICODE_TYPES = six.text_type
@@ -221,9 +234,10 @@ if _PY3:
 
         """
         if isinstance(val, bytes):
-            return _bytes_to_ascii(val)
+            ret = _bytes_to_ascii(val)
         else:
-            return val.encode("unicode_escape").decode("ascii")
+            ret = val.encode("unicode_escape").decode("ascii")
+        return _translate_non_printable(ret)
 
 
 else:
@@ -241,11 +255,12 @@ else:
         """
         if isinstance(val, bytes):
             try:
-                return val.encode("ascii")
+                ret = val.decode("ascii")
             except UnicodeDecodeError:
-                return val.encode("string-escape")
+                ret = val.encode("string-escape").decode("ascii")
         else:
-            return val.encode("unicode-escape")
+            ret = val.encode("unicode-escape").decode("ascii")
+        return _translate_non_printable(ret)
 
 
 class _PytestWrapper(object):
@@ -280,7 +295,7 @@ def get_real_func(obj):
     else:
         raise ValueError(
             ("could not find real function of {start}\nstopped at {current}").format(
-                start=py.io.saferepr(start_obj), current=py.io.saferepr(obj)
+                start=saferepr(start_obj), current=saferepr(obj)
             )
         )
     if isinstance(obj, functools.partial):
@@ -375,7 +390,6 @@ else:
 COLLECT_FAKEMODULE_ATTRIBUTES = (
     "Collector",
     "Module",
-    "Generator",
     "Function",
     "Instance",
     "Session",

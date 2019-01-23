@@ -11,6 +11,7 @@ import warnings
 import six
 
 import _pytest._code
+from _pytest.deprecated import WARNS_EXEC
 from _pytest.fixtures import yield_fixture
 from _pytest.outcomes import fail
 
@@ -89,6 +90,7 @@ def warns(expected_warning, *args, **kwargs):
             match_expr = kwargs.pop("match")
         return WarningsChecker(expected_warning, match_expr=match_expr)
     elif isinstance(args[0], str):
+        warnings.warn(WARNS_EXEC, stacklevel=2)
         code, = args
         assert isinstance(code, str)
         frame = sys._getframe(1)
@@ -189,6 +191,10 @@ class WarningsRecorder(warnings.catch_warnings):
         if six.PY2:
             warnings.warn = self._saved_warn
         super(WarningsRecorder, self).__exit__(*exc_info)
+
+        # Built-in catch_warnings does not reset entered state so we do it
+        # manually here for this context manager to become reusable.
+        self._entered = False
 
 
 class WarningsChecker(WarningsRecorder):

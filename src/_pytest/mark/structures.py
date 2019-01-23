@@ -1,17 +1,15 @@
 import inspect
 import warnings
 from collections import namedtuple
-from functools import reduce
 from operator import attrgetter
 
 import attr
-from six.moves import map
+import six
 
+from ..compat import ascii_escaped
 from ..compat import getfslineno
 from ..compat import MappingMixin
 from ..compat import NOTSET
-from ..deprecated import MARK_INFO_ATTRIBUTE
-from ..deprecated import MARK_PARAMETERSET_UNPACKING
 from _pytest.outcomes import fail
 
 
@@ -70,46 +68,33 @@ class ParameterSet(namedtuple("ParameterSet", "values, marks, id")):
         else:
             assert isinstance(marks, (tuple, list, set))
 
-        def param_extract_id(id=None):
-            return id
-
-        id_ = param_extract_id(**kw)
+        id_ = kw.pop("id", None)
+        if id_ is not None:
+            if not isinstance(id_, six.string_types):
+                raise TypeError(
+                    "Expected id to be a string, got {}: {!r}".format(type(id_), id_)
+                )
+            id_ = ascii_escaped(id_)
         return cls(values, marks, id_)
 
     @classmethod
-    def extract_from(cls, parameterset, belonging_definition, legacy_force_tuple=False):
+    def extract_from(cls, parameterset, force_tuple=False):
         """
         :param parameterset:
             a legacy style parameterset that may or may not be a tuple,
             and may or may not be wrapped into a mess of mark objects
 
-        :param legacy_force_tuple:
+        :param force_tuple:
             enforce tuple wrapping so single argument tuple values
             don't get decomposed and break tests
-
-        :param belonging_definition: the item that we will be extracting the parameters from.
         """
 
         if isinstance(parameterset, cls):
             return parameterset
-        if not isinstance(parameterset, MarkDecorator) and legacy_force_tuple:
+        if force_tuple:
             return cls.param(parameterset)
-
-        newmarks = []
-        argval = parameterset
-        while isinstance(argval, MarkDecorator):
-            newmarks.append(
-                MarkDecorator(Mark(argval.markname, argval.args[:-1], argval.kwargs))
-            )
-            argval = argval.args[-1]
-        assert not isinstance(argval, ParameterSet)
-        if legacy_force_tuple:
-            argval = (argval,)
-
-        if newmarks and belonging_definition is not None:
-            belonging_definition.warn(MARK_PARAMETERSET_UNPACKING)
-
-        return cls(argval, marks=newmarks, id=None)
+        else:
+            return cls(parameterset, marks=[], id=None)
 
     @classmethod
     def _for_parametrize(cls, argnames, argvalues, func, config, function_definition):
@@ -119,12 +104,7 @@ class ParameterSet(namedtuple("ParameterSet", "values, marks, id")):
         else:
             force_tuple = False
         parameters = [
-            ParameterSet.extract_from(
-                x,
-                legacy_force_tuple=force_tuple,
-                belonging_definition=function_definition,
-            )
-            for x in argvalues
+            ParameterSet.extract_from(x, force_tuple=force_tuple) for x in argvalues
         ]
         del argvalues
 
@@ -132,11 +112,21 @@ class ParameterSet(namedtuple("ParameterSet", "values, marks, id")):
             # check all parameter sets have the correct number of values
             for param in parameters:
                 if len(param.values) != len(argnames):
-                    raise ValueError(
-                        'In "parametrize" the number of values ({}) must be '
-                        "equal to the number of names ({})".format(
-                            param.values, argnames
-                        )
+                    msg = (
+                        '{nodeid}: in "parametrize" the number of names ({names_len}):\n'
+                        "  {names}\n"
+                        "must be equal to the number of values ({values_len}):\n"
+                        "  {values}"
+                    )
+                    fail(
+                        msg.format(
+                            nodeid=function_definition.nodeid,
+                            values=param.values,
+                            names=argnames,
+                            names_len=len(argnames),
+                            values_len=len(param.values),
+                        ),
+                        pytrace=False,
                     )
         else:
             # empty parameter set (likely computed at runtime): create a single
@@ -240,11 +230,7 @@ class MarkDecorator(object):
             func = args[0]
             is_class = inspect.isclass(func)
             if len(args) == 1 and (istestfunc(func) or is_class):
-                if is_class:
-                    store_mark(func, self.mark)
-                else:
-                    store_legacy_markinfo(func, self.mark)
-                    store_mark(func, self.mark)
+                store_mark(func, self.mark)
                 return func
         return self.with_args(*args, **kwargs)
 
@@ -266,7 +252,13 @@ def normalize_mark_list(mark_list):
     :type mark_list: List[Union[Mark, Markdecorator]]
     :rtype: List[Mark]
     """
-    return [getattr(mark, "mark", mark) for mark in mark_list]  # unpack MarkDecorator
+    extracted = [
+        getattr(mark, "mark", mark) for mark in mark_list
+    ]  # unpack MarkDecorator
+    for mark in extracted:
+        if not isinstance(mark, Mark):
+            raise TypeError("got {!r} instead of Mark".format(mark))
+    return [x for x in extracted if isinstance(x, Mark)]
 
 
 def store_mark(obj, mark):
@@ -277,90 +269,6 @@ def store_mark(obj, mark):
     # always reassign name to avoid updating pytestmark
     # in a reference that was only borrowed
     obj.pytestmark = get_unpacked_marks(obj) + [mark]
-
-
-def store_legacy_markinfo(func, mark):
-    """create the legacy MarkInfo objects and put them onto the function
-    """
-    if not isinstance(mark, Mark):
-        raise TypeError("got {mark!r} instead of a Mark".format(mark=mark))
-    holder = getattr(func, mark.name, None)
-    if holder is None:
-        holder = MarkInfo.for_mark(mark)
-        setattr(func, mark.name, holder)
-    elif isinstance(holder, MarkInfo):
-        holder.add_mark(mark)
-
-
-def transfer_markers(funcobj, cls, mod):
-    """
-    this function transfers class level markers and module level markers
-    into function level markinfo objects
-
-    this is the main reason why marks are so broken
-    the resolution will involve phasing out function level MarkInfo objects
-
-    """
-    for obj in (cls, mod):
-        for mark in get_unpacked_marks(obj):
-            if not _marked(funcobj, mark):
-                store_legacy_markinfo(funcobj, mark)
-
-
-def _marked(func, mark):
-    """ Returns True if :func: is already marked with :mark:, False otherwise.
-    This can happen if marker is applied to class and the test file is
-    invoked more than once.
-    """
-    try:
-        func_mark = getattr(func, getattr(mark, "combined", mark).name)
-    except AttributeError:
-        return False
-    return any(mark == info.combined for info in func_mark)
-
-
-@attr.s(repr=False)
-class MarkInfo(object):
-    """ Marking object created by :class:`MarkDecorator` instances. """
-
-    _marks = attr.ib(converter=list)
-
-    @_marks.validator
-    def validate_marks(self, attribute, value):
-        for item in value:
-            if not isinstance(item, Mark):
-                raise ValueError(
-                    "MarkInfo expects Mark instances, got {!r} ({!r})".format(
-                        item, type(item)
-                    )
-                )
-
-    combined = attr.ib(
-        repr=False,
-        default=attr.Factory(
-            lambda self: reduce(Mark.combined_with, self._marks), takes_self=True
-        ),
-    )
-
-    name = alias("combined.name", warning=MARK_INFO_ATTRIBUTE)
-    args = alias("combined.args", warning=MARK_INFO_ATTRIBUTE)
-    kwargs = alias("combined.kwargs", warning=MARK_INFO_ATTRIBUTE)
-
-    @classmethod
-    def for_mark(cls, mark):
-        return cls([mark])
-
-    def __repr__(self):
-        return "<MarkInfo {!r}>".format(self.combined)
-
-    def add_mark(self, mark):
-        """ add a MarkInfo with the given args and kwargs. """
-        self._marks.append(mark)
-        self.combined = self.combined.combined_with(mark)
-
-    def __iter__(self):
-        """ yield MarkInfo objects each relating to a marking-call. """
-        return map(MarkInfo.for_mark, self._marks)
 
 
 class MarkGenerator(object):

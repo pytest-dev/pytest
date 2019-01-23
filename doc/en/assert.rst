@@ -100,10 +100,9 @@ If you want to write test code that works on Python 2.4 as well,
 you may also use two other ways to test for an expected exception::
 
     pytest.raises(ExpectedException, func, *args, **kwargs)
-    pytest.raises(ExpectedException, "func(*args, **kwargs)")
 
-both of which execute the specified function with args and kwargs and
-asserts that the given ``ExpectedException`` is raised.  The reporter will
+which will execute the specified function with args and kwargs and
+assert that the given ``ExpectedException`` is raised.  The reporter will
 provide you with helpful output in case of failures such as *no
 exception* or *wrong exception*.
 

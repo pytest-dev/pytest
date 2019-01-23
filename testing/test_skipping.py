@@ -875,11 +875,22 @@ def test_reportchars_all(testdir):
             pass
         def test_4():
             pytest.skip("four")
+        @pytest.fixture
+        def fail():
+            assert 0
+        def test_5(fail):
+            pass
     """
     )
     result = testdir.runpytest("-ra")
     result.stdout.fnmatch_lines(
-        ["FAIL*test_1*", "SKIP*four*", "XFAIL*test_2*", "XPASS*test_3*"]
+        [
+            "SKIP*four*",
+            "XFAIL*test_2*",
+            "XPASS*test_3*",
+            "ERROR*test_5*",
+            "FAIL*test_1*",
+        ]
     )
 
 

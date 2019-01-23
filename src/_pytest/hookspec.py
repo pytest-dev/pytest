@@ -1,7 +1,7 @@
 """ hook specifications for pytest plugins, invoked from main.py and builtin plugins.  """
 from pluggy import HookspecMarker
 
-from .deprecated import PYTEST_NAMESPACE
+from _pytest.deprecated import PYTEST_LOGWARNING
 
 
 hookspec = HookspecMarker("pytest")
@@ -21,32 +21,6 @@ def pytest_addhooks(pluginmanager):
 
     .. note::
         This hook is incompatible with ``hookwrapper=True``.
-    """
-
-
-@hookspec(historic=True, warn_on_impl=PYTEST_NAMESPACE)
-def pytest_namespace():
-    """
-    return dict of name->object to be made globally available in
-    the pytest namespace.
-
-    This hook is called at plugin registration time.
-
-    .. note::
-        This hook is incompatible with ``hookwrapper=True``.
-
-    .. warning::
-        This hook has been **deprecated** and will be removed in pytest 4.0.
-
-        Plugins whose users depend on the current namespace functionality should prepare to migrate to a
-        namespace they actually own.
-
-        To support the migration it's suggested to trigger ``DeprecationWarnings`` for objects they put into the
-        pytest namespace.
-
-        A stopgap measure to avoid the warning is to monkeypatch the ``pytest`` module, but just as the
-        ``pytest_namespace`` hook this should be seen as a temporary measure to be removed in future versions after
-        an appropriate transition period.
     """
 
 
@@ -524,7 +498,7 @@ def pytest_terminal_summary(terminalreporter, exitstatus):
     """
 
 
-@hookspec(historic=True)
+@hookspec(historic=True, warn_on_impl=PYTEST_LOGWARNING)
 def pytest_logwarning(message, code, nodeid, fslocation):
     """
     .. deprecated:: 3.8

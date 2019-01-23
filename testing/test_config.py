@@ -12,7 +12,6 @@ from _pytest.config.findpaths import determine_setup
 from _pytest.config.findpaths import get_common_ancestor
 from _pytest.config.findpaths import getcfg
 from _pytest.main import EXIT_NOTESTSCOLLECTED
-from _pytest.warnings import SHOW_PYTEST_WARNINGS_ARG
 
 
 class TestParseIni(object):
@@ -194,7 +193,7 @@ class TestConfigAPI(object):
         config = testdir.parseconfig("--hello=this")
         for x in ("hello", "--hello", "-X"):
             assert config.getoption(x) == "this"
-        pytest.raises(ValueError, "config.getoption('qweqwe')")
+        pytest.raises(ValueError, config.getoption, "qweqwe")
 
     @pytest.mark.skipif("sys.version_info[0] < 3")
     def test_config_getoption_unicode(self, testdir):
@@ -211,7 +210,7 @@ class TestConfigAPI(object):
 
     def test_config_getvalueorskip(self, testdir):
         config = testdir.parseconfig()
-        pytest.raises(pytest.skip.Exception, "config.getvalueorskip('hello')")
+        pytest.raises(pytest.skip.Exception, config.getvalueorskip, "hello")
         verbose = config.getvalueorskip("verbose")
         assert verbose == config.option.verbose
 
@@ -511,6 +510,7 @@ def test_options_on_small_file_do_not_blow_up(testdir):
 
 def test_preparse_ordering_with_setuptools(testdir, monkeypatch):
     pkg_resources = pytest.importorskip("pkg_resources")
+    monkeypatch.delenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD", raising=False)
 
     def my_iter(name):
         assert name == "pytest11"
@@ -548,6 +548,7 @@ def test_preparse_ordering_with_setuptools(testdir, monkeypatch):
 
 def test_setuptools_importerror_issue1479(testdir, monkeypatch):
     pkg_resources = pytest.importorskip("pkg_resources")
+    monkeypatch.delenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD", raising=False)
 
     def my_iter(name):
         assert name == "pytest11"
@@ -576,6 +577,7 @@ def test_setuptools_importerror_issue1479(testdir, monkeypatch):
 @pytest.mark.parametrize("block_it", [True, False])
 def test_plugin_preparse_prevents_setuptools_loading(testdir, monkeypatch, block_it):
     pkg_resources = pytest.importorskip("pkg_resources")
+    monkeypatch.delenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD", raising=False)
 
     plugin_module_placeholder = object()
 
@@ -723,7 +725,8 @@ def test_config_in_subdirectory_colon_command_line_issue2148(testdir):
 
 def test_notify_exception(testdir, capfd):
     config = testdir.parseconfig()
-    excinfo = pytest.raises(ValueError, "raise ValueError(1)")
+    with pytest.raises(ValueError) as excinfo:
+        raise ValueError(1)
     config.notify_exception(excinfo)
     out, err = capfd.readouterr()
     assert "ValueError" in err
@@ -787,66 +790,6 @@ def test_collect_pytest_prefix_bug(pytestconfig):
 
     pm = pytestconfig.pluginmanager
     assert pm.parse_hookimpl_opts(Dummy(), "pytest_something") is None
-
-
-class TestLegacyWarning(object):
-    @pytest.mark.filterwarnings("default")
-    def test_warn_config(self, testdir):
-        testdir.makeconftest(
-            """
-            values = []
-            def pytest_runtest_setup(item):
-                item.config.warn("C1", "hello")
-            def pytest_logwarning(code, message):
-                if message == "hello" and code == "C1":
-                    values.append(1)
-        """
-        )
-        testdir.makepyfile(
-            """
-            def test_proper(pytestconfig):
-                import conftest
-                assert conftest.values == [1]
-        """
-        )
-        result = testdir.runpytest(SHOW_PYTEST_WARNINGS_ARG)
-        result.stdout.fnmatch_lines(
-            ["*hello", "*config.warn has been deprecated*", "*1 passed*"]
-        )
-
-    @pytest.mark.filterwarnings("default")
-    @pytest.mark.parametrize("use_kw", [True, False])
-    def test_warn_on_test_item_from_request(self, testdir, use_kw):
-        code_kw = "code=" if use_kw else ""
-        message_kw = "message=" if use_kw else ""
-        testdir.makepyfile(
-            """
-            import pytest
-
-            @pytest.fixture
-            def fix(request):
-                request.node.warn({code_kw}"T1", {message_kw}"hello")
-
-            def test_hello(fix):
-                pass
-        """.format(
-                code_kw=code_kw, message_kw=message_kw
-            )
-        )
-        result = testdir.runpytest(
-            "--disable-pytest-warnings", SHOW_PYTEST_WARNINGS_ARG
-        )
-        assert "hello" not in result.stdout.str()
-
-        result = testdir.runpytest(SHOW_PYTEST_WARNINGS_ARG)
-        result.stdout.fnmatch_lines(
-            """
-            ===*warnings summary*===
-            *test_warn_on_test_item_from_request.py::test_hello*
-            *hello*
-            *test_warn_on_test_item_from_request.py:7:*Node.warn(code, message) form has been deprecated*
-        """
-        )
 
 
 class TestRootdir(object):
@@ -1081,6 +1024,33 @@ class TestOverrideIniArgs(object):
         config = get_config()
         config._preparse([], addopts=True)
         assert config._override_ini == ["cache_dir=%s" % cache_dir]
+
+    def test_addopts_from_env_not_concatenated(self, monkeypatch):
+        """PYTEST_ADDOPTS should not take values from normal args (#4265)."""
+        from _pytest.config import get_config
+
+        monkeypatch.setenv("PYTEST_ADDOPTS", "-o")
+        config = get_config()
+        with pytest.raises(SystemExit) as excinfo:
+            config._preparse(["cache_dir=ignored"], addopts=True)
+        assert excinfo.value.args[0] == _pytest.main.EXIT_USAGEERROR
+
+    def test_addopts_from_ini_not_concatenated(self, testdir):
+        """addopts from ini should not take values from normal args (#4265)."""
+        testdir.makeini(
+            """
+            [pytest]
+            addopts=-o
+        """
+        )
+        result = testdir.runpytest("cache_dir=ignored")
+        result.stderr.fnmatch_lines(
+            [
+                "%s: error: argument -o/--override-ini: expected one argument"
+                % (testdir.request.config._parser.optparser.prog,)
+            ]
+        )
+        assert result.ret == _pytest.main.EXIT_USAGEERROR
 
     def test_override_ini_does_not_contain_paths(self):
         """Check that -o no longer swallows all options after it (#3103)"""

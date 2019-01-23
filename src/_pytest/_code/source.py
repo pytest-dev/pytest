@@ -237,9 +237,7 @@ def getfslineno(obj):
 def findsource(obj):
     try:
         sourcelines, lineno = inspect.findsource(obj)
-    except py.builtin._sysex:
-        raise
-    except:  # noqa
+    except Exception:
         return None, -1
     source = Source()
     source.lines = [line.rstrip() for line in sourcelines]

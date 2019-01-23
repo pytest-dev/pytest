@@ -4,6 +4,7 @@ from __future__ import division
 from __future__ import print_function
 
 import codecs
+import distutils.spawn
 import gc
 import os
 import platform
@@ -19,6 +20,7 @@ import py
 import six
 
 from _pytest._code import Source
+from _pytest._io.saferepr import saferepr
 from _pytest.capture import MultiCapture
 from _pytest.capture import SysCapture
 from _pytest.compat import safe_str
@@ -86,7 +88,7 @@ class LsofFdLeakChecker(object):
 
     def _exec_lsof(self):
         pid = os.getpid()
-        return py.process.cmdexec("lsof -Ffn0 -p %d" % pid)
+        return subprocess.check_output(("lsof", "-Ffn0", "-p", str(pid))).decode()
 
     def _parse_lsof_output(self, out):
         def isopen(line):
@@ -113,11 +115,8 @@ class LsofFdLeakChecker(object):
 
     def matching_platform(self):
         try:
-            py.process.cmdexec("lsof -v")
-        except (py.process.cmdexec.Error, UnicodeDecodeError):
-            # cmdexec may raise UnicodeDecodeError on Windows systems with
-            # locale other than English:
-            # https://bitbucket.org/pytest-dev/py/issues/66
+            subprocess.check_output(("lsof", "-v"))
+        except (OSError, subprocess.CalledProcessError):
             return False
         else:
             return True
@@ -159,7 +158,7 @@ def getexecutable(name, cache={}):
     try:
         return cache[name]
     except KeyError:
-        executable = py.path.local.sysfind(name)
+        executable = distutils.spawn.find_executable(name)
         if executable:
             import subprocess
 
@@ -1232,9 +1231,7 @@ def getdecoded(out):
     try:
         return out.decode("utf-8")
     except UnicodeDecodeError:
-        return "INTERNAL not-utf8-decodeable, truncated string:\n%s" % (
-            py.io.saferepr(out),
-        )
+        return "INTERNAL not-utf8-decodeable, truncated string:\n%s" % (saferepr(out),)
 
 
 class LineComp(object):

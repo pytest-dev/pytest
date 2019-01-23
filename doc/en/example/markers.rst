@@ -308,7 +308,7 @@ apply a marker to an individual test instance::
     @pytest.mark.foo
     @pytest.mark.parametrize(("n", "expected"), [
         (1, 2),
-        pytest.mark.bar((1, 3)),
+        pytest.param((1, 3), marks=pytest.mark.bar),
         (2, 3),
     ])
     def test_increment(n, expected):
@@ -317,15 +317,6 @@ apply a marker to an individual test instance::
 In this example the mark "foo" will apply to each of the three
 tests, whereas the "bar" mark is only applied to the second test.
 Skip and xfail marks can also be applied in this way, see :ref:`skip/xfail with parametrize`.
-
-.. note::
-
-    If the data you are parametrizing happen to be single callables, you need to be careful
-    when marking these items. ``pytest.mark.xfail(my_func)`` won't work because it's also the
-    signature of a function being decorated. To resolve this ambiguity, you need to pass a
-    reason argument:
-    ``pytest.mark.xfail(func_bar, reason="Issue#7")``.
-
 
 .. _`adding a custom marker from a plugin`:
 

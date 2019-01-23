@@ -3,6 +3,7 @@ from __future__ import division
 from __future__ import print_function
 
 import argparse
+import distutils.spawn
 import os
 import sys
 
@@ -23,6 +24,12 @@ class TestParser(object):
         pytest.raises(SystemExit, lambda: parser.parse(["-h"]))
         out, err = capsys.readouterr()
         assert err.find("error: unrecognized arguments") != -1
+
+    def test_custom_prog(self, parser):
+        """Custom prog can be set for `argparse.ArgumentParser`."""
+        assert parser._getparser().prog == os.path.basename(sys.argv[0])
+        parser.prog = "custom-prog"
+        assert parser._getparser().prog == "custom-prog"
 
     def test_argument(self):
         with pytest.raises(parseopt.ArgumentError):
@@ -100,12 +107,8 @@ class TestParser(object):
 
     def test_group_shortopt_lowercase(self, parser):
         group = parser.getgroup("hello")
-        pytest.raises(
-            ValueError,
-            """
+        with pytest.raises(ValueError):
             group.addoption("-x", action="store_true")
-        """,
-        )
         assert len(group.options) == 0
         group._addoption("-x", action="store_true")
         assert len(group.options) == 1
@@ -294,7 +297,7 @@ class TestParser(object):
 
 
 def test_argcomplete(testdir, monkeypatch):
-    if not py.path.local.sysfind("bash"):
+    if not distutils.spawn.find_executable("bash"):
         pytest.skip("bash not available")
     script = str(testdir.tmpdir.join("test_argcomplete"))
     pytest_bin = sys.argv[0]

@@ -155,7 +155,7 @@ DeprecationWarning and PendingDeprecationWarning
 .. versionchanged:: 3.9
 
 By default pytest will display ``DeprecationWarning`` and ``PendingDeprecationWarning`` warnings from
-user code and third-party libraries, as recommended by `PEP-0506 <https://www.python.org/dev/peps/pep-0565>`_.
+user code and third-party libraries, as recommended by `PEP-0565 <https://www.python.org/dev/peps/pep-0565>`_.
 This helps users keep their code modern and avoid breakages when deprecated warnings are effectively removed.
 
 Sometimes it is useful to hide some specific deprecation warnings that happen in code that you have no control over

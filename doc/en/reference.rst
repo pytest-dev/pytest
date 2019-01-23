@@ -618,7 +618,6 @@ Session related reporting hooks:
 .. autofunction:: pytest_terminal_summary
 .. autofunction:: pytest_fixture_setup
 .. autofunction:: pytest_fixture_post_finalizer
-.. autofunction:: pytest_logwarning
 .. autofunction:: pytest_warning_captured
 
 And here is the central hook for reporting about
@@ -722,13 +721,6 @@ MarkGenerator
 ~~~~~~~~~~~~~
 
 .. autoclass:: _pytest.mark.MarkGenerator
-    :members:
-
-
-MarkInfo
-~~~~~~~~
-
-.. autoclass:: _pytest.mark.MarkInfo
     :members:
 
 
@@ -896,6 +888,12 @@ Configuration Options
 Here is a list of builtin configuration options that may be written in a ``pytest.ini``, ``tox.ini`` or ``setup.cfg``
 file, usually located at the root of your repository. All options must be under a ``[pytest]`` section
 (``[tool:pytest]`` for ``setup.cfg`` files).
+
+.. warning::
+    Usage of ``setup.cfg`` is not recommended unless for very simple use cases. ``.cfg``
+    files use a different parser than ``pytest.ini`` and ``tox.ini`` which might cause hard to track
+    down problems.
+    When possible, it is recommended to use the latter files to hold your pytest configuration.
 
 Configuration file options may be overwritten in the command-line by using ``-o/--override``, which can also be
 passed multiple times. The expected format is ``name=value``. For example::

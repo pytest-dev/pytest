@@ -44,3 +44,4 @@ coverage.xml
 .pydevproject
 .project
 .settings
+.vscode

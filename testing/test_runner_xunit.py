@@ -7,7 +7,6 @@ from __future__ import division
 from __future__ import print_function
 
 import pytest
-from _pytest.warnings import SHOW_PYTEST_WARNINGS_ARG
 
 
 def test_module_and_function_setup(testdir):
@@ -168,64 +167,6 @@ def test_method_setup_failure_no_teardown(testdir):
     """
     )
     reprec.assertoutcome(failed=1, passed=1)
-
-
-def test_method_generator_setup(testdir):
-    reprec = testdir.inline_runsource(
-        """
-        class TestSetupTeardownOnInstance(object):
-            def setup_class(cls):
-                cls.classsetup = True
-
-            def setup_method(self, method):
-                self.methsetup = method
-
-            def test_generate(self):
-                assert self.classsetup
-                assert self.methsetup == self.test_generate
-                yield self.generated, 5
-                yield self.generated, 2
-
-            def generated(self, value):
-                assert self.classsetup
-                assert self.methsetup == self.test_generate
-                assert value == 5
-    """,
-        SHOW_PYTEST_WARNINGS_ARG,
-    )
-    reprec.assertoutcome(passed=1, failed=1)
-
-
-def test_func_generator_setup(testdir):
-    reprec = testdir.inline_runsource(
-        """
-        import sys
-
-        def setup_module(mod):
-            print("setup_module")
-            mod.x = []
-
-        def setup_function(fun):
-            print("setup_function")
-            x.append(1)
-
-        def teardown_function(fun):
-            print("teardown_function")
-            x.pop()
-
-        def test_one():
-            assert x == [1]
-            def check():
-                print("check")
-                sys.stderr.write("e\\n")
-                assert x == [1]
-            yield check
-            assert x == [1]
-    """,
-        SHOW_PYTEST_WARNINGS_ARG,
-    )
-    rep = reprec.matchreport("test_one", names="pytest_runtest_logreport")
-    assert rep.passed
 
 
 def test_method_setup_uses_fresh_instances(testdir):

@@ -134,10 +134,10 @@ The test collection would look like this:
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile: pytest.ini
     collected 2 items
-    <Module 'check_myapp.py'>
-      <Class 'CheckMyApp'>
-          <Function 'simple_check'>
-          <Function 'complex_check'>
+    <Module check_myapp.py>
+      <Class CheckMyApp>
+          <Function simple_check>
+          <Function complex_check>
 
     ======================= no tests ran in 0.12 seconds =======================
 
@@ -189,11 +189,11 @@ You can always peek at the collection tree without running tests like this:
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile: pytest.ini
     collected 3 items
-    <Module 'CWD/pythoncollection.py'>
-      <Function 'test_function'>
-      <Class 'TestClass'>
-          <Function 'test_method'>
-          <Function 'test_anothermethod'>
+    <Module CWD/pythoncollection.py>
+      <Function test_function>
+      <Class TestClass>
+          <Function test_method>
+          <Function test_anothermethod>
 
     ======================= no tests ran in 0.12 seconds =======================
 

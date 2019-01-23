@@ -8,6 +8,7 @@ import functools
 import os
 import pkgutil
 import sys
+import warnings
 
 import attr
 import py
@@ -18,6 +19,7 @@ from _pytest import nodes
 from _pytest.config import directory_arg
 from _pytest.config import hookimpl
 from _pytest.config import UsageError
+from _pytest.deprecated import PYTEST_CONFIG_GLOBAL
 from _pytest.outcomes import exit
 from _pytest.runner import collect_one_node
 
@@ -167,8 +169,24 @@ def pytest_addoption(parser):
     )
 
 
+class _ConfigDeprecated(object):
+    def __init__(self, config):
+        self.__dict__["_config"] = config
+
+    def __getattr__(self, attr):
+        warnings.warn(PYTEST_CONFIG_GLOBAL, stacklevel=2)
+        return getattr(self._config, attr)
+
+    def __setattr__(self, attr, val):
+        warnings.warn(PYTEST_CONFIG_GLOBAL, stacklevel=2)
+        return setattr(self._config, attr, val)
+
+    def __repr__(self):
+        return "{}({!r})".format(type(self).__name__, self._config)
+
+
 def pytest_configure(config):
-    __import__("pytest").config = config  # compatibility
+    __import__("pytest").config = _ConfigDeprecated(config)  # compatibility
 
 
 def wrap_session(config, doit):
@@ -187,8 +205,8 @@ def wrap_session(config, doit):
             raise
         except Failed:
             session.exitstatus = EXIT_TESTSFAILED
-        except KeyboardInterrupt:
-            excinfo = _pytest._code.ExceptionInfo()
+        except (KeyboardInterrupt, exit.Exception):
+            excinfo = _pytest._code.ExceptionInfo.from_current()
             exitstatus = EXIT_INTERRUPTED
             if initstate <= 2 and isinstance(excinfo.value, exit.Exception):
                 sys.stderr.write("{}: {}\n".format(excinfo.typename, excinfo.value.msg))
@@ -197,7 +215,7 @@ def wrap_session(config, doit):
             config.hook.pytest_keyboard_interrupt(excinfo=excinfo)
             session.exitstatus = exitstatus
         except:  # noqa
-            excinfo = _pytest._code.ExceptionInfo()
+            excinfo = _pytest._code.ExceptionInfo.from_current()
             config.notify_exception(excinfo, config.option)
             session.exitstatus = EXIT_INTERNALERROR
             if excinfo.errisinstance(SystemExit):

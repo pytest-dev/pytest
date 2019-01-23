@@ -628,7 +628,7 @@ So let's just do another run:
             response, msg = smtp_connection.ehlo()
             assert response == 250
     >       assert b"smtp.gmail.com" in msg
-    E       AssertionError: assert b'smtp.gmail.com' in b'mail.python.org\nPIPELINING\nSIZE 51200000\nETRN\nSTARTTLS\nAUTH DIGEST-MD5 NTLM CRAM-MD5\nENHANCEDSTATUSCODES\n8BITMIME\nDSN\nSMTPUTF8'
+    E       AssertionError: assert b'smtp.gmail.com' in b'mail.python.org\nPIPELINING\nSIZE 51200000\nETRN\nSTARTTLS\nAUTH DIGEST-MD5 NTLM CRAM-MD5\nENHANCEDSTATUSCODES\n8BITMIME\nDSN\nSMTPUTF8\nCHUNKING'
 
     test_module.py:5: AssertionError
     -------------------------- Captured stdout setup ---------------------------
@@ -703,19 +703,19 @@ Running the above tests results in the following test IDs being used:
    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
    rootdir: $REGENDOC_TMPDIR, inifile:
    collected 10 items
-   <Module 'test_anothersmtp.py'>
-     <Function 'test_showhelo[smtp.gmail.com]'>
-     <Function 'test_showhelo[mail.python.org]'>
-   <Module 'test_ids.py'>
-     <Function 'test_a[spam]'>
-     <Function 'test_a[ham]'>
-     <Function 'test_b[eggs]'>
-     <Function 'test_b[1]'>
-   <Module 'test_module.py'>
-     <Function 'test_ehlo[smtp.gmail.com]'>
-     <Function 'test_noop[smtp.gmail.com]'>
-     <Function 'test_ehlo[mail.python.org]'>
-     <Function 'test_noop[mail.python.org]'>
+   <Module test_anothersmtp.py>
+     <Function test_showhelo[smtp.gmail.com]>
+     <Function test_showhelo[mail.python.org]>
+   <Module test_ids.py>
+     <Function test_a[spam]>
+     <Function test_a[ham]>
+     <Function test_b[eggs]>
+     <Function test_b[1]>
+   <Module test_module.py>
+     <Function test_ehlo[smtp.gmail.com]>
+     <Function test_noop[smtp.gmail.com]>
+     <Function test_ehlo[mail.python.org]>
+     <Function test_noop[mail.python.org]>
 
    ======================= no tests ran in 0.12 seconds =======================
 
@@ -804,7 +804,7 @@ different ``App`` instances and respective smtp servers.  There is no
 need for the ``app`` fixture to be aware of the ``smtp_connection``
 parametrization because pytest will fully analyse the fixture dependency graph.
 
-Note, that the ``app`` fixture has a scope of ``module`` and uses a
+Note that the ``app`` fixture has a scope of ``module`` and uses a
 module-scoped ``smtp_connection`` fixture.  The example would still work if
 ``smtp_connection`` was cached on a ``session`` scope: it is fine for fixtures to use
 "broader" scoped fixtures but not the other way round:

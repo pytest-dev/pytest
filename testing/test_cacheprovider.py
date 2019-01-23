@@ -925,3 +925,15 @@ def test_does_not_create_boilerplate_in_existing_dirs(testdir):
     assert os.path.isdir("v")  # cache contents
     assert not os.path.exists(".gitignore")
     assert not os.path.exists("README.md")
+
+
+def test_cachedir_tag(testdir):
+    """Ensure we automatically create CACHEDIR.TAG file in the pytest_cache directory (#4278)."""
+    from _pytest.cacheprovider import Cache
+    from _pytest.cacheprovider import CACHEDIR_TAG_CONTENT
+
+    config = testdir.parseconfig()
+    cache = Cache.for_config(config)
+    cache.set("foo", "bar")
+    cachedir_tag_path = cache._cachedir.joinpath("CACHEDIR.TAG")
+    assert cachedir_tag_path.read_bytes() == CACHEDIR_TAG_CONTENT

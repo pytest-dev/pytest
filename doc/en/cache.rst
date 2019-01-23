@@ -185,11 +185,14 @@ across pytest invocations::
     import pytest
     import time
 
+    def expensive_computation():
+        print("running expensive computation...")
+
     @pytest.fixture
     def mydata(request):
         val = request.config.cache.get("example/value", None)
         if val is None:
-            time.sleep(9*0.6) # expensive computation :)
+            expensive_computation()
             val = 42
             request.config.cache.set("example/value", val)
         return val
@@ -197,8 +200,7 @@ across pytest invocations::
     def test_function(mydata):
         assert mydata == 23
 
-If you run this command once, it will take a while because
-of the sleep:
+If you run this command for the first time, you can see the print statement:
 
 .. code-block:: pytest
 
@@ -212,12 +214,16 @@ of the sleep:
         def test_function(mydata):
     >       assert mydata == 23
     E       assert 42 == 23
+    E         -42
+    E         +23
 
-    test_caching.py:14: AssertionError
+    test_caching.py:17: AssertionError
+    -------------------------- Captured stdout setup ---------------------------
+    running expensive computation...
     1 failed in 0.12 seconds
 
 If you run it a second time the value will be retrieved from
-the cache and this will be quick:
+the cache and nothing will be printed:
 
 .. code-block:: pytest
 
@@ -231,8 +237,10 @@ the cache and this will be quick:
         def test_function(mydata):
     >       assert mydata == 23
     E       assert 42 == 23
+    E         -42
+    E         +23
 
-    test_caching.py:14: AssertionError
+    test_caching.py:17: AssertionError
     1 failed in 0.12 seconds
 
 See the :ref:`cache-api` for more details.

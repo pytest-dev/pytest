@@ -14,8 +14,6 @@ from _pytest.outcomes import skip
 from _pytest.outcomes import xfail
 from _pytest.python import Class
 from _pytest.python import Function
-from _pytest.python import Module
-from _pytest.python import transfer_markers
 
 
 def pytest_pycollect_makeitem(collector, name, obj):
@@ -54,14 +52,12 @@ class UnitTestCase(Class):
             return
         self.session._fixturemanager.parsefactories(self, unittest=True)
         loader = TestLoader()
-        module = self.getparent(Module).obj
         foundsomething = False
         for name in loader.getTestCaseNames(self.obj):
             x = getattr(self.obj, name)
             if not getattr(x, "__test__", True):
                 continue
             funcobj = getimfunc(x)
-            transfer_markers(funcobj, cls, module)
             yield TestCaseFunction(name, parent=self, callobj=funcobj)
             foundsomething = True
 
@@ -115,6 +111,10 @@ class TestCaseFunction(Function):
         rawexcinfo = getattr(rawexcinfo, "_rawexcinfo", rawexcinfo)
         try:
             excinfo = _pytest._code.ExceptionInfo(rawexcinfo)
+            # invoke the attributes to trigger storing the traceback
+            # trial causes some issue there
+            excinfo.value
+            excinfo.traceback
         except TypeError:
             try:
                 try:
@@ -136,7 +136,7 @@ class TestCaseFunction(Function):
             except KeyboardInterrupt:
                 raise
             except fail.Exception:
-                excinfo = _pytest._code.ExceptionInfo()
+                excinfo = _pytest._code.ExceptionInfo.from_current()
         self.__dict__.setdefault("_excinfo", []).append(excinfo)
 
     def addError(self, testcase, rawexcinfo):

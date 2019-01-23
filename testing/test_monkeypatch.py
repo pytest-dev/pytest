@@ -27,7 +27,7 @@ def test_setattr():
         x = 1
 
     monkeypatch = MonkeyPatch()
-    pytest.raises(AttributeError, "monkeypatch.setattr(A, 'notexists', 2)")
+    pytest.raises(AttributeError, monkeypatch.setattr, A, "notexists", 2)
     monkeypatch.setattr(A, "y", 2, raising=False)
     assert A.y == 2
     monkeypatch.undo()
@@ -99,7 +99,7 @@ def test_delattr():
 
     monkeypatch = MonkeyPatch()
     monkeypatch.delattr(A, "x")
-    pytest.raises(AttributeError, "monkeypatch.delattr(A, 'y')")
+    pytest.raises(AttributeError, monkeypatch.delattr, A, "y")
     monkeypatch.delattr(A, "y", raising=False)
     monkeypatch.setattr(A, "x", 5, raising=False)
     assert A.x == 5
@@ -156,7 +156,7 @@ def test_delitem():
     monkeypatch.delitem(d, "x")
     assert "x" not in d
     monkeypatch.delitem(d, "y", raising=False)
-    pytest.raises(KeyError, "monkeypatch.delitem(d, 'y')")
+    pytest.raises(KeyError, monkeypatch.delitem, d, "y")
     assert not d
     monkeypatch.setitem(d, "y", 1700)
     assert d["y"] == 1700
@@ -182,7 +182,7 @@ def test_delenv():
     name = "xyz1234"
     assert name not in os.environ
     monkeypatch = MonkeyPatch()
-    pytest.raises(KeyError, "monkeypatch.delenv(%r, raising=True)" % name)
+    pytest.raises(KeyError, monkeypatch.delenv, name, raising=True)
     monkeypatch.delenv(name, raising=False)
     monkeypatch.undo()
     os.environ[name] = "1"
@@ -389,6 +389,33 @@ def test_issue156_undo_staticmethod(Sample):
 
     monkeypatch.undo()
     assert Sample.hello()
+
+
+def test_undo_class_descriptors_delattr():
+    class SampleParent(object):
+        @classmethod
+        def hello(_cls):
+            pass
+
+        @staticmethod
+        def world():
+            pass
+
+    class SampleChild(SampleParent):
+        pass
+
+    monkeypatch = MonkeyPatch()
+
+    original_hello = SampleChild.hello
+    original_world = SampleChild.world
+    monkeypatch.delattr(SampleParent, "hello")
+    monkeypatch.delattr(SampleParent, "world")
+    assert getattr(SampleParent, "hello", None) is None
+    assert getattr(SampleParent, "world", None) is None
+
+    monkeypatch.undo()
+    assert original_hello == SampleChild.hello
+    assert original_world == SampleChild.world
 
 
 def test_issue1338_name_resolving():

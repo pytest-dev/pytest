@@ -273,27 +273,6 @@ def record_xml_property(record_property, request):
     return record_property
 
 
-@fixture
-def record_xml_attribute(request):
-    """Add extra xml attributes to the tag for the calling test.
-    The fixture is callable with ``(name, value)``, with value being
-    automatically xml-encoded
-    """
-    from _pytest.warning_types import PytestWarning
-
-    request.node.warn(PytestWarning("record_xml_attribute is an experimental feature"))
-    xml = getattr(request.config, "_xml", None)
-    if xml is not None:
-        node_reporter = xml.node_reporter(request.node.nodeid)
-        return node_reporter.add_attribute
-    else:
-
-        def add_attr_noop(name, value):
-            pass
-
-        return add_attr_noop
-
-
 def pytest_addoption(parser):
     group = parser.getgroup("terminal reporting")
     group.addoption(
@@ -323,6 +302,11 @@ def pytest_addoption(parser):
         "one of no|system-out|system-err",
         default="no",
     )  # choices=['no', 'stdout', 'stderr'])
+    parser.addini(
+        "junit_duration_report",
+        "Duration time to report: one of total|call",
+        default="total",
+    )  # choices=['total', 'call'])
 
 
 def pytest_configure(config):
@@ -334,6 +318,7 @@ def pytest_configure(config):
             config.option.junitprefix,
             config.getini("junit_suite_name"),
             config.getini("junit_logging"),
+            config.getini("junit_duration_report"),
         )
         config.pluginmanager.register(config._xml)
 
@@ -361,12 +346,20 @@ def mangle_test_address(address):
 
 
 class LogXML(object):
-    def __init__(self, logfile, prefix, suite_name="pytest", logging="no"):
+    def __init__(
+        self,
+        logfile,
+        prefix,
+        suite_name="pytest",
+        logging="no",
+        report_duration="total",
+    ):
         logfile = os.path.expanduser(os.path.expandvars(logfile))
         self.logfile = os.path.normpath(os.path.abspath(logfile))
         self.prefix = prefix
         self.suite_name = suite_name
         self.logging = logging
+        self.report_duration = report_duration
         self.stats = dict.fromkeys(["error", "passed", "failure", "skipped"], 0)
         self.node_reporters = {}  # nodeid -> _NodeReporter
         self.node_reporters_ordered = []
@@ -500,8 +493,9 @@ class LogXML(object):
         """accumulates total duration for nodeid from given report and updates
         the Junit.testcase with the new total if already created.
         """
-        reporter = self.node_reporter(report)
-        reporter.duration += getattr(report, "duration", 0.0)
+        if self.report_duration == "total" or report.when == self.report_duration:
+            reporter = self.node_reporter(report)
+            reporter.duration += getattr(report, "duration", 0.0)
 
     def pytest_collectreport(self, report):
         if not report.passed:

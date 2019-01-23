@@ -181,6 +181,8 @@ class MonkeyPatch(object):
         attribute is missing.
         """
         __tracebackhide__ = True
+        import inspect
+
         if name is notset:
             if not isinstance(target, six.string_types):
                 raise TypeError(
@@ -194,7 +196,11 @@ class MonkeyPatch(object):
             if raising:
                 raise AttributeError(name)
         else:
-            self._setattr.append((target, name, getattr(target, name, notset)))
+            oldval = getattr(target, name, notset)
+            # Avoid class descriptors like staticmethod/classmethod.
+            if inspect.isclass(target):
+                oldval = target.__dict__.get(name, notset)
+            self._setattr.append((target, name, oldval))
             delattr(target, name)
 
     def setitem(self, dic, name, value):
