@@ -66,12 +66,34 @@ def bin_xml_escape(arg):
     return py.xml.raw(illegal_xml_re.sub(repl, py.xml.escape(arg)))
 
 
+def merge_family(left, right):
+    result = {}
+    for kl, vl in left.items():
+        for kr, vr in right.items():
+            if not isinstance(vl, list):
+                raise TypeError(type(vl))
+            result[kl] = vl + vr
+    left.update(result)
+
+
+families = {}
+families["_base"] = {"testcase": ["classname", "name"]}
+families["_base_legacy"] = {"testcase": ["file", "line", "url"]}
+
+# xUnit 1.x inherits legacy attributes
+families["xunit1"] = families["_base"].copy()
+merge_family(families["xunit1"], families["_base_legacy"])
+
+# xUnit 2.x uses strict base attributes
+families["xunit2"] = families["_base"]
+
+
 class _NodeReporter(object):
     def __init__(self, nodeid, xml):
-
         self.id = nodeid
         self.xml = xml
         self.add_stats = self.xml.add_stats
+        self.family = self.xml.family
         self.duration = 0
         self.properties = []
         self.nodes = []
@@ -119,8 +141,20 @@ class _NodeReporter(object):
         self.attrs = attrs
         self.attrs.update(existing_attrs)  # restore any user-defined attributes
 
+        # Preserve legacy testcase behavior
+        if self.family == "xunit1":
+            return
+
+        # Filter out attributes not permitted by this test family.
+        # Including custom attributes because they are not valid here.
+        temp_attrs = {}
+        for key in self.attrs.keys():
+            if key in families[self.family]["testcase"]:
+                temp_attrs[key] = self.attrs[key]
+        self.attrs = temp_attrs
+
     def to_xml(self):
-        testcase = Junit.testcase(time=self.duration, **self.attrs)
+        testcase = Junit.testcase(time="%.3f" % self.duration, **self.attrs)
         testcase.append(self.make_properties_node())
         for node in self.nodes:
             testcase.append(node)
@@ -269,16 +303,26 @@ def record_xml_attribute(request):
     from _pytest.warning_types import PytestWarning
 
     request.node.warn(PytestWarning("record_xml_attribute is an experimental feature"))
+
+    # Declare noop
+    def add_attr_noop(name, value):
+        pass
+
+    attr_func = add_attr_noop
     xml = getattr(request.config, "_xml", None)
-    if xml is not None:
+
+    if xml is not None and xml.family != "xunit1":
+        request.node.warn(
+            PytestWarning(
+                "record_xml_attribute is incompatible with junit_family: "
+                "%s (use: legacy|xunit1)" % xml.family
+            )
+        )
+    elif xml is not None:
         node_reporter = xml.node_reporter(request.node.nodeid)
-        return node_reporter.add_attribute
-    else:
+        attr_func = node_reporter.add_attribute
 
-        def add_attr_noop(name, value):
-            pass
-
-        return add_attr_noop
+    return attr_func
 
 
 def pytest_addoption(parser):
@@ -315,6 +359,11 @@ def pytest_addoption(parser):
         "Duration time to report: one of total|call",
         default="total",
     )  # choices=['total', 'call'])
+    parser.addini(
+        "junit_family",
+        "Emit XML for schema: one of legacy|xunit1|xunit2",
+        default="xunit1",
+    )
 
 
 def pytest_configure(config):
@@ -327,6 +376,7 @@ def pytest_configure(config):
             config.getini("junit_suite_name"),
             config.getini("junit_logging"),
             config.getini("junit_duration_report"),
+            config.getini("junit_family"),
         )
         config.pluginmanager.register(config._xml)
 
@@ -361,6 +411,7 @@ class LogXML(object):
         suite_name="pytest",
         logging="no",
         report_duration="total",
+        family="xunit1",
     ):
         logfile = os.path.expanduser(os.path.expandvars(logfile))
         self.logfile = os.path.normpath(os.path.abspath(logfile))
@@ -368,6 +419,7 @@ class LogXML(object):
         self.suite_name = suite_name
         self.logging = logging
         self.report_duration = report_duration
+        self.family = family
         self.stats = dict.fromkeys(["error", "passed", "failure", "skipped"], 0)
         self.node_reporters = {}  # nodeid -> _NodeReporter
         self.node_reporters_ordered = []
@@ -375,6 +427,10 @@ class LogXML(object):
         # List of reports that failed on call but teardown is pending.
         self.open_reports = []
         self.cnt_double_fail_tests = 0
+
+        # Replaces convenience family with real family
+        if self.family == "legacy":
+            self.family = "xunit1"
 
     def finalize(self, report):
         nodeid = getattr(report, "nodeid", report)
@@ -545,7 +601,7 @@ class LogXML(object):
                 name=self.suite_name,
                 errors=self.stats["error"],
                 failures=self.stats["failure"],
-                skips=self.stats["skipped"],
+                skipped=self.stats["skipped"],
                 tests=numtests,
                 time="%.3f" % suite_time_delta,
             ).unicode(indent=0)
