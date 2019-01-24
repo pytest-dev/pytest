@@ -770,6 +770,7 @@ def test_skip_reasons_folding():
 
     # ev3 might be a collection report
     ev3 = X()
+    ev3.when = "collect"
     ev3.longrepr = longrepr
     ev3.skipped = True
 
