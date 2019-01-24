@@ -12,7 +12,9 @@ def _get_modules():
     for module in vars(_pytest).values():
         if isinstance(module, types.ModuleType):
             name = module.__name__
-            marks = [pytest.mark.xfail] if name in KNOWN_BAD else []
+            marks = (
+                [pytest.mark.xfail(reason="known failure")] if name in KNOWN_BAD else []
+            )
             yield pytest.param(name, marks=marks)
 
 
@@ -26,5 +28,7 @@ def test_module_warning_free(module_name):
         "-W", "ignore:.*mode is deprecated.*:DeprecationWarning",
         # from bruno testing in a venv
         "-W", "ignore:.*Not importing directory.*:ImportWarning",
+        # virtualenv bug
+        "-W", "ignore:the imp:DeprecationWarning:distutils",
         "-c", "import " + module_name,
     ])

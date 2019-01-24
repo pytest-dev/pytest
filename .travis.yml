@@ -11,6 +11,7 @@ python:
   - '3.7'
 install:
   - pip install --upgrade --pre tox
+  - pip install --upgrade virtualenv>=
 env:
   matrix:
     - TOXENV=py27
