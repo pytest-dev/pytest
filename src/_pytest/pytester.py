@@ -305,13 +305,10 @@ class HookRecorder(object):
         """return a testreport whose dotted import path matches"""
         values = []
         for rep in self.getreports(names=names):
-            try:
-                if not when and rep.when != "call" and rep.passed:
-                    # setup/teardown passing reports - let's ignore those
-                    continue
-            except AttributeError:
-                pass
-            if when and getattr(rep, "when", None) != when:
+            if not when and rep.when != "call" and rep.passed:
+                # setup/teardown passing reports - let's ignore those
+                continue
+            if when and rep.when != when:
                 continue
             if not inamepart or inamepart in rep.nodeid.split("::"):
                 values.append(rep)
@@ -338,7 +335,7 @@ class HookRecorder(object):
         failed = []
         for rep in self.getreports("pytest_collectreport pytest_runtest_logreport"):
             if rep.passed:
-                if getattr(rep, "when", None) == "call":
+                if rep.when == "call":
                     passed.append(rep)
             elif rep.skipped:
                 skipped.append(rep)
