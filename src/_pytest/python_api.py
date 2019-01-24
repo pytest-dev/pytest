@@ -4,6 +4,7 @@ import math
 import pprint
 import sys
 import warnings
+from contextlib import contextmanager
 from decimal import Decimal
 from numbers import Number
 
@@ -726,3 +727,32 @@ class RaisesContext(object):
         if self.match_expr is not None and suppress_exception:
             self.excinfo.match(self.match_expr)
         return suppress_exception
+
+
+# builtin pytest.does_not_raise helper
+
+
+@contextmanager
+def does_not_raise():
+    r"""
+    This context manager is a complement to ``pytest.raises()`` that does
+    *not* catch any exceptions raised by the code block.
+
+
+    This is essentially a no-op but is useful when
+    conditionally parameterizing tests that may or may not
+    raise an error. For example::
+
+        @pytest.mark.parametrize('example_input,expectation', [
+            (3, does_not_raise()),
+            (2, does_not_raise()),
+            (1, does_not_raise()),
+            (0, raises(ZeroDivisionError)),
+        ])
+        def test_division(example_input, expectation):
+            '''Test how much I know division.'''
+            with expectation:
+                assert (6 / example_input) is not None
+    """
+
+    yield
