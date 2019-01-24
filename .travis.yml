@@ -9,6 +9,7 @@ stages:
 python: '3.7'
 cache: false
 
+  - pip install --upgrade virtualenv>=16.3.0
 env:
   global:
     - PYTEST_ADDOPTS=-vv

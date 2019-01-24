@@ -113,7 +113,7 @@ class LsofFdLeakChecker:
 
     def matching_platform(self):
         try:
-            subprocess.check_output(("lsof", "-v"))
+            subprocess.check_output(("lsof", "-v"), stderr=subprocess.STDOUT)
         except (OSError, subprocess.CalledProcessError):
             return False
         else:
