@@ -19,6 +19,8 @@ def getslaveinfoline(node):
 
 
 class BaseReport(object):
+    when = None
+
     def __init__(self, **kw):
         self.__dict__.update(kw)
 
@@ -169,6 +171,8 @@ class TeardownErrorReport(BaseReport):
 
 
 class CollectReport(BaseReport):
+    when = "collect"
+
     def __init__(self, nodeid, outcome, longrepr, result, sections=(), **extra):
         self.nodeid = nodeid
         self.outcome = outcome

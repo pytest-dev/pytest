@@ -804,8 +804,8 @@ class TestInvocationVariants(object):
         result = testdir.runpytest("-rf")
         lines = result.stdout.str().splitlines()
         for line in lines:
-            if line.startswith("FAIL "):
-                testid = line[5:].strip()
+            if line.startswith(("FAIL ", "FAILED ")):
+                _fail, _sep, testid = line.partition(" ")
                 break
         result = testdir.runpytest(testid, "-rf")
         result.stdout.fnmatch_lines([line, "*1 failed*"])
