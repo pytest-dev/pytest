@@ -497,6 +497,7 @@ class TerminalReporter(object):
         errors = len(self.stats.get("error", []))
         skipped = len(self.stats.get("skipped", []))
         deselected = len(self.stats.get("deselected", []))
+        selected = self._numcollected - errors - skipped - deselected
         if final:
             line = "collected "
         else:
@@ -510,6 +511,8 @@ class TerminalReporter(object):
             line += " / %d deselected" % deselected
         if skipped:
             line += " / %d skipped" % skipped
+        if self._numcollected > selected > 0:
+            line += " / %d selected" % selected
         if self.isatty:
             self.rewrite(line, bold=True, erase=True)
             if final:
