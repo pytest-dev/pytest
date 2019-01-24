@@ -7,7 +7,7 @@ from __future__ import division
 from __future__ import print_function
 
 import argparse
-import itertools
+import collections
 import platform
 import sys
 import time
@@ -727,33 +727,33 @@ class TerminalReporter(object):
 
             final = hasattr(self, "_already_displayed_warnings")
             if final:
-                warnings = all_warnings[self._already_displayed_warnings :]
+                warning_reports = all_warnings[self._already_displayed_warnings :]
             else:
-                warnings = all_warnings
-            self._already_displayed_warnings = len(warnings)
-            if not warnings:
+                warning_reports = all_warnings
+            self._already_displayed_warnings = len(warning_reports)
+            if not warning_reports:
                 return
 
-            grouped = itertools.groupby(
-                warnings, key=lambda wr: wr.get_location(self.config)
-            )
+            reports_grouped_by_message = collections.OrderedDict()
+            for wr in warning_reports:
+                reports_grouped_by_message.setdefault(wr.message, []).append(wr)
 
             title = "warnings summary (final)" if final else "warnings summary"
             self.write_sep("=", title, yellow=True, bold=False)
-            for location, warning_records in grouped:
-                # legacy warnings show their location explicitly, while standard warnings look better without
-                # it because the location is already formatted into the message
-                warning_records = list(warning_records)
-                if location:
-                    self._tw.line(str(location))
-                for w in warning_records:
+            for message, warning_reports in reports_grouped_by_message.items():
+                has_any_location = False
+                for w in warning_reports:
+                    location = w.get_location(self.config)
                     if location:
-                        lines = w.message.splitlines()
-                        indented = "\n".join("  " + x for x in lines)
-                        message = indented.rstrip()
-                    else:
-                        message = w.message.rstrip()
-                    self._tw.line(message)
+                        self._tw.line(str(location))
+                        has_any_location = True
+                if has_any_location:
+                    lines = message.splitlines()
+                    indented = "\n".join("  " + x for x in lines)
+                    message = indented.rstrip()
+                else:
+                    message = message.rstrip()
+                self._tw.line(message)
                 self._tw.line()
             self._tw.line("-- Docs: https://docs.pytest.org/en/latest/warnings.html")
 
