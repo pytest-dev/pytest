@@ -560,11 +560,13 @@ As the result:
 - The test ``test_eval[basic_2+4]`` passed.
 - The test ``test_eval[basic_6*9]`` was expected to fail and did fail.
 
-Parametrizing conditional raising with ``pytest.raises``
+.. _`parametrizing_conditional_raising`:
+
+Parametrizing conditional raising
 --------------------------------------------------------------------
 
-Use ``pytest.raises`` and ``pytest.does_not_raise`` together with the
-``parametrize`` decorator to write parametrized tests in which some
+Use :func:`pytest.raises` and :func:`pytest.does_not_raise` together with the
+:ref:`pytest.mark.parametrize ref` decorator to write parametrized tests in which some
 tests raise exceptions and others do not. For example::
 
     import pytest
@@ -580,5 +582,5 @@ tests raise exceptions and others do not. For example::
         with expectation:
             assert (6 / example_input) is not None
 
-In this example, the first three tests should run unexceptionally,
-while the fourth test should raise ``ZeroDivisionError``.
+In this example, the first three test cases should run unexceptionally,
+while the fourth should raise ``ZeroDivisionError``.

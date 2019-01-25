@@ -61,6 +61,12 @@ pytest.raises
 .. autofunction:: pytest.raises(expected_exception: Exception, [match], [message])
     :with: excinfo
 
+pytest.does_not_raise
+~~~~~~~~~~~~~~~~~~~~~
+
+.. autofunction:: pytest.does_not_raise()
+    :with: excinfo
+
 pytest.deprecated_call
 ~~~~~~~~~~~~~~~~~~~~~~
 

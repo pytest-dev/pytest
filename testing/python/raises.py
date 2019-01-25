@@ -98,7 +98,6 @@ class TestRaises(object):
         testdir.makepyfile(
             """
             import pytest
-            import _pytest._code
 
             @pytest.mark.parametrize('example_input,expectation', [
                 (3, pytest.does_not_raise()),
@@ -119,7 +118,6 @@ class TestRaises(object):
         testdir.makepyfile(
             """
             import pytest
-            import _pytest._code
 
             @pytest.mark.parametrize('example_input,expectation', [
                 (0, pytest.does_not_raise()),
