@@ -622,6 +622,14 @@ def raises(expected_exception, *args, **kwargs):
            ...
            >>> assert exc_info.type is ValueError
 
+    **Using with** ``pytest.mark.parametrize``
+
+    When using :ref:`pytest.mark.parametrize ref`
+    it is possible to parametrize tests such that
+    some runs raise an exception and others do not.
+
+    See :ref:`parametrizing_conditional_raising` for an example.
+
     **Legacy form**
 
     It is possible to specify a callable by passing a to-be-called lambda::
@@ -734,13 +742,13 @@ class RaisesContext(object):
 
 @contextmanager
 def does_not_raise():
-    r"""
+    r'''
     This context manager is a complement to ``pytest.raises()`` that does
     *not* catch any exceptions raised by the code block.
 
 
-    This is essentially a no-op but is useful when
-    conditionally parameterizing tests that may or may not
+    This is essentially a *no-op* but is useful when
+    conditionally parametrizing tests that may or may not
     raise an error. For example::
 
         @pytest.mark.parametrize('example_input,expectation', [
@@ -750,9 +758,14 @@ def does_not_raise():
             (0, raises(ZeroDivisionError)),
         ])
         def test_division(example_input, expectation):
-            '''Test how much I know division.'''
-            with expectation:
+            """Test how much I know division."""
+            with expectation as excinfo:
                 assert (6 / example_input) is not None
-    """
+
+    Note that `excinfo` will be *None* when using
+    ``does_not_raise``. In the example above, `execinfo`
+    will be `None` for the first three runs and
+    an :class:`ExceptionInfo` instance on last run.
+    '''
 
     yield
