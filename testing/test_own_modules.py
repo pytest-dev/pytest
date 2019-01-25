@@ -5,17 +5,18 @@ import types
 import _pytest
 import pytest
 
-KNOWN_BAD = {"_pytest.assertion"}
+KNOWN_BAD = {
+    "_pytest.assertion": [
+        pytest.mark.xfail("sys.version_info[0]==3", reason="assertion uses imp")
+    ]
+}
 
 
 def _get_modules():
     for module in vars(_pytest).values():
         if isinstance(module, types.ModuleType):
             name = module.__name__
-            marks = (
-                [pytest.mark.xfail(reason="known failure")] if name in KNOWN_BAD else []
-            )
-            yield pytest.param(name, marks=marks)
+            yield pytest.param(name, marks=KNOWN_BAD.get(name, []))
 
 
 @pytest.mark.parametrize("module_name", sorted(_get_modules()))
