@@ -739,7 +739,7 @@ class TestRequestBasic(object):
             def test_function(request, farg):
                 assert set(get_public_names(request.fixturenames)) == \
                        set(["tmpdir", "sarg", "arg1", "request", "farg",
-                            "tmpdir_factory"])
+                            "tmp_path", "tmp_path_factory"])
         """
         )
         reprec = testdir.inline_run()
