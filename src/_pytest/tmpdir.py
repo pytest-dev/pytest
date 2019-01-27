@@ -61,11 +61,11 @@ class TempPathFactory(object):
         """ return base temporary directory. """
         if self._basetemp is None:
             if self._given_basetemp is not None:
-                basetemp = self._given_basetemp
+                basetemp = self._given_basetemp.resolve()
                 ensure_reset_dir(basetemp)
             else:
                 from_env = os.environ.get("PYTEST_DEBUG_TEMPROOT")
-                temproot = Path(from_env or tempfile.gettempdir())
+                temproot = Path(from_env or tempfile.gettempdir()).resolve()
                 user = get_user() or "unknown"
                 # use a sub-directory in the temproot to speed-up
                 # make_numbered_dir() call
