@@ -25,11 +25,32 @@ Below is a complete list of all pytest features which are considered deprecated.
 .. deprecated:: 4.1
 
 It is a common mistake to think this parameter will match the exception message, while in fact
-it only serves to provide a custom message in case the ``pytest.raises`` check fails. To avoid this
-mistake and because it is believed to be little used, pytest is deprecating it without providing
-an alternative for the moment.
+it only serves to provide a custom message in case the ``pytest.raises`` check fails. To prevent
+users from making this mistake, and because it is believed to be little used, pytest is
+deprecating it without providing an alternative for the moment.
 
-If you have concerns about this, please comment on `issue #3974 <https://github.com/pytest-dev/pytest/issues/3974>`__.
+If you have a valid use case for this parameter, consider that to obtain the same results
+you can just call ``pytest.fail`` manually at the end of the ``with`` statement.
+
+For example:
+
+.. code-block:: python
+
+    with pytest.raises(TimeoutError, message="Client got unexpected message"):
+        wait_for(websocket.recv(), 0.5)
+
+
+Becomes:
+
+.. code-block:: python
+
+    with pytest.raises(TimeoutError):
+        wait_for(websocket.recv(), 0.5)
+        pytest.fail("Client got unexpected message")
+
+
+If you still have concerns about this deprecation and future removal, please comment on
+`issue #3974 <https://github.com/pytest-dev/pytest/issues/3974>`__.
 
 
 ``pytest.config`` global
