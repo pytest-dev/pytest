@@ -32,7 +32,6 @@ from _pytest.python import Instance
 from _pytest.python import Module
 from _pytest.python import Package
 from _pytest.python_api import approx
-from _pytest.python_api import does_not_raise
 from _pytest.python_api import raises
 from _pytest.recwarn import deprecated_call
 from _pytest.recwarn import warns
@@ -51,7 +50,6 @@ __all__ = [
     "cmdline",
     "Collector",
     "deprecated_call",
-    "does_not_raise",
     "exit",
     "fail",
     "File",

@@ -97,12 +97,17 @@ class TestRaises(object):
     def test_does_not_raise(self, testdir):
         testdir.makepyfile(
             """
+            from contextlib import contextmanager
             import pytest
 
+            @contextmanager
+            def does_not_raise():
+                yield
+
             @pytest.mark.parametrize('example_input,expectation', [
-                (3, pytest.does_not_raise()),
-                (2, pytest.does_not_raise()),
-                (1, pytest.does_not_raise()),
+                (3, does_not_raise()),
+                (2, does_not_raise()),
+                (1, does_not_raise()),
                 (0, pytest.raises(ZeroDivisionError)),
             ])
             def test_division(example_input, expectation):
@@ -117,10 +122,15 @@ class TestRaises(object):
     def test_does_not_raise_does_raise(self, testdir):
         testdir.makepyfile(
             """
+            from contextlib import contextmanager
             import pytest
 
+            @contextmanager
+            def does_not_raise():
+                yield
+
             @pytest.mark.parametrize('example_input,expectation', [
-                (0, pytest.does_not_raise()),
+                (0, does_not_raise()),
                 (1, pytest.raises(ZeroDivisionError)),
             ])
             def test_division(example_input, expectation):

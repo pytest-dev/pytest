@@ -1,1 +1,0 @@
-A context manager ``does_not_raise`` is added to complement ``raises`` in parametrized tests with conditional raises.
