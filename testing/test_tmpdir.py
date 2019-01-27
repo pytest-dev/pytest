@@ -337,3 +337,7 @@ def attempt_symlink_to(path, to_path):
         Path(path).symlink_to(Path(to_path))
     except OSError:
         pytest.skip("could not create symbolic link")
+
+
+def test_tmpdir_equals_tmp_path(tmpdir, tmp_path):
+    assert Path(tmpdir) == tmp_path

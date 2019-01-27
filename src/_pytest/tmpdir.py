@@ -167,7 +167,7 @@ def _mk_tmp(request, factory):
 
 
 @pytest.fixture
-def tmpdir(request, tmpdir_factory):
+def tmpdir(tmp_path):
     """Return a temporary directory path object
     which is unique to each test function invocation,
     created as a sub directory of the base temporary
@@ -176,7 +176,7 @@ def tmpdir(request, tmpdir_factory):
 
     .. _`py.path.local`: https://py.readthedocs.io/en/latest/path.html
     """
-    return _mk_tmp(request, tmpdir_factory)
+    return py.path.local(tmp_path)
 
 
 @pytest.fixture
