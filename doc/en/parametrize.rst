@@ -207,7 +207,7 @@ list:
     $ pytest -q -rs test_strings.py
     s                                                                    [100%]
     ========================= short test summary info ==========================
-    SKIP [1] test_strings.py: got empty parameter set ['stringinput'], function test_valid_string at $REGENDOC_TMPDIR/test_strings.py:1
+    SKIPPED [1] test_strings.py: got empty parameter set ['stringinput'], function test_valid_string at $REGENDOC_TMPDIR/test_strings.py:1
     1 skipped in 0.12 seconds
 
 Note that when calling ``metafunc.parametrize`` multiple times with different parameter sets, all parameter names across

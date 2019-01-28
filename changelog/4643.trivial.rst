@@ -1,3 +1,0 @@
-Use ``a.item()`` instead of the deprecated ``np.asscalar(a)`` in ``pytest.approx``.
-
-``np.asscalar`` has been `deprecated <https://github.com/numpy/numpy/blob/master/doc/release/1.16.0-notes.rst#new-deprecations>`__ in ``numpy 1.16.``.

@@ -433,7 +433,7 @@ Running it results in some skips if we don't have all the python interpreters in
    . $ pytest -rs -q multipython.py
    ...sss...sssssssss...sss...                                          [100%]
    ========================= short test summary info ==========================
-   SKIP [15] $REGENDOC_TMPDIR/CWD/multipython.py:30: 'python3.4' not found
+   SKIPPED [15] $REGENDOC_TMPDIR/CWD/multipython.py:30: 'python3.4' not found
    12 passed, 15 skipped in 0.12 seconds
 
 Indirect parametrization of optional implementations/imports
@@ -489,7 +489,7 @@ If you run this with reporting for skips enabled:
 
     test_module.py .s                                                    [100%]
     ========================= short test summary info ==========================
-    SKIP [1] $REGENDOC_TMPDIR/conftest.py:11: could not import 'opt2'
+    SKIPPED [1] $REGENDOC_TMPDIR/conftest.py:11: could not import 'opt2'
 
     =================== 1 passed, 1 skipped in 0.12 seconds ====================
 
@@ -547,7 +547,7 @@ Then run ``pytest`` with verbose mode and with only the ``basic`` marker:
 
     test_pytest_param_example.py::test_eval[1+7-8] PASSED                [ 33%]
     test_pytest_param_example.py::test_eval[basic_2+4] PASSED            [ 66%]
-    test_pytest_param_example.py::test_eval[basic_6*9] xfail             [100%]
+    test_pytest_param_example.py::test_eval[basic_6*9] XFAIL             [100%]
 
     ============ 2 passed, 14 deselected, 1 xfailed in 0.12 seconds ============
 

@@ -18,6 +18,45 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+pytest 4.1.2 (2019-01-28)
+=========================
+
+Bug Fixes
+---------
+
+- `#4402 <https://github.com/pytest-dev/pytest/issues/4402>`_: Warning summary now groups warnings by message instead of by test id.
+
+  This makes the output more compact and better conveys the general idea of how much code is
+  actually generating warnings, instead of how many tests call that code.
+
+
+- `#4536 <https://github.com/pytest-dev/pytest/issues/4536>`_: ``monkeypatch.delattr`` handles class descriptors like ``staticmethod``/``classmethod``.
+
+
+- `#4649 <https://github.com/pytest-dev/pytest/issues/4649>`_: Restore marks being considered keywords for keyword expressions.
+
+
+- `#4653 <https://github.com/pytest-dev/pytest/issues/4653>`_: ``tmp_path`` fixture and other related ones provides resolved path (a.k.a real path)
+
+
+- `#4667 <https://github.com/pytest-dev/pytest/issues/4667>`_: ``pytest_terminal_summary`` uses result from ``pytest_report_teststatus`` hook, rather than hardcoded strings.
+
+
+- `#4669 <https://github.com/pytest-dev/pytest/issues/4669>`_: Correctly handle ``unittest.SkipTest`` exception containing non-ascii characters on Python 2.
+
+
+
+Trivial/Internal Changes
+------------------------
+
+- `#4643 <https://github.com/pytest-dev/pytest/issues/4643>`_: Use ``a.item()`` instead of the deprecated ``np.asscalar(a)`` in ``pytest.approx``.
+
+  ``np.asscalar`` has been `deprecated <https://github.com/numpy/numpy/blob/master/doc/release/1.16.0-notes.rst#new-deprecations>`__ in ``numpy 1.16.``.
+
+
+- `#4657 <https://github.com/pytest-dev/pytest/issues/4657>`_: Copy saferepr from pylib
+
+
 pytest 4.1.1 (2019-01-12)
 =========================
 

@@ -193,7 +193,7 @@ and when running it will see a skipped "slow" test:
 
     test_module.py .s                                                    [100%]
     ========================= short test summary info ==========================
-    SKIP [1] test_module.py:8: need --runslow option to run
+    SKIPPED [1] test_module.py:8: need --runslow option to run
 
     =================== 1 passed, 1 skipped in 0.12 seconds ====================
 
