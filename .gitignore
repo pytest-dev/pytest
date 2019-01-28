@@ -45,3 +45,4 @@ coverage.xml
 .project
 .settings
 .vscode
+pip-wheel-metadata/
