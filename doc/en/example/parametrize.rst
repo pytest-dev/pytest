@@ -569,7 +569,7 @@ Use :func:`pytest.raises` with the
 :ref:`pytest.mark.parametrize ref` decorator to write parametrized tests
 in which some tests raise exceptions and others do not.
 
-It is helpful to define a function such as ``does_not_raise`` to serve
+It is helpful to define a context manager ``does_not_raise`` to serve
 as a complement to ``raises``. For example::
 
     from contextlib import contextmanager
@@ -591,5 +591,10 @@ as a complement to ``raises``. For example::
         with expectation:
             assert (6 / example_input) is not None
 
-In this example, the first three test cases should run unexceptionally,
+In the example above, the first three test cases should run unexceptionally,
 while the fourth should raise ``ZeroDivisionError``.
+
+In Python 3.7+, you can simply use ``nullcontext`` to define
+``does_not_raise``::
+
+    from contextlib import nullcontext as does_not_raise
