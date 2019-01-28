@@ -481,8 +481,10 @@ def pytest_report_collectionfinish(config, startdir, items):
 
 
 @hookspec(firstresult=True)
-def pytest_report_teststatus(report):
+def pytest_report_teststatus(report, config):
     """ return result-category, shortletter and verbose word for reporting.
+
+    :param _pytest.config.Config config: pytest config object
 
     Stops at first non-None result, see :ref:`firstresult` """
 

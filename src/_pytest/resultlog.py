@@ -66,7 +66,9 @@ class ResultLog(object):
     def pytest_runtest_logreport(self, report):
         if report.when != "call" and report.passed:
             return
-        res = self.config.hook.pytest_report_teststatus(report=report)
+        res = self.config.hook.pytest_report_teststatus(
+            report=report, config=self.config
+        )
         code = res[1]
         if code == "x":
             longrepr = str(report.longrepr)
