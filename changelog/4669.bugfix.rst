@@ -1,0 +1,1 @@
+Correctly handle ``unittest.SkipTest`` exception containing non-ascii characters on Python 2.
