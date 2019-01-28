@@ -1,3 +1,4 @@
+# encoding: utf-8
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
@@ -366,3 +367,17 @@ def test_nottest_class_decorator(testdir):
     assert not reprec.getfailedcollections()
     calls = reprec.getreports("pytest_runtest_logreport")
     assert not calls
+
+
+def test_skip_test_with_unicode(testdir):
+    testdir.makepyfile(
+        """
+        # encoding: utf-8
+        import unittest
+        class TestClass():
+            def test_io(self):
+                raise unittest.SkipTest(u'😊')
+    """
+    )
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines("* 1 skipped *")
