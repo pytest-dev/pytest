@@ -363,7 +363,7 @@ class TerminalReporter(object):
 
     def pytest_runtest_logreport(self, report):
         rep = report
-        res = self.config.hook.pytest_report_teststatus(report=rep)
+        res = self.config.hook.pytest_report_teststatus(report=rep, config=self.config)
         category, letter, word = res
         if isinstance(word, tuple):
             word, markup = word
