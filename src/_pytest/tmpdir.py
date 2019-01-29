@@ -61,8 +61,9 @@ class TempPathFactory(object):
         """ return base temporary directory. """
         if self._basetemp is None:
             if self._given_basetemp is not None:
-                basetemp = self._given_basetemp.resolve()
+                basetemp = self._given_basetemp
                 ensure_reset_dir(basetemp)
+                basetemp = basetemp.resolve()
             else:
                 from_env = os.environ.get("PYTEST_DEBUG_TEMPROOT")
                 temproot = Path(from_env or tempfile.gettempdir()).resolve()
