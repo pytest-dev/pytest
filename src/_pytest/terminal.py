@@ -633,7 +633,7 @@ class TerminalReporter(object):
         )
         if exitstatus in summary_exit_codes:
             self.config.hook.pytest_terminal_summary(
-                terminalreporter=self, exitstatus=exitstatus
+                terminalreporter=self, exitstatus=exitstatus, config=self.config
             )
         if exitstatus == EXIT_INTERRUPTED:
             self._report_keyboardinterrupt()
