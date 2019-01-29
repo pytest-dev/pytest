@@ -292,6 +292,13 @@ def test_keyword_option_custom(spec, testdir):
     assert list(passed) == list(passed_result)
 
 
+def test_keyword_option_considers_mark(testdir):
+    testdir.copy_example("marks/marks_considered_keywords")
+    rec = testdir.inline_run("-k", "foo")
+    passed = rec.listoutcomes()[0]
+    assert len(passed) == 1
+
+
 @pytest.mark.parametrize(
     "spec",
     [

@@ -1,0 +1,4 @@
+Warning summary now groups warnings by message instead of by test id.
+
+This makes the output more compact and better conveys the general idea of how much code is
+actually generating warnings, instead of how many tests call that code.

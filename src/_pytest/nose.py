@@ -5,6 +5,8 @@ from __future__ import print_function
 
 import sys
 
+import six
+
 from _pytest import python
 from _pytest import runner
 from _pytest import unittest
@@ -24,7 +26,7 @@ def pytest_runtest_makereport(item, call):
     if call.excinfo and call.excinfo.errisinstance(get_skip_exceptions()):
         # let's substitute the excinfo with a pytest.skip one
         call2 = runner.CallInfo.from_call(
-            lambda: runner.skip(str(call.excinfo.value)), call.when
+            lambda: runner.skip(six.text_type(call.excinfo.value)), call.when
         )
         call.excinfo = call2.excinfo
 

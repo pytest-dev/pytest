@@ -960,7 +960,7 @@ class TestTracebackCutting(object):
 
     def test_filter_traceback_generated_code(self):
         """test that filter_traceback() works with the fact that
-        py.code.Code.path attribute might return an str object.
+        _pytest._code.code.Code.path attribute might return an str object.
         In this case, one of the entries on the traceback was produced by
         dynamically generated code.
         See: https://bitbucket.org/pytest-dev/py/issues/71
@@ -981,7 +981,7 @@ class TestTracebackCutting(object):
 
     def test_filter_traceback_path_no_longer_valid(self, testdir):
         """test that filter_traceback() works with the fact that
-        py.code.Code.path attribute might return an str object.
+        _pytest._code.code.Code.path attribute might return an str object.
         In this case, one of the files in the traceback no longer exists.
         This fixes #1133.
         """
