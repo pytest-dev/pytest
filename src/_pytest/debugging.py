@@ -118,6 +118,10 @@ class pytestPDB(object):
 
                 do_c = do_cont = do_continue
 
+                def set_quit(self):
+                    super(_PdbWrapper, self).set_quit()
+                    outcomes.exit("Quitting debugger")
+
                 def setup(self, f, tb):
                     """Suspend on setup().
 
@@ -210,8 +214,7 @@ def _enter_pdb(node, excinfo, rep):
     tw.sep(">", "entering PDB")
     tb = _postmortem_traceback(excinfo)
     rep._pdbshown = True
-    if post_mortem(tb):
-        outcomes.exit("Quitting debugger")
+    post_mortem(tb)
     return rep
 
 
@@ -242,4 +245,5 @@ def post_mortem(t):
     p = Pdb()
     p.reset()
     p.interaction(None, t)
-    return p.quitting
+    if p.quitting:
+        outcomes.exit("Quitting debugger")
