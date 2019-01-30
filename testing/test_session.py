@@ -181,7 +181,6 @@ class TestNewSession(SessionTests):
         passed, skipped, failed = reprec.countoutcomes()
         assert failed == skipped == 0
         assert passed == 7
-        # also test listnames() here ...
 
     def test_collect_only_with_various_situations(self, testdir):
         p = testdir.makepyfile(

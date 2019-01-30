@@ -47,30 +47,6 @@ def pytest_unconfigure(config):
         config.pluginmanager.unregister(resultlog)
 
 
-def generic_path(item):
-    chain = item.listchain()
-    gpath = [chain[0].name]
-    fspath = chain[0].fspath
-    fspart = False
-    for node in chain[1:]:
-        newfspath = node.fspath
-        if newfspath == fspath:
-            if fspart:
-                gpath.append(":")
-                fspart = False
-            else:
-                gpath.append(".")
-        else:
-            gpath.append("/")
-            fspart = True
-        name = node.name
-        if name[0] in "([":
-            gpath.pop()
-        gpath.append(name)
-        fspath = newfspath
-    return "".join(gpath)
-
-
 class ResultLog(object):
     def __init__(self, config, logfile):
         self.config = config
@@ -90,7 +66,9 @@ class ResultLog(object):
     def pytest_runtest_logreport(self, report):
         if report.when != "call" and report.passed:
             return
-        res = self.config.hook.pytest_report_teststatus(report=report)
+        res = self.config.hook.pytest_report_teststatus(
+            report=report, config=self.config
+        )
         code = res[1]
         if code == "x":
             longrepr = str(report.longrepr)

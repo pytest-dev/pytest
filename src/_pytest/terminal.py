@@ -363,7 +363,7 @@ class TerminalReporter(object):
 
     def pytest_runtest_logreport(self, report):
         rep = report
-        res = self.config.hook.pytest_report_teststatus(report=rep)
+        res = self.config.hook.pytest_report_teststatus(report=rep, config=self.config)
         category, letter, word = res
         if isinstance(word, tuple):
             word, markup = word
@@ -500,6 +500,7 @@ class TerminalReporter(object):
         errors = len(self.stats.get("error", []))
         skipped = len(self.stats.get("skipped", []))
         deselected = len(self.stats.get("deselected", []))
+        selected = self._numcollected - errors - skipped - deselected
         if final:
             line = "collected "
         else:
@@ -513,6 +514,8 @@ class TerminalReporter(object):
             line += " / %d deselected" % deselected
         if skipped:
             line += " / %d skipped" % skipped
+        if self._numcollected > selected > 0:
+            line += " / %d selected" % selected
         if self.isatty:
             self.rewrite(line, bold=True, erase=True)
             if final:
@@ -633,7 +636,7 @@ class TerminalReporter(object):
         )
         if exitstatus in summary_exit_codes:
             self.config.hook.pytest_terminal_summary(
-                terminalreporter=self, exitstatus=exitstatus
+                terminalreporter=self, exitstatus=exitstatus, config=self.config
             )
         if exitstatus == EXIT_INTERRUPTED:
             self._report_keyboardinterrupt()
@@ -649,6 +652,7 @@ class TerminalReporter(object):
         self.summary_passes()
         # Display any extra warnings from teardown here (if any).
         self.summary_warnings()
+        self.summary_deprecated_python()
 
     def pytest_keyboard_interrupt(self, excinfo):
         self._keyboardinterrupt_memo = excinfo.getrepr(funcargs=True)
@@ -770,6 +774,20 @@ class TerminalReporter(object):
                         self.write_sep("_", msg)
                         self._outrep_summary(rep)
 
+    def summary_deprecated_python(self):
+        if sys.version_info[:2] <= (3, 4) and self.verbosity >= 0:
+            self.write_sep("=", "deprecated python version", yellow=True, bold=False)
+            using_version = ".".join(str(x) for x in sys.version_info[:3])
+            self.line(
+                "You are using Python {}, which will no longer be supported in pytest 5.0".format(
+                    using_version
+                ),
+                yellow=True,
+                bold=False,
+            )
+            self.line("For more information, please read:")
+            self.line("  https://docs.pytest.org/en/latest/py27-py34-deprecation.html")
+
     def print_teardown_sections(self, rep):
         showcapture = self.config.option.showcapture
         if showcapture == "no":
@@ -841,15 +859,6 @@ class TerminalReporter(object):
             self.write_sep("=", msg, **markup)
         if self.verbosity == -1:
             self.write_line(msg, **markup)
-
-
-def repr_pythonversion(v=None):
-    if v is None:
-        v = sys.version_info
-    try:
-        return "%s.%s.%s-%s-%s" % v
-    except (TypeError, ValueError):
-        return str(v)
 
 
 def build_summary_stats_line(stats):

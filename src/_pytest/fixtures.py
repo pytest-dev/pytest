@@ -660,12 +660,6 @@ class SubRequest(FixtureRequest):
         self._fixturedef.addfinalizer(finalizer)
 
 
-class ScopeMismatchError(Exception):
-    """ A fixture function tries to use a different fixture function which
-    which has a lower scope (e.g. a Session one calls a function one)
-    """
-
-
 scopes = "session package module class function".split()
 scopenum_function = scopes.index("function")
 

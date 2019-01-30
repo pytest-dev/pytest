@@ -240,9 +240,6 @@ class TestClass(object):
         assert result.ret == EXIT_NOTESTSCOLLECTED
 
 
-@pytest.mark.filterwarnings(
-    "ignore:usage of Generator.Function is deprecated, please use pytest.Function instead"
-)
 class TestFunction(object):
     def test_getmodulecollector(self, testdir):
         item = testdir.getitem("def test_func(): pass")

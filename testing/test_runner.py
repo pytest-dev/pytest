@@ -465,12 +465,7 @@ class TestSessionReports(object):
         assert res[1].name == "TestClass"
 
 
-reporttypes = [
-    reports.BaseReport,
-    reports.TestReport,
-    reports.TeardownErrorReport,
-    reports.CollectReport,
-]
+reporttypes = [reports.BaseReport, reports.TestReport, reports.CollectReport]
 
 
 @pytest.mark.parametrize(

@@ -81,8 +81,9 @@ If you then run it with ``--lf``:
     $ pytest --lf
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
+    cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR, inifile:
-    collected 50 items / 48 deselected
+    collected 50 items / 48 deselected / 2 selected
     run-last-failure: rerun previous 2 failures
 
     test_50.py FF                                                        [100%]
@@ -124,6 +125,7 @@ of ``FF`` and dots):
     $ pytest --ff
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
+    cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 50 items
     run-last-failure: rerun previous 2 failures first
@@ -257,11 +259,17 @@ You can always peek at the content of the cache using the
     $ pytest --cache-show
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
+    cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR, inifile:
-    cachedir: $REGENDOC_TMPDIR/.pytest_cache
+    cachedir: $PYTHON_PREFIX/.pytest_cache
     ------------------------------- cache values -------------------------------
     cache/lastfailed contains:
-      {'test_caching.py::test_function': True}
+      {'test_50.py::test_num[17]': True,
+       'test_50.py::test_num[25]': True,
+       'test_assert1.py::test_function': True,
+       'test_assert2.py::test_set_comparison': True,
+       'test_caching.py::test_function': True,
+       'test_foocompare.py::test_compare': True}
     cache/nodeids contains:
       ['test_caching.py::test_function']
     cache/stepwise contains:

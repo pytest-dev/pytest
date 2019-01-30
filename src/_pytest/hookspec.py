@@ -481,19 +481,22 @@ def pytest_report_collectionfinish(config, startdir, items):
 
 
 @hookspec(firstresult=True)
-def pytest_report_teststatus(report):
+def pytest_report_teststatus(report, config):
     """ return result-category, shortletter and verbose word for reporting.
+
+    :param _pytest.config.Config config: pytest config object
 
     Stops at first non-None result, see :ref:`firstresult` """
 
 
-def pytest_terminal_summary(terminalreporter, exitstatus):
+def pytest_terminal_summary(terminalreporter, exitstatus, config):
     """Add a section to terminal summary reporting.
 
     :param _pytest.terminal.TerminalReporter terminalreporter: the internal terminal reporter object
     :param int exitstatus: the exit status that will be reported back to the OS
+    :param _pytest.config.Config config: pytest config object
 
-    .. versionadded:: 3.5
+    .. versionadded:: 4.2
         The ``config`` parameter.
     """
 
