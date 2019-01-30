@@ -14,10 +14,10 @@ import attr
 import py
 import six
 from more_itertools import flatten
-from py._code.code import FormattedExcinfo
 
 import _pytest
 from _pytest import nodes
+from _pytest._code.code import FormattedExcinfo
 from _pytest._code.code import TerminalRepr
 from _pytest.compat import _format_args
 from _pytest.compat import _PytestWrapper
@@ -307,8 +307,8 @@ class FuncFixtureInfo(object):
     # fixture names specified via usefixtures and via autouse=True in fixture
     # definitions.
     initialnames = attr.ib(type=tuple)
-    names_closure = attr.ib()  # type: List[str]
-    name2fixturedefs = attr.ib()  # type: List[str, List[FixtureDef]]
+    names_closure = attr.ib()  # List[str]
+    name2fixturedefs = attr.ib()  # List[str, List[FixtureDef]]
 
     def prune_dependency_tree(self):
         """Recompute names_closure from initialnames and name2fixturedefs

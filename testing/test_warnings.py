@@ -693,3 +693,22 @@ def test_warnings_checker_twice():
         warnings.warn("Message A", UserWarning)
     with expectation:
         warnings.warn("Message B", UserWarning)
+
+
+@pytest.mark.filterwarnings("always")
+def test_group_warnings_by_message(testdir):
+    testdir.copy_example("warnings/test_group_warnings_by_message.py")
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines(
+        [
+            "test_group_warnings_by_message.py::test_foo[0]",
+            "test_group_warnings_by_message.py::test_foo[1]",
+            "test_group_warnings_by_message.py::test_foo[2]",
+            "test_group_warnings_by_message.py::test_foo[3]",
+            "test_group_warnings_by_message.py::test_foo[4]",
+            "test_group_warnings_by_message.py::test_bar",
+        ]
+    )
+    warning_code = 'warnings.warn(UserWarning("foo"))'
+    assert warning_code in result.stdout.str()
+    assert result.stdout.str().count(warning_code) == 1

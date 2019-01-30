@@ -180,9 +180,9 @@ def pytest_runtest_makereport(item, call):
 def pytest_report_teststatus(report):
     if hasattr(report, "wasxfail"):
         if report.skipped:
-            return "xfailed", "x", "xfail"
+            return "xfailed", "x", "XFAIL"
         elif report.passed:
-            return "xpassed", "X", ("XPASS", {"yellow": True})
+            return "xpassed", "X", "XPASS"
 
 
 # called by the terminalreporter instance/plugin
@@ -191,11 +191,6 @@ def pytest_report_teststatus(report):
 def pytest_terminal_summary(terminalreporter):
     tr = terminalreporter
     if not tr.reportchars:
-        # for name in "xfailed skipped failed xpassed":
-        #    if not tr.stats.get(name, 0):
-        #        tr.write_line("HINT: use '-r' option to see extra "
-        #              "summary info about tests")
-        #        break
         return
 
     lines = []
@@ -209,21 +204,23 @@ def pytest_terminal_summary(terminalreporter):
             tr._tw.line(line)
 
 
-def show_simple(terminalreporter, lines, stat, format):
+def show_simple(terminalreporter, lines, stat):
     failed = terminalreporter.stats.get(stat)
     if failed:
         for rep in failed:
+            verbose_word = _get_report_str(terminalreporter, rep)
             pos = terminalreporter.config.cwd_relative_nodeid(rep.nodeid)
-            lines.append(format % (pos,))
+            lines.append("%s %s" % (verbose_word, pos))
 
 
 def show_xfailed(terminalreporter, lines):
     xfailed = terminalreporter.stats.get("xfailed")
     if xfailed:
         for rep in xfailed:
+            verbose_word = _get_report_str(terminalreporter, rep)
             pos = terminalreporter.config.cwd_relative_nodeid(rep.nodeid)
             reason = rep.wasxfail
-            lines.append("XFAIL %s" % (pos,))
+            lines.append("%s %s" % (verbose_word, pos))
             if reason:
                 lines.append("  " + str(reason))
 
@@ -232,9 +229,10 @@ def show_xpassed(terminalreporter, lines):
     xpassed = terminalreporter.stats.get("xpassed")
     if xpassed:
         for rep in xpassed:
+            verbose_word = _get_report_str(terminalreporter, rep)
             pos = terminalreporter.config.cwd_relative_nodeid(rep.nodeid)
             reason = rep.wasxfail
-            lines.append("XPASS %s %s" % (pos, reason))
+            lines.append("%s %s %s" % (verbose_word, pos, reason))
 
 
 def folded_skips(skipped):
@@ -246,8 +244,11 @@ def folded_skips(skipped):
         # folding reports with global pytestmark variable
         # this is workaround, because for now we cannot identify the scope of a skip marker
         # TODO: revisit after marks scope would be fixed
-        when = getattr(event, "when", None)
-        if when == "setup" and "skip" in keywords and "pytestmark" not in keywords:
+        if (
+            event.when == "setup"
+            and "skip" in keywords
+            and "pytestmark" not in keywords
+        ):
             key = (key[0], None, key[2])
         d.setdefault(key, []).append(event)
     values = []
@@ -260,39 +261,42 @@ def show_skipped(terminalreporter, lines):
     tr = terminalreporter
     skipped = tr.stats.get("skipped", [])
     if skipped:
-        # if not tr.hasopt('skipped'):
-        #    tr.write_line(
-        #        "%d skipped tests, specify -rs for more info" %
-        #        len(skipped))
-        #    return
+        verbose_word = _get_report_str(terminalreporter, report=skipped[0])
         fskips = folded_skips(skipped)
         if fskips:
-            # tr.write_sep("_", "skipped test summary")
             for num, fspath, lineno, reason in fskips:
                 if reason.startswith("Skipped: "):
                     reason = reason[9:]
                 if lineno is not None:
                     lines.append(
-                        "SKIP [%d] %s:%d: %s" % (num, fspath, lineno + 1, reason)
+                        "%s [%d] %s:%d: %s"
+                        % (verbose_word, num, fspath, lineno + 1, reason)
                     )
                 else:
-                    lines.append("SKIP [%d] %s: %s" % (num, fspath, reason))
+                    lines.append("%s [%d] %s: %s" % (verbose_word, num, fspath, reason))
 
 
-def shower(stat, format):
+def shower(stat):
     def show_(terminalreporter, lines):
-        return show_simple(terminalreporter, lines, stat, format)
+        return show_simple(terminalreporter, lines, stat)
 
     return show_
+
+
+def _get_report_str(terminalreporter, report):
+    _category, _short, verbose = terminalreporter.config.hook.pytest_report_teststatus(
+        report=report, config=terminalreporter.config
+    )
+    return verbose
 
 
 REPORTCHAR_ACTIONS = {
     "x": show_xfailed,
     "X": show_xpassed,
-    "f": shower("failed", "FAIL %s"),
-    "F": shower("failed", "FAIL %s"),
+    "f": shower("failed"),
+    "F": shower("failed"),
     "s": show_skipped,
     "S": show_skipped,
-    "p": shower("passed", "PASSED %s"),
-    "E": shower("error", "ERROR %s"),
+    "p": shower("passed"),
+    "E": shower("error"),
 }

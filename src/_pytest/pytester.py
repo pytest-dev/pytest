@@ -4,6 +4,7 @@ from __future__ import division
 from __future__ import print_function
 
 import codecs
+import distutils.spawn
 import gc
 import os
 import platform
@@ -20,6 +21,7 @@ import six
 
 import pytest
 from _pytest._code import Source
+from _pytest._io.saferepr import saferepr
 from _pytest.assertion.rewrite import AssertionRewritingHook
 from _pytest.capture import MultiCapture
 from _pytest.capture import SysCapture
@@ -79,7 +81,7 @@ class LsofFdLeakChecker(object):
 
     def _exec_lsof(self):
         pid = os.getpid()
-        return py.process.cmdexec("lsof -Ffn0 -p %d" % pid)
+        return subprocess.check_output(("lsof", "-Ffn0", "-p", str(pid))).decode()
 
     def _parse_lsof_output(self, out):
         def isopen(line):
@@ -106,11 +108,8 @@ class LsofFdLeakChecker(object):
 
     def matching_platform(self):
         try:
-            py.process.cmdexec("lsof -v")
-        except (py.process.cmdexec.Error, UnicodeDecodeError):
-            # cmdexec may raise UnicodeDecodeError on Windows systems with
-            # locale other than English:
-            # https://bitbucket.org/pytest-dev/py/issues/66
+            subprocess.check_output(("lsof", "-v"))
+        except (OSError, subprocess.CalledProcessError):
             return False
         else:
             return True
@@ -152,7 +151,7 @@ def getexecutable(name, cache={}):
     try:
         return cache[name]
     except KeyError:
-        executable = py.path.local.sysfind(name)
+        executable = distutils.spawn.find_executable(name)
         if executable:
             import subprocess
 
@@ -306,13 +305,10 @@ class HookRecorder(object):
         """return a testreport whose dotted import path matches"""
         values = []
         for rep in self.getreports(names=names):
-            try:
-                if not when and rep.when != "call" and rep.passed:
-                    # setup/teardown passing reports - let's ignore those
-                    continue
-            except AttributeError:
-                pass
-            if when and getattr(rep, "when", None) != when:
+            if not when and rep.when != "call" and rep.passed:
+                # setup/teardown passing reports - let's ignore those
+                continue
+            if when and rep.when != when:
                 continue
             if not inamepart or inamepart in rep.nodeid.split("::"):
                 values.append(rep)
@@ -339,7 +335,7 @@ class HookRecorder(object):
         failed = []
         for rep in self.getreports("pytest_collectreport pytest_runtest_logreport"):
             if rep.passed:
-                if getattr(rep, "when", None) == "call":
+                if rep.when == "call":
                     passed.append(rep)
             elif rep.skipped:
                 skipped.append(rep)
@@ -1225,9 +1221,7 @@ def getdecoded(out):
     try:
         return out.decode("utf-8")
     except UnicodeDecodeError:
-        return "INTERNAL not-utf8-decodeable, truncated string:\n%s" % (
-            py.io.saferepr(out),
-        )
+        return "INTERNAL not-utf8-decodeable, truncated string:\n%s" % (saferepr(out),)
 
 
 class LineComp(object):

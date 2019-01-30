@@ -7,7 +7,6 @@ import sys
 import textwrap
 
 import attr
-import py
 import six
 
 import _pytest.assertion as plugin
@@ -455,10 +454,13 @@ class TestAssert_reprcompare(object):
         assert len(expl) > 1
 
     def test_Sequence(self):
-        col = py.builtin._tryimport("collections.abc", "collections", "sys")
-        if not hasattr(col, "MutableSequence"):
+        if sys.version_info >= (3, 3):
+            import collections.abc as collections_abc
+        else:
+            import collections as collections_abc
+        if not hasattr(collections_abc, "MutableSequence"):
             pytest.skip("cannot import MutableSequence")
-        MutableSequence = col.MutableSequence
+        MutableSequence = collections_abc.MutableSequence
 
         class TestSequence(MutableSequence):  # works with a Sequence subclass
             def __init__(self, iterable):
