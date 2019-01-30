@@ -217,7 +217,7 @@ class LogCaptureFixture(object):
         """Creates a new funcarg."""
         self._item = item
         # dict of log name -> log level
-        self._initial_log_levels = {}  # type: Dict[str, int]
+        self._initial_log_levels = {}  # Dict[str, int]
 
     def _finalize(self):
         """Finalizes the fixture.

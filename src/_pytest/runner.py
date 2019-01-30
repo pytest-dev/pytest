@@ -204,7 +204,7 @@ class CallInfo(object):
     """ Result/Exception info a function invocation. """
 
     _result = attr.ib()
-    # type: Optional[ExceptionInfo]
+    # Optional[ExceptionInfo]
     excinfo = attr.ib()
     start = attr.ib()
     stop = attr.ib()
