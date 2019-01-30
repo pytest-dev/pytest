@@ -193,6 +193,7 @@ Example:
     $ pytest -ra
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
+    cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 6 items
 
@@ -216,12 +217,12 @@ Example:
 
     test_example.py:14: AssertionError
     ========================= short test summary info ==========================
-    SKIP [1] $REGENDOC_TMPDIR/test_example.py:23: skipping this test
+    SKIPPED [1] $REGENDOC_TMPDIR/test_example.py:23: skipping this test
     XFAIL test_example.py::test_xfail
       reason: xfailing this test
     XPASS test_example.py::test_xpass always xfail
     ERROR test_example.py::test_error
-    FAIL test_example.py::test_fail
+    FAILED test_example.py::test_fail
      1 failed, 1 passed, 1 skipped, 1 xfailed, 1 xpassed, 1 error in 0.12 seconds
 
 The ``-r`` options accepts a number of characters after it, with ``a`` used above meaning "all except passes".
@@ -244,6 +245,7 @@ More than one character can be used, so for example to only see failed and skipp
     $ pytest -rfs
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
+    cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 6 items
 
@@ -267,8 +269,8 @@ More than one character can be used, so for example to only see failed and skipp
 
     test_example.py:14: AssertionError
     ========================= short test summary info ==========================
-    FAIL test_example.py::test_fail
-    SKIP [1] $REGENDOC_TMPDIR/test_example.py:23: skipping this test
+    FAILED test_example.py::test_fail
+    SKIPPED [1] $REGENDOC_TMPDIR/test_example.py:23: skipping this test
      1 failed, 1 passed, 1 skipped, 1 xfailed, 1 xpassed, 1 error in 0.12 seconds
 
 Using ``p`` lists the passing tests, whilst ``P`` adds an extra section "PASSES" with those tests that passed but had
@@ -279,6 +281,7 @@ captured output:
     $ pytest -rpP
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
+    cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 6 items
 

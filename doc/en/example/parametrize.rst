@@ -145,6 +145,7 @@ objects, they are still using the default pytest representation:
     $ pytest test_time.py --collect-only
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
+    cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 8 items
     <Module test_time.py>
@@ -203,6 +204,7 @@ this is a fully self-contained example which you can run with:
     $ pytest test_scenarios.py
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
+    cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 4 items
 
@@ -217,6 +219,7 @@ If you just collect tests you'll also nicely see 'advanced' and 'basic' as varia
     $ pytest --collect-only test_scenarios.py
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
+    cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 4 items
     <Module test_scenarios.py>
@@ -283,6 +286,7 @@ Let's first see how it looks like at collection time:
     $ pytest test_backends.py --collect-only
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
+    cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 2 items
     <Module test_backends.py>
@@ -348,6 +352,7 @@ The result of this test will be successful:
     $ pytest test_indirect_list.py --collect-only
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
+    cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 1 item
     <Module test_indirect_list.py>
@@ -433,7 +438,7 @@ Running it results in some skips if we don't have all the python interpreters in
    . $ pytest -rs -q multipython.py
    ...sss...sssssssss...sss...                                          [100%]
    ========================= short test summary info ==========================
-   SKIP [15] $REGENDOC_TMPDIR/CWD/multipython.py:30: 'python3.4' not found
+   SKIPPED [15] $REGENDOC_TMPDIR/CWD/multipython.py:30: 'python3.4' not found
    12 passed, 15 skipped in 0.12 seconds
 
 Indirect parametrization of optional implementations/imports
@@ -484,12 +489,13 @@ If you run this with reporting for skips enabled:
     $ pytest -rs test_module.py
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
+    cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 2 items
 
     test_module.py .s                                                    [100%]
     ========================= short test summary info ==========================
-    SKIP [1] $REGENDOC_TMPDIR/conftest.py:11: could not import 'opt2'
+    SKIPPED [1] $REGENDOC_TMPDIR/conftest.py:11: could not import 'opt2'
 
     =================== 1 passed, 1 skipped in 0.12 seconds ====================
 
@@ -540,14 +546,14 @@ Then run ``pytest`` with verbose mode and with only the ``basic`` marker:
 
     $ pytest -v -m basic
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.6
-    cachedir: .pytest_cache
+    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python
+    cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR, inifile:
-    collecting ... collected 17 items / 14 deselected
+    collecting ... collected 17 items / 14 deselected / 3 selected
 
     test_pytest_param_example.py::test_eval[1+7-8] PASSED                [ 33%]
     test_pytest_param_example.py::test_eval[basic_2+4] PASSED            [ 66%]
-    test_pytest_param_example.py::test_eval[basic_6*9] xfail             [100%]
+    test_pytest_param_example.py::test_eval[basic_6*9] XFAIL             [100%]
 
     ============ 2 passed, 14 deselected, 1 xfailed in 0.12 seconds ============
 

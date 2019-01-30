@@ -1,2 +1,0 @@
-Display a message at the end of the test session when running under Python 2.7 and 3.4 that pytest 5.0 will no longer
-support those Python versions.
