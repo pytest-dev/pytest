@@ -285,7 +285,7 @@ def shower(stat):
 
 def _get_report_str(terminalreporter, report):
     _category, _short, verbose = terminalreporter.config.hook.pytest_report_teststatus(
-        report=report
+        report=report, config=terminalreporter.config
     )
     return verbose
 
