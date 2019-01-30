@@ -143,9 +143,9 @@ class Mark(object):
     #: name of the mark
     name = attr.ib(type=str)
     #: positional arguments of the mark decorator
-    args = attr.ib()  # type: List[object]
+    args = attr.ib()  # List[object]
     #: keyword arguments of the mark decorator
-    kwargs = attr.ib()  # type: Dict[str, object]
+    kwargs = attr.ib()  # Dict[str, object]
 
     def combined_with(self, other):
         """
