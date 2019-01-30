@@ -636,7 +636,7 @@ class TerminalReporter(object):
         )
         if exitstatus in summary_exit_codes:
             self.config.hook.pytest_terminal_summary(
-                terminalreporter=self, exitstatus=exitstatus
+                terminalreporter=self, exitstatus=exitstatus, config=self.config
             )
         if exitstatus == EXIT_INTERRUPTED:
             self._report_keyboardinterrupt()
@@ -652,6 +652,7 @@ class TerminalReporter(object):
         self.summary_passes()
         # Display any extra warnings from teardown here (if any).
         self.summary_warnings()
+        self.summary_deprecated_python()
 
     def pytest_keyboard_interrupt(self, excinfo):
         self._keyboardinterrupt_memo = excinfo.getrepr(funcargs=True)
@@ -772,6 +773,20 @@ class TerminalReporter(object):
                         msg = self._getfailureheadline(rep)
                         self.write_sep("_", msg)
                         self._outrep_summary(rep)
+
+    def summary_deprecated_python(self):
+        if sys.version_info[:2] <= (3, 4) and self.verbosity >= 0:
+            self.write_sep("=", "deprecated python version", yellow=True, bold=False)
+            using_version = ".".join(str(x) for x in sys.version_info[:3])
+            self.line(
+                "You are using Python {}, which will no longer be supported in pytest 5.0".format(
+                    using_version
+                ),
+                yellow=True,
+                bold=False,
+            )
+            self.line("For more information, please read:")
+            self.line("  https://docs.pytest.org/en/latest/py27-py34-deprecation.html")
 
     def print_teardown_sections(self, rep):
         showcapture = self.config.option.showcapture
