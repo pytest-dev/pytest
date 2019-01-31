@@ -1,1 +1,0 @@
-``pytest_report_teststatus`` hook now can also receive a ``config`` parameter.

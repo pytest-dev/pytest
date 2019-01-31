@@ -25,6 +25,7 @@ Running pytest now produces this output:
     $ pytest test_show_warnings.py
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
+    cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 1 item
 

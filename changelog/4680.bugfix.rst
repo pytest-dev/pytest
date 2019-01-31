@@ -1,1 +1,0 @@
-Ensure the ``tmpdir`` and the ``tmp_path`` fixtures are the same folder.

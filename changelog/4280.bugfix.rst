@@ -1,3 +1,0 @@
-Improve quitting from pdb, especially with ``--trace``.
-
-Using ``q[quit]`` after ``pdb.set_trace()`` will quit pytest also.
