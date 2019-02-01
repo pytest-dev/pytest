@@ -96,6 +96,9 @@ Trivial/Internal Changes
 - `#4657 <https://github.com/pytest-dev/pytest/issues/4657>`_: Copy saferepr from pylib
 
 
+- `#4668 <https://github.com/pytest-dev/pytest/issues/4668>`_: The verbose word for expected failures in the teststatus report changes from ``xfail`` to ``XFAIL`` to be consistent with other test outcomes.
+
+
 pytest 4.1.1 (2019-01-12)
 =========================
 
