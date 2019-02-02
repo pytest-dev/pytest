@@ -233,7 +233,7 @@ You can also use it as a contextmanager::
 .. _warns:
 
 Asserting warnings with the warns function
------------------------------------------------
+------------------------------------------
 
 .. versionadded:: 2.8
 
@@ -291,7 +291,7 @@ Alternatively, you can examine raised warnings in detail using the
 .. _recwarn:
 
 Recording warnings
-------------------------
+------------------
 
 You can record raised warnings either using ``pytest.warns`` or with
 the ``recwarn`` fixture.
@@ -329,6 +329,26 @@ warnings, or index into it to get a particular recorded warning.
 
 Full API: :class:`WarningsRecorder`.
 
+.. _custom_failure_messages:
+
+Custom failure messages
+-----------------------
+
+Recording warnings provides an opportunity to produce custom test
+failure messages for when no warnings are issued or other conditions
+are met.
+
+.. code-block:: python
+
+    def test():
+        with pytest.warns(Warning) as record:
+            f()
+            if not record:
+                pytest.fail('Expected a warning!')
+
+If no warnings are issued when calling ``f``, then ``not record`` will
+evaluate to ``False``.  You can then call ``pytest.fail`` with a
+custom error message.
 
 .. _internal-warnings:
 
