@@ -430,10 +430,6 @@ class LoggingPlugin(object):
 
     @pytest.hookimpl(hookwrapper=True, tryfirst=True)
     def pytest_collection(self):
-        # This has to be called before the first log message is logged,
-        # so we can access the terminal reporter plugin.
-        self._setup_cli_logging()
-
         with self.live_logs_context():
             if self.log_cli_handler:
                 self.log_cli_handler.set_when("collection")
@@ -513,6 +509,8 @@ class LoggingPlugin(object):
 
     @pytest.hookimpl(hookwrapper=True, tryfirst=True)
     def pytest_sessionstart(self):
+        # This has to be called before the first log message is logged,
+        # so we can access the terminal reporter plugin.
         self._setup_cli_logging()
         with self.live_logs_context():
             if self.log_cli_handler:
