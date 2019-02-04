@@ -370,6 +370,8 @@ def get_actual_log_level(config, *setting_names):
         )
 
 
+# run after terminalreporter/capturemanager are configured
+@pytest.hookimpl(trylast=True)
 def pytest_configure(config):
     config.pluginmanager.register(LoggingPlugin(config), "logging-plugin")
 
@@ -388,8 +390,6 @@ class LoggingPlugin(object):
 
         # enable verbose output automatically if live logging is enabled
         if self._log_cli_enabled() and not config.getoption("verbose"):
-            # sanity check: terminal reporter should not have been loaded at this point
-            assert self._config.pluginmanager.get_plugin("terminalreporter") is None
             config.option.verbose = 1
 
         self.print_logs = get_option_ini(config, "log_print")
@@ -420,6 +420,55 @@ class LoggingPlugin(object):
 
         self.log_cli_handler = None
 
+        self._setup_cli_logging()
+
+    def _setup_cli_logging(self):
+        terminal_reporter = self._config.pluginmanager.get_plugin("terminalreporter")
+
+        if self._log_cli_enabled() and terminal_reporter is not None:
+            # FIXME don't set verbosity level and derived attributes of
+            # terminalwriter directly
+            terminal_reporter.verbosity = self._config.option.verbose
+            terminal_reporter.showheader = terminal_reporter.verbosity >= 0
+            terminal_reporter.showfspath = terminal_reporter.verbosity >= 0
+            terminal_reporter.showlongtestinfo = terminal_reporter.verbosity > 0
+
+            capture_manager = self._config.pluginmanager.get_plugin("capturemanager")
+            log_cli_handler = _LiveLoggingStreamHandler(
+                terminal_reporter, capture_manager
+            )
+            log_cli_format = get_option_ini(
+                self._config, "log_cli_format", "log_format"
+            )
+            log_cli_date_format = get_option_ini(
+                self._config, "log_cli_date_format", "log_date_format"
+            )
+            if (
+                self._config.option.color != "no"
+                and ColoredLevelFormatter.LEVELNAME_FMT_REGEX.search(log_cli_format)
+            ):
+                log_cli_formatter = ColoredLevelFormatter(
+                    create_terminal_writer(self._config),
+                    log_cli_format,
+                    datefmt=log_cli_date_format,
+                )
+            else:
+                log_cli_formatter = logging.Formatter(
+                    log_cli_format, datefmt=log_cli_date_format
+                )
+            log_cli_level = get_actual_log_level(
+                self._config, "log_cli_level", "log_level"
+            )
+            self.log_cli_handler = log_cli_handler
+            self.live_logs_context = lambda: catching_logs(
+                log_cli_handler, formatter=log_cli_formatter, level=log_cli_level
+            )
+        else:
+            self.live_logs_context = lambda: dummy_context_manager()
+        # Note that the lambda for the live_logs_context is needed because
+        # live_logs_context can otherwise not be entered multiple times due
+        # to limitations of contextlib.contextmanager
+
     def _log_cli_enabled(self):
         """Return True if log_cli should be considered enabled, either explicitly
         or because --log-cli-level was given in the command-line.
@@ -430,10 +479,6 @@ class LoggingPlugin(object):
 
     @pytest.hookimpl(hookwrapper=True, tryfirst=True)
     def pytest_collection(self):
-        # This has to be called before the first log message is logged,
-        # so we can access the terminal reporter plugin.
-        self._setup_cli_logging()
-
         with self.live_logs_context():
             if self.log_cli_handler:
                 self.log_cli_handler.set_when("collection")
@@ -513,7 +558,6 @@ class LoggingPlugin(object):
 
     @pytest.hookimpl(hookwrapper=True, tryfirst=True)
     def pytest_sessionstart(self):
-        self._setup_cli_logging()
         with self.live_logs_context():
             if self.log_cli_handler:
                 self.log_cli_handler.set_when("sessionstart")
@@ -532,46 +576,6 @@ class LoggingPlugin(object):
                     yield  # run all the tests
             else:
                 yield  # run all the tests
-
-    def _setup_cli_logging(self):
-        """Sets up the handler and logger for the Live Logs feature, if enabled."""
-        terminal_reporter = self._config.pluginmanager.get_plugin("terminalreporter")
-        if self._log_cli_enabled() and terminal_reporter is not None:
-            capture_manager = self._config.pluginmanager.get_plugin("capturemanager")
-            log_cli_handler = _LiveLoggingStreamHandler(
-                terminal_reporter, capture_manager
-            )
-            log_cli_format = get_option_ini(
-                self._config, "log_cli_format", "log_format"
-            )
-            log_cli_date_format = get_option_ini(
-                self._config, "log_cli_date_format", "log_date_format"
-            )
-            if (
-                self._config.option.color != "no"
-                and ColoredLevelFormatter.LEVELNAME_FMT_REGEX.search(log_cli_format)
-            ):
-                log_cli_formatter = ColoredLevelFormatter(
-                    create_terminal_writer(self._config),
-                    log_cli_format,
-                    datefmt=log_cli_date_format,
-                )
-            else:
-                log_cli_formatter = logging.Formatter(
-                    log_cli_format, datefmt=log_cli_date_format
-                )
-            log_cli_level = get_actual_log_level(
-                self._config, "log_cli_level", "log_level"
-            )
-            self.log_cli_handler = log_cli_handler
-            self.live_logs_context = lambda: catching_logs(
-                log_cli_handler, formatter=log_cli_formatter, level=log_cli_level
-            )
-        else:
-            self.live_logs_context = lambda: dummy_context_manager()
-        # Note that the lambda for the live_logs_context is needed because
-        # live_logs_context can otherwise not be entered multiple times due
-        # to limitations of contextlib.contextmanager
 
 
 class _LiveLoggingStreamHandler(logging.StreamHandler):
