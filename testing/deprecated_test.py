@@ -6,6 +6,7 @@ import os
 import sys
 
 import pytest
+from _pytest.warning_types import PytestDeprecationWarning
 from _pytest.warnings import SHOW_PYTEST_WARNINGS_ARG
 
 pytestmark = pytest.mark.pytester_example_path("deprecated")
@@ -238,3 +239,11 @@ def test_python_deprecation(testdir):
         )
     else:
         assert msg not in result.stdout.str()
+
+
+def test_pytest_warns_unknown_kwargs():
+    with pytest.warns(
+        PytestDeprecationWarning,
+        match=r"pytest.warns\(\) got unexpected keyword arguments: \['foo'\]",
+    ):
+        pytest.warns(UserWarning, foo="hello")
