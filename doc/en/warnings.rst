@@ -344,10 +344,10 @@ are met.
         with pytest.warns(Warning) as record:
             f()
             if not record:
-                pytest.fail('Expected a warning!')
+                pytest.fail("Expected a warning!")
 
 If no warnings are issued when calling ``f``, then ``not record`` will
-evaluate to ``False``.  You can then call ``pytest.fail`` with a
+evaluate to ``True``.  You can then call ``pytest.fail`` with a
 custom error message.
 
 .. _internal-warnings:
