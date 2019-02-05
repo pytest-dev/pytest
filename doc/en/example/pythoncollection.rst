@@ -41,6 +41,9 @@ you will see that ``pytest`` only collects test-modules, which do not match the 
 
     ========================= 5 passed in 0.02 seconds =========================
 
+The ``--ignore-glob`` option allows to ignore test file paths based on Unix shell-style wildcards.
+If you want to exclude test-modules that end with ``_01.py``, execute ``pytest`` with ``--ignore-glob='*_01.py'``.
+
 Deselect tests during test collection
 -------------------------------------
 

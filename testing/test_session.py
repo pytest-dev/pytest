@@ -253,6 +253,21 @@ def test_exclude(testdir):
     result.stdout.fnmatch_lines(["*1 passed*"])
 
 
+def test_exclude_glob(testdir):
+    hellodir = testdir.mkdir("hello")
+    hellodir.join("test_hello.py").write("x y syntaxerror")
+    hello2dir = testdir.mkdir("hello2")
+    hello2dir.join("test_hello2.py").write("x y syntaxerror")
+    hello3dir = testdir.mkdir("hallo3")
+    hello3dir.join("test_hello3.py").write("x y syntaxerror")
+    subdir = testdir.mkdir("sub")
+    subdir.join("test_hello4.py").write("x y syntaxerror")
+    testdir.makepyfile(test_ok="def test_pass(): pass")
+    result = testdir.runpytest("--ignore-glob=*h[ea]llo*")
+    assert result.ret == 0
+    result.stdout.fnmatch_lines(["*1 passed*"])
+
+
 def test_deselect(testdir):
     testdir.makepyfile(
         test_a="""

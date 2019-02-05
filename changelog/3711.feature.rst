@@ -1,0 +1,1 @@
+Add the ``--ignore-glob`` parameter to exclude test-modules with Unix shell-style wildcards.

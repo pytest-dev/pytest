@@ -4,6 +4,7 @@ from __future__ import division
 from __future__ import print_function
 
 import contextlib
+import fnmatch
 import functools
 import os
 import pkgutil
@@ -116,6 +117,12 @@ def pytest_addoption(parser):
         action="append",
         metavar="path",
         help="ignore path during collection (multi-allowed).",
+    )
+    group.addoption(
+        "--ignore-glob",
+        action="append",
+        metavar="path",
+        help="ignore path pattern during collection (multi-allowed).",
     )
     group.addoption(
         "--deselect",
@@ -294,6 +301,17 @@ def pytest_ignore_collect(path, config):
         ignore_paths.extend([py.path.local(x) for x in excludeopt])
 
     if py.path.local(path) in ignore_paths:
+        return True
+
+    ignore_globs = []
+    excludeglobopt = config.getoption("ignore_glob")
+    if excludeglobopt:
+        ignore_globs.extend([py.path.local(x) for x in excludeglobopt])
+
+    if any(
+        fnmatch.fnmatch(six.text_type(path), six.text_type(glob))
+        for glob in ignore_globs
+    ):
         return True
 
     allow_in_venv = config.getoption("collect_in_virtualenv")
