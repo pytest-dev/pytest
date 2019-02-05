@@ -65,6 +65,17 @@ def _format_args(func):
     return str(signature(func))
 
 
+def legacy_path(p):
+    return py.path.local(p)
+
+
+def legacy_path_alias(pathlib_path_name):
+    @property
+    def fspath(self):
+        # TODO: deprecationwarning
+        return legacy_path(getattr(self, pathlib_path_name))
+
+
 isfunction = inspect.isfunction
 isclass = inspect.isclass
 # used to work around a python2 exception info leak
@@ -318,12 +329,11 @@ def get_real_method(obj, holder):
     return obj
 
 
-def getfslineno(obj):
+def get_path_and_lineno(obj):
     # xxx let decorators etc specify a sane ordering
     obj = get_real_func(obj)
-    if hasattr(obj, "place_as"):
-        obj = obj.place_as
-    fslineno = _pytest._code.getfslineno(obj)
+    obj = getattr(obj, "place_as", obj)
+    fslineno = _pytest._code.get_path_and_lineno(obj)
     assert isinstance(fslineno[1], int), obj
     return fslineno
 

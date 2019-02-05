@@ -81,8 +81,8 @@ def test_wrapped_getfslineno():
     def wrapped_func(x, y, z):
         pass
 
-    fs, lineno = python.getfslineno(wrapped_func)
-    fs2, lineno2 = python.getfslineno(wrap)
+    fs, lineno = python.get_path_and_lineno(wrapped_func)
+    fs2, lineno2 = python.get_path_and_lineno(wrap)
     assert lineno > lineno2, "getfslineno does not unwrap correctly"
 
 

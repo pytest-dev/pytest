@@ -9,11 +9,13 @@ import sys
 import textwrap
 import tokenize
 import warnings
-from ast import PyCF_ONLY_AST as _AST_FLAG
+from ast import PyCF_ONLY_AST as _AST_FLAG  # NOQA
 from bisect import bisect_right
 
 import py
 import six
+
+from ..pathlib import Path
 
 
 class Source(object):
@@ -201,7 +203,7 @@ def compile_(source, filename=None, mode="exec", flags=0, dont_inherit=0):
     return co
 
 
-def getfslineno(obj):
+def get_path_and_lineno(obj):
     """ Return source location (path, lineno) for the given object.
     If the source cannot be determined return ("", -1)
     """
@@ -215,18 +217,18 @@ def getfslineno(obj):
         except TypeError:
             return "", -1
 
-        fspath = fn and py.path.local(fn) or None
+        path = Path(fn) if fn else None
         lineno = -1
-        if fspath:
+        if path:
             try:
                 _, lineno = findsource(obj)
             except IOError:
                 pass
     else:
-        fspath = code.path
+        path = Path(code.path)
         lineno = code.firstlineno
     assert isinstance(lineno, int)
-    return fspath, lineno
+    return path, lineno
 
 
 #

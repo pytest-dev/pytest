@@ -7,7 +7,7 @@ import attr
 import six
 
 from ..compat import ascii_escaped
-from ..compat import getfslineno
+from ..compat import get_path_and_lineno
 from ..compat import MappingMixin
 from ..compat import NOTSET
 from _pytest.outcomes import fail
@@ -43,13 +43,13 @@ def get_empty_parameterset_mark(config, argnames, func):
         mark = MARK_GEN.xfail(run=False)
     elif requested_mark == "fail_at_collect":
         f_name = func.__name__
-        _, lineno = getfslineno(func)
+        _, lineno = get_path_and_lineno(func)
         raise Collector.CollectError(
             "Empty parameter set in '%s' at line %d" % (f_name, lineno)
         )
     else:
         raise LookupError(requested_mark)
-    fs, lineno = getfslineno(func)
+    fs, lineno = get_path_and_lineno(func)
     reason = "got empty parameter set %r, function %s at %s:%d" % (
         argnames,
         func.__name__,

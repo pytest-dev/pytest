@@ -23,14 +23,15 @@ from _pytest.compat import _format_args
 from _pytest.compat import _PytestWrapper
 from _pytest.compat import exc_clear
 from _pytest.compat import FuncargnamesCompatAttr
+from _pytest.compat import get_path_and_lineno
 from _pytest.compat import get_real_func
 from _pytest.compat import get_real_method
-from _pytest.compat import getfslineno
 from _pytest.compat import getfuncargnames
 from _pytest.compat import getimfunc
 from _pytest.compat import getlocation
 from _pytest.compat import is_generator
 from _pytest.compat import isclass
+from _pytest.compat import legacy_path
 from _pytest.compat import NOTSET
 from _pytest.compat import safe_getattr
 from _pytest.deprecated import FIXTURE_FUNCTION_CALL
@@ -609,8 +610,8 @@ class FixtureRequest(FuncargnamesCompatAttr):
         lines = []
         for fixturedef in self._get_fixturestack():
             factory = fixturedef.func
-            fs, lineno = getfslineno(factory)
-            p = self._pyfuncitem.session.fspath.bestrelpath(fs)
+            fs, lineno = get_path_and_lineno(factory)
+            p = self._pyfuncitem.session.fspath.bestrelpath(legacy_path(fs))
             args = _format_args(factory)
             lines.append("%s:%d:  def %s%s" % (p, lineno, factory.__name__, args))
         return lines
@@ -703,7 +704,7 @@ class FixtureLookupError(LookupError):
             # it at the requesting side
             stack = stack[:-1]
         for function in stack:
-            fspath, lineno = getfslineno(function)
+            fspath, lineno = get_path_and_lineno(function)
             try:
                 lines, _ = inspect.getsourcelines(get_real_func(function))
             except (IOError, IndexError, TypeError):
@@ -765,7 +766,7 @@ class FixtureLookupErrorRepr(TerminalRepr):
 
 
 def fail_fixturefunc(fixturefunc, msg):
-    fs, lineno = getfslineno(fixturefunc)
+    fs, lineno = get_path_and_lineno(fixturefunc)
     location = "%s:%s" % (fs, lineno + 1)
     source = _pytest._code.Source(fixturefunc)
     fail(msg + ":\n\n" + str(source.indent()) + "\n" + location, pytrace=False)

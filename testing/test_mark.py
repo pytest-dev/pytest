@@ -859,13 +859,13 @@ def test_parameterset_for_fail_at_collect(testdir):
 
     config = testdir.parseconfig()
     from _pytest.mark import pytest_configure, get_empty_parameterset_mark
-    from _pytest.compat import getfslineno
+    from _pytest.compat import get_path_and_lineno
 
     pytest_configure(config)
 
     test_func = all
     func_name = test_func.__name__
-    _, func_lineno = getfslineno(test_func)
+    _, func_lineno = get_path_and_lineno(test_func)
     expected_errmsg = r"Empty parameter set in '%s' at line %d" % (
         func_name,
         func_lineno,

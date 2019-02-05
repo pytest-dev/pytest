@@ -23,8 +23,8 @@ from _pytest._code import filter_traceback
 from _pytest.compat import ascii_escaped
 from _pytest.compat import enum
 from _pytest.compat import get_default_arg_names
+from _pytest.compat import get_path_and_lineno
 from _pytest.compat import get_real_func
-from _pytest.compat import getfslineno
 from _pytest.compat import getimfunc
 from _pytest.compat import getlocation
 from _pytest.compat import is_generator
@@ -207,7 +207,7 @@ def pytest_pycollect_makeitem(collector, name, obj):
         # or a funtools.wrapped.
         # We musn't if it's been wrapped with mock.patch (python 2 only)
         if not (isfunction(obj) or isfunction(get_real_func(obj))):
-            filename, lineno = getfslineno(obj)
+            filename, lineno = get_path_and_lineno(obj)
             warnings.warn_explicit(
                 message=PytestWarning(
                     "cannot collect %r because it is not a function." % name
@@ -295,10 +295,10 @@ class PyobjMixin(PyobjContext):
                 fspath = fspath[:-1]
             lineno = compat_co_firstlineno
         else:
-            fspath, lineno = getfslineno(obj)
+            fspath, lineno = get_path_and_lineno(obj)
         modpath = self.getmodpath()
         assert isinstance(lineno, int)
-        return fspath, lineno, modpath
+        return str(fspath), lineno, modpath
 
 
 class PyCollector(PyobjMixin, nodes.Collector):

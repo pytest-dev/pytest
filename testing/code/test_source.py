@@ -479,24 +479,24 @@ def test_findsource():
     assert src[lineno] == "    def x():"
 
 
-def test_getfslineno():
-    from _pytest._code import getfslineno
+def test_get_path_and_lineno():
+    from _pytest._code import get_path_and_lineno
 
     def f(x):
         pass
 
-    fspath, lineno = getfslineno(f)
+    fspath, lineno = get_path_and_lineno(f)
 
-    assert fspath.basename == "test_source.py"
+    assert fspath.name == "test_source.py"
     assert lineno == _pytest._code.getrawcode(f).co_firstlineno - 1  # see findsource
 
     class A(object):
         pass
 
-    fspath, lineno = getfslineno(A)
+    fspath, lineno = get_path_and_lineno(A)
 
     _, A_lineno = inspect.findsource(A)
-    assert fspath.basename == "test_source.py"
+    assert fspath.name == "test_source.py"
     assert lineno == A_lineno
 
     assert getfslineno(3) == ("", -1)
@@ -505,7 +505,7 @@ def test_getfslineno():
         pass
 
     B.__name__ = "B2"
-    assert getfslineno(B)[1] == -1
+    assert get_path_and_lineno(B)[1] == -1
 
 
 def test_code_of_object_instance_with_call():

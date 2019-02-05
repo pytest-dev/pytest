@@ -9,9 +9,10 @@ import py
 import six
 
 import _pytest._code
-from _pytest.compat import getfslineno
+from _pytest.compat import get_path_and_lineno
 from _pytest.mark.structures import NodeKeywords
 from _pytest.outcomes import fail
+from _pytest.pathlib import Path
 
 SEP = "/"
 
@@ -127,7 +128,7 @@ class Node(object):
                     warning
                 )
             )
-        path, lineno = get_fslocation_from_item(self)
+        path, lineno = get_path_location_from_item(self)
         warnings.warn_explicit(
             warning,
             category=None,
@@ -287,7 +288,7 @@ class Node(object):
     repr_failure = _repr_failure_py
 
 
-def get_fslocation_from_item(item):
+def get_path_location_from_item(item):
     """Tries to extract the actual location from an item, depending on available attributes:
 
     * "fslocation": a pair (path, lineno)
@@ -301,8 +302,11 @@ def get_fslocation_from_item(item):
         return result[:2]
     obj = getattr(item, "obj", None)
     if obj is not None:
-        return getfslineno(obj)
-    return getattr(item, "fspath", "unknown location"), -1
+        return get_path_and_lineno(obj)
+    try:
+        return Path(item.fspath), -1
+    except AttributeError:
+        return "unknown location", -1
 
 
 class Collector(Node):
