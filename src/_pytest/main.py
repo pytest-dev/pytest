@@ -303,7 +303,10 @@ def pytest_ignore_collect(path, config):
     if py.path.local(path) in ignore_paths:
         return True
 
-    ignore_globs = []
+    ignore_globs = config._getconftest_pathlist(
+        "collect_ignore_glob", path=path.dirpath()
+    )
+    ignore_globs = ignore_globs or []
     excludeglobopt = config.getoption("ignore_glob")
     if excludeglobopt:
         ignore_globs.extend([py.path.local(x) for x in excludeglobopt])

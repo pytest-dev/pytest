@@ -269,3 +269,17 @@ file will be left out:
     collected 0 items
 
     ======================= no tests ran in 0.12 seconds =======================
+
+It's also possible to ignore files based on Unix shell-style wildcards by adding
+patterns to ``collect_ignore_glob``.
+
+The following example ``conftest.py`` ignores the file ``setup.py`` and in
+addition all files that end with ``*_py2.py`` when executed with a Python 3
+interpreter::
+
+    # content of conftest.py
+    import sys
+
+    collect_ignore = ["setup.py"]
+    if sys.version_info[0] > 2:
+        collect_ignore_glob = ["*_py2.py"]
