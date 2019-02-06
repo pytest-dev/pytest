@@ -420,54 +420,53 @@ class LoggingPlugin(object):
 
         self.log_cli_handler = None
 
-        self._setup_cli_logging()
-
-    def _setup_cli_logging(self):
-        terminal_reporter = self._config.pluginmanager.get_plugin("terminalreporter")
-
-        if self._log_cli_enabled() and terminal_reporter is not None:
-            # FIXME don't set verbosity level and derived attributes of
-            # terminalwriter directly
-            terminal_reporter.verbosity = self._config.option.verbose
-            terminal_reporter.showheader = terminal_reporter.verbosity >= 0
-            terminal_reporter.showfspath = terminal_reporter.verbosity >= 0
-            terminal_reporter.showlongtestinfo = terminal_reporter.verbosity > 0
-
-            capture_manager = self._config.pluginmanager.get_plugin("capturemanager")
-            log_cli_handler = _LiveLoggingStreamHandler(
-                terminal_reporter, capture_manager
-            )
-            log_cli_format = get_option_ini(
-                self._config, "log_cli_format", "log_format"
-            )
-            log_cli_date_format = get_option_ini(
-                self._config, "log_cli_date_format", "log_date_format"
-            )
-            if (
-                self._config.option.color != "no"
-                and ColoredLevelFormatter.LEVELNAME_FMT_REGEX.search(log_cli_format)
-            ):
-                log_cli_formatter = ColoredLevelFormatter(
-                    create_terminal_writer(self._config),
-                    log_cli_format,
-                    datefmt=log_cli_date_format,
-                )
-            else:
-                log_cli_formatter = logging.Formatter(
-                    log_cli_format, datefmt=log_cli_date_format
-                )
-            log_cli_level = get_actual_log_level(
-                self._config, "log_cli_level", "log_level"
-            )
-            self.log_cli_handler = log_cli_handler
-            self.live_logs_context = lambda: catching_logs(
-                log_cli_handler, formatter=log_cli_formatter, level=log_cli_level
-            )
-        else:
-            self.live_logs_context = lambda: dummy_context_manager()
+        self.live_logs_context = lambda: dummy_context_manager()
         # Note that the lambda for the live_logs_context is needed because
         # live_logs_context can otherwise not be entered multiple times due
-        # to limitations of contextlib.contextmanager
+        # to limitations of contextlib.contextmanager.
+
+        if self._log_cli_enabled():
+            self._setup_cli_logging()
+
+    def _setup_cli_logging(self):
+        config = self._config
+        terminal_reporter = config.pluginmanager.get_plugin("terminalreporter")
+        if terminal_reporter is None:
+            # terminal reporter is disabled e.g. by pytest-xdist.
+            return
+
+        # FIXME don't set verbosity level and derived attributes of
+        # terminalwriter directly
+        terminal_reporter.verbosity = config.option.verbose
+        terminal_reporter.showheader = terminal_reporter.verbosity >= 0
+        terminal_reporter.showfspath = terminal_reporter.verbosity >= 0
+        terminal_reporter.showlongtestinfo = terminal_reporter.verbosity > 0
+
+        capture_manager = config.pluginmanager.get_plugin("capturemanager")
+        # if capturemanager plugin is disabled, live logging still works.
+        log_cli_handler = _LiveLoggingStreamHandler(terminal_reporter, capture_manager)
+        log_cli_format = get_option_ini(config, "log_cli_format", "log_format")
+        log_cli_date_format = get_option_ini(
+            config, "log_cli_date_format", "log_date_format"
+        )
+        if (
+            config.option.color != "no"
+            and ColoredLevelFormatter.LEVELNAME_FMT_REGEX.search(log_cli_format)
+        ):
+            log_cli_formatter = ColoredLevelFormatter(
+                create_terminal_writer(config),
+                log_cli_format,
+                datefmt=log_cli_date_format,
+            )
+        else:
+            log_cli_formatter = logging.Formatter(
+                log_cli_format, datefmt=log_cli_date_format
+            )
+        log_cli_level = get_actual_log_level(config, "log_cli_level", "log_level")
+        self.log_cli_handler = log_cli_handler
+        self.live_logs_context = lambda: catching_logs(
+            log_cli_handler, formatter=log_cli_formatter, level=log_cli_level
+        )
 
     def _log_cli_enabled(self):
         """Return True if log_cli should be considered enabled, either explicitly
