@@ -408,6 +408,9 @@ class PytestPluginManager(PluginManager):
                 continue
             conftestpath = parent.join("conftest.py")
             if conftestpath.isfile():
+                # Use realpath to avoid loading the same conftest twice
+                # with build systems that create build directories containing
+                # symlinks to actual files.
                 mod = self._importconftest(conftestpath.realpath())
                 clist.append(mod)
         self._dirpath2confmods[directory] = clist
