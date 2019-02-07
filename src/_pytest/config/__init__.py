@@ -408,7 +408,7 @@ class PytestPluginManager(PluginManager):
                 continue
             conftestpath = parent.join("conftest.py")
             if conftestpath.isfile():
-                mod = self._importconftest(conftestpath)
+                mod = self._importconftest(conftestpath.realpath())
                 clist.append(mod)
         self._dirpath2confmods[directory] = clist
         return clist

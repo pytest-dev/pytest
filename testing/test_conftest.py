@@ -244,6 +244,42 @@ def test_conftest_symlink(testdir):
     assert result.ret == EXIT_OK
 
 
+@pytest.mark.skipif(
+    not hasattr(py.path.local, "mksymlinkto"),
+    reason="symlink not available on this platform",
+)
+def test_conftest_symlink_files(testdir):
+    """Check conftest.py loading when running in directory with symlinks."""
+    real = testdir.tmpdir.mkdir("real")
+    source = {
+        "app/test_foo.py": "def test1(fixture): pass",
+        "app/__init__.py": "",
+        "app/conftest.py": textwrap.dedent(
+            """
+            import pytest
+
+            print("conftest_loaded")
+
+            @pytest.fixture
+            def fixture():
+                print("fixture_used")
+            """
+        ),
+    }
+    testdir.makepyfile(**{"real/%s" % k: v for k, v in source.items()})
+
+    # Create a build directory that contains symlinks to actual files
+    # but doesn't symlink actual directories.
+    build = testdir.tmpdir.mkdir("build")
+    build.mkdir("app")
+    for f in source:
+        build.join(f).mksymlinkto(real.join(f))
+    build.chdir()
+    result = testdir.runpytest("-vs", "app/test_foo.py")
+    result.stdout.fnmatch_lines(["*conftest_loaded*", "PASSED"])
+    assert result.ret == EXIT_OK
+
+
 def test_no_conftest(testdir):
     testdir.makeconftest("assert 0")
     result = testdir.runpytest("--noconftest")
