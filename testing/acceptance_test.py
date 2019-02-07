@@ -8,6 +8,7 @@ import sys
 import textwrap
 import types
 
+import attr
 import py
 import six
 
@@ -107,6 +108,60 @@ class TestGeneralUsage(object):
         result = testdir.runpytest("-p", "pytest_xyz", "--xyz=123", syspathinsert=True)
         assert result.ret == 0
         result.stdout.fnmatch_lines(["*1 passed*"])
+
+    @pytest.mark.parametrize("load_cov_early", [True, False])
+    def test_early_load_setuptools_name(self, testdir, monkeypatch, load_cov_early):
+        pkg_resources = pytest.importorskip("pkg_resources")
+
+        testdir.makepyfile(mytestplugin1_module="")
+        testdir.makepyfile(mytestplugin2_module="")
+        testdir.makepyfile(mycov_module="")
+        testdir.syspathinsert()
+
+        loaded = []
+
+        @attr.s
+        class DummyEntryPoint(object):
+            name = attr.ib()
+            module = attr.ib()
+            version = "1.0"
+
+            @property
+            def project_name(self):
+                return self.name
+
+            def load(self):
+                __import__(self.module)
+                loaded.append(self.name)
+                return sys.modules[self.module]
+
+            @property
+            def dist(self):
+                return self
+
+            def _get_metadata(self, *args):
+                return []
+
+        entry_points = [
+            DummyEntryPoint("myplugin1", "mytestplugin1_module"),
+            DummyEntryPoint("myplugin2", "mytestplugin2_module"),
+            DummyEntryPoint("mycov", "mycov_module"),
+        ]
+
+        def my_iter(group, name=None):
+            assert group == "pytest11"
+            for ep in entry_points:
+                if name is not None and ep.name != name:
+                    continue
+                yield ep
+
+        monkeypatch.setattr(pkg_resources, "iter_entry_points", my_iter)
+        params = ("-p", "mycov") if load_cov_early else ()
+        testdir.runpytest_inprocess(*params)
+        if load_cov_early:
+            assert loaded == ["mycov", "myplugin1", "myplugin2"]
+        else:
+            assert loaded == ["myplugin1", "myplugin2", "mycov"]
 
     def test_assertion_magic(self, testdir):
         p = testdir.makepyfile(

@@ -1,0 +1,1 @@
+``pluggy>=0.9`` is now required.

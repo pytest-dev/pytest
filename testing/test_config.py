@@ -5,6 +5,8 @@ from __future__ import print_function
 import sys
 import textwrap
 
+import attr
+
 import _pytest._code
 import pytest
 from _pytest.config import _iter_rewritable_modules
@@ -622,7 +624,28 @@ def test_disable_plugin_autoload(testdir, monkeypatch, parse_args, should_load):
     pkg_resources = pytest.importorskip("pkg_resources")
 
     def my_iter(group, name=None):
-        raise AssertionError("Should not be called")
+        assert group == "pytest11"
+        assert name == "mytestplugin"
+        return iter([DummyEntryPoint()])
+
+    @attr.s
+    class DummyEntryPoint(object):
+        name = "mytestplugin"
+        version = "1.0"
+
+        @property
+        def project_name(self):
+            return self.name
+
+        def load(self):
+            return sys.modules[self.name]
+
+        @property
+        def dist(self):
+            return self
+
+        def _get_metadata(self, *args):
+            return []
 
     class PseudoPlugin(object):
         x = 42
