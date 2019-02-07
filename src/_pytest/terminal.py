@@ -222,12 +222,9 @@ class TerminalReporter(object):
         import _pytest.config
 
         self.config = config
-        self.verbosity = self.config.option.verbose
-        self.showheader = self.verbosity >= 0
-        self.showfspath = self.verbosity >= 0
-        self.showlongtestinfo = self.verbosity > 0
         self._numcollected = 0
         self._session = None
+        self._showfspath = None
 
         self.stats = {}
         self.startdir = py.path.local()
@@ -254,6 +251,28 @@ class TerminalReporter(object):
         if self.config.getoption("setupshow"):
             return False
         return self.config.getini("console_output_style") in ("progress", "count")
+
+    @property
+    def verbosity(self):
+        return self.config.option.verbose
+
+    @property
+    def showheader(self):
+        return self.verbosity >= 0
+
+    @property
+    def showfspath(self):
+        if self._showfspath is None:
+            return self.verbosity >= 0
+        return self._showfspath
+
+    @showfspath.setter
+    def showfspath(self, value):
+        self._showfspath = value
+
+    @property
+    def showlongtestinfo(self):
+        return self.verbosity > 0
 
     def hasopt(self, char):
         char = {"xfailed": "x", "skipped": "s"}.get(char, char)
