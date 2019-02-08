@@ -607,6 +607,7 @@ class Session(nodes.FSCollector):
                 yield y
 
     def _collectfile(self, path, handle_dupes=True):
+        assert path.isfile()
         ihook = self.gethookproxy(path)
         if not self.isinitpath(path):
             if ihook.pytest_ignore_collect(path=path, config=self.config):

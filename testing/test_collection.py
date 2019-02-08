@@ -1144,3 +1144,16 @@ def test_collect_symlink_out_of_tree(testdir):
         ]
     )
     assert result.ret == 0
+
+
+def test_collectignore_via_conftest(testdir, monkeypatch):
+    """collect_ignore in parent conftest skips importing child (issue #4592)."""
+    tests = testdir.mkpydir("tests")
+    tests.ensure("conftest.py").write("collect_ignore = ['ignore_me']")
+
+    ignore_me = tests.mkdir("ignore_me")
+    ignore_me.ensure("__init__.py")
+    ignore_me.ensure("conftest.py").write("assert 0, 'should_not_be_called'")
+
+    result = testdir.runpytest()
+    assert result.ret == EXIT_NOTESTSCOLLECTED
