@@ -556,10 +556,9 @@ class Session(nodes.FSCollector):
                 if parent.isdir():
                     pkginit = parent.join("__init__.py")
                     if pkginit.isfile():
-                        col = self._collectfile(pkginit, handle_dupes=False)
-                        if col:
-                            if isinstance(col[0], Package):
-                                self._pkg_roots[parent] = col[0]
+                        col = self._collectfile(pkginit, add_to_dupes=False)
+                        if col and isinstance(col[0], Package):
+                            self._pkg_roots[parent] = col[0]
 
         # If it's a directory argument, recurse and look for any Subpackages.
         # Let the Package collector deal with subnodes, don't collect here.
@@ -590,7 +589,7 @@ class Session(nodes.FSCollector):
             assert argpath.check(file=1)
 
             collect_root = self._pkg_roots.get(argpath.dirname, self)
-            col = collect_root._collectfile(argpath, handle_dupes=False)
+            col = collect_root._collectfile(argpath, add_to_dupes=False)
             m = self.matchnodes(col, names)
             # If __init__.py was the only file requested, then the matched node will be
             # the corresponding Package, and the first yielded item will be the __init__
@@ -602,7 +601,7 @@ class Session(nodes.FSCollector):
             for y in m:
                 yield y
 
-    def _collectfile(self, path, handle_dupes=True):
+    def _collectfile(self, path, add_to_dupes=True):
         assert path.isfile(), "%r is not a file (isdir=%r, exists=%r, islink=%r)" % (
             path,
             path.isdir(),
@@ -614,14 +613,13 @@ class Session(nodes.FSCollector):
             if ihook.pytest_ignore_collect(path=path, config=self.config):
                 return ()
 
-        if handle_dupes:
-            keepduplicates = self.config.getoption("keepduplicates")
-            if not keepduplicates:
-                duplicate_paths = self.config.pluginmanager._duplicatepaths
-                if path in duplicate_paths:
-                    return ()
-                else:
-                    duplicate_paths.add(path)
+        keepduplicates = self.config.getoption("keepduplicates")
+        if not keepduplicates:
+            duplicate_paths = self.config.pluginmanager._duplicatepaths
+            if path in duplicate_paths:
+                return ()
+            elif add_to_dupes:
+                duplicate_paths.add(path)
 
         return ihook.pytest_collect_file(path=path, parent=self)
 

@@ -598,7 +598,7 @@ class Package(Module):
             proxy = self.config.hook
         return proxy
 
-    def _collectfile(self, path, handle_dupes=True):
+    def _collectfile(self, path, add_to_dupes=True):
         assert path.isfile(), "%r is not a file (isdir=%r, exists=%r, islink=%r)" % (
             path,
             path.isdir(),
@@ -610,14 +610,13 @@ class Package(Module):
             if ihook.pytest_ignore_collect(path=path, config=self.config):
                 return ()
 
-        if handle_dupes:
-            keepduplicates = self.config.getoption("keepduplicates")
-            if not keepduplicates:
-                duplicate_paths = self.config.pluginmanager._duplicatepaths
-                if path in duplicate_paths:
-                    return ()
-                else:
-                    duplicate_paths.add(path)
+        keepduplicates = self.config.getoption("keepduplicates")
+        if not keepduplicates:
+            duplicate_paths = self.config.pluginmanager._duplicatepaths
+            if path in duplicate_paths:
+                return ()
+            elif add_to_dupes:
+                duplicate_paths.add(path)
 
         if self.fspath == path:  # __init__.py
             return [self]
