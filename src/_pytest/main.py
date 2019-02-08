@@ -434,8 +434,6 @@ class Session(nodes.FSCollector):
         self._norecursepatterns = config.getini("norecursedirs")
         self.startdir = py.path.local()
         self._initialpaths = frozenset()
-        # Keep track of any collected nodes in here, so we don't duplicate fixtures
-        self._node_cache = {}
         self._bestrelpathcache = _bestrelpath_cache(config.rootdir)
         # Dirnames of pkgs with dunder-init files.
         self._pkg_roots = {}
@@ -558,13 +556,10 @@ class Session(nodes.FSCollector):
                 if parent.isdir():
                     pkginit = parent.join("__init__.py")
                     if pkginit.isfile():
-                        if pkginit not in self._node_cache:
-                            col = self._collectfile(pkginit, handle_dupes=False)
-                            if col:
-                                if isinstance(col[0], Package):
-                                    self._pkg_roots[parent] = col[0]
-                                # always store a list in the cache, matchnodes expects it
-                                self._node_cache[col[0].fspath] = [col[0]]
+                        col = self._collectfile(pkginit, handle_dupes=False)
+                        if col:
+                            if isinstance(col[0], Package):
+                                self._pkg_roots[parent] = col[0]
 
         # If it's a directory argument, recurse and look for any Subpackages.
         # Let the Package collector deal with subnodes, don't collect here.
@@ -590,22 +585,12 @@ class Session(nodes.FSCollector):
                     continue
 
                 for x in self._collectfile(path):
-                    key = (type(x), x.fspath)
-                    if key in self._node_cache:
-                        yield self._node_cache[key]
-                    else:
-                        self._node_cache[key] = x
-                        yield x
+                    yield x
         else:
             assert argpath.check(file=1)
 
-            if argpath in self._node_cache:
-                col = self._node_cache[argpath]
-            else:
-                collect_root = self._pkg_roots.get(argpath.dirname, self)
-                col = collect_root._collectfile(argpath, handle_dupes=False)
-                if col:
-                    self._node_cache[argpath] = col
+            collect_root = self._pkg_roots.get(argpath.dirname, self)
+            col = collect_root._collectfile(argpath, handle_dupes=False)
             m = self.matchnodes(col, names)
             # If __init__.py was the only file requested, then the matched node will be
             # the corresponding Package, and the first yielded item will be the __init__
@@ -726,12 +711,7 @@ class Session(nodes.FSCollector):
                     resultnodes.append(node)
                 continue
             assert isinstance(node, nodes.Collector)
-            key = (type(node), node.nodeid)
-            if key in self._node_cache:
-                rep = self._node_cache[key]
-            else:
-                rep = collect_one_node(node)
-                self._node_cache[key] = rep
+            rep = collect_one_node(node)
             if rep.passed:
                 has_matched = False
                 for x in rep.result:
