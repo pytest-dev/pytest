@@ -1144,9 +1144,10 @@ def _find_parametrized_scope(argnames, arg2fixturedefs, indirect):
 
 def _idval(val, argname, idx, idfn, item, config):
     if idfn:
-        s = None
         try:
-            s = idfn(val)
+            generated_id = idfn(val)
+            if generated_id is not None:
+                val = generated_id
         except Exception as e:
             # See issue https://github.com/pytest-dev/pytest/issues/2169
             msg = "{}: error raised while trying to determine id of parameter '{}' at position {}\n"
@@ -1154,10 +1155,7 @@ def _idval(val, argname, idx, idfn, item, config):
             # we only append the exception type and message because on Python 2 reraise does nothing
             msg += "  {}: {}\n".format(type(e).__name__, e)
             six.raise_from(ValueError(msg), e)
-        if s:
-            return ascii_escaped(s)
-
-    if config:
+    elif config:
         hook_id = config.hook.pytest_make_parametrize_id(
             config=config, val=val, argname=argname
         )
