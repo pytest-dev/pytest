@@ -574,18 +574,19 @@ class TerminalReporter(object):
         return lines
 
     def pytest_collection_finish(self, session):
-        if self.config.option.collectonly:
+        if self.config.getoption("collectonly"):
             self._printcollecteditems(session.items)
-            if self.stats.get("failed"):
-                self._tw.sep("!", "collection failures")
-                for rep in self.stats.get("failed"):
-                    rep.toterminal(self._tw)
-                return 1
-            return 0
+
         lines = self.config.hook.pytest_report_collectionfinish(
             config=self.config, startdir=self.startdir, items=session.items
         )
         self._write_report_lines_from_hooks(lines)
+
+        if self.config.getoption("collectonly"):
+            if self.stats.get("failed"):
+                self._tw.sep("!", "collection failures")
+                for rep in self.stats.get("failed"):
+                    rep.toterminal(self._tw)
 
     def _printcollecteditems(self, items):
         # to print out items and their parent collectors

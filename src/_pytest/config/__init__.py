@@ -559,8 +559,8 @@ def _get_plugin_specs_as_list(specs):
     which case it is returned as a list. Specs can also be `None` in which case an
     empty list is returned.
     """
-    if specs is not None:
-        if isinstance(specs, str):
+    if specs is not None and not isinstance(specs, types.ModuleType):
+        if isinstance(specs, six.string_types):
             specs = specs.split(",") if specs else []
         if not isinstance(specs, (list, tuple)):
             raise UsageError(

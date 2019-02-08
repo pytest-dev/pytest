@@ -1,0 +1,1 @@
+Do not raise ``UsageError`` when an imported package has a ``pytest_plugins.py`` child module.

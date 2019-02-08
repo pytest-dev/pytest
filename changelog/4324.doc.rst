@@ -1,0 +1,1 @@
+Document how to use ``raises`` and ``does_not_raise`` to write parametrized tests with conditional raises.

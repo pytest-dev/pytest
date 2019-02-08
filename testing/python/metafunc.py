@@ -418,6 +418,21 @@ class TestMetafunc(object):
             ]
         )
 
+    def test_parametrize_ids_returns_non_string(self, testdir):
+        testdir.makepyfile(
+            """\
+            import pytest
+
+            def ids(d):
+                return d
+
+            @pytest.mark.parametrize("arg", ({1: 2}, {3, 4}), ids=ids)
+            def test(arg):
+                assert arg
+            """
+        )
+        assert testdir.runpytest().ret == 0
+
     def test_idmaker_with_ids(self):
         from _pytest.python import idmaker
 

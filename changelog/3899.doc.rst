@@ -1,0 +1,1 @@
+Add note to ``plugins.rst`` that ``pytest_plugins`` should not be used as a name for a user module containing plugins.
