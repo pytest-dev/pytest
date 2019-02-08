@@ -969,6 +969,20 @@ def test_import_plugin_unicode_name(testdir):
     assert r.ret == 0
 
 
+def test_pytest_plugins_as_module(testdir):
+    """Do not raise an error if pytest_plugins attribute is a module (#3899)"""
+    testdir.makepyfile(
+        **{
+            "__init__.py": "",
+            "pytest_plugins.py": "",
+            "conftest.py": "from . import pytest_plugins",
+            "test_foo.py": "def test(): pass",
+        }
+    )
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines("* 1 passed in *")
+
+
 def test_deferred_hook_checking(testdir):
     """
     Check hooks as late as possible (#1821).

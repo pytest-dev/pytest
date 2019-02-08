@@ -649,7 +649,10 @@ class TestTerminalFunctional(object):
         assert "===" not in s
         assert "passed" not in s
 
-    def test_report_collectionfinish_hook(self, testdir):
+    @pytest.mark.parametrize(
+        "params", [(), ("--collect-only",)], ids=["no-params", "collect-only"]
+    )
+    def test_report_collectionfinish_hook(self, testdir, params):
         testdir.makeconftest(
             """
             def pytest_report_collectionfinish(config, startdir, items):
@@ -664,7 +667,7 @@ class TestTerminalFunctional(object):
                 pass
         """
         )
-        result = testdir.runpytest()
+        result = testdir.runpytest(*params)
         result.stdout.fnmatch_lines(["collected 3 items", "hello from hook: 3 items"])
 
 

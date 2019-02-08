@@ -94,6 +94,54 @@ class TestRaises(object):
         result = testdir.runpytest()
         result.stdout.fnmatch_lines(["*3 passed*"])
 
+    def test_does_not_raise(self, testdir):
+        testdir.makepyfile(
+            """
+            from contextlib import contextmanager
+            import pytest
+
+            @contextmanager
+            def does_not_raise():
+                yield
+
+            @pytest.mark.parametrize('example_input,expectation', [
+                (3, does_not_raise()),
+                (2, does_not_raise()),
+                (1, does_not_raise()),
+                (0, pytest.raises(ZeroDivisionError)),
+            ])
+            def test_division(example_input, expectation):
+                '''Test how much I know division.'''
+                with expectation:
+                    assert (6 / example_input) is not None
+        """
+        )
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines(["*4 passed*"])
+
+    def test_does_not_raise_does_raise(self, testdir):
+        testdir.makepyfile(
+            """
+            from contextlib import contextmanager
+            import pytest
+
+            @contextmanager
+            def does_not_raise():
+                yield
+
+            @pytest.mark.parametrize('example_input,expectation', [
+                (0, does_not_raise()),
+                (1, pytest.raises(ZeroDivisionError)),
+            ])
+            def test_division(example_input, expectation):
+                '''Test how much I know division.'''
+                with expectation:
+                    assert (6 / example_input) is not None
+        """
+        )
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines(["*2 failed*"])
+
     def test_noclass(self):
         with pytest.raises(TypeError):
             pytest.raises("wrong", lambda: None)

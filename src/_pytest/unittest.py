@@ -87,6 +87,9 @@ def _make_xunit_fixture(obj, setup_name, teardown_name, scope, pass_self):
 
     @pytest.fixture(scope=scope, autouse=True)
     def fixture(self, request):
+        if getattr(self, "__unittest_skip__", None):
+            reason = self.__unittest_skip_why__
+            pytest.skip(reason)
         if setup is not None:
             if pass_self:
                 setup(self, request.function)
