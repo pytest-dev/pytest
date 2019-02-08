@@ -1,0 +1,1 @@
+Fix handling of ``collect_ignore`` via parent ``conftest.py``.
