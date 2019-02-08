@@ -550,19 +550,9 @@ class Session(nodes.FSCollector):
         if argpath.check(dir=1):
             assert not names, "invalid arg %r" % (arg,)
 
-            if six.PY2:
-
-                def filter_(f):
-                    return f.check(file=1) and not f.strpath.endswith("*.pyc")
-
-            else:
-
-                def filter_(f):
-                    return f.check(file=1)
-
             seen_dirs = set()
             for path in argpath.visit(
-                fil=filter_, rec=self._recurse, bf=True, sort=True
+                fil=self._visit_filter, rec=self._recurse, bf=True, sort=True
             ):
                 dirpath = path.dirpath()
                 if dirpath not in seen_dirs:
@@ -635,6 +625,18 @@ class Session(nodes.FSCollector):
         ihook = self.gethookproxy(dirpath)
         ihook.pytest_collect_directory(path=dirpath, parent=self)
         return True
+
+    if six.PY2:
+
+        @staticmethod
+        def _visit_filter(f):
+            return f.check(file=1) and not f.strpath.endswith("*.pyc")
+
+    else:
+
+        @staticmethod
+        def _visit_filter(f):
+            return f.check(file=1)
 
     def _tryconvertpyarg(self, x):
         """Convert a dotted module name to path."""
