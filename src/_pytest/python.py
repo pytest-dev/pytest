@@ -599,6 +599,7 @@ class Package(Module):
         return proxy
 
     def _collectfile(self, path, handle_dupes=True):
+        assert path.isfile()
         ihook = self.gethookproxy(path)
         if not self.isinitpath(path):
             if ihook.pytest_ignore_collect(path=path, config=self.config):
@@ -642,11 +643,12 @@ class Package(Module):
             ):
                 continue
 
-            if path.isdir() and path.join("__init__.py").check(file=1):
-                pkg_prefixes.add(path)
-
-            for x in self._collectfile(path):
-                yield x
+            if path.isdir():
+                if path.join("__init__.py").check(file=1):
+                    pkg_prefixes.add(path)
+            else:
+                for x in self._collectfile(path):
+                    yield x
 
 
 def _get_xunit_setup_teardown(holder, attr_name, param_obj=None):
