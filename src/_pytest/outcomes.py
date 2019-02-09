@@ -159,10 +159,15 @@ def importorskip(modname, minversion=None, reason=None):
         # import but without a __init__.py file
         warnings.simplefilter("ignore")
         try:
-            __import__(modname)
+            mod = __import__(modname)
         except ImportError:
             # Do not raise chained exception here(#1485)
             should_skip = True
+        else:
+            if mod.__file__ is None:
+                if reason is None:
+                    reason = "could not import %r (__file__ is None)" % (modname,)
+                raise Skipped(reason, allow_module_level=True)
     if should_skip:
         if reason is None:
             reason = "could not import %r" % (modname,)
