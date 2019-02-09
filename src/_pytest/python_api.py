@@ -4,6 +4,7 @@ import math
 import pprint
 import sys
 import warnings
+from datetime import timedelta, datetime
 from decimal import Decimal
 from numbers import Number
 
@@ -347,6 +348,43 @@ class ApproxDecimal(ApproxScalar):
     DEFAULT_RELATIVE_TOLERANCE = Decimal("1e-6")
 
 
+class ApproxDateTime(ApproxBase):
+    """
+    Perform approximate comparisons where the expected value is a
+    datetime or timedelta.
+    """
+
+    DEFAULT_ABSOLUTE_TOLERANCE = timedelta(seconds=1)
+
+    def __init__(self, expected, rel=None, abs=None, nan_ok=False):
+        if abs is None:
+            abs = self.DEFAULT_ABSOLUTE_TOLERANCE
+
+        if not isinstance(abs, timedelta):
+            raise TypeError("absolute tolerance must be a timedelta type")
+        if abs < timedelta(0):
+            raise ValueError(
+                "absolute tolerance can't be negative: {}".format(abs))
+
+        if rel is not None:
+            raise ValueError("datetime objects cannot be compared with a "
+                             "relative tolerance")
+        if nan_ok:
+            raise ValueError("datetime objects cannot be compared to NaN")
+
+        super(ApproxDateTime, self).__init__(expected, rel=None, abs=abs,
+                                             nan_ok=False)
+
+    def __repr__(self):
+        if sys.version_info[0] == 2:
+            return "approx({!r} +- {!r})".format(self.expected, self.abs)
+        else:
+            return u"approx({!r} \u00b1 {!r})".format(self.expected, self.abs)
+
+    def __eq__(self, actual):
+        return abs(self.expected - actual) <= self.abs
+
+
 def approx(expected, rel=None, abs=None, nan_ok=False):
     """
     Assert that two numbers (or two sets of numbers) are equal to each other
@@ -531,6 +569,8 @@ def approx(expected, rel=None, abs=None, nan_ok=False):
         and not isinstance(expected, STRING_TYPES)
     ):
         cls = ApproxSequencelike
+    elif isinstance(expected, (datetime, timedelta)):
+        cls = ApproxDateTime
     else:
         raise _non_numeric_type_error(expected, at=None)
 

@@ -2,6 +2,7 @@
 import doctest
 import operator
 import sys
+from datetime import datetime, timezone, timedelta
 from decimal import Decimal
 from fractions import Fraction
 from operator import eq
@@ -59,6 +60,17 @@ class TestApprox(object):
                 pm=plus_minus, tol1=tol1, tol2=tol2
             ),
         )
+
+        expected = datetime(1970, 1, 1, tzinfo=timezone.utc)
+        tolerance = timedelta(minutes=1)
+        assert repr(
+            approx(expected, abs=tolerance)
+        ) == 'approx({!r} {} {!r})'.format(expected, plus_minus, tolerance)
+        expected = timedelta(hours=1)
+        tolerance = timedelta(minutes=1)
+        assert repr(
+            approx(expected, abs=tolerance)
+        ) == 'approx({!r} {} {!r})'.format(expected, plus_minus, tolerance)
 
     @pytest.mark.parametrize(
         "value, repr_string",
@@ -507,3 +519,47 @@ class TestApprox(object):
 
         expected = MySizedIterable()
         assert [1, 2, 3, 4] == approx(expected)
+
+    def test_datetime(self):
+        a_little_earlier = datetime.now()
+        a_little_later = datetime.now()
+        a_minute_later = a_little_earlier + timedelta(seconds=30)
+        assert a_little_later == approx(a_little_earlier)
+        assert a_minute_later != approx(a_little_earlier)
+        assert a_minute_later == approx(a_little_earlier,
+                                        abs=timedelta(minutes=1))
+
+        with pytest.raises(TypeError):
+            approx(a_little_earlier, abs=1)
+        with pytest.raises(ValueError):
+            approx(a_little_earlier, abs=-timedelta(seconds=1))
+        with pytest.raises(ValueError):
+            approx(a_little_earlier, rel=1)
+        with pytest.raises(ValueError):
+            approx(a_little_earlier, rel=timedelta(seconds=1))
+        with pytest.raises(ValueError):
+            approx(a_little_earlier, nan_ok=True)
+        with pytest.raises(TypeError):
+            assert timedelta(seconds=1) == approx(a_little_earlier)
+
+    def test_timedelta(self):
+        an_hour = timedelta(hours=1)
+        an_hour_and_a_bit = timedelta(hours=1, milliseconds=1)
+        an_hour_and_a_bit_more = timedelta(hours=1, seconds=30)
+        assert an_hour_and_a_bit == approx(an_hour)
+        assert an_hour_and_a_bit_more != approx(an_hour)
+        assert an_hour_and_a_bit_more == approx(an_hour,
+                                                abs=timedelta(minutes=1))
+
+        with pytest.raises(TypeError):
+            approx(an_hour, abs=1)
+        with pytest.raises(ValueError):
+            approx(an_hour, abs=-timedelta(seconds=1))
+        with pytest.raises(ValueError):
+            approx(an_hour, rel=1)
+        with pytest.raises(ValueError):
+            approx(an_hour, rel=timedelta(seconds=1))
+        with pytest.raises(ValueError):
+            approx(an_hour, nan_ok=True)
+        with pytest.raises(TypeError):
+            assert datetime.now() == approx(an_hour)
