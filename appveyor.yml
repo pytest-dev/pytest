@@ -2,12 +2,10 @@ environment:
   matrix:
   - TOXENV: "py37-xdist"
   - TOXENV: "py27-xdist"
-  - TOXENV: "py27"
-  - TOXENV: "py37"
   - TOXENV: "linting,docs,doctesting"
-  - TOXENV: "py36"
-  - TOXENV: "py35"
-  - TOXENV: "py34"
+  - TOXENV: "py34-xdist"
+  - TOXENV: "py35-xdist"
+  - TOXENV: "py36-xdist"
   - TOXENV: "pypy"
     PYTEST_NO_COVERAGE: "1"
   # Specialized factors for py27.
