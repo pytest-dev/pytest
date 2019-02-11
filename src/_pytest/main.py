@@ -582,7 +582,7 @@ class Session(nodes.FSCollector):
                 col = self._node_cache[argpath]
             else:
                 collect_root = self._pkg_roots.get(argpath.dirname, self)
-                col = collect_root._collectfile(argpath)
+                col = collect_root._collectfile(argpath, handle_dupes=False)
                 if col:
                     self._node_cache[argpath] = col
             m = self.matchnodes(col, names)
