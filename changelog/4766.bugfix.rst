@@ -1,0 +1,1 @@
+Handle ``-p no:fooplugin`` when passed as single argument.

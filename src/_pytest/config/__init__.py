@@ -480,7 +480,7 @@ class PytestPluginManager(PluginManager):
                     parg = args[i]
                     i += 1
                 elif opt.startswith("-p"):
-                    parg = opt[2:]
+                    parg = opt[2:].lstrip()
                 else:
                     continue
                 self.consider_pluginarg(parg)

@@ -312,6 +312,7 @@ class TestPytestPluginManagerBootstrapming(object):
             pytestpm.consider_preparse(["-phello123"])
         assert '"hello123"' in excinfo.value.args[0]
         pytestpm.consider_preparse(["-pno:hello123"])
+        pytestpm.consider_preparse(["-p no:hello123"])
 
     def test_plugin_prevent_register(self, pytestpm):
         pytestpm.consider_preparse(["xyz", "-p", "no:abc"])
