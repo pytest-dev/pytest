@@ -1,0 +1,1 @@
+Usage errors from argparse are mapped to pytest's ``UsageError``.

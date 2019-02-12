@@ -648,8 +648,27 @@ class Config(object):
         return self.pluginmanager.get_plugin("terminalreporter")._tw
 
     def pytest_cmdline_parse(self, pluginmanager, args):
-        # REF1 assert self == pluginmanager.config, (self, pluginmanager.config)
-        self.parse(args)
+        try:
+            self.parse(args)
+        except UsageError:
+
+            # Handle --version and --help here in a minimal fashion.
+            # This gets done via helpconfig normally, but its
+            # pytest_cmdline_main is not called in case of errors.
+            if getattr(self.option, "version", False) or "--version" in args:
+                from _pytest.helpconfig import showversion
+
+                showversion(self)
+            elif (
+                getattr(self.option, "help", False) or "--help" in args or "-h" in args
+            ):
+                self._parser._getparser().print_help()
+                sys.stdout.write(
+                    "\nNOTE: displaying only minimal help due to UsageError.\n\n"
+                )
+
+            raise
+
         return self
 
     def notify_exception(self, excinfo, option=None):
@@ -760,21 +779,32 @@ class Config(object):
         for name in _iter_rewritable_modules(package_files):
             hook.mark_rewrite(name)
 
-    def _validate_args(self, args):
+    def _validate_args(self, args, via):
         """Validate known args."""
-        self._parser.parse_known_and_unknown_args(
-            args, namespace=copy.copy(self.option)
-        )
+        self._parser._config_source_hint = via
+        try:
+            self._parser.parse_known_and_unknown_args(
+                args, namespace=copy.copy(self.option)
+            )
+        finally:
+            del self._parser._config_source_hint
+
         return args
 
     def _preparse(self, args, addopts=True):
         if addopts:
             env_addopts = os.environ.get("PYTEST_ADDOPTS", "")
             if len(env_addopts):
-                args[:] = self._validate_args(shlex.split(env_addopts)) + args
+                args[:] = (
+                    self._validate_args(shlex.split(env_addopts), "via PYTEST_ADDOPTS")
+                    + args
+                )
         self._initini(args)
         if addopts:
-            args[:] = self._validate_args(self.getini("addopts")) + args
+            args[:] = (
+                self._validate_args(self.getini("addopts"), "via addopts config") + args
+            )
+
         self._checkversion()
         self._consider_importhook(args)
         self.pluginmanager.consider_preparse(args)
