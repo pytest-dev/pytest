@@ -513,6 +513,76 @@ class TestPDB(object):
         assert "1 failed" in rest
         self.flush(child)
 
+    def test_pdb_interaction_continue_recursive(self, testdir):
+        p1 = testdir.makepyfile(
+            mytest="""
+            import pdb
+            import pytest
+
+            count_continue = 0
+
+            # Simulates pdbpp, which injects Pdb into do_debug, and uses
+            # self.__class__ in do_continue.
+            class CustomPdb(pdb.Pdb, object):
+                def do_debug(self, arg):
+                    import sys
+                    import types
+
+                    newglobals = {
+                        'Pdb': self.__class__,  # NOTE: different with pdb.Pdb
+                        'sys': sys,
+                    }
+                    if sys.version_info < (3, ):
+                        do_debug_func = pdb.Pdb.do_debug.im_func
+                    else:
+                        do_debug_func = pdb.Pdb.do_debug
+
+                    orig_do_debug = types.FunctionType(
+                        do_debug_func.__code__, newglobals,
+                        do_debug_func.__name__, do_debug_func.__defaults__,
+                    )
+                    return orig_do_debug(self, arg)
+                do_debug.__doc__ = pdb.Pdb.do_debug.__doc__
+
+                def do_continue(self, *args, **kwargs):
+                    global count_continue
+                    count_continue += 1
+                    return super(CustomPdb, self).do_continue(*args, **kwargs)
+
+            def foo():
+                print("print_from_foo")
+
+            def test_1():
+                i = 0
+                print("hello17")
+                pytest.set_trace()
+                x = 3
+                print("hello18")
+
+                assert count_continue == 2, "unexpected_failure: %d != 2" % count_continue
+                pytest.fail("expected_failure")
+        """
+        )
+        child = testdir.spawn_pytest("--pdbcls=mytest:CustomPdb %s" % str(p1))
+        child.expect(r"PDB set_trace \(IO-capturing turned off\)")
+        child.expect(r"\n\(Pdb")
+        child.sendline("debug foo()")
+        child.expect("ENTERING RECURSIVE DEBUGGER")
+        child.expect(r"\n\(\(Pdb")
+        child.sendline("c")
+        child.expect("LEAVING RECURSIVE DEBUGGER")
+        assert b"PDB continue" not in child.before
+        assert b"print_from_foo" in child.before
+        child.sendline("c")
+        child.expect(r"PDB continue \(IO-capturing resumed\)")
+        rest = child.read().decode("utf8")
+        assert "hello17" in rest  # out is captured
+        assert "hello18" in rest  # out is captured
+        assert "1 failed" in rest
+        assert "Failed: expected_failure" in rest
+        assert "AssertionError: unexpected_failure" not in rest
+        self.flush(child)
+
     def test_pdb_without_capture(self, testdir):
         p1 = testdir.makepyfile(
             """

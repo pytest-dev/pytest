@@ -1,0 +1,1 @@
+Fix output capturing when using pdb++ with recursive debugging.
