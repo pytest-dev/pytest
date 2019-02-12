@@ -3,7 +3,7 @@ trigger:
 - features
 
 variables:
-  PYTEST_ADDOPTS: "--junitxml=build/test-results/$(tox.env).xml --color=yes"
+  PYTEST_ADDOPTS: "--junitxml=build/test-results/$(tox.env).xml"
 
 jobs:
 
