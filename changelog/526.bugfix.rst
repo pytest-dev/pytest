@@ -1,1 +1,0 @@
-Fix "ValueError: Plugin already registered" exceptions when running in build directories that symlink to actual source.
