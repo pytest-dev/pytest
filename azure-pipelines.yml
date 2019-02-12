@@ -1,11 +1,9 @@
-# Python package
-# Create and test a Python package on multiple Python versions.
-# Add steps that analyze code, save the dist with the build record, publish to a PyPI-compatible index, and more:
-# https://docs.microsoft.com/azure/devops/pipelines/languages/python
-
 trigger:
 - master
 - features
+
+variables:
+  PYTEST_ADDOPTS: "--junitxml=build/test-results/$(tox.env).xml --color=yes"
 
 jobs:
 
@@ -37,7 +35,7 @@ jobs:
   - script: python -m pip install --upgrade pip && pip install tox
     displayName: 'Install tox'
 
-  - script: python -m tox -e $(tox.env) -- --junitxml=build/test-results/$(tox.env).xml
+  - script: python -m tox -e $(tox.env)
     displayName: 'Run tests'
 
   - task: PublishTestResults@2
