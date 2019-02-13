@@ -599,7 +599,12 @@ class Package(Module):
         return proxy
 
     def _collectfile(self, path, handle_dupes=True):
-        assert path.isfile()
+        assert path.isfile(), "%r is not a file (isdir=%r, exists=%r, islink=%r)" % (
+            path,
+            path.isdir(),
+            path.exists(),
+            path.islink(),
+        )
         ihook = self.gethookproxy(path)
         if not self.isinitpath(path):
             if ihook.pytest_ignore_collect(path=path, config=self.config):
