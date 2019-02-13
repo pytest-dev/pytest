@@ -1,5 +1,7 @@
 __all__ = ["__version__"]
 
+
+# DUMMY
 try:
     from ._version import version as __version__
 except ImportError:
