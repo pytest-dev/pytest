@@ -599,7 +599,12 @@ class Package(Module):
         return proxy
 
     def _collectfile(self, path, handle_dupes=True):
-        assert path.isfile()
+        assert path.isfile(), "%r is not a file (isdir=%r, exists=%r, islink=%r)" % (
+            path,
+            path.isdir(),
+            path.exists(),
+            path.islink(),
+        )
         ihook = self.gethookproxy(path)
         if not self.isinitpath(path):
             if ihook.pytest_ignore_collect(path=path, config=self.config):
@@ -632,7 +637,8 @@ class Package(Module):
         pkg_prefixes = set()
         for path in this_path.visit(rec=self._recurse, bf=True, sort=True):
             # We will visit our own __init__.py file, in which case we skip it.
-            if path.isfile():
+            is_file = path.isfile()
+            if is_file:
                 if path.basename == "__init__.py" and path.dirpath() == this_path:
                     continue
 
@@ -643,12 +649,14 @@ class Package(Module):
             ):
                 continue
 
-            if path.isdir():
-                if path.join("__init__.py").check(file=1):
-                    pkg_prefixes.add(path)
-            else:
+            if is_file:
                 for x in self._collectfile(path):
                     yield x
+            elif not path.isdir():
+                # Broken symlink or invalid/missing file.
+                continue
+            elif path.join("__init__.py").check(file=1):
+                pkg_prefixes.add(path)
 
 
 def _get_xunit_setup_teardown(holder, attr_name, param_obj=None):
