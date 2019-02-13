@@ -280,7 +280,9 @@ class TerminalReporter(object):
 
     def write_fspath_result(self, nodeid, res, **markup):
         fspath = self.config.rootdir.join(nodeid.split("::")[0])
-        if fspath != self.currentfspath:
+        # NOTE: explicitly check for None to work around py bug, and for less
+        # overhead in general (https://github.com/pytest-dev/py/pull/207).
+        if self.currentfspath is None or fspath != self.currentfspath:
             if self.currentfspath is not None and self._show_progress_info:
                 self._write_progress_information_filling_space()
             self.currentfspath = fspath
