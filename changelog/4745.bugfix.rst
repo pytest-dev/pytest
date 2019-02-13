@@ -1,1 +1,0 @@
-Fix/improve collection of args when passing in ``__init__.py`` and a test file.

@@ -1,2 +1,0 @@
-Fix regression where ``setUpClass`` would always be called in subclasses even if all tests
-were skipped by a ``unittest.skip()`` decorator applied in the subclass.

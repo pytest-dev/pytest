@@ -1,2 +1,0 @@
-Some verbosity related attributes of the TerminalReporter plugin are now
-read only properties.
