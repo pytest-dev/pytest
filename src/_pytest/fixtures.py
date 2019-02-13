@@ -4,6 +4,7 @@ from __future__ import print_function
 
 import functools
 import inspect
+import itertools
 import sys
 import warnings
 from collections import defaultdict
@@ -13,7 +14,6 @@ from collections import OrderedDict
 import attr
 import py
 import six
-from more_itertools import flatten
 
 import _pytest
 from _pytest import nodes
@@ -1109,7 +1109,7 @@ class FixtureManager(object):
             argnames = getfuncargnames(func, cls=cls)
         else:
             argnames = ()
-        usefixtures = flatten(
+        usefixtures = itertools.chain.from_iterable(
             mark.args for mark in node.iter_markers(name="usefixtures")
         )
         initialnames = tuple(usefixtures) + argnames
