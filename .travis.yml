@@ -7,6 +7,8 @@ stages:
   if: repo = pytest-dev/pytest AND tag IS NOT present
 - name: deploy
   if: repo = pytest-dev/pytest AND tag IS present
+- name: cron_only
+  if: type = cron
 python:
   - '3.7'
 install:
@@ -40,8 +42,6 @@ jobs:
       python: '3.5'
     - env: TOXENV=py36
       python: '3.6'
-    - env: TOXENV=py38
-      python: '3.8-dev'
     - env: TOXENV=py37
     - &test-macos
       language: generic
@@ -64,6 +64,10 @@ jobs:
     - env: TOXENV=py37-xdist
     - env: TOXENV=linting,docs,doctesting
       python: '3.7'
+
+    - stage: cron_only
+      env: TOXENV=py38
+      python: '3.8-dev'
 
     - stage: deploy
       python: '3.6'
