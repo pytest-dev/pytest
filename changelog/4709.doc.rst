@@ -1,2 +1,0 @@
-Document how to customize test failure messages when using
-``pytest.warns``.

@@ -435,13 +435,6 @@ class LoggingPlugin(object):
             # terminal reporter is disabled e.g. by pytest-xdist.
             return
 
-        # FIXME don't set verbosity level and derived attributes of
-        # terminalwriter directly
-        terminal_reporter.verbosity = config.option.verbose
-        terminal_reporter.showheader = terminal_reporter.verbosity >= 0
-        terminal_reporter.showfspath = terminal_reporter.verbosity >= 0
-        terminal_reporter.showlongtestinfo = terminal_reporter.verbosity > 0
-
         capture_manager = config.pluginmanager.get_plugin("capturemanager")
         # if capturemanager plugin is disabled, live logging still works.
         log_cli_handler = _LiveLoggingStreamHandler(terminal_reporter, capture_manager)

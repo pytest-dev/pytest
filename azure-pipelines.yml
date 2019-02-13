@@ -1,0 +1,45 @@
+trigger:
+- master
+- features
+
+variables:
+  PYTEST_ADDOPTS: "--junitxml=build/test-results/$(tox.env).xml"
+
+jobs:
+
+- job: 'Test'
+  pool:
+    vmImage: "vs2017-win2016"
+  strategy:
+    matrix:
+      py27:
+        python.version: '2.7'
+        tox.env: 'py27'
+      py35:
+        python.version: '3.5'
+        tox.env: 'py35'
+      py36:
+        python.version: '3.6'
+        tox.env: 'py36'
+      py37:
+        python.version: '3.7'
+        tox.env: 'py37'
+    maxParallel: 4
+
+  steps:
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '$(python.version)'
+      architecture: 'x64'
+
+  - script: python -m pip install --upgrade pip && pip install tox
+    displayName: 'Install tox'
+
+  - script: python -m tox -e $(tox.env)
+    displayName: 'Run tests'
+
+  - task: PublishTestResults@2
+    inputs:
+      testResultsFiles: 'build/test-results/$(tox.env).xml'
+      testRunTitle: '$(tox.env)'
+    condition: succeededOrFailed()
