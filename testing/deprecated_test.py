@@ -3,7 +3,6 @@ from __future__ import division
 from __future__ import print_function
 
 import os
-import sys
 
 import pytest
 from _pytest.warning_types import PytestDeprecationWarning
@@ -221,24 +220,6 @@ def test_fixture_named_request(testdir):
             "*'request' is a reserved name for fixtures and will raise an error in future versions"
         ]
     )
-
-
-def test_python_deprecation(testdir):
-    result = testdir.runpytest()
-    python_ver = ".".join(str(x) for x in sys.version_info[:3])
-    msg = "You are using Python {}, which will no longer be supported in pytest 5.0".format(
-        python_ver
-    )
-    if sys.version_info[:2] <= (3, 4):
-        result.stdout.fnmatch_lines(
-            [
-                msg,
-                "For more information, please read:",
-                "  https://docs.pytest.org/en/latest/py27-py34-deprecation.html",
-            ]
-        )
-    else:
-        assert msg not in result.stdout.str()
 
 
 def test_pytest_warns_unknown_kwargs():

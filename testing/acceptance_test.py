@@ -854,9 +854,7 @@ class TestDurations(object):
         result = testdir.runpytest("--durations=2")
         assert result.ret == 0
         lines = result.stdout.get_lines_after("*slowest*durations*")
-        # account for the "deprecated python version" header
-        index = 2 if sys.version_info[:2] > (3, 4) else 6
-        assert "4 passed" in lines[index]
+        assert "4 passed" in lines[2]
 
     def test_calls_showall(self, testdir):
         testdir.makepyfile(self.source)

@@ -1,0 +1,5 @@
+The warning about Python 2.7 and 3.4 not being supported in pytest 5.0 has been removed.
+
+In the end it was considered to be more
+of a nuisance than actual utility and users of those Python versions shouldn't have problems as ``pip`` will not
+install pytest 5.0 on those interpreters.
