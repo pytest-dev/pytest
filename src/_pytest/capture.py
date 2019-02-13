@@ -400,7 +400,7 @@ def safe_text_dupfile(f, mode, encoding=None):
         if "b" not in mode:
             mode += "b"
         f = os.fdopen(newfd, mode, 0)  # no buffering
-    return EncodedFile(f, encoding or "UTF8")
+    return EncodedFile(f, encoding)
 
 
 class EncodedFile(object):
