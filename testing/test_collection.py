@@ -1177,3 +1177,32 @@ def test_collectignore_via_conftest(testdir, monkeypatch):
 
     result = testdir.runpytest()
     assert result.ret == EXIT_NOTESTSCOLLECTED
+
+
+def test_collect_pkg_init_and_file_in_args(testdir):
+    subdir = testdir.mkdir("sub")
+    init = subdir.ensure("__init__.py")
+    init.write("def test_init(): pass")
+    p = subdir.ensure("test_file.py")
+    p.write("def test_file(): pass")
+
+    # NOTE: without "-o python_files=*.py" this collects test_file.py twice.
+    # This changed/broke with "Add package scoped fixtures #2283" (2b1410895)
+    # initially (causing a RecursionError).
+    result = testdir.runpytest("-v", str(init), str(p))
+    result.stdout.fnmatch_lines(
+        [
+            "sub/test_file.py::test_file PASSED*",
+            "sub/test_file.py::test_file PASSED*",
+            "*2 passed in*",
+        ]
+    )
+
+    result = testdir.runpytest("-v", "-o", "python_files=*.py", str(init), str(p))
+    result.stdout.fnmatch_lines(
+        [
+            "sub/__init__.py::test_init PASSED*",
+            "sub/test_file.py::test_file PASSED*",
+            "*2 passed in*",
+        ]
+    )

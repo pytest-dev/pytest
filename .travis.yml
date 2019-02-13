@@ -17,10 +17,10 @@ env:
     # Specialized factors for py27.
     - TOXENV=py27-nobyte
     - TOXENV=py27-xdist
-    - TOXENV=py27-pluggymaster PYTEST_NO_COVERAGE=1
+    - TOXENV=py27-pluggymaster
     # Specialized factors for py37.
     - TOXENV=py37-pexpect,py37-trial,py37-numpy
-    - TOXENV=py37-pluggymaster PYTEST_NO_COVERAGE=1
+    - TOXENV=py37-pluggymaster
     - TOXENV=py37-freeze PYTEST_NO_COVERAGE=1
 
 matrix:

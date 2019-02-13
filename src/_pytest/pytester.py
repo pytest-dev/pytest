@@ -81,7 +81,11 @@ class LsofFdLeakChecker(object):
 
     def _exec_lsof(self):
         pid = os.getpid()
-        return subprocess.check_output(("lsof", "-Ffn0", "-p", str(pid))).decode()
+        # py3: use subprocess.DEVNULL directly.
+        with open(os.devnull, "wb") as devnull:
+            return subprocess.check_output(
+                ("lsof", "-Ffn0", "-p", str(pid)), stderr=devnull
+            ).decode()
 
     def _parse_lsof_output(self, out):
         def isopen(line):

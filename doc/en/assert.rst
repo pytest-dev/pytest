@@ -205,8 +205,8 @@ Special comparisons are done for a number of cases:
 
 See the :ref:`reporting demo <tbreportdemo>` for many more examples.
 
-Defining your own assertion comparison
-----------------------------------------------
+Defining your own explanation for failed assertions
+---------------------------------------------------
 
 It is possible to add your own detailed explanations by implementing
 the ``pytest_assertrepr_compare`` hook.

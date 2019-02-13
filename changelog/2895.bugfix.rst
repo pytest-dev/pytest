@@ -1,1 +1,0 @@
-The ``pytest_report_collectionfinish`` hook now is also called with ``--collect-only``.
