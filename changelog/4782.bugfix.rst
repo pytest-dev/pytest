@@ -1,0 +1,1 @@
+Fix ``AssertionError`` with collection of broken symlinks with packages.
