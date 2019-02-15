@@ -27,7 +27,7 @@ env:
 matrix:
   allow_failures:
     - python: '3.8-dev'
-      env: TOXENV=py38
+      env: TOXENV=py38-xdist
 
 jobs:
   include:
@@ -35,11 +35,11 @@ jobs:
     - env: TOXENV=pypy PYTEST_NO_COVERAGE=1
       python: 'pypy-5.4'
       dist: trusty
-    - env: TOXENV=py34
+    - env: TOXENV=py34-xdist
       python: '3.4'
-    - env: TOXENV=py35
+    - env: TOXENV=py35-xdist
       python: '3.5'
-    - env: TOXENV=py36
+    - env: TOXENV=py36-xdist
       python: '3.6'
     - env: TOXENV=py37
     - &test-macos
@@ -49,9 +49,9 @@ jobs:
       sudo: required
       install:
         - python -m pip install --pre tox
-      env: TOXENV=py27
+      env: TOXENV=py27-xdist
     - <<: *test-macos
-      env: TOXENV=py37
+      env: TOXENV=py37-xdist
       before_install:
         - brew update
         - brew upgrade python
@@ -65,7 +65,7 @@ jobs:
       python: '3.7'
 
     - stage: cron_only
-      env: TOXENV=py38
+      env: TOXENV=py38-xdist
       python: '3.8-dev'
 
     - stage: deploy
