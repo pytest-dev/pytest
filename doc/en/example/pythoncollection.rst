@@ -60,7 +60,7 @@ Example:
 
 .. code-block:: pytest
 
-    $ pytest path_a path_a
+    pytest path_a path_a
 
     ...
     collected 1 item
@@ -73,7 +73,7 @@ Example:
 
 .. code-block:: pytest
 
-    $ pytest --keep-duplicates path_a path_a
+    pytest --keep-duplicates path_a path_a
 
     ...
     collected 2 items
@@ -85,7 +85,7 @@ Example:
 
 .. code-block:: pytest
 
-    $ pytest test_a.py test_a.py
+    pytest test_a.py test_a.py
 
     ...
     collected 2 items
@@ -180,7 +180,7 @@ example if you have unittest2 installed you can type:
 
 .. code-block:: bash
 
-    $ pytest --pyargs unittest2.test.test_skipping -q
+    pytest --pyargs unittest2.test.test_skipping -q
 
 which would run the respective test module.  Like with
 other options, through an ini-file and the :confval:`addopts` option you
@@ -203,7 +203,7 @@ You can always peek at the collection tree without running tests like this:
 
 .. code-block:: pytest
 
-    $ pytest --collect-only pythoncollection.py
+    . $ pytest --collect-only pythoncollection.py
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
@@ -263,7 +263,7 @@ leave out the ``setup.py`` file:
 
 .. code-block:: pytest
 
-    $ pytest --collect-only
+    #$ pytest --collect-only
     ====== test session starts ======
     platform linux2 -- Python 2.7.10, pytest-2.9.1, py-1.4.31, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: pytest.ini

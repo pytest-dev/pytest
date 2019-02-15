@@ -8,7 +8,7 @@ can change the pattern by issuing:
 
 .. code-block:: bash
 
-    $ pytest --doctest-glob='*.rst'
+    pytest --doctest-glob='*.rst'
 
 on the command line. Since version ``2.9``, ``--doctest-glob``
 can be given multiple times in the command-line.
@@ -32,7 +32,7 @@ python test modules):
 
 .. code-block:: bash
 
-    $ pytest --doctest-modules
+    pytest --doctest-modules
 
 You can make these changes permanent in your project by
 putting them into a pytest.ini file like this:
@@ -133,7 +133,7 @@ you want to continue the test even when you have failures, do:
 
 .. code-block:: bash
 
-    $ pytest --doctest-modules --doctest-continue-on-failure
+    pytest --doctest-modules --doctest-continue-on-failure
 
 
 .. _`doctest_namespace`:
@@ -183,8 +183,8 @@ by using one of standard doctest modules format in options
 
 .. code-block:: bash
 
-    $ pytest --doctest-modules --doctest-report none
-    $ pytest --doctest-modules --doctest-report udiff
-    $ pytest --doctest-modules --doctest-report cdiff
-    $ pytest --doctest-modules --doctest-report ndiff
-    $ pytest --doctest-modules --doctest-report only_first_failure
+    pytest --doctest-modules --doctest-report none
+    pytest --doctest-modules --doctest-report udiff
+    pytest --doctest-modules --doctest-report cdiff
+    pytest --doctest-modules --doctest-report ndiff
+    pytest --doctest-modules --doctest-report only_first_failure
