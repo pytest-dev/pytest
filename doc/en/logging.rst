@@ -198,6 +198,9 @@ option names are:
 * ``log_file_format``
 * ``log_file_date_format``
 
+You can call ``set_log_path()`` to customize the log_file path dynamically. This functionality
+is considered **experimental**.
+
 .. _log_release_notes:
 
 Release notes
