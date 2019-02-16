@@ -18,6 +18,48 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+pytest 4.3.0 (2019-02-16)
+=========================
+
+Deprecations
+------------
+
+- `#4724 <https://github.com/pytest-dev/pytest/issues/4724>`_: ``pytest.warns()`` now emits a warning when it receives unknown keyword arguments.
+
+  This will be changed into an error in the future.
+
+
+
+Features
+--------
+
+- `#2753 <https://github.com/pytest-dev/pytest/issues/2753>`_: Usage errors from argparse are mapped to pytest's ``UsageError``.
+
+
+- `#3711 <https://github.com/pytest-dev/pytest/issues/3711>`_: Add the ``--ignore-glob`` parameter to exclude test-modules with Unix shell-style wildcards.
+  Add the ``collect_ignore_glob`` for ``conftest.py`` to exclude test-modules with Unix shell-style wildcards.
+
+
+- `#4698 <https://github.com/pytest-dev/pytest/issues/4698>`_: The warning about Python 2.7 and 3.4 not being supported in pytest 5.0 has been removed.
+
+  In the end it was considered to be more
+  of a nuisance than actual utility and users of those Python versions shouldn't have problems as ``pip`` will not
+  install pytest 5.0 on those interpreters.
+
+
+- `#4707 <https://github.com/pytest-dev/pytest/issues/4707>`_: With the help of new ``set_log_path()`` method there is a way to set ``log_file`` paths from hooks.
+
+
+
+Bug Fixes
+---------
+
+- `#4651 <https://github.com/pytest-dev/pytest/issues/4651>`_: ``--help`` and ``--version`` are handled with ``UsageError``.
+
+
+- `#4782 <https://github.com/pytest-dev/pytest/issues/4782>`_: Fix ``AssertionError`` with collection of broken symlinks with packages.
+
+
 pytest 4.2.1 (2019-02-12)
 =========================
 

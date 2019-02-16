@@ -1,1 +1,0 @@
-With the help of new ``set_log_path()`` method there is a way to set ``log_file`` paths from hooks.
