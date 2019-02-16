@@ -6,8 +6,6 @@ stages:
   if: repo = pytest-dev/pytest AND tag IS NOT present
 - name: deploy
   if: repo = pytest-dev/pytest AND tag IS present
-- name: cron_only
-  if: type = cron
 python:
   - '3.7'
 install:
@@ -58,15 +56,16 @@ jobs:
         - brew unlink python
         - brew link python
 
+    # Jobs only run via Travis cron jobs (currently daily).
+    - env: TOXENV=py38-xdist
+      python: '3.8-dev'
+      if: type = cron
+
     - stage: baseline
       env: TOXENV=py27-pexpect,py27-trial,py27-numpy
     - env: TOXENV=py37-xdist
     - env: TOXENV=linting,docs,doctesting
       python: '3.7'
-
-    - stage: cron_only
-      env: TOXENV=py38-xdist
-      python: '3.8-dev'
 
     - stage: deploy
       python: '3.6'
