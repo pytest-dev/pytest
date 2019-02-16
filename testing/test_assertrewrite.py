@@ -1308,10 +1308,17 @@ class TestEarlyRewriteBailout(object):
     @pytest.mark.skipif(
         sys.platform.startswith("win32"), reason="cannot remove cwd on Windows"
     )
-    def test_cwd_changed(self, testdir):
+    def test_cwd_changed(self, testdir, monkeypatch):
+        # Setup conditions for py's fspath trying to import pathlib on py34
+        # always (previously triggered via xdist only).
+        # Ref: https://github.com/pytest-dev/py/pull/207
+        monkeypatch.setattr(sys, "path", [""] + sys.path)
+        if "pathlib" in sys.modules:
+            del sys.modules["pathlib"]
+
         testdir.makepyfile(
             **{
-                "test_bar.py": """
+                "test_setup_nonexisting_cwd.py": """
                 import os
                 import shutil
                 import tempfile
@@ -1320,7 +1327,7 @@ class TestEarlyRewriteBailout(object):
                 os.chdir(d)
                 shutil.rmtree(d)
             """,
-                "test_foo.py": """
+                "test_test.py": """
                 def test():
                     pass
             """,

@@ -113,11 +113,12 @@ class Node(object):
 
         :raise ValueError: if ``warning`` instance is not a subclass of PytestWarning.
 
-        Example usage::
+        Example usage:
 
         .. code-block:: python
 
             node.warn(PytestWarning("some message"))
+
         """
         from _pytest.warning_types import PytestWarning
 
