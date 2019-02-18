@@ -797,6 +797,33 @@ Special Variables
 pytest treats some global variables in a special manner when defined in a test module.
 
 
+collect_ignore
+~~~~~~~~~~~~~~
+
+**Tutorial**: :ref:`customizing-test-collection`
+
+Can be declared in *conftest.py files* to exclude test directories or modules.
+Needs to be ``list[str]``.
+
+.. code-block:: python
+
+  collect_ignore = ["setup.py"]
+
+
+collect_ignore_glob
+~~~~~~~~~~~~~~~~~~~
+
+**Tutorial**: :ref:`customizing-test-collection`
+
+Can be declared in *conftest.py files* to exclude test directories or modules
+with Unix shell-style wildcards. Needs to be ``list[str]`` where ``str`` can
+contain glob patterns.
+
+.. code-block:: python
+
+  collect_ignore_glob = ["*_ignore.py"]
+
+
 pytest_plugins
 ~~~~~~~~~~~~~~
 

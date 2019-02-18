@@ -374,6 +374,26 @@ class TestCustomConftests(object):
         assert result.ret == 0
         assert "passed" in result.stdout.str()
 
+    def test_collectignoreglob_exclude_on_option(self, testdir):
+        testdir.makeconftest(
+            """
+            collect_ignore_glob = ['*w*l[dt]*']
+            def pytest_addoption(parser):
+                parser.addoption("--XX", action="store_true", default=False)
+            def pytest_configure(config):
+                if config.getvalue("XX"):
+                    collect_ignore_glob[:] = []
+        """
+        )
+        testdir.makepyfile(test_world="def test_hello(): pass")
+        testdir.makepyfile(test_welt="def test_hallo(): pass")
+        result = testdir.runpytest()
+        assert result.ret == EXIT_NOTESTSCOLLECTED
+        result.stdout.fnmatch_lines("*collected 0 items*")
+        result = testdir.runpytest("--XX")
+        assert result.ret == 0
+        result.stdout.fnmatch_lines("*2 passed*")
+
     def test_pytest_fs_collect_hooks_are_seen(self, testdir):
         testdir.makeconftest(
             """

@@ -11,6 +11,7 @@ import warnings
 import six
 
 import _pytest._code
+from _pytest.deprecated import PYTEST_WARNS_UNKNOWN_KWARGS
 from _pytest.deprecated import WARNS_EXEC
 from _pytest.fixtures import yield_fixture
 from _pytest.outcomes import fail
@@ -84,10 +85,12 @@ def warns(expected_warning, *args, **kwargs):
 
     """
     __tracebackhide__ = True
-    match_expr = None
     if not args:
-        if "match" in kwargs:
-            match_expr = kwargs.pop("match")
+        match_expr = kwargs.pop("match", None)
+        if kwargs:
+            warnings.warn(
+                PYTEST_WARNS_UNKNOWN_KWARGS.format(args=sorted(kwargs)), stacklevel=2
+            )
         return WarningsChecker(expected_warning, match_expr=match_expr)
     elif isinstance(args[0], str):
         warnings.warn(WARNS_EXEC, stacklevel=2)
@@ -97,12 +100,12 @@ def warns(expected_warning, *args, **kwargs):
         loc = frame.f_locals.copy()
         loc.update(kwargs)
 
-        with WarningsChecker(expected_warning, match_expr=match_expr):
+        with WarningsChecker(expected_warning):
             code = _pytest._code.Source(code).compile()
             six.exec_(code, frame.f_globals, loc)
     else:
         func = args[0]
-        with WarningsChecker(expected_warning, match_expr=match_expr):
+        with WarningsChecker(expected_warning):
             return func(*args[1:], **kwargs)
 
 

@@ -436,10 +436,8 @@ Running it results in some skips if we don't have all the python interpreters in
 .. code-block:: pytest
 
    . $ pytest -rs -q multipython.py
-   ...sss...sssssssss...sss...                                          [100%]
-   ========================= short test summary info ==========================
-   SKIPPED [15] $REGENDOC_TMPDIR/CWD/multipython.py:30: 'python3.4' not found
-   12 passed, 15 skipped in 0.12 seconds
+   ...........................                                          [100%]
+   27 passed in 0.12 seconds
 
 Indirect parametrization of optional implementations/imports
 --------------------------------------------------------------------

@@ -1002,3 +1002,51 @@ def test_log_in_hooks(testdir):
         assert "sessionstart" in contents
         assert "runtestloop" in contents
         assert "sessionfinish" in contents
+
+
+def test_log_set_path(testdir):
+    report_dir_base = testdir.tmpdir.strpath
+
+    testdir.makeini(
+        """
+        [pytest]
+        log_file_level = DEBUG
+        log_cli=true
+        """
+    )
+    testdir.makeconftest(
+        """
+            import os
+            import pytest
+            @pytest.hookimpl(hookwrapper=True, tryfirst=True)
+            def pytest_runtest_setup(item):
+                config = item.config
+                logging_plugin = config.pluginmanager.get_plugin("logging-plugin")
+                report_file = os.path.join({}, item._request.node.name)
+                logging_plugin.set_log_path(report_file)
+                yield
+        """.format(
+            repr(report_dir_base)
+        )
+    )
+    testdir.makepyfile(
+        """
+            import logging
+            logger = logging.getLogger("testcase-logger")
+            def test_first():
+                logger.info("message from test 1")
+                assert True
+
+            def test_second():
+                logger.debug("message from test 2")
+                assert True
+        """
+    )
+    testdir.runpytest()
+    with open(os.path.join(report_dir_base, "test_first"), "r") as rfh:
+        content = rfh.read()
+        assert "message from test 1" in content
+
+    with open(os.path.join(report_dir_base, "test_second"), "r") as rfh:
+        content = rfh.read()
+        assert "message from test 2" in content

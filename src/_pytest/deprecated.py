@@ -14,6 +14,7 @@ from __future__ import print_function
 
 from _pytest.warning_types import PytestDeprecationWarning
 from _pytest.warning_types import RemovedInPytest4Warning
+from _pytest.warning_types import UnformattedWarning
 
 
 YIELD_TESTS = "yield tests were removed in pytest 4.0 - {name} will be ignored"
@@ -86,4 +87,10 @@ PYTEST_ENSURETEMP = RemovedInPytest4Warning(
 PYTEST_LOGWARNING = PytestDeprecationWarning(
     "pytest_logwarning is deprecated, no longer being called, and will be removed soon\n"
     "please use pytest_warning_captured instead"
+)
+
+PYTEST_WARNS_UNKNOWN_KWARGS = UnformattedWarning(
+    PytestDeprecationWarning,
+    "pytest.warns() got unexpected keyword arguments: {args!r}.\n"
+    "This will be an error in future versions.",
 )

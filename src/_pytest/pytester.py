@@ -402,6 +402,12 @@ class RunResult(object):
         self.stderr = LineMatcher(errlines)
         self.duration = duration
 
+    def __repr__(self):
+        return (
+            "<RunResult ret=%r len(stdout.lines)=%d len(stderr.lines)=%d duration=%.2fs>"
+            % (self.ret, len(self.stdout.lines), len(self.stderr.lines), self.duration)
+        )
+
     def parseoutcomes(self):
         """Return a dictionary of outcomestring->num from parsing the terminal
         output that the test process produced.
