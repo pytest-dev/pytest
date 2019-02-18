@@ -25,6 +25,7 @@ Running pytest now produces this output:
     $ pytest test_show_warnings.py
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
+    cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 1 item
 
@@ -155,7 +156,7 @@ DeprecationWarning and PendingDeprecationWarning
 .. versionchanged:: 3.9
 
 By default pytest will display ``DeprecationWarning`` and ``PendingDeprecationWarning`` warnings from
-user code and third-party libraries, as recommended by `PEP-0506 <https://www.python.org/dev/peps/pep-0565>`_.
+user code and third-party libraries, as recommended by `PEP-0565 <https://www.python.org/dev/peps/pep-0565>`_.
 This helps users keep their code modern and avoid breakages when deprecated warnings are effectively removed.
 
 Sometimes it is useful to hide some specific deprecation warnings that happen in code that you have no control over
@@ -232,7 +233,7 @@ You can also use it as a contextmanager::
 .. _warns:
 
 Asserting warnings with the warns function
------------------------------------------------
+------------------------------------------
 
 .. versionadded:: 2.8
 
@@ -290,7 +291,7 @@ Alternatively, you can examine raised warnings in detail using the
 .. _recwarn:
 
 Recording warnings
-------------------------
+------------------
 
 You can record raised warnings either using ``pytest.warns`` or with
 the ``recwarn`` fixture.
@@ -328,6 +329,26 @@ warnings, or index into it to get a particular recorded warning.
 
 Full API: :class:`WarningsRecorder`.
 
+.. _custom_failure_messages:
+
+Custom failure messages
+-----------------------
+
+Recording warnings provides an opportunity to produce custom test
+failure messages for when no warnings are issued or other conditions
+are met.
+
+.. code-block:: python
+
+    def test():
+        with pytest.warns(Warning) as record:
+            f()
+            if not record:
+                pytest.fail("Expected a warning!")
+
+If no warnings are issued when calling ``f``, then ``not record`` will
+evaluate to ``True``.  You can then call ``pytest.fail`` with a
+custom error message.
 
 .. _internal-warnings:
 

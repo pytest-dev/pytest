@@ -17,6 +17,7 @@ import six
 from six import text_type
 
 import _pytest
+from _pytest._io.saferepr import saferepr
 from _pytest.outcomes import fail
 from _pytest.outcomes import TEST_OUTCOME
 
@@ -45,11 +46,11 @@ MODULE_NOT_FOUND_ERROR = "ModuleNotFoundError" if PY36 else "ImportError"
 
 if _PY3:
     from collections.abc import MutableMapping as MappingMixin
-    from collections.abc import Mapping, Sequence
+    from collections.abc import Iterable, Mapping, Sequence, Sized
 else:
     # those raise DeprecationWarnings in Python >=3.7
     from collections import MutableMapping as MappingMixin  # noqa
-    from collections import Mapping, Sequence  # noqa
+    from collections import Iterable, Mapping, Sequence, Sized  # noqa
 
 
 if sys.version_info >= (3, 4):
@@ -294,7 +295,7 @@ def get_real_func(obj):
     else:
         raise ValueError(
             ("could not find real function of {start}\nstopped at {current}").format(
-                start=py.io.saferepr(start_obj), current=py.io.saferepr(obj)
+                start=saferepr(start_obj), current=saferepr(obj)
             )
         )
     if isinstance(obj, functools.partial):

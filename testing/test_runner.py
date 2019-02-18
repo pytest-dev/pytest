@@ -465,12 +465,7 @@ class TestSessionReports(object):
         assert res[1].name == "TestClass"
 
 
-reporttypes = [
-    reports.BaseReport,
-    reports.TestReport,
-    reports.TeardownErrorReport,
-    reports.CollectReport,
-]
+reporttypes = [reports.BaseReport, reports.TestReport, reports.CollectReport]
 
 
 @pytest.mark.parametrize(
@@ -735,6 +730,22 @@ def test_importorskip_module_level(testdir):
     """
     )
     result = testdir.runpytest()
+    result.stdout.fnmatch_lines(["*collected 0 items / 1 skipped*"])
+
+
+def test_importorskip_custom_reason(testdir):
+    """make sure custom reasons are used"""
+    testdir.makepyfile(
+        """
+        import pytest
+        foobarbaz = pytest.importorskip("foobarbaz2", reason="just because")
+
+        def test_foo():
+            pass
+    """
+    )
+    result = testdir.runpytest("-ra")
+    result.stdout.fnmatch_lines(["*just because*"])
     result.stdout.fnmatch_lines(["*collected 0 items / 1 skipped*"])
 
 

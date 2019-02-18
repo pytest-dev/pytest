@@ -739,7 +739,7 @@ class TestRequestBasic(object):
             def test_function(request, farg):
                 assert set(get_public_names(request.fixturenames)) == \
                        set(["tmpdir", "sarg", "arg1", "request", "farg",
-                            "tmpdir_factory"])
+                            "tmp_path", "tmp_path_factory"])
         """
         )
         reprec = testdir.inline_run()
@@ -1225,6 +1225,45 @@ class TestFixtureUsages(object):
         reprec.assertoutcome(passed=4)
         values = reprec.getcalls("pytest_runtest_call")[0].item.module.values
         assert values == [1, 2, 10, 20]
+
+    def test_setup_functions_as_fixtures(self, testdir):
+        """Ensure setup_* methods obey fixture scope rules (#517, #3094)."""
+        testdir.makepyfile(
+            """
+            import pytest
+
+            DB_INITIALIZED = None
+
+            @pytest.yield_fixture(scope="session", autouse=True)
+            def db():
+                global DB_INITIALIZED
+                DB_INITIALIZED = True
+                yield
+                DB_INITIALIZED = False
+
+            def setup_module():
+                assert DB_INITIALIZED
+
+            def teardown_module():
+                assert DB_INITIALIZED
+
+            class TestClass(object):
+
+                def setup_method(self, method):
+                    assert DB_INITIALIZED
+
+                def teardown_method(self, method):
+                    assert DB_INITIALIZED
+
+                def test_printer_1(self):
+                    pass
+
+                def test_printer_2(self):
+                    pass
+        """
+        )
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines(["* 2 passed in *"])
 
 
 class TestFixtureManagerParseFactories(object):
@@ -3850,3 +3889,14 @@ class TestScopeOrdering(object):
         )
         reprec = testdir.inline_run()
         reprec.assertoutcome(passed=2)
+
+
+def test_call_fixture_function_error():
+    """Check if an error is raised if a fixture function is called directly (#4545)"""
+
+    @pytest.fixture
+    def fix():
+        return 1
+
+    with pytest.raises(pytest.fail.Exception):
+        assert fix() == 1

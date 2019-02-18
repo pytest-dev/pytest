@@ -121,6 +121,22 @@ def test_tmpdir_always_is_realpath(testdir):
     assert not result.ret
 
 
+def test_tmp_path_always_is_realpath(testdir, monkeypatch):
+    # for reasoning see: test_tmpdir_always_is_realpath test-case
+    realtemp = testdir.tmpdir.mkdir("myrealtemp")
+    linktemp = testdir.tmpdir.join("symlinktemp")
+    attempt_symlink_to(linktemp, str(realtemp))
+    monkeypatch.setenv("PYTEST_DEBUG_TEMPROOT", str(linktemp))
+    testdir.makepyfile(
+        """
+        def test_1(tmp_path):
+            assert tmp_path.resolve() == tmp_path
+    """
+    )
+    reprec = testdir.inline_run()
+    reprec.assertoutcome(passed=1)
+
+
 def test_tmpdir_too_long_on_parametrization(testdir):
     testdir.makepyfile(
         """
@@ -337,3 +353,7 @@ def attempt_symlink_to(path, to_path):
         Path(path).symlink_to(Path(to_path))
     except OSError:
         pytest.skip("could not create symbolic link")
+
+
+def test_tmpdir_equals_tmp_path(tmpdir, tmp_path):
+    assert Path(tmpdir) == tmp_path

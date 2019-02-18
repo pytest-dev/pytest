@@ -7,7 +7,6 @@ import sys
 import textwrap
 
 import attr
-import py
 import six
 
 import _pytest.assertion as plugin
@@ -455,10 +454,13 @@ class TestAssert_reprcompare(object):
         assert len(expl) > 1
 
     def test_Sequence(self):
-        col = py.builtin._tryimport("collections.abc", "collections", "sys")
-        if not hasattr(col, "MutableSequence"):
+        if sys.version_info >= (3, 3):
+            import collections.abc as collections_abc
+        else:
+            import collections as collections_abc
+        if not hasattr(collections_abc, "MutableSequence"):
             pytest.skip("cannot import MutableSequence")
-        MutableSequence = col.MutableSequence
+        MutableSequence = collections_abc.MutableSequence
 
         class TestSequence(MutableSequence):  # works with a Sequence subclass
             def __init__(self, iterable):
@@ -487,6 +489,30 @@ class TestAssert_reprcompare(object):
         assert len(expl) > 1
         expl = callequal([(1, 2)], [])
         assert len(expl) > 1
+
+    def test_repr_verbose(self):
+        class Nums:
+            def __init__(self, nums):
+                self.nums = nums
+
+            def __repr__(self):
+                return str(self.nums)
+
+        list_x = list(range(5000))
+        list_y = list(range(5000))
+        list_y[len(list_y) // 2] = 3
+        nums_x = Nums(list_x)
+        nums_y = Nums(list_y)
+
+        assert callequal(nums_x, nums_y) is None
+
+        expl = callequal(nums_x, nums_y, verbose=1)
+        assert "-" + repr(nums_x) in expl
+        assert "+" + repr(nums_y) in expl
+
+        expl = callequal(nums_x, nums_y, verbose=2)
+        assert "-" + repr(nums_x) in expl
+        assert "+" + repr(nums_y) in expl
 
     def test_list_bad_repr(self):
         class A(object):

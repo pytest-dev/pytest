@@ -146,6 +146,7 @@ class TestGeneralUsage(object):
         assert result.ret
         result.stderr.fnmatch_lines(["*ERROR: not found:*{}".format(p2.basename)])
 
+    @pytest.mark.filterwarnings("default")
     def test_better_reporting_on_conftest_load_failure(self, testdir, request):
         """Show a user-friendly traceback on conftest import failures (#486, #3332)"""
         testdir.makepyfile("")
@@ -559,12 +560,11 @@ class TestInvocationVariants(object):
     def test_equivalence_pytest_pytest(self):
         assert pytest.main == py.test.cmdline.main
 
-    def test_invoke_with_string(self, capsys):
-        retcode = pytest.main("-h")
-        assert not retcode
-        out, err = capsys.readouterr()
-        assert "--help" in out
-        pytest.raises(ValueError, lambda: pytest.main(0))
+    def test_invoke_with_invalid_type(self, capsys):
+        with pytest.raises(
+            TypeError, match="expected to be a list or tuple of strings, got: '-h'"
+        ):
+            pytest.main("-h")
 
     def test_invoke_with_path(self, tmpdir, capsys):
         retcode = pytest.main(tmpdir)
@@ -804,8 +804,8 @@ class TestInvocationVariants(object):
         result = testdir.runpytest("-rf")
         lines = result.stdout.str().splitlines()
         for line in lines:
-            if line.startswith("FAIL "):
-                testid = line[5:].strip()
+            if line.startswith(("FAIL ", "FAILED ")):
+                _fail, _sep, testid = line.partition(" ")
                 break
         result = testdir.runpytest(testid, "-rf")
         result.stdout.fnmatch_lines([line, "*1 failed*"])
@@ -965,6 +965,20 @@ def test_import_plugin_unicode_name(testdir):
     )
     r = testdir.runpytest()
     assert r.ret == 0
+
+
+def test_pytest_plugins_as_module(testdir):
+    """Do not raise an error if pytest_plugins attribute is a module (#3899)"""
+    testdir.makepyfile(
+        **{
+            "__init__.py": "",
+            "pytest_plugins.py": "",
+            "conftest.py": "from . import pytest_plugins",
+            "test_foo.py": "def test(): pass",
+        }
+    )
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines("* 1 passed in *")
 
 
 def test_deferred_hook_checking(testdir):

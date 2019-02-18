@@ -84,6 +84,11 @@ will be loaded as well.
     :ref:`full explanation <requiring plugins in non-root conftests>`
     in the Writing plugins section.
 
+.. note::
+   The name ``pytest_plugins`` is reserved and should not be used as a
+   name for a custom plugin module.
+
+
 .. _`findpluginname`:
 
 Finding out which plugins are active

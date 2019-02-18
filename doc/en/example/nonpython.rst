@@ -30,6 +30,7 @@ now execute the test specification:
     nonpython $ pytest test_simple.yml
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
+    cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR/nonpython, inifile:
     collected 2 items
 
@@ -63,8 +64,8 @@ consulted when reporting in ``verbose`` mode:
 
     nonpython $ pytest -v
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.6
-    cachedir: .pytest_cache
+    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python
+    cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR/nonpython, inifile:
     collecting ... collected 2 items
 
@@ -88,11 +89,12 @@ interesting to just look at the collection tree:
     nonpython $ pytest --collect-only
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
+    cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR/nonpython, inifile:
     collected 2 items
-    <Package '$REGENDOC_TMPDIR/nonpython'>
-      <YamlFile 'test_simple.yml'>
-        <YamlItem 'hello'>
-        <YamlItem 'ok'>
+    <Package $REGENDOC_TMPDIR/nonpython>
+      <YamlFile test_simple.yml>
+        <YamlItem hello>
+        <YamlItem ok>
 
     ======================= no tests ran in 0.12 seconds =======================

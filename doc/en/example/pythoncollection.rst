@@ -41,6 +41,9 @@ you will see that ``pytest`` only collects test-modules, which do not match the 
 
     ========================= 5 passed in 0.02 seconds =========================
 
+The ``--ignore-glob`` option allows to ignore test file paths based on Unix shell-style wildcards.
+If you want to exclude test-modules that end with ``_01.py``, execute ``pytest`` with ``--ignore-glob='*_01.py'``.
+
 Deselect tests during test collection
 -------------------------------------
 
@@ -132,12 +135,13 @@ The test collection would look like this:
     $ pytest --collect-only
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
+    cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR, inifile: pytest.ini
     collected 2 items
-    <Module 'check_myapp.py'>
-      <Class 'CheckMyApp'>
-          <Function 'simple_check'>
-          <Function 'complex_check'>
+    <Module check_myapp.py>
+      <Class CheckMyApp>
+          <Function simple_check>
+          <Function complex_check>
 
     ======================= no tests ran in 0.12 seconds =======================
 
@@ -187,13 +191,14 @@ You can always peek at the collection tree without running tests like this:
     . $ pytest --collect-only pythoncollection.py
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
+    cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR, inifile: pytest.ini
     collected 3 items
-    <Module 'CWD/pythoncollection.py'>
-      <Function 'test_function'>
-      <Class 'TestClass'>
-          <Function 'test_method'>
-          <Function 'test_anothermethod'>
+    <Module CWD/pythoncollection.py>
+      <Function test_function>
+      <Class TestClass>
+          <Function test_method>
+          <Function test_anothermethod>
 
     ======================= no tests ran in 0.12 seconds =======================
 
@@ -259,7 +264,22 @@ file will be left out:
     $ pytest --collect-only
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
+    cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR, inifile: pytest.ini
     collected 0 items
 
     ======================= no tests ran in 0.12 seconds =======================
+
+It's also possible to ignore files based on Unix shell-style wildcards by adding
+patterns to ``collect_ignore_glob``.
+
+The following example ``conftest.py`` ignores the file ``setup.py`` and in
+addition all files that end with ``*_py2.py`` when executed with a Python 3
+interpreter::
+
+    # content of conftest.py
+    import sys
+
+    collect_ignore = ["setup.py"]
+    if sys.version_info[0] > 2:
+        collect_ignore_glob = ["*_py2.py"]

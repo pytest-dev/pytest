@@ -240,17 +240,7 @@ class TestClass(object):
         assert result.ret == EXIT_NOTESTSCOLLECTED
 
 
-@pytest.mark.filterwarnings(
-    "ignore:usage of Generator.Function is deprecated, please use pytest.Function instead"
-)
 class TestFunction(object):
-    @pytest.fixture
-    def ignore_parametrized_marks_args(self):
-        """Provides arguments to pytester.runpytest() to ignore the warning about marks being applied directly
-        to parameters.
-        """
-        return ("-W", "ignore:Applying marks directly to parameters")
-
     def test_getmodulecollector(self, testdir):
         item = testdir.getitem("def test_func(): pass")
         modcol = item.getparent(pytest.Module)
@@ -472,7 +462,6 @@ class TestFunction(object):
         rec = testdir.inline_run()
         rec.assertoutcome(passed=1)
 
-    @pytest.mark.filterwarnings("ignore:Applying marks directly to parameters")
     def test_parametrize_with_mark(self, testdir):
         items = testdir.getitems(
             """
@@ -480,7 +469,7 @@ class TestFunction(object):
             @pytest.mark.foo
             @pytest.mark.parametrize('arg', [
                 1,
-                pytest.mark.bar(pytest.mark.baz(2))
+                pytest.param(2, marks=[pytest.mark.baz, pytest.mark.bar])
             ])
             def test_function(arg):
                 pass
@@ -558,37 +547,37 @@ class TestFunction(object):
         assert colitems[2].name == "test2[a-c]"
         assert colitems[3].name == "test2[b-c]"
 
-    def test_parametrize_skipif(self, testdir, ignore_parametrized_marks_args):
+    def test_parametrize_skipif(self, testdir):
         testdir.makepyfile(
             """
             import pytest
 
             m = pytest.mark.skipif('True')
 
-            @pytest.mark.parametrize('x', [0, 1, m(2)])
+            @pytest.mark.parametrize('x', [0, 1, pytest.param(2, marks=m)])
             def test_skip_if(x):
                 assert x < 2
         """
         )
-        result = testdir.runpytest(*ignore_parametrized_marks_args)
+        result = testdir.runpytest()
         result.stdout.fnmatch_lines("* 2 passed, 1 skipped in *")
 
-    def test_parametrize_skip(self, testdir, ignore_parametrized_marks_args):
+    def test_parametrize_skip(self, testdir):
         testdir.makepyfile(
             """
             import pytest
 
             m = pytest.mark.skip('')
 
-            @pytest.mark.parametrize('x', [0, 1, m(2)])
+            @pytest.mark.parametrize('x', [0, 1, pytest.param(2, marks=m)])
             def test_skip(x):
                 assert x < 2
         """
         )
-        result = testdir.runpytest(*ignore_parametrized_marks_args)
+        result = testdir.runpytest()
         result.stdout.fnmatch_lines("* 2 passed, 1 skipped in *")
 
-    def test_parametrize_skipif_no_skip(self, testdir, ignore_parametrized_marks_args):
+    def test_parametrize_skipif_no_skip(self, testdir):
         testdir.makepyfile(
             """
             import pytest
@@ -600,40 +589,40 @@ class TestFunction(object):
                 assert x < 2
         """
         )
-        result = testdir.runpytest(*ignore_parametrized_marks_args)
+        result = testdir.runpytest()
         result.stdout.fnmatch_lines("* 1 failed, 2 passed in *")
 
-    def test_parametrize_xfail(self, testdir, ignore_parametrized_marks_args):
+    def test_parametrize_xfail(self, testdir):
         testdir.makepyfile(
             """
             import pytest
 
             m = pytest.mark.xfail('True')
 
-            @pytest.mark.parametrize('x', [0, 1, m(2)])
+            @pytest.mark.parametrize('x', [0, 1, pytest.param(2, marks=m)])
             def test_xfail(x):
                 assert x < 2
         """
         )
-        result = testdir.runpytest(*ignore_parametrized_marks_args)
+        result = testdir.runpytest()
         result.stdout.fnmatch_lines("* 2 passed, 1 xfailed in *")
 
-    def test_parametrize_passed(self, testdir, ignore_parametrized_marks_args):
+    def test_parametrize_passed(self, testdir):
         testdir.makepyfile(
             """
             import pytest
 
             m = pytest.mark.xfail('True')
 
-            @pytest.mark.parametrize('x', [0, 1, m(2)])
+            @pytest.mark.parametrize('x', [0, 1, pytest.param(2, marks=m)])
             def test_xfail(x):
                 pass
         """
         )
-        result = testdir.runpytest(*ignore_parametrized_marks_args)
+        result = testdir.runpytest()
         result.stdout.fnmatch_lines("* 2 passed, 1 xpassed in *")
 
-    def test_parametrize_xfail_passed(self, testdir, ignore_parametrized_marks_args):
+    def test_parametrize_xfail_passed(self, testdir):
         testdir.makepyfile(
             """
             import pytest
@@ -645,7 +634,7 @@ class TestFunction(object):
                 pass
         """
         )
-        result = testdir.runpytest(*ignore_parametrized_marks_args)
+        result = testdir.runpytest()
         result.stdout.fnmatch_lines("* 3 passed in *")
 
     def test_function_original_name(self, testdir):
@@ -971,7 +960,7 @@ class TestTracebackCutting(object):
 
     def test_filter_traceback_generated_code(self):
         """test that filter_traceback() works with the fact that
-        py.code.Code.path attribute might return an str object.
+        _pytest._code.code.Code.path attribute might return an str object.
         In this case, one of the entries on the traceback was produced by
         dynamically generated code.
         See: https://bitbucket.org/pytest-dev/py/issues/71
@@ -992,7 +981,7 @@ class TestTracebackCutting(object):
 
     def test_filter_traceback_path_no_longer_valid(self, testdir):
         """test that filter_traceback() works with the fact that
-        py.code.Code.path attribute might return an str object.
+        _pytest._code.code.Code.path attribute might return an str object.
         In this case, one of the files in the traceback no longer exists.
         This fixes #1133.
         """

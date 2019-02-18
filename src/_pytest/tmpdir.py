@@ -31,7 +31,7 @@ class TempPathFactory(object):
         # using os.path.abspath() to get absolute path instead of resolve() as it
         # does not work the same in all platforms (see #4427)
         # Path.absolute() exists, but it is not public (see https://bugs.python.org/issue25012)
-        convert=attr.converters.optional(
+        converter=attr.converters.optional(
             lambda p: Path(os.path.abspath(six.text_type(p)))
         )
     )
@@ -63,9 +63,10 @@ class TempPathFactory(object):
             if self._given_basetemp is not None:
                 basetemp = self._given_basetemp
                 ensure_reset_dir(basetemp)
+                basetemp = basetemp.resolve()
             else:
                 from_env = os.environ.get("PYTEST_DEBUG_TEMPROOT")
-                temproot = Path(from_env or tempfile.gettempdir())
+                temproot = Path(from_env or tempfile.gettempdir()).resolve()
                 user = get_user() or "unknown"
                 # use a sub-directory in the temproot to speed-up
                 # make_numbered_dir() call
@@ -167,7 +168,7 @@ def _mk_tmp(request, factory):
 
 
 @pytest.fixture
-def tmpdir(request, tmpdir_factory):
+def tmpdir(tmp_path):
     """Return a temporary directory path object
     which is unique to each test function invocation,
     created as a sub directory of the base temporary
@@ -176,7 +177,7 @@ def tmpdir(request, tmpdir_factory):
 
     .. _`py.path.local`: https://py.readthedocs.io/en/latest/path.html
     """
-    return _mk_tmp(request, tmpdir_factory)
+    return py.path.local(tmp_path)
 
 
 @pytest.fixture

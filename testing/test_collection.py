@@ -374,6 +374,26 @@ class TestCustomConftests(object):
         assert result.ret == 0
         assert "passed" in result.stdout.str()
 
+    def test_collectignoreglob_exclude_on_option(self, testdir):
+        testdir.makeconftest(
+            """
+            collect_ignore_glob = ['*w*l[dt]*']
+            def pytest_addoption(parser):
+                parser.addoption("--XX", action="store_true", default=False)
+            def pytest_configure(config):
+                if config.getvalue("XX"):
+                    collect_ignore_glob[:] = []
+        """
+        )
+        testdir.makepyfile(test_world="def test_hello(): pass")
+        testdir.makepyfile(test_welt="def test_hallo(): pass")
+        result = testdir.runpytest()
+        assert result.ret == EXIT_NOTESTSCOLLECTED
+        result.stdout.fnmatch_lines("*collected 0 items*")
+        result = testdir.runpytest("--XX")
+        assert result.ret == 0
+        result.stdout.fnmatch_lines("*2 passed*")
+
     def test_pytest_fs_collect_hooks_are_seen(self, testdir):
         testdir.makeconftest(
             """
@@ -1144,3 +1164,72 @@ def test_collect_symlink_out_of_tree(testdir):
         ]
     )
     assert result.ret == 0
+
+
+def test_collectignore_via_conftest(testdir, monkeypatch):
+    """collect_ignore in parent conftest skips importing child (issue #4592)."""
+    tests = testdir.mkpydir("tests")
+    tests.ensure("conftest.py").write("collect_ignore = ['ignore_me']")
+
+    ignore_me = tests.mkdir("ignore_me")
+    ignore_me.ensure("__init__.py")
+    ignore_me.ensure("conftest.py").write("assert 0, 'should_not_be_called'")
+
+    result = testdir.runpytest()
+    assert result.ret == EXIT_NOTESTSCOLLECTED
+
+
+def test_collect_pkg_init_and_file_in_args(testdir):
+    subdir = testdir.mkdir("sub")
+    init = subdir.ensure("__init__.py")
+    init.write("def test_init(): pass")
+    p = subdir.ensure("test_file.py")
+    p.write("def test_file(): pass")
+
+    # NOTE: without "-o python_files=*.py" this collects test_file.py twice.
+    # This changed/broke with "Add package scoped fixtures #2283" (2b1410895)
+    # initially (causing a RecursionError).
+    result = testdir.runpytest("-v", str(init), str(p))
+    result.stdout.fnmatch_lines(
+        [
+            "sub/test_file.py::test_file PASSED*",
+            "sub/test_file.py::test_file PASSED*",
+            "*2 passed in*",
+        ]
+    )
+
+    result = testdir.runpytest("-v", "-o", "python_files=*.py", str(init), str(p))
+    result.stdout.fnmatch_lines(
+        [
+            "sub/__init__.py::test_init PASSED*",
+            "sub/test_file.py::test_file PASSED*",
+            "*2 passed in*",
+        ]
+    )
+
+
+@pytest.mark.skipif(
+    not hasattr(py.path.local, "mksymlinkto"),
+    reason="symlink not available on this platform",
+)
+@pytest.mark.parametrize("use_pkg", (True, False))
+def test_collect_sub_with_symlinks(use_pkg, testdir):
+    sub = testdir.mkdir("sub")
+    if use_pkg:
+        sub.ensure("__init__.py")
+    sub.ensure("test_file.py").write("def test_file(): pass")
+
+    # Create a broken symlink.
+    sub.join("test_broken.py").mksymlinkto("test_doesnotexist.py")
+
+    # Symlink that gets collected.
+    sub.join("test_symlink.py").mksymlinkto("test_file.py")
+
+    result = testdir.runpytest("-v", str(sub))
+    result.stdout.fnmatch_lines(
+        [
+            "sub/test_file.py::test_file PASSED*",
+            "sub/test_symlink.py::test_file PASSED*",
+            "*2 passed in*",
+        ]
+    )

@@ -72,8 +72,18 @@ to keep tests separate from actual application code (often a good idea)::
         test_view.py
         ...
 
-This way your tests can run easily against an installed version
-of ``mypkg``.
+This has the following benefits:
+
+* Your tests can run against an installed version after executing ``pip install .``.
+* Your tests can run against the local copy with an editable install after executing ``pip install --editable .``.
+* If you don't have a ``setup.py`` file and are relying on the fact that Python by default puts the current
+  directory in ``sys.path`` to import your package, you can execute ``python -m pytest`` to execute the tests against the
+  local copy directly, without using ``pip``.
+
+.. note::
+
+    See :ref:`pythonpath` for more information about the difference between calling ``pytest`` and
+    ``python -m pytest``.
 
 Note that using this scheme your test files must have **unique names**, because
 ``pytest`` will import them as *top-level* modules since there are no packages

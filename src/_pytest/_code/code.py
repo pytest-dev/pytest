@@ -18,12 +18,11 @@ import six
 from six import text_type
 
 import _pytest
+from _pytest._io.saferepr import saferepr
 from _pytest.compat import _PY2
 from _pytest.compat import _PY3
 from _pytest.compat import PY35
 from _pytest.compat import safe_str
-
-builtin_repr = repr
 
 if _PY3:
     from traceback import format_exception_only
@@ -144,7 +143,7 @@ class Frame(object):
     def repr(self, object):
         """ return a 'safe' (non-recursive, one-line) string repr for 'object'
         """
-        return py.io.saferepr(object)
+        return saferepr(object)
 
     def is_true(self, object):
         return object
@@ -423,7 +422,7 @@ class ExceptionInfo(object):
         if exprinfo is None and isinstance(tup[1], AssertionError):
             exprinfo = getattr(tup[1], "msg", None)
             if exprinfo is None:
-                exprinfo = py.io.saferepr(tup[1])
+                exprinfo = saferepr(tup[1])
             if exprinfo and exprinfo.startswith(cls._assert_start_repr):
                 _striptext = "AssertionError: "
 
@@ -620,7 +619,7 @@ class FormattedExcinfo(object):
         return source
 
     def _saferepr(self, obj):
-        return py.io.saferepr(obj)
+        return saferepr(obj)
 
     def repr_args(self, entry):
         if self.funcargs:
@@ -947,8 +946,6 @@ class ReprEntryNative(TerminalRepr):
 
 
 class ReprEntry(TerminalRepr):
-    localssep = "_ "
-
     def __init__(self, lines, reprfuncargs, reprlocals, filelocrepr, style):
         self.lines = lines
         self.reprfuncargs = reprfuncargs
@@ -970,7 +967,6 @@ class ReprEntry(TerminalRepr):
             red = line.startswith("E   ")
             tw.line(line, bold=True, red=red)
         if self.reprlocals:
-            # tw.sep(self.localssep, "Locals")
             tw.line("")
             self.reprlocals.toterminal(tw)
         if self.reprfileloc:

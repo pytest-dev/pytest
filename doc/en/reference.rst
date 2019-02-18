@@ -618,7 +618,6 @@ Session related reporting hooks:
 .. autofunction:: pytest_terminal_summary
 .. autofunction:: pytest_fixture_setup
 .. autofunction:: pytest_fixture_post_finalizer
-.. autofunction:: pytest_logwarning
 .. autofunction:: pytest_warning_captured
 
 And here is the central hook for reporting about
@@ -725,13 +724,6 @@ MarkGenerator
     :members:
 
 
-MarkInfo
-~~~~~~~~
-
-.. autoclass:: _pytest.mark.MarkInfo
-    :members:
-
-
 Mark
 ~~~~
 
@@ -803,6 +795,33 @@ Special Variables
 -----------------
 
 pytest treats some global variables in a special manner when defined in a test module.
+
+
+collect_ignore
+~~~~~~~~~~~~~~
+
+**Tutorial**: :ref:`customizing-test-collection`
+
+Can be declared in *conftest.py files* to exclude test directories or modules.
+Needs to be ``list[str]``.
+
+.. code-block:: python
+
+  collect_ignore = ["setup.py"]
+
+
+collect_ignore_glob
+~~~~~~~~~~~~~~~~~~~
+
+**Tutorial**: :ref:`customizing-test-collection`
+
+Can be declared in *conftest.py files* to exclude test directories or modules
+with Unix shell-style wildcards. Needs to be ``list[str]`` where ``str`` can
+contain glob patterns.
+
+.. code-block:: python
+
+  collect_ignore_glob = ["*_ignore.py"]
 
 
 pytest_plugins
@@ -896,6 +915,12 @@ Configuration Options
 Here is a list of builtin configuration options that may be written in a ``pytest.ini``, ``tox.ini`` or ``setup.cfg``
 file, usually located at the root of your repository. All options must be under a ``[pytest]`` section
 (``[tool:pytest]`` for ``setup.cfg`` files).
+
+.. warning::
+    Usage of ``setup.cfg`` is not recommended unless for very simple use cases. ``.cfg``
+    files use a different parser than ``pytest.ini`` and ``tox.ini`` which might cause hard to track
+    down problems.
+    When possible, it is recommended to use the latter files to hold your pytest configuration.
 
 Configuration file options may be overwritten in the command-line by using ``-o/--override``, which can also be
 passed multiple times. The expected format is ``name=value``. For example::
@@ -1017,6 +1042,20 @@ passed multiple times. The expected format is ``name=value``. For example::
    This tells pytest to ignore deprecation warnings and turn all other warnings
    into errors. For more information please refer to :ref:`warnings`.
 
+.. confval:: junit_family
+
+    .. versionadded:: 4.2
+
+    Configures the format of the generated JUnit XML file. The possible options are:
+
+    * ``xunit1`` (or ``legacy``): produces old style output, compatible with the xunit 1.0 format. **This is the default**.
+    * ``xunit2``: produces `xunit 2.0 style output <https://github.com/jenkinsci/xunit-plugin/blob/xunit-2.3.2/src/main/resources/org/jenkinsci/plugins/xunit/types/model/xsd/junit-10.xsd>`__,
+        which should be more compatible with latest Jenkins versions.
+
+    .. code-block:: ini
+
+        [pytest]
+        junit_family = xunit2
 
 .. confval:: junit_suite_name
 

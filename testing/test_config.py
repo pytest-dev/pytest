@@ -8,11 +8,12 @@ import textwrap
 import _pytest._code
 import pytest
 from _pytest.config import _iter_rewritable_modules
+from _pytest.config.exceptions import UsageError
 from _pytest.config.findpaths import determine_setup
 from _pytest.config.findpaths import get_common_ancestor
 from _pytest.config.findpaths import getcfg
 from _pytest.main import EXIT_NOTESTSCOLLECTED
-from _pytest.warnings import SHOW_PYTEST_WARNINGS_ARG
+from _pytest.main import EXIT_USAGEERROR
 
 
 class TestParseIni(object):
@@ -793,66 +794,6 @@ def test_collect_pytest_prefix_bug(pytestconfig):
     assert pm.parse_hookimpl_opts(Dummy(), "pytest_something") is None
 
 
-class TestLegacyWarning(object):
-    @pytest.mark.filterwarnings("default")
-    def test_warn_config(self, testdir):
-        testdir.makeconftest(
-            """
-            values = []
-            def pytest_runtest_setup(item):
-                item.config.warn("C1", "hello")
-            def pytest_logwarning(code, message):
-                if message == "hello" and code == "C1":
-                    values.append(1)
-        """
-        )
-        testdir.makepyfile(
-            """
-            def test_proper(pytestconfig):
-                import conftest
-                assert conftest.values == [1]
-        """
-        )
-        result = testdir.runpytest(SHOW_PYTEST_WARNINGS_ARG)
-        result.stdout.fnmatch_lines(
-            ["*hello", "*config.warn has been deprecated*", "*1 passed*"]
-        )
-
-    @pytest.mark.filterwarnings("default")
-    @pytest.mark.parametrize("use_kw", [True, False])
-    def test_warn_on_test_item_from_request(self, testdir, use_kw):
-        code_kw = "code=" if use_kw else ""
-        message_kw = "message=" if use_kw else ""
-        testdir.makepyfile(
-            """
-            import pytest
-
-            @pytest.fixture
-            def fix(request):
-                request.node.warn({code_kw}"T1", {message_kw}"hello")
-
-            def test_hello(fix):
-                pass
-        """.format(
-                code_kw=code_kw, message_kw=message_kw
-            )
-        )
-        result = testdir.runpytest(
-            "--disable-pytest-warnings", SHOW_PYTEST_WARNINGS_ARG
-        )
-        assert "hello" not in result.stdout.str()
-
-        result = testdir.runpytest(SHOW_PYTEST_WARNINGS_ARG)
-        result.stdout.fnmatch_lines(
-            """
-            ===*warnings summary*===
-            *test_warn_on_test_item_from_request.py::test_hello*
-            *hello*
-            *test_warn_on_test_item_from_request.py:7:*Node.warn(code, message) form has been deprecated*
-        """
-        )
-
-
 class TestRootdir(object):
     def test_simple_noini(self, tmpdir):
         assert get_common_ancestor([tmpdir]) == tmpdir
@@ -1092,9 +1033,12 @@ class TestOverrideIniArgs(object):
 
         monkeypatch.setenv("PYTEST_ADDOPTS", "-o")
         config = get_config()
-        with pytest.raises(SystemExit) as excinfo:
+        with pytest.raises(UsageError) as excinfo:
             config._preparse(["cache_dir=ignored"], addopts=True)
-        assert excinfo.value.args[0] == _pytest.main.EXIT_USAGEERROR
+        assert (
+            "error: argument -o/--override-ini: expected one argument (via PYTEST_ADDOPTS)"
+            in excinfo.value.args[0]
+        )
 
     def test_addopts_from_ini_not_concatenated(self, testdir):
         """addopts from ini should not take values from normal args (#4265)."""
@@ -1107,7 +1051,7 @@ class TestOverrideIniArgs(object):
         result = testdir.runpytest("cache_dir=ignored")
         result.stderr.fnmatch_lines(
             [
-                "%s: error: argument -o/--override-ini: expected one argument"
+                "%s: error: argument -o/--override-ini: expected one argument (via addopts config)"
                 % (testdir.request.config._parser.optparser.prog,)
             ]
         )
@@ -1144,3 +1088,68 @@ class TestOverrideIniArgs(object):
         result = testdir.runpytest("-o", "foo=1", "-o", "bar=0", "test_foo.py")
         assert "ERROR:" not in result.stderr.str()
         result.stdout.fnmatch_lines(["collected 1 item", "*= 1 passed in *="])
+
+
+def test_help_via_addopts(testdir):
+    testdir.makeini(
+        """
+        [pytest]
+        addopts = --unknown-option-should-allow-for-help --help
+    """
+    )
+    result = testdir.runpytest()
+    assert result.ret == 0
+    result.stdout.fnmatch_lines(
+        [
+            "usage: *",
+            "positional arguments:",
+            # Displays full/default help.
+            "to see available markers type: pytest --markers",
+        ]
+    )
+
+
+def test_help_and_version_after_argument_error(testdir):
+    testdir.makeconftest(
+        """
+        def validate(arg):
+            raise argparse.ArgumentTypeError("argerror")
+
+        def pytest_addoption(parser):
+            group = parser.getgroup('cov')
+            group.addoption(
+                "--invalid-option-should-allow-for-help",
+                type=validate,
+            )
+        """
+    )
+    testdir.makeini(
+        """
+        [pytest]
+        addopts = --invalid-option-should-allow-for-help
+    """
+    )
+    result = testdir.runpytest("--help")
+    result.stdout.fnmatch_lines(
+        [
+            "usage: *",
+            "positional arguments:",
+            "NOTE: displaying only minimal help due to UsageError.",
+        ]
+    )
+    result.stderr.fnmatch_lines(
+        [
+            "ERROR: usage: *",
+            "%s: error: argument --invalid-option-should-allow-for-help: expected one argument"
+            % (testdir.request.config._parser.optparser.prog,),
+        ]
+    )
+    # Does not display full/default help.
+    assert "to see available markers type: pytest --markers" not in result.stdout.lines
+    assert result.ret == EXIT_USAGEERROR
+
+    result = testdir.runpytest("--version")
+    result.stderr.fnmatch_lines(
+        ["*pytest*{}*imported from*".format(pytest.__version__)]
+    )
+    assert result.ret == EXIT_USAGEERROR

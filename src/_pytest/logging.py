@@ -13,6 +13,7 @@ import six
 import pytest
 from _pytest.compat import dummy_context_manager
 from _pytest.config import create_terminal_writer
+from _pytest.pathlib import Path
 
 
 DEFAULT_LOG_FORMAT = "%(filename)-25s %(lineno)4d %(levelname)-8s %(message)s"
@@ -217,7 +218,7 @@ class LogCaptureFixture(object):
         """Creates a new funcarg."""
         self._item = item
         # dict of log name -> log level
-        self._initial_log_levels = {}  # type: Dict[str, int]
+        self._initial_log_levels = {}  # Dict[str, int]
 
     def _finalize(self):
         """Finalizes the fixture.
@@ -370,6 +371,8 @@ def get_actual_log_level(config, *setting_names):
         )
 
 
+# run after terminalreporter/capturemanager are configured
+@pytest.hookimpl(trylast=True)
 def pytest_configure(config):
     config.pluginmanager.register(LoggingPlugin(config), "logging-plugin")
 
@@ -388,8 +391,6 @@ class LoggingPlugin(object):
 
         # enable verbose output automatically if live logging is enabled
         if self._log_cli_enabled() and not config.getoption("verbose"):
-            # sanity check: terminal reporter should not have been loaded at this point
-            assert self._config.pluginmanager.get_plugin("terminalreporter") is None
             config.option.verbose = 1
 
         self.print_logs = get_option_ini(config, "log_print")
@@ -399,26 +400,87 @@ class LoggingPlugin(object):
         )
         self.log_level = get_actual_log_level(config, "log_level")
 
+        self.log_file_level = get_actual_log_level(config, "log_file_level")
+        self.log_file_format = get_option_ini(config, "log_file_format", "log_format")
+        self.log_file_date_format = get_option_ini(
+            config, "log_file_date_format", "log_date_format"
+        )
+        self.log_file_formatter = logging.Formatter(
+            self.log_file_format, datefmt=self.log_file_date_format
+        )
+
         log_file = get_option_ini(config, "log_file")
         if log_file:
-            self.log_file_level = get_actual_log_level(config, "log_file_level")
-
-            log_file_format = get_option_ini(config, "log_file_format", "log_format")
-            log_file_date_format = get_option_ini(
-                config, "log_file_date_format", "log_date_format"
-            )
-            # Each pytest runtests session will write to a clean logfile
             self.log_file_handler = logging.FileHandler(
                 log_file, mode="w", encoding="UTF-8"
             )
-            log_file_formatter = logging.Formatter(
-                log_file_format, datefmt=log_file_date_format
-            )
-            self.log_file_handler.setFormatter(log_file_formatter)
+            self.log_file_handler.setFormatter(self.log_file_formatter)
         else:
             self.log_file_handler = None
 
         self.log_cli_handler = None
+
+        self.live_logs_context = lambda: dummy_context_manager()
+        # Note that the lambda for the live_logs_context is needed because
+        # live_logs_context can otherwise not be entered multiple times due
+        # to limitations of contextlib.contextmanager.
+
+        if self._log_cli_enabled():
+            self._setup_cli_logging()
+
+    def _setup_cli_logging(self):
+        config = self._config
+        terminal_reporter = config.pluginmanager.get_plugin("terminalreporter")
+        if terminal_reporter is None:
+            # terminal reporter is disabled e.g. by pytest-xdist.
+            return
+
+        capture_manager = config.pluginmanager.get_plugin("capturemanager")
+        # if capturemanager plugin is disabled, live logging still works.
+        log_cli_handler = _LiveLoggingStreamHandler(terminal_reporter, capture_manager)
+        log_cli_format = get_option_ini(config, "log_cli_format", "log_format")
+        log_cli_date_format = get_option_ini(
+            config, "log_cli_date_format", "log_date_format"
+        )
+        if (
+            config.option.color != "no"
+            and ColoredLevelFormatter.LEVELNAME_FMT_REGEX.search(log_cli_format)
+        ):
+            log_cli_formatter = ColoredLevelFormatter(
+                create_terminal_writer(config),
+                log_cli_format,
+                datefmt=log_cli_date_format,
+            )
+        else:
+            log_cli_formatter = logging.Formatter(
+                log_cli_format, datefmt=log_cli_date_format
+            )
+        log_cli_level = get_actual_log_level(config, "log_cli_level", "log_level")
+        self.log_cli_handler = log_cli_handler
+        self.live_logs_context = lambda: catching_logs(
+            log_cli_handler, formatter=log_cli_formatter, level=log_cli_level
+        )
+
+    def set_log_path(self, fname):
+        """Public method, which can set filename parameter for
+        Logging.FileHandler(). Also creates parent directory if
+        it does not exist.
+
+        .. warning::
+            Please considered as an experimental API.
+        """
+        fname = Path(fname)
+
+        if not fname.is_absolute():
+            fname = Path(self._config.rootdir, fname)
+
+        if not fname.parent.exists():
+            fname.parent.mkdir(exist_ok=True, parents=True)
+
+        self.log_file_handler = logging.FileHandler(
+            str(fname), mode="w", encoding="UTF-8"
+        )
+        self.log_file_handler.setFormatter(self.log_file_formatter)
 
     def _log_cli_enabled(self):
         """Return True if log_cli should be considered enabled, either explicitly
@@ -430,10 +492,6 @@ class LoggingPlugin(object):
 
     @pytest.hookimpl(hookwrapper=True, tryfirst=True)
     def pytest_collection(self):
-        # This has to be called before the first log message is logged,
-        # so we can access the terminal reporter plugin.
-        self._setup_cli_logging()
-
         with self.live_logs_context():
             if self.log_cli_handler:
                 self.log_cli_handler.set_when("collection")
@@ -446,6 +504,15 @@ class LoggingPlugin(object):
 
     @contextmanager
     def _runtest_for(self, item, when):
+        with self._runtest_for_main(item, when):
+            if self.log_file_handler is not None:
+                with catching_logs(self.log_file_handler, level=self.log_file_level):
+                    yield
+            else:
+                yield
+
+    @contextmanager
+    def _runtest_for_main(self, item, when):
         """Implements the internals of pytest_runtest_xxx() hook."""
         with catching_logs(
             LogCaptureHandler(), formatter=self.formatter, level=self.log_level
@@ -513,7 +580,6 @@ class LoggingPlugin(object):
 
     @pytest.hookimpl(hookwrapper=True, tryfirst=True)
     def pytest_sessionstart(self):
-        self._setup_cli_logging()
         with self.live_logs_context():
             if self.log_cli_handler:
                 self.log_cli_handler.set_when("sessionstart")
@@ -532,46 +598,6 @@ class LoggingPlugin(object):
                     yield  # run all the tests
             else:
                 yield  # run all the tests
-
-    def _setup_cli_logging(self):
-        """Sets up the handler and logger for the Live Logs feature, if enabled."""
-        terminal_reporter = self._config.pluginmanager.get_plugin("terminalreporter")
-        if self._log_cli_enabled() and terminal_reporter is not None:
-            capture_manager = self._config.pluginmanager.get_plugin("capturemanager")
-            log_cli_handler = _LiveLoggingStreamHandler(
-                terminal_reporter, capture_manager
-            )
-            log_cli_format = get_option_ini(
-                self._config, "log_cli_format", "log_format"
-            )
-            log_cli_date_format = get_option_ini(
-                self._config, "log_cli_date_format", "log_date_format"
-            )
-            if (
-                self._config.option.color != "no"
-                and ColoredLevelFormatter.LEVELNAME_FMT_REGEX.search(log_cli_format)
-            ):
-                log_cli_formatter = ColoredLevelFormatter(
-                    create_terminal_writer(self._config),
-                    log_cli_format,
-                    datefmt=log_cli_date_format,
-                )
-            else:
-                log_cli_formatter = logging.Formatter(
-                    log_cli_format, datefmt=log_cli_date_format
-                )
-            log_cli_level = get_actual_log_level(
-                self._config, "log_cli_level", "log_level"
-            )
-            self.log_cli_handler = log_cli_handler
-            self.live_logs_context = lambda: catching_logs(
-                log_cli_handler, formatter=log_cli_formatter, level=log_cli_level
-            )
-        else:
-            self.live_logs_context = lambda: dummy_context_manager()
-        # Note that the lambda for the live_logs_context is needed because
-        # live_logs_context can otherwise not be entered multiple times due
-        # to limitations of contextlib.contextmanager
 
 
 class _LiveLoggingStreamHandler(logging.StreamHandler):

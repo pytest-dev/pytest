@@ -68,38 +68,16 @@ def getmsg(f, extra_ns=None, must_pass=False):
             pytest.fail("function didn't raise at all")
 
 
-def adjust_body_for_new_docstring_in_module_node(m):
-    """Module docstrings in 3.8 are part of Module node.
-    This was briefly in 3.7 as well but got reverted in beta 5.
-
-    It's not in the body so we remove it so the following body items have
-    the same indexes on all Python versions:
-
-    TODO:
-
-    We have a complicated sys.version_info if in here to ease testing on
-    various Python 3.7 versions, but we should remove the 3.7 check after
-    3.7 is released as stable to make this check more straightforward.
-    """
-    if sys.version_info < (3, 8) and not (
-        (3, 7) <= sys.version_info <= (3, 7, 0, "beta", 4)
-    ):
-        assert len(m.body) > 1
-        assert isinstance(m.body[0], ast.Expr)
-        assert isinstance(m.body[0].value, ast.Str)
-        del m.body[0]
-
-
 class TestAssertionRewrite(object):
     def test_place_initial_imports(self):
         s = """'Doc string'\nother = stuff"""
         m = rewrite(s)
-        adjust_body_for_new_docstring_in_module_node(m)
-        for imp in m.body[0:2]:
+        assert isinstance(m.body[0], ast.Expr)
+        for imp in m.body[1:3]:
             assert isinstance(imp, ast.Import)
             assert imp.lineno == 2
             assert imp.col_offset == 0
-        assert isinstance(m.body[2], ast.Assign)
+        assert isinstance(m.body[3], ast.Assign)
         s = """from __future__ import division\nother_stuff"""
         m = rewrite(s)
         assert isinstance(m.body[0], ast.ImportFrom)
@@ -110,24 +88,24 @@ class TestAssertionRewrite(object):
         assert isinstance(m.body[3], ast.Expr)
         s = """'doc string'\nfrom __future__ import division"""
         m = rewrite(s)
-        adjust_body_for_new_docstring_in_module_node(m)
-        assert isinstance(m.body[0], ast.ImportFrom)
-        for imp in m.body[1:3]:
+        assert isinstance(m.body[0], ast.Expr)
+        assert isinstance(m.body[1], ast.ImportFrom)
+        for imp in m.body[2:4]:
             assert isinstance(imp, ast.Import)
             assert imp.lineno == 2
             assert imp.col_offset == 0
         s = """'doc string'\nfrom __future__ import division\nother"""
         m = rewrite(s)
-        adjust_body_for_new_docstring_in_module_node(m)
-        assert isinstance(m.body[0], ast.ImportFrom)
-        for imp in m.body[1:3]:
+        assert isinstance(m.body[0], ast.Expr)
+        assert isinstance(m.body[1], ast.ImportFrom)
+        for imp in m.body[2:4]:
             assert isinstance(imp, ast.Import)
             assert imp.lineno == 3
             assert imp.col_offset == 0
-        assert isinstance(m.body[3], ast.Expr)
+        assert isinstance(m.body[4], ast.Expr)
         s = """from . import relative\nother_stuff"""
         m = rewrite(s)
-        for imp in m.body[0:2]:
+        for imp in m.body[:2]:
             assert isinstance(imp, ast.Import)
             assert imp.lineno == 1
             assert imp.col_offset == 0
@@ -136,9 +114,8 @@ class TestAssertionRewrite(object):
     def test_dont_rewrite(self):
         s = """'PYTEST_DONT_REWRITE'\nassert 14"""
         m = rewrite(s)
-        adjust_body_for_new_docstring_in_module_node(m)
-        assert len(m.body) == 1
-        assert m.body[0].msg is None
+        assert len(m.body) == 2
+        assert m.body[1].msg is None
 
     def test_dont_rewrite_plugin(self, testdir):
         contents = {
@@ -179,6 +156,27 @@ class TestAssertionRewrite(object):
             pass
 
         assert getmsg(f, {"cls": X}) == "assert cls == 42"
+
+    def test_dont_rewrite_if_hasattr_fails(self):
+        class Y(object):
+            """ A class whos getattr fails, but not with `AttributeError` """
+
+            def __getattr__(self, attribute_name):
+                raise KeyError()
+
+            def __repr__(self):
+                return "Y"
+
+            def __init__(self):
+                self.foo = 3
+
+        def f():
+            assert cls().foo == 2  # noqa
+
+        message = getmsg(f, {"cls": Y})
+        assert "assert 3 == 2" in message
+        assert "+  where 3 = Y.foo" in message
+        assert "+    where Y = cls()" in message
 
     def test_assert_already_has_message(self):
         def f():
@@ -823,7 +821,9 @@ def test_rewritten():
         testdir.makepyfile(test_remember_rewritten_modules="")
         warnings = []
         hook = AssertionRewritingHook(pytestconfig)
-        monkeypatch.setattr(hook.config, "warn", lambda code, msg: warnings.append(msg))
+        monkeypatch.setattr(
+            hook, "_warn_already_imported", lambda code, msg: warnings.append(msg)
+        )
         hook.find_module("test_remember_rewritten_modules")
         hook.load_module("test_remember_rewritten_modules")
         hook.mark_rewrite("test_remember_rewritten_modules")
@@ -1308,10 +1308,17 @@ class TestEarlyRewriteBailout(object):
     @pytest.mark.skipif(
         sys.platform.startswith("win32"), reason="cannot remove cwd on Windows"
     )
-    def test_cwd_changed(self, testdir):
+    def test_cwd_changed(self, testdir, monkeypatch):
+        # Setup conditions for py's fspath trying to import pathlib on py34
+        # always (previously triggered via xdist only).
+        # Ref: https://github.com/pytest-dev/py/pull/207
+        monkeypatch.setattr(sys, "path", [""] + sys.path)
+        if "pathlib" in sys.modules:
+            del sys.modules["pathlib"]
+
         testdir.makepyfile(
             **{
-                "test_bar.py": """
+                "test_setup_nonexisting_cwd.py": """
                 import os
                 import shutil
                 import tempfile
@@ -1320,7 +1327,7 @@ class TestEarlyRewriteBailout(object):
                 os.chdir(d)
                 shutil.rmtree(d)
             """,
-                "test_foo.py": """
+                "test_test.py": """
                 def test():
                     pass
             """,

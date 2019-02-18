@@ -73,6 +73,7 @@ marked ``smtp_connection`` fixture function.  Running the test looks like this:
     $ pytest test_smtpsimple.py
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
+    cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 1 item
 
@@ -213,6 +214,7 @@ inspect what is going on and can now run the tests:
     $ pytest test_module.py
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
+    cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 2 items
 
@@ -628,7 +630,7 @@ So let's just do another run:
             response, msg = smtp_connection.ehlo()
             assert response == 250
     >       assert b"smtp.gmail.com" in msg
-    E       AssertionError: assert b'smtp.gmail.com' in b'mail.python.org\nPIPELINING\nSIZE 51200000\nETRN\nSTARTTLS\nAUTH DIGEST-MD5 NTLM CRAM-MD5\nENHANCEDSTATUSCODES\n8BITMIME\nDSN\nSMTPUTF8'
+    E       AssertionError: assert b'smtp.gmail.com' in b'mail.python.org\nPIPELINING\nSIZE 51200000\nETRN\nSTARTTLS\nAUTH DIGEST-MD5 NTLM CRAM-MD5\nENHANCEDSTATUSCODES\n8BITMIME\nDSN\nSMTPUTF8\nCHUNKING'
 
     test_module.py:5: AssertionError
     -------------------------- Captured stdout setup ---------------------------
@@ -701,21 +703,22 @@ Running the above tests results in the following test IDs being used:
    $ pytest --collect-only
    =========================== test session starts ============================
    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
+   cachedir: $PYTHON_PREFIX/.pytest_cache
    rootdir: $REGENDOC_TMPDIR, inifile:
    collected 10 items
-   <Module 'test_anothersmtp.py'>
-     <Function 'test_showhelo[smtp.gmail.com]'>
-     <Function 'test_showhelo[mail.python.org]'>
-   <Module 'test_ids.py'>
-     <Function 'test_a[spam]'>
-     <Function 'test_a[ham]'>
-     <Function 'test_b[eggs]'>
-     <Function 'test_b[1]'>
-   <Module 'test_module.py'>
-     <Function 'test_ehlo[smtp.gmail.com]'>
-     <Function 'test_noop[smtp.gmail.com]'>
-     <Function 'test_ehlo[mail.python.org]'>
-     <Function 'test_noop[mail.python.org]'>
+   <Module test_anothersmtp.py>
+     <Function test_showhelo[smtp.gmail.com]>
+     <Function test_showhelo[mail.python.org]>
+   <Module test_ids.py>
+     <Function test_a[spam]>
+     <Function test_a[ham]>
+     <Function test_b[eggs]>
+     <Function test_b[1]>
+   <Module test_module.py>
+     <Function test_ehlo[smtp.gmail.com]>
+     <Function test_noop[smtp.gmail.com]>
+     <Function test_ehlo[mail.python.org]>
+     <Function test_noop[mail.python.org]>
 
    ======================= no tests ran in 0.12 seconds =======================
 
@@ -744,8 +747,8 @@ Running this test will *skip* the invocation of ``data_set`` with value ``2``:
 
     $ pytest test_fixture_marks.py -v
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.6
-    cachedir: .pytest_cache
+    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python
+    cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR, inifile:
     collecting ... collected 3 items
 
@@ -789,8 +792,8 @@ Here we declare an ``app`` fixture which receives the previously defined
 
     $ pytest -v test_appsetup.py
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.6
-    cachedir: .pytest_cache
+    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python
+    cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR, inifile:
     collecting ... collected 2 items
 
@@ -804,7 +807,7 @@ different ``App`` instances and respective smtp servers.  There is no
 need for the ``app`` fixture to be aware of the ``smtp_connection``
 parametrization because pytest will fully analyse the fixture dependency graph.
 
-Note, that the ``app`` fixture has a scope of ``module`` and uses a
+Note that the ``app`` fixture has a scope of ``module`` and uses a
 module-scoped ``smtp_connection`` fixture.  The example would still work if
 ``smtp_connection`` was cached on a ``session`` scope: it is fine for fixtures to use
 "broader" scoped fixtures but not the other way round:
@@ -860,8 +863,8 @@ Let's run the tests in verbose mode and with looking at the print-output:
 
     $ pytest -v -s test_module.py
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.6
-    cachedir: .pytest_cache
+    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python
+    cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR, inifile:
     collecting ... collected 8 items
 

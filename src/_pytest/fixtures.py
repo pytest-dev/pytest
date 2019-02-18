@@ -4,6 +4,7 @@ from __future__ import print_function
 
 import functools
 import inspect
+import itertools
 import sys
 import warnings
 from collections import defaultdict
@@ -13,11 +14,10 @@ from collections import OrderedDict
 import attr
 import py
 import six
-from more_itertools import flatten
-from py._code.code import FormattedExcinfo
 
 import _pytest
 from _pytest import nodes
+from _pytest._code.code import FormattedExcinfo
 from _pytest._code.code import TerminalRepr
 from _pytest.compat import _format_args
 from _pytest.compat import _PytestWrapper
@@ -307,8 +307,8 @@ class FuncFixtureInfo(object):
     # fixture names specified via usefixtures and via autouse=True in fixture
     # definitions.
     initialnames = attr.ib(type=tuple)
-    names_closure = attr.ib()  # type: List[str]
-    name2fixturedefs = attr.ib()  # type: List[str, List[FixtureDef]]
+    names_closure = attr.ib()  # List[str]
+    name2fixturedefs = attr.ib()  # List[str, List[FixtureDef]]
 
     def prune_dependency_tree(self):
         """Recompute names_closure from initialnames and name2fixturedefs
@@ -660,12 +660,6 @@ class SubRequest(FixtureRequest):
         self._fixturedef.addfinalizer(finalizer)
 
 
-class ScopeMismatchError(Exception):
-    """ A fixture function tries to use a different fixture function which
-    which has a lower scope (e.g. a Session one calls a function one)
-    """
-
-
 scopes = "session package module class function".split()
 scopenum_function = scopes.index("function")
 
@@ -942,34 +936,17 @@ def _ensure_immutable_ids(ids):
     return tuple(ids)
 
 
-def wrap_function_to_warning_if_called_directly(function, fixture_marker):
-    """Wrap the given fixture function so we can issue warnings about it being called directly, instead of
-    used as an argument in a test function.
+def wrap_function_to_error_out_if_called_directly(function, fixture_marker):
+    """Wrap the given fixture function so we can raise an error about it being called directly,
+    instead of used as an argument in a test function.
     """
-    is_yield_function = is_generator(function)
-    warning = FIXTURE_FUNCTION_CALL.format(
+    message = FIXTURE_FUNCTION_CALL.format(
         name=fixture_marker.name or function.__name__
     )
 
-    if is_yield_function:
-
-        @functools.wraps(function)
-        def result(*args, **kwargs):
-            __tracebackhide__ = True
-            warnings.warn(warning, stacklevel=3)
-            for x in function(*args, **kwargs):
-                yield x
-
-    else:
-
-        @functools.wraps(function)
-        def result(*args, **kwargs):
-            __tracebackhide__ = True
-            warnings.warn(warning, stacklevel=3)
-            return function(*args, **kwargs)
-
-    if six.PY2:
-        result.__wrapped__ = function
+    @six.wraps(function)
+    def result(*args, **kwargs):
+        fail(message, pytrace=False)
 
     # keep reference to the original function in our own custom attribute so we don't unwrap
     # further than this point and lose useful wrappings like @mock.patch (#3774)
@@ -995,7 +972,7 @@ class FixtureFunctionMarker(object):
                 "fixture is being applied more than once to the same function"
             )
 
-        function = wrap_function_to_warning_if_called_directly(function, self)
+        function = wrap_function_to_error_out_if_called_directly(function, self)
 
         name = self.name or function.__name__
         if name == "request":
@@ -1132,7 +1109,7 @@ class FixtureManager(object):
             argnames = getfuncargnames(func, cls=cls)
         else:
             argnames = ()
-        usefixtures = flatten(
+        usefixtures = itertools.chain.from_iterable(
             mark.args for mark in node.iter_markers(name="usefixtures")
         )
         initialnames = tuple(usefixtures) + argnames
@@ -1224,19 +1201,20 @@ class FixtureManager(object):
             if faclist:
                 fixturedef = faclist[-1]
                 if fixturedef.params is not None:
-                    parametrize_func = getattr(metafunc.function, "parametrize", None)
-                    if parametrize_func is not None:
-                        parametrize_func = parametrize_func.combined
-                    func_params = getattr(parametrize_func, "args", [[None]])
-                    func_kwargs = getattr(parametrize_func, "kwargs", {})
-                    # skip directly parametrized arguments
-                    if "argnames" in func_kwargs:
-                        argnames = parametrize_func.kwargs["argnames"]
+                    markers = list(metafunc.definition.iter_markers("parametrize"))
+                    for parametrize_mark in markers:
+                        if "argnames" in parametrize_mark.kwargs:
+                            argnames = parametrize_mark.kwargs["argnames"]
+                        else:
+                            argnames = parametrize_mark.args[0]
+
+                        if not isinstance(argnames, (tuple, list)):
+                            argnames = [
+                                x.strip() for x in argnames.split(",") if x.strip()
+                            ]
+                        if argname in argnames:
+                            break
                     else:
-                        argnames = func_params[0]
-                    if not isinstance(argnames, (tuple, list)):
-                        argnames = [x.strip() for x in argnames.split(",") if x.strip()]
-                    if argname not in func_params and argname not in argnames:
                         metafunc.parametrize(
                             argname,
                             fixturedef.params,

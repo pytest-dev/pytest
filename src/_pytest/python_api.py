@@ -15,8 +15,9 @@ from six.moves import zip
 import _pytest._code
 from _pytest import deprecated
 from _pytest.compat import isclass
+from _pytest.compat import Iterable
 from _pytest.compat import Mapping
-from _pytest.compat import Sequence
+from _pytest.compat import Sized
 from _pytest.compat import STRING_TYPES
 from _pytest.outcomes import fail
 
@@ -149,10 +150,10 @@ class ApproxNumpy(ApproxBase):
 
         if np.isscalar(actual):
             for i in np.ndindex(self.expected.shape):
-                yield actual, np.asscalar(self.expected[i])
+                yield actual, self.expected[i].item()
         else:
             for i in np.ndindex(self.expected.shape):
-                yield np.asscalar(actual[i]), np.asscalar(self.expected[i])
+                yield actual[i].item(), self.expected[i].item()
 
 
 class ApproxMapping(ApproxBase):
@@ -186,7 +187,7 @@ class ApproxMapping(ApproxBase):
                 raise _non_numeric_type_error(self.expected, at="key={!r}".format(key))
 
 
-class ApproxSequence(ApproxBase):
+class ApproxSequencelike(ApproxBase):
     """
     Perform approximate comparisons where the expected value is a sequence of
     numbers.
@@ -522,10 +523,14 @@ def approx(expected, rel=None, abs=None, nan_ok=False):
         cls = ApproxScalar
     elif isinstance(expected, Mapping):
         cls = ApproxMapping
-    elif isinstance(expected, Sequence) and not isinstance(expected, STRING_TYPES):
-        cls = ApproxSequence
     elif _is_numpy_array(expected):
         cls = ApproxNumpy
+    elif (
+        isinstance(expected, Iterable)
+        and isinstance(expected, Sized)
+        and not isinstance(expected, STRING_TYPES)
+    ):
+        cls = ApproxSequencelike
     else:
         raise _non_numeric_type_error(expected, at=None)
 
@@ -615,6 +620,14 @@ def raises(expected_exception, *args, **kwargs):
            ...         raise ValueError("value must be <= 10")
            ...
            >>> assert exc_info.type is ValueError
+
+    **Using with** ``pytest.mark.parametrize``
+
+    When using :ref:`pytest.mark.parametrize ref`
+    it is possible to parametrize tests such that
+    some runs raise an exception and others do not.
+
+    See :ref:`parametrizing_conditional_raising` for an example.
 
     **Legacy form**
 

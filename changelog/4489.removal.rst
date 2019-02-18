@@ -1,3 +1,0 @@
-Removed ``request.cached_setup``. This was the predecessor mechanism to modern fixtures.
-
-See our `docs <https://docs.pytest.org/en/latest/deprecations.html#cached-setup>`__ on information on how to update your code.

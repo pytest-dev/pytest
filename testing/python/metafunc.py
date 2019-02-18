@@ -393,7 +393,6 @@ class TestMetafunc(object):
         )
         assert result == ["a-a0", "a-a1", "a-a2"]
 
-    @pytest.mark.filterwarnings("default")
     def test_parametrize_ids_exception(self, testdir):
         """
         :param testdir: the instance of Testdir class, a temporary
@@ -411,16 +410,28 @@ class TestMetafunc(object):
                     pass
             """
         )
-        result = testdir.runpytest("--collect-only", SHOW_PYTEST_WARNINGS_ARG)
+        result = testdir.runpytest()
         result.stdout.fnmatch_lines(
             [
-                "<Module test_parametrize_ids_exception.py>",
-                "  <Function test_foo[a]>",
-                "  <Function test_foo[b]>",
-                "*test_parametrize_ids_exception.py:6: *parameter arg at position 0*",
-                "*test_parametrize_ids_exception.py:6: *parameter arg at position 1*",
+                "*test_foo: error raised while trying to determine id of parameter 'arg' at position 0",
+                "*Exception: bad ids",
             ]
         )
+
+    def test_parametrize_ids_returns_non_string(self, testdir):
+        testdir.makepyfile(
+            """\
+            import pytest
+
+            def ids(d):
+                return d
+
+            @pytest.mark.parametrize("arg", ({1: 2}, {3, 4}), ids=ids)
+            def test(arg):
+                assert arg
+            """
+        )
+        assert testdir.runpytest().ret == 0
 
     def test_idmaker_with_ids(self):
         from _pytest.python import idmaker
@@ -788,7 +799,6 @@ class TestMetafuncFunctional(object):
 
             @pytest.fixture
             def metafunc(request):
-                assert request._pyfuncitem._genid == "0"
                 return request.param
 
             def test_function(metafunc, pytestconfig):
@@ -1376,7 +1386,6 @@ class TestMetafuncFunctionalAuto(object):
         assert output.count("preparing foo-3") == 1
 
 
-@pytest.mark.filterwarnings("ignore:Applying marks directly to parameters")
 @pytest.mark.issue308
 class TestMarkersWithParametrization(object):
     def test_simple_mark(self, testdir):
@@ -1386,7 +1395,7 @@ class TestMarkersWithParametrization(object):
             @pytest.mark.foo
             @pytest.mark.parametrize(("n", "expected"), [
                 (1, 2),
-                pytest.mark.bar((1, 3)),
+                pytest.param(1, 3, marks=pytest.mark.bar),
                 (2, 3),
             ])
             def test_increment(n, expected):
@@ -1406,7 +1415,7 @@ class TestMarkersWithParametrization(object):
 
             @pytest.mark.parametrize(("n", "expected"), [
                 (1, 2),
-                pytest.mark.foo((2, 3)),
+                pytest.param(2, 3, marks=pytest.mark.foo),
                 (3, 4),
             ])
             def test_increment(n, expected):
@@ -1446,7 +1455,7 @@ class TestMarkersWithParametrization(object):
 
             @pytest.mark.parametrize(("n", "expected"), [
                 (1, 2),
-                pytest.mark.xfail((1, 3)),
+                pytest.param(1, 3, marks=pytest.mark.xfail),
                 (2, 3),
             ])
             def test_increment(n, expected):
@@ -1463,7 +1472,7 @@ class TestMarkersWithParametrization(object):
 
             @pytest.mark.parametrize("n", [
                 2,
-                pytest.mark.xfail(3),
+                pytest.param(3, marks=pytest.mark.xfail),
                 4,
             ])
             def test_isEven(n):
@@ -1479,7 +1488,7 @@ class TestMarkersWithParametrization(object):
 
             @pytest.mark.parametrize(("n", "expected"), [
                 (1, 2),
-                pytest.mark.xfail("True")((1, 3)),
+                pytest.param(1, 3, marks=pytest.mark.xfail("True")),
                 (2, 3),
             ])
             def test_increment(n, expected):
@@ -1495,7 +1504,7 @@ class TestMarkersWithParametrization(object):
 
             @pytest.mark.parametrize(("n", "expected"), [
                 (1, 2),
-                pytest.mark.xfail(reason="some bug")((1, 3)),
+                pytest.param(1, 3, marks=pytest.mark.xfail(reason="some bug")),
                 (2, 3),
             ])
             def test_increment(n, expected):
@@ -1511,7 +1520,7 @@ class TestMarkersWithParametrization(object):
 
             @pytest.mark.parametrize(("n", "expected"), [
                 (1, 2),
-                pytest.mark.xfail("True", reason="some bug")((1, 3)),
+                pytest.param(1, 3, marks=pytest.mark.xfail("True", reason="some bug")),
                 (2, 3),
             ])
             def test_increment(n, expected):
@@ -1526,9 +1535,11 @@ class TestMarkersWithParametrization(object):
         s = """
             import pytest
 
+            m = pytest.mark.xfail("sys.version_info > (0, 0, 0)", reason="some bug", strict={strict})
+
             @pytest.mark.parametrize(("n", "expected"), [
                 (1, 2),
-                pytest.mark.xfail("sys.version_info > (0, 0, 0)", reason="some bug", strict={strict})((2, 3)),
+                pytest.param(2, 3, marks=m),
                 (3, 4),
             ])
             def test_increment(n, expected):
@@ -1552,7 +1563,7 @@ class TestMarkersWithParametrization(object):
                 failingTestData = [(1, 3),
                                    (2, 2)]
 
-                testData = passingTestData + [pytest.mark.xfail(d)
+                testData = passingTestData + [pytest.param(*d, marks=pytest.mark.xfail)
                                   for d in failingTestData]
                 metafunc.parametrize(("n", "expected"), testData)
 

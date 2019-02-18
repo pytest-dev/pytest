@@ -7,9 +7,6 @@ Installation and Getting Started
 
 **PyPI package name**: `pytest <https://pypi.org/project/pytest/>`_
 
-**Dependencies**: `py <https://pypi.org/project/py/>`_,
-`colorama (Windows) <https://pypi.org/project/colorama/>`_,
-
 **Documentation as PDF**: `download latest <https://media.readthedocs.org/pdf/pytest/latest/pytest.pdf>`_
 
 ``pytest`` is a framework that makes building simple and scalable tests easy. Tests are expressive and readable—no boilerplate code required. Get started in minutes with a small unit test or complex functional test for your application or library.
@@ -50,6 +47,7 @@ That’s it. You can now execute the test function:
     $ pytest
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
+    cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 1 item
 

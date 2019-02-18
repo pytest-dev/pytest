@@ -11,19 +11,10 @@ from .structures import Mark
 from .structures import MARK_GEN
 from .structures import MarkDecorator
 from .structures import MarkGenerator
-from .structures import MarkInfo
 from .structures import ParameterSet
-from .structures import transfer_markers
 from _pytest.config import UsageError
 
-__all__ = [
-    "Mark",
-    "MarkInfo",
-    "MarkDecorator",
-    "MarkGenerator",
-    "transfer_markers",
-    "get_empty_parameterset_mark",
-]
+__all__ = ["Mark", "MarkDecorator", "MarkGenerator", "get_empty_parameterset_mark"]
 
 
 def param(*values, **kw):

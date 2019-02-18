@@ -147,29 +147,6 @@ class TestPDB(object):
         assert rep.failed
         assert len(pdblist) == 1
 
-    def test_pdb_interaction(self, testdir):
-        p1 = testdir.makepyfile(
-            """
-            def test_1():
-                i = 0
-                assert i == 1
-
-            def test_not_called_due_to_quit():
-                pass
-        """
-        )
-        child = testdir.spawn_pytest("--pdb %s" % p1)
-        child.expect(".*def test_1")
-        child.expect(".*i = 0")
-        child.expect("Pdb")
-        child.sendeof()
-        rest = child.read().decode("utf8")
-        assert "= 1 failed in" in rest
-        assert "def test_1" not in rest
-        assert "Exit: Quitting debugger" in rest
-        assert "PDB continue (IO-capturing resumed)" not in rest
-        self.flush(child)
-
     @staticmethod
     def flush(child):
         if platform.system() == "Darwin":
@@ -214,40 +191,32 @@ class TestPDB(object):
         child.sendeof()
         self.flush(child)
 
-    def test_pdb_print_captured_stdout(self, testdir):
-        p1 = testdir.makepyfile(
-            """
-            def test_1():
-                print("get\\x20rekt")
-                assert False
-        """
-        )
-        child = testdir.spawn_pytest("--pdb %s" % p1)
-        child.expect("captured stdout")
-        child.expect("get rekt")
-        child.expect("Pdb")
-        child.sendeof()
-        rest = child.read().decode("utf8")
-        assert "1 failed" in rest
-        assert "get rekt" not in rest
-        self.flush(child)
-
-    def test_pdb_print_captured_stderr(self, testdir):
+    def test_pdb_print_captured_stdout_and_stderr(self, testdir):
         p1 = testdir.makepyfile(
             """
             def test_1():
                 import sys
                 sys.stderr.write("get\\x20rekt")
+                print("get\\x20rekt")
                 assert False
+
+            def test_not_called_due_to_quit():
+                pass
         """
         )
         child = testdir.spawn_pytest("--pdb %s" % p1)
+        child.expect("captured stdout")
+        child.expect("get rekt")
         child.expect("captured stderr")
         child.expect("get rekt")
+        child.expect("traceback")
+        child.expect("def test_1")
         child.expect("Pdb")
         child.sendeof()
         rest = child.read().decode("utf8")
-        assert "1 failed" in rest
+        assert "Exit: Quitting debugger" in rest
+        assert "= 1 failed in" in rest
+        assert "def test_1" not in rest
         assert "get rekt" not in rest
         self.flush(child)
 
@@ -375,15 +344,17 @@ class TestPDB(object):
                 i = 0
                 print("hello17")
                 pytest.set_trace()
-                x = 3
+                i == 1
+                assert 0
         """
         )
         child = testdir.spawn_pytest(str(p1))
-        child.expect("test_1")
-        child.expect("x = 3")
+        child.expect(r"test_1\(\)")
+        child.expect("i == 1")
         child.expect("Pdb")
-        child.sendeof()
+        child.sendline("c")
         rest = child.read().decode("utf-8")
+        assert "AssertionError" in rest
         assert "1 failed" in rest
         assert "def test_1" in rest
         assert "hello17" in rest  # out is captured
@@ -398,13 +369,14 @@ class TestPDB(object):
                 print("hello17")
                 pytest.set_trace(header="== my_header ==")
                 x = 3
+                assert 0
         """
         )
         child = testdir.spawn_pytest(str(p1))
         child.expect("== my_header ==")
         assert "PDB set_trace" not in child.before.decode()
         child.expect("Pdb")
-        child.sendeof()
+        child.sendline("c")
         rest = child.read().decode("utf-8")
         assert "1 failed" in rest
         assert "def test_1" in rest
@@ -424,9 +396,9 @@ class TestPDB(object):
         child.expect("Pdb")
         child.sendeof()
         rest = child.read().decode("utf8")
-        assert "1 failed" in rest
+        assert "no tests ran" in rest
         assert "reading from stdin while output" not in rest
-        assert "BdbQuit" in rest
+        assert "BdbQuit" not in rest
         self.flush(child)
 
     def test_pdb_and_capsys(self, testdir):
@@ -518,6 +490,7 @@ class TestPDB(object):
                 print("hello18")
                 pytest.set_trace()
                 x = 4
+                assert 0
         """
         )
         child = testdir.spawn_pytest(str(p1))
@@ -530,14 +503,84 @@ class TestPDB(object):
         child.expect(r"PDB set_trace \(IO-capturing turned off\)")
         child.expect("x = 4")
         child.expect("Pdb")
-        child.sendeof()
+        child.sendline("c")
         child.expect("_ test_1 _")
         child.expect("def test_1")
-        child.expect("Captured stdout call")
+        rest = child.read().decode("utf8")
+        assert "Captured stdout call" in rest
+        assert "hello17" in rest  # out is captured
+        assert "hello18" in rest  # out is captured
+        assert "1 failed" in rest
+        self.flush(child)
+
+    def test_pdb_interaction_continue_recursive(self, testdir):
+        p1 = testdir.makepyfile(
+            mytest="""
+            import pdb
+            import pytest
+
+            count_continue = 0
+
+            # Simulates pdbpp, which injects Pdb into do_debug, and uses
+            # self.__class__ in do_continue.
+            class CustomPdb(pdb.Pdb, object):
+                def do_debug(self, arg):
+                    import sys
+                    import types
+
+                    newglobals = {
+                        'Pdb': self.__class__,  # NOTE: different with pdb.Pdb
+                        'sys': sys,
+                    }
+                    if sys.version_info < (3, ):
+                        do_debug_func = pdb.Pdb.do_debug.im_func
+                    else:
+                        do_debug_func = pdb.Pdb.do_debug
+
+                    orig_do_debug = types.FunctionType(
+                        do_debug_func.__code__, newglobals,
+                        do_debug_func.__name__, do_debug_func.__defaults__,
+                    )
+                    return orig_do_debug(self, arg)
+                do_debug.__doc__ = pdb.Pdb.do_debug.__doc__
+
+                def do_continue(self, *args, **kwargs):
+                    global count_continue
+                    count_continue += 1
+                    return super(CustomPdb, self).do_continue(*args, **kwargs)
+
+            def foo():
+                print("print_from_foo")
+
+            def test_1():
+                i = 0
+                print("hello17")
+                pytest.set_trace()
+                x = 3
+                print("hello18")
+
+                assert count_continue == 2, "unexpected_failure: %d != 2" % count_continue
+                pytest.fail("expected_failure")
+        """
+        )
+        child = testdir.spawn_pytest("--pdbcls=mytest:CustomPdb %s" % str(p1))
+        child.expect(r"PDB set_trace \(IO-capturing turned off\)")
+        child.expect(r"\n\(Pdb")
+        child.sendline("debug foo()")
+        child.expect("ENTERING RECURSIVE DEBUGGER")
+        child.expect(r"\n\(\(Pdb")
+        child.sendline("c")
+        child.expect("LEAVING RECURSIVE DEBUGGER")
+        assert b"PDB continue" not in child.before
+        assert b"print_from_foo" in child.before
+        child.sendline("c")
+        child.expect(r"PDB continue \(IO-capturing resumed\)")
         rest = child.read().decode("utf8")
         assert "hello17" in rest  # out is captured
         assert "hello18" in rest  # out is captured
         assert "1 failed" in rest
+        assert "Failed: expected_failure" in rest
+        assert "AssertionError: unexpected_failure" not in rest
         self.flush(child)
 
     def test_pdb_without_capture(self, testdir):
@@ -795,7 +838,7 @@ class TestDebuggingBreakpoints(object):
         child.expect("Pdb")
         child.sendeof()
         rest = child.read().decode("utf8")
-        assert "1 failed" in rest
+        assert "Quitting debugger" in rest
         assert "reading from stdin while output" not in rest
         TestPDB.flush(child)
 
@@ -808,12 +851,13 @@ class TestDebuggingBreakpoints(object):
             import pdb
             def test_1():
                 pdb.set_trace()
+                assert 0
         """
         )
         child = testdir.spawn_pytest(str(p1))
         child.expect("test_1")
         child.expect("Pdb")
-        child.sendeof()
+        child.sendline("c")
         rest = child.read().decode("utf8")
         assert "1 failed" in rest
         assert "reading from stdin while output" not in rest
@@ -826,15 +870,29 @@ class TestTraceOption:
             """
             def test_1():
                 assert True
+
+            def test_2():
+                pass
+
+            def test_3():
+                pass
             """
         )
         child = testdir.spawn_pytest("--trace " + str(p1))
         child.expect("test_1")
         child.expect("Pdb")
-        child.sendeof()
+        child.sendline("c")
+        child.expect("test_2")
+        child.expect("Pdb")
+        child.sendline("c")
+        child.expect("test_3")
+        child.expect("Pdb")
+        child.sendline("q")
+        child.expect_exact("Exit: Quitting debugger")
         rest = child.read().decode("utf8")
-        assert "1 passed" in rest
+        assert "2 passed in" in rest
         assert "reading from stdin while output" not in rest
+        assert "Exit: Quitting debugger" in child.before.decode("utf8")
         TestPDB.flush(child)
 
 
@@ -863,3 +921,31 @@ def test_trace_after_runpytest(testdir):
     rest = child.read().decode("utf8")
     TestPDB.flush(child)
     assert child.exitstatus == 0, rest
+
+
+def test_quit_with_swallowed_SystemExit(testdir):
+    """Test that debugging's pytest_configure is re-entrant."""
+    p1 = testdir.makepyfile(
+        """
+        def call_pdb_set_trace():
+            __import__('pdb').set_trace()
+
+
+        def test_1():
+            try:
+                call_pdb_set_trace()
+            except SystemExit:
+                pass
+
+
+        def test_2():
+            pass
+    """
+    )
+    child = testdir.spawn_pytest(str(p1))
+    child.expect("Pdb")
+    child.sendline("q")
+    child.expect_exact("Exit: Quitting debugger")
+    rest = child.read().decode("utf8")
+    assert "no tests ran" in rest
+    TestPDB.flush(child)

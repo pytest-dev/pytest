@@ -1,7 +1,7 @@
 exclude: doc/en/example/py2py3/test_py2.py
 repos:
 -   repo: https://github.com/ambv/black
-    rev: 18.6b4
+    rev: 18.9b0
     hooks:
     -   id: black
         args: [--safe, --quiet]
@@ -13,7 +13,7 @@ repos:
         additional_dependencies: [black==18.9b0]
         language_version: python3
 -   repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v2.0.0
+    rev: v2.1.0
     hooks:
     -   id: trailing-whitespace
     -   id: end-of-file-fixer
@@ -21,20 +21,23 @@ repos:
     -   id: debug-statements
         exclude: _pytest/debugging.py
         language_version: python3
+-   repo: https://gitlab.com/pycqa/flake8
+    rev: 3.7.0
+    hooks:
     -   id: flake8
         language_version: python3
 -   repo: https://github.com/asottile/reorder_python_imports
-    rev: v1.3.3
+    rev: v1.3.5
     hooks:
     -   id: reorder-python-imports
         args: ['--application-directories=.:src']
 -   repo: https://github.com/asottile/pyupgrade
-    rev: v1.10.1
+    rev: v1.11.1
     hooks:
     -   id: pyupgrade
         args: [--keep-percent-format]
 -   repo: https://github.com/pre-commit/pygrep-hooks
-    rev: v1.1.0
+    rev: v1.2.0
     hooks:
     -   id: rst-backticks
 -   repo: local
@@ -51,3 +54,17 @@ repos:
         entry: 'changelog files must be named ####.(feature|bugfix|doc|deprecation|removal|vendor|trivial).rst'
         exclude: changelog/(\d+\.(feature|bugfix|doc|deprecation|removal|vendor|trivial).rst|README.rst|_template.rst)
         files: ^changelog/
+    -   id: py-deprecated
+        name: py library is deprecated
+        language: pygrep
+        entry: >
+            (?x)\bpy\.(
+                _code\.|
+                builtin\.|
+                code\.|
+                io\.(BytesIO|saferepr)|
+                path\.local\.sysfind|
+                process\.|
+                std\.
+            )
+        types: [python]

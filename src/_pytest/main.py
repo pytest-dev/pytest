@@ -4,6 +4,7 @@ from __future__ import division
 from __future__ import print_function
 
 import contextlib
+import fnmatch
 import functools
 import os
 import pkgutil
@@ -116,6 +117,12 @@ def pytest_addoption(parser):
         action="append",
         metavar="path",
         help="ignore path during collection (multi-allowed).",
+    )
+    group.addoption(
+        "--ignore-glob",
+        action="append",
+        metavar="path",
+        help="ignore path pattern during collection (multi-allowed).",
     )
     group.addoption(
         "--deselect",
@@ -294,6 +301,20 @@ def pytest_ignore_collect(path, config):
         ignore_paths.extend([py.path.local(x) for x in excludeopt])
 
     if py.path.local(path) in ignore_paths:
+        return True
+
+    ignore_globs = config._getconftest_pathlist(
+        "collect_ignore_glob", path=path.dirpath()
+    )
+    ignore_globs = ignore_globs or []
+    excludeglobopt = config.getoption("ignore_glob")
+    if excludeglobopt:
+        ignore_globs.extend([py.path.local(x) for x in excludeglobopt])
+
+    if any(
+        fnmatch.fnmatch(six.text_type(path), six.text_type(glob))
+        for glob in ignore_globs
+    ):
         return True
 
     allow_in_venv = config.getoption("collect_in_virtualenv")
@@ -550,19 +571,9 @@ class Session(nodes.FSCollector):
         if argpath.check(dir=1):
             assert not names, "invalid arg %r" % (arg,)
 
-            if six.PY2:
-
-                def filter_(f):
-                    return f.check(file=1) and not f.strpath.endswith("*.pyc")
-
-            else:
-
-                def filter_(f):
-                    return f.check(file=1)
-
             seen_dirs = set()
             for path in argpath.visit(
-                fil=filter_, rec=self._recurse, bf=True, sort=True
+                fil=self._visit_filter, rec=self._recurse, bf=True, sort=True
             ):
                 dirpath = path.dirpath()
                 if dirpath not in seen_dirs:
@@ -592,7 +603,7 @@ class Session(nodes.FSCollector):
                 col = self._node_cache[argpath]
             else:
                 collect_root = self._pkg_roots.get(argpath.dirname, self)
-                col = collect_root._collectfile(argpath)
+                col = collect_root._collectfile(argpath, handle_dupes=False)
                 if col:
                     self._node_cache[argpath] = col
             m = self.matchnodes(col, names)
@@ -607,6 +618,12 @@ class Session(nodes.FSCollector):
                 yield y
 
     def _collectfile(self, path, handle_dupes=True):
+        assert path.isfile(), "%r is not a file (isdir=%r, exists=%r, islink=%r)" % (
+            path,
+            path.isdir(),
+            path.exists(),
+            path.islink(),
+        )
         ihook = self.gethookproxy(path)
         if not self.isinitpath(path):
             if ihook.pytest_ignore_collect(path=path, config=self.config):
@@ -635,6 +652,18 @@ class Session(nodes.FSCollector):
         ihook = self.gethookproxy(dirpath)
         ihook.pytest_collect_directory(path=dirpath, parent=self)
         return True
+
+    if six.PY2:
+
+        @staticmethod
+        def _visit_filter(f):
+            return f.check(file=1) and not f.strpath.endswith("*.pyc")
+
+    else:
+
+        @staticmethod
+        def _visit_filter(f):
+            return f.check(file=1)
 
     def _tryconvertpyarg(self, x):
         """Convert a dotted module name to path."""

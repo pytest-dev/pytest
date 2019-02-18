@@ -3,6 +3,7 @@ import os
 import py
 
 from .exceptions import UsageError
+from _pytest.outcomes import fail
 
 
 def exists(path, ignore=EnvironmentError):
@@ -34,15 +35,10 @@ def getcfg(args, config=None):
                     iniconfig = py.iniconfig.IniConfig(p)
                     if "pytest" in iniconfig.sections:
                         if inibasename == "setup.cfg" and config is not None:
-                            from _pytest.warnings import _issue_config_warning
-                            from _pytest.warning_types import RemovedInPytest4Warning
 
-                            _issue_config_warning(
-                                RemovedInPytest4Warning(
-                                    CFG_PYTEST_SECTION.format(filename=inibasename)
-                                ),
-                                config=config,
-                                stacklevel=2,
+                            fail(
+                                CFG_PYTEST_SECTION.format(filename=inibasename),
+                                pytrace=False,
                             )
                         return base, p, iniconfig["pytest"]
                     if (
@@ -112,14 +108,9 @@ def determine_setup(inifile, args, rootdir_cmd_arg=None, config=None):
                 inicfg = iniconfig[section]
                 if is_cfg_file and section == "pytest" and config is not None:
                     from _pytest.deprecated import CFG_PYTEST_SECTION
-                    from _pytest.warnings import _issue_config_warning
 
-                    # TODO: [pytest] section in *.cfg files is deprecated. Need refactoring once
-                    # the deprecation expires.
-                    _issue_config_warning(
-                        CFG_PYTEST_SECTION.format(filename=str(inifile)),
-                        config,
-                        stacklevel=2,
+                    fail(
+                        CFG_PYTEST_SECTION.format(filename=str(inifile)), pytrace=False
                     )
                 break
             except KeyError:

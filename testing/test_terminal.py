@@ -18,7 +18,6 @@ from _pytest.main import EXIT_NOTESTSCOLLECTED
 from _pytest.terminal import _plugin_nameversions
 from _pytest.terminal import build_summary_stats_line
 from _pytest.terminal import getreportopt
-from _pytest.terminal import repr_pythonversion
 from _pytest.terminal import TerminalReporter
 
 DistInfo = collections.namedtuple("DistInfo", ["project_name", "version"])
@@ -276,6 +275,18 @@ class TestCollectonly(object):
         result = testdir.runpytest("--collect-only", "-rs")
         result.stdout.fnmatch_lines(["*ERROR collecting*"])
 
+    def test_collectonly_display_test_description(self, testdir):
+        testdir.makepyfile(
+            """
+            def test_with_description():
+                \""" This test has a description.
+                \"""
+                assert True
+        """
+        )
+        result = testdir.runpytest("--collect-only", "--verbose")
+        result.stdout.fnmatch_lines(["    This test has a description."])
+
     def test_collectonly_failed_module(self, testdir):
         testdir.makepyfile("""raise ValueError(0)""")
         result = testdir.runpytest("--collect-only")
@@ -347,16 +358,6 @@ class TestCollectonly(object):
         testdir.makepyfile(test_fun="def test_foo(): pass")
         result = testdir.runpytest("--collect-only", "-qq")
         result.stdout.fnmatch_lines(["*test_fun.py: 1*"])
-
-
-def test_repr_python_version(monkeypatch):
-    try:
-        monkeypatch.setattr(sys, "version_info", (2, 5, 1, "final", 0))
-        assert repr_pythonversion() == "2.5.1-final-0"
-        sys.version_info = x = (2, 3)
-        assert repr_pythonversion() == str(x)
-    finally:
-        monkeypatch.undo()  # do this early as pytest can get confused
 
 
 class TestFixtureReporting(object):
@@ -473,7 +474,7 @@ class TestTerminalFunctional(object):
         )
         result = testdir.runpytest("-k", "test_two:", testpath)
         result.stdout.fnmatch_lines(
-            ["collected 3 items / 1 deselected", "*test_deselected.py ..*"]
+            ["collected 3 items / 1 deselected / 2 selected", "*test_deselected.py ..*"]
         )
         assert result.ret == 0
 
@@ -497,7 +498,7 @@ class TestTerminalFunctional(object):
         result = testdir.runpytest("-m", "not foo")
         result.stdout.fnmatch_lines(
             [
-                "collected 3 items / 1 deselected",
+                "collected 3 items / 1 deselected / 2 selected",
                 "*test_show_deselected.py ..*",
                 "*= 2 passed, 1 deselected in * =*",
             ]
@@ -613,7 +614,7 @@ class TestTerminalFunctional(object):
                 "*test_verbose_reporting.py::test_fail *FAIL*",
                 "*test_verbose_reporting.py::test_pass *PASS*",
                 "*test_verbose_reporting.py::TestClass::test_skip *SKIP*",
-                "*test_verbose_reporting.py::test_gen *xfail*",
+                "*test_verbose_reporting.py::test_gen *XFAIL*",
             ]
         )
         assert result.ret == 1
@@ -648,7 +649,10 @@ class TestTerminalFunctional(object):
         assert "===" not in s
         assert "passed" not in s
 
-    def test_report_collectionfinish_hook(self, testdir):
+    @pytest.mark.parametrize(
+        "params", [(), ("--collect-only",)], ids=["no-params", "collect-only"]
+    )
+    def test_report_collectionfinish_hook(self, testdir, params):
         testdir.makeconftest(
             """
             def pytest_report_collectionfinish(config, startdir, items):
@@ -663,7 +667,7 @@ class TestTerminalFunctional(object):
                 pass
         """
         )
-        result = testdir.runpytest()
+        result = testdir.runpytest(*params)
         result.stdout.fnmatch_lines(["collected 3 items", "hello from hook: 3 items"])
 
 

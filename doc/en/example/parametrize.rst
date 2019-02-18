@@ -145,17 +145,18 @@ objects, they are still using the default pytest representation:
     $ pytest test_time.py --collect-only
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
+    cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 8 items
-    <Module 'test_time.py'>
-      <Function 'test_timedistance_v0[a0-b0-expected0]'>
-      <Function 'test_timedistance_v0[a1-b1-expected1]'>
-      <Function 'test_timedistance_v1[forward]'>
-      <Function 'test_timedistance_v1[backward]'>
-      <Function 'test_timedistance_v2[20011212-20011211-expected0]'>
-      <Function 'test_timedistance_v2[20011211-20011212-expected1]'>
-      <Function 'test_timedistance_v3[forward]'>
-      <Function 'test_timedistance_v3[backward]'>
+    <Module test_time.py>
+      <Function test_timedistance_v0[a0-b0-expected0]>
+      <Function test_timedistance_v0[a1-b1-expected1]>
+      <Function test_timedistance_v1[forward]>
+      <Function test_timedistance_v1[backward]>
+      <Function test_timedistance_v2[20011212-20011211-expected0]>
+      <Function test_timedistance_v2[20011211-20011212-expected1]>
+      <Function test_timedistance_v3[forward]>
+      <Function test_timedistance_v3[backward]>
 
     ======================= no tests ran in 0.12 seconds =======================
 
@@ -203,6 +204,7 @@ this is a fully self-contained example which you can run with:
     $ pytest test_scenarios.py
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
+    cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 4 items
 
@@ -217,14 +219,15 @@ If you just collect tests you'll also nicely see 'advanced' and 'basic' as varia
     $ pytest --collect-only test_scenarios.py
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
+    cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 4 items
-    <Module 'test_scenarios.py'>
-      <Class 'TestSampleWithScenarios'>
-          <Function 'test_demo1[basic]'>
-          <Function 'test_demo2[basic]'>
-          <Function 'test_demo1[advanced]'>
-          <Function 'test_demo2[advanced]'>
+    <Module test_scenarios.py>
+      <Class TestSampleWithScenarios>
+          <Function test_demo1[basic]>
+          <Function test_demo2[basic]>
+          <Function test_demo1[advanced]>
+          <Function test_demo2[advanced]>
 
     ======================= no tests ran in 0.12 seconds =======================
 
@@ -283,11 +286,12 @@ Let's first see how it looks like at collection time:
     $ pytest test_backends.py --collect-only
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
+    cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 2 items
-    <Module 'test_backends.py'>
-      <Function 'test_db_initialized[d1]'>
-      <Function 'test_db_initialized[d2]'>
+    <Module test_backends.py>
+      <Function test_db_initialized[d1]>
+      <Function test_db_initialized[d2]>
 
     ======================= no tests ran in 0.12 seconds =======================
 
@@ -348,10 +352,11 @@ The result of this test will be successful:
     $ pytest test_indirect_list.py --collect-only
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
+    cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 1 item
-    <Module 'test_indirect_list.py'>
-      <Function 'test_indirect[a-b]'>
+    <Module test_indirect_list.py>
+      <Function test_indirect[a-b]>
 
     ======================= no tests ran in 0.12 seconds =======================
 
@@ -406,6 +411,8 @@ argument sets to use for each test function.  Let's run it:
         def test_equals(self, a, b):
     >       assert a == b
     E       assert 1 == 2
+    E         -1
+    E         +2
 
     test_parametrize.py:18: AssertionError
     1 failed, 2 passed in 0.12 seconds
@@ -429,10 +436,8 @@ Running it results in some skips if we don't have all the python interpreters in
 .. code-block:: pytest
 
    . $ pytest -rs -q multipython.py
-   ...sss...sssssssss...sss...                                          [100%]
-   ========================= short test summary info ==========================
-   SKIP [15] $REGENDOC_TMPDIR/CWD/multipython.py:30: 'python3.4' not found
-   12 passed, 15 skipped in 0.12 seconds
+   ...........................                                          [100%]
+   27 passed in 0.12 seconds
 
 Indirect parametrization of optional implementations/imports
 --------------------------------------------------------------------
@@ -482,12 +487,13 @@ If you run this with reporting for skips enabled:
     $ pytest -rs test_module.py
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
+    cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 2 items
 
     test_module.py .s                                                    [100%]
     ========================= short test summary info ==========================
-    SKIP [1] $REGENDOC_TMPDIR/conftest.py:11: could not import 'opt2'
+    SKIPPED [1] $REGENDOC_TMPDIR/conftest.py:11: could not import 'opt2'
 
     =================== 1 passed, 1 skipped in 0.12 seconds ====================
 
@@ -538,14 +544,14 @@ Then run ``pytest`` with verbose mode and with only the ``basic`` marker:
 
     $ pytest -v -m basic
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.6
-    cachedir: .pytest_cache
+    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python
+    cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR, inifile:
-    collecting ... collected 17 items / 14 deselected
+    collecting ... collected 17 items / 14 deselected / 3 selected
 
     test_pytest_param_example.py::test_eval[1+7-8] PASSED                [ 33%]
     test_pytest_param_example.py::test_eval[basic_2+4] PASSED            [ 66%]
-    test_pytest_param_example.py::test_eval[basic_6*9] xfail             [100%]
+    test_pytest_param_example.py::test_eval[basic_6*9] XFAIL             [100%]
 
     ============ 2 passed, 14 deselected, 1 xfailed in 0.12 seconds ============
 
@@ -557,3 +563,50 @@ As the result:
 - The test ``test_eval[1+7-8]`` passed, but the name is autogenerated and confusing.
 - The test ``test_eval[basic_2+4]`` passed.
 - The test ``test_eval[basic_6*9]`` was expected to fail and did fail.
+
+.. _`parametrizing_conditional_raising`:
+
+Parametrizing conditional raising
+--------------------------------------------------------------------
+
+Use :func:`pytest.raises` with the
+:ref:`pytest.mark.parametrize ref` decorator to write parametrized tests
+in which some tests raise exceptions and others do not.
+
+It is helpful to define a no-op context manager ``does_not_raise`` to serve
+as a complement to ``raises``. For example::
+
+    from contextlib import contextmanager
+    import pytest
+
+    @contextmanager
+    def does_not_raise():
+        yield
+
+
+    @pytest.mark.parametrize('example_input,expectation', [
+        (3, does_not_raise()),
+        (2, does_not_raise()),
+        (1, does_not_raise()),
+        (0, pytest.raises(ZeroDivisionError)),
+    ])
+    def test_division(example_input, expectation):
+        """Test how much I know division."""
+        with expectation:
+            assert (6 / example_input) is not None
+
+In the example above, the first three test cases should run unexceptionally,
+while the fourth should raise ``ZeroDivisionError``.
+
+If you're only supporting Python 3.7+, you can simply use ``nullcontext``
+to define ``does_not_raise``::
+
+    from contextlib import nullcontext as does_not_raise
+
+Or, if you're supporting Python 3.3+ you can use::
+
+    from contextlib import ExitStack as does_not_raise
+
+Or, if desired, you can ``pip install contextlib2`` and use::
+
+    from contextlib2 import ExitStack as does_not_raise

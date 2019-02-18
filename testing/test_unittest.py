@@ -1026,3 +1026,18 @@ def test_error_message_with_parametrized_fixtures(testdir):
             "*Function type: TestCaseFunction",
         ]
     )
+
+
+@pytest.mark.parametrize(
+    "test_name, expected_outcome",
+    [
+        ("test_setup_skip.py", "1 skipped"),
+        ("test_setup_skip_class.py", "1 skipped"),
+        ("test_setup_skip_module.py", "1 error"),
+    ],
+)
+def test_setup_inheritance_skipping(testdir, test_name, expected_outcome):
+    """Issue #4700"""
+    testdir.copy_example("unittest/{}".format(test_name))
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines("* {} in *".format(expected_outcome))

@@ -5,13 +5,13 @@ from __future__ import print_function
 import os
 
 import pytest
+from _pytest.warning_types import PytestDeprecationWarning
 from _pytest.warnings import SHOW_PYTEST_WARNINGS_ARG
 
 pytestmark = pytest.mark.pytester_example_path("deprecated")
 
 
-@pytest.mark.filterwarnings("default")
-def test_pytest_setup_cfg_deprecated(testdir):
+def test_pytest_setup_cfg_unsupported(testdir):
     testdir.makefile(
         ".cfg",
         setup="""
@@ -19,14 +19,11 @@ def test_pytest_setup_cfg_deprecated(testdir):
         addopts = --verbose
     """,
     )
-    result = testdir.runpytest()
-    result.stdout.fnmatch_lines(
-        ["*pytest*section in setup.cfg files is deprecated*use*tool:pytest*instead*"]
-    )
+    with pytest.raises(pytest.fail.Exception):
+        testdir.runpytest()
 
 
-@pytest.mark.filterwarnings("default")
-def test_pytest_custom_cfg_deprecated(testdir):
+def test_pytest_custom_cfg_unsupported(testdir):
     testdir.makefile(
         ".cfg",
         custom="""
@@ -34,29 +31,8 @@ def test_pytest_custom_cfg_deprecated(testdir):
         addopts = --verbose
     """,
     )
-    result = testdir.runpytest("-c", "custom.cfg")
-    result.stdout.fnmatch_lines(
-        ["*pytest*section in custom.cfg files is deprecated*use*tool:pytest*instead*"]
-    )
-
-
-def test_str_args_deprecated(tmpdir):
-    """Deprecate passing strings to pytest.main(). Scheduled for removal in pytest-4.0."""
-    from _pytest.main import EXIT_NOTESTSCOLLECTED
-
-    warnings = []
-
-    class Collect(object):
-        def pytest_warning_captured(self, warning_message):
-            warnings.append(str(warning_message.message))
-
-    ret = pytest.main("%s -x" % tmpdir, plugins=[Collect()])
-    msg = (
-        "passing a string to pytest.main() is deprecated, "
-        "pass a list of arguments instead."
-    )
-    assert msg in warnings
-    assert ret == EXIT_NOTESTSCOLLECTED
+    with pytest.raises(pytest.fail.Exception):
+        testdir.runpytest("-c", "custom.cfg")
 
 
 def test_getfuncargvalue_is_deprecated(request):
@@ -98,6 +74,7 @@ def test_terminal_reporter_writer_attr(pytestconfig):
 
 
 @pytest.mark.parametrize("plugin", ["catchlog", "capturelog"])
+@pytest.mark.filterwarnings("default")
 def test_pytest_catchlog_deprecated(testdir, plugin):
     testdir.makepyfile(
         """
@@ -137,17 +114,15 @@ def test_pytest_plugins_in_non_top_level_conftest_deprecated(testdir):
     """
     )
     res = testdir.runpytest(SHOW_PYTEST_WARNINGS_ARG)
-    assert res.ret == 0
+    assert res.ret == 2
     msg = str(PYTEST_PLUGINS_FROM_NON_TOP_LEVEL_CONFTEST).splitlines()[0]
     res.stdout.fnmatch_lines(
-        "*subdirectory{sep}conftest.py:0: RemovedInPytest4Warning: {msg}*".format(
-            sep=os.sep, msg=msg
-        )
+        ["*{msg}*".format(msg=msg), "*subdirectory{sep}conftest.py*".format(sep=os.sep)]
     )
 
 
 @pytest.mark.parametrize("use_pyargs", [True, False])
-def test_pytest_plugins_in_non_top_level_conftest_deprecated_pyargs(
+def test_pytest_plugins_in_non_top_level_conftest_unsupported_pyargs(
     testdir, use_pyargs
 ):
     """When using --pyargs, do not emit the warning about non-top-level conftest warnings (#4039, #4044)"""
@@ -167,7 +142,7 @@ def test_pytest_plugins_in_non_top_level_conftest_deprecated_pyargs(
     args = ("--pyargs", "pkg") if use_pyargs else ()
     args += (SHOW_PYTEST_WARNINGS_ARG,)
     res = testdir.runpytest(*args)
-    assert res.ret == 0
+    assert res.ret == (0 if use_pyargs else 2)
     msg = str(PYTEST_PLUGINS_FROM_NON_TOP_LEVEL_CONFTEST).splitlines()[0]
     if use_pyargs:
         assert msg not in res.stdout.str()
@@ -175,7 +150,7 @@ def test_pytest_plugins_in_non_top_level_conftest_deprecated_pyargs(
         res.stdout.fnmatch_lines("*{msg}*".format(msg=msg))
 
 
-def test_pytest_plugins_in_non_top_level_conftest_deprecated_no_top_level_conftest(
+def test_pytest_plugins_in_non_top_level_conftest_unsupported_no_top_level_conftest(
     testdir
 ):
     from _pytest.deprecated import PYTEST_PLUGINS_FROM_NON_TOP_LEVEL_CONFTEST
@@ -184,8 +159,6 @@ def test_pytest_plugins_in_non_top_level_conftest_deprecated_no_top_level_confte
     subdirectory.mkdir()
     testdir.makeconftest(
         """
-        import warnings
-        warnings.filterwarnings('always', category=DeprecationWarning)
         pytest_plugins=['capture']
     """
     )
@@ -199,16 +172,14 @@ def test_pytest_plugins_in_non_top_level_conftest_deprecated_no_top_level_confte
     )
 
     res = testdir.runpytest_subprocess()
-    assert res.ret == 0
+    assert res.ret == 2
     msg = str(PYTEST_PLUGINS_FROM_NON_TOP_LEVEL_CONFTEST).splitlines()[0]
     res.stdout.fnmatch_lines(
-        "*subdirectory{sep}conftest.py:0: RemovedInPytest4Warning: {msg}*".format(
-            sep=os.sep, msg=msg
-        )
+        ["*{msg}*".format(msg=msg), "*subdirectory{sep}conftest.py*".format(sep=os.sep)]
     )
 
 
-def test_pytest_plugins_in_non_top_level_conftest_deprecated_no_false_positives(
+def test_pytest_plugins_in_non_top_level_conftest_unsupported_no_false_positives(
     testdir
 ):
     from _pytest.deprecated import PYTEST_PLUGINS_FROM_NON_TOP_LEVEL_CONFTEST
@@ -241,17 +212,6 @@ def test_pytest_plugins_in_non_top_level_conftest_deprecated_no_false_positives(
     assert msg not in res.stdout.str()
 
 
-def test_call_fixture_function_deprecated():
-    """Check if a warning is raised if a fixture function is called directly (#3661)"""
-
-    @pytest.fixture
-    def fix():
-        return 1
-
-    with pytest.deprecated_call():
-        assert fix() == 1
-
-
 def test_fixture_named_request(testdir):
     testdir.copy_example()
     result = testdir.runpytest()
@@ -260,3 +220,11 @@ def test_fixture_named_request(testdir):
             "*'request' is a reserved name for fixtures and will raise an error in future versions"
         ]
     )
+
+
+def test_pytest_warns_unknown_kwargs():
+    with pytest.warns(
+        PytestDeprecationWarning,
+        match=r"pytest.warns\(\) got unexpected keyword arguments: \['foo'\]",
+    ):
+        pytest.warns(UserWarning, foo="hello")

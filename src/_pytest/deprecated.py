@@ -17,29 +17,21 @@ from _pytest.warning_types import RemovedInPytest4Warning
 from _pytest.warning_types import UnformattedWarning
 
 
-MAIN_STR_ARGS = RemovedInPytest4Warning(
-    "passing a string to pytest.main() is deprecated, "
-    "pass a list of arguments instead."
-)
-
 YIELD_TESTS = "yield tests were removed in pytest 4.0 - {name} will be ignored"
 
 
-FIXTURE_FUNCTION_CALL = UnformattedWarning(
-    RemovedInPytest4Warning,
-    'Fixture "{name}" called directly. Fixtures are not meant to be called directly, '
-    "are created automatically when test functions request them as parameters. "
-    "See https://docs.pytest.org/en/latest/fixture.html for more information.",
+FIXTURE_FUNCTION_CALL = (
+    'Fixture "{name}" called directly. Fixtures are not meant to be called directly,\n'
+    "but are created automatically when test functions request them as parameters.\n"
+    "See https://docs.pytest.org/en/latest/fixture.html for more information about fixtures, and\n"
+    "https://docs.pytest.org/en/latest/deprecations.html#calling-fixtures-directly about how to update your code."
 )
 
 FIXTURE_NAMED_REQUEST = PytestDeprecationWarning(
     "'request' is a reserved name for fixtures and will raise an error in future versions"
 )
 
-CFG_PYTEST_SECTION = UnformattedWarning(
-    RemovedInPytest4Warning,
-    "[pytest] section in {filename} files is deprecated, use [tool:pytest] instead.",
-)
+CFG_PYTEST_SECTION = "[pytest] section in {filename} files is no longer supported, change to [tool:pytest] instead."
 
 GETFUNCARGVALUE = RemovedInPytest4Warning(
     "getfuncargvalue is deprecated, use getfixturevalue"
@@ -63,16 +55,6 @@ MARK_INFO_ATTRIBUTE = RemovedInPytest4Warning(
     "Docs: https://docs.pytest.org/en/latest/mark.html#updating-code"
 )
 
-MARK_PARAMETERSET_UNPACKING = RemovedInPytest4Warning(
-    "Applying marks directly to parameters is deprecated,"
-    " please use pytest.param(..., marks=...) instead.\n"
-    "For more details, see: https://docs.pytest.org/en/latest/parametrize.html"
-)
-
-NODE_WARN = RemovedInPytest4Warning(
-    "Node.warn(code, message) form has been deprecated, use Node.warn(warning_instance) instead."
-)
-
 RAISES_EXEC = PytestDeprecationWarning(
     "raises(..., 'code(as_a_string)') is deprecated, use the context manager form or use `exec()` directly\n\n"
     "See https://docs.pytest.org/en/latest/deprecations.html#raises-warns-exec"
@@ -82,17 +64,14 @@ WARNS_EXEC = PytestDeprecationWarning(
     "See https://docs.pytest.org/en/latest/deprecations.html#raises-warns-exec"
 )
 
-RECORD_XML_PROPERTY = RemovedInPytest4Warning(
-    'Fixture renamed from "record_xml_property" to "record_property" as user '
-    "properties are now available to all reporters.\n"
-    '"record_xml_property" is now deprecated.'
-)
-
-
-PYTEST_PLUGINS_FROM_NON_TOP_LEVEL_CONFTEST = RemovedInPytest4Warning(
-    "Defining pytest_plugins in a non-top-level conftest is deprecated, "
+PYTEST_PLUGINS_FROM_NON_TOP_LEVEL_CONFTEST = (
+    "Defining 'pytest_plugins' in a non-top-level conftest is no longer supported "
     "because it affects the entire directory tree in a non-explicit way.\n"
-    "Please move it to the top level conftest file instead."
+    "  {}\n"
+    "Please move it to a top level conftest file at the rootdir:\n"
+    "  {}\n"
+    "For more information, visit:\n"
+    "  https://docs.pytest.org/en/latest/deprecations.html#pytest-plugins-in-non-top-level-conftest-files"
 )
 
 PYTEST_CONFIG_GLOBAL = PytestDeprecationWarning(
@@ -103,4 +82,15 @@ PYTEST_CONFIG_GLOBAL = PytestDeprecationWarning(
 PYTEST_ENSURETEMP = RemovedInPytest4Warning(
     "pytest/tmpdir_factory.ensuretemp is deprecated, \n"
     "please use the tmp_path fixture or tmp_path_factory.mktemp"
+)
+
+PYTEST_LOGWARNING = PytestDeprecationWarning(
+    "pytest_logwarning is deprecated, no longer being called, and will be removed soon\n"
+    "please use pytest_warning_captured instead"
+)
+
+PYTEST_WARNS_UNKNOWN_KWARGS = UnformattedWarning(
+    PytestDeprecationWarning,
+    "pytest.warns() got unexpected keyword arguments: {args!r}.\n"
+    "This will be an error in future versions.",
 )

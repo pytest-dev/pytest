@@ -33,10 +33,10 @@ You can then restrict a test run to only run tests marked with ``webtest``:
 
     $ pytest -v -m webtest
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.6
-    cachedir: .pytest_cache
+    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python
+    cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR, inifile:
-    collecting ... collected 4 items / 3 deselected
+    collecting ... collected 4 items / 3 deselected / 1 selected
 
     test_server.py::test_send_http PASSED                                [100%]
 
@@ -48,10 +48,10 @@ Or the inverse, running all tests except the webtest ones:
 
     $ pytest -v -m "not webtest"
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.6
-    cachedir: .pytest_cache
+    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python
+    cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR, inifile:
-    collecting ... collected 4 items / 1 deselected
+    collecting ... collected 4 items / 1 deselected / 3 selected
 
     test_server.py::test_something_quick PASSED                          [ 33%]
     test_server.py::test_another PASSED                                  [ 66%]
@@ -70,8 +70,8 @@ tests based on their module, class, method, or function name:
 
     $ pytest -v test_server.py::TestClass::test_method
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.6
-    cachedir: .pytest_cache
+    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python
+    cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR, inifile:
     collecting ... collected 1 item
 
@@ -85,8 +85,8 @@ You can also select on the class:
 
     $ pytest -v test_server.py::TestClass
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.6
-    cachedir: .pytest_cache
+    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python
+    cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR, inifile:
     collecting ... collected 1 item
 
@@ -100,8 +100,8 @@ Or select multiple nodes:
 
     $ pytest -v test_server.py::TestClass test_server.py::test_send_http
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.6
-    cachedir: .pytest_cache
+    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python
+    cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR, inifile:
     collecting ... collected 2 items
 
@@ -140,10 +140,10 @@ select tests based on their names:
 
     $ pytest -v -k http  # running with the above defined example module
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.6
-    cachedir: .pytest_cache
+    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python
+    cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR, inifile:
-    collecting ... collected 4 items / 3 deselected
+    collecting ... collected 4 items / 3 deselected / 1 selected
 
     test_server.py::test_send_http PASSED                                [100%]
 
@@ -155,10 +155,10 @@ And you can also run all tests except the ones that match the keyword:
 
     $ pytest -k "not send_http" -v
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.6
-    cachedir: .pytest_cache
+    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python
+    cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR, inifile:
-    collecting ... collected 4 items / 1 deselected
+    collecting ... collected 4 items / 1 deselected / 3 selected
 
     test_server.py::test_something_quick PASSED                          [ 33%]
     test_server.py::test_another PASSED                                  [ 66%]
@@ -172,10 +172,10 @@ Or to select "http" and "quick" tests:
 
     $ pytest -k "http or quick" -v
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.6
-    cachedir: .pytest_cache
+    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python
+    cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR, inifile:
-    collecting ... collected 4 items / 2 deselected
+    collecting ... collected 4 items / 2 deselected / 2 selected
 
     test_server.py::test_send_http PASSED                                [ 50%]
     test_server.py::test_something_quick PASSED                          [100%]
@@ -308,7 +308,7 @@ apply a marker to an individual test instance::
     @pytest.mark.foo
     @pytest.mark.parametrize(("n", "expected"), [
         (1, 2),
-        pytest.mark.bar((1, 3)),
+        pytest.param((1, 3), marks=pytest.mark.bar),
         (2, 3),
     ])
     def test_increment(n, expected):
@@ -317,15 +317,6 @@ apply a marker to an individual test instance::
 In this example the mark "foo" will apply to each of the three
 tests, whereas the "bar" mark is only applied to the second test.
 Skip and xfail marks can also be applied in this way, see :ref:`skip/xfail with parametrize`.
-
-.. note::
-
-    If the data you are parametrizing happen to be single callables, you need to be careful
-    when marking these items. ``pytest.mark.xfail(my_func)`` won't work because it's also the
-    signature of a function being decorated. To resolve this ambiguity, you need to pass a
-    reason argument:
-    ``pytest.mark.xfail(func_bar, reason="Issue#7")``.
-
 
 .. _`adding a custom marker from a plugin`:
 
@@ -374,6 +365,7 @@ the test needs:
     $ pytest -E stage2
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
+    cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 1 item
 
@@ -388,6 +380,7 @@ and here is one that specifies exactly the environment needed:
     $ pytest -E stage1
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
+    cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 1 item
 
@@ -555,12 +548,13 @@ then you will see two tests skipped and two executed tests as expected:
     $ pytest -rs # this option reports skip reasons
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
+    cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 4 items
 
     test_plat.py s.s.                                                    [100%]
     ========================= short test summary info ==========================
-    SKIP [2] $REGENDOC_TMPDIR/conftest.py:12: cannot run on platform linux
+    SKIPPED [2] $REGENDOC_TMPDIR/conftest.py:12: cannot run on platform linux
 
     =================== 2 passed, 2 skipped in 0.12 seconds ====================
 
@@ -571,8 +565,9 @@ Note that if you specify a platform via the marker-command line option like this
     $ pytest -m linux
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
+    cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR, inifile:
-    collected 4 items / 3 deselected
+    collected 4 items / 3 deselected / 1 selected
 
     test_plat.py .                                                       [100%]
 
@@ -624,8 +619,9 @@ We can now use the ``-m option`` to select one set:
     $ pytest -m interface --tb=short
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
+    cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR, inifile:
-    collected 4 items / 2 deselected
+    collected 4 items / 2 deselected / 2 selected
 
     test_module.py FF                                                    [100%]
 
@@ -647,8 +643,9 @@ or to select both "event" and "interface" tests:
     $ pytest -m "interface or event" --tb=short
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
+    cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR, inifile:
-    collected 4 items / 1 deselected
+    collected 4 items / 1 deselected / 3 selected
 
     test_module.py FFF                                                   [100%]
 
