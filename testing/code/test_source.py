@@ -560,7 +560,6 @@ def test_oneline_and_comment():
     assert str(source) == "raise ValueError"
 
 
-@pytest.mark.xfail(hasattr(sys, "pypy_version_info"), reason="does not work on pypy")
 def test_comments():
     source = '''def test():
     "comment 1"
@@ -576,9 +575,15 @@ comment 4
 '''
     for line in range(2, 6):
         assert str(getstatement(line, source)) == "    x = 1"
-    for line in range(6, 10):
+    if sys.version_info >= (3, 8) or hasattr(sys, "pypy_version_info"):
+        tqs_start = 8
+    else:
+        tqs_start = 10
+        assert str(getstatement(10, source)) == '"""'
+    for line in range(6, tqs_start):
         assert str(getstatement(line, source)) == "    assert False"
-    assert str(getstatement(10, source)) == '"""'
+    for line in range(tqs_start, 10):
+        assert str(getstatement(line, source)) == '"""\ncomment 4\n"""'
 
 
 def test_comment_in_statement():

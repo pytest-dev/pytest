@@ -910,7 +910,6 @@ def test_reportchars_all_error(testdir):
     result.stdout.fnmatch_lines(["ERROR*test_foo*"])
 
 
-@pytest.mark.xfail("hasattr(sys, 'pypy_version_info')")
 def test_errors_in_xfail_skip_expressions(testdir):
     testdir.makepyfile(
         """
@@ -931,6 +930,10 @@ def test_errors_in_xfail_skip_expressions(testdir):
     if sys.platform.startswith("java"):
         # XXX report this to java
         markline = "*" + markline[8:]
+    elif hasattr(sys, "pypy_version_info") and sys.pypy_version_info < (6,):
+        markline = markline[5:]
+    elif sys.version_info >= (3, 8) or hasattr(sys, "pypy_version_info"):
+        markline = markline[4:]
     result.stdout.fnmatch_lines(
         [
             "*ERROR*test_nameerror*",
