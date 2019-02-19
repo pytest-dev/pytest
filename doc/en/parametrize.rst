@@ -172,7 +172,9 @@ command line option and the parametrization of our test function::
             metafunc.parametrize("stringinput",
                                  metafunc.config.getoption('stringinput'))
 
-If we now pass two stringinput values, our test will run twice::
+If we now pass two stringinput values, our test will run twice:
+
+.. code-block:: pytest
 
     $ pytest -q --stringinput="hello" --stringinput="world" test_strings.py
     ..                                                                   [100%]

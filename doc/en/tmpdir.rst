@@ -174,7 +174,9 @@ the system temporary directory.  The base name will be ``pytest-NUM`` where
 ``NUM`` will be incremented with each test run.  Moreover, entries older
 than 3 temporary directories will be removed.
 
-You can override the default temporary directory setting like this::
+You can override the default temporary directory setting like this:
+
+.. code-block:: bash
 
     pytest --basetemp=mydir
 
