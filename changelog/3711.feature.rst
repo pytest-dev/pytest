@@ -1,2 +1,0 @@
-Add the ``--ignore-glob`` parameter to exclude test-modules with Unix shell-style wildcards.
-Add the ``collect_ignore_glob`` for ``conftest.py`` to exclude test-modules with Unix shell-style wildcards.

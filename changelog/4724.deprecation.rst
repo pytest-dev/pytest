@@ -1,3 +1,0 @@
-``pytest.warns()`` now emits a warning when it receives unknown keyword arguments.
-
-This will be changed into an error in the future.
