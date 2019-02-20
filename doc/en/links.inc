@@ -14,7 +14,7 @@
 .. _`distribute docs`:
 .. _`distribute`: https://pypi.org/project/distribute/
 .. _`pip`: https://pypi.org/project/pip/
-.. _`virtualenv`: https://pypi.org/project/virtualenv/
+.. _`venv`: https://docs.python.org/3/library/venv.html/
 .. _hudson: http://hudson-ci.org/
 .. _jenkins: http://jenkins-ci.org/
 .. _tox: http://testrun.org/tox
