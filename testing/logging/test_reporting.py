@@ -1004,6 +1004,40 @@ def test_log_in_hooks(testdir):
         assert "sessionfinish" in contents
 
 
+def test_log_in_runtest_logreport(testdir):
+    log_file = testdir.tmpdir.join("pytest.log").strpath
+
+    testdir.makeini(
+        """
+        [pytest]
+        log_file={}
+        log_file_level = INFO
+        log_cli=true
+        """.format(
+            log_file
+        )
+    )
+    testdir.makeconftest(
+        """
+        import logging
+        logger = logging.getLogger(__name__)
+
+        def pytest_runtest_logreport(report):
+            logger.info("logreport")
+    """
+    )
+    testdir.makepyfile(
+        """
+            def test_first():
+                assert True
+        """
+    )
+    testdir.runpytest()
+    with open(log_file) as rfh:
+        contents = rfh.read()
+        assert contents.count("logreport") == 3
+
+
 def test_log_set_path(testdir):
     report_dir_base = testdir.tmpdir.strpath
 
