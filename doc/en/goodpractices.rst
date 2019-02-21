@@ -8,7 +8,7 @@ Install package with pip
 -------------------------------------------------
 
 For development, we recommend you use venv_ for virtual environments 
-(or virtualenv_ for Python 2.7 and 3.4) and 
+(or virtualenv_ for Python 2.7) and 
 pip_ for installing your application and any dependencies, 
 as well as the ``pytest`` package itself. 
 This ensures your code and dependencies are isolated from your system Python installation.
