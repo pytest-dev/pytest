@@ -7,10 +7,10 @@ Good Integration Practices
 Install package with pip
 -------------------------------------------------
 
-For development, we recommend you use venv_ for virtual environments 
-(or virtualenv_ for Python 2.7) and 
-pip_ for installing your application and any dependencies, 
-as well as the ``pytest`` package itself. 
+For development, we recommend you use venv_ for virtual environments
+(or virtualenv_ for Python 2.7) and
+pip_ for installing your application and any dependencies,
+as well as the ``pytest`` package itself.
 This ensures your code and dependencies are isolated from your system Python installation.
 
 Next, place a ``setup.py`` file in the root of your package with the following minimum content::
