@@ -17,11 +17,15 @@ Installation and Getting Started
 Install ``pytest``
 ----------------------------------------
 
-1. Run the following command in your command line::
+1. Run the following command in your command line:
+
+.. code-block:: bash
 
     pip install -U pytest
 
-2. Check that you installed the correct version::
+2. Check that you installed the correct version:
+
+.. code-block:: bash
 
     $ pytest --version
     This is pytest version 4.x.y, imported from $PYTHON_PREFIX/lib/python3.6/site-packages/pytest.py
@@ -168,7 +172,9 @@ List the name ``tmpdir`` in the test function signature and ``pytest`` will look
 
 More info on tmpdir handling is available at :ref:`Temporary directories and files <tmpdir handling>`.
 
-Find out what kind of builtin :ref:`pytest fixtures <fixtures>` exist with the command::
+Find out what kind of builtin :ref:`pytest fixtures <fixtures>` exist with the command:
+
+.. code-block:: bash
 
     pytest --fixtures   # shows builtin and custom fixtures
 

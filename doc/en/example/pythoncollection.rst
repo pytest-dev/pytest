@@ -6,7 +6,9 @@ Ignore paths during test collection
 
 You can easily ignore certain test directories and modules during collection
 by passing the ``--ignore=path`` option on the cli. ``pytest`` allows multiple
-``--ignore`` options. Example::
+``--ignore`` options. Example:
+
+.. code-block:: text
 
     tests/
     |-- example
@@ -57,7 +59,9 @@ Keeping duplicate paths specified from command line
 ----------------------------------------------------
 
 Default behavior of ``pytest`` is to ignore duplicate paths specified from the command line.
-Example::
+Example:
+
+.. code-block:: pytest
 
     pytest path_a path_a
 
@@ -68,7 +72,9 @@ Example::
 Just collect tests once.
 
 To collect duplicate tests, use the ``--keep-duplicates`` option on the cli.
-Example::
+Example:
+
+.. code-block:: pytest
 
     pytest --keep-duplicates path_a path_a
 
@@ -78,7 +84,9 @@ Example::
 
 As the collector just works on directories, if you specify twice a single test file, ``pytest`` will
 still collect it twice, no matter if the ``--keep-duplicates`` is not specified.
-Example::
+Example:
+
+.. code-block:: pytest
 
     pytest test_a.py test_a.py
 
@@ -90,7 +98,9 @@ Example::
 Changing directory recursion
 -----------------------------------------------------
 
-You can set the :confval:`norecursedirs` option in an ini-file, for example your ``pytest.ini`` in the project root directory::
+You can set the :confval:`norecursedirs` option in an ini-file, for example your ``pytest.ini`` in the project root directory:
+
+.. code-block:: ini
 
     # content of pytest.ini
     [pytest]
@@ -106,7 +116,9 @@ Changing naming conventions
 You can configure different naming conventions by setting
 the :confval:`python_files`, :confval:`python_classes` and
 :confval:`python_functions` configuration options.
-Here is an example::
+Here is an example:
+
+.. code-block:: ini
 
     # content of pytest.ini
     # Example 1: have pytest look for "check" instead of "test"
@@ -145,7 +157,9 @@ The test collection would look like this:
 
     ======================= no tests ran in 0.12 seconds =======================
 
-You can check for multiple glob patterns by adding a space between the patterns::
+You can check for multiple glob patterns by adding a space between the patterns:
+
+.. code-block:: ini
 
     # Example 2: have pytest look for files with "test" and "example"
     # content of pytest.ini, tox.ini, or setup.cfg file (replace "pytest"
@@ -165,13 +179,17 @@ Interpreting cmdline arguments as Python packages
 You can use the ``--pyargs`` option to make ``pytest`` try
 interpreting arguments as python package names, deriving
 their file system path and then running the test. For
-example if you have unittest2 installed you can type::
+example if you have unittest2 installed you can type:
+
+.. code-block:: bash
 
     pytest --pyargs unittest2.test.test_skipping -q
 
 which would run the respective test module.  Like with
 other options, through an ini-file and the :confval:`addopts` option you
-can make this change more permanently::
+can make this change more permanently:
+
+.. code-block:: ini
 
     # content of pytest.ini
     [pytest]
@@ -209,7 +227,9 @@ Customizing test collection
 
 .. regendoc:wipe
 
-You can easily instruct ``pytest`` to discover tests from every Python file::
+You can easily instruct ``pytest`` to discover tests from every Python file:
+
+.. code-block:: ini
 
     # content of pytest.ini
     [pytest]

@@ -114,7 +114,9 @@ with a list of available function arguments.
 
 .. note::
 
-    You can always issue ::
+    You can always issue:
+
+    .. code-block:: bash
 
         pytest --fixtures test_simplefactory.py
 
@@ -362,7 +364,9 @@ The ``print`` and ``smtp.close()`` statements will execute when the last test in
 the module has finished execution, regardless of the exception status of the
 tests.
 
-Let's execute it::
+Let's execute it:
+
+.. code-block:: pytest
 
     $ pytest -s -q --tb=no
     FFteardown smtp
@@ -471,7 +475,9 @@ read an optional server URL from the test module which uses our fixture::
 
 We use the ``request.module`` attribute to optionally obtain an
 ``smtpserver`` attribute from the test module.  If we just execute
-again, nothing much has changed::
+again, nothing much has changed:
+
+.. code-block:: pytest
 
     $ pytest -s -q --tb=no
     FFfinalizing <smtplib.SMTP object at 0xdeadbeef> (smtp.gmail.com)

@@ -35,7 +35,9 @@ There are two ways in which ``pytest`` can perform capturing:
 
 .. _`disable capturing`:
 
-You can influence output capturing mechanisms from the command line::
+You can influence output capturing mechanisms from the command line:
+
+.. code-block:: bash
 
     pytest -s            # disable all capturing
     pytest --capture=sys # replace sys.stdout/stderr with in-mem files

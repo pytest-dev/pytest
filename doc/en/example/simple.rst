@@ -731,7 +731,9 @@ and run them:
     test_module.py:6: AssertionError
     ========================= 2 failed in 0.12 seconds =========================
 
-you will have a "failures" file which contains the failing test ids::
+you will have a "failures" file which contains the failing test ids:
+
+.. code-block:: bash
 
     $ cat failures
     test_module.py::test_fail1 (PYTEST_TMPDIR/test_fail10)
@@ -935,6 +937,8 @@ like ``pytest-timeout`` they must be imported explicitly and passed on to pytest
 
 
 This allows you to execute tests using the frozen
-application with standard ``pytest`` command-line options::
+application with standard ``pytest`` command-line options:
+
+.. code-block:: bash
 
     ./app_main --pytest --verbose --tb=long --junitxml=results.xml test-suite/

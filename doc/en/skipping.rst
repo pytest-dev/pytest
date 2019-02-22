@@ -22,7 +22,9 @@ it's an **xpass** and will be reported in the test summary.
 ``pytest`` counts and lists *skip* and *xfail* tests separately. Detailed
 information about skipped/xfailed tests is not shown by default to avoid
 cluttering the output.  You can use the ``-r`` option to see details
-corresponding to the "short" letters shown in the test progress::
+corresponding to the "short" letters shown in the test progress:
+
+.. code-block:: bash
 
     pytest -rxXs  # show extra info on xfailed, xpassed, and skipped tests
 
@@ -82,7 +84,7 @@ It is also possible to skip the whole module using
 
 If you wish to skip something conditionally then you can use ``skipif`` instead.
 Here is an example of marking a test function to be skipped
-when run on an interpreter earlier than Python3.6 ::
+when run on an interpreter earlier than Python3.6::
 
     import sys
     @pytest.mark.skipif(sys.version_info < (3,6),
@@ -309,7 +311,9 @@ investigated later.
 Ignoring xfail
 ~~~~~~~~~~~~~~
 
-By specifying on the commandline::
+By specifying on the commandline:
+
+.. code-block:: bash
 
     pytest --runxfail
 

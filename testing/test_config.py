@@ -514,8 +514,8 @@ def test_preparse_ordering_with_setuptools(testdir, monkeypatch):
     pkg_resources = pytest.importorskip("pkg_resources")
     monkeypatch.delenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD", raising=False)
 
-    def my_iter(name):
-        assert name == "pytest11"
+    def my_iter(group, name=None):
+        assert group == "pytest11"
 
         class Dist(object):
             project_name = "spam"
@@ -552,8 +552,8 @@ def test_setuptools_importerror_issue1479(testdir, monkeypatch):
     pkg_resources = pytest.importorskip("pkg_resources")
     monkeypatch.delenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD", raising=False)
 
-    def my_iter(name):
-        assert name == "pytest11"
+    def my_iter(group, name=None):
+        assert group == "pytest11"
 
         class Dist(object):
             project_name = "spam"
@@ -583,8 +583,8 @@ def test_plugin_preparse_prevents_setuptools_loading(testdir, monkeypatch, block
 
     plugin_module_placeholder = object()
 
-    def my_iter(name):
-        assert name == "pytest11"
+    def my_iter(group, name=None):
+        assert group == "pytest11"
 
         class Dist(object):
             project_name = "spam"
@@ -621,7 +621,7 @@ def test_plugin_preparse_prevents_setuptools_loading(testdir, monkeypatch, block
 def test_disable_plugin_autoload(testdir, monkeypatch, parse_args, should_load):
     pkg_resources = pytest.importorskip("pkg_resources")
 
-    def my_iter(name):
+    def my_iter(group, name=None):
         raise AssertionError("Should not be called")
 
     class PseudoPlugin(object):
