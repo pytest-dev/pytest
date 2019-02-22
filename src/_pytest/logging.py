@@ -567,6 +567,11 @@ class LoggingPlugin(object):
         with self._runtest_for(None, "finish"):
             yield
 
+    @pytest.hookimpl(hookwrapper=True)
+    def pytest_runtest_logreport(self):
+        with self._runtest_for(None, "logreport"):
+            yield
+
     @pytest.hookimpl(hookwrapper=True, tryfirst=True)
     def pytest_sessionfinish(self):
         with self.live_logs_context():

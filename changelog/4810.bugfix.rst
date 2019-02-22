@@ -1,0 +1,1 @@
+Logging messages inside ``pytest_runtest_logreport()`` are now properly captured and displayed.
