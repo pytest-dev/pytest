@@ -209,7 +209,7 @@ class TestImportHookInstallation(object):
                     import spamplugin
                     return spamplugin
 
-            def iter_entry_points(name):
+            def iter_entry_points(group, name=None):
                 yield DummyEntryPoint()
 
             pkg_resources.iter_entry_points = iter_entry_points
