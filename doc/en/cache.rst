@@ -168,7 +168,9 @@ Behavior when no tests failed in the last run
 
 When no tests failed in the last run, or when no cached ``lastfailed`` data was
 found, ``pytest`` can be configured either to run all of the tests or no tests,
-using the ``--last-failed-no-failures`` option, which takes one of the following values::
+using the ``--last-failed-no-failures`` option, which takes one of the following values:
+
+.. code-block:: bash
 
     pytest --last-failed --last-failed-no-failures all    # run all tests (default behavior)
     pytest --last-failed --last-failed-no-failures none   # run no tests and exit
@@ -283,7 +285,9 @@ Clearing Cache content
 -------------------------------
 
 You can instruct pytest to clear all cache files and values
-by adding the ``--cache-clear`` option like this::
+by adding the ``--cache-clear`` option like this:
+
+.. code-block:: bash
 
     pytest --cache-clear
 

@@ -204,14 +204,18 @@ Registering markers
 
 .. ini-syntax for custom markers:
 
-Registering markers for your test suite is simple::
+Registering markers for your test suite is simple:
+
+.. code-block:: ini
 
     # content of pytest.ini
     [pytest]
     markers =
         webtest: mark a test as a webtest.
 
-You can ask which markers exist for your test suite - the list includes our just defined ``webtest`` markers::
+You can ask which markers exist for your test suite - the list includes our just defined ``webtest`` markers:
+
+.. code-block:: pytest
 
     $ pytest --markers
     @pytest.mark.webtest: mark a test as a webtest.
@@ -388,7 +392,9 @@ and here is one that specifies exactly the environment needed:
 
     ========================= 1 passed in 0.12 seconds =========================
 
-The ``--markers`` option always gives you a list of available markers::
+The ``--markers`` option always gives you a list of available markers:
+
+.. code-block:: pytest
 
     $ pytest --markers
     @pytest.mark.env(name): mark test to run only on named environment

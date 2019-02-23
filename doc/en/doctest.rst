@@ -4,7 +4,9 @@ Doctest integration for modules and test files
 
 By default all files matching the ``test*.txt`` pattern will
 be run through the python standard ``doctest`` module.  You
-can change the pattern by issuing::
+can change the pattern by issuing:
+
+.. code-block:: bash
 
     pytest --doctest-glob='*.rst'
 
@@ -26,7 +28,9 @@ can be given multiple times in the command-line.
 
 You can also trigger running of doctests
 from docstrings in all python modules (including regular
-python test modules)::
+python test modules):
+
+.. code-block:: bash
 
     pytest --doctest-modules
 
@@ -39,7 +43,9 @@ putting them into a pytest.ini file like this:
     [pytest]
     addopts = --doctest-modules
 
-If you then have a text file like this::
+If you then have a text file like this:
+
+.. code-block:: text
 
     # content of example.rst
 
@@ -73,7 +79,9 @@ then you can just invoke ``pytest`` without command line options:
 
     ========================= 1 passed in 0.12 seconds =========================
 
-It is possible to use fixtures using the ``getfixture`` helper::
+It is possible to use fixtures using the ``getfixture`` helper:
+
+.. code-block:: text
 
     # content of example.rst
     >>> tmp = getfixture('tmpdir')
@@ -112,14 +120,18 @@ the ``doctest_optionflags`` ini option:
 
 
 Alternatively, it can be enabled by an inline comment in the doc test
-itself::
+itself:
+
+.. code-block:: rst
 
     # content of example.rst
     >>> get_unicode_greeting()  # doctest: +ALLOW_UNICODE
     'Hello'
 
 By default, pytest would report only the first failure for a given doctest.  If
-you want to continue the test even when you have failures, do::
+you want to continue the test even when you have failures, do:
+
+.. code-block:: bash
 
     pytest --doctest-modules --doctest-continue-on-failure
 
@@ -167,7 +179,9 @@ Output format
 You can change the diff output format on failure for your doctests
 by using one of standard doctest modules format in options
 (see :data:`python:doctest.REPORT_UDIFF`, :data:`python:doctest.REPORT_CDIFF`,
-:data:`python:doctest.REPORT_NDIFF`, :data:`python:doctest.REPORT_ONLY_FIRST_FAILURE`)::
+:data:`python:doctest.REPORT_NDIFF`, :data:`python:doctest.REPORT_ONLY_FIRST_FAILURE`):
+
+.. code-block:: bash
 
     pytest --doctest-modules --doctest-report none
     pytest --doctest-modules --doctest-report udiff

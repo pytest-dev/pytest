@@ -4,6 +4,8 @@ trigger:
 
 variables:
   PYTEST_ADDOPTS: "--junitxml=build/test-results/$(tox.env).xml"
+  python.needs_vc: False
+  python.exe: "python"
 
 jobs:
 
@@ -15,6 +17,26 @@ jobs:
       py27:
         python.version: '2.7'
         tox.env: 'py27'
+      py27-xdist:
+        python.version: '2.7'
+        tox.env: 'py27-xdist'
+      py27-numpy/nobyte:
+        python.version: '2.7'
+        tox.env: 'py27-numpy,py27-nobyte'
+      py27-trial:
+        python.version: '2.7'
+        tox.env: 'py27-trial'
+        python.needs_vc: True
+      py27-pluggymaster:
+        python.version: '2.7'
+        tox.env: 'pluggymaster'
+      pypy:
+        python.version: 'pypy'
+        tox.env: 'pypy'
+        python.exe: 'pypy'
+      py34:
+        python.version: '3.4'
+        tox.env: 'py34'
       py35:
         python.version: '3.5'
         tox.env: 'py35'
@@ -24,18 +46,52 @@ jobs:
       py37:
         python.version: '3.7'
         tox.env: 'py37'
-    maxParallel: 4
+      py37-linting/docs/doctesting:
+        python.version: '3.7'
+        tox.env: 'linting,docs,doctesting'
+      py37-xdist:
+        python.version: '3.7'
+        tox.env: 'py37-xdist'
+      py37-trial/numpy:
+        python.version: '3.7'
+        tox.env: 'py37-trial,py37-numpy'
+      py37-pluggymaster:
+        python.version: '3.7'
+        tox.env: 'py37-pluggymaster'
+    maxParallel: 10
 
   steps:
   - task: UsePythonVersion@0
+    condition: not(startsWith(variables['python.exe'], 'pypy'))
     inputs:
       versionSpec: '$(python.version)'
       architecture: 'x64'
 
-  - script: python -m pip install --upgrade pip && pip install tox
+  - script: choco install vcpython27
+    condition: eq(variables['python.needs_vc'], True)
+    displayName: 'Install VC for py27'
+
+  - script: choco install python.pypy
+    condition: eq(variables['python.exe'], 'pypy')
+    displayName: 'Install pypy'
+
+  - script: choco install pypy3
+    condition: eq(variables['python.exe'], 'pypy3')
+    displayName: 'Install pypy3'
+
+  - task: PowerShell@2
+    inputs:
+      targetType: 'inline'
+      script: |
+        Invoke-WebRequest -Uri "https://bootstrap.pypa.io/get-pip.py" -OutFile "get-pip.py"
+        $(python.exe) get-pip.py
+    condition: startsWith(variables['python.exe'], 'pypy')
+    displayName: 'Install pip'
+
+  - script: $(python.exe) -m pip install --upgrade pip && $(python.exe) -m pip install tox
     displayName: 'Install tox'
 
-  - script: python -m tox -e $(tox.env)
+  - script: $(python.exe) -m tox -e $(tox.env)
     displayName: 'Run tests'
 
   - task: PublishTestResults@2

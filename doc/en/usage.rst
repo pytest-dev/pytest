@@ -12,7 +12,9 @@ Calling pytest through ``python -m pytest``
 
 .. versionadded:: 2.0
 
-You can invoke testing through the Python interpreter from the command line::
+You can invoke testing through the Python interpreter from the command line:
+
+.. code-block:: text
 
     python -m pytest [...]
 
@@ -34,7 +36,7 @@ Running ``pytest`` can result in six different exit codes:
 Getting help on version, option names, environment variables
 --------------------------------------------------------------
 
-::
+.. code-block:: bash
 
     pytest --version   # shows where pytest was imported from
     pytest --fixtures  # show available builtin function arguments
@@ -46,7 +48,9 @@ Getting help on version, option names, environment variables
 Stopping after the first (or N) failures
 ---------------------------------------------------
 
-To stop the testing process after the first (N) failures::
+To stop the testing process after the first (N) failures:
+
+.. code-block:: bash
 
     pytest -x            # stop after first failure
     pytest --maxfail=2    # stop after two failures
@@ -60,19 +64,19 @@ Pytest supports several ways to run and select tests from the command-line.
 
 **Run tests in a module**
 
-::
+.. code-block:: bash
 
     pytest test_mod.py
 
 **Run tests in a directory**
 
-::
+.. code-block:: bash
 
     pytest testing/
 
 **Run tests by keyword expressions**
 
-::
+.. code-block:: bash
 
     pytest -k "MyClass and not method"
 
@@ -87,18 +91,22 @@ The example above will run ``TestMyClass.test_something``  but not ``TestMyClass
 Each collected test is assigned a unique ``nodeid`` which consist of the module filename followed
 by specifiers like class names, function names and parameters from parametrization, separated by ``::`` characters.
 
-To run a specific test within a module::
+To run a specific test within a module:
+
+.. code-block:: bash
 
     pytest test_mod.py::test_func
 
 
-Another example specifying a test method in the command line::
+Another example specifying a test method in the command line:
+
+.. code-block:: bash
 
     pytest test_mod.py::TestClass::test_method
 
 **Run tests by marker expressions**
 
-::
+.. code-block:: bash
 
     pytest -m slow
 
@@ -108,7 +116,7 @@ For more information see :ref:`marks <mark>`.
 
 **Run tests from packages**
 
-::
+.. code-block:: bash
 
     pytest --pyargs pkg.testing
 
@@ -118,7 +126,9 @@ This will import ``pkg.testing`` and use its filesystem location to find and run
 Modifying Python traceback printing
 ----------------------------------------------
 
-Examples for modifying traceback printing::
+Examples for modifying traceback printing:
+
+.. code-block:: bash
 
     pytest --showlocals # show local variables in tracebacks
     pytest -l           # show local variables (shortcut)
@@ -320,13 +330,17 @@ Dropping to PDB_ (Python Debugger) on failures
 .. _PDB: http://docs.python.org/library/pdb.html
 
 Python comes with a builtin Python debugger called PDB_.  ``pytest``
-allows one to drop into the PDB_ prompt via a command line option::
+allows one to drop into the PDB_ prompt via a command line option:
+
+.. code-block:: bash
 
     pytest --pdb
 
 This will invoke the Python debugger on every failure (or KeyboardInterrupt).
 Often you might only want to do this for the first failing test to understand
-a certain failure situation::
+a certain failure situation:
+
+.. code-block:: bash
 
     pytest -x --pdb   # drop to PDB on first failure, then end test session
     pytest --pdb --maxfail=3  # drop to PDB for first three failures
@@ -349,7 +363,9 @@ Dropping to PDB_ (Python Debugger) at the start of a test
 ----------------------------------------------------------
 
 
-``pytest`` allows one to drop into the PDB_ prompt immediately at the start of each test via a command line option::
+``pytest`` allows one to drop into the PDB_ prompt immediately at the start of each test via a command line option:
+
+.. code-block:: bash
 
     pytest --trace
 
@@ -394,7 +410,9 @@ Profiling test execution duration
 
 .. versionadded: 2.2
 
-To get a list of the slowest 10 test durations::
+To get a list of the slowest 10 test durations:
+
+.. code-block:: bash
 
     pytest --durations=10
 
@@ -404,7 +422,9 @@ Creating JUnitXML format files
 ----------------------------------------------------
 
 To create result files which can be read by Jenkins_ or other Continuous
-integration servers, use this invocation::
+integration servers, use this invocation:
+
+.. code-block:: bash
 
     pytest --junitxml=path
 
@@ -627,7 +647,9 @@ Creating resultlog format files
     See `the deprecation docs <https://docs.pytest.org/en/latest/deprecations.html#result-log-result-log>`__
     for more information.
 
-To create plain-text machine-readable result files you can issue::
+To create plain-text machine-readable result files you can issue:
+
+.. code-block:: bash
 
     pytest --resultlog=path
 
@@ -640,7 +662,9 @@ by the `PyPy-test`_ web page to show test results over several revisions.
 Sending test report to online pastebin service
 -----------------------------------------------------
 
-**Creating a URL for each test failure**::
+**Creating a URL for each test failure**:
+
+.. code-block:: bash
 
     pytest --pastebin=failed
 
@@ -648,7 +672,9 @@ This will submit test run information to a remote Paste service and
 provide a URL for each failure.  You may select tests as usual or add
 for example ``-x`` if you only want to send one particular failure.
 
-**Creating a URL for a whole test session log**::
+**Creating a URL for a whole test session log**:
+
+.. code-block:: bash
 
     pytest --pastebin=all
 
@@ -661,7 +687,9 @@ To disable loading specific plugins at invocation time, use the ``-p`` option
 together with the prefix ``no:``.
 
 Example: to disable loading the plugin ``doctest``, which is responsible for
-executing doctest tests from text files, invoke pytest like this::
+executing doctest tests from text files, invoke pytest like this:
+
+.. code-block:: bash
 
     pytest -p no:doctest
 
@@ -693,7 +721,9 @@ You can specify additional plugins to ``pytest.main``::
     pytest.main(["-qq"], plugins=[MyPlugin()])
 
 Running it will show that ``MyPlugin`` was added and its
-hook was invoked::
+hook was invoked:
+
+.. code-block:: pytest
 
     $ python myinvoke.py
     .FEsxX.                                                              [100%]*** test run reporting finishing
