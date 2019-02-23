@@ -133,9 +133,8 @@ progress output, you can write it into a configuration file:
 
 .. code-block:: ini
 
-    # content of pytest.ini
-    # (or tox.ini or setup.cfg)
-    # (use [tool:pytest] in setup.cfg cause [pytest] is no longer supported)
+    # content of pytest.ini or tox.ini
+    # setup.cfg files should use [tool:pytest] section instead
     [pytest]
     addopts = -ra -q
 
