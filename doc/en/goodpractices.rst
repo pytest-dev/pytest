@@ -42,8 +42,8 @@ Conventions for Python test discovery
 * In those directories, search for ``test_*.py`` or ``*_test.py`` files, imported by their `test package name`_.
 * From those files, collect test items:
 
-  * ``test_`` prefixed test functions or methods outside of class
-  * ``test_`` prefixed test functions or methods inside ``Test`` prefixed test classes (without an ``__init__`` method)
+  * ``test`` prefixed test functions or methods outside of class
+  * ``test`` prefixed test functions or methods inside ``Test`` prefixed test classes (without an ``__init__`` method)
 
 For examples of how to customize your test discovery :doc:`example/pythoncollection`.
 
