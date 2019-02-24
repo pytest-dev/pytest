@@ -13,7 +13,7 @@ INSTALL_REQUIRES = [
     'more-itertools>=4.0.0,<6.0.0;python_version<="2.7"',
     'more-itertools>=4.0.0;python_version>"2.7"',
     "atomicwrites>=1.0",
-    'funcsigs;python_version<"3.0"',
+    'funcsigs>=1.0;python_version<"3.0"',
     'pathlib2>=2.2.0;python_version<"3.6"',
     'colorama;sys_platform=="win32"',
 ]
