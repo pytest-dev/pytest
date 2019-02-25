@@ -1,0 +1,6 @@
+The ``-p`` option can now be used to early-load plugins also by entry-point name, instead of just
+by module name.
+
+This makes it possible to early load external plugins like ``pytest-cov`` in the command-line::
+
+    pytest -p pytest_cov

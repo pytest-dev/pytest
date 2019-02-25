@@ -680,6 +680,22 @@ for example ``-x`` if you only want to send one particular failure.
 
 Currently only pasting to the http://bpaste.net service is implemented.
 
+Early loading plugins
+---------------------
+
+You can early-load plugins (internal and external) explicitly in the command-line with the ``-p`` option::
+
+    pytest -p mypluginmodule
+
+The option receives a ``name`` parameter, which can be:
+
+* A full module dotted name, for example ``myproject.plugins``. This dotted name must be importable.
+* The entry-point name of a plugin. This is the name passed to ``setuptools`` when the plugin is
+  registered. For example to early-load the `pytest-cov <https://pypi.org/project/pytest-cov/>`__ plugin you can use::
+
+    pytest -p pytest_cov
+
+
 Disabling plugins
 -----------------
 

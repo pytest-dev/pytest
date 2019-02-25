@@ -22,7 +22,7 @@ INSTALL_REQUIRES = [
 # if _PYTEST_SETUP_SKIP_PLUGGY_DEP is set, skip installing pluggy;
 # used by tox.ini to test with pluggy master
 if "_PYTEST_SETUP_SKIP_PLUGGY_DEP" not in os.environ:
-    INSTALL_REQUIRES.append("pluggy>=0.7")
+    INSTALL_REQUIRES.append("pluggy>=0.9")
 
 
 def main():
