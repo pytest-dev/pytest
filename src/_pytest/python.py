@@ -43,6 +43,7 @@ from _pytest.mark import MARK_GEN
 from _pytest.mark.structures import get_unpacked_marks
 from _pytest.mark.structures import normalize_mark_list
 from _pytest.outcomes import fail
+from _pytest.outcomes import skip
 from _pytest.pathlib import parts
 from _pytest.warning_types import PytestWarning
 
@@ -156,6 +157,15 @@ def pytest_configure(config):
 @hookimpl(trylast=True)
 def pytest_pyfunc_call(pyfuncitem):
     testfunction = pyfuncitem.obj
+    iscoroutinefunction = getattr(inspect, "iscoroutinefunction", None)
+    if iscoroutinefunction is not None and iscoroutinefunction(testfunction):
+        msg = "Coroutine functions are not natively supported and have been skipped.\n"
+        msg += "You need to install a suitable plugin for your async framework, for example:\n"
+        msg += "  - pytest-asyncio\n"
+        msg += "  - pytest-trio\n"
+        msg += "  - pytest-tornasync"
+        warnings.warn(PytestWarning(msg.format(pyfuncitem.nodeid)))
+        skip(msg="coroutine function and no async plugin installed (see warnings)")
     funcargs = pyfuncitem.funcargs
     testargs = {arg: funcargs[arg] for arg in pyfuncitem._fixtureinfo.argnames}
     testfunction(**testargs)
