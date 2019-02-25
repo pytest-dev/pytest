@@ -156,14 +156,9 @@ def pytest_configure(config):
 @hookimpl(trylast=True)
 def pytest_pyfunc_call(pyfuncitem):
     testfunction = pyfuncitem.obj
-    if pyfuncitem._isyieldedfunction():
-        testfunction(*pyfuncitem._args)
-    else:
-        funcargs = pyfuncitem.funcargs
-        testargs = {}
-        for arg in pyfuncitem._fixtureinfo.argnames:
-            testargs[arg] = funcargs[arg]
-        testfunction(**testargs)
+    funcargs = pyfuncitem.funcargs
+    testargs = {arg: funcargs[arg] for arg in pyfuncitem._fixtureinfo.argnames}
+    testfunction(**testargs)
     return True
 
 
@@ -1405,7 +1400,7 @@ class Function(FunctionMixin, nodes.Item, fixtures.FuncargnamesCompatAttr):
 
         if fixtureinfo is None:
             fixtureinfo = self.session._fixturemanager.getfixtureinfo(
-                self, self.obj, self.cls, funcargs=not self._isyieldedfunction()
+                self, self.obj, self.cls, funcargs=True
             )
         self._fixtureinfo = fixtureinfo
         self.fixturenames = fixtureinfo.names_closure
@@ -1419,16 +1414,11 @@ class Function(FunctionMixin, nodes.Item, fixtures.FuncargnamesCompatAttr):
 
     def _initrequest(self):
         self.funcargs = {}
-        if self._isyieldedfunction():
-            assert not hasattr(
-                self, "callspec"
-            ), "yielded functions (deprecated) cannot have funcargs"
-        else:
-            if hasattr(self, "callspec"):
-                callspec = self.callspec
-                assert not callspec.funcargs
-                if hasattr(callspec, "param"):
-                    self.param = callspec.param
+        if hasattr(self, "callspec"):
+            callspec = self.callspec
+            assert not callspec.funcargs
+            if hasattr(callspec, "param"):
+                self.param = callspec.param
         self._request = fixtures.FixtureRequest(self)
 
     @property
@@ -1447,9 +1437,6 @@ class Function(FunctionMixin, nodes.Item, fixtures.FuncargnamesCompatAttr):
     def _pyfuncitem(self):
         "(compatonly) for code expecting pytest-2.2 style request objects"
         return self
-
-    def _isyieldedfunction(self):
-        return getattr(self, "_args", None) is not None
 
     def runtest(self):
         """ execute the underlying test function. """
