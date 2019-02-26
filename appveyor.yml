@@ -6,14 +6,13 @@ environment:
   - TOXENV: "py34-xdist"
   - TOXENV: "py35-xdist"
   - TOXENV: "py36-xdist"
+  # NOTE: pypy-xdist is buggy currently (https://github.com/pytest-dev/pytest-xdist/issues/142).
   - TOXENV: "pypy"
     PYTEST_NO_COVERAGE: "1"
   # Specialized factors for py27.
   - TOXENV: "py27-trial,py27-numpy,py27-nobyte"
-  - TOXENV: "py27-pluggymaster"
   # Specialized factors for py37.
   - TOXENV: "py37-trial,py37-numpy"
-  - TOXENV: "py37-pluggymaster"
   - TOXENV: "py37-freeze"
     PYTEST_NO_COVERAGE: "1"
 

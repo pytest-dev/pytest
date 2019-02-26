@@ -27,9 +27,9 @@ jobs:
         python.version: '2.7'
         tox.env: 'py27-trial'
         python.needs_vc: True
-      py27-pluggymaster:
+      py27-pluggymaster-xdist:
         python.version: '2.7'
-        tox.env: 'pluggymaster'
+        tox.env: 'py27-pluggymaster-xdist'
       pypy:
         python.version: 'pypy'
         tox.env: 'pypy'
@@ -55,9 +55,9 @@ jobs:
       py37-trial/numpy:
         python.version: '3.7'
         tox.env: 'py37-trial,py37-numpy'
-      py37-pluggymaster:
+      py37-pluggymaster-xdist:
         python.version: '3.7'
-        tox.env: 'py37-pluggymaster'
+        tox.env: 'py37-pluggymaster-xdist'
     maxParallel: 10
 
   steps:
