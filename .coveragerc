@@ -1,7 +1,10 @@
 [run]
-source = pytest,_pytest,testing/
+source = .
 parallel = 1
 branch = 1
+
+[report]
+include = src/*, testing/*
 
 [paths]
 source = src/
