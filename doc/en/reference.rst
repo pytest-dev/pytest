@@ -1226,8 +1226,11 @@ passed multiple times. The expected format is ``name=value``. For example::
 
 .. confval:: markers
 
-    List of markers that are allowed in test functions, enforced when ``--strict`` command-line argument is used.
-    You can use a marker name per line, indented from the option name.
+    When the ``--strict`` command-line argument is used, only known markers -
+    defined in code by core pytest or some plugin - are allowed.
+    You can list additional markers in this setting to add them to the whitelist.
+
+    You can list one marker name per line, indented from the option name.
 
     .. code-block:: ini
 
