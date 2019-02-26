@@ -105,7 +105,7 @@ after_success:
       coverage combine
       coverage xml --ignore-errors
       coverage report -m --ignore-errors
-      bash <(curl -s https://codecov.io/bash) -Z -X gcov -X coveragepy -X search -X xcode -X gcovout -X fix -f coverage.xml -F "${TOXENV//-/,},linux"
+      bash <(curl -s https://codecov.io/bash) -Z -X gcov -X coveragepy -X search -X xcode -X gcovout -X fix -f coverage.xml -F $TRAVIS_OS_NAME
     fi
 
 notifications:
