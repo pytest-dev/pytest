@@ -6,6 +6,10 @@ variables:
   PYTEST_ADDOPTS: "--junitxml=build/test-results/$(tox.env).xml"
   python.needs_vc: False
   python.exe: "python"
+  COVERAGE_FILE: "$(Build.Repository.LocalPath)/.coverage"
+  COVERAGE_PROCESS_START: "$(Build.Repository.LocalPath)/.coveragerc"
+  _PYTEST_TOX_COVERAGE_RUN: "coverage run -m"
+  _PYTEST_TOX_EXTRA_DEP: "coverage-enable-subprocess"
 
 jobs:
 
@@ -34,6 +38,9 @@ jobs:
         python.version: 'pypy'
         tox.env: 'pypy'
         python.exe: 'pypy'
+        _PYTEST_TOX_COVERAGE_RUN: ""
+        _PYTEST_TOX_EXTRA_DEP: ""
+        PYTEST_NO_COVERAGE: "1"
       py34:
         python.version: '3.4'
         tox.env: 'py34'
@@ -99,3 +106,8 @@ jobs:
       testResultsFiles: 'build/test-results/$(tox.env).xml'
       testRunTitle: '$(tox.env)'
     condition: succeededOrFailed()
+
+  - script: call scripts\upload-coverage.bat
+    displayName: 'Upload coverage'
+    env:
+      CODECOV_TOKEN: $(CODECOV_TOKEN)
