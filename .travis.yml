@@ -16,10 +16,10 @@ env:
     # Specialized factors for py27.
     - TOXENV=py27-nobyte
     - TOXENV=py27-xdist
-    - TOXENV=py27-pluggymaster-xdist
+    - TOXENV=py27-pluggymaster-xdist PYTEST_NO_COVERAGE=1
     # Specialized factors for py37.
     - TOXENV=py37-pexpect,py37-trial,py37-numpy
-    - TOXENV=py37-pluggymaster-xdist
+    - TOXENV=py37-pluggymaster-xdist PYTEST_NO_COVERAGE=1
     - TOXENV=py37-freeze PYTEST_NO_COVERAGE=1
 
 matrix:
@@ -60,7 +60,7 @@ jobs:
         - test $(python -c 'import sys; print("%d%d" % sys.version_info[0:2])') = 37
 
     # Jobs only run via Travis cron jobs (currently daily).
-    - env: TOXENV=py38-xdist
+    - env: TOXENV=py38-xdist PYTEST_NO_COVERAGE=1
       python: '3.8-dev'
       if: type = cron
 
