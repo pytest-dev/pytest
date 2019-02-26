@@ -1,4 +1,6 @@
 environment:
+  global:
+    PYTEST_NO_COVERAGE: "1"
   matrix:
   - TOXENV: "py37-xdist"
   - TOXENV: "py27-xdist"
@@ -8,13 +10,11 @@ environment:
   - TOXENV: "py36-xdist"
   # NOTE: pypy-xdist is buggy currently (https://github.com/pytest-dev/pytest-xdist/issues/142).
   - TOXENV: "pypy"
-    PYTEST_NO_COVERAGE: "1"
   # Specialized factors for py27.
   - TOXENV: "py27-trial,py27-numpy,py27-nobyte"
   # Specialized factors for py37.
   - TOXENV: "py37-trial,py37-numpy"
   - TOXENV: "py37-freeze"
-    PYTEST_NO_COVERAGE: "1"
 
 matrix:
   fast_finish: true
@@ -37,9 +37,6 @@ before_test:
 
 test_script:
   - python -m tox
-
-on_success:
-  - call scripts\upload-coverage.bat
 
 cache:
   - '%LOCALAPPDATA%\pip\cache'
