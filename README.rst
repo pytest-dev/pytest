@@ -22,6 +22,9 @@
 .. image:: https://travis-ci.org/pytest-dev/pytest.svg?branch=master
     :target: https://travis-ci.org/pytest-dev/pytest
 
+.. image:: https://dev.azure.com/pytest-dev/pytest/_apis/build/status/pytest-CI?branchName=master
+    :target: https://dev.azure.com/pytest-dev/pytest
+
 .. image:: https://ci.appveyor.com/api/projects/status/mrgbjaua7t33pg6b?svg=true
     :target: https://ci.appveyor.com/project/pytestbot/pytest
 
