@@ -43,20 +43,23 @@ jobs:
       python: '3.6'
     - env: TOXENV=py37
     - &test-macos
-      language: generic
       os: osx
-      osx_image: xcode9.4
-      sudo: required
+      osx_image: xcode10.1
+      language: generic
       install:
         - python -m pip install --pre tox
+      before_install:
+        - python -V
+        - test $(python -c 'import sys; print("%d%d" % sys.version_info[0:2])') = 27
       env: TOXENV=py27-xdist
     - <<: *test-macos
       env: TOXENV=py37-xdist
       before_install:
-        - brew update
-        - brew upgrade python
-        - brew unlink python
-        - brew link python
+        - which python3
+        - python3 -V
+        - ln -sfn "$(which python3)" /usr/local/bin/python
+        - python -V
+        - test $(python -c 'import sys; print("%d%d" % sys.version_info[0:2])') = 37
 
     # Jobs only run via Travis cron jobs (currently daily).
     - env: TOXENV=py38-xdist
