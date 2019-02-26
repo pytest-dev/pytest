@@ -9,7 +9,7 @@ stages:
 python:
   - '3.7'
 install:
-  - pip install --upgrade --pre tox
+  - python -m pip install --upgrade --pre tox
 env:
   matrix:
     - TOXENV=py27
@@ -46,8 +46,6 @@ jobs:
       os: osx
       osx_image: xcode10.1
       language: generic
-      install:
-        - python -m pip install --pre tox
       before_install:
         - python -V
         - test $(python -c 'import sys; print("%d%d" % sys.version_info[0:2])') = 27
