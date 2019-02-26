@@ -25,9 +25,6 @@
 .. image:: https://dev.azure.com/pytest-dev/pytest/_apis/build/status/pytest-CI?branchName=master
     :target: https://dev.azure.com/pytest-dev/pytest
 
-.. image:: https://ci.appveyor.com/api/projects/status/mrgbjaua7t33pg6b?svg=true
-    :target: https://ci.appveyor.com/project/pytestbot/pytest
-
 .. image:: https://img.shields.io/badge/code%20style-black-000000.svg
     :target: https://github.com/ambv/black
 
