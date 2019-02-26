@@ -12,7 +12,6 @@ install:
   - pip install --upgrade --pre tox
 env:
   matrix:
-    - TOXENV=py27
     # Specialized factors for py27.
     - TOXENV=py27-nobyte
     - TOXENV=py27-xdist
@@ -41,7 +40,6 @@ jobs:
       python: '3.5'
     - env: TOXENV=py36-xdist
       python: '3.6'
-    - env: TOXENV=py37
     - &test-macos
       language: generic
       os: osx
@@ -49,9 +47,9 @@ jobs:
       sudo: required
       install:
         - python -m pip install --pre tox
-      env: TOXENV=py27-xdist
+      env: TOXENV=py27
     - <<: *test-macos
-      env: TOXENV=py37-xdist
+      env: TOXENV=py37
       before_install:
         - brew update
         - brew upgrade python
