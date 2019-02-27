@@ -24,7 +24,7 @@ jobs:
         PYTEST_COVERAGE: '1'
       py35-xdist:
         python.version: '3.5'
-        tox.env: 'py35-xdist'
+        tox.env: 'py35-lsof-xdist'
         # Coverage for test_supports_breakpoint_module_global
         PYTEST_COVERAGE: '1'
     maxParallel: 10
