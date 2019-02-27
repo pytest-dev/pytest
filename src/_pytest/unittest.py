@@ -220,6 +220,7 @@ class TestCaseFunction(Function):
         if self.config.pluginmanager.get_plugin("pdbinvoke") is None:
             self._testcase(result=self)
         else:
+            # TODO: should be covered now
             # disables tearDown and cleanups for post mortem debugging (see #1890)
             if self._handle_skip():
                 return

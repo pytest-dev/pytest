@@ -149,6 +149,7 @@ class TestPDB(object):
 
     @staticmethod
     def flush(child):
+        # TODO: should be covered now
         if platform.system() == "Darwin":
             return
         if child.isalive():

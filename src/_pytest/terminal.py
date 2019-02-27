@@ -487,8 +487,11 @@ class TerminalReporter(object):
             return self._tw.chars_on_current_line
 
     def pytest_collection(self):
+        # TODO: should be covered now
         if self.isatty:
-            if self.config.option.verbose >= 0:
+            if (
+                self.config.option.verbose >= 0
+            ):  # TODO: should be covered (true branch only)
                 self.write("collecting ... ", bold=True)
                 self._collect_report_last_write = time.time()
         elif self.config.option.verbose >= 1:
