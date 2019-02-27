@@ -7,6 +7,9 @@ branch = 1
 include = src/*, testing/*
 
 [paths]
-source = src/
-  .tox/*/lib/python*/site-packages/
-  .tox\*\Lib\site-packages\
+source = src/_pytest
+  .tox/*/lib/python*/site-packages/_pytest/
+  .tox\*\Lib\site-packages\pytest\
+source_pytest_py = src/pytest.py
+  .tox/*/lib/python*/site-packages/pytest.py
+  .tox\*\Lib\site-packages\pytest.py
