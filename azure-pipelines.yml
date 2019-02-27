@@ -17,9 +17,10 @@ jobs:
     vmImage: "vs2017-win2016"
   strategy:
     matrix:
-      py37-trial/numpy:
-        python.version: '3.7'
-        tox.env: 'py37-trial,py37-numpy'
+      py37-xdist:
+        python.version: '2.7'
+        tox.env: 'py27-xdist'
+        PYTEST_COVERAGE: '1'
     maxParallel: 10
 
   steps:
