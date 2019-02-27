@@ -120,3 +120,4 @@ jobs:
     condition: eq(variables['PYTEST_COVERAGE'], '1')
     env:
       CODECOV_TOKEN: $(CODECOV_TOKEN)
+      PYTEST_CODECOV_NAME: $(tox.env)

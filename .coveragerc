@@ -1,5 +1,11 @@
 [run]
-source = pytest,_pytest,testing/
+include =
+  src/*
+  testing/*
+  .tox/*/lib/python*/site-packages/_pytest/*
+  .tox/*/lib/python*/site-packages/pytest.py
+  .tox\*\Lib\site-packages\_pytest\*
+  .tox\*\Lib\site-packages\pytest.py
 parallel = 1
 branch = 1
 
