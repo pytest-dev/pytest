@@ -20,20 +20,16 @@ jobs:
       py27:
         python.version: '2.7'
         tox.env: 'py27'
-        PYTEST_COVERAGE: '1'
       py27-xdist:
         python.version: '2.7'
         tox.env: 'py27-xdist'
-        PYTEST_COVERAGE: '1'
       py27-numpy/nobyte:
         python.version: '2.7'
         tox.env: 'py27-numpy,py27-nobyte'
-        PYTEST_COVERAGE: '1'
       py27-trial:
         python.version: '2.7'
         tox.env: 'py27-trial'
         python.needs_vc: True
-        PYTEST_COVERAGE: '1'
       py27-pluggymaster-xdist:
         python.version: '2.7'
         tox.env: 'py27-pluggymaster-xdist'
@@ -44,30 +40,24 @@ jobs:
       py34:
         python.version: '3.4'
         tox.env: 'py34'
-        PYTEST_COVERAGE: '1'
       py35:
         python.version: '3.5'
         tox.env: 'py35'
-        PYTEST_COVERAGE: '1'
       py36:
         python.version: '3.6'
         tox.env: 'py36'
-        PYTEST_COVERAGE: '1'
       py37:
         python.version: '3.7'
         tox.env: 'py37'
-        PYTEST_COVERAGE: '1'
       py37-linting/docs/doctesting:
         python.version: '3.7'
         tox.env: 'linting,docs,doctesting'
       py37-xdist:
         python.version: '3.7'
         tox.env: 'py37-xdist'
-        PYTEST_COVERAGE: '1'
       py37-trial/numpy:
         python.version: '3.7'
         tox.env: 'py37-trial,py37-numpy'
-        PYTEST_COVERAGE: '1'
       py37-pluggymaster-xdist:
         python.version: '3.7'
         tox.env: 'py37-pluggymaster-xdist'
