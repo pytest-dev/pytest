@@ -39,13 +39,13 @@ jobs:
         python.exe: 'pypy'
       py34:
         python.version: '3.4'
-        tox.env: 'py34'
+        tox.env: 'py34-xdist'
       py35:
         python.version: '3.5'
-        tox.env: 'py35'
+        tox.env: 'py35-xdist'
       py36:
         python.version: '3.6'
-        tox.env: 'py36'
+        tox.env: 'py36-xdist'
       py37:
         python.version: '3.7'
         tox.env: 'py37'
