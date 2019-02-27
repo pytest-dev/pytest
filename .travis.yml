@@ -11,8 +11,6 @@ python:
 install:
   - python -m pip install --upgrade --pre tox
 env:
-  global:
-    - PYTEST_ADDOPTS=-vv
   matrix:
     # Specialized factors for py27.
     - TOXENV=py27-nobyte PYTEST_COVERAGE=1
