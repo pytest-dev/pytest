@@ -34,9 +34,12 @@ def main():
         extras_require={
             "testing": [
                 "hypothesis>=3.56",
-                "nose",
-                "requests",
                 "mock;python_version=='2.7'",
+                "nose",
+                "numpy",
+                "requests",
+                "twisted",
+                "unittest2",
             ],
         },
         # fmt: on

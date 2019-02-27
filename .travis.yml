@@ -18,7 +18,7 @@ env:
     - TOXENV=py27-xdist PYTEST_COVERAGE=1
     - TOXENV=py27-pluggymaster-xdist
     # Specialized factors for py37.
-    - TOXENV=py37-pexpect,py37-trial,py37-numpy
+    - TOXENV=py37-pexpect
     - TOXENV=py37-pluggymaster-xdist
     - TOXENV=py37-freeze
 
@@ -65,7 +65,7 @@ jobs:
       if: type = cron
 
     - stage: baseline
-      env: TOXENV=py27-pexpect,py27-trial,py27-numpy
+      env: TOXENV=py27-pexpect
     - env: TOXENV=py37-xdist
     - env: TOXENV=linting,docs,doctesting
       python: '3.7'

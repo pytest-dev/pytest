@@ -25,9 +25,9 @@ jobs:
         python.version: '2.7'
         tox.env: 'py27-xdist'
         PYTEST_COVERAGE: '1'
-      py27-numpy/nobyte:
+      py27-nobyte:
         python.version: '2.7'
-        tox.env: 'py27-numpy,py27-nobyte'
+        tox.env: 'py27-nobyte'
         PYTEST_COVERAGE: '1'
       py27-trial:
         python.version: '2.7'
@@ -63,10 +63,6 @@ jobs:
       py37-xdist:
         python.version: '3.7'
         tox.env: 'py37-xdist'
-        PYTEST_COVERAGE: '1'
-      py37-trial/numpy:
-        python.version: '3.7'
-        tox.env: 'py37-trial,py37-numpy'
         PYTEST_COVERAGE: '1'
       py37-pluggymaster-xdist:
         python.version: '3.7'
