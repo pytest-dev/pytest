@@ -274,7 +274,7 @@ Assertion rewriting caches files on disk
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ``pytest`` will write back the rewritten modules to disk for caching. You can disable
-this behavior (for example to avoid leaving stable ``.pyc`` files around in projects that
+this behavior (for example to avoid leaving stale ``.pyc`` files around in projects that
 move files around a lot) by adding this to the top of your ``conftest.py`` file:
 
 .. code-block:: python
@@ -283,7 +283,7 @@ move files around a lot) by adding this to the top of your ``conftest.py`` file:
 
    sys.dont_write_bytecode = True
 
-Note that you still get the benefits of assertion introspection, only change is that
+Note that you still get the benefits of assertion introspection, the only change is that
 the ``.pyc`` files won't be cached on disk.
 
 Additionally, rewriting will silently skip caching if it cannot write new ``.pyc`` files,
@@ -295,7 +295,7 @@ Disabling assert rewriting
 
 ``pytest`` rewrites test modules on import by using an import
 hook to write new ``pyc`` files. Most of the time this works transparently.
-However, if you are messing with import yourself, the import hook may
+However, if you are working with the import machinery yourself, the import hook may
 interfere.
 
 If this is the case you have two options:
