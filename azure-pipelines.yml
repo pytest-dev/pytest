@@ -17,7 +17,7 @@ jobs:
     vmImage: "vs2017-win2016"
   strategy:
     matrix:
-      py37-xdist:
+      py27-xdist:
         python.version: '2.7'
         tox.env: 'py27-xdist'
         PYTEST_COVERAGE: '1'
