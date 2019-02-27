@@ -28,13 +28,16 @@ jobs:
       os: osx
       osx_image: xcode10.1
       language: generic
-      env: TOXENV=py37-pexpect-xdist PYTEST_COVERAGE=1
+      env: TOXENV=py37-xdist
       before_install:
         - which python3
         - python3 -V
         - ln -sfn "$(which python3)" /usr/local/bin/python
         - python -V
         - test $(python -c 'import sys; print("%d%d" % sys.version_info[0:2])') = 37
+
+    - stage: baseline
+    - env: TOXENV=py37-pexpect-xdist PYTEST_COVERAGE=1
 
     - stage: deploy
       python: '3.6'
