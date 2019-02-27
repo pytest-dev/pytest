@@ -33,6 +33,7 @@ def main():
         # fmt: off
         extras_require={
             "testing": [
+                "argcomplete",
                 "hypothesis>=3.56",
                 "nose",
                 "requests",
