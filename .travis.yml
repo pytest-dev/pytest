@@ -103,8 +103,8 @@ after_success:
       # Add last TOXENV to $PATH.
       PATH="$PWD/.tox/${TOXENV##*,}/bin:$PATH"
       coverage combine
-      coverage xml --ignore-errors
-      coverage report -m --ignore-errors
+      coverage xml
+      coverage report -m
       bash <(curl -s https://codecov.io/bash) -Z -X gcov -X coveragepy -X search -X xcode -X gcovout -X fix -f coverage.xml -F $TRAVIS_OS_NAME
     fi
 
