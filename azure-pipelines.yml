@@ -6,6 +6,9 @@ variables:
   PYTEST_ADDOPTS: "--junitxml=build/test-results/$(tox.env).xml"
   python.needs_vc: False
   python.exe: "python"
+  COVERAGE_FILE: "$(Build.Repository.LocalPath)/.coverage"
+  COVERAGE_PROCESS_START: "$(Build.Repository.LocalPath)/.coveragerc"
+  PYTEST_COVERAGE: '0'
 
 jobs:
 
@@ -17,19 +20,23 @@ jobs:
       py27:
         python.version: '2.7'
         tox.env: 'py27'
+        PYTEST_COVERAGE: '1'
       py27-xdist:
         python.version: '2.7'
         tox.env: 'py27-xdist'
+        PYTEST_COVERAGE: '1'
       py27-numpy/nobyte:
         python.version: '2.7'
         tox.env: 'py27-numpy,py27-nobyte'
+        PYTEST_COVERAGE: '1'
       py27-trial:
         python.version: '2.7'
         tox.env: 'py27-trial'
         python.needs_vc: True
-      py27-pluggymaster:
+        PYTEST_COVERAGE: '1'
+      py27-pluggymaster-xdist:
         python.version: '2.7'
-        tox.env: 'pluggymaster'
+        tox.env: 'py27-pluggymaster-xdist'
       pypy:
         python.version: 'pypy'
         tox.env: 'pypy'
@@ -37,27 +44,33 @@ jobs:
       py34:
         python.version: '3.4'
         tox.env: 'py34'
+        PYTEST_COVERAGE: '1'
       py35:
         python.version: '3.5'
         tox.env: 'py35'
+        PYTEST_COVERAGE: '1'
       py36:
         python.version: '3.6'
         tox.env: 'py36'
+        PYTEST_COVERAGE: '1'
       py37:
         python.version: '3.7'
         tox.env: 'py37'
+        PYTEST_COVERAGE: '1'
       py37-linting/docs/doctesting:
         python.version: '3.7'
         tox.env: 'linting,docs,doctesting'
       py37-xdist:
         python.version: '3.7'
         tox.env: 'py37-xdist'
+        PYTEST_COVERAGE: '1'
       py37-trial/numpy:
         python.version: '3.7'
         tox.env: 'py37-trial,py37-numpy'
-      py37-pluggymaster:
+        PYTEST_COVERAGE: '1'
+      py37-pluggymaster-xdist:
         python.version: '3.7'
-        tox.env: 'py37-pluggymaster'
+        tox.env: 'py37-pluggymaster-xdist'
     maxParallel: 10
 
   steps:
@@ -91,7 +104,9 @@ jobs:
   - script: $(python.exe) -m pip install --upgrade pip && $(python.exe) -m pip install tox
     displayName: 'Install tox'
 
-  - script: $(python.exe) -m tox -e $(tox.env)
+  - script: |
+      call scripts/setup-coverage-vars.bat || goto :eof
+      $(python.exe) -m tox -e $(tox.env)
     displayName: 'Run tests'
 
   - task: PublishTestResults@2
@@ -99,3 +114,10 @@ jobs:
       testResultsFiles: 'build/test-results/$(tox.env).xml'
       testRunTitle: '$(tox.env)'
     condition: succeededOrFailed()
+
+  - script: call scripts\upload-coverage.bat
+    displayName: 'Upload coverage'
+    condition: eq(variables['PYTEST_COVERAGE'], '1')
+    env:
+      CODECOV_TOKEN: $(CODECOV_TOKEN)
+      PYTEST_CODECOV_NAME: $(tox.env)
