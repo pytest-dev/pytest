@@ -74,6 +74,8 @@ def catch_warnings_for_item(config, ihook, when, item):
     inifilters = config.getini("filterwarnings")
     with warnings.catch_warnings(record=True) as log:
 
+        # TODO: the False branch is not covered anymore, but was still in 9dcd6f2a.
+        # I could not find where `python -W` would be run from.
         if not sys.warnoptions:
             # if user is not explicitly configuring warning filters, show deprecation warnings by default (#2908)
             warnings.filterwarnings("always", category=DeprecationWarning)
