@@ -252,8 +252,8 @@ the conftest file:
 .. _assert-details:
 .. _`assert introspection`:
 
-Advanced assertion introspection
-----------------------------------
+Assertion introspection details
+-------------------------------
 
 .. versionadded:: 2.1
 
@@ -266,27 +266,45 @@ supporting modules which are not themselves test modules will not be rewritten**
 
 You can manually enable assertion rewriting for an imported module by calling
 `register_assert_rewrite <https://docs.pytest.org/en/latest/writing_plugins.html#assertion-rewriting>`_
-before you import it (a good place to do that is in ``conftest.py``).
-
-.. note::
-
-   ``pytest`` rewrites test modules on import by using an import
-   hook to write new ``pyc`` files. Most of the time this works transparently.
-   However, if you are messing with import yourself, the import hook may
-   interfere.
-
-   If this is the case you have two options:
-
-   * Disable rewriting for a specific module by adding the string
-     ``PYTEST_DONT_REWRITE`` to its docstring.
-
-   * Disable rewriting for all modules by using ``--assert=plain``.
-
-   Additionally, rewriting will fail silently if it cannot write new ``.pyc`` files,
-   i.e. in a read-only filesystem or a zipfile.
-
+before you import it (a good place to do that is in your root ``conftest.py``).
 
 For further information, Benjamin Peterson wrote up `Behind the scenes of pytest's new assertion rewriting <http://pybites.blogspot.com/2011/07/behind-scenes-of-pytests-new-assertion.html>`_.
+
+Assertion rewriting caches files on disk
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+``pytest`` will write back the rewritten modules to disk for caching. You can disable
+this behavior (for example to avoid leaving stale ``.pyc`` files around in projects that
+move files around a lot) by adding this to the top of your ``conftest.py`` file:
+
+.. code-block:: python
+
+   import sys
+
+   sys.dont_write_bytecode = True
+
+Note that you still get the benefits of assertion introspection, the only change is that
+the ``.pyc`` files won't be cached on disk.
+
+Additionally, rewriting will silently skip caching if it cannot write new ``.pyc`` files,
+i.e. in a read-only filesystem or a zipfile.
+
+
+Disabling assert rewriting
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+``pytest`` rewrites test modules on import by using an import
+hook to write new ``pyc`` files. Most of the time this works transparently.
+However, if you are working with the import machinery yourself, the import hook may
+interfere.
+
+If this is the case you have two options:
+
+* Disable rewriting for a specific module by adding the string
+  ``PYTEST_DONT_REWRITE`` to its docstring.
+
+* Disable rewriting for all modules by using ``--assert=plain``.
+
 
 .. versionadded:: 2.1
    Add assert rewriting as an alternate introspection technique.
