@@ -585,11 +585,13 @@ class FixtureRequest(FuncargnamesCompatAttr):
             # call the fixture function
             fixturedef.execute(request=subrequest)
         finally:
-            # if fixture function failed it might have registered finalizers
-            self.session._setupstate.addfinalizer(
-                functools.partial(fixturedef.finish, request=subrequest),
-                subrequest.node,
-            )
+            self._schedule_finalizers(fixturedef, subrequest)
+
+    def _schedule_finalizers(self, fixturedef, subrequest):
+        # if fixture function failed it might have registered finalizers
+        self.session._setupstate.addfinalizer(
+            functools.partial(fixturedef.finish, request=subrequest), subrequest.node
+        )
 
     def _check_scope(self, argname, invoking_scope, requested_scope):
         if argname == "request":
@@ -658,6 +660,16 @@ class SubRequest(FixtureRequest):
 
     def addfinalizer(self, finalizer):
         self._fixturedef.addfinalizer(finalizer)
+
+    def _schedule_finalizers(self, fixturedef, subrequest):
+        # if the executing fixturedef was not explicitly requested in the argument list (via
+        # getfixturevalue inside the fixture call) then ensure this fixture def will be finished
+        # first
+        if fixturedef.argname not in self.funcargnames:
+            fixturedef.addfinalizer(
+                functools.partial(self._fixturedef.finish, request=self)
+            )
+        super(SubRequest, self)._schedule_finalizers(fixturedef, subrequest)
 
 
 scopes = "session package module class function".split()
@@ -858,6 +870,7 @@ class FixtureDef(object):
     def execute(self, request):
         # get required arguments and register our own finish()
         # with their finalization
+        # TODO CHECK HOW TO AVOID EXPLICITLY FINALIZING AGAINST ARGNAMES
         for argname in self.argnames:
             fixturedef = request._get_active_fixturedef(argname)
             if argname != "request":

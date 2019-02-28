@@ -327,6 +327,7 @@ class SetupState(object):
         assert callable(finalizer)
         # assert colitem in self.stack  # some unit tests don't setup stack :/
         self._finalizers.setdefault(colitem, []).append(finalizer)
+        pass
 
     def _pop_and_teardown(self):
         colitem = self.stack.pop()
