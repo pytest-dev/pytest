@@ -12,8 +12,6 @@ install:
   - python -m pip install --upgrade --pre tox
 env:
   matrix:
-    # Specialized factors for py27.
-    - TOXENV=py27-nobyte PYTEST_COVERAGE=1
     # Specialized factors for py37.
     - TOXENV=py37-pexpect,py37-trial,py37-numpy PYTEST_COVERAGE=1
 
