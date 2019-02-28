@@ -31,8 +31,8 @@ jobs:
         python.version: '2.7'
         tox.env: 'py27-trial'
         python.needs_vc: True
-        # TODO: check
-        # PYTEST_COVERAGE: '1'
+        # TODO: check if coverage is necessary/useful here.
+        PYTEST_COVERAGE: '1'
       py34-xdist:
         python.version: '3.4'
         tox.env: 'py34-xdist'
