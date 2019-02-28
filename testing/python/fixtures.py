@@ -562,6 +562,44 @@ class TestRequestBasic(object):
         reprec = testdir.inline_run()
         reprec.assertoutcome(passed=1)
 
+    def test_getfixturevalue_teardown(self, testdir):
+        """
+        Issue #1895
+
+        `test_inner` requests `inner` fixture, which in turns requests `resource`
+        using getfixturevalue. `test_func` then requests `resource`.
+
+        `resource` is teardown before `inner` because the fixture mechanism won't consider
+        `inner` dependent on `resource` when it is get via `getfixturevalue`: `test_func`
+        will then cause the `resource`'s finalizer to be called first because of this.
+        """
+        testdir.makepyfile(
+            """
+            import pytest
+
+            @pytest.fixture(scope='session')
+            def resource():
+                r = ['value']
+                yield r
+                r.pop()
+
+            @pytest.fixture(scope='session')
+            def inner(request):
+                resource = request.getfixturevalue('resource')
+                assert resource == ['value']
+                yield
+                assert resource == ['value']
+
+            def test_inner(inner):
+                pass
+
+            def test_func(resource):
+                pass
+        """
+        )
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines("* 2 passed in *")
+
     @pytest.mark.parametrize("getfixmethod", ("getfixturevalue", "getfuncargvalue"))
     def test_getfixturevalue(self, testdir, getfixmethod):
         item = testdir.getitem(
