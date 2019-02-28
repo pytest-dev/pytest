@@ -28,7 +28,7 @@ jobs:
         #   (according to https://codecov.io/gh/pytest-dev/pytest/pull/4858/src/src/_pytest/terminal.py).
         PYTEST_COVERAGE: '1'
       py34-xdist:
-        python: '3.4'
+        python.version: '3.4'
         tox.env: 'py34-xdist'
         # Coverage for:
         # - _pytest.compat._bytes_to_ascii
