@@ -201,11 +201,14 @@ if _PY3:
 
     if PY35:
 
+        # TODO: only this is covered, but we have py37-xdist (osx)?!
+        #       Might be good now via py36-xdist (linux).
         def _bytes_to_ascii(val):
             return val.decode("ascii", "backslashreplace")
 
     else:
 
+        # TODO: should get covered.
         def _bytes_to_ascii(val):
             if val:
                 # source: http://goo.gl/bGsnwC
