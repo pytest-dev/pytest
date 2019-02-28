@@ -24,6 +24,8 @@ jobs:
         # - test_supports_breakpoint_module_global
         # - test_terminal_reporter_writer_attr (without xdist)
         # - "if write" branch in _pytest.assertion.rewrite
+        # - also for more stable(?) isatty in _pytest.terminal
+        #   (according to https://codecov.io/gh/pytest-dev/pytest/pull/4858/src/src/_pytest/terminal.py).
         PYTEST_COVERAGE: '1'
       py34-xdist:
         python: '3.4'
