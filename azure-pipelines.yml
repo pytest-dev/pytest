@@ -17,6 +17,12 @@ jobs:
     vmImage: "vs2017-win2016"
   strategy:
     matrix:
+      py27:
+        python.version: '2.7'
+        tox.env: 'py27'
+      py27-xdist:
+        python.version: '2.7'
+        tox.env: 'py27-xdist'
       py27-numpy/nobyte:
         python.version: '2.7'
         tox.env: 'py27-numpy,py27-nobyte'
@@ -27,6 +33,19 @@ jobs:
         # - also for more stable(?) isatty in _pytest.terminal
         #   (according to https://codecov.io/gh/pytest-dev/pytest/pull/4858/src/src/_pytest/terminal.py).
         PYTEST_COVERAGE: '1'
+      py27-trial:
+        python.version: '2.7'
+        tox.env: 'py27-trial'
+        python.needs_vc: True
+        # TODO: check
+        # PYTEST_COVERAGE: '1'
+      py27-pluggymaster-xdist:
+        python.version: '2.7'
+        tox.env: 'py27-pluggymaster-xdist'
+      pypy:
+        python.version: 'pypy'
+        tox.env: 'pypy'
+        python.exe: 'pypy'
       py34-xdist:
         python.version: '3.4'
         tox.env: 'py34-xdist'

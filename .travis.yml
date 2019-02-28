@@ -12,8 +12,15 @@ install:
   - python -m pip install --upgrade --pre tox
 env:
   matrix:
+    - TOXENV=py27
+    # Specialized factors for py27.
+    - TOXENV=py27-nobyte
+    - TOXENV=py27-xdist
+    - TOXENV=py27-pluggymaster-xdist
     # Specialized factors for py37.
-    - TOXENV=py37-pexpect,py37-trial,py37-numpy PYTEST_COVERAGE=1
+    - TOXENV=py37-pexpect,py37-trial,py37-numpy
+    - TOXENV=py37-pluggymaster-xdist
+    - TOXENV=py37-freeze
 
 matrix:
   allow_failures:
@@ -22,10 +29,28 @@ matrix:
 
 jobs:
   include:
+    # Coverage tracking is slow with pypy, skip it.
+    - env: TOXENV=pypy-xdist
+      python: 'pypy2.7-6.0'
+    - env: TOXENV=pypy3-xdist
+      python: 'pypy3.5-6.0'
+
+    - env: TOXENV=py34-xdist
+      python: '3.4'
+    - env: TOXENV=py35-xdist
+      python: '3.5'
+    - env: TOXENV=py36-xdist
+      python: '3.6'
+    - env: TOXENV=py37
     - &test-macos
       os: osx
       osx_image: xcode10.1
       language: generic
+      env: TOXENV=py27-xdist
+      before_install:
+        - python -V
+        - test $(python -c 'import sys; print("%d%d" % sys.version_info[0:2])') = 27
+    - <<: *test-macos
       env: TOXENV=py37-xdist PYTEST_COVERAGE=1
       before_install:
         - which python3
@@ -34,11 +59,20 @@ jobs:
         - python -V
         - test $(python -c 'import sys; print("%d%d" % sys.version_info[0:2])') = 37
 
+    # Jobs only run via Travis cron jobs (currently daily).
+    - env: TOXENV=py38-xdist
+      python: '3.8-dev'
+      if: type = cron
+
+    - stage: baseline
     # Coverage for:
     # - pdb / _test_pytest_function ?!
     # Regressed in e3eb26f.
     # But I've expected it to come via py37-pexpect already.  TODO: Verify!
     - env: TOXENV=py27-pexpect,py27-trial,py27-numpy PYTEST_COVERAGE=1
+    - env: TOXENV=py37-xdist
+    - env: TOXENV=linting,docs,doctesting
+      python: '3.7'
 
     - stage: deploy
       python: '3.6'
