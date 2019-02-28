@@ -87,6 +87,11 @@ jobs:
 
 before_script:
   - |
+    # Do not (re-)upload coverage with cron runs.
+    if [[ "$TRAVIS_EVENT_TYPE" = cron ]]; then
+      PYTEST_NO_COVERAGE=1
+    fi
+  - |
     if [[ "$PYTEST_NO_COVERAGE" != 1 ]]; then
       export COVERAGE_FILE="$PWD/.coverage"
       export COVERAGE_PROCESS_START="$PWD/.coveragerc"
