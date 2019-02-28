@@ -149,9 +149,11 @@ class TestPDB(object):
 
     @staticmethod
     def flush(child):
-        if platform.system() != "Darwin":  # pragma: no branch
-            if child.isalive():
-                child.wait()
+        # TODO: should be covered now
+        if platform.system() == "Darwin":
+            return
+        if child.isalive():
+            child.wait()
 
     def test_pdb_unittest_postmortem(self, testdir):
         p1 = testdir.makepyfile(
