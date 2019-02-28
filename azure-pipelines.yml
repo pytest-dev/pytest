@@ -29,6 +29,12 @@ jobs:
         tox.env: 'py35-xdist'
         # Coverage for test_supports_breakpoint_module_global
         PYTEST_COVERAGE: '1'
+      py36-xdist:
+        python.version: '3.6'
+        tox.env: 'py36-xdist'
+        # Coverage for:
+        # - _py36_windowsconsoleio_workaround (could also be py36+)
+        PYTEST_COVERAGE: '1'
     maxParallel: 10
 
   steps:
