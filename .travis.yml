@@ -36,6 +36,11 @@ jobs:
         - python -V
         - test $(python -c 'import sys; print("%d%d" % sys.version_info[0:2])') = 37
 
+      # Coverage for:
+      # - pdb / _test_pytest_function ?!
+      # Regressed in e3eb26f.  But I've expected it to come via py37-pexpect already.
+      env: TOXENV=py27-pexpect,py27-trial,py27-numpy PYTEST_COVERAGE=1
+
     - stage: deploy
       python: '3.6'
       install: pip install -U setuptools setuptools_scm
