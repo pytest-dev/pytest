@@ -17,9 +17,9 @@ jobs:
     vmImage: "vs2017-win2016"
   strategy:
     matrix:
-      py27-nobyte:
+      py27-numpy/nobyte:
         python.version: '2.7'
-        tox.env: 'py27-nobyte'
+        tox.env: 'py27-numpy,py27-nobyte'
         # Coverage for:
         # - test_supports_breakpoint_module_global
         # - test_terminal_reporter_writer_attr (without xdist)
