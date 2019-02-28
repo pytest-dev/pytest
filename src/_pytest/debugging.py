@@ -12,25 +12,32 @@ from _pytest import outcomes
 from _pytest.config import hookimpl
 
 
-def pytest_addoption(parser):
-    def validate_usepdb_cls(value):
-        try:
-            modname, classname = value.split(":")
-        except ValueError:
-            raise argparse.ArgumentTypeError(
-                "{!r} is not in the format 'modname:classname'".format(value)
-            )
+def _validate_usepdb_cls(value):
+    try:
+        modname, classname = value.split(":")
+    except ValueError:
+        raise argparse.ArgumentTypeError(
+            "{!r} is not in the format 'modname:classname'".format(value)
+        )
 
-        try:
-            __import__(modname)
-            pdb_cls = getattr(sys.modules[modname], classname)
-        except Exception as exc:
-            raise argparse.ArgumentTypeError(
-                "could not get pdb class for {!r}: {}".format(value, exc)
-            )
+    try:
+        __import__(modname)
+        mod = sys.modules[modname]
+
+        # Handle --pdbcls=pdb:pdb.Pdb (useful e.g. with pdbpp).
+        parts = classname.split(".")
+        pdb_cls = getattr(mod, parts[0])
+        for part in parts[1:]:
+            pdb_cls = getattr(pdb_cls, part)
 
         return pdb_cls
+    except Exception as exc:
+        raise argparse.ArgumentTypeError(
+            "could not get pdb class for {!r}: {}".format(value, exc)
+        )
 
+
+def pytest_addoption(parser):
     group = parser.getgroup("general")
     group._addoption(
         "--pdb",
@@ -42,7 +49,7 @@ def pytest_addoption(parser):
         "--pdbcls",
         dest="usepdb_cls",
         metavar="modulename:classname",
-        type=validate_usepdb_cls,
+        type=_validate_usepdb_cls,
         help="start a custom interactive Python debugger on errors. "
         "For example: --pdbcls=IPython.terminal.debugger:TerminalPdb",
     )
