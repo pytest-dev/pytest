@@ -40,7 +40,8 @@ jobs:
 
     # Coverage for:
     # - pdb / _test_pytest_function ?!
-    # Regressed in e3eb26f.  But I've expected it to come via py37-pexpect already.
+    # Regressed in e3eb26f.
+    # But I've expected it to come via py37-pexpect already.  TODO: Verify!
     - env: TOXENV=py27-pexpect,py27-trial,py27-numpy PYTEST_COVERAGE=1
 
     - stage: deploy
