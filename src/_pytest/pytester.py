@@ -4,7 +4,6 @@ from __future__ import division
 from __future__ import print_function
 
 import codecs
-import distutils.spawn
 import gc
 import os
 import platform
@@ -149,47 +148,6 @@ winpymap = {
     "python3.5": r"C:\Python35\python.exe",
     "python3.6": r"C:\Python36\python.exe",
 }
-
-
-def getexecutable(name, cache={}):
-    try:
-        return cache[name]
-    except KeyError:
-        executable = distutils.spawn.find_executable(name)
-        if executable:
-            import subprocess
-
-            popen = subprocess.Popen(
-                [str(executable), "--version"],
-                universal_newlines=True,
-                stderr=subprocess.PIPE,
-            )
-            out, err = popen.communicate()
-            if name == "jython":
-                if not err or "2.5" not in err:
-                    executable = None
-                if "2.5.2" in err:
-                    executable = None  # http://bugs.jython.org/issue1790
-            elif popen.returncode != 0:
-                # handle pyenv's 127
-                executable = None
-        cache[name] = executable
-        return executable
-
-
-@pytest.fixture(params=["python2.7", "python3.4", "pypy", "pypy3"])
-def anypython(request):
-    name = request.param
-    executable = getexecutable(name)
-    if executable is None:
-        if sys.platform == "win32":
-            executable = winpymap.get(name, None)
-            if executable:
-                executable = py.path.local(executable)
-                if executable.check():
-                    return executable
-        pytest.skip("no suitable %s found" % (name,))
-    return executable
 
 
 # used at least by pytest-xdist plugin
