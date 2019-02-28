@@ -10,6 +10,7 @@ import sys
 import _pytest._code
 import pytest
 from _pytest.debugging import _validate_usepdb_cls
+from _pytest.main import EXIT_NOTESTSCOLLECTED
 
 try:
     breakpoint
@@ -1112,3 +1113,16 @@ def test_pdb_suspends_fixture_capturing(testdir, fixture):
     assert child.exitstatus == 0
     assert "= 1 passed in " in rest
     assert "> PDB continue (IO-capturing resumed for fixture %s) >" % (fixture) in rest
+
+
+def test_pdb_skip_option(testdir):
+    p = testdir.makepyfile(
+        """
+        print("before_set_trace")
+        __import__('pdb').set_trace()
+        print("after_set_trace")
+        """
+    )
+    result = testdir.runpytest_inprocess("--pdb-ignore-set_trace", "-s", p)
+    assert result.ret == EXIT_NOTESTSCOLLECTED
+    result.stdout.fnmatch_lines(["*before_set_trace*", "*after_set_trace*"])
