@@ -3,6 +3,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import argparse
 import pdb
 import sys
 from doctest import UnexpectedException
@@ -12,6 +13,24 @@ from _pytest.config import hookimpl
 
 
 def pytest_addoption(parser):
+    def validate_usepdb_cls(value):
+        try:
+            modname, classname = value.split(":")
+        except ValueError:
+            raise argparse.ArgumentTypeError(
+                "{!r} is not in the format 'modname:classname'".format(value)
+            )
+
+        try:
+            __import__(modname)
+            pdb_cls = getattr(sys.modules[modname], classname)
+        except Exception as exc:
+            raise argparse.ArgumentTypeError(
+                "could not get pdb class for {!r}: {}".format(value, exc)
+            )
+
+        return pdb_cls
+
     group = parser.getgroup("general")
     group._addoption(
         "--pdb",
@@ -23,6 +42,7 @@ def pytest_addoption(parser):
         "--pdbcls",
         dest="usepdb_cls",
         metavar="modulename:classname",
+        type=validate_usepdb_cls,
         help="start a custom interactive Python debugger on errors. "
         "For example: --pdbcls=IPython.terminal.debugger:TerminalPdb",
     )
@@ -35,11 +55,8 @@ def pytest_addoption(parser):
 
 
 def pytest_configure(config):
-    if config.getvalue("usepdb_cls"):
-        modname, classname = config.getvalue("usepdb_cls").split(":")
-        __import__(modname)
-        pdb_cls = getattr(sys.modules[modname], classname)
-    else:
+    pdb_cls = config.getvalue("usepdb_cls")
+    if not pdb_cls:
         pdb_cls = pdb.Pdb
 
     if config.getvalue("trace"):

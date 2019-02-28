@@ -688,6 +688,20 @@ class TestPDB(object):
         result.stdout.fnmatch_lines(["*NameError*xxx*", "*1 error*"])
         assert custom_pdb_calls == ["init", "reset", "interaction"]
 
+    def test_pdb_custom_cls_invalid(self, testdir):
+        result = testdir.runpytest_inprocess("--pdbcls=invalid")
+        result.stderr.fnmatch_lines(
+            [
+                "*: error: argument --pdbcls: 'invalid' is not in the format 'modname:classname'"
+            ]
+        )
+        result = testdir.runpytest_inprocess("--pdbcls=pdb:DoesNotExist")
+        result.stderr.fnmatch_lines(
+            [
+                "*: error: argument --pdbcls: could not get pdb class for 'pdb:DoesNotExist':*"
+            ]
+        )
+
     def test_pdb_custom_cls_without_pdb(self, testdir, custom_pdb_calls):
         p1 = testdir.makepyfile("""xxx """)
         result = testdir.runpytest_inprocess("--pdbcls=_pytest:_CustomPdb", p1)
