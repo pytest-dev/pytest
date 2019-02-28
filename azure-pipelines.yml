@@ -21,13 +21,9 @@ jobs:
         python.version: '2.7'
         tox.env: 'py27'
         PYTEST_COVERAGE: '1'
-      py27-xdist:
+      py27-nobyte-numpy-xdist:
         python.version: '2.7'
-        tox.env: 'py27-xdist'
-        PYTEST_COVERAGE: '1'
-      py27-numpy/nobyte:
-        python.version: '2.7'
-        tox.env: 'py27-numpy,py27-nobyte'
+        tox.env: 'py27-nobyte-numpy-xdist'
         PYTEST_COVERAGE: '1'
       py27-trial:
         python.version: '2.7'
