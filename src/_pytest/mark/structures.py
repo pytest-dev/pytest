@@ -12,7 +12,6 @@ from ..compat import MappingMixin
 from ..compat import NOTSET
 from _pytest.outcomes import fail
 
-
 EMPTY_PARAMETERSET_OPTION = "empty_parameter_set_mark"
 
 

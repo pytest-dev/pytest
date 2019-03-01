@@ -19,7 +19,6 @@ from six.moves import map
 
 from .compat import PY36
 
-
 if PY36:
     from pathlib import Path, PurePath
 else:

@@ -12,7 +12,6 @@ import os
 
 import six
 
-
 DEFAULT_MAX_LINES = 8
 DEFAULT_MAX_CHARS = 8 * 80
 USAGE_MSG = "use '-vv' to show"

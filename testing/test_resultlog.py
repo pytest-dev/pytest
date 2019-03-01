@@ -12,7 +12,6 @@ from _pytest.resultlog import pytest_configure
 from _pytest.resultlog import pytest_unconfigure
 from _pytest.resultlog import ResultLog
 
-
 pytestmark = pytest.mark.filterwarnings("ignore:--result-log is deprecated")
 
 
