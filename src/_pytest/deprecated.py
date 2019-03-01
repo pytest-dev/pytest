@@ -16,7 +16,6 @@ from _pytest.warning_types import PytestDeprecationWarning
 from _pytest.warning_types import RemovedInPytest4Warning
 from _pytest.warning_types import UnformattedWarning
 
-
 YIELD_TESTS = "yield tests were removed in pytest 4.0 - {name} will be ignored"
 
 
