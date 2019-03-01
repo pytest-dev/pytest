@@ -10,7 +10,7 @@ if "%PYTEST_COVERAGE%" == "1" (
     coverage combine
     coverage xml
     coverage report -m
-    scripts\retry codecov --required -X gcov pycov search -f coverage.xml --flags windows --name %PYTEST_CODECOV_NAME%
+    scripts\retry codecov --required -X gcov pycov search -f coverage.xml --name %PYTEST_CODECOV_NAME%
 ) else (
     echo Skipping coverage upload, PYTEST_COVERAGE=%PYTEST_COVERAGE%
 )
