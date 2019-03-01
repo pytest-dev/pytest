@@ -65,7 +65,7 @@ jobs:
 
     - stage: baseline
       env: TOXENV=py27-pexpect,py27-trial
-    - env: TOXENV=py37-numpy-xdist
+    - env: TOXENV=py37-lsof-numpy-xdist PYTEST_COVERAGE=1
     - env: TOXENV=linting,docs,doctesting
       python: '3.7'
 
