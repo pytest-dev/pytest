@@ -509,6 +509,7 @@ class Testdir(object):
         self.test_tmproot = tmpdir_factory.mktemp("tmp-" + name, numbered=True)
         os.environ["PYTEST_DEBUG_TEMPROOT"] = str(self.test_tmproot)
         os.environ.pop("TOX_ENV_DIR", None)  # Ensure that it is not used for caching.
+        os.environ.pop("PYTEST_ADDOPTS", None)  # Do not use outer options.
         self.plugins = []
         self._cwd_snapshot = CwdSnapshot()
         self._sys_path_snapshot = SysPathsSnapshot()
