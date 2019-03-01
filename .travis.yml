@@ -10,24 +10,38 @@ python:
   - '3.7'
 install:
   - python -m pip install --upgrade --pre tox
-env:
-  matrix:
-    - TOXENV=py27 PYTEST_COVERAGE=1
-    # Specialized factors for py27.
-    - TOXENV=py27-nobyte-numpy-xdist PYTEST_COVERAGE=1
-    - TOXENV=py27-pluggymaster-xdist
-    # Specialized factors for py37.
-    - TOXENV=py37-pexpect,py37-trial
-    - TOXENV=py37-pluggymaster-xdist
-    - TOXENV=py37-freeze
-
-matrix:
-  allow_failures:
-    - python: '3.8-dev'
-      env: TOXENV=py38-xdist
 
 jobs:
   include:
+    # OSX tests - first (in test stage), since they are the slower ones.
+    - &test-macos
+      # NOTE: (tests with) pexpect appear to be buggy on Travis,
+      #       at least with coverage.
+      #       Log: https://travis-ci.org/pytest-dev/pytest/jobs/500358864
+      os: osx
+      osx_image: xcode10.1
+      language: generic
+      # Coverage for:
+      # - py2 with symlink in test_cmdline_python_package_symlink.
+      env: TOXENV=py27-xdist PYTEST_COVERAGE=1
+      before_install:
+        - python -V
+        - test $(python -c 'import sys; print("%d%d" % sys.version_info[0:2])') = 27
+    - <<: *test-macos
+      env: TOXENV=py37-xdist
+      before_install:
+        - which python3
+        - python3 -V
+        - ln -sfn "$(which python3)" /usr/local/bin/python
+        - python -V
+        - test $(python -c 'import sys; print("%d%d" % sys.version_info[0:2])') = 37
+
+    # Full run of latest (major) supported versions, without xdist.
+    - env: TOXENV=py27
+      python: '2.7'
+    - env: TOXENV=py37
+      python: '3.7'
+
     # Coverage tracking is slow with pypy, skip it.
     - env: TOXENV=pypy-xdist
       python: 'pypy2.7-6.0'
@@ -38,25 +52,25 @@ jobs:
       python: '3.4'
     - env: TOXENV=py35-xdist
       python: '3.5'
-    - env: TOXENV=py36-xdist
-      python: '3.6'
-    - env: TOXENV=py37
-    - &test-macos
-      os: osx
-      osx_image: xcode10.1
-      language: generic
-      before_install:
-        - python -V
-        - test $(python -c 'import sys; print("%d%d" % sys.version_info[0:2])') = 27
-      env: TOXENV=py27-xdist
-    - <<: *test-macos
-      env: TOXENV=py37-xdist
-      before_install:
-        - which python3
-        - python3 -V
-        - ln -sfn "$(which python3)" /usr/local/bin/python
-        - python -V
-        - test $(python -c 'import sys; print("%d%d" % sys.version_info[0:2])') = 37
+
+    # Coverage for:
+    # - pytester's LsofFdLeakChecker
+    # - TestArgComplete (linux only)
+    # - numpy
+    - env: TOXENV=py37-lsof-numpy-xdist PYTEST_COVERAGE=1
+
+    # Specialized factors for py27.
+    - env: TOXENV=py27-nobyte-numpy-xdist
+      python: '2.7'
+    - env: TOXENV=py27-pluggymaster-xdist
+      python: '2.7'
+
+    # Specialized factors for py37.
+    # Coverage for:
+    # - test_sys_breakpoint_interception (via pexpect).
+    - env: TOXENV=py37-pexpect,py37-trial PYTEST_COVERAGE=1
+    - env: TOXENV=py37-pluggymaster-xdist
+    - env: TOXENV=py37-freeze
 
     # Jobs only run via Travis cron jobs (currently daily).
     - env: TOXENV=py38-xdist
@@ -64,10 +78,14 @@ jobs:
       if: type = cron
 
     - stage: baseline
-      env: TOXENV=py27-pexpect,py27-trial
-    - env: TOXENV=py37-lsof-numpy-xdist PYTEST_COVERAGE=1
-    - env: TOXENV=linting,docs,doctesting
-      python: '3.7'
+    # Coverage for:
+    # - _pytest.unittest._handle_skip (via pexpect).
+      env: TOXENV=py27-pexpect,py27-trial PYTEST_COVERAGE=1
+      python: '2.7'
+    # Use py36 here for faster baseline.
+    - env: TOXENV=py36-xdist
+      python: '3.6'
+    - env: TOXENV=linting,docs,doctesting PYTEST_COVERAGE=1
 
     - stage: deploy
       python: '3.6'
@@ -83,6 +101,11 @@ jobs:
         on:
           tags: true
           repo: pytest-dev/pytest
+
+matrix:
+  allow_failures:
+    - python: '3.8-dev'
+      env: TOXENV=py38-xdist
 
 before_script:
   - |
@@ -109,7 +132,7 @@ after_success:
       coverage combine
       coverage xml
       coverage report -m
-      bash <(curl -s https://codecov.io/bash) -Z -X gcov -X coveragepy -X search -X xcode -X gcovout -X fix -f coverage.xml -n $TOXENV
+      bash <(curl -s https://codecov.io/bash) -Z -X gcov -X coveragepy -X search -X xcode -X gcovout -X fix -f coverage.xml -n $TOXENV-$TRAVIS_OS_NAME
     fi
 
 notifications:
