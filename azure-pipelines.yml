@@ -37,6 +37,10 @@ jobs:
         python.version: 'pypy'
         tox.env: 'pypy'
         python.exe: 'pypy'
+      pypy3:
+        python.version: 'pypy3'
+        tox.env: 'pypy3'
+        python.exe: 'pypy3'
       py34:
         python.version: '3.4'
         tox.env: 'py34'
@@ -115,5 +119,6 @@ jobs:
     displayName: 'Upload coverage'
     condition: eq(variables['PYTEST_COVERAGE'], '1')
     env:
+      PYTHON: $(python.exe)
       CODECOV_TOKEN: $(CODECOV_TOKEN)
       PYTEST_CODECOV_NAME: $(tox.env)
