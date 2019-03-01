@@ -132,24 +132,21 @@ class Cache(object):
         else:
             with f:
                 json.dump(value, f, indent=2, sort_keys=True)
+
             if not cache_dir_exists_already:
                 self._ensure_supporting_files()
 
     def _ensure_supporting_files(self):
         """Create supporting files in the cache dir that are not really part of the cache."""
-        if self._cachedir.is_dir():
-            readme_path = self._cachedir / "README.md"
-            if not readme_path.is_file():
-                readme_path.write_text(README_CONTENT)
+        readme_path = self._cachedir / "README.md"
+        readme_path.write_text(README_CONTENT)
 
-            gitignore_path = self._cachedir.joinpath(".gitignore")
-            if not gitignore_path.is_file():
-                msg = u"# Created by pytest automatically.\n*"
-                gitignore_path.write_text(msg, encoding="UTF-8")
+        gitignore_path = self._cachedir.joinpath(".gitignore")
+        msg = u"# Created by pytest automatically.\n*"
+        gitignore_path.write_text(msg, encoding="UTF-8")
 
-            cachedir_tag_path = self._cachedir.joinpath("CACHEDIR.TAG")
-            if not cachedir_tag_path.is_file():
-                cachedir_tag_path.write_bytes(CACHEDIR_TAG_CONTENT)
+        cachedir_tag_path = self._cachedir.joinpath("CACHEDIR.TAG")
+        cachedir_tag_path.write_bytes(CACHEDIR_TAG_CONTENT)
 
 
 class LFPlugin(object):
