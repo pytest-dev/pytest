@@ -18,6 +18,7 @@ from six import text_type
 import pytest
 from _pytest import capture
 from _pytest.capture import CaptureManager
+from _pytest.compat import _PY3
 from _pytest.main import EXIT_NOTESTSCOLLECTED
 
 # note: py.io capture tests where copied from
@@ -1526,3 +1527,26 @@ def test_capture_with_live_logging(testdir, capture_fixture):
 
     result = testdir.runpytest_subprocess("--log-cli-level=INFO")
     assert result.ret == 0
+
+
+def test_typeerror_encodedfile_write(testdir):
+    """It should behave the same with and without output capturing (#4861)."""
+    p = testdir.makepyfile(
+        """
+        def test_fails():
+            import sys
+            sys.stdout.write(b"foo")
+    """
+    )
+    result_without_capture = testdir.runpytest("-s", str(p))
+
+    result_with_capture = testdir.runpytest(str(p))
+
+    assert result_with_capture.ret == result_without_capture.ret
+
+    if _PY3:
+        result_with_capture.stdout.fnmatch_lines(
+            ["E           TypeError: write() argument must be str, not bytes"]
+        )
+    else:
+        assert result_with_capture.ret == 0

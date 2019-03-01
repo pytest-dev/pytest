@@ -1,0 +1,1 @@
+Validate type with writing to captured output like without.

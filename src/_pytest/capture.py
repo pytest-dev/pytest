@@ -17,6 +17,7 @@ from tempfile import TemporaryFile
 import six
 
 import pytest
+from _pytest.compat import _PY3
 from _pytest.compat import CaptureIO
 
 patchsysdict = {0: "stdin", 1: "stdout", 2: "stderr"}
@@ -412,6 +413,10 @@ class EncodedFile(object):
     def write(self, obj):
         if isinstance(obj, six.text_type):
             obj = obj.encode(self.encoding, "replace")
+        elif _PY3:
+            raise TypeError(
+                "write() argument must be str, not {}".format(type(obj).__name__)
+            )
         self.buffer.write(obj)
 
     def writelines(self, linelist):
