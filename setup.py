@@ -36,6 +36,7 @@ def main():
                 "argcomplete",
                 "hypothesis>=3.56",
                 "nose",
+                "pexpect;sys_platform!='win32'",
                 "requests",
                 "mock;python_version=='2.7'",
             ],
