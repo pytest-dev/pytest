@@ -2,12 +2,14 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import argparse
 import os
 import platform
 import sys
 
 import _pytest._code
 import pytest
+from _pytest.debugging import _validate_usepdb_cls
 
 try:
     breakpoint
@@ -687,6 +689,23 @@ class TestPDB(object):
         result = testdir.runpytest_inprocess("--pdb", "--pdbcls=_pytest:_CustomPdb", p1)
         result.stdout.fnmatch_lines(["*NameError*xxx*", "*1 error*"])
         assert custom_pdb_calls == ["init", "reset", "interaction"]
+
+    def test_pdb_custom_cls_invalid(self, testdir):
+        result = testdir.runpytest_inprocess("--pdbcls=invalid")
+        result.stderr.fnmatch_lines(
+            [
+                "*: error: argument --pdbcls: 'invalid' is not in the format 'modname:classname'"
+            ]
+        )
+
+    def test_pdb_validate_usepdb_cls(self, testdir):
+        assert _validate_usepdb_cls("os.path:dirname.__name__") == "dirname"
+
+        with pytest.raises(
+            argparse.ArgumentTypeError,
+            match=r"^could not get pdb class for 'pdb:DoesNotExist': .*'DoesNotExist'",
+        ):
+            _validate_usepdb_cls("pdb:DoesNotExist")
 
     def test_pdb_custom_cls_without_pdb(self, testdir, custom_pdb_calls):
         p1 = testdir.makepyfile("""xxx """)

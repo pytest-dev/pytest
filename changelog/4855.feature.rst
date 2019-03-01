@@ -1,0 +1,4 @@
+The ``--pdbcls`` option handles classes via module attributes now (e.g.
+``pdb:pdb.Pdb`` with `pdb++`_), and its validation was improved.
+
+.. _pdb++: https://pypi.org/project/pdbpp/
