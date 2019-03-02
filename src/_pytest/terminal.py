@@ -583,16 +583,21 @@ class TerminalReporter(object):
             self.write_line(line)
 
     def pytest_report_header(self, config):
-        inifile = ""
+        line = "rootdir: %s" % config.rootdir
+
         if config.inifile:
-            inifile = " " + config.rootdir.bestrelpath(config.inifile)
-        lines = ["rootdir: %s, inifile:%s" % (config.rootdir, inifile)]
+            line += ", inifile: " + config.rootdir.bestrelpath(config.inifile)
+
+        testpaths = config.getini("testpaths")
+        if testpaths and config.args == testpaths:
+            rel_paths = [config.rootdir.bestrelpath(x) for x in testpaths]
+            line += ", testpaths: {}".format(", ".join(rel_paths))
+        result = [line]
 
         plugininfo = config.pluginmanager.list_plugin_distinfo()
         if plugininfo:
-
-            lines.append("plugins: %s" % ", ".join(_plugin_nameversions(plugininfo)))
-        return lines
+            result.append("plugins: %s" % ", ".join(_plugin_nameversions(plugininfo)))
+        return result
 
     def pytest_collection_finish(self, session):
         if self.config.getoption("collectonly"):

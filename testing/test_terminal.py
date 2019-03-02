@@ -567,6 +567,35 @@ class TestTerminalFunctional(object):
         if request.config.pluginmanager.list_plugin_distinfo():
             result.stdout.fnmatch_lines(["plugins: *"])
 
+    def test_header(self, testdir, request):
+        testdir.tmpdir.join("tests").ensure_dir()
+        testdir.tmpdir.join("gui").ensure_dir()
+
+        # no ini file
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines(["rootdir: *test_header0"])
+
+        # with inifile
+        testdir.makeini("""[pytest]""")
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines(["rootdir: *test_header0, inifile: tox.ini"])
+
+        # with testpaths option, and not passing anything in the command-line
+        testdir.makeini(
+            """
+            [pytest]
+            testpaths = tests gui
+        """
+        )
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines(
+            ["rootdir: *test_header0, inifile: tox.ini, testpaths: tests, gui"]
+        )
+
+        # with testpaths option, passing directory in command-line: do not show testpaths then
+        result = testdir.runpytest("tests")
+        result.stdout.fnmatch_lines(["rootdir: *test_header0, inifile: tox.ini"])
+
     def test_showlocals(self, testdir):
         p1 = testdir.makepyfile(
             """
@@ -1197,15 +1226,6 @@ def test_summary_stats(exp_line, exp_color, stats_arg):
     print('Actually got:   "{}"; with color "{}"'.format(line, color))
     assert line == exp_line
     assert color == exp_color
-
-
-def test_no_trailing_whitespace_after_inifile_word(testdir):
-    result = testdir.runpytest("")
-    assert "inifile:\n" in result.stdout.str()
-
-    testdir.makeini("[pytest]")
-    result = testdir.runpytest("")
-    assert "inifile: tox.ini\n" in result.stdout.str()
 
 
 class TestClassicOutputStyle(object):

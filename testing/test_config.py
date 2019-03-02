@@ -697,9 +697,9 @@ def test_invalid_options_show_extra_information(testdir):
         ["-v", "dir2", "dir1"],
     ],
 )
-def test_consider_args_after_options_for_rootdir_and_inifile(testdir, args):
+def test_consider_args_after_options_for_rootdir(testdir, args):
     """
-    Consider all arguments in the command-line for rootdir and inifile
+    Consider all arguments in the command-line for rootdir
     discovery, even if they happen to occur after an option. #949
     """
     # replace "dir1" and "dir2" from "args" into their real directory
@@ -713,7 +713,7 @@ def test_consider_args_after_options_for_rootdir_and_inifile(testdir, args):
             args[i] = d2
     with root.as_cwd():
         result = testdir.runpytest(*args)
-    result.stdout.fnmatch_lines(["*rootdir: *myroot, inifile:"])
+    result.stdout.fnmatch_lines(["*rootdir: *myroot"])
 
 
 @pytest.mark.skipif("sys.platform == 'win32'")
