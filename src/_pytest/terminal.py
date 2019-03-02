@@ -586,8 +586,13 @@ class TerminalReporter(object):
         inifile = ""
         if config.inifile:
             inifile = " " + config.rootdir.bestrelpath(config.inifile)
-        lines = ["rootdir: %s, inifile:%s" % (config.rootdir, inifile)]
 
+        line = "rootdir: %s, inifile:%s" % (config.rootdir, inifile)
+        testpaths = config.getini("testpaths")
+        if testpaths and config.args == testpaths:
+            rel_paths = [config.rootdir.bestrelpath(x) for x in testpaths]
+            line += ", testpaths: {}".format(", ".join(rel_paths))
+        lines = [line]
         plugininfo = config.pluginmanager.list_plugin_distinfo()
         if plugininfo:
 

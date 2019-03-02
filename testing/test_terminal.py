@@ -567,6 +567,26 @@ class TestTerminalFunctional(object):
         if request.config.pluginmanager.list_plugin_distinfo():
             result.stdout.fnmatch_lines(["plugins: *"])
 
+    def test_header(self, testdir, request):
+        testdir.tmpdir.join("tests").ensure_dir()
+        testdir.tmpdir.join("gui").ensure_dir()
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines(["rootdir: *test_header0, inifile:"])
+
+        testdir.makeini(
+            """
+            [pytest]
+            testpaths = tests gui
+        """
+        )
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines(
+            ["rootdir: *test_header0, inifile: tox.ini, testpaths: tests, gui"]
+        )
+
+        result = testdir.runpytest("tests")
+        result.stdout.fnmatch_lines(["rootdir: *test_header0, inifile: tox.ini"])
+
     def test_showlocals(self, testdir):
         p1 = testdir.makepyfile(
             """
