@@ -1904,7 +1904,7 @@ class TestAutouseManagement(object):
                              "setup-2", "step1-2", "step2-2", "teardown-2",]
         """
         )
-        reprec = testdir.inline_run("-v")
+        reprec = testdir.inline_run("-s")
         reprec.assertoutcome(passed=5)
 
     def test_ordering_autouse_before_explicit(self, testdir):

@@ -870,7 +870,6 @@ class FixtureDef(object):
     def execute(self, request):
         # get required arguments and register our own finish()
         # with their finalization
-        # TODO CHECK HOW TO AVOID EXPLICITLY FINALIZING AGAINST ARGNAMES
         for argname in self.argnames:
             fixturedef = request._get_active_fixturedef(argname)
             if argname != "request":
