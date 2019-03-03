@@ -1,5 +1,3 @@
-import os
-
 from setuptools import setup
 
 # TODO: if py gets upgrade to >=1.6,
@@ -15,13 +13,8 @@ INSTALL_REQUIRES = [
     'funcsigs;python_version<"3.0"',
     'pathlib2>=2.2.0;python_version<"3.6"',
     'colorama;sys_platform=="win32"',
+    "pluggy>=0.7",
 ]
-
-
-# if _PYTEST_SETUP_SKIP_PLUGGY_DEP is set, skip installing pluggy;
-# used by tox.ini to test with pluggy master
-if "_PYTEST_SETUP_SKIP_PLUGGY_DEP" not in os.environ:
-    INSTALL_REQUIRES.append("pluggy>=0.7")
 
 
 def main():
