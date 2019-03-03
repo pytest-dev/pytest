@@ -566,11 +566,11 @@ class TestRequestBasic(object):
         """
         Issue #1895
 
-        `test_inner` requests `inner` fixture, which in turns requests `resource`
-        using getfixturevalue. `test_func` then requests `resource`.
+        `test_inner` requests `inner` fixture, which in turn requests `resource`
+        using `getfixturevalue`. `test_func` then requests `resource`.
 
         `resource` is teardown before `inner` because the fixture mechanism won't consider
-        `inner` dependent on `resource` when it is get via `getfixturevalue`: `test_func`
+        `inner` dependent on `resource` when it is used via `getfixturevalue`: `test_func`
         will then cause the `resource`'s finalizer to be called first because of this.
         """
         testdir.makepyfile(
