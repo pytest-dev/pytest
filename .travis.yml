@@ -106,9 +106,9 @@ script:
     # Add last TOXENV to $PATH (also used below).
     PATH="$PWD/.tox/${TOXENV##*,}/bin:$PATH"
     python -c 'import sys; assert sys.stdout.isatty()'
-    if [[ "$PYTEST_COVERAGE" = 1 ]]; then
-      coverage run -m pytest --help
-    fi
+    # if [[ "$PYTEST_COVERAGE" = 1 ]]; then
+    #   coverage run -m pytest --help
+    # fi
 
 after_success:
   - |
