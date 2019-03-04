@@ -1403,28 +1403,36 @@ def test_dontreadfrominput_has_encoding(testdir):
 
 
 def test_crash_on_closing_tmpfile_py27(testdir):
-    testdir.makepyfile(
+    p = testdir.makepyfile(
         """
         from __future__ import print_function
-        import time
         import threading
         import sys
 
+        printing = threading.Event()
+
         def spam():
             f = sys.stderr
-            while True:
-                print('.', end='', file=f)
+            print('SPAMBEFORE', end='', file=f)
+            printing.set()
 
-        def test_silly():
+            while True:
+                try:
+                    f.flush()
+                except (OSError, ValueError):
+                    break
+
+        def test_spam_in_thread():
             t = threading.Thread(target=spam)
             t.daemon = True
             t.start()
-            time.sleep(0.5)
 
+            printing.wait()
     """
     )
-    result = testdir.runpytest_subprocess()
+    result = testdir.runpytest_subprocess(str(p))
     assert result.ret == 0
+    assert result.stderr.str() == ""
     assert "IOError" not in result.stdout.str()
 
 
