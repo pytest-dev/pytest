@@ -99,6 +99,7 @@ before_script:
     fi
 
 script:
+  - python -c 'import sys; assert sys.stdout.isatty()'
   - tox --recreate
   # Add last TOXENV to $PATH.
   - PATH="$PWD/.tox/${TOXENV##*,}/bin:$PATH"
