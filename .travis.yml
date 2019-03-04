@@ -99,13 +99,14 @@ before_script:
     fi
 
 script:
-  - python -c 'import sys; assert sys.stdout.isatty()'
   - tox --recreate
-  # Add last TOXENV to $PATH.
-  - PATH="$PWD/.tox/${TOXENV##*,}/bin:$PATH"
+
   - |
+    # Cover terminalreport for isatty.
+    # Add last TOXENV to $PATH (also used below).
+    PATH="$PWD/.tox/${TOXENV##*,}/bin:$PATH"
+    python -c 'import sys; assert sys.stdout.isatty()'
     if [[ "$PYTEST_COVERAGE" = 1 ]]; then
-      which coverage
       coverage run -m pytest --help
     fi
 
