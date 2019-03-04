@@ -37,10 +37,11 @@ jobs:
         python.version: 'pypy'
         tox.env: 'pypy'
         python.exe: 'pypy'
-      pypy3:
-        python.version: 'pypy3'
-        tox.env: 'pypy3'
-        python.exe: 'pypy3'
+      # NOTE: pypy3 fails to install pip currently due to an interal error.
+      # pypy3:
+      #   python.version: 'pypy3'
+      #   tox.env: 'pypy3'
+      #   python.exe: 'pypy3'
       py34:
         python.version: '3.4'
         tox.env: 'py34'
