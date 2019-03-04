@@ -138,6 +138,9 @@ class Cache(object):
 
     def _ensure_supporting_files(self):
         """Create supporting files in the cache dir that are not really part of the cache."""
+        if self._cachedir.exists():
+            return
+
         readme_path = self._cachedir / "README.md"
         assert not readme_path.exists(), "{} exists already".format(readme_path)
         readme_path.write_text(README_CONTENT)
