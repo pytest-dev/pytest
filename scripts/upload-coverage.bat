@@ -6,11 +6,11 @@ if "%PYTEST_COVERAGE%" == "1" (
     ) else (
         echo CODECOV_TOKEN NOT defined
     )
-    python -m pip install codecov
-    coverage combine
-    coverage xml
-    coverage report -m
-    scripts\retry codecov --required -X gcov pycov search -f coverage.xml --name %PYTEST_CODECOV_NAME%
+    %PYTHON% -m pip install codecov
+    %PYTHON% -m coverage combine
+    %PYTHON% -m coverage xml
+    %PYTHON% -m coverage report -m
+    scripts\retry %PYTHON% -m codecov --required -X gcov pycov search -f coverage.xml --name %PYTEST_CODECOV_NAME%
 ) else (
     echo Skipping coverage upload, PYTEST_COVERAGE=%PYTEST_COVERAGE%
 )
