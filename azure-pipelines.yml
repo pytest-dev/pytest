@@ -116,7 +116,7 @@ jobs:
     condition: succeededOrFailed()
 
   - script: call scripts\upload-coverage.bat
-    displayName: 'Upload coverage'
+    displayName: 'Report and upload coverage'
     condition: eq(variables['PYTEST_COVERAGE'], '1')
     env:
       PYTHON: $(python.exe)
