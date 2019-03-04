@@ -98,14 +98,20 @@ before_script:
       export _PYTEST_TOX_EXTRA_DEP=coverage-enable-subprocess
     fi
 
-script: tox --recreate
+script:
+  - tox --recreate
+  # Add last TOXENV to $PATH.
+  - PATH="$PWD/.tox/${TOXENV##*,}/bin:$PATH"
+  - |
+    if [[ "$PYTEST_COVERAGE" = 1 ]]; then
+      which coverage
+      coverage run -m pytest --help
+    fi
 
 after_success:
   - |
     if [[ "$PYTEST_COVERAGE" = 1 ]]; then
       set -e
-      # Add last TOXENV to $PATH.
-      PATH="$PWD/.tox/${TOXENV##*,}/bin:$PATH"
       coverage combine
       coverage xml
       coverage report -m
