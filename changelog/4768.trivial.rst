@@ -1,0 +1,1 @@
+Avoid pkg_resources import at the top-level.
