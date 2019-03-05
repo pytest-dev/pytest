@@ -499,6 +499,32 @@ Each recorded warning is an instance of :class:`warnings.WarningMessage`.
     differently; see :ref:`ensuring_function_triggers`.
 
 
+tmp_path
+~~~~~~~~
+
+**Tutorial**: :doc:`tmpdir`
+
+.. currentmodule:: _pytest.tmpdir
+
+.. autofunction:: tmp_path()
+    :no-auto-options:
+
+
+tmp_path_factory
+~~~~~~~~~~~~~~~~
+
+**Tutorial**: :ref:`tmp_path_factory example`
+
+.. _`tmp_path_factory factory api`:
+
+``tmp_path_factory`` instances have the following methods:
+
+.. currentmodule:: _pytest.tmpdir
+
+.. automethod:: TempPathFactory.mktemp
+.. automethod:: TempPathFactory.getbasetemp
+
+
 tmpdir
 ~~~~~~
 

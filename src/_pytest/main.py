@@ -24,7 +24,6 @@ from _pytest.deprecated import PYTEST_CONFIG_GLOBAL
 from _pytest.outcomes import exit
 from _pytest.runner import collect_one_node
 
-
 # exitcodes for the command line
 EXIT_OK = 0
 EXIT_TESTSFAILED = 1

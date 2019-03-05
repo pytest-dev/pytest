@@ -66,6 +66,9 @@ Running this would result in a passed test except for the last
     test_tmp_path.py:13: AssertionError
     ========================= 1 failed in 0.12 seconds =========================
 
+
+.. _`tmp_path_factory example`:
+
 The ``tmp_path_factory`` fixture
 --------------------------------
 
@@ -76,6 +79,8 @@ The ``tmp_path_factory`` is a session-scoped fixture which can be used
 to create arbitrary temporary directories from any other fixture or test.
 
 It is intended to replace ``tmpdir_factory``, and returns :class:`pathlib.Path` instances.
+
+See :ref:`tmp_path_factory API <tmp_path_factory factory api>` for details.
 
 
 The 'tmpdir' fixture
