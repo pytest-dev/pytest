@@ -1313,8 +1313,7 @@ class TestEarlyRewriteBailout(object):
         # always (previously triggered via xdist only).
         # Ref: https://github.com/pytest-dev/py/pull/207
         monkeypatch.setattr(sys, "path", [""] + sys.path)
-        if "pathlib" in sys.modules:
-            del sys.modules["pathlib"]
+        monkeypatch.delitem(sys.modules, "pathlib", raising=False)
 
         testdir.makepyfile(
             **{

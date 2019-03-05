@@ -3,7 +3,6 @@ from pluggy import HookspecMarker
 
 from _pytest.deprecated import PYTEST_LOGWARNING
 
-
 hookspec = HookspecMarker("pytest")
 
 # -------------------------------------------------------------------------

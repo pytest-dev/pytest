@@ -299,15 +299,12 @@ def test_argcomplete(testdir, monkeypatch):
     if not distutils.spawn.find_executable("bash"):
         pytest.skip("bash not available")
     script = str(testdir.tmpdir.join("test_argcomplete"))
-    pytest_bin = sys.argv[0]
-    if "pytest" not in os.path.basename(pytest_bin):
-        pytest.skip("need to be run with pytest executable, not {}".format(pytest_bin))
 
     with open(str(script), "w") as fp:
         # redirect output from argcomplete to stdin and stderr is not trivial
         # http://stackoverflow.com/q/12589419/1307905
         # so we use bash
-        fp.write('COMP_WORDBREAKS="$COMP_WORDBREAKS" %s 8>&1 9>&2' % pytest_bin)
+        fp.write('COMP_WORDBREAKS="$COMP_WORDBREAKS" python -m pytest 8>&1 9>&2')
     # alternative would be exteneded Testdir.{run(),_run(),popen()} to be able
     # to handle a keyword argument env that replaces os.environ in popen or
     # extends the copy, advantage: could not forget to restore
@@ -323,7 +320,11 @@ def test_argcomplete(testdir, monkeypatch):
         # argcomplete not found
         pytest.skip("argcomplete not available")
     elif not result.stdout.str():
-        pytest.skip("bash provided no output, argcomplete not available?")
+        pytest.skip(
+            "bash provided no output on stdout, argcomplete not available? (stderr={!r})".format(
+                result.stderr.str()
+            )
+        )
     else:
         result.stdout.fnmatch_lines(["--funcargs", "--fulltrace"])
     os.mkdir("test_argcomplete.d")

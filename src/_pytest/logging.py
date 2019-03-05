@@ -15,7 +15,6 @@ from _pytest.compat import dummy_context_manager
 from _pytest.config import create_terminal_writer
 from _pytest.pathlib import Path
 
-
 DEFAULT_LOG_FORMAT = "%(filename)-25s %(lineno)4d %(levelname)-8s %(message)s"
 DEFAULT_LOG_DATE_FORMAT = "%H:%M:%S"
 

@@ -2,7 +2,6 @@ from six.moves import range
 
 import pytest
 
-
 SKIP = True
 
 

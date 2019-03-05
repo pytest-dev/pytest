@@ -8,7 +8,6 @@ import six
 
 import pytest
 
-
 WARNINGS_SUMMARY_HEADER = "warnings summary"
 
 

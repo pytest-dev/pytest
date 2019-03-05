@@ -16,7 +16,6 @@ import _pytest._code
 import pytest
 from _pytest._code import Source
 
-
 astonly = pytest.mark.nothing
 failsonjython = pytest.mark.xfail("sys.platform.startswith('java')")
 
