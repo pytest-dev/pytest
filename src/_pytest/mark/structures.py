@@ -129,7 +129,7 @@ class ParameterSet(namedtuple("ParameterSet", "values, marks, id")):
                     )
         else:
             # empty parameter set (likely computed at runtime): create a single
-            # parameter set with NOSET values, with the "empty parameter set" mark applied to it
+            # parameter set with NOTSET values, with the "empty parameter set" mark applied to it
             mark = get_empty_parameterset_mark(config, argnames, func)
             parameters.append(
                 ParameterSet(values=(NOTSET,) * len(argnames), marks=[mark], id=None)
@@ -152,7 +152,7 @@ class Mark(object):
         :type other: Mark
         :rtype: Mark
 
-        combines by appending aargs and merging the mappings
+        combines by appending args and merging the mappings
         """
         assert self.name == other.name
         return Mark(
