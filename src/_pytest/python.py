@@ -1414,11 +1414,6 @@ class Function(FunctionMixin, nodes.Item, fixtures.FuncargnamesCompatAttr):
 
     def _initrequest(self):
         self.funcargs = {}
-        if hasattr(self, "callspec"):
-            callspec = self.callspec
-            assert not callspec.funcargs
-            if hasattr(callspec, "param"):
-                self.param = callspec.param
         self._request = fixtures.FixtureRequest(self)
 
     @property
