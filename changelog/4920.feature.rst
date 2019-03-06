@@ -1,0 +1,6 @@
+Internal refactorings have been made in order to make the implementation of the
+`pytest-subtests <https://github.com/pytest-dev/pytest-subtests>`__ plugin
+possible, which adds unittest sub-test support and a new ``subtests`` fixture as discussed in
+`#1367 <https://github.com/pytest-dev/pytest/issues/1367>`__.
+
+For details on the internal refactorings, please see the details on the related PR.

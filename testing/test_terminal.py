@@ -15,6 +15,7 @@ import py
 
 import pytest
 from _pytest.main import EXIT_NOTESTSCOLLECTED
+from _pytest.reports import BaseReport
 from _pytest.terminal import _plugin_nameversions
 from _pytest.terminal import build_summary_stats_line
 from _pytest.terminal import getreportopt
@@ -1226,6 +1227,20 @@ def test_summary_stats(exp_line, exp_color, stats_arg):
     print('Actually got:   "{}"; with color "{}"'.format(line, color))
     assert line == exp_line
     assert color == exp_color
+
+
+def test_skip_counting_towards_summary():
+    class DummyReport(BaseReport):
+        count_towards_summary = True
+
+    r1 = DummyReport()
+    r2 = DummyReport()
+    res = build_summary_stats_line({"failed": (r1, r2)})
+    assert res == ("2 failed", "red")
+
+    r1.count_towards_summary = False
+    res = build_summary_stats_line({"failed": (r1, r2)})
+    assert res == ("1 failed", "red")
 
 
 class TestClassicOutputStyle(object):
