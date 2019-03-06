@@ -1,0 +1,1 @@
+Remove internally unused ``anypython`` fixture from the pytester plugin.
