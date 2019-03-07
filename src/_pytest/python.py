@@ -243,25 +243,24 @@ class PyobjMixin(PyobjContext):
     def __init__(self, *k, **kw):
         super(PyobjMixin, self).__init__(*k, **kw)
 
-    def obj():
-        def fget(self):
-            obj = getattr(self, "_obj", None)
-            if obj is None:
-                self._obj = obj = self._getobj()
-                # XXX evil hack
-                # used to avoid Instance collector marker duplication
-                if self._ALLOW_MARKERS:
-                    self.own_markers.extend(get_unpacked_marks(self.obj))
-            return obj
+    @property
+    def obj(self):
+        """underlying python object"""
+        obj = getattr(self, "_obj", None)
+        if obj is None:
+            self._obj = obj = self._getobj()
+            # XXX evil hack
+            # used to avoid Instance collector marker duplication
+            if self._ALLOW_MARKERS:
+                self.own_markers.extend(get_unpacked_marks(self.obj))
+        return obj
 
-        def fset(self, value):
-            self._obj = value
-
-        return property(fget, fset, None, "underlying python object")
-
-    obj = obj()
+    @obj.setter
+    def obj(self, value):
+        self._obj = value
 
     def _getobj(self):
+        """Gets the underlying python object. May be overwritten by subclasses."""
         return getattr(self.parent.obj, self.name)
 
     def getmodpath(self, stopatmodule=True, includemodule=False):
