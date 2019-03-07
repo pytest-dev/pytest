@@ -245,7 +245,7 @@ class PyobjMixin(PyobjContext):
 
     @property
     def obj(self):
-        """underlying python object"""
+        """Underlying Python object."""
         obj = getattr(self, "_obj", None)
         if obj is None:
             self._obj = obj = self._getobj()
@@ -260,7 +260,7 @@ class PyobjMixin(PyobjContext):
         self._obj = value
 
     def _getobj(self):
-        """Gets the underlying python object. May be overwritten by subclasses."""
+        """Gets the underlying Python object. May be overwritten by subclasses."""
         return getattr(self.parent.obj, self.name)
 
     def getmodpath(self, stopatmodule=True, includemodule=False):
