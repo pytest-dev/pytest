@@ -1,0 +1,1 @@
+Fix ``AttributeError: FixtureRequest has no 'confg' attribute`` bug in ``testdir.copy_example``.
