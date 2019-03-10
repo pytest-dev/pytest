@@ -1035,26 +1035,26 @@ class Testdir(object):
     def popen(self, cmdargs, stdout, stderr, **kw):
         """Invoke subprocess.Popen.
 
-        This calls subprocess.Popen making sure the current working directory
+        This calls subprocess.Popen, making sure the current working directory
         is in the PYTHONPATH.
 
         You probably want to use :py:meth:`run` instead.
-
         """
         env = os.environ.copy()
-        env["PYTHONPATH"] = os.pathsep.join(
-            filter(None, [os.getcwd(), env.get("PYTHONPATH", "")])
-        )
+        env_update = kw.get("env", {})
+        if "PYTHONPATH" not in env_update:
+            env_update["PYTHONPATH"] = os.pathsep.join(
+                filter(None, [os.getcwd(), env.get("PYTHONPATH", "")])
+            )
         # Do not load user config.
-        env["HOME"] = str(self.tmpdir)
-        env["USERPROFILE"] = env["HOME"]
-        kw["env"] = env
+        env_update["HOME"] = str(self.tmpdir)
+        env_update["USERPROFILE"] = env["HOME"]
+        env.update(env_update)
 
         popen = subprocess.Popen(
-            cmdargs, stdin=subprocess.PIPE, stdout=stdout, stderr=stderr, **kw
+            cmdargs, stdin=subprocess.PIPE, stdout=stdout, stderr=stderr, env=env, **kw
         )
         popen.stdin.close()
-
         return popen
 
     def run(self, *cmdargs, **kwargs):
