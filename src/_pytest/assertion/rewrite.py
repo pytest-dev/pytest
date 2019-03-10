@@ -344,9 +344,9 @@ def _write_pyc(state, co, source_stat, pyc):
     try:
         with atomicwrites.atomic_write(pyc, mode="wb", overwrite=True) as fp:
             fp.write(imp.get_magic())
-            mtime = int(source_stat.mtime)
+            mtime = int(source_stat.mtime) & 0xFFFFFFFF
             size = source_stat.size & 0xFFFFFFFF
-            fp.write(struct.pack("<ll", mtime, size))
+            fp.write(struct.pack("<LL", mtime, size))
             fp.write(marshal.dumps(co))
     except EnvironmentError as e:
         state.trace("error writing pyc file at %s: errno=%s" % (pyc, e.errno))
@@ -441,7 +441,7 @@ def _read_pyc(source, pyc, trace=lambda x: None):
         if (
             len(data) != 12
             or data[:4] != imp.get_magic()
-            or struct.unpack("<ll", data[4:]) != (mtime, size)
+            or struct.unpack("<LL", data[4:]) != (mtime & 0xFFFFFFFF, size & 0xFFFFFFFF)
         ):
             trace("_read_pyc(%s): invalid or out of date pyc" % source)
             return None
