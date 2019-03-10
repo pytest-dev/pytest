@@ -1050,20 +1050,21 @@ class Testdir(object):
     ):
         """Invoke subprocess.Popen.
 
-        This calls subprocess.Popen making sure the current working directory
+        This calls subprocess.Popen, making sure the current working directory
         is in the PYTHONPATH.
 
         You probably want to use :py:meth:`run` instead.
-
         """
         env = os.environ.copy()
-        env["PYTHONPATH"] = os.pathsep.join(
-            filter(None, [os.getcwd(), env.get("PYTHONPATH", "")])
-        )
+        env_update = kw.get("env", {})
+        if "PYTHONPATH" not in env_update:
+            env_update["PYTHONPATH"] = os.pathsep.join(
+                filter(None, [os.getcwd(), env.get("PYTHONPATH", "")])
+            )
         # Do not load user config.
-        env["HOME"] = str(self.tmpdir)
-        env["USERPROFILE"] = env["HOME"]
-        kw["env"] = env
+        env_update["HOME"] = str(self.tmpdir)
+        env_update["USERPROFILE"] = env["HOME"]
+        env.update(env_update)
 
         if stdin is Testdir.CLOSE_STDIN:
             kw["stdin"] = subprocess.PIPE
@@ -1072,7 +1073,7 @@ class Testdir(object):
         else:
             kw["stdin"] = stdin
 
-        popen = subprocess.Popen(cmdargs, stdout=stdout, stderr=stderr, **kw)
+        popen = subprocess.Popen(cmdargs, stdout=stdout, stderr=stderr, env=env, **kw)
         if stdin is Testdir.CLOSE_STDIN:
             popen.stdin.close()
         elif isinstance(stdin, bytes):
