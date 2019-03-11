@@ -212,6 +212,17 @@ class pytestPDB(object):
                             self._pytest_capman.suspend_global_capture(in_=True)
                     return ret
 
+                def get_stack(self, f, t):
+                    stack, i = super(PytestPdbWrapper, self).get_stack(f, t)
+                    if f is None:
+                        # Find last non-hidden frame.
+                        i = max(0, len(stack) - 1)
+                        while i and stack[i][0].f_locals.get(
+                            "__tracebackhide__", False
+                        ):
+                            i -= 1
+                    return stack, i
+
             _pdb = PytestPdbWrapper(**kwargs)
             cls._pluginmanager.hook.pytest_enter_pdb(config=cls._config, pdb=_pdb)
         else:
@@ -298,22 +309,8 @@ def _postmortem_traceback(excinfo):
         return excinfo._excinfo[2]
 
 
-def _find_last_non_hidden_frame(stack):
-    i = max(0, len(stack) - 1)
-    while i and stack[i][0].f_locals.get("__tracebackhide__", False):
-        i -= 1
-    return i
-
-
 def post_mortem(t):
-    class Pdb(pytestPDB._pdb_cls, object):
-        def get_stack(self, f, t):
-            stack, i = super(Pdb, self).get_stack(f, t)
-            if f is None:
-                i = _find_last_non_hidden_frame(stack)
-            return stack, i
-
-    p = Pdb()
+    p = pytestPDB._init_pdb()
     p.reset()
     p.interaction(None, t)
     if p.quitting:
