@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import os
 import pprint
 import sys
 import textwrap
@@ -1108,7 +1109,7 @@ def test_collect_pyargs_with_testpaths(testdir, monkeypatch):
     """
         )
     )
-    monkeypatch.setenv("PYTHONPATH", str(testdir.tmpdir))
+    monkeypatch.setenv("PYTHONPATH", str(testdir.tmpdir), prepend=os.pathsep)
     with root.as_cwd():
         result = testdir.runpytest_subprocess()
     result.stdout.fnmatch_lines(["*1 passed in*"])
