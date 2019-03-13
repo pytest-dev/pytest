@@ -107,6 +107,12 @@ matrix:
     - python: '3.8-dev'
       env: TOXENV=py38-xdist
 
+    # PyPy currently fails to install on Travis (#4915).
+    - env: TOXENV=pypy-xdist
+      python: 'pypy2.7-6.0'
+    - env: TOXENV=pypy3-xdist
+      python: 'pypy3.5-6.0'
+
 before_script:
   - |
     # Do not (re-)upload coverage with cron runs.
