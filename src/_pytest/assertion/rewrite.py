@@ -344,8 +344,10 @@ def _write_pyc(state, co, source_stat, pyc):
     try:
         with atomicwrites.atomic_write(pyc, mode="wb", overwrite=True) as fp:
             fp.write(imp.get_magic())
+            # as of now, bytecode header expects 32-bit numbers for size and mtime (#4903)
             mtime = int(source_stat.mtime) & 0xFFFFFFFF
             size = source_stat.size & 0xFFFFFFFF
+            # "<LL" stands for 2 unsigned longs, little-ending
             fp.write(struct.pack("<LL", mtime, size))
             fp.write(marshal.dumps(co))
     except EnvironmentError as e:

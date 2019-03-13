@@ -1,1 +1,1 @@
-Fix handling of mtime to work after year 2038
+Use the correct modified time for years after 2038 in rewritten ``.pyc`` files.
