@@ -335,7 +335,7 @@ intersphinx_mapping = {"python": ("https://docs.python.org/3", None)}
 def setup(app):
     # from sphinx.ext.autodoc import cut_lines
     # app.connect('autodoc-process-docstring', cut_lines(4, what=['module']))
-    app.add_description_unit(
+    app.add_object_type(
         "confval",
         "confval",
         objname="configuration value",
