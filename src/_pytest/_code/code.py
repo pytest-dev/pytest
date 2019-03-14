@@ -241,25 +241,20 @@ class TracebackEntry(object):
 
     def ishidden(self):
         """ return True if the current frame has a var __tracebackhide__
-            resolving to True
+            resolving to True.
 
             If __tracebackhide__ is a callable, it gets called with the
             ExceptionInfo instance and can decide whether to hide the traceback.
 
             mostly for internal use
         """
-        try:
-            tbh = self.frame.f_locals["__tracebackhide__"]
-        except KeyError:
-            try:
-                tbh = self.frame.f_globals["__tracebackhide__"]
-            except KeyError:
-                return False
-
-        if callable(tbh):
+        f = self.frame
+        tbh = f.f_locals.get(
+            "__tracebackhide__", f.f_globals.get("__tracebackhide__", False)
+        )
+        if tbh and callable(tbh):
             return tbh(None if self._excinfo is None else self._excinfo())
-        else:
-            return tbh
+        return tbh
 
     def __str__(self):
         try:
