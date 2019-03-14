@@ -528,15 +528,13 @@ class TestPDB(object):
                     import sys
                     import types
 
-                    newglobals = {
-                        'Pdb': self.__class__,  # NOTE: different with pdb.Pdb
-                        'sys': sys,
-                    }
                     if sys.version_info < (3, ):
                         do_debug_func = pdb.Pdb.do_debug.im_func
                     else:
                         do_debug_func = pdb.Pdb.do_debug
 
+                    newglobals = do_debug_func.__globals__.copy()
+                    newglobals['Pdb'] = self.__class__
                     orig_do_debug = types.FunctionType(
                         do_debug_func.__code__, newglobals,
                         do_debug_func.__name__, do_debug_func.__defaults__,
