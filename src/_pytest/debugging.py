@@ -263,9 +263,9 @@ def _find_last_non_hidden_frame(stack):
 
 
 def post_mortem(t):
-    class Pdb(pytestPDB._pdb_cls):
+    class Pdb(pytestPDB._pdb_cls, object):
         def get_stack(self, f, t):
-            stack, i = pdb.Pdb.get_stack(self, f, t)
+            stack, i = super(Pdb, self).get_stack(f, t)
             if f is None:
                 i = _find_last_non_hidden_frame(stack)
             return stack, i
