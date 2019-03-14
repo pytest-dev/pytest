@@ -457,7 +457,7 @@ class TestPDB(object):
         child.read()
         self.flush(child)
 
-    def test_pdb_interaction_doctest(self, testdir):
+    def test_pdb_interaction_doctest(self, testdir, monkeypatch):
         p1 = testdir.makepyfile(
             """
             import pytest
@@ -468,11 +468,18 @@ class TestPDB(object):
                 '''
         """
         )
+        # Prevent ~/.pdbrc etc to output anything.
+        monkeypatch.setenv("HOME", str(testdir))
+
         child = testdir.spawn_pytest("--doctest-modules --pdb %s" % p1)
         child.expect("Pdb")
-        child.sendline("i")
-        child.expect("0")
+
+        assert "UNEXPECTED EXCEPTION: AssertionError()" in child.before.decode("utf8")
+
+        child.sendline("'i=%i.' % i")
         child.expect("Pdb")
+        assert "\r\n'i=0.'\r\n" in child.before.decode("utf8")
+
         child.sendeof()
         rest = child.read().decode("utf8")
         assert "1 failed" in rest
