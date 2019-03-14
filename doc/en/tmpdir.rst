@@ -66,7 +66,6 @@ Running this would result in a passed test except for the last
     test_tmp_path.py:13: AssertionError
     ========================= 1 failed in 0.12 seconds =========================
 
-
 .. _`tmp_path_factory example`:
 
 The ``tmp_path_factory`` fixture

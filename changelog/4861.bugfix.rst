@@ -1,1 +1,0 @@
-Improve validation of contents written to captured output so it behaves the same as when capture is disabled.

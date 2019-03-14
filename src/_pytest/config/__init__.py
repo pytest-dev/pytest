@@ -14,7 +14,6 @@ import warnings
 
 import py
 import six
-from pkg_resources import parse_version
 from pluggy import HookimplMarker
 from pluggy import HookspecMarker
 from pluggy import PluginManager
@@ -853,6 +852,7 @@ class Config(object):
 
     def _checkversion(self):
         import pytest
+        from pkg_resources import parse_version
 
         minver = self.inicfg.get("minversion", None)
         if minver:
