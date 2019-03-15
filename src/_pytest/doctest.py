@@ -15,6 +15,7 @@ from _pytest._code.code import ReprFileLocation
 from _pytest._code.code import TerminalRepr
 from _pytest.compat import safe_getattr
 from _pytest.fixtures import FixtureRequest
+from _pytest.outcomes import Skipped
 
 DOCTEST_REPORT_CHOICE_NONE = "none"
 DOCTEST_REPORT_CHOICE_CDIFF = "cdiff"
@@ -153,6 +154,8 @@ def _init_runner_class():
                 raise failure
 
         def report_unexpected_exception(self, out, test, example, exc_info):
+            if isinstance(exc_info[1], Skipped):
+                raise exc_info[1]
             failure = doctest.UnexpectedException(test, example, exc_info)
             if self.continue_on_failure:
                 out.append(failure)
