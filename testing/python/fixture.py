@@ -992,8 +992,8 @@ class TestFixtureUsages(object):
         result.stdout.fnmatch_lines(
             [
                 "*ScopeMismatch*involved factories*",
-                "* def arg2*",
-                "* def arg1*",
+                "test_receives_funcargs_scope_mismatch.py:6:  def arg2(arg1)",
+                "test_receives_funcargs_scope_mismatch.py:2:  def arg1()",
                 "*1 error*",
             ]
         )

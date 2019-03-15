@@ -612,7 +612,7 @@ class FixtureRequest(FuncargnamesCompatAttr):
             fs, lineno = getfslineno(factory)
             p = self._pyfuncitem.session.fspath.bestrelpath(fs)
             args = _format_args(factory)
-            lines.append("%s:%d:  def %s%s" % (p, lineno, factory.__name__, args))
+            lines.append("%s:%d:  def %s%s" % (p, lineno + 1, factory.__name__, args))
         return lines
 
     def _getscopeitem(self, scope):
