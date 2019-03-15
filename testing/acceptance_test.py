@@ -1179,3 +1179,31 @@ def test_fixture_mock_integration(testdir):
 def test_usage_error_code(testdir):
     result = testdir.runpytest("-unknown-option-")
     assert result.ret == EXIT_USAGEERROR
+
+
+@pytest.mark.skipif(
+    sys.version_info[:2] < (3, 5), reason="async def syntax python 3.5+ only"
+)
+@pytest.mark.filterwarnings("default")
+def test_warn_on_async_function(testdir):
+    testdir.makepyfile(
+        test_async="""
+        async def test_1():
+            pass
+        async def test_2():
+            pass
+    """
+    )
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines(
+        [
+            "test_async.py::test_1",
+            "test_async.py::test_2",
+            "*Coroutine functions are not natively supported*",
+            "*2 skipped, 2 warnings in*",
+        ]
+    )
+    # ensure our warning message appears only once
+    assert (
+        result.stdout.str().count("Coroutine functions are not natively supported") == 1
+    )
