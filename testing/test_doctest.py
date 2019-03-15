@@ -188,6 +188,18 @@ class TestDoctests(object):
             ]
         )
 
+    def test_doctest_skip(self, testdir):
+        testdir.maketxtfile(
+            """
+            >>> 1
+            1
+            >>> import pytest
+            >>> pytest.skip("")
+        """
+        )
+        result = testdir.runpytest("--doctest-modules")
+        result.stdout.fnmatch_lines(["*1 skipped*"])
+
     def test_docstring_partial_context_around_error(self, testdir):
         """Test that we show some context before the actual line of a failing
         doctest.
