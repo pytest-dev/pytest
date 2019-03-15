@@ -301,21 +301,7 @@ class MarkGenerator(object):
     def __getattr__(self, name):
         if name[0] == "_":
             raise AttributeError("Marker name must NOT start with underscore")
-
-        # We store a set of registered markers as a performance optimisation,
-        # but more could be added to `self._config` by other plugins at runtime.
-        # If we see an unknown marker, we therefore update the set and try again!
-        if (
-            self._config is not None
-            and name not in self._markers
-            and (self._config.option.strict or name not in self._builtin_marks)
-        ):
-            for line in self._config.getini("markers"):
-                marker = line.split(":", 1)[0].rstrip().split("(", 1)[0]
-                self._markers.add(marker)
-
-        # With an up-to-date set of markers, we emit a warning if `name` is still
-        # unknown, then an error if it is not registered.
+        self._update_markers(name)
         if name not in self._markers:
             if name not in self._builtin_marks:
                 warnings.warn(
@@ -328,6 +314,19 @@ class MarkGenerator(object):
                 fail("{!r} not a registered marker".format(name), pytrace=False)
 
         return MarkDecorator(Mark(name, (), {}))
+
+    def _update_markers(self, name=None):
+        # We store a set of registered markers as a performance optimisation,
+        # but more could be added to `self._config` by other plugins at runtime.
+        # If we see an unknown marker, we therefore update the set and try again!
+        if (
+            self._config is not None
+            and name not in self._markers
+            and (self._config.option.strict or name not in self._builtin_marks)
+        ):
+            for line in self._config.getini("markers"):
+                marker = line.split(":", 1)[0].rstrip().split("(", 1)[0]
+                self._markers.add(marker)
 
 
 MARK_GEN = MarkGenerator()
