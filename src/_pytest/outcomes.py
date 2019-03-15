@@ -90,7 +90,7 @@ def skip(msg="", **kwargs):
         It is better to use the :ref:`pytest.mark.skipif ref` marker when possible to declare a test to be
         skipped under certain conditions like mismatching platforms or
         dependencies.
-        Similarly, use ``# doctest: +SKIP`` directive (see `doctest.SKIP
+        Similarly, use the ``# doctest: +SKIP`` directive (see `doctest.SKIP
         <https://docs.python.org/3/library/doctest.html#doctest.SKIP>`_)
         to skip a doctest statically.
     """
