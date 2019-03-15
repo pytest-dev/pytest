@@ -17,6 +17,7 @@ from _pytest.main import EXIT_OK
 from _pytest.main import EXIT_TESTSFAILED
 from _pytest.pytester import CwdSnapshot
 from _pytest.pytester import HookRecorder
+from _pytest.pytester import LineMatcher
 from _pytest.pytester import SysModulesSnapshot
 from _pytest.pytester import SysPathsSnapshot
 
@@ -453,3 +454,18 @@ def test_testdir_run_timeout_expires(testdir):
     )
     with pytest.raises(testdir.TimeoutExpired):
         testdir.runpytest_subprocess(testfile, timeout=1)
+
+
+def test_linematcher_with_nonlist():
+    """Test LineMatcher with regard to passing in a set (accidentally)."""
+    lm = LineMatcher([])
+
+    with pytest.raises(AssertionError):
+        lm.fnmatch_lines(set())
+    with pytest.raises(AssertionError):
+        lm.fnmatch_lines({})
+    lm.fnmatch_lines([])
+    lm.fnmatch_lines(())
+
+    assert lm._getlines({}) == {}
+    assert lm._getlines(set()) == set()

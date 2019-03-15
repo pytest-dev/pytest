@@ -25,6 +25,7 @@ from _pytest.assertion.rewrite import AssertionRewritingHook
 from _pytest.capture import MultiCapture
 from _pytest.capture import SysCapture
 from _pytest.compat import safe_str
+from _pytest.compat import Sequence
 from _pytest.main import EXIT_INTERRUPTED
 from _pytest.main import EXIT_OK
 from _pytest.main import Session
@@ -1325,6 +1326,7 @@ class LineMatcher(object):
             will be logged to stdout when a match occurs
 
         """
+        assert isinstance(lines2, Sequence)
         lines2 = self._getlines(lines2)
         lines1 = self.lines[:]
         nextline = None
