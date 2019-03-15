@@ -1,0 +1,1 @@
+pytester's ``LineMatcher`` asserts that the passed lines are a sequence.
