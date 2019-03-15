@@ -81,7 +81,7 @@ def skip(msg="", **kwargs):
 
     This function should be called only during testing (setup, call or teardown) or
     during collection by using the ``allow_module_level`` flag.  This function can
-    be called in doctest as well.
+    be called in doctests as well.
 
     :kwarg bool allow_module_level: allows this function to be called at
         module level, skipping the rest of the module. Default to False.
