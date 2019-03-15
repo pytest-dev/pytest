@@ -80,7 +80,8 @@ def skip(msg="", **kwargs):
     Skip an executing test with the given message.
 
     This function should be called only during testing (setup, call or teardown) or
-    during collection by using the ``allow_module_level`` flag.
+    during collection by using the ``allow_module_level`` flag.  This function can
+    be called in doctest as well.
 
     :kwarg bool allow_module_level: allows this function to be called at
         module level, skipping the rest of the module. Default to False.
@@ -89,6 +90,9 @@ def skip(msg="", **kwargs):
         It is better to use the :ref:`pytest.mark.skipif ref` marker when possible to declare a test to be
         skipped under certain conditions like mismatching platforms or
         dependencies.
+        Similarly, use ``# doctest: +SKIP`` directive (see `doctest.SKIP
+        <https://docs.python.org/3/library/doctest.html#doctest.SKIP>`_)
+        to skip a doctest statically.
     """
     __tracebackhide__ = True
     allow_module_level = kwargs.pop("allow_module_level", False)
