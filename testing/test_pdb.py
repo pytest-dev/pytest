@@ -459,7 +459,7 @@ class TestPDB(object):
         child.read()
         self.flush(child)
 
-    def test_pdb_interaction_doctest(self, testdir):
+    def test_pdb_interaction_doctest(self, testdir, monkeypatch):
         p1 = testdir.makepyfile(
             """
             import pytest
@@ -470,11 +470,18 @@ class TestPDB(object):
                 '''
         """
         )
+        # Prevent ~/.pdbrc etc to output anything.
+        monkeypatch.setenv("HOME", str(testdir))
+
         child = testdir.spawn_pytest("--doctest-modules --pdb %s" % p1)
         child.expect("Pdb")
-        child.sendline("i")
-        child.expect("0")
+
+        assert "UNEXPECTED EXCEPTION: AssertionError()" in child.before.decode("utf8")
+
+        child.sendline("'i=%i.' % i")
         child.expect("Pdb")
+        assert "\r\n'i=0.'\r\n" in child.before.decode("utf8")
+
         child.sendeof()
         rest = child.read().decode("utf8")
         assert "1 failed" in rest
@@ -530,15 +537,13 @@ class TestPDB(object):
                     import sys
                     import types
 
-                    newglobals = {
-                        'Pdb': self.__class__,  # NOTE: different with pdb.Pdb
-                        'sys': sys,
-                    }
                     if sys.version_info < (3, ):
                         do_debug_func = pdb.Pdb.do_debug.im_func
                     else:
                         do_debug_func = pdb.Pdb.do_debug
 
+                    newglobals = do_debug_func.__globals__.copy()
+                    newglobals['Pdb'] = self.__class__
                     orig_do_debug = types.FunctionType(
                         do_debug_func.__code__, newglobals,
                         do_debug_func.__name__, do_debug_func.__defaults__,

@@ -584,6 +584,8 @@ Initialization hooks called for plugins and ``conftest.py`` files.
 .. autofunction:: pytest_sessionstart
 .. autofunction:: pytest_sessionfinish
 
+.. autofunction:: pytest_plugin_registered
+
 Test running hooks
 ~~~~~~~~~~~~~~~~~~
 
@@ -607,6 +609,8 @@ into interactive debugging when a test failure occurs.
 The :py:mod:`_pytest.terminal` reported specifically uses
 the reporting hook to print information about a test run.
 
+.. autofunction:: pytest_pyfunc_call
+
 Collection hooks
 ~~~~~~~~~~~~~~~~
 
@@ -616,6 +620,7 @@ Collection hooks
 .. autofunction:: pytest_ignore_collect
 .. autofunction:: pytest_collect_directory
 .. autofunction:: pytest_collect_file
+.. autofunction:: pytest_pycollect_makemodule
 
 For influencing the collection of objects in Python modules
 you can use the following hook:
@@ -629,12 +634,15 @@ items, delete or otherwise amend the test items:
 
 .. autofunction:: pytest_collection_modifyitems
 
+.. autofunction:: pytest_collection_finish
+
 Reporting hooks
 ~~~~~~~~~~~~~~~
 
 Session related reporting hooks:
 
 .. autofunction:: pytest_collectstart
+.. autofunction:: pytest_make_collect_report
 .. autofunction:: pytest_itemcollected
 .. autofunction:: pytest_collectreport
 .. autofunction:: pytest_deselected

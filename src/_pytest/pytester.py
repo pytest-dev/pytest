@@ -652,7 +652,7 @@ class Testdir(object):
             else:
                 raise LookupError(
                     "{} cant be found as module or package in {}".format(
-                        func_name, example_dir.bestrelpath(self.request.confg.rootdir)
+                        func_name, example_dir.bestrelpath(self.request.config.rootdir)
                     )
                 )
         else:

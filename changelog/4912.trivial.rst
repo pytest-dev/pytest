@@ -1,0 +1,1 @@
+Remove deprecated Sphinx directive, ``add_description_unit()``.

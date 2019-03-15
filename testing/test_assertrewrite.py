@@ -1197,6 +1197,29 @@ class TestIssue2121:
         result.stdout.fnmatch_lines("*E*assert (1 + 1) == 3")
 
 
+@pytest.mark.parametrize("offset", [-1, +1])
+def test_source_mtime_long_long(testdir, offset):
+    """Support modification dates after 2038 in rewritten files (#4903).
+
+    pytest would crash with:
+
+            fp.write(struct.pack("<ll", mtime, size))
+        E   struct.error: argument out of range
+    """
+    p = testdir.makepyfile(
+        """
+        def test(): pass
+    """
+    )
+    # use unsigned long timestamp which overflows signed long,
+    # which was the cause of the bug
+    # +1 offset also tests masking of 0xFFFFFFFF
+    timestamp = 2 ** 32 + offset
+    os.utime(str(p), (timestamp, timestamp))
+    result = testdir.runpytest()
+    assert result.ret == 0
+
+
 def test_rewrite_infinite_recursion(testdir, pytestconfig, monkeypatch):
     """Fix infinite recursion when writing pyc files: if an import happens to be triggered when writing the pyc
     file, this would cause another call to the hook, which would trigger another pyc writing, which could
