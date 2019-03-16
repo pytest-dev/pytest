@@ -346,3 +346,10 @@ class TestPytestPluginManagerBootstrapming(object):
         l2 = pytestpm.get_plugins()
         assert 42 not in l2
         assert 43 not in l2
+
+    def test_blocked_plugin_can_be_used(self, pytestpm):
+        pytestpm.consider_preparse(["xyz", "-p", "no:abc", "-p", "abc"])
+
+        assert pytestpm.has_plugin("abc")
+        assert not pytestpm.is_blocked("abc")
+        assert not pytestpm.is_blocked("pytest_abc")
