@@ -1,0 +1,4 @@
+Handle ``-p plug`` after ``-p no:plug``.
+
+This can be used to override a blocked plugin (e.g. in "addopts") from the
+command line etc.
