@@ -455,3 +455,9 @@ if six.PY2:
 
 else:
     from functools import lru_cache  # noqa: F401
+
+
+if _PY2:
+    from pipes import quote as shell_quote
+else:
+    from shlex import quote as shell_quote  # noqa: F401

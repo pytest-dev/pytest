@@ -1176,3 +1176,36 @@ def test_help_and_version_after_argument_error(testdir):
         ["*pytest*{}*imported from*".format(pytest.__version__)]
     )
     assert result.ret == EXIT_USAGEERROR
+
+
+def test_report_implicit_args(testdir, monkeypatch):
+    p = testdir.makepyfile(
+        """
+            def test():
+                pass
+        """
+    )
+    result = testdir.runpytest(str(p))
+    assert "implicit args:" not in result.stdout.str()
+
+    ini = testdir.makeini(
+        """
+        [pytest]
+        addopts = -k "foo and bar"
+    """
+    )
+    result = testdir.runpytest(str(p))
+    result.stdout.fnmatch_lines(
+        ["implicit args: \"-k 'foo and bar'\" (addopts config)"]
+    )
+
+    monkeypatch.setenv("PYTEST_ADDOPTS", "-v")
+    result = testdir.runpytest(str(p))
+    result.stdout.fnmatch_lines(
+        ["implicit args: \"-k 'foo and bar'\" (addopts config), '-v' (PYTEST_ADDOPTS)"]
+    )
+
+    ini.remove()
+    monkeypatch.setenv("PYTEST_ADDOPTS", "-v -k 'bar'")
+    result = testdir.runpytest(str(p))
+    result.stdout.fnmatch_lines(["implicit args: '-v -k bar' (PYTEST_ADDOPTS)"])

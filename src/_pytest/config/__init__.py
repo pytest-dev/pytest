@@ -802,18 +802,19 @@ class Config(object):
         return args
 
     def _preparse(self, args, addopts=True):
+        self._implicit_args = []
         if addopts:
             env_addopts = os.environ.get("PYTEST_ADDOPTS", "")
             if len(env_addopts):
-                args[:] = (
-                    self._validate_args(shlex.split(env_addopts), "via PYTEST_ADDOPTS")
-                    + args
-                )
+                env_addopts = shlex.split(env_addopts)
+                args[:] = self._validate_args(env_addopts, "via PYTEST_ADDOPTS") + args
+                self._implicit_args.append(("PYTEST_ADDOPTS", env_addopts))
         self._initini(args)
         if addopts:
-            args[:] = (
-                self._validate_args(self.getini("addopts"), "via addopts config") + args
-            )
+            ini_addopts = self.getini("addopts")
+            if ini_addopts:
+                args[:] = self._validate_args(ini_addopts, "via addopts config") + args
+                self._implicit_args.insert(0, ("addopts config", ini_addopts))
 
         self._checkversion()
         self._consider_importhook(args)
