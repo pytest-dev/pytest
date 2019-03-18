@@ -1155,7 +1155,7 @@ class Testdir(object):
         args = self._getpytestargs() + args
         return self.run(*args, timeout=kwargs.get("timeout"))
 
-    def spawn_pytest(self, string, expect_timeout=10.0):
+    def spawn_pytest(self, string, expect_timeout=1.0):
         """Run pytest using pexpect.
 
         This makes sure to use the right pytest and sets up the temporary
