@@ -539,7 +539,10 @@ class FDCaptureBinary(object):
             self.tmpfile_fd = tmpfile.fileno()
 
     def __repr__(self):
-        return "<FDCapture %s oldfd=%s>" % (self.targetfd, self.targetfd_save)
+        return "<FDCapture %s oldfd=%s>" % (
+            self.targetfd,
+            getattr(self, "targetfd_save", None),
+        )
 
     def start(self):
         """ Start capturing on targetfd using memorized tmpfile. """
