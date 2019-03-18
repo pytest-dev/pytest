@@ -566,7 +566,7 @@ class TestCaptureFixture(object):
         result.stdout.fnmatch_lines(
             [
                 "*test_hello*",
-                "*capsysbinary is only supported on python 3*",
+                "*capsysbinary is only supported on Python 3*",
                 "*1 error in*",
             ]
         )
