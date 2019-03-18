@@ -470,9 +470,6 @@ class TestPDB(object):
                 '''
         """
         )
-        # Prevent ~/.pdbrc etc to output anything.
-        monkeypatch.setenv("HOME", str(testdir))
-
         child = testdir.spawn_pytest("--doctest-modules --pdb %s" % p1)
         child.expect("Pdb")
 
