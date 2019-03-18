@@ -970,3 +970,52 @@ def test_quit_with_swallowed_SystemExit(testdir):
     rest = child.read().decode("utf8")
     assert "no tests ran" in rest
     TestPDB.flush(child)
+
+
+@pytest.mark.parametrize("fixture", ("capfd", "capsys"))
+def test_pdb_suspends_fixture_capturing(testdir, fixture):
+    """Using "-s" with pytest should suspend/resume fixture capturing."""
+    p1 = testdir.makepyfile(
+        """
+        def test_inner({fixture}):
+            import sys
+
+            print("out_inner_before")
+            sys.stderr.write("err_inner_before\\n")
+
+            __import__("pdb").set_trace()
+
+            print("out_inner_after")
+            sys.stderr.write("err_inner_after\\n")
+
+            out, err = {fixture}.readouterr()
+            assert out =="out_inner_before\\nout_inner_after\\n"
+            assert err =="err_inner_before\\nerr_inner_after\\n"
+        """.format(
+            fixture=fixture
+        )
+    )
+
+    child = testdir.spawn_pytest(str(p1) + " -s")
+
+    child.expect("Pdb")
+    before = child.before.decode("utf8")
+    assert (
+        "> PDB set_trace (IO-capturing turned off for fixture %s) >" % (fixture)
+        in before
+    )
+
+    # Test that capturing is really suspended.
+    child.sendline("p 40 + 2")
+    child.expect("Pdb")
+    assert "\r\n42\r\n" in child.before.decode("utf8")
+
+    child.sendline("c")
+    rest = child.read().decode("utf8")
+    assert "out_inner" not in rest
+    assert "err_inner" not in rest
+
+    TestPDB.flush(child)
+    assert child.exitstatus == 0
+    assert "= 1 passed in " in rest
+    assert "> PDB continue (IO-capturing resumed for fixture %s) >" % (fixture) in rest
