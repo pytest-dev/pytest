@@ -127,7 +127,7 @@ class TestAssertionRewrite(object):
         result = testdir.runpytest_subprocess()
         assert "warnings" not in "".join(result.outlines)
 
-    def test_name(self):
+    def test_name(self, request):
         def f():
             assert False
 
@@ -147,17 +147,41 @@ class TestAssertionRewrite(object):
         def f():
             assert sys == 42
 
-        assert getmsg(f, {"sys": sys}) == "assert sys == 42"
+        verbose = request.config.getoption("verbose")
+        msg = getmsg(f, {"sys": sys})
+        if verbose > 0:
+            assert msg == (
+                "assert <module 'sys' (built-in)> == 42\n"
+                "  -<module 'sys' (built-in)>\n"
+                "  +42"
+            )
+        else:
+            assert msg == "assert sys == 42"
 
         def f():
-            assert cls == 42  # noqa
+            assert cls == 42  # noqa: F821
 
         class X(object):
             pass
 
-        assert getmsg(f, {"cls": X}) == "assert cls == 42"
+        msg = getmsg(f, {"cls": X}).splitlines()
+        if verbose > 0:
+            if six.PY2:
+                assert msg == [
+                    "assert <class 'test_assertrewrite.X'> == 42",
+                    "  -<class 'test_assertrewrite.X'>",
+                    "  +42",
+                ]
+            else:
+                assert msg == [
+                    "assert <class 'test_...e.<locals>.X'> == 42",
+                    "  -<class 'test_assertrewrite.TestAssertionRewrite.test_name.<locals>.X'>",
+                    "  +42",
+                ]
+        else:
+            assert msg == ["assert cls == 42"]
 
-    def test_dont_rewrite_if_hasattr_fails(self):
+    def test_dont_rewrite_if_hasattr_fails(self, request):
         class Y(object):
             """ A class whos getattr fails, but not with `AttributeError` """
 
@@ -173,10 +197,16 @@ class TestAssertionRewrite(object):
         def f():
             assert cls().foo == 2  # noqa
 
-        message = getmsg(f, {"cls": Y})
-        assert "assert 3 == 2" in message
-        assert "+  where 3 = Y.foo" in message
-        assert "+    where Y = cls()" in message
+        # XXX: looks like the "where" should also be there in verbose mode?!
+        message = getmsg(f, {"cls": Y}).splitlines()
+        if request.config.getoption("verbose") > 0:
+            assert message == ["assert 3 == 2", "  -3", "  +2"]
+        else:
+            assert message == [
+                "assert 3 == 2",
+                " +  where 3 = Y.foo",
+                " +    where Y = cls()",
+            ]
 
     def test_assert_already_has_message(self):
         def f():
@@ -552,15 +582,16 @@ class TestAssertionRewrite(object):
 
         getmsg(f, must_pass=True)
 
-    def test_len(self):
+    def test_len(self, request):
         def f():
             values = list(range(10))
             assert len(values) == 11
 
-        assert getmsg(f).startswith(
-            """assert 10 == 11
- +  where 10 = len(["""
-        )
+        msg = getmsg(f)
+        if request.config.getoption("verbose") > 0:
+            assert msg == "assert 10 == 11\n  -10\n  +11"
+        else:
+            assert msg == "assert 10 == 11\n +  where 10 = len([0, 1, 2, 3, 4, 5, ...])"
 
     def test_custom_reprcompare(self, monkeypatch):
         def my_reprcompare(op, left, right):
@@ -608,7 +639,7 @@ class TestAssertionRewrite(object):
 
         assert getmsg(f).startswith("assert '%test' == 'test'")
 
-    def test_custom_repr(self):
+    def test_custom_repr(self, request):
         def f():
             class Foo(object):
                 a = 1
@@ -619,7 +650,11 @@ class TestAssertionRewrite(object):
             f = Foo()
             assert 0 == f.a
 
-        assert r"where 1 = \n{ \n~ \n}.a" in util._format_lines([getmsg(f)])[0]
+        lines = util._format_lines([getmsg(f)])
+        if request.config.getoption("verbose") > 0:
+            assert lines == ["assert 0 == 1\n  -0\n  +1"]
+        else:
+            assert lines == ["assert 0 == 1\n +  where 1 = \\n{ \\n~ \\n}.a"]
 
     def test_custom_repr_non_ascii(self):
         def f():
