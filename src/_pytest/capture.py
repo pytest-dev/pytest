@@ -706,13 +706,11 @@ def _colorama_workaround():
     first import of colorama while I/O capture is active, colorama will
     fail in various ways.
     """
-
-    if not sys.platform.startswith("win32"):
-        return
-    try:
-        import colorama  # noqa
-    except ImportError:
-        pass
+    if sys.platform.startswith("win32"):
+        try:
+            import colorama  # noqa: F401
+        except ImportError:
+            pass
 
 
 def _readline_workaround():
@@ -733,13 +731,11 @@ def _readline_workaround():
 
     See https://github.com/pytest-dev/pytest/pull/1281
     """
-
-    if not sys.platform.startswith("win32"):
-        return
-    try:
-        import readline  # noqa
-    except ImportError:
-        pass
+    if sys.platform.startswith("win32"):
+        try:
+            import readline  # noqa: F401
+        except ImportError:
+            pass
 
 
 def _py36_windowsconsoleio_workaround(stream):
