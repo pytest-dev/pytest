@@ -576,7 +576,8 @@ class TestPDB(object):
         child.sendline("c")
         child.expect("LEAVING RECURSIVE DEBUGGER")
         assert b"PDB continue" not in child.before
-        assert b"print_from_foo" in child.before
+        # No extra newline.
+        assert child.before.endswith(b"c\r\nprint_from_foo\r\n")
         child.sendline("c")
         child.expect(r"PDB continue \(IO-capturing resumed\)")
         rest = child.read().decode("utf8")

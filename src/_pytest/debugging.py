@@ -146,22 +146,25 @@ class pytestPDB(object):
 
                 def do_continue(self, arg):
                     ret = super(_PdbWrapper, self).do_continue(arg)
-                    if self._pytest_capman:
+                    if cls._recursive_debug == 0:
                         tw = _pytest.config.create_terminal_writer(cls._config)
                         tw.line()
-                        if cls._recursive_debug == 0:
+                        if self._pytest_capman:
                             capturing = self._pytest_capman.is_capturing()
+                        else:
+                            capturing = False
+                        if capturing:
                             if capturing == "global":
                                 tw.sep(">", "PDB continue (IO-capturing resumed)")
-                            elif capturing:
+                            else:
                                 tw.sep(
                                     ">",
                                     "PDB continue (IO-capturing resumed for %s)"
                                     % capturing,
                                 )
-                            else:
-                                tw.sep(">", "PDB continue")
                             self._pytest_capman.resume()
+                        else:
+                            tw.sep(">", "PDB continue")
                     cls._pluginmanager.hook.pytest_leave_pdb(
                         config=cls._config, pdb=self
                     )
