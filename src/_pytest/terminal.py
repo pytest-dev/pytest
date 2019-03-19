@@ -197,6 +197,7 @@ class WarningReport(object):
     message = attr.ib()
     nodeid = attr.ib(default=None)
     fslocation = attr.ib(default=None)
+    count_towards_summary = True
 
     def get_location(self, config):
         """
@@ -383,6 +384,7 @@ class TerminalReporter(object):
             self.write_fspath_result(fsid, "")
 
     def pytest_runtest_logreport(self, report):
+        self._tests_ran = True
         rep = report
         res = self.config.hook.pytest_report_teststatus(report=rep, config=self.config)
         category, letter, word = res
@@ -391,7 +393,6 @@ class TerminalReporter(object):
         else:
             markup = None
         self.stats.setdefault(category, []).append(rep)
-        self._tests_ran = True
         if not letter and not word:
             # probably passed setup/teardown
             return
@@ -724,9 +725,8 @@ class TerminalReporter(object):
         return res + " "
 
     def _getfailureheadline(self, rep):
-        if hasattr(rep, "location"):
-            fspath, lineno, domain = rep.location
-            return domain
+        if rep.head_line:
+            return rep.head_line
         else:
             return "test session"  # XXX?
 
@@ -874,18 +874,23 @@ class TerminalReporter(object):
 
 
 def build_summary_stats_line(stats):
-    keys = ("failed passed skipped deselected xfailed xpassed warnings error").split()
-    unknown_key_seen = False
-    for key in stats.keys():
-        if key not in keys:
-            if key:  # setup/teardown reports have an empty key, ignore them
-                keys.append(key)
-                unknown_key_seen = True
+    known_types = (
+        "failed passed skipped deselected xfailed xpassed warnings error".split()
+    )
+    unknown_type_seen = False
+    for found_type in stats:
+        if found_type not in known_types:
+            if found_type:  # setup/teardown reports have an empty key, ignore them
+                known_types.append(found_type)
+                unknown_type_seen = True
     parts = []
-    for key in keys:
-        val = stats.get(key, None)
-        if val:
-            parts.append("%d %s" % (len(val), key))
+    for key in known_types:
+        reports = stats.get(key, None)
+        if reports:
+            count = sum(
+                1 for rep in reports if getattr(rep, "count_towards_summary", True)
+            )
+            parts.append("%d %s" % (count, key))
 
     if parts:
         line = ", ".join(parts)
@@ -894,14 +899,14 @@ def build_summary_stats_line(stats):
 
     if "failed" in stats or "error" in stats:
         color = "red"
-    elif "warnings" in stats or unknown_key_seen:
+    elif "warnings" in stats or unknown_type_seen:
         color = "yellow"
     elif "passed" in stats:
         color = "green"
     else:
         color = "yellow"
 
-    return (line, color)
+    return line, color
 
 
 def _plugin_nameversions(plugininfo):

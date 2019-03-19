@@ -1,6 +1,8 @@
 import py
 
+from _pytest._code.code import ExceptionInfo
 from _pytest._code.code import TerminalRepr
+from _pytest.outcomes import skip
 
 
 def getslaveinfoline(node):
@@ -20,6 +22,7 @@ def getslaveinfoline(node):
 
 class BaseReport(object):
     when = None
+    location = None
 
     def __init__(self, **kw):
         self.__dict__.update(kw)
@@ -97,6 +100,43 @@ class BaseReport(object):
     def fspath(self):
         return self.nodeid.split("::")[0]
 
+    @property
+    def count_towards_summary(self):
+        """
+        **Experimental**
+
+        Returns True if this report should be counted towards the totals shown at the end of the
+        test session: "1 passed, 1 failure, etc".
+
+        .. note::
+
+            This function is considered **experimental**, so beware that it is subject to changes
+            even in patch releases.
+        """
+        return True
+
+    @property
+    def head_line(self):
+        """
+        **Experimental**
+
+        Returns the head line shown with longrepr output for this report, more commonly during
+        traceback representation during failures::
+
+            ________ Test.foo ________
+
+
+        In the example above, the head_line is "Test.foo".
+
+        .. note::
+
+            This function is considered **experimental**, so beware that it is subject to changes
+            even in patch releases.
+        """
+        if self.location is not None:
+            fspath, lineno, domain = self.location
+            return domain
+
 
 class TestReport(BaseReport):
     """ Basic test report object (also used for setup and teardown calls if
@@ -157,6 +197,49 @@ class TestReport(BaseReport):
             self.nodeid,
             self.when,
             self.outcome,
+        )
+
+    @classmethod
+    def from_item_and_call(cls, item, call):
+        """
+        Factory method to create and fill a TestReport with standard item and call info.
+        """
+        when = call.when
+        duration = call.stop - call.start
+        keywords = {x: 1 for x in item.keywords}
+        excinfo = call.excinfo
+        sections = []
+        if not call.excinfo:
+            outcome = "passed"
+            longrepr = None
+        else:
+            if not isinstance(excinfo, ExceptionInfo):
+                outcome = "failed"
+                longrepr = excinfo
+            elif excinfo.errisinstance(skip.Exception):
+                outcome = "skipped"
+                r = excinfo._getreprcrash()
+                longrepr = (str(r.path), r.lineno, r.message)
+            else:
+                outcome = "failed"
+                if call.when == "call":
+                    longrepr = item.repr_failure(excinfo)
+                else:  # exception in setup or teardown
+                    longrepr = item._repr_failure_py(
+                        excinfo, style=item.config.option.tbstyle
+                    )
+        for rwhen, key, content in item._report_sections:
+            sections.append(("Captured %s %s" % (key, rwhen), content))
+        return cls(
+            item.nodeid,
+            item.location,
+            keywords,
+            outcome,
+            longrepr,
+            when,
+            sections,
+            duration,
+            user_properties=item.user_properties,
         )
 
 
