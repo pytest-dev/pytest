@@ -145,6 +145,7 @@ class CaptureManager(object):
             cap.suspend_capturing(in_=in_)
 
     def suspend(self, in_=False):
+        # Need to undo local capsys-et-al if it exists before disabling global capture.
         self.suspend_fixture(self._current_item)
         self.suspend_global_capture(in_)
 
@@ -186,14 +187,11 @@ class CaptureManager(object):
     @contextlib.contextmanager
     def global_and_fixture_disabled(self):
         """Context manager to temporarily disable global and current fixture capturing."""
-        # Need to undo local capsys-et-al if it exists before disabling global capture.
-        self.suspend_fixture(self._current_item)
-        self.suspend_global_capture(in_=False)
+        self.suspend()
         try:
             yield
         finally:
-            self.resume_global_capture()
-            self.resume_fixture(self._current_item)
+            self.resume()
 
     @contextlib.contextmanager
     def item_capture(self, when, item):
