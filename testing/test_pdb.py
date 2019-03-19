@@ -604,6 +604,57 @@ class TestPDB(object):
         child.expect("1 passed")
         self.flush(child)
 
+    @pytest.mark.parametrize("capture", (True, False))
+    def test_pdb_continue_with_recursive_debug(self, capture, testdir):
+        """Full coverage for do_debug without capturing.
+
+        This is very similar to test_pdb_interaction_continue_recursive, but
+        simpler, and providing more coverage.
+        """
+        p1 = testdir.makepyfile(
+            """
+            def set_trace():
+                __import__('pdb').set_trace()
+
+            def test_1():
+                set_trace()
+        """
+        )
+        if capture:
+            child = testdir.spawn_pytest("%s" % p1)
+        else:
+            child = testdir.spawn_pytest("-s %s" % p1)
+        child.expect("Pdb")
+        before = child.before.decode("utf8")
+        if capture:
+            assert ">>> PDB set_trace (IO-capturing turned off) >>>" in before
+        else:
+            assert ">>> PDB set_trace >>>" in before
+        child.sendline("debug set_trace()")
+        child.expect(r"\(Pdb.*")
+        before = child.before.decode("utf8")
+        assert "\r\nENTERING RECURSIVE DEBUGGER\r\n" in before
+        child.sendline("c")
+        child.expect(r"\(Pdb.*")
+
+        # No continue message with recursive debugging.
+        before = child.before.decode("utf8")
+        assert ">>> PDB continue " not in before
+        # No extra newline.
+        assert before.startswith("c\r\n\r\n--Return--")
+
+        child.sendline("c")
+        child.expect("Pdb")
+        before = child.before.decode("utf8")
+        assert "\r\nLEAVING RECURSIVE DEBUGGER\r\n" in before
+        child.sendline("c")
+        rest = child.read().decode("utf8")
+        if capture:
+            assert "> PDB continue (IO-capturing resumed) >" in rest
+        else:
+            assert "> PDB continue >" in rest
+        assert "1 passed in" in rest
+
     def test_pdb_used_outside_test(self, testdir):
         p1 = testdir.makepyfile(
             """
