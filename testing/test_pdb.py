@@ -604,52 +604,93 @@ class TestPDB(object):
         child.expect("1 passed")
         self.flush(child)
 
-    @pytest.mark.parametrize("capture", (True, False))
-    def test_pdb_continue_with_recursive_debug(self, capture, testdir):
+    @pytest.mark.parametrize("capture_arg", ("", "-s", "-p no:capture"))
+    def test_pdb_continue_with_recursive_debug(self, capture_arg, testdir):
         """Full coverage for do_debug without capturing.
 
-        This is very similar to test_pdb_interaction_continue_recursive, but
-        simpler, and providing more coverage.
+        This is very similar to test_pdb_interaction_continue_recursive in general,
+        but mocks out ``pdb.set_trace`` for providing more coverage.
         """
         p1 = testdir.makepyfile(
             """
+            try:
+                input = raw_input
+            except NameError:
+                pass
+
             def set_trace():
                 __import__('pdb').set_trace()
 
-            def test_1():
+            def test_1(monkeypatch):
+                import _pytest.debugging
+
+                class pytestPDBTest(_pytest.debugging.pytestPDB):
+                    @classmethod
+                    def set_trace(cls, *args, **kwargs):
+                        # Init _PdbWrapper to handle capturing.
+                        _pdb = cls._init_pdb(*args, **kwargs)
+
+                        # Mock out pdb.Pdb.do_continue.
+                        import pdb
+                        pdb.Pdb.do_continue = lambda self, arg: None
+
+                        print("=== SET_TRACE ===")
+                        assert input() == "debug set_trace()"
+
+                        # Simulate _PdbWrapper.do_debug
+                        cls._recursive_debug += 1
+                        print("ENTERING RECURSIVE DEBUGGER")
+                        print("=== SET_TRACE_2 ===")
+
+                        assert input() == "c"
+                        _pdb.do_continue("")
+                        print("=== SET_TRACE_3 ===")
+
+                        # Simulate _PdbWrapper.do_debug
+                        print("LEAVING RECURSIVE DEBUGGER")
+                        cls._recursive_debug -= 1
+
+                        print("=== SET_TRACE_4 ===")
+                        assert input() == "c"
+                        _pdb.do_continue("")
+
+                    def do_continue(self, arg):
+                        print("=== do_continue")
+                        # _PdbWrapper.do_continue("")
+
+                monkeypatch.setattr(_pytest.debugging, "pytestPDB", pytestPDBTest)
+
+                import pdb
+                monkeypatch.setattr(pdb, "set_trace", pytestPDBTest.set_trace)
+
                 set_trace()
         """
         )
-        if capture:
-            child = testdir.spawn_pytest("%s" % p1)
-        else:
-            child = testdir.spawn_pytest("-s %s" % p1)
-        child.expect("Pdb")
+        child = testdir.spawn_pytest("%s %s" % (p1, capture_arg))
+        child.expect("=== SET_TRACE ===")
         before = child.before.decode("utf8")
-        if capture:
+        if not capture_arg:
             assert ">>> PDB set_trace (IO-capturing turned off) >>>" in before
         else:
             assert ">>> PDB set_trace >>>" in before
         child.sendline("debug set_trace()")
-        child.expect(r"\(Pdb.*")
+        child.expect("=== SET_TRACE_2 ===")
         before = child.before.decode("utf8")
         assert "\r\nENTERING RECURSIVE DEBUGGER\r\n" in before
         child.sendline("c")
-        child.expect(r"\(Pdb.*")
+        child.expect("=== SET_TRACE_3 ===")
 
         # No continue message with recursive debugging.
         before = child.before.decode("utf8")
         assert ">>> PDB continue " not in before
-        # No extra newline.
-        assert before.startswith("c\r\n\r\n--Return--")
 
         child.sendline("c")
-        child.expect("Pdb")
+        child.expect("=== SET_TRACE_4 ===")
         before = child.before.decode("utf8")
         assert "\r\nLEAVING RECURSIVE DEBUGGER\r\n" in before
         child.sendline("c")
         rest = child.read().decode("utf8")
-        if capture:
+        if not capture_arg:
             assert "> PDB continue (IO-capturing resumed) >" in rest
         else:
             assert "> PDB continue >" in rest
