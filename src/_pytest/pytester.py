@@ -29,6 +29,7 @@ from _pytest.compat import Sequence
 from _pytest.main import EXIT_INTERRUPTED
 from _pytest.main import EXIT_OK
 from _pytest.main import Session
+from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pathlib import Path
 
 IGNORE_PAM = [  # filenames added when obtaining details about the current user
@@ -469,8 +470,6 @@ class Testdir(object):
         os.environ["PYTEST_DEBUG_TEMPROOT"] = str(self.test_tmproot)
         os.environ.pop("TOX_ENV_DIR", None)  # Ensure that it is not used for caching.
         os.environ.pop("PYTEST_ADDOPTS", None)  # Do not use outer options.
-        os.environ["HOME"] = str(self.tmpdir)  # Do not load user config.
-        os.environ["USERPROFILE"] = os.environ["HOME"]
         self.plugins = []
         self._cwd_snapshot = CwdSnapshot()
         self._sys_path_snapshot = SysPathsSnapshot()
@@ -788,6 +787,12 @@ class Testdir(object):
         """
         finalizers = []
         try:
+            # Do not load user config.
+            monkeypatch = MonkeyPatch()
+            monkeypatch.setenv("HOME", str(self.tmpdir))
+            monkeypatch.setenv("USERPROFILE", str(self.tmpdir))
+            finalizers.append(monkeypatch.undo)
+
             # When running pytest inline any plugins active in the main test
             # process are already imported.  So this disables the warning which
             # will trigger to say they can no longer be rewritten, which is
@@ -1018,6 +1023,9 @@ class Testdir(object):
         env["PYTHONPATH"] = os.pathsep.join(
             filter(None, [os.getcwd(), env.get("PYTHONPATH", "")])
         )
+        # Do not load user config.
+        env["HOME"] = str(self.tmpdir)
+        env["USERPROFILE"] = env["HOME"]
         kw["env"] = env
 
         popen = subprocess.Popen(

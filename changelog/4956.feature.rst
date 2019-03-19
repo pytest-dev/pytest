@@ -1,0 +1,3 @@
+``pytester`` sets ``$HOME`` and ``$USERPROFILE`` to the temporary directory during test runs.
+
+This ensures to not load configuration files from the real user's home directory.
