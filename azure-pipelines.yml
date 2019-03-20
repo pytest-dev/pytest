@@ -55,7 +55,7 @@ jobs:
         PYTEST_COVERAGE: '1'
     maxParallel: 10
 
-  steps: &test_steps
+  steps:
   - task: UsePythonVersion@0
     condition: not(startsWith(variables['python.exe'], 'pypy'))
     inputs:
