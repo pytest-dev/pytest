@@ -102,6 +102,12 @@ class pytestPDB(object):
     _recursive_debug = 0
 
     @classmethod
+    def _is_capturing(cls, capman):
+        if capman:
+            return capman.is_capturing()
+        return False
+
+    @classmethod
     def _init_pdb(cls, *args, **kwargs):
         """ Initialize PDB debugging, dropping any IO capturing. """
         import _pytest.config
@@ -118,10 +124,7 @@ class pytestPDB(object):
                 if header is not None:
                     tw.sep(">", header)
                 else:
-                    if capman:
-                        capturing = capman.is_capturing()
-                    else:
-                        capturing = False
+                    capturing = cls._is_capturing(capman)
                     if capturing:
                         if capturing == "global":
                             tw.sep(">", "PDB set_trace (IO-capturing turned off)")
@@ -149,10 +152,9 @@ class pytestPDB(object):
                     if cls._recursive_debug == 0:
                         tw = _pytest.config.create_terminal_writer(cls._config)
                         tw.line()
-                        if self._pytest_capman:
-                            capturing = self._pytest_capman.is_capturing()
-                        else:
-                            capturing = False
+
+                        capman = self._pytest_capman
+                        capturing = pytestPDB._is_capturing(capman)
                         if capturing:
                             if capturing == "global":
                                 tw.sep(">", "PDB continue (IO-capturing resumed)")
@@ -162,7 +164,7 @@ class pytestPDB(object):
                                     "PDB continue (IO-capturing resumed for %s)"
                                     % capturing,
                                 )
-                            self._pytest_capman.resume()
+                            capman.resume()
                         else:
                             tw.sep(">", "PDB continue")
                     cls._pluginmanager.hook.pytest_leave_pdb(
