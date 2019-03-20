@@ -142,6 +142,31 @@ class TestTerminal(object):
         child.sendeof()
         child.kill(15)
 
+    def test_report_collect_after_half_a_second(self, testdir):
+        """Test for "collecting" being updated after 0.5s"""
+
+        testdir.makepyfile(
+            **{
+                "test1.py": """
+                import _pytest.terminal
+
+                _pytest.terminal.REPORT_COLLECTING_RESOLUTION = 0
+
+                def test_1():
+                    pass
+                    """,
+                "test2.py": "def test_2(): pass",
+            }
+        )
+
+        child = testdir.spawn_pytest("-v test1.py test2.py")
+        child.expect(r"collecting \.\.\.")
+        child.expect(r"collecting 1 item")
+        child.expect(r"collecting 2 items")
+        child.expect(r"collected 2 items")
+        rest = child.read().decode("utf8")
+        assert "2 passed in" in rest
+
     def test_itemreport_subclasses_show_subclassed_file(self, testdir):
         testdir.makepyfile(
             test_p1="""

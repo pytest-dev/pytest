@@ -26,6 +26,8 @@ from _pytest.main import EXIT_OK
 from _pytest.main import EXIT_TESTSFAILED
 from _pytest.main import EXIT_USAGEERROR
 
+REPORT_COLLECTING_RESOLUTION = 0.5
+
 
 class MoreQuietAction(argparse.Action):
     """
@@ -512,7 +514,7 @@ class TerminalReporter(object):
             t = time.time()
             if (
                 self._collect_report_last_write is not None
-                and self._collect_report_last_write > t - 0.5
+                and self._collect_report_last_write > t - REPORT_COLLECTING_RESOLUTION
             ):
                 return
             self._collect_report_last_write = t
