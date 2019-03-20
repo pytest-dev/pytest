@@ -68,7 +68,7 @@ jobs:
     # Specialized factors for py37.
     # Coverage for:
     # - test_sys_breakpoint_interception (via pexpect).
-    - env: TOXENV=py37-pexpect,py37-trial PYTEST_COVERAGE=1
+    - env: TOXENV=py37-pexpect,py37-twisted PYTEST_COVERAGE=1
     - env: TOXENV=py37-pluggymaster-xdist
     - env: TOXENV=py37-freeze
 
@@ -80,7 +80,7 @@ jobs:
     - stage: baseline
     # Coverage for:
     # - _pytest.unittest._handle_skip (via pexpect).
-      env: TOXENV=py27-pexpect,py27-trial PYTEST_COVERAGE=1
+      env: TOXENV=py27-pexpect,py27-twisted PYTEST_COVERAGE=1
       python: '2.7'
     # Use py36 here for faster baseline.
     - env: TOXENV=py36-xdist
