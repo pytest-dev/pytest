@@ -1182,7 +1182,7 @@ def test_help_and_version_after_argument_error(testdir):
 def test_config_does_not_load_blocked_plugin_from_args(testdir):
     """This tests that pytest's config setup handles "-p no:X"."""
     p = testdir.makepyfile("def test(capfd): pass")
-    result = testdir.runpytest(str(p), "-pno:capture", "--tb=native")
+    result = testdir.runpytest(str(p), "-pno:capture")
     result.stdout.fnmatch_lines(["E       fixture 'capfd' not found"])
     assert result.ret == EXIT_TESTSFAILED
 
