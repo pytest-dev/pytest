@@ -140,6 +140,7 @@ default_plugins = (
     "stepwise",
     "warnings",
     "logging",
+    "reports",
 )
 
 

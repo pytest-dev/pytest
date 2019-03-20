@@ -375,6 +375,41 @@ def pytest_runtest_logreport(report):
     the respective phase of executing a test. """
 
 
+@hookspec(firstresult=True)
+def pytest_report_serialize(config, report):
+    """
+    .. warning::
+        This hook is experimental and subject to change between pytest releases, even
+        bug fixes.
+
+        The intent is for this to be used by plugins maintained by the core-devs, such
+        as ``pytest-xdist``, ``pytest-subtests``, and as a replacement for the internal
+        'resultlog' plugin.
+
+        In the future it might become part of the public hook API.
+
+    Serializes the given report object into a data structure suitable for sending
+    over the wire, or converted to JSON.
+    """
+
+
+@hookspec(firstresult=True)
+def pytest_report_unserialize(config, data):
+    """
+    .. warning::
+        This hook is experimental and subject to change between pytest releases, even
+        bug fixes.
+
+        The intent is for this to be used by plugins maintained by the core-devs, such
+        as ``pytest-xdist``, ``pytest-subtests``, and as a replacement for the internal
+        'resultlog' plugin.
+
+        In the future it might become part of the public hook API.
+
+    Restores a report object previously serialized with pytest_report_serialize().;
+    """
+
+
 # -------------------------------------------------------------------------
 # Fixture related hooks
 # -------------------------------------------------------------------------

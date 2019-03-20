@@ -181,3 +181,53 @@ class TestReportSerialization(object):
             assert newrep.skipped == rep.skipped
             if rep.failed:
                 assert newrep.longrepr == str(rep.longrepr)
+
+
+class TestHooks:
+    """Test that the hooks are working correctly for plugins"""
+
+    def test_test_report(self, testdir, pytestconfig):
+        testdir.makepyfile(
+            """
+            import os
+            def test_a(): assert False
+            def test_b(): pass
+        """
+        )
+        reprec = testdir.inline_run()
+        reports = reprec.getreports("pytest_runtest_logreport")
+        assert len(reports) == 6
+        for rep in reports:
+            data = pytestconfig.hook.pytest_report_serialize(
+                config=pytestconfig, report=rep
+            )
+            assert data["_report_type"] == "TestReport"
+            new_rep = pytestconfig.hook.pytest_report_unserialize(
+                config=pytestconfig, data=data
+            )
+            assert new_rep.nodeid == rep.nodeid
+            assert new_rep.when == rep.when
+            assert new_rep.outcome == rep.outcome
+
+    def test_collect_report(self, testdir, pytestconfig):
+        testdir.makepyfile(
+            """
+            import os
+            def test_a(): assert False
+            def test_b(): pass
+        """
+        )
+        reprec = testdir.inline_run()
+        reports = reprec.getreports("pytest_collectreport")
+        assert len(reports) == 2
+        for rep in reports:
+            data = pytestconfig.hook.pytest_report_serialize(
+                config=pytestconfig, report=rep
+            )
+            assert data["_report_type"] == "CollectReport"
+            new_rep = pytestconfig.hook.pytest_report_unserialize(
+                config=pytestconfig, data=data
+            )
+            assert new_rep.nodeid == rep.nodeid
+            assert new_rep.when == "collect"
+            assert new_rep.outcome == rep.outcome
