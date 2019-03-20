@@ -15,6 +15,7 @@ from _pytest.config.findpaths import determine_setup
 from _pytest.config.findpaths import get_common_ancestor
 from _pytest.config.findpaths import getcfg
 from _pytest.main import EXIT_NOTESTSCOLLECTED
+from _pytest.main import EXIT_TESTSFAILED
 from _pytest.main import EXIT_USAGEERROR
 
 
@@ -1175,4 +1176,16 @@ def test_help_and_version_after_argument_error(testdir):
     result.stderr.fnmatch_lines(
         ["*pytest*{}*imported from*".format(pytest.__version__)]
     )
+    assert result.ret == EXIT_USAGEERROR
+
+
+def test_config_does_not_load_blocked_plugin_from_args(testdir):
+    """This tests that pytest's config setup handles "-p no:X"."""
+    p = testdir.makepyfile("def test(capfd): pass")
+    result = testdir.runpytest(str(p), "-pno:capture", "--tb=native")
+    result.stdout.fnmatch_lines(["E       fixture 'capfd' not found"])
+    assert result.ret == EXIT_TESTSFAILED
+
+    result = testdir.runpytest(str(p), "-pno:capture", "-s")
+    result.stderr.fnmatch_lines(["*: error: unrecognized arguments: -s"])
     assert result.ret == EXIT_USAGEERROR

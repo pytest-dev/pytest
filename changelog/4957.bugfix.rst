@@ -1,0 +1,3 @@
+``-p no:plugin`` is handled correctly for default (internal) plugins now, e.g. with ``-p no:capture``.
+
+Previously they were loaded (imported) always, making e.g. the ``capfd`` fixture available.
