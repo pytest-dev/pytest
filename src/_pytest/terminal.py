@@ -246,7 +246,7 @@ class TerminalReporter(object):
     def _determine_show_progress_info(self):
         """Return True if we should display progress information based on the current config"""
         # do not show progress if we are not capturing output (#3038)
-        if self.config.getoption("capture") == "no":
+        if self.config.getoption("capture", "no") == "no":
             return False
         # do not show progress if we are showing fixture setup/teardown
         if self.config.getoption("setupshow"):
@@ -456,8 +456,6 @@ class TerminalReporter(object):
                     self._tw.write(msg + "\n", cyan=True)
 
     def _get_progress_information_message(self):
-        if self.config.getoption("capture") == "no":
-            return ""
         collected = self._session.testscollected
         if self.config.getini("console_output_style") == "count":
             if collected:

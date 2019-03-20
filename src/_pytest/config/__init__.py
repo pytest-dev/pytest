@@ -147,10 +147,15 @@ builtin_plugins = set(default_plugins)
 builtin_plugins.add("pytester")
 
 
-def get_config():
+def get_config(args=None):
     # subsequent calls to main will create a fresh instance
     pluginmanager = PytestPluginManager()
     config = Config(pluginmanager)
+
+    if args is not None:
+        # Handle any "-p no:plugin" args.
+        pluginmanager.consider_preparse(args)
+
     for spec in default_plugins:
         pluginmanager.import_plugin(spec)
     return config
@@ -178,7 +183,7 @@ def _prepareconfig(args=None, plugins=None):
         msg = "`args` parameter expected to be a list or tuple of strings, got: {!r} (type: {})"
         raise TypeError(msg.format(args, type(args)))
 
-    config = get_config()
+    config = get_config(args)
     pluginmanager = config.pluginmanager
     try:
         if plugins:
@@ -713,7 +718,7 @@ class Config(object):
     @classmethod
     def fromdictargs(cls, option_dict, args):
         """ constructor useable for subprocesses. """
-        config = get_config()
+        config = get_config(args)
         config.option.__dict__.update(option_dict)
         config.parse(args, addopts=False)
         for x in config.option.plugins:
