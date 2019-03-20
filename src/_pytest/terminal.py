@@ -456,8 +456,6 @@ class TerminalReporter(object):
                     self._tw.write(msg + "\n", cyan=True)
 
     def _get_progress_information_message(self):
-        if self.config.getoption("capture", "no") == "no":
-            return ""
         collected = self._session.testscollected
         if self.config.getini("console_output_style") == "count":
             if collected:
