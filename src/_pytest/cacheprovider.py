@@ -121,10 +121,12 @@ class Cache(object):
                 cache_dir_exists_already = True
             else:
                 cache_dir_exists_already = self._cachedir.exists()
-            path.parent.mkdir(exist_ok=True, parents=True)
+                path.parent.mkdir(exist_ok=True, parents=True)
         except (IOError, OSError):
             self.warn("could not create cache path {path}", path=path)
             return
+        if not cache_dir_exists_already:
+            self._ensure_supporting_files()
         try:
             f = path.open("wb" if PY2 else "w")
         except (IOError, OSError):
@@ -132,9 +134,6 @@ class Cache(object):
         else:
             with f:
                 json.dump(value, f, indent=2, sort_keys=True)
-
-            if not cache_dir_exists_already:
-                self._ensure_supporting_files()
 
     def _ensure_supporting_files(self):
         """Create supporting files in the cache dir that are not really part of the cache."""
