@@ -11,15 +11,11 @@ variables:
   PYTEST_COVERAGE: '0'
 
 jobs:
-
-- job: 'Test'
+- job: 'Test (with coverage)'
   pool:
     vmImage: "vs2017-win2016"
   strategy:
     matrix:
-      py27:
-        python.version: '2.7'
-        tox.env: 'py27'
       py27-nobyte-lsof-numpy:
         python.version: '2.7'
         tox.env: 'py27-lsof-nobyte-numpy'
@@ -30,10 +26,6 @@ jobs:
         # - numpy
         # - pytester's LsofFdLeakChecker (being skipped)
         PYTEST_COVERAGE: '1'
-      py27-trial:
-        python.version: '2.7'
-        tox.env: 'py27-trial'
-        python.needs_vc: True
       py27-pluggymaster-xdist:
         python.version: '2.7'
         tox.env: 'py27-pluggymaster-xdist'
@@ -42,15 +34,6 @@ jobs:
         #   Also seen with py27-nobyte (using xdist), and py27-xdist.
         #   But no exception with py27-pexpect,py27-trial,py27-numpy.
         PYTEST_COVERAGE: '1'
-      pypy:
-        python.version: 'pypy'
-        tox.env: 'pypy'
-        python.exe: 'pypy'
-      # NOTE: pypy3 fails to install pip currently due to an interal error.
-      # pypy3:
-      #   python.version: 'pypy3'
-      #   tox.env: 'pypy3'
-      #   python.exe: 'pypy3'
       py34-xdist:
         python.version: '3.4'
         tox.env: 'py34-xdist'
@@ -63,9 +46,6 @@ jobs:
         # Coverage for:
         # - test_supports_breakpoint_module_global
         PYTEST_COVERAGE: '1'
-      py36-xdist:
-        python.version: '3.6'
-        tox.env: 'py36-xdist'
       py37:
         python.version: '3.7'
         tox.env: 'py37'
@@ -73,18 +53,9 @@ jobs:
         # - _py36_windowsconsoleio_workaround (with py36+)
         # - test_request_garbage (no xdist)
         PYTEST_COVERAGE: '1'
-      py37-linting/docs/doctesting:
-        python.version: '3.7'
-        tox.env: 'linting,docs,doctesting'
-      py37-trial/numpy:
-        python.version: '3.7'
-        tox.env: 'py37-trial,py37-numpy'
-      py37-pluggymaster-xdist:
-        python.version: '3.7'
-        tox.env: 'py37-pluggymaster-xdist'
     maxParallel: 10
 
-  steps:
+  steps: &test_steps
   - task: UsePythonVersion@0
     condition: not(startsWith(variables['python.exe'], 'pypy'))
     inputs:
@@ -133,3 +104,38 @@ jobs:
       PYTHON: $(python.exe)
       CODECOV_TOKEN: $(CODECOV_TOKEN)
       PYTEST_CODECOV_NAME: $(tox.env)
+
+- job: 'Test (without coverage)'
+  pool:
+    vmImage: "vs2017-win2016"
+    matrix:
+      py27:
+        python.version: '2.7'
+        tox.env: 'py27'
+      py27-trial:
+        python.version: '2.7'
+        tox.env: 'py27-trial'
+        python.needs_vc: True
+      pypy:
+        python.version: 'pypy'
+        tox.env: 'pypy'
+        python.exe: 'pypy'
+      # NOTE: pypy3 fails to install pip currently due to an interal error.
+      # pypy3:
+      #   python.version: 'pypy3'
+      #   tox.env: 'pypy3'
+      #   python.exe: 'pypy3'
+      py36-xdist:
+        python.version: '3.6'
+        tox.env: 'py36-xdist'
+      py37-linting/docs/doctesting:
+        python.version: '3.7'
+        tox.env: 'linting,docs,doctesting'
+      py37-trial/numpy:
+        python.version: '3.7'
+        tox.env: 'py37-trial,py37-numpy'
+      py37-pluggymaster-xdist:
+        python.version: '3.7'
+        tox.env: 'py37-pluggymaster-xdist'
+    steps:
+      <<: *test_steps
