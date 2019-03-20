@@ -35,23 +35,30 @@ jobs:
         - ln -sfn "$(which python3)" /usr/local/bin/python
         - python -V
         - test $(python -c 'import sys; print("%d%d" % sys.version_info[0:2])') = 37
+      if: commit_message !~ /(ci-skip-without-coverage)/ AND type = pull_request
 
     # Full run of latest (major) supported versions, without xdist.
     - env: TOXENV=py27
       python: '2.7'
+      if: commit_message !~ /(ci-skip-without-coverage)/ AND type = pull_request
     - env: TOXENV=py37
       python: '3.7'
+      if: commit_message !~ /(ci-skip-without-coverage)/ AND type = pull_request
 
     # Coverage tracking is slow with pypy, skip it.
     - env: TOXENV=pypy-xdist
       python: 'pypy2.7-6.0'
+      if: commit_message !~ /(ci-skip-without-coverage)/ AND type = pull_request
     - env: TOXENV=pypy3-xdist
       python: 'pypy3.5-6.0'
+      if: commit_message !~ /(ci-skip-without-coverage)/ AND type = pull_request
 
     - env: TOXENV=py34-xdist
       python: '3.4'
+      if: commit_message !~ /(ci-skip-without-coverage)/ AND type = pull_request
     - env: TOXENV=py35-xdist
       python: '3.5'
+      if: commit_message !~ /(ci-skip-without-coverage)/ AND type = pull_request
 
     # Coverage for:
     # - pytester's LsofFdLeakChecker
@@ -62,15 +69,19 @@ jobs:
     # Specialized factors for py27.
     - env: TOXENV=py27-nobyte-numpy-xdist
       python: '2.7'
+      if: commit_message !~ /(ci-skip-without-coverage)/ AND type = pull_request
     - env: TOXENV=py27-pluggymaster-xdist
       python: '2.7'
+      if: commit_message !~ /(ci-skip-without-coverage)/ AND type = pull_request
 
     # Specialized factors for py37.
     # Coverage for:
     # - test_sys_breakpoint_interception (via pexpect).
     - env: TOXENV=py37-pexpect,py37-trial PYTEST_COVERAGE=1
     - env: TOXENV=py37-pluggymaster-xdist
+      if: commit_message !~ /(ci-skip-without-coverage)/ AND type = pull_request
     - env: TOXENV=py37-freeze
+      if: commit_message !~ /(ci-skip-without-coverage)/ AND type = pull_request
 
     # Jobs only run via Travis cron jobs (currently daily).
     - env: TOXENV=py38-xdist
@@ -85,6 +96,7 @@ jobs:
     # Use py36 here for faster baseline.
     - env: TOXENV=py36-xdist
       python: '3.6'
+      if: commit_message !~ /(ci-skip-without-coverage)/ AND type = pull_request
     - env: TOXENV=linting,docs,doctesting PYTEST_COVERAGE=1
       cache:
         directories:
