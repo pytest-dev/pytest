@@ -11,7 +11,7 @@ variables:
   PYTEST_COVERAGE: '0'
 
 jobs:
-- job: 'Test (with coverage)'
+- job: 'test_with_coverage'
   pool:
     vmImage: "vs2017-win2016"
   strategy:
@@ -105,7 +105,7 @@ jobs:
       CODECOV_TOKEN: $(CODECOV_TOKEN)
       PYTEST_CODECOV_NAME: $(tox.env)
 
-- job: 'Test (without coverage)'
+- job: 'test_without_coverage'
   pool:
     vmImage: "vs2017-win2016"
     matrix:
