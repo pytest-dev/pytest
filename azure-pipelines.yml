@@ -137,5 +137,5 @@ jobs:
       py37-pluggymaster-xdist:
         python.version: '3.7'
         tox.env: 'py37-pluggymaster-xdist'
-    steps:
-      <<: *test_steps
+  steps:
+    <<: *test_steps
