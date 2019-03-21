@@ -1,0 +1,3 @@
+The pdb ``quit`` command is handled properly when used after the ``debug`` command with `pdb++`_.
+
+.. _pdb++: https://pypi.org/project/pdbpp/

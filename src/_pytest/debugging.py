@@ -176,8 +176,15 @@ class pytestPDB(object):
                 do_c = do_cont = do_continue
 
                 def set_quit(self):
+                    """Raise Exit outcome when quit command is used in pdb.
+
+                    This is a bit of a hack - it would be better if BdbQuit
+                    could be handled, but this would require to wrap the
+                    whole pytest run, and adjust the report etc.
+                    """
                     super(_PdbWrapper, self).set_quit()
-                    outcomes.exit("Quitting debugger")
+                    if cls._recursive_debug == 0:
+                        outcomes.exit("Quitting debugger")
 
                 def setup(self, f, tb):
                     """Suspend on setup().
