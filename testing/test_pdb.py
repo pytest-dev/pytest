@@ -28,6 +28,17 @@ def runpdb_and_get_report(testdir, source):
     return reports[1]
 
 
+@pytest.fixture(autouse=True)
+def restore_settrace():
+    """(Re)store sys.gettrace after test run.
+
+    This is required to re-enable coverage tracking.
+    """
+    oldtrace = sys.gettrace()
+    yield
+    sys.settrace(oldtrace)
+
+
 @pytest.fixture
 def custom_pdb_calls():
     called = []
