@@ -1,0 +1,9 @@
+New ``pytest_report_serialize`` and ``pytest_report_unserialize`` **experimental** hooks.
+
+These hooks will be used by ``pytest-xdist``, ``pytest-subtests``, and the replacement for
+resultlog to serialize and customize reports.
+
+They are experimental, meaning that their details might change or even be removed
+completely in future patch releases without warning.
+
+Feedback is welcome from plugin authors and users alike.
