@@ -87,9 +87,9 @@ def runtestprotocol(item, log=True, nextitem=None):
     rep = call_and_report(item, "setup", log)
     reports = [rep]
     if rep.passed:
-        if item.config.option.setupshow:
+        if item.config.getoption("setupshow", False):
             show_test_item(item)
-        if not item.config.option.setuponly:
+        if not item.config.getoption("setuponly", False):
             reports.append(call_and_report(item, "call", log))
     reports.append(call_and_report(item, "teardown", log, nextitem=nextitem))
     # after all teardown hooks have been called
@@ -192,7 +192,7 @@ def call_runtest_hook(item, when, **kwds):
     hookname = "pytest_runtest_" + when
     ihook = getattr(item.ihook, hookname)
     reraise = (Exit,)
-    if not item.config.getvalue("usepdb"):
+    if not item.config.getoption("usepdb", False):
         reraise += (KeyboardInterrupt,)
     return CallInfo.from_call(
         lambda: ihook(item=item, **kwds), when=when, reraise=reraise

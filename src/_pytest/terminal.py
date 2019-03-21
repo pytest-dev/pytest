@@ -251,7 +251,7 @@ class TerminalReporter(object):
         if self.config.getoption("capture", "no") == "no":
             return False
         # do not show progress if we are showing fixture setup/teardown
-        if self.config.getoption("setupshow"):
+        if self.config.getoption("setupshow", False):
             return False
         return self.config.getini("console_output_style") in ("progress", "count")
 
