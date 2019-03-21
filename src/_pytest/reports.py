@@ -267,7 +267,7 @@ def _report_unserialization_failure(type_name, report_class, reportdict):
     pprint(reportdict, stream=stream)
     pprint("Please report this bug at %s" % url, stream=stream)
     pprint("-" * 100, stream=stream)
-    assert 0, stream.getvalue()
+    raise RuntimeError(stream.getvalue())
 
 
 class TestReport(BaseReport):

@@ -389,7 +389,7 @@ def pytest_report_serialize(config, report):
         In the future it might become part of the public hook API.
 
     Serializes the given report object into a data structure suitable for sending
-    over the wire, or converted to JSON.
+    over the wire, e.g. converted to JSON.
     """
 
 
@@ -406,7 +406,7 @@ def pytest_report_unserialize(config, data):
 
         In the future it might become part of the public hook API.
 
-    Restores a report object previously serialized with pytest_report_serialize().;
+    Restores a report object previously serialized with pytest_report_serialize().
     """
 
 
