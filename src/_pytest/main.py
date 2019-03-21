@@ -548,7 +548,7 @@ class Session(nodes.FSCollector):
         # Start with a Session root, and delve to argpath item (dir or file)
         # and stack all Packages found on the way.
         # No point in finding packages when collecting doctests
-        if not self.config.option.doctestmodules:
+        if not self.config.getoption("doctestmodules", False):
             pm = self.config.pluginmanager
             for parent in reversed(argpath.parts()):
                 if pm._confcutdir and pm._confcutdir.relto(parent):

@@ -762,7 +762,7 @@ class Config(object):
         by the importhook.
         """
         ns, unknown_args = self._parser.parse_known_and_unknown_args(args)
-        mode = ns.assertmode
+        mode = getattr(ns, "assertmode", "plain")
         if mode == "rewrite":
             try:
                 hook = _pytest.assertion.install_importhook(self)

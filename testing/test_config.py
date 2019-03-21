@@ -15,6 +15,7 @@ from _pytest.config.findpaths import determine_setup
 from _pytest.config.findpaths import get_common_ancestor
 from _pytest.config.findpaths import getcfg
 from _pytest.main import EXIT_NOTESTSCOLLECTED
+from _pytest.main import EXIT_OK
 from _pytest.main import EXIT_TESTSFAILED
 from _pytest.main import EXIT_USAGEERROR
 
@@ -1189,3 +1190,41 @@ def test_config_does_not_load_blocked_plugin_from_args(testdir):
     result = testdir.runpytest(str(p), "-pno:capture", "-s")
     result.stderr.fnmatch_lines(["*: error: unrecognized arguments: -s"])
     assert result.ret == EXIT_USAGEERROR
+
+
+@pytest.mark.parametrize(
+    "plugin",
+    [
+        x
+        for x in _pytest.config.default_plugins
+        if x
+        not in [
+            "fixtures",
+            "helpconfig",  # Provides -p.
+            "main",
+            "mark",
+            "python",
+            "runner",
+            "terminal",  # works in OK case (no output), but not with failures.
+        ]
+    ],
+)
+def test_config_blocked_default_plugins(testdir, plugin):
+    if plugin == "debugging":
+        # https://github.com/pytest-dev/pytest-xdist/pull/422
+        try:
+            import xdist  # noqa: F401
+        except ImportError:
+            pass
+        else:
+            pytest.skip("does not work with xdist currently")
+
+    p = testdir.makepyfile("def test(): pass")
+    result = testdir.runpytest(str(p), "-pno:%s" % plugin)
+    assert result.ret == EXIT_OK
+    result.stdout.fnmatch_lines(["* 1 passed in *"])
+
+    p = testdir.makepyfile("def test(): assert 0")
+    result = testdir.runpytest(str(p), "-pno:%s" % plugin)
+    assert result.ret == EXIT_TESTSFAILED
+    result.stdout.fnmatch_lines(["* 1 failed in *"])
