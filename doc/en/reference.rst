@@ -883,7 +883,7 @@ pytest_mark
 **Tutorial**: :ref:`scoped-marking`
 
 Can be declared at the **global** level in *test modules* to apply one or more :ref:`marks <marks ref>` to all
-test functions and methods. Can be either a single mark or a sequence of marks.
+test functions and methods. Can be either a single mark or a list of marks.
 
 .. code-block:: python
 
@@ -896,7 +896,7 @@ test functions and methods. Can be either a single mark or a sequence of marks.
 
     import pytest
 
-    pytestmark = (pytest.mark.integration, pytest.mark.slow)
+    pytestmark = [pytest.mark.integration, pytest.mark.slow]
 
 PYTEST_DONT_REWRITE (module docstring)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
