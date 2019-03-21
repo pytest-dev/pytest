@@ -275,6 +275,8 @@ class TestReport(BaseReport):
     they fail).
     """
 
+    __test__ = False
+
     def __init__(
         self,
         nodeid,
