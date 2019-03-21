@@ -481,7 +481,10 @@ class PytestPluginManager(PluginManager):
             i += 1
             if isinstance(opt, six.string_types):
                 if opt == "-p":
-                    parg = args[i]
+                    try:
+                        parg = args[i]
+                    except IndexError:
+                        return
                     i += 1
                 elif opt.startswith("-p"):
                     parg = opt[2:]
