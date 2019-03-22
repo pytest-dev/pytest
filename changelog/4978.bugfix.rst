@@ -1,0 +1,1 @@
+``outcomes.Exit`` is not swallowed in ``assertrepr_compare`` anymore.

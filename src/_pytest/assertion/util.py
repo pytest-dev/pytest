@@ -9,6 +9,7 @@ import six
 
 import _pytest._code
 from ..compat import Sequence
+from _pytest import outcomes
 from _pytest._io.saferepr import saferepr
 
 # The _reprcompare attribute on the util module is used by the new assertion
@@ -102,6 +103,38 @@ except NameError:
     basestring = str
 
 
+def issequence(x):
+    return isinstance(x, Sequence) and not isinstance(x, basestring)
+
+
+def istext(x):
+    return isinstance(x, basestring)
+
+
+def isdict(x):
+    return isinstance(x, dict)
+
+
+def isset(x):
+    return isinstance(x, (set, frozenset))
+
+
+def isdatacls(obj):
+    return getattr(obj, "__dataclass_fields__", None) is not None
+
+
+def isattrs(obj):
+    return getattr(obj, "__attrs_attrs__", None) is not None
+
+
+def isiterable(obj):
+    try:
+        iter(obj)
+        return not istext(obj)
+    except TypeError:
+        return False
+
+
 def assertrepr_compare(config, op, left, right):
     """Return specialised explanations for some operators/operands"""
     width = 80 - 15 - len(op) - 2  # 15 chars indentation, 1 space around op
@@ -109,31 +142,6 @@ def assertrepr_compare(config, op, left, right):
     right_repr = saferepr(right, maxsize=width - len(left_repr))
 
     summary = u"%s %s %s" % (ecu(left_repr), op, ecu(right_repr))
-
-    def issequence(x):
-        return isinstance(x, Sequence) and not isinstance(x, basestring)
-
-    def istext(x):
-        return isinstance(x, basestring)
-
-    def isdict(x):
-        return isinstance(x, dict)
-
-    def isset(x):
-        return isinstance(x, (set, frozenset))
-
-    def isdatacls(obj):
-        return getattr(obj, "__dataclass_fields__", None) is not None
-
-    def isattrs(obj):
-        return getattr(obj, "__attrs_attrs__", None) is not None
-
-    def isiterable(obj):
-        try:
-            iter(obj)
-            return not istext(obj)
-        except TypeError:
-            return False
 
     verbose = config.getoption("verbose")
     explanation = None
@@ -162,6 +170,8 @@ def assertrepr_compare(config, op, left, right):
         elif op == "not in":
             if istext(left) and istext(right):
                 explanation = _notin_text(left, right, verbose)
+    except outcomes.Exit:
+        raise
     except Exception:
         explanation = [
             u"(pytest_assertion plugin: representation of details failed.  "
