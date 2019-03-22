@@ -206,6 +206,9 @@ class CaptureManager(object):
             # XXX: flaky coverage
             # https://codecov.io/gh/pytest-dev/pytest/compare/15d608867dfa0fea5de4d9385dd2da8191ec0b8c...7a6bcc363934f4fc8cce4115d24118a72ed35f11/changes
             if err:
+                import sys
+
+                sys.exit(42)
                 assert 0, "flaky: %r" % err
                 rep.sections.append(("Captured stderr", err))
         else:
