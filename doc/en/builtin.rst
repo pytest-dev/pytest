@@ -55,7 +55,7 @@ For information about fixtures, see :ref:`fixtures`. To see a complete list of a
         Example::
 
             def test_foo(pytestconfig):
-                if pytestconfig.getoption("verbose"):
+                if pytestconfig.getoption("verbose") > 0:
                     ...
     record_property
         Add an extra properties the calling test.

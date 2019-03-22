@@ -1065,7 +1065,7 @@ def pytestconfig(request):
     Example::
 
         def test_foo(pytestconfig):
-            if pytestconfig.getoption("verbose"):
+            if pytestconfig.getoption("verbose") > 0:
                 ...
 
     """
