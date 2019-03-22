@@ -1,1 +1,1 @@
-``monkeypatch.syspath_prepend`` calls ``pkg_resources.fixup_namespace_packages`` to handle namespace packages better.
+Namespace packages are handled better with ``monkeypatch.syspath_prepend`` and ``testdir.syspathinsert`` (via ``pkg_resources.fixup_namespace_packages``).

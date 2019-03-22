@@ -593,11 +593,16 @@ class Testdir(object):
 
         This is undone automatically when this object dies at the end of each
         test.
-
         """
+        from pkg_resources import fixup_namespace_packages
+
         if path is None:
             path = self.tmpdir
-        sys.path.insert(0, str(path))
+
+        dirname = str(path)
+        sys.path.insert(0, dirname)
+        fixup_namespace_packages(dirname)
+
         # a call to syspathinsert() usually means that the caller wants to
         # import some dynamically created files, thus with python3 we
         # invalidate its import caches
