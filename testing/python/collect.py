@@ -34,8 +34,6 @@ class TestModule(object):
         )
 
     def test_import_prepend_append(self, testdir, monkeypatch):
-        syspath = list(sys.path)
-        monkeypatch.setattr(sys, "path", syspath)
         root1 = testdir.mkdir("root1")
         root2 = testdir.mkdir("root2")
         root1.ensure("x456.py")
