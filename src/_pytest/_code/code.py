@@ -413,6 +413,7 @@ class ExceptionInfo(object):
                          to the exception message/``__str__()``
         """
         tup = sys.exc_info()
+        assert tup[0] is not None, "no current exception"
         _striptext = ""
         if exprinfo is None and isinstance(tup[1], AssertionError):
             exprinfo = getattr(tup[1], "msg", None)

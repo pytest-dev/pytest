@@ -172,6 +172,10 @@ class TestExceptionInfo(object):
             exci = _pytest._code.ExceptionInfo.from_current()
         assert exci.getrepr()
 
+    def test_from_current_with_missing(self):
+        with pytest.raises(AssertionError, match="no current exception"):
+            _pytest._code.ExceptionInfo.from_current()
+
 
 class TestTracebackEntry(object):
     def test_getsource(self):
