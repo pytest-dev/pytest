@@ -208,8 +208,8 @@ class CaptureManager(object):
             if err:
                 import sys
 
+                sys.stderr.write("got you: %r" % err)
                 sys.exit(42)
-                assert 0, "flaky: %r" % err
                 rep.sections.append(("Captured stderr", err))
         else:
             yield
