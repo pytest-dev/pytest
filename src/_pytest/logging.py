@@ -579,7 +579,7 @@ class LoggingPlugin(object):
             if self.log_file_handler is not None:
                 with catching_logs(self.log_file_handler, level=self.log_file_level):
                     yield
-                self.log_file_handler.close()
+                self.log_file_handler = None  # avoid ResourceWarning
             else:
                 yield
 
