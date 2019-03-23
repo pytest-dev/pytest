@@ -325,7 +325,14 @@ class Collector(Node):
         if excinfo.errisinstance(self.CollectError):
             exc = excinfo.value
             return str(exc.args[0])
-        return self._repr_failure_py(excinfo, style="short")
+
+        # Respect explicit tbstyle option, but default to "short"
+        # (None._repr_failure_py defaults to "long" without "fulltrace" option).
+        tbstyle = self.config.getoption("tbstyle")
+        if tbstyle == "auto":
+            tbstyle = "short"
+
+        return self._repr_failure_py(excinfo, style=tbstyle)
 
     def _prunetraceback(self, excinfo):
         if hasattr(self, "fspath"):

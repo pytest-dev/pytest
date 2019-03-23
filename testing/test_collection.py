@@ -11,6 +11,7 @@ import py
 
 import pytest
 from _pytest.main import _in_venv
+from _pytest.main import EXIT_INTERRUPTED
 from _pytest.main import EXIT_NOTESTSCOLLECTED
 from _pytest.main import Session
 
@@ -1232,5 +1233,22 @@ def test_collect_sub_with_symlinks(use_pkg, testdir):
             "sub/test_file.py::test_file PASSED*",
             "sub/test_symlink.py::test_file PASSED*",
             "*2 passed in*",
+        ]
+    )
+
+
+def test_collector_respects_tbstyle(testdir):
+    p1 = testdir.makepyfile("assert 0")
+    result = testdir.runpytest(p1, "--tb=native")
+    assert result.ret == EXIT_INTERRUPTED
+    result.stdout.fnmatch_lines(
+        [
+            "*_ ERROR collecting test_collector_respects_tbstyle.py _*",
+            "Traceback (most recent call last):",
+            '  File "*/test_collector_respects_tbstyle.py", line 1, in <module>',
+            "    assert 0",
+            "AssertionError: assert 0",
+            "*! Interrupted: 1 errors during collection !*",
+            "*= 1 error in *",
         ]
     )
