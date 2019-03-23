@@ -640,7 +640,7 @@ def test_pytest_fail_notrace_non_ascii(testdir, str_prefix):
 
 def test_pytest_no_tests_collected_exit_status(testdir):
     result = testdir.runpytest()
-    result.stdout.fnmatch_lines("*collected 0 items*")
+    result.stdout.fnmatch_lines(["*collected 0 items*"])
     assert result.ret == main.EXIT_NOTESTSCOLLECTED
 
     testdir.makepyfile(
@@ -650,13 +650,13 @@ def test_pytest_no_tests_collected_exit_status(testdir):
     """
     )
     result = testdir.runpytest()
-    result.stdout.fnmatch_lines("*collected 1 item*")
-    result.stdout.fnmatch_lines("*1 passed*")
+    result.stdout.fnmatch_lines(["*collected 1 item*"])
+    result.stdout.fnmatch_lines(["*1 passed*"])
     assert result.ret == main.EXIT_OK
 
     result = testdir.runpytest("-k nonmatch")
-    result.stdout.fnmatch_lines("*collected 1 item*")
-    result.stdout.fnmatch_lines("*1 deselected*")
+    result.stdout.fnmatch_lines(["*collected 1 item*"])
+    result.stdout.fnmatch_lines(["*1 deselected*"])
     assert result.ret == main.EXIT_NOTESTSCOLLECTED
 
 

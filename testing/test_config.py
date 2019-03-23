@@ -805,7 +805,7 @@ def test_collect_pytest_prefix_bug_integration(testdir):
     """Integration test for issue #3775"""
     p = testdir.copy_example("config/collect_pytest_prefix")
     result = testdir.runpytest(p)
-    result.stdout.fnmatch_lines("* 1 passed *")
+    result.stdout.fnmatch_lines(["* 1 passed *"])
 
 
 def test_collect_pytest_prefix_bug(pytestconfig):

@@ -968,7 +968,7 @@ class TestDoctestAutoUseFixtures(object):
         """
         )
         result = testdir.runpytest("--doctest-modules")
-        result.stdout.fnmatch_lines("*2 passed*")
+        result.stdout.fnmatch_lines(["*2 passed*"])
 
     @pytest.mark.parametrize("scope", SCOPES)
     @pytest.mark.parametrize("enable_doctest", [True, False])

@@ -560,7 +560,7 @@ class TestFunction(object):
         """
         )
         result = testdir.runpytest()
-        result.stdout.fnmatch_lines("* 2 passed, 1 skipped in *")
+        result.stdout.fnmatch_lines(["* 2 passed, 1 skipped in *"])
 
     def test_parametrize_skip(self, testdir):
         testdir.makepyfile(
@@ -575,7 +575,7 @@ class TestFunction(object):
         """
         )
         result = testdir.runpytest()
-        result.stdout.fnmatch_lines("* 2 passed, 1 skipped in *")
+        result.stdout.fnmatch_lines(["* 2 passed, 1 skipped in *"])
 
     def test_parametrize_skipif_no_skip(self, testdir):
         testdir.makepyfile(
@@ -590,7 +590,7 @@ class TestFunction(object):
         """
         )
         result = testdir.runpytest()
-        result.stdout.fnmatch_lines("* 1 failed, 2 passed in *")
+        result.stdout.fnmatch_lines(["* 1 failed, 2 passed in *"])
 
     def test_parametrize_xfail(self, testdir):
         testdir.makepyfile(
@@ -605,7 +605,7 @@ class TestFunction(object):
         """
         )
         result = testdir.runpytest()
-        result.stdout.fnmatch_lines("* 2 passed, 1 xfailed in *")
+        result.stdout.fnmatch_lines(["* 2 passed, 1 xfailed in *"])
 
     def test_parametrize_passed(self, testdir):
         testdir.makepyfile(
@@ -620,7 +620,7 @@ class TestFunction(object):
         """
         )
         result = testdir.runpytest()
-        result.stdout.fnmatch_lines("* 2 passed, 1 xpassed in *")
+        result.stdout.fnmatch_lines(["* 2 passed, 1 xpassed in *"])
 
     def test_parametrize_xfail_passed(self, testdir):
         testdir.makepyfile(
@@ -635,7 +635,7 @@ class TestFunction(object):
         """
         )
         result = testdir.runpytest()
-        result.stdout.fnmatch_lines("* 3 passed in *")
+        result.stdout.fnmatch_lines(["* 3 passed in *"])
 
     def test_function_original_name(self, testdir):
         items = testdir.getitems(
@@ -833,7 +833,7 @@ class TestConftestCustomization(object):
         )
         # Use runpytest_subprocess, since we're futzing with sys.meta_path.
         result = testdir.runpytest_subprocess()
-        result.stdout.fnmatch_lines("*1 passed*")
+        result.stdout.fnmatch_lines(["*1 passed*"])
 
 
 def test_setup_only_available_in_subdir(testdir):
@@ -1298,14 +1298,14 @@ def test_keep_duplicates(testdir):
 def test_package_collection_infinite_recursion(testdir):
     testdir.copy_example("collect/package_infinite_recursion")
     result = testdir.runpytest()
-    result.stdout.fnmatch_lines("*1 passed*")
+    result.stdout.fnmatch_lines(["*1 passed*"])
 
 
 def test_package_collection_init_given_as_argument(testdir):
     """Regression test for #3749"""
     p = testdir.copy_example("collect/package_init_given_as_arg")
     result = testdir.runpytest(p / "pkg" / "__init__.py")
-    result.stdout.fnmatch_lines("*1 passed*")
+    result.stdout.fnmatch_lines(["*1 passed*"])
 
 
 def test_package_with_modules(testdir):

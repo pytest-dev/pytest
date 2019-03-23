@@ -794,7 +794,7 @@ def test_unittest_setup_interaction(testdir, fix_type, stmt):
         )
     )
     result = testdir.runpytest()
-    result.stdout.fnmatch_lines("*3 passed*")
+    result.stdout.fnmatch_lines(["*3 passed*"])
 
 
 def test_non_unittest_no_setupclass_support(testdir):
@@ -1040,4 +1040,4 @@ def test_setup_inheritance_skipping(testdir, test_name, expected_outcome):
     """Issue #4700"""
     testdir.copy_example("unittest/{}".format(test_name))
     result = testdir.runpytest()
-    result.stdout.fnmatch_lines("* {} in *".format(expected_outcome))
+    result.stdout.fnmatch_lines(["* {} in *".format(expected_outcome)])

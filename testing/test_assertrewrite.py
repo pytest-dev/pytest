@@ -796,7 +796,7 @@ def test_rewritten():
         )
         # needs to be a subprocess because pytester explicitly disables this warning
         result = testdir.runpytest_subprocess()
-        result.stdout.fnmatch_lines("*Module already imported*: _pytest")
+        result.stdout.fnmatch_lines(["*Module already imported*: _pytest"])
 
     def test_rewrite_module_imported_from_conftest(self, testdir):
         testdir.makeconftest(
@@ -1123,7 +1123,7 @@ class TestAssertionRewriteHookDetails(object):
         )
         path.join("data.txt").write("Hey")
         result = testdir.runpytest()
-        result.stdout.fnmatch_lines("*1 passed*")
+        result.stdout.fnmatch_lines(["*1 passed*"])
 
 
 def test_issue731(testdir):
@@ -1154,7 +1154,7 @@ class TestIssue925(object):
         """
         )
         result = testdir.runpytest()
-        result.stdout.fnmatch_lines("*E*assert (False == False) == False")
+        result.stdout.fnmatch_lines(["*E*assert (False == False) == False"])
 
     def test_long_case(self, testdir):
         testdir.makepyfile(
@@ -1164,7 +1164,7 @@ class TestIssue925(object):
         """
         )
         result = testdir.runpytest()
-        result.stdout.fnmatch_lines("*E*assert (False == True) == True")
+        result.stdout.fnmatch_lines(["*E*assert (False == True) == True"])
 
     def test_many_brackets(self, testdir):
         testdir.makepyfile(
@@ -1174,7 +1174,7 @@ class TestIssue925(object):
             """
         )
         result = testdir.runpytest()
-        result.stdout.fnmatch_lines("*E*assert True == ((False == True) == True)")
+        result.stdout.fnmatch_lines(["*E*assert True == ((False == True) == True)"])
 
 
 class TestIssue2121:
@@ -1194,7 +1194,7 @@ class TestIssue2121:
             """
         )
         result = testdir.runpytest()
-        result.stdout.fnmatch_lines("*E*assert (1 + 1) == 3")
+        result.stdout.fnmatch_lines(["*E*assert (1 + 1) == 3"])
 
 
 @pytest.mark.parametrize("offset", [-1, +1])
@@ -1356,4 +1356,4 @@ class TestEarlyRewriteBailout(object):
             }
         )
         result = testdir.runpytest()
-        result.stdout.fnmatch_lines("* 1 passed in *")
+        result.stdout.fnmatch_lines(["* 1 passed in *"])

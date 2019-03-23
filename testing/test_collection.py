@@ -350,10 +350,10 @@ class TestCustomConftests(object):
         p = testdir.makepyfile("def test_hello(): pass")
         result = testdir.runpytest(p)
         assert result.ret == 0
-        result.stdout.fnmatch_lines("*1 passed*")
+        result.stdout.fnmatch_lines(["*1 passed*"])
         result = testdir.runpytest()
         assert result.ret == EXIT_NOTESTSCOLLECTED
-        result.stdout.fnmatch_lines("*collected 0 items*")
+        result.stdout.fnmatch_lines(["*collected 0 items*"])
 
     def test_collectignore_exclude_on_option(self, testdir):
         testdir.makeconftest(
@@ -390,10 +390,10 @@ class TestCustomConftests(object):
         testdir.makepyfile(test_welt="def test_hallo(): pass")
         result = testdir.runpytest()
         assert result.ret == EXIT_NOTESTSCOLLECTED
-        result.stdout.fnmatch_lines("*collected 0 items*")
+        result.stdout.fnmatch_lines(["*collected 0 items*"])
         result = testdir.runpytest("--XX")
         assert result.ret == 0
-        result.stdout.fnmatch_lines("*2 passed*")
+        result.stdout.fnmatch_lines(["*2 passed*"])
 
     def test_pytest_fs_collect_hooks_are_seen(self, testdir):
         testdir.makeconftest(
