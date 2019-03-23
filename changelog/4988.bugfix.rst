@@ -1,0 +1,1 @@
+Close logging's file handler explicitly when the session finishes.
