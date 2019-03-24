@@ -40,6 +40,12 @@ def pytest_addoption(parser):
         dest="capture",
         help="shortcut for --capture=no.",
     )
+    parser.addini(
+        "capture_suspend_on_stdin",
+        "Suspend capturing when stdin is being read from.",
+        type="bool",
+        default=False,
+    )
 
 
 @pytest.hookimpl(hookwrapper=True)
@@ -50,7 +56,8 @@ def pytest_load_initial_conftests(early_config, parser, args):
     _colorama_workaround()
     _readline_workaround()
     pluginmanager = early_config.pluginmanager
-    capman = CaptureManager(ns.capture)
+    suspend_on_stdin = early_config.getini("capture_suspend_on_stdin")
+    capman = CaptureManager(ns.capture, suspend_on_stdin)
     pluginmanager.register(capman, "capturemanager")
 
     # make sure that capturemanager is properly reset at final shutdown
@@ -86,10 +93,11 @@ class CaptureManager(object):
       case special handling is needed to ensure the fixtures take precedence over the global capture.
     """
 
-    def __init__(self, method):
+    def __init__(self, method, suspend_on_stdin=False):
         self._method = method
         self._global_capturing = None
         self._current_item = None
+        self._suspend_on_stdin = suspend_on_stdin
 
     def __repr__(self):
         return "<CaptureManager _method=%r _global_capturing=%r _current_item=%r>" % (
@@ -538,7 +546,9 @@ class FDCaptureBinary(object):
             if targetfd == 0:
                 assert not tmpfile, "cannot set tmpfile with stdin"
                 tmpfile = open(os.devnull, "r")
-                self.syscapture = SysCapture(targetfd, tmpfile=None, multicapture=multicapture)
+                self.syscapture = SysCapture(
+                    targetfd, tmpfile=None, multicapture=multicapture
+                )
             else:
                 if tmpfile is None:
                     f = TemporaryFile()
@@ -623,8 +633,9 @@ class SysCapture(object):
         self.name = name
         if tmpfile is None:
             if name == "stdin":
-                tmpfile = SysStdinCapture(wrapped_capture=self,
-                                          multicapture=multicapture)
+                tmpfile = SysStdinCapture(
+                    wrapped_capture=self, multicapture=multicapture
+                )
             else:
                 tmpfile = CaptureIO()
         self.tmpfile = tmpfile
@@ -666,6 +677,7 @@ class SysCaptureBinary(SysCapture):
 
 class SysStdinCapture(CaptureIO):
     """Wrap CaptureIO to suspend on read."""
+
     def __init__(self, wrapped_capture, multicapture, *args):
         self.wrapped_capture = wrapped_capture
         self.multicapture = multicapture
@@ -676,7 +688,8 @@ class SysStdinCapture(CaptureIO):
 
     def __repr__(self):
         return "<SysStdinCapture wrapped_capture=%r multicapture=%r>" % (
-            self.wrapped_capture, self.multicapture,
+            self.wrapped_capture,
+            self.multicapture,
         )
 
     def _suspend_on_read(self, method, *args):
