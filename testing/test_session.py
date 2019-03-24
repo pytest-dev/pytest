@@ -126,14 +126,14 @@ class SessionTests(object):
         )
         reprec = testdir.inline_run(p)
         passed, skipped, failed = reprec.listoutcomes()
-        assert len(failed) == 1
+        assert (len(passed), len(skipped), len(failed)) == (1, 0, 1)
         out = failed[0].longrepr.reprcrash.message
         assert (
             out.find(
                 """[Exception("Ha Ha fooled you, I'm a broken repr().") raised in repr()]"""
             )
             != -1
-        )  # '
+        )
 
     def test_skip_file_by_conftest(self, testdir):
         testdir.makepyfile(
