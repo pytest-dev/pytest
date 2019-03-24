@@ -1573,18 +1573,29 @@ def test_suspend_on_read_from_stdin(testdir):
         import sys
 
         def test():
-            print("before")
-            assert sys.stdin.read() == "asdf\\n"
-            assert sys.stdin.readline() == "asdf\\n"
-            print("after")
+            print("prompt_1")
+            assert input() == "input_1"
+
+            print("prompt_2")
+            assert sys.stdin.read() == "input_2\\nsecond_line\\n"
+
+            print("prompt_3")
+            assert sys.stdin.readline() == "input_3\\n"
+            print("after_" + "input: OK")
     """
     )
     child = testdir.spawn_pytest("-o capture_suspend_on_stdin=1 %s" % p1)
-    child.expect("before")
-    child.sendline("asdf")
+    child.expect("prompt_1")
+    child.sendline("input_1")
+
+    child.expect("prompt_2")
+    child.sendline("input_2")
+    child.sendline("second_line")
     child.sendeof()
-    child.sendline("asdf")
-    child.sendeof()
-    child.expect("after")
+
+    child.expect("prompt_3")
+    child.sendline("input_3")
+
+    child.expect("after_input: OK")
     rest = child.read().decode("utf8")
     assert "1 passed in" in rest

@@ -729,6 +729,9 @@ class SysStdinCapture(CaptureIO):
     def read(self, *args):
         return self._suspend_on_read("read", *args)
 
+    def readline(self, *args):
+        return self._suspend_on_read("readline", *args)
+
 
 class DontReadFromInput(six.Iterator):
     """Temporary stub class.  Ideally when stdin is accessed, the
