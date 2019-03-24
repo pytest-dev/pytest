@@ -441,6 +441,15 @@ class Session(nodes.FSCollector):
 
         self.config.pluginmanager.register(self, name="session")
 
+    def __repr__(self):
+        return "<%s %s exitstatus=%r testsfailed=%d testscollected=%d>" % (
+            self.__class__.__name__,
+            self.name,
+            getattr(self, "exitstatus", "<UNSET>"),
+            self.testsfailed,
+            self.testscollected,
+        )
+
     def _node_location_to_relpath(self, node_path):
         # bestrelpath is a quite slow function
         return self._bestrelpathcache[node_path]
