@@ -751,6 +751,9 @@ class SysStdinCapture(CaptureIO):
     def readline(self, *args):
         return self._suspend_on_read("readline", *args)
 
+    def readlines(self, *args):  # Required for py2.
+        return self._suspend_on_read("readlines", *args)
+
     def fileno(self):
         return self._syscapture._old.fileno()
 
