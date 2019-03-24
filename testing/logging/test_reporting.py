@@ -67,15 +67,14 @@ def test_root_logger_affected(testdir):
     result = testdir.runpytest("--log-level=ERROR", "--log-file=pytest.log")
     assert result.ret == 1
 
-    # the capture log calls in the stdout section only contain the
-    # logger.error msg, because --log-level=ERROR
+    # The capture log calls in the stdout section only contain the
+    # logger.error msg, because of --log-level=ERROR.
     result.stdout.fnmatch_lines(["*error text going to logger*"])
-    with pytest.raises(pytest.fail.Exception):
-        result.stdout.fnmatch_lines(["*warning text going to logger*"])
-    with pytest.raises(pytest.fail.Exception):
-        result.stdout.fnmatch_lines(["*info text going to logger*"])
+    stdout = result.stdout.str()
+    assert "warning text going to logger" not in stdout
+    assert "info text going to logger" not in stdout
 
-    # the log file should contain the warning and the error log messages and
+    # The log file should contain the warning and the error log messages and
     # not the info one, because the default level of the root logger is
     # WARNING.
     assert os.path.isfile(log_file)
