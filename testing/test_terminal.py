@@ -660,7 +660,6 @@ class TestTerminalFunctional(object):
         )
 
     def test_verbose_reporting(self, verbose_testfile, testdir, pytestconfig):
-
         result = testdir.runpytest(
             verbose_testfile, "-v", "-Walways::pytest.PytestWarning"
         )

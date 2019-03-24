@@ -54,6 +54,7 @@ def test_root_logger_affected(testdir):
         """
         import logging
         logger = logging.getLogger()
+
         def test_foo():
             logger.info('info text ' + 'going to logger')
             logger.warning('warning text ' + 'going to logger')
