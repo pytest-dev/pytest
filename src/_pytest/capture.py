@@ -712,25 +712,33 @@ class SysStdinCapture(CaptureIO):
     def __repr__(self):
         return "<SysStdinCapture multicapture=%r>" % (self.multicapture,)
 
+    @property
+    def _syscapture(self):
+        try:
+            return self.multicapture.in_.syscapture
+        except AttributeError:
+            return self.multicapture.in_
+
     def _suspend_on_read(self, method, *args):
         # TODO: would be nice to have this in the original order!
         self.multicapture.pop_outerr_to_orig()
         self.multicapture.suspend_capturing(in_=True)
 
-        try:
-            syscapture = self.multicapture.in_.syscapture
-        except AttributeError:
-            syscapture = self.multicapture.in_
-
-        f = getattr(syscapture._old, method)
+        f = getattr(self._syscapture._old, method)
         r = f(*args)
         return r
+
+    def isatty(self):
+        return self._syscapture._old.isatty()
 
     def read(self, *args):
         return self._suspend_on_read("read", *args)
 
     def readline(self, *args):
         return self._suspend_on_read("readline", *args)
+
+    def fileno(self):
+        return self._syscapture._old.fileno()
 
 
 class DontReadFromInput(six.Iterator):

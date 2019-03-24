@@ -1581,7 +1581,13 @@ def test_suspend_on_read_from_stdin(testdir):
 
             print("prompt_3")
             assert sys.stdin.readline() == "input_3\\n"
+
+            print("prompt_4")
+            assert sys.stdin.readlines() == ["input_4\\n", "second_line\\n"]
+
             print("after_" + "input: OK")
+
+            print("is_atty: %d" % sys.stdin.isatty())
     """
     )
     child = testdir.spawn_pytest("-o capture_suspend_on_stdin=1 %s" % p1)
@@ -1596,6 +1602,52 @@ def test_suspend_on_read_from_stdin(testdir):
     child.expect("prompt_3")
     child.sendline("input_3")
 
+    child.expect("prompt_4")
+    child.sendline("input_4")
+    child.sendline("second_line")
+    child.sendeof()
+
     child.expect("after_input: OK")
     rest = child.read().decode("utf8")
+    assert "is_atty: 1" in rest
     assert "1 passed in" in rest
+
+
+@pytest.mark.parametrize("method", ("fd", "sys"))
+def test_sysstdincapture(method, testdir):
+    p1 = testdir.makepyfile(
+        """
+        import pytest
+        from _pytest.capture import CaptureManager, MultiCapture, SysStdinCapture
+
+        def test_inner():
+            method = {method!r}
+
+            capman = CaptureManager(method, suspend_on_stdin=True)
+            multicapture = capman._getcapture(method)
+            in_ = multicapture.in_
+            if method == "sys":
+                f = in_.tmpfile
+            else:
+                f = in_.syscapture.tmpfile
+            assert isinstance(f, SysStdinCapture)
+
+            assert not f.isatty()
+
+            assert f.read() == ""
+            assert f.readlines() == []
+            iter_f = iter(f)
+            with pytest.raises(StopIteration):
+                next(iter_f)
+
+            assert f.fileno() == 0
+            f.close()
+        """.format(
+            method=method
+        )
+    )
+    result = testdir.runpytest_subprocess(
+        str(p1), "-s"  # Pass through stdin, we're not testing resuming here.
+    )
+    assert result.ret == 0
+    assert "1 passed in" in result.stdout.str()
