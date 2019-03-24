@@ -1163,7 +1163,7 @@ def _find_parametrized_scope(argnames, arg2fixturedefs, indirect):
     return "function"
 
 
-def _disable_escaping(val, config=None):
+def _ascii_escaped_by_config(val, config):
     if config is None:
         escape_option = False
     else:
@@ -1194,7 +1194,7 @@ def _idval(val, argname, idx, idfn, item, config):
             return hook_id
 
     if isinstance(val, STRING_TYPES):
-        return _disable_escaping(val)
+        return _ascii_escaped_by_config(val, config)
     elif isinstance(val, (float, int, bool, NoneType)):
         return str(val)
     elif isinstance(val, REGEX_TYPE):
