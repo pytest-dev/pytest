@@ -108,9 +108,32 @@ class CaptureManager(object):
 
     def _getcapture(self, method):
         if method == "fd":
-            return MultiCapture(out=True, err=True, Capture=FDCapture)
+            if self._suspend_on_stdin:
+
+                def in_(fd, multicapture):
+                    assert fd == 0, fd
+                    syscapture = SysCapture(
+                        fd, tmpfile=SysStdinCapture(multicapture=multicapture)
+                    )
+                    return FDCapture(0, stdin_syscapture=syscapture)
+
+            else:
+                in_ = True
+            return MultiCapture(out=True, err=True, in_=in_, Capture=FDCapture)
+
         elif method == "sys":
-            return MultiCapture(out=True, err=True, Capture=SysCapture)
+            if self._suspend_on_stdin:
+
+                def in_(fd, multicapture):
+                    assert fd == 0, fd
+                    return SysCapture(
+                        fd, tmpfile=SysStdinCapture(multicapture=multicapture)
+                    )
+
+            else:
+                in_ = True
+            return MultiCapture(out=True, err=True, in_=in_, Capture=SysCapture)
+
         elif method == "no":
             return MultiCapture(out=False, err=False, in_=False)
         raise ValueError("unknown capturing method: %r" % method)  # pragma: no cover
@@ -458,7 +481,10 @@ class MultiCapture(object):
 
     def __init__(self, out=True, err=True, in_=True, Capture=None):
         if in_:
-            self.in_ = Capture(0, multicapture=self)
+            if in_ is True:
+                self.in_ = Capture(0)
+            else:
+                self.in_ = in_(0, multicapture=self)
         if out:
             self.out = Capture(1)
         if err:
@@ -535,7 +561,7 @@ class FDCaptureBinary(object):
 
     EMPTY_BUFFER = b""
 
-    def __init__(self, targetfd, tmpfile=None, multicapture=None):
+    def __init__(self, targetfd, tmpfile=None, stdin_syscapture=None):
         self.targetfd = targetfd
         try:
             self.targetfd_save = os.dup(self.targetfd)
@@ -546,9 +572,10 @@ class FDCaptureBinary(object):
             if targetfd == 0:
                 assert not tmpfile, "cannot set tmpfile with stdin"
                 tmpfile = open(os.devnull, "r")
-                self.syscapture = SysCapture(
-                    targetfd, tmpfile=None, multicapture=multicapture
-                )
+                if stdin_syscapture is None:
+                    self.syscapture = SysCapture(targetfd)
+                else:
+                    self.syscapture = stdin_syscapture
             else:
                 if tmpfile is None:
                     f = TemporaryFile()
@@ -627,15 +654,13 @@ class SysCapture(object):
 
     EMPTY_BUFFER = str()
 
-    def __init__(self, fd, tmpfile=None, multicapture=None):
+    def __init__(self, fd, tmpfile=None):
         name = patchsysdict[fd]
         self._old = getattr(sys, name)
         self.name = name
         if tmpfile is None:
             if name == "stdin":
-                tmpfile = SysStdinCapture(
-                    wrapped_capture=self, multicapture=multicapture
-                )
+                tmpfile = DontReadFromInput()
             else:
                 tmpfile = CaptureIO()
         self.tmpfile = tmpfile
@@ -678,22 +703,17 @@ class SysCaptureBinary(SysCapture):
 class SysStdinCapture(CaptureIO):
     """Wrap CaptureIO to suspend on read."""
 
-    def __init__(self, wrapped_capture, multicapture, *args):
-        self.wrapped_capture = wrapped_capture
+    def __init__(self, multicapture, *args):
         self.multicapture = multicapture
-        assert isinstance(wrapped_capture, SysCapture)
         assert isinstance(multicapture, MultiCapture), multicapture
 
         super(SysStdinCapture, self).__init__(*args)
 
     def __repr__(self):
-        return "<SysStdinCapture wrapped_capture=%r multicapture=%r>" % (
-            self.wrapped_capture,
-            self.multicapture,
-        )
+        return "<SysStdinCapture multicapture=%r>" % (self.multicapture,)
 
     def _suspend_on_read(self, method, *args):
-        # TODO: would be nice to have this in the same order!
+        # TODO: would be nice to have this in the original order!
         self.multicapture.pop_outerr_to_orig()
         self.multicapture.suspend_capturing(in_=True)
 

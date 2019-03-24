@@ -1579,7 +1579,7 @@ def test_suspend_on_read_from_stdin(testdir):
             print("after")
     """
     )
-    child = testdir.spawn_pytest("%s" % p1)
+    child = testdir.spawn_pytest("-o capture_suspend_on_stdin=1 %s" % p1)
     child.expect("before")
     child.sendline("asdf")
     child.sendeof()
