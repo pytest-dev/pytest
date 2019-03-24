@@ -635,7 +635,6 @@ def test_log_cli_auto_enable(testdir, request, cli_args):
     """
     testdir.makepyfile(
         """
-        import pytest
         import logging
 
         def test_log_1():
@@ -653,6 +652,7 @@ def test_log_cli_auto_enable(testdir, request, cli_args):
     )
 
     result = testdir.runpytest(cli_args)
+    stdout = result.stdout.str()
     if cli_args == "--log-cli-level=WARNING":
         result.stdout.fnmatch_lines(
             [
@@ -663,13 +663,13 @@ def test_log_cli_auto_enable(testdir, request, cli_args):
                 "=* 1 passed in *=",
             ]
         )
-        assert "INFO" not in result.stdout.str()
+        assert "INFO" not in stdout
     else:
         result.stdout.fnmatch_lines(
             ["*test_log_cli_auto_enable*100%*", "=* 1 passed in *="]
         )
-        assert "INFO" not in result.stdout.str()
-        assert "WARNING" not in result.stdout.str()
+        assert "INFO" not in stdout
+        assert "WARNING" not in stdout
 
 
 def test_log_file_cli(testdir):
