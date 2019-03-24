@@ -720,8 +720,22 @@ class SysStdinCapture(CaptureIO):
             return self.multicapture.in_
 
     def _suspend_on_read(self, method, *args):
-        # TODO: would be nice to have this in the original order!
-        self.multicapture.pop_outerr_to_orig()
+        # TODO: would be nice to have this in the original order, not split
+        # by stdout/stderr.  Let's have stderr first at least, given that
+        # prompts go to stdout usually.
+
+        # self.multicapture.pop_outerr_to_orig()
+        self.multicapture.out.writeorg(
+            "=== Suspending capturing due to stdin being read ===\n"
+        )
+        out, err = self.multicapture.readouterr()
+        if err:
+            # NOTE: this writes to stderr.  Not sure about this.
+            self.multicapture.err.writeorg("=== stderr ===\n")
+            self.multicapture.err.writeorg(err)
+        if out:
+            self.multicapture.out.writeorg("=== stdout ===\n")
+            self.multicapture.out.writeorg(out)
         self.multicapture.suspend_capturing(in_=True)
 
         f = getattr(self._syscapture._old, method)
