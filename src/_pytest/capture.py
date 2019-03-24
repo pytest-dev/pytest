@@ -450,7 +450,7 @@ class MultiCapture(object):
 
     def __init__(self, out=True, err=True, in_=True, Capture=None):
         if in_:
-            self.in_ = Capture(0)
+            self.in_ = Capture(0, multicapture=self)
         if out:
             self.out = Capture(1)
         if err:
@@ -527,7 +527,7 @@ class FDCaptureBinary(object):
 
     EMPTY_BUFFER = b""
 
-    def __init__(self, targetfd, tmpfile=None):
+    def __init__(self, targetfd, tmpfile=None, multicapture=None):
         self.targetfd = targetfd
         try:
             self.targetfd_save = os.dup(self.targetfd)
@@ -538,7 +538,7 @@ class FDCaptureBinary(object):
             if targetfd == 0:
                 assert not tmpfile, "cannot set tmpfile with stdin"
                 tmpfile = open(os.devnull, "r")
-                self.syscapture = SysCapture(targetfd)
+                self.syscapture = SysCapture(targetfd, tmpfile=None, multicapture=multicapture)
             else:
                 if tmpfile is None:
                     f = TemporaryFile()
@@ -617,13 +617,14 @@ class SysCapture(object):
 
     EMPTY_BUFFER = str()
 
-    def __init__(self, fd, tmpfile=None):
+    def __init__(self, fd, tmpfile=None, multicapture=None):
         name = patchsysdict[fd]
         self._old = getattr(sys, name)
         self.name = name
         if tmpfile is None:
             if name == "stdin":
-                tmpfile = DontReadFromInput()
+                tmpfile = SysStdinCapture(wrapped_capture=self,
+                                          multicapture=multicapture)
             else:
                 tmpfile = CaptureIO()
         self.tmpfile = tmpfile
@@ -661,6 +662,39 @@ class SysCaptureBinary(SysCapture):
         self.tmpfile.seek(0)
         self.tmpfile.truncate()
         return res
+
+
+class SysStdinCapture(CaptureIO):
+    """Wrap CaptureIO to suspend on read."""
+    def __init__(self, wrapped_capture, multicapture, *args):
+        self.wrapped_capture = wrapped_capture
+        self.multicapture = multicapture
+        assert isinstance(wrapped_capture, SysCapture)
+        assert isinstance(multicapture, MultiCapture), multicapture
+
+        super(SysStdinCapture, self).__init__(*args)
+
+    def __repr__(self):
+        return "<SysStdinCapture wrapped_capture=%r multicapture=%r>" % (
+            self.wrapped_capture, self.multicapture,
+        )
+
+    def _suspend_on_read(self, method, *args):
+        # TODO: would be nice to have this in the same order!
+        self.multicapture.pop_outerr_to_orig()
+        self.multicapture.suspend_capturing(in_=True)
+
+        try:
+            syscapture = self.multicapture.in_.syscapture
+        except AttributeError:
+            syscapture = self.multicapture.in_
+
+        f = getattr(syscapture._old, method)
+        r = f(*args)
+        return r
+
+    def read(self, *args):
+        return self._suspend_on_read("read", *args)
 
 
 class DontReadFromInput(six.Iterator):

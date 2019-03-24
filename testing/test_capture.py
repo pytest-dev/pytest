@@ -1565,3 +1565,26 @@ def test_typeerror_encodedfile_write(testdir):
         )
     else:
         assert result_with_capture.ret == 0
+
+
+def test_suspend_on_read_from_stdin(testdir):
+    p1 = testdir.makepyfile(
+        """
+        import sys
+
+        def test():
+            print("before")
+            assert sys.stdin.read() == "asdf\\n"
+            assert sys.stdin.readline() == "asdf\\n"
+            print("after")
+    """
+    )
+    child = testdir.spawn_pytest("%s" % p1)
+    child.expect("before")
+    child.sendline("asdf")
+    child.sendeof()
+    child.sendline("asdf")
+    child.sendeof()
+    child.expect("after")
+    rest = child.read().decode("utf8")
+    assert "1 passed in" in rest
