@@ -1103,6 +1103,7 @@ class TestFixtureUsages(object):
         values = reprec.getfailedcollections()
         assert len(values) == 1
 
+    @pytest.mark.filterwarnings("ignore::pytest.PytestDeprecationWarning")
     def test_request_can_be_overridden(self, testdir):
         testdir.makepyfile(
             """
