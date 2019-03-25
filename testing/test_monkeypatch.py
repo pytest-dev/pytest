@@ -437,3 +437,28 @@ def test_context():
         m.setattr(functools, "partial", 3)
         assert not inspect.isclass(functools.partial)
     assert inspect.isclass(functools.partial)
+
+
+def test_syspath_prepend_with_namespace_packages(testdir, monkeypatch):
+    for dirname in "hello", "world":
+        d = testdir.mkdir(dirname)
+        ns = d.mkdir("ns_pkg")
+        ns.join("__init__.py").write(
+            "__import__('pkg_resources').declare_namespace(__name__)"
+        )
+        lib = ns.mkdir(dirname)
+        lib.join("__init__.py").write("def check(): return %r" % dirname)
+
+    monkeypatch.syspath_prepend("hello")
+    import ns_pkg.hello
+
+    assert ns_pkg.hello.check() == "hello"
+
+    with pytest.raises(ImportError):
+        import ns_pkg.world
+
+    # Prepending should call fixup_namespace_packages.
+    monkeypatch.syspath_prepend("world")
+    import ns_pkg.world
+
+    assert ns_pkg.world.check() == "world"

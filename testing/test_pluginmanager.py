@@ -4,7 +4,6 @@ from __future__ import division
 from __future__ import print_function
 
 import os
-import re
 import sys
 import types
 
@@ -165,10 +164,10 @@ def test_importplugin_error_message(testdir, pytestpm):
     with pytest.raises(ImportError) as excinfo:
         pytestpm.import_plugin("qwe")
 
-    expected_message = '.*Error importing plugin "qwe": Not possible to import: .'
-    expected_traceback = ".*in test_traceback"
-    assert re.match(expected_message, str(excinfo.value))
-    assert re.match(expected_traceback, str(excinfo.traceback[-1]))
+    assert str(excinfo.value).endswith(
+        'Error importing plugin "qwe": Not possible to import: ☺'
+    )
+    assert "in test_traceback" in str(excinfo.traceback[-1])
 
 
 class TestPytestPluginManager(object):

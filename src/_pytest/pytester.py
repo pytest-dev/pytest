@@ -593,11 +593,16 @@ class Testdir(object):
 
         This is undone automatically when this object dies at the end of each
         test.
-
         """
+        from pkg_resources import fixup_namespace_packages
+
         if path is None:
             path = self.tmpdir
-        sys.path.insert(0, str(path))
+
+        dirname = str(path)
+        sys.path.insert(0, dirname)
+        fixup_namespace_packages(dirname)
+
         # a call to syspathinsert() usually means that the caller wants to
         # import some dynamically created files, thus with python3 we
         # invalidate its import caches
@@ -606,12 +611,10 @@ class Testdir(object):
     def _possibly_invalidate_import_caches(self):
         # invalidate caches if we can (py33 and above)
         try:
-            import importlib
+            from importlib import invalidate_caches
         except ImportError:
-            pass
-        else:
-            if hasattr(importlib, "invalidate_caches"):
-                importlib.invalidate_caches()
+            return
+        invalidate_caches()
 
     def mkdir(self, name):
         """Create a new (sub)directory."""

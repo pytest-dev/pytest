@@ -1335,7 +1335,7 @@ class TestEarlyRewriteBailout(object):
         # Setup conditions for py's fspath trying to import pathlib on py34
         # always (previously triggered via xdist only).
         # Ref: https://github.com/pytest-dev/py/pull/207
-        monkeypatch.setattr(sys, "path", [""] + sys.path)
+        monkeypatch.syspath_prepend("")
         monkeypatch.delitem(sys.modules, "pathlib", raising=False)
 
         testdir.makepyfile(
