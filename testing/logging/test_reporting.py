@@ -747,7 +747,7 @@ def test_log_level_not_changed_by_default(testdir):
     """
     )
     result = testdir.runpytest("-s")
-    result.stdout.fnmatch_lines("* 1 passed in *")
+    result.stdout.fnmatch_lines(["* 1 passed in *"])
 
 
 def test_log_file_ini(testdir):

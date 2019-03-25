@@ -673,7 +673,7 @@ class TestCaptureFixture(object):
             )
         )
         result = testdir.runpytest_subprocess()
-        result.stdout.fnmatch_lines("*1 passed*")
+        result.stdout.fnmatch_lines(["*1 passed*"])
         assert "stdout contents begin" not in result.stdout.str()
         assert "stderr contents begin" not in result.stdout.str()
 

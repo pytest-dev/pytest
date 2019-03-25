@@ -393,7 +393,7 @@ class TestLastFailed(object):
         """
         )
         result = testdir.runpytest()
-        result.stdout.fnmatch_lines("*1 failed in*")
+        result.stdout.fnmatch_lines(["*1 failed in*"])
 
     def test_terminal_report_lastfailed(self, testdir):
         test_a = testdir.makepyfile(
@@ -574,7 +574,7 @@ class TestLastFailed(object):
         """
         )
         result = testdir.runpytest()
-        result.stdout.fnmatch_lines("*1 xfailed*")
+        result.stdout.fnmatch_lines(["*1 xfailed*"])
         assert self.get_cached_last_failed(testdir) == []
 
     def test_xfail_strict_considered_failure(self, testdir):
@@ -587,7 +587,7 @@ class TestLastFailed(object):
         """
         )
         result = testdir.runpytest()
-        result.stdout.fnmatch_lines("*1 failed*")
+        result.stdout.fnmatch_lines(["*1 failed*"])
         assert self.get_cached_last_failed(testdir) == [
             "test_xfail_strict_considered_failure.py::test"
         ]
@@ -680,12 +680,12 @@ class TestLastFailed(object):
         """
         )
         result = testdir.runpytest(test_bar)
-        result.stdout.fnmatch_lines("*2 passed*")
+        result.stdout.fnmatch_lines(["*2 passed*"])
         # ensure cache does not forget that test_foo_4 failed once before
         assert self.get_cached_last_failed(testdir) == ["test_foo.py::test_foo_4"]
 
         result = testdir.runpytest("--last-failed")
-        result.stdout.fnmatch_lines("*1 failed, 3 deselected*")
+        result.stdout.fnmatch_lines(["*1 failed, 3 deselected*"])
         assert self.get_cached_last_failed(testdir) == ["test_foo.py::test_foo_4"]
 
         # 3. fix test_foo_4, run only test_foo.py
@@ -698,11 +698,11 @@ class TestLastFailed(object):
         """
         )
         result = testdir.runpytest(test_foo, "--last-failed")
-        result.stdout.fnmatch_lines("*1 passed, 1 deselected*")
+        result.stdout.fnmatch_lines(["*1 passed, 1 deselected*"])
         assert self.get_cached_last_failed(testdir) == []
 
         result = testdir.runpytest("--last-failed")
-        result.stdout.fnmatch_lines("*4 passed*")
+        result.stdout.fnmatch_lines(["*4 passed*"])
         assert self.get_cached_last_failed(testdir) == []
 
     def test_lastfailed_no_failures_behavior_all_passed(self, testdir):

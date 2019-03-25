@@ -1033,7 +1033,7 @@ def test_pytest_plugins_as_module(testdir):
         }
     )
     result = testdir.runpytest()
-    result.stdout.fnmatch_lines("* 1 passed in *")
+    result.stdout.fnmatch_lines(["* 1 passed in *"])
 
 
 def test_deferred_hook_checking(testdir):
@@ -1173,7 +1173,7 @@ def test_fixture_mock_integration(testdir):
     """Test that decorators applied to fixture are left working (#3774)"""
     p = testdir.copy_example("acceptance/fixture_mock_integration.py")
     result = testdir.runpytest(p)
-    result.stdout.fnmatch_lines("*1 passed*")
+    result.stdout.fnmatch_lines(["*1 passed*"])
 
 
 def test_usage_error_code(testdir):

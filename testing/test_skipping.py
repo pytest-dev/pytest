@@ -331,7 +331,7 @@ class TestXFail(object):
         result = testdir.runpytest(p, "-rx")
         result.stdout.fnmatch_lines(["*XFAIL*test_this*", "*reason:*hello*"])
         result = testdir.runpytest(p, "--runxfail")
-        result.stdout.fnmatch_lines("*1 pass*")
+        result.stdout.fnmatch_lines(["*1 pass*"])
 
     def test_xfail_imperative_in_setup_function(self, testdir):
         p = testdir.makepyfile(
@@ -477,7 +477,7 @@ class TestXFail(object):
             % strict
         )
         result = testdir.runpytest(p, "-rxX")
-        result.stdout.fnmatch_lines("*1 passed*")
+        result.stdout.fnmatch_lines(["*1 passed*"])
         assert result.ret == 0
 
     @pytest.mark.parametrize("strict", [True, False])
@@ -493,7 +493,7 @@ class TestXFail(object):
             % strict
         )
         result = testdir.runpytest(p, "-rxX")
-        result.stdout.fnmatch_lines("*1 passed*")
+        result.stdout.fnmatch_lines(["*1 passed*"])
         assert result.ret == 0
 
     @pytest.mark.parametrize("strict_val", ["true", "false"])
@@ -515,7 +515,7 @@ class TestXFail(object):
         )
         result = testdir.runpytest(p, "-rxX")
         strict = strict_val == "true"
-        result.stdout.fnmatch_lines("*1 failed*" if strict else "*1 xpassed*")
+        result.stdout.fnmatch_lines(["*1 failed*" if strict else "*1 xpassed*"])
         assert result.ret == (1 if strict else 0)
 
 
@@ -1130,7 +1130,9 @@ def test_module_level_skip_error(testdir):
     """
     )
     result = testdir.runpytest()
-    result.stdout.fnmatch_lines("*Using pytest.skip outside of a test is not allowed*")
+    result.stdout.fnmatch_lines(
+        ["*Using pytest.skip outside of a test is not allowed*"]
+    )
 
 
 def test_module_level_skip_with_allow_module_level(testdir):
@@ -1147,7 +1149,7 @@ def test_module_level_skip_with_allow_module_level(testdir):
     """
     )
     result = testdir.runpytest("-rxs")
-    result.stdout.fnmatch_lines("*SKIP*skip_module_level")
+    result.stdout.fnmatch_lines(["*SKIP*skip_module_level"])
 
 
 def test_invalid_skip_keyword_parameter(testdir):
@@ -1164,7 +1166,7 @@ def test_invalid_skip_keyword_parameter(testdir):
     """
     )
     result = testdir.runpytest()
-    result.stdout.fnmatch_lines("*TypeError:*['unknown']*")
+    result.stdout.fnmatch_lines(["*TypeError:*['unknown']*"])
 
 
 def test_mark_xfail_item(testdir):

@@ -16,7 +16,7 @@ from _pytest.warnings import SHOW_PYTEST_WARNINGS_ARG
 def test_tmpdir_fixture(testdir):
     p = testdir.copy_example("tmpdir/tmpdir_fixture.py")
     results = testdir.runpytest(p)
-    results.stdout.fnmatch_lines("*1 passed*")
+    results.stdout.fnmatch_lines(["*1 passed*"])
 
 
 def test_ensuretemp(recwarn):

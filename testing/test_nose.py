@@ -380,4 +380,4 @@ def test_skip_test_with_unicode(testdir):
     """
     )
     result = testdir.runpytest()
-    result.stdout.fnmatch_lines("* 1 skipped *")
+    result.stdout.fnmatch_lines(["* 1 skipped *"])
