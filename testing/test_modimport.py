@@ -30,8 +30,9 @@ def test_fileimport(modfile):
         stderr=subprocess.PIPE,
     )
     (out, err) = p.communicate()
-    if p.returncode != 0:
-        pytest.fail(
-            "importing %s failed (exitcode %d): out=%r, err=%r"
-            % (modfile, p.returncode, out, err)
-        )
+    assert p.returncode == 0, "importing %s failed (exitcode %d): out=%r, err=%r" % (
+        modfile,
+        p.returncode,
+        out,
+        err,
+    )

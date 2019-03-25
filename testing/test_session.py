@@ -68,9 +68,7 @@ class SessionTests(object):
         passed, skipped, failed = reprec.listoutcomes()
         assert len(failed) == 1
         out = failed[0].longrepr.reprcrash.message
-        if not out.find("DID NOT RAISE") != -1:
-            print(out)
-            pytest.fail("incorrect raises() output")
+        assert "DID NOT RAISE" in out
 
     def test_syntax_error_module(self, testdir):
         reprec = testdir.inline_runsource("this is really not python")
@@ -148,7 +146,7 @@ class SessionTests(object):
         )
         try:
             reprec = testdir.inline_run(testdir.tmpdir)
-        except pytest.skip.Exception:
+        except pytest.skip.Exception:  # pragma: no covers
             pytest.fail("wrong skipped caught")
         reports = reprec.getreports("pytest_collectreport")
         assert len(reports) == 1
