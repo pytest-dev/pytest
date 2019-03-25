@@ -11,6 +11,7 @@ from _pytest._code.code import ReprLocals
 from _pytest._code.code import ReprTraceback
 from _pytest._code.code import TerminalRepr
 from _pytest.outcomes import skip
+from _pytest.pathlib import Path
 
 
 def getslaveinfoline(node):
@@ -189,7 +190,7 @@ class BaseReport(object):
         else:
             d["longrepr"] = self.longrepr
         for name in d:
-            if isinstance(d[name], py.path.local):
+            if isinstance(d[name], (py.path.local, Path)):
                 d[name] = str(d[name])
             elif name == "result":
                 d[name] = None  # for now

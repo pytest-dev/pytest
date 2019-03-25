@@ -1,3 +1,4 @@
+from _pytest.pathlib import Path
 from _pytest.reports import CollectReport
 from _pytest.reports import TestReport
 
@@ -11,7 +12,6 @@ class TestReportSerialization(object):
         """
         testdir.makepyfile(
             """
-            import os
             def test_a(): assert False
             def test_b(): pass
         """
@@ -35,8 +35,8 @@ class TestReportSerialization(object):
         """
         reprec = testdir.inline_runsource(
             """
-                    import py
-                    def test_fail(): assert False, 'Expected Message'
+                    def test_fail():
+                        assert False, 'Expected Message'
                 """
         )
         reports = reprec.getreports("pytest_runtest_logreport")
@@ -200,6 +200,24 @@ class TestReportSerialization(object):
             assert newrep.skipped == rep.skipped
             if rep.failed:
                 assert newrep.longrepr == str(rep.longrepr)
+
+    def test_paths_support(self, testdir):
+        """Report attributes which are py.path or pathlib objects should become strings."""
+        testdir.makepyfile(
+            """
+            def test_a():
+                assert False
+        """
+        )
+        reprec = testdir.inline_run()
+        reports = reprec.getreports("pytest_runtest_logreport")
+        assert len(reports) == 3
+        test_a_call = reports[1]
+        test_a_call.path1 = testdir.tmpdir
+        test_a_call.path2 = Path(testdir.tmpdir)
+        data = test_a_call._to_json()
+        assert data["path1"] == str(testdir.tmpdir)
+        assert data["path2"] == str(testdir.tmpdir)
 
 
 class TestHooks:
