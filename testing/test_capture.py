@@ -134,12 +134,22 @@ def test_capturing_bytes_in_utf8_encoding(testdir, method):
 def test_collect_capturing(testdir):
     p = testdir.makepyfile(
         """
+        import sys
+
         print("collect %s failure" % 13)
+        sys.stderr.write("collect %s_stderr failure" % 13)
         import xyz42123
     """
     )
     result = testdir.runpytest(p)
-    result.stdout.fnmatch_lines(["*Captured stdout*", "*collect 13 failure*"])
+    result.stdout.fnmatch_lines(
+        [
+            "*Captured stdout*",
+            "collect 13 failure",
+            "*Captured stderr*",
+            "collect 13_stderr failure",
+        ]
+    )
 
 
 class TestPerTestCapturing(object):
