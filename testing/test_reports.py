@@ -1,3 +1,4 @@
+import pytest
 from _pytest.pathlib import Path
 from _pytest.reports import CollectReport
 from _pytest.reports import TestReport
@@ -218,6 +219,28 @@ class TestReportSerialization(object):
         data = test_a_call._to_json()
         assert data["path1"] == str(testdir.tmpdir)
         assert data["path2"] == str(testdir.tmpdir)
+
+    def test_unserialization_failure(self, testdir):
+        """Check handling of failure during unserialization of report types."""
+        testdir.makepyfile(
+            """
+            def test_a():
+                assert False
+        """
+        )
+        reprec = testdir.inline_run()
+        reports = reprec.getreports("pytest_runtest_logreport")
+        assert len(reports) == 3
+        test_a_call = reports[1]
+        data = test_a_call._to_json()
+        entry = data["longrepr"]["reprtraceback"]["reprentries"][0]
+        assert entry["type"] == "ReprEntry"
+
+        entry["type"] = "Unknown"
+        with pytest.raises(
+            RuntimeError, match="INTERNALERROR: Unknown entry type returned: Unknown"
+        ):
+            TestReport._from_json(data)
 
 
 class TestHooks:

@@ -1,3 +1,5 @@
+from pprint import pprint
+
 import py
 import six
 
@@ -258,8 +260,6 @@ class BaseReport(object):
 
 
 def _report_unserialization_failure(type_name, report_class, reportdict):
-    from pprint import pprint
-
     url = "https://github.com/pytest-dev/pytest/issues"
     stream = py.io.TextIO()
     pprint("-" * 100, stream=stream)
