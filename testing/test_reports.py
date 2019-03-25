@@ -3,11 +3,12 @@ from _pytest.reports import TestReport
 
 
 class TestReportSerialization(object):
-    """
-    All the tests in this class came originally from test_remote.py in xdist (ca03269).
-    """
-
     def test_xdist_longrepr_to_str_issue_241(self, testdir):
+        """
+        Regarding issue pytest-xdist#241
+
+        This test came originally from test_remote.py in xdist (ca03269).
+        """
         testdir.makepyfile(
             """
             import os
@@ -28,6 +29,10 @@ class TestReportSerialization(object):
         assert test_b_call._to_json()["longrepr"] is None
 
     def test_xdist_report_longrepr_reprcrash_130(self, testdir):
+        """Regarding issue pytest-xdist#130
+
+        This test came originally from test_remote.py in xdist (ca03269).
+        """
         reprec = testdir.inline_runsource(
             """
                     import py
@@ -59,6 +64,10 @@ class TestReportSerialization(object):
         assert added_section in a.longrepr.sections
 
     def test_reprentries_serialization_170(self, testdir):
+        """Regarding issue pytest-xdist#170
+
+        This test came originally from test_remote.py in xdist (ca03269).
+        """
         from _pytest._code.code import ReprEntry
 
         reprec = testdir.inline_runsource(
@@ -90,6 +99,10 @@ class TestReportSerialization(object):
             assert rep_entries[i].style == a_entries[i].style
 
     def test_reprentries_serialization_196(self, testdir):
+        """Regarding issue pytest-xdist#196
+
+        This test came originally from test_remote.py in xdist (ca03269).
+        """
         from _pytest._code.code import ReprEntryNative
 
         reprec = testdir.inline_runsource(
@@ -113,6 +126,9 @@ class TestReportSerialization(object):
             assert rep_entries[i].lines == a_entries[i].lines
 
     def test_itemreport_outcomes(self, testdir):
+        """
+        This test came originally from test_remote.py in xdist (ca03269).
+        """
         reprec = testdir.inline_runsource(
             """
             import py
@@ -145,6 +161,7 @@ class TestReportSerialization(object):
                 assert newrep.longreprtext == rep.longreprtext
 
     def test_collectreport_passed(self, testdir):
+        """This test came originally from test_remote.py in xdist (ca03269)."""
         reprec = testdir.inline_runsource("def test_func(): pass")
         reports = reprec.getreports("pytest_collectreport")
         for rep in reports:
@@ -155,6 +172,7 @@ class TestReportSerialization(object):
             assert newrep.skipped == rep.skipped
 
     def test_collectreport_fail(self, testdir):
+        """This test came originally from test_remote.py in xdist (ca03269)."""
         reprec = testdir.inline_runsource("qwe abc")
         reports = reprec.getreports("pytest_collectreport")
         assert reports
@@ -168,6 +186,7 @@ class TestReportSerialization(object):
                 assert newrep.longrepr == str(rep.longrepr)
 
     def test_extended_report_deserialization(self, testdir):
+        """This test came originally from test_remote.py in xdist (ca03269)."""
         reprec = testdir.inline_runsource("qwe abc")
         reports = reprec.getreports("pytest_collectreport")
         assert reports
