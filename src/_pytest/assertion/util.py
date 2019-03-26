@@ -151,7 +151,7 @@ def assertrepr_compare(config, op, left, right):
                 elif type(left) == type(right) and (isdatacls(left) or isattrs(left)):
                     type_fn = (isdatacls, isattrs)
                     explanation = _compare_eq_cls(left, right, verbose, type_fn)
-                elif verbose:
+                elif verbose > 0:
                     explanation = _compare_eq_verbose(left, right)
                 if isiterable(left) and isiterable(right):
                     expl = _compare_eq_iterable(left, right, verbose)
@@ -175,8 +175,8 @@ def assertrepr_compare(config, op, left, right):
     return [summary] + explanation
 
 
-def _diff_text(left, right, verbose=False):
-    """Return the explanation for the diff between text or bytes
+def _diff_text(left, right, verbose=0):
+    """Return the explanation for the diff between text or bytes.
 
     Unless --verbose is used this will skip leading and trailing
     characters which are identical to keep the diff minimal.
@@ -202,7 +202,7 @@ def _diff_text(left, right, verbose=False):
         left = escape_for_readable_diff(left)
     if isinstance(right, bytes):
         right = escape_for_readable_diff(right)
-    if not verbose:
+    if verbose < 1:
         i = 0  # just in case left or right has zero length
         for i in range(min(len(left), len(right))):
             if left[i] != right[i]:
@@ -250,7 +250,7 @@ def _compare_eq_verbose(left, right):
     return explanation
 
 
-def _compare_eq_iterable(left, right, verbose=False):
+def _compare_eq_iterable(left, right, verbose=0):
     if not verbose:
         return [u"Use -v to get the full diff"]
     # dynamic import to speedup pytest
@@ -273,7 +273,7 @@ def _compare_eq_iterable(left, right, verbose=False):
     return explanation
 
 
-def _compare_eq_sequence(left, right, verbose=False):
+def _compare_eq_sequence(left, right, verbose=0):
     explanation = []
     for i in range(min(len(left), len(right))):
         if left[i] != right[i]:
@@ -292,7 +292,7 @@ def _compare_eq_sequence(left, right, verbose=False):
     return explanation
 
 
-def _compare_eq_set(left, right, verbose=False):
+def _compare_eq_set(left, right, verbose=0):
     explanation = []
     diff_left = left - right
     diff_right = right - left
@@ -307,7 +307,7 @@ def _compare_eq_set(left, right, verbose=False):
     return explanation
 
 
-def _compare_eq_dict(left, right, verbose=False):
+def _compare_eq_dict(left, right, verbose=0):
     explanation = []
     common = set(left).intersection(set(right))
     same = {k: left[k] for k in common if left[k] == right[k]}
@@ -368,7 +368,7 @@ def _compare_eq_cls(left, right, verbose, type_fns):
     return explanation
 
 
-def _notin_text(term, text, verbose=False):
+def _notin_text(term, text, verbose=0):
     index = text.find(term)
     head = text[:index]
     tail = text[index + len(term) :]

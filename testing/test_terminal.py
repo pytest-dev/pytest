@@ -25,15 +25,14 @@ DistInfo = collections.namedtuple("DistInfo", ["project_name", "version"])
 
 
 class Option(object):
-    def __init__(self, verbose=False, fulltrace=False):
-        self.verbose = verbose
+    def __init__(self, verbosity=0, fulltrace=False):
+        self.verbosity = verbosity
         self.fulltrace = fulltrace
 
     @property
     def args(self):
         values = []
-        if self.verbose:
-            values.append("-v")
+        values.append("--verbosity=%d" % self.verbosity)
         if self.fulltrace:
             values.append("--fulltrace")
         return values
@@ -41,9 +40,9 @@ class Option(object):
 
 @pytest.fixture(
     params=[
-        Option(verbose=False),
-        Option(verbose=True),
-        Option(verbose=-1),
+        Option(verbosity=0),
+        Option(verbosity=1),
+        Option(verbosity=-1),
         Option(fulltrace=True),
     ],
     ids=["default", "verbose", "quiet", "fulltrace"],
@@ -87,7 +86,7 @@ class TestTerminal(object):
         """
         )
         result = testdir.runpytest(*option.args)
-        if option.verbose:
+        if option.verbosity > 0:
             result.stdout.fnmatch_lines(
                 [
                     "*test_pass_skip_fail.py::test_ok PASS*",
@@ -95,8 +94,10 @@ class TestTerminal(object):
                     "*test_pass_skip_fail.py::test_func FAIL*",
                 ]
             )
-        else:
+        elif option.verbosity == 0:
             result.stdout.fnmatch_lines(["*test_pass_skip_fail.py .sF*"])
+        else:
+            result.stdout.fnmatch_lines([".sF*"])
         result.stdout.fnmatch_lines(
             ["    def test_func():", ">       assert 0", "E       assert 0"]
         )

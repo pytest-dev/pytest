@@ -389,7 +389,7 @@ class LoggingPlugin(object):
         self._config = config
 
         # enable verbose output automatically if live logging is enabled
-        if self._log_cli_enabled() and not config.getoption("verbose"):
+        if self._log_cli_enabled() and config.getoption("verbose") < 1:
             config.option.verbose = 1
 
         self.print_logs = get_option_ini(config, "log_print")
