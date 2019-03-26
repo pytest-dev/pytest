@@ -1,0 +1,1 @@
+``Collector.repr_failure`` respects ``--tbstyle``, but only defaults to ``short`` now (with ``auto``).
