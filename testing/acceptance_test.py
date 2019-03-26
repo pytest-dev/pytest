@@ -677,6 +677,8 @@ class TestInvocationVariants(object):
     def test_cmdline_python_namespace_package(self, testdir, monkeypatch):
         """
         test --pyargs option with namespace packages (#1567)
+
+        Ref: https://packaging.python.org/guides/packaging-namespace-packages/
         """
         monkeypatch.delenv("PYTHONDONTWRITEBYTECODE", raising=False)
 

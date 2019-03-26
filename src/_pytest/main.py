@@ -225,7 +225,7 @@ def wrap_session(config, doit):
             config.notify_exception(excinfo, config.option)
             session.exitstatus = EXIT_INTERNALERROR
             if excinfo.errisinstance(SystemExit):
-                sys.stderr.write("mainloop: caught Spurious SystemExit!\n")
+                sys.stderr.write("mainloop: caught unexpected SystemExit!\n")
 
     finally:
         excinfo = None  # Explicitly break reference cycle.
