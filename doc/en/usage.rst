@@ -384,10 +384,8 @@ in your code and pytest automatically disables its output capture for that test:
 * Output capture in other tests is not affected.
 * Any prior test output that has already been captured and will be processed as
   such.
-* Any later output produced within the same test will not be captured and will
-  instead get sent directly to ``sys.stdout``. Note that this holds true even
-  for test output occurring after you exit the interactive PDB_ tracing session
-  and continue with the regular test run.
+* Output capture gets resumed when ending the debugger session (via the
+  ``continue`` command).
 
 
 .. _`breakpoint-builtin`:
