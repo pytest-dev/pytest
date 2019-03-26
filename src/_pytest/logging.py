@@ -577,8 +577,15 @@ class LoggingPlugin(object):
             if self.log_cli_handler:
                 self.log_cli_handler.set_when("sessionfinish")
             if self.log_file_handler is not None:
-                with catching_logs(self.log_file_handler, level=self.log_file_level):
-                    yield
+                try:
+                    with catching_logs(
+                        self.log_file_handler, level=self.log_file_level
+                    ):
+                        yield
+                finally:
+                    # Close the FileHandler explicitly.
+                    # (logging.shutdown might have lost the weakref?!)
+                    self.log_file_handler.close()
             else:
                 yield
 
