@@ -114,7 +114,8 @@ class SessionTests(object):
             class TestBrokenClass(object):
                 def test_explicit_bad_repr(self):
                     t = BrokenRepr1()
-                    pytest.raises(Exception, 'repr(t)')
+                    with pytest.raises(Exception, match="I'm a broken repr"):
+                        repr(t)
 
                 def test_implicit_bad_repr1(self):
                     t = BrokenRepr1()

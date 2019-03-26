@@ -1,6 +1,6 @@
 [run]
 include =
-  */src/*
+  src/*
   testing/*
   */lib/python*/site-packages/_pytest/*
   */lib/python*/site-packages/pytest.py

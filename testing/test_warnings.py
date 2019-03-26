@@ -95,10 +95,12 @@ def test_as_errors(testdir, pyfile_with_warnings, method):
         testdir.makeini(
             """
             [pytest]
-            filterwarnings= error
+            filterwarnings=error
             """
         )
-    result = testdir.runpytest(*args)
+    # Use a subprocess, since changing logging level affects other threads
+    # (xdist).
+    result = testdir.runpytest_subprocess(*args)
     result.stdout.fnmatch_lines(
         [
             "E       UserWarning: user warning",

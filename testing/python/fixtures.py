@@ -1030,8 +1030,8 @@ class TestFixtureUsages(object):
         result.stdout.fnmatch_lines(
             [
                 "*ScopeMismatch*involved factories*",
-                "* def arg2*",
-                "* def arg1*",
+                "test_receives_funcargs_scope_mismatch.py:6:  def arg2(arg1)",
+                "test_receives_funcargs_scope_mismatch.py:2:  def arg1()",
                 "*1 error*",
             ]
         )
@@ -1141,6 +1141,7 @@ class TestFixtureUsages(object):
         values = reprec.getfailedcollections()
         assert len(values) == 1
 
+    @pytest.mark.filterwarnings("ignore::pytest.PytestDeprecationWarning")
     def test_request_can_be_overridden(self, testdir):
         testdir.makepyfile(
             """

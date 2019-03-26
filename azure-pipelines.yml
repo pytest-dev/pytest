@@ -30,9 +30,9 @@ jobs:
         # - numpy
         # - pytester's LsofFdLeakChecker (being skipped)
         PYTEST_COVERAGE: '1'
-      py27-trial:
+      py27-twisted:
         python.version: '2.7'
-        tox.env: 'py27-trial'
+        tox.env: 'py27-twisted'
         python.needs_vc: True
       py27-pluggymaster-xdist:
         python.version: '2.7'
@@ -40,7 +40,7 @@ jobs:
         # Coverage for:
         # - except-IOError in _attempt_to_close_capture_file for py2.
         #   Also seen with py27-nobyte (using xdist), and py27-xdist.
-        #   But no exception with py27-pexpect,py27-trial,py27-numpy.
+        #   But no exception with py27-pexpect,py27-twisted,py27-numpy.
         PYTEST_COVERAGE: '1'
       pypy:
         python.version: 'pypy'
@@ -76,9 +76,9 @@ jobs:
       py37-linting/docs/doctesting:
         python.version: '3.7'
         tox.env: 'linting,docs,doctesting'
-      py37-trial/numpy:
+      py37-twisted/numpy:
         python.version: '3.7'
-        tox.env: 'py37-trial,py37-numpy'
+        tox.env: 'py37-twisted,py37-numpy'
       py37-pluggymaster-xdist:
         python.version: '3.7'
         tox.env: 'py37-pluggymaster-xdist'
