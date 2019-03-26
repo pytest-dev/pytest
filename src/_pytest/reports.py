@@ -422,4 +422,6 @@ def pytest_report_unserialize(data):
             return TestReport._from_json(data)
         elif data["_report_type"] == "CollectReport":
             return CollectReport._from_json(data)
-        assert "Unknown report_type unserialize data: {}".format(data["_report_type"])
+        assert False, "Unknown report_type unserialize data: {}".format(
+            data["_report_type"]
+        )

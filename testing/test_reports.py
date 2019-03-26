@@ -249,7 +249,6 @@ class TestHooks:
     def test_test_report(self, testdir, pytestconfig):
         testdir.makepyfile(
             """
-            import os
             def test_a(): assert False
             def test_b(): pass
         """
@@ -272,7 +271,6 @@ class TestHooks:
     def test_collect_report(self, testdir, pytestconfig):
         testdir.makepyfile(
             """
-            import os
             def test_a(): assert False
             def test_b(): pass
         """
@@ -291,3 +289,25 @@ class TestHooks:
             assert new_rep.nodeid == rep.nodeid
             assert new_rep.when == "collect"
             assert new_rep.outcome == rep.outcome
+
+    @pytest.mark.parametrize(
+        "hook_name", ["pytest_runtest_logreport", "pytest_collectreport"]
+    )
+    def test_invalid_report_types(self, testdir, pytestconfig, hook_name):
+        testdir.makepyfile(
+            """
+            def test_a(): pass
+            """
+        )
+        reprec = testdir.inline_run()
+        reports = reprec.getreports(hook_name)
+        assert reports
+        rep = reports[0]
+        data = pytestconfig.hook.pytest_report_serialize(
+            config=pytestconfig, report=rep
+        )
+        data["_report_type"] = "Unknown"
+        with pytest.raises(AssertionError):
+            _ = pytestconfig.hook.pytest_report_unserialize(
+                config=pytestconfig, data=data
+            )
