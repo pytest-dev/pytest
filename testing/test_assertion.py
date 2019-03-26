@@ -11,6 +11,7 @@ import six
 
 import _pytest.assertion as plugin
 import pytest
+from _pytest import outcomes
 from _pytest.assertion import truncate
 from _pytest.assertion import util
 
@@ -1305,3 +1306,13 @@ def test_issue_1944(testdir):
         "AttributeError: 'Module' object has no attribute '_obj'"
         not in result.stdout.str()
     )
+
+
+def test_exit_from_assertrepr_compare(monkeypatch):
+    def raise_exit(obj):
+        outcomes.exit("Quitting debugger")
+
+    monkeypatch.setattr(util, "istext", raise_exit)
+
+    with pytest.raises(outcomes.Exit, match="Quitting debugger"):
+        callequal(1, 1)
