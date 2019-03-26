@@ -207,20 +207,22 @@ def pytest_terminal_summary(terminalreporter):
 def show_simple(terminalreporter, lines, stat):
     failed = terminalreporter.stats.get(stat)
     if failed:
+        config = terminalreporter.config
         for rep in failed:
-            verbose_word = _get_report_str(terminalreporter, rep)
-            pos = terminalreporter.config.cwd_relative_nodeid(rep.nodeid)
+            verbose_word = _get_report_str(config, rep)
+            pos = _get_pos(config, rep)
             lines.append("%s %s" % (verbose_word, pos))
 
 
 def show_xfailed(terminalreporter, lines):
     xfailed = terminalreporter.stats.get("xfailed")
     if xfailed:
+        config = terminalreporter.config
         for rep in xfailed:
-            verbose_word = _get_report_str(terminalreporter, rep)
-            pos = terminalreporter.config.cwd_relative_nodeid(rep.nodeid)
-            reason = rep.wasxfail
+            verbose_word = _get_report_str(config, rep)
+            pos = _get_pos(config, rep)
             lines.append("%s %s" % (verbose_word, pos))
+            reason = rep.wasxfail
             if reason:
                 lines.append("  " + str(reason))
 
@@ -228,9 +230,10 @@ def show_xfailed(terminalreporter, lines):
 def show_xpassed(terminalreporter, lines):
     xpassed = terminalreporter.stats.get("xpassed")
     if xpassed:
+        config = terminalreporter.config
         for rep in xpassed:
-            verbose_word = _get_report_str(terminalreporter, rep)
-            pos = terminalreporter.config.cwd_relative_nodeid(rep.nodeid)
+            verbose_word = _get_report_str(config, rep)
+            pos = _get_pos(config, rep)
             reason = rep.wasxfail
             lines.append("%s %s %s" % (verbose_word, pos, reason))
 
@@ -261,9 +264,9 @@ def show_skipped(terminalreporter, lines):
     tr = terminalreporter
     skipped = tr.stats.get("skipped", [])
     if skipped:
-        verbose_word = _get_report_str(terminalreporter, report=skipped[0])
         fskips = folded_skips(skipped)
         if fskips:
+            verbose_word = _get_report_str(terminalreporter.config, report=skipped[0])
             for num, fspath, lineno, reason in fskips:
                 if reason.startswith("Skipped: "):
                     reason = reason[9:]
@@ -283,11 +286,16 @@ def shower(stat):
     return show_
 
 
-def _get_report_str(terminalreporter, report):
-    _category, _short, verbose = terminalreporter.config.hook.pytest_report_teststatus(
-        report=report, config=terminalreporter.config
+def _get_report_str(config, report):
+    _category, _short, verbose = config.hook.pytest_report_teststatus(
+        report=report, config=config
     )
     return verbose
+
+
+def _get_pos(config, rep):
+    nodeid = config.cwd_relative_nodeid(rep.nodeid)
+    return nodeid
 
 
 REPORTCHAR_ACTIONS = {
