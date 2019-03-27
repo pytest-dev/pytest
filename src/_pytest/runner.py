@@ -85,19 +85,17 @@ def runtestprotocol(item, log=True, nextitem=None):
     if hasrequest and not item._request:
         item._initrequest()
     rep = call_and_report(item, "setup", log)
-    reports = [rep]
     if rep.passed:
         if item.config.getoption("setupshow", False):
             show_test_item(item)
         if not item.config.getoption("setuponly", False):
-            reports.append(call_and_report(item, "call", log))
-    reports.append(call_and_report(item, "teardown", log, nextitem=nextitem))
+            call_and_report(item, "call", log)
+    call_and_report(item, "teardown", log, nextitem=nextitem)
     # after all teardown hooks have been called
     # want funcargs and request info to go away
     if hasrequest:
         item._request = False
         item.funcargs = None
-    return reports
 
 
 def show_test_item(item):
