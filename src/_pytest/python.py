@@ -102,6 +102,13 @@ def pytest_addoption(parser):
         default=["test"],
         help="prefixes or glob names for Python test function and method discovery",
     )
+    parser.addini(
+        "disable_test_id_escaping_and_forfeit_all_rights_to_community_support",
+        type="bool",
+        default=False,
+        help="disable string escape non-ascii characters, might cause unwanted "
+        "side effects(use at your own risk)",
+    )
 
     group.addoption(
         "--import-mode",
@@ -1156,6 +1163,16 @@ def _find_parametrized_scope(argnames, arg2fixturedefs, indirect):
     return "function"
 
 
+def _ascii_escaped_by_config(val, config):
+    if config is None:
+        escape_option = False
+    else:
+        escape_option = config.getini(
+            "disable_test_id_escaping_and_forfeit_all_rights_to_community_support"
+        )
+    return val if escape_option else ascii_escaped(val)
+
+
 def _idval(val, argname, idx, idfn, item, config):
     if idfn:
         try:
@@ -1177,7 +1194,7 @@ def _idval(val, argname, idx, idfn, item, config):
             return hook_id
 
     if isinstance(val, STRING_TYPES):
-        return ascii_escaped(val)
+        return _ascii_escaped_by_config(val, config)
     elif isinstance(val, (float, int, bool, NoneType)):
         return str(val)
     elif isinstance(val, REGEX_TYPE):
