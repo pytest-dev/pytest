@@ -8,6 +8,7 @@ import sys
 import six
 
 import pytest
+from _pytest.main import EXIT_INTERRUPTED
 from _pytest.mark import EMPTY_PARAMETERSET_OPTION
 from _pytest.mark import MarkGenerator as Mark
 from _pytest.nodes import Collector
@@ -859,20 +860,34 @@ def test_parameterset_for_fail_at_collect(testdir):
 
     config = testdir.parseconfig()
     from _pytest.mark import pytest_configure, get_empty_parameterset_mark
-    from _pytest.compat import getfslineno
 
     pytest_configure(config)
 
-    test_func = all
-    func_name = test_func.__name__
-    _, func_lineno = getfslineno(test_func)
-    expected_errmsg = r"Empty parameter set in '%s' at line %d" % (
-        func_name,
-        func_lineno,
-    )
+    with pytest.raises(
+        Collector.CollectError,
+        match=r"Empty parameter set in 'pytest_configure' at line \d\d+",
+    ):
+        get_empty_parameterset_mark(config, ["a"], pytest_configure)
 
-    with pytest.raises(Collector.CollectError, match=expected_errmsg):
-        get_empty_parameterset_mark(config, ["a"], test_func)
+    p1 = testdir.makepyfile(
+        """
+        import pytest
+
+        @pytest.mark.parametrize("empty", [])
+        def test():
+            pass
+        """
+    )
+    result = testdir.runpytest(str(p1))
+    result.stdout.fnmatch_lines(
+        [
+            "collected 0 items / 1 errors",
+            "* ERROR collecting test_parameterset_for_fail_at_collect.py *",
+            "Empty parameter set in 'test' at line 3",
+            "*= 1 error in *",
+        ]
+    )
+    assert result.ret == EXIT_INTERRUPTED
 
 
 def test_parameterset_for_parametrize_bad_markname(testdir):

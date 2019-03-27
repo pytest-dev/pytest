@@ -44,7 +44,7 @@ def get_empty_parameterset_mark(config, argnames, func):
         f_name = func.__name__
         _, lineno = getfslineno(func)
         raise Collector.CollectError(
-            "Empty parameter set in '%s' at line %d" % (f_name, lineno)
+            "Empty parameter set in '%s' at line %d" % (f_name, lineno + 1)
         )
     else:
         raise LookupError(requested_mark)
