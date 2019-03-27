@@ -173,6 +173,7 @@ def getreportopt(config):
     return reportopts
 
 
+@pytest.hookimpl(trylast=True)  # after _pytest.runner
 def pytest_report_teststatus(report):
     if report.passed:
         letter = "."
