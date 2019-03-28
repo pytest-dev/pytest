@@ -409,14 +409,14 @@ class CollectErrorRepr(TerminalRepr):
         out.line(self.longrepr, red=True)
 
 
-def pytest_report_serialize(report):
+def pytest_report_to_serializable(report):
     if isinstance(report, (TestReport, CollectReport)):
         data = report._to_json()
         data["_report_type"] = report.__class__.__name__
         return data
 
 
-def pytest_report_unserialize(data):
+def pytest_report_from_serializable(data):
     if "_report_type" in data:
         if data["_report_type"] == "TestReport":
             return TestReport._from_json(data)

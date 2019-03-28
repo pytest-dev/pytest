@@ -257,11 +257,11 @@ class TestHooks:
         reports = reprec.getreports("pytest_runtest_logreport")
         assert len(reports) == 6
         for rep in reports:
-            data = pytestconfig.hook.pytest_report_serialize(
+            data = pytestconfig.hook.pytest_report_to_serializable(
                 config=pytestconfig, report=rep
             )
             assert data["_report_type"] == "TestReport"
-            new_rep = pytestconfig.hook.pytest_report_unserialize(
+            new_rep = pytestconfig.hook.pytest_report_from_serializable(
                 config=pytestconfig, data=data
             )
             assert new_rep.nodeid == rep.nodeid
@@ -279,11 +279,11 @@ class TestHooks:
         reports = reprec.getreports("pytest_collectreport")
         assert len(reports) == 2
         for rep in reports:
-            data = pytestconfig.hook.pytest_report_serialize(
+            data = pytestconfig.hook.pytest_report_to_serializable(
                 config=pytestconfig, report=rep
             )
             assert data["_report_type"] == "CollectReport"
-            new_rep = pytestconfig.hook.pytest_report_unserialize(
+            new_rep = pytestconfig.hook.pytest_report_from_serializable(
                 config=pytestconfig, data=data
             )
             assert new_rep.nodeid == rep.nodeid
@@ -303,11 +303,11 @@ class TestHooks:
         reports = reprec.getreports(hook_name)
         assert reports
         rep = reports[0]
-        data = pytestconfig.hook.pytest_report_serialize(
+        data = pytestconfig.hook.pytest_report_to_serializable(
             config=pytestconfig, report=rep
         )
         data["_report_type"] = "Unknown"
         with pytest.raises(AssertionError):
-            _ = pytestconfig.hook.pytest_report_unserialize(
+            _ = pytestconfig.hook.pytest_report_from_serializable(
                 config=pytestconfig, data=data
             )
