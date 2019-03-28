@@ -99,8 +99,8 @@ def pytest_cmdline_parse(pluginmanager, args):
     Stops at first non-None result, see :ref:`firstresult`
 
     .. note::
-        This hook will not be called for ``conftest.py`` files, only for setuptools plugins or
-        modules which implement this hook and are early-loaded with the ``-p`` flag.
+        This hook will only be called for plugin classes passed to the ``plugins`` arg when using `pytest.main`_ to
+        perform an in-process test run.
 
     :param _pytest.config.PytestPluginManager pluginmanager: pytest plugin manager
     :param list[str] args: list of arguments passed on the command line
