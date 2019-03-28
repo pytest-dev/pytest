@@ -9,7 +9,6 @@ import sys
 import types
 
 import pytest
-from _pytest.config import get_config
 from _pytest.config import PytestPluginManager
 from _pytest.main import EXIT_NOTESTSCOLLECTED
 from _pytest.main import Session
@@ -21,7 +20,7 @@ def pytestpm():
 
 
 class TestPytestPluginInteractions(object):
-    def test_addhooks_conftestplugin(self, testdir):
+    def test_addhooks_conftestplugin(self, testdir, _config_for_test):
         testdir.makepyfile(
             newhooks="""
             def pytest_myhook(xyz):
@@ -37,7 +36,7 @@ class TestPytestPluginInteractions(object):
                 return xyz + 1
         """
         )
-        config = get_config()
+        config = _config_for_test
         pm = config.pluginmanager
         pm.hook.pytest_addhooks.call_historic(
             kwargs=dict(pluginmanager=config.pluginmanager)
@@ -92,8 +91,8 @@ class TestPytestPluginInteractions(object):
         config.pluginmanager.register(A())
         assert len(values) == 2
 
-    def test_hook_tracing(self):
-        pytestpm = get_config().pluginmanager  # fully initialized with plugins
+    def test_hook_tracing(self, _config_for_test):
+        pytestpm = _config_for_test.pluginmanager  # fully initialized with plugins
         saveindent = []
 
         class api1(object):
@@ -202,8 +201,8 @@ class TestPytestPluginManager(object):
         assert pytestpm.get_plugin("pytest_p1").__name__ == "pytest_p1"
         assert pytestpm.get_plugin("pytest_p2").__name__ == "pytest_p2"
 
-    def test_consider_module_import_module(self, testdir):
-        pytestpm = get_config().pluginmanager
+    def test_consider_module_import_module(self, testdir, _config_for_test):
+        pytestpm = _config_for_test.pluginmanager
         mod = types.ModuleType("x")
         mod.pytest_plugins = "pytest_a"
         aplugin = testdir.makepyfile(pytest_a="#")
