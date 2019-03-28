@@ -102,6 +102,12 @@ class pytestPDB(object):
     _recursive_debug = 0
 
     @classmethod
+    def _is_capturing(cls, capman):
+        if capman:
+            return capman.is_capturing()
+        return False
+
+    @classmethod
     def _init_pdb(cls, *args, **kwargs):
         """ Initialize PDB debugging, dropping any IO capturing. """
         import _pytest.config
@@ -109,7 +115,7 @@ class pytestPDB(object):
         if cls._pluginmanager is not None:
             capman = cls._pluginmanager.getplugin("capturemanager")
             if capman:
-                capman.suspend_global_capture(in_=True)
+                capman.suspend(in_=True)
             tw = _pytest.config.create_terminal_writer(cls._config)
             tw.line()
             if cls._recursive_debug == 0:
@@ -117,10 +123,19 @@ class pytestPDB(object):
                 header = kwargs.pop("header", None)
                 if header is not None:
                     tw.sep(">", header)
-                elif capman and capman.is_globally_capturing():
-                    tw.sep(">", "PDB set_trace (IO-capturing turned off)")
                 else:
-                    tw.sep(">", "PDB set_trace")
+                    capturing = cls._is_capturing(capman)
+                    if capturing:
+                        if capturing == "global":
+                            tw.sep(">", "PDB set_trace (IO-capturing turned off)")
+                        else:
+                            tw.sep(
+                                ">",
+                                "PDB set_trace (IO-capturing turned off for %s)"
+                                % capturing,
+                            )
+                    else:
+                        tw.sep(">", "PDB set_trace")
 
             class _PdbWrapper(cls._pdb_cls, object):
                 _pytest_capman = capman
@@ -134,15 +149,24 @@ class pytestPDB(object):
 
                 def do_continue(self, arg):
                     ret = super(_PdbWrapper, self).do_continue(arg)
-                    if self._pytest_capman:
+                    if cls._recursive_debug == 0:
                         tw = _pytest.config.create_terminal_writer(cls._config)
                         tw.line()
-                        if cls._recursive_debug == 0:
-                            if self._pytest_capman.is_globally_capturing():
+
+                        capman = self._pytest_capman
+                        capturing = pytestPDB._is_capturing(capman)
+                        if capturing:
+                            if capturing == "global":
                                 tw.sep(">", "PDB continue (IO-capturing resumed)")
                             else:
-                                tw.sep(">", "PDB continue")
-                            self._pytest_capman.resume_global_capture()
+                                tw.sep(
+                                    ">",
+                                    "PDB continue (IO-capturing resumed for %s)"
+                                    % capturing,
+                                )
+                            capman.resume()
+                        else:
+                            tw.sep(">", "PDB continue")
                     cls._pluginmanager.hook.pytest_leave_pdb(
                         config=cls._config, pdb=self
                     )

@@ -107,6 +107,16 @@ class CaptureManager(object):
             return MultiCapture(out=False, err=False, in_=False)
         raise ValueError("unknown capturing method: %r" % method)  # pragma: no cover
 
+    def is_capturing(self):
+        if self.is_globally_capturing():
+            return "global"
+        capture_fixture = getattr(self._current_item, "_capture_fixture", None)
+        if capture_fixture is not None:
+            return (
+                "fixture %s" % self._current_item._capture_fixture.request.fixturename
+            )
+        return False
+
     # Global capturing control
 
     def is_globally_capturing(self):
@@ -133,6 +143,15 @@ class CaptureManager(object):
         cap = getattr(self, "_global_capturing", None)
         if cap is not None:
             cap.suspend_capturing(in_=in_)
+
+    def suspend(self, in_=False):
+        # Need to undo local capsys-et-al if it exists before disabling global capture.
+        self.suspend_fixture(self._current_item)
+        self.suspend_global_capture(in_)
+
+    def resume(self):
+        self.resume_global_capture()
+        self.resume_fixture(self._current_item)
 
     def read_global_capture(self):
         return self._global_capturing.readouterr()
@@ -168,14 +187,11 @@ class CaptureManager(object):
     @contextlib.contextmanager
     def global_and_fixture_disabled(self):
         """Context manager to temporarily disable global and current fixture capturing."""
-        # Need to undo local capsys-et-al if it exists before disabling global capture.
-        self.suspend_fixture(self._current_item)
-        self.suspend_global_capture(in_=False)
+        self.suspend()
         try:
             yield
         finally:
-            self.resume_global_capture()
-            self.resume_fixture(self._current_item)
+            self.resume()
 
     @contextlib.contextmanager
     def item_capture(self, when, item):
