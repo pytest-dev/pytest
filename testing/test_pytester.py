@@ -1,14 +1,24 @@
 # -*- coding: utf-8 -*-
-from __future__ import absolute_import, division, print_function
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+
 import os
-import py.path
-import pytest
 import sys
+import time
+
+import py.path
+
 import _pytest.pytester as pytester
-from _pytest.pytester import HookRecorder
-from _pytest.pytester import CwdSnapshot, SysModulesSnapshot, SysPathsSnapshot
+import pytest
 from _pytest.config import PytestPluginManager
-from _pytest.main import EXIT_OK, EXIT_TESTSFAILED, EXIT_NOTESTSCOLLECTED
+from _pytest.main import EXIT_NOTESTSCOLLECTED
+from _pytest.main import EXIT_OK
+from _pytest.main import EXIT_TESTSFAILED
+from _pytest.pytester import CwdSnapshot
+from _pytest.pytester import HookRecorder
+from _pytest.pytester import SysModulesSnapshot
+from _pytest.pytester import SysPathsSnapshot
 
 
 def test_make_hook_recorder(testdir):
@@ -61,7 +71,7 @@ def test_make_hook_recorder(testdir):
     recorder.unregister()
     recorder.clear()
     recorder.hook.pytest_runtest_logreport(report=rep)
-    pytest.raises(ValueError, "recorder.getfailures()")
+    pytest.raises(ValueError, recorder.getfailures)
 
 
 def test_parseconfig(testdir):
@@ -117,6 +127,17 @@ def test_runresult_assertion_on_xpassed(testdir):
     assert result.ret == 0
 
 
+def test_runresult_repr():
+    from _pytest.pytester import RunResult
+
+    assert (
+        repr(
+            RunResult(ret="ret", outlines=[""], errlines=["some", "errors"], duration=1)
+        )
+        == "<RunResult ret='ret' len(stdout.lines)=1 len(stderr.lines)=2 duration=1.00s>"
+    )
+
+
 def test_xpassed_with_strict_is_considered_a_failure(testdir):
     testdir.makepyfile(
         """
@@ -158,13 +179,13 @@ def make_holder():
 @pytest.mark.parametrize("holder", make_holder())
 def test_hookrecorder_basic(holder):
     pm = PytestPluginManager()
-    pm.addhooks(holder)
+    pm.add_hookspecs(holder)
     rec = HookRecorder(pm)
     pm.hook.pytest_xyz(arg=123)
     call = rec.popcall("pytest_xyz")
     assert call.arg == 123
     assert call._name == "pytest_xyz"
-    pytest.raises(pytest.fail.Exception, "rec.popcall('abc')")
+    pytest.raises(pytest.fail.Exception, rec.popcall, "abc")
     pm.hook.pytest_xyz_noarg()
     call = rec.popcall("pytest_xyz_noarg")
     assert call._name == "pytest_xyz_noarg"
@@ -176,7 +197,7 @@ def test_makepyfile_unicode(testdir):
         unichr(65)
     except NameError:
         unichr = chr
-    testdir.makepyfile(unichr(0xfffd))
+    testdir.makepyfile(unichr(0xFFFD))
 
 
 def test_makepyfile_utf8(testdir):
@@ -270,7 +291,7 @@ def test_assert_outcomes_after_pytest_error(testdir):
     testdir.makepyfile("def test_foo(): assert True")
 
     result = testdir.runpytest("--unexpected-argument")
-    with pytest.raises(ValueError, message="Pytest terminal report not found"):
+    with pytest.raises(ValueError, match="Pytest terminal report not found"):
         result.assert_outcomes(passed=0)
 
 
@@ -401,3 +422,34 @@ def test_testdir_subprocess(testdir):
 def test_unicode_args(testdir):
     result = testdir.runpytest("-k", u"💩")
     assert result.ret == EXIT_NOTESTSCOLLECTED
+
+
+def test_testdir_run_no_timeout(testdir):
+    testfile = testdir.makepyfile("def test_no_timeout(): pass")
+    assert testdir.runpytest_subprocess(testfile).ret == EXIT_OK
+
+
+def test_testdir_run_with_timeout(testdir):
+    testfile = testdir.makepyfile("def test_no_timeout(): pass")
+
+    timeout = 120
+
+    start = time.time()
+    result = testdir.runpytest_subprocess(testfile, timeout=timeout)
+    end = time.time()
+    duration = end - start
+
+    assert result.ret == EXIT_OK
+    assert duration < timeout
+
+
+def test_testdir_run_timeout_expires(testdir):
+    testfile = testdir.makepyfile(
+        """
+        import time
+
+        def test_timeout():
+            time.sleep(10)"""
+    )
+    with pytest.raises(testdir.TimeoutExpired):
+        testdir.runpytest_subprocess(testfile, timeout=1)

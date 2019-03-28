@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-import re
 import os
+import re
 from io import open
 
 import six
@@ -908,3 +908,179 @@ def test_live_logging_suspends_capture(has_capture_manager, request):
     else:
         assert MockCaptureManager.calls == []
     assert out_file.getvalue() == "\nsome message\n"
+
+
+def test_collection_live_logging(testdir):
+    testdir.makepyfile(
+        """
+        import logging
+
+        logging.getLogger().info("Normal message")
+    """
+    )
+
+    result = testdir.runpytest("--log-cli-level=INFO")
+    result.stdout.fnmatch_lines(
+        [
+            "collecting*",
+            "*--- live log collection ---*",
+            "*Normal message*",
+            "collected 0 items",
+        ]
+    )
+
+
+def test_collection_logging_to_file(testdir):
+    log_file = testdir.tmpdir.join("pytest.log").strpath
+
+    testdir.makeini(
+        """
+        [pytest]
+        log_file={}
+        log_file_level = INFO
+        """.format(
+            log_file
+        )
+    )
+
+    testdir.makepyfile(
+        """
+        import logging
+
+        logging.getLogger().info("Normal message")
+
+        def test_simple():
+            logging.getLogger().debug("debug message in test_simple")
+            logging.getLogger().info("info message in test_simple")
+    """
+    )
+
+    result = testdir.runpytest()
+
+    assert "--- live log collection ---" not in result.stdout.str()
+
+    assert result.ret == 0
+    assert os.path.isfile(log_file)
+    with open(log_file, encoding="utf-8") as rfh:
+        contents = rfh.read()
+        assert "Normal message" in contents
+        assert "debug message in test_simple" not in contents
+        assert "info message in test_simple" in contents
+
+
+def test_log_in_hooks(testdir):
+    log_file = testdir.tmpdir.join("pytest.log").strpath
+
+    testdir.makeini(
+        """
+        [pytest]
+        log_file={}
+        log_file_level = INFO
+        log_cli=true
+        """.format(
+            log_file
+        )
+    )
+    testdir.makeconftest(
+        """
+        import logging
+
+        def pytest_runtestloop(session):
+            logging.info('runtestloop')
+
+        def pytest_sessionstart(session):
+            logging.info('sessionstart')
+
+        def pytest_sessionfinish(session, exitstatus):
+            logging.info('sessionfinish')
+    """
+    )
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines(["*sessionstart*", "*runtestloop*", "*sessionfinish*"])
+    with open(log_file) as rfh:
+        contents = rfh.read()
+        assert "sessionstart" in contents
+        assert "runtestloop" in contents
+        assert "sessionfinish" in contents
+
+
+def test_log_in_runtest_logreport(testdir):
+    log_file = testdir.tmpdir.join("pytest.log").strpath
+
+    testdir.makeini(
+        """
+        [pytest]
+        log_file={}
+        log_file_level = INFO
+        log_cli=true
+        """.format(
+            log_file
+        )
+    )
+    testdir.makeconftest(
+        """
+        import logging
+        logger = logging.getLogger(__name__)
+
+        def pytest_runtest_logreport(report):
+            logger.info("logreport")
+    """
+    )
+    testdir.makepyfile(
+        """
+            def test_first():
+                assert True
+        """
+    )
+    testdir.runpytest()
+    with open(log_file) as rfh:
+        contents = rfh.read()
+        assert contents.count("logreport") == 3
+
+
+def test_log_set_path(testdir):
+    report_dir_base = testdir.tmpdir.strpath
+
+    testdir.makeini(
+        """
+        [pytest]
+        log_file_level = DEBUG
+        log_cli=true
+        """
+    )
+    testdir.makeconftest(
+        """
+            import os
+            import pytest
+            @pytest.hookimpl(hookwrapper=True, tryfirst=True)
+            def pytest_runtest_setup(item):
+                config = item.config
+                logging_plugin = config.pluginmanager.get_plugin("logging-plugin")
+                report_file = os.path.join({}, item._request.node.name)
+                logging_plugin.set_log_path(report_file)
+                yield
+        """.format(
+            repr(report_dir_base)
+        )
+    )
+    testdir.makepyfile(
+        """
+            import logging
+            logger = logging.getLogger("testcase-logger")
+            def test_first():
+                logger.info("message from test 1")
+                assert True
+
+            def test_second():
+                logger.debug("message from test 2")
+                assert True
+        """
+    )
+    testdir.runpytest()
+    with open(os.path.join(report_dir_base, "test_first"), "r") as rfh:
+        content = rfh.read()
+        assert "message from test 1" in content
+
+    with open(os.path.join(report_dir_base, "test_second"), "r") as rfh:
+        content = rfh.read()
+        assert "message from test 2" in content

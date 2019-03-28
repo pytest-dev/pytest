@@ -43,7 +43,9 @@ provide the ``cmdopt`` through a :ref:`fixture function <fixture function>`:
     def cmdopt(request):
         return request.config.getoption("--cmdopt")
 
-Let's run this without supplying our new option::
+Let's run this without supplying our new option:
+
+.. code-block:: pytest
 
     $ pytest -q test_sample.py
     F                                                                    [100%]
@@ -65,7 +67,9 @@ Let's run this without supplying our new option::
     first
     1 failed in 0.12 seconds
 
-And now with supplying a command line option::
+And now with supplying a command line option:
+
+.. code-block:: pytest
 
     $ pytest -q --cmdopt=type2
     F                                                                    [100%]
@@ -117,11 +121,14 @@ the command line arguments before they get processed:
 If you have the `xdist plugin <https://pypi.org/project/pytest-xdist/>`_ installed
 you will now always perform test runs using a number
 of subprocesses close to your CPU. Running in an empty
-directory with the above conftest.py::
+directory with the above conftest.py:
+
+.. code-block:: pytest
 
     $ pytest
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
+    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
+    cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 0 items
 
@@ -175,25 +182,31 @@ We can now write a test module like this:
     def test_func_slow():
         pass
 
-and when running it will see a skipped "slow" test::
+and when running it will see a skipped "slow" test:
+
+.. code-block:: pytest
 
     $ pytest -rs    # "-rs" means report details on the little 's'
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
+    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
+    cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 2 items
 
     test_module.py .s                                                    [100%]
     ========================= short test summary info ==========================
-    SKIP [1] test_module.py:8: need --runslow option to run
+    SKIPPED [1] test_module.py:8: need --runslow option to run
 
     =================== 1 passed, 1 skipped in 0.12 seconds ====================
 
-Or run it including the ``slow`` marked test::
+Or run it including the ``slow`` marked test:
+
+.. code-block:: pytest
 
     $ pytest --runslow
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
+    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
+    cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 2 items
 
@@ -230,7 +243,9 @@ Example:
 The ``__tracebackhide__`` setting influences ``pytest`` showing
 of tracebacks: the ``checkconfig`` function will not be shown
 unless the ``--full-trace`` command line option is specified.
-Let's run our little function::
+Let's run our little function:
+
+.. code-block:: pytest
 
     $ pytest -q test_checkconfig.py
     F                                                                    [100%]
@@ -327,11 +342,14 @@ It's easy to present extra information in a ``pytest`` run:
     def pytest_report_header(config):
         return "project deps: mylib-1.1"
 
-which will add the string to the test header accordingly::
+which will add the string to the test header accordingly:
+
+.. code-block:: pytest
 
     $ pytest
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
+    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
+    cachedir: $PYTHON_PREFIX/.pytest_cache
     project deps: mylib-1.1
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 0 items
@@ -353,12 +371,14 @@ display more information if applicable:
         if config.getoption("verbose") > 0:
             return ["info1: did you know that ...", "did you?"]
 
-which will add info only when run with "--v"::
+which will add info only when run with "--v":
+
+.. code-block:: pytest
 
     $ pytest -v
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.6
-    cachedir: .pytest_cache
+    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python
+    cachedir: $PYTHON_PREFIX/.pytest_cache
     info1: did you know that ...
     did you?
     rootdir: $REGENDOC_TMPDIR, inifile:
@@ -366,11 +386,14 @@ which will add info only when run with "--v"::
 
     ======================= no tests ran in 0.12 seconds =======================
 
-and nothing when run plainly::
+and nothing when run plainly:
+
+.. code-block:: pytest
 
     $ pytest
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
+    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
+    cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 0 items
 
@@ -403,11 +426,14 @@ out which tests are the slowest. Let's make an artificial test suite:
     def test_funcslow2():
         time.sleep(0.3)
 
-Now we can profile which test functions execute the slowest::
+Now we can profile which test functions execute the slowest:
+
+.. code-block:: pytest
 
     $ pytest --durations=3
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
+    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
+    cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 3 items
 
@@ -475,11 +501,14 @@ tests in a class.  Here is a test module example:
     def test_normal():
         pass
 
-If we run this::
+If we run this:
+
+.. code-block:: pytest
 
     $ pytest -rx
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
+    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
+    cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 4 items
 
@@ -496,7 +525,7 @@ If we run this::
 
     test_step.py:11: AssertionError
     ========================= short test summary info ==========================
-    XFAIL test_step.py::TestUserHandling::()::test_deletion
+    XFAIL test_step.py::TestUserHandling::test_deletion
       reason: previous test failed (test_modification)
     ============== 1 failed, 2 passed, 1 xfailed in 0.12 seconds ===============
 
@@ -556,11 +585,14 @@ the ``db`` fixture:
     def test_root(db):  # no db here, will error out
         pass
 
-We can run this::
+We can run this:
+
+.. code-block:: pytest
 
     $ pytest
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
+    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
+    cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 7 items
 
@@ -574,7 +606,7 @@ We can run this::
     file $REGENDOC_TMPDIR/b/test_error.py, line 1
       def test_root(db):  # no db here, will error out
     E       fixture 'db' not found
-    >       available fixtures: cache, capfd, capfdbinary, caplog, capsys, capsysbinary, doctest_namespace, monkeypatch, pytestconfig, record_property, record_xml_attribute, record_xml_property, recwarn, tmpdir, tmpdir_factory
+    >       available fixtures: cache, capfd, capfdbinary, caplog, capsys, capsysbinary, doctest_namespace, monkeypatch, pytestconfig, record_property, record_xml_attribute, recwarn, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
     >       use 'pytest --fixtures [testpath]' for help on them.
 
     $REGENDOC_TMPDIR/b/test_error.py:1
@@ -667,11 +699,14 @@ if you then have failing tests:
     def test_fail2():
         assert 0
 
-and run them::
+and run them:
+
+.. code-block:: pytest
 
     $ pytest test_module.py
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
+    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
+    cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 2 items
 
@@ -696,7 +731,9 @@ and run them::
     test_module.py:6: AssertionError
     ========================= 2 failed in 0.12 seconds =========================
 
-you will have a "failures" file which contains the failing test ids::
+you will have a "failures" file which contains the failing test ids:
+
+.. code-block:: bash
 
     $ cat failures
     test_module.py::test_fail1 (PYTEST_TMPDIR/test_fail10)
@@ -766,11 +803,14 @@ if you then have failing tests:
     def test_fail2():
         assert 0
 
-and run it::
+and run it:
+
+.. code-block:: pytest
 
     $ pytest -s test_module.py
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
+    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
+    cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 3 items
 
@@ -852,6 +892,8 @@ In that order.
     can be changed between releases (even bug fixes) so it shouldn't be relied on for scripting
     or automation.
 
+.. _freezing-pytest:
+
 Freezing pytest
 ---------------
 
@@ -895,6 +937,8 @@ like ``pytest-timeout`` they must be imported explicitly and passed on to pytest
 
 
 This allows you to execute tests using the frozen
-application with standard ``pytest`` command-line options::
+application with standard ``pytest`` command-line options:
+
+.. code-block:: bash
 
     ./app_main --pytest --verbose --tb=long --junitxml=results.xml test-suite/

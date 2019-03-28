@@ -84,6 +84,12 @@ pytest.warns
 .. autofunction:: pytest.warns(expected_warning: Exception, [match])
     :with:
 
+pytest.freeze_includes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**Tutorial**: :ref:`freezing-pytest`.
+
+.. autofunction:: pytest.freeze_includes
 
 .. _`marks ref`:
 
@@ -111,6 +117,7 @@ Add warning filters to marked test items.
         A *warning specification string*, which is composed of contents of the tuple ``(action, message, category, module, lineno)``
         as specified in `The Warnings filter <https://docs.python.org/3/library/warnings.html#warning-filter>`_ section of
         the Python documentation, separated by ``":"``. Optional fields can be omitted.
+        Module names passed for filtering are not regex-escaped.
 
         For example:
 
@@ -172,7 +179,7 @@ Mark a test function as using the given fixture names.
 
 .. warning::
 
-    This mark can be used with *test functions* only, having no affect when applied
+    This mark has no effect when applied
     to a **fixture** function.
 
 .. py:function:: pytest.mark.usefixtures(*names)
@@ -192,16 +199,18 @@ Marks a test function as *expected to fail*.
 .. py:function:: pytest.mark.xfail(condition=None, *, reason=None, raises=None, run=True, strict=False)
 
     :type condition: bool or str
-    :param condition: ``True/False`` if the condition should be marked as xfail or a :ref:`condition string <string conditions>`.
+    :param condition:
+        Condition for marking the test function as xfail (``True/False`` or a
+        :ref:`condition string <string conditions>`).
     :keyword str reason: Reason why the test function is marked as xfail.
     :keyword Exception raises: Exception subclass expected to be raised by the test function; other exceptions will fail the test.
     :keyword bool run:
         If the test function should actually be executed. If ``False``, the function will always xfail and will
-        not be executed (useful a function is segfaulting).
+        not be executed (useful if a function is segfaulting).
     :keyword bool strict:
         * If ``False`` (the default) the function will be shown in the terminal output as ``xfailed`` if it fails
           and as ``xpass`` if it passes. In both cases this will not cause the test suite to fail as a whole. This
-          is particularly useful to mark *flaky* tests (tests that random at fail) to be tackled later.
+          is particularly useful to mark *flaky* tests (tests that fail at random) to be tackled later.
         * If ``True``, the function will be shown in the terminal output as ``xfailed`` if it fails, but if it
           unexpectedly passes then it will **fail** the test suite. This is particularly useful to mark functions
           that are always failing and there should be a clear indication if they unexpectedly start to pass (for example
@@ -492,6 +501,32 @@ Each recorded warning is an instance of :class:`warnings.WarningMessage`.
     differently; see :ref:`ensuring_function_triggers`.
 
 
+tmp_path
+~~~~~~~~
+
+**Tutorial**: :doc:`tmpdir`
+
+.. currentmodule:: _pytest.tmpdir
+
+.. autofunction:: tmp_path()
+    :no-auto-options:
+
+
+tmp_path_factory
+~~~~~~~~~~~~~~~~
+
+**Tutorial**: :ref:`tmp_path_factory example`
+
+.. _`tmp_path_factory factory api`:
+
+``tmp_path_factory`` instances have the following methods:
+
+.. currentmodule:: _pytest.tmpdir
+
+.. automethod:: TempPathFactory.mktemp
+.. automethod:: TempPathFactory.getbasetemp
+
+
 tmpdir
 ~~~~~~
 
@@ -551,6 +586,8 @@ Initialization hooks called for plugins and ``conftest.py`` files.
 .. autofunction:: pytest_sessionstart
 .. autofunction:: pytest_sessionfinish
 
+.. autofunction:: pytest_plugin_registered
+
 Test running hooks
 ~~~~~~~~~~~~~~~~~~
 
@@ -574,6 +611,8 @@ into interactive debugging when a test failure occurs.
 The :py:mod:`_pytest.terminal` reported specifically uses
 the reporting hook to print information about a test run.
 
+.. autofunction:: pytest_pyfunc_call
+
 Collection hooks
 ~~~~~~~~~~~~~~~~
 
@@ -583,6 +622,7 @@ Collection hooks
 .. autofunction:: pytest_ignore_collect
 .. autofunction:: pytest_collect_directory
 .. autofunction:: pytest_collect_file
+.. autofunction:: pytest_pycollect_makemodule
 
 For influencing the collection of objects in Python modules
 you can use the following hook:
@@ -596,12 +636,15 @@ items, delete or otherwise amend the test items:
 
 .. autofunction:: pytest_collection_modifyitems
 
+.. autofunction:: pytest_collection_finish
+
 Reporting hooks
 ~~~~~~~~~~~~~~~
 
 Session related reporting hooks:
 
 .. autofunction:: pytest_collectstart
+.. autofunction:: pytest_make_collect_report
 .. autofunction:: pytest_itemcollected
 .. autofunction:: pytest_collectreport
 .. autofunction:: pytest_deselected
@@ -611,7 +654,6 @@ Session related reporting hooks:
 .. autofunction:: pytest_terminal_summary
 .. autofunction:: pytest_fixture_setup
 .. autofunction:: pytest_fixture_post_finalizer
-.. autofunction:: pytest_logwarning
 .. autofunction:: pytest_warning_captured
 
 And here is the central hook for reporting about
@@ -718,13 +760,6 @@ MarkGenerator
     :members:
 
 
-MarkInfo
-~~~~~~~~
-
-.. autoclass:: _pytest.mark.MarkInfo
-    :members:
-
-
 Mark
 ~~~~
 
@@ -798,6 +833,33 @@ Special Variables
 pytest treats some global variables in a special manner when defined in a test module.
 
 
+collect_ignore
+~~~~~~~~~~~~~~
+
+**Tutorial**: :ref:`customizing-test-collection`
+
+Can be declared in *conftest.py files* to exclude test directories or modules.
+Needs to be ``list[str]``.
+
+.. code-block:: python
+
+  collect_ignore = ["setup.py"]
+
+
+collect_ignore_glob
+~~~~~~~~~~~~~~~~~~~
+
+**Tutorial**: :ref:`customizing-test-collection`
+
+Can be declared in *conftest.py files* to exclude test directories or modules
+with Unix shell-style wildcards. Needs to be ``list[str]`` where ``str`` can
+contain glob patterns.
+
+.. code-block:: python
+
+  collect_ignore_glob = ["*_ignore.py"]
+
+
 pytest_plugins
 ~~~~~~~~~~~~~~
 
@@ -821,7 +883,7 @@ pytest_mark
 **Tutorial**: :ref:`scoped-marking`
 
 Can be declared at the **global** level in *test modules* to apply one or more :ref:`marks <marks ref>` to all
-test functions and methods. Can be either a single mark or a sequence of marks.
+test functions and methods. Can be either a single mark or a list of marks.
 
 .. code-block:: python
 
@@ -834,7 +896,7 @@ test functions and methods. Can be either a single mark or a sequence of marks.
 
     import pytest
 
-    pytestmark = (pytest.mark.integration, pytest.mark.slow)
+    pytestmark = [pytest.mark.integration, pytest.mark.slow]
 
 PYTEST_DONT_REWRITE (module docstring)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -889,6 +951,12 @@ Configuration Options
 Here is a list of builtin configuration options that may be written in a ``pytest.ini``, ``tox.ini`` or ``setup.cfg``
 file, usually located at the root of your repository. All options must be under a ``[pytest]`` section
 (``[tool:pytest]`` for ``setup.cfg`` files).
+
+.. warning::
+    Usage of ``setup.cfg`` is not recommended unless for very simple use cases. ``.cfg``
+    files use a different parser than ``pytest.ini`` and ``tox.ini`` which might cause hard to track
+    down problems.
+    When possible, it is recommended to use the latter files to hold your pytest configuration.
 
 Configuration file options may be overwritten in the command-line by using ``-o/--override``, which can also be
 passed multiple times. The expected format is ``name=value``. For example::
@@ -976,6 +1044,7 @@ passed multiple times. The expected format is ``name=value``. For example::
 
     * ``skip`` skips tests with an empty parameterset (default)
     * ``xfail`` marks tests with an empty parameterset as xfail(run=False)
+    * ``fail_at_collect`` raises an exception if parametrize collects an empty parameter set
 
     .. code-block:: ini
 
@@ -1009,6 +1078,20 @@ passed multiple times. The expected format is ``name=value``. For example::
    This tells pytest to ignore deprecation warnings and turn all other warnings
    into errors. For more information please refer to :ref:`warnings`.
 
+.. confval:: junit_family
+
+    .. versionadded:: 4.2
+
+    Configures the format of the generated JUnit XML file. The possible options are:
+
+    * ``xunit1`` (or ``legacy``): produces old style output, compatible with the xunit 1.0 format. **This is the default**.
+    * ``xunit2``: produces `xunit 2.0 style output <https://github.com/jenkinsci/xunit-plugin/blob/xunit-2.3.2/src/main/resources/org/jenkinsci/plugins/xunit/types/model/xsd/junit-10.xsd>`__,
+        which should be more compatible with latest Jenkins versions.
+
+    .. code-block:: ini
+
+        [pytest]
+        junit_family = xunit2
 
 .. confval:: junit_suite_name
 
@@ -1179,8 +1262,11 @@ passed multiple times. The expected format is ``name=value``. For example::
 
 .. confval:: markers
 
-    List of markers that are allowed in test functions, enforced when ``--strict`` command-line argument is used.
-    You can use a marker name per line, indented from the option name.
+    When the ``--strict`` command-line argument is used, only known markers -
+    defined in code by core pytest or some plugin - are allowed.
+    You can list additional markers in this setting to add them to the whitelist.
+
+    You can list one marker name per line, indented from the option name.
 
     .. code-block:: ini
 

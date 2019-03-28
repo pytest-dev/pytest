@@ -1,7 +1,9 @@
 """
 python version compatibility code
 """
-from __future__ import absolute_import, division, print_function
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 
 import codecs
 import functools
@@ -11,19 +13,19 @@ import sys
 from contextlib import contextmanager
 
 import py
+import six
+from six import text_type
 
 import _pytest
+from _pytest._io.saferepr import saferepr
+from _pytest.outcomes import fail
 from _pytest.outcomes import TEST_OUTCOME
-from six import text_type
-import six
 
 try:
     import enum
 except ImportError:  # pragma: no cover
     # Only available in Python 3.4+ or as a backport
     enum = None
-
-__all__ = ["Path", "PurePath"]
 
 _PY3 = sys.version_info > (3, 0)
 _PY2 = not _PY3
@@ -41,19 +43,14 @@ PY35 = sys.version_info[:2] >= (3, 5)
 PY36 = sys.version_info[:2] >= (3, 6)
 MODULE_NOT_FOUND_ERROR = "ModuleNotFoundError" if PY36 else "ImportError"
 
-if PY36:
-    from pathlib import Path, PurePath
-else:
-    from pathlib2 import Path, PurePath
-
 
 if _PY3:
     from collections.abc import MutableMapping as MappingMixin
-    from collections.abc import Mapping, Sequence
+    from collections.abc import Iterable, Mapping, Sequence, Sized
 else:
     # those raise DeprecationWarnings in Python >=3.7
     from collections import MutableMapping as MappingMixin  # noqa
-    from collections import Mapping, Sequence  # noqa
+    from collections import Iterable, Mapping, Sequence, Sized  # noqa
 
 
 if sys.version_info >= (3, 4):
@@ -138,9 +135,17 @@ def getfuncargnames(function, is_method=False, cls=None):
     # ordered mapping of parameter names to Parameter instances.  This
     # creates a tuple of the names of the parameters that don't have
     # defaults.
+    try:
+        parameters = signature(function).parameters
+    except (ValueError, TypeError) as e:
+        fail(
+            "Could not determine arguments of {!r}: {}".format(function, e),
+            pytrace=False,
+        )
+
     arg_names = tuple(
         p.name
-        for p in signature(function).parameters.values()
+        for p in parameters.values()
         if (
             p.kind is Parameter.POSITIONAL_OR_KEYWORD
             or p.kind is Parameter.KEYWORD_ONLY
@@ -176,6 +181,18 @@ def get_default_arg_names(function):
         if p.kind in (Parameter.POSITIONAL_OR_KEYWORD, Parameter.KEYWORD_ONLY)
         and p.default is not Parameter.empty
     )
+
+
+_non_printable_ascii_translate_table = {
+    i: u"\\x{:02x}".format(i) for i in range(128) if i not in range(32, 127)
+}
+_non_printable_ascii_translate_table.update(
+    {ord("\t"): u"\\t", ord("\r"): u"\\r", ord("\n"): u"\\n"}
+)
+
+
+def _translate_non_printable(s):
+    return s.translate(_non_printable_ascii_translate_table)
 
 
 if _PY3:
@@ -217,9 +234,10 @@ if _PY3:
 
         """
         if isinstance(val, bytes):
-            return _bytes_to_ascii(val)
+            ret = _bytes_to_ascii(val)
         else:
-            return val.encode("unicode_escape").decode("ascii")
+            ret = val.encode("unicode_escape").decode("ascii")
+        return _translate_non_printable(ret)
 
 
 else:
@@ -237,11 +255,12 @@ else:
         """
         if isinstance(val, bytes):
             try:
-                return val.encode("ascii")
+                ret = val.decode("ascii")
             except UnicodeDecodeError:
-                return val.encode("string-escape")
+                ret = val.encode("string-escape").decode("ascii")
         else:
-            return val.encode("unicode-escape")
+            ret = val.encode("unicode-escape").decode("ascii")
+        return _translate_non_printable(ret)
 
 
 class _PytestWrapper(object):
@@ -275,8 +294,8 @@ def get_real_func(obj):
         obj = new_obj
     else:
         raise ValueError(
-            ("could not find real function of {start}" "\nstopped at {current}").format(
-                start=py.io.saferepr(start_obj), current=py.io.saferepr(obj)
+            ("could not find real function of {start}\nstopped at {current}").format(
+                start=saferepr(start_obj), current=saferepr(obj)
             )
         )
     if isinstance(obj, functools.partial):
@@ -330,6 +349,14 @@ def safe_getattr(object, name, default):
         return default
 
 
+def safe_isclass(obj):
+    """Ignore any exception via isinstance on Python 3."""
+    try:
+        return isclass(obj)
+    except Exception:
+        return False
+
+
 def _is_unittest_unexpected_success_a_failure():
     """Return if the test suite should fail if an @expectedFailure unittest test PASSES.
 
@@ -363,7 +390,6 @@ else:
 COLLECT_FAKEMODULE_ATTRIBUTES = (
     "Collector",
     "Module",
-    "Generator",
     "Function",
     "Instance",
     "Session",
@@ -416,3 +442,16 @@ class FuncargnamesCompatAttr(object):
     def funcargnames(self):
         """ alias attribute for ``fixturenames`` for pre-2.3 compatibility"""
         return self.fixturenames
+
+
+if six.PY2:
+
+    def lru_cache(*_, **__):
+        def dec(fn):
+            return fn
+
+        return dec
+
+
+else:
+    from functools import lru_cache  # noqa: F401

@@ -1,12 +1,15 @@
-from __future__ import absolute_import, division, print_function
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 
+import os
+import shutil
 import sys
 import textwrap
 
 import py
+
 import pytest
-import os
-import shutil
 
 pytest_plugins = ("pytester",)
 
@@ -63,7 +66,8 @@ class TestNewAPI(object):
         )
         result = testdir.runpytest("-rw")
         assert result.ret == 1
-        result.stdout.fnmatch_lines(["*could not create cache path*", "*2 warnings*"])
+        # warnings from nodeids, lastfailed, and stepwise
+        result.stdout.fnmatch_lines(["*could not create cache path*", "*3 warnings*"])
 
     def test_config_cache(self, testdir):
         testdir.makeconftest(
@@ -144,15 +148,17 @@ class TestNewAPI(object):
         assert testdir.tmpdir.join("custom_cache_dir").isdir()
 
 
-def test_cache_reportheader(testdir):
-    testdir.makepyfile(
-        """
-        def test_hello():
-            pass
-    """
-    )
+@pytest.mark.parametrize("env", ((), ("TOX_ENV_DIR", "/tox_env_dir")))
+def test_cache_reportheader(env, testdir, monkeypatch):
+    testdir.makepyfile("""def test_foo(): pass""")
+    if env:
+        monkeypatch.setenv(*env)
+        expected = os.path.join(env[1], ".pytest_cache")
+    else:
+        monkeypatch.delenv("TOX_ENV_DIR", raising=False)
+        expected = ".pytest_cache"
     result = testdir.runpytest("-v")
-    result.stdout.fnmatch_lines(["cachedir: .pytest_cache"])
+    result.stdout.fnmatch_lines(["cachedir: %s" % expected])
 
 
 def test_cache_reportheader_external_abspath(testdir, tmpdir_factory):
@@ -215,7 +221,7 @@ def test_cache_show(testdir):
 
 class TestLastFailed(object):
     def test_lastfailed_usecase(self, testdir, monkeypatch):
-        monkeypatch.setenv("PYTHONDONTWRITEBYTECODE", 1)
+        monkeypatch.setenv("PYTHONDONTWRITEBYTECODE", "1")
         p = testdir.makepyfile(
             """
             def test_1():
@@ -301,7 +307,7 @@ class TestLastFailed(object):
         assert "test_a.py" not in result.stdout.str()
 
     def test_lastfailed_difference_invocations(self, testdir, monkeypatch):
-        monkeypatch.setenv("PYTHONDONTWRITEBYTECODE", 1)
+        monkeypatch.setenv("PYTHONDONTWRITEBYTECODE", "1")
         testdir.makepyfile(
             test_a="""\
             def test_a1():
@@ -335,7 +341,7 @@ class TestLastFailed(object):
         result.stdout.fnmatch_lines(["*1 failed*1 desel*"])
 
     def test_lastfailed_usecase_splice(self, testdir, monkeypatch):
-        monkeypatch.setenv("PYTHONDONTWRITEBYTECODE", 1)
+        monkeypatch.setenv("PYTHONDONTWRITEBYTECODE", "1")
         testdir.makepyfile(
             """\
             def test_1():
@@ -412,7 +418,7 @@ class TestLastFailed(object):
         result = testdir.runpytest("--lf")
         result.stdout.fnmatch_lines(
             [
-                "collected 4 items / 2 deselected",
+                "collected 4 items / 2 deselected / 2 selected",
                 "run-last-failure: rerun previous 2 failures",
                 "*2 failed, 2 deselected in*",
             ]
@@ -474,8 +480,8 @@ class TestLastFailed(object):
         )
 
         def rlf(fail_import, fail_run):
-            monkeypatch.setenv("FAILIMPORT", fail_import)
-            monkeypatch.setenv("FAILTEST", fail_run)
+            monkeypatch.setenv("FAILIMPORT", str(fail_import))
+            monkeypatch.setenv("FAILTEST", str(fail_run))
 
             testdir.runpytest("-q")
             config = testdir.parseconfigure()
@@ -519,8 +525,8 @@ class TestLastFailed(object):
         )
 
         def rlf(fail_import, fail_run, args=()):
-            monkeypatch.setenv("FAILIMPORT", fail_import)
-            monkeypatch.setenv("FAILTEST", fail_run)
+            monkeypatch.setenv("FAILIMPORT", str(fail_import))
+            monkeypatch.setenv("FAILTEST", str(fail_run))
 
             result = testdir.runpytest("-q", "--lf", *args)
             config = testdir.parseconfigure()
@@ -893,5 +899,41 @@ def test_gitignore(testdir):
     config = testdir.parseconfig()
     cache = Cache.for_config(config)
     cache.set("foo", "bar")
-    msg = "# created by pytest automatically, do not change\n*"
-    assert cache._cachedir.joinpath(".gitignore").read_text(encoding="UTF-8") == msg
+    msg = "# Created by pytest automatically.\n*"
+    gitignore_path = cache._cachedir.joinpath(".gitignore")
+    assert gitignore_path.read_text(encoding="UTF-8") == msg
+
+    # Does not overwrite existing/custom one.
+    gitignore_path.write_text(u"custom")
+    cache.set("something", "else")
+    assert gitignore_path.read_text(encoding="UTF-8") == "custom"
+
+
+def test_does_not_create_boilerplate_in_existing_dirs(testdir):
+    from _pytest.cacheprovider import Cache
+
+    testdir.makeini(
+        """
+        [pytest]
+        cache_dir = .
+        """
+    )
+    config = testdir.parseconfig()
+    cache = Cache.for_config(config)
+    cache.set("foo", "bar")
+
+    assert os.path.isdir("v")  # cache contents
+    assert not os.path.exists(".gitignore")
+    assert not os.path.exists("README.md")
+
+
+def test_cachedir_tag(testdir):
+    """Ensure we automatically create CACHEDIR.TAG file in the pytest_cache directory (#4278)."""
+    from _pytest.cacheprovider import Cache
+    from _pytest.cacheprovider import CACHEDIR_TAG_CONTENT
+
+    config = testdir.parseconfig()
+    cache = Cache.for_config(config)
+    cache.set("foo", "bar")
+    cachedir_tag_path = cache._cachedir.joinpath("CACHEDIR.TAG")
+    assert cachedir_tag_path.read_bytes() == CACHEDIR_TAG_CONTENT

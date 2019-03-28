@@ -1,23 +1,24 @@
 # -*- coding: utf-8 -*-
-from __future__ import absolute_import, division, print_function
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 
 import operator
 import os
 import sys
 import textwrap
-import _pytest
-import py
-import pytest
-import six
-from _pytest._code.code import (
-    ExceptionInfo,
-    FormattedExcinfo,
-    ReprExceptionInfo,
-    ExceptionChainRepr,
-)
-from six.moves import queue
 
+import py
+import six
+from six.moves import queue
 from test_source import astonly
+
+import _pytest
+import pytest
+from _pytest._code.code import ExceptionChainRepr
+from _pytest._code.code import ExceptionInfo
+from _pytest._code.code import FormattedExcinfo
+from _pytest._code.code import ReprExceptionInfo
 
 try:
     import importlib
@@ -29,6 +30,14 @@ else:
 failsonjython = pytest.mark.xfail("sys.platform.startswith('java')")
 
 pytest_version_info = tuple(map(int, pytest.__version__.split(".")[:3]))
+
+
+@pytest.fixture
+def limited_recursion_depth():
+    before = sys.getrecursionlimit()
+    sys.setrecursionlimit(150)
+    yield
+    sys.setrecursionlimit(before)
 
 
 class TWMock(object):
@@ -62,7 +71,7 @@ def test_excinfo_simple():
     try:
         raise ValueError
     except ValueError:
-        info = _pytest._code.ExceptionInfo()
+        info = _pytest._code.ExceptionInfo.from_current()
     assert info.type == ValueError
 
 
@@ -76,7 +85,7 @@ def test_excinfo_getstatement():
     try:
         f()
     except ValueError:
-        excinfo = _pytest._code.ExceptionInfo()
+        excinfo = _pytest._code.ExceptionInfo.from_current()
     linenumbers = [
         _pytest._code.getrawcode(f).co_firstlineno - 1 + 4,
         _pytest._code.getrawcode(f).co_firstlineno - 1 + 1,
@@ -117,7 +126,7 @@ class TestTraceback_f_g_h(object):
         try:
             h()
         except ValueError:
-            self.excinfo = _pytest._code.ExceptionInfo()
+            self.excinfo = _pytest._code.ExceptionInfo.from_current()
 
     def test_traceback_entries(self):
         tb = self.excinfo.traceback
@@ -154,7 +163,7 @@ class TestTraceback_f_g_h(object):
         try:
             exec(source.compile())
         except NameError:
-            tb = _pytest._code.ExceptionInfo().traceback
+            tb = _pytest._code.ExceptionInfo.from_current().traceback
             print(tb[-1].getsource())
             s = str(tb[-1].getsource())
             assert s.startswith("def xyz():\n    try:")
@@ -171,7 +180,8 @@ class TestTraceback_f_g_h(object):
 
     def test_traceback_cut_excludepath(self, testdir):
         p = testdir.makepyfile("def f(): raise ValueError")
-        excinfo = pytest.raises(ValueError, "p.pyimport().f()")
+        with pytest.raises(ValueError) as excinfo:
+            p.pyimport().f()
         basedir = py.path.local(pytest.__file__).dirpath()
         newtraceback = excinfo.traceback.cut(excludepath=basedir)
         for x in newtraceback:
@@ -239,7 +249,7 @@ class TestTraceback_f_g_h(object):
                 raise RuntimeError("hello")
             f(n - 1)
 
-        excinfo = pytest.raises(RuntimeError, f, 100)
+        excinfo = pytest.raises(RuntimeError, f, 25)
         monkeypatch.delattr(excinfo.traceback.__class__, "recursionindex")
         repr = excinfo.getrepr()
         assert "RuntimeError: hello" in str(repr.reprcrash)
@@ -327,7 +337,8 @@ class TestTraceback_f_g_h(object):
 def test_excinfo_exconly():
     excinfo = pytest.raises(ValueError, h)
     assert excinfo.exconly().startswith("ValueError")
-    excinfo = pytest.raises(ValueError, "raise ValueError('hello\\nworld')")
+    with pytest.raises(ValueError) as excinfo:
+        raise ValueError("hello\nworld")
     msg = excinfo.exconly(tryshort=True)
     assert msg.startswith("ValueError")
     assert msg.endswith("world")
@@ -347,6 +358,12 @@ def test_excinfo_str():
     assert len(s.split(":")) >= 3  # on windows it's 4
 
 
+def test_excinfo_for_later():
+    e = ExceptionInfo.for_later()
+    assert "for raises" in repr(e)
+    assert "for raises" in str(e)
+
+
 def test_excinfo_errisinstance():
     excinfo = pytest.raises(ValueError, h)
     assert excinfo.errisinstance(ValueError)
@@ -356,7 +373,7 @@ def test_excinfo_no_sourcecode():
     try:
         exec("raise ValueError()")
     except ValueError:
-        excinfo = _pytest._code.ExceptionInfo()
+        excinfo = _pytest._code.ExceptionInfo.from_current()
     s = str(excinfo.traceback[-1])
     assert s == "  File '<string>':1 in <module>\n  ???\n"
 
@@ -381,7 +398,7 @@ def test_entrysource_Queue_example():
     try:
         queue.Queue().get(timeout=0.001)
     except queue.Empty:
-        excinfo = _pytest._code.ExceptionInfo()
+        excinfo = _pytest._code.ExceptionInfo.from_current()
     entry = excinfo.traceback[-1]
     source = entry.getsource()
     assert source is not None
@@ -393,7 +410,7 @@ def test_codepath_Queue_example():
     try:
         queue.Queue().get(timeout=0.001)
     except queue.Empty:
-        excinfo = _pytest._code.ExceptionInfo()
+        excinfo = _pytest._code.ExceptionInfo.from_current()
     entry = excinfo.traceback[-1]
     path = entry.path
     assert isinstance(path, py.path.local)
@@ -444,7 +461,7 @@ class TestFormattedExcinfo(object):
         except KeyboardInterrupt:
             raise
         except:  # noqa
-            return _pytest._code.ExceptionInfo()
+            return _pytest._code.ExceptionInfo.from_current()
         assert 0, "did not raise"
 
     def test_repr_source(self):
@@ -482,7 +499,7 @@ class TestFormattedExcinfo(object):
         try:
             exec(co)
         except ValueError:
-            excinfo = _pytest._code.ExceptionInfo()
+            excinfo = _pytest._code.ExceptionInfo.from_current()
         repr = pr.repr_excinfo(excinfo)
         assert repr.reprtraceback.reprentries[1].lines[0] == ">   ???"
         if sys.version_info[0] >= 3:
@@ -501,7 +518,7 @@ raise ValueError()
         try:
             exec(co)
         except ValueError:
-            excinfo = _pytest._code.ExceptionInfo()
+            excinfo = _pytest._code.ExceptionInfo.from_current()
         repr = pr.repr_excinfo(excinfo)
         assert repr.reprtraceback.reprentries[1].lines[0] == ">   ???"
         if sys.version_info[0] >= 3:
@@ -1176,20 +1193,28 @@ raise ValueError()
         assert tw.lines[47] == ":15: AttributeError"
 
     @pytest.mark.skipif("sys.version_info[0] < 3")
-    def test_exc_repr_with_raise_from_none_chain_suppression(self, importasmod):
+    @pytest.mark.parametrize("mode", ["from_none", "explicit_suppress"])
+    def test_exc_repr_chain_suppression(self, importasmod, mode):
+        """Check that exc repr does not show chained exceptions in Python 3.
+        - When the exception is raised with "from None"
+        - Explicitly suppressed with "chain=False" to ExceptionInfo.getrepr().
+        """
+        raise_suffix = " from None" if mode == "from_none" else ""
         mod = importasmod(
             """
             def f():
                 try:
                     g()
                 except Exception:
-                    raise AttributeError() from None
+                    raise AttributeError(){raise_suffix}
             def g():
                 raise ValueError()
-        """
+        """.format(
+                raise_suffix=raise_suffix
+            )
         )
         excinfo = pytest.raises(AttributeError, mod.f)
-        r = excinfo.getrepr(style="long")
+        r = excinfo.getrepr(style="long", chain=mode != "explicit_suppress")
         tw = TWMock()
         r.toterminal(tw)
         for line in tw.lines:
@@ -1199,7 +1224,9 @@ raise ValueError()
         assert tw.lines[2] == "        try:"
         assert tw.lines[3] == "            g()"
         assert tw.lines[4] == "        except Exception:"
-        assert tw.lines[5] == ">           raise AttributeError() from None"
+        assert tw.lines[5] == ">           raise AttributeError(){}".format(
+            raise_suffix
+        )
         assert tw.lines[6] == "E           AttributeError"
         assert tw.lines[7] == ""
         line = tw.get_write_msg(8)
@@ -1321,7 +1348,7 @@ def test_repr_traceback_with_unicode(style, encoding):
     try:
         raise RuntimeError(msg)
     except RuntimeError:
-        e_info = ExceptionInfo()
+        e_info = ExceptionInfo.from_current()
     formatter = FormattedExcinfo(style=style)
     repr_traceback = formatter.repr_traceback(e_info)
     assert repr_traceback is not None
@@ -1341,11 +1368,13 @@ def test_cwd_deleted(testdir):
     assert "INTERNALERROR" not in result.stdout.str() + result.stderr.str()
 
 
+@pytest.mark.usefixtures("limited_recursion_depth")
 def test_exception_repr_extraction_error_on_recursion():
     """
     Ensure we can properly detect a recursion error even
     if some locals raise error on comparison (#2459).
     """
+    from _pytest.pytester import LineMatcher
 
     class numpy_like(object):
         def __eq__(self, other):
@@ -1361,40 +1390,30 @@ def test_exception_repr_extraction_error_on_recursion():
     def b(x):
         return a(numpy_like())
 
-    try:
+    with pytest.raises(RuntimeError) as excinfo:
         a(numpy_like())
-    except:  # noqa
-        from _pytest._code.code import ExceptionInfo
-        from _pytest.pytester import LineMatcher
 
-        exc_info = ExceptionInfo()
-
-        matcher = LineMatcher(str(exc_info.getrepr()).splitlines())
-        matcher.fnmatch_lines(
-            [
-                "!!! Recursion error detected, but an error occurred locating the origin of recursion.",
-                "*The following exception happened*",
-                "*ValueError: The truth value of an array*",
-            ]
-        )
+    matcher = LineMatcher(str(excinfo.getrepr()).splitlines())
+    matcher.fnmatch_lines(
+        [
+            "!!! Recursion error detected, but an error occurred locating the origin of recursion.",
+            "*The following exception happened*",
+            "*ValueError: The truth value of an array*",
+        ]
+    )
 
 
+@pytest.mark.usefixtures("limited_recursion_depth")
 def test_no_recursion_index_on_recursion_error():
     """
     Ensure that we don't break in case we can't find the recursion index
     during a recursion error (#2486).
     """
-    try:
 
-        class RecursionDepthError(object):
-            def __getattr__(self, attr):
-                return getattr(self, "_" + attr)
+    class RecursionDepthError(object):
+        def __getattr__(self, attr):
+            return getattr(self, "_" + attr)
 
+    with pytest.raises(RuntimeError) as excinfo:
         RecursionDepthError().trigger
-    except:  # noqa
-        from _pytest._code.code import ExceptionInfo
-
-        exc_info = ExceptionInfo()
-        assert "maximum recursion" in str(exc_info.getrepr())
-    else:
-        assert 0
+    assert "maximum recursion" in str(excinfo.getrepr())

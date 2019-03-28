@@ -1,10 +1,12 @@
 import os
-import six
-import sys
 import platform
+import sys
 import traceback
 
-from ..outcomes import fail, TEST_OUTCOME
+import six
+
+from ..outcomes import fail
+from ..outcomes import TEST_OUTCOME
 
 
 def cached_eval(config, expr, d):
@@ -90,7 +92,10 @@ class MarkEvaluator(object):
                     else:
                         if "reason" not in mark.kwargs:
                             # XXX better be checked at collection time
-                            msg = "you need to specify reason=STRING " "when using booleans as conditions."
+                            msg = (
+                                "you need to specify reason=STRING "
+                                "when using booleans as conditions."
+                            )
                             fail(msg)
                         result = bool(expr)
                     if result:

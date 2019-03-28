@@ -1,0 +1,2 @@
+Remove deprecated Sphinx directive, ``add_description_unit()``,
+pin sphinx-removed-in to >= 0.2.0 to support Sphinx 2.0.

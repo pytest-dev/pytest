@@ -35,7 +35,9 @@ There are two ways in which ``pytest`` can perform capturing:
 
 .. _`disable capturing`:
 
-You can influence output capturing mechanisms from the command line::
+You can influence output capturing mechanisms from the command line:
+
+.. code-block:: bash
 
     pytest -s            # disable all capturing
     pytest --capture=sys # replace sys.stdout/stderr with in-mem files
@@ -52,7 +54,7 @@ is that you can use print statements for debugging::
     # content of test_module.py
 
     def setup_function(function):
-        print ("setting up %s" % function)
+        print("setting up %s" % function)
 
     def test_func1():
         assert True
@@ -61,11 +63,14 @@ is that you can use print statements for debugging::
         assert False
 
 and running this module will show you precisely the output
-of the failing function and hide the other one::
+of the failing function and hide the other one:
+
+.. code-block:: pytest
 
     $ pytest
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
+    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
+    cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 2 items
 

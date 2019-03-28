@@ -175,3 +175,13 @@ Previous to version 2.4 to set a break point in code one needed to use ``pytest.
 This is no longer needed and one can use the native ``import pdb;pdb.set_trace()`` call directly.
 
 For more details see :ref:`breakpoints`.
+
+"compat" properties
+-------------------
+
+.. deprecated:: 3.9
+
+Access of ``Module``, ``Function``, ``Class``, ``Instance``, ``File`` and ``Item`` through ``Node`` instances have long
+been documented as deprecated, but started to emit warnings from pytest ``3.9`` and onward.
+
+Users should just ``import pytest`` and access those objects using the ``pytest`` module.

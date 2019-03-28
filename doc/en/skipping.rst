@@ -22,7 +22,9 @@ it's an **xpass** and will be reported in the test summary.
 ``pytest`` counts and lists *skip* and *xfail* tests separately. Detailed
 information about skipped/xfailed tests is not shown by default to avoid
 cluttering the output.  You can use the ``-r`` option to see details
-corresponding to the "short" letters shown in the test progress::
+corresponding to the "short" letters shown in the test progress:
+
+.. code-block:: bash
 
     pytest -rxXs  # show extra info on xfailed, xpassed, and skipped tests
 
@@ -58,18 +60,20 @@ by calling the ``pytest.skip(reason)`` function:
         if not valid_config():
             pytest.skip("unsupported configuration")
 
+The imperative method is useful when it is not possible to evaluate the skip condition
+during import time.
+
 It is also possible to skip the whole module using
 ``pytest.skip(reason, allow_module_level=True)`` at the module level:
 
 .. code-block:: python
 
+    import sys
     import pytest
 
-    if not pytest.config.getoption("--custom-flag"):
-        pytest.skip("--custom-flag is missing, skipping tests", allow_module_level=True)
+    if not sys.platform.startswith("win"):
+        pytest.skip("skipping windows-only tests", allow_module_level=True)
 
-The imperative method is useful when it is not possible to evaluate the skip condition
-during import time.
 
 **Reference**: :ref:`pytest.mark.skip ref`
 
@@ -80,7 +84,7 @@ during import time.
 
 If you wish to skip something conditionally then you can use ``skipif`` instead.
 Here is an example of marking a test function to be skipped
-when run on an interpreter earlier than Python3.6 ::
+when run on an interpreter earlier than Python3.6::
 
     import sys
     @pytest.mark.skipif(sys.version_info < (3,6),
@@ -307,7 +311,9 @@ investigated later.
 Ignoring xfail
 ~~~~~~~~~~~~~~
 
-By specifying on the commandline::
+By specifying on the commandline:
+
+.. code-block:: bash
 
     pytest --runxfail
 
@@ -321,11 +327,14 @@ Here is a simple test file with the several usages:
 
 .. literalinclude:: example/xfail_demo.py
 
-Running it with the report-on-xfail option gives this output::
+Running it with the report-on-xfail option gives this output:
+
+.. code-block:: pytest
 
     example $ pytest -rx xfail_demo.py
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
+    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
+    cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR/example, inifile:
     collected 7 items
 

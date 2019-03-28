@@ -20,8 +20,7 @@ Thanks to all who contributed to this release, among them:
 * Ondřej Súkup
 * Ronny Pfannschmidt
 * T.E.A de Souza
-* Victor
-* victor
+* Victor Maryama
 
 
 Happy testing,

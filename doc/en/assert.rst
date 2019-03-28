@@ -22,11 +22,14 @@ following::
         assert f() == 4
 
 to assert that your function returns a certain value. If this assertion fails
-you will see the return value of the function call::
+you will see the return value of the function call:
+
+.. code-block:: pytest
 
     $ pytest test_assert1.py
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
+    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
+    cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 1 item
 
@@ -85,24 +88,30 @@ and if you need to have access to the actual exception info you may use::
 the actual exception raised.  The main attributes of interest are
 ``.type``, ``.value`` and ``.traceback``.
 
-.. versionchanged:: 3.0
+You can pass a ``match`` keyword parameter to the context-manager to test
+that a regular expression matches on the string representation of an exception
+(similar to the ``TestCase.assertRaisesRegexp`` method from ``unittest``)::
 
-In the context manager form you may use the keyword argument
-``message`` to specify a custom failure message::
+    import pytest
 
-     >>> with raises(ZeroDivisionError, message="Expecting ZeroDivisionError"):
-     ...     pass
-     ... Failed: Expecting ZeroDivisionError
+    def myfunc():
+        raise ValueError("Exception 123 raised")
 
-If you want to write test code that works on Python 2.4 as well,
-you may also use two other ways to test for an expected exception::
+    def test_match():
+        with pytest.raises(ValueError, match=r'.* 123 .*'):
+            myfunc()
+
+The regexp parameter of the ``match`` method is matched with the ``re.search``
+function, so in the above example ``match='123'`` would have worked as
+well.
+
+There's an alternate form of the ``pytest.raises`` function where you pass
+a function that will be executed with the given ``*args`` and ``**kwargs`` and
+assert that the given exception is raised::
 
     pytest.raises(ExpectedException, func, *args, **kwargs)
-    pytest.raises(ExpectedException, "func(*args, **kwargs)")
 
-both of which execute the specified function with args and kwargs and
-asserts that the given ``ExpectedException`` is raised.  The reporter will
-provide you with helpful output in case of failures such as *no
+The reporter will provide you with helpful output in case of failures such as *no
 exception* or *wrong exception*.
 
 Note that it is also possible to specify a "raises" argument to
@@ -118,23 +127,6 @@ exceptions your own code is deliberately raising, whereas using
 ``@pytest.mark.xfail`` with a check function is probably better for something
 like documenting unfixed bugs (where the test describes what "should" happen)
 or bugs in dependencies.
-
-Also, the context manager form accepts a ``match`` keyword parameter to test
-that a regular expression matches on the string representation of an exception
-(like the ``TestCase.assertRaisesRegexp`` method from ``unittest``)::
-
-    import pytest
-
-    def myfunc():
-        raise ValueError("Exception 123 raised")
-
-    def test_match():
-        with pytest.raises(ValueError, match=r'.* 123 .*'):
-            myfunc()
-
-The regexp parameter of the ``match`` method is matched with the ``re.search``
-function. So in the above example ``match='123'`` would have worked as
-well.
 
 
 .. _`assertwarns`:
@@ -165,11 +157,14 @@ when it encounters comparisons.  For example::
         set2 = set("8035")
         assert set1 == set2
 
-if you run this module::
+if you run this module:
+
+.. code-block:: pytest
 
     $ pytest test_assert2.py
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
+    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
+    cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 1 item
 
@@ -200,8 +195,8 @@ Special comparisons are done for a number of cases:
 
 See the :ref:`reporting demo <tbreportdemo>` for many more examples.
 
-Defining your own assertion comparison
-----------------------------------------------
+Defining your own explanation for failed assertions
+---------------------------------------------------
 
 It is possible to add your own detailed explanations by implementing
 the ``pytest_assertrepr_compare`` hook.
@@ -235,7 +230,9 @@ now, given this test module::
        assert f1 == f2
 
 you can run the test module and get the custom output defined in
-the conftest file::
+the conftest file:
+
+.. code-block:: pytest
 
    $ pytest -q test_foocompare.py
    F                                                                    [100%]
@@ -255,8 +252,8 @@ the conftest file::
 .. _assert-details:
 .. _`assert introspection`:
 
-Advanced assertion introspection
-----------------------------------
+Assertion introspection details
+-------------------------------
 
 .. versionadded:: 2.1
 
@@ -269,27 +266,45 @@ supporting modules which are not themselves test modules will not be rewritten**
 
 You can manually enable assertion rewriting for an imported module by calling
 `register_assert_rewrite <https://docs.pytest.org/en/latest/writing_plugins.html#assertion-rewriting>`_
-before you import it (a good place to do that is in ``conftest.py``).
-
-.. note::
-
-   ``pytest`` rewrites test modules on import by using an import
-   hook to write new ``pyc`` files. Most of the time this works transparently.
-   However, if you are messing with import yourself, the import hook may
-   interfere.
-
-   If this is the case you have two options:
-
-   * Disable rewriting for a specific module by adding the string
-     ``PYTEST_DONT_REWRITE`` to its docstring.
-
-   * Disable rewriting for all modules by using ``--assert=plain``.
-
-   Additionally, rewriting will fail silently if it cannot write new ``.pyc`` files,
-   i.e. in a read-only filesystem or a zipfile.
-
+before you import it (a good place to do that is in your root ``conftest.py``).
 
 For further information, Benjamin Peterson wrote up `Behind the scenes of pytest's new assertion rewriting <http://pybites.blogspot.com/2011/07/behind-scenes-of-pytests-new-assertion.html>`_.
+
+Assertion rewriting caches files on disk
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+``pytest`` will write back the rewritten modules to disk for caching. You can disable
+this behavior (for example to avoid leaving stale ``.pyc`` files around in projects that
+move files around a lot) by adding this to the top of your ``conftest.py`` file:
+
+.. code-block:: python
+
+   import sys
+
+   sys.dont_write_bytecode = True
+
+Note that you still get the benefits of assertion introspection, the only change is that
+the ``.pyc`` files won't be cached on disk.
+
+Additionally, rewriting will silently skip caching if it cannot write new ``.pyc`` files,
+i.e. in a read-only filesystem or a zipfile.
+
+
+Disabling assert rewriting
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+``pytest`` rewrites test modules on import by using an import
+hook to write new ``pyc`` files. Most of the time this works transparently.
+However, if you are working with the import machinery yourself, the import hook may
+interfere.
+
+If this is the case you have two options:
+
+* Disable rewriting for a specific module by adding the string
+  ``PYTEST_DONT_REWRITE`` to its docstring.
+
+* Disable rewriting for all modules by using ``--assert=plain``.
+
 
 .. versionadded:: 2.1
    Add assert rewriting as an alternate introspection technique.

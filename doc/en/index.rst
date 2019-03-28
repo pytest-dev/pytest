@@ -22,11 +22,14 @@ An example of a simple test:
         assert inc(3) == 5
 
 
-To execute it::
+To execute it:
+
+.. code-block:: pytest
 
     $ pytest
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
+    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
+    cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 1 item
 

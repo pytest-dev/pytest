@@ -1,13 +1,10 @@
-import six
-import warnings
 import argparse
-
-from gettext import gettext as _
-import sys as _sys
+import warnings
 
 import py
+import six
 
-from ..main import EXIT_USAGEERROR
+from _pytest.config.exceptions import UsageError
 
 FILE_OR_DIR = "file_or_dir"
 
@@ -18,6 +15,8 @@ class Parser(object):
     :ivar extra_info: dict of generic param -> value to display in case
         there's an error processing the command line arguments.
     """
+
+    prog = None
 
     def __init__(self, usage=None, processopt=None):
         self._anonymous = OptionGroup("custom options", parser=self)
@@ -83,7 +82,7 @@ class Parser(object):
     def _getparser(self):
         from _pytest._argcomplete import filescompleter
 
-        optparser = MyOptionParser(self, self.extra_info)
+        optparser = MyOptionParser(self, self.extra_info, prog=self.prog)
         groups = self._groups + [self._anonymous]
         for group in groups:
             if group.options:
@@ -153,7 +152,7 @@ class ArgumentError(Exception):
 class Argument(object):
     """class that mimics the necessary behaviour of optparse.Option
 
-    its currently a least effort implementation
+    it's currently a least effort implementation
     and ignoring choices and integer prefixes
     https://docs.python.org/3/library/optparse.html#optparse-standard-option-types
     """
@@ -320,12 +319,13 @@ class OptionGroup(object):
 
 
 class MyOptionParser(argparse.ArgumentParser):
-    def __init__(self, parser, extra_info=None):
+    def __init__(self, parser, extra_info=None, prog=None):
         if not extra_info:
             extra_info = {}
         self._parser = parser
         argparse.ArgumentParser.__init__(
             self,
+            prog=prog,
             usage=parser._usage,
             add_help=False,
             formatter_class=DropShorterLongHelpFormatter,
@@ -335,14 +335,13 @@ class MyOptionParser(argparse.ArgumentParser):
         self.extra_info = extra_info
 
     def error(self, message):
-        """error(message: string)
+        """Transform argparse error message into UsageError."""
+        msg = "%s: error: %s" % (self.prog, message)
 
-        Prints a usage message incorporating the message to stderr and
-        exits.
-        Overrides the method in parent class to change exit code"""
-        self.print_usage(_sys.stderr)
-        args = {"prog": self.prog, "message": message}
-        self.exit(EXIT_USAGEERROR, _("%(prog)s: error: %(message)s\n") % args)
+        if hasattr(self._parser, "_config_source_hint"):
+            msg = "%s (%s)" % (msg, self._parser._config_source_hint)
+
+        raise UsageError(self.format_usage() + msg)
 
     def parse_args(self, args=None, namespace=None):
         """allow splitting of positional arguments"""

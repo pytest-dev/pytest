@@ -66,11 +66,14 @@ using it::
 
 Here, the ``test_ehlo`` needs the ``smtp_connection`` fixture value.  pytest
 will discover and call the :py:func:`@pytest.fixture <_pytest.python.fixture>`
-marked ``smtp_connection`` fixture function.  Running the test looks like this::
+marked ``smtp_connection`` fixture function.  Running the test looks like this:
+
+.. code-block:: pytest
 
     $ pytest test_smtpsimple.py
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
+    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
+    cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 1 item
 
@@ -111,7 +114,9 @@ with a list of available function arguments.
 
 .. note::
 
-    You can always issue ::
+    You can always issue:
+
+    .. code-block:: bash
 
         pytest --fixtures test_simplefactory.py
 
@@ -153,7 +158,7 @@ This makes use of the automatic caching mechanisms of pytest.
 
 Another good approach is by adding the data files in the ``tests`` folder.
 There are also community plugins available to help managing this aspect of
-testing, e.g. `pytest-datadir <https://github.com/gabrielcnr/pytest-datadir>`__
+testing, e.g. `pytest-datadir <https://pypi.org/project/pytest-datadir/>`__
 and `pytest-datafiles <https://pypi.org/project/pytest-datafiles/>`__.
 
 .. _smtpshared:
@@ -171,6 +176,7 @@ to cause the decorated ``smtp_connection`` fixture function to only be invoked
 once per test *module* (the default is to invoke once per test *function*).
 Multiple test functions in a test module will thus
 each receive the same ``smtp_connection`` fixture instance, thus saving time.
+Possible values for ``scope`` are: ``function``, ``class``, ``module``, ``package`` or ``session``.
 
 The next example puts the fixture function into a separate ``conftest.py`` file
 so that tests from multiple test modules in the directory can
@@ -203,11 +209,14 @@ located)::
         assert 0  # for demo purposes
 
 We deliberately insert failing ``assert 0`` statements in order to
-inspect what is going on and can now run the tests::
+inspect what is going on and can now run the tests:
+
+.. code-block:: pytest
 
     $ pytest test_module.py
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
+    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
+    cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 2 items
 
@@ -257,6 +266,11 @@ instance, you can simply declare it:
         ...
 
 Finally, the ``class`` scope will invoke the fixture once per test *class*.
+
+.. note::
+
+    Pytest will only cache one instance of a fixture at a time.
+    This means that when using a parametrized fixture, pytest may invoke a fixture more than once in the given scope.
 
 
 ``package`` scope (experimental)
@@ -350,7 +364,9 @@ The ``print`` and ``smtp.close()`` statements will execute when the last test in
 the module has finished execution, regardless of the exception status of the
 tests.
 
-Let's execute it::
+Let's execute it:
+
+.. code-block:: pytest
 
     $ pytest -s -q --tb=no
     FFteardown smtp
@@ -454,12 +470,14 @@ read an optional server URL from the test module which uses our fixture::
         server = getattr(request.module, "smtpserver", "smtp.gmail.com")
         smtp_connection = smtplib.SMTP(server, 587, timeout=5)
         yield smtp_connection
-        print ("finalizing %s (%s)" % (smtp_connection, server))
+        print("finalizing %s (%s)" % (smtp_connection, server))
         smtp_connection.close()
 
 We use the ``request.module`` attribute to optionally obtain an
 ``smtpserver`` attribute from the test module.  If we just execute
-again, nothing much has changed::
+again, nothing much has changed:
+
+.. code-block:: pytest
 
     $ pytest -s -q --tb=no
     FFfinalizing <smtplib.SMTP object at 0xdeadbeef> (smtp.gmail.com)
@@ -476,7 +494,9 @@ server URL in its module namespace::
     def test_showhelo(smtp_connection):
         assert 0, smtp_connection.helo()
 
-Running it::
+Running it:
+
+.. code-block:: pytest
 
     $ pytest -qq --tb=short test_anothersmtp.py
     F                                                                    [100%]
@@ -578,7 +598,9 @@ The main change is the declaration of ``params`` with
 :py:func:`@pytest.fixture <_pytest.python.fixture>`, a list of values
 for each of which the fixture function will execute and can access
 a value via ``request.param``.  No test function code needs to change.
-So let's just do another run::
+So let's just do another run:
+
+.. code-block:: pytest
 
     $ pytest -q test_module.py
     FFFF                                                                 [100%]
@@ -614,7 +636,7 @@ So let's just do another run::
             response, msg = smtp_connection.ehlo()
             assert response == 250
     >       assert b"smtp.gmail.com" in msg
-    E       AssertionError: assert b'smtp.gmail.com' in b'mail.python.org\nPIPELINING\nSIZE 51200000\nETRN\nSTARTTLS\nAUTH DIGEST-MD5 NTLM CRAM-MD5\nENHANCEDSTATUSCODES\n8BITMIME\nDSN\nSMTPUTF8'
+    E       AssertionError: assert b'smtp.gmail.com' in b'mail.python.org\nPIPELINING\nSIZE 51200000\nETRN\nSTARTTLS\nAUTH DIGEST-MD5 NTLM CRAM-MD5\nENHANCEDSTATUSCODES\n8BITMIME\nDSN\nSMTPUTF8\nCHUNKING'
 
     test_module.py:5: AssertionError
     -------------------------- Captured stdout setup ---------------------------
@@ -680,26 +702,29 @@ a function which will be called with the fixture value and then
 has to return a string to use.  In the latter case if the function
 return ``None`` then pytest's auto-generated ID will be used.
 
-Running the above tests results in the following test IDs being used::
+Running the above tests results in the following test IDs being used:
+
+.. code-block:: pytest
 
    $ pytest --collect-only
    =========================== test session starts ============================
-   platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
+   platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
+   cachedir: $PYTHON_PREFIX/.pytest_cache
    rootdir: $REGENDOC_TMPDIR, inifile:
    collected 10 items
-   <Module 'test_anothersmtp.py'>
-     <Function 'test_showhelo[smtp.gmail.com]'>
-     <Function 'test_showhelo[mail.python.org]'>
-   <Module 'test_ids.py'>
-     <Function 'test_a[spam]'>
-     <Function 'test_a[ham]'>
-     <Function 'test_b[eggs]'>
-     <Function 'test_b[1]'>
-   <Module 'test_module.py'>
-     <Function 'test_ehlo[smtp.gmail.com]'>
-     <Function 'test_noop[smtp.gmail.com]'>
-     <Function 'test_ehlo[mail.python.org]'>
-     <Function 'test_noop[mail.python.org]'>
+   <Module test_anothersmtp.py>
+     <Function test_showhelo[smtp.gmail.com]>
+     <Function test_showhelo[mail.python.org]>
+   <Module test_ids.py>
+     <Function test_a[spam]>
+     <Function test_a[ham]>
+     <Function test_b[eggs]>
+     <Function test_b[1]>
+   <Module test_module.py>
+     <Function test_ehlo[smtp.gmail.com]>
+     <Function test_noop[smtp.gmail.com]>
+     <Function test_ehlo[mail.python.org]>
+     <Function test_noop[mail.python.org]>
 
    ======================= no tests ran in 0.12 seconds =======================
 
@@ -722,12 +747,14 @@ Example::
     def test_data(data_set):
         pass
 
-Running this test will *skip* the invocation of ``data_set`` with value ``2``::
+Running this test will *skip* the invocation of ``data_set`` with value ``2``:
+
+.. code-block:: pytest
 
     $ pytest test_fixture_marks.py -v
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.6
-    cachedir: .pytest_cache
+    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python
+    cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR, inifile:
     collecting ... collected 3 items
 
@@ -765,12 +792,14 @@ and instantiate an object ``app`` where we stick the already defined
         assert app.smtp_connection
 
 Here we declare an ``app`` fixture which receives the previously defined
-``smtp_connection`` fixture and instantiates an ``App`` object with it.  Let's run it::
+``smtp_connection`` fixture and instantiates an ``App`` object with it.  Let's run it:
+
+.. code-block:: pytest
 
     $ pytest -v test_appsetup.py
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.6
-    cachedir: .pytest_cache
+    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python
+    cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR, inifile:
     collecting ... collected 2 items
 
@@ -784,7 +813,7 @@ different ``App`` instances and respective smtp servers.  There is no
 need for the ``app`` fixture to be aware of the ``smtp_connection``
 parametrization because pytest will fully analyse the fixture dependency graph.
 
-Note, that the ``app`` fixture has a scope of ``module`` and uses a
+Note that the ``app`` fixture has a scope of ``module`` and uses a
 module-scoped ``smtp_connection`` fixture.  The example would still work if
 ``smtp_connection`` was cached on a ``session`` scope: it is fine for fixtures to use
 "broader" scoped fixtures but not the other way round:
@@ -815,31 +844,33 @@ to show the setup/teardown flow::
     @pytest.fixture(scope="module", params=["mod1", "mod2"])
     def modarg(request):
         param = request.param
-        print ("  SETUP modarg %s" % param)
+        print("  SETUP modarg %s" % param)
         yield param
-        print ("  TEARDOWN modarg %s" % param)
+        print("  TEARDOWN modarg %s" % param)
 
     @pytest.fixture(scope="function", params=[1,2])
     def otherarg(request):
         param = request.param
-        print ("  SETUP otherarg %s" % param)
+        print("  SETUP otherarg %s" % param)
         yield param
-        print ("  TEARDOWN otherarg %s" % param)
+        print("  TEARDOWN otherarg %s" % param)
 
     def test_0(otherarg):
-        print ("  RUN test0 with otherarg %s" % otherarg)
+        print("  RUN test0 with otherarg %s" % otherarg)
     def test_1(modarg):
-        print ("  RUN test1 with modarg %s" % modarg)
+        print("  RUN test1 with modarg %s" % modarg)
     def test_2(otherarg, modarg):
-        print ("  RUN test2 with otherarg %s and modarg %s" % (otherarg, modarg))
+        print("  RUN test2 with otherarg %s and modarg %s" % (otherarg, modarg))
 
 
-Let's run the tests in verbose mode and with looking at the print-output::
+Let's run the tests in verbose mode and with looking at the print-output:
+
+.. code-block:: pytest
 
     $ pytest -v -s test_module.py
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.6
-    cachedir: .pytest_cache
+    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python
+    cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR, inifile:
     collecting ... collected 8 items
 
@@ -936,7 +967,9 @@ and declare its use in a test module via a ``usefixtures`` marker::
 Due to the ``usefixtures`` marker, the ``cleandir`` fixture
 will be required for the execution of each test method, just as if
 you specified a "cleandir" function argument to each of them.  Let's run it
-to verify our fixture is activated and the tests pass::
+to verify our fixture is activated and the tests pass:
+
+.. code-block:: pytest
 
     $ pytest -q
     ..                                                                   [100%]
@@ -1035,7 +1068,9 @@ which implies that all test methods in the class will use this fixture
 without a need to state it in the test function signature or with a
 class-level ``usefixtures`` decorator.
 
-If we run it, we get two passing tests::
+If we run it, we get two passing tests:
+
+.. code-block:: pytest
 
     $ pytest -q
     ..                                                                   [100%]

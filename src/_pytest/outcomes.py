@@ -2,7 +2,10 @@
 exception classes and constants handling test outcomes
 as well as functions creating them
 """
-from __future__ import absolute_import, division, print_function
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+
 import sys
 
 
@@ -46,21 +49,27 @@ class Failed(OutcomeException):
     __module__ = "builtins"
 
 
-class Exit(KeyboardInterrupt):
+class Exit(Exception):
     """ raised for immediate program exits (no tracebacks/summaries)"""
 
-    def __init__(self, msg="unknown reason"):
+    def __init__(self, msg="unknown reason", returncode=None):
         self.msg = msg
-        KeyboardInterrupt.__init__(self, msg)
+        self.returncode = returncode
+        super(Exit, self).__init__(msg)
 
 
 # exposed helper methods
 
 
-def exit(msg):
-    """ exit testing process as if KeyboardInterrupt was triggered. """
+def exit(msg, returncode=None):
+    """
+    Exit testing process.
+
+    :param str msg: message to display upon exit.
+    :param int returncode: return code to be used when exiting pytest.
+    """
     __tracebackhide__ = True
-    raise Exit(msg)
+    raise Exit(msg, returncode)
 
 
 exit.Exception = Exit
@@ -128,10 +137,15 @@ def xfail(reason=""):
 xfail.Exception = XFailed
 
 
-def importorskip(modname, minversion=None):
-    """ return imported module if it has at least "minversion" as its
-    __version__ attribute.  If no minversion is specified the a skip
-    is only triggered if the module can not be imported.
+def importorskip(modname, minversion=None, reason=None):
+    """Imports and returns the requested module ``modname``, or skip the current test
+    if the module cannot be imported.
+
+    :param str modname: the name of the module to import
+    :param str minversion: if given, the imported module ``__version__`` attribute must be
+        at least this minimal version, otherwise the test is still skipped.
+    :param str reason: if given, this reason is shown as the message when the module
+        cannot be imported.
     """
     import warnings
 
@@ -150,7 +164,9 @@ def importorskip(modname, minversion=None):
             # Do not raise chained exception here(#1485)
             should_skip = True
     if should_skip:
-        raise Skipped("could not import %r" % (modname,), allow_module_level=True)
+        if reason is None:
+            reason = "could not import %r" % (modname,)
+        raise Skipped(reason, allow_module_level=True)
     mod = sys.modules[modname]
     if minversion is None:
         return mod

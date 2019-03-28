@@ -1,13 +1,14 @@
 # encoding: utf-8
+import doctest
 import operator
 import sys
-import pytest
-import doctest
-
-from pytest import approx
-from operator import eq, ne
 from decimal import Decimal
 from fractions import Fraction
+from operator import eq
+from operator import ne
+
+import pytest
+from pytest import approx
 
 inf, nan = float("inf"), float("nan")
 
@@ -62,11 +63,11 @@ class TestApprox(object):
     @pytest.mark.parametrize(
         "value, repr_string",
         [
-            (5., "approx(5.0 {pm} 5.0e-06)"),
-            ([5.], "approx([5.0 {pm} 5.0e-06])"),
-            ([[5.]], "approx([[5.0 {pm} 5.0e-06]])"),
-            ([[5., 6.]], "approx([[5.0 {pm} 5.0e-06, 6.0 {pm} 6.0e-06]])"),
-            ([[5.], [6.]], "approx([[5.0 {pm} 5.0e-06], [6.0 {pm} 6.0e-06]])"),
+            (5.0, "approx(5.0 {pm} 5.0e-06)"),
+            ([5.0], "approx([5.0 {pm} 5.0e-06])"),
+            ([[5.0]], "approx([[5.0 {pm} 5.0e-06]])"),
+            ([[5.0, 6.0]], "approx([[5.0 {pm} 5.0e-06, 6.0 {pm} 6.0e-06]])"),
+            ([[5.0], [6.0]], "approx([[5.0 {pm} 5.0e-06], [6.0 {pm} 6.0e-06]])"),
         ],
     )
     def test_repr_nd_array(self, plus_minus, value, repr_string):
@@ -354,16 +355,16 @@ class TestApprox(object):
         Test all permutations of where the approx and np.array() can show up
         """
         np = pytest.importorskip("numpy")
-        expected = 100.
-        actual = 99.
+        expected = 100.0
+        actual = 99.0
         abs_diff = expected - actual
         rel_diff = (expected - actual) / expected
 
         tests = [
             (eq, abs_diff, 0),
             (eq, 0, rel_diff),
-            (ne, 0, rel_diff / 2.),  # rel diff fail
-            (ne, abs_diff / 2., 0),  # abs diff fail
+            (ne, 0, rel_diff / 2.0),  # rel diff fail
+            (ne, abs_diff / 2.0, 0),  # abs diff fail
         ]
 
         for op, _abs, _rel in tests:
@@ -495,3 +496,14 @@ class TestApprox(object):
         assert actual != approx(expected, rel=5e-8, abs=0)
         assert approx(expected, rel=5e-7, abs=0) == actual
         assert approx(expected, rel=5e-8, abs=0) != actual
+
+    def test_generic_sized_iterable_object(self):
+        class MySizedIterable(object):
+            def __iter__(self):
+                return iter([1, 2, 3, 4])
+
+            def __len__(self):
+                return 4
+
+        expected = MySizedIterable()
+        assert [1, 2, 3, 4] == approx(expected)

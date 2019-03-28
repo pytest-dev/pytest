@@ -1,12 +1,16 @@
 """ version info, help messages, tracing configuration.  """
-from __future__ import absolute_import, division, print_function
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 
-import py
-import pytest
-from _pytest.config import PrintHelp
 import os
 import sys
 from argparse import Action
+
+import py
+
+import pytest
+from _pytest.config import PrintHelp
 
 
 class HelpAction(Action):
@@ -114,16 +118,20 @@ def pytest_cmdline_parse():
         config.add_cleanup(unset_tracing)
 
 
+def showversion(config):
+    p = py.path.local(pytest.__file__)
+    sys.stderr.write(
+        "This is pytest version %s, imported from %s\n" % (pytest.__version__, p)
+    )
+    plugininfo = getpluginversioninfo(config)
+    if plugininfo:
+        for line in plugininfo:
+            sys.stderr.write(line + "\n")
+
+
 def pytest_cmdline_main(config):
     if config.option.version:
-        p = py.path.local(pytest.__file__)
-        sys.stderr.write(
-            "This is pytest version %s, imported from %s\n" % (pytest.__version__, p)
-        )
-        plugininfo = getpluginversioninfo(config)
-        if plugininfo:
-            for line in plugininfo:
-                sys.stderr.write(line + "\n")
+        showversion(config)
         return 0
     elif config.option.help:
         config._do_configure()
@@ -139,7 +147,7 @@ def showhelp(config):
     tw.line()
     tw.line()
     tw.line(
-        "[pytest] ini-options in the first " "pytest.ini|tox.ini|setup.cfg file found:"
+        "[pytest] ini-options in the first pytest.ini|tox.ini|setup.cfg file found:"
     )
     tw.line()
 

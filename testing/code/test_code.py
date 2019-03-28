@@ -1,13 +1,15 @@
 # coding: utf-8
-from __future__ import absolute_import, division, print_function
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 
 import sys
 
+from six import text_type
+from test_excinfo import TWMock
+
 import _pytest._code
 import pytest
-from six import text_type
-
-from test_excinfo import TWMock
 
 try:
     import mock
@@ -35,7 +37,7 @@ def test_code_with_class():
     class A(object):
         pass
 
-    pytest.raises(TypeError, "_pytest._code.Code(A)")
+    pytest.raises(TypeError, _pytest._code.Code, A)
 
 
 def x():
@@ -167,7 +169,7 @@ class TestExceptionInfo(object):
             else:
                 assert False
         except AssertionError:
-            exci = _pytest._code.ExceptionInfo()
+            exci = _pytest._code.ExceptionInfo.from_current()
         assert exci.getrepr()
 
 
@@ -179,7 +181,7 @@ class TestTracebackEntry(object):
             else:
                 assert False
         except AssertionError:
-            exci = _pytest._code.ExceptionInfo()
+            exci = _pytest._code.ExceptionInfo.from_current()
         entry = exci.traceback[0]
         source = entry.getsource()
         assert len(source) == 6

@@ -33,6 +33,7 @@ Full pytest documentation
    reference
 
    goodpractices
+   flaky
    pythonpath
    customize
    example/index
@@ -40,6 +41,7 @@ Full pytest documentation
 
    backwards-compatibility
    deprecations
+   py27-py34-deprecation
    historical-notes
    license
    contributing

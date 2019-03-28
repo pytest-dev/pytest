@@ -26,9 +26,9 @@ a per-session Database object::
     # content of conftest.py
     class Database(object):
         def __init__(self):
-            print ("database instance created")
+            print("database instance created")
         def destroy(self):
-            print ("database instance destroyed")
+            print("database instance destroyed")
 
     def pytest_funcarg__db(request):
         return request.cached_setup(setup=DataBase,

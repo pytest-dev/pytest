@@ -2,9 +2,10 @@
 module containing a parametrized tests testing cross-python
 serialization via the pickle module.
 """
+import distutils.spawn
+import subprocess
 import textwrap
 
-import py
 import pytest
 
 pythonlist = ["python2.7", "python3.4", "python3.5"]
@@ -23,7 +24,7 @@ def python2(request, python1):
 
 class Python(object):
     def __init__(self, version, picklefile):
-        self.pythonpath = py.path.local.sysfind(version)
+        self.pythonpath = distutils.spawn.find_executable(version)
         if not self.pythonpath:
             pytest.skip("{!r} not found".format(version))
         self.picklefile = picklefile
@@ -32,7 +33,7 @@ class Python(object):
         dumpfile = self.picklefile.dirpath("dump.py")
         dumpfile.write(
             textwrap.dedent(
-                """\
+                r"""
                 import pickle
                 f = open({!r}, 'wb')
                 s = pickle.dump({!r}, f, protocol=2)
@@ -42,13 +43,13 @@ class Python(object):
                 )
             )
         )
-        py.process.cmdexec("{} {}".format(self.pythonpath, dumpfile))
+        subprocess.check_call((self.pythonpath, str(dumpfile)))
 
     def load_and_is_true(self, expression):
         loadfile = self.picklefile.dirpath("load.py")
         loadfile.write(
             textwrap.dedent(
-                """\
+                r"""
                 import pickle
                 f = open({!r}, 'rb')
                 obj = pickle.load(f)
@@ -62,7 +63,7 @@ class Python(object):
             )
         )
         print(loadfile)
-        py.process.cmdexec("{} {}".format(self.pythonpath, loadfile))
+        subprocess.check_call((self.pythonpath, str(loadfile)))
 
 
 @pytest.mark.parametrize("obj", [42, {}, {1: 3}])

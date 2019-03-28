@@ -45,7 +45,7 @@ def test_change_level_undo(testdir):
             assert 0
     """
     )
-    result = testdir.runpytest_subprocess()
+    result = testdir.runpytest()
     result.stdout.fnmatch_lines(["*log from test1*", "*2 failed in *"])
     assert "log from test2" not in result.stdout.str()
 
@@ -136,5 +136,5 @@ def test_caplog_captures_for_all_stages(caplog, logging_during_setup_and_teardow
 
     assert [x.message for x in caplog.get_records("setup")] == ["a_setup_log"]
 
-    # This reachers into private API, don't use this type of thing in real tests!
+    # This reaches into private API, don't use this type of thing in real tests!
     assert set(caplog._item.catch_log_handlers.keys()) == {"setup", "call"}

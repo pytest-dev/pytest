@@ -240,225 +240,7 @@ class TestClass(object):
         assert result.ret == EXIT_NOTESTSCOLLECTED
 
 
-class TestGenerator(object):
-    def test_generative_functions(self, testdir):
-        modcol = testdir.getmodulecol(
-            """
-            def func1(arg, arg2):
-                assert arg == arg2
-
-            def test_gen():
-                yield func1, 17, 3*5
-                yield func1, 42, 6*7
-        """
-        )
-        colitems = modcol.collect()
-        assert len(colitems) == 1
-        gencol = colitems[0]
-        assert isinstance(gencol, pytest.Generator)
-        gencolitems = gencol.collect()
-        assert len(gencolitems) == 2
-        assert isinstance(gencolitems[0], pytest.Function)
-        assert isinstance(gencolitems[1], pytest.Function)
-        assert gencolitems[0].name == "[0]"
-        assert gencolitems[0].obj.__name__ == "func1"
-
-    def test_generative_methods(self, testdir):
-        modcol = testdir.getmodulecol(
-            """
-            def func1(arg, arg2):
-                assert arg == arg2
-            class TestGenMethods(object):
-                def test_gen(self):
-                    yield func1, 17, 3*5
-                    yield func1, 42, 6*7
-        """
-        )
-        gencol = modcol.collect()[0].collect()[0].collect()[0]
-        assert isinstance(gencol, pytest.Generator)
-        gencolitems = gencol.collect()
-        assert len(gencolitems) == 2
-        assert isinstance(gencolitems[0], pytest.Function)
-        assert isinstance(gencolitems[1], pytest.Function)
-        assert gencolitems[0].name == "[0]"
-        assert gencolitems[0].obj.__name__ == "func1"
-
-    def test_generative_functions_with_explicit_names(self, testdir):
-        modcol = testdir.getmodulecol(
-            """
-            def func1(arg, arg2):
-                assert arg == arg2
-
-            def test_gen():
-                yield "seventeen", func1, 17, 3*5
-                yield "fortytwo", func1, 42, 6*7
-        """
-        )
-        colitems = modcol.collect()
-        assert len(colitems) == 1
-        gencol = colitems[0]
-        assert isinstance(gencol, pytest.Generator)
-        gencolitems = gencol.collect()
-        assert len(gencolitems) == 2
-        assert isinstance(gencolitems[0], pytest.Function)
-        assert isinstance(gencolitems[1], pytest.Function)
-        assert gencolitems[0].name == "['seventeen']"
-        assert gencolitems[0].obj.__name__ == "func1"
-        assert gencolitems[1].name == "['fortytwo']"
-        assert gencolitems[1].obj.__name__ == "func1"
-
-    def test_generative_functions_unique_explicit_names(self, testdir):
-        # generative
-        modcol = testdir.getmodulecol(
-            """
-            def func(): pass
-            def test_gen():
-                yield "name", func
-                yield "name", func
-        """
-        )
-        colitems = modcol.collect()
-        assert len(colitems) == 1
-        gencol = colitems[0]
-        assert isinstance(gencol, pytest.Generator)
-        pytest.raises(ValueError, "gencol.collect()")
-
-    def test_generative_methods_with_explicit_names(self, testdir):
-        modcol = testdir.getmodulecol(
-            """
-            def func1(arg, arg2):
-                assert arg == arg2
-            class TestGenMethods(object):
-                def test_gen(self):
-                    yield "m1", func1, 17, 3*5
-                    yield "m2", func1, 42, 6*7
-        """
-        )
-        gencol = modcol.collect()[0].collect()[0].collect()[0]
-        assert isinstance(gencol, pytest.Generator)
-        gencolitems = gencol.collect()
-        assert len(gencolitems) == 2
-        assert isinstance(gencolitems[0], pytest.Function)
-        assert isinstance(gencolitems[1], pytest.Function)
-        assert gencolitems[0].name == "['m1']"
-        assert gencolitems[0].obj.__name__ == "func1"
-        assert gencolitems[1].name == "['m2']"
-        assert gencolitems[1].obj.__name__ == "func1"
-
-    def test_order_of_execution_generator_same_codeline(self, testdir, tmpdir):
-        o = testdir.makepyfile(
-            """
-            from __future__ import print_function
-            def test_generative_order_of_execution():
-                import py, pytest
-                test_list = []
-                expected_list = list(range(6))
-
-                def list_append(item):
-                    test_list.append(item)
-
-                def assert_order_of_execution():
-                    print('expected order', expected_list)
-                    print('but got       ', test_list)
-                    assert test_list == expected_list
-
-                for i in expected_list:
-                    yield list_append, i
-                yield assert_order_of_execution
-        """
-        )
-        reprec = testdir.inline_run(o)
-        passed, skipped, failed = reprec.countoutcomes()
-        assert passed == 7
-        assert not skipped and not failed
-
-    def test_order_of_execution_generator_different_codeline(self, testdir):
-        o = testdir.makepyfile(
-            """
-            from __future__ import print_function
-            def test_generative_tests_different_codeline():
-                import py, pytest
-                test_list = []
-                expected_list = list(range(3))
-
-                def list_append_2():
-                    test_list.append(2)
-
-                def list_append_1():
-                    test_list.append(1)
-
-                def list_append_0():
-                    test_list.append(0)
-
-                def assert_order_of_execution():
-                    print('expected order', expected_list)
-                    print('but got       ', test_list)
-                    assert test_list == expected_list
-
-                yield list_append_0
-                yield list_append_1
-                yield list_append_2
-                yield assert_order_of_execution
-        """
-        )
-        reprec = testdir.inline_run(o)
-        passed, skipped, failed = reprec.countoutcomes()
-        assert passed == 4
-        assert not skipped and not failed
-
-    def test_setupstate_is_preserved_134(self, testdir):
-        # yield-based tests are messy wrt to setupstate because
-        # during collection they already invoke setup functions
-        # and then again when they are run.  For now, we want to make sure
-        # that the old 1.3.4 behaviour is preserved such that all
-        # yielded functions all share the same "self" instance that
-        # has been used during collection.
-        o = testdir.makepyfile(
-            """
-            setuplist = []
-            class TestClass(object):
-                def setup_method(self, func):
-                    #print "setup_method", self, func
-                    setuplist.append(self)
-                    self.init = 42
-
-                def teardown_method(self, func):
-                    self.init = None
-
-                def test_func1(self):
-                    pass
-
-                def test_func2(self):
-                    yield self.func2
-                    yield self.func2
-
-                def func2(self):
-                    assert self.init
-
-            def test_setuplist():
-                # once for test_func2 during collection
-                # once for test_func1 during test run
-                # once for test_func2 during test run
-                #print setuplist
-                assert len(setuplist) == 3, len(setuplist)
-                assert setuplist[0] == setuplist[2], setuplist
-                assert setuplist[1] != setuplist[2], setuplist
-        """
-        )
-        reprec = testdir.inline_run(o, "-v")
-        passed, skipped, failed = reprec.countoutcomes()
-        assert passed == 4
-        assert not skipped and not failed
-
-
 class TestFunction(object):
-    @pytest.fixture
-    def ignore_parametrized_marks_args(self):
-        """Provides arguments to pytester.runpytest() to ignore the warning about marks being applied directly
-        to parameters.
-        """
-        return ("-W", "ignore:Applying marks directly to parameters")
-
     def test_getmodulecollector(self, testdir):
         item = testdir.getitem("def test_func(): pass")
         modcol = item.getparent(pytest.Module)
@@ -485,25 +267,33 @@ class TestFunction(object):
             ]
         )
 
-    def test_function_equality(self, testdir, tmpdir):
+    @staticmethod
+    def make_function(testdir, **kwargs):
         from _pytest.fixtures import FixtureManager
 
         config = testdir.parseconfigure()
         session = testdir.Session(config)
         session._fixturemanager = FixtureManager(session)
 
+        return pytest.Function(config=config, parent=session, **kwargs)
+
+    def test_function_equality(self, testdir, tmpdir):
         def func1():
             pass
 
         def func2():
             pass
 
-        f1 = pytest.Function(
-            name="name", parent=session, config=config, args=(1,), callobj=func1
-        )
+        f1 = self.make_function(testdir, name="name", args=(1,), callobj=func1)
         assert f1 == f1
-        f2 = pytest.Function(name="name", config=config, callobj=func2, parent=session)
+        f2 = self.make_function(testdir, name="name", callobj=func2)
         assert f1 != f2
+
+    def test_repr_produces_actual_test_id(self, testdir):
+        f = self.make_function(
+            testdir, name=r"test[\xe5]", callobj=self.test_repr_produces_actual_test_id
+        )
+        assert repr(f) == r"<Function test[\xe5]>"
 
     def test_issue197_parametrize_emptyset(self, testdir):
         testdir.makepyfile(
@@ -672,7 +462,6 @@ class TestFunction(object):
         rec = testdir.inline_run()
         rec.assertoutcome(passed=1)
 
-    @pytest.mark.filterwarnings("ignore:Applying marks directly to parameters")
     def test_parametrize_with_mark(self, testdir):
         items = testdir.getitems(
             """
@@ -680,7 +469,7 @@ class TestFunction(object):
             @pytest.mark.foo
             @pytest.mark.parametrize('arg', [
                 1,
-                pytest.mark.bar(pytest.mark.baz(2))
+                pytest.param(2, marks=[pytest.mark.baz, pytest.mark.bar])
             ])
             def test_function(arg):
                 pass
@@ -758,37 +547,37 @@ class TestFunction(object):
         assert colitems[2].name == "test2[a-c]"
         assert colitems[3].name == "test2[b-c]"
 
-    def test_parametrize_skipif(self, testdir, ignore_parametrized_marks_args):
+    def test_parametrize_skipif(self, testdir):
         testdir.makepyfile(
             """
             import pytest
 
             m = pytest.mark.skipif('True')
 
-            @pytest.mark.parametrize('x', [0, 1, m(2)])
+            @pytest.mark.parametrize('x', [0, 1, pytest.param(2, marks=m)])
             def test_skip_if(x):
                 assert x < 2
         """
         )
-        result = testdir.runpytest(*ignore_parametrized_marks_args)
+        result = testdir.runpytest()
         result.stdout.fnmatch_lines("* 2 passed, 1 skipped in *")
 
-    def test_parametrize_skip(self, testdir, ignore_parametrized_marks_args):
+    def test_parametrize_skip(self, testdir):
         testdir.makepyfile(
             """
             import pytest
 
             m = pytest.mark.skip('')
 
-            @pytest.mark.parametrize('x', [0, 1, m(2)])
+            @pytest.mark.parametrize('x', [0, 1, pytest.param(2, marks=m)])
             def test_skip(x):
                 assert x < 2
         """
         )
-        result = testdir.runpytest(*ignore_parametrized_marks_args)
+        result = testdir.runpytest()
         result.stdout.fnmatch_lines("* 2 passed, 1 skipped in *")
 
-    def test_parametrize_skipif_no_skip(self, testdir, ignore_parametrized_marks_args):
+    def test_parametrize_skipif_no_skip(self, testdir):
         testdir.makepyfile(
             """
             import pytest
@@ -800,40 +589,40 @@ class TestFunction(object):
                 assert x < 2
         """
         )
-        result = testdir.runpytest(*ignore_parametrized_marks_args)
+        result = testdir.runpytest()
         result.stdout.fnmatch_lines("* 1 failed, 2 passed in *")
 
-    def test_parametrize_xfail(self, testdir, ignore_parametrized_marks_args):
+    def test_parametrize_xfail(self, testdir):
         testdir.makepyfile(
             """
             import pytest
 
             m = pytest.mark.xfail('True')
 
-            @pytest.mark.parametrize('x', [0, 1, m(2)])
+            @pytest.mark.parametrize('x', [0, 1, pytest.param(2, marks=m)])
             def test_xfail(x):
                 assert x < 2
         """
         )
-        result = testdir.runpytest(*ignore_parametrized_marks_args)
+        result = testdir.runpytest()
         result.stdout.fnmatch_lines("* 2 passed, 1 xfailed in *")
 
-    def test_parametrize_passed(self, testdir, ignore_parametrized_marks_args):
+    def test_parametrize_passed(self, testdir):
         testdir.makepyfile(
             """
             import pytest
 
             m = pytest.mark.xfail('True')
 
-            @pytest.mark.parametrize('x', [0, 1, m(2)])
+            @pytest.mark.parametrize('x', [0, 1, pytest.param(2, marks=m)])
             def test_xfail(x):
                 pass
         """
         )
-        result = testdir.runpytest(*ignore_parametrized_marks_args)
+        result = testdir.runpytest()
         result.stdout.fnmatch_lines("* 2 passed, 1 xpassed in *")
 
-    def test_parametrize_xfail_passed(self, testdir, ignore_parametrized_marks_args):
+    def test_parametrize_xfail_passed(self, testdir):
         testdir.makepyfile(
             """
             import pytest
@@ -845,7 +634,7 @@ class TestFunction(object):
                 pass
         """
         )
-        result = testdir.runpytest(*ignore_parametrized_marks_args)
+        result = testdir.runpytest()
         result.stdout.fnmatch_lines("* 3 passed in *")
 
     def test_function_original_name(self, testdir):
@@ -1008,7 +797,7 @@ class TestConftestCustomization(object):
         modcol = testdir.getmodulecol("def _hello(): pass")
         values = []
         monkeypatch.setattr(
-            pytest.Module, "makeitem", lambda self, name, obj: values.append(name)
+            pytest.Module, "_makeitem", lambda self, name, obj: values.append(name)
         )
         values = modcol.collect()
         assert "_hello" not in values
@@ -1091,7 +880,8 @@ def test_modulecol_roundtrip(testdir):
 
 class TestTracebackCutting(object):
     def test_skip_simple(self):
-        excinfo = pytest.raises(pytest.skip.Exception, 'pytest.skip("xxx")')
+        with pytest.raises(pytest.skip.Exception) as excinfo:
+            pytest.skip("xxx")
         assert excinfo.traceback[-1].frame.code.name == "skip"
         assert excinfo.traceback[-1].ishidden()
 
@@ -1170,7 +960,7 @@ class TestTracebackCutting(object):
 
     def test_filter_traceback_generated_code(self):
         """test that filter_traceback() works with the fact that
-        py.code.Code.path attribute might return an str object.
+        _pytest._code.code.Code.path attribute might return an str object.
         In this case, one of the entries on the traceback was produced by
         dynamically generated code.
         See: https://bitbucket.org/pytest-dev/py/issues/71
@@ -1191,7 +981,7 @@ class TestTracebackCutting(object):
 
     def test_filter_traceback_path_no_longer_valid(self, testdir):
         """test that filter_traceback() works with the fact that
-        py.code.Code.path attribute might return an str object.
+        _pytest._code.code.Code.path attribute might return an str object.
         In this case, one of the files in the traceback no longer exists.
         This fixes #1133.
         """
@@ -1255,39 +1045,9 @@ class TestReportInfo(object):
         assert lineno == 1
         assert msg == "TestClass"
 
-    def test_generator_reportinfo(self, testdir):
-        modcol = testdir.getmodulecol(
-            """
-            # lineno 0
-            def test_gen():
-                def check(x):
-                    assert x
-                yield check, 3
-        """
-        )
-        gencol = testdir.collect_by_name(modcol, "test_gen")
-        fspath, lineno, modpath = gencol.reportinfo()
-        assert fspath == modcol.fspath
-        assert lineno == 1
-        assert modpath == "test_gen"
-
-        genitem = gencol.collect()[0]
-        fspath, lineno, modpath = genitem.reportinfo()
-        assert fspath == modcol.fspath
-        assert lineno == 2
-        assert modpath == "test_gen[0]"
-        """
-            def test_func():
-                pass
-            def test_genfunc():
-                def check(x):
-                    pass
-                yield check, 3
-            class TestClass(object):
-                def test_method(self):
-                    pass
-       """
-
+    @pytest.mark.filterwarnings(
+        "ignore:usage of Generator.Function is deprecated, please use pytest.Function instead"
+    )
     def test_reportinfo_with_nasty_getattr(self, testdir):
         # https://github.com/pytest-dev/pytest/issues/1204
         modcol = testdir.getmodulecol(
@@ -1355,56 +1115,6 @@ def test_customized_python_discovery_functions(testdir):
     result = testdir.runpytest()
     assert result.ret == 0
     result.stdout.fnmatch_lines(["*1 passed*"])
-
-
-def test_collector_attributes(testdir):
-    testdir.makeconftest(
-        """
-        import pytest
-        def pytest_pycollect_makeitem(collector):
-            assert collector.Function == pytest.Function
-            assert collector.Class == pytest.Class
-            assert collector.Instance == pytest.Instance
-            assert collector.Module == pytest.Module
-    """
-    )
-    testdir.makepyfile(
-        """
-         def test_hello():
-            pass
-    """
-    )
-    result = testdir.runpytest()
-    result.stdout.fnmatch_lines(["*1 passed*"])
-
-
-def test_customize_through_attributes(testdir):
-    testdir.makeconftest(
-        """
-        import pytest
-        class MyFunction(pytest.Function):
-            pass
-        class MyInstance(pytest.Instance):
-            Function = MyFunction
-        class MyClass(pytest.Class):
-            Instance = MyInstance
-
-        def pytest_pycollect_makeitem(collector, name, obj):
-            if name.startswith("MyTestClass"):
-                return MyClass(name, parent=collector)
-    """
-    )
-    testdir.makepyfile(
-        """
-         class MyTestClass(object):
-            def test_hello(self):
-                pass
-    """
-    )
-    result = testdir.runpytest("--collect-only")
-    result.stdout.fnmatch_lines(
-        ["*MyClass*", "*MyInstance*", "*MyFunction*test_hello*"]
-    )
 
 
 def test_unorderable_types(testdir):

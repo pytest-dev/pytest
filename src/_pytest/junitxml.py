@@ -8,14 +8,19 @@ Based on initial code from Ross Lawley.
 Output conforms to https://github.com/jenkinsci/xunit-plugin/blob/master/
 src/main/resources/org/jenkinsci/plugins/xunit/types/model/xsd/junit-10.xsd
 """
-from __future__ import absolute_import, division, print_function
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 
 import functools
-import py
 import os
 import re
 import sys
 import time
+
+import py
+import six
+
 import pytest
 from _pytest import nodes
 from _pytest.config import filename_arg
@@ -23,10 +28,6 @@ from _pytest.config import filename_arg
 # Python 2.X and 3.X compatibility
 if sys.version_info[0] < 3:
     from codecs import open
-else:
-    unichr = chr
-    unicode = str
-    long = int
 
 
 class Junit(py.xml.Namespace):
@@ -38,15 +39,15 @@ class Junit(py.xml.Namespace):
 # this dynamically instead of hardcoding it.  The spec range of valid
 # chars is: Char ::= #x9 | #xA | #xD | [#x20-#xD7FF] | [#xE000-#xFFFD]
 #                    | [#x10000-#x10FFFF]
-_legal_chars = (0x09, 0x0A, 0x0d)
+_legal_chars = (0x09, 0x0A, 0x0D)
 _legal_ranges = ((0x20, 0x7E), (0x80, 0xD7FF), (0xE000, 0xFFFD), (0x10000, 0x10FFFF))
 _legal_xml_re = [
-    unicode("%s-%s") % (unichr(low), unichr(high))
+    u"%s-%s" % (six.unichr(low), six.unichr(high))
     for (low, high) in _legal_ranges
     if low < sys.maxunicode
 ]
-_legal_xml_re = [unichr(x) for x in _legal_chars] + _legal_xml_re
-illegal_xml_re = re.compile(unicode("[^%s]") % unicode("").join(_legal_xml_re))
+_legal_xml_re = [six.unichr(x) for x in _legal_chars] + _legal_xml_re
+illegal_xml_re = re.compile(u"[^%s]" % u"".join(_legal_xml_re))
 del _legal_chars
 del _legal_ranges
 del _legal_xml_re
@@ -58,19 +59,41 @@ def bin_xml_escape(arg):
     def repl(matchobj):
         i = ord(matchobj.group())
         if i <= 0xFF:
-            return unicode("#x%02X") % i
+            return u"#x%02X" % i
         else:
-            return unicode("#x%04X") % i
+            return u"#x%04X" % i
 
     return py.xml.raw(illegal_xml_re.sub(repl, py.xml.escape(arg)))
 
 
+def merge_family(left, right):
+    result = {}
+    for kl, vl in left.items():
+        for kr, vr in right.items():
+            if not isinstance(vl, list):
+                raise TypeError(type(vl))
+            result[kl] = vl + vr
+    left.update(result)
+
+
+families = {}
+families["_base"] = {"testcase": ["classname", "name"]}
+families["_base_legacy"] = {"testcase": ["file", "line", "url"]}
+
+# xUnit 1.x inherits legacy attributes
+families["xunit1"] = families["_base"].copy()
+merge_family(families["xunit1"], families["_base_legacy"])
+
+# xUnit 2.x uses strict base attributes
+families["xunit2"] = families["_base"]
+
+
 class _NodeReporter(object):
     def __init__(self, nodeid, xml):
-
         self.id = nodeid
         self.xml = xml
         self.add_stats = self.xml.add_stats
+        self.family = self.xml.family
         self.duration = 0
         self.properties = []
         self.nodes = []
@@ -118,8 +141,20 @@ class _NodeReporter(object):
         self.attrs = attrs
         self.attrs.update(existing_attrs)  # restore any user-defined attributes
 
+        # Preserve legacy testcase behavior
+        if self.family == "xunit1":
+            return
+
+        # Filter out attributes not permitted by this test family.
+        # Including custom attributes because they are not valid here.
+        temp_attrs = {}
+        for key in self.attrs.keys():
+            if key in families[self.family]["testcase"]:
+                temp_attrs[key] = self.attrs[key]
+        self.attrs = temp_attrs
+
     def to_xml(self):
-        testcase = Junit.testcase(time=self.duration, **self.attrs)
+        testcase = Junit.testcase(time="%.3f" % self.duration, **self.attrs)
         testcase.append(self.make_properties_node())
         for node in self.nodes:
             testcase.append(node)
@@ -190,7 +225,7 @@ class _NodeReporter(object):
         else:
             if hasattr(report.longrepr, "reprcrash"):
                 message = report.longrepr.reprcrash.message
-            elif isinstance(report.longrepr, (unicode, str)):
+            elif isinstance(report.longrepr, six.string_types):
                 message = report.longrepr
             else:
                 message = str(report.longrepr)
@@ -209,7 +244,7 @@ class _NodeReporter(object):
         self._add_simple(Junit.skipped, "collection skipped", report.longrepr)
 
     def append_error(self, report):
-        if getattr(report, "when", None) == "teardown":
+        if report.when == "teardown":
             msg = "test teardown failure"
         else:
             msg = "test setup failure"
@@ -221,12 +256,14 @@ class _NodeReporter(object):
         else:
             filename, lineno, skipreason = report.longrepr
             if skipreason.startswith("Skipped: "):
-                skipreason = bin_xml_escape(skipreason[9:])
+                skipreason = skipreason[9:]
+            details = "%s:%s: %s" % (filename, lineno, skipreason)
+
             self.append(
                 Junit.skipped(
-                    "%s:%s: %s" % (filename, lineno, skipreason),
+                    bin_xml_escape(details),
                     type="pytest.skip",
-                    message=skipreason,
+                    message=bin_xml_escape(skipreason),
                 )
             )
             self.write_captured_output(report)
@@ -258,16 +295,6 @@ def record_property(request):
 
 
 @pytest.fixture
-def record_xml_property(record_property, request):
-    """(Deprecated) use record_property."""
-    from _pytest import deprecated
-
-    request.node.warn(deprecated.RECORD_XML_PROPERTY)
-
-    return record_property
-
-
-@pytest.fixture
 def record_xml_attribute(request):
     """Add extra xml attributes to the tag for the calling test.
     The fixture is callable with ``(name, value)``, with value being
@@ -276,16 +303,26 @@ def record_xml_attribute(request):
     from _pytest.warning_types import PytestWarning
 
     request.node.warn(PytestWarning("record_xml_attribute is an experimental feature"))
+
+    # Declare noop
+    def add_attr_noop(name, value):
+        pass
+
+    attr_func = add_attr_noop
     xml = getattr(request.config, "_xml", None)
-    if xml is not None:
+
+    if xml is not None and xml.family != "xunit1":
+        request.node.warn(
+            PytestWarning(
+                "record_xml_attribute is incompatible with junit_family: "
+                "%s (use: legacy|xunit1)" % xml.family
+            )
+        )
+    elif xml is not None:
         node_reporter = xml.node_reporter(request.node.nodeid)
-        return node_reporter.add_attribute
-    else:
+        attr_func = node_reporter.add_attribute
 
-        def add_attr_noop(name, value):
-            pass
-
-        return add_attr_noop
+    return attr_func
 
 
 def pytest_addoption(parser):
@@ -317,6 +354,16 @@ def pytest_addoption(parser):
         "one of no|system-out|system-err",
         default="no",
     )  # choices=['no', 'stdout', 'stderr'])
+    parser.addini(
+        "junit_duration_report",
+        "Duration time to report: one of total|call",
+        default="total",
+    )  # choices=['total', 'call'])
+    parser.addini(
+        "junit_family",
+        "Emit XML for schema: one of legacy|xunit1|xunit2",
+        default="xunit1",
+    )
 
 
 def pytest_configure(config):
@@ -328,6 +375,8 @@ def pytest_configure(config):
             config.option.junitprefix,
             config.getini("junit_suite_name"),
             config.getini("junit_logging"),
+            config.getini("junit_duration_report"),
+            config.getini("junit_family"),
         )
         config.pluginmanager.register(config._xml)
 
@@ -355,12 +404,22 @@ def mangle_test_address(address):
 
 
 class LogXML(object):
-    def __init__(self, logfile, prefix, suite_name="pytest", logging="no"):
+    def __init__(
+        self,
+        logfile,
+        prefix,
+        suite_name="pytest",
+        logging="no",
+        report_duration="total",
+        family="xunit1",
+    ):
         logfile = os.path.expanduser(os.path.expandvars(logfile))
         self.logfile = os.path.normpath(os.path.abspath(logfile))
         self.prefix = prefix
         self.suite_name = suite_name
         self.logging = logging
+        self.report_duration = report_duration
+        self.family = family
         self.stats = dict.fromkeys(["error", "passed", "failure", "skipped"], 0)
         self.node_reporters = {}  # nodeid -> _NodeReporter
         self.node_reporters_ordered = []
@@ -368,6 +427,10 @@ class LogXML(object):
         # List of reports that failed on call but teardown is pending.
         self.open_reports = []
         self.cnt_double_fail_tests = 0
+
+        # Replaces convenience family with real family
+        if self.family == "legacy":
+            self.family = "xunit1"
 
     def finalize(self, report):
         nodeid = getattr(report, "nodeid", report)
@@ -494,8 +557,9 @@ class LogXML(object):
         """accumulates total duration for nodeid from given report and updates
         the Junit.testcase with the new total if already created.
         """
-        reporter = self.node_reporter(report)
-        reporter.duration += getattr(report, "duration", 0.0)
+        if self.report_duration == "total" or report.when == self.report_duration:
+            reporter = self.node_reporter(report)
+            reporter.duration += getattr(report, "duration", 0.0)
 
     def pytest_collectreport(self, report):
         if not report.passed:
@@ -537,7 +601,7 @@ class LogXML(object):
                 name=self.suite_name,
                 errors=self.stats["error"],
                 failures=self.stats["failure"],
-                skips=self.stats["skipped"],
+                skipped=self.stats["skipped"],
                 tests=numtests,
                 time="%.3f" % suite_time_delta,
             ).unicode(indent=0)

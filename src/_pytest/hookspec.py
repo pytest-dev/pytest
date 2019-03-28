@@ -1,8 +1,7 @@
 """ hook specifications for pytest plugins, invoked from main.py and builtin plugins.  """
-
 from pluggy import HookspecMarker
-from .deprecated import PYTEST_NAMESPACE
 
+from _pytest.deprecated import PYTEST_LOGWARNING
 
 hookspec = HookspecMarker("pytest")
 
@@ -21,32 +20,6 @@ def pytest_addhooks(pluginmanager):
 
     .. note::
         This hook is incompatible with ``hookwrapper=True``.
-    """
-
-
-@hookspec(historic=True, warn_on_impl=PYTEST_NAMESPACE)
-def pytest_namespace():
-    """
-    return dict of name->object to be made globally available in
-    the pytest namespace.
-
-    This hook is called at plugin registration time.
-
-    .. note::
-        This hook is incompatible with ``hookwrapper=True``.
-
-    .. warning::
-        This hook has been **deprecated** and will be removed in pytest 4.0.
-
-        Plugins whose users depend on the current namespace functionality should prepare to migrate to a
-        namespace they actually own.
-
-        To support the migration its suggested to trigger ``DeprecationWarnings`` for objects they put into the
-        pytest namespace.
-
-        An stopgap measure to avoid the warning is to monkeypatch the ``pytest`` module, but just as the
-        ``pytest_namespace`` hook this should be seen as a temporary measure to be removed in future versions after
-        an appropriate transition period.
     """
 
 
@@ -126,7 +99,8 @@ def pytest_cmdline_parse(pluginmanager, args):
     Stops at first non-None result, see :ref:`firstresult`
 
     .. note::
-        This hook will not be called for ``conftest.py`` files, only for setuptools plugins.
+        This hook will not be called for ``conftest.py`` files, only for setuptools plugins or
+        modules which implement this hook and are early-loaded with the ``-p`` flag.
 
     :param _pytest.config.PytestPluginManager pluginmanager: pytest plugin manager
     :param list[str] args: list of arguments passed on the command line
@@ -507,24 +481,27 @@ def pytest_report_collectionfinish(config, startdir, items):
 
 
 @hookspec(firstresult=True)
-def pytest_report_teststatus(report):
+def pytest_report_teststatus(report, config):
     """ return result-category, shortletter and verbose word for reporting.
+
+    :param _pytest.config.Config config: pytest config object
 
     Stops at first non-None result, see :ref:`firstresult` """
 
 
-def pytest_terminal_summary(terminalreporter, exitstatus):
+def pytest_terminal_summary(terminalreporter, exitstatus, config):
     """Add a section to terminal summary reporting.
 
     :param _pytest.terminal.TerminalReporter terminalreporter: the internal terminal reporter object
     :param int exitstatus: the exit status that will be reported back to the OS
+    :param _pytest.config.Config config: pytest config object
 
-    .. versionadded:: 3.5
+    .. versionadded:: 4.2
         The ``config`` parameter.
     """
 
 
-@hookspec(historic=True)
+@hookspec(historic=True, warn_on_impl=PYTEST_LOGWARNING)
 def pytest_logwarning(message, code, nodeid, fslocation):
     """
     .. deprecated:: 3.8
@@ -603,9 +580,21 @@ def pytest_exception_interact(node, call, report):
     """
 
 
-def pytest_enter_pdb(config):
+def pytest_enter_pdb(config, pdb):
     """ called upon pdb.set_trace(), can be used by plugins to take special
     action just before the python debugger enters in interactive mode.
 
     :param _pytest.config.Config config: pytest config object
+    :param pdb.Pdb pdb: Pdb instance
+    """
+
+
+def pytest_leave_pdb(config, pdb):
+    """ called when leaving pdb (e.g. with continue after pdb.set_trace()).
+
+    Can be used by plugins to take special action just after the python
+    debugger leaves interactive mode.
+
+    :param _pytest.config.Config config: pytest config object
+    :param pdb.Pdb pdb: Pdb instance
     """

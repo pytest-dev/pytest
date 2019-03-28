@@ -1,10 +1,16 @@
-from __future__ import absolute_import, division, print_function
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+
 import textwrap
 
 import py
+
 import pytest
 from _pytest.config import PytestPluginManager
-from _pytest.main import EXIT_NOTESTSCOLLECTED, EXIT_USAGEERROR
+from _pytest.main import EXIT_NOTESTSCOLLECTED
+from _pytest.main import EXIT_OK
+from _pytest.main import EXIT_USAGEERROR
 
 
 @pytest.fixture(scope="module", params=["global", "inpackage"])
@@ -43,14 +49,14 @@ class TestConftestValueAccessGlobal(object):
 
     def test_immediate_initialiation_and_incremental_are_the_same(self, basedir):
         conftest = PytestPluginManager()
-        len(conftest._path2confmods)
+        len(conftest._dirpath2confmods)
         conftest._getconftestmodules(basedir)
-        snap1 = len(conftest._path2confmods)
-        # assert len(conftest._path2confmods) == snap1 + 1
+        snap1 = len(conftest._dirpath2confmods)
+        # assert len(conftest._dirpath2confmods) == snap1 + 1
         conftest._getconftestmodules(basedir.join("adir"))
-        assert len(conftest._path2confmods) == snap1 + 1
+        assert len(conftest._dirpath2confmods) == snap1 + 1
         conftest._getconftestmodules(basedir.join("b"))
-        assert len(conftest._path2confmods) == snap1 + 2
+        assert len(conftest._dirpath2confmods) == snap1 + 2
 
     def test_value_access_not_existing(self, basedir):
         conftest = ConftestWithSetinitial(basedir)
@@ -184,6 +190,94 @@ def test_conftest_confcutdir(testdir):
     result = testdir.runpytest("-h", "--confcutdir=%s" % x, x)
     result.stdout.fnmatch_lines(["*--xyz*"])
     assert "warning: could not load initial" not in result.stdout.str()
+
+
+@pytest.mark.skipif(
+    not hasattr(py.path.local, "mksymlinkto"),
+    reason="symlink not available on this platform",
+)
+def test_conftest_symlink(testdir):
+    """Ensure that conftest.py is used for resolved symlinks."""
+    real = testdir.tmpdir.mkdir("real")
+    realtests = real.mkdir("app").mkdir("tests")
+    testdir.tmpdir.join("symlinktests").mksymlinkto(realtests)
+    testdir.tmpdir.join("symlink").mksymlinkto(real)
+    testdir.makepyfile(
+        **{
+            "real/app/tests/test_foo.py": "def test1(fixture): pass",
+            "real/conftest.py": textwrap.dedent(
+                """
+                import pytest
+
+                print("conftest_loaded")
+
+                @pytest.fixture
+                def fixture():
+                    print("fixture_used")
+                """
+            ),
+        }
+    )
+    result = testdir.runpytest("-vs", "symlinktests")
+    result.stdout.fnmatch_lines(
+        [
+            "*conftest_loaded*",
+            "real/app/tests/test_foo.py::test1 fixture_used",
+            "PASSED",
+        ]
+    )
+    assert result.ret == EXIT_OK
+
+    # Should not cause "ValueError: Plugin already registered" (#4174).
+    result = testdir.runpytest("-vs", "symlink")
+    assert result.ret == EXIT_OK
+
+    realtests.ensure("__init__.py")
+    result = testdir.runpytest("-vs", "symlinktests/test_foo.py::test1")
+    result.stdout.fnmatch_lines(
+        [
+            "*conftest_loaded*",
+            "real/app/tests/test_foo.py::test1 fixture_used",
+            "PASSED",
+        ]
+    )
+    assert result.ret == EXIT_OK
+
+
+@pytest.mark.skipif(
+    not hasattr(py.path.local, "mksymlinkto"),
+    reason="symlink not available on this platform",
+)
+def test_conftest_symlink_files(testdir):
+    """Check conftest.py loading when running in directory with symlinks."""
+    real = testdir.tmpdir.mkdir("real")
+    source = {
+        "app/test_foo.py": "def test1(fixture): pass",
+        "app/__init__.py": "",
+        "app/conftest.py": textwrap.dedent(
+            """
+            import pytest
+
+            print("conftest_loaded")
+
+            @pytest.fixture
+            def fixture():
+                print("fixture_used")
+            """
+        ),
+    }
+    testdir.makepyfile(**{"real/%s" % k: v for k, v in source.items()})
+
+    # Create a build directory that contains symlinks to actual files
+    # but doesn't symlink actual directories.
+    build = testdir.tmpdir.mkdir("build")
+    build.mkdir("app")
+    for f in source:
+        build.join(f).mksymlinkto(real.join(f))
+    build.chdir()
+    result = testdir.runpytest("-vs", "app/test_foo.py")
+    result.stdout.fnmatch_lines(["*conftest_loaded*", "PASSED"])
+    assert result.ret == EXIT_OK
 
 
 def test_no_conftest(testdir):

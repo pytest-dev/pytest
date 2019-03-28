@@ -5,7 +5,9 @@ Command line options and configuration file settings
 -----------------------------------------------------------------
 
 You can get help on command line options and values in INI-style
-configurations files by using the general help option::
+configurations files by using the general help option:
+
+.. code-block:: bash
 
     pytest -h   # prints options _and_ config file settings
 
@@ -92,12 +94,16 @@ The rootdir is used a reference directory for constructing test
 addresses ("nodeids") and can be used also by plugins for storing
 per-testrun information.
 
-Example::
+Example:
+
+.. code-block:: bash
 
     pytest path/to/testdir path/other/
 
 will determine the common ancestor as ``path`` and then
-check for ini-files as follows::
+check for ini-files as follows:
+
+.. code-block:: text
 
     # first look for pytest.ini files
     path/pytest.ini
@@ -127,25 +133,33 @@ progress output, you can write it into a configuration file:
 
 .. code-block:: ini
 
-    # content of pytest.ini
-    # (or tox.ini or setup.cfg)
+    # content of pytest.ini or tox.ini
+    # setup.cfg files should use [tool:pytest] section instead
     [pytest]
     addopts = -ra -q
 
 Alternatively, you can set a ``PYTEST_ADDOPTS`` environment variable to add command
-line options while the environment is in use::
+line options while the environment is in use:
+
+.. code-block:: bash
 
     export PYTEST_ADDOPTS="-v"
 
-Here's how the command-line is built in the presence of ``addopts`` or the environment variable::
+Here's how the command-line is built in the presence of ``addopts`` or the environment variable:
+
+.. code-block:: text
 
     <pytest.ini:addopts> $PYTEST_ADDOPTS <extra command-line arguments>
 
-So if the user executes in the command-line::
+So if the user executes in the command-line:
+
+.. code-block:: bash
 
     pytest -m slow
 
-The actual command line executed is::
+The actual command line executed is:
+
+.. code-block:: bash
 
     pytest -ra -q -v -m slow
 

@@ -1,19 +1,28 @@
-from __future__ import absolute_import, division, print_function
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+
 import inspect
 import pprint
+import re
 import sys
 import traceback
-from inspect import CO_VARARGS, CO_VARKEYWORDS
+from inspect import CO_VARARGS
+from inspect import CO_VARKEYWORDS
+from weakref import ref
 
 import attr
-import re
-from weakref import ref
-from _pytest.compat import _PY2, _PY3, PY35, safe_str
-from six import text_type
+import pluggy
 import py
 import six
+from six import text_type
 
-builtin_repr = repr
+import _pytest
+from _pytest._io.saferepr import saferepr
+from _pytest.compat import _PY2
+from _pytest.compat import _PY3
+from _pytest.compat import PY35
+from _pytest.compat import safe_str
 
 if _PY3:
     from traceback import format_exception_only
@@ -134,7 +143,7 @@ class Frame(object):
     def repr(self, object):
         """ return a 'safe' (non-recursive, one-line) string repr for 'object'
         """
-        return py.io.saferepr(object)
+        return saferepr(object)
 
     def is_true(self, object):
         return object
@@ -381,40 +390,84 @@ co_equal = compile(
 )
 
 
+@attr.s(repr=False)
 class ExceptionInfo(object):
     """ wraps sys.exc_info() objects and offers
         help for navigating the traceback.
     """
 
-    _striptext = ""
     _assert_start_repr = (
         "AssertionError(u'assert " if _PY2 else "AssertionError('assert "
     )
 
-    def __init__(self, tup=None, exprinfo=None):
-        import _pytest._code
+    _excinfo = attr.ib()
+    _striptext = attr.ib(default="")
+    _traceback = attr.ib(default=None)
 
-        if tup is None:
-            tup = sys.exc_info()
-            if exprinfo is None and isinstance(tup[1], AssertionError):
-                exprinfo = getattr(tup[1], "msg", None)
-                if exprinfo is None:
-                    exprinfo = py.io.saferepr(tup[1])
-                if exprinfo and exprinfo.startswith(self._assert_start_repr):
-                    self._striptext = "AssertionError: "
-        self._excinfo = tup
-        #: the exception class
-        self.type = tup[0]
-        #: the exception instance
-        self.value = tup[1]
-        #: the exception raw traceback
-        self.tb = tup[2]
-        #: the exception type name
-        self.typename = self.type.__name__
-        #: the exception traceback (_pytest._code.Traceback instance)
-        self.traceback = _pytest._code.Traceback(self.tb, excinfo=ref(self))
+    @classmethod
+    def from_current(cls, exprinfo=None):
+        """returns an ExceptionInfo matching the current traceback
+
+        .. warning::
+
+            Experimental API
+
+
+        :param exprinfo: a text string helping to determine if we should
+                         strip ``AssertionError`` from the output, defaults
+                         to the exception message/``__str__()``
+        """
+        tup = sys.exc_info()
+        _striptext = ""
+        if exprinfo is None and isinstance(tup[1], AssertionError):
+            exprinfo = getattr(tup[1], "msg", None)
+            if exprinfo is None:
+                exprinfo = saferepr(tup[1])
+            if exprinfo and exprinfo.startswith(cls._assert_start_repr):
+                _striptext = "AssertionError: "
+
+        return cls(tup, _striptext)
+
+    @classmethod
+    def for_later(cls):
+        """return an unfilled ExceptionInfo
+        """
+        return cls(None)
+
+    @property
+    def type(self):
+        """the exception class"""
+        return self._excinfo[0]
+
+    @property
+    def value(self):
+        """the exception value"""
+        return self._excinfo[1]
+
+    @property
+    def tb(self):
+        """the exception raw traceback"""
+        return self._excinfo[2]
+
+    @property
+    def typename(self):
+        """the type name of the exception"""
+        return self.type.__name__
+
+    @property
+    def traceback(self):
+        """the traceback"""
+        if self._traceback is None:
+            self._traceback = Traceback(self.tb, excinfo=ref(self))
+        return self._traceback
+
+    @traceback.setter
+    def traceback(self, value):
+        self._traceback = value
 
     def __repr__(self):
+        if self._excinfo is None:
+            return "<ExceptionInfo for raises contextmanager>"
         return "<ExceptionInfo %s tblen=%d>" % (self.typename, len(self.traceback))
 
     def exconly(self, tryshort=False):
@@ -451,13 +504,35 @@ class ExceptionInfo(object):
         tbfilter=True,
         funcargs=False,
         truncate_locals=True,
+        chain=True,
     ):
-        """ return str()able representation of this exception info.
-            showlocals: show locals per traceback entry
-            style: long|short|no|native traceback style
-            tbfilter: hide entries (where __tracebackhide__ is true)
+        """
+        Return str()able representation of this exception info.
 
-            in case of style==native, tbfilter and showlocals is ignored.
+        :param bool showlocals:
+            Show locals per traceback entry.
+            Ignored if ``style=="native"``.
+
+        :param str style: long|short|no|native traceback style
+
+        :param bool abspath:
+            If paths should be changed to absolute or left unchanged.
+
+        :param bool tbfilter:
+            Hide entries that contain a local variable ``__tracebackhide__==True``.
+            Ignored if ``style=="native"``.
+
+        :param bool funcargs:
+            Show fixtures ("funcargs" for legacy purposes) per traceback entry.
+
+        :param bool truncate_locals:
+            With ``showlocals==True``, make sure locals can be safely represented as strings.
+
+        :param bool chain: if chained exceptions in Python 3 should be shown.
+
+        .. versionchanged:: 3.9
+
+            Added the ``chain`` parameter.
         """
         if style == "native":
             return ReprExceptionInfo(
@@ -476,10 +551,13 @@ class ExceptionInfo(object):
             tbfilter=tbfilter,
             funcargs=funcargs,
             truncate_locals=truncate_locals,
+            chain=chain,
         )
         return fmt.repr_excinfo(self)
 
     def __str__(self):
+        if self._excinfo is None:
+            return repr(self)
         entry = self.traceback[-1]
         loc = ReprFileLocation(entry.path, entry.lineno + 1, self.exconly())
         return str(loc)
@@ -516,6 +594,7 @@ class FormattedExcinfo(object):
     tbfilter = attr.ib(default=True)
     funcargs = attr.ib(default=False)
     truncate_locals = attr.ib(default=True)
+    chain = attr.ib(default=True)
     astcache = attr.ib(default=attr.Factory(dict), init=False, repr=False)
 
     def _getindent(self, source):
@@ -540,7 +619,7 @@ class FormattedExcinfo(object):
         return source
 
     def _saferepr(self, obj):
-        return py.io.saferepr(obj)
+        return saferepr(obj)
 
     def repr_args(self, entry):
         if self.funcargs:
@@ -735,7 +814,7 @@ class FormattedExcinfo(object):
                     reprcrash = None
 
                 repr_chain += [(reprtraceback, reprcrash, descr)]
-                if e.__cause__ is not None:
+                if e.__cause__ is not None and self.chain:
                     e = e.__cause__
                     excinfo = (
                         ExceptionInfo((type(e), e, e.__traceback__))
@@ -743,7 +822,11 @@ class FormattedExcinfo(object):
                         else None
                     )
                     descr = "The above exception was the direct cause of the following exception:"
-                elif e.__context__ is not None and not e.__suppress_context__:
+                elif (
+                    e.__context__ is not None
+                    and not e.__suppress_context__
+                    and self.chain
+                ):
                     e = e.__context__
                     excinfo = (
                         ExceptionInfo((type(e), e, e.__traceback__))
@@ -863,8 +946,6 @@ class ReprEntryNative(TerminalRepr):
 
 
 class ReprEntry(TerminalRepr):
-    localssep = "_ "
-
     def __init__(self, lines, reprfuncargs, reprlocals, filelocrepr, style):
         self.lines = lines
         self.reprfuncargs = reprfuncargs
@@ -886,7 +967,6 @@ class ReprEntry(TerminalRepr):
             red = line.startswith("E   ")
             tw.line(line, bold=True, red=red)
         if self.reprlocals:
-            # tw.sep(self.localssep, "Locals")
             tw.line("")
             self.reprlocals.toterminal(tw)
         if self.reprfileloc:
@@ -979,3 +1059,36 @@ else:
             return "maximum recursion depth exceeded" in str(excinfo.value)
         except UnicodeError:
             return False
+
+
+# relative paths that we use to filter traceback entries from appearing to the user;
+# see filter_traceback
+# note: if we need to add more paths than what we have now we should probably use a list
+# for better maintenance
+
+_PLUGGY_DIR = py.path.local(pluggy.__file__.rstrip("oc"))
+# pluggy is either a package or a single module depending on the version
+if _PLUGGY_DIR.basename == "__init__.py":
+    _PLUGGY_DIR = _PLUGGY_DIR.dirpath()
+_PYTEST_DIR = py.path.local(_pytest.__file__).dirpath()
+_PY_DIR = py.path.local(py.__file__).dirpath()
+
+
+def filter_traceback(entry):
+    """Return True if a TracebackEntry instance should be removed from tracebacks:
+    * dynamically generated code (no code to show up for it);
+    * internal traceback from pytest or its internal libraries, py and pluggy.
+    """
+    # entry.path might sometimes return a str object when the entry
+    # points to dynamically generated code
+    # see https://bitbucket.org/pytest-dev/py/issues/71
+    raw_filename = entry.frame.code.raw.co_filename
+    is_generated = "<" in raw_filename and ">" in raw_filename
+    if is_generated:
+        return False
+    # entry.path might point to a non-existing file, in which case it will
+    # also return a str object. see #1133
+    p = py.path.local(entry.path)
+    return (
+        not p.relto(_PLUGGY_DIR) and not p.relto(_PYTEST_DIR) and not p.relto(_PY_DIR)
+    )

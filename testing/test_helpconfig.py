@@ -1,6 +1,9 @@
-from __future__ import absolute_import, division, print_function
-from _pytest.main import EXIT_NOTESTSCOLLECTED
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+
 import pytest
+from _pytest.main import EXIT_NOTESTSCOLLECTED
 
 
 def test_version(testdir, pytestconfig):

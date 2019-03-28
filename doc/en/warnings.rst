@@ -18,25 +18,31 @@ and displays them at the end of the session::
     def test_one():
         assert api_v1() == 1
 
-Running pytest now produces this output::
+Running pytest now produces this output:
+
+.. code-block:: pytest
 
     $ pytest test_show_warnings.py
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
+    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
+    cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 1 item
 
     test_show_warnings.py .                                              [100%]
 
     ============================= warnings summary =============================
-    $REGENDOC_TMPDIR/test_show_warnings.py:4: UserWarning: api v1, should use functions from v2
-      warnings.warn(UserWarning("api v1, should use functions from v2"))
+    test_show_warnings.py::test_one
+      $REGENDOC_TMPDIR/test_show_warnings.py:4: UserWarning: api v1, should use functions from v2
+        warnings.warn(UserWarning("api v1, should use functions from v2"))
 
     -- Docs: https://docs.pytest.org/en/latest/warnings.html
     =================== 1 passed, 1 warnings in 0.12 seconds ===================
 
 The ``-W`` flag can be passed to control which warnings will be displayed or even turn
-them into errors::
+them into errors:
+
+.. code-block:: pytest
 
     $ pytest -q test_show_warnings.py -W error::UserWarning
     F                                                                    [100%]
@@ -74,54 +80,6 @@ is performed.
 Both ``-W`` command-line option and ``filterwarnings`` ini option are based on Python's own
 `-W option`_ and `warnings.simplefilter`_, so please refer to those sections in the Python
 documentation for other examples and advanced usage.
-
-Disabling warning summary
--------------------------
-
-Although not recommended, you can use the ``--disable-warnings`` command-line option to suppress the
-warning summary entirely from the test run output.
-
-Disabling warning capture entirely
-----------------------------------
-
-This plugin is enabled by default but can be disabled entirely in your ``pytest.ini`` file with:
-
-    .. code-block:: ini
-
-        [pytest]
-        addopts = -p no:warnings
-
-Or passing ``-p no:warnings`` in the command-line. This might be useful if your test suites handles warnings
-using an external system.
-
-
-.. _`deprecation-warnings`:
-
-DeprecationWarning and PendingDeprecationWarning
-------------------------------------------------
-
-.. versionadded:: 3.8
-
-By default pytest will display ``DeprecationWarning`` and ``PendingDeprecationWarning`` if no other warning filters
-are configured.
-
-To disable showing ``DeprecationWarning`` and ``PendingDeprecationWarning`` warnings, you might define any warnings
-filter either in the command-line or in the ini file, or you can use:
-
-.. code-block:: ini
-
-    [pytest]
-    filterwarnings =
-        ignore::DeprecationWarning
-        ignore::PendingDeprecationWarning
-
-.. note::
-    This makes pytest more compliant with `PEP-0506 <https://www.python.org/dev/peps/pep-0565/#recommended-filter-settings-for-test-runners>`_ which suggests that those warnings should
-    be shown by default by test runners, but pytest doesn't follow ``PEP-0506`` completely because resetting all
-    warning filters like suggested in the PEP will break existing test suites that configure warning filters themselves
-    by calling ``warnings.simplefilter`` (see issue `#2430 <https://github.com/pytest-dev/pytest/issues/2430>`_
-    for an example of that).
-
 
 .. _`filterwarnings`:
 
@@ -161,24 +119,6 @@ decorator or to all tests in a module by setting the ``pytestmark`` variable:
     pytestmark = pytest.mark.filterwarnings("error")
 
 
-.. note::
-
-    Except for these features, pytest does not change the python warning filter; it only captures
-    and displays the warnings which are issued with respect to the currently configured filter,
-    including changes to the filter made by test functions or by the system under test.
-
-.. note::
-
-    ``DeprecationWarning`` and ``PendingDeprecationWarning`` are hidden by the standard library
-    by default so you have to explicitly configure them to be displayed in your ``pytest.ini``:
-
-    .. code-block:: ini
-
-        [pytest]
-        filterwarnings =
-            once::DeprecationWarning
-            once::PendingDeprecationWarning
-
 
 *Credits go to Florian Schulze for the reference implementation in the* `pytest-warnings`_
 *plugin.*
@@ -186,6 +126,102 @@ decorator or to all tests in a module by setting the ``pytestmark`` variable:
 .. _`-W option`: https://docs.python.org/3/using/cmdline.html?highlight=#cmdoption-W
 .. _warnings.simplefilter: https://docs.python.org/3/library/warnings.html#warnings.simplefilter
 .. _`pytest-warnings`: https://github.com/fschulze/pytest-warnings
+
+Disabling warnings summary
+--------------------------
+
+Although not recommended, you can use the ``--disable-warnings`` command-line option to suppress the
+warning summary entirely from the test run output.
+
+Disabling warning capture entirely
+----------------------------------
+
+This plugin is enabled by default but can be disabled entirely in your ``pytest.ini`` file with:
+
+    .. code-block:: ini
+
+        [pytest]
+        addopts = -p no:warnings
+
+Or passing ``-p no:warnings`` in the command-line. This might be useful if your test suites handles warnings
+using an external system.
+
+
+.. _`deprecation-warnings`:
+
+DeprecationWarning and PendingDeprecationWarning
+------------------------------------------------
+
+.. versionadded:: 3.8
+.. versionchanged:: 3.9
+
+By default pytest will display ``DeprecationWarning`` and ``PendingDeprecationWarning`` warnings from
+user code and third-party libraries, as recommended by `PEP-0565 <https://www.python.org/dev/peps/pep-0565>`_.
+This helps users keep their code modern and avoid breakages when deprecated warnings are effectively removed.
+
+Sometimes it is useful to hide some specific deprecation warnings that happen in code that you have no control over
+(such as third-party libraries), in which case you might use the warning filters options (ini or marks) to ignore
+those warnings.
+
+For example:
+
+.. code-block:: ini
+
+    [pytest]
+    filterwarnings =
+        ignore:.*U.*mode is deprecated:DeprecationWarning
+
+
+This will ignore all warnings of type ``DeprecationWarning`` where the start of the message matches
+the regular expression ``".*U.*mode is deprecated"``.
+
+.. note::
+    If warnings are configured at the interpreter level, using
+    the `PYTHONWARNINGS <https://docs.python.org/3/using/cmdline.html#envvar-PYTHONWARNINGS>`_ environment variable or the
+    ``-W`` command-line option, pytest will not configure any filters by default.
+
+    Also pytest doesn't follow ``PEP-0506`` suggestion of resetting all warning filters because
+    it might break test suites that configure warning filters themselves
+    by calling ``warnings.simplefilter`` (see issue `#2430 <https://github.com/pytest-dev/pytest/issues/2430>`_
+    for an example of that).
+
+
+.. _`ensuring a function triggers a deprecation warning`:
+
+.. _ensuring_function_triggers:
+
+Ensuring code triggers a deprecation warning
+--------------------------------------------
+
+You can also call a global helper for checking
+that a certain function call triggers a ``DeprecationWarning`` or
+``PendingDeprecationWarning``::
+
+    import pytest
+
+    def test_global():
+        pytest.deprecated_call(myfunction, 17)
+
+By default, ``DeprecationWarning`` and ``PendingDeprecationWarning`` will not be
+caught when using ``pytest.warns`` or ``recwarn`` because default Python warnings filters hide
+them. If you wish to record them in your own code, use the
+command ``warnings.simplefilter('always')``::
+
+    import warnings
+    import pytest
+
+    def test_deprecation(recwarn):
+        warnings.simplefilter('always')
+        warnings.warn("deprecated", DeprecationWarning)
+        assert len(recwarn) == 1
+        assert recwarn.pop(DeprecationWarning)
+
+You can also use it as a contextmanager::
+
+    def test_global():
+        with pytest.deprecated_call():
+            myobject.deprecated_method()
+
 
 
 .. _`asserting warnings`:
@@ -197,7 +233,7 @@ decorator or to all tests in a module by setting the ``pytestmark`` variable:
 .. _warns:
 
 Asserting warnings with the warns function
------------------------------------------------
+------------------------------------------
 
 .. versionadded:: 2.8
 
@@ -255,7 +291,7 @@ Alternatively, you can examine raised warnings in detail using the
 .. _recwarn:
 
 Recording warnings
-------------------------
+------------------
 
 You can record raised warnings either using ``pytest.warns`` or with
 the ``recwarn`` fixture.
@@ -293,43 +329,26 @@ warnings, or index into it to get a particular recorded warning.
 
 Full API: :class:`WarningsRecorder`.
 
-.. _`ensuring a function triggers a deprecation warning`:
+.. _custom_failure_messages:
 
-.. _ensuring_function_triggers:
+Custom failure messages
+-----------------------
 
-Ensuring a function triggers a deprecation warning
--------------------------------------------------------
+Recording warnings provides an opportunity to produce custom test
+failure messages for when no warnings are issued or other conditions
+are met.
 
-You can also call a global helper for checking
-that a certain function call triggers a ``DeprecationWarning`` or
-``PendingDeprecationWarning``::
+.. code-block:: python
 
-    import pytest
+    def test():
+        with pytest.warns(Warning) as record:
+            f()
+            if not record:
+                pytest.fail("Expected a warning!")
 
-    def test_global():
-        pytest.deprecated_call(myfunction, 17)
-
-By default, ``DeprecationWarning`` and ``PendingDeprecationWarning`` will not be
-caught when using ``pytest.warns`` or ``recwarn`` because default Python warnings filters hide
-them. If you wish to record them in your own code, use the
-command ``warnings.simplefilter('always')``::
-
-    import warnings
-    import pytest
-
-    def test_deprecation(recwarn):
-        warnings.simplefilter('always')
-        warnings.warn("deprecated", DeprecationWarning)
-        assert len(recwarn) == 1
-        assert recwarn.pop(DeprecationWarning)
-
-You can also use it as a contextmanager::
-
-    def test_global():
-        with pytest.deprecated_call():
-            myobject.deprecated_method()
-
-
+If no warnings are issued when calling ``f``, then ``not record`` will
+evaluate to ``True``.  You can then call ``pytest.fail`` with a
+custom error message.
 
 .. _internal-warnings:
 
@@ -353,13 +372,14 @@ defines an ``__init__`` constructor, as this prevents the class from being insta
         def test_foo(self):
             assert 1 == 1
 
-::
+.. code-block:: pytest
 
     $ pytest test_pytest_warnings.py -q
 
     ============================= warnings summary =============================
-    $REGENDOC_TMPDIR/test_pytest_warnings.py:1: PytestWarning: cannot collect test class 'Test' because it has a __init__ constructor
-      class Test:
+    test_pytest_warnings.py:1
+      $REGENDOC_TMPDIR/test_pytest_warnings.py:1: PytestWarning: cannot collect test class 'Test' because it has a __init__ constructor
+        class Test:
 
     -- Docs: https://docs.pytest.org/en/latest/warnings.html
     1 warnings in 0.12 seconds

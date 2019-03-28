@@ -2,18 +2,22 @@
 per-test stdout/stderr capturing mechanism.
 
 """
-from __future__ import absolute_import, division, print_function
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 
 import collections
 import contextlib
-import sys
-import os
 import io
+import os
+import sys
 from io import UnsupportedOperation
 from tempfile import TemporaryFile
 
 import six
+
 import pytest
+from _pytest.compat import _PY3
 from _pytest.compat import CaptureIO
 
 patchsysdict = {0: "stdin", 1: "stdout", 2: "stderr"}
@@ -99,6 +103,9 @@ class CaptureManager(object):
 
     # Global capturing control
 
+    def is_globally_capturing(self):
+        return self._method != "no"
+
     def start_global_capturing(self):
         assert self._global_capturing is None
         self._global_capturing = self._getcapture(self._method)
@@ -111,7 +118,10 @@ class CaptureManager(object):
             self._global_capturing = None
 
     def resume_global_capture(self):
-        self._global_capturing.resume_capturing()
+        # During teardown of the python process, and on rare occasions, capture
+        # attributes can be `None` while trying to resume global capture.
+        if self._global_capturing is not None:
+            self._global_capturing.resume_capturing()
 
     def suspend_global_capture(self, in_=False):
         cap = getattr(self, "_global_capturing", None)
@@ -121,7 +131,7 @@ class CaptureManager(object):
     def read_global_capture(self):
         return self._global_capturing.readouterr()
 
-    # Fixture Control (its just forwarding, think about removing this later)
+    # Fixture Control (it's just forwarding, think about removing this later)
 
     def activate_fixture(self, item):
         """If the current item is using ``capsys`` or ``capfd``, activate them so they take precedence over
@@ -403,6 +413,10 @@ class EncodedFile(object):
     def write(self, obj):
         if isinstance(obj, six.text_type):
             obj = obj.encode(self.encoding, "replace")
+        elif _PY3:
+            raise TypeError(
+                "write() argument must be str, not {}".format(type(obj).__name__)
+            )
         self.buffer.write(obj)
 
     def writelines(self, linelist):
@@ -498,7 +512,7 @@ class FDCaptureBinary(object):
     snap() produces `bytes`
     """
 
-    EMPTY_BUFFER = bytes()
+    EMPTY_BUFFER = b""
 
     def __init__(self, targetfd, tmpfile=None):
         self.targetfd = targetfd
@@ -525,7 +539,10 @@ class FDCaptureBinary(object):
             self.tmpfile_fd = tmpfile.fileno()
 
     def __repr__(self):
-        return "<FDCapture %s oldfd=%s>" % (self.targetfd, self.targetfd_save)
+        return "<FDCapture %s oldfd=%s>" % (
+            self.targetfd,
+            getattr(self, "targetfd_save", None),
+        )
 
     def start(self):
         """ Start capturing on targetfd using memorized tmpfile. """
@@ -624,7 +641,7 @@ class SysCapture(object):
 
 
 class SysCaptureBinary(SysCapture):
-    EMPTY_BUFFER = bytes()
+    EMPTY_BUFFER = b""
 
     def snap(self):
         res = self.tmpfile.buffer.getvalue()
@@ -654,7 +671,7 @@ class DontReadFromInput(six.Iterator):
         return self
 
     def fileno(self):
-        raise UnsupportedOperation("redirected stdin is pseudofile, " "has no fileno()")
+        raise UnsupportedOperation("redirected stdin is pseudofile, has no fileno()")
 
     def isatty(self):
         return False
@@ -764,9 +781,9 @@ def _py36_windowsconsoleio_workaround(stream):
             f.line_buffering,
         )
 
-    sys.__stdin__ = sys.stdin = _reopen_stdio(sys.stdin, "rb")
-    sys.__stdout__ = sys.stdout = _reopen_stdio(sys.stdout, "wb")
-    sys.__stderr__ = sys.stderr = _reopen_stdio(sys.stderr, "wb")
+    sys.stdin = _reopen_stdio(sys.stdin, "rb")
+    sys.stdout = _reopen_stdio(sys.stdout, "wb")
+    sys.stderr = _reopen_stdio(sys.stderr, "wb")
 
 
 def _attempt_to_close_capture_file(f):

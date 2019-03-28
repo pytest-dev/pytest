@@ -1,14 +1,21 @@
 # -*- coding: utf-8 -*-
-from __future__ import absolute_import, division, print_function
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 
-import _pytest._code
 import inspect
 import os
-import py
-import pytest
 import sys
 import types
-from _pytest import runner, main, outcomes, reports
+
+import py
+
+import _pytest._code
+import pytest
+from _pytest import main
+from _pytest import outcomes
+from _pytest import reports
+from _pytest import runner
 
 
 class TestSetupState(object):
@@ -458,12 +465,7 @@ class TestSessionReports(object):
         assert res[1].name == "TestClass"
 
 
-reporttypes = [
-    reports.BaseReport,
-    reports.TestReport,
-    reports.TeardownErrorReport,
-    reports.CollectReport,
-]
+reporttypes = [reports.BaseReport, reports.TestReport, reports.CollectReport]
 
 
 @pytest.mark.parametrize(
@@ -480,13 +482,16 @@ def test_report_extra_parameters(reporttype):
 
 
 def test_callinfo():
-    ci = runner.CallInfo(lambda: 0, "123")
+    ci = runner.CallInfo.from_call(lambda: 0, "123")
     assert ci.when == "123"
     assert ci.result == 0
     assert "result" in repr(ci)
-    ci = runner.CallInfo(lambda: 0 / 0, "123")
+    assert repr(ci) == "<CallInfo when='123' result: 0>"
+
+    ci = runner.CallInfo.from_call(lambda: 0 / 0, "123")
     assert ci.when == "123"
     assert not hasattr(ci, "result")
+    assert repr(ci) == "<CallInfo when='123' exception: division by zero>"
     assert ci.excinfo
     assert "exc" in repr(ci)
 
@@ -541,20 +546,16 @@ def test_outcomeexception_passes_except_Exception():
 
 
 def test_pytest_exit():
-    try:
+    with pytest.raises(pytest.exit.Exception) as excinfo:
         pytest.exit("hello")
-    except pytest.exit.Exception:
-        excinfo = _pytest._code.ExceptionInfo()
-        assert excinfo.errisinstance(KeyboardInterrupt)
+    assert excinfo.errisinstance(pytest.exit.Exception)
 
 
 def test_pytest_fail():
-    try:
+    with pytest.raises(pytest.fail.Exception) as excinfo:
         pytest.fail("hello")
-    except pytest.fail.Exception:
-        excinfo = _pytest._code.ExceptionInfo()
-        s = excinfo.exconly(tryshort=True)
-        assert s.startswith("Failed")
+    s = excinfo.exconly(tryshort=True)
+    assert s.startswith("Failed")
 
 
 def test_pytest_exit_msg(testdir):
@@ -570,7 +571,20 @@ def test_pytest_exit_msg(testdir):
     result.stderr.fnmatch_lines(["Exit: oh noes"])
 
 
-def test_pytest_fail_notrace(testdir):
+def test_pytest_exit_returncode(testdir):
+    testdir.makepyfile(
+        """
+        import pytest
+        def test_foo():
+            pytest.exit("some exit msg", 99)
+    """
+    )
+    result = testdir.runpytest()
+    assert result.ret == 99
+
+
+def test_pytest_fail_notrace_runtest(testdir):
+    """Test pytest.fail(..., pytrace=False) does not show tracebacks during test run."""
     testdir.makepyfile(
         """
         import pytest
@@ -583,6 +597,21 @@ def test_pytest_fail_notrace(testdir):
     result = testdir.runpytest()
     result.stdout.fnmatch_lines(["world", "hello"])
     assert "def teardown_function" not in result.stdout.str()
+
+
+def test_pytest_fail_notrace_collection(testdir):
+    """Test pytest.fail(..., pytrace=False) does not show tracebacks during collection."""
+    testdir.makepyfile(
+        """
+        import pytest
+        def some_internal_function():
+            pytest.fail("hello", pytrace=False)
+        some_internal_function()
+    """
+    )
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines(["hello"])
+    assert "def some_internal_function()" not in result.stdout.str()
 
 
 @pytest.mark.parametrize("str_prefix", ["u", ""])
@@ -635,7 +664,7 @@ def test_exception_printing_skip():
     try:
         pytest.skip("hello")
     except pytest.skip.Exception:
-        excinfo = _pytest._code.ExceptionInfo()
+        excinfo = _pytest._code.ExceptionInfo.from_current()
         s = excinfo.exconly(tryshort=True)
         assert s.startswith("Skipped")
 
@@ -656,21 +685,17 @@ def test_importorskip(monkeypatch):
         # check that importorskip reports the actual call
         # in this test the test_runner.py file
         assert path.purebasename == "test_runner"
-        pytest.raises(SyntaxError, "pytest.importorskip('x y z')")
-        pytest.raises(SyntaxError, "pytest.importorskip('x=y')")
+        pytest.raises(SyntaxError, pytest.importorskip, "x y z")
+        pytest.raises(SyntaxError, pytest.importorskip, "x=y")
         mod = types.ModuleType("hello123")
         mod.__version__ = "1.3"
         monkeypatch.setitem(sys.modules, "hello123", mod)
-        pytest.raises(
-            pytest.skip.Exception,
-            """
+        with pytest.raises(pytest.skip.Exception):
             pytest.importorskip("hello123", minversion="1.3.1")
-        """,
-        )
         mod2 = pytest.importorskip("hello123", minversion="1.3")
         assert mod2 == mod
     except pytest.skip.Exception:
-        print(_pytest._code.ExceptionInfo())
+        print(_pytest._code.ExceptionInfo.from_current())
         pytest.fail("spurious skip")
 
 
@@ -686,13 +711,10 @@ def test_importorskip_dev_module(monkeypatch):
         monkeypatch.setitem(sys.modules, "mockmodule", mod)
         mod2 = pytest.importorskip("mockmodule", minversion="0.12.0")
         assert mod2 == mod
-        pytest.raises(
-            pytest.skip.Exception,
-            """
-            pytest.importorskip('mockmodule1', minversion='0.14.0')""",
-        )
+        with pytest.raises(pytest.skip.Exception):
+            pytest.importorskip("mockmodule1", minversion="0.14.0")
     except pytest.skip.Exception:
-        print(_pytest._code.ExceptionInfo())
+        print(_pytest._code.ExceptionInfo.from_current())
         pytest.fail("spurious skip")
 
 
@@ -708,6 +730,22 @@ def test_importorskip_module_level(testdir):
     """
     )
     result = testdir.runpytest()
+    result.stdout.fnmatch_lines(["*collected 0 items / 1 skipped*"])
+
+
+def test_importorskip_custom_reason(testdir):
+    """make sure custom reasons are used"""
+    testdir.makepyfile(
+        """
+        import pytest
+        foobarbaz = pytest.importorskip("foobarbaz2", reason="just because")
+
+        def test_foo():
+            pass
+    """
+    )
+    result = testdir.runpytest("-ra")
+    result.stdout.fnmatch_lines(["*just because*"])
     result.stdout.fnmatch_lines(["*collected 0 items / 1 skipped*"])
 
 

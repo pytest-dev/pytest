@@ -4,19 +4,23 @@ merged implementation of the cache provider
 the name cache was not chosen to ensure pluggy automatically
 ignores the external pytest-cache
 """
-from __future__ import absolute_import, division, print_function
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+
+import json
+import os
 from collections import OrderedDict
 
+import attr
 import py
 import six
-import attr
 
 import pytest
-import json
-import shutil
-
-from . import paths
-from .compat import _PY2 as PY2, Path
+from .compat import _PY2 as PY2
+from .pathlib import Path
+from .pathlib import resolve_from_str
+from .pathlib import rmtree
 
 README_CONTENT = u"""\
 # pytest cache directory #
@@ -29,6 +33,13 @@ which provides the `--lf` and `--ff` options, as well as the `cache` fixture.
 See [the docs](https://docs.pytest.org/en/latest/cache.html) for more information.
 """
 
+CACHEDIR_TAG_CONTENT = b"""\
+Signature: 8a477f597d28d172789f06886806bc55
+# This file is a cache directory tag created by pytest.
+# For information about cache directory tags, see:
+#	http://www.bford.info/cachedir/spec.html
+"""
+
 
 @attr.s
 class Cache(object):
@@ -39,20 +50,22 @@ class Cache(object):
     def for_config(cls, config):
         cachedir = cls.cache_dir_from_config(config)
         if config.getoption("cacheclear") and cachedir.exists():
-            shutil.rmtree(str(cachedir))
+            rmtree(cachedir, force=True)
             cachedir.mkdir()
         return cls(cachedir, config)
 
     @staticmethod
     def cache_dir_from_config(config):
-        return paths.resolve_from_str(config.getini("cache_dir"), config.rootdir)
+        return resolve_from_str(config.getini("cache_dir"), config.rootdir)
 
     def warn(self, fmt, **args):
-        from _pytest.warnings import _issue_config_warning
+        from _pytest.warnings import _issue_warning_captured
         from _pytest.warning_types import PytestWarning
 
-        _issue_config_warning(
-            PytestWarning(fmt.format(**args) if args else fmt), self._config
+        _issue_warning_captured(
+            PytestWarning(fmt.format(**args) if args else fmt),
+            self._config.hook,
+            stacklevel=3,
         )
 
     def makedir(self, name):
@@ -104,6 +117,10 @@ class Cache(object):
         """
         path = self._getvaluepath(key)
         try:
+            if path.parent.is_dir():
+                cache_dir_exists_already = True
+            else:
+                cache_dir_exists_already = self._cachedir.exists()
             path.parent.mkdir(exist_ok=True, parents=True)
         except (IOError, OSError):
             self.warn("could not create cache path {path}", path=path)
@@ -115,6 +132,7 @@ class Cache(object):
         else:
             with f:
                 json.dump(value, f, indent=2, sort_keys=True)
+            if not cache_dir_exists_already:
                 self._ensure_supporting_files()
 
     def _ensure_supporting_files(self):
@@ -124,8 +142,14 @@ class Cache(object):
             if not readme_path.is_file():
                 readme_path.write_text(README_CONTENT)
 
-            msg = u"# created by pytest automatically, do not change\n*"
-            self._cachedir.joinpath(".gitignore").write_text(msg, encoding="UTF-8")
+            gitignore_path = self._cachedir.joinpath(".gitignore")
+            if not gitignore_path.is_file():
+                msg = u"# Created by pytest automatically.\n*"
+                gitignore_path.write_text(msg, encoding="UTF-8")
+
+            cachedir_tag_path = self._cachedir.joinpath("CACHEDIR.TAG")
+            if not cachedir_tag_path.is_file():
+                cachedir_tag_path.write_bytes(CACHEDIR_TAG_CONTENT)
 
 
 class LFPlugin(object):
@@ -272,7 +296,10 @@ def pytest_addoption(parser):
         dest="cacheclear",
         help="remove all cache contents at start of test run.",
     )
-    parser.addini("cache_dir", default=".pytest_cache", help="cache directory path.")
+    cache_dir_default = ".pytest_cache"
+    if "TOX_ENV_DIR" in os.environ:
+        cache_dir_default = os.path.join(os.environ["TOX_ENV_DIR"], cache_dir_default)
+    parser.addini("cache_dir", default=cache_dir_default, help="cache directory path.")
     group.addoption(
         "--lfnf",
         "--last-failed-no-failures",
@@ -316,7 +343,8 @@ def cache(request):
 
 
 def pytest_report_header(config):
-    if config.option.verbose:
+    """Display cachedir with --cache-show and if non-default."""
+    if config.option.verbose or config.getini("cache_dir") != ".pytest_cache":
         cachedir = config.cache._cachedir
         # TODO: evaluate generating upward relative paths
         # starting with .., ../.. if sensible
@@ -344,7 +372,7 @@ def cacheshow(config, session):
         key = valpath.relative_to(vdir)
         val = config.cache.get(key, dummy)
         if val is dummy:
-            tw.line("%s contains unreadable content, " "will be ignored" % key)
+            tw.line("%s contains unreadable content, will be ignored" % key)
         else:
             tw.line("%s contains:" % key)
             for line in pformat(val).splitlines():

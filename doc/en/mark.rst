@@ -29,9 +29,11 @@ which also serve as documentation.
 Raising errors on unknown marks: --strict
 -----------------------------------------
 
-When the ``--strict`` command-line flag is passed, any marks not registered in the ``pytest.ini`` file will trigger an error.
+When the ``--strict`` command-line flag is passed, any unknown marks applied
+with the ``@pytest.mark.name_of_the_mark`` decorator will trigger an error.
+Marks defined or added by pytest or by a plugin will not trigger an error.
 
-Marks can be registered like this:
+Marks can be registered in ``pytest.ini`` like this:
 
 .. code-block:: ini
 
@@ -156,4 +158,4 @@ More details can be found in the `original PR <https://github.com/pytest-dev/pyt
 .. note::
 
     in a future major relase of pytest we will introduce class based markers,
-    at which points markers will no longer be limited to instances of :py:class:`Mark`
+    at which point markers will no longer be limited to instances of :py:class:`Mark`

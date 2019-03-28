@@ -1,15 +1,21 @@
 """ monkeypatching and mocking functionality.  """
-from __future__ import absolute_import, division, print_function
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 
 import os
-import sys
 import re
+import sys
+import warnings
 from contextlib import contextmanager
 
 import six
-from _pytest.fixtures import fixture
 
-RE_IMPORT_ERROR_NAME = re.compile("^No module named (.*)$")
+import pytest
+from _pytest.fixtures import fixture
+from _pytest.pathlib import Path
+
+RE_IMPORT_ERROR_NAME = re.compile(r"^No module named (.*)$")
 
 
 @fixture
@@ -175,6 +181,8 @@ class MonkeyPatch(object):
         attribute is missing.
         """
         __tracebackhide__ = True
+        import inspect
+
         if name is notset:
             if not isinstance(target, six.string_types):
                 raise TypeError(
@@ -188,7 +196,11 @@ class MonkeyPatch(object):
             if raising:
                 raise AttributeError(name)
         else:
-            self._setattr.append((target, name, getattr(target, name, notset)))
+            oldval = getattr(target, name, notset)
+            # Avoid class descriptors like staticmethod/classmethod.
+            if inspect.isclass(target):
+                oldval = target.__dict__.get(name, notset)
+            self._setattr.append((target, name, oldval))
             delattr(target, name)
 
     def setitem(self, dic, name, value):
@@ -209,13 +221,33 @@ class MonkeyPatch(object):
             self._setitem.append((dic, name, dic.get(name, notset)))
             del dic[name]
 
+    def _warn_if_env_name_is_not_str(self, name):
+        """On Python 2, warn if the given environment variable name is not a native str (#4056)"""
+        if six.PY2 and not isinstance(name, str):
+            warnings.warn(
+                pytest.PytestWarning(
+                    "Environment variable name {!r} should be str".format(name)
+                )
+            )
+
     def setenv(self, name, value, prepend=None):
         """ Set environment variable ``name`` to ``value``.  If ``prepend``
         is a character, read the current environment variable value
         and prepend the ``value`` adjoined with the ``prepend`` character."""
-        value = str(value)
+        if not isinstance(value, str):
+            warnings.warn(
+                pytest.PytestWarning(
+                    "Value of environment variable {name} type should be str, but got "
+                    "{value!r} (type: {type}); converted to str implicitly".format(
+                        name=name, value=value, type=type(value).__name__
+                    )
+                ),
+                stacklevel=2,
+            )
+            value = str(value)
         if prepend and name in os.environ:
             value = value + prepend + os.environ[name]
+        self._warn_if_env_name_is_not_str(name)
         self.setitem(os.environ, name, value)
 
     def delenv(self, name, raising=True):
@@ -225,6 +257,7 @@ class MonkeyPatch(object):
         If ``raising`` is set to False, no exception will be raised if the
         environment variable is missing.
         """
+        self._warn_if_env_name_is_not_str(name)
         self.delitem(os.environ, name, raising=raising)
 
     def syspath_prepend(self, path):
@@ -241,6 +274,9 @@ class MonkeyPatch(object):
             self._cwd = os.getcwd()
         if hasattr(path, "chdir"):
             path.chdir()
+        elif isinstance(path, Path):
+            # modern python uses the fspath protocol here LEGACY
+            os.chdir(str(path))
         else:
             os.chdir(path)
 

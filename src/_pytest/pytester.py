@@ -1,28 +1,35 @@
 """(disabled by default) support for testing pytest and pytest plugins."""
-from __future__ import absolute_import, division, print_function
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 
 import codecs
+import distutils.spawn
 import gc
 import os
 import platform
 import re
 import subprocess
-import six
 import sys
 import time
 import traceback
 from fnmatch import fnmatch
-
 from weakref import WeakKeyDictionary
 
-from _pytest.capture import MultiCapture, SysCapture
-from _pytest._code import Source
 import py
+import six
+
 import pytest
-from _pytest.main import Session, EXIT_OK
+from _pytest._code import Source
+from _pytest._io.saferepr import saferepr
 from _pytest.assertion.rewrite import AssertionRewritingHook
-from _pytest.compat import Path
+from _pytest.capture import MultiCapture
+from _pytest.capture import SysCapture
 from _pytest.compat import safe_str
+from _pytest.main import EXIT_INTERRUPTED
+from _pytest.main import EXIT_OK
+from _pytest.main import Session
+from _pytest.pathlib import Path
 
 IGNORE_PAM = [  # filenames added when obtaining details about the current user
     u"/var/lib/sss/mc/passwd"
@@ -61,6 +68,11 @@ def pytest_configure(config):
             config.pluginmanager.register(checker)
 
 
+def raise_on_kwargs(kwargs):
+    if kwargs:
+        raise TypeError("Unexpected arguments: {}".format(", ".join(sorted(kwargs))))
+
+
 class LsofFdLeakChecker(object):
     def get_open_files(self):
         out = self._exec_lsof()
@@ -69,7 +81,11 @@ class LsofFdLeakChecker(object):
 
     def _exec_lsof(self):
         pid = os.getpid()
-        return py.process.cmdexec("lsof -Ffn0 -p %d" % pid)
+        # py3: use subprocess.DEVNULL directly.
+        with open(os.devnull, "wb") as devnull:
+            return subprocess.check_output(
+                ("lsof", "-Ffn0", "-p", str(pid)), stderr=devnull
+            ).decode()
 
     def _parse_lsof_output(self, out):
         def isopen(line):
@@ -96,11 +112,8 @@ class LsofFdLeakChecker(object):
 
     def matching_platform(self):
         try:
-            py.process.cmdexec("lsof -v")
-        except (py.process.cmdexec.Error, UnicodeDecodeError):
-            # cmdexec may raise UnicodeDecodeError on Windows systems with
-            # locale other than English:
-            # https://bitbucket.org/pytest-dev/py/issues/66
+            subprocess.check_output(("lsof", "-v"))
+        except (OSError, subprocess.CalledProcessError):
             return False
         else:
             return True
@@ -142,7 +155,7 @@ def getexecutable(name, cache={}):
     try:
         return cache[name]
     except KeyError:
-        executable = py.path.local.sysfind(name)
+        executable = distutils.spawn.find_executable(name)
         if executable:
             import subprocess
 
@@ -296,13 +309,10 @@ class HookRecorder(object):
         """return a testreport whose dotted import path matches"""
         values = []
         for rep in self.getreports(names=names):
-            try:
-                if not when and rep.when != "call" and rep.passed:
-                    # setup/teardown passing reports - let's ignore those
-                    continue
-            except AttributeError:
-                pass
-            if when and getattr(rep, "when", None) != when:
+            if not when and rep.when != "call" and rep.passed:
+                # setup/teardown passing reports - let's ignore those
+                continue
+            if when and rep.when != when:
                 continue
             if not inamepart or inamepart in rep.nodeid.split("::"):
                 values.append(rep)
@@ -329,7 +339,7 @@ class HookRecorder(object):
         failed = []
         for rep in self.getreports("pytest_collectreport pytest_runtest_logreport"):
             if rep.passed:
-                if getattr(rep, "when", None) == "call":
+                if rep.when == "call":
                     passed.append(rep)
             elif rep.skipped:
                 skipped.append(rep)
@@ -391,6 +401,12 @@ class RunResult(object):
         self.stdout = LineMatcher(outlines)
         self.stderr = LineMatcher(errlines)
         self.duration = duration
+
+    def __repr__(self):
+        return (
+            "<RunResult ret=%r len(stdout.lines)=%d len(stderr.lines)=%d duration=%.2fs>"
+            % (self.ret, len(self.stdout.lines), len(self.stderr.lines), self.duration)
+        )
 
     def parseoutcomes(self):
         """Return a dictionary of outcomestring->num from parsing the terminal
@@ -482,11 +498,17 @@ class Testdir(object):
 
     """
 
+    class TimeoutExpired(Exception):
+        pass
+
     def __init__(self, request, tmpdir_factory):
         self.request = request
         self._mod_collections = WeakKeyDictionary()
         name = request.function.__name__
         self.tmpdir = tmpdir_factory.mktemp(name, numbered=True)
+        self.test_tmproot = tmpdir_factory.mktemp("tmp-" + name, numbered=True)
+        os.environ["PYTEST_DEBUG_TEMPROOT"] = str(self.test_tmproot)
+        os.environ.pop("TOX_ENV_DIR", None)  # Ensure that it is not used for caching.
         self.plugins = []
         self._cwd_snapshot = CwdSnapshot()
         self._sys_path_snapshot = SysPathsSnapshot()
@@ -502,6 +524,9 @@ class Testdir(object):
     def __repr__(self):
         return "<Testdir %r>" % (self.tmpdir,)
 
+    def __str__(self):
+        return str(self.tmpdir)
+
     def finalize(self):
         """Clean up global state artifacts.
 
@@ -513,6 +538,7 @@ class Testdir(object):
         self._sys_modules_snapshot.restore()
         self._sys_path_snapshot.restore()
         self._cwd_snapshot.restore()
+        os.environ.pop("PYTEST_DEBUG_TEMPROOT", None)
 
     def __take_sys_modules_snapshot(self):
         # some zope modules used by twisted-related tests keep internal state
@@ -667,7 +693,7 @@ class Testdir(object):
             else:
                 raise LookupError(
                     "{} cant be found as module or package in {}".format(
-                        func_name, example_dir.bestrelpath(self.request.confg.rootdir)
+                        func_name, example_dir.bestrelpath(self.request.config.rootdir)
                     )
                 )
         else:
@@ -845,7 +871,7 @@ class Testdir(object):
 
             # typically we reraise keyboard interrupts from the child run
             # because it's our user requesting interruption of the testing
-            if ret == 2 and not kwargs.get("no_reraise_ctrlc"):
+            if ret == EXIT_INTERRUPTED and not kwargs.get("no_reraise_ctrlc"):
                 calls = reprec.getcalls("pytest_keyboard_interrupt")
                 if calls and calls[-1].excinfo.type == KeyboardInterrupt:
                     raise KeyboardInterrupt()
@@ -1039,14 +1065,23 @@ class Testdir(object):
 
         return popen
 
-    def run(self, *cmdargs):
+    def run(self, *cmdargs, **kwargs):
         """Run a command with arguments.
 
         Run a process using subprocess.Popen saving the stdout and stderr.
 
+        :param args: the sequence of arguments to pass to `subprocess.Popen()`
+        :param timeout: the period in seconds after which to timeout and raise
+            :py:class:`Testdir.TimeoutExpired`
+
         Returns a :py:class:`RunResult`.
 
         """
+        __tracebackhide__ = True
+
+        timeout = kwargs.pop("timeout", None)
+        raise_on_kwargs(kwargs)
+
         cmdargs = [
             str(arg) if isinstance(arg, py.path.local) else arg for arg in cmdargs
         ]
@@ -1061,7 +1096,40 @@ class Testdir(object):
             popen = self.popen(
                 cmdargs, stdout=f1, stderr=f2, close_fds=(sys.platform != "win32")
             )
-            ret = popen.wait()
+
+            def handle_timeout():
+                __tracebackhide__ = True
+
+                timeout_message = (
+                    "{seconds} second timeout expired running:"
+                    " {command}".format(seconds=timeout, command=cmdargs)
+                )
+
+                popen.kill()
+                popen.wait()
+                raise self.TimeoutExpired(timeout_message)
+
+            if timeout is None:
+                ret = popen.wait()
+            elif six.PY3:
+                try:
+                    ret = popen.wait(timeout)
+                except subprocess.TimeoutExpired:
+                    handle_timeout()
+            else:
+                end = time.time() + timeout
+
+                resolution = min(0.1, timeout / 10)
+
+                while True:
+                    ret = popen.poll()
+                    if ret is not None:
+                        break
+
+                    if time.time() > end:
+                        handle_timeout()
+
+                    time.sleep(resolution)
         finally:
             f1.close()
             f2.close()
@@ -1102,15 +1170,21 @@ class Testdir(object):
     def runpytest_subprocess(self, *args, **kwargs):
         """Run pytest as a subprocess with given arguments.
 
-        Any plugins added to the :py:attr:`plugins` list will added using the
-        ``-p`` command line option.  Additionally ``--basetemp`` is used put
+        Any plugins added to the :py:attr:`plugins` list will be added using the
+        ``-p`` command line option.  Additionally ``--basetemp`` is used to put
         any temporary files and directories in a numbered directory prefixed
-        with "runpytest-" so they do not conflict with the normal numbered
-        pytest location for temporary files and directories.
+        with "runpytest-" to not conflict with the normal numbered pytest
+        location for temporary files and directories.
+
+        :param args: the sequence of arguments to pass to the pytest subprocess
+        :param timeout: the period in seconds after which to timeout and raise
+            :py:class:`Testdir.TimeoutExpired`
 
         Returns a :py:class:`RunResult`.
 
         """
+        __tracebackhide__ = True
+
         p = py.path.local.make_numbered_dir(
             prefix="runpytest-", keep=None, rootdir=self.tmpdir
         )
@@ -1119,7 +1193,7 @@ class Testdir(object):
         if plugins:
             args = ("-p", plugins[0]) + args
         args = self._getpytestargs() + args
-        return self.run(*args)
+        return self.run(*args, timeout=kwargs.get("timeout"))
 
     def spawn_pytest(self, string, expect_timeout=10.0):
         """Run pytest using pexpect.
@@ -1157,9 +1231,7 @@ def getdecoded(out):
     try:
         return out.decode("utf-8")
     except UnicodeDecodeError:
-        return "INTERNAL not-utf8-decodeable, truncated string:\n%s" % (
-            py.io.saferepr(out),
-        )
+        return "INTERNAL not-utf8-decodeable, truncated string:\n%s" % (saferepr(out),)
 
 
 class LineComp(object):
@@ -1267,6 +1339,7 @@ class LineMatcher(object):
         matches and non-matches are also printed on stdout.
 
         """
+        __tracebackhide__ = True
         self._match_lines(lines2, fnmatch, "fnmatch")
 
     def re_match_lines(self, lines2):
@@ -1278,6 +1351,7 @@ class LineMatcher(object):
         The matches and non-matches are also printed on stdout.
 
         """
+        __tracebackhide__ = True
         self._match_lines(lines2, lambda name, pat: re.match(pat, name), "re.match")
 
     def _match_lines(self, lines2, match_func, match_nickname):

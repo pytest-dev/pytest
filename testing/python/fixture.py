@@ -3,10 +3,12 @@ import sys
 import textwrap
 
 import pytest
-from _pytest.pytester import get_public_names
-from _pytest.fixtures import FixtureLookupError, FixtureRequest
 from _pytest import fixtures
-from _pytest.compat import Path
+from _pytest.fixtures import FixtureLookupError
+from _pytest.fixtures import FixtureRequest
+from _pytest.pathlib import Path
+from _pytest.pytester import get_public_names
+from _pytest.warnings import SHOW_PYTEST_WARNINGS_ARG
 
 
 def test_getfuncargnames():
@@ -58,6 +60,13 @@ class TestFillFixtures(object):
             *fixture*some*not found*
             *xyzsomething*
             """
+        )
+
+    def test_detect_recursive_dependency_error(self, testdir):
+        testdir.copy_example()
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines(
+            ["*recursive dependency involving fixture 'fix1' detected*"]
         )
 
     def test_funcarg_basic(self, testdir):
@@ -494,6 +503,12 @@ class TestRequestBasic(object):
         reason="this method of test doesn't work on pypy",
     )
     def test_request_garbage(self, testdir):
+        try:
+            import xdist  # noqa
+        except ImportError:
+            pass
+        else:
+            pytest.xfail("this test is flaky when executed with xdist")
         testdir.makepyfile(
             """
             import sys
@@ -511,15 +526,8 @@ class TestRequestBasic(object):
 
                 try:
                     gc.collect()
-                    leaked_types = sum(1 for _ in gc.garbage
-                                       if isinstance(_, PseudoFixtureDef))
-
-                    # debug leaked types if the test fails
-                    print(leaked_types)
-
-                    gc.garbage[:] = []
-
-                    assert leaked_types == 0
+                    leaked = [x for _ in gc.garbage if isinstance(_, PseudoFixtureDef)]
+                    assert leaked == []
                 finally:
                     gc.set_debug(original)
 
@@ -527,7 +535,7 @@ class TestRequestBasic(object):
                 pass
         """
         )
-        result = testdir.runpytest()
+        result = testdir.runpytest_subprocess()
         result.stdout.fnmatch_lines("* 1 passed in *")
 
     def test_getfixturevalue_recursive(self, testdir):
@@ -618,25 +626,6 @@ class TestRequestBasic(object):
         ss.teardown_exact(item, None)
         print(ss.stack)
         assert teardownlist == [1]
-
-    def test_mark_as_fixture_with_prefix_and_decorator_fails(self, testdir):
-        testdir.makeconftest(
-            """
-            import pytest
-
-            @pytest.fixture
-            def pytest_funcarg__marked_with_prefix_and_decorator():
-                pass
-        """
-        )
-        result = testdir.runpytest_subprocess()
-        assert result.ret != 0
-        result.stdout.fnmatch_lines(
-            [
-                "*AssertionError: fixtures cannot have*@pytest.fixture*",
-                "*pytest_funcarg__marked_with_prefix_and_decorator*",
-            ]
-        )
 
     def test_request_addfinalizer_failing_setup(self, testdir):
         testdir.makepyfile(
@@ -750,11 +739,17 @@ class TestRequestBasic(object):
             def test_function(request, farg):
                 assert set(get_public_names(request.fixturenames)) == \
                        set(["tmpdir", "sarg", "arg1", "request", "farg",
-                            "tmpdir_factory"])
+                            "tmp_path", "tmp_path_factory"])
         """
         )
         reprec = testdir.inline_run()
         reprec.assertoutcome(passed=1)
+
+    def test_request_fixturenames_dynamic_fixture(self, testdir):
+        """Regression test for #3057"""
+        testdir.copy_example("fixtures/test_getfixturevalue_dynamic.py")
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines("*1 passed*")
 
     def test_funcargnames_compatattr(self, testdir):
         testdir.makepyfile(
@@ -892,7 +887,8 @@ class TestRequestMarking(object):
         assert "skipif" not in item1.keywords
         req1.applymarker(pytest.mark.skipif)
         assert "skipif" in item1.keywords
-        pytest.raises(ValueError, "req1.applymarker(42)")
+        with pytest.raises(ValueError):
+            req1.applymarker(42)
 
     def test_accesskeywords(self, testdir):
         testdir.makepyfile(
@@ -936,177 +932,6 @@ class TestRequestMarking(object):
         )
         reprec = testdir.inline_run()
         reprec.assertoutcome(passed=2)
-
-
-class TestRequestCachedSetup(object):
-    def test_request_cachedsetup_defaultmodule(self, testdir):
-        reprec = testdir.inline_runsource(
-            """
-            mysetup = ["hello",].pop
-
-            import pytest
-
-            @pytest.fixture
-            def something(request):
-                return request.cached_setup(mysetup, scope="module")
-
-            def test_func1(something):
-                assert something == "hello"
-            class TestClass(object):
-                def test_func1a(self, something):
-                    assert something == "hello"
-        """
-        )
-        reprec.assertoutcome(passed=2)
-
-    def test_request_cachedsetup_class(self, testdir):
-        reprec = testdir.inline_runsource(
-            """
-            mysetup = ["hello", "hello2", "hello3"].pop
-
-            import pytest
-            @pytest.fixture
-            def something(request):
-                return request.cached_setup(mysetup, scope="class")
-            def test_func1(something):
-                assert something == "hello3"
-            def test_func2(something):
-                assert something == "hello2"
-            class TestClass(object):
-                def test_func1a(self, something):
-                    assert something == "hello"
-                def test_func2b(self, something):
-                    assert something == "hello"
-        """
-        )
-        reprec.assertoutcome(passed=4)
-
-    def test_request_cachedsetup_extrakey(self, testdir):
-        item1 = testdir.getitem("def test_func(): pass")
-        req1 = fixtures.FixtureRequest(item1)
-        values = ["hello", "world"]
-
-        def setup():
-            return values.pop()
-
-        ret1 = req1.cached_setup(setup, extrakey=1)
-        ret2 = req1.cached_setup(setup, extrakey=2)
-        assert ret2 == "hello"
-        assert ret1 == "world"
-        ret1b = req1.cached_setup(setup, extrakey=1)
-        ret2b = req1.cached_setup(setup, extrakey=2)
-        assert ret1 == ret1b
-        assert ret2 == ret2b
-
-    def test_request_cachedsetup_cache_deletion(self, testdir):
-        item1 = testdir.getitem("def test_func(): pass")
-        req1 = fixtures.FixtureRequest(item1)
-        values = []
-
-        def setup():
-            values.append("setup")
-
-        def teardown(val):
-            values.append("teardown")
-
-        req1.cached_setup(setup, teardown, scope="function")
-        assert values == ["setup"]
-        # artificial call of finalizer
-        setupstate = req1._pyfuncitem.session._setupstate
-        setupstate._callfinalizers(item1)
-        assert values == ["setup", "teardown"]
-        req1.cached_setup(setup, teardown, scope="function")
-        assert values == ["setup", "teardown", "setup"]
-        setupstate._callfinalizers(item1)
-        assert values == ["setup", "teardown", "setup", "teardown"]
-
-    def test_request_cached_setup_two_args(self, testdir):
-        testdir.makepyfile(
-            """
-            import pytest
-
-            @pytest.fixture
-            def arg1(request):
-                return request.cached_setup(lambda: 42)
-            @pytest.fixture
-            def arg2(request):
-                return request.cached_setup(lambda: 17)
-            def test_two_different_setups(arg1, arg2):
-                assert arg1 != arg2
-        """
-        )
-        result = testdir.runpytest("-v")
-        result.stdout.fnmatch_lines(["*1 passed*"])
-
-    def test_request_cached_setup_getfixturevalue(self, testdir):
-        testdir.makepyfile(
-            """
-            import pytest
-
-            @pytest.fixture
-            def arg1(request):
-                arg1 = request.getfixturevalue("arg2")
-                return request.cached_setup(lambda: arg1 + 1)
-            @pytest.fixture
-            def arg2(request):
-                return request.cached_setup(lambda: 10)
-            def test_two_funcarg(arg1):
-                assert arg1 == 11
-        """
-        )
-        result = testdir.runpytest("-v")
-        result.stdout.fnmatch_lines(["*1 passed*"])
-
-    def test_request_cached_setup_functional(self, testdir):
-        testdir.makepyfile(
-            test_0="""
-            import pytest
-            values = []
-            @pytest.fixture
-            def something(request):
-                val = request.cached_setup(fsetup, fteardown)
-                return val
-            def fsetup(mycache=[1]):
-                values.append(mycache.pop())
-                return values
-            def fteardown(something):
-                values.remove(something[0])
-                values.append(2)
-            def test_list_once(something):
-                assert something == [1]
-            def test_list_twice(something):
-                assert something == [1]
-        """
-        )
-        testdir.makepyfile(
-            test_1="""
-            import test_0 # should have run already
-            def test_check_test0_has_teardown_correct():
-                assert test_0.values == [2]
-        """
-        )
-        result = testdir.runpytest("-v")
-        result.stdout.fnmatch_lines(["*3 passed*"])
-
-    def test_issue117_sessionscopeteardown(self, testdir):
-        testdir.makepyfile(
-            """
-            import pytest
-
-            @pytest.fixture
-            def app(request):
-                app = request.cached_setup(
-                    scope='session',
-                    setup=lambda: 0,
-                    teardown=lambda x: 3/x)
-                return app
-            def test_func(app):
-                pass
-        """
-        )
-        result = testdir.runpytest()
-        assert result.ret != 0
-        result.stdout.fnmatch_lines(["*3/x*", "*ZeroDivisionError*"])
 
 
 class TestFixtureUsages(object):
@@ -1167,8 +992,8 @@ class TestFixtureUsages(object):
         result.stdout.fnmatch_lines(
             [
                 "*ScopeMismatch*involved factories*",
-                "* def arg2*",
-                "* def arg1*",
+                "test_receives_funcargs_scope_mismatch.py:6:  def arg2(arg1)",
+                "test_receives_funcargs_scope_mismatch.py:2:  def arg1()",
                 "*1 error*",
             ]
         )
@@ -1209,8 +1034,7 @@ class TestFixtureUsages(object):
         result = testdir.runpytest_inprocess()
         result.stdout.fnmatch_lines(
             (
-                "*ValueError: fixture badscope from test_invalid_scope.py has an unsupported"
-                " scope value 'functions'"
+                "*Fixture 'badscope' from test_invalid_scope.py got an unexpected scope value 'functions'"
             )
         )
 
@@ -1279,6 +1103,7 @@ class TestFixtureUsages(object):
         values = reprec.getfailedcollections()
         assert len(values) == 1
 
+    @pytest.mark.filterwarnings("ignore::pytest.PytestDeprecationWarning")
     def test_request_can_be_overridden(self, testdir):
         testdir.makepyfile(
             """
@@ -1402,6 +1227,45 @@ class TestFixtureUsages(object):
         values = reprec.getcalls("pytest_runtest_call")[0].item.module.values
         assert values == [1, 2, 10, 20]
 
+    def test_setup_functions_as_fixtures(self, testdir):
+        """Ensure setup_* methods obey fixture scope rules (#517, #3094)."""
+        testdir.makepyfile(
+            """
+            import pytest
+
+            DB_INITIALIZED = None
+
+            @pytest.yield_fixture(scope="session", autouse=True)
+            def db():
+                global DB_INITIALIZED
+                DB_INITIALIZED = True
+                yield
+                DB_INITIALIZED = False
+
+            def setup_module():
+                assert DB_INITIALIZED
+
+            def teardown_module():
+                assert DB_INITIALIZED
+
+            class TestClass(object):
+
+                def setup_method(self, method):
+                    assert DB_INITIALIZED
+
+                def teardown_method(self, method):
+                    assert DB_INITIALIZED
+
+                def test_printer_1(self):
+                    pass
+
+                def test_printer_2(self):
+                    pass
+        """
+        )
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines(["* 2 passed in *"])
+
 
 class TestFixtureManagerParseFactories(object):
     @pytest.fixture
@@ -1471,7 +1335,7 @@ class TestFixtureManagerParseFactories(object):
                     return "class"
                 def test_hello(self, item, fm):
                     faclist = fm.getfixturedefs("hello", item.nodeid)
-                    print (faclist)
+                    print(faclist)
                     assert len(faclist) == 3
 
                     assert faclist[0].func(item._request) == "conftest"
@@ -1832,24 +1696,6 @@ class TestAutouseManagement(object):
         reprec = testdir.inline_run("-s")
         reprec.assertoutcome(passed=1)
 
-    def test_autouse_honored_for_yield(self, testdir):
-        testdir.makepyfile(
-            """
-            import pytest
-            @pytest.fixture(autouse=True)
-            def tst():
-                global x
-                x = 3
-            def test_gen():
-                def f(hello):
-                    assert x == abs(hello)
-                yield f, 3
-                yield f, -3
-        """
-        )
-        reprec = testdir.inline_run()
-        reprec.assertoutcome(passed=2)
-
     def test_funcarg_and_setup(self, testdir):
         testdir.makepyfile(
             """
@@ -2016,7 +1862,7 @@ class TestAutouseManagement(object):
                     values.append("step2-%d" % item)
 
             def test_finish():
-                print (values)
+                print(values)
                 assert values == ["setup-1", "step1-1", "step2-1", "teardown-1",
                              "setup-2", "step1-2", "step2-2", "teardown-2",]
         """
@@ -2297,15 +2143,7 @@ class TestFixtureMarker(object):
         reprec = testdir.inline_run()
         reprec.assertoutcome(passed=4)
 
-    @pytest.mark.parametrize(
-        "method",
-        [
-            'request.getfixturevalue("arg")',
-            'request.cached_setup(lambda: None, scope="function")',
-        ],
-        ids=["getfixturevalue", "cached_setup"],
-    )
-    def test_scope_mismatch_various(self, testdir, method):
+    def test_scope_mismatch_various(self, testdir):
         testdir.makeconftest(
             """
             import pytest
@@ -2321,13 +2159,12 @@ class TestFixtureMarker(object):
                 import pytest
                 @pytest.fixture(scope="session")
                 def arg(request):
-                    %s
+                    request.getfixturevalue("arg")
                 def test_1(arg):
                     pass
             """
-            % method
         )
-        result = testdir.runpytest()
+        result = testdir.runpytest(SHOW_PYTEST_WARNINGS_ARG)
         assert result.ret != 0
         result.stdout.fnmatch_lines(
             ["*ScopeMismatch*You tried*function*session*request*"]
@@ -2856,7 +2693,7 @@ class TestFixtureMarker(object):
             def base(request, fix1):
                 def cleanup_base():
                     values.append("fin_base")
-                    print ("finalizing base")
+                    print("finalizing base")
                 request.addfinalizer(cleanup_base)
 
             def test_begin():
@@ -3456,13 +3293,13 @@ class TestContextManagerFixtureFuncs(object):
             from test_context import fixture
             @fixture
             def arg1():
-                print ("setup")
+                print("setup")
                 yield 1
-                print ("teardown")
+                print("teardown")
             def test_1(arg1):
-                print ("test1", arg1)
+                print("test1", arg1)
             def test_2(arg1):
-                print ("test2", arg1)
+                print("test2", arg1)
                 assert 0
         """
         )
@@ -3485,13 +3322,13 @@ class TestContextManagerFixtureFuncs(object):
             from test_context import fixture
             @fixture(scope="module")
             def arg1():
-                print ("setup")
+                print("setup")
                 yield 1
-                print ("teardown")
+                print("teardown")
             def test_1(arg1):
-                print ("test1", arg1)
+                print("test1", arg1)
             def test_2(arg1):
-                print ("test2", arg1)
+                print("test2", arg1)
         """
         )
         result = testdir.runpytest("-s")
@@ -3599,15 +3436,15 @@ class TestParameterizedSubRequest(object):
         )
         result = testdir.runpytest()
         result.stdout.fnmatch_lines(
-            """
-            E*Failed: The requested fixture has no parameter defined for the current test.
-            E*
-            E*Requested fixture 'fix_with_param' defined in:
-            E*test_call_from_fixture.py:4
-            E*Requested here:
-            E*test_call_from_fixture.py:9
-            *1 error*
-            """
+            [
+                "The requested fixture has no parameter defined for test:",
+                "    test_call_from_fixture.py::test_foo",
+                "Requested fixture 'fix_with_param' defined in:",
+                "test_call_from_fixture.py:4",
+                "Requested here:",
+                "test_call_from_fixture.py:9",
+                "*1 error in*",
+            ]
         )
 
     def test_call_from_test(self, testdir):
@@ -3625,15 +3462,15 @@ class TestParameterizedSubRequest(object):
         )
         result = testdir.runpytest()
         result.stdout.fnmatch_lines(
-            """
-            E*Failed: The requested fixture has no parameter defined for the current test.
-            E*
-            E*Requested fixture 'fix_with_param' defined in:
-            E*test_call_from_test.py:4
-            E*Requested here:
-            E*test_call_from_test.py:8
-            *1 failed*
-            """
+            [
+                "The requested fixture has no parameter defined for test:",
+                "    test_call_from_test.py::test_foo",
+                "Requested fixture 'fix_with_param' defined in:",
+                "test_call_from_test.py:4",
+                "Requested here:",
+                "test_call_from_test.py:8",
+                "*1 failed*",
+            ]
         )
 
     def test_external_fixture(self, testdir):
@@ -3655,15 +3492,16 @@ class TestParameterizedSubRequest(object):
         )
         result = testdir.runpytest()
         result.stdout.fnmatch_lines(
-            """
-            E*Failed: The requested fixture has no parameter defined for the current test.
-            E*
-            E*Requested fixture 'fix_with_param' defined in:
-            E*conftest.py:4
-            E*Requested here:
-            E*test_external_fixture.py:2
-            *1 failed*
-            """
+            [
+                "The requested fixture has no parameter defined for test:",
+                "    test_external_fixture.py::test_foo",
+                "",
+                "Requested fixture 'fix_with_param' defined in:",
+                "conftest.py:4",
+                "Requested here:",
+                "test_external_fixture.py:2",
+                "*1 failed*",
+            ]
         )
 
     def test_non_relative_path(self, testdir):
@@ -3698,15 +3536,16 @@ class TestParameterizedSubRequest(object):
         testdir.syspathinsert(fixdir)
         result = testdir.runpytest()
         result.stdout.fnmatch_lines(
-            """
-            E*Failed: The requested fixture has no parameter defined for the current test.
-            E*
-            E*Requested fixture 'fix_with_param' defined in:
-            E*fix.py:4
-            E*Requested here:
-            E*test_foos.py:4
-            *1 failed*
-            """
+            [
+                "The requested fixture has no parameter defined for test:",
+                "    test_foos.py::test_foo",
+                "",
+                "Requested fixture 'fix_with_param' defined in:",
+                "*fix.py:4",
+                "Requested here:",
+                "test_foos.py:4",
+                "*1 failed*",
+            ]
         )
 
 
@@ -4051,3 +3890,14 @@ class TestScopeOrdering(object):
         )
         reprec = testdir.inline_run()
         reprec.assertoutcome(passed=2)
+
+
+def test_call_fixture_function_error():
+    """Check if an error is raised if a fixture function is called directly (#4545)"""
+
+    @pytest.fixture
+    def fix():
+        return 1
+
+    with pytest.raises(pytest.fail.Exception):
+        assert fix() == 1

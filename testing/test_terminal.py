@@ -1,7 +1,10 @@
 """
 terminal reporting of the full testing process.
 """
-from __future__ import absolute_import, division, print_function
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+
 import collections
 import os
 import sys
@@ -9,11 +12,13 @@ import textwrap
 
 import pluggy
 import py
+
 import pytest
 from _pytest.main import EXIT_NOTESTSCOLLECTED
-from _pytest.terminal import TerminalReporter, repr_pythonversion, getreportopt
-from _pytest.terminal import build_summary_stats_line, _plugin_nameversions
-
+from _pytest.terminal import _plugin_nameversions
+from _pytest.terminal import build_summary_stats_line
+from _pytest.terminal import getreportopt
+from _pytest.terminal import TerminalReporter
 
 DistInfo = collections.namedtuple("DistInfo", ["project_name", "version"])
 
@@ -98,7 +103,8 @@ class TestTerminal(object):
     def test_internalerror(self, testdir, linecomp):
         modcol = testdir.getmodulecol("def test_one(): pass")
         rep = TerminalReporter(modcol.config, file=linecomp.stringio)
-        excinfo = pytest.raises(ValueError, "raise ValueError('hello')")
+        with pytest.raises(ValueError) as excinfo:
+            raise ValueError("hello")
         rep.pytest_internalerror(excinfo.getrepr())
         linecomp.assert_contains_lines(["INTERNALERROR> *ValueError*hello*"])
 
@@ -154,7 +160,7 @@ class TestTerminal(object):
         )
         result = testdir.runpytest(p2)
         result.stdout.fnmatch_lines(["*test_p2.py .*", "*1 passed*"])
-        result = testdir.runpytest("-v", p2)
+        result = testdir.runpytest("-vv", p2)
         result.stdout.fnmatch_lines(
             ["*test_p2.py::TestMore::test_p1* <- *test_p1.py*PASSED*"]
         )
@@ -170,7 +176,7 @@ class TestTerminal(object):
                 """
             )
         )
-        result = testdir.runpytest("-v")
+        result = testdir.runpytest("-vv")
         assert result.ret == 0
         result.stdout.fnmatch_lines(["*a123/test_hello123.py*PASS*"])
         assert " <- " not in result.stdout.str()
@@ -256,7 +262,7 @@ class TestCollectonly(object):
         )
         result = testdir.runpytest("--collect-only")
         result.stdout.fnmatch_lines(
-            ["<Module 'test_collectonly_basic.py'>", "  <Function 'test_func'>"]
+            ["<Module test_collectonly_basic.py>", "  <Function test_func>"]
         )
 
     def test_collectonly_skipped_module(self, testdir):
@@ -268,6 +274,18 @@ class TestCollectonly(object):
         )
         result = testdir.runpytest("--collect-only", "-rs")
         result.stdout.fnmatch_lines(["*ERROR collecting*"])
+
+    def test_collectonly_display_test_description(self, testdir):
+        testdir.makepyfile(
+            """
+            def test_with_description():
+                \""" This test has a description.
+                \"""
+                assert True
+        """
+        )
+        result = testdir.runpytest("--collect-only", "--verbose")
+        result.stdout.fnmatch_lines(["    This test has a description."])
 
     def test_collectonly_failed_module(self, testdir):
         testdir.makepyfile("""raise ValueError(0)""")
@@ -300,11 +318,10 @@ class TestCollectonly(object):
         assert result.ret == 0
         result.stdout.fnmatch_lines(
             [
-                "*<Module '*.py'>",
-                "* <Function 'test_func1'*>",
-                "* <Class 'TestClass'>",
-                # "*  <Instance '()'>",
-                "*   <Function 'test_method'*>",
+                "*<Module *.py>",
+                "* <Function test_func1>",
+                "* <Class TestClass>",
+                "*   <Function test_method>",
             ]
         )
 
@@ -343,22 +360,12 @@ class TestCollectonly(object):
         result.stdout.fnmatch_lines(["*test_fun.py: 1*"])
 
 
-def test_repr_python_version(monkeypatch):
-    try:
-        monkeypatch.setattr(sys, "version_info", (2, 5, 1, "final", 0))
-        assert repr_pythonversion() == "2.5.1-final-0"
-        sys.version_info = x = (2, 3)
-        assert repr_pythonversion() == str(x)
-    finally:
-        monkeypatch.undo()  # do this early as pytest can get confused
-
-
 class TestFixtureReporting(object):
     def test_setup_fixture_error(self, testdir):
         testdir.makepyfile(
             """
             def setup_function(function):
-                print ("setup func")
+                print("setup func")
                 assert 0
             def test_nada():
                 pass
@@ -382,7 +389,7 @@ class TestFixtureReporting(object):
             def test_nada():
                 pass
             def teardown_function(function):
-                print ("teardown func")
+                print("teardown func")
                 assert 0
         """
         )
@@ -405,7 +412,7 @@ class TestFixtureReporting(object):
                 assert 0, "failingfunc"
 
             def teardown_function(function):
-                print ("teardown func")
+                print("teardown func")
                 assert False
         """
         )
@@ -429,13 +436,13 @@ class TestFixtureReporting(object):
         testdir.makepyfile(
             """
             def setup_function(function):
-                print ("setup func")
+                print("setup func")
 
             def test_fail():
                 assert 0, "failingfunc"
 
             def teardown_function(function):
-                print ("teardown func")
+                print("teardown func")
         """
         )
         result = testdir.runpytest()
@@ -467,7 +474,7 @@ class TestTerminalFunctional(object):
         )
         result = testdir.runpytest("-k", "test_two:", testpath)
         result.stdout.fnmatch_lines(
-            ["collected 3 items / 1 deselected", "*test_deselected.py ..*"]
+            ["collected 3 items / 1 deselected / 2 selected", "*test_deselected.py ..*"]
         )
         assert result.ret == 0
 
@@ -491,7 +498,7 @@ class TestTerminalFunctional(object):
         result = testdir.runpytest("-m", "not foo")
         result.stdout.fnmatch_lines(
             [
-                "collected 3 items / 1 deselected",
+                "collected 3 items / 1 deselected / 2 selected",
                 "*test_show_deselected.py ..*",
                 "*= 2 passed, 1 deselected in * =*",
             ]
@@ -533,7 +540,7 @@ class TestTerminalFunctional(object):
         result.stdout.fnmatch_lines(["test_passes.py ..*", "* 2 pass*"])
         assert result.ret == 0
 
-    def test_header_trailer_info(self, testdir):
+    def test_header_trailer_info(self, testdir, request):
         testdir.makepyfile(
             """
             def test_passes():
@@ -557,7 +564,7 @@ class TestTerminalFunctional(object):
                 "=* 1 passed*in *.[0-9][0-9] seconds *=",
             ]
         )
-        if pytest.config.pluginmanager.list_plugin_distinfo():
+        if request.config.pluginmanager.list_plugin_distinfo():
             result.stdout.fnmatch_lines(["plugins: *"])
 
     def test_showlocals(self, testdir):
@@ -578,8 +585,9 @@ class TestTerminalFunctional(object):
             ]
         )
 
-    def test_verbose_reporting(self, testdir, pytestconfig):
-        p1 = testdir.makepyfile(
+    @pytest.fixture
+    def verbose_testfile(self, testdir):
+        return testdir.makepyfile(
             """
             import pytest
             def test_fail():
@@ -595,22 +603,32 @@ class TestTerminalFunctional(object):
                 yield check, 0
         """
         )
-        result = testdir.runpytest(p1, "-v")
+
+    def test_verbose_reporting(self, verbose_testfile, testdir, pytestconfig):
+
+        result = testdir.runpytest(
+            verbose_testfile, "-v", "-Walways::pytest.PytestWarning"
+        )
         result.stdout.fnmatch_lines(
             [
                 "*test_verbose_reporting.py::test_fail *FAIL*",
                 "*test_verbose_reporting.py::test_pass *PASS*",
                 "*test_verbose_reporting.py::TestClass::test_skip *SKIP*",
-                "*test_verbose_reporting.py::test_gen*0* *FAIL*",
+                "*test_verbose_reporting.py::test_gen *XFAIL*",
             ]
         )
         assert result.ret == 1
 
+    def test_verbose_reporting_xdist(self, verbose_testfile, testdir, pytestconfig):
         if not pytestconfig.pluginmanager.get_plugin("xdist"):
             pytest.skip("xdist plugin not installed")
 
-        result = testdir.runpytest(p1, "-v", "-n 1")
-        result.stdout.fnmatch_lines(["*FAIL*test_verbose_reporting.py::test_fail*"])
+        result = testdir.runpytest(
+            verbose_testfile, "-v", "-n 1", "-Walways::pytest.PytestWarning"
+        )
+        result.stdout.fnmatch_lines(
+            ["*FAIL*test_verbose_reporting_xdist.py::test_fail*"]
+        )
         assert result.ret == 1
 
     def test_quiet_reporting(self, testdir):
@@ -631,7 +649,10 @@ class TestTerminalFunctional(object):
         assert "===" not in s
         assert "passed" not in s
 
-    def test_report_collectionfinish_hook(self, testdir):
+    @pytest.mark.parametrize(
+        "params", [(), ("--collect-only",)], ids=["no-params", "collect-only"]
+    )
+    def test_report_collectionfinish_hook(self, testdir, params):
         testdir.makeconftest(
             """
             def pytest_report_collectionfinish(config, startdir, items):
@@ -646,7 +667,7 @@ class TestTerminalFunctional(object):
                 pass
         """
         )
-        result = testdir.runpytest()
+        result = testdir.runpytest(*params)
         result.stdout.fnmatch_lines(["collected 3 items", "hello from hook: 3 items"])
 
 
@@ -847,7 +868,7 @@ class TestGenericReporting(object):
             def g():
                 raise IndexError
             def test_func():
-                print (6*7)
+                print(6*7)
                 g()  # --calling--
         """
         )
@@ -856,9 +877,9 @@ class TestGenericReporting(object):
             result = testdir.runpytest("--tb=%s" % tbopt)
             s = result.stdout.str()
             if tbopt == "long":
-                assert "print (6*7)" in s
+                assert "print(6*7)" in s
             else:
-                assert "print (6*7)" not in s
+                assert "print(6*7)" not in s
             if tbopt != "no":
                 assert "--calling--" in s
                 assert "IndexError" in s
@@ -874,7 +895,7 @@ class TestGenericReporting(object):
             def g():
                 raise IndexError
             def test_func1():
-                print (6*7)
+                print(6*7)
                 g()  # --calling--
             def test_func2():
                 assert 0, "hello"
@@ -1067,11 +1088,54 @@ def test_terminal_summary_warnings_are_displayed(testdir):
             warnings.warn(UserWarning('internal warning'))
     """
     )
-    result = testdir.runpytest()
+    testdir.makepyfile(
+        """
+        def test_failure():
+            import warnings
+            warnings.warn("warning_from_" + "test")
+            assert 0
+    """
+    )
+    result = testdir.runpytest("-ra")
     result.stdout.fnmatch_lines(
-        ["*conftest.py:3:*internal warning", "*== 1 warnings in *"]
+        [
+            "*= warnings summary =*",
+            "*warning_from_test*",
+            "*= short test summary info =*",
+            "*= warnings summary (final) =*",
+            "*conftest.py:3:*internal warning",
+            "*== 1 failed, 2 warnings in *",
+        ]
     )
     assert "None" not in result.stdout.str()
+    stdout = result.stdout.str()
+    assert stdout.count("warning_from_test") == 1
+    assert stdout.count("=== warnings summary ") == 2
+
+
+@pytest.mark.filterwarnings("default")
+def test_terminal_summary_warnings_header_once(testdir):
+    testdir.makepyfile(
+        """
+        def test_failure():
+            import warnings
+            warnings.warn("warning_from_" + "test")
+            assert 0
+    """
+    )
+    result = testdir.runpytest("-ra")
+    result.stdout.fnmatch_lines(
+        [
+            "*= warnings summary =*",
+            "*warning_from_test*",
+            "*= short test summary info =*",
+            "*== 1 failed, 1 warnings in *",
+        ]
+    )
+    assert "None" not in result.stdout.str()
+    stdout = result.stdout.str()
+    assert stdout.count("warning_from_test") == 1
+    assert stdout.count("=== warnings summary ") == 1
 
 
 @pytest.mark.parametrize(
@@ -1281,13 +1345,15 @@ class TestProgressOutputStyle(object):
             ]
         )
 
-    def test_xdist_normal(self, many_tests_files, testdir):
+    def test_xdist_normal(self, many_tests_files, testdir, monkeypatch):
         pytest.importorskip("xdist")
+        monkeypatch.delenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD", raising=False)
         output = testdir.runpytest("-n2")
         output.stdout.re_match_lines([r"\.{20} \s+ \[100%\]"])
 
-    def test_xdist_normal_count(self, many_tests_files, testdir):
+    def test_xdist_normal_count(self, many_tests_files, testdir, monkeypatch):
         pytest.importorskip("xdist")
+        monkeypatch.delenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD", raising=False)
         testdir.makeini(
             """
             [pytest]
@@ -1297,8 +1363,9 @@ class TestProgressOutputStyle(object):
         output = testdir.runpytest("-n2")
         output.stdout.re_match_lines([r"\.{20} \s+ \[20/20\]"])
 
-    def test_xdist_verbose(self, many_tests_files, testdir):
+    def test_xdist_verbose(self, many_tests_files, testdir, monkeypatch):
         pytest.importorskip("xdist")
+        monkeypatch.delenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD", raising=False)
         output = testdir.runpytest("-n2", "-v")
         output.stdout.re_match_lines_random(
             [
@@ -1392,7 +1459,8 @@ class TestProgressWithTeardown(object):
             ]
         )
 
-    def test_xdist_normal(self, many_files, testdir):
+    def test_xdist_normal(self, many_files, testdir, monkeypatch):
         pytest.importorskip("xdist")
+        monkeypatch.delenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD", raising=False)
         output = testdir.runpytest("-n2")
         output.stdout.re_match_lines([r"[\.E]{40} \s+ \[100%\]"])
