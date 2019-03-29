@@ -18,6 +18,164 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+pytest 4.4.0 (2019-03-29)
+=========================
+
+Features
+--------
+
+- `#2224 <https://github.com/pytest-dev/pytest/issues/2224>`_: ``async`` test functions are skipped and a warning is emitted when a suitable
+  async plugin is not installed (such as ``pytest-asyncio`` or ``pytest-trio``).
+
+  Previously ``async`` functions would not execute at all but still be marked as "passed".
+
+
+- `#2482 <https://github.com/pytest-dev/pytest/issues/2482>`_: Include new ``disable_test_id_escaping_and_forfeit_all_rights_to_community_support`` option to disable ascii-escaping in parametrized values. This may cause a series of problems and as the name makes clear, use at your own risk.
+
+
+- `#4718 <https://github.com/pytest-dev/pytest/issues/4718>`_: The ``-p`` option can now be used to early-load plugins also by entry-point name, instead of just
+  by module name.
+
+  This makes it possible to early load external plugins like ``pytest-cov`` in the command-line::
+
+      pytest -p pytest_cov
+
+
+- `#4855 <https://github.com/pytest-dev/pytest/issues/4855>`_: The ``--pdbcls`` option handles classes via module attributes now (e.g.
+  ``pdb:pdb.Pdb`` with `pdb++`_), and its validation was improved.
+
+  .. _pdb++: https://pypi.org/project/pdbpp/
+
+
+- `#4875 <https://github.com/pytest-dev/pytest/issues/4875>`_: The `testpaths <https://docs.pytest.org/en/latest/reference.html#confval-testpaths>`__ configuration option is now displayed next
+  to the ``rootdir`` and ``inifile`` lines in the pytest header if the option is in effect, i.e., directories or file names were
+  not explicitly passed in the command line.
+
+  Also, ``inifile`` is only displayed if there's a configuration file, instead of an empty ``inifile:`` string.
+
+
+- `#4911 <https://github.com/pytest-dev/pytest/issues/4911>`_: Doctests can be skipped now dynamically using ``pytest.skip()``.
+
+
+- `#4920 <https://github.com/pytest-dev/pytest/issues/4920>`_: Internal refactorings have been made in order to make the implementation of the
+  `pytest-subtests <https://github.com/pytest-dev/pytest-subtests>`__ plugin
+  possible, which adds unittest sub-test support and a new ``subtests`` fixture as discussed in
+  `#1367 <https://github.com/pytest-dev/pytest/issues/1367>`__.
+
+  For details on the internal refactorings, please see the details on the related PR.
+
+
+- `#4931 <https://github.com/pytest-dev/pytest/issues/4931>`_: pytester's ``LineMatcher`` asserts that the passed lines are a sequence.
+
+
+- `#4936 <https://github.com/pytest-dev/pytest/issues/4936>`_: Handle ``-p plug`` after ``-p no:plug``.
+
+  This can be used to override a blocked plugin (e.g. in "addopts") from the
+  command line etc.
+
+
+- `#4951 <https://github.com/pytest-dev/pytest/issues/4951>`_: Output capturing is handled correctly when only capturing via fixtures (capsys, capfs) with ``pdb.set_trace()``.
+
+
+- `#4956 <https://github.com/pytest-dev/pytest/issues/4956>`_: ``pytester`` sets ``$HOME`` and ``$USERPROFILE`` to the temporary directory during test runs.
+
+  This ensures to not load configuration files from the real user's home directory.
+
+
+- `#4980 <https://github.com/pytest-dev/pytest/issues/4980>`_: Namespace packages are handled better with ``monkeypatch.syspath_prepend`` and ``testdir.syspathinsert`` (via ``pkg_resources.fixup_namespace_packages``).
+
+
+- `#4993 <https://github.com/pytest-dev/pytest/issues/4993>`_: The stepwise plugin reports status information now.
+
+
+- `#5008 <https://github.com/pytest-dev/pytest/issues/5008>`_: If a ``setup.cfg`` file contains ``[tool:pytest]`` and also the no longer supported ``[pytest]`` section, pytest will use ``[tool:pytest]`` ignoring ``[pytest]``. Previously it would unconditionally error out.
+
+  This makes it simpler for plugins to support old pytest versions.
+
+
+
+Bug Fixes
+---------
+
+- `#1895 <https://github.com/pytest-dev/pytest/issues/1895>`_: Fix bug where fixtures requested dynamically via ``request.getfixturevalue()`` might be teardown
+  before the requesting fixture.
+
+
+- `#4851 <https://github.com/pytest-dev/pytest/issues/4851>`_: pytester unsets ``PYTEST_ADDOPTS`` now to not use outer options with ``testdir.runpytest()``.
+
+
+- `#4903 <https://github.com/pytest-dev/pytest/issues/4903>`_: Use the correct modified time for years after 2038 in rewritten ``.pyc`` files.
+
+
+- `#4928 <https://github.com/pytest-dev/pytest/issues/4928>`_: Fix line offsets with ``ScopeMismatch`` errors.
+
+
+- `#4957 <https://github.com/pytest-dev/pytest/issues/4957>`_: ``-p no:plugin`` is handled correctly for default (internal) plugins now, e.g. with ``-p no:capture``.
+
+  Previously they were loaded (imported) always, making e.g. the ``capfd`` fixture available.
+
+
+- `#4968 <https://github.com/pytest-dev/pytest/issues/4968>`_: The pdb ``quit`` command is handled properly when used after the ``debug`` command with `pdb++`_.
+
+  .. _pdb++: https://pypi.org/project/pdbpp/
+
+
+- `#4975 <https://github.com/pytest-dev/pytest/issues/4975>`_: Fix the interpretation of ``-qq`` option where it was being considered as ``-v`` instead.
+
+
+- `#4978 <https://github.com/pytest-dev/pytest/issues/4978>`_: ``outcomes.Exit`` is not swallowed in ``assertrepr_compare`` anymore.
+
+
+- `#4988 <https://github.com/pytest-dev/pytest/issues/4988>`_: Close logging's file handler explicitly when the session finishes.
+
+
+- `#5003 <https://github.com/pytest-dev/pytest/issues/5003>`_: Fix line offset with mark collection error (off by one).
+
+
+
+Improved Documentation
+----------------------
+
+- `#4974 <https://github.com/pytest-dev/pytest/issues/4974>`_: Update docs for ``pytest_cmdline_parse`` hook to note availability liminations
+
+
+
+Trivial/Internal Changes
+------------------------
+
+- `#4718 <https://github.com/pytest-dev/pytest/issues/4718>`_: ``pluggy>=0.9`` is now required.
+
+
+- `#4815 <https://github.com/pytest-dev/pytest/issues/4815>`_: ``funcsigs>=1.0`` is now required for Python 2.7.
+
+
+- `#4829 <https://github.com/pytest-dev/pytest/issues/4829>`_: Some left-over internal code related to ``yield`` tests has been removed.
+
+
+- `#4890 <https://github.com/pytest-dev/pytest/issues/4890>`_: Remove internally unused ``anypython`` fixture from the pytester plugin.
+
+
+- `#4912 <https://github.com/pytest-dev/pytest/issues/4912>`_: Remove deprecated Sphinx directive, ``add_description_unit()``,
+  pin sphinx-removed-in to >= 0.2.0 to support Sphinx 2.0.
+
+
+- `#4913 <https://github.com/pytest-dev/pytest/issues/4913>`_: Fix pytest tests invocation with custom ``PYTHONPATH``.
+
+
+- `#4965 <https://github.com/pytest-dev/pytest/issues/4965>`_: New ``pytest_report_to_serializable`` and ``pytest_report_from_serializable`` **experimental** hooks.
+
+  These hooks will be used by ``pytest-xdist``, ``pytest-subtests``, and the replacement for
+  resultlog to serialize and customize reports.
+
+  They are experimental, meaning that their details might change or even be removed
+  completely in future patch releases without warning.
+
+  Feedback is welcome from plugin authors and users alike.
+
+
+- `#4987 <https://github.com/pytest-dev/pytest/issues/4987>`_: ``Collector.repr_failure`` respects ``--tbstyle``, but only defaults to ``short`` now (with ``auto``).
+
+
 pytest 4.3.1 (2019-03-11)
 =========================
 

@@ -1,1 +1,0 @@
-Output capturing is handled correctly when only capturing via fixtures (capsys, capfs) with ``pdb.set_trace()``.

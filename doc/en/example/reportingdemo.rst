@@ -15,7 +15,7 @@ get on the terminal - we are working on that):
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: $REGENDOC_TMPDIR/assertion, inifile:
+    rootdir: $REGENDOC_TMPDIR/assertion
     collected 44 items
 
     failure_demo.py FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF         [100%]

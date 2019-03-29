@@ -204,7 +204,7 @@ Example:
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: $REGENDOC_TMPDIR, inifile:
+    rootdir: $REGENDOC_TMPDIR
     collected 6 items
 
     test_example.py .FEsxX                                               [100%]
@@ -256,7 +256,7 @@ More than one character can be used, so for example to only see failed and skipp
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: $REGENDOC_TMPDIR, inifile:
+    rootdir: $REGENDOC_TMPDIR
     collected 6 items
 
     test_example.py .FEsxX                                               [100%]
@@ -292,7 +292,7 @@ captured output:
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: $REGENDOC_TMPDIR, inifile:
+    rootdir: $REGENDOC_TMPDIR
     collected 6 items
 
     test_example.py .FEsxX                                               [100%]

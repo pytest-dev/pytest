@@ -1,1 +1,0 @@
-``funcsigs>=1.0`` is now required for Python 2.7.

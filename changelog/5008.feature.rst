@@ -1,3 +1,0 @@
-If a ``setup.cfg`` file contains ``[tool:pytest]`` and also the no longer supported ``[pytest]`` section, pytest will use ``[tool:pytest]`` ignoring ``[pytest]``. Previously it would unconditionally error out.
-
-This makes it simpler for plugins to support old pytest versions.

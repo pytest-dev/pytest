@@ -82,7 +82,7 @@ If you then run it with ``--lf``:
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: $REGENDOC_TMPDIR, inifile:
+    rootdir: $REGENDOC_TMPDIR
     collected 50 items / 48 deselected / 2 selected
     run-last-failure: rerun previous 2 failures
 
@@ -126,7 +126,7 @@ of ``FF`` and dots):
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: $REGENDOC_TMPDIR, inifile:
+    rootdir: $REGENDOC_TMPDIR
     collected 50 items
     run-last-failure: rerun previous 2 failures first
 
@@ -218,12 +218,8 @@ If you run this command for the first time, you can see the print statement:
         def test_function(mydata):
     >       assert mydata == 23
     E       assert 42 == 23
-    E         -42
-    E         +23
 
     test_caching.py:17: AssertionError
-    -------------------------- Captured stdout setup ---------------------------
-    running expensive computation...
     1 failed in 0.12 seconds
 
 If you run it a second time the value will be retrieved from
@@ -241,8 +237,6 @@ the cache and nothing will be printed:
         def test_function(mydata):
     >       assert mydata == 23
     E       assert 42 == 23
-    E         -42
-    E         +23
 
     test_caching.py:17: AssertionError
     1 failed in 0.12 seconds
@@ -262,16 +256,96 @@ You can always peek at the content of the cache using the
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: $REGENDOC_TMPDIR, inifile:
+    rootdir: $REGENDOC_TMPDIR
     cachedir: $PYTHON_PREFIX/.pytest_cache
     ------------------------------- cache values -------------------------------
     cache/lastfailed contains:
-      {'test_50.py::test_num[17]': True,
+      {'a/test_db.py::test_a1': True,
+       'a/test_db2.py::test_a2': True,
+       'b/test_error.py::test_root': True,
+       'failure_demo.py::TestCustomAssertMsg::test_custom_repr': True,
+       'failure_demo.py::TestCustomAssertMsg::test_multiline': True,
+       'failure_demo.py::TestCustomAssertMsg::test_single_line': True,
+       'failure_demo.py::TestFailing::test_not': True,
+       'failure_demo.py::TestFailing::test_simple': True,
+       'failure_demo.py::TestFailing::test_simple_multiline': True,
+       'failure_demo.py::TestMoreErrors::test_compare': True,
+       'failure_demo.py::TestMoreErrors::test_complex_error': True,
+       'failure_demo.py::TestMoreErrors::test_global_func': True,
+       'failure_demo.py::TestMoreErrors::test_instance': True,
+       'failure_demo.py::TestMoreErrors::test_startswith': True,
+       'failure_demo.py::TestMoreErrors::test_startswith_nested': True,
+       'failure_demo.py::TestMoreErrors::test_try_finally': True,
+       'failure_demo.py::TestMoreErrors::test_z1_unpack_error': True,
+       'failure_demo.py::TestMoreErrors::test_z2_type_error': True,
+       'failure_demo.py::TestRaises::test_raise': True,
+       'failure_demo.py::TestRaises::test_raises': True,
+       'failure_demo.py::TestRaises::test_raises_doesnt': True,
+       'failure_demo.py::TestRaises::test_reinterpret_fails_with_print_for_the_fun_of_it': True,
+       'failure_demo.py::TestRaises::test_some_error': True,
+       'failure_demo.py::TestRaises::test_tupleerror': True,
+       'failure_demo.py::TestSpecialisedExplanations::test_eq_attrs': True,
+       'failure_demo.py::TestSpecialisedExplanations::test_eq_dataclass': True,
+       'failure_demo.py::TestSpecialisedExplanations::test_eq_dict': True,
+       'failure_demo.py::TestSpecialisedExplanations::test_eq_list': True,
+       'failure_demo.py::TestSpecialisedExplanations::test_eq_list_long': True,
+       'failure_demo.py::TestSpecialisedExplanations::test_eq_long_text': True,
+       'failure_demo.py::TestSpecialisedExplanations::test_eq_long_text_multiline': True,
+       'failure_demo.py::TestSpecialisedExplanations::test_eq_longer_list': True,
+       'failure_demo.py::TestSpecialisedExplanations::test_eq_multiline_text': True,
+       'failure_demo.py::TestSpecialisedExplanations::test_eq_set': True,
+       'failure_demo.py::TestSpecialisedExplanations::test_eq_similar_text': True,
+       'failure_demo.py::TestSpecialisedExplanations::test_eq_text': True,
+       'failure_demo.py::TestSpecialisedExplanations::test_in_list': True,
+       'failure_demo.py::TestSpecialisedExplanations::test_not_in_text_multiline': True,
+       'failure_demo.py::TestSpecialisedExplanations::test_not_in_text_single': True,
+       'failure_demo.py::TestSpecialisedExplanations::test_not_in_text_single_long': True,
+       'failure_demo.py::TestSpecialisedExplanations::test_not_in_text_single_long_term': True,
+       'failure_demo.py::test_attribute': True,
+       'failure_demo.py::test_attribute_failure': True,
+       'failure_demo.py::test_attribute_instance': True,
+       'failure_demo.py::test_attribute_multiple': True,
+       'failure_demo.py::test_dynamic_compile_shows_nicely': True,
+       'failure_demo.py::test_generative[3-6]': True,
+       'test_50.py::test_num[17]': True,
        'test_50.py::test_num[25]': True,
+       'test_anothersmtp.py::test_showhelo': True,
        'test_assert1.py::test_function': True,
        'test_assert2.py::test_set_comparison': True,
+       'test_backends.py::test_db_initialized[d2]': True,
        'test_caching.py::test_function': True,
-       'test_foocompare.py::test_compare': True}
+       'test_checkconfig.py::test_something': True,
+       'test_class.py::TestClass::test_two': True,
+       'test_compute.py::test_compute[4]': True,
+       'test_example.py::test_error': True,
+       'test_example.py::test_fail': True,
+       'test_foocompare.py::test_compare': True,
+       'test_module.py::test_call_fails': True,
+       'test_module.py::test_ehlo': True,
+       'test_module.py::test_ehlo[mail.python.org]': True,
+       'test_module.py::test_ehlo[smtp.gmail.com]': True,
+       'test_module.py::test_event_simple': True,
+       'test_module.py::test_fail1': True,
+       'test_module.py::test_fail2': True,
+       'test_module.py::test_func2': True,
+       'test_module.py::test_interface_complex': True,
+       'test_module.py::test_interface_simple': True,
+       'test_module.py::test_noop': True,
+       'test_module.py::test_noop[mail.python.org]': True,
+       'test_module.py::test_noop[smtp.gmail.com]': True,
+       'test_module.py::test_setup_fails': True,
+       'test_parametrize.py::TestClass::test_equals[1-2]': True,
+       'test_sample.py::test_answer': True,
+       'test_show_warnings.py::test_one': True,
+       'test_simple.yml::hello': True,
+       'test_smtpsimple.py::test_ehlo': True,
+       'test_step.py::TestUserHandling::test_modification': True,
+       'test_strings.py::test_valid_string[!]': True,
+       'test_tmp_path.py::test_create_file': True,
+       'test_tmpdir.py::test_create_file': True,
+       'test_tmpdir.py::test_needsfiles': True,
+       'test_unittest_db.py::MyTest::test_method1': True,
+       'test_unittest_db.py::MyTest::test_method2': True}
     cache/nodeids contains:
       ['test_caching.py::test_function']
     cache/stepwise contains:

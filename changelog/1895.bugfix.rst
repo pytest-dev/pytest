@@ -1,2 +1,0 @@
-Fix bug where fixtures requested dynamically via ``request.getfixturevalue()`` might be teardown
-before the requesting fixture.

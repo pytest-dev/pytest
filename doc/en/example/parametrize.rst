@@ -146,7 +146,7 @@ objects, they are still using the default pytest representation:
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: $REGENDOC_TMPDIR, inifile:
+    rootdir: $REGENDOC_TMPDIR
     collected 8 items
     <Module test_time.py>
       <Function test_timedistance_v0[a0-b0-expected0]>
@@ -205,7 +205,7 @@ this is a fully self-contained example which you can run with:
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: $REGENDOC_TMPDIR, inifile:
+    rootdir: $REGENDOC_TMPDIR
     collected 4 items
 
     test_scenarios.py ....                                               [100%]
@@ -220,7 +220,7 @@ If you just collect tests you'll also nicely see 'advanced' and 'basic' as varia
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: $REGENDOC_TMPDIR, inifile:
+    rootdir: $REGENDOC_TMPDIR
     collected 4 items
     <Module test_scenarios.py>
       <Class TestSampleWithScenarios>
@@ -287,7 +287,7 @@ Let's first see how it looks like at collection time:
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: $REGENDOC_TMPDIR, inifile:
+    rootdir: $REGENDOC_TMPDIR
     collected 2 items
     <Module test_backends.py>
       <Function test_db_initialized[d1]>
@@ -353,7 +353,7 @@ The result of this test will be successful:
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: $REGENDOC_TMPDIR, inifile:
+    rootdir: $REGENDOC_TMPDIR
     collected 1 item
     <Module test_indirect_list.py>
       <Function test_indirect[a-b]>
@@ -411,8 +411,6 @@ argument sets to use for each test function.  Let's run it:
         def test_equals(self, a, b):
     >       assert a == b
     E       assert 1 == 2
-    E         -1
-    E         +2
 
     test_parametrize.py:18: AssertionError
     1 failed, 2 passed in 0.12 seconds
@@ -490,7 +488,7 @@ If you run this with reporting for skips enabled:
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: $REGENDOC_TMPDIR, inifile:
+    rootdir: $REGENDOC_TMPDIR
     collected 2 items
 
     test_module.py .s                                                    [100%]
@@ -548,7 +546,7 @@ Then run ``pytest`` with verbose mode and with only the ``basic`` marker:
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python
     cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: $REGENDOC_TMPDIR, inifile:
+    rootdir: $REGENDOC_TMPDIR
     collecting ... collected 17 items / 14 deselected / 3 selected
 
     test_pytest_param_example.py::test_eval[1+7-8] PASSED                [ 33%]
