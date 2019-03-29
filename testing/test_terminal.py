@@ -726,12 +726,18 @@ class TestTerminalFunctional(object):
         result.stdout.fnmatch_lines(["collected 3 items", "hello from hook: 3 items"])
 
 
-def test_fail_extra_reporting(testdir):
-    testdir.makepyfile("def test_this(): assert 0")
+def test_fail_extra_reporting(testdir, monkeypatch):
+    monkeypatch.setenv("COLUMNS", "80")
+    testdir.makepyfile("def test_this(): assert 0, 'this_failed' * 100")
     result = testdir.runpytest()
     assert "short test summary" not in result.stdout.str()
     result = testdir.runpytest("-rf")
-    result.stdout.fnmatch_lines(["*test summary*", "FAIL*test_fail_extra_reporting*"])
+    result.stdout.fnmatch_lines(
+        [
+            "*test summary*",
+            "FAILED test_fail_extra_reporting.py::test_this: AssertionError: this_failedthis…",
+        ]
+    )
 
 
 def test_fail_reporting_on_pass(testdir):

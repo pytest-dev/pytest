@@ -211,7 +211,25 @@ def show_simple(terminalreporter, lines, stat):
         for rep in failed:
             verbose_word = _get_report_str(config, rep)
             pos = _get_pos(config, rep)
-            lines.append("%s %s" % (verbose_word, pos))
+
+            line = "%s %s" % (verbose_word, pos)
+            try:
+                msg = rep.longrepr.reprcrash.message
+            except AttributeError:
+                pass
+            else:
+                # Only use the first line.
+                # Might be worth having a short_message property, which
+                # could default to this behavior.
+                i = msg.find("\n")
+                if i != -1:
+                    msg = msg[:i]
+                max_len = terminalreporter.writer.fullwidth - len(line) - 2
+                if len(msg) > max_len:
+                    msg = msg[: (max_len - 1)] + "…"
+                line += ": %s" % msg
+
+            lines.append(line)
 
 
 def show_xfailed(terminalreporter, lines):
