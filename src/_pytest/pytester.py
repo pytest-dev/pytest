@@ -335,6 +335,15 @@ def testdir(request, tmpdir_factory):
     return Testdir(request, tmpdir_factory)
 
 
+@pytest.fixture
+def _config_for_test():
+    from _pytest.config import get_config
+
+    config = get_config()
+    yield config
+    config._ensure_unconfigure()  # cleanup, e.g. capman closing tmpfiles.
+
+
 rex_outcome = re.compile(r"(\d+) ([\w-]+)")
 
 

@@ -768,10 +768,8 @@ def test_notify_exception(testdir, capfd):
     assert not err
 
 
-def test_load_initial_conftest_last_ordering(testdir):
-    from _pytest.config import get_config
-
-    pm = get_config().pluginmanager
+def test_load_initial_conftest_last_ordering(testdir, _config_for_test):
+    pm = _config_for_test.pluginmanager
 
     class My(object):
         def pytest_load_initial_conftests(self):
@@ -1043,21 +1041,17 @@ class TestOverrideIniArgs(object):
             assert rootdir == tmpdir
             assert inifile is None
 
-    def test_addopts_before_initini(self, monkeypatch):
+    def test_addopts_before_initini(self, monkeypatch, _config_for_test):
         cache_dir = ".custom_cache"
         monkeypatch.setenv("PYTEST_ADDOPTS", "-o cache_dir=%s" % cache_dir)
-        from _pytest.config import get_config
-
-        config = get_config()
+        config = _config_for_test
         config._preparse([], addopts=True)
         assert config._override_ini == ["cache_dir=%s" % cache_dir]
 
-    def test_addopts_from_env_not_concatenated(self, monkeypatch):
+    def test_addopts_from_env_not_concatenated(self, monkeypatch, _config_for_test):
         """PYTEST_ADDOPTS should not take values from normal args (#4265)."""
-        from _pytest.config import get_config
-
         monkeypatch.setenv("PYTEST_ADDOPTS", "-o")
-        config = get_config()
+        config = _config_for_test
         with pytest.raises(UsageError) as excinfo:
             config._preparse(["cache_dir=ignored"], addopts=True)
         assert (
@@ -1082,11 +1076,9 @@ class TestOverrideIniArgs(object):
         )
         assert result.ret == _pytest.main.EXIT_USAGEERROR
 
-    def test_override_ini_does_not_contain_paths(self):
+    def test_override_ini_does_not_contain_paths(self, _config_for_test):
         """Check that -o no longer swallows all options after it (#3103)"""
-        from _pytest.config import get_config
-
-        config = get_config()
+        config = _config_for_test
         config._preparse(["-o", "cache_dir=/cache", "/some/test/path"])
         assert config._override_ini == ["cache_dir=/cache"]
 
