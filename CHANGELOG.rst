@@ -173,7 +173,7 @@ Trivial/Internal Changes
   Feedback is welcome from plugin authors and users alike.
 
 
-- `#4987 <https://github.com/pytest-dev/pytest/issues/4987>`_: ``Collector.repr_failure`` respects ``--tbstyle``, but only defaults to ``short`` now (with ``auto``).
+- `#4987 <https://github.com/pytest-dev/pytest/issues/4987>`_: ``Collector.repr_failure`` respects the ``--tb`` option, but only defaults to ``short`` now (with ``auto``).
 
 
 pytest 4.3.1 (2019-03-11)
