@@ -46,6 +46,22 @@ class TestParseIni(object):
         """correctly handle zero length arguments (a la pytest '')"""
         getcfg([""])
 
+    def test_setupcfg_uses_toolpytest_with_pytest(self, testdir):
+        p1 = testdir.makepyfile("def test(): pass")
+        testdir.makefile(
+            ".cfg",
+            setup="""
+                [tool:pytest]
+                testpaths=%s
+                [pytest]
+                testpaths=ignored
+        """
+            % p1.basename,
+        )
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines(["*, inifile: setup.cfg, *", "* 1 passed in *"])
+        assert result.ret == 0
+
     def test_append_parse_args(self, testdir, tmpdir, monkeypatch):
         monkeypatch.setenv("PYTEST_ADDOPTS", '--color no -rs --tb="short"')
         tmpdir.join("pytest.ini").write(
