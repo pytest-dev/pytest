@@ -519,7 +519,10 @@ class TestPDB(object):
         assert "1 failed" in rest
         self.flush(child)
 
-    def test_pdb_interaction_continue_recursive(self, testdir):
+    def test_pdb_with_injected_do_debug(self, testdir):
+        """Simulates pdbpp, which injects Pdb into do_debug, and uses
+        self.__class__ in do_continue.
+        """
         p1 = testdir.makepyfile(
             mytest="""
             import pdb
@@ -527,8 +530,6 @@ class TestPDB(object):
 
             count_continue = 0
 
-            # Simulates pdbpp, which injects Pdb into do_debug, and uses
-            # self.__class__ in do_continue.
             class CustomPdb(pdb.Pdb, object):
                 def do_debug(self, arg):
                     import sys
@@ -578,6 +579,14 @@ class TestPDB(object):
         assert b"PDB continue" not in child.before
         # No extra newline.
         assert child.before.endswith(b"c\r\nprint_from_foo\r\n")
+
+        # set_debug should not raise outcomes.Exit, if used recrursively.
+        child.sendline("debug 42")
+        child.sendline("q")
+        child.expect("LEAVING RECURSIVE DEBUGGER")
+        assert b"ENTERING RECURSIVE DEBUGGER" in child.before
+        assert b"Quitting debugger" not in child.before
+
         child.sendline("c")
         child.expect(r"PDB continue \(IO-capturing resumed\)")
         rest = child.read().decode("utf8")
