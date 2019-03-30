@@ -238,7 +238,10 @@ class TestTraceback_f_g_h(object):
                 n += 1
             f(n)
 
+        # Restore trace function (https://bugs.python.org/issue36474).
+        oldtrace = sys.gettrace()
         excinfo = pytest.raises(RuntimeError, f, 8)
+        sys.settrace(oldtrace)
         traceback = excinfo.traceback
         recindex = traceback.recursionindex()
         assert recindex == 3
@@ -861,13 +864,19 @@ raise ValueError()
             """
             def rec2(x):
                 return rec1(x+1)
+
             def rec1(x):
                 return rec2(x-1)
+
             def entry():
                 rec1(42)
         """
         )
-        excinfo = pytest.raises(RuntimeError, mod.entry)
+        # Restore trace function (https://bugs.python.org/issue36474).
+        oldtrace = sys.gettrace()
+        with pytest.raises(RuntimeError) as excinfo:
+            mod.entry()
+        sys.settrace(oldtrace)
 
         for style in ("short", "long", "no"):
             p = FormattedExcinfo(style="short")
@@ -1390,8 +1399,11 @@ def test_exception_repr_extraction_error_on_recursion():
     def b(x):
         return a(numpy_like())
 
+    # Restore trace function (https://bugs.python.org/issue36474).
+    oldtrace = sys.gettrace()
     with pytest.raises(RuntimeError) as excinfo:
         a(numpy_like())
+    sys.settrace(oldtrace)
 
     matcher = LineMatcher(str(excinfo.getrepr()).splitlines())
     matcher.fnmatch_lines(
@@ -1414,6 +1426,9 @@ def test_no_recursion_index_on_recursion_error():
         def __getattr__(self, attr):
             return getattr(self, "_" + attr)
 
+    # Restore trace function (https://bugs.python.org/issue36474).
+    oldtrace = sys.gettrace()
     with pytest.raises(RuntimeError) as excinfo:
         RecursionDepthError().trigger
+    sys.settrace(oldtrace)
     assert "maximum recursion" in str(excinfo.getrepr())

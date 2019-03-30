@@ -1025,16 +1025,19 @@ def test_trace_after_runpytest(testdir):
     """Test that debugging's pytest_configure is re-entrant."""
     p1 = testdir.makepyfile(
         """
+        import sys
         from _pytest.debugging import pytestPDB
 
-        def test_outer(testdir):
-            from _pytest.debugging import pytestPDB
+        oldtrace = sys.gettrace()
 
+        def test_outer(testdir):
             assert len(pytestPDB._saved) == 1
 
             testdir.runpytest("-k test_inner")
 
             __import__('pdb').set_trace()
+
+            sys.settrace(oldtrace)
 
         def test_inner(testdir):
             assert len(pytestPDB._saved) == 2
