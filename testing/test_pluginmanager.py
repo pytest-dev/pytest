@@ -4,7 +4,6 @@ from __future__ import division
 from __future__ import print_function
 
 import os
-import re
 import sys
 import types
 
@@ -164,10 +163,10 @@ def test_importplugin_error_message(testdir, pytestpm):
     with pytest.raises(ImportError) as excinfo:
         pytestpm.import_plugin("qwe")
 
-    expected_message = '.*Error importing plugin "qwe": Not possible to import: .'
-    expected_traceback = ".*in test_traceback"
-    assert re.match(expected_message, str(excinfo.value))
-    assert re.match(expected_traceback, str(excinfo.traceback[-1]))
+    assert str(excinfo.value).endswith(
+        'Error importing plugin "qwe": Not possible to import: ☺'
+    )
+    assert "in test_traceback" in str(excinfo.traceback[-1])
 
 
 class TestPytestPluginManager(object):
@@ -312,6 +311,9 @@ class TestPytestPluginManagerBootstrapming(object):
         assert '"hello123"' in excinfo.value.args[0]
         pytestpm.consider_preparse(["-pno:hello123"])
 
+        # Handles -p without following arg (when used without argparse).
+        pytestpm.consider_preparse(["-p"])
+
     def test_plugin_prevent_register(self, pytestpm):
         pytestpm.consider_preparse(["xyz", "-p", "no:abc"])
         l1 = pytestpm.get_plugins()
@@ -345,3 +347,10 @@ class TestPytestPluginManagerBootstrapming(object):
         l2 = pytestpm.get_plugins()
         assert 42 not in l2
         assert 43 not in l2
+
+    def test_blocked_plugin_can_be_used(self, pytestpm):
+        pytestpm.consider_preparse(["xyz", "-p", "no:abc", "-p", "abc"])
+
+        assert pytestpm.has_plugin("abc")
+        assert not pytestpm.is_blocked("abc")
+        assert not pytestpm.is_blocked("pytest_abc")

@@ -204,7 +204,7 @@ Example:
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: $REGENDOC_TMPDIR, inifile:
+    rootdir: $REGENDOC_TMPDIR
     collected 6 items
 
     test_example.py .FEsxX                                               [100%]
@@ -256,7 +256,7 @@ More than one character can be used, so for example to only see failed and skipp
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: $REGENDOC_TMPDIR, inifile:
+    rootdir: $REGENDOC_TMPDIR
     collected 6 items
 
     test_example.py .FEsxX                                               [100%]
@@ -292,7 +292,7 @@ captured output:
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: $REGENDOC_TMPDIR, inifile:
+    rootdir: $REGENDOC_TMPDIR
     collected 6 items
 
     test_example.py .FEsxX                                               [100%]
@@ -384,10 +384,8 @@ in your code and pytest automatically disables its output capture for that test:
 * Output capture in other tests is not affected.
 * Any prior test output that has already been captured and will be processed as
   such.
-* Any later output produced within the same test will not be captured and will
-  instead get sent directly to ``sys.stdout``. Note that this holds true even
-  for test output occurring after you exit the interactive PDB_ tracing session
-  and continue with the regular test run.
+* Output capture gets resumed when ending the debugger session (via the
+  ``continue`` command).
 
 
 .. _`breakpoint-builtin`:
@@ -679,6 +677,22 @@ for example ``-x`` if you only want to send one particular failure.
     pytest --pastebin=all
 
 Currently only pasting to the http://bpaste.net service is implemented.
+
+Early loading plugins
+---------------------
+
+You can early-load plugins (internal and external) explicitly in the command-line with the ``-p`` option::
+
+    pytest -p mypluginmodule
+
+The option receives a ``name`` parameter, which can be:
+
+* A full module dotted name, for example ``myproject.plugins``. This dotted name must be importable.
+* The entry-point name of a plugin. This is the name passed to ``setuptools`` when the plugin is
+  registered. For example to early-load the `pytest-cov <https://pypi.org/project/pytest-cov/>`__ plugin you can use::
+
+    pytest -p pytest_cov
+
 
 Disabling plugins
 -----------------

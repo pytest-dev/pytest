@@ -8,6 +8,7 @@ import sys
 import textwrap
 import types
 
+import attr
 import py
 import six
 
@@ -107,6 +108,60 @@ class TestGeneralUsage(object):
         result = testdir.runpytest("-p", "pytest_xyz", "--xyz=123", syspathinsert=True)
         assert result.ret == 0
         result.stdout.fnmatch_lines(["*1 passed*"])
+
+    @pytest.mark.parametrize("load_cov_early", [True, False])
+    def test_early_load_setuptools_name(self, testdir, monkeypatch, load_cov_early):
+        pkg_resources = pytest.importorskip("pkg_resources")
+
+        testdir.makepyfile(mytestplugin1_module="")
+        testdir.makepyfile(mytestplugin2_module="")
+        testdir.makepyfile(mycov_module="")
+        testdir.syspathinsert()
+
+        loaded = []
+
+        @attr.s
+        class DummyEntryPoint(object):
+            name = attr.ib()
+            module = attr.ib()
+            version = "1.0"
+
+            @property
+            def project_name(self):
+                return self.name
+
+            def load(self):
+                __import__(self.module)
+                loaded.append(self.name)
+                return sys.modules[self.module]
+
+            @property
+            def dist(self):
+                return self
+
+            def _get_metadata(self, *args):
+                return []
+
+        entry_points = [
+            DummyEntryPoint("myplugin1", "mytestplugin1_module"),
+            DummyEntryPoint("myplugin2", "mytestplugin2_module"),
+            DummyEntryPoint("mycov", "mycov_module"),
+        ]
+
+        def my_iter(group, name=None):
+            assert group == "pytest11"
+            for ep in entry_points:
+                if name is not None and ep.name != name:
+                    continue
+                yield ep
+
+        monkeypatch.setattr(pkg_resources, "iter_entry_points", my_iter)
+        params = ("-p", "mycov") if load_cov_early else ()
+        testdir.runpytest_inprocess(*params)
+        if load_cov_early:
+            assert loaded == ["mycov", "myplugin1", "myplugin2"]
+        else:
+            assert loaded == ["myplugin1", "myplugin2", "mycov"]
 
     def test_assertion_magic(self, testdir):
         p = testdir.makepyfile(
@@ -622,6 +677,8 @@ class TestInvocationVariants(object):
     def test_cmdline_python_namespace_package(self, testdir, monkeypatch):
         """
         test --pyargs option with namespace packages (#1567)
+
+        Ref: https://packaging.python.org/guides/packaging-namespace-packages/
         """
         monkeypatch.delenv("PYTHONDONTWRITEBYTECODE", raising=False)
 
@@ -978,7 +1035,7 @@ def test_pytest_plugins_as_module(testdir):
         }
     )
     result = testdir.runpytest()
-    result.stdout.fnmatch_lines("* 1 passed in *")
+    result.stdout.fnmatch_lines(["* 1 passed in *"])
 
 
 def test_deferred_hook_checking(testdir):
@@ -1118,9 +1175,37 @@ def test_fixture_mock_integration(testdir):
     """Test that decorators applied to fixture are left working (#3774)"""
     p = testdir.copy_example("acceptance/fixture_mock_integration.py")
     result = testdir.runpytest(p)
-    result.stdout.fnmatch_lines("*1 passed*")
+    result.stdout.fnmatch_lines(["*1 passed*"])
 
 
 def test_usage_error_code(testdir):
     result = testdir.runpytest("-unknown-option-")
     assert result.ret == EXIT_USAGEERROR
+
+
+@pytest.mark.skipif(
+    sys.version_info[:2] < (3, 5), reason="async def syntax python 3.5+ only"
+)
+@pytest.mark.filterwarnings("default")
+def test_warn_on_async_function(testdir):
+    testdir.makepyfile(
+        test_async="""
+        async def test_1():
+            pass
+        async def test_2():
+            pass
+    """
+    )
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines(
+        [
+            "test_async.py::test_1",
+            "test_async.py::test_2",
+            "*Coroutine functions are not natively supported*",
+            "*2 skipped, 2 warnings in*",
+        ]
+    )
+    # ensure our warning message appears only once
+    assert (
+        result.stdout.str().count("Coroutine functions are not natively supported") == 1
+    )

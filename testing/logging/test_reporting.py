@@ -54,6 +54,7 @@ def test_root_logger_affected(testdir):
         """
         import logging
         logger = logging.getLogger()
+
         def test_foo():
             logger.info('info text ' + 'going to logger')
             logger.warning('warning text ' + 'going to logger')
@@ -66,15 +67,14 @@ def test_root_logger_affected(testdir):
     result = testdir.runpytest("--log-level=ERROR", "--log-file=pytest.log")
     assert result.ret == 1
 
-    # the capture log calls in the stdout section only contain the
-    # logger.error msg, because --log-level=ERROR
+    # The capture log calls in the stdout section only contain the
+    # logger.error msg, because of --log-level=ERROR.
     result.stdout.fnmatch_lines(["*error text going to logger*"])
-    with pytest.raises(pytest.fail.Exception):
-        result.stdout.fnmatch_lines(["*warning text going to logger*"])
-    with pytest.raises(pytest.fail.Exception):
-        result.stdout.fnmatch_lines(["*info text going to logger*"])
+    stdout = result.stdout.str()
+    assert "warning text going to logger" not in stdout
+    assert "info text going to logger" not in stdout
 
-    # the log file should contain the warning and the error log messages and
+    # The log file should contain the warning and the error log messages and
     # not the info one, because the default level of the root logger is
     # WARNING.
     assert os.path.isfile(log_file)
@@ -635,7 +635,6 @@ def test_log_cli_auto_enable(testdir, request, cli_args):
     """
     testdir.makepyfile(
         """
-        import pytest
         import logging
 
         def test_log_1():
@@ -653,6 +652,7 @@ def test_log_cli_auto_enable(testdir, request, cli_args):
     )
 
     result = testdir.runpytest(cli_args)
+    stdout = result.stdout.str()
     if cli_args == "--log-cli-level=WARNING":
         result.stdout.fnmatch_lines(
             [
@@ -663,13 +663,13 @@ def test_log_cli_auto_enable(testdir, request, cli_args):
                 "=* 1 passed in *=",
             ]
         )
-        assert "INFO" not in result.stdout.str()
+        assert "INFO" not in stdout
     else:
         result.stdout.fnmatch_lines(
             ["*test_log_cli_auto_enable*100%*", "=* 1 passed in *="]
         )
-        assert "INFO" not in result.stdout.str()
-        assert "WARNING" not in result.stdout.str()
+        assert "INFO" not in stdout
+        assert "WARNING" not in stdout
 
 
 def test_log_file_cli(testdir):
@@ -747,7 +747,7 @@ def test_log_level_not_changed_by_default(testdir):
     """
     )
     result = testdir.runpytest("-s")
-    result.stdout.fnmatch_lines("* 1 passed in *")
+    result.stdout.fnmatch_lines(["* 1 passed in *"])
 
 
 def test_log_file_ini(testdir):

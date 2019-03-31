@@ -389,7 +389,7 @@ class LoggingPlugin(object):
         self._config = config
 
         # enable verbose output automatically if live logging is enabled
-        if self._log_cli_enabled() and not config.getoption("verbose"):
+        if self._log_cli_enabled() and config.getoption("verbose") < 1:
             config.option.verbose = 1
 
         self.print_logs = get_option_ini(config, "log_print")
@@ -577,8 +577,15 @@ class LoggingPlugin(object):
             if self.log_cli_handler:
                 self.log_cli_handler.set_when("sessionfinish")
             if self.log_file_handler is not None:
-                with catching_logs(self.log_file_handler, level=self.log_file_level):
-                    yield
+                try:
+                    with catching_logs(
+                        self.log_file_handler, level=self.log_file_level
+                    ):
+                        yield
+                finally:
+                    # Close the FileHandler explicitly.
+                    # (logging.shutdown might have lost the weakref?!)
+                    self.log_file_handler.close()
             else:
                 yield
 

@@ -121,10 +121,12 @@ class Cache(object):
                 cache_dir_exists_already = True
             else:
                 cache_dir_exists_already = self._cachedir.exists()
-            path.parent.mkdir(exist_ok=True, parents=True)
+                path.parent.mkdir(exist_ok=True, parents=True)
         except (IOError, OSError):
             self.warn("could not create cache path {path}", path=path)
             return
+        if not cache_dir_exists_already:
+            self._ensure_supporting_files()
         try:
             f = path.open("wb" if PY2 else "w")
         except (IOError, OSError):
@@ -132,24 +134,18 @@ class Cache(object):
         else:
             with f:
                 json.dump(value, f, indent=2, sort_keys=True)
-            if not cache_dir_exists_already:
-                self._ensure_supporting_files()
 
     def _ensure_supporting_files(self):
         """Create supporting files in the cache dir that are not really part of the cache."""
-        if self._cachedir.is_dir():
-            readme_path = self._cachedir / "README.md"
-            if not readme_path.is_file():
-                readme_path.write_text(README_CONTENT)
+        readme_path = self._cachedir / "README.md"
+        readme_path.write_text(README_CONTENT)
 
-            gitignore_path = self._cachedir.joinpath(".gitignore")
-            if not gitignore_path.is_file():
-                msg = u"# Created by pytest automatically.\n*"
-                gitignore_path.write_text(msg, encoding="UTF-8")
+        gitignore_path = self._cachedir.joinpath(".gitignore")
+        msg = u"# Created by pytest automatically.\n*"
+        gitignore_path.write_text(msg, encoding="UTF-8")
 
-            cachedir_tag_path = self._cachedir.joinpath("CACHEDIR.TAG")
-            if not cachedir_tag_path.is_file():
-                cachedir_tag_path.write_bytes(CACHEDIR_TAG_CONTENT)
+        cachedir_tag_path = self._cachedir.joinpath("CACHEDIR.TAG")
+        cachedir_tag_path.write_bytes(CACHEDIR_TAG_CONTENT)
 
 
 class LFPlugin(object):
@@ -344,7 +340,7 @@ def cache(request):
 
 def pytest_report_header(config):
     """Display cachedir with --cache-show and if non-default."""
-    if config.option.verbose or config.getini("cache_dir") != ".pytest_cache":
+    if config.option.verbose > 0 or config.getini("cache_dir") != ".pytest_cache":
         cachedir = config.cache._cachedir
         # TODO: evaluate generating upward relative paths
         # starting with .., ../.. if sensible

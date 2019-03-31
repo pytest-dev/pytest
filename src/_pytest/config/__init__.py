@@ -140,6 +140,7 @@ default_plugins = (
     "stepwise",
     "warnings",
     "logging",
+    "reports",
 )
 
 
@@ -147,10 +148,15 @@ builtin_plugins = set(default_plugins)
 builtin_plugins.add("pytester")
 
 
-def get_config():
+def get_config(args=None):
     # subsequent calls to main will create a fresh instance
     pluginmanager = PytestPluginManager()
     config = Config(pluginmanager)
+
+    if args is not None:
+        # Handle any "-p no:plugin" args.
+        pluginmanager.consider_preparse(args)
+
     for spec in default_plugins:
         pluginmanager.import_plugin(spec)
     return config
@@ -178,7 +184,7 @@ def _prepareconfig(args=None, plugins=None):
         msg = "`args` parameter expected to be a list or tuple of strings, got: {!r} (type: {})"
         raise TypeError(msg.format(args, type(args)))
 
-    config = get_config()
+    config = get_config(args)
     pluginmanager = config.pluginmanager
     try:
         if plugins:
@@ -476,7 +482,10 @@ class PytestPluginManager(PluginManager):
             i += 1
             if isinstance(opt, six.string_types):
                 if opt == "-p":
-                    parg = args[i]
+                    try:
+                        parg = args[i]
+                    except IndexError:
+                        return
                     i += 1
                 elif opt.startswith("-p"):
                     parg = opt[2:]
@@ -496,7 +505,15 @@ class PytestPluginManager(PluginManager):
             if not name.startswith("pytest_"):
                 self.set_blocked("pytest_" + name)
         else:
-            self.import_plugin(arg)
+            name = arg
+            # Unblock the plugin.  None indicates that it has been blocked.
+            # There is no interface with pluggy for this.
+            if self._name2plugin.get(name, -1) is None:
+                del self._name2plugin[name]
+            if not name.startswith("pytest_"):
+                if self._name2plugin.get("pytest_" + name, -1) is None:
+                    del self._name2plugin["pytest_" + name]
+            self.import_plugin(arg, consider_entry_points=True)
 
     def consider_conftest(self, conftestmodule):
         self.register(conftestmodule, name=conftestmodule.__file__)
@@ -512,7 +529,11 @@ class PytestPluginManager(PluginManager):
         for import_spec in plugins:
             self.import_plugin(import_spec)
 
-    def import_plugin(self, modname):
+    def import_plugin(self, modname, consider_entry_points=False):
+        """
+        Imports a plugin with ``modname``. If ``consider_entry_points`` is True, entry point
+        names are also considered to find a plugin.
+        """
         # most often modname refers to builtin modules, e.g. "pytester",
         # "terminal" or "capture".  Those plugins are registered under their
         # basename for historic purposes but must be imported with the
@@ -523,22 +544,26 @@ class PytestPluginManager(PluginManager):
         modname = str(modname)
         if self.is_blocked(modname) or self.get_plugin(modname) is not None:
             return
-        if modname in builtin_plugins:
-            importspec = "_pytest." + modname
-        else:
-            importspec = modname
+
+        importspec = "_pytest." + modname if modname in builtin_plugins else modname
         self.rewrite_hook.mark_rewrite(importspec)
+
+        if consider_entry_points:
+            loaded = self.load_setuptools_entrypoints("pytest11", name=modname)
+            if loaded:
+                return
+
         try:
             __import__(importspec)
         except ImportError as e:
-            new_exc_type = ImportError
             new_exc_message = 'Error importing plugin "%s": %s' % (
                 modname,
                 safe_str(e.args[0]),
             )
-            new_exc = new_exc_type(new_exc_message)
+            new_exc = ImportError(new_exc_message)
+            tb = sys.exc_info()[2]
 
-            six.reraise(new_exc_type, new_exc, sys.exc_info()[2])
+            six.reraise(ImportError, new_exc, tb)
 
         except Skipped as e:
             from _pytest.warnings import _issue_warning_captured
@@ -697,7 +722,7 @@ class Config(object):
     @classmethod
     def fromdictargs(cls, option_dict, args):
         """ constructor useable for subprocesses. """
-        config = get_config()
+        config = get_config(args)
         config.option.__dict__.update(option_dict)
         config.parse(args, addopts=False)
         for x in config.option.plugins:
@@ -741,7 +766,7 @@ class Config(object):
         by the importhook.
         """
         ns, unknown_args = self._parser.parse_known_and_unknown_args(args)
-        mode = ns.assertmode
+        mode = getattr(ns, "assertmode", "plain")
         if mode == "rewrite":
             try:
                 hook = _pytest.assertion.install_importhook(self)

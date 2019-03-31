@@ -3,7 +3,7 @@ trigger:
 - features
 
 variables:
-  PYTEST_ADDOPTS: "--junitxml=build/test-results/$(tox.env).xml"
+  PYTEST_ADDOPTS: "--junitxml=build/test-results/$(tox.env).xml -vv"
   python.needs_vc: False
   python.exe: "python"
   COVERAGE_FILE: "$(Build.Repository.LocalPath)/.coverage"

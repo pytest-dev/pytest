@@ -87,9 +87,9 @@ def runtestprotocol(item, log=True, nextitem=None):
     rep = call_and_report(item, "setup", log)
     reports = [rep]
     if rep.passed:
-        if item.config.option.setupshow:
+        if item.config.getoption("setupshow", False):
             show_test_item(item)
-        if not item.config.option.setuponly:
+        if not item.config.getoption("setuponly", False):
             reports.append(call_and_report(item, "call", log))
     reports.append(call_and_report(item, "teardown", log, nextitem=nextitem))
     # after all teardown hooks have been called
@@ -192,7 +192,7 @@ def call_runtest_hook(item, when, **kwds):
     hookname = "pytest_runtest_" + when
     ihook = getattr(item.ihook, hookname)
     reraise = (Exit,)
-    if not item.config.getvalue("usepdb"):
+    if not item.config.getoption("usepdb", False):
         reraise += (KeyboardInterrupt,)
     return CallInfo.from_call(
         lambda: ihook(item=item, **kwds), when=when, reraise=reraise
@@ -246,43 +246,7 @@ class CallInfo(object):
 
 
 def pytest_runtest_makereport(item, call):
-    when = call.when
-    duration = call.stop - call.start
-    keywords = {x: 1 for x in item.keywords}
-    excinfo = call.excinfo
-    sections = []
-    if not call.excinfo:
-        outcome = "passed"
-        longrepr = None
-    else:
-        if not isinstance(excinfo, ExceptionInfo):
-            outcome = "failed"
-            longrepr = excinfo
-        elif excinfo.errisinstance(skip.Exception):
-            outcome = "skipped"
-            r = excinfo._getreprcrash()
-            longrepr = (str(r.path), r.lineno, r.message)
-        else:
-            outcome = "failed"
-            if call.when == "call":
-                longrepr = item.repr_failure(excinfo)
-            else:  # exception in setup or teardown
-                longrepr = item._repr_failure_py(
-                    excinfo, style=item.config.option.tbstyle
-                )
-    for rwhen, key, content in item._report_sections:
-        sections.append(("Captured %s %s" % (key, rwhen), content))
-    return TestReport(
-        item.nodeid,
-        item.location,
-        keywords,
-        outcome,
-        longrepr,
-        when,
-        sections,
-        duration,
-        user_properties=item.user_properties,
-    )
+    return TestReport.from_item_and_call(item, call)
 
 
 def pytest_make_collect_report(collector):

@@ -1,4 +1,3 @@
-
 Reference
 =========
 
@@ -49,7 +48,7 @@ pytest.main
 .. autofunction:: _pytest.config.main
 
 pytest.param
-~~~~~~~~~~~~~
+~~~~~~~~~~~~
 
 .. autofunction:: pytest.param(*values, [id], [marks])
 

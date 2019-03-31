@@ -203,7 +203,9 @@ def compile_(source, filename=None, mode="exec", flags=0, dont_inherit=0):
 
 def getfslineno(obj):
     """ Return source location (path, lineno) for the given object.
-    If the source cannot be determined return ("", -1)
+    If the source cannot be determined return ("", -1).
+
+    The line number is 0-based.
     """
     from .code import Code
 

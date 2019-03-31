@@ -21,6 +21,9 @@ import six
 
 from _pytest._io.saferepr import saferepr
 from _pytest.assertion import util
+from _pytest.assertion.util import (  # noqa: F401
+    format_explanation as _format_explanation,
+)
 from _pytest.compat import spec_from_file_location
 from _pytest.pathlib import fnmatch_ex
 from _pytest.pathlib import PurePath
@@ -483,9 +486,6 @@ def _saferepr(obj):
             for c in r
         )
     return r.replace(u"\n", u"\\n")
-
-
-from _pytest.assertion.util import format_explanation as _format_explanation  # noqa
 
 
 def _format_assertmsg(obj):

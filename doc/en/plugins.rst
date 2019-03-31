@@ -27,7 +27,7 @@ Here is a little annotated list for some popular plugins:
   for `twisted <http://twistedmatrix.com>`_ apps, starting a reactor and
   processing deferreds from test functions.
 
-* `pytest-cov <https://pypi.org/project/pytest-cov/>`_:
+* `pytest-cov <https://pypi.org/project/pytest-cov/>`__:
   coverage reporting, compatible with distributed testing
 
 * `pytest-xdist <https://pypi.org/project/pytest-xdist/>`_:

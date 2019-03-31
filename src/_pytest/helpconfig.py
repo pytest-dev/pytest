@@ -60,7 +60,7 @@ def pytest_addoption(parser):
         dest="plugins",
         default=[],
         metavar="name",
-        help="early-load given plugin (multi-allowed). "
+        help="early-load given plugin module name or entry point (multi-allowed). "
         "To avoid loading of plugins, use the `no:` prefix, e.g. "
         "`no:doctest`.",
     )

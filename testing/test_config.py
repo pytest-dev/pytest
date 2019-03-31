@@ -5,6 +5,8 @@ from __future__ import print_function
 import sys
 import textwrap
 
+import attr
+
 import _pytest._code
 import pytest
 from _pytest.config import _iter_rewritable_modules
@@ -13,6 +15,8 @@ from _pytest.config.findpaths import determine_setup
 from _pytest.config.findpaths import get_common_ancestor
 from _pytest.config.findpaths import getcfg
 from _pytest.main import EXIT_NOTESTSCOLLECTED
+from _pytest.main import EXIT_OK
+from _pytest.main import EXIT_TESTSFAILED
 from _pytest.main import EXIT_USAGEERROR
 
 
@@ -41,6 +45,22 @@ class TestParseIni(object):
     def test_getcfg_empty_path(self):
         """correctly handle zero length arguments (a la pytest '')"""
         getcfg([""])
+
+    def test_setupcfg_uses_toolpytest_with_pytest(self, testdir):
+        p1 = testdir.makepyfile("def test(): pass")
+        testdir.makefile(
+            ".cfg",
+            setup="""
+                [tool:pytest]
+                testpaths=%s
+                [pytest]
+                testpaths=ignored
+        """
+            % p1.basename,
+        )
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines(["*, inifile: setup.cfg, *", "* 1 passed in *"])
+        assert result.ret == 0
 
     def test_append_parse_args(self, testdir, tmpdir, monkeypatch):
         monkeypatch.setenv("PYTEST_ADDOPTS", '--color no -rs --tb="short"')
@@ -622,7 +642,28 @@ def test_disable_plugin_autoload(testdir, monkeypatch, parse_args, should_load):
     pkg_resources = pytest.importorskip("pkg_resources")
 
     def my_iter(group, name=None):
-        raise AssertionError("Should not be called")
+        assert group == "pytest11"
+        assert name == "mytestplugin"
+        return iter([DummyEntryPoint()])
+
+    @attr.s
+    class DummyEntryPoint(object):
+        name = "mytestplugin"
+        version = "1.0"
+
+        @property
+        def project_name(self):
+            return self.name
+
+        def load(self):
+            return sys.modules[self.name]
+
+        @property
+        def dist(self):
+            return self
+
+        def _get_metadata(self, *args):
+            return []
 
     class PseudoPlugin(object):
         x = 42
@@ -674,9 +715,9 @@ def test_invalid_options_show_extra_information(testdir):
         ["-v", "dir2", "dir1"],
     ],
 )
-def test_consider_args_after_options_for_rootdir_and_inifile(testdir, args):
+def test_consider_args_after_options_for_rootdir(testdir, args):
     """
-    Consider all arguments in the command-line for rootdir and inifile
+    Consider all arguments in the command-line for rootdir
     discovery, even if they happen to occur after an option. #949
     """
     # replace "dir1" and "dir2" from "args" into their real directory
@@ -690,7 +731,7 @@ def test_consider_args_after_options_for_rootdir_and_inifile(testdir, args):
             args[i] = d2
     with root.as_cwd():
         result = testdir.runpytest(*args)
-    result.stdout.fnmatch_lines(["*rootdir: *myroot, inifile:"])
+    result.stdout.fnmatch_lines(["*rootdir: *myroot"])
 
 
 @pytest.mark.skipif("sys.platform == 'win32'")
@@ -778,7 +819,7 @@ def test_collect_pytest_prefix_bug_integration(testdir):
     """Integration test for issue #3775"""
     p = testdir.copy_example("config/collect_pytest_prefix")
     result = testdir.runpytest(p)
-    result.stdout.fnmatch_lines("* 1 passed *")
+    result.stdout.fnmatch_lines(["* 1 passed *"])
 
 
 def test_collect_pytest_prefix_bug(pytestconfig):
@@ -1145,3 +1186,53 @@ def test_help_and_version_after_argument_error(testdir):
         ["*pytest*{}*imported from*".format(pytest.__version__)]
     )
     assert result.ret == EXIT_USAGEERROR
+
+
+def test_config_does_not_load_blocked_plugin_from_args(testdir):
+    """This tests that pytest's config setup handles "-p no:X"."""
+    p = testdir.makepyfile("def test(capfd): pass")
+    result = testdir.runpytest(str(p), "-pno:capture")
+    result.stdout.fnmatch_lines(["E       fixture 'capfd' not found"])
+    assert result.ret == EXIT_TESTSFAILED
+
+    result = testdir.runpytest(str(p), "-pno:capture", "-s")
+    result.stderr.fnmatch_lines(["*: error: unrecognized arguments: -s"])
+    assert result.ret == EXIT_USAGEERROR
+
+
+@pytest.mark.parametrize(
+    "plugin",
+    [
+        x
+        for x in _pytest.config.default_plugins
+        if x
+        not in [
+            "fixtures",
+            "helpconfig",  # Provides -p.
+            "main",
+            "mark",
+            "python",
+            "runner",
+            "terminal",  # works in OK case (no output), but not with failures.
+        ]
+    ],
+)
+def test_config_blocked_default_plugins(testdir, plugin):
+    if plugin == "debugging":
+        # https://github.com/pytest-dev/pytest-xdist/pull/422
+        try:
+            import xdist  # noqa: F401
+        except ImportError:
+            pass
+        else:
+            pytest.skip("does not work with xdist currently")
+
+    p = testdir.makepyfile("def test(): pass")
+    result = testdir.runpytest(str(p), "-pno:%s" % plugin)
+    assert result.ret == EXIT_OK
+    result.stdout.fnmatch_lines(["* 1 passed in *"])
+
+    p = testdir.makepyfile("def test(): assert 0")
+    result = testdir.runpytest(str(p), "-pno:%s" % plugin)
+    assert result.ret == EXIT_TESTSFAILED
+    result.stdout.fnmatch_lines(["* 1 failed in *"])

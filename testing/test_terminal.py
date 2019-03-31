@@ -15,6 +15,7 @@ import py
 
 import pytest
 from _pytest.main import EXIT_NOTESTSCOLLECTED
+from _pytest.reports import BaseReport
 from _pytest.terminal import _plugin_nameversions
 from _pytest.terminal import build_summary_stats_line
 from _pytest.terminal import getreportopt
@@ -24,15 +25,14 @@ DistInfo = collections.namedtuple("DistInfo", ["project_name", "version"])
 
 
 class Option(object):
-    def __init__(self, verbose=False, fulltrace=False):
-        self.verbose = verbose
+    def __init__(self, verbosity=0, fulltrace=False):
+        self.verbosity = verbosity
         self.fulltrace = fulltrace
 
     @property
     def args(self):
         values = []
-        if self.verbose:
-            values.append("-v")
+        values.append("--verbosity=%d" % self.verbosity)
         if self.fulltrace:
             values.append("--fulltrace")
         return values
@@ -40,9 +40,9 @@ class Option(object):
 
 @pytest.fixture(
     params=[
-        Option(verbose=False),
-        Option(verbose=True),
-        Option(verbose=-1),
+        Option(verbosity=0),
+        Option(verbosity=1),
+        Option(verbosity=-1),
         Option(fulltrace=True),
     ],
     ids=["default", "verbose", "quiet", "fulltrace"],
@@ -86,7 +86,7 @@ class TestTerminal(object):
         """
         )
         result = testdir.runpytest(*option.args)
-        if option.verbose:
+        if option.verbosity > 0:
             result.stdout.fnmatch_lines(
                 [
                     "*test_pass_skip_fail.py::test_ok PASS*",
@@ -94,8 +94,10 @@ class TestTerminal(object):
                     "*test_pass_skip_fail.py::test_func FAIL*",
                 ]
             )
-        else:
+        elif option.verbosity == 0:
             result.stdout.fnmatch_lines(["*test_pass_skip_fail.py .sF*"])
+        else:
+            result.stdout.fnmatch_lines([".sF*"])
         result.stdout.fnmatch_lines(
             ["    def test_func():", ">       assert 0", "E       assert 0"]
         )
@@ -140,6 +142,31 @@ class TestTerminal(object):
         child.expect(".*test_runtest_location.*py")
         child.sendeof()
         child.kill(15)
+
+    def test_report_collect_after_half_a_second(self, testdir):
+        """Test for "collecting" being updated after 0.5s"""
+
+        testdir.makepyfile(
+            **{
+                "test1.py": """
+                import _pytest.terminal
+
+                _pytest.terminal.REPORT_COLLECTING_RESOLUTION = 0
+
+                def test_1():
+                    pass
+                    """,
+                "test2.py": "def test_2(): pass",
+            }
+        )
+
+        child = testdir.spawn_pytest("-v test1.py test2.py")
+        child.expect(r"collecting \.\.\.")
+        child.expect(r"collecting 1 item")
+        child.expect(r"collecting 2 items")
+        child.expect(r"collected 2 items")
+        rest = child.read().decode("utf8")
+        assert "2 passed in" in rest
 
     def test_itemreport_subclasses_show_subclassed_file(self, testdir):
         testdir.makepyfile(
@@ -567,6 +594,35 @@ class TestTerminalFunctional(object):
         if request.config.pluginmanager.list_plugin_distinfo():
             result.stdout.fnmatch_lines(["plugins: *"])
 
+    def test_header(self, testdir, request):
+        testdir.tmpdir.join("tests").ensure_dir()
+        testdir.tmpdir.join("gui").ensure_dir()
+
+        # no ini file
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines(["rootdir: *test_header0"])
+
+        # with inifile
+        testdir.makeini("""[pytest]""")
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines(["rootdir: *test_header0, inifile: tox.ini"])
+
+        # with testpaths option, and not passing anything in the command-line
+        testdir.makeini(
+            """
+            [pytest]
+            testpaths = tests gui
+        """
+        )
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines(
+            ["rootdir: *test_header0, inifile: tox.ini, testpaths: tests, gui"]
+        )
+
+        # with testpaths option, passing directory in command-line: do not show testpaths then
+        result = testdir.runpytest("tests")
+        result.stdout.fnmatch_lines(["rootdir: *test_header0, inifile: tox.ini"])
+
     def test_showlocals(self, testdir):
         p1 = testdir.makepyfile(
             """
@@ -605,7 +661,6 @@ class TestTerminalFunctional(object):
         )
 
     def test_verbose_reporting(self, verbose_testfile, testdir, pytestconfig):
-
         result = testdir.runpytest(
             verbose_testfile, "-v", "-Walways::pytest.PytestWarning"
         )
@@ -1199,13 +1254,18 @@ def test_summary_stats(exp_line, exp_color, stats_arg):
     assert color == exp_color
 
 
-def test_no_trailing_whitespace_after_inifile_word(testdir):
-    result = testdir.runpytest("")
-    assert "inifile:\n" in result.stdout.str()
+def test_skip_counting_towards_summary():
+    class DummyReport(BaseReport):
+        count_towards_summary = True
 
-    testdir.makeini("[pytest]")
-    result = testdir.runpytest("")
-    assert "inifile: tox.ini\n" in result.stdout.str()
+    r1 = DummyReport()
+    r2 = DummyReport()
+    res = build_summary_stats_line({"failed": (r1, r2)})
+    assert res == ("2 failed", "red")
+
+    r1.count_towards_summary = False
+    res = build_summary_stats_line({"failed": (r1, r2)})
+    assert res == ("1 failed", "red")
 
 
 class TestClassicOutputStyle(object):

@@ -28,25 +28,29 @@ For information about fixtures, see :ref:`fixtures`. To see a complete list of a
 
         Values can be any object handled by the json stdlib module.
     capsys
-        Enable capturing of writes to ``sys.stdout`` and ``sys.stderr`` and make
-        captured output available via ``capsys.readouterr()`` method calls
-        which return a ``(out, err)`` namedtuple.  ``out`` and ``err`` will be ``text``
-        objects.
+        Enable text capturing of writes to ``sys.stdout`` and ``sys.stderr``.
+
+        The captured output is made available via ``capsys.readouterr()`` method
+        calls, which return a ``(out, err)`` namedtuple.
+        ``out`` and ``err`` will be ``text`` objects.
     capsysbinary
-        Enable capturing of writes to ``sys.stdout`` and ``sys.stderr`` and make
-        captured output available via ``capsys.readouterr()`` method calls
-        which return a ``(out, err)`` tuple.  ``out`` and ``err`` will be ``bytes``
-        objects.
+        Enable bytes capturing of writes to ``sys.stdout`` and ``sys.stderr``.
+
+        The captured output is made available via ``capsysbinary.readouterr()``
+        method calls, which return a ``(out, err)`` namedtuple.
+        ``out`` and ``err`` will be ``bytes`` objects.
     capfd
-        Enable capturing of writes to file descriptors ``1`` and ``2`` and make
-        captured output available via ``capfd.readouterr()`` method calls
-        which return a ``(out, err)`` tuple.  ``out`` and ``err`` will be ``text``
-        objects.
+        Enable text capturing of writes to file descriptors ``1`` and ``2``.
+
+        The captured output is made available via ``capfd.readouterr()`` method
+        calls, which return a ``(out, err)`` namedtuple.
+        ``out`` and ``err`` will be ``text`` objects.
     capfdbinary
-        Enable capturing of write to file descriptors 1 and 2 and make
-        captured output available via ``capfdbinary.readouterr`` method calls
-        which return a ``(out, err)`` tuple.  ``out`` and ``err`` will be
-        ``bytes`` objects.
+        Enable bytes capturing of writes to file descriptors ``1`` and ``2``.
+
+        The captured output is made available via ``capfd.readouterr()`` method
+        calls, which return a ``(out, err)`` namedtuple.
+        ``out`` and ``err`` will be ``byte`` objects.
     doctest_namespace
         Fixture that returns a :py:class:`dict` that will be injected into the namespace of doctests.
     pytestconfig
@@ -55,7 +59,7 @@ For information about fixtures, see :ref:`fixtures`. To see a complete list of a
         Example::
 
             def test_foo(pytestconfig):
-                if pytestconfig.getoption("verbose"):
+                if pytestconfig.getoption("verbose") > 0:
                     ...
     record_property
         Add an extra properties the calling test.

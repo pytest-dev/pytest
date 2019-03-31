@@ -147,7 +147,7 @@ def test_pytest_plugins_in_non_top_level_conftest_unsupported_pyargs(
     if use_pyargs:
         assert msg not in res.stdout.str()
     else:
-        res.stdout.fnmatch_lines("*{msg}*".format(msg=msg))
+        res.stdout.fnmatch_lines(["*{msg}*".format(msg=msg)])
 
 
 def test_pytest_plugins_in_non_top_level_conftest_unsupported_no_top_level_conftest(

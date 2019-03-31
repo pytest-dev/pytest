@@ -818,14 +818,11 @@ def test_invalid_xml_escape():
 
 def test_logxml_path_expansion(tmpdir, monkeypatch):
     home_tilde = py.path.local(os.path.expanduser("~")).join("test.xml")
-
     xml_tilde = LogXML("~%stest.xml" % tmpdir.sep, None)
     assert xml_tilde.logfile == home_tilde
 
-    # this is here for when $HOME is not set correct
     monkeypatch.setenv("HOME", str(tmpdir))
     home_var = os.path.normpath(os.path.expandvars("$HOME/test.xml"))
-
     xml_var = LogXML("$HOME%stest.xml" % tmpdir.sep, None)
     assert xml_var.logfile == home_var
 

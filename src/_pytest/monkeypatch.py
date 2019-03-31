@@ -262,9 +262,14 @@ class MonkeyPatch(object):
 
     def syspath_prepend(self, path):
         """ Prepend ``path`` to ``sys.path`` list of import locations. """
+        from pkg_resources import fixup_namespace_packages
+
         if self._savesyspath is None:
             self._savesyspath = sys.path[:]
         sys.path.insert(0, str(path))
+
+        # https://github.com/pypa/setuptools/blob/d8b901bc/docs/pkg_resources.txt#L162-L171
+        fixup_namespace_packages(str(path))
 
     def chdir(self, path):
         """ Change the current working directory to the specified path.

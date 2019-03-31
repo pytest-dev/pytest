@@ -43,6 +43,7 @@ from _pytest.mark import MARK_GEN
 from _pytest.mark.structures import get_unpacked_marks
 from _pytest.mark.structures import normalize_mark_list
 from _pytest.outcomes import fail
+from _pytest.outcomes import skip
 from _pytest.pathlib import parts
 from _pytest.warning_types import PytestWarning
 
@@ -101,6 +102,13 @@ def pytest_addoption(parser):
         default=["test"],
         help="prefixes or glob names for Python test function and method discovery",
     )
+    parser.addini(
+        "disable_test_id_escaping_and_forfeit_all_rights_to_community_support",
+        type="bool",
+        default=False,
+        help="disable string escape non-ascii characters, might cause unwanted "
+        "side effects(use at your own risk)",
+    )
 
     group.addoption(
         "--import-mode",
@@ -156,14 +164,18 @@ def pytest_configure(config):
 @hookimpl(trylast=True)
 def pytest_pyfunc_call(pyfuncitem):
     testfunction = pyfuncitem.obj
-    if pyfuncitem._isyieldedfunction():
-        testfunction(*pyfuncitem._args)
-    else:
-        funcargs = pyfuncitem.funcargs
-        testargs = {}
-        for arg in pyfuncitem._fixtureinfo.argnames:
-            testargs[arg] = funcargs[arg]
-        testfunction(**testargs)
+    iscoroutinefunction = getattr(inspect, "iscoroutinefunction", None)
+    if iscoroutinefunction is not None and iscoroutinefunction(testfunction):
+        msg = "Coroutine functions are not natively supported and have been skipped.\n"
+        msg += "You need to install a suitable plugin for your async framework, for example:\n"
+        msg += "  - pytest-asyncio\n"
+        msg += "  - pytest-trio\n"
+        msg += "  - pytest-tornasync"
+        warnings.warn(PytestWarning(msg.format(pyfuncitem.nodeid)))
+        skip(msg="coroutine function and no async plugin installed (see warnings)")
+    funcargs = pyfuncitem.funcargs
+    testargs = {arg: funcargs[arg] for arg in pyfuncitem._fixtureinfo.argnames}
+    testfunction(**testargs)
     return True
 
 
@@ -1151,6 +1163,16 @@ def _find_parametrized_scope(argnames, arg2fixturedefs, indirect):
     return "function"
 
 
+def _ascii_escaped_by_config(val, config):
+    if config is None:
+        escape_option = False
+    else:
+        escape_option = config.getini(
+            "disable_test_id_escaping_and_forfeit_all_rights_to_community_support"
+        )
+    return val if escape_option else ascii_escaped(val)
+
+
 def _idval(val, argname, idx, idfn, item, config):
     if idfn:
         try:
@@ -1172,7 +1194,7 @@ def _idval(val, argname, idx, idfn, item, config):
             return hook_id
 
     if isinstance(val, STRING_TYPES):
-        return ascii_escaped(val)
+        return _ascii_escaped_by_config(val, config)
     elif isinstance(val, (float, int, bool, NoneType)):
         return str(val)
     elif isinstance(val, REGEX_TYPE):
@@ -1404,7 +1426,7 @@ class Function(FunctionMixin, nodes.Item, fixtures.FuncargnamesCompatAttr):
 
         if fixtureinfo is None:
             fixtureinfo = self.session._fixturemanager.getfixtureinfo(
-                self, self.obj, self.cls, funcargs=not self._isyieldedfunction()
+                self, self.obj, self.cls, funcargs=True
             )
         self._fixtureinfo = fixtureinfo
         self.fixturenames = fixtureinfo.names_closure
@@ -1418,16 +1440,6 @@ class Function(FunctionMixin, nodes.Item, fixtures.FuncargnamesCompatAttr):
 
     def _initrequest(self):
         self.funcargs = {}
-        if self._isyieldedfunction():
-            assert not hasattr(
-                self, "callspec"
-            ), "yielded functions (deprecated) cannot have funcargs"
-        else:
-            if hasattr(self, "callspec"):
-                callspec = self.callspec
-                assert not callspec.funcargs
-                if hasattr(callspec, "param"):
-                    self.param = callspec.param
         self._request = fixtures.FixtureRequest(self)
 
     @property
@@ -1446,9 +1458,6 @@ class Function(FunctionMixin, nodes.Item, fixtures.FuncargnamesCompatAttr):
     def _pyfuncitem(self):
         "(compatonly) for code expecting pytest-2.2 style request objects"
         return self
-
-    def _isyieldedfunction(self):
-        return getattr(self, "_args", None) is not None
 
     def runtest(self):
         """ execute the underlying test function. """

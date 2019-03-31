@@ -91,6 +91,13 @@ class CaptureManager(object):
         self._global_capturing = None
         self._current_item = None
 
+    def __repr__(self):
+        return "<CaptureManager _method=%r _global_capturing=%r _current_item=%r>" % (
+            self._method,
+            self._global_capturing,
+            self._current_item,
+        )
+
     def _getcapture(self, method):
         if method == "fd":
             return MultiCapture(out=True, err=True, Capture=FDCapture)
@@ -98,8 +105,17 @@ class CaptureManager(object):
             return MultiCapture(out=True, err=True, Capture=SysCapture)
         elif method == "no":
             return MultiCapture(out=False, err=False, in_=False)
-        else:
-            raise ValueError("unknown capturing method: %r" % method)
+        raise ValueError("unknown capturing method: %r" % method)  # pragma: no cover
+
+    def is_capturing(self):
+        if self.is_globally_capturing():
+            return "global"
+        capture_fixture = getattr(self._current_item, "_capture_fixture", None)
+        if capture_fixture is not None:
+            return (
+                "fixture %s" % self._current_item._capture_fixture.request.fixturename
+            )
+        return False
 
     # Global capturing control
 
@@ -127,6 +143,15 @@ class CaptureManager(object):
         cap = getattr(self, "_global_capturing", None)
         if cap is not None:
             cap.suspend_capturing(in_=in_)
+
+    def suspend(self, in_=False):
+        # Need to undo local capsys-et-al if it exists before disabling global capture.
+        self.suspend_fixture(self._current_item)
+        self.suspend_global_capture(in_)
+
+    def resume(self):
+        self.resume_global_capture()
+        self.resume_fixture(self._current_item)
 
     def read_global_capture(self):
         return self._global_capturing.readouterr()
@@ -161,15 +186,12 @@ class CaptureManager(object):
 
     @contextlib.contextmanager
     def global_and_fixture_disabled(self):
-        """Context manager to temporarily disables global and current fixture capturing."""
-        # Need to undo local capsys-et-al if exists before disabling global capture
-        self.suspend_fixture(self._current_item)
-        self.suspend_global_capture(in_=False)
+        """Context manager to temporarily disable global and current fixture capturing."""
+        self.suspend()
         try:
             yield
         finally:
-            self.resume_global_capture()
-            self.resume_fixture(self._current_item)
+            self.resume()
 
     @contextlib.contextmanager
     def item_capture(self, when, item):
@@ -247,10 +269,11 @@ def _ensure_only_one_capture_fixture(request, name):
 
 @pytest.fixture
 def capsys(request):
-    """Enable capturing of writes to ``sys.stdout`` and ``sys.stderr`` and make
-    captured output available via ``capsys.readouterr()`` method calls
-    which return a ``(out, err)`` namedtuple.  ``out`` and ``err`` will be ``text``
-    objects.
+    """Enable text capturing of writes to ``sys.stdout`` and ``sys.stderr``.
+
+    The captured output is made available via ``capsys.readouterr()`` method
+    calls, which return a ``(out, err)`` namedtuple.
+    ``out`` and ``err`` will be ``text`` objects.
     """
     _ensure_only_one_capture_fixture(request, "capsys")
     with _install_capture_fixture_on_item(request, SysCapture) as fixture:
@@ -259,26 +282,28 @@ def capsys(request):
 
 @pytest.fixture
 def capsysbinary(request):
-    """Enable capturing of writes to ``sys.stdout`` and ``sys.stderr`` and make
-    captured output available via ``capsys.readouterr()`` method calls
-    which return a ``(out, err)`` tuple.  ``out`` and ``err`` will be ``bytes``
-    objects.
+    """Enable bytes capturing of writes to ``sys.stdout`` and ``sys.stderr``.
+
+    The captured output is made available via ``capsysbinary.readouterr()``
+    method calls, which return a ``(out, err)`` namedtuple.
+    ``out`` and ``err`` will be ``bytes`` objects.
     """
     _ensure_only_one_capture_fixture(request, "capsysbinary")
     # Currently, the implementation uses the python3 specific `.buffer`
     # property of CaptureIO.
     if sys.version_info < (3,):
-        raise request.raiseerror("capsysbinary is only supported on python 3")
+        raise request.raiseerror("capsysbinary is only supported on Python 3")
     with _install_capture_fixture_on_item(request, SysCaptureBinary) as fixture:
         yield fixture
 
 
 @pytest.fixture
 def capfd(request):
-    """Enable capturing of writes to file descriptors ``1`` and ``2`` and make
-    captured output available via ``capfd.readouterr()`` method calls
-    which return a ``(out, err)`` tuple.  ``out`` and ``err`` will be ``text``
-    objects.
+    """Enable text capturing of writes to file descriptors ``1`` and ``2``.
+
+    The captured output is made available via ``capfd.readouterr()`` method
+    calls, which return a ``(out, err)`` namedtuple.
+    ``out`` and ``err`` will be ``text`` objects.
     """
     _ensure_only_one_capture_fixture(request, "capfd")
     if not hasattr(os, "dup"):
@@ -291,10 +316,11 @@ def capfd(request):
 
 @pytest.fixture
 def capfdbinary(request):
-    """Enable capturing of write to file descriptors 1 and 2 and make
-    captured output available via ``capfdbinary.readouterr`` method calls
-    which return a ``(out, err)`` tuple.  ``out`` and ``err`` will be
-    ``bytes`` objects.
+    """Enable bytes capturing of writes to file descriptors ``1`` and ``2``.
+
+    The captured output is made available via ``capfd.readouterr()`` method
+    calls, which return a ``(out, err)`` namedtuple.
+    ``out`` and ``err`` will be ``byte`` objects.
     """
     _ensure_only_one_capture_fixture(request, "capfdbinary")
     if not hasattr(os, "dup"):
@@ -316,9 +342,9 @@ def _install_capture_fixture_on_item(request, capture_class):
     """
     request.node._capture_fixture = fixture = CaptureFixture(capture_class, request)
     capmanager = request.config.pluginmanager.getplugin("capturemanager")
-    # need to active this fixture right away in case it is being used by another fixture (setup phase)
-    # if this fixture is being used only by a test function (call phase), then we wouldn't need this
-    # activation, but it doesn't hurt
+    # Need to active this fixture right away in case it is being used by another fixture (setup phase).
+    # If this fixture is being used only by a test function (call phase), then we wouldn't need this
+    # activation, but it doesn't hurt.
     capmanager.activate_fixture(request.node)
     yield fixture
     fixture.close()
@@ -357,7 +383,7 @@ class CaptureFixture(object):
     def readouterr(self):
         """Read and return the captured output so far, resetting the internal buffer.
 
-        :return: captured content as a namedtuple with  ``out`` and ``err`` string attributes
+        :return: captured content as a namedtuple with ``out`` and ``err`` string attributes
         """
         captured_out, captured_err = self._captured_out, self._captured_err
         if self._capture is not None:
@@ -445,6 +471,9 @@ class MultiCapture(object):
             self.out = Capture(1)
         if err:
             self.err = Capture(2)
+
+    def __repr__(self):
+        return "<MultiCapture out=%r err=%r in_=%r>" % (self.out, self.err, self.in_)
 
     def start_capturing(self):
         if self.in_:
@@ -593,7 +622,7 @@ class FDCapture(FDCaptureBinary):
     EMPTY_BUFFER = str()
 
     def snap(self):
-        res = FDCaptureBinary.snap(self)
+        res = super(FDCapture, self).snap()
         enc = getattr(self.tmpfile, "encoding", None)
         if enc and isinstance(res, bytes):
             res = six.text_type(res, enc, "replace")
@@ -696,13 +725,11 @@ def _colorama_workaround():
     first import of colorama while I/O capture is active, colorama will
     fail in various ways.
     """
-
-    if not sys.platform.startswith("win32"):
-        return
-    try:
-        import colorama  # noqa
-    except ImportError:
-        pass
+    if sys.platform.startswith("win32"):
+        try:
+            import colorama  # noqa: F401
+        except ImportError:
+            pass
 
 
 def _readline_workaround():
@@ -723,13 +750,11 @@ def _readline_workaround():
 
     See https://github.com/pytest-dev/pytest/pull/1281
     """
-
-    if not sys.platform.startswith("win32"):
-        return
-    try:
-        import readline  # noqa
-    except ImportError:
-        pass
+    if sys.platform.startswith("win32"):
+        try:
+            import readline  # noqa: F401
+        except ImportError:
+            pass
 
 
 def _py36_windowsconsoleio_workaround(stream):

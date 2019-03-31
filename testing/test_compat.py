@@ -18,10 +18,10 @@ from _pytest.outcomes import OutcomeException
 
 def test_is_generator():
     def zap():
-        yield
+        yield  # pragma: no cover
 
     def foo():
-        pass
+        pass  # pragma: no cover
 
     assert is_generator(zap)
     assert not is_generator(foo)
@@ -37,15 +37,20 @@ def test_real_func_loop_limit():
 
         def __getattr__(self, attr):
             if not self.left:
-                raise RuntimeError("its over")
+                raise RuntimeError("it's over")  # pragma: no cover
             self.left -= 1
             return self
 
     evil = Evil()
 
-    with pytest.raises(ValueError):
-        res = get_real_func(evil)
-        print(res)
+    with pytest.raises(
+        ValueError,
+        match=(
+            "could not find real function of <Evil left=800>\n"
+            "stopped at <Evil left=800>"
+        ),
+    ):
+        get_real_func(evil)
 
 
 def test_get_real_func():
@@ -54,14 +59,14 @@ def test_get_real_func():
     def decorator(f):
         @wraps(f)
         def inner():
-            pass
+            pass  # pragma: no cover
 
         if six.PY2:
             inner.__wrapped__ = f
         return inner
 
     def func():
-        pass
+        pass  # pragma: no cover
 
     wrapped_func = decorator(decorator(func))
     assert get_real_func(wrapped_func) is func

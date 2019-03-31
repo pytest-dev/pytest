@@ -6,8 +6,13 @@ stages:
   if: repo = pytest-dev/pytest AND tag IS NOT present
 - name: deploy
   if: repo = pytest-dev/pytest AND tag IS present
-python:
-  - '3.7'
+python: '3.7'
+cache: false
+
+env:
+  global:
+    - PYTEST_ADDOPTS=-vv
+
 install:
   - python -m pip install --upgrade --pre tox
 
@@ -57,7 +62,8 @@ jobs:
     # - pytester's LsofFdLeakChecker
     # - TestArgComplete (linux only)
     # - numpy
-    - env: TOXENV=py37-lsof-numpy-xdist PYTEST_COVERAGE=1
+    # Empty PYTEST_ADDOPTS to run this non-verbose.
+    - env: TOXENV=py37-lsof-numpy-xdist PYTEST_COVERAGE=1 PYTEST_ADDOPTS=
 
     # Specialized factors for py27.
     - env: TOXENV=py27-nobyte-numpy-xdist
@@ -147,4 +153,3 @@ notifications:
     skip_join: true
   email:
     - pytest-commit@python.org
-cache: false

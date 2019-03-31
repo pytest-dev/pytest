@@ -58,7 +58,7 @@ them in turn:
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: $REGENDOC_TMPDIR, inifile:
+    rootdir: $REGENDOC_TMPDIR
     collected 3 items
 
     test_expectation.py ..F                                              [100%]
@@ -80,6 +80,21 @@ them in turn:
 
     test_expectation.py:8: AssertionError
     ==================== 1 failed, 2 passed in 0.12 seconds ====================
+
+.. note::
+
+    pytest by default escapes any non-ascii characters used in unicode strings
+    for the parametrization because it has several downsides.
+    If however you would like to use unicode strings in parametrization and see them in the terminal as is (non-escaped), use this option in your ``pytest.ini``:
+
+    .. code-block:: ini
+
+        [pytest]
+        disable_test_id_escaping_and_forfeit_all_rights_to_community_support = True
+
+    Keep in mind however that this might cause unwanted side effects and
+    even bugs depending on the OS used and plugins currently installed, so use it at your own risk.
+
 
 As designed in this example, only one pair of input/output values fails
 the simple test function.  And as usual with test function arguments,
@@ -110,7 +125,7 @@ Let's run this:
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: $REGENDOC_TMPDIR, inifile:
+    rootdir: $REGENDOC_TMPDIR
     collected 3 items
 
     test_expectation.py ..x                                              [100%]

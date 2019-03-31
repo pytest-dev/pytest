@@ -2,12 +2,14 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import argparse
 import os
 import platform
 import sys
 
 import _pytest._code
 import pytest
+from _pytest.debugging import _validate_usepdb_cls
 
 try:
     breakpoint
@@ -468,9 +470,6 @@ class TestPDB(object):
                 '''
         """
         )
-        # Prevent ~/.pdbrc etc to output anything.
-        monkeypatch.setenv("HOME", str(testdir))
-
         child = testdir.spawn_pytest("--doctest-modules --pdb %s" % p1)
         child.expect("Pdb")
 
@@ -520,7 +519,10 @@ class TestPDB(object):
         assert "1 failed" in rest
         self.flush(child)
 
-    def test_pdb_interaction_continue_recursive(self, testdir):
+    def test_pdb_with_injected_do_debug(self, testdir):
+        """Simulates pdbpp, which injects Pdb into do_debug, and uses
+        self.__class__ in do_continue.
+        """
         p1 = testdir.makepyfile(
             mytest="""
             import pdb
@@ -528,8 +530,6 @@ class TestPDB(object):
 
             count_continue = 0
 
-            # Simulates pdbpp, which injects Pdb into do_debug, and uses
-            # self.__class__ in do_continue.
             class CustomPdb(pdb.Pdb, object):
                 def do_debug(self, arg):
                     import sys
@@ -577,7 +577,16 @@ class TestPDB(object):
         child.sendline("c")
         child.expect("LEAVING RECURSIVE DEBUGGER")
         assert b"PDB continue" not in child.before
-        assert b"print_from_foo" in child.before
+        # No extra newline.
+        assert child.before.endswith(b"c\r\nprint_from_foo\r\n")
+
+        # set_debug should not raise outcomes.Exit, if used recrursively.
+        child.sendline("debug 42")
+        child.sendline("q")
+        child.expect("LEAVING RECURSIVE DEBUGGER")
+        assert b"ENTERING RECURSIVE DEBUGGER" in child.before
+        assert b"Quitting debugger" not in child.before
+
         child.sendline("c")
         child.expect(r"PDB continue \(IO-capturing resumed\)")
         rest = child.read().decode("utf8")
@@ -603,6 +612,98 @@ class TestPDB(object):
         child.expect(r">>> PDB continue >>>")
         child.expect("1 passed")
         self.flush(child)
+
+    @pytest.mark.parametrize("capture_arg", ("", "-s", "-p no:capture"))
+    def test_pdb_continue_with_recursive_debug(self, capture_arg, testdir):
+        """Full coverage for do_debug without capturing.
+
+        This is very similar to test_pdb_interaction_continue_recursive in general,
+        but mocks out ``pdb.set_trace`` for providing more coverage.
+        """
+        p1 = testdir.makepyfile(
+            """
+            try:
+                input = raw_input
+            except NameError:
+                pass
+
+            def set_trace():
+                __import__('pdb').set_trace()
+
+            def test_1(monkeypatch):
+                import _pytest.debugging
+
+                class pytestPDBTest(_pytest.debugging.pytestPDB):
+                    @classmethod
+                    def set_trace(cls, *args, **kwargs):
+                        # Init _PdbWrapper to handle capturing.
+                        _pdb = cls._init_pdb(*args, **kwargs)
+
+                        # Mock out pdb.Pdb.do_continue.
+                        import pdb
+                        pdb.Pdb.do_continue = lambda self, arg: None
+
+                        print("=== SET_TRACE ===")
+                        assert input() == "debug set_trace()"
+
+                        # Simulate _PdbWrapper.do_debug
+                        cls._recursive_debug += 1
+                        print("ENTERING RECURSIVE DEBUGGER")
+                        print("=== SET_TRACE_2 ===")
+
+                        assert input() == "c"
+                        _pdb.do_continue("")
+                        print("=== SET_TRACE_3 ===")
+
+                        # Simulate _PdbWrapper.do_debug
+                        print("LEAVING RECURSIVE DEBUGGER")
+                        cls._recursive_debug -= 1
+
+                        print("=== SET_TRACE_4 ===")
+                        assert input() == "c"
+                        _pdb.do_continue("")
+
+                    def do_continue(self, arg):
+                        print("=== do_continue")
+                        # _PdbWrapper.do_continue("")
+
+                monkeypatch.setattr(_pytest.debugging, "pytestPDB", pytestPDBTest)
+
+                import pdb
+                monkeypatch.setattr(pdb, "set_trace", pytestPDBTest.set_trace)
+
+                set_trace()
+        """
+        )
+        child = testdir.spawn_pytest("%s %s" % (p1, capture_arg))
+        child.expect("=== SET_TRACE ===")
+        before = child.before.decode("utf8")
+        if not capture_arg:
+            assert ">>> PDB set_trace (IO-capturing turned off) >>>" in before
+        else:
+            assert ">>> PDB set_trace >>>" in before
+        child.sendline("debug set_trace()")
+        child.expect("=== SET_TRACE_2 ===")
+        before = child.before.decode("utf8")
+        assert "\r\nENTERING RECURSIVE DEBUGGER\r\n" in before
+        child.sendline("c")
+        child.expect("=== SET_TRACE_3 ===")
+
+        # No continue message with recursive debugging.
+        before = child.before.decode("utf8")
+        assert ">>> PDB continue " not in before
+
+        child.sendline("c")
+        child.expect("=== SET_TRACE_4 ===")
+        before = child.before.decode("utf8")
+        assert "\r\nLEAVING RECURSIVE DEBUGGER\r\n" in before
+        child.sendline("c")
+        rest = child.read().decode("utf8")
+        if not capture_arg:
+            assert "> PDB continue (IO-capturing resumed) >" in rest
+        else:
+            assert "> PDB continue >" in rest
+        assert "1 passed in" in rest
 
     def test_pdb_used_outside_test(self, testdir):
         p1 = testdir.makepyfile(
@@ -692,6 +793,23 @@ class TestPDB(object):
         result = testdir.runpytest_inprocess("--pdb", "--pdbcls=_pytest:_CustomPdb", p1)
         result.stdout.fnmatch_lines(["*NameError*xxx*", "*1 error*"])
         assert custom_pdb_calls == ["init", "reset", "interaction"]
+
+    def test_pdb_custom_cls_invalid(self, testdir):
+        result = testdir.runpytest_inprocess("--pdbcls=invalid")
+        result.stderr.fnmatch_lines(
+            [
+                "*: error: argument --pdbcls: 'invalid' is not in the format 'modname:classname'"
+            ]
+        )
+
+    def test_pdb_validate_usepdb_cls(self, testdir):
+        assert _validate_usepdb_cls("os.path:dirname.__name__") == "dirname"
+
+        with pytest.raises(
+            argparse.ArgumentTypeError,
+            match=r"^could not get pdb class for 'pdb:DoesNotExist': .*'DoesNotExist'",
+        ):
+            _validate_usepdb_cls("pdb:DoesNotExist")
 
     def test_pdb_custom_cls_without_pdb(self, testdir, custom_pdb_calls):
         p1 = testdir.makepyfile("""xxx """)
@@ -954,3 +1072,52 @@ def test_quit_with_swallowed_SystemExit(testdir):
     rest = child.read().decode("utf8")
     assert "no tests ran" in rest
     TestPDB.flush(child)
+
+
+@pytest.mark.parametrize("fixture", ("capfd", "capsys"))
+def test_pdb_suspends_fixture_capturing(testdir, fixture):
+    """Using "-s" with pytest should suspend/resume fixture capturing."""
+    p1 = testdir.makepyfile(
+        """
+        def test_inner({fixture}):
+            import sys
+
+            print("out_inner_before")
+            sys.stderr.write("err_inner_before\\n")
+
+            __import__("pdb").set_trace()
+
+            print("out_inner_after")
+            sys.stderr.write("err_inner_after\\n")
+
+            out, err = {fixture}.readouterr()
+            assert out =="out_inner_before\\nout_inner_after\\n"
+            assert err =="err_inner_before\\nerr_inner_after\\n"
+        """.format(
+            fixture=fixture
+        )
+    )
+
+    child = testdir.spawn_pytest(str(p1) + " -s")
+
+    child.expect("Pdb")
+    before = child.before.decode("utf8")
+    assert (
+        "> PDB set_trace (IO-capturing turned off for fixture %s) >" % (fixture)
+        in before
+    )
+
+    # Test that capturing is really suspended.
+    child.sendline("p 40 + 2")
+    child.expect("Pdb")
+    assert "\r\n42\r\n" in child.before.decode("utf8")
+
+    child.sendline("c")
+    rest = child.read().decode("utf8")
+    assert "out_inner" not in rest
+    assert "err_inner" not in rest
+
+    TestPDB.flush(child)
+    assert child.exitstatus == 0
+    assert "= 1 passed in " in rest
+    assert "> PDB continue (IO-capturing resumed for fixture %s) >" % (fixture) in rest

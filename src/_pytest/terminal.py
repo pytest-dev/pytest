@@ -26,6 +26,8 @@ from _pytest.main import EXIT_OK
 from _pytest.main import EXIT_TESTSFAILED
 from _pytest.main import EXIT_USAGEERROR
 
+REPORT_COLLECTING_RESOLUTION = 0.5
+
 
 class MoreQuietAction(argparse.Action):
     """
@@ -197,6 +199,7 @@ class WarningReport(object):
     message = attr.ib()
     nodeid = attr.ib(default=None)
     fslocation = attr.ib(default=None)
+    count_towards_summary = True
 
     def get_location(self, config):
         """
@@ -245,10 +248,10 @@ class TerminalReporter(object):
     def _determine_show_progress_info(self):
         """Return True if we should display progress information based on the current config"""
         # do not show progress if we are not capturing output (#3038)
-        if self.config.getoption("capture") == "no":
+        if self.config.getoption("capture", "no") == "no":
             return False
         # do not show progress if we are showing fixture setup/teardown
-        if self.config.getoption("setupshow"):
+        if self.config.getoption("setupshow", False):
             return False
         return self.config.getini("console_output_style") in ("progress", "count")
 
@@ -383,6 +386,7 @@ class TerminalReporter(object):
             self.write_fspath_result(fsid, "")
 
     def pytest_runtest_logreport(self, report):
+        self._tests_ran = True
         rep = report
         res = self.config.hook.pytest_report_teststatus(report=rep, config=self.config)
         category, letter, word = res
@@ -391,7 +395,6 @@ class TerminalReporter(object):
         else:
             markup = None
         self.stats.setdefault(category, []).append(rep)
-        self._tests_ran = True
         if not letter and not word:
             # probably passed setup/teardown
             return
@@ -455,8 +458,6 @@ class TerminalReporter(object):
                     self._tw.write(msg + "\n", cyan=True)
 
     def _get_progress_information_message(self):
-        if self.config.getoption("capture") == "no":
-            return ""
         collected = self._session.testscollected
         if self.config.getini("console_output_style") == "count":
             if collected:
@@ -513,7 +514,7 @@ class TerminalReporter(object):
             t = time.time()
             if (
                 self._collect_report_last_write is not None
-                and self._collect_report_last_write > t - 0.5
+                and self._collect_report_last_write > t - REPORT_COLLECTING_RESOLUTION
             ):
                 return
             self._collect_report_last_write = t
@@ -583,16 +584,21 @@ class TerminalReporter(object):
             self.write_line(line)
 
     def pytest_report_header(self, config):
-        inifile = ""
+        line = "rootdir: %s" % config.rootdir
+
         if config.inifile:
-            inifile = " " + config.rootdir.bestrelpath(config.inifile)
-        lines = ["rootdir: %s, inifile:%s" % (config.rootdir, inifile)]
+            line += ", inifile: " + config.rootdir.bestrelpath(config.inifile)
+
+        testpaths = config.getini("testpaths")
+        if testpaths and config.args == testpaths:
+            rel_paths = [config.rootdir.bestrelpath(x) for x in testpaths]
+            line += ", testpaths: {}".format(", ".join(rel_paths))
+        result = [line]
 
         plugininfo = config.pluginmanager.list_plugin_distinfo()
         if plugininfo:
-
-            lines.append("plugins: %s" % ", ".join(_plugin_nameversions(plugininfo)))
-        return lines
+            result.append("plugins: %s" % ", ".join(_plugin_nameversions(plugininfo)))
+        return result
 
     def pytest_collection_finish(self, session):
         if self.config.getoption("collectonly"):
@@ -719,9 +725,8 @@ class TerminalReporter(object):
         return res + " "
 
     def _getfailureheadline(self, rep):
-        if hasattr(rep, "location"):
-            fspath, lineno, domain = rep.location
-            return domain
+        if rep.head_line:
+            return rep.head_line
         else:
             return "test session"  # XXX?
 
@@ -869,18 +874,23 @@ class TerminalReporter(object):
 
 
 def build_summary_stats_line(stats):
-    keys = ("failed passed skipped deselected xfailed xpassed warnings error").split()
-    unknown_key_seen = False
-    for key in stats.keys():
-        if key not in keys:
-            if key:  # setup/teardown reports have an empty key, ignore them
-                keys.append(key)
-                unknown_key_seen = True
+    known_types = (
+        "failed passed skipped deselected xfailed xpassed warnings error".split()
+    )
+    unknown_type_seen = False
+    for found_type in stats:
+        if found_type not in known_types:
+            if found_type:  # setup/teardown reports have an empty key, ignore them
+                known_types.append(found_type)
+                unknown_type_seen = True
     parts = []
-    for key in keys:
-        val = stats.get(key, None)
-        if val:
-            parts.append("%d %s" % (len(val), key))
+    for key in known_types:
+        reports = stats.get(key, None)
+        if reports:
+            count = sum(
+                1 for rep in reports if getattr(rep, "count_towards_summary", True)
+            )
+            parts.append("%d %s" % (count, key))
 
     if parts:
         line = ", ".join(parts)
@@ -889,14 +899,14 @@ def build_summary_stats_line(stats):
 
     if "failed" in stats or "error" in stats:
         color = "red"
-    elif "warnings" in stats or unknown_key_seen:
+    elif "warnings" in stats or unknown_type_seen:
         color = "yellow"
     elif "passed" in stats:
         color = "green"
     else:
         color = "yellow"
 
-    return (line, color)
+    return line, color
 
 
 def _plugin_nameversions(plugininfo):

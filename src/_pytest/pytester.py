@@ -4,7 +4,6 @@ from __future__ import division
 from __future__ import print_function
 
 import codecs
-import distutils.spawn
 import gc
 import os
 import platform
@@ -26,9 +25,11 @@ from _pytest.assertion.rewrite import AssertionRewritingHook
 from _pytest.capture import MultiCapture
 from _pytest.capture import SysCapture
 from _pytest.compat import safe_str
+from _pytest.compat import Sequence
 from _pytest.main import EXIT_INTERRUPTED
 from _pytest.main import EXIT_OK
 from _pytest.main import Session
+from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pathlib import Path
 
 IGNORE_PAM = [  # filenames added when obtaining details about the current user
@@ -149,47 +150,6 @@ winpymap = {
     "python3.5": r"C:\Python35\python.exe",
     "python3.6": r"C:\Python36\python.exe",
 }
-
-
-def getexecutable(name, cache={}):
-    try:
-        return cache[name]
-    except KeyError:
-        executable = distutils.spawn.find_executable(name)
-        if executable:
-            import subprocess
-
-            popen = subprocess.Popen(
-                [str(executable), "--version"],
-                universal_newlines=True,
-                stderr=subprocess.PIPE,
-            )
-            out, err = popen.communicate()
-            if name == "jython":
-                if not err or "2.5" not in err:
-                    executable = None
-                if "2.5.2" in err:
-                    executable = None  # http://bugs.jython.org/issue1790
-            elif popen.returncode != 0:
-                # handle pyenv's 127
-                executable = None
-        cache[name] = executable
-        return executable
-
-
-@pytest.fixture(params=["python2.7", "python3.4", "pypy", "pypy3"])
-def anypython(request):
-    name = request.param
-    executable = getexecutable(name)
-    if executable is None:
-        if sys.platform == "win32":
-            executable = winpymap.get(name, None)
-            if executable:
-                executable = py.path.local(executable)
-                if executable.check():
-                    return executable
-        pytest.skip("no suitable %s found" % (name,))
-    return executable
 
 
 # used at least by pytest-xdist plugin
@@ -518,6 +478,7 @@ class Testdir(object):
         self.test_tmproot = tmpdir_factory.mktemp("tmp-" + name, numbered=True)
         os.environ["PYTEST_DEBUG_TEMPROOT"] = str(self.test_tmproot)
         os.environ.pop("TOX_ENV_DIR", None)  # Ensure that it is not used for caching.
+        os.environ.pop("PYTEST_ADDOPTS", None)  # Do not use outer options.
         self.plugins = []
         self._cwd_snapshot = CwdSnapshot()
         self._sys_path_snapshot = SysPathsSnapshot()
@@ -641,11 +602,16 @@ class Testdir(object):
 
         This is undone automatically when this object dies at the end of each
         test.
-
         """
+        from pkg_resources import fixup_namespace_packages
+
         if path is None:
             path = self.tmpdir
-        sys.path.insert(0, str(path))
+
+        dirname = str(path)
+        sys.path.insert(0, dirname)
+        fixup_namespace_packages(dirname)
+
         # a call to syspathinsert() usually means that the caller wants to
         # import some dynamically created files, thus with python3 we
         # invalidate its import caches
@@ -654,12 +620,10 @@ class Testdir(object):
     def _possibly_invalidate_import_caches(self):
         # invalidate caches if we can (py33 and above)
         try:
-            import importlib
+            from importlib import invalidate_caches
         except ImportError:
-            pass
-        else:
-            if hasattr(importlib, "invalidate_caches"):
-                importlib.invalidate_caches()
+            return
+        invalidate_caches()
 
     def mkdir(self, name):
         """Create a new (sub)directory."""
@@ -835,6 +799,12 @@ class Testdir(object):
         """
         finalizers = []
         try:
+            # Do not load user config.
+            monkeypatch = MonkeyPatch()
+            monkeypatch.setenv("HOME", str(self.tmpdir))
+            monkeypatch.setenv("USERPROFILE", str(self.tmpdir))
+            finalizers.append(monkeypatch.undo)
+
             # When running pytest inline any plugins active in the main test
             # process are already imported.  So this disables the warning which
             # will trigger to say they can no longer be rewritten, which is
@@ -1065,6 +1035,9 @@ class Testdir(object):
         env["PYTHONPATH"] = os.pathsep.join(
             filter(None, [os.getcwd(), env.get("PYTHONPATH", "")])
         )
+        # Do not load user config.
+        env["HOME"] = str(self.tmpdir)
+        env["USERPROFILE"] = env["HOME"]
         kw["env"] = env
 
         popen = subprocess.Popen(
@@ -1375,6 +1348,7 @@ class LineMatcher(object):
             will be logged to stdout when a match occurs
 
         """
+        assert isinstance(lines2, Sequence)
         lines2 = self._getlines(lines2)
         lines1 = self.lines[:]
         nextline = None

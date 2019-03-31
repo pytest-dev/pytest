@@ -103,8 +103,9 @@ def catch_warnings_for_item(config, ihook, when, item):
 
 
 def warning_record_to_str(warning_message):
-    """Convert a warnings.WarningMessage to a string, taking in account a lot of unicode shenaningans in Python 2.
+    """Convert a warnings.WarningMessage to a string.
 
+    This takes lot of unicode shenaningans into account for Python 2.
     When Python 2 support is dropped this function can be greatly simplified.
     """
     warn_msg = warning_message.message

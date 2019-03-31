@@ -11,6 +11,7 @@ import py
 
 import pytest
 from _pytest.main import _in_venv
+from _pytest.main import EXIT_INTERRUPTED
 from _pytest.main import EXIT_NOTESTSCOLLECTED
 from _pytest.main import Session
 
@@ -350,10 +351,10 @@ class TestCustomConftests(object):
         p = testdir.makepyfile("def test_hello(): pass")
         result = testdir.runpytest(p)
         assert result.ret == 0
-        result.stdout.fnmatch_lines("*1 passed*")
+        result.stdout.fnmatch_lines(["*1 passed*"])
         result = testdir.runpytest()
         assert result.ret == EXIT_NOTESTSCOLLECTED
-        result.stdout.fnmatch_lines("*collected 0 items*")
+        result.stdout.fnmatch_lines(["*collected 0 items*"])
 
     def test_collectignore_exclude_on_option(self, testdir):
         testdir.makeconftest(
@@ -390,10 +391,10 @@ class TestCustomConftests(object):
         testdir.makepyfile(test_welt="def test_hallo(): pass")
         result = testdir.runpytest()
         assert result.ret == EXIT_NOTESTSCOLLECTED
-        result.stdout.fnmatch_lines("*collected 0 items*")
+        result.stdout.fnmatch_lines(["*collected 0 items*"])
         result = testdir.runpytest("--XX")
         assert result.ret == 0
-        result.stdout.fnmatch_lines("*2 passed*")
+        result.stdout.fnmatch_lines(["*2 passed*"])
 
     def test_pytest_fs_collect_hooks_are_seen(self, testdir):
         testdir.makeconftest(
@@ -1232,5 +1233,22 @@ def test_collect_sub_with_symlinks(use_pkg, testdir):
             "sub/test_file.py::test_file PASSED*",
             "sub/test_symlink.py::test_file PASSED*",
             "*2 passed in*",
+        ]
+    )
+
+
+def test_collector_respects_tbstyle(testdir):
+    p1 = testdir.makepyfile("assert 0")
+    result = testdir.runpytest(p1, "--tb=native")
+    assert result.ret == EXIT_INTERRUPTED
+    result.stdout.fnmatch_lines(
+        [
+            "*_ ERROR collecting test_collector_respects_tbstyle.py _*",
+            "Traceback (most recent call last):",
+            '  File "*/test_collector_respects_tbstyle.py", line 1, in <module>',
+            "    assert 0",
+            "AssertionError: assert 0",
+            "*! Interrupted: 1 errors during collection !*",
+            "*= 1 error in *",
         ]
     )

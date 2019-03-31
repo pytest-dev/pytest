@@ -225,7 +225,7 @@ def wrap_session(config, doit):
             config.notify_exception(excinfo, config.option)
             session.exitstatus = EXIT_INTERNALERROR
             if excinfo.errisinstance(SystemExit):
-                sys.stderr.write("mainloop: caught Spurious SystemExit!\n")
+                sys.stderr.write("mainloop: caught unexpected SystemExit!\n")
 
     finally:
         excinfo = None  # Explicitly break reference cycle.
@@ -441,6 +441,15 @@ class Session(nodes.FSCollector):
 
         self.config.pluginmanager.register(self, name="session")
 
+    def __repr__(self):
+        return "<%s %s exitstatus=%r testsfailed=%d testscollected=%d>" % (
+            self.__class__.__name__,
+            self.name,
+            getattr(self, "exitstatus", "<UNSET>"),
+            self.testsfailed,
+            self.testscollected,
+        )
+
     def _node_location_to_relpath(self, node_path):
         # bestrelpath is a quite slow function
         return self._bestrelpathcache[node_path]
@@ -548,7 +557,7 @@ class Session(nodes.FSCollector):
         # Start with a Session root, and delve to argpath item (dir or file)
         # and stack all Packages found on the way.
         # No point in finding packages when collecting doctests
-        if not self.config.option.doctestmodules:
+        if not self.config.getoption("doctestmodules", False):
             pm = self.config.pluginmanager
             for parent in reversed(argpath.parts()):
                 if pm._confcutdir and pm._confcutdir.relto(parent):

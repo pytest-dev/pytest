@@ -536,7 +536,7 @@ class TestRequestBasic(object):
         """
         )
         result = testdir.runpytest_subprocess()
-        result.stdout.fnmatch_lines("* 1 passed in *")
+        result.stdout.fnmatch_lines(["* 1 passed in *"])
 
     def test_getfixturevalue_recursive(self, testdir):
         testdir.makeconftest(
@@ -561,6 +561,44 @@ class TestRequestBasic(object):
         )
         reprec = testdir.inline_run()
         reprec.assertoutcome(passed=1)
+
+    def test_getfixturevalue_teardown(self, testdir):
+        """
+        Issue #1895
+
+        `test_inner` requests `inner` fixture, which in turn requests `resource`
+        using `getfixturevalue`. `test_func` then requests `resource`.
+
+        `resource` is teardown before `inner` because the fixture mechanism won't consider
+        `inner` dependent on `resource` when it is used via `getfixturevalue`: `test_func`
+        will then cause the `resource`'s finalizer to be called first because of this.
+        """
+        testdir.makepyfile(
+            """
+            import pytest
+
+            @pytest.fixture(scope='session')
+            def resource():
+                r = ['value']
+                yield r
+                r.pop()
+
+            @pytest.fixture(scope='session')
+            def inner(request):
+                resource = request.getfixturevalue('resource')
+                assert resource == ['value']
+                yield
+                assert resource == ['value']
+
+            def test_inner(inner):
+                pass
+
+            def test_func(resource):
+                pass
+        """
+        )
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines(["* 2 passed in *"])
 
     @pytest.mark.parametrize("getfixmethod", ("getfixturevalue", "getfuncargvalue"))
     def test_getfixturevalue(self, testdir, getfixmethod):
@@ -749,7 +787,7 @@ class TestRequestBasic(object):
         """Regression test for #3057"""
         testdir.copy_example("fixtures/test_getfixturevalue_dynamic.py")
         result = testdir.runpytest()
-        result.stdout.fnmatch_lines("*1 passed*")
+        result.stdout.fnmatch_lines(["*1 passed*"])
 
     def test_funcargnames_compatattr(self, testdir):
         testdir.makepyfile(
@@ -1490,7 +1528,7 @@ class TestFixtureManagerParseFactories(object):
     def test_collect_custom_items(self, testdir):
         testdir.copy_example("fixtures/custom_item")
         result = testdir.runpytest("foo")
-        result.stdout.fnmatch_lines("*passed*")
+        result.stdout.fnmatch_lines(["*passed*"])
 
 
 class TestAutouseDiscovery(object):
@@ -2572,7 +2610,7 @@ class TestFixtureMarker(object):
         )
         reprec = testdir.runpytest("-s")
         for test in ["test_browser"]:
-            reprec.stdout.fnmatch_lines("*Finalized*")
+            reprec.stdout.fnmatch_lines(["*Finalized*"])
 
     def test_class_scope_with_normal_tests(self, testdir):
         testpath = testdir.makepyfile(
@@ -3413,7 +3451,7 @@ class TestContextManagerFixtureFuncs(object):
         """
         )
         result = testdir.runpytest("-s")
-        result.stdout.fnmatch_lines("*mew*")
+        result.stdout.fnmatch_lines(["*mew*"])
 
 
 class TestParameterizedSubRequest(object):

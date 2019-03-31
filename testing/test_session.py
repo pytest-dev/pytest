@@ -68,9 +68,7 @@ class SessionTests(object):
         passed, skipped, failed = reprec.listoutcomes()
         assert len(failed) == 1
         out = failed[0].longrepr.reprcrash.message
-        if not out.find("DID NOT RAISE") != -1:
-            print(out)
-            pytest.fail("incorrect raises() output")
+        assert "DID NOT RAISE" in out
 
     def test_syntax_error_module(self, testdir):
         reprec = testdir.inline_runsource("this is really not python")
@@ -127,14 +125,14 @@ class SessionTests(object):
         )
         reprec = testdir.inline_run(p)
         passed, skipped, failed = reprec.listoutcomes()
-        assert len(failed) == 1
+        assert (len(passed), len(skipped), len(failed)) == (1, 0, 1)
         out = failed[0].longrepr.reprcrash.message
         assert (
             out.find(
                 """[Exception("Ha Ha fooled you, I'm a broken repr().") raised in repr()]"""
             )
             != -1
-        )  # '
+        )
 
     def test_skip_file_by_conftest(self, testdir):
         testdir.makepyfile(
@@ -149,7 +147,7 @@ class SessionTests(object):
         )
         try:
             reprec = testdir.inline_run(testdir.tmpdir)
-        except pytest.skip.Exception:
+        except pytest.skip.Exception:  # pragma: no covers
             pytest.fail("wrong skipped caught")
         reports = reprec.getreports("pytest_collectreport")
         assert len(reports) == 1
@@ -333,7 +331,7 @@ def test_rootdir_option_arg(testdir, monkeypatch, path):
     result = testdir.runpytest("--rootdir={}".format(path))
     result.stdout.fnmatch_lines(
         [
-            "*rootdir: {}/root, inifile:*".format(testdir.tmpdir),
+            "*rootdir: {}/root".format(testdir.tmpdir),
             "root/test_rootdir_option_arg.py *",
             "*1 passed*",
         ]
