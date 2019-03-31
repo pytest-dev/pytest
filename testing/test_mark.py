@@ -448,7 +448,7 @@ class TestFunctional(object):
         items, rec = testdir.inline_genitems(p)
         self.assert_markers(items, test_foo=("a", "b"), test_bar=("a",))
 
-    @pytest.mark.issue568
+    @pytest.mark.issue(568)
     def test_mark_should_not_pass_to_siebling_class(self, testdir):
         p = testdir.makepyfile(
             """
@@ -651,7 +651,7 @@ class TestFunctional(object):
             markers = {m.name for m in items[name].iter_markers()}
             assert markers == set(expected_markers)
 
-    @pytest.mark.issue1540
+    @pytest.mark.issue(1540)
     @pytest.mark.filterwarnings("ignore")
     def test_mark_from_parameters(self, testdir):
         testdir.makepyfile(

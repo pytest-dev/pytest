@@ -490,7 +490,7 @@ class TestConftestVisibility(object):
             ("snc", ".", 1),
         ],
     )
-    @pytest.mark.issue616
+    @pytest.mark.issue(616)
     def test_parsefactories_relative_node_ids(
         self, testdir, chdir, testarg, expect_ntests_passed
     ):
