@@ -43,7 +43,7 @@ Marks can be registered in ``pytest.ini`` like this:
 When the ``--strict`` command-line flag is passed, any unknown marks applied
 with the ``@pytest.mark.name_of_the_mark`` decorator will trigger an error.
 Marks added by pytest or by a plugin instead of the decorator will not trigger
-this error.  To enforce a limited set of markers, add ``--strict`` to ``addopts``:
+this error.  To enforce validation of markers, add ``--strict`` to ``addopts``:
 
 .. code-block:: ini
 
