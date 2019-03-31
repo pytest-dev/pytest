@@ -68,6 +68,12 @@ def pytest_configure(config):
         if checker.matching_platform():
             config.pluginmanager.register(checker)
 
+    config.addinivalue_line(
+        "markers",
+        "pytester_example_path(*path_segments): join the given path "
+        "segments to `pytester_example_dir` for this test.",
+    )
+
 
 def raise_on_kwargs(kwargs):
     if kwargs:
