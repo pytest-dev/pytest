@@ -75,6 +75,14 @@ def pytest_configure(config):
     )
 
 
+@pytest.fixture(autouse=True)
+def check_trace():
+    old = sys.gettrace()
+    yield
+    if old != sys.gettrace():
+        assert 0, (old, sys.gettrace())
+
+
 def raise_on_kwargs(kwargs):
     if kwargs:
         raise TypeError("Unexpected arguments: {}".format(", ".join(sorted(kwargs))))
