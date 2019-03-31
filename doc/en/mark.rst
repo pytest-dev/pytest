@@ -31,7 +31,10 @@ which also serve as documentation.
 Raising errors on unknown marks
 -------------------------------
 
-Marks can be registered in ``pytest.ini`` like this:
+Unknown marks applied with the ``@pytest.mark.name_of_the_mark`` decorator
+will always emit a warning, in order to avoid silently doing something
+surprising due to mis-typed names.  You can disable the warning for custom
+marks by registering them in ``pytest.ini`` like this:
 
 .. code-block:: ini
 
