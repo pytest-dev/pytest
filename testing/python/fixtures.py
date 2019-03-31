@@ -1927,7 +1927,7 @@ class TestAutouseManagement(object):
         reprec = testdir.inline_run()
         reprec.assertoutcome(passed=1)
 
-    @pytest.mark.issue226
+    @pytest.mark.issue(226)
     @pytest.mark.parametrize("param1", ["", "params=[1]"], ids=["p00", "p01"])
     @pytest.mark.parametrize("param2", ["", "params=[1]"], ids=["p10", "p11"])
     def test_ordering_dependencies_torndown_first(self, testdir, param1, param2):
@@ -2709,7 +2709,7 @@ class TestFixtureMarker(object):
         reprec = testdir.inline_run("-v")
         reprec.assertoutcome(passed=5)
 
-    @pytest.mark.issue246
+    @pytest.mark.issue(246)
     @pytest.mark.parametrize("scope", ["session", "function", "module"])
     def test_finalizer_order_on_parametrization(self, scope, testdir):
         testdir.makepyfile(
@@ -2746,7 +2746,7 @@ class TestFixtureMarker(object):
         reprec = testdir.inline_run("-lvs")
         reprec.assertoutcome(passed=3)
 
-    @pytest.mark.issue396
+    @pytest.mark.issue(396)
     def test_class_scope_parametrization_ordering(self, testdir):
         testdir.makepyfile(
             """
@@ -2867,7 +2867,7 @@ class TestFixtureMarker(object):
         res = testdir.runpytest("-v")
         res.stdout.fnmatch_lines(["*test_foo*alpha*", "*test_foo*beta*"])
 
-    @pytest.mark.issue920
+    @pytest.mark.issue(920)
     def test_deterministic_fixture_collection(self, testdir, monkeypatch):
         testdir.makepyfile(
             """

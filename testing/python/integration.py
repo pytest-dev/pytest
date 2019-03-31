@@ -393,7 +393,7 @@ class TestNoselikeTestAttribute(object):
         assert not call.items
 
 
-@pytest.mark.issue351
+@pytest.mark.issue(351)
 class TestParameterize(object):
     def test_idfn_marker(self, testdir):
         testdir.makepyfile(

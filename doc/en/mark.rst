@@ -26,12 +26,10 @@ which also serve as documentation.
     :ref:`fixtures <fixtures>`.
 
 
-Raising errors on unknown marks: --strict
------------------------------------------
+.. _unknown-marks:
 
-When the ``--strict`` command-line flag is passed, any unknown marks applied
-with the ``@pytest.mark.name_of_the_mark`` decorator will trigger an error.
-Marks defined or added by pytest or by a plugin will not trigger an error.
+Raising errors on unknown marks
+-------------------------------
 
 Marks can be registered in ``pytest.ini`` like this:
 
@@ -42,8 +40,10 @@ Marks can be registered in ``pytest.ini`` like this:
         slow
         serial
 
-This can be used to prevent users mistyping mark names by accident. Test suites that want to enforce this
-should add ``--strict`` to ``addopts``:
+When the ``--strict`` command-line flag is passed, any unknown marks applied
+with the ``@pytest.mark.name_of_the_mark`` decorator will trigger an error.
+Marks added by pytest or by a plugin instead of the decorator will not trigger
+this error.  To enforce validation of markers, add ``--strict`` to ``addopts``:
 
 .. code-block:: ini
 
@@ -52,6 +52,9 @@ should add ``--strict`` to ``addopts``:
     markers =
         slow
         serial
+
+Third-party plugins should always :ref:`register their markers <registering-markers>`
+so that they appear in pytest's help text and do not emit warnings.
 
 
 .. _marker-revamp:
