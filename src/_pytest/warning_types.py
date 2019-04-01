@@ -9,6 +9,15 @@ class PytestWarning(UserWarning):
     """
 
 
+class UnknownMarkWarning(PytestWarning):
+    """
+    Bases: :class:`PytestWarning`.
+
+    Warning emitted on use of unknown markers.
+    See https://docs.pytest.org/en/latest/mark.html for details.
+    """
+
+
 class PytestDeprecationWarning(PytestWarning, DeprecationWarning):
     """
     Bases: :class:`pytest.PytestWarning`, :class:`DeprecationWarning`.

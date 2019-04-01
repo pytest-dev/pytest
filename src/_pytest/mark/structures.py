@@ -11,7 +11,7 @@ from ..compat import getfslineno
 from ..compat import MappingMixin
 from ..compat import NOTSET
 from _pytest.outcomes import fail
-from _pytest.warning_types import PytestWarning
+from _pytest.warning_types import UnknownMarkWarning
 
 EMPTY_PARAMETERSET_OPTION = "empty_parameter_set_mark"
 
@@ -294,10 +294,10 @@ class MarkGenerator(object):
             self._update_markers(name)
             if name not in self._markers:
                 warnings.warn(
-                    "Unknown mark %r.  You can register custom marks to avoid this "
-                    "warning, without risking typos that break your tests.  See "
-                    "https://docs.pytest.org/en/latest/mark.html for details." % name,
-                    PytestWarning,
+                    "Unknown pytest.mark.%s - is this a typo?  You can register "
+                    "custom marks to avoid this warning - for details, see "
+                    "https://docs.pytest.org/en/latest/mark.html" % name,
+                    UnknownMarkWarning,
                 )
                 if self._config.option.strict:
                     fail("{!r} not a registered marker".format(name), pytrace=False)
