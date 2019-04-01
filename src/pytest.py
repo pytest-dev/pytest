@@ -97,6 +97,21 @@ if __name__ == "__main__":
     # if run as a script or by 'python -m pytest'
     # we trigger the below "else" condition by the following import
     import pytest
+    import signal
+
+    _installed_signal_handler = {}
+
+    def signal_handler(signum, frame):
+        # Uninstall ourselves for second invocation.
+        orig = _installed_signal_handler.pop(signum)
+        print("uninstall", signum, frame, orig)
+        signal.signal(signum, orig)
+
+        exit("exiting due to signal %d" % signum, returncode=(128 + signum))
+
+    _installed_signal_handler[signal.SIGTERM] = signal.signal(
+        signal.SIGTERM, signal_handler
+    )
 
     raise SystemExit(pytest.main())
 else:

@@ -1222,3 +1222,106 @@ def test_warn_on_async_function(testdir):
     assert (
         result.stdout.str().count("Coroutine functions are not natively supported") == 1
     )
+
+
+@pytest.mark.parametrize("with_second", (False, True))
+def test_exit_on_sigterm(with_second, testdir):
+    import signal
+    import subprocess
+    import time
+
+    stampfile = str(testdir.tmpdir.join("stampfile"))
+    if with_second:
+        stampfile_second = str(testdir.tmpdir.join("stampfile_second"))
+
+    p1 = testdir.makepyfile(
+        """
+        import pytest
+        import time
+        import sys
+
+        @pytest.mark.parametrize("i", range(1, 3))
+        def test(i):
+            print("test_%d" % i)
+            sys.stdout.flush()
+            if i == 1:
+                with open({stampfile!r}, "w"):
+                    pass
+            if i > 1:
+                time.sleep(20)
+    """.format(
+            stampfile=stampfile
+        )
+    )
+    if with_second:
+        testdir.makeconftest(
+            """
+            import sys
+            import time
+            import signal
+
+            def pytest_sessionfinish():
+                sys.stdout.write("current_signal: %s\\n" % signal.getsignal(15))
+                sys.stdout.write("pytest_sessionfinish_should_be_canceled\\n")
+                sys.stdout.flush()
+                with open({stampfile_second!r}, "w"):
+                    pass
+                time.sleep(10)
+                """.format(
+                stampfile_second=stampfile_second
+            )
+        )
+    start = time.time()
+    popen = testdir.popen(
+        testdir._getpytestargs() + ("-s", str(p1)),
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+
+    def wait_for_stampfile(stampfile):
+        while True:
+            if os.path.exists(stampfile):
+                break
+            elif popen.poll():
+                assert 0, (
+                    "unexpected process exit: returncode=%d stdout=%r stderr=%r"
+                    % (popen.returncode, popen.stdout.read(), popen.stderr.read())
+                )
+            time.sleep(0.1)
+
+    wait_for_stampfile(stampfile)
+    popen.send_signal(signal.SIGTERM)
+
+    is_windows = sys.platform.startswith("win")
+    if with_second and not is_windows:
+        wait_for_stampfile(stampfile_second)
+        popen.send_signal(signal.SIGTERM)
+
+    popen.wait()
+    stdout = popen.stdout.read().decode("utf8")
+    stderr = popen.stderr.read().decode("utf8")
+    popen.stdout.close()
+    popen.stderr.close()
+
+    sys.stdout.write("=== STDOUT from popen ===\n")
+    sys.stdout.write(stdout)
+    sys.stderr.write("=== STDERR from popen ===\n")
+    sys.stderr.write(stderr)
+
+    if is_windows:
+        assert popen.returncode == 1
+    elif with_second:
+        assert popen.returncode == -15  # SIGTERM
+    else:
+        assert popen.returncode == 143  # 128 + 15 (SIGTERM)
+
+    if with_second:
+        assert stdout.splitlines()[-1] == "pytest_sessionfinish_should_be_canceled"
+    elif is_windows:
+        assert stdout.splitlines()[-1] == ".test_2"
+    else:
+        assert "1 passed in" in stdout
+        assert "Exit: exiting due to signal 15 !" in stdout
+
+    duration = time.time() - start
+    assert duration < 10
