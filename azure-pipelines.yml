@@ -73,8 +73,9 @@ jobs:
         # - _py36_windowsconsoleio_workaround (with py36+)
         # - test_request_garbage (no xdist)
         PYTEST_COVERAGE: '1'
-      py37-linting/docs/doctesting:
-        python.version: '3.7'
+      py27-linting/docs/doctesting:
+        # Use Python 2 here (Travis uses 3).
+        python.version: '2.7'
         tox.env: 'linting,docs,doctesting'
       py37-twisted/numpy:
         python.version: '3.7'
