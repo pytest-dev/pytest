@@ -285,19 +285,22 @@ def _compare_eq_iterable(left, right, verbose=0):
 
 def _compare_eq_sequence(left, right, verbose=0):
     explanation = []
-    for i in range(min(len(left), len(right))):
+    len_left = len(left)
+    len_right = len(right)
+    for i in range(min(len_left, len_right)):
         if left[i] != right[i]:
             explanation += [u"At index %s diff: %r != %r" % (i, left[i], right[i])]
             break
-    if len(left) > len(right):
+    len_diff = len_left - len_right
+    if len_diff > 0:
         explanation += [
-            u"Left contains more items, first extra item: %s"
-            % saferepr(left[len(right)])
+            u"Left contains %d more items, first extra item: %s"
+            % (len_diff, saferepr(left[len_right]))
         ]
-    elif len(left) < len(right):
+    elif len_diff < 0:
         explanation += [
-            u"Right contains more items, first extra item: %s"
-            % saferepr(right[len(left)])
+            u"Right contains %d more items, first extra item: %s"
+            % (0 - len_diff, saferepr(right[len_left]))
         ]
     return explanation
 
