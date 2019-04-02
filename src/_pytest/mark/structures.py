@@ -291,30 +291,31 @@ class MarkGenerator(object):
             raise AttributeError("Marker name must NOT start with underscore")
 
         if self._config is not None:
-            self._update_markers(name)
+            # We store a set of markers as a performance optimisation - if a mark
+            # name is in the set we definitely know it, but a mark may be known and
+            # not in the set.  We therefore start by updating the set!
             if name not in self._markers:
-                warnings.warn(
-                    "Unknown pytest.mark.%s - is this a typo?  You can register "
-                    "custom marks to avoid this warning - for details, see "
-                    "https://docs.pytest.org/en/latest/mark.html" % name,
-                    UnknownMarkWarning,
-                )
+                for line in self._config.getini("markers"):
+                    # example lines: "skipif(condition): skip the given test if..."
+                    # or "hypothesis: tests which use Hypothesis", so to get the
+                    # marker name we we split on both `:` and `(`.
+                    marker = line.split(":")[0].split("(")[0].strip()
+                    self._markers.add(marker)
+
+            # If the name is not in the set of known marks after updating,
+            # then it really is time to issue a warning or an error.
+            if name not in self._markers:
                 if self._config.option.strict:
                     fail("{!r} not a registered marker".format(name), pytrace=False)
+                else:
+                    warnings.warn(
+                        "Unknown pytest.mark.%s - is this a typo?  You can register "
+                        "custom marks to avoid this warning - for details, see "
+                        "https://docs.pytest.org/en/latest/mark.html" % name,
+                        UnknownMarkWarning,
+                    )
 
         return MarkDecorator(Mark(name, (), {}))
-
-    def _update_markers(self, name):
-        # We store a set of registered markers as a performance optimisation,
-        # but more could be added to `self._config` by other plugins at runtime.
-        # If we see an unknown marker, we therefore update the set and try again!
-        if name not in self._markers:
-            for line in self._config.getini("markers"):
-                # example lines: "skipif(condition): skip the given test if..."
-                # or "hypothesis: tests which use Hypothesis", so to get the
-                # marker name we we split on both `:` and `(`.
-                marker = line.split(":")[0].split("(")[0].strip()
-                self._markers.add(marker)
 
 
 MARK_GEN = MarkGenerator()
