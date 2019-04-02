@@ -11,6 +11,7 @@ from ..compat import getfslineno
 from ..compat import MappingMixin
 from ..compat import NOTSET
 from _pytest.outcomes import fail
+from _pytest.warning_types import UnknownMarkWarning
 
 EMPTY_PARAMETERSET_OPTION = "empty_parameter_set_mark"
 
@@ -283,28 +284,38 @@ class MarkGenerator(object):
     on the ``test_function`` object. """
 
     _config = None
+    _markers = set()
 
     def __getattr__(self, name):
         if name[0] == "_":
             raise AttributeError("Marker name must NOT start with underscore")
-        if self._config is not None:
-            self._check(name)
-        return MarkDecorator(Mark(name, (), {}))
 
-    def _check(self, name):
-        try:
-            if name in self._markers:
-                return
-        except AttributeError:
-            pass
-        self._markers = values = set()
-        for line in self._config.getini("markers"):
-            marker = line.split(":", 1)[0]
-            marker = marker.rstrip()
-            x = marker.split("(", 1)[0]
-            values.add(x)
-        if name not in self._markers:
-            fail("{!r} not a registered marker".format(name), pytrace=False)
+        if self._config is not None:
+            # We store a set of markers as a performance optimisation - if a mark
+            # name is in the set we definitely know it, but a mark may be known and
+            # not in the set.  We therefore start by updating the set!
+            if name not in self._markers:
+                for line in self._config.getini("markers"):
+                    # example lines: "skipif(condition): skip the given test if..."
+                    # or "hypothesis: tests which use Hypothesis", so to get the
+                    # marker name we we split on both `:` and `(`.
+                    marker = line.split(":")[0].split("(")[0].strip()
+                    self._markers.add(marker)
+
+            # If the name is not in the set of known marks after updating,
+            # then it really is time to issue a warning or an error.
+            if name not in self._markers:
+                if self._config.option.strict:
+                    fail("{!r} not a registered marker".format(name), pytrace=False)
+                else:
+                    warnings.warn(
+                        "Unknown pytest.mark.%s - is this a typo?  You can register "
+                        "custom marks to avoid this warning - for details, see "
+                        "https://docs.pytest.org/en/latest/mark.html" % name,
+                        UnknownMarkWarning,
+                    )
+
+        return MarkDecorator(Mark(name, (), {}))
 
 
 MARK_GEN = MarkGenerator()

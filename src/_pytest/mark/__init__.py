@@ -147,8 +147,7 @@ def pytest_collection_modifyitems(items, config):
 
 def pytest_configure(config):
     config._old_mark_config = MARK_GEN._config
-    if config.option.strict:
-        MARK_GEN._config = config
+    MARK_GEN._config = config
 
     empty_parameterset = config.getini(EMPTY_PARAMETERSET_OPTION)
 
