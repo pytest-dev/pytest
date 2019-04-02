@@ -16,7 +16,6 @@ from .reports import CollectReport
 from .reports import TestReport
 from _pytest._code.code import ExceptionInfo
 from _pytest.outcomes import Exit
-from _pytest.outcomes import skip
 from _pytest.outcomes import Skipped
 from _pytest.outcomes import TEST_OUTCOME
 
@@ -183,7 +182,7 @@ def call_and_report(item, when, log=True, **kwds):
 def check_interactive_exception(call, report):
     return call.excinfo and not (
         hasattr(report, "wasxfail")
-        or call.excinfo.errisinstance(skip.Exception)
+        or call.excinfo.errisinstance(Skipped)
         or call.excinfo.errisinstance(bdb.BdbQuit)
     )
 
