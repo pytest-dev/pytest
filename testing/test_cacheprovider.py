@@ -27,7 +27,8 @@ class TestNewAPI:
         cache = config.cache
         pytest.raises(TypeError, lambda: cache.set("key/name", cache))
         config.cache.set("key/name", 0)
-        config.cache._getvaluepath("key/name").write_bytes(b"123invalid")
+        with config.cache._getvaluepath("key/name").open("wb") as f:
+            f.write(b"123invalid")
         val = config.cache.get("key/name", -2)
         assert val == -2
 
@@ -1031,12 +1032,15 @@ def test_gitignore(testdir):
     cache.set("foo", "bar")
     msg = "# Created by pytest automatically.\n*"
     gitignore_path = cache._cachedir.joinpath(".gitignore")
-    assert gitignore_path.read_text(encoding="UTF-8") == msg
+    with gitignore_path.open("r", encoding="UTF-8") as f:
+        assert f.read() == msg
 
     # Does not overwrite existing/custom one.
-    gitignore_path.write_text("custom")
+    with gitignore_path.open("w", encoding="UTF-8") as f:
+        f.write("custom")
     cache.set("something", "else")
-    assert gitignore_path.read_text(encoding="UTF-8") == "custom"
+    with gitignore_path.open("r", encoding="UTF-8") as f:
+        assert f.read() == "custom"
 
 
 def test_does_not_create_boilerplate_in_existing_dirs(testdir):
@@ -1066,4 +1070,5 @@ def test_cachedir_tag(testdir):
     cache = Cache.for_config(config)
     cache.set("foo", "bar")
     cachedir_tag_path = cache._cachedir.joinpath("CACHEDIR.TAG")
-    assert cachedir_tag_path.read_bytes() == CACHEDIR_TAG_CONTENT
+    with cachedir_tag_path.open("rb") as f:
+        assert f.read() == CACHEDIR_TAG_CONTENT

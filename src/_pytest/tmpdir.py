@@ -66,7 +66,8 @@ class TempPathFactory:
             # use a sub-directory in the temproot to speed-up
             # make_numbered_dir() call
             rootdir = temproot.joinpath("pytest-of-{}".format(user))
-            rootdir.mkdir(exist_ok=True)
+            if not rootdir.is_dir():
+                os.mkdir(str(rootdir))
             basetemp = make_numbered_dir_with_cleanup(
                 prefix="pytest-", root=rootdir, keep=3, lock_timeout=LOCK_TIMEOUT
             )
@@ -180,10 +181,6 @@ def tmp_path(request, tmp_path_factory):
     created as a sub directory of the base temporary
     directory.  The returned object is a :class:`pathlib.Path`
     object.
-
-    .. note::
-
-        in python < 3.6 this is a pathlib2.Path
     """
 
     return _mk_tmp(request, tmp_path_factory)

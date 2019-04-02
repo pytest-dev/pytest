@@ -50,7 +50,7 @@ class Cache:
 
     @staticmethod
     def cache_dir_from_config(config):
-        return resolve_from_str(config.getini("cache_dir"), config.rootdir)
+        return resolve_from_str(config.getini("cache_dir"), str(config.rootdir))
 
     def warn(self, fmt, **args):
         from _pytest.warnings import _issue_warning_captured
@@ -76,7 +76,8 @@ class Cache:
         if len(name.parts) > 1:
             raise ValueError("name is not allowed to contain path separators")
         res = self._cachedir.joinpath("d", name)
-        res.mkdir(exist_ok=True, parents=True)
+        if not res.is_dir():
+            os.makedirs(str(res))
         return py.path.local(res)
 
     def _getvaluepath(self, key):
@@ -115,7 +116,7 @@ class Cache:
                 cache_dir_exists_already = True
             else:
                 cache_dir_exists_already = self._cachedir.exists()
-                path.parent.mkdir(exist_ok=True, parents=True)
+                os.makedirs(str(path.parent))
         except (IOError, OSError):
             self.warn("could not create cache path {path}", path=path)
             return
@@ -132,14 +133,17 @@ class Cache:
     def _ensure_supporting_files(self):
         """Create supporting files in the cache dir that are not really part of the cache."""
         readme_path = self._cachedir / "README.md"
-        readme_path.write_text(README_CONTENT)
+        with readme_path.open("w") as f:
+            f.write(README_CONTENT)
 
         gitignore_path = self._cachedir.joinpath(".gitignore")
         msg = "# Created by pytest automatically.\n*"
-        gitignore_path.write_text(msg, encoding="UTF-8")
+        with gitignore_path.open("w", encoding="UTF-8") as f:
+            f.write(msg)
 
         cachedir_tag_path = self._cachedir.joinpath("CACHEDIR.TAG")
-        cachedir_tag_path.write_bytes(CACHEDIR_TAG_CONTENT)
+        with cachedir_tag_path.open("wb") as f:
+            f.write(CACHEDIR_TAG_CONTENT)
 
 
 class LFPlugin:
@@ -160,7 +164,7 @@ class LFPlugin:
         try:
             return self._last_failed_paths
         except AttributeError:
-            rootpath = Path(self.config.rootdir)
+            rootpath = Path(str(self.config.rootdir))
             result = {rootpath / nodeid.split("::")[0] for nodeid in self.lastfailed}
             result = {x for x in result if x.exists()}
             self._last_failed_paths = result
@@ -174,7 +178,7 @@ class LFPlugin:
         if self.active and self.config.getoption("lf") and path.isfile():
             last_failed_paths = self.last_failed_paths()
             if last_failed_paths:
-                skip_it = Path(path) not in self.last_failed_paths()
+                skip_it = Path(str(path)) not in self.last_failed_paths()
                 if skip_it:
                     self._skipped_files += 1
                 return skip_it
@@ -385,7 +389,7 @@ def pytest_report_header(config):
         # starting with .., ../.. if sensible
 
         try:
-            displaypath = cachedir.relative_to(config.rootdir)
+            displaypath = cachedir.relative_to(str(config.rootdir))
         except ValueError:
             displaypath = cachedir
         return "cachedir: {}".format(displaypath)

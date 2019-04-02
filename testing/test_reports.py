@@ -215,7 +215,7 @@ class TestReportSerialization:
         assert len(reports) == 3
         test_a_call = reports[1]
         test_a_call.path1 = testdir.tmpdir
-        test_a_call.path2 = Path(testdir.tmpdir)
+        test_a_call.path2 = Path(str(testdir.tmpdir))
         data = test_a_call._to_json()
         assert data["path1"] == str(testdir.tmpdir)
         assert data["path2"] == str(testdir.tmpdir)

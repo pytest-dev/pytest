@@ -11,13 +11,10 @@ from os.path import expanduser
 from os.path import expandvars
 from os.path import isabs
 from os.path import sep
+from pathlib import Path
+from pathlib import PurePath
 from posixpath import sep as posix_sep
 
-
-if sys.version_info[:2] >= (3, 6):
-    from pathlib import Path, PurePath
-else:
-    from pathlib2 import Path, PurePath
 
 __all__ = ["Path", "PurePath"]
 
@@ -254,7 +251,6 @@ def make_numbered_dir_with_cleanup(root, prefix, keep, lock_timeout):
 
 
 def resolve_from_str(input, root):
-    assert not isinstance(input, Path), "would break on py2"
     root = Path(root)
     input = expanduser(input)
     input = expandvars(input)

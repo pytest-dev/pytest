@@ -322,7 +322,8 @@ class TestNumberedDir:
 
         adir.mkdir()
         afile = adir / "afile"
-        afile.write_bytes(b"aa")
+        with afile.open("wb") as f:
+            f.write(b"aa")
 
         rmtree(adir, force=True)
         assert not adir.exists()
@@ -343,10 +344,10 @@ def attempt_symlink_to(path, to_path):
     """Try to make a symlink from "path" to "to_path", skipping in case this platform
     does not support it or we don't have sufficient privileges (common on Windows)."""
     try:
-        Path(path).symlink_to(Path(to_path))
+        Path(str(path)).symlink_to(Path(to_path))
     except OSError:
         pytest.skip("could not create symbolic link")
 
 
 def test_tmpdir_equals_tmp_path(tmpdir, tmp_path):
-    assert Path(tmpdir) == tmp_path
+    assert Path(str(tmpdir)) == tmp_path

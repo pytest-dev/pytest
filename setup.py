@@ -8,7 +8,6 @@ INSTALL_REQUIRES = [
     "attrs>=17.4.0",
     "more-itertools>=4.0.0",
     "atomicwrites>=1.0",
-    'pathlib2>=2.2.0;python_version<"3.6"',
     'colorama;sys_platform=="win32"',
     "pluggy>=0.12,<1.0",
     "importlib-metadata>=0.12",

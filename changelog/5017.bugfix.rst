@@ -1,0 +1,1 @@
+``pathlib2`` is no longer used, avoiding a number of problems when mixing ``pathlib2.Path`` and ``pathlib.Path`` objects. pytest now always uses the native ``pathlib`` module.
