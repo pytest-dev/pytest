@@ -223,7 +223,6 @@ import ``helper.py`` normally.  The contents of
    pytest.register_assert_rewrite("pytest_foo.helper")
 
 
-
 Requiring/Loading plugins in a test module or conftest file
 -----------------------------------------------------------
 
