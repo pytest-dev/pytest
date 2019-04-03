@@ -476,9 +476,6 @@ class Testdir(object):
         name = request.function.__name__
         self.tmpdir = tmpdir_factory.mktemp(name, numbered=True)
         self.test_tmproot = tmpdir_factory.mktemp("tmp-" + name, numbered=True)
-        os.environ["PYTEST_DEBUG_TEMPROOT"] = str(self.test_tmproot)
-        os.environ.pop("TOX_ENV_DIR", None)  # Ensure that it is not used for caching.
-        os.environ.pop("PYTEST_ADDOPTS", None)  # Do not use outer options.
         self.plugins = []
         self._cwd_snapshot = CwdSnapshot()
         self._sys_path_snapshot = SysPathsSnapshot()
@@ -490,6 +487,13 @@ class Testdir(object):
             self._runpytest_method = self.runpytest_inprocess
         elif method == "subprocess":
             self._runpytest_method = self.runpytest_subprocess
+
+        mp = self.monkeypatch = MonkeyPatch()
+        mp.setenv("PYTEST_DEBUG_TEMPROOT", str(self.test_tmproot))
+        # Ensure no unexpected caching via tox.
+        mp.delenv("TOX_ENV_DIR", raising=False)
+        # Discard outer pytest options.
+        mp.delenv("PYTEST_ADDOPTS", raising=False)
 
     def __repr__(self):
         return "<Testdir %r>" % (self.tmpdir,)
@@ -508,7 +512,7 @@ class Testdir(object):
         self._sys_modules_snapshot.restore()
         self._sys_path_snapshot.restore()
         self._cwd_snapshot.restore()
-        os.environ.pop("PYTEST_DEBUG_TEMPROOT", None)
+        self.monkeypatch.undo()
 
     def __take_sys_modules_snapshot(self):
         # some zope modules used by twisted-related tests keep internal state
@@ -799,11 +803,11 @@ class Testdir(object):
         """
         finalizers = []
         try:
-            # Do not load user config.
-            monkeypatch = MonkeyPatch()
-            monkeypatch.setenv("HOME", str(self.tmpdir))
-            monkeypatch.setenv("USERPROFILE", str(self.tmpdir))
-            finalizers.append(monkeypatch.undo)
+            # Do not load user config (during runs only).
+            mp_run = MonkeyPatch()
+            mp_run.setenv("HOME", str(self.tmpdir))
+            mp_run.setenv("USERPROFILE", str(self.tmpdir))
+            finalizers.append(mp_run.undo)
 
             # When running pytest inline any plugins active in the main test
             # process are already imported.  So this disables the warning which

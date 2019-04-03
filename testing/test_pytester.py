@@ -469,3 +469,16 @@ def test_linematcher_with_nonlist():
 
     assert lm._getlines({}) == {}
     assert lm._getlines(set()) == set()
+
+
+def test_pytester_addopts(request, monkeypatch):
+    monkeypatch.setenv("PYTEST_ADDOPTS", "--orig-unused")
+
+    testdir = request.getfixturevalue("testdir")
+
+    try:
+        assert "PYTEST_ADDOPTS" not in os.environ
+    finally:
+        testdir.finalize()
+
+    assert os.environ["PYTEST_ADDOPTS"] == "--orig-unused"
