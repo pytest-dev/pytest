@@ -1021,6 +1021,7 @@ def fixture(scope="function", params=None, autouse=False, ids=None, name=None):
     :arg params: an optional list of parameters which will cause multiple
                 invocations of the fixture function and all of the tests
                 using it.
+                The current parameter is available in ``request.param``.
 
     :arg autouse: if True, the fixture func is activated for all tests that
                 can see it.  If False (the default) then an explicit

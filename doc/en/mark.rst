@@ -1,9 +1,7 @@
-
 .. _mark:
 
 Marking test functions with attributes
-=================================================================
-
+======================================
 
 By using the ``pytest.mark`` helper you can easily set
 metadata on your test functions. There are
@@ -164,4 +162,4 @@ More details can be found in the `original PR <https://github.com/pytest-dev/pyt
 .. note::
 
     in a future major relase of pytest we will introduce class based markers,
-    at which point markers will no longer be limited to instances of :py:class:`Mark`
+    at which point markers will no longer be limited to instances of :py:class:`Mark`.
