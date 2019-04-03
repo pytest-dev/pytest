@@ -58,7 +58,7 @@ them in turn:
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: $REGENDOC_TMPDIR
+    rootdir: /home/sweet/project
     collected 3 items
 
     test_expectation.py ..F                                              [100%]
@@ -125,7 +125,7 @@ Let's run this:
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: $REGENDOC_TMPDIR
+    rootdir: /home/sweet/project
     collected 3 items
 
     test_expectation.py ..x                                              [100%]
@@ -226,7 +226,7 @@ list:
     $ pytest -q -rs test_strings.py
     s                                                                    [100%]
     ========================= short test summary info ==========================
-    SKIPPED [1] test_strings.py: got empty parameter set ['stringinput'], function test_valid_string at $REGENDOC_TMPDIR/test_strings.py:1
+    SKIPPED [1] test_strings.py: got empty parameter set ['stringinput'], function test_valid_string at /home/sweet/project/test_strings.py:1
     1 skipped in 0.12 seconds
 
 Note that when calling ``metafunc.parametrize`` multiple times with different parameter sets, all parameter names across
