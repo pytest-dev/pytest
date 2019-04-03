@@ -59,6 +59,13 @@ def pytest_addoption(parser):
         action="store_true",
         help="Immediately break when running each test.",
     )
+    group._addoption(
+        "--pdb-skip",
+        "--pdb-ignore-set_trace",
+        dest="pdb_ignore_set_trace",
+        action="store_true",
+        help="Ignore calls to pdb.set_trace().",
+    )
 
 
 def pytest_configure(config):
@@ -209,6 +216,9 @@ class pytestPDB(object):
     @classmethod
     def set_trace(cls, *args, **kwargs):
         """Invoke debugging via ``Pdb.set_trace``, dropping any IO capturing."""
+        if pytestPDB._config:  # Might not be available when called directly.
+            if pytestPDB._config.getoption("pdb_ignore_set_trace"):
+                return
         frame = sys._getframe().f_back
         _pdb = cls._init_pdb(*args, **kwargs)
         _pdb.set_trace(frame)
