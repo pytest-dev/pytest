@@ -1,1 +1,0 @@
-The stepwise plugin reports status information now.

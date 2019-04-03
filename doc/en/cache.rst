@@ -82,7 +82,7 @@ If you then run it with ``--lf``:
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: $REGENDOC_TMPDIR, inifile:
+    rootdir: /home/sweet/project
     collected 50 items / 48 deselected / 2 selected
     run-last-failure: rerun previous 2 failures
 
@@ -126,7 +126,7 @@ of ``FF`` and dots):
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: $REGENDOC_TMPDIR, inifile:
+    rootdir: /home/sweet/project
     collected 50 items
     run-last-failure: rerun previous 2 failures first
 
@@ -218,8 +218,6 @@ If you run this command for the first time, you can see the print statement:
         def test_function(mydata):
     >       assert mydata == 23
     E       assert 42 == 23
-    E         -42
-    E         +23
 
     test_caching.py:17: AssertionError
     -------------------------- Captured stdout setup ---------------------------
@@ -241,8 +239,6 @@ the cache and nothing will be printed:
         def test_function(mydata):
     >       assert mydata == 23
     E       assert 42 == 23
-    E         -42
-    E         +23
 
     test_caching.py:17: AssertionError
     1 failed in 0.12 seconds
@@ -262,7 +258,7 @@ You can always peek at the content of the cache using the
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: $REGENDOC_TMPDIR, inifile:
+    rootdir: /home/sweet/project
     cachedir: $PYTHON_PREFIX/.pytest_cache
     ------------------------------- cache values -------------------------------
     cache/lastfailed contains:
