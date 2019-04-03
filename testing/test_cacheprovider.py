@@ -10,6 +10,7 @@ import textwrap
 import py
 
 import pytest
+from _pytest.main import EXIT_NOTESTSCOLLECTED
 
 pytest_plugins = ("pytester",)
 
@@ -251,7 +252,13 @@ class TestLastFailed(object):
         result = testdir.runpytest("--lf")
         result.stdout.fnmatch_lines(["*2 passed*1 desel*"])
         result = testdir.runpytest("--lf")
-        result.stdout.fnmatch_lines(["*1 failed*2 passed*"])
+        result.stdout.fnmatch_lines(
+            [
+                "collected 3 items",
+                "run-last-failure: no previously failed tests, not deselecting items.",
+                "*1 failed*2 passed*",
+            ]
+        )
         result = testdir.runpytest("--lf", "--cache-clear")
         result.stdout.fnmatch_lines(["*1 failed*2 passed*"])
 
@@ -425,7 +432,13 @@ class TestLastFailed(object):
         )
 
         result = testdir.runpytest(test_a, "--lf")
-        result.stdout.fnmatch_lines(["collected 2 items", "*2 passed in*"])
+        result.stdout.fnmatch_lines(
+            [
+                "collected 2 items",
+                "run-last-failure: 2 known failures not in selected tests",
+                "*2 passed in*",
+            ]
+        )
 
         result = testdir.runpytest(test_b, "--lf")
         result.stdout.fnmatch_lines(
@@ -721,7 +734,14 @@ class TestLastFailed(object):
         result = testdir.runpytest("--lf", "--lfnf", "all")
         result.stdout.fnmatch_lines(["*2 passed*"])
         result = testdir.runpytest("--lf", "--lfnf", "none")
-        result.stdout.fnmatch_lines(["*2 desel*"])
+        result.stdout.fnmatch_lines(
+            [
+                "collected 2 items / 2 deselected",
+                "run-last-failure: no previously failed tests, deselecting all items.",
+                "* 2 deselected in *",
+            ]
+        )
+        assert result.ret == EXIT_NOTESTSCOLLECTED
 
     def test_lastfailed_no_failures_behavior_empty_cache(self, testdir):
         testdir.makepyfile(

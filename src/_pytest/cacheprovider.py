@@ -157,18 +157,11 @@ class LFPlugin(object):
         self.active = any(config.getoption(key) for key in active_keys)
         self.lastfailed = config.cache.get("cache/lastfailed", {})
         self._previously_failed_count = None
-        self._no_failures_behavior = self.config.getoption("last_failed_no_failures")
+        self._report_status = None
 
     def pytest_report_collectionfinish(self):
         if self.active and self.config.getoption("verbose") >= 0:
-            if not self._previously_failed_count:
-                return None
-            noun = "failure" if self._previously_failed_count == 1 else "failures"
-            suffix = " first" if self.config.getoption("failedfirst") else ""
-            mode = "rerun previous {count} {noun}{suffix}".format(
-                count=self._previously_failed_count, suffix=suffix, noun=noun
-            )
-            return "run-last-failure: %s" % mode
+            return "run-last-failure: %s" % self._report_status
 
     def pytest_runtest_logreport(self, report):
         if (report.when == "call" and report.passed) or report.skipped:
@@ -196,18 +189,35 @@ class LFPlugin(object):
                     else:
                         previously_passed.append(item)
                 self._previously_failed_count = len(previously_failed)
+
                 if not previously_failed:
-                    # running a subset of all tests with recorded failures outside
-                    # of the set of tests currently executing
-                    return
-                if self.config.getoption("lf"):
-                    items[:] = previously_failed
-                    config.hook.pytest_deselected(items=previously_passed)
+                    # Running a subset of all tests with recorded failures
+                    # only outside of it.
+                    self._report_status = "%d known failures not in selected tests" % (
+                        len(self.lastfailed),
+                    )
                 else:
-                    items[:] = previously_failed + previously_passed
-            elif self._no_failures_behavior == "none":
-                config.hook.pytest_deselected(items=items)
-                items[:] = []
+                    if self.config.getoption("lf"):
+                        items[:] = previously_failed
+                        config.hook.pytest_deselected(items=previously_passed)
+                    else:  # --failedfirst
+                        items[:] = previously_failed + previously_passed
+
+                    noun = (
+                        "failure" if self._previously_failed_count == 1 else "failures"
+                    )
+                    suffix = " first" if self.config.getoption("failedfirst") else ""
+                    self._report_status = "rerun previous {count} {noun}{suffix}".format(
+                        count=self._previously_failed_count, suffix=suffix, noun=noun
+                    )
+            else:
+                self._report_status = "no previously failed tests, "
+                if self.config.getoption("last_failed_no_failures") == "none":
+                    self._report_status += "deselecting all items."
+                    config.hook.pytest_deselected(items=items)
+                    items[:] = []
+                else:
+                    self._report_status += "not deselecting items."
 
     def pytest_sessionfinish(self, session):
         config = self.config
@@ -303,8 +313,7 @@ def pytest_addoption(parser):
         dest="last_failed_no_failures",
         choices=("all", "none"),
         default="all",
-        help="change the behavior when no test failed in the last run or no "
-        "information about the last failures was found in the cache",
+        help="which tests to run with no previously (known) failures.",
     )
 
 
