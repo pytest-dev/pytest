@@ -115,6 +115,9 @@ class Cache(object):
                python types, including nested types
                like e. g. lists of dictionaries.
         """
+        if self._config.option.cache_readonly:
+            return
+
         path = self._getvaluepath(key)
         try:
             if path.parent.is_dir():
@@ -314,6 +317,12 @@ def pytest_addoption(parser):
         choices=("all", "none"),
         default="all",
         help="which tests to run with no previously (known) failures.",
+    )
+    group.addoption(
+        "--cache-readonly",
+        action="store_true",
+        dest="cache_readonly",
+        help="do not update cache.",
     )
 
 
