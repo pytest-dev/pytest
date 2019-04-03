@@ -112,13 +112,18 @@ def directory_arg(path, optname):
     return path
 
 
-default_plugins = (
+# Plugins that cannot be disabled via "-p no:X" currently.
+essential_plugins = (
     "mark",
     "main",
-    "terminal",
     "runner",
     "python",
     "fixtures",
+    "helpconfig",  # Provides -p.
+)
+
+default_plugins = essential_plugins + (
+    "terminal",  # Has essential options, but xdist uses -pno:terminal.
     "debugging",
     "unittest",
     "capture",
@@ -127,7 +132,6 @@ default_plugins = (
     "monkeypatch",
     "recwarn",
     "pastebin",
-    "helpconfig",
     "nose",
     "assertion",
     "junitxml",
@@ -142,7 +146,6 @@ default_plugins = (
     "logging",
     "reports",
 )
-
 
 builtin_plugins = set(default_plugins)
 builtin_plugins.add("pytester")
@@ -496,6 +499,9 @@ class PytestPluginManager(PluginManager):
     def consider_pluginarg(self, arg):
         if arg.startswith("no:"):
             name = arg[3:]
+            if name in essential_plugins:
+                raise UsageError("plugin %s cannot be disabled" % name)
+
             # PR #4304 : remove stepwise if cacheprovider is blocked
             if name == "cacheprovider":
                 self.set_blocked("stepwise")
