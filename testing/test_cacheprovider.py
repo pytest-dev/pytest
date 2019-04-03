@@ -196,6 +196,7 @@ def test_cache_show(testdir):
         """
         def pytest_configure(config):
             config.cache.set("my/name", [1,2,3])
+            config.cache.set("my/hello", "world")
             config.cache.set("other/some", {1:2})
             dp = config.cache.makedir("mydb")
             dp.ensure("hello")
@@ -204,20 +205,39 @@ def test_cache_show(testdir):
     )
     result = testdir.runpytest()
     assert result.ret == 5  # no tests executed
+
     result = testdir.runpytest("--cache-show")
-    result.stdout.fnmatch_lines_random(
+    result.stdout.fnmatch_lines(
         [
             "*cachedir:*",
-            "-*cache values*-",
-            "*my/name contains:",
+            "*- cache values for '[*]' -*",
+            "cache/nodeids contains:",
+            "my/name contains:",
             "  [1, 2, 3]",
-            "*other/some contains*",
-            "  {*1*: 2}",
-            "-*cache directories*-",
+            "other/some contains:",
+            "  {*'1': 2}",
+            "*- cache directories for '[*]' -*",
             "*mydb/hello*length 0*",
             "*mydb/world*length 0*",
         ]
     )
+    assert result.ret == 0
+
+    result = testdir.runpytest("--cache-show", "*/hello")
+    result.stdout.fnmatch_lines(
+        [
+            "*cachedir:*",
+            "*- cache values for '[*]/hello' -*",
+            "my/hello contains:",
+            "  *'world'",
+            "*- cache directories for '[*]/hello' -*",
+            "d/mydb/hello*length 0*",
+        ]
+    )
+    stdout = result.stdout.str()
+    assert "other/some" not in stdout
+    assert "d/mydb/world" not in stdout
+    assert result.ret == 0
 
 
 class TestLastFailed(object):
