@@ -580,7 +580,23 @@ def test_pytest_exit_returncode(testdir):
     """
     )
     result = testdir.runpytest()
+    result.stdout.fnmatch_lines(["*! *Exit: some exit msg !*"])
+    assert result.stderr.lines == [""]
     assert result.ret == 99
+
+    # It prints to stderr also in case of exit during pytest_sessionstart.
+    testdir.makeconftest(
+        """
+        import pytest
+
+        def pytest_sessionstart():
+            pytest.exit("during_sessionstart", 98)
+        """
+    )
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines(["*! *Exit: during_sessionstart !*"])
+    assert result.stderr.lines == ["Exit: during_sessionstart", ""]
+    assert result.ret == 98
 
 
 def test_pytest_fail_notrace_runtest(testdir):
