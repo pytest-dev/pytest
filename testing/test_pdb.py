@@ -1016,7 +1016,8 @@ class TestTraceOption:
         rest = child.read().decode("utf8")
         assert "2 passed in" in rest
         assert "reading from stdin while output" not in rest
-        assert "Exit: Quitting debugger" in child.before.decode("utf8")
+        # Only printed once - not on stderr.
+        assert "Exit: Quitting debugger" not in child.before.decode("utf8")
         TestPDB.flush(child)
 
 
