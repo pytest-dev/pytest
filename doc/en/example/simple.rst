@@ -129,7 +129,7 @@ directory with the above conftest.py:
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: $REGENDOC_TMPDIR
+    rootdir: /home/sweet/project
     collected 0 items
 
     ======================= no tests ran in 0.12 seconds =======================
@@ -190,7 +190,7 @@ and when running it will see a skipped "slow" test:
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: $REGENDOC_TMPDIR
+    rootdir: /home/sweet/project
     collected 2 items
 
     test_module.py .s                                                    [100%]
@@ -207,7 +207,7 @@ Or run it including the ``slow`` marked test:
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: $REGENDOC_TMPDIR
+    rootdir: /home/sweet/project
     collected 2 items
 
     test_module.py ..                                                    [100%]
@@ -351,7 +351,7 @@ which will add the string to the test header accordingly:
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
     project deps: mylib-1.1
-    rootdir: $REGENDOC_TMPDIR
+    rootdir: /home/sweet/project
     collected 0 items
 
     ======================= no tests ran in 0.12 seconds =======================
@@ -381,7 +381,7 @@ which will add info only when run with "--v":
     cachedir: $PYTHON_PREFIX/.pytest_cache
     info1: did you know that ...
     did you?
-    rootdir: $REGENDOC_TMPDIR
+    rootdir: /home/sweet/project
     collecting ... collected 0 items
 
     ======================= no tests ran in 0.12 seconds =======================
@@ -394,7 +394,7 @@ and nothing when run plainly:
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: $REGENDOC_TMPDIR
+    rootdir: /home/sweet/project
     collected 0 items
 
     ======================= no tests ran in 0.12 seconds =======================
@@ -434,7 +434,7 @@ Now we can profile which test functions execute the slowest:
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: $REGENDOC_TMPDIR
+    rootdir: /home/sweet/project
     collected 3 items
 
     test_some_are_slow.py ...                                            [100%]
@@ -509,7 +509,7 @@ If we run this:
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: $REGENDOC_TMPDIR
+    rootdir: /home/sweet/project
     collected 4 items
 
     test_step.py .Fx.                                                    [100%]
@@ -593,7 +593,7 @@ We can run this:
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: $REGENDOC_TMPDIR
+    rootdir: /home/sweet/project
     collected 7 items
 
     test_step.py .Fx.                                                    [ 57%]
@@ -603,13 +603,13 @@ We can run this:
 
     ================================== ERRORS ==================================
     _______________________ ERROR at setup of test_root ________________________
-    file $REGENDOC_TMPDIR/b/test_error.py, line 1
+    file /home/sweet/project/b/test_error.py, line 1
       def test_root(db):  # no db here, will error out
     E       fixture 'db' not found
     >       available fixtures: cache, capfd, capfdbinary, caplog, capsys, capsysbinary, doctest_namespace, monkeypatch, pytestconfig, record_property, record_xml_attribute, recwarn, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
     >       use 'pytest --fixtures [testpath]' for help on them.
 
-    $REGENDOC_TMPDIR/b/test_error.py:1
+    /home/sweet/project/b/test_error.py:1
     ================================= FAILURES =================================
     ____________________ TestUserHandling.test_modification ____________________
 
@@ -707,7 +707,7 @@ and run them:
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: $REGENDOC_TMPDIR
+    rootdir: /home/sweet/project
     collected 2 items
 
     test_module.py FF                                                    [100%]
@@ -811,7 +811,7 @@ and run it:
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: $REGENDOC_TMPDIR
+    rootdir: /home/sweet/project
     collected 3 items
 
     test_module.py Esetting up a test failed! test_module.py::test_setup_fails

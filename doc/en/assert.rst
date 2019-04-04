@@ -30,7 +30,7 @@ you will see the return value of the function call:
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: $REGENDOC_TMPDIR
+    rootdir: /home/sweet/project
     collected 1 item
 
     test_assert1.py F                                                    [100%]
@@ -165,7 +165,7 @@ if you run this module:
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: $REGENDOC_TMPDIR
+    rootdir: /home/sweet/project
     collected 1 item
 
     test_assert2.py F                                                    [100%]
