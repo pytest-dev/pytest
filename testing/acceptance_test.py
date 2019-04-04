@@ -157,6 +157,7 @@ class TestGeneralUsage(object):
 
         monkeypatch.setattr(pkg_resources, "iter_entry_points", my_iter)
         params = ("-p", "mycov") if load_cov_early else ()
+        testdir.monkeypatch.delenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD")
         testdir.runpytest_inprocess(*params)
         if load_cov_early:
             assert loaded == ["mycov", "myplugin1", "myplugin2"]

@@ -500,6 +500,8 @@ class Testdir(object):
         mp.delenv("TOX_ENV_DIR", raising=False)
         # Discard outer pytest options.
         mp.delenv("PYTEST_ADDOPTS", raising=False)
+        # Do not load entrypoint plugins by default.
+        mp.setenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD", "1")
 
     def __repr__(self):
         return "<Testdir %r>" % (self.tmpdir,)

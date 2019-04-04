@@ -7,6 +7,7 @@ from _pytest.main import EXIT_NOTESTSCOLLECTED
 
 
 def test_version(testdir, pytestconfig):
+    testdir.monkeypatch.delenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD")
     result = testdir.runpytest("--version")
     assert result.ret == 0
     # p = py.path.local(py.__file__).dirpath()
