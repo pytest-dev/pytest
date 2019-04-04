@@ -21,6 +21,11 @@ from _pytest.pytester import LineMatcher
 from _pytest.pytester import SysModulesSnapshot
 from _pytest.pytester import SysPathsSnapshot
 
+try:
+    import mock
+except ImportError:
+    import unittest.mock as mock
+
 
 def test_make_hook_recorder(testdir):
     item = testdir.getitem("def test_func(): pass")
@@ -482,3 +487,36 @@ def test_pytester_addopts(request, monkeypatch):
         testdir.finalize()
 
     assert os.environ["PYTEST_ADDOPTS"] == "--orig-unused"
+
+
+def test_popen_env(testdir, monkeypatch):
+    monkeypatch.delenv("PYTHONPATH", raising=False)
+    popen_args = (["cmd"], None, None)
+
+    with mock.patch("subprocess.Popen") as m:
+        testdir.popen(*popen_args)
+        env = m.call_args[1]["env"]
+        assert set(env.keys()) == set(
+            list(os.environ.keys()) + ["PYTHONPATH", "USERPROFILE", "HOME"]
+        )
+        assert env["PYTHONPATH"] == os.getcwd()
+
+        # Updates PYTHONPATH by default.
+        monkeypatch.setenv("PYTHONPATH", "custom")
+        testdir.popen(*popen_args)
+        env = m.call_args[1]["env"]
+        assert env["PYTHONPATH"] == os.pathsep.join((os.getcwd(), "custom"))
+
+        # Uses explicit PYTHONPATH via env_update.
+        testdir.popen(*popen_args, env_update={"PYTHONPATH": "mypp", "CUSTOM_ENV": "1"})
+        env = m.call_args[1]["env"]
+        assert env["PYTHONPATH"] == "mypp"
+        assert env["CUSTOM_ENV"] == "1"
+
+        # Uses explicit env only.
+        testdir.popen(*popen_args, env={"CUSTOM_ENV": "1"})
+        env = m.call_args[1]["env"]
+        assert env == {"CUSTOM_ENV": "1"}
+
+    with pytest.raises(ValueError, match="env and env_update are mutually exclusive"):
+        testdir.popen(*popen_args, env={}, env_update={})
