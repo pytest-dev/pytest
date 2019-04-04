@@ -130,7 +130,7 @@ the ``self.db`` values in the traceback:
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: $REGENDOC_TMPDIR, inifile:
+    rootdir: /home/sweet/project
     collected 2 items
 
     test_unittest_db.py FF                                               [100%]

@@ -1,1 +1,0 @@
-Update docs for ``pytest_cmdline_parse`` hook to note availability liminations

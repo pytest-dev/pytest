@@ -74,7 +74,7 @@ marked ``smtp_connection`` fixture function.  Running the test looks like this:
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: $REGENDOC_TMPDIR, inifile:
+    rootdir: /home/sweet/project
     collected 1 item
 
     test_smtpsimple.py F                                                 [100%]
@@ -217,7 +217,7 @@ inspect what is going on and can now run the tests:
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: $REGENDOC_TMPDIR, inifile:
+    rootdir: /home/sweet/project
     collected 2 items
 
     test_module.py FF                                                    [100%]
@@ -710,7 +710,7 @@ Running the above tests results in the following test IDs being used:
    =========================== test session starts ============================
    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
    cachedir: $PYTHON_PREFIX/.pytest_cache
-   rootdir: $REGENDOC_TMPDIR, inifile:
+   rootdir: /home/sweet/project
    collected 10 items
    <Module test_anothersmtp.py>
      <Function test_showhelo[smtp.gmail.com]>
@@ -755,7 +755,7 @@ Running this test will *skip* the invocation of ``data_set`` with value ``2``:
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python
     cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: $REGENDOC_TMPDIR, inifile:
+    rootdir: /home/sweet/project
     collecting ... collected 3 items
 
     test_fixture_marks.py::test_data[0] PASSED                           [ 33%]
@@ -800,7 +800,7 @@ Here we declare an ``app`` fixture which receives the previously defined
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python
     cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: $REGENDOC_TMPDIR, inifile:
+    rootdir: /home/sweet/project
     collecting ... collected 2 items
 
     test_appsetup.py::test_smtp_connection_exists[smtp.gmail.com] PASSED [ 50%]
@@ -871,7 +871,7 @@ Let's run the tests in verbose mode and with looking at the print-output:
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python
     cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: $REGENDOC_TMPDIR, inifile:
+    rootdir: /home/sweet/project
     collecting ... collected 8 items
 
     test_module.py::test_0[1]   SETUP otherarg 1

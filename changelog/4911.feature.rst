@@ -1,1 +1,0 @@
-Doctests can be skipped now dynamically using ``pytest.skip()``.

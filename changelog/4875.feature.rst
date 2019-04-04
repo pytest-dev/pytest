@@ -1,5 +1,0 @@
-The `testpaths <https://docs.pytest.org/en/latest/reference.html#confval-testpaths>`__ configuration option is now displayed next
-to the ``rootdir`` and ``inifile`` lines in the pytest header if the option is in effect, i.e., directories or file names were
-not explicitly passed in the command line.
-
-Also, ``inifile`` is only displayed if there's a configuration file, instead of an empty ``inifile:`` string.

@@ -1,4 +1,0 @@
-``async`` test functions are skipped and a warning is emitted when a suitable
-async plugin is not installed (such as ``pytest-asyncio`` or ``pytest-trio``).
-
-Previously ``async`` functions would not execute at all but still be marked as "passed".
