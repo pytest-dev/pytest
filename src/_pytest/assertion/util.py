@@ -292,16 +292,23 @@ def _compare_eq_sequence(left, right, verbose=0):
             explanation += [u"At index %s diff: %r != %r" % (i, left[i], right[i])]
             break
     len_diff = len_left - len_right
-    if len_diff > 0:
-        explanation += [
-            u"Left contains %d more items, first extra item: %s"
-            % (len_diff, saferepr(left[len_right]))
-        ]
-    elif len_diff < 0:
-        explanation += [
-            u"Right contains %d more items, first extra item: %s"
-            % (0 - len_diff, saferepr(right[len_left]))
-        ]
+
+    if len_diff:
+        if len_diff > 0:
+            dir_with_more = "Left"
+            extra = saferepr(left[len_right])
+        elif len_diff < 0:
+            len_diff = 0 - len_diff
+            dir_with_more = "Right"
+            extra = saferepr(right[len_left])
+
+        if len_diff == 1:
+            explanation += [u"%s contains one more item: %s" % (dir_with_more, extra)]
+        else:
+            explanation += [
+                u"%s contains %d more items, first extra item: %s"
+                % (dir_with_more, len_diff, extra)
+            ]
     return explanation
 
 
@@ -337,14 +344,22 @@ def _compare_eq_dict(left, right, verbose=0):
         for k in diff:
             explanation += [saferepr({k: left[k]}) + " != " + saferepr({k: right[k]})]
     extra_left = set_left - set_right
-    if extra_left:
-        explanation.append(u"Left contains %d more items:" % len(extra_left))
+    len_extra_left = len(extra_left)
+    if len_extra_left:
+        explanation.append(
+            u"Left contains %d more item%s:"
+            % (len_extra_left, "" if len_extra_left == 1 else "s")
+        )
         explanation.extend(
             pprint.pformat({k: left[k] for k in extra_left}).splitlines()
         )
     extra_right = set_right - set_left
-    if extra_right:
-        explanation.append(u"Right contains %d more items:" % len(extra_right))
+    len_extra_right = len(extra_right)
+    if len_extra_right:
+        explanation.append(
+            u"Right contains %d more item%s:"
+            % (len_extra_right, "" if len_extra_right == 1 else "s")
+        )
         explanation.extend(
             pprint.pformat({k: right[k] for k in extra_right}).splitlines()
         )
