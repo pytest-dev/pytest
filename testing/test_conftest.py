@@ -11,17 +11,8 @@ from _pytest.config import PytestPluginManager
 from _pytest.main import EXIT_NOTESTSCOLLECTED
 from _pytest.main import EXIT_OK
 from _pytest.main import EXIT_USAGEERROR
-
-
-@pytest.fixture(scope="module", params=["global", "inpackage"])
-def basedir(request, tmpdir_factory):
-    tmpdir = tmpdir_factory.mktemp("basedir", numbered=True)
-    tmpdir.ensure("adir/conftest.py").write("a=1 ; Directory = 3")
-    tmpdir.ensure("adir/b/conftest.py").write("b=2 ; a = 1.5")
-    if request.param == "inpackage":
-        tmpdir.ensure("adir/__init__.py")
-        tmpdir.ensure("adir/b/__init__.py")
-    return tmpdir
+from _pytest.pytester import SysModulesSnapshot
+from _pytest.pytester import SysPathsSnapshot
 
 
 def ConftestWithSetinitial(path):
@@ -42,6 +33,26 @@ def conftest_setinitial(conftest, args, confcutdir=None):
 
 
 class TestConftestValueAccessGlobal(object):
+    @pytest.fixture(scope="module", params=["global", "inpackage"])
+    def basedir(self, request, tmpdir_factory):
+        tmpdir = tmpdir_factory.mktemp("basedir", numbered=True)
+        tmpdir.ensure("adir/conftest.py").write("a=1 ; Directory = 3")
+        tmpdir.ensure("adir/b/conftest.py").write("b=2 ; a = 1.5")
+        if request.param == "inpackage":
+            tmpdir.ensure("adir/__init__.py")
+            tmpdir.ensure("adir/b/__init__.py")
+
+        yield tmpdir
+
+    @pytest.fixture(autouse=True)
+    def restore(self):
+        """Restore sys.modules to prevent ConftestImportFailure when run randomly."""
+        snapmods = SysModulesSnapshot()
+        snappath = SysPathsSnapshot()
+        yield
+        snapmods.restore()
+        snappath.restore()
+
     def test_basic_init(self, basedir):
         conftest = PytestPluginManager()
         p = basedir.join("adir")
