@@ -1059,12 +1059,22 @@ class Testdir(object):
         """Invoke subprocess.Popen.
 
         This calls subprocess.Popen, making sure the current working directory
-        is in the PYTHONPATH.
+        is in the PYTHONPATH by default.
+
+        Optional keyword arguments:
+
+        :param env: OS environment to be used as is (no PYTHONPATH adjustment,
+                    nor isolation for HOME etc).
+        :param env_update: OS environment values to update the current
+                           environment with.
+                           PYTHONPATH gets adjusted if not passed in explicitly.
 
         You probably want to use :py:meth:`run` instead.
         """
         if "env" in kw:
-            env = kw["env"]
+            env = kw.pop("env")
+            if "env_update" in kw:
+                raise ValueError("env and env_update are mutually exclusive")
         else:
             env = os.environ.copy()
             env.update(self._get_isolated_env())
