@@ -795,6 +795,14 @@ class Testdir(object):
         items = [x.item for x in rec.getcalls("pytest_itemcollected")]
         return items, rec
 
+    def _get_isolated_env(self):
+        tmpdir = str(self.tmpdir)
+        return (
+            # Do not load user config.
+            ("HOME", tmpdir),
+            ("USERPROFILE", tmpdir),
+        )
+
     def inline_run(self, *args, **kwargs):
         """Run ``pytest.main()`` in-process, returning a HookRecorder.
 
@@ -819,8 +827,8 @@ class Testdir(object):
         try:
             # Do not load user config (during runs only).
             mp_run = MonkeyPatch()
-            mp_run.setenv("HOME", str(self.tmpdir))
-            mp_run.setenv("USERPROFILE", str(self.tmpdir))
+            for k, v in self._get_isolated_env():
+                mp_run.setenv(k, v)
             finalizers.append(mp_run.undo)
 
             # When running pytest inline any plugins active in the main test
@@ -1055,16 +1063,18 @@ class Testdir(object):
 
         You probably want to use :py:meth:`run` instead.
         """
-        env = os.environ.copy()
-        env_update = kw.get("env", {})
-        if "PYTHONPATH" not in env_update:
-            env_update["PYTHONPATH"] = os.pathsep.join(
-                filter(None, [os.getcwd(), env.get("PYTHONPATH", "")])
-            )
-        # Do not load user config.
-        env_update["HOME"] = str(self.tmpdir)
-        env_update["USERPROFILE"] = env["HOME"]
-        env.update(env_update)
+        if "env" in kw:
+            env = kw["env"]
+        else:
+            env = os.environ.copy()
+            env.update(self._get_isolated_env())
+
+            env_update = kw.pop("env_update", {})
+            if "PYTHONPATH" not in env_update:
+                env["PYTHONPATH"] = os.pathsep.join(
+                    filter(None, [os.getcwd(), env.get("PYTHONPATH", "")])
+                )
+            env.update(env_update)
 
         if stdin is Testdir.CLOSE_STDIN:
             kw["stdin"] = subprocess.PIPE
