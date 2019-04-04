@@ -204,31 +204,49 @@ def pytest_terminal_summary(terminalreporter):
             tr._tw.line(line)
 
 
+def _get_line_with_reprcrash_message(config, rep, termwidth):
+    """Get summary line for a report, trying to add reprcrash message."""
+    verbose_word = _get_report_str(config, rep)
+    pos = _get_pos(config, rep)
+
+    line = "%s %s" % (verbose_word, pos)
+
+    len_line = len(line)
+    ellipsis = "..."
+    len_ellipsis = len(ellipsis)
+
+    if len_line > termwidth - len_ellipsis:
+        # No space for an additional message.
+        return line
+
+    try:
+        msg = rep.longrepr.reprcrash.message
+    except AttributeError:
+        pass
+    else:
+        # Only use the first line.
+        i = msg.find("\n")
+        if i != -1:
+            msg = msg[:i]
+        len_msg = len(msg)
+
+        sep = ": "
+        len_sep = len(sep)
+        max_len = termwidth - len_line - len_sep
+        if max_len >= len_ellipsis:
+            if len_msg > max_len:
+                msg = msg[: (max_len - len_ellipsis)] + ellipsis
+            line += sep + msg
+    return line
+
+
 def show_simple(terminalreporter, lines, stat):
     failed = terminalreporter.stats.get(stat)
     if failed:
         config = terminalreporter.config
+        termwidth = terminalreporter.writer.fullwidth
         for rep in failed:
-            verbose_word = _get_report_str(config, rep)
-            pos = _get_pos(config, rep)
-
-            line = "%s %s" % (verbose_word, pos)
-            try:
-                msg = rep.longrepr.reprcrash.message
-            except AttributeError:
-                pass
-            else:
-                # Only use the first line.
-                # Might be worth having a short_message property, which
-                # could default to this behavior.
-                i = msg.find("\n")
-                if i != -1:
-                    msg = msg[:i]
-                max_len = terminalreporter.writer.fullwidth - len(line) - 2
-                if len(msg) > max_len:
-                    msg = msg[: (max_len - 1)] + "…"
-                line += ": %s" % msg
-
+            line = _get_line_with_reprcrash_message(config, rep, termwidth)
             lines.append(line)
 
 

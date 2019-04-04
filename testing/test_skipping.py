@@ -1211,3 +1211,47 @@ def test_summary_list_after_errors(testdir):
             "FAILED test_summary_list_after_errors.py::test_fail: assert 0",
         ]
     )
+
+
+def test_line_with_reprcrash(monkeypatch):
+    import _pytest.skipping
+    from _pytest.skipping import _get_line_with_reprcrash_message
+
+    def mock_get_report_str(*args):
+        return "FAILED"
+
+    def mock_get_pos(*args):
+        return "some::nodeid"
+
+    monkeypatch.setattr(_pytest.skipping, "_get_report_str", mock_get_report_str)
+    monkeypatch.setattr(_pytest.skipping, "_get_pos", mock_get_pos)
+
+    class config:
+        pass
+
+    class rep:
+        pass
+
+    f = _get_line_with_reprcrash_message
+    assert f(config, rep, 80) == "FAILED some::nodeid"
+
+    class rep:
+        class longrepr:
+            class reprcrash:
+                message = "msg"
+
+    assert f(config, rep, 80) == "FAILED some::nodeid: msg"
+    assert f(config, rep, 3) == "FAILED some::nodeid"
+
+    assert f(config, rep, 23) == "FAILED some::nodeid"
+    assert f(config, rep, 24) == "FAILED some::nodeid: msg"
+
+    rep.longrepr.reprcrash.message = "some longer message"
+    assert f(config, rep, 23) == "FAILED some::nodeid"
+    assert f(config, rep, 24) == "FAILED some::nodeid: ..."
+    assert f(config, rep, 25) == "FAILED some::nodeid: s..."
+
+    rep.longrepr.reprcrash.message = "some\nmessage"
+    assert f(config, rep, 24) == "FAILED some::nodeid: ..."
+    assert f(config, rep, 25) == "FAILED some::nodeid: some"
+    assert f(config, rep, 80) == "FAILED some::nodeid: some"
