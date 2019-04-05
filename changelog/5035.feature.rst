@@ -1,0 +1,1 @@
+The ``--cache-show`` option/action accepts an optional glob to show only matching cache entries.

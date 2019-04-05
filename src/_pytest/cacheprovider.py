@@ -292,9 +292,13 @@ def pytest_addoption(parser):
     )
     group.addoption(
         "--cache-show",
-        action="store_true",
+        action="append",
+        nargs="?",
         dest="cacheshow",
-        help="show cache contents, don't perform collection or tests",
+        help=(
+            "show cache contents, don't perform collection or tests. "
+            "Optional argument: glob (default: '*')."
+        ),
     )
     group.addoption(
         "--cache-clear",
@@ -369,11 +373,16 @@ def cacheshow(config, session):
     if not config.cache._cachedir.is_dir():
         tw.line("cache is empty")
         return 0
+
+    glob = config.option.cacheshow[0]
+    if glob is None:
+        glob = "*"
+
     dummy = object()
     basedir = config.cache._cachedir
     vdir = basedir / "v"
-    tw.sep("-", "cache values")
-    for valpath in sorted(x for x in vdir.rglob("*") if x.is_file()):
+    tw.sep("-", "cache values for %r" % glob)
+    for valpath in sorted(x for x in vdir.rglob(glob) if x.is_file()):
         key = valpath.relative_to(vdir)
         val = config.cache.get(key, dummy)
         if val is dummy:
@@ -385,8 +394,8 @@ def cacheshow(config, session):
 
     ddir = basedir / "d"
     if ddir.is_dir():
-        contents = sorted(ddir.rglob("*"))
-        tw.sep("-", "cache directories")
+        contents = sorted(ddir.rglob(glob))
+        tw.sep("-", "cache directories for %r" % glob)
         for p in contents:
             # if p.check(dir=1):
             #    print("%s/" % p.relto(basedir))
