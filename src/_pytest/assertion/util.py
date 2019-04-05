@@ -297,7 +297,7 @@ def _compare_eq_sequence(left, right, verbose=0):
         if len_diff > 0:
             dir_with_more = "Left"
             extra = saferepr(left[len_right])
-        elif len_diff < 0:
+        else:
             len_diff = 0 - len_diff
             dir_with_more = "Right"
             extra = saferepr(right[len_left])
