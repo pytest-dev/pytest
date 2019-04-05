@@ -1216,50 +1216,67 @@ def test_summary_list_after_errors(testdir):
 def test_line_with_reprcrash(monkeypatch):
     import _pytest.skipping
     from _pytest.skipping import _get_line_with_reprcrash_message
+    from wcwidth import wcswidth
+
+    mocked_verbose_word = "FAILED"
 
     def mock_get_report_str(*args):
-        return "FAILED"
-
-    def mock_get_pos(*args):
-        return "some::nodeid"
+        return mocked_verbose_word
 
     monkeypatch.setattr(_pytest.skipping, "_get_report_str", mock_get_report_str)
+
+    mocked_pos = "some::nodeid"
+
+    def mock_get_pos(*args):
+        return mocked_pos
+
     monkeypatch.setattr(_pytest.skipping, "_get_pos", mock_get_pos)
 
     class config:
         pass
 
     class rep:
-        pass
-
-    f = _get_line_with_reprcrash_message
-    assert f(config, rep, 80) == "FAILED some::nodeid"
-
-    class rep:
         class longrepr:
             class reprcrash:
-                message = "msg"
+                pass
 
-    assert f(config, rep, 80) == "FAILED some::nodeid - msg"
-    assert f(config, rep, 3) == "FAILED some::nodeid"
+    def check(msg, width, expected):
+        if msg:
+            rep.longrepr.reprcrash.message = msg
+        actual = _get_line_with_reprcrash_message(config, rep, width)
 
-    assert f(config, rep, 24) == "FAILED some::nodeid"
-    assert f(config, rep, 25) == "FAILED some::nodeid - msg"
+        assert actual == expected
+        if actual != "%s %s" % (mocked_verbose_word, mocked_pos):
+            assert len(actual) <= width
+            assert wcswidth(actual) <= width
 
-    rep.longrepr.reprcrash.message = "some longer message"
-    assert f(config, rep, 24) == "FAILED some::nodeid"
-    assert f(config, rep, 25) == "FAILED some::nodeid - ..."
-    assert f(config, rep, 26) == "FAILED some::nodeid - s..."
+    # AttributeError with message
+    check(None, 80, "FAILED some::nodeid")
 
-    rep.longrepr.reprcrash.message = "some\nmessage"
-    assert f(config, rep, 25) == "FAILED some::nodeid - ..."
-    assert f(config, rep, 26) == "FAILED some::nodeid - some"
-    assert f(config, rep, 80) == "FAILED some::nodeid - some"
+    check("msg", 80, "FAILED some::nodeid - msg")
+    check("msg", 3, "FAILED some::nodeid")
+
+    check("msg", 24, "FAILED some::nodeid")
+    check("msg", 25, "FAILED some::nodeid - msg")
+
+    check("some longer msg", 24, "FAILED some::nodeid")
+    check("some longer msg", 25, "FAILED some::nodeid - ...")
+    check("some longer msg", 26, "FAILED some::nodeid - s...")
+
+    check("some\nmessage", 25, "FAILED some::nodeid - ...")
+    check("some\nmessage", 26, "FAILED some::nodeid - some")
+    check("some\nmessage", 80, "FAILED some::nodeid - some")
 
     # Test unicode safety.
-    rep.longrepr.reprcrash.message = "😄😄😄😄😄\n2nd line"
-    assert f(config, rep, 26) == "FAILED some::nodeid - 😄..."
-    # XXX: this is actually wrong - since the character uses two terminal
-    # cells.
-    rep.longrepr.reprcrash.message = "😄😄😄😄\n2nd line"
-    assert f(config, rep, 26) == "FAILED some::nodeid - 😄😄😄😄"
+    check("😄😄😄😄😄\n2nd line", 25, "FAILED some::nodeid - ...")
+    check("😄😄😄😄😄\n2nd line", 26, "FAILED some::nodeid - ...")
+    check("😄😄😄😄😄\n2nd line", 27, "FAILED some::nodeid - 😄...")
+    check("😄😄😄😄😄\n2nd line", 28, "FAILED some::nodeid - 😄...")
+    check("😄😄😄😄😄\n2nd line", 29, "FAILED some::nodeid - 😄😄...")
+
+    mocked_pos = "nodeid::😄::withunicode"
+    check("😄😄😄😄😄\n2nd line", 29, "FAILED nodeid::😄::withunicode")
+    check("😄😄😄😄😄\n2nd line", 40, "FAILED nodeid::😄::withunicode - 😄😄...")
+    check("😄😄😄😄😄\n2nd line", 41, "FAILED nodeid::😄::withunicode - 😄😄...")
+    check("😄😄😄😄😄\n2nd line", 42, "FAILED nodeid::😄::withunicode - 😄😄😄...")
+    check("😄😄😄😄😄\n2nd line", 80, "FAILED nodeid::😄::withunicode - 😄😄😄😄😄")

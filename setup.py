@@ -14,6 +14,7 @@ INSTALL_REQUIRES = [
     'pathlib2>=2.2.0;python_version<"3.6"',
     'colorama;sys_platform=="win32"',
     "pluggy>=0.9",
+    "wcwidth",
 ]
 
 

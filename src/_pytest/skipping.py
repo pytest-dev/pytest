@@ -206,11 +206,13 @@ def pytest_terminal_summary(terminalreporter):
 
 def _get_line_with_reprcrash_message(config, rep, termwidth):
     """Get summary line for a report, trying to add reprcrash message."""
+    from wcwidth import wcswidth
+
     verbose_word = _get_report_str(config, rep)
     pos = _get_pos(config, rep)
 
     line = "%s %s" % (verbose_word, pos)
-    len_line = len(line)
+    len_line = wcswidth(line)
     ellipsis, len_ellipsis = "...", 3
     if len_line > termwidth - len_ellipsis:
         # No space for an additional message.
@@ -225,13 +227,17 @@ def _get_line_with_reprcrash_message(config, rep, termwidth):
         i = msg.find("\n")
         if i != -1:
             msg = msg[:i]
-        len_msg = len(msg)
+        len_msg = wcswidth(msg)
 
         sep, len_sep = " - ", 3
         max_len_msg = termwidth - len_line - len_sep
         if max_len_msg >= len_ellipsis:
             if len_msg > max_len_msg:
-                msg = msg[: (max_len_msg - len_ellipsis)] + ellipsis
+                max_len_msg -= len_ellipsis
+                msg = msg[:max_len_msg]
+                while wcswidth(msg) > max_len_msg:
+                    msg = msg[:-1]
+                msg += ellipsis
             line += sep + msg
     return line
 
