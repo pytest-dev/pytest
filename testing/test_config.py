@@ -436,7 +436,7 @@ class TestConfigAPI(object):
 
 
 class TestConfigFromdictargs(object):
-    def test_basic_behavior(self):
+    def test_basic_behavior(self, _sys_snapshot):
         from _pytest.config import Config
 
         option_dict = {"verbose": 444, "foo": "bar", "capture": "no"}
@@ -450,7 +450,7 @@ class TestConfigFromdictargs(object):
         assert config.option.capture == "no"
         assert config.args == args
 
-    def test_origargs(self):
+    def test_origargs(self, _sys_snapshot):
         """Show that fromdictargs can handle args in their "orig" format"""
         from _pytest.config import Config
 
@@ -1057,7 +1057,7 @@ class TestOverrideIniArgs(object):
             assert rootdir == tmpdir
             assert inifile is None
 
-    def test_addopts_before_initini(self, monkeypatch, _config_for_test):
+    def test_addopts_before_initini(self, monkeypatch, _config_for_test, _sys_snapshot):
         cache_dir = ".custom_cache"
         monkeypatch.setenv("PYTEST_ADDOPTS", "-o cache_dir=%s" % cache_dir)
         config = _config_for_test
@@ -1092,7 +1092,7 @@ class TestOverrideIniArgs(object):
         )
         assert result.ret == _pytest.main.EXIT_USAGEERROR
 
-    def test_override_ini_does_not_contain_paths(self, _config_for_test):
+    def test_override_ini_does_not_contain_paths(self, _config_for_test, _sys_snapshot):
         """Check that -o no longer swallows all options after it (#3103)"""
         config = _config_for_test
         config._preparse(["-o", "cache_dir=/cache", "/some/test/path"])

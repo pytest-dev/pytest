@@ -410,7 +410,7 @@ def test_deindent():
     assert lines == ["def f():", "    def g():", "        pass"]
 
 
-def test_source_of_class_at_eof_without_newline(tmpdir):
+def test_source_of_class_at_eof_without_newline(tmpdir, _sys_snapshot):
     # this test fails because the implicit inspect.getsource(A) below
     # does not return the "x = 1" last line.
     source = _pytest._code.Source(

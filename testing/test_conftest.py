@@ -11,8 +11,6 @@ from _pytest.config import PytestPluginManager
 from _pytest.main import EXIT_NOTESTSCOLLECTED
 from _pytest.main import EXIT_OK
 from _pytest.main import EXIT_USAGEERROR
-from _pytest.pytester import SysModulesSnapshot
-from _pytest.pytester import SysPathsSnapshot
 
 
 def ConftestWithSetinitial(path):
@@ -32,6 +30,7 @@ def conftest_setinitial(conftest, args, confcutdir=None):
     conftest._set_initial_conftests(Namespace())
 
 
+@pytest.mark.usefixtures("_sys_snapshot")
 class TestConftestValueAccessGlobal(object):
     @pytest.fixture(scope="module", params=["global", "inpackage"])
     def basedir(self, request, tmpdir_factory):
@@ -43,15 +42,6 @@ class TestConftestValueAccessGlobal(object):
             tmpdir.ensure("adir/b/__init__.py")
 
         yield tmpdir
-
-    @pytest.fixture(autouse=True)
-    def restore(self):
-        """Restore sys.modules to prevent ConftestImportFailure when run randomly."""
-        snapmods = SysModulesSnapshot()
-        snappath = SysPathsSnapshot()
-        yield
-        snapmods.restore()
-        snappath.restore()
 
     def test_basic_init(self, basedir):
         conftest = PytestPluginManager()
@@ -91,7 +81,7 @@ class TestConftestValueAccessGlobal(object):
         assert path.purebasename.startswith("conftest")
 
 
-def test_conftest_in_nonpkg_with_init(tmpdir):
+def test_conftest_in_nonpkg_with_init(tmpdir, _sys_snapshot):
     tmpdir.ensure("adir-1.0/conftest.py").write("a=1 ; Directory = 3")
     tmpdir.ensure("adir-1.0/b/conftest.py").write("b=2 ; a = 1.5")
     tmpdir.ensure("adir-1.0/b/__init__.py")

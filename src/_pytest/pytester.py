@@ -336,6 +336,15 @@ def testdir(request, tmpdir_factory):
 
 
 @pytest.fixture
+def _sys_snapshot():
+    snappaths = SysPathsSnapshot()
+    snapmods = SysModulesSnapshot()
+    yield
+    snapmods.restore()
+    snappaths.restore()
+
+
+@pytest.fixture
 def _config_for_test():
     from _pytest.config import get_config
 
