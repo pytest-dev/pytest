@@ -1255,3 +1255,11 @@ def test_line_with_reprcrash(monkeypatch):
     assert f(config, rep, 25) == "FAILED some::nodeid - ..."
     assert f(config, rep, 26) == "FAILED some::nodeid - some"
     assert f(config, rep, 80) == "FAILED some::nodeid - some"
+
+    # Test unicode safety.
+    rep.longrepr.reprcrash.message = "😄😄😄😄😄\n2nd line"
+    assert f(config, rep, 26) == "FAILED some::nodeid - 😄..."
+    # XXX: this is actually wrong - since the character uses two terminal
+    # cells.
+    rep.longrepr.reprcrash.message = "😄😄😄😄\n2nd line"
+    assert f(config, rep, 26) == "FAILED some::nodeid - 😄😄😄😄"
