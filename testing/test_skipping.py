@@ -1208,7 +1208,7 @@ def test_summary_list_after_errors(testdir):
         [
             "=* FAILURES *=",
             "*= short test summary info =*",
-            "FAILED test_summary_list_after_errors.py::test_fail: assert 0",
+            "FAILED test_summary_list_after_errors.py::test_fail - assert 0",
         ]
     )
 
@@ -1240,18 +1240,18 @@ def test_line_with_reprcrash(monkeypatch):
             class reprcrash:
                 message = "msg"
 
-    assert f(config, rep, 80) == "FAILED some::nodeid: msg"
+    assert f(config, rep, 80) == "FAILED some::nodeid - msg"
     assert f(config, rep, 3) == "FAILED some::nodeid"
 
-    assert f(config, rep, 23) == "FAILED some::nodeid"
-    assert f(config, rep, 24) == "FAILED some::nodeid: msg"
+    assert f(config, rep, 24) == "FAILED some::nodeid"
+    assert f(config, rep, 25) == "FAILED some::nodeid - msg"
 
     rep.longrepr.reprcrash.message = "some longer message"
-    assert f(config, rep, 23) == "FAILED some::nodeid"
-    assert f(config, rep, 24) == "FAILED some::nodeid: ..."
-    assert f(config, rep, 25) == "FAILED some::nodeid: s..."
+    assert f(config, rep, 24) == "FAILED some::nodeid"
+    assert f(config, rep, 25) == "FAILED some::nodeid - ..."
+    assert f(config, rep, 26) == "FAILED some::nodeid - s..."
 
     rep.longrepr.reprcrash.message = "some\nmessage"
-    assert f(config, rep, 24) == "FAILED some::nodeid: ..."
-    assert f(config, rep, 25) == "FAILED some::nodeid: some"
-    assert f(config, rep, 80) == "FAILED some::nodeid: some"
+    assert f(config, rep, 25) == "FAILED some::nodeid - ..."
+    assert f(config, rep, 26) == "FAILED some::nodeid - some"
+    assert f(config, rep, 80) == "FAILED some::nodeid - some"
