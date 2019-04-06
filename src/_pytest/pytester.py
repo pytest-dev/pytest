@@ -1034,7 +1034,14 @@ class Testdir(object):
             if colitem.name == name:
                 return colitem
 
-    def popen(self, cmdargs, stdout, stderr, stdin=CLOSE_STDIN, **kw):
+    def popen(
+        self,
+        cmdargs,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        stdin=CLOSE_STDIN,
+        **kw
+    ):
         """Invoke subprocess.Popen.
 
         This calls subprocess.Popen making sure the current working directory
