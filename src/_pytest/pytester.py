@@ -36,6 +36,8 @@ IGNORE_PAM = [  # filenames added when obtaining details about the current user
     u"/var/lib/sss/mc/passwd"
 ]
 
+CLOSE_STDIN = object
+
 
 def pytest_addoption(parser):
     parser.addoption(
@@ -1032,7 +1034,7 @@ class Testdir(object):
             if colitem.name == name:
                 return colitem
 
-    def popen(self, cmdargs, stdout, stderr, **kw):
+    def popen(self, cmdargs, stdout, stderr, stdin=CLOSE_STDIN, **kw):
         """Invoke subprocess.Popen.
 
         This calls subprocess.Popen making sure the current working directory
@@ -1050,10 +1052,18 @@ class Testdir(object):
         env["USERPROFILE"] = env["HOME"]
         kw["env"] = env
 
-        popen = subprocess.Popen(
-            cmdargs, stdin=subprocess.PIPE, stdout=stdout, stderr=stderr, **kw
-        )
-        popen.stdin.close()
+        if stdin is CLOSE_STDIN:
+            kw["stdin"] = subprocess.PIPE
+        elif isinstance(stdin, bytes):
+            kw["stdin"] = subprocess.PIPE
+        else:
+            kw["stdin"] = stdin
+
+        popen = subprocess.Popen(cmdargs, stdout=stdout, stderr=stderr, **kw)
+        if stdin is CLOSE_STDIN:
+            popen.stdin.close()
+        elif isinstance(stdin, bytes):
+            popen.stdin.write(stdin)
 
         return popen
 
@@ -1065,6 +1075,10 @@ class Testdir(object):
         :param args: the sequence of arguments to pass to `subprocess.Popen()`
         :param timeout: the period in seconds after which to timeout and raise
             :py:class:`Testdir.TimeoutExpired`
+        :param stdin: optional standard input.  Bytes are being send, closing
+            the pipe, otherwise it is passed through to ``popen``.
+            Defaults to ``CLOSE_STDIN``, which translates to using a pipe
+            (``subprocess.PIPE``) that gets closed.
 
         Returns a :py:class:`RunResult`.
 
@@ -1072,7 +1086,12 @@ class Testdir(object):
         __tracebackhide__ = True
 
         timeout = kwargs.pop("timeout", None)
+        stdin = kwargs.pop("stdin", CLOSE_STDIN)
         raise_on_kwargs(kwargs)
+
+        popen_kwargs = {"stdin": stdin}
+        if isinstance(stdin, bytes):
+            popen_kwargs["stdin"] = subprocess.PIPE
 
         cmdargs = [
             str(arg) if isinstance(arg, py.path.local) else arg for arg in cmdargs
@@ -1086,8 +1105,15 @@ class Testdir(object):
         try:
             now = time.time()
             popen = self.popen(
-                cmdargs, stdout=f1, stderr=f2, close_fds=(sys.platform != "win32")
+                cmdargs,
+                stdout=f1,
+                stderr=f2,
+                close_fds=(sys.platform != "win32"),
+                **popen_kwargs
             )
+            if isinstance(stdin, bytes):
+                popen.stdin.write(stdin)
+                popen.stdin.close()
 
             def handle_timeout():
                 __tracebackhide__ = True

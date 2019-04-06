@@ -4,6 +4,7 @@ from __future__ import division
 from __future__ import print_function
 
 import os
+import subprocess
 import sys
 import time
 
@@ -482,3 +483,60 @@ def test_pytester_addopts(request, monkeypatch):
         testdir.finalize()
 
     assert os.environ["PYTEST_ADDOPTS"] == "--orig-unused"
+
+
+def test_run_stdin(testdir):
+    with pytest.raises(testdir.TimeoutExpired):
+        testdir.run(
+            sys.executable,
+            "-c",
+            "import sys; print(sys.stdin.read())",
+            stdin=subprocess.PIPE,
+            timeout=0.1,
+        )
+
+    with pytest.raises(testdir.TimeoutExpired):
+        result = testdir.run(
+            sys.executable,
+            "-c",
+            "import sys, time; time.sleep(1); print(sys.stdin.read())",
+            stdin=b"input\n2ndline",
+            timeout=0.1,
+        )
+
+    result = testdir.run(
+        sys.executable,
+        "-c",
+        "import sys; print(sys.stdin.read())",
+        stdin=b"input\n2ndline",
+    )
+    assert result.stdout.lines == ["input", "2ndline"]
+    assert result.stderr.str() == ""
+    assert result.ret == 0
+
+
+def test_popen_stdin_pipe(testdir):
+    proc = testdir.popen(
+        [sys.executable, "-c", "import sys; print(sys.stdin.read())"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        stdin=subprocess.PIPE,
+    )
+    stdin = b"input\n2ndline"
+    stdout, stderr = proc.communicate(input=stdin)
+    assert stdout.decode("utf8").splitlines() == ["input", "2ndline"]
+    assert stderr == b""
+    assert proc.returncode == 0
+
+
+def test_popen_stdin_bytes(testdir):
+    proc = testdir.popen(
+        [sys.executable, "-c", "import sys; print(sys.stdin.read())"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        stdin=b"input\n2ndline",
+    )
+    stdout, stderr = proc.communicate()
+    assert stdout.decode("utf8").splitlines() == ["input", "2ndline"]
+    assert stderr == b""
+    assert proc.returncode == 0
