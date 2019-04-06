@@ -864,15 +864,41 @@ class TerminalReporter:
             self._tw.line(content)
 
     def summary_stats(self):
-        session_duration = time.time() - self._sessionstarttime
-        (line, color) = build_summary_stats_line(self.stats)
-        msg = "{} in {}".format(line, format_session_duration(session_duration))
-        markup = {color: True, "bold": True}
+        if self.verbosity < -1:
+            return
 
-        if self.verbosity >= 0:
-            self.write_sep("=", msg, **markup)
-        if self.verbosity == -1:
-            self.write_line(msg, **markup)
+        session_duration = time.time() - self._sessionstarttime
+        (parts, main_color) = build_summary_stats_line(self.stats)
+        line_parts = []
+
+        display_sep = self.verbosity >= 0
+        if display_sep:
+            fullwidth = self._tw.fullwidth
+        for text, markup in parts:
+            with_markup = self._tw.markup(text, **markup)
+            if display_sep:
+                fullwidth += len(with_markup) - len(text)
+            line_parts.append(with_markup)
+        msg = ", ".join(line_parts)
+
+        main_markup = {main_color: True}
+        duration = " in {}".format(format_session_duration(session_duration))
+        duration_with_markup = self._tw.markup(duration, **main_markup)
+        if display_sep:
+            fullwidth += len(duration_with_markup) - len(duration)
+        msg += duration_with_markup
+
+        if display_sep:
+            markup_for_end_sep = self._tw.markup("", **main_markup)
+            if markup_for_end_sep.endswith("\x1b[0m"):
+                markup_for_end_sep = markup_for_end_sep[:-4]
+            fullwidth += len(markup_for_end_sep)
+            msg += markup_for_end_sep
+
+        if display_sep:
+            self.write_sep("=", msg, fullwidth=fullwidth, **main_markup)
+        else:
+            self.write_line(msg, **main_markup)
 
     def short_test_summary(self):
         if not self.reportchars:
@@ -1011,6 +1037,15 @@ def _folded_skips(skipped):
     return values
 
 
+_color_for_type = {
+    "failed": "red",
+    "error": "red",
+    "warnings": "yellow",
+    "passed": "green",
+}
+_color_for_type_default = "yellow"
+
+
 def build_summary_stats_line(stats):
     known_types = (
         "failed passed skipped deselected xfailed xpassed warnings error".split()
@@ -1021,6 +1056,17 @@ def build_summary_stats_line(stats):
             if found_type:  # setup/teardown reports have an empty key, ignore them
                 known_types.append(found_type)
                 unknown_type_seen = True
+
+    # main color
+    if "failed" in stats or "error" in stats:
+        main_color = "red"
+    elif "warnings" in stats or unknown_type_seen:
+        main_color = "yellow"
+    elif "passed" in stats:
+        main_color = "green"
+    else:
+        main_color = "yellow"
+
     parts = []
     for key in known_types:
         reports = stats.get(key, None)
@@ -1028,23 +1074,14 @@ def build_summary_stats_line(stats):
             count = sum(
                 1 for rep in reports if getattr(rep, "count_towards_summary", True)
             )
-            parts.append("%d %s" % (count, key))
+            color = _color_for_type.get(key, _color_for_type_default)
+            markup = {color: True, "bold": color == main_color}
+            parts.append(("%d %s" % (count, key), markup))
 
-    if parts:
-        line = ", ".join(parts)
-    else:
-        line = "no tests ran"
+    if not parts:
+        parts = [("no tests ran", {_color_for_type_default: True})]
 
-    if "failed" in stats or "error" in stats:
-        color = "red"
-    elif "warnings" in stats or unknown_type_seen:
-        color = "yellow"
-    elif "passed" in stats:
-        color = "green"
-    else:
-        color = "yellow"
-
-    return line, color
+    return parts, main_color
 
 
 def _plugin_nameversions(plugininfo):

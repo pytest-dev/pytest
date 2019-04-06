@@ -164,7 +164,7 @@ class TestTerminal:
         child.expect(r"collecting 2 items")
         child.expect(r"collected 2 items")
         rest = child.read().decode("utf8")
-        assert "2 passed in" in rest
+        assert "= \x1b[32m\x1b[1m2 passed\x1b[0m\x1b[32m in" in rest
 
     def test_itemreport_subclasses_show_subclassed_file(self, testdir):
         testdir.makepyfile(
@@ -1252,42 +1252,123 @@ def test_terminal_summary_warnings_header_once(testdir):
         # dict value, not the actual contents, so tuples of anything
         # suffice
         # Important statuses -- the highest priority of these always wins
-        ("red", "1 failed", {"failed": (1,)}),
-        ("red", "1 failed, 1 passed", {"failed": (1,), "passed": (1,)}),
-        ("red", "1 error", {"error": (1,)}),
-        ("red", "1 passed, 1 error", {"error": (1,), "passed": (1,)}),
+        ("red", [("1 failed", {"bold": True, "red": True})], {"failed": (1,)}),
+        (
+            "red",
+            [
+                ("1 failed", {"bold": True, "red": True}),
+                ("1 passed", {"bold": False, "green": True}),
+            ],
+            {"failed": (1,), "passed": (1,)},
+        ),
+        ("red", [("1 error", {"bold": True, "red": True})], {"error": (1,)}),
+        (
+            "red",
+            [
+                ("1 passed", {"bold": False, "green": True}),
+                ("1 error", {"bold": True, "red": True}),
+            ],
+            {"error": (1,), "passed": (1,)},
+        ),
         # (a status that's not known to the code)
-        ("yellow", "1 weird", {"weird": (1,)}),
-        ("yellow", "1 passed, 1 weird", {"weird": (1,), "passed": (1,)}),
-        ("yellow", "1 warnings", {"warnings": (1,)}),
-        ("yellow", "1 passed, 1 warnings", {"warnings": (1,), "passed": (1,)}),
-        ("green", "5 passed", {"passed": (1, 2, 3, 4, 5)}),
+        ("yellow", [("1 weird", {"bold": True, "yellow": True})], {"weird": (1,)}),
+        (
+            "yellow",
+            [
+                ("1 passed", {"bold": False, "green": True}),
+                ("1 weird", {"bold": True, "yellow": True}),
+            ],
+            {"weird": (1,), "passed": (1,)},
+        ),
+        (
+            "yellow",
+            [("1 warnings", {"bold": True, "yellow": True})],
+            {"warnings": (1,)},
+        ),
+        (
+            "yellow",
+            [
+                ("1 passed", {"bold": False, "green": True}),
+                ("1 warnings", {"bold": True, "yellow": True}),
+            ],
+            {"warnings": (1,), "passed": (1,)},
+        ),
+        (
+            "green",
+            [("5 passed", {"bold": True, "green": True})],
+            {"passed": (1, 2, 3, 4, 5)},
+        ),
         # "Boring" statuses.  These have no effect on the color of the summary
         # line.  Thus, if *every* test has a boring status, the summary line stays
         # at its default color, i.e. yellow, to warn the user that the test run
         # produced no useful information
-        ("yellow", "1 skipped", {"skipped": (1,)}),
-        ("green", "1 passed, 1 skipped", {"skipped": (1,), "passed": (1,)}),
-        ("yellow", "1 deselected", {"deselected": (1,)}),
-        ("green", "1 passed, 1 deselected", {"deselected": (1,), "passed": (1,)}),
-        ("yellow", "1 xfailed", {"xfailed": (1,)}),
-        ("green", "1 passed, 1 xfailed", {"xfailed": (1,), "passed": (1,)}),
-        ("yellow", "1 xpassed", {"xpassed": (1,)}),
-        ("green", "1 passed, 1 xpassed", {"xpassed": (1,), "passed": (1,)}),
+        ("yellow", [("1 skipped", {"bold": True, "yellow": True})], {"skipped": (1,)}),
+        (
+            "green",
+            [
+                ("1 passed", {"bold": True, "green": True}),
+                ("1 skipped", {"bold": False, "yellow": True}),
+            ],
+            {"skipped": (1,), "passed": (1,)},
+        ),
+        (
+            "yellow",
+            [("1 deselected", {"bold": True, "yellow": True})],
+            {"deselected": (1,)},
+        ),
+        (
+            "green",
+            [
+                ("1 passed", {"bold": True, "green": True}),
+                ("1 deselected", {"bold": False, "yellow": True}),
+            ],
+            {"deselected": (1,), "passed": (1,)},
+        ),
+        ("yellow", [("1 xfailed", {"bold": True, "yellow": True})], {"xfailed": (1,)}),
+        (
+            "green",
+            [
+                ("1 passed", {"bold": True, "green": True}),
+                ("1 xfailed", {"bold": False, "yellow": True}),
+            ],
+            {"xfailed": (1,), "passed": (1,)},
+        ),
+        ("yellow", [("1 xpassed", {"bold": True, "yellow": True})], {"xpassed": (1,)}),
+        (
+            "green",
+            [
+                ("1 passed", {"bold": True, "green": True}),
+                ("1 xpassed", {"bold": False, "yellow": True}),
+            ],
+            {"xpassed": (1,), "passed": (1,)},
+        ),
         # Likewise if no tests were found at all
-        ("yellow", "no tests ran", {}),
+        ("yellow", [("no tests ran", {"yellow": True})], {}),
         # Test the empty-key special case
-        ("yellow", "no tests ran", {"": (1,)}),
-        ("green", "1 passed", {"": (1,), "passed": (1,)}),
+        ("yellow", [("no tests ran", {"yellow": True})], {"": (1,)}),
+        (
+            "green",
+            [("1 passed", {"bold": True, "green": True})],
+            {"": (1,), "passed": (1,)},
+        ),
         # A couple more complex combinations
         (
             "red",
-            "1 failed, 2 passed, 3 xfailed",
+            [
+                ("1 failed", {"bold": True, "red": True}),
+                ("2 passed", {"bold": False, "green": True}),
+                ("3 xfailed", {"bold": False, "yellow": True}),
+            ],
             {"passed": (1, 2), "failed": (1,), "xfailed": (1, 2, 3)},
         ),
         (
             "green",
-            "1 passed, 2 skipped, 3 deselected, 2 xfailed",
+            [
+                ("1 passed", {"bold": True, "green": True}),
+                ("2 skipped", {"bold": False, "yellow": True}),
+                ("3 deselected", {"bold": False, "yellow": True}),
+                ("2 xfailed", {"bold": False, "yellow": True}),
+            ],
             {
                 "passed": (1,),
                 "skipped": (1, 2),
@@ -1313,11 +1394,11 @@ def test_skip_counting_towards_summary():
     r1 = DummyReport()
     r2 = DummyReport()
     res = build_summary_stats_line({"failed": (r1, r2)})
-    assert res == ("2 failed", "red")
+    assert res == ([("2 failed", {"bold": True, "red": True})], "red")
 
     r1.count_towards_summary = False
     res = build_summary_stats_line({"failed": (r1, r2)})
-    assert res == ("1 failed", "red")
+    assert res == ([("1 failed", {"bold": True, "red": True})], "red")
 
 
 class TestClassicOutputStyle:
