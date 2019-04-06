@@ -1,3 +1,4 @@
+# coding=utf8
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
@@ -1268,15 +1269,17 @@ def test_line_with_reprcrash(monkeypatch):
     check("some\nmessage", 80, "FAILED some::nodeid - some")
 
     # Test unicode safety.
-    check("😄😄😄😄😄\n2nd line", 25, "FAILED some::nodeid - ...")
-    check("😄😄😄😄😄\n2nd line", 26, "FAILED some::nodeid - ...")
-    check("😄😄😄😄😄\n2nd line", 27, "FAILED some::nodeid - 😄...")
-    check("😄😄😄😄😄\n2nd line", 28, "FAILED some::nodeid - 😄...")
-    check("😄😄😄😄😄\n2nd line", 29, "FAILED some::nodeid - 😄😄...")
+    check(u"😄😄😄😄😄\n2nd line", 25, u"FAILED some::nodeid - ...")
+    check(u"😄😄😄😄😄\n2nd line", 26, u"FAILED some::nodeid - ...")
+    check(u"😄😄😄😄😄\n2nd line", 27, u"FAILED some::nodeid - 😄...")
+    check(u"😄😄😄😄😄\n2nd line", 28, u"FAILED some::nodeid - 😄...")
+    check(u"😄😄😄😄😄\n2nd line", 29, u"FAILED some::nodeid - 😄😄...")
 
-    mocked_pos = "nodeid::😄::withunicode"
-    check("😄😄😄😄😄\n2nd line", 29, "FAILED nodeid::😄::withunicode")
-    check("😄😄😄😄😄\n2nd line", 40, "FAILED nodeid::😄::withunicode - 😄😄...")
-    check("😄😄😄😄😄\n2nd line", 41, "FAILED nodeid::😄::withunicode - 😄😄...")
-    check("😄😄😄😄😄\n2nd line", 42, "FAILED nodeid::😄::withunicode - 😄😄😄...")
-    check("😄😄😄😄😄\n2nd line", 80, "FAILED nodeid::😄::withunicode - 😄😄😄😄😄")
+    # NOTE: constructed, not sure if this is supported.
+    # It would fail if not using u"" in Python 2 for mocked_pos.
+    mocked_pos = u"nodeid::😄::withunicode"
+    check(u"😄😄😄😄😄\n2nd line", 29, u"FAILED nodeid::😄::withunicode")
+    check(u"😄😄😄😄😄\n2nd line", 40, u"FAILED nodeid::😄::withunicode - 😄😄...")
+    check(u"😄😄😄😄😄\n2nd line", 41, u"FAILED nodeid::😄::withunicode - 😄😄...")
+    check(u"😄😄😄😄😄\n2nd line", 42, u"FAILED nodeid::😄::withunicode - 😄😄😄...")
+    check(u"😄😄😄😄😄\n2nd line", 80, u"FAILED nodeid::😄::withunicode - 😄😄😄😄😄")
