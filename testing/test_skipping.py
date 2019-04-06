@@ -1242,6 +1242,7 @@ def test_line_with_reprcrash(monkeypatch):
                 pass
 
     def check(msg, width, expected):
+        __tracebackhide__ = True
         if msg:
             rep.longrepr.reprcrash.message = msg
         actual = _get_line_with_reprcrash_message(config, rep, width)
