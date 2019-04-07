@@ -830,13 +830,19 @@ def test_getreportopt():
     config.option.reportchars = "sfxw"
     assert getreportopt(config) == "sfx"
 
-    config.option.reportchars = "sfx"
+    # Now with --disable-warnings.
     config.option.disable_warnings = False
+    config.option.reportchars = "a"
+    assert getreportopt(config) == "sxXwEf"  # NOTE: "w" included!
+
+    config.option.reportchars = "sfx"
     assert getreportopt(config) == "sfxw"
 
     config.option.reportchars = "sfxw"
-    config.option.disable_warnings = False
     assert getreportopt(config) == "sfxw"
+
+    config.option.reportchars = "a"
+    assert getreportopt(config) == "sxXwEf"  # NOTE: "w" included!
 
     config.option.reportchars = "A"
     assert getreportopt(config) == "sxXwEfpP"
