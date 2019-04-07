@@ -83,7 +83,7 @@ def pytest_addoption(parser):
         metavar="chars",
         help="show extra test summary info as specified by chars: (f)ailed, "
         "(E)rror, (s)kipped, (x)failed, (X)passed, "
-        "(p)assed, (P)assed with output, (a)ll except passed (p/P). "
+        "(p)assed, (P)assed with output, (a)ll except passed (p/P), or (A)ll. "
         "Warnings are displayed at all times except when "
         "--disable-warnings is set.",
     )
@@ -166,10 +166,13 @@ def getreportopt(config):
         reportchars = reportchars.replace("w", "")
     if reportchars:
         for char in reportchars:
-            if char not in reportopts and char != "a":
-                reportopts += char
-            elif char == "a":
+            if char == "a":
                 reportopts = "sxXwEf"
+            elif char == "A":
+                reportopts = "sxXwEfpP"
+                break
+            elif char not in reportopts:
+                reportopts += char
     return reportopts
 
 

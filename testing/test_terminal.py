@@ -838,6 +838,9 @@ def test_getreportopt():
     config.option.disable_warnings = False
     assert getreportopt(config) == "sfxw"
 
+    config.option.reportchars = "A"
+    assert getreportopt(config) == "sxXwEfpP"
+
 
 def test_terminalreporter_reportopt_addopts(testdir):
     testdir.makeini("[pytest]\naddopts=-rs")
