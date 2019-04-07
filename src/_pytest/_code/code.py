@@ -773,10 +773,15 @@ class FormattedExcinfo:
             extraline = None
 
         last = traceback[-1]
+        crashentry = traceback.getcrashentry()
         entries = []
         for index, entry in enumerate(traceback):
             einfo = (last == entry) and excinfo or None
             reprentry = self.repr_traceback_entry(entry, einfo)
+
+            # Store this for toterminal.
+            reprentry._is_crashentry = entry == crashentry
+
             entries.append(reprentry)
         return ReprTraceback(entries, extraline, style=self.style)
 
@@ -963,6 +968,8 @@ class ReprEntryNative(TerminalRepr):
 
 
 class ReprEntry(TerminalRepr):
+    _is_crashentry = None
+
     def __init__(self, lines, reprfuncargs, reprlocals, filelocrepr, style):
         self.lines = lines
         self.reprfuncargs = reprfuncargs
@@ -972,11 +979,14 @@ class ReprEntry(TerminalRepr):
 
     def toterminal(self, tw):
         if self.style == "short":
-            self.reprfileloc.toterminal(tw)
+            self.reprfileloc.toterminal(tw, style="short")
             for line in self.lines:
-                red = line.startswith("E   ")
-                tw.line(line, bold=True, red=red)
+                is_error = line.startswith("E   ")
+                red = is_error
+                bold = is_error or self._is_crashentry
+                tw.line(line, bold=bold, red=red)
             return
+
         if self.reprfuncargs:
             self.reprfuncargs.toterminal(tw)
         for line in self.lines:
@@ -1002,15 +1012,16 @@ class ReprFileLocation(TerminalRepr):
         self.lineno = lineno
         self.message = message
 
-    def toterminal(self, tw):
+    def toterminal(self, tw, style=None):
         # filename and lineno output for each entry,
         # using an output format that most editors unterstand
         msg = self.message
         i = msg.find("\n")
         if i != -1:
             msg = msg[:i]
-        tw.write(self.path, bold=True, red=True)
-        tw.line(":{}: {}".format(self.lineno, msg))
+        bold = style != "short"
+        tw.write("%s" % self.path, bold=bold)
+        tw.line(":%s: %s" % (self.lineno, msg))
 
 
 class ReprLocals(TerminalRepr):
