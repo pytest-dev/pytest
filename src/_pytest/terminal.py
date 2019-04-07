@@ -81,11 +81,11 @@ def pytest_addoption(parser):
         dest="reportchars",
         default="",
         metavar="chars",
-        help="show extra test summary info as specified by chars (f)ailed, "
-        "(E)error, (s)skipped, (x)failed, (X)passed, "
-        "(p)passed, (P)passed with output, (a)all except pP. "
+        help="show extra test summary info as specified by chars: (f)ailed, "
+        "(E)rror, (s)kipped, (x)failed, (X)passed, "
+        "(p)assed, (P)assed with output, (a)ll except passed (p/P). "
         "Warnings are displayed at all times except when "
-        "--disable-warnings is set",
+        "--disable-warnings is set.",
     )
     group._addoption(
         "--disable-warnings",
