@@ -16,9 +16,9 @@ import py
 import pytest
 from _pytest.main import EXIT_NOTESTSCOLLECTED
 from _pytest.reports import BaseReport
+from _pytest.terminal import _folded_skips
 from _pytest.terminal import _plugin_nameversions
 from _pytest.terminal import build_summary_stats_line
-from _pytest.terminal import folded_skips
 from _pytest.terminal import getreportopt
 from _pytest.terminal import TerminalReporter
 
@@ -1552,7 +1552,7 @@ def test_skip_reasons_folding():
     ev3.longrepr = longrepr
     ev3.skipped = True
 
-    values = folded_skips([ev1, ev2, ev3])
+    values = _folded_skips([ev1, ev2, ev3])
     assert len(values) == 1
     num, fspath, lineno, reason = values[0]
     assert num == 3

@@ -678,6 +678,7 @@ class TerminalReporter(object):
         self.summary_failures()
         self.summary_warnings()
         yield
+        self.short_test_summary()
         self.summary_passes()
         # Display any extra warnings from teardown here (if any).
         self.summary_warnings()
@@ -873,58 +874,100 @@ class TerminalReporter(object):
         if self.verbosity == -1:
             self.write_line(msg, **markup)
 
+    def short_test_summary(self):
+        if not self.reportchars:
+            return
 
-def pytest_terminal_summary(terminalreporter):
-    tr = terminalreporter
-    if not tr.reportchars:
-        return
+        def show_simple(lines, stat):
+            failed = self.stats.get(stat)
+            if failed:
+                config = self.config
+                for rep in failed:
+                    verbose_word = _get_report_str(config, rep)
+                    pos = _get_pos(config, rep)
+                    lines.append("%s %s" % (verbose_word, pos))
 
-    lines = []
-    for char in tr.reportchars:
-        action = REPORTCHAR_ACTIONS.get(char, lambda tr, lines: None)
-        action(terminalreporter, lines)
+        def show_xfailed(lines):
+            xfailed = self.stats.get("xfailed")
+            if xfailed:
+                config = self.config
+                for rep in xfailed:
+                    verbose_word = _get_report_str(config, rep)
+                    pos = _get_pos(config, rep)
+                    lines.append("%s %s" % (verbose_word, pos))
+                    reason = rep.wasxfail
+                    if reason:
+                        lines.append("  " + str(reason))
 
-    if lines:
-        tr._tw.sep("=", "short test summary info")
-        for line in lines:
-            tr._tw.line(line)
+        def show_xpassed(lines):
+            xpassed = self.stats.get("xpassed")
+            if xpassed:
+                config = self.config
+                for rep in xpassed:
+                    verbose_word = _get_report_str(config, rep)
+                    pos = _get_pos(config, rep)
+                    reason = rep.wasxfail
+                    lines.append("%s %s %s" % (verbose_word, pos, reason))
+
+        def show_skipped(lines):
+            skipped = self.stats.get("skipped", [])
+            if skipped:
+                fskips = _folded_skips(skipped)
+                if fskips:
+                    verbose_word = _get_report_str(self.config, report=skipped[0])
+                    for num, fspath, lineno, reason in fskips:
+                        if reason.startswith("Skipped: "):
+                            reason = reason[9:]
+                        if lineno is not None:
+                            lines.append(
+                                "%s [%d] %s:%d: %s"
+                                % (verbose_word, num, fspath, lineno + 1, reason)
+                            )
+                        else:
+                            lines.append(
+                                "%s [%d] %s: %s" % (verbose_word, num, fspath, reason)
+                            )
+
+        def shower(stat):
+            def show_(lines):
+                return show_simple(lines, stat)
+
+            return show_
+
+        def _get_report_str(config, report):
+            _category, _short, verbose = config.hook.pytest_report_teststatus(
+                report=report, config=config
+            )
+            return verbose
+
+        def _get_pos(config, rep):
+            nodeid = config.cwd_relative_nodeid(rep.nodeid)
+            return nodeid
+
+        REPORTCHAR_ACTIONS = {
+            "x": show_xfailed,
+            "X": show_xpassed,
+            "f": shower("failed"),
+            "F": shower("failed"),
+            "s": show_skipped,
+            "S": show_skipped,
+            "p": shower("passed"),
+            "E": shower("error"),
+        }
+
+        lines = []
+        for char in self.reportchars:
+            action = REPORTCHAR_ACTIONS.get(char)
+            if action:  # skipping e.g. "P" (passed with output) here.
+                action(lines)
+
+        if lines:
+            self.write_sep("=", "short test summary info")
+            for line in lines:
+                self.write_line(line)
 
 
-def show_simple(terminalreporter, lines, stat):
-    failed = terminalreporter.stats.get(stat)
-    if failed:
-        config = terminalreporter.config
-        for rep in failed:
-            verbose_word = _get_report_str(config, rep)
-            pos = _get_pos(config, rep)
-            lines.append("%s %s" % (verbose_word, pos))
-
-
-def show_xfailed(terminalreporter, lines):
-    xfailed = terminalreporter.stats.get("xfailed")
-    if xfailed:
-        config = terminalreporter.config
-        for rep in xfailed:
-            verbose_word = _get_report_str(config, rep)
-            pos = _get_pos(config, rep)
-            lines.append("%s %s" % (verbose_word, pos))
-            reason = rep.wasxfail
-            if reason:
-                lines.append("  " + str(reason))
-
-
-def show_xpassed(terminalreporter, lines):
-    xpassed = terminalreporter.stats.get("xpassed")
-    if xpassed:
-        config = terminalreporter.config
-        for rep in xpassed:
-            verbose_word = _get_report_str(config, rep)
-            pos = _get_pos(config, rep)
-            reason = rep.wasxfail
-            lines.append("%s %s %s" % (verbose_word, pos, reason))
-
-
-def folded_skips(skipped):
+def _folded_skips(skipped):
     d = {}
     for event in skipped:
         key = event.longrepr
@@ -944,56 +987,6 @@ def folded_skips(skipped):
     for key, events in d.items():
         values.append((len(events),) + key)
     return values
-
-
-def show_skipped(terminalreporter, lines):
-    tr = terminalreporter
-    skipped = tr.stats.get("skipped", [])
-    if skipped:
-        fskips = folded_skips(skipped)
-        if fskips:
-            verbose_word = _get_report_str(terminalreporter.config, report=skipped[0])
-            for num, fspath, lineno, reason in fskips:
-                if reason.startswith("Skipped: "):
-                    reason = reason[9:]
-                if lineno is not None:
-                    lines.append(
-                        "%s [%d] %s:%d: %s"
-                        % (verbose_word, num, fspath, lineno + 1, reason)
-                    )
-                else:
-                    lines.append("%s [%d] %s: %s" % (verbose_word, num, fspath, reason))
-
-
-def shower(stat):
-    def show_(terminalreporter, lines):
-        return show_simple(terminalreporter, lines, stat)
-
-    return show_
-
-
-def _get_report_str(config, report):
-    _category, _short, verbose = config.hook.pytest_report_teststatus(
-        report=report, config=config
-    )
-    return verbose
-
-
-def _get_pos(config, rep):
-    nodeid = config.cwd_relative_nodeid(rep.nodeid)
-    return nodeid
-
-
-REPORTCHAR_ACTIONS = {
-    "x": show_xfailed,
-    "X": show_xpassed,
-    "f": shower("failed"),
-    "F": shower("failed"),
-    "s": show_skipped,
-    "S": show_skipped,
-    "p": shower("passed"),
-    "E": shower("error"),
-}
 
 
 def build_summary_stats_line(stats):
