@@ -11,6 +11,7 @@ import collections
 import platform
 import sys
 import time
+from functools import partial
 
 import attr
 import pluggy
@@ -878,7 +879,7 @@ class TerminalReporter(object):
         if not self.reportchars:
             return
 
-        def show_simple(lines, stat):
+        def show_simple(stat, lines):
             failed = self.stats.get(stat)
             if failed:
                 config = self.config
@@ -928,12 +929,6 @@ class TerminalReporter(object):
                                 "%s [%d] %s: %s" % (verbose_word, num, fspath, reason)
                             )
 
-        def shower(stat):
-            def show_(lines):
-                return show_simple(lines, stat)
-
-            return show_
-
         def _get_report_str(config, report):
             _category, _short, verbose = config.hook.pytest_report_teststatus(
                 report=report, config=config
@@ -947,12 +942,12 @@ class TerminalReporter(object):
         REPORTCHAR_ACTIONS = {
             "x": show_xfailed,
             "X": show_xpassed,
-            "f": shower("failed"),
-            "F": shower("failed"),
+            "f": partial(show_simple, "failed"),
+            "F": partial(show_simple, "failed"),
             "s": show_skipped,
             "S": show_skipped,
-            "p": shower("passed"),
-            "E": shower("error"),
+            "p": partial(show_simple, "passed"),
+            "E": partial(show_simple, "error"),
         }
 
         lines = []
