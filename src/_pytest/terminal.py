@@ -880,54 +880,46 @@ class TerminalReporter(object):
             return
 
         def show_simple(stat, lines):
-            failed = self.stats.get(stat)
-            if failed:
-                config = self.config
-                for rep in failed:
-                    verbose_word = _get_report_str(config, rep)
-                    pos = _get_pos(config, rep)
-                    lines.append("%s %s" % (verbose_word, pos))
+            failed = self.stats.get(stat, [])
+            for rep in failed:
+                verbose_word = _get_report_str(self.config, rep)
+                pos = _get_pos(self.config, rep)
+                lines.append("%s %s" % (verbose_word, pos))
 
         def show_xfailed(lines):
-            xfailed = self.stats.get("xfailed")
-            if xfailed:
-                config = self.config
-                for rep in xfailed:
-                    verbose_word = _get_report_str(config, rep)
-                    pos = _get_pos(config, rep)
-                    lines.append("%s %s" % (verbose_word, pos))
-                    reason = rep.wasxfail
-                    if reason:
-                        lines.append("  " + str(reason))
+            xfailed = self.stats.get("xfailed", [])
+            for rep in xfailed:
+                verbose_word = _get_report_str(self.config, rep)
+                pos = _get_pos(self.config, rep)
+                lines.append("%s %s" % (verbose_word, pos))
+                reason = rep.wasxfail
+                if reason:
+                    lines.append("  " + str(reason))
 
         def show_xpassed(lines):
-            xpassed = self.stats.get("xpassed")
-            if xpassed:
-                config = self.config
-                for rep in xpassed:
-                    verbose_word = _get_report_str(config, rep)
-                    pos = _get_pos(config, rep)
-                    reason = rep.wasxfail
-                    lines.append("%s %s %s" % (verbose_word, pos, reason))
+            xpassed = self.stats.get("xpassed", [])
+            for rep in xpassed:
+                verbose_word = _get_report_str(self.config, rep)
+                pos = _get_pos(self.config, rep)
+                reason = rep.wasxfail
+                lines.append("%s %s %s" % (verbose_word, pos, reason))
 
         def show_skipped(lines):
             skipped = self.stats.get("skipped", [])
-            if skipped:
-                fskips = _folded_skips(skipped)
-                if fskips:
-                    verbose_word = _get_report_str(self.config, report=skipped[0])
-                    for num, fspath, lineno, reason in fskips:
-                        if reason.startswith("Skipped: "):
-                            reason = reason[9:]
-                        if lineno is not None:
-                            lines.append(
-                                "%s [%d] %s:%d: %s"
-                                % (verbose_word, num, fspath, lineno + 1, reason)
-                            )
-                        else:
-                            lines.append(
-                                "%s [%d] %s: %s" % (verbose_word, num, fspath, reason)
-                            )
+            fskips = _folded_skips(skipped) if skipped else []
+            if not fskips:
+                return
+            verbose_word = _get_report_str(self.config, report=skipped[0])
+            for num, fspath, lineno, reason in fskips:
+                if reason.startswith("Skipped: "):
+                    reason = reason[9:]
+                if lineno is not None:
+                    lines.append(
+                        "%s [%d] %s:%d: %s"
+                        % (verbose_word, num, fspath, lineno + 1, reason)
+                    )
+                else:
+                    lines.append("%s [%d] %s: %s" % (verbose_word, num, fspath, reason))
 
         def _get_report_str(config, report):
             _category, _short, verbose = config.hook.pytest_report_teststatus(
