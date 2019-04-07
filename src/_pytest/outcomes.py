@@ -8,6 +8,8 @@ from __future__ import print_function
 
 import sys
 
+from packaging.version import Version
+
 
 class OutcomeException(BaseException):
     """ OutcomeException and its subclass instances indicate and
@@ -175,15 +177,7 @@ def importorskip(modname, minversion=None, reason=None):
         return mod
     verattr = getattr(mod, "__version__", None)
     if minversion is not None:
-        try:
-            from pkg_resources import parse_version as pv
-        except ImportError:
-            raise Skipped(
-                "we have a required version for %r but can not import "
-                "pkg_resources to parse version strings." % (modname,),
-                allow_module_level=True,
-            )
-        if verattr is None or pv(verattr) < pv(minversion):
+        if verattr is None or Version(verattr) < Version(minversion):
             raise Skipped(
                 "module %r has __version__ %r, required is: %r"
                 % (modname, verattr, minversion),

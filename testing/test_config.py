@@ -5,7 +5,7 @@ from __future__ import print_function
 import sys
 import textwrap
 
-import attr
+import importlib_metadata
 
 import _pytest._code
 import pytest
@@ -531,32 +531,26 @@ def test_options_on_small_file_do_not_blow_up(testdir):
 
 
 def test_preparse_ordering_with_setuptools(testdir, monkeypatch):
-    pkg_resources = pytest.importorskip("pkg_resources")
     monkeypatch.delenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD", raising=False)
 
-    def my_iter(group, name=None):
-        assert group == "pytest11"
+    class EntryPoint(object):
+        name = "mytestplugin"
+        group = "pytest11"
 
-        class Dist(object):
-            project_name = "spam"
-            version = "1.0"
+        def load(self):
+            class PseudoPlugin(object):
+                x = 42
 
-            def _get_metadata(self, name):
-                return ["foo.txt,sha256=abc,123"]
+            return PseudoPlugin()
 
-        class EntryPoint(object):
-            name = "mytestplugin"
-            dist = Dist()
+    class Dist(object):
+        files = ()
+        entry_points = (EntryPoint(),)
 
-            def load(self):
-                class PseudoPlugin(object):
-                    x = 42
+    def my_dists():
+        return (Dist,)
 
-                return PseudoPlugin()
-
-        return iter([EntryPoint()])
-
-    monkeypatch.setattr(pkg_resources, "iter_entry_points", my_iter)
+    monkeypatch.setattr(importlib_metadata, "distributions", my_dists)
     testdir.makeconftest(
         """
         pytest_plugins = "mytestplugin",
@@ -569,60 +563,50 @@ def test_preparse_ordering_with_setuptools(testdir, monkeypatch):
 
 
 def test_setuptools_importerror_issue1479(testdir, monkeypatch):
-    pkg_resources = pytest.importorskip("pkg_resources")
     monkeypatch.delenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD", raising=False)
 
-    def my_iter(group, name=None):
-        assert group == "pytest11"
+    class DummyEntryPoint(object):
+        name = "mytestplugin"
+        group = "pytest11"
 
-        class Dist(object):
-            project_name = "spam"
-            version = "1.0"
+        def load(self):
+            raise ImportError("Don't hide me!")
 
-            def _get_metadata(self, name):
-                return ["foo.txt,sha256=abc,123"]
+    class Distribution(object):
+        version = "1.0"
+        files = ("foo.txt",)
+        entry_points = (DummyEntryPoint(),)
 
-        class EntryPoint(object):
-            name = "mytestplugin"
-            dist = Dist()
+    def distributions():
+        return (Distribution(),)
 
-            def load(self):
-                raise ImportError("Don't hide me!")
-
-        return iter([EntryPoint()])
-
-    monkeypatch.setattr(pkg_resources, "iter_entry_points", my_iter)
+    monkeypatch.setattr(importlib_metadata, "distributions", distributions)
     with pytest.raises(ImportError):
         testdir.parseconfig()
 
 
 @pytest.mark.parametrize("block_it", [True, False])
 def test_plugin_preparse_prevents_setuptools_loading(testdir, monkeypatch, block_it):
-    pkg_resources = pytest.importorskip("pkg_resources")
     monkeypatch.delenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD", raising=False)
 
     plugin_module_placeholder = object()
 
-    def my_iter(group, name=None):
-        assert group == "pytest11"
+    class DummyEntryPoint(object):
+        name = "mytestplugin"
+        group = "pytest11"
 
-        class Dist(object):
-            project_name = "spam"
-            version = "1.0"
+        def load(self):
+            return plugin_module_placeholder
 
-            def _get_metadata(self, name):
-                return ["foo.txt,sha256=abc,123"]
+    class Distribution(object):
+        version = "1.0"
+        files = ("foo.txt",)
+        entry_points = (DummyEntryPoint(),)
 
-        class EntryPoint(object):
-            name = "mytestplugin"
-            dist = Dist()
+    def distributions():
+        return (Distribution(),)
 
-            def load(self):
-                return plugin_module_placeholder
-
-        return iter([EntryPoint()])
-
-    monkeypatch.setattr(pkg_resources, "iter_entry_points", my_iter)
+    monkeypatch.setattr(importlib_metadata, "distributions", distributions)
     args = ("-p", "no:mytestplugin") if block_it else ()
     config = testdir.parseconfig(*args)
     config.pluginmanager.import_plugin("mytestplugin")
@@ -639,37 +623,26 @@ def test_plugin_preparse_prevents_setuptools_loading(testdir, monkeypatch, block
     "parse_args,should_load", [(("-p", "mytestplugin"), True), ((), False)]
 )
 def test_disable_plugin_autoload(testdir, monkeypatch, parse_args, should_load):
-    pkg_resources = pytest.importorskip("pkg_resources")
-
-    def my_iter(group, name=None):
-        assert group == "pytest11"
-        assert name == "mytestplugin"
-        return iter([DummyEntryPoint()])
-
-    @attr.s
     class DummyEntryPoint(object):
-        name = "mytestplugin"
+        project_name = name = "mytestplugin"
+        group = "pytest11"
         version = "1.0"
-
-        @property
-        def project_name(self):
-            return self.name
 
         def load(self):
             return sys.modules[self.name]
 
-        @property
-        def dist(self):
-            return self
-
-        def _get_metadata(self, *args):
-            return []
+    class Distribution(object):
+        entry_points = (DummyEntryPoint(),)
+        files = ()
 
     class PseudoPlugin(object):
         x = 42
 
+    def distributions():
+        return (Distribution(),)
+
     monkeypatch.setenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD", "1")
-    monkeypatch.setattr(pkg_resources, "iter_entry_points", my_iter)
+    monkeypatch.setattr(importlib_metadata, "distributions", distributions)
     monkeypatch.setitem(sys.modules, "mytestplugin", PseudoPlugin())
     config = testdir.parseconfig(*parse_args)
     has_loaded = config.pluginmanager.get_plugin("mytestplugin") is not None

@@ -12,8 +12,10 @@ import sys
 import types
 import warnings
 
+import importlib_metadata
 import py
 import six
+from packaging.version import Version
 from pluggy import HookimplMarker
 from pluggy import HookspecMarker
 from pluggy import PluginManager
@@ -787,25 +789,17 @@ class Config(object):
         modules or packages in the distribution package for
         all pytest plugins.
         """
-        import pkg_resources
-
         self.pluginmanager.rewrite_hook = hook
 
         if os.environ.get("PYTEST_DISABLE_PLUGIN_AUTOLOAD"):
             # We don't autoload from setuptools entry points, no need to continue.
             return
 
-        # 'RECORD' available for plugins installed normally (pip install)
-        # 'SOURCES.txt' available for plugins installed in dev mode (pip install -e)
-        # for installed plugins 'SOURCES.txt' returns an empty list, and vice-versa
-        # so it shouldn't be an issue
-        metadata_files = "RECORD", "SOURCES.txt"
-
         package_files = (
-            entry.split(",")[0]
-            for entrypoint in pkg_resources.iter_entry_points("pytest11")
-            for metadata in metadata_files
-            for entry in entrypoint.dist._get_metadata(metadata)
+            str(file)
+            for dist in importlib_metadata.distributions()
+            if any(ep.group == "pytest11" for ep in dist.entry_points)
+            for file in dist.files
         )
 
         for name in _iter_rewritable_modules(package_files):
@@ -874,11 +868,10 @@ class Config(object):
 
     def _checkversion(self):
         import pytest
-        from pkg_resources import parse_version
 
         minver = self.inicfg.get("minversion", None)
         if minver:
-            if parse_version(minver) > parse_version(pytest.__version__):
+            if Version(minver) > Version(pytest.__version__):
                 raise pytest.UsageError(
                     "%s:%d: requires pytest-%s, actual pytest-%s'"
                     % (
