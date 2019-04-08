@@ -254,7 +254,10 @@ class TerminalReporter(object):
         # do not show progress if we are showing fixture setup/teardown
         if self.config.getoption("setupshow", False):
             return False
-        return self.config.getini("console_output_style") in ("progress", "count")
+        cfg = self.config.getini("console_output_style")
+        if cfg in ("progress", "count"):
+            return cfg
+        return False
 
     @property
     def verbosity(self):
@@ -438,13 +441,13 @@ class TerminalReporter(object):
                 self.currentfspath = -2
 
     def pytest_runtest_logfinish(self, nodeid):
-        if self.config.getini("console_output_style") == "count":
-            num_tests = self._session.testscollected
-            progress_length = len(" [{}/{}]".format(str(num_tests), str(num_tests)))
-        else:
-            progress_length = len(" [100%]")
-
         if self.verbosity <= 0 and self._show_progress_info:
+            if self._show_progress_info == "count":
+                num_tests = self._session.testscollected
+                progress_length = len(" [{}/{}]".format(str(num_tests), str(num_tests)))
+            else:
+                progress_length = len(" [100%]")
+
             self._progress_nodeids_reported.add(nodeid)
             last_item = (
                 len(self._progress_nodeids_reported) == self._session.testscollected
@@ -460,7 +463,7 @@ class TerminalReporter(object):
 
     def _get_progress_information_message(self):
         collected = self._session.testscollected
-        if self.config.getini("console_output_style") == "count":
+        if self._show_progress_info == "count":
             if collected:
                 progress = self._progress_nodeids_reported
                 counter_format = "{{:{}d}}".format(len(str(collected)))
