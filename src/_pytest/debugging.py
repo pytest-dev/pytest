@@ -256,7 +256,7 @@ def _test_pytest_function(pyfuncitem):
     _pdb = pytestPDB._init_pdb()
     testfunction = pyfuncitem.obj
     pyfuncitem.obj = _pdb.runcall
-    if "func" in pyfuncitem._fixtureinfo.argnames:  # noqa
+    if "func" in pyfuncitem._fixtureinfo.argnames:  # pragma: no branch
         raise ValueError("--trace can't be used with a fixture named func!")
     pyfuncitem.funcargs["func"] = testfunction
     new_list = list(pyfuncitem._fixtureinfo.argnames)

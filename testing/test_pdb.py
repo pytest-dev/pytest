@@ -1148,7 +1148,11 @@ def test_pdbcls_via_local_module(testdir):
         class Wrapped:
             class MyPdb:
                 def set_trace(self, *args):
-                    print("mypdb_called", args)
+                    print("settrace_called", args)
+
+                def runcall(self, *args, **kwds):
+                    print("runcall_called", args, kwds)
+                    assert "func" in kwds
         """,
     )
     result = testdir.runpytest(
@@ -1165,4 +1169,11 @@ def test_pdbcls_via_local_module(testdir):
         str(p1), "--pdbcls=mypdb:Wrapped.MyPdb", syspathinsert=True
     )
     assert result.ret == 0
-    result.stdout.fnmatch_lines(["*mypdb_called*", "* 1 passed in *"])
+    result.stdout.fnmatch_lines(["*settrace_called*", "* 1 passed in *"])
+
+    # Ensure that it also works with --trace.
+    result = testdir.runpytest(
+        str(p1), "--pdbcls=mypdb:Wrapped.MyPdb", "--trace", syspathinsert=True
+    )
+    assert result.ret == 0
+    result.stdout.fnmatch_lines(["*runcall_called*", "* 1 passed in *"])
