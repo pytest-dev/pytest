@@ -36,8 +36,6 @@ IGNORE_PAM = [  # filenames added when obtaining details about the current user
     u"/var/lib/sss/mc/passwd"
 ]
 
-CLOSE_STDIN = object
-
 
 def pytest_addoption(parser):
     parser.addoption(
@@ -474,6 +472,8 @@ class Testdir(object):
        the method using them so refer to them for details.
 
     """
+
+    CLOSE_STDIN = object
 
     class TimeoutExpired(Exception):
         pass
@@ -1059,7 +1059,7 @@ class Testdir(object):
         env["USERPROFILE"] = env["HOME"]
         kw["env"] = env
 
-        if stdin is CLOSE_STDIN:
+        if stdin is Testdir.CLOSE_STDIN:
             kw["stdin"] = subprocess.PIPE
         elif isinstance(stdin, bytes):
             kw["stdin"] = subprocess.PIPE
@@ -1067,7 +1067,7 @@ class Testdir(object):
             kw["stdin"] = stdin
 
         popen = subprocess.Popen(cmdargs, stdout=stdout, stderr=stderr, **kw)
-        if stdin is CLOSE_STDIN:
+        if stdin is Testdir.CLOSE_STDIN:
             popen.stdin.close()
         elif isinstance(stdin, bytes):
             popen.stdin.write(stdin)
@@ -1093,7 +1093,7 @@ class Testdir(object):
         __tracebackhide__ = True
 
         timeout = kwargs.pop("timeout", None)
-        stdin = kwargs.pop("stdin", CLOSE_STDIN)
+        stdin = kwargs.pop("stdin", Testdir.CLOSE_STDIN)
         raise_on_kwargs(kwargs)
 
         popen_kwargs = {"stdin": stdin}
