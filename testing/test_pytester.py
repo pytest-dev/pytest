@@ -490,7 +490,7 @@ def test_run_stdin(testdir):
         testdir.run(
             sys.executable,
             "-c",
-            "import sys; print(sys.stdin.read())",
+            "import sys, time; time.sleep(1); print(sys.stdin.read())",
             stdin=subprocess.PIPE,
             timeout=0.1,
         )
