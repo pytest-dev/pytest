@@ -140,7 +140,7 @@ def pytest_addoption(parser):
 
     parser.addini(
         "console_output_style",
-        help="console output: classic or with additional progress information (classic|progress).",
+        help='console output: "classic", or with additional progress information ("progress" (percentage) | "count").',
         default="progress",
     )
 
