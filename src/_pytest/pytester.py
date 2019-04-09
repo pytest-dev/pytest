@@ -1096,10 +1096,6 @@ class Testdir(object):
         stdin = kwargs.pop("stdin", Testdir.CLOSE_STDIN)
         raise_on_kwargs(kwargs)
 
-        popen_kwargs = {"stdin": stdin}
-        if isinstance(stdin, bytes):
-            popen_kwargs["stdin"] = subprocess.PIPE
-
         cmdargs = [
             str(arg) if isinstance(arg, py.path.local) else arg for arg in cmdargs
         ]
@@ -1113,13 +1109,12 @@ class Testdir(object):
             now = time.time()
             popen = self.popen(
                 cmdargs,
+                stdin=stdin,
                 stdout=f1,
                 stderr=f2,
                 close_fds=(sys.platform != "win32"),
-                **popen_kwargs
             )
             if isinstance(stdin, bytes):
-                popen.stdin.write(stdin)
                 popen.stdin.close()
 
             def handle_timeout():
