@@ -76,8 +76,11 @@ def pytest_configure(config):
 
 
 def raise_on_kwargs(kwargs):
+    __tracebackhide__ = True
     if kwargs:
-        raise TypeError("Unexpected arguments: {}".format(", ".join(sorted(kwargs))))
+        raise TypeError(
+            "Unexpected keyword arguments: {}".format(", ".join(sorted(kwargs)))
+        )
 
 
 class LsofFdLeakChecker(object):
@@ -803,12 +806,15 @@ class Testdir(object):
 
         :param args: command line arguments to pass to :py:func:`pytest.main`
 
-        :param plugin: (keyword-only) extra plugin instances the
+        :param plugins: (keyword-only) extra plugin instances the
            ``pytest.main()`` instance should use
 
         :return: a :py:class:`HookRecorder` instance
-
         """
+        plugins = kwargs.pop("plugins", [])
+        no_reraise_ctrlc = kwargs.pop("no_reraise_ctrlc", None)
+        raise_on_kwargs(kwargs)
+
         finalizers = []
         try:
             # Do not load user config (during runs only).
@@ -848,7 +854,6 @@ class Testdir(object):
                 def pytest_configure(x, config):
                     rec.append(self.make_hook_recorder(config.pluginmanager))
 
-            plugins = kwargs.get("plugins") or []
             plugins.append(Collect())
             ret = pytest.main(list(args), plugins=plugins)
             if len(rec) == 1:
@@ -862,7 +867,7 @@ class Testdir(object):
 
             # typically we reraise keyboard interrupts from the child run
             # because it's our user requesting interruption of the testing
-            if ret == EXIT_INTERRUPTED and not kwargs.get("no_reraise_ctrlc"):
+            if ret == EXIT_INTERRUPTED and not no_reraise_ctrlc:
                 calls = reprec.getcalls("pytest_keyboard_interrupt")
                 if calls and calls[-1].excinfo.type == KeyboardInterrupt:
                     raise KeyboardInterrupt()
@@ -874,9 +879,10 @@ class Testdir(object):
     def runpytest_inprocess(self, *args, **kwargs):
         """Return result of running pytest in-process, providing a similar
         interface to what self.runpytest() provides.
-
         """
-        if kwargs.get("syspathinsert"):
+        syspathinsert = kwargs.pop("syspathinsert", False)
+
+        if syspathinsert:
             self.syspathinsert()
         now = time.time()
         capture = MultiCapture(Capture=SysCapture)
@@ -1201,9 +1207,10 @@ class Testdir(object):
             :py:class:`Testdir.TimeoutExpired`
 
         Returns a :py:class:`RunResult`.
-
         """
         __tracebackhide__ = True
+        timeout = kwargs.pop("timeout", None)
+        raise_on_kwargs(kwargs)
 
         p = py.path.local.make_numbered_dir(
             prefix="runpytest-", keep=None, rootdir=self.tmpdir
@@ -1213,7 +1220,7 @@ class Testdir(object):
         if plugins:
             args = ("-p", plugins[0]) + args
         args = self._getpytestargs() + args
-        return self.run(*args, timeout=kwargs.get("timeout"))
+        return self.run(*args, timeout=timeout)
 
     def spawn_pytest(self, string, expect_timeout=10.0):
         """Run pytest using pexpect.
