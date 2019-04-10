@@ -11,6 +11,7 @@ import collections
 import platform
 import sys
 import time
+from functools import partial
 
 import attr
 import pluggy
@@ -681,6 +682,7 @@ class TerminalReporter(object):
         self.summary_failures()
         self.summary_warnings()
         yield
+        self.short_test_summary()
         self.summary_passes()
         # Display any extra warnings from teardown here (if any).
         self.summary_warnings()
@@ -875,6 +877,106 @@ class TerminalReporter(object):
             self.write_sep("=", msg, **markup)
         if self.verbosity == -1:
             self.write_line(msg, **markup)
+
+    def short_test_summary(self):
+        if not self.reportchars:
+            return
+
+        def show_simple(stat, lines):
+            failed = self.stats.get(stat, [])
+            for rep in failed:
+                verbose_word = _get_report_str(self.config, rep)
+                pos = _get_pos(self.config, rep)
+                lines.append("%s %s" % (verbose_word, pos))
+
+        def show_xfailed(lines):
+            xfailed = self.stats.get("xfailed", [])
+            for rep in xfailed:
+                verbose_word = _get_report_str(self.config, rep)
+                pos = _get_pos(self.config, rep)
+                lines.append("%s %s" % (verbose_word, pos))
+                reason = rep.wasxfail
+                if reason:
+                    lines.append("  " + str(reason))
+
+        def show_xpassed(lines):
+            xpassed = self.stats.get("xpassed", [])
+            for rep in xpassed:
+                verbose_word = _get_report_str(self.config, rep)
+                pos = _get_pos(self.config, rep)
+                reason = rep.wasxfail
+                lines.append("%s %s %s" % (verbose_word, pos, reason))
+
+        def show_skipped(lines):
+            skipped = self.stats.get("skipped", [])
+            fskips = _folded_skips(skipped) if skipped else []
+            if not fskips:
+                return
+            verbose_word = _get_report_str(self.config, report=skipped[0])
+            for num, fspath, lineno, reason in fskips:
+                if reason.startswith("Skipped: "):
+                    reason = reason[9:]
+                if lineno is not None:
+                    lines.append(
+                        "%s [%d] %s:%d: %s"
+                        % (verbose_word, num, fspath, lineno + 1, reason)
+                    )
+                else:
+                    lines.append("%s [%d] %s: %s" % (verbose_word, num, fspath, reason))
+
+        def _get_report_str(config, report):
+            _category, _short, verbose = config.hook.pytest_report_teststatus(
+                report=report, config=config
+            )
+            return verbose
+
+        def _get_pos(config, rep):
+            nodeid = config.cwd_relative_nodeid(rep.nodeid)
+            return nodeid
+
+        REPORTCHAR_ACTIONS = {
+            "x": show_xfailed,
+            "X": show_xpassed,
+            "f": partial(show_simple, "failed"),
+            "F": partial(show_simple, "failed"),
+            "s": show_skipped,
+            "S": show_skipped,
+            "p": partial(show_simple, "passed"),
+            "E": partial(show_simple, "error"),
+        }
+
+        lines = []
+        for char in self.reportchars:
+            action = REPORTCHAR_ACTIONS.get(char)
+            if action:  # skipping e.g. "P" (passed with output) here.
+                action(lines)
+
+        if lines:
+            self.write_sep("=", "short test summary info")
+            for line in lines:
+                self.write_line(line)
+
+
+def _folded_skips(skipped):
+    d = {}
+    for event in skipped:
+        key = event.longrepr
+        assert len(key) == 3, (event, key)
+        keywords = getattr(event, "keywords", {})
+        # folding reports with global pytestmark variable
+        # this is workaround, because for now we cannot identify the scope of a skip marker
+        # TODO: revisit after marks scope would be fixed
+        if (
+            event.when == "setup"
+            and "skip" in keywords
+            and "pytestmark" not in keywords
+        ):
+            key = (key[0], None, key[2])
+        d.setdefault(key, []).append(event)
+    values = []
+    for key, events in d.items():
+        values.append((len(events),) + key)
+    return values
 
 
 def build_summary_stats_line(stats):

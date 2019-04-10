@@ -16,6 +16,7 @@ import py
 import pytest
 from _pytest.main import EXIT_NOTESTSCOLLECTED
 from _pytest.reports import BaseReport
+from _pytest.terminal import _folded_skips
 from _pytest.terminal import _plugin_nameversions
 from _pytest.terminal import build_summary_stats_line
 from _pytest.terminal import getreportopt
@@ -1524,3 +1525,37 @@ class TestProgressWithTeardown(object):
         monkeypatch.delenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD", raising=False)
         output = testdir.runpytest("-n2")
         output.stdout.re_match_lines([r"[\.E]{40} \s+ \[100%\]"])
+
+
+def test_skip_reasons_folding():
+    path = "xyz"
+    lineno = 3
+    message = "justso"
+    longrepr = (path, lineno, message)
+
+    class X(object):
+        pass
+
+    ev1 = X()
+    ev1.when = "execute"
+    ev1.skipped = True
+    ev1.longrepr = longrepr
+
+    ev2 = X()
+    ev2.when = "execute"
+    ev2.longrepr = longrepr
+    ev2.skipped = True
+
+    # ev3 might be a collection report
+    ev3 = X()
+    ev3.when = "collect"
+    ev3.longrepr = longrepr
+    ev3.skipped = True
+
+    values = _folded_skips([ev1, ev2, ev3])
+    assert len(values) == 1
+    num, fspath, lineno, reason = values[0]
+    assert num == 3
+    assert fspath == path
+    assert lineno == lineno
+    assert reason == message
