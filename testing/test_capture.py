@@ -819,15 +819,15 @@ def test_error_during_readouterr(testdir):
     testdir.makepyfile(
         pytest_xyz="""
         from _pytest.capture import FDCapture
+
         def bad_snap(self):
             raise Exception('boom')
+
         assert FDCapture.snap
         FDCapture.snap = bad_snap
     """
     )
-    result = testdir.runpytest_subprocess(
-        "-p", "pytest_xyz", "--version", syspathinsert=True
-    )
+    result = testdir.runpytest_subprocess("-p", "pytest_xyz", "--version")
     result.stderr.fnmatch_lines(
         ["*in bad_snap", "    raise Exception('boom')", "Exception: boom"]
     )

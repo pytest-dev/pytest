@@ -1,0 +1,1 @@
+Improved validation of kwargs for various methods in the pytester plugin.
