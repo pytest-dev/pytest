@@ -191,7 +191,7 @@ class pytestPDB:
                     # pdb.setup() returns True if the command wants to exit
                     # from the interaction: do not suspend capturing then.
                     if self._pytest_capman:
-                        self._pytest_capman.suspend_global_capture(in_=True)
+                        self._pytest_capman.suspend(in_=True)
                 return ret
 
             def get_stack(self, f, t):
