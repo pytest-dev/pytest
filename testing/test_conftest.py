@@ -13,17 +13,6 @@ from _pytest.main import EXIT_OK
 from _pytest.main import EXIT_USAGEERROR
 
 
-@pytest.fixture(scope="module", params=["global", "inpackage"])
-def basedir(request, tmpdir_factory):
-    tmpdir = tmpdir_factory.mktemp("basedir", numbered=True)
-    tmpdir.ensure("adir/conftest.py").write("a=1 ; Directory = 3")
-    tmpdir.ensure("adir/b/conftest.py").write("b=2 ; a = 1.5")
-    if request.param == "inpackage":
-        tmpdir.ensure("adir/__init__.py")
-        tmpdir.ensure("adir/b/__init__.py")
-    return tmpdir
-
-
 def ConftestWithSetinitial(path):
     conftest = PytestPluginManager()
     conftest_setinitial(conftest, [path])
@@ -41,7 +30,19 @@ def conftest_setinitial(conftest, args, confcutdir=None):
     conftest._set_initial_conftests(Namespace())
 
 
+@pytest.mark.usefixtures("_sys_snapshot")
 class TestConftestValueAccessGlobal(object):
+    @pytest.fixture(scope="module", params=["global", "inpackage"])
+    def basedir(self, request, tmpdir_factory):
+        tmpdir = tmpdir_factory.mktemp("basedir", numbered=True)
+        tmpdir.ensure("adir/conftest.py").write("a=1 ; Directory = 3")
+        tmpdir.ensure("adir/b/conftest.py").write("b=2 ; a = 1.5")
+        if request.param == "inpackage":
+            tmpdir.ensure("adir/__init__.py")
+            tmpdir.ensure("adir/b/__init__.py")
+
+        yield tmpdir
+
     def test_basic_init(self, basedir):
         conftest = PytestPluginManager()
         p = basedir.join("adir")
@@ -49,10 +50,10 @@ class TestConftestValueAccessGlobal(object):
 
     def test_immediate_initialiation_and_incremental_are_the_same(self, basedir):
         conftest = PytestPluginManager()
-        len(conftest._dirpath2confmods)
+        assert not len(conftest._dirpath2confmods)
         conftest._getconftestmodules(basedir)
         snap1 = len(conftest._dirpath2confmods)
-        # assert len(conftest._dirpath2confmods) == snap1 + 1
+        assert snap1 == 1
         conftest._getconftestmodules(basedir.join("adir"))
         assert len(conftest._dirpath2confmods) == snap1 + 1
         conftest._getconftestmodules(basedir.join("b"))
@@ -80,7 +81,7 @@ class TestConftestValueAccessGlobal(object):
         assert path.purebasename.startswith("conftest")
 
 
-def test_conftest_in_nonpkg_with_init(tmpdir):
+def test_conftest_in_nonpkg_with_init(tmpdir, _sys_snapshot):
     tmpdir.ensure("adir-1.0/conftest.py").write("a=1 ; Directory = 3")
     tmpdir.ensure("adir-1.0/b/conftest.py").write("b=2 ; a = 1.5")
     tmpdir.ensure("adir-1.0/b/__init__.py")
