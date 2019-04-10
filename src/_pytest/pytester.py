@@ -473,6 +473,8 @@ class Testdir(object):
 
     """
 
+    CLOSE_STDIN = object
+
     class TimeoutExpired(Exception):
         pass
 
@@ -1032,7 +1034,14 @@ class Testdir(object):
             if colitem.name == name:
                 return colitem
 
-    def popen(self, cmdargs, stdout, stderr, **kw):
+    def popen(
+        self,
+        cmdargs,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        stdin=CLOSE_STDIN,
+        **kw
+    ):
         """Invoke subprocess.Popen.
 
         This calls subprocess.Popen making sure the current working directory
@@ -1050,10 +1059,18 @@ class Testdir(object):
         env["USERPROFILE"] = env["HOME"]
         kw["env"] = env
 
-        popen = subprocess.Popen(
-            cmdargs, stdin=subprocess.PIPE, stdout=stdout, stderr=stderr, **kw
-        )
-        popen.stdin.close()
+        if stdin is Testdir.CLOSE_STDIN:
+            kw["stdin"] = subprocess.PIPE
+        elif isinstance(stdin, bytes):
+            kw["stdin"] = subprocess.PIPE
+        else:
+            kw["stdin"] = stdin
+
+        popen = subprocess.Popen(cmdargs, stdout=stdout, stderr=stderr, **kw)
+        if stdin is Testdir.CLOSE_STDIN:
+            popen.stdin.close()
+        elif isinstance(stdin, bytes):
+            popen.stdin.write(stdin)
 
         return popen
 
@@ -1065,6 +1082,10 @@ class Testdir(object):
         :param args: the sequence of arguments to pass to `subprocess.Popen()`
         :param timeout: the period in seconds after which to timeout and raise
             :py:class:`Testdir.TimeoutExpired`
+        :param stdin: optional standard input.  Bytes are being send, closing
+            the pipe, otherwise it is passed through to ``popen``.
+            Defaults to ``CLOSE_STDIN``, which translates to using a pipe
+            (``subprocess.PIPE``) that gets closed.
 
         Returns a :py:class:`RunResult`.
 
@@ -1072,6 +1093,7 @@ class Testdir(object):
         __tracebackhide__ = True
 
         timeout = kwargs.pop("timeout", None)
+        stdin = kwargs.pop("stdin", Testdir.CLOSE_STDIN)
         raise_on_kwargs(kwargs)
 
         cmdargs = [
@@ -1086,8 +1108,14 @@ class Testdir(object):
         try:
             now = time.time()
             popen = self.popen(
-                cmdargs, stdout=f1, stderr=f2, close_fds=(sys.platform != "win32")
+                cmdargs,
+                stdin=stdin,
+                stdout=f1,
+                stderr=f2,
+                close_fds=(sys.platform != "win32"),
             )
+            if isinstance(stdin, bytes):
+                popen.stdin.close()
 
             def handle_timeout():
                 __tracebackhide__ = True
