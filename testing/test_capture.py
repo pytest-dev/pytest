@@ -1243,25 +1243,24 @@ class TestStdCaptureFDinvalidFD(object):
             from _pytest import capture
 
             def StdCaptureFD(out=True, err=True, in_=True):
-                return capture.MultiCapture(out, err, in_,
-                                            Capture=capture.FDCapture)
+                return capture.MultiCapture(out, err, in_, Capture=capture.FDCapture)
 
             def test_stdout():
                 os.close(1)
                 cap = StdCaptureFD(out=True, err=False, in_=False)
-                assert repr(cap.out) == "<FDCapture 1 oldfd=None>"
+                assert repr(cap.out) == "<FDCapture 1 oldfd=None _state=None>"
                 cap.stop_capturing()
 
             def test_stderr():
                 os.close(2)
                 cap = StdCaptureFD(out=False, err=True, in_=False)
-                assert repr(cap.err) == "<FDCapture 2 oldfd=None>"
+                assert repr(cap.err) == "<FDCapture 2 oldfd=None _state=None>"
                 cap.stop_capturing()
 
             def test_stdin():
                 os.close(0)
                 cap = StdCaptureFD(out=False, err=False, in_=True)
-                assert repr(cap.in_) == "<FDCapture 0 oldfd=None>"
+                assert repr(cap.in_) == "<FDCapture 0 oldfd=None _state=None>"
                 cap.stop_capturing()
         """
         )
