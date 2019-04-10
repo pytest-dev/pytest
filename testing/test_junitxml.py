@@ -485,8 +485,26 @@ class TestPython(object):
         tnode = node.find_first_by_tag("testcase")
         tnode.assert_attr(classname="test_xfailure_function", name="test_xfail")
         fnode = tnode.find_first_by_tag("skipped")
-        fnode.assert_attr(message="expected test failure")
+        fnode.assert_attr(type="pytest.xfail", message="42")
         # assert "ValueError" in fnode.toxml()
+
+    def test_xfailure_marker(self, testdir):
+        testdir.makepyfile(
+            """
+            import pytest
+            @pytest.mark.xfail(reason="42")
+            def test_xfail():
+                assert False
+        """
+        )
+        result, dom = runandparse(testdir)
+        assert not result.ret
+        node = dom.find_first_by_tag("testsuite")
+        node.assert_attr(skipped=1, tests=1)
+        tnode = node.find_first_by_tag("testcase")
+        tnode.assert_attr(classname="test_xfailure_marker", name="test_xfail")
+        fnode = tnode.find_first_by_tag("skipped")
+        fnode.assert_attr(type="pytest.xfail", message="42")
 
     def test_xfail_captures_output_once(self, testdir):
         testdir.makepyfile(
