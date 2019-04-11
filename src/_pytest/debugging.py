@@ -85,6 +85,29 @@ class pytestPDB:
         return False
 
     @classmethod
+    def _suspend_capturing(cls, capman, header=None):
+        import _pytest.config
+
+        if capman:
+            capman.suspend(in_=True)
+        tw = _pytest.config.create_terminal_writer(cls._config)
+        tw.line()
+        if cls._recursive_debug == 0:
+            if header is None:
+                header = "PDB set_trace"
+
+            capturing = cls._is_capturing(capman)
+            if capturing:
+                if capturing == "global":
+                    tw.sep(">", "%s (IO-capturing turned off)" % header)
+                else:
+                    tw.sep(
+                        ">", "%s (IO-capturing turned off for %s)" % (header, capturing)
+                    )
+            else:
+                tw.sep(">", header)
+
+    @classmethod
     def _import_pdb_cls(cls, capman):
         if not cls._config:
             import pdb
@@ -215,7 +238,7 @@ class pytestPDB:
         else:
             capman = None
         if capman:
-            capman.suspend(in_=True)
+            cls._suspend_capturing(capman, header=kwargs.pop("header", None))
 
         if cls._config:
             tw = _pytest.config.create_terminal_writer(cls._config)

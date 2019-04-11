@@ -379,7 +379,7 @@ class TestPDB:
         """
         )
         child = testdir.spawn_pytest(str(p1))
-        child.expect("== my_header ==")
+        child.expect(r"> == my_header == \(IO-capturing turned off\) >")
         assert "PDB set_trace" not in child.before.decode()
         child.expect("Pdb")
         child.sendline("c")
@@ -1198,6 +1198,7 @@ def test_pdbcls_via_local_module(testdir):
     )
     assert result.ret == 0
     result.stdout.fnmatch_lines(["*runcall_called*", "* 1 passed in *"])
+<<<<<<< HEAD
 
 
 def test_raises_bdbquit_with_eoferror(testdir):
@@ -1247,3 +1248,36 @@ def test_pdb_wrapper_class_is_reused(testdir):
     result.stdout.fnmatch_lines(
         ["*set_trace_called*", "*set_trace_called*", "* 1 passed in *"]
     )
+||||||| parent of c769536f8... Factor out _suspend_capturing
+=======
+
+
+def test_continue_with_breakpoint(testdir):
+    """Test capturing with later breakpoint."""
+    p1 = testdir.makepyfile(
+        """
+        def f():
+            print("print_in_f")
+            assert 0
+
+        def test_1():
+            __import__('pdb').set_trace()
+
+            f()
+    """
+    )
+    child = testdir.spawn_pytest(str(p1))
+    child.expect(r"PDB set_trace \(IO-capturing turned off\)")
+    child.expect(r"\(Pdb")
+    child.sendline("break f")
+    child.sendline("c")
+    child.expect(r"PDB continue \(IO-capturing resumed\)")
+    child.expect(r"PDB set_trace \(IO-capturing turned off\)")
+    child.expect(r'-> print\("print_in_f"\)')
+    child.expect(r"\(Pdb")
+    child.sendline("c")
+    rest = child.read().decode("utf8")
+    assert "Captured stdout call" in rest
+    assert "print_in_f" in rest
+    assert "1 failed" in rest
+>>>>>>> c769536f8... Factor out _suspend_capturing
