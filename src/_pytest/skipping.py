@@ -1,7 +1,10 @@
+# coding=utf8
 """ support for skip/xfail functions and markers. """
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
+
+import six
 
 from _pytest.config import hookimpl
 from _pytest.mark.evaluate import MarkEvaluator
@@ -237,6 +240,14 @@ def _get_line_with_reprcrash_message(config, rep, termwidth):
                 msg = msg[:max_len_msg]
                 while wcswidth(msg) > max_len_msg:
                     msg = msg[:-1]
+                if six.PY2:
+                    # on python 2 systems with narrow unicode compilation, trying to
+                    # get a single character out of a multi-byte unicode character such as
+                    # u'😄' will result in a High Surrogate (U+D83D) character, which is
+                    # rendered as u'�'; in this case we just strip that character out as it
+                    # serves no purpose being rendered
+                    while msg.endswith(u"\uD83D"):
+                        msg = msg[:-1]
                 msg += ellipsis
             line += sep + msg
     return line
