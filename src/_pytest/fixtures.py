@@ -853,7 +853,9 @@ class FixtureDef(object):
                     exceptions.append(sys.exc_info())
             if exceptions:
                 e = exceptions[0]
-                del exceptions  # ensure we don't keep all frames alive because of the traceback
+                del (
+                    exceptions
+                )  # ensure we don't keep all frames alive because of the traceback
                 six.reraise(*e)
 
         finally:
