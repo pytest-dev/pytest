@@ -235,7 +235,8 @@ Example:
     FAILED test_example.py::test_fail
     = 1 failed, 1 passed, 1 skipped, 1 xfailed, 1 xpassed, 1 error in 0.12 seconds =
 
-The ``-r`` options accepts a number of characters after it, with ``a`` used above meaning "all except passes".
+The ``-r`` options accepts a number of characters after it, with ``a`` used
+above meaning "all except passes".
 
 Here is the full list of available characters that can be used:
 
@@ -247,6 +248,7 @@ Here is the full list of available characters that can be used:
  - ``p`` - passed
  - ``P`` - passed with output
  - ``a`` - all except ``pP``
+ - ``A`` - all
 
 More than one character can be used, so for example to only see failed and skipped tests, you can execute:
 
