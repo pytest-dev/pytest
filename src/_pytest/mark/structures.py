@@ -10,6 +10,7 @@ from ..compat import ascii_escaped
 from ..compat import getfslineno
 from ..compat import MappingMixin
 from ..compat import NOTSET
+from _pytest.deprecated import PYTEST_PARAM_UNKNOWN_KWARGS
 from _pytest.outcomes import fail
 
 EMPTY_PARAMETERSET_OPTION = "empty_parameter_set_mark"
@@ -60,20 +61,25 @@ def get_empty_parameterset_mark(config, argnames, func):
 
 class ParameterSet(namedtuple("ParameterSet", "values, marks, id")):
     @classmethod
-    def param(cls, *values, **kw):
-        marks = kw.pop("marks", ())
+    def param(cls, *values, **kwargs):
+        marks = kwargs.pop("marks", ())
         if isinstance(marks, MarkDecorator):
             marks = (marks,)
         else:
             assert isinstance(marks, (tuple, list, set))
 
-        id_ = kw.pop("id", None)
+        id_ = kwargs.pop("id", None)
         if id_ is not None:
             if not isinstance(id_, six.string_types):
                 raise TypeError(
                     "Expected id to be a string, got {}: {!r}".format(type(id_), id_)
                 )
             id_ = ascii_escaped(id_)
+
+        if kwargs:
+            warnings.warn(
+                PYTEST_PARAM_UNKNOWN_KWARGS.format(args=sorted(kwargs)), stacklevel=3
+            )
         return cls(values, marks, id_)
 
     @classmethod

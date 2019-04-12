@@ -93,3 +93,9 @@ PYTEST_WARNS_UNKNOWN_KWARGS = UnformattedWarning(
     "pytest.warns() got unexpected keyword arguments: {args!r}.\n"
     "This will be an error in future versions.",
 )
+
+PYTEST_PARAM_UNKNOWN_KWARGS = UnformattedWarning(
+    PytestDeprecationWarning,
+    "pytest.param() got unexpected keyword arguments: {args!r}.\n"
+    "This will be an error in future versions.",
+)
