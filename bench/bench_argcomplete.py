@@ -16,4 +16,4 @@ run = 'fc("/d")'
 
 if __name__ == "__main__":
     print(timeit.timeit(run, setup=setup % imports[0], number=count))
-    print((timeit.timeit(run, setup=setup % imports[1], number=count)))
+    print(timeit.timeit(run, setup=setup % imports[1], number=count))

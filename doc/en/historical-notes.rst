@@ -57,14 +57,16 @@ Applying marks to ``@pytest.mark.parametrize`` parameters
 .. versionchanged:: 3.1
 
 Prior to version 3.1 the supported mechanism for marking values
-used the syntax::
+used the syntax:
+
+.. code-block:: python
 
     import pytest
-    @pytest.mark.parametrize("test_input,expected", [
-        ("3+5", 8),
-        ("2+4", 6),
-        pytest.mark.xfail(("6*9", 42),),
-    ])
+
+
+    @pytest.mark.parametrize(
+        "test_input,expected", [("3+5", 8), ("2+4", 6), pytest.mark.xfail(("6*9", 42))]
+    )
     def test_eval(test_input, expected):
         assert eval(test_input) == expected
 
@@ -105,9 +107,13 @@ Conditions as strings instead of booleans
 .. versionchanged:: 2.4
 
 Prior to pytest-2.4 the only way to specify skipif/xfail conditions was
-to use strings::
+to use strings:
+
+.. code-block:: python
 
     import sys
+
+
     @pytest.mark.skipif("sys.version_info >= (3,3)")
     def test_function():
         ...
@@ -139,17 +145,20 @@ dictionary which is constructed as follows:
   expression is applied.
 
 The pytest ``config`` object allows you to skip based on a test
-configuration value which you might have added::
+configuration value which you might have added:
+
+.. code-block:: python
 
     @pytest.mark.skipif("not config.getvalue('db')")
-    def test_function(...):
+    def test_function():
         ...
 
-The equivalent with "boolean conditions" is::
+The equivalent with "boolean conditions" is:
 
-    @pytest.mark.skipif(not pytest.config.getvalue("db"),
-                        reason="--db was not specified")
-    def test_function(...):
+.. code-block:: python
+
+    @pytest.mark.skipif(not pytest.config.getvalue("db"), reason="--db was not specified")
+    def test_function():
         pass
 
 .. note::
@@ -164,12 +173,16 @@ The equivalent with "boolean conditions" is::
 
 .. versionchanged:: 2.4
 
-Previous to version 2.4 to set a break point in code one needed to use ``pytest.set_trace()``::
+Previous to version 2.4 to set a break point in code one needed to use ``pytest.set_trace()``:
+
+.. code-block:: python
 
     import pytest
+
+
     def test_function():
         ...
-        pytest.set_trace()    # invoke PDB debugger and tracing
+        pytest.set_trace()  # invoke PDB debugger and tracing
 
 
 This is no longer needed and one can use the native ``import pdb;pdb.set_trace()`` call directly.

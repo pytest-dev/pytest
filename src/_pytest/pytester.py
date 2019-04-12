@@ -1320,7 +1320,7 @@ class LineMatcher(object):
         raise ValueError("line %r not found in output" % fnline)
 
     def _log(self, *args):
-        self._log_output.append(" ".join((str(x) for x in args)))
+        self._log_output.append(" ".join(str(x) for x in args))
 
     @property
     def _log_text(self):
