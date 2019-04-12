@@ -1,0 +1,1 @@
+Invalidate import caches with ``monkeypatch.syspath_prepend``, which is required with namespace packages being used.
