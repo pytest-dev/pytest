@@ -9,18 +9,28 @@ Here are some example using the :ref:`mark` mechanism.
 Marking test functions and selecting them for a run
 ----------------------------------------------------
 
-You can "mark" a test function with custom metadata like this::
+You can "mark" a test function with custom metadata like this:
+
+.. code-block:: python
 
     # content of test_server.py
 
     import pytest
+
+
     @pytest.mark.webtest
     def test_send_http():
-        pass # perform some webtest test for your app
+        pass  # perform some webtest test for your app
+
+
     def test_something_quick():
         pass
+
+
     def test_another():
         pass
+
+
     class TestClass(object):
         def test_method(self):
             pass
@@ -257,14 +267,19 @@ Marking whole classes or modules
 ----------------------------------------------------
 
 You may use ``pytest.mark`` decorators with classes to apply markers to all of
-its test methods::
+its test methods:
+
+.. code-block:: python
 
     # content of test_mark_classlevel.py
     import pytest
+
+
     @pytest.mark.webtest
     class TestClass(object):
         def test_startup(self):
             pass
+
         def test_startup_and_more(self):
             pass
 
@@ -272,16 +287,22 @@ This is equivalent to directly applying the decorator to the
 two test functions.
 
 To remain backward-compatible with Python 2.4 you can also set a
-``pytestmark`` attribute on a TestClass like this::
+``pytestmark`` attribute on a TestClass like this:
+
+.. code-block:: python
 
     import pytest
+
 
     class TestClass(object):
         pytestmark = pytest.mark.webtest
 
-or if you need to use multiple markers you can use a list::
+or if you need to use multiple markers you can use a list:
+
+.. code-block:: python
 
     import pytest
+
 
     class TestClass(object):
         pytestmark = [pytest.mark.webtest, pytest.mark.slowtest]
@@ -305,18 +326,19 @@ Marking individual tests when using parametrize
 
 When using parametrize, applying a mark will make it apply
 to each individual test. However it is also possible to
-apply a marker to an individual test instance::
+apply a marker to an individual test instance:
+
+.. code-block:: python
 
     import pytest
 
+
     @pytest.mark.foo
-    @pytest.mark.parametrize(("n", "expected"), [
-        (1, 2),
-        pytest.param((1, 3), marks=pytest.mark.bar),
-        (2, 3),
-    ])
+    @pytest.mark.parametrize(
+        ("n", "expected"), [(1, 2), pytest.param((1, 3), marks=pytest.mark.bar), (2, 3)]
+    )
     def test_increment(n, expected):
-         assert n + 1 == expected
+        assert n + 1 == expected
 
 In this example the mark "foo" will apply to each of the three
 tests, whereas the "bar" mark is only applied to the second test.
@@ -332,31 +354,46 @@ Custom marker and command line option to control test runs
 Plugins can provide custom markers and implement specific behaviour
 based on it. This is a self-contained example which adds a command
 line option and a parametrized test function marker to run tests
-specifies via named environments::
+specifies via named environments:
+
+.. code-block:: python
 
     # content of conftest.py
 
     import pytest
+
+
     def pytest_addoption(parser):
-        parser.addoption("-E", action="store", metavar="NAME",
-            help="only run tests matching the environment NAME.")
+        parser.addoption(
+            "-E",
+            action="store",
+            metavar="NAME",
+            help="only run tests matching the environment NAME.",
+        )
+
 
     def pytest_configure(config):
         # register an additional marker
-        config.addinivalue_line("markers",
-            "env(name): mark test to run only on named environment")
+        config.addinivalue_line(
+            "markers", "env(name): mark test to run only on named environment"
+        )
+
 
     def pytest_runtest_setup(item):
-        envnames = [mark.args[0] for mark in item.iter_markers(name='env')]
+        envnames = [mark.args[0] for mark in item.iter_markers(name="env")]
         if envnames:
             if item.config.getoption("-E") not in envnames:
                 pytest.skip("test requires env in %r" % envnames)
 
-A test file using this local plugin::
+A test file using this local plugin:
+
+.. code-block:: python
 
     # content of test_someenv.py
 
     import pytest
+
+
     @pytest.mark.env("stage1")
     def test_basic_db_operation():
         pass
@@ -423,25 +460,32 @@ Passing a callable to custom markers
 
 .. regendoc:wipe
 
-Below is the config file that will be used in the next examples::
+Below is the config file that will be used in the next examples:
+
+.. code-block:: python
 
     # content of conftest.py
     import sys
 
+
     def pytest_runtest_setup(item):
-        for marker in item.iter_markers(name='my_marker'):
+        for marker in item.iter_markers(name="my_marker"):
             print(marker)
             sys.stdout.flush()
 
 A custom marker can have its argument set, i.e. ``args`` and ``kwargs`` properties, defined by either invoking it as a callable or using ``pytest.mark.MARKER_NAME.with_args``. These two methods achieve the same effect most of the time.
 
-However, if there is a callable as the single positional argument with no keyword arguments, using the ``pytest.mark.MARKER_NAME(c)`` will not pass ``c`` as a positional argument but decorate ``c`` with the custom marker (see :ref:`MarkDecorator <mark>`). Fortunately, ``pytest.mark.MARKER_NAME.with_args`` comes to the rescue::
+However, if there is a callable as the single positional argument with no keyword arguments, using the ``pytest.mark.MARKER_NAME(c)`` will not pass ``c`` as a positional argument but decorate ``c`` with the custom marker (see :ref:`MarkDecorator <mark>`). Fortunately, ``pytest.mark.MARKER_NAME.with_args`` comes to the rescue:
+
+.. code-block:: python
 
     # content of test_custom_marker.py
     import pytest
 
+
     def hello_world(*args, **kwargs):
-        return 'Hello World'
+        return "Hello World"
+
 
     @pytest.mark.my_marker.with_args(hello_world)
     def test_with_args():
@@ -467,11 +511,15 @@ Reading markers which were set from multiple places
 .. regendoc:wipe
 
 If you are heavily using markers in your test suite you may encounter the case where a marker is applied several times to a test function.  From plugin
-code you can read over all such settings.  Example::
+code you can read over all such settings.  Example:
+
+.. code-block:: python
 
     # content of test_mark_three_times.py
     import pytest
+
     pytestmark = pytest.mark.glob("module", x=1)
+
 
     @pytest.mark.glob("class", x=2)
     class TestClass(object):
@@ -480,13 +528,16 @@ code you can read over all such settings.  Example::
             pass
 
 Here we have the marker "glob" applied three times to the same
-test function.  From a conftest file we can read it like this::
+test function.  From a conftest file we can read it like this:
+
+.. code-block:: python
 
     # content of conftest.py
     import sys
 
+
     def pytest_runtest_setup(item):
-        for mark in item.iter_markers(name='glob'):
+        for mark in item.iter_markers(name="glob"):
             print("glob args=%s kwargs=%s" % (mark.args, mark.kwargs))
             sys.stdout.flush()
 
@@ -510,7 +561,9 @@ Consider you have a test suite which marks tests for particular platforms,
 namely ``pytest.mark.darwin``, ``pytest.mark.win32`` etc. and you
 also have tests that run on all platforms and have no specific
 marker.  If you now want to have a way to only run the tests
-for your particular platform, you could use the following plugin::
+for your particular platform, you could use the following plugin:
+
+.. code-block:: python
 
     # content of conftest.py
     #
@@ -519,6 +572,7 @@ for your particular platform, you could use the following plugin::
 
     ALL = set("darwin linux win32".split())
 
+
     def pytest_runtest_setup(item):
         supported_platforms = ALL.intersection(mark.name for mark in item.iter_markers())
         plat = sys.platform
@@ -526,23 +580,29 @@ for your particular platform, you could use the following plugin::
             pytest.skip("cannot run on platform %s" % (plat))
 
 then tests will be skipped if they were specified for a different platform.
-Let's do a little test file to show how this looks like::
+Let's do a little test file to show how this looks like:
+
+.. code-block:: python
 
     # content of test_plat.py
 
     import pytest
 
+
     @pytest.mark.darwin
     def test_if_apple_is_evil():
         pass
+
 
     @pytest.mark.linux
     def test_if_linux_works():
         pass
 
+
     @pytest.mark.win32
     def test_if_win32_crashes():
         pass
+
 
     def test_runs_everywhere():
         pass
@@ -589,28 +649,38 @@ Automatically adding markers based on test names
 If you a test suite where test function names indicate a certain
 type of test, you can implement a hook that automatically defines
 markers so that you can use the ``-m`` option with it. Let's look
-at this test module::
+at this test module:
+
+.. code-block:: python
 
     # content of test_module.py
+
 
     def test_interface_simple():
         assert 0
 
+
     def test_interface_complex():
         assert 0
 
+
     def test_event_simple():
         assert 0
+
 
     def test_something_else():
         assert 0
 
 We want to dynamically define two markers and can do it in a
-``conftest.py`` plugin::
+``conftest.py`` plugin:
+
+.. code-block:: python
 
     # content of conftest.py
 
     import pytest
+
+
     def pytest_collection_modifyitems(items):
         for item in items:
             if "interface" in item.nodeid:
