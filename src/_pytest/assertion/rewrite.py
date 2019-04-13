@@ -964,6 +964,8 @@ warn_explicit(
         """
         visit `ast.Call` nodes on Python3.5 and after
         """
+        if call.func.id == "all":
+            return self.visit_all(call)
         new_func, func_expl = self.visit(call.func)
         arg_expls = []
         new_args = []
@@ -986,6 +988,22 @@ warn_explicit(
         res_expl = self.explanation_param(self.display(res))
         outer_expl = "%s\n{%s = %s\n}" % (res_expl, res_expl, expl)
         return res, outer_expl
+
+    def visit_all(self, call):
+        """Special rewrite for the builtin all function, see #5602"""
+        if not isinstance(call.args[0], ast.GeneratorExp):
+            return
+        gen_exp = call.args[0]
+        for_loop = ast.For(
+            iter=gen_exp.generators[0].iter,
+            target=gen_exp.generators[0].target,
+            body=[
+                self.visit(ast.Assert(test=gen_exp.elt, lineno=1, msg="", col_offset=1))
+            ],
+        )
+        ast.fix_missing_locations(for_loop)
+        for_loop = ast.copy_location(for_loop, call)
+        return for_loop, ""
 
     def visit_Starred(self, starred):
         # From Python 3.5, a Starred node can appear in a function call
