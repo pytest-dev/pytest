@@ -656,6 +656,12 @@ class TestAssertionRewrite(object):
         else:
             assert lines == ["assert 0 == 1\n +  where 1 = \\n{ \\n~ \\n}.a"]
 
+    def test_all_unroll(self):
+        def f():
+            assert all(x == 1 for x in range(10))
+
+        assert "0 != 1" in getmsg(f)
+
     def test_custom_repr_non_ascii(self):
         def f():
             class A(object):
