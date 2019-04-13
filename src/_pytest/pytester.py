@@ -854,6 +854,8 @@ class Testdir:
         """
         syspathinsert = kwargs.pop("syspathinsert", False)
 
+        print("running (inline): pytest", *args)
+        print("              in:", py.path.local())
         if syspathinsert:
             self.syspathinsert()
         now = time.time()

@@ -1,0 +1,3 @@
+``testdir.runpytest_inprocess`` now prints the command and current working
+directory, bringing it in line with
+``testdir.run`` / ``testdir.runpytest_subprocess``.
