@@ -1242,6 +1242,37 @@ def test_collect_sub_with_symlinks(use_pkg, testdir):
     )
 
 
+def test_automatic_pytest_deselect(testdir):
+    p1 = testdir.makepyfile(
+        conftest="""
+        import pytest
+
+        deselect_calls = []
+
+        def pytest_deselected(items):
+            print("deselect", items)
+            deselect_calls.append(items)
+
+        def pytest_collection_modifyitems(items):
+            print([x.name for x in items])
+            items[:] = [item for item in items if item.name != "test_removed"]
+            print(items)
+            # print(items)
+            # items.pop()
+
+        def test_removed():
+            assert 0
+
+        def test_check():
+            assert len(deselect_calls) == 1
+            assert [x.name for x in deselect_calls[0]] == ["test_removed"]
+    """
+    )
+    result = testdir.runpytest(str(p1))
+    assert result.ret == 0
+    assert result.reprec.countoutcomes() == [1, 0, 0]
+
+
 def test_collector_respects_tbstyle(testdir):
     p1 = testdir.makepyfile("assert 0")
     result = testdir.runpytest(p1, "--tb=native")

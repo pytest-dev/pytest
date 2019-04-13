@@ -384,6 +384,8 @@ class Session(nodes.FSCollector):
 
         self.config.pluginmanager.register(self, name="session")
 
+        self._deselected = []
+
     def __repr__(self):
         return "<%s %s exitstatus=%r testsfailed=%d testscollected=%d>" % (
             self.__class__.__name__,
@@ -431,14 +433,26 @@ class Session(nodes.FSCollector):
             proxy = self.config.hook
         return proxy
 
+    def pytest_deselected(self, items):
+        """Keep track of explicitly deselected items."""
+        self._deselected.extend(items)
+
     def perform_collect(self, args=None, genitems=True):
         hook = self.config.hook
         try:
             items = self._perform_collect(args, genitems)
             self.config.pluginmanager.check_pending()
+
+            items_before = set(items)
             hook.pytest_collection_modifyitems(
                 session=self, config=self.config, items=items
             )
+            ignore = set(self._deselected + items)
+            removed_items = items_before.difference(ignore)
+            if removed_items:
+                # Explicitly deselect them.
+                # Calls the own hook again, but that is OK.
+                self.config.hook.pytest_deselected(items=removed_items)
         finally:
             hook.pytest_collection_finish(session=self)
         self.testscollected = len(items)
