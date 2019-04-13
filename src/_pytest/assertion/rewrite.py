@@ -994,16 +994,21 @@ warn_explicit(
         if not isinstance(call.args[0], ast.GeneratorExp):
             return
         gen_exp = call.args[0]
+        assertion_module = ast.Module(
+            body=[ast.Assert(test=gen_exp.elt, lineno=1, msg="", col_offset=1)]
+        )
+        AssertionRewriter(None, None).run(assertion_module)
         for_loop = ast.For(
             iter=gen_exp.generators[0].iter,
             target=gen_exp.generators[0].target,
-            body=[
-                self.visit(ast.Assert(test=gen_exp.elt, lineno=1, msg="", col_offset=1))
-            ],
+            body=assertion_module.body,
+            orelse=[],
         )
-        ast.fix_missing_locations(for_loop)
-        for_loop = ast.copy_location(for_loop, call)
-        return for_loop, ""
+        self.statements.append(for_loop)
+        return (
+            ast.Num(n=1),
+            "",
+        )  # Return an empty expression, all the asserts are in the for_loop
 
     def visit_Starred(self, starred):
         # From Python 3.5, a Starred node can appear in a function call
