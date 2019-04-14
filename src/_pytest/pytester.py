@@ -77,7 +77,7 @@ def pytest_configure(config):
 
 def raise_on_kwargs(kwargs):
     __tracebackhide__ = True
-    if kwargs:
+    if kwargs:  # pragma: no branch
         raise TypeError(
             "Unexpected keyword arguments: {}".format(", ".join(sorted(kwargs)))
         )
