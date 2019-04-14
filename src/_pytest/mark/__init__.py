@@ -100,6 +100,9 @@ pytest_cmdline_main.tryfirst = True
 
 def deselect_by_keyword(items, config):
     keywordexpr = config.option.keyword.lstrip()
+    if not keywordexpr:
+        return
+
     if keywordexpr.startswith("-"):
         keywordexpr = "not " + keywordexpr[1:]
     selectuntil = False
