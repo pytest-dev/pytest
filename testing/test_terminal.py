@@ -506,6 +506,37 @@ class TestTerminalFunctional(object):
         )
         assert result.ret == 0
 
+    def test_deselected_with_hookwrapper(self, testdir):
+        testpath = testdir.makeconftest(
+            """
+            import pytest
+
+            @pytest.hookimpl(hookwrapper=True)
+            def pytest_collection_modifyitems(config, items):
+                yield
+                deselected = items.pop()
+                config.hook.pytest_deselected(items=[deselected])
+            """
+        )
+        testpath = testdir.makepyfile(
+            """
+                def test_one():
+                    pass
+                def test_two():
+                    pass
+                def test_three():
+                    pass
+           """
+        )
+        result = testdir.runpytest(testpath)
+        result.stdout.fnmatch_lines(
+            [
+                "collected 3 items / 1 deselected / 2 selected",
+                "*= 2 passed, 1 deselected in*",
+            ]
+        )
+        assert result.ret == 0
+
     def test_show_deselected_items_using_markexpr_before_test_execution(self, testdir):
         testdir.makepyfile(
             test_show_deselected="""

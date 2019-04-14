@@ -554,10 +554,6 @@ class TerminalReporter(object):
             self.write_line(line)
 
     @pytest.hookimpl(trylast=True)
-    def pytest_collection_modifyitems(self):
-        self.report_collect(True)
-
-    @pytest.hookimpl(trylast=True)
     def pytest_sessionstart(self, session):
         self._session = session
         self._sessionstarttime = time.time()
@@ -609,6 +605,8 @@ class TerminalReporter(object):
         return result
 
     def pytest_collection_finish(self, session):
+        self.report_collect(True)
+
         if self.config.getoption("collectonly"):
             self._printcollecteditems(session.items)
 
