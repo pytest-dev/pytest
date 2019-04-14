@@ -165,15 +165,14 @@ def getreportopt(config):
         reportchars += "w"
     elif config.option.disable_warnings and "w" in reportchars:
         reportchars = reportchars.replace("w", "")
-    if reportchars:
-        for char in reportchars:
-            if char == "a":
-                reportopts = "sxXwEf"
-            elif char == "A":
-                reportopts = "sxXwEfpP"
-                break
-            elif char not in reportopts:
-                reportopts += char
+    for char in reportchars:
+        if char == "a":
+            reportopts = "sxXwEf"
+        elif char == "A":
+            reportopts = "sxXwEfpP"
+            break
+        elif char not in reportopts:
+            reportopts += char
     return reportopts
 
 
