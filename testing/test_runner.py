@@ -581,7 +581,7 @@ def test_pytest_exit_returncode(testdir):
     )
     result = testdir.runpytest()
     result.stdout.fnmatch_lines(["*! *Exit: some exit msg !*"])
-    # Assert no output on stderr, except for unreliable  ResourceWarnings.
+    # Assert no output on stderr, except for unreliable ResourceWarnings.
     # (https://github.com/pytest-dev/pytest/issues/5088)
     assert [
         x
