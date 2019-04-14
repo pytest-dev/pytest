@@ -312,7 +312,8 @@ class HookRecorder(object):
                     passed.append(rep)
             elif rep.skipped:
                 skipped.append(rep)
-            elif rep.failed:
+            else:
+                assert rep.failed, "Unexpected outcome: {!r}".format(rep)
                 failed.append(rep)
         return passed, skipped, failed
 
