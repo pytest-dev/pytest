@@ -627,27 +627,10 @@ class Testdir(object):
         This is undone automatically when this object dies at the end of each
         test.
         """
-        from pkg_resources import fixup_namespace_packages
-
         if path is None:
             path = self.tmpdir
 
-        dirname = str(path)
-        sys.path.insert(0, dirname)
-        fixup_namespace_packages(dirname)
-
-        # a call to syspathinsert() usually means that the caller wants to
-        # import some dynamically created files, thus with python3 we
-        # invalidate its import caches
-        self._possibly_invalidate_import_caches()
-
-    def _possibly_invalidate_import_caches(self):
-        # invalidate caches if we can (py33 and above)
-        try:
-            from importlib import invalidate_caches
-        except ImportError:
-            return
-        invalidate_caches()
+        self.monkeypatch.syspath_prepend(str(path))
 
     def mkdir(self, name):
         """Create a new (sub)directory."""
@@ -1361,7 +1344,7 @@ class LineMatcher(object):
         raise ValueError("line %r not found in output" % fnline)
 
     def _log(self, *args):
-        self._log_output.append(" ".join((str(x) for x in args)))
+        self._log_output.append(" ".join(str(x) for x in args))
 
     @property
     def _log_text(self):

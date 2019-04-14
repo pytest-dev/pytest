@@ -271,6 +271,18 @@ class MonkeyPatch(object):
         # https://github.com/pypa/setuptools/blob/d8b901bc/docs/pkg_resources.txt#L162-L171
         fixup_namespace_packages(str(path))
 
+        # A call to syspathinsert() usually means that the caller wants to
+        # import some dynamically created files, thus with python3 we
+        # invalidate its import caches.
+        # This is especially important when any namespace package is in used,
+        # since then the mtime based FileFinder cache (that gets created in
+        # this case already) gets not invalidated when writing the new files
+        # quickly afterwards.
+        if sys.version_info >= (3, 3):
+            from importlib import invalidate_caches
+
+            invalidate_caches()
+
     def chdir(self, path):
         """ Change the current working directory to the specified path.
         Path can be a string or a py.path.local object.

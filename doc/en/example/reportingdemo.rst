@@ -1,13 +1,9 @@
-
 .. _`tbreportdemo`:
 
 Demo of Python failure reports with pytest
-==================================================
+==========================================
 
-Here is a nice run of several tens of failures
-and how ``pytest`` presents things (unfortunately
-not showing the nice colors here in the HTML that you
-get on the terminal - we are working on that):
+Here is a nice run of several failures and how ``pytest`` presents things:
 
 .. code-block:: pytest
 
