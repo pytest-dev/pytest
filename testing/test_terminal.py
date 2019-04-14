@@ -769,11 +769,19 @@ def test_pass_output_reporting(testdir):
     assert "test_pass_has_output" not in s
     assert "Four score and seven years ago..." not in s
     assert "test_pass_no_output" not in s
-    result = testdir.runpytest("-rP")
+    result = testdir.runpytest("-rPp")
     result.stdout.fnmatch_lines(
-        ["*test_pass_has_output*", "Four score and seven years ago..."]
+        [
+            "*= PASSES =*",
+            "*_ test_pass_has_output _*",
+            "*- Captured stdout call -*",
+            "Four score and seven years ago...",
+            "*= short test summary info =*",
+            "PASSED test_pass_output_reporting.py::test_pass_has_output",
+            "PASSED test_pass_output_reporting.py::test_pass_no_output",
+            "*= 2 passed in *",
+        ]
     )
-    assert "test_pass_no_output" not in result.stdout.str()
 
 
 def test_color_yes(testdir):

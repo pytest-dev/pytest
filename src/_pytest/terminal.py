@@ -684,9 +684,9 @@ class TerminalReporter(object):
         self.summary_errors()
         self.summary_failures()
         self.summary_warnings()
+        self.summary_passes()
         yield
         self.short_test_summary()
-        self.summary_passes()
         # Display any extra warnings from teardown here (if any).
         self.summary_warnings()
 
