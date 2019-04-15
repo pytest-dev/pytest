@@ -828,17 +828,22 @@ class TerminalReporter(object):
             if not reports:
                 return
             self.write_sep("=", "FAILURES")
-            for rep in reports:
-                if self.config.option.tbstyle == "line":
+            if self.config.option.tbstyle == "line":
+                for rep in reports:
                     line = self._getcrashline(rep)
                     self.write_line(line)
-                else:
+            else:
+                teardown_sections = {}
+                for report in self.getreports(""):
+                    if report.when == "teardown":
+                        teardown_sections.setdefault(report.nodeid, []).append(report)
+
+                for rep in reports:
                     msg = self._getfailureheadline(rep)
                     self.write_sep("_", msg, red=True, bold=True)
                     self._outrep_summary(rep)
-                    for report in self.getreports(""):
-                        if report.nodeid == rep.nodeid and report.when == "teardown":
-                            self.print_teardown_sections(report)
+                    for report in teardown_sections.get(rep.nodeid, []):
+                        self.print_teardown_sections(report)
 
     def summary_errors(self):
         if self.config.option.tbstyle != "no":
