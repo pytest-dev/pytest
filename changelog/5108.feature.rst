@@ -1,0 +1,1 @@
+The short test summary is displayed after passes with output (``-rP``).
