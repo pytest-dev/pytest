@@ -204,7 +204,7 @@ def test_strict_prohibits_unregistered_markers(testdir):
     )
     result = testdir.runpytest("--strict")
     assert result.ret != 0
-    result.stdout.fnmatch_lines(["'unregisteredmark' not a registered marker"])
+    result.stdout.fnmatch_lines(["'unregisteredmark' is not a registered marker"])
 
 
 @pytest.mark.parametrize(
