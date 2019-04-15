@@ -11,7 +11,7 @@ Here is a nice run of several failures and how ``pytest`` presents things:
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: /home/sweet/project/assertion
+    rootdir: $REGENDOC_TMPDIR/assertion
     collected 44 items
 
     failure_demo.py FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF         [100%]
@@ -471,7 +471,7 @@ Here is a nice run of several failures and how ``pytest`` presents things:
     >    assert 1 == 0
     E    AssertionError
 
-    <0-codegen 'abc-123' /home/sweet/project/assertion/failure_demo.py:201>:2: AssertionError
+    <0-codegen 'abc-123' $REGENDOC_TMPDIR/assertion/failure_demo.py:201>:2: AssertionError
     ____________________ TestMoreErrors.test_complex_error _____________________
 
     self = <failure_demo.TestMoreErrors object at 0xdeadbeef>
