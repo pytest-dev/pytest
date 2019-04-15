@@ -328,7 +328,8 @@ class TestReport(BaseReport):
         self.__dict__.update(extra)
 
     def __repr__(self):
-        return "<TestReport %r when=%r outcome=%r>" % (
+        return "<%s %r when=%r outcome=%r>" % (
+            self.__class__.__name__,
             self.nodeid,
             self.when,
             self.outcome,
