@@ -304,7 +304,7 @@ class MarkGenerator(object):
                 for line in self._config.getini("markers"):
                     # example lines: "skipif(condition): skip the given test if..."
                     # or "hypothesis: tests which use Hypothesis", so to get the
-                    # marker name we we split on both `:` and `(`.
+                    # marker name we split on both `:` and `(`.
                     marker = line.split(":")[0].split("(")[0].strip()
                     self._markers.add(marker)
 

@@ -453,10 +453,10 @@ class TerminalReporter(object):
                 progress_length = len(" [100%]")
 
             self._progress_nodeids_reported.add(nodeid)
-            last_item = (
+            is_last_item = (
                 len(self._progress_nodeids_reported) == self._session.testscollected
             )
-            if last_item:
+            if is_last_item:
                 self._write_progress_information_filling_space()
             else:
                 w = self._width_of_current_line

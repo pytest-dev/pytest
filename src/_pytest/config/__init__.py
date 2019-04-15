@@ -282,7 +282,6 @@ class PytestPluginManager(PluginManager):
             known_marks = {m.name for m in getattr(method, "pytestmark", [])}
 
             for name in ("tryfirst", "trylast", "optionalhook", "hookwrapper"):
-
                 opts.setdefault(name, hasattr(method, name) or name in known_marks)
         return opts
 
