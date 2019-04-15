@@ -71,7 +71,7 @@ of the failing function and hide the other one:
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: /home/sweet/project
+    rootdir: $REGENDOC_TMPDIR
     collected 2 items
 
     test_module.py .F                                                    [100%]

@@ -30,14 +30,14 @@ Running pytest now produces this output:
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: /home/sweet/project
+    rootdir: $REGENDOC_TMPDIR
     collected 1 item
 
     test_show_warnings.py .                                              [100%]
 
     ============================= warnings summary =============================
     test_show_warnings.py::test_one
-      /home/sweet/project/test_show_warnings.py:4: UserWarning: api v1, should use functions from v2
+      $REGENDOC_TMPDIR/test_show_warnings.py:5: UserWarning: api v1, should use functions from v2
         warnings.warn(UserWarning("api v1, should use functions from v2"))
 
     -- Docs: https://docs.pytest.org/en/latest/warnings.html
@@ -56,14 +56,14 @@ them into errors:
         def test_one():
     >       assert api_v1() == 1
 
-    test_show_warnings.py:8:
+    test_show_warnings.py:10:
     _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 
         def api_v1():
     >       warnings.warn(UserWarning("api v1, should use functions from v2"))
     E       UserWarning: api v1, should use functions from v2
 
-    test_show_warnings.py:4: UserWarning
+    test_show_warnings.py:5: UserWarning
     1 failed in 0.12 seconds
 
 The same option can be set in the ``pytest.ini`` file using the ``filterwarnings`` ini option.
@@ -400,7 +400,7 @@ defines an ``__init__`` constructor, as this prevents the class from being insta
 
     ============================= warnings summary =============================
     test_pytest_warnings.py:1
-      /home/sweet/project/test_pytest_warnings.py:1: PytestWarning: cannot collect test class 'Test' because it has a __init__ constructor
+      $REGENDOC_TMPDIR/test_pytest_warnings.py:1: PytestWarning: cannot collect test class 'Test' because it has a __init__ constructor
         class Test:
 
     -- Docs: https://docs.pytest.org/en/latest/warnings.html

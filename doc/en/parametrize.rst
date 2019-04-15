@@ -58,7 +58,7 @@ them in turn:
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: /home/sweet/project
+    rootdir: $REGENDOC_TMPDIR
     collected 3 items
 
     test_expectation.py ..F                                              [100%]
@@ -68,17 +68,13 @@ them in turn:
 
     test_input = '6*9', expected = 42
 
-        @pytest.mark.parametrize("test_input,expected", [
-            ("3+5", 8),
-            ("2+4", 6),
-            ("6*9", 42),
-        ])
+        @pytest.mark.parametrize("test_input,expected", [("3+5", 8), ("2+4", 6), ("6*9", 42)])
         def test_eval(test_input, expected):
     >       assert eval(test_input) == expected
     E       AssertionError: assert 54 == 42
     E        +  where 54 = eval('6*9')
 
-    test_expectation.py:8: AssertionError
+    test_expectation.py:6: AssertionError
     ==================== 1 failed, 2 passed in 0.12 seconds ====================
 
 .. note::
@@ -127,7 +123,7 @@ Let's run this:
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: /home/sweet/project
+    rootdir: $REGENDOC_TMPDIR
     collected 3 items
 
     test_expectation.py ..x                                              [100%]
@@ -228,7 +224,7 @@ Let's also run with a stringinput that will lead to a failing test:
     E        +  where False = <built-in method isalpha of str object at 0xdeadbeef>()
     E        +    where <built-in method isalpha of str object at 0xdeadbeef> = '!'.isalpha
 
-    test_strings.py:3: AssertionError
+    test_strings.py:4: AssertionError
     1 failed in 0.12 seconds
 
 As expected our test function fails.
@@ -242,7 +238,7 @@ list:
     $ pytest -q -rs test_strings.py
     s                                                                    [100%]
     ========================= short test summary info ==========================
-    SKIPPED [1] test_strings.py: got empty parameter set ['stringinput'], function test_valid_string at /home/sweet/project/test_strings.py:1
+    SKIPPED [1] test_strings.py: got empty parameter set ['stringinput'], function test_valid_string at $REGENDOC_TMPDIR/test_strings.py:2
     1 skipped in 0.12 seconds
 
 Note that when calling ``metafunc.parametrize`` multiple times with different parameter sets, all parameter names across
