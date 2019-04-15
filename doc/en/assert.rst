@@ -33,7 +33,7 @@ you will see the return value of the function call:
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: /home/sweet/project
+    rootdir: $REGENDOC_TMPDIR
     collected 1 item
 
     test_assert1.py F                                                    [100%]
@@ -46,7 +46,7 @@ you will see the return value of the function call:
     E       assert 3 == 4
     E        +  where 3 = f()
 
-    test_assert1.py:5: AssertionError
+    test_assert1.py:6: AssertionError
     ========================= 1 failed in 0.12 seconds =========================
 
 ``pytest`` has support for showing the values of the most common subexpressions
@@ -188,7 +188,7 @@ if you run this module:
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: /home/sweet/project
+    rootdir: $REGENDOC_TMPDIR
     collected 1 item
 
     test_assert2.py F                                                    [100%]
@@ -207,7 +207,7 @@ if you run this module:
     E         '5'
     E         Use -v to get the full diff
 
-    test_assert2.py:5: AssertionError
+    test_assert2.py:6: AssertionError
     ========================= 1 failed in 0.12 seconds =========================
 
 Special comparisons are done for a number of cases:
@@ -275,7 +275,7 @@ the conftest file:
    E       assert Comparing Foo instances:
    E            vals: 1 != 2
 
-   test_foocompare.py:11: AssertionError
+   test_foocompare.py:12: AssertionError
    1 failed in 0.12 seconds
 
 .. _assert-details:

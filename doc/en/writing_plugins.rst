@@ -433,14 +433,14 @@ additionally it is possible to copy examples for an example folder before runnin
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: /home/sweet/project, inifile: pytest.ini
+    rootdir: $REGENDOC_TMPDIR, inifile: pytest.ini
     collected 2 items
 
     test_example.py ..                                                   [100%]
 
     ============================= warnings summary =============================
     test_example.py::test_plugin
-      /home/sweet/project/test_example.py:4: PytestExperimentalApiWarning: testdir.copy_example is an experimental api that may change over time
+      $REGENDOC_TMPDIR/test_example.py:4: PytestExperimentalApiWarning: testdir.copy_example is an experimental api that may change over time
         testdir.copy_example("test_example.py")
 
     -- Docs: https://docs.pytest.org/en/latest/warnings.html

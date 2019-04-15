@@ -1,1 +1,0 @@
-Environment variables are properly restored when using pytester's ``testdir`` fixture.
