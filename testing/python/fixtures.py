@@ -1071,9 +1071,7 @@ class TestFixtureUsages(object):
         )
         result = testdir.runpytest_inprocess()
         result.stdout.fnmatch_lines(
-            (
-                "*Fixture 'badscope' from test_invalid_scope.py got an unexpected scope value 'functions'"
-            )
+            "*Fixture 'badscope' from test_invalid_scope.py got an unexpected scope value 'functions'"
         )
 
     def test_funcarg_parametrized_and_used_twice(self, testdir):

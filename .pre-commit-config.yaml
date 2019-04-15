@@ -1,16 +1,16 @@
 exclude: doc/en/example/py2py3/test_py2.py
 repos:
 -   repo: https://github.com/ambv/black
-    rev: 18.9b0
+    rev: 19.3b0
     hooks:
     -   id: black
         args: [--safe, --quiet]
         language_version: python3
 -   repo: https://github.com/asottile/blacken-docs
-    rev: v0.3.0
+    rev: v0.5.0
     hooks:
     -   id: blacken-docs
-        additional_dependencies: [black==18.9b0]
+        additional_dependencies: [black==19.3b0]
         language_version: python3
 -   repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v2.1.0
@@ -22,22 +22,22 @@ repos:
         exclude: _pytest/debugging.py
         language_version: python3
 -   repo: https://gitlab.com/pycqa/flake8
-    rev: 3.7.0
+    rev: 3.7.7
     hooks:
     -   id: flake8
         language_version: python3
 -   repo: https://github.com/asottile/reorder_python_imports
-    rev: v1.3.5
+    rev: v1.4.0
     hooks:
     -   id: reorder-python-imports
         args: ['--application-directories=.:src']
 -   repo: https://github.com/asottile/pyupgrade
-    rev: v1.11.1
+    rev: v1.15.0
     hooks:
     -   id: pyupgrade
         args: [--keep-percent-format]
 -   repo: https://github.com/pre-commit/pygrep-hooks
-    rev: v1.2.0
+    rev: v1.3.0
     hooks:
     -   id: rst-backticks
 -   repo: local
