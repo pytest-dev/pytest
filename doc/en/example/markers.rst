@@ -45,7 +45,7 @@ You can then restrict a test run to only run tests marked with ``webtest``:
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python
     cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: /home/sweet/project
+    rootdir: $REGENDOC_TMPDIR
     collecting ... collected 4 items / 3 deselected / 1 selected
 
     test_server.py::test_send_http PASSED                                [100%]
@@ -60,7 +60,7 @@ Or the inverse, running all tests except the webtest ones:
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python
     cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: /home/sweet/project
+    rootdir: $REGENDOC_TMPDIR
     collecting ... collected 4 items / 1 deselected / 3 selected
 
     test_server.py::test_something_quick PASSED                          [ 33%]
@@ -82,7 +82,7 @@ tests based on their module, class, method, or function name:
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python
     cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: /home/sweet/project
+    rootdir: $REGENDOC_TMPDIR
     collecting ... collected 1 item
 
     test_server.py::TestClass::test_method PASSED                        [100%]
@@ -97,7 +97,7 @@ You can also select on the class:
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python
     cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: /home/sweet/project
+    rootdir: $REGENDOC_TMPDIR
     collecting ... collected 1 item
 
     test_server.py::TestClass::test_method PASSED                        [100%]
@@ -112,7 +112,7 @@ Or select multiple nodes:
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python
     cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: /home/sweet/project
+    rootdir: $REGENDOC_TMPDIR
     collecting ... collected 2 items
 
     test_server.py::TestClass::test_method PASSED                        [ 50%]
@@ -152,7 +152,7 @@ select tests based on their names:
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python
     cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: /home/sweet/project
+    rootdir: $REGENDOC_TMPDIR
     collecting ... collected 4 items / 3 deselected / 1 selected
 
     test_server.py::test_send_http PASSED                                [100%]
@@ -167,7 +167,7 @@ And you can also run all tests except the ones that match the keyword:
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python
     cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: /home/sweet/project
+    rootdir: $REGENDOC_TMPDIR
     collecting ... collected 4 items / 1 deselected / 3 selected
 
     test_server.py::test_something_quick PASSED                          [ 33%]
@@ -184,7 +184,7 @@ Or to select "http" and "quick" tests:
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python
     cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: /home/sweet/project
+    rootdir: $REGENDOC_TMPDIR
     collecting ... collected 4 items / 2 deselected / 2 selected
 
     test_server.py::test_send_http PASSED                                [ 50%]
@@ -407,7 +407,7 @@ the test needs:
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: /home/sweet/project
+    rootdir: $REGENDOC_TMPDIR
     collected 1 item
 
     test_someenv.py s                                                    [100%]
@@ -422,7 +422,7 @@ and here is one that specifies exactly the environment needed:
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: /home/sweet/project
+    rootdir: $REGENDOC_TMPDIR
     collected 1 item
 
     test_someenv.py .                                                    [100%]
@@ -615,12 +615,12 @@ then you will see two tests skipped and two executed tests as expected:
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: /home/sweet/project
+    rootdir: $REGENDOC_TMPDIR
     collected 4 items
 
     test_plat.py s.s.                                                    [100%]
     ========================= short test summary info ==========================
-    SKIPPED [2] /home/sweet/project/conftest.py:12: cannot run on platform linux
+    SKIPPED [2] $REGENDOC_TMPDIR/conftest.py:13: cannot run on platform linux
 
     =================== 2 passed, 2 skipped in 0.12 seconds ====================
 
@@ -632,7 +632,7 @@ Note that if you specify a platform via the marker-command line option like this
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: /home/sweet/project
+    rootdir: $REGENDOC_TMPDIR
     collected 4 items / 3 deselected / 1 selected
 
     test_plat.py .                                                       [100%]
@@ -696,18 +696,18 @@ We can now use the ``-m option`` to select one set:
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: /home/sweet/project
+    rootdir: $REGENDOC_TMPDIR
     collected 4 items / 2 deselected / 2 selected
 
     test_module.py FF                                                    [100%]
 
     ================================= FAILURES =================================
     __________________________ test_interface_simple ___________________________
-    test_module.py:3: in test_interface_simple
+    test_module.py:4: in test_interface_simple
         assert 0
     E   assert 0
     __________________________ test_interface_complex __________________________
-    test_module.py:6: in test_interface_complex
+    test_module.py:8: in test_interface_complex
         assert 0
     E   assert 0
     ================== 2 failed, 2 deselected in 0.12 seconds ==================
@@ -720,22 +720,22 @@ or to select both "event" and "interface" tests:
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: /home/sweet/project
+    rootdir: $REGENDOC_TMPDIR
     collected 4 items / 1 deselected / 3 selected
 
     test_module.py FFF                                                   [100%]
 
     ================================= FAILURES =================================
     __________________________ test_interface_simple ___________________________
-    test_module.py:3: in test_interface_simple
+    test_module.py:4: in test_interface_simple
         assert 0
     E   assert 0
     __________________________ test_interface_complex __________________________
-    test_module.py:6: in test_interface_complex
+    test_module.py:8: in test_interface_complex
         assert 0
     E   assert 0
     ____________________________ test_event_simple _____________________________
-    test_module.py:9: in test_event_simple
+    test_module.py:12: in test_event_simple
         assert 0
     E   assert 0
     ================== 3 failed, 1 deselected in 0.12 seconds ==================

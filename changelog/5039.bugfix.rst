@@ -1,1 +1,0 @@
-Fix regression with ``--pdbcls``, which stopped working with local modules in 4.0.0.

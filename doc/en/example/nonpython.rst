@@ -31,7 +31,7 @@ now execute the test specification:
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: /home/sweet/project/nonpython
+    rootdir: $REGENDOC_TMPDIR/nonpython
     collected 2 items
 
     test_simple.yml F.                                                   [100%]
@@ -66,7 +66,7 @@ consulted when reporting in ``verbose`` mode:
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python
     cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: /home/sweet/project/nonpython
+    rootdir: $REGENDOC_TMPDIR/nonpython
     collecting ... collected 2 items
 
     test_simple.yml::hello FAILED                                        [ 50%]
@@ -90,9 +90,9 @@ interesting to just look at the collection tree:
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: /home/sweet/project/nonpython
+    rootdir: $REGENDOC_TMPDIR/nonpython
     collected 2 items
-    <Package /home/sweet/project/nonpython>
+    <Package $REGENDOC_TMPDIR/nonpython>
       <YamlFile test_simple.yml>
         <YamlItem hello>
         <YamlItem ok>
