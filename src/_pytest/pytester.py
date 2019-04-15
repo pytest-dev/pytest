@@ -77,7 +77,7 @@ def pytest_configure(config):
 
 def raise_on_kwargs(kwargs):
     __tracebackhide__ = True
-    if kwargs:
+    if kwargs:  # pragma: no branch
         raise TypeError(
             "Unexpected keyword arguments: {}".format(", ".join(sorted(kwargs)))
         )
@@ -312,7 +312,8 @@ class HookRecorder(object):
                     passed.append(rep)
             elif rep.skipped:
                 skipped.append(rep)
-            elif rep.failed:
+            else:
+                assert rep.failed, "Unexpected outcome: {!r}".format(rep)
                 failed.append(rep)
         return passed, skipped, failed
 
