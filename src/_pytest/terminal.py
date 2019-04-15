@@ -849,11 +849,8 @@ class TerminalReporter(object):
                 msg = self._getfailureheadline(rep)
                 if rep.when == "collect":
                     msg = "ERROR collecting " + msg
-                elif rep.when == "setup":
-                    msg = "ERROR at setup of " + msg
                 else:
-                    assert rep.when == "teardown", "Unexpected rep: %r" % (rep,)
-                    msg = "ERROR at teardown of " + msg
+                    msg = "ERROR at %s of %s" % (rep.when, msg)
                 self.write_sep("_", msg, red=True, bold=True)
                 self._outrep_summary(rep)
 
