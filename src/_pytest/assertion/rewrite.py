@@ -744,12 +744,12 @@ class AssertionRewriter(ast.NodeVisitor):
 
     def display(self, expr):
         """Call saferepr on the expression."""
-        return self.helper("saferepr", expr)
+        return self.helper("_saferepr", expr)
 
     def helper(self, name, *args):
         """Call a helper in this module."""
         py_name = ast.Name("@pytest_ar", ast.Load())
-        attr = ast.Attribute(py_name, "_" + name, ast.Load())
+        attr = ast.Attribute(py_name, name, ast.Load())
         return ast_Call(attr, list(args), [])
 
     def builtin(self, name):
@@ -849,14 +849,14 @@ class AssertionRewriter(ast.NodeVisitor):
         negation = ast.UnaryOp(ast.Not(), top_condition)
         self.statements.append(ast.If(negation, body, []))
         if assert_.msg:
-            assertmsg = self.helper("format_assertmsg", assert_.msg)
+            assertmsg = self.helper("_format_assertmsg", assert_.msg)
             explanation = "\n>assert " + explanation
         else:
             assertmsg = ast.Str("")
             explanation = "assert " + explanation
         template = ast.BinOp(assertmsg, ast.Add(), ast.Str(explanation))
         msg = self.pop_format_context(template)
-        fmt = self.helper("format_explanation", msg)
+        fmt = self.helper("_format_explanation", msg)
         err_name = ast.Name("AssertionError", ast.Load())
         exc = ast_Call(err_name, [fmt], [])
         if sys.version_info[0] >= 3:
@@ -906,7 +906,7 @@ warn_explicit(
         # _should_repr_global_name() thinks it's acceptable.
         locs = ast_Call(self.builtin("locals"), [], [])
         inlocs = ast.Compare(ast.Str(name.id), [ast.In()], [locs])
-        dorepr = self.helper("should_repr_global_name", name)
+        dorepr = self.helper("_should_repr_global_name", name)
         test = ast.BoolOp(ast.Or(), [inlocs, dorepr])
         expr = ast.IfExp(test, self.display(name), ast.Str(name.id))
         return name, self.explanation_param(expr)
@@ -942,7 +942,7 @@ warn_explicit(
                 self.statements = body = inner
         self.statements = save
         self.on_failure = fail_save
-        expl_template = self.helper("format_boolop", expl_list, ast.Num(is_or))
+        expl_template = self.helper("_format_boolop", expl_list, ast.Num(is_or))
         expl = self.pop_format_context(expl_template)
         return ast.Name(res_var, ast.Load()), self.explanation_param(expl)
 
@@ -1067,7 +1067,7 @@ warn_explicit(
             left_res, left_expl = next_res, next_expl
         # Use pytest.assertion.util._reprcompare if that's available.
         expl_call = self.helper(
-            "call_reprcompare",
+            "_call_reprcompare",
             ast.Tuple(syms, ast.Load()),
             ast.Tuple(load_names, ast.Load()),
             ast.Tuple(expls, ast.Load()),
