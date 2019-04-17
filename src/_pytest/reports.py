@@ -361,7 +361,7 @@ class TestReport(BaseReport):
                     longrepr = item.repr_failure(excinfo)
                 else:  # exception in setup or teardown
                     longrepr = item._repr_failure_py(
-                        excinfo, style=item.config.option.tbstyle
+                        excinfo, style=item.config.getoption("tbstyle", "auto")
                     )
         for rwhen, key, content in item._report_sections:
             sections.append(("Captured %s %s" % (key, rwhen), content))

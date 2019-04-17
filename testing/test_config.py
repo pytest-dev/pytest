@@ -770,7 +770,7 @@ def test_notify_exception(testdir, capfd):
     config = testdir.parseconfig()
     with pytest.raises(ValueError) as excinfo:
         raise ValueError(1)
-    config.notify_exception(excinfo)
+    config.notify_exception(excinfo, config.option)
     out, err = capfd.readouterr()
     assert "ValueError" in err
 
@@ -779,9 +779,16 @@ def test_notify_exception(testdir, capfd):
             return True
 
     config.pluginmanager.register(A())
-    config.notify_exception(excinfo)
+    config.notify_exception(excinfo, config.option)
     out, err = capfd.readouterr()
     assert not err
+
+    config = testdir.parseconfig("-p", "no:terminal")
+    with pytest.raises(ValueError) as excinfo:
+        raise ValueError(1)
+    config.notify_exception(excinfo, config.option)
+    out, err = capfd.readouterr()
+    assert "ValueError" in err
 
 
 def test_load_initial_conftest_last_ordering(testdir, _config_for_test):
