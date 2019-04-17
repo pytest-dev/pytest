@@ -890,14 +890,14 @@ class TerminalReporter(object):
         def show_simple(stat, lines):
             failed = self.stats.get(stat, [])
             for rep in failed:
-                verbose_word = _get_report_str(self.config, rep)
+                verbose_word = rep._get_verbose_word(self.config)
                 pos = _get_pos(self.config, rep)
                 lines.append("%s %s" % (verbose_word, pos))
 
         def show_xfailed(lines):
             xfailed = self.stats.get("xfailed", [])
             for rep in xfailed:
-                verbose_word = _get_report_str(self.config, rep)
+                verbose_word = rep._get_verbose_word(self.config)
                 pos = _get_pos(self.config, rep)
                 lines.append("%s %s" % (verbose_word, pos))
                 reason = rep.wasxfail
@@ -907,7 +907,7 @@ class TerminalReporter(object):
         def show_xpassed(lines):
             xpassed = self.stats.get("xpassed", [])
             for rep in xpassed:
-                verbose_word = _get_report_str(self.config, rep)
+                verbose_word = rep._get_verbose_word(self.config)
                 pos = _get_pos(self.config, rep)
                 reason = rep.wasxfail
                 lines.append("%s %s %s" % (verbose_word, pos, reason))
@@ -917,7 +917,7 @@ class TerminalReporter(object):
             fskips = _folded_skips(skipped) if skipped else []
             if not fskips:
                 return
-            verbose_word = _get_report_str(self.config, report=skipped[0])
+            verbose_word = skipped[0]._get_verbose_word(self.config)
             for num, fspath, lineno, reason in fskips:
                 if reason.startswith("Skipped: "):
                     reason = reason[9:]
@@ -928,12 +928,6 @@ class TerminalReporter(object):
                     )
                 else:
                     lines.append("%s [%d] %s: %s" % (verbose_word, num, fspath, reason))
-
-        def _get_report_str(config, report):
-            _category, _short, verbose = config.hook.pytest_report_teststatus(
-                report=report, config=config
-            )
-            return verbose
 
         def _get_pos(config, rep):
             nodeid = config.cwd_relative_nodeid(rep.nodeid)
