@@ -446,6 +446,50 @@ class TestAssert_reprcompare(object):
         assert "Omitting" not in lines[1]
         assert lines[2] == "{'b': 1}"
 
+    def test_dict_different_items(self):
+        lines = callequal({"a": 0}, {"b": 1, "c": 2}, verbose=2)
+        assert lines == [
+            "{'a': 0} == {'b': 1, 'c': 2}",
+            "Left contains 1 more item:",
+            "{'a': 0}",
+            "Right contains 2 more items:",
+            "{'b': 1, 'c': 2}",
+            "Full diff:",
+            "- {'a': 0}",
+            "+ {'b': 1, 'c': 2}",
+        ]
+        lines = callequal({"b": 1, "c": 2}, {"a": 0}, verbose=2)
+        assert lines == [
+            "{'b': 1, 'c': 2} == {'a': 0}",
+            "Left contains 2 more items:",
+            "{'b': 1, 'c': 2}",
+            "Right contains 1 more item:",
+            "{'a': 0}",
+            "Full diff:",
+            "- {'b': 1, 'c': 2}",
+            "+ {'a': 0}",
+        ]
+
+    def test_sequence_different_items(self):
+        lines = callequal((1, 2), (3, 4, 5), verbose=2)
+        assert lines == [
+            "(1, 2) == (3, 4, 5)",
+            "At index 0 diff: 1 != 3",
+            "Right contains one more item: 5",
+            "Full diff:",
+            "- (1, 2)",
+            "+ (3, 4, 5)",
+        ]
+        lines = callequal((1, 2, 3), (4,), verbose=2)
+        assert lines == [
+            "(1, 2, 3) == (4,)",
+            "At index 0 diff: 1 != 4",
+            "Left contains 2 more items, first extra item: 2",
+            "Full diff:",
+            "- (1, 2, 3)",
+            "+ (4,)",
+        ]
+
     def test_set(self):
         expl = callequal({0, 1}, {0, 2})
         assert len(expl) > 1

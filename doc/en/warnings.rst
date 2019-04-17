@@ -6,14 +6,18 @@ Warnings Capture
 .. versionadded:: 3.1
 
 Starting from version ``3.1``, pytest now automatically catches warnings during test execution
-and displays them at the end of the session::
+and displays them at the end of the session:
+
+.. code-block:: python
 
     # content of test_show_warnings.py
     import warnings
 
+
     def api_v1():
         warnings.warn(UserWarning("api v1, should use functions from v2"))
         return 1
+
 
     def test_one():
         assert api_v1() == 1
@@ -26,14 +30,14 @@ Running pytest now produces this output:
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: /home/sweet/project
+    rootdir: $REGENDOC_TMPDIR
     collected 1 item
 
     test_show_warnings.py .                                              [100%]
 
     ============================= warnings summary =============================
     test_show_warnings.py::test_one
-      /home/sweet/project/test_show_warnings.py:4: UserWarning: api v1, should use functions from v2
+      $REGENDOC_TMPDIR/test_show_warnings.py:5: UserWarning: api v1, should use functions from v2
         warnings.warn(UserWarning("api v1, should use functions from v2"))
 
     -- Docs: https://docs.pytest.org/en/latest/warnings.html
@@ -52,14 +56,14 @@ them into errors:
         def test_one():
     >       assert api_v1() == 1
 
-    test_show_warnings.py:8:
+    test_show_warnings.py:10:
     _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 
         def api_v1():
     >       warnings.warn(UserWarning("api v1, should use functions from v2"))
     E       UserWarning: api v1, should use functions from v2
 
-    test_show_warnings.py:4: UserWarning
+    test_show_warnings.py:5: UserWarning
     1 failed in 0.12 seconds
 
 The same option can be set in the ``pytest.ini`` file using the ``filterwarnings`` ini option.
@@ -195,9 +199,12 @@ Ensuring code triggers a deprecation warning
 
 You can also call a global helper for checking
 that a certain function call triggers a ``DeprecationWarning`` or
-``PendingDeprecationWarning``::
+``PendingDeprecationWarning``:
+
+.. code-block:: python
 
     import pytest
+
 
     def test_global():
         pytest.deprecated_call(myfunction, 17)
@@ -205,18 +212,23 @@ that a certain function call triggers a ``DeprecationWarning`` or
 By default, ``DeprecationWarning`` and ``PendingDeprecationWarning`` will not be
 caught when using ``pytest.warns`` or ``recwarn`` because default Python warnings filters hide
 them. If you wish to record them in your own code, use the
-command ``warnings.simplefilter('always')``::
+command ``warnings.simplefilter('always')``:
+
+.. code-block:: python
 
     import warnings
     import pytest
 
+
     def test_deprecation(recwarn):
-        warnings.simplefilter('always')
+        warnings.simplefilter("always")
         warnings.warn("deprecated", DeprecationWarning)
         assert len(recwarn) == 1
         assert recwarn.pop(DeprecationWarning)
 
-You can also use it as a contextmanager::
+You can also use it as a contextmanager:
+
+.. code-block:: python
 
     def test_global():
         with pytest.deprecated_call():
@@ -238,10 +250,13 @@ Asserting warnings with the warns function
 .. versionadded:: 2.8
 
 You can check that code raises a particular warning using ``pytest.warns``,
-which works in a similar manner to :ref:`raises <assertraises>`::
+which works in a similar manner to :ref:`raises <assertraises>`:
+
+.. code-block:: python
 
     import warnings
     import pytest
+
 
     def test_warning():
         with pytest.warns(UserWarning):
@@ -269,7 +284,9 @@ You can also call ``pytest.warns`` on a function or code string::
 
 The function also returns a list of all raised warnings (as
 ``warnings.WarningMessage`` objects), which you can query for
-additional information::
+additional information:
+
+.. code-block:: python
 
     with pytest.warns(RuntimeWarning) as record:
         warnings.warn("another warning", RuntimeWarning)
@@ -297,7 +314,9 @@ You can record raised warnings either using ``pytest.warns`` or with
 the ``recwarn`` fixture.
 
 To record with ``pytest.warns`` without asserting anything about the warnings,
-pass ``None`` as the expected warning type::
+pass ``None`` as the expected warning type:
+
+.. code-block:: python
 
     with pytest.warns(None) as record:
         warnings.warn("user", UserWarning)
@@ -307,9 +326,12 @@ pass ``None`` as the expected warning type::
     assert str(record[0].message) == "user"
     assert str(record[1].message) == "runtime"
 
-The ``recwarn`` fixture will record warnings for the whole function::
+The ``recwarn`` fixture will record warnings for the whole function:
+
+.. code-block:: python
 
     import warnings
+
 
     def test_hello(recwarn):
         warnings.warn("hello", UserWarning)
@@ -378,7 +400,7 @@ defines an ``__init__`` constructor, as this prevents the class from being insta
 
     ============================= warnings summary =============================
     test_pytest_warnings.py:1
-      /home/sweet/project/test_pytest_warnings.py:1: PytestWarning: cannot collect test class 'Test' because it has a __init__ constructor
+      $REGENDOC_TMPDIR/test_pytest_warnings.py:1: PytestWarning: cannot collect test class 'Test' because it has a __init__ constructor
         class Test:
 
     -- Docs: https://docs.pytest.org/en/latest/warnings.html

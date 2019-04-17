@@ -433,14 +433,14 @@ additionally it is possible to copy examples for an example folder before runnin
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: /home/sweet/project, inifile: pytest.ini
+    rootdir: $REGENDOC_TMPDIR, inifile: pytest.ini
     collected 2 items
 
     test_example.py ..                                                   [100%]
 
     ============================= warnings summary =============================
     test_example.py::test_plugin
-      /home/sweet/project/test_example.py:4: PytestExperimentalApiWarning: testdir.copy_example is an experimental api that may change over time
+      $REGENDOC_TMPDIR/test_example.py:4: PytestExperimentalApiWarning: testdir.copy_example is an experimental api that may change over time
         testdir.copy_example("test_example.py")
 
     -- Docs: https://docs.pytest.org/en/latest/warnings.html
@@ -528,9 +528,12 @@ a :py:class:`Result <pluggy._Result>` instance which encapsulates a result or
 exception info.  The yield point itself will thus typically not raise
 exceptions (unless there are bugs).
 
-Here is an example definition of a hook wrapper::
+Here is an example definition of a hook wrapper:
+
+.. code-block:: python
 
     import pytest
+
 
     @pytest.hookimpl(hookwrapper=True)
     def pytest_pyfunc_call(pyfuncitem):
@@ -636,9 +639,12 @@ if you depend on a plugin that is not installed, validation will fail and
 the error message will not make much sense to your users.
 
 One approach is to defer the hook implementation to a new plugin instead of
-declaring the hook functions directly in your plugin module, for example::
+declaring the hook functions directly in your plugin module, for example:
+
+.. code-block:: python
 
     # contents of myplugin.py
+
 
     class DeferPlugin(object):
         """Simple plugin to defer pytest-xdist hook functions."""
@@ -647,8 +653,9 @@ declaring the hook functions directly in your plugin module, for example::
             """standard xdist hook function.
             """
 
+
     def pytest_configure(config):
-        if config.pluginmanager.hasplugin('xdist'):
+        if config.pluginmanager.hasplugin("xdist"):
             config.pluginmanager.register(DeferPlugin())
 
 This has the added benefit of allowing you to conditionally install hooks

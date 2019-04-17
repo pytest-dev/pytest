@@ -462,3 +462,10 @@ def test_syspath_prepend_with_namespace_packages(testdir, monkeypatch):
     import ns_pkg.world
 
     assert ns_pkg.world.check() == "world"
+
+    # Should invalidate caches via importlib.invalidate_caches.
+    tmpdir = testdir.tmpdir
+    modules_tmpdir = tmpdir.mkdir("modules_tmpdir")
+    monkeypatch.syspath_prepend(str(modules_tmpdir))
+    modules_tmpdir.join("main_app.py").write("app = True")
+    from main_app import app  # noqa: F401

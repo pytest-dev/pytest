@@ -581,7 +581,14 @@ def test_pytest_exit_returncode(testdir):
     )
     result = testdir.runpytest()
     result.stdout.fnmatch_lines(["*! *Exit: some exit msg !*"])
-    assert result.stderr.lines == [""]
+    # Assert no output on stderr, except for unreliable ResourceWarnings.
+    # (https://github.com/pytest-dev/pytest/issues/5088)
+    assert [
+        x
+        for x in result.stderr.lines
+        if not x.startswith("Exception ignored in:")
+        and not x.startswith("ResourceWarning")
+    ] == [""]
     assert result.ret == 99
 
     # It prints to stderr also in case of exit during pytest_sessionstart.

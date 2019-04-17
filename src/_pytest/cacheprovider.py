@@ -179,45 +179,45 @@ class LFPlugin(object):
             self.lastfailed[report.nodeid] = True
 
     def pytest_collection_modifyitems(self, session, config, items):
-        if self.active:
-            if self.lastfailed:
-                previously_failed = []
-                previously_passed = []
-                for item in items:
-                    if item.nodeid in self.lastfailed:
-                        previously_failed.append(item)
-                    else:
-                        previously_passed.append(item)
-                self._previously_failed_count = len(previously_failed)
+        if not self.active:
+            return
 
-                if not previously_failed:
-                    # Running a subset of all tests with recorded failures
-                    # only outside of it.
-                    self._report_status = "%d known failures not in selected tests" % (
-                        len(self.lastfailed),
-                    )
+        if self.lastfailed:
+            previously_failed = []
+            previously_passed = []
+            for item in items:
+                if item.nodeid in self.lastfailed:
+                    previously_failed.append(item)
                 else:
-                    if self.config.getoption("lf"):
-                        items[:] = previously_failed
-                        config.hook.pytest_deselected(items=previously_passed)
-                    else:  # --failedfirst
-                        items[:] = previously_failed + previously_passed
+                    previously_passed.append(item)
+            self._previously_failed_count = len(previously_failed)
 
-                    noun = (
-                        "failure" if self._previously_failed_count == 1 else "failures"
-                    )
-                    suffix = " first" if self.config.getoption("failedfirst") else ""
-                    self._report_status = "rerun previous {count} {noun}{suffix}".format(
-                        count=self._previously_failed_count, suffix=suffix, noun=noun
-                    )
+            if not previously_failed:
+                # Running a subset of all tests with recorded failures
+                # only outside of it.
+                self._report_status = "%d known failures not in selected tests" % (
+                    len(self.lastfailed),
+                )
             else:
-                self._report_status = "no previously failed tests, "
-                if self.config.getoption("last_failed_no_failures") == "none":
-                    self._report_status += "deselecting all items."
-                    config.hook.pytest_deselected(items=items)
-                    items[:] = []
-                else:
-                    self._report_status += "not deselecting items."
+                if self.config.getoption("lf"):
+                    items[:] = previously_failed
+                    config.hook.pytest_deselected(items=previously_passed)
+                else:  # --failedfirst
+                    items[:] = previously_failed + previously_passed
+
+                noun = "failure" if self._previously_failed_count == 1 else "failures"
+                suffix = " first" if self.config.getoption("failedfirst") else ""
+                self._report_status = "rerun previous {count} {noun}{suffix}".format(
+                    count=self._previously_failed_count, suffix=suffix, noun=noun
+                )
+        else:
+            self._report_status = "no previously failed tests, "
+            if self.config.getoption("last_failed_no_failures") == "none":
+                self._report_status += "deselecting all items."
+                config.hook.pytest_deselected(items=items)
+                items[:] = []
+            else:
+                self._report_status += "not deselecting items."
 
     def pytest_sessionfinish(self, session):
         config = self.config
@@ -292,9 +292,13 @@ def pytest_addoption(parser):
     )
     group.addoption(
         "--cache-show",
-        action="store_true",
+        action="append",
+        nargs="?",
         dest="cacheshow",
-        help="show cache contents, don't perform collection or tests",
+        help=(
+            "show cache contents, don't perform collection or tests. "
+            "Optional argument: glob (default: '*')."
+        ),
     )
     group.addoption(
         "--cache-clear",
@@ -369,11 +373,16 @@ def cacheshow(config, session):
     if not config.cache._cachedir.is_dir():
         tw.line("cache is empty")
         return 0
+
+    glob = config.option.cacheshow[0]
+    if glob is None:
+        glob = "*"
+
     dummy = object()
     basedir = config.cache._cachedir
     vdir = basedir / "v"
-    tw.sep("-", "cache values")
-    for valpath in sorted(x for x in vdir.rglob("*") if x.is_file()):
+    tw.sep("-", "cache values for %r" % glob)
+    for valpath in sorted(x for x in vdir.rglob(glob) if x.is_file()):
         key = valpath.relative_to(vdir)
         val = config.cache.get(key, dummy)
         if val is dummy:
@@ -385,8 +394,8 @@ def cacheshow(config, session):
 
     ddir = basedir / "d"
     if ddir.is_dir():
-        contents = sorted(ddir.rglob("*"))
-        tw.sep("-", "cache directories")
+        contents = sorted(ddir.rglob(glob))
+        tw.sep("-", "cache directories for %r" % glob)
         for p in contents:
             # if p.check(dir=1):
             #    print("%s/" % p.relto(basedir))

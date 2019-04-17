@@ -16,6 +16,7 @@ import py
 import pytest
 from _pytest.main import EXIT_NOTESTSCOLLECTED
 from _pytest.reports import BaseReport
+from _pytest.terminal import _folded_skips
 from _pytest.terminal import _plugin_nameversions
 from _pytest.terminal import build_summary_stats_line
 from _pytest.terminal import getreportopt
@@ -774,11 +775,19 @@ def test_pass_output_reporting(testdir):
     assert "test_pass_has_output" not in s
     assert "Four score and seven years ago..." not in s
     assert "test_pass_no_output" not in s
-    result = testdir.runpytest("-rP")
+    result = testdir.runpytest("-rPp")
     result.stdout.fnmatch_lines(
-        ["*test_pass_has_output*", "Four score and seven years ago..."]
+        [
+            "*= PASSES =*",
+            "*_ test_pass_has_output _*",
+            "*- Captured stdout call -*",
+            "Four score and seven years ago...",
+            "*= short test summary info =*",
+            "PASSED test_pass_output_reporting.py::test_pass_has_output",
+            "PASSED test_pass_output_reporting.py::test_pass_no_output",
+            "*= 2 passed in *",
+        ]
     )
-    assert "test_pass_no_output" not in result.stdout.str()
 
 
 def test_color_yes(testdir):
@@ -836,13 +845,22 @@ def test_getreportopt():
     config.option.reportchars = "sfxw"
     assert getreportopt(config) == "sfx"
 
-    config.option.reportchars = "sfx"
+    # Now with --disable-warnings.
     config.option.disable_warnings = False
+    config.option.reportchars = "a"
+    assert getreportopt(config) == "sxXwEf"  # NOTE: "w" included!
+
+    config.option.reportchars = "sfx"
     assert getreportopt(config) == "sfxw"
 
     config.option.reportchars = "sfxw"
-    config.option.disable_warnings = False
     assert getreportopt(config) == "sfxw"
+
+    config.option.reportchars = "a"
+    assert getreportopt(config) == "sxXwEf"  # NOTE: "w" included!
+
+    config.option.reportchars = "A"
+    assert getreportopt(config) == "sxXwEfpP"
 
 
 def test_terminalreporter_reportopt_addopts(testdir):
@@ -1530,3 +1548,37 @@ class TestProgressWithTeardown(object):
         monkeypatch.delenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD", raising=False)
         output = testdir.runpytest("-n2")
         output.stdout.re_match_lines([r"[\.E]{40} \s+ \[100%\]"])
+
+
+def test_skip_reasons_folding():
+    path = "xyz"
+    lineno = 3
+    message = "justso"
+    longrepr = (path, lineno, message)
+
+    class X(object):
+        pass
+
+    ev1 = X()
+    ev1.when = "execute"
+    ev1.skipped = True
+    ev1.longrepr = longrepr
+
+    ev2 = X()
+    ev2.when = "execute"
+    ev2.longrepr = longrepr
+    ev2.skipped = True
+
+    # ev3 might be a collection report
+    ev3 = X()
+    ev3.when = "collect"
+    ev3.longrepr = longrepr
+    ev3.skipped = True
+
+    values = _folded_skips([ev1, ev2, ev3])
+    assert len(values) == 1
+    num, fspath, lineno, reason = values[0]
+    assert num == 3
+    assert fspath == path
+    assert lineno == lineno
+    assert reason == message

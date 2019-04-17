@@ -12,11 +12,14 @@ Asserting with the ``assert`` statement
 
 ``pytest`` allows you to use the standard python ``assert`` for verifying
 expectations and values in Python tests.  For example, you can write the
-following::
+following:
+
+.. code-block:: python
 
     # content of test_assert1.py
     def f():
         return 3
+
 
     def test_function():
         assert f() == 4
@@ -30,7 +33,7 @@ you will see the return value of the function call:
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: /home/sweet/project
+    rootdir: $REGENDOC_TMPDIR
     collected 1 item
 
     test_assert1.py F                                                    [100%]
@@ -43,7 +46,7 @@ you will see the return value of the function call:
     E       assert 3 == 4
     E        +  where 3 = f()
 
-    test_assert1.py:5: AssertionError
+    test_assert1.py:6: AssertionError
     ========================= 1 failed in 0.12 seconds =========================
 
 ``pytest`` has support for showing the values of the most common subexpressions
@@ -52,7 +55,9 @@ operators. (See :ref:`tbreportdemo`).  This allows you to use the
 idiomatic python constructs without boilerplate code while not losing
 introspection information.
 
-However, if you specify a message with the assertion like this::
+However, if you specify a message with the assertion like this:
+
+.. code-block:: python
 
     assert a % 2 == 0, "value was odd, should be even"
 
@@ -67,22 +72,29 @@ Assertions about expected exceptions
 ------------------------------------------
 
 In order to write assertions about raised exceptions, you can use
-``pytest.raises`` as a context manager like this::
+``pytest.raises`` as a context manager like this:
+
+.. code-block:: python
 
     import pytest
+
 
     def test_zero_division():
         with pytest.raises(ZeroDivisionError):
             1 / 0
 
-and if you need to have access to the actual exception info you may use::
+and if you need to have access to the actual exception info you may use:
+
+.. code-block:: python
 
     def test_recursion_depth():
         with pytest.raises(RuntimeError) as excinfo:
+
             def f():
                 f()
+
             f()
-        assert 'maximum recursion' in str(excinfo.value)
+        assert "maximum recursion" in str(excinfo.value)
 
 ``excinfo`` is a ``ExceptionInfo`` instance, which is a wrapper around
 the actual exception raised.  The main attributes of interest are
@@ -90,15 +102,19 @@ the actual exception raised.  The main attributes of interest are
 
 You can pass a ``match`` keyword parameter to the context-manager to test
 that a regular expression matches on the string representation of an exception
-(similar to the ``TestCase.assertRaisesRegexp`` method from ``unittest``)::
+(similar to the ``TestCase.assertRaisesRegexp`` method from ``unittest``):
+
+.. code-block:: python
 
     import pytest
+
 
     def myfunc():
         raise ValueError("Exception 123 raised")
 
+
     def test_match():
-        with pytest.raises(ValueError, match=r'.* 123 .*'):
+        with pytest.raises(ValueError, match=r".* 123 .*"):
             myfunc()
 
 The regexp parameter of the ``match`` method is matched with the ``re.search``
@@ -107,7 +123,9 @@ well.
 
 There's an alternate form of the ``pytest.raises`` function where you pass
 a function that will be executed with the given ``*args`` and ``**kwargs`` and
-assert that the given exception is raised::
+assert that the given exception is raised:
+
+.. code-block:: python
 
     pytest.raises(ExpectedException, func, *args, **kwargs)
 
@@ -116,7 +134,9 @@ exception* or *wrong exception*.
 
 Note that it is also possible to specify a "raises" argument to
 ``pytest.mark.xfail``, which checks that the test is failing in a more
-specific way than just having any exception raised::
+specific way than just having any exception raised:
+
+.. code-block:: python
 
     @pytest.mark.xfail(raises=IndexError)
     def test_f():
@@ -148,9 +168,12 @@ Making use of context-sensitive comparisons
 .. versionadded:: 2.0
 
 ``pytest`` has rich support for providing context-sensitive information
-when it encounters comparisons.  For example::
+when it encounters comparisons.  For example:
+
+.. code-block:: python
 
     # content of test_assert2.py
+
 
     def test_set_comparison():
         set1 = set("1308")
@@ -165,7 +188,7 @@ if you run this module:
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: /home/sweet/project
+    rootdir: $REGENDOC_TMPDIR
     collected 1 item
 
     test_assert2.py F                                                    [100%]
@@ -184,7 +207,7 @@ if you run this module:
     E         '5'
     E         Use -v to get the full diff
 
-    test_assert2.py:5: AssertionError
+    test_assert2.py:6: AssertionError
     ========================= 1 failed in 0.12 seconds =========================
 
 Special comparisons are done for a number of cases:
@@ -205,16 +228,21 @@ the ``pytest_assertrepr_compare`` hook.
    :noindex:
 
 As an example consider adding the following hook in a :ref:`conftest.py <conftest.py>`
-file which provides an alternative explanation for ``Foo`` objects::
+file which provides an alternative explanation for ``Foo`` objects:
+
+.. code-block:: python
 
    # content of conftest.py
    from test_foocompare import Foo
+
+
    def pytest_assertrepr_compare(op, left, right):
        if isinstance(left, Foo) and isinstance(right, Foo) and op == "==":
-           return ['Comparing Foo instances:',
-                   '   vals: %s != %s' % (left.val, right.val)]
+           return ["Comparing Foo instances:", "   vals: %s != %s" % (left.val, right.val)]
 
-now, given this test module::
+now, given this test module:
+
+.. code-block:: python
 
    # content of test_foocompare.py
    class Foo(object):
@@ -223,6 +251,7 @@ now, given this test module::
 
        def __eq__(self, other):
            return self.val == other.val
+
 
    def test_compare():
        f1 = Foo(1)
@@ -246,7 +275,7 @@ the conftest file:
    E       assert Comparing Foo instances:
    E            vals: 1 != 2
 
-   test_foocompare.py:11: AssertionError
+   test_foocompare.py:12: AssertionError
    1 failed in 0.12 seconds
 
 .. _assert-details:

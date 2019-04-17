@@ -485,7 +485,7 @@ class TestGeneralUsage(object):
             ["*source code not available*", "E*fixture 'invalid_fixture' not found"]
         )
 
-    def test_plugins_given_as_strings(self, tmpdir, monkeypatch):
+    def test_plugins_given_as_strings(self, tmpdir, monkeypatch, _sys_snapshot):
         """test that str values passed to main() as `plugins` arg
         are interpreted as module names to be imported and registered.
         #855.

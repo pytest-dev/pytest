@@ -146,7 +146,7 @@ objects, they are still using the default pytest representation:
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: /home/sweet/project
+    rootdir: $REGENDOC_TMPDIR
     collected 8 items
     <Module test_time.py>
       <Function test_timedistance_v0[a0-b0-expected0]>
@@ -205,7 +205,7 @@ this is a fully self-contained example which you can run with:
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: /home/sweet/project
+    rootdir: $REGENDOC_TMPDIR
     collected 4 items
 
     test_scenarios.py ....                                               [100%]
@@ -220,7 +220,7 @@ If you just collect tests you'll also nicely see 'advanced' and 'basic' as varia
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: /home/sweet/project
+    rootdir: $REGENDOC_TMPDIR
     collected 4 items
     <Module test_scenarios.py>
       <Class TestSampleWithScenarios>
@@ -287,7 +287,7 @@ Let's first see how it looks like at collection time:
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: /home/sweet/project
+    rootdir: $REGENDOC_TMPDIR
     collected 2 items
     <Module test_backends.py>
       <Function test_db_initialized[d1]>
@@ -353,7 +353,7 @@ The result of this test will be successful:
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: /home/sweet/project
+    rootdir: $REGENDOC_TMPDIR
     collected 1 item
     <Module test_indirect_list.py>
       <Function test_indirect[a-b]>
@@ -434,9 +434,9 @@ Running it results in some skips if we don't have all the python interpreters in
 .. code-block:: pytest
 
    . $ pytest -rs -q multipython.py
-   ......sss......ssssssssssss                                          [100%]
+   ...sss...sssssssss...sss...                                          [100%]
    ========================= short test summary info ==========================
-   SKIPPED [15] /home/sweet/project/CWD/multipython.py:30: 'python3.5' not found
+   SKIPPED [15] $REGENDOC_TMPDIR/CWD/multipython.py:30: 'python3.4' not found
    12 passed, 15 skipped in 0.12 seconds
 
 Indirect parametrization of optional implementations/imports
@@ -488,12 +488,12 @@ If you run this with reporting for skips enabled:
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: /home/sweet/project
+    rootdir: $REGENDOC_TMPDIR
     collected 2 items
 
     test_module.py .s                                                    [100%]
     ========================= short test summary info ==========================
-    SKIPPED [1] /home/sweet/project/conftest.py:11: could not import 'opt2'
+    SKIPPED [1] $REGENDOC_TMPDIR/conftest.py:11: could not import 'opt2'
 
     =================== 1 passed, 1 skipped in 0.12 seconds ====================
 
@@ -515,21 +515,25 @@ Set marks or test ID for individual parametrized test
 --------------------------------------------------------------------
 
 Use ``pytest.param`` to apply marks or set test ID to individual parametrized test.
-For example::
+For example:
+
+.. code-block:: python
 
     # content of test_pytest_param_example.py
     import pytest
-    @pytest.mark.parametrize('test_input,expected', [
-        ('3+5', 8),
-        pytest.param('1+7', 8,
-                     marks=pytest.mark.basic),
-        pytest.param('2+4', 6,
-                     marks=pytest.mark.basic,
-                     id='basic_2+4'),
-        pytest.param('6*9', 42,
-                     marks=[pytest.mark.basic, pytest.mark.xfail],
-                     id='basic_6*9'),
-    ])
+
+
+    @pytest.mark.parametrize(
+        "test_input,expected",
+        [
+            ("3+5", 8),
+            pytest.param("1+7", 8, marks=pytest.mark.basic),
+            pytest.param("2+4", 6, marks=pytest.mark.basic, id="basic_2+4"),
+            pytest.param(
+                "6*9", 42, marks=[pytest.mark.basic, pytest.mark.xfail], id="basic_6*9"
+            ),
+        ],
+    )
     def test_eval(test_input, expected):
         assert eval(test_input) == expected
 
@@ -546,7 +550,7 @@ Then run ``pytest`` with verbose mode and with only the ``basic`` marker:
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python
     cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: /home/sweet/project
+    rootdir: $REGENDOC_TMPDIR
     collecting ... collected 17 items / 14 deselected / 3 selected
 
     test_pytest_param_example.py::test_eval[1+7-8] PASSED                [ 33%]

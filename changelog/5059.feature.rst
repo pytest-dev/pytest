@@ -1,0 +1,1 @@
+Standard input (stdin) can be given to pytester's ``Testdir.run()`` and ``Testdir.popen()``.

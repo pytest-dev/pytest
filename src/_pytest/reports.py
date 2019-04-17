@@ -148,6 +148,12 @@ class BaseReport(object):
             fspath, lineno, domain = self.location
             return domain
 
+    def _get_verbose_word(self, config):
+        _category, _short, verbose = config.hook.pytest_report_teststatus(
+            report=self, config=config
+        )
+        return verbose
+
     def _to_json(self):
         """
         This was originally the serialize_report() function from xdist (ca03269).
@@ -328,7 +334,8 @@ class TestReport(BaseReport):
         self.__dict__.update(extra)
 
     def __repr__(self):
-        return "<TestReport %r when=%r outcome=%r>" % (
+        return "<%s %r when=%r outcome=%r>" % (
+            self.__class__.__name__,
             self.nodeid,
             self.when,
             self.outcome,

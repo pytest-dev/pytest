@@ -252,7 +252,14 @@ class _NodeReporter(object):
 
     def append_skipped(self, report):
         if hasattr(report, "wasxfail"):
-            self._add_simple(Junit.skipped, "expected test failure", report.wasxfail)
+            xfailreason = report.wasxfail
+            if xfailreason.startswith("reason: "):
+                xfailreason = xfailreason[8:]
+            self.append(
+                Junit.skipped(
+                    "", type="pytest.xfail", message=bin_xml_escape(xfailreason)
+                )
+            )
         else:
             filename, lineno, skipreason = report.longrepr
             if skipreason.startswith("Skipped: "):

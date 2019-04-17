@@ -76,8 +76,11 @@ def pytest_configure(config):
 
 
 def raise_on_kwargs(kwargs):
-    if kwargs:
-        raise TypeError("Unexpected arguments: {}".format(", ".join(sorted(kwargs))))
+    __tracebackhide__ = True
+    if kwargs:  # pragma: no branch
+        raise TypeError(
+            "Unexpected keyword arguments: {}".format(", ".join(sorted(kwargs)))
+        )
 
 
 class LsofFdLeakChecker(object):
@@ -309,7 +312,8 @@ class HookRecorder(object):
                     passed.append(rep)
             elif rep.skipped:
                 skipped.append(rep)
-            elif rep.failed:
+            else:
+                assert rep.failed, "Unexpected outcome: {!r}".format(rep)
                 failed.append(rep)
         return passed, skipped, failed
 
@@ -339,6 +343,15 @@ def LineMatcher_fixture(request):
 @pytest.fixture
 def testdir(request, tmpdir_factory):
     return Testdir(request, tmpdir_factory)
+
+
+@pytest.fixture
+def _sys_snapshot():
+    snappaths = SysPathsSnapshot()
+    snapmods = SysModulesSnapshot()
+    yield
+    snapmods.restore()
+    snappaths.restore()
 
 
 @pytest.fixture
@@ -472,6 +485,8 @@ class Testdir(object):
        the method using them so refer to them for details.
 
     """
+
+    CLOSE_STDIN = object
 
     class TimeoutExpired(Exception):
         pass
@@ -613,27 +628,10 @@ class Testdir(object):
         This is undone automatically when this object dies at the end of each
         test.
         """
-        from pkg_resources import fixup_namespace_packages
-
         if path is None:
             path = self.tmpdir
 
-        dirname = str(path)
-        sys.path.insert(0, dirname)
-        fixup_namespace_packages(dirname)
-
-        # a call to syspathinsert() usually means that the caller wants to
-        # import some dynamically created files, thus with python3 we
-        # invalidate its import caches
-        self._possibly_invalidate_import_caches()
-
-    def _possibly_invalidate_import_caches(self):
-        # invalidate caches if we can (py33 and above)
-        try:
-            from importlib import invalidate_caches
-        except ImportError:
-            return
-        invalidate_caches()
+        self.monkeypatch.syspath_prepend(str(path))
 
     def mkdir(self, name):
         """Create a new (sub)directory."""
@@ -801,12 +799,15 @@ class Testdir(object):
 
         :param args: command line arguments to pass to :py:func:`pytest.main`
 
-        :param plugin: (keyword-only) extra plugin instances the
+        :param plugins: (keyword-only) extra plugin instances the
            ``pytest.main()`` instance should use
 
         :return: a :py:class:`HookRecorder` instance
-
         """
+        plugins = kwargs.pop("plugins", [])
+        no_reraise_ctrlc = kwargs.pop("no_reraise_ctrlc", None)
+        raise_on_kwargs(kwargs)
+
         finalizers = []
         try:
             # Do not load user config (during runs only).
@@ -846,7 +847,6 @@ class Testdir(object):
                 def pytest_configure(x, config):
                     rec.append(self.make_hook_recorder(config.pluginmanager))
 
-            plugins = kwargs.get("plugins") or []
             plugins.append(Collect())
             ret = pytest.main(list(args), plugins=plugins)
             if len(rec) == 1:
@@ -860,7 +860,7 @@ class Testdir(object):
 
             # typically we reraise keyboard interrupts from the child run
             # because it's our user requesting interruption of the testing
-            if ret == EXIT_INTERRUPTED and not kwargs.get("no_reraise_ctrlc"):
+            if ret == EXIT_INTERRUPTED and not no_reraise_ctrlc:
                 calls = reprec.getcalls("pytest_keyboard_interrupt")
                 if calls and calls[-1].excinfo.type == KeyboardInterrupt:
                     raise KeyboardInterrupt()
@@ -872,9 +872,10 @@ class Testdir(object):
     def runpytest_inprocess(self, *args, **kwargs):
         """Return result of running pytest in-process, providing a similar
         interface to what self.runpytest() provides.
-
         """
-        if kwargs.get("syspathinsert"):
+        syspathinsert = kwargs.pop("syspathinsert", False)
+
+        if syspathinsert:
             self.syspathinsert()
         now = time.time()
         capture = MultiCapture(Capture=SysCapture)
@@ -1032,7 +1033,14 @@ class Testdir(object):
             if colitem.name == name:
                 return colitem
 
-    def popen(self, cmdargs, stdout, stderr, **kw):
+    def popen(
+        self,
+        cmdargs,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        stdin=CLOSE_STDIN,
+        **kw
+    ):
         """Invoke subprocess.Popen.
 
         This calls subprocess.Popen making sure the current working directory
@@ -1050,10 +1058,18 @@ class Testdir(object):
         env["USERPROFILE"] = env["HOME"]
         kw["env"] = env
 
-        popen = subprocess.Popen(
-            cmdargs, stdin=subprocess.PIPE, stdout=stdout, stderr=stderr, **kw
-        )
-        popen.stdin.close()
+        if stdin is Testdir.CLOSE_STDIN:
+            kw["stdin"] = subprocess.PIPE
+        elif isinstance(stdin, bytes):
+            kw["stdin"] = subprocess.PIPE
+        else:
+            kw["stdin"] = stdin
+
+        popen = subprocess.Popen(cmdargs, stdout=stdout, stderr=stderr, **kw)
+        if stdin is Testdir.CLOSE_STDIN:
+            popen.stdin.close()
+        elif isinstance(stdin, bytes):
+            popen.stdin.write(stdin)
 
         return popen
 
@@ -1065,6 +1081,10 @@ class Testdir(object):
         :param args: the sequence of arguments to pass to `subprocess.Popen()`
         :param timeout: the period in seconds after which to timeout and raise
             :py:class:`Testdir.TimeoutExpired`
+        :param stdin: optional standard input.  Bytes are being send, closing
+            the pipe, otherwise it is passed through to ``popen``.
+            Defaults to ``CLOSE_STDIN``, which translates to using a pipe
+            (``subprocess.PIPE``) that gets closed.
 
         Returns a :py:class:`RunResult`.
 
@@ -1072,6 +1092,7 @@ class Testdir(object):
         __tracebackhide__ = True
 
         timeout = kwargs.pop("timeout", None)
+        stdin = kwargs.pop("stdin", Testdir.CLOSE_STDIN)
         raise_on_kwargs(kwargs)
 
         cmdargs = [
@@ -1086,8 +1107,14 @@ class Testdir(object):
         try:
             now = time.time()
             popen = self.popen(
-                cmdargs, stdout=f1, stderr=f2, close_fds=(sys.platform != "win32")
+                cmdargs,
+                stdin=stdin,
+                stdout=f1,
+                stderr=f2,
+                close_fds=(sys.platform != "win32"),
             )
+            if isinstance(stdin, bytes):
+                popen.stdin.close()
 
             def handle_timeout():
                 __tracebackhide__ = True
@@ -1173,9 +1200,10 @@ class Testdir(object):
             :py:class:`Testdir.TimeoutExpired`
 
         Returns a :py:class:`RunResult`.
-
         """
         __tracebackhide__ = True
+        timeout = kwargs.pop("timeout", None)
+        raise_on_kwargs(kwargs)
 
         p = py.path.local.make_numbered_dir(
             prefix="runpytest-", keep=None, rootdir=self.tmpdir
@@ -1185,7 +1213,7 @@ class Testdir(object):
         if plugins:
             args = ("-p", plugins[0]) + args
         args = self._getpytestargs() + args
-        return self.run(*args, timeout=kwargs.get("timeout"))
+        return self.run(*args, timeout=timeout)
 
     def spawn_pytest(self, string, expect_timeout=10.0):
         """Run pytest using pexpect.
@@ -1317,7 +1345,7 @@ class LineMatcher(object):
         raise ValueError("line %r not found in output" % fnline)
 
     def _log(self, *args):
-        self._log_output.append(" ".join((str(x) for x in args)))
+        self._log_output.append(" ".join(str(x) for x in args))
 
     @property
     def _log_text(self):

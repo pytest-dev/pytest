@@ -2,7 +2,6 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import argparse
 import os
 import platform
 import sys
@@ -804,13 +803,12 @@ class TestPDB(object):
         )
 
     def test_pdb_validate_usepdb_cls(self, testdir):
-        assert _validate_usepdb_cls("os.path:dirname.__name__") == "dirname"
+        assert _validate_usepdb_cls("os.path:dirname.__name__") == (
+            "os.path",
+            "dirname.__name__",
+        )
 
-        with pytest.raises(
-            argparse.ArgumentTypeError,
-            match=r"^could not get pdb class for 'pdb:DoesNotExist': .*'DoesNotExist'",
-        ):
-            _validate_usepdb_cls("pdb:DoesNotExist")
+        assert _validate_usepdb_cls("pdb:DoesNotExist") == ("pdb", "DoesNotExist")
 
     def test_pdb_custom_cls_without_pdb(self, testdir, custom_pdb_calls):
         p1 = testdir.makepyfile("""xxx """)
@@ -1136,3 +1134,46 @@ def test_pdb_skip_option(testdir):
     result = testdir.runpytest_inprocess("--pdb-ignore-set_trace", "-s", p)
     assert result.ret == EXIT_NOTESTSCOLLECTED
     result.stdout.fnmatch_lines(["*before_set_trace*", "*after_set_trace*"])
+
+
+def test_pdbcls_via_local_module(testdir):
+    """It should be imported in pytest_configure or later only."""
+    p1 = testdir.makepyfile(
+        """
+        def test():
+            print("before_settrace")
+            __import__("pdb").set_trace()
+        """,
+        mypdb="""
+        class Wrapped:
+            class MyPdb:
+                def set_trace(self, *args):
+                    print("settrace_called", args)
+
+                def runcall(self, *args, **kwds):
+                    print("runcall_called", args, kwds)
+                    assert "func" in kwds
+        """,
+    )
+    result = testdir.runpytest(
+        str(p1), "--pdbcls=really.invalid:Value", syspathinsert=True
+    )
+    result.stderr.fnmatch_lines(
+        [
+            "ERROR: --pdbcls: could not import 'really.invalid:Value': No module named *really*"
+        ]
+    )
+    assert result.ret == 4
+
+    result = testdir.runpytest(
+        str(p1), "--pdbcls=mypdb:Wrapped.MyPdb", syspathinsert=True
+    )
+    assert result.ret == 0
+    result.stdout.fnmatch_lines(["*settrace_called*", "* 1 passed in *"])
+
+    # Ensure that it also works with --trace.
+    result = testdir.runpytest(
+        str(p1), "--pdbcls=mypdb:Wrapped.MyPdb", "--trace", syspathinsert=True
+    )
+    assert result.ret == 0
+    result.stdout.fnmatch_lines(["*runcall_called*", "* 1 passed in *"])

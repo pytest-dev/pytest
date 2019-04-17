@@ -18,6 +18,24 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+pytest 4.4.1 (2019-04-15)
+=========================
+
+Bug Fixes
+---------
+
+- `#5031 <https://github.com/pytest-dev/pytest/issues/5031>`_: Environment variables are properly restored when using pytester's ``testdir`` fixture.
+
+
+- `#5039 <https://github.com/pytest-dev/pytest/issues/5039>`_: Fix regression with ``--pdbcls``, which stopped working with local modules in 4.0.0.
+
+
+- `#5092 <https://github.com/pytest-dev/pytest/issues/5092>`_: Produce a warning when unknown keywords are passed to ``pytest.param(...)``.
+
+
+- `#5098 <https://github.com/pytest-dev/pytest/issues/5098>`_: Invalidate import caches with ``monkeypatch.syspath_prepend``, which is required with namespace packages being used.
+
+
 pytest 4.4.0 (2019-03-29)
 =========================
 

@@ -7,7 +7,6 @@ import sys
 
 import pytest
 from _pytest.runner import runtestprotocol
-from _pytest.skipping import folded_skips
 from _pytest.skipping import MarkEvaluator
 from _pytest.skipping import pytest_runtest_setup
 
@@ -748,40 +747,6 @@ def test_skipif_class(testdir):
     )
     result = testdir.runpytest(p)
     result.stdout.fnmatch_lines(["*2 skipped*"])
-
-
-def test_skip_reasons_folding():
-    path = "xyz"
-    lineno = 3
-    message = "justso"
-    longrepr = (path, lineno, message)
-
-    class X(object):
-        pass
-
-    ev1 = X()
-    ev1.when = "execute"
-    ev1.skipped = True
-    ev1.longrepr = longrepr
-
-    ev2 = X()
-    ev2.when = "execute"
-    ev2.longrepr = longrepr
-    ev2.skipped = True
-
-    # ev3 might be a collection report
-    ev3 = X()
-    ev3.when = "collect"
-    ev3.longrepr = longrepr
-    ev3.skipped = True
-
-    values = folded_skips([ev1, ev2, ev3])
-    assert len(values) == 1
-    num, fspath, lineno, reason = values[0]
-    assert num == 3
-    assert fspath == path
-    assert lineno == lineno
-    assert reason == message
 
 
 def test_skipped_reasons_functional(testdir):

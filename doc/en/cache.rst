@@ -82,7 +82,7 @@ If you then run it with ``--lf``:
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: /home/sweet/project
+    rootdir: $REGENDOC_TMPDIR
     collected 50 items / 48 deselected / 2 selected
     run-last-failure: rerun previous 2 failures
 
@@ -126,7 +126,7 @@ of ``FF`` and dots):
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: /home/sweet/project
+    rootdir: $REGENDOC_TMPDIR
     collected 50 items
     run-last-failure: rerun previous 2 failures first
 
@@ -247,7 +247,7 @@ See the :ref:`cache-api` for more details.
 
 
 Inspecting Cache content
--------------------------------
+------------------------
 
 You can always peek at the content of the cache using the
 ``--cache-show`` command line option:
@@ -258,9 +258,9 @@ You can always peek at the content of the cache using the
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: /home/sweet/project
+    rootdir: $REGENDOC_TMPDIR
     cachedir: $PYTHON_PREFIX/.pytest_cache
-    ------------------------------- cache values -------------------------------
+    --------------------------- cache values for '*' ---------------------------
     cache/lastfailed contains:
       {'test_50.py::test_num[17]': True,
        'test_50.py::test_num[25]': True,
@@ -277,8 +277,25 @@ You can always peek at the content of the cache using the
 
     ======================= no tests ran in 0.12 seconds =======================
 
+``--cache-show`` takes an optional argument to specify a glob pattern for
+filtering:
+
+.. code-block:: pytest
+
+    $ pytest --cache-show example/*
+    =========================== test session starts ============================
+    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
+    cachedir: $PYTHON_PREFIX/.pytest_cache
+    rootdir: $REGENDOC_TMPDIR, inifile:
+    cachedir: $PYTHON_PREFIX/.pytest_cache
+    ----------------------- cache values for 'example/*' -----------------------
+    example/value contains:
+      42
+
+    ======================= no tests ran in 0.12 seconds =======================
+
 Clearing Cache content
--------------------------------
+----------------------
 
 You can instruct pytest to clear all cache files and values
 by adding the ``--cache-clear`` option like this:

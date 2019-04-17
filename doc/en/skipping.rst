@@ -84,31 +84,43 @@ It is also possible to skip the whole module using
 
 If you wish to skip something conditionally then you can use ``skipif`` instead.
 Here is an example of marking a test function to be skipped
-when run on an interpreter earlier than Python3.6::
+when run on an interpreter earlier than Python3.6:
+
+.. code-block:: python
 
     import sys
-    @pytest.mark.skipif(sys.version_info < (3,6),
-                        reason="requires python3.6 or higher")
+
+
+    @pytest.mark.skipif(sys.version_info < (3, 6), reason="requires python3.6 or higher")
     def test_function():
         ...
 
 If the condition evaluates to ``True`` during collection, the test function will be skipped,
 with the specified reason appearing in the summary when using ``-rs``.
 
-You can share ``skipif`` markers between modules.  Consider this test module::
+You can share ``skipif`` markers between modules.  Consider this test module:
+
+.. code-block:: python
 
     # content of test_mymodule.py
     import mymodule
-    minversion = pytest.mark.skipif(mymodule.__versioninfo__ < (1,1),
-                                    reason="at least mymodule-1.1 required")
+
+    minversion = pytest.mark.skipif(
+        mymodule.__versioninfo__ < (1, 1), reason="at least mymodule-1.1 required"
+    )
+
+
     @minversion
     def test_function():
         ...
 
-You can import the marker and reuse it in another test module::
+You can import the marker and reuse it in another test module:
+
+.. code-block:: python
 
     # test_myothermodule.py
     from test_mymodule import minversion
+
 
     @minversion
     def test_anotherfunction():
@@ -128,12 +140,12 @@ so they are supported mainly for backward compatibility reasons.
 Skip all test functions of a class or module
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-You can use the ``skipif`` marker (as any other marker) on classes::
+You can use the ``skipif`` marker (as any other marker) on classes:
 
-    @pytest.mark.skipif(sys.platform == 'win32',
-                        reason="does not run on windows")
+.. code-block:: python
+
+    @pytest.mark.skipif(sys.platform == "win32", reason="does not run on windows")
     class TestPosixCalls(object):
-
         def test_function(self):
             "will not be setup or run under 'win32' platform"
 
@@ -269,10 +281,11 @@ You can change the default value of the ``strict`` parameter using the
 ~~~~~~~~~~~~~~~~~~~~
 
 As with skipif_ you can also mark your expectation of a failure
-on a particular platform::
+on a particular platform:
 
-    @pytest.mark.xfail(sys.version_info >= (3,6),
-                       reason="python3.6 api changes")
+.. code-block:: python
+
+    @pytest.mark.xfail(sys.version_info >= (3, 6), reason="python3.6 api changes")
     def test_function():
         ...
 
@@ -335,7 +348,7 @@ Running it with the report-on-xfail option gives this output:
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: /home/sweet/project/example
+    rootdir: $REGENDOC_TMPDIR/example
     collected 7 items
 
     xfail_demo.py xxxxxxx                                                [100%]

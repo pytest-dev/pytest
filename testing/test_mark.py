@@ -13,6 +13,7 @@ from _pytest.mark import EMPTY_PARAMETERSET_OPTION
 from _pytest.mark import MarkGenerator as Mark
 from _pytest.nodes import Collector
 from _pytest.nodes import Node
+from _pytest.warning_types import PytestDeprecationWarning
 from _pytest.warnings import SHOW_PYTEST_WARNINGS_ARG
 
 try:
@@ -204,7 +205,7 @@ def test_strict_prohibits_unregistered_markers(testdir):
     )
     result = testdir.runpytest("--strict")
     assert result.ret != 0
-    result.stdout.fnmatch_lines(["'unregisteredmark' not a registered marker"])
+    result.stdout.fnmatch_lines(["'unregisteredmark' is not a registered marker"])
 
 
 @pytest.mark.parametrize(
@@ -991,3 +992,15 @@ def test_pytest_param_id_requires_string():
 @pytest.mark.parametrize("s", (None, "hello world"))
 def test_pytest_param_id_allows_none_or_string(s):
     assert pytest.param(id=s)
+
+
+def test_pytest_param_warning_on_unknown_kwargs():
+    with pytest.warns(PytestDeprecationWarning) as warninfo:
+        # typo, should be marks=
+        pytest.param(1, 2, mark=pytest.mark.xfail())
+    assert warninfo[0].filename == __file__
+    msg, = warninfo[0].message.args
+    assert msg == (
+        "pytest.param() got unexpected keyword arguments: ['mark'].\n"
+        "This will be an error in future versions."
+    )

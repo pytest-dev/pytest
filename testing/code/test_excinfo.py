@@ -441,7 +441,7 @@ def test_match_raises_error(testdir):
 
 class TestFormattedExcinfo(object):
     @pytest.fixture
-    def importasmod(self, request):
+    def importasmod(self, request, _sys_snapshot):
         def importasmod(source):
             source = textwrap.dedent(source)
             tmpdir = request.getfixturevalue("tmpdir")
