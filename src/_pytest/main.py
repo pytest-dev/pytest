@@ -208,6 +208,7 @@ def wrap_session(config, doit):
             initstate = 2
             session.exitstatus = doit(config, session) or 0
         except UsageError:
+            session.exitstatus = EXIT_USAGEERROR
             raise
         except Failed:
             session.exitstatus = EXIT_TESTSFAILED
