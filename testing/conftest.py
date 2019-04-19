@@ -1,5 +1,13 @@
+import pytest
+
+
+@pytest.hookimpl(hookwrapper=True, tryfirst=True)
 def pytest_collection_modifyitems(config, items):
-    """Prefer faster tests."""
+    """Prefer faster tests.
+
+    Use a hookwrapper to do this in the beginning, so e.g. --ff still works
+    correctly.
+    """
     fast_items = []
     slow_items = []
     neutral_items = []
@@ -24,3 +32,5 @@ def pytest_collection_modifyitems(config, items):
                     fast_items.append(item)
 
     items[:] = fast_items + neutral_items + slow_items
+
+    yield
