@@ -289,6 +289,7 @@ def _enter_pdb(node, excinfo, rep):
     tw.sep(">", "entering PDB")
     tb = _postmortem_traceback(excinfo)
     rep._pdbshown = True
+    sys.last_type, sys.last_value, sys.last_traceback = excinfo._excinfo
     post_mortem(tb)
     return rep
 

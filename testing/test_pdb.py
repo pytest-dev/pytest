@@ -89,6 +89,7 @@ class TestPDB(object):
         return pdblist
 
     def test_pdb_on_fail(self, testdir, pdblist):
+        sys.last_type, sys.last_value, sys.last_traceback = (None, None, None)
         rep = runpdb_and_get_report(
             testdir,
             """
@@ -100,6 +101,9 @@ class TestPDB(object):
         assert len(pdblist) == 1
         tb = _pytest._code.Traceback(pdblist[0][0])
         assert tb[-1].name == "test_func"
+        assert sys.last_type == AssertionError
+        assert type(sys.last_value) == AssertionError
+        assert sys.last_traceback == pdblist[0][0]
 
     def test_pdb_on_xfail(self, testdir, pdblist):
         rep = runpdb_and_get_report(
