@@ -9,6 +9,7 @@ from __future__ import print_function
 import argparse
 import collections
 import platform
+import subprocess
 import sys
 import time
 
@@ -574,6 +575,11 @@ class TerminalReporter(object):
         ):
             msg += " -- " + str(sys.executable)
         self.write_line(msg)
+        pipe = subprocess.Popen("pip list", shell=True, stdout=subprocess.PIPE).stdout
+        package_msg = pipe.read()
+        package_msg = package_msg[:-2]
+        if package_msg:
+            self.write_line(package_msg)
         lines = self.config.hook.pytest_report_header(
             config=self.config, startdir=self.startdir
         )
