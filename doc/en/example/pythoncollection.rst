@@ -206,7 +206,7 @@ You can always peek at the collection tree without running tests like this:
 
 .. code-block:: pytest
 
-    . $ pytest --collect-only pythoncollection.py
+    $ pytest --collect-only pythoncollection.py
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
@@ -266,7 +266,7 @@ leave out the ``setup.py`` file:
 
 .. code-block:: pytest
 
-    #$ pytest --collect-only
+    $ pytest --collect-only
     ====== test session starts ======
     platform linux2 -- Python 2.7.10, pytest-2.9.1, py-1.4.31, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: pytest.ini
