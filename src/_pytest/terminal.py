@@ -234,7 +234,7 @@ class TerminalReporter(object):
         self._showfspath = None
 
         self.stats = {}
-        self.startdir = py.path.local()
+        self.startdir = config.invocation_dir
         if file is None:
             file = sys.stdout
         self._tw = _pytest.config.create_terminal_writer(config, file)
