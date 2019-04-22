@@ -279,6 +279,15 @@ class TestTerminal(object):
         tr.rewrite("hey", erase=True)
         assert f.getvalue() == "hello" + "\r" + "hey" + (6 * " ")
 
+    def test_packages_display(self, testdir):
+        testdir.makepyfile(
+            """
+            def test_pass(num):
+                assert 1 == 1"""
+        )
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines(["*Package*", "*Version*"])
+
 
 class TestCollectonly(object):
     def test_collectonly_basic(self, testdir):
