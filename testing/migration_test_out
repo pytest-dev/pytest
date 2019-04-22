@@ -1,0 +1,26 @@
+============================= test session starts ==============================
+platform linux -- Python 3.7.0, pytest-4.4.2.dev7+g34bc594, py-1.8.0, pluggy-0.9.0
+rootdir: /home/davidfyu/Desktop/OpenSourceContribution/pytest, inifile: tox.ini
+collected 16 items
+<Module src/sample_test/test_whatever_full.py>
+  <UnitTestCase TestFull>
+    <TestCaseFunction test_double1>
+    <TestCaseFunction test_double2>
+    <TestCaseFunction test_single1>
+    <TestCaseFunction test_single2>
+    <TestCaseFunction test_single3>
+    <TestCaseFunction test_single4>
+    <TestCaseFunction test_single5>
+    <TestCaseFunction test_tripple1>
+<Module src/sample_test/test_whatever_half.py>
+  <UnitTestCase TestHalf>
+    <TestCaseFunction test_single1>
+    <TestCaseFunction test_single2>
+    <TestCaseFunction test_single3>
+    <TestCaseFunction test_single4>
+    <TestCaseFunction test_single5>
+    <TestCaseFunction test_single6>
+    <TestCaseFunction test_single7>
+    <TestCaseFunction test_single8>
+
+========================= no tests ran in 0.02 seconds =========================
