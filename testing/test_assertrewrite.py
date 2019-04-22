@@ -671,6 +671,53 @@ class TestAssertionRewrite(object):
         assert "UnicodeDecodeError" not in msg
         assert "UnicodeEncodeError" not in msg
 
+    def test_generator(self, testdir):
+        testdir.makepyfile(
+            """
+            def check_even(num):
+                if num % 2 == 0:
+                    return True
+                return False
+
+            def test_generator():
+                odd_list = list(range(1,9,2))
+                assert all(check_even(num) for num in odd_list)"""
+        )
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines(["*assert False*", "*where False = check_even(1)*"])
+
+    def test_list_comprehension(self, testdir):
+        testdir.makepyfile(
+            """
+            def check_even(num):
+                if num % 2 == 0:
+                    return True
+                return False
+
+            def test_list_comprehension():
+                odd_list = list(range(1,9,2))
+                assert all([check_even(num) for num in odd_list])"""
+        )
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines(["*assert False*", "*where False = check_even(1)*"])
+
+    def test_for_loop(self, testdir):
+        testdir.makepyfile(
+            """
+            def check_even(num):
+                if num % 2 == 0:
+                    return True
+                return False
+
+            def test_for_loop():
+                odd_list = list(range(1,9,2))
+                for num in odd_list:
+                    assert check_even(num)
+        """
+        )
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines(["*assert False*", "*where False = check_even(1)*"])
+
 
 class TestRewriteOnImport(object):
     def test_pycache_is_a_file(self, testdir):
