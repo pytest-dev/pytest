@@ -1,4 +1,5 @@
 -   id: pytest
     name: pytest
     entry: pytest
+    language: python
     pass_filenames: false
