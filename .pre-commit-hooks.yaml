@@ -2,3 +2,4 @@
     name: pytest
     entry: pytest
     language: python
+    types: [python]
