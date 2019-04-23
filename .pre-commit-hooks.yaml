@@ -1,0 +1,4 @@
+-   id: pytest
+    name: pytest
+    entry: pytest
+    language: python
