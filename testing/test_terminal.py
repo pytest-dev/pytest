@@ -286,7 +286,7 @@ class TestTerminal(object):
                 assert 1 == 1"""
         )
         result = testdir.runpytest()
-        result.stdout.fnmatch_lines(["*Package*", "*Version*"])
+        result.stdout.fnmatch_lines(["*Package        Version              *"])
 
 
 class TestCollectonly(object):
