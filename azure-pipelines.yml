@@ -5,7 +5,6 @@ trigger:
 variables:
   PYTEST_ADDOPTS: "--junitxml=build/test-results/$(tox.env).xml -vv"
   python.needs_vc: False
-  python.exe: "python"
   COVERAGE_FILE: "$(Build.Repository.LocalPath)/.coverage"
   COVERAGE_PROCESS_START: "$(Build.Repository.LocalPath)/.coveragerc"
   PYTEST_COVERAGE: '0'
@@ -43,14 +42,12 @@ jobs:
         #   But no exception with py27-pexpect,py27-twisted,py27-numpy.
         PYTEST_COVERAGE: '1'
       pypy:
-        python.version: 'pypy'
+        python.version: 'pypy2'
         tox.env: 'pypy'
-        python.exe: 'pypy'
       # NOTE: pypy3 fails to install pip currently due to an interal error.
       # pypy3:
       #   python.version: 'pypy3'
       #   tox.env: 'pypy3'
-      #   python.exe: 'pypy3'
       py34-xdist:
         python.version: '3.4'
         tox.env: 'py34-xdist'
@@ -86,7 +83,6 @@ jobs:
 
   steps:
   - task: UsePythonVersion@0
-    condition: not(startsWith(variables['python.exe'], 'pypy'))
     inputs:
       versionSpec: '$(python.version)'
       architecture: 'x64'
@@ -95,29 +91,12 @@ jobs:
     condition: eq(variables['python.needs_vc'], True)
     displayName: 'Install VC for py27'
 
-  - script: choco install python.pypy
-    condition: eq(variables['python.exe'], 'pypy')
-    displayName: 'Install pypy'
-
-  - script: choco install pypy3
-    condition: eq(variables['python.exe'], 'pypy3')
-    displayName: 'Install pypy3'
-
-  - task: PowerShell@2
-    inputs:
-      targetType: 'inline'
-      script: |
-        Invoke-WebRequest -Uri "https://bootstrap.pypa.io/get-pip.py" -OutFile "get-pip.py"
-        $(python.exe) get-pip.py
-    condition: startsWith(variables['python.exe'], 'pypy')
-    displayName: 'Install pip'
-
-  - script: $(python.exe) -m pip install --upgrade pip && $(python.exe) -m pip install tox
+  - script: python -m pip install --upgrade pip && python -m pip install tox
     displayName: 'Install tox'
 
   - script: |
       call scripts/setup-coverage-vars.bat || goto :eof
-      $(python.exe) -m tox -e $(tox.env)
+      python -m tox -e $(tox.env)
     displayName: 'Run tests'
 
   - task: PublishTestResults@2
@@ -130,6 +109,6 @@ jobs:
     displayName: 'Report and upload coverage'
     condition: eq(variables['PYTEST_COVERAGE'], '1')
     env:
-      PYTHON: $(python.exe)
+      PYTHON: python
       CODECOV_TOKEN: $(CODECOV_TOKEN)
       PYTEST_CODECOV_NAME: $(tox.env)
