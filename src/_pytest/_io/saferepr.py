@@ -1,6 +1,24 @@
-import sys
+import pprint
 
 from six.moves import reprlib
+
+
+def _call_and_format_exception(call, x, *args):
+    try:
+        # Try the vanilla repr and make sure that the result is a string
+        return call(x, *args)
+    except Exception as exc:
+        exc_name = type(exc).__name__
+        try:
+            exc_info = str(exc)
+        except Exception:
+            exc_info = "unknown"
+        return '<[%s("%s") raised in repr()] %s object at 0x%x>' % (
+            exc_name,
+            exc_info,
+            x.__class__.__name__,
+            id(x),
+        )
 
 
 class SafeRepr(reprlib.Repr):
@@ -33,28 +51,20 @@ class SafeRepr(reprlib.Repr):
         return self._callhelper(repr, x)
 
     def _callhelper(self, call, x, *args):
-        try:
-            # Try the vanilla repr and make sure that the result is a string
-            s = call(x, *args)
-        except Exception:
-            cls, e, tb = sys.exc_info()
-            exc_name = getattr(cls, "__name__", "unknown")
-            try:
-                exc_info = str(e)
-            except Exception:
-                exc_info = "unknown"
-            return '<[%s("%s") raised in repr()] %s object at 0x%x>' % (
-                exc_name,
-                exc_info,
-                x.__class__.__name__,
-                id(x),
-            )
-        else:
-            if len(s) > self.maxsize:
-                i = max(0, (self.maxsize - 3) // 2)
-                j = max(0, self.maxsize - 3 - i)
-                s = s[:i] + "..." + s[len(s) - j :]
-            return s
+        s = _call_and_format_exception(call, x, *args)
+        if len(s) > self.maxsize:
+            i = max(0, (self.maxsize - 3) // 2)
+            j = max(0, self.maxsize - 3 - i)
+            s = s[:i] + "..." + s[len(s) - j :]
+        return s
+
+
+def safeformat(obj):
+    """return a pretty printed string for the given object.
+    Failing __repr__ functions of user instances will be represented
+    with a short exception info.
+    """
+    return _call_and_format_exception(pprint.pformat, obj)
 
 
 def saferepr(obj, maxsize=240):

@@ -598,6 +598,35 @@ raise ValueError()
         assert reprlocals.lines[2] == "y          = 5"
         assert reprlocals.lines[3] == "z          = 7"
 
+    def test_repr_local_with_error(self):
+        class ObjWithErrorInRepr:
+            def __repr__(self):
+                raise NotImplementedError
+
+        p = FormattedExcinfo(showlocals=True, truncate_locals=False)
+        loc = {"x": ObjWithErrorInRepr(), "__builtins__": {}}
+        reprlocals = p.repr_locals(loc)
+        assert reprlocals.lines
+        assert reprlocals.lines[0] == "__builtins__ = <builtins>"
+        assert '[NotImplementedError("") raised in repr()]' in reprlocals.lines[1]
+
+    def test_repr_local_with_exception_in_class_property(self):
+        class ExceptionWithBrokenClass(Exception):
+            @property
+            def __class__(self):
+                raise TypeError("boom!")
+
+        class ObjWithErrorInRepr:
+            def __repr__(self):
+                raise ExceptionWithBrokenClass()
+
+        p = FormattedExcinfo(showlocals=True, truncate_locals=False)
+        loc = {"x": ObjWithErrorInRepr(), "__builtins__": {}}
+        reprlocals = p.repr_locals(loc)
+        assert reprlocals.lines
+        assert reprlocals.lines[0] == "__builtins__ = <builtins>"
+        assert '[ExceptionWithBrokenClass("") raised in repr()]' in reprlocals.lines[1]
+
     def test_repr_local_truncated(self):
         loc = {"l": [i for i in range(10)]}
         p = FormattedExcinfo(showlocals=True)

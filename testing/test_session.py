@@ -134,6 +134,30 @@ class SessionTests(object):
             != -1
         )
 
+    def test_broken_repr_with_showlocals_verbose(self, testdir):
+        p = testdir.makepyfile(
+            """
+            class ObjWithErrorInRepr:
+                def __repr__(self):
+                    raise NotImplementedError
+
+            def test_repr_error():
+                x = ObjWithErrorInRepr()
+                assert x == "value"
+        """
+        )
+        reprec = testdir.inline_run("--showlocals", "-vv", p)
+        passed, skipped, failed = reprec.listoutcomes()
+        assert (len(passed), len(skipped), len(failed)) == (0, 0, 1)
+        entries = failed[0].longrepr.reprtraceback.reprentries
+        assert len(entries) == 1
+        repr_locals = entries[0].reprlocals
+        assert repr_locals.lines
+        assert len(repr_locals.lines) == 1
+        assert repr_locals.lines[0].startswith(
+            'x          = <[NotImplementedError("") raised in repr()] ObjWithErrorInRepr'
+        )
+
     def test_skip_file_by_conftest(self, testdir):
         testdir.makepyfile(
             conftest="""

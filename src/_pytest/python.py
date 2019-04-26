@@ -820,7 +820,7 @@ class FunctionMixin(PyobjMixin):
             self.obj = self._getobj()
 
     def _prunetraceback(self, excinfo):
-        if hasattr(self, "_obj") and not self.config.option.fulltrace:
+        if hasattr(self, "_obj") and not self.config.getoption("fulltrace", False):
             code = _pytest._code.Code(get_real_func(self.obj))
             path, firstlineno = code.path, code.firstlineno
             traceback = excinfo.traceback
@@ -835,14 +835,14 @@ class FunctionMixin(PyobjMixin):
             excinfo.traceback = ntraceback.filter()
             # issue364: mark all but first and last frames to
             # only show a single-line message for each frame
-            if self.config.option.tbstyle == "auto":
+            if self.config.getoption("tbstyle", "auto") == "auto":
                 if len(excinfo.traceback) > 2:
                     for entry in excinfo.traceback[1:-1]:
                         entry.set_repr_style("short")
 
     def repr_failure(self, excinfo, outerr=None):
         assert outerr is None, "XXX outerr usage is deprecated"
-        style = self.config.option.tbstyle
+        style = self.config.getoption("tbstyle", "auto")
         if style == "auto":
             style = "long"
         return self._repr_failure_py(excinfo, style=style)
