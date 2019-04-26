@@ -3,7 +3,6 @@ from __future__ import division
 from __future__ import print_function
 
 import inspect
-import pprint
 import re
 import sys
 import traceback
@@ -18,6 +17,7 @@ import six
 from six import text_type
 
 import _pytest
+from _pytest._io.saferepr import safeformat
 from _pytest._io.saferepr import saferepr
 from _pytest.compat import _PY2
 from _pytest.compat import _PY3
@@ -614,14 +614,11 @@ class FormattedExcinfo(object):
             source = source.deindent()
         return source
 
-    def _saferepr(self, obj):
-        return saferepr(obj)
-
     def repr_args(self, entry):
         if self.funcargs:
             args = []
             for argname, argvalue in entry.frame.getargs(var=True):
-                args.append((argname, self._saferepr(argvalue)))
+                args.append((argname, saferepr(argvalue)))
             return ReprFuncArgs(args)
 
     def get_source(self, source, line_index=-1, excinfo=None, short=False):
@@ -674,9 +671,9 @@ class FormattedExcinfo(object):
                     # _repr() function, which is only reprlib.Repr in
                     # disguise, so is very configurable.
                     if self.truncate_locals:
-                        str_repr = self._saferepr(value)
+                        str_repr = saferepr(value)
                     else:
-                        str_repr = pprint.pformat(value)
+                        str_repr = safeformat(value)
                     # if len(str_repr) < 70 or not isinstance(value,
                     #                            (list, tuple, dict)):
                     lines.append("%-10s = %s" % (name, str_repr))

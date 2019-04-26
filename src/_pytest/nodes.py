@@ -248,7 +248,7 @@ class Node(object):
         if excinfo.errisinstance(fm.FixtureLookupError):
             return excinfo.value.formatrepr()
         tbfilter = True
-        if self.config.option.fulltrace:
+        if self.config.getoption("fulltrace", False):
             style = "long"
         else:
             tb = _pytest._code.Traceback([excinfo.traceback[-1]])
@@ -260,12 +260,12 @@ class Node(object):
                 style = "long"
         # XXX should excinfo.getrepr record all data and toterminal() process it?
         if style is None:
-            if self.config.option.tbstyle == "short":
+            if self.config.getoption("tbstyle", "auto") == "short":
                 style = "short"
             else:
                 style = "long"
 
-        if self.config.option.verbose > 1:
+        if self.config.getoption("verbose", 0) > 1:
             truncate_locals = False
         else:
             truncate_locals = True
@@ -279,7 +279,7 @@ class Node(object):
         return excinfo.getrepr(
             funcargs=True,
             abspath=abspath,
-            showlocals=self.config.option.showlocals,
+            showlocals=self.config.getoption("showlocals", False),
             style=style,
             tbfilter=tbfilter,
             truncate_locals=truncate_locals,

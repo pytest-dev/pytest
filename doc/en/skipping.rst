@@ -208,7 +208,7 @@ Here's a quick guide on how to skip tests in a module in different situations:
 
   .. code-block:: python
 
-        pytestmark = pytest.mark.skipif(sys.platform == "win32", "tests for linux only")
+        pytestmark = pytest.mark.skipif(sys.platform == "win32", reason="tests for linux only")
 
 3. Skip all tests in a module if some import is missing:
 
