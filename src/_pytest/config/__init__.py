@@ -123,7 +123,7 @@ essential_plugins = (
 )
 
 default_plugins = essential_plugins + (
-    "terminal",  # Has essential options, but xdist uses -pno:terminal.
+    "terminal",
     "debugging",
     "unittest",
     "capture",
