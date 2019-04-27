@@ -107,7 +107,7 @@ the command line arguments before they get processed:
 
 .. code-block:: python
 
-    # content of conftest.py
+    # setuptools plugin
     import sys
 
 
