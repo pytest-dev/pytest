@@ -930,11 +930,11 @@ def test_class_method_containing_test_issue1558(testdir):
     reprec.assertoutcome(passed=1)
 
 
-@pytest.mark.issue(3498)
 @pytest.mark.parametrize(
     "base", ["six.moves.builtins.object", "unittest.TestCase", "unittest2.TestCase"]
 )
 def test_usefixtures_marker_on_unittest(base, testdir):
+    """#3498"""
     module = base.rsplit(".", 1)[0]
     pytest.importorskip(module)
     testdir.makepyfile(

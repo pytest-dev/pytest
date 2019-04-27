@@ -159,8 +159,9 @@ class TestMetafunc(object):
                 ("x", "y"), [("abc", "def"), ("ghi", "jkl")], ids=["one"]
             )
 
-    @pytest.mark.issue(510)
     def test_parametrize_empty_list(self):
+        """#510"""
+
         def func(y):
             pass
 
@@ -262,8 +263,8 @@ class TestMetafunc(object):
         for val, expected in values:
             assert _idval(val, "a", 6, None, item=None, config=None) == expected
 
-    @pytest.mark.issue(250)
     def test_idmaker_autoname(self):
+        """#250"""
         from _pytest.python import idmaker
 
         result = idmaker(
@@ -356,8 +357,8 @@ class TestMetafunc(object):
         result = idmaker(("a", "b"), [pytest.param(e.one, e.two)])
         assert result == ["Foo.one-Foo.two"]
 
-    @pytest.mark.issue(351)
     def test_idmaker_idfn(self):
+        """#351"""
         from _pytest.python import idmaker
 
         def ids(val):
@@ -375,8 +376,8 @@ class TestMetafunc(object):
         )
         assert result == ["10.0-IndexError()", "20-KeyError()", "three-b2"]
 
-    @pytest.mark.issue(351)
     def test_idmaker_idfn_unique_names(self):
+        """#351"""
         from _pytest.python import idmaker
 
         def ids(val):
@@ -459,8 +460,9 @@ class TestMetafunc(object):
         )
         assert result == ["a0", "a1", "b0", "c", "b1"]
 
-    @pytest.mark.issue(714)
     def test_parametrize_indirect(self):
+        """#714"""
+
         def func(x, y):
             pass
 
@@ -473,8 +475,9 @@ class TestMetafunc(object):
         assert metafunc._calls[0].params == dict(x=1, y=2)
         assert metafunc._calls[1].params == dict(x=1, y=3)
 
-    @pytest.mark.issue(714)
     def test_parametrize_indirect_list(self):
+        """#714"""
+
         def func(x, y):
             pass
 
@@ -483,8 +486,9 @@ class TestMetafunc(object):
         assert metafunc._calls[0].funcargs == dict(y="b")
         assert metafunc._calls[0].params == dict(x="a")
 
-    @pytest.mark.issue(714)
     def test_parametrize_indirect_list_all(self):
+        """#714"""
+
         def func(x, y):
             pass
 
@@ -493,8 +497,9 @@ class TestMetafunc(object):
         assert metafunc._calls[0].funcargs == {}
         assert metafunc._calls[0].params == dict(x="a", y="b")
 
-    @pytest.mark.issue(714)
     def test_parametrize_indirect_list_empty(self):
+        """#714"""
+
         def func(x, y):
             pass
 
@@ -503,9 +508,9 @@ class TestMetafunc(object):
         assert metafunc._calls[0].funcargs == dict(x="a", y="b")
         assert metafunc._calls[0].params == {}
 
-    @pytest.mark.issue(714)
     def test_parametrize_indirect_list_functional(self, testdir):
         """
+        #714
         Test parametrization with 'indirect' parameter applied on
         particular arguments. As y is is direct, its value should
         be used directly rather than being passed to the fixture
@@ -532,8 +537,9 @@ class TestMetafunc(object):
         result = testdir.runpytest("-v")
         result.stdout.fnmatch_lines(["*test_simple*a-b*", "*1 passed*"])
 
-    @pytest.mark.issue(714)
     def test_parametrize_indirect_list_error(self, testdir):
+        """#714"""
+
         def func(x, y):
             pass
 
@@ -541,12 +547,13 @@ class TestMetafunc(object):
         with pytest.raises(pytest.fail.Exception):
             metafunc.parametrize("x, y", [("a", "b")], indirect=["x", "z"])
 
-    @pytest.mark.issue(714)
     def test_parametrize_uses_no_fixture_error_indirect_false(self, testdir):
         """The 'uses no fixture' error tells the user at collection time
         that the parametrize data they've set up doesn't correspond to the
         fixtures in their test function, rather than silently ignoring this
         and letting the test potentially pass.
+
+        #714
         """
         testdir.makepyfile(
             """
@@ -560,8 +567,8 @@ class TestMetafunc(object):
         result = testdir.runpytest("--collect-only")
         result.stdout.fnmatch_lines(["*uses no argument 'y'*"])
 
-    @pytest.mark.issue(714)
     def test_parametrize_uses_no_fixture_error_indirect_true(self, testdir):
+        """#714"""
         testdir.makepyfile(
             """
             import pytest
@@ -580,8 +587,8 @@ class TestMetafunc(object):
         result = testdir.runpytest("--collect-only")
         result.stdout.fnmatch_lines(["*uses no fixture 'y'*"])
 
-    @pytest.mark.issue(714)
     def test_parametrize_indirect_uses_no_fixture_error_indirect_string(self, testdir):
+        """#714"""
         testdir.makepyfile(
             """
             import pytest
@@ -597,8 +604,8 @@ class TestMetafunc(object):
         result = testdir.runpytest("--collect-only")
         result.stdout.fnmatch_lines(["*uses no fixture 'y'*"])
 
-    @pytest.mark.issue(714)
     def test_parametrize_indirect_uses_no_fixture_error_indirect_list(self, testdir):
+        """#714"""
         testdir.makepyfile(
             """
             import pytest
@@ -614,8 +621,8 @@ class TestMetafunc(object):
         result = testdir.runpytest("--collect-only")
         result.stdout.fnmatch_lines(["*uses no fixture 'y'*"])
 
-    @pytest.mark.issue(714)
     def test_parametrize_argument_not_in_indirect_list(self, testdir):
+        """#714"""
         testdir.makepyfile(
             """
             import pytest
@@ -1201,9 +1208,9 @@ class TestMetafuncFunctional(object):
         reprec = testdir.runpytest()
         reprec.assert_outcomes(passed=4)
 
-    @pytest.mark.issue(463)
     @pytest.mark.parametrize("attr", ["parametrise", "parameterize", "parameterise"])
     def test_parametrize_misspelling(self, testdir, attr):
+        """#463"""
         testdir.makepyfile(
             """
             import pytest
@@ -1386,8 +1393,9 @@ class TestMetafuncFunctionalAuto(object):
         assert output.count("preparing foo-3") == 1
 
 
-@pytest.mark.issue(308)
 class TestMarkersWithParametrization(object):
+    """#308"""
+
     def test_simple_mark(self, testdir):
         s = """
             import pytest
@@ -1575,8 +1583,8 @@ class TestMarkersWithParametrization(object):
         reprec = testdir.inline_run(SHOW_PYTEST_WARNINGS_ARG)
         reprec.assertoutcome(passed=2, skipped=2)
 
-    @pytest.mark.issue(290)
     def test_parametrize_ID_generation_string_int_works(self, testdir):
+        """#290"""
         testdir.makepyfile(
             """
             import pytest

@@ -452,8 +452,8 @@ class TestFunctional(object):
         items, rec = testdir.inline_genitems(p)
         self.assert_markers(items, test_foo=("a", "b"), test_bar=("a",))
 
-    @pytest.mark.issue(568)
     def test_mark_should_not_pass_to_siebling_class(self, testdir):
+        """#568"""
         p = testdir.makepyfile(
             """
             import pytest
@@ -655,9 +655,9 @@ class TestFunctional(object):
             markers = {m.name for m in items[name].iter_markers()}
             assert markers == set(expected_markers)
 
-    @pytest.mark.issue(1540)
     @pytest.mark.filterwarnings("ignore")
     def test_mark_from_parameters(self, testdir):
+        """#1540"""
         testdir.makepyfile(
             """
             import pytest
@@ -943,9 +943,9 @@ def test_addmarker_order():
     assert extracted == ["c", "a", "b"]
 
 
-@pytest.mark.issue("https://github.com/pytest-dev/pytest/issues/3605")
 @pytest.mark.filterwarnings("ignore")
 def test_markers_from_parametrize(testdir):
+    """#3605"""
     testdir.makepyfile(
         """
         from __future__ import print_function
