@@ -44,11 +44,11 @@ class TestMark(object):
         class SomeClass(object):
             pass
 
-        assert pytest.mark.fun(some_function) is some_function
-        assert pytest.mark.fun.with_args(some_function) is not some_function
+        assert pytest.mark.foo(some_function) is some_function
+        assert pytest.mark.foo.with_args(some_function) is not some_function
 
-        assert pytest.mark.fun(SomeClass) is SomeClass
-        assert pytest.mark.fun.with_args(SomeClass) is not SomeClass
+        assert pytest.mark.foo(SomeClass) is SomeClass
+        assert pytest.mark.foo.with_args(SomeClass) is not SomeClass
 
     def test_pytest_mark_name_starts_with_underscore(self):
         mark = Mark()
@@ -936,11 +936,11 @@ def test_mark_expressions_no_smear(testdir):
 
 def test_addmarker_order():
     node = Node("Test", config=mock.Mock(), session=mock.Mock(), nodeid="Test")
-    node.add_marker("a")
-    node.add_marker("b")
-    node.add_marker("c", append=False)
+    node.add_marker("foo")
+    node.add_marker("bar")
+    node.add_marker("baz", append=False)
     extracted = [x.name for x in node.iter_markers()]
-    assert extracted == ["c", "a", "b"]
+    assert extracted == ["baz", "foo", "bar"]
 
 
 @pytest.mark.filterwarnings("ignore")

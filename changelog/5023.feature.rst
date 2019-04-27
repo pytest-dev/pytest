@@ -1,1 +1,5 @@
-``--strict`` is now called ``--strict-markers`` as it is more explicit about what it does. The old name still works for backward compatibility.
+New flag ``--strict-markers`` that triggers an error when unknown markers (e.g. those not registered using the `markers option`_ in the configuration file) are used in the test suite.
+
+The existing ``--strict`` option has the same behavior currently, but can be augmented in the future for additional checks.
+
+.. _`markers option`: https://docs.pytest.org/en/latest/reference.html#confval-markers
