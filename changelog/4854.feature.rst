@@ -1,5 +1,0 @@
-The ``--pdb-skip`` option can now be used to ignore calls to
-``pdb.set_trace()`` (and ``pytest.set_trace()``).
-
-This is meant to help while debugging, where you want to use e.g. ``--pdb`` or
-``--trace`` only, or just run the tests again without any interruption.
