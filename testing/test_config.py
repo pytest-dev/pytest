@@ -1232,8 +1232,10 @@ def test_config_blocked_default_plugins(testdir, plugin):
     if plugin != "terminal":
         result.stdout.fnmatch_lines(["* 1 passed in *"])
 
-    if plugin != "terminal":  # fails to report due to its options being used elsewhere.
-        p = testdir.makepyfile("def test(): assert 0")
-        result = testdir.runpytest(str(p), "-pno:%s" % plugin)
-        assert result.ret == EXIT_TESTSFAILED
+    p = testdir.makepyfile("def test(): assert 0")
+    result = testdir.runpytest(str(p), "-pno:%s" % plugin)
+    assert result.ret == EXIT_TESTSFAILED
+    if plugin != "terminal":
         result.stdout.fnmatch_lines(["* 1 failed in *"])
+    else:
+        assert result.stdout.lines == [""]
