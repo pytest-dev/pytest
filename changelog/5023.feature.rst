@@ -1,0 +1,1 @@
+``--strict`` is now called ``--strict-markers`` as it is more explicit about what it does. The old name still works for backward compatibility.

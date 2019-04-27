@@ -47,11 +47,6 @@ def pytest_addoption(parser):
         type="args",
         default=[],
     )
-    # parser.addini("dirpatterns",
-    #    "patterns specifying possible locations of test files",
-    #    type="linelist", default=["**/test_*.txt",
-    #            "**/test_*.py", "**/*_test.py"]
-    # )
     group = parser.getgroup("general", "running and selection options")
     group._addoption(
         "-x",
@@ -71,9 +66,10 @@ def pytest_addoption(parser):
         help="exit after first num failures or errors.",
     )
     group._addoption(
+        "--strict-markers",
         "--strict",
         action="store_true",
-        help="marks not registered in configuration file raise errors.",
+        help="markers not registered in the `markers` section of the configuration file raise errors.",
     )
     group._addoption(
         "-c",

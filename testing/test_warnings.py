@@ -302,7 +302,7 @@ def test_filterwarnings_mark_registration(testdir):
             pass
     """
     )
-    result = testdir.runpytest("--strict")
+    result = testdir.runpytest("--strict-markers")
     assert result.ret == 0
 
 

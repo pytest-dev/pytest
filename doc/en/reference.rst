@@ -1261,18 +1261,23 @@ passed multiple times. The expected format is ``name=value``. For example::
 
 .. confval:: markers
 
-    When the ``--strict`` command-line argument is used, only known markers -
+    When the ``--strict-markers`` command-line argument is used, only known markers -
     defined in code by core pytest or some plugin - are allowed.
-    You can list additional markers in this setting to add them to the whitelist.
 
-    You can list one marker name per line, indented from the option name.
+    You can list additional markers in this setting to add them to the whitelist,
+    in which case you probably want to add ``--strict-markers`` to ``addopts``
+    to avoid future regressions:
 
     .. code-block:: ini
 
         [pytest]
+        addopts = --strict-markers
         markers =
             slow
             serial
+
+    **Note**: This option was previously called ``--strict``, which is now an
+    alias preserved for backward compatibility.
 
 .. confval:: minversion
 

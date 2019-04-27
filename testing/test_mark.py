@@ -130,7 +130,7 @@ def test_ini_markers_whitespace(testdir):
             assert True
     """
     )
-    rec = testdir.inline_run("--strict", "-m", "a1")
+    rec = testdir.inline_run("--strict-markers", "-m", "a1")
     rec.assertoutcome(passed=1)
 
 
@@ -150,7 +150,7 @@ def test_marker_without_description(testdir):
     )
     ftdir = testdir.mkdir("ft1_dummy")
     testdir.tmpdir.join("conftest.py").move(ftdir.join("conftest.py"))
-    rec = testdir.runpytest("--strict")
+    rec = testdir.runpytest("--strict-markers")
     rec.assert_outcomes()
 
 
@@ -194,7 +194,8 @@ def test_mark_on_pseudo_function(testdir):
     reprec.assertoutcome(passed=1)
 
 
-def test_strict_prohibits_unregistered_markers(testdir):
+@pytest.mark.parametrize("option_name", ["--strict-markers", "--strict"])
+def test_strict_prohibits_unregistered_markers(testdir, option_name):
     testdir.makepyfile(
         """
         import pytest
@@ -203,9 +204,11 @@ def test_strict_prohibits_unregistered_markers(testdir):
             pass
     """
     )
-    result = testdir.runpytest("--strict")
+    result = testdir.runpytest(option_name)
     assert result.ret != 0
-    result.stdout.fnmatch_lines(["'unregisteredmark' is not a registered marker"])
+    result.stdout.fnmatch_lines(
+        ["'unregisteredmark' not found in `markers` configuration option"]
+    )
 
 
 @pytest.mark.parametrize(
