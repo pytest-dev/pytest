@@ -31,10 +31,10 @@ then you can just invoke ``pytest`` directly:
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: $REGENDOC_TMPDIR, inifile: pytest.ini
+    rootdir: $REGENDOC_TMPDIR
     collected 1 item
 
-    mymodule.py .                                                        [100%]
+    test_example.txt .                                                   [100%]
 
     ========================= 1 passed in 0.12 seconds =========================
 
@@ -57,6 +57,16 @@ and functions, including from test modules:
 .. code-block:: bash
 
     $ pytest --doctest-modules
+    =========================== test session starts ============================
+    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
+    cachedir: $PYTHON_PREFIX/.pytest_cache
+    rootdir: $REGENDOC_TMPDIR
+    collected 2 items
+
+    mymodule.py .                                                        [ 50%]
+    test_example.txt .                                                   [100%]
+
+    ========================= 2 passed in 0.12 seconds =========================
 
 You can make these changes permanent in your project by
 putting them into a pytest.ini file like this:
