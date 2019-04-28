@@ -79,9 +79,11 @@ putting them into a pytest.ini file like this:
 
 .. note::
 
-    If you are making serious use of doctests through your code, please checkout
-    `Sybil <https://sybil.readthedocs.io/en/latest/index.html>`__, which besides
-    supporting doctests also supports Sphinx directives, plus other features.
+    The builtin pytest doctest supports only ``doctest`` blocks, but if you are looking
+    for more advanced checking over *all* your documentation,
+    including doctests, ``.. codeblock:: python`` Sphinx directive support,
+    and any other examples your documentation may include, you may wish to
+    consider `Sybil <https://sybil.readthedocs.io/en/latest/index.html>`__.
     It provides pytest integration out of the box.
 
 
