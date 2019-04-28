@@ -9,7 +9,7 @@ class PytestWarning(UserWarning):
     """
 
 
-class UnknownMarkWarning(PytestWarning):
+class PytestUnknownMarkWarning(PytestWarning):
     """
     Bases: :class:`PytestWarning`.
 

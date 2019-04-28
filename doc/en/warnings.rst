@@ -420,3 +420,5 @@ The following warning types ares used by pytest and are part of the public API:
 .. autoclass:: pytest.RemovedInPytest4Warning
 
 .. autoclass:: pytest.PytestExperimentalApiWarning
+
+.. autoclass:: pytest.PytestUnknownMarkWarning

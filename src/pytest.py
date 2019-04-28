@@ -37,6 +37,7 @@ from _pytest.recwarn import deprecated_call
 from _pytest.recwarn import warns
 from _pytest.warning_types import PytestDeprecationWarning
 from _pytest.warning_types import PytestExperimentalApiWarning
+from _pytest.warning_types import PytestUnknownMarkWarning
 from _pytest.warning_types import PytestWarning
 from _pytest.warning_types import RemovedInPytest4Warning
 
@@ -72,6 +73,7 @@ __all__ = [
     "raises",
     "register_assert_rewrite",
     "RemovedInPytest4Warning",
+    "PytestUnknownMarkWarning",
     "Session",
     "set_trace",
     "skip",
