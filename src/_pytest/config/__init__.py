@@ -32,7 +32,7 @@ from _pytest.compat import lru_cache
 from _pytest.compat import safe_str
 from _pytest.outcomes import fail
 from _pytest.outcomes import Skipped
-from _pytest.warning_types import PytestWarning
+from _pytest.warning_types import PytestConfigWarning
 
 hookimpl = HookimplMarker("pytest")
 hookspec = HookspecMarker("pytest")
@@ -307,7 +307,7 @@ class PytestPluginManager(PluginManager):
     def register(self, plugin, name=None):
         if name in ["pytest_catchlog", "pytest_capturelog"]:
             warnings.warn(
-                PytestWarning(
+                PytestConfigWarning(
                     "{} plugin has been merged into the core, "
                     "please remove it from your requirements.".format(
                         name.replace("_", "-")
@@ -574,7 +574,7 @@ class PytestPluginManager(PluginManager):
             from _pytest.warnings import _issue_warning_captured
 
             _issue_warning_captured(
-                PytestWarning("skipped plugin %r: %s" % (modname, e.msg)),
+                PytestConfigWarning("skipped plugin %r: %s" % (modname, e.msg)),
                 self.hook,
                 stacklevel=1,
             )
@@ -863,7 +863,7 @@ class Config(object):
                 from _pytest.warnings import _issue_warning_captured
 
                 _issue_warning_captured(
-                    PytestWarning(
+                    PytestConfigWarning(
                         "could not load initial conftests: {}".format(e.path)
                     ),
                     self.hook,
