@@ -10,61 +10,20 @@ can change the pattern by issuing:
 
     pytest --doctest-glob='*.rst'
 
-on the command line. Since version ``2.9``, ``--doctest-glob``
-can be given multiple times in the command-line.
-
-.. versionadded:: 3.1
-
-    You can specify the encoding that will be used for those doctest files
-    using the ``doctest_encoding`` ini option:
-
-    .. code-block:: ini
-
-        # content of pytest.ini
-        [pytest]
-        doctest_encoding = latin1
-
-    The default encoding is UTF-8.
-
-You can also trigger running of doctests
-from docstrings in all python modules (including regular
-python test modules):
-
-.. code-block:: bash
-
-    pytest --doctest-modules
-
-You can make these changes permanent in your project by
-putting them into a pytest.ini file like this:
-
-.. code-block:: ini
-
-    # content of pytest.ini
-    [pytest]
-    addopts = --doctest-modules
+on the command line. ``--doctest-glob`` can be given multiple times in the command-line.
 
 If you then have a text file like this:
 
 .. code-block:: text
 
-    # content of example.rst
+    # content of test_example.txt
 
     hello this is a doctest
     >>> x = 3
     >>> x
     3
 
-and another like this::
-
-    # content of mymodule.py
-    def something():
-        """ a doctest in a docstring
-        >>> something()
-        42
-        """
-        return 42
-
-then you can just invoke ``pytest`` without command line options:
+then you can just invoke ``pytest`` directly:
 
 .. code-block:: pytest
 
@@ -79,21 +38,64 @@ then you can just invoke ``pytest`` without command line options:
 
     ========================= 1 passed in 0.12 seconds =========================
 
-It is possible to use fixtures using the ``getfixture`` helper:
+By default, pytest will collect ``test*.txt`` files looking for doctest directives, but you
+can pass additional globs using the ``--doctest-glob`` option (multi-allowed).
 
-.. code-block:: text
+In addition to text files, you can also execute doctests directly from docstrings of your classes
+and functions, including from test modules:
 
-    # content of example.rst
-    >>> tmp = getfixture('tmpdir')
-    >>> ...
-    >>>
+.. code-block:: python
 
-Also, :ref:`usefixtures` and :ref:`autouse` fixtures are supported
-when executing text doctest files.
+    # content of mymodule.py
+    def something():
+        """ a doctest in a docstring
+        >>> something()
+        42
+        """
+        return 42
 
-The standard ``doctest`` module provides some setting flags to configure the
-strictness of doctest tests. In pytest, you can enable those flags using the
-configuration file. To make pytest ignore trailing whitespaces and ignore
+.. code-block:: bash
+
+    $ pytest --doctest-modules
+
+You can make these changes permanent in your project by
+putting them into a pytest.ini file like this:
+
+.. code-block:: ini
+
+    # content of pytest.ini
+    [pytest]
+    addopts = --doctest-modules
+
+.. note::
+
+    If you are making serious use of doctests through your code, please checkout
+    `Sybil <https://sybil.readthedocs.io/en/latest/index.html>`__, which besides
+    supporting doctests also supports Sphinx directives, plus other features.
+    It provides pytest integration out of the box.
+
+
+Encoding
+--------
+
+The default encoding is **UTF-8**, but you can specify the encoding
+that will be used for those doctest files using the
+``doctest_encoding`` ini option:
+
+.. code-block:: ini
+
+    # content of pytest.ini
+    [pytest]
+    doctest_encoding = latin1
+
+Using 'doctest' options
+-----------------------
+
+The standard ``doctest`` module provides some `options <https://docs.python.org/3/library/doctest.html#option-flags>`__
+to configure the strictness of doctest tests. In pytest, you can enable those flags using the
+configuration file.
+
+For example, to make pytest ignore trailing whitespaces and ignore
 lengthy exception stack traces you can just write:
 
 .. code-block:: ini
@@ -110,16 +112,7 @@ Python 3 unchanged:
 * ``ALLOW_BYTES``: when enabled, the ``b`` prefix is stripped from byte strings
   in expected doctest output.
 
-As with any other option flag, these flags can be enabled in ``pytest.ini`` using
-the ``doctest_optionflags`` ini option:
-
-.. code-block:: ini
-
-    [pytest]
-    doctest_optionflags = ALLOW_UNICODE ALLOW_BYTES
-
-
-Alternatively, it can be enabled by an inline comment in the doc test
+Alternatively, options can be enabled by an inline comment in the doc test
 itself:
 
 .. code-block:: rst
@@ -128,7 +121,7 @@ itself:
     >>> get_unicode_greeting()  # doctest: +ALLOW_UNICODE
     'Hello'
 
-By default, pytest would report only the first failure for a given doctest.  If
+By default, pytest would report only the first failure for a given doctest. If
 you want to continue the test even when you have failures, do:
 
 .. code-block:: bash
@@ -136,12 +129,50 @@ you want to continue the test even when you have failures, do:
     pytest --doctest-modules --doctest-continue-on-failure
 
 
+Output format
+-------------
+
+You can change the diff output format on failure for your doctests
+by using one of standard doctest modules format in options
+(see :data:`python:doctest.REPORT_UDIFF`, :data:`python:doctest.REPORT_CDIFF`,
+:data:`python:doctest.REPORT_NDIFF`, :data:`python:doctest.REPORT_ONLY_FIRST_FAILURE`):
+
+.. code-block:: bash
+
+    pytest --doctest-modules --doctest-report none
+    pytest --doctest-modules --doctest-report udiff
+    pytest --doctest-modules --doctest-report cdiff
+    pytest --doctest-modules --doctest-report ndiff
+    pytest --doctest-modules --doctest-report only_first_failure
+
+
+pytest-specific features
+------------------------
+
+Some features are provided to make writing doctests easier or with better integration with
+your existing test suite. Keep in mind however that by using those features you will make
+your doctests incompatible with the standard ``doctests`` module.
+
+Using fixtures
+^^^^^^^^^^^^^^
+
+It is possible to use fixtures using the ``getfixture`` helper:
+
+.. code-block:: text
+
+    # content of example.rst
+    >>> tmp = getfixture('tmpdir')
+    >>> ...
+    >>>
+
+Also, :ref:`usefixtures` and :ref:`autouse` fixtures are supported
+when executing text doctest files.
+
+
 .. _`doctest_namespace`:
 
-The 'doctest_namespace' fixture
--------------------------------
-
-.. versionadded:: 3.0
+'doctest_namespace' fixture
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The ``doctest_namespace`` fixture can be used to inject items into the
 namespace in which your doctests run. It is intended to be used within
@@ -171,20 +202,14 @@ Note that like the normal ``conftest.py``, the fixtures are discovered in the di
 Meaning that if you put your doctest with your source code, the relevant conftest.py needs to be in the same directory tree.
 Fixtures will not be discovered in a sibling directory tree!
 
-Output format
--------------
+Skipping tests dynamically
+^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. versionadded:: 3.0
+.. versionadded:: 4.4
 
-You can change the diff output format on failure for your doctests
-by using one of standard doctest modules format in options
-(see :data:`python:doctest.REPORT_UDIFF`, :data:`python:doctest.REPORT_CDIFF`,
-:data:`python:doctest.REPORT_NDIFF`, :data:`python:doctest.REPORT_ONLY_FIRST_FAILURE`):
+You can use ``pytest.skip`` to dynamically skip doctests. For example::
 
-.. code-block:: bash
-
-    pytest --doctest-modules --doctest-report none
-    pytest --doctest-modules --doctest-report udiff
-    pytest --doctest-modules --doctest-report cdiff
-    pytest --doctest-modules --doctest-report ndiff
-    pytest --doctest-modules --doctest-report only_first_failure
+    >>> import sys, pytest
+    >>> if sys.platform.startswith('win'):
+    ...     pytest.skip('this doctest does not work on Windows')
+    ...
