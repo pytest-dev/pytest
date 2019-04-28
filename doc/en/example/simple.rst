@@ -854,7 +854,7 @@ information.
 ``PYTEST_CURRENT_TEST`` environment variable
 --------------------------------------------
 
-.. versionadded:: 3.2
+
 
 Sometimes a test session might get stuck and there might be no easy way to figure out
 which test got stuck, for example if pytest was run in quiet mode (``-q``) or you don't have access to the console

@@ -7,7 +7,7 @@ pytest fixtures: explicit, modular, scalable
 
 .. currentmodule:: _pytest.python
 
-.. versionadded:: 2.0/2.3/2.4
+
 
 .. _`xUnit`: http://en.wikipedia.org/wiki/XUnit
 .. _`purpose of test fixtures`: http://en.wikipedia.org/wiki/Test_fixture#Software
@@ -276,7 +276,7 @@ Finally, the ``class`` scope will invoke the fixture once per test *class*.
 ``package`` scope (experimental)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. versionadded:: 3.7
+
 
 In pytest 3.7 the ``package`` scope has been introduced. Package-scoped fixtures
 are finalized when the last test of a *package* finishes.
@@ -292,7 +292,7 @@ are finalized when the last test of a *package* finishes.
 Higher-scoped fixtures are instantiated first
 ---------------------------------------------
 
-.. versionadded:: 3.5
+
 
 Within a function request for features, fixture of higher-scopes (such as ``session``) are instantiated first than
 lower-scoped fixtures (such as ``function`` or ``class``). The relative order of fixtures of same scope follows

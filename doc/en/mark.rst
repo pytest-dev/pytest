@@ -59,7 +59,7 @@ should add ``--strict`` to ``addopts``:
 Marker revamp and iteration
 ---------------------------
 
-.. versionadded:: 3.6
+
 
 pytest's marker implementation traditionally worked by simply updating the ``__dict__`` attribute of functions to cumulatively add markers. As a result, markers would unintentionally be passed along class hierarchies in surprising ways. Further, the API for retrieving them was inconsistent, as markers from parameterization would be stored differently than markers applied using the ``@pytest.mark`` decorator and markers added via ``node.add_marker``.
 

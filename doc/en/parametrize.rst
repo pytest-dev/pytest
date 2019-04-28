@@ -29,8 +29,8 @@ pytest enables test parametrization at several levels:
 
 .. regendoc: wipe
 
-.. versionadded:: 2.2
-.. versionchanged:: 2.4
+
+
     Several improvements.
 
 The builtin :ref:`pytest.mark.parametrize ref` decorator enables

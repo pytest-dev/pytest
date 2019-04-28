@@ -20,7 +20,7 @@ which were registered by installed plugins.
 Initialization: determining rootdir and inifile
 -----------------------------------------------
 
-.. versionadded:: 2.7
+
 
 pytest determines a ``rootdir`` for each test run which depends on
 the command line arguments (specified test files, paths) and on
