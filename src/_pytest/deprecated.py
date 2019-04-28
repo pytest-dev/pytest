@@ -48,12 +48,6 @@ RESULT_LOG = PytestDeprecationWarning(
     "See https://docs.pytest.org/en/latest/deprecations.html#result-log-result-log for more information."
 )
 
-MARK_INFO_ATTRIBUTE = RemovedInPytest4Warning(
-    "MarkInfo objects are deprecated as they contain merged marks which are hard to deal with correctly.\n"
-    "Please use node.get_closest_marker(name) or node.iter_markers(name).\n"
-    "Docs: https://docs.pytest.org/en/latest/mark.html#updating-code"
-)
-
 RAISES_EXEC = PytestDeprecationWarning(
     "raises(..., 'code(as_a_string)') is deprecated, use the context manager form or use `exec()` directly\n\n"
     "See https://docs.pytest.org/en/latest/deprecations.html#raises-warns-exec"
