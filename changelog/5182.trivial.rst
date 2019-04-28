@@ -1,0 +1,1 @@
+Removed internal and unused ``_pytest.deprecated.MARK_INFO_ATTRIBUTE``.
