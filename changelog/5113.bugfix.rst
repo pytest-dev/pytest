@@ -1,0 +1,1 @@
+Deselected items from plugins using ``pytest_collect_modifyitems`` as a hookwrapper are correctly reported now.
