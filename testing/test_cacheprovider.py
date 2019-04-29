@@ -445,9 +445,9 @@ class TestLastFailed(object):
         result = testdir.runpytest("--lf")
         result.stdout.fnmatch_lines(
             [
-                "collected 4 items / 2 deselected / 2 selected",
-                "run-last-failure: rerun previous 2 failures",
-                "*2 failed, 2 deselected in*",
+                "collected 2 items",
+                "run-last-failure: rerun previous 2 failures (skipped 1 file)",
+                "*2 failed in*",
             ]
         )
 
@@ -718,7 +718,7 @@ class TestLastFailed(object):
         assert self.get_cached_last_failed(testdir) == ["test_foo.py::test_foo_4"]
 
         result = testdir.runpytest("--last-failed")
-        result.stdout.fnmatch_lines(["*1 failed, 3 deselected*"])
+        result.stdout.fnmatch_lines(["*1 failed, 1 deselected*"])
         assert self.get_cached_last_failed(testdir) == ["test_foo.py::test_foo_4"]
 
         # 3. fix test_foo_4, run only test_foo.py
@@ -778,6 +778,58 @@ class TestLastFailed(object):
         result.stdout.fnmatch_lines(["*1 failed*1 passed*"])
         result = testdir.runpytest("--lf", "--cache-clear", "--lfnf", "none")
         result.stdout.fnmatch_lines(["*2 desel*"])
+
+    def test_lastfailed_skip_collection(self, testdir):
+        """
+        Test --lf behavior regarding skipping collection of files that are not marked as
+        failed in the cache (#5172).
+        """
+        testdir.makepyfile(
+            **{
+                "pkg1/test_1.py": """
+                import pytest
+
+                @pytest.mark.parametrize('i', range(3))
+                def test_1(i): pass
+            """,
+                "pkg2/test_2.py": """
+                import pytest
+
+                @pytest.mark.parametrize('i', range(5))
+                def test_1(i):
+                    assert i not in (1, 3)
+            """,
+            }
+        )
+        # first run: collects 8 items (test_1: 3, test_2: 5)
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines(["collected 8 items", "*2 failed*6 passed*"])
+        # second run: collects only 5 items from test_2, because all tests from test_1 have passed
+        result = testdir.runpytest("--lf")
+        result.stdout.fnmatch_lines(
+            [
+                "collected 5 items / 3 deselected / 2 selected",
+                "run-last-failure: rerun previous 2 failures (skipped 1 file)",
+                "*2 failed*3 deselected*",
+            ]
+        )
+
+        # add another file and check if message is correct when skipping more than 1 file
+        testdir.makepyfile(
+            **{
+                "pkg1/test_3.py": """
+                def test_3(): pass
+            """
+            }
+        )
+        result = testdir.runpytest("--lf")
+        result.stdout.fnmatch_lines(
+            [
+                "collected 5 items / 3 deselected / 2 selected",
+                "run-last-failure: rerun previous 2 failures (skipped 2 files)",
+                "*2 failed*3 deselected*",
+            ]
+        )
 
 
 class TestNewFirst(object):
