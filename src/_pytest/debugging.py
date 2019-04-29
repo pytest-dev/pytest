@@ -143,18 +143,18 @@ class pytestPDB(object):
                     else:
                         tw.sep(">", "PDB set_trace")
 
-            class _PdbWrapper(cls._pdb_cls, object):
+            class PytestPdbWrapper(cls._pdb_cls, object):
                 _pytest_capman = capman
                 _continued = False
 
                 def do_debug(self, arg):
                     cls._recursive_debug += 1
-                    ret = super(_PdbWrapper, self).do_debug(arg)
+                    ret = super(PytestPdbWrapper, self).do_debug(arg)
                     cls._recursive_debug -= 1
                     return ret
 
                 def do_continue(self, arg):
-                    ret = super(_PdbWrapper, self).do_continue(arg)
+                    ret = super(PytestPdbWrapper, self).do_continue(arg)
                     if cls._recursive_debug == 0:
                         tw = _pytest.config.create_terminal_writer(cls._config)
                         tw.line()
@@ -188,7 +188,7 @@ class pytestPDB(object):
                     could be handled, but this would require to wrap the
                     whole pytest run, and adjust the report etc.
                     """
-                    super(_PdbWrapper, self).set_quit()
+                    super(PytestPdbWrapper, self).set_quit()
                     if cls._recursive_debug == 0:
                         outcomes.exit("Quitting debugger")
 
@@ -198,7 +198,7 @@ class pytestPDB(object):
                     Needed after do_continue resumed, and entering another
                     breakpoint again.
                     """
-                    ret = super(_PdbWrapper, self).setup(f, tb)
+                    ret = super(PytestPdbWrapper, self).setup(f, tb)
                     if not ret and self._continued:
                         # pdb.setup() returns True if the command wants to exit
                         # from the interaction: do not suspend capturing then.
@@ -206,7 +206,7 @@ class pytestPDB(object):
                             self._pytest_capman.suspend_global_capture(in_=True)
                     return ret
 
-            _pdb = _PdbWrapper(**kwargs)
+            _pdb = PytestPdbWrapper(**kwargs)
             cls._pluginmanager.hook.pytest_enter_pdb(config=cls._config, pdb=_pdb)
         else:
             _pdb = cls._pdb_cls(**kwargs)
