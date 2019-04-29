@@ -7,7 +7,7 @@ kept here as a historical note so users looking at old code can find documentati
 cache plugin integrated into the core
 -------------------------------------
 
-.. versionadded:: 2.8
+
 
 The functionality of the :ref:`core cache <cache>` plugin was previously distributed
 as a third party plugin named ``pytest-cache``.  The core plugin
@@ -18,7 +18,7 @@ can only store/receive data between test runs that is json-serializable.
 funcargs and ``pytest_funcarg__``
 ---------------------------------
 
-.. versionchanged:: 2.3
+
 
 In versions prior to 2.3 there was no ``@pytest.fixture`` marker
 and you had to use a magic ``pytest_funcarg__NAME`` prefix
@@ -30,7 +30,7 @@ functions.
 ``@pytest.yield_fixture`` decorator
 -----------------------------------
 
-.. versionchanged:: 2.10
+
 
 Prior to version 2.10, in order to use a ``yield`` statement to execute teardown code one
 had to mark a fixture using the ``yield_fixture`` marker. From 2.10 onward, normal
@@ -41,7 +41,7 @@ and considered deprecated.
 ``[pytest]`` header in ``setup.cfg``
 ------------------------------------
 
-.. versionchanged:: 3.0
+
 
 Prior to 3.0, the supported section name was ``[pytest]``. Due to how
 this may collide with some distutils commands, the recommended
@@ -54,7 +54,7 @@ name is ``[pytest]``.
 Applying marks to ``@pytest.mark.parametrize`` parameters
 ---------------------------------------------------------
 
-.. versionchanged:: 3.1
+
 
 Prior to version 3.1 the supported mechanism for marking values
 used the syntax:
@@ -80,7 +80,7 @@ The old syntax is planned to be removed in pytest-4.0.
 ``@pytest.mark.parametrize`` argument names as a tuple
 ------------------------------------------------------
 
-.. versionchanged:: 2.4
+
 
 In versions prior to 2.4 one needed to specify the argument
 names as a tuple.  This remains valid but the simpler ``"name1,name2,..."``
@@ -91,7 +91,7 @@ it's easier to write and produces less line noise.
 setup: is now an "autouse fixture"
 ----------------------------------
 
-.. versionchanged:: 2.3
+
 
 During development prior to the pytest-2.3 release the name
 ``pytest.setup`` was used but before the release it was renamed
@@ -104,7 +104,7 @@ namely :ref:`autouse fixtures`
 Conditions as strings instead of booleans
 -----------------------------------------
 
-.. versionchanged:: 2.4
+
 
 Prior to pytest-2.4 the only way to specify skipif/xfail conditions was
 to use strings:
@@ -171,7 +171,7 @@ The equivalent with "boolean conditions" is:
 ``pytest.set_trace()``
 ----------------------
 
-.. versionchanged:: 2.4
+
 
 Previous to version 2.4 to set a break point in code one needed to use ``pytest.set_trace()``:
 
@@ -192,7 +192,7 @@ For more details see :ref:`breakpoints`.
 "compat" properties
 -------------------
 
-.. deprecated:: 3.9
+
 
 Access of ``Module``, ``Function``, ``Class``, ``Instance``, ``File`` and ``Item`` through ``Node`` instances have long
 been documented as deprecated, but started to emit warnings from pytest ``3.9`` and onward.

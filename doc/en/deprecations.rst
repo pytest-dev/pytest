@@ -104,7 +104,7 @@ Becomes:
 Result log (``--result-log``)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. deprecated:: 3.0
+
 
 The ``--resultlog`` command line option has been deprecated: it is little used
 and there are more modern and better alternatives, for example `pytest-tap <https://tappy.readthedocs.io/en/latest/>`_.

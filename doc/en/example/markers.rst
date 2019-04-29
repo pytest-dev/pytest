@@ -35,7 +35,7 @@ You can "mark" a test function with custom metadata like this:
         def test_method(self):
             pass
 
-.. versionadded:: 2.2
+
 
 You can then restrict a test run to only run tests marked with ``webtest``:
 
@@ -210,7 +210,7 @@ Or to select "http" and "quick" tests:
 Registering markers
 -------------------------------------
 
-.. versionadded:: 2.2
+
 
 .. ini-syntax for custom markers:
 
