@@ -415,8 +415,20 @@ The following warning types ares used by pytest and are part of the public API:
 
 .. autoclass:: pytest.PytestWarning
 
+.. autoclass:: pytest.PytestAssertRewriteWarning
+
+.. autoclass:: pytest.PytestCacheWarning
+
+.. autoclass:: pytest.PytestCollectionWarning
+
+.. autoclass:: pytest.PytestConfigWarning
+
 .. autoclass:: pytest.PytestDeprecationWarning
 
-.. autoclass:: pytest.RemovedInPytest4Warning
-
 .. autoclass:: pytest.PytestExperimentalApiWarning
+
+.. autoclass:: pytest.PytestUnhandledCoroutineWarning
+
+.. autoclass:: pytest.PytestUnknownMarkWarning
+
+.. autoclass:: pytest.RemovedInPytest4Warning

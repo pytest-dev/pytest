@@ -1,0 +1,14 @@
+Introduce new specific warning ``PytestWarning`` subclasses to make it easier to filter warnings based on the class, rather than on the message. The new subclasses are:
+
+
+* ``PytestAssertRewriteWarning``
+
+* ``PytestCacheWarning``
+
+* ``PytestCollectionWarning``
+
+* ``PytestConfigWarning``
+
+* ``PytestUnhandledCoroutineWarning``
+
+* ``PytestUnknownMarkWarning``

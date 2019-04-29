@@ -12,7 +12,7 @@ from ..compat import MappingMixin
 from ..compat import NOTSET
 from _pytest.deprecated import PYTEST_PARAM_UNKNOWN_KWARGS
 from _pytest.outcomes import fail
-from _pytest.warning_types import UnknownMarkWarning
+from _pytest.warning_types import PytestUnknownMarkWarning
 
 EMPTY_PARAMETERSET_OPTION = "empty_parameter_set_mark"
 
@@ -318,7 +318,7 @@ class MarkGenerator(object):
                         "Unknown pytest.mark.%s - is this a typo?  You can register "
                         "custom marks to avoid this warning - for details, see "
                         "https://docs.pytest.org/en/latest/mark.html" % name,
-                        UnknownMarkWarning,
+                        PytestUnknownMarkWarning,
                     )
 
         return MarkDecorator(Mark(name, (), {}))

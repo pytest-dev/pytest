@@ -268,11 +268,13 @@ class AssertionRewritingHook(object):
         self._marked_for_rewrite_cache.clear()
 
     def _warn_already_imported(self, name):
-        from _pytest.warning_types import PytestWarning
+        from _pytest.warning_types import PytestAssertRewriteWarning
         from _pytest.warnings import _issue_warning_captured
 
         _issue_warning_captured(
-            PytestWarning("Module already imported so cannot be rewritten: %s" % name),
+            PytestAssertRewriteWarning(
+                "Module already imported so cannot be rewritten: %s" % name
+            ),
             self.config.hook,
             stacklevel=5,
         )
@@ -819,11 +821,13 @@ class AssertionRewriter(ast.NodeVisitor):
 
         """
         if isinstance(assert_.test, ast.Tuple) and len(assert_.test.elts) >= 1:
-            from _pytest.warning_types import PytestWarning
+            from _pytest.warning_types import PytestAssertRewriteWarning
             import warnings
 
             warnings.warn_explicit(
-                PytestWarning("assertion is always true, perhaps remove parentheses?"),
+                PytestAssertRewriteWarning(
+                    "assertion is always true, perhaps remove parentheses?"
+                ),
                 category=None,
                 filename=str(self.module_path),
                 lineno=assert_.lineno,
@@ -887,10 +891,10 @@ class AssertionRewriter(ast.NodeVisitor):
         val_is_none = ast.Compare(node, [ast.Is()], [AST_NONE])
         send_warning = ast.parse(
             """
-from _pytest.warning_types import PytestWarning
+from _pytest.warning_types import PytestAssertRewriteWarning
 from warnings import warn_explicit
 warn_explicit(
-    PytestWarning('asserting the value None, please use "assert is None"'),
+    PytestAssertRewriteWarning('asserting the value None, please use "assert is None"'),
     category=None,
     filename={filename!r},
     lineno={lineno},

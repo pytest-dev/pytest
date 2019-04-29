@@ -60,10 +60,10 @@ class Cache(object):
 
     def warn(self, fmt, **args):
         from _pytest.warnings import _issue_warning_captured
-        from _pytest.warning_types import PytestWarning
+        from _pytest.warning_types import PytestCacheWarning
 
         _issue_warning_captured(
-            PytestWarning(fmt.format(**args) if args else fmt),
+            PytestCacheWarning(fmt.format(**args) if args else fmt),
             self._config.hook,
             stacklevel=3,
         )
