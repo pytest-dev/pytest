@@ -435,7 +435,7 @@ class Session(nodes.FSCollector):
         self.shouldfail = False
         self.trace = config.trace.root.get("collection")
         self._norecursepatterns = config.getini("norecursedirs")
-        self.startdir = py.path.local()
+        self.startdir = config.invocation_dir
         self._initialpaths = frozenset()
         # Keep track of any collected nodes in here, so we don't duplicate fixtures
         self._node_cache = {}
