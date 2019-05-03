@@ -803,7 +803,7 @@ class TerminalReporter(object):
                 for rep in reports:
                     if rep.sections:
                         msg = self._getfailureheadline(rep)
-                        self.write_sep("_", msg)
+                        self.write_sep("_", msg, green=True, bold=True)
                         self._outrep_summary(rep)
 
     def print_teardown_sections(self, rep):
