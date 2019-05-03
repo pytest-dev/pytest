@@ -1,0 +1,5 @@
+New ``record_testsuite_property`` session-scoped fixture allows users to log ``<property>`` tags at the ``testsuite``
+level with the ``junitxml`` plugin.
+
+The generated XML is compatible with the latest xunit standard, contrary to
+the properties recorded by ``record_property`` and ``record_xml_attribute``.

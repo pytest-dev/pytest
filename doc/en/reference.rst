@@ -424,6 +424,14 @@ record_property
 
 .. autofunction:: _pytest.junitxml.record_property()
 
+
+record_testsuite_property
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**Tutorial**: :ref:`record_testsuite_property example`.
+
+.. autofunction:: _pytest.junitxml.record_testsuite_property()
+
 caplog
 ~~~~~~
 
