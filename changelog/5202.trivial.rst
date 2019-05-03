@@ -1,0 +1,4 @@
+``record_property`` now emits a ``PytestWarning`` when used with ``junit_family=xunit2``: the fixture generates
+``property`` tags as children of ``testcase``, which is not permitted according to the most
+`recent schema <https://github.com/jenkinsci/xunit-plugin/blob/master/
+src/main/resources/org/jenkinsci/plugins/xunit/types/model/xsd/junit-10.xsd>`__.

@@ -281,6 +281,21 @@ class _NodeReporter(object):
         self.to_xml = lambda: py.xml.raw(data)
 
 
+def _warn_incompatibility_with_xunit2(request, fixture_name):
+    """Emits a PytestWarning about the given fixture being incompatible with newer xunit revisions"""
+    from _pytest.warning_types import PytestWarning
+
+    xml = getattr(request.config, "_xml", None)
+    if xml is not None and xml.family not in ("xunit1", "legacy"):
+        request.node.warn(
+            PytestWarning(
+                "{fixture_name} is incompatible with junit_family '{family}' (use 'legacy' or 'xunit1')".format(
+                    fixture_name=fixture_name, family=xml.family
+                )
+            )
+        )
+
+
 @pytest.fixture
 def record_property(request):
     """Add an extra properties the calling test.
@@ -294,6 +309,7 @@ def record_property(request):
         def test_function(record_property):
             record_property("example_key", 1)
     """
+    _warn_incompatibility_with_xunit2(request, "record_property")
 
     def append_property(name, value):
         request.node.user_properties.append((name, value))
@@ -307,27 +323,22 @@ def record_xml_attribute(request):
     The fixture is callable with ``(name, value)``, with value being
     automatically xml-encoded
     """
-    from _pytest.warning_types import PytestExperimentalApiWarning, PytestWarning
+    from _pytest.warning_types import PytestExperimentalApiWarning
 
     request.node.warn(
         PytestExperimentalApiWarning("record_xml_attribute is an experimental feature")
     )
+
+    _warn_incompatibility_with_xunit2(request, "record_xml_attribute")
 
     # Declare noop
     def add_attr_noop(name, value):
         pass
 
     attr_func = add_attr_noop
-    xml = getattr(request.config, "_xml", None)
 
-    if xml is not None and xml.family != "xunit1":
-        request.node.warn(
-            PytestWarning(
-                "record_xml_attribute is incompatible with junit_family: "
-                "%s (use: legacy|xunit1)" % xml.family
-            )
-        )
-    elif xml is not None:
+    xml = getattr(request.config, "_xml", None)
+    if xml is not None:
         node_reporter = xml.node_reporter(request.node.nodeid)
         attr_func = node_reporter.add_attribute
 
