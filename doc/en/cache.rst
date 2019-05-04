@@ -5,7 +5,7 @@
 Cache: working with cross-testrun state
 =======================================
 
-.. versionadded:: 2.8
+
 
 Usage
 ---------

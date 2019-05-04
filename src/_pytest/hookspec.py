@@ -188,7 +188,7 @@ def pytest_ignore_collect(path, config):
 
     Stops at first non-None result, see :ref:`firstresult`
 
-    :param str path: the path to analyze
+    :param path: a :py:class:`py.path.local` - the path to analyze
     :param _pytest.config.Config config: pytest config object
     """
 
@@ -199,7 +199,7 @@ def pytest_collect_directory(path, parent):
 
     Stops at first non-None result, see :ref:`firstresult`
 
-    :param str path: the path to analyze
+    :param path: a :py:class:`py.path.local` - the path to analyze
     """
 
 
@@ -207,7 +207,7 @@ def pytest_collect_file(path, parent):
     """ return collection Node or None for the given path. Any new node
     needs to have the specified ``parent`` as a parent.
 
-    :param str path: the path to collect
+    :param path: a :py:class:`py.path.local` - the path to collect
     """
 
 
@@ -249,7 +249,10 @@ def pytest_pycollect_makemodule(path, parent):
     The pytest_collect_file hook needs to be used if you want to
     create test modules for files that do not match as a test module.
 
-    Stops at first non-None result, see :ref:`firstresult` """
+    Stops at first non-None result, see :ref:`firstresult`
+
+    :param path: a :py:class:`py.path.local` - the path of module to collect
+    """
 
 
 @hookspec(firstresult=True)

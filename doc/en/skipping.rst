@@ -39,7 +39,7 @@ More details on the ``-r`` option can be found by running ``pytest -h``.
 Skipping test functions
 -----------------------
 
-.. versionadded:: 2.9
+
 
 The simplest way to skip a test function is to mark it with the ``skip`` decorator
 which may be passed an optional ``reason``:
@@ -80,7 +80,7 @@ It is also possible to skip the whole module using
 ``skipif``
 ~~~~~~~~~~
 
-.. versionadded:: 2.0
+
 
 If you wish to skip something conditionally then you can use ``skipif`` instead.
 Here is an example of marking a test function to be skipped
@@ -254,7 +254,7 @@ internally by raising a known exception.
 ``strict`` parameter
 ~~~~~~~~~~~~~~~~~~~~
 
-.. versionadded:: 2.9
+
 
 Both ``XFAIL`` and ``XPASS`` don't fail the test suite, unless the ``strict`` keyword-only
 parameter is passed as ``True``:

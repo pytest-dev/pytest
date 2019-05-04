@@ -60,7 +60,8 @@ If you still have concerns about this deprecation and future removal, please com
 
 The ``pytest.config`` global object is deprecated.  Instead use
 ``request.config`` (via the ``request`` fixture) or if you are a plugin author
-use the ``pytest_configure(config)`` hook.
+use the ``pytest_configure(config)`` hook. Note that many hooks can also access
+the ``config`` object indirectly, through ``session.config`` or ``item.config`` for example.
 
 .. _raises-warns-exec:
 
@@ -104,7 +105,7 @@ Becomes:
 Result log (``--result-log``)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. deprecated:: 3.0
+
 
 The ``--resultlog`` command line option has been deprecated: it is little used
 and there are more modern and better alternatives, for example `pytest-tap <https://tappy.readthedocs.io/en/latest/>`_.

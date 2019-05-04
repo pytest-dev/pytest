@@ -1,0 +1,1 @@
+Doc: ``pytest_ignore_collect``, ``pytest_collect_directory``, ``pytest_collect_file`` and ``pytest_pycollect_makemodule`` hooks's 'path' parameter documented type is now ``py.path.local``
