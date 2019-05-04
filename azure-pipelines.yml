@@ -43,10 +43,10 @@ jobs:
         #   But no exception with py27-pexpect,py27-twisted,py27-numpy.
         PYTEST_COVERAGE: '1'
       pypy:
-        python.version: 'pypy'
+        python.version: 'pypy2'
         tox.env: 'pypy'
         python.exe: 'pypy'
-      # NOTE: pypy3 fails to install pip currently due to an interal error.
+      # NOTE: pypy3 fails to install pip currently due to an internal error.
       # pypy3:
       #   python.version: 'pypy3'
       #   tox.env: 'pypy3'
@@ -86,7 +86,6 @@ jobs:
 
   steps:
   - task: UsePythonVersion@0
-    condition: not(startsWith(variables['python.exe'], 'pypy'))
     inputs:
       versionSpec: '$(python.version)'
       architecture: 'x64'
@@ -94,23 +93,6 @@ jobs:
   - script: choco install vcpython27
     condition: eq(variables['python.needs_vc'], True)
     displayName: 'Install VC for py27'
-
-  - script: choco install python.pypy
-    condition: eq(variables['python.exe'], 'pypy')
-    displayName: 'Install pypy'
-
-  - script: choco install pypy3
-    condition: eq(variables['python.exe'], 'pypy3')
-    displayName: 'Install pypy3'
-
-  - task: PowerShell@2
-    inputs:
-      targetType: 'inline'
-      script: |
-        Invoke-WebRequest -Uri "https://bootstrap.pypa.io/get-pip.py" -OutFile "get-pip.py"
-        $(python.exe) get-pip.py
-    condition: startsWith(variables['python.exe'], 'pypy')
-    displayName: 'Install pip'
 
   - script: $(python.exe) -m pip install --upgrade pip && $(python.exe) -m pip install tox
     displayName: 'Install tox'
