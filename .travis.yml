@@ -49,9 +49,9 @@ jobs:
 
     # Coverage tracking is slow with pypy, skip it.
     - env: TOXENV=pypy-xdist
-      python: 'pypy2.7-6.0'
+      python: 'pypy'
     - env: TOXENV=pypy3-xdist
-      python: 'pypy3.5-6.0'
+      python: 'pypy3'
 
     - env: TOXENV=py34-xdist
       python: '3.4'
