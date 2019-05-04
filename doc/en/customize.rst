@@ -90,7 +90,7 @@ The ``config`` object will subsequently carry these attributes:
 
 - ``config.inifile``: the determined ini-file, may be ``None``.
 
-The rootdir is used a reference directory for constructing test
+The rootdir is used as a reference directory for constructing test
 addresses ("nodeids") and can be used also by plugins for storing
 per-testrun information.
 
