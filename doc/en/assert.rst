@@ -154,7 +154,7 @@ or bugs in dependencies.
 Assertions about expected warnings
 -----------------------------------------
 
-.. versionadded:: 2.8
+
 
 You can check that code raises a particular warning using
 :ref:`pytest.warns <warns>`.
@@ -165,7 +165,7 @@ You can check that code raises a particular warning using
 Making use of context-sensitive comparisons
 -------------------------------------------------
 
-.. versionadded:: 2.0
+
 
 ``pytest`` has rich support for providing context-sensitive information
 when it encounters comparisons.  For example:
@@ -284,7 +284,7 @@ the conftest file:
 Assertion introspection details
 -------------------------------
 
-.. versionadded:: 2.1
+
 
 
 Reporting details about a failing assertion is achieved by rewriting assert
@@ -335,13 +335,13 @@ If this is the case you have two options:
 * Disable rewriting for all modules by using ``--assert=plain``.
 
 
-.. versionadded:: 2.1
+
    Add assert rewriting as an alternate introspection technique.
 
-.. versionchanged:: 2.1
+
    Introduce the ``--assert`` option. Deprecate ``--no-assert`` and
    ``--nomagic``.
 
-.. versionchanged:: 3.0
+
    Removes the ``--no-assert`` and ``--nomagic`` options.
    Removes the ``--assert=reinterp`` option.

@@ -20,7 +20,7 @@ which were registered by installed plugins.
 Initialization: determining rootdir and inifile
 -----------------------------------------------
 
-.. versionadded:: 2.7
+
 
 pytest determines a ``rootdir`` for each test run which depends on
 the command line arguments (specified test files, paths) and on
@@ -90,7 +90,7 @@ The ``config`` object will subsequently carry these attributes:
 
 - ``config.inifile``: the determined ini-file, may be ``None``.
 
-The rootdir is used a reference directory for constructing test
+The rootdir is used as a reference directory for constructing test
 addresses ("nodeids") and can be used also by plugins for storing
 per-testrun information.
 

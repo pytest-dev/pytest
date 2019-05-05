@@ -8,7 +8,7 @@ Temporary directories and files
 The ``tmp_path`` fixture
 ------------------------
 
-.. versionadded:: 3.9
+
 
 
 You can use the ``tmp_path`` fixture which will
@@ -71,7 +71,7 @@ Running this would result in a passed test except for the last
 The ``tmp_path_factory`` fixture
 --------------------------------
 
-.. versionadded:: 3.9
+
 
 
 The ``tmp_path_factory`` is a session-scoped fixture which can be used
@@ -136,7 +136,7 @@ Running this would result in a passed test except for the last
 The 'tmpdir_factory' fixture
 ----------------------------
 
-.. versionadded:: 2.8
+
 
 The ``tmpdir_factory`` is a session-scoped fixture which can be used
 to create arbitrary temporary directories from any other fixture or test.

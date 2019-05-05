@@ -10,7 +10,7 @@ Usage and Invocations
 Calling pytest through ``python -m pytest``
 -----------------------------------------------------
 
-.. versionadded:: 2.0
+
 
 You can invoke testing through the Python interpreter from the command line:
 
@@ -155,7 +155,7 @@ option you make sure a trace is shown.
 Detailed summary report
 -----------------------
 
-.. versionadded:: 2.9
+
 
 The ``-r`` flag can be used to display a "short test summary info" at the end of the test session,
 making it easy in large test suites to get a clear picture of all failures, skips, xfails, etc.
@@ -430,7 +430,7 @@ integration servers, use this invocation:
 
 to create an XML file at ``path``.
 
-.. versionadded:: 3.1
+
 
 To set the name of the root test suite xml item, you can configure the ``junit_suite_name`` option in your config file:
 
@@ -458,8 +458,8 @@ instead, configure the ``junit_duration_report`` option like this:
 record_property
 ^^^^^^^^^^^^^^^
 
-.. versionadded:: 2.8
-.. versionchanged:: 3.5
+
+
 
    Fixture renamed from ``record_xml_property`` to ``record_property`` as user
    properties are now available to all reporters.
@@ -530,7 +530,7 @@ Will result in:
 record_xml_attribute
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. versionadded:: 3.4
+
 
 To add an additional xml attribute to a testcase element, you can use
 ``record_xml_attribute`` fixture. This can also be used to override existing values:
@@ -590,7 +590,7 @@ Instead, this will add an attribute ``assertions="REQ-1234"`` inside the generat
 LogXML: add_global_property
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. versionadded:: 3.0
+
 
 If you want to add a properties node in the testsuite level, which may contains properties that are relevant
 to all testcases you can use ``LogXML.add_global_properties``
@@ -640,7 +640,7 @@ This will add a property node below the testsuite node to the generated xml:
 Creating resultlog format files
 ----------------------------------------------------
 
-.. deprecated:: 3.0
+
 
     This option is rarely used and is scheduled for removal in 5.0.
 
@@ -714,7 +714,7 @@ executing doctest tests from text files, invoke pytest like this:
 Calling pytest from Python code
 ----------------------------------------------------
 
-.. versionadded:: 2.0
+
 
 You can invoke ``pytest`` from Python code directly::
 

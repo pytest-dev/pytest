@@ -3,7 +3,7 @@
 Warnings Capture
 ================
 
-.. versionadded:: 3.1
+
 
 Starting from version ``3.1``, pytest now automatically catches warnings during test execution
 and displays them at the end of the session:
@@ -90,7 +90,7 @@ documentation for other examples and advanced usage.
 ``@pytest.mark.filterwarnings``
 -------------------------------
 
-.. versionadded:: 3.2
+
 
 You can use the ``@pytest.mark.filterwarnings`` to add warning filters to specific test items,
 allowing you to have finer control of which warnings should be captured at test, class or
@@ -156,8 +156,8 @@ using an external system.
 DeprecationWarning and PendingDeprecationWarning
 ------------------------------------------------
 
-.. versionadded:: 3.8
-.. versionchanged:: 3.9
+
+
 
 By default pytest will display ``DeprecationWarning`` and ``PendingDeprecationWarning`` warnings from
 user code and third-party libraries, as recommended by `PEP-0565 <https://www.python.org/dev/peps/pep-0565>`_.
@@ -247,7 +247,7 @@ You can also use it as a contextmanager:
 Asserting warnings with the warns function
 ------------------------------------------
 
-.. versionadded:: 2.8
+
 
 You can check that code raises a particular warning using ``pytest.warns``,
 which works in a similar manner to :ref:`raises <assertraises>`:
@@ -377,7 +377,7 @@ custom error message.
 Internal pytest warnings
 ------------------------
 
-.. versionadded:: 3.8
+
 
 pytest may generate its own warnings in some situations, such as improper usage or deprecated features.
 

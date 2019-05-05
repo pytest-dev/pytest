@@ -983,7 +983,7 @@ passed multiple times. The expected format is ``name=value``. For example::
 
 .. confval:: cache_dir
 
-   .. versionadded:: 3.2
+
 
    Sets a directory where stores content of cache plugin. Default directory is
    ``.pytest_cache`` which is created in :ref:`rootdir <rootdir>`. Directory may be
@@ -1003,7 +1003,7 @@ passed multiple times. The expected format is ``name=value``. For example::
 
 .. confval:: console_output_style
 
-   .. versionadded:: 3.3
+
 
    Sets the console output style while running tests:
 
@@ -1023,7 +1023,7 @@ passed multiple times. The expected format is ``name=value``. For example::
 
 .. confval:: doctest_encoding
 
-   .. versionadded:: 3.1
+
 
    Default encoding to use to decode text files with docstrings.
    :doc:`See how pytest handles doctests <doctest>`.
@@ -1037,7 +1037,7 @@ passed multiple times. The expected format is ``name=value``. For example::
 
 .. confval:: empty_parameter_set_mark
 
-    .. versionadded:: 3.4
+
 
     Allows to pick the action for empty parametersets in parameterization
 
@@ -1060,7 +1060,7 @@ passed multiple times. The expected format is ``name=value``. For example::
 
 .. confval:: filterwarnings
 
-   .. versionadded:: 3.1
+
 
    Sets a list of filters and actions that should be taken for matched
    warnings. By default all warnings emitted during the test session
@@ -1094,7 +1094,7 @@ passed multiple times. The expected format is ``name=value``. For example::
 
 .. confval:: junit_suite_name
 
-    .. versionadded:: 3.1
+
 
     To set the name of the root test suite xml item, you can configure the ``junit_suite_name`` option in your config file:
 
@@ -1106,7 +1106,7 @@ passed multiple times. The expected format is ``name=value``. For example::
 
 .. confval:: log_cli_date_format
 
-    .. versionadded:: 3.3
+
 
     Sets a :py:func:`time.strftime`-compatible string that will be used when formatting dates for live logging.
 
@@ -1119,7 +1119,7 @@ passed multiple times. The expected format is ``name=value``. For example::
 
 .. confval:: log_cli_format
 
-    .. versionadded:: 3.3
+
 
     Sets a :py:mod:`logging`-compatible string used to format live logging messages.
 
@@ -1133,7 +1133,7 @@ passed multiple times. The expected format is ``name=value``. For example::
 
 .. confval:: log_cli_level
 
-    .. versionadded:: 3.3
+
 
     Sets the minimum log message level that should be captured for live logging. The integer value or
     the names of the levels can be used.
@@ -1148,7 +1148,7 @@ passed multiple times. The expected format is ``name=value``. For example::
 
 .. confval:: log_date_format
 
-    .. versionadded:: 3.3
+
 
     Sets a :py:func:`time.strftime`-compatible string that will be used when formatting dates for logging capture.
 
@@ -1162,7 +1162,7 @@ passed multiple times. The expected format is ``name=value``. For example::
 
 .. confval:: log_file
 
-    .. versionadded:: 3.3
+
 
     Sets a file name relative to the ``pytest.ini`` file where log messages should be written to, in addition
     to the other logging facilities that are active.
@@ -1177,7 +1177,7 @@ passed multiple times. The expected format is ``name=value``. For example::
 
 .. confval:: log_file_date_format
 
-    .. versionadded:: 3.3
+
 
     Sets a :py:func:`time.strftime`-compatible string that will be used when formatting dates for the logging file.
 
@@ -1190,7 +1190,7 @@ passed multiple times. The expected format is ``name=value``. For example::
 
 .. confval:: log_file_format
 
-    .. versionadded:: 3.3
+
 
     Sets a :py:mod:`logging`-compatible string used to format logging messages redirected to the logging file.
 
@@ -1203,7 +1203,7 @@ passed multiple times. The expected format is ``name=value``. For example::
 
 .. confval:: log_file_level
 
-    .. versionadded:: 3.3
+
 
     Sets the minimum log message level that should be captured for the logging file. The integer value or
     the names of the levels can be used.
@@ -1218,7 +1218,7 @@ passed multiple times. The expected format is ``name=value``. For example::
 
 .. confval:: log_format
 
-    .. versionadded:: 3.3
+
 
     Sets a :py:mod:`logging`-compatible string used to format captured logging messages.
 
@@ -1232,7 +1232,7 @@ passed multiple times. The expected format is ``name=value``. For example::
 
 .. confval:: log_level
 
-    .. versionadded:: 3.3
+
 
     Sets the minimum log message level that should be captured for logging capture. The integer value or
     the names of the levels can be used.
@@ -1247,7 +1247,7 @@ passed multiple times. The expected format is ``name=value``. For example::
 
 .. confval:: log_print
 
-    .. versionadded:: 3.3
+
 
     If set to ``False``, will disable displaying captured logging messages for failed tests.
 
@@ -1384,7 +1384,7 @@ passed multiple times. The expected format is ``name=value``. For example::
 
 .. confval:: testpaths
 
-   .. versionadded:: 2.8
+
 
    Sets list of directories that should be searched for tests when
    no specific directories, files or test ids are given in the command line when
