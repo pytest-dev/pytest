@@ -1599,10 +1599,10 @@ def test_line_with_reprcrash(monkeypatch):
 
     monkeypatch.setattr(_pytest.terminal, "_get_pos", mock_get_pos)
 
-    class config:
+    class config(object):
         pass
 
-    class rep:
+    class rep(object):
         def _get_verbose_word(self, *args):
             return mocked_verbose_word
 
@@ -1614,7 +1614,7 @@ def test_line_with_reprcrash(monkeypatch):
         __tracebackhide__ = True
         if msg:
             rep.longrepr.reprcrash.message = msg
-        actual = _get_line_with_reprcrash_message(config, rep, width)
+        actual = _get_line_with_reprcrash_message(config, rep(), width)
 
         assert actual == expected
         if actual != "%s %s" % (mocked_verbose_word, mocked_pos):
