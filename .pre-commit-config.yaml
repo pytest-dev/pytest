@@ -1,6 +1,6 @@
 exclude: doc/en/example/py2py3/test_py2.py
 repos:
--   repo: https://github.com/ambv/black
+-   repo: https://github.com/python/black
     rev: 19.3b0
     hooks:
     -   id: black
