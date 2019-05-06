@@ -3037,11 +3037,25 @@ class TestShowFixtures(object):
 
     def test_show_fixtures(self, testdir):
         result = testdir.runpytest("--fixtures")
-        result.stdout.fnmatch_lines(["*tmpdir*", "*temporary directory*"])
+        result.stdout.fnmatch_lines(
+            [
+                "tmpdir_factory [[]session scope[]]",
+                "*for the test session*",
+                "tmpdir",
+                "*temporary directory*",
+            ]
+        )
 
     def test_show_fixtures_verbose(self, testdir):
         result = testdir.runpytest("--fixtures", "-v")
-        result.stdout.fnmatch_lines(["*tmpdir*--*tmpdir.py*", "*temporary directory*"])
+        result.stdout.fnmatch_lines(
+            [
+                "tmpdir_factory [[]session scope[]] -- *tmpdir.py*",
+                "*for the test session*",
+                "tmpdir -- *tmpdir.py*",
+                "*temporary directory*",
+            ]
+        )
 
     def test_show_fixtures_testmodule(self, testdir):
         p = testdir.makepyfile(
