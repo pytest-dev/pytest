@@ -993,6 +993,20 @@ def test_record_property_same_name(testdir):
     pnodes[1].assert_attr(name="foo", value="baz")
 
 
+@pytest.mark.parametrize("fixture_name", ["record_property", "record_xml_attribute"])
+def test_record_fixtures_without_junitxml(testdir, fixture_name):
+    testdir.makepyfile(
+        """
+        def test_record({fixture_name}):
+            {fixture_name}("foo", "bar")
+    """.format(
+            fixture_name=fixture_name
+        )
+    )
+    result = testdir.runpytest()
+    assert result.ret == 0
+
+
 @pytest.mark.filterwarnings("default")
 def test_record_attribute(testdir):
     testdir.makeini(
@@ -1023,8 +1037,9 @@ def test_record_attribute(testdir):
 
 
 @pytest.mark.filterwarnings("default")
-def test_record_attribute_xunit2(testdir):
-    """Ensure record_xml_attribute drops values when outside of legacy family
+@pytest.mark.parametrize("fixture_name", ["record_xml_attribute", "record_property"])
+def test_record_fixtures_xunit2(testdir, fixture_name):
+    """Ensure record_xml_attribute and record_property drop values when outside of legacy family
     """
     testdir.makeini(
         """
@@ -1037,21 +1052,28 @@ def test_record_attribute_xunit2(testdir):
         import pytest
 
         @pytest.fixture
-        def other(record_xml_attribute):
-            record_xml_attribute("bar", 1)
-        def test_record(record_xml_attribute, other):
-            record_xml_attribute("foo", "<1");
-    """
+        def other({fixture_name}):
+            {fixture_name}("bar", 1)
+        def test_record({fixture_name}, other):
+            {fixture_name}("foo", "<1");
+    """.format(
+            fixture_name=fixture_name
+        )
     )
 
     result, dom = runandparse(testdir, "-rw")
-    result.stdout.fnmatch_lines(
-        [
-            "*test_record_attribute_xunit2.py:6:*record_xml_attribute is an experimental feature",
-            "*test_record_attribute_xunit2.py:6:*record_xml_attribute is incompatible with "
-            "junit_family: xunit2 (use: legacy|xunit1)",
-        ]
-    )
+    expected_lines = []
+    if fixture_name == "record_xml_attribute":
+        expected_lines.append(
+            "*test_record_fixtures_xunit2.py:6:*record_xml_attribute is an experimental feature"
+        )
+    expected_lines = [
+        "*test_record_fixtures_xunit2.py:6:*{fixture_name} is incompatible "
+        "with junit_family 'xunit2' (use 'legacy' or 'xunit1')".format(
+            fixture_name=fixture_name
+        )
+    ]
+    result.stdout.fnmatch_lines(expected_lines)
 
 
 def test_random_report_log_xdist(testdir, monkeypatch):
