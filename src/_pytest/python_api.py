@@ -561,7 +561,7 @@ def raises(expected_exception, *args, **kwargs):
     :kwparam match: if specified, asserts that the exception matches a text or regex
 
     :kwparam message: **(deprecated since 4.1)** if specified, provides a custom failure message
-        if the exception is not raised
+        if the exception is not raised. See :ref:`the deprecation docs <raises message deprecated>` for a workaround.
 
     .. currentmodule:: _pytest._code
 
@@ -597,6 +597,7 @@ def raises(expected_exception, *args, **kwargs):
         ``message`` to specify a custom failure message that will be displayed
         in case the ``pytest.raises`` check fails. This has been deprecated as it
         is considered error prone as users often mean to use ``match`` instead.
+        See :ref:`the deprecation docs <raises message deprecated>` for a workaround.
 
     .. note::
 
