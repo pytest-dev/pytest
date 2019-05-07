@@ -1342,17 +1342,19 @@ def _showfixtures_main(config, session):
                 currentmodule = module
         if verbose <= 0 and argname[0] == "_":
             continue
+        tw.write(argname, green=True)
+        if fixturedef.scope != "function":
+            tw.write(" [%s scope]" % fixturedef.scope, cyan=True)
         if verbose > 0:
-            funcargspec = "%s -- %s" % (argname, bestrel)
-        else:
-            funcargspec = argname
-        tw.line(funcargspec, green=True)
+            tw.write(" -- %s" % bestrel, yellow=True)
+        tw.write("\n")
         loc = getlocation(fixturedef.func, curdir)
         doc = fixturedef.func.__doc__ or ""
         if doc:
             write_docstring(tw, doc)
         else:
             tw.line("    %s: no docstring available" % (loc,), red=True)
+        tw.line()
 
 
 def write_docstring(tw, doc, indent="    "):

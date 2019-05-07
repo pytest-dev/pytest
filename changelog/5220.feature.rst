@@ -1,0 +1,1 @@
+``--fixtures`` now also shows fixture scope for scopes other than ``"function"``.
