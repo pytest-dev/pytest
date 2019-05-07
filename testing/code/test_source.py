@@ -312,7 +312,7 @@ class TestSourceParsingAndCompiling(object):
 
     def test_compile_and_getsource(self):
         co = self.source.compile()
-        six.exec_(co, globals())
+        exec(co, globals())
         f(7)
         excinfo = pytest.raises(AssertionError, f, 6)
         frame = excinfo.traceback[-1].frame
@@ -376,7 +376,7 @@ def test_getfuncsource_dynamic():
         def g(): pass
     """
     co = _pytest._code.compile(source)
-    six.exec_(co, globals())
+    exec(co, globals())
     assert str(_pytest._code.Source(f)).strip() == "def f():\n    raise ValueError"
     assert str(_pytest._code.Source(g)).strip() == "def g(): pass"
 

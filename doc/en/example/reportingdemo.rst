@@ -460,7 +460,7 @@ Here is a nice run of several failures and how ``pytest`` presents things:
             name = "abc-123"
             module = imp.new_module(name)
             code = _pytest._code.compile(src, name, "exec")
-            six.exec_(code, module.__dict__)
+            exec(code, module.__dict__)
             sys.modules[name] = module
     >       module.foo()
 

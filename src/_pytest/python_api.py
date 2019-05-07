@@ -7,7 +7,6 @@ import warnings
 from decimal import Decimal
 from numbers import Number
 
-import six
 from more_itertools.more import always_iterable
 from six.moves import filterfalse
 from six.moves import zip
@@ -702,7 +701,7 @@ def raises(expected_exception, *args, **kwargs):
         # print "raises frame scope: %r" % frame.f_locals
         try:
             code = _pytest._code.Source(code).compile(_genframe=frame)
-            six.exec_(code, frame.f_globals, loc)
+            exec(code, frame.f_globals, loc)
             # XXX didn't mean f_globals == f_locals something special?
             #     this is destroyed here ...
         except expected_exception:
