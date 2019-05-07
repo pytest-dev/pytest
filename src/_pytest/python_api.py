@@ -558,12 +558,12 @@ def raises(expected_exception, *args, **kwargs):
     Assert that a code block/function call raises ``expected_exception``
     or raise a failure exception otherwise.
 
-    :kwparam match: if specified, a string containing a regular expression, 
-        or a regular expression object, that is tested against the string 
-        representation of the exception using ``re.match``. To match a literal 
-        string that may contain `special characters`__, the pattern can 
+    :kwparam match: if specified, a string containing a regular expression,
+        or a regular expression object, that is tested against the string
+        representation of the exception using ``re.match``. To match a literal
+        string that may contain `special characters`__, the pattern can
         first be escaped with ``re.escape``.
-        
+
     __ https://docs.python.org/3/library/re.html#regular-expression-syntax
 
     :kwparam message: **(deprecated since 4.1)** if specified, provides a custom failure message
