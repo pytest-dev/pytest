@@ -13,7 +13,6 @@ from weakref import ref
 import attr
 import pluggy
 import py
-import six
 from six import text_type
 
 import _pytest
@@ -138,7 +137,7 @@ class Frame(object):
         """
         f_locals = self.f_locals.copy()
         f_locals.update(vars)
-        six.exec_(code, self.f_globals, f_locals)
+        exec(code, self.f_globals, f_locals)
 
     def repr(self, object):
         """ return a 'safe' (non-recursive, one-line) string repr for 'object'

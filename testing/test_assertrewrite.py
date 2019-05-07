@@ -52,7 +52,7 @@ def getmsg(f, extra_ns=None, must_pass=False):
     ns = {}
     if extra_ns is not None:
         ns.update(extra_ns)
-    six.exec_(code, ns)
+    exec(code, ns)
     func = ns[f.__name__]
     try:
         func()
