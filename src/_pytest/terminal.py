@@ -1000,8 +1000,7 @@ def _get_line_with_reprcrash_message(config, rep, termwidth):
                     # u'😄' will result in a High Surrogate (U+D83D) character, which is
                     # rendered as u'�'; in this case we just strip that character out as it
                     # serves no purpose being rendered
-                    while msg.endswith(u"\uD83D"):
-                        msg = msg[:-1]
+                    msg = msg.rstrip(u"\uD83D")
                 msg += ellipsis
             line += sep + msg
     return line
