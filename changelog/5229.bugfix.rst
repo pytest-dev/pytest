@@ -1,2 +1,0 @@
-Require ``pluggy>=0.11.0`` which reverts a dependency to ``importlib-metadata`` added in ``0.10.0``.
-The ``importlib-metadata`` package cannot be imported when installed as an egg and causes issues when relying on ``setup.py`` to install test dependencies.
