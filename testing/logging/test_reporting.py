@@ -248,7 +248,7 @@ def test_log_cli_enabled_disabled(testdir, enabled):
             [
                 "test_log_cli_enabled_disabled.py::test_log_cli ",
                 "*-- live log call --*",
-                "test_log_cli_enabled_disabled.py* CRITICAL critical message logged by test",
+                "CRITICAL *test_log_cli_enabled_disabled.py* critical message logged by test",
                 "PASSED*",
             ]
         )
@@ -282,7 +282,7 @@ def test_log_cli_default_level(testdir):
     result.stdout.fnmatch_lines(
         [
             "test_log_cli_default_level.py::test_log_cli ",
-            "test_log_cli_default_level.py*WARNING message will be shown*",
+            "WARNING*test_log_cli_default_level.py* message will be shown*",
         ]
     )
     assert "INFO message won't be shown" not in result.stdout.str()
@@ -523,7 +523,7 @@ def test_sections_single_new_line_after_test_outcome(testdir, request):
     )
     assert (
         re.search(
-            r"(.+)live log teardown(.+)\n(.+)WARNING(.+)\n(.+)WARNING(.+)",
+            r"(.+)live log teardown(.+)\nWARNING(.+)\nWARNING(.+)",
             result.stdout.str(),
             re.MULTILINE,
         )
@@ -531,7 +531,7 @@ def test_sections_single_new_line_after_test_outcome(testdir, request):
     )
     assert (
         re.search(
-            r"(.+)live log finish(.+)\n(.+)WARNING(.+)\n(.+)WARNING(.+)",
+            r"(.+)live log finish(.+)\nWARNING(.+)\nWARNING(.+)",
             result.stdout.str(),
             re.MULTILINE,
         )
@@ -565,7 +565,7 @@ def test_log_cli_level(testdir):
     # fnmatch_lines does an assertion internally
     result.stdout.fnmatch_lines(
         [
-            "test_log_cli_level.py*This log message will be shown",
+            "*test_log_cli_level.py*This log message will be shown",
             "PASSED",  # 'PASSED' on its own line because the log message prints a new line
         ]
     )
@@ -579,7 +579,7 @@ def test_log_cli_level(testdir):
     # fnmatch_lines does an assertion internally
     result.stdout.fnmatch_lines(
         [
-            "test_log_cli_level.py* This log message will be shown",
+            "*test_log_cli_level.py* This log message will be shown",
             "PASSED",  # 'PASSED' on its own line because the log message prints a new line
         ]
     )
@@ -615,7 +615,7 @@ def test_log_cli_ini_level(testdir):
     # fnmatch_lines does an assertion internally
     result.stdout.fnmatch_lines(
         [
-            "test_log_cli_ini_level.py* This log message will be shown",
+            "*test_log_cli_ini_level.py* This log message will be shown",
             "PASSED",  # 'PASSED' on its own line because the log message prints a new line
         ]
     )
