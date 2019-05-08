@@ -233,7 +233,7 @@ Example:
     XPASS test_example.py::test_xpass always xfail
     ERROR test_example.py::test_error
     FAILED test_example.py::test_fail
-     1 failed, 1 passed, 1 skipped, 1 xfailed, 1 xpassed, 1 error in 0.12 seconds
+    = 1 failed, 1 passed, 1 skipped, 1 xfailed, 1 xpassed, 1 error in 0.12 seconds =
 
 The ``-r`` options accepts a number of characters after it, with ``a`` used above meaning "all except passes".
 
@@ -281,7 +281,7 @@ More than one character can be used, so for example to only see failed and skipp
     ========================= short test summary info ==========================
     FAILED test_example.py::test_fail
     SKIPPED [1] $REGENDOC_TMPDIR/test_example.py:23: skipping this test
-     1 failed, 1 passed, 1 skipped, 1 xfailed, 1 xpassed, 1 error in 0.12 seconds
+    = 1 failed, 1 passed, 1 skipped, 1 xfailed, 1 xpassed, 1 error in 0.12 seconds =
 
 Using ``p`` lists the passing tests, whilst ``P`` adds an extra section "PASSES" with those tests that passed but had
 captured output:
@@ -320,7 +320,7 @@ captured output:
     _________________________________ test_ok __________________________________
     --------------------------- Captured stdout call ---------------------------
     ok
-     1 failed, 1 passed, 1 skipped, 1 xfailed, 1 xpassed, 1 error in 0.12 seconds
+    = 1 failed, 1 passed, 1 skipped, 1 xfailed, 1 xpassed, 1 error in 0.12 seconds =
 
 .. _pdb-option:
 
