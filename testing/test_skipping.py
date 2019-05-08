@@ -1,3 +1,4 @@
+# coding=utf8
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
@@ -1173,6 +1174,6 @@ def test_summary_list_after_errors(testdir):
         [
             "=* FAILURES *=",
             "*= short test summary info =*",
-            "FAILED test_summary_list_after_errors.py::test_fail",
+            "FAILED test_summary_list_after_errors.py::test_fail - assert 0",
         ]
     )

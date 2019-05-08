@@ -1,3 +1,4 @@
+# encoding: utf-8
 """ terminal reporting of the full testing process.
 
 This is a good source for looking at the various reporting hooks.
@@ -887,10 +888,13 @@ class TerminalReporter(object):
 
         def show_simple(stat, lines):
             failed = self.stats.get(stat, [])
+            if not failed:
+                return
+            termwidth = self.writer.fullwidth
+            config = self.config
             for rep in failed:
-                verbose_word = rep._get_verbose_word(self.config)
-                pos = _get_pos(self.config, rep)
-                lines.append("%s %s" % (verbose_word, pos))
+                line = _get_line_with_reprcrash_message(config, rep, termwidth)
+                lines.append(line)
 
         def show_xfailed(lines):
             xfailed = self.stats.get("xfailed", [])
@@ -927,10 +931,6 @@ class TerminalReporter(object):
                 else:
                     lines.append("%s [%d] %s: %s" % (verbose_word, num, fspath, reason))
 
-        def _get_pos(config, rep):
-            nodeid = config.cwd_relative_nodeid(rep.nodeid)
-            return nodeid
-
         REPORTCHAR_ACTIONS = {
             "x": show_xfailed,
             "X": show_xpassed,
@@ -952,6 +952,56 @@ class TerminalReporter(object):
             self.write_sep("=", "short test summary info")
             for line in lines:
                 self.write_line(line)
+
+
+def _get_pos(config, rep):
+    nodeid = config.cwd_relative_nodeid(rep.nodeid)
+    return nodeid
+
+
+def _get_line_with_reprcrash_message(config, rep, termwidth):
+    """Get summary line for a report, trying to add reprcrash message."""
+    from wcwidth import wcswidth
+
+    verbose_word = rep._get_verbose_word(config)
+    pos = _get_pos(config, rep)
+
+    line = "%s %s" % (verbose_word, pos)
+    len_line = wcswidth(line)
+    ellipsis, len_ellipsis = "...", 3
+    if len_line > termwidth - len_ellipsis:
+        # No space for an additional message.
+        return line
+
+    try:
+        msg = rep.longrepr.reprcrash.message
+    except AttributeError:
+        pass
+    else:
+        # Only use the first line.
+        i = msg.find("\n")
+        if i != -1:
+            msg = msg[:i]
+        len_msg = wcswidth(msg)
+
+        sep, len_sep = " - ", 3
+        max_len_msg = termwidth - len_line - len_sep
+        if max_len_msg >= len_ellipsis:
+            if len_msg > max_len_msg:
+                max_len_msg -= len_ellipsis
+                msg = msg[:max_len_msg]
+                while wcswidth(msg) > max_len_msg:
+                    msg = msg[:-1]
+                if six.PY2:
+                    # on python 2 systems with narrow unicode compilation, trying to
+                    # get a single character out of a multi-byte unicode character such as
+                    # u'😄' will result in a High Surrogate (U+D83D) character, which is
+                    # rendered as u'�'; in this case we just strip that character out as it
+                    # serves no purpose being rendered
+                    msg = msg.rstrip(u"\uD83D")
+                msg += ellipsis
+            line += sep + msg
+    return line
 
 
 def _folded_skips(skipped):

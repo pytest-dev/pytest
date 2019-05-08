@@ -1,3 +1,4 @@
+# coding=utf8
 """ support for skip/xfail functions and markers. """
 from __future__ import absolute_import
 from __future__ import division

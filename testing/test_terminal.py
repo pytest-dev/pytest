@@ -1,3 +1,4 @@
+# encoding: utf-8
 """
 terminal reporting of the full testing process.
 """
@@ -17,6 +18,7 @@ import pytest
 from _pytest.main import EXIT_NOTESTSCOLLECTED
 from _pytest.reports import BaseReport
 from _pytest.terminal import _folded_skips
+from _pytest.terminal import _get_line_with_reprcrash_message
 from _pytest.terminal import _plugin_nameversions
 from _pytest.terminal import build_summary_stats_line
 from _pytest.terminal import getreportopt
@@ -758,12 +760,18 @@ class TestTerminalFunctional(object):
         result.stdout.fnmatch_lines(["collected 3 items", "hello from hook: 3 items"])
 
 
-def test_fail_extra_reporting(testdir):
-    testdir.makepyfile("def test_this(): assert 0")
+def test_fail_extra_reporting(testdir, monkeypatch):
+    monkeypatch.setenv("COLUMNS", "80")
+    testdir.makepyfile("def test_this(): assert 0, 'this_failed' * 100")
     result = testdir.runpytest()
     assert "short test summary" not in result.stdout.str()
     result = testdir.runpytest("-rf")
-    result.stdout.fnmatch_lines(["*test summary*", "FAIL*test_fail_extra_reporting*"])
+    result.stdout.fnmatch_lines(
+        [
+            "*test summary*",
+            "FAILED test_fail_extra_reporting.py::test_this - AssertionError: this_failedt...",
+        ]
+    )
 
 
 def test_fail_reporting_on_pass(testdir):
@@ -1607,3 +1615,72 @@ def test_skip_reasons_folding():
     assert fspath == path
     assert lineno == lineno
     assert reason == message
+
+
+def test_line_with_reprcrash(monkeypatch):
+    import _pytest.terminal
+    from wcwidth import wcswidth
+
+    mocked_verbose_word = "FAILED"
+
+    mocked_pos = "some::nodeid"
+
+    def mock_get_pos(*args):
+        return mocked_pos
+
+    monkeypatch.setattr(_pytest.terminal, "_get_pos", mock_get_pos)
+
+    class config(object):
+        pass
+
+    class rep(object):
+        def _get_verbose_word(self, *args):
+            return mocked_verbose_word
+
+        class longrepr:
+            class reprcrash:
+                pass
+
+    def check(msg, width, expected):
+        __tracebackhide__ = True
+        if msg:
+            rep.longrepr.reprcrash.message = msg
+        actual = _get_line_with_reprcrash_message(config, rep(), width)
+
+        assert actual == expected
+        if actual != "%s %s" % (mocked_verbose_word, mocked_pos):
+            assert len(actual) <= width
+            assert wcswidth(actual) <= width
+
+    # AttributeError with message
+    check(None, 80, "FAILED some::nodeid")
+
+    check("msg", 80, "FAILED some::nodeid - msg")
+    check("msg", 3, "FAILED some::nodeid")
+
+    check("msg", 24, "FAILED some::nodeid")
+    check("msg", 25, "FAILED some::nodeid - msg")
+
+    check("some longer msg", 24, "FAILED some::nodeid")
+    check("some longer msg", 25, "FAILED some::nodeid - ...")
+    check("some longer msg", 26, "FAILED some::nodeid - s...")
+
+    check("some\nmessage", 25, "FAILED some::nodeid - ...")
+    check("some\nmessage", 26, "FAILED some::nodeid - some")
+    check("some\nmessage", 80, "FAILED some::nodeid - some")
+
+    # Test unicode safety.
+    check(u"😄😄😄😄😄\n2nd line", 25, u"FAILED some::nodeid - ...")
+    check(u"😄😄😄😄😄\n2nd line", 26, u"FAILED some::nodeid - ...")
+    check(u"😄😄😄😄😄\n2nd line", 27, u"FAILED some::nodeid - 😄...")
+    check(u"😄😄😄😄😄\n2nd line", 28, u"FAILED some::nodeid - 😄...")
+    check(u"😄😄😄😄😄\n2nd line", 29, u"FAILED some::nodeid - 😄😄...")
+
+    # NOTE: constructed, not sure if this is supported.
+    # It would fail if not using u"" in Python 2 for mocked_pos.
+    mocked_pos = u"nodeid::😄::withunicode"
+    check(u"😄😄😄😄😄\n2nd line", 29, u"FAILED nodeid::😄::withunicode")
+    check(u"😄😄😄😄😄\n2nd line", 40, u"FAILED nodeid::😄::withunicode - 😄😄...")
+    check(u"😄😄😄😄😄\n2nd line", 41, u"FAILED nodeid::😄::withunicode - 😄😄...")
+    check(u"😄😄😄😄😄\n2nd line", 42, u"FAILED nodeid::😄::withunicode - 😄😄😄...")
+    check(u"😄😄😄😄😄\n2nd line", 80, u"FAILED nodeid::😄::withunicode - 😄😄😄😄😄")

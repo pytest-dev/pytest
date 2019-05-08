@@ -876,7 +876,9 @@ class TestInvocationVariants(object):
                 _fail, _sep, testid = line.partition(" ")
                 break
         result = testdir.runpytest(testid, "-rf")
-        result.stdout.fnmatch_lines([line, "*1 failed*"])
+        result.stdout.fnmatch_lines(
+            ["FAILED test_doctest_id.txt::test_doctest_id.txt", "*1 failed*"]
+        )
 
     def test_core_backward_compatibility(self):
         """Test backward compatibility for get_plugin_manager function. See #787."""
