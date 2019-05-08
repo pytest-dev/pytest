@@ -951,6 +951,14 @@ PYTEST_CURRENT_TEST
 This is not meant to be set by users, but is set by pytest internally with the name of the current test so other
 processes can inspect it, see :ref:`pytest current test env` for more information.
 
+Exceptions
+----------
+
+UsageError
+~~~~~~~~~~
+
+.. autoclass:: _pytest.config.UsageError()
+
 
 .. _`ini options ref`:
 
