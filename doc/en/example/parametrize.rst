@@ -492,9 +492,9 @@ If you run this with reporting for skips enabled:
     collected 2 items
 
     test_module.py .s                                                    [100%]
+
     ========================= short test summary info ==========================
     SKIPPED [1] $REGENDOC_TMPDIR/conftest.py:11: could not import 'opt2'
-
     =================== 1 passed, 1 skipped in 0.12 seconds ====================
 
 You'll see that we don't have an ``opt2`` module and thus the second test run

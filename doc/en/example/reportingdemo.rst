@@ -182,9 +182,9 @@ Here is a nice run of several failures and how ``pytest`` presents things:
     E         Omitting 1 identical items, use -vv to show
     E         Differing items:
     E         {'b': 1} != {'b': 2}
-    E         Left contains more items:
+    E         Left contains 1 more item:
     E         {'c': 0}
-    E         Right contains more items:
+    E         Right contains 1 more item:
     E         {'d': 0}...
     E
     E         ...Full output truncated (2 lines hidden), use '-vv' to show
@@ -215,7 +215,7 @@ Here is a nice run of several failures and how ``pytest`` presents things:
         def test_eq_longer_list(self):
     >       assert [1, 2] == [1, 2, 3]
     E       assert [1, 2] == [1, 2, 3]
-    E         Right contains more items, first extra item: 3
+    E         Right contains one more item: 3
     E         Use -v to get the full diff
 
     failure_demo.py:80: AssertionError
