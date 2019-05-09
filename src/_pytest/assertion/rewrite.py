@@ -991,13 +991,13 @@ warn_explicit(
 
     def visit_all(self, call):
         """Special rewrite for the builtin all function, see #5602"""
-        if not isinstance(call.args[0], ast.GeneratorExp):
+        if not isinstance(call.args[0], (ast.GeneratorExp, ast.ListComp)):
             return
         gen_exp = call.args[0]
         assertion_module = ast.Module(
             body=[ast.Assert(test=gen_exp.elt, lineno=1, msg="", col_offset=1)]
         )
-        AssertionRewriter(None, None).run(assertion_module)
+        AssertionRewriter(module_path=None, config=None).run(assertion_module)
         for_loop = ast.For(
             iter=gen_exp.generators[0].iter,
             target=gen_exp.generators[0].target,

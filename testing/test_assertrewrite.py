@@ -677,7 +677,7 @@ class TestAssertionRewrite(object):
         assert "UnicodeDecodeError" not in msg
         assert "UnicodeEncodeError" not in msg
 
-    def test_generator(self, testdir):
+    def test_unroll_generator(self, testdir):
         testdir.makepyfile(
             """
             def check_even(num):
@@ -692,7 +692,7 @@ class TestAssertionRewrite(object):
         result = testdir.runpytest()
         result.stdout.fnmatch_lines(["*assert False*", "*where False = check_even(1)*"])
 
-    def test_list_comprehension(self, testdir):
+    def test_unroll_list_comprehension(self, testdir):
         testdir.makepyfile(
             """
             def check_even(num):
