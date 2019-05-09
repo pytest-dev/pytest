@@ -19,6 +19,7 @@ import pluggy
 import py
 import six
 from more_itertools import collapse
+from wcwidth import wcswidth
 
 import pytest
 from _pytest import nodes
@@ -961,8 +962,6 @@ def _get_pos(config, rep):
 
 def _get_line_with_reprcrash_message(config, rep, termwidth):
     """Get summary line for a report, trying to add reprcrash message."""
-    from wcwidth import wcswidth
-
     verbose_word = rep._get_verbose_word(config)
     pos = _get_pos(config, rep)
 
@@ -982,8 +981,13 @@ def _get_line_with_reprcrash_message(config, rep, termwidth):
         i = msg.find("\n")
         if i != -1:
             msg = msg[:i]
-        len_msg = wcswidth(msg)
 
+        # Remove duplicate prefix, e.g. "Failed:" from pytest.fail.
+        implicit_prefix = verbose_word.lower() + ":"
+        if msg[: len(implicit_prefix)].lower() == implicit_prefix:
+            msg = msg[len(implicit_prefix) + 1 :]
+
+        len_msg = wcswidth(msg)
         sep, len_sep = " - ", 3
         max_len_msg = termwidth - len_line - len_sep
         if max_len_msg >= len_ellipsis:
