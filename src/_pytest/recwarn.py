@@ -102,7 +102,7 @@ def warns(expected_warning, *args, **kwargs):
 
         with WarningsChecker(expected_warning):
             code = _pytest._code.Source(code).compile()
-            six.exec_(code, frame.f_globals, loc)
+            exec(code, frame.f_globals, loc)
     else:
         func = args[0]
         with WarningsChecker(expected_warning):

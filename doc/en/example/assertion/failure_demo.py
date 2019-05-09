@@ -1,5 +1,3 @@
-import six
-
 import _pytest._code
 import pytest
 from pytest import raises
@@ -199,7 +197,7 @@ def test_dynamic_compile_shows_nicely():
     name = "abc-123"
     module = imp.new_module(name)
     code = _pytest._code.compile(src, name, "exec")
-    six.exec_(code, module.__dict__)
+    exec(code, module.__dict__)
     sys.modules[name] = module
     module.foo()
 

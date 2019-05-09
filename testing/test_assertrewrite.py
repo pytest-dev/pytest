@@ -52,7 +52,7 @@ def getmsg(f, extra_ns=None, must_pass=False):
     ns = {}
     if extra_ns is not None:
         ns.update(extra_ns)
-    six.exec_(code, ns)
+    exec(code, ns)
     func = ns[f.__name__]
     try:
         func()
@@ -1232,6 +1232,9 @@ class TestIssue2121:
         result.stdout.fnmatch_lines(["*E*assert (1 + 1) == 3"])
 
 
+@pytest.mark.skipif(
+    sys.maxsize <= (2 ** 31 - 1), reason="Causes OverflowError on 32bit systems"
+)
 @pytest.mark.parametrize("offset", [-1, +1])
 def test_source_mtime_long_long(testdir, offset):
     """Support modification dates after 2038 in rewritten files (#4903).

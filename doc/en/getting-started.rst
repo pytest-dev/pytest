@@ -83,7 +83,7 @@ Run multiple tests
 Assert that a certain exception is raised
 --------------------------------------------------------------
 
-Use the ``raises`` helper to assert that some code raises an exception::
+Use the :ref:`raises <assertraises>` helper to assert that some code raises an exception::
 
     # content of test_sysexit.py
     import pytest

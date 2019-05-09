@@ -1,1 +1,0 @@
-Fix crash caused by error in ``__repr__`` function with both ``showlocals`` and verbose output enabled.
