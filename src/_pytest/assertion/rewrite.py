@@ -965,7 +965,7 @@ warn_explicit(
         visit `ast.Call` nodes on Python3.5 and after
         """
         if isinstance(call.func, ast.Name) and call.func.id == "all":
-            return self.visit_all(call)
+            return self._visit_all(call)
         new_func, func_expl = self.visit(call.func)
         arg_expls = []
         new_args = []
@@ -989,7 +989,7 @@ warn_explicit(
         outer_expl = "%s\n{%s = %s\n}" % (res_expl, res_expl, expl)
         return res, outer_expl
 
-    def visit_all(self, call):
+    def _visit_all(self, call):
         """Special rewrite for the builtin all function, see #5602"""
         if not isinstance(call.args[0], (ast.GeneratorExp, ast.ListComp)):
             return
