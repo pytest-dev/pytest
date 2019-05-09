@@ -7,7 +7,6 @@ import warnings
 from decimal import Decimal
 from numbers import Number
 
-import six
 from more_itertools.more import always_iterable
 from six.moves import filterfalse
 from six.moves import zip
@@ -558,10 +557,16 @@ def raises(expected_exception, *args, **kwargs):
     Assert that a code block/function call raises ``expected_exception``
     or raise a failure exception otherwise.
 
-    :kwparam match: if specified, asserts that the exception matches a text or regex
+    :kwparam match: if specified, a string containing a regular expression,
+        or a regular expression object, that is tested against the string
+        representation of the exception using ``re.match``. To match a literal
+        string that may contain `special characters`__, the pattern can
+        first be escaped with ``re.escape``.
+
+    __ https://docs.python.org/3/library/re.html#regular-expression-syntax
 
     :kwparam message: **(deprecated since 4.1)** if specified, provides a custom failure message
-        if the exception is not raised
+        if the exception is not raised. See :ref:`the deprecation docs <raises message deprecated>` for a workaround.
 
     .. currentmodule:: _pytest._code
 
@@ -597,6 +602,7 @@ def raises(expected_exception, *args, **kwargs):
         ``message`` to specify a custom failure message that will be displayed
         in case the ``pytest.raises`` check fails. This has been deprecated as it
         is considered error prone as users often mean to use ``match`` instead.
+        See :ref:`the deprecation docs <raises message deprecated>` for a workaround.
 
     .. note::
 
@@ -695,7 +701,7 @@ def raises(expected_exception, *args, **kwargs):
         # print "raises frame scope: %r" % frame.f_locals
         try:
             code = _pytest._code.Source(code).compile(_genframe=frame)
-            six.exec_(code, frame.f_globals, loc)
+            exec(code, frame.f_globals, loc)
             # XXX didn't mean f_globals == f_locals something special?
             #     this is destroyed here ...
         except expected_exception:
