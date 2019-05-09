@@ -194,9 +194,9 @@ and when running it will see a skipped "slow" test:
     collected 2 items
 
     test_module.py .s                                                    [100%]
+
     ========================= short test summary info ==========================
     SKIPPED [1] test_module.py:8: need --runslow option to run
-
     =================== 1 passed, 1 skipped in 0.12 seconds ====================
 
 Or run it including the ``slow`` marked test:

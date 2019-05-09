@@ -231,9 +231,9 @@ Example:
     XFAIL test_example.py::test_xfail
       reason: xfailing this test
     XPASS test_example.py::test_xpass always xfail
-    ERROR test_example.py::test_error
-    FAILED test_example.py::test_fail
-     1 failed, 1 passed, 1 skipped, 1 xfailed, 1 xpassed, 1 error in 0.12 seconds
+    ERROR test_example.py::test_error - assert 0
+    FAILED test_example.py::test_fail - assert 0
+    = 1 failed, 1 passed, 1 skipped, 1 xfailed, 1 xpassed, 1 error in 0.12 seconds =
 
 The ``-r`` options accepts a number of characters after it, with ``a`` used
 above meaning "all except passes".
@@ -281,9 +281,9 @@ More than one character can be used, so for example to only see failed and skipp
 
     test_example.py:14: AssertionError
     ========================= short test summary info ==========================
-    FAILED test_example.py::test_fail
+    FAILED test_example.py::test_fail - assert 0
     SKIPPED [1] $REGENDOC_TMPDIR/test_example.py:23: skipping this test
-     1 failed, 1 passed, 1 skipped, 1 xfailed, 1 xpassed, 1 error in 0.12 seconds
+    = 1 failed, 1 passed, 1 skipped, 1 xfailed, 1 xpassed, 1 error in 0.12 seconds =
 
 Using ``p`` lists the passing tests, whilst ``P`` adds an extra section "PASSES" with those tests that passed but had
 captured output:
@@ -316,13 +316,13 @@ captured output:
     E       assert 0
 
     test_example.py:14: AssertionError
-    ========================= short test summary info ==========================
-    PASSED test_example.py::test_ok
     ================================== PASSES ==================================
     _________________________________ test_ok __________________________________
     --------------------------- Captured stdout call ---------------------------
     ok
-     1 failed, 1 passed, 1 skipped, 1 xfailed, 1 xpassed, 1 error in 0.12 seconds
+    ========================= short test summary info ==========================
+    PASSED test_example.py::test_ok
+    = 1 failed, 1 passed, 1 skipped, 1 xfailed, 1 xpassed, 1 error in 0.12 seconds =
 
 .. _pdb-option:
 
