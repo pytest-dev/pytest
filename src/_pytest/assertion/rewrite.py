@@ -990,7 +990,7 @@ warn_explicit(
         return res, outer_expl
 
     def _visit_all(self, call):
-        """Special rewrite for the builtin all function, see #5602"""
+        """Special rewrite for the builtin all function, see #5062"""
         if not isinstance(call.args[0], (ast.GeneratorExp, ast.ListComp)):
             return
         gen_exp = call.args[0]
