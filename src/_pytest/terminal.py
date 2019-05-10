@@ -956,6 +956,12 @@ class TerminalReporter(object):
 
 def _get_pos(config, rep):
     nodeid = config.cwd_relative_nodeid(rep.nodeid)
+
+    # Add line numbers after paths.
+    fname, _, testname = nodeid.partition("::")
+    if testname and rep.location and rep.location[1]:
+        return "%s:%d: %s" % (fname, rep.location[1], testname)
+
     return nodeid
 
 
