@@ -9,6 +9,7 @@ from __future__ import print_function
 
 import argparse
 import collections
+import os
 import platform
 import sys
 import time
@@ -956,13 +957,17 @@ class TerminalReporter(object):
 
 def _get_pos(config, rep):
     nodeid = config.cwd_relative_nodeid(rep.nodeid)
+    path, _, testname = nodeid.rpartition("::")
+    if not testname:
+        return nodeid
 
-    # Add line numbers after paths.
-    fname, _, testname = nodeid.partition("::")
-    if testname and rep.location and rep.location[1]:
-        return "%s:%d: %s" % (fname, rep.location[1], testname)
+    try:
+        reprcrash = rep.longrepr.reprcrash
+    except AttributeError:
+        return nodeid
 
-    return nodeid
+    rel_crash_path = os.path.relpath(reprcrash.path, config.invocation_dir)
+    return "%s::%s:%s" % (rel_crash_path, testname, reprcrash.lineno)
 
 
 def _get_line_with_reprcrash_message(config, rep, termwidth):
