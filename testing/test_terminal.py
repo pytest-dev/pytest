@@ -769,7 +769,7 @@ def test_fail_extra_reporting(testdir, monkeypatch):
     result.stdout.fnmatch_lines(
         [
             "*test summary*",
-            "FAILED test_fail_extra_reporting.py::test_this - AssertionError: this_failedt...",
+            "FAILED test_fail_extra_reporting.py::test_this:1 - AssertionError: this_faile...",
         ]
     )
 
