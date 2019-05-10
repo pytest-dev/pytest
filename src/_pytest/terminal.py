@@ -9,7 +9,6 @@ from __future__ import print_function
 
 import argparse
 import collections
-import os
 import platform
 import sys
 import time
@@ -966,7 +965,11 @@ def _get_pos(config, rep):
     except AttributeError:
         return nodeid
 
-    rel_crash_path = os.path.relpath(reprcrash.path, config.invocation_dir)
+    if isinstance(reprcrash.path, six.string_types):
+        crash_path = py.path.local(reprcrash.path)
+    else:
+        crash_path = reprcrash.path
+    rel_crash_path = config.invocation_dir.bestrelpath(crash_path)
     return "%s::%s:%s" % (rel_crash_path, testname, reprcrash.lineno)
 
 
