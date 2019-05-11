@@ -1027,19 +1027,25 @@ def test_trace_after_runpytest(testdir):
         from _pytest.debugging import pytestPDB
 
         def test_outer(testdir):
-            from _pytest.debugging import pytestPDB
-
             assert len(pytestPDB._saved) == 1
 
-            testdir.runpytest("-k test_inner")
+            testdir.makepyfile(
+                \"""
+                from _pytest.debugging import pytestPDB
 
+                def test_inner():
+                    assert len(pytestPDB._saved) == 2
+                    print("test_inner_" + "end")
+                \"""
+            )
+
+            result = testdir.runpytest("-s", "-k", "test_inner")
+            assert result.ret == 0
             __import__('pdb').set_trace()
-
-        def test_inner(testdir):
-            assert len(pytestPDB._saved) == 2
     """
     )
-    child = testdir.spawn_pytest("-p pytester %s -k test_outer" % p1)
+    child = testdir.spawn_pytest("-s -p pytester %s -k test_outer" % p1)
+    child.expect("test_inner_end")
     child.expect(r"\(Pdb")
     child.sendline("c")
     rest = child.read().decode("utf8")
