@@ -58,8 +58,8 @@ class TestTempdirHandler(object):
         assert tmp2.relto(t.getbasetemp()).startswith("this")
         assert tmp2 != tmp
 
-    @pytest.mark.issue(4425)
     def test_tmppath_relative_basetemp_absolute(self, tmp_path, monkeypatch):
+        """#4425"""
         from _pytest.tmpdir import TempPathFactory
 
         monkeypatch.chdir(tmp_path)

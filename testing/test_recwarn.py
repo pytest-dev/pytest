@@ -47,8 +47,8 @@ class TestWarningsRecorderChecker(object):
             assert values is rec.list
             pytest.raises(AssertionError, rec.pop)
 
-    @pytest.mark.issue(4243)
     def test_warn_stacklevel(self):
+        """#4243"""
         rec = WarningsRecorder()
         with rec:
             warnings.warn("test", DeprecationWarning, 2)

@@ -311,8 +311,11 @@ class MarkGenerator(object):
             # If the name is not in the set of known marks after updating,
             # then it really is time to issue a warning or an error.
             if name not in self._markers:
-                if self._config.option.strict:
-                    fail("{!r} is not a registered marker".format(name), pytrace=False)
+                if self._config.option.strict_markers:
+                    fail(
+                        "{!r} not found in `markers` configuration option".format(name),
+                        pytrace=False,
+                    )
                 else:
                     warnings.warn(
                         "Unknown pytest.mark.%s - is this a typo?  You can register "

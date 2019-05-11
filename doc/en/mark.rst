@@ -41,15 +41,15 @@ marks by registering them in ``pytest.ini`` like this:
         slow
         serial
 
-When the ``--strict`` command-line flag is passed, any unknown marks applied
+When the ``--strict-markers`` command-line flag is passed, any unknown marks applied
 with the ``@pytest.mark.name_of_the_mark`` decorator will trigger an error.
 Marks added by pytest or by a plugin instead of the decorator will not trigger
-this error.  To enforce validation of markers, add ``--strict`` to ``addopts``:
+this error.  To enforce validation of markers, add ``--strict-markers`` to ``addopts``:
 
 .. code-block:: ini
 
     [pytest]
-    addopts = --strict
+    addopts = --strict-markers
     markers =
         slow
         serial

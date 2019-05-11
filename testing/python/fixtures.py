@@ -1925,10 +1925,10 @@ class TestAutouseManagement(object):
         reprec = testdir.inline_run()
         reprec.assertoutcome(passed=1)
 
-    @pytest.mark.issue(226)
     @pytest.mark.parametrize("param1", ["", "params=[1]"], ids=["p00", "p01"])
     @pytest.mark.parametrize("param2", ["", "params=[1]"], ids=["p10", "p11"])
     def test_ordering_dependencies_torndown_first(self, testdir, param1, param2):
+        """#226"""
         testdir.makepyfile(
             """
             import pytest
@@ -2707,9 +2707,9 @@ class TestFixtureMarker(object):
         reprec = testdir.inline_run("-v")
         reprec.assertoutcome(passed=5)
 
-    @pytest.mark.issue(246)
     @pytest.mark.parametrize("scope", ["session", "function", "module"])
     def test_finalizer_order_on_parametrization(self, scope, testdir):
+        """#246"""
         testdir.makepyfile(
             """
             import pytest
@@ -2744,8 +2744,8 @@ class TestFixtureMarker(object):
         reprec = testdir.inline_run("-lvs")
         reprec.assertoutcome(passed=3)
 
-    @pytest.mark.issue(396)
     def test_class_scope_parametrization_ordering(self, testdir):
+        """#396"""
         testdir.makepyfile(
             """
             import pytest
@@ -2865,8 +2865,8 @@ class TestFixtureMarker(object):
         res = testdir.runpytest("-v")
         res.stdout.fnmatch_lines(["*test_foo*alpha*", "*test_foo*beta*"])
 
-    @pytest.mark.issue(920)
     def test_deterministic_fixture_collection(self, testdir, monkeypatch):
+        """#920"""
         testdir.makepyfile(
             """
             import pytest
@@ -3649,7 +3649,6 @@ class TestScopeOrdering(object):
     """Class of tests that ensure fixtures are ordered based on their scopes (#2405)"""
 
     @pytest.mark.parametrize("variant", ["mark", "autouse"])
-    @pytest.mark.issue(github="#2405")
     def test_func_closure_module_auto(self, testdir, variant, monkeypatch):
         """Semantically identical to the example posted in #2405 when ``use_mark=True``"""
         monkeypatch.setenv("FIXTURE_ACTIVATION_VARIANT", variant)

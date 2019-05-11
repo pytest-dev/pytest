@@ -605,8 +605,8 @@ class TestCaptureFixture(object):
         result.stdout.fnmatch_lines(["*KeyboardInterrupt*"])
         assert result.ret == 2
 
-    @pytest.mark.issue(14)
     def test_capture_and_logging(self, testdir):
+        """#14"""
         p = testdir.makepyfile(
             """\
             import logging

@@ -44,11 +44,11 @@ class TestMark(object):
         class SomeClass(object):
             pass
 
-        assert pytest.mark.fun(some_function) is some_function
-        assert pytest.mark.fun.with_args(some_function) is not some_function
+        assert pytest.mark.foo(some_function) is some_function
+        assert pytest.mark.foo.with_args(some_function) is not some_function
 
-        assert pytest.mark.fun(SomeClass) is SomeClass
-        assert pytest.mark.fun.with_args(SomeClass) is not SomeClass
+        assert pytest.mark.foo(SomeClass) is SomeClass
+        assert pytest.mark.foo.with_args(SomeClass) is not SomeClass
 
     def test_pytest_mark_name_starts_with_underscore(self):
         mark = Mark()
@@ -130,7 +130,7 @@ def test_ini_markers_whitespace(testdir):
             assert True
     """
     )
-    rec = testdir.inline_run("--strict", "-m", "a1")
+    rec = testdir.inline_run("--strict-markers", "-m", "a1")
     rec.assertoutcome(passed=1)
 
 
@@ -150,7 +150,7 @@ def test_marker_without_description(testdir):
     )
     ftdir = testdir.mkdir("ft1_dummy")
     testdir.tmpdir.join("conftest.py").move(ftdir.join("conftest.py"))
-    rec = testdir.runpytest("--strict")
+    rec = testdir.runpytest("--strict-markers")
     rec.assert_outcomes()
 
 
@@ -194,7 +194,8 @@ def test_mark_on_pseudo_function(testdir):
     reprec.assertoutcome(passed=1)
 
 
-def test_strict_prohibits_unregistered_markers(testdir):
+@pytest.mark.parametrize("option_name", ["--strict-markers", "--strict"])
+def test_strict_prohibits_unregistered_markers(testdir, option_name):
     testdir.makepyfile(
         """
         import pytest
@@ -203,9 +204,11 @@ def test_strict_prohibits_unregistered_markers(testdir):
             pass
     """
     )
-    result = testdir.runpytest("--strict")
+    result = testdir.runpytest(option_name)
     assert result.ret != 0
-    result.stdout.fnmatch_lines(["'unregisteredmark' is not a registered marker"])
+    result.stdout.fnmatch_lines(
+        ["'unregisteredmark' not found in `markers` configuration option"]
+    )
 
 
 @pytest.mark.parametrize(
@@ -449,8 +452,8 @@ class TestFunctional(object):
         items, rec = testdir.inline_genitems(p)
         self.assert_markers(items, test_foo=("a", "b"), test_bar=("a",))
 
-    @pytest.mark.issue(568)
     def test_mark_should_not_pass_to_siebling_class(self, testdir):
+        """#568"""
         p = testdir.makepyfile(
             """
             import pytest
@@ -652,9 +655,9 @@ class TestFunctional(object):
             markers = {m.name for m in items[name].iter_markers()}
             assert markers == set(expected_markers)
 
-    @pytest.mark.issue(1540)
     @pytest.mark.filterwarnings("ignore")
     def test_mark_from_parameters(self, testdir):
+        """#1540"""
         testdir.makepyfile(
             """
             import pytest
@@ -933,16 +936,16 @@ def test_mark_expressions_no_smear(testdir):
 
 def test_addmarker_order():
     node = Node("Test", config=mock.Mock(), session=mock.Mock(), nodeid="Test")
-    node.add_marker("a")
-    node.add_marker("b")
-    node.add_marker("c", append=False)
+    node.add_marker("foo")
+    node.add_marker("bar")
+    node.add_marker("baz", append=False)
     extracted = [x.name for x in node.iter_markers()]
-    assert extracted == ["c", "a", "b"]
+    assert extracted == ["baz", "foo", "bar"]
 
 
-@pytest.mark.issue("https://github.com/pytest-dev/pytest/issues/3605")
 @pytest.mark.filterwarnings("ignore")
 def test_markers_from_parametrize(testdir):
+    """#3605"""
     testdir.makepyfile(
         """
         from __future__ import print_function
