@@ -1,1 +1,0 @@
-The code for the short test summary in the terminal was moved to the terminal plugin.

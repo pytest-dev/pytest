@@ -1,1 +1,0 @@
-``logging.raiseExceptions`` is not set to ``False`` anymore.

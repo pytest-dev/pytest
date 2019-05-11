@@ -1,1 +1,0 @@
-Improve reporting with ``--lf`` and ``--ff`` (run-last-failure).

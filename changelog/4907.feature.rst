@@ -1,1 +1,0 @@
-Show XFail reason as part of JUnitXML message field.
