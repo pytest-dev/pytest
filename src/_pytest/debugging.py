@@ -77,9 +77,7 @@ def pytest_configure(config):
     if config.getvalue("usepdb"):
         config.pluginmanager.register(PdbInvoke(), "pdbinvoke")
 
-    pytestPDB._saved.append(
-        (pdb.set_trace, pytestPDB._pluginmanager, pytestPDB._config, pytestPDB._pdb_cls)
-    )
+    pytestPDB._saved.append(pdb.set_trace)
     pdb.set_trace = pytestPDB.set_trace
     pytestPDB._pluginmanager = config.pluginmanager
     pytestPDB._config = config
@@ -88,12 +86,7 @@ def pytest_configure(config):
     # NOTE: not using pytest_unconfigure, since it might get called although
     #       pytest_configure was not (if another plugin raises UsageError).
     def fin():
-        (
-            pdb.set_trace,
-            pytestPDB._pluginmanager,
-            pytestPDB._config,
-            pytestPDB._pdb_cls,
-        ) = pytestPDB._saved.pop()
+        pdb.set_trace = pytestPDB._saved.pop()
 
     config._cleanup.append(fin)
 

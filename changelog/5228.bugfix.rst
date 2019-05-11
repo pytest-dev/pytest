@@ -1,0 +1,1 @@
+Fix ``pdb.set_trace`` wrapper when used in child threads after main thread exited.
