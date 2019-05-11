@@ -104,7 +104,6 @@ if __name__ == "__main__":
     def signal_handler(signum, frame):
         # Uninstall ourselves for second invocation.
         orig = _installed_signal_handler.pop(signum)
-        print("uninstall", signum, frame, orig)
         signal.signal(signum, orig)
 
         exit("exiting due to signal %d" % signum, returncode=(128 + signum))
