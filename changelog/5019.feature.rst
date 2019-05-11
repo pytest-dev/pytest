@@ -1,1 +1,1 @@
-The ``SIGTERM`` signal is now properly handled, causing the current test session to exit.
+The ``SIGTERM`` signal is now handled, causing the test session to exit via ``Exit`` outcome exception.
