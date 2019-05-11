@@ -960,17 +960,24 @@ def _get_pos(config, rep):
     if not testname:
         return nodeid
 
+    # Append location (line number).
+    # This uses the first traceback entry for the location in the test itself
+    # (rather than reprcrash, which might be less relevant for going to
+    # directly, e.g. pexpect failures in pytest itself).
     try:
-        reprcrash = rep.longrepr.reprcrash
+        testloc = rep.longrepr.reprtraceback.reprentries[0].reprfileloc
     except AttributeError:
         return nodeid
 
-    if isinstance(reprcrash.path, six.string_types):
-        crash_path = py.path.local(reprcrash.path)
+    if isinstance(testloc.path, six.string_types):
+        testloc_path = py.path.local(testloc.path)
     else:
-        crash_path = reprcrash.path
-    rel_crash_path = config.invocation_dir.bestrelpath(crash_path)
-    return "%s::%s:%s" % (rel_crash_path, testname, reprcrash.lineno)
+        testloc_path = testloc.path
+    rel_testloc_path = config.invocation_dir.bestrelpath(testloc_path)
+    if rel_testloc_path == path:
+        return "%s (line %d)" % (nodeid, testloc.lineno)
+
+    return "%s (%s:%d)" % (nodeid, rel_testloc_path, testloc.lineno)
 
 
 def _get_line_with_reprcrash_message(config, rep, termwidth):
