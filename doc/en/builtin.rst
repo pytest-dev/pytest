@@ -85,6 +85,20 @@ For information about fixtures, see :ref:`fixtures`. To see a complete list of a
         The fixture is callable with ``(name, value)``, with value being
         automatically xml-encoded
 
+    record_testsuite_property [session scope]
+        Records a new ``<property>`` tag as child of the root ``<testsuite>``. This is suitable to
+        writing global information regarding the entire test suite, and is compatible with ``xunit2`` JUnit family.
+
+        This is a ``session``-scoped fixture which is called with ``(name, value)``. Example:
+
+        .. code-block:: python
+
+            def test_foo(record_testsuite_property):
+                record_testsuite_property("ARCH", "PPC")
+                record_testsuite_property("STORAGE_TYPE", "CEPH")
+
+        ``name`` must be a string, ``value`` will be converted to a string and properly xml-escaped.
+
     caplog
         Access and control log capturing.
 

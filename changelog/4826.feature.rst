@@ -1,2 +1,0 @@
-A warning is now emitted when unknown marks are used as a decorator.
-This is often due to a typo, which can lead to silently broken tests.

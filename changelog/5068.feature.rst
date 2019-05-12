@@ -1,1 +1,0 @@
-The ``-r`` option learnt about ``A`` to display all reports (including passed ones) in the short test summary.

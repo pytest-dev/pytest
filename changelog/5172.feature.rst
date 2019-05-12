@@ -1,2 +1,0 @@
-The ``--last-failed`` (``--lf``) option got smarter and will now skip entire files if all tests
-of that test file have passed in previous runs, greatly speeding up collection.

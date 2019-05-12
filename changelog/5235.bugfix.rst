@@ -1,1 +1,0 @@
-``outcome.exit`` is not used with ``EOF`` in the pdb wrapper anymore, but only with ``quit``.
