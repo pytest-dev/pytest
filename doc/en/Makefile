@@ -43,7 +43,7 @@ clean:
 
 regen: REGENDOC_FILES:=*.rst */*.rst
 regen:
-	PYTHONDONTWRITEBYTECODE=1 PYTEST_ADDOPTS=-pno:hypothesis COLUMNS=76 regendoc --update ${REGENDOC_FILES} ${REGENDOC_ARGS}
+	PYTHONDONTWRITEBYTECODE=1 PYTEST_ADDOPTS="-pno:hypothesis -Wignore::pytest.PytestUnknownMarkWarning" COLUMNS=76 regendoc --update ${REGENDOC_FILES} ${REGENDOC_ARGS}
 
 html:
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html

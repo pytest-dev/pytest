@@ -302,7 +302,7 @@ def test_filterwarnings_mark_registration(testdir):
             pass
     """
     )
-    result = testdir.runpytest("--strict")
+    result = testdir.runpytest("--strict-markers")
     assert result.ret == 0
 
 
@@ -630,7 +630,7 @@ def test_removed_in_pytest4_warning_as_error(testdir, change_default):
 class TestAssertionWarnings:
     @staticmethod
     def assert_result_warns(result, msg):
-        result.stdout.fnmatch_lines(["*PytestWarning: %s*" % msg])
+        result.stdout.fnmatch_lines(["*PytestAssertRewriteWarning: %s*" % msg])
 
     def test_tuple_warning(self, testdir):
         testdir.makepyfile(

@@ -35,8 +35,14 @@ from _pytest.python_api import approx
 from _pytest.python_api import raises
 from _pytest.recwarn import deprecated_call
 from _pytest.recwarn import warns
+from _pytest.warning_types import PytestAssertRewriteWarning
+from _pytest.warning_types import PytestCacheWarning
+from _pytest.warning_types import PytestCollectionWarning
+from _pytest.warning_types import PytestConfigWarning
 from _pytest.warning_types import PytestDeprecationWarning
 from _pytest.warning_types import PytestExperimentalApiWarning
+from _pytest.warning_types import PytestUnhandledCoroutineWarning
+from _pytest.warning_types import PytestUnknownMarkWarning
 from _pytest.warning_types import PytestWarning
 from _pytest.warning_types import RemovedInPytest4Warning
 
@@ -66,8 +72,14 @@ __all__ = [
     "Module",
     "Package",
     "param",
+    "PytestAssertRewriteWarning",
+    "PytestCacheWarning",
+    "PytestCollectionWarning",
+    "PytestConfigWarning",
     "PytestDeprecationWarning",
     "PytestExperimentalApiWarning",
+    "PytestUnhandledCoroutineWarning",
+    "PytestUnknownMarkWarning",
     "PytestWarning",
     "raises",
     "register_assert_rewrite",

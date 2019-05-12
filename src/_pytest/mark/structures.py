@@ -12,6 +12,7 @@ from ..compat import MappingMixin
 from ..compat import NOTSET
 from _pytest.deprecated import PYTEST_PARAM_UNKNOWN_KWARGS
 from _pytest.outcomes import fail
+from _pytest.warning_types import PytestUnknownMarkWarning
 
 EMPTY_PARAMETERSET_OPTION = "empty_parameter_set_mark"
 
@@ -135,7 +136,7 @@ class ParameterSet(namedtuple("ParameterSet", "values, marks, id")):
                     )
         else:
             # empty parameter set (likely computed at runtime): create a single
-            # parameter set with NOSET values, with the "empty parameter set" mark applied to it
+            # parameter set with NOTSET values, with the "empty parameter set" mark applied to it
             mark = get_empty_parameterset_mark(config, argnames, func)
             parameters.append(
                 ParameterSet(values=(NOTSET,) * len(argnames), marks=[mark], id=None)
@@ -158,7 +159,7 @@ class Mark(object):
         :type other: Mark
         :rtype: Mark
 
-        combines by appending aargs and merging the mappings
+        combines by appending args and merging the mappings
         """
         assert self.name == other.name
         return Mark(
@@ -289,28 +290,41 @@ class MarkGenerator(object):
     on the ``test_function`` object. """
 
     _config = None
+    _markers = set()
 
     def __getattr__(self, name):
         if name[0] == "_":
             raise AttributeError("Marker name must NOT start with underscore")
-        if self._config is not None:
-            self._check(name)
-        return MarkDecorator(Mark(name, (), {}))
 
-    def _check(self, name):
-        try:
-            if name in self._markers:
-                return
-        except AttributeError:
-            pass
-        self._markers = values = set()
-        for line in self._config.getini("markers"):
-            marker = line.split(":", 1)[0]
-            marker = marker.rstrip()
-            x = marker.split("(", 1)[0]
-            values.add(x)
-        if name not in self._markers:
-            fail("{!r} not a registered marker".format(name), pytrace=False)
+        if self._config is not None:
+            # We store a set of markers as a performance optimisation - if a mark
+            # name is in the set we definitely know it, but a mark may be known and
+            # not in the set.  We therefore start by updating the set!
+            if name not in self._markers:
+                for line in self._config.getini("markers"):
+                    # example lines: "skipif(condition): skip the given test if..."
+                    # or "hypothesis: tests which use Hypothesis", so to get the
+                    # marker name we split on both `:` and `(`.
+                    marker = line.split(":")[0].split("(")[0].strip()
+                    self._markers.add(marker)
+
+            # If the name is not in the set of known marks after updating,
+            # then it really is time to issue a warning or an error.
+            if name not in self._markers:
+                if self._config.option.strict_markers:
+                    fail(
+                        "{!r} not found in `markers` configuration option".format(name),
+                        pytrace=False,
+                    )
+                else:
+                    warnings.warn(
+                        "Unknown pytest.mark.%s - is this a typo?  You can register "
+                        "custom marks to avoid this warning - for details, see "
+                        "https://docs.pytest.org/en/latest/mark.html" % name,
+                        PytestUnknownMarkWarning,
+                    )
+
+        return MarkDecorator(Mark(name, (), {}))
 
 
 MARK_GEN = MarkGenerator()

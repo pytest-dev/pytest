@@ -1,9 +1,7 @@
-
 .. _mark:
 
 Marking test functions with attributes
-=================================================================
-
+======================================
 
 By using the ``pytest.mark`` helper you can easily set
 metadata on your test functions. There are
@@ -26,32 +24,38 @@ which also serve as documentation.
     :ref:`fixtures <fixtures>`.
 
 
-Raising errors on unknown marks: --strict
------------------------------------------
+.. _unknown-marks:
 
-When the ``--strict`` command-line flag is passed, any unknown marks applied
+Raising errors on unknown marks
+-------------------------------
+
+Unknown marks applied with the ``@pytest.mark.name_of_the_mark`` decorator
+will always emit a warning, in order to avoid silently doing something
+surprising due to mis-typed names.  You can disable the warning for custom
+marks by registering them in ``pytest.ini`` like this:
+
+.. code-block:: ini
+
+    [pytest]
+    markers =
+        slow
+        serial
+
+When the ``--strict-markers`` command-line flag is passed, any unknown marks applied
 with the ``@pytest.mark.name_of_the_mark`` decorator will trigger an error.
-Marks defined or added by pytest or by a plugin will not trigger an error.
-
-Marks can be registered in ``pytest.ini`` like this:
-
-.. code-block:: ini
-
-    [pytest]
-    markers =
-        slow
-        serial
-
-This can be used to prevent users mistyping mark names by accident. Test suites that want to enforce this
-should add ``--strict`` to ``addopts``:
+Marks added by pytest or by a plugin instead of the decorator will not trigger
+this error.  To enforce validation of markers, add ``--strict-markers`` to ``addopts``:
 
 .. code-block:: ini
 
     [pytest]
-    addopts = --strict
+    addopts = --strict-markers
     markers =
         slow
         serial
+
+Third-party plugins should always :ref:`register their markers <registering-markers>`
+so that they appear in pytest's help text and do not emit warnings.
 
 
 .. _marker-revamp:
@@ -158,4 +162,4 @@ More details can be found in the `original PR <https://github.com/pytest-dev/pyt
 .. note::
 
     in a future major relase of pytest we will introduce class based markers,
-    at which point markers will no longer be limited to instances of :py:class:`Mark`
+    at which point markers will no longer be limited to instances of :py:class:`Mark`.

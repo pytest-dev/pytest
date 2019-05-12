@@ -45,7 +45,8 @@ from _pytest.mark.structures import normalize_mark_list
 from _pytest.outcomes import fail
 from _pytest.outcomes import skip
 from _pytest.pathlib import parts
-from _pytest.warning_types import PytestWarning
+from _pytest.warning_types import PytestCollectionWarning
+from _pytest.warning_types import PytestUnhandledCoroutineWarning
 
 
 def pyobj_property(name):
@@ -171,7 +172,7 @@ def pytest_pyfunc_call(pyfuncitem):
         msg += "  - pytest-asyncio\n"
         msg += "  - pytest-trio\n"
         msg += "  - pytest-tornasync"
-        warnings.warn(PytestWarning(msg.format(pyfuncitem.nodeid)))
+        warnings.warn(PytestUnhandledCoroutineWarning(msg.format(pyfuncitem.nodeid)))
         skip(msg="coroutine function and no async plugin installed (see warnings)")
     funcargs = pyfuncitem.funcargs
     testargs = {arg: funcargs[arg] for arg in pyfuncitem._fixtureinfo.argnames}
@@ -221,7 +222,7 @@ def pytest_pycollect_makeitem(collector, name, obj):
         if not (isfunction(obj) or isfunction(get_real_func(obj))):
             filename, lineno = getfslineno(obj)
             warnings.warn_explicit(
-                message=PytestWarning(
+                message=PytestCollectionWarning(
                     "cannot collect %r because it is not a function." % name
                 ),
                 category=None,
@@ -233,7 +234,7 @@ def pytest_pycollect_makeitem(collector, name, obj):
                 res = Function(name, parent=collector)
                 reason = deprecated.YIELD_TESTS.format(name=name)
                 res.add_marker(MARK_GEN.xfail(run=False, reason=reason))
-                res.warn(PytestWarning(reason))
+                res.warn(PytestCollectionWarning(reason))
             else:
                 res = list(collector._genfunctions(name, obj))
             outcome.force_result(res)
@@ -721,7 +722,7 @@ class Class(PyCollector):
             return []
         if hasinit(self.obj):
             self.warn(
-                PytestWarning(
+                PytestCollectionWarning(
                     "cannot collect test class %r because it has a "
                     "__init__ constructor" % self.obj.__name__
                 )
@@ -729,7 +730,7 @@ class Class(PyCollector):
             return []
         elif hasnew(self.obj):
             self.warn(
-                PytestWarning(
+                PytestCollectionWarning(
                     "cannot collect test class %r because it has a "
                     "__new__ constructor" % self.obj.__name__
                 )
@@ -1341,17 +1342,19 @@ def _showfixtures_main(config, session):
                 currentmodule = module
         if verbose <= 0 and argname[0] == "_":
             continue
+        tw.write(argname, green=True)
+        if fixturedef.scope != "function":
+            tw.write(" [%s scope]" % fixturedef.scope, cyan=True)
         if verbose > 0:
-            funcargspec = "%s -- %s" % (argname, bestrel)
-        else:
-            funcargspec = argname
-        tw.line(funcargspec, green=True)
+            tw.write(" -- %s" % bestrel, yellow=True)
+        tw.write("\n")
         loc = getlocation(fixturedef.func, curdir)
         doc = fixturedef.func.__doc__ or ""
         if doc:
             write_docstring(tw, doc)
         else:
             tw.line("    %s: no docstring available" % (loc,), red=True)
+        tw.line()
 
 
 def write_docstring(tw, doc, indent="    "):

@@ -285,20 +285,30 @@ def _compare_eq_iterable(left, right, verbose=0):
 
 def _compare_eq_sequence(left, right, verbose=0):
     explanation = []
-    for i in range(min(len(left), len(right))):
+    len_left = len(left)
+    len_right = len(right)
+    for i in range(min(len_left, len_right)):
         if left[i] != right[i]:
             explanation += [u"At index %s diff: %r != %r" % (i, left[i], right[i])]
             break
-    if len(left) > len(right):
-        explanation += [
-            u"Left contains more items, first extra item: %s"
-            % saferepr(left[len(right)])
-        ]
-    elif len(left) < len(right):
-        explanation += [
-            u"Right contains more items, first extra item: %s"
-            % saferepr(right[len(left)])
-        ]
+    len_diff = len_left - len_right
+
+    if len_diff:
+        if len_diff > 0:
+            dir_with_more = "Left"
+            extra = saferepr(left[len_right])
+        else:
+            len_diff = 0 - len_diff
+            dir_with_more = "Right"
+            extra = saferepr(right[len_left])
+
+        if len_diff == 1:
+            explanation += [u"%s contains one more item: %s" % (dir_with_more, extra)]
+        else:
+            explanation += [
+                u"%s contains %d more items, first extra item: %s"
+                % (dir_with_more, len_diff, extra)
+            ]
     return explanation
 
 
@@ -319,7 +329,9 @@ def _compare_eq_set(left, right, verbose=0):
 
 def _compare_eq_dict(left, right, verbose=0):
     explanation = []
-    common = set(left).intersection(set(right))
+    set_left = set(left)
+    set_right = set(right)
+    common = set_left.intersection(set_right)
     same = {k: left[k] for k in common if left[k] == right[k]}
     if same and verbose < 2:
         explanation += [u"Omitting %s identical items, use -vv to show" % len(same)]
@@ -331,15 +343,23 @@ def _compare_eq_dict(left, right, verbose=0):
         explanation += [u"Differing items:"]
         for k in diff:
             explanation += [saferepr({k: left[k]}) + " != " + saferepr({k: right[k]})]
-    extra_left = set(left) - set(right)
-    if extra_left:
-        explanation.append(u"Left contains more items:")
+    extra_left = set_left - set_right
+    len_extra_left = len(extra_left)
+    if len_extra_left:
+        explanation.append(
+            u"Left contains %d more item%s:"
+            % (len_extra_left, "" if len_extra_left == 1 else "s")
+        )
         explanation.extend(
             pprint.pformat({k: left[k] for k in extra_left}).splitlines()
         )
-    extra_right = set(right) - set(left)
-    if extra_right:
-        explanation.append(u"Right contains more items:")
+    extra_right = set_right - set_left
+    len_extra_right = len(extra_right)
+    if len_extra_right:
+        explanation.append(
+            u"Right contains %d more item%s:"
+            % (len_extra_right, "" if len_extra_right == 1 else "s")
+        )
         explanation.extend(
             pprint.pformat({k: right[k] for k in extra_right}).splitlines()
         )

@@ -143,18 +143,18 @@ class pytestPDB(object):
                     else:
                         tw.sep(">", "PDB set_trace")
 
-            class _PdbWrapper(cls._pdb_cls, object):
+            class PytestPdbWrapper(cls._pdb_cls, object):
                 _pytest_capman = capman
                 _continued = False
 
                 def do_debug(self, arg):
                     cls._recursive_debug += 1
-                    ret = super(_PdbWrapper, self).do_debug(arg)
+                    ret = super(PytestPdbWrapper, self).do_debug(arg)
                     cls._recursive_debug -= 1
                     return ret
 
                 def do_continue(self, arg):
-                    ret = super(_PdbWrapper, self).do_continue(arg)
+                    ret = super(PytestPdbWrapper, self).do_continue(arg)
                     if cls._recursive_debug == 0:
                         tw = _pytest.config.create_terminal_writer(cls._config)
                         tw.line()
@@ -181,16 +181,22 @@ class pytestPDB(object):
 
                 do_c = do_cont = do_continue
 
-                def set_quit(self):
+                def do_quit(self, arg):
                     """Raise Exit outcome when quit command is used in pdb.
 
                     This is a bit of a hack - it would be better if BdbQuit
                     could be handled, but this would require to wrap the
                     whole pytest run, and adjust the report etc.
                     """
-                    super(_PdbWrapper, self).set_quit()
+                    ret = super(PytestPdbWrapper, self).do_quit(arg)
+
                     if cls._recursive_debug == 0:
                         outcomes.exit("Quitting debugger")
+
+                    return ret
+
+                do_q = do_quit
+                do_exit = do_quit
 
                 def setup(self, f, tb):
                     """Suspend on setup().
@@ -198,7 +204,7 @@ class pytestPDB(object):
                     Needed after do_continue resumed, and entering another
                     breakpoint again.
                     """
-                    ret = super(_PdbWrapper, self).setup(f, tb)
+                    ret = super(PytestPdbWrapper, self).setup(f, tb)
                     if not ret and self._continued:
                         # pdb.setup() returns True if the command wants to exit
                         # from the interaction: do not suspend capturing then.
@@ -206,7 +212,7 @@ class pytestPDB(object):
                             self._pytest_capman.suspend_global_capture(in_=True)
                     return ret
 
-            _pdb = _PdbWrapper(**kwargs)
+            _pdb = PytestPdbWrapper(**kwargs)
             cls._pluginmanager.hook.pytest_enter_pdb(config=cls._config, pdb=_pdb)
         else:
             _pdb = cls._pdb_cls(**kwargs)
@@ -246,7 +252,7 @@ def _test_pytest_function(pyfuncitem):
     _pdb = pytestPDB._init_pdb()
     testfunction = pyfuncitem.obj
     pyfuncitem.obj = _pdb.runcall
-    if "func" in pyfuncitem._fixtureinfo.argnames:  # noqa
+    if "func" in pyfuncitem._fixtureinfo.argnames:  # pragma: no branch
         raise ValueError("--trace can't be used with a fixture named func!")
     pyfuncitem.funcargs["func"] = testfunction
     new_list = list(pyfuncitem._fixtureinfo.argnames)

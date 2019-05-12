@@ -1,3 +1,0 @@
-Pin ``pluggy`` to ``< 1.0`` so we don't update to ``1.0`` automatically when
-it gets released: there are planned breaking changes, and we want to ensure
-pytest properly supports ``pluggy 1.0``.

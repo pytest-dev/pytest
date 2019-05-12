@@ -6,6 +6,8 @@ import py
 import _pytest
 import pytest
 
+pytestmark = pytest.mark.slow
+
 MODSET = [
     x
     for x in py.path.local(_pytest.__file__).dirpath().visit("*.py")

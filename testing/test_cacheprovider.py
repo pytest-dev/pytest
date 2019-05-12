@@ -10,6 +10,7 @@ import textwrap
 import py
 
 import pytest
+from _pytest.main import EXIT_NOTESTSCOLLECTED
 
 pytest_plugins = ("pytester",)
 
@@ -195,6 +196,7 @@ def test_cache_show(testdir):
         """
         def pytest_configure(config):
             config.cache.set("my/name", [1,2,3])
+            config.cache.set("my/hello", "world")
             config.cache.set("other/some", {1:2})
             dp = config.cache.makedir("mydb")
             dp.ensure("hello")
@@ -203,20 +205,39 @@ def test_cache_show(testdir):
     )
     result = testdir.runpytest()
     assert result.ret == 5  # no tests executed
+
     result = testdir.runpytest("--cache-show")
-    result.stdout.fnmatch_lines_random(
+    result.stdout.fnmatch_lines(
         [
             "*cachedir:*",
-            "-*cache values*-",
-            "*my/name contains:",
+            "*- cache values for '[*]' -*",
+            "cache/nodeids contains:",
+            "my/name contains:",
             "  [1, 2, 3]",
-            "*other/some contains*",
-            "  {*1*: 2}",
-            "-*cache directories*-",
+            "other/some contains:",
+            "  {*'1': 2}",
+            "*- cache directories for '[*]' -*",
             "*mydb/hello*length 0*",
             "*mydb/world*length 0*",
         ]
     )
+    assert result.ret == 0
+
+    result = testdir.runpytest("--cache-show", "*/hello")
+    result.stdout.fnmatch_lines(
+        [
+            "*cachedir:*",
+            "*- cache values for '[*]/hello' -*",
+            "my/hello contains:",
+            "  *'world'",
+            "*- cache directories for '[*]/hello' -*",
+            "d/mydb/hello*length 0*",
+        ]
+    )
+    stdout = result.stdout.str()
+    assert "other/some" not in stdout
+    assert "d/mydb/world" not in stdout
+    assert result.ret == 0
 
 
 class TestLastFailed(object):
@@ -251,7 +272,13 @@ class TestLastFailed(object):
         result = testdir.runpytest("--lf")
         result.stdout.fnmatch_lines(["*2 passed*1 desel*"])
         result = testdir.runpytest("--lf")
-        result.stdout.fnmatch_lines(["*1 failed*2 passed*"])
+        result.stdout.fnmatch_lines(
+            [
+                "collected 3 items",
+                "run-last-failure: no previously failed tests, not deselecting items.",
+                "*1 failed*2 passed*",
+            ]
+        )
         result = testdir.runpytest("--lf", "--cache-clear")
         result.stdout.fnmatch_lines(["*1 failed*2 passed*"])
 
@@ -418,14 +445,20 @@ class TestLastFailed(object):
         result = testdir.runpytest("--lf")
         result.stdout.fnmatch_lines(
             [
-                "collected 4 items / 2 deselected / 2 selected",
-                "run-last-failure: rerun previous 2 failures",
-                "*2 failed, 2 deselected in*",
+                "collected 2 items",
+                "run-last-failure: rerun previous 2 failures (skipped 1 file)",
+                "*2 failed in*",
             ]
         )
 
         result = testdir.runpytest(test_a, "--lf")
-        result.stdout.fnmatch_lines(["collected 2 items", "*2 passed in*"])
+        result.stdout.fnmatch_lines(
+            [
+                "collected 2 items",
+                "run-last-failure: 2 known failures not in selected tests",
+                "*2 passed in*",
+            ]
+        )
 
         result = testdir.runpytest(test_b, "--lf")
         result.stdout.fnmatch_lines(
@@ -685,7 +718,7 @@ class TestLastFailed(object):
         assert self.get_cached_last_failed(testdir) == ["test_foo.py::test_foo_4"]
 
         result = testdir.runpytest("--last-failed")
-        result.stdout.fnmatch_lines(["*1 failed, 3 deselected*"])
+        result.stdout.fnmatch_lines(["*1 failed, 1 deselected*"])
         assert self.get_cached_last_failed(testdir) == ["test_foo.py::test_foo_4"]
 
         # 3. fix test_foo_4, run only test_foo.py
@@ -721,7 +754,14 @@ class TestLastFailed(object):
         result = testdir.runpytest("--lf", "--lfnf", "all")
         result.stdout.fnmatch_lines(["*2 passed*"])
         result = testdir.runpytest("--lf", "--lfnf", "none")
-        result.stdout.fnmatch_lines(["*2 desel*"])
+        result.stdout.fnmatch_lines(
+            [
+                "collected 2 items / 2 deselected",
+                "run-last-failure: no previously failed tests, deselecting all items.",
+                "* 2 deselected in *",
+            ]
+        )
+        assert result.ret == EXIT_NOTESTSCOLLECTED
 
     def test_lastfailed_no_failures_behavior_empty_cache(self, testdir):
         testdir.makepyfile(
@@ -738,6 +778,58 @@ class TestLastFailed(object):
         result.stdout.fnmatch_lines(["*1 failed*1 passed*"])
         result = testdir.runpytest("--lf", "--cache-clear", "--lfnf", "none")
         result.stdout.fnmatch_lines(["*2 desel*"])
+
+    def test_lastfailed_skip_collection(self, testdir):
+        """
+        Test --lf behavior regarding skipping collection of files that are not marked as
+        failed in the cache (#5172).
+        """
+        testdir.makepyfile(
+            **{
+                "pkg1/test_1.py": """
+                import pytest
+
+                @pytest.mark.parametrize('i', range(3))
+                def test_1(i): pass
+            """,
+                "pkg2/test_2.py": """
+                import pytest
+
+                @pytest.mark.parametrize('i', range(5))
+                def test_1(i):
+                    assert i not in (1, 3)
+            """,
+            }
+        )
+        # first run: collects 8 items (test_1: 3, test_2: 5)
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines(["collected 8 items", "*2 failed*6 passed*"])
+        # second run: collects only 5 items from test_2, because all tests from test_1 have passed
+        result = testdir.runpytest("--lf")
+        result.stdout.fnmatch_lines(
+            [
+                "collected 5 items / 3 deselected / 2 selected",
+                "run-last-failure: rerun previous 2 failures (skipped 1 file)",
+                "*2 failed*3 deselected*",
+            ]
+        )
+
+        # add another file and check if message is correct when skipping more than 1 file
+        testdir.makepyfile(
+            **{
+                "pkg1/test_3.py": """
+                def test_3(): pass
+            """
+            }
+        )
+        result = testdir.runpytest("--lf")
+        result.stdout.fnmatch_lines(
+            [
+                "collected 5 items / 3 deselected / 2 selected",
+                "run-last-failure: rerun previous 2 failures (skipped 2 files)",
+                "*2 failed*3 deselected*",
+            ]
+        )
 
 
 class TestNewFirst(object):

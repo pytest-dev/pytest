@@ -151,13 +151,14 @@ def showhelp(config):
     )
     tw.line()
 
+    columns = tw.fullwidth  # costly call
     for name in config._parser._ininames:
         help, type, default = config._parser._inidict[name]
         if type is None:
             type = "string"
         spec = "%s (%s)" % (name, type)
         line = "  %-24s %s" % (spec, help)
-        tw.line(line[: tw.fullwidth])
+        tw.line(line[:columns])
 
     tw.line()
     tw.line("environment variables:")

@@ -47,11 +47,6 @@ def pytest_addoption(parser):
         type="args",
         default=[],
     )
-    # parser.addini("dirpatterns",
-    #    "patterns specifying possible locations of test files",
-    #    type="linelist", default=["**/test_*.txt",
-    #            "**/test_*.py", "**/*_test.py"]
-    # )
     group = parser.getgroup("general", "running and selection options")
     group._addoption(
         "-x",
@@ -71,9 +66,10 @@ def pytest_addoption(parser):
         help="exit after first num failures or errors.",
     )
     group._addoption(
+        "--strict-markers",
         "--strict",
         action="store_true",
-        help="marks not registered in configuration file raise errors.",
+        help="markers not registered in the `markers` section of the configuration file raise errors.",
     )
     group._addoption(
         "-c",
@@ -208,16 +204,20 @@ def wrap_session(config, doit):
             initstate = 2
             session.exitstatus = doit(config, session) or 0
         except UsageError:
+            session.exitstatus = EXIT_USAGEERROR
             raise
         except Failed:
             session.exitstatus = EXIT_TESTSFAILED
         except (KeyboardInterrupt, exit.Exception):
             excinfo = _pytest._code.ExceptionInfo.from_current()
             exitstatus = EXIT_INTERRUPTED
-            if initstate <= 2 and isinstance(excinfo.value, exit.Exception):
-                sys.stderr.write("{}: {}\n".format(excinfo.typename, excinfo.value.msg))
+            if isinstance(excinfo.value, exit.Exception):
                 if excinfo.value.returncode is not None:
                     exitstatus = excinfo.value.returncode
+                if initstate < 2:
+                    sys.stderr.write(
+                        "{}: {}\n".format(excinfo.typename, excinfo.value.msg)
+                    )
             config.hook.pytest_keyboard_interrupt(excinfo=excinfo)
             session.exitstatus = exitstatus
         except:  # noqa
@@ -431,7 +431,7 @@ class Session(nodes.FSCollector):
         self.shouldfail = False
         self.trace = config.trace.root.get("collection")
         self._norecursepatterns = config.getini("norecursedirs")
-        self.startdir = py.path.local()
+        self.startdir = config.invocation_dir
         self._initialpaths = frozenset()
         # Keep track of any collected nodes in here, so we don't duplicate fixtures
         self._node_cache = {}

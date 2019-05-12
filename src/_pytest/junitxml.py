@@ -252,7 +252,14 @@ class _NodeReporter(object):
 
     def append_skipped(self, report):
         if hasattr(report, "wasxfail"):
-            self._add_simple(Junit.skipped, "expected test failure", report.wasxfail)
+            xfailreason = report.wasxfail
+            if xfailreason.startswith("reason: "):
+                xfailreason = xfailreason[8:]
+            self.append(
+                Junit.skipped(
+                    "", type="pytest.xfail", message=bin_xml_escape(xfailreason)
+                )
+            )
         else:
             filename, lineno, skipreason = report.longrepr
             if skipreason.startswith("Skipped: "):
@@ -274,6 +281,21 @@ class _NodeReporter(object):
         self.to_xml = lambda: py.xml.raw(data)
 
 
+def _warn_incompatibility_with_xunit2(request, fixture_name):
+    """Emits a PytestWarning about the given fixture being incompatible with newer xunit revisions"""
+    from _pytest.warning_types import PytestWarning
+
+    xml = getattr(request.config, "_xml", None)
+    if xml is not None and xml.family not in ("xunit1", "legacy"):
+        request.node.warn(
+            PytestWarning(
+                "{fixture_name} is incompatible with junit_family '{family}' (use 'legacy' or 'xunit1')".format(
+                    fixture_name=fixture_name, family=xml.family
+                )
+            )
+        )
+
+
 @pytest.fixture
 def record_property(request):
     """Add an extra properties the calling test.
@@ -287,6 +309,7 @@ def record_property(request):
         def test_function(record_property):
             record_property("example_key", 1)
     """
+    _warn_incompatibility_with_xunit2(request, "record_property")
 
     def append_property(name, value):
         request.node.user_properties.append((name, value))
@@ -300,29 +323,65 @@ def record_xml_attribute(request):
     The fixture is callable with ``(name, value)``, with value being
     automatically xml-encoded
     """
-    from _pytest.warning_types import PytestWarning
+    from _pytest.warning_types import PytestExperimentalApiWarning
 
-    request.node.warn(PytestWarning("record_xml_attribute is an experimental feature"))
+    request.node.warn(
+        PytestExperimentalApiWarning("record_xml_attribute is an experimental feature")
+    )
+
+    _warn_incompatibility_with_xunit2(request, "record_xml_attribute")
 
     # Declare noop
     def add_attr_noop(name, value):
         pass
 
     attr_func = add_attr_noop
-    xml = getattr(request.config, "_xml", None)
 
-    if xml is not None and xml.family != "xunit1":
-        request.node.warn(
-            PytestWarning(
-                "record_xml_attribute is incompatible with junit_family: "
-                "%s (use: legacy|xunit1)" % xml.family
-            )
-        )
-    elif xml is not None:
+    xml = getattr(request.config, "_xml", None)
+    if xml is not None:
         node_reporter = xml.node_reporter(request.node.nodeid)
         attr_func = node_reporter.add_attribute
 
     return attr_func
+
+
+def _check_record_param_type(param, v):
+    """Used by record_testsuite_property to check that the given parameter name is of the proper
+    type"""
+    __tracebackhide__ = True
+    if not isinstance(v, six.string_types):
+        msg = "{param} parameter needs to be a string, but {g} given"
+        raise TypeError(msg.format(param=param, g=type(v).__name__))
+
+
+@pytest.fixture(scope="session")
+def record_testsuite_property(request):
+    """
+    Records a new ``<property>`` tag as child of the root ``<testsuite>``. This is suitable to
+    writing global information regarding the entire test suite, and is compatible with ``xunit2`` JUnit family.
+
+    This is a ``session``-scoped fixture which is called with ``(name, value)``. Example:
+
+    .. code-block:: python
+
+        def test_foo(record_testsuite_property):
+            record_testsuite_property("ARCH", "PPC")
+            record_testsuite_property("STORAGE_TYPE", "CEPH")
+
+    ``name`` must be a string, ``value`` will be converted to a string and properly xml-escaped.
+    """
+
+    __tracebackhide__ = True
+
+    def record_func(name, value):
+        """noop function in case --junitxml was not passed in the command-line"""
+        __tracebackhide__ = True
+        _check_record_param_type("name", name)
+
+    xml = getattr(request.config, "_xml", None)
+    if xml is not None:
+        record_func = xml.add_global_property  # noqa
+    return record_func
 
 
 def pytest_addoption(parser):
@@ -424,6 +483,7 @@ class LogXML(object):
         self.node_reporters = {}  # nodeid -> _NodeReporter
         self.node_reporters_ordered = []
         self.global_properties = []
+
         # List of reports that failed on call but teardown is pending.
         self.open_reports = []
         self.cnt_double_fail_tests = 0
@@ -612,7 +672,9 @@ class LogXML(object):
         terminalreporter.write_sep("-", "generated xml file: %s" % (self.logfile))
 
     def add_global_property(self, name, value):
-        self.global_properties.append((str(name), bin_xml_escape(value)))
+        __tracebackhide__ = True
+        _check_record_param_type("name", name)
+        self.global_properties.append((name, bin_xml_escape(value)))
 
     def _get_global_properties_node(self):
         """Return a Junit node containing custom properties, if any.

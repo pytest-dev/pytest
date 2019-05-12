@@ -6,6 +6,8 @@ import os
 import platform
 import sys
 
+import six
+
 import _pytest._code
 import pytest
 from _pytest.debugging import _validate_usepdb_cls
@@ -395,7 +397,7 @@ class TestPDB(object):
         child = testdir.spawn_pytest(str(p1))
         child.expect("test_1")
         child.expect("Pdb")
-        child.sendeof()
+        child.sendline("q")
         rest = child.read().decode("utf8")
         assert "no tests ran" in rest
         assert "reading from stdin while output" not in rest
@@ -957,7 +959,7 @@ class TestDebuggingBreakpoints(object):
         child = testdir.spawn_pytest(str(p1))
         child.expect("test_1")
         child.expect("Pdb")
-        child.sendeof()
+        child.sendline("quit")
         rest = child.read().decode("utf8")
         assert "Quitting debugger" in rest
         assert "reading from stdin while output" not in rest
@@ -1013,7 +1015,8 @@ class TestTraceOption:
         rest = child.read().decode("utf8")
         assert "2 passed in" in rest
         assert "reading from stdin while output" not in rest
-        assert "Exit: Quitting debugger" in child.before.decode("utf8")
+        # Only printed once - not on stderr.
+        assert "Exit: Quitting debugger" not in child.before.decode("utf8")
         TestPDB.flush(child)
 
 
@@ -1133,7 +1136,11 @@ def test_pdbcls_via_local_module(testdir):
         class Wrapped:
             class MyPdb:
                 def set_trace(self, *args):
-                    print("mypdb_called", args)
+                    print("settrace_called", args)
+
+                def runcall(self, *args, **kwds):
+                    print("runcall_called", args, kwds)
+                    assert "func" in kwds
         """,
     )
     result = testdir.runpytest(
@@ -1150,4 +1157,37 @@ def test_pdbcls_via_local_module(testdir):
         str(p1), "--pdbcls=mypdb:Wrapped.MyPdb", syspathinsert=True
     )
     assert result.ret == 0
-    result.stdout.fnmatch_lines(["*mypdb_called*", "* 1 passed in *"])
+    result.stdout.fnmatch_lines(["*settrace_called*", "* 1 passed in *"])
+
+    # Ensure that it also works with --trace.
+    result = testdir.runpytest(
+        str(p1), "--pdbcls=mypdb:Wrapped.MyPdb", "--trace", syspathinsert=True
+    )
+    assert result.ret == 0
+    result.stdout.fnmatch_lines(["*runcall_called*", "* 1 passed in *"])
+
+
+def test_raises_bdbquit_with_eoferror(testdir):
+    """It is not guaranteed that DontReadFromInput's read is called."""
+    if six.PY2:
+        builtin_module = "__builtin__"
+        input_func = "raw_input"
+    else:
+        builtin_module = "builtins"
+        input_func = "input"
+    p1 = testdir.makepyfile(
+        """
+        def input_without_read(*args, **kwargs):
+            raise EOFError()
+
+        def test(monkeypatch):
+            import {builtin_module}
+            monkeypatch.setattr({builtin_module}, {input_func!r}, input_without_read)
+            __import__('pdb').set_trace()
+        """.format(
+            builtin_module=builtin_module, input_func=input_func
+        )
+    )
+    result = testdir.runpytest(str(p1))
+    result.stdout.fnmatch_lines(["E *BdbQuit", "*= 1 failed in*"])
+    assert result.ret == 1

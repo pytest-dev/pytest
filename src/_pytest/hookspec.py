@@ -227,7 +227,7 @@ def pytest_collectreport(report):
 
 
 def pytest_deselected(items):
-    """ called for test items deselected by keyword. """
+    """ called for test items deselected, e.g. by keyword. """
 
 
 @hookspec(firstresult=True)

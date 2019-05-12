@@ -1,3 +1,4 @@
+# encoding: utf-8
 """
 terminal reporting of the full testing process.
 """
@@ -16,6 +17,8 @@ import py
 import pytest
 from _pytest.main import EXIT_NOTESTSCOLLECTED
 from _pytest.reports import BaseReport
+from _pytest.terminal import _folded_skips
+from _pytest.terminal import _get_line_with_reprcrash_message
 from _pytest.terminal import _plugin_nameversions
 from _pytest.terminal import build_summary_stats_line
 from _pytest.terminal import getreportopt
@@ -505,6 +508,37 @@ class TestTerminalFunctional(object):
         )
         assert result.ret == 0
 
+    def test_deselected_with_hookwrapper(self, testdir):
+        testpath = testdir.makeconftest(
+            """
+            import pytest
+
+            @pytest.hookimpl(hookwrapper=True)
+            def pytest_collection_modifyitems(config, items):
+                yield
+                deselected = items.pop()
+                config.hook.pytest_deselected(items=[deselected])
+            """
+        )
+        testpath = testdir.makepyfile(
+            """
+                def test_one():
+                    pass
+                def test_two():
+                    pass
+                def test_three():
+                    pass
+           """
+        )
+        result = testdir.runpytest(testpath)
+        result.stdout.fnmatch_lines(
+            [
+                "collected 3 items / 1 deselected / 2 selected",
+                "*= 2 passed, 1 deselected in*",
+            ]
+        )
+        assert result.ret == 0
+
     def test_show_deselected_items_using_markexpr_before_test_execution(self, testdir):
         testdir.makepyfile(
             test_show_deselected="""
@@ -726,12 +760,18 @@ class TestTerminalFunctional(object):
         result.stdout.fnmatch_lines(["collected 3 items", "hello from hook: 3 items"])
 
 
-def test_fail_extra_reporting(testdir):
-    testdir.makepyfile("def test_this(): assert 0")
+def test_fail_extra_reporting(testdir, monkeypatch):
+    monkeypatch.setenv("COLUMNS", "80")
+    testdir.makepyfile("def test_this(): assert 0, 'this_failed' * 100")
     result = testdir.runpytest()
     assert "short test summary" not in result.stdout.str()
     result = testdir.runpytest("-rf")
-    result.stdout.fnmatch_lines(["*test summary*", "FAIL*test_fail_extra_reporting*"])
+    result.stdout.fnmatch_lines(
+        [
+            "*test summary*",
+            "FAILED test_fail_extra_reporting.py::test_this - AssertionError: this_failedt...",
+        ]
+    )
 
 
 def test_fail_reporting_on_pass(testdir):
@@ -768,11 +808,19 @@ def test_pass_output_reporting(testdir):
     assert "test_pass_has_output" not in s
     assert "Four score and seven years ago..." not in s
     assert "test_pass_no_output" not in s
-    result = testdir.runpytest("-rP")
+    result = testdir.runpytest("-rPp")
     result.stdout.fnmatch_lines(
-        ["*test_pass_has_output*", "Four score and seven years ago..."]
+        [
+            "*= PASSES =*",
+            "*_ test_pass_has_output _*",
+            "*- Captured stdout call -*",
+            "Four score and seven years ago...",
+            "*= short test summary info =*",
+            "PASSED test_pass_output_reporting.py::test_pass_has_output",
+            "PASSED test_pass_output_reporting.py::test_pass_no_output",
+            "*= 2 passed in *",
+        ]
     )
-    assert "test_pass_no_output" not in result.stdout.str()
 
 
 def test_color_yes(testdir):
@@ -830,13 +878,22 @@ def test_getreportopt():
     config.option.reportchars = "sfxw"
     assert getreportopt(config) == "sfx"
 
-    config.option.reportchars = "sfx"
+    # Now with --disable-warnings.
     config.option.disable_warnings = False
+    config.option.reportchars = "a"
+    assert getreportopt(config) == "sxXwEf"  # NOTE: "w" included!
+
+    config.option.reportchars = "sfx"
     assert getreportopt(config) == "sfxw"
 
     config.option.reportchars = "sfxw"
-    config.option.disable_warnings = False
     assert getreportopt(config) == "sfxw"
+
+    config.option.reportchars = "a"
+    assert getreportopt(config) == "sxXwEf"  # NOTE: "w" included!
+
+    config.option.reportchars = "A"
+    assert getreportopt(config) == "sxXwEfpP"
 
 
 def test_terminalreporter_reportopt_addopts(testdir):
@@ -1524,3 +1581,106 @@ class TestProgressWithTeardown(object):
         monkeypatch.delenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD", raising=False)
         output = testdir.runpytest("-n2")
         output.stdout.re_match_lines([r"[\.E]{40} \s+ \[100%\]"])
+
+
+def test_skip_reasons_folding():
+    path = "xyz"
+    lineno = 3
+    message = "justso"
+    longrepr = (path, lineno, message)
+
+    class X(object):
+        pass
+
+    ev1 = X()
+    ev1.when = "execute"
+    ev1.skipped = True
+    ev1.longrepr = longrepr
+
+    ev2 = X()
+    ev2.when = "execute"
+    ev2.longrepr = longrepr
+    ev2.skipped = True
+
+    # ev3 might be a collection report
+    ev3 = X()
+    ev3.when = "collect"
+    ev3.longrepr = longrepr
+    ev3.skipped = True
+
+    values = _folded_skips([ev1, ev2, ev3])
+    assert len(values) == 1
+    num, fspath, lineno, reason = values[0]
+    assert num == 3
+    assert fspath == path
+    assert lineno == lineno
+    assert reason == message
+
+
+def test_line_with_reprcrash(monkeypatch):
+    import _pytest.terminal
+    from wcwidth import wcswidth
+
+    mocked_verbose_word = "FAILED"
+
+    mocked_pos = "some::nodeid"
+
+    def mock_get_pos(*args):
+        return mocked_pos
+
+    monkeypatch.setattr(_pytest.terminal, "_get_pos", mock_get_pos)
+
+    class config(object):
+        pass
+
+    class rep(object):
+        def _get_verbose_word(self, *args):
+            return mocked_verbose_word
+
+        class longrepr:
+            class reprcrash:
+                pass
+
+    def check(msg, width, expected):
+        __tracebackhide__ = True
+        if msg:
+            rep.longrepr.reprcrash.message = msg
+        actual = _get_line_with_reprcrash_message(config, rep(), width)
+
+        assert actual == expected
+        if actual != "%s %s" % (mocked_verbose_word, mocked_pos):
+            assert len(actual) <= width
+            assert wcswidth(actual) <= width
+
+    # AttributeError with message
+    check(None, 80, "FAILED some::nodeid")
+
+    check("msg", 80, "FAILED some::nodeid - msg")
+    check("msg", 3, "FAILED some::nodeid")
+
+    check("msg", 24, "FAILED some::nodeid")
+    check("msg", 25, "FAILED some::nodeid - msg")
+
+    check("some longer msg", 24, "FAILED some::nodeid")
+    check("some longer msg", 25, "FAILED some::nodeid - ...")
+    check("some longer msg", 26, "FAILED some::nodeid - s...")
+
+    check("some\nmessage", 25, "FAILED some::nodeid - ...")
+    check("some\nmessage", 26, "FAILED some::nodeid - some")
+    check("some\nmessage", 80, "FAILED some::nodeid - some")
+
+    # Test unicode safety.
+    check(u"😄😄😄😄😄\n2nd line", 25, u"FAILED some::nodeid - ...")
+    check(u"😄😄😄😄😄\n2nd line", 26, u"FAILED some::nodeid - ...")
+    check(u"😄😄😄😄😄\n2nd line", 27, u"FAILED some::nodeid - 😄...")
+    check(u"😄😄😄😄😄\n2nd line", 28, u"FAILED some::nodeid - 😄...")
+    check(u"😄😄😄😄😄\n2nd line", 29, u"FAILED some::nodeid - 😄😄...")
+
+    # NOTE: constructed, not sure if this is supported.
+    # It would fail if not using u"" in Python 2 for mocked_pos.
+    mocked_pos = u"nodeid::😄::withunicode"
+    check(u"😄😄😄😄😄\n2nd line", 29, u"FAILED nodeid::😄::withunicode")
+    check(u"😄😄😄😄😄\n2nd line", 40, u"FAILED nodeid::😄::withunicode - 😄😄...")
+    check(u"😄😄😄😄😄\n2nd line", 41, u"FAILED nodeid::😄::withunicode - 😄😄...")
+    check(u"😄😄😄😄😄\n2nd line", 42, u"FAILED nodeid::😄::withunicode - 😄😄😄...")
+    check(u"😄😄😄😄😄\n2nd line", 80, u"FAILED nodeid::😄::withunicode - 😄😄😄😄😄")

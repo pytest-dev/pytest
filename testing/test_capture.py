@@ -605,8 +605,8 @@ class TestCaptureFixture(object):
         result.stdout.fnmatch_lines(["*KeyboardInterrupt*"])
         assert result.ret == 2
 
-    @pytest.mark.issue14
     def test_capture_and_logging(self, testdir):
+        """#14"""
         p = testdir.makepyfile(
             """\
             import logging
@@ -819,15 +819,15 @@ def test_error_during_readouterr(testdir):
     testdir.makepyfile(
         pytest_xyz="""
         from _pytest.capture import FDCapture
+
         def bad_snap(self):
             raise Exception('boom')
+
         assert FDCapture.snap
         FDCapture.snap = bad_snap
     """
     )
-    result = testdir.runpytest_subprocess(
-        "-p", "pytest_xyz", "--version", syspathinsert=True
-    )
+    result = testdir.runpytest_subprocess("-p", "pytest_xyz", "--version")
     result.stderr.fnmatch_lines(
         ["*in bad_snap", "    raise Exception('boom')", "Exception: boom"]
     )
@@ -1243,25 +1243,24 @@ class TestStdCaptureFDinvalidFD(object):
             from _pytest import capture
 
             def StdCaptureFD(out=True, err=True, in_=True):
-                return capture.MultiCapture(out, err, in_,
-                                            Capture=capture.FDCapture)
+                return capture.MultiCapture(out, err, in_, Capture=capture.FDCapture)
 
             def test_stdout():
                 os.close(1)
                 cap = StdCaptureFD(out=True, err=False, in_=False)
-                assert repr(cap.out) == "<FDCapture 1 oldfd=None>"
+                assert repr(cap.out) == "<FDCapture 1 oldfd=None _state=None>"
                 cap.stop_capturing()
 
             def test_stderr():
                 os.close(2)
                 cap = StdCaptureFD(out=False, err=True, in_=False)
-                assert repr(cap.err) == "<FDCapture 2 oldfd=None>"
+                assert repr(cap.err) == "<FDCapture 2 oldfd=None _state=None>"
                 cap.stop_capturing()
 
             def test_stdin():
                 os.close(0)
                 cap = StdCaptureFD(out=False, err=False, in_=True)
-                assert repr(cap.in_) == "<FDCapture 0 oldfd=None>"
+                assert repr(cap.in_) == "<FDCapture 0 oldfd=None _state=None>"
                 cap.stop_capturing()
         """
         )

@@ -9,6 +9,7 @@ import types
 
 import pytest
 from _pytest.config import PytestPluginManager
+from _pytest.config.exceptions import UsageError
 from _pytest.main import EXIT_NOTESTSCOLLECTED
 from _pytest.main import Session
 
@@ -313,6 +314,9 @@ class TestPytestPluginManagerBootstrapming(object):
 
         # Handles -p without following arg (when used without argparse).
         pytestpm.consider_preparse(["-p"])
+
+        with pytest.raises(UsageError, match="^plugin main cannot be disabled$"):
+            pytestpm.consider_preparse(["-p", "no:main"])
 
     def test_plugin_prevent_register(self, pytestpm):
         pytestpm.consider_preparse(["xyz", "-p", "no:abc"])

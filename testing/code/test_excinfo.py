@@ -11,7 +11,6 @@ import textwrap
 import py
 import six
 from six.moves import queue
-from test_source import astonly
 
 import _pytest
 import pytest
@@ -147,7 +146,6 @@ class TestTraceback_f_g_h(object):
         assert s.startswith("def f():")
         assert s.endswith("raise ValueError")
 
-    @astonly
     @failsonjython
     def test_traceback_entry_getsource_in_construct(self):
         source = _pytest._code.Source(

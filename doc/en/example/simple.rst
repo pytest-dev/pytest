@@ -194,9 +194,9 @@ and when running it will see a skipped "slow" test:
     collected 2 items
 
     test_module.py .s                                                    [100%]
+
     ========================= short test summary info ==========================
     SKIPPED [1] test_module.py:8: need --runslow option to run
-
     =================== 1 passed, 1 skipped in 0.12 seconds ====================
 
 Or run it including the ``slow`` marked test:
@@ -606,7 +606,7 @@ We can run this:
     file $REGENDOC_TMPDIR/b/test_error.py, line 1
       def test_root(db):  # no db here, will error out
     E       fixture 'db' not found
-    >       available fixtures: cache, capfd, capfdbinary, caplog, capsys, capsysbinary, doctest_namespace, monkeypatch, pytestconfig, record_property, record_xml_attribute, recwarn, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
+    >       available fixtures: cache, capfd, capfdbinary, caplog, capsys, capsysbinary, doctest_namespace, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
     >       use 'pytest --fixtures [testpath]' for help on them.
 
     $REGENDOC_TMPDIR/b/test_error.py:1

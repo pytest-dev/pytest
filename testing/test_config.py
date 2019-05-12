@@ -1212,20 +1212,12 @@ def test_config_does_not_load_blocked_plugin_from_args(testdir):
     [
         x
         for x in _pytest.config.default_plugins
-        if x
-        not in [
-            "fixtures",
-            "helpconfig",  # Provides -p.
-            "main",
-            "mark",
-            "python",
-            "runner",
-            "terminal",  # works in OK case (no output), but not with failures.
-        ]
+        if x not in _pytest.config.essential_plugins
     ],
 )
 def test_config_blocked_default_plugins(testdir, plugin):
     if plugin == "debugging":
+        # Fixed in xdist master (after 1.27.0).
         # https://github.com/pytest-dev/pytest-xdist/pull/422
         try:
             import xdist  # noqa: F401
@@ -1237,9 +1229,13 @@ def test_config_blocked_default_plugins(testdir, plugin):
     p = testdir.makepyfile("def test(): pass")
     result = testdir.runpytest(str(p), "-pno:%s" % plugin)
     assert result.ret == EXIT_OK
-    result.stdout.fnmatch_lines(["* 1 passed in *"])
+    if plugin != "terminal":
+        result.stdout.fnmatch_lines(["* 1 passed in *"])
 
     p = testdir.makepyfile("def test(): assert 0")
     result = testdir.runpytest(str(p), "-pno:%s" % plugin)
     assert result.ret == EXIT_TESTSFAILED
-    result.stdout.fnmatch_lines(["* 1 failed in *"])
+    if plugin != "terminal":
+        result.stdout.fnmatch_lines(["* 1 failed in *"])
+    else:
+        assert result.stdout.lines == [""]

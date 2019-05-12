@@ -223,7 +223,6 @@ import ``helper.py`` normally.  The contents of
    pytest.register_assert_rewrite("pytest_foo.helper")
 
 
-
 Requiring/Loading plugins in a test module or conftest file
 -----------------------------------------------------------
 
@@ -285,6 +284,26 @@ the plugin manager like this:
 
 If you want to look at the names of existing plugins, use
 the ``--trace-config`` option.
+
+
+.. _registering-markers:
+
+Registering custom markers
+--------------------------
+
+If your plugin uses any markers, you should register them so that they appear in
+pytest's help text and do not :ref:`cause spurious warnings <unknown-marks>`.
+For example, the following plugin would register ``cool_marker`` and
+``mark_with`` for all users:
+
+.. code-block:: python
+
+    def pytest_configure(config):
+        config.addinivalue_line("markers", "cool_marker: this one is for cool tests.")
+        config.addinivalue_line(
+            "markers", "mark_with(arg, arg2): this marker takes arguments."
+        )
+
 
 Testing plugins
 ---------------

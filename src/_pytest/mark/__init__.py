@@ -100,6 +100,9 @@ pytest_cmdline_main.tryfirst = True
 
 def deselect_by_keyword(items, config):
     keywordexpr = config.option.keyword.lstrip()
+    if not keywordexpr:
+        return
+
     if keywordexpr.startswith("-"):
         keywordexpr = "not " + keywordexpr[1:]
     selectuntil = False
@@ -147,8 +150,7 @@ def pytest_collection_modifyitems(items, config):
 
 def pytest_configure(config):
     config._old_mark_config = MARK_GEN._config
-    if config.option.strict:
-        MARK_GEN._config = config
+    MARK_GEN._config = config
 
     empty_parameterset = config.getini(EMPTY_PARAMETERSET_OPTION)
 

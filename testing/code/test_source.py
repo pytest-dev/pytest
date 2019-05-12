@@ -16,7 +16,6 @@ import _pytest._code
 import pytest
 from _pytest._code import Source
 
-astonly = pytest.mark.nothing
 failsonjython = pytest.mark.xfail("sys.platform.startswith('java')")
 
 
@@ -227,7 +226,6 @@ class TestSourceParsingAndCompiling(object):
         s = source.getstatement(1)
         assert s == str(source)
 
-    @astonly
     def test_getstatementrange_within_constructs(self):
         source = Source(
             """\
@@ -630,7 +628,6 @@ x = 3
 
 
 class TestTry(object):
-    pytestmark = astonly
     source = """\
 try:
     raise ValueError
@@ -675,7 +672,6 @@ finally:
 
 
 class TestIf(object):
-    pytestmark = astonly
     source = """\
 if 1:
     y = 3
