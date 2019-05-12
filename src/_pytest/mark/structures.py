@@ -103,8 +103,11 @@ class ParameterSet(namedtuple("ParameterSet", "values, marks, id")):
         else:
             return cls(parameterset, marks=[], id=None)
 
-    @classmethod
-    def _for_parametrize(cls, argnames, argvalues, func, config, function_definition):
+    @staticmethod
+    def _parse_parametrize_args(argnames, argvalues, **_):
+        """It receives an ignored _ (kwargs) argument so this function can
+        take also calls from parametrize ignoring scope, indirect, and other
+        arguments..."""
         if not isinstance(argnames, (tuple, list)):
             argnames = [x.strip() for x in argnames.split(",") if x.strip()]
             force_tuple = len(argnames) == 1
@@ -113,6 +116,11 @@ class ParameterSet(namedtuple("ParameterSet", "values, marks, id")):
         parameters = [
             ParameterSet.extract_from(x, force_tuple=force_tuple) for x in argvalues
         ]
+        return argnames, parameters
+
+    @classmethod
+    def _for_parametrize(cls, argnames, argvalues, func, config, function_definition):
+        argnames, parameters = cls._parse_parametrize_args(argnames, argvalues)
         del argvalues
 
         if parameters:

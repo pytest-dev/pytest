@@ -1129,18 +1129,40 @@ class FixtureManager(object):
         self._nodeid_and_autousenames = [("", self.config.getini("usefixtures"))]
         session.config.pluginmanager.register(self, "funcmanage")
 
+    def _get_direct_parametrize_args(self, node):
+        """This function returns all the direct parametrization
+        arguments of a node, so we don't mistake them for fixtures
+
+        Check https://github.com/pytest-dev/pytest/issues/5036
+
+        This things are done later as well when dealing with parametrization
+        so this could be improved
+        """
+        from _pytest.mark import ParameterSet
+
+        parametrize_argnames = []
+        for marker in node.iter_markers(name="parametrize"):
+            if not marker.kwargs.get("indirect", False):
+                p_argnames, _ = ParameterSet._parse_parametrize_args(
+                    *marker.args, **marker.kwargs
+                )
+                parametrize_argnames.extend(p_argnames)
+
+        return parametrize_argnames
+
     def getfixtureinfo(self, node, func, cls, funcargs=True):
         if funcargs and not getattr(node, "nofuncargs", False):
             argnames = getfuncargnames(func, cls=cls)
         else:
             argnames = ()
+
         usefixtures = itertools.chain.from_iterable(
             mark.args for mark in node.iter_markers(name="usefixtures")
         )
         initialnames = tuple(usefixtures) + argnames
         fm = node.session._fixturemanager
         initialnames, names_closure, arg2fixturedefs = fm.getfixtureclosure(
-            initialnames, node
+            initialnames, node, ignore_args=self._get_direct_parametrize_args(node)
         )
         return FuncFixtureInfo(argnames, initialnames, names_closure, arg2fixturedefs)
 
@@ -1174,7 +1196,7 @@ class FixtureManager(object):
                 autousenames.extend(basenames)
         return autousenames
 
-    def getfixtureclosure(self, fixturenames, parentnode):
+    def getfixtureclosure(self, fixturenames, parentnode, ignore_args=()):
         # collect the closure of all fixtures , starting with the given
         # fixturenames as the initial set.  As we have to visit all
         # factory definitions anyway, we also return an arg2fixturedefs
@@ -1202,6 +1224,8 @@ class FixtureManager(object):
         while lastlen != len(fixturenames_closure):
             lastlen = len(fixturenames_closure)
             for argname in fixturenames_closure:
+                if argname in ignore_args:
+                    continue
                 if argname in arg2fixturedefs:
                     continue
                 fixturedefs = self.getfixturedefs(argname, parentid)
