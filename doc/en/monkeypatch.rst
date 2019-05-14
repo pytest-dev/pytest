@@ -86,32 +86,39 @@ Monkeypatching environment variables
 
 If you are working with environment variables you often need to safely change the values
 or delete them from the system for testing purposes. ``Monkeypatch`` provides a mechanism
-to do this using the ``setenv`` and ``delenv`` method. Our example code to test::
+to do this using the ``setenv`` and ``delenv`` method. Our example code to test:
+
+.. code-block:: python
 
     # contents of our original code file e.g. code.py
     import os
 
+
     def get_os_user_lower():
-    """Simple retrieval function.
-    Returns lowercase USER or raises EnvironmentError."""
-    username = os.getenv("USER")
+        """Simple retrieval function.
+        Returns lowercase USER or raises EnvironmentError."""
+        username = os.getenv("USER")
 
-    if username is None:
-        raise EnvironmentError("USER environment is not set.")
+        if username is None:
+            raise EnvironmentError("USER environment is not set.")
 
-    return username.lower()
+        return username.lower()
 
 There are two potential paths. First, the ``USER`` environment variable is set to a
 value. Second, the ``USER`` environment variable does not exist. Using ``monkeypatch``
-both paths can be safely tested without impacting the running environment::
+both paths can be safely tested without impacting the running environment:
+
+.. code-block:: python
 
     # contents of our test file e.g. test_code.py
     import pytest
+
 
     def test_upper_to_lower(monkeypatch):
         """Set the USER env var to assert the behavior."""
         monkeypatch.setenv("USER", "TestingUser")
         assert get_os_user_lower() == "testinguser"
+
 
     def test_raise_exception(monkeypatch):
         """Remove the USER env var and assert EnvironmentError is raised."""
@@ -120,26 +127,31 @@ both paths can be safely tested without impacting the running environment::
         with pytest.raises(EnvironmentError):
             _ = get_os_user_lower()
 
-This behavior can be be moved into ``fixture`` structures and shared across tests::
+This behavior can be be moved into ``fixture`` structures and shared across tests:
+
+.. code-block:: python
 
     import pytest
+
 
     @pytest.fixture
     def mock_env_user(monkeypatch):
         monkeypatch.setenv("USER", "TestingUser")
 
+
     @pytest.fixture
     def mock_env_missing(monkeypatch):
         monkeypatch.delenv("USER", raising=False)
+
 
     # Notice the tests reference the fixtures for mocks
     def test_upper_to_lower(mock_env_user):
         assert get_os_user_lower() == "testinguser"
 
+
     def test_raise_exception(mock_env_missing):
         with pytest.raises(EnvironmentError):
             _ = get_os_user_lower()
-
 
 
 
