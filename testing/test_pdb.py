@@ -817,7 +817,7 @@ class TestPDB(object):
         result.stdout.fnmatch_lines(["*NameError*xxx*", "*1 error*"])
         assert custom_pdb_calls == []
 
-    def test_pdb_custom_cls_with_settrace(self, testdir, monkeypatch):
+    def test_pdb_custom_cls_with_set_trace(self, testdir, monkeypatch):
         testdir.makepyfile(
             custom_pdb="""
             class CustomPdb(object):
@@ -1129,14 +1129,14 @@ def test_pdbcls_via_local_module(testdir):
     p1 = testdir.makepyfile(
         """
         def test():
-            print("before_settrace")
+            print("before_set_trace")
             __import__("pdb").set_trace()
         """,
         mypdb="""
         class Wrapped:
             class MyPdb:
                 def set_trace(self, *args):
-                    print("settrace_called", args)
+                    print("set_trace_called", args)
 
                 def runcall(self, *args, **kwds):
                     print("runcall_called", args, kwds)
@@ -1157,7 +1157,7 @@ def test_pdbcls_via_local_module(testdir):
         str(p1), "--pdbcls=mypdb:Wrapped.MyPdb", syspathinsert=True
     )
     assert result.ret == 0
-    result.stdout.fnmatch_lines(["*settrace_called*", "* 1 passed in *"])
+    result.stdout.fnmatch_lines(["*set_trace_called*", "* 1 passed in *"])
 
     # Ensure that it also works with --trace.
     result = testdir.runpytest(
