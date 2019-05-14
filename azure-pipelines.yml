@@ -94,7 +94,7 @@ jobs:
     condition: eq(variables['python.needs_vc'], True)
     displayName: 'Install VC for py27'
 
-  - script: $(python.exe) -m pip install --upgrade pip && $(python.exe) -m pip install tox
+  - script: $(python.exe) -m pip install --upgrade pip && $(python.exe) -m pip install --force-reinstall tox
     displayName: 'Install tox'
 
   - script: |
