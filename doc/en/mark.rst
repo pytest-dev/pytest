@@ -24,39 +24,56 @@ which also serve as documentation.
     :ref:`fixtures <fixtures>`.
 
 
-.. _unknown-marks:
+Registering marks
+-----------------
 
-Raising errors on unknown marks
--------------------------------
-
-Unknown marks applied with the ``@pytest.mark.name_of_the_mark`` decorator
-will always emit a warning, in order to avoid silently doing something
-surprising due to mis-typed names.  You can disable the warning for custom
-marks by registering them in ``pytest.ini`` like this:
+You can register custom marks in your ``pytest.ini`` file like this:
 
 .. code-block:: ini
 
     [pytest]
     markers =
-        slow
+        slow: marks tests as slow (deselect with '-m "not slow"')
         serial
 
+Note that everything after the ``:`` is an optional description.
+
+Alternatively, you can register new markers programatically in a
+:ref:`pytest_configure <initialization-hooks>` hook:
+
+.. code-block:: python
+
+    def pytest_configure(config):
+        config.addinivalue_line(
+            "markers", "env(name): mark test to run only on named environment"
+        )
+
+
+Registered marks appear in pytest's help text and do not emit warnings (see the next section). It
+is recommended that third-party plugins always :ref:`register their markers <registering-markers>`.
+
+.. _unknown-marks:
+
+Raising errors on unknown marks
+-------------------------------
+
+Unregistered marks applied with the ``@pytest.mark.name_of_the_mark`` decorator
+will always emit a warning in order to avoid silently doing something
+surprising due to mis-typed names. As described in the previous section, you can disable
+the warning for custom marks by registering them in your ``pytest.ini`` file or
+using a custom ``pytest_configure`` hook.
+
 When the ``--strict-markers`` command-line flag is passed, any unknown marks applied
-with the ``@pytest.mark.name_of_the_mark`` decorator will trigger an error.
-Marks added by pytest or by a plugin instead of the decorator will not trigger
-this error.  To enforce validation of markers, add ``--strict-markers`` to ``addopts``:
+with the ``@pytest.mark.name_of_the_mark`` decorator will trigger an error. You can
+enforce this validation in your project by adding ``--strict-markers`` to ``addopts``:
 
 .. code-block:: ini
 
     [pytest]
     addopts = --strict-markers
     markers =
-        slow
+        slow: marks tests as slow (deselect with '-m "not slow"')
         serial
-
-Third-party plugins should always :ref:`register their markers <registering-markers>`
-so that they appear in pytest's help text and do not emit warnings.
-
 
 .. _marker-revamp:
 
