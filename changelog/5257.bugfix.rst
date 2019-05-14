@@ -1,0 +1,1 @@
+Ensure that ``sys.stdout.mode`` does not include ``'b'`` as it is a text stream.
