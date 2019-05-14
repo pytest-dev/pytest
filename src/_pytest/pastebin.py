@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """ submit failure or test session information to a pastebin service. """
 from __future__ import absolute_import
 from __future__ import division

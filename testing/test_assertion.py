@@ -1,4 +1,4 @@
-# coding: utf-8
+# -*- coding: utf-8 -*-
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
@@ -1297,7 +1297,7 @@ def test_assert_indirect_tuple_no_warning(testdir):
 def test_assert_with_unicode(monkeypatch, testdir):
     testdir.makepyfile(
         u"""
-        # coding: utf-8
+        # -*- coding: utf-8 -*-
         def test_unicode():
             assert u'유니코드' == u'Unicode'
     """

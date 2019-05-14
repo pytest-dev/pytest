@@ -1,4 +1,4 @@
-# encoding: utf-8
+# -*- coding: utf-8 -*-
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
@@ -372,7 +372,7 @@ def test_nottest_class_decorator(testdir):
 def test_skip_test_with_unicode(testdir):
     testdir.makepyfile(
         """
-        # encoding: utf-8
+        # -*- coding: utf-8 -*-
         import unittest
         class TestClass():
             def test_io(self):

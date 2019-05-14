@@ -1,4 +1,4 @@
-# coding: utf-8
+# -*- coding: utf-8 -*-
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
@@ -106,7 +106,7 @@ def test_capturing_unicode(testdir, method):
         obj = "u'\u00f6y'"
     testdir.makepyfile(
         """
-        # coding: utf-8
+        # -*- coding: utf-8 -*-
         # taken from issue 227 from nosetests
         def test_unicode():
             import sys

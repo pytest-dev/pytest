@@ -1,4 +1,4 @@
-# coding: utf-8
+# -*- coding: utf-8 -*-
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
@@ -645,7 +645,7 @@ def test_pytest_fail_notrace_non_ascii(testdir, str_prefix):
     """
     testdir.makepyfile(
         u"""
-        # coding: utf-8
+        # -*- coding: utf-8 -*-
         import pytest
 
         def test_hello():
@@ -793,7 +793,7 @@ def test_pytest_cmdline_main(testdir):
 def test_unicode_in_longrepr(testdir):
     testdir.makeconftest(
         """
-        # coding: utf-8
+        # -*- coding: utf-8 -*-
         import pytest
         @pytest.hookimpl(hookwrapper=True)
         def pytest_runtest_makereport():

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
  test correct setup/teardowns at
  module, class, and instance level

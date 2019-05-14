@@ -1,4 +1,4 @@
-# coding: utf-8
+# -*- coding: utf-8 -*-
 import os
 import re
 from io import open
@@ -842,7 +842,7 @@ def test_log_file_unicode(testdir):
     )
     testdir.makepyfile(
         """
-        # coding: utf-8
+        # -*- coding: utf-8 -*-
         from __future__ import unicode_literals
         import logging
 

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """ command line options, ini-file and conftest.py processing. """
 from __future__ import absolute_import
 from __future__ import division

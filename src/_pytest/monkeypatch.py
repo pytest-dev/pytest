@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """ monkeypatching and mocking functionality.  """
 from __future__ import absolute_import
 from __future__ import division

@@ -1,4 +1,4 @@
-# coding: utf-8
+# -*- coding: utf-8 -*-
 import os
 import sys
 import textwrap
@@ -119,7 +119,7 @@ class TestModule(object):
         """
         testdir.makepyfile(
             u"""
-            # coding: utf-8
+            # -*- coding: utf-8 -*-
             raise ImportError(u'Something bad happened ☺')
         """
         )
@@ -1244,7 +1244,7 @@ def test_syntax_error_with_non_ascii_chars(testdir):
     """
     testdir.makepyfile(
         u"""
-    # coding: utf-8
+    # -*- coding: utf-8 -*-
 
     ☃
     """

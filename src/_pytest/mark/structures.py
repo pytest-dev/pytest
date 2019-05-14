@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import inspect
 import warnings
 from collections import namedtuple

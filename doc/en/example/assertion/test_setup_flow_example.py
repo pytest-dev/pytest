@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 def setup_module(module):
     module.TestStateFullThing.classcount = 0
 

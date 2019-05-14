@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # run this with $ pytest --collect-only test_collectonly.py
 #
 

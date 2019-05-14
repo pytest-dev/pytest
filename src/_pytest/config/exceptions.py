@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 class UsageError(Exception):
     """ error in pytest usage or invocation"""
 
