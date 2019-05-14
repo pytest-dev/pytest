@@ -1,4 +1,4 @@
-# encoding: UTF-8
+# encoding: utf-8
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
@@ -155,7 +155,7 @@ def test_importplugin_error_message(testdir, pytestpm):
     testdir.syspathinsert(testdir.tmpdir)
     testdir.makepyfile(
         qwe="""
-        # encoding: UTF-8
+        # encoding: utf-8
         def test_traceback():
             raise ImportError(u'Not possible to import: ☺')
         test_traceback()

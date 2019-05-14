@@ -1,4 +1,4 @@
-# -*- coding: utf8 -*-
+# coding: utf-8
 from __future__ import unicode_literals
 
 import sys
@@ -133,7 +133,7 @@ def test_ignore(testdir, pyfile_with_warnings, method):
 def test_unicode(testdir, pyfile_with_warnings):
     testdir.makepyfile(
         """
-        # -*- coding: utf8 -*-
+        # coding: utf-8
         import warnings
         import pytest
 
@@ -168,7 +168,7 @@ def test_py2_unicode(testdir, pyfile_with_warnings):
         pytest.xfail("fails with unicode error on PyPy2 5.9 and Windows (#2905)")
     testdir.makepyfile(
         """
-        # -*- coding: utf8 -*-
+        # coding: utf-8
         import warnings
         import pytest
 
@@ -577,7 +577,7 @@ def test_infinite_loop_warning_against_unicode_usage_py2(testdir):
     """
     testdir.makepyfile(
         """
-        # -*- coding: utf8 -*-
+        # coding: utf-8
         from __future__ import unicode_literals
         import warnings
         import pytest
