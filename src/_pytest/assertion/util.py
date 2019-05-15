@@ -263,8 +263,11 @@ def _compare_eq_sequence(left, right, verbose=0):
                 "At index {} diff: {!r} != {!r}".format(i, left[i], right[i])
             ]
             break
-    len_diff = len_left - len_right
 
+    if isinstance(left, bytes):
+        return explanation
+
+    len_diff = len_left - len_right
     if len_diff:
         if len_diff > 0:
             dir_with_more = "Left"
