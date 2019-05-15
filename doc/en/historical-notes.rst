@@ -19,10 +19,13 @@ This state of things made it technically next to impossible to use data from mar
 Depending on how a marker got declared/changed one would get either a ``MarkerInfo`` which might contain markers from sibling classes,
 ``MarkDecorators`` when marks came from parameterization or from a ``node.add_marker`` call, discarding prior marks. Also ``MarkerInfo`` acts like a single mark, when it in fact represents a merged view on multiple marks with the same name.
 
-On top of that markers were not accessible the same way for modules, classes, and functions/methods.
+On top of that markers were not accessible in the same way for modules, classes, and functions/methods.
 In fact, markers were only accessible in functions, even if they were declared on classes/modules.
 
-A new API to access markers has been introduced in pytest 3.6 in order to solve the problems with the initial design, providing :func:`_pytest.nodes.Node.iter_markers` method to iterate over markers in a consistent manner and reworking the internals, which solved great deal of problems with the initial design.
+A new API to access markers has been introduced in pytest 3.6 in order to solve the problems with
+the initial design, providing the :func:`_pytest.nodes.Node.iter_markers` method to iterate over
+markers in a consistent manner and reworking the internals, which solved a great deal of problems
+with the initial design.
 
 
 .. _update marker code:
