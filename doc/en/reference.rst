@@ -581,6 +581,8 @@ Bootstrapping hooks called for plugins registered early enough (internal and set
 .. autofunction:: pytest_cmdline_parse
 .. autofunction:: pytest_cmdline_main
 
+.. _`initialization-hooks`:
+
 Initialization hooks
 ~~~~~~~~~~~~~~~~~~~~
 
