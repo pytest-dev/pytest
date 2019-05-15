@@ -1,0 +1,1 @@
+Handle internal error due to a lone surrogate unicode character not being representable in Jython.
