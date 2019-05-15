@@ -605,7 +605,10 @@ class TestAssert_reprcompare(object):
                 return "\xff"
 
         expl = callequal(A(), "1")
-        assert expl
+        if PY3:
+            assert expl == ["ÿ == '1'", "+ 1"]
+        else:
+            assert expl == [u"\ufffd == '1'", u"+ 1"]
 
     def test_format_nonascii_explanation(self):
         assert util.format_explanation("λ")
