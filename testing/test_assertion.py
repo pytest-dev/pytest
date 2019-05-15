@@ -354,6 +354,18 @@ class TestAssert_reprcompare(object):
         assert "- spam" in diff
         assert "+ eggs" in diff
 
+    def test_bytes_diff(self):
+        diff = callequal(b"spam", b"eggs")
+        if PY3:
+            assert diff == [
+                "b'spam' == b'eggs'",
+                "At index 0 diff: 115 != 101",
+                "Use -v to get the full diff",
+            ]
+        else:
+            # Handled as text on Python 2.
+            assert diff == ["'spam' == 'eggs'", "- spam", "+ eggs"]
+
     def test_list(self):
         expl = callequal([0, 1], [0, 2])
         assert len(expl) > 1
