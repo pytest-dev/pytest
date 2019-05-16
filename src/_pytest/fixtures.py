@@ -1075,6 +1075,15 @@ def pytestconfig(request):
     return request.config
 
 
+def pytest_addoption(parser):
+    parser.addini(
+        "usefixtures",
+        type="args",
+        default=[],
+        help="list of default fixtures to be used with this project",
+    )
+
+
 class FixtureManager(object):
     """
     pytest fixtures definitions and information is stored and managed

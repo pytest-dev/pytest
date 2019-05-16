@@ -1228,6 +1228,17 @@ def test_config_blocked_default_plugins(testdir, plugin):
 
     p = testdir.makepyfile("def test(): pass")
     result = testdir.runpytest(str(p), "-pno:%s" % plugin)
+
+    if plugin == "python":
+        assert result.ret == EXIT_USAGEERROR
+        result.stderr.fnmatch_lines(
+            [
+                "ERROR: not found: */test_config_blocked_default_plugins.py",
+                "(no name '*/test_config_blocked_default_plugins.py' in any of [])",
+            ]
+        )
+        return
+
     assert result.ret == EXIT_OK
     if plugin != "terminal":
         result.stdout.fnmatch_lines(["* 1 passed in *"])
