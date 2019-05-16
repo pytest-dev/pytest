@@ -127,7 +127,7 @@ both paths can be safely tested without impacting the running environment:
         with pytest.raises(EnvironmentError):
             _ = get_os_user_lower()
 
-This behavior can be be moved into ``fixture`` structures and shared across tests:
+This behavior can be moved into ``fixture`` structures and shared across tests:
 
 .. code-block:: python
 
