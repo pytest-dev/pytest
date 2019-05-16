@@ -1,0 +1,1 @@
+Expand docs on use of ``setenv`` and ``delenv`` with ``monkeypatch``.

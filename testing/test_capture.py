@@ -1051,6 +1051,9 @@ class TestFDCapture(object):
             cap.done()
             pytest.raises(AttributeError, cap.suspend)
 
+    def test_capfd_sys_stdout_mode(self, capfd):
+        assert "b" not in sys.stdout.mode
+
 
 @contextlib.contextmanager
 def saved_fd(fd):

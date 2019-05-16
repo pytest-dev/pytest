@@ -4,7 +4,9 @@
 Working with custom markers
 =================================================
 
-Here are some example using the :ref:`mark` mechanism.
+Here are some examples using the :ref:`mark` mechanism.
+
+.. _`mark run`:
 
 Marking test functions and selecting them for a run
 ----------------------------------------------------

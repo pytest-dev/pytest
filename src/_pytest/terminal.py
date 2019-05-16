@@ -998,7 +998,15 @@ def _get_line_with_reprcrash_message(config, rep, termwidth):
                     # u'😄' will result in a High Surrogate (U+D83D) character, which is
                     # rendered as u'�'; in this case we just strip that character out as it
                     # serves no purpose being rendered
-                    msg = msg.rstrip(u"\uD83D")
+                    try:
+                        surrogate = six.unichr(0xD83D)
+                        msg = msg.rstrip(surrogate)
+                    except ValueError:  # pragma: no cover
+                        # Jython cannot represent this lone surrogate at all (#5256):
+                        # ValueError: unichr() arg is a lone surrogate in range
+                        #     (0xD800, 0xDFFF) (Jython UTF-16 encoding)
+                        # ignore this case as it shouldn't appear in the string anyway
+                        pass
                 msg += ellipsis
             line += sep + msg
     return line
