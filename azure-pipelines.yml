@@ -41,12 +41,13 @@ jobs:
         #   Also seen with py27-nobyte (using xdist), and py27-xdist.
         #   But no exception with py27-pexpect,py27-twisted,py27-numpy.
         PYTEST_COVERAGE: '1'
-      pypy:
-        python.version: 'pypy2'
-        tox.env: 'pypy'
-      pypy3:
-        python.version: 'pypy3'
-        tox.env: 'pypy3'
+      # -- pypy2 and pypy3 are disabled for now: #5279 --
+      # pypy:
+      #   python.version: 'pypy2'
+      #   tox.env: 'pypy'
+      # pypy3:
+      #   python.version: 'pypy3'
+      #   tox.env: 'pypy3'
       py34-xdist:
         python.version: '3.4'
         tox.env: 'py34-xdist'
