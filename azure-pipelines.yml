@@ -5,7 +5,6 @@ trigger:
 variables:
   PYTEST_ADDOPTS: "--junitxml=build/test-results/$(tox.env).xml -vv"
   python.needs_vc: False
-  python.exe: "python"
   COVERAGE_FILE: "$(Build.Repository.LocalPath)/.coverage"
   COVERAGE_PROCESS_START: "$(Build.Repository.LocalPath)/.coveragerc"
   PYTEST_COVERAGE: '0'
@@ -42,15 +41,13 @@ jobs:
         #   Also seen with py27-nobyte (using xdist), and py27-xdist.
         #   But no exception with py27-pexpect,py27-twisted,py27-numpy.
         PYTEST_COVERAGE: '1'
-      pypy:
-        python.version: 'pypy2'
-        tox.env: 'pypy'
-        python.exe: 'pypy'
-      # NOTE: pypy3 fails to install pip currently due to an internal error.
+      # -- pypy2 and pypy3 are disabled for now: #5279 --
+      # pypy:
+      #   python.version: 'pypy2'
+      #   tox.env: 'pypy'
       # pypy3:
       #   python.version: 'pypy3'
       #   tox.env: 'pypy3'
-      #   python.exe: 'pypy3'
       py34-xdist:
         python.version: '3.4'
         tox.env: 'py34-xdist'
@@ -94,12 +91,12 @@ jobs:
     condition: eq(variables['python.needs_vc'], True)
     displayName: 'Install VC for py27'
 
-  - script: $(python.exe) -m pip install --upgrade pip && $(python.exe) -m pip install tox
+  - script: python -m pip install --upgrade pip && python -m pip install tox
     displayName: 'Install tox'
 
   - script: |
       call scripts/setup-coverage-vars.bat || goto :eof
-      $(python.exe) -m tox -e $(tox.env)
+      python -m tox -e $(tox.env)
     displayName: 'Run tests'
 
   - task: PublishTestResults@2
@@ -112,6 +109,5 @@ jobs:
     displayName: 'Report and upload coverage'
     condition: eq(variables['PYTEST_COVERAGE'], '1')
     env:
-      PYTHON: $(python.exe)
       CODECOV_TOKEN: $(CODECOV_TOKEN)
       PYTEST_CODECOV_NAME: $(tox.env)
