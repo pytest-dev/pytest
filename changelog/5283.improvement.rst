@@ -1,0 +1,1 @@
+Display full crash information in short test summaries on non-tty (e.g. CI).

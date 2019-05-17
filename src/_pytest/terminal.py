@@ -5,6 +5,7 @@ This is a good source for looking at the various reporting hooks.
 import argparse
 import collections
 import datetime
+import os
 import platform
 import sys
 import time
@@ -914,11 +915,15 @@ class TerminalReporter:
         if not self.reportchars:
             return
 
+        if os.environ.get("CI") == "true" or not self.isatty:
+            termwidth = None
+        else:
+            termwidth = self._tw.fullwidth
+
         def show_simple(stat, lines: List[str]) -> None:
             failed = self.stats.get(stat, [])
             if not failed:
                 return
-            termwidth = self.writer.fullwidth
             config = self.config
             for rep in failed:
                 line = _get_line_with_reprcrash_message(config, rep, termwidth)
@@ -989,17 +994,19 @@ def _get_pos(config, rep):
 
 def _get_line_with_reprcrash_message(config, rep, termwidth):
     """Get summary line for a report, trying to add reprcrash message."""
-    from wcwidth import wcswidth
-
     verbose_word = rep._get_verbose_word(config)
     pos = _get_pos(config, rep)
 
     line = "{} {}".format(verbose_word, pos)
-    len_line = wcswidth(line)
-    ellipsis, len_ellipsis = "...", 3
-    if len_line > termwidth - len_ellipsis:
-        # No space for an additional message.
-        return line
+
+    if termwidth is not None:
+        from wcwidth import wcswidth
+
+        len_line = wcswidth(line)
+        ellipsis, len_ellipsis = "...", 3
+        if len_line > termwidth - len_ellipsis:
+            # No space for an additional message.
+            return line
 
     try:
         msg = rep.longrepr.reprcrash.message
@@ -1010,9 +1017,14 @@ def _get_line_with_reprcrash_message(config, rep, termwidth):
         i = msg.find("\n")
         if i != -1:
             msg = msg[:i]
+
+        sep = " - "
+        if termwidth is None:
+            return line + sep + msg
+
+        len_sep = 3
         len_msg = wcswidth(msg)
 
-        sep, len_sep = " - ", 3
         max_len_msg = termwidth - len_line - len_sep
         if max_len_msg >= len_ellipsis:
             if len_msg > max_len_msg:

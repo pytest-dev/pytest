@@ -756,16 +756,44 @@ class TestTerminalFunctional:
         result.stdout.fnmatch_lines(["collected 3 items", "hello from hook: 3 items"])
 
 
-def test_fail_extra_reporting(testdir, monkeypatch):
+@pytest.mark.parametrize("use_CI", (True, False))
+def test_fail_extra_reporting(use_CI, testdir, monkeypatch):
+    if use_CI:
+        monkeypatch.setenv("CI", "true")
+    else:
+        monkeypatch.delenv("CI", raising=False)
     monkeypatch.setenv("COLUMNS", "80")
-    testdir.makepyfile("def test_this(): assert 0, 'this_failed' * 100")
+    testdir.makepyfile(
+        """
+        def test_this(request):
+            tr = request.config.pluginmanager.getplugin("terminalreporter")
+            assert not tr.isatty
+            assert 0, 'this_failed' * 8
+    """
+    )
     result = testdir.runpytest()
     result.stdout.no_fnmatch_line("*short test summary*")
     result = testdir.runpytest("-rf")
-    result.stdout.fnmatch_lines(
+    msg = "FAILED test_fail_extra_reporting.py::test_this - AssertionError: " + (
+        "this_failed" * 8
+    )
+    result.stdout.fnmatch_lines(["*test summary*", msg])
+
+
+def test_fail_extra_reporting_tty(testdir, LineMatcher):
+    testdir.makepyfile(
+        """
+        def test_this(request):
+            tr = request.config.pluginmanager.getplugin("terminalreporter")
+            assert tr.isatty
+            assert 0, 'this_failed' * 8
+    """
+    )
+    child = testdir.spawn_pytest("-rf")
+    LineMatcher(child.read().decode().splitlines()).fnmatch_lines(
         [
             "*test summary*",
-            "FAILED test_fail_extra_reporting.py::test_this - AssertionError: this_failedt...",
+            "FAILED test_fail_extra_reporting_tty.py::test_this - AssertionError: this_fai...",
         ]
     )
 
