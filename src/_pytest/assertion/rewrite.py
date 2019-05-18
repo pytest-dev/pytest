@@ -1020,6 +1020,8 @@ warn_explicit(
         """
         visit `ast.Call nodes on 3.4 and below`
         """
+        if isinstance(call.func, ast.Name) and call.func.id == "all":
+            return self._visit_all(call)
         new_func, func_expl = self.visit(call.func)
         arg_expls = []
         new_args = []
