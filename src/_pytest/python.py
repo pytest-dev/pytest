@@ -1217,7 +1217,7 @@ def _idvalset(idx, parameterset, argnames, idfn, ids, item, config):
         ]
         return "-".join(this_id)
     else:
-        return ascii_escaped(ids[idx])
+        return _ascii_escaped_by_config(ids[idx], config)
 
 
 def idmaker(argnames, parametersets, idfn=None, ids=None, config=None, item=None):
