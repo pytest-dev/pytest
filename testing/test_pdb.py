@@ -745,7 +745,8 @@ class TestPDB(object):
             ["E   NameError: *xxx*", "*! *Exit: Quitting debugger !*"]  # due to EOF
         )
 
-    def test_enter_leave_pdb_hooks_are_called(self, testdir):
+    @pytest.mark.parametrize("post_mortem", (False, True))
+    def test_enter_leave_pdb_hooks_are_called(self, post_mortem, testdir):
         testdir.makeconftest(
             """
             mypdb = None
@@ -774,16 +775,25 @@ class TestPDB(object):
             """
             import pytest
 
-            def test_foo():
+            def test_set_trace():
                 pytest.set_trace()
+                assert 0
+
+            def test_post_mortem():
                 assert 0
         """
         )
-        child = testdir.spawn_pytest(str(p1))
+        if post_mortem:
+            child = testdir.spawn_pytest(str(p1) + " --pdb -s -k test_post_mortem")
+        else:
+            child = testdir.spawn_pytest(str(p1) + " -k test_set_trace")
         child.expect("enter_pdb_hook")
         child.sendline("c")
-        child.expect(r"PDB continue \(IO-capturing resumed\)")
-        child.expect("Captured stdout call")
+        if post_mortem:
+            child.expect(r"PDB continue")
+        else:
+            child.expect(r"PDB continue \(IO-capturing resumed\)")
+            child.expect("Captured stdout call")
         rest = child.read().decode("utf8")
         assert "leave_pdb_hook" in rest
         assert "1 failed" in rest
