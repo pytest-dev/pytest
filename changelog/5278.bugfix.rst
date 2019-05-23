@@ -1,1 +1,1 @@
-Pytest's internal python plugin can be disabled using ``-p python`` now again.
+Pytest's internal python plugin can be disabled using ``-p no:python`` again.
