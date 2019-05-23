@@ -80,14 +80,9 @@ def pytest_addoption(parser):
         help="show fixtures per test",
     )
     parser.addini(
-        "usefixtures",
-        type="args",
-        default=[],
-        help="list of default fixtures to be used with this project",
-    )
-    parser.addini(
         "python_files",
         type="args",
+        # NOTE: default is also used in AssertionRewritingHook.
         default=["test_*.py", "*_test.py"],
         help="glob-style file patterns for Python test module discovery",
     )
