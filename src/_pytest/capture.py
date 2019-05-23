@@ -358,8 +358,7 @@ class CaptureFixture(object):
         self._captured_err = self.captureclass.EMPTY_BUFFER
 
     def _start(self):
-        # Start if not started yet
-        if getattr(self, "_capture", None) is None:
+        if self._capture is None:
             self._capture = MultiCapture(
                 out=True, err=True, in_=False, Capture=self.captureclass
             )
@@ -389,11 +388,13 @@ class CaptureFixture(object):
 
     def _suspend(self):
         """Suspends this fixture's own capturing temporarily."""
-        self._capture.suspend_capturing()
+        if self._capture is not None:
+            self._capture.suspend_capturing()
 
     def _resume(self):
         """Resumes this fixture's own capturing temporarily."""
-        self._capture.resume_capturing()
+        if self._capture is not None:
+            self._capture.resume_capturing()
 
     @contextlib.contextmanager
     def disabled(self):
