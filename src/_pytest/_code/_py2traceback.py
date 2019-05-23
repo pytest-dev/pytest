@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # copied from python-2.7.3's traceback.py
 # CHANGES:
 # - some_str is replaced, trying to create unicode strings

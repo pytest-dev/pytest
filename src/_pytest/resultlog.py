@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """ log machine-parseable test session result information in a plain
 text file.
 """

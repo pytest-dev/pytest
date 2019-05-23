@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """ interactive debugging with PDB, the Python Debugger. """
 from __future__ import absolute_import
 from __future__ import division

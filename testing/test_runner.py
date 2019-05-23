@@ -645,7 +645,7 @@ def test_pytest_fail_notrace_non_ascii(testdir, str_prefix):
     """
     testdir.makepyfile(
         u"""
-        # coding: utf-8
+        # -*- coding: utf-8 -*-
         import pytest
 
         def test_hello():

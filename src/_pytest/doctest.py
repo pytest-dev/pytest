@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """ discover and run doctests in modules and test files."""
 from __future__ import absolute_import
 from __future__ import division

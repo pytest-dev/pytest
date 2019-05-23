@@ -1244,7 +1244,7 @@ def test_syntax_error_with_non_ascii_chars(testdir):
     """
     testdir.makepyfile(
         u"""
-    # -*- coding: UTF-8 -*-
+    # -*- coding: utf-8 -*-
 
     ☃
     """
