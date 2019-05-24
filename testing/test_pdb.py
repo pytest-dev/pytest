@@ -1157,12 +1157,13 @@ def test_pdbcls_via_local_module(testdir):
     result = testdir.runpytest(
         str(p1), "--pdbcls=really.invalid:Value", syspathinsert=True
     )
-    result.stderr.fnmatch_lines(
+    result.stdout.fnmatch_lines(
         [
-            "ERROR: --pdbcls: could not import 'really.invalid:Value': No module named *really*"
+            "*= FAILURES =*",
+            "E * --pdbcls: could not import 'really.invalid:Value': No module named *really*",
         ]
     )
-    assert result.ret == 4
+    assert result.ret == 1
 
     result = testdir.runpytest(
         str(p1), "--pdbcls=mypdb:Wrapped.MyPdb", syspathinsert=True
