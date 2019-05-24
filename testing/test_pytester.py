@@ -569,12 +569,15 @@ def test_spawn_uses_tmphome(testdir):
     # Does use HOME only during run.
     assert os.environ.get("HOME") != tmphome
 
+    testdir._env_run_update["CUSTOMENV"] = "42"
+
     p1 = testdir.makepyfile(
         """
         import os
 
         def test():
             assert os.environ["HOME"] == {tmphome!r}
+            assert os.environ["CUSTOMENV"] == "42"
         """.format(
             tmphome=tmphome
         )
