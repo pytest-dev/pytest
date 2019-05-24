@@ -1233,7 +1233,13 @@ class Testdir(object):
         if sys.platform.startswith("freebsd"):
             pytest.xfail("pexpect does not work reliably on freebsd")
         logfile = self.tmpdir.join("spawn.out").open("wb")
-        child = pexpect.spawn(cmd, logfile=logfile)
+
+        # Do not load user config.
+        env = os.environ.copy()
+        env["HOME"] = str(self.tmpdir)
+        env["USERPROFILE"] = env["HOME"]
+
+        child = pexpect.spawn(cmd, logfile=logfile, env=env)
         self.request.addfinalizer(logfile.close)
         child.timeout = expect_timeout
         return child
