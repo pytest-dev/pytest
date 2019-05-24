@@ -41,6 +41,21 @@ class ColoredLevelFormatter(logging.Formatter):
         if six.PY2:
             self._original_fmt = self._fmt
         else:
+
+            class PercentStyleMultiline(logging.PercentStyle):
+                def format(self, record):
+                    if "\n" in record.message:
+                        fmt = self._fmt
+                        dct = record.__dict__
+                        data_seq = [
+                            fmt % {**dct, "message": line}
+                            for line in record.message.splitlines()
+                        ]
+                        return "\n".join(data_seq)
+                    else:
+                        return self._fmt % record.__dict__
+
+            self._style = PercentStyleMultiline(self._style._fmt)
             self._original_fmt = self._style._fmt
         self._level_to_fmt_mapping = {}
 
