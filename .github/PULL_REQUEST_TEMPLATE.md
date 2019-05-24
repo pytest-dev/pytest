@@ -1,7 +1,7 @@
 <!--
 Thanks for submitting a PR, your contribution is really appreciated!
 
-Here's a quick checklist that should be present in PRs.
+Here is a quick checklist that should be present in PRs.
 (please delete this text from the final description, this is just a guideline)
 -->
 
