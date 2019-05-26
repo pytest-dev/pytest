@@ -171,7 +171,7 @@ class SessionTests(object):
         )
         try:
             reprec = testdir.inline_run(testdir.tmpdir)
-        except pytest.skip.Exception:  # pragma: no covers
+        except pytest.skip.Exception:  # pragma: no cover
             pytest.fail("wrong skipped caught")
         reports = reprec.getreports("pytest_collectreport")
         assert len(reports) == 1
