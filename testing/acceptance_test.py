@@ -9,6 +9,7 @@ import textwrap
 import types
 
 import attr
+import importlib_metadata
 import py
 import six
 
@@ -111,8 +112,6 @@ class TestGeneralUsage(object):
 
     @pytest.mark.parametrize("load_cov_early", [True, False])
     def test_early_load_setuptools_name(self, testdir, monkeypatch, load_cov_early):
-        pkg_resources = pytest.importorskip("pkg_resources")
-
         testdir.makepyfile(mytestplugin1_module="")
         testdir.makepyfile(mytestplugin2_module="")
         testdir.makepyfile(mycov_module="")
@@ -124,23 +123,12 @@ class TestGeneralUsage(object):
         class DummyEntryPoint(object):
             name = attr.ib()
             module = attr.ib()
-            version = "1.0"
-
-            @property
-            def project_name(self):
-                return self.name
+            group = "pytest11"
 
             def load(self):
                 __import__(self.module)
                 loaded.append(self.name)
                 return sys.modules[self.module]
-
-            @property
-            def dist(self):
-                return self
-
-            def _get_metadata(self, *args):
-                return []
 
         entry_points = [
             DummyEntryPoint("myplugin1", "mytestplugin1_module"),
@@ -148,14 +136,15 @@ class TestGeneralUsage(object):
             DummyEntryPoint("mycov", "mycov_module"),
         ]
 
-        def my_iter(group, name=None):
-            assert group == "pytest11"
-            for ep in entry_points:
-                if name is not None and ep.name != name:
-                    continue
-                yield ep
+        @attr.s
+        class DummyDist(object):
+            entry_points = attr.ib()
+            files = ()
 
-        monkeypatch.setattr(pkg_resources, "iter_entry_points", my_iter)
+        def my_dists():
+            return (DummyDist(entry_points),)
+
+        monkeypatch.setattr(importlib_metadata, "distributions", my_dists)
         params = ("-p", "mycov") if load_cov_early else ()
         testdir.runpytest_inprocess(*params)
         if load_cov_early:

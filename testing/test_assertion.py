@@ -137,12 +137,12 @@ class TestImportHookInstallation(object):
     def test_pytest_plugins_rewrite_module_names_correctly(self, testdir):
         """Test that we match files correctly when they are marked for rewriting (#2939)."""
         contents = {
-            "conftest.py": """
+            "conftest.py": """\
                 pytest_plugins = "ham"
             """,
             "ham.py": "",
             "hamster.py": "",
-            "test_foo.py": """
+            "test_foo.py": """\
                 def test_foo(pytestconfig):
                     assert pytestconfig.pluginmanager.rewrite_hook.find_module('ham') is not None
                     assert pytestconfig.pluginmanager.rewrite_hook.find_module('hamster') is None
@@ -153,14 +153,13 @@ class TestImportHookInstallation(object):
         assert result.ret == 0
 
     @pytest.mark.parametrize("mode", ["plain", "rewrite"])
-    @pytest.mark.parametrize("plugin_state", ["development", "installed"])
-    def test_installed_plugin_rewrite(self, testdir, mode, plugin_state, monkeypatch):
+    def test_installed_plugin_rewrite(self, testdir, mode, monkeypatch):
         monkeypatch.delenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD", raising=False)
         # Make sure the hook is installed early enough so that plugins
         # installed via setuptools are rewritten.
         testdir.tmpdir.join("hampkg").ensure(dir=1)
         contents = {
-            "hampkg/__init__.py": """
+            "hampkg/__init__.py": """\
                 import pytest
 
                 @pytest.fixture
@@ -169,7 +168,7 @@ class TestImportHookInstallation(object):
                         assert values.pop(0) == value
                     return check
             """,
-            "spamplugin.py": """
+            "spamplugin.py": """\
             import pytest
             from hampkg import check_first2
 
@@ -179,46 +178,31 @@ class TestImportHookInstallation(object):
                     assert values.pop(0) == value
                 return check
             """,
-            "mainwrapper.py": """
-            import pytest, pkg_resources
-
-            plugin_state = "{plugin_state}"
-
-            class DummyDistInfo(object):
-                project_name = 'spam'
-                version = '1.0'
-
-                def _get_metadata(self, name):
-                    # 'RECORD' meta-data only available in installed plugins
-                    if name == 'RECORD' and plugin_state == "installed":
-                        return ['spamplugin.py,sha256=abc,123',
-                                'hampkg/__init__.py,sha256=abc,123']
-                    # 'SOURCES.txt' meta-data only available for plugins in development mode
-                    elif name == 'SOURCES.txt' and plugin_state == "development":
-                        return ['spamplugin.py',
-                                'hampkg/__init__.py']
-                    return []
+            "mainwrapper.py": """\
+            import pytest, importlib_metadata
 
             class DummyEntryPoint(object):
                 name = 'spam'
                 module_name = 'spam.py'
-                attrs = ()
-                extras = None
-                dist = DummyDistInfo()
+                group = 'pytest11'
 
-                def load(self, require=True, *args, **kwargs):
+                def load(self):
                     import spamplugin
                     return spamplugin
 
-            def iter_entry_points(group, name=None):
-                yield DummyEntryPoint()
+            class DummyDistInfo(object):
+                version = '1.0'
+                files = ('spamplugin.py', 'hampkg/__init__.py')
+                entry_points = (DummyEntryPoint(),)
+                metadata = {'name': 'foo'}
 
-            pkg_resources.iter_entry_points = iter_entry_points
+            def distributions():
+                return (DummyDistInfo(),)
+
+            importlib_metadata.distributions = distributions
             pytest.main()
-            """.format(
-                plugin_state=plugin_state
-            ),
-            "test_foo.py": """
+            """,
+            "test_foo.py": """\
             def test(check_first):
                 check_first([10, 30], 30)
 
