@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
     report test results in JUnit-XML format,
     for use with Jenkins and build integration servers.

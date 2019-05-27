@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """ Access and control log capturing. """
 from __future__ import absolute_import
 from __future__ import division

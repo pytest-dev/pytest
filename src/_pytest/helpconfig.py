@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """ version info, help messages, tracing configuration.  """
 from __future__ import absolute_import
 from __future__ import division

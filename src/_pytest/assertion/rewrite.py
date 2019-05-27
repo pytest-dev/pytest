@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """Rewrite assertion AST to produce nice error messages"""
 from __future__ import absolute_import
 from __future__ import division
@@ -60,7 +61,10 @@ class AssertionRewritingHook(object):
 
     def __init__(self, config):
         self.config = config
-        self.fnpats = config.getini("python_files")
+        try:
+            self.fnpats = config.getini("python_files")
+        except ValueError:
+            self.fnpats = ["test_*.py", "*_test.py"]
         self.session = None
         self.modules = {}
         self._rewritten_names = set()

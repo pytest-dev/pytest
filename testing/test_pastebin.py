@@ -1,4 +1,4 @@
-# encoding: utf-8
+# -*- coding: utf-8 -*-
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
@@ -68,7 +68,7 @@ class TestPasteCapture(object):
         """
         testdir.makepyfile(
             test_unicode="""
-            # encoding: utf-8
+            # -*- coding: utf-8 -*-
             def test():
                 assert '☺' == 1
         """

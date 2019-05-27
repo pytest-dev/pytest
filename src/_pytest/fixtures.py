@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
@@ -1071,6 +1072,15 @@ def pytestconfig(request):
 
     """
     return request.config
+
+
+def pytest_addoption(parser):
+    parser.addini(
+        "usefixtures",
+        type="args",
+        default=[],
+        help="list of default fixtures to be used with this project",
+    )
 
 
 class FixtureManager(object):

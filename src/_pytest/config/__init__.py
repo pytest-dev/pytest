@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """ command line options, ini-file and conftest.py processing. """
 from __future__ import absolute_import
 from __future__ import division
@@ -115,16 +116,16 @@ def directory_arg(path, optname):
 
 
 # Plugins that cannot be disabled via "-p no:X" currently.
-essential_plugins = (
+essential_plugins = (  # fmt: off
     "mark",
     "main",
     "runner",
-    "python",
     "fixtures",
     "helpconfig",  # Provides -p.
-)
+)  # fmt: on
 
 default_plugins = essential_plugins + (
+    "python",
     "terminal",
     "debugging",
     "unittest",

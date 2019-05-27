@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 def pytest_configure(config):
     import pytest
 

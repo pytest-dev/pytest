@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 exception classes and constants handling test outcomes
 as well as functions creating them

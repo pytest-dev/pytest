@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
@@ -564,10 +565,11 @@ class ExceptionInfo(object):
 
     def match(self, regexp):
         """
-        Match the regular expression 'regexp' on the string representation of
-        the exception. If it matches then True is returned (so that it is
-        possible to write 'assert excinfo.match()'). If it doesn't match an
-        AssertionError is raised.
+        Check whether the regular expression 'regexp' is found in the string
+        representation of the exception using ``re.search``. If it matches
+        then True is returned (so that it is possible to write
+        ``assert excinfo.match()``). If it doesn't match an AssertionError is
+        raised.
         """
         __tracebackhide__ = True
         if not re.search(regexp, str(self.value)):

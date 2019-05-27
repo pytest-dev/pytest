@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from setuptools import setup
 
 # TODO: if py gets upgrade to >=1.6,

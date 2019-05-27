@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """ Python test discovery, setup and run of test functions. """
 from __future__ import absolute_import
 from __future__ import division
@@ -80,14 +81,9 @@ def pytest_addoption(parser):
         help="show fixtures per test",
     )
     parser.addini(
-        "usefixtures",
-        type="args",
-        default=[],
-        help="list of default fixtures to be used with this project",
-    )
-    parser.addini(
         "python_files",
         type="args",
+        # NOTE: default is also used in AssertionRewritingHook.
         default=["test_*.py", "*_test.py"],
         help="glob-style file patterns for Python test module discovery",
     )
@@ -1217,7 +1213,7 @@ def _idvalset(idx, parameterset, argnames, idfn, ids, item, config):
         ]
         return "-".join(this_id)
     else:
-        return ascii_escaped(ids[idx])
+        return _ascii_escaped_by_config(ids[idx], config)
 
 
 def idmaker(argnames, parametersets, idfn=None, ids=None, config=None, item=None):
