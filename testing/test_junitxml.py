@@ -4,7 +4,6 @@ from __future__ import division
 from __future__ import print_function
 
 import os
-import sys
 from xml.dom import minidom
 
 import py
@@ -585,8 +584,7 @@ class TestPython(object):
         assert result.ret == 1
         tnode = dom.find_first_by_tag("testcase")
         fnode = tnode.find_first_by_tag("failure")
-        if not sys.platform.startswith("java"):
-            assert "hx" in fnode.toxml()
+        assert "hx" in fnode.toxml()
 
     def test_assertion_binchars(self, testdir):
         """this test did fail when the escaping wasnt strict"""

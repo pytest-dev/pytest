@@ -43,10 +43,7 @@ class ColoredLevelFormatter(logging.Formatter):
 
     def __init__(self, terminalwriter, *args, **kwargs):
         super(ColoredLevelFormatter, self).__init__(*args, **kwargs)
-        if six.PY2:
-            self._original_fmt = self._fmt
-        else:
-            self._original_fmt = self._style._fmt
+        self._original_fmt = self._style._fmt
         self._level_to_fmt_mapping = {}
 
         levelname_fmt_match = self.LEVELNAME_FMT_REGEX.search(self._fmt)
@@ -70,10 +67,7 @@ class ColoredLevelFormatter(logging.Formatter):
 
     def format(self, record):
         fmt = self._level_to_fmt_mapping.get(record.levelno, self._original_fmt)
-        if six.PY2:
-            self._fmt = fmt
-        else:
-            self._style._fmt = fmt
+        self._style._fmt = fmt
         return super(ColoredLevelFormatter, self).format(record)
 
 

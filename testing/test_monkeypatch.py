@@ -8,8 +8,6 @@ import re
 import sys
 import textwrap
 
-import six
-
 import pytest
 from _pytest.monkeypatch import MonkeyPatch
 
@@ -209,22 +207,6 @@ class TestEnvironWarnings(object):
 
     VAR_NAME = u"PYTEST_INTERNAL_MY_VAR"
 
-    @pytest.mark.skipif(six.PY3, reason="Python 2 only test")
-    def test_setenv_unicode_key(self, monkeypatch):
-        with pytest.warns(
-            pytest.PytestWarning,
-            match="Environment variable name {!r} should be str".format(self.VAR_NAME),
-        ):
-            monkeypatch.setenv(self.VAR_NAME, "2")
-
-    @pytest.mark.skipif(six.PY3, reason="Python 2 only test")
-    def test_delenv_unicode_key(self, monkeypatch):
-        with pytest.warns(
-            pytest.PytestWarning,
-            match="Environment variable name {!r} should be str".format(self.VAR_NAME),
-        ):
-            monkeypatch.delenv(self.VAR_NAME, raising=False)
-
     def test_setenv_non_str_warning(self, monkeypatch):
         value = 2
         msg = (
@@ -349,10 +331,8 @@ def test_importerror(testdir):
     result = testdir.runpytest()
     result.stdout.fnmatch_lines(
         """
-        *import error in package.a: No module named {0}doesnotexist{0}*
-    """.format(
-            "'" if sys.version_info > (3, 0) else ""
-        )
+        *import error in package.a: No module named 'doesnotexist'*
+    """
     )
 
 

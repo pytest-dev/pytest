@@ -9,8 +9,6 @@ import re
 import sys
 import warnings
 
-import six
-
 import _pytest._code
 from _pytest.deprecated import PYTEST_WARNS_UNKNOWN_KWARGS
 from _pytest.deprecated import WARNS_EXEC
@@ -156,44 +154,13 @@ class WarningsRecorder(warnings.catch_warnings):
             raise RuntimeError("Cannot enter %r twice" % self)
         self._list = super(WarningsRecorder, self).__enter__()
         warnings.simplefilter("always")
-        # python3 keeps track of a "filter version", when the filters are
-        # updated previously seen warnings can be re-warned.  python2 has no
-        # concept of this so we must reset the warnings registry manually.
-        # trivial patching of `warnings.warn` seems to be enough somehow?
-        if six.PY2:
-
-            def warn(message, category=None, stacklevel=1):
-                # duplicate the stdlib logic due to
-                # bad handing in the c version of warnings
-                if isinstance(message, Warning):
-                    category = message.__class__
-                # Check category argument
-                if category is None:
-                    category = UserWarning
-                assert issubclass(category, Warning)
-
-                # emulate resetting the warn registry
-                f_globals = sys._getframe(stacklevel).f_globals
-                if "__warningregistry__" in f_globals:
-                    orig = f_globals["__warningregistry__"]
-                    f_globals["__warningregistry__"] = None
-                    try:
-                        return self._saved_warn(message, category, stacklevel + 1)
-                    finally:
-                        f_globals["__warningregistry__"] = orig
-                else:
-                    return self._saved_warn(message, category, stacklevel + 1)
-
-            warnings.warn, self._saved_warn = warn, warnings.warn
         return self
 
     def __exit__(self, *exc_info):
         if not self._entered:
             __tracebackhide__ = True
             raise RuntimeError("Cannot exit %r without entering first" % self)
-        # see above where `self._saved_warn` is assigned
-        if six.PY2:
-            warnings.warn = self._saved_warn
+
         super(WarningsRecorder, self).__exit__(*exc_info)
 
         # Built-in catch_warnings does not reset entered state so we do it

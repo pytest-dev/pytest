@@ -5,11 +5,11 @@ from __future__ import division
 from __future__ import print_function
 
 import pprint
+from collections.abc import Sequence
 
 import six
 
 import _pytest._code
-from ..compat import Sequence
 from _pytest import outcomes
 from _pytest._io.saferepr import saferepr
 

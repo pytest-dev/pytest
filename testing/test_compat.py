@@ -6,8 +6,6 @@ from __future__ import print_function
 import sys
 from functools import wraps
 
-import six
-
 import pytest
 from _pytest.compat import _PytestWrapper
 from _pytest.compat import get_real_func
@@ -62,8 +60,6 @@ def test_get_real_func():
         def inner():
             pass  # pragma: no cover
 
-        if six.PY2:
-            inner.__wrapped__ = f
         return inner
 
     def func():
@@ -81,9 +77,6 @@ def test_get_real_func():
     assert get_real_func(wrapped_func2) is wrapped_func
 
 
-@pytest.mark.skipif(
-    sys.version_info < (3, 4), reason="asyncio available in Python 3.4+"
-)
 def test_is_generator_asyncio(testdir):
     testdir.makepyfile(
         """

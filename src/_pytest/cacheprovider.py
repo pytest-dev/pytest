@@ -18,7 +18,6 @@ import py
 import six
 
 import pytest
-from .compat import _PY2 as PY2
 from .pathlib import Path
 from .pathlib import resolve_from_str
 from .pathlib import rmtree
@@ -129,7 +128,7 @@ class Cache(object):
         if not cache_dir_exists_already:
             self._ensure_supporting_files()
         try:
-            f = path.open("wb" if PY2 else "w")
+            f = path.open("w")
         except (IOError, OSError):
             self.warn("cache could not write path {path}", path=path)
         else:

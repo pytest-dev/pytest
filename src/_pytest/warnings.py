@@ -8,7 +8,6 @@ import warnings
 from contextlib import contextmanager
 
 import pytest
-from _pytest import compat
 
 SHOW_PYTEST_WARNINGS_ARG = "-Walways::pytest.RemovedInPytest4Warning"
 
@@ -104,22 +103,8 @@ def catch_warnings_for_item(config, ihook, when, item):
 
 
 def warning_record_to_str(warning_message):
-    """Convert a warnings.WarningMessage to a string.
-
-    This takes lot of unicode shenaningans into account for Python 2.
-    When Python 2 support is dropped this function can be greatly simplified.
-    """
+    """Convert a warnings.WarningMessage to a string."""
     warn_msg = warning_message.message
-    unicode_warning = False
-    if compat._PY2 and any(isinstance(m, compat.UNICODE_TYPES) for m in warn_msg.args):
-        new_args = []
-        for m in warn_msg.args:
-            new_args.append(
-                compat.ascii_escaped(m) if isinstance(m, compat.UNICODE_TYPES) else m
-            )
-        unicode_warning = list(warn_msg.args) != new_args
-        warn_msg.args = new_args
-
     msg = warnings.formatwarning(
         warn_msg,
         warning_message.category,
@@ -127,12 +112,6 @@ def warning_record_to_str(warning_message):
         warning_message.lineno,
         warning_message.line,
     )
-    if unicode_warning:
-        warnings.warn(
-            "Warning is using unicode non convertible to ascii, "
-            "converting to a safe representation:\n  {!r}".format(compat.safe_str(msg)),
-            UnicodeWarning,
-        )
     return msg
 
 

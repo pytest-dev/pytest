@@ -13,8 +13,6 @@ from _pytest import fixtures
 from _pytest import python
 from _pytest.warnings import SHOW_PYTEST_WARNINGS_ARG
 
-PY3 = sys.version_info >= (3, 0)
-
 
 class TestMetafunc(object):
     def Metafunc(self, func, config=None):

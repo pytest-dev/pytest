@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 import sys
 
-import six
-
 import pytest
 from _pytest.outcomes import Failed
 from _pytest.warning_types import PytestDeprecationWarning
@@ -265,16 +263,7 @@ class TestRaises(object):
             def __class__(self):
                 assert False, "via __class__"
 
-        if six.PY2:
-            with pytest.raises(pytest.fail.Exception) as excinfo:
-                with pytest.raises(CrappyClass()):
-                    pass
-            assert "DID NOT RAISE" in excinfo.value.args[0]
-
-            with pytest.raises(CrappyClass) as excinfo:
-                raise CrappyClass()
-        else:
-            with pytest.raises(AssertionError) as excinfo:
-                with pytest.raises(CrappyClass()):
-                    pass
-            assert "via __class__" in excinfo.value.args[0]
+        with pytest.raises(AssertionError) as excinfo:
+            with pytest.raises(CrappyClass()):
+                pass
+        assert "via __class__" in excinfo.value.args[0]

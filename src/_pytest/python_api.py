@@ -5,6 +5,9 @@ import math
 import pprint
 import sys
 import warnings
+from collections.abc import Iterable
+from collections.abc import Mapping
+from collections.abc import Sized
 from decimal import Decimal
 from numbers import Number
 
@@ -15,9 +18,6 @@ from six.moves import zip
 import _pytest._code
 from _pytest import deprecated
 from _pytest.compat import isclass
-from _pytest.compat import Iterable
-from _pytest.compat import Mapping
-from _pytest.compat import Sized
 from _pytest.compat import STRING_TYPES
 from _pytest.outcomes import fail
 
@@ -81,9 +81,6 @@ class ApproxBase(object):
     def __ne__(self, actual):
         return not (actual == self)
 
-    if sys.version_info[0] == 2:
-        __cmp__ = _cmp_raises_type_error
-
     def _approx_scalar(self, x):
         return ApproxScalar(x, rel=self.rel, abs=self.abs, nan_ok=self.nan_ok)
 
@@ -121,9 +118,6 @@ class ApproxNumpy(ApproxBase):
     def __repr__(self):
         list_scalars = _recursive_list_map(self._approx_scalar, self.expected.tolist())
         return "approx({!r})".format(list_scalars)
-
-    if sys.version_info[0] == 2:
-        __cmp__ = _cmp_raises_type_error
 
     def __eq__(self, actual):
         import numpy as np
@@ -251,10 +245,7 @@ class ApproxScalar(ApproxBase):
         except ValueError:
             vetted_tolerance = "???"
 
-        if sys.version_info[0] == 2:
-            return "{} +- {}".format(self.expected, vetted_tolerance)
-        else:
-            return u"{} \u00b1 {}".format(self.expected, vetted_tolerance)
+        return "{} \u00b1 {}".format(self.expected, vetted_tolerance)
 
     def __eq__(self, actual):
         """
@@ -736,8 +727,6 @@ class RaisesContext(object):
             fail(self.message)
         self.excinfo.__init__(tp)
         suppress_exception = issubclass(self.excinfo.type, self.expected_exception)
-        if sys.version_info[0] == 2 and suppress_exception:
-            sys.exc_clear()
         if self.match_expr is not None and suppress_exception:
             self.excinfo.match(self.match_expr)
         return suppress_exception

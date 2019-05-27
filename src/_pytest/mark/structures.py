@@ -2,6 +2,7 @@
 import inspect
 import warnings
 from collections import namedtuple
+from collections.abc import MutableMapping
 from operator import attrgetter
 
 import attr
@@ -9,7 +10,6 @@ import six
 
 from ..compat import ascii_escaped
 from ..compat import getfslineno
-from ..compat import MappingMixin
 from ..compat import NOTSET
 from _pytest.deprecated import PYTEST_PARAM_UNKNOWN_KWARGS
 from _pytest.outcomes import fail
@@ -343,7 +343,7 @@ class MarkGenerator(object):
 MARK_GEN = MarkGenerator()
 
 
-class NodeKeywords(MappingMixin):
+class NodeKeywords(MutableMapping):
     def __init__(self, node):
         self.node = node
         self.parent = node.parent

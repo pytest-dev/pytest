@@ -15,6 +15,7 @@ import string
 import struct
 import sys
 import types
+from importlib.util import spec_from_file_location
 
 import atomicwrites
 import py
@@ -25,7 +26,6 @@ from _pytest.assertion import util
 from _pytest.assertion.util import (  # noqa: F401
     format_explanation as _format_explanation,
 )
-from _pytest.compat import spec_from_file_location
 from _pytest.pathlib import fnmatch_ex
 from _pytest.pathlib import PurePath
 
@@ -35,8 +35,6 @@ if hasattr(imp, "get_tag"):
 else:
     if hasattr(sys, "pypy_version_info"):
         impl = "pypy"
-    elif sys.platform == "java":
-        impl = "jython"
     else:
         impl = "cpython"
     ver = sys.version_info
@@ -45,15 +43,6 @@ else:
 
 PYC_EXT = ".py" + (__debug__ and "c" or "o")
 PYC_TAIL = "." + PYTEST_TAG + PYC_EXT
-
-ASCII_IS_DEFAULT_ENCODING = sys.version_info[0] < 3
-
-if sys.version_info >= (3, 5):
-    ast_Call = ast.Call
-else:
-
-    def ast_Call(a, b, c):
-        return ast.Call(a, b, c, None, None)
 
 
 class AssertionRewritingHook(object):
@@ -364,37 +353,6 @@ def _rewrite_test(config, fn):
         source = fn.read("rb")
     except EnvironmentError:
         return None, None
-    if ASCII_IS_DEFAULT_ENCODING:
-        # ASCII is the default encoding in Python 2. Without a coding
-        # declaration, Python 2 will complain about any bytes in the file
-        # outside the ASCII range. Sadly, this behavior does not extend to
-        # compile() or ast.parse(), which prefer to interpret the bytes as
-        # latin-1. (At least they properly handle explicit coding cookies.) To
-        # preserve this error behavior, we could force ast.parse() to use ASCII
-        # as the encoding by inserting a coding cookie. Unfortunately, that
-        # messes up line numbers. Thus, we have to check ourselves if anything
-        # is outside the ASCII range in the case no encoding is explicitly
-        # declared. For more context, see issue #269. Yay for Python 3 which
-        # gets this right.
-        end1 = source.find("\n")
-        end2 = source.find("\n", end1 + 1)
-        if (
-            not source.startswith(BOM_UTF8)
-            and cookie_re.match(source[0:end1]) is None
-            and cookie_re.match(source[end1 + 1 : end2]) is None
-        ):
-            if hasattr(state, "_indecode"):
-                # encodings imported us again, so don't rewrite.
-                return None, None
-            state._indecode = True
-            try:
-                try:
-                    source.decode("ascii")
-                except UnicodeDecodeError:
-                    # Let it fail in real import.
-                    return None, None
-            finally:
-                del state._indecode
     try:
         tree = ast.parse(source, filename=fn.strpath)
     except SyntaxError:
@@ -737,7 +695,7 @@ class AssertionRewriter(ast.NodeVisitor):
         """Call a helper in this module."""
         py_name = ast.Name("@pytest_ar", ast.Load())
         attr = ast.Attribute(py_name, name, ast.Load())
-        return ast_Call(attr, list(args), [])
+        return ast.Call(attr, list(args), [])
 
     def builtin(self, name):
         """Return the builtin called *name*."""
@@ -847,11 +805,9 @@ class AssertionRewriter(ast.NodeVisitor):
         msg = self.pop_format_context(template)
         fmt = self.helper("_format_explanation", msg)
         err_name = ast.Name("AssertionError", ast.Load())
-        exc = ast_Call(err_name, [fmt], [])
-        if sys.version_info[0] >= 3:
-            raise_ = ast.Raise(exc, None)
-        else:
-            raise_ = ast.Raise(exc, None, None)
+        exc = ast.Call(err_name, [fmt], [])
+        raise_ = ast.Raise(exc, None)
+
         body.append(raise_)
         # Clear temporary variables by setting them to None.
         if self.variables:
@@ -893,7 +849,7 @@ warn_explicit(
     def visit_Name(self, name):
         # Display the repr of the name if it's a local variable or
         # _should_repr_global_name() thinks it's acceptable.
-        locs = ast_Call(self.builtin("locals"), [], [])
+        locs = ast.Call(self.builtin("locals"), [], [])
         inlocs = ast.Compare(ast.Str(name.id), [ast.In()], [locs])
         dorepr = self.helper("_should_repr_global_name", name)
         test = ast.BoolOp(ast.Or(), [inlocs, dorepr])
@@ -920,7 +876,7 @@ warn_explicit(
             res, expl = self.visit(v)
             body.append(ast.Assign([ast.Name(res_var, ast.Store())], res))
             expl_format = self.pop_format_context(ast.Str(expl))
-            call = ast_Call(app, [expl_format], [])
+            call = ast.Call(app, [expl_format], [])
             self.on_failure.append(ast.Expr(call))
             if i < levels:
                 cond = res
@@ -959,9 +915,9 @@ warn_explicit(
             and isinstance(call.args[0], (ast.GeneratorExp, ast.ListComp))
         )
 
-    def visit_Call_35(self, call):
+    def visit_Call(self, call):
         """
-        visit `ast.Call` nodes on Python3.5 and after
+        visit `ast.Call` nodes
         """
         if self._is_any_call_with_generator_or_list_comprehension(call):
             return self._visit_all(call)
@@ -1012,46 +968,6 @@ warn_explicit(
         res, expl = self.visit(starred.value)
         new_starred = ast.Starred(res, starred.ctx)
         return new_starred, "*" + expl
-
-    def visit_Call_legacy(self, call):
-        """
-        visit `ast.Call nodes on 3.4 and below`
-        """
-        if self._is_any_call_with_generator_or_list_comprehension(call):
-            return self._visit_all(call)
-        new_func, func_expl = self.visit(call.func)
-        arg_expls = []
-        new_args = []
-        new_kwargs = []
-        new_star = new_kwarg = None
-        for arg in call.args:
-            res, expl = self.visit(arg)
-            new_args.append(res)
-            arg_expls.append(expl)
-        for keyword in call.keywords:
-            res, expl = self.visit(keyword.value)
-            new_kwargs.append(ast.keyword(keyword.arg, res))
-            arg_expls.append(keyword.arg + "=" + expl)
-        if call.starargs:
-            new_star, expl = self.visit(call.starargs)
-            arg_expls.append("*" + expl)
-        if call.kwargs:
-            new_kwarg, expl = self.visit(call.kwargs)
-            arg_expls.append("**" + expl)
-        expl = "%s(%s)" % (func_expl, ", ".join(arg_expls))
-        new_call = ast.Call(new_func, new_args, new_kwargs, new_star, new_kwarg)
-        res = self.assign(new_call)
-        res_expl = self.explanation_param(self.display(res))
-        outer_expl = "%s\n{%s = %s\n}" % (res_expl, res_expl, expl)
-        return res, outer_expl
-
-    # ast.Call signature changed on 3.5,
-    # conditionally change  which methods is named
-    # visit_Call depending on Python version
-    if sys.version_info >= (3, 5):
-        visit_Call = visit_Call_35
-    else:
-        visit_Call = visit_Call_legacy
 
     def visit_Attribute(self, attr):
         if not isinstance(attr.ctx, ast.Load):

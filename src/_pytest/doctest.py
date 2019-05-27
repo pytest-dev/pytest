@@ -333,7 +333,6 @@ class DoctestTextfile(pytest.Module):
             checker=_get_checker(),
             continue_on_failure=_get_continue_on_failure(self.config),
         )
-        _fix_spoof_python2(runner, encoding)
 
         parser = doctest.DocTestParser()
         test = parser.get_doctest(text, globs, name, filename, 0)
@@ -537,32 +536,6 @@ def _get_report_choice(key):
         DOCTEST_REPORT_CHOICE_ONLY_FIRST_FAILURE: doctest.REPORT_ONLY_FIRST_FAILURE,
         DOCTEST_REPORT_CHOICE_NONE: 0,
     }[key]
-
-
-def _fix_spoof_python2(runner, encoding):
-    """
-    Installs a "SpoofOut" into the given DebugRunner so it properly deals with unicode output. This
-    should patch only doctests for text files because they don't have a way to declare their
-    encoding. Doctests in docstrings from Python modules don't have the same problem given that
-    Python already decoded the strings.
-
-    This fixes the problem related in issue #2434.
-    """
-    from _pytest.compat import _PY2
-
-    if not _PY2:
-        return
-
-    from doctest import _SpoofOut
-
-    class UnicodeSpoof(_SpoofOut):
-        def getvalue(self):
-            result = _SpoofOut.getvalue(self)
-            if encoding and isinstance(result, bytes):
-                result = result.decode(encoding)
-            return result
-
-    runner._fakeout = UnicodeSpoof()
 
 
 @pytest.fixture(scope="session")

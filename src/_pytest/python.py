@@ -5,6 +5,7 @@ from __future__ import division
 from __future__ import print_function
 
 import collections
+import enum
 import fnmatch
 import inspect
 import os
@@ -22,7 +23,6 @@ from _pytest import fixtures
 from _pytest import nodes
 from _pytest._code import filter_traceback
 from _pytest.compat import ascii_escaped
-from _pytest.compat import enum
 from _pytest.compat import get_default_arg_names
 from _pytest.compat import get_real_func
 from _pytest.compat import getfslineno
@@ -35,7 +35,6 @@ from _pytest.compat import NOTSET
 from _pytest.compat import REGEX_TYPE
 from _pytest.compat import safe_getattr
 from _pytest.compat import safe_isclass
-from _pytest.compat import safe_str
 from _pytest.compat import STRING_TYPES
 from _pytest.config import hookimpl
 from _pytest.main import FSHookProxy
@@ -531,7 +530,7 @@ class Module(nodes.File, PyCollector):
                 if exc_info.traceback
                 else exc_info.exconly()
             )
-            formatted_tb = safe_str(exc_repr)
+            formatted_tb = str(exc_repr)
             raise self.CollectError(
                 "ImportError while importing test module '{fspath}'.\n"
                 "Hint: make sure your test modules/packages have valid Python names.\n"

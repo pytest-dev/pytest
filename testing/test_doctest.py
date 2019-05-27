@@ -3,7 +3,6 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import sys
 import textwrap
 
 import pytest
@@ -830,13 +829,11 @@ class TestLiterals(object):
         """
         )
         reprec = testdir.inline_run()
-        passed = int(sys.version_info[0] >= 3)
-        reprec.assertoutcome(passed=passed, failed=int(not passed))
+        reprec.assertoutcome(passed=1)
 
     def test_bytes_literal(self, testdir):
         """Test that doctests which output bytes fail in Python 3 when
-        the ALLOW_BYTES option is not used. The same test should pass
-        in Python 2 (#1287).
+        the ALLOW_BYTES option is not used. (#1287).
         """
         testdir.maketxtfile(
             test_doc="""
@@ -845,8 +842,7 @@ class TestLiterals(object):
         """
         )
         reprec = testdir.inline_run()
-        passed = int(sys.version_info[0] == 2)
-        reprec.assertoutcome(passed=passed, failed=int(not passed))
+        reprec.assertoutcome(failed=1)
 
 
 class TestDoctestSkips(object):

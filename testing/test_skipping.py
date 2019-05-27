@@ -49,22 +49,6 @@ class TestEvaluator(object):
         expl = ev.getexplanation()
         assert expl == "condition: hasattr(os, 'sep')"
 
-    @pytest.mark.skipif("sys.version_info[0] >= 3")
-    def test_marked_one_arg_unicode(self, testdir):
-        item = testdir.getitem(
-            """
-            import pytest
-            @pytest.mark.xyz(u"hasattr(os, 'sep')")
-            def test_func():
-                pass
-        """
-        )
-        ev = MarkEvaluator(item, "xyz")
-        assert ev
-        assert ev.istrue()
-        expl = ev.getexplanation()
-        assert expl == "condition: hasattr(os, 'sep')"
-
     def test_marked_one_arg_with_reason(self, testdir):
         item = testdir.getitem(
             """
@@ -893,10 +877,7 @@ def test_errors_in_xfail_skip_expressions(testdir):
     )
     result = testdir.runpytest()
     markline = "                ^"
-    if sys.platform.startswith("java"):
-        # XXX report this to java
-        markline = "*" + markline[8:]
-    elif hasattr(sys, "pypy_version_info") and sys.pypy_version_info < (6,):
+    if hasattr(sys, "pypy_version_info") and sys.pypy_version_info < (6,):
         markline = markline[5:]
     elif sys.version_info >= (3, 8) or hasattr(sys, "pypy_version_info"):
         markline = markline[4:]

@@ -1303,11 +1303,7 @@ class FixtureManager(object):
             # during fixture definition we wrap the original fixture function
             # to issue a warning if called directly, so here we unwrap it in order to not emit the warning
             # when pytest itself calls the fixture function
-            if six.PY2 and unittest:
-                # hack on Python 2 because of the unbound methods
-                obj = get_real_func(obj)
-            else:
-                obj = get_real_method(obj, holderobj)
+            obj = get_real_method(obj, holderobj)
 
             fixture_def = FixtureDef(
                 self,

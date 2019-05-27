@@ -18,7 +18,6 @@ from tempfile import TemporaryFile
 import six
 
 import pytest
-from _pytest.compat import _PY3
 from _pytest.compat import CaptureIO
 
 patchsysdict = {0: "stdin", 1: "stdout", 2: "stderr"}
@@ -283,10 +282,6 @@ def capsysbinary(request):
     ``out`` and ``err`` will be ``bytes`` objects.
     """
     _ensure_only_one_capture_fixture(request, "capsysbinary")
-    # Currently, the implementation uses the python3 specific `.buffer`
-    # property of CaptureIO.
-    if sys.version_info < (3,):
-        raise request.raiseerror("capsysbinary is only supported on Python 3")
     with _install_capture_fixture_on_item(request, SysCaptureBinary) as fixture:
         yield fixture
 
@@ -434,7 +429,7 @@ class EncodedFile(object):
     def write(self, obj):
         if isinstance(obj, six.text_type):
             obj = obj.encode(self.encoding, "replace")
-        elif _PY3:
+        else:
             raise TypeError(
                 "write() argument must be str, not {}".format(type(obj).__name__)
             )
@@ -608,7 +603,7 @@ class FDCaptureBinary(object):
         os.dup2(targetfd_save, self.targetfd)
         os.close(targetfd_save)
         self.syscapture.done()
-        _attempt_to_close_capture_file(self.tmpfile)
+        self.tmpfile.close()
         self._state = "done"
 
     def suspend(self):
@@ -681,7 +676,7 @@ class SysCapture(object):
     def done(self):
         setattr(sys, self.name, self._old)
         del self._old
-        _attempt_to_close_capture_file(self.tmpfile)
+        self.tmpfile.close()
         self._state = "done"
 
     def suspend(self):
@@ -738,10 +733,7 @@ class DontReadFromInput(six.Iterator):
 
     @property
     def buffer(self):
-        if sys.version_info >= (3, 0):
-            return self
-        else:
-            raise AttributeError("redirected stdin has no attribute buffer")
+        return self
 
 
 def _colorama_workaround():
@@ -837,14 +829,3 @@ def _py36_windowsconsoleio_workaround(stream):
     sys.stdin = _reopen_stdio(sys.stdin, "rb")
     sys.stdout = _reopen_stdio(sys.stdout, "wb")
     sys.stderr = _reopen_stdio(sys.stderr, "wb")
-
-
-def _attempt_to_close_capture_file(f):
-    """Suppress IOError when closing the temporary file used for capturing streams in py27 (#2370)"""
-    if six.PY2:
-        try:
-            f.close()
-        except IOError:
-            pass
-    else:
-        f.close()

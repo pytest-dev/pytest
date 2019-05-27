@@ -3,8 +3,6 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import sys
-
 import pytest
 
 
@@ -74,10 +72,7 @@ class TestPasteCapture(object):
         """
         )
         result = testdir.runpytest("--pastebin=all")
-        if sys.version_info[0] == 3:
-            expected_msg = "*assert '☺' == 1*"
-        else:
-            expected_msg = "*assert '\\xe2\\x98\\xba' == 1*"
+        expected_msg = "*assert '☺' == 1*"
         result.stdout.fnmatch_lines(
             [
                 expected_msg,
@@ -110,14 +105,9 @@ class TestPaste(object):
 
             return DummyFile()
 
-        if sys.version_info < (3, 0):
-            import urllib
+        import urllib.request
 
-            monkeypatch.setattr(urllib, "urlopen", mocked)
-        else:
-            import urllib.request
-
-            monkeypatch.setattr(urllib.request, "urlopen", mocked)
+        monkeypatch.setattr(urllib.request, "urlopen", mocked)
         return calls
 
     def test_create_new_paste(self, pastebin, mocked_urlopen):
@@ -126,7 +116,7 @@ class TestPaste(object):
         assert len(mocked_urlopen) == 1
         url, data = mocked_urlopen[0]
         assert type(data) is bytes
-        lexer = "python3" if sys.version_info[0] == 3 else "python"
+        lexer = "python3"
         assert url == "https://bpaste.net"
         assert "lexer=%s" % lexer in data.decode()
         assert "code=full-paste-contents" in data.decode()

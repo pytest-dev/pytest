@@ -654,10 +654,7 @@ def test_pytest_fail_notrace_non_ascii(testdir, str_prefix):
         % str_prefix
     )
     result = testdir.runpytest()
-    if sys.version_info[0] >= 3:
-        result.stdout.fnmatch_lines(["*test_hello*", "oh oh: ☺"])
-    else:
-        result.stdout.fnmatch_lines(["*test_hello*", "oh oh: *"])
+    result.stdout.fnmatch_lines(["*test_hello*", "oh oh: ☺"])
     assert "def test_hello" not in result.stdout.str()
 
 
