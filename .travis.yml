@@ -65,7 +65,7 @@ jobs:
     # - numpy
     # - test_sys_breakpoint_interception (via pexpect).
     # Empty PYTEST_ADDOPTS to run this non-verbose.
-    - env: TOXENV=py37-lsof-numpy-pexpect-xdist PYTEST_COVERAGE=1 PYTEST_ADDOPTS=
+    - env: TOXENV=py37-lsof-numpy-pexpect-xdist PYTEST_COVERAGE=1 PYTEST_ADDOPTS="-vv -s"
 
     # Specialized factors for py27.
     - env: TOXENV=py27-nobyte-numpy-xdist
