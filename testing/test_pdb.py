@@ -4,7 +4,6 @@ from __future__ import division
 from __future__ import print_function
 
 import os
-import platform
 import sys
 
 import six
@@ -153,10 +152,11 @@ class TestPDB(object):
 
     @staticmethod
     def flush(child):
-        if platform.system() == "Darwin":
-            return
         if child.isalive():
+            # Read if the test has not (e.g. test_pdb_unittest_skip).
+            child.read()
             child.wait()
+        assert not child.isalive()
 
     def test_pdb_unittest_postmortem(self, testdir):
         p1 = testdir.makepyfile(
