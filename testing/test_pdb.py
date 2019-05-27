@@ -797,7 +797,6 @@ class TestPDB(object):
         rest = child.read().decode("utf8")
         assert "leave_pdb_hook" in rest
         assert "1 failed" in rest
-        child.sendeof()
         self.flush(child)
 
     def test_pdb_custom_cls(self, testdir, custom_pdb_calls):
