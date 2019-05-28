@@ -627,7 +627,7 @@ Removals
   See our `docs <https://docs.pytest.org/en/latest/deprecations.html#passing-command-line-string-to-pytest-main>`__ on information on how to update your code.
 
 
-- `#3086 <https://github.com/pytest-dev/pytest/issues/3086>`_: ``[pytest]`` section in **setup.cfg** files is not longer supported, use ``[tool:pytest]`` instead. ``setup.cfg`` files
+- `#3086 <https://github.com/pytest-dev/pytest/issues/3086>`_: ``[pytest]`` section in **setup.cfg** files is no longer supported, use ``[tool:pytest]`` instead. ``setup.cfg`` files
   are meant for use with ``distutils``, and a section named ``pytest`` has notoriously been a source of conflicts and bugs.
 
   Note that for **pytest.ini** and **tox.ini** files the section remains ``[pytest]``.
@@ -1849,7 +1849,7 @@ Features
   exits the debugger. On python 3.2 and higher, use CTRL+D. (`#3299
   <https://github.com/pytest-dev/pytest/issues/3299>`_)
 
-- pytest not longer changes the log level of the root logger when the
+- pytest no longer changes the log level of the root logger when the
   ``log-level`` parameter has greater numeric value than that of the level of
   the root logger, which makes it play better with custom logging configuration
   in user code. (`#3307 <https://github.com/pytest-dev/pytest/issues/3307>`_)
