@@ -63,40 +63,38 @@ testing, you do not want your test to depend on the running user. ``monkeypatch`
 can be used to patch functions dependent on the user to always return a
 specific value.
 
-In this example, :py:meth:`monkeypatch.setattr` is used to patch ``os.path.expanduser``
-so that the known testing string ``"/abc"`` is always used when the test is run.
+In this example, :py:meth:`monkeypatch.setattr` is used to patch ``Path.home``
+so that the known testing path ``Path("/abc")`` is always used when the test is run.
 This removes any dependency on the running user for testing purposes.
 :py:meth:`monkeypatch.setattr` must be called before the function which will use
 the patched function is called.
-After the test function finishes the ``os.path.expanduser`` modification will be undone.
+After the test function finishes the ``Path.home`` modification will be undone.
 
 .. code-block:: python
 
     # contents of test_module.py with source code and the test
-    # os.path is imported for reference in monkeypatch.setattr()
-    import os.path
+    from pathlib import Path
 
 
     def getssh():
         """Simple function to return expanded homedir ssh path."""
-        return os.path.expanduser("~/.ssh")
+        return Path.home() / ".ssh"
 
 
     def test_getssh(monkeypatch):
-        # mocked return function to replace os.path.expanduser
-        # given a path, always return '/abc'
-        def mockreturn(path):
-            return "/abc"
+        # mocked return function to replace Path.home
+        # always return '/abc'
+        def mockreturn():
+            return Path("/abc")
 
-        # Application of the monkeypatch to replace os.path.expanduser
+        # Application of the monkeypatch to replace Path.home
         # with the behavior of mockreturn defined above.
-        monkeypatch.setattr(os.path, "expanduser", mockreturn)
+        monkeypatch.setattr(Path, "home", mockreturn)
 
-        # Calling getssh() will use mockreturn in place of os.path.expanduser
+        # Calling getssh() will use mockreturn in place of Path.home
         # for this test with the monkeypatch.
         x = getssh()
-        assert x == "/abc/.ssh"
-
+        assert x == Path("/abc/.ssh")
 
 Monkeypatching returned objects: building mock classes
 ------------------------------------------------------
