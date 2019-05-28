@@ -638,36 +638,35 @@ class TestPDB(object):
                 class pytestPDBTest(_pytest.debugging.pytestPDB):
                     @classmethod
                     def set_trace(cls, *args, **kwargs):
-                        # Init _PdbWrapper to handle capturing.
-                        _pdb = cls._init_pdb(*args, **kwargs)
+                        # Init PytestPdbWrapper to handle capturing.
+                        _pdb = cls._init_pdb("set_trace", *args, **kwargs)
 
                         # Mock out pdb.Pdb.do_continue.
                         import pdb
                         pdb.Pdb.do_continue = lambda self, arg: None
 
-                        print("=== SET_TRACE ===")
+                        print("===" + " SET_TRACE ===")
                         assert input() == "debug set_trace()"
 
-                        # Simulate _PdbWrapper.do_debug
+                        # Simulate PytestPdbWrapper.do_debug
                         cls._recursive_debug += 1
                         print("ENTERING RECURSIVE DEBUGGER")
-                        print("=== SET_TRACE_2 ===")
+                        print("===" + " SET_TRACE_2 ===")
 
                         assert input() == "c"
                         _pdb.do_continue("")
-                        print("=== SET_TRACE_3 ===")
+                        print("===" + " SET_TRACE_3 ===")
 
-                        # Simulate _PdbWrapper.do_debug
+                        # Simulate PytestPdbWrapper.do_debug
                         print("LEAVING RECURSIVE DEBUGGER")
                         cls._recursive_debug -= 1
 
-                        print("=== SET_TRACE_4 ===")
+                        print("===" + " SET_TRACE_4 ===")
                         assert input() == "c"
                         _pdb.do_continue("")
 
                     def do_continue(self, arg):
                         print("=== do_continue")
-                        # _PdbWrapper.do_continue("")
 
                 monkeypatch.setattr(_pytest.debugging, "pytestPDB", pytestPDBTest)
 
@@ -677,7 +676,7 @@ class TestPDB(object):
                 set_trace()
         """
         )
-        child = testdir.spawn_pytest("%s %s" % (p1, capture_arg))
+        child = testdir.spawn_pytest("--tb=short %s %s" % (p1, capture_arg))
         child.expect("=== SET_TRACE ===")
         before = child.before.decode("utf8")
         if not capture_arg:
@@ -1207,3 +1206,33 @@ def test_raises_bdbquit_with_eoferror(testdir):
     result = testdir.runpytest(str(p1))
     result.stdout.fnmatch_lines(["E *BdbQuit", "*= 1 failed in*"])
     assert result.ret == 1
+
+
+def test_pdb_wrapper_class_is_reused(testdir):
+    p1 = testdir.makepyfile(
+        """
+        def test():
+            __import__("pdb").set_trace()
+            __import__("pdb").set_trace()
+
+            import mypdb
+            instances = mypdb.instances
+            assert len(instances) == 2
+            assert instances[0].__class__ is instances[1].__class__
+        """,
+        mypdb="""
+        instances = []
+
+        class MyPdb:
+            def __init__(self, *args, **kwargs):
+                instances.append(self)
+
+            def set_trace(self, *args):
+                print("set_trace_called", args)
+        """,
+    )
+    result = testdir.runpytest(str(p1), "--pdbcls=mypdb:MyPdb", syspathinsert=True)
+    assert result.ret == 0
+    result.stdout.fnmatch_lines(
+        ["*set_trace_called*", "*set_trace_called*", "* 1 passed in *"]
+    )
