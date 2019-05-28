@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """ recording warnings during test function execution. """
 from __future__ import absolute_import
 from __future__ import division

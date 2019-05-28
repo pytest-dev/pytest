@@ -106,7 +106,7 @@ def test_capturing_unicode(testdir, method):
         obj = "u'\u00f6y'"
     testdir.makepyfile(
         """
-        # coding=utf8
+        # -*- coding: utf-8 -*-
         # taken from issue 227 from nosetests
         def test_unicode():
             import sys

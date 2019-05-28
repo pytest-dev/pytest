@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import pprint
 
 from six.moves import reprlib

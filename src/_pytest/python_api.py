@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from __future__ import absolute_import
 
 import math
@@ -559,7 +560,7 @@ def raises(expected_exception, *args, **kwargs):
 
     :kwparam match: if specified, a string containing a regular expression,
         or a regular expression object, that is tested against the string
-        representation of the exception using ``re.match``. To match a literal
+        representation of the exception using ``re.search``. To match a literal
         string that may contain `special characters`__, the pattern can
         first be escaped with ``re.escape``.
 

@@ -229,6 +229,36 @@ class TestMetafunc(object):
         for val, expected in values:
             assert _idval(val, "a", 6, None, item=None, config=None) == expected
 
+    def test_unicode_idval_with_config(self):
+        """unittest for expected behavior to obtain ids with
+        disable_test_id_escaping_and_forfeit_all_rights_to_community_support
+        option. (#5294)
+        """
+        from _pytest.python import _idval
+
+        class MockConfig(object):
+            def __init__(self, config):
+                self.config = config
+
+            @property
+            def hook(self):
+                return self
+
+            def pytest_make_parametrize_id(self, **kw):
+                pass
+
+            def getini(self, name):
+                return self.config[name]
+
+        option = "disable_test_id_escaping_and_forfeit_all_rights_to_community_support"
+
+        values = [
+            (u"ação", MockConfig({option: True}), u"ação"),
+            (u"ação", MockConfig({option: False}), "a\\xe7\\xe3o"),
+        ]
+        for val, config, expected in values:
+            assert _idval(val, "a", 6, None, item=None, config=config) == expected
+
     def test_bytes_idval(self):
         """unittest for the expected behavior to obtain ids for parametrized
         bytes values:
@@ -393,6 +423,72 @@ class TestMetafunc(object):
             idfn=ids,
         )
         assert result == ["a-a0", "a-a1", "a-a2"]
+
+    def test_idmaker_with_idfn_and_config(self):
+        """unittest for expected behavior to create ids with idfn and
+        disable_test_id_escaping_and_forfeit_all_rights_to_community_support
+        option. (#5294)
+        """
+        from _pytest.python import idmaker
+
+        class MockConfig(object):
+            def __init__(self, config):
+                self.config = config
+
+            @property
+            def hook(self):
+                return self
+
+            def pytest_make_parametrize_id(self, **kw):
+                pass
+
+            def getini(self, name):
+                return self.config[name]
+
+        option = "disable_test_id_escaping_and_forfeit_all_rights_to_community_support"
+
+        values = [
+            (MockConfig({option: True}), u"ação"),
+            (MockConfig({option: False}), "a\\xe7\\xe3o"),
+        ]
+        for config, expected in values:
+            result = idmaker(
+                ("a",), [pytest.param("string")], idfn=lambda _: u"ação", config=config
+            )
+            assert result == [expected]
+
+    def test_idmaker_with_ids_and_config(self):
+        """unittest for expected behavior to create ids with ids and
+        disable_test_id_escaping_and_forfeit_all_rights_to_community_support
+        option. (#5294)
+        """
+        from _pytest.python import idmaker
+
+        class MockConfig(object):
+            def __init__(self, config):
+                self.config = config
+
+            @property
+            def hook(self):
+                return self
+
+            def pytest_make_parametrize_id(self, **kw):
+                pass
+
+            def getini(self, name):
+                return self.config[name]
+
+        option = "disable_test_id_escaping_and_forfeit_all_rights_to_community_support"
+
+        values = [
+            (MockConfig({option: True}), u"ação"),
+            (MockConfig({option: False}), "a\\xe7\\xe3o"),
+        ]
+        for config, expected in values:
+            result = idmaker(
+                ("a",), [pytest.param("string")], ids=[u"ação"], config=config
+            )
+            assert result == [expected]
 
     def test_parametrize_ids_exception(self, testdir):
         """

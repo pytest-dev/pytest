@@ -1,4 +1,4 @@
-# encoding: utf-8
+# -*- coding: utf-8 -*-
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
@@ -581,7 +581,7 @@ class TestDoctests(object):
         """
         testdir.makepyfile(
             u'''
-            # encoding: utf-8
+            # -*- coding: utf-8 -*-
             def foo():
                 """
                 >>> name = 'с' # not letter 'c' but instead Cyrillic 's'.
@@ -658,7 +658,7 @@ class TestDoctests(object):
         """
         p = testdir.makepyfile(
             test_unicode_doctest_module="""
-            # -*- encoding: utf-8 -*-
+            # -*- coding: utf-8 -*-
             from __future__ import unicode_literals
 
             def fix_bad_unicode(text):

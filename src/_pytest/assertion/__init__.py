@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 support for presenting detailed information in failing assertions.
 """

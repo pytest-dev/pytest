@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """ interactive debugging with PDB, the Python Debugger. """
 from __future__ import absolute_import
 from __future__ import division
@@ -48,42 +49,18 @@ def pytest_addoption(parser):
     )
 
 
-def _import_pdbcls(modname, classname):
-    try:
-        __import__(modname)
-        mod = sys.modules[modname]
-
-        # Handle --pdbcls=pdb:pdb.Pdb (useful e.g. with pdbpp).
-        parts = classname.split(".")
-        pdb_cls = getattr(mod, parts[0])
-        for part in parts[1:]:
-            pdb_cls = getattr(pdb_cls, part)
-
-        return pdb_cls
-    except Exception as exc:
-        value = ":".join((modname, classname))
-        raise UsageError("--pdbcls: could not import {!r}: {}".format(value, exc))
-
-
 def pytest_configure(config):
-    pdb_cls = config.getvalue("usepdb_cls")
-    if pdb_cls:
-        pdb_cls = _import_pdbcls(*pdb_cls)
-    else:
-        pdb_cls = pdb.Pdb
-
     if config.getvalue("trace"):
         config.pluginmanager.register(PdbTrace(), "pdbtrace")
     if config.getvalue("usepdb"):
         config.pluginmanager.register(PdbInvoke(), "pdbinvoke")
 
     pytestPDB._saved.append(
-        (pdb.set_trace, pytestPDB._pluginmanager, pytestPDB._config, pytestPDB._pdb_cls)
+        (pdb.set_trace, pytestPDB._pluginmanager, pytestPDB._config)
     )
     pdb.set_trace = pytestPDB.set_trace
     pytestPDB._pluginmanager = config.pluginmanager
     pytestPDB._config = config
-    pytestPDB._pdb_cls = pdb_cls
 
     # NOTE: not using pytest_unconfigure, since it might get called although
     #       pytest_configure was not (if another plugin raises UsageError).
@@ -92,7 +69,6 @@ def pytest_configure(config):
             pdb.set_trace,
             pytestPDB._pluginmanager,
             pytestPDB._config,
-            pytestPDB._pdb_cls,
         ) = pytestPDB._saved.pop()
 
     config._cleanup.append(fin)
@@ -103,7 +79,6 @@ class pytestPDB(object):
 
     _pluginmanager = None
     _config = None
-    _pdb_cls = pdb.Pdb
     _saved = []
     _recursive_debug = 0
 
@@ -112,6 +87,33 @@ class pytestPDB(object):
         if capman:
             return capman.is_capturing()
         return False
+
+    @classmethod
+    def _import_pdb_cls(cls):
+        if not cls._config:
+            # Happens when using pytest.set_trace outside of a test.
+            return pdb.Pdb
+
+        pdb_cls = cls._config.getvalue("usepdb_cls")
+        if not pdb_cls:
+            return pdb.Pdb
+
+        modname, classname = pdb_cls
+
+        try:
+            __import__(modname)
+            mod = sys.modules[modname]
+
+            # Handle --pdbcls=pdb:pdb.Pdb (useful e.g. with pdbpp).
+            parts = classname.split(".")
+            pdb_cls = getattr(mod, parts[0])
+            for part in parts[1:]:
+                pdb_cls = getattr(pdb_cls, part)
+
+            return pdb_cls
+        except Exception as exc:
+            value = ":".join((modname, classname))
+            raise UsageError("--pdbcls: could not import {!r}: {}".format(value, exc))
 
     @classmethod
     def _init_pdb(cls, *args, **kwargs):
@@ -143,7 +145,9 @@ class pytestPDB(object):
                     else:
                         tw.sep(">", "PDB set_trace")
 
-            class PytestPdbWrapper(cls._pdb_cls, object):
+            pdb_cls = cls._import_pdb_cls()
+
+            class PytestPdbWrapper(pdb_cls, object):
                 _pytest_capman = capman
                 _continued = False
 
@@ -212,10 +216,22 @@ class pytestPDB(object):
                             self._pytest_capman.suspend_global_capture(in_=True)
                     return ret
 
+                def get_stack(self, f, t):
+                    stack, i = super(PytestPdbWrapper, self).get_stack(f, t)
+                    if f is None:
+                        # Find last non-hidden frame.
+                        i = max(0, len(stack) - 1)
+                        while i and stack[i][0].f_locals.get(
+                            "__tracebackhide__", False
+                        ):
+                            i -= 1
+                    return stack, i
+
             _pdb = PytestPdbWrapper(**kwargs)
             cls._pluginmanager.hook.pytest_enter_pdb(config=cls._config, pdb=_pdb)
         else:
-            _pdb = cls._pdb_cls(**kwargs)
+            pdb_cls = cls._import_pdb_cls()
+            _pdb = pdb_cls(**kwargs)
         return _pdb
 
     @classmethod
@@ -298,22 +314,8 @@ def _postmortem_traceback(excinfo):
         return excinfo._excinfo[2]
 
 
-def _find_last_non_hidden_frame(stack):
-    i = max(0, len(stack) - 1)
-    while i and stack[i][0].f_locals.get("__tracebackhide__", False):
-        i -= 1
-    return i
-
-
 def post_mortem(t):
-    class Pdb(pytestPDB._pdb_cls, object):
-        def get_stack(self, f, t):
-            stack, i = super(Pdb, self).get_stack(f, t)
-            if f is None:
-                i = _find_last_non_hidden_frame(stack)
-            return stack, i
-
-    p = Pdb()
+    p = pytestPDB._init_pdb()
     p.reset()
     p.interaction(None, t)
     if p.quitting:
