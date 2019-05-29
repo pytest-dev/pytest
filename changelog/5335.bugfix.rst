@@ -1,0 +1,2 @@
+Colorize level names when the level in the logging format is formatted using
+'%(levelname).Xs' (truncated fixed width alignment), where X is an integer.

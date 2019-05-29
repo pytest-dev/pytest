@@ -39,7 +39,7 @@ class ColoredLevelFormatter(logging.Formatter):
         logging.DEBUG: {"purple"},
         logging.NOTSET: set(),
     }
-    LEVELNAME_FMT_REGEX = re.compile(r"%\(levelname\)([+-]?\d*s)")
+    LEVELNAME_FMT_REGEX = re.compile(r"%\(levelname\)([+-.]?\d*s)")
 
     def __init__(self, terminalwriter, *args, **kwargs):
         super(ColoredLevelFormatter, self).__init__(*args, **kwargs)

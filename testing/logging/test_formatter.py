@@ -65,3 +65,28 @@ def test_multiline_message():
         "dummypath                   10 INFO     Test Message line1\n"
         "                                        line2"
     )
+
+
+def test_colored_short_level():
+    logfmt = "%(levelname).1s %(message)s"
+
+    record = logging.LogRecord(
+        name="dummy",
+        level=logging.INFO,
+        pathname="dummypath",
+        lineno=10,
+        msg="Test Message",
+        args=(),
+        exc_info=False,
+    )
+
+    class ColorConfig(object):
+        class option(object):
+            pass
+
+    tw = py.io.TerminalWriter()
+    tw.hasmarkup = True
+    formatter = ColoredLevelFormatter(tw, logfmt)
+    output = formatter.format(record)
+    # the I (of INFO) is colored
+    assert output == ("\x1b[32mI\x1b[0m Test Message")
