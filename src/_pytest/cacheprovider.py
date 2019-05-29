@@ -168,6 +168,7 @@ class LFPlugin(object):
         if result is None:
             rootpath = Path(self.config.rootdir)
             result = {rootpath / nodeid.split("::")[0] for nodeid in self.lastfailed}
+            result = {x for x in result if x.exists()}
             self._last_failed_paths = result
         return result
 
@@ -176,17 +177,13 @@ class LFPlugin(object):
         Ignore this file path if we are in --lf mode and it is not in the list of
         previously failed files.
         """
-        if (
-            self.active
-            and self._previously_failed_count
-            and self.config.getoption("lf")
-            and path.isfile()
-            and self.lastfailed
-        ):
-            skip_it = Path(path) not in self.last_failed_paths()
-            if skip_it:
-                self._skipped_files += 1
-            return skip_it
+        if self.active and self.config.getoption("lf") and path.isfile():
+            last_failed_paths = self.last_failed_paths()
+            if last_failed_paths:
+                skip_it = Path(path) not in self.last_failed_paths()
+                if skip_it:
+                    self._skipped_files += 1
+                return skip_it
 
     def pytest_report_collectionfinish(self):
         if self.active and self.config.getoption("verbose") >= 0:
