@@ -27,9 +27,9 @@ def pytest_collection_modifyitems(config, items):
             if "testdir" in fixtures:
                 if spawn_names.intersection(item.function.__code__.co_names):
                     item.add_marker(pytest.mark.uses_pexpect)
-                    slow_items.append(item)
+                    slowest_items.append(item)
                 else:
-                    slowest_items.append(0)
+                    slow_items.append(item)
             else:
                 marker = item.get_closest_marker("slow")
                 if marker:
@@ -37,6 +37,6 @@ def pytest_collection_modifyitems(config, items):
                 else:
                     fast_items.append(item)
 
-    items[:] = fast_items + neutral_items + slow_items
+    items[:] = fast_items + neutral_items + slow_items + slowest_items
 
     yield
