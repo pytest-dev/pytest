@@ -20,6 +20,9 @@ jobs:
   include:
     # OSX tests - first (in test stage), since they are the slower ones.
     - &test-macos
+      os: osx
+      osx_image: xcode10.1
+      language: generic
       env: TOXENV=py37-pexpect-xdist PYTEST_COVERAGE=1
       before_install:
         - which python3
