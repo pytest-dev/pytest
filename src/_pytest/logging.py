@@ -18,6 +18,11 @@ from _pytest.pathlib import Path
 
 DEFAULT_LOG_FORMAT = "%(levelname)-8s %(name)s:%(filename)s:%(lineno)d %(message)s"
 DEFAULT_LOG_DATE_FORMAT = "%H:%M:%S"
+_ANSI_ESCAPE_SEQ = re.compile(r"\x1b\[[\d;]+m")
+
+
+def _remove_ansi_escape_sequences(text):
+    return _ANSI_ESCAPE_SEQ.sub("", text)
 
 
 class ColoredLevelFormatter(logging.Formatter):
@@ -257,8 +262,8 @@ class LogCaptureFixture(object):
 
     @property
     def text(self):
-        """Returns the log text."""
-        return self.handler.stream.getvalue()
+        """Returns the formatted log text."""
+        return _remove_ansi_escape_sequences(self.handler.stream.getvalue())
 
     @property
     def records(self):
@@ -394,7 +399,7 @@ class LoggingPlugin(object):
             config.option.verbose = 1
 
         self.print_logs = get_option_ini(config, "log_print")
-        self.formatter = logging.Formatter(
+        self.formatter = self._create_formatter(
             get_option_ini(config, "log_format"),
             get_option_ini(config, "log_date_format"),
         )
@@ -428,6 +433,19 @@ class LoggingPlugin(object):
         if self._log_cli_enabled():
             self._setup_cli_logging()
 
+    def _create_formatter(self, log_format, log_date_format):
+        # color option doesn't exist if terminal plugin is disabled
+        color = getattr(self._config.option, "color", "no")
+        if color != "no" and ColoredLevelFormatter.LEVELNAME_FMT_REGEX.search(
+            log_format
+        ):
+            formatter = ColoredLevelFormatter(
+                create_terminal_writer(self._config), log_format, log_date_format
+            )
+        else:
+            formatter = logging.Formatter(log_format, log_date_format)
+        return formatter
+
     def _setup_cli_logging(self):
         config = self._config
         terminal_reporter = config.pluginmanager.get_plugin("terminalreporter")
@@ -438,23 +456,12 @@ class LoggingPlugin(object):
         capture_manager = config.pluginmanager.get_plugin("capturemanager")
         # if capturemanager plugin is disabled, live logging still works.
         log_cli_handler = _LiveLoggingStreamHandler(terminal_reporter, capture_manager)
-        log_cli_format = get_option_ini(config, "log_cli_format", "log_format")
-        log_cli_date_format = get_option_ini(
-            config, "log_cli_date_format", "log_date_format"
+
+        log_cli_formatter = self._create_formatter(
+            get_option_ini(config, "log_cli_format", "log_format"),
+            get_option_ini(config, "log_cli_date_format", "log_date_format"),
         )
-        if (
-            config.option.color != "no"
-            and ColoredLevelFormatter.LEVELNAME_FMT_REGEX.search(log_cli_format)
-        ):
-            log_cli_formatter = ColoredLevelFormatter(
-                create_terminal_writer(config),
-                log_cli_format,
-                datefmt=log_cli_date_format,
-            )
-        else:
-            log_cli_formatter = logging.Formatter(
-                log_cli_format, datefmt=log_cli_date_format
-            )
+
         log_cli_level = get_actual_log_level(config, "log_cli_level", "log_level")
         self.log_cli_handler = log_cli_handler
         self.live_logs_context = lambda: catching_logs(
