@@ -832,6 +832,26 @@ class TestLastFailed(object):
             ]
         )
 
+    def test_lastfailed_with_unknown_failure(self, testdir):
+        testdir.makepyfile(
+            **{
+                "pkg1/test_1.py": """def test_1(): assert 0""",
+                "pkg1/test_2.py": """def test_2(): pass""",
+            }
+        )
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines(["collected 2 items", "* 1 failed, 1 passed in *"])
+
+        py.path.local("pkg1/test_1.py").remove()
+        result = testdir.runpytest("--lf")
+        result.stdout.fnmatch_lines(
+            [
+                "collected 1 item",
+                "run-last-failure: 1 known failures not in selected tests",
+                "* 1 passed in *",
+            ]
+        )
+
 
 class TestNewFirst(object):
     def test_newfirst_usecase(self, testdir):

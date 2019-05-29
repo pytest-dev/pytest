@@ -178,6 +178,7 @@ class LFPlugin(object):
         """
         if (
             self.active
+            and self._previously_failed_count
             and self.config.getoption("lf")
             and path.isfile()
             and self.lastfailed
