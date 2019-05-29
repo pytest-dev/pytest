@@ -233,19 +233,15 @@ class LFPlugin(object):
                     items[:] = previously_failed + previously_passed
 
                 noun = "failure" if self._previously_failed_count == 1 else "failures"
-                if self._skipped_files > 0:
-                    files_noun = "file" if self._skipped_files == 1 else "files"
-                    skipped_files_msg = " (skipped {files} {files_noun})".format(
-                        files=self._skipped_files, files_noun=files_noun
-                    )
-                else:
-                    skipped_files_msg = ""
                 suffix = " first" if self.config.getoption("failedfirst") else ""
-                self._report_status = "rerun previous {count} {noun}{suffix}{skipped_files}".format(
-                    count=self._previously_failed_count,
-                    suffix=suffix,
-                    noun=noun,
-                    skipped_files=skipped_files_msg,
+                self._report_status = "rerun previous {count} {noun}{suffix}".format(
+                    count=self._previously_failed_count, suffix=suffix, noun=noun
+                )
+
+            if self._skipped_files > 0:
+                files_noun = "file" if self._skipped_files == 1 else "files"
+                self._report_status += " (skipped {files} {files_noun})".format(
+                    files=self._skipped_files, files_noun=files_noun
                 )
         else:
             self._report_status = "no previously failed tests, "

@@ -869,7 +869,7 @@ class TestLastFailed(object):
         result.stdout.fnmatch_lines(
             [
                 "collected 1 item",
-                "run-last-failure: 1 known failures not in selected tests",
+                "run-last-failure: 1 known failures not in selected tests (skipped 1 file)",
                 "* 1 failed in *",
             ]
         )
