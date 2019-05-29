@@ -31,7 +31,7 @@ jobs:
         - python -V
         - test $(python -c 'import sys; print("%d%d" % sys.version_info[0:2])') = 37
 
-    - env: TOXENV=py37-pexpect-xdist PYTEST_COVERAGE=1 PYTEST_ADDOPTS="-vv -s"
+    - env: TOXENV=py37-pexpect PYTEST_COVERAGE=1 PYTEST_ADDOPTS="-vv -s"
 
     - stage: deploy
       python: '3.6'
