@@ -164,13 +164,14 @@ class LFPlugin(object):
     def last_failed_paths(self):
         """Returns a set with all Paths()s of the previously failed nodeids (cached).
         """
-        result = getattr(self, "_last_failed_paths", None)
-        if result is None:
+        try:
+            return self._last_failed_paths
+        except AttributeError:
             rootpath = Path(self.config.rootdir)
             result = {rootpath / nodeid.split("::")[0] for nodeid in self.lastfailed}
             result = {x for x in result if x.exists()}
             self._last_failed_paths = result
-        return result
+            return result
 
     def pytest_ignore_collect(self, path):
         """
