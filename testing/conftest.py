@@ -30,6 +30,7 @@ def pytest_collection_modifyitems(config, items):
                     slowest_items.append(item)
                 else:
                     slow_items.append(item)
+                item.add_marker(pytest.mark.slow)
             else:
                 marker = item.get_closest_marker("slow")
                 if marker:
