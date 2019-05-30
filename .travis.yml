@@ -18,7 +18,7 @@ install:
 
 jobs:
   include:
-    - env: TOXENV=pypy3-xdist
+    - env: TOXENV=pypy3
       python: 'pypy3'
 
     - stage: deploy
@@ -55,7 +55,7 @@ before_script:
       export _PYTEST_TOX_EXTRA_DEP=coverage-enable-subprocess
     fi
 
-script: tox --recreate
+script: tox -- testing/acceptance_test.py
 
 after_success:
   - |
