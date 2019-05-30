@@ -1,0 +1,1 @@
+Fix regression with ``--lf`` not re-running all tests with known failures from non-selected tests.
