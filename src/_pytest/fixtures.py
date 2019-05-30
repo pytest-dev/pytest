@@ -1308,6 +1308,9 @@ class FixtureManager(object):
                 faclist.insert(i, fixture_def)
             if marker.autouse:
                 autousenames.append(name)
+            # CHECK if 'marker' being deleted is the cause for the 'ResourceWarning' errors
+            # in pypy3
+            del marker
 
         if autousenames:
             self._nodeid_and_autousenames.append((nodeid or "", autousenames))
