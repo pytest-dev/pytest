@@ -153,15 +153,6 @@ class LsofFdLeakChecker(object):
             item.warn(pytest.PytestWarning("\n".join(error)))
 
 
-# XXX copied from execnet's conftest.py - needs to be merged
-winpymap = {
-    "python2.7": r"C:\Python27\python.exe",
-    "python3.4": r"C:\Python34\python.exe",
-    "python3.5": r"C:\Python35\python.exe",
-    "python3.6": r"C:\Python36\python.exe",
-}
-
-
 # used at least by pytest-xdist plugin
 
 
