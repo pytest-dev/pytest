@@ -153,15 +153,6 @@ class LsofFdLeakChecker(object):
             item.warn(pytest.PytestWarning("\n".join(error)))
 
 
-# XXX copied from execnet's conftest.py - needs to be merged
-winpymap = {
-    "python2.7": r"C:\Python27\python.exe",
-    "python3.4": r"C:\Python34\python.exe",
-    "python3.5": r"C:\Python35\python.exe",
-    "python3.6": r"C:\Python36\python.exe",
-}
-
-
 # used at least by pytest-xdist plugin
 
 
@@ -517,6 +508,10 @@ class Testdir(object):
         # Discard outer pytest options.
         mp.delenv("PYTEST_ADDOPTS", raising=False)
 
+        # Environment (updates) for inner runs.
+        tmphome = str(self.tmpdir)
+        self._env_run_update = {"HOME": tmphome, "USERPROFILE": tmphome}
+
     def __repr__(self):
         return "<Testdir %r>" % (self.tmpdir,)
 
@@ -813,8 +808,8 @@ class Testdir(object):
         try:
             # Do not load user config (during runs only).
             mp_run = MonkeyPatch()
-            mp_run.setenv("HOME", str(self.tmpdir))
-            mp_run.setenv("USERPROFILE", str(self.tmpdir))
+            for k, v in self._env_run_update.items():
+                mp_run.setenv(k, v)
             finalizers.append(mp_run.undo)
 
             # When running pytest inline any plugins active in the main test
@@ -1054,9 +1049,7 @@ class Testdir(object):
         env["PYTHONPATH"] = os.pathsep.join(
             filter(None, [os.getcwd(), env.get("PYTHONPATH", "")])
         )
-        # Do not load user config.
-        env["HOME"] = str(self.tmpdir)
-        env["USERPROFILE"] = env["HOME"]
+        env.update(self._env_run_update)
         kw["env"] = env
 
         if stdin is Testdir.CLOSE_STDIN:
@@ -1242,7 +1235,12 @@ class Testdir(object):
         if sys.platform.startswith("freebsd"):
             pytest.xfail("pexpect does not work reliably on freebsd")
         logfile = self.tmpdir.join("spawn.out").open("wb")
-        child = pexpect.spawn(cmd, logfile=logfile)
+
+        # Do not load user config.
+        env = os.environ.copy()
+        env.update(self._env_run_update)
+
+        child = pexpect.spawn(cmd, logfile=logfile, env=env)
         self.request.addfinalizer(logfile.close)
         child.timeout = expect_timeout
         return child

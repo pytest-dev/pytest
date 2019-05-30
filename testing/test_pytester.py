@@ -559,3 +559,29 @@ def test_popen_default_stdin_stderr_and_stdin_None(testdir):
     assert stdout.splitlines() == [b"", b"stdout"]
     assert stderr.splitlines() == [b"stderr"]
     assert proc.returncode == 0
+
+
+def test_spawn_uses_tmphome(testdir):
+    import os
+
+    tmphome = str(testdir.tmpdir)
+
+    # Does use HOME only during run.
+    assert os.environ.get("HOME") != tmphome
+
+    testdir._env_run_update["CUSTOMENV"] = "42"
+
+    p1 = testdir.makepyfile(
+        """
+        import os
+
+        def test():
+            assert os.environ["HOME"] == {tmphome!r}
+            assert os.environ["CUSTOMENV"] == "42"
+        """.format(
+            tmphome=tmphome
+        )
+    )
+    child = testdir.spawn_pytest(str(p1))
+    out = child.read()
+    assert child.wait() == 0, out.decode("utf8")

@@ -1,0 +1,2 @@
+Captured logs that are output for each failing test are formatted using the
+ColoredLevelFormatter.

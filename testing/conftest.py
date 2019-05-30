@@ -11,9 +11,10 @@ def pytest_collection_modifyitems(config, items):
     """
     fast_items = []
     slow_items = []
+    slowest_items = []
     neutral_items = []
 
-    slow_fixturenames = ("testdir",)
+    spawn_names = {"spawn_pytest", "spawn"}
 
     for item in items:
         try:
@@ -23,15 +24,20 @@ def pytest_collection_modifyitems(config, items):
             # (https://github.com/pytest-dev/pytest/issues/5070)
             neutral_items.append(item)
         else:
-            if any(x for x in fixtures if x in slow_fixturenames):
-                slow_items.append(item)
+            if "testdir" in fixtures:
+                if spawn_names.intersection(item.function.__code__.co_names):
+                    item.add_marker(pytest.mark.uses_pexpect)
+                    slowest_items.append(item)
+                else:
+                    slow_items.append(item)
+                item.add_marker(pytest.mark.slow)
             else:
                 marker = item.get_closest_marker("slow")
                 if marker:
-                    slow_items.append(item)
+                    slowest_items.append(item)
                 else:
                     fast_items.append(item)
 
-    items[:] = fast_items + neutral_items + slow_items
+    items[:] = fast_items + neutral_items + slow_items + slowest_items
 
     yield
