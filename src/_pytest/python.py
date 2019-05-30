@@ -720,7 +720,8 @@ class Class(PyCollector):
             self.warn(
                 PytestCollectionWarning(
                     "cannot collect test class %r because it has a "
-                    "__init__ constructor" % self.obj.__name__
+                    "__init__ constructor (from: %s)"
+                    % (self.obj.__name__, self.parent.nodeid)
                 )
             )
             return []
@@ -728,7 +729,8 @@ class Class(PyCollector):
             self.warn(
                 PytestCollectionWarning(
                     "cannot collect test class %r because it has a "
-                    "__new__ constructor" % self.obj.__name__
+                    "__new__ constructor (from: %s)"
+                    % (self.obj.__name__, self.parent.nodeid)
                 )
             )
             return []
