@@ -11,7 +11,7 @@ cache: false
 
 env:
   global:
-    - PYTEST_ADDOPTS=-vv
+    - PYTEST_ADDOPTS="-vv -s"
 
 install:
   - python -m pip install --upgrade --pre tox
