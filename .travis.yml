@@ -55,7 +55,7 @@ before_script:
       export _PYTEST_TOX_EXTRA_DEP=coverage-enable-subprocess
     fi
 
-script: tox --  testing/test_capture.py
+script: tox --  testing/python
 
 after_success:
   - |
