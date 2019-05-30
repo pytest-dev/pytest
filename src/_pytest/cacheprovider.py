@@ -164,28 +164,27 @@ class LFPlugin(object):
     def last_failed_paths(self):
         """Returns a set with all Paths()s of the previously failed nodeids (cached).
         """
-        result = getattr(self, "_last_failed_paths", None)
-        if result is None:
+        try:
+            return self._last_failed_paths
+        except AttributeError:
             rootpath = Path(self.config.rootdir)
             result = {rootpath / nodeid.split("::")[0] for nodeid in self.lastfailed}
+            result = {x for x in result if x.exists()}
             self._last_failed_paths = result
-        return result
+            return result
 
     def pytest_ignore_collect(self, path):
         """
         Ignore this file path if we are in --lf mode and it is not in the list of
         previously failed files.
         """
-        if (
-            self.active
-            and self.config.getoption("lf")
-            and path.isfile()
-            and self.lastfailed
-        ):
-            skip_it = Path(path) not in self.last_failed_paths()
-            if skip_it:
-                self._skipped_files += 1
-            return skip_it
+        if self.active and self.config.getoption("lf") and path.isfile():
+            last_failed_paths = self.last_failed_paths()
+            if last_failed_paths:
+                skip_it = Path(path) not in self.last_failed_paths()
+                if skip_it:
+                    self._skipped_files += 1
+                return skip_it
 
     def pytest_report_collectionfinish(self):
         if self.active and self.config.getoption("verbose") >= 0:
@@ -234,19 +233,15 @@ class LFPlugin(object):
                     items[:] = previously_failed + previously_passed
 
                 noun = "failure" if self._previously_failed_count == 1 else "failures"
-                if self._skipped_files > 0:
-                    files_noun = "file" if self._skipped_files == 1 else "files"
-                    skipped_files_msg = " (skipped {files} {files_noun})".format(
-                        files=self._skipped_files, files_noun=files_noun
-                    )
-                else:
-                    skipped_files_msg = ""
                 suffix = " first" if self.config.getoption("failedfirst") else ""
-                self._report_status = "rerun previous {count} {noun}{suffix}{skipped_files}".format(
-                    count=self._previously_failed_count,
-                    suffix=suffix,
-                    noun=noun,
-                    skipped_files=skipped_files_msg,
+                self._report_status = "rerun previous {count} {noun}{suffix}".format(
+                    count=self._previously_failed_count, suffix=suffix, noun=noun
+                )
+
+            if self._skipped_files > 0:
+                files_noun = "file" if self._skipped_files == 1 else "files"
+                self._report_status += " (skipped {files} {files_noun})".format(
+                    files=self._skipped_files, files_noun=files_noun
                 )
         else:
             self._report_status = "no previously failed tests, "
