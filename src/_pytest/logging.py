@@ -77,6 +77,36 @@ class ColoredLevelFormatter(logging.Formatter):
         return super(ColoredLevelFormatter, self).format(record)
 
 
+if not six.PY2:
+    # Formatter classes don't support format styles in PY2
+
+    class PercentStyleMultiline(logging.PercentStyle):
+        """A logging style with special support for multiline messages.
+
+        If the message of a record consists of multiple lines, this style
+        formats the message as if each line were logged separately.
+        """
+
+        @staticmethod
+        def _update_message(record_dict, message):
+            tmp = record_dict.copy()
+            tmp["message"] = message
+            return tmp
+
+        def format(self, record):
+            if "\n" in record.message:
+                lines = record.message.splitlines()
+                formatted = self._fmt % self._update_message(record.__dict__, lines[0])
+                # TODO optimize this by introducing an option that tells the
+                # logging framework that the indentation doesn't
+                # change. This allows to compute the indentation only once.
+                indentation = _remove_ansi_escape_sequences(formatted).find(lines[0])
+                lines[0] = formatted
+                return ("\n" + " " * indentation).join(lines)
+            else:
+                return self._fmt % record.__dict__
+
+
 def get_option_ini(config, *names):
     for name in names:
         ret = config.getoption(name)  # 'default' arg won't work as expected
@@ -444,6 +474,9 @@ class LoggingPlugin(object):
             )
         else:
             formatter = logging.Formatter(log_format, log_date_format)
+
+        if not six.PY2:
+            formatter._style = PercentStyleMultiline(formatter._style._fmt)
         return formatter
 
     def _setup_cli_logging(self):
