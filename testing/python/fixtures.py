@@ -3950,3 +3950,46 @@ def test_call_fixture_function_error():
 
     with pytest.raises(pytest.fail.Exception):
         assert fix() == 1
+
+
+def test_fixture_param_shadowing(testdir):
+    """Parametrized arguments would be shadowed if a fixture with the same name also exists (#5036)"""
+    testdir.makepyfile(
+        """
+        import pytest
+
+        @pytest.fixture(params=['a', 'b'])
+        def argroot(request):
+            return request.param
+
+        @pytest.fixture
+        def arg(argroot):
+            return argroot
+
+        # This should only be parametrized directly
+        @pytest.mark.parametrize("arg", [1])
+        def test_direct(arg):
+            assert arg == 1
+
+        # This should be parametrized based on the fixtures
+        def test_normal_fixture(arg):
+            assert isinstance(arg, str)
+
+        # Indirect should still work:
+
+        @pytest.fixture
+        def arg2(request):
+            return 2*request.param
+
+        @pytest.mark.parametrize("arg2", [1], indirect=True)
+        def test_indirect(arg2):
+            assert arg2 == 2
+    """
+    )
+    # Only one test should have run
+    result = testdir.runpytest("-v")
+    result.assert_outcomes(passed=4)
+    result.stdout.fnmatch_lines(["*::test_direct[[]1[]]*"])
+    result.stdout.fnmatch_lines(["*::test_normal_fixture[[]a[]]*"])
+    result.stdout.fnmatch_lines(["*::test_normal_fixture[[]b[]]*"])
+    result.stdout.fnmatch_lines(["*::test_indirect[[]1[]]*"])
