@@ -146,7 +146,24 @@ class TestClass(object):
         result = testdir.runpytest("-rw")
         result.stdout.fnmatch_lines(
             [
-                "*cannot collect test class 'TestClass1' because it has a __init__ constructor"
+                "*cannot collect test class 'TestClass1' because it has "
+                "a __init__ constructor (from: test_class_with_init_warning.py)"
+            ]
+        )
+
+    def test_class_with_new_warning(self, testdir):
+        testdir.makepyfile(
+            """
+            class TestClass1(object):
+                def __new__(self):
+                    pass
+        """
+        )
+        result = testdir.runpytest("-rw")
+        result.stdout.fnmatch_lines(
+            [
+                "*cannot collect test class 'TestClass1' because it has "
+                "a __new__ constructor (from: test_class_with_new_warning.py)"
             ]
         )
 
