@@ -1,1 +1,0 @@
-Unroll calls to ``all`` to full for-loops for better failure messages, especially when using Generator Expressions.

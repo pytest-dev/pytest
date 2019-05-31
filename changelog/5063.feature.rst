@@ -1,1 +1,0 @@
-Switch from ``pkg_resources`` to ``importlib-metadata`` for entrypoint detection for improved performance and import time.

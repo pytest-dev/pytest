@@ -1,1 +1,0 @@
-pytester's ``testdir.spawn`` uses ``tmpdir`` as HOME/USERPROFILE directory.

@@ -1,1 +1,0 @@
-Added the ``junit_log_passing_tests`` ini value which can be used to enable and disable logging passing test output in the Junit XML file.

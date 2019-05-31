@@ -1,1 +1,0 @@
-The debugging plugin imports the wrapped ``Pdb`` class (``--pdbcls``) on-demand now.
