@@ -893,7 +893,7 @@ def test_getreportopt():
     assert getreportopt(config) == "sxXwEf"  # NOTE: "w" included!
 
     config.option.reportchars = "A"
-    assert getreportopt(config) == "sxXwEfpP"
+    assert getreportopt(config) == "PpsxXwEf"
 
 
 def test_terminalreporter_reportopt_addopts(testdir):

@@ -1087,6 +1087,22 @@ passed multiple times. The expected format is ``name=value``. For example::
    This tells pytest to ignore deprecation warnings and turn all other warnings
    into errors. For more information please refer to :ref:`warnings`.
 
+
+.. confval:: junit_duration_report
+
+    .. versionadded:: 4.1
+
+    Configures how durations are recorded into the JUnit XML report:
+
+    * ``total`` (the default): duration times reported include setup, call, and teardown times.
+    * ``call``: duration times reported include only call times, excluding setup and teardown.
+
+    .. code-block:: ini
+
+        [pytest]
+        junit_duration_report = call
+
+
 .. confval:: junit_family
 
     .. versionadded:: 4.2
@@ -1102,9 +1118,34 @@ passed multiple times. The expected format is ``name=value``. For example::
         [pytest]
         junit_family = xunit2
 
+
+.. confval:: junit_logging
+
+    .. versionadded:: 3.5
+
+    Configures if stdout/stderr should be written to the JUnit XML file. Valid values are
+    ``system-out``, ``system-err``, and ``no`` (the default).
+
+    .. code-block:: ini
+
+        [pytest]
+        junit_logging = system-out
+
+
+.. confval:: junit_log_passing_tests
+
+    .. versionadded:: 4.6
+
+    If ``junit_logging != "no"``, configures if the captured output should be written
+    to the JUnit XML file for **passing** tests. Default is ``True``.
+
+    .. code-block:: ini
+
+        [pytest]
+        junit_log_passing_tests = False
+
+
 .. confval:: junit_suite_name
-
-
 
     To set the name of the root test suite xml item, you can configure the ``junit_suite_name`` option in your config file:
 

@@ -18,6 +18,11 @@ from _pytest.pathlib import Path
 
 DEFAULT_LOG_FORMAT = "%(levelname)-8s %(name)s:%(filename)s:%(lineno)d %(message)s"
 DEFAULT_LOG_DATE_FORMAT = "%H:%M:%S"
+_ANSI_ESCAPE_SEQ = re.compile(r"\x1b\[[\d;]+m")
+
+
+def _remove_ansi_escape_sequences(text):
+    return _ANSI_ESCAPE_SEQ.sub("", text)
 
 
 class ColoredLevelFormatter(logging.Formatter):
@@ -70,6 +75,36 @@ class ColoredLevelFormatter(logging.Formatter):
         else:
             self._style._fmt = fmt
         return super(ColoredLevelFormatter, self).format(record)
+
+
+if not six.PY2:
+    # Formatter classes don't support format styles in PY2
+
+    class PercentStyleMultiline(logging.PercentStyle):
+        """A logging style with special support for multiline messages.
+
+        If the message of a record consists of multiple lines, this style
+        formats the message as if each line were logged separately.
+        """
+
+        @staticmethod
+        def _update_message(record_dict, message):
+            tmp = record_dict.copy()
+            tmp["message"] = message
+            return tmp
+
+        def format(self, record):
+            if "\n" in record.message:
+                lines = record.message.splitlines()
+                formatted = self._fmt % self._update_message(record.__dict__, lines[0])
+                # TODO optimize this by introducing an option that tells the
+                # logging framework that the indentation doesn't
+                # change. This allows to compute the indentation only once.
+                indentation = _remove_ansi_escape_sequences(formatted).find(lines[0])
+                lines[0] = formatted
+                return ("\n" + " " * indentation).join(lines)
+            else:
+                return self._fmt % record.__dict__
 
 
 def get_option_ini(config, *names):
@@ -257,8 +292,8 @@ class LogCaptureFixture(object):
 
     @property
     def text(self):
-        """Returns the log text."""
-        return self.handler.stream.getvalue()
+        """Returns the formatted log text."""
+        return _remove_ansi_escape_sequences(self.handler.stream.getvalue())
 
     @property
     def records(self):
@@ -394,7 +429,7 @@ class LoggingPlugin(object):
             config.option.verbose = 1
 
         self.print_logs = get_option_ini(config, "log_print")
-        self.formatter = logging.Formatter(
+        self.formatter = self._create_formatter(
             get_option_ini(config, "log_format"),
             get_option_ini(config, "log_date_format"),
         )
@@ -428,6 +463,22 @@ class LoggingPlugin(object):
         if self._log_cli_enabled():
             self._setup_cli_logging()
 
+    def _create_formatter(self, log_format, log_date_format):
+        # color option doesn't exist if terminal plugin is disabled
+        color = getattr(self._config.option, "color", "no")
+        if color != "no" and ColoredLevelFormatter.LEVELNAME_FMT_REGEX.search(
+            log_format
+        ):
+            formatter = ColoredLevelFormatter(
+                create_terminal_writer(self._config), log_format, log_date_format
+            )
+        else:
+            formatter = logging.Formatter(log_format, log_date_format)
+
+        if not six.PY2:
+            formatter._style = PercentStyleMultiline(formatter._style._fmt)
+        return formatter
+
     def _setup_cli_logging(self):
         config = self._config
         terminal_reporter = config.pluginmanager.get_plugin("terminalreporter")
@@ -438,23 +489,12 @@ class LoggingPlugin(object):
         capture_manager = config.pluginmanager.get_plugin("capturemanager")
         # if capturemanager plugin is disabled, live logging still works.
         log_cli_handler = _LiveLoggingStreamHandler(terminal_reporter, capture_manager)
-        log_cli_format = get_option_ini(config, "log_cli_format", "log_format")
-        log_cli_date_format = get_option_ini(
-            config, "log_cli_date_format", "log_date_format"
+
+        log_cli_formatter = self._create_formatter(
+            get_option_ini(config, "log_cli_format", "log_format"),
+            get_option_ini(config, "log_cli_date_format", "log_date_format"),
         )
-        if (
-            config.option.color != "no"
-            and ColoredLevelFormatter.LEVELNAME_FMT_REGEX.search(log_cli_format)
-        ):
-            log_cli_formatter = ColoredLevelFormatter(
-                create_terminal_writer(config),
-                log_cli_format,
-                datefmt=log_cli_date_format,
-            )
-        else:
-            log_cli_formatter = logging.Formatter(
-                log_cli_format, datefmt=log_cli_date_format
-            )
+
         log_cli_level = get_actual_log_level(config, "log_cli_level", "log_level")
         self.log_cli_handler = log_cli_handler
         self.live_logs_context = lambda: catching_logs(

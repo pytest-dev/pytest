@@ -112,11 +112,9 @@ matrix:
   allow_failures:
     - python: '3.8-dev'
       env: TOXENV=py38-xdist
-    # temporary until pytest 4.6 is released
-    - env: TOXENV=py27-pluggymaster-xdist
-      python: '2.7'
-    - env: TOXENV=py37-pluggymaster-xdist
-
+    # Temporary (https://github.com/pytest-dev/pytest/pull/5334).
+    - env: TOXENV=pypy3-xdist
+      python: 'pypy3'
 
 before_script:
   - |

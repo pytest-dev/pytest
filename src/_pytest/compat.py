@@ -37,7 +37,6 @@ if _PY3:
 else:
     from funcsigs import signature, Parameter as Parameter
 
-NoneType = type(None)
 NOTSET = object()
 
 PY35 = sys.version_info[:2] >= (3, 5)

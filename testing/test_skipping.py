@@ -1177,3 +1177,11 @@ def test_summary_list_after_errors(testdir):
             "FAILED test_summary_list_after_errors.py::test_fail - assert 0",
         ]
     )
+
+
+def test_importorskip():
+    with pytest.raises(
+        pytest.skip.Exception,
+        match="^could not import 'doesnotexist': No module named .*",
+    ):
+        pytest.importorskip("doesnotexist")

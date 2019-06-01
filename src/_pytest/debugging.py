@@ -81,6 +81,7 @@ class pytestPDB(object):
     _config = None
     _saved = []
     _recursive_debug = 0
+    _wrapped_pdb_cls = None
 
     @classmethod
     def _is_capturing(cls, capman):
@@ -89,43 +90,138 @@ class pytestPDB(object):
         return False
 
     @classmethod
-    def _import_pdb_cls(cls):
+    def _import_pdb_cls(cls, capman):
         if not cls._config:
             # Happens when using pytest.set_trace outside of a test.
             return pdb.Pdb
 
-        pdb_cls = cls._config.getvalue("usepdb_cls")
-        if not pdb_cls:
-            return pdb.Pdb
+        usepdb_cls = cls._config.getvalue("usepdb_cls")
 
-        modname, classname = pdb_cls
+        if cls._wrapped_pdb_cls and cls._wrapped_pdb_cls[0] == usepdb_cls:
+            return cls._wrapped_pdb_cls[1]
 
-        try:
-            __import__(modname)
-            mod = sys.modules[modname]
+        if usepdb_cls:
+            modname, classname = usepdb_cls
 
-            # Handle --pdbcls=pdb:pdb.Pdb (useful e.g. with pdbpp).
-            parts = classname.split(".")
-            pdb_cls = getattr(mod, parts[0])
-            for part in parts[1:]:
-                pdb_cls = getattr(pdb_cls, part)
+            try:
+                __import__(modname)
+                mod = sys.modules[modname]
 
-            return pdb_cls
-        except Exception as exc:
-            value = ":".join((modname, classname))
-            raise UsageError("--pdbcls: could not import {!r}: {}".format(value, exc))
+                # Handle --pdbcls=pdb:pdb.Pdb (useful e.g. with pdbpp).
+                parts = classname.split(".")
+                pdb_cls = getattr(mod, parts[0])
+                for part in parts[1:]:
+                    pdb_cls = getattr(pdb_cls, part)
+            except Exception as exc:
+                value = ":".join((modname, classname))
+                raise UsageError(
+                    "--pdbcls: could not import {!r}: {}".format(value, exc)
+                )
+        else:
+            pdb_cls = pdb.Pdb
+
+        wrapped_cls = cls._get_pdb_wrapper_class(pdb_cls, capman)
+        cls._wrapped_pdb_cls = (usepdb_cls, wrapped_cls)
+        return wrapped_cls
 
     @classmethod
-    def _init_pdb(cls, *args, **kwargs):
+    def _get_pdb_wrapper_class(cls, pdb_cls, capman):
+        import _pytest.config
+
+        class PytestPdbWrapper(pdb_cls, object):
+            _pytest_capman = capman
+            _continued = False
+
+            def do_debug(self, arg):
+                cls._recursive_debug += 1
+                ret = super(PytestPdbWrapper, self).do_debug(arg)
+                cls._recursive_debug -= 1
+                return ret
+
+            def do_continue(self, arg):
+                ret = super(PytestPdbWrapper, self).do_continue(arg)
+                if cls._recursive_debug == 0:
+                    tw = _pytest.config.create_terminal_writer(cls._config)
+                    tw.line()
+
+                    capman = self._pytest_capman
+                    capturing = pytestPDB._is_capturing(capman)
+                    if capturing:
+                        if capturing == "global":
+                            tw.sep(">", "PDB continue (IO-capturing resumed)")
+                        else:
+                            tw.sep(
+                                ">",
+                                "PDB continue (IO-capturing resumed for %s)"
+                                % capturing,
+                            )
+                        capman.resume()
+                    else:
+                        tw.sep(">", "PDB continue")
+                cls._pluginmanager.hook.pytest_leave_pdb(config=cls._config, pdb=self)
+                self._continued = True
+                return ret
+
+            do_c = do_cont = do_continue
+
+            def do_quit(self, arg):
+                """Raise Exit outcome when quit command is used in pdb.
+
+                This is a bit of a hack - it would be better if BdbQuit
+                could be handled, but this would require to wrap the
+                whole pytest run, and adjust the report etc.
+                """
+                ret = super(PytestPdbWrapper, self).do_quit(arg)
+
+                if cls._recursive_debug == 0:
+                    outcomes.exit("Quitting debugger")
+
+                return ret
+
+            do_q = do_quit
+            do_exit = do_quit
+
+            def setup(self, f, tb):
+                """Suspend on setup().
+
+                Needed after do_continue resumed, and entering another
+                breakpoint again.
+                """
+                ret = super(PytestPdbWrapper, self).setup(f, tb)
+                if not ret and self._continued:
+                    # pdb.setup() returns True if the command wants to exit
+                    # from the interaction: do not suspend capturing then.
+                    if self._pytest_capman:
+                        self._pytest_capman.suspend_global_capture(in_=True)
+                return ret
+
+            def get_stack(self, f, t):
+                stack, i = super(PytestPdbWrapper, self).get_stack(f, t)
+                if f is None:
+                    # Find last non-hidden frame.
+                    i = max(0, len(stack) - 1)
+                    while i and stack[i][0].f_locals.get("__tracebackhide__", False):
+                        i -= 1
+                return stack, i
+
+        return PytestPdbWrapper
+
+    @classmethod
+    def _init_pdb(cls, method, *args, **kwargs):
         """ Initialize PDB debugging, dropping any IO capturing. """
         import _pytest.config
 
         if cls._pluginmanager is not None:
             capman = cls._pluginmanager.getplugin("capturemanager")
-            if capman:
-                capman.suspend(in_=True)
+        else:
+            capman = None
+        if capman:
+            capman.suspend(in_=True)
+
+        if cls._config:
             tw = _pytest.config.create_terminal_writer(cls._config)
             tw.line()
+
             if cls._recursive_debug == 0:
                 # Handle header similar to pdb.set_trace in py37+.
                 header = kwargs.pop("header", None)
@@ -133,112 +229,28 @@ class pytestPDB(object):
                     tw.sep(">", header)
                 else:
                     capturing = cls._is_capturing(capman)
-                    if capturing:
-                        if capturing == "global":
-                            tw.sep(">", "PDB set_trace (IO-capturing turned off)")
-                        else:
-                            tw.sep(
-                                ">",
-                                "PDB set_trace (IO-capturing turned off for %s)"
-                                % capturing,
-                            )
+                    if capturing == "global":
+                        tw.sep(">", "PDB %s (IO-capturing turned off)" % (method,))
+                    elif capturing:
+                        tw.sep(
+                            ">",
+                            "PDB %s (IO-capturing turned off for %s)"
+                            % (method, capturing),
+                        )
                     else:
-                        tw.sep(">", "PDB set_trace")
+                        tw.sep(">", "PDB %s" % (method,))
 
-            pdb_cls = cls._import_pdb_cls()
+        _pdb = cls._import_pdb_cls(capman)(**kwargs)
 
-            class PytestPdbWrapper(pdb_cls, object):
-                _pytest_capman = capman
-                _continued = False
-
-                def do_debug(self, arg):
-                    cls._recursive_debug += 1
-                    ret = super(PytestPdbWrapper, self).do_debug(arg)
-                    cls._recursive_debug -= 1
-                    return ret
-
-                def do_continue(self, arg):
-                    ret = super(PytestPdbWrapper, self).do_continue(arg)
-                    if cls._recursive_debug == 0:
-                        tw = _pytest.config.create_terminal_writer(cls._config)
-                        tw.line()
-
-                        capman = self._pytest_capman
-                        capturing = pytestPDB._is_capturing(capman)
-                        if capturing:
-                            if capturing == "global":
-                                tw.sep(">", "PDB continue (IO-capturing resumed)")
-                            else:
-                                tw.sep(
-                                    ">",
-                                    "PDB continue (IO-capturing resumed for %s)"
-                                    % capturing,
-                                )
-                            capman.resume()
-                        else:
-                            tw.sep(">", "PDB continue")
-                    cls._pluginmanager.hook.pytest_leave_pdb(
-                        config=cls._config, pdb=self
-                    )
-                    self._continued = True
-                    return ret
-
-                do_c = do_cont = do_continue
-
-                def do_quit(self, arg):
-                    """Raise Exit outcome when quit command is used in pdb.
-
-                    This is a bit of a hack - it would be better if BdbQuit
-                    could be handled, but this would require to wrap the
-                    whole pytest run, and adjust the report etc.
-                    """
-                    ret = super(PytestPdbWrapper, self).do_quit(arg)
-
-                    if cls._recursive_debug == 0:
-                        outcomes.exit("Quitting debugger")
-
-                    return ret
-
-                do_q = do_quit
-                do_exit = do_quit
-
-                def setup(self, f, tb):
-                    """Suspend on setup().
-
-                    Needed after do_continue resumed, and entering another
-                    breakpoint again.
-                    """
-                    ret = super(PytestPdbWrapper, self).setup(f, tb)
-                    if not ret and self._continued:
-                        # pdb.setup() returns True if the command wants to exit
-                        # from the interaction: do not suspend capturing then.
-                        if self._pytest_capman:
-                            self._pytest_capman.suspend_global_capture(in_=True)
-                    return ret
-
-                def get_stack(self, f, t):
-                    stack, i = super(PytestPdbWrapper, self).get_stack(f, t)
-                    if f is None:
-                        # Find last non-hidden frame.
-                        i = max(0, len(stack) - 1)
-                        while i and stack[i][0].f_locals.get(
-                            "__tracebackhide__", False
-                        ):
-                            i -= 1
-                    return stack, i
-
-            _pdb = PytestPdbWrapper(**kwargs)
+        if cls._pluginmanager:
             cls._pluginmanager.hook.pytest_enter_pdb(config=cls._config, pdb=_pdb)
-        else:
-            pdb_cls = cls._import_pdb_cls()
-            _pdb = pdb_cls(**kwargs)
         return _pdb
 
     @classmethod
     def set_trace(cls, *args, **kwargs):
         """Invoke debugging via ``Pdb.set_trace``, dropping any IO capturing."""
         frame = sys._getframe().f_back
-        _pdb = cls._init_pdb(*args, **kwargs)
+        _pdb = cls._init_pdb("set_trace", *args, **kwargs)
         _pdb.set_trace(frame)
 
 
@@ -265,7 +277,7 @@ class PdbTrace(object):
 
 
 def _test_pytest_function(pyfuncitem):
-    _pdb = pytestPDB._init_pdb()
+    _pdb = pytestPDB._init_pdb("runcall")
     testfunction = pyfuncitem.obj
     pyfuncitem.obj = _pdb.runcall
     if "func" in pyfuncitem._fixtureinfo.argnames:  # pragma: no branch
@@ -315,7 +327,7 @@ def _postmortem_traceback(excinfo):
 
 
 def post_mortem(t):
-    p = pytestPDB._init_pdb()
+    p = pytestPDB._init_pdb("post_mortem")
     p.reset()
     p.interaction(None, t)
     if p.quitting:

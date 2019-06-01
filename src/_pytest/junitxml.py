@@ -167,6 +167,9 @@ class _NodeReporter(object):
         self.append(node)
 
     def write_captured_output(self, report):
+        if not self.xml.log_passing_tests and report.passed:
+            return
+
         content_out = report.capstdout
         content_log = report.caplog
         content_err = report.capstderr
@@ -415,6 +418,12 @@ def pytest_addoption(parser):
         default="no",
     )  # choices=['no', 'stdout', 'stderr'])
     parser.addini(
+        "junit_log_passing_tests",
+        "Capture log information for passing tests to JUnit report: ",
+        type="bool",
+        default=True,
+    )
+    parser.addini(
         "junit_duration_report",
         "Duration time to report: one of total|call",
         default="total",
@@ -437,6 +446,7 @@ def pytest_configure(config):
             config.getini("junit_logging"),
             config.getini("junit_duration_report"),
             config.getini("junit_family"),
+            config.getini("junit_log_passing_tests"),
         )
         config.pluginmanager.register(config._xml)
 
@@ -472,12 +482,14 @@ class LogXML(object):
         logging="no",
         report_duration="total",
         family="xunit1",
+        log_passing_tests=True,
     ):
         logfile = os.path.expanduser(os.path.expandvars(logfile))
         self.logfile = os.path.normpath(os.path.abspath(logfile))
         self.prefix = prefix
         self.suite_name = suite_name
         self.logging = logging
+        self.log_passing_tests = log_passing_tests
         self.report_duration = report_duration
         self.family = family
         self.stats = dict.fromkeys(["error", "passed", "failure", "skipped"], 0)

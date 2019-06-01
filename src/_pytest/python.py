@@ -31,7 +31,6 @@ from _pytest.compat import getlocation
 from _pytest.compat import is_generator
 from _pytest.compat import isclass
 from _pytest.compat import isfunction
-from _pytest.compat import NoneType
 from _pytest.compat import NOTSET
 from _pytest.compat import REGEX_TYPE
 from _pytest.compat import safe_getattr
@@ -1194,7 +1193,7 @@ def _idval(val, argname, idx, idfn, item, config):
 
     if isinstance(val, STRING_TYPES):
         return _ascii_escaped_by_config(val, config)
-    elif isinstance(val, (float, int, bool, NoneType)):
+    elif val is None or isinstance(val, (float, int, bool)):
         return str(val)
     elif isinstance(val, REGEX_TYPE):
         return ascii_escaped(val.pattern)

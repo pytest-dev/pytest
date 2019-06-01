@@ -142,10 +142,11 @@ def pytest_cmdline_main(config):
 
 
 def showhelp(config):
+    import textwrap
+
     reporter = config.pluginmanager.get_plugin("terminalreporter")
     tw = reporter._tw
     tw.write(config._parser.optparser.format_help())
-    tw.line()
     tw.line()
     tw.line(
         "[pytest] ini-options in the first pytest.ini|tox.ini|setup.cfg file found:"
@@ -153,13 +154,36 @@ def showhelp(config):
     tw.line()
 
     columns = tw.fullwidth  # costly call
+    indent_len = 24  # based on argparse's max_help_position=24
+    indent = " " * indent_len
     for name in config._parser._ininames:
         help, type, default = config._parser._inidict[name]
         if type is None:
             type = "string"
-        spec = "%s (%s)" % (name, type)
-        line = "  %-24s %s" % (spec, help)
-        tw.line(line[:columns])
+        spec = "%s (%s):" % (name, type)
+        tw.write("  %s" % spec)
+        spec_len = len(spec)
+        if spec_len > (indent_len - 3):
+            # Display help starting at a new line.
+            tw.line()
+            helplines = textwrap.wrap(
+                help,
+                columns,
+                initial_indent=indent,
+                subsequent_indent=indent,
+                break_on_hyphens=False,
+            )
+
+            for line in helplines:
+                tw.line(line)
+        else:
+            # Display help starting after the spec, following lines indented.
+            tw.write(" " * (indent_len - spec_len - 2))
+            wrapped = textwrap.wrap(help, columns - indent_len, break_on_hyphens=False)
+
+            tw.line(wrapped[0])
+            for line in wrapped[1:]:
+                tw.line(indent + line)
 
     tw.line()
     tw.line("environment variables:")

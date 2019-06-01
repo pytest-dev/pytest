@@ -1,1 +1,0 @@
-The ``pytest_enter_pdb`` hook gets called with post-mortem (``--pdb``).

@@ -1084,3 +1084,48 @@ def test_log_set_path(testdir):
     with open(os.path.join(report_dir_base, "test_second"), "r") as rfh:
         content = rfh.read()
         assert "message from test 2" in content
+
+
+def test_colored_captured_log(testdir):
+    """
+    Test that the level names of captured log messages of a failing test are
+    colored.
+    """
+    testdir.makepyfile(
+        """
+        import logging
+
+        logger = logging.getLogger(__name__)
+
+        def test_foo():
+            logger.info('text going to logger from call')
+            assert False
+        """
+    )
+    result = testdir.runpytest("--log-level=INFO", "--color=yes")
+    assert result.ret == 1
+    result.stdout.fnmatch_lines(
+        [
+            "*-- Captured log call --*",
+            "\x1b[32mINFO    \x1b[0m*text going to logger from call",
+        ]
+    )
+
+
+def test_colored_ansi_esc_caplogtext(testdir):
+    """
+    Make sure that caplog.text does not contain ANSI escape sequences.
+    """
+    testdir.makepyfile(
+        """
+        import logging
+
+        logger = logging.getLogger(__name__)
+
+        def test_foo(caplog):
+            logger.info('text going to logger from call')
+            assert '\x1b' not in caplog.text
+        """
+    )
+    result = testdir.runpytest("--log-level=INFO", "--color=yes")
+    assert result.ret == 0

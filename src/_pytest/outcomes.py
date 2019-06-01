@@ -9,6 +9,8 @@ from __future__ import print_function
 
 import sys
 
+from packaging.version import Version
+
 
 class OutcomeException(BaseException):
     """ OutcomeException and its subclass instances indicate and
@@ -155,7 +157,7 @@ def importorskip(modname, minversion=None, reason=None):
 
     __tracebackhide__ = True
     compile(modname, "", "eval")  # to catch syntaxerrors
-    should_skip = False
+    import_exc = None
 
     with warnings.catch_warnings():
         # make sure to ignore ImportWarnings that might happen because
@@ -164,27 +166,19 @@ def importorskip(modname, minversion=None, reason=None):
         warnings.simplefilter("ignore")
         try:
             __import__(modname)
-        except ImportError:
+        except ImportError as exc:
             # Do not raise chained exception here(#1485)
-            should_skip = True
-    if should_skip:
+            import_exc = exc
+    if import_exc:
         if reason is None:
-            reason = "could not import %r" % (modname,)
+            reason = "could not import %r: %s" % (modname, import_exc)
         raise Skipped(reason, allow_module_level=True)
     mod = sys.modules[modname]
     if minversion is None:
         return mod
     verattr = getattr(mod, "__version__", None)
     if minversion is not None:
-        try:
-            from pkg_resources import parse_version as pv
-        except ImportError:
-            raise Skipped(
-                "we have a required version for %r but can not import "
-                "pkg_resources to parse version strings." % (modname,),
-                allow_module_level=True,
-            )
-        if verattr is None or pv(verattr) < pv(minversion):
+        if verattr is None or Version(verattr) < Version(minversion):
             raise Skipped(
                 "module %r has __version__ %r, required is: %r"
                 % (modname, verattr, minversion),

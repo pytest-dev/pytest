@@ -854,11 +854,9 @@ class FixtureDef(object):
                     exceptions.append(sys.exc_info())
             if exceptions:
                 e = exceptions[0]
-                del (
-                    exceptions
-                )  # ensure we don't keep all frames alive because of the traceback
+                # Ensure to not keep frame references through traceback.
+                del exceptions
                 six.reraise(*e)
-
         finally:
             hook = self._fixturemanager.session.gethookproxy(request.node.fspath)
             hook.pytest_fixture_post_finalizer(fixturedef=self, request=request)

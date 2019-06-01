@@ -1332,3 +1332,30 @@ def test_escaped_skipreason_issue3533(testdir):
     snode = node.find_first_by_tag("skipped")
     assert "1 <> 2" in snode.text
     snode.assert_attr(message="1 <> 2")
+
+
+def test_logging_passing_tests_disabled_does_not_log_test_output(testdir):
+    testdir.makeini(
+        """
+        [pytest]
+        junit_log_passing_tests=False
+        junit_logging=system-out
+    """
+    )
+    testdir.makepyfile(
+        """
+        import pytest
+        import logging
+        import sys
+
+        def test_func():
+            sys.stdout.write('This is stdout')
+            sys.stderr.write('This is stderr')
+            logging.warning('hello')
+    """
+    )
+    result, dom = runandparse(testdir)
+    assert result.ret == 0
+    node = dom.find_first_by_tag("testcase")
+    assert len(node.find_by_tag("system-err")) == 0
+    assert len(node.find_by_tag("system-out")) == 0
