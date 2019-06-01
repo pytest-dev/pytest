@@ -413,6 +413,28 @@ def test_parametrized_with_kwargs(testdir):
     assert result.ret == 0
 
 
+def test_parametrize_iterator(testdir):
+    """parametrize should work with generators (#5354)."""
+    py_file = testdir.makepyfile(
+        """\
+        import pytest
+
+        def gen():
+            yield 1
+            yield 2
+            yield 3
+
+        @pytest.mark.parametrize('a', gen())
+        def test(a):
+            assert a >= 1
+        """
+    )
+    result = testdir.runpytest(py_file)
+    assert result.ret == 0
+    # should not skip any tests
+    result.stdout.fnmatch_lines(["*3 passed*"])
+
+
 class TestFunctional(object):
     def test_merging_markers_deep(self, testdir):
         # issue 199 - propagate markers into nested classes
