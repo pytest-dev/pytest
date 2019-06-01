@@ -910,7 +910,6 @@ class ReprEntry(TerminalRepr):
             for line in self.lines:
                 red = line.startswith("E   ")
                 tw.line(line, bold=True, red=red)
-            # tw.line("")
             return
         if self.reprfuncargs:
             self.reprfuncargs.toterminal(tw)
