@@ -113,14 +113,18 @@ class ParameterSet(namedtuple("ParameterSet", "values, marks, id")):
             force_tuple = len(argnames) == 1
         else:
             force_tuple = False
-        parameters = [
+        return argnames, force_tuple
+
+    @staticmethod
+    def _parse_parametrize_parameters(argvalues, force_tuple):
+        return [
             ParameterSet.extract_from(x, force_tuple=force_tuple) for x in argvalues
         ]
-        return argnames, parameters
 
     @classmethod
     def _for_parametrize(cls, argnames, argvalues, func, config, function_definition):
-        argnames, parameters = cls._parse_parametrize_args(argnames, argvalues)
+        argnames, force_tuple = cls._parse_parametrize_args(argnames, argvalues)
+        parameters = cls._parse_parametrize_parameters(argvalues, force_tuple)
         del argvalues
 
         if parameters:
