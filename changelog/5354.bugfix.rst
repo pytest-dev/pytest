@@ -1,0 +1,1 @@
+Fix ``pytest.mark.parametrize`` when the argvalues is an iterator.
