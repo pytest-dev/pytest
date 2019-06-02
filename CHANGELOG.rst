@@ -18,6 +18,18 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+pytest 4.6.1 (2019-06-02)
+=========================
+
+Bug Fixes
+---------
+
+- `#5354 <https://github.com/pytest-dev/pytest/issues/5354>`_: Fix ``pytest.mark.parametrize`` when the argvalues is an iterator.
+
+
+- `#5358 <https://github.com/pytest-dev/pytest/issues/5358>`_: Fix assertion rewriting of ``all()`` calls to deal with non-generators.
+
+
 pytest 4.6.0 (2019-05-31)
 =========================
 
