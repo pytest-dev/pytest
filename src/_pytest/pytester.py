@@ -1,5 +1,4 @@
 """(disabled by default) support for testing pytest and pytest plugins."""
-import codecs
 import gc
 import os
 import platform
@@ -1089,8 +1088,8 @@ class Testdir:
         p2 = self.tmpdir.join("stderr")
         print("running:", *cmdargs)
         print("     in:", py.path.local())
-        f1 = codecs.open(str(p1), "w", encoding="utf8")
-        f2 = codecs.open(str(p2), "w", encoding="utf8")
+        f1 = open(str(p1), "w", encoding="utf8")
+        f2 = open(str(p2), "w", encoding="utf8")
         try:
             now = time.time()
             popen = self.popen(
@@ -1125,8 +1124,8 @@ class Testdir:
         finally:
             f1.close()
             f2.close()
-        f1 = codecs.open(str(p1), "r", encoding="utf8")
-        f2 = codecs.open(str(p2), "r", encoding="utf8")
+        f1 = open(str(p1), "r", encoding="utf8")
+        f2 = open(str(p2), "r", encoding="utf8")
         try:
             out = f1.read().splitlines()
             err = f2.read().splitlines()
