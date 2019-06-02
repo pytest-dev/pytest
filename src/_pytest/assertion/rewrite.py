@@ -949,11 +949,21 @@ warn_explicit(
         res = self.assign(ast.BinOp(left_expr, binop.op, right_expr))
         return res, explanation
 
+    @staticmethod
+    def _is_any_call_with_generator_or_list_comprehension(call):
+        """Return True if the Call node is an 'any' call with a generator or list comprehension"""
+        return (
+            isinstance(call.func, ast.Name)
+            and call.func.id == "all"
+            and len(call.args) == 1
+            and isinstance(call.args[0], (ast.GeneratorExp, ast.ListComp))
+        )
+
     def visit_Call_35(self, call):
         """
         visit `ast.Call` nodes on Python3.5 and after
         """
-        if isinstance(call.func, ast.Name) and call.func.id == "all":
+        if self._is_any_call_with_generator_or_list_comprehension(call):
             return self._visit_all(call)
         new_func, func_expl = self.visit(call.func)
         arg_expls = []
@@ -980,8 +990,6 @@ warn_explicit(
 
     def _visit_all(self, call):
         """Special rewrite for the builtin all function, see #5062"""
-        if not isinstance(call.args[0], (ast.GeneratorExp, ast.ListComp)):
-            return
         gen_exp = call.args[0]
         assertion_module = ast.Module(
             body=[ast.Assert(test=gen_exp.elt, lineno=1, msg="", col_offset=1)]
@@ -1009,7 +1017,7 @@ warn_explicit(
         """
         visit `ast.Call nodes on 3.4 and below`
         """
-        if isinstance(call.func, ast.Name) and call.func.id == "all":
+        if self._is_any_call_with_generator_or_list_comprehension(call):
             return self._visit_all(call)
         new_func, func_expl = self.visit(call.func)
         arg_expls = []
