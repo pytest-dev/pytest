@@ -25,7 +25,7 @@ def test_make_hook_recorder(testdir):
 
     pytest.xfail("internal reportrecorder tests need refactoring")
 
-    class rep(object):
+    class rep:
         excinfo = None
         passed = False
         failed = True
@@ -38,7 +38,7 @@ def test_make_hook_recorder(testdir):
     failures = recorder.getfailures()
     assert failures == [rep]
 
-    class rep(object):
+    class rep:
         excinfo = None
         passed = False
         failed = False
@@ -153,7 +153,7 @@ def test_xpassed_with_strict_is_considered_a_failure(testdir):
 
 
 def make_holder():
-    class apiclass(object):
+    class apiclass:
         def pytest_xyz(self, arg):
             "x"
 
@@ -199,17 +199,17 @@ def test_makepyfile_unicode(testdir):
 
 def test_makepyfile_utf8(testdir):
     """Ensure makepyfile accepts utf-8 bytes as input (#2738)"""
-    utf8_contents = u"""
+    utf8_contents = """
         def setup_function(function):
             mixed_encoding = u'São Paulo'
     """.encode(
         "utf-8"
     )
     p = testdir.makepyfile(utf8_contents)
-    assert u"mixed_encoding = u'São Paulo'".encode("utf-8") in p.read("rb")
+    assert "mixed_encoding = u'São Paulo'".encode() in p.read("rb")
 
 
-class TestInlineRunModulesCleanup(object):
+class TestInlineRunModulesCleanup:
     def test_inline_run_test_module_not_cleaned_up(self, testdir):
         test_mod = testdir.makepyfile("def test_foo(): assert True")
         result = testdir.inline_run(str(test_mod))
@@ -220,7 +220,7 @@ class TestInlineRunModulesCleanup(object):
         assert result2.ret == EXIT_TESTSFAILED
 
     def spy_factory(self):
-        class SysModulesSnapshotSpy(object):
+        class SysModulesSnapshotSpy:
             instances = []
 
             def __init__(self, preserve=None):
@@ -303,7 +303,7 @@ def test_cwd_snapshot(tmpdir):
     assert py.path.local() == foo
 
 
-class TestSysModulesSnapshot(object):
+class TestSysModulesSnapshot:
     key = "my-test-module"
 
     def test_remove_added(self):
@@ -366,7 +366,7 @@ class TestSysModulesSnapshot(object):
 
 
 @pytest.mark.parametrize("path_type", ("path", "meta_path"))
-class TestSysPathsSnapshot(object):
+class TestSysPathsSnapshot:
     other_path = {"path": "meta_path", "meta_path": "path"}
 
     @staticmethod
@@ -417,7 +417,7 @@ def test_testdir_subprocess(testdir):
 
 
 def test_unicode_args(testdir):
-    result = testdir.runpytest("-k", u"💩")
+    result = testdir.runpytest("-k", "💩")
     assert result.ret == EXIT_NOTESTSCOLLECTED
 
 

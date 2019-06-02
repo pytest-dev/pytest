@@ -23,7 +23,7 @@ class OutcomeException(BaseException):
             if isinstance(val, bytes):
                 val = val.decode("UTF-8", errors="replace")
             return val
-        return "<%s instance>" % (self.__class__.__name__,)
+        return "<{} instance>".format(self.__class__.__name__)
 
     __str__ = __repr__
 
@@ -53,7 +53,7 @@ class Exit(Exception):
     def __init__(self, msg="unknown reason", returncode=None):
         self.msg = msg
         self.returncode = returncode
-        super(Exit, self).__init__(msg)
+        super().__init__(msg)
 
 
 # exposed helper methods
@@ -166,7 +166,7 @@ def importorskip(modname, minversion=None, reason=None):
             import_exc = exc
     if import_exc:
         if reason is None:
-            reason = "could not import %r: %s" % (modname, import_exc)
+            reason = "could not import {!r}: {}".format(modname, import_exc)
         raise Skipped(reason, allow_module_level=True)
     mod = sys.modules[modname]
     if minversion is None:

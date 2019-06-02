@@ -13,7 +13,7 @@ from _pytest import reports
 from _pytest import runner
 
 
-class TestSetupState(object):
+class TestSetupState:
     def test_setup(self, testdir):
         ss = runner.SetupState()
         item = testdir.getitem("def test_func(): pass")
@@ -101,7 +101,7 @@ class TestSetupState(object):
         assert module_teardown
 
 
-class BaseFunctionalTests(object):
+class BaseFunctionalTests:
     def test_passfunction(self, testdir):
         reports = testdir.runitem(
             """
@@ -436,7 +436,7 @@ class TestExecutionForked(BaseFunctionalTests):
         assert rep.when == "???"
 
 
-class TestSessionReports(object):
+class TestSessionReports:
     def test_collect_result(self, testdir):
         col = testdir.getmodulecol(
             """
@@ -639,7 +639,7 @@ def test_pytest_fail_notrace_non_ascii(testdir, str_prefix):
     This tests with native and unicode strings containing non-ascii chars.
     """
     testdir.makepyfile(
-        u"""
+        """
         # -*- coding: utf-8 -*-
         import pytest
 
@@ -868,7 +868,7 @@ def test_store_except_info_on_error():
     sys.last_traceback and friends.
     """
     # Simulate item that might raise a specific exception, depending on `raise_error` class var
-    class ItemMightRaise(object):
+    class ItemMightRaise:
         nodeid = "item_that_raises"
         raise_error = True
 
@@ -925,7 +925,7 @@ def test_current_test_env_var(testdir, monkeypatch):
     assert "PYTEST_CURRENT_TEST" not in os.environ
 
 
-class TestReportContents(object):
+class TestReportContents:
     """
     Test user-level API of ``TestReport`` objects.
     """

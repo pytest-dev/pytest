@@ -6,7 +6,6 @@ import types
 import attr
 import importlib_metadata
 import py
-import six
 
 import pytest
 from _pytest.main import EXIT_NOTESTSCOLLECTED
@@ -21,7 +20,7 @@ def prepend_pythonpath(*dirs):
     return os.pathsep.join(str(p) for p in dirs)
 
 
-class TestGeneralUsage(object):
+class TestGeneralUsage:
     def test_config_error(self, testdir):
         testdir.copy_example("conftest_usageerror/conftest.py")
         result = testdir.runpytest(testdir.tmpdir)
@@ -115,7 +114,7 @@ class TestGeneralUsage(object):
         loaded = []
 
         @attr.s
-        class DummyEntryPoint(object):
+        class DummyEntryPoint:
             name = attr.ib()
             module = attr.ib()
             group = "pytest11"
@@ -132,7 +131,7 @@ class TestGeneralUsage(object):
         ]
 
         @attr.s
-        class DummyDist(object):
+        class DummyDist:
             entry_points = attr.ib()
             files = ()
 
@@ -508,7 +507,7 @@ class TestGeneralUsage(object):
     def test_parametrized_with_null_bytes(self, testdir):
         """Test parametrization with values that contain null bytes and unicode characters (#2644, #2957)"""
         p = testdir.makepyfile(
-            u"""
+            """
             # encoding: UTF-8
             import pytest
 
@@ -521,7 +520,7 @@ class TestGeneralUsage(object):
         res.assert_outcomes(passed=3)
 
 
-class TestInvocationVariants(object):
+class TestInvocationVariants:
     def test_earlyinit(self, testdir):
         p = testdir.makepyfile(
             """
@@ -618,7 +617,7 @@ class TestInvocationVariants(object):
         out, err = capsys.readouterr()
 
     def test_invoke_plugin_api(self, testdir, capsys):
-        class MyPlugin(object):
+        class MyPlugin:
             def pytest_addoption(self, parser):
                 parser.addoption("--myopt")
 
@@ -756,7 +755,7 @@ class TestInvocationVariants(object):
                     str(testdir.tmpdir.join("tmpfile2")),
                 )
             except OSError as e:
-                pytest.skip(six.text_type(e.args[0]))
+                pytest.skip(str(e.args[0]))
         monkeypatch.delenv("PYTHONDONTWRITEBYTECODE", raising=False)
 
         dirname = "lib"
@@ -871,7 +870,7 @@ class TestInvocationVariants(object):
         assert request.config.pluginmanager.hasplugin("python")
 
 
-class TestDurations(object):
+class TestDurations:
     source = """
         import time
         frag = 0.002
@@ -949,7 +948,7 @@ class TestDurations(object):
         assert result.ret == 0
 
 
-class TestDurationWithFixture(object):
+class TestDurationWithFixture:
     source = """
         import pytest
         import time

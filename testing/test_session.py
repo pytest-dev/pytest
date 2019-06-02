@@ -2,7 +2,7 @@ import pytest
 from _pytest.main import EXIT_NOTESTSCOLLECTED
 
 
-class SessionTests(object):
+class SessionTests:
     def test_basic_testitem_events(self, testdir):
         tfile = testdir.makepyfile(
             """
@@ -71,7 +71,7 @@ class SessionTests(object):
         values = reprec.getfailedcollections()
         assert len(values) == 1
         out = str(values[0].longrepr)
-        assert out.find(str("not python")) != -1
+        assert out.find("not python") != -1
 
     def test_exit_first_problem(self, testdir):
         reprec = testdir.inline_runsource(

@@ -3,8 +3,6 @@ import platform
 import sys
 import traceback
 
-import six
-
 from ..outcomes import fail
 from ..outcomes import TEST_OUTCOME
 
@@ -22,7 +20,7 @@ def cached_eval(config, expr, d):
         return x
 
 
-class MarkEvaluator(object):
+class MarkEvaluator:
     def __init__(self, item, name):
         self.item = item
         self._marks = None
@@ -86,7 +84,7 @@ class MarkEvaluator(object):
 
                 for expr in args:
                     self.expr = expr
-                    if isinstance(expr, six.string_types):
+                    if isinstance(expr, str):
                         d = self._getglobals()
                         result = cached_eval(self.item.config, expr, d)
                     else:

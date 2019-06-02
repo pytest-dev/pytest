@@ -11,7 +11,7 @@ from _pytest.main import EXIT_NOTESTSCOLLECTED
 pytest_plugins = ("pytester",)
 
 
-class TestNewAPI(object):
+class TestNewAPI:
     def test_config_cache_makedir(self, testdir):
         testdir.makeini("[pytest]")
         config = testdir.parseconfigure()
@@ -236,7 +236,7 @@ def test_cache_show(testdir):
     assert result.ret == 0
 
 
-class TestLastFailed(object):
+class TestLastFailed:
     def test_lastfailed_usecase(self, testdir, monkeypatch):
         monkeypatch.setenv("PYTHONDONTWRITEBYTECODE", "1")
         p = testdir.makepyfile(
@@ -870,7 +870,7 @@ class TestLastFailed(object):
         )
 
 
-class TestNewFirst(object):
+class TestNewFirst:
     def test_newfirst_usecase(self, testdir):
         testdir.makepyfile(
             **{
@@ -995,7 +995,7 @@ class TestNewFirst(object):
         )
 
 
-class TestReadme(object):
+class TestReadme:
     def check_readme(self, testdir):
         config = testdir.parseconfigure()
         readme = config.cache._cachedir.joinpath("README.md")
@@ -1034,7 +1034,7 @@ def test_gitignore(testdir):
     assert gitignore_path.read_text(encoding="UTF-8") == msg
 
     # Does not overwrite existing/custom one.
-    gitignore_path.write_text(u"custom")
+    gitignore_path.write_text("custom")
     cache.set("something", "else")
     assert gitignore_path.read_text(encoding="UTF-8") == "custom"
 

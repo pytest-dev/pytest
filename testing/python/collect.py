@@ -8,7 +8,7 @@ from _pytest.main import EXIT_NOTESTSCOLLECTED
 from _pytest.nodes import Collector
 
 
-class TestModule(object):
+class TestModule:
     def test_failing_import(self, testdir):
         modcol = testdir.getmodulecol("import alksdjalskdjalkjals")
         pytest.raises(Collector.CollectError, modcol.collect)
@@ -117,7 +117,7 @@ class TestModule(object):
         are handled properly (#2336).
         """
         testdir.makepyfile(
-            u"""
+            """
             # -*- coding: utf-8 -*-
             raise ImportError(u'Something bad happened ☺')
         """
@@ -133,7 +133,7 @@ class TestModule(object):
         assert result.ret == 2
 
 
-class TestClass(object):
+class TestClass:
     def test_class_with_init_warning(self, testdir):
         testdir.makepyfile(
             """
@@ -254,7 +254,7 @@ class TestClass(object):
         assert result.ret == EXIT_NOTESTSCOLLECTED
 
 
-class TestFunction(object):
+class TestFunction:
     def test_getmodulecollector(self, testdir):
         item = testdir.getitem("def test_func(): pass")
         modcol = item.getparent(pytest.Module)
@@ -513,11 +513,11 @@ class TestFunction(object):
         item = testdir.getitem("def test_func(): raise ValueError")
         config = item.config
 
-        class MyPlugin1(object):
+        class MyPlugin1:
             def pytest_pyfunc_call(self, pyfuncitem):
                 raise ValueError
 
-        class MyPlugin2(object):
+        class MyPlugin2:
             def pytest_pyfunc_call(self, pyfuncitem):
                 return True
 
@@ -663,7 +663,7 @@ class TestFunction(object):
         assert [x.originalname for x in items] == ["test_func", "test_func"]
 
 
-class TestSorting(object):
+class TestSorting:
     def test_check_equality(self, testdir):
         modcol = testdir.getmodulecol(
             """
@@ -715,7 +715,7 @@ class TestSorting(object):
         assert [item.name for item in colitems] == ["test_b", "test_a"]
 
 
-class TestConftestCustomization(object):
+class TestConftestCustomization:
     def test_pytest_pycollect_module(self, testdir):
         testdir.makeconftest(
             """
@@ -890,7 +890,7 @@ def test_modulecol_roundtrip(testdir):
     assert modcol.name == newcol.name
 
 
-class TestTracebackCutting(object):
+class TestTracebackCutting:
     def test_skip_simple(self):
         with pytest.raises(pytest.skip.Exception) as excinfo:
             pytest.skip("xxx")
@@ -1019,7 +1019,7 @@ class TestTracebackCutting(object):
         assert filter_traceback(tb[-1])
 
 
-class TestReportInfo(object):
+class TestReportInfo:
     def test_itemreport_reportinfo(self, testdir, linecomp):
         testdir.makeconftest(
             """
@@ -1257,7 +1257,7 @@ def test_syntax_error_with_non_ascii_chars(testdir):
     """Fix decoding issue while formatting SyntaxErrors during collection (#578)
     """
     testdir.makepyfile(
-        u"""
+        """
     # -*- coding: utf-8 -*-
 
     ☃

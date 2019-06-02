@@ -11,7 +11,6 @@ from functools import lru_cache
 
 import importlib_metadata
 import py
-import six
 from packaging.version import Version
 from pluggy import HookimplMarker
 from pluggy import HookspecMarker
@@ -83,7 +82,7 @@ def main(args=None, plugins=None):
         return EXIT_USAGEERROR
 
 
-class cmdline(object):  # compatibility namespace
+class cmdline:  # compatibility namespace
     main = staticmethod(main)
 
 
@@ -189,7 +188,7 @@ def _prepareconfig(args=None, plugins=None):
     try:
         if plugins:
             for plugin in plugins:
-                if isinstance(plugin, six.string_types):
+                if isinstance(plugin, str):
                     pluginmanager.consider_pluginarg(plugin)
                 else:
                     pluginmanager.register(plugin)
@@ -216,7 +215,7 @@ class PytestPluginManager(PluginManager):
     """
 
     def __init__(self):
-        super(PytestPluginManager, self).__init__("pytest")
+        super().__init__("pytest")
         self._conftest_plugins = set()
 
         # state related to local conftest plugins
@@ -264,7 +263,7 @@ class PytestPluginManager(PluginManager):
             return
 
         method = getattr(plugin, name)
-        opts = super(PytestPluginManager, self).parse_hookimpl_opts(plugin, name)
+        opts = super().parse_hookimpl_opts(plugin, name)
 
         # consider only actual functions for hooks (#3775)
         if not inspect.isroutine(method):
@@ -283,9 +282,7 @@ class PytestPluginManager(PluginManager):
         return opts
 
     def parse_hookspec_opts(self, module_or_class, name):
-        opts = super(PytestPluginManager, self).parse_hookspec_opts(
-            module_or_class, name
-        )
+        opts = super().parse_hookspec_opts(module_or_class, name)
         if opts is None:
             method = getattr(module_or_class, name)
 
@@ -312,7 +309,7 @@ class PytestPluginManager(PluginManager):
                 )
             )
             return
-        ret = super(PytestPluginManager, self).register(plugin, name)
+        ret = super().register(plugin, name)
         if ret:
             self.hook.pytest_plugin_registered.call_historic(
                 kwargs=dict(plugin=plugin, manager=self)
@@ -473,7 +470,7 @@ class PytestPluginManager(PluginManager):
         while i < n:
             opt = args[i]
             i += 1
-            if isinstance(opt, six.string_types):
+            if isinstance(opt, str):
                 if opt == "-p":
                     try:
                         parg = args[i]
@@ -534,7 +531,7 @@ class PytestPluginManager(PluginManager):
         # "terminal" or "capture".  Those plugins are registered under their
         # basename for historic purposes but must be imported with the
         # _pytest prefix.
-        assert isinstance(modname, six.string_types), (
+        assert isinstance(modname, str), (
             "module name as text required, got %r" % modname
         )
         modname = str(modname)
@@ -552,20 +549,19 @@ class PytestPluginManager(PluginManager):
         try:
             __import__(importspec)
         except ImportError as e:
-            new_exc_message = 'Error importing plugin "%s": %s' % (
-                modname,
-                str(e.args[0]),
+            new_exc_message = 'Error importing plugin "{}": {}'.format(
+                modname, str(e.args[0])
             )
             new_exc = ImportError(new_exc_message)
             tb = sys.exc_info()[2]
 
-            six.reraise(ImportError, new_exc, tb)
+            raise new_exc.with_traceback(tb)
 
         except Skipped as e:
             from _pytest.warnings import _issue_warning_captured
 
             _issue_warning_captured(
-                PytestConfigWarning("skipped plugin %r: %s" % (modname, e.msg)),
+                PytestConfigWarning("skipped plugin {!r}: {}".format(modname, e.msg)),
                 self.hook,
                 stacklevel=1,
             )
@@ -583,7 +579,7 @@ def _get_plugin_specs_as_list(specs):
     empty list is returned.
     """
     if specs is not None and not isinstance(specs, types.ModuleType):
-        if isinstance(specs, six.string_types):
+        if isinstance(specs, str):
             specs = specs.split(",") if specs else []
         if not isinstance(specs, (list, tuple)):
             raise UsageError(
@@ -601,7 +597,7 @@ def _ensure_removed_sysmodule(modname):
         pass
 
 
-class Notset(object):
+class Notset:
     def __repr__(self):
         return "<NOTSET>"
 
@@ -621,7 +617,7 @@ def _iter_rewritable_modules(package_files):
             yield package_name
 
 
-class Config(object):
+class Config:
     """ access to configuration values, pluginmanager and plugin hooks.  """
 
     def __init__(self, pluginmanager):
@@ -632,7 +628,7 @@ class Config(object):
 
         _a = FILE_OR_DIR
         self._parser = Parser(
-            usage="%%(prog)s [options] [%s] [%s] [...]" % (_a, _a),
+            usage="%(prog)s [options] [{}] [{}] [...]".format(_a, _a),
             processopt=self._processopt,
         )
         #: a pluginmanager instance
@@ -920,7 +916,7 @@ class Config(object):
         try:
             description, type, default = self._parser._inidict[name]
         except KeyError:
-            raise ValueError("unknown configuration value: %r" % (name,))
+            raise ValueError("unknown configuration value: {!r}".format(name))
         value = self._get_override_ini_value(name)
         if value is None:
             try:
@@ -997,8 +993,8 @@ class Config(object):
             if skip:
                 import pytest
 
-                pytest.skip("no %r option found" % (name,))
-            raise ValueError("no option named %r" % (name,))
+                pytest.skip("no {!r} option found".format(name))
+            raise ValueError("no option named {!r}".format(name))
 
     def getvalue(self, name, path=None):
         """ (deprecated, use getoption()) """
@@ -1086,4 +1082,4 @@ def _strtobool(val):
     elif val in ("n", "no", "f", "false", "off", "0"):
         return 0
     else:
-        raise ValueError("invalid truth value %r" % (val,))
+        raise ValueError("invalid truth value {!r}".format(val))

@@ -29,7 +29,7 @@ def custom_pdb_calls():
     called = []
 
     # install dummy debugger class and track which methods were called on it
-    class _CustomPdb(object):
+    class _CustomPdb:
         quitting = False
 
         def __init__(self, *args, **kwargs):
@@ -50,7 +50,7 @@ def custom_debugger_hook():
     called = []
 
     # install dummy debugger class and track which methods were called on it
-    class _CustomDebugger(object):
+    class _CustomDebugger:
         def __init__(self, *args, **kwargs):
             called.append("init")
 
@@ -69,7 +69,7 @@ def custom_debugger_hook():
     del _pytest._CustomDebugger
 
 
-class TestPDB(object):
+class TestPDB:
     @pytest.fixture
     def pdblist(self, request):
         monkeypatch = request.getfixturevalue("monkeypatch")
@@ -666,7 +666,7 @@ class TestPDB(object):
                 set_trace()
         """
         )
-        child = testdir.spawn_pytest("--tb=short %s %s" % (p1, capture_arg))
+        child = testdir.spawn_pytest("--tb=short {} {}".format(p1, capture_arg))
         child.expect("=== SET_TRACE ===")
         before = child.before.decode("utf8")
         if not capture_arg:
@@ -846,7 +846,7 @@ class TestPDB(object):
         self.flush(child)
 
 
-class TestDebuggingBreakpoints(object):
+class TestDebuggingBreakpoints:
     def test_supports_breakpoint_module_global(self):
         """
         Test that supports breakpoint global marks on Python 3.7+ and not on

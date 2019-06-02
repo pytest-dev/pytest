@@ -3,7 +3,6 @@ import sys
 import textwrap
 
 import attr
-import six
 
 import _pytest.assertion as plugin
 import pytest
@@ -13,7 +12,7 @@ from _pytest.assertion import util
 
 
 def mock_config():
-    class Config(object):
+    class Config:
         verbose = False
 
         def getoption(self, name):
@@ -24,7 +23,7 @@ def mock_config():
     return Config()
 
 
-class TestImportHookInstallation(object):
+class TestImportHookInstallation:
     @pytest.mark.parametrize("initial_conftest", [True, False])
     @pytest.mark.parametrize("mode", ["plain", "rewrite"])
     def test_conftest_assertion_rewrite(self, testdir, initial_conftest, mode):
@@ -269,7 +268,7 @@ class TestImportHookInstallation(object):
         )
 
 
-class TestBinReprIntegration(object):
+class TestBinReprIntegration:
     def test_pytest_assertrepr_compare_called(self, testdir):
         testdir.makeconftest(
             """
@@ -301,7 +300,7 @@ def callequal(left, right, verbose=False):
     return plugin.pytest_assertrepr_compare(config, "==", left, right)
 
 
-class TestAssert_reprcompare(object):
+class TestAssert_reprcompare:
     def test_different_types(self):
         assert callequal([0, 1], "foo") is None
 
@@ -527,7 +526,7 @@ class TestAssert_reprcompare(object):
         assert "+" + repr(nums_y) in expl
 
     def test_list_bad_repr(self):
-        class A(object):
+        class A:
             def __repr__(self):
                 raise ValueError(42)
 
@@ -554,12 +553,12 @@ class TestAssert_reprcompare(object):
         assert "raised in repr()" not in expl
 
     def test_unicode(self):
-        left = u"£€"
-        right = u"£"
+        left = "£€"
+        right = "£"
         expl = callequal(left, right)
-        assert expl[0] == u"'£€' == '£'"
-        assert expl[1] == u"- £€"
-        assert expl[2] == u"+ £"
+        assert expl[0] == "'£€' == '£'"
+        assert expl[1] == "- £€"
+        assert expl[2] == "+ £"
 
     def test_nonascii_text(self):
         """
@@ -583,12 +582,12 @@ class TestAssert_reprcompare(object):
         right = b"\xc3\xa9"
         expl = callequal(left, right)
         for line in expl:
-            assert isinstance(line, six.text_type)
-        msg = u"\n".join(expl)
+            assert isinstance(line, str)
+        msg = "\n".join(expl)
         assert msg
 
 
-class TestAssert_reprcompare_dataclass(object):
+class TestAssert_reprcompare_dataclass:
     @pytest.mark.skipif(sys.version_info < (3, 7), reason="Dataclasses in Python3.7+")
     def test_dataclasses(self, testdir):
         p = testdir.copy_example("dataclasses/test_compare_dataclasses.py")
@@ -633,10 +632,10 @@ class TestAssert_reprcompare_dataclass(object):
         result.assert_outcomes(failed=0, passed=1)
 
 
-class TestAssert_reprcompare_attrsclass(object):
+class TestAssert_reprcompare_attrsclass:
     def test_attrs(self):
         @attr.s
-        class SimpleDataObject(object):
+        class SimpleDataObject:
             field_a = attr.ib()
             field_b = attr.ib()
 
@@ -651,7 +650,7 @@ class TestAssert_reprcompare_attrsclass(object):
 
     def test_attrs_verbose(self):
         @attr.s
-        class SimpleDataObject(object):
+        class SimpleDataObject:
             field_a = attr.ib()
             field_b = attr.ib()
 
@@ -665,7 +664,7 @@ class TestAssert_reprcompare_attrsclass(object):
 
     def test_attrs_with_attribute_comparison_off(self):
         @attr.s
-        class SimpleDataObject(object):
+        class SimpleDataObject:
             field_a = attr.ib()
             field_b = attr.ib(cmp=False)
 
@@ -681,12 +680,12 @@ class TestAssert_reprcompare_attrsclass(object):
 
     def test_comparing_two_different_attrs_classes(self):
         @attr.s
-        class SimpleDataObjectOne(object):
+        class SimpleDataObjectOne:
             field_a = attr.ib()
             field_b = attr.ib()
 
         @attr.s
-        class SimpleDataObjectTwo(object):
+        class SimpleDataObjectTwo:
             field_a = attr.ib()
             field_b = attr.ib()
 
@@ -697,7 +696,7 @@ class TestAssert_reprcompare_attrsclass(object):
         assert lines is None
 
 
-class TestFormatExplanation(object):
+class TestFormatExplanation:
     def test_special_chars_full(self, testdir):
         # Issue 453, for the bug this would raise IndexError
         testdir.makepyfile(
@@ -784,7 +783,7 @@ class TestFormatExplanation(object):
         assert util.format_explanation(expl) == res
 
 
-class TestTruncateExplanation(object):
+class TestTruncateExplanation:
 
     """ Confirm assertion output is truncated as expected """
 
@@ -1218,7 +1217,7 @@ def test_assert_indirect_tuple_no_warning(testdir):
 
 def test_assert_with_unicode(monkeypatch, testdir):
     testdir.makepyfile(
-        u"""
+        """
         # -*- coding: utf-8 -*-
         def test_unicode():
             assert u'유니코드' == u'Unicode'
@@ -1243,7 +1242,7 @@ def test_raise_unprintable_assertion_error(testdir):
 
 def test_raise_assertion_error_raisin_repr(testdir):
     testdir.makepyfile(
-        u"""
+        """
         class RaisingRepr(object):
             def __repr__(self):
                 raise Exception()

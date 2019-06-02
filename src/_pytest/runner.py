@@ -57,7 +57,7 @@ def pytest_terminal_summary(terminalreporter):
             tr.write_line("")
             tr.write_line("(0.00 durations hidden.  Use -vv to show these durations.)")
             break
-        tr.write_line("%02.2fs %-8s %s" % (rep.duration, rep.when, rep.nodeid))
+        tr.write_line("{:02.2f}s {:<8} {}".format(rep.duration, rep.when, rep.nodeid))
 
 
 def pytest_sessionstart(session):
@@ -195,7 +195,7 @@ def call_runtest_hook(item, when, **kwds):
 
 
 @attr.s(repr=False)
-class CallInfo(object):
+class CallInfo:
     """ Result/Exception info a function invocation. """
 
     _result = attr.ib()
@@ -270,7 +270,7 @@ def pytest_make_collect_report(collector):
     return rep
 
 
-class SetupState(object):
+class SetupState:
     """ shared state for setting up/tearing down test items or collectors. """
 
     def __init__(self):

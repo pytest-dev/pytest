@@ -37,7 +37,7 @@ class ColoredLevelFormatter(logging.Formatter):
     LEVELNAME_FMT_REGEX = re.compile(r"%\(levelname\)([+-.]?\d*s)")
 
     def __init__(self, terminalwriter, *args, **kwargs):
-        super(ColoredLevelFormatter, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self._original_fmt = self._style._fmt
         self._level_to_fmt_mapping = {}
 
@@ -63,7 +63,7 @@ class ColoredLevelFormatter(logging.Formatter):
     def format(self, record):
         fmt = self._level_to_fmt_mapping.get(record.levelno, self._original_fmt)
         self._style._fmt = fmt
-        return super(ColoredLevelFormatter, self).format(record)
+        return super().format(record)
 
 
 if not six.PY2:
@@ -235,7 +235,7 @@ class LogCaptureHandler(logging.StreamHandler):
         self.stream = py.io.TextIO()
 
 
-class LogCaptureFixture(object):
+class LogCaptureFixture:
     """Provides access and control of log capturing."""
 
     def __init__(self, item):
@@ -382,7 +382,7 @@ def get_actual_log_level(config, *setting_names):
     else:
         return
 
-    if isinstance(log_level, six.string_types):
+    if isinstance(log_level, str):
         log_level = log_level.upper()
     try:
         return int(getattr(logging, log_level, log_level))
@@ -401,7 +401,7 @@ def pytest_configure(config):
     config.pluginmanager.register(LoggingPlugin(config), "logging-plugin")
 
 
-class LoggingPlugin(object):
+class LoggingPlugin:
     """Attaches to the logging module and captures log messages for each test.
     """
 

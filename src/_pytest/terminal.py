@@ -12,7 +12,6 @@ from functools import partial
 import attr
 import pluggy
 import py
-import six
 from more_itertools import collapse
 
 import pytest
@@ -35,7 +34,7 @@ class MoreQuietAction(argparse.Action):
     """
 
     def __init__(self, option_strings, dest, default=None, required=False, help=None):
-        super(MoreQuietAction, self).__init__(
+        super().__init__(
             option_strings=option_strings,
             dest=dest,
             nargs=0,
@@ -186,7 +185,7 @@ def pytest_report_teststatus(report):
 
 
 @attr.s
-class WarningReport(object):
+class WarningReport:
     """
     Simple structure to hold warnings information captured by ``pytest_warning_captured``.
 
@@ -214,13 +213,13 @@ class WarningReport(object):
                 relpath = py.path.local(filename).relto(config.invocation_dir)
                 if not relpath:
                     relpath = str(filename)
-                return "%s:%s" % (relpath, linenum)
+                return "{}:{}".format(relpath, linenum)
             else:
                 return str(self.fslocation)
         return None
 
 
-class TerminalReporter(object):
+class TerminalReporter:
     def __init__(self, config, file=None):
         import _pytest.config
 
@@ -315,8 +314,8 @@ class TerminalReporter(object):
         self._tw.write(content, **markup)
 
     def write_line(self, line, **markup):
-        if not isinstance(line, six.text_type):
-            line = six.text_type(line, errors="replace")
+        if not isinstance(line, str):
+            line = str(line, errors="replace")
         self.ensure_newline()
         self._tw.line(line, **markup)
 
@@ -349,7 +348,7 @@ class TerminalReporter(object):
         self._tw.line(msg, **kw)
 
     def pytest_internalerror(self, excrepr):
-        for line in six.text_type(excrepr).split("\n"):
+        for line in str(excrepr).split("\n"):
             self.write_line("INTERNALERROR> " + line)
         return 1
 
@@ -369,7 +368,7 @@ class TerminalReporter(object):
 
     def pytest_plugin_registered(self, plugin):
         if self.config.option.traceconfig:
-            msg = "PLUGIN registered: %s" % (plugin,)
+            msg = "PLUGIN registered: {}".format(plugin)
             # XXX this event may happen during setup/teardown time
             #     which unfortunately captures our output here
             #     which garbles our output if we use self.write_line
@@ -556,14 +555,12 @@ class TerminalReporter(object):
             return
         self.write_sep("=", "test session starts", bold=True)
         verinfo = platform.python_version()
-        msg = "platform %s -- Python %s" % (sys.platform, verinfo)
+        msg = "platform {} -- Python {}".format(sys.platform, verinfo)
         if hasattr(sys, "pypy_version_info"):
             verinfo = ".".join(map(str, sys.pypy_version_info[:3]))
-            msg += "[pypy-%s-%s]" % (verinfo, sys.pypy_version_info[3])
-        msg += ", pytest-%s, py-%s, pluggy-%s" % (
-            pytest.__version__,
-            py.__version__,
-            pluggy.__version__,
+            msg += "[pypy-{}-{}]".format(verinfo, sys.pypy_version_info[3])
+        msg += ", pytest-{}, py-{}, pluggy-{}".format(
+            pytest.__version__, py.__version__, pluggy.__version__
         )
         if (
             self.verbosity > 0
@@ -645,11 +642,11 @@ class TerminalReporter(object):
                 if col.name == "()":  # Skip Instances.
                     continue
                 indent = (len(stack) - 1) * "  "
-                self._tw.line("%s%s" % (indent, col))
+                self._tw.line("{}{}".format(indent, col))
                 if self.config.option.verbose >= 1:
                     if hasattr(col, "_obj") and col._obj.__doc__:
                         for line in col._obj.__doc__.strip().splitlines():
-                            self._tw.line("%s%s" % (indent + "  ", line.strip()))
+                            self._tw.line("{}{}".format(indent + "  ", line.strip()))
 
     @pytest.hookimpl(hookwrapper=True)
     def pytest_sessionfinish(self, exitstatus):
@@ -849,7 +846,7 @@ class TerminalReporter(object):
                 if rep.when == "collect":
                     msg = "ERROR collecting " + msg
                 else:
-                    msg = "ERROR at %s of %s" % (rep.when, msg)
+                    msg = "ERROR at {} of {}".format(rep.when, msg)
                 self.write_sep("_", msg, red=True, bold=True)
                 self._outrep_summary(rep)
 
@@ -869,7 +866,7 @@ class TerminalReporter(object):
     def summary_stats(self):
         session_duration = time.time() - self._sessionstarttime
         (line, color) = build_summary_stats_line(self.stats)
-        msg = "%s in %.2f seconds" % (line, session_duration)
+        msg = "{} in {:.2f} seconds".format(line, session_duration)
         markup = {color: True, "bold": True}
 
         if self.verbosity >= 0:
@@ -896,7 +893,7 @@ class TerminalReporter(object):
             for rep in xfailed:
                 verbose_word = rep._get_verbose_word(self.config)
                 pos = _get_pos(self.config, rep)
-                lines.append("%s %s" % (verbose_word, pos))
+                lines.append("{} {}".format(verbose_word, pos))
                 reason = rep.wasxfail
                 if reason:
                     lines.append("  " + str(reason))
@@ -907,7 +904,7 @@ class TerminalReporter(object):
                 verbose_word = rep._get_verbose_word(self.config)
                 pos = _get_pos(self.config, rep)
                 reason = rep.wasxfail
-                lines.append("%s %s %s" % (verbose_word, pos, reason))
+                lines.append("{} {} {}".format(verbose_word, pos, reason))
 
         def show_skipped(lines):
             skipped = self.stats.get("skipped", [])
@@ -961,7 +958,7 @@ def _get_line_with_reprcrash_message(config, rep, termwidth):
     verbose_word = rep._get_verbose_word(config)
     pos = _get_pos(config, rep)
 
-    line = "%s %s" % (verbose_word, pos)
+    line = "{} {}".format(verbose_word, pos)
     len_line = wcswidth(line)
     ellipsis, len_ellipsis = "...", 3
     if len_line > termwidth - len_ellipsis:

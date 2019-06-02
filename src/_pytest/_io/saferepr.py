@@ -12,11 +12,8 @@ def _call_and_format_exception(call, x, *args):
             exc_info = str(exc)
         except Exception:
             exc_info = "unknown"
-        return '<[%s("%s") raised in repr()] %s object at 0x%x>' % (
-            exc_name,
-            exc_info,
-            x.__class__.__name__,
-            id(x),
+        return '<[{}("{}") raised in repr()] {} object at 0x{:x}>'.format(
+            exc_name, exc_info, x.__class__.__name__, id(x)
         )
 
 
@@ -32,11 +29,11 @@ class SafeRepr(reprlib.Repr):
         # Strictly speaking wrong on narrow builds
         def repr(u):
             if "'" not in u:
-                return u"'%s'" % u
+                return "'%s'" % u
             elif '"' not in u:
-                return u'"%s"' % u
+                return '"%s"' % u
             else:
-                return u"'%s'" % u.replace("'", r"\'")
+                return "'%s'" % u.replace("'", r"\'")
 
         s = repr(x[: self.maxstring])
         if len(s) > self.maxstring:

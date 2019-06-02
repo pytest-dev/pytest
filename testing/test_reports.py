@@ -4,7 +4,7 @@ from _pytest.reports import CollectReport
 from _pytest.reports import TestReport
 
 
-class TestReportSerialization(object):
+class TestReportSerialization:
     def test_xdist_longrepr_to_str_issue_241(self, testdir):
         """
         Regarding issue pytest-xdist#241
@@ -43,7 +43,7 @@ class TestReportSerialization(object):
         reports = reprec.getreports("pytest_runtest_logreport")
         assert len(reports) == 3
         rep = reports[1]
-        added_section = ("Failure Metadata", str("metadata metadata"), "*")
+        added_section = ("Failure Metadata", "metadata metadata", "*")
         rep.longrepr.sections.append(added_section)
         d = rep._to_json()
         a = TestReport._from_json(d)

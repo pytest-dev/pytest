@@ -22,7 +22,7 @@ def python2(request, python1):
     return Python(request.param, python1.picklefile)
 
 
-class Python(object):
+class Python:
     def __init__(self, version, picklefile):
         self.pythonpath = distutils.spawn.find_executable(version)
         if not self.pythonpath:

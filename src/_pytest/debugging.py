@@ -69,7 +69,7 @@ def pytest_configure(config):
     config._cleanup.append(fin)
 
 
-class pytestPDB(object):
+class pytestPDB:
     """ Pseudo PDB that defers to the real pdb. """
 
     _pluginmanager = None
@@ -123,18 +123,18 @@ class pytestPDB(object):
     def _get_pdb_wrapper_class(cls, pdb_cls, capman):
         import _pytest.config
 
-        class PytestPdbWrapper(pdb_cls, object):
+        class PytestPdbWrapper(pdb_cls):
             _pytest_capman = capman
             _continued = False
 
             def do_debug(self, arg):
                 cls._recursive_debug += 1
-                ret = super(PytestPdbWrapper, self).do_debug(arg)
+                ret = super().do_debug(arg)
                 cls._recursive_debug -= 1
                 return ret
 
             def do_continue(self, arg):
-                ret = super(PytestPdbWrapper, self).do_continue(arg)
+                ret = super().do_continue(arg)
                 if cls._recursive_debug == 0:
                     tw = _pytest.config.create_terminal_writer(cls._config)
                     tw.line()
@@ -166,7 +166,7 @@ class pytestPDB(object):
                 could be handled, but this would require to wrap the
                 whole pytest run, and adjust the report etc.
                 """
-                ret = super(PytestPdbWrapper, self).do_quit(arg)
+                ret = super().do_quit(arg)
 
                 if cls._recursive_debug == 0:
                     outcomes.exit("Quitting debugger")
@@ -182,7 +182,7 @@ class pytestPDB(object):
                 Needed after do_continue resumed, and entering another
                 breakpoint again.
                 """
-                ret = super(PytestPdbWrapper, self).setup(f, tb)
+                ret = super().setup(f, tb)
                 if not ret and self._continued:
                     # pdb.setup() returns True if the command wants to exit
                     # from the interaction: do not suspend capturing then.
@@ -191,7 +191,7 @@ class pytestPDB(object):
                 return ret
 
             def get_stack(self, f, t):
-                stack, i = super(PytestPdbWrapper, self).get_stack(f, t)
+                stack, i = super().get_stack(f, t)
                 if f is None:
                     # Find last non-hidden frame.
                     i = max(0, len(stack) - 1)
@@ -225,7 +225,7 @@ class pytestPDB(object):
                 else:
                     capturing = cls._is_capturing(capman)
                     if capturing == "global":
-                        tw.sep(">", "PDB %s (IO-capturing turned off)" % (method,))
+                        tw.sep(">", "PDB {} (IO-capturing turned off)".format(method))
                     elif capturing:
                         tw.sep(
                             ">",
@@ -233,7 +233,7 @@ class pytestPDB(object):
                             % (method, capturing),
                         )
                     else:
-                        tw.sep(">", "PDB %s" % (method,))
+                        tw.sep(">", "PDB {}".format(method))
 
         _pdb = cls._import_pdb_cls(capman)(**kwargs)
 
@@ -249,7 +249,7 @@ class pytestPDB(object):
         _pdb.set_trace(frame)
 
 
-class PdbInvoke(object):
+class PdbInvoke:
     def pytest_exception_interact(self, node, call, report):
         capman = node.config.pluginmanager.getplugin("capturemanager")
         if capman:
@@ -264,7 +264,7 @@ class PdbInvoke(object):
         post_mortem(tb)
 
 
-class PdbTrace(object):
+class PdbTrace:
     @hookimpl(hookwrapper=True)
     def pytest_pyfunc_call(self, pyfuncitem):
         _test_pytest_function(pyfuncitem)

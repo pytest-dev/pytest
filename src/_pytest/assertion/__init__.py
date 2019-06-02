@@ -3,8 +3,6 @@ support for presenting detailed information in failing assertions.
 """
 import sys
 
-import six
-
 from _pytest.assertion import rewrite
 from _pytest.assertion import truncate
 from _pytest.assertion import util
@@ -51,14 +49,14 @@ def register_assert_rewrite(*names):
     importhook.mark_rewrite(*names)
 
 
-class DummyRewriteHook(object):
+class DummyRewriteHook:
     """A no-op import hook for when rewriting is disabled."""
 
     def mark_rewrite(self, *names):
         pass
 
 
-class AssertionState(object):
+class AssertionState:
     """State for the assertion plugin."""
 
     def __init__(self, config, mode):
@@ -124,7 +122,7 @@ def pytest_runtest_setup(item):
             if new_expl:
                 new_expl = truncate.truncate_if_required(new_expl, item)
                 new_expl = [line.replace("\n", "\\n") for line in new_expl]
-                res = six.text_type("\n~").join(new_expl)
+                res = "\n~".join(new_expl)
                 if item.config.getvalue("assertmode") == "rewrite":
                     res = res.replace("%", "%%")
                 return res

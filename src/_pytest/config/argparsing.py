@@ -2,14 +2,13 @@ import argparse
 import warnings
 
 import py
-import six
 
 from _pytest.config.exceptions import UsageError
 
 FILE_OR_DIR = "file_or_dir"
 
 
-class Parser(object):
+class Parser:
     """ Parser for command line arguments and ini-file values.
 
     :ivar extra_info: dict of generic param -> value to display in case
@@ -144,12 +143,12 @@ class ArgumentError(Exception):
 
     def __str__(self):
         if self.option_id:
-            return "option %s: %s" % (self.option_id, self.msg)
+            return "option {}: {}".format(self.option_id, self.msg)
         else:
             return self.msg
 
 
-class Argument(object):
+class Argument:
     """class that mimics the necessary behaviour of optparse.Option
 
     it's currently a least effort implementation
@@ -178,7 +177,7 @@ class Argument(object):
             pass
         else:
             # this might raise a keyerror as well, don't want to catch that
-            if isinstance(typ, six.string_types):
+            if isinstance(typ, str):
                 if typ == "choice":
                     warnings.warn(
                         "`type` argument to addoption() is the string %r."
@@ -281,7 +280,7 @@ class Argument(object):
         return "Argument({})".format(", ".join(args))
 
 
-class OptionGroup(object):
+class OptionGroup:
     def __init__(self, name, description="", parser=None):
         self.name = name
         self.description = description
@@ -336,10 +335,10 @@ class MyOptionParser(argparse.ArgumentParser):
 
     def error(self, message):
         """Transform argparse error message into UsageError."""
-        msg = "%s: error: %s" % (self.prog, message)
+        msg = "{}: error: {}".format(self.prog, message)
 
         if hasattr(self._parser, "_config_source_hint"):
-            msg = "%s (%s)" % (msg, self._parser._config_source_hint)
+            msg = "{} ({})".format(msg, self._parser._config_source_hint)
 
         raise UsageError(self.format_usage() + msg)
 
@@ -351,7 +350,7 @@ class MyOptionParser(argparse.ArgumentParser):
                 if arg and arg[0] == "-":
                     lines = ["unrecognized arguments: %s" % (" ".join(argv))]
                     for k, v in sorted(self.extra_info.items()):
-                        lines.append("  %s: %s" % (k, v))
+                        lines.append("  {}: {}".format(k, v))
                     self.error("\n".join(lines))
             getattr(args, FILE_OR_DIR).extend(argv)
         return args

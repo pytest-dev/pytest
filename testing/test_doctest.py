@@ -7,7 +7,7 @@ from _pytest.doctest import DoctestModule
 from _pytest.doctest import DoctestTextfile
 
 
-class TestDoctests(object):
+class TestDoctests:
     def test_collect_testtextfile(self, testdir):
         w = testdir.maketxtfile(whatever="")
         checkfile = testdir.maketxtfile(
@@ -139,7 +139,7 @@ class TestDoctests(object):
 
     @pytest.mark.parametrize(
         "   test_string,    encoding",
-        [(u"foo", "ascii"), (u"öäü", "latin1"), (u"öäü", "utf-8")],
+        [("foo", "ascii"), ("öäü", "latin1"), ("öäü", "utf-8")],
     )
     def test_encoding(self, testdir, test_string, encoding):
         """Test support for doctest_encoding ini option.
@@ -152,7 +152,7 @@ class TestDoctests(object):
                 encoding
             )
         )
-        doctest = u"""
+        doctest = """
             >>> u"{}"
             {}
         """.format(
@@ -574,7 +574,7 @@ class TestDoctests(object):
         """Fix internal error with docstrings containing non-ascii characters.
         """
         testdir.makepyfile(
-            u'''
+            '''
             # -*- coding: utf-8 -*-
             def foo():
                 """
@@ -733,7 +733,7 @@ class TestDoctests(object):
         result.stdout.fnmatch_lines(["*collected 1 item*"])
 
 
-class TestLiterals(object):
+class TestLiterals:
     @pytest.mark.parametrize("config_mode", ["ini", "comment"])
     def test_allow_unicode(self, testdir, config_mode):
         """Test that doctests which output unicode work in all python versions
@@ -840,7 +840,7 @@ class TestLiterals(object):
         reprec.assertoutcome(failed=1)
 
 
-class TestDoctestSkips(object):
+class TestDoctestSkips:
     """
     If all examples in a doctest are skipped due to the SKIP option, then
     the tests should be SKIPPED rather than PASSED. (#957)
@@ -921,7 +921,7 @@ class TestDoctestSkips(object):
         )
 
 
-class TestDoctestAutoUseFixtures(object):
+class TestDoctestAutoUseFixtures:
 
     SCOPES = ["module", "session", "class", "function"]
 
@@ -1065,7 +1065,7 @@ class TestDoctestAutoUseFixtures(object):
         result.stdout.fnmatch_lines(["*=== 1 passed in *"])
 
 
-class TestDoctestNamespaceFixture(object):
+class TestDoctestNamespaceFixture:
 
     SCOPES = ["module", "session", "class", "function"]
 
@@ -1127,7 +1127,7 @@ class TestDoctestNamespaceFixture(object):
         reprec.assertoutcome(passed=1)
 
 
-class TestDoctestReportingOption(object):
+class TestDoctestReportingOption:
     def _run_doctest_report(self, testdir, format):
         testdir.makepyfile(
             """

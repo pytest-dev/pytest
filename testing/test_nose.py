@@ -31,7 +31,7 @@ def test_setup_func_with_setup_decorator():
 
     values = []
 
-    class A(object):
+    class A:
         @pytest.fixture(autouse=True)
         def f(self):
             values.append(1)
@@ -43,7 +43,7 @@ def test_setup_func_with_setup_decorator():
 def test_setup_func_not_callable():
     from _pytest.nose import call_optional
 
-    class A(object):
+    class A:
         f = 1
 
     call_optional(A(), "f")

@@ -5,7 +5,6 @@ import sys
 import textwrap
 
 import py
-import six
 
 import _pytest
 import pytest
@@ -32,7 +31,7 @@ def limited_recursion_depth():
     sys.setrecursionlimit(before)
 
 
-class TWMock(object):
+class TWMock:
     WRITE = object()
 
     def __init__(self):
@@ -113,7 +112,7 @@ def h():
     #
 
 
-class TestTraceback_f_g_h(object):
+class TestTraceback_f_g_h:
     def setup_method(self, method):
         try:
             h()
@@ -252,7 +251,7 @@ class TestTraceback_f_g_h(object):
             import sys
 
             exc, val, tb = sys.exc_info()
-            six.reraise(exc, val, tb)
+            raise val.with_traceback(tb)
 
         def f(n):
             try:
@@ -429,7 +428,7 @@ def test_match_raises_error(testdir):
     result.stdout.fnmatch_lines(["*AssertionError*Pattern*[123]*not found*"])
 
 
-class TestFormattedExcinfo(object):
+class TestFormattedExcinfo:
     @pytest.fixture
     def importasmod(self, request, _sys_snapshot):
         def importasmod(source):
@@ -515,8 +514,8 @@ raise ValueError()
     def test_repr_source_failing_fullsource(self):
         pr = FormattedExcinfo()
 
-        class FakeCode(object):
-            class raw(object):
+        class FakeCode:
+            class raw:
                 co_filename = "?"
 
             path = "?"
@@ -527,7 +526,7 @@ raise ValueError()
 
             fullsource = property(fullsource)
 
-        class FakeFrame(object):
+        class FakeFrame:
             code = FakeCode()
             f_locals = {}
             f_globals = {}
@@ -558,7 +557,7 @@ raise ValueError()
 
         excinfo = FakeExcinfo()
 
-        class FakeRawTB(object):
+        class FakeRawTB:
             tb_next = None
 
         tb = FakeRawTB()
@@ -915,10 +914,10 @@ raise ValueError()
 
         class MyRepr(TerminalRepr):
             def toterminal(self, tw):
-                tw.line(u"я")
+                tw.line("я")
 
-        x = six.text_type(MyRepr())
-        assert x == u"я"
+        x = str(MyRepr())
+        assert x == "я"
 
     def test_toterminal_long(self, importasmod):
         mod = importasmod(
@@ -1351,7 +1350,7 @@ raise ValueError()
 @pytest.mark.parametrize("style", ["short", "long"])
 @pytest.mark.parametrize("encoding", [None, "utf8", "utf16"])
 def test_repr_traceback_with_unicode(style, encoding):
-    msg = u"☹"
+    msg = "☹"
     if encoding is not None:
         msg = msg.encode(encoding)
     try:
@@ -1385,7 +1384,7 @@ def test_exception_repr_extraction_error_on_recursion():
     """
     from _pytest.pytester import LineMatcher
 
-    class numpy_like(object):
+    class numpy_like:
         def __eq__(self, other):
             if type(other) is numpy_like:
                 raise ValueError(
@@ -1419,7 +1418,7 @@ def test_no_recursion_index_on_recursion_error():
     during a recursion error (#2486).
     """
 
-    class RecursionDepthError(object):
+    class RecursionDepthError:
         def __getattr__(self, attr):
             return getattr(self, "_" + attr)
 

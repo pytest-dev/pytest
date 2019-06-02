@@ -15,7 +15,7 @@ def parser():
     return parseopt.Parser()
 
 
-class TestParser(object):
+class TestParser:
     def test_no_help_by_default(self):
         parser = parseopt.Parser(usage="xyz")
         pytest.raises(UsageError, lambda: parser.parse(["-h"]))
@@ -152,7 +152,7 @@ class TestParser(object):
         parser.addoption("--hello", dest="hello", action="store")
         parser.addoption("--world", dest="world", default=42)
 
-        class A(object):
+        class A:
             pass
 
         option = A()

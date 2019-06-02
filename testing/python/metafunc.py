@@ -4,7 +4,6 @@ import textwrap
 
 import attr
 import hypothesis
-import six
 from hypothesis import strategies
 
 import pytest
@@ -13,19 +12,19 @@ from _pytest import python
 from _pytest.warnings import SHOW_PYTEST_WARNINGS_ARG
 
 
-class TestMetafunc(object):
+class TestMetafunc:
     def Metafunc(self, func, config=None):
         # the unit tests of this class check if things work correctly
         # on the funcarg level, so we don't need a full blown
         # initiliazation
-        class FixtureInfo(object):
+        class FixtureInfo:
             name2fixturedefs = None
 
             def __init__(self, names):
                 self.names_closure = names
 
         @attr.s
-        class DefinitionMock(object):
+        class DefinitionMock:
             obj = attr.ib()
 
         names = fixtures.getfuncargnames(func)
@@ -79,7 +78,7 @@ class TestMetafunc(object):
         from _pytest.python import _find_parametrized_scope
 
         @attr.s
-        class DummyFixtureDef(object):
+        class DummyFixtureDef:
             scope = attr.ib()
 
         fixtures_defs = dict(
@@ -138,9 +137,9 @@ class TestMetafunc(object):
             pass
 
         metafunc = self.Metafunc(func)
-        metafunc.parametrize("x", [1, 2], ids=[u"basic", u"advanced"])
+        metafunc.parametrize("x", [1, 2], ids=["basic", "advanced"])
         ids = [x.id for x in metafunc._calls]
-        assert ids == [u"basic", u"advanced"]
+        assert ids == ["basic", "advanced"]
 
     def test_parametrize_with_wrong_number_of_ids(self, testdir):
         def func(x, y):
@@ -162,7 +161,7 @@ class TestMetafunc(object):
         def func(y):
             pass
 
-        class MockConfig(object):
+        class MockConfig:
             def getini(self, name):
                 return ""
 
@@ -183,7 +182,7 @@ class TestMetafunc(object):
 
         metafunc = self.Metafunc(func)
 
-        class A(object):
+        class A:
             pass
 
         metafunc.parametrize("x", [A(), A()])
@@ -201,7 +200,7 @@ class TestMetafunc(object):
         from _pytest.python import _idval
 
         escaped = _idval(value, "a", 6, None, item=None, config=None)
-        assert isinstance(escaped, six.text_type)
+        assert isinstance(escaped, str)
         escaped.encode("ascii")
 
     def test_unicode_idval(self):
@@ -213,12 +212,12 @@ class TestMetafunc(object):
         from _pytest.python import _idval
 
         values = [
-            (u"", ""),
-            (u"ascii", "ascii"),
-            (u"ação", "a\\xe7\\xe3o"),
-            (u"josé@blah.com", "jos\\xe9@blah.com"),
+            ("", ""),
+            ("ascii", "ascii"),
+            ("ação", "a\\xe7\\xe3o"),
+            ("josé@blah.com", "jos\\xe9@blah.com"),
             (
-                u"δοκ.ιμή@παράδειγμα.δοκιμή",
+                "δοκ.ιμή@παράδειγμα.δοκιμή",
                 "\\u03b4\\u03bf\\u03ba.\\u03b9\\u03bc\\u03ae@\\u03c0\\u03b1\\u03c1\\u03ac\\u03b4\\u03b5\\u03b9\\u03b3"
                 "\\u03bc\\u03b1.\\u03b4\\u03bf\\u03ba\\u03b9\\u03bc\\u03ae",
             ),
@@ -233,7 +232,7 @@ class TestMetafunc(object):
         """
         from _pytest.python import _idval
 
-        class MockConfig(object):
+        class MockConfig:
             def __init__(self, config):
                 self.config = config
 
@@ -250,8 +249,8 @@ class TestMetafunc(object):
         option = "disable_test_id_escaping_and_forfeit_all_rights_to_community_support"
 
         values = [
-            (u"ação", MockConfig({option: True}), u"ação"),
-            (u"ação", MockConfig({option: False}), "a\\xe7\\xe3o"),
+            ("ação", MockConfig({option: True}), "ação"),
+            ("ação", MockConfig({option: False}), "a\\xe7\\xe3o"),
         ]
         for val, config, expected in values:
             assert _idval(val, "a", 6, None, item=None, config=config) == expected
@@ -269,7 +268,7 @@ class TestMetafunc(object):
             (b"", ""),
             (b"\xc3\xb4\xff\xe4", "\\xc3\\xb4\\xff\\xe4"),
             (b"ascii", "ascii"),
-            (u"αρά".encode("utf-8"), "\\xce\\xb1\\xcf\\x81\\xce\\xac"),
+            ("αρά".encode(), "\\xce\\xb1\\xcf\\x81\\xce\\xac"),
         ]
         for val, expected in values:
             assert _idval(val, "a", 6, idfn=None, item=None, config=None) == expected
@@ -280,7 +279,7 @@ class TestMetafunc(object):
         """
         from _pytest.python import _idval
 
-        class TestClass(object):
+        class TestClass:
             pass
 
         def test_function():
@@ -304,7 +303,7 @@ class TestMetafunc(object):
         )
         assert result == ["a0-1.0", "a1-b1"]
         # unicode mixing, issue250
-        result = idmaker((u"a", "b"), [pytest.param({}, b"\xc3\xb4")])
+        result = idmaker(("a", "b"), [pytest.param({}, b"\xc3\xb4")])
         assert result == ["a0-\\xc3\\xb4"]
 
     def test_idmaker_with_bytes_regex(self):
@@ -330,7 +329,7 @@ class TestMetafunc(object):
                 pytest.param({7}, set("seven")),
                 pytest.param(tuple("eight"), (8, -8, 8)),
                 pytest.param(b"\xc3\xb4", b"name"),
-                pytest.param(b"\xc3\xb4", u"other"),
+                pytest.param(b"\xc3\xb4", "other"),
             ],
         )
         assert result == [
@@ -428,7 +427,7 @@ class TestMetafunc(object):
         """
         from _pytest.python import idmaker
 
-        class MockConfig(object):
+        class MockConfig:
             def __init__(self, config):
                 self.config = config
 
@@ -445,12 +444,12 @@ class TestMetafunc(object):
         option = "disable_test_id_escaping_and_forfeit_all_rights_to_community_support"
 
         values = [
-            (MockConfig({option: True}), u"ação"),
+            (MockConfig({option: True}), "ação"),
             (MockConfig({option: False}), "a\\xe7\\xe3o"),
         ]
         for config, expected in values:
             result = idmaker(
-                ("a",), [pytest.param("string")], idfn=lambda _: u"ação", config=config
+                ("a",), [pytest.param("string")], idfn=lambda _: "ação", config=config
             )
             assert result == [expected]
 
@@ -461,7 +460,7 @@ class TestMetafunc(object):
         """
         from _pytest.python import idmaker
 
-        class MockConfig(object):
+        class MockConfig:
             def __init__(self, config):
                 self.config = config
 
@@ -478,12 +477,12 @@ class TestMetafunc(object):
         option = "disable_test_id_escaping_and_forfeit_all_rights_to_community_support"
 
         values = [
-            (MockConfig({option: True}), u"ação"),
+            (MockConfig({option: True}), "ação"),
             (MockConfig({option: False}), "a\\xe7\\xe3o"),
         ]
         for config, expected in values:
             result = idmaker(
-                ("a",), [pytest.param("string")], ids=[u"ação"], config=config
+                ("a",), [pytest.param("string")], ids=["ação"], config=config
             )
             assert result == [expected]
 
@@ -888,7 +887,7 @@ class TestMetafunc(object):
         assert fixtures._format_args(function4) == "(arg1, *args, **kwargs)"
 
 
-class TestMetafuncFunctional(object):
+class TestMetafuncFunctional:
     def test_attributes(self, testdir):
         p = testdir.makepyfile(
             """
@@ -1324,7 +1323,7 @@ class TestMetafuncFunctional(object):
         )
 
 
-class TestMetafuncFunctionalAuto(object):
+class TestMetafuncFunctionalAuto:
     """
     Tests related to automatically find out the correct scope for parametrized tests (#1832).
     """
@@ -1486,7 +1485,7 @@ class TestMetafuncFunctionalAuto(object):
         assert output.count("preparing foo-3") == 1
 
 
-class TestMarkersWithParametrization(object):
+class TestMarkersWithParametrization:
     """#308"""
 
     def test_simple_mark(self, testdir):

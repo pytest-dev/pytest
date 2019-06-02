@@ -121,7 +121,7 @@ class ReprFailDoctest(TerminalRepr):
 
 class MultipleDoctestFailures(Exception):
     def __init__(self, failures):
-        super(MultipleDoctestFailures, self).__init__()
+        super().__init__()
         self.failures = failures
 
 
@@ -176,7 +176,7 @@ def _get_runner(checker=None, verbose=None, optionflags=0, continue_on_failure=T
 
 class DoctestItem(pytest.Item):
     def __init__(self, name, parent, runner=None, dtest=None):
-        super(DoctestItem, self).__init__(name, parent)
+        super().__init__(name, parent)
         self.runner = runner
         self.dtest = dtest
         self.obj = None
@@ -253,7 +253,7 @@ class DoctestItem(pytest.Item):
                     ]
                     indent = ">>>"
                     for line in example.source.splitlines():
-                        lines.append("??? %s %s" % (indent, line))
+                        lines.append("??? {} {}".format(indent, line))
                         indent = "..."
                 if isinstance(failure, doctest.DocTestFailure):
                     lines += checker.output_difference(
@@ -266,7 +266,7 @@ class DoctestItem(pytest.Item):
                 reprlocation_lines.append((reprlocation, lines))
             return ReprFailDoctest(reprlocation_lines)
         else:
-            return super(DoctestItem, self).repr_failure(excinfo)
+            return super().repr_failure(excinfo)
 
     def reportinfo(self):
         return self.fspath, self.dtest.lineno, "[doctest] %s" % self.name

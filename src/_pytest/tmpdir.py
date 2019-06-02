@@ -17,7 +17,7 @@ from _pytest.monkeypatch import MonkeyPatch
 
 
 @attr.s
-class TempPathFactory(object):
+class TempPathFactory:
     """Factory for temporary directories under the common base temp directory.
 
     The base directory can be configured using the ``--basetemp`` option."""
@@ -77,7 +77,7 @@ class TempPathFactory(object):
 
 
 @attr.s
-class TempdirFactory(object):
+class TempdirFactory:
     """
     backward comptibility wrapper that implements
     :class:``py.path.local`` for :class:``TempPathFactory``

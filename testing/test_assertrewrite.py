@@ -8,7 +8,6 @@ import textwrap
 import zipfile
 
 import py
-import six
 
 import _pytest._code
 import pytest
@@ -50,7 +49,7 @@ def getmsg(f, extra_ns=None, must_pass=False):
     except AssertionError:
         if must_pass:
             pytest.fail("shouldn't have raised")
-        s = six.text_type(sys.exc_info()[1])
+        s = str(sys.exc_info()[1])
         if not s.startswith("assert"):
             return "AssertionError: " + s
         return s
@@ -59,7 +58,7 @@ def getmsg(f, extra_ns=None, must_pass=False):
             pytest.fail("function didn't raise at all")
 
 
-class TestAssertionRewrite(object):
+class TestAssertionRewrite:
     def test_place_initial_imports(self):
         s = """'Doc string'\nother = stuff"""
         m = rewrite(s)
@@ -152,7 +151,7 @@ class TestAssertionRewrite(object):
         def f():
             assert cls == 42  # noqa: F821
 
-        class X(object):
+        class X:
             pass
 
         msg = getmsg(f, {"cls": X}).splitlines()
@@ -167,7 +166,7 @@ class TestAssertionRewrite(object):
             assert msg == ["assert cls == 42"]
 
     def test_dont_rewrite_if_hasattr_fails(self, request):
-        class Y(object):
+        class Y:
             """ A class whos getattr fails, but not with `AttributeError` """
 
             def __getattr__(self, attribute_name):
@@ -506,7 +505,7 @@ class TestAssertionRewrite(object):
         )
 
     def test_attribute(self):
-        class X(object):
+        class X:
             g = 3
 
         ns = {"x": X}
@@ -596,7 +595,7 @@ class TestAssertionRewrite(object):
 
     def test_assert_raising_nonzero_in_comparison(self):
         def f():
-            class A(object):
+            class A:
                 def __nonzero__(self):
                     raise ValueError(42)
 
@@ -621,7 +620,7 @@ class TestAssertionRewrite(object):
 
     def test_custom_repr(self, request):
         def f():
-            class Foo(object):
+            class Foo:
                 a = 1
 
                 def __repr__(self):
@@ -644,8 +643,8 @@ class TestAssertionRewrite(object):
 
     def test_custom_repr_non_ascii(self):
         def f():
-            class A(object):
-                name = u"ä"
+            class A:
+                name = "ä"
 
                 def __repr__(self):
                     return self.name.encode("UTF-8")  # only legal in python2
@@ -730,7 +729,7 @@ class TestAssertionRewrite(object):
         result.stdout.fnmatch_lines(["*assert False*", "*where False = check_even(1)*"])
 
 
-class TestRewriteOnImport(object):
+class TestRewriteOnImport:
     def test_pycache_is_a_file(self, testdir):
         testdir.tmpdir.join("__pycache__").write("Hello")
         testdir.makepyfile(
@@ -950,7 +949,7 @@ def test_rewritten():
         assert "pytest-warning summary" not in result.stdout.str()
 
 
-class TestAssertionRewriteHookDetails(object):
+class TestAssertionRewriteHookDetails:
     def test_loader_is_package_false_for_module(self, testdir):
         testdir.makepyfile(
             test_fun="""
@@ -1169,7 +1168,7 @@ def test_issue731(testdir):
     assert "unbalanced braces" not in result.stdout.str()
 
 
-class TestIssue925(object):
+class TestIssue925:
     def test_simple_case(self, testdir):
         testdir.makepyfile(
             """
@@ -1276,7 +1275,7 @@ def test_rewrite_infinite_recursion(testdir, pytestconfig, monkeypatch):
     assert len(write_pyc_called) == 1
 
 
-class TestEarlyRewriteBailout(object):
+class TestEarlyRewriteBailout:
     @pytest.fixture
     def hook(self, pytestconfig, monkeypatch, testdir):
         """Returns a patched AssertionRewritingHook instance so we can configure its initial paths and track
@@ -1287,7 +1286,7 @@ class TestEarlyRewriteBailout(object):
         self.find_module_calls = []
         self.initial_paths = set()
 
-        class StubSession(object):
+        class StubSession:
             _initialpaths = self.initial_paths
 
             def isinitpath(self, p):

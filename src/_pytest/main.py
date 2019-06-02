@@ -8,7 +8,6 @@ import warnings
 
 import attr
 import py
-import six
 
 import _pytest._code
 from _pytest import nodes
@@ -166,7 +165,7 @@ def pytest_addoption(parser):
     )
 
 
-class _ConfigDeprecated(object):
+class _ConfigDeprecated:
     def __init__(self, config):
         self.__dict__["_config"] = config
 
@@ -305,10 +304,7 @@ def pytest_ignore_collect(path, config):
     if excludeglobopt:
         ignore_globs.extend([py.path.local(x) for x in excludeglobopt])
 
-    if any(
-        fnmatch.fnmatch(six.text_type(path), six.text_type(glob))
-        for glob in ignore_globs
-    ):
+    if any(fnmatch.fnmatch(str(path), str(glob)) for glob in ignore_globs):
         return True
 
     allow_in_venv = config.getoption("collect_in_virtualenv")
@@ -336,7 +332,7 @@ def pytest_collection_modifyitems(items, config):
         items[:] = remaining
 
 
-class FSHookProxy(object):
+class FSHookProxy:
     def __init__(self, fspath, pm, remove_mods):
         self.fspath = fspath
         self.pm = pm
@@ -476,8 +472,8 @@ class Session(nodes.FSCollector):
         if self._notfound:
             errors = []
             for arg, exc in self._notfound:
-                line = "(no name %r in any of %r)" % (arg, exc.args[0])
-                errors.append("not found: %s\n%s" % (arg, line))
+                line = "(no name {!r} in any of {!r})".format(arg, exc.args[0])
+                errors.append("not found: {}\n{}".format(arg, line))
                 # XXX: test this
             raise UsageError(*errors)
         if not genitems:
@@ -494,8 +490,7 @@ class Session(nodes.FSCollector):
             self.trace("processing argument", arg)
             self.trace.root.indent += 1
             try:
-                for x in self._collect(arg):
-                    yield x
+                yield from self._collect(arg)
             except NoMatch:
                 # we are inside a make_report hook so
                 # we cannot directly pass through the exception
@@ -532,7 +527,7 @@ class Session(nodes.FSCollector):
         # If it's a directory argument, recurse and look for any Subpackages.
         # Let the Package collector deal with subnodes, don't collect here.
         if argpath.check(dir=1):
-            assert not names, "invalid arg %r" % (arg,)
+            assert not names, "invalid arg {!r}".format(arg)
 
             seen_dirs = set()
             for path in argpath.visit(
@@ -577,15 +572,13 @@ class Session(nodes.FSCollector):
             if argpath.basename == "__init__.py":
                 yield next(m[0].collect())
                 return
-            for y in m:
-                yield y
+            yield from m
 
     def _collectfile(self, path, handle_dupes=True):
-        assert path.isfile(), "%r is not a file (isdir=%r, exists=%r, islink=%r)" % (
-            path,
-            path.isdir(),
-            path.exists(),
-            path.islink(),
+        assert (
+            path.isfile()
+        ), "{!r} is not a file (isdir={!r}, exists={!r}, islink={!r})".format(
+            path, path.isdir(), path.exists(), path.islink()
         )
         ihook = self.gethookproxy(path)
         if not self.isinitpath(path):
@@ -713,6 +706,5 @@ class Session(nodes.FSCollector):
             rep = collect_one_node(node)
             if rep.passed:
                 for subnode in rep.result:
-                    for x in self.genitems(subnode):
-                        yield x
+                    yield from self.genitems(subnode)
             node.ihook.pytest_collectreport(report=rep)

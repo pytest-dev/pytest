@@ -148,10 +148,10 @@ def get_default_arg_names(function):
 
 
 _non_printable_ascii_translate_table = {
-    i: u"\\x{:02x}".format(i) for i in range(128) if i not in range(32, 127)
+    i: "\\x{:02x}".format(i) for i in range(128) if i not in range(32, 127)
 }
 _non_printable_ascii_translate_table.update(
-    {ord("\t"): u"\\t", ord("\r"): u"\\r", ord("\n"): u"\\n"}
+    {ord("\t"): "\\t", ord("\r"): "\\r", ord("\n"): "\\n"}
 )
 
 
@@ -191,7 +191,7 @@ def ascii_escaped(val):
     return _translate_non_printable(ret)
 
 
-class _PytestWrapper(object):
+class _PytestWrapper:
     """Dummy wrapper around a function object for internal use only.
 
     Used to correctly unwrap the underlying function object
@@ -310,15 +310,13 @@ def _setup_collect_fakemodule():
 
 class CaptureIO(io.TextIOWrapper):
     def __init__(self):
-        super(CaptureIO, self).__init__(
-            io.BytesIO(), encoding="UTF-8", newline="", write_through=True
-        )
+        super().__init__(io.BytesIO(), encoding="UTF-8", newline="", write_through=True)
 
     def getvalue(self):
         return self.buffer.getvalue().decode("UTF-8")
 
 
-class FuncargnamesCompatAttr(object):
+class FuncargnamesCompatAttr:
     """ helper class so that Metafunc, Function and FixtureRequest
     don't need to each define the "funcargnames" compatibility attribute.
     """

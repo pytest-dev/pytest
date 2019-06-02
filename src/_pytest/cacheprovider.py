@@ -10,14 +10,13 @@ from collections import OrderedDict
 
 import attr
 import py
-import six
 
 import pytest
 from .pathlib import Path
 from .pathlib import resolve_from_str
 from .pathlib import rmtree
 
-README_CONTENT = u"""\
+README_CONTENT = """\
 # pytest cache directory #
 
 This directory contains data from the pytest's cache plugin,
@@ -37,7 +36,7 @@ Signature: 8a477f597d28d172789f06886806bc55
 
 
 @attr.s
-class Cache(object):
+class Cache:
     _cachedir = attr.ib(repr=False)
     _config = attr.ib(repr=False)
 
@@ -136,14 +135,14 @@ class Cache(object):
         readme_path.write_text(README_CONTENT)
 
         gitignore_path = self._cachedir.joinpath(".gitignore")
-        msg = u"# Created by pytest automatically.\n*"
+        msg = "# Created by pytest automatically.\n*"
         gitignore_path.write_text(msg, encoding="UTF-8")
 
         cachedir_tag_path = self._cachedir.joinpath("CACHEDIR.TAG")
         cachedir_tag_path.write_bytes(CACHEDIR_TAG_CONTENT)
 
 
-class LFPlugin(object):
+class LFPlugin:
     """ Plugin which implements the --lf (run last-failing) option """
 
     def __init__(self, config):
@@ -256,7 +255,7 @@ class LFPlugin(object):
             config.cache.set("cache/lastfailed", self.lastfailed)
 
 
-class NFPlugin(object):
+class NFPlugin:
     """ Plugin which implements the --nf (run new-first) option """
 
     def __init__(self, config):
@@ -275,8 +274,8 @@ class NFPlugin(object):
                     other_items[item.nodeid] = item
 
             items[:] = self._get_increasing_order(
-                six.itervalues(new_items)
-            ) + self._get_increasing_order(six.itervalues(other_items))
+                new_items.values()
+            ) + self._get_increasing_order(other_items.values())
         self.cached_nodeids = [x.nodeid for x in items if isinstance(x, pytest.Item)]
 
     def _get_increasing_order(self, items):

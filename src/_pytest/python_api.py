@@ -46,7 +46,7 @@ def _non_numeric_type_error(value, at):
 # builtin pytest.approx helper
 
 
-class ApproxBase(object):
+class ApproxBase:
     """
     Provide shared utilities for making approximate comparisons between numbers
     or sequences of numbers.
@@ -706,7 +706,7 @@ def raises(expected_exception, *args, **kwargs):
 raises.Exception = fail.Exception
 
 
-class RaisesContext(object):
+class RaisesContext:
     def __init__(self, expected_exception, message, match_expr):
         self.expected_exception = expected_exception
         self.message = message

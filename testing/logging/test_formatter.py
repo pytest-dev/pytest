@@ -20,8 +20,8 @@ def test_coloredlogformatter():
         exc_info=False,
     )
 
-    class ColorConfig(object):
-        class option(object):
+    class ColorConfig:
+        class option:
             pass
 
     tw = py.io.TerminalWriter()

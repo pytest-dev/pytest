@@ -6,8 +6,6 @@ Current default behaviour is to truncate assertion explanations at
 """
 import os
 
-import six
-
 DEFAULT_MAX_LINES = 8
 DEFAULT_MAX_CHARS = 8 * 80
 USAGE_MSG = "use '-vv' to show"
@@ -71,7 +69,7 @@ def _truncate_explanation(input_lines, max_lines=None, max_chars=None):
     else:
         msg += " ({} lines hidden)".format(truncated_line_count)
     msg += ", {}".format(USAGE_MSG)
-    truncated_explanation.extend([six.text_type(""), six.text_type(msg)])
+    truncated_explanation.extend(["", str(msg)])
     return truncated_explanation
 
 

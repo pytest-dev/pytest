@@ -50,7 +50,7 @@ def test_write_log_entry():
     assert entry_lines[1:] == [" " + line for line in longrepr.splitlines()]
 
 
-class TestWithFunctionIntegration(object):
+class TestWithFunctionIntegration:
     # XXX (hpk) i think that the resultlog plugin should
     # provide a Parser object so that one can remain
     # ignorant regarding formatting details.

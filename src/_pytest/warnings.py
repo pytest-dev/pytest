@@ -13,7 +13,7 @@ def _setoption(wmod, arg):
     """
     parts = arg.split(":")
     if len(parts) > 5:
-        raise wmod._OptionError("too many fields (max 5): %r" % (arg,))
+        raise wmod._OptionError("too many fields (max 5): {!r}".format(arg))
     while len(parts) < 5:
         parts.append("")
     action, message, category, module, lineno = [s.strip() for s in parts]
@@ -25,7 +25,7 @@ def _setoption(wmod, arg):
             if lineno < 0:
                 raise ValueError
         except (ValueError, OverflowError):
-            raise wmod._OptionError("invalid lineno %r" % (lineno,))
+            raise wmod._OptionError("invalid lineno {!r}".format(lineno))
     else:
         lineno = 0
     wmod.filterwarnings(action, message, category, module, lineno)

@@ -5,7 +5,6 @@ from collections.abc import MutableMapping
 from operator import attrgetter
 
 import attr
-import six
 
 from ..compat import ascii_escaped
 from ..compat import getfslineno
@@ -71,7 +70,7 @@ class ParameterSet(namedtuple("ParameterSet", "values, marks, id")):
 
         id_ = kwargs.pop("id", None)
         if id_ is not None:
-            if not isinstance(id_, six.string_types):
+            if not isinstance(id_, str):
                 raise TypeError(
                     "Expected id to be a string, got {}: {!r}".format(type(id_), id_)
                 )
@@ -157,7 +156,7 @@ class ParameterSet(namedtuple("ParameterSet", "values, marks, id")):
 
 
 @attr.s(frozen=True)
-class Mark(object):
+class Mark:
     #: name of the mark
     name = attr.ib(type=str)
     #: positional arguments of the mark decorator
@@ -180,7 +179,7 @@ class Mark(object):
 
 
 @attr.s
-class MarkDecorator(object):
+class MarkDecorator:
     """ A decorator for test functions and test classes.  When applied
     it will create :class:`MarkInfo` objects which may be
     :ref:`retrieved by hooks as item keywords <excontrolskip>`.
@@ -228,7 +227,7 @@ class MarkDecorator(object):
         return self.mark == other.mark if isinstance(other, MarkDecorator) else False
 
     def __repr__(self):
-        return "<MarkDecorator %r>" % (self.mark,)
+        return "<MarkDecorator {!r}>".format(self.mark)
 
     def with_args(self, *args, **kwargs):
         """ return a MarkDecorator with extra arguments added
@@ -289,7 +288,7 @@ def store_mark(obj, mark):
     obj.pytestmark = get_unpacked_marks(obj) + [mark]
 
 
-class MarkGenerator(object):
+class MarkGenerator:
     """ Factory for :class:`MarkDecorator` objects - exposed as
     a ``pytest.mark`` singleton instance.  Example::
 
@@ -376,11 +375,11 @@ class NodeKeywords(MutableMapping):
         return len(self._seen())
 
     def __repr__(self):
-        return "<NodeKeywords for node %s>" % (self.node,)
+        return "<NodeKeywords for node {}>".format(self.node)
 
 
 @attr.s(cmp=False, hash=False)
-class NodeMarkers(object):
+class NodeMarkers:
     """
     internal structure for storing marks belonging to a node
 

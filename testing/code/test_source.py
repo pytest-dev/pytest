@@ -28,11 +28,11 @@ def test_source_str_function():
 
 
 def test_unicode():
-    x = Source(u"4")
+    x = Source("4")
     assert str(x) == "4"
-    co = _pytest._code.compile(u'u"å"', mode="eval")
+    co = _pytest._code.compile('u"å"', mode="eval")
     val = eval(co)
-    assert isinstance(val, six.text_type)
+    assert isinstance(val, str)
 
 
 def test_source_from_function():
@@ -41,7 +41,7 @@ def test_source_from_function():
 
 
 def test_source_from_method():
-    class TestClass(object):
+    class TestClass:
         def test_method(self):
             pass
 
@@ -128,7 +128,7 @@ def test_isparseable():
     assert not Source(chr(0)).isparseable()
 
 
-class TestAccesses(object):
+class TestAccesses:
     source = Source(
         """\
         def f(x):
@@ -156,7 +156,7 @@ class TestAccesses(object):
         assert len(values) == 4
 
 
-class TestSourceParsingAndCompiling(object):
+class TestSourceParsingAndCompiling:
     source = Source(
         """\
         def f(x):
@@ -333,7 +333,7 @@ class TestSourceParsingAndCompiling(object):
 
 
 def test_getstartingblock_singleline():
-    class A(object):
+    class A:
         def __init__(self, *args):
             frame = sys._getframe(1)
             self.source = _pytest._code.Frame(frame).statement
@@ -480,7 +480,7 @@ def test_getfslineno():
     assert fspath.basename == "test_source.py"
     assert lineno == _pytest._code.getrawcode(f).co_firstlineno - 1  # see findsource
 
-    class A(object):
+    class A:
         pass
 
     fspath, lineno = getfslineno(A)
@@ -491,7 +491,7 @@ def test_getfslineno():
 
     assert getfslineno(3) == ("", -1)
 
-    class B(object):
+    class B:
         pass
 
     B.__name__ = "B2"
@@ -499,19 +499,19 @@ def test_getfslineno():
 
 
 def test_code_of_object_instance_with_call():
-    class A(object):
+    class A:
         pass
 
     pytest.raises(TypeError, lambda: _pytest._code.Source(A()))
 
-    class WithCall(object):
+    class WithCall:
         def __call__(self):
             pass
 
     code = _pytest._code.Code(WithCall())
     assert "pass" in str(code.source())
 
-    class Hello(object):
+    class Hello:
         def __call__(self):
             pass
 
@@ -620,7 +620,7 @@ x = 3
     assert str(source) == "raise ValueError(\n    23\n)"
 
 
-class TestTry(object):
+class TestTry:
     source = """\
 try:
     raise ValueError
@@ -647,7 +647,7 @@ else:
         assert str(source) == "    raise KeyError()"
 
 
-class TestTryFinally(object):
+class TestTryFinally:
     source = """\
 try:
     raise ValueError
@@ -664,7 +664,7 @@ finally:
         assert str(source) == "    raise IndexError(1)"
 
 
-class TestIf(object):
+class TestIf:
     source = """\
 if 1:
     y = 3
@@ -720,7 +720,7 @@ something
 
 
 def test_getstartingblock_multiline():
-    class A(object):
+    class A:
         def __init__(self, *args):
             frame = sys._getframe(1)
             self.source = _pytest._code.Frame(frame).statement

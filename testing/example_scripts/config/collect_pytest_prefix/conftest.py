@@ -1,2 +1,2 @@
-class pytest_something(object):
+class pytest_something:
     pass

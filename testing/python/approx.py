@@ -23,10 +23,10 @@ class MyDocTestRunner(doctest.DocTestRunner):
         )
 
 
-class TestApprox(object):
+class TestApprox:
     @pytest.fixture
     def plus_minus(self):
-        return u"\u00b1"
+        return "\u00b1"
 
     def test_repr_string(self, plus_minus):
         tol1, tol2, infr = "1.0e-06", "2.0e-06", "inf"
@@ -496,7 +496,7 @@ class TestApprox(object):
         assert approx(expected, rel=5e-8, abs=0) != actual
 
     def test_generic_sized_iterable_object(self):
-        class MySizedIterable(object):
+        class MySizedIterable:
             def __iter__(self):
                 return iter([1, 2, 3, 4])
 

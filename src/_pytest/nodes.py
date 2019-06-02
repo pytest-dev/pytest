@@ -2,7 +2,6 @@ import os
 import warnings
 
 import py
-import six
 
 import _pytest._code
 from _pytest.compat import getfslineno
@@ -50,7 +49,7 @@ def ischildnode(baseid, nodeid):
     return node_parts[: len(base_parts)] == base_parts
 
 
-class Node(object):
+class Node:
     """ base class for Collector and Item the test collection tree.
     Collector subclasses have children, Items are terminal nodes."""
 
@@ -98,7 +97,7 @@ class Node(object):
         return self.session.gethookproxy(self.fspath)
 
     def __repr__(self):
-        return "<%s %s>" % (self.__class__.__name__, getattr(self, "name", None))
+        return "<{} {}>".format(self.__class__.__name__, getattr(self, "name", None))
 
     def warn(self, warning):
         """Issue a warning for this item.
@@ -168,7 +167,7 @@ class Node(object):
         """
         from _pytest.mark import MarkDecorator, MARK_GEN
 
-        if isinstance(marker, six.string_types):
+        if isinstance(marker, str):
             marker = getattr(MARK_GEN, marker)
         elif not isinstance(marker, MarkDecorator):
             raise ValueError("is not a string or pytest.mark.* Marker")
@@ -239,7 +238,7 @@ class Node(object):
     def _repr_failure_py(self, excinfo, style=None):
         if excinfo.errisinstance(fail.Exception):
             if not excinfo.value.pytrace:
-                return six.text_type(excinfo.value)
+                return str(excinfo.value)
         fm = self.session._fixturemanager
         if excinfo.errisinstance(fm.FixtureLookupError):
             return excinfo.value.formatrepr()
@@ -366,9 +365,7 @@ class FSCollector(Collector):
             if nodeid and os.sep != SEP:
                 nodeid = nodeid.replace(os.sep, SEP)
 
-        super(FSCollector, self).__init__(
-            name, parent, config, session, nodeid=nodeid, fspath=fspath
-        )
+        super().__init__(name, parent, config, session, nodeid=nodeid, fspath=fspath)
 
 
 class File(FSCollector):
@@ -383,7 +380,7 @@ class Item(Node):
     nextitem = None
 
     def __init__(self, name, parent=None, config=None, session=None, nodeid=None):
-        super(Item, self).__init__(name, parent, config, session, nodeid=nodeid)
+        super().__init__(name, parent, config, session, nodeid=nodeid)
         self._report_sections = []
 
         #: user properties is a list of tuples (name, value) that holds user

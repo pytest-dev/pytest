@@ -10,8 +10,6 @@ import sys
 from io import UnsupportedOperation
 from tempfile import TemporaryFile
 
-import six
-
 import pytest
 from _pytest.compat import CaptureIO
 
@@ -61,7 +59,7 @@ def pytest_load_initial_conftests(early_config, parser, args):
         sys.stderr.write(err)
 
 
-class CaptureManager(object):
+class CaptureManager:
     """
     Capture plugin, manages that the appropriate capture method is enabled/disabled during collection and each
     test phase (setup, call, teardown). After each of those points, the captured output is obtained and
@@ -80,10 +78,8 @@ class CaptureManager(object):
         self._current_item = None
 
     def __repr__(self):
-        return "<CaptureManager _method=%r _global_capturing=%r _current_item=%r>" % (
-            self._method,
-            self._global_capturing,
-            self._current_item,
+        return "<CaptureManager _method={!r} _global_capturing={!r} _current_item={!r}>".format(
+            self._method, self._global_capturing, self._current_item
         )
 
     def _getcapture(self, method):
@@ -335,7 +331,7 @@ def _install_capture_fixture_on_item(request, capture_class):
     del request.node._capture_fixture
 
 
-class CaptureFixture(object):
+class CaptureFixture:
     """
     Object returned by :py:func:`capsys`, :py:func:`capsysbinary`, :py:func:`capfd` and :py:func:`capfdbinary`
     fixtures.
@@ -414,7 +410,7 @@ def safe_text_dupfile(f, mode, default_encoding="UTF8"):
     return EncodedFile(f, encoding or default_encoding)
 
 
-class EncodedFile(object):
+class EncodedFile:
     errors = "strict"  # possibly needed by py3 code (issue555)
 
     def __init__(self, buffer, encoding):
@@ -422,7 +418,7 @@ class EncodedFile(object):
         self.encoding = encoding
 
     def write(self, obj):
-        if isinstance(obj, six.text_type):
+        if isinstance(obj, str):
             obj = obj.encode(self.encoding, "replace")
         else:
             raise TypeError(
@@ -450,7 +446,7 @@ class EncodedFile(object):
 CaptureResult = collections.namedtuple("CaptureResult", ["out", "err"])
 
 
-class MultiCapture(object):
+class MultiCapture:
     out = err = in_ = None
     _state = None
 
@@ -463,7 +459,7 @@ class MultiCapture(object):
             self.err = Capture(2)
 
     def __repr__(self):
-        return "<MultiCapture out=%r err=%r in_=%r _state=%r _in_suspended=%r>" % (
+        return "<MultiCapture out={!r} err={!r} in_={!r} _state={!r} _in_suspended={!r}>".format(
             self.out,
             self.err,
             self.in_,
@@ -529,12 +525,12 @@ class MultiCapture(object):
         )
 
 
-class NoCapture(object):
+class NoCapture:
     EMPTY_BUFFER = None
     __init__ = start = done = suspend = resume = lambda *args: None
 
 
-class FDCaptureBinary(object):
+class FDCaptureBinary:
     """Capture IO to/from a given os-level filedescriptor.
 
     snap() produces `bytes`
@@ -568,10 +564,8 @@ class FDCaptureBinary(object):
             self.tmpfile_fd = tmpfile.fileno()
 
     def __repr__(self):
-        return "<FDCapture %s oldfd=%s _state=%r>" % (
-            self.targetfd,
-            getattr(self, "targetfd_save", None),
-            self._state,
+        return "<FDCapture {} oldfd={} _state={!r}>".format(
+            self.targetfd, getattr(self, "targetfd_save", None), self._state
         )
 
     def start(self):
@@ -613,7 +607,7 @@ class FDCaptureBinary(object):
 
     def writeorg(self, data):
         """ write to original file descriptor. """
-        if isinstance(data, six.text_type):
+        if isinstance(data, str):
             data = data.encode("utf8")  # XXX use encoding of original stream
         os.write(self.targetfd_save, data)
 
@@ -627,14 +621,14 @@ class FDCapture(FDCaptureBinary):
     EMPTY_BUFFER = str()
 
     def snap(self):
-        res = super(FDCapture, self).snap()
+        res = super().snap()
         enc = getattr(self.tmpfile, "encoding", None)
         if enc and isinstance(res, bytes):
-            res = six.text_type(res, enc, "replace")
+            res = str(res, enc, "replace")
         return res
 
 
-class SysCapture(object):
+class SysCapture:
 
     EMPTY_BUFFER = str()
     _state = None
@@ -651,11 +645,8 @@ class SysCapture(object):
         self.tmpfile = tmpfile
 
     def __repr__(self):
-        return "<SysCapture %s _old=%r, tmpfile=%r _state=%r>" % (
-            self.name,
-            self._old,
-            self.tmpfile,
-            self._state,
+        return "<SysCapture {} _old={!r}, tmpfile={!r} _state={!r}>".format(
+            self.name, self._old, self.tmpfile, self._state
         )
 
     def start(self):
@@ -697,7 +688,7 @@ class SysCaptureBinary(SysCapture):
         return res
 
 
-class DontReadFromInput(six.Iterator):
+class DontReadFromInput:
     """Temporary stub class.  Ideally when stdin is accessed, the
     capturing should be turned off, with possibly all data captured
     so far sent to the screen.  This should be configurable, though,

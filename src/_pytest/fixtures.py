@@ -36,7 +36,7 @@ from _pytest.outcomes import TEST_OUTCOME
 
 
 @attr.s(frozen=True)
-class PseudoFixtureDef(object):
+class PseudoFixtureDef:
     cached_result = attr.ib()
     scope = attr.ib()
 
@@ -76,7 +76,7 @@ def scopeproperty(name=None, doc=None):
             if func.__name__ in scope2props[self.scope]:
                 return func(self)
             raise AttributeError(
-                "%s not available in %s-scoped context" % (scopename, self.scope)
+                "{} not available in {}-scoped context".format(scopename, self.scope)
             )
 
         return property(provide, None, None, func.__doc__)
@@ -89,7 +89,7 @@ def get_scope_package(node, fixturedef):
 
     cls = pytest.Package
     current = node
-    fixture_package_name = "%s/%s" % (fixturedef.baseid, "__init__.py")
+    fixture_package_name = "{}/{}".format(fixturedef.baseid, "__init__.py")
     while current and (
         type(current) is not cls or fixture_package_name != current.nodeid
     ):
@@ -296,7 +296,7 @@ def get_direct_param_fixture_func(request):
 
 
 @attr.s(slots=True)
-class FuncFixtureInfo(object):
+class FuncFixtureInfo:
     # original function argument names
     argnames = attr.ib(type=tuple)
     # argnames that function immediately requires. These include argnames +
@@ -652,7 +652,7 @@ class SubRequest(FixtureRequest):
         self._fixturemanager = request._fixturemanager
 
     def __repr__(self):
-        return "<SubRequest %r for %r>" % (self.fixturename, self._pyfuncitem)
+        return "<SubRequest {!r} for {!r}>".format(self.fixturename, self._pyfuncitem)
 
     def addfinalizer(self, finalizer):
         self._fixturedef.addfinalizer(finalizer)
@@ -665,7 +665,7 @@ class SubRequest(FixtureRequest):
             fixturedef.addfinalizer(
                 functools.partial(self._fixturedef.finish, request=self)
             )
-        super(SubRequest, self)._schedule_finalizers(fixturedef, subrequest)
+        super()._schedule_finalizers(fixturedef, subrequest)
 
 
 scopes = "session package module class function".split()
@@ -718,7 +718,7 @@ class FixtureLookupError(LookupError):
                 error_msg = "file %s, line %s: source code not available"
                 addline(error_msg % (fspath, lineno + 1))
             else:
-                addline("file %s, line %s" % (fspath, lineno + 1))
+                addline("file {}, line {}".format(fspath, lineno + 1))
                 for i, line in enumerate(lines):
                     line = line.rstrip()
                     addline("  " + line)
@@ -774,7 +774,7 @@ class FixtureLookupErrorRepr(TerminalRepr):
 
 def fail_fixturefunc(fixturefunc, msg):
     fs, lineno = getfslineno(fixturefunc)
-    location = "%s:%s" % (fs, lineno + 1)
+    location = "{}:{}".format(fs, lineno + 1)
     source = _pytest._code.Source(fixturefunc)
     fail(msg + ":\n\n" + str(source.indent()) + "\n" + location, pytrace=False)
 
@@ -804,7 +804,7 @@ def _teardown_yield_fixture(fixturefunc, it):
         )
 
 
-class FixtureDef(object):
+class FixtureDef:
     """ A container for a factory definition. """
 
     def __init__(
@@ -889,10 +889,8 @@ class FixtureDef(object):
         return hook.pytest_fixture_setup(fixturedef=self, request=request)
 
     def __repr__(self):
-        return "<FixtureDef argname=%r scope=%r baseid=%r>" % (
-            self.argname,
-            self.scope,
-            self.baseid,
+        return "<FixtureDef argname={!r} scope={!r} baseid={!r}>".format(
+            self.argname, self.scope, self.baseid
         )
 
 
@@ -964,7 +962,7 @@ def wrap_function_to_error_out_if_called_directly(function, fixture_marker):
 
 
 @attr.s(frozen=True)
-class FixtureFunctionMarker(object):
+class FixtureFunctionMarker:
     scope = attr.ib()
     params = attr.ib(converter=attr.converters.optional(tuple))
     autouse = attr.ib(default=False)
@@ -1078,7 +1076,7 @@ def pytest_addoption(parser):
     )
 
 
-class FixtureManager(object):
+class FixtureManager:
     """
     pytest fixtures definitions and information is stored and managed
     from this class.

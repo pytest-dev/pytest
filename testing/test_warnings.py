@@ -493,7 +493,7 @@ class TestDeprecationWarningsByDefault:
 
     def test_hidden_by_system(self, testdir, monkeypatch):
         self.create_file(testdir)
-        monkeypatch.setenv(str("PYTHONWARNINGS"), str("once::UserWarning"))
+        monkeypatch.setenv("PYTHONWARNINGS", "once::UserWarning")
         result = testdir.runpytest_subprocess()
         assert WARNINGS_SUMMARY_HEADER not in result.stdout.str()
 

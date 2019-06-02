@@ -4,8 +4,6 @@
 #
 import types
 
-from six import text_type
-
 
 def format_exception_only(etype, value):
     """Format the exception part of a traceback.
@@ -80,7 +78,7 @@ def _format_final_exc_line(etype, value):
 
 def _some_str(value):
     try:
-        return text_type(value)
+        return str(value)
     except Exception:
         try:
             return bytes(value).decode("UTF-8", "replace")

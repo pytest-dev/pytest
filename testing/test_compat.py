@@ -22,7 +22,7 @@ def test_is_generator():
 
 
 def test_real_func_loop_limit():
-    class Evil(object):
+    class Evil:
         def __init__(self):
             self.left = 1000
 
@@ -113,7 +113,7 @@ def test_is_generator_async_syntax(testdir):
     result.stdout.fnmatch_lines(["*1 passed*"])
 
 
-class ErrorsHelper(object):
+class ErrorsHelper:
     @property
     def raise_exception(self):
         raise Exception("exception should be catched")

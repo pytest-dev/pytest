@@ -1,7 +1,6 @@
 import sys
 from unittest import mock
 
-from six import text_type
 from test_excinfo import TWMock
 
 import _pytest._code
@@ -25,7 +24,7 @@ def test_code_gives_back_name_for_not_existing_file():
 
 
 def test_code_with_class():
-    class A(object):
+    class A:
         pass
 
     pytest.raises(TypeError, _pytest._code.Code, A)
@@ -76,13 +75,13 @@ def test_code_from_func():
 
 
 def test_unicode_handling():
-    value = u"ąć".encode("UTF-8")
+    value = "ąć".encode()
 
     def f():
         raise Exception(value)
 
     excinfo = pytest.raises(Exception, f)
-    text_type(excinfo)
+    str(excinfo)
 
 
 def test_code_getargs():
@@ -137,7 +136,7 @@ def test_frame_getargs():
     assert fr4.getargs(var=True) == [("x", "a"), ("y", ("b",)), ("z", {"c": "d"})]
 
 
-class TestExceptionInfo(object):
+class TestExceptionInfo:
     def test_bad_getsource(self):
         try:
             if False:
@@ -153,7 +152,7 @@ class TestExceptionInfo(object):
             _pytest._code.ExceptionInfo.from_current()
 
 
-class TestTracebackEntry(object):
+class TestTracebackEntry:
     def test_getsource(self):
         try:
             if False:
@@ -168,13 +167,13 @@ class TestTracebackEntry(object):
         assert "assert False" in source[5]
 
 
-class TestReprFuncArgs(object):
+class TestReprFuncArgs:
     def test_not_raise_exception_with_mixed_encoding(self):
         from _pytest._code.code import ReprFuncArgs
 
         tw = TWMock()
 
-        args = [("unicode_string", u"São Paulo"), ("utf8_string", b"S\xc3\xa3o Paulo")]
+        args = [("unicode_string", "São Paulo"), ("utf8_string", b"S\xc3\xa3o Paulo")]
 
         r = ReprFuncArgs(args)
         r.toterminal(tw)
