@@ -74,10 +74,6 @@ class AssertionState(object):
 
 def install_importhook(config):
     """Try to install the rewrite hook, raise SystemError if it fails."""
-    # Jython has an AST bug that make the assertion rewriting hook malfunction.
-    if sys.platform.startswith("java"):
-        raise SystemError("rewrite not supported")
-
     config._assertstate = AssertionState(config, "rewrite")
     config._assertstate.hook = hook = rewrite.AssertionRewritingHook(config)
     sys.meta_path.insert(0, hook)

@@ -222,15 +222,6 @@ class MonkeyPatch(object):
             self._setitem.append((dic, name, dic.get(name, notset)))
             del dic[name]
 
-    def _warn_if_env_name_is_not_str(self, name):
-        """On Python 2, warn if the given environment variable name is not a native str (#4056)"""
-        if six.PY2 and not isinstance(name, str):
-            warnings.warn(
-                pytest.PytestWarning(
-                    "Environment variable name {!r} should be str".format(name)
-                )
-            )
-
     def setenv(self, name, value, prepend=None):
         """ Set environment variable ``name`` to ``value``.  If ``prepend``
         is a character, read the current environment variable value
@@ -248,7 +239,6 @@ class MonkeyPatch(object):
             value = str(value)
         if prepend and name in os.environ:
             value = value + prepend + os.environ[name]
-        self._warn_if_env_name_is_not_str(name)
         self.setitem(os.environ, name, value)
 
     def delenv(self, name, raising=True):
@@ -258,7 +248,6 @@ class MonkeyPatch(object):
         If ``raising`` is set to False, no exception will be raised if the
         environment variable is missing.
         """
-        self._warn_if_env_name_is_not_str(name)
         self.delitem(os.environ, name, raising=raising)
 
     def syspath_prepend(self, path):
@@ -279,10 +268,9 @@ class MonkeyPatch(object):
         # since then the mtime based FileFinder cache (that gets created in
         # this case already) gets not invalidated when writing the new files
         # quickly afterwards.
-        if sys.version_info >= (3, 3):
-            from importlib import invalidate_caches
+        from importlib import invalidate_caches
 
-            invalidate_caches()
+        invalidate_caches()
 
     def chdir(self, path):
         """ Change the current working directory to the specified path.

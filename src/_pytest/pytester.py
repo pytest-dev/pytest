@@ -13,6 +13,7 @@ import subprocess
 import sys
 import time
 import traceback
+from collections.abc import Sequence
 from fnmatch import fnmatch
 from weakref import WeakKeyDictionary
 
@@ -25,8 +26,6 @@ from _pytest._io.saferepr import saferepr
 from _pytest.assertion.rewrite import AssertionRewritingHook
 from _pytest.capture import MultiCapture
 from _pytest.capture import SysCapture
-from _pytest.compat import safe_str
-from _pytest.compat import Sequence
 from _pytest.main import EXIT_INTERRUPTED
 from _pytest.main import EXIT_OK
 from _pytest.main import Session
@@ -911,7 +910,7 @@ class Testdir(object):
     def _ensure_basetemp(self, args):
         args = list(args)
         for x in args:
-            if safe_str(x).startswith("--basetemp"):
+            if str(x).startswith("--basetemp"):
                 break
         else:
             args.append("--basetemp=%s" % self.tmpdir.dirpath("basetemp"))
@@ -1124,25 +1123,11 @@ class Testdir(object):
 
             if timeout is None:
                 ret = popen.wait()
-            elif six.PY3:
+            else:
                 try:
                     ret = popen.wait(timeout)
                 except subprocess.TimeoutExpired:
                     handle_timeout()
-            else:
-                end = time.time() + timeout
-
-                resolution = min(0.1, timeout / 10)
-
-                while True:
-                    ret = popen.poll()
-                    if ret is not None:
-                        break
-
-                    if time.time() > end:
-                        handle_timeout()
-
-                    time.sleep(resolution)
         finally:
             f1.close()
             f2.close()

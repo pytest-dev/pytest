@@ -17,7 +17,7 @@ import pytest
 from _pytest._code.code import ExceptionChainRepr
 from _pytest._code.code import ExceptionInfo
 from _pytest._code.code import FormattedExcinfo
-from _pytest._code.code import ReprExceptionInfo
+
 
 try:
     import importlib
@@ -25,8 +25,6 @@ except ImportError:
     invalidate_import_caches = None
 else:
     invalidate_import_caches = getattr(importlib, "invalidate_caches", None)
-
-failsonjython = pytest.mark.xfail("sys.platform.startswith('java')")
 
 pytest_version_info = tuple(map(int, pytest.__version__.split(".")[:3]))
 
@@ -146,7 +144,6 @@ class TestTraceback_f_g_h(object):
         assert s.startswith("def f():")
         assert s.endswith("raise ValueError")
 
-    @failsonjython
     def test_traceback_entry_getsource_in_construct(self):
         source = _pytest._code.Source(
             """\
@@ -500,8 +497,7 @@ class TestFormattedExcinfo(object):
             excinfo = _pytest._code.ExceptionInfo.from_current()
         repr = pr.repr_excinfo(excinfo)
         assert repr.reprtraceback.reprentries[1].lines[0] == ">   ???"
-        if sys.version_info[0] >= 3:
-            assert repr.chain[0][0].reprentries[1].lines[0] == ">   ???"
+        assert repr.chain[0][0].reprentries[1].lines[0] == ">   ???"
 
     def test_repr_many_line_source_not_existing(self):
         pr = FormattedExcinfo()
@@ -519,8 +515,7 @@ raise ValueError()
             excinfo = _pytest._code.ExceptionInfo.from_current()
         repr = pr.repr_excinfo(excinfo)
         assert repr.reprtraceback.reprentries[1].lines[0] == ">   ???"
-        if sys.version_info[0] >= 3:
-            assert repr.chain[0][0].reprentries[1].lines[0] == ">   ???"
+        assert repr.chain[0][0].reprentries[1].lines[0] == ">   ???"
 
     def test_repr_source_failing_fullsource(self):
         pr = FormattedExcinfo()
@@ -577,14 +572,12 @@ raise ValueError()
         fail = IOError()
         repr = pr.repr_excinfo(excinfo)
         assert repr.reprtraceback.reprentries[0].lines[0] == ">   ???"
-        if sys.version_info[0] >= 3:
-            assert repr.chain[0][0].reprentries[0].lines[0] == ">   ???"
+        assert repr.chain[0][0].reprentries[0].lines[0] == ">   ???"
 
         fail = py.error.ENOENT  # noqa
         repr = pr.repr_excinfo(excinfo)
         assert repr.reprtraceback.reprentries[0].lines[0] == ">   ???"
-        if sys.version_info[0] >= 3:
-            assert repr.chain[0][0].reprentries[0].lines[0] == ">   ???"
+        assert repr.chain[0][0].reprentries[0].lines[0] == ">   ???"
 
     def test_repr_local(self):
         p = FormattedExcinfo(showlocals=True)
@@ -828,9 +821,9 @@ raise ValueError()
             repr = p.repr_excinfo(excinfo)
             assert repr.reprtraceback
             assert len(repr.reprtraceback.reprentries) == len(reprtb.reprentries)
-            if sys.version_info[0] >= 3:
-                assert repr.chain[0][0]
-                assert len(repr.chain[0][0].reprentries) == len(reprtb.reprentries)
+
+            assert repr.chain[0][0]
+            assert len(repr.chain[0][0].reprentries) == len(reprtb.reprentries)
             assert repr.reprcrash.path.endswith("mod.py")
             assert repr.reprcrash.message == "ValueError: 0"
 
@@ -916,13 +909,11 @@ raise ValueError()
         for style in ("short", "long", "no"):
             for showlocals in (True, False):
                 repr = excinfo.getrepr(style=style, showlocals=showlocals)
-                if sys.version_info[0] < 3:
-                    assert isinstance(repr, ReprExceptionInfo)
                 assert repr.reprtraceback.style == style
-                if sys.version_info[0] >= 3:
-                    assert isinstance(repr, ExceptionChainRepr)
-                    for repr in repr.chain:
-                        assert repr[0].style == style
+
+                assert isinstance(repr, ExceptionChainRepr)
+                for repr in repr.chain:
+                    assert repr[0].style == style
 
     def test_reprexcinfo_unicode(self):
         from _pytest._code.code import TerminalRepr
@@ -1133,7 +1124,6 @@ raise ValueError()
         msg.endswith("mod.py")
         assert tw.lines[20] == ":9: ValueError"
 
-    @pytest.mark.skipif("sys.version_info[0] < 3")
     def test_exc_chain_repr(self, importasmod):
         mod = importasmod(
             """
@@ -1219,7 +1209,6 @@ raise ValueError()
         assert line.endswith("mod.py")
         assert tw.lines[47] == ":15: AttributeError"
 
-    @pytest.mark.skipif("sys.version_info[0] < 3")
     @pytest.mark.parametrize("mode", ["from_none", "explicit_suppress"])
     def test_exc_repr_chain_suppression(self, importasmod, mode):
         """Check that exc repr does not show chained exceptions in Python 3.
@@ -1261,7 +1250,6 @@ raise ValueError()
         assert tw.lines[9] == ":6: AttributeError"
         assert len(tw.lines) == 10
 
-    @pytest.mark.skipif("sys.version_info[0] < 3")
     @pytest.mark.parametrize(
         "reason, description",
         [
@@ -1321,7 +1309,6 @@ raise ValueError()
             ]
         )
 
-    @pytest.mark.skipif("sys.version_info[0] < 3")
     def test_exc_chain_repr_cycle(self, importasmod):
         mod = importasmod(
             """

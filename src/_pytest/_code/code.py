@@ -9,25 +9,16 @@ import sys
 import traceback
 from inspect import CO_VARARGS
 from inspect import CO_VARKEYWORDS
+from traceback import format_exception_only
 from weakref import ref
 
 import attr
 import pluggy
 import py
-from six import text_type
 
 import _pytest
 from _pytest._io.saferepr import safeformat
 from _pytest._io.saferepr import saferepr
-from _pytest.compat import _PY2
-from _pytest.compat import _PY3
-from _pytest.compat import PY35
-from _pytest.compat import safe_str
-
-if _PY3:
-    from traceback import format_exception_only
-else:
-    from ._py2traceback import format_exception_only
 
 
 class Code(object):
@@ -208,8 +199,7 @@ class TracebackEntry(object):
     locals = property(getlocals, None, None, "locals of underlaying frame")
 
     def getfirstlinesource(self):
-        # on Jython this firstlineno can be -1 apparently
-        return max(self.frame.code.firstlineno, 0)
+        return self.frame.code.firstlineno
 
     def getsource(self, astcache=None):
         """ return failing source code. """
@@ -391,9 +381,7 @@ class ExceptionInfo(object):
         help for navigating the traceback.
     """
 
-    _assert_start_repr = (
-        "AssertionError(u'assert " if _PY2 else "AssertionError('assert "
-    )
+    _assert_start_repr = "AssertionError('assert "
 
     _excinfo = attr.ib()
     _striptext = attr.ib(default="")
@@ -558,11 +546,6 @@ class ExceptionInfo(object):
         loc = ReprFileLocation(entry.path, entry.lineno + 1, self.exconly())
         return str(loc)
 
-    def __unicode__(self):
-        entry = self.traceback[-1]
-        loc = ReprFileLocation(entry.path, entry.lineno + 1, self.exconly())
-        return text_type(loc)
-
     def match(self, regexp):
         """
         Check whether the regular expression 'regexp' is found in the string
@@ -692,8 +675,7 @@ class FormattedExcinfo(object):
             source = _pytest._code.Source("???")
             line_index = 0
         else:
-            # entry.getfirstlinesource() can be -1, should be 0 on jython
-            line_index = entry.lineno - max(entry.getfirstlinesource(), 0)
+            line_index = entry.lineno - entry.getfirstlinesource()
 
         lines = []
         style = entry._repr_style
@@ -733,7 +715,7 @@ class FormattedExcinfo(object):
         if self.tbfilter:
             traceback = traceback.filter()
 
-        if is_recursion_error(excinfo):
+        if excinfo.errisinstance(RecursionError):
             traceback, extraline = self._truncate_recursive_traceback(traceback)
         else:
             extraline = None
@@ -769,7 +751,7 @@ class FormattedExcinfo(object):
                 "  Displaying first and last {max_frames} stack frames out of {total}."
             ).format(
                 exc_type=type(e).__name__,
-                exc_msg=safe_str(e),
+                exc_msg=str(e),
                 max_frames=max_frames,
                 total=len(traceback),
             )
@@ -784,64 +766,51 @@ class FormattedExcinfo(object):
         return traceback, extraline
 
     def repr_excinfo(self, excinfo):
-        if _PY2:
-            reprtraceback = self.repr_traceback(excinfo)
-            reprcrash = excinfo._getreprcrash()
 
-            return ReprExceptionInfo(reprtraceback, reprcrash)
-        else:
-            repr_chain = []
-            e = excinfo.value
-            descr = None
-            seen = set()
-            while e is not None and id(e) not in seen:
-                seen.add(id(e))
-                if excinfo:
-                    reprtraceback = self.repr_traceback(excinfo)
-                    reprcrash = excinfo._getreprcrash()
-                else:
-                    # fallback to native repr if the exception doesn't have a traceback:
-                    # ExceptionInfo objects require a full traceback to work
-                    reprtraceback = ReprTracebackNative(
-                        traceback.format_exception(type(e), e, None)
-                    )
-                    reprcrash = None
+        repr_chain = []
+        e = excinfo.value
+        descr = None
+        seen = set()
+        while e is not None and id(e) not in seen:
+            seen.add(id(e))
+            if excinfo:
+                reprtraceback = self.repr_traceback(excinfo)
+                reprcrash = excinfo._getreprcrash()
+            else:
+                # fallback to native repr if the exception doesn't have a traceback:
+                # ExceptionInfo objects require a full traceback to work
+                reprtraceback = ReprTracebackNative(
+                    traceback.format_exception(type(e), e, None)
+                )
+                reprcrash = None
 
-                repr_chain += [(reprtraceback, reprcrash, descr)]
-                if e.__cause__ is not None and self.chain:
-                    e = e.__cause__
-                    excinfo = (
-                        ExceptionInfo((type(e), e, e.__traceback__))
-                        if e.__traceback__
-                        else None
-                    )
-                    descr = "The above exception was the direct cause of the following exception:"
-                elif (
-                    e.__context__ is not None
-                    and not e.__suppress_context__
-                    and self.chain
-                ):
-                    e = e.__context__
-                    excinfo = (
-                        ExceptionInfo((type(e), e, e.__traceback__))
-                        if e.__traceback__
-                        else None
-                    )
-                    descr = "During handling of the above exception, another exception occurred:"
-                else:
-                    e = None
-            repr_chain.reverse()
-            return ExceptionChainRepr(repr_chain)
+            repr_chain += [(reprtraceback, reprcrash, descr)]
+            if e.__cause__ is not None and self.chain:
+                e = e.__cause__
+                excinfo = (
+                    ExceptionInfo((type(e), e, e.__traceback__))
+                    if e.__traceback__
+                    else None
+                )
+                descr = "The above exception was the direct cause of the following exception:"
+            elif (
+                e.__context__ is not None and not e.__suppress_context__ and self.chain
+            ):
+                e = e.__context__
+                excinfo = (
+                    ExceptionInfo((type(e), e, e.__traceback__))
+                    if e.__traceback__
+                    else None
+                )
+                descr = "During handling of the above exception, another exception occurred:"
+            else:
+                e = None
+        repr_chain.reverse()
+        return ExceptionChainRepr(repr_chain)
 
 
 class TerminalRepr(object):
     def __str__(self):
-        s = self.__unicode__()
-        if _PY2:
-            s = s.encode("utf-8")
-        return s
-
-    def __unicode__(self):
         # FYI this is called from pytest-xdist's serialization of exception
         # information.
         io = py.io.TextIO()
@@ -1006,7 +975,7 @@ class ReprFuncArgs(TerminalRepr):
         if self.args:
             linesofar = ""
             for name, value in self.args:
-                ns = "%s = %s" % (safe_str(name), safe_str(value))
+                ns = "%s = %s" % (name, value)
                 if len(ns) + len(linesofar) + 2 > tw.fullwidth:
                     if linesofar:
                         tw.line(linesofar)
@@ -1036,23 +1005,6 @@ def getrawcode(obj, trycall=True):
                 if hasattr(x, "co_firstlineno"):
                     return x
         return obj
-
-
-if PY35:  # RecursionError introduced in 3.5
-
-    def is_recursion_error(excinfo):
-        return excinfo.errisinstance(RecursionError)  # noqa
-
-
-else:
-
-    def is_recursion_error(excinfo):
-        if not excinfo.errisinstance(RuntimeError):
-            return False
-        try:
-            return "maximum recursion depth exceeded" in str(excinfo.value)
-        except UnicodeError:
-            return False
 
 
 # relative paths that we use to filter traceback entries from appearing to the user;

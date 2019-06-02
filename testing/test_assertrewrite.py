@@ -3,6 +3,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import ast
 import glob
 import os
 import py_compile
@@ -21,11 +22,6 @@ from _pytest.assertion.rewrite import AssertionRewritingHook
 from _pytest.assertion.rewrite import PYTEST_TAG
 from _pytest.assertion.rewrite import rewrite_asserts
 from _pytest.main import EXIT_NOTESTSCOLLECTED
-
-ast = pytest.importorskip("ast")
-if sys.platform.startswith("java"):
-    # XXX should be xfail
-    pytest.skip("assert rewrite does currently not work on jython")
 
 
 def setup_module(mod):
@@ -166,18 +162,12 @@ class TestAssertionRewrite(object):
 
         msg = getmsg(f, {"cls": X}).splitlines()
         if verbose > 0:
-            if six.PY2:
-                assert msg == [
-                    "assert <class 'test_assertrewrite.X'> == 42",
-                    "  -<class 'test_assertrewrite.X'>",
-                    "  +42",
-                ]
-            else:
-                assert msg == [
-                    "assert <class 'test_...e.<locals>.X'> == 42",
-                    "  -<class 'test_assertrewrite.TestAssertionRewrite.test_name.<locals>.X'>",
-                    "  +42",
-                ]
+
+            assert msg == [
+                "assert <class 'test_...e.<locals>.X'> == 42",
+                "  -<class 'test_assertrewrite.TestAssertionRewrite.test_name.<locals>.X'>",
+                "  +42",
+            ]
         else:
             assert msg == ["assert cls == 42"]
 
@@ -277,9 +267,6 @@ class TestAssertionRewrite(object):
             ["*AssertionError: To be escaped: %", "*assert 1 == 2"]
         )
 
-    @pytest.mark.skipif(
-        sys.version_info < (3,), reason="bytes is a string type in python 2"
-    )
     def test_assertion_messages_bytes(self, testdir):
         testdir.makepyfile("def test_bytes_assertion():\n    assert False, b'ohai!'\n")
         result = testdir.runpytest()
@@ -426,7 +413,6 @@ class TestAssertionRewrite(object):
 
         assert getmsg(f) == "assert (False or (4 % 2))"
 
-    @pytest.mark.skipif("sys.version_info < (3,5)")
     def test_at_operator_issue1290(self, testdir):
         testdir.makepyfile(
             """
@@ -441,7 +427,6 @@ class TestAssertionRewrite(object):
         )
         testdir.runpytest().assert_outcomes(passed=1)
 
-    @pytest.mark.skipif("sys.version_info < (3,5)")
     def test_starred_with_side_effect(self, testdir):
         """See #4412"""
         testdir.makepyfile(
@@ -822,9 +807,6 @@ def test_rewritten():
         assert testdir.runpytest_subprocess().ret == 0
 
     def test_orphaned_pyc_file(self, testdir):
-        if sys.version_info < (3, 0) and hasattr(sys, "pypy_version_info"):
-            pytest.skip("pypy2 doesn't run orphaned pyc files")
-
         testdir.makepyfile(
             """
             import orphan
@@ -890,10 +872,6 @@ def test_rewritten():
         testdir.tmpdir.join("test_newlines.py").write(b, "wb")
         assert testdir.runpytest().ret == 0
 
-    @pytest.mark.skipif(
-        sys.version_info < (3, 4),
-        reason="packages without __init__.py not supported on python 2",
-    )
     def test_package_without__init__py(self, testdir):
         pkg = testdir.mkdir("a_package_without_init_py")
         pkg.join("module.py").ensure()
@@ -976,26 +954,6 @@ def test_rewritten():
         result.stdout.fnmatch_lines(["*= 1 passed in *=*"])
         assert "pytest-warning summary" not in result.stdout.str()
 
-    @pytest.mark.skipif(sys.version_info[0] > 2, reason="python 2 only")
-    def test_rewrite_future_imports(self, testdir):
-        """Test that rewritten modules don't inherit the __future__ flags
-        from the assertrewrite module.
-
-        assertion.rewrite imports __future__.division (and others), so
-        ensure rewritten modules don't inherit those flags.
-
-        The test below will fail if __future__.division is enabled
-        """
-        testdir.makepyfile(
-            """
-            def test():
-                x = 1 / 2
-                assert type(x) is int
-        """
-        )
-        result = testdir.runpytest()
-        assert result.ret == 0
-
 
 class TestAssertionRewriteHookDetails(object):
     def test_loader_is_package_false_for_module(self, testdir):
@@ -1024,48 +982,6 @@ class TestAssertionRewriteHookDetails(object):
         testdir.mkpydir("fun")
         result = testdir.runpytest()
         result.stdout.fnmatch_lines(["* 3 passed*"])
-
-    @pytest.mark.skipif("sys.version_info[0] >= 3")
-    @pytest.mark.xfail("hasattr(sys, 'pypy_translation_info')")
-    def test_assume_ascii(self, testdir):
-        content = "u'\xe2\x99\xa5\x01\xfe'"
-        testdir.tmpdir.join("test_encoding.py").write(content, "wb")
-        res = testdir.runpytest()
-        assert res.ret != 0
-        assert "SyntaxError: Non-ASCII character" in res.stdout.str()
-
-    @pytest.mark.skipif("sys.version_info[0] >= 3")
-    def test_detect_coding_cookie(self, testdir):
-        testdir.makepyfile(
-            test_cookie="""
-            # -*- coding: utf-8 -*-
-            u"St\xc3\xa4d"
-            def test_rewritten():
-                assert "@py_builtins" in globals()"""
-        )
-        assert testdir.runpytest().ret == 0
-
-    @pytest.mark.skipif("sys.version_info[0] >= 3")
-    def test_detect_coding_cookie_second_line(self, testdir):
-        testdir.makepyfile(
-            test_cookie="""
-            # -*- coding: utf-8 -*-
-            u"St\xc3\xa4d"
-            def test_rewritten():
-                assert "@py_builtins" in globals()"""
-        )
-        assert testdir.runpytest().ret == 0
-
-    @pytest.mark.skipif("sys.version_info[0] >= 3")
-    def test_detect_coding_cookie_crlf(self, testdir):
-        testdir.makepyfile(
-            test_cookie="""
-            # -*- coding: utf-8 -*-
-            u"St\xc3\xa4d"
-            def test_rewritten():
-                assert "@py_builtins" in globals()"""
-        )
-        assert testdir.runpytest().ret == 0
 
     def test_sys_meta_path_munged(self, testdir):
         testdir.makepyfile(

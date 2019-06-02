@@ -4,17 +4,13 @@ from __future__ import division
 from __future__ import print_function
 
 import sys
+from unittest import mock
 
 from six import text_type
 from test_excinfo import TWMock
 
 import _pytest._code
 import pytest
-
-try:
-    import mock
-except ImportError:
-    import unittest.mock as mock
 
 
 def test_ne():
@@ -92,21 +88,6 @@ def test_unicode_handling():
 
     excinfo = pytest.raises(Exception, f)
     text_type(excinfo)
-    if sys.version_info < (3,):
-        bytes(excinfo)
-
-
-@pytest.mark.skipif(sys.version_info[0] >= 3, reason="python 2 only issue")
-def test_unicode_handling_syntax_error():
-    value = u"ąć".encode("UTF-8")
-
-    def f():
-        raise SyntaxError("invalid syntax", (None, 1, 3, value))
-
-    excinfo = pytest.raises(Exception, f)
-    str(excinfo)
-    if sys.version_info[0] < 3:
-        text_type(excinfo)
 
 
 def test_code_getargs():
@@ -202,10 +183,8 @@ class TestReprFuncArgs(object):
 
         r = ReprFuncArgs(args)
         r.toterminal(tw)
-        if sys.version_info[0] >= 3:
-            assert (
-                tw.lines[0]
-                == r"unicode_string = São Paulo, utf8_string = b'S\xc3\xa3o Paulo'"
-            )
-        else:
-            assert tw.lines[0] == "unicode_string = São Paulo, utf8_string = São Paulo"
+
+        assert (
+            tw.lines[0]
+            == r"unicode_string = São Paulo, utf8_string = b'S\xc3\xa3o Paulo'"
+        )

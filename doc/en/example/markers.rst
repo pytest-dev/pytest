@@ -288,8 +288,7 @@ its test methods:
 This is equivalent to directly applying the decorator to the
 two test functions.
 
-To remain backward-compatible with Python 2.4 you can also set a
-``pytestmark`` attribute on a TestClass like this:
+Due to legacy reasons, it is possible to set the ``pytestmark`` attribute on a TestClass like this:
 
 .. code-block:: python
 

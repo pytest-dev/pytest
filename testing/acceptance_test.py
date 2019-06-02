@@ -176,7 +176,6 @@ class TestGeneralUsage(object):
         result = testdir.runpytest(p)
         result.stdout.fnmatch_lines(
             [
-                # XXX on jython this fails:  ">   import import_fails",
                 "ImportError while importing test module*",
                 "*No module named *does_not_work*",
             ]
@@ -222,9 +221,7 @@ class TestGeneralUsage(object):
                 "    foo()",
                 "conftest.py:2: in foo",
                 "    import qwerty",
-                "E   {}: No module named {q}qwerty{q}".format(
-                    exc_name, q="'" if six.PY3 else ""
-                ),
+                "E   {}: No module named 'qwerty'".format(exc_name),
             ]
         )
 
@@ -540,7 +537,6 @@ class TestInvocationVariants(object):
         result = testdir.runpython(p)
         assert result.ret == 0
 
-    @pytest.mark.xfail("sys.platform.startswith('java')")
     def test_pydoc(self, testdir):
         for name in ("py.test", "pytest"):
             result = testdir.runpython_c("import {};help({})".format(name, name))
@@ -783,10 +779,7 @@ class TestInvocationVariants(object):
 
         d_local = testdir.mkdir("local")
         symlink_location = os.path.join(str(d_local), "lib")
-        if six.PY2:
-            os.symlink(str(d), symlink_location)
-        else:
-            os.symlink(str(d), symlink_location, target_is_directory=True)
+        os.symlink(str(d), symlink_location, target_is_directory=True)
 
         # The structure of the test directory is now:
         # .
@@ -1185,9 +1178,6 @@ def test_usage_error_code(testdir):
     assert result.ret == EXIT_USAGEERROR
 
 
-@pytest.mark.skipif(
-    sys.version_info[:2] < (3, 5), reason="async def syntax python 3.5+ only"
-)
 @pytest.mark.filterwarnings("default")
 def test_warn_on_async_function(testdir):
     testdir.makepyfile(

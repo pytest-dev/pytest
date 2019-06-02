@@ -218,12 +218,9 @@ class TestConfigAPI(object):
             assert config.getoption(x) == "this"
         pytest.raises(ValueError, config.getoption, "qweqwe")
 
-    @pytest.mark.skipif("sys.version_info[0] < 3")
     def test_config_getoption_unicode(self, testdir):
         testdir.makeconftest(
             """
-            from __future__ import unicode_literals
-
             def pytest_addoption(parser):
                 parser.addoption('--hello', type=str)
         """

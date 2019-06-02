@@ -5,8 +5,7 @@ from __future__ import print_function
 
 import os
 import sys
-
-import six
+from unittest import mock
 
 import pytest
 from _pytest.main import EXIT_INTERRUPTED
@@ -16,11 +15,6 @@ from _pytest.nodes import Collector
 from _pytest.nodes import Node
 from _pytest.warning_types import PytestDeprecationWarning
 from _pytest.warnings import SHOW_PYTEST_WARNINGS_ARG
-
-try:
-    import mock
-except ImportError:
-    import unittest.mock as mock
 
 ignore_markinfo = pytest.mark.filterwarnings(
     "ignore:MarkInfo objects:pytest.RemovedInPytest4Warning"
@@ -1009,10 +1003,7 @@ def test_pytest_param_id_requires_string():
     with pytest.raises(TypeError) as excinfo:
         pytest.param(id=True)
     msg, = excinfo.value.args
-    if six.PY2:
-        assert msg == "Expected id to be a string, got <type 'bool'>: True"
-    else:
-        assert msg == "Expected id to be a string, got <class 'bool'>: True"
+    assert msg == "Expected id to be a string, got <class 'bool'>: True"
 
 
 @pytest.mark.parametrize("s", (None, "hello world"))

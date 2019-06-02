@@ -129,17 +129,13 @@ def pytest_runtest_makereport(item, call):
     evalxfail = getattr(item, "_evalxfail", None)
     # unitttest special case, see setting of _unexpectedsuccess
     if hasattr(item, "_unexpectedsuccess") and rep.when == "call":
-        from _pytest.compat import _is_unittest_unexpected_success_a_failure
 
         if item._unexpectedsuccess:
             rep.longrepr = "Unexpected success: {}".format(item._unexpectedsuccess)
         else:
             rep.longrepr = "Unexpected success"
-        if _is_unittest_unexpected_success_a_failure():
-            rep.outcome = "failed"
-        else:
-            rep.outcome = "passed"
-            rep.wasxfail = rep.longrepr
+        rep.outcome = "failed"
+
     elif item.config.option.runxfail:
         pass  # don't interefere
     elif call.excinfo and call.excinfo.errisinstance(xfail.Exception):

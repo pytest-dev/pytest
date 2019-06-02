@@ -6,7 +6,6 @@ from __future__ import print_function
 import sys
 
 import attr
-import six
 
 import pytest
 from _pytest import pathlib
@@ -348,8 +347,6 @@ class TestNumberedDir(object):
 def attempt_symlink_to(path, to_path):
     """Try to make a symlink from "path" to "to_path", skipping in case this platform
     does not support it or we don't have sufficient privileges (common on Windows)."""
-    if sys.platform.startswith("win") and six.PY2:
-        pytest.skip("pathlib for some reason cannot make symlinks on Python 2")
     try:
         Path(path).symlink_to(Path(to_path))
     except OSError:

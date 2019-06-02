@@ -4,7 +4,6 @@ trigger:
 
 variables:
   PYTEST_ADDOPTS: "--junitxml=build/test-results/$(tox.env).xml -vv"
-  python.needs_vc: False
   COVERAGE_FILE: "$(Build.Repository.LocalPath)/.coverage"
   COVERAGE_PROCESS_START: "$(Build.Repository.LocalPath)/.coveragerc"
   PYTEST_COVERAGE: '0'
@@ -16,44 +15,10 @@ jobs:
     vmImage: "vs2017-win2016"
   strategy:
     matrix:
-      py27:
-        python.version: '2.7'
-        tox.env: 'py27'
-      py27-nobyte-lsof-numpy:
-        python.version: '2.7'
-        tox.env: 'py27-lsof-nobyte-numpy'
-        # Coverage for:
-        # - test_supports_breakpoint_module_global
-        # - test_terminal_reporter_writer_attr (without xdist)
-        # - "if write" branch in _pytest.assertion.rewrite
-        # - numpy
-        # - pytester's LsofFdLeakChecker (being skipped)
-        PYTEST_COVERAGE: '1'
-      py27-twisted:
-        python.version: '2.7'
-        tox.env: 'py27-twisted'
-        python.needs_vc: True
-      py27-pluggymaster-xdist:
-        python.version: '2.7'
-        tox.env: 'py27-pluggymaster-xdist'
-        # Coverage for:
-        # - except-IOError in _attempt_to_close_capture_file for py2.
-        #   Also seen with py27-nobyte (using xdist), and py27-xdist.
-        #   But no exception with py27-pexpect,py27-twisted,py27-numpy.
-        PYTEST_COVERAGE: '1'
-      # -- pypy2 and pypy3 are disabled for now: #5279 --
-      # pypy:
-      #   python.version: 'pypy2'
-      #   tox.env: 'pypy'
+      # -- pypy3 disabled for now: #5279 --
       # pypy3:
       #   python.version: 'pypy3'
       #   tox.env: 'pypy3'
-      py34-xdist:
-        python.version: '3.4'
-        tox.env: 'py34-xdist'
-        # Coverage for:
-        # - _pytest.compat._bytes_to_ascii
-        PYTEST_COVERAGE: '1'
       py35-xdist:
         python.version: '3.5'
         tox.env: 'py35-xdist'
@@ -86,10 +51,6 @@ jobs:
     inputs:
       versionSpec: '$(python.version)'
       architecture: 'x64'
-
-  - script: choco install vcpython27
-    condition: eq(variables['python.needs_vc'], True)
-    displayName: 'Install VC for py27'
 
   - script: python -m pip install --upgrade pip && python -m pip install tox
     displayName: 'Install tox'

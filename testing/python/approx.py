@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import doctest
 import operator
-import sys
 from decimal import Decimal
 from fractions import Fraction
 from operator import eq
@@ -28,7 +27,7 @@ class MyDocTestRunner(doctest.DocTestRunner):
 class TestApprox(object):
     @pytest.fixture
     def plus_minus(self):
-        return u"\u00b1" if sys.version_info[0] > 2 else u"+-"
+        return u"\u00b1"
 
     def test_repr_string(self, plus_minus):
         tol1, tol2, infr = "1.0e-06", "2.0e-06", "inf"

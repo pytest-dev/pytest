@@ -3,6 +3,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import collections.abc as collections_abc
 import sys
 import textwrap
 
@@ -14,8 +15,6 @@ import pytest
 from _pytest import outcomes
 from _pytest.assertion import truncate
 from _pytest.assertion import util
-
-PY3 = sys.version_info >= (3, 0)
 
 
 def mock_config():
@@ -372,14 +371,6 @@ class TestAssert_reprcompare(object):
                 {0, 2},
                 """
                 Full diff:
-                - set([0, 1])
-                ?         ^
-                + set([0, 2])
-                ?         ^
-            """
-                if not PY3
-                else """
-                Full diff:
                 - {0, 1}
                 ?     ^
                 + {0, 2}
@@ -483,10 +474,7 @@ class TestAssert_reprcompare(object):
         assert len(expl) > 1
 
     def test_Sequence(self):
-        if sys.version_info >= (3, 3):
-            import collections.abc as collections_abc
-        else:
-            import collections as collections_abc
+
         if not hasattr(collections_abc, "MutableSequence"):
             pytest.skip("cannot import MutableSequence")
         MutableSequence = collections_abc.MutableSequence
@@ -589,10 +577,7 @@ class TestAssert_reprcompare(object):
                 return "\xff"
 
         expl = callequal(A(), "1")
-        if PY3:
-            assert expl == ["ÿ == '1'", "+ 1"]
-        else:
-            assert expl == [u"\ufffd == '1'", u"+ 1"]
+        assert expl == ["ÿ == '1'", "+ 1"]
 
     def test_format_nonascii_explanation(self):
         assert util.format_explanation("λ")
@@ -1100,10 +1085,6 @@ def test_traceback_failure(testdir):
     )
 
 
-@pytest.mark.skipif(
-    sys.version_info[:2] <= (3, 3),
-    reason="Python 3.4+ shows chained exceptions on multiprocess",
-)
 def test_exception_handling_no_traceback(testdir):
     """
     Handle chain exceptions in tasks submitted by the multiprocess module (#1984).
@@ -1137,9 +1118,7 @@ def test_exception_handling_no_traceback(testdir):
     )
 
 
-@pytest.mark.skipif(
-    "'__pypy__' in sys.builtin_module_names or sys.platform.startswith('java')"
-)
+@pytest.mark.skipif("'__pypy__' in sys.builtin_module_names")
 def test_warn_missing(testdir):
     testdir.makepyfile("")
     result = testdir.run(sys.executable, "-OO", "-m", "pytest", "-h")
@@ -1185,45 +1164,6 @@ def test_AssertionError_message(testdir):
         *AssertionError: (1, 2)*
     """
     )
-
-
-@pytest.mark.skipif(PY3, reason="This bug does not exist on PY3")
-def test_set_with_unsortable_elements():
-    # issue #718
-    class UnsortableKey(object):
-        def __init__(self, name):
-            self.name = name
-
-        def __lt__(self, other):
-            raise RuntimeError()
-
-        def __repr__(self):
-            return "repr({})".format(self.name)
-
-        def __eq__(self, other):
-            return self.name == other.name
-
-        def __hash__(self):
-            return hash(self.name)
-
-    left_set = {UnsortableKey(str(i)) for i in range(1, 3)}
-    right_set = {UnsortableKey(str(i)) for i in range(2, 4)}
-    expl = callequal(left_set, right_set, verbose=True)
-    # skip first line because it contains the "construction" of the set, which does not have a guaranteed order
-    expl = expl[1:]
-    dedent = textwrap.dedent(
-        """
-        Extra items in the left set:
-        repr(1)
-        Extra items in the right set:
-        repr(3)
-        Full diff (fallback to calling repr on each item):
-        - repr(1)
-        repr(2)
-        + repr(3)
-    """
-    ).strip()
-    assert "\n".join(expl) == dedent
 
 
 def test_diff_newline_at_end(monkeypatch, testdir):

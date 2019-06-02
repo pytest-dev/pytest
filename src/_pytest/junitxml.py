@@ -26,10 +26,6 @@ import pytest
 from _pytest import nodes
 from _pytest.config import filename_arg
 
-# Python 2.X and 3.X compatibility
-if sys.version_info[0] < 3:
-    from codecs import open
-
 
 class Junit(py.xml.Namespace):
     pass

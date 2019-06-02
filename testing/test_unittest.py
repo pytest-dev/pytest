@@ -459,9 +459,6 @@ class TestTrialUnittest(object):
                     pass
         """
         )
-        from _pytest.compat import _is_unittest_unexpected_success_a_failure
-
-        should_fail = _is_unittest_unexpected_success_a_failure()
         result = testdir.runpytest("-rxs", *self.ignore_unclosed_socket_warning)
         result.stdout.fnmatch_lines_random(
             [
@@ -472,12 +469,10 @@ class TestTrialUnittest(object):
                 "*i2wanto*",
                 "*sys.version_info*",
                 "*skip_in_method*",
-                "*1 failed*4 skipped*3 xfailed*"
-                if should_fail
-                else "*4 skipped*3 xfail*1 xpass*",
+                "*1 failed*4 skipped*3 xfailed*",
             ]
         )
-        assert result.ret == (1 if should_fail else 0)
+        assert result.ret == 1
 
     def test_trial_error(self, testdir):
         testdir.makepyfile(
@@ -745,22 +740,17 @@ def test_unittest_expected_failure_for_passing_test_is_fail(testdir, runner):
             unittest.main()
     """
     )
-    from _pytest.compat import _is_unittest_unexpected_success_a_failure
 
-    should_fail = _is_unittest_unexpected_success_a_failure()
     if runner == "pytest":
         result = testdir.runpytest("-rxX")
         result.stdout.fnmatch_lines(
-            [
-                "*MyTestCase*test_passing_test_is_fail*",
-                "*1 failed*" if should_fail else "*1 xpassed*",
-            ]
+            ["*MyTestCase*test_passing_test_is_fail*", "*1 failed*"]
         )
     else:
         result = testdir.runpython(script)
         result.stderr.fnmatch_lines(["*1 test in*", "*(unexpected successes=1)*"])
 
-    assert result.ret == (1 if should_fail else 0)
+    assert result.ret == 1
 
 
 @pytest.mark.parametrize(

@@ -12,6 +12,7 @@ import shlex
 import sys
 import types
 import warnings
+from functools import lru_cache
 
 import importlib_metadata
 import py
@@ -31,8 +32,6 @@ from .findpaths import exists
 from _pytest import deprecated
 from _pytest._code import ExceptionInfo
 from _pytest._code import filter_traceback
-from _pytest.compat import lru_cache
-from _pytest.compat import safe_str
 from _pytest.outcomes import fail
 from _pytest.outcomes import Skipped
 from _pytest.warning_types import PytestConfigWarning
@@ -73,7 +72,7 @@ def main(args=None, plugins=None):
                 if exc_info.traceback
                 else exc_info.exconly()
             )
-            formatted_tb = safe_str(exc_repr)
+            formatted_tb = str(exc_repr)
             for line in formatted_tb.splitlines():
                 tw.line(line.rstrip(), red=True)
             return 4
@@ -403,12 +402,6 @@ class PytestPluginManager(PluginManager):
         else:
             directory = path
 
-        if six.PY2:  # py2 is not using lru_cache.
-            try:
-                return self._dirpath2confmods[directory]
-            except KeyError:
-                pass
-
         # XXX these days we may rather want to use config.rootdir
         # and allow users to opt into looking into the rootdir parent
         # directories instead of requiring to specify confcutdir
@@ -566,7 +559,7 @@ class PytestPluginManager(PluginManager):
         except ImportError as e:
             new_exc_message = 'Error importing plugin "%s": %s' % (
                 modname,
-                safe_str(e.args[0]),
+                str(e.args[0]),
             )
             new_exc = ImportError(new_exc_message)
             tb = sys.exc_info()[2]

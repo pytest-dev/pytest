@@ -6,8 +6,6 @@ from __future__ import print_function
 import os
 import sys
 
-import six
-
 import _pytest._code
 import pytest
 from _pytest.debugging import _validate_usepdb_cls
@@ -537,10 +535,7 @@ class TestPDB(object):
                     import sys
                     import types
 
-                    if sys.version_info < (3, ):
-                        do_debug_func = pdb.Pdb.do_debug.im_func
-                    else:
-                        do_debug_func = pdb.Pdb.do_debug
+                    do_debug_func = pdb.Pdb.do_debug
 
                     newglobals = do_debug_func.__globals__.copy()
                     newglobals['Pdb'] = self.__class__
@@ -866,8 +861,6 @@ class TestDebuggingBreakpoints(object):
             assert SUPPORTS_BREAKPOINT_BUILTIN is True
         if sys.version_info.major == 3 and sys.version_info.minor == 5:
             assert SUPPORTS_BREAKPOINT_BUILTIN is False
-        if sys.version_info.major == 2 and sys.version_info.minor == 7:
-            assert SUPPORTS_BREAKPOINT_BUILTIN is False
 
     @pytest.mark.skipif(
         not SUPPORTS_BREAKPOINT_BUILTIN, reason="Requires breakpoint() builtin"
@@ -1183,24 +1176,17 @@ def test_pdbcls_via_local_module(testdir):
 
 def test_raises_bdbquit_with_eoferror(testdir):
     """It is not guaranteed that DontReadFromInput's read is called."""
-    if six.PY2:
-        builtin_module = "__builtin__"
-        input_func = "raw_input"
-    else:
-        builtin_module = "builtins"
-        input_func = "input"
+
     p1 = testdir.makepyfile(
         """
         def input_without_read(*args, **kwargs):
             raise EOFError()
 
         def test(monkeypatch):
-            import {builtin_module}
-            monkeypatch.setattr({builtin_module}, {input_func!r}, input_without_read)
+            import builtins
+            monkeypatch.setattr(builtins, "input", input_without_read)
             __import__('pdb').set_trace()
-        """.format(
-            builtin_module=builtin_module, input_func=input_func
-        )
+        """
     )
     result = testdir.runpytest(str(p1))
     result.stdout.fnmatch_lines(["E *BdbQuit", "*= 1 failed in*"])
