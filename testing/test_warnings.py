@@ -141,7 +141,7 @@ def test_unicode(testdir, pyfile_with_warnings):
     result.stdout.fnmatch_lines(
         [
             "*== %s ==*" % WARNINGS_SUMMARY_HEADER,
-            "*test_unicode.py:8: UserWarning: \u6d4b\u8bd5*",
+            "*test_unicode.py:7: UserWarning: \u6d4b\u8bd5*",
             "* 1 passed, 1 warnings*",
         ]
     )
