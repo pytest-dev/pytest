@@ -429,7 +429,7 @@ is to be run with different sets of arguments for its three arguments:
 
 .. literalinclude:: multipython.py
 
-Running it results in some skips if we don't have all the python interpreters installed and otherwise runs all combinations (5 interpreters times 5 interpreters times 3 objects to serialize/deserialize):
+Running it results in some skips if we don't have all the python interpreters installed and otherwise runs all combinations (3 interpreters times 3 interpreters times 3 objects to serialize/deserialize):
 
 .. code-block:: pytest
 
