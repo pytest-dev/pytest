@@ -1,8 +1,4 @@
 """ core implementation of testing process: init, session, runtest loop. """
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 import fnmatch
 import functools
 import os

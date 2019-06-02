@@ -1,10 +1,6 @@
 # flake8: noqa
 # disable flake check on this file because some constructs are strange
 # or redundant on purpose and can't be disable on a line-by-line basis
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 import ast
 import inspect
 import sys

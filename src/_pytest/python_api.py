@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-
 import math
 import pprint
 import sys
@@ -8,11 +6,10 @@ from collections.abc import Iterable
 from collections.abc import Mapping
 from collections.abc import Sized
 from decimal import Decimal
+from itertools import filterfalse
 from numbers import Number
 
 from more_itertools.more import always_iterable
-from six.moves import filterfalse
-from six.moves import zip
 
 import _pytest._code
 from _pytest import deprecated

@@ -1,8 +1,4 @@
 """Rewrite assertion AST to produce nice error messages"""
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 import ast
 import errno
 import imp

@@ -4,10 +4,6 @@ merged implementation of the cache provider
 the name cache was not chosen to ensure pluggy automatically
 ignores the external pytest-cache
 """
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 import json
 import os
 from collections import OrderedDict

@@ -1,6 +1,5 @@
 import pprint
-
-from six.moves import reprlib
+import reprlib
 
 
 def _call_and_format_exception(call, x, *args):

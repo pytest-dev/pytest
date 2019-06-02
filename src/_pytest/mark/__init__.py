@@ -1,8 +1,4 @@
 """ generic mechanism for marking and selecting python functions. """
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 from .legacy import matchkeyword
 from .legacy import matchmark
 from .structures import EMPTY_PARAMETERSET_OPTION

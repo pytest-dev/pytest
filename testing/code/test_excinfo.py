@@ -1,15 +1,11 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 import operator
 import os
+import queue
 import sys
 import textwrap
 
 import py
 import six
-from six.moves import queue
 
 import _pytest
 import pytest

@@ -53,10 +53,6 @@ If things do not work right away:
   which should throw a KeyError: 'COMPLINE' (which is properly set by the
   global argcomplete script).
 """
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 import os
 import sys
 from glob import glob

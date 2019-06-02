@@ -2,10 +2,6 @@
 
 This is a good source for looking at the various reporting hooks.
 """
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 import argparse
 import collections
 import platform

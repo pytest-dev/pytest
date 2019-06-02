@@ -14,7 +14,6 @@ from os.path import sep
 from posixpath import sep as posix_sep
 
 import six
-from six.moves import map
 
 
 if sys.version_info[:2] >= (3, 6):
