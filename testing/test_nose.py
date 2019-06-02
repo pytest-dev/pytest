@@ -366,13 +366,12 @@ def test_nottest_class_decorator(testdir):
 
 def test_skip_test_with_unicode(testdir):
     testdir.makepyfile(
-        """
-        # -*- coding: utf-8 -*-
+        """\
         import unittest
         class TestClass():
             def test_io(self):
                 raise unittest.SkipTest(u'😊')
-    """
+        """
     )
     result = testdir.runpytest()
     result.stdout.fnmatch_lines(["* 1 skipped *"])

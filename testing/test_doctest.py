@@ -574,14 +574,13 @@ class TestDoctests:
         """Fix internal error with docstrings containing non-ascii characters.
         """
         testdir.makepyfile(
-            '''
-            # -*- coding: utf-8 -*-
+            '''\
             def foo():
                 """
                 >>> name = 'с' # not letter 'c' but instead Cyrillic 's'.
                 'anything'
                 """
-        '''
+            '''
         )
         result = testdir.runpytest("--doctest-modules")
         result.stdout.fnmatch_lines(["Got nothing", "* 1 failed in*"])
@@ -652,9 +651,6 @@ class TestDoctests:
         """
         p = testdir.makepyfile(
             test_unicode_doctest_module="""
-            # -*- coding: utf-8 -*-
-            from __future__ import unicode_literals
-
             def fix_bad_unicode(text):
                 '''
                     >>> print(fix_bad_unicode('Ãºnico'))

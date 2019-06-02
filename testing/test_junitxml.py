@@ -567,12 +567,12 @@ class TestPython:
     def test_unicode(self, testdir):
         value = "hx\xc4\x85\xc4\x87\n"
         testdir.makepyfile(
-            """
+            """\
             # coding: latin1
             def test_hello():
                 print(%r)
                 assert 0
-        """
+            """
             % value
         )
         result, dom = runandparse(testdir)

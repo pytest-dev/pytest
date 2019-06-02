@@ -1217,11 +1217,10 @@ def test_assert_indirect_tuple_no_warning(testdir):
 
 def test_assert_with_unicode(monkeypatch, testdir):
     testdir.makepyfile(
-        """
-        # -*- coding: utf-8 -*-
+        """\
         def test_unicode():
             assert u'유니코드' == u'Unicode'
-    """
+        """
     )
     result = testdir.runpytest()
     result.stdout.fnmatch_lines(["*AssertionError*"])

@@ -123,8 +123,7 @@ def test_ignore(testdir, pyfile_with_warnings, method):
 @pytest.mark.filterwarnings("always")
 def test_unicode(testdir, pyfile_with_warnings):
     testdir.makepyfile(
-        """
-        # -*- coding: utf-8 -*-
+        """\
         import warnings
         import pytest
 
@@ -136,7 +135,7 @@ def test_unicode(testdir, pyfile_with_warnings):
 
         def test_func(fix):
             pass
-    """
+        """
     )
     result = testdir.runpytest()
     result.stdout.fnmatch_lines(

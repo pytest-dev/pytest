@@ -639,13 +639,12 @@ def test_pytest_fail_notrace_non_ascii(testdir, str_prefix):
     This tests with native and unicode strings containing non-ascii chars.
     """
     testdir.makepyfile(
-        """
-        # -*- coding: utf-8 -*-
+        """\
         import pytest
 
         def test_hello():
             pytest.fail(%s'oh oh: ☺', pytrace=False)
-    """
+        """
         % str_prefix
     )
     result = testdir.runpytest()
@@ -784,8 +783,7 @@ def test_pytest_cmdline_main(testdir):
 
 def test_unicode_in_longrepr(testdir):
     testdir.makeconftest(
-        """
-        # -*- coding: utf-8 -*-
+        """\
         import pytest
         @pytest.hookimpl(hookwrapper=True)
         def pytest_runtest_makereport():
@@ -793,7 +791,7 @@ def test_unicode_in_longrepr(testdir):
             rep = outcome.get_result()
             if rep.when == "call":
                 rep.longrepr = u'ä'
-    """
+        """
     )
     testdir.makepyfile(
         """

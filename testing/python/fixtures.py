@@ -3338,7 +3338,6 @@ class TestContextManagerFixtureFuncs:
     def test_simple(self, testdir, flavor):
         testdir.makepyfile(
             """
-            from __future__ import print_function
             from test_context import fixture
             @fixture
             def arg1():
@@ -3367,7 +3366,6 @@ class TestContextManagerFixtureFuncs:
     def test_scoped(self, testdir, flavor):
         testdir.makepyfile(
             """
-            from __future__ import print_function
             from test_context import fixture
             @fixture(scope="module")
             def arg1():
@@ -3601,7 +3599,6 @@ class TestParameterizedSubRequest:
 def test_pytest_fixture_setup_and_post_finalizer_hook(testdir):
     testdir.makeconftest(
         """
-        from __future__ import print_function
         def pytest_fixture_setup(fixturedef, request):
             print('ROOT setup hook called for {0} from {1}'.format(fixturedef.argname, request.node.name))
         def pytest_fixture_post_finalizer(fixturedef, request):
@@ -3611,14 +3608,12 @@ def test_pytest_fixture_setup_and_post_finalizer_hook(testdir):
     testdir.makepyfile(
         **{
             "tests/conftest.py": """
-            from __future__ import print_function
             def pytest_fixture_setup(fixturedef, request):
                 print('TESTS setup hook called for {0} from {1}'.format(fixturedef.argname, request.node.name))
             def pytest_fixture_post_finalizer(fixturedef, request):
                 print('TESTS finalizer hook called for {0} from {1}'.format(fixturedef.argname, request.node.name))
         """,
             "tests/test_hooks.py": """
-            from __future__ import print_function
             import pytest
 
             @pytest.fixture()

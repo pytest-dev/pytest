@@ -840,16 +840,14 @@ def test_log_file_unicode(testdir):
         )
     )
     testdir.makepyfile(
-        """
-        # -*- coding: utf-8 -*-
-        from __future__ import unicode_literals
+        """\
         import logging
 
         def test_log_file():
             logging.getLogger('catchlog').info("Normal message")
             logging.getLogger('catchlog').info("├")
             logging.getLogger('catchlog').info("Another normal message")
-    """
+        """
     )
 
     result = testdir.runpytest()

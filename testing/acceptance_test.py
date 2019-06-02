@@ -507,14 +507,13 @@ class TestGeneralUsage:
     def test_parametrized_with_null_bytes(self, testdir):
         """Test parametrization with values that contain null bytes and unicode characters (#2644, #2957)"""
         p = testdir.makepyfile(
-            """
-            # encoding: UTF-8
+            """\
             import pytest
 
             @pytest.mark.parametrize("data", [b"\\x00", "\\x00", u'ação'])
             def test_foo(data):
                 assert data
-        """
+            """
         )
         res = testdir.runpytest(p)
         res.assert_outcomes(passed=3)

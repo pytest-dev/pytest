@@ -960,7 +960,6 @@ def test_markers_from_parametrize(testdir):
     """#3605"""
     testdir.makepyfile(
         """
-        from __future__ import print_function
         import pytest
 
         first_custom_mark = pytest.mark.custom_marker

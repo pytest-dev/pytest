@@ -116,12 +116,7 @@ class TestModule:
         """Check test modules collected which raise ImportError with unicode messages
         are handled properly (#2336).
         """
-        testdir.makepyfile(
-            """
-            # -*- coding: utf-8 -*-
-            raise ImportError(u'Something bad happened ☺')
-        """
-        )
+        testdir.makepyfile("raise ImportError(u'Something bad happened ☺')")
         result = testdir.runpytest()
         result.stdout.fnmatch_lines(
             [
@@ -1256,13 +1251,7 @@ def test_class_injection_does_not_break_collection(testdir):
 def test_syntax_error_with_non_ascii_chars(testdir):
     """Fix decoding issue while formatting SyntaxErrors during collection (#578)
     """
-    testdir.makepyfile(
-        """
-    # -*- coding: utf-8 -*-
-
-    ☃
-    """
-    )
+    testdir.makepyfile("☃")
     result = testdir.runpytest()
     result.stdout.fnmatch_lines(["*ERROR collecting*", "*SyntaxError*", "*1 error in*"])
 

@@ -60,11 +60,10 @@ class TestPasteCapture:
         correctly. See #1219.
         """
         testdir.makepyfile(
-            test_unicode="""
-            # -*- coding: utf-8 -*-
+            test_unicode="""\
             def test():
                 assert '☺' == 1
-        """
+            """
         )
         result = testdir.runpytest("--pastebin=all")
         expected_msg = "*assert '☺' == 1*"

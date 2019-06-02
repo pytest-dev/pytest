@@ -95,14 +95,13 @@ def test_capturing_unicode(testdir, method):
         pytest.xfail("does not work on pypy < 2.2")
     obj = "'b\u00f6y'"
     testdir.makepyfile(
-        """
-        # -*- coding: utf-8 -*-
+        """\
         # taken from issue 227 from nosetests
         def test_unicode():
             import sys
             print(sys.stdout)
             print(%s)
-    """
+        """
         % obj
     )
     result = testdir.runpytest("--capture=%s" % method)
@@ -624,7 +623,6 @@ class TestCaptureFixture:
         """
         testdir.makepyfile(
             """\
-            from __future__ import print_function
             import sys
             import pytest
 
@@ -1363,7 +1361,6 @@ def test_dontreadfrominput_has_encoding(testdir):
 def test_crash_on_closing_tmpfile_py27(testdir):
     p = testdir.makepyfile(
         """
-        from __future__ import print_function
         import threading
         import sys
 

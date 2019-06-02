@@ -149,12 +149,11 @@ def test_importplugin_error_message(testdir, pytestpm):
     """
     testdir.syspathinsert(testdir.tmpdir)
     testdir.makepyfile(
-        qwe="""
-        # -*- coding: utf-8 -*-
+        qwe="""\
         def test_traceback():
-            raise ImportError(u'Not possible to import: ☺')
+            raise ImportError('Not possible to import: ☺')
         test_traceback()
-    """
+        """
     )
     with pytest.raises(ImportError) as excinfo:
         pytestpm.import_plugin("qwe")
