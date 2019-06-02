@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """ terminal reporting of the full testing process.
 
 This is a good source for looking at the various reporting hooks.

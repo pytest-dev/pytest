@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """ Python test discovery, setup and run of test functions. """
 from __future__ import absolute_import
 from __future__ import division

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import pytest
 from _pytest.pathlib import Path
 from _pytest.reports import CollectReport

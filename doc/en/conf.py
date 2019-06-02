@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # pytest documentation build configuration file, created by
 # sphinx-quickstart on Fri Oct  8 17:54:28 2010.

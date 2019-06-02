@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import doctest
 import operator
 from decimal import Decimal

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """ basic collect and runtest protocol implementations """
 from __future__ import absolute_import
 from __future__ import division

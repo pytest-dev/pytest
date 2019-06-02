@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Reproduces issue #3774"""
 from unittest import mock
 

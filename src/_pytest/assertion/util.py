@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Utilities for assertion debugging"""
 from __future__ import absolute_import
 from __future__ import division

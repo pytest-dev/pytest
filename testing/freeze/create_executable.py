@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Generates an executable with pytest runner embedded using PyInstaller.
 """

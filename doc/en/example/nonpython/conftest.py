@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # content of conftest.py
 import pytest
 

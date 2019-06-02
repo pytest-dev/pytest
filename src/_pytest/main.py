@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """ core implementation of testing process: init, session, runtest loop. """
 from __future__ import absolute_import
 from __future__ import division

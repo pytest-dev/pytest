@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import _pytest._code
 import pytest
 from pytest import raises

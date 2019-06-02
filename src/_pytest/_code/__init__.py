@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """ python inspection/code generation API """
 from __future__ import absolute_import
 from __future__ import division

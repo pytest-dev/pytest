@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 per-test stdout/stderr capturing mechanism.
 

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from _pytest._io.saferepr import saferepr
 
 

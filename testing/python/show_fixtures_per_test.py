@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 
 
 def test_no_items_should_not_show_output(testdir):

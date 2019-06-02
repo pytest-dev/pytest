@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import pytest
 from _pytest import python
 from _pytest import runner

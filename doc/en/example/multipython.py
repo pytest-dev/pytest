@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 module containing a parametrized tests testing cross-python
 serialization via the pickle module.

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 This module contains deprecation messages and bits of code used elsewhere in the codebase
 that is planned to be removed in the next pytest release.

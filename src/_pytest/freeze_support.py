@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Provides a function to report all internal modules for using freezing tools
 pytest

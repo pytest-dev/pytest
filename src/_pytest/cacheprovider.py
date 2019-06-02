@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 merged implementation of the cache provider
 

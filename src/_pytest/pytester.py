@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """(disabled by default) support for testing pytest and pytest plugins."""
 from __future__ import absolute_import
 from __future__ import division

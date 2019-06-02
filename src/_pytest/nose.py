@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """ run test suites written for nose. """
 from __future__ import absolute_import
 from __future__ import division
