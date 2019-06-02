@@ -677,7 +677,7 @@ class TestAssertionRewrite(object):
         assert "UnicodeDecodeError" not in msg
         assert "UnicodeEncodeError" not in msg
 
-    def test_unroll_generator(self, testdir):
+    def test_unroll_all_generator(self, testdir):
         testdir.makepyfile(
             """
             def check_even(num):
@@ -692,7 +692,7 @@ class TestAssertionRewrite(object):
         result = testdir.runpytest()
         result.stdout.fnmatch_lines(["*assert False*", "*where False = check_even(1)*"])
 
-    def test_unroll_list_comprehension(self, testdir):
+    def test_unroll_all_list_comprehension(self, testdir):
         testdir.makepyfile(
             """
             def check_even(num):
@@ -706,6 +706,31 @@ class TestAssertionRewrite(object):
         )
         result = testdir.runpytest()
         result.stdout.fnmatch_lines(["*assert False*", "*where False = check_even(1)*"])
+
+    def test_unroll_all_object(self, testdir):
+        """all() for non generators/non list-comprehensions (#5358)"""
+        testdir.makepyfile(
+            """
+            def test():
+                assert all((1, 0))
+            """
+        )
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines(["*assert False*", "*where False = all((1, 0))*"])
+
+    def test_unroll_all_starred(self, testdir):
+        """all() for non generators/non list-comprehensions (#5358)"""
+        testdir.makepyfile(
+            """
+            def test():
+                x = ((1, 0),)
+                assert all(*x)
+            """
+        )
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines(
+            ["*assert False*", "*where False = all(*((1, 0),))*"]
+        )
 
     def test_for_loop(self, testdir):
         testdir.makepyfile(
