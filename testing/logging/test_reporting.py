@@ -1,7 +1,6 @@
+import io
 import os
 import re
-
-import six
 
 import pytest
 
@@ -885,7 +884,7 @@ def test_live_logging_suspends_capture(has_capture_manager, request):
             yield
             self.calls.append("exit disabled")
 
-    class DummyTerminal(six.StringIO):
+    class DummyTerminal(io.StringIO):
         def section(self, *args, **kwargs):
             pass
 

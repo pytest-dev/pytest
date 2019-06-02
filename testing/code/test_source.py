@@ -5,8 +5,6 @@ import ast
 import inspect
 import sys
 
-import six
-
 import _pytest._code
 import pytest
 from _pytest._code import Source

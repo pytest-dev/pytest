@@ -1,9 +1,7 @@
 import logging
 
 import py.io
-import six
 
-import pytest
 from _pytest.logging import ColoredLevelFormatter
 
 
@@ -38,9 +36,6 @@ def test_coloredlogformatter():
     assert output == ("dummypath                   10 INFO     Test Message")
 
 
-@pytest.mark.skipif(
-    six.PY2, reason="Formatter classes don't support format styles in PY2"
-)
 def test_multiline_message():
     from _pytest.logging import PercentStyleMultiline
 

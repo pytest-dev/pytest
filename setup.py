@@ -4,7 +4,6 @@ from setuptools import setup
 #       remove _width_of_current_line in terminal.py
 INSTALL_REQUIRES = [
     "py>=1.5.0",
-    "six>=1.10.0",
     "packaging",
     "attrs>=17.4.0",
     "more-itertools>=4.0.0",

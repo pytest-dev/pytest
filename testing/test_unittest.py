@@ -917,7 +917,7 @@ def test_class_method_containing_test_issue1558(testdir):
 
 
 @pytest.mark.parametrize(
-    "base", ["six.moves.builtins.object", "unittest.TestCase", "unittest2.TestCase"]
+    "base", ["builtins.object", "unittest.TestCase", "unittest2.TestCase"]
 )
 def test_usefixtures_marker_on_unittest(base, testdir):
     """#3498"""

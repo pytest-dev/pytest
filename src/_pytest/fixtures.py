@@ -9,7 +9,6 @@ from collections import OrderedDict
 
 import attr
 import py
-import six
 
 import _pytest
 from _pytest import nodes
@@ -848,10 +847,10 @@ class FixtureDef:
                 except:  # noqa
                     exceptions.append(sys.exc_info())
             if exceptions:
-                e = exceptions[0]
+                _, val, tb = exceptions[0]
                 # Ensure to not keep frame references through traceback.
                 del exceptions
-                six.reraise(*e)
+                raise val.with_traceback(tb)
         finally:
             hook = self._fixturemanager.session.gethookproxy(request.node.fspath)
             hook.pytest_fixture_post_finalizer(fixturedef=self, request=request)
@@ -877,7 +876,8 @@ class FixtureDef:
             result, cache_key, err = cached_result
             if my_cache_key == cache_key:
                 if err is not None:
-                    six.reraise(*err)
+                    _, val, tb = err
+                    raise val.with_traceback(tb)
                 else:
                     return result
             # we have a previous but differently parametrized fixture instance
@@ -950,7 +950,7 @@ def wrap_function_to_error_out_if_called_directly(function, fixture_marker):
         name=fixture_marker.name or function.__name__
     )
 
-    @six.wraps(function)
+    @functools.wraps(function)
     def result(*args, **kwargs):
         fail(message, pytrace=False)
 

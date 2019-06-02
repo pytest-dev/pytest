@@ -1357,9 +1357,8 @@ class TestFixtureManagerParseFactories:
 
     def test_parsefactories_conftest_and_module_and_class(self, testdir):
         testdir.makepyfile(
-            """
+            """\
             import pytest
-            import six
 
             @pytest.fixture
             def hello(request):
@@ -1376,7 +1375,7 @@ class TestFixtureManagerParseFactories:
                     assert faclist[0].func(item._request) == "conftest"
                     assert faclist[1].func(item._request) == "module"
                     assert faclist[2].func(item._request) == "class"
-        """
+            """
         )
         reprec = testdir.inline_run("-s")
         reprec.assertoutcome(passed=1)

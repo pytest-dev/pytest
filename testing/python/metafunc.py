@@ -892,7 +892,7 @@ class TestMetafuncFunctional:
         p = testdir.makepyfile(
             """
             # assumes that generate/provide runs in the same process
-            import sys, pytest, six
+            import sys, pytest
             def pytest_generate_tests(metafunc):
                 metafunc.parametrize('metafunc', [metafunc])
 
@@ -910,7 +910,7 @@ class TestMetafuncFunctional:
                 def test_method(self, metafunc, pytestconfig):
                     assert metafunc.config == pytestconfig
                     assert metafunc.module.__name__ == __name__
-                    unbound = six.get_unbound_function(TestClass.test_method)
+                    unbound = TestClass.test_method
                     assert metafunc.function == unbound
                     assert metafunc.cls == TestClass
         """

@@ -14,7 +14,6 @@ from importlib.util import spec_from_file_location
 
 import atomicwrites
 import py
-import six
 
 from _pytest._io.saferepr import saferepr
 from _pytest.assertion import util
@@ -612,7 +611,7 @@ class AssertionRewriter(ast.NodeVisitor):
         # Insert some special imports at the top of the module but after any
         # docstrings and __future__ imports.
         aliases = [
-            ast.alias(six.moves.builtins.__name__, "@py_builtins"),
+            ast.alias("builtins", "@py_builtins"),
             ast.alias("_pytest.assertion.rewrite", "@pytest_ar"),
         ]
         doc = getattr(mod, "docstring", None)
