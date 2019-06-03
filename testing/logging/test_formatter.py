@@ -74,8 +74,8 @@ def test_colored_short_level():
         exc_info=False,
     )
 
-    class ColorConfig(object):
-        class option(object):
+    class ColorConfig:
+        class option:
             pass
 
     tw = py.io.TerminalWriter()
