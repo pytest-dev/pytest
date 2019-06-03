@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import atexit
 import errno
 import fnmatch
@@ -13,9 +12,6 @@ from os.path import expandvars
 from os.path import isabs
 from os.path import sep
 from posixpath import sep as posix_sep
-
-import six
-from six.moves import map
 
 
 if sys.version_info[:2] >= (3, 6):
@@ -130,9 +126,10 @@ def create_cleanup_lock(p):
         fd = os.open(str(lock_path), os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o644)
     except OSError as e:
         if e.errno == errno.EEXIST:
-            six.raise_from(
-                EnvironmentError("cannot create lockfile in {path}".format(path=p)), e
-            )
+            raise EnvironmentError(
+                "cannot create lockfile in {path}".format(path=p)
+            ) from e
+
         else:
             raise
     else:
@@ -298,7 +295,7 @@ def fnmatch_ex(pattern, path):
     if sep not in pattern:
         name = path.name
     else:
-        name = six.text_type(path)
+        name = str(path)
     return fnmatch.fnmatch(name, pattern)
 
 

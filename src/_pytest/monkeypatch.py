@@ -1,16 +1,9 @@
-# -*- coding: utf-8 -*-
 """ monkeypatching and mocking functionality.  """
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 import os
 import re
 import sys
 import warnings
 from contextlib import contextmanager
-
-import six
 
 import pytest
 from _pytest.fixtures import fixture
@@ -67,7 +60,7 @@ def resolve(name):
             if expected == used:
                 raise
             else:
-                raise ImportError("import error in %s: %s" % (used, ex))
+                raise ImportError("import error in {}: {}".format(used, ex))
         found = annotated_getattr(found, part, used)
     return found
 
@@ -77,14 +70,18 @@ def annotated_getattr(obj, name, ann):
         obj = getattr(obj, name)
     except AttributeError:
         raise AttributeError(
-            "%r object at %s has no attribute %r" % (type(obj).__name__, ann, name)
+            "{!r} object at {} has no attribute {!r}".format(
+                type(obj).__name__, ann, name
+            )
         )
     return obj
 
 
 def derive_importpath(import_path, raising):
-    if not isinstance(import_path, six.string_types) or "." not in import_path:
-        raise TypeError("must be absolute import path string, not %r" % (import_path,))
+    if not isinstance(import_path, str) or "." not in import_path:
+        raise TypeError(
+            "must be absolute import path string, not {!r}".format(import_path)
+        )
     module, attr = import_path.rsplit(".", 1)
     target = resolve(module)
     if raising:
@@ -92,7 +89,7 @@ def derive_importpath(import_path, raising):
     return attr, target
 
 
-class Notset(object):
+class Notset:
     def __repr__(self):
         return "<notset>"
 
@@ -100,7 +97,7 @@ class Notset(object):
 notset = Notset()
 
 
-class MonkeyPatch(object):
+class MonkeyPatch:
     """ Object returned by the ``monkeypatch`` fixture keeping a record of setattr/item/env/syspath changes.
     """
 
@@ -151,7 +148,7 @@ class MonkeyPatch(object):
         import inspect
 
         if value is notset:
-            if not isinstance(target, six.string_types):
+            if not isinstance(target, str):
                 raise TypeError(
                     "use setattr(target, name, value) or "
                     "setattr(target, value) with target being a dotted "
@@ -162,7 +159,7 @@ class MonkeyPatch(object):
 
         oldval = getattr(target, name, notset)
         if raising and oldval is notset:
-            raise AttributeError("%r has no attribute %r" % (target, name))
+            raise AttributeError("{!r} has no attribute {!r}".format(target, name))
 
         # avoid class descriptors like staticmethod/classmethod
         if inspect.isclass(target):
@@ -185,7 +182,7 @@ class MonkeyPatch(object):
         import inspect
 
         if name is notset:
-            if not isinstance(target, six.string_types):
+            if not isinstance(target, str):
                 raise TypeError(
                     "use delattr(target, name) or "
                     "delattr(target) with target being a dotted "

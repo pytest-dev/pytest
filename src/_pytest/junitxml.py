@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
     report test results in JUnit-XML format,
     for use with Jenkins and build integration servers.
@@ -9,10 +8,6 @@ Based on initial code from Ross Lawley.
 Output conforms to https://github.com/jenkinsci/xunit-plugin/blob/master/
 src/main/resources/org/jenkinsci/plugins/xunit/types/model/xsd/junit-10.xsd
 """
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 import functools
 import os
 import re
@@ -20,7 +15,6 @@ import sys
 import time
 
 import py
-import six
 
 import pytest
 from _pytest import nodes
@@ -39,12 +33,12 @@ class Junit(py.xml.Namespace):
 _legal_chars = (0x09, 0x0A, 0x0D)
 _legal_ranges = ((0x20, 0x7E), (0x80, 0xD7FF), (0xE000, 0xFFFD), (0x10000, 0x10FFFF))
 _legal_xml_re = [
-    u"%s-%s" % (six.unichr(low), six.unichr(high))
+    "{}-{}".format(chr(low), chr(high))
     for (low, high) in _legal_ranges
     if low < sys.maxunicode
 ]
-_legal_xml_re = [six.unichr(x) for x in _legal_chars] + _legal_xml_re
-illegal_xml_re = re.compile(u"[^%s]" % u"".join(_legal_xml_re))
+_legal_xml_re = [chr(x) for x in _legal_chars] + _legal_xml_re
+illegal_xml_re = re.compile("[^%s]" % "".join(_legal_xml_re))
 del _legal_chars
 del _legal_ranges
 del _legal_xml_re
@@ -56,9 +50,9 @@ def bin_xml_escape(arg):
     def repl(matchobj):
         i = ord(matchobj.group())
         if i <= 0xFF:
-            return u"#x%02X" % i
+            return "#x%02X" % i
         else:
-            return u"#x%04X" % i
+            return "#x%04X" % i
 
     return py.xml.raw(illegal_xml_re.sub(repl, py.xml.escape(arg)))
 
@@ -85,7 +79,7 @@ merge_family(families["xunit1"], families["_base_legacy"])
 families["xunit2"] = families["_base"]
 
 
-class _NodeReporter(object):
+class _NodeReporter:
     def __init__(self, nodeid, xml):
         self.id = nodeid
         self.xml = xml
@@ -225,7 +219,7 @@ class _NodeReporter(object):
         else:
             if hasattr(report.longrepr, "reprcrash"):
                 message = report.longrepr.reprcrash.message
-            elif isinstance(report.longrepr, six.string_types):
+            elif isinstance(report.longrepr, str):
                 message = report.longrepr
             else:
                 message = str(report.longrepr)
@@ -264,7 +258,7 @@ class _NodeReporter(object):
             filename, lineno, skipreason = report.longrepr
             if skipreason.startswith("Skipped: "):
                 skipreason = skipreason[9:]
-            details = "%s:%s: %s" % (filename, lineno, skipreason)
+            details = "{}:{}: {}".format(filename, lineno, skipreason)
 
             self.append(
                 Junit.skipped(
@@ -349,7 +343,7 @@ def _check_record_param_type(param, v):
     """Used by record_testsuite_property to check that the given parameter name is of the proper
     type"""
     __tracebackhide__ = True
-    if not isinstance(v, six.string_types):
+    if not isinstance(v, str):
         msg = "{param} parameter needs to be a string, but {g} given"
         raise TypeError(msg.format(param=param, g=type(v).__name__))
 
@@ -469,7 +463,7 @@ def mangle_test_address(address):
     return names
 
 
-class LogXML(object):
+class LogXML:
     def __init__(
         self,
         logfile,

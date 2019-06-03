@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from _pytest._io.saferepr import saferepr
 
 
@@ -53,7 +52,7 @@ def test_big_repr():
 
 
 def test_repr_on_newstyle():
-    class Function(object):
+    class Function:
         def __repr__(self):
             return "<%s>" % (self.name)
 
@@ -61,6 +60,6 @@ def test_repr_on_newstyle():
 
 
 def test_unicode():
-    val = u"£€"
-    reprval = u"'£€'"
+    val = "£€"
+    reprval = "'£€'"
     assert saferepr(val) == reprval

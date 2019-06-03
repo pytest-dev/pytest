@@ -1,9 +1,6 @@
-# -*- coding: utf-8 -*-
+import io
 import os
 import re
-from io import open
-
-import six
 
 import pytest
 
@@ -841,16 +838,14 @@ def test_log_file_unicode(testdir):
         )
     )
     testdir.makepyfile(
-        """
-        # -*- coding: utf-8 -*-
-        from __future__ import unicode_literals
+        """\
         import logging
 
         def test_log_file():
             logging.getLogger('catchlog').info("Normal message")
             logging.getLogger('catchlog').info("├")
             logging.getLogger('catchlog').info("Another normal message")
-    """
+        """
     )
 
     result = testdir.runpytest()
@@ -861,7 +856,7 @@ def test_log_file_unicode(testdir):
     with open(log_file, encoding="utf-8") as rfh:
         contents = rfh.read()
         assert "Normal message" in contents
-        assert u"├" in contents
+        assert "├" in contents
         assert "Another normal message" in contents
 
 
@@ -889,7 +884,7 @@ def test_live_logging_suspends_capture(has_capture_manager, request):
             yield
             self.calls.append("exit disabled")
 
-    class DummyTerminal(six.StringIO):
+    class DummyTerminal(io.StringIO):
         def section(self, *args, **kwargs):
             pass
 

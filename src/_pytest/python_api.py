@@ -1,6 +1,3 @@
-# -*- coding: utf-8 -*-
-from __future__ import absolute_import
-
 import math
 import pprint
 import sys
@@ -9,11 +6,10 @@ from collections.abc import Iterable
 from collections.abc import Mapping
 from collections.abc import Sized
 from decimal import Decimal
+from itertools import filterfalse
 from numbers import Number
 
 from more_itertools.more import always_iterable
-from six.moves import filterfalse
-from six.moves import zip
 
 import _pytest._code
 from _pytest import deprecated
@@ -50,7 +46,7 @@ def _non_numeric_type_error(value, at):
 # builtin pytest.approx helper
 
 
-class ApproxBase(object):
+class ApproxBase:
     """
     Provide shared utilities for making approximate comparisons between numbers
     or sequences of numbers.
@@ -710,7 +706,7 @@ def raises(expected_exception, *args, **kwargs):
 raises.Exception = fail.Exception
 
 
-class RaisesContext(object):
+class RaisesContext:
     def __init__(self, expected_exception, message, match_expr):
         self.expected_exception = expected_exception
         self.message = message

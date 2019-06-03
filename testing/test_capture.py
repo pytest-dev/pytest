@@ -1,8 +1,3 @@
-# -*- coding: utf-8 -*-
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 import contextlib
 import io
 import os
@@ -36,7 +31,7 @@ def StdCapture(out=True, err=True, in_=True):
     return capture.MultiCapture(out, err, in_, Capture=capture.SysCapture)
 
 
-class TestCaptureManager(object):
+class TestCaptureManager:
     def test_getmethod_default_no_fd(self, monkeypatch):
         from _pytest.capture import pytest_addoption
         from _pytest.config.argparsing import Parser
@@ -100,14 +95,13 @@ def test_capturing_unicode(testdir, method):
         pytest.xfail("does not work on pypy < 2.2")
     obj = "'b\u00f6y'"
     testdir.makepyfile(
-        """
-        # -*- coding: utf-8 -*-
+        """\
         # taken from issue 227 from nosetests
         def test_unicode():
             import sys
             print(sys.stdout)
             print(%s)
-    """
+        """
         % obj
     )
     result = testdir.runpytest("--capture=%s" % method)
@@ -147,7 +141,7 @@ def test_collect_capturing(testdir):
     )
 
 
-class TestPerTestCapturing(object):
+class TestPerTestCapturing:
     def test_capture_and_fixtures(self, testdir):
         p = testdir.makepyfile(
             """
@@ -290,7 +284,7 @@ class TestPerTestCapturing(object):
         )
 
 
-class TestLoggingInteraction(object):
+class TestLoggingInteraction:
     def test_logging_stream_ownership(self, testdir):
         p = testdir.makepyfile(
             """\
@@ -428,7 +422,7 @@ class TestLoggingInteraction(object):
         )
 
 
-class TestCaptureFixture(object):
+class TestCaptureFixture:
     @pytest.mark.parametrize("opt", [[], ["-s"]])
     def test_std_functional(self, testdir, opt):
         reprec = testdir.inline_runsource(
@@ -629,7 +623,6 @@ class TestCaptureFixture(object):
         """
         testdir.makepyfile(
             """\
-            from __future__ import print_function
             import sys
             import pytest
 
@@ -806,7 +799,7 @@ def test_error_during_readouterr(testdir):
     )
 
 
-class TestCaptureIO(object):
+class TestCaptureIO:
     def test_text(self):
         f = capture.CaptureIO()
         f.write("hello")
@@ -921,7 +914,7 @@ def lsof_check():
     assert len2 < len1 + 3, out2
 
 
-class TestFDCapture(object):
+class TestFDCapture:
     pytestmark = needsosdup
 
     def test_simple(self, tmpfile):
@@ -1019,7 +1012,7 @@ def saved_fd(fd):
         os.close(new_fd)
 
 
-class TestStdCapture(object):
+class TestStdCapture:
     captureclass = staticmethod(StdCapture)
 
     @contextlib.contextmanager
@@ -1070,7 +1063,7 @@ class TestStdCapture(object):
         with self.getcapture() as cap:
             print("hxąć")
             out, err = cap.readouterr()
-        assert out == u"hxąć\n"
+        assert out == "hxąć\n"
 
     def test_reset_twice_error(self):
         with self.getcapture() as cap:
@@ -1180,7 +1173,7 @@ class TestStdCaptureFD(TestStdCapture):
                 cap.stop_capturing()
 
 
-class TestStdCaptureFDinvalidFD(object):
+class TestStdCaptureFDinvalidFD:
     pytestmark = needsosdup
 
     def test_stdcapture_fd_invalid_fd(self, testdir):
@@ -1343,7 +1336,7 @@ def test_py36_windowsconsoleio_workaround_non_standard_streams():
     """
     from _pytest.capture import _py36_windowsconsoleio_workaround
 
-    class DummyStream(object):
+    class DummyStream:
         def write(self, s):
             pass
 
@@ -1368,7 +1361,6 @@ def test_dontreadfrominput_has_encoding(testdir):
 def test_crash_on_closing_tmpfile_py27(testdir):
     p = testdir.makepyfile(
         """
-        from __future__ import print_function
         import threading
         import sys
 

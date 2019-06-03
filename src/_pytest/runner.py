@@ -1,16 +1,10 @@
-# -*- coding: utf-8 -*-
 """ basic collect and runtest protocol implementations """
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 import bdb
 import os
 import sys
 from time import time
 
 import attr
-import six
 
 from .reports import CollectErrorRepr
 from .reports import CollectReport
@@ -62,7 +56,7 @@ def pytest_terminal_summary(terminalreporter):
             tr.write_line("")
             tr.write_line("(0.00 durations hidden.  Use -vv to show these durations.)")
             break
-        tr.write_line("%02.2fs %-8s %s" % (rep.duration, rep.when, rep.nodeid))
+        tr.write_line("{:02.2f}s {:<8} {}".format(rep.duration, rep.when, rep.nodeid))
 
 
 def pytest_sessionstart(session):
@@ -200,7 +194,7 @@ def call_runtest_hook(item, when, **kwds):
 
 
 @attr.s(repr=False)
-class CallInfo(object):
+class CallInfo:
     """ Result/Exception info a function invocation. """
 
     _result = attr.ib()
@@ -275,7 +269,7 @@ def pytest_make_collect_report(collector):
     return rep
 
 
-class SetupState(object):
+class SetupState:
     """ shared state for setting up/tearing down test items or collectors. """
 
     def __init__(self):
@@ -309,7 +303,8 @@ class SetupState(object):
                 if exc is None:
                     exc = sys.exc_info()
         if exc:
-            six.reraise(*exc)
+            _, val, tb = exc
+            raise val.with_traceback(tb)
 
     def _teardown_with_finalization(self, colitem):
         self._callfinalizers(colitem)
@@ -344,7 +339,8 @@ class SetupState(object):
                 if exc is None:
                     exc = sys.exc_info()
         if exc:
-            six.reraise(*exc)
+            _, val, tb = exc
+            raise val.with_traceback(tb)
 
     def prepare(self, colitem):
         """ setup objects along the collector chain to the test-method
@@ -355,7 +351,8 @@ class SetupState(object):
         # check if the last collection node has raised an error
         for col in self.stack:
             if hasattr(col, "_prepare_exc"):
-                six.reraise(*col._prepare_exc)
+                _, val, tb = col._prepare_exc
+                raise val.with_traceback(tb)
         for col in needed_collectors[len(self.stack) :]:
             self.stack.append(col)
             try:

@@ -1,10 +1,4 @@
-# -*- coding: utf-8 -*-
 """(disabled by default) support for testing pytest and pytest plugins."""
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
-import codecs
 import gc
 import os
 import platform
@@ -18,7 +12,6 @@ from fnmatch import fnmatch
 from weakref import WeakKeyDictionary
 
 import py
-import six
 
 import pytest
 from _pytest._code import Source
@@ -33,7 +26,7 @@ from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pathlib import Path
 
 IGNORE_PAM = [  # filenames added when obtaining details about the current user
-    u"/var/lib/sss/mc/passwd"
+    "/var/lib/sss/mc/passwd"
 ]
 
 
@@ -83,7 +76,7 @@ def raise_on_kwargs(kwargs):
         )
 
 
-class LsofFdLeakChecker(object):
+class LsofFdLeakChecker:
     def get_open_files(self):
         out = self._exec_lsof()
         open_files = self._parse_lsof_output(out)
@@ -165,7 +158,7 @@ def _pytest(request):
     return PytestArg(request)
 
 
-class PytestArg(object):
+class PytestArg:
     def __init__(self, request):
         self.request = request
 
@@ -180,7 +173,7 @@ def get_public_names(values):
     return [x for x in values if x[0] != "_"]
 
 
-class ParsedCall(object):
+class ParsedCall:
     def __init__(self, name, kwargs):
         self.__dict__.update(kwargs)
         self._name = name
@@ -188,10 +181,10 @@ class ParsedCall(object):
     def __repr__(self):
         d = self.__dict__.copy()
         del d["_name"]
-        return "<ParsedCall %r(**%r)>" % (self._name, d)
+        return "<ParsedCall {!r}(**{!r})>".format(self._name, d)
 
 
-class HookRecorder(object):
+class HookRecorder:
     """Record all hooks called in a plugin manager.
 
     This wraps all the hook calls in the plugin manager, recording each call
@@ -238,7 +231,7 @@ class HookRecorder(object):
                     break
                 print("NONAMEMATCH", name, "with", call)
             else:
-                pytest.fail("could not find %r check %r" % (name, check))
+                pytest.fail("could not find {!r} check {!r}".format(name, check))
 
     def popcall(self, name):
         __tracebackhide__ = True
@@ -246,7 +239,7 @@ class HookRecorder(object):
             if call._name == name:
                 del self.calls[i]
                 return call
-        lines = ["could not find call %r, in:" % (name,)]
+        lines = ["could not find call {!r}, in:".format(name)]
         lines.extend(["  %s" % x for x in self.calls])
         pytest.fail("\n".join(lines))
 
@@ -283,7 +276,9 @@ class HookRecorder(object):
             )
         if len(values) > 1:
             raise ValueError(
-                "found 2 or more testreports matching %r: %s" % (inamepart, values)
+                "found 2 or more testreports matching {!r}: {}".format(
+                    inamepart, values
+                )
             )
         return values[0]
 
@@ -357,7 +352,7 @@ def _config_for_test():
 rex_outcome = re.compile(r"(\d+) ([\w-]+)")
 
 
-class RunResult(object):
+class RunResult:
     """The result of running a command.
 
     Attributes:
@@ -429,7 +424,7 @@ class RunResult(object):
         assert obtained == expected
 
 
-class CwdSnapshot(object):
+class CwdSnapshot:
     def __init__(self):
         self.__saved = os.getcwd()
 
@@ -437,7 +432,7 @@ class CwdSnapshot(object):
         os.chdir(self.__saved)
 
 
-class SysModulesSnapshot(object):
+class SysModulesSnapshot:
     def __init__(self, preserve=None):
         self.__preserve = preserve
         self.__saved = dict(sys.modules)
@@ -451,7 +446,7 @@ class SysModulesSnapshot(object):
         sys.modules.update(self.__saved)
 
 
-class SysPathsSnapshot(object):
+class SysPathsSnapshot:
     def __init__(self):
         self.__saved = list(sys.path), list(sys.meta_path)
 
@@ -459,7 +454,7 @@ class SysPathsSnapshot(object):
         sys.path[:], sys.meta_path[:] = self.__saved
 
 
-class Testdir(object):
+class Testdir:
     """Temporary test directory with tools to test/run pytest itself.
 
     This is based on the ``tmpdir`` fixture but provides a number of methods
@@ -512,7 +507,7 @@ class Testdir(object):
         self._env_run_update = {"HOME": tmphome, "USERPROFILE": tmphome}
 
     def __repr__(self):
-        return "<Testdir %r>" % (self.tmpdir,)
+        return "<Testdir {!r}>".format(self.tmpdir)
 
     def __str__(self):
         return str(self.tmpdir)
@@ -557,10 +552,10 @@ class Testdir(object):
         items = list(kwargs.items())
 
         def to_text(s):
-            return s.decode(encoding) if isinstance(s, bytes) else six.text_type(s)
+            return s.decode(encoding) if isinstance(s, bytes) else str(s)
 
         if args:
-            source = u"\n".join(to_text(x) for x in args)
+            source = "\n".join(to_text(x) for x in args)
             basename = self.request.function.__name__
             items.insert(0, (basename, source))
 
@@ -569,7 +564,7 @@ class Testdir(object):
             p = self.tmpdir.join(basename).new(ext=ext)
             p.dirpath().ensure_dir()
             source = Source(value)
-            source = u"\n".join(to_text(line) for line in source.lines)
+            source = "\n".join(to_text(line) for line in source.lines)
             p.write(source.strip().encode(encoding), "wb")
             if ret is None:
                 ret = p
@@ -838,7 +833,7 @@ class Testdir(object):
 
             rec = []
 
-            class Collect(object):
+            class Collect:
                 def pytest_configure(x, config):
                     rec.append(self.make_hook_recorder(config.pluginmanager))
 
@@ -848,7 +843,7 @@ class Testdir(object):
                 reprec = rec.pop()
             else:
 
-                class reprec(object):
+                class reprec:
                     pass
 
             reprec.ret = ret
@@ -880,13 +875,13 @@ class Testdir(object):
                 reprec = self.inline_run(*args, **kwargs)
             except SystemExit as e:
 
-                class reprec(object):
+                class reprec:
                     ret = e.args[0]
 
             except Exception:
                 traceback.print_exc()
 
-                class reprec(object):
+                class reprec:
                     ret = 3
 
         finally:
@@ -968,10 +963,8 @@ class Testdir(object):
         for item in items:
             if item.name == funcname:
                 return item
-        assert 0, "%r item not found in module:\n%s\nitems: %s" % (
-            funcname,
-            source,
-            items,
+        assert 0, "{!r} item not found in module:\n{}\nitems: {}".format(
+            funcname, source, items
         )
 
     def getitems(self, source):
@@ -1095,8 +1088,8 @@ class Testdir(object):
         p2 = self.tmpdir.join("stderr")
         print("running:", *cmdargs)
         print("     in:", py.path.local())
-        f1 = codecs.open(str(p1), "w", encoding="utf8")
-        f2 = codecs.open(str(p2), "w", encoding="utf8")
+        f1 = open(str(p1), "w", encoding="utf8")
+        f2 = open(str(p2), "w", encoding="utf8")
         try:
             now = time.time()
             popen = self.popen(
@@ -1131,8 +1124,8 @@ class Testdir(object):
         finally:
             f1.close()
             f2.close()
-        f1 = codecs.open(str(p1), "r", encoding="utf8")
-        f2 = codecs.open(str(p2), "r", encoding="utf8")
+        f1 = open(str(p1), "r", encoding="utf8")
+        f2 = open(str(p2), "r", encoding="utf8")
         try:
             out = f1.read().splitlines()
             err = f2.read().splitlines()
@@ -1148,7 +1141,7 @@ class Testdir(object):
             for line in lines:
                 print(line, file=fp)
         except UnicodeEncodeError:
-            print("couldn't print to %s because of encoding" % (fp,))
+            print("couldn't print to {} because of encoding".format(fp))
 
     def _getpytestargs(self):
         return sys.executable, "-mpytest"
@@ -1205,7 +1198,7 @@ class Testdir(object):
         """
         basetemp = self.tmpdir.mkdir("temp-pexpect")
         invoke = " ".join(map(str, self._getpytestargs()))
-        cmd = "%s --basetemp=%s %s" % (invoke, basetemp, string)
+        cmd = "{} --basetemp={} {}".format(invoke, basetemp, string)
         return self.spawn(cmd, expect_timeout=expect_timeout)
 
     def spawn(self, cmd, expect_timeout=10.0):
@@ -1235,10 +1228,12 @@ def getdecoded(out):
     try:
         return out.decode("utf-8")
     except UnicodeDecodeError:
-        return "INTERNAL not-utf8-decodeable, truncated string:\n%s" % (saferepr(out),)
+        return "INTERNAL not-utf8-decodeable, truncated string:\n{}".format(
+            saferepr(out)
+        )
 
 
-class LineComp(object):
+class LineComp:
     def __init__(self):
         self.stringio = py.io.TextIO()
 
@@ -1256,7 +1251,7 @@ class LineComp(object):
         return LineMatcher(lines1).fnmatch_lines(lines2)
 
 
-class LineMatcher(object):
+class LineMatcher:
     """Flexible matching of text.
 
     This is a convenience class to test large texts like the output of
@@ -1394,5 +1389,5 @@ class LineMatcher(object):
                     self._log("    and:", repr(nextline))
                 extralines.append(nextline)
             else:
-                self._log("remains unmatched: %r" % (line,))
+                self._log("remains unmatched: {!r}".format(line))
                 pytest.fail(self._log_text)

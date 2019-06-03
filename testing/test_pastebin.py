@@ -1,12 +1,7 @@
-# -*- coding: utf-8 -*-
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 import pytest
 
 
-class TestPasteCapture(object):
+class TestPasteCapture:
     @pytest.fixture
     def pastebinlist(self, monkeypatch, request):
         pastebinlist = []
@@ -65,11 +60,10 @@ class TestPasteCapture(object):
         correctly. See #1219.
         """
         testdir.makepyfile(
-            test_unicode="""
-            # -*- coding: utf-8 -*-
+            test_unicode="""\
             def test():
                 assert '☺' == 1
-        """
+            """
         )
         result = testdir.runpytest("--pastebin=all")
         expected_msg = "*assert '☺' == 1*"
@@ -82,7 +76,7 @@ class TestPasteCapture(object):
         )
 
 
-class TestPaste(object):
+class TestPaste:
     @pytest.fixture
     def pastebin(self, request):
         return request.config.pluginmanager.getplugin("pastebin")
@@ -98,7 +92,7 @@ class TestPaste(object):
         def mocked(url, data):
             calls.append((url, data))
 
-            class DummyFile(object):
+            class DummyFile:
                 def read(self):
                     # part of html of a normal response
                     return b'View <a href="/raw/3c0c6750bd">raw</a>.'

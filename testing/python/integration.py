@@ -1,10 +1,9 @@
-# -*- coding: utf-8 -*-
 import pytest
 from _pytest import python
 from _pytest import runner
 
 
-class TestOEJSKITSpecials(object):
+class TestOEJSKITSpecials:
     def test_funcarg_non_pycollectobj(self, testdir):  # rough jstests usage
         testdir.makeconftest(
             """
@@ -87,7 +86,7 @@ def test_wrapped_getfslineno():
     assert lineno > lineno2, "getfslineno does not unwrap correctly"
 
 
-class TestMockDecoration(object):
+class TestMockDecoration:
     def test_wrapped_getfuncargnames(self):
         from _pytest.compat import getfuncargnames
 
@@ -264,7 +263,7 @@ class TestMockDecoration(object):
         reprec.assertoutcome(passed=1)
 
 
-class TestReRunTests(object):
+class TestReRunTests:
     def test_rerun(self, testdir):
         testdir.makeconftest(
             """
@@ -310,7 +309,7 @@ def test_pytestconfig_is_session_scoped():
     assert pytestconfig._pytestfixturefunction.scope == "session"
 
 
-class TestNoselikeTestAttribute(object):
+class TestNoselikeTestAttribute:
     def test_module_with_global_test(self, testdir):
         testdir.makepyfile(
             """
@@ -394,7 +393,7 @@ class TestNoselikeTestAttribute(object):
         assert not call.items
 
 
-class TestParameterize(object):
+class TestParameterize:
     """#351"""
 
     def test_idfn_marker(self, testdir):

@@ -1,8 +1,3 @@
-# -*- coding: utf-8 -*-
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 import sys
 
 import pytest
@@ -11,7 +6,7 @@ from _pytest.skipping import MarkEvaluator
 from _pytest.skipping import pytest_runtest_setup
 
 
-class TestEvaluator(object):
+class TestEvaluator:
     def test_no_marker(self, testdir):
         item = testdir.getitem("def test_func(): pass")
         evalskipif = MarkEvaluator(item, "skipif")
@@ -136,7 +131,7 @@ class TestEvaluator(object):
         assert expl == "condition: config._hackxyz"
 
 
-class TestXFail(object):
+class TestXFail:
     @pytest.mark.parametrize("strict", [True, False])
     def test_xfail_simple(self, testdir, strict):
         item = testdir.getitem(
@@ -503,7 +498,7 @@ class TestXFail(object):
         assert result.ret == (1 if strict else 0)
 
 
-class TestXFailwithSetupTeardown(object):
+class TestXFailwithSetupTeardown:
     def test_failing_setup_issue9(self, testdir):
         testdir.makepyfile(
             """
@@ -535,7 +530,7 @@ class TestXFailwithSetupTeardown(object):
         result.stdout.fnmatch_lines(["*1 xfail*"])
 
 
-class TestSkip(object):
+class TestSkip:
     def test_skip_class(self, testdir):
         testdir.makepyfile(
             """
@@ -632,7 +627,7 @@ class TestSkip(object):
         result.stdout.fnmatch_lines(["*unconditional skip*", "*1 skipped*"])
 
 
-class TestSkipif(object):
+class TestSkipif:
     def test_skipif_conditional(self, testdir):
         item = testdir.getitem(
             """
@@ -987,7 +982,7 @@ def test_imperativeskip_on_xfail_test(testdir):
     )
 
 
-class TestBooleanCondition(object):
+class TestBooleanCondition:
     def test_skipif(self, testdir):
         testdir.makepyfile(
             """

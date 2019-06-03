@@ -1,8 +1,3 @@
-# -*- coding: utf-8 -*-
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 import inspect
 import re
 import sys
@@ -21,7 +16,7 @@ from _pytest._io.saferepr import safeformat
 from _pytest._io.saferepr import saferepr
 
 
-class Code(object):
+class Code:
     """ wrapper around Python code objects """
 
     def __init__(self, rawcode):
@@ -32,7 +27,7 @@ class Code(object):
             self.firstlineno = rawcode.co_firstlineno - 1
             self.name = rawcode.co_name
         except AttributeError:
-            raise TypeError("not a code object: %r" % (rawcode,))
+            raise TypeError("not a code object: {!r}".format(rawcode))
         self.raw = rawcode
 
     def __eq__(self, other):
@@ -91,7 +86,7 @@ class Code(object):
         return raw.co_varnames[:argcount]
 
 
-class Frame(object):
+class Frame:
     """Wrapper around a Python frame holding f_locals and f_globals
     in which expressions can be evaluated."""
 
@@ -154,7 +149,7 @@ class Frame(object):
         return retval
 
 
-class TracebackEntry(object):
+class TracebackEntry:
     """ a single entry in a traceback """
 
     _repr_style = None
@@ -314,7 +309,7 @@ class Traceback(list):
         return self
 
     def __getitem__(self, key):
-        val = super(Traceback, self).__getitem__(key)
+        val = super().__getitem__(key)
         if isinstance(key, type(slice(0))):
             val = self.__class__(val)
         return val
@@ -376,7 +371,7 @@ co_equal = compile(
 
 
 @attr.s(repr=False)
-class ExceptionInfo(object):
+class ExceptionInfo:
     """ wraps sys.exc_info() objects and offers
         help for navigating the traceback.
     """
@@ -561,7 +556,7 @@ class ExceptionInfo(object):
 
 
 @attr.s
-class FormattedExcinfo(object):
+class FormattedExcinfo:
     """ presenting information about failing Functions and Generators. """
 
     # for traceback entries
@@ -660,7 +655,7 @@ class FormattedExcinfo(object):
                         str_repr = safeformat(value)
                     # if len(str_repr) < 70 or not isinstance(value,
                     #                            (list, tuple, dict)):
-                    lines.append("%-10s = %s" % (name, str_repr))
+                    lines.append("{:<10} = {}".format(name, str_repr))
                     # else:
                     #    self._line("%-10s =\\" % (name,))
                     #    # XXX
@@ -809,7 +804,7 @@ class FormattedExcinfo(object):
         return ExceptionChainRepr(repr_chain)
 
 
-class TerminalRepr(object):
+class TerminalRepr:
     def __str__(self):
         # FYI this is called from pytest-xdist's serialization of exception
         # information.
@@ -819,7 +814,7 @@ class TerminalRepr(object):
         return io.getvalue().strip()
 
     def __repr__(self):
-        return "<%s instance at %0x>" % (self.__class__, id(self))
+        return "<{} instance at {:0x}>".format(self.__class__, id(self))
 
 
 class ExceptionRepr(TerminalRepr):
@@ -837,7 +832,7 @@ class ExceptionRepr(TerminalRepr):
 
 class ExceptionChainRepr(ExceptionRepr):
     def __init__(self, chain):
-        super(ExceptionChainRepr, self).__init__()
+        super().__init__()
         self.chain = chain
         # reprcrash and reprtraceback of the outermost (the newest) exception
         # in the chain
@@ -850,18 +845,18 @@ class ExceptionChainRepr(ExceptionRepr):
             if element[2] is not None:
                 tw.line("")
                 tw.line(element[2], yellow=True)
-        super(ExceptionChainRepr, self).toterminal(tw)
+        super().toterminal(tw)
 
 
 class ReprExceptionInfo(ExceptionRepr):
     def __init__(self, reprtraceback, reprcrash):
-        super(ReprExceptionInfo, self).__init__()
+        super().__init__()
         self.reprtraceback = reprtraceback
         self.reprcrash = reprcrash
 
     def toterminal(self, tw):
         self.reprtraceback.toterminal(tw)
-        super(ReprExceptionInfo, self).toterminal(tw)
+        super().toterminal(tw)
 
 
 class ReprTraceback(TerminalRepr):
@@ -938,7 +933,9 @@ class ReprEntry(TerminalRepr):
             self.reprfileloc.toterminal(tw)
 
     def __str__(self):
-        return "%s\n%s\n%s" % ("\n".join(self.lines), self.reprlocals, self.reprfileloc)
+        return "{}\n{}\n{}".format(
+            "\n".join(self.lines), self.reprlocals, self.reprfileloc
+        )
 
 
 class ReprFileLocation(TerminalRepr):
@@ -955,7 +952,7 @@ class ReprFileLocation(TerminalRepr):
         if i != -1:
             msg = msg[:i]
         tw.write(self.path, bold=True, red=True)
-        tw.line(":%s: %s" % (self.lineno, msg))
+        tw.line(":{}: {}".format(self.lineno, msg))
 
 
 class ReprLocals(TerminalRepr):
@@ -975,7 +972,7 @@ class ReprFuncArgs(TerminalRepr):
         if self.args:
             linesofar = ""
             for name, value in self.args:
-                ns = "%s = %s" % (name, value)
+                ns = "{} = {}".format(name, value)
                 if len(ns) + len(linesofar) + 2 > tw.fullwidth:
                     if linesofar:
                         tw.line(linesofar)

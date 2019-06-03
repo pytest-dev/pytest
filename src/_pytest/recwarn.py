@@ -1,9 +1,4 @@
-# -*- coding: utf-8 -*-
 """ recording warnings during test function execution. """
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 import inspect
 import re
 import sys
@@ -115,7 +110,7 @@ class WarningsRecorder(warnings.catch_warnings):
     """
 
     def __init__(self):
-        super(WarningsRecorder, self).__init__(record=True)
+        super().__init__(record=True)
         self._entered = False
         self._list = []
 
@@ -152,7 +147,7 @@ class WarningsRecorder(warnings.catch_warnings):
         if self._entered:
             __tracebackhide__ = True
             raise RuntimeError("Cannot enter %r twice" % self)
-        self._list = super(WarningsRecorder, self).__enter__()
+        self._list = super().__enter__()
         warnings.simplefilter("always")
         return self
 
@@ -161,7 +156,7 @@ class WarningsRecorder(warnings.catch_warnings):
             __tracebackhide__ = True
             raise RuntimeError("Cannot exit %r without entering first" % self)
 
-        super(WarningsRecorder, self).__exit__(*exc_info)
+        super().__exit__(*exc_info)
 
         # Built-in catch_warnings does not reset entered state so we do it
         # manually here for this context manager to become reusable.
@@ -170,7 +165,7 @@ class WarningsRecorder(warnings.catch_warnings):
 
 class WarningsChecker(WarningsRecorder):
     def __init__(self, expected_warning=None, match_expr=None):
-        super(WarningsChecker, self).__init__()
+        super().__init__()
 
         msg = "exceptions must be old-style classes or derived from Warning, not %s"
         if isinstance(expected_warning, tuple):
@@ -186,7 +181,7 @@ class WarningsChecker(WarningsRecorder):
         self.match_expr = match_expr
 
     def __exit__(self, *exc_info):
-        super(WarningsChecker, self).__exit__(*exc_info)
+        super().__exit__(*exc_info)
 
         __tracebackhide__ = True
 

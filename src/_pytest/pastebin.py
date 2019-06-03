@@ -1,12 +1,5 @@
-# -*- coding: utf-8 -*-
 """ submit failure or test session information to a pastebin service. """
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 import tempfile
-
-import six
 
 import pytest
 
@@ -38,7 +31,7 @@ def pytest_configure(config):
 
             def tee_write(s, **kwargs):
                 oldwrite(s, **kwargs)
-                if isinstance(s, six.text_type):
+                if isinstance(s, str):
                     s = s.encode("utf-8")
                 config._pastebinfile.write(s)
 
@@ -77,7 +70,7 @@ def create_new_paste(contents):
     response = urlopen(url, data=urlencode(params).encode("ascii")).read()
     m = re.search(r'href="/raw/(\w+)"', response.decode("utf-8"))
     if m:
-        return "%s/show/%s" % (url, m.group(1))
+        return "{}/show/{}".format(url, m.group(1))
     else:
         return "bad response: " + response
 
@@ -102,4 +95,4 @@ def pytest_terminal_summary(terminalreporter):
             s = tw.stringio.getvalue()
             assert len(s)
             pastebinurl = create_new_paste(s)
-            tr.write_line("%s --> %s" % (msg, pastebinurl))
+            tr.write_line("{} --> {}".format(msg, pastebinurl))

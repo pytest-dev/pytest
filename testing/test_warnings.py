@@ -1,6 +1,3 @@
-# -*- coding: utf-8 -*-
-from __future__ import unicode_literals
-
 import warnings
 
 import pytest
@@ -126,8 +123,7 @@ def test_ignore(testdir, pyfile_with_warnings, method):
 @pytest.mark.filterwarnings("always")
 def test_unicode(testdir, pyfile_with_warnings):
     testdir.makepyfile(
-        """
-        # -*- coding: utf-8 -*-
+        """\
         import warnings
         import pytest
 
@@ -139,13 +135,13 @@ def test_unicode(testdir, pyfile_with_warnings):
 
         def test_func(fix):
             pass
-    """
+        """
     )
     result = testdir.runpytest()
     result.stdout.fnmatch_lines(
         [
             "*== %s ==*" % WARNINGS_SUMMARY_HEADER,
-            "*test_unicode.py:8: UserWarning: \u6d4b\u8bd5*",
+            "*test_unicode.py:7: UserWarning: \u6d4b\u8bd5*",
             "* 1 passed, 1 warnings*",
         ]
     )
@@ -496,7 +492,7 @@ class TestDeprecationWarningsByDefault:
 
     def test_hidden_by_system(self, testdir, monkeypatch):
         self.create_file(testdir)
-        monkeypatch.setenv(str("PYTHONWARNINGS"), str("once::UserWarning"))
+        monkeypatch.setenv("PYTHONWARNINGS", "once::UserWarning")
         result = testdir.runpytest_subprocess()
         assert WARNINGS_SUMMARY_HEADER not in result.stdout.str()
 

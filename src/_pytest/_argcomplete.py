@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """allow bash-completion for argparse with argcomplete if installed
 needs argcomplete>=0.5.6 for python 3.2/3.3 (older versions fail
 to find the magic string, so _ARGCOMPLETE env. var is never set, and
@@ -54,16 +53,12 @@ If things do not work right away:
   which should throw a KeyError: 'COMPLINE' (which is properly set by the
   global argcomplete script).
 """
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 import os
 import sys
 from glob import glob
 
 
-class FastFilesCompleter(object):
+class FastFilesCompleter:
     "Fast file completer class"
 
     def __init__(self, directories=True):

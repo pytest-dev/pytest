@@ -1,9 +1,4 @@
-# -*- coding: utf-8 -*-
 """ support for providing temporary directories to test functions.  """
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 import os
 import re
 import tempfile
@@ -22,7 +17,7 @@ from _pytest.monkeypatch import MonkeyPatch
 
 
 @attr.s
-class TempPathFactory(object):
+class TempPathFactory:
     """Factory for temporary directories under the common base temp directory.
 
     The base directory can be configured using the ``--basetemp`` option."""
@@ -82,7 +77,7 @@ class TempPathFactory(object):
 
 
 @attr.s
-class TempdirFactory(object):
+class TempdirFactory:
     """
     backward comptibility wrapper that implements
     :class:``py.path.local`` for :class:``TempPathFactory``

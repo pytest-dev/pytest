@@ -1,8 +1,3 @@
-# -*- coding: utf-8 -*-
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 import os
 import re
 import sys
@@ -22,7 +17,7 @@ def mp():
 
 
 def test_setattr():
-    class A(object):
+    class A:
         x = 1
 
     monkeypatch = MonkeyPatch()
@@ -45,7 +40,7 @@ def test_setattr():
     assert A.x == 5
 
 
-class TestSetattrWithImportPath(object):
+class TestSetattrWithImportPath:
     def test_string_expression(self, monkeypatch):
         monkeypatch.setattr("os.path.abspath", lambda x: "hello2")
         assert os.path.abspath("123") == "hello2"
@@ -87,7 +82,7 @@ class TestSetattrWithImportPath(object):
 
 
 def test_delattr():
-    class A(object):
+    class A:
         x = 1
 
     monkeypatch = MonkeyPatch()
@@ -198,14 +193,14 @@ def test_delenv():
             del os.environ[name]
 
 
-class TestEnvironWarnings(object):
+class TestEnvironWarnings:
     """
     os.environ keys and values should be native strings, otherwise it will cause problems with other modules (notably
     subprocess). On Python 2 os.environ accepts anything without complaining, while Python 3 does the right thing
     and raises an error.
     """
 
-    VAR_NAME = u"PYTEST_INTERNAL_MY_VAR"
+    VAR_NAME = "PYTEST_INTERNAL_MY_VAR"
 
     def test_setenv_non_str_warning(self, monkeypatch):
         value = 2
@@ -336,7 +331,7 @@ def test_importerror(testdir):
     )
 
 
-class SampleNew(object):
+class SampleNew:
     @staticmethod
     def hello():
         return True
@@ -346,7 +341,7 @@ class SampleNewInherit(SampleNew):
     pass
 
 
-class SampleOld(object):
+class SampleOld:
     # oldstyle on python2
     @staticmethod
     def hello():
@@ -373,7 +368,7 @@ def test_issue156_undo_staticmethod(Sample):
 
 
 def test_undo_class_descriptors_delattr():
-    class SampleParent(object):
+    class SampleParent:
         @classmethod
         def hello(_cls):
             pass

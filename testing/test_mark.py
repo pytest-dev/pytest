@@ -1,8 +1,3 @@
-# -*- coding: utf-8 -*-
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 import os
 import sys
 from unittest import mock
@@ -21,7 +16,7 @@ ignore_markinfo = pytest.mark.filterwarnings(
 )
 
 
-class TestMark(object):
+class TestMark:
     @pytest.mark.parametrize("attr", ["mark", "param"])
     @pytest.mark.parametrize("modulename", ["py.test", "pytest"])
     def test_pytest_exists_in_namespace_all(self, attr, modulename):
@@ -36,7 +31,7 @@ class TestMark(object):
         def some_function(abc):
             pass
 
-        class SomeClass(object):
+        class SomeClass:
             pass
 
         assert pytest.mark.foo(some_function) is some_function
@@ -429,7 +424,7 @@ def test_parametrize_iterator(testdir):
     result.stdout.fnmatch_lines(["*3 passed*"])
 
 
-class TestFunctional(object):
+class TestFunctional:
     def test_merging_markers_deep(self, testdir):
         # issue 199 - propagate markers into nested classes
         p = testdir.makepyfile(
@@ -698,7 +693,7 @@ class TestFunctional(object):
         reprec.assertoutcome(skipped=1)
 
 
-class TestKeywordSelection(object):
+class TestKeywordSelection:
     def test_select_simple(self, testdir):
         file_test = testdir.makepyfile(
             """
@@ -829,7 +824,7 @@ class TestKeywordSelection(object):
         assert_test_is_not_selected("()")
 
 
-class TestMarkDecorator(object):
+class TestMarkDecorator:
     @pytest.mark.parametrize(
         "lhs, rhs, expected",
         [
@@ -965,7 +960,6 @@ def test_markers_from_parametrize(testdir):
     """#3605"""
     testdir.makepyfile(
         """
-        from __future__ import print_function
         import pytest
 
         first_custom_mark = pytest.mark.custom_marker

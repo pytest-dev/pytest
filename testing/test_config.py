@@ -1,8 +1,3 @@
-# -*- coding: utf-8 -*-
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 import sys
 import textwrap
 
@@ -21,7 +16,7 @@ from _pytest.main import EXIT_TESTSFAILED
 from _pytest.main import EXIT_USAGEERROR
 
 
-class TestParseIni(object):
+class TestParseIni:
     @pytest.mark.parametrize(
         "section, filename", [("pytest", "pytest.ini"), ("tool:pytest", "setup.cfg")]
     )
@@ -144,7 +139,7 @@ class TestParseIni(object):
         assert result.ret == 0
 
 
-class TestConfigCmdlineParsing(object):
+class TestConfigCmdlineParsing:
     def test_parsing_again_fails(self, testdir):
         config = testdir.parseconfig()
         pytest.raises(AssertionError, lambda: config.parse([]))
@@ -197,7 +192,7 @@ class TestConfigCmdlineParsing(object):
         assert ret == _pytest.main.EXIT_OK
 
 
-class TestConfigAPI(object):
+class TestConfigAPI:
     def test_config_trace(self, testdir):
         config = testdir.parseconfig()
         values = []
@@ -433,7 +428,7 @@ class TestConfigAPI(object):
         assert list(_iter_rewritable_modules(["/".join(names)])) == expected
 
 
-class TestConfigFromdictargs(object):
+class TestConfigFromdictargs:
     def test_basic_behavior(self, _sys_snapshot):
         from _pytest.config import Config
 
@@ -531,17 +526,17 @@ def test_options_on_small_file_do_not_blow_up(testdir):
 def test_preparse_ordering_with_setuptools(testdir, monkeypatch):
     monkeypatch.delenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD", raising=False)
 
-    class EntryPoint(object):
+    class EntryPoint:
         name = "mytestplugin"
         group = "pytest11"
 
         def load(self):
-            class PseudoPlugin(object):
+            class PseudoPlugin:
                 x = 42
 
             return PseudoPlugin()
 
-    class Dist(object):
+    class Dist:
         files = ()
         entry_points = (EntryPoint(),)
 
@@ -563,14 +558,14 @@ def test_preparse_ordering_with_setuptools(testdir, monkeypatch):
 def test_setuptools_importerror_issue1479(testdir, monkeypatch):
     monkeypatch.delenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD", raising=False)
 
-    class DummyEntryPoint(object):
+    class DummyEntryPoint:
         name = "mytestplugin"
         group = "pytest11"
 
         def load(self):
             raise ImportError("Don't hide me!")
 
-    class Distribution(object):
+    class Distribution:
         version = "1.0"
         files = ("foo.txt",)
         entry_points = (DummyEntryPoint(),)
@@ -589,14 +584,14 @@ def test_plugin_preparse_prevents_setuptools_loading(testdir, monkeypatch, block
 
     plugin_module_placeholder = object()
 
-    class DummyEntryPoint(object):
+    class DummyEntryPoint:
         name = "mytestplugin"
         group = "pytest11"
 
         def load(self):
             return plugin_module_placeholder
 
-    class Distribution(object):
+    class Distribution:
         version = "1.0"
         files = ("foo.txt",)
         entry_points = (DummyEntryPoint(),)
@@ -621,7 +616,7 @@ def test_plugin_preparse_prevents_setuptools_loading(testdir, monkeypatch, block
     "parse_args,should_load", [(("-p", "mytestplugin"), True), ((), False)]
 )
 def test_disable_plugin_autoload(testdir, monkeypatch, parse_args, should_load):
-    class DummyEntryPoint(object):
+    class DummyEntryPoint:
         project_name = name = "mytestplugin"
         group = "pytest11"
         version = "1.0"
@@ -629,11 +624,11 @@ def test_disable_plugin_autoload(testdir, monkeypatch, parse_args, should_load):
         def load(self):
             return sys.modules[self.name]
 
-    class Distribution(object):
+    class Distribution:
         entry_points = (DummyEntryPoint(),)
         files = ()
 
-    class PseudoPlugin(object):
+    class PseudoPlugin:
         x = 42
 
     def distributions():
@@ -745,7 +740,7 @@ def test_notify_exception(testdir, capfd):
     out, err = capfd.readouterr()
     assert "ValueError" in err
 
-    class A(object):
+    class A:
         def pytest_internalerror(self, excrepr):
             return True
 
@@ -765,7 +760,7 @@ def test_notify_exception(testdir, capfd):
 def test_load_initial_conftest_last_ordering(testdir, _config_for_test):
     pm = _config_for_test.pluginmanager
 
-    class My(object):
+    class My:
         def pytest_load_initial_conftests(self):
             pass
 
@@ -803,15 +798,15 @@ def test_collect_pytest_prefix_bug_integration(testdir):
 def test_collect_pytest_prefix_bug(pytestconfig):
     """Ensure we collect only actual functions from conftest files (#3775)"""
 
-    class Dummy(object):
-        class pytest_something(object):
+    class Dummy:
+        class pytest_something:
             pass
 
     pm = pytestconfig.pluginmanager
     assert pm.parse_hookimpl_opts(Dummy(), "pytest_something") is None
 
 
-class TestRootdir(object):
+class TestRootdir:
     def test_simple_noini(self, tmpdir):
         assert get_common_ancestor([tmpdir]) == tmpdir
         a = tmpdir.mkdir("a")
@@ -869,7 +864,7 @@ class TestRootdir(object):
         assert rootdir == tmpdir
 
 
-class TestOverrideIniArgs(object):
+class TestOverrideIniArgs:
     @pytest.mark.parametrize("name", "setup.cfg tox.ini pytest.ini".split())
     def test_override_ini_names(self, testdir, name):
         section = "[pytest]" if name != "setup.cfg" else "[tool:pytest]"

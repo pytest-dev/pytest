@@ -1,16 +1,15 @@
-# -*- coding: utf-8 -*-
 from dataclasses import dataclass
 from dataclasses import field
 
 
 def test_comparing_two_different_data_classes():
     @dataclass
-    class SimpleDataObjectOne(object):
+    class SimpleDataObjectOne:
         field_a: int = field()
         field_b: int = field()
 
     @dataclass
-    class SimpleDataObjectTwo(object):
+    class SimpleDataObjectTwo:
         field_a: int = field()
         field_b: int = field()
 

@@ -335,8 +335,6 @@ string value of ``Hello World!`` if we do not supply a value or ``Hello
 
 .. code-block:: python
 
-    # -*- coding: utf-8 -*-
-
     import pytest
 
 

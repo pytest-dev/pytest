@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import py
 
 failure_demo = py.path.local(__file__).dirpath("failure_demo.py")

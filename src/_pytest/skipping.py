@@ -1,9 +1,4 @@
-# -*- coding: utf-8 -*-
 """ support for skip/xfail functions and markers. """
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 from _pytest.config import hookimpl
 from _pytest.mark.evaluate import MarkEvaluator
 from _pytest.outcomes import fail
