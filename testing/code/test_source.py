@@ -113,7 +113,7 @@ def test_source_strip_multiline():
 def test_syntaxerror_rerepresentation():
     ex = pytest.raises(SyntaxError, _pytest._code.compile, "xyz xyz")
     assert ex.value.lineno == 1
-    assert ex.value.offset == 7
+    assert ex.value.offset in {5, 7}  # cpython: 7, pypy3.6 7.1.1: 5
     assert ex.value.text.strip(), "x x"
 
 
