@@ -656,12 +656,6 @@ class TestAssertionRewrite(object):
         else:
             assert lines == ["assert 0 == 1\n +  where 1 = \\n{ \\n~ \\n}.a"]
 
-    def test_unroll_expression(self):
-        def f():
-            assert all(x == 1 for x in range(10))
-
-        assert "0 == 1" in getmsg(f)
-
     def test_custom_repr_non_ascii(self):
         def f():
             class A(object):
@@ -676,78 +670,6 @@ class TestAssertionRewrite(object):
         msg = getmsg(f)
         assert "UnicodeDecodeError" not in msg
         assert "UnicodeEncodeError" not in msg
-
-    def test_unroll_all_generator(self, testdir):
-        testdir.makepyfile(
-            """
-            def check_even(num):
-                if num % 2 == 0:
-                    return True
-                return False
-
-            def test_generator():
-                odd_list = list(range(1,9,2))
-                assert all(check_even(num) for num in odd_list)"""
-        )
-        result = testdir.runpytest()
-        result.stdout.fnmatch_lines(["*assert False*", "*where False = check_even(1)*"])
-
-    def test_unroll_all_list_comprehension(self, testdir):
-        testdir.makepyfile(
-            """
-            def check_even(num):
-                if num % 2 == 0:
-                    return True
-                return False
-
-            def test_list_comprehension():
-                odd_list = list(range(1,9,2))
-                assert all([check_even(num) for num in odd_list])"""
-        )
-        result = testdir.runpytest()
-        result.stdout.fnmatch_lines(["*assert False*", "*where False = check_even(1)*"])
-
-    def test_unroll_all_object(self, testdir):
-        """all() for non generators/non list-comprehensions (#5358)"""
-        testdir.makepyfile(
-            """
-            def test():
-                assert all((1, 0))
-            """
-        )
-        result = testdir.runpytest()
-        result.stdout.fnmatch_lines(["*assert False*", "*where False = all((1, 0))*"])
-
-    def test_unroll_all_starred(self, testdir):
-        """all() for non generators/non list-comprehensions (#5358)"""
-        testdir.makepyfile(
-            """
-            def test():
-                x = ((1, 0),)
-                assert all(*x)
-            """
-        )
-        result = testdir.runpytest()
-        result.stdout.fnmatch_lines(
-            ["*assert False*", "*where False = all(*((1, 0),))*"]
-        )
-
-    def test_for_loop(self, testdir):
-        testdir.makepyfile(
-            """
-            def check_even(num):
-                if num % 2 == 0:
-                    return True
-                return False
-
-            def test_for_loop():
-                odd_list = list(range(1,9,2))
-                for num in odd_list:
-                    assert check_even(num)
-        """
-        )
-        result = testdir.runpytest()
-        result.stdout.fnmatch_lines(["*assert False*", "*where False = check_even(1)*"])
 
 
 class TestRewriteOnImport(object):
