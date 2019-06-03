@@ -1,10 +1,4 @@
-# -*- coding: utf-8 -*-
 """ core implementation of testing process: init, session, runtest loop. """
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
-import contextlib
 import fnmatch
 import functools
 import os
@@ -14,7 +8,6 @@ import warnings
 
 import attr
 import py
-import six
 
 import _pytest._code
 from _pytest import nodes
@@ -172,7 +165,7 @@ def pytest_addoption(parser):
     )
 
 
-class _ConfigDeprecated(object):
+class _ConfigDeprecated:
     def __init__(self, config):
         self.__dict__["_config"] = config
 
@@ -311,10 +304,7 @@ def pytest_ignore_collect(path, config):
     if excludeglobopt:
         ignore_globs.extend([py.path.local(x) for x in excludeglobopt])
 
-    if any(
-        fnmatch.fnmatch(six.text_type(path), six.text_type(glob))
-        for glob in ignore_globs
-    ):
+    if any(fnmatch.fnmatch(str(path), str(glob)) for glob in ignore_globs):
         return True
 
     allow_in_venv = config.getoption("collect_in_virtualenv")
@@ -342,47 +332,7 @@ def pytest_collection_modifyitems(items, config):
         items[:] = remaining
 
 
-@contextlib.contextmanager
-def _patched_find_module():
-    """Patch bug in pkgutil.ImpImporter.find_module
-
-    When using pkgutil.find_loader on python<3.4 it removes symlinks
-    from the path due to a call to os.path.realpath. This is not consistent
-    with actually doing the import (in these versions, pkgutil and __import__
-    did not share the same underlying code). This can break conftest
-    discovery for pytest where symlinks are involved.
-
-    The only supported python<3.4 by pytest is python 2.7.
-    """
-    if six.PY2:  # python 3.4+ uses importlib instead
-
-        def find_module_patched(self, fullname, path=None):
-            # Note: we ignore 'path' argument since it is only used via meta_path
-            subname = fullname.split(".")[-1]
-            if subname != fullname and self.path is None:
-                return None
-            if self.path is None:
-                path = None
-            else:
-                # original: path = [os.path.realpath(self.path)]
-                path = [self.path]
-            try:
-                file, filename, etc = pkgutil.imp.find_module(subname, path)
-            except ImportError:
-                return None
-            return pkgutil.ImpLoader(fullname, file, filename, etc)
-
-        old_find_module = pkgutil.ImpImporter.find_module
-        pkgutil.ImpImporter.find_module = find_module_patched
-        try:
-            yield
-        finally:
-            pkgutil.ImpImporter.find_module = old_find_module
-    else:
-        yield
-
-
-class FSHookProxy(object):
+class FSHookProxy:
     def __init__(self, fspath, pm, remove_mods):
         self.fspath = fspath
         self.pm = pm
@@ -522,8 +472,8 @@ class Session(nodes.FSCollector):
         if self._notfound:
             errors = []
             for arg, exc in self._notfound:
-                line = "(no name %r in any of %r)" % (arg, exc.args[0])
-                errors.append("not found: %s\n%s" % (arg, line))
+                line = "(no name {!r} in any of {!r})".format(arg, exc.args[0])
+                errors.append("not found: {}\n{}".format(arg, line))
                 # XXX: test this
             raise UsageError(*errors)
         if not genitems:
@@ -540,8 +490,7 @@ class Session(nodes.FSCollector):
             self.trace("processing argument", arg)
             self.trace.root.indent += 1
             try:
-                for x in self._collect(arg):
-                    yield x
+                yield from self._collect(arg)
             except NoMatch:
                 # we are inside a make_report hook so
                 # we cannot directly pass through the exception
@@ -578,7 +527,7 @@ class Session(nodes.FSCollector):
         # If it's a directory argument, recurse and look for any Subpackages.
         # Let the Package collector deal with subnodes, don't collect here.
         if argpath.check(dir=1):
-            assert not names, "invalid arg %r" % (arg,)
+            assert not names, "invalid arg {!r}".format(arg)
 
             seen_dirs = set()
             for path in argpath.visit(
@@ -623,15 +572,13 @@ class Session(nodes.FSCollector):
             if argpath.basename == "__init__.py":
                 yield next(m[0].collect())
                 return
-            for y in m:
-                yield y
+            yield from m
 
     def _collectfile(self, path, handle_dupes=True):
-        assert path.isfile(), "%r is not a file (isdir=%r, exists=%r, islink=%r)" % (
-            path,
-            path.isdir(),
-            path.exists(),
-            path.islink(),
+        assert (
+            path.isfile()
+        ), "{!r} is not a file (isdir={!r}, exists={!r}, islink={!r})".format(
+            path, path.isdir(), path.exists(), path.islink()
         )
         ihook = self.gethookproxy(path)
         if not self.isinitpath(path):
@@ -662,23 +609,14 @@ class Session(nodes.FSCollector):
         ihook.pytest_collect_directory(path=dirpath, parent=self)
         return True
 
-    if six.PY2:
-
-        @staticmethod
-        def _visit_filter(f):
-            return f.check(file=1) and not f.strpath.endswith("*.pyc")
-
-    else:
-
-        @staticmethod
-        def _visit_filter(f):
-            return f.check(file=1)
+    @staticmethod
+    def _visit_filter(f):
+        return f.check(file=1)
 
     def _tryconvertpyarg(self, x):
         """Convert a dotted module name to path."""
         try:
-            with _patched_find_module():
-                loader = pkgutil.find_loader(x)
+            loader = pkgutil.find_loader(x)
         except ImportError:
             return x
         if loader is None:
@@ -686,8 +624,7 @@ class Session(nodes.FSCollector):
         # This method is sometimes invoked when AssertionRewritingHook, which
         # does not define a get_filename method, is already in place:
         try:
-            with _patched_find_module():
-                path = loader.get_filename(x)
+            path = loader.get_filename(x)
         except AttributeError:
             # Retrieve path from AssertionRewritingHook:
             path = loader.modules[x][0].co_filename
@@ -769,6 +706,5 @@ class Session(nodes.FSCollector):
             rep = collect_one_node(node)
             if rep.passed:
                 for subnode in rep.result:
-                    for x in self.genitems(subnode):
-                        yield x
+                    yield from self.genitems(subnode)
             node.ihook.pytest_collectreport(report=rep)

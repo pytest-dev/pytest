@@ -1,15 +1,8 @@
-# -*- coding: utf-8 -*-
 """Utilities for assertion debugging"""
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 import pprint
-
-import six
+from collections.abc import Sequence
 
 import _pytest._code
-from ..compat import Sequence
 from _pytest import outcomes
 from _pytest._io.saferepr import saferepr
 
@@ -42,7 +35,7 @@ def format_explanation(explanation):
     explanation = ecu(explanation)
     lines = _split_explanation(explanation)
     result = _format_lines(lines)
-    return u"\n".join(result)
+    return "\n".join(result)
 
 
 def _split_explanation(explanation):
@@ -52,7 +45,7 @@ def _split_explanation(explanation):
     Any other newlines will be escaped and appear in the line as the
     literal '\n' characters.
     """
-    raw_lines = (explanation or u"").split("\n")
+    raw_lines = (explanation or "").split("\n")
     lines = [raw_lines[0]]
     for values in raw_lines[1:]:
         if values and values[0] in ["{", "}", "~", ">"]:
@@ -77,13 +70,13 @@ def _format_lines(lines):
     for line in lines[1:]:
         if line.startswith("{"):
             if stackcnt[-1]:
-                s = u"and   "
+                s = "and   "
             else:
-                s = u"where "
+                s = "where "
             stack.append(len(result))
             stackcnt[-1] += 1
             stackcnt.append(0)
-            result.append(u" +" + u"  " * (len(stack) - 1) + s + line[1:])
+            result.append(" +" + "  " * (len(stack) - 1) + s + line[1:])
         elif line.startswith("}"):
             stack.pop()
             stackcnt.pop()
@@ -92,7 +85,7 @@ def _format_lines(lines):
             assert line[0] in ["~", ">"]
             stack[-1] += 1
             indent = len(stack) if line.startswith("~") else len(stack) - 1
-            result.append(u"  " * indent + line[1:])
+            result.append("  " * indent + line[1:])
     assert len(stack) == 1
     return result
 
@@ -142,7 +135,7 @@ def assertrepr_compare(config, op, left, right):
     left_repr = saferepr(left, maxsize=int(width // 2))
     right_repr = saferepr(right, maxsize=width - len(left_repr))
 
-    summary = u"%s %s %s" % (ecu(left_repr), op, ecu(right_repr))
+    summary = "{} {} {}".format(ecu(left_repr), op, ecu(right_repr))
 
     verbose = config.getoption("verbose")
     explanation = None
@@ -175,9 +168,9 @@ def assertrepr_compare(config, op, left, right):
         raise
     except Exception:
         explanation = [
-            u"(pytest_assertion plugin: representation of details failed.  "
-            u"Probably an object has a faulty __repr__.)",
-            six.text_type(_pytest._code.ExceptionInfo.from_current()),
+            "(pytest_assertion plugin: representation of details failed.  "
+            "Probably an object has a faulty __repr__.)",
+            str(_pytest._code.ExceptionInfo.from_current()),
         ]
 
     if not explanation:
@@ -204,7 +197,7 @@ def _diff_text(left, right, verbose=0):
         This is done using repr() which then needs post-processing to fix the encompassing quotes and un-escape
         newlines and carriage returns (#429).
         """
-        r = six.text_type(repr(binary_text)[1:-1])
+        r = str(repr(binary_text)[1:-1])
         r = r.replace(r"\n", "\n")
         r = r.replace(r"\r", "\r")
         return r
@@ -221,7 +214,7 @@ def _diff_text(left, right, verbose=0):
         if i > 42:
             i -= 10  # Provide some context
             explanation = [
-                u"Skipping %s identical leading characters in diff, use -v to show" % i
+                "Skipping %s identical leading characters in diff, use -v to show" % i
             ]
             left = left[i:]
             right = right[i:]
@@ -232,8 +225,8 @@ def _diff_text(left, right, verbose=0):
             if i > 42:
                 i -= 10  # Provide some context
                 explanation += [
-                    u"Skipping {} identical trailing "
-                    u"characters in diff, use -v to show".format(i)
+                    "Skipping {} identical trailing "
+                    "characters in diff, use -v to show".format(i)
                 ]
                 left = left[:-i]
                 right = right[:-i]
@@ -241,7 +234,7 @@ def _diff_text(left, right, verbose=0):
     if left.isspace() or right.isspace():
         left = repr(str(left))
         right = repr(str(right))
-        explanation += [u"Strings contain only whitespace, escaping them using repr()"]
+        explanation += ["Strings contain only whitespace, escaping them using repr()"]
     explanation += [
         line.strip("\n")
         for line in ndiff(left.splitlines(keepends), right.splitlines(keepends))
@@ -255,29 +248,29 @@ def _compare_eq_verbose(left, right):
     right_lines = repr(right).splitlines(keepends)
 
     explanation = []
-    explanation += [u"-" + line for line in left_lines]
-    explanation += [u"+" + line for line in right_lines]
+    explanation += ["-" + line for line in left_lines]
+    explanation += ["+" + line for line in right_lines]
 
     return explanation
 
 
 def _compare_eq_iterable(left, right, verbose=0):
     if not verbose:
-        return [u"Use -v to get the full diff"]
+        return ["Use -v to get the full diff"]
     # dynamic import to speedup pytest
     import difflib
 
     try:
         left_formatting = pprint.pformat(left).splitlines()
         right_formatting = pprint.pformat(right).splitlines()
-        explanation = [u"Full diff:"]
+        explanation = ["Full diff:"]
     except Exception:
         # hack: PrettyPrinter.pformat() in python 2 fails when formatting items that can't be sorted(), ie, calling
         # sorted() on a list would raise. See issue #718.
         # As a workaround, the full diff is generated by using the repr() string of each item of each container.
         left_formatting = sorted(repr(x) for x in left)
         right_formatting = sorted(repr(x) for x in right)
-        explanation = [u"Full diff (fallback to calling repr on each item):"]
+        explanation = ["Full diff (fallback to calling repr on each item):"]
     explanation.extend(
         line.strip() for line in difflib.ndiff(left_formatting, right_formatting)
     )
@@ -290,7 +283,9 @@ def _compare_eq_sequence(left, right, verbose=0):
     len_right = len(right)
     for i in range(min(len_left, len_right)):
         if left[i] != right[i]:
-            explanation += [u"At index %s diff: %r != %r" % (i, left[i], right[i])]
+            explanation += [
+                "At index {} diff: {!r} != {!r}".format(i, left[i], right[i])
+            ]
             break
     len_diff = len_left - len_right
 
@@ -304,10 +299,12 @@ def _compare_eq_sequence(left, right, verbose=0):
             extra = saferepr(right[len_left])
 
         if len_diff == 1:
-            explanation += [u"%s contains one more item: %s" % (dir_with_more, extra)]
+            explanation += [
+                "{} contains one more item: {}".format(dir_with_more, extra)
+            ]
         else:
             explanation += [
-                u"%s contains %d more items, first extra item: %s"
+                "%s contains %d more items, first extra item: %s"
                 % (dir_with_more, len_diff, extra)
             ]
     return explanation
@@ -318,11 +315,11 @@ def _compare_eq_set(left, right, verbose=0):
     diff_left = left - right
     diff_right = right - left
     if diff_left:
-        explanation.append(u"Extra items in the left set:")
+        explanation.append("Extra items in the left set:")
         for item in diff_left:
             explanation.append(saferepr(item))
     if diff_right:
-        explanation.append(u"Extra items in the right set:")
+        explanation.append("Extra items in the right set:")
         for item in diff_right:
             explanation.append(saferepr(item))
     return explanation
@@ -335,20 +332,20 @@ def _compare_eq_dict(left, right, verbose=0):
     common = set_left.intersection(set_right)
     same = {k: left[k] for k in common if left[k] == right[k]}
     if same and verbose < 2:
-        explanation += [u"Omitting %s identical items, use -vv to show" % len(same)]
+        explanation += ["Omitting %s identical items, use -vv to show" % len(same)]
     elif same:
-        explanation += [u"Common items:"]
+        explanation += ["Common items:"]
         explanation += pprint.pformat(same).splitlines()
     diff = {k for k in common if left[k] != right[k]}
     if diff:
-        explanation += [u"Differing items:"]
+        explanation += ["Differing items:"]
         for k in diff:
             explanation += [saferepr({k: left[k]}) + " != " + saferepr({k: right[k]})]
     extra_left = set_left - set_right
     len_extra_left = len(extra_left)
     if len_extra_left:
         explanation.append(
-            u"Left contains %d more item%s:"
+            "Left contains %d more item%s:"
             % (len_extra_left, "" if len_extra_left == 1 else "s")
         )
         explanation.extend(
@@ -358,7 +355,7 @@ def _compare_eq_dict(left, right, verbose=0):
     len_extra_right = len(extra_right)
     if len_extra_right:
         explanation.append(
-            u"Right contains %d more item%s:"
+            "Right contains %d more item%s:"
             % (len_extra_right, "" if len_extra_right == 1 else "s")
         )
         explanation.extend(
@@ -386,15 +383,15 @@ def _compare_eq_cls(left, right, verbose, type_fns):
 
     explanation = []
     if same and verbose < 2:
-        explanation.append(u"Omitting %s identical items, use -vv to show" % len(same))
+        explanation.append("Omitting %s identical items, use -vv to show" % len(same))
     elif same:
-        explanation += [u"Matching attributes:"]
+        explanation += ["Matching attributes:"]
         explanation += pprint.pformat(same).splitlines()
     if diff:
-        explanation += [u"Differing attributes:"]
+        explanation += ["Differing attributes:"]
         for field in diff:
             explanation += [
-                (u"%s: %r != %r") % (field, getattr(left, field), getattr(right, field))
+                ("%s: %r != %r") % (field, getattr(left, field), getattr(right, field))
             ]
     return explanation
 
@@ -405,14 +402,14 @@ def _notin_text(term, text, verbose=0):
     tail = text[index + len(term) :]
     correct_text = head + tail
     diff = _diff_text(correct_text, text, verbose)
-    newdiff = [u"%s is contained here:" % saferepr(term, maxsize=42)]
+    newdiff = ["%s is contained here:" % saferepr(term, maxsize=42)]
     for line in diff:
-        if line.startswith(u"Skipping"):
+        if line.startswith("Skipping"):
             continue
-        if line.startswith(u"- "):
+        if line.startswith("- "):
             continue
-        if line.startswith(u"+ "):
-            newdiff.append(u"  " + line[2:])
+        if line.startswith("+ "):
+            newdiff.append("  " + line[2:])
         else:
             newdiff.append(line)
     return newdiff

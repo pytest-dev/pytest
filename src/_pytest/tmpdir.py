@@ -1,9 +1,4 @@
-# -*- coding: utf-8 -*-
 """ support for providing temporary directories to test functions.  """
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 import os
 import re
 import tempfile
@@ -11,7 +6,6 @@ import warnings
 
 import attr
 import py
-import six
 
 import pytest
 from .pathlib import ensure_reset_dir
@@ -23,7 +17,7 @@ from _pytest.monkeypatch import MonkeyPatch
 
 
 @attr.s
-class TempPathFactory(object):
+class TempPathFactory:
     """Factory for temporary directories under the common base temp directory.
 
     The base directory can be configured using the ``--basetemp`` option."""
@@ -32,9 +26,7 @@ class TempPathFactory(object):
         # using os.path.abspath() to get absolute path instead of resolve() as it
         # does not work the same in all platforms (see #4427)
         # Path.absolute() exists, but it is not public (see https://bugs.python.org/issue25012)
-        converter=attr.converters.optional(
-            lambda p: Path(os.path.abspath(six.text_type(p)))
-        )
+        converter=attr.converters.optional(lambda p: Path(os.path.abspath(str(p))))
     )
     _trace = attr.ib()
     _basetemp = attr.ib(default=None)
@@ -85,7 +77,7 @@ class TempPathFactory(object):
 
 
 @attr.s
-class TempdirFactory(object):
+class TempdirFactory:
     """
     backward comptibility wrapper that implements
     :class:``py.path.local`` for :class:``TempPathFactory``

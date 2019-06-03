@@ -1,14 +1,7 @@
-# -*- coding: utf-8 -*-
 """
 support for presenting detailed information in failing assertions.
 """
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 import sys
-
-import six
 
 from _pytest.assertion import rewrite
 from _pytest.assertion import truncate
@@ -56,14 +49,14 @@ def register_assert_rewrite(*names):
     importhook.mark_rewrite(*names)
 
 
-class DummyRewriteHook(object):
+class DummyRewriteHook:
     """A no-op import hook for when rewriting is disabled."""
 
     def mark_rewrite(self, *names):
         pass
 
 
-class AssertionState(object):
+class AssertionState:
     """State for the assertion plugin."""
 
     def __init__(self, config, mode):
@@ -74,10 +67,6 @@ class AssertionState(object):
 
 def install_importhook(config):
     """Try to install the rewrite hook, raise SystemError if it fails."""
-    # Jython has an AST bug that make the assertion rewriting hook malfunction.
-    if sys.platform.startswith("java"):
-        raise SystemError("rewrite not supported")
-
     config._assertstate = AssertionState(config, "rewrite")
     config._assertstate.hook = hook = rewrite.AssertionRewritingHook(config)
     sys.meta_path.insert(0, hook)
@@ -133,7 +122,7 @@ def pytest_runtest_setup(item):
             if new_expl:
                 new_expl = truncate.truncate_if_required(new_expl, item)
                 new_expl = [line.replace("\n", "\\n") for line in new_expl]
-                res = six.text_type("\n~").join(new_expl)
+                res = "\n~".join(new_expl)
                 if item.config.getvalue("assertmode") == "rewrite":
                     res = res.replace("%", "%%")
                 return res

@@ -1,12 +1,6 @@
-# -*- coding: utf-8 -*-
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 import sys
 
 import attr
-import six
 
 import pytest
 from _pytest import pathlib
@@ -28,7 +22,7 @@ def test_ensuretemp(recwarn):
 
 
 @attr.s
-class FakeConfig(object):
+class FakeConfig:
     basetemp = attr.ib()
     trace = attr.ib(default=None)
 
@@ -44,7 +38,7 @@ class FakeConfig(object):
         return self
 
 
-class TestTempdirHandler(object):
+class TestTempdirHandler:
     def test_mktemp(self, tmp_path):
 
         from _pytest.tmpdir import TempdirFactory, TempPathFactory
@@ -69,7 +63,7 @@ class TestTempdirHandler(object):
         assert t.getbasetemp().resolve() == (tmp_path / "hello").resolve()
 
 
-class TestConfigTmpdir(object):
+class TestConfigTmpdir:
     def test_getbasetemp_custom_removes_old(self, testdir):
         mytemp = testdir.tmpdir.join("xyz")
         p = testdir.makepyfile(
@@ -234,7 +228,7 @@ def test_get_user(monkeypatch):
     assert get_user() is None
 
 
-class TestNumberedDir(object):
+class TestNumberedDir:
     PREFIX = "fun-"
 
     def test_make(self, tmp_path):
@@ -348,8 +342,6 @@ class TestNumberedDir(object):
 def attempt_symlink_to(path, to_path):
     """Try to make a symlink from "path" to "to_path", skipping in case this platform
     does not support it or we don't have sufficient privileges (common on Windows)."""
-    if sys.platform.startswith("win") and six.PY2:
-        pytest.skip("pathlib for some reason cannot make symlinks on Python 2")
     try:
         Path(path).symlink_to(Path(to_path))
     except OSError:

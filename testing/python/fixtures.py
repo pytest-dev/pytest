@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import sys
 import textwrap
 
@@ -32,7 +31,7 @@ def test_getfuncargnames():
 
     assert fixtures.getfuncargnames(h) == ("arg1", "arg2")
 
-    class A(object):
+    class A:
         def f(self, arg1, arg2="hello"):
             pass
 
@@ -45,7 +44,7 @@ def test_getfuncargnames():
 
 
 @pytest.mark.pytester_example_path("fixtures/fill_fixtures")
-class TestFillFixtures(object):
+class TestFillFixtures:
     def test_fillfuncargs_exposed(self):
         # used by oejskit, kept for compatibility
         assert pytest._fillfuncargs == fixtures.fillfixtures
@@ -443,7 +442,7 @@ class TestFillFixtures(object):
         assert result.ret == 0
 
 
-class TestRequestBasic(object):
+class TestRequestBasic:
     def test_request_attributes(self, testdir):
         item = testdir.getitem(
             """
@@ -902,7 +901,7 @@ class TestRequestBasic(object):
         reprec.assertoutcome(passed=2)
 
 
-class TestRequestMarking(object):
+class TestRequestMarking:
     def test_applymarker(self, testdir):
         item1, item2 = testdir.getitems(
             """
@@ -972,7 +971,7 @@ class TestRequestMarking(object):
         reprec.assertoutcome(passed=2)
 
 
-class TestFixtureUsages(object):
+class TestFixtureUsages:
     def test_noargfixturedec(self, testdir):
         testdir.makepyfile(
             """
@@ -1303,7 +1302,7 @@ class TestFixtureUsages(object):
         result.stdout.fnmatch_lines(["* 2 passed in *"])
 
 
-class TestFixtureManagerParseFactories(object):
+class TestFixtureManagerParseFactories:
     @pytest.fixture
     def testdir(self, request):
         testdir = request.getfixturevalue("testdir")
@@ -1358,9 +1357,8 @@ class TestFixtureManagerParseFactories(object):
 
     def test_parsefactories_conftest_and_module_and_class(self, testdir):
         testdir.makepyfile(
-            """
+            """\
             import pytest
-            import six
 
             @pytest.fixture
             def hello(request):
@@ -1377,7 +1375,7 @@ class TestFixtureManagerParseFactories(object):
                     assert faclist[0].func(item._request) == "conftest"
                     assert faclist[1].func(item._request) == "module"
                     assert faclist[2].func(item._request) == "class"
-        """
+            """
         )
         reprec = testdir.inline_run("-s")
         reprec.assertoutcome(passed=1)
@@ -1529,7 +1527,7 @@ class TestFixtureManagerParseFactories(object):
         result.stdout.fnmatch_lines(["*passed*"])
 
 
-class TestAutouseDiscovery(object):
+class TestAutouseDiscovery:
     @pytest.fixture
     def testdir(self, testdir):
         testdir.makeconftest(
@@ -1705,7 +1703,7 @@ class TestAutouseDiscovery(object):
         reprec.assertoutcome(passed=3)
 
 
-class TestAutouseManagement(object):
+class TestAutouseManagement:
     def test_autouse_conftest_mid_directory(self, testdir):
         pkgdir = testdir.mkpydir("xyz123")
         pkgdir.join("conftest.py").write(
@@ -1953,7 +1951,7 @@ class TestAutouseManagement(object):
         reprec.assertoutcome(passed=2)
 
 
-class TestFixtureMarker(object):
+class TestFixtureMarker:
     def test_parametrize(self, testdir):
         testdir.makepyfile(
             """
@@ -2909,7 +2907,7 @@ class TestFixtureMarker(object):
         assert out1 == out2
 
 
-class TestRequestScopeAccess(object):
+class TestRequestScopeAccess:
     pytestmark = pytest.mark.parametrize(
         ("scope", "ok", "error"),
         [
@@ -2963,7 +2961,7 @@ class TestRequestScopeAccess(object):
         reprec.assertoutcome(passed=1)
 
 
-class TestErrors(object):
+class TestErrors:
     def test_subfactory_missing_funcarg(self, testdir):
         testdir.makepyfile(
             """
@@ -3030,7 +3028,7 @@ class TestErrors(object):
         )
 
 
-class TestShowFixtures(object):
+class TestShowFixtures:
     def test_funcarg_compat(self, testdir):
         config = testdir.parseconfigure("--funcargs")
         assert config.option.showfixtures
@@ -3318,7 +3316,7 @@ class TestShowFixtures(object):
                 pass
 
 
-class TestContextManagerFixtureFuncs(object):
+class TestContextManagerFixtureFuncs:
     @pytest.fixture(params=["fixture", "yield_fixture"])
     def flavor(self, request, testdir, monkeypatch):
         monkeypatch.setenv("PYTEST_FIXTURE_FLAVOR", request.param)
@@ -3339,7 +3337,6 @@ class TestContextManagerFixtureFuncs(object):
     def test_simple(self, testdir, flavor):
         testdir.makepyfile(
             """
-            from __future__ import print_function
             from test_context import fixture
             @fixture
             def arg1():
@@ -3368,7 +3365,6 @@ class TestContextManagerFixtureFuncs(object):
     def test_scoped(self, testdir, flavor):
         testdir.makepyfile(
             """
-            from __future__ import print_function
             from test_context import fixture
             @fixture(scope="module")
             def arg1():
@@ -3466,7 +3462,7 @@ class TestContextManagerFixtureFuncs(object):
         result.stdout.fnmatch_lines(["*mew*"])
 
 
-class TestParameterizedSubRequest(object):
+class TestParameterizedSubRequest:
     def test_call_from_fixture(self, testdir):
         testdir.makepyfile(
             test_call_from_fixture="""
@@ -3602,7 +3598,6 @@ class TestParameterizedSubRequest(object):
 def test_pytest_fixture_setup_and_post_finalizer_hook(testdir):
     testdir.makeconftest(
         """
-        from __future__ import print_function
         def pytest_fixture_setup(fixturedef, request):
             print('ROOT setup hook called for {0} from {1}'.format(fixturedef.argname, request.node.name))
         def pytest_fixture_post_finalizer(fixturedef, request):
@@ -3612,14 +3607,12 @@ def test_pytest_fixture_setup_and_post_finalizer_hook(testdir):
     testdir.makepyfile(
         **{
             "tests/conftest.py": """
-            from __future__ import print_function
             def pytest_fixture_setup(fixturedef, request):
                 print('TESTS setup hook called for {0} from {1}'.format(fixturedef.argname, request.node.name))
             def pytest_fixture_post_finalizer(fixturedef, request):
                 print('TESTS finalizer hook called for {0} from {1}'.format(fixturedef.argname, request.node.name))
         """,
             "tests/test_hooks.py": """
-            from __future__ import print_function
             import pytest
 
             @pytest.fixture()
@@ -3645,7 +3638,7 @@ def test_pytest_fixture_setup_and_post_finalizer_hook(testdir):
     )
 
 
-class TestScopeOrdering(object):
+class TestScopeOrdering:
     """Class of tests that ensure fixtures are ordered based on their scopes (#2405)"""
 
     @pytest.mark.parametrize("variant", ["mark", "autouse"])

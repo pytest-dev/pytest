@@ -1,14 +1,7 @@
-# -*- coding: utf-8 -*-
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
-import sys
-
 import pytest
 
 
-class TestPasteCapture(object):
+class TestPasteCapture:
     @pytest.fixture
     def pastebinlist(self, monkeypatch, request):
         pastebinlist = []
@@ -67,17 +60,13 @@ class TestPasteCapture(object):
         correctly. See #1219.
         """
         testdir.makepyfile(
-            test_unicode="""
-            # -*- coding: utf-8 -*-
+            test_unicode="""\
             def test():
                 assert '☺' == 1
-        """
+            """
         )
         result = testdir.runpytest("--pastebin=all")
-        if sys.version_info[0] == 3:
-            expected_msg = "*assert '☺' == 1*"
-        else:
-            expected_msg = "*assert '\\xe2\\x98\\xba' == 1*"
+        expected_msg = "*assert '☺' == 1*"
         result.stdout.fnmatch_lines(
             [
                 expected_msg,
@@ -87,7 +76,7 @@ class TestPasteCapture(object):
         )
 
 
-class TestPaste(object):
+class TestPaste:
     @pytest.fixture
     def pastebin(self, request):
         return request.config.pluginmanager.getplugin("pastebin")
@@ -103,21 +92,16 @@ class TestPaste(object):
         def mocked(url, data):
             calls.append((url, data))
 
-            class DummyFile(object):
+            class DummyFile:
                 def read(self):
                     # part of html of a normal response
                     return b'View <a href="/raw/3c0c6750bd">raw</a>.'
 
             return DummyFile()
 
-        if sys.version_info < (3, 0):
-            import urllib
+        import urllib.request
 
-            monkeypatch.setattr(urllib, "urlopen", mocked)
-        else:
-            import urllib.request
-
-            monkeypatch.setattr(urllib.request, "urlopen", mocked)
+        monkeypatch.setattr(urllib.request, "urlopen", mocked)
         return calls
 
     def test_create_new_paste(self, pastebin, mocked_urlopen):
@@ -126,7 +110,7 @@ class TestPaste(object):
         assert len(mocked_urlopen) == 1
         url, data = mocked_urlopen[0]
         assert type(data) is bytes
-        lexer = "python3" if sys.version_info[0] == 3 else "python"
+        lexer = "python3"
         assert url == "https://bpaste.net"
         assert "lexer=%s" % lexer in data.decode()
         assert "code=full-paste-contents" in data.decode()

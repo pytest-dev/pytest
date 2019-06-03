@@ -1,8 +1,3 @@
-# -*- coding: utf-8 -*-
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 import os
 import sys
 import textwrap
@@ -11,7 +6,6 @@ import types
 import attr
 import importlib_metadata
 import py
-import six
 
 import pytest
 from _pytest.main import EXIT_NOTESTSCOLLECTED
@@ -26,7 +20,7 @@ def prepend_pythonpath(*dirs):
     return os.pathsep.join(str(p) for p in dirs)
 
 
-class TestGeneralUsage(object):
+class TestGeneralUsage:
     def test_config_error(self, testdir):
         testdir.copy_example("conftest_usageerror/conftest.py")
         result = testdir.runpytest(testdir.tmpdir)
@@ -120,7 +114,7 @@ class TestGeneralUsage(object):
         loaded = []
 
         @attr.s
-        class DummyEntryPoint(object):
+        class DummyEntryPoint:
             name = attr.ib()
             module = attr.ib()
             group = "pytest11"
@@ -137,7 +131,7 @@ class TestGeneralUsage(object):
         ]
 
         @attr.s
-        class DummyDist(object):
+        class DummyDist:
             entry_points = attr.ib()
             files = ()
 
@@ -176,7 +170,6 @@ class TestGeneralUsage(object):
         result = testdir.runpytest(p)
         result.stdout.fnmatch_lines(
             [
-                # XXX on jython this fails:  ">   import import_fails",
                 "ImportError while importing test module*",
                 "*No module named *does_not_work*",
             ]
@@ -222,9 +215,7 @@ class TestGeneralUsage(object):
                 "    foo()",
                 "conftest.py:2: in foo",
                 "    import qwerty",
-                "E   {}: No module named {q}qwerty{q}".format(
-                    exc_name, q="'" if six.PY3 else ""
-                ),
+                "E   {}: No module named 'qwerty'".format(exc_name),
             ]
         )
 
@@ -516,20 +507,19 @@ class TestGeneralUsage(object):
     def test_parametrized_with_null_bytes(self, testdir):
         """Test parametrization with values that contain null bytes and unicode characters (#2644, #2957)"""
         p = testdir.makepyfile(
-            u"""
-            # encoding: UTF-8
+            """\
             import pytest
 
             @pytest.mark.parametrize("data", [b"\\x00", "\\x00", u'ação'])
             def test_foo(data):
                 assert data
-        """
+            """
         )
         res = testdir.runpytest(p)
         res.assert_outcomes(passed=3)
 
 
-class TestInvocationVariants(object):
+class TestInvocationVariants:
     def test_earlyinit(self, testdir):
         p = testdir.makepyfile(
             """
@@ -540,7 +530,6 @@ class TestInvocationVariants(object):
         result = testdir.runpython(p)
         assert result.ret == 0
 
-    @pytest.mark.xfail("sys.platform.startswith('java')")
     def test_pydoc(self, testdir):
         for name in ("py.test", "pytest"):
             result = testdir.runpython_c("import {};help({})".format(name, name))
@@ -627,7 +616,7 @@ class TestInvocationVariants(object):
         out, err = capsys.readouterr()
 
     def test_invoke_plugin_api(self, testdir, capsys):
-        class MyPlugin(object):
+        class MyPlugin:
             def pytest_addoption(self, parser):
                 parser.addoption("--myopt")
 
@@ -765,7 +754,7 @@ class TestInvocationVariants(object):
                     str(testdir.tmpdir.join("tmpfile2")),
                 )
             except OSError as e:
-                pytest.skip(six.text_type(e.args[0]))
+                pytest.skip(str(e.args[0]))
         monkeypatch.delenv("PYTHONDONTWRITEBYTECODE", raising=False)
 
         dirname = "lib"
@@ -783,10 +772,7 @@ class TestInvocationVariants(object):
 
         d_local = testdir.mkdir("local")
         symlink_location = os.path.join(str(d_local), "lib")
-        if six.PY2:
-            os.symlink(str(d), symlink_location)
-        else:
-            os.symlink(str(d), symlink_location, target_is_directory=True)
+        os.symlink(str(d), symlink_location, target_is_directory=True)
 
         # The structure of the test directory is now:
         # .
@@ -883,7 +869,7 @@ class TestInvocationVariants(object):
         assert request.config.pluginmanager.hasplugin("python")
 
 
-class TestDurations(object):
+class TestDurations:
     source = """
         import time
         frag = 0.002
@@ -961,7 +947,7 @@ class TestDurations(object):
         assert result.ret == 0
 
 
-class TestDurationWithFixture(object):
+class TestDurationWithFixture:
     source = """
         import pytest
         import time
@@ -1185,9 +1171,6 @@ def test_usage_error_code(testdir):
     assert result.ret == EXIT_USAGEERROR
 
 
-@pytest.mark.skipif(
-    sys.version_info[:2] < (3, 5), reason="async def syntax python 3.5+ only"
-)
 @pytest.mark.filterwarnings("default")
 def test_warn_on_async_function(testdir):
     testdir.makepyfile(

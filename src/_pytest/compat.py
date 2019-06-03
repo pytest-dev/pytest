@@ -1,64 +1,28 @@
-# -*- coding: utf-8 -*-
 """
 python version compatibility code
 """
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
-import codecs
 import functools
 import inspect
+import io
 import re
 import sys
 from contextlib import contextmanager
+from inspect import Parameter
+from inspect import signature
 
 import py
-import six
-from six import text_type
 
 import _pytest
 from _pytest._io.saferepr import saferepr
 from _pytest.outcomes import fail
 from _pytest.outcomes import TEST_OUTCOME
 
-try:
-    import enum
-except ImportError:  # pragma: no cover
-    # Only available in Python 3.4+ or as a backport
-    enum = None
-
-_PY3 = sys.version_info > (3, 0)
-_PY2 = not _PY3
-
-
-if _PY3:
-    from inspect import signature, Parameter as Parameter
-else:
-    from funcsigs import signature, Parameter as Parameter
 
 NOTSET = object()
 
-PY35 = sys.version_info[:2] >= (3, 5)
-PY36 = sys.version_info[:2] >= (3, 6)
-MODULE_NOT_FOUND_ERROR = "ModuleNotFoundError" if PY36 else "ImportError"
-
-
-if _PY3:
-    from collections.abc import MutableMapping as MappingMixin
-    from collections.abc import Iterable, Mapping, Sequence, Sized
-else:
-    # those raise DeprecationWarnings in Python >=3.7
-    from collections import MutableMapping as MappingMixin  # noqa
-    from collections import Iterable, Mapping, Sequence, Sized  # noqa
-
-
-if sys.version_info >= (3, 4):
-    from importlib.util import spec_from_file_location
-else:
-
-    def spec_from_file_location(*_, **__):
-        return None
+MODULE_NOT_FOUND_ERROR = (
+    "ModuleNotFoundError" if sys.version_info[:2] >= (3, 6) else "ImportError"
+)
 
 
 def _format_args(func):
@@ -184,10 +148,10 @@ def get_default_arg_names(function):
 
 
 _non_printable_ascii_translate_table = {
-    i: u"\\x{:02x}".format(i) for i in range(128) if i not in range(32, 127)
+    i: "\\x{:02x}".format(i) for i in range(128) if i not in range(32, 127)
 }
 _non_printable_ascii_translate_table.update(
-    {ord("\t"): u"\\t", ord("\r"): u"\\r", ord("\n"): u"\\n"}
+    {ord("\t"): "\\t", ord("\r"): "\\r", ord("\n"): "\\n"}
 )
 
 
@@ -195,75 +159,39 @@ def _translate_non_printable(s):
     return s.translate(_non_printable_ascii_translate_table)
 
 
-if _PY3:
-    STRING_TYPES = bytes, str
-    UNICODE_TYPES = six.text_type
+STRING_TYPES = bytes, str
 
-    if PY35:
 
-        def _bytes_to_ascii(val):
-            return val.decode("ascii", "backslashreplace")
+def _bytes_to_ascii(val):
+    return val.decode("ascii", "backslashreplace")
 
+
+def ascii_escaped(val):
+    """If val is pure ascii, returns it as a str().  Otherwise, escapes
+    bytes objects into a sequence of escaped bytes:
+
+    b'\xc3\xb4\xc5\xd6' -> u'\\xc3\\xb4\\xc5\\xd6'
+
+    and escapes unicode objects into a sequence of escaped unicode
+    ids, e.g.:
+
+    '4\\nV\\U00043efa\\x0eMXWB\\x1e\\u3028\\u15fd\\xcd\\U0007d944'
+
+    note:
+       the obvious "v.decode('unicode-escape')" will return
+       valid utf-8 unicode if it finds them in bytes, but we
+       want to return escaped bytes for any byte, even if they match
+       a utf-8 string.
+
+    """
+    if isinstance(val, bytes):
+        ret = _bytes_to_ascii(val)
     else:
-
-        def _bytes_to_ascii(val):
-            if val:
-                # source: http://goo.gl/bGsnwC
-                encoded_bytes, _ = codecs.escape_encode(val)
-                return encoded_bytes.decode("ascii")
-            else:
-                # empty bytes crashes codecs.escape_encode (#1087)
-                return ""
-
-    def ascii_escaped(val):
-        """If val is pure ascii, returns it as a str().  Otherwise, escapes
-        bytes objects into a sequence of escaped bytes:
-
-        b'\xc3\xb4\xc5\xd6' -> u'\\xc3\\xb4\\xc5\\xd6'
-
-        and escapes unicode objects into a sequence of escaped unicode
-        ids, e.g.:
-
-        '4\\nV\\U00043efa\\x0eMXWB\\x1e\\u3028\\u15fd\\xcd\\U0007d944'
-
-        note:
-           the obvious "v.decode('unicode-escape')" will return
-           valid utf-8 unicode if it finds them in bytes, but we
-           want to return escaped bytes for any byte, even if they match
-           a utf-8 string.
-
-        """
-        if isinstance(val, bytes):
-            ret = _bytes_to_ascii(val)
-        else:
-            ret = val.encode("unicode_escape").decode("ascii")
-        return _translate_non_printable(ret)
+        ret = val.encode("unicode_escape").decode("ascii")
+    return _translate_non_printable(ret)
 
 
-else:
-    STRING_TYPES = six.string_types
-    UNICODE_TYPES = six.text_type
-
-    def ascii_escaped(val):
-        """In py2 bytes and str are the same type, so return if it's a bytes
-        object, return it unchanged if it is a full ascii string,
-        otherwise escape it into its binary form.
-
-        If it's a unicode string, change the unicode characters into
-        unicode escapes.
-
-        """
-        if isinstance(val, bytes):
-            try:
-                ret = val.decode("ascii")
-            except UnicodeDecodeError:
-                ret = val.encode("string-escape").decode("ascii")
-        else:
-            ret = val.encode("unicode-escape").decode("ascii")
-        return _translate_non_printable(ret)
-
-
-class _PytestWrapper(object):
+class _PytestWrapper:
     """Dummy wrapper around a function object for internal use only.
 
     Used to correctly unwrap the underlying function object
@@ -357,36 +285,6 @@ def safe_isclass(obj):
         return False
 
 
-def _is_unittest_unexpected_success_a_failure():
-    """Return if the test suite should fail if an @expectedFailure unittest test PASSES.
-
-    From https://docs.python.org/3/library/unittest.html?highlight=unittest#unittest.TestResult.wasSuccessful:
-        Changed in version 3.4: Returns False if there were any
-        unexpectedSuccesses from tests marked with the expectedFailure() decorator.
-    """
-    return sys.version_info >= (3, 4)
-
-
-if _PY3:
-
-    def safe_str(v):
-        """returns v as string"""
-        return str(v)
-
-
-else:
-
-    def safe_str(v):
-        """returns v as string, converting to ascii if necessary"""
-        try:
-            return str(v)
-        except UnicodeError:
-            if not isinstance(v, text_type):
-                v = text_type(v)
-            errors = "replace"
-            return v.encode("utf-8", errors)
-
-
 COLLECT_FAKEMODULE_ATTRIBUTES = (
     "Collector",
     "Module",
@@ -410,30 +308,15 @@ def _setup_collect_fakemodule():
         setattr(pytest.collect, attr, getattr(pytest, attr))
 
 
-if _PY2:
-    # Without this the test_dupfile_on_textio will fail, otherwise CaptureIO could directly inherit from StringIO.
-    from py.io import TextIO
+class CaptureIO(io.TextIOWrapper):
+    def __init__(self):
+        super().__init__(io.BytesIO(), encoding="UTF-8", newline="", write_through=True)
 
-    class CaptureIO(TextIO):
-        @property
-        def encoding(self):
-            return getattr(self, "_encoding", "UTF-8")
+    def getvalue(self):
+        return self.buffer.getvalue().decode("UTF-8")
 
 
-else:
-    import io
-
-    class CaptureIO(io.TextIOWrapper):
-        def __init__(self):
-            super(CaptureIO, self).__init__(
-                io.BytesIO(), encoding="UTF-8", newline="", write_through=True
-            )
-
-        def getvalue(self):
-            return self.buffer.getvalue().decode("UTF-8")
-
-
-class FuncargnamesCompatAttr(object):
+class FuncargnamesCompatAttr:
     """ helper class so that Metafunc, Function and FixtureRequest
     don't need to each define the "funcargnames" compatibility attribute.
     """
@@ -442,16 +325,3 @@ class FuncargnamesCompatAttr(object):
     def funcargnames(self):
         """ alias attribute for ``fixturenames`` for pre-2.3 compatibility"""
         return self.fixturenames
-
-
-if six.PY2:
-
-    def lru_cache(*_, **__):
-        def dec(fn):
-            return fn
-
-        return dec
-
-
-else:
-    from functools import lru_cache  # noqa: F401

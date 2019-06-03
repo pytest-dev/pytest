@@ -1,23 +1,17 @@
-# -*- coding: utf-8 -*-
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 import operator
 import os
+import queue
 import sys
 import textwrap
 
 import py
-import six
-from six.moves import queue
 
 import _pytest
 import pytest
 from _pytest._code.code import ExceptionChainRepr
 from _pytest._code.code import ExceptionInfo
 from _pytest._code.code import FormattedExcinfo
-from _pytest._code.code import ReprExceptionInfo
+
 
 try:
     import importlib
@@ -25,8 +19,6 @@ except ImportError:
     invalidate_import_caches = None
 else:
     invalidate_import_caches = getattr(importlib, "invalidate_caches", None)
-
-failsonjython = pytest.mark.xfail("sys.platform.startswith('java')")
 
 pytest_version_info = tuple(map(int, pytest.__version__.split(".")[:3]))
 
@@ -39,7 +31,7 @@ def limited_recursion_depth():
     sys.setrecursionlimit(before)
 
 
-class TWMock(object):
+class TWMock:
     WRITE = object()
 
     def __init__(self):
@@ -120,7 +112,7 @@ def h():
     #
 
 
-class TestTraceback_f_g_h(object):
+class TestTraceback_f_g_h:
     def setup_method(self, method):
         try:
             h()
@@ -146,7 +138,6 @@ class TestTraceback_f_g_h(object):
         assert s.startswith("def f():")
         assert s.endswith("raise ValueError")
 
-    @failsonjython
     def test_traceback_entry_getsource_in_construct(self):
         source = _pytest._code.Source(
             """\
@@ -260,7 +251,7 @@ class TestTraceback_f_g_h(object):
             import sys
 
             exc, val, tb = sys.exc_info()
-            six.reraise(exc, val, tb)
+            raise val.with_traceback(tb)
 
         def f(n):
             try:
@@ -437,7 +428,7 @@ def test_match_raises_error(testdir):
     result.stdout.fnmatch_lines(["*AssertionError*Pattern*[123]*not found*"])
 
 
-class TestFormattedExcinfo(object):
+class TestFormattedExcinfo:
     @pytest.fixture
     def importasmod(self, request, _sys_snapshot):
         def importasmod(source):
@@ -500,8 +491,7 @@ class TestFormattedExcinfo(object):
             excinfo = _pytest._code.ExceptionInfo.from_current()
         repr = pr.repr_excinfo(excinfo)
         assert repr.reprtraceback.reprentries[1].lines[0] == ">   ???"
-        if sys.version_info[0] >= 3:
-            assert repr.chain[0][0].reprentries[1].lines[0] == ">   ???"
+        assert repr.chain[0][0].reprentries[1].lines[0] == ">   ???"
 
     def test_repr_many_line_source_not_existing(self):
         pr = FormattedExcinfo()
@@ -519,14 +509,13 @@ raise ValueError()
             excinfo = _pytest._code.ExceptionInfo.from_current()
         repr = pr.repr_excinfo(excinfo)
         assert repr.reprtraceback.reprentries[1].lines[0] == ">   ???"
-        if sys.version_info[0] >= 3:
-            assert repr.chain[0][0].reprentries[1].lines[0] == ">   ???"
+        assert repr.chain[0][0].reprentries[1].lines[0] == ">   ???"
 
     def test_repr_source_failing_fullsource(self):
         pr = FormattedExcinfo()
 
-        class FakeCode(object):
-            class raw(object):
+        class FakeCode:
+            class raw:
                 co_filename = "?"
 
             path = "?"
@@ -537,7 +526,7 @@ raise ValueError()
 
             fullsource = property(fullsource)
 
-        class FakeFrame(object):
+        class FakeFrame:
             code = FakeCode()
             f_locals = {}
             f_globals = {}
@@ -568,7 +557,7 @@ raise ValueError()
 
         excinfo = FakeExcinfo()
 
-        class FakeRawTB(object):
+        class FakeRawTB:
             tb_next = None
 
         tb = FakeRawTB()
@@ -577,14 +566,12 @@ raise ValueError()
         fail = IOError()
         repr = pr.repr_excinfo(excinfo)
         assert repr.reprtraceback.reprentries[0].lines[0] == ">   ???"
-        if sys.version_info[0] >= 3:
-            assert repr.chain[0][0].reprentries[0].lines[0] == ">   ???"
+        assert repr.chain[0][0].reprentries[0].lines[0] == ">   ???"
 
         fail = py.error.ENOENT  # noqa
         repr = pr.repr_excinfo(excinfo)
         assert repr.reprtraceback.reprentries[0].lines[0] == ">   ???"
-        if sys.version_info[0] >= 3:
-            assert repr.chain[0][0].reprentries[0].lines[0] == ">   ???"
+        assert repr.chain[0][0].reprentries[0].lines[0] == ">   ???"
 
     def test_repr_local(self):
         p = FormattedExcinfo(showlocals=True)
@@ -828,9 +815,9 @@ raise ValueError()
             repr = p.repr_excinfo(excinfo)
             assert repr.reprtraceback
             assert len(repr.reprtraceback.reprentries) == len(reprtb.reprentries)
-            if sys.version_info[0] >= 3:
-                assert repr.chain[0][0]
-                assert len(repr.chain[0][0].reprentries) == len(reprtb.reprentries)
+
+            assert repr.chain[0][0]
+            assert len(repr.chain[0][0].reprentries) == len(reprtb.reprentries)
             assert repr.reprcrash.path.endswith("mod.py")
             assert repr.reprcrash.message == "ValueError: 0"
 
@@ -916,23 +903,21 @@ raise ValueError()
         for style in ("short", "long", "no"):
             for showlocals in (True, False):
                 repr = excinfo.getrepr(style=style, showlocals=showlocals)
-                if sys.version_info[0] < 3:
-                    assert isinstance(repr, ReprExceptionInfo)
                 assert repr.reprtraceback.style == style
-                if sys.version_info[0] >= 3:
-                    assert isinstance(repr, ExceptionChainRepr)
-                    for repr in repr.chain:
-                        assert repr[0].style == style
+
+                assert isinstance(repr, ExceptionChainRepr)
+                for repr in repr.chain:
+                    assert repr[0].style == style
 
     def test_reprexcinfo_unicode(self):
         from _pytest._code.code import TerminalRepr
 
         class MyRepr(TerminalRepr):
             def toterminal(self, tw):
-                tw.line(u"я")
+                tw.line("я")
 
-        x = six.text_type(MyRepr())
-        assert x == u"я"
+        x = str(MyRepr())
+        assert x == "я"
 
     def test_toterminal_long(self, importasmod):
         mod = importasmod(
@@ -1133,7 +1118,6 @@ raise ValueError()
         msg.endswith("mod.py")
         assert tw.lines[20] == ":9: ValueError"
 
-    @pytest.mark.skipif("sys.version_info[0] < 3")
     def test_exc_chain_repr(self, importasmod):
         mod = importasmod(
             """
@@ -1219,7 +1203,6 @@ raise ValueError()
         assert line.endswith("mod.py")
         assert tw.lines[47] == ":15: AttributeError"
 
-    @pytest.mark.skipif("sys.version_info[0] < 3")
     @pytest.mark.parametrize("mode", ["from_none", "explicit_suppress"])
     def test_exc_repr_chain_suppression(self, importasmod, mode):
         """Check that exc repr does not show chained exceptions in Python 3.
@@ -1261,7 +1244,6 @@ raise ValueError()
         assert tw.lines[9] == ":6: AttributeError"
         assert len(tw.lines) == 10
 
-    @pytest.mark.skipif("sys.version_info[0] < 3")
     @pytest.mark.parametrize(
         "reason, description",
         [
@@ -1321,7 +1303,6 @@ raise ValueError()
             ]
         )
 
-    @pytest.mark.skipif("sys.version_info[0] < 3")
     def test_exc_chain_repr_cycle(self, importasmod):
         mod = importasmod(
             """
@@ -1369,7 +1350,7 @@ raise ValueError()
 @pytest.mark.parametrize("style", ["short", "long"])
 @pytest.mark.parametrize("encoding", [None, "utf8", "utf16"])
 def test_repr_traceback_with_unicode(style, encoding):
-    msg = u"☹"
+    msg = "☹"
     if encoding is not None:
         msg = msg.encode(encoding)
     try:
@@ -1403,7 +1384,7 @@ def test_exception_repr_extraction_error_on_recursion():
     """
     from _pytest.pytester import LineMatcher
 
-    class numpy_like(object):
+    class numpy_like:
         def __eq__(self, other):
             if type(other) is numpy_like:
                 raise ValueError(
@@ -1437,7 +1418,7 @@ def test_no_recursion_index_on_recursion_error():
     during a recursion error (#2486).
     """
 
-    class RecursionDepthError(object):
+    class RecursionDepthError:
         def __getattr__(self, attr):
             return getattr(self, "_" + attr)
 

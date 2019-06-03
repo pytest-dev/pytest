@@ -23,4 +23,4 @@ back-porting patches to the ``4.6-maintenance`` branch that affect Python 2 user
 branch will continue to exist so the community itself can contribute patches. The core team will
 be happy to accept those patches and make new ``4.6`` releases **until mid-2020**.
 
-.. _`python_requires`: https://packaging.python.org/guides/distributing-packages-using-setuptools/#python-requires>
+.. _`python_requires`: https://packaging.python.org/guides/distributing-packages-using-setuptools/#python-requires

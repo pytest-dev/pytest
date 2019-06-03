@@ -1,10 +1,6 @@
-# -*- coding: utf-8 -*-
 """ Python test discovery, setup and run of test functions. """
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 import collections
+import enum
 import fnmatch
 import inspect
 import os
@@ -14,7 +10,6 @@ from functools import partial
 from textwrap import dedent
 
 import py
-import six
 
 import _pytest
 from _pytest import deprecated
@@ -22,7 +17,6 @@ from _pytest import fixtures
 from _pytest import nodes
 from _pytest._code import filter_traceback
 from _pytest.compat import ascii_escaped
-from _pytest.compat import enum
 from _pytest.compat import get_default_arg_names
 from _pytest.compat import get_real_func
 from _pytest.compat import getfslineno
@@ -35,7 +29,6 @@ from _pytest.compat import NOTSET
 from _pytest.compat import REGEX_TYPE
 from _pytest.compat import safe_getattr
 from _pytest.compat import safe_isclass
-from _pytest.compat import safe_str
 from _pytest.compat import STRING_TYPES
 from _pytest.config import hookimpl
 from _pytest.main import FSHookProxy
@@ -55,8 +48,8 @@ def pyobj_property(name):
         if node is not None:
             return node.obj
 
-    doc = "python %s object this node was collected from (can be None)." % (
-        name.lower(),
+    doc = "python {} object this node was collected from (can be None).".format(
+        name.lower()
     )
     return property(get, None, None, doc)
 
@@ -239,7 +232,7 @@ def pytest_make_parametrize_id(config, val, argname=None):
     return None
 
 
-class PyobjContext(object):
+class PyobjContext:
     module = pyobj_property("Module")
     cls = pyobj_property("Class")
     instance = pyobj_property("Instance")
@@ -249,7 +242,7 @@ class PyobjMixin(PyobjContext):
     _ALLOW_MARKERS = True
 
     def __init__(self, *k, **kw):
-        super(PyobjMixin, self).__init__(*k, **kw)
+        super().__init__(*k, **kw)
 
     @property
     def obj(self):
@@ -421,7 +414,7 @@ class PyCollector(PyobjMixin, nodes.Collector):
             fixtureinfo.prune_dependency_tree()
 
             for callspec in metafunc._calls:
-                subname = "%s[%s]" % (name, callspec.id)
+                subname = "{}[{}]".format(name, callspec.id)
                 yield Function(
                     name=subname,
                     parent=self,
@@ -443,7 +436,7 @@ class Module(nodes.File, PyCollector):
         self._inject_setup_module_fixture()
         self._inject_setup_function_fixture()
         self.session._fixturemanager.parsefactories(self)
-        return super(Module, self).collect()
+        return super().collect()
 
     def _inject_setup_module_fixture(self):
         """Injects a hidden autouse, module scoped fixture into the collected module object
@@ -531,7 +524,7 @@ class Module(nodes.File, PyCollector):
                 if exc_info.traceback
                 else exc_info.exconly()
             )
-            formatted_tb = safe_str(exc_repr)
+            formatted_tb = str(exc_repr)
             raise self.CollectError(
                 "ImportError while importing test module '{fspath}'.\n"
                 "Hint: make sure your test modules/packages have valid Python names.\n"
@@ -606,11 +599,10 @@ class Package(Module):
         return proxy
 
     def _collectfile(self, path, handle_dupes=True):
-        assert path.isfile(), "%r is not a file (isdir=%r, exists=%r, islink=%r)" % (
-            path,
-            path.isdir(),
-            path.exists(),
-            path.islink(),
+        assert (
+            path.isfile()
+        ), "{!r} is not a file (isdir={!r}, exists={!r}, islink={!r})".format(
+            path, path.isdir(), path.exists(), path.islink()
         )
         ihook = self.gethookproxy(path)
         if not self.isinitpath(path):
@@ -657,8 +649,7 @@ class Package(Module):
                 continue
 
             if is_file:
-                for x in self._collectfile(path):
-                    yield x
+                yield from self._collectfile(path)
             elif not path.isdir():
                 # Broken symlink or invalid/missing file.
                 continue
@@ -800,7 +791,7 @@ class Instance(PyCollector):
 
     def collect(self):
         self.session._fixturemanager.parsefactories(self)
-        return super(Instance, self).collect()
+        return super().collect()
 
     def newinstance(self):
         self.obj = self._getobj()
@@ -858,7 +849,7 @@ def hasnew(obj):
         return new != object.__new__
 
 
-class CallSpec2(object):
+class CallSpec2:
     def __init__(self, metafunc):
         self.metafunc = metafunc
         self.funcargs = {}
@@ -884,7 +875,7 @@ class CallSpec2(object):
 
     def _checkargnotcontained(self, arg):
         if arg in self.params or arg in self.funcargs:
-            raise ValueError("duplicate %r" % (arg,))
+            raise ValueError("duplicate {!r}".format(arg))
 
     def getparam(self, name):
         try:
@@ -1060,7 +1051,7 @@ class Metafunc(fixtures.FuncargnamesCompatAttr):
                 msg = "In {}: {} parameter sets specified, with different number of ids: {}"
                 fail(msg.format(func_name, len(parameters), len(ids)), pytrace=False)
             for id_value in ids:
-                if id_value is not None and not isinstance(id_value, six.string_types):
+                if id_value is not None and not isinstance(id_value, str):
                     msg = "In {}: ids must be list of strings, found: {} (type: {!r})"
                     fail(
                         msg.format(func_name, saferepr(id_value), type(id_value)),
@@ -1183,7 +1174,7 @@ def _idval(val, argname, idx, idfn, item, config):
             msg = msg.format(item.nodeid, argname, idx)
             # we only append the exception type and message because on Python 2 reraise does nothing
             msg += "  {}: {}\n".format(type(e).__name__, e)
-            six.raise_from(ValueError(msg), e)
+            raise ValueError(msg) from e
     elif config:
         hook_id = config.hook.pytest_make_parametrize_id(
             config=config, val=val, argname=argname
@@ -1335,7 +1326,7 @@ def _showfixtures_main(config, session):
         if currentmodule != module:
             if not module.startswith("_pytest."):
                 tw.line()
-                tw.sep("-", "fixtures defined from %s" % (module,))
+                tw.sep("-", "fixtures defined from {}".format(module))
                 currentmodule = module
         if verbose <= 0 and argname[0] == "_":
             continue
@@ -1350,7 +1341,7 @@ def _showfixtures_main(config, session):
         if doc:
             write_docstring(tw, doc)
         else:
-            tw.line("    %s: no docstring available" % (loc,), red=True)
+            tw.line("    {}: no docstring available".format(loc), red=True)
         tw.line()
 
 
@@ -1390,7 +1381,7 @@ class Function(FunctionMixin, nodes.Item, fixtures.FuncargnamesCompatAttr):
         fixtureinfo=None,
         originalname=None,
     ):
-        super(Function, self).__init__(name, parent, config=config, session=session)
+        super().__init__(name, parent, config=config, session=session)
         self._args = args
         if callobj is not NOTSET:
             self.obj = callobj
@@ -1464,7 +1455,7 @@ class Function(FunctionMixin, nodes.Item, fixtures.FuncargnamesCompatAttr):
         self.ihook.pytest_pyfunc_call(pyfuncitem=self)
 
     def setup(self):
-        super(Function, self).setup()
+        super().setup()
         fixtures.fillfixtures(self)
 
 

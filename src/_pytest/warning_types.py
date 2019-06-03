@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import attr
 
 
@@ -95,7 +94,7 @@ class RemovedInPytest4Warning(PytestDeprecationWarning):
 
 
 @attr.s
-class UnformattedWarning(object):
+class UnformattedWarning:
     """Used to hold warnings that need to format their message at runtime, as opposed to a direct message.
 
     Using this class avoids to keep all the warning types and messages in this module, avoiding misuse.

@@ -429,14 +429,14 @@ is to be run with different sets of arguments for its three arguments:
 
 .. literalinclude:: multipython.py
 
-Running it results in some skips if we don't have all the python interpreters installed and otherwise runs all combinations (5 interpreters times 5 interpreters times 3 objects to serialize/deserialize):
+Running it results in some skips if we don't have all the python interpreters installed and otherwise runs all combinations (3 interpreters times 3 interpreters times 3 objects to serialize/deserialize):
 
 .. code-block:: pytest
 
    . $ pytest -rs -q multipython.py
    ...sss...sssssssss...sss...                                          [100%]
    ========================= short test summary info ==========================
-   SKIPPED [15] $REGENDOC_TMPDIR/CWD/multipython.py:30: 'python3.4' not found
+   SKIPPED [15] $REGENDOC_TMPDIR/CWD/multipython.py:31: 'python3.4' not found
    12 passed, 15 skipped in 0.12 seconds
 
 Indirect parametrization of optional implementations/imports
@@ -494,7 +494,7 @@ If you run this with reporting for skips enabled:
     test_module.py .s                                                    [100%]
 
     ========================= short test summary info ==========================
-    SKIPPED [1] $REGENDOC_TMPDIR/conftest.py:11: could not import 'opt2'
+    SKIPPED [1] $REGENDOC_TMPDIR/conftest.py:11: could not import 'opt2': No module named 'opt2'
     =================== 1 passed, 1 skipped in 0.12 seconds ====================
 
 You'll see that we don't have an ``opt2`` module and thus the second test run

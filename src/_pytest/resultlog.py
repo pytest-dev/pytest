@@ -1,11 +1,6 @@
-# -*- coding: utf-8 -*-
 """ log machine-parseable test session result information in a plain
 text file.
 """
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 import os
 
 import py
@@ -48,13 +43,13 @@ def pytest_unconfigure(config):
         config.pluginmanager.unregister(resultlog)
 
 
-class ResultLog(object):
+class ResultLog:
     def __init__(self, config, logfile):
         self.config = config
         self.logfile = logfile  # preferably line buffered
 
     def write_log_entry(self, testpath, lettercode, longrepr):
-        print("%s %s" % (lettercode, testpath), file=self.logfile)
+        print("{} {}".format(lettercode, testpath), file=self.logfile)
         for line in longrepr.splitlines():
             print(" %s" % line, file=self.logfile)
 

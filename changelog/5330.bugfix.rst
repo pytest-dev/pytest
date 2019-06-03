@@ -1,2 +1,0 @@
-Show the test module being collected when emitting ``PytestCollectionWarning`` messages for
-test classes with ``__init__`` and ``__new__`` methods to make it easier to pin down the problem.

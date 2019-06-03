@@ -1,11 +1,10 @@
-# -*- coding: utf-8 -*-
 from dataclasses import dataclass
 from dataclasses import field
 
 
 def test_dataclasses_verbose():
     @dataclass
-    class SimpleDataObject(object):
+    class SimpleDataObject:
         field_a: int = field()
         field_b: int = field()
 

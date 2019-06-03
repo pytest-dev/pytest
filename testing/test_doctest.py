@@ -1,9 +1,3 @@
-# -*- coding: utf-8 -*-
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
-import sys
 import textwrap
 
 import pytest
@@ -13,7 +7,7 @@ from _pytest.doctest import DoctestModule
 from _pytest.doctest import DoctestTextfile
 
 
-class TestDoctests(object):
+class TestDoctests:
     def test_collect_testtextfile(self, testdir):
         w = testdir.maketxtfile(whatever="")
         checkfile = testdir.maketxtfile(
@@ -145,7 +139,7 @@ class TestDoctests(object):
 
     @pytest.mark.parametrize(
         "   test_string,    encoding",
-        [(u"foo", "ascii"), (u"öäü", "latin1"), (u"öäü", "utf-8")],
+        [("foo", "ascii"), ("öäü", "latin1"), ("öäü", "utf-8")],
     )
     def test_encoding(self, testdir, test_string, encoding):
         """Test support for doctest_encoding ini option.
@@ -158,7 +152,7 @@ class TestDoctests(object):
                 encoding
             )
         )
-        doctest = u"""
+        doctest = """
             >>> u"{}"
             {}
         """.format(
@@ -580,14 +574,13 @@ class TestDoctests(object):
         """Fix internal error with docstrings containing non-ascii characters.
         """
         testdir.makepyfile(
-            u'''
-            # -*- coding: utf-8 -*-
+            '''\
             def foo():
                 """
                 >>> name = 'с' # not letter 'c' but instead Cyrillic 's'.
                 'anything'
                 """
-        '''
+            '''
         )
         result = testdir.runpytest("--doctest-modules")
         result.stdout.fnmatch_lines(["Got nothing", "* 1 failed in*"])
@@ -658,9 +651,6 @@ class TestDoctests(object):
         """
         p = testdir.makepyfile(
             test_unicode_doctest_module="""
-            # -*- coding: utf-8 -*-
-            from __future__ import unicode_literals
-
             def fix_bad_unicode(text):
                 '''
                     >>> print(fix_bad_unicode('Ãºnico'))
@@ -739,7 +729,7 @@ class TestDoctests(object):
         result.stdout.fnmatch_lines(["*collected 1 item*"])
 
 
-class TestLiterals(object):
+class TestLiterals:
     @pytest.mark.parametrize("config_mode", ["ini", "comment"])
     def test_allow_unicode(self, testdir, config_mode):
         """Test that doctests which output unicode work in all python versions
@@ -830,13 +820,11 @@ class TestLiterals(object):
         """
         )
         reprec = testdir.inline_run()
-        passed = int(sys.version_info[0] >= 3)
-        reprec.assertoutcome(passed=passed, failed=int(not passed))
+        reprec.assertoutcome(passed=1)
 
     def test_bytes_literal(self, testdir):
         """Test that doctests which output bytes fail in Python 3 when
-        the ALLOW_BYTES option is not used. The same test should pass
-        in Python 2 (#1287).
+        the ALLOW_BYTES option is not used. (#1287).
         """
         testdir.maketxtfile(
             test_doc="""
@@ -845,11 +833,10 @@ class TestLiterals(object):
         """
         )
         reprec = testdir.inline_run()
-        passed = int(sys.version_info[0] == 2)
-        reprec.assertoutcome(passed=passed, failed=int(not passed))
+        reprec.assertoutcome(failed=1)
 
 
-class TestDoctestSkips(object):
+class TestDoctestSkips:
     """
     If all examples in a doctest are skipped due to the SKIP option, then
     the tests should be SKIPPED rather than PASSED. (#957)
@@ -930,7 +917,7 @@ class TestDoctestSkips(object):
         )
 
 
-class TestDoctestAutoUseFixtures(object):
+class TestDoctestAutoUseFixtures:
 
     SCOPES = ["module", "session", "class", "function"]
 
@@ -1074,7 +1061,7 @@ class TestDoctestAutoUseFixtures(object):
         result.stdout.fnmatch_lines(["*=== 1 passed in *"])
 
 
-class TestDoctestNamespaceFixture(object):
+class TestDoctestNamespaceFixture:
 
     SCOPES = ["module", "session", "class", "function"]
 
@@ -1136,7 +1123,7 @@ class TestDoctestNamespaceFixture(object):
         reprec.assertoutcome(passed=1)
 
 
-class TestDoctestReportingOption(object):
+class TestDoctestReportingOption:
     def _run_doctest_report(self, testdir, format):
         testdir.makepyfile(
             """

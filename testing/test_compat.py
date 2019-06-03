@@ -1,12 +1,5 @@
-# -*- coding: utf-8 -*-
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 import sys
 from functools import wraps
-
-import six
 
 import pytest
 from _pytest.compat import _PytestWrapper
@@ -29,7 +22,7 @@ def test_is_generator():
 
 
 def test_real_func_loop_limit():
-    class Evil(object):
+    class Evil:
         def __init__(self):
             self.left = 1000
 
@@ -62,8 +55,6 @@ def test_get_real_func():
         def inner():
             pass  # pragma: no cover
 
-        if six.PY2:
-            inner.__wrapped__ = f
         return inner
 
     def func():
@@ -81,9 +72,6 @@ def test_get_real_func():
     assert get_real_func(wrapped_func2) is wrapped_func
 
 
-@pytest.mark.skipif(
-    sys.version_info < (3, 4), reason="asyncio available in Python 3.4+"
-)
 def test_is_generator_asyncio(testdir):
     testdir.makepyfile(
         """
@@ -125,7 +113,7 @@ def test_is_generator_async_syntax(testdir):
     result.stdout.fnmatch_lines(["*1 passed*"])
 
 
-class ErrorsHelper(object):
+class ErrorsHelper:
     @property
     def raise_exception(self):
         raise Exception("exception should be catched")

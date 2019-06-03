@@ -1,14 +1,11 @@
-# -*- coding: utf-8 -*-
 import sys
-
-import six
 
 import pytest
 from _pytest.outcomes import Failed
 from _pytest.warning_types import PytestDeprecationWarning
 
 
-class TestRaises(object):
+class TestRaises:
     def test_raises(self):
         source = "int('qwe')"
         with pytest.warns(PytestDeprecationWarning):
@@ -36,7 +33,7 @@ class TestRaises(object):
         pytest.raises(ValueError, int, "hello")
 
     def test_raises_callable_no_exception(self):
-        class A(object):
+        class A:
             def __call__(self):
                 pass
 
@@ -190,7 +187,7 @@ class TestRaises(object):
         """
         import gc
 
-        class T(object):
+        class T:
             def __call__(self):
                 raise ValueError
 
@@ -238,8 +235,6 @@ class TestRaises(object):
                 int("asdf")
 
     def test_raises_exception_looks_iterable(self):
-        from six import add_metaclass
-
         class Meta(type(object)):
             def __getitem__(self, item):
                 return 1 / 0
@@ -247,8 +242,7 @@ class TestRaises(object):
             def __len__(self):
                 return 1
 
-        @add_metaclass(Meta)
-        class ClassLooksIterableException(Exception):
+        class ClassLooksIterableException(Exception, metaclass=Meta):
             pass
 
         with pytest.raises(
@@ -265,16 +259,7 @@ class TestRaises(object):
             def __class__(self):
                 assert False, "via __class__"
 
-        if six.PY2:
-            with pytest.raises(pytest.fail.Exception) as excinfo:
-                with pytest.raises(CrappyClass()):
-                    pass
-            assert "DID NOT RAISE" in excinfo.value.args[0]
-
-            with pytest.raises(CrappyClass) as excinfo:
-                raise CrappyClass()
-        else:
-            with pytest.raises(AssertionError) as excinfo:
-                with pytest.raises(CrappyClass()):
-                    pass
-            assert "via __class__" in excinfo.value.args[0]
+        with pytest.raises(AssertionError) as excinfo:
+            with pytest.raises(CrappyClass()):
+                pass
+        assert "via __class__" in excinfo.value.args[0]

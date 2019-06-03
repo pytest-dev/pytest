@@ -1,8 +1,3 @@
-# -*- coding: utf-8 -*-
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 import functools
 import inspect
 import itertools
@@ -14,7 +9,6 @@ from collections import OrderedDict
 
 import attr
 import py
-import six
 
 import _pytest
 from _pytest import nodes
@@ -41,7 +35,7 @@ from _pytest.outcomes import TEST_OUTCOME
 
 
 @attr.s(frozen=True)
-class PseudoFixtureDef(object):
+class PseudoFixtureDef:
     cached_result = attr.ib()
     scope = attr.ib()
 
@@ -81,7 +75,7 @@ def scopeproperty(name=None, doc=None):
             if func.__name__ in scope2props[self.scope]:
                 return func(self)
             raise AttributeError(
-                "%s not available in %s-scoped context" % (scopename, self.scope)
+                "{} not available in {}-scoped context".format(scopename, self.scope)
             )
 
         return property(provide, None, None, func.__doc__)
@@ -94,7 +88,7 @@ def get_scope_package(node, fixturedef):
 
     cls = pytest.Package
     current = node
-    fixture_package_name = "%s/%s" % (fixturedef.baseid, "__init__.py")
+    fixture_package_name = "{}/{}".format(fixturedef.baseid, "__init__.py")
     while current and (
         type(current) is not cls or fixture_package_name != current.nodeid
     ):
@@ -301,7 +295,7 @@ def get_direct_param_fixture_func(request):
 
 
 @attr.s(slots=True)
-class FuncFixtureInfo(object):
+class FuncFixtureInfo:
     # original function argument names
     argnames = attr.ib(type=tuple)
     # argnames that function immediately requires. These include argnames +
@@ -657,7 +651,7 @@ class SubRequest(FixtureRequest):
         self._fixturemanager = request._fixturemanager
 
     def __repr__(self):
-        return "<SubRequest %r for %r>" % (self.fixturename, self._pyfuncitem)
+        return "<SubRequest {!r} for {!r}>".format(self.fixturename, self._pyfuncitem)
 
     def addfinalizer(self, finalizer):
         self._fixturedef.addfinalizer(finalizer)
@@ -670,7 +664,7 @@ class SubRequest(FixtureRequest):
             fixturedef.addfinalizer(
                 functools.partial(self._fixturedef.finish, request=self)
             )
-        super(SubRequest, self)._schedule_finalizers(fixturedef, subrequest)
+        super()._schedule_finalizers(fixturedef, subrequest)
 
 
 scopes = "session package module class function".split()
@@ -723,7 +717,7 @@ class FixtureLookupError(LookupError):
                 error_msg = "file %s, line %s: source code not available"
                 addline(error_msg % (fspath, lineno + 1))
             else:
-                addline("file %s, line %s" % (fspath, lineno + 1))
+                addline("file {}, line {}".format(fspath, lineno + 1))
                 for i, line in enumerate(lines):
                     line = line.rstrip()
                     addline("  " + line)
@@ -779,7 +773,7 @@ class FixtureLookupErrorRepr(TerminalRepr):
 
 def fail_fixturefunc(fixturefunc, msg):
     fs, lineno = getfslineno(fixturefunc)
-    location = "%s:%s" % (fs, lineno + 1)
+    location = "{}:{}".format(fs, lineno + 1)
     source = _pytest._code.Source(fixturefunc)
     fail(msg + ":\n\n" + str(source.indent()) + "\n" + location, pytrace=False)
 
@@ -809,7 +803,7 @@ def _teardown_yield_fixture(fixturefunc, it):
         )
 
 
-class FixtureDef(object):
+class FixtureDef:
     """ A container for a factory definition. """
 
     def __init__(
@@ -853,10 +847,10 @@ class FixtureDef(object):
                 except:  # noqa
                     exceptions.append(sys.exc_info())
             if exceptions:
-                e = exceptions[0]
+                _, val, tb = exceptions[0]
                 # Ensure to not keep frame references through traceback.
                 del exceptions
-                six.reraise(*e)
+                raise val.with_traceback(tb)
         finally:
             hook = self._fixturemanager.session.gethookproxy(request.node.fspath)
             hook.pytest_fixture_post_finalizer(fixturedef=self, request=request)
@@ -882,7 +876,8 @@ class FixtureDef(object):
             result, cache_key, err = cached_result
             if my_cache_key == cache_key:
                 if err is not None:
-                    six.reraise(*err)
+                    _, val, tb = err
+                    raise val.with_traceback(tb)
                 else:
                     return result
             # we have a previous but differently parametrized fixture instance
@@ -894,10 +889,8 @@ class FixtureDef(object):
         return hook.pytest_fixture_setup(fixturedef=self, request=request)
 
     def __repr__(self):
-        return "<FixtureDef argname=%r scope=%r baseid=%r>" % (
-            self.argname,
-            self.scope,
-            self.baseid,
+        return "<FixtureDef argname={!r} scope={!r} baseid={!r}>".format(
+            self.argname, self.scope, self.baseid
         )
 
 
@@ -957,7 +950,7 @@ def wrap_function_to_error_out_if_called_directly(function, fixture_marker):
         name=fixture_marker.name or function.__name__
     )
 
-    @six.wraps(function)
+    @functools.wraps(function)
     def result(*args, **kwargs):
         fail(message, pytrace=False)
 
@@ -969,7 +962,7 @@ def wrap_function_to_error_out_if_called_directly(function, fixture_marker):
 
 
 @attr.s(frozen=True)
-class FixtureFunctionMarker(object):
+class FixtureFunctionMarker:
     scope = attr.ib()
     params = attr.ib(converter=attr.converters.optional(tuple))
     autouse = attr.ib(default=False)
@@ -1083,7 +1076,7 @@ def pytest_addoption(parser):
     )
 
 
-class FixtureManager(object):
+class FixtureManager:
     """
     pytest fixtures definitions and information is stored and managed
     from this class.
@@ -1303,11 +1296,7 @@ class FixtureManager(object):
             # during fixture definition we wrap the original fixture function
             # to issue a warning if called directly, so here we unwrap it in order to not emit the warning
             # when pytest itself calls the fixture function
-            if six.PY2 and unittest:
-                # hack on Python 2 because of the unbound methods
-                obj = get_real_func(obj)
-            else:
-                obj = get_real_method(obj, holderobj)
+            obj = get_real_method(obj, holderobj)
 
             fixture_def = FixtureDef(
                 self,

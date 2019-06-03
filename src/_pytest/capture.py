@@ -1,12 +1,7 @@
-# -*- coding: utf-8 -*-
 """
 per-test stdout/stderr capturing mechanism.
 
 """
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 import collections
 import contextlib
 import io
@@ -15,10 +10,7 @@ import sys
 from io import UnsupportedOperation
 from tempfile import TemporaryFile
 
-import six
-
 import pytest
-from _pytest.compat import _PY3
 from _pytest.compat import CaptureIO
 
 patchsysdict = {0: "stdin", 1: "stdout", 2: "stderr"}
@@ -67,7 +59,7 @@ def pytest_load_initial_conftests(early_config, parser, args):
         sys.stderr.write(err)
 
 
-class CaptureManager(object):
+class CaptureManager:
     """
     Capture plugin, manages that the appropriate capture method is enabled/disabled during collection and each
     test phase (setup, call, teardown). After each of those points, the captured output is obtained and
@@ -86,10 +78,8 @@ class CaptureManager(object):
         self._current_item = None
 
     def __repr__(self):
-        return "<CaptureManager _method=%r _global_capturing=%r _current_item=%r>" % (
-            self._method,
-            self._global_capturing,
-            self._current_item,
+        return "<CaptureManager _method={!r} _global_capturing={!r} _current_item={!r}>".format(
+            self._method, self._global_capturing, self._current_item
         )
 
     def _getcapture(self, method):
@@ -283,10 +273,6 @@ def capsysbinary(request):
     ``out`` and ``err`` will be ``bytes`` objects.
     """
     _ensure_only_one_capture_fixture(request, "capsysbinary")
-    # Currently, the implementation uses the python3 specific `.buffer`
-    # property of CaptureIO.
-    if sys.version_info < (3,):
-        raise request.raiseerror("capsysbinary is only supported on Python 3")
     with _install_capture_fixture_on_item(request, SysCaptureBinary) as fixture:
         yield fixture
 
@@ -345,7 +331,7 @@ def _install_capture_fixture_on_item(request, capture_class):
     del request.node._capture_fixture
 
 
-class CaptureFixture(object):
+class CaptureFixture:
     """
     Object returned by :py:func:`capsys`, :py:func:`capsysbinary`, :py:func:`capfd` and :py:func:`capfdbinary`
     fixtures.
@@ -424,7 +410,7 @@ def safe_text_dupfile(f, mode, default_encoding="UTF8"):
     return EncodedFile(f, encoding or default_encoding)
 
 
-class EncodedFile(object):
+class EncodedFile:
     errors = "strict"  # possibly needed by py3 code (issue555)
 
     def __init__(self, buffer, encoding):
@@ -432,9 +418,9 @@ class EncodedFile(object):
         self.encoding = encoding
 
     def write(self, obj):
-        if isinstance(obj, six.text_type):
+        if isinstance(obj, str):
             obj = obj.encode(self.encoding, "replace")
-        elif _PY3:
+        else:
             raise TypeError(
                 "write() argument must be str, not {}".format(type(obj).__name__)
             )
@@ -460,7 +446,7 @@ class EncodedFile(object):
 CaptureResult = collections.namedtuple("CaptureResult", ["out", "err"])
 
 
-class MultiCapture(object):
+class MultiCapture:
     out = err = in_ = None
     _state = None
 
@@ -473,7 +459,7 @@ class MultiCapture(object):
             self.err = Capture(2)
 
     def __repr__(self):
-        return "<MultiCapture out=%r err=%r in_=%r _state=%r _in_suspended=%r>" % (
+        return "<MultiCapture out={!r} err={!r} in_={!r} _state={!r} _in_suspended={!r}>".format(
             self.out,
             self.err,
             self.in_,
@@ -539,12 +525,12 @@ class MultiCapture(object):
         )
 
 
-class NoCapture(object):
+class NoCapture:
     EMPTY_BUFFER = None
     __init__ = start = done = suspend = resume = lambda *args: None
 
 
-class FDCaptureBinary(object):
+class FDCaptureBinary:
     """Capture IO to/from a given os-level filedescriptor.
 
     snap() produces `bytes`
@@ -578,10 +564,8 @@ class FDCaptureBinary(object):
             self.tmpfile_fd = tmpfile.fileno()
 
     def __repr__(self):
-        return "<FDCapture %s oldfd=%s _state=%r>" % (
-            self.targetfd,
-            getattr(self, "targetfd_save", None),
-            self._state,
+        return "<FDCapture {} oldfd={} _state={!r}>".format(
+            self.targetfd, getattr(self, "targetfd_save", None), self._state
         )
 
     def start(self):
@@ -608,7 +592,7 @@ class FDCaptureBinary(object):
         os.dup2(targetfd_save, self.targetfd)
         os.close(targetfd_save)
         self.syscapture.done()
-        _attempt_to_close_capture_file(self.tmpfile)
+        self.tmpfile.close()
         self._state = "done"
 
     def suspend(self):
@@ -623,7 +607,7 @@ class FDCaptureBinary(object):
 
     def writeorg(self, data):
         """ write to original file descriptor. """
-        if isinstance(data, six.text_type):
+        if isinstance(data, str):
             data = data.encode("utf8")  # XXX use encoding of original stream
         os.write(self.targetfd_save, data)
 
@@ -637,14 +621,14 @@ class FDCapture(FDCaptureBinary):
     EMPTY_BUFFER = str()
 
     def snap(self):
-        res = super(FDCapture, self).snap()
+        res = super().snap()
         enc = getattr(self.tmpfile, "encoding", None)
         if enc and isinstance(res, bytes):
-            res = six.text_type(res, enc, "replace")
+            res = str(res, enc, "replace")
         return res
 
 
-class SysCapture(object):
+class SysCapture:
 
     EMPTY_BUFFER = str()
     _state = None
@@ -661,11 +645,8 @@ class SysCapture(object):
         self.tmpfile = tmpfile
 
     def __repr__(self):
-        return "<SysCapture %s _old=%r, tmpfile=%r _state=%r>" % (
-            self.name,
-            self._old,
-            self.tmpfile,
-            self._state,
+        return "<SysCapture {} _old={!r}, tmpfile={!r} _state={!r}>".format(
+            self.name, self._old, self.tmpfile, self._state
         )
 
     def start(self):
@@ -681,7 +662,7 @@ class SysCapture(object):
     def done(self):
         setattr(sys, self.name, self._old)
         del self._old
-        _attempt_to_close_capture_file(self.tmpfile)
+        self.tmpfile.close()
         self._state = "done"
 
     def suspend(self):
@@ -707,7 +688,7 @@ class SysCaptureBinary(SysCapture):
         return res
 
 
-class DontReadFromInput(six.Iterator):
+class DontReadFromInput:
     """Temporary stub class.  Ideally when stdin is accessed, the
     capturing should be turned off, with possibly all data captured
     so far sent to the screen.  This should be configurable, though,
@@ -738,10 +719,7 @@ class DontReadFromInput(six.Iterator):
 
     @property
     def buffer(self):
-        if sys.version_info >= (3, 0):
-            return self
-        else:
-            raise AttributeError("redirected stdin has no attribute buffer")
+        return self
 
 
 def _colorama_workaround():
@@ -837,14 +815,3 @@ def _py36_windowsconsoleio_workaround(stream):
     sys.stdin = _reopen_stdio(sys.stdin, "rb")
     sys.stdout = _reopen_stdio(sys.stdout, "wb")
     sys.stderr = _reopen_stdio(sys.stderr, "wb")
-
-
-def _attempt_to_close_capture_file(f):
-    """Suppress IOError when closing the temporary file used for capturing streams in py27 (#2370)"""
-    if six.PY2:
-        try:
-            f.close()
-        except IOError:
-            pass
-    else:
-        f.close()

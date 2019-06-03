@@ -1,13 +1,8 @@
-# -*- coding: utf-8 -*-
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
+import collections.abc as collections_abc
 import sys
 import textwrap
 
 import attr
-import six
 
 import _pytest.assertion as plugin
 import pytest
@@ -15,11 +10,9 @@ from _pytest import outcomes
 from _pytest.assertion import truncate
 from _pytest.assertion import util
 
-PY3 = sys.version_info >= (3, 0)
-
 
 def mock_config():
-    class Config(object):
+    class Config:
         verbose = False
 
         def getoption(self, name):
@@ -30,7 +23,7 @@ def mock_config():
     return Config()
 
 
-class TestImportHookInstallation(object):
+class TestImportHookInstallation:
     @pytest.mark.parametrize("initial_conftest", [True, False])
     @pytest.mark.parametrize("mode", ["plain", "rewrite"])
     def test_conftest_assertion_rewrite(self, testdir, initial_conftest, mode):
@@ -275,7 +268,7 @@ class TestImportHookInstallation(object):
         )
 
 
-class TestBinReprIntegration(object):
+class TestBinReprIntegration:
     def test_pytest_assertrepr_compare_called(self, testdir):
         testdir.makeconftest(
             """
@@ -307,7 +300,7 @@ def callequal(left, right, verbose=False):
     return plugin.pytest_assertrepr_compare(config, "==", left, right)
 
 
-class TestAssert_reprcompare(object):
+class TestAssert_reprcompare:
     def test_different_types(self):
         assert callequal([0, 1], "foo") is None
 
@@ -371,14 +364,6 @@ class TestAssert_reprcompare(object):
                 {0, 1},
                 {0, 2},
                 """
-                Full diff:
-                - set([0, 1])
-                ?         ^
-                + set([0, 2])
-                ?         ^
-            """
-                if not PY3
-                else """
                 Full diff:
                 - {0, 1}
                 ?     ^
@@ -483,10 +468,7 @@ class TestAssert_reprcompare(object):
         assert len(expl) > 1
 
     def test_Sequence(self):
-        if sys.version_info >= (3, 3):
-            import collections.abc as collections_abc
-        else:
-            import collections as collections_abc
+
         if not hasattr(collections_abc, "MutableSequence"):
             pytest.skip("cannot import MutableSequence")
         MutableSequence = collections_abc.MutableSequence
@@ -544,7 +526,7 @@ class TestAssert_reprcompare(object):
         assert "+" + repr(nums_y) in expl
 
     def test_list_bad_repr(self):
-        class A(object):
+        class A:
             def __repr__(self):
                 raise ValueError(42)
 
@@ -571,12 +553,12 @@ class TestAssert_reprcompare(object):
         assert "raised in repr()" not in expl
 
     def test_unicode(self):
-        left = u"£€"
-        right = u"£"
+        left = "£€"
+        right = "£"
         expl = callequal(left, right)
-        assert expl[0] == u"'£€' == '£'"
-        assert expl[1] == u"- £€"
-        assert expl[2] == u"+ £"
+        assert expl[0] == "'£€' == '£'"
+        assert expl[1] == "- £€"
+        assert expl[2] == "+ £"
 
     def test_nonascii_text(self):
         """
@@ -589,10 +571,7 @@ class TestAssert_reprcompare(object):
                 return "\xff"
 
         expl = callequal(A(), "1")
-        if PY3:
-            assert expl == ["ÿ == '1'", "+ 1"]
-        else:
-            assert expl == [u"\ufffd == '1'", u"+ 1"]
+        assert expl == ["ÿ == '1'", "+ 1"]
 
     def test_format_nonascii_explanation(self):
         assert util.format_explanation("λ")
@@ -603,12 +582,12 @@ class TestAssert_reprcompare(object):
         right = b"\xc3\xa9"
         expl = callequal(left, right)
         for line in expl:
-            assert isinstance(line, six.text_type)
-        msg = u"\n".join(expl)
+            assert isinstance(line, str)
+        msg = "\n".join(expl)
         assert msg
 
 
-class TestAssert_reprcompare_dataclass(object):
+class TestAssert_reprcompare_dataclass:
     @pytest.mark.skipif(sys.version_info < (3, 7), reason="Dataclasses in Python3.7+")
     def test_dataclasses(self, testdir):
         p = testdir.copy_example("dataclasses/test_compare_dataclasses.py")
@@ -653,10 +632,10 @@ class TestAssert_reprcompare_dataclass(object):
         result.assert_outcomes(failed=0, passed=1)
 
 
-class TestAssert_reprcompare_attrsclass(object):
+class TestAssert_reprcompare_attrsclass:
     def test_attrs(self):
         @attr.s
-        class SimpleDataObject(object):
+        class SimpleDataObject:
             field_a = attr.ib()
             field_b = attr.ib()
 
@@ -671,7 +650,7 @@ class TestAssert_reprcompare_attrsclass(object):
 
     def test_attrs_verbose(self):
         @attr.s
-        class SimpleDataObject(object):
+        class SimpleDataObject:
             field_a = attr.ib()
             field_b = attr.ib()
 
@@ -685,7 +664,7 @@ class TestAssert_reprcompare_attrsclass(object):
 
     def test_attrs_with_attribute_comparison_off(self):
         @attr.s
-        class SimpleDataObject(object):
+        class SimpleDataObject:
             field_a = attr.ib()
             field_b = attr.ib(cmp=False)
 
@@ -701,12 +680,12 @@ class TestAssert_reprcompare_attrsclass(object):
 
     def test_comparing_two_different_attrs_classes(self):
         @attr.s
-        class SimpleDataObjectOne(object):
+        class SimpleDataObjectOne:
             field_a = attr.ib()
             field_b = attr.ib()
 
         @attr.s
-        class SimpleDataObjectTwo(object):
+        class SimpleDataObjectTwo:
             field_a = attr.ib()
             field_b = attr.ib()
 
@@ -717,7 +696,7 @@ class TestAssert_reprcompare_attrsclass(object):
         assert lines is None
 
 
-class TestFormatExplanation(object):
+class TestFormatExplanation:
     def test_special_chars_full(self, testdir):
         # Issue 453, for the bug this would raise IndexError
         testdir.makepyfile(
@@ -804,7 +783,7 @@ class TestFormatExplanation(object):
         assert util.format_explanation(expl) == res
 
 
-class TestTruncateExplanation(object):
+class TestTruncateExplanation:
 
     """ Confirm assertion output is truncated as expected """
 
@@ -1100,10 +1079,6 @@ def test_traceback_failure(testdir):
     )
 
 
-@pytest.mark.skipif(
-    sys.version_info[:2] <= (3, 3),
-    reason="Python 3.4+ shows chained exceptions on multiprocess",
-)
 def test_exception_handling_no_traceback(testdir):
     """
     Handle chain exceptions in tasks submitted by the multiprocess module (#1984).
@@ -1137,9 +1112,7 @@ def test_exception_handling_no_traceback(testdir):
     )
 
 
-@pytest.mark.skipif(
-    "'__pypy__' in sys.builtin_module_names or sys.platform.startswith('java')"
-)
+@pytest.mark.skipif("'__pypy__' in sys.builtin_module_names")
 def test_warn_missing(testdir):
     testdir.makepyfile("")
     result = testdir.run(sys.executable, "-OO", "-m", "pytest", "-h")
@@ -1185,45 +1158,6 @@ def test_AssertionError_message(testdir):
         *AssertionError: (1, 2)*
     """
     )
-
-
-@pytest.mark.skipif(PY3, reason="This bug does not exist on PY3")
-def test_set_with_unsortable_elements():
-    # issue #718
-    class UnsortableKey(object):
-        def __init__(self, name):
-            self.name = name
-
-        def __lt__(self, other):
-            raise RuntimeError()
-
-        def __repr__(self):
-            return "repr({})".format(self.name)
-
-        def __eq__(self, other):
-            return self.name == other.name
-
-        def __hash__(self):
-            return hash(self.name)
-
-    left_set = {UnsortableKey(str(i)) for i in range(1, 3)}
-    right_set = {UnsortableKey(str(i)) for i in range(2, 4)}
-    expl = callequal(left_set, right_set, verbose=True)
-    # skip first line because it contains the "construction" of the set, which does not have a guaranteed order
-    expl = expl[1:]
-    dedent = textwrap.dedent(
-        """
-        Extra items in the left set:
-        repr(1)
-        Extra items in the right set:
-        repr(3)
-        Full diff (fallback to calling repr on each item):
-        - repr(1)
-        repr(2)
-        + repr(3)
-    """
-    ).strip()
-    assert "\n".join(expl) == dedent
 
 
 def test_diff_newline_at_end(monkeypatch, testdir):
@@ -1283,11 +1217,10 @@ def test_assert_indirect_tuple_no_warning(testdir):
 
 def test_assert_with_unicode(monkeypatch, testdir):
     testdir.makepyfile(
-        u"""
-        # -*- coding: utf-8 -*-
+        """\
         def test_unicode():
             assert u'유니코드' == u'Unicode'
-    """
+        """
     )
     result = testdir.runpytest()
     result.stdout.fnmatch_lines(["*AssertionError*"])
@@ -1308,7 +1241,7 @@ def test_raise_unprintable_assertion_error(testdir):
 
 def test_raise_assertion_error_raisin_repr(testdir):
     testdir.makepyfile(
-        u"""
+        """
         class RaisingRepr(object):
             def __repr__(self):
                 raise Exception()

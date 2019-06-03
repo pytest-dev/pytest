@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 this is a place where we put datastructures used by legacy apis
 we hope ot remove
@@ -11,7 +10,7 @@ from _pytest.config import UsageError
 
 
 @attr.s
-class MarkMapping(object):
+class MarkMapping:
     """Provides a local mapping for markers where item access
     resolves to True if the marker is present. """
 
@@ -26,7 +25,7 @@ class MarkMapping(object):
         return name in self.own_mark_names
 
 
-class KeywordMapping(object):
+class KeywordMapping:
     """Provides a local mapping for keywords.
     Given a list of names, map any substring of one of these names to True.
     """

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import atexit
 import errno
 import fnmatch
@@ -8,19 +7,14 @@ import os
 import shutil
 import sys
 import uuid
-from functools import reduce
 from os.path import expanduser
 from os.path import expandvars
 from os.path import isabs
 from os.path import sep
 from posixpath import sep as posix_sep
 
-import six
-from six.moves import map
 
-from .compat import PY36
-
-if PY36:
+if sys.version_info[:2] >= (3, 6):
     from pathlib import Path, PurePath
 else:
     from pathlib2 import Path, PurePath
@@ -84,17 +78,6 @@ def parse_num(maybe_num):
         return -1
 
 
-if six.PY2:
-
-    def _max(iterable, default):
-        """needed due to python2.7 lacking the default argument for max"""
-        return reduce(max, iterable, default)
-
-
-else:
-    _max = max
-
-
 def _force_symlink(root, target, link_to):
     """helper to create the current symlink
 
@@ -119,7 +102,7 @@ def make_numbered_dir(root, prefix):
     """create a directory with an increased number as suffix for the given prefix"""
     for i in range(10):
         # try up to 10 times to create the folder
-        max_existing = _max(map(parse_num, find_suffixes(root, prefix)), default=-1)
+        max_existing = max(map(parse_num, find_suffixes(root, prefix)), default=-1)
         new_number = max_existing + 1
         new_path = root.joinpath("{}{}".format(prefix, new_number))
         try:
@@ -143,9 +126,10 @@ def create_cleanup_lock(p):
         fd = os.open(str(lock_path), os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o644)
     except OSError as e:
         if e.errno == errno.EEXIST:
-            six.raise_from(
-                EnvironmentError("cannot create lockfile in {path}".format(path=p)), e
-            )
+            raise EnvironmentError(
+                "cannot create lockfile in {path}".format(path=p)
+            ) from e
+
         else:
             raise
     else:
@@ -230,7 +214,7 @@ def try_cleanup(path, consider_lock_dead_if_created_before):
 
 def cleanup_candidates(root, prefix, keep):
     """lists candidates for numbered directories to be removed - follows py.path"""
-    max_existing = _max(map(parse_num, find_suffixes(root, prefix)), default=-1)
+    max_existing = max(map(parse_num, find_suffixes(root, prefix)), default=-1)
     max_delete = max_existing - keep
     paths = find_prefixed(root, prefix)
     paths, paths2 = itertools.tee(paths)
@@ -311,7 +295,7 @@ def fnmatch_ex(pattern, path):
     if sep not in pattern:
         name = path.name
     else:
-        name = six.text_type(path)
+        name = str(path)
     return fnmatch.fnmatch(name, pattern)
 
 

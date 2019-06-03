@@ -1,15 +1,9 @@
-# -*- coding: utf-8 -*-
 """ Access and control log capturing. """
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 import logging
 import re
 from contextlib import contextmanager
 
 import py
-import six
 
 import pytest
 from _pytest.compat import dummy_context_manager
@@ -39,14 +33,11 @@ class ColoredLevelFormatter(logging.Formatter):
         logging.DEBUG: {"purple"},
         logging.NOTSET: set(),
     }
-    LEVELNAME_FMT_REGEX = re.compile(r"%\(levelname\)([+-]?\d*s)")
+    LEVELNAME_FMT_REGEX = re.compile(r"%\(levelname\)([+-.]?\d*s)")
 
     def __init__(self, terminalwriter, *args, **kwargs):
-        super(ColoredLevelFormatter, self).__init__(*args, **kwargs)
-        if six.PY2:
-            self._original_fmt = self._fmt
-        else:
-            self._original_fmt = self._style._fmt
+        super().__init__(*args, **kwargs)
+        self._original_fmt = self._style._fmt
         self._level_to_fmt_mapping = {}
 
         levelname_fmt_match = self.LEVELNAME_FMT_REGEX.search(self._fmt)
@@ -70,41 +61,35 @@ class ColoredLevelFormatter(logging.Formatter):
 
     def format(self, record):
         fmt = self._level_to_fmt_mapping.get(record.levelno, self._original_fmt)
-        if six.PY2:
-            self._fmt = fmt
+        self._style._fmt = fmt
+        return super().format(record)
+
+
+class PercentStyleMultiline(logging.PercentStyle):
+    """A logging style with special support for multiline messages.
+
+    If the message of a record consists of multiple lines, this style
+    formats the message as if each line were logged separately.
+    """
+
+    @staticmethod
+    def _update_message(record_dict, message):
+        tmp = record_dict.copy()
+        tmp["message"] = message
+        return tmp
+
+    def format(self, record):
+        if "\n" in record.message:
+            lines = record.message.splitlines()
+            formatted = self._fmt % self._update_message(record.__dict__, lines[0])
+            # TODO optimize this by introducing an option that tells the
+            # logging framework that the indentation doesn't
+            # change. This allows to compute the indentation only once.
+            indentation = _remove_ansi_escape_sequences(formatted).find(lines[0])
+            lines[0] = formatted
+            return ("\n" + " " * indentation).join(lines)
         else:
-            self._style._fmt = fmt
-        return super(ColoredLevelFormatter, self).format(record)
-
-
-if not six.PY2:
-    # Formatter classes don't support format styles in PY2
-
-    class PercentStyleMultiline(logging.PercentStyle):
-        """A logging style with special support for multiline messages.
-
-        If the message of a record consists of multiple lines, this style
-        formats the message as if each line were logged separately.
-        """
-
-        @staticmethod
-        def _update_message(record_dict, message):
-            tmp = record_dict.copy()
-            tmp["message"] = message
-            return tmp
-
-        def format(self, record):
-            if "\n" in record.message:
-                lines = record.message.splitlines()
-                formatted = self._fmt % self._update_message(record.__dict__, lines[0])
-                # TODO optimize this by introducing an option that tells the
-                # logging framework that the indentation doesn't
-                # change. This allows to compute the indentation only once.
-                indentation = _remove_ansi_escape_sequences(formatted).find(lines[0])
-                lines[0] = formatted
-                return ("\n" + " " * indentation).join(lines)
-            else:
-                return self._fmt % record.__dict__
+            return self._fmt % record.__dict__
 
 
 def get_option_ini(config, *names):
@@ -246,7 +231,7 @@ class LogCaptureHandler(logging.StreamHandler):
         self.stream = py.io.TextIO()
 
 
-class LogCaptureFixture(object):
+class LogCaptureFixture:
     """Provides access and control of log capturing."""
 
     def __init__(self, item):
@@ -393,7 +378,7 @@ def get_actual_log_level(config, *setting_names):
     else:
         return
 
-    if isinstance(log_level, six.string_types):
+    if isinstance(log_level, str):
         log_level = log_level.upper()
     try:
         return int(getattr(logging, log_level, log_level))
@@ -412,7 +397,7 @@ def pytest_configure(config):
     config.pluginmanager.register(LoggingPlugin(config), "logging-plugin")
 
 
-class LoggingPlugin(object):
+class LoggingPlugin:
     """Attaches to the logging module and captures log messages for each test.
     """
 
@@ -475,8 +460,7 @@ class LoggingPlugin(object):
         else:
             formatter = logging.Formatter(log_format, log_date_format)
 
-        if not six.PY2:
-            formatter._style = PercentStyleMultiline(formatter._style._fmt)
+        formatter._style = PercentStyleMultiline(formatter._style._fmt)
         return formatter
 
     def _setup_cli_logging(self):

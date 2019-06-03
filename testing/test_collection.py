@@ -1,8 +1,3 @@
-# -*- coding: utf-8 -*-
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 import os
 import pprint
 import sys
@@ -17,7 +12,7 @@ from _pytest.main import EXIT_NOTESTSCOLLECTED
 from _pytest.main import Session
 
 
-class TestCollector(object):
+class TestCollector:
     def test_collect_versus_item(self):
         from pytest import Collector, Item
 
@@ -38,8 +33,6 @@ class TestCollector(object):
 
         assert fn1 == fn2
         assert fn1 != modcol
-        if sys.version_info < (3, 0):
-            assert cmp(fn1, fn2) == 0  # NOQA
         assert hash(fn1) == hash(fn2)
 
         fn3 = testdir.collect_by_name(modcol, "test_fail")
@@ -109,7 +102,7 @@ class TestCollector(object):
         result.stdout.fnmatch_lines(["collected 0 items", "*no tests ran in*"])
 
 
-class TestCollectFS(object):
+class TestCollectFS:
     def test_ignored_certain_directories(self, testdir):
         tmpdir = testdir.tmpdir
         tmpdir.ensure("build", "test_notfound.py")
@@ -246,11 +239,11 @@ class TestCollectFS(object):
             assert [x.name for x in items] == ["test_%s" % dirname]
 
 
-class TestCollectPluginHookRelay(object):
+class TestCollectPluginHookRelay:
     def test_pytest_collect_file(self, testdir):
         wascalled = []
 
-        class Plugin(object):
+        class Plugin:
             def pytest_collect_file(self, path, parent):
                 if not path.basename.startswith("."):
                     # Ignore hidden files, e.g. .testmondata.
@@ -264,7 +257,7 @@ class TestCollectPluginHookRelay(object):
     def test_pytest_collect_directory(self, testdir):
         wascalled = []
 
-        class Plugin(object):
+        class Plugin:
             def pytest_collect_directory(self, path, parent):
                 wascalled.append(path.basename)
 
@@ -275,7 +268,7 @@ class TestCollectPluginHookRelay(object):
         assert "world" in wascalled
 
 
-class TestPrunetraceback(object):
+class TestPrunetraceback:
     def test_custom_repr_failure(self, testdir):
         p = testdir.makepyfile(
             """
@@ -324,7 +317,7 @@ class TestPrunetraceback(object):
         result.stdout.fnmatch_lines(["*ERROR collecting*", "*header1*"])
 
 
-class TestCustomConftests(object):
+class TestCustomConftests:
     def test_ignore_collect_path(self, testdir):
         testdir.makeconftest(
             """
@@ -445,7 +438,7 @@ class TestCustomConftests(object):
         result.stdout.fnmatch_lines(["*MyModule1*", "*MyModule2*", "*test_x*"])
 
 
-class TestSession(object):
+class TestSession:
     def test_parsearg(self, testdir):
         p = testdir.makepyfile("def test_func(): pass")
         subdir = testdir.mkdir("sub")
@@ -636,7 +629,7 @@ class TestSession(object):
         assert [x.name for x in self.get_reported_items(hookrec)] == ["test_method"]
 
 
-class Test_getinitialnodes(object):
+class Test_getinitialnodes:
     def test_global_file(self, testdir, tmpdir):
         x = tmpdir.ensure("x.py")
         with tmpdir.as_cwd():
@@ -670,7 +663,7 @@ class Test_getinitialnodes(object):
             assert col.config is config
 
 
-class Test_genitems(object):
+class Test_genitems:
     def test_check_collect_hashes(self, testdir):
         p = testdir.makepyfile(
             """
@@ -783,7 +776,7 @@ def test_matchnodes_two_collections_same_file(testdir):
     res.stdout.fnmatch_lines(["*1 passed*"])
 
 
-class TestNodekeywords(object):
+class TestNodekeywords:
     def test_no_under(self, testdir):
         modcol = testdir.getmodulecol(
             """

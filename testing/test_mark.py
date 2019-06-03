@@ -1,12 +1,6 @@
-# -*- coding: utf-8 -*-
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 import os
 import sys
-
-import six
+from unittest import mock
 
 import pytest
 from _pytest.main import EXIT_INTERRUPTED
@@ -17,17 +11,12 @@ from _pytest.nodes import Node
 from _pytest.warning_types import PytestDeprecationWarning
 from _pytest.warnings import SHOW_PYTEST_WARNINGS_ARG
 
-try:
-    import mock
-except ImportError:
-    import unittest.mock as mock
-
 ignore_markinfo = pytest.mark.filterwarnings(
     "ignore:MarkInfo objects:pytest.RemovedInPytest4Warning"
 )
 
 
-class TestMark(object):
+class TestMark:
     @pytest.mark.parametrize("attr", ["mark", "param"])
     @pytest.mark.parametrize("modulename", ["py.test", "pytest"])
     def test_pytest_exists_in_namespace_all(self, attr, modulename):
@@ -42,7 +31,7 @@ class TestMark(object):
         def some_function(abc):
             pass
 
-        class SomeClass(object):
+        class SomeClass:
             pass
 
         assert pytest.mark.foo(some_function) is some_function
@@ -413,7 +402,29 @@ def test_parametrized_with_kwargs(testdir):
     assert result.ret == 0
 
 
-class TestFunctional(object):
+def test_parametrize_iterator(testdir):
+    """parametrize should work with generators (#5354)."""
+    py_file = testdir.makepyfile(
+        """\
+        import pytest
+
+        def gen():
+            yield 1
+            yield 2
+            yield 3
+
+        @pytest.mark.parametrize('a', gen())
+        def test(a):
+            assert a >= 1
+        """
+    )
+    result = testdir.runpytest(py_file)
+    assert result.ret == 0
+    # should not skip any tests
+    result.stdout.fnmatch_lines(["*3 passed*"])
+
+
+class TestFunctional:
     def test_merging_markers_deep(self, testdir):
         # issue 199 - propagate markers into nested classes
         p = testdir.makepyfile(
@@ -682,7 +693,7 @@ class TestFunctional(object):
         reprec.assertoutcome(skipped=1)
 
 
-class TestKeywordSelection(object):
+class TestKeywordSelection:
     def test_select_simple(self, testdir):
         file_test = testdir.makepyfile(
             """
@@ -813,7 +824,7 @@ class TestKeywordSelection(object):
         assert_test_is_not_selected("()")
 
 
-class TestMarkDecorator(object):
+class TestMarkDecorator:
     @pytest.mark.parametrize(
         "lhs, rhs, expected",
         [
@@ -949,7 +960,6 @@ def test_markers_from_parametrize(testdir):
     """#3605"""
     testdir.makepyfile(
         """
-        from __future__ import print_function
         import pytest
 
         first_custom_mark = pytest.mark.custom_marker
@@ -987,10 +997,7 @@ def test_pytest_param_id_requires_string():
     with pytest.raises(TypeError) as excinfo:
         pytest.param(id=True)
     msg, = excinfo.value.args
-    if six.PY2:
-        assert msg == "Expected id to be a string, got <type 'bool'>: True"
-    else:
-        assert msg == "Expected id to be a string, got <class 'bool'>: True"
+    assert msg == "Expected id to be a string, got <class 'bool'>: True"
 
 
 @pytest.mark.parametrize("s", (None, "hello world"))

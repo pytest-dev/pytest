@@ -1,12 +1,5 @@
-# -*- coding: utf-8 -*-
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 import os
 import sys
-
-import six
 
 import _pytest._code
 import pytest
@@ -36,7 +29,7 @@ def custom_pdb_calls():
     called = []
 
     # install dummy debugger class and track which methods were called on it
-    class _CustomPdb(object):
+    class _CustomPdb:
         quitting = False
 
         def __init__(self, *args, **kwargs):
@@ -57,7 +50,7 @@ def custom_debugger_hook():
     called = []
 
     # install dummy debugger class and track which methods were called on it
-    class _CustomDebugger(object):
+    class _CustomDebugger:
         def __init__(self, *args, **kwargs):
             called.append("init")
 
@@ -76,7 +69,7 @@ def custom_debugger_hook():
     del _pytest._CustomDebugger
 
 
-class TestPDB(object):
+class TestPDB:
     @pytest.fixture
     def pdblist(self, request):
         monkeypatch = request.getfixturevalue("monkeypatch")
@@ -537,10 +530,7 @@ class TestPDB(object):
                     import sys
                     import types
 
-                    if sys.version_info < (3, ):
-                        do_debug_func = pdb.Pdb.do_debug.im_func
-                    else:
-                        do_debug_func = pdb.Pdb.do_debug
+                    do_debug_func = pdb.Pdb.do_debug
 
                     newglobals = do_debug_func.__globals__.copy()
                     newglobals['Pdb'] = self.__class__
@@ -676,7 +666,7 @@ class TestPDB(object):
                 set_trace()
         """
         )
-        child = testdir.spawn_pytest("--tb=short %s %s" % (p1, capture_arg))
+        child = testdir.spawn_pytest("--tb=short {} {}".format(p1, capture_arg))
         child.expect("=== SET_TRACE ===")
         before = child.before.decode("utf8")
         if not capture_arg:
@@ -856,7 +846,7 @@ class TestPDB(object):
         self.flush(child)
 
 
-class TestDebuggingBreakpoints(object):
+class TestDebuggingBreakpoints:
     def test_supports_breakpoint_module_global(self):
         """
         Test that supports breakpoint global marks on Python 3.7+ and not on
@@ -865,8 +855,6 @@ class TestDebuggingBreakpoints(object):
         if sys.version_info.major == 3 and sys.version_info.minor >= 7:
             assert SUPPORTS_BREAKPOINT_BUILTIN is True
         if sys.version_info.major == 3 and sys.version_info.minor == 5:
-            assert SUPPORTS_BREAKPOINT_BUILTIN is False
-        if sys.version_info.major == 2 and sys.version_info.minor == 7:
             assert SUPPORTS_BREAKPOINT_BUILTIN is False
 
     @pytest.mark.skipif(
@@ -1183,24 +1171,17 @@ def test_pdbcls_via_local_module(testdir):
 
 def test_raises_bdbquit_with_eoferror(testdir):
     """It is not guaranteed that DontReadFromInput's read is called."""
-    if six.PY2:
-        builtin_module = "__builtin__"
-        input_func = "raw_input"
-    else:
-        builtin_module = "builtins"
-        input_func = "input"
+
     p1 = testdir.makepyfile(
         """
         def input_without_read(*args, **kwargs):
             raise EOFError()
 
         def test(monkeypatch):
-            import {builtin_module}
-            monkeypatch.setattr({builtin_module}, {input_func!r}, input_without_read)
+            import builtins
+            monkeypatch.setattr(builtins, "input", input_without_read)
             __import__('pdb').set_trace()
-        """.format(
-            builtin_module=builtin_module, input_func=input_func
-        )
+        """
     )
     result = testdir.runpytest(str(p1))
     result.stdout.fnmatch_lines(["E *BdbQuit", "*= 1 failed in*"])

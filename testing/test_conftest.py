@@ -1,8 +1,3 @@
-# -*- coding: utf-8 -*-
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 import textwrap
 
 import py
@@ -21,7 +16,7 @@ def ConftestWithSetinitial(path):
 
 
 def conftest_setinitial(conftest, args, confcutdir=None):
-    class Namespace(object):
+    class Namespace:
         def __init__(self):
             self.file_or_dir = args
             self.confcutdir = str(confcutdir)
@@ -32,7 +27,7 @@ def conftest_setinitial(conftest, args, confcutdir=None):
 
 
 @pytest.mark.usefixtures("_sys_snapshot")
-class TestConftestValueAccessGlobal(object):
+class TestConftestValueAccessGlobal:
     @pytest.fixture(scope="module", params=["global", "inpackage"])
     def basedir(self, request, tmpdir_factory):
         tmpdir = tmpdir_factory.mktemp("basedir", numbered=True)
@@ -401,7 +396,7 @@ def test_conftest_found_with_double_dash(testdir):
     )
 
 
-class TestConftestVisibility(object):
+class TestConftestVisibility:
     def _setup_tree(self, testdir):  # for issue616
         # example mostly taken from:
         # https://mail.python.org/pipermail/pytest-dev/2014-September/002617.html

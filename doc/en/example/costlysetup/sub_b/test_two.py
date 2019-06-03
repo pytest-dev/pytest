@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 def test_something(setup):
     assert setup.timecostly == 1
 

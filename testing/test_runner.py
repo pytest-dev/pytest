@@ -1,8 +1,3 @@
-# -*- coding: utf-8 -*-
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 import inspect
 import os
 import sys
@@ -18,7 +13,7 @@ from _pytest import reports
 from _pytest import runner
 
 
-class TestSetupState(object):
+class TestSetupState:
     def test_setup(self, testdir):
         ss = runner.SetupState()
         item = testdir.getitem("def test_func(): pass")
@@ -106,7 +101,7 @@ class TestSetupState(object):
         assert module_teardown
 
 
-class BaseFunctionalTests(object):
+class BaseFunctionalTests:
     def test_passfunction(self, testdir):
         reports = testdir.runitem(
             """
@@ -441,7 +436,7 @@ class TestExecutionForked(BaseFunctionalTests):
         assert rep.when == "???"
 
 
-class TestSessionReports(object):
+class TestSessionReports:
     def test_collect_result(self, testdir):
         col = testdir.getmodulecol(
             """
@@ -644,20 +639,16 @@ def test_pytest_fail_notrace_non_ascii(testdir, str_prefix):
     This tests with native and unicode strings containing non-ascii chars.
     """
     testdir.makepyfile(
-        u"""
-        # -*- coding: utf-8 -*-
+        """\
         import pytest
 
         def test_hello():
             pytest.fail(%s'oh oh: ☺', pytrace=False)
-    """
+        """
         % str_prefix
     )
     result = testdir.runpytest()
-    if sys.version_info[0] >= 3:
-        result.stdout.fnmatch_lines(["*test_hello*", "oh oh: ☺"])
-    else:
-        result.stdout.fnmatch_lines(["*test_hello*", "oh oh: *"])
+    result.stdout.fnmatch_lines(["*test_hello*", "oh oh: ☺"])
     assert "def test_hello" not in result.stdout.str()
 
 
@@ -792,8 +783,7 @@ def test_pytest_cmdline_main(testdir):
 
 def test_unicode_in_longrepr(testdir):
     testdir.makeconftest(
-        """
-        # -*- coding: utf-8 -*-
+        """\
         import pytest
         @pytest.hookimpl(hookwrapper=True)
         def pytest_runtest_makereport():
@@ -801,7 +791,7 @@ def test_unicode_in_longrepr(testdir):
             rep = outcome.get_result()
             if rep.when == "call":
                 rep.longrepr = u'ä'
-    """
+        """
     )
     testdir.makepyfile(
         """
@@ -876,7 +866,7 @@ def test_store_except_info_on_error():
     sys.last_traceback and friends.
     """
     # Simulate item that might raise a specific exception, depending on `raise_error` class var
-    class ItemMightRaise(object):
+    class ItemMightRaise:
         nodeid = "item_that_raises"
         raise_error = True
 
@@ -933,7 +923,7 @@ def test_current_test_env_var(testdir, monkeypatch):
     assert "PYTEST_CURRENT_TEST" not in os.environ
 
 
-class TestReportContents(object):
+class TestReportContents:
     """
     Test user-level API of ``TestReport`` objects.
     """

@@ -1,11 +1,6 @@
-# -*- coding: utf-8 -*-
 """
 terminal reporting of the full testing process.
 """
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 import collections
 import os
 import sys
@@ -27,7 +22,7 @@ from _pytest.terminal import TerminalReporter
 DistInfo = collections.namedtuple("DistInfo", ["project_name", "version"])
 
 
-class Option(object):
+class Option:
     def __init__(self, verbosity=0, fulltrace=False):
         self.verbosity = verbosity
         self.fulltrace = fulltrace
@@ -75,7 +70,7 @@ def test_plugin_nameversion(input, expected):
     assert result == expected
 
 
-class TestTerminal(object):
+class TestTerminal:
     def test_pass_skip_fail(self, testdir, option):
         testdir.makepyfile(
             """
@@ -282,7 +277,7 @@ class TestTerminal(object):
         assert f.getvalue() == "hello" + "\r" + "hey" + (6 * " ")
 
 
-class TestCollectonly(object):
+class TestCollectonly:
     def test_collectonly_basic(self, testdir):
         testdir.makepyfile(
             """
@@ -390,7 +385,7 @@ class TestCollectonly(object):
         result.stdout.fnmatch_lines(["*test_fun.py: 1*"])
 
 
-class TestFixtureReporting(object):
+class TestFixtureReporting:
     def test_setup_fixture_error(self, testdir):
         testdir.makepyfile(
             """
@@ -490,7 +485,7 @@ class TestFixtureReporting(object):
         )
 
 
-class TestTerminalFunctional(object):
+class TestTerminalFunctional:
     def test_deselected(self, testdir):
         testpath = testdir.makepyfile(
             """
@@ -863,8 +858,8 @@ def test_color_yes_collection_on_non_atty(testdir, verbose):
 
 
 def test_getreportopt():
-    class Config(object):
-        class Option(object):
+    class Config:
+        class Option:
             reportchars = ""
             disable_warnings = True
 
@@ -945,7 +940,7 @@ def test_traceconfig(testdir, monkeypatch):
     assert result.ret == EXIT_NOTESTSCOLLECTED
 
 
-class TestGenericReporting(object):
+class TestGenericReporting:
     """ this test class can be subclassed with a different option
         provider to run e.g. distributed tests.
     """
@@ -1325,7 +1320,7 @@ def test_skip_counting_towards_summary():
     assert res == ("1 failed", "red")
 
 
-class TestClassicOutputStyle(object):
+class TestClassicOutputStyle:
     """Ensure classic output style works as expected (#3883)"""
 
     @pytest.fixture
@@ -1371,7 +1366,7 @@ class TestClassicOutputStyle(object):
         result.stdout.fnmatch_lines([".F.F.", "*2 failed, 3 passed in*"])
 
 
-class TestProgressOutputStyle(object):
+class TestProgressOutputStyle:
     @pytest.fixture
     def many_tests_files(self, testdir):
         testdir.makepyfile(
@@ -1502,7 +1497,7 @@ class TestProgressOutputStyle(object):
         assert "%]" not in output.stdout.str()
 
 
-class TestProgressWithTeardown(object):
+class TestProgressWithTeardown:
     """Ensure we show the correct percentages for tests that fail during teardown (#3088)"""
 
     @pytest.fixture
@@ -1589,7 +1584,7 @@ def test_skip_reasons_folding():
     message = "justso"
     longrepr = (path, lineno, message)
 
-    class X(object):
+    class X:
         pass
 
     ev1 = X()
@@ -1630,10 +1625,10 @@ def test_line_with_reprcrash(monkeypatch):
 
     monkeypatch.setattr(_pytest.terminal, "_get_pos", mock_get_pos)
 
-    class config(object):
+    class config:
         pass
 
-    class rep(object):
+    class rep:
         def _get_verbose_word(self, *args):
             return mocked_verbose_word
 
@@ -1648,7 +1643,7 @@ def test_line_with_reprcrash(monkeypatch):
         actual = _get_line_with_reprcrash_message(config, rep(), width)
 
         assert actual == expected
-        if actual != "%s %s" % (mocked_verbose_word, mocked_pos):
+        if actual != "{} {}".format(mocked_verbose_word, mocked_pos):
             assert len(actual) <= width
             assert wcswidth(actual) <= width
 
@@ -1670,17 +1665,17 @@ def test_line_with_reprcrash(monkeypatch):
     check("some\nmessage", 80, "FAILED some::nodeid - some")
 
     # Test unicode safety.
-    check(u"😄😄😄😄😄\n2nd line", 25, u"FAILED some::nodeid - ...")
-    check(u"😄😄😄😄😄\n2nd line", 26, u"FAILED some::nodeid - ...")
-    check(u"😄😄😄😄😄\n2nd line", 27, u"FAILED some::nodeid - 😄...")
-    check(u"😄😄😄😄😄\n2nd line", 28, u"FAILED some::nodeid - 😄...")
-    check(u"😄😄😄😄😄\n2nd line", 29, u"FAILED some::nodeid - 😄😄...")
+    check("😄😄😄😄😄\n2nd line", 25, "FAILED some::nodeid - ...")
+    check("😄😄😄😄😄\n2nd line", 26, "FAILED some::nodeid - ...")
+    check("😄😄😄😄😄\n2nd line", 27, "FAILED some::nodeid - 😄...")
+    check("😄😄😄😄😄\n2nd line", 28, "FAILED some::nodeid - 😄...")
+    check("😄😄😄😄😄\n2nd line", 29, "FAILED some::nodeid - 😄😄...")
 
     # NOTE: constructed, not sure if this is supported.
     # It would fail if not using u"" in Python 2 for mocked_pos.
-    mocked_pos = u"nodeid::😄::withunicode"
-    check(u"😄😄😄😄😄\n2nd line", 29, u"FAILED nodeid::😄::withunicode")
-    check(u"😄😄😄😄😄\n2nd line", 40, u"FAILED nodeid::😄::withunicode - 😄😄...")
-    check(u"😄😄😄😄😄\n2nd line", 41, u"FAILED nodeid::😄::withunicode - 😄😄...")
-    check(u"😄😄😄😄😄\n2nd line", 42, u"FAILED nodeid::😄::withunicode - 😄😄😄...")
-    check(u"😄😄😄😄😄\n2nd line", 80, u"FAILED nodeid::😄::withunicode - 😄😄😄😄😄")
+    mocked_pos = "nodeid::😄::withunicode"
+    check("😄😄😄😄😄\n2nd line", 29, "FAILED nodeid::😄::withunicode")
+    check("😄😄😄😄😄\n2nd line", 40, "FAILED nodeid::😄::withunicode - 😄😄...")
+    check("😄😄😄😄😄\n2nd line", 41, "FAILED nodeid::😄::withunicode - 😄😄...")
+    check("😄😄😄😄😄\n2nd line", 42, "FAILED nodeid::😄::withunicode - 😄😄😄...")
+    check("😄😄😄😄😄\n2nd line", 80, "FAILED nodeid::😄::withunicode - 😄😄😄😄😄")

@@ -1,10 +1,4 @@
-# -*- coding: utf-8 -*-
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 import os
-import sys
 from xml.dom import minidom
 
 import py
@@ -34,7 +28,7 @@ def assert_attr(node, **kwargs):
     assert on_node == expected
 
 
-class DomNode(object):
+class DomNode:
     def __init__(self, dom):
         self.__node = dom
 
@@ -85,7 +79,7 @@ class DomNode(object):
         return type(self)(self.__node.nextSibling)
 
 
-class TestPython(object):
+class TestPython:
     def test_summing_simple(self, testdir):
         testdir.makepyfile(
             """
@@ -573,20 +567,19 @@ class TestPython(object):
     def test_unicode(self, testdir):
         value = "hx\xc4\x85\xc4\x87\n"
         testdir.makepyfile(
-            """
+            """\
             # coding: latin1
             def test_hello():
                 print(%r)
                 assert 0
-        """
+            """
             % value
         )
         result, dom = runandparse(testdir)
         assert result.ret == 1
         tnode = dom.find_first_by_tag("testcase")
         fnode = tnode.find_first_by_tag("failure")
-        if not sys.platform.startswith("java"):
-            assert "hx" in fnode.toxml()
+        assert "hx" in fnode.toxml()
 
     def test_assertion_binchars(self, testdir):
         """this test did fail when the escaping wasnt strict"""
@@ -703,7 +696,7 @@ def test_mangle_test_address():
 def test_dont_configure_on_slaves(tmpdir):
     gotten = []
 
-    class FakeConfig(object):
+    class FakeConfig:
         def __init__(self):
             self.pluginmanager = self
             self.option = self
@@ -726,7 +719,7 @@ def test_dont_configure_on_slaves(tmpdir):
     assert len(gotten) == 1
 
 
-class TestNonPython(object):
+class TestNonPython:
     def test_summing_simple(self, testdir):
         testdir.makeconftest(
             """
@@ -929,7 +922,7 @@ def test_double_colon_split_method_issue469(testdir):
 def test_unicode_issue368(testdir):
     path = testdir.tmpdir.join("test.xml")
     log = LogXML(str(path), None)
-    ustr = u"ВНИ!"
+    ustr = "ВНИ!"
 
     class Report(BaseReport):
         longrepr = ustr
@@ -1173,13 +1166,13 @@ def test_fancy_items_regression(testdir):
 
     pprint.pprint(items)
     assert items == [
-        u"conftest a",
-        u"conftest a",
-        u"conftest b",
-        u"test_fancy_items_regression a",
-        u"test_fancy_items_regression a",
-        u"test_fancy_items_regression b",
-        u"test_fancy_items_regression test_pass",
+        "conftest a",
+        "conftest a",
+        "conftest b",
+        "test_fancy_items_regression a",
+        "test_fancy_items_regression a",
+        "test_fancy_items_regression b",
+        "test_fancy_items_regression test_pass",
     ]
 
 

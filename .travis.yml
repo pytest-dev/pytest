@@ -19,18 +19,13 @@ install:
 jobs:
   include:
     # OSX tests - first (in test stage), since they are the slower ones.
-    - &test-macos
-      os: osx
+    - os: osx
+      # NOTE: (tests with) pexpect appear to be buggy on Travis,
+      #       at least with coverage.
+      #       Log: https://travis-ci.org/pytest-dev/pytest/jobs/500358864
       osx_image: xcode10.1
       language: generic
-      # Coverage for:
-      # - py2 with symlink in test_cmdline_python_package_symlink.
-      env: TOXENV=py27-xdist PYTEST_COVERAGE=1
-      before_install:
-        - python -V
-        - test $(python -c 'import sys; print("%d%d" % sys.version_info[0:2])') = 27
-    - <<: *test-macos
-      env: TOXENV=py37-pexpect,py37-xdist PYTEST_COVERAGE=1
+      env: TOXENV=py37-xdist PYTEST_COVERAGE=1
       before_install:
         - which python3
         - python3 -V
@@ -38,20 +33,14 @@ jobs:
         - python -V
         - test $(python -c 'import sys; print("%d%d" % sys.version_info[0:2])') = 37
 
-    # Full run of latest (major) supported versions, without xdist.
-    - env: TOXENV=py27
-      python: '2.7'
-    - env: TOXENV=py37
+    # Full run of latest supported version, without xdist.
+    - env: TOXENV=py37  PYTEST_COVERAGE=1
       python: '3.7'
 
     # Coverage tracking is slow with pypy, skip it.
-    - env: TOXENV=pypy-xdist
-      python: 'pypy'
     - env: TOXENV=pypy3-xdist
       python: 'pypy3'
 
-    - env: TOXENV=py34-xdist
-      python: '3.4'
     - env: TOXENV=py35-xdist
       python: '3.5'
 
@@ -61,12 +50,6 @@ jobs:
     # - numpy
     # Empty PYTEST_ADDOPTS to run this non-verbose.
     - env: TOXENV=py37-lsof-numpy-xdist PYTEST_COVERAGE=1 PYTEST_ADDOPTS=
-
-    # Specialized factors for py27.
-    - env: TOXENV=py27-nobyte-numpy-xdist
-      python: '2.7'
-    - env: TOXENV=py27-pluggymaster-xdist
-      python: '2.7'
 
     # Specialized factors for py37.
     # Coverage for:
@@ -81,12 +64,7 @@ jobs:
       if: type = cron
 
     - stage: baseline
-    # Coverage for:
-    # - _pytest.unittest._handle_skip (via pexpect).
-      env: TOXENV=py27-pexpect,py27-twisted PYTEST_COVERAGE=1
-      python: '2.7'
-    # Use py36 here for faster baseline.
-    - env: TOXENV=py36-xdist
+      env: TOXENV=py36-xdist
       python: '3.6'
     - env: TOXENV=linting,docs,doctesting PYTEST_COVERAGE=1
       cache:
@@ -112,9 +90,6 @@ matrix:
   allow_failures:
     - python: '3.8-dev'
       env: TOXENV=py38-xdist
-    # Temporary (https://github.com/pytest-dev/pytest/pull/5334).
-    - env: TOXENV=pypy3-xdist
-      python: 'pypy3'
 
 before_script:
   - |

@@ -1,15 +1,13 @@
-# -*- coding: utf-8 -*-
 import inspect
 import warnings
 from collections import namedtuple
+from collections.abc import MutableMapping
 from operator import attrgetter
 
 import attr
-import six
 
 from ..compat import ascii_escaped
 from ..compat import getfslineno
-from ..compat import MappingMixin
 from ..compat import NOTSET
 from _pytest.deprecated import PYTEST_PARAM_UNKNOWN_KWARGS
 from _pytest.outcomes import fail
@@ -72,7 +70,7 @@ class ParameterSet(namedtuple("ParameterSet", "values, marks, id")):
 
         id_ = kwargs.pop("id", None)
         if id_ is not None:
-            if not isinstance(id_, six.string_types):
+            if not isinstance(id_, str):
                 raise TypeError(
                     "Expected id to be a string, got {}: {!r}".format(type(id_), id_)
                 )
@@ -113,14 +111,18 @@ class ParameterSet(namedtuple("ParameterSet", "values, marks, id")):
             force_tuple = len(argnames) == 1
         else:
             force_tuple = False
-        parameters = [
+        return argnames, force_tuple
+
+    @staticmethod
+    def _parse_parametrize_parameters(argvalues, force_tuple):
+        return [
             ParameterSet.extract_from(x, force_tuple=force_tuple) for x in argvalues
         ]
-        return argnames, parameters
 
     @classmethod
     def _for_parametrize(cls, argnames, argvalues, func, config, function_definition):
-        argnames, parameters = cls._parse_parametrize_args(argnames, argvalues)
+        argnames, force_tuple = cls._parse_parametrize_args(argnames, argvalues)
+        parameters = cls._parse_parametrize_parameters(argvalues, force_tuple)
         del argvalues
 
         if parameters:
@@ -154,7 +156,7 @@ class ParameterSet(namedtuple("ParameterSet", "values, marks, id")):
 
 
 @attr.s(frozen=True)
-class Mark(object):
+class Mark:
     #: name of the mark
     name = attr.ib(type=str)
     #: positional arguments of the mark decorator
@@ -177,7 +179,7 @@ class Mark(object):
 
 
 @attr.s
-class MarkDecorator(object):
+class MarkDecorator:
     """ A decorator for test functions and test classes.  When applied
     it will create :class:`MarkInfo` objects which may be
     :ref:`retrieved by hooks as item keywords <excontrolskip>`.
@@ -225,7 +227,7 @@ class MarkDecorator(object):
         return self.mark == other.mark if isinstance(other, MarkDecorator) else False
 
     def __repr__(self):
-        return "<MarkDecorator %r>" % (self.mark,)
+        return "<MarkDecorator {!r}>".format(self.mark)
 
     def with_args(self, *args, **kwargs):
         """ return a MarkDecorator with extra arguments added
@@ -286,7 +288,7 @@ def store_mark(obj, mark):
     obj.pytestmark = get_unpacked_marks(obj) + [mark]
 
 
-class MarkGenerator(object):
+class MarkGenerator:
     """ Factory for :class:`MarkDecorator` objects - exposed as
     a ``pytest.mark`` singleton instance.  Example::
 
@@ -339,7 +341,7 @@ class MarkGenerator(object):
 MARK_GEN = MarkGenerator()
 
 
-class NodeKeywords(MappingMixin):
+class NodeKeywords(MutableMapping):
     def __init__(self, node):
         self.node = node
         self.parent = node.parent
@@ -373,11 +375,11 @@ class NodeKeywords(MappingMixin):
         return len(self._seen())
 
     def __repr__(self):
-        return "<NodeKeywords for node %s>" % (self.node,)
+        return "<NodeKeywords for node {}>".format(self.node)
 
 
 @attr.s(cmp=False, hash=False)
-class NodeMarkers(object):
+class NodeMarkers:
     """
     internal structure for storing marks belonging to a node
 
