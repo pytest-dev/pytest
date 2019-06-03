@@ -903,22 +903,10 @@ warn_explicit(
         res = self.assign(ast.BinOp(left_expr, binop.op, right_expr))
         return res, explanation
 
-    @staticmethod
-    def _is_any_call_with_generator_or_list_comprehension(call):
-        """Return True if the Call node is an 'any' call with a generator or list comprehension"""
-        return (
-            isinstance(call.func, ast.Name)
-            and call.func.id == "all"
-            and len(call.args) == 1
-            and isinstance(call.args[0], (ast.GeneratorExp, ast.ListComp))
-        )
-
     def visit_Call(self, call):
         """
         visit `ast.Call` nodes
         """
-        if self._is_any_call_with_generator_or_list_comprehension(call):
-            return self._visit_all(call)
         new_func, func_expl = self.visit(call.func)
         arg_expls = []
         new_args = []
@@ -941,25 +929,6 @@ warn_explicit(
         res_expl = self.explanation_param(self.display(res))
         outer_expl = "{}\n{{{} = {}\n}}".format(res_expl, res_expl, expl)
         return res, outer_expl
-
-    def _visit_all(self, call):
-        """Special rewrite for the builtin all function, see #5062"""
-        gen_exp = call.args[0]
-        assertion_module = ast.Module(
-            body=[ast.Assert(test=gen_exp.elt, lineno=1, msg="", col_offset=1)]
-        )
-        AssertionRewriter(module_path=None, config=None).run(assertion_module)
-        for_loop = ast.For(
-            iter=gen_exp.generators[0].iter,
-            target=gen_exp.generators[0].target,
-            body=assertion_module.body,
-            orelse=[],
-        )
-        self.statements.append(for_loop)
-        return (
-            ast.Num(n=1),
-            "",
-        )  # Return an empty expression, all the asserts are in the for_loop
 
     def visit_Starred(self, starred):
         # From Python 3.5, a Starred node can appear in a function call

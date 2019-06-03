@@ -1,1 +1,0 @@
-Fix assertion rewriting of ``all()`` calls to deal with non-generators.
