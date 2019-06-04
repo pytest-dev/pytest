@@ -578,6 +578,29 @@ def test_setuptools_importerror_issue1479(testdir, monkeypatch):
         testdir.parseconfig()
 
 
+def test_importlib_metadata_broken_distribution(testdir, monkeypatch):
+    """Integration test for broken distributions with 'files' metadata being None (#5389)"""
+    monkeypatch.delenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD", raising=False)
+
+    class DummyEntryPoint:
+        name = "mytestplugin"
+        group = "pytest11"
+
+        def load(self):
+            return object()
+
+    class Distribution:
+        version = "1.0"
+        files = None
+        entry_points = (DummyEntryPoint(),)
+
+    def distributions():
+        return (Distribution(),)
+
+    monkeypatch.setattr(importlib_metadata, "distributions", distributions)
+    testdir.parseconfig()
+
+
 @pytest.mark.parametrize("block_it", [True, False])
 def test_plugin_preparse_prevents_setuptools_loading(testdir, monkeypatch, block_it):
     monkeypatch.delenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD", raising=False)
