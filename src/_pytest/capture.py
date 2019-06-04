@@ -87,9 +87,7 @@ class CaptureManager(object):
 
     def __repr__(self):
         return "<CaptureManager _method={!r} _global_capturing={!r} _current_item={!r}>".format(
-            self._method,
-            self._global_capturing,
-            self._current_item,
+            self._method, self._global_capturing, self._current_item
         )
 
     def _getcapture(self, method):
@@ -579,9 +577,7 @@ class FDCaptureBinary(object):
 
     def __repr__(self):
         return "<FDCapture {} oldfd={} _state={!r}>".format(
-            self.targetfd,
-            getattr(self, "targetfd_save", None),
-            self._state,
+            self.targetfd, getattr(self, "targetfd_save", None), self._state
         )
 
     def start(self):
@@ -662,10 +658,7 @@ class SysCapture(object):
 
     def __repr__(self):
         return "<SysCapture {} _old={!r}, tmpfile={!r} _state={!r}>".format(
-            self.name,
-            self._old,
-            self.tmpfile,
-            self._state,
+            self.name, self._old, self.tmpfile, self._state
         )
 
     def start(self):

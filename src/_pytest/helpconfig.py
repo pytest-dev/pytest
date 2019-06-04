@@ -229,7 +229,9 @@ def getpluginversioninfo(config):
 def pytest_report_header(config):
     lines = []
     if config.option.debug or config.option.traceconfig:
-        lines.append("using: pytest-{} pylib-{}".format(pytest.__version__, py.__version__))
+        lines.append(
+            "using: pytest-{} pylib-{}".format(pytest.__version__, py.__version__)
+        )
 
         verinfo = getpluginversioninfo(config)
         if verinfo:

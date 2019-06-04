@@ -627,11 +627,10 @@ class Session(nodes.FSCollector):
                 yield y
 
     def _collectfile(self, path, handle_dupes=True):
-        assert path.isfile(), "{!r} is not a file (isdir={!r}, exists={!r}, islink={!r})".format(
-            path,
-            path.isdir(),
-            path.exists(),
-            path.islink(),
+        assert (
+            path.isfile()
+        ), "{!r} is not a file (isdir={!r}, exists={!r}, islink={!r})".format(
+            path, path.isdir(), path.exists(), path.islink()
         )
         ihook = self.gethookproxy(path)
         if not self.isinitpath(path):

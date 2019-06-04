@@ -290,7 +290,9 @@ def _compare_eq_sequence(left, right, verbose=0):
     len_right = len(right)
     for i in range(min(len_left, len_right)):
         if left[i] != right[i]:
-            explanation += [u"At index {} diff: {!r} != {!r}".format(i, left[i], right[i])]
+            explanation += [
+                u"At index {} diff: {!r} != {!r}".format(i, left[i], right[i])
+            ]
             break
     len_diff = len_left - len_right
 
@@ -304,7 +306,9 @@ def _compare_eq_sequence(left, right, verbose=0):
             extra = saferepr(right[len_left])
 
         if len_diff == 1:
-            explanation += [u"{} contains one more item: {}".format(dir_with_more, extra)]
+            explanation += [
+                u"{} contains one more item: {}".format(dir_with_more, extra)
+            ]
         else:
             explanation += [
                 u"%s contains %d more items, first extra item: %s"

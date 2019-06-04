@@ -284,7 +284,9 @@ class HookRecorder(object):
             )
         if len(values) > 1:
             raise ValueError(
-                "found 2 or more testreports matching {!r}: {}".format(inamepart, values)
+                "found 2 or more testreports matching {!r}: {}".format(
+                    inamepart, values
+                )
             )
         return values[0]
 
@@ -970,9 +972,7 @@ class Testdir(object):
             if item.name == funcname:
                 return item
         assert 0, "{!r} item not found in module:\n{}\nitems: {}".format(
-            funcname,
-            source,
-            items,
+            funcname, source, items
         )
 
     def getitems(self, source):
@@ -1250,7 +1250,9 @@ def getdecoded(out):
     try:
         return out.decode("utf-8")
     except UnicodeDecodeError:
-        return "INTERNAL not-utf8-decodeable, truncated string:\n{}".format(saferepr(out))
+        return "INTERNAL not-utf8-decodeable, truncated string:\n{}".format(
+            saferepr(out)
+        )
 
 
 class LineComp(object):

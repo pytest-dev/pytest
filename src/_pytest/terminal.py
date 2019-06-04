@@ -566,9 +566,7 @@ class TerminalReporter(object):
             verinfo = ".".join(map(str, sys.pypy_version_info[:3]))
             msg += "[pypy-{}-{}]".format(verinfo, sys.pypy_version_info[3])
         msg += ", pytest-{}, py-{}, pluggy-{}".format(
-            pytest.__version__,
-            py.__version__,
-            pluggy.__version__,
+            pytest.__version__, py.__version__, pluggy.__version__
         )
         if (
             self.verbosity > 0

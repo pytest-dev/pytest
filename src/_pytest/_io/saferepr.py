@@ -15,10 +15,7 @@ def _call_and_format_exception(call, x, *args):
         except Exception:
             exc_info = "unknown"
         return '<[{}("{}") raised in repr()] {} object at 0x{:x}>'.format(
-            exc_name,
-            exc_info,
-            x.__class__.__name__,
-            id(x),
+            exc_name, exc_info, x.__class__.__name__, id(x)
         )
 
 

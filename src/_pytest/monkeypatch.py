@@ -77,14 +77,18 @@ def annotated_getattr(obj, name, ann):
         obj = getattr(obj, name)
     except AttributeError:
         raise AttributeError(
-            "{!r} object at {} has no attribute {!r}".format(type(obj).__name__, ann, name)
+            "{!r} object at {} has no attribute {!r}".format(
+                type(obj).__name__, ann, name
+            )
         )
     return obj
 
 
 def derive_importpath(import_path, raising):
     if not isinstance(import_path, six.string_types) or "." not in import_path:
-        raise TypeError("must be absolute import path string, not {!r}".format(import_path))
+        raise TypeError(
+            "must be absolute import path string, not {!r}".format(import_path)
+        )
     module, attr = import_path.rsplit(".", 1)
     target = resolve(module)
     if raising:

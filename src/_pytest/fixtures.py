@@ -895,9 +895,7 @@ class FixtureDef(object):
 
     def __repr__(self):
         return "<FixtureDef argname={!r} scope={!r} baseid={!r}>".format(
-            self.argname,
-            self.scope,
-            self.baseid,
+            self.argname, self.scope, self.baseid
         )
 
 

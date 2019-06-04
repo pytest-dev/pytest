@@ -24,10 +24,7 @@ def getslaveinfoline(node):
         d = node.slaveinfo
         ver = "%s.%s.%s" % d["version_info"][:3]
         node._slaveinfocache = s = "[{}] {} -- Python {} {}".format(
-            d["id"],
-            d["sysplatform"],
-            ver,
-            d["executable"],
+            d["id"], d["sysplatform"], ver, d["executable"]
         )
         return s
 
@@ -336,10 +333,7 @@ class TestReport(BaseReport):
 
     def __repr__(self):
         return "<{} {!r} when={!r} outcome={!r}>".format(
-            self.__class__.__name__,
-            self.nodeid,
-            self.when,
-            self.outcome,
+            self.__class__.__name__, self.nodeid, self.when, self.outcome
         )
 
     @classmethod
@@ -403,9 +397,7 @@ class CollectReport(BaseReport):
 
     def __repr__(self):
         return "<CollectReport {!r} lenresult={} outcome={!r}>".format(
-            self.nodeid,
-            len(self.result),
-            self.outcome,
+            self.nodeid, len(self.result), self.outcome
         )
 
 

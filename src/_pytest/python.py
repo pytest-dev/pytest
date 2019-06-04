@@ -56,7 +56,7 @@ def pyobj_property(name):
             return node.obj
 
     doc = "python {} object this node was collected from (can be None).".format(
-        name.lower(),
+        name.lower()
     )
     return property(get, None, None, doc)
 
@@ -606,11 +606,10 @@ class Package(Module):
         return proxy
 
     def _collectfile(self, path, handle_dupes=True):
-        assert path.isfile(), "{!r} is not a file (isdir={!r}, exists={!r}, islink={!r})".format(
-            path,
-            path.isdir(),
-            path.exists(),
-            path.islink(),
+        assert (
+            path.isfile()
+        ), "{!r} is not a file (isdir={!r}, exists={!r}, islink={!r})".format(
+            path, path.isdir(), path.exists(), path.islink()
         )
         ihook = self.gethookproxy(path)
         if not self.isinitpath(path):

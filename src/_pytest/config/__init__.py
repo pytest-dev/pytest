@@ -565,8 +565,7 @@ class PytestPluginManager(PluginManager):
             __import__(importspec)
         except ImportError as e:
             new_exc_message = 'Error importing plugin "{}": {}'.format(
-                modname,
-                safe_str(e.args[0]),
+                modname, safe_str(e.args[0])
             )
             new_exc = ImportError(new_exc_message)
             tb = sys.exc_info()[2]

@@ -969,7 +969,9 @@ class ReprEntry(TerminalRepr):
             self.reprfileloc.toterminal(tw)
 
     def __str__(self):
-        return "{}\n{}\n{}".format("\n".join(self.lines), self.reprlocals, self.reprfileloc)
+        return "{}\n{}\n{}".format(
+            "\n".join(self.lines), self.reprlocals, self.reprfileloc
+        )
 
 
 class ReprFileLocation(TerminalRepr):

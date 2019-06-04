@@ -228,7 +228,9 @@ class AssertionRewritingHook(object):
 
         if self.session is not None:
             if self.session.isinitpath(fn):
-                state.trace("matched test file (was specified on cmdline): {!r}".format(fn))
+                state.trace(
+                    "matched test file (was specified on cmdline): {!r}".format(fn)
+                )
                 return True
 
         # modules not passed explicitly on the command line are only
@@ -246,7 +248,9 @@ class AssertionRewritingHook(object):
         except KeyError:
             for marked in self._must_rewrite:
                 if name == marked or name.startswith(marked + "."):
-                    state.trace("matched marked file {!r} (from {!r})".format(name, marked))
+                    state.trace(
+                        "matched marked file {!r} (from {!r})".format(name, marked)
+                    )
                     self._marked_for_rewrite_cache[name] = True
                     return True
 
