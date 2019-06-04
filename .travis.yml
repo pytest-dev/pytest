@@ -105,7 +105,7 @@ before_script:
       export _PYTEST_TOX_EXTRA_DEP=coverage-enable-subprocess
     fi
 
-script: tox --recreate
+script: tox
 
 after_success:
   - |
