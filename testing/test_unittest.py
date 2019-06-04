@@ -139,6 +139,29 @@ def test_new_instances(testdir):
     reprec.assertoutcome(passed=2)
 
 
+def test_function_item_obj_is_instance(testdir):
+    """item.obj should be a bound method on unittest.TestCase function items (#5390)."""
+    testdir.makeconftest(
+        """
+        def pytest_runtest_makereport(item, call):
+            if call.when == 'call':
+                class_ = item.parent.obj
+                assert isinstance(item.obj.__self__, class_)
+    """
+    )
+    testdir.makepyfile(
+        """
+        import unittest
+
+        class Test(unittest.TestCase):
+            def test_foo(self):
+                pass
+    """
+    )
+    result = testdir.runpytest_inprocess()
+    result.stdout.fnmatch_lines(["* 1 passed in*"])
+
+
 def test_teardown(testdir):
     testpath = testdir.makepyfile(
         """
