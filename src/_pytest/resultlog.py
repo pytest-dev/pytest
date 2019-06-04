@@ -54,7 +54,7 @@ class ResultLog(object):
         self.logfile = logfile  # preferably line buffered
 
     def write_log_entry(self, testpath, lettercode, longrepr):
-        print("%s %s" % (lettercode, testpath), file=self.logfile)
+        print("{} {}".format(lettercode, testpath), file=self.logfile)
         for line in longrepr.splitlines():
             print(" %s" % line, file=self.logfile)
 

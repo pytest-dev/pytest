@@ -23,7 +23,7 @@ def getslaveinfoline(node):
     except AttributeError:
         d = node.slaveinfo
         ver = "%s.%s.%s" % d["version_info"][:3]
-        node._slaveinfocache = s = "[%s] %s -- Python %s %s" % (
+        node._slaveinfocache = s = "[{}] {} -- Python {} {}".format(
             d["id"],
             d["sysplatform"],
             ver,
@@ -335,7 +335,7 @@ class TestReport(BaseReport):
         self.__dict__.update(extra)
 
     def __repr__(self):
-        return "<%s %r when=%r outcome=%r>" % (
+        return "<{} {!r} when={!r} outcome={!r}>".format(
             self.__class__.__name__,
             self.nodeid,
             self.when,
@@ -372,7 +372,7 @@ class TestReport(BaseReport):
                         excinfo, style=item.config.getoption("tbstyle", "auto")
                     )
         for rwhen, key, content in item._report_sections:
-            sections.append(("Captured %s %s" % (key, rwhen), content))
+            sections.append(("Captured {} {}".format(key, rwhen), content))
         return cls(
             item.nodeid,
             item.location,
@@ -402,7 +402,7 @@ class CollectReport(BaseReport):
         return (self.fspath, None, self.fspath)
 
     def __repr__(self):
-        return "<CollectReport %r lenresult=%s outcome=%r>" % (
+        return "<CollectReport {!r} lenresult={} outcome={!r}>".format(
             self.nodeid,
             len(self.result),
             self.outcome,

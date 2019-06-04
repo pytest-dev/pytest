@@ -564,7 +564,7 @@ class PytestPluginManager(PluginManager):
         try:
             __import__(importspec)
         except ImportError as e:
-            new_exc_message = 'Error importing plugin "%s": %s' % (
+            new_exc_message = 'Error importing plugin "{}": {}'.format(
                 modname,
                 safe_str(e.args[0]),
             )
@@ -577,7 +577,7 @@ class PytestPluginManager(PluginManager):
             from _pytest.warnings import _issue_warning_captured
 
             _issue_warning_captured(
-                PytestConfigWarning("skipped plugin %r: %s" % (modname, e.msg)),
+                PytestConfigWarning("skipped plugin {!r}: {}".format(modname, e.msg)),
                 self.hook,
                 stacklevel=1,
             )
@@ -644,7 +644,7 @@ class Config(object):
 
         _a = FILE_OR_DIR
         self._parser = Parser(
-            usage="%%(prog)s [options] [%s] [%s] [...]" % (_a, _a),
+            usage="%(prog)s [options] [{}] [{}] [...]".format(_a, _a),
             processopt=self._processopt,
         )
         #: a pluginmanager instance
@@ -932,7 +932,7 @@ class Config(object):
         try:
             description, type, default = self._parser._inidict[name]
         except KeyError:
-            raise ValueError("unknown configuration value: %r" % (name,))
+            raise ValueError("unknown configuration value: {!r}".format(name))
         value = self._get_override_ini_value(name)
         if value is None:
             try:
@@ -1009,8 +1009,8 @@ class Config(object):
             if skip:
                 import pytest
 
-                pytest.skip("no %r option found" % (name,))
-            raise ValueError("no option named %r" % (name,))
+                pytest.skip("no {!r} option found".format(name))
+            raise ValueError("no option named {!r}".format(name))
 
     def getvalue(self, name, path=None):
         """ (deprecated, use getoption()) """
@@ -1098,4 +1098,4 @@ def _strtobool(val):
     elif val in ("n", "no", "f", "false", "off", "0"):
         return 0
     else:
-        raise ValueError("invalid truth value %r" % (val,))
+        raise ValueError("invalid truth value {!r}".format(val))

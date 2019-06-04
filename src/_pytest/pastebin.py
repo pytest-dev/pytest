@@ -86,7 +86,7 @@ def create_new_paste(contents):
     response = urlopen(url, data=urlencode(params).encode("ascii")).read()
     m = re.search(r'href="/raw/(\w+)"', response.decode("utf-8"))
     if m:
-        return "%s/show/%s" % (url, m.group(1))
+        return "{}/show/{}".format(url, m.group(1))
     else:
         return "bad response: " + response
 
@@ -111,4 +111,4 @@ def pytest_terminal_summary(terminalreporter):
             s = tw.stringio.getvalue()
             assert len(s)
             pastebinurl = create_new_paste(s)
-            tr.write_line("%s --> %s" % (msg, pastebinurl))
+            tr.write_line("{} --> {}".format(msg, pastebinurl))

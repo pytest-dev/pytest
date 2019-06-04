@@ -86,7 +86,7 @@ class CaptureManager(object):
         self._current_item = None
 
     def __repr__(self):
-        return "<CaptureManager _method=%r _global_capturing=%r _current_item=%r>" % (
+        return "<CaptureManager _method={!r} _global_capturing={!r} _current_item={!r}>".format(
             self._method,
             self._global_capturing,
             self._current_item,
@@ -473,7 +473,7 @@ class MultiCapture(object):
             self.err = Capture(2)
 
     def __repr__(self):
-        return "<MultiCapture out=%r err=%r in_=%r _state=%r _in_suspended=%r>" % (
+        return "<MultiCapture out={!r} err={!r} in_={!r} _state={!r} _in_suspended={!r}>".format(
             self.out,
             self.err,
             self.in_,
@@ -578,7 +578,7 @@ class FDCaptureBinary(object):
             self.tmpfile_fd = tmpfile.fileno()
 
     def __repr__(self):
-        return "<FDCapture %s oldfd=%s _state=%r>" % (
+        return "<FDCapture {} oldfd={} _state={!r}>".format(
             self.targetfd,
             getattr(self, "targetfd_save", None),
             self._state,
@@ -661,7 +661,7 @@ class SysCapture(object):
         self.tmpfile = tmpfile
 
     def __repr__(self):
-        return "<SysCapture %s _old=%r, tmpfile=%r _state=%r>" % (
+        return "<SysCapture {} _old={!r}, tmpfile={!r} _state={!r}>".format(
             self.name,
             self._old,
             self.tmpfile,

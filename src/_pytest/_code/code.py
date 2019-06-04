@@ -41,7 +41,7 @@ class Code(object):
             self.firstlineno = rawcode.co_firstlineno - 1
             self.name = rawcode.co_name
         except AttributeError:
-            raise TypeError("not a code object: %r" % (rawcode,))
+            raise TypeError("not a code object: {!r}".format(rawcode))
         self.raw = rawcode
 
     def __eq__(self, other):
@@ -677,7 +677,7 @@ class FormattedExcinfo(object):
                         str_repr = safeformat(value)
                     # if len(str_repr) < 70 or not isinstance(value,
                     #                            (list, tuple, dict)):
-                    lines.append("%-10s = %s" % (name, str_repr))
+                    lines.append("{:<10} = {}".format(name, str_repr))
                     # else:
                     #    self._line("%-10s =\\" % (name,))
                     #    # XXX
@@ -850,7 +850,7 @@ class TerminalRepr(object):
         return io.getvalue().strip()
 
     def __repr__(self):
-        return "<%s instance at %0x>" % (self.__class__, id(self))
+        return "<{} instance at {:0x}>".format(self.__class__, id(self))
 
 
 class ExceptionRepr(TerminalRepr):
@@ -969,7 +969,7 @@ class ReprEntry(TerminalRepr):
             self.reprfileloc.toterminal(tw)
 
     def __str__(self):
-        return "%s\n%s\n%s" % ("\n".join(self.lines), self.reprlocals, self.reprfileloc)
+        return "{}\n{}\n{}".format("\n".join(self.lines), self.reprlocals, self.reprfileloc)
 
 
 class ReprFileLocation(TerminalRepr):
@@ -986,7 +986,7 @@ class ReprFileLocation(TerminalRepr):
         if i != -1:
             msg = msg[:i]
         tw.write(self.path, bold=True, red=True)
-        tw.line(":%s: %s" % (self.lineno, msg))
+        tw.line(":{}: {}".format(self.lineno, msg))
 
 
 class ReprLocals(TerminalRepr):
@@ -1006,7 +1006,7 @@ class ReprFuncArgs(TerminalRepr):
         if self.args:
             linesofar = ""
             for name, value in self.args:
-                ns = "%s = %s" % (safe_str(name), safe_str(value))
+                ns = "{} = {}".format(safe_str(name), safe_str(value))
                 if len(ns) + len(linesofar) + 2 > tw.fullwidth:
                     if linesofar:
                         tw.line(linesofar)

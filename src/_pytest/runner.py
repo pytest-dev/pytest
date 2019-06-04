@@ -62,7 +62,7 @@ def pytest_terminal_summary(terminalreporter):
             tr.write_line("")
             tr.write_line("(0.00 durations hidden.  Use -vv to show these durations.)")
             break
-        tr.write_line("%02.2fs %-8s %s" % (rep.duration, rep.when, rep.nodeid))
+        tr.write_line("{:02.2f}s {:<8} {}".format(rep.duration, rep.when, rep.nodeid))
 
 
 def pytest_sessionstart(session):

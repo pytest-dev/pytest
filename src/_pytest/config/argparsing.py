@@ -145,7 +145,7 @@ class ArgumentError(Exception):
 
     def __str__(self):
         if self.option_id:
-            return "option %s: %s" % (self.option_id, self.msg)
+            return "option {}: {}".format(self.option_id, self.msg)
         else:
             return self.msg
 
@@ -337,10 +337,10 @@ class MyOptionParser(argparse.ArgumentParser):
 
     def error(self, message):
         """Transform argparse error message into UsageError."""
-        msg = "%s: error: %s" % (self.prog, message)
+        msg = "{}: error: {}".format(self.prog, message)
 
         if hasattr(self._parser, "_config_source_hint"):
-            msg = "%s (%s)" % (msg, self._parser._config_source_hint)
+            msg = "{} ({})".format(msg, self._parser._config_source_hint)
 
         raise UsageError(self.format_usage() + msg)
 
@@ -352,7 +352,7 @@ class MyOptionParser(argparse.ArgumentParser):
                 if arg and arg[0] == "-":
                     lines = ["unrecognized arguments: %s" % (" ".join(argv))]
                     for k, v in sorted(self.extra_info.items()):
-                        lines.append("  %s: %s" % (k, v))
+                        lines.append("  {}: {}".format(k, v))
                     self.error("\n".join(lines))
             getattr(args, FILE_OR_DIR).extend(argv)
         return args

@@ -522,8 +522,8 @@ class Session(nodes.FSCollector):
         if self._notfound:
             errors = []
             for arg, exc in self._notfound:
-                line = "(no name %r in any of %r)" % (arg, exc.args[0])
-                errors.append("not found: %s\n%s" % (arg, line))
+                line = "(no name {!r} in any of {!r})".format(arg, exc.args[0])
+                errors.append("not found: {}\n{}".format(arg, line))
                 # XXX: test this
             raise UsageError(*errors)
         if not genitems:
@@ -578,7 +578,7 @@ class Session(nodes.FSCollector):
         # If it's a directory argument, recurse and look for any Subpackages.
         # Let the Package collector deal with subnodes, don't collect here.
         if argpath.check(dir=1):
-            assert not names, "invalid arg %r" % (arg,)
+            assert not names, "invalid arg {!r}".format(arg)
 
             seen_dirs = set()
             for path in argpath.visit(
@@ -627,7 +627,7 @@ class Session(nodes.FSCollector):
                 yield y
 
     def _collectfile(self, path, handle_dupes=True):
-        assert path.isfile(), "%r is not a file (isdir=%r, exists=%r, islink=%r)" % (
+        assert path.isfile(), "{!r} is not a file (isdir={!r}, exists={!r}, islink={!r})".format(
             path,
             path.isdir(),
             path.exists(),

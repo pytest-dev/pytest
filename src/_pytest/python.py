@@ -55,7 +55,7 @@ def pyobj_property(name):
         if node is not None:
             return node.obj
 
-    doc = "python %s object this node was collected from (can be None)." % (
+    doc = "python {} object this node was collected from (can be None).".format(
         name.lower(),
     )
     return property(get, None, None, doc)
@@ -421,7 +421,7 @@ class PyCollector(PyobjMixin, nodes.Collector):
             fixtureinfo.prune_dependency_tree()
 
             for callspec in metafunc._calls:
-                subname = "%s[%s]" % (name, callspec.id)
+                subname = "{}[{}]".format(name, callspec.id)
                 yield Function(
                     name=subname,
                     parent=self,
@@ -606,7 +606,7 @@ class Package(Module):
         return proxy
 
     def _collectfile(self, path, handle_dupes=True):
-        assert path.isfile(), "%r is not a file (isdir=%r, exists=%r, islink=%r)" % (
+        assert path.isfile(), "{!r} is not a file (isdir={!r}, exists={!r}, islink={!r})".format(
             path,
             path.isdir(),
             path.exists(),
@@ -884,7 +884,7 @@ class CallSpec2(object):
 
     def _checkargnotcontained(self, arg):
         if arg in self.params or arg in self.funcargs:
-            raise ValueError("duplicate %r" % (arg,))
+            raise ValueError("duplicate {!r}".format(arg))
 
     def getparam(self, name):
         try:
@@ -1335,7 +1335,7 @@ def _showfixtures_main(config, session):
         if currentmodule != module:
             if not module.startswith("_pytest."):
                 tw.line()
-                tw.sep("-", "fixtures defined from %s" % (module,))
+                tw.sep("-", "fixtures defined from {}".format(module))
                 currentmodule = module
         if verbose <= 0 and argname[0] == "_":
             continue
@@ -1350,7 +1350,7 @@ def _showfixtures_main(config, session):
         if doc:
             write_docstring(tw, doc)
         else:
-            tw.line("    %s: no docstring available" % (loc,), red=True)
+            tw.line("    {}: no docstring available".format(loc), red=True)
         tw.line()
 
 

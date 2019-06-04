@@ -258,7 +258,7 @@ class DoctestItem(pytest.Item):
                     ]
                     indent = ">>>"
                     for line in example.source.splitlines():
-                        lines.append("??? %s %s" % (indent, line))
+                        lines.append("??? {} {}".format(indent, line))
                         indent = "..."
                 if isinstance(failure, doctest.DocTestFailure):
                     lines += checker.output_difference(

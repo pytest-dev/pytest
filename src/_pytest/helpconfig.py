@@ -122,7 +122,7 @@ def pytest_cmdline_parse():
 def showversion(config):
     p = py.path.local(pytest.__file__)
     sys.stderr.write(
-        "This is pytest version %s, imported from %s\n" % (pytest.__version__, p)
+        "This is pytest version {}, imported from {}\n".format(pytest.__version__, p)
     )
     plugininfo = getpluginversioninfo(config)
     if plugininfo:
@@ -160,7 +160,7 @@ def showhelp(config):
         help, type, default = config._parser._inidict[name]
         if type is None:
             type = "string"
-        spec = "%s (%s):" % (name, type)
+        spec = "{} ({}):".format(name, type)
         tw.write("  %s" % spec)
         spec_len = len(spec)
         if spec_len > (indent_len - 3):
@@ -194,7 +194,7 @@ def showhelp(config):
         ("PYTEST_DEBUG", "set to enable debug tracing of pytest's internals"),
     ]
     for name, help in vars:
-        tw.line("  %-24s %s" % (name, help))
+        tw.line("  {:<24} {}".format(name, help))
     tw.line()
     tw.line()
 
@@ -221,7 +221,7 @@ def getpluginversioninfo(config):
         lines.append("setuptools registered plugins:")
         for plugin, dist in plugininfo:
             loc = getattr(plugin, "__file__", repr(plugin))
-            content = "%s-%s at %s" % (dist.project_name, dist.version, loc)
+            content = "{}-{} at {}".format(dist.project_name, dist.version, loc)
             lines.append("  " + content)
     return lines
 
@@ -229,7 +229,7 @@ def getpluginversioninfo(config):
 def pytest_report_header(config):
     lines = []
     if config.option.debug or config.option.traceconfig:
-        lines.append("using: pytest-%s pylib-%s" % (pytest.__version__, py.__version__))
+        lines.append("using: pytest-{} pylib-{}".format(pytest.__version__, py.__version__))
 
         verinfo = getpluginversioninfo(config)
         if verinfo:
@@ -243,5 +243,5 @@ def pytest_report_header(config):
                 r = plugin.__file__
             else:
                 r = repr(plugin)
-            lines.append("    %-20s: %s" % (name, r))
+            lines.append("    {:<20}: {}".format(name, r))
     return lines

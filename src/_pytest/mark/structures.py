@@ -229,7 +229,7 @@ class MarkDecorator(object):
         return self.mark == other.mark if isinstance(other, MarkDecorator) else False
 
     def __repr__(self):
-        return "<MarkDecorator %r>" % (self.mark,)
+        return "<MarkDecorator {!r}>".format(self.mark)
 
     def with_args(self, *args, **kwargs):
         """ return a MarkDecorator with extra arguments added
@@ -377,7 +377,7 @@ class NodeKeywords(MappingMixin):
         return len(self._seen())
 
     def __repr__(self):
-        return "<NodeKeywords for node %s>" % (self.node,)
+        return "<NodeKeywords for node {}>".format(self.node)
 
 
 @attr.s(cmp=False, hash=False)

@@ -40,7 +40,7 @@ else:
     else:
         impl = "cpython"
     ver = sys.version_info
-    PYTEST_TAG = "%s-%s%s-PYTEST" % (impl, ver[0], ver[1])
+    PYTEST_TAG = "{}-{}{}-PYTEST".format(impl, ver[0], ver[1])
     del ver, impl
 
 PYC_EXT = ".py" + (__debug__ and "c" or "o")
@@ -165,7 +165,7 @@ class AssertionRewritingHook(object):
         # to check for a cached pyc. This may not be optimal...
         co = _read_pyc(fn_pypath, pyc, state.trace)
         if co is None:
-            state.trace("rewriting %r" % (fn,))
+            state.trace("rewriting {!r}".format(fn))
             source_stat, co = _rewrite_test(self.config, fn_pypath)
             if co is None:
                 # Probably a SyntaxError in the test.
@@ -177,7 +177,7 @@ class AssertionRewritingHook(object):
                 finally:
                     self._writing_pyc = False
         else:
-            state.trace("found cached rewritten pyc for %r" % (fn,))
+            state.trace("found cached rewritten pyc for {!r}".format(fn))
         self.modules[name] = co, pyc
         return self
 
@@ -216,26 +216,26 @@ class AssertionRewritingHook(object):
         if self._is_marked_for_rewrite(name, state):
             return False
 
-        state.trace("early skip of rewriting module: %s" % (name,))
+        state.trace("early skip of rewriting module: {}".format(name))
         return True
 
     def _should_rewrite(self, name, fn_pypath, state):
         # always rewrite conftest files
         fn = str(fn_pypath)
         if fn_pypath.basename == "conftest.py":
-            state.trace("rewriting conftest file: %r" % (fn,))
+            state.trace("rewriting conftest file: {!r}".format(fn))
             return True
 
         if self.session is not None:
             if self.session.isinitpath(fn):
-                state.trace("matched test file (was specified on cmdline): %r" % (fn,))
+                state.trace("matched test file (was specified on cmdline): {!r}".format(fn))
                 return True
 
         # modules not passed explicitly on the command line are only
         # rewritten if they match the naming convention for test files
         for pat in self.fnpats:
             if fn_pypath.fnmatch(pat):
-                state.trace("matched test file %r" % (fn,))
+                state.trace("matched test file {!r}".format(fn))
                 return True
 
         return self._is_marked_for_rewrite(name, state)
@@ -246,7 +246,7 @@ class AssertionRewritingHook(object):
         except KeyError:
             for marked in self._must_rewrite:
                 if name == marked or name.startswith(marked + "."):
-                    state.trace("matched marked file %r (from %r)" % (name, marked))
+                    state.trace("matched marked file {!r} (from {!r})".format(name, marked))
                     self._marked_for_rewrite_cache[name] = True
                     return True
 
@@ -341,7 +341,7 @@ def _write_pyc(state, co, source_stat, pyc):
             fp.write(struct.pack("<LL", mtime, size))
             fp.write(marshal.dumps(co))
     except EnvironmentError as e:
-        state.trace("error writing pyc file at %s: errno=%s" % (pyc, e.errno))
+        state.trace("error writing pyc file at {}: errno={}".format(pyc, e.errno))
         # we ignore any failure to write the cache file
         # there are many reasons, permission-denied, __pycache__ being a
         # file etc.
@@ -399,7 +399,7 @@ def _rewrite_test(config, fn):
         tree = ast.parse(source, filename=fn.strpath)
     except SyntaxError:
         # Let this pop up again in the real import.
-        state.trace("failed to parse: %r" % (fn,))
+        state.trace("failed to parse: {!r}".format(fn))
         return None, None
     rewrite_asserts(tree, fn, config)
     try:
@@ -407,7 +407,7 @@ def _rewrite_test(config, fn):
     except SyntaxError:
         # It's possible that this error is from some bug in the
         # assertion rewriting, but I don't know of a fast way to tell.
-        state.trace("failed to compile: %r" % (fn,))
+        state.trace("failed to compile: {!r}".format(fn))
         return None, None
     return stat, co
 
@@ -427,7 +427,7 @@ def _read_pyc(source, pyc, trace=lambda x: None):
             size = source.size()
             data = fp.read(12)
         except EnvironmentError as e:
-            trace("_read_pyc(%s): EnvironmentError %s" % (source, e))
+            trace("_read_pyc({}): EnvironmentError {}".format(source, e))
             return None
         # Check for invalid or out of date pyc file.
         if (
@@ -440,7 +440,7 @@ def _read_pyc(source, pyc, trace=lambda x: None):
         try:
             co = marshal.load(fp)
         except Exception as e:
-            trace("_read_pyc(%s): marshal.load error %s" % (source, e))
+            trace("_read_pyc({}): marshal.load error {}".format(source, e))
             return None
         if not isinstance(co, types.CodeType):
             trace("_read_pyc(%s): not a code object" % source)
@@ -945,7 +945,7 @@ warn_explicit(
         symbol = binop_map[binop.op.__class__]
         left_expr, left_expl = self.visit(binop.left)
         right_expr, right_expl = self.visit(binop.right)
-        explanation = "(%s %s %s)" % (left_expl, symbol, right_expl)
+        explanation = "({} {} {})".format(left_expl, symbol, right_expl)
         res = self.assign(ast.BinOp(left_expr, binop.op, right_expr))
         return res, explanation
 
@@ -969,11 +969,11 @@ warn_explicit(
             else:  # **args have `arg` keywords with an .arg of None
                 arg_expls.append("**" + expl)
 
-        expl = "%s(%s)" % (func_expl, ", ".join(arg_expls))
+        expl = "{}({})".format(func_expl, ", ".join(arg_expls))
         new_call = ast.Call(new_func, new_args, new_kwargs)
         res = self.assign(new_call)
         res_expl = self.explanation_param(self.display(res))
-        outer_expl = "%s\n{%s = %s\n}" % (res_expl, res_expl, expl)
+        outer_expl = "{}\n{{{} = {}\n}}".format(res_expl, res_expl, expl)
         return res, outer_expl
 
     def visit_Starred(self, starred):
@@ -1005,11 +1005,11 @@ warn_explicit(
         if call.kwargs:
             new_kwarg, expl = self.visit(call.kwargs)
             arg_expls.append("**" + expl)
-        expl = "%s(%s)" % (func_expl, ", ".join(arg_expls))
+        expl = "{}({})".format(func_expl, ", ".join(arg_expls))
         new_call = ast.Call(new_func, new_args, new_kwargs, new_star, new_kwarg)
         res = self.assign(new_call)
         res_expl = self.explanation_param(self.display(res))
-        outer_expl = "%s\n{%s = %s\n}" % (res_expl, res_expl, expl)
+        outer_expl = "{}\n{{{} = {}\n}}".format(res_expl, res_expl, expl)
         return res, outer_expl
 
     # ast.Call signature changed on 3.5,
@@ -1049,7 +1049,7 @@ warn_explicit(
             results.append(next_res)
             sym = binop_map[op.__class__]
             syms.append(ast.Str(sym))
-            expl = "%s %s %s" % (left_expl, sym, next_expl)
+            expl = "{} {} {}".format(left_expl, sym, next_expl)
             expls.append(ast.Str(expl))
             res_expr = ast.Compare(left_res, [op], [next_res])
             self.statements.append(ast.Assign([store_names[i]], res_expr))

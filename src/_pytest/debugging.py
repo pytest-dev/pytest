@@ -230,7 +230,7 @@ class pytestPDB(object):
                 else:
                     capturing = cls._is_capturing(capman)
                     if capturing == "global":
-                        tw.sep(">", "PDB %s (IO-capturing turned off)" % (method,))
+                        tw.sep(">", "PDB {} (IO-capturing turned off)".format(method))
                     elif capturing:
                         tw.sep(
                             ">",
@@ -238,7 +238,7 @@ class pytestPDB(object):
                             % (method, capturing),
                         )
                     else:
-                        tw.sep(">", "PDB %s" % (method,))
+                        tw.sep(">", "PDB {}".format(method))
 
         _pdb = cls._import_pdb_cls(capman)(**kwargs)
 

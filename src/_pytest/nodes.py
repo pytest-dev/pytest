@@ -103,7 +103,7 @@ class Node(object):
         return self.session.gethookproxy(self.fspath)
 
     def __repr__(self):
-        return "<%s %s>" % (self.__class__.__name__, getattr(self, "name", None))
+        return "<{} {}>".format(self.__class__.__name__, getattr(self, "name", None))
 
     def warn(self, warning):
         """Issue a warning for this item.

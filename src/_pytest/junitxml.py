@@ -43,7 +43,7 @@ class Junit(py.xml.Namespace):
 _legal_chars = (0x09, 0x0A, 0x0D)
 _legal_ranges = ((0x20, 0x7E), (0x80, 0xD7FF), (0xE000, 0xFFFD), (0x10000, 0x10FFFF))
 _legal_xml_re = [
-    u"%s-%s" % (six.unichr(low), six.unichr(high))
+    u"{}-{}".format(six.unichr(low), six.unichr(high))
     for (low, high) in _legal_ranges
     if low < sys.maxunicode
 ]
@@ -268,7 +268,7 @@ class _NodeReporter(object):
             filename, lineno, skipreason = report.longrepr
             if skipreason.startswith("Skipped: "):
                 skipreason = skipreason[9:]
-            details = "%s:%s: %s" % (filename, lineno, skipreason)
+            details = "{}:{}: {}".format(filename, lineno, skipreason)
 
             self.append(
                 Junit.skipped(

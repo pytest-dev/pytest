@@ -189,7 +189,7 @@ class ParsedCall(object):
     def __repr__(self):
         d = self.__dict__.copy()
         del d["_name"]
-        return "<ParsedCall %r(**%r)>" % (self._name, d)
+        return "<ParsedCall {!r}(**{!r})>".format(self._name, d)
 
 
 class HookRecorder(object):
@@ -239,7 +239,7 @@ class HookRecorder(object):
                     break
                 print("NONAMEMATCH", name, "with", call)
             else:
-                pytest.fail("could not find %r check %r" % (name, check))
+                pytest.fail("could not find {!r} check {!r}".format(name, check))
 
     def popcall(self, name):
         __tracebackhide__ = True
@@ -247,7 +247,7 @@ class HookRecorder(object):
             if call._name == name:
                 del self.calls[i]
                 return call
-        lines = ["could not find call %r, in:" % (name,)]
+        lines = ["could not find call {!r}, in:".format(name)]
         lines.extend(["  %s" % x for x in self.calls])
         pytest.fail("\n".join(lines))
 
@@ -284,7 +284,7 @@ class HookRecorder(object):
             )
         if len(values) > 1:
             raise ValueError(
-                "found 2 or more testreports matching %r: %s" % (inamepart, values)
+                "found 2 or more testreports matching {!r}: {}".format(inamepart, values)
             )
         return values[0]
 
@@ -513,7 +513,7 @@ class Testdir(object):
         self._env_run_update = {"HOME": tmphome, "USERPROFILE": tmphome}
 
     def __repr__(self):
-        return "<Testdir %r>" % (self.tmpdir,)
+        return "<Testdir {!r}>".format(self.tmpdir)
 
     def __str__(self):
         return str(self.tmpdir)
@@ -969,7 +969,7 @@ class Testdir(object):
         for item in items:
             if item.name == funcname:
                 return item
-        assert 0, "%r item not found in module:\n%s\nitems: %s" % (
+        assert 0, "{!r} item not found in module:\n{}\nitems: {}".format(
             funcname,
             source,
             items,
@@ -1163,7 +1163,7 @@ class Testdir(object):
             for line in lines:
                 print(line, file=fp)
         except UnicodeEncodeError:
-            print("couldn't print to %s because of encoding" % (fp,))
+            print("couldn't print to {} because of encoding".format(fp))
 
     def _getpytestargs(self):
         return sys.executable, "-mpytest"
@@ -1220,7 +1220,7 @@ class Testdir(object):
         """
         basetemp = self.tmpdir.mkdir("temp-pexpect")
         invoke = " ".join(map(str, self._getpytestargs()))
-        cmd = "%s --basetemp=%s %s" % (invoke, basetemp, string)
+        cmd = "{} --basetemp={} {}".format(invoke, basetemp, string)
         return self.spawn(cmd, expect_timeout=expect_timeout)
 
     def spawn(self, cmd, expect_timeout=10.0):
@@ -1250,7 +1250,7 @@ def getdecoded(out):
     try:
         return out.decode("utf-8")
     except UnicodeDecodeError:
-        return "INTERNAL not-utf8-decodeable, truncated string:\n%s" % (saferepr(out),)
+        return "INTERNAL not-utf8-decodeable, truncated string:\n{}".format(saferepr(out))
 
 
 class LineComp(object):
@@ -1409,5 +1409,5 @@ class LineMatcher(object):
                     self._log("    and:", repr(nextline))
                 extralines.append(nextline)
             else:
-                self._log("remains unmatched: %r" % (line,))
+                self._log("remains unmatched: {!r}".format(line))
                 pytest.fail(self._log_text)

@@ -676,7 +676,7 @@ class TestPDB(object):
                 set_trace()
         """
         )
-        child = testdir.spawn_pytest("--tb=short %s %s" % (p1, capture_arg))
+        child = testdir.spawn_pytest("--tb=short {} {}".format(p1, capture_arg))
         child.expect("=== SET_TRACE ===")
         before = child.before.decode("utf8")
         if not capture_arg:

@@ -142,7 +142,7 @@ def assertrepr_compare(config, op, left, right):
     left_repr = saferepr(left, maxsize=int(width // 2))
     right_repr = saferepr(right, maxsize=width - len(left_repr))
 
-    summary = u"%s %s %s" % (ecu(left_repr), op, ecu(right_repr))
+    summary = u"{} {} {}".format(ecu(left_repr), op, ecu(right_repr))
 
     verbose = config.getoption("verbose")
     explanation = None
@@ -290,7 +290,7 @@ def _compare_eq_sequence(left, right, verbose=0):
     len_right = len(right)
     for i in range(min(len_left, len_right)):
         if left[i] != right[i]:
-            explanation += [u"At index %s diff: %r != %r" % (i, left[i], right[i])]
+            explanation += [u"At index {} diff: {!r} != {!r}".format(i, left[i], right[i])]
             break
     len_diff = len_left - len_right
 
@@ -304,7 +304,7 @@ def _compare_eq_sequence(left, right, verbose=0):
             extra = saferepr(right[len_left])
 
         if len_diff == 1:
-            explanation += [u"%s contains one more item: %s" % (dir_with_more, extra)]
+            explanation += [u"{} contains one more item: {}".format(dir_with_more, extra)]
         else:
             explanation += [
                 u"%s contains %d more items, first extra item: %s"

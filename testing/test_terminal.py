@@ -1648,7 +1648,7 @@ def test_line_with_reprcrash(monkeypatch):
         actual = _get_line_with_reprcrash_message(config, rep(), width)
 
         assert actual == expected
-        if actual != "%s %s" % (mocked_verbose_word, mocked_pos):
+        if actual != "{} {}".format(mocked_verbose_word, mocked_pos):
             assert len(actual) <= width
             assert wcswidth(actual) <= width
 
