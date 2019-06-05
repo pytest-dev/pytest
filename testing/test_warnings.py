@@ -130,7 +130,7 @@ def test_unicode(testdir, pyfile_with_warnings):
 
         @pytest.fixture
         def fix():
-            warnings.warn(u"测试")
+            warnings.warn("测试")
             yield
 
         def test_func(fix):
@@ -207,13 +207,13 @@ def test_filterwarnings_mark(testdir, default_config):
 def test_non_string_warning_argument(testdir):
     """Non-str argument passed to warning breaks pytest (#2956)"""
     testdir.makepyfile(
-        """
+        """\
         import warnings
         import pytest
 
         def test():
-            warnings.warn(UserWarning(1, u'foo'))
-    """
+            warnings.warn(UserWarning(1, 'foo'))
+        """
     )
     result = testdir.runpytest("-W", "always")
     result.stdout.fnmatch_lines(["*= 1 passed, 1 warnings in *"])

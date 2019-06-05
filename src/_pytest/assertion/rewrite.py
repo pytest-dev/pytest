@@ -6,7 +6,6 @@ import itertools
 import marshal
 import os
 import re
-import string
 import struct
 import sys
 import types
@@ -336,8 +335,8 @@ def _write_pyc(state, co, source_stat, pyc):
     return True
 
 
-RN = "\r\n".encode()
-N = "\n".encode()
+RN = b"\r\n"
+N = b"\n"
 
 cookie_re = re.compile(r"^[ \t\f]*#.*coding[:=][ \t]*[-\w.]+")
 BOM_UTF8 = "\xef\xbb\xbf"
@@ -420,15 +419,7 @@ def _saferepr(obj):
     JSON reprs.
 
     """
-    r = saferepr(obj)
-    # only occurs in python2.x, repr must return text in python3+
-    if isinstance(r, bytes):
-        # Represent unprintable bytes as `\x##`
-        r = "".join(
-            "\\x{:x}".format(ord(c)) if c not in string.printable else c.decode()
-            for c in r
-        )
-    return r.replace("\n", "\\n")
+    return saferepr(obj).replace("\n", "\\n")
 
 
 def _format_assertmsg(obj):
@@ -447,9 +438,6 @@ def _format_assertmsg(obj):
     if not isinstance(obj, str):
         obj = saferepr(obj)
         replaces.append(("\\n", "\n~"))
-
-    if isinstance(obj, bytes):
-        replaces = [(r1.encode(), r2.encode()) for r1, r2 in replaces]
 
     for r1, r2 in replaces:
         obj = obj.replace(r1, r2)

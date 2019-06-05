@@ -116,7 +116,7 @@ class TestModule:
         """Check test modules collected which raise ImportError with unicode messages
         are handled properly (#2336).
         """
-        testdir.makepyfile("raise ImportError(u'Something bad happened ☺')")
+        testdir.makepyfile("raise ImportError('Something bad happened ☺')")
         result = testdir.runpytest()
         result.stdout.fnmatch_lines(
             [

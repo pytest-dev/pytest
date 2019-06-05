@@ -510,7 +510,7 @@ class TestGeneralUsage:
             """\
             import pytest
 
-            @pytest.mark.parametrize("data", [b"\\x00", "\\x00", u'ação'])
+            @pytest.mark.parametrize("data", [b"\\x00", "\\x00", 'ação'])
             def test_foo(data):
                 assert data
             """
@@ -998,16 +998,8 @@ def test_zipimport_hook(testdir, tmpdir):
 
 def test_import_plugin_unicode_name(testdir):
     testdir.makepyfile(myplugin="")
-    testdir.makepyfile(
-        """
-        def test(): pass
-    """
-    )
-    testdir.makeconftest(
-        """
-        pytest_plugins = [u'myplugin']
-    """
-    )
+    testdir.makepyfile("def test(): pass")
+    testdir.makeconftest("pytest_plugins = ['myplugin']")
     r = testdir.runpytest()
     assert r.ret == 0
 

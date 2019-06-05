@@ -632,8 +632,7 @@ def test_pytest_fail_notrace_collection(testdir):
     assert "def some_internal_function()" not in result.stdout.str()
 
 
-@pytest.mark.parametrize("str_prefix", ["u", ""])
-def test_pytest_fail_notrace_non_ascii(testdir, str_prefix):
+def test_pytest_fail_notrace_non_ascii(testdir):
     """Fix pytest.fail with pytrace=False with non-ascii characters (#1178).
 
     This tests with native and unicode strings containing non-ascii chars.
@@ -643,9 +642,8 @@ def test_pytest_fail_notrace_non_ascii(testdir, str_prefix):
         import pytest
 
         def test_hello():
-            pytest.fail(%s'oh oh: ☺', pytrace=False)
+            pytest.fail('oh oh: ☺', pytrace=False)
         """
-        % str_prefix
     )
     result = testdir.runpytest()
     result.stdout.fnmatch_lines(["*test_hello*", "oh oh: ☺"])
@@ -790,7 +788,7 @@ def test_unicode_in_longrepr(testdir):
             outcome = yield
             rep = outcome.get_result()
             if rep.when == "call":
-                rep.longrepr = u'ä'
+                rep.longrepr = 'ä'
         """
     )
     testdir.makepyfile(

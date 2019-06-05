@@ -370,7 +370,7 @@ def test_skip_test_with_unicode(testdir):
         import unittest
         class TestClass():
             def test_io(self):
-                raise unittest.SkipTest(u'😊')
+                raise unittest.SkipTest('😊')
         """
     )
     result = testdir.runpytest()

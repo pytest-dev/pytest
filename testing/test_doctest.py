@@ -153,7 +153,7 @@ class TestDoctests:
             )
         )
         doctest = """
-            >>> u"{}"
+            >>> "{}"
             {}
         """.format(
             test_string, repr(test_string)
@@ -671,7 +671,7 @@ class TestDoctests:
             test_print_unicode_value=r"""
             Here is a doctest::
 
-                >>> print(u'\xE5\xE9\xEE\xF8\xFC')
+                >>> print('\xE5\xE9\xEE\xF8\xFC')
                 åéîøü
         """
         )

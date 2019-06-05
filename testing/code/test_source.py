@@ -28,7 +28,7 @@ def test_source_str_function():
 def test_unicode():
     x = Source("4")
     assert str(x) == "4"
-    co = _pytest._code.compile('u"å"', mode="eval")
+    co = _pytest._code.compile('"å"', mode="eval")
     val = eval(co)
     assert isinstance(val, str)
 

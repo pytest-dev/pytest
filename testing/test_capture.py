@@ -111,10 +111,10 @@ def test_capturing_unicode(testdir, method):
 @pytest.mark.parametrize("method", ["fd", "sys"])
 def test_capturing_bytes_in_utf8_encoding(testdir, method):
     testdir.makepyfile(
-        """
+        """\
         def test_unicode():
             print('b\\u00f6y')
-    """
+        """
     )
     result = testdir.runpytest("--capture=%s" % method)
     result.stdout.fnmatch_lines(["*1 passed*"])
@@ -511,7 +511,7 @@ class TestCaptureFixture:
             """\
             def test_hello(capfd):
                 import os
-                os.write(1, "42".encode('ascii'))
+                os.write(1, b"42")
                 out, err = capfd.readouterr()
                 assert out.startswith("42")
                 capfd.close()
@@ -564,7 +564,7 @@ class TestCaptureFixture:
             """\
             def test_hello(capfd):
                 import os
-                os.write(1, str(42).encode('ascii'))
+                os.write(1, b'42')
                 raise KeyboardInterrupt()
             """
         )
@@ -1136,12 +1136,12 @@ class TestStdCaptureFD(TestStdCapture):
 
     def test_simple_only_fd(self, testdir):
         testdir.makepyfile(
-            """
+            """\
             import os
             def test_x():
-                os.write(1, "hello\\n".encode("ascii"))
+                os.write(1, b"hello\\n")
                 assert 0
-        """
+            """
         )
         result = testdir.runpytest_subprocess()
         result.stdout.fnmatch_lines(
