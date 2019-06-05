@@ -1,0 +1,1 @@
+Fix regression where the ``obj`` attribute of ``TestCase`` items was no longer bound to methods.
