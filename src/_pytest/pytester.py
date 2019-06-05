@@ -68,14 +68,6 @@ def pytest_configure(config):
     )
 
 
-def raise_on_kwargs(kwargs):
-    __tracebackhide__ = True
-    if kwargs:  # pragma: no branch
-        raise TypeError(
-            "Unexpected keyword arguments: {}".format(", ".join(sorted(kwargs)))
-        )
-
-
 class LsofFdLeakChecker:
     def get_open_files(self):
         out = self._exec_lsof()
@@ -778,7 +770,7 @@ class Testdir:
         items = [x.item for x in rec.getcalls("pytest_itemcollected")]
         return items, rec
 
-    def inline_run(self, *args, **kwargs):
+    def inline_run(self, *args, plugins=(), no_reraise_ctrlc=False):
         """Run ``pytest.main()`` in-process, returning a HookRecorder.
 
         Runs the :py:func:`pytest.main` function to run all of pytest inside
@@ -789,15 +781,14 @@ class Testdir:
 
         :param args: command line arguments to pass to :py:func:`pytest.main`
 
-        :param plugins: (keyword-only) extra plugin instances the
-           ``pytest.main()`` instance should use
+        :kwarg plugins: extra plugin instances the ``pytest.main()`` instance should use.
+
+        :kwarg no_reraise_ctrlc: typically we reraise keyboard interrupts from the child run. If
+            True, the KeyboardInterrupt exception is captured.
 
         :return: a :py:class:`HookRecorder` instance
         """
-        plugins = kwargs.pop("plugins", [])
-        no_reraise_ctrlc = kwargs.pop("no_reraise_ctrlc", None)
-        raise_on_kwargs(kwargs)
-
+        plugins = list(plugins)
         finalizers = []
         try:
             # Do not load user config (during runs only).
@@ -1059,15 +1050,15 @@ class Testdir:
 
         return popen
 
-    def run(self, *cmdargs, **kwargs):
+    def run(self, *cmdargs, timeout=None, stdin=CLOSE_STDIN):
         """Run a command with arguments.
 
         Run a process using subprocess.Popen saving the stdout and stderr.
 
         :param args: the sequence of arguments to pass to `subprocess.Popen()`
-        :param timeout: the period in seconds after which to timeout and raise
+        :kwarg timeout: the period in seconds after which to timeout and raise
             :py:class:`Testdir.TimeoutExpired`
-        :param stdin: optional standard input.  Bytes are being send, closing
+        :kwarg stdin: optional standard input.  Bytes are being send, closing
             the pipe, otherwise it is passed through to ``popen``.
             Defaults to ``CLOSE_STDIN``, which translates to using a pipe
             (``subprocess.PIPE``) that gets closed.
@@ -1076,10 +1067,6 @@ class Testdir:
 
         """
         __tracebackhide__ = True
-
-        timeout = kwargs.pop("timeout", None)
-        stdin = kwargs.pop("stdin", Testdir.CLOSE_STDIN)
-        raise_on_kwargs(kwargs)
 
         cmdargs = [
             str(arg) if isinstance(arg, py.path.local) else arg for arg in cmdargs
@@ -1158,7 +1145,7 @@ class Testdir:
         """Run python -c "command", return a :py:class:`RunResult`."""
         return self.run(sys.executable, "-c", command)
 
-    def runpytest_subprocess(self, *args, **kwargs):
+    def runpytest_subprocess(self, *args, timeout=None):
         """Run pytest as a subprocess with given arguments.
 
         Any plugins added to the :py:attr:`plugins` list will be added using the
@@ -1174,9 +1161,6 @@ class Testdir:
         Returns a :py:class:`RunResult`.
         """
         __tracebackhide__ = True
-        timeout = kwargs.pop("timeout", None)
-        raise_on_kwargs(kwargs)
-
         p = py.path.local.make_numbered_dir(
             prefix="runpytest-", keep=None, rootdir=self.tmpdir
         )
