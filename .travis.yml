@@ -34,7 +34,7 @@ jobs:
         - test $(python -c 'import sys; print("%d%d" % sys.version_info[0:2])') = 37
 
     # Full run of latest supported version, without xdist.
-    - env: TOXENV=py37  PYTEST_COVERAGE=1
+    - env: TOXENV=py37
       python: '3.7'
 
     # Coverage tracking is slow with pypy, skip it.
