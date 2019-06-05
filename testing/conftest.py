@@ -1,4 +1,19 @@
+import sys
+
 import pytest
+
+if sys.gettrace():
+
+    @pytest.fixture(autouse=True)
+    def restore_tracing():
+        """Restore tracing function (when run with Coverage.py).
+
+        https://bugs.python.org/issue37011
+        """
+        orig_trace = sys.gettrace()
+        yield
+        if sys.gettrace() != orig_trace:
+            sys.settrace(orig_trace)
 
 
 @pytest.hookimpl(hookwrapper=True, tryfirst=True)
