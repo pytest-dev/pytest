@@ -1,0 +1,1 @@
+Reinstate ``AssertionRewritingHook._register_with_pkg_resources`` so ``has_resource`` for ``pkg_resources`` providers doesn't fail in tests.

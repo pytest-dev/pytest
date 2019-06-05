@@ -1305,3 +1305,18 @@ class TestEarlyRewriteBailout:
         )
         result = testdir.runpytest()
         result.stdout.fnmatch_lines(["* 1 passed in *"])
+
+
+def test_issue_5392_registriation_with_pkg_resources(testdir):
+    """See https://github.com/pytest-dev/pytest/issues/5392"""
+    pkg = testdir.mkpydir("loadme")
+    pkg.join("templates").mkdir().join("test.txt").write("hello")
+    pkg.join("test_pkg_resources.py").write(
+        """\
+from pkg_resources import get_provider
+def test_has_resource():
+    assert get_provider(__name__).has_resource("templates/test.txt")
+"""
+    )
+
+    testdir.runpytest().assert_outcomes(passed=1)

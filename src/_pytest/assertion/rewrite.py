@@ -51,6 +51,7 @@ class AssertionRewritingHook:
         self.session = None
         self.modules = {}
         self._rewritten_names = set()
+        self._register_with_pkg_resources()
         self._must_rewrite = set()
         # flag to guard against trying to rewrite a pyc file while we are already writing another pyc file,
         # which might result in infinite recursion (#3506)
@@ -304,6 +305,24 @@ class AssertionRewritingHook:
             fd.close()
         tp = desc[2]
         return tp == imp.PKG_DIRECTORY
+
+    @classmethod
+    def _register_with_pkg_resources(cls):
+        """
+        Ensure package resources can be loaded from this loader. May be called
+        multiple times, as the operation is idempotent.
+        """
+        try:
+            import pkg_resources
+
+            # access an attribute in case a deferred importer is present
+            pkg_resources.__name__
+        except ImportError:
+            return
+
+        # Since pytest tests are always located in the file system, the
+        #  DefaultProvider is appropriate.
+        pkg_resources.register_loader_type(cls, pkg_resources.DefaultProvider)
 
     def get_data(self, pathname):
         """Optional PEP302 get_data API.
