@@ -20,9 +20,6 @@ jobs:
   include:
     # OSX tests - first (in test stage), since they are the slower ones.
     - os: osx
-      # NOTE: (tests with) pexpect appear to be buggy on Travis,
-      #       at least with coverage.
-      #       Log: https://travis-ci.org/pytest-dev/pytest/jobs/500358864
       osx_image: xcode10.1
       language: generic
       env: TOXENV=py37-xdist PYTEST_COVERAGE=1
@@ -45,12 +42,12 @@ jobs:
     # - TestArgComplete (linux only)
     # - numpy
     # Empty PYTEST_ADDOPTS to run this non-verbose.
-    - env: TOXENV=py37-lsof-numpy-xdist PYTEST_COVERAGE=1 PYTEST_ADDOPTS=
+    - env: TOXENV=py37-lsof-numpy-twisted-xdist PYTEST_COVERAGE=1 PYTEST_ADDOPTS=
 
     # Specialized factors for py37.
     # Coverage for:
     # - test_sys_breakpoint_interception (via pexpect).
-    - env: TOXENV=py37-pexpect,py37-twisted PYTEST_COVERAGE=1
+    - env: TOXENV=py37-pexpect PYTEST_COVERAGE=1
     - env: TOXENV=py37-pluggymaster-xdist
     - env: TOXENV=py37-freeze
 
