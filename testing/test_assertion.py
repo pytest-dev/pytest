@@ -1219,7 +1219,7 @@ def test_assert_with_unicode(monkeypatch, testdir):
     testdir.makepyfile(
         """\
         def test_unicode():
-            assert u'유니코드' == u'Unicode'
+            assert '유니코드' == 'Unicode'
         """
     )
     result = testdir.runpytest()

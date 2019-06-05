@@ -170,7 +170,7 @@ def ascii_escaped(val):
     """If val is pure ascii, returns it as a str().  Otherwise, escapes
     bytes objects into a sequence of escaped bytes:
 
-    b'\xc3\xb4\xc5\xd6' -> u'\\xc3\\xb4\\xc5\\xd6'
+    b'\xc3\xb4\xc5\xd6' -> '\\xc3\\xb4\\xc5\\xd6'
 
     and escapes unicode objects into a sequence of escaped unicode
     ids, e.g.:

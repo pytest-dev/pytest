@@ -1672,7 +1672,6 @@ def test_line_with_reprcrash(monkeypatch):
     check("😄😄😄😄😄\n2nd line", 29, "FAILED some::nodeid - 😄😄...")
 
     # NOTE: constructed, not sure if this is supported.
-    # It would fail if not using u"" in Python 2 for mocked_pos.
     mocked_pos = "nodeid::😄::withunicode"
     check("😄😄😄😄😄\n2nd line", 29, "FAILED nodeid::😄::withunicode")
     check("😄😄😄😄😄\n2nd line", 40, "FAILED nodeid::😄::withunicode - 😄😄...")

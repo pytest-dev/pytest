@@ -201,12 +201,10 @@ def test_makepyfile_utf8(testdir):
     """Ensure makepyfile accepts utf-8 bytes as input (#2738)"""
     utf8_contents = """
         def setup_function(function):
-            mixed_encoding = u'São Paulo'
-    """.encode(
-        "utf-8"
-    )
+            mixed_encoding = 'São Paulo'
+    """.encode()
     p = testdir.makepyfile(utf8_contents)
-    assert "mixed_encoding = u'São Paulo'".encode() in p.read("rb")
+    assert "mixed_encoding = 'São Paulo'".encode() in p.read("rb")
 
 
 class TestInlineRunModulesCleanup:

@@ -13,15 +13,6 @@ from _pytest._io.saferepr import saferepr
 _reprcompare = None
 
 
-# the re-encoding is needed for python2 repr
-# with non-ascii characters (see issue 877 and 1379)
-def ecu(s):
-    if isinstance(s, bytes):
-        return s.decode("UTF-8", "replace")
-    else:
-        return s
-
-
 def format_explanation(explanation):
     """This formats an explanation
 
@@ -32,7 +23,7 @@ def format_explanation(explanation):
     for when one explanation needs to span multiple lines, e.g. when
     displaying diffs.
     """
-    explanation = ecu(explanation)
+    explanation = explanation
     lines = _split_explanation(explanation)
     result = _format_lines(lines)
     return "\n".join(result)
@@ -135,7 +126,7 @@ def assertrepr_compare(config, op, left, right):
     left_repr = saferepr(left, maxsize=int(width // 2))
     right_repr = saferepr(right, maxsize=width - len(left_repr))
 
-    summary = "{} {} {}".format(ecu(left_repr), op, ecu(right_repr))
+    summary = "{} {} {}".format(left_repr, op, right_repr)
 
     verbose = config.getoption("verbose")
     explanation = None

@@ -22,7 +22,7 @@ created in the `base temporary directory`_.
     # content of test_tmp_path.py
     import os
 
-    CONTENT = u"content"
+    CONTENT = "content"
 
 
     def test_create_file(tmp_path):
