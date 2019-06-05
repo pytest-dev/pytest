@@ -73,7 +73,7 @@ def exit(msg, returncode=None):
 exit.Exception = Exit
 
 
-def skip(msg="", **kwargs):
+def skip(msg="", *, allow_module_level=False):
     """
     Skip an executing test with the given message.
 
@@ -93,9 +93,6 @@ def skip(msg="", **kwargs):
         to skip a doctest statically.
     """
     __tracebackhide__ = True
-    allow_module_level = kwargs.pop("allow_module_level", False)
-    if kwargs:
-        raise TypeError("unexpected keyword arguments: {}".format(sorted(kwargs)))
     raise Skipped(msg=msg, allow_module_level=allow_module_level)
 
 
