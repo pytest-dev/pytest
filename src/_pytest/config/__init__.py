@@ -800,7 +800,7 @@ class Config(object):
             str(file)
             for dist in importlib_metadata.distributions()
             if any(ep.group == "pytest11" for ep in dist.entry_points)
-            for file in dist.files
+            for file in dist.files or []
         )
 
         for name in _iter_rewritable_modules(package_files):
