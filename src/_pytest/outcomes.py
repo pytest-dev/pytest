@@ -114,7 +114,7 @@ def fail(msg="", pytrace=True):
 fail.Exception = Failed
 
 
-class XFailed(fail.Exception):
+class XFailed(Failed):
     """ raised from an explicit call to pytest.xfail() """
 
 

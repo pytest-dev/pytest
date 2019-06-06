@@ -235,7 +235,7 @@ class TestRaises:
                 int("asdf")
 
     def test_raises_exception_looks_iterable(self):
-        class Meta(type(object)):
+        class Meta(type):
             def __getitem__(self, item):
                 return 1 / 0
 

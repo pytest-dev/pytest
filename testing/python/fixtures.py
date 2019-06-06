@@ -26,10 +26,10 @@ def test_getfuncargnames():
 
     assert fixtures.getfuncargnames(h) == ("arg1",)
 
-    def h(arg1, arg2, arg3="hello"):
+    def j(arg1, arg2, arg3="hello"):
         pass
 
-    assert fixtures.getfuncargnames(h) == ("arg1", "arg2")
+    assert fixtures.getfuncargnames(j) == ("arg1", "arg2")
 
     class A:
         def f(self, arg1, arg2="hello"):
