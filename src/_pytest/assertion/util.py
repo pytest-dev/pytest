@@ -81,19 +81,12 @@ def _format_lines(lines):
     return result
 
 
-# Provide basestring in python3
-try:
-    basestring = basestring
-except NameError:
-    basestring = str
-
-
 def issequence(x):
-    return isinstance(x, Sequence) and not isinstance(x, basestring)
+    return isinstance(x, Sequence) and not isinstance(x, str)
 
 
 def istext(x):
-    return isinstance(x, basestring)
+    return isinstance(x, str)
 
 
 def isdict(x):

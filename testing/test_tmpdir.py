@@ -24,7 +24,6 @@ def test_ensuretemp(recwarn):
 @attr.s
 class FakeConfig:
     basetemp = attr.ib()
-    trace = attr.ib(default=None)
 
     @property
     def trace(self):

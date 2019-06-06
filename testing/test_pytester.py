@@ -189,12 +189,7 @@ def test_hookrecorder_basic(holder):
 
 
 def test_makepyfile_unicode(testdir):
-    global unichr
-    try:
-        unichr(65)
-    except NameError:
-        unichr = chr
-    testdir.makepyfile(unichr(0xFFFD))
+    testdir.makepyfile(chr(0xFFFD))
 
 
 def test_makepyfile_utf8(testdir):
