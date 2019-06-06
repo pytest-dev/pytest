@@ -75,6 +75,7 @@ def catch_warnings_for_item(config, ihook, when, item):
             warnings.filterwarnings("always", category=PendingDeprecationWarning)
 
         warnings.filterwarnings("error", category=pytest.RemovedInPytest4Warning)
+        warnings.filterwarnings("error", category=pytest.PytestDeprecationWarning)
 
         # filters should have this precedence: mark, cmdline options, ini
         # filters should be applied in the inverse order of precedence

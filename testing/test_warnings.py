@@ -528,6 +528,37 @@ def test_removed_in_pytest4_warning_as_error(testdir, change_default):
         result.stdout.fnmatch_lines(["* 1 passed in *"])
 
 
+@pytest.mark.parametrize("change_default", [None, "ini", "cmdline"])
+def test_deprecation_warning_as_error(testdir, change_default):
+    testdir.makepyfile(
+        """
+        import warnings, pytest
+        def test():
+            warnings.warn(pytest.PytestDeprecationWarning("some warning"))
+    """
+    )
+    if change_default == "ini":
+        testdir.makeini(
+            """
+            [pytest]
+            filterwarnings =
+                ignore::pytest.PytestDeprecationWarning
+        """
+        )
+
+    args = (
+        ("-Wignore::pytest.PytestDeprecationWarning",)
+        if change_default == "cmdline"
+        else ()
+    )
+    result = testdir.runpytest(*args)
+    if change_default is None:
+        result.stdout.fnmatch_lines(["* 1 failed in *"])
+    else:
+        assert change_default in ("ini", "cmdline")
+        result.stdout.fnmatch_lines(["* 1 passed in *"])
+
+
 class TestAssertionWarnings:
     @staticmethod
     def assert_result_warns(result, msg):
