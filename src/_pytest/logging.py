@@ -424,10 +424,6 @@ class LoggingPlugin(object):
         """
         self._config = config
 
-        # enable verbose output automatically if live logging is enabled
-        if self._log_cli_enabled() and config.getoption("verbose") < 1:
-            config.option.verbose = 1
-
         self.print_logs = get_option_ini(config, "log_print")
         self.formatter = self._create_formatter(
             get_option_ini(config, "log_format"),
@@ -644,6 +640,15 @@ class LoggingPlugin(object):
     @pytest.hookimpl(hookwrapper=True)
     def pytest_runtestloop(self, session):
         """Runs all collected test items."""
+
+        if session.config.option.collectonly:
+            yield
+            return
+
+        if self._log_cli_enabled() and self._config.getoption("verbose") < 1:
+            # setting verbose flag is needed to avoid messy test progress output
+            self._config.option.verbose = 1
+
         with self.live_logs_context():
             if self.log_file_handler is not None:
                 with catching_logs(self.log_file_handler, level=self.log_file_level):
