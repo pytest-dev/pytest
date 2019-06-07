@@ -534,13 +534,6 @@ class ExceptionInfo:
         )
         return fmt.repr_excinfo(self)
 
-    def __str__(self):
-        if self._excinfo is None:
-            return repr(self)
-        entry = self.traceback[-1]
-        loc = ReprFileLocation(entry.path, entry.lineno + 1, self.exconly())
-        return str(loc)
-
     def match(self, regexp):
         """
         Check whether the regular expression 'regexp' is found in the string
