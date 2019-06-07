@@ -5,7 +5,7 @@ import types
 import pytest
 from _pytest.config import PytestPluginManager
 from _pytest.config.exceptions import UsageError
-from _pytest.main import EXIT_NOTESTSCOLLECTED
+from _pytest.main import ExitCode
 from _pytest.main import Session
 
 
@@ -227,7 +227,7 @@ class TestPytestPluginManager:
         p.copy(p.dirpath("skipping2.py"))
         monkeypatch.setenv("PYTEST_PLUGINS", "skipping2")
         result = testdir.runpytest("-rw", "-p", "skipping1", syspathinsert=True)
-        assert result.ret == EXIT_NOTESTSCOLLECTED
+        assert result.ret == ExitCode.NO_TESTS_COLLECTED
         result.stdout.fnmatch_lines(
             ["*skipped plugin*skipping1*hello*", "*skipped plugin*skipping2*hello*"]
         )

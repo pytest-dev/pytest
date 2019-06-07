@@ -3,7 +3,7 @@ import sys
 from unittest import mock
 
 import pytest
-from _pytest.main import EXIT_INTERRUPTED
+from _pytest.main import ExitCode
 from _pytest.mark import EMPTY_PARAMETERSET_OPTION
 from _pytest.mark import MarkGenerator as Mark
 from _pytest.nodes import Collector
@@ -903,7 +903,7 @@ def test_parameterset_for_fail_at_collect(testdir):
             "*= 1 error in *",
         ]
     )
-    assert result.ret == EXIT_INTERRUPTED
+    assert result.ret == ExitCode.INTERRUPTED
 
 
 def test_parameterset_for_parametrize_bad_markname(testdir):

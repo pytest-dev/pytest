@@ -8,8 +8,7 @@ import importlib_metadata
 import py
 
 import pytest
-from _pytest.main import EXIT_NOTESTSCOLLECTED
-from _pytest.main import EXIT_USAGEERROR
+from _pytest.main import ExitCode
 from _pytest.warnings import SHOW_PYTEST_WARNINGS_ARG
 
 
@@ -24,7 +23,7 @@ class TestGeneralUsage:
     def test_config_error(self, testdir):
         testdir.copy_example("conftest_usageerror/conftest.py")
         result = testdir.runpytest(testdir.tmpdir)
-        assert result.ret == EXIT_USAGEERROR
+        assert result.ret == ExitCode.USAGE_ERROR
         result.stderr.fnmatch_lines(["*ERROR: hello"])
         result.stdout.fnmatch_lines(["*pytest_unconfigure_called"])
 
@@ -83,7 +82,7 @@ class TestGeneralUsage:
         """
         )
         result = testdir.runpytest("-s", "asd")
-        assert result.ret == 4  # EXIT_USAGEERROR
+        assert result.ret == ExitCode.USAGE_ERROR
         result.stderr.fnmatch_lines(["ERROR: file not found*asd"])
         result.stdout.fnmatch_lines(["*---configure", "*---unconfigure"])
 
@@ -229,7 +228,7 @@ class TestGeneralUsage:
         """
         )
         result = testdir.runpytest()
-        assert result.ret == EXIT_NOTESTSCOLLECTED
+        assert result.ret == ExitCode.NO_TESTS_COLLECTED
         result.stdout.fnmatch_lines(["*1 skip*"])
 
     def test_issue88_initial_file_multinodes(self, testdir):
@@ -247,7 +246,7 @@ class TestGeneralUsage:
         """
         )
         result = testdir.runpytest()
-        assert result.ret == EXIT_NOTESTSCOLLECTED
+        assert result.ret == ExitCode.NO_TESTS_COLLECTED
         assert "should not be seen" not in result.stdout.str()
         assert "stderr42" not in result.stderr.str()
 
@@ -290,13 +289,13 @@ class TestGeneralUsage:
         sub2 = testdir.mkdir("sub2")
         sub1.join("conftest.py").write("assert 0")
         result = testdir.runpytest(sub2)
-        assert result.ret == EXIT_NOTESTSCOLLECTED
+        assert result.ret == ExitCode.NO_TESTS_COLLECTED
         sub2.ensure("__init__.py")
         p = sub2.ensure("test_hello.py")
         result = testdir.runpytest(p)
-        assert result.ret == EXIT_NOTESTSCOLLECTED
+        assert result.ret == ExitCode.NO_TESTS_COLLECTED
         result = testdir.runpytest(sub1)
-        assert result.ret == EXIT_USAGEERROR
+        assert result.ret == ExitCode.USAGE_ERROR
 
     def test_directory_skipped(self, testdir):
         testdir.makeconftest(
@@ -308,7 +307,7 @@ class TestGeneralUsage:
         )
         testdir.makepyfile("def test_hello(): pass")
         result = testdir.runpytest()
-        assert result.ret == EXIT_NOTESTSCOLLECTED
+        assert result.ret == ExitCode.NO_TESTS_COLLECTED
         result.stdout.fnmatch_lines(["*1 skipped*"])
 
     def test_multiple_items_per_collector_byid(self, testdir):
@@ -410,10 +409,10 @@ class TestGeneralUsage:
     def test_report_all_failed_collections_initargs(self, testdir):
         testdir.makeconftest(
             """
-            from _pytest.main import EXIT_USAGEERROR
+            from _pytest.main import ExitCode
 
             def pytest_sessionfinish(exitstatus):
-                assert exitstatus == EXIT_USAGEERROR
+                assert exitstatus == ExitCode.USAGE_ERROR
                 print("pytest_sessionfinish_called")
             """
         )
@@ -421,7 +420,7 @@ class TestGeneralUsage:
         result = testdir.runpytest("test_a.py::a", "test_b.py::b")
         result.stderr.fnmatch_lines(["*ERROR*test_a.py::a*", "*ERROR*test_b.py::b*"])
         result.stdout.fnmatch_lines(["pytest_sessionfinish_called"])
-        assert result.ret == EXIT_USAGEERROR
+        assert result.ret == ExitCode.USAGE_ERROR
 
     @pytest.mark.usefixtures("recwarn")
     def test_namespace_import_doesnt_confuse_import_hook(self, testdir):
@@ -612,7 +611,7 @@ class TestInvocationVariants:
 
     def test_invoke_with_path(self, tmpdir, capsys):
         retcode = pytest.main(tmpdir)
-        assert retcode == EXIT_NOTESTSCOLLECTED
+        assert retcode == ExitCode.NO_TESTS_COLLECTED
         out, err = capsys.readouterr()
 
     def test_invoke_plugin_api(self, testdir, capsys):
@@ -1160,7 +1159,7 @@ def test_fixture_mock_integration(testdir):
 
 def test_usage_error_code(testdir):
     result = testdir.runpytest("-unknown-option-")
-    assert result.ret == EXIT_USAGEERROR
+    assert result.ret == ExitCode.USAGE_ERROR
 
 
 @pytest.mark.filterwarnings("default")

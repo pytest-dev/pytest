@@ -10,10 +10,7 @@ from _pytest.config.exceptions import UsageError
 from _pytest.config.findpaths import determine_setup
 from _pytest.config.findpaths import get_common_ancestor
 from _pytest.config.findpaths import getcfg
-from _pytest.main import EXIT_NOTESTSCOLLECTED
-from _pytest.main import EXIT_OK
-from _pytest.main import EXIT_TESTSFAILED
-from _pytest.main import EXIT_USAGEERROR
+from _pytest.main import ExitCode
 
 
 class TestParseIni:
@@ -189,7 +186,7 @@ class TestConfigCmdlineParsing:
 
         temp_ini_file = normpath(str(temp_ini_file))
         ret = pytest.main(["-c", temp_ini_file])
-        assert ret == _pytest.main.EXIT_OK
+        assert ret == ExitCode.OK
 
 
 class TestConfigAPI:
@@ -726,7 +723,7 @@ def test_consider_args_after_options_for_rootdir(testdir, args):
 @pytest.mark.skipif("sys.platform == 'win32'")
 def test_toolongargs_issue224(testdir):
     result = testdir.runpytest("-m", "hello" * 500)
-    assert result.ret == EXIT_NOTESTSCOLLECTED
+    assert result.ret == ExitCode.NO_TESTS_COLLECTED
 
 
 def test_config_in_subdirectory_colon_command_line_issue2148(testdir):
@@ -1086,7 +1083,7 @@ class TestOverrideIniArgs:
                 % (testdir.request.config._parser.optparser.prog,)
             ]
         )
-        assert result.ret == _pytest.main.EXIT_USAGEERROR
+        assert result.ret == _pytest.main.ExitCode.USAGE_ERROR
 
     def test_override_ini_does_not_contain_paths(self, _config_for_test, _sys_snapshot):
         """Check that -o no longer swallows all options after it (#3103)"""
@@ -1175,13 +1172,13 @@ def test_help_and_version_after_argument_error(testdir):
     )
     # Does not display full/default help.
     assert "to see available markers type: pytest --markers" not in result.stdout.lines
-    assert result.ret == EXIT_USAGEERROR
+    assert result.ret == ExitCode.USAGE_ERROR
 
     result = testdir.runpytest("--version")
     result.stderr.fnmatch_lines(
         ["*pytest*{}*imported from*".format(pytest.__version__)]
     )
-    assert result.ret == EXIT_USAGEERROR
+    assert result.ret == ExitCode.USAGE_ERROR
 
 
 def test_config_does_not_load_blocked_plugin_from_args(testdir):
@@ -1189,11 +1186,11 @@ def test_config_does_not_load_blocked_plugin_from_args(testdir):
     p = testdir.makepyfile("def test(capfd): pass")
     result = testdir.runpytest(str(p), "-pno:capture")
     result.stdout.fnmatch_lines(["E       fixture 'capfd' not found"])
-    assert result.ret == EXIT_TESTSFAILED
+    assert result.ret == ExitCode.TESTS_FAILED
 
     result = testdir.runpytest(str(p), "-pno:capture", "-s")
     result.stderr.fnmatch_lines(["*: error: unrecognized arguments: -s"])
-    assert result.ret == EXIT_USAGEERROR
+    assert result.ret == ExitCode.USAGE_ERROR
 
 
 @pytest.mark.parametrize(
@@ -1219,7 +1216,7 @@ def test_config_blocked_default_plugins(testdir, plugin):
     result = testdir.runpytest(str(p), "-pno:%s" % plugin)
 
     if plugin == "python":
-        assert result.ret == EXIT_USAGEERROR
+        assert result.ret == ExitCode.USAGE_ERROR
         result.stderr.fnmatch_lines(
             [
                 "ERROR: not found: */test_config_blocked_default_plugins.py",
@@ -1228,13 +1225,13 @@ def test_config_blocked_default_plugins(testdir, plugin):
         )
         return
 
-    assert result.ret == EXIT_OK
+    assert result.ret == ExitCode.OK
     if plugin != "terminal":
         result.stdout.fnmatch_lines(["* 1 passed in *"])
 
     p = testdir.makepyfile("def test(): assert 0")
     result = testdir.runpytest(str(p), "-pno:%s" % plugin)
-    assert result.ret == EXIT_TESTSFAILED
+    assert result.ret == ExitCode.TESTS_FAILED
     if plugin != "terminal":
         result.stdout.fnmatch_lines(["* 1 failed in *"])
     else:

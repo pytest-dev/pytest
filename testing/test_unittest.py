@@ -1,7 +1,7 @@
 import gc
 
 import pytest
-from _pytest.main import EXIT_NOTESTSCOLLECTED
+from _pytest.main import ExitCode
 
 
 def test_simple_unittest(testdir):
@@ -55,7 +55,7 @@ def test_isclasscheck_issue53(testdir):
     """
     )
     result = testdir.runpytest(testpath)
-    assert result.ret == EXIT_NOTESTSCOLLECTED
+    assert result.ret == ExitCode.NO_TESTS_COLLECTED
 
 
 def test_setup(testdir):
@@ -704,7 +704,7 @@ def test_unorderable_types(testdir):
     )
     result = testdir.runpytest()
     assert "TypeError" not in result.stdout.str()
-    assert result.ret == EXIT_NOTESTSCOLLECTED
+    assert result.ret == ExitCode.NO_TESTS_COLLECTED
 
 
 def test_unittest_typerror_traceback(testdir):

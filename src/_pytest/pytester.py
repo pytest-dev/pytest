@@ -19,8 +19,7 @@ from _pytest._io.saferepr import saferepr
 from _pytest.assertion.rewrite import AssertionRewritingHook
 from _pytest.capture import MultiCapture
 from _pytest.capture import SysCapture
-from _pytest.main import EXIT_INTERRUPTED
-from _pytest.main import EXIT_OK
+from _pytest.main import ExitCode
 from _pytest.main import Session
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pathlib import Path
@@ -691,7 +690,7 @@ class Testdir:
         p = py.path.local(arg)
         config.hook.pytest_sessionstart(session=session)
         res = session.perform_collect([str(p)], genitems=False)[0]
-        config.hook.pytest_sessionfinish(session=session, exitstatus=EXIT_OK)
+        config.hook.pytest_sessionfinish(session=session, exitstatus=ExitCode.OK)
         return res
 
     def getpathnode(self, path):
@@ -708,11 +707,11 @@ class Testdir:
         x = session.fspath.bestrelpath(path)
         config.hook.pytest_sessionstart(session=session)
         res = session.perform_collect([x], genitems=False)[0]
-        config.hook.pytest_sessionfinish(session=session, exitstatus=EXIT_OK)
+        config.hook.pytest_sessionfinish(session=session, exitstatus=ExitCode.OK)
         return res
 
     def genitems(self, colitems):
-        """Generate all test items from a collection node.
+        """Generate all test items from a collection node.src/_pytest/main.py
 
         This recurses into the collection node and returns a list of all the
         test items contained within.
@@ -841,7 +840,7 @@ class Testdir:
 
             # typically we reraise keyboard interrupts from the child run
             # because it's our user requesting interruption of the testing
-            if ret == EXIT_INTERRUPTED and not no_reraise_ctrlc:
+            if ret == ExitCode.INTERRUPTED and not no_reraise_ctrlc:
                 calls = reprec.getcalls("pytest_keyboard_interrupt")
                 if calls and calls[-1].excinfo.type == KeyboardInterrupt:
                     raise KeyboardInterrupt()

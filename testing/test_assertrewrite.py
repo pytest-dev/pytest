@@ -15,7 +15,7 @@ from _pytest.assertion import util
 from _pytest.assertion.rewrite import AssertionRewritingHook
 from _pytest.assertion.rewrite import PYTEST_TAG
 from _pytest.assertion.rewrite import rewrite_asserts
-from _pytest.main import EXIT_NOTESTSCOLLECTED
+from _pytest.main import ExitCode
 
 
 def setup_module(mod):
@@ -692,7 +692,7 @@ class TestRewriteOnImport:
             import test_gum.test_lizard"""
             % (z_fn,)
         )
-        assert testdir.runpytest().ret == EXIT_NOTESTSCOLLECTED
+        assert testdir.runpytest().ret == ExitCode.NO_TESTS_COLLECTED
 
     def test_readonly(self, testdir):
         sub = testdir.mkdir("testing")
@@ -792,7 +792,7 @@ def test_rewritten():
         pkg = testdir.mkdir("a_package_without_init_py")
         pkg.join("module.py").ensure()
         testdir.makepyfile("import a_package_without_init_py.module")
-        assert testdir.runpytest().ret == EXIT_NOTESTSCOLLECTED
+        assert testdir.runpytest().ret == ExitCode.NO_TESTS_COLLECTED
 
     def test_rewrite_warning(self, testdir):
         testdir.makeconftest(

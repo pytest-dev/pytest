@@ -1,5 +1,5 @@
 import pytest
-from _pytest.main import EXIT_NOTESTSCOLLECTED
+from _pytest.main import ExitCode
 
 
 class SessionTests:
@@ -330,7 +330,7 @@ def test_sessionfinish_with_start(testdir):
     """
     )
     res = testdir.runpytest("--collect-only")
-    assert res.ret == EXIT_NOTESTSCOLLECTED
+    assert res.ret == ExitCode.NO_TESTS_COLLECTED
 
 
 @pytest.mark.parametrize("path", ["root", "{relative}/root", "{environment}/root"])

@@ -8,9 +8,7 @@ import py.path
 import _pytest.pytester as pytester
 import pytest
 from _pytest.config import PytestPluginManager
-from _pytest.main import EXIT_NOTESTSCOLLECTED
-from _pytest.main import EXIT_OK
-from _pytest.main import EXIT_TESTSFAILED
+from _pytest.main import ExitCode
 from _pytest.pytester import CwdSnapshot
 from _pytest.pytester import HookRecorder
 from _pytest.pytester import LineMatcher
@@ -206,11 +204,11 @@ class TestInlineRunModulesCleanup:
     def test_inline_run_test_module_not_cleaned_up(self, testdir):
         test_mod = testdir.makepyfile("def test_foo(): assert True")
         result = testdir.inline_run(str(test_mod))
-        assert result.ret == EXIT_OK
+        assert result.ret == ExitCode.OK
         # rewrite module, now test should fail if module was re-imported
         test_mod.write("def test_foo(): assert False")
         result2 = testdir.inline_run(str(test_mod))
-        assert result2.ret == EXIT_TESTSFAILED
+        assert result2.ret == ExitCode.TESTS_FAILED
 
     def spy_factory(self):
         class SysModulesSnapshotSpy:
@@ -411,12 +409,12 @@ def test_testdir_subprocess(testdir):
 
 def test_unicode_args(testdir):
     result = testdir.runpytest("-k", "💩")
-    assert result.ret == EXIT_NOTESTSCOLLECTED
+    assert result.ret == ExitCode.NO_TESTS_COLLECTED
 
 
 def test_testdir_run_no_timeout(testdir):
     testfile = testdir.makepyfile("def test_no_timeout(): pass")
-    assert testdir.runpytest_subprocess(testfile).ret == EXIT_OK
+    assert testdir.runpytest_subprocess(testfile).ret == ExitCode.OK
 
 
 def test_testdir_run_with_timeout(testdir):
@@ -429,7 +427,7 @@ def test_testdir_run_with_timeout(testdir):
     end = time.time()
     duration = end - start
 
-    assert result.ret == EXIT_OK
+    assert result.ret == ExitCode.OK
     assert duration < timeout
 
 

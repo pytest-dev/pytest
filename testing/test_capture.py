@@ -12,7 +12,7 @@ import py
 import pytest
 from _pytest import capture
 from _pytest.capture import CaptureManager
-from _pytest.main import EXIT_NOTESTSCOLLECTED
+from _pytest.main import ExitCode
 
 # note: py.io capture tests where copied from
 # pylib 1.4.20.dev2 (rev 13d9af95547e)
@@ -361,7 +361,7 @@ class TestLoggingInteraction:
         )
         # make sure that logging is still captured in tests
         result = testdir.runpytest_subprocess("-s", "-p", "no:capturelog")
-        assert result.ret == EXIT_NOTESTSCOLLECTED
+        assert result.ret == ExitCode.NO_TESTS_COLLECTED
         result.stderr.fnmatch_lines(["WARNING*hello435*"])
         assert "operation on closed file" not in result.stderr.str()
 

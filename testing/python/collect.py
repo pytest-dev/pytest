@@ -4,7 +4,7 @@ import textwrap
 
 import _pytest._code
 import pytest
-from _pytest.main import EXIT_NOTESTSCOLLECTED
+from _pytest.main import ExitCode
 from _pytest.nodes import Collector
 
 
@@ -246,7 +246,7 @@ class TestClass:
         """
         )
         result = testdir.runpytest()
-        assert result.ret == EXIT_NOTESTSCOLLECTED
+        assert result.ret == ExitCode.NO_TESTS_COLLECTED
 
 
 class TestFunction:
@@ -1140,7 +1140,7 @@ def test_unorderable_types(testdir):
     )
     result = testdir.runpytest()
     assert "TypeError" not in result.stdout.str()
-    assert result.ret == EXIT_NOTESTSCOLLECTED
+    assert result.ret == ExitCode.NO_TESTS_COLLECTED
 
 
 def test_collect_functools_partial(testdir):
