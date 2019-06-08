@@ -40,8 +40,8 @@ GETFUNCARGVALUE = RemovedInPytest4Warning(
 RAISES_MESSAGE_PARAMETER = PytestDeprecationWarning(
     "The 'message' parameter is deprecated.\n"
     "(did you mean to use `match='some regex'` to check the exception message?)\n"
-    "Please comment on https://github.com/pytest-dev/pytest/issues/3974 "
-    "if you have concerns about removal of this parameter."
+    "Please see:\n"
+    "  https://docs.pytest.org/en/4.6-maintenance/deprecations.html#message-parameter-of-pytest-raises"
 )
 
 RESULT_LOG = PytestDeprecationWarning(
