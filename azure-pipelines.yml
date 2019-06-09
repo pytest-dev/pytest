@@ -28,7 +28,7 @@ jobs:
         tox.env: 'py36-xdist'
       py37:
         python.version: '3.7'
-        tox.env: 'py37'
+        tox.env: 'py37-twisted-numpy'
         # Coverage for:
         # - _py36_windowsconsoleio_workaround (with py36+)
         # - test_request_garbage (no xdist)
@@ -36,9 +36,6 @@ jobs:
       py37-linting/docs/doctesting:
         python.version: '3.7'
         tox.env: 'linting,docs,doctesting'
-      py37-twisted/numpy:
-        python.version: '3.7'
-        tox.env: 'py37-twisted,py37-numpy'
       py37-pluggymaster-xdist:
         python.version: '3.7'
         tox.env: 'py37-pluggymaster-xdist'
