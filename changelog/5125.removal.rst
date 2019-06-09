@@ -1,0 +1,2 @@
+Introduce the ``pytest.ExitCode`` Enum and make session.exitcode an instance of it.
+User defined exit codes are still valid, but consumers need to take the enum into account.
