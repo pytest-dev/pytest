@@ -87,10 +87,6 @@ matrix:
   allow_failures:
     - python: '3.8-dev'
       env: TOXENV=py38-xdist
-    # failing due to ResourceWarning exceptions:
-    # https://github.com/pytest-dev/pytest/issues/5317
-    - env: TOXENV=pypy3-xdist
-      python: 'pypy3'
 
 before_script:
   - |
