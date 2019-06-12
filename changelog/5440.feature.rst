@@ -1,0 +1,8 @@
+The `faulthandler <https://docs.python.org/3/library/faulthandler.html>`__ standard library
+module is now enabled by default to help users diagnose crashes in C modules.
+
+This functionality was provided by integrating the external
+`pytest-faulthandler <https://github.com/pytest-dev/pytest-faulthandler>`__ plugin into the core,
+so users should remove that plugin from their requirements if used.
+
+For more information see the docs: https://docs.pytest.org/en/latest/usage.html#fault-handler
