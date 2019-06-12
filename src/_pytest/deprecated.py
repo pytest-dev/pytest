@@ -40,7 +40,7 @@ RAISES_MESSAGE_PARAMETER = PytestDeprecationWarning(
 )
 
 RESULT_LOG = PytestDeprecationWarning(
-    "--result-log is deprecated and scheduled for removal in pytest 5.0.\n"
+    "--result-log is deprecated and scheduled for removal in pytest 6.0.\n"
     "See https://docs.pytest.org/en/latest/deprecations.html#result-log-result-log for more information."
 )
 
