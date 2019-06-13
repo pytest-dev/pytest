@@ -46,7 +46,7 @@ Unsupported idioms / known issues
   <https://github.com/pytest-dev/pytest/issues/377/>`_.
 
 - nose imports test modules with the same import path (e.g.
-  ``tests.test_mod``) but different file system paths
+  ``tests.test_mode``) but different file system paths
   (e.g. ``tests/test_mode.py`` and ``other/tests/test_mode.py``)
   by extending sys.path/import semantics.   pytest does not do that
   but there is discussion in `#268 <https://github.com/pytest-dev/pytest/issues/268>`_ for adding some support.  Note that
