@@ -29,6 +29,7 @@ class StepwisePlugin:
         self.config = config
         self.active = config.getvalue("stepwise")
         self.session = None
+        self.report_status = ""
 
         if self.active:
             self.lastfailed = config.cache.get("cache/stepwise", None)
@@ -104,7 +105,7 @@ class StepwisePlugin:
                     self.lastfailed = None
 
     def pytest_report_collectionfinish(self):
-        if self.active and self.config.getoption("verbose") >= 0:
+        if self.active and self.config.getoption("verbose") >= 0 and self.report_status:
             return "stepwise: %s" % self.report_status
 
     def pytest_sessionfinish(self, session):

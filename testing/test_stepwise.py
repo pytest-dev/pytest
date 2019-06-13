@@ -157,14 +157,18 @@ def test_change_testfile(stepwise_testdir):
     assert "test_success PASSED" in stdout
 
 
-def test_stop_on_collection_errors(broken_testdir):
-    result = broken_testdir.runpytest(
-        "-v",
-        "--strict-markers",
-        "--stepwise",
-        "broken_testfile.py",
-        "working_testfile.py",
-    )
+@pytest.mark.parametrize("broken_first", [True, False])
+def test_stop_on_collection_errors(broken_testdir, broken_first):
+    """Stop during collection errors. We have two possible messages depending on the order (#5444),
+    so test both cases."""
+    files = ["working_testfile.py", "broken_testfile.py"]
+    if broken_first:
+        files.reverse()
+    result = broken_testdir.runpytest("-v", "--strict-markers", "--stepwise", *files)
 
-    stdout = result.stdout.str()
-    assert "errors during collection" in stdout
+    if broken_first:
+        result.stdout.fnmatch_lines(
+            "*Error when collecting test, stopping test execution*"
+        )
+    else:
+        result.stdout.fnmatch_lines("*errors during collection*")
