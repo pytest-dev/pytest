@@ -23,7 +23,6 @@ from .exceptions import PrintHelp
 from .exceptions import UsageError
 from .findpaths import determine_setup
 from .findpaths import exists
-from _pytest import deprecated
 from _pytest._code import ExceptionInfo
 from _pytest._code import filter_traceback
 from _pytest.outcomes import fail
@@ -241,16 +240,6 @@ class PytestPluginManager(PluginManager):
         self.rewrite_hook = _pytest.assertion.DummyRewriteHook()
         # Used to know when we are importing conftests after the pytest_configure stage
         self._configured = False
-
-    def addhooks(self, module_or_class):
-        """
-        .. deprecated:: 2.8
-
-        Use :py:meth:`pluggy.PluginManager.add_hookspecs <PluginManager.add_hookspecs>`
-        instead.
-        """
-        warnings.warn(deprecated.PLUGIN_MANAGER_ADDHOOKS, stacklevel=2)
-        return self.add_hookspecs(module_or_class)
 
     def parse_hookimpl_opts(self, plugin, name):
         # pytest hooks are always prefixed with pytest_
