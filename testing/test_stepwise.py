@@ -161,8 +161,8 @@ def test_stop_on_collection_errors(broken_testdir):
         "-v",
         "--strict-markers",
         "--stepwise",
-        "working_testfile.py",
         "broken_testfile.py",
+        "working_testfile.py",
     )
 
     stdout = result.stdout.str()
