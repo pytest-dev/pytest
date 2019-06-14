@@ -158,8 +158,8 @@ def test_change_testfile(stepwise_testdir):
 
 @pytest.mark.parametrize("broken_first", [True, False])
 def test_stop_on_collection_errors(broken_testdir, broken_first):
-    """Stop during collection errors. We have two possible messages depending on the order (#5444),
-    so test both cases."""
+    """Stop during collection errors. Broken test first or broken test last
+    actually surfaced a bug (#5444), so we test both situations."""
     files = ["working_testfile.py", "broken_testfile.py"]
     if broken_first:
         files.reverse()
