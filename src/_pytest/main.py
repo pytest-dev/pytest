@@ -19,15 +19,23 @@ from _pytest.deprecated import PYTEST_CONFIG_GLOBAL
 from _pytest.outcomes import exit
 from _pytest.runner import collect_one_node
 
-# exitcodes for the command line
-
 
 class ExitCode(enum.IntEnum):
+    """
+    encodes the valid exit codes of pytest
+    currently users may still supply other exit codes as well
+    """
+    #: tests passed
     OK = 0
+    #: tests failed
     TESTS_FAILED = 1
+    #: pytest was interrupted
     INTERRUPTED = 2
+    #: an internal error got in the way
     INTERNAL_ERROR = 3
+    #: pytest was missused
     USAGE_ERROR = 4
+    #: pytest couldnt find tests
     NO_TESTS_COLLECTED = 5
 
 
