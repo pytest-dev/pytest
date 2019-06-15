@@ -6,7 +6,7 @@ from contextlib import contextmanager
 import py
 
 import pytest
-from _pytest.compat import dummy_context_manager
+from _pytest.compat import nullcontext
 from _pytest.config import create_terminal_writer
 from _pytest.pathlib import Path
 
@@ -436,7 +436,7 @@ class LoggingPlugin:
 
         self.log_cli_handler = None
 
-        self.live_logs_context = lambda: dummy_context_manager()
+        self.live_logs_context = lambda: nullcontext()
         # Note that the lambda for the live_logs_context is needed because
         # live_logs_context can otherwise not be entered multiple times due
         # to limitations of contextlib.contextmanager.
@@ -676,7 +676,7 @@ class _LiveLoggingStreamHandler(logging.StreamHandler):
         ctx_manager = (
             self.capture_manager.global_and_fixture_disabled()
             if self.capture_manager
-            else dummy_context_manager()
+            else nullcontext()
         )
         with ctx_manager:
             if not self._first_record_emitted:

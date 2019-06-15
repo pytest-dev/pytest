@@ -1,3 +1,4 @@
+import inspect
 import math
 import pprint
 import sys
@@ -13,7 +14,6 @@ from more_itertools.more import always_iterable
 
 import _pytest._code
 from _pytest import deprecated
-from _pytest.compat import isclass
 from _pytest.compat import STRING_TYPES
 from _pytest.outcomes import fail
 
@@ -658,7 +658,9 @@ def raises(expected_exception, *args, **kwargs):
 
     """
     __tracebackhide__ = True
-    for exc in filterfalse(isclass, always_iterable(expected_exception, BASE_TYPE)):
+    for exc in filterfalse(
+        inspect.isclass, always_iterable(expected_exception, BASE_TYPE)
+    ):
         msg = (
             "exceptions must be old-style classes or"
             " derived from BaseException, not %s"
