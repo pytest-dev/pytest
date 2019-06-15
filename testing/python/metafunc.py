@@ -506,8 +506,8 @@ class TestMetafunc:
         result = testdir.runpytest()
         result.stdout.fnmatch_lines(
             [
-                "*test_foo: error raised while trying to determine id of parameter 'arg' at position 0",
                 "*Exception: bad ids",
+                "*test_foo: error raised while trying to determine id of parameter 'arg' at position 0",
             ]
         )
 

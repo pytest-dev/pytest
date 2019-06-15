@@ -20,20 +20,6 @@ from _pytest.outcomes import fail
 BASE_TYPE = (type, STRING_TYPES)
 
 
-def _cmp_raises_type_error(self, other):
-    """__cmp__ implementation which raises TypeError. Used
-    by Approx base classes to implement only == and != and raise a
-    TypeError for other comparisons.
-
-    Needed in Python 2 only, Python 3 all it takes is not implementing the
-    other operators at all.
-    """
-    __tracebackhide__ = True
-    raise TypeError(
-        "Comparison operators other than == and != not supported by approx objects"
-    )
-
-
 def _non_numeric_type_error(value, at):
     at_str = " at {}".format(at) if at else ""
     return TypeError(

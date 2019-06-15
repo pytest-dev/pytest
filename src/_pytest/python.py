@@ -1170,8 +1170,6 @@ def _idval(val, argname, idx, idfn, item, config):
             # See issue https://github.com/pytest-dev/pytest/issues/2169
             msg = "{}: error raised while trying to determine id of parameter '{}' at position {}\n"
             msg = msg.format(item.nodeid, argname, idx)
-            # we only append the exception type and message because on Python 2 reraise does nothing
-            msg += "  {}: {}\n".format(type(e).__name__, e)
             raise ValueError(msg) from e
     elif config:
         hook_id = config.hook.pytest_make_parametrize_id(
