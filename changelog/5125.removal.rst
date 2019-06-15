@@ -1,2 +1,5 @@
-Introduce the ``pytest.ExitCode`` Enum and make session.exitcode an instance of it.
-User defined exit codes are still valid, but consumers need to take the enum into account.
+``Session.exitcode`` values are now coded in ``pytest.ExitCode``, an ``IntEnum``. This makes the exit code available for consumer code and are more explicit other than just documentation. User defined exit codes are still valid, but should be used with caution.
+
+The team doesn't expect this change to break test suites or plugins in general, except in esoteric/specific scenarios.
+
+**pytest-xdist** users should upgrade to ``1.29.0`` or later, as ``pytest-xdist`` required a compatibility fix because of this change.
