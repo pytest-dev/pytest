@@ -25,6 +25,7 @@ class ExitCode(enum.IntEnum):
     encodes the valid exit codes of pytest
     currently users may still supply other exit codes as well
     """
+
     #: tests passed
     OK = 0
     #: tests failed
