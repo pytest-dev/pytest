@@ -3,11 +3,14 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import inspect
 import sys
 import textwrap
 
 import pytest
 from _pytest.compat import MODULE_NOT_FOUND_ERROR
+from _pytest.doctest import _is_mocked
+from _pytest.doctest import _patch_unwrap_mock_aware
 from _pytest.doctest import DoctestItem
 from _pytest.doctest import DoctestModule
 from _pytest.doctest import DoctestTextfile
@@ -1237,3 +1240,25 @@ def test_doctest_mock_objects_dont_recurse_missbehaved(mock_module, testdir):
     )
     result = testdir.runpytest("--doctest-modules")
     result.stdout.fnmatch_lines(["* 1 passed *"])
+
+
+class Broken:
+    def __getattr__(self, _):
+        raise KeyError("This should be an AttributeError")
+
+
+@pytest.mark.skipif(not hasattr(inspect, "unwrap"), reason="nothing to patch")
+@pytest.mark.parametrize(  # pragma: no branch (lambdas are not called)
+    "stop", [None, _is_mocked, lambda f: None, lambda f: False, lambda f: True]
+)
+def test_warning_on_unwrap_of_broken_object(stop):
+    bad_instance = Broken()
+    assert inspect.unwrap.__module__ == "inspect"
+    with _patch_unwrap_mock_aware():
+        assert inspect.unwrap.__module__ != "inspect"
+        with pytest.warns(
+            pytest.PytestWarning, match="^Got KeyError.* when unwrapping"
+        ):
+            with pytest.raises(KeyError):
+                inspect.unwrap(bad_instance, stop=stop)
+    assert inspect.unwrap.__module__ == "inspect"
