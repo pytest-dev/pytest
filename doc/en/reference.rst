@@ -727,6 +727,14 @@ ExceptionInfo
 .. autoclass:: _pytest._code.ExceptionInfo
     :members:
 
+
+pytest.ExitCode
+~~~~~~~~~~~~~~~
+
+.. autoclass:: _pytest.main.ExitCode
+    :members:
+
+
 FixtureDef
 ~~~~~~~~~~
 

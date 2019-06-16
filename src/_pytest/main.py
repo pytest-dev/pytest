@@ -1,4 +1,5 @@
 """ core implementation of testing process: init, session, runtest loop. """
+import enum
 import fnmatch
 import functools
 import os
@@ -18,13 +19,26 @@ from _pytest.deprecated import PYTEST_CONFIG_GLOBAL
 from _pytest.outcomes import exit
 from _pytest.runner import collect_one_node
 
-# exitcodes for the command line
-EXIT_OK = 0
-EXIT_TESTSFAILED = 1
-EXIT_INTERRUPTED = 2
-EXIT_INTERNALERROR = 3
-EXIT_USAGEERROR = 4
-EXIT_NOTESTSCOLLECTED = 5
+
+class ExitCode(enum.IntEnum):
+    """
+    Encodes the valid exit codes by pytest.
+
+    Currently users and plugins may supply other exit codes as well.
+    """
+
+    #: tests passed
+    OK = 0
+    #: tests failed
+    TESTS_FAILED = 1
+    #: pytest was interrupted
+    INTERRUPTED = 2
+    #: an internal error got in the way
+    INTERNAL_ERROR = 3
+    #: pytest was missused
+    USAGE_ERROR = 4
+    #: pytest couldnt find tests
+    NO_TESTS_COLLECTED = 5
 
 
 def pytest_addoption(parser):
@@ -188,7 +202,7 @@ def pytest_configure(config):
 def wrap_session(config, doit):
     """Skeleton command line program"""
     session = Session(config)
-    session.exitstatus = EXIT_OK
+    session.exitstatus = ExitCode.OK
     initstate = 0
     try:
         try:
@@ -198,13 +212,13 @@ def wrap_session(config, doit):
             initstate = 2
             session.exitstatus = doit(config, session) or 0
         except UsageError:
-            session.exitstatus = EXIT_USAGEERROR
+            session.exitstatus = ExitCode.USAGE_ERROR
             raise
         except Failed:
-            session.exitstatus = EXIT_TESTSFAILED
+            session.exitstatus = ExitCode.TESTS_FAILED
         except (KeyboardInterrupt, exit.Exception):
             excinfo = _pytest._code.ExceptionInfo.from_current()
-            exitstatus = EXIT_INTERRUPTED
+            exitstatus = ExitCode.INTERRUPTED
             if isinstance(excinfo.value, exit.Exception):
                 if excinfo.value.returncode is not None:
                     exitstatus = excinfo.value.returncode
@@ -217,7 +231,7 @@ def wrap_session(config, doit):
         except:  # noqa
             excinfo = _pytest._code.ExceptionInfo.from_current()
             config.notify_exception(excinfo, config.option)
-            session.exitstatus = EXIT_INTERNALERROR
+            session.exitstatus = ExitCode.INTERNAL_ERROR
             if excinfo.errisinstance(SystemExit):
                 sys.stderr.write("mainloop: caught unexpected SystemExit!\n")
 
@@ -243,9 +257,9 @@ def _main(config, session):
     config.hook.pytest_runtestloop(session=session)
 
     if session.testsfailed:
-        return EXIT_TESTSFAILED
+        return ExitCode.TESTS_FAILED
     elif session.testscollected == 0:
-        return EXIT_NOTESTSCOLLECTED
+        return ExitCode.NO_TESTS_COLLECTED
 
 
 def pytest_collection(session):

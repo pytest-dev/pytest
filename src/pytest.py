@@ -15,6 +15,7 @@ from _pytest.fixtures import fillfixtures as _fillfuncargs
 from _pytest.fixtures import fixture
 from _pytest.fixtures import yield_fixture
 from _pytest.freeze_support import freeze_includes
+from _pytest.main import ExitCode
 from _pytest.main import Session
 from _pytest.mark import MARK_GEN as mark
 from _pytest.mark import param
@@ -57,6 +58,7 @@ __all__ = [
     "Collector",
     "deprecated_call",
     "exit",
+    "ExitCode",
     "fail",
     "File",
     "fixture",

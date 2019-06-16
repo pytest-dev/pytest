@@ -33,6 +33,8 @@ Running ``pytest`` can result in six different exit codes:
 :Exit code 4: pytest command line usage error
 :Exit code 5: No tests were collected
 
+They are repressended by the :class:`_pytest.main.ExitCode` enum.
+
 Getting help on version, option names, environment variables
 --------------------------------------------------------------
 

@@ -7,8 +7,7 @@ import py
 
 import pytest
 from _pytest.main import _in_venv
-from _pytest.main import EXIT_INTERRUPTED
-from _pytest.main import EXIT_NOTESTSCOLLECTED
+from _pytest.main import ExitCode
 from _pytest.main import Session
 
 
@@ -347,7 +346,7 @@ class TestCustomConftests:
         assert result.ret == 0
         result.stdout.fnmatch_lines(["*1 passed*"])
         result = testdir.runpytest()
-        assert result.ret == EXIT_NOTESTSCOLLECTED
+        assert result.ret == ExitCode.NO_TESTS_COLLECTED
         result.stdout.fnmatch_lines(["*collected 0 items*"])
 
     def test_collectignore_exclude_on_option(self, testdir):
@@ -364,7 +363,7 @@ class TestCustomConftests:
         testdir.mkdir("hello")
         testdir.makepyfile(test_world="def test_hello(): pass")
         result = testdir.runpytest()
-        assert result.ret == EXIT_NOTESTSCOLLECTED
+        assert result.ret == ExitCode.NO_TESTS_COLLECTED
         assert "passed" not in result.stdout.str()
         result = testdir.runpytest("--XX")
         assert result.ret == 0
@@ -384,7 +383,7 @@ class TestCustomConftests:
         testdir.makepyfile(test_world="def test_hello(): pass")
         testdir.makepyfile(test_welt="def test_hallo(): pass")
         result = testdir.runpytest()
-        assert result.ret == EXIT_NOTESTSCOLLECTED
+        assert result.ret == ExitCode.NO_TESTS_COLLECTED
         result.stdout.fnmatch_lines(["*collected 0 items*"])
         result = testdir.runpytest("--XX")
         assert result.ret == 0
@@ -1172,7 +1171,7 @@ def test_collectignore_via_conftest(testdir, monkeypatch):
     ignore_me.ensure("conftest.py").write("assert 0, 'should_not_be_called'")
 
     result = testdir.runpytest()
-    assert result.ret == EXIT_NOTESTSCOLLECTED
+    assert result.ret == ExitCode.NO_TESTS_COLLECTED
 
 
 def test_collect_pkg_init_and_file_in_args(testdir):
@@ -1234,7 +1233,7 @@ def test_collect_sub_with_symlinks(use_pkg, testdir):
 def test_collector_respects_tbstyle(testdir):
     p1 = testdir.makepyfile("assert 0")
     result = testdir.runpytest(p1, "--tb=native")
-    assert result.ret == EXIT_INTERRUPTED
+    assert result.ret == ExitCode.INTERRUPTED
     result.stdout.fnmatch_lines(
         [
             "*_ ERROR collecting test_collector_respects_tbstyle.py _*",

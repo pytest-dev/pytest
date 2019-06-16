@@ -48,7 +48,7 @@ def main(args=None, plugins=None):
     :arg plugins: list of plugin objects to be auto-registered during
                   initialization.
     """
-    from _pytest.main import EXIT_USAGEERROR
+    from _pytest.main import ExitCode
 
     try:
         try:
@@ -78,7 +78,7 @@ def main(args=None, plugins=None):
         tw = py.io.TerminalWriter(sys.stderr)
         for msg in e.args:
             tw.line("ERROR: {}\n".format(msg), red=True)
-        return EXIT_USAGEERROR
+        return ExitCode.USAGE_ERROR
 
 
 class cmdline:  # compatibility namespace

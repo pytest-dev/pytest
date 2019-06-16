@@ -6,7 +6,7 @@ import textwrap
 import py
 
 import pytest
-from _pytest.main import EXIT_NOTESTSCOLLECTED
+from _pytest.main import ExitCode
 
 pytest_plugins = ("pytester",)
 
@@ -757,7 +757,7 @@ class TestLastFailed:
                 "* 2 deselected in *",
             ]
         )
-        assert result.ret == EXIT_NOTESTSCOLLECTED
+        assert result.ret == ExitCode.NO_TESTS_COLLECTED
 
     def test_lastfailed_no_failures_behavior_empty_cache(self, testdir):
         testdir.makepyfile(
