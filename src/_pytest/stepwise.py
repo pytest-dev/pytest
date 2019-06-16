@@ -28,6 +28,7 @@ class StepwisePlugin:
         self.config = config
         self.active = config.getvalue("stepwise")
         self.session = None
+        self.report_status = ""
 
         if self.active:
             self.lastfailed = config.cache.get("cache/stepwise", None)
@@ -69,12 +70,6 @@ class StepwisePlugin:
 
         config.hook.pytest_deselected(items=already_passed)
 
-    def pytest_collectreport(self, report):
-        if self.active and report.failed:
-            self.session.shouldstop = (
-                "Error when collecting test, stopping test execution."
-            )
-
     def pytest_runtest_logreport(self, report):
         # Skip this hook if plugin is not active or the test is xfailed.
         if not self.active or "xfail" in report.keywords:
@@ -103,7 +98,7 @@ class StepwisePlugin:
                     self.lastfailed = None
 
     def pytest_report_collectionfinish(self):
-        if self.active and self.config.getoption("verbose") >= 0:
+        if self.active and self.config.getoption("verbose") >= 0 and self.report_status:
             return "stepwise: %s" % self.report_status
 
     def pytest_sessionfinish(self, session):

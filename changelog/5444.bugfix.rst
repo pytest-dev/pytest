@@ -1,0 +1,1 @@
+Fix ``--stepwise`` mode when the first file passed on the command-line fails to collect.
