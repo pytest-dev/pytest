@@ -1,3 +1,4 @@
+import inspect
 import math
 import pprint
 import sys
@@ -13,25 +14,10 @@ from more_itertools.more import always_iterable
 
 import _pytest._code
 from _pytest import deprecated
-from _pytest.compat import isclass
 from _pytest.compat import STRING_TYPES
 from _pytest.outcomes import fail
 
 BASE_TYPE = (type, STRING_TYPES)
-
-
-def _cmp_raises_type_error(self, other):
-    """__cmp__ implementation which raises TypeError. Used
-    by Approx base classes to implement only == and != and raise a
-    TypeError for other comparisons.
-
-    Needed in Python 2 only, Python 3 all it takes is not implementing the
-    other operators at all.
-    """
-    __tracebackhide__ = True
-    raise TypeError(
-        "Comparison operators other than == and != not supported by approx objects"
-    )
 
 
 def _non_numeric_type_error(value, at):
@@ -658,7 +644,9 @@ def raises(expected_exception, *args, **kwargs):
 
     """
     __tracebackhide__ = True
-    for exc in filterfalse(isclass, always_iterable(expected_exception, BASE_TYPE)):
+    for exc in filterfalse(
+        inspect.isclass, always_iterable(expected_exception, BASE_TYPE)
+    ):
         msg = (
             "exceptions must be old-style classes or"
             " derived from BaseException, not %s"

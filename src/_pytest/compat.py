@@ -10,6 +10,7 @@ from contextlib import contextmanager
 from inspect import Parameter
 from inspect import signature
 
+import attr
 import py
 
 import _pytest
@@ -29,10 +30,6 @@ def _format_args(func):
     return str(signature(func))
 
 
-isfunction = inspect.isfunction
-isclass = inspect.isclass
-# used to work around a python2 exception info leak
-exc_clear = getattr(sys, "exc_clear", lambda: None)
 # The type of re.compile objects is not exposed in Python.
 REGEX_TYPE = type(re.compile(""))
 
@@ -129,11 +126,15 @@ def getfuncargnames(function, is_method=False, cls=None):
     return arg_names
 
 
-@contextmanager
-def dummy_context_manager():
-    """Context manager that does nothing, useful in situations where you might need an actual context manager or not
-    depending on some condition. Using this allow to keep the same code"""
-    yield
+if sys.version_info < (3, 7):
+
+    @contextmanager
+    def nullcontext():
+        yield
+
+
+else:
+    from contextlib import nullcontext  # noqa
 
 
 def get_default_arg_names(function):
@@ -191,6 +192,7 @@ def ascii_escaped(val):
     return _translate_non_printable(ret)
 
 
+@attr.s
 class _PytestWrapper:
     """Dummy wrapper around a function object for internal use only.
 
@@ -199,8 +201,7 @@ class _PytestWrapper:
     to issue warnings when the fixture function is called directly.
     """
 
-    def __init__(self, obj):
-        self.obj = obj
+    obj = attr.ib()
 
 
 def get_real_func(obj):
@@ -280,7 +281,7 @@ def safe_getattr(object, name, default):
 def safe_isclass(obj):
     """Ignore any exception via isinstance on Python 3."""
     try:
-        return isclass(obj)
+        return inspect.isclass(obj)
     except Exception:
         return False
 
@@ -304,8 +305,8 @@ def _setup_collect_fakemodule():
 
     pytest.collect = ModuleType("pytest.collect")
     pytest.collect.__all__ = []  # used for setns
-    for attr in COLLECT_FAKEMODULE_ATTRIBUTES:
-        setattr(pytest.collect, attr, getattr(pytest, attr))
+    for attr_name in COLLECT_FAKEMODULE_ATTRIBUTES:
+        setattr(pytest.collect, attr_name, getattr(pytest, attr_name))
 
 
 class CaptureIO(io.TextIOWrapper):

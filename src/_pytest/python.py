@@ -23,8 +23,6 @@ from _pytest.compat import getfslineno
 from _pytest.compat import getimfunc
 from _pytest.compat import getlocation
 from _pytest.compat import is_generator
-from _pytest.compat import isclass
-from _pytest.compat import isfunction
 from _pytest.compat import NOTSET
 from _pytest.compat import REGEX_TYPE
 from _pytest.compat import safe_getattr
@@ -207,7 +205,7 @@ def pytest_pycollect_makeitem(collector, name, obj):
         # We need to try and unwrap the function if it's a functools.partial
         # or a funtools.wrapped.
         # We musn't if it's been wrapped with mock.patch (python 2 only)
-        if not (isfunction(obj) or isfunction(get_real_func(obj))):
+        if not (inspect.isfunction(obj) or inspect.isfunction(get_real_func(obj))):
             filename, lineno = getfslineno(obj)
             warnings.warn_explicit(
                 message=PytestCollectionWarning(
@@ -1172,8 +1170,6 @@ def _idval(val, argname, idx, idfn, item, config):
             # See issue https://github.com/pytest-dev/pytest/issues/2169
             msg = "{}: error raised while trying to determine id of parameter '{}' at position {}\n"
             msg = msg.format(item.nodeid, argname, idx)
-            # we only append the exception type and message because on Python 2 reraise does nothing
-            msg += "  {}: {}\n".format(type(e).__name__, e)
             raise ValueError(msg) from e
     elif config:
         hook_id = config.hook.pytest_make_parametrize_id(
@@ -1190,7 +1186,7 @@ def _idval(val, argname, idx, idfn, item, config):
         return ascii_escaped(val.pattern)
     elif enum is not None and isinstance(val, enum.Enum):
         return str(val)
-    elif (isclass(val) or isfunction(val)) and hasattr(val, "__name__"):
+    elif (inspect.isclass(val) or inspect.isfunction(val)) and hasattr(val, "__name__"):
         return val.__name__
     return str(argname) + str(idx)
 
