@@ -711,7 +711,7 @@ class Testdir:
         return res
 
     def genitems(self, colitems):
-        """Generate all test items from a collection node.src/_pytest/main.py
+        """Generate all test items from a collection node.
 
         This recurses into the collection node and returns a list of all the
         test items contained within.
