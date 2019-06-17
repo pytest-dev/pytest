@@ -35,9 +35,9 @@ class ExitCode(enum.IntEnum):
     INTERRUPTED = 2
     #: an internal error got in the way
     INTERNAL_ERROR = 3
-    #: pytest was missused
+    #: pytest was misused
     USAGE_ERROR = 4
-    #: pytest couldnt find tests
+    #: pytest couldn't find tests
     NO_TESTS_COLLECTED = 5
 
 
