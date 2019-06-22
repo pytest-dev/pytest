@@ -74,7 +74,7 @@ def report(issues):
 if __name__ == "__main__":
     import argparse
 
-    parser = argparse.ArgumentParser("process bitbucket issues")
+    parser = argparse.ArgumentParser("process bitbucket issues", allow_abbrev=False)
     parser.add_argument(
         "--refresh", action="store_true", help="invalidate cache, refresh issues"
     )

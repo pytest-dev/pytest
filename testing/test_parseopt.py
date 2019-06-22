@@ -200,7 +200,7 @@ class TestParser:
 
     def test_drop_short_helper(self):
         parser = argparse.ArgumentParser(
-            formatter_class=parseopt.DropShorterLongHelpFormatter
+            formatter_class=parseopt.DropShorterLongHelpFormatter, allow_abbrev=False
         )
         parser.add_argument(
             "-t", "--twoword", "--duo", "--two-word", "--two", help="foo"

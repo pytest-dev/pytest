@@ -1,0 +1,4 @@
+Pytest no longer accepts prefixes of command-line arguments.
+This was previously allowed where the ``ArgumentParser`` thought it was unambigious,
+because this could be incorrect due to delayed parsing of options for plugins.
+See for example issues #1149, #3413, and #4009.

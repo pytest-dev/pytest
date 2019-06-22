@@ -4,7 +4,7 @@ import pathlib
 HERE = pathlib.Path(__file__).parent
 TEST_CONTENT = (HERE / "template_test.py").read_bytes()
 
-parser = argparse.ArgumentParser()
+parser = argparse.ArgumentParser(allow_abbrev=False)
 parser.add_argument("numbers", nargs="*", type=int)
 
 

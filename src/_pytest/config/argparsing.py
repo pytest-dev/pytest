@@ -328,6 +328,7 @@ class MyOptionParser(argparse.ArgumentParser):
             usage=parser._usage,
             add_help=False,
             formatter_class=DropShorterLongHelpFormatter,
+            allow_abbrev=False,
         )
         # extra_info is a dict of (param -> value) to display if there's
         # an usage error to provide more contextual information to the user
