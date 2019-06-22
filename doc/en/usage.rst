@@ -428,11 +428,25 @@ Fault Handler
 The `faulthandler <https://docs.python.org/3/library/faulthandler.html>`__ standard module
 can be used to dump Python tracebacks on a segfault or after a timeout.
 
-The module is automatically enabled for pytest runs, unless the ``--no-faulthandler`` is given
+The module is automatically enabled for pytest runs, unless the ``-p no:faulthandler`` is given
 on the command-line.
 
-Also the ``--faulthandler-timeout=X`` can be used to dump the traceback of all threads if a test
-takes longer than ``X`` seconds to finish (not available on Windows).
+Also the :confval:`faulthandler_timeout=X<faulthandler_timeout>` configuration option can be used
+to dump the traceback of all threads if a test takes longer than ``X``
+seconds to finish (not available on Windows).
+
+.. note::
+
+    This functionality has been integrated from the external
+    `pytest-faulthandler <https://github.com/pytest-dev/pytest-faulthandler>`__ plugin, with two
+    small differences:
+
+    * To disable it, use ``-p no:faulthandler`` instead of ``--no-faulthandler``: the former
+      can be used with any plugin, so it saves one option.
+
+    * The ``--faulthandler-timeout`` command-line option has become the
+      :confval:`faulthandler_timeout` configuration option. It can still be configured from
+      the command-line using ``-o faulthandler_timeout=X``.
 
 
 Creating JUnitXML format files

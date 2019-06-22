@@ -1076,6 +1076,23 @@ passed multiple times. The expected format is ``name=value``. For example::
       for more details.
 
 
+.. confval:: faulthandler_timeout
+
+   Dumps the tracebacks of all threads if a test takes longer than ``X`` seconds to run (including
+   fixture setup and teardown). Implemented using the `faulthandler.dump_traceback_later`_ function,
+   so all caveats there apply.
+
+   .. code-block:: ini
+
+        # content of pytest.ini
+        [pytest]
+        faulthandler_timeout=5
+
+   For more information please refer to :ref:`faulthandler`.
+
+.. _`faulthandler.dump_traceback_later`: https://docs.python.org/3/library/faulthandler.html#faulthandler.dump_traceback_later
+
+
 .. confval:: filterwarnings
 
 

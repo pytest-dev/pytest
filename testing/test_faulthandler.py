@@ -44,7 +44,7 @@ def test_disabled(testdir):
         assert not faulthandler.is_enabled()
     """
     )
-    result = testdir.runpytest_subprocess("--no-faulthandler")
+    result = testdir.runpytest_subprocess("-p", "no:faulthandler")
     result.stdout.fnmatch_lines(["*1 passed*"])
     assert result.ret == 0
 
@@ -61,9 +61,13 @@ def test_timeout(testdir, enabled):
         time.sleep(2.0)
     """
     )
-    args = ["--faulthandler-timeout=1"]
-    if not enabled:
-        args.append("--no-faulthandler")
+    testdir.makeini(
+        """
+        [pytest]
+        faulthandler_timeout = 1
+        """
+    )
+    args = ["-p", "no:faulthandler"] if not enabled else []
 
     result = testdir.runpytest_subprocess(*args)
     tb_output = "most recent call first"

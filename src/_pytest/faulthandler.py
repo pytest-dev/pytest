@@ -6,38 +6,24 @@ import pytest
 
 
 def pytest_addoption(parser):
-    group = parser.getgroup("terminal reporting")
-    group.addoption(
-        "--no-faulthandler",
-        action="store_false",
-        dest="fault_handler",
-        default=True,
-        help="Disable faulthandler module.",
-    )
-
-    group.addoption(
-        "--faulthandler-timeout",
-        type=float,
-        dest="fault_handler_timeout",
-        metavar="TIMEOUT",
-        default=0.0,
-        help="Dump the traceback of all threads if a test takes "
+    help = (
+        "Dump the traceback of all threads if a test takes "
         "more than TIMEOUT seconds to finish.\n"
-        "Not available on Windows.",
+        "Not available on Windows."
     )
+    parser.addini("faulthandler_timeout", help, default=0.0)
 
 
 def pytest_configure(config):
-    if config.getoption("fault_handler"):
-        import faulthandler
+    import faulthandler
 
-        # avoid trying to dup sys.stderr if faulthandler is already enabled
-        if faulthandler.is_enabled():
-            return
+    # avoid trying to dup sys.stderr if faulthandler is already enabled
+    if faulthandler.is_enabled():
+        return
 
-        stderr_fd_copy = os.dup(_get_stderr_fileno())
-        config.fault_handler_stderr = os.fdopen(stderr_fd_copy, "w")
-        faulthandler.enable(file=config.fault_handler_stderr)
+    stderr_fd_copy = os.dup(_get_stderr_fileno())
+    config.fault_handler_stderr = os.fdopen(stderr_fd_copy, "w")
+    faulthandler.enable(file=config.fault_handler_stderr)
 
 
 def _get_stderr_fileno():
@@ -51,26 +37,24 @@ def _get_stderr_fileno():
 
 
 def pytest_unconfigure(config):
-    if config.getoption("fault_handler"):
-        import faulthandler
+    import faulthandler
 
-        faulthandler.disable()
-        # close our dup file installed during pytest_configure
-        f = getattr(config, "fault_handler_stderr", None)
-        if f is not None:
-            # re-enable the faulthandler, attaching it to the default sys.stderr
-            # so we can see crashes after pytest has finished, usually during
-            # garbage collection during interpreter shutdown
-            config.fault_handler_stderr.close()
-            del config.fault_handler_stderr
-            faulthandler.enable(file=_get_stderr_fileno())
+    faulthandler.disable()
+    # close our dup file installed during pytest_configure
+    f = getattr(config, "fault_handler_stderr", None)
+    if f is not None:
+        # re-enable the faulthandler, attaching it to the default sys.stderr
+        # so we can see crashes after pytest has finished, usually during
+        # garbage collection during interpreter shutdown
+        config.fault_handler_stderr.close()
+        del config.fault_handler_stderr
+        faulthandler.enable(file=_get_stderr_fileno())
 
 
 @pytest.hookimpl(hookwrapper=True)
 def pytest_runtest_protocol(item):
-    enabled = item.config.getoption("fault_handler")
-    timeout = item.config.getoption("fault_handler_timeout")
-    if enabled and timeout > 0:
+    timeout = float(item.config.getini("faulthandler_timeout") or 0.0)
+    if timeout > 0:
         import faulthandler
 
         stderr = item.config.fault_handler_stderr
