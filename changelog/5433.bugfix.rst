@@ -1,0 +1,1 @@
+Fix assertion rewriting in packages (``__init__.py``).

@@ -1,3 +1,4 @@
+import os.path
 import sys
 
 import py
@@ -52,6 +53,10 @@ class TestPort:
     )
     def test_matching(self, match, pattern, path):
         assert match(pattern, path)
+
+    def test_matching_abspath(self, match):
+        abspath = os.path.abspath(os.path.join("tests/foo.py"))
+        assert match("tests/foo.py", abspath)
 
     @pytest.mark.parametrize(
         "pattern, path",
