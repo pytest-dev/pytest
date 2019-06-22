@@ -113,8 +113,8 @@ If you then run it with ``--lf``:
     test_50.py:6: Failed
     ================= 2 failed, 48 deselected in 0.12 seconds ==================
 
-You have run only the two failing test from the last run, while 48 tests have
-not been run ("deselected").
+You have run only the two failing tests from the last run, while the 48 passing
+tests have not been run ("deselected").
 
 Now, if you run with the ``--ff`` option, all tests will be run but the first
 previous failures will be executed first (as can be seen from the series
@@ -224,7 +224,7 @@ If you run this command for the first time, you can see the print statement:
     running expensive computation...
     1 failed in 0.12 seconds
 
-If you run it a second time the value will be retrieved from
+If you run it a second time, the value will be retrieved from
 the cache and nothing will be printed:
 
 .. code-block:: pytest
