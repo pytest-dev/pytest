@@ -212,7 +212,7 @@ class TestMockDecoration:
                 assert os.path.basename("123") == "mock_basename"
         """
         )
-        reprec = testdir.inline_run()
+        reprec = testdir.inline_run("-p", "no:randomly")
         reprec.assertoutcome(passed=2)
         calls = reprec.getcalls("pytest_runtest_logreport")
         funcnames = [
@@ -238,7 +238,7 @@ class TestMockDecoration:
                 pass
         """
         )
-        reprec = testdir.inline_run()
+        reprec = testdir.inline_run("-p", "no:randomly")
         calls = reprec.getreports("pytest_runtest_logreport")
         calls = [x for x in calls if x.when == "call"]
         names = [x.nodeid.split("::")[-1] for x in calls]
@@ -442,5 +442,5 @@ class TestParameterize:
                 pass
         """
         )
-        res = testdir.runpytest("--collect-only")
+        res = testdir.runpytest("--collect-only", "-p", "no:randomly")
         res.stdout.fnmatch_lines(["*spam-2*", "*ham-2*"])
