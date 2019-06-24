@@ -137,8 +137,8 @@ class TestImportHookInstallation:
             "hamster.py": "",
             "test_foo.py": """\
                 def test_foo(pytestconfig):
-                    assert pytestconfig.pluginmanager.rewrite_hook.find_module('ham') is not None
-                    assert pytestconfig.pluginmanager.rewrite_hook.find_module('hamster') is None
+                    assert pytestconfig.pluginmanager.rewrite_hook.find_spec('ham') is not None
+                    assert pytestconfig.pluginmanager.rewrite_hook.find_spec('hamster') is None
             """,
         }
         testdir.makepyfile(**contents)
