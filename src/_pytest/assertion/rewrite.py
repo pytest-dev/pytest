@@ -13,6 +13,7 @@ import types
 import atomicwrites
 
 from _pytest._io.saferepr import saferepr
+from _pytest._version import version
 from _pytest.assertion import util
 from _pytest.assertion.util import (  # noqa: F401
     format_explanation as _format_explanation,
@@ -21,7 +22,7 @@ from _pytest.pathlib import fnmatch_ex
 from _pytest.pathlib import PurePath
 
 # pytest caches rewritten pycs in __pycache__.
-PYTEST_TAG = "{}-PYTEST".format(sys.implementation.cache_tag)
+PYTEST_TAG = "{}-pytest-{}".format(sys.implementation.cache_tag, version)
 PYC_EXT = ".py" + (__debug__ and "c" or "o")
 PYC_TAIL = "." + PYTEST_TAG + PYC_EXT
 
