@@ -358,11 +358,6 @@ def _rewrite_test(config, fn):
         state.trace("failed to parse: {!r}".format(fn))
         return None, None
     rewrite_asserts(tree, fn, config)
-
-    # TODO: REMOVE, THIS IS ONLY FOR DEBUG
-    with open(f'{str(fn)+"bak"}', "w", encoding="utf-8") as f:
-        f.write(astor.to_source(tree))
-
     try:
         co = compile(tree, fn.strpath, "exec", dont_inherit=True)
     except SyntaxError:
