@@ -92,7 +92,7 @@ def pytest_collection(session):
 
 
 def pytest_runtest_setup(item):
-    """Setup the pytest_assertrepr_compare hook
+    """Setup the pytest_assertrepr_compare and pytest_assertion_pass hooks
 
     The newinterpret and rewrite modules will use util._reprcompare if
     it exists to use custom reporting via the
@@ -129,9 +129,15 @@ def pytest_runtest_setup(item):
 
     util._reprcompare = callbinrepr
 
+    if item.ihook.pytest_assertion_pass.get_hookimpls():
+        def call_assertion_pass_hook(lineno, expl, orig):
+            item.ihook.pytest_assertion_pass(item=item, lineno=lineno, orig=orig, expl=expl)
+        util._assertion_pass = call_assertion_pass_hook
+
 
 def pytest_runtest_teardown(item):
     util._reprcompare = None
+    util._assertion_pass = None
 
 
 def pytest_sessionfinish(session):

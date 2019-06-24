@@ -1,0 +1,2 @@
+Adds ``pytest_assertion_pass`` hook, called with assertion context information
+(original asssertion statement and pytest explanation) whenever an assertion passes.

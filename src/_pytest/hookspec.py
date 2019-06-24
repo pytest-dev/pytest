@@ -485,6 +485,21 @@ def pytest_assertrepr_compare(config, op, left, right):
     """
 
 
+def pytest_assertion_pass(item, lineno, orig, expl):
+    """Process explanation when assertions are valid.
+
+    Use this hook to do some processing after a passing assertion.
+    The original assertion information is available in the `orig` string
+    and the pytest introspected assertion information is available in the
+    `expl` string.
+
+    :param _pytest.nodes.Item item: pytest item object of current test
+    :param int lineno: line number of the assert statement
+    :param string orig: string with original assertion
+    :param string expl: string with assert explanation
+    """
+
+
 # -------------------------------------------------------------------------
 # hooks for influencing reporting (invoked from _pytest_terminal)
 # -------------------------------------------------------------------------
