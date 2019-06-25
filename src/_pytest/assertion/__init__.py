@@ -130,8 +130,12 @@ def pytest_runtest_setup(item):
     util._reprcompare = callbinrepr
 
     if item.ihook.pytest_assertion_pass.get_hookimpls():
+
         def call_assertion_pass_hook(lineno, expl, orig):
-            item.ihook.pytest_assertion_pass(item=item, lineno=lineno, orig=orig, expl=expl)
+            item.ihook.pytest_assertion_pass(
+                item=item, lineno=lineno, orig=orig, expl=expl
+            )
+
         util._assertion_pass = call_assertion_pass_hook
 
 
