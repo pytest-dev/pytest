@@ -32,6 +32,11 @@ GETFUNCARGVALUE = RemovedInPytest4Warning(
     "getfuncargvalue is deprecated, use getfixturevalue"
 )
 
+FUNCARGNAMES = PytestDeprecationWarning(
+    "The `funcargnames` attribute was an alias for `fixturenames`, "
+    "since pytest 2.3 - use the newer attribute instead."
+)
+
 RAISES_MESSAGE_PARAMETER = PytestDeprecationWarning(
     "The 'message' parameter is deprecated.\n"
     "(did you mean to use `match='some regex'` to check the exception message?)\n"

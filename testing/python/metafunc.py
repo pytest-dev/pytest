@@ -1205,7 +1205,7 @@ class TestMetafuncFunctional:
             import pytest
             values = []
             def pytest_generate_tests(metafunc):
-                if "arg" in metafunc.funcargnames:
+                if "arg" in metafunc.fixturenames:
                     metafunc.parametrize("arg", [1,2], indirect=True,
                                          scope=%r)
             @pytest.fixture
