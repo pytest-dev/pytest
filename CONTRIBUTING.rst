@@ -173,7 +173,7 @@ Short version
 
    The test environments above are usually enough to cover most cases locally.
 
-#. Write a ``changelog`` entry: ``changelog/2574.bugfix``, use issue id number
+#. Write a ``changelog`` entry: ``changelog/2574.bugfix.rst``, use issue id number
    and one of ``bugfix``, ``removal``, ``feature``, ``vendor``, ``doc`` or
    ``trivial`` for the issue type.
 #. Unless your change is a trivial or a documentation fix (e.g., a typo or reword of a small section) please
@@ -264,7 +264,7 @@ Here is a simple overview, with pytest-specific bits:
     $ git commit -a -m "<commit message>"
     $ git push -u
 
-#. Create a new changelog entry in ``changelog``. The file should be named ``<issueid>.<type>``,
+#. Create a new changelog entry in ``changelog``. The file should be named ``<issueid>.<type>.rst``,
    where *issueid* is the number of the issue related to the change and *type* is one of
    ``bugfix``, ``removal``, ``feature``, ``vendor``, ``doc`` or ``trivial``.
 
