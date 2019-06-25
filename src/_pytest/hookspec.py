@@ -497,6 +497,13 @@ def pytest_assertion_pass(item, lineno, orig, expl):
     :param int lineno: line number of the assert statement
     :param string orig: string with original assertion
     :param string expl: string with assert explanation
+
+    .. note::
+
+    This hook is still *experimental*, so its parameters or even the hook itself might
+    be changed/removed without warning in any future pytest release.
+
+    If you find this hook useful, please share your feedback opening an issue.
     """
 
 
