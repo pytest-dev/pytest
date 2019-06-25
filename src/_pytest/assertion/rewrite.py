@@ -69,6 +69,8 @@ class AssertionRewritingHook:
             # python3.5 - python3.6: `namespace`
             # python3.7+: `None`
             or spec.origin in {None, "namespace"}
+            # we can only rewrite source files
+            or not isinstance(spec.loader, importlib.machinery.SourceFileLoader)
             # if the file doesn't exist, we can't rewrite it
             or not os.path.exists(spec.origin)
         ):
