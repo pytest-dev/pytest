@@ -14,7 +14,7 @@ env:
     - PYTEST_ADDOPTS=-vv
 
 install:
-  - python -m pip install --upgrade --pre tox
+  - python -m pip install --upgrade --pre tox virtualenv
 
 jobs:
   include:
