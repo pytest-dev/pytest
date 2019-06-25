@@ -105,7 +105,7 @@ def changelog(version, write_out=False):
 
 def main():
     init(autoreset=True)
-    parser = argparse.ArgumentParser(allow_abbrev=False)
+    parser = argparse.ArgumentParser()
     parser.add_argument("version", help="Release version")
     options = parser.parse_args()
     pre_release(options.version)
