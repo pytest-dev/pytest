@@ -503,6 +503,8 @@ def pytest_assertion_pass(item, lineno, orig, expl):
     This hook is still *experimental*, so its parameters or even the hook itself might
     be changed/removed without warning in any future pytest release.
 
+    It should be enabled using the `--enable-assertion-pass-hook` command line option.
+
     If you find this hook useful, please share your feedback opening an issue.
     """
 

@@ -746,8 +746,10 @@ class Config:
         and find all the installed plugins to mark them for rewriting
         by the importhook.
         """
-        ns, unknown_args = self._parser.parse_known_and_unknown_args(args)
-        mode = getattr(ns, "assertmode", "plain")
+        # Saving _ns so it can be used for other assertion rewriting purposes
+        # e.g. experimental assertion pass hook
+        self._ns, self._unknown_args = self._parser.parse_known_and_unknown_args(args)
+        mode = getattr(self._ns, "assertmode", "plain")
         if mode == "rewrite":
             try:
                 hook = _pytest.assertion.install_importhook(self)

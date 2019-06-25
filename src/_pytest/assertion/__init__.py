@@ -24,6 +24,14 @@ def pytest_addoption(parser):
                             expression information.""",
     )
 
+    group = parser.getgroup("experimental")
+    group.addoption(
+        "--enable-assertion-pass-hook",
+        action="store_true",
+        help="Enables the pytest_assertion_pass hook."
+        "Make sure to delete any previously generated pyc cache files.",
+    )
+
 
 def register_assert_rewrite(*names):
     """Register one or more module names to be rewritten on import.

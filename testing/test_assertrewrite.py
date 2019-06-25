@@ -1326,8 +1326,7 @@ class TestAssertionPass:
                 assert a+b == c+d
             """
         )
-        result = testdir.runpytest()
-        print(testdir.tmpdir)
+        result = testdir.runpytest("--enable-assertion-pass-hook")
         result.stdout.fnmatch_lines(
             "*Assertion Passed: a + b == c + d (1 + 2) == (3 + 0) at line 7*"
         )
@@ -1341,6 +1340,38 @@ class TestAssertionPass:
 
         monkeypatch.setattr(
             _pytest.assertion.rewrite, "_call_assertion_pass", raise_on_assertionpass
+        )
+
+        testdir.makepyfile(
+            """
+            def test_simple():
+                a=1
+                b=2
+                c=3
+                d=0
+
+                assert a+b == c+d
+            """
+        )
+        result = testdir.runpytest("--enable-assertion-pass-hook")
+        result.assert_outcomes(passed=1)
+
+    def test_hook_not_called_without_cmd_option(self, testdir, monkeypatch):
+        """Assertion pass should not be called (and hence formatting should
+        not occur) if there is no hook declared for pytest_assertion_pass"""
+
+        def raise_on_assertionpass(*_, **__):
+            raise Exception("Assertion passed called when it shouldn't!")
+
+        monkeypatch.setattr(
+            _pytest.assertion.rewrite, "_call_assertion_pass", raise_on_assertionpass
+        )
+
+        testdir.makeconftest(
+            """
+            def pytest_assertion_pass(item, lineno, orig, expl):
+                raise Exception("Assertion Passed: {} {} at line {}".format(orig, expl, lineno))
+            """
         )
 
         testdir.makepyfile(
