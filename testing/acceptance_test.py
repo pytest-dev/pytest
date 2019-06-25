@@ -1088,7 +1088,10 @@ def test_fixture_values_leak(testdir):
             assert fix_of_test1_ref() is None
     """
     )
-    result = testdir.runpytest()
+    # Running on subprocess does not activate the HookRecorder
+    # which holds itself a reference to objects in case of the
+    # pytest_assert_reprcompare hook
+    result = testdir.runpytest_subprocess()
     result.stdout.fnmatch_lines(["* 2 passed *"])
 
 
