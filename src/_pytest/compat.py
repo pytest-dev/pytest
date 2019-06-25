@@ -377,7 +377,7 @@ if _PY3:
 else:
 
     def safe_str(v):
-        """returns v as string, converting to ascii if necessary"""
+        """returns v as string, converting to utf-8 if necessary"""
         try:
             return str(v)
         except UnicodeError:
