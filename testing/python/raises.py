@@ -278,3 +278,7 @@ class TestRaises(object):
                 with pytest.raises(CrappyClass()):
                     pass
             assert "via __class__" in excinfo.value.args[0]
+
+    def test_u(self):
+        with pytest.raises(AssertionError, match=u"\u2603"):
+            assert False, u"\u2603"

@@ -1,0 +1,1 @@
+Use safe_str to serialize Exceptions in pytest.raises
