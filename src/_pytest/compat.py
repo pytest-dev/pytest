@@ -325,4 +325,8 @@ class FuncargnamesCompatAttr:
     @property
     def funcargnames(self):
         """ alias attribute for ``fixturenames`` for pre-2.3 compatibility"""
+        import warnings
+        from _pytest.deprecated import FUNCARGNAMES
+
+        warnings.warn(FUNCARGNAMES, stacklevel=2)
         return self.fixturenames

@@ -793,12 +793,15 @@ class TestRequestBasic:
             """
             import pytest
             def pytest_generate_tests(metafunc):
-                assert metafunc.funcargnames == metafunc.fixturenames
+                with pytest.warns(pytest.PytestDeprecationWarning):
+                    assert metafunc.funcargnames == metafunc.fixturenames
             @pytest.fixture
             def fn(request):
-                assert request._pyfuncitem.funcargnames == \
-                       request._pyfuncitem.fixturenames
-                return request.funcargnames, request.fixturenames
+                with pytest.warns(pytest.PytestDeprecationWarning):
+                    assert request._pyfuncitem.funcargnames == \
+                           request._pyfuncitem.fixturenames
+                with pytest.warns(pytest.PytestDeprecationWarning):
+                    return request.funcargnames, request.fixturenames
 
             def test_hello(fn):
                 assert fn[0] == fn[1]

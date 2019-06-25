@@ -19,6 +19,21 @@ Below is a complete list of all pytest features which are considered deprecated.
 :class:`_pytest.warning_types.PytestWarning` or subclasses, which can be filtered using
 :ref:`standard warning filters <warnings>`.
 
+
+Removal of ``funcargnames`` alias for ``fixturenames``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 5.0
+
+The ``FixtureRequest``, ``Metafunc``, and ``Function`` classes track the names of
+their associated fixtures, with the aptly-named ``fixturenames`` attribute.
+
+Prior to pytest 2.3, this attribute was named ``funcargnames``, and we have kept
+that as an alias since.  It is finally due for removal, as it is often confusing
+in places where we or plugin authors must distinguish between fixture names and
+names supplied by non-fixture things such as ``pytest.mark.parametrize``.
+
+
 .. _`raises message deprecated`:
 
 ``"message"`` parameter of ``pytest.raises``
