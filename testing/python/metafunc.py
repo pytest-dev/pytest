@@ -1765,3 +1765,16 @@ class TestMarkersWithParametrization(object):
         result.stdout.fnmatch_lines(
             ["*test_func_a*0*PASS*", "*test_func_a*2*PASS*", "*test_func_b*10*PASS*"]
         )
+
+    def test_parametrize_positional_args(self, testdir):
+        testdir.makepyfile(
+            """
+            import pytest
+
+            @pytest.mark.parametrize("a", [1], False)
+            def test_foo(a):
+                pass
+        """
+        )
+        result = testdir.runpytest()
+        result.assert_outcomes(passed=1)

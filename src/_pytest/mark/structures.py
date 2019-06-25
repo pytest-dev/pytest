@@ -104,10 +104,7 @@ class ParameterSet(namedtuple("ParameterSet", "values, marks, id")):
             return cls(parameterset, marks=[], id=None)
 
     @staticmethod
-    def _parse_parametrize_args(argnames, argvalues, **_):
-        """It receives an ignored _ (kwargs) argument so this function can
-        take also calls from parametrize ignoring scope, indirect, and other
-        arguments..."""
+    def _parse_parametrize_args(argnames, argvalues, *args, **kwargs):
         if not isinstance(argnames, (tuple, list)):
             argnames = [x.strip() for x in argnames.split(",") if x.strip()]
             force_tuple = len(argnames) == 1
