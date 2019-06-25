@@ -807,10 +807,7 @@ class AssertionRewriter(ast.NodeVisitor):
         fmt = self.helper("_format_explanation", err_msg)
         fmt_pass = self.helper("_format_explanation", msg)
         exc = ast.Call(err_name, [fmt], [])
-        if sys.version_info[0] >= 3:
-            raise_ = ast.Raise(exc, None)
-        else:
-            raise_ = ast.Raise(exc, None, None)
+        raise_ = ast.Raise(exc, None)
         # Call to hook when passes
         orig = astor.to_source(assert_.test).rstrip("\n").lstrip("(").rstrip(")")
         hook_call_pass = ast.Expr(
@@ -821,9 +818,7 @@ class AssertionRewriter(ast.NodeVisitor):
 
         # If any hooks implement assert_pass hook
         hook_impl_test = ast.If(
-            self.helper("_check_if_assertionpass_impl"),
-            [hook_call_pass],
-            [],
+            self.helper("_check_if_assertionpass_impl"), [hook_call_pass], []
         )
         main_test = ast.If(negation, [raise_], [hook_impl_test])
 
