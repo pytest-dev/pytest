@@ -1,1 +1,17 @@
-Improve/fix comparison of byte strings with Python 3.
+Improved comparison of byte strings.
+
+When comparing bytes, the assertion message used to show the byte numeric value when showing the differences::
+
+        def test():
+    >       assert b'spam' == b'eggs'
+    E       AssertionError: assert b'spam' == b'eggs'
+    E         At index 0 diff: 115 != 101
+    E         Use -v to get the full diff
+
+It now shows the actual ascii representation instead, which is often more useful::
+
+        def test():
+    >       assert b'spam' == b'eggs'
+    E       AssertionError: assert b'spam' == b'eggs'
+    E         At index 0 diff: b's' != b'e'
+    E         Use -v to get the full diff
