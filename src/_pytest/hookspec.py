@@ -504,6 +504,7 @@ def pytest_assertion_pass(item, lineno, orig, expl):
     be changed/removed without warning in any future pytest release.
 
     It should be enabled using the `--enable-assertion-pass-hook` command line option.
+    Remember to clean the .pyc files in your project directory and interpreter libraries.
 
     If you find this hook useful, please share your feedback opening an issue.
     """
