@@ -1339,9 +1339,9 @@ class TestAssertionPass:
         def raise_on_assertionpass(*_, **__):
             raise Exception("Assertion passed called when it shouldn't!")
 
-        monkeypatch.setattr(_pytest.assertion.rewrite,
-                            "_call_assertion_pass",
-                            raise_on_assertionpass)
+        monkeypatch.setattr(
+            _pytest.assertion.rewrite, "_call_assertion_pass", raise_on_assertionpass
+        )
 
         testdir.makepyfile(
             """
