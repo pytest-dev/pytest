@@ -984,7 +984,7 @@ def test_zipimport_hook(testdir, tmpdir):
             "app/foo.py": """
             import pytest
             def main():
-                pytest.main(['--pyarg', 'foo'])
+                pytest.main(['--pyargs', 'foo'])
         """
         }
     )
