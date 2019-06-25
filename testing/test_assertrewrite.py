@@ -780,6 +780,24 @@ def test_rewritten():
 
         assert testdir.runpytest().ret == 0
 
+    def test_cached_pyc_includes_pytest_version(self, testdir, monkeypatch):
+        """Avoid stale caches (#1671)"""
+        monkeypatch.delenv("PYTHONDONTWRITEBYTECODE", raising=False)
+        testdir.makepyfile(
+            test_foo="""
+            def test_foo():
+                assert True
+            """
+        )
+        result = testdir.runpytest_subprocess()
+        assert result.ret == 0
+        found_names = glob.glob(
+            "__pycache__/*-pytest-{}.pyc".format(pytest.__version__)
+        )
+        assert found_names, "pyc with expected tag not found in names: {}".format(
+            glob.glob("__pycache__/*.pyc")
+        )
+
     @pytest.mark.skipif('"__pypy__" in sys.modules')
     def test_pyc_vs_pyo(self, testdir, monkeypatch):
         testdir.makepyfile(
