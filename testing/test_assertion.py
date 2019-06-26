@@ -331,6 +331,27 @@ class TestAssert_reprcompare:
         assert "- spam" in diff
         assert "+ eggs" in diff
 
+    def test_bytes_diff_normal(self):
+        """Check special handling for bytes diff (#5260)"""
+        diff = callequal(b"spam", b"eggs")
+
+        assert diff == [
+            "b'spam' == b'eggs'",
+            "At index 0 diff: b's' != b'e'",
+            "Use -v to get the full diff",
+        ]
+
+    def test_bytes_diff_verbose(self):
+        """Check special handling for bytes diff (#5260)"""
+        diff = callequal(b"spam", b"eggs", verbose=True)
+        assert diff == [
+            "b'spam' == b'eggs'",
+            "At index 0 diff: b's' != b'e'",
+            "Full diff:",
+            "- b'spam'",
+            "+ b'eggs'",
+        ]
+
     def test_list(self):
         expl = callequal([0, 1], [0, 2])
         assert len(expl) > 1
