@@ -484,7 +484,7 @@ def _call_assertion_pass(lineno, orig, expl):
         util._assertion_pass(lineno=lineno, orig=orig, expl=expl)
 
 
-def _check_if_assertionpass_impl():
+def _check_if_assertion_pass_impl():
     """Checks if any plugins implement the pytest_assertion_pass hook
     in order not to generate explanation unecessarily (might be expensive)"""
     return True if util._assertion_pass else False
