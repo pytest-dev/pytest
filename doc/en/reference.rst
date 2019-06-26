@@ -665,15 +665,14 @@ Session related reporting hooks:
 .. autofunction:: pytest_fixture_post_finalizer
 .. autofunction:: pytest_warning_captured
 
-And here is the central hook for reporting about
-test execution:
+Central hook for reporting about test execution:
 
 .. autofunction:: pytest_runtest_logreport
 
-You can also use this hook to customize assertion representation for some
-types:
+Assertion related hooks:
 
 .. autofunction:: pytest_assertrepr_compare
+.. autofunction:: pytest_assertion_pass
 
 
 Debugging/Interaction hooks
