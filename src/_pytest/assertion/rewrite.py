@@ -1,6 +1,5 @@
 """Rewrite assertion AST to produce nice error messages"""
 import ast
-import astor
 import errno
 import importlib.machinery
 import importlib.util
@@ -11,6 +10,7 @@ import struct
 import sys
 import types
 
+import astor
 import atomicwrites
 
 from _pytest._io.saferepr import saferepr
