@@ -1308,7 +1308,6 @@ class TestEarlyRewriteBailout:
 
 
 class TestAssertionPass:
-
     def test_hook_call(self, testdir):
         testdir.makeconftest(
             """
@@ -1317,10 +1316,12 @@ class TestAssertionPass:
             """
         )
 
-        testdir.makeini("""
+        testdir.makeini(
+            """
         [pytest]
         enable_assertion_pass_hook = True
-        """)
+        """
+        )
 
         testdir.makepyfile(
             """
@@ -1349,10 +1350,12 @@ class TestAssertionPass:
             _pytest.assertion.rewrite, "_call_assertion_pass", raise_on_assertionpass
         )
 
-        testdir.makeini("""
+        testdir.makeini(
+            """
         [pytest]
         enable_assertion_pass_hook = True
-        """)
+        """
+        )
 
         testdir.makepyfile(
             """
@@ -1386,10 +1389,12 @@ class TestAssertionPass:
             """
         )
 
-        testdir.makeini("""
+        testdir.makeini(
+            """
         [pytest]
         enable_assertion_pass_hook = False
-        """)
+        """
+        )
 
         testdir.makepyfile(
             """

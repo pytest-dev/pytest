@@ -605,7 +605,9 @@ class AssertionRewriter(ast.NodeVisitor):
         self.module_path = module_path
         self.config = config
         if config is not None:
-            self.enable_assertion_pass_hook = config.getini("enable_assertion_pass_hook")
+            self.enable_assertion_pass_hook = config.getini(
+                "enable_assertion_pass_hook"
+            )
         else:
             self.enable_assertion_pass_hook = False
 
