@@ -773,7 +773,7 @@ warn_explicit(
         fail_save = self.on_failure
         levels = len(boolop.values) - 1
         self.push_format_context()
-        # Process each operand, short-circuting if needed.
+        # Process each operand, short-circuiting if needed.
         for i, v in enumerate(boolop.values):
             if i:
                 fail_inner = []
