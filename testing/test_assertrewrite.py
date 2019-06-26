@@ -1335,6 +1335,10 @@ class TestEarlyRewriteBailout:
 
 
 class TestAssertionPass:
+    def test_option_default(self, testdir):
+        config = testdir.parseconfig()
+        assert config.getini("enable_assertion_pass_hook") is False
+
     def test_hook_call(self, testdir):
         testdir.makeconftest(
             """
