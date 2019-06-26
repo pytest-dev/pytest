@@ -413,9 +413,9 @@ def _check_if_assertion_pass_impl():
     return True if util._assertion_pass else False
 
 
-unary_map = {ast.Not: "not %s", ast.Invert: "~%s", ast.USub: "-%s", ast.UAdd: "+%s"}
+UNARY_MAP = {ast.Not: "not %s", ast.Invert: "~%s", ast.USub: "-%s", ast.UAdd: "+%s"}
 
-binop_map = {
+BINOP_MAP = {
     ast.BitOr: "|",
     ast.BitXor: "^",
     ast.BitAnd: "&",
@@ -438,20 +438,8 @@ binop_map = {
     ast.IsNot: "is not",
     ast.In: "in",
     ast.NotIn: "not in",
+    ast.MatMult: "@",
 }
-# Python 3.5+ compatibility
-try:
-    binop_map[ast.MatMult] = "@"
-except AttributeError:
-    pass
-
-# Python 3.4+ compatibility
-if hasattr(ast, "NameConstant"):
-    _NameConstant = ast.NameConstant
-else:
-
-    def _NameConstant(c):
-        return ast.Name(str(c), ast.Load())
 
 
 def set_location(node, lineno, col_offset):
@@ -774,7 +762,7 @@ class AssertionRewriter(ast.NodeVisitor):
                 variables = [
                     ast.Name(name, ast.Store()) for name in self.format_variables
                 ]
-                clear_format = ast.Assign(variables, _NameConstant(None))
+                clear_format = ast.Assign(variables, ast.NameConstant(None))
                 self.statements.append(clear_format)
 
         else:  # Original assertion rewriting
@@ -800,7 +788,7 @@ class AssertionRewriter(ast.NodeVisitor):
         # Clear temporary variables by setting them to None.
         if self.variables:
             variables = [ast.Name(name, ast.Store()) for name in self.variables]
-            clear = ast.Assign(variables, _NameConstant(None))
+            clear = ast.Assign(variables, ast.NameConstant(None))
             self.statements.append(clear)
         # Fix line numbers.
         for stmt in self.statements:
@@ -880,13 +868,13 @@ warn_explicit(
         return ast.Name(res_var, ast.Load()), self.explanation_param(expl)
 
     def visit_UnaryOp(self, unary):
-        pattern = unary_map[unary.op.__class__]
+        pattern = UNARY_MAP[unary.op.__class__]
         operand_res, operand_expl = self.visit(unary.operand)
         res = self.assign(ast.UnaryOp(unary.op, operand_res))
         return res, pattern % (operand_expl,)
 
     def visit_BinOp(self, binop):
-        symbol = binop_map[binop.op.__class__]
+        symbol = BINOP_MAP[binop.op.__class__]
         left_expr, left_expl = self.visit(binop.left)
         right_expr, right_expl = self.visit(binop.right)
         explanation = "({} {} {})".format(left_expl, symbol, right_expl)
@@ -953,7 +941,7 @@ warn_explicit(
             if isinstance(next_operand, (ast.Compare, ast.BoolOp)):
                 next_expl = "({})".format(next_expl)
             results.append(next_res)
-            sym = binop_map[op.__class__]
+            sym = BINOP_MAP[op.__class__]
             syms.append(ast.Str(sym))
             expl = "{} {} {}".format(left_expl, sym, next_expl)
             expls.append(ast.Str(expl))
