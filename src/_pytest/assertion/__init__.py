@@ -23,11 +23,10 @@ def pytest_addoption(parser):
                             test modules on import to provide assert
                             expression information.""",
     )
-
-    group = parser.getgroup("experimental")
-    group.addoption(
-        "--enable-assertion-pass-hook",
-        action="store_true",
+    parser.addini(
+        "enable_assertion_pass_hook",
+        type="bool",
+        default="False",
         help="Enables the pytest_assertion_pass hook."
         "Make sure to delete any previously generated pyc cache files.",
     )

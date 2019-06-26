@@ -604,6 +604,10 @@ class AssertionRewriter(ast.NodeVisitor):
         super().__init__()
         self.module_path = module_path
         self.config = config
+        if config is not None:
+            self.enable_assertion_pass_hook = config.getini("enable_assertion_pass_hook")
+        else:
+            self.enable_assertion_pass_hook = False
 
     def run(self, mod):
         """Find all assert statements in *mod* and rewrite them."""
@@ -745,7 +749,7 @@ class AssertionRewriter(ast.NodeVisitor):
         format_dict = ast.Dict(keys, list(current.values()))
         form = ast.BinOp(expl_expr, ast.Mod(), format_dict)
         name = "@py_format" + str(next(self.variable_counter))
-        if getattr(self.config._ns, "enable_assertion_pass_hook", False):
+        if self.enable_assertion_pass_hook:
             self.format_variables.append(name)
         self.expl_stmts.append(ast.Assign([ast.Name(name, ast.Store())], form))
         return ast.Name(name, ast.Load())
@@ -782,7 +786,7 @@ class AssertionRewriter(ast.NodeVisitor):
         self.variables = []
         self.variable_counter = itertools.count()
 
-        if getattr(self.config._ns, "enable_assertion_pass_hook", False):
+        if self.enable_assertion_pass_hook:
             self.format_variables = []
 
         self.stack = []
@@ -797,7 +801,7 @@ class AssertionRewriter(ast.NodeVisitor):
                     top_condition, module_path=self.module_path, lineno=assert_.lineno
                 )
             )
-        if getattr(self.config._ns, "enable_assertion_pass_hook", False):
+        if self.enable_assertion_pass_hook:
             ### Experimental pytest_assertion_pass hook
             negation = ast.UnaryOp(ast.Not(), top_condition)
             msg = self.pop_format_context(ast.Str(explanation))

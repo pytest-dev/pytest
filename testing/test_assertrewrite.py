@@ -1308,6 +1308,7 @@ class TestEarlyRewriteBailout:
 
 
 class TestAssertionPass:
+
     def test_hook_call(self, testdir):
         testdir.makeconftest(
             """
@@ -1315,6 +1316,12 @@ class TestAssertionPass:
                 raise Exception("Assertion Passed: {} {} at line {}".format(orig, expl, lineno))
             """
         )
+
+        testdir.makeini("""
+        [pytest]
+        enable_assertion_pass_hook = True
+        """)
+
         testdir.makepyfile(
             """
             def test_simple():
@@ -1326,7 +1333,7 @@ class TestAssertionPass:
                 assert a+b == c+d
             """
         )
-        result = testdir.runpytest("--enable-assertion-pass-hook")
+        result = testdir.runpytest()
         result.stdout.fnmatch_lines(
             "*Assertion Passed: a + b == c + d (1 + 2) == (3 + 0) at line 7*"
         )
@@ -1342,6 +1349,11 @@ class TestAssertionPass:
             _pytest.assertion.rewrite, "_call_assertion_pass", raise_on_assertionpass
         )
 
+        testdir.makeini("""
+        [pytest]
+        enable_assertion_pass_hook = True
+        """)
+
         testdir.makepyfile(
             """
             def test_simple():
@@ -1353,7 +1365,7 @@ class TestAssertionPass:
                 assert a+b == c+d
             """
         )
-        result = testdir.runpytest("--enable-assertion-pass-hook")
+        result = testdir.runpytest()
         result.assert_outcomes(passed=1)
 
     def test_hook_not_called_without_cmd_option(self, testdir, monkeypatch):
@@ -1373,6 +1385,11 @@ class TestAssertionPass:
                 raise Exception("Assertion Passed: {} {} at line {}".format(orig, expl, lineno))
             """
         )
+
+        testdir.makeini("""
+        [pytest]
+        enable_assertion_pass_hook = False
+        """)
 
         testdir.makepyfile(
             """
