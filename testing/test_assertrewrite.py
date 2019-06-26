@@ -1363,6 +1363,10 @@ class TestAssertionPass:
                 d=0
 
                 assert a+b == c+d
+
+            # cover failing assertions with a message
+            def test_fails():
+                assert False, "assert with message"
             """
         )
         result = testdir.runpytest()
