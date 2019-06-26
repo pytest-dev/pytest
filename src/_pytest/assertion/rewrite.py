@@ -358,7 +358,7 @@ def _format_assertmsg(obj):
     # contains a newline it gets escaped, however if an object has a
     # .__repr__() which contains newlines it does not get escaped.
     # However in either case we want to preserve the newline.
-    replaces = [("\n", "\n~")]
+    replaces = [("\n", "\n~"), ("%", "%%")]
     if not isinstance(obj, str):
         obj = saferepr(obj)
         replaces.append(("\\n", "\n~"))
