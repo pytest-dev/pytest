@@ -748,8 +748,8 @@ class Config:
         """
         # Saving _ns so it can be used for other assertion rewriting purposes
         # e.g. experimental assertion pass hook
-        self._ns, self._unknown_args = self._parser.parse_known_and_unknown_args(args)
-        mode = getattr(self._ns, "assertmode", "plain")
+        _ns, _unknown_args = self._parser.parse_known_and_unknown_args(args)
+        mode = getattr(_ns, "assertmode", "plain")
         if mode == "rewrite":
             try:
                 hook = _pytest.assertion.install_importhook(self)
