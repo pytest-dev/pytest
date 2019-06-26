@@ -761,11 +761,11 @@ class AssertionRewriter(ast.NodeVisitor):
             )
             # If any hooks implement assert_pass hook
             hook_impl_test = ast.If(
-                self.helper("_check_if_assertion_pass_impl"), [hook_call_pass], []
+                self.helper("_check_if_assertion_pass_impl"),
+                self.expl_stmts + [hook_call_pass],
+                [],
             )
-            statements_pass = []
-            statements_pass.extend(self.expl_stmts)
-            statements_pass.append(hook_impl_test)
+            statements_pass = [hook_impl_test]
 
             # Test for assertion condition
             main_test = ast.If(negation, statements_fail, statements_pass)
