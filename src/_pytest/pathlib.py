@@ -294,6 +294,8 @@ def fnmatch_ex(pattern, path):
         name = path.name
     else:
         name = str(path)
+        if path.is_absolute() and not os.path.isabs(pattern):
+            pattern = "*{}{}".format(os.sep, pattern)
     return fnmatch.fnmatch(name, pattern)
 
 

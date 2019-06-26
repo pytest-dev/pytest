@@ -21,7 +21,7 @@ class TestPasteCapture:
                 pytest.skip("")
         """
         )
-        reprec = testdir.inline_run(testpath, "--paste=failed")
+        reprec = testdir.inline_run(testpath, "--pastebin=failed")
         assert len(pastebinlist) == 1
         s = pastebinlist[0]
         assert s.find("def test_fail") != -1

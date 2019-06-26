@@ -2,7 +2,6 @@
 """
 pytest: unit and functional testing with Python.
 """
-# else we are imported
 from _pytest import __version__
 from _pytest.assertion import register_assert_rewrite
 from _pytest.config import cmdline

@@ -1,0 +1,7 @@
+Pytest no longer accepts prefixes of command-line arguments, for example
+typing ``pytest --doctest-mod`` inplace of ``--doctest-modules``.
+This was previously allowed where the ``ArgumentParser`` thought it was unambiguous,
+but this could be incorrect due to delayed parsing of options for plugins.
+See for example issues `#1149 <https://github.com/pytest-dev/pytest/issues/1149>`__,
+`#3413 <https://github.com/pytest-dev/pytest/issues/3413>`__, and
+`#4009 <https://github.com/pytest-dev/pytest/issues/4009>`__.

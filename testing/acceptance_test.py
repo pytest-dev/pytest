@@ -633,6 +633,19 @@ class TestInvocationVariants:
 
         result.stdout.fnmatch_lines(["collected*0*items*/*1*errors"])
 
+    def test_pyargs_only_imported_once(self, testdir):
+        pkg = testdir.mkpydir("foo")
+        pkg.join("test_foo.py").write("print('hello from test_foo')\ndef test(): pass")
+        pkg.join("conftest.py").write(
+            "def pytest_configure(config): print('configuring')"
+        )
+
+        result = testdir.runpytest("--pyargs", "foo.test_foo", "-s", syspathinsert=True)
+        # should only import once
+        assert result.outlines.count("hello from test_foo") == 1
+        # should only configure once
+        assert result.outlines.count("configuring") == 1
+
     def test_cmdline_python_package(self, testdir, monkeypatch):
         import warnings
 
@@ -983,7 +996,7 @@ def test_zipimport_hook(testdir, tmpdir):
             "app/foo.py": """
             import pytest
             def main():
-                pytest.main(['--pyarg', 'foo'])
+                pytest.main(['--pyargs', 'foo'])
         """
         }
     )

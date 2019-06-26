@@ -258,17 +258,38 @@ def _compare_eq_iterable(left, right, verbose=0):
 
 
 def _compare_eq_sequence(left, right, verbose=0):
+    comparing_bytes = isinstance(left, bytes) and isinstance(right, bytes)
     explanation = []
     len_left = len(left)
     len_right = len(right)
     for i in range(min(len_left, len_right)):
         if left[i] != right[i]:
+            if comparing_bytes:
+                # when comparing bytes, we want to see their ascii representation
+                # instead of their numeric values (#5260)
+                # using a slice gives us the ascii representation:
+                # >>> s = b'foo'
+                # >>> s[0]
+                # 102
+                # >>> s[0:1]
+                # b'f'
+                left_value = left[i : i + 1]
+                right_value = right[i : i + 1]
+            else:
+                left_value = left[i]
+                right_value = right[i]
+
             explanation += [
-                "At index {} diff: {!r} != {!r}".format(i, left[i], right[i])
+                "At index {} diff: {!r} != {!r}".format(i, left_value, right_value)
             ]
             break
-    len_diff = len_left - len_right
 
+    if comparing_bytes:
+        # when comparing bytes, it doesn't help to show the "sides contain one or more items"
+        # longer explanation, so skip it
+        return explanation
+
+    len_diff = len_left - len_right
     if len_diff:
         if len_diff > 0:
             dir_with_more = "Left"

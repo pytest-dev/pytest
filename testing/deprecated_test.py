@@ -1,6 +1,7 @@
 import os
 
 import pytest
+from _pytest import deprecated
 from _pytest.warning_types import PytestDeprecationWarning
 from _pytest.warnings import SHOW_PYTEST_WARNINGS_ARG
 
@@ -69,22 +70,14 @@ def test_terminal_reporter_writer_attr(pytestconfig):
     assert terminal_reporter.writer is terminal_reporter._tw
 
 
-@pytest.mark.parametrize("plugin", ["catchlog", "capturelog"])
+@pytest.mark.parametrize("plugin", deprecated.DEPRECATED_EXTERNAL_PLUGINS)
 @pytest.mark.filterwarnings("default")
-def test_pytest_catchlog_deprecated(testdir, plugin):
-    testdir.makepyfile(
-        """
-        def test_func(pytestconfig):
-            pytestconfig.pluginmanager.register(None, 'pytest_{}')
-    """.format(
-            plugin
-        )
-    )
-    res = testdir.runpytest()
-    assert res.ret == 0
-    res.stdout.fnmatch_lines(
-        ["*pytest-*log plugin has been merged into the core*", "*1 passed, 1 warnings*"]
-    )
+def test_external_plugins_integrated(testdir, plugin):
+    testdir.syspathinsert()
+    testdir.makepyfile(**{plugin: ""})
+
+    with pytest.warns(pytest.PytestConfigWarning):
+        testdir.parseconfig("-p", plugin)
 
 
 def test_raises_message_argument_deprecated():

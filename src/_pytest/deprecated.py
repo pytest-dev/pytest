@@ -14,6 +14,14 @@ from _pytest.warning_types import UnformattedWarning
 
 YIELD_TESTS = "yield tests were removed in pytest 4.0 - {name} will be ignored"
 
+# set of plugins which have been integrated into the core; we use this list to ignore
+# them during registration to avoid conflicts
+DEPRECATED_EXTERNAL_PLUGINS = {
+    "pytest_catchlog",
+    "pytest_capturelog",
+    "pytest_faulthandler",
+}
+
 
 FIXTURE_FUNCTION_CALL = (
     'Fixture "{name}" called directly. Fixtures are not meant to be called directly,\n'

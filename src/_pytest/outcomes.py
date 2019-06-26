@@ -149,7 +149,6 @@ def importorskip(modname, minversion=None, reason=None):
 
     __tracebackhide__ = True
     compile(modname, "", "eval")  # to catch syntaxerrors
-    import_exc = None
 
     with warnings.catch_warnings():
         # make sure to ignore ImportWarnings that might happen because
@@ -159,12 +158,9 @@ def importorskip(modname, minversion=None, reason=None):
         try:
             __import__(modname)
         except ImportError as exc:
-            # Do not raise chained exception here(#1485)
-            import_exc = exc
-    if import_exc:
-        if reason is None:
-            reason = "could not import {!r}: {}".format(modname, import_exc)
-        raise Skipped(reason, allow_module_level=True)
+            if reason is None:
+                reason = "could not import {!r}: {}".format(modname, exc)
+            raise Skipped(reason, allow_module_level=True) from None
     mod = sys.modules[modname]
     if minversion is None:
         return mod
