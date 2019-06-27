@@ -646,6 +646,12 @@ class TestInvocationVariants:
         # should only configure once
         assert result.outlines.count("configuring") == 1
 
+    def test_pyargs_filename_looks_like_module(self, testdir):
+        testdir.tmpdir.join("conftest.py").ensure()
+        testdir.tmpdir.join("t.py").write("def test(): pass")
+        result = testdir.runpytest("--pyargs", "t.py")
+        assert result.ret == ExitCode.OK
+
     def test_cmdline_python_package(self, testdir, monkeypatch):
         import warnings
 
