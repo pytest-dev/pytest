@@ -1,0 +1,1 @@
+Fix crash when discovery fails while using ``-p no:terminal``.
