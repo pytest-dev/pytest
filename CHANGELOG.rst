@@ -21,6 +21,13 @@ with advance notice in the **Deprecations** section of releases.
 pytest 5.0.0 (2019-06-28)
 =========================
 
+Important
+---------
+
+This release is a Python3.5+ only release.
+
+For more details, see our `Python 2.7 and 3.4 support plan <https://docs.pytest.org/en/latest/py27-py34-deprecation.html>`__.
+
 Removals
 --------
 
@@ -31,13 +38,6 @@ Removals
   See for example issues `#1149 <https://github.com/pytest-dev/pytest/issues/1149>`__,
   `#3413 <https://github.com/pytest-dev/pytest/issues/3413>`__, and
   `#4009 <https://github.com/pytest-dev/pytest/issues/4009>`__.
-
-
-- `#5125 <https://github.com/pytest-dev/pytest/issues/5125>`_: ``Session.exitcode`` values are now coded in ``pytest.ExitCode``, an ``IntEnum``. This makes the exit code available for consumer code and are more explicit other than just documentation. User defined exit codes are still valid, but should be used with caution.
-
-  The team doesn't expect this change to break test suites or plugins in general, except in esoteric/specific scenarios.
-
-  **pytest-xdist** users should upgrade to ``1.29.0`` or later, as ``pytest-xdist`` required a compatibility fix because of this change.
 
 
 - `#5402 <https://github.com/pytest-dev/pytest/issues/5402>`_: **PytestDeprecationWarning are now errors by default.**
@@ -102,6 +102,13 @@ Features
 
 
 - `#5452 <https://github.com/pytest-dev/pytest/issues/5452>`_: When warnings are configured as errors, pytest warnings now appear as originating from ``pytest.`` instead of the internal ``_pytest.warning_types.`` module.
+
+
+- `#5125 <https://github.com/pytest-dev/pytest/issues/5125>`_: ``Session.exitcode`` values are now coded in ``pytest.ExitCode``, an ``IntEnum``. This makes the exit code available for consumer code and are more explicit other than just documentation. User defined exit codes are still valid, but should be used with caution.
+
+  The team doesn't expect this change to break test suites or plugins in general, except in esoteric/specific scenarios.
+
+  **pytest-xdist** users should upgrade to ``1.29.0`` or later, as ``pytest-xdist`` required a compatibility fix because of this change.
 
 
 
