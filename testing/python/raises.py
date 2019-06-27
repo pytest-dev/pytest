@@ -202,6 +202,9 @@ class TestRaises:
         assert sys.exc_info() == (None, None, None)
 
         del t
+        # Make sure this does get updated in locals dict
+        # otherwise it could keep a reference
+        locals()
 
         # ensure the t instance is not stuck in a cyclic reference
         for o in gc.get_objects():

@@ -10,6 +10,7 @@ import struct
 import sys
 import types
 
+import astor
 import atomicwrites
 
 from _pytest._io.saferepr import saferepr
@@ -134,7 +135,7 @@ class AssertionRewritingHook:
         co = _read_pyc(fn, pyc, state.trace)
         if co is None:
             state.trace("rewriting {!r}".format(fn))
-            source_stat, co = _rewrite_test(fn)
+            source_stat, co = _rewrite_test(fn, self.config)
             if write:
                 self._writing_pyc = True
                 try:
@@ -278,13 +279,13 @@ def _write_pyc(state, co, source_stat, pyc):
     return True
 
 
-def _rewrite_test(fn):
+def _rewrite_test(fn, config):
     """read and rewrite *fn* and return the code object."""
     stat = os.stat(fn)
     with open(fn, "rb") as f:
         source = f.read()
     tree = ast.parse(source, filename=fn)
-    rewrite_asserts(tree, fn)
+    rewrite_asserts(tree, fn, config)
     co = compile(tree, fn, "exec", dont_inherit=True)
     return stat, co
 
@@ -326,9 +327,9 @@ def _read_pyc(source, pyc, trace=lambda x: None):
         return co
 
 
-def rewrite_asserts(mod, module_path=None):
+def rewrite_asserts(mod, module_path=None, config=None):
     """Rewrite the assert statements in mod."""
-    AssertionRewriter(module_path).run(mod)
+    AssertionRewriter(module_path, config).run(mod)
 
 
 def _saferepr(obj):
@@ -399,6 +400,17 @@ def _call_reprcompare(ops, results, expls, each_obj):
         if custom is not None:
             return custom
     return expl
+
+
+def _call_assertion_pass(lineno, orig, expl):
+    if util._assertion_pass is not None:
+        util._assertion_pass(lineno=lineno, orig=orig, expl=expl)
+
+
+def _check_if_assertion_pass_impl():
+    """Checks if any plugins implement the pytest_assertion_pass hook
+    in order not to generate explanation unecessarily (might be expensive)"""
+    return True if util._assertion_pass else False
 
 
 unary_map = {ast.Not: "not %s", ast.Invert: "~%s", ast.USub: "-%s", ast.UAdd: "+%s"}
@@ -473,7 +485,8 @@ class AssertionRewriter(ast.NodeVisitor):
     original assert statement: it rewrites the test of an assertion
     to provide intermediate values and replace it with an if statement
     which raises an assertion error with a detailed explanation in
-    case the expression is false.
+    case the expression is false and calls pytest_assertion_pass hook
+    if expression is true.
 
     For this .visit_Assert() uses the visitor pattern to visit all the
     AST nodes of the ast.Assert.test field, each visit call returning
@@ -491,9 +504,10 @@ class AssertionRewriter(ast.NodeVisitor):
        by statements.  Variables are created using .variable() and
        have the form of "@py_assert0".
 
-    :on_failure: The AST statements which will be executed if the
-       assertion test fails.  This is the code which will construct
-       the failure message and raises the AssertionError.
+    :expl_stmts: The AST statements which will be executed to get
+       data from the assertion.  This is the code which will construct
+       the detailed assertion message that is used in the AssertionError
+       or for the pytest_assertion_pass hook.
 
     :explanation_specifiers: A dict filled by .explanation_param()
        with %-formatting placeholders and their corresponding
@@ -509,9 +523,16 @@ class AssertionRewriter(ast.NodeVisitor):
 
     """
 
-    def __init__(self, module_path):
+    def __init__(self, module_path, config):
         super().__init__()
         self.module_path = module_path
+        self.config = config
+        if config is not None:
+            self.enable_assertion_pass_hook = config.getini(
+                "enable_assertion_pass_hook"
+            )
+        else:
+            self.enable_assertion_pass_hook = False
 
     def run(self, mod):
         """Find all assert statements in *mod* and rewrite them."""
@@ -642,7 +663,7 @@ class AssertionRewriter(ast.NodeVisitor):
 
         The expl_expr should be an ast.Str instance constructed from
         the %-placeholders created by .explanation_param().  This will
-        add the required code to format said string to .on_failure and
+        add the required code to format said string to .expl_stmts and
         return the ast.Name instance of the formatted string.
 
         """
@@ -653,7 +674,9 @@ class AssertionRewriter(ast.NodeVisitor):
         format_dict = ast.Dict(keys, list(current.values()))
         form = ast.BinOp(expl_expr, ast.Mod(), format_dict)
         name = "@py_format" + str(next(self.variable_counter))
-        self.on_failure.append(ast.Assign([ast.Name(name, ast.Store())], form))
+        if self.enable_assertion_pass_hook:
+            self.format_variables.append(name)
+        self.expl_stmts.append(ast.Assign([ast.Name(name, ast.Store())], form))
         return ast.Name(name, ast.Load())
 
     def generic_visit(self, node):
@@ -687,8 +710,12 @@ class AssertionRewriter(ast.NodeVisitor):
         self.statements = []
         self.variables = []
         self.variable_counter = itertools.count()
+
+        if self.enable_assertion_pass_hook:
+            self.format_variables = []
+
         self.stack = []
-        self.on_failure = []
+        self.expl_stmts = []
         self.push_format_context()
         # Rewrite assert into a bunch of statements.
         top_condition, explanation = self.visit(assert_.test)
@@ -699,24 +726,77 @@ class AssertionRewriter(ast.NodeVisitor):
                     top_condition, module_path=self.module_path, lineno=assert_.lineno
                 )
             )
-        # Create failure message.
-        body = self.on_failure
-        negation = ast.UnaryOp(ast.Not(), top_condition)
-        self.statements.append(ast.If(negation, body, []))
-        if assert_.msg:
-            assertmsg = self.helper("_format_assertmsg", assert_.msg)
-            explanation = "\n>assert " + explanation
-        else:
-            assertmsg = ast.Str("")
-            explanation = "assert " + explanation
-        template = ast.BinOp(assertmsg, ast.Add(), ast.Str(explanation))
-        msg = self.pop_format_context(template)
-        fmt = self.helper("_format_explanation", msg)
-        err_name = ast.Name("AssertionError", ast.Load())
-        exc = ast.Call(err_name, [fmt], [])
-        raise_ = ast.Raise(exc, None)
 
-        body.append(raise_)
+        if self.enable_assertion_pass_hook:  # Experimental pytest_assertion_pass hook
+            negation = ast.UnaryOp(ast.Not(), top_condition)
+            msg = self.pop_format_context(ast.Str(explanation))
+
+            # Failed
+            if assert_.msg:
+                assertmsg = self.helper("_format_assertmsg", assert_.msg)
+                gluestr = "\n>assert "
+            else:
+                assertmsg = ast.Str("")
+                gluestr = "assert "
+            err_explanation = ast.BinOp(ast.Str(gluestr), ast.Add(), msg)
+            err_msg = ast.BinOp(assertmsg, ast.Add(), err_explanation)
+            err_name = ast.Name("AssertionError", ast.Load())
+            fmt = self.helper("_format_explanation", err_msg)
+            exc = ast.Call(err_name, [fmt], [])
+            raise_ = ast.Raise(exc, None)
+            statements_fail = []
+            statements_fail.extend(self.expl_stmts)
+            statements_fail.append(raise_)
+
+            # Passed
+            fmt_pass = self.helper("_format_explanation", msg)
+            orig = astor.to_source(assert_.test).rstrip("\n").lstrip("(").rstrip(")")
+            hook_call_pass = ast.Expr(
+                self.helper(
+                    "_call_assertion_pass",
+                    ast.Num(assert_.lineno),
+                    ast.Str(orig),
+                    fmt_pass,
+                )
+            )
+            # If any hooks implement assert_pass hook
+            hook_impl_test = ast.If(
+                self.helper("_check_if_assertion_pass_impl"),
+                self.expl_stmts + [hook_call_pass],
+                [],
+            )
+            statements_pass = [hook_impl_test]
+
+            # Test for assertion condition
+            main_test = ast.If(negation, statements_fail, statements_pass)
+            self.statements.append(main_test)
+            if self.format_variables:
+                variables = [
+                    ast.Name(name, ast.Store()) for name in self.format_variables
+                ]
+                clear_format = ast.Assign(variables, _NameConstant(None))
+                self.statements.append(clear_format)
+
+        else:  # Original assertion rewriting
+            # Create failure message.
+            body = self.expl_stmts
+            negation = ast.UnaryOp(ast.Not(), top_condition)
+            self.statements.append(ast.If(negation, body, []))
+            if assert_.msg:
+                assertmsg = self.helper("_format_assertmsg", assert_.msg)
+                explanation = "\n>assert " + explanation
+            else:
+                assertmsg = ast.Str("")
+                explanation = "assert " + explanation
+            template = ast.BinOp(assertmsg, ast.Add(), ast.Str(explanation))
+            msg = self.pop_format_context(template)
+            fmt = self.helper("_format_explanation", msg)
+            err_name = ast.Name("AssertionError", ast.Load())
+            exc = ast.Call(err_name, [fmt], [])
+            raise_ = ast.Raise(exc, None)
+
+            body.append(raise_)
+
         # Clear temporary variables by setting them to None.
         if self.variables:
             variables = [ast.Name(name, ast.Store()) for name in self.variables]
@@ -770,7 +850,7 @@ warn_explicit(
         app = ast.Attribute(expl_list, "append", ast.Load())
         is_or = int(isinstance(boolop.op, ast.Or))
         body = save = self.statements
-        fail_save = self.on_failure
+        fail_save = self.expl_stmts
         levels = len(boolop.values) - 1
         self.push_format_context()
         # Process each operand, short-circuiting if needed.
@@ -778,14 +858,14 @@ warn_explicit(
             if i:
                 fail_inner = []
                 # cond is set in a prior loop iteration below
-                self.on_failure.append(ast.If(cond, fail_inner, []))  # noqa
-                self.on_failure = fail_inner
+                self.expl_stmts.append(ast.If(cond, fail_inner, []))  # noqa
+                self.expl_stmts = fail_inner
             self.push_format_context()
             res, expl = self.visit(v)
             body.append(ast.Assign([ast.Name(res_var, ast.Store())], res))
             expl_format = self.pop_format_context(ast.Str(expl))
             call = ast.Call(app, [expl_format], [])
-            self.on_failure.append(ast.Expr(call))
+            self.expl_stmts.append(ast.Expr(call))
             if i < levels:
                 cond = res
                 if is_or:
@@ -794,7 +874,7 @@ warn_explicit(
                 self.statements.append(ast.If(cond, inner, []))
                 self.statements = body = inner
         self.statements = save
-        self.on_failure = fail_save
+        self.expl_stmts = fail_save
         expl_template = self.helper("_format_boolop", expl_list, ast.Num(is_or))
         expl = self.pop_format_context(expl_template)
         return ast.Name(res_var, ast.Load()), self.explanation_param(expl)

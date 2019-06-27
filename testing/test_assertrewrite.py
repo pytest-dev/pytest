@@ -1332,3 +1332,115 @@ class TestEarlyRewriteBailout:
         )
         result = testdir.runpytest()
         result.stdout.fnmatch_lines(["* 1 passed in *"])
+
+
+class TestAssertionPass:
+    def test_option_default(self, testdir):
+        config = testdir.parseconfig()
+        assert config.getini("enable_assertion_pass_hook") is False
+
+    def test_hook_call(self, testdir):
+        testdir.makeconftest(
+            """
+            def pytest_assertion_pass(item, lineno, orig, expl):
+                raise Exception("Assertion Passed: {} {} at line {}".format(orig, expl, lineno))
+            """
+        )
+
+        testdir.makeini(
+            """
+        [pytest]
+        enable_assertion_pass_hook = True
+        """
+        )
+
+        testdir.makepyfile(
+            """
+            def test_simple():
+                a=1
+                b=2
+                c=3
+                d=0
+
+                assert a+b == c+d
+
+            # cover failing assertions with a message
+            def test_fails():
+                assert False, "assert with message"
+            """
+        )
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines(
+            "*Assertion Passed: a + b == c + d (1 + 2) == (3 + 0) at line 7*"
+        )
+
+    def test_hook_not_called_without_hookimpl(self, testdir, monkeypatch):
+        """Assertion pass should not be called (and hence formatting should
+        not occur) if there is no hook declared for pytest_assertion_pass"""
+
+        def raise_on_assertionpass(*_, **__):
+            raise Exception("Assertion passed called when it shouldn't!")
+
+        monkeypatch.setattr(
+            _pytest.assertion.rewrite, "_call_assertion_pass", raise_on_assertionpass
+        )
+
+        testdir.makeini(
+            """
+        [pytest]
+        enable_assertion_pass_hook = True
+        """
+        )
+
+        testdir.makepyfile(
+            """
+            def test_simple():
+                a=1
+                b=2
+                c=3
+                d=0
+
+                assert a+b == c+d
+            """
+        )
+        result = testdir.runpytest()
+        result.assert_outcomes(passed=1)
+
+    def test_hook_not_called_without_cmd_option(self, testdir, monkeypatch):
+        """Assertion pass should not be called (and hence formatting should
+        not occur) if there is no hook declared for pytest_assertion_pass"""
+
+        def raise_on_assertionpass(*_, **__):
+            raise Exception("Assertion passed called when it shouldn't!")
+
+        monkeypatch.setattr(
+            _pytest.assertion.rewrite, "_call_assertion_pass", raise_on_assertionpass
+        )
+
+        testdir.makeconftest(
+            """
+            def pytest_assertion_pass(item, lineno, orig, expl):
+                raise Exception("Assertion Passed: {} {} at line {}".format(orig, expl, lineno))
+            """
+        )
+
+        testdir.makeini(
+            """
+        [pytest]
+        enable_assertion_pass_hook = False
+        """
+        )
+
+        testdir.makepyfile(
+            """
+            def test_simple():
+                a=1
+                b=2
+                c=3
+                d=0
+
+                assert a+b == c+d
+            """
+        )
+        result = testdir.runpytest()
+        result.assert_outcomes(passed=1)

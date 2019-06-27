@@ -1,0 +1,4 @@
+New `pytest_assertion_pass <https://docs.pytest.org/en/latest/reference.html#_pytest.hookspec.pytest_assertion_pass>`__
+hook, called with context information when an assertion *passes*.
+
+This hook is still **experimental** so use it with caution.

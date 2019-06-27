@@ -12,6 +12,10 @@ from _pytest._io.saferepr import saferepr
 # DebugInterpreter.
 _reprcompare = None
 
+# Works similarly as _reprcompare attribute. Is populated with the hook call
+# when pytest_runtest_setup is called.
+_assertion_pass = None
+
 
 def format_explanation(explanation):
     """This formats an explanation

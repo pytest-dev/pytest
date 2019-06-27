@@ -13,6 +13,7 @@ INSTALL_REQUIRES = [
     "pluggy>=0.12,<1.0",
     "importlib-metadata>=0.12",
     "wcwidth",
+    "astor",
 ]
 
 
