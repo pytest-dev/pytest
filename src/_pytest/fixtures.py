@@ -654,7 +654,7 @@ class SubRequest(FixtureRequest):
         # if the executing fixturedef was not explicitly requested in the argument list (via
         # getfixturevalue inside the fixture call) then ensure this fixture def will be finished
         # first
-        if fixturedef.argname not in self.funcargnames:
+        if fixturedef.argname not in self.fixturenames:
             fixturedef.addfinalizer(
                 functools.partial(self._fixturedef.finish, request=self)
             )
