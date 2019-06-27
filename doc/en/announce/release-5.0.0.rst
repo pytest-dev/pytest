@@ -38,7 +38,6 @@ Thanks to all who contributed to this release, among them:
 * Victor Maryama
 * Yuri Apollov
 * Zac Hatfield-Dodds
-* Zac-HD
 * curiousjazz77
 * patriksevallius
 
