@@ -631,7 +631,10 @@ class Session(nodes.FSCollector):
         """Convert a dotted module name to path."""
         try:
             spec = importlib.util.find_spec(x)
-        except (ValueError, ImportError):
+        # AttributeError: looks like package module, but actually filename
+        # ImportError: module does not exist
+        # ValueError: not a module name
+        except (AttributeError, ImportError, ValueError):
             return x
         if spec is None or spec.origin in {None, "namespace"}:
             return x
