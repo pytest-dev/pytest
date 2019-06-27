@@ -211,12 +211,37 @@ You can always peek at the collection tree without running tests like this:
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR, inifile: pytest.ini
-    collected 3 items
-    <Module CWD/pythoncollection.py>
-      <Function test_function>
-      <Class TestClass>
-          <Function test_method>
-          <Function test_anothermethod>
+    collected 0 items
+    INTERNALERROR> Traceback (most recent call last):
+    INTERNALERROR>   File "$PYTHON_PREFIX/lib/python3.6/site-packages/_pytest/main.py", line 213, in wrap_session
+    INTERNALERROR>     session.exitstatus = doit(config, session) or 0
+    INTERNALERROR>   File "$PYTHON_PREFIX/lib/python3.6/site-packages/_pytest/main.py", line 256, in _main
+    INTERNALERROR>     config.hook.pytest_collection(session=session)
+    INTERNALERROR>   File "$PYTHON_PREFIX/lib/python3.6/site-packages/pluggy/hooks.py", line 289, in __call__
+    INTERNALERROR>     return self._hookexec(self, self.get_hookimpls(), kwargs)
+    INTERNALERROR>   File "$PYTHON_PREFIX/lib/python3.6/site-packages/pluggy/manager.py", line 87, in _hookexec
+    INTERNALERROR>     return self._inner_hookexec(hook, methods, kwargs)
+    INTERNALERROR>   File "$PYTHON_PREFIX/lib/python3.6/site-packages/pluggy/manager.py", line 81, in <lambda>
+    INTERNALERROR>     firstresult=hook.spec.opts.get("firstresult") if hook.spec else False,
+    INTERNALERROR>   File "$PYTHON_PREFIX/lib/python3.6/site-packages/pluggy/callers.py", line 208, in _multicall
+    INTERNALERROR>     return outcome.get_result()
+    INTERNALERROR>   File "$PYTHON_PREFIX/lib/python3.6/site-packages/pluggy/callers.py", line 80, in get_result
+    INTERNALERROR>     raise ex[1].with_traceback(ex[2])
+    INTERNALERROR>   File "$PYTHON_PREFIX/lib/python3.6/site-packages/pluggy/callers.py", line 187, in _multicall
+    INTERNALERROR>     res = hook_impl.function(*args)
+    INTERNALERROR>   File "$PYTHON_PREFIX/lib/python3.6/site-packages/_pytest/main.py", line 266, in pytest_collection
+    INTERNALERROR>     return session.perform_collect()
+    INTERNALERROR>   File "$PYTHON_PREFIX/lib/python3.6/site-packages/_pytest/main.py", line 459, in perform_collect
+    INTERNALERROR>     items = self._perform_collect(args, genitems)
+    INTERNALERROR>   File "$PYTHON_PREFIX/lib/python3.6/site-packages/_pytest/main.py", line 479, in _perform_collect
+    INTERNALERROR>     parts = self._parsearg(arg)
+    INTERNALERROR>   File "$PYTHON_PREFIX/lib/python3.6/site-packages/_pytest/main.py", line 647, in _parsearg
+    INTERNALERROR>     parts[0] = self._tryconvertpyarg(parts[0])
+    INTERNALERROR>   File "$PYTHON_PREFIX/lib/python3.6/site-packages/_pytest/main.py", line 633, in _tryconvertpyarg
+    INTERNALERROR>     spec = importlib.util.find_spec(x)
+    INTERNALERROR>   File "$PYTHON_PREFIX/lib/python3.6/importlib/util.py", line 89, in find_spec
+    INTERNALERROR>     return _find_spec(fullname, parent.__path__)
+    INTERNALERROR> AttributeError: module 'pythoncollection' has no attribute '__path__'
 
     ======================= no tests ran in 0.12 seconds =======================
 
