@@ -323,7 +323,7 @@ class Collector(Node):
 
         # Respect explicit tbstyle option, but default to "short"
         # (None._repr_failure_py defaults to "long" without "fulltrace" option).
-        tbstyle = self.config.getoption("tbstyle")
+        tbstyle = self.config.getoption("tbstyle", "auto")
         if tbstyle == "auto":
             tbstyle = "short"
 
