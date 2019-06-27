@@ -1,1 +1,1 @@
-Use safe_str to serialize Exceptions in pytest.raises
+Fix encode error when using unicode strings in exceptions with ``pytest.raises``.
