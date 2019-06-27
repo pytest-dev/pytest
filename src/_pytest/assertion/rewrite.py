@@ -750,7 +750,7 @@ class AssertionRewriter(ast.NodeVisitor):
 
             # Passed
             fmt_pass = self.helper("_format_explanation", msg)
-            orig = astor.to_source(assert_.test).rstrip("\n").lstrip("(").rstrip(")")
+            orig = astor.to_source(assert_.test).strip()
             hook_call_pass = ast.Expr(
                 self.helper(
                     "_call_assertion_pass",

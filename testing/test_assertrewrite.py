@@ -1335,23 +1335,25 @@ class TestEarlyRewriteBailout:
 
 
 class TestAssertionPass:
-    def test_option_default(self, testdir):
-        config = testdir.parseconfig()
-        assert config.getini("enable_assertion_pass_hook") is False
-
-    def test_hook_call(self, testdir):
-        testdir.makeconftest(
-            """
-            def pytest_assertion_pass(item, lineno, orig, expl):
-                raise Exception("Assertion Passed: {} {} at line {}".format(orig, expl, lineno))
-            """
-        )
-
+    @pytest.fixture
+    def ini(self, testdir):
         testdir.makeini(
             """
         [pytest]
         enable_assertion_pass_hook = True
         """
+        )
+
+    def test_option_default(self, testdir):
+        config = testdir.parseconfig()
+        assert config.getini("enable_assertion_pass_hook") is False
+
+    def test_hook_call_expr(self, testdir, ini):
+        testdir.makeconftest(
+            """
+            def pytest_assertion_pass(item, lineno, orig, expl):
+                pass
+            """
         )
 
         testdir.makepyfile(
@@ -1369,12 +1371,15 @@ class TestAssertionPass:
                 assert False, "assert with message"
             """
         )
-        result = testdir.runpytest()
-        result.stdout.fnmatch_lines(
-            "*Assertion Passed: a + b == c + d (1 + 2) == (3 + 0) at line 7*"
+        rec = testdir.inline_run()
+        calls = rec.getcalls("pytest_assertion_pass")
+        assert len(calls) == 1
+        calls[0].assert_params(
+            orig="(a + b == c + d)", expl="(1 + 2) == (3 + 0)", lineno=7
         )
+        assert calls[0].item.nodeid == "test_hook_call_expr.py::test_simple"
 
-    def test_hook_not_called_without_hookimpl(self, testdir, monkeypatch):
+    def test_hook_not_called_without_hookimpl(self, testdir, monkeypatch, ini):
         """Assertion pass should not be called (and hence formatting should
         not occur) if there is no hook declared for pytest_assertion_pass"""
 
@@ -1383,13 +1388,6 @@ class TestAssertionPass:
 
         monkeypatch.setattr(
             _pytest.assertion.rewrite, "_call_assertion_pass", raise_on_assertionpass
-        )
-
-        testdir.makeini(
-            """
-        [pytest]
-        enable_assertion_pass_hook = True
-        """
         )
 
         testdir.makepyfile(
@@ -1422,13 +1420,6 @@ class TestAssertionPass:
             def pytest_assertion_pass(item, lineno, orig, expl):
                 raise Exception("Assertion Passed: {} {} at line {}".format(orig, expl, lineno))
             """
-        )
-
-        testdir.makeini(
-            """
-        [pytest]
-        enable_assertion_pass_hook = False
-        """
         )
 
         testdir.makepyfile(

@@ -168,11 +168,16 @@ class ParsedCall:
     def __init__(self, name, kwargs):
         self.__dict__.update(kwargs)
         self._name = name
+        self._kwargs = kwargs
 
     def __repr__(self):
         d = self.__dict__.copy()
         del d["_name"]
         return "<ParsedCall {!r}(**{!r})>".format(self._name, d)
+
+    def assert_params(self, **expected_params):
+        obtained_params = {k: self._kwargs[k] for k in expected_params}
+        assert obtained_params == expected_params
 
 
 class HookRecorder:
