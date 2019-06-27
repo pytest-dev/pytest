@@ -453,25 +453,26 @@ Here is a nice run of several failures and how ``pytest`` presents things:
     ____________________ test_dynamic_compile_shows_nicely _____________________
 
         def test_dynamic_compile_shows_nicely():
-            import imp
+            import importlib.util
             import sys
 
             src = "def foo():\n assert 1 == 0\n"
             name = "abc-123"
-            module = imp.new_module(name)
+            spec = importlib.util.spec_from_loader(name, loader=None)
+            module = importlib.util.module_from_spec(spec)
             code = _pytest._code.compile(src, name, "exec")
             exec(code, module.__dict__)
             sys.modules[name] = module
     >       module.foo()
 
-    failure_demo.py:202:
+    failure_demo.py:203:
     _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 
         def foo():
     >    assert 1 == 0
     E    AssertionError
 
-    <0-codegen 'abc-123' $REGENDOC_TMPDIR/assertion/failure_demo.py:199>:2: AssertionError
+    <0-codegen 'abc-123' $REGENDOC_TMPDIR/assertion/failure_demo.py:200>:2: AssertionError
     ____________________ TestMoreErrors.test_complex_error _____________________
 
     self = <failure_demo.TestMoreErrors object at 0xdeadbeef>
@@ -485,7 +486,7 @@ Here is a nice run of several failures and how ``pytest`` presents things:
 
     >       somefunc(f(), g())
 
-    failure_demo.py:213:
+    failure_demo.py:214:
     _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
     failure_demo.py:11: in somefunc
         otherfunc(x, y)
@@ -507,7 +508,7 @@ Here is a nice run of several failures and how ``pytest`` presents things:
     >       a, b = items
     E       ValueError: not enough values to unpack (expected 2, got 0)
 
-    failure_demo.py:217: ValueError
+    failure_demo.py:218: ValueError
     ____________________ TestMoreErrors.test_z2_type_error _____________________
 
     self = <failure_demo.TestMoreErrors object at 0xdeadbeef>
@@ -517,7 +518,7 @@ Here is a nice run of several failures and how ``pytest`` presents things:
     >       a, b = items
     E       TypeError: 'int' object is not iterable
 
-    failure_demo.py:221: TypeError
+    failure_demo.py:222: TypeError
     ______________________ TestMoreErrors.test_startswith ______________________
 
     self = <failure_demo.TestMoreErrors object at 0xdeadbeef>
@@ -530,7 +531,7 @@ Here is a nice run of several failures and how ``pytest`` presents things:
     E        +  where False = <built-in method startswith of str object at 0xdeadbeef>('456')
     E        +    where <built-in method startswith of str object at 0xdeadbeef> = '123'.startswith
 
-    failure_demo.py:226: AssertionError
+    failure_demo.py:227: AssertionError
     __________________ TestMoreErrors.test_startswith_nested ___________________
 
     self = <failure_demo.TestMoreErrors object at 0xdeadbeef>
@@ -549,7 +550,7 @@ Here is a nice run of several failures and how ``pytest`` presents things:
     E        +      where '123' = <function TestMoreErrors.test_startswith_nested.<locals>.f at 0xdeadbeef>()
     E        +    and   '456' = <function TestMoreErrors.test_startswith_nested.<locals>.g at 0xdeadbeef>()
 
-    failure_demo.py:235: AssertionError
+    failure_demo.py:236: AssertionError
     _____________________ TestMoreErrors.test_global_func ______________________
 
     self = <failure_demo.TestMoreErrors object at 0xdeadbeef>
@@ -560,7 +561,7 @@ Here is a nice run of several failures and how ``pytest`` presents things:
     E        +  where False = isinstance(43, float)
     E        +    where 43 = globf(42)
 
-    failure_demo.py:238: AssertionError
+    failure_demo.py:239: AssertionError
     _______________________ TestMoreErrors.test_instance _______________________
 
     self = <failure_demo.TestMoreErrors object at 0xdeadbeef>
@@ -571,7 +572,7 @@ Here is a nice run of several failures and how ``pytest`` presents things:
     E       assert 42 != 42
     E        +  where 42 = <failure_demo.TestMoreErrors object at 0xdeadbeef>.x
 
-    failure_demo.py:242: AssertionError
+    failure_demo.py:243: AssertionError
     _______________________ TestMoreErrors.test_compare ________________________
 
     self = <failure_demo.TestMoreErrors object at 0xdeadbeef>
@@ -581,7 +582,7 @@ Here is a nice run of several failures and how ``pytest`` presents things:
     E       assert 11 < 5
     E        +  where 11 = globf(10)
 
-    failure_demo.py:245: AssertionError
+    failure_demo.py:246: AssertionError
     _____________________ TestMoreErrors.test_try_finally ______________________
 
     self = <failure_demo.TestMoreErrors object at 0xdeadbeef>
@@ -592,7 +593,7 @@ Here is a nice run of several failures and how ``pytest`` presents things:
     >           assert x == 0
     E           assert 1 == 0
 
-    failure_demo.py:250: AssertionError
+    failure_demo.py:251: AssertionError
     ___________________ TestCustomAssertMsg.test_single_line ___________________
 
     self = <failure_demo.TestCustomAssertMsg object at 0xdeadbeef>
@@ -607,7 +608,7 @@ Here is a nice run of several failures and how ``pytest`` presents things:
     E       assert 1 == 2
     E        +  where 1 = <class 'failure_demo.TestCustomAssertMsg.test_single_line.<locals>.A'>.a
 
-    failure_demo.py:261: AssertionError
+    failure_demo.py:262: AssertionError
     ____________________ TestCustomAssertMsg.test_multiline ____________________
 
     self = <failure_demo.TestCustomAssertMsg object at 0xdeadbeef>
@@ -626,7 +627,7 @@ Here is a nice run of several failures and how ``pytest`` presents things:
     E       assert 1 == 2
     E        +  where 1 = <class 'failure_demo.TestCustomAssertMsg.test_multiline.<locals>.A'>.a
 
-    failure_demo.py:268: AssertionError
+    failure_demo.py:269: AssertionError
     ___________________ TestCustomAssertMsg.test_custom_repr ___________________
 
     self = <failure_demo.TestCustomAssertMsg object at 0xdeadbeef>
@@ -648,11 +649,5 @@ Here is a nice run of several failures and how ``pytest`` presents things:
     E       assert 1 == 2
     E        +  where 1 = This is JSON\n{\n  'foo': 'bar'\n}.a
 
-    failure_demo.py:281: AssertionError
-    ============================= warnings summary =============================
-    failure_demo.py::test_dynamic_compile_shows_nicely
-      $REGENDOC_TMPDIR/assertion/failure_demo.py:193: DeprecationWarning: the imp module is deprecated in favour of importlib; see the module's documentation for alternative uses
-        import imp
-
-    -- Docs: https://docs.pytest.org/en/latest/warnings.html
-    ================== 44 failed, 1 warnings in 0.12 seconds ===================
+    failure_demo.py:282: AssertionError
+    ======================== 44 failed in 0.12 seconds =========================
