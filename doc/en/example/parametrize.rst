@@ -434,10 +434,16 @@ Running it results in some skips if we don't have all the python interpreters in
 .. code-block:: pytest
 
    . $ pytest -rs -q multipython.py
-   ...sss...sssssssss...sss...                                          [100%]
+   ssssssssssss......sss......                                          [100%]
+   ============================= warnings summary =============================
+   $PYTHON_PREFIX/lib/python3.6/distutils/__init__.py:1
+     $PYTHON_PREFIX/lib/python3.6/distutils/__init__.py:1: DeprecationWarning: the imp module is deprecated in favour of importlib; see the module's documentation for alternative uses
+       import imp
+
+   -- Docs: https://docs.pytest.org/en/latest/warnings.html
    ========================= short test summary info ==========================
-   SKIPPED [15] $REGENDOC_TMPDIR/CWD/multipython.py:31: 'python3.4' not found
-   12 passed, 15 skipped in 0.12 seconds
+   SKIPPED [15] $REGENDOC_TMPDIR/CWD/multipython.py:30: 'python3.5' not found
+   12 passed, 15 skipped, 1 warnings in 0.12 seconds
 
 Indirect parametrization of optional implementations/imports
 --------------------------------------------------------------------

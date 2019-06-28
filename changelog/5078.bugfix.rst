@@ -1,1 +1,0 @@
-Test module is no longer double-imported when using ``--pyargs``.

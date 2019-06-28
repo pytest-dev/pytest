@@ -1,2 +1,0 @@
-The name of the ``.pyc`` files cached by the assertion writer now includes the pytest version
-to avoid stale caches.

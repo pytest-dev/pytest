@@ -1,2 +1,0 @@
-``-q`` has again an impact on the style of the collected items
-(``--collect-only``) when ``--log-cli-level`` is used.
