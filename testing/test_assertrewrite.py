@@ -13,6 +13,7 @@ import py
 import _pytest._code
 import pytest
 from _pytest.assertion import util
+from _pytest.assertion.rewrite import _get_assertion_exprs
 from _pytest.assertion.rewrite import AssertionRewritingHook
 from _pytest.assertion.rewrite import PYTEST_TAG
 from _pytest.assertion.rewrite import rewrite_asserts
@@ -31,7 +32,7 @@ def teardown_module(mod):
 
 def rewrite(src):
     tree = ast.parse(src)
-    rewrite_asserts(tree)
+    rewrite_asserts(tree, src.encode())
     return tree
 
 
@@ -1292,10 +1293,10 @@ class TestEarlyRewriteBailout:
         """
         p = testdir.makepyfile(
             **{
-                "tests/file.py": """
-                        def test_simple_failure():
-                            assert 1 + 1 == 3
-                        """
+                "tests/file.py": """\
+                    def test_simple_failure():
+                        assert 1 + 1 == 3
+                """
             }
         )
         testdir.syspathinsert(p.dirpath())
@@ -1315,19 +1316,19 @@ class TestEarlyRewriteBailout:
 
         testdir.makepyfile(
             **{
-                "test_setup_nonexisting_cwd.py": """
-                import os
-                import shutil
-                import tempfile
+                "test_setup_nonexisting_cwd.py": """\
+                    import os
+                    import shutil
+                    import tempfile
 
-                d = tempfile.mkdtemp()
-                os.chdir(d)
-                shutil.rmtree(d)
-            """,
-                "test_test.py": """
-                def test():
-                    pass
-            """,
+                    d = tempfile.mkdtemp()
+                    os.chdir(d)
+                    shutil.rmtree(d)
+                """,
+                "test_test.py": """\
+                    def test():
+                        pass
+                """,
             }
         )
         result = testdir.runpytest()
@@ -1339,23 +1340,22 @@ class TestAssertionPass:
         config = testdir.parseconfig()
         assert config.getini("enable_assertion_pass_hook") is False
 
-    def test_hook_call(self, testdir):
+    @pytest.fixture
+    def flag_on(self, testdir):
+        testdir.makeini("[pytest]\nenable_assertion_pass_hook = True\n")
+
+    @pytest.fixture
+    def hook_on(self, testdir):
         testdir.makeconftest(
-            """
+            """\
             def pytest_assertion_pass(item, lineno, orig, expl):
                 raise Exception("Assertion Passed: {} {} at line {}".format(orig, expl, lineno))
             """
         )
 
-        testdir.makeini(
-            """
-        [pytest]
-        enable_assertion_pass_hook = True
-        """
-        )
-
+    def test_hook_call(self, testdir, flag_on, hook_on):
         testdir.makepyfile(
-            """
+            """\
             def test_simple():
                 a=1
                 b=2
@@ -1371,10 +1371,21 @@ class TestAssertionPass:
         )
         result = testdir.runpytest()
         result.stdout.fnmatch_lines(
-            "*Assertion Passed: a + b == c + d (1 + 2) == (3 + 0) at line 7*"
+            "*Assertion Passed: a+b == c+d (1 + 2) == (3 + 0) at line 7*"
         )
 
-    def test_hook_not_called_without_hookimpl(self, testdir, monkeypatch):
+    def test_hook_call_with_parens(self, testdir, flag_on, hook_on):
+        testdir.makepyfile(
+            """\
+            def f(): return 1
+            def test():
+                assert f()
+            """
+        )
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines("*Assertion Passed: f() 1")
+
+    def test_hook_not_called_without_hookimpl(self, testdir, monkeypatch, flag_on):
         """Assertion pass should not be called (and hence formatting should
         not occur) if there is no hook declared for pytest_assertion_pass"""
 
@@ -1385,15 +1396,8 @@ class TestAssertionPass:
             _pytest.assertion.rewrite, "_call_assertion_pass", raise_on_assertionpass
         )
 
-        testdir.makeini(
-            """
-        [pytest]
-        enable_assertion_pass_hook = True
-        """
-        )
-
         testdir.makepyfile(
-            """
+            """\
             def test_simple():
                 a=1
                 b=2
@@ -1418,21 +1422,14 @@ class TestAssertionPass:
         )
 
         testdir.makeconftest(
-            """
+            """\
             def pytest_assertion_pass(item, lineno, orig, expl):
                 raise Exception("Assertion Passed: {} {} at line {}".format(orig, expl, lineno))
             """
         )
 
-        testdir.makeini(
-            """
-        [pytest]
-        enable_assertion_pass_hook = False
-        """
-        )
-
         testdir.makepyfile(
-            """
+            """\
             def test_simple():
                 a=1
                 b=2
@@ -1444,3 +1441,90 @@ class TestAssertionPass:
         )
         result = testdir.runpytest()
         result.assert_outcomes(passed=1)
+
+
+@pytest.mark.parametrize(
+    ("src", "expected"),
+    (
+        # fmt: off
+        pytest.param(b"", {}, id="trivial"),
+        pytest.param(
+            b"def x(): assert 1\n",
+            {1: "1"},
+            id="assert statement not on own line",
+        ),
+        pytest.param(
+            b"def x():\n"
+            b"    assert 1\n"
+            b"    assert 1+2\n",
+            {2: "1", 3: "1+2"},
+            id="multiple assertions",
+        ),
+        pytest.param(
+            # changes in encoding cause the byte offsets to be different
+            "# -*- coding: latin1\n"
+            "def ÀÀÀÀÀ(): assert 1\n".encode("latin1"),
+            {2: "1"},
+            id="latin1 encoded on first line\n",
+        ),
+        pytest.param(
+            # using the default utf-8 encoding
+            "def ÀÀÀÀÀ(): assert 1\n".encode(),
+            {1: "1"},
+            id="utf-8 encoded on first line",
+        ),
+        pytest.param(
+            b"def x():\n"
+            b"    assert (\n"
+            b"        1 + 2  # comment\n"
+            b"    )\n",
+            {2: "(\n        1 + 2  # comment\n    )"},
+            id="multi-line assertion",
+        ),
+        pytest.param(
+            b"def x():\n"
+            b"    assert y == [\n"
+            b"        1, 2, 3\n"
+            b"    ]\n",
+            {2: "y == [\n        1, 2, 3\n    ]"},
+            id="multi line assert with list continuation",
+        ),
+        pytest.param(
+            b"def x():\n"
+            b"    assert 1 + \\\n"
+            b"        2\n",
+            {2: "1 + \\\n        2"},
+            id="backslash continuation",
+        ),
+        pytest.param(
+            b"def x():\n"
+            b"    assert x, y\n",
+            {2: "x"},
+            id="assertion with message",
+        ),
+        pytest.param(
+            b"def x():\n"
+            b"    assert (\n"
+            b"        f(1, 2, 3)\n"
+            b"    ),  'f did not work!'\n",
+            {2: "(\n        f(1, 2, 3)\n    )"},
+            id="assertion with message, test spanning multiple lines",
+        ),
+        pytest.param(
+            b"def x():\n"
+            b"    assert \\\n"
+            b"        x\\\n"
+            b"        , 'failure message'\n",
+            {2: "x"},
+            id="escaped newlines plus message",
+        ),
+        pytest.param(
+            b"def x(): assert 5",
+            {1: "5"},
+            id="no newline at end of file",
+        ),
+        # fmt: on
+    ),
+)
+def test_get_assertion_exprs(src, expected):
+    assert _get_assertion_exprs(src) == expected
