@@ -621,11 +621,59 @@ the new plugin:
 
 Hooks are usually declared as do-nothing functions that contain only
 documentation describing when the hook will be called and what return values
-are expected.
+are expected. The names of the functions must start with `pytest_` otherwise pytest won't recognize them.
 
-For an example, see `newhooks.py`_ from `xdist <https://github.com/pytest-dev/pytest-xdist>`_.
+Here's an example. Let's assume this code is in the ``hooks.py`` module.
+
+.. code-block:: python
+
+    def pytest_my_hook(config):
+        """
+        Receives the pytest config and does things with it
+        """
+
+To register the hooks with pytest they need to be structured in their own module or class. This
+class or module can then be passed to the ``pluginmanager`` using the ``pytest_addhooks`` function
+(which itself is a hook exposed by pytest).
+
+.. code-block:: python
+
+    def pytest_addhooks(pluginmanager):
+        """ This example assumes the hooks are grouped in the 'hooks' module. """
+        from my_app.tests import hooks
+        pluginmanager.add_hookspecs(hooks)
+
+For a real world example, see `newhooks.py`_ from `xdist <https://github.com/pytest-dev/pytest-xdist>`_.
 
 .. _`newhooks.py`: https://github.com/pytest-dev/pytest-xdist/blob/974bd566c599dc6a9ea291838c6f226197208b46/xdist/newhooks.py
+
+Hooks may be called both from fixtures or from other hooks. In both cases, hooks are called
+through the ``hook`` object, available in the ``config`` object. Most hooks receive a
+``config`` object directly, while fixtures may use the ``pytestconfig`` fixture which provides the same object.
+
+.. code-block:: python
+
+    @pytest.fixture()
+    def my_fixture(pytestconfig):
+        # call the hook called "pytest_my_hook"
+        # `result` will be a list of return values from all registered functions.
+        result = pytestconfig.hook.pytest_my_hook(config=pytestconfig)
+
+.. note::
+    Hooks receive parameters using only keyword arguments.
+
+Now your hook is ready to be used. To register a function at the hook, other plugins or users must
+now simply define the function ``pytest_my_hook`` with the correct signature in their ``conftest.py``.
+
+Example:
+
+.. code-block:: python
+
+    def pytest_my_hook(config):
+        """
+        Print all active hooks to the screen.
+        """
+        print(config.hook)
 
 
 Optionally using hooks from 3rd party plugins
