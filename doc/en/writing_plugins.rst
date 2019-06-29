@@ -641,6 +641,7 @@ class or module can then be passed to the ``pluginmanager`` using the ``pytest_a
     def pytest_addhooks(pluginmanager):
         """ This example assumes the hooks are grouped in the 'hooks' module. """
         from my_app.tests import hooks
+
         pluginmanager.add_hookspecs(hooks)
 
 For a real world example, see `newhooks.py`_ from `xdist <https://github.com/pytest-dev/pytest-xdist>`_.
@@ -656,7 +657,7 @@ through the ``hook`` object, available in the ``config`` object. Most hooks rece
     @pytest.fixture()
     def my_fixture(pytestconfig):
         # call the hook called "pytest_my_hook"
-        # `result` will be a list of return values from all registered functions.
+        # 'result' will be a list of return values from all registered functions.
         result = pytestconfig.hook.pytest_my_hook(config=pytestconfig)
 
 .. note::
