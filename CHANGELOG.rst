@@ -203,6 +203,26 @@ Improved Documentation
 - `#5416 <https://github.com/pytest-dev/pytest/issues/5416>`_: Fix PytestUnknownMarkWarning in run/skip example.
 
 
+pytest 4.6.4 (2019-06-28)
+=========================
+
+Bug Fixes
+---------
+
+- `#5404 <https://github.com/pytest-dev/pytest/issues/5404>`_: Emit a warning when attempting to unwrap a broken object raises an exception,
+  for easier debugging (`#5080 <https://github.com/pytest-dev/pytest/issues/5080>`__).
+
+
+- `#5444 <https://github.com/pytest-dev/pytest/issues/5444>`_: Fix ``--stepwise`` mode when the first file passed on the command-line fails to collect.
+
+
+- `#5482 <https://github.com/pytest-dev/pytest/issues/5482>`_: Fix bug introduced in 4.6.0 causing collection errors when passing
+  more than 2 positional arguments to ``pytest.mark.parametrize``.
+
+
+- `#5505 <https://github.com/pytest-dev/pytest/issues/5505>`_: Fix crash when discovery fails while using ``-p no:terminal``.
+
+
 pytest 4.6.3 (2019-06-11)
 =========================
 
