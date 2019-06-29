@@ -21,7 +21,6 @@ Thanks to all who contributed to this release, among them:
 * Kyle Altendorf
 * Stephan Hoyer
 * Zac Hatfield-Dodds
-* Zac-HD
 * songbowen
 
 

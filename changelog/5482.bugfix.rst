@@ -1,2 +1,0 @@
-Fix bug introduced in 4.6.0 causing collection errors when passing
-more than 2 positional arguments to ``pytest.mark.parametrize``.

@@ -1,2 +1,0 @@
-The ``funcargnames`` attribute has been an alias for ``fixturenames`` since
-pytest 2.3, and is now deprecated in code too.

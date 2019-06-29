@@ -190,12 +190,13 @@ class TestRaises:
 
 # thanks to Matthew Scott for this test
 def test_dynamic_compile_shows_nicely():
-    import imp
+    import importlib.util
     import sys
 
     src = "def foo():\n assert 1 == 0\n"
     name = "abc-123"
-    module = imp.new_module(name)
+    spec = importlib.util.spec_from_loader(name, loader=None)
+    module = importlib.util.module_from_spec(spec)
     code = _pytest._code.compile(src, name, "exec")
     exec(code, module.__dict__)
     sys.modules[name] = module

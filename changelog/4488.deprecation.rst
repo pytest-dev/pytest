@@ -1,2 +1,0 @@
-The removal of the ``--result-log`` option and module has been postponed to (tentatively) pytest 6.0 as
-the team has not yet got around to implement a good alternative for it.

@@ -1,1 +1,0 @@
-Revert unrolling of ``all()`` to fix incorrect handling of generators with ``if``.

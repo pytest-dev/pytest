@@ -2,7 +2,7 @@
 module containing a parametrized tests testing cross-python
 serialization via the pickle module.
 """
-import distutils.spawn
+import shutil
 import subprocess
 import textwrap
 
@@ -24,7 +24,7 @@ def python2(request, python1):
 
 class Python:
     def __init__(self, version, picklefile):
-        self.pythonpath = distutils.spawn.find_executable(version)
+        self.pythonpath = shutil.which(version)
         if not self.pythonpath:
             pytest.skip("{!r} not found".format(version))
         self.picklefile = picklefile
