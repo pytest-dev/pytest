@@ -33,7 +33,7 @@ def ensure_reset_dir(path):
     """
     if path.exists():
         rmtree(path, force=True)
-    path.mkdir()
+    path.mkdir(exist_ok=True)
 
 
 def rmtree(path, force=False):

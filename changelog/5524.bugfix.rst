@@ -1,0 +1,1 @@
+Fixed rare race condition error when creating the ``basetemp`` directory.
