@@ -108,11 +108,13 @@ class TestCaseFunction(Function):
 
     def setup(self):
         self._testcase = self.parent.obj(self.name)
+        self._obj = getattr(self._testcase, self.name)
         if hasattr(self, "_request"):
             self._request._fillfixtures()
 
     def teardown(self):
         self._testcase = None
+        self._obj = None
 
     def startTest(self, testcase):
         pass

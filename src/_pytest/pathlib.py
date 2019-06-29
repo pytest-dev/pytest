@@ -134,9 +134,7 @@ def create_cleanup_lock(p):
             raise
     else:
         pid = os.getpid()
-        spid = str(pid)
-        if not isinstance(spid, bytes):
-            spid = spid.encode("ascii")
+        spid = str(pid).encode()
         os.write(fd, spid)
         os.close(fd)
         if not lock_path.is_file():
@@ -296,6 +294,8 @@ def fnmatch_ex(pattern, path):
         name = path.name
     else:
         name = str(path)
+        if path.is_absolute() and not os.path.isabs(pattern):
+            pattern = "*{}{}".format(os.sep, pattern)
     return fnmatch.fnmatch(name, pattern)
 
 

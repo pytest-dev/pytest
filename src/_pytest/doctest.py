@@ -3,6 +3,7 @@ import inspect
 import platform
 import sys
 import traceback
+import warnings
 from contextlib import contextmanager
 
 import pytest
@@ -12,6 +13,7 @@ from _pytest._code.code import TerminalRepr
 from _pytest.compat import safe_getattr
 from _pytest.fixtures import FixtureRequest
 from _pytest.outcomes import Skipped
+from _pytest.warning_types import PytestWarning
 
 DOCTEST_REPORT_CHOICE_NONE = "none"
 DOCTEST_REPORT_CHOICE_CDIFF = "cdiff"
@@ -362,22 +364,27 @@ def _patch_unwrap_mock_aware():
     contextmanager which replaces ``inspect.unwrap`` with a version
     that's aware of mock objects and doesn't recurse on them
     """
-    real_unwrap = getattr(inspect, "unwrap", None)
-    if real_unwrap is None:
-        yield
-    else:
+    real_unwrap = inspect.unwrap
 
-        def _mock_aware_unwrap(obj, stop=None):
-            if stop is None:
-                return real_unwrap(obj, stop=_is_mocked)
-            else:
-                return real_unwrap(obj, stop=lambda obj: _is_mocked(obj) or stop(obj))
-
-        inspect.unwrap = _mock_aware_unwrap
+    def _mock_aware_unwrap(obj, stop=None):
         try:
-            yield
-        finally:
-            inspect.unwrap = real_unwrap
+            if stop is None or stop is _is_mocked:
+                return real_unwrap(obj, stop=_is_mocked)
+            return real_unwrap(obj, stop=lambda obj: _is_mocked(obj) or stop(obj))
+        except Exception as e:
+            warnings.warn(
+                "Got %r when unwrapping %r.  This is usually caused "
+                "by a violation of Python's object protocol; see e.g. "
+                "https://github.com/pytest-dev/pytest/issues/5080" % (e, obj),
+                PytestWarning,
+            )
+            raise
+
+    inspect.unwrap = _mock_aware_unwrap
+    try:
+        yield
+    finally:
+        inspect.unwrap = real_unwrap
 
 
 class DoctestModule(pytest.Module):

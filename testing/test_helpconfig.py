@@ -1,5 +1,5 @@
 import pytest
-from _pytest.main import EXIT_NOTESTSCOLLECTED
+from _pytest.main import ExitCode
 
 
 def test_version(testdir, pytestconfig):
@@ -49,7 +49,7 @@ def test_hookvalidation_optional(testdir):
     """
     )
     result = testdir.runpytest()
-    assert result.ret == EXIT_NOTESTSCOLLECTED
+    assert result.ret == ExitCode.NO_TESTS_COLLECTED
 
 
 def test_traceconfig(testdir):
@@ -59,7 +59,7 @@ def test_traceconfig(testdir):
 
 def test_debug(testdir, monkeypatch):
     result = testdir.runpytest_subprocess("--debug")
-    assert result.ret == EXIT_NOTESTSCOLLECTED
+    assert result.ret == ExitCode.NO_TESTS_COLLECTED
     p = testdir.tmpdir.join("pytestdebug.log")
     assert "pytest_sessionstart" in p.read()
 
@@ -67,7 +67,7 @@ def test_debug(testdir, monkeypatch):
 def test_PYTEST_DEBUG(testdir, monkeypatch):
     monkeypatch.setenv("PYTEST_DEBUG", "1")
     result = testdir.runpytest_subprocess()
-    assert result.ret == EXIT_NOTESTSCOLLECTED
+    assert result.ret == ExitCode.NO_TESTS_COLLECTED
     result.stderr.fnmatch_lines(
         ["*pytest_plugin_registered*", "*manager*PluginManager*"]
     )

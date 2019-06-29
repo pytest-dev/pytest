@@ -4,9 +4,7 @@ import py
 
 import pytest
 from _pytest.config import PytestPluginManager
-from _pytest.main import EXIT_NOTESTSCOLLECTED
-from _pytest.main import EXIT_OK
-from _pytest.main import EXIT_USAGEERROR
+from _pytest.main import ExitCode
 
 
 def ConftestWithSetinitial(path):
@@ -223,11 +221,11 @@ def test_conftest_symlink(testdir):
             "PASSED",
         ]
     )
-    assert result.ret == EXIT_OK
+    assert result.ret == ExitCode.OK
 
     # Should not cause "ValueError: Plugin already registered" (#4174).
     result = testdir.runpytest("-vs", "symlink")
-    assert result.ret == EXIT_OK
+    assert result.ret == ExitCode.OK
 
     realtests.ensure("__init__.py")
     result = testdir.runpytest("-vs", "symlinktests/test_foo.py::test1")
@@ -238,7 +236,7 @@ def test_conftest_symlink(testdir):
             "PASSED",
         ]
     )
-    assert result.ret == EXIT_OK
+    assert result.ret == ExitCode.OK
 
 
 @pytest.mark.skipif(
@@ -274,16 +272,16 @@ def test_conftest_symlink_files(testdir):
     build.chdir()
     result = testdir.runpytest("-vs", "app/test_foo.py")
     result.stdout.fnmatch_lines(["*conftest_loaded*", "PASSED"])
-    assert result.ret == EXIT_OK
+    assert result.ret == ExitCode.OK
 
 
 def test_no_conftest(testdir):
     testdir.makeconftest("assert 0")
     result = testdir.runpytest("--noconftest")
-    assert result.ret == EXIT_NOTESTSCOLLECTED
+    assert result.ret == ExitCode.NO_TESTS_COLLECTED
 
     result = testdir.runpytest()
-    assert result.ret == EXIT_USAGEERROR
+    assert result.ret == ExitCode.USAGE_ERROR
 
 
 def test_conftest_existing_resultlog(testdir):

@@ -16,11 +16,7 @@ from more_itertools import collapse
 
 import pytest
 from _pytest import nodes
-from _pytest.main import EXIT_INTERRUPTED
-from _pytest.main import EXIT_NOTESTSCOLLECTED
-from _pytest.main import EXIT_OK
-from _pytest.main import EXIT_TESTSFAILED
-from _pytest.main import EXIT_USAGEERROR
+from _pytest.main import ExitCode
 
 REPORT_COLLECTING_RESOLUTION = 0.5
 
@@ -80,8 +76,7 @@ def pytest_addoption(parser):
         help="show extra test summary info as specified by chars: (f)ailed, "
         "(E)rror, (s)kipped, (x)failed, (X)passed, "
         "(p)assed, (P)assed with output, (a)ll except passed (p/P), or (A)ll. "
-        "Warnings are displayed at all times except when "
-        "--disable-warnings is set.",
+        "(w)arnings are enabled by default (see --disable-warnings).",
     )
     group._addoption(
         "--disable-warnings",
@@ -654,17 +649,17 @@ class TerminalReporter:
         outcome.get_result()
         self._tw.line("")
         summary_exit_codes = (
-            EXIT_OK,
-            EXIT_TESTSFAILED,
-            EXIT_INTERRUPTED,
-            EXIT_USAGEERROR,
-            EXIT_NOTESTSCOLLECTED,
+            ExitCode.OK,
+            ExitCode.TESTS_FAILED,
+            ExitCode.INTERRUPTED,
+            ExitCode.USAGE_ERROR,
+            ExitCode.NO_TESTS_COLLECTED,
         )
         if exitstatus in summary_exit_codes:
             self.config.hook.pytest_terminal_summary(
                 terminalreporter=self, exitstatus=exitstatus, config=self.config
             )
-        if exitstatus == EXIT_INTERRUPTED:
+        if exitstatus == ExitCode.INTERRUPTED:
             self._report_keyboardinterrupt()
             del self._keyboardinterrupt_memo
         self.summary_stats()

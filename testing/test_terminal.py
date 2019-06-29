@@ -10,7 +10,7 @@ import pluggy
 import py
 
 import pytest
-from _pytest.main import EXIT_NOTESTSCOLLECTED
+from _pytest.main import ExitCode
 from _pytest.reports import BaseReport
 from _pytest.terminal import _folded_skips
 from _pytest.terminal import _get_line_with_reprcrash_message
@@ -937,7 +937,7 @@ def test_tbstyle_short(testdir):
 def test_traceconfig(testdir, monkeypatch):
     result = testdir.runpytest("--traceconfig")
     result.stdout.fnmatch_lines(["*active plugins*"])
-    assert result.ret == EXIT_NOTESTSCOLLECTED
+    assert result.ret == ExitCode.NO_TESTS_COLLECTED
 
 
 class TestGenericReporting:
@@ -1672,7 +1672,6 @@ def test_line_with_reprcrash(monkeypatch):
     check("😄😄😄😄😄\n2nd line", 29, "FAILED some::nodeid - 😄😄...")
 
     # NOTE: constructed, not sure if this is supported.
-    # It would fail if not using u"" in Python 2 for mocked_pos.
     mocked_pos = "nodeid::😄::withunicode"
     check("😄😄😄😄😄\n2nd line", 29, "FAILED nodeid::😄::withunicode")
     check("😄😄😄😄😄\n2nd line", 40, "FAILED nodeid::😄::withunicode - 😄😄...")

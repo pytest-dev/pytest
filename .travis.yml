@@ -20,9 +20,6 @@ jobs:
   include:
     # OSX tests - first (in test stage), since they are the slower ones.
     - os: osx
-      # NOTE: (tests with) pexpect appear to be buggy on Travis,
-      #       at least with coverage.
-      #       Log: https://travis-ci.org/pytest-dev/pytest/jobs/500358864
       osx_image: xcode10.1
       language: generic
       env: TOXENV=py37-xdist PYTEST_COVERAGE=1
@@ -34,7 +31,7 @@ jobs:
         - test $(python -c 'import sys; print("%d%d" % sys.version_info[0:2])') = 37
 
     # Full run of latest supported version, without xdist.
-    - env: TOXENV=py37  PYTEST_COVERAGE=1
+    - env: TOXENV=py37
       python: '3.7'
 
     # Coverage tracking is slow with pypy, skip it.
@@ -49,12 +46,12 @@ jobs:
     # - TestArgComplete (linux only)
     # - numpy
     # Empty PYTEST_ADDOPTS to run this non-verbose.
-    - env: TOXENV=py37-lsof-numpy-xdist PYTEST_COVERAGE=1 PYTEST_ADDOPTS=
+    - env: TOXENV=py37-lsof-numpy-twisted-xdist PYTEST_COVERAGE=1 PYTEST_ADDOPTS=
 
     # Specialized factors for py37.
     # Coverage for:
     # - test_sys_breakpoint_interception (via pexpect).
-    - env: TOXENV=py37-pexpect,py37-twisted PYTEST_COVERAGE=1
+    - env: TOXENV=py37-pexpect PYTEST_COVERAGE=1
     - env: TOXENV=py37-pluggymaster-xdist
     - env: TOXENV=py37-freeze
 
@@ -105,18 +102,12 @@ before_script:
       export _PYTEST_TOX_EXTRA_DEP=coverage-enable-subprocess
     fi
 
-script: tox --recreate
+script: tox
 
 after_success:
   - |
     if [[ "$PYTEST_COVERAGE" = 1 ]]; then
-      set -e
-      # Add last TOXENV to $PATH.
-      PATH="$PWD/.tox/${TOXENV##*,}/bin:$PATH"
-      coverage combine
-      coverage xml
-      coverage report -m
-      bash <(curl -s https://codecov.io/bash) -Z -X gcov -X coveragepy -X search -X xcode -X gcovout -X fix -f coverage.xml -n $TOXENV-$TRAVIS_OS_NAME
+      env CODECOV_NAME="$TOXENV-$TRAVIS_OS_NAME" scripts/report-coverage.sh
     fi
 
 notifications:

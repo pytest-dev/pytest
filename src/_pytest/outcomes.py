@@ -73,7 +73,7 @@ def exit(msg, returncode=None):
 exit.Exception = Exit
 
 
-def skip(msg="", **kwargs):
+def skip(msg="", *, allow_module_level=False):
     """
     Skip an executing test with the given message.
 
@@ -93,9 +93,6 @@ def skip(msg="", **kwargs):
         to skip a doctest statically.
     """
     __tracebackhide__ = True
-    allow_module_level = kwargs.pop("allow_module_level", False)
-    if kwargs:
-        raise TypeError("unexpected keyword arguments: {}".format(sorted(kwargs)))
     raise Skipped(msg=msg, allow_module_level=allow_module_level)
 
 
@@ -117,7 +114,7 @@ def fail(msg="", pytrace=True):
 fail.Exception = Failed
 
 
-class XFailed(fail.Exception):
+class XFailed(Failed):
     """ raised from an explicit call to pytest.xfail() """
 
 
@@ -152,7 +149,6 @@ def importorskip(modname, minversion=None, reason=None):
 
     __tracebackhide__ = True
     compile(modname, "", "eval")  # to catch syntaxerrors
-    import_exc = None
 
     with warnings.catch_warnings():
         # make sure to ignore ImportWarnings that might happen because
@@ -162,12 +158,9 @@ def importorskip(modname, minversion=None, reason=None):
         try:
             __import__(modname)
         except ImportError as exc:
-            # Do not raise chained exception here(#1485)
-            import_exc = exc
-    if import_exc:
-        if reason is None:
-            reason = "could not import {!r}: {}".format(modname, import_exc)
-        raise Skipped(reason, allow_module_level=True)
+            if reason is None:
+                reason = "could not import {!r}: {}".format(modname, exc)
+            raise Skipped(reason, allow_module_level=True) from None
     mod = sys.modules[modname]
     if minversion is None:
         return mod

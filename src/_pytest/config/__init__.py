@@ -23,7 +23,6 @@ from .exceptions import PrintHelp
 from .exceptions import UsageError
 from .findpaths import determine_setup
 from .findpaths import exists
-from _pytest import deprecated
 from _pytest._code import ExceptionInfo
 from _pytest._code import filter_traceback
 from _pytest.outcomes import fail
@@ -49,7 +48,7 @@ def main(args=None, plugins=None):
     :arg plugins: list of plugin objects to be auto-registered during
                   initialization.
     """
-    from _pytest.main import EXIT_USAGEERROR
+    from _pytest.main import ExitCode
 
     try:
         try:
@@ -79,7 +78,7 @@ def main(args=None, plugins=None):
         tw = py.io.TerminalWriter(sys.stderr)
         for msg in e.args:
             tw.line("ERROR: {}\n".format(msg), red=True)
-        return EXIT_USAGEERROR
+        return ExitCode.USAGE_ERROR
 
 
 class cmdline:  # compatibility namespace
@@ -141,6 +140,7 @@ default_plugins = essential_plugins + (
     "warnings",
     "logging",
     "reports",
+    "faulthandler",
 )
 
 builtin_plugins = set(default_plugins)
@@ -242,16 +242,6 @@ class PytestPluginManager(PluginManager):
         # Used to know when we are importing conftests after the pytest_configure stage
         self._configured = False
 
-    def addhooks(self, module_or_class):
-        """
-        .. deprecated:: 2.8
-
-        Use :py:meth:`pluggy.PluginManager.add_hookspecs <PluginManager.add_hookspecs>`
-        instead.
-        """
-        warnings.warn(deprecated.PLUGIN_MANAGER_ADDHOOKS, stacklevel=2)
-        return self.add_hookspecs(module_or_class)
-
     def parse_hookimpl_opts(self, plugin, name):
         # pytest hooks are always prefixed with pytest_
         # so we avoid accessing possibly non-readable attributes
@@ -299,7 +289,7 @@ class PytestPluginManager(PluginManager):
         return opts
 
     def register(self, plugin, name=None):
-        if name in ["pytest_catchlog", "pytest_capturelog"]:
+        if name in _pytest.deprecated.DEPRECATED_EXTERNAL_PLUGINS:
             warnings.warn(
                 PytestConfigWarning(
                     "{} plugin has been merged into the core, "
@@ -784,7 +774,7 @@ class Config:
             str(file)
             for dist in importlib_metadata.distributions()
             if any(ep.group == "pytest11" for ep in dist.entry_points)
-            for file in dist.files
+            for file in dist.files or []
         )
 
         for name in _iter_rewritable_modules(package_files):

@@ -130,7 +130,7 @@ def test_unicode(testdir, pyfile_with_warnings):
 
         @pytest.fixture
         def fix():
-            warnings.warn(u"测试")
+            warnings.warn("测试")
             yield
 
         def test_func(fix):
@@ -207,13 +207,13 @@ def test_filterwarnings_mark(testdir, default_config):
 def test_non_string_warning_argument(testdir):
     """Non-str argument passed to warning breaks pytest (#2956)"""
     testdir.makepyfile(
-        """
+        """\
         import warnings
         import pytest
 
         def test():
-            warnings.warn(UserWarning(1, u'foo'))
-    """
+            warnings.warn(UserWarning(1, 'foo'))
+        """
     )
     result = testdir.runpytest("-W", "always")
     result.stdout.fnmatch_lines(["*= 1 passed, 1 warnings in *"])
@@ -517,6 +517,37 @@ def test_removed_in_pytest4_warning_as_error(testdir, change_default):
 
     args = (
         ("-Wignore::pytest.RemovedInPytest4Warning",)
+        if change_default == "cmdline"
+        else ()
+    )
+    result = testdir.runpytest(*args)
+    if change_default is None:
+        result.stdout.fnmatch_lines(["* 1 failed in *"])
+    else:
+        assert change_default in ("ini", "cmdline")
+        result.stdout.fnmatch_lines(["* 1 passed in *"])
+
+
+@pytest.mark.parametrize("change_default", [None, "ini", "cmdline"])
+def test_deprecation_warning_as_error(testdir, change_default):
+    testdir.makepyfile(
+        """
+        import warnings, pytest
+        def test():
+            warnings.warn(pytest.PytestDeprecationWarning("some warning"))
+    """
+    )
+    if change_default == "ini":
+        testdir.makeini(
+            """
+            [pytest]
+            filterwarnings =
+                ignore::pytest.PytestDeprecationWarning
+        """
+        )
+
+    args = (
+        ("-Wignore::pytest.PytestDeprecationWarning",)
         if change_default == "cmdline"
         else ()
     )

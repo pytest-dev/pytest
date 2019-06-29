@@ -1,5 +1,6 @@
 """(disabled by default) support for testing pytest and pytest plugins."""
 import gc
+import importlib
 import os
 import platform
 import re
@@ -16,11 +17,9 @@ import py
 import pytest
 from _pytest._code import Source
 from _pytest._io.saferepr import saferepr
-from _pytest.assertion.rewrite import AssertionRewritingHook
 from _pytest.capture import MultiCapture
 from _pytest.capture import SysCapture
-from _pytest.main import EXIT_INTERRUPTED
-from _pytest.main import EXIT_OK
+from _pytest.main import ExitCode
 from _pytest.main import Session
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pathlib import Path
@@ -66,14 +65,6 @@ def pytest_configure(config):
         "pytester_example_path(*path_segments): join the given path "
         "segments to `pytester_example_dir` for this test.",
     )
-
-
-def raise_on_kwargs(kwargs):
-    __tracebackhide__ = True
-    if kwargs:  # pragma: no branch
-        raise TypeError(
-            "Unexpected keyword arguments: {}".format(", ".join(sorted(kwargs)))
-        )
 
 
 class LsofFdLeakChecker:
@@ -699,7 +690,7 @@ class Testdir:
         p = py.path.local(arg)
         config.hook.pytest_sessionstart(session=session)
         res = session.perform_collect([str(p)], genitems=False)[0]
-        config.hook.pytest_sessionfinish(session=session, exitstatus=EXIT_OK)
+        config.hook.pytest_sessionfinish(session=session, exitstatus=ExitCode.OK)
         return res
 
     def getpathnode(self, path):
@@ -716,7 +707,7 @@ class Testdir:
         x = session.fspath.bestrelpath(path)
         config.hook.pytest_sessionstart(session=session)
         res = session.perform_collect([x], genitems=False)[0]
-        config.hook.pytest_sessionfinish(session=session, exitstatus=EXIT_OK)
+        config.hook.pytest_sessionfinish(session=session, exitstatus=ExitCode.OK)
         return res
 
     def genitems(self, colitems):
@@ -778,7 +769,7 @@ class Testdir:
         items = [x.item for x in rec.getcalls("pytest_itemcollected")]
         return items, rec
 
-    def inline_run(self, *args, **kwargs):
+    def inline_run(self, *args, plugins=(), no_reraise_ctrlc=False):
         """Run ``pytest.main()`` in-process, returning a HookRecorder.
 
         Runs the :py:func:`pytest.main` function to run all of pytest inside
@@ -789,15 +780,19 @@ class Testdir:
 
         :param args: command line arguments to pass to :py:func:`pytest.main`
 
-        :param plugins: (keyword-only) extra plugin instances the
-           ``pytest.main()`` instance should use
+        :kwarg plugins: extra plugin instances the ``pytest.main()`` instance should use.
+
+        :kwarg no_reraise_ctrlc: typically we reraise keyboard interrupts from the child run. If
+            True, the KeyboardInterrupt exception is captured.
 
         :return: a :py:class:`HookRecorder` instance
         """
-        plugins = kwargs.pop("plugins", [])
-        no_reraise_ctrlc = kwargs.pop("no_reraise_ctrlc", None)
-        raise_on_kwargs(kwargs)
+        # (maybe a cpython bug?) the importlib cache sometimes isn't updated
+        # properly between file creation and inline_run (especially if imports
+        # are interspersed with file creation)
+        importlib.invalidate_caches()
 
+        plugins = list(plugins)
         finalizers = []
         try:
             # Do not load user config (during runs only).
@@ -805,18 +800,6 @@ class Testdir:
             for k, v in self._env_run_update.items():
                 mp_run.setenv(k, v)
             finalizers.append(mp_run.undo)
-
-            # When running pytest inline any plugins active in the main test
-            # process are already imported.  So this disables the warning which
-            # will trigger to say they can no longer be rewritten, which is
-            # fine as they have already been rewritten.
-            orig_warn = AssertionRewritingHook._warn_already_imported
-
-            def revert_warn_already_imported():
-                AssertionRewritingHook._warn_already_imported = orig_warn
-
-            finalizers.append(revert_warn_already_imported)
-            AssertionRewritingHook._warn_already_imported = lambda *a: None
 
             # Any sys.module or sys.path changes done while running pytest
             # inline should be reverted after the test run completes to avoid
@@ -850,7 +833,7 @@ class Testdir:
 
             # typically we reraise keyboard interrupts from the child run
             # because it's our user requesting interruption of the testing
-            if ret == EXIT_INTERRUPTED and not no_reraise_ctrlc:
+            if ret == ExitCode.INTERRUPTED and not no_reraise_ctrlc:
                 calls = reprec.getcalls("pytest_keyboard_interrupt")
                 if calls and calls[-1].excinfo.type == KeyboardInterrupt:
                     raise KeyboardInterrupt()
@@ -1059,15 +1042,15 @@ class Testdir:
 
         return popen
 
-    def run(self, *cmdargs, **kwargs):
+    def run(self, *cmdargs, timeout=None, stdin=CLOSE_STDIN):
         """Run a command with arguments.
 
         Run a process using subprocess.Popen saving the stdout and stderr.
 
         :param args: the sequence of arguments to pass to `subprocess.Popen()`
-        :param timeout: the period in seconds after which to timeout and raise
+        :kwarg timeout: the period in seconds after which to timeout and raise
             :py:class:`Testdir.TimeoutExpired`
-        :param stdin: optional standard input.  Bytes are being send, closing
+        :kwarg stdin: optional standard input.  Bytes are being send, closing
             the pipe, otherwise it is passed through to ``popen``.
             Defaults to ``CLOSE_STDIN``, which translates to using a pipe
             (``subprocess.PIPE``) that gets closed.
@@ -1076,10 +1059,6 @@ class Testdir:
 
         """
         __tracebackhide__ = True
-
-        timeout = kwargs.pop("timeout", None)
-        stdin = kwargs.pop("stdin", Testdir.CLOSE_STDIN)
-        raise_on_kwargs(kwargs)
 
         cmdargs = [
             str(arg) if isinstance(arg, py.path.local) else arg for arg in cmdargs
@@ -1158,7 +1137,7 @@ class Testdir:
         """Run python -c "command", return a :py:class:`RunResult`."""
         return self.run(sys.executable, "-c", command)
 
-    def runpytest_subprocess(self, *args, **kwargs):
+    def runpytest_subprocess(self, *args, timeout=None):
         """Run pytest as a subprocess with given arguments.
 
         Any plugins added to the :py:attr:`plugins` list will be added using the
@@ -1174,9 +1153,6 @@ class Testdir:
         Returns a :py:class:`RunResult`.
         """
         __tracebackhide__ = True
-        timeout = kwargs.pop("timeout", None)
-        raise_on_kwargs(kwargs)
-
         p = py.path.local.make_numbered_dir(
             prefix="runpytest-", keep=None, rootdir=self.tmpdir
         )

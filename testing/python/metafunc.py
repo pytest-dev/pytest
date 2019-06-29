@@ -506,8 +506,8 @@ class TestMetafunc:
         result = testdir.runpytest()
         result.stdout.fnmatch_lines(
             [
-                "*test_foo: error raised while trying to determine id of parameter 'arg' at position 0",
                 "*Exception: bad ids",
+                "*test_foo: error raised while trying to determine id of parameter 'arg' at position 0",
             ]
         )
 
@@ -1205,7 +1205,7 @@ class TestMetafuncFunctional:
             import pytest
             values = []
             def pytest_generate_tests(metafunc):
-                if "arg" in metafunc.funcargnames:
+                if "arg" in metafunc.fixturenames:
                     metafunc.parametrize("arg", [1,2], indirect=True,
                                          scope=%r)
             @pytest.fixture
@@ -1761,3 +1761,16 @@ class TestMarkersWithParametrization:
         result.stdout.fnmatch_lines(
             ["*test_func_a*0*PASS*", "*test_func_a*2*PASS*", "*test_func_b*10*PASS*"]
         )
+
+    def test_parametrize_positional_args(self, testdir):
+        testdir.makepyfile(
+            """
+            import pytest
+
+            @pytest.mark.parametrize("a", [1], False)
+            def test_foo(a):
+                pass
+        """
+        )
+        result = testdir.runpytest()
+        result.assert_outcomes(passed=1)

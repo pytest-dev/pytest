@@ -665,15 +665,14 @@ Session related reporting hooks:
 .. autofunction:: pytest_fixture_post_finalizer
 .. autofunction:: pytest_warning_captured
 
-And here is the central hook for reporting about
-test execution:
+Central hook for reporting about test execution:
 
 .. autofunction:: pytest_runtest_logreport
 
-You can also use this hook to customize assertion representation for some
-types:
+Assertion related hooks:
 
 .. autofunction:: pytest_assertrepr_compare
+.. autofunction:: pytest_assertion_pass
 
 
 Debugging/Interaction hooks
@@ -726,6 +725,14 @@ ExceptionInfo
 
 .. autoclass:: _pytest._code.ExceptionInfo
     :members:
+
+
+pytest.ExitCode
+~~~~~~~~~~~~~~~
+
+.. autoclass:: _pytest.main.ExitCode
+    :members:
+
 
 FixtureDef
 ~~~~~~~~~~
@@ -951,6 +958,14 @@ PYTEST_CURRENT_TEST
 This is not meant to be set by users, but is set by pytest internally with the name of the current test so other
 processes can inspect it, see :ref:`pytest current test env` for more information.
 
+Exceptions
+----------
+
+UsageError
+~~~~~~~~~~
+
+.. autoclass:: _pytest.config.UsageError()
+
 
 .. _`ini options ref`:
 
@@ -1066,6 +1081,23 @@ passed multiple times. The expected format is ``name=value``. For example::
       The default value of this option is planned to change to ``xfail`` in future releases
       as this is considered less error prone, see `#3155 <https://github.com/pytest-dev/pytest/issues/3155>`_
       for more details.
+
+
+.. confval:: faulthandler_timeout
+
+   Dumps the tracebacks of all threads if a test takes longer than ``X`` seconds to run (including
+   fixture setup and teardown). Implemented using the `faulthandler.dump_traceback_later`_ function,
+   so all caveats there apply.
+
+   .. code-block:: ini
+
+        # content of pytest.ini
+        [pytest]
+        faulthandler_timeout=5
+
+   For more information please refer to :ref:`faulthandler`.
+
+.. _`faulthandler.dump_traceback_later`: https://docs.python.org/3/library/faulthandler.html#faulthandler.dump_traceback_later
 
 
 .. confval:: filterwarnings

@@ -1,7 +1,10 @@
+import inspect
 import textwrap
 
 import pytest
 from _pytest.compat import MODULE_NOT_FOUND_ERROR
+from _pytest.doctest import _is_mocked
+from _pytest.doctest import _patch_unwrap_mock_aware
 from _pytest.doctest import DoctestItem
 from _pytest.doctest import DoctestModule
 from _pytest.doctest import DoctestTextfile
@@ -153,7 +156,7 @@ class TestDoctests:
             )
         )
         doctest = """
-            >>> u"{}"
+            >>> "{}"
             {}
         """.format(
             test_string, repr(test_string)
@@ -671,7 +674,7 @@ class TestDoctests:
             test_print_unicode_value=r"""
             Here is a doctest::
 
-                >>> print(u'\xE5\xE9\xEE\xF8\xFC')
+                >>> print('\xE5\xE9\xEE\xF8\xFC')
                 åéîøü
         """
         )
@@ -1224,3 +1227,24 @@ def test_doctest_mock_objects_dont_recurse_missbehaved(mock_module, testdir):
     )
     result = testdir.runpytest("--doctest-modules")
     result.stdout.fnmatch_lines(["* 1 passed *"])
+
+
+class Broken:
+    def __getattr__(self, _):
+        raise KeyError("This should be an AttributeError")
+
+
+@pytest.mark.parametrize(  # pragma: no branch (lambdas are not called)
+    "stop", [None, _is_mocked, lambda f: None, lambda f: False, lambda f: True]
+)
+def test_warning_on_unwrap_of_broken_object(stop):
+    bad_instance = Broken()
+    assert inspect.unwrap.__module__ == "inspect"
+    with _patch_unwrap_mock_aware():
+        assert inspect.unwrap.__module__ != "inspect"
+        with pytest.warns(
+            pytest.PytestWarning, match="^Got KeyError.* when unwrapping"
+        ):
+            with pytest.raises(KeyError):
+                inspect.unwrap(bad_instance, stop=stop)
+    assert inspect.unwrap.__module__ == "inspect"

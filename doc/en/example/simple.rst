@@ -157,6 +157,10 @@ line option to control skipping of ``pytest.mark.slow`` marked tests:
         )
 
 
+    def pytest_configure(config):
+        config.addinivalue_line("markers", "slow: mark test as slow to run")
+
+
     def pytest_collection_modifyitems(config, items):
         if config.getoption("--runslow"):
             # --runslow given in cli: do not skip slow tests
@@ -441,7 +445,7 @@ Now we can profile which test functions execute the slowest:
 
     ========================= slowest 3 test durations =========================
     0.30s call     test_some_are_slow.py::test_funcslow2
-    0.21s call     test_some_are_slow.py::test_funcslow1
+    0.20s call     test_some_are_slow.py::test_funcslow1
     0.10s call     test_some_are_slow.py::test_funcfast
     ========================= 3 passed in 0.12 seconds =========================
 

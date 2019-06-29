@@ -16,7 +16,6 @@ from _pytest._code.code import FormattedExcinfo
 from _pytest._code.code import TerminalRepr
 from _pytest.compat import _format_args
 from _pytest.compat import _PytestWrapper
-from _pytest.compat import exc_clear
 from _pytest.compat import FuncargnamesCompatAttr
 from _pytest.compat import get_real_func
 from _pytest.compat import get_real_method
@@ -25,7 +24,6 @@ from _pytest.compat import getfuncargnames
 from _pytest.compat import getimfunc
 from _pytest.compat import getlocation
 from _pytest.compat import is_generator
-from _pytest.compat import isclass
 from _pytest.compat import NOTSET
 from _pytest.compat import safe_getattr
 from _pytest.deprecated import FIXTURE_FUNCTION_CALL
@@ -572,10 +570,6 @@ class FixtureRequest(FuncargnamesCompatAttr):
 
         # check if a higher-level scoped fixture accesses a lower level one
         subrequest._check_scope(argname, self.scope, scope)
-
-        # clear sys.exc_info before invoking the fixture (python bug?)
-        # if it's not explicitly cleared it will leak into the call
-        exc_clear()
         try:
             # call the fixture function
             fixturedef.execute(request=subrequest)
@@ -660,7 +654,7 @@ class SubRequest(FixtureRequest):
         # if the executing fixturedef was not explicitly requested in the argument list (via
         # getfixturevalue inside the fixture call) then ensure this fixture def will be finished
         # first
-        if fixturedef.argname not in self.funcargnames:
+        if fixturedef.argname not in self.fixturenames:
             fixturedef.addfinalizer(
                 functools.partial(self._fixturedef.finish, request=self)
             )
@@ -970,7 +964,7 @@ class FixtureFunctionMarker:
     name = attr.ib(default=None)
 
     def __call__(self, function):
-        if isclass(function):
+        if inspect.isclass(function):
             raise ValueError("class fixtures not supported (maybe in the future)")
 
         if getattr(function, "_pytestfixturefunction", False):

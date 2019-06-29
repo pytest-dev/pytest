@@ -15,7 +15,7 @@ def test_maxsize():
 
 def test_maxsize_error_on_instance():
     class A:
-        def __repr__():
+        def __repr__(self):
             raise ValueError("...")
 
     s = saferepr(("*" * 50, A()), maxsize=25)

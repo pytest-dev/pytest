@@ -8,6 +8,8 @@ class PytestWarning(UserWarning):
     Base class for all warnings emitted by pytest.
     """
 
+    __module__ = "pytest"
+
 
 class PytestAssertRewriteWarning(PytestWarning):
     """
@@ -15,6 +17,8 @@ class PytestAssertRewriteWarning(PytestWarning):
 
     Warning emitted by the pytest assert rewrite module.
     """
+
+    __module__ = "pytest"
 
 
 class PytestCacheWarning(PytestWarning):
@@ -24,6 +28,8 @@ class PytestCacheWarning(PytestWarning):
     Warning emitted by the cache plugin in various situations.
     """
 
+    __module__ = "pytest"
+
 
 class PytestConfigWarning(PytestWarning):
     """
@@ -31,6 +37,8 @@ class PytestConfigWarning(PytestWarning):
 
     Warning emitted for configuration issues.
     """
+
+    __module__ = "pytest"
 
 
 class PytestCollectionWarning(PytestWarning):
@@ -40,6 +48,8 @@ class PytestCollectionWarning(PytestWarning):
     Warning emitted when pytest is not able to collect a file or symbol in a module.
     """
 
+    __module__ = "pytest"
+
 
 class PytestDeprecationWarning(PytestWarning, DeprecationWarning):
     """
@@ -47,6 +57,8 @@ class PytestDeprecationWarning(PytestWarning, DeprecationWarning):
 
     Warning class for features that will be removed in a future version.
     """
+
+    __module__ = "pytest"
 
 
 class PytestExperimentalApiWarning(PytestWarning, FutureWarning):
@@ -56,6 +68,8 @@ class PytestExperimentalApiWarning(PytestWarning, FutureWarning):
     Warning category used to denote experiments in pytest. Use sparingly as the API might change or even be
     removed completely in future version
     """
+
+    __module__ = "pytest"
 
     @classmethod
     def simple(cls, apiname):
@@ -75,6 +89,8 @@ class PytestUnhandledCoroutineWarning(PytestWarning):
     are not natively supported.
     """
 
+    __module__ = "pytest"
+
 
 class PytestUnknownMarkWarning(PytestWarning):
     """
@@ -84,6 +100,8 @@ class PytestUnknownMarkWarning(PytestWarning):
     See https://docs.pytest.org/en/latest/mark.html for details.
     """
 
+    __module__ = "pytest"
+
 
 class RemovedInPytest4Warning(PytestDeprecationWarning):
     """
@@ -91,6 +109,8 @@ class RemovedInPytest4Warning(PytestDeprecationWarning):
 
     Warning class for features scheduled to be removed in pytest 4.0.
     """
+
+    __module__ = "pytest"
 
 
 @attr.s

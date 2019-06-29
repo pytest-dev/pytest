@@ -4,7 +4,7 @@ import textwrap
 
 import _pytest._code
 import pytest
-from _pytest.main import EXIT_NOTESTSCOLLECTED
+from _pytest.main import ExitCode
 from _pytest.nodes import Collector
 
 
@@ -116,7 +116,7 @@ class TestModule:
         """Check test modules collected which raise ImportError with unicode messages
         are handled properly (#2336).
         """
-        testdir.makepyfile("raise ImportError(u'Something bad happened ☺')")
+        testdir.makepyfile("raise ImportError('Something bad happened ☺')")
         result = testdir.runpytest()
         result.stdout.fnmatch_lines(
             [
@@ -246,7 +246,7 @@ class TestClass:
         """
         )
         result = testdir.runpytest()
-        assert result.ret == EXIT_NOTESTSCOLLECTED
+        assert result.ret == ExitCode.NO_TESTS_COLLECTED
 
 
 class TestFunction:
@@ -1140,7 +1140,7 @@ def test_unorderable_types(testdir):
     )
     result = testdir.runpytest()
     assert "TypeError" not in result.stdout.str()
-    assert result.ret == EXIT_NOTESTSCOLLECTED
+    assert result.ret == ExitCode.NO_TESTS_COLLECTED
 
 
 def test_collect_functools_partial(testdir):

@@ -19,6 +19,21 @@ Below is a complete list of all pytest features which are considered deprecated.
 :class:`_pytest.warning_types.PytestWarning` or subclasses, which can be filtered using
 :ref:`standard warning filters <warnings>`.
 
+
+Removal of ``funcargnames`` alias for ``fixturenames``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 5.0
+
+The ``FixtureRequest``, ``Metafunc``, and ``Function`` classes track the names of
+their associated fixtures, with the aptly-named ``fixturenames`` attribute.
+
+Prior to pytest 2.3, this attribute was named ``funcargnames``, and we have kept
+that as an alias since.  It is finally due for removal, as it is often confusing
+in places where we or plugin authors must distinguish between fixture names and
+names supplied by non-fixture things such as ``pytest.mark.parametrize``.
+
+
 .. _`raises message deprecated`:
 
 ``"message"`` parameter of ``pytest.raises``
@@ -101,20 +116,21 @@ Becomes:
 
 
 
-
-
-
 Result log (``--result-log``)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+.. deprecated:: 4.0
 
+The ``--result-log`` option produces a stream of test reports which can be
+analysed at runtime. It uses a custom format which requires users to implement their own
+parser, but the team believes using a line-based format that can be parsed using standard
+tools would provide a suitable and better alternative.
 
-The ``--resultlog`` command line option has been deprecated: it is little used
-and there are more modern and better alternatives, for example `pytest-tap <https://tappy.readthedocs.io/en/latest/>`_.
+The current plan is to provide an alternative in the pytest 5.0 series and remove the ``--result-log``
+option in pytest 6.0 after the new implementation proves satisfactory to all users and is deemed
+stable.
 
-This feature will be effectively removed in pytest 4.0 as the team intends to include a better alternative in the core.
-
-If you have any concerns, please don't hesitate to `open an issue <https://github.com/pytest-dev/pytest/issues>`__.
+The actual alternative is still being discussed in issue `#4488 <https://github.com/pytest-dev/pytest/issues/4488>`__.
 
 Removed Features
 ----------------

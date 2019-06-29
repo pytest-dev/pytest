@@ -20,7 +20,7 @@ Thanks to all who contributed to this release, among them:
 * Jeffrey Rackauckas
 * Jose Carlos Menezes
 * Ronny Pfannschmidt
-* Zac-HD
+* Zac Hatfield-Dodds
 * iwanb
 
 

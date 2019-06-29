@@ -916,13 +916,44 @@ def test_collection_live_logging(testdir):
 
     result = testdir.runpytest("--log-cli-level=INFO")
     result.stdout.fnmatch_lines(
-        [
-            "collecting*",
-            "*--- live log collection ---*",
-            "*Normal message*",
-            "collected 0 items",
-        ]
+        ["*--- live log collection ---*", "*Normal message*", "collected 0 items"]
     )
+
+
+@pytest.mark.parametrize("verbose", ["", "-q", "-qq"])
+def test_collection_collect_only_live_logging(testdir, verbose):
+    testdir.makepyfile(
+        """
+        def test_simple():
+            pass
+    """
+    )
+
+    result = testdir.runpytest("--collect-only", "--log-cli-level=INFO", verbose)
+
+    expected_lines = []
+
+    if not verbose:
+        expected_lines.extend(
+            [
+                "*collected 1 item*",
+                "*<Module test_collection_collect_only_live_logging.py>*",
+                "*no tests ran*",
+            ]
+        )
+    elif verbose == "-q":
+        assert "collected 1 item*" not in result.stdout.str()
+        expected_lines.extend(
+            [
+                "*test_collection_collect_only_live_logging.py::test_simple*",
+                "no tests ran in * seconds",
+            ]
+        )
+    elif verbose == "-qq":
+        assert "collected 1 item*" not in result.stdout.str()
+        expected_lines.extend(["*test_collection_collect_only_live_logging.py: 1*"])
+
+    result.stdout.fnmatch_lines(expected_lines)
 
 
 def test_collection_logging_to_file(testdir):

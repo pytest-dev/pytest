@@ -333,18 +333,10 @@ def test_excinfo_exconly():
     assert msg.endswith("world")
 
 
-def test_excinfo_repr():
+def test_excinfo_repr_str():
     excinfo = pytest.raises(ValueError, h)
-    s = repr(excinfo)
-    assert s == "<ExceptionInfo ValueError tblen=4>"
-
-
-def test_excinfo_str():
-    excinfo = pytest.raises(ValueError, h)
-    s = str(excinfo)
-    assert s.startswith(__file__[:-9])  # pyc file and $py.class
-    assert s.endswith("ValueError")
-    assert len(s.split(":")) >= 3  # on windows it's 4
+    assert repr(excinfo) == "<ExceptionInfo ValueError tblen=4>"
+    assert str(excinfo) == "<ExceptionInfo ValueError tblen=4>"
 
 
 def test_excinfo_for_later():

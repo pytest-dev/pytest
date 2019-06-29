@@ -26,10 +26,10 @@ def test_getfuncargnames():
 
     assert fixtures.getfuncargnames(h) == ("arg1",)
 
-    def h(arg1, arg2, arg3="hello"):
+    def j(arg1, arg2, arg3="hello"):
         pass
 
-    assert fixtures.getfuncargnames(h) == ("arg1", "arg2")
+    assert fixtures.getfuncargnames(j) == ("arg1", "arg2")
 
     class A:
         def f(self, arg1, arg2="hello"):
@@ -793,12 +793,15 @@ class TestRequestBasic:
             """
             import pytest
             def pytest_generate_tests(metafunc):
-                assert metafunc.funcargnames == metafunc.fixturenames
+                with pytest.warns(pytest.PytestDeprecationWarning):
+                    assert metafunc.funcargnames == metafunc.fixturenames
             @pytest.fixture
             def fn(request):
-                assert request._pyfuncitem.funcargnames == \
-                       request._pyfuncitem.fixturenames
-                return request.funcargnames, request.fixturenames
+                with pytest.warns(pytest.PytestDeprecationWarning):
+                    assert request._pyfuncitem.funcargnames == \
+                           request._pyfuncitem.fixturenames
+                with pytest.warns(pytest.PytestDeprecationWarning):
+                    return request.funcargnames, request.fixturenames
 
             def test_hello(fn):
                 assert fn[0] == fn[1]
@@ -1138,7 +1141,6 @@ class TestFixtureUsages:
         values = reprec.getfailedcollections()
         assert len(values) == 1
 
-    @pytest.mark.filterwarnings("ignore::pytest.PytestDeprecationWarning")
     def test_request_can_be_overridden(self, testdir):
         testdir.makepyfile(
             """
@@ -1151,7 +1153,7 @@ class TestFixtureUsages:
                 assert request.a == 1
         """
         )
-        reprec = testdir.inline_run()
+        reprec = testdir.inline_run("-Wignore::pytest.PytestDeprecationWarning")
         reprec.assertoutcome(passed=1)
 
     def test_usefixtures_marker(self, testdir):

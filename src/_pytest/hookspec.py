@@ -485,6 +485,42 @@ def pytest_assertrepr_compare(config, op, left, right):
     """
 
 
+def pytest_assertion_pass(item, lineno, orig, expl):
+    """
+    **(Experimental)**
+
+    Hook called whenever an assertion *passes*.
+
+    Use this hook to do some processing after a passing assertion.
+    The original assertion information is available in the `orig` string
+    and the pytest introspected assertion information is available in the
+    `expl` string.
+
+    This hook must be explicitly enabled by the ``enable_assertion_pass_hook``
+    ini-file option:
+
+    .. code-block:: ini
+
+        [pytest]
+        enable_assertion_pass_hook=true
+
+    You need to **clean the .pyc** files in your project directory and interpreter libraries
+    when enabling this option, as assertions will require to be re-written.
+
+    :param _pytest.nodes.Item item: pytest item object of current test
+    :param int lineno: line number of the assert statement
+    :param string orig: string with original assertion
+    :param string expl: string with assert explanation
+
+    .. note::
+
+        This hook is **experimental**, so its parameters or even the hook itself might
+        be changed/removed without warning in any future pytest release.
+
+        If you find this hook useful, please share your feedback opening an issue.
+    """
+
+
 # -------------------------------------------------------------------------
 # hooks for influencing reporting (invoked from _pytest_terminal)
 # -------------------------------------------------------------------------
