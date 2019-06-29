@@ -1,0 +1,1 @@
+Fixed using multiple short options together in the command-line (for example ``-vs``) in Python 3.8+.
