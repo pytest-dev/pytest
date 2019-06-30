@@ -12,7 +12,6 @@ from textwrap import dedent
 import py
 
 import _pytest
-from _pytest import deprecated
 from _pytest import fixtures
 from _pytest import nodes
 from _pytest._code import filter_traceback
@@ -218,7 +217,9 @@ def pytest_pycollect_makeitem(collector, name, obj):
         elif getattr(obj, "__test__", True):
             if is_generator(obj):
                 res = Function(name, parent=collector)
-                reason = deprecated.YIELD_TESTS.format(name=name)
+                reason = "yield tests were removed in pytest 4.0 - {name} will be ignored".format(
+                    name=name
+                )
                 res.add_marker(MARK_GEN.xfail(run=False, reason=reason))
                 res.warn(PytestCollectionWarning(reason))
             else:

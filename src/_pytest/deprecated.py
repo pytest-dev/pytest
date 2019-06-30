@@ -10,8 +10,6 @@ in case of warnings which need to format their messages.
 """
 from _pytest.warning_types import PytestDeprecationWarning
 
-YIELD_TESTS = "yield tests were removed in pytest 4.0 - {name} will be ignored"
-
 # set of plugins which have been integrated into the core; we use this list to ignore
 # them during registration to avoid conflicts
 DEPRECATED_EXTERNAL_PLUGINS = {
