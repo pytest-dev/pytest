@@ -41,9 +41,3 @@ RESULT_LOG = PytestDeprecationWarning(
     "--result-log is deprecated and scheduled for removal in pytest 6.0.\n"
     "See https://docs.pytest.org/en/latest/deprecations.html#result-log-result-log for more information."
 )
-
-
-PYTEST_LOGWARNING = PytestDeprecationWarning(
-    "pytest_logwarning is deprecated, no longer being called, and will be removed soon\n"
-    "please use pytest_warning_captured instead"
-)
