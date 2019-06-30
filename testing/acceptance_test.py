@@ -9,7 +9,6 @@ import py
 
 import pytest
 from _pytest.main import ExitCode
-from _pytest.warnings import SHOW_PYTEST_WARNINGS_ARG
 
 
 def prepend_pythonpath(*dirs):
@@ -343,7 +342,7 @@ class TestGeneralUsage:
         """
         )
         p = testdir.makepyfile("""def test_func(x): pass""")
-        res = testdir.runpytest(p, SHOW_PYTEST_WARNINGS_ARG)
+        res = testdir.runpytest(p)
         assert res.ret == 0
         res.stdout.fnmatch_lines(["*1 skipped*"])
 
@@ -356,9 +355,7 @@ class TestGeneralUsage:
                 pass
         """
         )
-        res = testdir.runpytest(
-            p.basename + "::" + "test_func[1]", SHOW_PYTEST_WARNINGS_ARG
-        )
+        res = testdir.runpytest(p.basename + "::" + "test_func[1]")
         assert res.ret == 0
         res.stdout.fnmatch_lines(["*1 passed*"])
 

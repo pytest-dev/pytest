@@ -5,7 +5,6 @@ import attr
 import pytest
 from _pytest import pathlib
 from _pytest.pathlib import Path
-from _pytest.warnings import SHOW_PYTEST_WARNINGS_ARG
 
 
 def test_tmpdir_fixture(testdir):
@@ -82,9 +81,7 @@ def test_basetemp(testdir):
             tmpdir_factory.mktemp('hello', numbered=False)
     """
     )
-    result = testdir.runpytest(
-        p, "--basetemp=%s" % mytemp, SHOW_PYTEST_WARNINGS_ARG, "-s"
-    )
+    result = testdir.runpytest(p, "--basetemp=%s" % mytemp)
     assert result.ret == 0
     print(mytemp)
     assert mytemp.join("hello").check()

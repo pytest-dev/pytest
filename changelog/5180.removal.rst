@@ -17,6 +17,8 @@ removed:
 
 * ``pytest_logwarning`` hook.
 
+* ``RemovedInPytest4Warning`` warning type.
+
 
 For more information consult
 `Deprecations and Removals <https://docs.pytest.org/en/latest/deprecations.html>`__ in the docs.

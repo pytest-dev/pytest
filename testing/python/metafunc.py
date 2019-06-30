@@ -9,7 +9,6 @@ from hypothesis import strategies
 import pytest
 from _pytest import fixtures
 from _pytest import python
-from _pytest.warnings import SHOW_PYTEST_WARNINGS_ARG
 
 
 class TestMetafunc:
@@ -915,7 +914,7 @@ class TestMetafuncFunctional:
                     assert metafunc.cls == TestClass
         """
         )
-        result = testdir.runpytest(p, "-v", SHOW_PYTEST_WARNINGS_ARG)
+        result = testdir.runpytest(p, "-v")
         result.assert_outcomes(passed=2)
 
     def test_two_functions(self, testdir):
@@ -931,7 +930,7 @@ class TestMetafuncFunctional:
                 assert arg1 in (10, 20)
         """
         )
-        result = testdir.runpytest("-v", p, SHOW_PYTEST_WARNINGS_ARG)
+        result = testdir.runpytest("-v", p)
         result.stdout.fnmatch_lines(
             [
                 "*test_func1*0*PASS*",
@@ -967,7 +966,7 @@ class TestMetafuncFunctional:
                     assert hello == "world"
         """
         )
-        result = testdir.runpytest("-v", p, SHOW_PYTEST_WARNINGS_ARG)
+        result = testdir.runpytest("-v", p)
         result.stdout.fnmatch_lines(["*test_myfunc*hello*PASS*", "*1 passed*"])
 
     def test_two_functions_not_same_instance(self, testdir):
@@ -982,7 +981,7 @@ class TestMetafuncFunctional:
                     self.x = 1
         """
         )
-        result = testdir.runpytest("-v", p, SHOW_PYTEST_WARNINGS_ARG)
+        result = testdir.runpytest("-v", p)
         result.stdout.fnmatch_lines(
             ["*test_func*0*PASS*", "*test_func*1*PASS*", "*2 pass*"]
         )
@@ -1000,7 +999,7 @@ class TestMetafuncFunctional:
                     self.val = 1
             """
         )
-        result = testdir.runpytest(p, SHOW_PYTEST_WARNINGS_ARG)
+        result = testdir.runpytest(p)
         result.assert_outcomes(passed=1)
 
     def test_parametrize_functional2(self, testdir):
@@ -1522,7 +1521,7 @@ class TestMarkersWithParametrization:
                 assert n + 1 == expected
         """
         testdir.makepyfile(s)
-        rec = testdir.inline_run("-m", "foo", SHOW_PYTEST_WARNINGS_ARG)
+        rec = testdir.inline_run("-m", "foo")
         passed, skipped, fail = rec.listoutcomes()
         assert len(passed) == 1
         assert len(skipped) == 0
@@ -1562,7 +1561,7 @@ class TestMarkersWithParametrization:
                 assert n + 1 == expected
         """
         testdir.makepyfile(s)
-        reprec = testdir.inline_run(SHOW_PYTEST_WARNINGS_ARG)
+        reprec = testdir.inline_run()
         # xfail is skip??
         reprec.assertoutcome(passed=2, skipped=1)
 
@@ -1579,7 +1578,7 @@ class TestMarkersWithParametrization:
                 assert n % 2 == 0
         """
         testdir.makepyfile(s)
-        reprec = testdir.inline_run(SHOW_PYTEST_WARNINGS_ARG)
+        reprec = testdir.inline_run()
         reprec.assertoutcome(passed=2, skipped=1)
 
     def test_xfail_with_arg(self, testdir):
@@ -1595,7 +1594,7 @@ class TestMarkersWithParametrization:
                 assert n + 1 == expected
         """
         testdir.makepyfile(s)
-        reprec = testdir.inline_run(SHOW_PYTEST_WARNINGS_ARG)
+        reprec = testdir.inline_run()
         reprec.assertoutcome(passed=2, skipped=1)
 
     def test_xfail_with_kwarg(self, testdir):
@@ -1611,7 +1610,7 @@ class TestMarkersWithParametrization:
                 assert n + 1 == expected
         """
         testdir.makepyfile(s)
-        reprec = testdir.inline_run(SHOW_PYTEST_WARNINGS_ARG)
+        reprec = testdir.inline_run()
         reprec.assertoutcome(passed=2, skipped=1)
 
     def test_xfail_with_arg_and_kwarg(self, testdir):
@@ -1627,7 +1626,7 @@ class TestMarkersWithParametrization:
                 assert n + 1 == expected
         """
         testdir.makepyfile(s)
-        reprec = testdir.inline_run(SHOW_PYTEST_WARNINGS_ARG)
+        reprec = testdir.inline_run()
         reprec.assertoutcome(passed=2, skipped=1)
 
     @pytest.mark.parametrize("strict", [True, False])
@@ -1648,7 +1647,7 @@ class TestMarkersWithParametrization:
             strict=strict
         )
         testdir.makepyfile(s)
-        reprec = testdir.inline_run(SHOW_PYTEST_WARNINGS_ARG)
+        reprec = testdir.inline_run()
         passed, failed = (2, 1) if strict else (3, 0)
         reprec.assertoutcome(passed=passed, failed=failed)
 
@@ -1672,7 +1671,7 @@ class TestMarkersWithParametrization:
                 assert n + 1 == expected
         """
         testdir.makepyfile(s)
-        reprec = testdir.inline_run(SHOW_PYTEST_WARNINGS_ARG)
+        reprec = testdir.inline_run()
         reprec.assertoutcome(passed=2, skipped=2)
 
     def test_parametrize_ID_generation_string_int_works(self, testdir):

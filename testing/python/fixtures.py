@@ -7,7 +7,6 @@ from _pytest.fixtures import FixtureLookupError
 from _pytest.fixtures import FixtureRequest
 from _pytest.pathlib import Path
 from _pytest.pytester import get_public_names
-from _pytest.warnings import SHOW_PYTEST_WARNINGS_ARG
 
 
 def test_getfuncargnames():
@@ -2186,7 +2185,7 @@ class TestFixtureMarker:
                     pass
             """
         )
-        result = testdir.runpytest(SHOW_PYTEST_WARNINGS_ARG)
+        result = testdir.runpytest()
         assert result.ret != 0
         result.stdout.fnmatch_lines(
             ["*ScopeMismatch*You tried*function*session*request*"]
