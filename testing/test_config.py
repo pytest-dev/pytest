@@ -1245,6 +1245,30 @@ def test_config_blocked_default_plugins(testdir, plugin):
         assert result.stdout.lines == [""]
 
 
+class TestSetupCfg:
+    def test_pytest_setup_cfg_unsupported(self, testdir):
+        testdir.makefile(
+            ".cfg",
+            setup="""
+            [pytest]
+            addopts = --verbose
+        """,
+        )
+        with pytest.raises(pytest.fail.Exception):
+            testdir.runpytest()
+
+    def test_pytest_custom_cfg_unsupported(self, testdir):
+        testdir.makefile(
+            ".cfg",
+            custom="""
+            [pytest]
+            addopts = --verbose
+        """,
+        )
+        with pytest.raises(pytest.fail.Exception):
+            testdir.runpytest("-c", "custom.cfg")
+
+
 class TestPytestPluginsVariable:
     def test_pytest_plugins_in_non_top_level_conftest_unsupported(self, testdir):
         testdir.makepyfile(

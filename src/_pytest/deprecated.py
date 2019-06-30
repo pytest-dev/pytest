@@ -33,8 +33,6 @@ FIXTURE_NAMED_REQUEST = PytestDeprecationWarning(
     "'request' is a reserved name for fixtures and will raise an error in future versions"
 )
 
-CFG_PYTEST_SECTION = "[pytest] section in {filename} files is no longer supported, change to [tool:pytest] instead."
-
 
 FUNCARGNAMES = PytestDeprecationWarning(
     "The `funcargnames` attribute was an alias for `fixturenames`, "

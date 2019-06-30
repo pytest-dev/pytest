@@ -4,30 +4,6 @@ from _pytest import deprecated
 pytestmark = pytest.mark.pytester_example_path("deprecated")
 
 
-def test_pytest_setup_cfg_unsupported(testdir):
-    testdir.makefile(
-        ".cfg",
-        setup="""
-        [pytest]
-        addopts = --verbose
-    """,
-    )
-    with pytest.raises(pytest.fail.Exception):
-        testdir.runpytest()
-
-
-def test_pytest_custom_cfg_unsupported(testdir):
-    testdir.makefile(
-        ".cfg",
-        custom="""
-        [pytest]
-        addopts = --verbose
-    """,
-    )
-    with pytest.raises(pytest.fail.Exception):
-        testdir.runpytest("-c", "custom.cfg")
-
-
 @pytest.mark.filterwarnings("default")
 def test_resultlog_is_deprecated(testdir):
     result = testdir.runpytest("--help")
