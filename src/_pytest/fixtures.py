@@ -26,7 +26,6 @@ from _pytest.compat import getlocation
 from _pytest.compat import is_generator
 from _pytest.compat import NOTSET
 from _pytest.compat import safe_getattr
-from _pytest.deprecated import FIXTURE_FUNCTION_CALL
 from _pytest.deprecated import FIXTURE_NAMED_REQUEST
 from _pytest.outcomes import fail
 from _pytest.outcomes import TEST_OUTCOME
@@ -933,9 +932,12 @@ def wrap_function_to_error_out_if_called_directly(function, fixture_marker):
     """Wrap the given fixture function so we can raise an error about it being called directly,
     instead of used as an argument in a test function.
     """
-    message = FIXTURE_FUNCTION_CALL.format(
-        name=fixture_marker.name or function.__name__
-    )
+    message = (
+        'Fixture "{name}" called directly. Fixtures are not meant to be called directly,\n'
+        "but are created automatically when test functions request them as parameters.\n"
+        "See https://docs.pytest.org/en/latest/fixture.html for more information about fixtures, and\n"
+        "https://docs.pytest.org/en/latest/deprecations.html#calling-fixtures-directly about how to update your code."
+    ).format(name=fixture_marker.name or function.__name__)
 
     @functools.wraps(function)
     def result(*args, **kwargs):

@@ -19,13 +19,6 @@ DEPRECATED_EXTERNAL_PLUGINS = {
 }
 
 
-FIXTURE_FUNCTION_CALL = (
-    'Fixture "{name}" called directly. Fixtures are not meant to be called directly,\n'
-    "but are created automatically when test functions request them as parameters.\n"
-    "See https://docs.pytest.org/en/latest/fixture.html for more information about fixtures, and\n"
-    "https://docs.pytest.org/en/latest/deprecations.html#calling-fixtures-directly about how to update your code."
-)
-
 FIXTURE_NAMED_REQUEST = PytestDeprecationWarning(
     "'request' is a reserved name for fixtures and will raise an error in future versions"
 )
