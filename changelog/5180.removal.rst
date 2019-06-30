@@ -1,0 +1,4 @@
+As per our policy, the following features have been deprecated in the 4.X series and are now being
+removed:
+
+* ``Request.getfuncargvalue``: use ``Request.getfixturevalue`` instead.

@@ -32,10 +32,6 @@ def test_pytest_custom_cfg_unsupported(testdir):
         testdir.runpytest("-c", "custom.cfg")
 
 
-def test_getfuncargvalue_is_deprecated(request):
-    pytest.deprecated_call(request.getfuncargvalue, "tmpdir")
-
-
 @pytest.mark.filterwarnings("default")
 def test_resultlog_is_deprecated(testdir):
     result = testdir.runpytest("--help")

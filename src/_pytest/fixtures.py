@@ -470,13 +470,6 @@ class FixtureRequest(FuncargnamesCompatAttr):
         """
         return self._get_active_fixturedef(argname).cached_result[0]
 
-    def getfuncargvalue(self, argname):
-        """ Deprecated, use getfixturevalue. """
-        from _pytest import deprecated
-
-        warnings.warn(deprecated.GETFUNCARGVALUE, stacklevel=2)
-        return self.getfixturevalue(argname)
-
     def _get_active_fixturedef(self, argname):
         try:
             return self._fixture_defs[argname]
