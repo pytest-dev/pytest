@@ -279,6 +279,8 @@ class TestRaises(object):
                     pass
             assert "via __class__" in excinfo.value.args[0]
 
-    def test_u(self):
+    def test_unicode_message(self):
+        """pytest.raises should be able to match unicode messages when using a unicode regex (#5478)
+        """
         with pytest.raises(AssertionError, match=u"\u2603"):
             assert False, u"\u2603"
