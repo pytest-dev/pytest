@@ -11,6 +11,8 @@ removed:
   syntax. This might change the exception message from previous versions, but they still raise
   ``TypeError`` on unknown keyword arguments as before.
 
+* ``pytest.config`` global variable.
+
 
 For more information consult
 `Deprecations and Removals <https://docs.pytest.org/en/latest/deprecations.html>`__ in the docs.

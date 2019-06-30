@@ -46,11 +46,6 @@ RESULT_LOG = PytestDeprecationWarning(
 )
 
 
-PYTEST_CONFIG_GLOBAL = PytestDeprecationWarning(
-    "the `pytest.config` global is deprecated.  Please use `request.config` "
-    "or `pytest_configure` (if you're a pytest plugin) instead."
-)
-
 PYTEST_ENSURETEMP = RemovedInPytest4Warning(
     "pytest/tmpdir_factory.ensuretemp is deprecated, \n"
     "please use the tmp_path fixture or tmp_path_factory.mktemp"

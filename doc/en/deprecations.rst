@@ -34,19 +34,6 @@ in places where we or plugin authors must distinguish between fixture names and
 names supplied by non-fixture things such as ``pytest.mark.parametrize``.
 
 
-
-
-``pytest.config`` global
-~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. deprecated:: 4.1
-
-The ``pytest.config`` global object is deprecated.  Instead use
-``request.config`` (via the ``request`` fixture) or if you are a plugin author
-use the ``pytest_configure(config)`` hook. Note that many hooks can also access
-the ``config`` object indirectly, through ``session.config`` or ``item.config`` for example.
-
-
 Result log (``--result-log``)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -63,11 +50,23 @@ stable.
 
 The actual alternative is still being discussed in issue `#4488 <https://github.com/pytest-dev/pytest/issues/4488>`__.
 
+
 Removed Features
 ----------------
 
 As stated in our :ref:`backwards-compatibility` policy, deprecated features are removed only in major releases after
 an appropriate period of deprecation has passed.
+
+
+``pytest.config`` global
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. versionremoved:: 5.0
+
+The ``pytest.config`` global object is deprecated.  Instead use
+``request.config`` (via the ``request`` fixture) or if you are a plugin author
+use the ``pytest_configure(config)`` hook. Note that many hooks can also access
+the ``config`` object indirectly, through ``session.config`` or ``item.config`` for example.
 
 
 .. _`raises message deprecated`:
