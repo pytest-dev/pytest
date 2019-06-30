@@ -19,11 +19,6 @@ DEPRECATED_EXTERNAL_PLUGINS = {
 }
 
 
-FIXTURE_NAMED_REQUEST = PytestDeprecationWarning(
-    "'request' is a reserved name for fixtures and will raise an error in future versions"
-)
-
-
 FUNCARGNAMES = PytestDeprecationWarning(
     "The `funcargnames` attribute was an alias for `fixturenames`, "
     "since pytest 2.3 - use the newer attribute instead."

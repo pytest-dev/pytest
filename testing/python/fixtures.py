@@ -1126,21 +1126,6 @@ class TestFixtureUsages:
         values = reprec.getfailedcollections()
         assert len(values) == 1
 
-    def test_request_can_be_overridden(self, testdir):
-        testdir.makepyfile(
-            """
-            import pytest
-            @pytest.fixture()
-            def request(request):
-                request.a = 1
-                return request
-            def test_request(request):
-                assert request.a == 1
-        """
-        )
-        reprec = testdir.inline_run("-Wignore::pytest.PytestDeprecationWarning")
-        reprec.assertoutcome(passed=1)
-
     def test_usefixtures_marker(self, testdir):
         testdir.makepyfile(
             """
@@ -3973,3 +3958,14 @@ def test_fixture_param_shadowing(testdir):
     result.stdout.fnmatch_lines(["*::test_normal_fixture[[]a[]]*"])
     result.stdout.fnmatch_lines(["*::test_normal_fixture[[]b[]]*"])
     result.stdout.fnmatch_lines(["*::test_indirect[[]1[]]*"])
+
+
+def test_fixture_named_request(testdir):
+    testdir.copy_example("fixtures/test_fixture_named_request.py")
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines(
+        [
+            "*'request' is a reserved word for fixtures, use another name:",
+            "  *test_fixture_named_request.py:5",
+        ]
+    )

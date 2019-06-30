@@ -1,8 +1,6 @@
 import pytest
 from _pytest import deprecated
 
-pytestmark = pytest.mark.pytester_example_path("deprecated")
-
 
 @pytest.mark.filterwarnings("default")
 def test_resultlog_is_deprecated(testdir):
@@ -46,13 +44,3 @@ def test_external_plugins_integrated(testdir, plugin):
 
     with pytest.warns(pytest.PytestConfigWarning):
         testdir.parseconfig("-p", plugin)
-
-
-def test_fixture_named_request(testdir):
-    testdir.copy_example()
-    result = testdir.runpytest()
-    result.stdout.fnmatch_lines(
-        [
-            "*'request' is a reserved name for fixtures and will raise an error in future versions"
-        ]
-    )

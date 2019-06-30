@@ -18,6 +18,7 @@ from pluggy import PluginManager
 
 import _pytest._code
 import _pytest.assertion
+import _pytest.deprecated
 import _pytest.hookspec  # the extension point definitions
 from .exceptions import PrintHelp
 from .exceptions import UsageError

@@ -2,7 +2,6 @@ import functools
 import inspect
 import itertools
 import sys
-import warnings
 from collections import defaultdict
 from collections import deque
 from collections import OrderedDict
@@ -26,7 +25,6 @@ from _pytest.compat import getlocation
 from _pytest.compat import is_generator
 from _pytest.compat import NOTSET
 from _pytest.compat import safe_getattr
-from _pytest.deprecated import FIXTURE_NAMED_REQUEST
 from _pytest.outcomes import fail
 from _pytest.outcomes import TEST_OUTCOME
 
@@ -971,7 +969,13 @@ class FixtureFunctionMarker:
 
         name = self.name or function.__name__
         if name == "request":
-            warnings.warn(FIXTURE_NAMED_REQUEST)
+            location = getlocation(function)
+            fail(
+                "'request' is a reserved word for fixtures, use another name:\n  {}".format(
+                    location
+                ),
+                pytrace=False,
+            )
         function._pytestfixturefunction = self
         return function
 

@@ -19,6 +19,8 @@ removed:
 
 * ``RemovedInPytest4Warning`` warning type.
 
+* ``request`` is now a reserved name for fixtures.
+
 
 For more information consult
 `Deprecations and Removals <https://docs.pytest.org/en/latest/deprecations.html>`__ in the docs.
