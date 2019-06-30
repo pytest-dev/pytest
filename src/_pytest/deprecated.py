@@ -42,12 +42,6 @@ FUNCARGNAMES = PytestDeprecationWarning(
     "since pytest 2.3 - use the newer attribute instead."
 )
 
-RAISES_MESSAGE_PARAMETER = PytestDeprecationWarning(
-    "The 'message' parameter is deprecated.\n"
-    "(did you mean to use `match='some regex'` to check the exception message?)\n"
-    "Please see:\n"
-    "  https://docs.pytest.org/en/4.6-maintenance/deprecations.html#message-parameter-of-pytest-raises"
-)
 
 RESULT_LOG = PytestDeprecationWarning(
     "--result-log is deprecated and scheduled for removal in pytest 6.0.\n"

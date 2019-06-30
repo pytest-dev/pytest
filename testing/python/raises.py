@@ -2,7 +2,6 @@ import sys
 
 import pytest
 from _pytest.outcomes import Failed
-from _pytest.warning_types import PytestDeprecationWarning
 
 
 class TestRaises:
@@ -152,17 +151,6 @@ class TestRaises:
                 pass
         except pytest.raises.Exception as e:
             assert e.msg == "DID NOT RAISE {}".format(repr(ValueError))
-        else:
-            assert False, "Expected pytest.raises.Exception"
-
-    def test_custom_raise_message(self):
-        message = "TEST_MESSAGE"
-        try:
-            with pytest.warns(PytestDeprecationWarning):
-                with pytest.raises(ValueError, message=message):
-                    pass
-        except pytest.raises.Exception as e:
-            assert e.msg == message
         else:
             assert False, "Expected pytest.raises.Exception"
 

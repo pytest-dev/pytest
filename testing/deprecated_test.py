@@ -76,12 +76,6 @@ def test_external_plugins_integrated(testdir, plugin):
         testdir.parseconfig("-p", plugin)
 
 
-def test_raises_message_argument_deprecated():
-    with pytest.warns(pytest.PytestDeprecationWarning):
-        with pytest.raises(RuntimeError, message="foobar"):
-            raise RuntimeError
-
-
 def test_pytest_plugins_in_non_top_level_conftest_deprecated(testdir):
     from _pytest.deprecated import PYTEST_PLUGINS_FROM_NON_TOP_LEVEL_CONFTEST
 

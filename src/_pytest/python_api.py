@@ -1,7 +1,6 @@
 import inspect
 import math
 import pprint
-import warnings
 from collections.abc import Iterable
 from collections.abc import Mapping
 from collections.abc import Sized
@@ -12,7 +11,6 @@ from numbers import Number
 from more_itertools.more import always_iterable
 
 import _pytest._code
-from _pytest import deprecated
 from _pytest.compat import STRING_TYPES
 from _pytest.outcomes import fail
 
@@ -538,8 +536,6 @@ def raises(expected_exception, *args, **kwargs):
 
     __ https://docs.python.org/3/library/re.html#regular-expression-syntax
 
-    :kwparam message: **(deprecated since 4.1)** if specified, provides a custom failure message
-        if the exception is not raised. See :ref:`the deprecation docs <raises message deprecated>` for a workaround.
 
     .. currentmodule:: _pytest._code
 
@@ -656,9 +652,6 @@ def raises(expected_exception, *args, **kwargs):
     match_expr = None
 
     if not args:
-        if "message" in kwargs:
-            message = kwargs.pop("message")
-            warnings.warn(deprecated.RAISES_MESSAGE_PARAMETER, stacklevel=2)
         if "match" in kwargs:
             match_expr = kwargs.pop("match")
         if kwargs:
