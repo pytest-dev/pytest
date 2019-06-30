@@ -7,6 +7,10 @@ removed:
 
 * ``message`` parameter of ``pytest.raises``.
 
+* ``pytest.raises``, ``pytest.warns`` and ``ParameterSet.param`` now use native keyword-only
+  syntax. This might change the exception message from previous versions, but they still raise
+  ``TypeError`` on unknown keyword arguments as before.
+
 
 For more information consult
 `Deprecations and Removals <https://docs.pytest.org/en/latest/deprecations.html>`__ in the docs.

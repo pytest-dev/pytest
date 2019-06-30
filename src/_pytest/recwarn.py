@@ -3,7 +3,6 @@ import inspect
 import re
 import warnings
 
-from _pytest.deprecated import PYTEST_WARNS_UNKNOWN_KWARGS
 from _pytest.fixtures import yield_fixture
 from _pytest.outcomes import fail
 
@@ -43,7 +42,7 @@ def deprecated_call(func=None, *args, **kwargs):
     return warns((DeprecationWarning, PendingDeprecationWarning), *args, **kwargs)
 
 
-def warns(expected_warning, *args, **kwargs):
+def warns(expected_warning, *args, match=None, **kwargs):
     r"""Assert that code raises a particular class of warning.
 
     Specifically, the parameter ``expected_warning`` can be a warning class or
@@ -77,12 +76,12 @@ def warns(expected_warning, *args, **kwargs):
     """
     __tracebackhide__ = True
     if not args:
-        match_expr = kwargs.pop("match", None)
         if kwargs:
-            warnings.warn(
-                PYTEST_WARNS_UNKNOWN_KWARGS.format(args=sorted(kwargs)), stacklevel=2
-            )
-        return WarningsChecker(expected_warning, match_expr=match_expr)
+            msg = "Unexpected keyword arguments passed to pytest.warns: "
+            msg += ", ".join(sorted(kwargs))
+            msg += "\nUse context-manager form instead?"
+            raise TypeError(msg)
+        return WarningsChecker(expected_warning, match_expr=match)
     else:
         func = args[0]
         if not callable(func):

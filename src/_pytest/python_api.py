@@ -523,7 +523,7 @@ def _is_numpy_array(obj):
 # builtin pytest.raises helper
 
 
-def raises(expected_exception, *args, **kwargs):
+def raises(expected_exception, *args, match=None, **kwargs):
     r"""
     Assert that a code block/function call raises ``expected_exception``
     or raise a failure exception otherwise.
@@ -649,16 +649,14 @@ def raises(expected_exception, *args, **kwargs):
         raise TypeError(msg % type(exc))
 
     message = "DID NOT RAISE {}".format(expected_exception)
-    match_expr = None
 
     if not args:
-        if "match" in kwargs:
-            match_expr = kwargs.pop("match")
         if kwargs:
             msg = "Unexpected keyword arguments passed to pytest.raises: "
             msg += ", ".join(sorted(kwargs))
+            msg += "\nUse context-manager form instead?"
             raise TypeError(msg)
-        return RaisesContext(expected_exception, message, match_expr)
+        return RaisesContext(expected_exception, message, match)
     else:
         func = args[0]
         if not callable(func):
