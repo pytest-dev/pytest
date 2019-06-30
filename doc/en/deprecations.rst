@@ -80,12 +80,35 @@ The ``pytest.config`` global object is deprecated.  Instead use
 use the ``pytest_configure(config)`` hook. Note that many hooks can also access
 the ``config`` object indirectly, through ``session.config`` or ``item.config`` for example.
 
+
+Result log (``--result-log``)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 4.0
+
+The ``--result-log`` option produces a stream of test reports which can be
+analysed at runtime. It uses a custom format which requires users to implement their own
+parser, but the team believes using a line-based format that can be parsed using standard
+tools would provide a suitable and better alternative.
+
+The current plan is to provide an alternative in the pytest 5.0 series and remove the ``--result-log``
+option in pytest 6.0 after the new implementation proves satisfactory to all users and is deemed
+stable.
+
+The actual alternative is still being discussed in issue `#4488 <https://github.com/pytest-dev/pytest/issues/4488>`__.
+
+Removed Features
+----------------
+
+As stated in our :ref:`backwards-compatibility` policy, deprecated features are removed only in major releases after
+an appropriate period of deprecation has passed.
+
 .. _raises-warns-exec:
 
 ``raises`` / ``warns`` with a string as the second argument
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. deprecated:: 4.1
+.. versionremoved:: 5.0
 
 Use the context manager form of these instead.  When necessary, invoke ``exec``
 directly.
@@ -116,27 +139,6 @@ Becomes:
 
 
 
-Result log (``--result-log``)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. deprecated:: 4.0
-
-The ``--result-log`` option produces a stream of test reports which can be
-analysed at runtime. It uses a custom format which requires users to implement their own
-parser, but the team believes using a line-based format that can be parsed using standard
-tools would provide a suitable and better alternative.
-
-The current plan is to provide an alternative in the pytest 5.0 series and remove the ``--result-log``
-option in pytest 6.0 after the new implementation proves satisfactory to all users and is deemed
-stable.
-
-The actual alternative is still being discussed in issue `#4488 <https://github.com/pytest-dev/pytest/issues/4488>`__.
-
-Removed Features
-----------------
-
-As stated in our :ref:`backwards-compatibility` policy, deprecated features are removed only in major releases after
-an appropriate period of deprecation has passed.
 
 Using ``Class`` in custom Collectors
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

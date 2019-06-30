@@ -1,7 +1,6 @@
 import inspect
 import math
 import pprint
-import sys
 import warnings
 from collections.abc import Iterable
 from collections.abc import Mapping
@@ -667,23 +666,12 @@ def raises(expected_exception, *args, **kwargs):
             msg += ", ".join(sorted(kwargs))
             raise TypeError(msg)
         return RaisesContext(expected_exception, message, match_expr)
-    elif isinstance(args[0], str):
-        warnings.warn(deprecated.RAISES_EXEC, stacklevel=2)
-        code, = args
-        assert isinstance(code, str)
-        frame = sys._getframe(1)
-        loc = frame.f_locals.copy()
-        loc.update(kwargs)
-        # print "raises frame scope: %r" % frame.f_locals
-        try:
-            code = _pytest._code.Source(code).compile(_genframe=frame)
-            exec(code, frame.f_globals, loc)
-            # XXX didn't mean f_globals == f_locals something special?
-            #     this is destroyed here ...
-        except expected_exception:
-            return _pytest._code.ExceptionInfo.from_current()
     else:
         func = args[0]
+        if not callable(func):
+            raise TypeError(
+                "{!r} object (type: {}) must be callable".format(func, type(func))
+            )
         try:
             func(*args[1:], **kwargs)
         except expected_exception:

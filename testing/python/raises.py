@@ -6,31 +6,17 @@ from _pytest.warning_types import PytestDeprecationWarning
 
 
 class TestRaises:
+    def test_check_callable(self):
+        with pytest.raises(TypeError, match=r".* must be callable"):
+            pytest.raises(RuntimeError, "int('qwe')")
+
     def test_raises(self):
-        source = "int('qwe')"
-        with pytest.warns(PytestDeprecationWarning):
-            excinfo = pytest.raises(ValueError, source)
-        code = excinfo.traceback[-1].frame.code
-        s = str(code.fullsource)
-        assert s == source
-
-    def test_raises_exec(self):
-        with pytest.warns(PytestDeprecationWarning) as warninfo:
-            pytest.raises(ValueError, "a,x = []")
-        assert warninfo[0].filename == __file__
-
-    def test_raises_exec_correct_filename(self):
-        with pytest.warns(PytestDeprecationWarning):
-            excinfo = pytest.raises(ValueError, 'int("s")')
-            assert __file__ in excinfo.traceback[-1].path
-
-    def test_raises_syntax_error(self):
-        with pytest.warns(PytestDeprecationWarning) as warninfo:
-            pytest.raises(SyntaxError, "qwe qwe qwe")
-        assert warninfo[0].filename == __file__
+        excinfo = pytest.raises(ValueError, int, "qwe")
+        assert "invalid literal" in str(excinfo.value)
 
     def test_raises_function(self):
-        pytest.raises(ValueError, int, "hello")
+        excinfo = pytest.raises(ValueError, int, "hello")
+        assert "invalid literal" in str(excinfo.value)
 
     def test_raises_callable_no_exception(self):
         class A:

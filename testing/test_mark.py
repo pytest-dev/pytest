@@ -25,7 +25,8 @@ class TestMark:
 
     def test_pytest_mark_notcallable(self):
         mark = Mark()
-        pytest.raises((AttributeError, TypeError), mark)
+        with pytest.raises(TypeError):
+            mark()
 
     def test_mark_with_param(self):
         def some_function(abc):

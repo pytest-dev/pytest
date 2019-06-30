@@ -2,3 +2,9 @@ As per our policy, the following features have been deprecated in the 4.X series
 removed:
 
 * ``Request.getfuncargvalue``: use ``Request.getfixturevalue`` instead.
+
+* ``pytest.raises`` and ``pytest.warns`` no longer support strings as the second argument.
+
+
+For more information consult
+`Deprecations and Removals <https://docs.pytest.org/en/latest/deprecations.html>`__ in the docs.

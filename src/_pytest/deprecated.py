@@ -54,14 +54,6 @@ RESULT_LOG = PytestDeprecationWarning(
     "See https://docs.pytest.org/en/latest/deprecations.html#result-log-result-log for more information."
 )
 
-RAISES_EXEC = PytestDeprecationWarning(
-    "raises(..., 'code(as_a_string)') is deprecated, use the context manager form or use `exec()` directly\n\n"
-    "See https://docs.pytest.org/en/latest/deprecations.html#raises-warns-exec"
-)
-WARNS_EXEC = PytestDeprecationWarning(
-    "warns(..., 'code(as_a_string)') is deprecated, use the context manager form or use `exec()` directly.\n\n"
-    "See https://docs.pytest.org/en/latest/deprecations.html#raises-warns-exec"
-)
 
 PYTEST_PLUGINS_FROM_NON_TOP_LEVEL_CONFTEST = (
     "Defining 'pytest_plugins' in a non-top-level conftest is no longer supported "
