@@ -14,13 +14,6 @@ def test_tmpdir_fixture(testdir):
     results.stdout.fnmatch_lines(["*1 passed*"])
 
 
-def test_ensuretemp(recwarn):
-    d1 = pytest.ensuretemp("hello")
-    d2 = pytest.ensuretemp("hello")
-    assert d1 == d2
-    assert d1.check(dir=1)
-
-
 @attr.s
 class FakeConfig:
     basetemp = attr.ib()
@@ -85,12 +78,15 @@ def test_basetemp(testdir):
     p = testdir.makepyfile(
         """
         import pytest
-        def test_1():
-            pytest.ensuretemp("hello")
+        def test_1(tmpdir_factory):
+            tmpdir_factory.mktemp('hello', numbered=False)
     """
     )
-    result = testdir.runpytest(p, "--basetemp=%s" % mytemp, SHOW_PYTEST_WARNINGS_ARG)
+    result = testdir.runpytest(
+        p, "--basetemp=%s" % mytemp, SHOW_PYTEST_WARNINGS_ARG, "-s"
+    )
     assert result.ret == 0
+    print(mytemp)
     assert mytemp.join("hello").check()
 
 

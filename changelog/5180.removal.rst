@@ -13,6 +13,8 @@ removed:
 
 * ``pytest.config`` global variable.
 
+* ``tmpdir_factory.ensuretemp`` method.
+
 
 For more information consult
 `Deprecations and Removals <https://docs.pytest.org/en/latest/deprecations.html>`__ in the docs.

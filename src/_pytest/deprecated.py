@@ -9,7 +9,6 @@ All constants defined in this module should be either PytestWarning instances or
 in case of warnings which need to format their messages.
 """
 from _pytest.warning_types import PytestDeprecationWarning
-from _pytest.warning_types import RemovedInPytest4Warning
 
 YIELD_TESTS = "yield tests were removed in pytest 4.0 - {name} will be ignored"
 
@@ -45,11 +44,6 @@ RESULT_LOG = PytestDeprecationWarning(
     "See https://docs.pytest.org/en/latest/deprecations.html#result-log-result-log for more information."
 )
 
-
-PYTEST_ENSURETEMP = RemovedInPytest4Warning(
-    "pytest/tmpdir_factory.ensuretemp is deprecated, \n"
-    "please use the tmp_path fixture or tmp_path_factory.mktemp"
-)
 
 PYTEST_LOGWARNING = PytestDeprecationWarning(
     "pytest_logwarning is deprecated, no longer being called, and will be removed soon\n"
