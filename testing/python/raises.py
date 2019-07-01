@@ -4,6 +4,7 @@ import sys
 import six
 
 import pytest
+from _pytest.compat import dummy_context_manager
 from _pytest.outcomes import Failed
 from _pytest.warning_types import PytestDeprecationWarning
 
@@ -279,8 +280,34 @@ class TestRaises(object):
                     pass
             assert "via __class__" in excinfo.value.args[0]
 
-    def test_unicode_message(self):
-        """pytest.raises should be able to match unicode messages when using a unicode regex (#5478)
-        """
-        with pytest.raises(AssertionError, match=u"\u2603"):
-            assert False, u"\u2603"
+
+class TestUnicodeHandling:
+    """Test various combinations of bytes and unicode with pytest.raises (#5478)
+
+    https://github.com/pytest-dev/pytest/pull/5479#discussion_r298852433
+    """
+
+    success = dummy_context_manager
+    py2_only = pytest.mark.skipif(
+        six.PY3, reason="bytes in raises only supported in Python 2"
+    )
+
+    @pytest.mark.parametrize(
+        "message, match, expectation",
+        [
+            (u"\u2603", u"\u2603", success()),
+            (u"\u2603", u"\u2603foo", pytest.raises(AssertionError)),
+            pytest.param(b"hello", b"hello", success(), marks=py2_only),
+            pytest.param(
+                b"hello", b"world", pytest.raises(AssertionError), marks=py2_only
+            ),
+            pytest.param(u"hello", b"hello", success(), marks=py2_only),
+            pytest.param(
+                u"hello", b"world", pytest.raises(AssertionError), marks=py2_only
+            ),
+        ],
+    )
+    def test_handling(self, message, match, expectation):
+        with expectation:
+            with pytest.raises(RuntimeError, match=match):
+                raise RuntimeError(message)
