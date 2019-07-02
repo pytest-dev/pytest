@@ -9,7 +9,6 @@ import types
 import warnings
 from functools import lru_cache
 
-import importlib_metadata
 import py
 from packaging.version import Version
 from pluggy import HookimplMarker
@@ -25,6 +24,7 @@ from .findpaths import determine_setup
 from .findpaths import exists
 from _pytest._code import ExceptionInfo
 from _pytest._code import filter_traceback
+from _pytest.compat import importlib_metadata
 from _pytest.outcomes import fail
 from _pytest.outcomes import Skipped
 from _pytest.warning_types import PytestConfigWarning

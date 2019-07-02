@@ -172,7 +172,8 @@ class TestImportHookInstallation:
                 return check
             """,
             "mainwrapper.py": """\
-            import pytest, importlib_metadata
+            import pytest
+            from _pytest.compat import importlib_metadata
 
             class DummyEntryPoint(object):
                 name = 'spam'

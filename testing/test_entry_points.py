@@ -1,4 +1,4 @@
-import importlib_metadata
+from _pytest.compat import importlib_metadata
 
 
 def test_pytest_entry_points_are_identical():
