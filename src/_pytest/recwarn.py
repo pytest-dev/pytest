@@ -76,12 +76,7 @@ def warns(expected_warning, *args, match=None, **kwargs):
     """
     __tracebackhide__ = True
     if not args:
-        if kwargs:
-            msg = "Unexpected keyword arguments passed to pytest.warns: "
-            msg += ", ".join(sorted(kwargs))
-            msg += "\nUse context-manager form instead?"
-            raise TypeError(msg)
-        return WarningsChecker(expected_warning, match_expr=match)
+        return WarningsChecker(expected_warning, match_expr=match, **kwargs)
     else:
         func = args[0]
         if not callable(func):

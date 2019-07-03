@@ -651,12 +651,9 @@ def raises(expected_exception, *args, match=None, **kwargs):
     message = "DID NOT RAISE {}".format(expected_exception)
 
     if not args:
-        if kwargs:
-            msg = "Unexpected keyword arguments passed to pytest.raises: "
-            msg += ", ".join(sorted(kwargs))
-            msg += "\nUse context-manager form instead?"
-            raise TypeError(msg)
-        return RaisesContext(expected_exception, message, match)
+        return RaisesContext(
+            expected_exception, message=message, match_expr=match, **kwargs
+        )
     else:
         func = args[0]
         if not callable(func):
