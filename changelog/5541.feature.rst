@@ -1,0 +1,1 @@
+Add '.exception' attribute as an alias for '.value' to facilitate porting tests written using unittest.

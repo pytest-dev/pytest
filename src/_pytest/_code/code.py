@@ -422,6 +422,20 @@ class ExceptionInfo:
     def value(self):
         """the exception value"""
         return self._excinfo[1]
+    
+    @property
+    def exception(self):
+        """
+        an alias to '.value' to facilitate porting porting tests written using
+        unittest. Prefer '.value' in new code.
+        """
+        msg = (
+            "The '.exception' attribute is an alias to facilitate porting "
+            "tests written using unittest.\n"
+            "Prefer '.value' in new code."
+        )  
+        warnings.warn(PytestWarning(msg), stacklevel=2)
+        return self.value        
 
     @property
     def tb(self):
