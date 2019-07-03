@@ -2,12 +2,11 @@
 Talks and Tutorials
 ==========================
 
-..
-   .. sidebar:: Next Open Trainings
+.. sidebar:: Next Open Trainings
 
-      `Professional Testing with Python
-      <http://www.python-academy.com/courses/specialtopics/python_course_testing.html>`_,
-      26-28 April 2017, Leipzig, Germany.
+   - `Training at Europython 2019 <https://ep2019.europython.eu/talks/94WEnsY-introduction-to-pytest/>`_, 8th July 2019, Basel, Switzerland.
+
+   - `Training at Workshoptage 2019 <https://workshoptage.ch/workshops/2019/test-driven-development-fuer-python-mit-pytest/>`_ (German), 10th September 2019, Rapperswil, Switzerland.
 
 .. _`funcargs`: funcargs.html
 
