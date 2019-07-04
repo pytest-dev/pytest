@@ -572,8 +572,13 @@ class ExceptionInfo(object):
         raised.
         """
         __tracebackhide__ = True
-        if not re.search(regexp, str(self.value)):
-            assert 0, "Pattern '{!s}' not found in '{!s}'".format(regexp, self.value)
+        value = (
+            text_type(self.value) if isinstance(regexp, text_type) else str(self.value)
+        )
+        if not re.search(regexp, value):
+            raise AssertionError(
+                u"Pattern {!r} not found in {!r}".format(regexp, value)
+            )
         return True
 
 
