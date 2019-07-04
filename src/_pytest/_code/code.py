@@ -544,7 +544,7 @@ class ExceptionInfo:
         """
         __tracebackhide__ = True
         if not re.search(regexp, str(self.value)):
-            assert 0, "Pattern '{!s}' not found in '{!s}'".format(regexp, self.value)
+            assert 0, "Pattern {!r} not found in {!r}".format(regexp, str(self.value))
         return True
 
 
