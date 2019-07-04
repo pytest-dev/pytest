@@ -186,28 +186,33 @@ class WarningsChecker(WarningsRecorder):
         __tracebackhide__ = True
 
         # only check if we're not currently handling an exception
-        if all(a is None for a in exc_info):
-            if self.expected_warning is not None:
-                if not any(issubclass(r.category, self.expected_warning) for r in self):
-                    __tracebackhide__ = True
-                    fail(
-                        "DID NOT WARN. No warnings of type {} was emitted. "
-                        "The list of emitted warnings is: {}.".format(
-                            self.expected_warning, [each.message for each in self]
-                        )
-                    )
-                elif self.match_expr is not None:
-                    for r in self:
-                        if issubclass(r.category, self.expected_warning):
-                            if re.compile(self.match_expr).search(str(r.message)):
-                                break
-                    else:
-                        fail(
-                            "DID NOT WARN. No warnings of type {} matching"
-                            " ('{}') was emitted. The list of emitted warnings"
-                            " is: {}.".format(
-                                self.expected_warning,
-                                self.match_expr,
-                                [each.message for each in self],
-                            )
-                        )
+        if not all(a is None for a in exc_info):
+            return
+
+        if self.expected_warning is None:
+            return
+
+        for r in self:
+            if issubclass(r.category, self.expected_warning) and (
+                self.match_expr is None or re.search(self.match_expr, str(r.message))
+            ):
+                self.warning = r.message
+                self.filename = r.filename
+                self.lineno = r.lineno
+                return
+
+        if self.match_expr is None:
+            fail(
+                "DID NOT WARN. No warnings of type {} was emitted. "
+                "The list of emitted warnings is: {}.".format(
+                    self.expected_warning, [each.message for each in self]
+                )
+            )
+
+        fail(
+            "DID NOT WARN. No warnings of type {} matching"
+            " ('{}') was emitted. The list of emitted warnings"
+            " is: {}.".format(
+                self.expected_warning, self.match_expr, [each.message for each in self]
+            )
+        )
