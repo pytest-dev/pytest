@@ -577,7 +577,7 @@ class ExceptionInfo(object):
         )
         if not re.search(regexp, value):
             raise AssertionError(
-                u"Pattern '{}' not found in '{}'".format(regexp, value)
+                u"Pattern {!r} not found in {!r}".format(regexp, value)
             )
         return True
 

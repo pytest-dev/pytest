@@ -221,7 +221,7 @@ class TestRaises(object):
             int("asdf")
 
         msg = "with base 16"
-        expr = r"Pattern '{}' not found in 'invalid literal for int\(\) with base 10: 'asdf''".format(
+        expr = r"Pattern '{}' not found in \"invalid literal for int\(\) with base 10: 'asdf'\"".format(
             msg
         )
         with pytest.raises(AssertionError, match=expr):
@@ -304,6 +304,18 @@ class TestUnicodeHandling:
             pytest.param(u"hello", b"hello", success(), marks=py2_only),
             pytest.param(
                 u"hello", b"world", pytest.raises(AssertionError), marks=py2_only
+            ),
+            pytest.param(
+                u"😊".encode("UTF-8"),
+                b"world",
+                pytest.raises(AssertionError),
+                marks=py2_only,
+            ),
+            pytest.param(
+                u"world",
+                u"😊".encode("UTF-8"),
+                pytest.raises(AssertionError),
+                marks=py2_only,
             ),
         ],
     )
