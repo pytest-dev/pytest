@@ -12,6 +12,9 @@ Tidelift aims to make Open Source sustainable by offering subscriptions to compa
 on Open Source packages. This subscription allows it to pay maintainers of those Open Source
 packages to aid sustainability of the work.
 
+It is the perfect platform for companies that want to support Open Source packages and at the same
+time obtain assurances regarding maintenance, quality and security.
+
 Funds
 =====
 

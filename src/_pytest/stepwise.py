@@ -72,7 +72,7 @@ class StepwisePlugin:
 
     def pytest_runtest_logreport(self, report):
         # Skip this hook if plugin is not active or the test is xfailed.
-        if not self.active or "xfail" in report.keywords:
+        if not self.active:
             return
 
         if report.failed:

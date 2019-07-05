@@ -169,7 +169,7 @@ Short version
 #. Follow **PEP-8** for naming and `black <https://github.com/python/black>`_ for formatting.
 #. Tests are run using ``tox``::
 
-    tox -e linting,py27,py37
+    tox -e linting,py37
 
    The test environments above are usually enough to cover most cases locally.
 
@@ -217,7 +217,9 @@ Here is a simple overview, with pytest-specific bits:
    If you need some help with Git, follow this quick start
    guide: https://git.wiki.kernel.org/index.php/QuickStart
 
-#. Install `pre-commit <https://pre-commit.com>`_ and its hook on the pytest repo::
+#. Install `pre-commit <https://pre-commit.com>`_ and its hook on the pytest repo:
+
+   **Note: pre-commit must be installed as admin, as it will not function otherwise**::
 
      $ pip install --user pre-commit
      $ pre-commit install
@@ -237,20 +239,20 @@ Here is a simple overview, with pytest-specific bits:
 
 #. Run all the tests
 
-   You need to have Python 2.7 and 3.7 available in your system.  Now
+   You need to have Python 3.7 available in your system.  Now
    running tests is as simple as issuing this command::
 
-    $ tox -e linting,py27,py37
+    $ tox -e linting,py37
 
-   This command will run tests via the "tox" tool against Python 2.7 and 3.7
+   This command will run tests via the "tox" tool against Python 3.7
    and also perform "lint" coding-style checks.
 
 #. You can now edit your local working copy and run the tests again as necessary. Please follow PEP-8 for naming.
 
-   You can pass different options to ``tox``. For example, to run tests on Python 2.7 and pass options to pytest
+   You can pass different options to ``tox``. For example, to run tests on Python 3.7 and pass options to pytest
    (e.g. enter pdb on failure) to pytest you can do::
 
-    $ tox -e py27 -- --pdb
+    $ tox -e py37 -- --pdb
 
    Or to only run tests in a particular test module on Python 3.7::
 
@@ -266,7 +268,8 @@ Here is a simple overview, with pytest-specific bits:
 
 #. Create a new changelog entry in ``changelog``. The file should be named ``<issueid>.<type>.rst``,
    where *issueid* is the number of the issue related to the change and *type* is one of
-   ``bugfix``, ``removal``, ``feature``, ``vendor``, ``doc`` or ``trivial``.
+   ``bugfix``, ``removal``, ``feature``, ``vendor``, ``doc`` or ``trivial``. You may not create a
+   changelog entry if the change doesn't affect the documented behaviour of Pytest.
 
 #. Add yourself to ``AUTHORS`` file if not there yet, in alphabetical order.
 
