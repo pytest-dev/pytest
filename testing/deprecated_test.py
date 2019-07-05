@@ -70,7 +70,7 @@ def test_terminal_reporter_writer_attr(pytestconfig):
     assert terminal_reporter.writer is terminal_reporter._tw
 
 
-@pytest.mark.parametrize("plugin", deprecated.DEPRECATED_EXTERNAL_PLUGINS)
+@pytest.mark.parametrize("plugin", sorted(deprecated.DEPRECATED_EXTERNAL_PLUGINS))
 @pytest.mark.filterwarnings("default")
 def test_external_plugins_integrated(testdir, plugin):
     testdir.syspathinsert()
