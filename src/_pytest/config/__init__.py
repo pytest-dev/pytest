@@ -70,6 +70,8 @@ def main(args=None, plugins=None):
                 tw.line(line.rstrip(), red=True)
             return 4
         else:
+            config.invocation_args = args
+            config.invocation_plugins = plugins
             try:
                 return config.hook.pytest_cmdline_main(config=config)
             finally:
@@ -608,20 +610,33 @@ def _iter_rewritable_modules(package_files):
 
 
 class Config:
-    """ access to configuration values, pluginmanager and plugin hooks.  """
+    """
+    Access to configuration values, pluginmanager and plugin hooks.
+
+    :ivar PytestPluginManager pluginmanager: the plugin manager handles plugin registration and hook invocation.
+
+    :ivar argparse.Namespace option: access to command line option as attributes.
+
+    :ivar invocation_args: list of command-line arguments as passed to pytest.main()
+
+    :ivar invocation_plugins: list of extra plugins passed to pytest.main(), might be None
+
+    :ivar py.path.local invocation_dir: directory where pytest.main() was invoked from
+    """
 
     def __init__(self, pluginmanager):
-        #: access to command line option as attributes.
-        #: (deprecated), use :py:func:`getoption() <_pytest.config.Config.getoption>` instead
-        self.option = argparse.Namespace()
         from .argparsing import Parser, FILE_OR_DIR
+
+        self.option = argparse.Namespace()
+        self.invocation_args = None
+        self.invocation_plugins = None
+        self.invocation_dir = py.path.local()
 
         _a = FILE_OR_DIR
         self._parser = Parser(
             usage="%(prog)s [options] [{}] [{}] [...]".format(_a, _a),
             processopt=self._processopt,
         )
-        #: a pluginmanager instance
         self.pluginmanager = pluginmanager
         self.trace = self.pluginmanager.trace.root.get("config")
         self.hook = self.pluginmanager.hook
@@ -631,7 +646,6 @@ class Config:
         self._cleanup = []
         self.pluginmanager.register(self, "pytestconfig")
         self._configured = False
-        self.invocation_dir = py.path.local()
         self.hook.pytest_addoption.call_historic(kwargs=dict(parser=self._parser))
 
     def add_cleanup(self, func):
