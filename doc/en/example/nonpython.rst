@@ -29,12 +29,12 @@ now execute the test specification:
 
     nonpython $ pytest test_simple.yaml
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
+    platform linux -- Python 3.x.y, pytest-5.x.y, py-1.x.y, pluggy-0.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR/nonpython
     collected 2 items
 
-    test_simple.yaml F.                                                   [100%]
+    test_simple.yaml F.                                                  [100%]
 
     ================================= FAILURES =================================
     ______________________________ usecase: hello ______________________________
@@ -64,13 +64,13 @@ consulted when reporting in ``verbose`` mode:
 
     nonpython $ pytest -v
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python
+    platform linux -- Python 3.x.y, pytest-5.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python
     cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR/nonpython
     collecting ... collected 2 items
 
-    test_simple.yaml::hello FAILED                                        [ 50%]
-    test_simple.yaml::ok PASSED                                           [100%]
+    test_simple.yaml::hello FAILED                                       [ 50%]
+    test_simple.yaml::ok PASSED                                          [100%]
 
     ================================= FAILURES =================================
     ______________________________ usecase: hello ______________________________
@@ -88,7 +88,7 @@ interesting to just look at the collection tree:
 
     nonpython $ pytest --collect-only
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
+    platform linux -- Python 3.x.y, pytest-5.x.y, py-1.x.y, pluggy-0.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR/nonpython
     collected 2 items

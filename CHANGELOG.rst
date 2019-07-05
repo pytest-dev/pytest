@@ -18,6 +18,28 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+pytest 5.0.1 (2019-07-04)
+=========================
+
+Bug Fixes
+---------
+
+- `#5479 <https://github.com/pytest-dev/pytest/issues/5479>`_: Improve quoting in ``raises`` match failure message.
+
+
+- `#5523 <https://github.com/pytest-dev/pytest/issues/5523>`_: Fixed using multiple short options together in the command-line (for example ``-vs``) in Python 3.8+.
+
+
+- `#5547 <https://github.com/pytest-dev/pytest/issues/5547>`_: ``--step-wise`` now handles ``xfail(strict=True)`` markers properly.
+
+
+
+Improved Documentation
+----------------------
+
+- `#5517 <https://github.com/pytest-dev/pytest/issues/5517>`_: Improve "Declaring new hooks" section in chapter "Writing Plugins"
+
+
 pytest 5.0.0 (2019-06-28)
 =========================
 
