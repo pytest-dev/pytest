@@ -13,7 +13,6 @@ import sys
 import types
 import warnings
 
-import importlib_metadata
 import py
 import six
 from packaging.version import Version
@@ -31,6 +30,7 @@ from .findpaths import exists
 from _pytest import deprecated
 from _pytest._code import ExceptionInfo
 from _pytest._code import filter_traceback
+from _pytest.compat import importlib_metadata
 from _pytest.compat import lru_cache
 from _pytest.compat import safe_str
 from _pytest.outcomes import fail

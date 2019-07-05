@@ -1,0 +1,2 @@
+Replace ``importlib_metadata`` backport with ``importlib.metadata`` from the
+standard library on Python 3.8+.
