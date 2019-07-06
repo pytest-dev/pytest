@@ -1,3 +1,1 @@
-New ``Config.invocation_args`` and ``Config.invocation_plugins`` attributes.
-
-These attributes can be used by plugins to access the unchanged arguments passed to ``pytest.main()``.
+New ``Config.invocation_args`` attribute containing the unchanged arguments passed to ``pytest.main()``.
