@@ -1,5 +1,6 @@
 import sys
 import textwrap
+from pathlib import Path
 
 import _pytest._code
 import pytest
@@ -1212,9 +1213,10 @@ def test_invocation_arguments(testdir):
     call = calls[0]
     config = call.item.config
 
-    assert config.invocation_args == [p, "-v"]
+    assert config.invocation_params.args == [p, "-v"]
+    assert config.invocation_params.dir == Path(testdir.tmpdir)
 
-    plugins = config.invocation_plugins
+    plugins = config.invocation_params.plugins
     assert len(plugins) == 2
     assert plugins[0] is plugin
     assert type(plugins[1]).__name__ == "Collect"  # installed by testdir.inline_run()

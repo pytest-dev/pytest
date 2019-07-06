@@ -8,7 +8,9 @@ import sys
 import types
 import warnings
 from functools import lru_cache
+from pathlib import Path
 
+import attr
 import py
 from packaging.version import Version
 from pluggy import HookimplMarker
@@ -70,8 +72,6 @@ def main(args=None, plugins=None):
                 tw.line(line.rstrip(), red=True)
             return 4
         else:
-            config.invocation_args = args
-            config.invocation_plugins = plugins
             try:
                 return config.hook.pytest_cmdline_main(config=config)
             finally:
@@ -149,10 +149,15 @@ builtin_plugins = set(default_plugins)
 builtin_plugins.add("pytester")
 
 
-def get_config(args=None):
+def get_config(args=None, plugins=None):
     # subsequent calls to main will create a fresh instance
     pluginmanager = PytestPluginManager()
-    config = Config(pluginmanager)
+    config = Config(
+        pluginmanager,
+        invocation_params=Config.InvocationParams(
+            args=args, plugins=plugins, dir=Path().resolve()
+        ),
+    )
 
     if args is not None:
         # Handle any "-p no:plugin" args.
@@ -185,7 +190,7 @@ def _prepareconfig(args=None, plugins=None):
         msg = "`args` parameter expected to be a list or tuple of strings, got: {!r} (type: {})"
         raise TypeError(msg.format(args, type(args)))
 
-    config = get_config(args)
+    config = get_config(args, plugins)
     pluginmanager = config.pluginmanager
     try:
         if plugins:
@@ -617,20 +622,36 @@ class Config:
 
     :ivar argparse.Namespace option: access to command line option as attributes.
 
-    :ivar invocation_args: list of command-line arguments as passed to pytest.main()
+    :ivar InvocationParams invocation_params:
 
-    :ivar invocation_plugins: list of extra plugins passed to pytest.main(), might be None
+        Object containing the parameters regarding the ``pytest.main``
+        invocation.
 
-    :ivar py.path.local invocation_dir: directory where pytest.main() was invoked from
+        Contains the followinig read-only attributes:
+
+        * ``args``: list of command-line arguments as passed to ``pytest.main()``.
+        * ``plugins``: list of extra plugins, might be None
+        * ``dir``: directory where ``pytest.main()`` was invoked from.
     """
 
-    def __init__(self, pluginmanager):
+    @attr.s(frozen=True)
+    class InvocationParams:
+        """Holds parameters passed during ``pytest.main()``"""
+
+        args = attr.ib()
+        plugins = attr.ib()
+        dir = attr.ib()
+
+    def __init__(self, pluginmanager, *, invocation_params=None):
         from .argparsing import Parser, FILE_OR_DIR
 
+        if invocation_params is None:
+            invocation_params = self.InvocationParams(
+                args=(), plugins=None, dir=Path().resolve()
+            )
+
         self.option = argparse.Namespace()
-        self.invocation_args = None
-        self.invocation_plugins = None
-        self.invocation_dir = py.path.local()
+        self.invocation_params = invocation_params
 
         _a = FILE_OR_DIR
         self._parser = Parser(
@@ -647,6 +668,11 @@ class Config:
         self.pluginmanager.register(self, "pytestconfig")
         self._configured = False
         self.hook.pytest_addoption.call_historic(kwargs=dict(parser=self._parser))
+
+    @property
+    def invocation_dir(self):
+        """Backward compatibility"""
+        return py.path.local(str(self.invocation_params.dir))
 
     def add_cleanup(self, func):
         """ Add a function to be called when the config object gets out of
