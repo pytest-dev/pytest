@@ -636,7 +636,15 @@ class Config:
 
     @attr.s(frozen=True)
     class InvocationParams:
-        """Holds parameters passed during ``pytest.main()``"""
+        """Holds parameters passed during ``pytest.main()``
+
+        .. note::
+
+            Currently the environment variable PYTEST_ADDOPTS is also handled by
+            pytest implicitly, not being part of the invocation.
+
+            Plugins accessing ``InvocationParams`` must be aware of that.
+        """
 
         args = attr.ib()
         plugins = attr.ib()

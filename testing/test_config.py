@@ -1199,7 +1199,7 @@ def test_config_does_not_load_blocked_plugin_from_args(testdir):
     assert result.ret == ExitCode.USAGE_ERROR
 
 
-def test_invocation_arguments(testdir):
+def test_invocation_args(testdir):
     """Ensure that Config.invocation_* arguments are correctly defined"""
 
     class DummyPlugin:
@@ -1214,7 +1214,7 @@ def test_invocation_arguments(testdir):
     config = call.item.config
 
     assert config.invocation_params.args == [p, "-v"]
-    assert config.invocation_params.dir == Path(testdir.tmpdir)
+    assert config.invocation_params.dir == Path(str(testdir.tmpdir))
 
     plugins = config.invocation_params.plugins
     assert len(plugins) == 2
