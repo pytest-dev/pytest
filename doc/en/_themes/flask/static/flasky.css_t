@@ -106,14 +106,14 @@ div.sphinxsidebar h3,
 div.sphinxsidebar h4 {
     font-family: {{ header_font }};
     color: #444;
-    font-size: 24px;
+    font-size: 21px;
     font-weight: normal;
-    margin: 0 0 5px 0;
+    margin: 16px 0 0 0;
     padding: 0;
 }
 
 div.sphinxsidebar h4 {
-    font-size: 20px;
+    font-size: 18px;
 }
 
 div.sphinxsidebar h3 a {
