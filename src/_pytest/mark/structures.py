@@ -313,24 +313,35 @@ class MarkGenerator:
                     # example lines: "skipif(condition): skip the given test if..."
                     # or "hypothesis: tests which use Hypothesis", so to get the
                     # marker name we split on both `:` and `(`.
-                    marker = line.split(":")[0].split("(")[0].strip()
-                    self._markers.add(marker)
+                    if isinstance(line, str):
+                        line = line.split(":")[0].split("(")[0].strip()
+                    self._markers.add(line)
 
             # If the name is not in the set of known marks after updating,
             # then it really is time to issue a warning or an error.
             if name not in self._markers:
-                if self._config.option.strict_markers:
-                    fail(
-                        "{!r} not found in `markers` configuration option".format(name),
-                        pytrace=False,
-                    )
+                for marker in self._markers:
+                    if not isinstance(marker, str):
+                        # If marker is not a string then we expect a sequence where the first element must be a
+                        # pattern (e.g. from re.compile()) and the second is the description
+                        pattern = marker[0]
+                        if pattern.match(name):
+                            break
                 else:
-                    warnings.warn(
-                        "Unknown pytest.mark.%s - is this a typo?  You can register "
-                        "custom marks to avoid this warning - for details, see "
-                        "https://docs.pytest.org/en/latest/mark.html" % name,
-                        PytestUnknownMarkWarning,
-                    )
+                    if self._config.option.strict_markers:
+                        fail(
+                            "{!r} not found in `markers` configuration option".format(
+                                name
+                            ),
+                            pytrace=False,
+                        )
+                    else:
+                        warnings.warn(
+                            "Unknown pytest.mark.%s - is this a typo?  You can register "
+                            "custom marks to avoid this warning - for details, see "
+                            "https://docs.pytest.org/en/latest/mark.html" % name,
+                            PytestUnknownMarkWarning,
+                        )
 
         return MarkDecorator(Mark(name, (), {}))
 

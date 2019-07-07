@@ -81,9 +81,15 @@ def pytest_cmdline_main(config):
         config._do_configure()
         tw = _pytest.config.create_terminal_writer(config)
         for line in config.getini("markers"):
-            parts = line.split(":", 1)
-            name = parts[0]
-            rest = parts[1] if len(parts) == 2 else ""
+            if isinstance(line, str):
+                parts = line.split(":", 1)
+                name = parts[0]
+                rest = parts[1] if len(parts) == 2 else ""
+            else:
+                # Expecting a sequence of one or two elements where the first is a pattern to match
+                name = "[Matching: %s]" % line[0]
+                rest = " " + line[1] if len(line) == 2 else ""
+
             tw.write("@pytest.mark.%s:" % name, bold=True)
             tw.line(rest)
             tw.line()
