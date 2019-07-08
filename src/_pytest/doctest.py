@@ -13,6 +13,7 @@ from _pytest._code.code import TerminalRepr
 from _pytest.compat import safe_getattr
 from _pytest.fixtures import FixtureRequest
 from _pytest.outcomes import Skipped
+from _pytest.python_api import approx
 from _pytest.warning_types import PytestWarning
 
 DOCTEST_REPORT_CHOICE_NONE = "none"
@@ -286,6 +287,7 @@ def _get_flag_lookup():
         COMPARISON_FLAGS=doctest.COMPARISON_FLAGS,
         ALLOW_UNICODE=_get_allow_unicode_flag(),
         ALLOW_BYTES=_get_allow_bytes_flag(),
+        NUMBER=_get_number_flag(),
     )
 
 
@@ -453,10 +455,15 @@ def _setup_fixtures(doctest_item):
 
 def _get_checker():
     """
-    Returns a doctest.OutputChecker subclass that takes in account the
-    ALLOW_UNICODE option to ignore u'' prefixes in strings and ALLOW_BYTES
-    to strip b'' prefixes.
-    Useful when the same doctest should run in Python 2 and Python 3.
+    Returns a doctest.OutputChecker subclass that supports some
+    additional options:
+
+    * ALLOW_UNICODE and ALLOW_BYTES options to ignore u'' and b''
+      prefixes (respectively) in string literals. Useful when the same
+      doctest should run in Python 2 and Python 3.
+
+    * NUMBER to ignore floating-point differences smaller than the
+      precision of the literal number in the doctest.
 
     An inner class is used to avoid importing "doctest" at the module
     level.
@@ -469,38 +476,89 @@ def _get_checker():
 
     class LiteralsOutputChecker(doctest.OutputChecker):
         """
-        Copied from doctest_nose_plugin.py from the nltk project:
-            https://github.com/nltk/nltk
-
-        Further extended to also support byte literals.
+        Based on doctest_nose_plugin.py from the nltk project
+        (https://github.com/nltk/nltk) and on the "numtest" doctest extension
+        by Sebastien Boisgerault (https://github.com/boisgera/numtest).
         """
 
         _unicode_literal_re = re.compile(r"(\W|^)[uU]([rR]?[\'\"])", re.UNICODE)
         _bytes_literal_re = re.compile(r"(\W|^)[bB]([rR]?[\'\"])", re.UNICODE)
+        _number_re = re.compile(
+            r"""
+            (?P<number>
+              (?P<mantissa>
+                (?P<integer1> [+-]?\d*)\.(?P<fraction>\d+)
+                |
+                (?P<integer2> [+-]?\d+)\.
+              )
+              (?:
+                [Ee]
+                (?P<exponent1> [+-]?\d+)
+              )?
+              |
+              (?P<integer3> [+-]?\d+)
+              (?:
+                [Ee]
+                (?P<exponent2> [+-]?\d+)
+              )
+            )
+            """,
+            re.VERBOSE,
+        )
 
         def check_output(self, want, got, optionflags):
-            res = doctest.OutputChecker.check_output(self, want, got, optionflags)
-            if res:
+            if doctest.OutputChecker.check_output(self, want, got, optionflags):
                 return True
 
             allow_unicode = optionflags & _get_allow_unicode_flag()
             allow_bytes = optionflags & _get_allow_bytes_flag()
-            if not allow_unicode and not allow_bytes:
+            allow_number = optionflags & _get_number_flag()
+
+            if not allow_unicode and not allow_bytes and not allow_number:
                 return False
 
-            else:  # pragma: no cover
+            def remove_prefixes(regex, txt):
+                return re.sub(regex, r"\1\2", txt)
 
-                def remove_prefixes(regex, txt):
-                    return re.sub(regex, r"\1\2", txt)
+            if allow_unicode:
+                want = remove_prefixes(self._unicode_literal_re, want)
+                got = remove_prefixes(self._unicode_literal_re, got)
 
-                if allow_unicode:
-                    want = remove_prefixes(self._unicode_literal_re, want)
-                    got = remove_prefixes(self._unicode_literal_re, got)
-                if allow_bytes:
-                    want = remove_prefixes(self._bytes_literal_re, want)
-                    got = remove_prefixes(self._bytes_literal_re, got)
-                res = doctest.OutputChecker.check_output(self, want, got, optionflags)
-                return res
+            if allow_bytes:
+                want = remove_prefixes(self._bytes_literal_re, want)
+                got = remove_prefixes(self._bytes_literal_re, got)
+
+            if allow_number:
+                got = self._remove_unwanted_precision(want, got)
+
+            return doctest.OutputChecker.check_output(self, want, got, optionflags)
+
+        def _remove_unwanted_precision(self, want, got):
+            wants = list(self._number_re.finditer(want))
+            gots = list(self._number_re.finditer(got))
+            if len(wants) != len(gots):
+                return got
+            offset = 0
+            for w, g in zip(wants, gots):
+                fraction = w.group("fraction")
+                exponent = w.group("exponent1")
+                if exponent is None:
+                    exponent = w.group("exponent2")
+                if fraction is None:
+                    precision = 0
+                else:
+                    precision = len(fraction)
+                if exponent is not None:
+                    precision -= int(exponent)
+                if float(w.group()) == approx(float(g.group()), abs=10 ** -precision):
+                    # They're close enough. Replace the text we actually
+                    # got with the text we want, so that it will match when we
+                    # check the string literally.
+                    got = (
+                        got[: g.start() + offset] + w.group() + got[g.end() + offset :]
+                    )
+                    offset += w.end() - w.start() - (g.end() - g.start())
+            return got
 
     _get_checker.LiteralsOutputChecker = LiteralsOutputChecker
     return _get_checker.LiteralsOutputChecker()
@@ -522,6 +580,15 @@ def _get_allow_bytes_flag():
     import doctest
 
     return doctest.register_optionflag("ALLOW_BYTES")
+
+
+def _get_number_flag():
+    """
+    Registers and returns the NUMBER flag.
+    """
+    import doctest
+
+    return doctest.register_optionflag("NUMBER")
 
 
 def _get_report_choice(key):
