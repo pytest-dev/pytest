@@ -1,4 +1,5 @@
 from pprint import pprint
+from typing import Optional
 
 import py
 
@@ -28,7 +29,7 @@ def getslaveinfoline(node):
 
 
 class BaseReport:
-    when = None
+    when = None  # type: Optional[str]
     location = None
 
     def __init__(self, **kw):
