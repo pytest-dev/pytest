@@ -103,7 +103,7 @@ that will be used for those doctest files using the
 Using 'doctest' options
 -----------------------
 
-The standard ``doctest`` module provides some `options <https://docs.python.org/3/library/doctest.html#option-flags>`__
+Python's standard ``doctest`` module provides some `options <https://docs.python.org/3/library/doctest.html#option-flags>`__
 to configure the strictness of doctest tests. In pytest, you can enable those flags using the
 configuration file.
 
@@ -114,6 +114,15 @@ lengthy exception stack traces you can just write:
 
     [pytest]
     doctest_optionflags= NORMALIZE_WHITESPACE IGNORE_EXCEPTION_DETAIL
+
+Alternatively, options can be enabled by an inline comment in the doc test
+itself:
+
+.. code-block:: rst
+
+    >>> something_that_raises()  # doctest: +IGNORE_EXCEPTION_DETAIL
+    Traceback (most recent call last):
+    ValueError: ...
 
 pytest also introduces new options:
 
@@ -145,14 +154,9 @@ pytest also introduces new options:
   ``NUMBER`` also supports lists of floating-point numbers -- in fact, it
   supports floating-point numbers appearing anywhere in the output.
 
-Alternatively, options can be enabled by an inline comment in the doc test
-itself:
 
-.. code-block:: rst
-
-    # content of example.rst
-    >>> get_unicode_greeting()  # doctest: +ALLOW_UNICODE
-    'Hello'
+Continue on failure
+-------------------
 
 By default, pytest would report only the first failure for a given doctest. If
 you want to continue the test even when you have failures, do:
