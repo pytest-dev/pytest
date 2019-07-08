@@ -165,18 +165,18 @@ html_favicon = "img/pytest1favi.ico"
 
 html_sidebars = {
     "index": [
+        "slim_searchbox.html",
         "sidebarintro.html",
         "globaltoc.html",
         "links.html",
         "sourcelink.html",
-        "searchbox.html",
     ],
     "**": [
+        "slim_searchbox.html",
         "globaltoc.html",
         "relations.html",
         "links.html",
         "sourcelink.html",
-        "searchbox.html",
     ],
 }
 
