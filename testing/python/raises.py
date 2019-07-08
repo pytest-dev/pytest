@@ -220,12 +220,19 @@ class TestRaises:
             int("asdf")
 
         msg = "with base 16"
-        expr = r"Pattern '{}' not found in 'invalid literal for int\(\) with base 10: 'asdf''".format(
+        expr = r"Pattern '{}' not found in \"invalid literal for int\(\) with base 10: 'asdf'\"".format(
             msg
         )
         with pytest.raises(AssertionError, match=expr):
             with pytest.raises(ValueError, match=msg):
                 int("asdf", base=10)
+
+    def test_match_failure_string_quoting(self):
+        with pytest.raises(AssertionError) as excinfo:
+            with pytest.raises(AssertionError, match="'foo"):
+                raise AssertionError("'bar")
+        msg, = excinfo.value.args
+        assert msg == 'Pattern "\'foo" not found in "\'bar"'
 
     def test_raises_match_wrong_type(self):
         """Raising an exception with the wrong type and match= given.
