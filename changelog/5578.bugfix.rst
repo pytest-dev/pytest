@@ -1,0 +1,3 @@
+Improve type checking for some exception-raising functions (``pytest.xfail``, ``pytest.skip``, etc)
+so they provide better error messages when users meant to use marks (for example ``@pytest.xfail``
+instead of ``@pytest.mark.xfail``).

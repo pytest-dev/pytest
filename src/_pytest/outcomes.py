@@ -13,16 +13,19 @@ class OutcomeException(BaseException):
     """
 
     def __init__(self, msg=None, pytrace=True):
+        if msg is not None and not isinstance(msg, str):
+            error_msg = (
+                "{} expected string as 'msg' parameter, got '{}' instead.\n"
+                "Perhaps you meant to use a mark?"
+            )
+            raise TypeError(error_msg.format(type(self).__name__, type(msg).__name__))
         BaseException.__init__(self, msg)
         self.msg = msg
         self.pytrace = pytrace
 
     def __repr__(self):
         if self.msg:
-            val = self.msg
-            if isinstance(val, bytes):
-                val = val.decode("UTF-8", errors="replace")
-            return val
+            return self.msg
         return "<{} instance>".format(self.__class__.__name__)
 
     __str__ = __repr__
