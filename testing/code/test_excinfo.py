@@ -589,7 +589,8 @@ raise ValueError()
 
     def test_repr_local_with_exception_in_class_property(self):
         class ExceptionWithBrokenClass(Exception):
-            @property
+            # Type ignored because it's bypassed intentionally.
+            @property  # type: ignore
             def __class__(self):
                 raise TypeError("boom!")
 

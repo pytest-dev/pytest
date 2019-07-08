@@ -547,6 +547,8 @@ class FDCaptureBinary:
             self.start = lambda: None
             self.done = lambda: None
         else:
+            self.start = self._start
+            self.done = self._done
             if targetfd == 0:
                 assert not tmpfile, "cannot set tmpfile with stdin"
                 tmpfile = open(os.devnull, "r")
@@ -568,7 +570,7 @@ class FDCaptureBinary:
             self.targetfd, getattr(self, "targetfd_save", None), self._state
         )
 
-    def start(self):
+    def _start(self):
         """ Start capturing on targetfd using memorized tmpfile. """
         try:
             os.fstat(self.targetfd_save)
@@ -585,7 +587,7 @@ class FDCaptureBinary:
         self.tmpfile.truncate()
         return res
 
-    def done(self):
+    def _done(self):
         """ stop capturing, restore streams, return original capture file,
         seeked to position zero. """
         targetfd_save = self.__dict__.pop("targetfd_save")
@@ -618,7 +620,8 @@ class FDCapture(FDCaptureBinary):
     snap() produces text
     """
 
-    EMPTY_BUFFER = str()
+    # Ignore type because it doesn't match the type in the superclass (bytes).
+    EMPTY_BUFFER = str()  # type: ignore
 
     def snap(self):
         res = super().snap()
@@ -679,7 +682,8 @@ class SysCapture:
 
 
 class SysCaptureBinary(SysCapture):
-    EMPTY_BUFFER = b""
+    # Ignore type because it doesn't match the type in the superclass (str).
+    EMPTY_BUFFER = b""  # type: ignore
 
     def snap(self):
         res = self.tmpfile.buffer.getvalue()

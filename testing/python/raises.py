@@ -258,7 +258,8 @@ class TestRaises:
         """Test current behavior with regard to exceptions via __class__ (#4284)."""
 
         class CrappyClass(Exception):
-            @property
+            # Type ignored because it's bypassed intentionally.
+            @property  # type: ignore
             def __class__(self):
                 assert False, "via __class__"
 
