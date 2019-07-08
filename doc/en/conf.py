@@ -15,7 +15,6 @@
 #
 # The full version, including alpha/beta/rc tags.
 # The short X.Y version.
-import datetime
 import os
 import sys
 
