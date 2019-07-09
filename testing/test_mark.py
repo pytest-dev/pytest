@@ -8,12 +8,6 @@ from _pytest.mark import EMPTY_PARAMETERSET_OPTION
 from _pytest.mark import MarkGenerator as Mark
 from _pytest.nodes import Collector
 from _pytest.nodes import Node
-from _pytest.warning_types import PytestDeprecationWarning
-from _pytest.warnings import SHOW_PYTEST_WARNINGS_ARG
-
-ignore_markinfo = pytest.mark.filterwarnings(
-    "ignore:MarkInfo objects:pytest.RemovedInPytest4Warning"
-)
 
 
 class TestMark:
@@ -25,7 +19,8 @@ class TestMark:
 
     def test_pytest_mark_notcallable(self):
         mark = Mark()
-        pytest.raises((AttributeError, TypeError), mark)
+        with pytest.raises(TypeError):
+            mark()
 
     def test_mark_with_param(self):
         def some_function(abc):
@@ -625,7 +620,6 @@ class TestFunctional:
         reprec = testdir.inline_run()
         reprec.assertoutcome(passed=1)
 
-    @ignore_markinfo
     def test_keyword_added_for_session(self, testdir):
         testdir.makeconftest(
             """
@@ -651,7 +645,7 @@ class TestFunctional:
                 assert marker.kwargs == {}
         """
         )
-        reprec = testdir.inline_run("-m", "mark1", SHOW_PYTEST_WARNINGS_ARG)
+        reprec = testdir.inline_run("-m", "mark1")
         reprec.assertoutcome(passed=1)
 
     def assert_markers(self, items, **expected):
@@ -689,7 +683,7 @@ class TestFunctional:
                 assert True
         """
         )
-        reprec = testdir.inline_run(SHOW_PYTEST_WARNINGS_ARG)
+        reprec = testdir.inline_run()
         reprec.assertoutcome(skipped=1)
 
 
@@ -989,7 +983,7 @@ def test_markers_from_parametrize(testdir):
     """
     )
 
-    result = testdir.runpytest(SHOW_PYTEST_WARNINGS_ARG)
+    result = testdir.runpytest()
     result.assert_outcomes(passed=4)
 
 
@@ -1003,15 +997,3 @@ def test_pytest_param_id_requires_string():
 @pytest.mark.parametrize("s", (None, "hello world"))
 def test_pytest_param_id_allows_none_or_string(s):
     assert pytest.param(id=s)
-
-
-def test_pytest_param_warning_on_unknown_kwargs():
-    with pytest.warns(PytestDeprecationWarning) as warninfo:
-        # typo, should be marks=
-        pytest.param(1, 2, mark=pytest.mark.xfail())
-    assert warninfo[0].filename == __file__
-    msg, = warninfo[0].message.args
-    assert msg == (
-        "pytest.param() got unexpected keyword arguments: ['mark'].\n"
-        "This will be an error in future versions."
-    )

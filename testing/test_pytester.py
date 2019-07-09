@@ -72,8 +72,7 @@ def test_make_hook_recorder(testdir):
 def test_parseconfig(testdir):
     config1 = testdir.parseconfig()
     config2 = testdir.parseconfig()
-    assert config2 != config1
-    assert config1 != pytest.config
+    assert config2 is not config1
 
 
 def test_testdir_runs_with_plugin(testdir):

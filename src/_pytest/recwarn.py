@@ -1,12 +1,8 @@
 """ recording warnings during test function execution. """
 import inspect
 import re
-import sys
 import warnings
 
-import _pytest._code
-from _pytest.deprecated import PYTEST_WARNS_UNKNOWN_KWARGS
-from _pytest.deprecated import WARNS_EXEC
 from _pytest.fixtures import yield_fixture
 from _pytest.outcomes import fail
 
@@ -46,7 +42,7 @@ def deprecated_call(func=None, *args, **kwargs):
     return warns((DeprecationWarning, PendingDeprecationWarning), *args, **kwargs)
 
 
-def warns(expected_warning, *args, **kwargs):
+def warns(expected_warning, *args, match=None, **kwargs):
     r"""Assert that code raises a particular class of warning.
 
     Specifically, the parameter ``expected_warning`` can be a warning class or
@@ -80,25 +76,13 @@ def warns(expected_warning, *args, **kwargs):
     """
     __tracebackhide__ = True
     if not args:
-        match_expr = kwargs.pop("match", None)
-        if kwargs:
-            warnings.warn(
-                PYTEST_WARNS_UNKNOWN_KWARGS.format(args=sorted(kwargs)), stacklevel=2
-            )
-        return WarningsChecker(expected_warning, match_expr=match_expr)
-    elif isinstance(args[0], str):
-        warnings.warn(WARNS_EXEC, stacklevel=2)
-        code, = args
-        assert isinstance(code, str)
-        frame = sys._getframe(1)
-        loc = frame.f_locals.copy()
-        loc.update(kwargs)
-
-        with WarningsChecker(expected_warning):
-            code = _pytest._code.Source(code).compile()
-            exec(code, frame.f_globals, loc)
+        return WarningsChecker(expected_warning, match_expr=match, **kwargs)
     else:
         func = args[0]
+        if not callable(func):
+            raise TypeError(
+                "{!r} object (type: {}) must be callable".format(func, type(func))
+            )
         with WarningsChecker(expected_warning):
             return func(*args[1:], **kwargs)
 

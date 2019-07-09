@@ -10,7 +10,6 @@ import attr
 from ..compat import ascii_escaped
 from ..compat import getfslineno
 from ..compat import NOTSET
-from _pytest.deprecated import PYTEST_PARAM_UNKNOWN_KWARGS
 from _pytest.outcomes import fail
 from _pytest.warning_types import PytestUnknownMarkWarning
 
@@ -62,26 +61,19 @@ def get_empty_parameterset_mark(config, argnames, func):
 
 class ParameterSet(namedtuple("ParameterSet", "values, marks, id")):
     @classmethod
-    def param(cls, *values, **kwargs):
-        marks = kwargs.pop("marks", ())
+    def param(cls, *values, marks=(), id=None):
         if isinstance(marks, MarkDecorator):
             marks = (marks,)
         else:
             assert isinstance(marks, (tuple, list, set))
 
-        id_ = kwargs.pop("id", None)
-        if id_ is not None:
-            if not isinstance(id_, str):
+        if id is not None:
+            if not isinstance(id, str):
                 raise TypeError(
-                    "Expected id to be a string, got {}: {!r}".format(type(id_), id_)
+                    "Expected id to be a string, got {}: {!r}".format(type(id), id)
                 )
-            id_ = ascii_escaped(id_)
-
-        if kwargs:
-            warnings.warn(
-                PYTEST_PARAM_UNKNOWN_KWARGS.format(args=sorted(kwargs)), stacklevel=3
-            )
-        return cls(values, marks, id_)
+            id = ascii_escaped(id)
+        return cls(values, marks, id)
 
     @classmethod
     def extract_from(cls, parameterset, force_tuple=False):

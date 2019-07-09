@@ -1,8 +1,6 @@
 import inspect
 import math
 import pprint
-import sys
-import warnings
 from collections.abc import Iterable
 from collections.abc import Mapping
 from collections.abc import Sized
@@ -14,7 +12,6 @@ from typing import Union
 from more_itertools.more import always_iterable
 
 import _pytest._code
-from _pytest import deprecated
 from _pytest.compat import STRING_TYPES
 from _pytest.outcomes import fail
 
@@ -531,7 +528,7 @@ def _is_numpy_array(obj):
 # builtin pytest.raises helper
 
 
-def raises(expected_exception, *args, **kwargs):
+def raises(expected_exception, *args, match=None, **kwargs):
     r"""
     Assert that a code block/function call raises ``expected_exception``
     or raise a failure exception otherwise.
@@ -544,8 +541,6 @@ def raises(expected_exception, *args, **kwargs):
 
     __ https://docs.python.org/3/library/re.html#regular-expression-syntax
 
-    :kwparam message: **(deprecated since 4.1)** if specified, provides a custom failure message
-        if the exception is not raised. See :ref:`the deprecation docs <raises message deprecated>` for a workaround.
 
     .. currentmodule:: _pytest._code
 
@@ -659,36 +654,17 @@ def raises(expected_exception, *args, **kwargs):
         raise TypeError(msg % type(exc))
 
     message = "DID NOT RAISE {}".format(expected_exception)
-    match_expr = None
 
     if not args:
-        if "message" in kwargs:
-            message = kwargs.pop("message")
-            warnings.warn(deprecated.RAISES_MESSAGE_PARAMETER, stacklevel=2)
-        if "match" in kwargs:
-            match_expr = kwargs.pop("match")
-        if kwargs:
-            msg = "Unexpected keyword arguments passed to pytest.raises: "
-            msg += ", ".join(sorted(kwargs))
-            raise TypeError(msg)
-        return RaisesContext(expected_exception, message, match_expr)
-    elif isinstance(args[0], str):
-        warnings.warn(deprecated.RAISES_EXEC, stacklevel=2)
-        code, = args
-        assert isinstance(code, str)
-        frame = sys._getframe(1)
-        loc = frame.f_locals.copy()
-        loc.update(kwargs)
-        # print "raises frame scope: %r" % frame.f_locals
-        try:
-            code = _pytest._code.Source(code).compile(_genframe=frame)
-            exec(code, frame.f_globals, loc)
-            # XXX didn't mean f_globals == f_locals something special?
-            #     this is destroyed here ...
-        except expected_exception:
-            return _pytest._code.ExceptionInfo.from_current()
+        return RaisesContext(
+            expected_exception, message=message, match_expr=match, **kwargs
+        )
     else:
         func = args[0]
+        if not callable(func):
+            raise TypeError(
+                "{!r} object (type: {}) must be callable".format(func, type(func))
+            )
         try:
             func(*args[1:], **kwargs)
         except expected_exception:

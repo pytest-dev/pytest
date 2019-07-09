@@ -17,6 +17,7 @@ from pluggy import PluginManager
 
 import _pytest._code
 import _pytest.assertion
+import _pytest.deprecated
 import _pytest.hookspec  # the extension point definitions
 from .exceptions import PrintHelp
 from .exceptions import UsageError
@@ -202,6 +203,19 @@ def _prepareconfig(args=None, plugins=None):
     except BaseException:
         config._ensure_unconfigure()
         raise
+
+
+def _fail_on_non_top_pytest_plugins(conftestpath, confcutdir):
+    msg = (
+        "Defining 'pytest_plugins' in a non-top-level conftest is no longer supported:\n"
+        "It affects the entire test suite instead of just below the conftest as expected.\n"
+        "  {}\n"
+        "Please move it to a top level conftest file at the rootdir:\n"
+        "  {}\n"
+        "For more information, visit:\n"
+        "  https://docs.pytest.org/en/latest/deprecations.html#pytest-plugins-in-non-top-level-conftest-files"
+    )
+    fail(msg.format(conftestpath, confcutdir), pytrace=False)
 
 
 class PytestPluginManager(PluginManager):
@@ -424,16 +438,7 @@ class PytestPluginManager(PluginManager):
                     and self._configured
                     and not self._using_pyargs
                 ):
-                    from _pytest.deprecated import (
-                        PYTEST_PLUGINS_FROM_NON_TOP_LEVEL_CONFTEST,
-                    )
-
-                    fail(
-                        PYTEST_PLUGINS_FROM_NON_TOP_LEVEL_CONFTEST.format(
-                            conftestpath, self._confcutdir
-                        ),
-                        pytrace=False,
-                    )
+                    _fail_on_non_top_pytest_plugins(conftestpath, self._confcutdir)
             except Exception:
                 raise ConftestImportFailure(conftestpath, sys.exc_info())
 

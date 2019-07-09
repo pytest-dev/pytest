@@ -1,7 +1,6 @@
 """ hook specifications for pytest plugins, invoked from main.py and builtin plugins.  """
 from pluggy import HookspecMarker
 
-from _pytest.deprecated import PYTEST_LOGWARNING
 
 hookspec = HookspecMarker("pytest")
 
@@ -572,27 +571,6 @@ def pytest_terminal_summary(terminalreporter, exitstatus, config):
 
     .. versionadded:: 4.2
         The ``config`` parameter.
-    """
-
-
-@hookspec(historic=True, warn_on_impl=PYTEST_LOGWARNING)
-def pytest_logwarning(message, code, nodeid, fslocation):
-    """
-    .. deprecated:: 3.8
-
-        This hook is will stop working in a future release.
-
-        pytest no longer triggers this hook, but the
-        terminal writer still implements it to display warnings issued by
-        :meth:`_pytest.config.Config.warn` and :meth:`_pytest.nodes.Node.warn`. Calling those functions will be
-        an error in future releases.
-
-    process a warning specified by a message, a code string,
-    a nodeid and fslocation (both of which may be None
-    if the warning is not tied to a particular node/location).
-
-    .. note::
-        This hook is incompatible with ``hookwrapper=True``.
     """
 
 
