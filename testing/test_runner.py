@@ -11,6 +11,7 @@ from _pytest import main
 from _pytest import outcomes
 from _pytest import reports
 from _pytest import runner
+from _pytest.outcomes import OutcomeException
 
 
 class TestSetupState:
@@ -990,3 +991,18 @@ class TestReportContents:
         rep = reports[1]
         assert rep.capstdout == ""
         assert rep.capstderr == ""
+
+
+def test_outcome_exception_bad_msg():
+    """Check that OutcomeExceptions validate their input to prevent confusing errors (#5578)"""
+
+    def func():
+        pass
+
+    expected = (
+        "OutcomeException expected string as 'msg' parameter, got 'function' instead.\n"
+        "Perhaps you meant to use a mark?"
+    )
+    with pytest.raises(TypeError) as excinfo:
+        OutcomeException(func)
+    assert str(excinfo.value) == expected
