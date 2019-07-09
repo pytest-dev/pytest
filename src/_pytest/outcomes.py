@@ -70,7 +70,8 @@ def exit(msg, returncode=None):
     raise Exit(msg, returncode)
 
 
-exit.Exception = Exit
+# Ignore type because of https://github.com/python/mypy/issues/2087.
+exit.Exception = Exit  # type: ignore
 
 
 def skip(msg="", *, allow_module_level=False):
@@ -96,7 +97,8 @@ def skip(msg="", *, allow_module_level=False):
     raise Skipped(msg=msg, allow_module_level=allow_module_level)
 
 
-skip.Exception = Skipped
+# Ignore type because of https://github.com/python/mypy/issues/2087.
+skip.Exception = Skipped  # type: ignore
 
 
 def fail(msg="", pytrace=True):
@@ -111,7 +113,8 @@ def fail(msg="", pytrace=True):
     raise Failed(msg=msg, pytrace=pytrace)
 
 
-fail.Exception = Failed
+# Ignore type because of https://github.com/python/mypy/issues/2087.
+fail.Exception = Failed  # type: ignore
 
 
 class XFailed(Failed):
@@ -132,7 +135,8 @@ def xfail(reason=""):
     raise XFailed(reason)
 
 
-xfail.Exception = XFailed
+# Ignore type because of https://github.com/python/mypy/issues/2087.
+xfail.Exception = XFailed  # type: ignore
 
 
 def importorskip(modname, minversion=None, reason=None):

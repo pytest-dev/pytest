@@ -6,7 +6,8 @@ import pytest
 from _pytest.debugging import _validate_usepdb_cls
 
 try:
-    breakpoint
+    # Type ignored for Python <= 3.6.
+    breakpoint  # type: ignore
 except NameError:
     SUPPORTS_BREAKPOINT_BUILTIN = False
 else:

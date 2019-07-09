@@ -280,7 +280,8 @@ class Node:
             truncate_locals=truncate_locals,
         )
 
-    repr_failure = _repr_failure_py
+    def repr_failure(self, excinfo, style=None):
+        return self._repr_failure_py(excinfo, style)
 
 
 def get_fslocation_from_item(item):

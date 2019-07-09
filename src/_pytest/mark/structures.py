@@ -3,6 +3,7 @@ import warnings
 from collections import namedtuple
 from collections.abc import MutableMapping
 from operator import attrgetter
+from typing import Set
 
 import attr
 
@@ -298,7 +299,7 @@ class MarkGenerator:
     on the ``test_function`` object. """
 
     _config = None
-    _markers = set()
+    _markers = set()  # type: Set[str]
 
     def __getattr__(self, name):
         if name[0] == "_":
