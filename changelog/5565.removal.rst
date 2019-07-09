@@ -1,0 +1,13 @@
+Removed unused support code for `unittest2 <https://pypi.org/project/unittest2/>`__.
+
+The ``unittest2`` backport module is no longer
+necessary since Python 3.3+, and the small amount of code in pytest to support it also doesn't seem
+to be used: after removed, all tests still pass unchanged.
+
+Although our policy is to introduce a deprecation period before removing any features or support
+for third party libraries, because this code is apparently not used
+at all (even if ``unittest2`` is used by a test suite executed by pytest), it was decided to
+remove it in this release.
+
+If you experience a regression because of this, please
+`file an issue <https://github.com/pytest-dev/pytest/issues/new>`__.
