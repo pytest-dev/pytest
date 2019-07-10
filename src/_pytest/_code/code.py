@@ -5,6 +5,11 @@ import traceback
 from inspect import CO_VARARGS
 from inspect import CO_VARKEYWORDS
 from traceback import format_exception_only
+from types import TracebackType
+from typing import Optional
+from typing import Pattern
+from typing import Tuple
+from typing import Union
 from weakref import ref
 
 import attr
@@ -14,6 +19,9 @@ import py
 import _pytest
 from _pytest._io.saferepr import safeformat
 from _pytest._io.saferepr import saferepr
+
+if False:  # TYPE_CHECKING
+    from typing import Type
 
 
 class Code:
@@ -379,12 +387,14 @@ class ExceptionInfo:
 
     _assert_start_repr = "AssertionError('assert "
 
-    _excinfo = attr.ib()
-    _striptext = attr.ib(default="")
-    _traceback = attr.ib(default=None)
+    _excinfo = attr.ib(
+        type=Optional[Tuple["Type[BaseException]", BaseException, TracebackType]]
+    )
+    _striptext = attr.ib(type=str, default="")
+    _traceback = attr.ib(type=Optional[Traceback], default=None)
 
     @classmethod
-    def from_current(cls, exprinfo=None):
+    def from_current(cls, exprinfo: Optional[str] = None) -> "ExceptionInfo":
         """returns an ExceptionInfo matching the current traceback
 
         .. warning::
@@ -396,8 +406,11 @@ class ExceptionInfo:
                          strip ``AssertionError`` from the output, defaults
                          to the exception message/``__str__()``
         """
-        tup = sys.exc_info()
-        assert tup[0] is not None, "no current exception"
+        tup_ = sys.exc_info()
+        assert tup_[0] is not None, "no current exception"
+        assert tup_[1] is not None, "no current exception"
+        assert tup_[2] is not None, "no current exception"
+        tup = (tup_[0], tup_[1], tup_[2])
         _striptext = ""
         if exprinfo is None and isinstance(tup[1], AssertionError):
             exprinfo = getattr(tup[1], "msg", None)
@@ -409,48 +422,60 @@ class ExceptionInfo:
         return cls(tup, _striptext)
 
     @classmethod
-    def for_later(cls):
+    def for_later(cls) -> "ExceptionInfo":
         """return an unfilled ExceptionInfo
         """
         return cls(None)
 
     @property
-    def type(self):
+    def type(self) -> "Type[BaseException]":
         """the exception class"""
+        assert (
+            self._excinfo is not None
+        ), ".type can only be used after the context manager exits"
         return self._excinfo[0]
 
     @property
-    def value(self):
+    def value(self) -> BaseException:
         """the exception value"""
+        assert (
+            self._excinfo is not None
+        ), ".value can only be used after the context manager exits"
         return self._excinfo[1]
 
     @property
-    def tb(self):
+    def tb(self) -> TracebackType:
         """the exception raw traceback"""
+        assert (
+            self._excinfo is not None
+        ), ".tb can only be used after the context manager exits"
         return self._excinfo[2]
 
     @property
-    def typename(self):
+    def typename(self) -> str:
         """the type name of the exception"""
+        assert (
+            self._excinfo is not None
+        ), ".typename can only be used after the context manager exits"
         return self.type.__name__
 
     @property
-    def traceback(self):
+    def traceback(self) -> Traceback:
         """the traceback"""
         if self._traceback is None:
             self._traceback = Traceback(self.tb, excinfo=ref(self))
         return self._traceback
 
     @traceback.setter
-    def traceback(self, value):
+    def traceback(self, value: Traceback) -> None:
         self._traceback = value
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         if self._excinfo is None:
             return "<ExceptionInfo for raises contextmanager>"
         return "<ExceptionInfo %s tblen=%d>" % (self.typename, len(self.traceback))
 
-    def exconly(self, tryshort=False):
+    def exconly(self, tryshort: bool = False) -> str:
         """ return the exception as a string
 
             when 'tryshort' resolves to True, and the exception is a
@@ -466,11 +491,11 @@ class ExceptionInfo:
                 text = text[len(self._striptext) :]
         return text
 
-    def errisinstance(self, exc):
+    def errisinstance(self, exc: "Type[BaseException]") -> bool:
         """ return True if the exception is an instance of exc """
         return isinstance(self.value, exc)
 
-    def _getreprcrash(self):
+    def _getreprcrash(self) -> "ReprFileLocation":
         exconly = self.exconly(tryshort=True)
         entry = self.traceback.getcrashentry()
         path, lineno = entry.frame.code.raw.co_filename, entry.lineno
@@ -478,13 +503,13 @@ class ExceptionInfo:
 
     def getrepr(
         self,
-        showlocals=False,
-        style="long",
-        abspath=False,
-        tbfilter=True,
-        funcargs=False,
-        truncate_locals=True,
-        chain=True,
+        showlocals: bool = False,
+        style: str = "long",
+        abspath: bool = False,
+        tbfilter: bool = True,
+        funcargs: bool = False,
+        truncate_locals: bool = True,
+        chain: bool = True,
     ):
         """
         Return str()able representation of this exception info.
@@ -535,7 +560,7 @@ class ExceptionInfo:
         )
         return fmt.repr_excinfo(self)
 
-    def match(self, regexp):
+    def match(self, regexp: Union[str, Pattern]) -> bool:
         """
         Check whether the regular expression 'regexp' is found in the string
         representation of the exception using ``re.search``. If it matches
