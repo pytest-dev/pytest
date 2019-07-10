@@ -6,9 +6,11 @@ from inspect import CO_VARARGS
 from inspect import CO_VARKEYWORDS
 from traceback import format_exception_only
 from types import TracebackType
+from typing import Generic
 from typing import Optional
 from typing import Pattern
 from typing import Tuple
+from typing import TypeVar
 from typing import Union
 from weakref import ref
 
@@ -379,22 +381,25 @@ co_equal = compile(
 )
 
 
+_E = TypeVar("_E", bound=BaseException)
+
+
 @attr.s(repr=False)
-class ExceptionInfo:
+class ExceptionInfo(Generic[_E]):
     """ wraps sys.exc_info() objects and offers
         help for navigating the traceback.
     """
 
     _assert_start_repr = "AssertionError('assert "
 
-    _excinfo = attr.ib(
-        type=Optional[Tuple["Type[BaseException]", BaseException, TracebackType]]
-    )
+    _excinfo = attr.ib(type=Optional[Tuple["Type[_E]", "_E", TracebackType]])
     _striptext = attr.ib(type=str, default="")
     _traceback = attr.ib(type=Optional[Traceback], default=None)
 
     @classmethod
-    def from_current(cls, exprinfo: Optional[str] = None) -> "ExceptionInfo":
+    def from_current(
+        cls, exprinfo: Optional[str] = None
+    ) -> "ExceptionInfo[BaseException]":
         """returns an ExceptionInfo matching the current traceback
 
         .. warning::
@@ -422,13 +427,13 @@ class ExceptionInfo:
         return cls(tup, _striptext)
 
     @classmethod
-    def for_later(cls) -> "ExceptionInfo":
+    def for_later(cls) -> "ExceptionInfo[_E]":
         """return an unfilled ExceptionInfo
         """
         return cls(None)
 
     @property
-    def type(self) -> "Type[BaseException]":
+    def type(self) -> "Type[_E]":
         """the exception class"""
         assert (
             self._excinfo is not None
@@ -436,7 +441,7 @@ class ExceptionInfo:
         return self._excinfo[0]
 
     @property
-    def value(self) -> BaseException:
+    def value(self) -> _E:
         """the exception value"""
         assert (
             self._excinfo is not None
