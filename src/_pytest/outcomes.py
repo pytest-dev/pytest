@@ -3,8 +3,13 @@ exception classes and constants handling test outcomes
 as well as functions creating them
 """
 import sys
+from typing import Any
+from typing import Optional
 
 from packaging.version import Version
+
+if False:  # TYPE_CHECKING
+    from typing import NoReturn
 
 
 class OutcomeException(BaseException):
@@ -12,12 +17,12 @@ class OutcomeException(BaseException):
         contain info about test and collection outcomes.
     """
 
-    def __init__(self, msg=None, pytrace=True):
+    def __init__(self, msg: Optional[str] = None, pytrace: bool = True) -> None:
         BaseException.__init__(self, msg)
         self.msg = msg
         self.pytrace = pytrace
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         if self.msg:
             val = self.msg
             if isinstance(val, bytes):
@@ -36,7 +41,12 @@ class Skipped(OutcomeException):
     # in order to have Skipped exception printing shorter/nicer
     __module__ = "builtins"
 
-    def __init__(self, msg=None, pytrace=True, allow_module_level=False):
+    def __init__(
+        self,
+        msg: Optional[str] = None,
+        pytrace: bool = True,
+        allow_module_level: bool = False,
+    ) -> None:
         OutcomeException.__init__(self, msg=msg, pytrace=pytrace)
         self.allow_module_level = allow_module_level
 
@@ -50,7 +60,9 @@ class Failed(OutcomeException):
 class Exit(Exception):
     """ raised for immediate program exits (no tracebacks/summaries)"""
 
-    def __init__(self, msg="unknown reason", returncode=None):
+    def __init__(
+        self, msg: str = "unknown reason", returncode: Optional[int] = None
+    ) -> None:
         self.msg = msg
         self.returncode = returncode
         super().__init__(msg)
@@ -59,7 +71,7 @@ class Exit(Exception):
 # exposed helper methods
 
 
-def exit(msg, returncode=None):
+def exit(msg: str, returncode: Optional[int] = None) -> "NoReturn":
     """
     Exit testing process.
 
@@ -74,7 +86,7 @@ def exit(msg, returncode=None):
 exit.Exception = Exit  # type: ignore
 
 
-def skip(msg="", *, allow_module_level=False):
+def skip(msg: str = "", *, allow_module_level: bool = False) -> "NoReturn":
     """
     Skip an executing test with the given message.
 
@@ -101,7 +113,7 @@ def skip(msg="", *, allow_module_level=False):
 skip.Exception = Skipped  # type: ignore
 
 
-def fail(msg="", pytrace=True):
+def fail(msg: str = "", pytrace: bool = True) -> "NoReturn":
     """
     Explicitly fail an executing test with the given message.
 
@@ -121,7 +133,7 @@ class XFailed(Failed):
     """ raised from an explicit call to pytest.xfail() """
 
 
-def xfail(reason=""):
+def xfail(reason: str = "") -> "NoReturn":
     """
     Imperatively xfail an executing test or setup functions with the given reason.
 
@@ -139,7 +151,9 @@ def xfail(reason=""):
 xfail.Exception = XFailed  # type: ignore
 
 
-def importorskip(modname, minversion=None, reason=None):
+def importorskip(
+    modname: str, minversion: Optional[str] = None, reason: Optional[str] = None
+) -> Any:
     """Imports and returns the requested module ``modname``, or skip the current test
     if the module cannot be imported.
 
