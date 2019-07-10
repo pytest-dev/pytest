@@ -7,12 +7,14 @@ import os
 import shutil
 import sys
 import uuid
+import warnings
 from os.path import expanduser
 from os.path import expandvars
 from os.path import isabs
 from os.path import sep
 from posixpath import sep as posix_sep
 
+from _pytest.warning_types import PytestWarning
 
 if sys.version_info[:2] >= (3, 6):
     from pathlib import Path, PurePath
@@ -32,17 +34,42 @@ def ensure_reset_dir(path):
     ensures the given path is an empty directory
     """
     if path.exists():
-        rmtree(path, force=True)
+        rm_rf(path)
     path.mkdir()
 
 
-def rmtree(path, force=False):
-    if force:
-        # NOTE: ignore_errors might leave dead folders around.
-        #       Python needs a rm -rf as a followup.
-        shutil.rmtree(str(path), ignore_errors=True)
-    else:
-        shutil.rmtree(str(path))
+def rm_rf(path):
+    """Remove the path contents recursively, even if some elements
+    are read-only.
+    """
+
+    def chmod_w(p):
+        import stat
+
+        mode = os.stat(str(p)).st_mode
+        os.chmod(str(p), mode | stat.S_IWRITE)
+
+    def force_writable_and_retry(function, p, excinfo):
+        p = Path(p)
+
+        # for files, we need to recursively go upwards
+        # in the directories to ensure they all are also
+        # writable
+        if p.is_file():
+            for parent in p.parents:
+                chmod_w(parent)
+                # stop when we reach the original path passed to rm_rf
+                if parent == path:
+                    break
+
+        chmod_w(p)
+        try:
+            # retry the function that failed
+            function(str(p))
+        except Exception as e:
+            warnings.warn(PytestWarning("(rm_rf) error removing {}: {}".format(p, e)))
+
+    shutil.rmtree(str(path), onerror=force_writable_and_retry)
 
 
 def find_prefixed(root, prefix):
@@ -168,7 +195,7 @@ def maybe_delete_a_numbered_dir(path):
 
         garbage = parent.joinpath("garbage-{}".format(uuid.uuid4()))
         path.rename(garbage)
-        rmtree(garbage, force=True)
+        rm_rf(garbage)
     except (OSError, EnvironmentError):
         #  known races:
         #  * other process did a cleanup at the same time

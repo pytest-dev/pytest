@@ -14,7 +14,7 @@ import py
 import pytest
 from .pathlib import Path
 from .pathlib import resolve_from_str
-from .pathlib import rmtree
+from .pathlib import rm_rf
 
 README_CONTENT = """\
 # pytest cache directory #
@@ -44,7 +44,7 @@ class Cache:
     def for_config(cls, config):
         cachedir = cls.cache_dir_from_config(config)
         if config.getoption("cacheclear") and cachedir.exists():
-            rmtree(cachedir, force=True)
+            rm_rf(cachedir)
             cachedir.mkdir()
         return cls(cachedir, config)
 
