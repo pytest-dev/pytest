@@ -647,10 +647,7 @@ def raises(expected_exception, *args, match=None, **kwargs):
     for exc in filterfalse(
         inspect.isclass, always_iterable(expected_exception, BASE_TYPE)
     ):
-        msg = (
-            "exceptions must be old-style classes or"
-            " derived from BaseException, not %s"
-        )
+        msg = "exceptions must be derived from BaseException, not %s"
         raise TypeError(msg % type(exc))
 
     message = "DID NOT RAISE {}".format(expected_exception)
