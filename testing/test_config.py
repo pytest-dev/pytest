@@ -1,6 +1,7 @@
 import os
 import sys
 import textwrap
+from pathlib import Path
 
 import _pytest._code
 import pytest
@@ -1197,6 +1198,29 @@ def test_config_does_not_load_blocked_plugin_from_args(testdir):
     result = testdir.runpytest(str(p), "-pno:capture", "-s")
     result.stderr.fnmatch_lines(["*: error: unrecognized arguments: -s"])
     assert result.ret == ExitCode.USAGE_ERROR
+
+
+def test_invocation_args(testdir):
+    """Ensure that Config.invocation_* arguments are correctly defined"""
+
+    class DummyPlugin:
+        pass
+
+    p = testdir.makepyfile("def test(): pass")
+    plugin = DummyPlugin()
+    rec = testdir.inline_run(p, "-v", plugins=[plugin])
+    calls = rec.getcalls("pytest_runtest_protocol")
+    assert len(calls) == 1
+    call = calls[0]
+    config = call.item.config
+
+    assert config.invocation_params.args == [p, "-v"]
+    assert config.invocation_params.dir == Path(str(testdir.tmpdir))
+
+    plugins = config.invocation_params.plugins
+    assert len(plugins) == 2
+    assert plugins[0] is plugin
+    assert type(plugins[1]).__name__ == "Collect"  # installed by testdir.inline_run()
 
 
 @pytest.mark.parametrize(
