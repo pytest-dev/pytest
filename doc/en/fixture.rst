@@ -400,6 +400,35 @@ The ``smtp_connection`` connection will be closed after the test finished
 execution because the ``smtp_connection`` object automatically closes when
 the ``with`` statement ends.
 
+Using the contextlib.ExitStack context manager finalizers will always be called
+regardless if the fixture *setup* code raises an exception. This is handy to properly
+close all resources created by a fixture even if one of them fails to be created/acquired:
+
+.. code-block:: python
+
+    # content of test_yield3.py
+
+    import contextlib
+
+    import pytest
+
+    from .utils import connect
+
+
+    @pytest.fixture
+    def equipments():
+        with contextlib.ExitStack() as stack:
+            r = []
+            for port in ("C1", "C3", "C28"):
+                equip = connect(port)
+                stack.callback(equip.disconnect)
+                r.append(equip)
+            yield r
+
+In the example above, if ``"C28"`` fails with an exception, ``"C1"`` and ``"C3"`` will still
+be properly closed. Of course, if an exception happens before the finalize function is
+registered then it will not be executed.
+
 Note that if an exception happens during the *setup* code (before the ``yield`` keyword), the
 *teardown* code (after the ``yield``) will not be called.
 
@@ -428,28 +457,31 @@ Here's the ``smtp_connection`` fixture changed to use ``addfinalizer`` for clean
         return smtp_connection  # provide the fixture value
 
 
+Here's the ``equipments`` fixture changed to use ``addfinalizer`` for cleanup:
+
+.. code-block:: python
+
+    # content of test_yield3.py
+
+    import contextlib
+
+    import pytest
+
+    from .utils import connect
+
+
+    @pytest.fixture
+    def equipments(request):
+        r = []
+        for port in ("C1", "C3", "C28"):
+            equip = connect(port)
+            request.addfinalizer(equip.disconnect)
+            r.append(equip)
+        return r
+
+
 Both ``yield`` and ``addfinalizer`` methods work similarly by calling their code after the test
-ends, but ``addfinalizer`` has two key differences over ``yield``:
-
-1. It is possible to register multiple finalizer functions.
-
-2. Finalizers will always be called regardless if the fixture *setup* code raises an exception.
-   This is handy to properly close all resources created by a fixture even if one of them
-   fails to be created/acquired::
-
-        @pytest.fixture
-        def equipments(request):
-            r = []
-            for port in ('C1', 'C3', 'C28'):
-                equip = connect(port)
-                request.addfinalizer(equip.disconnect)
-                r.append(equip)
-            return r
-
-   In the example above, if ``"C28"`` fails with an exception, ``"C1"`` and ``"C3"`` will still
-   be properly closed. Of course, if an exception happens before the finalize function is
-   registered then it will not be executed.
-
+ends.
 
 .. _`request-context`:
 
