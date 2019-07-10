@@ -74,7 +74,7 @@ class pytestPDB:
 
     _pluginmanager = None
     _config = None
-    _saved = []
+    _saved = []  # type: list
     _recursive_debug = 0
     _wrapped_pdb_cls = None
 

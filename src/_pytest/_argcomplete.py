@@ -56,6 +56,7 @@ If things do not work right away:
 import os
 import sys
 from glob import glob
+from typing import Optional
 
 
 class FastFilesCompleter:
@@ -91,7 +92,7 @@ if os.environ.get("_ARGCOMPLETE"):
         import argcomplete.completers
     except ImportError:
         sys.exit(-1)
-    filescompleter = FastFilesCompleter()
+    filescompleter = FastFilesCompleter()  # type: Optional[FastFilesCompleter]
 
     def try_argcomplete(parser):
         argcomplete.autocomplete(parser, always_complete_options=False)
