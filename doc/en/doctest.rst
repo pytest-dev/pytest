@@ -152,7 +152,9 @@ pytest also introduces new options:
           0.23300000000000001
 
   ``NUMBER`` also supports lists of floating-point numbers -- in fact, it
-  supports floating-point numbers appearing anywhere in the output.
+  matches floating-point numbers appearing anywhere in the output, even inside
+  a string! This means that it may not be appropriate to enable globally in
+  ``doctest_optionflags`` in your configuration file.
 
 
 Continue on failure
