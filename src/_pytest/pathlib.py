@@ -109,9 +109,9 @@ def _force_symlink(root, target, link_to):
     """helper to create the current symlink
 
     it's full of race conditions that are reasonably ok to ignore
-    for the context of best effort linking to the latest testrun
+    for the context of best effort linking to the latest test run
 
-    the presumption being thatin case of much parallelism
+    the presumption being that in case of much parallelism
     the inaccuracy is going to be acceptable
     """
     current_symlink = root.joinpath(target)
