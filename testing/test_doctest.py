@@ -956,7 +956,7 @@ class TestLiterals:
             ("3.1", "4.0"),
             ("8.22e5", "810000.0"),
             # Only the actual output is rounded up, not the expected output:
-            ("3.0", "2.99"),
+            ("3.0", "2.98"),
             ("1e3", "999"),
         ],
     )
@@ -965,7 +965,9 @@ class TestLiterals:
             test_doc="""
             >>> {expression} #doctest: +NUMBER
             {output}
-            """
+            """.format(
+                expression=expression, output=output
+            )
         )
         reprec = testdir.inline_run()
         reprec.assertoutcome(passed=0, failed=1)
