@@ -745,9 +745,13 @@ class RaisesContext(Generic[_E]):
         if exc_type is None:
             fail(self.message)
         assert self.excinfo is not None
-        # Type ignored because mypy doesn't like calling __init__ directly like this.
-        self.excinfo.__init__((exc_type, exc_val, exc_tb))  # type: ignore
-        suppress_exception = issubclass(self.excinfo.type, self.expected_exception)
-        if self.match_expr is not None and suppress_exception:
+        if not issubclass(exc_type, self.expected_exception):
+            return False
+        # Cast to narrow the exception type now that it's verified.
+        exc_info = cast(
+            Tuple["Type[_E]", _E, TracebackType], (exc_type, exc_val, exc_tb)
+        )
+        self.excinfo.fill_unfilled(exc_info)
+        if self.match_expr is not None:
             self.excinfo.match(self.match_expr)
-        return suppress_exception
+        return True

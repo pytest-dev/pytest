@@ -432,6 +432,11 @@ class ExceptionInfo(Generic[_E]):
         """
         return cls(None)
 
+    def fill_unfilled(self, exc_info: Tuple["Type[_E]", _E, TracebackType]) -> None:
+        """fill an unfilled ExceptionInfo created with for_later()"""
+        assert self._excinfo is None, "ExceptionInfo was already filled"
+        self._excinfo = exc_info
+
     @property
     def type(self) -> "Type[_E]":
         """the exception class"""
