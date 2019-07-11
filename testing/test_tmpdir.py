@@ -3,6 +3,8 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import os
+import stat
 import sys
 
 import attr
@@ -318,11 +320,11 @@ class TestNumberedDir(object):
         )
 
     def test_rmtree(self, tmp_path):
-        from _pytest.pathlib import rmtree
+        from _pytest.pathlib import rm_rf
 
         adir = tmp_path / "adir"
         adir.mkdir()
-        rmtree(adir)
+        rm_rf(adir)
 
         assert not adir.exists()
 
@@ -330,8 +332,39 @@ class TestNumberedDir(object):
         afile = adir / "afile"
         afile.write_bytes(b"aa")
 
-        rmtree(adir, force=True)
+        rm_rf(adir)
         assert not adir.exists()
+
+    def test_rmtree_with_read_only_file(self, tmp_path):
+        """Ensure rm_rf can remove directories with read-only files in them (#5524)"""
+        from _pytest.pathlib import rm_rf
+
+        fn = tmp_path / "dir/foo.txt"
+        fn.parent.mkdir()
+
+        fn.touch()
+
+        mode = os.stat(str(fn)).st_mode
+        os.chmod(str(fn), mode & ~stat.S_IWRITE)
+
+        rm_rf(fn.parent)
+
+        assert not fn.parent.is_dir()
+
+    def test_rmtree_with_read_only_directory(self, tmp_path):
+        """Ensure rm_rf can remove read-only directories (#5524)"""
+        from _pytest.pathlib import rm_rf
+
+        adir = tmp_path / "dir"
+        adir.mkdir()
+
+        (adir / "foo.txt").touch()
+        mode = os.stat(str(adir)).st_mode
+        os.chmod(str(adir), mode & ~stat.S_IWRITE)
+
+        rm_rf(adir)
+
+        assert not adir.is_dir()
 
     def test_cleanup_ignores_symlink(self, tmp_path):
         the_symlink = tmp_path / (self.PREFIX + "current")
@@ -358,3 +391,24 @@ def attempt_symlink_to(path, to_path):
 
 def test_tmpdir_equals_tmp_path(tmpdir, tmp_path):
     assert Path(tmpdir) == tmp_path
+
+
+def test_basetemp_with_read_only_files(testdir):
+    """Integration test for #5524"""
+    testdir.makepyfile(
+        """
+        import os
+        import stat
+
+        def test(tmp_path):
+            fn = tmp_path / 'foo.txt'
+            fn.write_text(u'hello')
+            mode = os.stat(str(fn)).st_mode
+            os.chmod(str(fn), mode & ~stat.S_IREAD)
+    """
+    )
+    result = testdir.runpytest("--basetemp=tmp")
+    assert result.ret == 0
+    # running a second time and ensure we don't crash
+    result = testdir.runpytest("--basetemp=tmp")
+    assert result.ret == 0
