@@ -103,7 +103,7 @@ that will be used for those doctest files using the
 Using 'doctest' options
 -----------------------
 
-The standard ``doctest`` module provides some `options <https://docs.python.org/3/library/doctest.html#option-flags>`__
+Python's standard ``doctest`` module provides some `options <https://docs.python.org/3/library/doctest.html#option-flags>`__
 to configure the strictness of doctest tests. In pytest, you can enable those flags using the
 configuration file.
 
@@ -115,23 +115,50 @@ lengthy exception stack traces you can just write:
     [pytest]
     doctest_optionflags= NORMALIZE_WHITESPACE IGNORE_EXCEPTION_DETAIL
 
-pytest also introduces new options to allow doctests to run in Python 2 and
-Python 3 unchanged:
-
-* ``ALLOW_UNICODE``: when enabled, the ``u`` prefix is stripped from unicode
-  strings in expected doctest output.
-
-* ``ALLOW_BYTES``: when enabled, the ``b`` prefix is stripped from byte strings
-  in expected doctest output.
-
 Alternatively, options can be enabled by an inline comment in the doc test
 itself:
 
 .. code-block:: rst
 
-    # content of example.rst
-    >>> get_unicode_greeting()  # doctest: +ALLOW_UNICODE
-    'Hello'
+    >>> something_that_raises()  # doctest: +IGNORE_EXCEPTION_DETAIL
+    Traceback (most recent call last):
+    ValueError: ...
+
+pytest also introduces new options:
+
+* ``ALLOW_UNICODE``: when enabled, the ``u`` prefix is stripped from unicode
+  strings in expected doctest output. This allows doctests to run in Python 2
+  and Python 3 unchanged.
+
+* ``ALLOW_BYTES``: similarly, the ``b`` prefix is stripped from byte strings
+  in expected doctest output.
+
+* ``NUMBER``: when enabled, floating-point numbers only need to match as far as
+  the precision you have written in the expected doctest output. For example,
+  the following output would only need to match to 2 decimal places::
+
+      >>> math.pi
+      3.14
+
+  If you wrote ``3.1416`` then the actual output would need to match to 4
+  decimal places; and so on.
+
+  This avoids false positives caused by limited floating-point precision, like
+  this::
+
+      Expected:
+          0.233
+      Got:
+          0.23300000000000001
+
+  ``NUMBER`` also supports lists of floating-point numbers -- in fact, it
+  matches floating-point numbers appearing anywhere in the output, even inside
+  a string! This means that it may not be appropriate to enable globally in
+  ``doctest_optionflags`` in your configuration file.
+
+
+Continue on failure
+-------------------
 
 By default, pytest would report only the first failure for a given doctest. If
 you want to continue the test even when you have failures, do:

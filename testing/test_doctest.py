@@ -3,6 +3,7 @@ import textwrap
 
 import pytest
 from _pytest.compat import MODULE_NOT_FOUND_ERROR
+from _pytest.doctest import _get_checker
 from _pytest.doctest import _is_mocked
 from _pytest.doctest import _patch_unwrap_mock_aware
 from _pytest.doctest import DoctestItem
@@ -837,6 +838,154 @@ class TestLiterals:
         )
         reprec = testdir.inline_run()
         reprec.assertoutcome(failed=1)
+
+    def test_number_re(self):
+        for s in [
+            "1.",
+            "+1.",
+            "-1.",
+            ".1",
+            "+.1",
+            "-.1",
+            "0.1",
+            "+0.1",
+            "-0.1",
+            "1e5",
+            "+1e5",
+            "1e+5",
+            "+1e+5",
+            "1e-5",
+            "+1e-5",
+            "-1e-5",
+            "1.2e3",
+            "-1.2e-3",
+        ]:
+            print(s)
+            m = _get_checker()._number_re.match(s)
+            assert m is not None
+            assert float(m.group()) == pytest.approx(float(s))
+        for s in ["1", "abc"]:
+            print(s)
+            assert _get_checker()._number_re.match(s) is None
+
+    @pytest.mark.parametrize("config_mode", ["ini", "comment"])
+    def test_number_precision(self, testdir, config_mode):
+        """Test the NUMBER option."""
+        if config_mode == "ini":
+            testdir.makeini(
+                """
+                [pytest]
+                doctest_optionflags = NUMBER
+                """
+            )
+            comment = ""
+        else:
+            comment = "#doctest: +NUMBER"
+
+        testdir.maketxtfile(
+            test_doc="""
+
+            Scalars:
+
+            >>> import math
+            >>> math.pi {comment}
+            3.141592653589793
+            >>> math.pi {comment}
+            3.1416
+            >>> math.pi {comment}
+            3.14
+            >>> -math.pi {comment}
+            -3.14
+            >>> math.pi {comment}
+            3.
+            >>> 3. {comment}
+            3.0
+            >>> 3. {comment}
+            3.
+            >>> 3. {comment}
+            3.01
+            >>> 3. {comment}
+            2.99
+            >>> .299 {comment}
+            .3
+            >>> .301 {comment}
+            .3
+            >>> 951. {comment}
+            1e3
+            >>> 1049. {comment}
+            1e3
+            >>> -1049. {comment}
+            -1e3
+            >>> 1e3 {comment}
+            1e3
+            >>> 1e3 {comment}
+            1000.
+
+            Lists:
+
+            >>> [3.1415, 0.097, 13.1, 7, 8.22222e5, 0.598e-2] {comment}
+            [3.14, 0.1, 13., 7, 8.22e5, 6.0e-3]
+            >>> [[0.333, 0.667], [0.999, 1.333]] {comment}
+            [[0.33, 0.667], [0.999, 1.333]]
+            >>> [[[0.101]]] {comment}
+            [[[0.1]]]
+
+            Doesn't barf on non-numbers:
+
+            >>> 'abc' {comment}
+            'abc'
+            >>> None {comment}
+            """.format(
+                comment=comment
+            )
+        )
+        reprec = testdir.inline_run()
+        reprec.assertoutcome(passed=1)
+
+    @pytest.mark.parametrize(
+        "expression,output",
+        [
+            # ints shouldn't match floats:
+            ("3.0", "3"),
+            ("3e0", "3"),
+            ("1e3", "1000"),
+            ("3", "3.0"),
+            # Rounding:
+            ("3.1", "3.0"),
+            ("3.1", "3.2"),
+            ("3.1", "4.0"),
+            ("8.22e5", "810000.0"),
+            # Only the actual output is rounded up, not the expected output:
+            ("3.0", "2.98"),
+            ("1e3", "999"),
+            # The current implementation doesn't understand that numbers inside
+            # strings shouldn't be treated as numbers:
+            pytest.param("'3.1416'", "'3.14'", marks=pytest.mark.xfail),
+        ],
+    )
+    def test_number_non_matches(self, testdir, expression, output):
+        testdir.maketxtfile(
+            test_doc="""
+            >>> {expression} #doctest: +NUMBER
+            {output}
+            """.format(
+                expression=expression, output=output
+            )
+        )
+        reprec = testdir.inline_run()
+        reprec.assertoutcome(passed=0, failed=1)
+
+    def test_number_and_allow_unicode(self, testdir):
+        testdir.maketxtfile(
+            test_doc="""
+            >>> from collections import namedtuple
+            >>> T = namedtuple('T', 'a b c')
+            >>> T(a=0.2330000001, b=u'str', c=b'bytes') # doctest: +ALLOW_UNICODE, +ALLOW_BYTES, +NUMBER
+            T(a=0.233, b=u'str', c='bytes')
+            """
+        )
+        reprec = testdir.inline_run()
+        reprec.assertoutcome(passed=1)
 
 
 class TestDoctestSkips:
