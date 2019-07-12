@@ -438,13 +438,12 @@ class Module(nodes.File, PyCollector):
         Using a fixture to invoke this methods ensures we play nicely and unsurprisingly with
         other fixtures (#517).
         """
-        setup_module = _get_non_fixture_func(self.obj, "setUpModule")
-        if setup_module is None:
-            setup_module = _get_non_fixture_func(self.obj, "setup_module")
-
-        teardown_module = _get_non_fixture_func(self.obj, "tearDownModule")
-        if teardown_module is None:
-            teardown_module = _get_non_fixture_func(self.obj, "teardown_module")
+        setup_module = _get_first_non_fixture_func(
+            self.obj, ("setUpModule", "setup_module")
+        )
+        teardown_module = _get_first_non_fixture_func(
+            self.obj, ("tearDownModule", "teardown_module")
+        )
 
         if setup_module is None and teardown_module is None:
             return
@@ -466,8 +465,10 @@ class Module(nodes.File, PyCollector):
         Using a fixture to invoke this methods ensures we play nicely and unsurprisingly with
         other fixtures (#517).
         """
-        setup_function = _get_non_fixture_func(self.obj, "setup_function")
-        teardown_function = _get_non_fixture_func(self.obj, "teardown_function")
+        setup_function = _get_first_non_fixture_func(self.obj, ("setup_function",))
+        teardown_function = _get_first_non_fixture_func(
+            self.obj, ("teardown_function",)
+        )
         if setup_function is None and teardown_function is None:
             return
 
@@ -551,15 +552,15 @@ class Package(Module):
     def setup(self):
         # not using fixtures to call setup_module here because autouse fixtures
         # from packages are not called automatically (#4085)
-        setup_module = _get_non_fixture_func(self.obj, "setUpModule")
-        if setup_module is None:
-            setup_module = _get_non_fixture_func(self.obj, "setup_module")
+        setup_module = _get_first_non_fixture_func(
+            self.obj, ("setUpModule", "setup_module")
+        )
         if setup_module is not None:
             _call_with_optional_argument(setup_module, self.obj)
 
-        teardown_module = _get_non_fixture_func(self.obj, "tearDownModule")
-        if teardown_module is None:
-            teardown_module = _get_non_fixture_func(self.obj, "teardown_module")
+        teardown_module = _get_first_non_fixture_func(
+            self.obj, ("tearDownModule", "teardown_module")
+        )
         if teardown_module is not None:
             func = partial(_call_with_optional_argument, teardown_module, self.obj)
             self.addfinalizer(func)
@@ -662,14 +663,15 @@ def _call_with_optional_argument(func, arg):
         func()
 
 
-def _get_non_fixture_func(obj, name):
+def _get_first_non_fixture_func(obj, names):
     """Return the attribute from the given object to be used as a setup/teardown
     xunit-style function, but only if not marked as a fixture to
     avoid calling it twice.
     """
-    meth = getattr(obj, name, None)
-    if fixtures.getfixturemarker(meth) is None:
-        return meth
+    for name in names:
+        meth = getattr(obj, name, None)
+        if meth is not None and fixtures.getfixturemarker(meth) is None:
+            return meth
 
 
 class Class(PyCollector):
@@ -709,7 +711,7 @@ class Class(PyCollector):
         Using a fixture to invoke this methods ensures we play nicely and unsurprisingly with
         other fixtures (#517).
         """
-        setup_class = _get_non_fixture_func(self.obj, "setup_class")
+        setup_class = _get_first_non_fixture_func(self.obj, ("setup_class",))
         teardown_class = getattr(self.obj, "teardown_class", None)
         if setup_class is None and teardown_class is None:
             return
@@ -733,7 +735,7 @@ class Class(PyCollector):
         Using a fixture to invoke this methods ensures we play nicely and unsurprisingly with
         other fixtures (#517).
         """
-        setup_method = _get_non_fixture_func(self.obj, "setup_method")
+        setup_method = _get_first_non_fixture_func(self.obj, ("setup_method",))
         teardown_method = getattr(self.obj, "teardown_method", None)
         if setup_method is None and teardown_method is None:
             return
