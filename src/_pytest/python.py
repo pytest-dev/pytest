@@ -649,27 +649,6 @@ class Package(Module):
                 pkg_prefixes.add(path)
 
 
-def _get_xunit_setup_teardown(holder, attr_name, param_obj=None):
-    """
-    Return a callable to perform xunit-style setup or teardown if
-    the function exists in the ``holder`` object.
-    The ``param_obj`` parameter is the parameter which will be passed to the function
-    when the callable is called without arguments, defaults to the ``holder`` object.
-    Return ``None`` if a suitable callable is not found.
-    """
-    # TODO: only needed because of Package!
-    param_obj = param_obj if param_obj is not None else holder
-    result = _get_non_fixture_func(holder, attr_name)
-    if result is not None:
-        arg_count = result.__code__.co_argcount
-        if inspect.ismethod(result):
-            arg_count -= 1
-        if arg_count:
-            return lambda: result(param_obj)
-        else:
-            return result
-
-
 def _call_with_optional_argument(func, arg):
     """Call the given function with the given argument if func accepts one argument, otherwise
     calls func without arguments"""
