@@ -1,11 +1,12 @@
 """ Python test discovery, setup and run of test functions. """
-import collections
 import enum
 import fnmatch
 import inspect
 import os
 import sys
 import warnings
+from collections import Counter
+from collections.abc import Sequence
 from functools import partial
 from textwrap import dedent
 
@@ -1042,12 +1043,9 @@ class Metafunc(fixtures.FuncargnamesCompatAttr):
             * "params" if the argname should be the parameter of a fixture of the same name.
             * "funcargs" if the argname should be a parameter to the parametrized test function.
         """
-        valtypes = {}
-        if indirect is True:
-            valtypes = dict.fromkeys(argnames, "params")
-        elif indirect is False:
-            valtypes = dict.fromkeys(argnames, "funcargs")
-        elif isinstance(indirect, (tuple, list)):
+        if isinstance(indirect, bool):
+            valtypes = dict.fromkeys(argnames, "params" if indirect else "funcargs")
+        elif isinstance(indirect, Sequence):
             valtypes = dict.fromkeys(argnames, "funcargs")
             for arg in indirect:
                 if arg not in argnames:
@@ -1058,6 +1056,13 @@ class Metafunc(fixtures.FuncargnamesCompatAttr):
                         pytrace=False,
                     )
                 valtypes[arg] = "params"
+        else:
+            fail(
+                "In {func}: expected Sequence or boolean for indirect, got {type}".format(
+                    type=type(indirect).__name__, func=self.function.__name__
+                ),
+                pytrace=False,
+            )
         return valtypes
 
     def _validate_if_using_arg_names(self, argnames, indirect):
@@ -1185,7 +1190,7 @@ def idmaker(argnames, parametersets, idfn=None, ids=None, config=None, item=None
     if len(set(ids)) != len(ids):
         # The ids are not unique
         duplicates = [testid for testid in ids if ids.count(testid) > 1]
-        counters = collections.defaultdict(lambda: 0)
+        counters = Counter()
         for index, testid in enumerate(ids):
             if testid in duplicates:
                 ids[index] = testid + str(counters[testid])
