@@ -1,0 +1,2 @@
+XML files of the ``xunit2`` family are now validated against the schema by pytest's own test suite
+to avoid future regressions.
