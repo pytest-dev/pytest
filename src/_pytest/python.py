@@ -391,12 +391,8 @@ class PyCollector(PyobjMixin, nodes.Collector):
             methods.append(module.pytest_generate_tests)
         if hasattr(cls, "pytest_generate_tests"):
             methods.append(cls().pytest_generate_tests)
-        if methods:
-            self.ihook.pytest_generate_tests.call_extra(
-                methods, dict(metafunc=metafunc)
-            )
-        else:
-            self.ihook.pytest_generate_tests(metafunc=metafunc)
+
+        self.ihook.pytest_generate_tests.call_extra(methods, dict(metafunc=metafunc))
 
         if not metafunc._calls:
             yield Function(name, parent=self, fixtureinfo=fixtureinfo)
