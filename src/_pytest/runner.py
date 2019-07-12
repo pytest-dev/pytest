@@ -249,10 +249,11 @@ def pytest_make_collect_report(collector):
     if not call.excinfo:
         outcome = "passed"
     else:
-        from _pytest import nose
-
-        skip_exceptions = (Skipped,) + nose.get_skip_exceptions()
-        if call.excinfo.errisinstance(skip_exceptions):
+        skip_exceptions = [Skipped]
+        unittest = sys.modules.get("unittest")
+        if unittest is not None:
+            skip_exceptions.append(unittest.SkipTest)
+        if call.excinfo.errisinstance(tuple(skip_exceptions)):
             outcome = "skipped"
             r = collector._repr_failure_py(call.excinfo, "line").reprcrash
             longrepr = (str(r.path), r.lineno, r.message)
