@@ -1399,14 +1399,11 @@ class Function(FunctionMixin, nodes.Item, fixtures.FuncargnamesCompatAttr):
         # https://github.com/pytest-dev/pytest/issues/4569
 
         self.keywords.update(
-            dict.fromkeys(
-                [
-                    mark.name
-                    for mark in self.iter_markers()
-                    if mark.name not in self.keywords
-                ],
-                True,
-            )
+            {
+                mark.name: True
+                for mark in self.iter_markers()
+                if mark.name not in self.keywords
+            }
         )
 
         if fixtureinfo is None:
