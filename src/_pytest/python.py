@@ -240,9 +240,6 @@ class PyobjContext:
 class PyobjMixin(PyobjContext):
     _ALLOW_MARKERS = True
 
-    def __init__(self, *k, **kw):
-        super().__init__(*k, **kw)
-
     @property
     def obj(self):
         """Underlying Python object."""
