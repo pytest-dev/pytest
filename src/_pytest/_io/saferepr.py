@@ -25,24 +25,6 @@ class SafeRepr(reprlib.Repr):
     def repr(self, x):
         return self._callhelper(reprlib.Repr.repr, self, x)
 
-    def repr_unicode(self, x, level):
-        # Strictly speaking wrong on narrow builds
-        def repr(u):
-            if "'" not in u:
-                return "'%s'" % u
-            elif '"' not in u:
-                return '"%s"' % u
-            else:
-                return "'%s'" % u.replace("'", r"\'")
-
-        s = repr(x[: self.maxstring])
-        if len(s) > self.maxstring:
-            i = max(0, (self.maxstring - 3) // 2)
-            j = max(0, self.maxstring - 3 - i)
-            s = repr(x[:i] + x[len(x) - j :])
-            s = s[:i] + "..." + s[len(s) - j :]
-        return s
-
     def repr_instance(self, x, level):
         return self._callhelper(repr, x)
 
