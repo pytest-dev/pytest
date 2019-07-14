@@ -47,12 +47,7 @@ repos:
     rev: v0.711
     hooks:
     -   id: mypy
-        name: mypy (src)
-        files: ^src/
-        args: []
-    -   id: mypy
-        name: mypy (testing)
-        files: ^testing/
+        files: ^(src/|testing/)
         args: []
 -   repo: local
     hooks:
