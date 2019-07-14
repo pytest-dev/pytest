@@ -1,0 +1,1 @@
+Simplified internal ``SafeRepr`` class and removed some dead code.
