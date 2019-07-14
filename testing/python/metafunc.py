@@ -599,6 +599,17 @@ class TestMetafunc:
         assert metafunc._calls[0].funcargs == dict(x="a", y="b")
         assert metafunc._calls[0].params == {}
 
+    def test_parametrize_indirect_wrong_type(self):
+        def func(x, y):
+            pass
+
+        metafunc = self.Metafunc(func)
+        with pytest.raises(
+            pytest.fail.Exception,
+            match="In func: expected Sequence or boolean for indirect, got dict",
+        ):
+            metafunc.parametrize("x, y", [("a", "b")], indirect={})
+
     def test_parametrize_indirect_list_functional(self, testdir):
         """
         #714
