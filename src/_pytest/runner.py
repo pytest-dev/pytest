@@ -3,6 +3,10 @@ import bdb
 import os
 import sys
 from time import time
+from typing import Callable
+from typing import Dict
+from typing import List
+from typing import Tuple
 
 import attr
 
@@ -10,9 +14,13 @@ from .reports import CollectErrorRepr
 from .reports import CollectReport
 from .reports import TestReport
 from _pytest._code.code import ExceptionInfo
+from _pytest.nodes import Node
 from _pytest.outcomes import Exit
 from _pytest.outcomes import Skipped
 from _pytest.outcomes import TEST_OUTCOME
+
+if False:  # TYPE_CHECKING
+    from typing import Type
 
 #
 # pytest plugin hooks
@@ -118,6 +126,7 @@ def pytest_runtest_call(item):
     except Exception:
         # Store trace info to allow postmortem debugging
         type, value, tb = sys.exc_info()
+        assert tb is not None
         tb = tb.tb_next  # Skip *this* frame
         sys.last_type = type
         sys.last_value = value
@@ -185,7 +194,7 @@ def check_interactive_exception(call, report):
 def call_runtest_hook(item, when, **kwds):
     hookname = "pytest_runtest_" + when
     ihook = getattr(item.ihook, hookname)
-    reraise = (Exit,)
+    reraise = (Exit,)  # type: Tuple[Type[BaseException], ...]
     if not item.config.getoption("usepdb", False):
         reraise += (KeyboardInterrupt,)
     return CallInfo.from_call(
@@ -252,7 +261,8 @@ def pytest_make_collect_report(collector):
         skip_exceptions = [Skipped]
         unittest = sys.modules.get("unittest")
         if unittest is not None:
-            skip_exceptions.append(unittest.SkipTest)
+            # Type ignored because unittest is loaded dynamically.
+            skip_exceptions.append(unittest.SkipTest)  # type: ignore
         if call.excinfo.errisinstance(tuple(skip_exceptions)):
             outcome = "skipped"
             r = collector._repr_failure_py(call.excinfo, "line").reprcrash
@@ -266,7 +276,7 @@ def pytest_make_collect_report(collector):
     rep = CollectReport(
         collector.nodeid, outcome, longrepr, getattr(call, "result", None)
     )
-    rep.call = call  # see collect_one_node
+    rep.call = call  # type: ignore # see collect_one_node
     return rep
 
 
@@ -274,8 +284,8 @@ class SetupState:
     """ shared state for setting up/tearing down test items or collectors. """
 
     def __init__(self):
-        self.stack = []
-        self._finalizers = {}
+        self.stack = []  # type: List[Node]
+        self._finalizers = {}  # type: Dict[Node, List[Callable[[], None]]]
 
     def addfinalizer(self, finalizer, colitem):
         """ attach a finalizer to the given colitem. """
@@ -302,6 +312,7 @@ class SetupState:
                     exc = sys.exc_info()
         if exc:
             _, val, tb = exc
+            assert val is not None
             raise val.with_traceback(tb)
 
     def _teardown_with_finalization(self, colitem):
@@ -335,6 +346,7 @@ class SetupState:
                     exc = sys.exc_info()
         if exc:
             _, val, tb = exc
+            assert val is not None
             raise val.with_traceback(tb)
 
     def prepare(self, colitem):

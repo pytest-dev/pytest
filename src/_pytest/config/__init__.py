@@ -9,6 +9,15 @@ import types
 import warnings
 from functools import lru_cache
 from pathlib import Path
+from types import TracebackType
+from typing import Any
+from typing import Callable
+from typing import Dict
+from typing import List
+from typing import Optional
+from typing import Sequence
+from typing import Set
+from typing import Tuple
 
 import attr
 import py
@@ -32,6 +41,10 @@ from _pytest.outcomes import fail
 from _pytest.outcomes import Skipped
 from _pytest.warning_types import PytestConfigWarning
 
+if False:  # TYPE_CHECKING
+    from typing import Type
+
+
 hookimpl = HookimplMarker("pytest")
 hookspec = HookspecMarker("pytest")
 
@@ -40,7 +53,7 @@ class ConftestImportFailure(Exception):
     def __init__(self, path, excinfo):
         Exception.__init__(self, path, excinfo)
         self.path = path
-        self.excinfo = excinfo
+        self.excinfo = excinfo  # type: Tuple[Type[Exception], Exception, TracebackType]
 
 
 def main(args=None, plugins=None):
@@ -237,14 +250,18 @@ class PytestPluginManager(PluginManager):
 
     def __init__(self):
         super().__init__("pytest")
-        self._conftest_plugins = set()
+        # The objects are module objects, only used generically.
+        self._conftest_plugins = set()  # type: Set[object]
 
         # state related to local conftest plugins
-        self._dirpath2confmods = {}
-        self._conftestpath2mod = {}
+        # Maps a py.path.local to a list of module objects.
+        self._dirpath2confmods = {}  # type: Dict[Any, List[object]]
+        # Maps a py.path.local to a module object.
+        self._conftestpath2mod = {}  # type: Dict[Any, object]
         self._confcutdir = None
         self._noconftest = False
-        self._duplicatepaths = set()
+        # Set of py.path.local's.
+        self._duplicatepaths = set()  # type: Set[Any]
 
         self.add_hookspecs(_pytest.hookspec)
         self.register(self)
@@ -653,7 +670,7 @@ class Config:
 
         args = attr.ib()
         plugins = attr.ib()
-        dir = attr.ib()
+        dir = attr.ib(type=Path)
 
     def __init__(self, pluginmanager, *, invocation_params=None):
         from .argparsing import Parser, FILE_OR_DIR
@@ -674,10 +691,10 @@ class Config:
         self.pluginmanager = pluginmanager
         self.trace = self.pluginmanager.trace.root.get("config")
         self.hook = self.pluginmanager.hook
-        self._inicache = {}
-        self._override_ini = ()
-        self._opt2dest = {}
-        self._cleanup = []
+        self._inicache = {}  # type: Dict[str, Any]
+        self._override_ini = ()  # type: Sequence[str]
+        self._opt2dest = {}  # type: Dict[str, str]
+        self._cleanup = []  # type: List[Callable[[], None]]
         self.pluginmanager.register(self, "pytestconfig")
         self._configured = False
         self.hook.pytest_addoption.call_historic(kwargs=dict(parser=self._parser))
@@ -778,7 +795,7 @@ class Config:
     def pytest_load_initial_conftests(self, early_config):
         self.pluginmanager._set_initial_conftests(early_config.known_args_namespace)
 
-    def _initini(self, args):
+    def _initini(self, args) -> None:
         ns, unknown_args = self._parser.parse_known_and_unknown_args(
             args, namespace=copy.copy(self.option)
         )
@@ -879,8 +896,7 @@ class Config:
             self.hook.pytest_load_initial_conftests(
                 early_config=self, args=args, parser=self._parser
             )
-        except ConftestImportFailure:
-            e = sys.exc_info()[1]
+        except ConftestImportFailure as e:
             if ns.help or ns.version:
                 # we don't want to prevent --help/--version to work
                 # so just let is pass and print a warning at the end
@@ -946,7 +962,7 @@ class Config:
         assert isinstance(x, list)
         x.append(line)  # modifies the cached list inline
 
-    def getini(self, name):
+    def getini(self, name: str):
         """ return configuration value from an :ref:`ini file <inifiles>`. If the
         specified name hasn't been registered through a prior
         :py:func:`parser.addini <_pytest.config.Parser.addini>`
@@ -957,7 +973,7 @@ class Config:
             self._inicache[name] = val = self._getini(name)
             return val
 
-    def _getini(self, name):
+    def _getini(self, name: str) -> Any:
         try:
             description, type, default = self._parser._inidict[name]
         except KeyError:
@@ -1002,7 +1018,7 @@ class Config:
             values.append(relroot)
         return values
 
-    def _get_override_ini_value(self, name):
+    def _get_override_ini_value(self, name: str) -> Optional[str]:
         value = None
         # override_ini is a list of "ini=value" options
         # always use the last item if multiple values are set for same ini-name,
@@ -1017,7 +1033,7 @@ class Config:
                     value = user_ini_value
         return value
 
-    def getoption(self, name, default=notset, skip=False):
+    def getoption(self, name: str, default=notset, skip: bool = False):
         """ return command line option value.
 
         :arg name: name of the option.  You may also specify
