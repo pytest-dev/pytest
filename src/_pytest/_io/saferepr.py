@@ -26,7 +26,6 @@ class SafeRepr(reprlib.Repr):
         super().__init__()
         self.maxstring = maxsize
         self.maxsize = maxsize
-        self.maxother = 160
 
     def repr(self, x):
         return self._callhelper(reprlib.Repr.repr, self, x)
