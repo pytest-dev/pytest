@@ -48,7 +48,7 @@ def test_exceptions():
 def test_big_repr():
     from _pytest._io.saferepr import SafeRepr
 
-    assert len(saferepr(range(1000))) <= len("[" + SafeRepr().maxlist * "1000" + "]")
+    assert len(saferepr(range(1000))) <= len("[" + SafeRepr(0).maxlist * "1000" + "]")
 
 
 def test_repr_on_newstyle():

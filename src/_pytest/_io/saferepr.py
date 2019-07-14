@@ -22,6 +22,12 @@ class SafeRepr(reprlib.Repr):
     and includes information on exceptions raised during the call.
     """
 
+    def __init__(self, maxsize):
+        super().__init__()
+        self.maxstring = maxsize
+        self.maxsize = maxsize
+        self.maxother = 160
+
     def repr(self, x):
         return self._callhelper(reprlib.Repr.repr, self, x)
 
@@ -52,9 +58,4 @@ def saferepr(obj, maxsize=240):
     care to never raise exceptions itself.  This function is a wrapper
     around the Repr/reprlib functionality of the standard 2.6 lib.
     """
-    # review exception handling
-    srepr = SafeRepr()
-    srepr.maxstring = maxsize
-    srepr.maxsize = maxsize
-    srepr.maxother = 160
-    return srepr.repr(obj)
+    return SafeRepr(maxsize).repr(obj)
