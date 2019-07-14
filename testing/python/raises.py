@@ -248,3 +248,9 @@ class TestRaises:
             with pytest.raises(CrappyClass()):
                 pass
         assert "via __class__" in excinfo.value.args[0]
+
+    def test_raises_context_manager_with_kwargs(self):
+        with pytest.raises(TypeError) as excinfo:
+            with pytest.raises(Exception, foo="bar"):
+                pass
+        assert "Unexpected keyword arguments" in str(excinfo.value)
