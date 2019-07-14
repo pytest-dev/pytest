@@ -1164,7 +1164,7 @@ def _idval(val, argname, idx, idfn, item, config):
         return str(val)
     elif isinstance(val, REGEX_TYPE):
         return ascii_escaped(val.pattern)
-    elif enum is not None and isinstance(val, enum.Enum):
+    elif isinstance(val, enum.Enum):
         return str(val)
     elif (inspect.isclass(val) or inspect.isfunction(val)) and hasattr(val, "__name__"):
         return val.__name__
