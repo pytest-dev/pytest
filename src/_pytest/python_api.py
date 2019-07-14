@@ -707,11 +707,11 @@ def raises(
             )
         try:
             func(*args[1:], **kwargs)
-        except expected_exception:
-            # Cast to narrow the type to expected_exception (_E).
-            return cast(
-                _pytest._code.ExceptionInfo[_E],
-                _pytest._code.ExceptionInfo.from_current(),
+        except expected_exception as e:
+            # We just caught the exception - there is a traceback.
+            assert e.__traceback__ is not None
+            return _pytest._code.ExceptionInfo.from_exc_info(
+                (type(e), e, e.__traceback__)
             )
     fail(message)
 

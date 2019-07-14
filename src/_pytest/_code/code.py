@@ -397,6 +397,33 @@ class ExceptionInfo(Generic[_E]):
     _traceback = attr.ib(type=Optional[Traceback], default=None)
 
     @classmethod
+    def from_exc_info(
+        cls,
+        exc_info: Tuple["Type[_E]", "_E", TracebackType],
+        exprinfo: Optional[str] = None,
+    ) -> "ExceptionInfo[_E]":
+        """returns an ExceptionInfo for an existing exc_info tuple.
+
+        .. warning::
+
+            Experimental API
+
+
+        :param exprinfo: a text string helping to determine if we should
+                         strip ``AssertionError`` from the output, defaults
+                         to the exception message/``__str__()``
+        """
+        _striptext = ""
+        if exprinfo is None and isinstance(exc_info[1], AssertionError):
+            exprinfo = getattr(exc_info[1], "msg", None)
+            if exprinfo is None:
+                exprinfo = saferepr(exc_info[1])
+            if exprinfo and exprinfo.startswith(cls._assert_start_repr):
+                _striptext = "AssertionError: "
+
+        return cls(exc_info, _striptext)
+
+    @classmethod
     def from_current(
         cls, exprinfo: Optional[str] = None
     ) -> "ExceptionInfo[BaseException]":
@@ -411,20 +438,12 @@ class ExceptionInfo(Generic[_E]):
                          strip ``AssertionError`` from the output, defaults
                          to the exception message/``__str__()``
         """
-        tup_ = sys.exc_info()
-        assert tup_[0] is not None, "no current exception"
-        assert tup_[1] is not None, "no current exception"
-        assert tup_[2] is not None, "no current exception"
-        tup = (tup_[0], tup_[1], tup_[2])
-        _striptext = ""
-        if exprinfo is None and isinstance(tup[1], AssertionError):
-            exprinfo = getattr(tup[1], "msg", None)
-            if exprinfo is None:
-                exprinfo = saferepr(tup[1])
-            if exprinfo and exprinfo.startswith(cls._assert_start_repr):
-                _striptext = "AssertionError: "
-
-        return cls(tup, _striptext)
+        tup = sys.exc_info()
+        assert tup[0] is not None, "no current exception"
+        assert tup[1] is not None, "no current exception"
+        assert tup[2] is not None, "no current exception"
+        exc_info = (tup[0], tup[1], tup[2])
+        return cls.from_exc_info(exc_info)
 
     @classmethod
     def for_later(cls) -> "ExceptionInfo[_E]":
