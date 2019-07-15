@@ -210,6 +210,15 @@ ul.simple li {
     margin-bottom: 0.5em;
 }
 
+div.topic ul.simple li {
+    margin-bottom: 0;
+}
+
+div.topic li > p:first-child {
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
 div.admonition {
     background: #fafafa;
     padding: 10px 20px;
