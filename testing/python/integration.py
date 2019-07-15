@@ -126,7 +126,6 @@ class TestMockDecoration:
         assert values == ("y", "z")
 
     def test_unittest_mock(self, testdir):
-        pytest.importorskip("unittest.mock")
         testdir.makepyfile(
             """
             import unittest.mock
@@ -142,7 +141,6 @@ class TestMockDecoration:
         reprec.assertoutcome(passed=1)
 
     def test_unittest_mock_and_fixture(self, testdir):
-        pytest.importorskip("unittest.mock")
         testdir.makepyfile(
             """
             import os.path
@@ -164,7 +162,6 @@ class TestMockDecoration:
         reprec.assertoutcome(passed=1)
 
     def test_unittest_mock_and_pypi_mock(self, testdir):
-        pytest.importorskip("unittest.mock")
         pytest.importorskip("mock", "1.0.1")
         testdir.makepyfile(
             """
