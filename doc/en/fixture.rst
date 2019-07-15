@@ -418,16 +418,10 @@ close all resources created by a fixture even if one of them fails to be created
     @pytest.fixture
     def equipments():
         with contextlib.ExitStack() as stack:
-            r = []
-            for port in ("C1", "C3", "C28"):
-                equip = connect(port)
-                stack.callback(equip.disconnect)
-                r.append(equip)
-            yield r
+            yield [stack.enter_context(connect(port)) for port in ("C1", "C3", "C28")]
 
 In the example above, if ``"C28"`` fails with an exception, ``"C1"`` and ``"C3"`` will still
-be properly closed. Of course, if an exception happens before the finalize function is
-registered then it will not be executed.
+be properly closed.
 
 Note that if an exception happens during the *setup* code (before the ``yield`` keyword), the
 *teardown* code (after the ``yield``) will not be called.
@@ -464,6 +458,7 @@ Here's the ``equipments`` fixture changed to use ``addfinalizer`` for cleanup:
     # content of test_yield3.py
 
     import contextlib
+    import functools
 
     import pytest
 
@@ -474,14 +469,17 @@ Here's the ``equipments`` fixture changed to use ``addfinalizer`` for cleanup:
     def equipments(request):
         r = []
         for port in ("C1", "C3", "C28"):
-            equip = connect(port)
-            request.addfinalizer(equip.disconnect)
+            cm = connect(port)
+            equip = cm.__enter__()
+            request.addfinalizer(functools.partial(cm.__exit__, None, None, None))
             r.append(equip)
         return r
 
 
 Both ``yield`` and ``addfinalizer`` methods work similarly by calling their code after the test
-ends.
+ends. Of course, if an exception happens before the finalize function is registered then it
+will not be executed.
+
 
 .. _`request-context`:
 
