@@ -1221,7 +1221,6 @@ def test_runs_twice(testdir, run_and_parse):
     assert first == second
 
 
-@pytest.mark.xfail(reason="hangs", run=False)
 def test_runs_twice_xdist(testdir, run_and_parse):
     pytest.importorskip("xdist")
     f = testdir.makepyfile(
