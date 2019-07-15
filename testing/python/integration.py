@@ -104,21 +104,15 @@ class TestMockDecoration:
         values = getfuncargnames(f)
         assert values == ("x",)
 
-    @pytest.mark.xfail(
-        strict=False, reason="getfuncargnames breaks if mock is imported"
-    )
-    def test_wrapped_getfuncargnames_patching(self):
+    def test_getfuncargnames_patching(self):
         from _pytest.compat import getfuncargnames
+        from unittest.mock import patch
 
-        def wrap(f):
-            def func():
+        class T:
+            def original(self, x, y, z):
                 pass
 
-            func.__wrapped__ = f
-            func.patchings = ["qwe"]
-            return func
-
-        @wrap
+        @patch.object(T, "original")
         def f(x, y, z):
             pass
 
