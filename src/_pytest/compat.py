@@ -67,8 +67,17 @@ def num_mock_patch_args(function):
     mock_modules = [sys.modules.get("mock"), sys.modules.get("unittest.mock")]
     if any(mock_modules):
         sentinels = [m.DEFAULT for m in mock_modules if m is not None]
+
+        def check_is_sentinel(o):
+            """Check if the given object is a mock sentinel by identity to avoid possible
+            problematic comparisons (#5606)"""
+            for sentinel in sentinels:
+                if o is sentinel:
+                    return True
+            return False
+
         return len(
-            [p for p in patchings if not p.attribute_name and p.new in sentinels]
+            [p for p in patchings if not p.attribute_name and check_is_sentinel(p.new)]
         )
     return len(patchings)
 
