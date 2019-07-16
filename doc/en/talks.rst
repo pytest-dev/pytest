@@ -4,8 +4,6 @@ Talks and Tutorials
 
 .. sidebar:: Next Open Trainings
 
-   - `Training at Europython 2019 <https://ep2019.europython.eu/talks/94WEnsY-introduction-to-pytest/>`_, 8th July 2019, Basel, Switzerland.
-
    - `Training at Workshoptage 2019 <https://workshoptage.ch/workshops/2019/test-driven-development-fuer-python-mit-pytest/>`_ (German), 10th September 2019, Rapperswil, Switzerland.
 
 .. _`funcargs`: funcargs.html
