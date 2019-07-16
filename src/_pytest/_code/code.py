@@ -520,7 +520,9 @@ class ExceptionInfo(Generic[_E]):
                 text = text[len(self._striptext) :]
         return text
 
-    def errisinstance(self, exc: "Type[BaseException]") -> bool:
+    def errisinstance(
+        self, exc: Union["Type[BaseException]", Tuple["Type[BaseException]", ...]]
+    ) -> bool:
         """ return True if the exception is an instance of exc """
         return isinstance(self.value, exc)
 
