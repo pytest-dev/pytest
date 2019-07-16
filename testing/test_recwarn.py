@@ -374,3 +374,9 @@ class TestWarns:
         assert f() == 10
         assert pytest.warns(UserWarning, f) == 10
         assert pytest.warns(UserWarning, f) == 10
+
+    def test_warns_context_manager_with_kwargs(self):
+        with pytest.raises(TypeError) as excinfo:
+            with pytest.warns(UserWarning, foo="bar"):
+                pass
+        assert "Unexpected keyword arguments" in str(excinfo.value)

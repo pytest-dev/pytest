@@ -7,6 +7,16 @@ from collections.abc import Sized
 from decimal import Decimal
 from itertools import filterfalse
 from numbers import Number
+from types import TracebackType
+from typing import Any
+from typing import Callable
+from typing import cast
+from typing import Generic
+from typing import Optional
+from typing import overload
+from typing import Pattern
+from typing import Tuple
+from typing import TypeVar
 from typing import Union
 
 from more_itertools.more import always_iterable
@@ -14,6 +24,9 @@ from more_itertools.more import always_iterable
 import _pytest._code
 from _pytest.compat import STRING_TYPES
 from _pytest.outcomes import fail
+
+if False:  # TYPE_CHECKING
+    from typing import Type  # noqa: F401 (used in type string)
 
 BASE_TYPE = (type, STRING_TYPES)
 
@@ -527,8 +540,35 @@ def _is_numpy_array(obj):
 
 # builtin pytest.raises helper
 
+_E = TypeVar("_E", bound=BaseException)
 
-def raises(expected_exception, *args, match=None, **kwargs):
+
+@overload
+def raises(
+    expected_exception: Union["Type[_E]", Tuple["Type[_E]", ...]],
+    *,
+    match: Optional[Union[str, Pattern]] = ...
+) -> "RaisesContext[_E]":
+    ...  # pragma: no cover
+
+
+@overload
+def raises(
+    expected_exception: Union["Type[_E]", Tuple["Type[_E]", ...]],
+    func: Callable,
+    *args: Any,
+    match: Optional[str] = ...,
+    **kwargs: Any
+) -> Optional[_pytest._code.ExceptionInfo[_E]]:
+    ...  # pragma: no cover
+
+
+def raises(
+    expected_exception: Union["Type[_E]", Tuple["Type[_E]", ...]],
+    *args: Any,
+    match: Optional[Union[str, Pattern]] = None,
+    **kwargs: Any
+) -> Union["RaisesContext[_E]", Optional[_pytest._code.ExceptionInfo[_E]]]:
     r"""
     Assert that a code block/function call raises ``expected_exception``
     or raise a failure exception otherwise.
@@ -647,18 +687,18 @@ def raises(expected_exception, *args, match=None, **kwargs):
     for exc in filterfalse(
         inspect.isclass, always_iterable(expected_exception, BASE_TYPE)
     ):
-        msg = (
-            "exceptions must be old-style classes or"
-            " derived from BaseException, not %s"
-        )
+        msg = "exceptions must be derived from BaseException, not %s"
         raise TypeError(msg % type(exc))
 
     message = "DID NOT RAISE {}".format(expected_exception)
 
     if not args:
-        return RaisesContext(
-            expected_exception, message=message, match_expr=match, **kwargs
-        )
+        if kwargs:
+            msg = "Unexpected keyword arguments passed to pytest.raises: "
+            msg += ", ".join(sorted(kwargs))
+            msg += "\nUse context-manager form instead?"
+            raise TypeError(msg)
+        return RaisesContext(expected_exception, message, match)
     else:
         func = args[0]
         if not callable(func):
@@ -667,31 +707,51 @@ def raises(expected_exception, *args, match=None, **kwargs):
             )
         try:
             func(*args[1:], **kwargs)
-        except expected_exception:
-            return _pytest._code.ExceptionInfo.from_current()
+        except expected_exception as e:
+            # We just caught the exception - there is a traceback.
+            assert e.__traceback__ is not None
+            return _pytest._code.ExceptionInfo.from_exc_info(
+                (type(e), e, e.__traceback__)
+            )
     fail(message)
 
 
 raises.Exception = fail.Exception  # type: ignore
 
 
-class RaisesContext:
-    def __init__(self, expected_exception, message, match_expr):
+class RaisesContext(Generic[_E]):
+    def __init__(
+        self,
+        expected_exception: Union["Type[_E]", Tuple["Type[_E]", ...]],
+        message: str,
+        match_expr: Optional[Union[str, Pattern]] = None,
+    ) -> None:
         self.expected_exception = expected_exception
         self.message = message
         self.match_expr = match_expr
-        self.excinfo = None
+        self.excinfo = None  # type: Optional[_pytest._code.ExceptionInfo[_E]]
 
-    def __enter__(self):
+    def __enter__(self) -> _pytest._code.ExceptionInfo[_E]:
         self.excinfo = _pytest._code.ExceptionInfo.for_later()
         return self.excinfo
 
-    def __exit__(self, *tp):
+    def __exit__(
+        self,
+        exc_type: Optional["Type[BaseException]"],
+        exc_val: Optional[BaseException],
+        exc_tb: Optional[TracebackType],
+    ) -> bool:
         __tracebackhide__ = True
-        if tp[0] is None:
+        if exc_type is None:
             fail(self.message)
-        self.excinfo.__init__(tp)
-        suppress_exception = issubclass(self.excinfo.type, self.expected_exception)
-        if self.match_expr is not None and suppress_exception:
+        assert self.excinfo is not None
+        if not issubclass(exc_type, self.expected_exception):
+            return False
+        # Cast to narrow the exception type now that it's verified.
+        exc_info = cast(
+            Tuple["Type[_E]", _E, TracebackType], (exc_type, exc_val, exc_tb)
+        )
+        self.excinfo.fill_unfilled(exc_info)
+        if self.match_expr is not None:
             self.excinfo.match(self.match_expr)
-        return suppress_exception
+        return True
