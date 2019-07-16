@@ -307,13 +307,6 @@ def make_numbered_dir_with_cleanup(
         except Exception as exc:
             e = exc
         else:
-            # Cleanup now at the beginning of the test execution
-            cleanup_numbered_dir(
-                root=root,
-                prefix=prefix,
-                keep=keep,
-                consider_lock_dead_if_created_before=consider_lock_dead_if_created_before,
-            )
             return p
     assert e is not None
     raise e
