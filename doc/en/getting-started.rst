@@ -142,7 +142,7 @@ The first test passed and the second failed. You can easily see the intermediate
 Request a unique temporary directory for functional tests
 --------------------------------------------------------------
 
-``pytest`` provides `Builtin fixtures/function arguments <https://docs.pytest.org/en/latest/builtin.html#builtinfixtures>`_ to request arbitrary resources, like a unique temporary directory::
+``pytest`` provides `Builtin fixtures/function arguments <https://docs.pytest.org/en/latest/builtin.html>`_ to request arbitrary resources, like a unique temporary directory::
 
     # content of test_tmpdir.py
     def test_needsfiles(tmpdir):
