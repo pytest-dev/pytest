@@ -424,12 +424,56 @@ a:hover tt {
     background: #EEE;
 }
 
+#reference div.section h2 {
+    /* separate code elements in the reference section */
+    border-top: 2px solid #ccc;
+    padding-top: 0.5em;
+}
+
 #reference div.section h3 {
     /* separate code elements in the reference section */
     border-top: 1px solid #ccc;
     padding-top: 0.5em;
 }
 
+dl.class, dl.function {
+    margin-top: 1em;
+    margin-bottom: 1em;
+}
+
+dl.class > dd {
+    border-left: 3px solid #ccc;
+    margin-left: 0px;
+    padding-left: 30px;
+}
+
+dl.field-list {
+    flex-direction: column;
+}
+
+dl.field-list dd {
+    padding-left: 4em;
+    border-left: 3px solid #ccc;
+    margin-bottom: 0.5em;
+}
+
+dl.field-list dd > ul {
+    list-style: none;
+    padding-left: 0px;
+}
+
+dl.field-list dd > ul > li li :first-child {
+    text-indent: 0;
+}
+
+dl.field-list dd > ul > li :first-child {
+    text-indent: -2em;
+    padding-left: 0px;
+}
+
+dl.field-list dd > p:first-child {
+    text-indent: -2em;
+}
 
 @media screen and (max-width: 870px) {
 

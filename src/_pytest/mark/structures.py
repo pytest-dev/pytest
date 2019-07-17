@@ -193,17 +193,18 @@ class MarkDecorator:
             pass
 
     When a MarkDecorator instance is called it does the following:
-      1. If called with a single class as its only positional argument and no
-         additional keyword arguments, it attaches itself to the class so it
-         gets applied automatically to all test cases found in that class.
-      2. If called with a single function as its only positional argument and
-         no additional keyword arguments, it attaches a MarkInfo object to the
-         function, containing all the arguments already stored internally in
-         the MarkDecorator.
-      3. When called in any other case, it performs a 'fake construction' call,
-         i.e. it returns a new MarkDecorator instance with the original
-         MarkDecorator's content updated with the arguments passed to this
-         call.
+
+    1. If called with a single class as its only positional argument and no
+       additional keyword arguments, it attaches itself to the class so it
+       gets applied automatically to all test cases found in that class.
+    2. If called with a single function as its only positional argument and
+       no additional keyword arguments, it attaches a MarkInfo object to the
+       function, containing all the arguments already stored internally in
+       the MarkDecorator.
+    3. When called in any other case, it performs a 'fake construction' call,
+       i.e. it returns a new MarkDecorator instance with the original
+       MarkDecorator's content updated with the arguments passed to this
+       call.
 
     Note: The rules above prevent MarkDecorator objects from storing only a
     single function or class reference as their positional argument with no
