@@ -1,0 +1,2 @@
+Fix issue where directories from ``tmpdir`` are not removed properly when
+multiple instances of pytest are running in parallel.
