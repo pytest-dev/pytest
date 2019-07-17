@@ -5,7 +5,6 @@ as well as functions creating them
 import sys
 from typing import Any
 from typing import Optional
-from typing import Union
 
 from packaging.version import Version
 
@@ -18,19 +17,14 @@ class OutcomeException(BaseException):
         contain info about test and collection outcomes.
     """
 
-    def __init__(
-        self, msg: Optional[Union[str, bytes]] = None, pytrace: bool = True
-    ) -> None:
+    def __init__(self, msg: Optional[str] = None, pytrace: bool = True) -> None:
         BaseException.__init__(self, msg)
         self.msg = msg
         self.pytrace = pytrace
 
     def __repr__(self) -> str:
         if self.msg:
-            val = self.msg
-            if isinstance(val, bytes):
-                val = val.decode("UTF-8", errors="replace")
-            return val
+            return self.msg
         return "<{} instance>".format(self.__class__.__name__)
 
     __str__ = __repr__
