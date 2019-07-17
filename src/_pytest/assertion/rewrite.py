@@ -2,6 +2,7 @@
 import ast
 import errno
 import functools
+import importlib.abc
 import importlib.machinery
 import importlib.util
 import io
@@ -37,7 +38,7 @@ AST_IS = ast.Is()
 AST_NONE = ast.NameConstant(None)
 
 
-class AssertionRewritingHook:
+class AssertionRewritingHook(importlib.abc.MetaPathFinder):
     """PEP302/PEP451 import hook which rewrites asserts."""
 
     def __init__(self, config):
