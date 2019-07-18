@@ -166,8 +166,17 @@ class LFPlugin:
             return self._last_failed_paths
         except AttributeError:
             rootpath = Path(self.config.rootdir)
-            result = {rootpath / nodeid.split("::")[0] for nodeid in self.lastfailed}
-            result = {x for x in result if x.exists()}
+            result = []
+            abs_args = {
+                x if Path(x).is_absolute() else rootpath / x for x in self.config.args
+            }
+            for nodeid in self.lastfailed:
+                path = nodeid.split("::")[0]
+                abs_path = rootpath / path
+                if not any(str(abs_path).startswith(x) for x in abs_args):
+                    continue
+                if abs_path.exists():
+                    result.append(abs_path)
             self._last_failed_paths = result
             return result
 
