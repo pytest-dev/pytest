@@ -1,0 +1,7 @@
+``pytest.fail``, ``pytest.xfail`` and ``pytest.skip`` no longer support bytes for the message argument.
+
+This was supported for Python 2 where it was tempting to use ``"message"``
+instead of ``u"message"``.
+
+Python 3 code is unlikely to pass ``bytes`` to these functions. If you do,
+please decode it to an ``str`` beforehand.

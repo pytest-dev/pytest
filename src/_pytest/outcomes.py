@@ -24,10 +24,7 @@ class OutcomeException(BaseException):
 
     def __repr__(self) -> str:
         if self.msg:
-            val = self.msg
-            if isinstance(val, bytes):
-                val = val.decode("UTF-8", errors="replace")
-            return val
+            return self.msg
         return "<{} instance>".format(self.__class__.__name__)
 
     __str__ = __repr__

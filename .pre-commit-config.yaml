@@ -44,15 +44,10 @@ repos:
     hooks:
     -   id: rst-backticks
 -   repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v0.711
+    rev: v0.720
     hooks:
     -   id: mypy
-        name: mypy (src)
-        files: ^src/
-        args: []
-    -   id: mypy
-        name: mypy (testing)
-        files: ^testing/
+        files: ^(src/|testing/)
         args: []
 -   repo: local
     hooks:
