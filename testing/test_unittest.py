@@ -1085,4 +1085,4 @@ def test_exit_outcome(testdir):
     """
     )
     result = testdir.runpytest()
-    result.stdout.fnmatch_lines("*Exit: pytest_exit called*")
+    result.stdout.fnmatch_lines(["*Exit: pytest_exit called*", "*= no tests ran in *"])
