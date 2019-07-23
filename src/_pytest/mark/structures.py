@@ -179,9 +179,7 @@ class Mark:
 @attr.s
 class MarkDecorator:
     """ A decorator for test functions and test classes.  When applied
-    it will create :class:`MarkInfo` objects which may be
-    :ref:`retrieved by hooks as item keywords <excontrolskip>`.
-    MarkDecorator instances are often created like this::
+    it will create :class:`Mark` objects which are often created like this::
 
         mark1 = pytest.mark.NAME              # simple MarkDecorator
         mark2 = pytest.mark.NAME(name1=value) # parametrized MarkDecorator
