@@ -391,7 +391,12 @@ close all resources created by a fixture even if one of them fails to be created
 
     import pytest
 
-    from .utils import connect
+
+    @contextlib.contextmanager
+    def connect(port):
+        ...  # create connection
+        yield
+        ...  # close connection
 
 
     @pytest.fixture
@@ -441,7 +446,12 @@ Here's the ``equipments`` fixture changed to use ``addfinalizer`` for cleanup:
 
     import pytest
 
-    from .utils import connect
+
+    @contextlib.contextmanager
+    def connect(port):
+        ...  # create connection
+        yield
+        ...  # close connection
 
 
     @pytest.fixture
