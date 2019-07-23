@@ -1,0 +1,1 @@
+``pytest.exit`` and ``bdb.BdbQuit`` are now correctly handled in ``unittest`` cases.

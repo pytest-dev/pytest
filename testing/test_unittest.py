@@ -1050,3 +1050,39 @@ def test_setup_inheritance_skipping(testdir, test_name, expected_outcome):
     testdir.copy_example("unittest/{}".format(test_name))
     result = testdir.runpytest()
     result.stdout.fnmatch_lines(["* {} in *".format(expected_outcome)])
+
+
+def test_BdbQuit(testdir):
+    testdir.makepyfile(
+        test_foo="""
+        import unittest
+
+        class MyTestCase(unittest.TestCase):
+            def test_bdbquit(self):
+                import bdb
+                raise bdb.BdbQuit()
+
+            def test_should_not_run(self):
+                pass
+    """
+    )
+    reprec = testdir.inline_run()
+    reprec.assertoutcome(failed=1, passed=1)
+
+
+def test_exit_outcome(testdir):
+    testdir.makepyfile(
+        test_foo="""
+        import pytest
+        import unittest
+
+        class MyTestCase(unittest.TestCase):
+            def test_exit_outcome(self):
+                pytest.exit("pytest_exit called")
+
+            def test_should_not_run(self):
+                pass
+    """
+    )
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines("*Exit: pytest_exit called*")
