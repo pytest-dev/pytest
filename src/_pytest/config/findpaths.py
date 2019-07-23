@@ -32,7 +32,11 @@ def getcfg(args, config=None):
             for inibasename in inibasenames:
                 p = base.join(inibasename)
                 if exists(p):
-                    iniconfig = py.iniconfig.IniConfig(p)
+                    try:
+                        iniconfig = py.iniconfig.IniConfig(p)
+                    except py.iniconfig.ParseError as exc:
+                        raise UsageError(str(exc))
+
                     if (
                         inibasename == "setup.cfg"
                         and "tool:pytest" in iniconfig.sections
