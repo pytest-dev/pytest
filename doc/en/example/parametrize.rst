@@ -552,13 +552,13 @@ Then run ``pytest`` with verbose mode and with only the ``basic`` marker:
     platform linux -- Python 3.x.y, pytest-5.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python
     cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR
-    collecting ... collected 17 items / 14 deselected / 3 selected
+    collecting ... collected 18 items / 15 deselected / 3 selected
 
     test_pytest_param_example.py::test_eval[1+7-8] PASSED                [ 33%]
     test_pytest_param_example.py::test_eval[basic_2+4] PASSED            [ 66%]
     test_pytest_param_example.py::test_eval[basic_6*9] XFAIL             [100%]
 
-    ============ 2 passed, 14 deselected, 1 xfailed in 0.12 seconds ============
+    ============ 2 passed, 15 deselected, 1 xfailed in 0.12 seconds ============
 
 As the result:
 
