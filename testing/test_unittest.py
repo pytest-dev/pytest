@@ -1078,11 +1078,11 @@ def test_exit_outcome(testdir):
 
         class MyTestCase(unittest.TestCase):
             def test_exit_outcome(self):
-                pytest.exit("pytest_exit")
+                pytest.exit("pytest_exit called")
 
             def test_should_not_run(self):
                 pass
     """
     )
-    reprec = testdir.inline_run()
-    reprec.assertoutcome()
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines("*Exit: pytest_exit called*")
