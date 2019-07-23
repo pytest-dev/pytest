@@ -123,12 +123,10 @@ class TestParseIni:
         assert config.getini("minversion") == "2.0"
 
     def test_ini_parse_error(self, testdir):
-        testdir.tmpdir.join("pytest.ini").write('addopts = -x')
+        testdir.tmpdir.join("pytest.ini").write("addopts = -x")
         result = testdir.runpytest()
         assert result.ret != 0
-        result.stderr.fnmatch_lines([
-            "ERROR: *pytest.ini:1: no section header defined"
-        ])
+        result.stderr.fnmatch_lines(["ERROR: *pytest.ini:1: no section header defined"])
 
     @pytest.mark.xfail(reason="probably not needed")
     def test_confcutdir(self, testdir):
