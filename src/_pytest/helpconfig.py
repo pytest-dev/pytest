@@ -98,7 +98,7 @@ def pytest_cmdline_parse():
                 py.__version__,
                 ".".join(map(str, sys.version_info)),
                 os.getcwd(),
-                config._origargs,
+                config.invocation_params.args,
             )
         )
         config.trace.root.setwriter(debugfile.write)

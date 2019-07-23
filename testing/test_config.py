@@ -441,7 +441,7 @@ class TestConfigFromdictargs:
         assert config.option.capture == "no"
         assert config.args == args
 
-    def test_origargs(self, _sys_snapshot):
+    def test_invocation_params_args(self, _sys_snapshot):
         """Show that fromdictargs can handle args in their "orig" format"""
         from _pytest.config import Config
 
@@ -450,7 +450,7 @@ class TestConfigFromdictargs:
 
         config = Config.fromdictargs(option_dict, args)
         assert config.args == ["a", "b"]
-        assert config._origargs == args
+        assert config.invocation_params.args == args
         assert config.option.verbose == 4
         assert config.option.capture == "no"
 
