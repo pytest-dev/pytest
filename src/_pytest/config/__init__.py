@@ -632,10 +632,10 @@ class Config:
         Object containing the parameters regarding the ``pytest.main``
         invocation.
 
-        Contains the followinig read-only attributes:
+        Contains the following read-only attributes:
 
         * ``args``: list of command-line arguments as passed to ``pytest.main()``.
-        * ``plugins``: list of extra plugins, might be None
+        * ``plugins``: list of extra plugins, might be None.
         * ``dir``: directory where ``pytest.main()`` was invoked from.
     """
 
@@ -915,7 +915,7 @@ class Config:
         assert not hasattr(
             self, "args"
         ), "can only parse cmdline args at most once per Config object"
-        self._origargs = args
+        assert self.invocation_params.args == args
         self.hook.pytest_addhooks.call_historic(
             kwargs=dict(pluginmanager=self.pluginmanager)
         )
