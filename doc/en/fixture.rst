@@ -307,7 +307,6 @@ The fixtures requested by ``test_foo`` will be instantiated in the following ord
 
 1. ``s1``: is the highest-scoped fixture (``session``).
 2. ``m1``: is the second highest-scoped fixture (``module``).
-   because it is a dependency of ``f1``.
 3. ``a1``: is a ``function``-scoped ``autouse`` fixture: it will be instantiated before other fixtures
    within the same scope.
 4. ``f3``: is a ``function``-scoped fixture, required by ``f1``: it needs to be instantiated at this point
@@ -541,7 +540,7 @@ of a fixture is needed multiple times in a single test. Instead of returning
 data directly, the fixture instead returns a function which generates the data.
 This function can then be called multiple times in the test.
 
-Factories can have have parameters as needed::
+Factories can have parameters as needed::
 
     @pytest.fixture
     def make_customer_record():
