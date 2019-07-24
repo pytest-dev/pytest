@@ -46,9 +46,12 @@ environment variable is missing, or to set multiple values to a known variable.
 :py:meth:`monkeypatch.setenv` and :py:meth:`monkeypatch.delenv` can be used for
 these patches.
 
-4. Use :py:meth:`monkeypatch.syspath_prepend` to modify the system ``$PATH`` safely, and
+4. Use `monkeypatch.setenv("PATH", value, prepend=True)` to modify ``$PATH``, and
 :py:meth:`monkeypatch.chdir` to change the context of the current working directory
 during a test.
+
+5. Use py:meth:`monkeypatch.syspath_prepend` to modify ``sys.path`` which will also
+call :py:meth:`pkg_resources.fixup_namespace_packages` and :py:meth:`importlib.invalidate_caches`.
 
 See the `monkeypatch blog post`_ for some introduction material
 and a discussion of its motivation.
