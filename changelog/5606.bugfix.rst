@@ -1,0 +1,2 @@
+Fixed internal error when test functions were patched with objects that cannot be compared
+for truth values against others, like ``numpy`` arrays.

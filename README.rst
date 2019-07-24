@@ -111,13 +111,13 @@ Consult the `Changelog <https://docs.pytest.org/en/latest/changelog.html>`__ pag
 Support pytest
 --------------
 
-You can support pytest by obtaining a `Tideflift subscription`_.
+You can support pytest by obtaining a `Tidelift subscription`_.
 
 Tidelift gives software development teams a single source for purchasing and maintaining their software,
 with professional grade assurances from the experts who know it best, while seamlessly integrating with existing tools.
 
 
-.. _`Tideflift subscription`: https://tidelift.com/subscription/pkg/pypi-pytest?utm_source=pypi-pytest&utm_medium=referral&utm_campaign=readme
+.. _`Tidelift subscription`: https://tidelift.com/subscription/pkg/pypi-pytest?utm_source=pypi-pytest&utm_medium=referral&utm_campaign=readme
 
 
 Security

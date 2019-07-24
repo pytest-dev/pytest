@@ -164,7 +164,7 @@ If a package is installed this way, ``pytest`` will load
 .. note::
 
     Make sure to include ``Framework :: Pytest`` in your list of
-    `PyPI classifiers <https://python-packaging-user-guide.readthedocs.io/distributing/#classifiers>`_
+    `PyPI classifiers <https://pypi.org/classifiers/>`_
     to make it easy for users to find your plugin.
 
 

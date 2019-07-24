@@ -1,5 +1,5 @@
-Reference
-=========
+API Reference
+=============
 
 This page contains the full reference to pytest's API.
 

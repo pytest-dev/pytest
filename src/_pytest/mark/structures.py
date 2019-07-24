@@ -179,9 +179,7 @@ class Mark:
 @attr.s
 class MarkDecorator:
     """ A decorator for test functions and test classes.  When applied
-    it will create :class:`MarkInfo` objects which may be
-    :ref:`retrieved by hooks as item keywords <excontrolskip>`.
-    MarkDecorator instances are often created like this::
+    it will create :class:`Mark` objects which are often created like this::
 
         mark1 = pytest.mark.NAME              # simple MarkDecorator
         mark2 = pytest.mark.NAME(name1=value) # parametrized MarkDecorator
@@ -193,17 +191,18 @@ class MarkDecorator:
             pass
 
     When a MarkDecorator instance is called it does the following:
-      1. If called with a single class as its only positional argument and no
-         additional keyword arguments, it attaches itself to the class so it
-         gets applied automatically to all test cases found in that class.
-      2. If called with a single function as its only positional argument and
-         no additional keyword arguments, it attaches a MarkInfo object to the
-         function, containing all the arguments already stored internally in
-         the MarkDecorator.
-      3. When called in any other case, it performs a 'fake construction' call,
-         i.e. it returns a new MarkDecorator instance with the original
-         MarkDecorator's content updated with the arguments passed to this
-         call.
+
+    1. If called with a single class as its only positional argument and no
+       additional keyword arguments, it attaches itself to the class so it
+       gets applied automatically to all test cases found in that class.
+    2. If called with a single function as its only positional argument and
+       no additional keyword arguments, it attaches a MarkInfo object to the
+       function, containing all the arguments already stored internally in
+       the MarkDecorator.
+    3. When called in any other case, it performs a 'fake construction' call,
+       i.e. it returns a new MarkDecorator instance with the original
+       MarkDecorator's content updated with the arguments passed to this
+       call.
 
     Note: The rules above prevent MarkDecorator objects from storing only a
     single function or class reference as their positional argument with no

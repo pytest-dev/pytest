@@ -542,7 +542,7 @@ def raises(expected_exception, *args, **kwargs):
         string that may contain `special characters`__, the pattern can
         first be escaped with ``re.escape``.
 
-    __ https://docs.python.org/3/library/re.html#regular-expression-syntax
+        __ https://docs.python.org/3/library/re.html#regular-expression-syntax
 
     :kwparam message: **(deprecated since 4.1)** if specified, provides a custom failure message
         if the exception is not raised. See :ref:`the deprecation docs <raises message deprecated>` for a workaround.
