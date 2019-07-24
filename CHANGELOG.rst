@@ -90,6 +90,24 @@ Removals
 - `#5412 <https://github.com/pytest-dev/pytest/issues/5412>`_: ``ExceptionInfo`` objects (returned by ``pytest.raises``) now have the same ``str`` representation as ``repr``, which
   avoids some confusion when users use ``print(e)`` to inspect the object.
 
+  This means code like:
+
+  .. code-block:: python
+
+        with pytest.raises(SomeException) as e:
+            ...
+        assert "some message" in str(e)
+
+
+  Needs to be changed to:
+
+  .. code-block:: python
+
+        with pytest.raises(SomeException) as e:
+            ...
+        assert "some message" in str(e.value)
+
+
 
 
 Deprecations
