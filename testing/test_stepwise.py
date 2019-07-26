@@ -207,7 +207,8 @@ def test_xfail_handling(testdir):
 
     # because we are writing to the same file, mtime might not be affected enough to
     # invalidate the cache, making this next run flaky
-    testdir.tmpdir.join("__pycache__").remove()
+    if testdir.tmpdir.join("__pycache__").exists():
+        testdir.tmpdir.join("__pycache__").remove()
     testdir.makepyfile(contents.format(assert_value="0", strict="True"))
     result = testdir.runpytest("--sw", "-v")
     result.stdout.fnmatch_lines(
