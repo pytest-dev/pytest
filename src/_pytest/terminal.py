@@ -114,7 +114,7 @@ def pytest_addoption(parser):
     )
     group._addoption(
         "--fulltrace",
-        "--full-trace",
+        "--fulltrace",
         action="store_true",
         default=False,
         help="don't cut any tracebacks (default is to cut).",
