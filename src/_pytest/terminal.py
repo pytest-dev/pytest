@@ -114,7 +114,7 @@ def pytest_addoption(parser):
     )
     group._addoption(
         "--fulltrace",
-        "--fulltrace",
+        "--full-trace",
         action="store_true",
         default=False,
         help="don't cut any tracebacks (default is to cut).",
@@ -692,7 +692,7 @@ class TerminalReporter:
             else:
                 excrepr.reprcrash.toterminal(self._tw)
                 self._tw.line(
-                    "(to show a full traceback on KeyboardInterrupt use --fulltrace)",
+                    "(to show a full traceback on KeyboardInterrupt use --full-trace)",
                     yellow=True,
                 )
 
