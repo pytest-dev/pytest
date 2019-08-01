@@ -40,7 +40,7 @@ You can register custom marks in your ``pytest.ini`` file like this:
 
 Note that everything after the ``:`` is an optional description.
 
-Alternatively, you can register new markers programatically in a
+Alternatively, you can register new markers programmatically in a
 :ref:`pytest_configure <initialization-hooks>` hook:
 
 .. code-block:: python
