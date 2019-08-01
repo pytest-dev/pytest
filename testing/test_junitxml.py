@@ -705,7 +705,7 @@ def test_dont_configure_on_slaves(tmpdir):
             return "pytest"
 
         junitprefix = None
-        # XXX: shouldnt need tmpdir ?
+        # XXX: shouldn't need tmpdir ?
         xmlpath = str(tmpdir.join("junix.xml"))
         register = gotten.append
 
