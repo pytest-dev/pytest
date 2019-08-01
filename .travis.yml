@@ -13,6 +13,10 @@ env:
   global:
     - PYTEST_ADDOPTS=-vv
 
+# setuptools-scm needs all tags in order to obtain a proper version
+git:
+  depth: false
+
 install:
   - python -m pip install --upgrade --pre tox
 
