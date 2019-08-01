@@ -582,7 +582,7 @@ class TestPython:
         assert "hx" in fnode.toxml()
 
     def test_assertion_binchars(self, testdir):
-        """this test did fail when the escaping wasnt strict"""
+        """this test did fail when the escaping wasn't strict"""
         testdir.makepyfile(
             """
 
