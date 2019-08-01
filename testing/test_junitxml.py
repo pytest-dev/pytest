@@ -582,7 +582,7 @@ class TestPython:
         assert "hx" in fnode.toxml()
 
     def test_assertion_binchars(self, testdir):
-        """this test did fail when the escaping wasnt strict"""
+        """this test did fail when the escaping wasn't strict"""
         testdir.makepyfile(
             """
 
@@ -705,7 +705,7 @@ def test_dont_configure_on_slaves(tmpdir):
             return "pytest"
 
         junitprefix = None
-        # XXX: shouldnt need tmpdir ?
+        # XXX: shouldn't need tmpdir ?
         xmlpath = str(tmpdir.join("junix.xml"))
         register = gotten.append
 

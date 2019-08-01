@@ -399,7 +399,7 @@ class DropShorterLongHelpFormatter(argparse.HelpFormatter):
     """shorten help for long options that differ only in extra hyphens
 
     - collapse **long** options that are the same except for extra hyphens
-    - special action attribute map_long_option allows surpressing additional
+    - special action attribute map_long_option allows suppressing additional
       long options
     - shortcut if there are only two options and one of them is a short one
     - cache result on action object as this is called at least 2 times
