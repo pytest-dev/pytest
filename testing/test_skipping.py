@@ -1066,7 +1066,8 @@ def test_module_level_skip_error(testdir):
     testdir.makepyfile(
         """
         import pytest
-        @pytest.skip
+        pytest.skip("skip_module_level")
+
         def test_func():
             assert True
     """

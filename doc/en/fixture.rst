@@ -289,51 +289,29 @@ are finalized when the last test of a *package* finishes.
     Use this new feature sparingly and please make sure to report any issues you find.
 
 
-Higher-scoped fixtures are instantiated first
----------------------------------------------
+Order: Higher-scoped fixtures are instantiated first
+----------------------------------------------------
 
 
 
 Within a function request for features, fixture of higher-scopes (such as ``session``) are instantiated first than
 lower-scoped fixtures (such as ``function`` or ``class``). The relative order of fixtures of same scope follows
-the declared order in the test function and honours dependencies between fixtures.
+the declared order in the test function and honours dependencies between fixtures. Autouse fixtures will be
+instantiated before explicitly used fixtures.
 
 Consider the code below:
 
-.. code-block:: python
-
-    @pytest.fixture(scope="session")
-    def s1():
-        pass
-
-
-    @pytest.fixture(scope="module")
-    def m1():
-        pass
-
-
-    @pytest.fixture
-    def f1(tmpdir):
-        pass
-
-
-    @pytest.fixture
-    def f2():
-        pass
-
-
-    def test_foo(f1, m1, f2, s1):
-        ...
-
+.. literalinclude:: example/fixtures/test_fixtures_order.py
 
 The fixtures requested by ``test_foo`` will be instantiated in the following order:
 
 1. ``s1``: is the highest-scoped fixture (``session``).
 2. ``m1``: is the second highest-scoped fixture (``module``).
-3. ``tmpdir``: is a ``function``-scoped fixture, required by ``f1``: it needs to be instantiated at this point
-   because it is a dependency of ``f1``.
-4. ``f1``: is the first ``function``-scoped fixture in ``test_foo`` parameter list.
-5. ``f2``: is the last ``function``-scoped fixture in ``test_foo`` parameter list.
+3. ``a1``: is a ``function``-scoped ``autouse`` fixture: it will be instantiated before other fixtures
+   within the same scope.
+4. ``f3``: is a ``function``-scoped fixture, required by ``f1``: it needs to be instantiated at this point
+5. ``f1``: is the first ``function``-scoped fixture in ``test_foo`` parameter list.
+6. ``f2``: is the last ``function``-scoped fixture in ``test_foo`` parameter list.
 
 
 .. _`finalization`:
@@ -400,6 +378,34 @@ The ``smtp_connection`` connection will be closed after the test finished
 execution because the ``smtp_connection`` object automatically closes when
 the ``with`` statement ends.
 
+Using the contextlib.ExitStack context manager finalizers will always be called
+regardless if the fixture *setup* code raises an exception. This is handy to properly
+close all resources created by a fixture even if one of them fails to be created/acquired:
+
+.. code-block:: python
+
+    # content of test_yield3.py
+
+    import contextlib
+
+    import pytest
+
+
+    @contextlib.contextmanager
+    def connect(port):
+        ...  # create connection
+        yield
+        ...  # close connection
+
+
+    @pytest.fixture
+    def equipments():
+        with contextlib.ExitStack() as stack:
+            yield [stack.enter_context(connect(port)) for port in ("C1", "C3", "C28")]
+
+In the example above, if ``"C28"`` fails with an exception, ``"C1"`` and ``"C3"`` will still
+be properly closed.
+
 Note that if an exception happens during the *setup* code (before the ``yield`` keyword), the
 *teardown* code (after the ``yield``) will not be called.
 
@@ -428,27 +434,39 @@ Here's the ``smtp_connection`` fixture changed to use ``addfinalizer`` for clean
         return smtp_connection  # provide the fixture value
 
 
+Here's the ``equipments`` fixture changed to use ``addfinalizer`` for cleanup:
+
+.. code-block:: python
+
+    # content of test_yield3.py
+
+    import contextlib
+    import functools
+
+    import pytest
+
+
+    @contextlib.contextmanager
+    def connect(port):
+        ...  # create connection
+        yield
+        ...  # close connection
+
+
+    @pytest.fixture
+    def equipments(request):
+        r = []
+        for port in ("C1", "C3", "C28"):
+            cm = connect(port)
+            equip = cm.__enter__()
+            request.addfinalizer(functools.partial(cm.__exit__, None, None, None))
+            r.append(equip)
+        return r
+
+
 Both ``yield`` and ``addfinalizer`` methods work similarly by calling their code after the test
-ends, but ``addfinalizer`` has two key differences over ``yield``:
-
-1. It is possible to register multiple finalizer functions.
-
-2. Finalizers will always be called regardless if the fixture *setup* code raises an exception.
-   This is handy to properly close all resources created by a fixture even if one of them
-   fails to be created/acquired::
-
-        @pytest.fixture
-        def equipments(request):
-            r = []
-            for port in ('C1', 'C3', 'C28'):
-                equip = connect(port)
-                request.addfinalizer(equip.disconnect)
-                r.append(equip)
-            return r
-
-   In the example above, if ``"C28"`` fails with an exception, ``"C1"`` and ``"C3"`` will still
-   be properly closed. Of course, if an exception happens before the finalize function is
-   registered then it will not be executed.
+ends. Of course, if an exception happens before the finalize function is registered then it
+will not be executed.
 
 
 .. _`request-context`:
@@ -522,7 +540,7 @@ of a fixture is needed multiple times in a single test. Instead of returning
 data directly, the fixture instead returns a function which generates the data.
 This function can then be called multiple times in the test.
 
-Factories can have have parameters as needed::
+Factories can have parameters as needed::
 
     @pytest.fixture
     def make_customer_record():

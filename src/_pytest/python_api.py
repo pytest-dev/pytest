@@ -579,7 +579,7 @@ def raises(
         string that may contain `special characters`__, the pattern can
         first be escaped with ``re.escape``.
 
-    __ https://docs.python.org/3/library/re.html#regular-expression-syntax
+        __ https://docs.python.org/3/library/re.html#regular-expression-syntax
 
 
     .. currentmodule:: _pytest._code

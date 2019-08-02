@@ -71,7 +71,6 @@ class StepwisePlugin:
         config.hook.pytest_deselected(items=already_passed)
 
     def pytest_runtest_logreport(self, report):
-        # Skip this hook if plugin is not active or the test is xfailed.
         if not self.active:
             return
 

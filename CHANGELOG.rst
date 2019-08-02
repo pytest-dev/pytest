@@ -1,6 +1,6 @@
-=================
-Changelog history
-=================
+=========
+Changelog
+=========
 
 Versions follow `Semantic Versioning <https://semver.org/>`_ (``<major>.<minor>.<patch>``).
 
@@ -89,6 +89,24 @@ Removals
 
 - `#5412 <https://github.com/pytest-dev/pytest/issues/5412>`_: ``ExceptionInfo`` objects (returned by ``pytest.raises``) now have the same ``str`` representation as ``repr``, which
   avoids some confusion when users use ``print(e)`` to inspect the object.
+
+  This means code like:
+
+  .. code-block:: python
+
+        with pytest.raises(SomeException) as e:
+            ...
+        assert "some message" in str(e)
+
+
+  Needs to be changed to:
+
+  .. code-block:: python
+
+        with pytest.raises(SomeException) as e:
+            ...
+        assert "some message" in str(e.value)
+
 
 
 
@@ -2173,10 +2191,10 @@ Features
   design. This introduces new ``Node.iter_markers(name)`` and
   ``Node.get_closest_marker(name)`` APIs. Users are **strongly encouraged** to
   read the `reasons for the revamp in the docs
-  <https://docs.pytest.org/en/latest/mark.html#marker-revamp-and-iteration>`_,
+  <https://docs.pytest.org/en/latest/historical-notes.html#marker-revamp-and-iteration>`_,
   or jump over to details about `updating existing code to use the new APIs
-  <https://docs.pytest.org/en/latest/mark.html#updating-code>`_. (`#3317
-  <https://github.com/pytest-dev/pytest/issues/3317>`_)
+  <https://docs.pytest.org/en/latest/historical-notes.html#updating-code>`_.
+  (`#3317 <https://github.com/pytest-dev/pytest/issues/3317>`_)
 
 - Now when ``@pytest.fixture`` is applied more than once to the same function a
   ``ValueError`` is raised. This buggy behavior would cause surprising problems
@@ -2582,10 +2600,10 @@ Features
   <https://github.com/pytest-dev/pytest/issues/3038>`_)
 
 - New `pytest_runtest_logfinish
-  <https://docs.pytest.org/en/latest/writing_plugins.html#_pytest.hookspec.pytest_runtest_logfinish>`_
+  <https://docs.pytest.org/en/latest/reference.html#_pytest.hookspec.pytest_runtest_logfinish>`_
   hook which is called when a test item has finished executing, analogous to
   `pytest_runtest_logstart
-  <https://docs.pytest.org/en/latest/writing_plugins.html#_pytest.hookspec.pytest_runtest_start>`_.
+  <https://docs.pytest.org/en/latest/reference.html#_pytest.hookspec.pytest_runtest_logstart>`_.
   (`#3101 <https://github.com/pytest-dev/pytest/issues/3101>`_)
 
 - Improve performance when collecting tests using many fixtures. (`#3107
@@ -3575,7 +3593,7 @@ Bug Fixes
   Thanks `@sirex`_ for the report and `@nicoddemus`_ for the PR.
 
 * Replace ``raise StopIteration`` usages in the code by simple ``returns`` to finish generators, in accordance to `PEP-479`_ (`#2160`_).
-  Thanks `@tgoodlet`_ for the report and `@nicoddemus`_ for the PR.
+  Thanks to `@nicoddemus`_ for the PR.
 
 * Fix internal errors when an unprintable ``AssertionError`` is raised inside a test.
   Thanks `@omerhadari`_ for the PR.
@@ -3706,7 +3724,7 @@ Bug Fixes
 
 .. _@syre: https://github.com/syre
 .. _@adler-j: https://github.com/adler-j
-.. _@d-b-w: https://bitbucket.org/d-b-w/
+.. _@d-b-w: https://github.com/d-b-w
 .. _@DuncanBetts: https://github.com/DuncanBetts
 .. _@dupuy: https://bitbucket.org/dupuy/
 .. _@kerrick-lyft: https://github.com/kerrick-lyft
@@ -3766,7 +3784,7 @@ Bug Fixes
 
 .. _@adborden: https://github.com/adborden
 .. _@cwitty: https://github.com/cwitty
-.. _@d_b_w: https://github.com/d_b_w
+.. _@d_b_w: https://github.com/d-b-w
 .. _@gdyuldin: https://github.com/gdyuldin
 .. _@matclab: https://github.com/matclab
 .. _@MSeifert04: https://github.com/MSeifert04
@@ -3801,7 +3819,7 @@ Bug Fixes
   Thanks `@axil`_ for the PR.
 
 * Explain a bad scope value passed to ``@fixture`` declarations or
-  a ``MetaFunc.parametrize()`` call. Thanks `@tgoodlet`_ for the PR.
+  a ``MetaFunc.parametrize()`` call.
 
 * This version includes ``pluggy-0.4.0``, which correctly handles
   ``VersionConflict`` errors in plugins (`#704`_).
@@ -3811,7 +3829,6 @@ Bug Fixes
 .. _@philpep: https://github.com/philpep
 .. _@raquel-ucl: https://github.com/raquel-ucl
 .. _@axil: https://github.com/axil
-.. _@tgoodlet: https://github.com/tgoodlet
 .. _@vlad-dragos: https://github.com/vlad-dragos
 
 .. _#1853: https://github.com/pytest-dev/pytest/issues/1853
@@ -4157,7 +4174,7 @@ time or change existing behaviors in order to make them less surprising/more use
 * Updated docstrings with a more uniform style.
 
 * Add stderr write for ``pytest.exit(msg)`` during startup. Previously the message was never shown.
-  Thanks `@BeyondEvil`_ for reporting `#1210`_. Thanks to `@JonathonSonesen`_ and
+  Thanks `@BeyondEvil`_ for reporting `#1210`_. Thanks to `@jgsonesen`_ and
   `@tomviner`_ for the PR.
 
 * No longer display the incorrect test deselection reason (`#1372`_).
@@ -4205,7 +4222,7 @@ time or change existing behaviors in order to make them less surprising/more use
   Thanks to `@Stranger6667`_ for the PR.
 
 * Fixed the total tests tally in junit xml output (`#1798`_).
-  Thanks to `@cryporchild`_ for the PR.
+  Thanks to `@cboelsen`_ for the PR.
 
 * Fixed off-by-one error with lines from ``request.node.warn``.
   Thanks to `@blueyed`_ for the PR.
@@ -4278,7 +4295,7 @@ time or change existing behaviors in order to make them less surprising/more use
 .. _@BeyondEvil: https://github.com/BeyondEvil
 .. _@blueyed: https://github.com/blueyed
 .. _@ceridwen: https://github.com/ceridwen
-.. _@cryporchild: https://github.com/cryporchild
+.. _@cboelsen: https://github.com/cboelsen
 .. _@csaftoiu: https://github.com/csaftoiu
 .. _@d6e: https://github.com/d6e
 .. _@davehunt: https://github.com/davehunt
@@ -4289,7 +4306,7 @@ time or change existing behaviors in order to make them less surprising/more use
 .. _@gprasad84: https://github.com/gprasad84
 .. _@graingert: https://github.com/graingert
 .. _@hartym: https://github.com/hartym
-.. _@JonathonSonesen: https://github.com/JonathonSonesen
+.. _@jgsonesen: https://github.com/jgsonesen
 .. _@kalekundert: https://github.com/kalekundert
 .. _@kvas-it: https://github.com/kvas-it
 .. _@marscher: https://github.com/marscher
@@ -4426,7 +4443,7 @@ time or change existing behaviors in order to make them less surprising/more use
 
 **Changes**
 
-* **Important**: `py.code <https://pylib.readthedocs.io/en/latest/code.html>`_ has been
+* **Important**: `py.code <https://pylib.readthedocs.io/en/stable/code.html>`_ has been
   merged into the ``pytest`` repository as ``pytest._code``. This decision
   was made because ``py.code`` had very few uses outside ``pytest`` and the
   fact that it was in a different repository made it difficult to fix bugs on

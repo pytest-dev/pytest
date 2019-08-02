@@ -430,7 +430,7 @@ class TestFunctional:
                 def test_b(self):
                     assert True
                 class TestC(object):
-                    # this one didnt get marked
+                    # this one didn't get marked
                     def test_d(self):
                         assert True
         """

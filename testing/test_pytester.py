@@ -230,8 +230,8 @@ class TestInlineRunModulesCleanup:
     ):
         spy_factory = self.spy_factory()
         monkeypatch.setattr(pytester, "SysModulesSnapshot", spy_factory)
-        original = dict(sys.modules)
         testdir.syspathinsert()
+        original = dict(sys.modules)
         testdir.makepyfile(import1="# you son of a silly person")
         testdir.makepyfile(import2="# my hovercraft is full of eels")
         test_mod = testdir.makepyfile(
