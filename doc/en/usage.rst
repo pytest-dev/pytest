@@ -35,6 +35,14 @@ Running ``pytest`` can result in six different exit codes:
 
 They are represented by the :class:`_pytest.main.ExitCode` enum.
 
+.. note::
+
+    If you would like to customize the exit code in some scenarios, specially when
+    no tests are collected, consider using the
+    `pytest-custom_exit_code <https://github.com/yashtodi94/pytest-custom_exit_code>`__
+    plugin.
+
+
 Getting help on version, option names, environment variables
 --------------------------------------------------------------
 
