@@ -127,7 +127,7 @@ decorator or to all tests in a module by setting the ``pytestmark`` variable:
 *Credits go to Florian Schulze for the reference implementation in the* `pytest-warnings`_
 *plugin.*
 
-.. _`-W option`: https://docs.python.org/3/using/cmdline.html?highlight=#cmdoption-W
+.. _`-W option`: https://docs.python.org/3/using/cmdline.html#cmdoption-w
 .. _warnings.simplefilter: https://docs.python.org/3/library/warnings.html#warnings.simplefilter
 .. _`pytest-warnings`: https://github.com/fschulze/pytest-warnings
 

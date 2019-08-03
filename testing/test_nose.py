@@ -253,7 +253,7 @@ def test_apiwrapper_problem_issue260(testdir):
 
 
 def test_setup_teardown_linking_issue265(testdir):
-    # we accidentally didnt integrate nose setupstate with normal setupstate
+    # we accidentally didn't integrate nose setupstate with normal setupstate
     # this test ensures that won't happen again
     testdir.makepyfile(
         '''

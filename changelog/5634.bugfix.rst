@@ -1,0 +1,2 @@
+``pytest.exit`` is now correctly handled in ``unittest`` cases.
+This makes ``unittest`` cases handle ``quit`` from pytest's pdb correctly.

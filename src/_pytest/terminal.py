@@ -692,7 +692,7 @@ class TerminalReporter:
             else:
                 excrepr.reprcrash.toterminal(self._tw)
                 self._tw.line(
-                    "(to show a full traceback on KeyboardInterrupt use --fulltrace)",
+                    "(to show a full traceback on KeyboardInterrupt use --full-trace)",
                     yellow=True,
                 )
 

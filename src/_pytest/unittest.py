@@ -6,6 +6,7 @@ import _pytest._code
 import pytest
 from _pytest.compat import getimfunc
 from _pytest.config import hookimpl
+from _pytest.outcomes import exit
 from _pytest.outcomes import fail
 from _pytest.outcomes import skip
 from _pytest.outcomes import xfail
@@ -154,6 +155,11 @@ class TestCaseFunction(Function):
         self.__dict__.setdefault("_excinfo", []).append(excinfo)
 
     def addError(self, testcase, rawexcinfo):
+        try:
+            if isinstance(rawexcinfo[1], exit.Exception):
+                exit(rawexcinfo[1].msg)
+        except TypeError:
+            pass
         self._addexcinfo(rawexcinfo)
 
     def addFailure(self, testcase, rawexcinfo):
