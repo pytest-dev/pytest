@@ -1,4 +1,6 @@
 import os
+import platform
+from datetime import datetime
 from xml.dom import minidom
 
 import py
@@ -138,6 +140,30 @@ class TestPython:
         assert result.ret
         node = dom.find_first_by_tag("testsuite")
         node.assert_attr(name="pytest", errors=1, failures=2, skipped=1, tests=5)
+
+    def test_hostname_in_xml(self, testdir):
+        testdir.makepyfile(
+            """
+            def test_pass():
+                pass
+        """
+        )
+        result, dom = runandparse(testdir)
+        node = dom.find_first_by_tag("testsuite")
+        node.assert_attr(hostname=platform.node())
+
+    def test_timestamp_in_xml(self, testdir):
+        testdir.makepyfile(
+            """
+            def test_pass():
+                pass
+        """
+        )
+        start_time = datetime.now()
+        result, dom = runandparse(testdir)
+        node = dom.find_first_by_tag("testsuite")
+        timestamp = datetime.strptime(node["timestamp"], "%Y-%m-%dT%H:%M:%S.%f")
+        assert start_time <= timestamp < datetime.now()
 
     def test_timing_function(self, testdir):
         testdir.makepyfile(
