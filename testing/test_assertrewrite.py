@@ -1,4 +1,5 @@
 import ast
+import errno
 import glob
 import importlib
 import os
@@ -7,6 +8,7 @@ import stat
 import sys
 import textwrap
 import zipfile
+from functools import partial
 
 import py
 
@@ -1528,3 +1530,43 @@ class TestAssertionPass:
 )
 def test_get_assertion_exprs(src, expected):
     assert _get_assertion_exprs(src) == expected
+
+
+def test_try_mkdir(monkeypatch, tmp_path):
+    from _pytest.assertion.rewrite import try_mkdir
+
+    p = tmp_path / "foo"
+
+    # create
+    assert try_mkdir(str(p))
+    assert p.is_dir()
+
+    # already exist
+    assert try_mkdir(str(p))
+
+    # monkeypatch to simulate all error situations
+    def fake_mkdir(p, *, exc):
+        assert isinstance(p, str)
+        raise exc
+
+    monkeypatch.setattr(os, "mkdir", partial(fake_mkdir, exc=FileNotFoundError()))
+    assert not try_mkdir(str(p))
+
+    monkeypatch.setattr(os, "mkdir", partial(fake_mkdir, exc=NotADirectoryError()))
+    assert not try_mkdir(str(p))
+
+    monkeypatch.setattr(os, "mkdir", partial(fake_mkdir, exc=PermissionError()))
+    assert not try_mkdir(str(p))
+
+    err = OSError()
+    err.errno = errno.EROFS
+    monkeypatch.setattr(os, "mkdir", partial(fake_mkdir, exc=err))
+    assert not try_mkdir(str(p))
+
+    # unhandled OSError should raise
+    err = OSError()
+    err.errno = errno.ECHILD
+    monkeypatch.setattr(os, "mkdir", partial(fake_mkdir, exc=err))
+    with pytest.raises(OSError) as exc_info:
+        try_mkdir(str(p))
+    assert exc_info.value.errno == errno.ECHILD

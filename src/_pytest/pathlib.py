@@ -1,5 +1,4 @@
 import atexit
-import errno
 import fnmatch
 import itertools
 import operator
@@ -163,14 +162,8 @@ def create_cleanup_lock(p):
     lock_path = get_lock_path(p)
     try:
         fd = os.open(str(lock_path), os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o644)
-    except OSError as e:
-        if e.errno == errno.EEXIST:
-            raise EnvironmentError(
-                "cannot create lockfile in {path}".format(path=p)
-            ) from e
-
-        else:
-            raise
+    except FileExistsError as e:
+        raise EnvironmentError("cannot create lockfile in {path}".format(path=p)) from e
     else:
         pid = os.getpid()
         spid = str(pid).encode()

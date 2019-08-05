@@ -116,24 +116,11 @@ class AssertionRewritingHook:
         write = not sys.dont_write_bytecode
         cache_dir = os.path.join(os.path.dirname(fn), "__pycache__")
         if write:
-            try:
-                os.mkdir(cache_dir)
-            except OSError:
-                e = sys.exc_info()[1].errno
-                if e == errno.EEXIST:
-                    # Either the __pycache__ directory already exists (the
-                    # common case) or it's blocked by a non-dir node. In the
-                    # latter case, we'll ignore it in _write_pyc.
-                    pass
-                elif e in {errno.ENOENT, errno.ENOTDIR}:
-                    # One of the path components was not a directory, likely
-                    # because we're in a zip file.
-                    write = False
-                elif e in {errno.EACCES, errno.EROFS, errno.EPERM}:
-                    state.trace("read only directory: %r" % os.path.dirname(fn))
-                    write = False
-                else:
-                    raise
+            ok = try_mkdir(cache_dir)
+            if not ok:
+                write = False
+                state.trace("read only directory: {}".format(os.path.dirname(fn)))
+
         cache_name = os.path.basename(fn)[:-3] + PYC_TAIL
         pyc = os.path.join(cache_dir, cache_name)
         # Notice that even if we're in a read-only directory, I'm going
@@ -1026,3 +1013,26 @@ warn_explicit(
         else:
             res = load_names[0]
         return res, self.explanation_param(self.pop_format_context(expl_call))
+
+
+def try_mkdir(cache_dir):
+    """Attempts to create the given directory, returns True if successful"""
+    try:
+        os.mkdir(cache_dir)
+    except FileExistsError:
+        # Either the __pycache__ directory already exists (the
+        # common case) or it's blocked by a non-dir node. In the
+        # latter case, we'll ignore it in _write_pyc.
+        return True
+    except (FileNotFoundError, NotADirectoryError):
+        # One of the path components was not a directory, likely
+        # because we're in a zip file.
+        return False
+    except PermissionError:
+        return False
+    except OSError as e:
+        # as of now, EROFS doesn't have an equivalent OSError-subclass
+        if e.errno == errno.EROFS:
+            return False
+        raise
+    return True
