@@ -11,6 +11,7 @@ import shutil
 import sys
 import uuid
 import warnings
+from functools import partial
 from functools import reduce
 from os.path import expanduser
 from os.path import expandvars
@@ -46,38 +47,53 @@ def ensure_reset_dir(path):
     path.mkdir()
 
 
+def on_rm_rf_error(func, path, exc, **kwargs):
+    """Handles known read-only errors during rmtree."""
+    start_path = kwargs["start_path"]
+    excvalue = exc[1]
+
+    if not isinstance(excvalue, OSError) or excvalue.errno not in (
+        errno.EACCES,
+        errno.EPERM,
+    ):
+        warnings.warn(
+            PytestWarning("(rm_rf) error removing {}: {}".format(path, excvalue))
+        )
+        return
+
+    if func not in (os.rmdir, os.remove, os.unlink):
+        warnings.warn(
+            PytestWarning("(rm_rf) error removing {}: {}".format(path, excvalue))
+        )
+        return
+
+    # Chmod + retry.
+    import stat
+
+    def chmod_rw(p):
+        mode = os.stat(p).st_mode
+        os.chmod(p, mode | stat.S_IRUSR | stat.S_IWUSR)
+
+    # For files, we need to recursively go upwards in the directories to
+    # ensure they all are also writable.
+    p = Path(path)
+    if p.is_file():
+        for parent in p.parents:
+            chmod_rw(str(parent))
+            # stop when we reach the original path passed to rm_rf
+            if parent == start_path:
+                break
+    chmod_rw(str(path))
+
+    func(path)
+
+
 def rm_rf(path):
     """Remove the path contents recursively, even if some elements
     are read-only.
     """
-
-    def chmod_w(p):
-        import stat
-
-        mode = os.stat(str(p)).st_mode
-        os.chmod(str(p), mode | stat.S_IWRITE)
-
-    def force_writable_and_retry(function, p, excinfo):
-        p = Path(p)
-
-        # for files, we need to recursively go upwards
-        # in the directories to ensure they all are also
-        # writable
-        if p.is_file():
-            for parent in p.parents:
-                chmod_w(parent)
-                # stop when we reach the original path passed to rm_rf
-                if parent == path:
-                    break
-
-        chmod_w(p)
-        try:
-            # retry the function that failed
-            function(str(p))
-        except Exception as e:
-            warnings.warn(PytestWarning("(rm_rf) error removing {}: {}".format(p, e)))
-
-    shutil.rmtree(str(path), onerror=force_writable_and_retry)
+    onerror = partial(on_rm_rf_error, start_path=path)
+    shutil.rmtree(str(path), onerror=onerror)
 
 
 def find_prefixed(root, prefix):
