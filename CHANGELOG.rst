@@ -18,6 +18,28 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+pytest 4.6.5 (2019-08-05)
+=========================
+
+Bug Fixes
+---------
+
+- `#4344 <https://github.com/pytest-dev/pytest/issues/4344>`_: Fix RuntimeError/StopIteration when trying to collect package with "__init__.py" only.
+
+
+- `#5478 <https://github.com/pytest-dev/pytest/issues/5478>`_: Fix encode error when using unicode strings in exceptions with ``pytest.raises``.
+
+
+- `#5524 <https://github.com/pytest-dev/pytest/issues/5524>`_: Fix issue where ``tmp_path`` and ``tmpdir`` would not remove directories containing files marked as read-only,
+  which could lead to pytest crashing when executed a second time with the ``--basetemp`` option.
+
+
+- `#5547 <https://github.com/pytest-dev/pytest/issues/5547>`_: ``--step-wise`` now handles ``xfail(strict=True)`` markers properly.
+
+
+- `#5650 <https://github.com/pytest-dev/pytest/issues/5650>`_: Improved output when parsing an ini configuration file fails.
+
+
 pytest 4.6.4 (2019-06-28)
 =========================
 

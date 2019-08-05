@@ -1,2 +1,0 @@
-Fix issue where ``tmp_path`` and ``tmpdir`` would not remove directories containing files marked as read-only,
-which could lead to pytest crashing when executed a second time with the ``--basetemp`` option.
