@@ -15,9 +15,11 @@ from __future__ import print_function
 
 import functools
 import os
+import platform
 import re
 import sys
 import time
+from datetime import datetime
 
 import py
 import six
@@ -676,6 +678,8 @@ class LogXML(object):
             skipped=self.stats["skipped"],
             tests=numtests,
             time="%.3f" % suite_time_delta,
+            timestamp=datetime.fromtimestamp(self.suite_start_time).isoformat(),
+            hostname=platform.node(),
         )
         logfile.write(Junit.testsuites([suite_node]).unicode(indent=0))
         logfile.close()
