@@ -1211,6 +1211,18 @@ def test_collect_pkg_init_and_file_in_args(testdir):
     )
 
 
+def test_collect_pkg_init_only(testdir):
+    subdir = testdir.mkdir("sub")
+    init = subdir.ensure("__init__.py")
+    init.write("def test_init(): pass")
+
+    result = testdir.runpytest(str(init))
+    result.stdout.fnmatch_lines(["*no tests ran in*"])
+
+    result = testdir.runpytest("-v", "-o", "python_files=*.py", str(init))
+    result.stdout.fnmatch_lines(["sub/__init__.py::test_init PASSED*", "*1 passed in*"])
+
+
 @pytest.mark.skipif(
     not hasattr(py.path.local, "mksymlinkto"),
     reason="symlink not available on this platform",
