@@ -1,1 +1,0 @@
-Fix encode error when using unicode strings in exceptions with ``pytest.raises``.

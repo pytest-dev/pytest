@@ -1,1 +1,0 @@
-``--step-wise`` now handles ``xfail(strict=True)`` markers properly.
