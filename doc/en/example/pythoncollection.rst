@@ -136,7 +136,7 @@ that match ``*_check``. For example, if we have::
 .. code-block:: python
 
     # content of check_myapp.py
-    class CheckMyApp(object):
+    class CheckMyApp:
         def simple_check(self):
             pass
         def complex_check(self):

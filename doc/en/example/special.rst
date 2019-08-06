@@ -16,7 +16,7 @@ calls it::
     @pytest.fixture(scope="session", autouse=True)
     def callattr_ahead_of_alltests(request):
         print("callattr_ahead_of_alltests called")
-        seen = set([None])
+        seen = {None}
         session = request.node
         for item in session.items:
             cls = item.getparent(pytest.Class)
@@ -32,7 +32,7 @@ will be called ahead of running any tests::
 
     # content of test_module.py
 
-    class TestHello(object):
+    class TestHello:
         @classmethod
         def callme(cls):
             print("callme called!")
@@ -43,7 +43,7 @@ will be called ahead of running any tests::
         def test_method2(self):
             print("test_method1 called")
 
-    class TestOther(object):
+    class TestOther:
         @classmethod
         def callme(cls):
             print("callme other called")

@@ -114,7 +114,7 @@ Once you develop multiple tests, you may want to group them into a class. pytest
 .. code-block:: python
 
     # content of test_class.py
-    class TestClass(object):
+    class TestClass:
         def test_one(self):
             x = "this"
             assert 'h' in x

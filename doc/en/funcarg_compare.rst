@@ -26,7 +26,7 @@ a per-session Database object::
 .. code-block:: python
 
     # content of conftest.py
-    class Database(object):
+    class Database:
         def __init__(self):
             print("database instance created")
         def destroy(self):

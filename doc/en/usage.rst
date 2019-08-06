@@ -774,7 +774,7 @@ You can specify additional plugins to ``pytest.main``::
 
     # content of myinvoke.py
     import pytest
-    class MyPlugin(object):
+    class MyPlugin:
         def pytest_sessionfinish(self):
             print("*** test run reporting finishing")
 

@@ -496,7 +496,7 @@ read an optional server URL from the test module which uses our fixture::
         server = getattr(request.module, "smtpserver", "smtp.gmail.com")
         smtp_connection = smtplib.SMTP(server, 587, timeout=5)
         yield smtp_connection
-        print("finalizing %s (%s)" % (smtp_connection, server))
+        print("finalizing {} ({})".format(smtp_connection, server))
         smtp_connection.close()
 
 We use the ``request.module`` attribute to optionally obtain an
@@ -820,7 +820,7 @@ and instantiate an object ``app`` where we stick the already defined
 
     import pytest
 
-    class App(object):
+    class App:
         def __init__(self, smtp_connection):
             self.smtp_connection = smtp_connection
 
@@ -902,7 +902,7 @@ to show the setup/teardown flow::
     def test_1(modarg):
         print("  RUN test1 with modarg %s" % modarg)
     def test_2(otherarg, modarg):
-        print("  RUN test2 with otherarg %s and modarg %s" % (otherarg, modarg))
+        print("  RUN test2 with otherarg {} and modarg {}".format(otherarg, modarg))
 
 
 Let's run the tests in verbose mode and with looking at the print-output:
@@ -1001,7 +1001,7 @@ and declare its use in a test module via a ``usefixtures`` marker::
     import pytest
 
     @pytest.mark.usefixtures("cleandir")
-    class TestDirectoryInit(object):
+    class TestDirectoryInit:
         def test_cwd_starts_empty(self):
             assert os.listdir(os.getcwd()) == []
             with open("myfile", "w") as f:
@@ -1086,7 +1086,7 @@ self-contained implementation of this idea::
 
     import pytest
 
-    class DB(object):
+    class DB:
         def __init__(self):
             self.intransaction = []
         def begin(self, name):
@@ -1098,7 +1098,7 @@ self-contained implementation of this idea::
     def db():
         return DB()
 
-    class TestClass(object):
+    class TestClass:
         @pytest.fixture(autouse=True)
         def transact(self, request, db):
             db.begin(request.function.__name__)
@@ -1162,7 +1162,7 @@ and then e.g. have a TestClass using it by declaring the need::
 .. code-block:: python
 
     @pytest.mark.usefixtures("transact")
-    class TestClass(object):
+    class TestClass:
         def test_method1(self):
             ...
 
