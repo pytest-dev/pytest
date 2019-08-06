@@ -27,7 +27,7 @@ Module level setup/teardown
 
 If you have multiple test functions and test classes in a single
 module you can optionally implement the following fixture methods
-which will usually be called once for all the functions
+which will usually be called once for all the functions::
 
 .. code-block:: python
 
@@ -46,7 +46,7 @@ Class level setup/teardown
 ----------------------------------
 
 Similarly, the following methods are called at class level before
-and after all test methods of the class are called
+and after all test methods of the class are called::
 
 .. code-block:: python
 
@@ -66,7 +66,7 @@ and after all test methods of the class are called
 Method and function level setup/teardown
 -----------------------------------------------
 
-Similarly, the following methods are called around each method invocation
+Similarly, the following methods are called around each method invocation::
 
 .. code-block:: python
 
@@ -84,7 +84,7 @@ Similarly, the following methods are called around each method invocation
 As of pytest-3.0, the ``method`` parameter is optional.
 
 If you would rather define test functions directly at module level
-you can also use the following functions to implement fixtures
+you can also use the following functions to implement fixtures::
 
 .. code-block:: python
 

@@ -455,7 +455,7 @@ Internal classes accessed through ``Node``
 .. versionremoved:: 4.0
 
 Access of ``Module``, ``Function``, ``Class``, ``Instance``, ``File`` and ``Item`` through ``Node`` instances now issue
-this warning
+this warning::
 
 .. code-block:: text
 

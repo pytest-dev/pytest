@@ -70,7 +70,7 @@ caplog fixture
 ^^^^^^^^^^^^^^
 
 Inside tests it is possible to change the log level for the captured log
-messages.  This is supported by the ``caplog`` fixture
+messages.  This is supported by the ``caplog`` fixture::
 
 .. code-block:: python
 
@@ -80,7 +80,7 @@ messages.  This is supported by the ``caplog`` fixture
 
 By default the level is set on the root logger,
 however as a convenience it is also possible to set the log level of any
-logger
+logger::
 
 .. code-block:: python
 
@@ -91,7 +91,7 @@ logger
 The log levels set are restored automatically at the end of the test.
 
 It is also possible to use a context manager to temporarily change the log
-level inside a ``with`` block
+level inside a ``with`` block::
 
 .. code-block:: python
 
@@ -100,7 +100,7 @@ level inside a ``with`` block
             pass
 
 Again, by default the level of the root logger is affected but the level of any
-logger can be changed instead with
+logger can be changed instead with::
 
 .. code-block:: python
 
@@ -110,7 +110,7 @@ logger can be changed instead with
 
 Lastly all the logs sent to the logger during the test run are made available on
 the fixture in the form of both the ``logging.LogRecord`` instances and the final log text.
-This is useful for when you want to assert on the contents of a message
+This is useful for when you want to assert on the contents of a message::
 
 .. code-block:: python
 
@@ -125,7 +125,7 @@ For all the available attributes of the log records see the
 
 You can also resort to ``record_tuples`` if all you want to do is to ensure,
 that certain messages have been logged under a given logger name with a given
-severity and message
+severity and message::
 
 .. code-block:: python
 
@@ -134,7 +134,7 @@ severity and message
 
         assert caplog.record_tuples == [("root", logging.INFO, "boo arg")]
 
-You can call ``caplog.clear()`` to reset the captured log records in a test
+You can call ``caplog.clear()`` to reset the captured log records in a test::
 
 .. code-block:: python
 

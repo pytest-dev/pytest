@@ -278,7 +278,7 @@ argument ``match`` to assert that the exception matches a text or regex::
       ...
     Failed: DID NOT WARN. No warnings of type ...UserWarning... was emitted...
 
-You can also call ``pytest.warns`` on a function or code string
+You can also call ``pytest.warns`` on a function or code string::
 
 .. code-block:: python
 

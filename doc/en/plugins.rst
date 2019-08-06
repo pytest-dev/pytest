@@ -8,7 +8,7 @@ Installing and Using plugins
 This section talks about installing and using third party plugins.
 For writing your own plugins, please refer to :ref:`writing-plugins`.
 
-Installing a third party plugin can be easily done with ``pip``
+Installing a third party plugin can be easily done with ``pip``::
 
 .. code-block:: bash
 
@@ -97,7 +97,7 @@ Finding out which plugins are active
 ------------------------------------
 
 If you want to find out which plugins are active in your
-environment you can type
+environment you can type::
 
 .. code-block:: bash
 
@@ -112,7 +112,7 @@ and their names. It will also print local plugins aka
 Deactivating / unregistering a plugin by name
 ---------------------------------------------
 
-You can prevent plugins from loading or unregister them
+You can prevent plugins from loading or unregister them::
 
 .. code-block:: bash
 

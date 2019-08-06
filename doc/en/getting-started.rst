@@ -35,7 +35,7 @@ Install ``pytest``
 Create your first test
 ----------------------------------------------------------
 
-Create a simple test function with just four lines of code
+Create a simple test function with just four lines of code::
 
 .. code-block:: python
 
@@ -86,7 +86,7 @@ Run multiple tests
 Assert that a certain exception is raised
 --------------------------------------------------------------
 
-Use the :ref:`raises <assertraises>` helper to assert that some code raises an exception
+Use the :ref:`raises <assertraises>` helper to assert that some code raises an exception::
 
 .. code-block:: python
 
@@ -113,7 +113,7 @@ Execute the test function with “quiet” reporting mode:
 Group multiple tests in a class
 --------------------------------------------------------------
 
-Once you develop multiple tests, you may want to group them into a class. pytest makes it easy to create a class containing more than one test
+Once you develop multiple tests, you may want to group them into a class. pytest makes it easy to create a class containing more than one test::
 
 .. code-block:: python
 
@@ -152,7 +152,7 @@ The first test passed and the second failed. You can easily see the intermediate
 Request a unique temporary directory for functional tests
 --------------------------------------------------------------
 
-``pytest`` provides `Builtin fixtures/function arguments <https://docs.pytest.org/en/latest/builtin.html>`_ to request arbitrary resources, like a unique temporary directory
+``pytest`` provides `Builtin fixtures/function arguments <https://docs.pytest.org/en/latest/builtin.html>`_ to request arbitrary resources, like a unique temporary directory::
 
 .. code-block:: python
 

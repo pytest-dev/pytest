@@ -90,7 +90,7 @@ provide a temporary directory unique to the test invocation,
 created in the `base temporary directory`_.
 
 ``tmpdir`` is a `py.path.local`_ object which offers ``os.path`` methods
-and more.  Here is an example test usage
+and more.  Here is an example test usage::
 
 .. code-block:: python
 
