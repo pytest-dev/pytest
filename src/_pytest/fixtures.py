@@ -828,7 +828,7 @@ class FixtureDef:
             where=baseid,
         )
         self.params = params
-        self.argnames = getfuncargnames(func, is_method=unittest)
+        self.argnames = getfuncargnames(func, name=argname, is_method=unittest)
         self.unittest = unittest
         self.ids = ids
         self._finalizers = []
@@ -1143,7 +1143,7 @@ class FixtureManager:
 
     def getfixtureinfo(self, node, func, cls, funcargs=True):
         if funcargs and not getattr(node, "nofuncargs", False):
-            argnames = getfuncargnames(func, cls=cls)
+            argnames = getfuncargnames(func, name=node.name, cls=cls)
         else:
             argnames = ()
 
