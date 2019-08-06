@@ -15,7 +15,7 @@ Running an existing test suite with pytest
 Say you want to contribute to an existing repository somewhere.
 After pulling the code into your development space using some
 flavor of version control and (optionally) setting up a virtualenv
-you will want to run::
+you will want to run:
 
 .. code-block:: bash
 

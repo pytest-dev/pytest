@@ -754,7 +754,7 @@ Calling pytest from Python code
 
 
 
-You can invoke ``pytest`` from Python code directly::
+You can invoke ``pytest`` from Python code directly:
 
 .. code-block:: python
 
@@ -762,13 +762,13 @@ You can invoke ``pytest`` from Python code directly::
 
 this acts as if you would call "pytest" from the command line.
 It will not raise ``SystemExit`` but return the exitcode instead.
-You can pass in options and arguments::
+You can pass in options and arguments:
 
 .. code-block:: python
 
     pytest.main(["-x", "mytestdir"])
 
-You can specify additional plugins to ``pytest.main``::
+You can specify additional plugins to ``pytest.main``:
 
 .. code-block:: python
 
