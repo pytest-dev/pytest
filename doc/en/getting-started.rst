@@ -37,6 +37,8 @@ Create your first test
 
 Create a simple test function with just four lines of code::
 
+.. code-block:: python
+
     # content of test_sample.py
     def func(x):
         return x + 1
@@ -85,6 +87,8 @@ Assert that a certain exception is raised
 
 Use the :ref:`raises <assertraises>` helper to assert that some code raises an exception::
 
+.. code-block:: python
+
     # content of test_sysexit.py
     import pytest
     def f():
@@ -106,6 +110,8 @@ Group multiple tests in a class
 --------------------------------------------------------------
 
 Once you develop multiple tests, you may want to group them into a class. pytest makes it easy to create a class containing more than one test::
+
+.. code-block:: python
 
     # content of test_class.py
     class TestClass(object):
@@ -143,6 +149,8 @@ Request a unique temporary directory for functional tests
 --------------------------------------------------------------
 
 ``pytest`` provides `Builtin fixtures/function arguments <https://docs.pytest.org/en/latest/builtin.html>`_ to request arbitrary resources, like a unique temporary directory::
+
+.. code-block:: python
 
     # content of test_tmpdir.py
     def test_needsfiles(tmpdir):

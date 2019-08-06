@@ -182,11 +182,15 @@ Skipping on a missing import dependency
 You can use the following helper at module level
 or within a test or test setup function::
 
+.. code-block:: python
+
     docutils = pytest.importorskip("docutils")
 
 If ``docutils`` cannot be imported here, this will lead to a
 skip outcome of the test.  You can also skip based on the
 version number of a library::
+
+.. code-block:: python
 
     docutils = pytest.importorskip("docutils", minversion="0.3")
 
@@ -224,6 +228,8 @@ XFail: mark test functions as expected to fail
 
 You can use the ``xfail`` marker to indicate that you
 expect a test to fail::
+
+.. code-block:: python
 
     @pytest.mark.xfail
     def test_function():

@@ -24,6 +24,8 @@ Consider this file and directory layout::
 
 When executing::
 
+.. code-block:: bash
+
     pytest root/
 
 
@@ -55,6 +57,8 @@ Consider this file and directory layout::
 
 
 When executing::
+
+.. code-block:: bash
 
     pytest root/
 

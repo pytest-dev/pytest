@@ -10,6 +10,8 @@ For writing your own plugins, please refer to :ref:`writing-plugins`.
 
 Installing a third party plugin can be easily done with ``pip``::
 
+.. code-block:: bash
+
     pip install pytest-NAME
     pip uninstall pytest-NAME
 
@@ -97,6 +99,8 @@ Finding out which plugins are active
 If you want to find out which plugins are active in your
 environment you can type::
 
+.. code-block:: bash
+
     pytest --trace-config
 
 and will get an extended test header which shows activated plugins
@@ -109,6 +113,8 @@ Deactivating / unregistering a plugin by name
 ---------------------------------------------
 
 You can prevent plugins from loading or unregister them::
+
+.. code-block:: bash
 
     pytest -p no:NAME
 

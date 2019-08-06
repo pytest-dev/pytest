@@ -133,6 +133,8 @@ This would make ``pytest`` look for tests in files that match the ``check_*
 .py`` glob-pattern, ``Check`` prefixes in classes, and functions and methods
 that match ``*_check``. For example, if we have::
 
+.. code-block:: python
+
     # content of check_myapp.py
     class CheckMyApp(object):
         def simple_check(self):
@@ -240,6 +242,8 @@ imported. Moreover, there may files only importable by a specific python
 version. For such cases you can dynamically define files to be ignored by
 listing them in a ``conftest.py`` file::
 
+.. code-block:: python
+
     # content of conftest.py
     import sys
 
@@ -249,6 +253,8 @@ listing them in a ``conftest.py`` file::
 
 and then if you have a module file like this::
 
+.. code-block:: python
+
     # content of pkg/module_py2.py
     def test_only_on_python2():
         try:
@@ -257,6 +263,8 @@ and then if you have a module file like this::
             pass
 
 and a ``setup.py`` dummy file like this::
+
+.. code-block:: python
 
     # content of setup.py
     0/0  # will raise exception if imported
@@ -296,6 +304,8 @@ patterns to ``collect_ignore_glob``.
 The following example ``conftest.py`` ignores the file ``setup.py`` and in
 addition all files that end with ``*_py2.py`` when executed with a Python 3
 interpreter::
+
+.. code-block:: python
 
     # content of conftest.py
     import sys

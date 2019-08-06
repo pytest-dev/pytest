@@ -471,6 +471,8 @@ test plugins.
 
 To use it, include in your top-most ``conftest.py`` file::
 
+.. code-block:: python
+
     pytest_plugins = 'pytester'
 
 
@@ -1000,6 +1002,8 @@ passed multiple times. The expected format is ``name=value``. For example::
         addopts = --maxfail=2 -rf  # exit after 2 failures, report fail info
 
    issuing ``pytest test_hello.py`` actually means::
+
+   .. code-block:: bash
 
         pytest --maxfail=2 -rf test_hello.py
 

@@ -457,6 +457,8 @@ Internal classes accessed through ``Node``
 Access of ``Module``, ``Function``, ``Class``, ``Instance``, ``File`` and ``Item`` through ``Node`` instances now issue
 this warning::
 
+.. code-block:: text
+
     usage of Function.Module is deprecated, please use pytest.Module instead
 
 Users should just ``import pytest`` and access those objects using the ``pytest`` module.

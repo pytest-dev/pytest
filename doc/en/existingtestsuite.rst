@@ -17,6 +17,8 @@ After pulling the code into your development space using some
 flavor of version control and (optionally) setting up a virtualenv
 you will want to run::
 
+.. code-block:: bash
+
     cd <repository>
     pip install -e .  # Environment dependent alternatives include
                       # 'python setup.py develop' and 'conda develop'

@@ -180,6 +180,7 @@ This will ignore all warnings of type ``DeprecationWarning`` where the start of 
 the regular expression ``".*U.*mode is deprecated"``.
 
 .. note::
+
     If warnings are configured at the interpreter level, using
     the `PYTHONWARNINGS <https://docs.python.org/3/using/cmdline.html#envvar-PYTHONWARNINGS>`_ environment variable or the
     ``-W`` command-line option, pytest will not configure any filters by default.
@@ -278,6 +279,8 @@ argument ``match`` to assert that the exception matches a text or regex::
     Failed: DID NOT WARN. No warnings of type ...UserWarning... was emitted...
 
 You can also call ``pytest.warns`` on a function or code string::
+
+.. code-block:: python
 
     pytest.warns(expected_warning, func, *args, **kwargs)
     pytest.warns(expected_warning, "func(*args, **kwargs)")
@@ -411,7 +414,7 @@ These warnings might be filtered using the same builtin mechanisms used to filte
 Please read our :ref:`backwards-compatibility` to learn how we proceed about deprecating and eventually removing
 features.
 
-The following warning types ares used by pytest and are part of the public API:
+The following warning types are used by pytest and are part of the public API:
 
 .. autoclass:: pytest.PytestWarning
 

@@ -21,12 +21,16 @@ Let's say we want to execute a test with different computation
 parameters and the parameter range shall be determined by a command
 line argument.  Let's first write a simple (do-nothing) computation test::
 
+.. code-block:: python
+
     # content of test_compute.py
 
     def test_compute(param1):
         assert param1 < 4
 
 Now we add a test configuration like this::
+
+.. code-block:: python
 
     # content of conftest.py
 
@@ -84,6 +88,8 @@ Running pytest with ``--collect-only`` will show the generated IDs.
 Numbers, strings, booleans and None will have their usual string representation
 used in the test ID. For other objects, pytest will make a string based on
 the argument name::
+
+.. code-block:: python
 
     # content of test_time.py
 
@@ -173,6 +179,8 @@ an add-on from Robert Collins for the standard unittest framework. We
 only have to work a bit to construct the correct arguments for pytest's
 :py:func:`Metafunc.parametrize`::
 
+.. code-block:: python
+
     # content of test_scenarios.py
 
     def pytest_generate_tests(metafunc):
@@ -246,6 +254,8 @@ connections or subprocess only when the actual test is run.
 Here is a simple example how you can achieve that, first
 the actual test requiring a ``db`` object::
 
+.. code-block:: python
+
     # content of test_backends.py
 
     import pytest
@@ -257,6 +267,8 @@ the actual test requiring a ``db`` object::
 We can now add a test configuration that generates two invocations of
 the ``test_db_initialized`` function and also implements a factory that
 creates a database object for the actual test invocations::
+
+.. code-block:: python
 
     # content of conftest.py
     import pytest
@@ -329,6 +341,8 @@ two fixtures: ``x`` and ``y``. Here we give to indirect the list, which contains
 fixture ``x``. The indirect parameter will be applied to this argument only, and the value ``a``
 will be passed to respective fixture function::
 
+.. code-block:: python
+
     # content of test_indirect_list.py
 
     import pytest
@@ -371,6 +385,8 @@ Parametrizing test methods through per-class configuration
 Here is an example ``pytest_generate_tests`` function implementing a
 parametrization scheme similar to Michael Foord's `unittest
 parametrizer`_ but in a lot less code::
+
+.. code-block:: python
 
     # content of ./test_parametrize.py
     import pytest
@@ -449,6 +465,8 @@ and get skipped in case the implementation is not importable/available.  Let's
 say we have a "base" implementation and the other (possibly optimized ones)
 need to provide similar results::
 
+.. code-block:: python
+
     # content of conftest.py
 
     import pytest
@@ -463,17 +481,23 @@ need to provide similar results::
 
 And then a base implementation of a simple function::
 
+.. code-block:: python
+
     # content of base.py
     def func1():
         return 1
 
 And an optimized version::
 
+.. code-block:: python
+
     # content of opt1.py
     def func1():
         return 1.0001
 
 And finally a little test module::
+
+.. code-block:: python
 
     # content of test_module.py
 
@@ -581,6 +605,8 @@ in which some tests raise exceptions and others do not.
 It is helpful to define a no-op context manager ``does_not_raise`` to serve
 as a complement to ``raises``. For example::
 
+.. code-block:: python
+
     from contextlib import contextmanager
     import pytest
 
@@ -606,12 +632,18 @@ while the fourth should raise ``ZeroDivisionError``.
 If you're only supporting Python 3.7+, you can simply use ``nullcontext``
 to define ``does_not_raise``::
 
+.. code-block:: python
+
     from contextlib import nullcontext as does_not_raise
 
 Or, if you're supporting Python 3.3+ you can use::
 
+.. code-block:: python
+
     from contextlib import ExitStack as does_not_raise
 
 Or, if desired, you can ``pip install contextlib2`` and use::
+
+.. code-block:: python
 
     from contextlib2 import ExitStack as does_not_raise

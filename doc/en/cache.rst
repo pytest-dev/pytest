@@ -35,6 +35,8 @@ Rerunning only failures or failures first
 
 First, let's create 50 test invocation of which only 2 fail::
 
+.. code-block:: python
+
     # content of test_50.py
     import pytest
 
@@ -184,6 +186,8 @@ Plugins or conftest.py support code can get a cached value using the
 pytest ``config`` object.  Here is a basic example plugin which
 implements a :ref:`fixture` which re-uses previously created state
 across pytest invocations::
+
+.. code-block:: python
 
     # content of test_caching.py
     import pytest

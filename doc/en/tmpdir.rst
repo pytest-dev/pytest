@@ -92,6 +92,8 @@ created in the `base temporary directory`_.
 ``tmpdir`` is a `py.path.local`_ object which offers ``os.path`` methods
 and more.  Here is an example test usage::
 
+.. code-block:: python
+
     # content of test_tmpdir.py
     import os
     def test_create_file(tmpdir):

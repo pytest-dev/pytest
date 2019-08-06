@@ -12,6 +12,8 @@ the test suite to take full advantage of pytest's features.
 
 To run an existing ``unittest``-style test suite using ``pytest``, type::
 
+.. code-block:: bash
+
     pytest tests
 
 
@@ -80,6 +82,8 @@ let's jump-start into an example that integrates a pytest ``db_class``
 fixture, setting up a class-cached database object, and then reference
 it from a unittest-style test::
 
+.. code-block:: python
+
     # content of conftest.py
 
     # we define a fixture function below and it will be "used" by
@@ -104,6 +108,8 @@ is used.  This architecture de-couples fixture writing from actual test
 code and allows re-use of the fixture by a minimal reference, the fixture
 name.  So let's write an actual ``unittest.TestCase`` class using our
 fixture definition::
+
+.. code-block:: python
 
     # content of test_unittest_db.py
 
@@ -180,6 +186,8 @@ Let's look at an ``initdir`` fixture which makes all test methods of a
 pre-initialized ``samplefile.ini``.  Our ``initdir`` fixture itself uses
 the pytest builtin :ref:`tmpdir <tmpdir>` fixture to delegate the
 creation of a per-test temporary directory::
+
+.. code-block:: python
 
     # content of test_unittest_cleandir.py
     import pytest

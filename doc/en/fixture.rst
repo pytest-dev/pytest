@@ -51,6 +51,8 @@ the fixture object.  Fixture functions are registered by marking them with
 self-contained test module containing a fixture and a test function
 using it::
 
+.. code-block:: python
+
     # content of ./test_smtpsimple.py
     import pytest
 
@@ -182,6 +184,8 @@ The next example puts the fixture function into a separate ``conftest.py`` file
 so that tests from multiple test modules in the directory can
 access the fixture function::
 
+.. code-block:: python
+
     # content of conftest.py
     import pytest
     import smtplib
@@ -194,6 +198,8 @@ The name of the fixture again is ``smtp_connection`` and you can access its
 result by listing the name ``smtp_connection`` as an input parameter in any
 test or fixture function (in or below the directory where ``conftest.py`` is
 located)::
+
+.. code-block:: python
 
     # content of test_module.py
 
@@ -479,6 +485,8 @@ to introspect the "requesting" test function, class or module context.
 Further extending the previous ``smtp_connection`` fixture example, let's
 read an optional server URL from the test module which uses our fixture::
 
+.. code-block:: python
+
     # content of conftest.py
     import pytest
     import smtplib
@@ -504,6 +512,8 @@ again, nothing much has changed:
 
 Let's quickly create another test module that actually sets the
 server URL in its module namespace::
+
+.. code-block:: python
 
     # content of test_anothersmtp.py
 
@@ -542,6 +552,8 @@ This function can then be called multiple times in the test.
 
 Factories can have parameters as needed::
 
+.. code-block:: python
+
     @pytest.fixture
     def make_customer_record():
 
@@ -560,6 +572,8 @@ Factories can have parameters as needed::
         customer_3 = make_customer_record("Meredith")
 
 If the data created by the factory requires managing, the fixture can take care of that::
+
+.. code-block:: python
 
     @pytest.fixture
     def make_customer_record():
@@ -599,6 +613,8 @@ Extending the previous example, we can flag the fixture to create two
 ``smtp_connection`` fixture instances which will cause all tests using the fixture
 to run twice.  The fixture function gets access to each parameter
 through the special :py:class:`request <FixtureRequest>` object::
+
+.. code-block:: python
 
     # content of conftest.py
     import pytest
@@ -692,6 +708,8 @@ make a string based on the argument name.  It is possible to customise
 the string used in a test ID for a certain fixture value by using the
 ``ids`` keyword argument::
 
+.. code-block:: python
+
    # content of test_ids.py
    import pytest
 
@@ -756,6 +774,8 @@ that they can be used with :ref:`@pytest.mark.parametrize <@pytest.mark.parametr
 
 Example::
 
+.. code-block:: python
+
     # content of test_fixture_marks.py
     import pytest
     @pytest.fixture(params=[0, 1, pytest.param(2, marks=pytest.mark.skip)])
@@ -793,6 +813,8 @@ of your fixtures and allows re-use of framework-specific fixtures across
 many projects.  As a simple example, we can extend the previous example
 and instantiate an object ``app`` where we stick the already defined
 ``smtp_connection`` resource into it::
+
+.. code-block:: python
 
     # content of test_appsetup.py
 
@@ -855,6 +877,8 @@ this eases testing of applications which create and use global state.
 The following example uses two parametrized fixtures, one of which is
 scoped on a per-module basis, and all the functions perform ``print`` calls
 to show the setup/teardown flow::
+
+.. code-block:: python
 
     # content of test_module.py
     import pytest
@@ -955,6 +979,8 @@ directory.  Here is how you can use the standard `tempfile
 achieve it.  We separate the creation of the fixture into a conftest.py
 file::
 
+.. code-block:: python
+
     # content of conftest.py
 
     import pytest
@@ -967,6 +993,8 @@ file::
         os.chdir(newpath)
 
 and declare its use in a test module via a ``usefixtures`` marker::
+
+.. code-block:: python
 
     # content of test_setenv.py
     import os
@@ -1052,6 +1080,8 @@ begin/rollback/commit architecture and we want to automatically surround
 each test method by a transaction and a rollback.  Here is a dummy
 self-contained implementation of this idea::
 
+.. code-block:: python
+
     # content of test_db_transact.py
 
     import pytest
@@ -1118,6 +1148,8 @@ you want to make available in your project without having it generally
 active.  The canonical way to do that is to put the transact definition
 into a conftest.py file **without** using ``autouse``::
 
+.. code-block:: python
+
     # content of conftest.py
     @pytest.fixture
     def transact(request, db):
@@ -1126,6 +1158,8 @@ into a conftest.py file **without** using ``autouse``::
         db.rollback()
 
 and then e.g. have a TestClass using it by declaring the need::
+
+.. code-block:: python
 
     @pytest.mark.usefixtures("transact")
     class TestClass(object):

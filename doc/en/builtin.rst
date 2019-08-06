@@ -164,5 +164,7 @@ For information about fixtures, see :ref:`fixtures`. To see a complete list of a
 
 You can also interactively ask for help, e.g. by typing on the Python interactive prompt something like::
 
+.. code-block:: python
+
     import pytest
     help(pytest)

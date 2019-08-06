@@ -29,6 +29,8 @@ If you have multiple test functions and test classes in a single
 module you can optionally implement the following fixture methods
 which will usually be called once for all the functions::
 
+.. code-block:: python
+
     def setup_module(module):
         """ setup any state specific to the execution of the given module."""
 
@@ -44,6 +46,8 @@ Class level setup/teardown
 
 Similarly, the following methods are called at class level before
 and after all test methods of the class are called::
+
+.. code-block:: python
 
     @classmethod
     def setup_class(cls):
@@ -62,6 +66,8 @@ Method and function level setup/teardown
 
 Similarly, the following methods are called around each method invocation::
 
+.. code-block:: python
+
     def setup_method(self, method):
         """ setup any state tied to the execution of the given method in a
         class.  setup_method is invoked for every test method of a class.
@@ -76,6 +82,8 @@ As of pytest-3.0, the ``method`` parameter is optional.
 
 If you would rather define test functions directly at module level
 you can also use the following functions to implement fixtures::
+
+.. code-block:: python
 
     def setup_function(function):
         """ setup any state tied to the execution of the given function.

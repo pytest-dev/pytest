@@ -72,6 +72,8 @@ caplog fixture
 Inside tests it is possible to change the log level for the captured log
 messages.  This is supported by the ``caplog`` fixture::
 
+.. code-block:: python
+
     def test_foo(caplog):
         caplog.set_level(logging.INFO)
         pass
@@ -79,6 +81,8 @@ messages.  This is supported by the ``caplog`` fixture::
 By default the level is set on the root logger,
 however as a convenience it is also possible to set the log level of any
 logger::
+
+.. code-block:: python
 
     def test_foo(caplog):
         caplog.set_level(logging.CRITICAL, logger='root.baz')
@@ -89,12 +93,16 @@ The log levels set are restored automatically at the end of the test.
 It is also possible to use a context manager to temporarily change the log
 level inside a ``with`` block::
 
+.. code-block:: python
+
     def test_bar(caplog):
         with caplog.at_level(logging.INFO):
             pass
 
 Again, by default the level of the root logger is affected but the level of any
 logger can be changed instead with::
+
+.. code-block:: python
 
     def test_bar(caplog):
         with caplog.at_level(logging.CRITICAL, logger='root.baz'):
@@ -103,6 +111,8 @@ logger can be changed instead with::
 Lastly all the logs sent to the logger during the test run are made available on
 the fixture in the form of both the ``logging.LogRecord`` instances and the final log text.
 This is useful for when you want to assert on the contents of a message::
+
+.. code-block:: python
 
     def test_baz(caplog):
         func_under_test()
@@ -117,6 +127,8 @@ You can also resort to ``record_tuples`` if all you want to do is to ensure,
 that certain messages have been logged under a given logger name with a given
 severity and message::
 
+.. code-block:: python
+
     def test_foo(caplog):
         logging.getLogger().info('boo %s', 'arg')
 
@@ -125,6 +137,8 @@ severity and message::
         ]
 
 You can call ``caplog.clear()`` to reset the captured log records in a test::
+
+.. code-block:: python
 
     def test_something_with_clearing_records(caplog):
         some_method_that_creates_log_records()

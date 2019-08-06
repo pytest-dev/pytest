@@ -7,6 +7,8 @@ function which walks all collected tests and looks
 if their test class defines a ``callme`` method and
 calls it::
 
+.. code-block:: python
+
     # content of conftest.py
 
     import pytest
@@ -25,6 +27,8 @@ calls it::
 
 test classes may now define a ``callme`` method which
 will be called ahead of running any tests::
+
+.. code-block:: python
 
     # content of test_module.py
 

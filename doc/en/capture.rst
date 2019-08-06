@@ -51,6 +51,8 @@ Using print statements for debugging
 One primary benefit of the default capturing of stdout/stderr output
 is that you can use print statements for debugging::
 
+.. code-block:: python
+
     # content of test_module.py
 
     def setup_function(function):
