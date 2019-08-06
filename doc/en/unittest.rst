@@ -91,10 +91,12 @@ it from a unittest-style test::
 
     import pytest
 
+
     @pytest.fixture(scope="class")
     def db_class(request):
         class DummyDB:
             pass
+
         # set a class attribute on the invoking test context
         request.cls.db = DummyDB()
 
@@ -116,14 +118,15 @@ fixture definition::
     import unittest
     import pytest
 
+
     @pytest.mark.usefixtures("db_class")
     class MyTest(unittest.TestCase):
         def test_method1(self):
             assert hasattr(self, "db")
-            assert 0, self.db   # fail for demo purposes
+            assert 0, self.db  # fail for demo purposes
 
         def test_method2(self):
-            assert 0, self.db   # fail for demo purposes
+            assert 0, self.db  # fail for demo purposes
 
 The ``@pytest.mark.usefixtures("db_class")`` class-decorator makes sure that
 the pytest fixture function ``db_class`` is called once per class.
@@ -193,11 +196,11 @@ creation of a per-test temporary directory::
     import pytest
     import unittest
 
-    class MyTest(unittest.TestCase):
 
+    class MyTest(unittest.TestCase):
         @pytest.fixture(autouse=True)
         def initdir(self, tmpdir):
-            tmpdir.chdir() # change to pytest-provided temporary directory
+            tmpdir.chdir()  # change to pytest-provided temporary directory
             tmpdir.join("samplefile.ini").write("# testdata")
 
         def test_method(self):

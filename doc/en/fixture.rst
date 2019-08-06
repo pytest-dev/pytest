@@ -56,15 +56,18 @@ using it::
     # content of ./test_smtpsimple.py
     import pytest
 
+
     @pytest.fixture
     def smtp_connection():
         import smtplib
+
         return smtplib.SMTP("smtp.gmail.com", 587, timeout=5)
+
 
     def test_ehlo(smtp_connection):
         response, msg = smtp_connection.ehlo()
         assert response == 250
-        assert 0 # for demo purposes
+        assert 0  # for demo purposes
 
 Here, the ``test_ehlo`` needs the ``smtp_connection`` fixture value.  pytest
 will discover and call the :py:func:`@pytest.fixture <_pytest.python.fixture>`
@@ -190,6 +193,7 @@ access the fixture function::
     import pytest
     import smtplib
 
+
     @pytest.fixture(scope="module")
     def smtp_connection():
         return smtplib.SMTP("smtp.gmail.com", 587, timeout=5)
@@ -203,11 +207,13 @@ located)::
 
     # content of test_module.py
 
+
     def test_ehlo(smtp_connection):
         response, msg = smtp_connection.ehlo()
         assert response == 250
         assert b"smtp.gmail.com" in msg
         assert 0  # for demo purposes
+
 
     def test_noop(smtp_connection):
         response, msg = smtp_connection.noop()
@@ -491,6 +497,7 @@ read an optional server URL from the test module which uses our fixture::
     import pytest
     import smtplib
 
+
     @pytest.fixture(scope="module")
     def smtp_connection(request):
         server = getattr(request.module, "smtpserver", "smtp.gmail.com")
@@ -518,6 +525,7 @@ server URL in its module namespace::
     # content of test_anothersmtp.py
 
     smtpserver = "mail.python.org"  # will be read by smtp fixture
+
 
     def test_showhelo(smtp_connection):
         assert 0, smtp_connection.helo()
@@ -556,12 +564,8 @@ Factories can have parameters as needed::
 
     @pytest.fixture
     def make_customer_record():
-
         def _make_customer_record(name):
-            return {
-                "name": name,
-                "orders": []
-            }
+            return {"name": name, "orders": []}
 
         return _make_customer_record
 
@@ -620,8 +624,8 @@ through the special :py:class:`request <FixtureRequest>` object::
     import pytest
     import smtplib
 
-    @pytest.fixture(scope="module",
-                    params=["smtp.gmail.com", "mail.python.org"])
+
+    @pytest.fixture(scope="module", params=["smtp.gmail.com", "mail.python.org"])
     def smtp_connection(request):
         smtp_connection = smtplib.SMTP(request.param, 587, timeout=5)
         yield smtp_connection
@@ -713,12 +717,15 @@ the string used in a test ID for a certain fixture value by using the
    # content of test_ids.py
    import pytest
 
+
    @pytest.fixture(params=[0, 1], ids=["spam", "ham"])
    def a(request):
        return request.param
 
+
    def test_a(a):
        pass
+
 
    def idfn(fixture_value):
        if fixture_value == 0:
@@ -726,9 +733,11 @@ the string used in a test ID for a certain fixture value by using the
        else:
            return None
 
+
    @pytest.fixture(params=[0, 1], ids=idfn)
    def b(request):
        return request.param
+
 
    def test_b(b):
        pass
@@ -778,9 +787,12 @@ Example::
 
     # content of test_fixture_marks.py
     import pytest
+
+
     @pytest.fixture(params=[0, 1, pytest.param(2, marks=pytest.mark.skip)])
     def data_set(request):
         return request.param
+
 
     def test_data(data_set):
         pass
@@ -820,13 +832,16 @@ and instantiate an object ``app`` where we stick the already defined
 
     import pytest
 
+
     class App:
         def __init__(self, smtp_connection):
             self.smtp_connection = smtp_connection
 
+
     @pytest.fixture(scope="module")
     def app(smtp_connection):
         return App(smtp_connection)
+
 
     def test_smtp_connection_exists(app):
         assert app.smtp_connection
@@ -883,6 +898,7 @@ to show the setup/teardown flow::
     # content of test_module.py
     import pytest
 
+
     @pytest.fixture(scope="module", params=["mod1", "mod2"])
     def modarg(request):
         param = request.param
@@ -890,17 +906,23 @@ to show the setup/teardown flow::
         yield param
         print("  TEARDOWN modarg %s" % param)
 
-    @pytest.fixture(scope="function", params=[1,2])
+
+    @pytest.fixture(scope="function", params=[1, 2])
     def otherarg(request):
         param = request.param
         print("  SETUP otherarg %s" % param)
         yield param
         print("  TEARDOWN otherarg %s" % param)
 
+
     def test_0(otherarg):
         print("  RUN test0 with otherarg %s" % otherarg)
+
+
     def test_1(modarg):
         print("  RUN test1 with modarg %s" % modarg)
+
+
     def test_2(otherarg, modarg):
         print("  RUN test2 with otherarg {} and modarg {}".format(otherarg, modarg))
 
@@ -987,6 +1009,7 @@ file::
     import tempfile
     import os
 
+
     @pytest.fixture()
     def cleandir():
         newpath = tempfile.mkdtemp()
@@ -999,6 +1022,7 @@ and declare its use in a test module via a ``usefixtures`` marker::
     # content of test_setenv.py
     import os
     import pytest
+
 
     @pytest.mark.usefixtures("cleandir")
     class TestDirectoryInit:
@@ -1086,17 +1110,22 @@ self-contained implementation of this idea::
 
     import pytest
 
+
     class DB:
         def __init__(self):
             self.intransaction = []
+
         def begin(self, name):
             self.intransaction.append(name)
+
         def rollback(self):
             self.intransaction.pop()
+
 
     @pytest.fixture(scope="module")
     def db():
         return DB()
+
 
     class TestClass:
         @pytest.fixture(autouse=True)

@@ -43,6 +43,7 @@ Create a simple test function with just four lines of code::
     def func(x):
         return x + 1
 
+
     def test_answer():
         assert func(3) == 5
 
@@ -91,8 +92,11 @@ Use the :ref:`raises <assertraises>` helper to assert that some code raises an e
 
     # content of test_sysexit.py
     import pytest
+
+
     def f():
         raise SystemExit(1)
+
 
     def test_mytest():
         with pytest.raises(SystemExit):
@@ -117,11 +121,11 @@ Once you develop multiple tests, you may want to group them into a class. pytest
     class TestClass:
         def test_one(self):
             x = "this"
-            assert 'h' in x
+            assert "h" in x
 
         def test_two(self):
             x = "hello"
-            assert hasattr(x, 'check')
+            assert hasattr(x, "check")
 
 ``pytest`` discovers all tests following its :ref:`Conventions for Python test discovery <test discovery>`, so it finds both ``test_`` prefixed functions. There is no need to subclass anything. We can simply run the module by passing its filename:
 

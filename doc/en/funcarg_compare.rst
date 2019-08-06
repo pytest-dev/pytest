@@ -29,13 +29,15 @@ a per-session Database object::
     class Database:
         def __init__(self):
             print("database instance created")
+
         def destroy(self):
             print("database instance destroyed")
 
+
     def pytest_funcarg__db(request):
-        return request.cached_setup(setup=DataBase,
-                                    teardown=lambda db: db.destroy,
-                                    scope="session")
+        return request.cached_setup(
+            setup=DataBase, teardown=lambda db: db.destroy, scope="session"
+        )
 
 There are several limitations and difficulties with this approach:
 
@@ -100,7 +102,7 @@ sets.  pytest-2.3 introduces a decorator for use on the factory itself::
 
     @pytest.fixture(params=["mysql", "pg"])
     def db(request):
-        ... # use request.param
+        ...  # use request.param
 
 Here the factory will be invoked twice (with the respective "mysql"
 and "pg" values set as ``request.param`` attributes) and all of

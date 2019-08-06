@@ -85,7 +85,7 @@ logger::
 .. code-block:: python
 
     def test_foo(caplog):
-        caplog.set_level(logging.CRITICAL, logger='root.baz')
+        caplog.set_level(logging.CRITICAL, logger="root.baz")
         pass
 
 The log levels set are restored automatically at the end of the test.
@@ -105,7 +105,7 @@ logger can be changed instead with::
 .. code-block:: python
 
     def test_bar(caplog):
-        with caplog.at_level(logging.CRITICAL, logger='root.baz'):
+        with caplog.at_level(logging.CRITICAL, logger="root.baz"):
             pass
 
 Lastly all the logs sent to the logger during the test run are made available on
@@ -117,8 +117,8 @@ This is useful for when you want to assert on the contents of a message::
     def test_baz(caplog):
         func_under_test()
         for record in caplog.records:
-            assert record.levelname != 'CRITICAL'
-        assert 'wally' not in caplog.text
+            assert record.levelname != "CRITICAL"
+        assert "wally" not in caplog.text
 
 For all the available attributes of the log records see the
 ``logging.LogRecord`` class.
@@ -130,11 +130,9 @@ severity and message::
 .. code-block:: python
 
     def test_foo(caplog):
-        logging.getLogger().info('boo %s', 'arg')
+        logging.getLogger().info("boo %s", "arg")
 
-        assert caplog.record_tuples == [
-            ('root', logging.INFO, 'boo arg'),
-        ]
+        assert caplog.record_tuples == [("root", logging.INFO, "boo arg")]
 
 You can call ``caplog.clear()`` to reset the captured log records in a test::
 
@@ -144,7 +142,7 @@ You can call ``caplog.clear()`` to reset the captured log records in a test::
         some_method_that_creates_log_records()
         caplog.clear()
         your_test_method()
-        assert ['Foo'] == [rec.message for rec in caplog.records]
+        assert ["Foo"] == [rec.message for rec in caplog.records]
 
 
 The ``caplog.records`` attribute contains records from the current stage only, so

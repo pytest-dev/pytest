@@ -139,6 +139,7 @@ that match ``*_check``. For example, if we have::
     class CheckMyApp:
         def simple_check(self):
             pass
+
         def complex_check(self):
             pass
 
@@ -267,7 +268,7 @@ and a ``setup.py`` dummy file like this::
 .. code-block:: python
 
     # content of setup.py
-    0/0  # will raise exception if imported
+    0 / 0  # will raise exception if imported
 
 If you run with a Python 2 interpreter then you will find the one test and will
 leave out the ``setup.py`` file:

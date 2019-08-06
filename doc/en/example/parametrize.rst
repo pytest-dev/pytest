@@ -25,6 +25,7 @@ line argument.  Let's first write a simple (do-nothing) computation test::
 
     # content of test_compute.py
 
+
     def test_compute(param1):
         assert param1 < 4
 
@@ -34,13 +35,14 @@ Now we add a test configuration like this::
 
     # content of conftest.py
 
+
     def pytest_addoption(parser):
-        parser.addoption("--all", action="store_true",
-            help="run all combinations")
+        parser.addoption("--all", action="store_true", help="run all combinations")
+
 
     def pytest_generate_tests(metafunc):
-        if 'param1' in metafunc.fixturenames:
-            if metafunc.config.getoption('all'):
+        if "param1" in metafunc.fixturenames:
+            if metafunc.config.getoption("all"):
                 end = 5
             else:
                 end = 2
@@ -118,7 +120,7 @@ the argument name::
     def idfn(val):
         if isinstance(val, (datetime,)):
             # note this wouldn't show any hours/minutes/seconds
-            return val.strftime('%Y%m%d')
+            return val.strftime("%Y%m%d")
 
 
     @pytest.mark.parametrize("a,b,expected", testdata, ids=idfn)
@@ -126,12 +128,18 @@ the argument name::
         diff = a - b
         assert diff == expected
 
-    @pytest.mark.parametrize("a,b,expected", [
-        pytest.param(datetime(2001, 12, 12), datetime(2001, 12, 11),
-                     timedelta(1), id='forward'),
-        pytest.param(datetime(2001, 12, 11), datetime(2001, 12, 12),
-                     timedelta(-1), id='backward'),
-    ])
+
+    @pytest.mark.parametrize(
+        "a,b,expected",
+        [
+            pytest.param(
+                datetime(2001, 12, 12), datetime(2001, 12, 11), timedelta(1), id="forward"
+            ),
+            pytest.param(
+                datetime(2001, 12, 11), datetime(2001, 12, 12), timedelta(-1), id="backward"
+            ),
+        ],
+    )
     def test_timedistance_v3(a, b, expected):
         diff = a - b
         assert diff == expected
@@ -183,6 +191,7 @@ only have to work a bit to construct the correct arguments for pytest's
 
     # content of test_scenarios.py
 
+
     def pytest_generate_tests(metafunc):
         idlist = []
         argvalues = []
@@ -193,8 +202,10 @@ only have to work a bit to construct the correct arguments for pytest's
             argvalues.append([x[1] for x in items])
         metafunc.parametrize(argnames, argvalues, ids=idlist, scope="class")
 
-    scenario1 = ('basic', {'attribute': 'value'})
-    scenario2 = ('advanced', {'attribute': 'value2'})
+
+    scenario1 = ("basic", {"attribute": "value"})
+    scenario2 = ("advanced", {"attribute": "value2"})
+
 
     class TestSampleWithScenarios:
         scenarios = [scenario1, scenario2]
@@ -259,6 +270,8 @@ the actual test requiring a ``db`` object::
     # content of test_backends.py
 
     import pytest
+
+
     def test_db_initialized(db):
         # a dummy test
         if db.__class__.__name__ == "DB2":
@@ -273,14 +286,19 @@ creates a database object for the actual test invocations::
     # content of conftest.py
     import pytest
 
+
     def pytest_generate_tests(metafunc):
-        if 'db' in metafunc.fixturenames:
-            metafunc.parametrize("db", ['d1', 'd2'], indirect=True)
+        if "db" in metafunc.fixturenames:
+            metafunc.parametrize("db", ["d1", "d2"], indirect=True)
+
 
     class DB1:
         "one database object"
+
+
     class DB2:
         "alternative database object"
+
 
     @pytest.fixture
     def db(request):
@@ -346,18 +364,22 @@ will be passed to respective fixture function::
     # content of test_indirect_list.py
 
     import pytest
-    @pytest.fixture(scope='function')
+
+
+    @pytest.fixture(scope="function")
     def x(request):
         return request.param * 3
 
-    @pytest.fixture(scope='function')
+
+    @pytest.fixture(scope="function")
     def y(request):
         return request.param * 2
 
-    @pytest.mark.parametrize('x, y', [('a', 'b')], indirect=['x'])
-    def test_indirect(x,y):
-        assert x == 'aaa'
-        assert y == 'b'
+
+    @pytest.mark.parametrize("x, y", [("a", "b")], indirect=["x"])
+    def test_indirect(x, y):
+        assert x == "aaa"
+        assert y == "b"
 
 The result of this test will be successful:
 
@@ -391,18 +413,21 @@ parametrizer`_ but in a lot less code::
     # content of ./test_parametrize.py
     import pytest
 
+
     def pytest_generate_tests(metafunc):
         # called once per each test function
         funcarglist = metafunc.cls.params[metafunc.function.__name__]
         argnames = sorted(funcarglist[0])
-        metafunc.parametrize(argnames, [[funcargs[name] for name in argnames]
-                for funcargs in funcarglist])
+        metafunc.parametrize(
+            argnames, [[funcargs[name] for name in argnames] for funcargs in funcarglist]
+        )
+
 
     class TestClass:
         # a map specifying multiple argument sets for a test method
         params = {
-            'test_equals': [dict(a=1, b=2), dict(a=3, b=3), ],
-            'test_zerodivision': [dict(a=1, b=0), ],
+            "test_equals": [dict(a=1, b=2), dict(a=3, b=3)],
+            "test_zerodivision": [dict(a=1, b=0)],
         }
 
         def test_equals(self, a, b):
@@ -471,9 +496,11 @@ need to provide similar results::
 
     import pytest
 
+
     @pytest.fixture(scope="session")
     def basemod(request):
         return pytest.importorskip("base")
+
 
     @pytest.fixture(scope="session", params=["opt1", "opt2"])
     def optmod(request):
@@ -500,6 +527,7 @@ And finally a little test module::
 .. code-block:: python
 
     # content of test_module.py
+
 
     def test_func1(basemod, optmod):
         assert round(basemod.func1(), 3) == round(optmod.func1(), 3)
@@ -610,17 +638,21 @@ as a complement to ``raises``. For example::
     from contextlib import contextmanager
     import pytest
 
+
     @contextmanager
     def does_not_raise():
         yield
 
 
-    @pytest.mark.parametrize('example_input,expectation', [
-        (3, does_not_raise()),
-        (2, does_not_raise()),
-        (1, does_not_raise()),
-        (0, pytest.raises(ZeroDivisionError)),
-    ])
+    @pytest.mark.parametrize(
+        "example_input,expectation",
+        [
+            (3, does_not_raise()),
+            (2, does_not_raise()),
+            (1, does_not_raise()),
+            (0, pytest.raises(ZeroDivisionError)),
+        ],
+    )
     def test_division(example_input, expectation):
         """Test how much I know division."""
         with expectation:

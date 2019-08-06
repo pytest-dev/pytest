@@ -40,10 +40,11 @@ First, let's create 50 test invocation of which only 2 fail::
     # content of test_50.py
     import pytest
 
+
     @pytest.mark.parametrize("i", range(50))
     def test_num(i):
         if i in (17, 25):
-           pytest.fail("bad luck")
+            pytest.fail("bad luck")
 
 If you run this for the first time you will see two failures:
 
@@ -193,8 +194,10 @@ across pytest invocations::
     import pytest
     import time
 
+
     def expensive_computation():
         print("running expensive computation...")
+
 
     @pytest.fixture
     def mydata(request):
@@ -204,6 +207,7 @@ across pytest invocations::
             val = 42
             request.config.cache.set("example/value", val)
         return val
+
 
     def test_function(mydata):
         assert mydata == 23

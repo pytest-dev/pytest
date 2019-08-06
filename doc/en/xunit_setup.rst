@@ -34,6 +34,7 @@ which will usually be called once for all the functions::
     def setup_module(module):
         """ setup any state specific to the execution of the given module."""
 
+
     def teardown_module(module):
         """ teardown any state that was previously setup with a setup_module
         method.
@@ -55,6 +56,7 @@ and after all test methods of the class are called::
         usually contains tests).
         """
 
+
     @classmethod
     def teardown_class(cls):
         """ teardown any state that was previously setup with a call to
@@ -73,6 +75,7 @@ Similarly, the following methods are called around each method invocation::
         class.  setup_method is invoked for every test method of a class.
         """
 
+
     def teardown_method(self, method):
         """ teardown any state that was previously setup with a setup_method
         call.
@@ -89,6 +92,7 @@ you can also use the following functions to implement fixtures::
         """ setup any state tied to the execution of the given function.
         Invoked for every test function in the module.
         """
+
 
     def teardown_function(function):
         """ teardown any state that was previously setup with a setup_function

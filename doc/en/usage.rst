@@ -766,7 +766,7 @@ You can pass in options and arguments::
 
 .. code-block:: python
 
-    pytest.main(['-x', 'mytestdir'])
+    pytest.main(["-x", "mytestdir"])
 
 You can specify additional plugins to ``pytest.main``::
 
@@ -774,9 +774,12 @@ You can specify additional plugins to ``pytest.main``::
 
     # content of myinvoke.py
     import pytest
+
+
     class MyPlugin:
         def pytest_sessionfinish(self):
             print("*** test run reporting finishing")
+
 
     pytest.main(["-qq"], plugins=[MyPlugin()])
 

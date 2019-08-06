@@ -473,7 +473,7 @@ To use it, include in your top-most ``conftest.py`` file::
 
 .. code-block:: python
 
-    pytest_plugins = 'pytester'
+    pytest_plugins = "pytester"
 
 
 
