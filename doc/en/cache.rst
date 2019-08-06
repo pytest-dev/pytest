@@ -33,7 +33,7 @@ Other plugins may access the `config.cache`_ object to set/get
 Rerunning only failures or failures first
 -----------------------------------------------
 
-First, let's create 50 test invocation of which only 2 fail::
+First, let's create 50 test invocation of which only 2 fail
 
 .. code-block:: python
 
@@ -186,7 +186,7 @@ The new config.cache object
 Plugins or conftest.py support code can get a cached value using the
 pytest ``config`` object.  Here is a basic example plugin which
 implements a :ref:`fixture` which re-uses previously created state
-across pytest invocations::
+across pytest invocations
 
 .. code-block:: python
 

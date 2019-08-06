@@ -19,7 +19,7 @@ Generating parameters combinations, depending on command line
 
 Let's say we want to execute a test with different computation
 parameters and the parameter range shall be determined by a command
-line argument.  Let's first write a simple (do-nothing) computation test::
+line argument.  Let's first write a simple (do-nothing) computation test
 
 .. code-block:: python
 
@@ -29,7 +29,7 @@ line argument.  Let's first write a simple (do-nothing) computation test::
     def test_compute(param1):
         assert param1 < 4
 
-Now we add a test configuration like this::
+Now we add a test configuration like this
 
 .. code-block:: python
 
@@ -89,7 +89,7 @@ Running pytest with ``--collect-only`` will show the generated IDs.
 
 Numbers, strings, booleans and None will have their usual string representation
 used in the test ID. For other objects, pytest will make a string based on
-the argument name::
+the argument name
 
 .. code-block:: python
 
@@ -185,7 +185,7 @@ A quick port of "testscenarios"
 Here is a quick port to run tests configured with `test scenarios`_,
 an add-on from Robert Collins for the standard unittest framework. We
 only have to work a bit to construct the correct arguments for pytest's
-:py:func:`Metafunc.parametrize`::
+:py:func:`Metafunc.parametrize`
 
 .. code-block:: python
 
@@ -263,7 +263,7 @@ The parametrization of test functions happens at collection
 time.  It is a good idea to setup expensive resources like DB
 connections or subprocess only when the actual test is run.
 Here is a simple example how you can achieve that, first
-the actual test requiring a ``db`` object::
+the actual test requiring a ``db`` object
 
 .. code-block:: python
 
@@ -279,7 +279,7 @@ the actual test requiring a ``db`` object::
 
 We can now add a test configuration that generates two invocations of
 the ``test_db_initialized`` function and also implements a factory that
-creates a database object for the actual test invocations::
+creates a database object for the actual test invocations
 
 .. code-block:: python
 
@@ -357,7 +357,7 @@ parameter on particular arguments. It can be done by passing list or tuple of
 arguments' names to ``indirect``. In the example below there is a function ``test_indirect`` which uses
 two fixtures: ``x`` and ``y``. Here we give to indirect the list, which contains the name of the
 fixture ``x``. The indirect parameter will be applied to this argument only, and the value ``a``
-will be passed to respective fixture function::
+will be passed to respective fixture function
 
 .. code-block:: python
 
@@ -406,7 +406,7 @@ Parametrizing test methods through per-class configuration
 
 Here is an example ``pytest_generate_tests`` function implementing a
 parametrization scheme similar to Michael Foord's `unittest
-parametrizer`_ but in a lot less code::
+parametrizer`_ but in a lot less code
 
 .. code-block:: python
 
@@ -488,7 +488,7 @@ If you want to compare the outcomes of several implementations of a given
 API, you can write test functions that receive the already imported implementations
 and get skipped in case the implementation is not importable/available.  Let's
 say we have a "base" implementation and the other (possibly optimized ones)
-need to provide similar results::
+need to provide similar results
 
 .. code-block:: python
 
@@ -506,7 +506,7 @@ need to provide similar results::
     def optmod(request):
         return pytest.importorskip(request.param)
 
-And then a base implementation of a simple function::
+And then a base implementation of a simple function
 
 .. code-block:: python
 
@@ -514,7 +514,7 @@ And then a base implementation of a simple function::
     def func1():
         return 1
 
-And an optimized version::
+And an optimized version
 
 .. code-block:: python
 
@@ -522,7 +522,7 @@ And an optimized version::
     def func1():
         return 1.0001
 
-And finally a little test module::
+And finally a little test module
 
 .. code-block:: python
 
@@ -631,7 +631,7 @@ Use :func:`pytest.raises` with the
 in which some tests raise exceptions and others do not.
 
 It is helpful to define a no-op context manager ``does_not_raise`` to serve
-as a complement to ``raises``. For example::
+as a complement to ``raises``. For example
 
 .. code-block:: python
 
@@ -662,19 +662,19 @@ In the example above, the first three test cases should run unexceptionally,
 while the fourth should raise ``ZeroDivisionError``.
 
 If you're only supporting Python 3.7+, you can simply use ``nullcontext``
-to define ``does_not_raise``::
+to define ``does_not_raise``
 
 .. code-block:: python
 
     from contextlib import nullcontext as does_not_raise
 
-Or, if you're supporting Python 3.3+ you can use::
+Or, if you're supporting Python 3.3+ you can use
 
 .. code-block:: python
 
     from contextlib import ExitStack as does_not_raise
 
-Or, if desired, you can ``pip install contextlib2`` and use::
+Or, if desired, you can ``pip install contextlib2`` and use
 
 .. code-block:: python
 

@@ -131,7 +131,7 @@ Here is an example:
 
 This would make ``pytest`` look for tests in files that match the ``check_*
 .py`` glob-pattern, ``Check`` prefixes in classes, and functions and methods
-that match ``*_check``. For example, if we have::
+that match ``*_check``. For example, if we have
 
 .. code-block:: python
 
@@ -241,7 +241,7 @@ You can easily instruct ``pytest`` to discover tests from every Python file:
 However, many projects will have a ``setup.py`` which they don't want to be
 imported. Moreover, there may files only importable by a specific python
 version. For such cases you can dynamically define files to be ignored by
-listing them in a ``conftest.py`` file::
+listing them in a ``conftest.py`` file
 
 .. code-block:: python
 
@@ -252,7 +252,7 @@ listing them in a ``conftest.py`` file::
     if sys.version_info[0] > 2:
         collect_ignore.append("pkg/module_py2.py")
 
-and then if you have a module file like this::
+and then if you have a module file like this
 
 .. code-block:: python
 
@@ -263,7 +263,7 @@ and then if you have a module file like this::
         except Exception, e:
             pass
 
-and a ``setup.py`` dummy file like this::
+and a ``setup.py`` dummy file like this
 
 .. code-block:: python
 
@@ -304,7 +304,7 @@ patterns to ``collect_ignore_glob``.
 
 The following example ``conftest.py`` ignores the file ``setup.py`` and in
 addition all files that end with ``*_py2.py`` when executed with a Python 3
-interpreter::
+interpreter
 
 .. code-block:: python
 

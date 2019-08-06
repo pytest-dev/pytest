@@ -180,7 +180,7 @@ Skipping on a missing import dependency
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 You can use the following helper at module level
-or within a test or test setup function::
+or within a test or test setup function
 
 .. code-block:: python
 
@@ -188,7 +188,7 @@ or within a test or test setup function::
 
 If ``docutils`` cannot be imported here, this will lead to a
 skip outcome of the test.  You can also skip based on the
-version number of a library::
+version number of a library
 
 .. code-block:: python
 
@@ -227,7 +227,7 @@ XFail: mark test functions as expected to fail
 ----------------------------------------------
 
 You can use the ``xfail`` marker to indicate that you
-expect a test to fail::
+expect a test to fail
 
 .. code-block:: python
 

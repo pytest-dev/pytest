@@ -5,7 +5,7 @@ A session-scoped fixture effectively has access to all
 collected test items.  Here is an example of a fixture
 function which walks all collected tests and looks
 if their test class defines a ``callme`` method and
-calls it::
+calls it
 
 .. code-block:: python
 
@@ -27,7 +27,7 @@ calls it::
                 seen.add(cls)
 
 test classes may now define a ``callme`` method which
-will be called ahead of running any tests::
+will be called ahead of running any tests
 
 .. code-block:: python
 

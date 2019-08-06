@@ -469,7 +469,7 @@ testdir
 This fixture provides a :class:`Testdir` instance useful for black-box testing of test files, making it ideal to
 test plugins.
 
-To use it, include in your top-most ``conftest.py`` file::
+To use it, include in your top-most ``conftest.py`` file
 
 .. code-block:: python
 
