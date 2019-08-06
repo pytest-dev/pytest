@@ -145,7 +145,7 @@ You can use the ``skipif`` marker (as any other marker) on classes:
 .. code-block:: python
 
     @pytest.mark.skipif(sys.platform == "win32", reason="does not run on windows")
-    class TestPosixCalls(object):
+    class TestPosixCalls:
         def test_function(self):
             "will not be setup or run under 'win32' platform"
 

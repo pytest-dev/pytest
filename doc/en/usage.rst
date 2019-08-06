@@ -652,7 +652,7 @@ to all tests.
         record_testsuite_property("STORAGE_TYPE", "CEPH")
 
 
-    class TestMe(object):
+    class TestMe:
         def test_foo(self):
             assert True
 

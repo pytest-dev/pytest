@@ -238,14 +238,14 @@ file which provides an alternative explanation for ``Foo`` objects:
 
    def pytest_assertrepr_compare(op, left, right):
        if isinstance(left, Foo) and isinstance(right, Foo) and op == "==":
-           return ["Comparing Foo instances:", "   vals: %s != %s" % (left.val, right.val)]
+           return ["Comparing Foo instances:", "   vals: {} != {}".format(left.val, right.val)]
 
 now, given this test module:
 
 .. code-block:: python
 
    # content of test_foocompare.py
-   class Foo(object):
+   class Foo:
        def __init__(self, val):
            self.val = val
 
