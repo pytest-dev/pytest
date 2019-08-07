@@ -693,7 +693,7 @@ declaring the hook functions directly in your plugin module, for example:
     # contents of myplugin.py
 
 
-    class DeferPlugin(object):
+    class DeferPlugin:
         """Simple plugin to defer pytest-xdist hook functions."""
 
         def pytest_testnodedown(self, node, error):

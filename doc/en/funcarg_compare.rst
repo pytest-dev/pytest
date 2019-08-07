@@ -21,19 +21,23 @@ funcarg for a test function is required.  If a factory wants to
 re-use a resource across different scopes, it often used
 the ``request.cached_setup()`` helper to manage caching of
 resources.  Here is a basic example how we could implement
-a per-session Database object::
+a per-session Database object:
+
+.. code-block:: python
 
     # content of conftest.py
-    class Database(object):
+    class Database:
         def __init__(self):
             print("database instance created")
+
         def destroy(self):
             print("database instance destroyed")
 
+
     def pytest_funcarg__db(request):
-        return request.cached_setup(setup=DataBase,
-                                    teardown=lambda db: db.destroy,
-                                    scope="session")
+        return request.cached_setup(
+            setup=DataBase, teardown=lambda db: db.destroy, scope="session"
+        )
 
 There are several limitations and difficulties with this approach:
 
@@ -68,7 +72,9 @@ Direct scoping of fixture/funcarg factories
 
 Instead of calling cached_setup() with a cache scope, you can use the
 :ref:`@pytest.fixture <pytest.fixture>` decorator and directly state
-the scope::
+the scope:
+
+.. code-block:: python
 
     @pytest.fixture(scope="session")
     def db(request):
@@ -90,11 +96,13 @@ Previously, funcarg factories could not directly cause parametrization.
 You needed to specify a ``@parametrize`` decorator on your test function
 or implement a ``pytest_generate_tests`` hook to perform
 parametrization, i.e. calling a test multiple times with different value
-sets.  pytest-2.3 introduces a decorator for use on the factory itself::
+sets.  pytest-2.3 introduces a decorator for use on the factory itself:
+
+.. code-block:: python
 
     @pytest.fixture(params=["mysql", "pg"])
     def db(request):
-        ... # use request.param
+        ...  # use request.param
 
 Here the factory will be invoked twice (with the respective "mysql"
 and "pg" values set as ``request.param`` attributes) and all of
@@ -107,7 +115,9 @@ allow to re-use already written factories because effectively
 parametrized via
 :py:func:`~_pytest.python.Metafunc.parametrize(indirect=True)` calls.
 
-Of course it's perfectly fine to combine parametrization and scoping::
+Of course it's perfectly fine to combine parametrization and scoping:
+
+.. code-block:: python
 
     @pytest.fixture(scope="session", params=["mysql", "pg"])
     def db(request):
@@ -128,7 +138,9 @@ No ``pytest_funcarg__`` prefix when using @fixture decorator
 
 When using the ``@fixture`` decorator the name of the function
 denotes the name under which the resource can be accessed as a function
-argument::
+argument:
+
+.. code-block:: python
 
     @pytest.fixture()
     def db(request):
@@ -137,7 +149,9 @@ argument::
 The name under which the funcarg resource can be requested is ``db``.
 
 You can still use the "old" non-decorator way of specifying funcarg factories
-aka::
+aka:
+
+.. code-block:: python
 
     def pytest_funcarg__db(request):
         ...

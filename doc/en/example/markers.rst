@@ -33,7 +33,7 @@ You can "mark" a test function with custom metadata like this:
         pass
 
 
-    class TestClass(object):
+    class TestClass:
         def test_method(self):
             pass
 
@@ -278,7 +278,7 @@ its test methods:
 
 
     @pytest.mark.webtest
-    class TestClass(object):
+    class TestClass:
         def test_startup(self):
             pass
 
@@ -295,7 +295,7 @@ Due to legacy reasons, it is possible to set the ``pytestmark`` attribute on a T
     import pytest
 
 
-    class TestClass(object):
+    class TestClass:
         pytestmark = pytest.mark.webtest
 
 or if you need to use multiple markers you can use a list:
@@ -305,7 +305,7 @@ or if you need to use multiple markers you can use a list:
     import pytest
 
 
-    class TestClass(object):
+    class TestClass:
         pytestmark = [pytest.mark.webtest, pytest.mark.slowtest]
 
 You can also set a module level marker::
@@ -523,7 +523,7 @@ code you can read over all such settings.  Example:
 
 
     @pytest.mark.glob("class", x=2)
-    class TestClass(object):
+    class TestClass:
         @pytest.mark.glob("function", x=3)
         def test_something(self):
             pass
@@ -539,7 +539,7 @@ test function.  From a conftest file we can read it like this:
 
     def pytest_runtest_setup(item):
         for mark in item.iter_markers(name="glob"):
-            print("glob args=%s kwargs=%s" % (mark.args, mark.kwargs))
+            print("glob args={} kwargs={}".format(mark.args, mark.kwargs))
             sys.stdout.flush()
 
 Let's run this without capturing output and see what we get:
