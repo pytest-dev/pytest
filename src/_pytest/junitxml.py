@@ -290,6 +290,7 @@ def _warn_incompatibility_with_xunit2(request, fixture_name):
         )
 
 
+@fixture
 def record_property(request):
     """Add an extra properties the calling test.
     User properties become part of the test report and are available to the
@@ -311,35 +312,26 @@ def record_property(request):
 
 
 @fixture
-def record_xml_property(record_property, request):
-    """(Deprecated) use record_property."""
-    from _pytest import deprecated
-
-    request.node.warn(deprecated.RECORD_XML_PROPERTY)
-
-    return record_property
-
-
-@fixture
 def record_xml_attribute(request):
     """Add extra xml attributes to the tag for the calling test.
     The fixture is callable with ``(name, value)``, with value being
     automatically xml-encoded
     """
-    from _pytest.warning_types import PytestWarning
+    from _pytest.warning_types import PytestExperimentalApiWarning
 
-    request.node.warn(PytestWarning("record_xml_attribute is an experimental feature"))
+    request.node.warn(
+        PytestExperimentalApiWarning("record_xml_attribute is an experimental feature")
+    )
+
+    _warn_incompatibility_with_xunit2(request, "record_xml_attribute")
+
+    # Declare noop
+    def add_attr_noop(name, value):
+        pass
+
+    attr_func = add_attr_noop
+
     xml = getattr(request.config, "_xml", None)
-    if xml is not None:
-        node_reporter = xml.node_reporter(request.node.nodeid)
-        return node_reporter.add_attribute
-    else:
-
-        def add_attr_noop(name, value):
-            pass
-
-        return add_attr_noop
-
     if xml is not None:
         node_reporter = xml.node_reporter(request.node.nodeid)
         attr_func = node_reporter.add_attribute
