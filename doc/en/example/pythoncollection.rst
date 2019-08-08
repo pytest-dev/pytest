@@ -31,7 +31,7 @@ you will see that ``pytest`` only collects test-modules, which do not match the 
 .. code-block:: pytest
 
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
+    platform linux -- Python 3.x.y, pytest-5.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 5 items
 
