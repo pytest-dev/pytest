@@ -28,18 +28,21 @@ Install ``pytest``
 .. code-block:: bash
 
     $ pytest --version
-    This is pytest version 4.x.y, imported from $PYTHON_PREFIX/lib/python3.6/site-packages/pytest.py
+    This is pytest version 5.x.y, imported from $PYTHON_PREFIX/lib/python3.6/site-packages/pytest.py
 
 .. _`simpletest`:
 
 Create your first test
 ----------------------------------------------------------
 
-Create a simple test function with just four lines of code::
+Create a simple test function with just four lines of code:
+
+.. code-block:: python
 
     # content of test_sample.py
     def func(x):
         return x + 1
+
 
     def test_answer():
         assert func(3) == 5
@@ -50,7 +53,7 @@ That’s it. You can now execute the test function:
 
     $ pytest
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
+    platform linux -- Python 3.x.y, pytest-5.x.y, py-1.x.y, pluggy-0.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR
     collected 1 item
@@ -83,12 +86,17 @@ Run multiple tests
 Assert that a certain exception is raised
 --------------------------------------------------------------
 
-Use the :ref:`raises <assertraises>` helper to assert that some code raises an exception::
+Use the :ref:`raises <assertraises>` helper to assert that some code raises an exception:
+
+.. code-block:: python
 
     # content of test_sysexit.py
     import pytest
+
+
     def f():
         raise SystemExit(1)
+
 
     def test_mytest():
         with pytest.raises(SystemExit):
@@ -105,17 +113,19 @@ Execute the test function with “quiet” reporting mode:
 Group multiple tests in a class
 --------------------------------------------------------------
 
-Once you develop multiple tests, you may want to group them into a class. pytest makes it easy to create a class containing more than one test::
+Once you develop multiple tests, you may want to group them into a class. pytest makes it easy to create a class containing more than one test:
+
+.. code-block:: python
 
     # content of test_class.py
-    class TestClass(object):
+    class TestClass:
         def test_one(self):
             x = "this"
-            assert 'h' in x
+            assert "h" in x
 
         def test_two(self):
             x = "hello"
-            assert hasattr(x, 'check')
+            assert hasattr(x, "check")
 
 ``pytest`` discovers all tests following its :ref:`Conventions for Python test discovery <test discovery>`, so it finds both ``test_`` prefixed functions. There is no need to subclass anything. We can simply run the module by passing its filename:
 
@@ -142,7 +152,9 @@ The first test passed and the second failed. You can easily see the intermediate
 Request a unique temporary directory for functional tests
 --------------------------------------------------------------
 
-``pytest`` provides `Builtin fixtures/function arguments <https://docs.pytest.org/en/latest/builtin.html#builtinfixtures>`_ to request arbitrary resources, like a unique temporary directory::
+``pytest`` provides `Builtin fixtures/function arguments <https://docs.pytest.org/en/latest/builtin.html>`_ to request arbitrary resources, like a unique temporary directory:
+
+.. code-block:: python
 
     # content of test_tmpdir.py
     def test_needsfiles(tmpdir):

@@ -2,12 +2,10 @@
 Talks and Tutorials
 ==========================
 
-..
-   .. sidebar:: Next Open Trainings
+.. sidebar:: Next Open Trainings
 
-      `Professional Testing with Python
-      <http://www.python-academy.com/courses/specialtopics/python_course_testing.html>`_,
-      26-28 April 2017, Leipzig, Germany.
+   - `Training at Workshoptage 2019 <https://workshoptage.ch/workshops/2019/test-driven-development-fuer-python-mit-pytest/>`_ (German), 10th September 2019, Rapperswil, Switzerland.
+   - `3 day hands-on workshop covering pytest, tox and devpi: "Professional Testing with Python" <https://python-academy.com/courses/specialtopics/python_course_testing.html>`_ (English), October 21 - 23, 2019, Leipzig, Germany.
 
 .. _`funcargs`: funcargs.html
 
@@ -22,6 +20,8 @@ Books
 
 Talks and blog postings
 ---------------------------------------------
+
+- `pytest: recommendations, basic packages for testing in Python and Django, Andreu Vallbona, PyBCN June 2019 <https://www.slideshare.net/AndreuVallbonaPlazas/pybcn-pytest-recomendaciones-paquetes-bsicos-para-testing-en-python-y-django>`_.
 
 - pytest: recommendations, basic packages for testing in Python and Django, Andreu Vallbona, PyconES 2017 (`slides in english <http://talks.apsl.io/testing-pycones-2017/>`_, `video in spanish <https://www.youtube.com/watch?v=K20GeR-lXDk>`_)
 

@@ -370,7 +370,7 @@ def test_excinfo_no_python_sourcecode(tmpdir):
     excinfo = pytest.raises(ValueError, template.render, h=h)
     for item in excinfo.traceback:
         print(item)  # XXX: for some reason jinja.Template.render is printed in full
-        item.source  # shouldnt fail
+        item.source  # shouldn't fail
         if item.path.basename == "test.txt":
             assert str(item.source) == "{{ h()}}:"
 
@@ -589,7 +589,8 @@ raise ValueError()
 
     def test_repr_local_with_exception_in_class_property(self):
         class ExceptionWithBrokenClass(Exception):
-            @property
+            # Type ignored because it's bypassed intentionally.
+            @property  # type: ignore
             def __class__(self):
                 raise TypeError("boom!")
 

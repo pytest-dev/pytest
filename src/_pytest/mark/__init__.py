@@ -91,7 +91,8 @@ def pytest_cmdline_main(config):
         return 0
 
 
-pytest_cmdline_main.tryfirst = True
+# Ignore type because of https://github.com/python/mypy/issues/2087.
+pytest_cmdline_main.tryfirst = True  # type: ignore
 
 
 def deselect_by_keyword(items, config):

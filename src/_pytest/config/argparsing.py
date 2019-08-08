@@ -1,5 +1,7 @@
 import argparse
+import sys
 import warnings
+from gettext import gettext
 
 import py
 
@@ -328,6 +330,7 @@ class MyOptionParser(argparse.ArgumentParser):
             usage=parser._usage,
             add_help=False,
             formatter_class=DropShorterLongHelpFormatter,
+            allow_abbrev=False,
         )
         # extra_info is a dict of (param -> value) to display if there's
         # an usage error to provide more contextual information to the user
@@ -355,12 +358,48 @@ class MyOptionParser(argparse.ArgumentParser):
             getattr(args, FILE_OR_DIR).extend(argv)
         return args
 
+    if sys.version_info[:2] < (3, 9):  # pragma: no cover
+        # Backport of https://github.com/python/cpython/pull/14316 so we can
+        # disable long --argument abbreviations without breaking short flags.
+        def _parse_optional(self, arg_string):
+            if not arg_string:
+                return None
+            if not arg_string[0] in self.prefix_chars:
+                return None
+            if arg_string in self._option_string_actions:
+                action = self._option_string_actions[arg_string]
+                return action, arg_string, None
+            if len(arg_string) == 1:
+                return None
+            if "=" in arg_string:
+                option_string, explicit_arg = arg_string.split("=", 1)
+                if option_string in self._option_string_actions:
+                    action = self._option_string_actions[option_string]
+                    return action, option_string, explicit_arg
+            if self.allow_abbrev or not arg_string.startswith("--"):
+                option_tuples = self._get_option_tuples(arg_string)
+                if len(option_tuples) > 1:
+                    msg = gettext(
+                        "ambiguous option: %(option)s could match %(matches)s"
+                    )
+                    options = ", ".join(option for _, option, _ in option_tuples)
+                    self.error(msg % {"option": arg_string, "matches": options})
+                elif len(option_tuples) == 1:
+                    option_tuple, = option_tuples
+                    return option_tuple
+            if self._negative_number_matcher.match(arg_string):
+                if not self._has_negative_number_optionals:
+                    return None
+            if " " in arg_string:
+                return None
+            return None, arg_string, None
+
 
 class DropShorterLongHelpFormatter(argparse.HelpFormatter):
     """shorten help for long options that differ only in extra hyphens
 
     - collapse **long** options that are the same except for extra hyphens
-    - special action attribute map_long_option allows surpressing additional
+    - special action attribute map_long_option allows suppressing additional
       long options
     - shortcut if there are only two options and one of them is a short one
     - cache result on action object as this is called at least 2 times

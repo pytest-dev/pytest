@@ -14,6 +14,14 @@ from _pytest.warning_types import UnformattedWarning
 
 YIELD_TESTS = "yield tests were removed in pytest 4.0 - {name} will be ignored"
 
+# set of plugins which have been integrated into the core; we use this list to ignore
+# them during registration to avoid conflicts
+DEPRECATED_EXTERNAL_PLUGINS = {
+    "pytest_catchlog",
+    "pytest_capturelog",
+    "pytest_faulthandler",
+}
+
 
 FIXTURE_FUNCTION_CALL = (
     'Fixture "{name}" called directly. Fixtures are not meant to be called directly,\n'
@@ -30,6 +38,11 @@ CFG_PYTEST_SECTION = "[pytest] section in {filename} files is no longer supporte
 
 GETFUNCARGVALUE = RemovedInPytest4Warning(
     "getfuncargvalue is deprecated, use getfixturevalue"
+)
+
+FUNCARGNAMES = PytestDeprecationWarning(
+    "The `funcargnames` attribute was an alias for `fixturenames`, "
+    "since pytest 2.3 - use the newer attribute instead."
 )
 
 RAISES_MESSAGE_PARAMETER = PytestDeprecationWarning(

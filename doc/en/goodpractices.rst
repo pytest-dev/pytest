@@ -12,13 +12,17 @@ pip_ for installing your application and any dependencies,
 as well as the ``pytest`` package itself.
 This ensures your code and dependencies are isolated from your system Python installation.
 
-Next, place a ``setup.py`` file in the root of your package with the following minimum content::
+Next, place a ``setup.py`` file in the root of your package with the following minimum content:
+
+.. code-block:: python
 
     from setuptools import setup, find_packages
 
     setup(name="PACKAGENAME", packages=find_packages())
 
-Where ``PACKAGENAME`` is the name of your package. You can then install your package in "editable" mode by running from the same directory::
+Where ``PACKAGENAME`` is the name of your package. You can then install your package in "editable" mode by running from the same directory:
+
+.. code-block:: bash
 
      pip install -e .
 
@@ -60,7 +64,9 @@ Tests outside application code
 
 Putting tests into an extra directory outside your actual application code
 might be useful if you have many functional tests or for other reasons want
-to keep tests separate from actual application code (often a good idea)::
+to keep tests separate from actual application code (often a good idea):
+
+.. code-block:: text
 
     setup.py
     mypkg/
@@ -92,7 +98,9 @@ be imported as ``test_app`` and ``test_view`` top-level modules by adding ``test
 ``sys.path``.
 
 If you need to have test modules with the same name, you might add ``__init__.py`` files to your
-``tests`` folder and subfolders, changing them to packages::
+``tests`` folder and subfolders, changing them to packages:
+
+.. code-block:: text
 
     setup.py
     mypkg/
@@ -114,7 +122,9 @@ This is problematic if you are using a tool like `tox`_ to test your package in 
 because you want to test the *installed* version of your package, not the local code from the repository.
 
 In this situation, it is **strongly** suggested to use a ``src`` layout where application root package resides in a
-sub-directory of your root::
+sub-directory of your root:
+
+.. code-block:: text
 
     setup.py
     src/
@@ -140,7 +150,9 @@ Tests as part of application code
 
 Inlining test directories into your application package
 is useful if you have direct relation between tests and application modules and
-want to distribute them along with your application::
+want to distribute them along with your application:
+
+.. code-block:: text
 
     setup.py
     mypkg/
@@ -153,7 +165,9 @@ want to distribute them along with your application::
             test_view.py
             ...
 
-In this scheme, it is easy to run your tests using the ``--pyargs`` option::
+In this scheme, it is easy to run your tests using the ``--pyargs`` option:
+
+.. code-block:: bash
 
     pytest --pyargs mypkg
 
@@ -217,103 +231,6 @@ dependencies and then executing a pre-configured test command with
 options.  It will run tests against the installed package and not
 against your source code checkout, helping to detect packaging
 glitches.
-
-
-Integrating with setuptools / ``python setup.py test`` / ``pytest-runner``
---------------------------------------------------------------------------
-
-You can integrate test runs into your setuptools based project
-with the `pytest-runner <https://pypi.org/project/pytest-runner/>`_ plugin.
-
-Add this to ``setup.py`` file:
-
-.. code-block:: python
-
-    from setuptools import setup
-
-    setup(
-        # ...,
-        setup_requires=["pytest-runner", ...],
-        tests_require=["pytest", ...],
-        # ...,
-    )
-
-
-And create an alias into ``setup.cfg`` file:
-
-
-.. code-block:: ini
-
-    [aliases]
-    test=pytest
-
-If you now type::
-
-    python setup.py test
-
-this will execute your tests using ``pytest-runner``. As this is a
-standalone version of ``pytest`` no prior installation whatsoever is
-required for calling the test command. You can also pass additional
-arguments to pytest such as your test directory or other
-options using ``--addopts``.
-
-You can also specify other pytest-ini options in your ``setup.cfg`` file
-by putting them into a ``[tool:pytest]`` section:
-
-.. code-block:: ini
-
-    [tool:pytest]
-    addopts = --verbose
-    python_files = testing/*/*.py
-
-
-Manual Integration
-^^^^^^^^^^^^^^^^^^
-
-If for some reason you don't want/can't use ``pytest-runner``, you can write
-your own setuptools Test command for invoking pytest.
-
-.. code-block:: python
-
-    import sys
-
-    from setuptools.command.test import test as TestCommand
-
-
-    class PyTest(TestCommand):
-        user_options = [("pytest-args=", "a", "Arguments to pass to pytest")]
-
-        def initialize_options(self):
-            TestCommand.initialize_options(self)
-            self.pytest_args = ""
-
-        def run_tests(self):
-            import shlex
-
-            # import here, cause outside the eggs aren't loaded
-            import pytest
-
-            errno = pytest.main(shlex.split(self.pytest_args))
-            sys.exit(errno)
-
-
-    setup(
-        # ...,
-        tests_require=["pytest"],
-        cmdclass={"pytest": PyTest},
-    )
-
-Now if you run::
-
-    python setup.py test
-
-this will download ``pytest`` if needed and then run your tests
-as you would expect it to. You can pass a single string of arguments
-using the ``--pytest-args`` or ``-a`` command-line option. For example::
-
-    python setup.py test -a "--durations=5"
-
-is equivalent to running ``pytest --durations=5``.
 
 
 .. include:: links.inc

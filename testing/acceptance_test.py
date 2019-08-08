@@ -633,6 +633,25 @@ class TestInvocationVariants:
 
         result.stdout.fnmatch_lines(["collected*0*items*/*1*errors"])
 
+    def test_pyargs_only_imported_once(self, testdir):
+        pkg = testdir.mkpydir("foo")
+        pkg.join("test_foo.py").write("print('hello from test_foo')\ndef test(): pass")
+        pkg.join("conftest.py").write(
+            "def pytest_configure(config): print('configuring')"
+        )
+
+        result = testdir.runpytest("--pyargs", "foo.test_foo", "-s", syspathinsert=True)
+        # should only import once
+        assert result.outlines.count("hello from test_foo") == 1
+        # should only configure once
+        assert result.outlines.count("configuring") == 1
+
+    def test_pyargs_filename_looks_like_module(self, testdir):
+        testdir.tmpdir.join("conftest.py").ensure()
+        testdir.tmpdir.join("t.py").write("def test(): pass")
+        result = testdir.runpytest("--pyargs", "t.py")
+        assert result.ret == ExitCode.OK
+
     def test_cmdline_python_package(self, testdir, monkeypatch):
         import warnings
 
@@ -983,7 +1002,7 @@ def test_zipimport_hook(testdir, tmpdir):
             "app/foo.py": """
             import pytest
             def main():
-                pytest.main(['--pyarg', 'foo'])
+                pytest.main(['--pyargs', 'foo'])
         """
         }
     )
@@ -1088,7 +1107,10 @@ def test_fixture_values_leak(testdir):
             assert fix_of_test1_ref() is None
     """
     )
-    result = testdir.runpytest()
+    # Running on subprocess does not activate the HookRecorder
+    # which holds itself a reference to objects in case of the
+    # pytest_assert_reprcompare hook
+    result = testdir.runpytest_subprocess()
     result.stdout.fnmatch_lines(["* 2 passed *"])
 
 

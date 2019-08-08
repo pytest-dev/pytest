@@ -1,20 +1,26 @@
 """Rewrite assertion AST to produce nice error messages"""
 import ast
 import errno
-import imp
+import functools
+import importlib.machinery
+import importlib.util
+import io
 import itertools
 import marshal
 import os
-import re
 import struct
 import sys
+import tokenize
 import types
-from importlib.util import spec_from_file_location
+from typing import Dict
+from typing import List
+from typing import Optional
+from typing import Set
 
 import atomicwrites
-import py
 
 from _pytest._io.saferepr import saferepr
+from _pytest._version import version
 from _pytest.assertion import util
 from _pytest.assertion.util import (  # noqa: F401
     format_explanation as _format_explanation,
@@ -23,23 +29,13 @@ from _pytest.pathlib import fnmatch_ex
 from _pytest.pathlib import PurePath
 
 # pytest caches rewritten pycs in __pycache__.
-if hasattr(imp, "get_tag"):
-    PYTEST_TAG = imp.get_tag() + "-PYTEST"
-else:
-    if hasattr(sys, "pypy_version_info"):
-        impl = "pypy"
-    else:
-        impl = "cpython"
-    ver = sys.version_info
-    PYTEST_TAG = "{}-{}{}-PYTEST".format(impl, ver[0], ver[1])
-    del ver, impl
-
+PYTEST_TAG = "{}-pytest-{}".format(sys.implementation.cache_tag, version)
 PYC_EXT = ".py" + (__debug__ and "c" or "o")
 PYC_TAIL = "." + PYTEST_TAG + PYC_EXT
 
 
 class AssertionRewritingHook:
-    """PEP302 Import hook which rewrites asserts."""
+    """PEP302/PEP451 import hook which rewrites asserts."""
 
     def __init__(self, config):
         self.config = config
@@ -48,7 +44,6 @@ class AssertionRewritingHook:
         except ValueError:
             self.fnpats = ["test_*.py", "*_test.py"]
         self.session = None
-        self.modules = {}
         self._rewritten_names = set()
         self._must_rewrite = set()
         # flag to guard against trying to rewrite a pyc file while we are already writing another pyc file,
@@ -62,55 +57,53 @@ class AssertionRewritingHook:
         self.session = session
         self._session_paths_checked = False
 
-    def _imp_find_module(self, name, path=None):
-        """Indirection so we can mock calls to find_module originated from the hook during testing"""
-        return imp.find_module(name, path)
+    # Indirection so we can mock calls to find_spec originated from the hook during testing
+    _find_spec = importlib.machinery.PathFinder.find_spec
 
-    def find_module(self, name, path=None):
+    def find_spec(self, name, path=None, target=None):
         if self._writing_pyc:
             return None
         state = self.config._assertstate
         if self._early_rewrite_bailout(name, state):
             return None
         state.trace("find_module called for: %s" % name)
-        names = name.rsplit(".", 1)
-        lastname = names[-1]
-        pth = None
-        if path is not None:
-            # Starting with Python 3.3, path is a _NamespacePath(), which
-            # causes problems if not converted to list.
-            path = list(path)
-            if len(path) == 1:
-                pth = path[0]
-        if pth is None:
-            try:
-                fd, fn, desc = self._imp_find_module(lastname, path)
-            except ImportError:
-                return None
-            if fd is not None:
-                fd.close()
-            tp = desc[2]
-            if tp == imp.PY_COMPILED:
-                if hasattr(imp, "source_from_cache"):
-                    try:
-                        fn = imp.source_from_cache(fn)
-                    except ValueError:
-                        # Python 3 doesn't like orphaned but still-importable
-                        # .pyc files.
-                        fn = fn[:-1]
-                else:
-                    fn = fn[:-1]
-            elif tp != imp.PY_SOURCE:
-                # Don't know what this is.
-                return None
-        else:
-            fn = os.path.join(pth, name.rpartition(".")[2] + ".py")
 
-        fn_pypath = py.path.local(fn)
-        if not self._should_rewrite(name, fn_pypath, state):
+        spec = self._find_spec(name, path)
+        if (
+            # the import machinery could not find a file to import
+            spec is None
+            # this is a namespace package (without `__init__.py`)
+            # there's nothing to rewrite there
+            # python3.5 - python3.6: `namespace`
+            # python3.7+: `None`
+            or spec.origin in {None, "namespace"}
+            # we can only rewrite source files
+            or not isinstance(spec.loader, importlib.machinery.SourceFileLoader)
+            # if the file doesn't exist, we can't rewrite it
+            or not os.path.exists(spec.origin)
+        ):
+            return None
+        else:
+            fn = spec.origin
+
+        if not self._should_rewrite(name, fn, state):
             return None
 
-        self._rewritten_names.add(name)
+        return importlib.util.spec_from_file_location(
+            name,
+            fn,
+            loader=self,
+            submodule_search_locations=spec.submodule_search_locations,
+        )
+
+    def create_module(self, spec):
+        return None  # default behaviour is fine
+
+    def exec_module(self, module):
+        fn = module.__spec__.origin
+        state = self.config._assertstate
+
+        self._rewritten_names.add(module.__name__)
 
         # The requested module looks like a test file, so rewrite it. This is
         # the most magical part of the process: load the source, rewrite the
@@ -121,37 +114,21 @@ class AssertionRewritingHook:
         # cached pyc is always a complete, valid pyc. Operations on it must be
         # atomic. POSIX's atomic rename comes in handy.
         write = not sys.dont_write_bytecode
-        cache_dir = os.path.join(fn_pypath.dirname, "__pycache__")
+        cache_dir = os.path.join(os.path.dirname(fn), "__pycache__")
         if write:
-            try:
-                os.mkdir(cache_dir)
-            except OSError:
-                e = sys.exc_info()[1].errno
-                if e == errno.EEXIST:
-                    # Either the __pycache__ directory already exists (the
-                    # common case) or it's blocked by a non-dir node. In the
-                    # latter case, we'll ignore it in _write_pyc.
-                    pass
-                elif e in [errno.ENOENT, errno.ENOTDIR]:
-                    # One of the path components was not a directory, likely
-                    # because we're in a zip file.
-                    write = False
-                elif e in [errno.EACCES, errno.EROFS, errno.EPERM]:
-                    state.trace("read only directory: %r" % fn_pypath.dirname)
-                    write = False
-                else:
-                    raise
-        cache_name = fn_pypath.basename[:-3] + PYC_TAIL
+            ok = try_mkdir(cache_dir)
+            if not ok:
+                write = False
+                state.trace("read only directory: {}".format(os.path.dirname(fn)))
+
+        cache_name = os.path.basename(fn)[:-3] + PYC_TAIL
         pyc = os.path.join(cache_dir, cache_name)
         # Notice that even if we're in a read-only directory, I'm going
         # to check for a cached pyc. This may not be optimal...
-        co = _read_pyc(fn_pypath, pyc, state.trace)
+        co = _read_pyc(fn, pyc, state.trace)
         if co is None:
             state.trace("rewriting {!r}".format(fn))
-            source_stat, co = _rewrite_test(self.config, fn_pypath)
-            if co is None:
-                # Probably a SyntaxError in the test.
-                return None
+            source_stat, co = _rewrite_test(fn, self.config)
             if write:
                 self._writing_pyc = True
                 try:
@@ -160,13 +137,11 @@ class AssertionRewritingHook:
                     self._writing_pyc = False
         else:
             state.trace("found cached rewritten pyc for {!r}".format(fn))
-        self.modules[name] = co, pyc
-        return self
+        exec(co, module.__dict__)
 
     def _early_rewrite_bailout(self, name, state):
-        """
-        This is a fast way to get out of rewriting modules. Profiling has
-        shown that the call to imp.find_module (inside of the find_module
+        """This is a fast way to get out of rewriting modules. Profiling has
+        shown that the call to PathFinder.find_spec (inside of the find_spec
         from this class) is a major slowdown, so, this method tries to
         filter what we're sure won't be rewritten before getting to it.
         """
@@ -201,10 +176,9 @@ class AssertionRewritingHook:
         state.trace("early skip of rewriting module: {}".format(name))
         return True
 
-    def _should_rewrite(self, name, fn_pypath, state):
+    def _should_rewrite(self, name, fn, state):
         # always rewrite conftest files
-        fn = str(fn_pypath)
-        if fn_pypath.basename == "conftest.py":
+        if os.path.basename(fn) == "conftest.py":
             state.trace("rewriting conftest file: {!r}".format(fn))
             return True
 
@@ -217,8 +191,9 @@ class AssertionRewritingHook:
 
         # modules not passed explicitly on the command line are only
         # rewritten if they match the naming convention for test files
+        fn_path = PurePath(fn)
         for pat in self.fnpats:
-            if fn_pypath.fnmatch(pat):
+            if fnmatch_ex(pat, fn_path):
                 state.trace("matched test file {!r}".format(fn))
                 return True
 
@@ -249,9 +224,10 @@ class AssertionRewritingHook:
             set(names).intersection(sys.modules).difference(self._rewritten_names)
         )
         for name in already_imported:
+            mod = sys.modules[name]
             if not AssertionRewriter.is_rewrite_disabled(
-                sys.modules[name].__doc__ or ""
-            ):
+                mod.__doc__ or ""
+            ) and not isinstance(mod.__loader__, type(self)):
                 self._warn_already_imported(name)
         self._must_rewrite.update(names)
         self._marked_for_rewrite_cache.clear()
@@ -268,45 +244,8 @@ class AssertionRewritingHook:
             stacklevel=5,
         )
 
-    def load_module(self, name):
-        co, pyc = self.modules.pop(name)
-        if name in sys.modules:
-            # If there is an existing module object named 'fullname' in
-            # sys.modules, the loader must use that existing module. (Otherwise,
-            # the reload() builtin will not work correctly.)
-            mod = sys.modules[name]
-        else:
-            # I wish I could just call imp.load_compiled here, but __file__ has to
-            # be set properly. In Python 3.2+, this all would be handled correctly
-            # by load_compiled.
-            mod = sys.modules[name] = imp.new_module(name)
-        try:
-            mod.__file__ = co.co_filename
-            # Normally, this attribute is 3.2+.
-            mod.__cached__ = pyc
-            mod.__loader__ = self
-            # Normally, this attribute is 3.4+
-            mod.__spec__ = spec_from_file_location(name, co.co_filename, loader=self)
-            exec(co, mod.__dict__)
-        except:  # noqa
-            if name in sys.modules:
-                del sys.modules[name]
-            raise
-        return sys.modules[name]
-
-    def is_package(self, name):
-        try:
-            fd, fn, desc = self._imp_find_module(name)
-        except ImportError:
-            return False
-        if fd is not None:
-            fd.close()
-        tp = desc[2]
-        return tp == imp.PKG_DIRECTORY
-
     def get_data(self, pathname):
-        """Optional PEP302 get_data API.
-        """
+        """Optional PEP302 get_data API."""
         with open(pathname, "rb") as f:
             return f.read()
 
@@ -314,15 +253,13 @@ class AssertionRewritingHook:
 def _write_pyc(state, co, source_stat, pyc):
     # Technically, we don't have to have the same pyc format as
     # (C)Python, since these "pycs" should never be seen by builtin
-    # import. However, there's little reason deviate, and I hope
-    # sometime to be able to use imp.load_compiled to load them. (See
-    # the comment in load_module above.)
+    # import. However, there's little reason deviate.
     try:
         with atomicwrites.atomic_write(pyc, mode="wb", overwrite=True) as fp:
-            fp.write(imp.get_magic())
+            fp.write(importlib.util.MAGIC_NUMBER)
             # as of now, bytecode header expects 32-bit numbers for size and mtime (#4903)
-            mtime = int(source_stat.mtime) & 0xFFFFFFFF
-            size = source_stat.size & 0xFFFFFFFF
+            mtime = int(source_stat.st_mtime) & 0xFFFFFFFF
+            size = source_stat.st_size & 0xFFFFFFFF
             # "<LL" stands for 2 unsigned longs, little-ending
             fp.write(struct.pack("<LL", mtime, size))
             fp.write(marshal.dumps(co))
@@ -335,35 +272,14 @@ def _write_pyc(state, co, source_stat, pyc):
     return True
 
 
-RN = b"\r\n"
-N = b"\n"
-
-cookie_re = re.compile(r"^[ \t\f]*#.*coding[:=][ \t]*[-\w.]+")
-BOM_UTF8 = "\xef\xbb\xbf"
-
-
-def _rewrite_test(config, fn):
-    """Try to read and rewrite *fn* and return the code object."""
-    state = config._assertstate
-    try:
-        stat = fn.stat()
-        source = fn.read("rb")
-    except EnvironmentError:
-        return None, None
-    try:
-        tree = ast.parse(source, filename=fn.strpath)
-    except SyntaxError:
-        # Let this pop up again in the real import.
-        state.trace("failed to parse: {!r}".format(fn))
-        return None, None
-    rewrite_asserts(tree, fn, config)
-    try:
-        co = compile(tree, fn.strpath, "exec", dont_inherit=True)
-    except SyntaxError:
-        # It's possible that this error is from some bug in the
-        # assertion rewriting, but I don't know of a fast way to tell.
-        state.trace("failed to compile: {!r}".format(fn))
-        return None, None
+def _rewrite_test(fn, config):
+    """read and rewrite *fn* and return the code object."""
+    stat = os.stat(fn)
+    with open(fn, "rb") as f:
+        source = f.read()
+    tree = ast.parse(source, filename=fn)
+    rewrite_asserts(tree, source, fn, config)
+    co = compile(tree, fn, "exec", dont_inherit=True)
     return stat, co
 
 
@@ -378,8 +294,9 @@ def _read_pyc(source, pyc, trace=lambda x: None):
         return None
     with fp:
         try:
-            mtime = int(source.mtime())
-            size = source.size()
+            stat_result = os.stat(source)
+            mtime = int(stat_result.st_mtime)
+            size = stat_result.st_size
             data = fp.read(12)
         except EnvironmentError as e:
             trace("_read_pyc({}): EnvironmentError {}".format(source, e))
@@ -387,7 +304,7 @@ def _read_pyc(source, pyc, trace=lambda x: None):
         # Check for invalid or out of date pyc file.
         if (
             len(data) != 12
-            or data[:4] != imp.get_magic()
+            or data[:4] != importlib.util.MAGIC_NUMBER
             or struct.unpack("<LL", data[4:]) != (mtime & 0xFFFFFFFF, size & 0xFFFFFFFF)
         ):
             trace("_read_pyc(%s): invalid or out of date pyc" % source)
@@ -403,9 +320,9 @@ def _read_pyc(source, pyc, trace=lambda x: None):
         return co
 
 
-def rewrite_asserts(mod, module_path=None, config=None):
+def rewrite_asserts(mod, source, module_path=None, config=None):
     """Rewrite the assert statements in mod."""
-    AssertionRewriter(module_path, config).run(mod)
+    AssertionRewriter(module_path, config, source).run(mod)
 
 
 def _saferepr(obj):
@@ -478,9 +395,20 @@ def _call_reprcompare(ops, results, expls, each_obj):
     return expl
 
 
-unary_map = {ast.Not: "not %s", ast.Invert: "~%s", ast.USub: "-%s", ast.UAdd: "+%s"}
+def _call_assertion_pass(lineno, orig, expl):
+    if util._assertion_pass is not None:
+        util._assertion_pass(lineno=lineno, orig=orig, expl=expl)
 
-binop_map = {
+
+def _check_if_assertion_pass_impl():
+    """Checks if any plugins implement the pytest_assertion_pass hook
+    in order not to generate explanation unecessarily (might be expensive)"""
+    return True if util._assertion_pass else False
+
+
+UNARY_MAP = {ast.Not: "not %s", ast.Invert: "~%s", ast.USub: "-%s", ast.UAdd: "+%s"}
+
+BINOP_MAP = {
     ast.BitOr: "|",
     ast.BitXor: "^",
     ast.BitAnd: "&",
@@ -503,20 +431,8 @@ binop_map = {
     ast.IsNot: "is not",
     ast.In: "in",
     ast.NotIn: "not in",
+    ast.MatMult: "@",
 }
-# Python 3.5+ compatibility
-try:
-    binop_map[ast.MatMult] = "@"
-except AttributeError:
-    pass
-
-# Python 3.4+ compatibility
-if hasattr(ast, "NameConstant"):
-    _NameConstant = ast.NameConstant
-else:
-
-    def _NameConstant(c):
-        return ast.Name(str(c), ast.Load())
 
 
 def set_location(node, lineno, col_offset):
@@ -532,6 +448,60 @@ def set_location(node, lineno, col_offset):
 
     _fix(node, lineno, col_offset)
     return node
+
+
+def _get_assertion_exprs(src: bytes) -> Dict[int, str]:
+    """Returns a mapping from {lineno: "assertion test expression"}"""
+    ret = {}  # type: Dict[int, str]
+
+    depth = 0
+    lines = []  # type: List[str]
+    assert_lineno = None  # type: Optional[int]
+    seen_lines = set()  # type: Set[int]
+
+    def _write_and_reset() -> None:
+        nonlocal depth, lines, assert_lineno, seen_lines
+        assert assert_lineno is not None
+        ret[assert_lineno] = "".join(lines).rstrip().rstrip("\\")
+        depth = 0
+        lines = []
+        assert_lineno = None
+        seen_lines = set()
+
+    tokens = tokenize.tokenize(io.BytesIO(src).readline)
+    for tp, source, (lineno, offset), _, line in tokens:
+        if tp == tokenize.NAME and source == "assert":
+            assert_lineno = lineno
+        elif assert_lineno is not None:
+            # keep track of depth for the assert-message `,` lookup
+            if tp == tokenize.OP and source in "([{":
+                depth += 1
+            elif tp == tokenize.OP and source in ")]}":
+                depth -= 1
+
+            if not lines:
+                lines.append(line[offset:])
+                seen_lines.add(lineno)
+            # a non-nested comma separates the expression from the message
+            elif depth == 0 and tp == tokenize.OP and source == ",":
+                # one line assert with message
+                if lineno in seen_lines and len(lines) == 1:
+                    offset_in_trimmed = offset + len(lines[-1]) - len(line)
+                    lines[-1] = lines[-1][:offset_in_trimmed]
+                # multi-line assert with message
+                elif lineno in seen_lines:
+                    lines[-1] = lines[-1][:offset]
+                # multi line assert with escapd newline before message
+                else:
+                    lines.append(line[:offset])
+                _write_and_reset()
+            elif tp in {tokenize.NEWLINE, tokenize.ENDMARKER}:
+                _write_and_reset()
+            elif lines and lineno not in seen_lines:
+                lines.append(line)
+                seen_lines.add(lineno)
+
+    return ret
 
 
 class AssertionRewriter(ast.NodeVisitor):
@@ -550,7 +520,8 @@ class AssertionRewriter(ast.NodeVisitor):
     original assert statement: it rewrites the test of an assertion
     to provide intermediate values and replace it with an if statement
     which raises an assertion error with a detailed explanation in
-    case the expression is false.
+    case the expression is false and calls pytest_assertion_pass hook
+    if expression is true.
 
     For this .visit_Assert() uses the visitor pattern to visit all the
     AST nodes of the ast.Assert.test field, each visit call returning
@@ -568,9 +539,10 @@ class AssertionRewriter(ast.NodeVisitor):
        by statements.  Variables are created using .variable() and
        have the form of "@py_assert0".
 
-    :on_failure: The AST statements which will be executed if the
-       assertion test fails.  This is the code which will construct
-       the failure message and raises the AssertionError.
+    :expl_stmts: The AST statements which will be executed to get
+       data from the assertion.  This is the code which will construct
+       the detailed assertion message that is used in the AssertionError
+       or for the pytest_assertion_pass hook.
 
     :explanation_specifiers: A dict filled by .explanation_param()
        with %-formatting placeholders and their corresponding
@@ -586,10 +558,21 @@ class AssertionRewriter(ast.NodeVisitor):
 
     """
 
-    def __init__(self, module_path, config):
+    def __init__(self, module_path, config, source):
         super().__init__()
         self.module_path = module_path
         self.config = config
+        if config is not None:
+            self.enable_assertion_pass_hook = config.getini(
+                "enable_assertion_pass_hook"
+            )
+        else:
+            self.enable_assertion_pass_hook = False
+        self.source = source
+
+    @functools.lru_cache(maxsize=1)
+    def _assert_expr_to_lineno(self):
+        return _get_assertion_exprs(self.source)
 
     def run(self, mod):
         """Find all assert statements in *mod* and rewrite them."""
@@ -720,7 +703,7 @@ class AssertionRewriter(ast.NodeVisitor):
 
         The expl_expr should be an ast.Str instance constructed from
         the %-placeholders created by .explanation_param().  This will
-        add the required code to format said string to .on_failure and
+        add the required code to format said string to .expl_stmts and
         return the ast.Name instance of the formatted string.
 
         """
@@ -731,7 +714,9 @@ class AssertionRewriter(ast.NodeVisitor):
         format_dict = ast.Dict(keys, list(current.values()))
         form = ast.BinOp(expl_expr, ast.Mod(), format_dict)
         name = "@py_format" + str(next(self.variable_counter))
-        self.on_failure.append(ast.Assign([ast.Name(name, ast.Store())], form))
+        if self.enable_assertion_pass_hook:
+            self.format_variables.append(name)
+        self.expl_stmts.append(ast.Assign([ast.Name(name, ast.Store())], form))
         return ast.Name(name, ast.Load())
 
     def generic_visit(self, node):
@@ -758,15 +743,19 @@ class AssertionRewriter(ast.NodeVisitor):
                     "assertion is always true, perhaps remove parentheses?"
                 ),
                 category=None,
-                filename=str(self.module_path),
+                filename=self.module_path,
                 lineno=assert_.lineno,
             )
 
         self.statements = []
         self.variables = []
         self.variable_counter = itertools.count()
+
+        if self.enable_assertion_pass_hook:
+            self.format_variables = []
+
         self.stack = []
-        self.on_failure = []
+        self.expl_stmts = []
         self.push_format_context()
         # Rewrite assert into a bunch of statements.
         top_condition, explanation = self.visit(assert_.test)
@@ -777,28 +766,81 @@ class AssertionRewriter(ast.NodeVisitor):
                     top_condition, module_path=self.module_path, lineno=assert_.lineno
                 )
             )
-        # Create failure message.
-        body = self.on_failure
-        negation = ast.UnaryOp(ast.Not(), top_condition)
-        self.statements.append(ast.If(negation, body, []))
-        if assert_.msg:
-            assertmsg = self.helper("_format_assertmsg", assert_.msg)
-            explanation = "\n>assert " + explanation
-        else:
-            assertmsg = ast.Str("")
-            explanation = "assert " + explanation
-        template = ast.BinOp(assertmsg, ast.Add(), ast.Str(explanation))
-        msg = self.pop_format_context(template)
-        fmt = self.helper("_format_explanation", msg)
-        err_name = ast.Name("AssertionError", ast.Load())
-        exc = ast.Call(err_name, [fmt], [])
-        raise_ = ast.Raise(exc, None)
 
-        body.append(raise_)
+        if self.enable_assertion_pass_hook:  # Experimental pytest_assertion_pass hook
+            negation = ast.UnaryOp(ast.Not(), top_condition)
+            msg = self.pop_format_context(ast.Str(explanation))
+
+            # Failed
+            if assert_.msg:
+                assertmsg = self.helper("_format_assertmsg", assert_.msg)
+                gluestr = "\n>assert "
+            else:
+                assertmsg = ast.Str("")
+                gluestr = "assert "
+            err_explanation = ast.BinOp(ast.Str(gluestr), ast.Add(), msg)
+            err_msg = ast.BinOp(assertmsg, ast.Add(), err_explanation)
+            err_name = ast.Name("AssertionError", ast.Load())
+            fmt = self.helper("_format_explanation", err_msg)
+            exc = ast.Call(err_name, [fmt], [])
+            raise_ = ast.Raise(exc, None)
+            statements_fail = []
+            statements_fail.extend(self.expl_stmts)
+            statements_fail.append(raise_)
+
+            # Passed
+            fmt_pass = self.helper("_format_explanation", msg)
+            orig = self._assert_expr_to_lineno()[assert_.lineno]
+            hook_call_pass = ast.Expr(
+                self.helper(
+                    "_call_assertion_pass",
+                    ast.Num(assert_.lineno),
+                    ast.Str(orig),
+                    fmt_pass,
+                )
+            )
+            # If any hooks implement assert_pass hook
+            hook_impl_test = ast.If(
+                self.helper("_check_if_assertion_pass_impl"),
+                self.expl_stmts + [hook_call_pass],
+                [],
+            )
+            statements_pass = [hook_impl_test]
+
+            # Test for assertion condition
+            main_test = ast.If(negation, statements_fail, statements_pass)
+            self.statements.append(main_test)
+            if self.format_variables:
+                variables = [
+                    ast.Name(name, ast.Store()) for name in self.format_variables
+                ]
+                clear_format = ast.Assign(variables, ast.NameConstant(None))
+                self.statements.append(clear_format)
+
+        else:  # Original assertion rewriting
+            # Create failure message.
+            body = self.expl_stmts
+            negation = ast.UnaryOp(ast.Not(), top_condition)
+            self.statements.append(ast.If(negation, body, []))
+            if assert_.msg:
+                assertmsg = self.helper("_format_assertmsg", assert_.msg)
+                explanation = "\n>assert " + explanation
+            else:
+                assertmsg = ast.Str("")
+                explanation = "assert " + explanation
+            template = ast.BinOp(assertmsg, ast.Add(), ast.Str(explanation))
+            msg = self.pop_format_context(template)
+            fmt = self.helper("_format_explanation", msg)
+            err_name = ast.Name("AssertionError", ast.Load())
+            exc = ast.Call(err_name, [fmt], [])
+            raise_ = ast.Raise(exc, None)
+
+            body.append(raise_)
+
         # Clear temporary variables by setting them to None.
         if self.variables:
             variables = [ast.Name(name, ast.Store()) for name in self.variables]
-            clear = ast.Assign(variables, _NameConstant(None))
+            clear = ast.Assign(variables, ast.NameConstant(None))
             self.statements.append(clear)
         # Fix line numbers.
         for stmt in self.statements:
@@ -817,7 +859,7 @@ class AssertionRewriter(ast.NodeVisitor):
         AST_NONE = ast.parse("None").body[0].value
         val_is_none = ast.Compare(node, [ast.Is()], [AST_NONE])
         send_warning = ast.parse(
-            """
+            """\
 from _pytest.warning_types import PytestAssertRewriteWarning
 from warnings import warn_explicit
 warn_explicit(
@@ -827,7 +869,7 @@ warn_explicit(
     lineno={lineno},
 )
             """.format(
-                filename=module_path.strpath, lineno=lineno
+                filename=module_path, lineno=lineno
             )
         ).body
         return ast.If(val_is_none, send_warning, [])
@@ -848,22 +890,22 @@ warn_explicit(
         app = ast.Attribute(expl_list, "append", ast.Load())
         is_or = int(isinstance(boolop.op, ast.Or))
         body = save = self.statements
-        fail_save = self.on_failure
+        fail_save = self.expl_stmts
         levels = len(boolop.values) - 1
         self.push_format_context()
-        # Process each operand, short-circuting if needed.
+        # Process each operand, short-circuiting if needed.
         for i, v in enumerate(boolop.values):
             if i:
                 fail_inner = []
                 # cond is set in a prior loop iteration below
-                self.on_failure.append(ast.If(cond, fail_inner, []))  # noqa
-                self.on_failure = fail_inner
+                self.expl_stmts.append(ast.If(cond, fail_inner, []))  # noqa
+                self.expl_stmts = fail_inner
             self.push_format_context()
             res, expl = self.visit(v)
             body.append(ast.Assign([ast.Name(res_var, ast.Store())], res))
             expl_format = self.pop_format_context(ast.Str(expl))
             call = ast.Call(app, [expl_format], [])
-            self.on_failure.append(ast.Expr(call))
+            self.expl_stmts.append(ast.Expr(call))
             if i < levels:
                 cond = res
                 if is_or:
@@ -872,19 +914,19 @@ warn_explicit(
                 self.statements.append(ast.If(cond, inner, []))
                 self.statements = body = inner
         self.statements = save
-        self.on_failure = fail_save
+        self.expl_stmts = fail_save
         expl_template = self.helper("_format_boolop", expl_list, ast.Num(is_or))
         expl = self.pop_format_context(expl_template)
         return ast.Name(res_var, ast.Load()), self.explanation_param(expl)
 
     def visit_UnaryOp(self, unary):
-        pattern = unary_map[unary.op.__class__]
+        pattern = UNARY_MAP[unary.op.__class__]
         operand_res, operand_expl = self.visit(unary.operand)
         res = self.assign(ast.UnaryOp(unary.op, operand_res))
         return res, pattern % (operand_expl,)
 
     def visit_BinOp(self, binop):
-        symbol = binop_map[binop.op.__class__]
+        symbol = BINOP_MAP[binop.op.__class__]
         left_expr, left_expl = self.visit(binop.left)
         right_expr, right_expl = self.visit(binop.right)
         explanation = "({} {} {})".format(left_expl, symbol, right_expl)
@@ -951,7 +993,7 @@ warn_explicit(
             if isinstance(next_operand, (ast.Compare, ast.BoolOp)):
                 next_expl = "({})".format(next_expl)
             results.append(next_res)
-            sym = binop_map[op.__class__]
+            sym = BINOP_MAP[op.__class__]
             syms.append(ast.Str(sym))
             expl = "{} {} {}".format(left_expl, sym, next_expl)
             expls.append(ast.Str(expl))
@@ -971,3 +1013,26 @@ warn_explicit(
         else:
             res = load_names[0]
         return res, self.explanation_param(self.pop_format_context(expl_call))
+
+
+def try_mkdir(cache_dir):
+    """Attempts to create the given directory, returns True if successful"""
+    try:
+        os.mkdir(cache_dir)
+    except FileExistsError:
+        # Either the __pycache__ directory already exists (the
+        # common case) or it's blocked by a non-dir node. In the
+        # latter case, we'll ignore it in _write_pyc.
+        return True
+    except (FileNotFoundError, NotADirectoryError):
+        # One of the path components was not a directory, likely
+        # because we're in a zip file.
+        return False
+    except PermissionError:
+        return False
+    except OSError as e:
+        # as of now, EROFS doesn't have an equivalent OSError-subclass
+        if e.errno == errno.EROFS:
+            return False
+        raise
+    return True

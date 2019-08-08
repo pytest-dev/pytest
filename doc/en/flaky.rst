@@ -122,4 +122,4 @@ Resources
 * Google:
 
   * `Flaky Tests at Google and How We Mitigate Them <https://testing.googleblog.com/2016/05/flaky-tests-at-google-and-how-we.html>`_ by John Micco, 2016
-  * `Where do Google's flaky tests come from? <https://docs.google.com/document/d/1mZ0-Kc97DI_F3tf_GBW_NB_aqka-P1jVOsFfufxqUUM/edit#heading=h.ec0r4fypsleh>`_  by Jeff Listfield, 2017
+  * `Where do Google's flaky tests come from? <https://testing.googleblog.com/2017/04/where-do-our-flaky-tests-come-from.html>`_  by Jeff Listfield, 2017

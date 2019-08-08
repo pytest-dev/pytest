@@ -29,7 +29,7 @@ then you can just invoke ``pytest`` directly:
 
     $ pytest
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
+    platform linux -- Python 3.x.y, pytest-5.x.y, py-1.x.y, pluggy-0.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR
     collected 1 item
@@ -58,7 +58,7 @@ and functions, including from test modules:
 
     $ pytest --doctest-modules
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
+    platform linux -- Python 3.x.y, pytest-5.x.y, py-1.x.y, pluggy-0.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR
     collected 2 items
@@ -191,15 +191,21 @@ namespace in which your doctests run. It is intended to be used within
 your own fixtures to provide the tests that use them with context.
 
 ``doctest_namespace`` is a standard ``dict`` object into which you
-place the objects you want to appear in the doctest namespace::
+place the objects you want to appear in the doctest namespace:
+
+.. code-block:: python
 
     # content of conftest.py
     import numpy
+
+
     @pytest.fixture(autouse=True)
     def add_np(doctest_namespace):
-        doctest_namespace['np'] = numpy
+        doctest_namespace["np"] = numpy
 
-which can then be used in your doctests directly::
+which can then be used in your doctests directly:
+
+.. code-block:: python
 
     # content of numpy.py
     def arange():
@@ -219,7 +225,9 @@ Skipping tests dynamically
 
 .. versionadded:: 4.4
 
-You can use ``pytest.skip`` to dynamically skip doctests. For example::
+You can use ``pytest.skip`` to dynamically skip doctests. For example:
+
+.. code-block:: text
 
     >>> import sys, pytest
     >>> if sys.platform.startswith('win'):

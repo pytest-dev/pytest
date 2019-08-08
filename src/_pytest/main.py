@@ -2,8 +2,8 @@
 import enum
 import fnmatch
 import functools
+import importlib
 import os
-import pkgutil
 import sys
 import warnings
 
@@ -584,7 +584,13 @@ class Session(nodes.FSCollector):
             # Module itself, so just use that. If this special case isn't taken, then all
             # the files in the package will be yielded.
             if argpath.basename == "__init__.py":
-                yield next(m[0].collect())
+                try:
+                    yield next(m[0].collect())
+                except StopIteration:
+                    # The package collects nothing with only an __init__.py
+                    # file in it, which gets ignored by the default
+                    # "python_files" option.
+                    pass
                 return
             yield from m
 
@@ -630,21 +636,18 @@ class Session(nodes.FSCollector):
     def _tryconvertpyarg(self, x):
         """Convert a dotted module name to path."""
         try:
-            loader = pkgutil.find_loader(x)
-        except ImportError:
+            spec = importlib.util.find_spec(x)
+        # AttributeError: looks like package module, but actually filename
+        # ImportError: module does not exist
+        # ValueError: not a module name
+        except (AttributeError, ImportError, ValueError):
             return x
-        if loader is None:
+        if spec is None or spec.origin in {None, "namespace"}:
             return x
-        # This method is sometimes invoked when AssertionRewritingHook, which
-        # does not define a get_filename method, is already in place:
-        try:
-            path = loader.get_filename(x)
-        except AttributeError:
-            # Retrieve path from AssertionRewritingHook:
-            path = loader.modules[x][0].co_filename
-        if loader.is_package(x):
-            path = os.path.dirname(path)
-        return path
+        elif spec.submodule_search_locations:
+            return os.path.dirname(spec.origin)
+        else:
+            return spec.origin
 
     def _parsearg(self, arg):
         """ return (fspath, names) tuple after checking the file exists. """

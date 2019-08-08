@@ -1,3 +1,5 @@
+import os
+import stat
 import sys
 
 import attr
@@ -310,22 +312,6 @@ class TestNumberedDir:
             p, consider_lock_dead_if_created_before=p.stat().st_mtime + 1
         )
 
-    def test_rmtree(self, tmp_path):
-        from _pytest.pathlib import rmtree
-
-        adir = tmp_path / "adir"
-        adir.mkdir()
-        rmtree(adir)
-
-        assert not adir.exists()
-
-        adir.mkdir()
-        afile = adir / "afile"
-        afile.write_bytes(b"aa")
-
-        rmtree(adir, force=True)
-        assert not adir.exists()
-
     def test_cleanup_ignores_symlink(self, tmp_path):
         the_symlink = tmp_path / (self.PREFIX + "current")
         attempt_symlink_to(the_symlink, tmp_path / (self.PREFIX + "5"))
@@ -336,6 +322,83 @@ class TestNumberedDir:
         pathlib.create_cleanup_lock(folder)
         pathlib.maybe_delete_a_numbered_dir(folder)
         assert folder.is_dir()
+
+
+class TestRmRf:
+    def test_rm_rf(self, tmp_path):
+        from _pytest.pathlib import rm_rf
+
+        adir = tmp_path / "adir"
+        adir.mkdir()
+        rm_rf(adir)
+
+        assert not adir.exists()
+
+        adir.mkdir()
+        afile = adir / "afile"
+        afile.write_bytes(b"aa")
+
+        rm_rf(adir)
+        assert not adir.exists()
+
+    def test_rm_rf_with_read_only_file(self, tmp_path):
+        """Ensure rm_rf can remove directories with read-only files in them (#5524)"""
+        from _pytest.pathlib import rm_rf
+
+        fn = tmp_path / "dir/foo.txt"
+        fn.parent.mkdir()
+
+        fn.touch()
+
+        self.chmod_r(fn)
+
+        rm_rf(fn.parent)
+
+        assert not fn.parent.is_dir()
+
+    def chmod_r(self, path):
+        mode = os.stat(str(path)).st_mode
+        os.chmod(str(path), mode & ~stat.S_IWRITE)
+
+    def test_rm_rf_with_read_only_directory(self, tmp_path):
+        """Ensure rm_rf can remove read-only directories (#5524)"""
+        from _pytest.pathlib import rm_rf
+
+        adir = tmp_path / "dir"
+        adir.mkdir()
+
+        (adir / "foo.txt").touch()
+        self.chmod_r(adir)
+
+        rm_rf(adir)
+
+        assert not adir.is_dir()
+
+    def test_on_rm_rf_error(self, tmp_path):
+        from _pytest.pathlib import on_rm_rf_error
+
+        adir = tmp_path / "dir"
+        adir.mkdir()
+
+        fn = adir / "foo.txt"
+        fn.touch()
+        self.chmod_r(fn)
+
+        # unknown exception
+        with pytest.warns(pytest.PytestWarning):
+            exc_info = (None, RuntimeError(), None)
+            on_rm_rf_error(os.unlink, str(fn), exc_info, start_path=tmp_path)
+            assert fn.is_file()
+
+        # unknown function
+        with pytest.warns(pytest.PytestWarning):
+            exc_info = (None, PermissionError(), None)
+            on_rm_rf_error(None, str(fn), exc_info, start_path=tmp_path)
+            assert fn.is_file()
+
+        exc_info = (None, PermissionError(), None)
+        on_rm_rf_error(os.unlink, str(fn), exc_info, start_path=tmp_path)
+        assert not fn.is_file()
 
 
 def attempt_symlink_to(path, to_path):
@@ -349,3 +412,24 @@ def attempt_symlink_to(path, to_path):
 
 def test_tmpdir_equals_tmp_path(tmpdir, tmp_path):
     assert Path(tmpdir) == tmp_path
+
+
+def test_basetemp_with_read_only_files(testdir):
+    """Integration test for #5524"""
+    testdir.makepyfile(
+        """
+        import os
+        import stat
+
+        def test(tmp_path):
+            fn = tmp_path / 'foo.txt'
+            fn.write_text('hello')
+            mode = os.stat(str(fn)).st_mode
+            os.chmod(str(fn), mode & ~stat.S_IREAD)
+    """
+    )
+    result = testdir.runpytest("--basetemp=tmp")
+    assert result.ret == 0
+    # running a second time and ensure we don't crash
+    result = testdir.runpytest("--basetemp=tmp")
+    assert result.ret == 0

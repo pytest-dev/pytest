@@ -139,6 +139,7 @@ default_plugins = essential_plugins + (
     "warnings",
     "logging",
     "reports",
+    "faulthandler",
 )
 
 builtin_plugins = set(default_plugins)
@@ -289,7 +290,7 @@ class PytestPluginManager(PluginManager):
         return opts
 
     def register(self, plugin, name=None):
-        if name in ["pytest_catchlog", "pytest_capturelog"]:
+        if name in _pytest.deprecated.DEPRECATED_EXTERNAL_PLUGINS:
             warnings.warn(
                 PytestConfigWarning(
                     "{} plugin has been merged into the core, "

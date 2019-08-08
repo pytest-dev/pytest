@@ -49,15 +49,20 @@ Using print statements for debugging
 ---------------------------------------------------
 
 One primary benefit of the default capturing of stdout/stderr output
-is that you can use print statements for debugging::
+is that you can use print statements for debugging:
+
+.. code-block:: python
 
     # content of test_module.py
+
 
     def setup_function(function):
         print("setting up %s" % function)
 
+
     def test_func1():
         assert True
+
 
     def test_func2():
         assert False
@@ -69,7 +74,7 @@ of the failing function and hide the other one:
 
     $ pytest
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
+    platform linux -- Python 3.x.y, pytest-5.x.y, py-1.x.y, pluggy-0.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR
     collected 2 items

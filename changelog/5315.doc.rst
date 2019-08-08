@@ -1,1 +1,0 @@
-Expand docs on mocking classes and dictionaries with ``monkeypatch``.

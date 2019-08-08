@@ -1,2 +1,0 @@
-Emit a warning when attempting to unwrap a broken object raises an exception,
-for easier debugging (`#5080 <https://github.com/pytest-dev/pytest/issues/5080>`__).

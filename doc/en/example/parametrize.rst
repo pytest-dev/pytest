@@ -19,24 +19,30 @@ Generating parameters combinations, depending on command line
 
 Let's say we want to execute a test with different computation
 parameters and the parameter range shall be determined by a command
-line argument.  Let's first write a simple (do-nothing) computation test::
+line argument.  Let's first write a simple (do-nothing) computation test:
+
+.. code-block:: python
 
     # content of test_compute.py
+
 
     def test_compute(param1):
         assert param1 < 4
 
-Now we add a test configuration like this::
+Now we add a test configuration like this:
+
+.. code-block:: python
 
     # content of conftest.py
 
+
     def pytest_addoption(parser):
-        parser.addoption("--all", action="store_true",
-            help="run all combinations")
+        parser.addoption("--all", action="store_true", help="run all combinations")
+
 
     def pytest_generate_tests(metafunc):
-        if 'param1' in metafunc.fixturenames:
-            if metafunc.config.getoption('all'):
+        if "param1" in metafunc.fixturenames:
+            if metafunc.config.getoption("all"):
                 end = 5
             else:
                 end = 2
@@ -83,7 +89,9 @@ Running pytest with ``--collect-only`` will show the generated IDs.
 
 Numbers, strings, booleans and None will have their usual string representation
 used in the test ID. For other objects, pytest will make a string based on
-the argument name::
+the argument name:
+
+.. code-block:: python
 
     # content of test_time.py
 
@@ -112,7 +120,7 @@ the argument name::
     def idfn(val):
         if isinstance(val, (datetime,)):
             # note this wouldn't show any hours/minutes/seconds
-            return val.strftime('%Y%m%d')
+            return val.strftime("%Y%m%d")
 
 
     @pytest.mark.parametrize("a,b,expected", testdata, ids=idfn)
@@ -120,12 +128,18 @@ the argument name::
         diff = a - b
         assert diff == expected
 
-    @pytest.mark.parametrize("a,b,expected", [
-        pytest.param(datetime(2001, 12, 12), datetime(2001, 12, 11),
-                     timedelta(1), id='forward'),
-        pytest.param(datetime(2001, 12, 11), datetime(2001, 12, 12),
-                     timedelta(-1), id='backward'),
-    ])
+
+    @pytest.mark.parametrize(
+        "a,b,expected",
+        [
+            pytest.param(
+                datetime(2001, 12, 12), datetime(2001, 12, 11), timedelta(1), id="forward"
+            ),
+            pytest.param(
+                datetime(2001, 12, 11), datetime(2001, 12, 12), timedelta(-1), id="backward"
+            ),
+        ],
+    )
     def test_timedistance_v3(a, b, expected):
         diff = a - b
         assert diff == expected
@@ -144,7 +158,7 @@ objects, they are still using the default pytest representation:
 
     $ pytest test_time.py --collect-only
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
+    platform linux -- Python 3.x.y, pytest-5.x.y, py-1.x.y, pluggy-0.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR
     collected 8 items
@@ -171,9 +185,12 @@ A quick port of "testscenarios"
 Here is a quick port to run tests configured with `test scenarios`_,
 an add-on from Robert Collins for the standard unittest framework. We
 only have to work a bit to construct the correct arguments for pytest's
-:py:func:`Metafunc.parametrize`::
+:py:func:`Metafunc.parametrize`:
+
+.. code-block:: python
 
     # content of test_scenarios.py
+
 
     def pytest_generate_tests(metafunc):
         idlist = []
@@ -182,13 +199,15 @@ only have to work a bit to construct the correct arguments for pytest's
             idlist.append(scenario[0])
             items = scenario[1].items()
             argnames = [x[0] for x in items]
-            argvalues.append(([x[1] for x in items]))
+            argvalues.append([x[1] for x in items])
         metafunc.parametrize(argnames, argvalues, ids=idlist, scope="class")
 
-    scenario1 = ('basic', {'attribute': 'value'})
-    scenario2 = ('advanced', {'attribute': 'value2'})
 
-    class TestSampleWithScenarios(object):
+    scenario1 = ("basic", {"attribute": "value"})
+    scenario2 = ("advanced", {"attribute": "value2"})
+
+
+    class TestSampleWithScenarios:
         scenarios = [scenario1, scenario2]
 
         def test_demo1(self, attribute):
@@ -203,7 +222,7 @@ this is a fully self-contained example which you can run with:
 
     $ pytest test_scenarios.py
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
+    platform linux -- Python 3.x.y, pytest-5.x.y, py-1.x.y, pluggy-0.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR
     collected 4 items
@@ -218,7 +237,7 @@ If you just collect tests you'll also nicely see 'advanced' and 'basic' as varia
 
     $ pytest --collect-only test_scenarios.py
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
+    platform linux -- Python 3.x.y, pytest-5.x.y, py-1.x.y, pluggy-0.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR
     collected 4 items
@@ -244,11 +263,15 @@ The parametrization of test functions happens at collection
 time.  It is a good idea to setup expensive resources like DB
 connections or subprocess only when the actual test is run.
 Here is a simple example how you can achieve that, first
-the actual test requiring a ``db`` object::
+the actual test requiring a ``db`` object:
+
+.. code-block:: python
 
     # content of test_backends.py
 
     import pytest
+
+
     def test_db_initialized(db):
         # a dummy test
         if db.__class__.__name__ == "DB2":
@@ -256,19 +279,26 @@ the actual test requiring a ``db`` object::
 
 We can now add a test configuration that generates two invocations of
 the ``test_db_initialized`` function and also implements a factory that
-creates a database object for the actual test invocations::
+creates a database object for the actual test invocations:
+
+.. code-block:: python
 
     # content of conftest.py
     import pytest
 
-    def pytest_generate_tests(metafunc):
-        if 'db' in metafunc.fixturenames:
-            metafunc.parametrize("db", ['d1', 'd2'], indirect=True)
 
-    class DB1(object):
+    def pytest_generate_tests(metafunc):
+        if "db" in metafunc.fixturenames:
+            metafunc.parametrize("db", ["d1", "d2"], indirect=True)
+
+
+    class DB1:
         "one database object"
-    class DB2(object):
+
+
+    class DB2:
         "alternative database object"
+
 
     @pytest.fixture
     def db(request):
@@ -285,7 +315,7 @@ Let's first see how it looks like at collection time:
 
     $ pytest test_backends.py --collect-only
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
+    platform linux -- Python 3.x.y, pytest-5.x.y, py-1.x.y, pluggy-0.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR
     collected 2 items
@@ -327,23 +357,29 @@ parameter on particular arguments. It can be done by passing list or tuple of
 arguments' names to ``indirect``. In the example below there is a function ``test_indirect`` which uses
 two fixtures: ``x`` and ``y``. Here we give to indirect the list, which contains the name of the
 fixture ``x``. The indirect parameter will be applied to this argument only, and the value ``a``
-will be passed to respective fixture function::
+will be passed to respective fixture function:
+
+.. code-block:: python
 
     # content of test_indirect_list.py
 
     import pytest
-    @pytest.fixture(scope='function')
+
+
+    @pytest.fixture(scope="function")
     def x(request):
         return request.param * 3
 
-    @pytest.fixture(scope='function')
+
+    @pytest.fixture(scope="function")
     def y(request):
         return request.param * 2
 
-    @pytest.mark.parametrize('x, y', [('a', 'b')], indirect=['x'])
-    def test_indirect(x,y):
-        assert x == 'aaa'
-        assert y == 'b'
+
+    @pytest.mark.parametrize("x, y", [("a", "b")], indirect=["x"])
+    def test_indirect(x, y):
+        assert x == "aaa"
+        assert y == "b"
 
 The result of this test will be successful:
 
@@ -351,7 +387,7 @@ The result of this test will be successful:
 
     $ pytest test_indirect_list.py --collect-only
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
+    platform linux -- Python 3.x.y, pytest-5.x.y, py-1.x.y, pluggy-0.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR
     collected 1 item
@@ -370,23 +406,28 @@ Parametrizing test methods through per-class configuration
 
 Here is an example ``pytest_generate_tests`` function implementing a
 parametrization scheme similar to Michael Foord's `unittest
-parametrizer`_ but in a lot less code::
+parametrizer`_ but in a lot less code:
+
+.. code-block:: python
 
     # content of ./test_parametrize.py
     import pytest
+
 
     def pytest_generate_tests(metafunc):
         # called once per each test function
         funcarglist = metafunc.cls.params[metafunc.function.__name__]
         argnames = sorted(funcarglist[0])
-        metafunc.parametrize(argnames, [[funcargs[name] for name in argnames]
-                for funcargs in funcarglist])
+        metafunc.parametrize(
+            argnames, [[funcargs[name] for name in argnames] for funcargs in funcarglist]
+        )
 
-    class TestClass(object):
+
+    class TestClass:
         # a map specifying multiple argument sets for a test method
         params = {
-            'test_equals': [dict(a=1, b=2), dict(a=3, b=3), ],
-            'test_zerodivision': [dict(a=1, b=0), ],
+            "test_equals": [dict(a=1, b=2), dict(a=3, b=3)],
+            "test_zerodivision": [dict(a=1, b=0)],
         }
 
         def test_equals(self, a, b):
@@ -434,10 +475,11 @@ Running it results in some skips if we don't have all the python interpreters in
 .. code-block:: pytest
 
    . $ pytest -rs -q multipython.py
-   ...sss...sssssssss...sss...                                          [100%]
+   ssssssssssss...ssssssssssss                                          [100%]
    ========================= short test summary info ==========================
-   SKIPPED [15] $REGENDOC_TMPDIR/CWD/multipython.py:31: 'python3.4' not found
-   12 passed, 15 skipped in 0.12 seconds
+   SKIPPED [12] $REGENDOC_TMPDIR/CWD/multipython.py:30: 'python3.5' not found
+   SKIPPED [12] $REGENDOC_TMPDIR/CWD/multipython.py:30: 'python3.7' not found
+   3 passed, 24 skipped in 0.12 seconds
 
 Indirect parametrization of optional implementations/imports
 --------------------------------------------------------------------
@@ -446,35 +488,46 @@ If you want to compare the outcomes of several implementations of a given
 API, you can write test functions that receive the already imported implementations
 and get skipped in case the implementation is not importable/available.  Let's
 say we have a "base" implementation and the other (possibly optimized ones)
-need to provide similar results::
+need to provide similar results:
+
+.. code-block:: python
 
     # content of conftest.py
 
     import pytest
 
+
     @pytest.fixture(scope="session")
     def basemod(request):
         return pytest.importorskip("base")
+
 
     @pytest.fixture(scope="session", params=["opt1", "opt2"])
     def optmod(request):
         return pytest.importorskip(request.param)
 
-And then a base implementation of a simple function::
+And then a base implementation of a simple function:
+
+.. code-block:: python
 
     # content of base.py
     def func1():
         return 1
 
-And an optimized version::
+And an optimized version:
+
+.. code-block:: python
 
     # content of opt1.py
     def func1():
         return 1.0001
 
-And finally a little test module::
+And finally a little test module:
+
+.. code-block:: python
 
     # content of test_module.py
+
 
     def test_func1(basemod, optmod):
         assert round(basemod.func1(), 3) == round(optmod.func1(), 3)
@@ -486,7 +539,7 @@ If you run this with reporting for skips enabled:
 
     $ pytest -rs test_module.py
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
+    platform linux -- Python 3.x.y, pytest-5.x.y, py-1.x.y, pluggy-0.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR
     collected 2 items
@@ -548,16 +601,16 @@ Then run ``pytest`` with verbose mode and with only the ``basic`` marker:
 
     $ pytest -v -m basic
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python
+    platform linux -- Python 3.x.y, pytest-5.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python
     cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR
-    collecting ... collected 17 items / 14 deselected / 3 selected
+    collecting ... collected 18 items / 15 deselected / 3 selected
 
     test_pytest_param_example.py::test_eval[1+7-8] PASSED                [ 33%]
     test_pytest_param_example.py::test_eval[basic_2+4] PASSED            [ 66%]
     test_pytest_param_example.py::test_eval[basic_6*9] XFAIL             [100%]
 
-    ============ 2 passed, 14 deselected, 1 xfailed in 0.12 seconds ============
+    ============ 2 passed, 15 deselected, 1 xfailed in 0.12 seconds ============
 
 As the result:
 
@@ -578,22 +631,28 @@ Use :func:`pytest.raises` with the
 in which some tests raise exceptions and others do not.
 
 It is helpful to define a no-op context manager ``does_not_raise`` to serve
-as a complement to ``raises``. For example::
+as a complement to ``raises``. For example:
+
+.. code-block:: python
 
     from contextlib import contextmanager
     import pytest
+
 
     @contextmanager
     def does_not_raise():
         yield
 
 
-    @pytest.mark.parametrize('example_input,expectation', [
-        (3, does_not_raise()),
-        (2, does_not_raise()),
-        (1, does_not_raise()),
-        (0, pytest.raises(ZeroDivisionError)),
-    ])
+    @pytest.mark.parametrize(
+        "example_input,expectation",
+        [
+            (3, does_not_raise()),
+            (2, does_not_raise()),
+            (1, does_not_raise()),
+            (0, pytest.raises(ZeroDivisionError)),
+        ],
+    )
     def test_division(example_input, expectation):
         """Test how much I know division."""
         with expectation:
@@ -603,14 +662,20 @@ In the example above, the first three test cases should run unexceptionally,
 while the fourth should raise ``ZeroDivisionError``.
 
 If you're only supporting Python 3.7+, you can simply use ``nullcontext``
-to define ``does_not_raise``::
+to define ``does_not_raise``:
+
+.. code-block:: python
 
     from contextlib import nullcontext as does_not_raise
 
-Or, if you're supporting Python 3.3+ you can use::
+Or, if you're supporting Python 3.3+ you can use:
+
+.. code-block:: python
 
     from contextlib import ExitStack as does_not_raise
 
-Or, if desired, you can ``pip install contextlib2`` and use::
+Or, if desired, you can ``pip install contextlib2`` and use:
+
+.. code-block:: python
 
     from contextlib2 import ExitStack as does_not_raise

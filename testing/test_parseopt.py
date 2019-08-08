@@ -200,7 +200,7 @@ class TestParser:
 
     def test_drop_short_helper(self):
         parser = argparse.ArgumentParser(
-            formatter_class=parseopt.DropShorterLongHelpFormatter
+            formatter_class=parseopt.DropShorterLongHelpFormatter, allow_abbrev=False
         )
         parser.add_argument(
             "-t", "--twoword", "--duo", "--two-word", "--two", help="foo"
@@ -239,10 +239,8 @@ class TestParser:
         parser.addoption("--funcarg", "--func-arg", action="store_true")
         parser.addoption("--abc-def", "--abc-def", action="store_true")
         parser.addoption("--klm-hij", action="store_true")
-        args = parser.parse(["--funcarg", "--k"])
-        assert args.funcarg is True
-        assert args.abc_def is False
-        assert args.klm_hij is True
+        with pytest.raises(UsageError):
+            parser.parse(["--funcarg", "--k"])
 
     def test_drop_short_2(self, parser):
         parser.addoption("--func-arg", "--doit", action="store_true")

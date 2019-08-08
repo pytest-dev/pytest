@@ -26,7 +26,10 @@ class TempPathFactory:
         # using os.path.abspath() to get absolute path instead of resolve() as it
         # does not work the same in all platforms (see #4427)
         # Path.absolute() exists, but it is not public (see https://bugs.python.org/issue25012)
-        converter=attr.converters.optional(lambda p: Path(os.path.abspath(str(p))))
+        # Ignore type because of https://github.com/python/mypy/issues/6172.
+        converter=attr.converters.optional(
+            lambda p: Path(os.path.abspath(str(p)))  # type: ignore
+        )
     )
     _trace = attr.ib()
     _basetemp = attr.ib(default=None)

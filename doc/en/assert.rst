@@ -31,7 +31,7 @@ you will see the return value of the function call:
 
     $ pytest test_assert1.py
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
+    platform linux -- Python 3.x.y, pytest-5.x.y, py-1.x.y, pluggy-0.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR
     collected 1 item
@@ -186,7 +186,7 @@ if you run this module:
 
     $ pytest test_assert2.py
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
+    platform linux -- Python 3.x.y, pytest-5.x.y, py-1.x.y, pluggy-0.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR
     collected 1 item
@@ -238,14 +238,17 @@ file which provides an alternative explanation for ``Foo`` objects:
 
    def pytest_assertrepr_compare(op, left, right):
        if isinstance(left, Foo) and isinstance(right, Foo) and op == "==":
-           return ["Comparing Foo instances:", "   vals: %s != %s" % (left.val, right.val)]
+           return [
+               "Comparing Foo instances:",
+               "   vals: {} != {}".format(left.val, right.val),
+           ]
 
 now, given this test module:
 
 .. code-block:: python
 
    # content of test_foocompare.py
-   class Foo(object):
+   class Foo:
        def __init__(self, val):
            self.val = val
 

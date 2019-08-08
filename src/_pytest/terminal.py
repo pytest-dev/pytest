@@ -77,8 +77,7 @@ def pytest_addoption(parser):
         help="show extra test summary info as specified by chars: (f)ailed, "
         "(E)rror, (s)kipped, (x)failed, (X)passed, "
         "(p)assed, (P)assed with output, (a)ll except passed (p/P), or (A)ll. "
-        "Warnings are displayed at all times except when "
-        "--disable-warnings is set.",
+        "(w)arnings are enabled by default (see --disable-warnings).",
     )
     group._addoption(
         "--disable-warnings",
@@ -698,7 +697,7 @@ class TerminalReporter:
             else:
                 excrepr.reprcrash.toterminal(self._tw)
                 self._tw.line(
-                    "(to show a full traceback on KeyboardInterrupt use --fulltrace)",
+                    "(to show a full traceback on KeyboardInterrupt use --full-trace)",
                     yellow=True,
                 )
 

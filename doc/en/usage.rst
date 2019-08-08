@@ -33,7 +33,19 @@ Running ``pytest`` can result in six different exit codes:
 :Exit code 4: pytest command line usage error
 :Exit code 5: No tests were collected
 
-They are represented by the :class:`_pytest.main.ExitCode` enum.
+They are represented by the :class:`_pytest.main.ExitCode` enum. The exit codes being a part of the public API can be imported and accessed directly using:
+
+.. code-block:: python
+
+    from pytest import ExitCode
+
+.. note::
+
+    If you would like to customize the exit code in some scenarios, specially when
+    no tests are collected, consider using the
+    `pytest-custom_exit_code <https://github.com/yashtodi94/pytest-custom_exit_code>`__
+    plugin.
+
 
 Getting help on version, option names, environment variables
 --------------------------------------------------------------
@@ -204,7 +216,7 @@ Example:
 
     $ pytest -ra
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
+    platform linux -- Python 3.x.y, pytest-5.x.y, py-1.x.y, pluggy-0.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR
     collected 6 items
@@ -258,7 +270,7 @@ More than one character can be used, so for example to only see failed and skipp
 
     $ pytest -rfs
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
+    platform linux -- Python 3.x.y, pytest-5.x.y, py-1.x.y, pluggy-0.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR
     collected 6 items
@@ -294,7 +306,7 @@ captured output:
 
     $ pytest -rpP
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
+    platform linux -- Python 3.x.y, pytest-5.x.y, py-1.x.y, pluggy-0.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR
     collected 6 items
@@ -410,7 +422,6 @@ Pytest supports the use of ``breakpoint()`` with the following behaviours:
 Profiling test execution duration
 -------------------------------------
 
-.. versionadded: 2.2
 
 To get a list of the slowest 10 test durations:
 
@@ -419,6 +430,38 @@ To get a list of the slowest 10 test durations:
     pytest --durations=10
 
 By default, pytest will not show test durations that are too small (<0.01s) unless ``-vv`` is passed on the command-line.
+
+
+.. _faulthandler:
+
+Fault Handler
+-------------
+
+.. versionadded:: 5.0
+
+The `faulthandler <https://docs.python.org/3/library/faulthandler.html>`__ standard module
+can be used to dump Python tracebacks on a segfault or after a timeout.
+
+The module is automatically enabled for pytest runs, unless the ``-p no:faulthandler`` is given
+on the command-line.
+
+Also the :confval:`faulthandler_timeout=X<faulthandler_timeout>` configuration option can be used
+to dump the traceback of all threads if a test takes longer than ``X``
+seconds to finish (not available on Windows).
+
+.. note::
+
+    This functionality has been integrated from the external
+    `pytest-faulthandler <https://github.com/pytest-dev/pytest-faulthandler>`__ plugin, with two
+    small differences:
+
+    * To disable it, use ``-p no:faulthandler`` instead of ``--no-faulthandler``: the former
+      can be used with any plugin, so it saves one option.
+
+    * The ``--faulthandler-timeout`` command-line option has become the
+      :confval:`faulthandler_timeout` configuration option. It can still be configured from
+      the command-line using ``-o faulthandler_timeout=X``.
+
 
 Creating JUnitXML format files
 ----------------------------------------------------
@@ -609,7 +652,7 @@ to all tests.
         record_testsuite_property("STORAGE_TYPE", "CEPH")
 
 
-    class TestMe(object):
+    class TestMe:
         def test_foo(self):
             assert True
 
@@ -711,23 +754,32 @@ Calling pytest from Python code
 
 
 
-You can invoke ``pytest`` from Python code directly::
+You can invoke ``pytest`` from Python code directly:
+
+.. code-block:: python
 
     pytest.main()
 
 this acts as if you would call "pytest" from the command line.
 It will not raise ``SystemExit`` but return the exitcode instead.
-You can pass in options and arguments::
+You can pass in options and arguments:
 
-    pytest.main(['-x', 'mytestdir'])
+.. code-block:: python
 
-You can specify additional plugins to ``pytest.main``::
+    pytest.main(["-x", "mytestdir"])
+
+You can specify additional plugins to ``pytest.main``:
+
+.. code-block:: python
 
     # content of myinvoke.py
     import pytest
-    class MyPlugin(object):
+
+
+    class MyPlugin:
         def pytest_sessionfinish(self):
             print("*** test run reporting finishing")
+
 
     pytest.main(["-qq"], plugins=[MyPlugin()])
 

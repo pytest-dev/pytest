@@ -14,6 +14,10 @@ env:
   global:
     - PYTEST_ADDOPTS=-vv
 
+# setuptools-scm needs all tags in order to obtain a proper version
+git:
+  depth: false
+
 install:
   - python -m pip install --upgrade --pre tox
 
@@ -56,10 +60,8 @@ jobs:
     - env: TOXENV=py37-pluggymaster-xdist
     - env: TOXENV=py37-freeze
 
-    # Jobs only run via Travis cron jobs (currently daily).
     - env: TOXENV=py38-xdist
       python: '3.8-dev'
-      if: type = cron
 
     - stage: baseline
       env: TOXENV=py36-xdist

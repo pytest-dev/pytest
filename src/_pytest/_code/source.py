@@ -44,7 +44,8 @@ class Source:
                 return str(self) == other
             return False
 
-    __hash__ = None
+    # Ignore type because of https://github.com/python/mypy/issues/4266.
+    __hash__ = None  # type: ignore
 
     def __getitem__(self, key):
         if isinstance(key, int):

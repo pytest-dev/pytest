@@ -1,5 +1,6 @@
 """(disabled by default) support for testing pytest and pytest plugins."""
 import gc
+import importlib
 import os
 import platform
 import re
@@ -794,6 +795,11 @@ class Testdir:
 
         :return: a :py:class:`HookRecorder` instance
         """
+        # (maybe a cpython bug?) the importlib cache sometimes isn't updated
+        # properly between file creation and inline_run (especially if imports
+        # are interspersed with file creation)
+        importlib.invalidate_caches()
+
         plugins = list(plugins)
         finalizers = []
         try:
@@ -802,20 +808,6 @@ class Testdir:
             for k, v in self._env_run_update.items():
                 mp_run.setenv(k, v)
             finalizers.append(mp_run.undo)
-
-            from _pytest.assertion.rewrite import AssertionRewritingHook
-
-            # When running pytest inline any plugins active in the main test
-            # process are already imported.  So this disables the warning which
-            # will trigger to say they can no longer be rewritten, which is
-            # fine as they have already been rewritten.
-            orig_warn = AssertionRewritingHook._warn_already_imported
-
-            def revert_warn_already_imported():
-                AssertionRewritingHook._warn_already_imported = orig_warn
-
-            finalizers.append(revert_warn_already_imported)
-            AssertionRewritingHook._warn_already_imported = lambda *a: None
 
             # Any sys.module or sys.path changes done while running pytest
             # inline should be reverted after the test run completes to avoid

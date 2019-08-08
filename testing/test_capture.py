@@ -735,7 +735,7 @@ def test_capture_badoutput_issue412(testdir):
             assert 0
         """
     )
-    result = testdir.runpytest("--cap=fd")
+    result = testdir.runpytest("--capture=fd")
     result.stdout.fnmatch_lines(
         """
         *def test_func*

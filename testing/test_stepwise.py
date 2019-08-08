@@ -165,3 +165,57 @@ def test_stop_on_collection_errors(broken_testdir, broken_first):
         files.reverse()
     result = broken_testdir.runpytest("-v", "--strict-markers", "--stepwise", *files)
     result.stdout.fnmatch_lines("*errors during collection*")
+
+
+def test_xfail_handling(testdir):
+    """Ensure normal xfail is ignored, and strict xfail interrupts the session in sw mode
+
+    (#5547)
+    """
+    contents = """
+        import pytest
+        def test_a(): pass
+
+        @pytest.mark.xfail(strict={strict})
+        def test_b(): assert {assert_value}
+
+        def test_c(): pass
+        def test_d(): pass
+    """
+    testdir.makepyfile(contents.format(assert_value="0", strict="False"))
+    result = testdir.runpytest("--sw", "-v")
+    result.stdout.fnmatch_lines(
+        [
+            "*::test_a PASSED *",
+            "*::test_b XFAIL *",
+            "*::test_c PASSED *",
+            "*::test_d PASSED *",
+            "* 3 passed, 1 xfailed in *",
+        ]
+    )
+
+    testdir.makepyfile(contents.format(assert_value="1", strict="True"))
+    result = testdir.runpytest("--sw", "-v")
+    result.stdout.fnmatch_lines(
+        [
+            "*::test_a PASSED *",
+            "*::test_b FAILED *",
+            "* Interrupted*",
+            "* 1 failed, 1 passed in *",
+        ]
+    )
+
+    # because we are writing to the same file, mtime might not be affected enough to
+    # invalidate the cache, making this next run flaky
+    if testdir.tmpdir.join("__pycache__").exists():
+        testdir.tmpdir.join("__pycache__").remove()
+    testdir.makepyfile(contents.format(assert_value="0", strict="True"))
+    result = testdir.runpytest("--sw", "-v")
+    result.stdout.fnmatch_lines(
+        [
+            "*::test_b XFAIL *",
+            "*::test_c PASSED *",
+            "*::test_d PASSED *",
+            "* 2 passed, 1 deselected, 1 xfailed in *",
+        ]
+    )

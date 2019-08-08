@@ -13,16 +13,19 @@ class OutcomeException(BaseException):
     """
 
     def __init__(self, msg=None, pytrace=True):
+        if msg is not None and not isinstance(msg, str):
+            error_msg = (
+                "{} expected string as 'msg' parameter, got '{}' instead.\n"
+                "Perhaps you meant to use a mark?"
+            )
+            raise TypeError(error_msg.format(type(self).__name__, type(msg).__name__))
         BaseException.__init__(self, msg)
         self.msg = msg
         self.pytrace = pytrace
 
     def __repr__(self):
         if self.msg:
-            val = self.msg
-            if isinstance(val, bytes):
-                val = val.decode("UTF-8", errors="replace")
-            return val
+            return self.msg
         return "<{} instance>".format(self.__class__.__name__)
 
     __str__ = __repr__
@@ -70,7 +73,8 @@ def exit(msg, returncode=None):
     raise Exit(msg, returncode)
 
 
-exit.Exception = Exit
+# Ignore type because of https://github.com/python/mypy/issues/2087.
+exit.Exception = Exit  # type: ignore
 
 
 def skip(msg="", *, allow_module_level=False):
@@ -96,7 +100,8 @@ def skip(msg="", *, allow_module_level=False):
     raise Skipped(msg=msg, allow_module_level=allow_module_level)
 
 
-skip.Exception = Skipped
+# Ignore type because of https://github.com/python/mypy/issues/2087.
+skip.Exception = Skipped  # type: ignore
 
 
 def fail(msg="", pytrace=True):
@@ -111,7 +116,8 @@ def fail(msg="", pytrace=True):
     raise Failed(msg=msg, pytrace=pytrace)
 
 
-fail.Exception = Failed
+# Ignore type because of https://github.com/python/mypy/issues/2087.
+fail.Exception = Failed  # type: ignore
 
 
 class XFailed(Failed):
@@ -132,7 +138,8 @@ def xfail(reason=""):
     raise XFailed(reason)
 
 
-xfail.Exception = XFailed
+# Ignore type because of https://github.com/python/mypy/issues/2087.
+xfail.Exception = XFailed  # type: ignore
 
 
 def importorskip(modname, minversion=None, reason=None):
@@ -149,7 +156,6 @@ def importorskip(modname, minversion=None, reason=None):
 
     __tracebackhide__ = True
     compile(modname, "", "eval")  # to catch syntaxerrors
-    import_exc = None
 
     with warnings.catch_warnings():
         # make sure to ignore ImportWarnings that might happen because
@@ -159,12 +165,9 @@ def importorskip(modname, minversion=None, reason=None):
         try:
             __import__(modname)
         except ImportError as exc:
-            # Do not raise chained exception here(#1485)
-            import_exc = exc
-    if import_exc:
-        if reason is None:
-            reason = "could not import {!r}: {}".format(modname, import_exc)
-        raise Skipped(reason, allow_module_level=True)
+            if reason is None:
+                reason = "could not import {!r}: {}".format(modname, exc)
+            raise Skipped(reason, allow_module_level=True) from None
     mod = sys.modules[modname]
     if minversion is None:
         return mod

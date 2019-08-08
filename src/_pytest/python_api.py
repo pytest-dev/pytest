@@ -9,6 +9,7 @@ from collections.abc import Sized
 from decimal import Decimal
 from itertools import filterfalse
 from numbers import Number
+from typing import Union
 
 from more_itertools.more import always_iterable
 
@@ -58,7 +59,8 @@ class ApproxBase:
             a == self._approx_scalar(x) for a, x in self._yield_comparisons(actual)
         )
 
-    __hash__ = None
+    # Ignore type because of https://github.com/python/mypy/issues/4266.
+    __hash__ = None  # type: ignore
 
     def __ne__(self, actual):
         return not (actual == self)
@@ -202,8 +204,10 @@ class ApproxScalar(ApproxBase):
     Perform approximate comparisons where the expected value is a single number.
     """
 
-    DEFAULT_ABSOLUTE_TOLERANCE = 1e-12
-    DEFAULT_RELATIVE_TOLERANCE = 1e-6
+    # Using Real should be better than this Union, but not possible yet:
+    # https://github.com/python/typeshed/pull/3108
+    DEFAULT_ABSOLUTE_TOLERANCE = 1e-12  # type: Union[float, Decimal]
+    DEFAULT_RELATIVE_TOLERANCE = 1e-6  # type: Union[float, Decimal]
 
     def __repr__(self):
         """
@@ -261,7 +265,8 @@ class ApproxScalar(ApproxBase):
         # Return true if the two numbers are within the tolerance.
         return abs(self.expected - actual) <= self.tolerance
 
-    __hash__ = None
+    # Ignore type because of https://github.com/python/mypy/issues/4266.
+    __hash__ = None  # type: ignore
 
     @property
     def tolerance(self):
@@ -537,7 +542,7 @@ def raises(expected_exception, *args, **kwargs):
         string that may contain `special characters`__, the pattern can
         first be escaped with ``re.escape``.
 
-    __ https://docs.python.org/3/library/re.html#regular-expression-syntax
+        __ https://docs.python.org/3/library/re.html#regular-expression-syntax
 
     :kwparam message: **(deprecated since 4.1)** if specified, provides a custom failure message
         if the exception is not raised. See :ref:`the deprecation docs <raises message deprecated>` for a workaround.
@@ -691,7 +696,7 @@ def raises(expected_exception, *args, **kwargs):
     fail(message)
 
 
-raises.Exception = fail.Exception
+raises.Exception = fail.Exception  # type: ignore
 
 
 class RaisesContext:

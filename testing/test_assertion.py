@@ -137,8 +137,8 @@ class TestImportHookInstallation:
             "hamster.py": "",
             "test_foo.py": """\
                 def test_foo(pytestconfig):
-                    assert pytestconfig.pluginmanager.rewrite_hook.find_module('ham') is not None
-                    assert pytestconfig.pluginmanager.rewrite_hook.find_module('hamster') is None
+                    assert pytestconfig.pluginmanager.rewrite_hook.find_spec('ham') is not None
+                    assert pytestconfig.pluginmanager.rewrite_hook.find_spec('hamster') is None
             """,
         }
         testdir.makepyfile(**contents)
@@ -330,6 +330,27 @@ class TestAssert_reprcompare:
         diff = callequal(left, right)
         assert "- spam" in diff
         assert "+ eggs" in diff
+
+    def test_bytes_diff_normal(self):
+        """Check special handling for bytes diff (#5260)"""
+        diff = callequal(b"spam", b"eggs")
+
+        assert diff == [
+            "b'spam' == b'eggs'",
+            "At index 0 diff: b's' != b'e'",
+            "Use -v to get the full diff",
+        ]
+
+    def test_bytes_diff_verbose(self):
+        """Check special handling for bytes diff (#5260)"""
+        diff = callequal(b"spam", b"eggs", verbose=True)
+        assert diff == [
+            "b'spam' == b'eggs'",
+            "At index 0 diff: b's' != b'e'",
+            "Full diff:",
+            "- b'spam'",
+            "+ b'eggs'",
+        ]
 
     def test_list(self):
         expl = callequal([0, 1], [0, 2])

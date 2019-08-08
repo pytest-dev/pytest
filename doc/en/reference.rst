@@ -1,5 +1,5 @@
-Reference
-=========
+API Reference
+=============
 
 This page contains the full reference to pytest's API.
 
@@ -469,9 +469,11 @@ testdir
 This fixture provides a :class:`Testdir` instance useful for black-box testing of test files, making it ideal to
 test plugins.
 
-To use it, include in your top-most ``conftest.py`` file::
+To use it, include in your top-most ``conftest.py`` file:
 
-    pytest_plugins = 'pytester'
+.. code-block:: python
+
+    pytest_plugins = "pytester"
 
 
 
@@ -665,15 +667,14 @@ Session related reporting hooks:
 .. autofunction:: pytest_fixture_post_finalizer
 .. autofunction:: pytest_warning_captured
 
-And here is the central hook for reporting about
-test execution:
+Central hook for reporting about test execution:
 
 .. autofunction:: pytest_runtest_logreport
 
-You can also use this hook to customize assertion representation for some
-types:
+Assertion related hooks:
 
 .. autofunction:: pytest_assertrepr_compare
+.. autofunction:: pytest_assertion_pass
 
 
 Debugging/Interaction hooks
@@ -1002,6 +1003,8 @@ passed multiple times. The expected format is ``name=value``. For example::
 
    issuing ``pytest test_hello.py`` actually means::
 
+   .. code-block:: bash
+
         pytest --maxfail=2 -rf test_hello.py
 
    Default is to add no options.
@@ -1082,6 +1085,23 @@ passed multiple times. The expected format is ``name=value``. For example::
       The default value of this option is planned to change to ``xfail`` in future releases
       as this is considered less error prone, see `#3155 <https://github.com/pytest-dev/pytest/issues/3155>`_
       for more details.
+
+
+.. confval:: faulthandler_timeout
+
+   Dumps the tracebacks of all threads if a test takes longer than ``X`` seconds to run (including
+   fixture setup and teardown). Implemented using the `faulthandler.dump_traceback_later`_ function,
+   so all caveats there apply.
+
+   .. code-block:: ini
+
+        # content of pytest.ini
+        [pytest]
+        faulthandler_timeout=5
+
+   For more information please refer to :ref:`faulthandler`.
+
+.. _`faulthandler.dump_traceback_later`: https://docs.python.org/3/library/faulthandler.html#faulthandler.dump_traceback_later
 
 
 .. confval:: filterwarnings

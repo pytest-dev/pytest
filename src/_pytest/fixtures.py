@@ -6,6 +6,8 @@ import warnings
 from collections import defaultdict
 from collections import deque
 from collections import OrderedDict
+from typing import Dict
+from typing import Tuple
 
 import attr
 import py
@@ -31,6 +33,9 @@ from _pytest.deprecated import FIXTURE_NAMED_REQUEST
 from _pytest.outcomes import fail
 from _pytest.outcomes import TEST_OUTCOME
 
+if False:  # TYPE_CHECKING
+    from typing import Type
+
 
 @attr.s(frozen=True)
 class PseudoFixtureDef:
@@ -54,10 +59,10 @@ def pytest_sessionstart(session):
     session._fixturemanager = FixtureManager(session)
 
 
-scopename2class = {}
+scopename2class = {}  # type: Dict[str, Type[nodes.Node]]
 
 
-scope2props = dict(session=())
+scope2props = dict(session=())  # type: Dict[str, Tuple[str, ...]]
 scope2props["package"] = ("fspath",)
 scope2props["module"] = ("fspath", "module")
 scope2props["class"] = scope2props["module"] + ("cls",)
@@ -654,7 +659,7 @@ class SubRequest(FixtureRequest):
         # if the executing fixturedef was not explicitly requested in the argument list (via
         # getfixturevalue inside the fixture call) then ensure this fixture def will be finished
         # first
-        if fixturedef.argname not in self.funcargnames:
+        if fixturedef.argname not in self.fixturenames:
             fixturedef.addfinalizer(
                 functools.partial(self._fixturedef.finish, request=self)
             )
@@ -960,7 +965,8 @@ class FixtureFunctionMarker:
     scope = attr.ib()
     params = attr.ib(converter=attr.converters.optional(tuple))
     autouse = attr.ib(default=False)
-    ids = attr.ib(default=None, converter=_ensure_immutable_ids)
+    # Ignore type because of https://github.com/python/mypy/issues/6172.
+    ids = attr.ib(default=None, converter=_ensure_immutable_ids)  # type: ignore
     name = attr.ib(default=None)
 
     def __call__(self, function):

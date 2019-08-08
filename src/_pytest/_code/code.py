@@ -33,7 +33,8 @@ class Code:
     def __eq__(self, other):
         return self.raw == other.raw
 
-    __hash__ = None
+    # Ignore type because of https://github.com/python/mypy/issues/4266.
+    __hash__ = None  # type: ignore
 
     def __ne__(self, other):
         return not self == other
@@ -188,10 +189,10 @@ class TracebackEntry:
         """ path to the source code """
         return self.frame.code.path
 
-    def getlocals(self):
+    @property
+    def locals(self):
+        """ locals of underlaying frame """
         return self.frame.f_locals
-
-    locals = property(getlocals, None, None, "locals of underlaying frame")
 
     def getfirstlinesource(self):
         return self.frame.code.firstlineno
@@ -255,10 +256,10 @@ class TracebackEntry:
             line = "???"
         return "  File %r:%d in %s\n  %s\n" % (fn, self.lineno + 1, name, line)
 
+    @property
     def name(self):
+        """ co_name of underlaying code """
         return self.frame.code.raw.co_name
-
-    name = property(name, None, None, "co_name of underlaying code")
 
 
 class Traceback(list):
@@ -544,7 +545,7 @@ class ExceptionInfo:
         """
         __tracebackhide__ = True
         if not re.search(regexp, str(self.value)):
-            assert 0, "Pattern '{!s}' not found in '{!s}'".format(regexp, self.value)
+            assert 0, "Pattern {!r} not found in {!r}".format(regexp, str(self.value))
         return True
 
 

@@ -33,15 +33,18 @@ Other plugins may access the `config.cache`_ object to set/get
 Rerunning only failures or failures first
 -----------------------------------------------
 
-First, let's create 50 test invocation of which only 2 fail::
+First, let's create 50 test invocation of which only 2 fail:
+
+.. code-block:: python
 
     # content of test_50.py
     import pytest
 
+
     @pytest.mark.parametrize("i", range(50))
     def test_num(i):
         if i in (17, 25):
-           pytest.fail("bad luck")
+            pytest.fail("bad luck")
 
 If you run this for the first time you will see two failures:
 
@@ -80,7 +83,7 @@ If you then run it with ``--lf``:
 
     $ pytest --lf
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
+    platform linux -- Python 3.x.y, pytest-5.x.y, py-1.x.y, pluggy-0.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR
     collected 50 items / 48 deselected / 2 selected
@@ -113,8 +116,8 @@ If you then run it with ``--lf``:
     test_50.py:6: Failed
     ================= 2 failed, 48 deselected in 0.12 seconds ==================
 
-You have run only the two failing test from the last run, while 48 tests have
-not been run ("deselected").
+You have run only the two failing tests from the last run, while the 48 passing
+tests have not been run ("deselected").
 
 Now, if you run with the ``--ff`` option, all tests will be run but the first
 previous failures will be executed first (as can be seen from the series
@@ -124,7 +127,7 @@ of ``FF`` and dots):
 
     $ pytest --ff
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
+    platform linux -- Python 3.x.y, pytest-5.x.y, py-1.x.y, pluggy-0.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR
     collected 50 items
@@ -183,14 +186,18 @@ The new config.cache object
 Plugins or conftest.py support code can get a cached value using the
 pytest ``config`` object.  Here is a basic example plugin which
 implements a :ref:`fixture` which re-uses previously created state
-across pytest invocations::
+across pytest invocations:
+
+.. code-block:: python
 
     # content of test_caching.py
     import pytest
     import time
 
+
     def expensive_computation():
         print("running expensive computation...")
+
 
     @pytest.fixture
     def mydata(request):
@@ -200,6 +207,7 @@ across pytest invocations::
             val = 42
             request.config.cache.set("example/value", val)
         return val
+
 
     def test_function(mydata):
         assert mydata == 23
@@ -224,7 +232,7 @@ If you run this command for the first time, you can see the print statement:
     running expensive computation...
     1 failed in 0.12 seconds
 
-If you run it a second time the value will be retrieved from
+If you run it a second time, the value will be retrieved from
 the cache and nothing will be printed:
 
 .. code-block:: pytest
@@ -256,7 +264,7 @@ You can always peek at the content of the cache using the
 
     $ pytest --cache-show
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
+    platform linux -- Python 3.x.y, pytest-5.x.y, py-1.x.y, pluggy-0.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR
     cachedir: $PYTHON_PREFIX/.pytest_cache
@@ -284,7 +292,7 @@ filtering:
 
     $ pytest --cache-show example/*
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
+    platform linux -- Python 3.x.y, pytest-5.x.y, py-1.x.y, pluggy-0.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR
     cachedir: $PYTHON_PREFIX/.pytest_cache

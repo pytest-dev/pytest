@@ -1,0 +1,2 @@
+When invoking pytest's own testsuite with ``PYTHONDONTWRITEBYTECODE=1``,
+the ``test_xfail_handling`` test no longer fails.

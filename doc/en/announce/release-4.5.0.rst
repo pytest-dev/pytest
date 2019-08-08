@@ -28,7 +28,6 @@ Thanks to all who contributed to this release, among them:
 * Pulkit Goyal
 * Samuel Searles-Bryant
 * Zac Hatfield-Dodds
-* Zac-HD
 
 
 Happy testing,

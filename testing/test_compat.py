@@ -141,7 +141,8 @@ def test_safe_isclass():
     assert safe_isclass(type) is True
 
     class CrappyClass(Exception):
-        @property
+        # Type ignored because it's bypassed intentionally.
+        @property  # type: ignore
         def __class__(self):
             assert False, "Should be ignored"
 

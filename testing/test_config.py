@@ -122,6 +122,12 @@ class TestParseIni:
         config = testdir.parseconfigure(sub)
         assert config.getini("minversion") == "2.0"
 
+    def test_ini_parse_error(self, testdir):
+        testdir.tmpdir.join("pytest.ini").write("addopts = -x")
+        result = testdir.runpytest()
+        assert result.ret != 0
+        result.stderr.fnmatch_lines(["ERROR: *pytest.ini:1: no section header defined"])
+
     @pytest.mark.xfail(reason="probably not needed")
     def test_confcutdir(self, testdir):
         sub = testdir.mkdir("sub")
@@ -741,10 +747,10 @@ def test_config_in_subdirectory_colon_command_line_issue2148(testdir):
         **{
             "conftest": conftest_source,
             "subdir/conftest": conftest_source,
-            "subdir/test_foo": """
+            "subdir/test_foo": """\
             def test_foo(pytestconfig):
                 assert pytestconfig.getini('foo') == 'subdir'
-        """,
+            """,
         }
     )
 
@@ -775,6 +781,12 @@ def test_notify_exception(testdir, capfd):
     config.notify_exception(excinfo, config.option)
     out, err = capfd.readouterr()
     assert "ValueError" in err
+
+
+def test_no_terminal_discovery_error(testdir):
+    testdir.makepyfile("raise TypeError('oops!')")
+    result = testdir.runpytest("-p", "no:terminal", "--collect-only")
+    assert result.ret == ExitCode.INTERRUPTED
 
 
 def test_load_initial_conftest_last_ordering(testdir, _config_for_test):
