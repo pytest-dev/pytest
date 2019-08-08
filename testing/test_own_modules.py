@@ -5,18 +5,20 @@ import types
 import _pytest
 import pytest
 
-KNOWN_BAD = {
-    "_pytest.assertion": [
-        pytest.mark.xfail("sys.version_info[0]==3", reason="assertion uses imp")
-    ]
-}
+KNOWN_BAD = {}
+
+
+def _modvalues(module):
+    for submodule in vars(module).values():
+        if isinstance(submodule, types.ModuleType):
+            name = submodule.__name__
+            yield pytest.param(name, marks=KNOWN_BAD.get(name, []))
 
 
 def _get_modules():
-    for module in vars(_pytest).values():
-        if isinstance(module, types.ModuleType):
-            name = module.__name__
-            yield pytest.param(name, marks=KNOWN_BAD.get(name, []))
+    yield from _modvalues(_pytest)
+    yield from _modvalues(_pytest.config)
+    yield from _modvalues(_pytest.mark)
 
 
 @pytest.mark.parametrize("module_name", sorted(_get_modules()))
