@@ -1,11 +1,13 @@
 import subprocess
 import sys
 import types
+from typing import Dict
 
 import _pytest
 import pytest
+from _pytest.mark import MarkDecorator
 
-KNOWN_BAD = {}
+KNOWN_BAD: Dict[str, MarkDecorator] = {}
 
 
 def _modvalues(module):
