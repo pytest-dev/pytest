@@ -8,6 +8,8 @@ import py
 from .config import hookimpl
 from _pytest.compat import nullcontext
 from _pytest.config import create_terminal_writer
+from _pytest.config import UsageError
+from _pytest.fixtures import fixture
 from _pytest.pathlib import Path
 
 DEFAULT_LOG_FORMAT = "%(levelname)-8s %(name)s:%(filename)s:%(lineno)d %(message)s"

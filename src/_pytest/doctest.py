@@ -9,6 +9,7 @@ from contextlib import contextmanager
 from _pytest._code.code import ExceptionInfo
 from _pytest._code.code import ReprFileLocation
 from _pytest._code.code import TerminalRepr
+from _pytest.compat import safe_getattr
 from _pytest.fixtures import fixture
 from _pytest.fixtures import FixtureRequest
 from _pytest.nodes import Item
@@ -16,7 +17,6 @@ from _pytest.outcomes import skip
 from _pytest.outcomes import Skipped
 from _pytest.python import Module
 from _pytest.warning_types import PytestWarning
-
 
 DOCTEST_REPORT_CHOICE_NONE = "none"
 DOCTEST_REPORT_CHOICE_CDIFF = "cdiff"
@@ -389,6 +389,8 @@ def _patch_unwrap_mock_aware():
     finally:
         inspect.unwrap = real_unwrap
 
+
+class DoctestModule(Module):
     def collect(self):
         import doctest
 

@@ -356,7 +356,7 @@ def _check_record_param_type(param, v):
         raise TypeError(msg.format(param=param, g=type(v).__name__))
 
 
-@pytest.fixture(scope="session")
+@fixture(scope="session")
 def record_testsuite_property(request):
     """
     Records a new ``<property>`` tag as child of the root ``<testsuite>``. This is suitable to

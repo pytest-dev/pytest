@@ -167,7 +167,7 @@ def getreportopt(config):
     return reportopts
 
 
-@pytest.hookimpl(trylast=True)  # after _pytest.runner
+@hookimpl(trylast=True)  # after _pytest.runner
 def pytest_report_teststatus(report):
     if report.passed:
         letter = "."
@@ -559,6 +559,9 @@ class TerminalReporter:
         if hasattr(sys, "pypy_version_info"):
             verinfo = ".".join(map(str, sys.pypy_version_info[:3]))
             msg += "[pypy-{}-{}]".format(verinfo, sys.pypy_version_info[3])
+        import pytest
+        import py
+
         msg += ", pytest-{}, py-{}, pluggy-{}".format(
             pytest.__version__, py.__version__, pluggy.__version__
         )

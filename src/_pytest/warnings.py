@@ -3,7 +3,7 @@ import warnings
 from contextlib import contextmanager
 
 from _pytest.config import hookimpl
-from _pytest.warning_types import RemovedInPytest4Warning
+from _pytest.warning_types import PytestDeprecationWarning
 
 SHOW_PYTEST_WARNINGS_ARG = "-Walways::pytest.RemovedInPytest4Warning"
 
@@ -75,7 +75,7 @@ def catch_warnings_for_item(config, ihook, when, item):
             warnings.filterwarnings("always", category=DeprecationWarning)
             warnings.filterwarnings("always", category=PendingDeprecationWarning)
 
-        warnings.filterwarnings("error", category=pytest.PytestDeprecationWarning)
+        warnings.filterwarnings("error", category=PytestDeprecationWarning)
 
         # filters should have this precedence: mark, cmdline options, ini
         # filters should be applied in the inverse order of precedence
