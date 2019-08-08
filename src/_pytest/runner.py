@@ -1,22 +1,16 @@
 """ basic collect and runtest protocol implementations """
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 import bdb
 import os
 import sys
 from time import time
 
 import attr
-import six
 
 from .reports import CollectErrorRepr
 from .reports import CollectReport
 from .reports import TestReport
 from _pytest._code.code import ExceptionInfo
 from _pytest.outcomes import Exit
-from _pytest.outcomes import skip
 from _pytest.outcomes import Skipped
 from _pytest.outcomes import TEST_OUTCOME
 
@@ -62,7 +56,7 @@ def pytest_terminal_summary(terminalreporter):
             tr.write_line("")
             tr.write_line("(0.00 durations hidden.  Use -vv to show these durations.)")
             break
-        tr.write_line("%02.2fs %-8s %s" % (rep.duration, rep.when, rep.nodeid))
+        tr.write_line("{:02.2f}s {:<8} {}".format(rep.duration, rep.when, rep.nodeid))
 
 
 def pytest_sessionstart(session):
@@ -87,9 +81,9 @@ def runtestprotocol(item, log=True, nextitem=None):
     rep = call_and_report(item, "setup", log)
     reports = [rep]
     if rep.passed:
-        if item.config.option.setupshow:
+        if item.config.getoption("setupshow", False):
             show_test_item(item)
-        if not item.config.option.setuponly:
+        if not item.config.getoption("setuponly", False):
             reports.append(call_and_report(item, "call", log))
     reports.append(call_and_report(item, "teardown", log, nextitem=nextitem))
     # after all teardown hooks have been called
@@ -183,7 +177,7 @@ def call_and_report(item, when, log=True, **kwds):
 def check_interactive_exception(call, report):
     return call.excinfo and not (
         hasattr(report, "wasxfail")
-        or call.excinfo.errisinstance(skip.Exception)
+        or call.excinfo.errisinstance(Skipped)
         or call.excinfo.errisinstance(bdb.BdbQuit)
     )
 
@@ -192,7 +186,7 @@ def call_runtest_hook(item, when, **kwds):
     hookname = "pytest_runtest_" + when
     ihook = getattr(item.ihook, hookname)
     reraise = (Exit,)
-    if not item.config.getvalue("usepdb"):
+    if not item.config.getoption("usepdb", False):
         reraise += (KeyboardInterrupt,)
     return CallInfo.from_call(
         lambda: ihook(item=item, **kwds), when=when, reraise=reraise
@@ -200,11 +194,11 @@ def call_runtest_hook(item, when, **kwds):
 
 
 @attr.s(repr=False)
-class CallInfo(object):
+class CallInfo:
     """ Result/Exception info a function invocation. """
 
     _result = attr.ib()
-    # type: Optional[ExceptionInfo]
+    # Optional[ExceptionInfo]
     excinfo = attr.ib()
     start = attr.ib()
     stop = attr.ib()
@@ -246,43 +240,7 @@ class CallInfo(object):
 
 
 def pytest_runtest_makereport(item, call):
-    when = call.when
-    duration = call.stop - call.start
-    keywords = {x: 1 for x in item.keywords}
-    excinfo = call.excinfo
-    sections = []
-    if not call.excinfo:
-        outcome = "passed"
-        longrepr = None
-    else:
-        if not isinstance(excinfo, ExceptionInfo):
-            outcome = "failed"
-            longrepr = excinfo
-        elif excinfo.errisinstance(skip.Exception):
-            outcome = "skipped"
-            r = excinfo._getreprcrash()
-            longrepr = (str(r.path), r.lineno, r.message)
-        else:
-            outcome = "failed"
-            if call.when == "call":
-                longrepr = item.repr_failure(excinfo)
-            else:  # exception in setup or teardown
-                longrepr = item._repr_failure_py(
-                    excinfo, style=item.config.option.tbstyle
-                )
-    for rwhen, key, content in item._report_sections:
-        sections.append(("Captured %s %s" % (key, rwhen), content))
-    return TestReport(
-        item.nodeid,
-        item.location,
-        keywords,
-        outcome,
-        longrepr,
-        when,
-        sections,
-        duration,
-        user_properties=item.user_properties,
-    )
+    return TestReport.from_item_and_call(item, call)
 
 
 def pytest_make_collect_report(collector):
@@ -311,7 +269,7 @@ def pytest_make_collect_report(collector):
     return rep
 
 
-class SetupState(object):
+class SetupState:
     """ shared state for setting up/tearing down test items or collectors. """
 
     def __init__(self):
@@ -345,7 +303,8 @@ class SetupState(object):
                 if exc is None:
                     exc = sys.exc_info()
         if exc:
-            six.reraise(*exc)
+            _, val, tb = exc
+            raise val.with_traceback(tb)
 
     def _teardown_with_finalization(self, colitem):
         self._callfinalizers(colitem)
@@ -380,7 +339,8 @@ class SetupState(object):
                 if exc is None:
                     exc = sys.exc_info()
         if exc:
-            six.reraise(*exc)
+            _, val, tb = exc
+            raise val.with_traceback(tb)
 
     def prepare(self, colitem):
         """ setup objects along the collector chain to the test-method
@@ -391,7 +351,8 @@ class SetupState(object):
         # check if the last collection node has raised an error
         for col in self.stack:
             if hasattr(col, "_prepare_exc"):
-                six.reraise(*col._prepare_exc)
+                _, val, tb = col._prepare_exc
+                raise val.with_traceback(tb)
         for col in needed_collectors[len(self.stack) :]:
             self.stack.append(col)
             try:

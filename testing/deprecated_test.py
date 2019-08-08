@@ -1,10 +1,7 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 import os
 
 import pytest
+from _pytest.warning_types import PytestDeprecationWarning
 from _pytest.warnings import SHOW_PYTEST_WARNINGS_ARG
 
 pytestmark = pytest.mark.pytester_example_path("deprecated")
@@ -52,7 +49,7 @@ def test_resultlog_is_deprecated(testdir):
     result = testdir.runpytest("--result-log=%s" % testdir.tmpdir.join("result.log"))
     result.stdout.fnmatch_lines(
         [
-            "*--result-log is deprecated and scheduled for removal in pytest 5.0*",
+            "*--result-log is deprecated and scheduled for removal in pytest 6.0*",
             "*See https://docs.pytest.org/en/latest/deprecations.html#result-log-result-log for more information*",
         ]
     )
@@ -146,7 +143,7 @@ def test_pytest_plugins_in_non_top_level_conftest_unsupported_pyargs(
     if use_pyargs:
         assert msg not in res.stdout.str()
     else:
-        res.stdout.fnmatch_lines("*{msg}*".format(msg=msg))
+        res.stdout.fnmatch_lines(["*{msg}*".format(msg=msg)])
 
 
 def test_pytest_plugins_in_non_top_level_conftest_unsupported_no_top_level_conftest(
@@ -219,3 +216,11 @@ def test_fixture_named_request(testdir):
             "*'request' is a reserved name for fixtures and will raise an error in future versions"
         ]
     )
+
+
+def test_pytest_warns_unknown_kwargs():
+    with pytest.warns(
+        PytestDeprecationWarning,
+        match=r"pytest.warns\(\) got unexpected keyword arguments: \['foo'\]",
+    ):
+        pytest.warns(UserWarning, foo="hello")

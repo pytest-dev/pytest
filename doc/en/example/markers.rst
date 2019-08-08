@@ -4,28 +4,40 @@
 Working with custom markers
 =================================================
 
-Here are some example using the :ref:`mark` mechanism.
+Here are some examples using the :ref:`mark` mechanism.
+
+.. _`mark run`:
 
 Marking test functions and selecting them for a run
 ----------------------------------------------------
 
-You can "mark" a test function with custom metadata like this::
+You can "mark" a test function with custom metadata like this:
+
+.. code-block:: python
 
     # content of test_server.py
 
     import pytest
+
+
     @pytest.mark.webtest
     def test_send_http():
-        pass # perform some webtest test for your app
+        pass  # perform some webtest test for your app
+
+
     def test_something_quick():
         pass
+
+
     def test_another():
         pass
+
+
     class TestClass(object):
         def test_method(self):
             pass
 
-.. versionadded:: 2.2
+
 
 You can then restrict a test run to only run tests marked with ``webtest``:
 
@@ -33,10 +45,10 @@ You can then restrict a test run to only run tests marked with ``webtest``:
 
     $ pytest -v -m webtest
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.6
-    cachedir: .pytest_cache
-    rootdir: $REGENDOC_TMPDIR, inifile:
-    collecting ... collected 4 items / 3 deselected
+    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python
+    cachedir: $PYTHON_PREFIX/.pytest_cache
+    rootdir: $REGENDOC_TMPDIR
+    collecting ... collected 4 items / 3 deselected / 1 selected
 
     test_server.py::test_send_http PASSED                                [100%]
 
@@ -48,10 +60,10 @@ Or the inverse, running all tests except the webtest ones:
 
     $ pytest -v -m "not webtest"
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.6
-    cachedir: .pytest_cache
-    rootdir: $REGENDOC_TMPDIR, inifile:
-    collecting ... collected 4 items / 1 deselected
+    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python
+    cachedir: $PYTHON_PREFIX/.pytest_cache
+    rootdir: $REGENDOC_TMPDIR
+    collecting ... collected 4 items / 1 deselected / 3 selected
 
     test_server.py::test_something_quick PASSED                          [ 33%]
     test_server.py::test_another PASSED                                  [ 66%]
@@ -70,9 +82,9 @@ tests based on their module, class, method, or function name:
 
     $ pytest -v test_server.py::TestClass::test_method
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.6
-    cachedir: .pytest_cache
-    rootdir: $REGENDOC_TMPDIR, inifile:
+    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python
+    cachedir: $PYTHON_PREFIX/.pytest_cache
+    rootdir: $REGENDOC_TMPDIR
     collecting ... collected 1 item
 
     test_server.py::TestClass::test_method PASSED                        [100%]
@@ -85,9 +97,9 @@ You can also select on the class:
 
     $ pytest -v test_server.py::TestClass
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.6
-    cachedir: .pytest_cache
-    rootdir: $REGENDOC_TMPDIR, inifile:
+    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python
+    cachedir: $PYTHON_PREFIX/.pytest_cache
+    rootdir: $REGENDOC_TMPDIR
     collecting ... collected 1 item
 
     test_server.py::TestClass::test_method PASSED                        [100%]
@@ -100,9 +112,9 @@ Or select multiple nodes:
 
     $ pytest -v test_server.py::TestClass test_server.py::test_send_http
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.6
-    cachedir: .pytest_cache
-    rootdir: $REGENDOC_TMPDIR, inifile:
+    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python
+    cachedir: $PYTHON_PREFIX/.pytest_cache
+    rootdir: $REGENDOC_TMPDIR
     collecting ... collected 2 items
 
     test_server.py::TestClass::test_method PASSED                        [ 50%]
@@ -140,10 +152,10 @@ select tests based on their names:
 
     $ pytest -v -k http  # running with the above defined example module
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.6
-    cachedir: .pytest_cache
-    rootdir: $REGENDOC_TMPDIR, inifile:
-    collecting ... collected 4 items / 3 deselected
+    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python
+    cachedir: $PYTHON_PREFIX/.pytest_cache
+    rootdir: $REGENDOC_TMPDIR
+    collecting ... collected 4 items / 3 deselected / 1 selected
 
     test_server.py::test_send_http PASSED                                [100%]
 
@@ -155,10 +167,10 @@ And you can also run all tests except the ones that match the keyword:
 
     $ pytest -k "not send_http" -v
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.6
-    cachedir: .pytest_cache
-    rootdir: $REGENDOC_TMPDIR, inifile:
-    collecting ... collected 4 items / 1 deselected
+    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python
+    cachedir: $PYTHON_PREFIX/.pytest_cache
+    rootdir: $REGENDOC_TMPDIR
+    collecting ... collected 4 items / 1 deselected / 3 selected
 
     test_server.py::test_something_quick PASSED                          [ 33%]
     test_server.py::test_another PASSED                                  [ 66%]
@@ -172,10 +184,10 @@ Or to select "http" and "quick" tests:
 
     $ pytest -k "http or quick" -v
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.6
-    cachedir: .pytest_cache
-    rootdir: $REGENDOC_TMPDIR, inifile:
-    collecting ... collected 4 items / 2 deselected
+    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python
+    cachedir: $PYTHON_PREFIX/.pytest_cache
+    rootdir: $REGENDOC_TMPDIR
+    collecting ... collected 4 items / 2 deselected / 2 selected
 
     test_server.py::test_send_http PASSED                                [ 50%]
     test_server.py::test_something_quick PASSED                          [100%]
@@ -200,18 +212,22 @@ Or to select "http" and "quick" tests:
 Registering markers
 -------------------------------------
 
-.. versionadded:: 2.2
+
 
 .. ini-syntax for custom markers:
 
-Registering markers for your test suite is simple::
+Registering markers for your test suite is simple:
+
+.. code-block:: ini
 
     # content of pytest.ini
     [pytest]
     markers =
         webtest: mark a test as a webtest.
 
-You can ask which markers exist for your test suite - the list includes our just defined ``webtest`` markers::
+You can ask which markers exist for your test suite - the list includes our just defined ``webtest`` markers:
+
+.. code-block:: pytest
 
     $ pytest --markers
     @pytest.mark.webtest: mark a test as a webtest.
@@ -245,7 +261,7 @@ For an example on how to add and work with markers from a plugin, see
     * Asking for existing markers via ``pytest --markers`` gives good output
 
     * Typos in function markers are treated as an error if you use
-      the ``--strict`` option.
+      the ``--strict-markers`` option.
 
 .. _`scoped-marking`:
 
@@ -253,31 +269,41 @@ Marking whole classes or modules
 ----------------------------------------------------
 
 You may use ``pytest.mark`` decorators with classes to apply markers to all of
-its test methods::
+its test methods:
+
+.. code-block:: python
 
     # content of test_mark_classlevel.py
     import pytest
+
+
     @pytest.mark.webtest
     class TestClass(object):
         def test_startup(self):
             pass
+
         def test_startup_and_more(self):
             pass
 
 This is equivalent to directly applying the decorator to the
 two test functions.
 
-To remain backward-compatible with Python 2.4 you can also set a
-``pytestmark`` attribute on a TestClass like this::
+Due to legacy reasons, it is possible to set the ``pytestmark`` attribute on a TestClass like this:
+
+.. code-block:: python
 
     import pytest
+
 
     class TestClass(object):
         pytestmark = pytest.mark.webtest
 
-or if you need to use multiple markers you can use a list::
+or if you need to use multiple markers you can use a list:
+
+.. code-block:: python
 
     import pytest
+
 
     class TestClass(object):
         pytestmark = [pytest.mark.webtest, pytest.mark.slowtest]
@@ -301,18 +327,19 @@ Marking individual tests when using parametrize
 
 When using parametrize, applying a mark will make it apply
 to each individual test. However it is also possible to
-apply a marker to an individual test instance::
+apply a marker to an individual test instance:
+
+.. code-block:: python
 
     import pytest
 
+
     @pytest.mark.foo
-    @pytest.mark.parametrize(("n", "expected"), [
-        (1, 2),
-        pytest.param((1, 3), marks=pytest.mark.bar),
-        (2, 3),
-    ])
+    @pytest.mark.parametrize(
+        ("n", "expected"), [(1, 2), pytest.param((1, 3), marks=pytest.mark.bar), (2, 3)]
+    )
     def test_increment(n, expected):
-         assert n + 1 == expected
+        assert n + 1 == expected
 
 In this example the mark "foo" will apply to each of the three
 tests, whereas the "bar" mark is only applied to the second test.
@@ -328,31 +355,46 @@ Custom marker and command line option to control test runs
 Plugins can provide custom markers and implement specific behaviour
 based on it. This is a self-contained example which adds a command
 line option and a parametrized test function marker to run tests
-specifies via named environments::
+specifies via named environments:
+
+.. code-block:: python
 
     # content of conftest.py
 
     import pytest
+
+
     def pytest_addoption(parser):
-        parser.addoption("-E", action="store", metavar="NAME",
-            help="only run tests matching the environment NAME.")
+        parser.addoption(
+            "-E",
+            action="store",
+            metavar="NAME",
+            help="only run tests matching the environment NAME.",
+        )
+
 
     def pytest_configure(config):
         # register an additional marker
-        config.addinivalue_line("markers",
-            "env(name): mark test to run only on named environment")
+        config.addinivalue_line(
+            "markers", "env(name): mark test to run only on named environment"
+        )
+
 
     def pytest_runtest_setup(item):
-        envnames = [mark.args[0] for mark in item.iter_markers(name='env')]
+        envnames = [mark.args[0] for mark in item.iter_markers(name="env")]
         if envnames:
             if item.config.getoption("-E") not in envnames:
                 pytest.skip("test requires env in %r" % envnames)
 
-A test file using this local plugin::
+A test file using this local plugin:
+
+.. code-block:: python
 
     # content of test_someenv.py
 
     import pytest
+
+
     @pytest.mark.env("stage1")
     def test_basic_db_operation():
         pass
@@ -365,7 +407,8 @@ the test needs:
     $ pytest -E stage2
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
-    rootdir: $REGENDOC_TMPDIR, inifile:
+    cachedir: $PYTHON_PREFIX/.pytest_cache
+    rootdir: $REGENDOC_TMPDIR
     collected 1 item
 
     test_someenv.py s                                                    [100%]
@@ -379,14 +422,17 @@ and here is one that specifies exactly the environment needed:
     $ pytest -E stage1
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
-    rootdir: $REGENDOC_TMPDIR, inifile:
+    cachedir: $PYTHON_PREFIX/.pytest_cache
+    rootdir: $REGENDOC_TMPDIR
     collected 1 item
 
     test_someenv.py .                                                    [100%]
 
     ========================= 1 passed in 0.12 seconds =========================
 
-The ``--markers`` option always gives you a list of available markers::
+The ``--markers`` option always gives you a list of available markers:
+
+.. code-block:: pytest
 
     $ pytest --markers
     @pytest.mark.env(name): mark test to run only on named environment
@@ -415,25 +461,32 @@ Passing a callable to custom markers
 
 .. regendoc:wipe
 
-Below is the config file that will be used in the next examples::
+Below is the config file that will be used in the next examples:
+
+.. code-block:: python
 
     # content of conftest.py
     import sys
 
+
     def pytest_runtest_setup(item):
-        for marker in item.iter_markers(name='my_marker'):
+        for marker in item.iter_markers(name="my_marker"):
             print(marker)
             sys.stdout.flush()
 
 A custom marker can have its argument set, i.e. ``args`` and ``kwargs`` properties, defined by either invoking it as a callable or using ``pytest.mark.MARKER_NAME.with_args``. These two methods achieve the same effect most of the time.
 
-However, if there is a callable as the single positional argument with no keyword arguments, using the ``pytest.mark.MARKER_NAME(c)`` will not pass ``c`` as a positional argument but decorate ``c`` with the custom marker (see :ref:`MarkDecorator <mark>`). Fortunately, ``pytest.mark.MARKER_NAME.with_args`` comes to the rescue::
+However, if there is a callable as the single positional argument with no keyword arguments, using the ``pytest.mark.MARKER_NAME(c)`` will not pass ``c`` as a positional argument but decorate ``c`` with the custom marker (see :ref:`MarkDecorator <mark>`). Fortunately, ``pytest.mark.MARKER_NAME.with_args`` comes to the rescue:
+
+.. code-block:: python
 
     # content of test_custom_marker.py
     import pytest
 
+
     def hello_world(*args, **kwargs):
-        return 'Hello World'
+        return "Hello World"
+
 
     @pytest.mark.my_marker.with_args(hello_world)
     def test_with_args():
@@ -459,11 +512,15 @@ Reading markers which were set from multiple places
 .. regendoc:wipe
 
 If you are heavily using markers in your test suite you may encounter the case where a marker is applied several times to a test function.  From plugin
-code you can read over all such settings.  Example::
+code you can read over all such settings.  Example:
+
+.. code-block:: python
 
     # content of test_mark_three_times.py
     import pytest
+
     pytestmark = pytest.mark.glob("module", x=1)
+
 
     @pytest.mark.glob("class", x=2)
     class TestClass(object):
@@ -472,13 +529,16 @@ code you can read over all such settings.  Example::
             pass
 
 Here we have the marker "glob" applied three times to the same
-test function.  From a conftest file we can read it like this::
+test function.  From a conftest file we can read it like this:
+
+.. code-block:: python
 
     # content of conftest.py
     import sys
 
+
     def pytest_runtest_setup(item):
-        for mark in item.iter_markers(name='glob'):
+        for mark in item.iter_markers(name="glob"):
             print("glob args=%s kwargs=%s" % (mark.args, mark.kwargs))
             sys.stdout.flush()
 
@@ -502,7 +562,9 @@ Consider you have a test suite which marks tests for particular platforms,
 namely ``pytest.mark.darwin``, ``pytest.mark.win32`` etc. and you
 also have tests that run on all platforms and have no specific
 marker.  If you now want to have a way to only run the tests
-for your particular platform, you could use the following plugin::
+for your particular platform, you could use the following plugin:
+
+.. code-block:: python
 
     # content of conftest.py
     #
@@ -511,6 +573,7 @@ for your particular platform, you could use the following plugin::
 
     ALL = set("darwin linux win32".split())
 
+
     def pytest_runtest_setup(item):
         supported_platforms = ALL.intersection(mark.name for mark in item.iter_markers())
         plat = sys.platform
@@ -518,23 +581,29 @@ for your particular platform, you could use the following plugin::
             pytest.skip("cannot run on platform %s" % (plat))
 
 then tests will be skipped if they were specified for a different platform.
-Let's do a little test file to show how this looks like::
+Let's do a little test file to show how this looks like:
+
+.. code-block:: python
 
     # content of test_plat.py
 
     import pytest
 
+
     @pytest.mark.darwin
     def test_if_apple_is_evil():
         pass
+
 
     @pytest.mark.linux
     def test_if_linux_works():
         pass
 
+
     @pytest.mark.win32
     def test_if_win32_crashes():
         pass
+
 
     def test_runs_everywhere():
         pass
@@ -546,13 +615,14 @@ then you will see two tests skipped and two executed tests as expected:
     $ pytest -rs # this option reports skip reasons
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
-    rootdir: $REGENDOC_TMPDIR, inifile:
+    cachedir: $PYTHON_PREFIX/.pytest_cache
+    rootdir: $REGENDOC_TMPDIR
     collected 4 items
 
     test_plat.py s.s.                                                    [100%]
-    ========================= short test summary info ==========================
-    SKIP [2] $REGENDOC_TMPDIR/conftest.py:12: cannot run on platform linux
 
+    ========================= short test summary info ==========================
+    SKIPPED [2] $REGENDOC_TMPDIR/conftest.py:13: cannot run on platform linux
     =================== 2 passed, 2 skipped in 0.12 seconds ====================
 
 Note that if you specify a platform via the marker-command line option like this:
@@ -562,8 +632,9 @@ Note that if you specify a platform via the marker-command line option like this
     $ pytest -m linux
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
-    rootdir: $REGENDOC_TMPDIR, inifile:
-    collected 4 items / 3 deselected
+    cachedir: $PYTHON_PREFIX/.pytest_cache
+    rootdir: $REGENDOC_TMPDIR
+    collected 4 items / 3 deselected / 1 selected
 
     test_plat.py .                                                       [100%]
 
@@ -579,28 +650,38 @@ Automatically adding markers based on test names
 If you a test suite where test function names indicate a certain
 type of test, you can implement a hook that automatically defines
 markers so that you can use the ``-m`` option with it. Let's look
-at this test module::
+at this test module:
+
+.. code-block:: python
 
     # content of test_module.py
+
 
     def test_interface_simple():
         assert 0
 
+
     def test_interface_complex():
         assert 0
 
+
     def test_event_simple():
         assert 0
+
 
     def test_something_else():
         assert 0
 
 We want to dynamically define two markers and can do it in a
-``conftest.py`` plugin::
+``conftest.py`` plugin:
+
+.. code-block:: python
 
     # content of conftest.py
 
     import pytest
+
+
     def pytest_collection_modifyitems(items):
         for item in items:
             if "interface" in item.nodeid:
@@ -615,18 +696,19 @@ We can now use the ``-m option`` to select one set:
     $ pytest -m interface --tb=short
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
-    rootdir: $REGENDOC_TMPDIR, inifile:
-    collected 4 items / 2 deselected
+    cachedir: $PYTHON_PREFIX/.pytest_cache
+    rootdir: $REGENDOC_TMPDIR
+    collected 4 items / 2 deselected / 2 selected
 
     test_module.py FF                                                    [100%]
 
     ================================= FAILURES =================================
     __________________________ test_interface_simple ___________________________
-    test_module.py:3: in test_interface_simple
+    test_module.py:4: in test_interface_simple
         assert 0
     E   assert 0
     __________________________ test_interface_complex __________________________
-    test_module.py:6: in test_interface_complex
+    test_module.py:8: in test_interface_complex
         assert 0
     E   assert 0
     ================== 2 failed, 2 deselected in 0.12 seconds ==================
@@ -638,22 +720,23 @@ or to select both "event" and "interface" tests:
     $ pytest -m "interface or event" --tb=short
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
-    rootdir: $REGENDOC_TMPDIR, inifile:
-    collected 4 items / 1 deselected
+    cachedir: $PYTHON_PREFIX/.pytest_cache
+    rootdir: $REGENDOC_TMPDIR
+    collected 4 items / 1 deselected / 3 selected
 
     test_module.py FFF                                                   [100%]
 
     ================================= FAILURES =================================
     __________________________ test_interface_simple ___________________________
-    test_module.py:3: in test_interface_simple
+    test_module.py:4: in test_interface_simple
         assert 0
     E   assert 0
     __________________________ test_interface_complex __________________________
-    test_module.py:6: in test_interface_complex
+    test_module.py:8: in test_interface_complex
         assert 0
     E   assert 0
     ____________________________ test_event_simple _____________________________
-    test_module.py:9: in test_event_simple
+    test_module.py:12: in test_event_simple
         assert 0
     E   assert 0
     ================== 3 failed, 1 deselected in 0.12 seconds ==================

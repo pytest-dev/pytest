@@ -7,16 +7,20 @@ Python 3.4's last release is scheduled for
 `March 2019 <https://www.python.org/dev/peps/pep-0429/#release-schedule>`__. pytest is one of
 the participating projects of the https://python3statement.org.
 
-We plan to drop support for Python 2.7 and 3.4 at the same time with the release of **pytest 5.0**,
-scheduled to be released by **mid-2019**. Thanks to the `python_requires <https://packaging.python.org/guides/distributing-packages-using-setuptools/#python-requires>`__ ``setuptools`` option,
+The **pytest 4.6** series will be the last to support Python 2.7 and 3.4, and is scheduled
+to be released by **mid-2019**. **pytest 5.0** and onwards will support only Python 3.5+.
+
+Thanks to the `python_requires`_ ``setuptools`` option,
 Python 2.7 and Python 3.4 users using a modern ``pip`` version
-will install the last compatible pytest ``4.X`` version automatically even if ``5.0`` or later
+will install the last pytest ``4.6`` version automatically even if ``5.0`` or later
 are available on PyPI.
 
-During the period **from mid-2019 and 2020**, the pytest core team plans to make
-bug-fix releases of the pytest ``4.X`` series by back-porting patches to the ``4.x-maintenance``
-branch.
+While pytest ``5.0`` will be the new mainstream and development version, until **January 2020**
+the pytest core team plans to make bug-fix releases of the pytest ``4.6`` series by
+back-porting patches to the ``4.6-maintenance`` branch that affect Python 2 users.
 
-**After 2020**, the core team will no longer actively back port-patches, but the ``4.x-maintenance``
-branch will continue to exist so the community itself can contribute patches. The
-core team will be happy to accept those patches and make new ``4.X`` releases **until mid-2020**.
+**After 2020**, the core team will no longer actively backport patches, but the ``4.6-maintenance``
+branch will continue to exist so the community itself can contribute patches. The core team will
+be happy to accept those patches and make new ``4.6`` releases **until mid-2020**.
+
+.. _`python_requires`: https://packaging.python.org/guides/distributing-packages-using-setuptools/#python-requires

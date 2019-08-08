@@ -1,7 +1,3 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 import ast
 import inspect
 import linecache
@@ -13,10 +9,9 @@ from ast import PyCF_ONLY_AST as _AST_FLAG
 from bisect import bisect_right
 
 import py
-import six
 
 
-class Source(object):
+class Source:
     """ an immutable object holding a source code fragment,
         possibly deindenting it.
     """
@@ -33,7 +28,7 @@ class Source(object):
                 partlines = part.lines
             elif isinstance(part, (tuple, list)):
                 partlines = [x.rstrip("\n") for x in part]
-            elif isinstance(part, six.string_types):
+            elif isinstance(part, str):
                 partlines = part.split("\n")
             else:
                 partlines = getsource(part, deindent=de).lines
@@ -203,7 +198,9 @@ def compile_(source, filename=None, mode="exec", flags=0, dont_inherit=0):
 
 def getfslineno(obj):
     """ Return source location (path, lineno) for the given object.
-    If the source cannot be determined return ("", -1)
+    If the source cannot be determined return ("", -1).
+
+    The line number is 0-based.
     """
     from .code import Code
 

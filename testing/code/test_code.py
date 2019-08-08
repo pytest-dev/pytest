@@ -1,20 +1,10 @@
-# coding: utf-8
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 import sys
+from unittest import mock
 
-from six import text_type
 from test_excinfo import TWMock
 
 import _pytest._code
 import pytest
-
-try:
-    import mock
-except ImportError:
-    import unittest.mock as mock
 
 
 def test_ne():
@@ -34,7 +24,7 @@ def test_code_gives_back_name_for_not_existing_file():
 
 
 def test_code_with_class():
-    class A(object):
+    class A:
         pass
 
     pytest.raises(TypeError, _pytest._code.Code, A)
@@ -85,28 +75,13 @@ def test_code_from_func():
 
 
 def test_unicode_handling():
-    value = u"ąć".encode("UTF-8")
+    value = "ąć".encode()
 
     def f():
         raise Exception(value)
 
     excinfo = pytest.raises(Exception, f)
-    text_type(excinfo)
-    if sys.version_info < (3,):
-        bytes(excinfo)
-
-
-@pytest.mark.skipif(sys.version_info[0] >= 3, reason="python 2 only issue")
-def test_unicode_handling_syntax_error():
-    value = u"ąć".encode("UTF-8")
-
-    def f():
-        raise SyntaxError("invalid syntax", (None, 1, 3, value))
-
-    excinfo = pytest.raises(Exception, f)
     str(excinfo)
-    if sys.version_info[0] < 3:
-        text_type(excinfo)
 
 
 def test_code_getargs():
@@ -161,7 +136,7 @@ def test_frame_getargs():
     assert fr4.getargs(var=True) == [("x", "a"), ("y", ("b",)), ("z", {"c": "d"})]
 
 
-class TestExceptionInfo(object):
+class TestExceptionInfo:
     def test_bad_getsource(self):
         try:
             if False:
@@ -172,8 +147,12 @@ class TestExceptionInfo(object):
             exci = _pytest._code.ExceptionInfo.from_current()
         assert exci.getrepr()
 
+    def test_from_current_with_missing(self):
+        with pytest.raises(AssertionError, match="no current exception"):
+            _pytest._code.ExceptionInfo.from_current()
 
-class TestTracebackEntry(object):
+
+class TestTracebackEntry:
     def test_getsource(self):
         try:
             if False:
@@ -188,20 +167,18 @@ class TestTracebackEntry(object):
         assert "assert False" in source[5]
 
 
-class TestReprFuncArgs(object):
+class TestReprFuncArgs:
     def test_not_raise_exception_with_mixed_encoding(self):
         from _pytest._code.code import ReprFuncArgs
 
         tw = TWMock()
 
-        args = [("unicode_string", u"São Paulo"), ("utf8_string", b"S\xc3\xa3o Paulo")]
+        args = [("unicode_string", "São Paulo"), ("utf8_string", b"S\xc3\xa3o Paulo")]
 
         r = ReprFuncArgs(args)
         r.toterminal(tw)
-        if sys.version_info[0] >= 3:
-            assert (
-                tw.lines[0]
-                == r"unicode_string = São Paulo, utf8_string = b'S\xc3\xa3o Paulo'"
-            )
-        else:
-            assert tw.lines[0] == "unicode_string = São Paulo, utf8_string = São Paulo"
+
+        assert (
+            tw.lines[0]
+            == r"unicode_string = São Paulo, utf8_string = b'S\xc3\xa3o Paulo'"
+        )

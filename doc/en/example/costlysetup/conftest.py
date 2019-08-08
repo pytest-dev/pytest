@@ -8,7 +8,7 @@ def setup(request):
     setup.finalize()
 
 
-class CostlySetup(object):
+class CostlySetup:
     def __init__(self):
         import time
 

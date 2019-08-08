@@ -19,17 +19,40 @@ Below is a complete list of all pytest features which are considered deprecated.
 :class:`_pytest.warning_types.PytestWarning` or subclasses, which can be filtered using
 :ref:`standard warning filters <warnings>`.
 
+.. _`raises message deprecated`:
+
 ``"message"`` parameter of ``pytest.raises``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. deprecated:: 4.1
 
 It is a common mistake to think this parameter will match the exception message, while in fact
-it only serves to provide a custom message in case the ``pytest.raises`` check fails. To avoid this
-mistake and because it is believed to be little used, pytest is deprecating it without providing
-an alternative for the moment.
+it only serves to provide a custom message in case the ``pytest.raises`` check fails. To prevent
+users from making this mistake, and because it is believed to be little used, pytest is
+deprecating it without providing an alternative for the moment.
 
-If you have concerns about this, please comment on `issue #3974 <https://github.com/pytest-dev/pytest/issues/3974>`__.
+If you have a valid use case for this parameter, consider that to obtain the same results
+you can just call ``pytest.fail`` manually at the end of the ``with`` statement.
+
+For example:
+
+.. code-block:: python
+
+    with pytest.raises(TimeoutError, message="Client got unexpected message"):
+        wait_for(websocket.recv(), 0.5)
+
+
+Becomes:
+
+.. code-block:: python
+
+    with pytest.raises(TimeoutError):
+        wait_for(websocket.recv(), 0.5)
+        pytest.fail("Client got unexpected message")
+
+
+If you still have concerns about this deprecation and future removal, please comment on
+`issue #3974 <https://github.com/pytest-dev/pytest/issues/3974>`__.
 
 
 ``pytest.config`` global
@@ -39,7 +62,8 @@ If you have concerns about this, please comment on `issue #3974 <https://github.
 
 The ``pytest.config`` global object is deprecated.  Instead use
 ``request.config`` (via the ``request`` fixture) or if you are a plugin author
-use the ``pytest_configure(config)`` hook.
+use the ``pytest_configure(config)`` hook. Note that many hooks can also access
+the ``config`` object indirectly, through ``session.config`` or ``item.config`` for example.
 
 .. _raises-warns-exec:
 
@@ -77,20 +101,21 @@ Becomes:
 
 
 
-
-
-
 Result log (``--result-log``)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. deprecated:: 3.0
+.. deprecated:: 4.0
 
-The ``--resultlog`` command line option has been deprecated: it is little used
-and there are more modern and better alternatives, for example `pytest-tap <https://tappy.readthedocs.io/en/latest/>`_.
+The ``--result-log`` option produces a stream of test reports which can be
+analysed at runtime. It uses a custom format which requires users to implement their own
+parser, but the team believes using a line-based format that can be parsed using standard
+tools would provide a suitable and better alternative.
 
-This feature will be effectively removed in pytest 4.0 as the team intends to include a better alternative in the core.
+The current plan is to provide an alternative in the pytest 5.0 series and remove the ``--result-log``
+option in pytest 6.0 after the new implementation proves satisfactory to all users and is deemed
+stable.
 
-If you have any concerns, please don't hesitate to `open an issue <https://github.com/pytest-dev/pytest/issues>`__.
+The actual alternative is still being discussed in issue `#4488 <https://github.com/pytest-dev/pytest/issues/4488>`__.
 
 Removed Features
 ----------------

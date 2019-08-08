@@ -1,12 +1,9 @@
 """ discovery and running of std-library "unittest" style tests. """
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 import sys
 import traceback
 
 import _pytest._code
+import pytest
 from _pytest.compat import getimfunc
 from _pytest.config import hookimpl
 from _pytest.outcomes import fail
@@ -32,24 +29,18 @@ class UnitTestCase(Class):
     # to declare that our children do not support funcargs
     nofuncargs = True
 
-    def setup(self):
-        cls = self.obj
-        if getattr(cls, "__unittest_skip__", False):
-            return  # skipped
-        setup = getattr(cls, "setUpClass", None)
-        if setup is not None:
-            setup()
-        teardown = getattr(cls, "tearDownClass", None)
-        if teardown is not None:
-            self.addfinalizer(teardown)
-        super(UnitTestCase, self).setup()
-
     def collect(self):
         from unittest import TestLoader
 
         cls = self.obj
         if not getattr(cls, "__test__", True):
             return
+
+        skipped = getattr(cls, "__unittest_skip__", False)
+        if not skipped:
+            self._inject_setup_teardown_fixtures(cls)
+            self._inject_setup_class_fixture()
+
         self.session._fixturemanager.parsefactories(self, unittest=True)
         loader = TestLoader()
         foundsomething = False
@@ -68,6 +59,47 @@ class UnitTestCase(Class):
                 if ut is None or runtest != ut.TestCase.runTest:
                     yield TestCaseFunction("runTest", parent=self)
 
+    def _inject_setup_teardown_fixtures(self, cls):
+        """Injects a hidden auto-use fixture to invoke setUpClass/setup_method and corresponding
+        teardown functions (#517)"""
+        class_fixture = _make_xunit_fixture(
+            cls, "setUpClass", "tearDownClass", scope="class", pass_self=False
+        )
+        if class_fixture:
+            cls.__pytest_class_setup = class_fixture
+
+        method_fixture = _make_xunit_fixture(
+            cls, "setup_method", "teardown_method", scope="function", pass_self=True
+        )
+        if method_fixture:
+            cls.__pytest_method_setup = method_fixture
+
+
+def _make_xunit_fixture(obj, setup_name, teardown_name, scope, pass_self):
+    setup = getattr(obj, setup_name, None)
+    teardown = getattr(obj, teardown_name, None)
+    if setup is None and teardown is None:
+        return None
+
+    @pytest.fixture(scope=scope, autouse=True)
+    def fixture(self, request):
+        if getattr(self, "__unittest_skip__", None):
+            reason = self.__unittest_skip_why__
+            pytest.skip(reason)
+        if setup is not None:
+            if pass_self:
+                setup(self, request.function)
+            else:
+                setup()
+        yield
+        if teardown is not None:
+            if pass_self:
+                teardown(self, request.function)
+            else:
+                teardown()
+
+    return fixture
+
 
 class TestCaseFunction(Function):
     nofuncargs = True
@@ -76,30 +108,11 @@ class TestCaseFunction(Function):
 
     def setup(self):
         self._testcase = self.parent.obj(self.name)
-        self._fix_unittest_skip_decorator()
         self._obj = getattr(self._testcase, self.name)
-        if hasattr(self._testcase, "setup_method"):
-            self._testcase.setup_method(self._obj)
         if hasattr(self, "_request"):
             self._request._fillfixtures()
 
-    def _fix_unittest_skip_decorator(self):
-        """
-        The @unittest.skip decorator calls functools.wraps(self._testcase)
-        The call to functools.wraps() fails unless self._testcase
-        has a __name__ attribute. This is usually automatically supplied
-        if the test is a function or method, but we need to add manually
-        here.
-
-        See issue #1169
-        """
-        if sys.version_info[0] == 2:
-            setattr(self._testcase, "__name__", self.name)
-
     def teardown(self):
-        if hasattr(self._testcase, "teardown_method"):
-            self._testcase.teardown_method(self._obj)
-        # Allow garbage collection on TestCase instance attributes.
         self._testcase = None
         self._obj = None
 
@@ -178,12 +191,7 @@ class TestCaseFunction(Function):
             skip_why = getattr(
                 self._testcase.__class__, "__unittest_skip_why__", ""
             ) or getattr(testMethod, "__unittest_skip_why__", "")
-            try:  # PY3, unittest2 on PY2
-                self._testcase._addSkip(self, self._testcase, skip_why)
-            except TypeError:  # PY2
-                if sys.version_info[0] != 2:
-                    raise
-                self._testcase._addSkip(self, skip_why)
+            self._testcase._addSkip(self, self._testcase, skip_why)
             return True
         return False
 

@@ -1,17 +1,14 @@
 import argparse
-import sys as _sys
 import warnings
-from gettext import gettext as _
 
 import py
-import six
 
-from ..main import EXIT_USAGEERROR
+from _pytest.config.exceptions import UsageError
 
 FILE_OR_DIR = "file_or_dir"
 
 
-class Parser(object):
+class Parser:
     """ Parser for command line arguments and ini-file values.
 
     :ivar extra_info: dict of generic param -> value to display in case
@@ -146,12 +143,12 @@ class ArgumentError(Exception):
 
     def __str__(self):
         if self.option_id:
-            return "option %s: %s" % (self.option_id, self.msg)
+            return "option {}: {}".format(self.option_id, self.msg)
         else:
             return self.msg
 
 
-class Argument(object):
+class Argument:
     """class that mimics the necessary behaviour of optparse.Option
 
     it's currently a least effort implementation
@@ -180,7 +177,7 @@ class Argument(object):
             pass
         else:
             # this might raise a keyerror as well, don't want to catch that
-            if isinstance(typ, six.string_types):
+            if isinstance(typ, str):
                 if typ == "choice":
                     warnings.warn(
                         "`type` argument to addoption() is the string %r."
@@ -283,7 +280,7 @@ class Argument(object):
         return "Argument({})".format(", ".join(args))
 
 
-class OptionGroup(object):
+class OptionGroup:
     def __init__(self, name, description="", parser=None):
         self.name = name
         self.description = description
@@ -337,14 +334,13 @@ class MyOptionParser(argparse.ArgumentParser):
         self.extra_info = extra_info
 
     def error(self, message):
-        """error(message: string)
+        """Transform argparse error message into UsageError."""
+        msg = "{}: error: {}".format(self.prog, message)
 
-        Prints a usage message incorporating the message to stderr and
-        exits.
-        Overrides the method in parent class to change exit code"""
-        self.print_usage(_sys.stderr)
-        args = {"prog": self.prog, "message": message}
-        self.exit(EXIT_USAGEERROR, _("%(prog)s: error: %(message)s\n") % args)
+        if hasattr(self._parser, "_config_source_hint"):
+            msg = "{} ({})".format(msg, self._parser._config_source_hint)
+
+        raise UsageError(self.format_usage() + msg)
 
     def parse_args(self, args=None, namespace=None):
         """allow splitting of positional arguments"""
@@ -354,7 +350,7 @@ class MyOptionParser(argparse.ArgumentParser):
                 if arg and arg[0] == "-":
                     lines = ["unrecognized arguments: %s" % (" ".join(argv))]
                     for k, v in sorted(self.extra_info.items()):
-                        lines.append("  %s: %s" % (k, v))
+                        lines.append("  {}: {}".format(k, v))
                     self.error("\n".join(lines))
             getattr(args, FILE_OR_DIR).extend(argv)
         return args

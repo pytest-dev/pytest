@@ -1,7 +1,3 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 import pytest
 
 
@@ -35,7 +31,7 @@ def test_setup_func_with_setup_decorator():
 
     values = []
 
-    class A(object):
+    class A:
         @pytest.fixture(autouse=True)
         def f(self):
             values.append(1)
@@ -47,7 +43,7 @@ def test_setup_func_with_setup_decorator():
 def test_setup_func_not_callable():
     from _pytest.nose import call_optional
 
-    class A(object):
+    class A:
         f = 1
 
     call_optional(A(), "f")
@@ -366,3 +362,16 @@ def test_nottest_class_decorator(testdir):
     assert not reprec.getfailedcollections()
     calls = reprec.getreports("pytest_runtest_logreport")
     assert not calls
+
+
+def test_skip_test_with_unicode(testdir):
+    testdir.makepyfile(
+        """\
+        import unittest
+        class TestClass():
+            def test_io(self):
+                raise unittest.SkipTest('😊')
+        """
+    )
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines(["* 1 skipped *"])

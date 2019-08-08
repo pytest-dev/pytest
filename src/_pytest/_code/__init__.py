@@ -1,8 +1,4 @@
 """ python inspection/code generation API """
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 from .code import Code  # noqa
 from .code import ExceptionInfo  # noqa
 from .code import filter_traceback  # noqa

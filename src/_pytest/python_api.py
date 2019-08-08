@@ -1,41 +1,23 @@
-from __future__ import absolute_import
-
+import inspect
 import math
 import pprint
 import sys
 import warnings
+from collections.abc import Iterable
+from collections.abc import Mapping
+from collections.abc import Sized
 from decimal import Decimal
+from itertools import filterfalse
 from numbers import Number
 
-import six
 from more_itertools.more import always_iterable
-from six.moves import filterfalse
-from six.moves import zip
 
 import _pytest._code
 from _pytest import deprecated
-from _pytest.compat import isclass
-from _pytest.compat import Iterable
-from _pytest.compat import Mapping
-from _pytest.compat import Sized
 from _pytest.compat import STRING_TYPES
 from _pytest.outcomes import fail
 
 BASE_TYPE = (type, STRING_TYPES)
-
-
-def _cmp_raises_type_error(self, other):
-    """__cmp__ implementation which raises TypeError. Used
-    by Approx base classes to implement only == and != and raise a
-    TypeError for other comparisons.
-
-    Needed in Python 2 only, Python 3 all it takes is not implementing the
-    other operators at all.
-    """
-    __tracebackhide__ = True
-    raise TypeError(
-        "Comparison operators other than == and != not supported by approx objects"
-    )
 
 
 def _non_numeric_type_error(value, at):
@@ -50,7 +32,7 @@ def _non_numeric_type_error(value, at):
 # builtin pytest.approx helper
 
 
-class ApproxBase(object):
+class ApproxBase:
     """
     Provide shared utilities for making approximate comparisons between numbers
     or sequences of numbers.
@@ -80,9 +62,6 @@ class ApproxBase(object):
 
     def __ne__(self, actual):
         return not (actual == self)
-
-    if sys.version_info[0] == 2:
-        __cmp__ = _cmp_raises_type_error
 
     def _approx_scalar(self, x):
         return ApproxScalar(x, rel=self.rel, abs=self.abs, nan_ok=self.nan_ok)
@@ -121,9 +100,6 @@ class ApproxNumpy(ApproxBase):
     def __repr__(self):
         list_scalars = _recursive_list_map(self._approx_scalar, self.expected.tolist())
         return "approx({!r})".format(list_scalars)
-
-    if sys.version_info[0] == 2:
-        __cmp__ = _cmp_raises_type_error
 
     def __eq__(self, actual):
         import numpy as np
@@ -251,10 +227,7 @@ class ApproxScalar(ApproxBase):
         except ValueError:
             vetted_tolerance = "???"
 
-        if sys.version_info[0] == 2:
-            return "{} +- {}".format(self.expected, vetted_tolerance)
-        else:
-            return u"{} \u00b1 {}".format(self.expected, vetted_tolerance)
+        return "{} \u00b1 {}".format(self.expected, vetted_tolerance)
 
     def __eq__(self, actual):
         """
@@ -558,10 +531,16 @@ def raises(expected_exception, *args, **kwargs):
     Assert that a code block/function call raises ``expected_exception``
     or raise a failure exception otherwise.
 
-    :kwparam match: if specified, asserts that the exception matches a text or regex
+    :kwparam match: if specified, a string containing a regular expression,
+        or a regular expression object, that is tested against the string
+        representation of the exception using ``re.search``. To match a literal
+        string that may contain `special characters`__, the pattern can
+        first be escaped with ``re.escape``.
+
+    __ https://docs.python.org/3/library/re.html#regular-expression-syntax
 
     :kwparam message: **(deprecated since 4.1)** if specified, provides a custom failure message
-        if the exception is not raised
+        if the exception is not raised. See :ref:`the deprecation docs <raises message deprecated>` for a workaround.
 
     .. currentmodule:: _pytest._code
 
@@ -597,6 +576,7 @@ def raises(expected_exception, *args, **kwargs):
         ``message`` to specify a custom failure message that will be displayed
         in case the ``pytest.raises`` check fails. This has been deprecated as it
         is considered error prone as users often mean to use ``match`` instead.
+        See :ref:`the deprecation docs <raises message deprecated>` for a workaround.
 
     .. note::
 
@@ -620,6 +600,14 @@ def raises(expected_exception, *args, **kwargs):
            ...         raise ValueError("value must be <= 10")
            ...
            >>> assert exc_info.type is ValueError
+
+    **Using with** ``pytest.mark.parametrize``
+
+    When using :ref:`pytest.mark.parametrize ref`
+    it is possible to parametrize tests such that
+    some runs raise an exception and others do not.
+
+    See :ref:`parametrizing_conditional_raising` for an example.
 
     **Legacy form**
 
@@ -656,7 +644,9 @@ def raises(expected_exception, *args, **kwargs):
 
     """
     __tracebackhide__ = True
-    for exc in filterfalse(isclass, always_iterable(expected_exception, BASE_TYPE)):
+    for exc in filterfalse(
+        inspect.isclass, always_iterable(expected_exception, BASE_TYPE)
+    ):
         msg = (
             "exceptions must be old-style classes or"
             " derived from BaseException, not %s"
@@ -674,7 +664,7 @@ def raises(expected_exception, *args, **kwargs):
             match_expr = kwargs.pop("match")
         if kwargs:
             msg = "Unexpected keyword arguments passed to pytest.raises: "
-            msg += ", ".join(kwargs.keys())
+            msg += ", ".join(sorted(kwargs))
             raise TypeError(msg)
         return RaisesContext(expected_exception, message, match_expr)
     elif isinstance(args[0], str):
@@ -687,7 +677,7 @@ def raises(expected_exception, *args, **kwargs):
         # print "raises frame scope: %r" % frame.f_locals
         try:
             code = _pytest._code.Source(code).compile(_genframe=frame)
-            six.exec_(code, frame.f_globals, loc)
+            exec(code, frame.f_globals, loc)
             # XXX didn't mean f_globals == f_locals something special?
             #     this is destroyed here ...
         except expected_exception:
@@ -704,7 +694,7 @@ def raises(expected_exception, *args, **kwargs):
 raises.Exception = fail.Exception
 
 
-class RaisesContext(object):
+class RaisesContext:
     def __init__(self, expected_exception, message, match_expr):
         self.expected_exception = expected_exception
         self.message = message
@@ -721,8 +711,6 @@ class RaisesContext(object):
             fail(self.message)
         self.excinfo.__init__(tp)
         suppress_exception = issubclass(self.excinfo.type, self.expected_exception)
-        if sys.version_info[0] == 2 and suppress_exception:
-            sys.exc_clear()
         if self.match_expr is not None and suppress_exception:
             self.excinfo.match(self.match_expr)
         return suppress_exception

@@ -1,0 +1,2 @@
+``ExceptionInfo`` objects (returned by ``pytest.raises``) now have the same ``str`` representation as ``repr``, which
+avoids some confusion when users use ``print(e)`` to inspect the object.

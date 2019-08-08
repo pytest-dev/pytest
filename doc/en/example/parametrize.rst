@@ -145,7 +145,8 @@ objects, they are still using the default pytest representation:
     $ pytest test_time.py --collect-only
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
-    rootdir: $REGENDOC_TMPDIR, inifile:
+    cachedir: $PYTHON_PREFIX/.pytest_cache
+    rootdir: $REGENDOC_TMPDIR
     collected 8 items
     <Module test_time.py>
       <Function test_timedistance_v0[a0-b0-expected0]>
@@ -203,7 +204,8 @@ this is a fully self-contained example which you can run with:
     $ pytest test_scenarios.py
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
-    rootdir: $REGENDOC_TMPDIR, inifile:
+    cachedir: $PYTHON_PREFIX/.pytest_cache
+    rootdir: $REGENDOC_TMPDIR
     collected 4 items
 
     test_scenarios.py ....                                               [100%]
@@ -217,7 +219,8 @@ If you just collect tests you'll also nicely see 'advanced' and 'basic' as varia
     $ pytest --collect-only test_scenarios.py
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
-    rootdir: $REGENDOC_TMPDIR, inifile:
+    cachedir: $PYTHON_PREFIX/.pytest_cache
+    rootdir: $REGENDOC_TMPDIR
     collected 4 items
     <Module test_scenarios.py>
       <Class TestSampleWithScenarios>
@@ -283,7 +286,8 @@ Let's first see how it looks like at collection time:
     $ pytest test_backends.py --collect-only
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
-    rootdir: $REGENDOC_TMPDIR, inifile:
+    cachedir: $PYTHON_PREFIX/.pytest_cache
+    rootdir: $REGENDOC_TMPDIR
     collected 2 items
     <Module test_backends.py>
       <Function test_db_initialized[d1]>
@@ -348,7 +352,8 @@ The result of this test will be successful:
     $ pytest test_indirect_list.py --collect-only
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
-    rootdir: $REGENDOC_TMPDIR, inifile:
+    cachedir: $PYTHON_PREFIX/.pytest_cache
+    rootdir: $REGENDOC_TMPDIR
     collected 1 item
     <Module test_indirect_list.py>
       <Function test_indirect[a-b]>
@@ -406,8 +411,6 @@ argument sets to use for each test function.  Let's run it:
         def test_equals(self, a, b):
     >       assert a == b
     E       assert 1 == 2
-    E         -1
-    E         +2
 
     test_parametrize.py:18: AssertionError
     1 failed, 2 passed in 0.12 seconds
@@ -426,14 +429,14 @@ is to be run with different sets of arguments for its three arguments:
 
 .. literalinclude:: multipython.py
 
-Running it results in some skips if we don't have all the python interpreters installed and otherwise runs all combinations (5 interpreters times 5 interpreters times 3 objects to serialize/deserialize):
+Running it results in some skips if we don't have all the python interpreters installed and otherwise runs all combinations (3 interpreters times 3 interpreters times 3 objects to serialize/deserialize):
 
 .. code-block:: pytest
 
    . $ pytest -rs -q multipython.py
    ...sss...sssssssss...sss...                                          [100%]
    ========================= short test summary info ==========================
-   SKIP [15] $REGENDOC_TMPDIR/CWD/multipython.py:30: 'python3.4' not found
+   SKIPPED [15] $REGENDOC_TMPDIR/CWD/multipython.py:31: 'python3.4' not found
    12 passed, 15 skipped in 0.12 seconds
 
 Indirect parametrization of optional implementations/imports
@@ -484,13 +487,14 @@ If you run this with reporting for skips enabled:
     $ pytest -rs test_module.py
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
-    rootdir: $REGENDOC_TMPDIR, inifile:
+    cachedir: $PYTHON_PREFIX/.pytest_cache
+    rootdir: $REGENDOC_TMPDIR
     collected 2 items
 
     test_module.py .s                                                    [100%]
-    ========================= short test summary info ==========================
-    SKIP [1] $REGENDOC_TMPDIR/conftest.py:11: could not import 'opt2'
 
+    ========================= short test summary info ==========================
+    SKIPPED [1] $REGENDOC_TMPDIR/conftest.py:11: could not import 'opt2': No module named 'opt2'
     =================== 1 passed, 1 skipped in 0.12 seconds ====================
 
 You'll see that we don't have an ``opt2`` module and thus the second test run
@@ -511,21 +515,25 @@ Set marks or test ID for individual parametrized test
 --------------------------------------------------------------------
 
 Use ``pytest.param`` to apply marks or set test ID to individual parametrized test.
-For example::
+For example:
+
+.. code-block:: python
 
     # content of test_pytest_param_example.py
     import pytest
-    @pytest.mark.parametrize('test_input,expected', [
-        ('3+5', 8),
-        pytest.param('1+7', 8,
-                     marks=pytest.mark.basic),
-        pytest.param('2+4', 6,
-                     marks=pytest.mark.basic,
-                     id='basic_2+4'),
-        pytest.param('6*9', 42,
-                     marks=[pytest.mark.basic, pytest.mark.xfail],
-                     id='basic_6*9'),
-    ])
+
+
+    @pytest.mark.parametrize(
+        "test_input,expected",
+        [
+            ("3+5", 8),
+            pytest.param("1+7", 8, marks=pytest.mark.basic),
+            pytest.param("2+4", 6, marks=pytest.mark.basic, id="basic_2+4"),
+            pytest.param(
+                "6*9", 42, marks=[pytest.mark.basic, pytest.mark.xfail], id="basic_6*9"
+            ),
+        ],
+    )
     def test_eval(test_input, expected):
         assert eval(test_input) == expected
 
@@ -540,14 +548,14 @@ Then run ``pytest`` with verbose mode and with only the ``basic`` marker:
 
     $ pytest -v -m basic
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.6
-    cachedir: .pytest_cache
-    rootdir: $REGENDOC_TMPDIR, inifile:
-    collecting ... collected 17 items / 14 deselected
+    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python
+    cachedir: $PYTHON_PREFIX/.pytest_cache
+    rootdir: $REGENDOC_TMPDIR
+    collecting ... collected 17 items / 14 deselected / 3 selected
 
     test_pytest_param_example.py::test_eval[1+7-8] PASSED                [ 33%]
     test_pytest_param_example.py::test_eval[basic_2+4] PASSED            [ 66%]
-    test_pytest_param_example.py::test_eval[basic_6*9] xfail             [100%]
+    test_pytest_param_example.py::test_eval[basic_6*9] XFAIL             [100%]
 
     ============ 2 passed, 14 deselected, 1 xfailed in 0.12 seconds ============
 
@@ -559,3 +567,50 @@ As the result:
 - The test ``test_eval[1+7-8]`` passed, but the name is autogenerated and confusing.
 - The test ``test_eval[basic_2+4]`` passed.
 - The test ``test_eval[basic_6*9]`` was expected to fail and did fail.
+
+.. _`parametrizing_conditional_raising`:
+
+Parametrizing conditional raising
+--------------------------------------------------------------------
+
+Use :func:`pytest.raises` with the
+:ref:`pytest.mark.parametrize ref` decorator to write parametrized tests
+in which some tests raise exceptions and others do not.
+
+It is helpful to define a no-op context manager ``does_not_raise`` to serve
+as a complement to ``raises``. For example::
+
+    from contextlib import contextmanager
+    import pytest
+
+    @contextmanager
+    def does_not_raise():
+        yield
+
+
+    @pytest.mark.parametrize('example_input,expectation', [
+        (3, does_not_raise()),
+        (2, does_not_raise()),
+        (1, does_not_raise()),
+        (0, pytest.raises(ZeroDivisionError)),
+    ])
+    def test_division(example_input, expectation):
+        """Test how much I know division."""
+        with expectation:
+            assert (6 / example_input) is not None
+
+In the example above, the first three test cases should run unexceptionally,
+while the fourth should raise ``ZeroDivisionError``.
+
+If you're only supporting Python 3.7+, you can simply use ``nullcontext``
+to define ``does_not_raise``::
+
+    from contextlib import nullcontext as does_not_raise
+
+Or, if you're supporting Python 3.3+ you can use::
+
+    from contextlib import ExitStack as does_not_raise
+
+Or, if desired, you can ``pip install contextlib2`` and use::
+
+    from contextlib2 import ExitStack as does_not_raise

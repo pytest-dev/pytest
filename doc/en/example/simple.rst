@@ -107,7 +107,7 @@ the command line arguments before they get processed:
 
 .. code-block:: python
 
-    # content of conftest.py
+    # setuptools plugin
     import sys
 
 
@@ -128,7 +128,8 @@ directory with the above conftest.py:
     $ pytest
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
-    rootdir: $REGENDOC_TMPDIR, inifile:
+    cachedir: $PYTHON_PREFIX/.pytest_cache
+    rootdir: $REGENDOC_TMPDIR
     collected 0 items
 
     ======================= no tests ran in 0.12 seconds =======================
@@ -154,6 +155,10 @@ line option to control skipping of ``pytest.mark.slow`` marked tests:
         parser.addoption(
             "--runslow", action="store_true", default=False, help="run slow tests"
         )
+
+
+    def pytest_configure(config):
+        config.addinivalue_line("markers", "slow: mark test as slow to run")
 
 
     def pytest_collection_modifyitems(config, items):
@@ -188,13 +193,14 @@ and when running it will see a skipped "slow" test:
     $ pytest -rs    # "-rs" means report details on the little 's'
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
-    rootdir: $REGENDOC_TMPDIR, inifile:
+    cachedir: $PYTHON_PREFIX/.pytest_cache
+    rootdir: $REGENDOC_TMPDIR
     collected 2 items
 
     test_module.py .s                                                    [100%]
-    ========================= short test summary info ==========================
-    SKIP [1] test_module.py:8: need --runslow option to run
 
+    ========================= short test summary info ==========================
+    SKIPPED [1] test_module.py:8: need --runslow option to run
     =================== 1 passed, 1 skipped in 0.12 seconds ====================
 
 Or run it including the ``slow`` marked test:
@@ -204,7 +210,8 @@ Or run it including the ``slow`` marked test:
     $ pytest --runslow
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
-    rootdir: $REGENDOC_TMPDIR, inifile:
+    cachedir: $PYTHON_PREFIX/.pytest_cache
+    rootdir: $REGENDOC_TMPDIR
     collected 2 items
 
     test_module.py ..                                                    [100%]
@@ -346,8 +353,9 @@ which will add the string to the test header accordingly:
     $ pytest
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
+    cachedir: $PYTHON_PREFIX/.pytest_cache
     project deps: mylib-1.1
-    rootdir: $REGENDOC_TMPDIR, inifile:
+    rootdir: $REGENDOC_TMPDIR
     collected 0 items
 
     ======================= no tests ran in 0.12 seconds =======================
@@ -373,11 +381,11 @@ which will add info only when run with "--v":
 
     $ pytest -v
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.6
-    cachedir: .pytest_cache
+    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python
+    cachedir: $PYTHON_PREFIX/.pytest_cache
     info1: did you know that ...
     did you?
-    rootdir: $REGENDOC_TMPDIR, inifile:
+    rootdir: $REGENDOC_TMPDIR
     collecting ... collected 0 items
 
     ======================= no tests ran in 0.12 seconds =======================
@@ -389,7 +397,8 @@ and nothing when run plainly:
     $ pytest
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
-    rootdir: $REGENDOC_TMPDIR, inifile:
+    cachedir: $PYTHON_PREFIX/.pytest_cache
+    rootdir: $REGENDOC_TMPDIR
     collected 0 items
 
     ======================= no tests ran in 0.12 seconds =======================
@@ -428,7 +437,8 @@ Now we can profile which test functions execute the slowest:
     $ pytest --durations=3
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
-    rootdir: $REGENDOC_TMPDIR, inifile:
+    cachedir: $PYTHON_PREFIX/.pytest_cache
+    rootdir: $REGENDOC_TMPDIR
     collected 3 items
 
     test_some_are_slow.py ...                                            [100%]
@@ -502,7 +512,8 @@ If we run this:
     $ pytest -rx
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
-    rootdir: $REGENDOC_TMPDIR, inifile:
+    cachedir: $PYTHON_PREFIX/.pytest_cache
+    rootdir: $REGENDOC_TMPDIR
     collected 4 items
 
     test_step.py .Fx.                                                    [100%]
@@ -585,7 +596,8 @@ We can run this:
     $ pytest
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
-    rootdir: $REGENDOC_TMPDIR, inifile:
+    cachedir: $PYTHON_PREFIX/.pytest_cache
+    rootdir: $REGENDOC_TMPDIR
     collected 7 items
 
     test_step.py .Fx.                                                    [ 57%]
@@ -598,7 +610,7 @@ We can run this:
     file $REGENDOC_TMPDIR/b/test_error.py, line 1
       def test_root(db):  # no db here, will error out
     E       fixture 'db' not found
-    >       available fixtures: cache, capfd, capfdbinary, caplog, capsys, capsysbinary, doctest_namespace, monkeypatch, pytestconfig, record_property, record_xml_attribute, recwarn, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
+    >       available fixtures: cache, capfd, capfdbinary, caplog, capsys, capsysbinary, doctest_namespace, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
     >       use 'pytest --fixtures [testpath]' for help on them.
 
     $REGENDOC_TMPDIR/b/test_error.py:1
@@ -698,7 +710,8 @@ and run them:
     $ pytest test_module.py
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
-    rootdir: $REGENDOC_TMPDIR, inifile:
+    cachedir: $PYTHON_PREFIX/.pytest_cache
+    rootdir: $REGENDOC_TMPDIR
     collected 2 items
 
     test_module.py FF                                                    [100%]
@@ -722,7 +735,9 @@ and run them:
     test_module.py:6: AssertionError
     ========================= 2 failed in 0.12 seconds =========================
 
-you will have a "failures" file which contains the failing test ids::
+you will have a "failures" file which contains the failing test ids:
+
+.. code-block:: bash
 
     $ cat failures
     test_module.py::test_fail1 (PYTEST_TMPDIR/test_fail10)
@@ -799,7 +814,8 @@ and run it:
     $ pytest -s test_module.py
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
-    rootdir: $REGENDOC_TMPDIR, inifile:
+    cachedir: $PYTHON_PREFIX/.pytest_cache
+    rootdir: $REGENDOC_TMPDIR
     collected 3 items
 
     test_module.py Esetting up a test failed! test_module.py::test_setup_fails
@@ -842,7 +858,7 @@ information.
 ``PYTEST_CURRENT_TEST`` environment variable
 --------------------------------------------
 
-.. versionadded:: 3.2
+
 
 Sometimes a test session might get stuck and there might be no easy way to figure out
 which test got stuck, for example if pytest was run in quiet mode (``-q``) or you don't have access to the console
@@ -925,6 +941,8 @@ like ``pytest-timeout`` they must be imported explicitly and passed on to pytest
 
 
 This allows you to execute tests using the frozen
-application with standard ``pytest`` command-line options::
+application with standard ``pytest`` command-line options:
+
+.. code-block:: bash
 
     ./app_main --pytest --verbose --tb=long --junitxml=results.xml test-suite/

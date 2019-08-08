@@ -1,7 +1,7 @@
 import pytest
 
 
-class TestClass(object):
+class TestClass:
     @pytest.fixture
     def something(self, request):
         return request.instance

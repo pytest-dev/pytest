@@ -1,0 +1,1 @@
+Revert unrolling of ``all()`` to fix incorrect assertion when using ``all()`` in an expression.

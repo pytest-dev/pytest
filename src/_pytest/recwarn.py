@@ -1,16 +1,11 @@
 """ recording warnings during test function execution. """
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 import inspect
 import re
 import sys
 import warnings
 
-import six
-
 import _pytest._code
+from _pytest.deprecated import PYTEST_WARNS_UNKNOWN_KWARGS
 from _pytest.deprecated import WARNS_EXEC
 from _pytest.fixtures import yield_fixture
 from _pytest.outcomes import fail
@@ -84,10 +79,12 @@ def warns(expected_warning, *args, **kwargs):
 
     """
     __tracebackhide__ = True
-    match_expr = None
     if not args:
-        if "match" in kwargs:
-            match_expr = kwargs.pop("match")
+        match_expr = kwargs.pop("match", None)
+        if kwargs:
+            warnings.warn(
+                PYTEST_WARNS_UNKNOWN_KWARGS.format(args=sorted(kwargs)), stacklevel=2
+            )
         return WarningsChecker(expected_warning, match_expr=match_expr)
     elif isinstance(args[0], str):
         warnings.warn(WARNS_EXEC, stacklevel=2)
@@ -97,12 +94,12 @@ def warns(expected_warning, *args, **kwargs):
         loc = frame.f_locals.copy()
         loc.update(kwargs)
 
-        with WarningsChecker(expected_warning, match_expr=match_expr):
+        with WarningsChecker(expected_warning):
             code = _pytest._code.Source(code).compile()
-            six.exec_(code, frame.f_globals, loc)
+            exec(code, frame.f_globals, loc)
     else:
         func = args[0]
-        with WarningsChecker(expected_warning, match_expr=match_expr):
+        with WarningsChecker(expected_warning):
             return func(*args[1:], **kwargs)
 
 
@@ -113,7 +110,7 @@ class WarningsRecorder(warnings.catch_warnings):
     """
 
     def __init__(self):
-        super(WarningsRecorder, self).__init__(record=True)
+        super().__init__(record=True)
         self._entered = False
         self._list = []
 
@@ -150,47 +147,16 @@ class WarningsRecorder(warnings.catch_warnings):
         if self._entered:
             __tracebackhide__ = True
             raise RuntimeError("Cannot enter %r twice" % self)
-        self._list = super(WarningsRecorder, self).__enter__()
+        self._list = super().__enter__()
         warnings.simplefilter("always")
-        # python3 keeps track of a "filter version", when the filters are
-        # updated previously seen warnings can be re-warned.  python2 has no
-        # concept of this so we must reset the warnings registry manually.
-        # trivial patching of `warnings.warn` seems to be enough somehow?
-        if six.PY2:
-
-            def warn(message, category=None, stacklevel=1):
-                # duplicate the stdlib logic due to
-                # bad handing in the c version of warnings
-                if isinstance(message, Warning):
-                    category = message.__class__
-                # Check category argument
-                if category is None:
-                    category = UserWarning
-                assert issubclass(category, Warning)
-
-                # emulate resetting the warn registry
-                f_globals = sys._getframe(stacklevel).f_globals
-                if "__warningregistry__" in f_globals:
-                    orig = f_globals["__warningregistry__"]
-                    f_globals["__warningregistry__"] = None
-                    try:
-                        return self._saved_warn(message, category, stacklevel + 1)
-                    finally:
-                        f_globals["__warningregistry__"] = orig
-                else:
-                    return self._saved_warn(message, category, stacklevel + 1)
-
-            warnings.warn, self._saved_warn = warn, warnings.warn
         return self
 
     def __exit__(self, *exc_info):
         if not self._entered:
             __tracebackhide__ = True
             raise RuntimeError("Cannot exit %r without entering first" % self)
-        # see above where `self._saved_warn` is assigned
-        if six.PY2:
-            warnings.warn = self._saved_warn
-        super(WarningsRecorder, self).__exit__(*exc_info)
+
+        super().__exit__(*exc_info)
 
         # Built-in catch_warnings does not reset entered state so we do it
         # manually here for this context manager to become reusable.
@@ -199,7 +165,7 @@ class WarningsRecorder(warnings.catch_warnings):
 
 class WarningsChecker(WarningsRecorder):
     def __init__(self, expected_warning=None, match_expr=None):
-        super(WarningsChecker, self).__init__()
+        super().__init__()
 
         msg = "exceptions must be old-style classes or derived from Warning, not %s"
         if isinstance(expected_warning, tuple):
@@ -215,7 +181,7 @@ class WarningsChecker(WarningsRecorder):
         self.match_expr = match_expr
 
     def __exit__(self, *exc_info):
-        super(WarningsChecker, self).__exit__(*exc_info)
+        super().__exit__(*exc_info)
 
         __tracebackhide__ = True
 

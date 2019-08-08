@@ -1,6 +1,3 @@
-# -*- coding: utf-8 -*-
-
-
 def test_no_items_should_not_show_output(testdir):
     result = testdir.runpytest("--fixtures-per-test")
     assert "fixtures used by" not in result.stdout.str()

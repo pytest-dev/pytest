@@ -223,7 +223,6 @@ import ``helper.py`` normally.  The contents of
    pytest.register_assert_rewrite("pytest_foo.helper")
 
 
-
 Requiring/Loading plugins in a test module or conftest file
 -----------------------------------------------------------
 
@@ -286,6 +285,26 @@ the plugin manager like this:
 If you want to look at the names of existing plugins, use
 the ``--trace-config`` option.
 
+
+.. _registering-markers:
+
+Registering custom markers
+--------------------------
+
+If your plugin uses any markers, you should register them so that they appear in
+pytest's help text and do not :ref:`cause spurious warnings <unknown-marks>`.
+For example, the following plugin would register ``cool_marker`` and
+``mark_with`` for all users:
+
+.. code-block:: python
+
+    def pytest_configure(config):
+        config.addinivalue_line("markers", "cool_marker: this one is for cool tests.")
+        config.addinivalue_line(
+            "markers", "mark_with(arg, arg2): this marker takes arguments."
+        )
+
+
 Testing plugins
 ---------------
 
@@ -315,8 +334,6 @@ string value of ``Hello World!`` if we do not supply a value or ``Hello
 {value}!`` if we do supply a string value.
 
 .. code-block:: python
-
-    # -*- coding: utf-8 -*-
 
     import pytest
 
@@ -413,6 +430,7 @@ additionally it is possible to copy examples for an example folder before runnin
     $ pytest
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
+    cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR, inifile: pytest.ini
     collected 2 items
 
@@ -495,7 +513,7 @@ hookwrapper: executing around other hooks
 
 .. currentmodule:: _pytest.core
 
-.. versionadded:: 2.7
+
 
 pytest plugins can implement hook wrappers which wrap the execution
 of other hook implementations.  A hook wrapper is a generator function
@@ -508,9 +526,12 @@ a :py:class:`Result <pluggy._Result>` instance which encapsulates a result or
 exception info.  The yield point itself will thus typically not raise
 exceptions (unless there are bugs).
 
-Here is an example definition of a hook wrapper::
+Here is an example definition of a hook wrapper:
+
+.. code-block:: python
 
     import pytest
+
 
     @pytest.hookimpl(hookwrapper=True)
     def pytest_pyfunc_call(pyfuncitem):
@@ -616,9 +637,12 @@ if you depend on a plugin that is not installed, validation will fail and
 the error message will not make much sense to your users.
 
 One approach is to defer the hook implementation to a new plugin instead of
-declaring the hook functions directly in your plugin module, for example::
+declaring the hook functions directly in your plugin module, for example:
+
+.. code-block:: python
 
     # contents of myplugin.py
+
 
     class DeferPlugin(object):
         """Simple plugin to defer pytest-xdist hook functions."""
@@ -627,8 +651,9 @@ declaring the hook functions directly in your plugin module, for example::
             """standard xdist hook function.
             """
 
+
     def pytest_configure(config):
-        if config.pluginmanager.hasplugin('xdist'):
+        if config.pluginmanager.hasplugin("xdist"):
             config.pluginmanager.register(DeferPlugin())
 
 This has the added benefit of allowing you to conditionally install hooks

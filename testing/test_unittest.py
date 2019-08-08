@@ -1,11 +1,7 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 import gc
 
 import pytest
-from _pytest.main import EXIT_NOTESTSCOLLECTED
+from _pytest.main import ExitCode
 
 
 def test_simple_unittest(testdir):
@@ -59,7 +55,7 @@ def test_isclasscheck_issue53(testdir):
     """
     )
     result = testdir.runpytest(testpath)
-    assert result.ret == EXIT_NOTESTSCOLLECTED
+    assert result.ret == ExitCode.NO_TESTS_COLLECTED
 
 
 def test_setup(testdir):
@@ -141,6 +137,29 @@ def test_new_instances(testdir):
     )
     reprec = testdir.inline_run(testpath)
     reprec.assertoutcome(passed=2)
+
+
+def test_function_item_obj_is_instance(testdir):
+    """item.obj should be a bound method on unittest.TestCase function items (#5390)."""
+    testdir.makeconftest(
+        """
+        def pytest_runtest_makereport(item, call):
+            if call.when == 'call':
+                class_ = item.parent.obj
+                assert isinstance(item.obj.__self__, class_)
+    """
+    )
+    testdir.makepyfile(
+        """
+        import unittest
+
+        class Test(unittest.TestCase):
+            def test_foo(self):
+                pass
+    """
+    )
+    result = testdir.runpytest_inprocess()
+    result.stdout.fnmatch_lines(["* 1 passed in*"])
 
 
 def test_teardown(testdir):
@@ -392,7 +411,7 @@ def test_module_level_pytestmark(testdir):
     reprec.assertoutcome(skipped=1)
 
 
-class TestTrialUnittest(object):
+class TestTrialUnittest:
     def setup_class(cls):
         cls.ut = pytest.importorskip("twisted.trial.unittest")
         # on windows trial uses a socket for a reactor and apparently doesn't close it properly
@@ -458,9 +477,6 @@ class TestTrialUnittest(object):
                     pass
         """
         )
-        from _pytest.compat import _is_unittest_unexpected_success_a_failure
-
-        should_fail = _is_unittest_unexpected_success_a_failure()
         result = testdir.runpytest("-rxs", *self.ignore_unclosed_socket_warning)
         result.stdout.fnmatch_lines_random(
             [
@@ -471,12 +487,10 @@ class TestTrialUnittest(object):
                 "*i2wanto*",
                 "*sys.version_info*",
                 "*skip_in_method*",
-                "*1 failed*4 skipped*3 xfailed*"
-                if should_fail
-                else "*4 skipped*3 xfail*1 xpass*",
+                "*1 failed*4 skipped*3 xfailed*",
             ]
         )
-        assert result.ret == (1 if should_fail else 0)
+        assert result.ret == 1
 
     def test_trial_error(self, testdir):
         testdir.makepyfile(
@@ -690,7 +704,7 @@ def test_unorderable_types(testdir):
     )
     result = testdir.runpytest()
     assert "TypeError" not in result.stdout.str()
-    assert result.ret == EXIT_NOTESTSCOLLECTED
+    assert result.ret == ExitCode.NO_TESTS_COLLECTED
 
 
 def test_unittest_typerror_traceback(testdir):
@@ -744,22 +758,17 @@ def test_unittest_expected_failure_for_passing_test_is_fail(testdir, runner):
             unittest.main()
     """
     )
-    from _pytest.compat import _is_unittest_unexpected_success_a_failure
 
-    should_fail = _is_unittest_unexpected_success_a_failure()
     if runner == "pytest":
         result = testdir.runpytest("-rxX")
         result.stdout.fnmatch_lines(
-            [
-                "*MyTestCase*test_passing_test_is_fail*",
-                "*1 failed*" if should_fail else "*1 xpassed*",
-            ]
+            ["*MyTestCase*test_passing_test_is_fail*", "*1 failed*"]
         )
     else:
         result = testdir.runpython(script)
         result.stderr.fnmatch_lines(["*1 test in*", "*(unexpected successes=1)*"])
 
-    assert result.ret == (1 if should_fail else 0)
+    assert result.ret == 1
 
 
 @pytest.mark.parametrize(
@@ -794,7 +803,7 @@ def test_unittest_setup_interaction(testdir, fix_type, stmt):
         )
     )
     result = testdir.runpytest()
-    result.stdout.fnmatch_lines("*3 passed*")
+    result.stdout.fnmatch_lines(["*3 passed*"])
 
 
 def test_non_unittest_no_setupclass_support(testdir):
@@ -930,11 +939,11 @@ def test_class_method_containing_test_issue1558(testdir):
     reprec.assertoutcome(passed=1)
 
 
-@pytest.mark.issue(3498)
 @pytest.mark.parametrize(
-    "base", ["six.moves.builtins.object", "unittest.TestCase", "unittest2.TestCase"]
+    "base", ["builtins.object", "unittest.TestCase", "unittest2.TestCase"]
 )
 def test_usefixtures_marker_on_unittest(base, testdir):
+    """#3498"""
     module = base.rsplit(".", 1)[0]
     pytest.importorskip(module)
     testdir.makepyfile(
@@ -1026,3 +1035,18 @@ def test_error_message_with_parametrized_fixtures(testdir):
             "*Function type: TestCaseFunction",
         ]
     )
+
+
+@pytest.mark.parametrize(
+    "test_name, expected_outcome",
+    [
+        ("test_setup_skip.py", "1 skipped"),
+        ("test_setup_skip_class.py", "1 skipped"),
+        ("test_setup_skip_module.py", "1 error"),
+    ],
+)
+def test_setup_inheritance_skipping(testdir, test_name, expected_outcome):
+    """Issue #4700"""
+    testdir.copy_example("unittest/{}".format(test_name))
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines(["* {} in *".format(expected_outcome)])

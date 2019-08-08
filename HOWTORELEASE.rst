@@ -12,6 +12,8 @@ taking a lot of time to make a new one.
 
 #. Create a branch ``release-X.Y.Z`` with the version for the release.
 
+   * **maintenance releases**: from ``4.6-maintenance``;
+
    * **patch releases**: from the latest ``master``;
 
    * **minor releases**: from the latest ``features``; then merge with the latest ``master``;
@@ -24,7 +26,8 @@ taking a lot of time to make a new one.
 
    This will generate a commit with all the changes ready for pushing.
 
-#. Open a PR for this branch targeting ``master``.
+#. Open a PR for this branch targeting ``master`` (or ``4.6-maintenance`` for
+   maintenance releases).
 
 #. After all tests pass and the PR has been approved, publish to PyPI by pushing the tag::
 
@@ -33,7 +36,16 @@ taking a lot of time to make a new one.
 
    Wait for the deploy to complete, then make sure it is `available on PyPI <https://pypi.org/project/pytest>`_.
 
-#. Merge the PR into ``master``.
+#. Merge the PR.
+
+#. If this is a maintenance release, cherry-pick the CHANGELOG / announce
+   files to the ``master`` branch::
+
+       git fetch --all --prune
+       git checkout origin/master -b cherry-pick-maintenance-release
+       git cherry-pick --no-commit -m1 origin/4.6-maintenance
+       git checkout origin/master -- changelog
+       git commit  # no arguments
 
 #. Send an email announcement with the contents from::
 

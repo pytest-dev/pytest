@@ -1,19 +1,16 @@
-# encoding: utf-8
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
-import sys
+import inspect
 import textwrap
 
 import pytest
 from _pytest.compat import MODULE_NOT_FOUND_ERROR
+from _pytest.doctest import _is_mocked
+from _pytest.doctest import _patch_unwrap_mock_aware
 from _pytest.doctest import DoctestItem
 from _pytest.doctest import DoctestModule
 from _pytest.doctest import DoctestTextfile
 
 
-class TestDoctests(object):
+class TestDoctests:
     def test_collect_testtextfile(self, testdir):
         w = testdir.maketxtfile(whatever="")
         checkfile = testdir.maketxtfile(
@@ -145,7 +142,7 @@ class TestDoctests(object):
 
     @pytest.mark.parametrize(
         "   test_string,    encoding",
-        [(u"foo", "ascii"), (u"öäü", "latin1"), (u"öäü", "utf-8")],
+        [("foo", "ascii"), ("öäü", "latin1"), ("öäü", "utf-8")],
     )
     def test_encoding(self, testdir, test_string, encoding):
         """Test support for doctest_encoding ini option.
@@ -158,8 +155,8 @@ class TestDoctests(object):
                 encoding
             )
         )
-        doctest = u"""
-            >>> u"{}"
+        doctest = """
+            >>> "{}"
             {}
         """.format(
             test_string, repr(test_string)
@@ -187,6 +184,18 @@ class TestDoctests(object):
                 "*UNEXPECTED*ZeroDivision*",
             ]
         )
+
+    def test_doctest_skip(self, testdir):
+        testdir.maketxtfile(
+            """
+            >>> 1
+            1
+            >>> import pytest
+            >>> pytest.skip("")
+        """
+        )
+        result = testdir.runpytest("--doctest-modules")
+        result.stdout.fnmatch_lines(["*1 skipped*"])
 
     def test_docstring_partial_context_around_error(self, testdir):
         """Test that we show some context before the actual line of a failing
@@ -568,14 +577,13 @@ class TestDoctests(object):
         """Fix internal error with docstrings containing non-ascii characters.
         """
         testdir.makepyfile(
-            u'''
-            # encoding: utf-8
+            '''\
             def foo():
                 """
                 >>> name = 'с' # not letter 'c' but instead Cyrillic 's'.
                 'anything'
                 """
-        '''
+            '''
         )
         result = testdir.runpytest("--doctest-modules")
         result.stdout.fnmatch_lines(["Got nothing", "* 1 failed in*"])
@@ -646,9 +654,6 @@ class TestDoctests(object):
         """
         p = testdir.makepyfile(
             test_unicode_doctest_module="""
-            # -*- encoding: utf-8 -*-
-            from __future__ import unicode_literals
-
             def fix_bad_unicode(text):
                 '''
                     >>> print(fix_bad_unicode('Ãºnico'))
@@ -669,7 +674,7 @@ class TestDoctests(object):
             test_print_unicode_value=r"""
             Here is a doctest::
 
-                >>> print(u'\xE5\xE9\xEE\xF8\xFC')
+                >>> print('\xE5\xE9\xEE\xF8\xFC')
                 åéîøü
         """
         )
@@ -727,7 +732,7 @@ class TestDoctests(object):
         result.stdout.fnmatch_lines(["*collected 1 item*"])
 
 
-class TestLiterals(object):
+class TestLiterals:
     @pytest.mark.parametrize("config_mode", ["ini", "comment"])
     def test_allow_unicode(self, testdir, config_mode):
         """Test that doctests which output unicode work in all python versions
@@ -818,13 +823,11 @@ class TestLiterals(object):
         """
         )
         reprec = testdir.inline_run()
-        passed = int(sys.version_info[0] >= 3)
-        reprec.assertoutcome(passed=passed, failed=int(not passed))
+        reprec.assertoutcome(passed=1)
 
     def test_bytes_literal(self, testdir):
         """Test that doctests which output bytes fail in Python 3 when
-        the ALLOW_BYTES option is not used. The same test should pass
-        in Python 2 (#1287).
+        the ALLOW_BYTES option is not used. (#1287).
         """
         testdir.maketxtfile(
             test_doc="""
@@ -833,11 +836,10 @@ class TestLiterals(object):
         """
         )
         reprec = testdir.inline_run()
-        passed = int(sys.version_info[0] == 2)
-        reprec.assertoutcome(passed=passed, failed=int(not passed))
+        reprec.assertoutcome(failed=1)
 
 
-class TestDoctestSkips(object):
+class TestDoctestSkips:
     """
     If all examples in a doctest are skipped due to the SKIP option, then
     the tests should be SKIPPED rather than PASSED. (#957)
@@ -918,7 +920,7 @@ class TestDoctestSkips(object):
         )
 
 
-class TestDoctestAutoUseFixtures(object):
+class TestDoctestAutoUseFixtures:
 
     SCOPES = ["module", "session", "class", "function"]
 
@@ -956,7 +958,7 @@ class TestDoctestAutoUseFixtures(object):
         """
         )
         result = testdir.runpytest("--doctest-modules")
-        result.stdout.fnmatch_lines("*2 passed*")
+        result.stdout.fnmatch_lines(["*2 passed*"])
 
     @pytest.mark.parametrize("scope", SCOPES)
     @pytest.mark.parametrize("enable_doctest", [True, False])
@@ -1062,7 +1064,7 @@ class TestDoctestAutoUseFixtures(object):
         result.stdout.fnmatch_lines(["*=== 1 passed in *"])
 
 
-class TestDoctestNamespaceFixture(object):
+class TestDoctestNamespaceFixture:
 
     SCOPES = ["module", "session", "class", "function"]
 
@@ -1124,7 +1126,7 @@ class TestDoctestNamespaceFixture(object):
         reprec.assertoutcome(passed=1)
 
 
-class TestDoctestReportingOption(object):
+class TestDoctestReportingOption:
     def _run_doctest_report(self, testdir, format):
         testdir.makepyfile(
             """
@@ -1225,3 +1227,24 @@ def test_doctest_mock_objects_dont_recurse_missbehaved(mock_module, testdir):
     )
     result = testdir.runpytest("--doctest-modules")
     result.stdout.fnmatch_lines(["* 1 passed *"])
+
+
+class Broken:
+    def __getattr__(self, _):
+        raise KeyError("This should be an AttributeError")
+
+
+@pytest.mark.parametrize(  # pragma: no branch (lambdas are not called)
+    "stop", [None, _is_mocked, lambda f: None, lambda f: False, lambda f: True]
+)
+def test_warning_on_unwrap_of_broken_object(stop):
+    bad_instance = Broken()
+    assert inspect.unwrap.__module__ == "inspect"
+    with _patch_unwrap_mock_aware():
+        assert inspect.unwrap.__module__ != "inspect"
+        with pytest.warns(
+            pytest.PytestWarning, match="^Got KeyError.* when unwrapping"
+        ):
+            with pytest.raises(KeyError):
+                inspect.unwrap(bad_instance, stop=stop)
+    assert inspect.unwrap.__module__ == "inspect"

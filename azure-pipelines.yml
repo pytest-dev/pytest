@@ -1,0 +1,77 @@
+trigger:
+- master
+- features
+
+variables:
+  PYTEST_ADDOPTS: "--junitxml=build/test-results/$(tox.env).xml -vv"
+  PYTEST_COVERAGE: '0'
+
+jobs:
+
+- job: 'Test'
+  pool:
+    vmImage: "vs2017-win2016"
+  strategy:
+    matrix:
+      # -- pypy3 disabled for now: #5279 --
+      # pypy3:
+      #   python.version: 'pypy3'
+      #   tox.env: 'pypy3'
+      py35-xdist:
+        python.version: '3.5'
+        tox.env: 'py35-xdist'
+        # Coverage for:
+        # - test_supports_breakpoint_module_global
+        PYTEST_COVERAGE: '1'
+      py36-xdist:
+        python.version: '3.6'
+        tox.env: 'py36-xdist'
+      py37:
+        python.version: '3.7'
+        tox.env: 'py37-twisted-numpy'
+        # Coverage for:
+        # - _py36_windowsconsoleio_workaround (with py36+)
+        # - test_request_garbage (no xdist)
+        PYTEST_COVERAGE: '1'
+      py37-linting/docs/doctesting:
+        python.version: '3.7'
+        tox.env: 'linting,docs,doctesting'
+      py37-pluggymaster-xdist:
+        python.version: '3.7'
+        tox.env: 'py37-pluggymaster-xdist'
+    maxParallel: 10
+
+  steps:
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '$(python.version)'
+      architecture: 'x64'
+
+  - script: python -m pip install --upgrade pip && python -m pip install tox
+    displayName: 'Install tox'
+
+  - bash: |
+      if [[ "$PYTEST_COVERAGE" == "1" ]]; then
+        export _PYTEST_TOX_COVERAGE_RUN="coverage run -m"
+        export _PYTEST_TOX_EXTRA_DEP=coverage-enable-subprocess
+        export COVERAGE_FILE="$PWD/.coverage"
+        export COVERAGE_PROCESS_START="$PWD/.coveragerc"
+      fi
+      python -m tox -e $(tox.env)
+    displayName: 'Run tests'
+
+  - task: PublishTestResults@2
+    inputs:
+      testResultsFiles: 'build/test-results/$(tox.env).xml'
+      testRunTitle: '$(tox.env)'
+    condition: succeededOrFailed()
+
+  - bash: |
+      if [[ "$PYTEST_COVERAGE" == 1 ]]; then
+        scripts/report-coverage.sh
+      fi
+    env:
+      CODECOV_NAME: $(tox.env)
+      CODECOV_TOKEN: $(CODECOV_TOKEN)
+    displayName: Report and upload coverage
+    condition: eq(variables['PYTEST_COVERAGE'], '1')

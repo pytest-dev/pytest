@@ -50,6 +50,7 @@ Full pytest documentation
    projects
    faq
    contact
+   tidelift
 
 .. only:: html
 

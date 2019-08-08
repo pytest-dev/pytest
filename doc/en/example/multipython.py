@@ -8,7 +8,7 @@ import textwrap
 
 import pytest
 
-pythonlist = ["python2.7", "python3.4", "python3.5"]
+pythonlist = ["python3.5", "python3.6", "python3.7"]
 
 
 @pytest.fixture(params=pythonlist)
@@ -22,7 +22,7 @@ def python2(request, python1):
     return Python(request.param, python1.picklefile)
 
 
-class Python(object):
+class Python:
     def __init__(self, version, picklefile):
         self.pythonpath = distutils.spawn.find_executable(version)
         if not self.pythonpath:

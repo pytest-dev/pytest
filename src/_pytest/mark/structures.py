@@ -1,17 +1,17 @@
 import inspect
 import warnings
 from collections import namedtuple
+from collections.abc import MutableMapping
 from operator import attrgetter
 
 import attr
-import six
 
 from ..compat import ascii_escaped
 from ..compat import getfslineno
-from ..compat import MappingMixin
 from ..compat import NOTSET
+from _pytest.deprecated import PYTEST_PARAM_UNKNOWN_KWARGS
 from _pytest.outcomes import fail
-
+from _pytest.warning_types import PytestUnknownMarkWarning
 
 EMPTY_PARAMETERSET_OPTION = "empty_parameter_set_mark"
 
@@ -45,7 +45,7 @@ def get_empty_parameterset_mark(config, argnames, func):
         f_name = func.__name__
         _, lineno = getfslineno(func)
         raise Collector.CollectError(
-            "Empty parameter set in '%s' at line %d" % (f_name, lineno)
+            "Empty parameter set in '%s' at line %d" % (f_name, lineno + 1)
         )
     else:
         raise LookupError(requested_mark)
@@ -61,20 +61,25 @@ def get_empty_parameterset_mark(config, argnames, func):
 
 class ParameterSet(namedtuple("ParameterSet", "values, marks, id")):
     @classmethod
-    def param(cls, *values, **kw):
-        marks = kw.pop("marks", ())
+    def param(cls, *values, **kwargs):
+        marks = kwargs.pop("marks", ())
         if isinstance(marks, MarkDecorator):
             marks = (marks,)
         else:
             assert isinstance(marks, (tuple, list, set))
 
-        id_ = kw.pop("id", None)
+        id_ = kwargs.pop("id", None)
         if id_ is not None:
-            if not isinstance(id_, six.string_types):
+            if not isinstance(id_, str):
                 raise TypeError(
                     "Expected id to be a string, got {}: {!r}".format(type(id_), id_)
                 )
             id_ = ascii_escaped(id_)
+
+        if kwargs:
+            warnings.warn(
+                PYTEST_PARAM_UNKNOWN_KWARGS.format(args=sorted(kwargs)), stacklevel=3
+            )
         return cls(values, marks, id_)
 
     @classmethod
@@ -96,16 +101,28 @@ class ParameterSet(namedtuple("ParameterSet", "values, marks, id")):
         else:
             return cls(parameterset, marks=[], id=None)
 
-    @classmethod
-    def _for_parametrize(cls, argnames, argvalues, func, config, function_definition):
+    @staticmethod
+    def _parse_parametrize_args(argnames, argvalues, **_):
+        """It receives an ignored _ (kwargs) argument so this function can
+        take also calls from parametrize ignoring scope, indirect, and other
+        arguments..."""
         if not isinstance(argnames, (tuple, list)):
             argnames = [x.strip() for x in argnames.split(",") if x.strip()]
             force_tuple = len(argnames) == 1
         else:
             force_tuple = False
-        parameters = [
+        return argnames, force_tuple
+
+    @staticmethod
+    def _parse_parametrize_parameters(argvalues, force_tuple):
+        return [
             ParameterSet.extract_from(x, force_tuple=force_tuple) for x in argvalues
         ]
+
+    @classmethod
+    def _for_parametrize(cls, argnames, argvalues, func, config, function_definition):
+        argnames, force_tuple = cls._parse_parametrize_args(argnames, argvalues)
+        parameters = cls._parse_parametrize_parameters(argvalues, force_tuple)
         del argvalues
 
         if parameters:
@@ -130,7 +147,7 @@ class ParameterSet(namedtuple("ParameterSet", "values, marks, id")):
                     )
         else:
             # empty parameter set (likely computed at runtime): create a single
-            # parameter set with NOSET values, with the "empty parameter set" mark applied to it
+            # parameter set with NOTSET values, with the "empty parameter set" mark applied to it
             mark = get_empty_parameterset_mark(config, argnames, func)
             parameters.append(
                 ParameterSet(values=(NOTSET,) * len(argnames), marks=[mark], id=None)
@@ -139,13 +156,13 @@ class ParameterSet(namedtuple("ParameterSet", "values, marks, id")):
 
 
 @attr.s(frozen=True)
-class Mark(object):
+class Mark:
     #: name of the mark
     name = attr.ib(type=str)
     #: positional arguments of the mark decorator
-    args = attr.ib()  # type: List[object]
+    args = attr.ib()  # List[object]
     #: keyword arguments of the mark decorator
-    kwargs = attr.ib()  # type: Dict[str, object]
+    kwargs = attr.ib()  # Dict[str, object]
 
     def combined_with(self, other):
         """
@@ -153,7 +170,7 @@ class Mark(object):
         :type other: Mark
         :rtype: Mark
 
-        combines by appending aargs and merging the mappings
+        combines by appending args and merging the mappings
         """
         assert self.name == other.name
         return Mark(
@@ -162,7 +179,7 @@ class Mark(object):
 
 
 @attr.s
-class MarkDecorator(object):
+class MarkDecorator:
     """ A decorator for test functions and test classes.  When applied
     it will create :class:`MarkInfo` objects which may be
     :ref:`retrieved by hooks as item keywords <excontrolskip>`.
@@ -210,7 +227,7 @@ class MarkDecorator(object):
         return self.mark == other.mark if isinstance(other, MarkDecorator) else False
 
     def __repr__(self):
-        return "<MarkDecorator %r>" % (self.mark,)
+        return "<MarkDecorator {!r}>".format(self.mark)
 
     def with_args(self, *args, **kwargs):
         """ return a MarkDecorator with extra arguments added
@@ -271,7 +288,7 @@ def store_mark(obj, mark):
     obj.pytestmark = get_unpacked_marks(obj) + [mark]
 
 
-class MarkGenerator(object):
+class MarkGenerator:
     """ Factory for :class:`MarkDecorator` objects - exposed as
     a ``pytest.mark`` singleton instance.  Example::
 
@@ -284,34 +301,47 @@ class MarkGenerator(object):
     on the ``test_function`` object. """
 
     _config = None
+    _markers = set()
 
     def __getattr__(self, name):
         if name[0] == "_":
             raise AttributeError("Marker name must NOT start with underscore")
-        if self._config is not None:
-            self._check(name)
-        return MarkDecorator(Mark(name, (), {}))
 
-    def _check(self, name):
-        try:
-            if name in self._markers:
-                return
-        except AttributeError:
-            pass
-        self._markers = values = set()
-        for line in self._config.getini("markers"):
-            marker = line.split(":", 1)[0]
-            marker = marker.rstrip()
-            x = marker.split("(", 1)[0]
-            values.add(x)
-        if name not in self._markers:
-            fail("{!r} not a registered marker".format(name), pytrace=False)
+        if self._config is not None:
+            # We store a set of markers as a performance optimisation - if a mark
+            # name is in the set we definitely know it, but a mark may be known and
+            # not in the set.  We therefore start by updating the set!
+            if name not in self._markers:
+                for line in self._config.getini("markers"):
+                    # example lines: "skipif(condition): skip the given test if..."
+                    # or "hypothesis: tests which use Hypothesis", so to get the
+                    # marker name we split on both `:` and `(`.
+                    marker = line.split(":")[0].split("(")[0].strip()
+                    self._markers.add(marker)
+
+            # If the name is not in the set of known marks after updating,
+            # then it really is time to issue a warning or an error.
+            if name not in self._markers:
+                if self._config.option.strict_markers:
+                    fail(
+                        "{!r} not found in `markers` configuration option".format(name),
+                        pytrace=False,
+                    )
+                else:
+                    warnings.warn(
+                        "Unknown pytest.mark.%s - is this a typo?  You can register "
+                        "custom marks to avoid this warning - for details, see "
+                        "https://docs.pytest.org/en/latest/mark.html" % name,
+                        PytestUnknownMarkWarning,
+                    )
+
+        return MarkDecorator(Mark(name, (), {}))
 
 
 MARK_GEN = MarkGenerator()
 
 
-class NodeKeywords(MappingMixin):
+class NodeKeywords(MutableMapping):
     def __init__(self, node):
         self.node = node
         self.parent = node.parent
@@ -345,11 +375,11 @@ class NodeKeywords(MappingMixin):
         return len(self._seen())
 
     def __repr__(self):
-        return "<NodeKeywords for node %s>" % (self.node,)
+        return "<NodeKeywords for node {}>".format(self.node)
 
 
 @attr.s(cmp=False, hash=False)
-class NodeMarkers(object):
+class NodeMarkers:
     """
     internal structure for storing marks belonging to a node
 

@@ -1,8 +1,4 @@
 """ support for providing temporary directories to test functions.  """
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 import os
 import re
 import tempfile
@@ -10,7 +6,6 @@ import warnings
 
 import attr
 import py
-import six
 
 from .fixtures import fixture
 from .monkeypatch import MonkeyPatch
@@ -22,7 +17,7 @@ from .pathlib import Path
 
 
 @attr.s
-class TempPathFactory(object):
+class TempPathFactory:
     """Factory for temporary directories under the common base temp directory.
 
     The base directory can be configured using the ``--basetemp`` option."""
@@ -31,9 +26,7 @@ class TempPathFactory(object):
         # using os.path.abspath() to get absolute path instead of resolve() as it
         # does not work the same in all platforms (see #4427)
         # Path.absolute() exists, but it is not public (see https://bugs.python.org/issue25012)
-        converter=attr.converters.optional(
-            lambda p: Path(os.path.abspath(six.text_type(p)))
-        )
+        converter=attr.converters.optional(lambda p: Path(os.path.abspath(str(p))))
     )
     _trace = attr.ib()
     _basetemp = attr.ib(default=None)
@@ -59,31 +52,32 @@ class TempPathFactory(object):
 
     def getbasetemp(self):
         """ return base temporary directory. """
-        if self._basetemp is None:
-            if self._given_basetemp is not None:
-                basetemp = self._given_basetemp
-                ensure_reset_dir(basetemp)
-            else:
-                from_env = os.environ.get("PYTEST_DEBUG_TEMPROOT")
-                temproot = Path(from_env or tempfile.gettempdir()).resolve()
-                user = get_user() or "unknown"
-                # use a sub-directory in the temproot to speed-up
-                # make_numbered_dir() call
-                rootdir = temproot.joinpath("pytest-of-{}".format(user))
-                rootdir.mkdir(exist_ok=True)
-                basetemp = make_numbered_dir_with_cleanup(
-                    prefix="pytest-", root=rootdir, keep=3, lock_timeout=LOCK_TIMEOUT
-                )
-            assert basetemp is not None
-            self._basetemp = t = basetemp
-            self._trace("new basetemp", t)
-            return t
-        else:
+        if self._basetemp is not None:
             return self._basetemp
+
+        if self._given_basetemp is not None:
+            basetemp = self._given_basetemp
+            ensure_reset_dir(basetemp)
+            basetemp = basetemp.resolve()
+        else:
+            from_env = os.environ.get("PYTEST_DEBUG_TEMPROOT")
+            temproot = Path(from_env or tempfile.gettempdir()).resolve()
+            user = get_user() or "unknown"
+            # use a sub-directory in the temproot to speed-up
+            # make_numbered_dir() call
+            rootdir = temproot.joinpath("pytest-of-{}".format(user))
+            rootdir.mkdir(exist_ok=True)
+            basetemp = make_numbered_dir_with_cleanup(
+                prefix="pytest-", root=rootdir, keep=3, lock_timeout=LOCK_TIMEOUT
+            )
+        assert basetemp is not None, basetemp
+        self._basetemp = t = basetemp
+        self._trace("new basetemp", t)
+        return t
 
 
 @attr.s
-class TempdirFactory(object):
+class TempdirFactory:
     """
     backward comptibility wrapper that implements
     :class:``py.path.local`` for :class:``TempPathFactory``
@@ -168,7 +162,7 @@ def _mk_tmp(request, factory):
 
 
 @fixture
-def tmpdir(request, tmpdir_factory):
+def tmpdir(tmp_path):
     """Return a temporary directory path object
     which is unique to each test function invocation,
     created as a sub directory of the base temporary
@@ -177,7 +171,7 @@ def tmpdir(request, tmpdir_factory):
 
     .. _`py.path.local`: https://py.readthedocs.io/en/latest/path.html
     """
-    return _mk_tmp(request, tmpdir_factory)
+    return py.path.local(tmp_path)
 
 
 @fixture

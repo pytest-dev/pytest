@@ -1,15 +1,9 @@
 """ monkeypatching and mocking functionality.  """
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 import os
 import re
 import sys
 import warnings
 from contextlib import contextmanager
-
-import six
 
 from .warning_types import PytestWarning
 from _pytest.fixtures import fixture
@@ -66,7 +60,7 @@ def resolve(name):
             if expected == used:
                 raise
             else:
-                raise ImportError("import error in %s: %s" % (used, ex))
+                raise ImportError("import error in {}: {}".format(used, ex))
         found = annotated_getattr(found, part, used)
     return found
 
@@ -76,14 +70,18 @@ def annotated_getattr(obj, name, ann):
         obj = getattr(obj, name)
     except AttributeError:
         raise AttributeError(
-            "%r object at %s has no attribute %r" % (type(obj).__name__, ann, name)
+            "{!r} object at {} has no attribute {!r}".format(
+                type(obj).__name__, ann, name
+            )
         )
     return obj
 
 
 def derive_importpath(import_path, raising):
-    if not isinstance(import_path, six.string_types) or "." not in import_path:
-        raise TypeError("must be absolute import path string, not %r" % (import_path,))
+    if not isinstance(import_path, str) or "." not in import_path:
+        raise TypeError(
+            "must be absolute import path string, not {!r}".format(import_path)
+        )
     module, attr = import_path.rsplit(".", 1)
     target = resolve(module)
     if raising:
@@ -91,7 +89,7 @@ def derive_importpath(import_path, raising):
     return attr, target
 
 
-class Notset(object):
+class Notset:
     def __repr__(self):
         return "<notset>"
 
@@ -99,7 +97,7 @@ class Notset(object):
 notset = Notset()
 
 
-class MonkeyPatch(object):
+class MonkeyPatch:
     """ Object returned by the ``monkeypatch`` fixture keeping a record of setattr/item/env/syspath changes.
     """
 
@@ -150,7 +148,7 @@ class MonkeyPatch(object):
         import inspect
 
         if value is notset:
-            if not isinstance(target, six.string_types):
+            if not isinstance(target, str):
                 raise TypeError(
                     "use setattr(target, name, value) or "
                     "setattr(target, value) with target being a dotted "
@@ -161,7 +159,7 @@ class MonkeyPatch(object):
 
         oldval = getattr(target, name, notset)
         if raising and oldval is notset:
-            raise AttributeError("%r has no attribute %r" % (target, name))
+            raise AttributeError("{!r} has no attribute {!r}".format(target, name))
 
         # avoid class descriptors like staticmethod/classmethod
         if inspect.isclass(target):
@@ -184,7 +182,7 @@ class MonkeyPatch(object):
         import inspect
 
         if name is notset:
-            if not isinstance(target, six.string_types):
+            if not isinstance(target, str):
                 raise TypeError(
                     "use delattr(target, name) or "
                     "delattr(target) with target being a dotted "
@@ -221,15 +219,6 @@ class MonkeyPatch(object):
             self._setitem.append((dic, name, dic.get(name, notset)))
             del dic[name]
 
-    def _warn_if_env_name_is_not_str(self, name):
-        """On Python 2, warn if the given environment variable name is not a native str (#4056)"""
-        if six.PY2 and not isinstance(name, str):
-            warnings.warn(
-                PytestWarning(
-                    "Environment variable name {!r} should be str".format(name)
-                )
-            )
-
     def setenv(self, name, value, prepend=None):
         """ Set environment variable ``name`` to ``value``.  If ``prepend``
         is a character, read the current environment variable value
@@ -247,7 +236,6 @@ class MonkeyPatch(object):
             value = str(value)
         if prepend and name in os.environ:
             value = value + prepend + os.environ[name]
-        self._warn_if_env_name_is_not_str(name)
         self.setitem(os.environ, name, value)
 
     def delenv(self, name, raising=True):
@@ -257,14 +245,29 @@ class MonkeyPatch(object):
         If ``raising`` is set to False, no exception will be raised if the
         environment variable is missing.
         """
-        self._warn_if_env_name_is_not_str(name)
         self.delitem(os.environ, name, raising=raising)
 
     def syspath_prepend(self, path):
         """ Prepend ``path`` to ``sys.path`` list of import locations. """
+        from pkg_resources import fixup_namespace_packages
+
         if self._savesyspath is None:
             self._savesyspath = sys.path[:]
         sys.path.insert(0, str(path))
+
+        # https://github.com/pypa/setuptools/blob/d8b901bc/docs/pkg_resources.txt#L162-L171
+        fixup_namespace_packages(str(path))
+
+        # A call to syspathinsert() usually means that the caller wants to
+        # import some dynamically created files, thus with python3 we
+        # invalidate its import caches.
+        # This is especially important when any namespace package is in used,
+        # since then the mtime based FileFinder cache (that gets created in
+        # this case already) gets not invalidated when writing the new files
+        # quickly afterwards.
+        from importlib import invalidate_caches
+
+        invalidate_caches()
 
     def chdir(self, path):
         """ Change the current working directory to the specified path.

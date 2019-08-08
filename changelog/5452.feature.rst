@@ -1,0 +1,1 @@
+When warnings are configured as errors, pytest warnings now appear as originating from ``pytest.`` instead of the internal ``_pytest.warning_types.`` module.

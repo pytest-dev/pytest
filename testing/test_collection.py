@@ -1,7 +1,4 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
+import os
 import pprint
 import sys
 import textwrap
@@ -10,11 +7,11 @@ import py
 
 import pytest
 from _pytest.main import _in_venv
-from _pytest.main import EXIT_NOTESTSCOLLECTED
+from _pytest.main import ExitCode
 from _pytest.main import Session
 
 
-class TestCollector(object):
+class TestCollector:
     def test_collect_versus_item(self):
         from pytest import Collector, Item
 
@@ -35,8 +32,6 @@ class TestCollector(object):
 
         assert fn1 == fn2
         assert fn1 != modcol
-        if sys.version_info < (3, 0):
-            assert cmp(fn1, fn2) == 0  # NOQA
         assert hash(fn1) == hash(fn2)
 
         fn3 = testdir.collect_by_name(modcol, "test_fail")
@@ -106,7 +101,7 @@ class TestCollector(object):
         result.stdout.fnmatch_lines(["collected 0 items", "*no tests ran in*"])
 
 
-class TestCollectFS(object):
+class TestCollectFS:
     def test_ignored_certain_directories(self, testdir):
         tmpdir = testdir.tmpdir
         tmpdir.ensure("build", "test_notfound.py")
@@ -243,11 +238,11 @@ class TestCollectFS(object):
             assert [x.name for x in items] == ["test_%s" % dirname]
 
 
-class TestCollectPluginHookRelay(object):
+class TestCollectPluginHookRelay:
     def test_pytest_collect_file(self, testdir):
         wascalled = []
 
-        class Plugin(object):
+        class Plugin:
             def pytest_collect_file(self, path, parent):
                 if not path.basename.startswith("."):
                     # Ignore hidden files, e.g. .testmondata.
@@ -261,7 +256,7 @@ class TestCollectPluginHookRelay(object):
     def test_pytest_collect_directory(self, testdir):
         wascalled = []
 
-        class Plugin(object):
+        class Plugin:
             def pytest_collect_directory(self, path, parent):
                 wascalled.append(path.basename)
 
@@ -272,7 +267,7 @@ class TestCollectPluginHookRelay(object):
         assert "world" in wascalled
 
 
-class TestPrunetraceback(object):
+class TestPrunetraceback:
     def test_custom_repr_failure(self, testdir):
         p = testdir.makepyfile(
             """
@@ -321,7 +316,7 @@ class TestPrunetraceback(object):
         result.stdout.fnmatch_lines(["*ERROR collecting*", "*header1*"])
 
 
-class TestCustomConftests(object):
+class TestCustomConftests:
     def test_ignore_collect_path(self, testdir):
         testdir.makeconftest(
             """
@@ -349,10 +344,10 @@ class TestCustomConftests(object):
         p = testdir.makepyfile("def test_hello(): pass")
         result = testdir.runpytest(p)
         assert result.ret == 0
-        result.stdout.fnmatch_lines("*1 passed*")
+        result.stdout.fnmatch_lines(["*1 passed*"])
         result = testdir.runpytest()
-        assert result.ret == EXIT_NOTESTSCOLLECTED
-        result.stdout.fnmatch_lines("*collected 0 items*")
+        assert result.ret == ExitCode.NO_TESTS_COLLECTED
+        result.stdout.fnmatch_lines(["*collected 0 items*"])
 
     def test_collectignore_exclude_on_option(self, testdir):
         testdir.makeconftest(
@@ -368,11 +363,31 @@ class TestCustomConftests(object):
         testdir.mkdir("hello")
         testdir.makepyfile(test_world="def test_hello(): pass")
         result = testdir.runpytest()
-        assert result.ret == EXIT_NOTESTSCOLLECTED
+        assert result.ret == ExitCode.NO_TESTS_COLLECTED
         assert "passed" not in result.stdout.str()
         result = testdir.runpytest("--XX")
         assert result.ret == 0
         assert "passed" in result.stdout.str()
+
+    def test_collectignoreglob_exclude_on_option(self, testdir):
+        testdir.makeconftest(
+            """
+            collect_ignore_glob = ['*w*l[dt]*']
+            def pytest_addoption(parser):
+                parser.addoption("--XX", action="store_true", default=False)
+            def pytest_configure(config):
+                if config.getvalue("XX"):
+                    collect_ignore_glob[:] = []
+        """
+        )
+        testdir.makepyfile(test_world="def test_hello(): pass")
+        testdir.makepyfile(test_welt="def test_hallo(): pass")
+        result = testdir.runpytest()
+        assert result.ret == ExitCode.NO_TESTS_COLLECTED
+        result.stdout.fnmatch_lines(["*collected 0 items*"])
+        result = testdir.runpytest("--XX")
+        assert result.ret == 0
+        result.stdout.fnmatch_lines(["*2 passed*"])
 
     def test_pytest_fs_collect_hooks_are_seen(self, testdir):
         testdir.makeconftest(
@@ -422,7 +437,7 @@ class TestCustomConftests(object):
         result.stdout.fnmatch_lines(["*MyModule1*", "*MyModule2*", "*test_x*"])
 
 
-class TestSession(object):
+class TestSession:
     def test_parsearg(self, testdir):
         p = testdir.makepyfile("def test_func(): pass")
         subdir = testdir.mkdir("sub")
@@ -613,7 +628,7 @@ class TestSession(object):
         assert [x.name for x in self.get_reported_items(hookrec)] == ["test_method"]
 
 
-class Test_getinitialnodes(object):
+class Test_getinitialnodes:
     def test_global_file(self, testdir, tmpdir):
         x = tmpdir.ensure("x.py")
         with tmpdir.as_cwd():
@@ -647,7 +662,7 @@ class Test_getinitialnodes(object):
             assert col.config is config
 
 
-class Test_genitems(object):
+class Test_genitems:
     def test_check_collect_hashes(self, testdir):
         p = testdir.makepyfile(
             """
@@ -760,7 +775,7 @@ def test_matchnodes_two_collections_same_file(testdir):
     res.stdout.fnmatch_lines(["*1 passed*"])
 
 
-class TestNodekeywords(object):
+class TestNodekeywords:
     def test_no_under(self, testdir):
         modcol = testdir.getmodulecol(
             """
@@ -1088,7 +1103,7 @@ def test_collect_pyargs_with_testpaths(testdir, monkeypatch):
     """
         )
     )
-    monkeypatch.setenv("PYTHONPATH", str(testdir.tmpdir))
+    monkeypatch.setenv("PYTHONPATH", str(testdir.tmpdir), prepend=os.pathsep)
     with root.as_cwd():
         result = testdir.runpytest_subprocess()
     result.stdout.fnmatch_lines(["*1 passed in*"])
@@ -1144,3 +1159,89 @@ def test_collect_symlink_out_of_tree(testdir):
         ]
     )
     assert result.ret == 0
+
+
+def test_collectignore_via_conftest(testdir, monkeypatch):
+    """collect_ignore in parent conftest skips importing child (issue #4592)."""
+    tests = testdir.mkpydir("tests")
+    tests.ensure("conftest.py").write("collect_ignore = ['ignore_me']")
+
+    ignore_me = tests.mkdir("ignore_me")
+    ignore_me.ensure("__init__.py")
+    ignore_me.ensure("conftest.py").write("assert 0, 'should_not_be_called'")
+
+    result = testdir.runpytest()
+    assert result.ret == ExitCode.NO_TESTS_COLLECTED
+
+
+def test_collect_pkg_init_and_file_in_args(testdir):
+    subdir = testdir.mkdir("sub")
+    init = subdir.ensure("__init__.py")
+    init.write("def test_init(): pass")
+    p = subdir.ensure("test_file.py")
+    p.write("def test_file(): pass")
+
+    # NOTE: without "-o python_files=*.py" this collects test_file.py twice.
+    # This changed/broke with "Add package scoped fixtures #2283" (2b1410895)
+    # initially (causing a RecursionError).
+    result = testdir.runpytest("-v", str(init), str(p))
+    result.stdout.fnmatch_lines(
+        [
+            "sub/test_file.py::test_file PASSED*",
+            "sub/test_file.py::test_file PASSED*",
+            "*2 passed in*",
+        ]
+    )
+
+    result = testdir.runpytest("-v", "-o", "python_files=*.py", str(init), str(p))
+    result.stdout.fnmatch_lines(
+        [
+            "sub/__init__.py::test_init PASSED*",
+            "sub/test_file.py::test_file PASSED*",
+            "*2 passed in*",
+        ]
+    )
+
+
+@pytest.mark.skipif(
+    not hasattr(py.path.local, "mksymlinkto"),
+    reason="symlink not available on this platform",
+)
+@pytest.mark.parametrize("use_pkg", (True, False))
+def test_collect_sub_with_symlinks(use_pkg, testdir):
+    sub = testdir.mkdir("sub")
+    if use_pkg:
+        sub.ensure("__init__.py")
+    sub.ensure("test_file.py").write("def test_file(): pass")
+
+    # Create a broken symlink.
+    sub.join("test_broken.py").mksymlinkto("test_doesnotexist.py")
+
+    # Symlink that gets collected.
+    sub.join("test_symlink.py").mksymlinkto("test_file.py")
+
+    result = testdir.runpytest("-v", str(sub))
+    result.stdout.fnmatch_lines(
+        [
+            "sub/test_file.py::test_file PASSED*",
+            "sub/test_symlink.py::test_file PASSED*",
+            "*2 passed in*",
+        ]
+    )
+
+
+def test_collector_respects_tbstyle(testdir):
+    p1 = testdir.makepyfile("assert 0")
+    result = testdir.runpytest(p1, "--tb=native")
+    assert result.ret == ExitCode.INTERRUPTED
+    result.stdout.fnmatch_lines(
+        [
+            "*_ ERROR collecting test_collector_respects_tbstyle.py _*",
+            "Traceback (most recent call last):",
+            '  File "*/test_collector_respects_tbstyle.py", line 1, in <module>',
+            "    assert 0",
+            "AssertionError: assert 0",
+            "*! Interrupted: 1 errors during collection !*",
+            "*= 1 error in *",
+        ]
+    )

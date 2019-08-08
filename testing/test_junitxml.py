@@ -1,10 +1,4 @@
-# -*- coding: utf-8 -*-
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 import os
-import sys
 from xml.dom import minidom
 
 import py
@@ -34,7 +28,7 @@ def assert_attr(node, **kwargs):
     assert on_node == expected
 
 
-class DomNode(object):
+class DomNode:
     def __init__(self, dom):
         self.__node = dom
 
@@ -85,7 +79,7 @@ class DomNode(object):
         return type(self)(self.__node.nextSibling)
 
 
-class TestPython(object):
+class TestPython:
     def test_summing_simple(self, testdir):
         testdir.makepyfile(
             """
@@ -107,7 +101,7 @@ class TestPython(object):
         result, dom = runandparse(testdir)
         assert result.ret
         node = dom.find_first_by_tag("testsuite")
-        node.assert_attr(name="pytest", errors=0, failures=1, skips=2, tests=5)
+        node.assert_attr(name="pytest", errors=0, failures=1, skipped=2, tests=5)
 
     def test_summing_simple_with_errors(self, testdir):
         testdir.makepyfile(
@@ -133,7 +127,7 @@ class TestPython(object):
         result, dom = runandparse(testdir)
         assert result.ret
         node = dom.find_first_by_tag("testsuite")
-        node.assert_attr(name="pytest", errors=1, failures=2, skips=1, tests=5)
+        node.assert_attr(name="pytest", errors=1, failures=2, skipped=1, tests=5)
 
     def test_timing_function(self, testdir):
         testdir.makepyfile(
@@ -201,12 +195,7 @@ class TestPython(object):
         node = dom.find_first_by_tag("testsuite")
         node.assert_attr(errors=1, tests=1)
         tnode = node.find_first_by_tag("testcase")
-        tnode.assert_attr(
-            file="test_setup_error.py",
-            line="5",
-            classname="test_setup_error",
-            name="test_function",
-        )
+        tnode.assert_attr(classname="test_setup_error", name="test_function")
         fnode = tnode.find_first_by_tag("error")
         fnode.assert_attr(message="test setup failure")
         assert "ValueError" in fnode.toxml()
@@ -228,12 +217,7 @@ class TestPython(object):
         assert result.ret
         node = dom.find_first_by_tag("testsuite")
         tnode = node.find_first_by_tag("testcase")
-        tnode.assert_attr(
-            file="test_teardown_error.py",
-            line="6",
-            classname="test_teardown_error",
-            name="test_function",
-        )
+        tnode.assert_attr(classname="test_teardown_error", name="test_function")
         fnode = tnode.find_first_by_tag("error")
         fnode.assert_attr(message="test teardown failure")
         assert "ValueError" in fnode.toxml()
@@ -274,14 +258,9 @@ class TestPython(object):
         result, dom = runandparse(testdir)
         assert result.ret == 0
         node = dom.find_first_by_tag("testsuite")
-        node.assert_attr(skips=1)
+        node.assert_attr(skipped=1)
         tnode = node.find_first_by_tag("testcase")
-        tnode.assert_attr(
-            file="test_skip_contains_name_reason.py",
-            line="1",
-            classname="test_skip_contains_name_reason",
-            name="test_skip",
-        )
+        tnode.assert_attr(classname="test_skip_contains_name_reason", name="test_skip")
         snode = tnode.find_first_by_tag("skipped")
         snode.assert_attr(type="pytest.skip", message="hello23")
 
@@ -297,13 +276,10 @@ class TestPython(object):
         result, dom = runandparse(testdir)
         assert result.ret == 0
         node = dom.find_first_by_tag("testsuite")
-        node.assert_attr(skips=1)
+        node.assert_attr(skipped=1)
         tnode = node.find_first_by_tag("testcase")
         tnode.assert_attr(
-            file="test_mark_skip_contains_name_reason.py",
-            line="1",
-            classname="test_mark_skip_contains_name_reason",
-            name="test_skip",
+            classname="test_mark_skip_contains_name_reason", name="test_skip"
         )
         snode = tnode.find_first_by_tag("skipped")
         snode.assert_attr(type="pytest.skip", message="hello24")
@@ -321,13 +297,10 @@ class TestPython(object):
         result, dom = runandparse(testdir)
         assert result.ret == 0
         node = dom.find_first_by_tag("testsuite")
-        node.assert_attr(skips=1)
+        node.assert_attr(skipped=1)
         tnode = node.find_first_by_tag("testcase")
         tnode.assert_attr(
-            file="test_mark_skipif_contains_name_reason.py",
-            line="2",
-            classname="test_mark_skipif_contains_name_reason",
-            name="test_skip",
+            classname="test_mark_skipif_contains_name_reason", name="test_skip"
         )
         snode = tnode.find_first_by_tag("skipped")
         snode.assert_attr(type="pytest.skip", message="hello25")
@@ -360,10 +333,7 @@ class TestPython(object):
         node.assert_attr(failures=1)
         tnode = node.find_first_by_tag("testcase")
         tnode.assert_attr(
-            file="test_classname_instance.py",
-            line="1",
-            classname="test_classname_instance.TestClass",
-            name="test_method",
+            classname="test_classname_instance.TestClass", name="test_method"
         )
 
     def test_classname_nested_dir(self, testdir):
@@ -374,12 +344,7 @@ class TestPython(object):
         node = dom.find_first_by_tag("testsuite")
         node.assert_attr(failures=1)
         tnode = node.find_first_by_tag("testcase")
-        tnode.assert_attr(
-            file=os.path.join("sub", "test_hello.py"),
-            line="0",
-            classname="sub.test_hello",
-            name="test_func",
-        )
+        tnode.assert_attr(classname="sub.test_hello", name="test_func")
 
     def test_internal_error(self, testdir):
         testdir.makeconftest("def pytest_runtest_protocol(): 0 / 0")
@@ -415,12 +380,7 @@ class TestPython(object):
         node = dom.find_first_by_tag("testsuite")
         node.assert_attr(failures=1, tests=1)
         tnode = node.find_first_by_tag("testcase")
-        tnode.assert_attr(
-            file="test_failure_function.py",
-            line="3",
-            classname="test_failure_function",
-            name="test_fail",
-        )
+        tnode.assert_attr(classname="test_failure_function", name="test_fail")
         fnode = tnode.find_first_by_tag("failure")
         fnode.assert_attr(message="ValueError: 42")
         assert "ValueError" in fnode.toxml()
@@ -477,10 +437,7 @@ class TestPython(object):
 
             tnode = node.find_nth_by_tag("testcase", index)
             tnode.assert_attr(
-                file="test_failure_escape.py",
-                line="1",
-                classname="test_failure_escape",
-                name="test_func[%s]" % char,
+                classname="test_failure_escape", name="test_func[%s]" % char
             )
             sysout = tnode.find_first_by_tag("system-out")
             text = sysout.text
@@ -501,18 +458,10 @@ class TestPython(object):
         node = dom.find_first_by_tag("testsuite")
         node.assert_attr(failures=1, tests=2)
         tnode = node.find_first_by_tag("testcase")
-        tnode.assert_attr(
-            file="test_junit_prefixing.py",
-            line="0",
-            classname="xyz.test_junit_prefixing",
-            name="test_func",
-        )
+        tnode.assert_attr(classname="xyz.test_junit_prefixing", name="test_func")
         tnode = node.find_nth_by_tag("testcase", 1)
         tnode.assert_attr(
-            file="test_junit_prefixing.py",
-            line="3",
-            classname="xyz.test_junit_prefixing.TestHello",
-            name="test_hello",
+            classname="xyz.test_junit_prefixing.TestHello", name="test_hello"
         )
 
     def test_xfailure_function(self, testdir):
@@ -526,17 +475,30 @@ class TestPython(object):
         result, dom = runandparse(testdir)
         assert not result.ret
         node = dom.find_first_by_tag("testsuite")
-        node.assert_attr(skips=1, tests=1)
+        node.assert_attr(skipped=1, tests=1)
         tnode = node.find_first_by_tag("testcase")
-        tnode.assert_attr(
-            file="test_xfailure_function.py",
-            line="1",
-            classname="test_xfailure_function",
-            name="test_xfail",
-        )
+        tnode.assert_attr(classname="test_xfailure_function", name="test_xfail")
         fnode = tnode.find_first_by_tag("skipped")
-        fnode.assert_attr(message="expected test failure")
+        fnode.assert_attr(type="pytest.xfail", message="42")
         # assert "ValueError" in fnode.toxml()
+
+    def test_xfailure_marker(self, testdir):
+        testdir.makepyfile(
+            """
+            import pytest
+            @pytest.mark.xfail(reason="42")
+            def test_xfail():
+                assert False
+        """
+        )
+        result, dom = runandparse(testdir)
+        assert not result.ret
+        node = dom.find_first_by_tag("testsuite")
+        node.assert_attr(skipped=1, tests=1)
+        tnode = node.find_first_by_tag("testcase")
+        tnode.assert_attr(classname="test_xfailure_marker", name="test_xfail")
+        fnode = tnode.find_first_by_tag("skipped")
+        fnode.assert_attr(type="pytest.xfail", message="42")
 
     def test_xfail_captures_output_once(self, testdir):
         testdir.makepyfile(
@@ -569,14 +531,9 @@ class TestPython(object):
         result, dom = runandparse(testdir)
         # assert result.ret
         node = dom.find_first_by_tag("testsuite")
-        node.assert_attr(skips=0, tests=1)
+        node.assert_attr(skipped=0, tests=1)
         tnode = node.find_first_by_tag("testcase")
-        tnode.assert_attr(
-            file="test_xfailure_xpass.py",
-            line="1",
-            classname="test_xfailure_xpass",
-            name="test_xpass",
-        )
+        tnode.assert_attr(classname="test_xfailure_xpass", name="test_xpass")
 
     def test_xfailure_xpass_strict(self, testdir):
         testdir.makepyfile(
@@ -590,14 +547,9 @@ class TestPython(object):
         result, dom = runandparse(testdir)
         # assert result.ret
         node = dom.find_first_by_tag("testsuite")
-        node.assert_attr(skips=0, tests=1)
+        node.assert_attr(skipped=0, tests=1)
         tnode = node.find_first_by_tag("testcase")
-        tnode.assert_attr(
-            file="test_xfailure_xpass_strict.py",
-            line="1",
-            classname="test_xfailure_xpass_strict",
-            name="test_xpass",
-        )
+        tnode.assert_attr(classname="test_xfailure_xpass_strict", name="test_xpass")
         fnode = tnode.find_first_by_tag("failure")
         fnode.assert_attr(message="[XPASS(strict)] This needs to fail!")
 
@@ -608,8 +560,6 @@ class TestPython(object):
         node = dom.find_first_by_tag("testsuite")
         node.assert_attr(errors=1, tests=1)
         tnode = node.find_first_by_tag("testcase")
-        tnode.assert_attr(file="test_collect_error.py", name="test_collect_error")
-        assert tnode["line"] is None
         fnode = tnode.find_first_by_tag("error")
         fnode.assert_attr(message="collection failure")
         assert "SyntaxError" in fnode.toxml()
@@ -617,20 +567,19 @@ class TestPython(object):
     def test_unicode(self, testdir):
         value = "hx\xc4\x85\xc4\x87\n"
         testdir.makepyfile(
-            """
+            """\
             # coding: latin1
             def test_hello():
                 print(%r)
                 assert 0
-        """
+            """
             % value
         )
         result, dom = runandparse(testdir)
         assert result.ret == 1
         tnode = dom.find_first_by_tag("testcase")
         fnode = tnode.find_first_by_tag("failure")
-        if not sys.platform.startswith("java"):
-            assert "hx" in fnode.toxml()
+        assert "hx" in fnode.toxml()
 
     def test_assertion_binchars(self, testdir):
         """this test did fail when the escaping wasnt strict"""
@@ -747,7 +696,7 @@ def test_mangle_test_address():
 def test_dont_configure_on_slaves(tmpdir):
     gotten = []
 
-    class FakeConfig(object):
+    class FakeConfig:
         def __init__(self):
             self.pluginmanager = self
             self.option = self
@@ -770,7 +719,7 @@ def test_dont_configure_on_slaves(tmpdir):
     assert len(gotten) == 1
 
 
-class TestNonPython(object):
+class TestNonPython:
     def test_summing_simple(self, testdir):
         testdir.makeconftest(
             """
@@ -792,7 +741,7 @@ class TestNonPython(object):
         result, dom = runandparse(testdir)
         assert result.ret
         node = dom.find_first_by_tag("testsuite")
-        node.assert_attr(errors=0, failures=1, skips=0, tests=1)
+        node.assert_attr(errors=0, failures=1, skipped=0, tests=1)
         tnode = node.find_first_by_tag("testcase")
         tnode.assert_attr(name="myfile.xyz")
         fnode = tnode.find_first_by_tag("failure")
@@ -880,14 +829,11 @@ def test_invalid_xml_escape():
 
 def test_logxml_path_expansion(tmpdir, monkeypatch):
     home_tilde = py.path.local(os.path.expanduser("~")).join("test.xml")
-
     xml_tilde = LogXML("~%stest.xml" % tmpdir.sep, None)
     assert xml_tilde.logfile == home_tilde
 
-    # this is here for when $HOME is not set correct
     monkeypatch.setenv("HOME", str(tmpdir))
     home_var = os.path.normpath(os.path.expandvars("$HOME/test.xml"))
-
     xml_var = LogXML("$HOME%stest.xml" % tmpdir.sep, None)
     assert xml_var.logfile == home_var
 
@@ -927,12 +873,12 @@ def test_logxml_check_isdir(testdir):
 
 def test_escaped_parametrized_names_xml(testdir):
     testdir.makepyfile(
-        """
+        """\
         import pytest
-        @pytest.mark.parametrize('char', [u"\\x00"])
+        @pytest.mark.parametrize('char', ["\\x00"])
         def test_func(char):
             assert char
-    """
+        """
     )
     result, dom = runandparse(testdir)
     assert result.ret == 0
@@ -976,7 +922,7 @@ def test_double_colon_split_method_issue469(testdir):
 def test_unicode_issue368(testdir):
     path = testdir.tmpdir.join("test.xml")
     log = LogXML(str(path), None)
-    ustr = u"ВНИ!"
+    ustr = "ВНИ!"
 
     class Report(BaseReport):
         longrepr = ustr
@@ -1040,8 +986,28 @@ def test_record_property_same_name(testdir):
     pnodes[1].assert_attr(name="foo", value="baz")
 
 
+@pytest.mark.parametrize("fixture_name", ["record_property", "record_xml_attribute"])
+def test_record_fixtures_without_junitxml(testdir, fixture_name):
+    testdir.makepyfile(
+        """
+        def test_record({fixture_name}):
+            {fixture_name}("foo", "bar")
+    """.format(
+            fixture_name=fixture_name
+        )
+    )
+    result = testdir.runpytest()
+    assert result.ret == 0
+
+
 @pytest.mark.filterwarnings("default")
 def test_record_attribute(testdir):
+    testdir.makeini(
+        """
+        [pytest]
+        junit_family = xunit1
+    """
+    )
     testdir.makepyfile(
         """
         import pytest
@@ -1061,6 +1027,46 @@ def test_record_attribute(testdir):
     result.stdout.fnmatch_lines(
         ["*test_record_attribute.py:6:*record_xml_attribute is an experimental feature"]
     )
+
+
+@pytest.mark.filterwarnings("default")
+@pytest.mark.parametrize("fixture_name", ["record_xml_attribute", "record_property"])
+def test_record_fixtures_xunit2(testdir, fixture_name):
+    """Ensure record_xml_attribute and record_property drop values when outside of legacy family
+    """
+    testdir.makeini(
+        """
+        [pytest]
+        junit_family = xunit2
+    """
+    )
+    testdir.makepyfile(
+        """
+        import pytest
+
+        @pytest.fixture
+        def other({fixture_name}):
+            {fixture_name}("bar", 1)
+        def test_record({fixture_name}, other):
+            {fixture_name}("foo", "<1");
+    """.format(
+            fixture_name=fixture_name
+        )
+    )
+
+    result, dom = runandparse(testdir, "-rw")
+    expected_lines = []
+    if fixture_name == "record_xml_attribute":
+        expected_lines.append(
+            "*test_record_fixtures_xunit2.py:6:*record_xml_attribute is an experimental feature"
+        )
+    expected_lines = [
+        "*test_record_fixtures_xunit2.py:6:*{fixture_name} is incompatible "
+        "with junit_family 'xunit2' (use 'legacy' or 'xunit1')".format(
+            fixture_name=fixture_name
+        )
+    ]
+    result.stdout.fnmatch_lines(expected_lines)
 
 
 def test_random_report_log_xdist(testdir, monkeypatch):
@@ -1155,20 +1161,18 @@ def test_fancy_items_regression(testdir):
 
     assert "INTERNALERROR" not in result.stdout.str()
 
-    items = sorted(
-        "%(classname)s %(name)s %(file)s" % x for x in dom.find_by_tag("testcase")
-    )
+    items = sorted("%(classname)s %(name)s" % x for x in dom.find_by_tag("testcase"))
     import pprint
 
     pprint.pprint(items)
     assert items == [
-        u"conftest a conftest.py",
-        u"conftest a conftest.py",
-        u"conftest b conftest.py",
-        u"test_fancy_items_regression a test_fancy_items_regression.py",
-        u"test_fancy_items_regression a test_fancy_items_regression.py",
-        u"test_fancy_items_regression b test_fancy_items_regression.py",
-        u"test_fancy_items_regression test_pass" u" test_fancy_items_regression.py",
+        "conftest a",
+        "conftest a",
+        "conftest b",
+        "test_fancy_items_regression a",
+        "test_fancy_items_regression a",
+        "test_fancy_items_regression b",
+        "test_fancy_items_regression test_pass",
     ]
 
 
@@ -1232,6 +1236,53 @@ def test_url_property(testdir):
     ), "The URL did not get written to the xml"
 
 
+def test_record_testsuite_property(testdir):
+    testdir.makepyfile(
+        """
+        def test_func1(record_testsuite_property):
+            record_testsuite_property("stats", "all good")
+
+        def test_func2(record_testsuite_property):
+            record_testsuite_property("stats", 10)
+    """
+    )
+    result, dom = runandparse(testdir)
+    assert result.ret == 0
+    node = dom.find_first_by_tag("testsuite")
+    properties_node = node.find_first_by_tag("properties")
+    p1_node = properties_node.find_nth_by_tag("property", 0)
+    p2_node = properties_node.find_nth_by_tag("property", 1)
+    p1_node.assert_attr(name="stats", value="all good")
+    p2_node.assert_attr(name="stats", value="10")
+
+
+def test_record_testsuite_property_junit_disabled(testdir):
+    testdir.makepyfile(
+        """
+        def test_func1(record_testsuite_property):
+            record_testsuite_property("stats", "all good")
+    """
+    )
+    result = testdir.runpytest()
+    assert result.ret == 0
+
+
+@pytest.mark.parametrize("junit", [True, False])
+def test_record_testsuite_property_type_checking(testdir, junit):
+    testdir.makepyfile(
+        """
+        def test_func1(record_testsuite_property):
+            record_testsuite_property(1, 2)
+    """
+    )
+    args = ("--junitxml=tests.xml",) if junit else ()
+    result = testdir.runpytest(*args)
+    assert result.ret == 1
+    result.stdout.fnmatch_lines(
+        ["*TypeError: name parameter needs to be a string, but int given"]
+    )
+
+
 @pytest.mark.parametrize("suite_name", ["my_suite", ""])
 def test_set_suite_name(testdir, suite_name):
     if suite_name:
@@ -1274,3 +1325,30 @@ def test_escaped_skipreason_issue3533(testdir):
     snode = node.find_first_by_tag("skipped")
     assert "1 <> 2" in snode.text
     snode.assert_attr(message="1 <> 2")
+
+
+def test_logging_passing_tests_disabled_does_not_log_test_output(testdir):
+    testdir.makeini(
+        """
+        [pytest]
+        junit_log_passing_tests=False
+        junit_logging=system-out
+    """
+    )
+    testdir.makepyfile(
+        """
+        import pytest
+        import logging
+        import sys
+
+        def test_func():
+            sys.stdout.write('This is stdout')
+            sys.stderr.write('This is stderr')
+            logging.warning('hello')
+    """
+    )
+    result, dom = runandparse(testdir)
+    assert result.ret == 0
+    node = dom.find_first_by_tag("testcase")
+    assert len(node.find_by_tag("system-err")) == 0
+    assert len(node.find_by_tag("system-out")) == 0

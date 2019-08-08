@@ -1,7 +1,3 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 import subprocess
 import sys
 
@@ -29,24 +25,12 @@ def equal_with_bash(prefix, ffc, fc, out=None):
 
 def _wrapcall(*args, **kargs):
     try:
-        if sys.version_info > (2, 7):
-            return subprocess.check_output(*args, **kargs).decode().splitlines()
-        if "stdout" in kargs:
-            raise ValueError("stdout argument not allowed, it will be overridden.")
-        process = subprocess.Popen(stdout=subprocess.PIPE, *args, **kargs)
-        output, unused_err = process.communicate()
-        retcode = process.poll()
-        if retcode:
-            cmd = kargs.get("args")
-            if cmd is None:
-                cmd = args[0]
-            raise subprocess.CalledProcessError(retcode, cmd)
-        return output.decode().splitlines()
+        return subprocess.check_output(*args, **kargs).decode().splitlines()
     except subprocess.CalledProcessError:
         return []
 
 
-class FilesCompleter(object):
+class FilesCompleter:
     "File completer class, optionally takes a list of allowed extensions"
 
     def __init__(self, allowednames=(), directories=True):
@@ -89,7 +73,7 @@ class FilesCompleter(object):
         return completion
 
 
-class TestArgComplete(object):
+class TestArgComplete:
     @pytest.mark.skipif("sys.platform in ('win32', 'darwin')")
     def test_compare_with_compgen(self, tmpdir):
         from _pytest._argcomplete import FastFilesCompleter

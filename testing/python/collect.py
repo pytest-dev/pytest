@@ -1,15 +1,14 @@
-# -*- coding: utf-8 -*-
 import os
 import sys
 import textwrap
 
 import _pytest._code
 import pytest
-from _pytest.main import EXIT_NOTESTSCOLLECTED
+from _pytest.main import ExitCode
 from _pytest.nodes import Collector
 
 
-class TestModule(object):
+class TestModule:
     def test_failing_import(self, testdir):
         modcol = testdir.getmodulecol("import alksdjalskdjalkjals")
         pytest.raises(Collector.CollectError, modcol.collect)
@@ -34,8 +33,6 @@ class TestModule(object):
         )
 
     def test_import_prepend_append(self, testdir, monkeypatch):
-        syspath = list(sys.path)
-        monkeypatch.setattr(sys, "path", syspath)
         root1 = testdir.mkdir("root1")
         root2 = testdir.mkdir("root2")
         root1.ensure("x456.py")
@@ -119,12 +116,7 @@ class TestModule(object):
         """Check test modules collected which raise ImportError with unicode messages
         are handled properly (#2336).
         """
-        testdir.makepyfile(
-            u"""
-            # -*- coding: utf-8 -*-
-            raise ImportError(u'Something bad happened ☺')
-        """
-        )
+        testdir.makepyfile("raise ImportError('Something bad happened ☺')")
         result = testdir.runpytest()
         result.stdout.fnmatch_lines(
             [
@@ -136,7 +128,7 @@ class TestModule(object):
         assert result.ret == 2
 
 
-class TestClass(object):
+class TestClass:
     def test_class_with_init_warning(self, testdir):
         testdir.makepyfile(
             """
@@ -148,7 +140,24 @@ class TestClass(object):
         result = testdir.runpytest("-rw")
         result.stdout.fnmatch_lines(
             [
-                "*cannot collect test class 'TestClass1' because it has a __init__ constructor"
+                "*cannot collect test class 'TestClass1' because it has "
+                "a __init__ constructor (from: test_class_with_init_warning.py)"
+            ]
+        )
+
+    def test_class_with_new_warning(self, testdir):
+        testdir.makepyfile(
+            """
+            class TestClass1(object):
+                def __new__(self):
+                    pass
+        """
+        )
+        result = testdir.runpytest("-rw")
+        result.stdout.fnmatch_lines(
+            [
+                "*cannot collect test class 'TestClass1' because it has "
+                "a __new__ constructor (from: test_class_with_new_warning.py)"
             ]
         )
 
@@ -237,13 +246,10 @@ class TestClass(object):
         """
         )
         result = testdir.runpytest()
-        assert result.ret == EXIT_NOTESTSCOLLECTED
+        assert result.ret == ExitCode.NO_TESTS_COLLECTED
 
 
-@pytest.mark.filterwarnings(
-    "ignore:usage of Generator.Function is deprecated, please use pytest.Function instead"
-)
-class TestFunction(object):
+class TestFunction:
     def test_getmodulecollector(self, testdir):
         item = testdir.getitem("def test_func(): pass")
         modcol = item.getparent(pytest.Module)
@@ -502,11 +508,11 @@ class TestFunction(object):
         item = testdir.getitem("def test_func(): raise ValueError")
         config = item.config
 
-        class MyPlugin1(object):
+        class MyPlugin1:
             def pytest_pyfunc_call(self, pyfuncitem):
                 raise ValueError
 
-        class MyPlugin2(object):
+        class MyPlugin2:
             def pytest_pyfunc_call(self, pyfuncitem):
                 return True
 
@@ -563,7 +569,7 @@ class TestFunction(object):
         """
         )
         result = testdir.runpytest()
-        result.stdout.fnmatch_lines("* 2 passed, 1 skipped in *")
+        result.stdout.fnmatch_lines(["* 2 passed, 1 skipped in *"])
 
     def test_parametrize_skip(self, testdir):
         testdir.makepyfile(
@@ -578,7 +584,7 @@ class TestFunction(object):
         """
         )
         result = testdir.runpytest()
-        result.stdout.fnmatch_lines("* 2 passed, 1 skipped in *")
+        result.stdout.fnmatch_lines(["* 2 passed, 1 skipped in *"])
 
     def test_parametrize_skipif_no_skip(self, testdir):
         testdir.makepyfile(
@@ -593,7 +599,7 @@ class TestFunction(object):
         """
         )
         result = testdir.runpytest()
-        result.stdout.fnmatch_lines("* 1 failed, 2 passed in *")
+        result.stdout.fnmatch_lines(["* 1 failed, 2 passed in *"])
 
     def test_parametrize_xfail(self, testdir):
         testdir.makepyfile(
@@ -608,7 +614,7 @@ class TestFunction(object):
         """
         )
         result = testdir.runpytest()
-        result.stdout.fnmatch_lines("* 2 passed, 1 xfailed in *")
+        result.stdout.fnmatch_lines(["* 2 passed, 1 xfailed in *"])
 
     def test_parametrize_passed(self, testdir):
         testdir.makepyfile(
@@ -623,7 +629,7 @@ class TestFunction(object):
         """
         )
         result = testdir.runpytest()
-        result.stdout.fnmatch_lines("* 2 passed, 1 xpassed in *")
+        result.stdout.fnmatch_lines(["* 2 passed, 1 xpassed in *"])
 
     def test_parametrize_xfail_passed(self, testdir):
         testdir.makepyfile(
@@ -638,7 +644,7 @@ class TestFunction(object):
         """
         )
         result = testdir.runpytest()
-        result.stdout.fnmatch_lines("* 3 passed in *")
+        result.stdout.fnmatch_lines(["* 3 passed in *"])
 
     def test_function_original_name(self, testdir):
         items = testdir.getitems(
@@ -652,7 +658,7 @@ class TestFunction(object):
         assert [x.originalname for x in items] == ["test_func", "test_func"]
 
 
-class TestSorting(object):
+class TestSorting:
     def test_check_equality(self, testdir):
         modcol = testdir.getmodulecol(
             """
@@ -667,8 +673,6 @@ class TestSorting(object):
 
         assert fn1 == fn2
         assert fn1 != modcol
-        if sys.version_info < (3, 0):
-            assert cmp(fn1, fn2) == 0  # NOQA
         assert hash(fn1) == hash(fn2)
 
         fn3 = testdir.collect_by_name(modcol, "test_fail")
@@ -706,7 +710,7 @@ class TestSorting(object):
         assert [item.name for item in colitems] == ["test_b", "test_a"]
 
 
-class TestConftestCustomization(object):
+class TestConftestCustomization:
     def test_pytest_pycollect_module(self, testdir):
         testdir.makeconftest(
             """
@@ -836,7 +840,7 @@ class TestConftestCustomization(object):
         )
         # Use runpytest_subprocess, since we're futzing with sys.meta_path.
         result = testdir.runpytest_subprocess()
-        result.stdout.fnmatch_lines("*1 passed*")
+        result.stdout.fnmatch_lines(["*1 passed*"])
 
 
 def test_setup_only_available_in_subdir(testdir):
@@ -881,7 +885,7 @@ def test_modulecol_roundtrip(testdir):
     assert modcol.name == newcol.name
 
 
-class TestTracebackCutting(object):
+class TestTracebackCutting:
     def test_skip_simple(self):
         with pytest.raises(pytest.skip.Exception) as excinfo:
             pytest.skip("xxx")
@@ -1010,7 +1014,7 @@ class TestTracebackCutting(object):
         assert filter_traceback(tb[-1])
 
 
-class TestReportInfo(object):
+class TestReportInfo:
     def test_itemreport_reportinfo(self, testdir, linecomp):
         testdir.makeconftest(
             """
@@ -1136,7 +1140,7 @@ def test_unorderable_types(testdir):
     )
     result = testdir.runpytest()
     assert "TypeError" not in result.stdout.str()
-    assert result.ret == EXIT_NOTESTSCOLLECTED
+    assert result.ret == ExitCode.NO_TESTS_COLLECTED
 
 
 def test_collect_functools_partial(testdir):
@@ -1247,13 +1251,7 @@ def test_class_injection_does_not_break_collection(testdir):
 def test_syntax_error_with_non_ascii_chars(testdir):
     """Fix decoding issue while formatting SyntaxErrors during collection (#578)
     """
-    testdir.makepyfile(
-        u"""
-    # -*- coding: UTF-8 -*-
-
-    ☃
-    """
-    )
+    testdir.makepyfile("☃")
     result = testdir.runpytest()
     result.stdout.fnmatch_lines(["*ERROR collecting*", "*SyntaxError*", "*1 error in*"])
 
@@ -1301,14 +1299,14 @@ def test_keep_duplicates(testdir):
 def test_package_collection_infinite_recursion(testdir):
     testdir.copy_example("collect/package_infinite_recursion")
     result = testdir.runpytest()
-    result.stdout.fnmatch_lines("*1 passed*")
+    result.stdout.fnmatch_lines(["*1 passed*"])
 
 
 def test_package_collection_init_given_as_argument(testdir):
     """Regression test for #3749"""
     p = testdir.copy_example("collect/package_init_given_as_arg")
     result = testdir.runpytest(p / "pkg" / "__init__.py")
-    result.stdout.fnmatch_lines("*1 passed*")
+    result.stdout.fnmatch_lines(["*1 passed*"])
 
 
 def test_package_with_modules(testdir):

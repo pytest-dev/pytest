@@ -1,4 +1,3 @@
-sudo: false
 language: python
 dist: xenial
 stages:
@@ -7,61 +6,71 @@ stages:
   if: repo = pytest-dev/pytest AND tag IS NOT present
 - name: deploy
   if: repo = pytest-dev/pytest AND tag IS present
-python:
-  - '3.7'
-install:
-  - pip install --upgrade --pre tox
+python: '3.7'
+cache: false
+
   - pip install --upgrade virtualenv>=16.3.0
 env:
-  matrix:
-    - TOXENV=py27
-    # Specialized factors for py27.
-    - TOXENV=py27-nobyte
-    - TOXENV=py27-xdist
-    - TOXENV=py27-pluggymaster PYTEST_NO_COVERAGE=1
-    # Specialized factors for py37.
-    - TOXENV=py37-pexpect,py37-trial,py37-numpy
-    - TOXENV=py37-pluggymaster PYTEST_NO_COVERAGE=1
-    - TOXENV=py37-freeze PYTEST_NO_COVERAGE=1
+  global:
+    - PYTEST_ADDOPTS=-vv
+
+install:
+  - python -m pip install --upgrade --pre tox
 
 jobs:
   include:
-    # Coverage tracking is slow with pypy, skip it.
-    - env: TOXENV=pypy PYTEST_NO_COVERAGE=1
-      python: 'pypy-5.4'
-      dist: trusty
-    - env: TOXENV=py34
-      python: '3.4'
-    - env: TOXENV=py35
-      python: '3.5'
-    - env: TOXENV=py36
-      python: '3.6'
-    - env: TOXENV=py37
-    - &test-macos
+    # OSX tests - first (in test stage), since they are the slower ones.
+    - os: osx
+      osx_image: xcode10.1
       language: generic
-      os: osx
-      osx_image: xcode9.4
-      sudo: required
-      install:
-        - python -m pip install --pre tox
-      env: TOXENV=py27
-    - <<: *test-macos
-      env: TOXENV=py37
+      env: TOXENV=py37-xdist PYTEST_COVERAGE=1
       before_install:
-        - brew update
-        - brew upgrade python
-        - brew unlink python
-        - brew link python
+        - which python3
+        - python3 -V
+        - ln -sfn "$(which python3)" /usr/local/bin/python
+        - python -V
+        - test $(python -c 'import sys; print("%d%d" % sys.version_info[0:2])') = 37
+
+    # Full run of latest supported version, without xdist.
+    - env: TOXENV=py37
+      python: '3.7'
+
+    # Coverage tracking is slow with pypy, skip it.
+    - env: TOXENV=pypy3-xdist
+      python: 'pypy3'
+
+    - env: TOXENV=py35-xdist
+      python: '3.5'
+
+    # Coverage for:
+    # - pytester's LsofFdLeakChecker
+    # - TestArgComplete (linux only)
+    # - numpy
+    # Empty PYTEST_ADDOPTS to run this non-verbose.
+    - env: TOXENV=py37-lsof-numpy-twisted-xdist PYTEST_COVERAGE=1 PYTEST_ADDOPTS=
+
+    # Specialized factors for py37.
+    # Coverage for:
+    # - test_sys_breakpoint_interception (via pexpect).
+    - env: TOXENV=py37-pexpect PYTEST_COVERAGE=1
+    - env: TOXENV=py37-pluggymaster-xdist
+    - env: TOXENV=py37-freeze
+
+    # Jobs only run via Travis cron jobs (currently daily).
+    - env: TOXENV=py38-xdist
+      python: '3.8-dev'
+      if: type = cron
 
     - stage: baseline
-      env: TOXENV=py27-pexpect,py27-trial,py27-numpy
-    - env: TOXENV=py37-xdist
-    - env: TOXENV=linting,docs,doctesting
-      python: '3.7'
+      env: TOXENV=py36-xdist
+      python: '3.6'
+    - env: TOXENV=linting,docs,doctesting PYTEST_COVERAGE=1
+      cache:
+        directories:
+          - $HOME/.cache/pre-commit
 
     - stage: deploy
       python: '3.6'
-      env: PYTEST_NO_COVERAGE=1
       install: pip install -U setuptools setuptools_scm
       script: skip
       deploy:
@@ -75,27 +84,31 @@ jobs:
           tags: true
           repo: pytest-dev/pytest
 
+matrix:
+  allow_failures:
+    - python: '3.8-dev'
+      env: TOXENV=py38-xdist
+
 before_script:
   - |
-    if [[ "$PYTEST_NO_COVERAGE" != 1 ]]; then
+    # Do not (re-)upload coverage with cron runs.
+    if [[ "$TRAVIS_EVENT_TYPE" = cron ]]; then
+      PYTEST_COVERAGE=0
+    fi
+  - |
+    if [[ "$PYTEST_COVERAGE" = 1 ]]; then
       export COVERAGE_FILE="$PWD/.coverage"
       export COVERAGE_PROCESS_START="$PWD/.coveragerc"
       export _PYTEST_TOX_COVERAGE_RUN="coverage run -m"
       export _PYTEST_TOX_EXTRA_DEP=coverage-enable-subprocess
     fi
 
-script: tox --recreate
+script: tox
 
 after_success:
   - |
-    if [[ "$PYTEST_NO_COVERAGE" != 1 ]]; then
-      set -e
-      # Add last TOXENV to $PATH.
-      PATH="$PWD/.tox/${TOXENV##*,}/bin:$PATH"
-      coverage combine
-      coverage xml --ignore-errors
-      coverage report -m --ignore-errors
-      bash <(curl -s https://codecov.io/bash) -Z -X gcov -X coveragepy -X search -X xcode -X gcovout -X fix -f coverage.xml -F "${TOXENV//-/,},linux"
+    if [[ "$PYTEST_COVERAGE" = 1 ]]; then
+      env CODECOV_NAME="$TOXENV-$TRAVIS_OS_NAME" scripts/report-coverage.sh
     fi
 
 notifications:
@@ -107,7 +120,3 @@ notifications:
     skip_join: true
   email:
     - pytest-commit@python.org
-cache:
-    directories:
-        - $HOME/.cache/pip
-        - $HOME/.cache/pre-commit

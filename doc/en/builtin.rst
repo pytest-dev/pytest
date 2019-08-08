@@ -27,36 +27,47 @@ For information about fixtures, see :ref:`fixtures`. To see a complete list of a
         name of your plugin or application to avoid clashes with other cache users.
 
         Values can be any object handled by the json stdlib module.
+
     capsys
-        Enable capturing of writes to ``sys.stdout`` and ``sys.stderr`` and make
-        captured output available via ``capsys.readouterr()`` method calls
-        which return a ``(out, err)`` namedtuple.  ``out`` and ``err`` will be ``text``
-        objects.
+        Enable text capturing of writes to ``sys.stdout`` and ``sys.stderr``.
+
+        The captured output is made available via ``capsys.readouterr()`` method
+        calls, which return a ``(out, err)`` namedtuple.
+        ``out`` and ``err`` will be ``text`` objects.
+
     capsysbinary
-        Enable capturing of writes to ``sys.stdout`` and ``sys.stderr`` and make
-        captured output available via ``capsys.readouterr()`` method calls
-        which return a ``(out, err)`` tuple.  ``out`` and ``err`` will be ``bytes``
-        objects.
+        Enable bytes capturing of writes to ``sys.stdout`` and ``sys.stderr``.
+
+        The captured output is made available via ``capsysbinary.readouterr()``
+        method calls, which return a ``(out, err)`` namedtuple.
+        ``out`` and ``err`` will be ``bytes`` objects.
+
     capfd
-        Enable capturing of writes to file descriptors ``1`` and ``2`` and make
-        captured output available via ``capfd.readouterr()`` method calls
-        which return a ``(out, err)`` tuple.  ``out`` and ``err`` will be ``text``
-        objects.
+        Enable text capturing of writes to file descriptors ``1`` and ``2``.
+
+        The captured output is made available via ``capfd.readouterr()`` method
+        calls, which return a ``(out, err)`` namedtuple.
+        ``out`` and ``err`` will be ``text`` objects.
+
     capfdbinary
-        Enable capturing of write to file descriptors 1 and 2 and make
-        captured output available via ``capfdbinary.readouterr`` method calls
-        which return a ``(out, err)`` tuple.  ``out`` and ``err`` will be
-        ``bytes`` objects.
-    doctest_namespace
+        Enable bytes capturing of writes to file descriptors ``1`` and ``2``.
+
+        The captured output is made available via ``capfd.readouterr()`` method
+        calls, which return a ``(out, err)`` namedtuple.
+        ``out`` and ``err`` will be ``byte`` objects.
+
+    doctest_namespace [session scope]
         Fixture that returns a :py:class:`dict` that will be injected into the namespace of doctests.
-    pytestconfig
+
+    pytestconfig [session scope]
         Session-scoped fixture that returns the :class:`_pytest.config.Config` object.
 
         Example::
 
             def test_foo(pytestconfig):
-                if pytestconfig.getoption("verbose"):
+                if pytestconfig.getoption("verbose") > 0:
                     ...
+
     record_property
         Add an extra properties the calling test.
         User properties become part of the test report and are available to the
@@ -68,10 +79,26 @@ For information about fixtures, see :ref:`fixtures`. To see a complete list of a
 
             def test_function(record_property):
                 record_property("example_key", 1)
+
     record_xml_attribute
         Add extra xml attributes to the tag for the calling test.
         The fixture is callable with ``(name, value)``, with value being
         automatically xml-encoded
+
+    record_testsuite_property [session scope]
+        Records a new ``<property>`` tag as child of the root ``<testsuite>``. This is suitable to
+        writing global information regarding the entire test suite, and is compatible with ``xunit2`` JUnit family.
+
+        This is a ``session``-scoped fixture which is called with ``(name, value)``. Example:
+
+        .. code-block:: python
+
+            def test_foo(record_testsuite_property):
+                record_testsuite_property("ARCH", "PPC")
+                record_testsuite_property("STORAGE_TYPE", "CEPH")
+
+        ``name`` must be a string, ``value`` will be converted to a string and properly xml-escaped.
+
     caplog
         Access and control log capturing.
 
@@ -81,6 +108,7 @@ For information about fixtures, see :ref:`fixtures`. To see a complete list of a
         * caplog.records         -> list of logging.LogRecord instances
         * caplog.record_tuples   -> list of (logger_name, level, message) tuples
         * caplog.clear()         -> clear captured records and formatted log output string
+
     monkeypatch
         The returned ``monkeypatch`` fixture provides these
         helper methods to modify objects, dictionaries or os.environ::
@@ -98,15 +126,19 @@ For information about fixtures, see :ref:`fixtures`. To see a complete list of a
         test function or fixture has finished. The ``raising``
         parameter determines if a KeyError or AttributeError
         will be raised if the set/deletion operation has no target.
+
     recwarn
         Return a :class:`WarningsRecorder` instance that records all warnings emitted by test functions.
 
         See http://docs.python.org/library/warnings.html for information
         on warning categories.
-    tmpdir_factory
+
+    tmpdir_factory [session scope]
         Return a :class:`_pytest.tmpdir.TempdirFactory` instance for the test session.
-    tmp_path_factory
+
+    tmp_path_factory [session scope]
         Return a :class:`_pytest.tmpdir.TempPathFactory` instance for the test session.
+
     tmpdir
         Return a temporary directory path object
         which is unique to each test function invocation,
@@ -115,6 +147,7 @@ For information about fixtures, see :ref:`fixtures`. To see a complete list of a
         path object.
 
         .. _`py.path.local`: https://py.readthedocs.io/en/latest/path.html
+
     tmp_path
         Return a temporary directory path object
         which is unique to each test function invocation,
@@ -125,6 +158,7 @@ For information about fixtures, see :ref:`fixtures`. To see a complete list of a
         .. note::
 
             in python < 3.6 this is a pathlib2.Path
+
 
     no tests ran in 0.12 seconds
 

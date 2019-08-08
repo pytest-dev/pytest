@@ -76,7 +76,7 @@ def broken_testdir(testdir):
 
 
 def test_run_without_stepwise(stepwise_testdir):
-    result = stepwise_testdir.runpytest("-v", "--strict", "--fail")
+    result = stepwise_testdir.runpytest("-v", "--strict-markers", "--fail")
 
     result.stdout.fnmatch_lines(["*test_success_before_fail PASSED*"])
     result.stdout.fnmatch_lines(["*test_fail_on_flag FAILED*"])
@@ -85,7 +85,9 @@ def test_run_without_stepwise(stepwise_testdir):
 
 def test_fail_and_continue_with_stepwise(stepwise_testdir):
     # Run the tests with a failing second test.
-    result = stepwise_testdir.runpytest("-v", "--strict", "--stepwise", "--fail")
+    result = stepwise_testdir.runpytest(
+        "-v", "--strict-markers", "--stepwise", "--fail"
+    )
     assert not result.stderr.str()
 
     stdout = result.stdout.str()
@@ -95,7 +97,7 @@ def test_fail_and_continue_with_stepwise(stepwise_testdir):
     assert "test_success_after_fail" not in stdout
 
     # "Fix" the test that failed in the last run and run it again.
-    result = stepwise_testdir.runpytest("-v", "--strict", "--stepwise")
+    result = stepwise_testdir.runpytest("-v", "--strict-markers", "--stepwise")
     assert not result.stderr.str()
 
     stdout = result.stdout.str()
@@ -107,7 +109,12 @@ def test_fail_and_continue_with_stepwise(stepwise_testdir):
 
 def test_run_with_skip_option(stepwise_testdir):
     result = stepwise_testdir.runpytest(
-        "-v", "--strict", "--stepwise", "--stepwise-skip", "--fail", "--fail-last"
+        "-v",
+        "--strict-markers",
+        "--stepwise",
+        "--stepwise-skip",
+        "--fail",
+        "--fail-last",
     )
     assert not result.stderr.str()
 
@@ -120,7 +127,7 @@ def test_run_with_skip_option(stepwise_testdir):
 
 
 def test_fail_on_errors(error_testdir):
-    result = error_testdir.runpytest("-v", "--strict", "--stepwise")
+    result = error_testdir.runpytest("-v", "--strict-markers", "--stepwise")
 
     assert not result.stderr.str()
     stdout = result.stdout.str()
@@ -131,7 +138,7 @@ def test_fail_on_errors(error_testdir):
 
 def test_change_testfile(stepwise_testdir):
     result = stepwise_testdir.runpytest(
-        "-v", "--strict", "--stepwise", "--fail", "test_a.py"
+        "-v", "--strict-markers", "--stepwise", "--fail", "test_a.py"
     )
     assert not result.stderr.str()
 
@@ -140,17 +147,21 @@ def test_change_testfile(stepwise_testdir):
 
     # Make sure the second test run starts from the beginning, since the
     # test to continue from does not exist in testfile_b.
-    result = stepwise_testdir.runpytest("-v", "--strict", "--stepwise", "test_b.py")
+    result = stepwise_testdir.runpytest(
+        "-v", "--strict-markers", "--stepwise", "test_b.py"
+    )
     assert not result.stderr.str()
 
     stdout = result.stdout.str()
     assert "test_success PASSED" in stdout
 
 
-def test_stop_on_collection_errors(broken_testdir):
-    result = broken_testdir.runpytest(
-        "-v", "--strict", "--stepwise", "working_testfile.py", "broken_testfile.py"
-    )
-
-    stdout = result.stdout.str()
-    assert "errors during collection" in stdout
+@pytest.mark.parametrize("broken_first", [True, False])
+def test_stop_on_collection_errors(broken_testdir, broken_first):
+    """Stop during collection errors. Broken test first or broken test last
+    actually surfaced a bug (#5444), so we test both situations."""
+    files = ["working_testfile.py", "broken_testfile.py"]
+    if broken_first:
+        files.reverse()
+    result = broken_testdir.runpytest("-v", "--strict-markers", "--stepwise", *files)
+    result.stdout.fnmatch_lines("*errors during collection*")

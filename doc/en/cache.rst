@@ -5,7 +5,7 @@
 Cache: working with cross-testrun state
 =======================================
 
-.. versionadded:: 2.8
+
 
 Usage
 ---------
@@ -81,8 +81,9 @@ If you then run it with ``--lf``:
     $ pytest --lf
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
-    rootdir: $REGENDOC_TMPDIR, inifile:
-    collected 50 items / 48 deselected
+    cachedir: $PYTHON_PREFIX/.pytest_cache
+    rootdir: $REGENDOC_TMPDIR
+    collected 50 items / 48 deselected / 2 selected
     run-last-failure: rerun previous 2 failures
 
     test_50.py FF                                                        [100%]
@@ -124,7 +125,8 @@ of ``FF`` and dots):
     $ pytest --ff
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
-    rootdir: $REGENDOC_TMPDIR, inifile:
+    cachedir: $PYTHON_PREFIX/.pytest_cache
+    rootdir: $REGENDOC_TMPDIR
     collected 50 items
     run-last-failure: rerun previous 2 failures first
 
@@ -166,7 +168,9 @@ Behavior when no tests failed in the last run
 
 When no tests failed in the last run, or when no cached ``lastfailed`` data was
 found, ``pytest`` can be configured either to run all of the tests or no tests,
-using the ``--last-failed-no-failures`` option, which takes one of the following values::
+using the ``--last-failed-no-failures`` option, which takes one of the following values:
+
+.. code-block:: bash
 
     pytest --last-failed --last-failed-no-failures all    # run all tests (default behavior)
     pytest --last-failed --last-failed-no-failures none   # run no tests and exit
@@ -214,8 +218,6 @@ If you run this command for the first time, you can see the print statement:
         def test_function(mydata):
     >       assert mydata == 23
     E       assert 42 == 23
-    E         -42
-    E         +23
 
     test_caching.py:17: AssertionError
     -------------------------- Captured stdout setup ---------------------------
@@ -237,8 +239,6 @@ the cache and nothing will be printed:
         def test_function(mydata):
     >       assert mydata == 23
     E       assert 42 == 23
-    E         -42
-    E         +23
 
     test_caching.py:17: AssertionError
     1 failed in 0.12 seconds
@@ -247,7 +247,7 @@ See the :ref:`cache-api` for more details.
 
 
 Inspecting Cache content
--------------------------------
+------------------------
 
 You can always peek at the content of the cache using the
 ``--cache-show`` command line option:
@@ -257,11 +257,17 @@ You can always peek at the content of the cache using the
     $ pytest --cache-show
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
-    rootdir: $REGENDOC_TMPDIR, inifile:
-    cachedir: $REGENDOC_TMPDIR/.pytest_cache
-    ------------------------------- cache values -------------------------------
+    cachedir: $PYTHON_PREFIX/.pytest_cache
+    rootdir: $REGENDOC_TMPDIR
+    cachedir: $PYTHON_PREFIX/.pytest_cache
+    --------------------------- cache values for '*' ---------------------------
     cache/lastfailed contains:
-      {'test_caching.py::test_function': True}
+      {'test_50.py::test_num[17]': True,
+       'test_50.py::test_num[25]': True,
+       'test_assert1.py::test_function': True,
+       'test_assert2.py::test_set_comparison': True,
+       'test_caching.py::test_function': True,
+       'test_foocompare.py::test_compare': True}
     cache/nodeids contains:
       ['test_caching.py::test_function']
     cache/stepwise contains:
@@ -271,11 +277,30 @@ You can always peek at the content of the cache using the
 
     ======================= no tests ran in 0.12 seconds =======================
 
+``--cache-show`` takes an optional argument to specify a glob pattern for
+filtering:
+
+.. code-block:: pytest
+
+    $ pytest --cache-show example/*
+    =========================== test session starts ============================
+    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
+    cachedir: $PYTHON_PREFIX/.pytest_cache
+    rootdir: $REGENDOC_TMPDIR
+    cachedir: $PYTHON_PREFIX/.pytest_cache
+    ----------------------- cache values for 'example/*' -----------------------
+    example/value contains:
+      42
+
+    ======================= no tests ran in 0.12 seconds =======================
+
 Clearing Cache content
--------------------------------
+----------------------
 
 You can instruct pytest to clear all cache files and values
-by adding the ``--cache-clear`` option like this::
+by adding the ``--cache-clear`` option like this:
+
+.. code-block:: bash
 
     pytest --cache-clear
 

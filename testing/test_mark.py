@@ -1,30 +1,22 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 import os
 import sys
-
-import six
+from unittest import mock
 
 import pytest
+from _pytest.main import ExitCode
 from _pytest.mark import EMPTY_PARAMETERSET_OPTION
 from _pytest.mark import MarkGenerator as Mark
 from _pytest.nodes import Collector
 from _pytest.nodes import Node
+from _pytest.warning_types import PytestDeprecationWarning
 from _pytest.warnings import SHOW_PYTEST_WARNINGS_ARG
-
-try:
-    import mock
-except ImportError:
-    import unittest.mock as mock
 
 ignore_markinfo = pytest.mark.filterwarnings(
     "ignore:MarkInfo objects:pytest.RemovedInPytest4Warning"
 )
 
 
-class TestMark(object):
+class TestMark:
     @pytest.mark.parametrize("attr", ["mark", "param"])
     @pytest.mark.parametrize("modulename", ["py.test", "pytest"])
     def test_pytest_exists_in_namespace_all(self, attr, modulename):
@@ -39,14 +31,14 @@ class TestMark(object):
         def some_function(abc):
             pass
 
-        class SomeClass(object):
+        class SomeClass:
             pass
 
-        assert pytest.mark.fun(some_function) is some_function
-        assert pytest.mark.fun.with_args(some_function) is not some_function
+        assert pytest.mark.foo(some_function) is some_function
+        assert pytest.mark.foo.with_args(some_function) is not some_function
 
-        assert pytest.mark.fun(SomeClass) is SomeClass
-        assert pytest.mark.fun.with_args(SomeClass) is not SomeClass
+        assert pytest.mark.foo(SomeClass) is SomeClass
+        assert pytest.mark.foo.with_args(SomeClass) is not SomeClass
 
     def test_pytest_mark_name_starts_with_underscore(self):
         mark = Mark()
@@ -128,7 +120,7 @@ def test_ini_markers_whitespace(testdir):
             assert True
     """
     )
-    rec = testdir.inline_run("--strict", "-m", "a1")
+    rec = testdir.inline_run("--strict-markers", "-m", "a1")
     rec.assertoutcome(passed=1)
 
 
@@ -148,7 +140,7 @@ def test_marker_without_description(testdir):
     )
     ftdir = testdir.mkdir("ft1_dummy")
     testdir.tmpdir.join("conftest.py").move(ftdir.join("conftest.py"))
-    rec = testdir.runpytest("--strict")
+    rec = testdir.runpytest("--strict-markers")
     rec.assert_outcomes()
 
 
@@ -192,7 +184,8 @@ def test_mark_on_pseudo_function(testdir):
     reprec.assertoutcome(passed=1)
 
 
-def test_strict_prohibits_unregistered_markers(testdir):
+@pytest.mark.parametrize("option_name", ["--strict-markers", "--strict"])
+def test_strict_prohibits_unregistered_markers(testdir, option_name):
     testdir.makepyfile(
         """
         import pytest
@@ -201,9 +194,11 @@ def test_strict_prohibits_unregistered_markers(testdir):
             pass
     """
     )
-    result = testdir.runpytest("--strict")
+    result = testdir.runpytest(option_name)
     assert result.ret != 0
-    result.stdout.fnmatch_lines(["'unregisteredmark' not a registered marker"])
+    result.stdout.fnmatch_lines(
+        ["'unregisteredmark' not found in `markers` configuration option"]
+    )
 
 
 @pytest.mark.parametrize(
@@ -407,7 +402,29 @@ def test_parametrized_with_kwargs(testdir):
     assert result.ret == 0
 
 
-class TestFunctional(object):
+def test_parametrize_iterator(testdir):
+    """parametrize should work with generators (#5354)."""
+    py_file = testdir.makepyfile(
+        """\
+        import pytest
+
+        def gen():
+            yield 1
+            yield 2
+            yield 3
+
+        @pytest.mark.parametrize('a', gen())
+        def test(a):
+            assert a >= 1
+        """
+    )
+    result = testdir.runpytest(py_file)
+    assert result.ret == 0
+    # should not skip any tests
+    result.stdout.fnmatch_lines(["*3 passed*"])
+
+
+class TestFunctional:
     def test_merging_markers_deep(self, testdir):
         # issue 199 - propagate markers into nested classes
         p = testdir.makepyfile(
@@ -447,8 +464,8 @@ class TestFunctional(object):
         items, rec = testdir.inline_genitems(p)
         self.assert_markers(items, test_foo=("a", "b"), test_bar=("a",))
 
-    @pytest.mark.issue568
     def test_mark_should_not_pass_to_siebling_class(self, testdir):
+        """#568"""
         p = testdir.makepyfile(
             """
             import pytest
@@ -650,9 +667,9 @@ class TestFunctional(object):
             markers = {m.name for m in items[name].iter_markers()}
             assert markers == set(expected_markers)
 
-    @pytest.mark.issue1540
     @pytest.mark.filterwarnings("ignore")
     def test_mark_from_parameters(self, testdir):
+        """#1540"""
         testdir.makepyfile(
             """
             import pytest
@@ -676,7 +693,7 @@ class TestFunctional(object):
         reprec.assertoutcome(skipped=1)
 
 
-class TestKeywordSelection(object):
+class TestKeywordSelection:
     def test_select_simple(self, testdir):
         file_test = testdir.makepyfile(
             """
@@ -807,7 +824,7 @@ class TestKeywordSelection(object):
         assert_test_is_not_selected("()")
 
 
-class TestMarkDecorator(object):
+class TestMarkDecorator:
     @pytest.mark.parametrize(
         "lhs, rhs, expected",
         [
@@ -859,20 +876,34 @@ def test_parameterset_for_fail_at_collect(testdir):
 
     config = testdir.parseconfig()
     from _pytest.mark import pytest_configure, get_empty_parameterset_mark
-    from _pytest.compat import getfslineno
 
     pytest_configure(config)
 
-    test_func = all
-    func_name = test_func.__name__
-    _, func_lineno = getfslineno(test_func)
-    expected_errmsg = r"Empty parameter set in '%s' at line %d" % (
-        func_name,
-        func_lineno,
-    )
+    with pytest.raises(
+        Collector.CollectError,
+        match=r"Empty parameter set in 'pytest_configure' at line \d\d+",
+    ):
+        get_empty_parameterset_mark(config, ["a"], pytest_configure)
 
-    with pytest.raises(Collector.CollectError, match=expected_errmsg):
-        get_empty_parameterset_mark(config, ["a"], test_func)
+    p1 = testdir.makepyfile(
+        """
+        import pytest
+
+        @pytest.mark.parametrize("empty", [])
+        def test():
+            pass
+        """
+    )
+    result = testdir.runpytest(str(p1))
+    result.stdout.fnmatch_lines(
+        [
+            "collected 0 items / 1 errors",
+            "* ERROR collecting test_parameterset_for_fail_at_collect.py *",
+            "Empty parameter set in 'test' at line 3",
+            "*= 1 error in *",
+        ]
+    )
+    assert result.ret == ExitCode.INTERRUPTED
 
 
 def test_parameterset_for_parametrize_bad_markname(testdir):
@@ -917,19 +948,18 @@ def test_mark_expressions_no_smear(testdir):
 
 def test_addmarker_order():
     node = Node("Test", config=mock.Mock(), session=mock.Mock(), nodeid="Test")
-    node.add_marker("a")
-    node.add_marker("b")
-    node.add_marker("c", append=False)
+    node.add_marker("foo")
+    node.add_marker("bar")
+    node.add_marker("baz", append=False)
     extracted = [x.name for x in node.iter_markers()]
-    assert extracted == ["c", "a", "b"]
+    assert extracted == ["baz", "foo", "bar"]
 
 
-@pytest.mark.issue("https://github.com/pytest-dev/pytest/issues/3605")
 @pytest.mark.filterwarnings("ignore")
 def test_markers_from_parametrize(testdir):
+    """#3605"""
     testdir.makepyfile(
         """
-        from __future__ import print_function
         import pytest
 
         first_custom_mark = pytest.mark.custom_marker
@@ -967,12 +997,21 @@ def test_pytest_param_id_requires_string():
     with pytest.raises(TypeError) as excinfo:
         pytest.param(id=True)
     msg, = excinfo.value.args
-    if six.PY2:
-        assert msg == "Expected id to be a string, got <type 'bool'>: True"
-    else:
-        assert msg == "Expected id to be a string, got <class 'bool'>: True"
+    assert msg == "Expected id to be a string, got <class 'bool'>: True"
 
 
 @pytest.mark.parametrize("s", (None, "hello world"))
 def test_pytest_param_id_allows_none_or_string(s):
     assert pytest.param(id=s)
+
+
+def test_pytest_param_warning_on_unknown_kwargs():
+    with pytest.warns(PytestDeprecationWarning) as warninfo:
+        # typo, should be marks=
+        pytest.param(1, 2, mark=pytest.mark.xfail())
+    assert warninfo[0].filename == __file__
+    msg, = warninfo[0].message.args
+    assert msg == (
+        "pytest.param() got unexpected keyword arguments: ['mark'].\n"
+        "This will be an error in future versions."
+    )

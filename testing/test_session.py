@@ -1,12 +1,8 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 import pytest
-from _pytest.main import EXIT_NOTESTSCOLLECTED
+from _pytest.main import ExitCode
 
 
-class SessionTests(object):
+class SessionTests:
     def test_basic_testitem_events(self, testdir):
         tfile = testdir.makepyfile(
             """
@@ -68,16 +64,14 @@ class SessionTests(object):
         passed, skipped, failed = reprec.listoutcomes()
         assert len(failed) == 1
         out = failed[0].longrepr.reprcrash.message
-        if not out.find("DID NOT RAISE") != -1:
-            print(out)
-            pytest.fail("incorrect raises() output")
+        assert "DID NOT RAISE" in out
 
     def test_syntax_error_module(self, testdir):
         reprec = testdir.inline_runsource("this is really not python")
         values = reprec.getfailedcollections()
         assert len(values) == 1
         out = str(values[0].longrepr)
-        assert out.find(str("not python")) != -1
+        assert out.find("not python") != -1
 
     def test_exit_first_problem(self, testdir):
         reprec = testdir.inline_runsource(
@@ -116,7 +110,8 @@ class SessionTests(object):
             class TestBrokenClass(object):
                 def test_explicit_bad_repr(self):
                     t = BrokenRepr1()
-                    pytest.raises(Exception, 'repr(t)')
+                    with pytest.raises(Exception, match="I'm a broken repr"):
+                        repr(t)
 
                 def test_implicit_bad_repr1(self):
                     t = BrokenRepr1()
@@ -126,14 +121,38 @@ class SessionTests(object):
         )
         reprec = testdir.inline_run(p)
         passed, skipped, failed = reprec.listoutcomes()
-        assert len(failed) == 1
+        assert (len(passed), len(skipped), len(failed)) == (1, 0, 1)
         out = failed[0].longrepr.reprcrash.message
         assert (
             out.find(
                 """[Exception("Ha Ha fooled you, I'm a broken repr().") raised in repr()]"""
             )
             != -1
-        )  # '
+        )
+
+    def test_broken_repr_with_showlocals_verbose(self, testdir):
+        p = testdir.makepyfile(
+            """
+            class ObjWithErrorInRepr:
+                def __repr__(self):
+                    raise NotImplementedError
+
+            def test_repr_error():
+                x = ObjWithErrorInRepr()
+                assert x == "value"
+        """
+        )
+        reprec = testdir.inline_run("--showlocals", "-vv", p)
+        passed, skipped, failed = reprec.listoutcomes()
+        assert (len(passed), len(skipped), len(failed)) == (0, 0, 1)
+        entries = failed[0].longrepr.reprtraceback.reprentries
+        assert len(entries) == 1
+        repr_locals = entries[0].reprlocals
+        assert repr_locals.lines
+        assert len(repr_locals.lines) == 1
+        assert repr_locals.lines[0].startswith(
+            'x          = <[NotImplementedError("") raised in repr()] ObjWithErrorInRepr'
+        )
 
     def test_skip_file_by_conftest(self, testdir):
         testdir.makepyfile(
@@ -148,7 +167,7 @@ class SessionTests(object):
         )
         try:
             reprec = testdir.inline_run(testdir.tmpdir)
-        except pytest.skip.Exception:
+        except pytest.skip.Exception:  # pragma: no cover
             pytest.fail("wrong skipped caught")
         reports = reprec.getreports("pytest_collectreport")
         assert len(reports) == 1
@@ -181,7 +200,6 @@ class TestNewSession(SessionTests):
         passed, skipped, failed = reprec.countoutcomes()
         assert failed == skipped == 0
         assert passed == 7
-        # also test listnames() here ...
 
     def test_collect_only_with_various_situations(self, testdir):
         p = testdir.makepyfile(
@@ -254,6 +272,21 @@ def test_exclude(testdir):
     result.stdout.fnmatch_lines(["*1 passed*"])
 
 
+def test_exclude_glob(testdir):
+    hellodir = testdir.mkdir("hello")
+    hellodir.join("test_hello.py").write("x y syntaxerror")
+    hello2dir = testdir.mkdir("hello2")
+    hello2dir.join("test_hello2.py").write("x y syntaxerror")
+    hello3dir = testdir.mkdir("hallo3")
+    hello3dir.join("test_hello3.py").write("x y syntaxerror")
+    subdir = testdir.mkdir("sub")
+    subdir.join("test_hello4.py").write("x y syntaxerror")
+    testdir.makepyfile(test_ok="def test_pass(): pass")
+    result = testdir.runpytest("--ignore-glob=*h[ea]llo*")
+    assert result.ret == 0
+    result.stdout.fnmatch_lines(["*1 passed*"])
+
+
 def test_deselect(testdir):
     testdir.makepyfile(
         test_a="""
@@ -297,7 +330,7 @@ def test_sessionfinish_with_start(testdir):
     """
     )
     res = testdir.runpytest("--collect-only")
-    assert res.ret == EXIT_NOTESTSCOLLECTED
+    assert res.ret == ExitCode.NO_TESTS_COLLECTED
 
 
 @pytest.mark.parametrize("path", ["root", "{relative}/root", "{environment}/root"])
@@ -318,7 +351,7 @@ def test_rootdir_option_arg(testdir, monkeypatch, path):
     result = testdir.runpytest("--rootdir={}".format(path))
     result.stdout.fnmatch_lines(
         [
-            "*rootdir: {}/root, inifile:*".format(testdir.tmpdir),
+            "*rootdir: {}/root".format(testdir.tmpdir),
             "root/test_rootdir_option_arg.py *",
             "*1 passed*",
         ]

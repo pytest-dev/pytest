@@ -27,7 +27,7 @@ Here is a little annotated list for some popular plugins:
   for `twisted <http://twistedmatrix.com>`_ apps, starting a reactor and
   processing deferreds from test functions.
 
-* `pytest-cov <https://pypi.org/project/pytest-cov/>`_:
+* `pytest-cov <https://pypi.org/project/pytest-cov/>`__:
   coverage reporting, compatible with distributed testing
 
 * `pytest-xdist <https://pypi.org/project/pytest-xdist/>`_:
@@ -83,6 +83,11 @@ will be loaded as well.
     ``conftest.py`` files is deprecated. See
     :ref:`full explanation <requiring plugins in non-root conftests>`
     in the Writing plugins section.
+
+.. note::
+   The name ``pytest_plugins`` is reserved and should not be used as a
+   name for a custom plugin module.
+
 
 .. _`findpluginname`:
 

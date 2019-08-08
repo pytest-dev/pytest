@@ -7,7 +7,7 @@ pytest fixtures: explicit, modular, scalable
 
 .. currentmodule:: _pytest.python
 
-.. versionadded:: 2.0/2.3/2.4
+
 
 .. _`xUnit`: http://en.wikipedia.org/wiki/XUnit
 .. _`purpose of test fixtures`: http://en.wikipedia.org/wiki/Test_fixture#Software
@@ -73,7 +73,8 @@ marked ``smtp_connection`` fixture function.  Running the test looks like this:
     $ pytest test_smtpsimple.py
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
-    rootdir: $REGENDOC_TMPDIR, inifile:
+    cachedir: $PYTHON_PREFIX/.pytest_cache
+    rootdir: $REGENDOC_TMPDIR
     collected 1 item
 
     test_smtpsimple.py F                                                 [100%]
@@ -113,7 +114,9 @@ with a list of available function arguments.
 
 .. note::
 
-    You can always issue ::
+    You can always issue:
+
+    .. code-block:: bash
 
         pytest --fixtures test_simplefactory.py
 
@@ -213,7 +216,8 @@ inspect what is going on and can now run the tests:
     $ pytest test_module.py
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
-    rootdir: $REGENDOC_TMPDIR, inifile:
+    cachedir: $PYTHON_PREFIX/.pytest_cache
+    rootdir: $REGENDOC_TMPDIR
     collected 2 items
 
     test_module.py FF                                                    [100%]
@@ -272,7 +276,7 @@ Finally, the ``class`` scope will invoke the fixture once per test *class*.
 ``package`` scope (experimental)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. versionadded:: 3.7
+
 
 In pytest 3.7 the ``package`` scope has been introduced. Package-scoped fixtures
 are finalized when the last test of a *package* finishes.
@@ -288,7 +292,7 @@ are finalized when the last test of a *package* finishes.
 Higher-scoped fixtures are instantiated first
 ---------------------------------------------
 
-.. versionadded:: 3.5
+
 
 Within a function request for features, fixture of higher-scopes (such as ``session``) are instantiated first than
 lower-scoped fixtures (such as ``function`` or ``class``). The relative order of fixtures of same scope follows
@@ -360,7 +364,9 @@ The ``print`` and ``smtp.close()`` statements will execute when the last test in
 the module has finished execution, regardless of the exception status of the
 tests.
 
-Let's execute it::
+Let's execute it:
+
+.. code-block:: pytest
 
     $ pytest -s -q --tb=no
     FFteardown smtp
@@ -469,7 +475,9 @@ read an optional server URL from the test module which uses our fixture::
 
 We use the ``request.module`` attribute to optionally obtain an
 ``smtpserver`` attribute from the test module.  If we just execute
-again, nothing much has changed::
+again, nothing much has changed:
+
+.. code-block:: pytest
 
     $ pytest -s -q --tb=no
     FFfinalizing <smtplib.SMTP object at 0xdeadbeef> (smtp.gmail.com)
@@ -701,7 +709,8 @@ Running the above tests results in the following test IDs being used:
    $ pytest --collect-only
    =========================== test session starts ============================
    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
-   rootdir: $REGENDOC_TMPDIR, inifile:
+   cachedir: $PYTHON_PREFIX/.pytest_cache
+   rootdir: $REGENDOC_TMPDIR
    collected 10 items
    <Module test_anothersmtp.py>
      <Function test_showhelo[smtp.gmail.com]>
@@ -744,9 +753,9 @@ Running this test will *skip* the invocation of ``data_set`` with value ``2``:
 
     $ pytest test_fixture_marks.py -v
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.6
-    cachedir: .pytest_cache
-    rootdir: $REGENDOC_TMPDIR, inifile:
+    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python
+    cachedir: $PYTHON_PREFIX/.pytest_cache
+    rootdir: $REGENDOC_TMPDIR
     collecting ... collected 3 items
 
     test_fixture_marks.py::test_data[0] PASSED                           [ 33%]
@@ -789,9 +798,9 @@ Here we declare an ``app`` fixture which receives the previously defined
 
     $ pytest -v test_appsetup.py
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.6
-    cachedir: .pytest_cache
-    rootdir: $REGENDOC_TMPDIR, inifile:
+    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python
+    cachedir: $PYTHON_PREFIX/.pytest_cache
+    rootdir: $REGENDOC_TMPDIR
     collecting ... collected 2 items
 
     test_appsetup.py::test_smtp_connection_exists[smtp.gmail.com] PASSED [ 50%]
@@ -860,9 +869,9 @@ Let's run the tests in verbose mode and with looking at the print-output:
 
     $ pytest -v -s test_module.py
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.6
-    cachedir: .pytest_cache
-    rootdir: $REGENDOC_TMPDIR, inifile:
+    platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python
+    cachedir: $PYTHON_PREFIX/.pytest_cache
+    rootdir: $REGENDOC_TMPDIR
     collecting ... collected 8 items
 
     test_module.py::test_0[1]   SETUP otherarg 1
@@ -1170,6 +1179,8 @@ Given the tests file structure is:
 
         conftest.py
             # content of tests/conftest.py
+            import pytest
+
             @pytest.fixture
             def username():
                 return 'username'

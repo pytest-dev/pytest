@@ -1,38 +1,22 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 import inspect
-import pprint
 import re
 import sys
 import traceback
 from inspect import CO_VARARGS
 from inspect import CO_VARKEYWORDS
+from traceback import format_exception_only
 from weakref import ref
 
 import attr
 import pluggy
 import py
-import six
-from six import text_type
 
 import _pytest
+from _pytest._io.saferepr import safeformat
 from _pytest._io.saferepr import saferepr
-from _pytest.compat import _PY2
-from _pytest.compat import _PY3
-from _pytest.compat import PY35
-from _pytest.compat import safe_str
-
-builtin_repr = repr
-
-if _PY3:
-    from traceback import format_exception_only
-else:
-    from ._py2traceback import format_exception_only
 
 
-class Code(object):
+class Code:
     """ wrapper around Python code objects """
 
     def __init__(self, rawcode):
@@ -43,7 +27,7 @@ class Code(object):
             self.firstlineno = rawcode.co_firstlineno - 1
             self.name = rawcode.co_name
         except AttributeError:
-            raise TypeError("not a code object: %r" % (rawcode,))
+            raise TypeError("not a code object: {!r}".format(rawcode))
         self.raw = rawcode
 
     def __eq__(self, other):
@@ -102,7 +86,7 @@ class Code(object):
         return raw.co_varnames[:argcount]
 
 
-class Frame(object):
+class Frame:
     """Wrapper around a Python frame holding f_locals and f_globals
     in which expressions can be evaluated."""
 
@@ -140,7 +124,7 @@ class Frame(object):
         """
         f_locals = self.f_locals.copy()
         f_locals.update(vars)
-        six.exec_(code, self.f_globals, f_locals)
+        exec(code, self.f_globals, f_locals)
 
     def repr(self, object):
         """ return a 'safe' (non-recursive, one-line) string repr for 'object'
@@ -165,7 +149,7 @@ class Frame(object):
         return retval
 
 
-class TracebackEntry(object):
+class TracebackEntry:
     """ a single entry in a traceback """
 
     _repr_style = None
@@ -210,8 +194,7 @@ class TracebackEntry(object):
     locals = property(getlocals, None, None, "locals of underlaying frame")
 
     def getfirstlinesource(self):
-        # on Jython this firstlineno can be -1 apparently
-        return max(self.frame.code.firstlineno, 0)
+        return self.frame.code.firstlineno
 
     def getsource(self, astcache=None):
         """ return failing source code. """
@@ -243,25 +226,20 @@ class TracebackEntry(object):
 
     def ishidden(self):
         """ return True if the current frame has a var __tracebackhide__
-            resolving to True
+            resolving to True.
 
             If __tracebackhide__ is a callable, it gets called with the
             ExceptionInfo instance and can decide whether to hide the traceback.
 
             mostly for internal use
         """
-        try:
-            tbh = self.frame.f_locals["__tracebackhide__"]
-        except KeyError:
-            try:
-                tbh = self.frame.f_globals["__tracebackhide__"]
-            except KeyError:
-                return False
-
-        if callable(tbh):
+        f = self.frame
+        tbh = f.f_locals.get(
+            "__tracebackhide__", f.f_globals.get("__tracebackhide__", False)
+        )
+        if tbh and callable(tbh):
             return tbh(None if self._excinfo is None else self._excinfo())
-        else:
-            return tbh
+        return tbh
 
     def __str__(self):
         try:
@@ -331,7 +309,7 @@ class Traceback(list):
         return self
 
     def __getitem__(self, key):
-        val = super(Traceback, self).__getitem__(key)
+        val = super().__getitem__(key)
         if isinstance(key, type(slice(0))):
             val = self.__class__(val)
         return val
@@ -393,14 +371,12 @@ co_equal = compile(
 
 
 @attr.s(repr=False)
-class ExceptionInfo(object):
+class ExceptionInfo:
     """ wraps sys.exc_info() objects and offers
         help for navigating the traceback.
     """
 
-    _assert_start_repr = (
-        "AssertionError(u'assert " if _PY2 else "AssertionError('assert "
-    )
+    _assert_start_repr = "AssertionError('assert "
 
     _excinfo = attr.ib()
     _striptext = attr.ib(default="")
@@ -420,6 +396,7 @@ class ExceptionInfo(object):
                          to the exception message/``__str__()``
         """
         tup = sys.exc_info()
+        assert tup[0] is not None, "no current exception"
         _striptext = ""
         if exprinfo is None and isinstance(tup[1], AssertionError):
             exprinfo = getattr(tup[1], "msg", None)
@@ -557,24 +534,13 @@ class ExceptionInfo(object):
         )
         return fmt.repr_excinfo(self)
 
-    def __str__(self):
-        if self._excinfo is None:
-            return repr(self)
-        entry = self.traceback[-1]
-        loc = ReprFileLocation(entry.path, entry.lineno + 1, self.exconly())
-        return str(loc)
-
-    def __unicode__(self):
-        entry = self.traceback[-1]
-        loc = ReprFileLocation(entry.path, entry.lineno + 1, self.exconly())
-        return text_type(loc)
-
     def match(self, regexp):
         """
-        Match the regular expression 'regexp' on the string representation of
-        the exception. If it matches then True is returned (so that it is
-        possible to write 'assert excinfo.match()'). If it doesn't match an
-        AssertionError is raised.
+        Check whether the regular expression 'regexp' is found in the string
+        representation of the exception using ``re.search``. If it matches
+        then True is returned (so that it is possible to write
+        ``assert excinfo.match()``). If it doesn't match an AssertionError is
+        raised.
         """
         __tracebackhide__ = True
         if not re.search(regexp, str(self.value)):
@@ -583,7 +549,7 @@ class ExceptionInfo(object):
 
 
 @attr.s
-class FormattedExcinfo(object):
+class FormattedExcinfo:
     """ presenting information about failing Functions and Generators. """
 
     # for traceback entries
@@ -620,14 +586,11 @@ class FormattedExcinfo(object):
             source = source.deindent()
         return source
 
-    def _saferepr(self, obj):
-        return saferepr(obj)
-
     def repr_args(self, entry):
         if self.funcargs:
             args = []
             for argname, argvalue in entry.frame.getargs(var=True):
-                args.append((argname, self._saferepr(argvalue)))
+                args.append((argname, saferepr(argvalue)))
             return ReprFuncArgs(args)
 
     def get_source(self, source, line_index=-1, excinfo=None, short=False):
@@ -680,12 +643,12 @@ class FormattedExcinfo(object):
                     # _repr() function, which is only reprlib.Repr in
                     # disguise, so is very configurable.
                     if self.truncate_locals:
-                        str_repr = self._saferepr(value)
+                        str_repr = saferepr(value)
                     else:
-                        str_repr = pprint.pformat(value)
+                        str_repr = safeformat(value)
                     # if len(str_repr) < 70 or not isinstance(value,
                     #                            (list, tuple, dict)):
-                    lines.append("%-10s = %s" % (name, str_repr))
+                    lines.append("{:<10} = {}".format(name, str_repr))
                     # else:
                     #    self._line("%-10s =\\" % (name,))
                     #    # XXX
@@ -700,8 +663,7 @@ class FormattedExcinfo(object):
             source = _pytest._code.Source("???")
             line_index = 0
         else:
-            # entry.getfirstlinesource() can be -1, should be 0 on jython
-            line_index = entry.lineno - max(entry.getfirstlinesource(), 0)
+            line_index = entry.lineno - entry.getfirstlinesource()
 
         lines = []
         style = entry._repr_style
@@ -741,7 +703,7 @@ class FormattedExcinfo(object):
         if self.tbfilter:
             traceback = traceback.filter()
 
-        if is_recursion_error(excinfo):
+        if excinfo.errisinstance(RecursionError):
             traceback, extraline = self._truncate_recursive_traceback(traceback)
         else:
             extraline = None
@@ -777,7 +739,7 @@ class FormattedExcinfo(object):
                 "  Displaying first and last {max_frames} stack frames out of {total}."
             ).format(
                 exc_type=type(e).__name__,
-                exc_msg=safe_str(e),
+                exc_msg=str(e),
                 max_frames=max_frames,
                 total=len(traceback),
             )
@@ -792,64 +754,51 @@ class FormattedExcinfo(object):
         return traceback, extraline
 
     def repr_excinfo(self, excinfo):
-        if _PY2:
-            reprtraceback = self.repr_traceback(excinfo)
-            reprcrash = excinfo._getreprcrash()
 
-            return ReprExceptionInfo(reprtraceback, reprcrash)
-        else:
-            repr_chain = []
-            e = excinfo.value
-            descr = None
-            seen = set()
-            while e is not None and id(e) not in seen:
-                seen.add(id(e))
-                if excinfo:
-                    reprtraceback = self.repr_traceback(excinfo)
-                    reprcrash = excinfo._getreprcrash()
-                else:
-                    # fallback to native repr if the exception doesn't have a traceback:
-                    # ExceptionInfo objects require a full traceback to work
-                    reprtraceback = ReprTracebackNative(
-                        traceback.format_exception(type(e), e, None)
-                    )
-                    reprcrash = None
+        repr_chain = []
+        e = excinfo.value
+        descr = None
+        seen = set()
+        while e is not None and id(e) not in seen:
+            seen.add(id(e))
+            if excinfo:
+                reprtraceback = self.repr_traceback(excinfo)
+                reprcrash = excinfo._getreprcrash()
+            else:
+                # fallback to native repr if the exception doesn't have a traceback:
+                # ExceptionInfo objects require a full traceback to work
+                reprtraceback = ReprTracebackNative(
+                    traceback.format_exception(type(e), e, None)
+                )
+                reprcrash = None
 
-                repr_chain += [(reprtraceback, reprcrash, descr)]
-                if e.__cause__ is not None and self.chain:
-                    e = e.__cause__
-                    excinfo = (
-                        ExceptionInfo((type(e), e, e.__traceback__))
-                        if e.__traceback__
-                        else None
-                    )
-                    descr = "The above exception was the direct cause of the following exception:"
-                elif (
-                    e.__context__ is not None
-                    and not e.__suppress_context__
-                    and self.chain
-                ):
-                    e = e.__context__
-                    excinfo = (
-                        ExceptionInfo((type(e), e, e.__traceback__))
-                        if e.__traceback__
-                        else None
-                    )
-                    descr = "During handling of the above exception, another exception occurred:"
-                else:
-                    e = None
-            repr_chain.reverse()
-            return ExceptionChainRepr(repr_chain)
+            repr_chain += [(reprtraceback, reprcrash, descr)]
+            if e.__cause__ is not None and self.chain:
+                e = e.__cause__
+                excinfo = (
+                    ExceptionInfo((type(e), e, e.__traceback__))
+                    if e.__traceback__
+                    else None
+                )
+                descr = "The above exception was the direct cause of the following exception:"
+            elif (
+                e.__context__ is not None and not e.__suppress_context__ and self.chain
+            ):
+                e = e.__context__
+                excinfo = (
+                    ExceptionInfo((type(e), e, e.__traceback__))
+                    if e.__traceback__
+                    else None
+                )
+                descr = "During handling of the above exception, another exception occurred:"
+            else:
+                e = None
+        repr_chain.reverse()
+        return ExceptionChainRepr(repr_chain)
 
 
-class TerminalRepr(object):
+class TerminalRepr:
     def __str__(self):
-        s = self.__unicode__()
-        if _PY2:
-            s = s.encode("utf-8")
-        return s
-
-    def __unicode__(self):
         # FYI this is called from pytest-xdist's serialization of exception
         # information.
         io = py.io.TextIO()
@@ -858,7 +807,7 @@ class TerminalRepr(object):
         return io.getvalue().strip()
 
     def __repr__(self):
-        return "<%s instance at %0x>" % (self.__class__, id(self))
+        return "<{} instance at {:0x}>".format(self.__class__, id(self))
 
 
 class ExceptionRepr(TerminalRepr):
@@ -876,7 +825,7 @@ class ExceptionRepr(TerminalRepr):
 
 class ExceptionChainRepr(ExceptionRepr):
     def __init__(self, chain):
-        super(ExceptionChainRepr, self).__init__()
+        super().__init__()
         self.chain = chain
         # reprcrash and reprtraceback of the outermost (the newest) exception
         # in the chain
@@ -889,18 +838,18 @@ class ExceptionChainRepr(ExceptionRepr):
             if element[2] is not None:
                 tw.line("")
                 tw.line(element[2], yellow=True)
-        super(ExceptionChainRepr, self).toterminal(tw)
+        super().toterminal(tw)
 
 
 class ReprExceptionInfo(ExceptionRepr):
     def __init__(self, reprtraceback, reprcrash):
-        super(ReprExceptionInfo, self).__init__()
+        super().__init__()
         self.reprtraceback = reprtraceback
         self.reprcrash = reprcrash
 
     def toterminal(self, tw):
         self.reprtraceback.toterminal(tw)
-        super(ReprExceptionInfo, self).toterminal(tw)
+        super().toterminal(tw)
 
 
 class ReprTraceback(TerminalRepr):
@@ -948,8 +897,6 @@ class ReprEntryNative(TerminalRepr):
 
 
 class ReprEntry(TerminalRepr):
-    localssep = "_ "
-
     def __init__(self, lines, reprfuncargs, reprlocals, filelocrepr, style):
         self.lines = lines
         self.reprfuncargs = reprfuncargs
@@ -963,7 +910,6 @@ class ReprEntry(TerminalRepr):
             for line in self.lines:
                 red = line.startswith("E   ")
                 tw.line(line, bold=True, red=red)
-            # tw.line("")
             return
         if self.reprfuncargs:
             self.reprfuncargs.toterminal(tw)
@@ -971,7 +917,6 @@ class ReprEntry(TerminalRepr):
             red = line.startswith("E   ")
             tw.line(line, bold=True, red=red)
         if self.reprlocals:
-            # tw.sep(self.localssep, "Locals")
             tw.line("")
             self.reprlocals.toterminal(tw)
         if self.reprfileloc:
@@ -980,7 +925,9 @@ class ReprEntry(TerminalRepr):
             self.reprfileloc.toterminal(tw)
 
     def __str__(self):
-        return "%s\n%s\n%s" % ("\n".join(self.lines), self.reprlocals, self.reprfileloc)
+        return "{}\n{}\n{}".format(
+            "\n".join(self.lines), self.reprlocals, self.reprfileloc
+        )
 
 
 class ReprFileLocation(TerminalRepr):
@@ -997,7 +944,7 @@ class ReprFileLocation(TerminalRepr):
         if i != -1:
             msg = msg[:i]
         tw.write(self.path, bold=True, red=True)
-        tw.line(":%s: %s" % (self.lineno, msg))
+        tw.line(":{}: {}".format(self.lineno, msg))
 
 
 class ReprLocals(TerminalRepr):
@@ -1017,7 +964,7 @@ class ReprFuncArgs(TerminalRepr):
         if self.args:
             linesofar = ""
             for name, value in self.args:
-                ns = "%s = %s" % (safe_str(name), safe_str(value))
+                ns = "{} = {}".format(name, value)
                 if len(ns) + len(linesofar) + 2 > tw.fullwidth:
                     if linesofar:
                         tw.line(linesofar)
@@ -1047,23 +994,6 @@ def getrawcode(obj, trycall=True):
                 if hasattr(x, "co_firstlineno"):
                     return x
         return obj
-
-
-if PY35:  # RecursionError introduced in 3.5
-
-    def is_recursion_error(excinfo):
-        return excinfo.errisinstance(RecursionError)  # noqa
-
-
-else:
-
-    def is_recursion_error(excinfo):
-        if not excinfo.errisinstance(RuntimeError):
-            return False
-        try:
-            return "maximum recursion depth exceeded" in str(excinfo.value)
-        except UnicodeError:
-            return False
 
 
 # relative paths that we use to filter traceback entries from appearing to the user;

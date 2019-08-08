@@ -7,12 +7,12 @@ Good Integration Practices
 Install package with pip
 -------------------------------------------------
 
-For development, we recommend to use virtualenv_ environments and pip_
-for installing your application and any dependencies
-as well as the ``pytest`` package itself. This ensures your code and
-dependencies are isolated from the system Python installation.
+For development, we recommend you use venv_ for virtual environments and
+pip_ for installing your application and any dependencies,
+as well as the ``pytest`` package itself.
+This ensures your code and dependencies are isolated from your system Python installation.
 
-First you need to place a ``setup.py`` file in the root of your package with the following minimum content::
+Next, place a ``setup.py`` file in the root of your package with the following minimum content::
 
     from setuptools import setup, find_packages
 
@@ -41,8 +41,8 @@ Conventions for Python test discovery
 * In those directories, search for ``test_*.py`` or ``*_test.py`` files, imported by their `test package name`_.
 * From those files, collect test items:
 
-  * ``test_`` prefixed test functions or methods outside of class
-  * ``test_`` prefixed test functions or methods inside ``Test`` prefixed test classes (without an ``__init__`` method)
+  * ``test`` prefixed test functions or methods outside of class
+  * ``test`` prefixed test functions or methods inside ``Test`` prefixed test classes (without an ``__init__`` method)
 
 For examples of how to customize your test discovery :doc:`example/pythoncollection`.
 

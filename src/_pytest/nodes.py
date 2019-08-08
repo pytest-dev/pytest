@@ -1,12 +1,7 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 import os
 import warnings
 
 import py
-import six
 
 import _pytest._code
 from _pytest.compat import getfslineno
@@ -54,7 +49,7 @@ def ischildnode(baseid, nodeid):
     return node_parts[: len(base_parts)] == base_parts
 
 
-class Node(object):
+class Node:
     """ base class for Collector and Item the test collection tree.
     Collector subclasses have children, Items are terminal nodes."""
 
@@ -102,7 +97,7 @@ class Node(object):
         return self.session.gethookproxy(self.fspath)
 
     def __repr__(self):
-        return "<%s %s>" % (self.__class__.__name__, getattr(self, "name", None))
+        return "<{} {}>".format(self.__class__.__name__, getattr(self, "name", None))
 
     def warn(self, warning):
         """Issue a warning for this item.
@@ -113,11 +108,12 @@ class Node(object):
 
         :raise ValueError: if ``warning`` instance is not a subclass of PytestWarning.
 
-        Example usage::
+        Example usage:
 
         .. code-block:: python
 
             node.warn(PytestWarning("some message"))
+
         """
         from _pytest.warning_types import PytestWarning
 
@@ -171,7 +167,7 @@ class Node(object):
         """
         from _pytest.mark import MarkDecorator, MARK_GEN
 
-        if isinstance(marker, six.string_types):
+        if isinstance(marker, str):
             marker = getattr(MARK_GEN, marker)
         elif not isinstance(marker, MarkDecorator):
             raise ValueError("is not a string or pytest.mark.* Marker")
@@ -242,12 +238,12 @@ class Node(object):
     def _repr_failure_py(self, excinfo, style=None):
         if excinfo.errisinstance(fail.Exception):
             if not excinfo.value.pytrace:
-                return six.text_type(excinfo.value)
+                return str(excinfo.value)
         fm = self.session._fixturemanager
         if excinfo.errisinstance(fm.FixtureLookupError):
             return excinfo.value.formatrepr()
         tbfilter = True
-        if self.config.option.fulltrace:
+        if self.config.getoption("fulltrace", False):
             style = "long"
         else:
             tb = _pytest._code.Traceback([excinfo.traceback[-1]])
@@ -259,12 +255,12 @@ class Node(object):
                 style = "long"
         # XXX should excinfo.getrepr record all data and toterminal() process it?
         if style is None:
-            if self.config.option.tbstyle == "short":
+            if self.config.getoption("tbstyle", "auto") == "short":
                 style = "short"
             else:
                 style = "long"
 
-        if self.config.option.verbose > 1:
+        if self.config.getoption("verbose", 0) > 1:
             truncate_locals = False
         else:
             truncate_locals = True
@@ -278,7 +274,7 @@ class Node(object):
         return excinfo.getrepr(
             funcargs=True,
             abspath=abspath,
-            showlocals=self.config.option.showlocals,
+            showlocals=self.config.getoption("showlocals", False),
             style=style,
             tbfilter=tbfilter,
             truncate_locals=truncate_locals,
@@ -324,7 +320,14 @@ class Collector(Node):
         if excinfo.errisinstance(self.CollectError):
             exc = excinfo.value
             return str(exc.args[0])
-        return self._repr_failure_py(excinfo, style="short")
+
+        # Respect explicit tbstyle option, but default to "short"
+        # (None._repr_failure_py defaults to "long" without "fulltrace" option).
+        tbstyle = self.config.getoption("tbstyle")
+        if tbstyle == "auto":
+            tbstyle = "short"
+
+        return self._repr_failure_py(excinfo, style=tbstyle)
 
     def _prunetraceback(self, excinfo):
         if hasattr(self, "fspath"):
@@ -362,9 +365,7 @@ class FSCollector(Collector):
             if nodeid and os.sep != SEP:
                 nodeid = nodeid.replace(os.sep, SEP)
 
-        super(FSCollector, self).__init__(
-            name, parent, config, session, nodeid=nodeid, fspath=fspath
-        )
+        super().__init__(name, parent, config, session, nodeid=nodeid, fspath=fspath)
 
 
 class File(FSCollector):
@@ -379,7 +380,7 @@ class Item(Node):
     nextitem = None
 
     def __init__(self, name, parent=None, config=None, session=None, nodeid=None):
-        super(Item, self).__init__(name, parent, config, session, nodeid=nodeid)
+        super().__init__(name, parent, config, session, nodeid=nodeid)
         self._report_sections = []
 
         #: user properties is a list of tuples (name, value) that holds user

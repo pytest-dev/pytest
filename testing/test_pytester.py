@@ -1,9 +1,5 @@
-# -*- coding: utf-8 -*-
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 import os
+import subprocess
 import sys
 import time
 
@@ -12,11 +8,10 @@ import py.path
 import _pytest.pytester as pytester
 import pytest
 from _pytest.config import PytestPluginManager
-from _pytest.main import EXIT_NOTESTSCOLLECTED
-from _pytest.main import EXIT_OK
-from _pytest.main import EXIT_TESTSFAILED
+from _pytest.main import ExitCode
 from _pytest.pytester import CwdSnapshot
 from _pytest.pytester import HookRecorder
+from _pytest.pytester import LineMatcher
 from _pytest.pytester import SysModulesSnapshot
 from _pytest.pytester import SysPathsSnapshot
 
@@ -28,7 +23,7 @@ def test_make_hook_recorder(testdir):
 
     pytest.xfail("internal reportrecorder tests need refactoring")
 
-    class rep(object):
+    class rep:
         excinfo = None
         passed = False
         failed = True
@@ -41,7 +36,7 @@ def test_make_hook_recorder(testdir):
     failures = recorder.getfailures()
     assert failures == [rep]
 
-    class rep(object):
+    class rep:
         excinfo = None
         passed = False
         failed = False
@@ -127,6 +122,17 @@ def test_runresult_assertion_on_xpassed(testdir):
     assert result.ret == 0
 
 
+def test_runresult_repr():
+    from _pytest.pytester import RunResult
+
+    assert (
+        repr(
+            RunResult(ret="ret", outlines=[""], errlines=["some", "errors"], duration=1)
+        )
+        == "<RunResult ret='ret' len(stdout.lines)=1 len(stderr.lines)=2 duration=1.00s>"
+    )
+
+
 def test_xpassed_with_strict_is_considered_a_failure(testdir):
     testdir.makepyfile(
         """
@@ -145,7 +151,7 @@ def test_xpassed_with_strict_is_considered_a_failure(testdir):
 
 
 def make_holder():
-    class apiclass(object):
+    class apiclass:
         def pytest_xyz(self, arg):
             "x"
 
@@ -181,38 +187,31 @@ def test_hookrecorder_basic(holder):
 
 
 def test_makepyfile_unicode(testdir):
-    global unichr
-    try:
-        unichr(65)
-    except NameError:
-        unichr = chr
-    testdir.makepyfile(unichr(0xFFFD))
+    testdir.makepyfile(chr(0xFFFD))
 
 
 def test_makepyfile_utf8(testdir):
     """Ensure makepyfile accepts utf-8 bytes as input (#2738)"""
-    utf8_contents = u"""
+    utf8_contents = """
         def setup_function(function):
-            mixed_encoding = u'São Paulo'
-    """.encode(
-        "utf-8"
-    )
+            mixed_encoding = 'São Paulo'
+    """.encode()
     p = testdir.makepyfile(utf8_contents)
-    assert u"mixed_encoding = u'São Paulo'".encode("utf-8") in p.read("rb")
+    assert "mixed_encoding = 'São Paulo'".encode() in p.read("rb")
 
 
-class TestInlineRunModulesCleanup(object):
+class TestInlineRunModulesCleanup:
     def test_inline_run_test_module_not_cleaned_up(self, testdir):
         test_mod = testdir.makepyfile("def test_foo(): assert True")
         result = testdir.inline_run(str(test_mod))
-        assert result.ret == EXIT_OK
+        assert result.ret == ExitCode.OK
         # rewrite module, now test should fail if module was re-imported
         test_mod.write("def test_foo(): assert False")
         result2 = testdir.inline_run(str(test_mod))
-        assert result2.ret == EXIT_TESTSFAILED
+        assert result2.ret == ExitCode.TESTS_FAILED
 
     def spy_factory(self):
-        class SysModulesSnapshotSpy(object):
+        class SysModulesSnapshotSpy:
             instances = []
 
             def __init__(self, preserve=None):
@@ -295,7 +294,7 @@ def test_cwd_snapshot(tmpdir):
     assert py.path.local() == foo
 
 
-class TestSysModulesSnapshot(object):
+class TestSysModulesSnapshot:
     key = "my-test-module"
 
     def test_remove_added(self):
@@ -358,7 +357,7 @@ class TestSysModulesSnapshot(object):
 
 
 @pytest.mark.parametrize("path_type", ("path", "meta_path"))
-class TestSysPathsSnapshot(object):
+class TestSysPathsSnapshot:
     other_path = {"path": "meta_path", "meta_path": "path"}
 
     @staticmethod
@@ -409,13 +408,13 @@ def test_testdir_subprocess(testdir):
 
 
 def test_unicode_args(testdir):
-    result = testdir.runpytest("-k", u"💩")
-    assert result.ret == EXIT_NOTESTSCOLLECTED
+    result = testdir.runpytest("-k", "💩")
+    assert result.ret == ExitCode.NO_TESTS_COLLECTED
 
 
 def test_testdir_run_no_timeout(testdir):
     testfile = testdir.makepyfile("def test_no_timeout(): pass")
-    assert testdir.runpytest_subprocess(testfile).ret == EXIT_OK
+    assert testdir.runpytest_subprocess(testfile).ret == ExitCode.OK
 
 
 def test_testdir_run_with_timeout(testdir):
@@ -428,7 +427,7 @@ def test_testdir_run_with_timeout(testdir):
     end = time.time()
     duration = end - start
 
-    assert result.ret == EXIT_OK
+    assert result.ret == ExitCode.OK
     assert duration < timeout
 
 
@@ -442,3 +441,133 @@ def test_testdir_run_timeout_expires(testdir):
     )
     with pytest.raises(testdir.TimeoutExpired):
         testdir.runpytest_subprocess(testfile, timeout=1)
+
+
+def test_linematcher_with_nonlist():
+    """Test LineMatcher with regard to passing in a set (accidentally)."""
+    lm = LineMatcher([])
+
+    with pytest.raises(AssertionError):
+        lm.fnmatch_lines(set())
+    with pytest.raises(AssertionError):
+        lm.fnmatch_lines({})
+    lm.fnmatch_lines([])
+    lm.fnmatch_lines(())
+
+    assert lm._getlines({}) == {}
+    assert lm._getlines(set()) == set()
+
+
+def test_pytester_addopts(request, monkeypatch):
+    monkeypatch.setenv("PYTEST_ADDOPTS", "--orig-unused")
+
+    testdir = request.getfixturevalue("testdir")
+
+    try:
+        assert "PYTEST_ADDOPTS" not in os.environ
+    finally:
+        testdir.finalize()
+
+    assert os.environ["PYTEST_ADDOPTS"] == "--orig-unused"
+
+
+def test_run_stdin(testdir):
+    with pytest.raises(testdir.TimeoutExpired):
+        testdir.run(
+            sys.executable,
+            "-c",
+            "import sys, time; time.sleep(1); print(sys.stdin.read())",
+            stdin=subprocess.PIPE,
+            timeout=0.1,
+        )
+
+    with pytest.raises(testdir.TimeoutExpired):
+        result = testdir.run(
+            sys.executable,
+            "-c",
+            "import sys, time; time.sleep(1); print(sys.stdin.read())",
+            stdin=b"input\n2ndline",
+            timeout=0.1,
+        )
+
+    result = testdir.run(
+        sys.executable,
+        "-c",
+        "import sys; print(sys.stdin.read())",
+        stdin=b"input\n2ndline",
+    )
+    assert result.stdout.lines == ["input", "2ndline"]
+    assert result.stderr.str() == ""
+    assert result.ret == 0
+
+
+def test_popen_stdin_pipe(testdir):
+    proc = testdir.popen(
+        [sys.executable, "-c", "import sys; print(sys.stdin.read())"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        stdin=subprocess.PIPE,
+    )
+    stdin = b"input\n2ndline"
+    stdout, stderr = proc.communicate(input=stdin)
+    assert stdout.decode("utf8").splitlines() == ["input", "2ndline"]
+    assert stderr == b""
+    assert proc.returncode == 0
+
+
+def test_popen_stdin_bytes(testdir):
+    proc = testdir.popen(
+        [sys.executable, "-c", "import sys; print(sys.stdin.read())"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        stdin=b"input\n2ndline",
+    )
+    stdout, stderr = proc.communicate()
+    assert stdout.decode("utf8").splitlines() == ["input", "2ndline"]
+    assert stderr == b""
+    assert proc.returncode == 0
+
+
+def test_popen_default_stdin_stderr_and_stdin_None(testdir):
+    # stdout, stderr default to pipes,
+    # stdin can be None to not close the pipe, avoiding
+    # "ValueError: flush of closed file" with `communicate()`.
+    p1 = testdir.makepyfile(
+        """
+        import sys
+        print(sys.stdin.read())  # empty
+        print('stdout')
+        sys.stderr.write('stderr')
+        """
+    )
+    proc = testdir.popen([sys.executable, str(p1)], stdin=None)
+    stdout, stderr = proc.communicate(b"ignored")
+    assert stdout.splitlines() == [b"", b"stdout"]
+    assert stderr.splitlines() == [b"stderr"]
+    assert proc.returncode == 0
+
+
+def test_spawn_uses_tmphome(testdir):
+    import os
+
+    tmphome = str(testdir.tmpdir)
+
+    # Does use HOME only during run.
+    assert os.environ.get("HOME") != tmphome
+
+    testdir._env_run_update["CUSTOMENV"] = "42"
+
+    p1 = testdir.makepyfile(
+        """
+        import os
+
+        def test():
+            assert os.environ["HOME"] == {tmphome!r}
+            assert os.environ["CUSTOMENV"] == "42"
+        """.format(
+            tmphome=tmphome
+        )
+    )
+    child = testdir.spawn_pytest(str(p1))
+    out = child.read()
+    assert child.wait() == 0, out.decode("utf8")

@@ -1,7 +1,3 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 import argparse
 import distutils.spawn
 import os
@@ -11,6 +7,7 @@ import py
 
 import pytest
 from _pytest.config import argparsing as parseopt
+from _pytest.config.exceptions import UsageError
 
 
 @pytest.fixture
@@ -18,12 +15,10 @@ def parser():
     return parseopt.Parser()
 
 
-class TestParser(object):
-    def test_no_help_by_default(self, capsys):
+class TestParser:
+    def test_no_help_by_default(self):
         parser = parseopt.Parser(usage="xyz")
-        pytest.raises(SystemExit, lambda: parser.parse(["-h"]))
-        out, err = capsys.readouterr()
-        assert err.find("error: unrecognized arguments") != -1
+        pytest.raises(UsageError, lambda: parser.parse(["-h"]))
 
     def test_custom_prog(self, parser):
         """Custom prog can be set for `argparse.ArgumentParser`."""
@@ -157,7 +152,7 @@ class TestParser(object):
         parser.addoption("--hello", dest="hello", action="store")
         parser.addoption("--world", dest="world", default=42)
 
-        class A(object):
+        class A:
             pass
 
         option = A()
@@ -300,15 +295,12 @@ def test_argcomplete(testdir, monkeypatch):
     if not distutils.spawn.find_executable("bash"):
         pytest.skip("bash not available")
     script = str(testdir.tmpdir.join("test_argcomplete"))
-    pytest_bin = sys.argv[0]
-    if "pytest" not in os.path.basename(pytest_bin):
-        pytest.skip("need to be run with pytest executable, not {}".format(pytest_bin))
 
     with open(str(script), "w") as fp:
         # redirect output from argcomplete to stdin and stderr is not trivial
         # http://stackoverflow.com/q/12589419/1307905
         # so we use bash
-        fp.write('COMP_WORDBREAKS="$COMP_WORDBREAKS" %s 8>&1 9>&2' % pytest_bin)
+        fp.write('COMP_WORDBREAKS="$COMP_WORDBREAKS" python -m pytest 8>&1 9>&2')
     # alternative would be exteneded Testdir.{run(),_run(),popen()} to be able
     # to handle a keyword argument env that replaces os.environ in popen or
     # extends the copy, advantage: could not forget to restore
@@ -324,7 +316,11 @@ def test_argcomplete(testdir, monkeypatch):
         # argcomplete not found
         pytest.skip("argcomplete not available")
     elif not result.stdout.str():
-        pytest.skip("bash provided no output, argcomplete not available?")
+        pytest.skip(
+            "bash provided no output on stdout, argcomplete not available? (stderr={!r})".format(
+                result.stderr.str()
+            )
+        )
     else:
         result.stdout.fnmatch_lines(["--funcargs", "--fulltrace"])
     os.mkdir("test_argcomplete.d")

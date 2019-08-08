@@ -29,7 +29,8 @@ To execute it:
     $ pytest
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
-    rootdir: $REGENDOC_TMPDIR, inifile:
+    cachedir: $PYTHON_PREFIX/.pytest_cache
+    rootdir: $REGENDOC_TMPDIR
     collected 1 item
 
     test_sample.py F                                                     [100%]
@@ -60,7 +61,7 @@ Features
 
 - Can run :ref:`unittest <unittest>` (including trial) and :ref:`nose <noseintegration>` test suites out of the box;
 
-- Python 2.7, Python 3.4+, PyPy 2.3, Jython 2.5 (untested);
+- Python Python 3.5+ and PyPy 3;
 
 - Rich plugin architecture, with over 315+ `external plugins <http://plugincompat.herokuapp.com>`_ and thriving community;
 

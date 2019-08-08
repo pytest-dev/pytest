@@ -1,19 +1,14 @@
-# -*- coding: utf-8 -*-
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 import os
 import sys
 import textwrap
 import types
 
+import attr
+import importlib_metadata
 import py
-import six
 
 import pytest
-from _pytest.main import EXIT_NOTESTSCOLLECTED
-from _pytest.main import EXIT_USAGEERROR
+from _pytest.main import ExitCode
 from _pytest.warnings import SHOW_PYTEST_WARNINGS_ARG
 
 
@@ -24,11 +19,11 @@ def prepend_pythonpath(*dirs):
     return os.pathsep.join(str(p) for p in dirs)
 
 
-class TestGeneralUsage(object):
+class TestGeneralUsage:
     def test_config_error(self, testdir):
         testdir.copy_example("conftest_usageerror/conftest.py")
         result = testdir.runpytest(testdir.tmpdir)
-        assert result.ret == EXIT_USAGEERROR
+        assert result.ret == ExitCode.USAGE_ERROR
         result.stderr.fnmatch_lines(["*ERROR: hello"])
         result.stdout.fnmatch_lines(["*pytest_unconfigure_called"])
 
@@ -87,7 +82,7 @@ class TestGeneralUsage(object):
         """
         )
         result = testdir.runpytest("-s", "asd")
-        assert result.ret == 4  # EXIT_USAGEERROR
+        assert result.ret == ExitCode.USAGE_ERROR
         result.stderr.fnmatch_lines(["ERROR: file not found*asd"])
         result.stdout.fnmatch_lines(["*---configure", "*---unconfigure"])
 
@@ -107,6 +102,48 @@ class TestGeneralUsage(object):
         result = testdir.runpytest("-p", "pytest_xyz", "--xyz=123", syspathinsert=True)
         assert result.ret == 0
         result.stdout.fnmatch_lines(["*1 passed*"])
+
+    @pytest.mark.parametrize("load_cov_early", [True, False])
+    def test_early_load_setuptools_name(self, testdir, monkeypatch, load_cov_early):
+        testdir.makepyfile(mytestplugin1_module="")
+        testdir.makepyfile(mytestplugin2_module="")
+        testdir.makepyfile(mycov_module="")
+        testdir.syspathinsert()
+
+        loaded = []
+
+        @attr.s
+        class DummyEntryPoint:
+            name = attr.ib()
+            module = attr.ib()
+            group = "pytest11"
+
+            def load(self):
+                __import__(self.module)
+                loaded.append(self.name)
+                return sys.modules[self.module]
+
+        entry_points = [
+            DummyEntryPoint("myplugin1", "mytestplugin1_module"),
+            DummyEntryPoint("myplugin2", "mytestplugin2_module"),
+            DummyEntryPoint("mycov", "mycov_module"),
+        ]
+
+        @attr.s
+        class DummyDist:
+            entry_points = attr.ib()
+            files = ()
+
+        def my_dists():
+            return (DummyDist(entry_points),)
+
+        monkeypatch.setattr(importlib_metadata, "distributions", my_dists)
+        params = ("-p", "mycov") if load_cov_early else ()
+        testdir.runpytest_inprocess(*params)
+        if load_cov_early:
+            assert loaded == ["mycov", "myplugin1", "myplugin2"]
+        else:
+            assert loaded == ["myplugin1", "myplugin2", "mycov"]
 
     def test_assertion_magic(self, testdir):
         p = testdir.makepyfile(
@@ -132,7 +169,6 @@ class TestGeneralUsage(object):
         result = testdir.runpytest(p)
         result.stdout.fnmatch_lines(
             [
-                # XXX on jython this fails:  ">   import import_fails",
                 "ImportError while importing test module*",
                 "*No module named *does_not_work*",
             ]
@@ -178,9 +214,7 @@ class TestGeneralUsage(object):
                 "    foo()",
                 "conftest.py:2: in foo",
                 "    import qwerty",
-                "E   {}: No module named {q}qwerty{q}".format(
-                    exc_name, q="'" if six.PY3 else ""
-                ),
+                "E   {}: No module named 'qwerty'".format(exc_name),
             ]
         )
 
@@ -194,7 +228,7 @@ class TestGeneralUsage(object):
         """
         )
         result = testdir.runpytest()
-        assert result.ret == EXIT_NOTESTSCOLLECTED
+        assert result.ret == ExitCode.NO_TESTS_COLLECTED
         result.stdout.fnmatch_lines(["*1 skip*"])
 
     def test_issue88_initial_file_multinodes(self, testdir):
@@ -212,7 +246,7 @@ class TestGeneralUsage(object):
         """
         )
         result = testdir.runpytest()
-        assert result.ret == EXIT_NOTESTSCOLLECTED
+        assert result.ret == ExitCode.NO_TESTS_COLLECTED
         assert "should not be seen" not in result.stdout.str()
         assert "stderr42" not in result.stderr.str()
 
@@ -255,13 +289,13 @@ class TestGeneralUsage(object):
         sub2 = testdir.mkdir("sub2")
         sub1.join("conftest.py").write("assert 0")
         result = testdir.runpytest(sub2)
-        assert result.ret == EXIT_NOTESTSCOLLECTED
+        assert result.ret == ExitCode.NO_TESTS_COLLECTED
         sub2.ensure("__init__.py")
         p = sub2.ensure("test_hello.py")
         result = testdir.runpytest(p)
-        assert result.ret == EXIT_NOTESTSCOLLECTED
+        assert result.ret == ExitCode.NO_TESTS_COLLECTED
         result = testdir.runpytest(sub1)
-        assert result.ret == EXIT_USAGEERROR
+        assert result.ret == ExitCode.USAGE_ERROR
 
     def test_directory_skipped(self, testdir):
         testdir.makeconftest(
@@ -273,7 +307,7 @@ class TestGeneralUsage(object):
         )
         testdir.makepyfile("def test_hello(): pass")
         result = testdir.runpytest()
-        assert result.ret == EXIT_NOTESTSCOLLECTED
+        assert result.ret == ExitCode.NO_TESTS_COLLECTED
         result.stdout.fnmatch_lines(["*1 skipped*"])
 
     def test_multiple_items_per_collector_byid(self, testdir):
@@ -373,9 +407,20 @@ class TestGeneralUsage(object):
             assert result.ret == 4  # usage error only if item not found
 
     def test_report_all_failed_collections_initargs(self, testdir):
+        testdir.makeconftest(
+            """
+            from _pytest.main import ExitCode
+
+            def pytest_sessionfinish(exitstatus):
+                assert exitstatus == ExitCode.USAGE_ERROR
+                print("pytest_sessionfinish_called")
+            """
+        )
         testdir.makepyfile(test_a="def", test_b="def")
         result = testdir.runpytest("test_a.py::a", "test_b.py::b")
         result.stderr.fnmatch_lines(["*ERROR*test_a.py::a*", "*ERROR*test_b.py::b*"])
+        result.stdout.fnmatch_lines(["pytest_sessionfinish_called"])
+        assert result.ret == ExitCode.USAGE_ERROR
 
     @pytest.mark.usefixtures("recwarn")
     def test_namespace_import_doesnt_confuse_import_hook(self, testdir):
@@ -430,7 +475,7 @@ class TestGeneralUsage(object):
             ["*source code not available*", "E*fixture 'invalid_fixture' not found"]
         )
 
-    def test_plugins_given_as_strings(self, tmpdir, monkeypatch):
+    def test_plugins_given_as_strings(self, tmpdir, monkeypatch, _sys_snapshot):
         """test that str values passed to main() as `plugins` arg
         are interpreted as module names to be imported and registered.
         #855.
@@ -461,20 +506,19 @@ class TestGeneralUsage(object):
     def test_parametrized_with_null_bytes(self, testdir):
         """Test parametrization with values that contain null bytes and unicode characters (#2644, #2957)"""
         p = testdir.makepyfile(
-            u"""
-            # encoding: UTF-8
+            """\
             import pytest
 
-            @pytest.mark.parametrize("data", [b"\\x00", "\\x00", u'ação'])
+            @pytest.mark.parametrize("data", [b"\\x00", "\\x00", 'ação'])
             def test_foo(data):
                 assert data
-        """
+            """
         )
         res = testdir.runpytest(p)
         res.assert_outcomes(passed=3)
 
 
-class TestInvocationVariants(object):
+class TestInvocationVariants:
     def test_earlyinit(self, testdir):
         p = testdir.makepyfile(
             """
@@ -485,7 +529,6 @@ class TestInvocationVariants(object):
         result = testdir.runpython(p)
         assert result.ret == 0
 
-    @pytest.mark.xfail("sys.platform.startswith('java')")
     def test_pydoc(self, testdir):
         for name in ("py.test", "pytest"):
             result = testdir.runpython_c("import {};help({})".format(name, name))
@@ -568,11 +611,11 @@ class TestInvocationVariants(object):
 
     def test_invoke_with_path(self, tmpdir, capsys):
         retcode = pytest.main(tmpdir)
-        assert retcode == EXIT_NOTESTSCOLLECTED
+        assert retcode == ExitCode.NO_TESTS_COLLECTED
         out, err = capsys.readouterr()
 
     def test_invoke_plugin_api(self, testdir, capsys):
-        class MyPlugin(object):
+        class MyPlugin:
             def pytest_addoption(self, parser):
                 parser.addoption("--myopt")
 
@@ -622,6 +665,8 @@ class TestInvocationVariants(object):
     def test_cmdline_python_namespace_package(self, testdir, monkeypatch):
         """
         test --pyargs option with namespace packages (#1567)
+
+        Ref: https://packaging.python.org/guides/packaging-namespace-packages/
         """
         monkeypatch.delenv("PYTHONDONTWRITEBYTECODE", raising=False)
 
@@ -708,7 +753,7 @@ class TestInvocationVariants(object):
                     str(testdir.tmpdir.join("tmpfile2")),
                 )
             except OSError as e:
-                pytest.skip(six.text_type(e.args[0]))
+                pytest.skip(str(e.args[0]))
         monkeypatch.delenv("PYTHONDONTWRITEBYTECODE", raising=False)
 
         dirname = "lib"
@@ -726,10 +771,7 @@ class TestInvocationVariants(object):
 
         d_local = testdir.mkdir("local")
         symlink_location = os.path.join(str(d_local), "lib")
-        if six.PY2:
-            os.symlink(str(d), symlink_location)
-        else:
-            os.symlink(str(d), symlink_location, target_is_directory=True)
+        os.symlink(str(d), symlink_location, target_is_directory=True)
 
         # The structure of the test directory is now:
         # .
@@ -804,11 +846,13 @@ class TestInvocationVariants(object):
         result = testdir.runpytest("-rf")
         lines = result.stdout.str().splitlines()
         for line in lines:
-            if line.startswith("FAIL "):
-                testid = line[5:].strip()
+            if line.startswith(("FAIL ", "FAILED ")):
+                _fail, _sep, testid = line.partition(" ")
                 break
         result = testdir.runpytest(testid, "-rf")
-        result.stdout.fnmatch_lines([line, "*1 failed*"])
+        result.stdout.fnmatch_lines(
+            ["FAILED test_doctest_id.txt::test_doctest_id.txt", "*1 failed*"]
+        )
 
     def test_core_backward_compatibility(self):
         """Test backward compatibility for get_plugin_manager function. See #787."""
@@ -824,7 +868,7 @@ class TestInvocationVariants(object):
         assert request.config.pluginmanager.hasplugin("python")
 
 
-class TestDurations(object):
+class TestDurations:
     source = """
         import time
         frag = 0.002
@@ -902,7 +946,7 @@ class TestDurations(object):
         assert result.ret == 0
 
 
-class TestDurationWithFixture(object):
+class TestDurationWithFixture:
     source = """
         import pytest
         import time
@@ -953,18 +997,24 @@ def test_zipimport_hook(testdir, tmpdir):
 
 def test_import_plugin_unicode_name(testdir):
     testdir.makepyfile(myplugin="")
-    testdir.makepyfile(
-        """
-        def test(): pass
-    """
-    )
-    testdir.makeconftest(
-        """
-        pytest_plugins = [u'myplugin']
-    """
-    )
+    testdir.makepyfile("def test(): pass")
+    testdir.makeconftest("pytest_plugins = ['myplugin']")
     r = testdir.runpytest()
     assert r.ret == 0
+
+
+def test_pytest_plugins_as_module(testdir):
+    """Do not raise an error if pytest_plugins attribute is a module (#3899)"""
+    testdir.makepyfile(
+        **{
+            "__init__.py": "",
+            "pytest_plugins.py": "",
+            "conftest.py": "from . import pytest_plugins",
+            "test_foo.py": "def test(): pass",
+        }
+    )
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines(["* 1 passed in *"])
 
 
 def test_deferred_hook_checking(testdir):
@@ -1104,9 +1154,34 @@ def test_fixture_mock_integration(testdir):
     """Test that decorators applied to fixture are left working (#3774)"""
     p = testdir.copy_example("acceptance/fixture_mock_integration.py")
     result = testdir.runpytest(p)
-    result.stdout.fnmatch_lines("*1 passed*")
+    result.stdout.fnmatch_lines(["*1 passed*"])
 
 
 def test_usage_error_code(testdir):
     result = testdir.runpytest("-unknown-option-")
-    assert result.ret == EXIT_USAGEERROR
+    assert result.ret == ExitCode.USAGE_ERROR
+
+
+@pytest.mark.filterwarnings("default")
+def test_warn_on_async_function(testdir):
+    testdir.makepyfile(
+        test_async="""
+        async def test_1():
+            pass
+        async def test_2():
+            pass
+    """
+    )
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines(
+        [
+            "test_async.py::test_1",
+            "test_async.py::test_2",
+            "*Coroutine functions are not natively supported*",
+            "*2 skipped, 2 warnings in*",
+        ]
+    )
+    # ensure our warning message appears only once
+    assert (
+        result.stdout.str().count("Coroutine functions are not natively supported") == 1
+    )

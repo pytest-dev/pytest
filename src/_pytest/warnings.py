@@ -1,12 +1,7 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 import sys
 import warnings
 from contextlib import contextmanager
 
-from _pytest import compat
 from _pytest.config import hookimpl
 from _pytest.warning_types import RemovedInPytest4Warning
 
@@ -19,7 +14,7 @@ def _setoption(wmod, arg):
     """
     parts = arg.split(":")
     if len(parts) > 5:
-        raise wmod._OptionError("too many fields (max 5): %r" % (arg,))
+        raise wmod._OptionError("too many fields (max 5): {!r}".format(arg))
     while len(parts) < 5:
         parts.append("")
     action, message, category, module, lineno = [s.strip() for s in parts]
@@ -31,7 +26,7 @@ def _setoption(wmod, arg):
             if lineno < 0:
                 raise ValueError
         except (ValueError, OverflowError):
-            raise wmod._OptionError("invalid lineno %r" % (lineno,))
+            raise wmod._OptionError("invalid lineno {!r}".format(lineno))
     else:
         lineno = 0
     wmod.filterwarnings(action, message, category, module, lineno)
@@ -80,7 +75,7 @@ def catch_warnings_for_item(config, ihook, when, item):
             warnings.filterwarnings("always", category=DeprecationWarning)
             warnings.filterwarnings("always", category=PendingDeprecationWarning)
 
-        warnings.filterwarnings("error", category=RemovedInPytest4Warning)
+        warnings.filterwarnings("error", category=pytest.PytestDeprecationWarning)
 
         # filters should have this precedence: mark, cmdline options, ini
         # filters should be applied in the inverse order of precedence
@@ -104,21 +99,8 @@ def catch_warnings_for_item(config, ihook, when, item):
 
 
 def warning_record_to_str(warning_message):
-    """Convert a warnings.WarningMessage to a string, taking in account a lot of unicode shenaningans in Python 2.
-
-    When Python 2 support is dropped this function can be greatly simplified.
-    """
+    """Convert a warnings.WarningMessage to a string."""
     warn_msg = warning_message.message
-    unicode_warning = False
-    if compat._PY2 and any(isinstance(m, compat.UNICODE_TYPES) for m in warn_msg.args):
-        new_args = []
-        for m in warn_msg.args:
-            new_args.append(
-                compat.ascii_escaped(m) if isinstance(m, compat.UNICODE_TYPES) else m
-            )
-        unicode_warning = list(warn_msg.args) != new_args
-        warn_msg.args = new_args
-
     msg = warnings.formatwarning(
         warn_msg,
         warning_message.category,
@@ -126,12 +108,6 @@ def warning_record_to_str(warning_message):
         warning_message.lineno,
         warning_message.line,
     )
-    if unicode_warning:
-        warnings.warn(
-            "Warning is using unicode non convertible to ascii, "
-            "converting to a safe representation:\n  {!r}".format(compat.safe_str(msg)),
-            UnicodeWarning,
-        )
     return msg
 
 

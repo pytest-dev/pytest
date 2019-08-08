@@ -4,14 +4,7 @@ Utilities for truncating assertion output.
 Current default behaviour is to truncate assertion explanations at
 ~8 terminal lines, unless running in "-vv" mode or running on CI.
 """
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 import os
-
-import six
-
 
 DEFAULT_MAX_LINES = 8
 DEFAULT_MAX_CHARS = 8 * 80
@@ -76,7 +69,7 @@ def _truncate_explanation(input_lines, max_lines=None, max_chars=None):
     else:
         msg += " ({} lines hidden)".format(truncated_line_count)
     msg += ", {}".format(USAGE_MSG)
-    truncated_explanation.extend([six.text_type(""), six.text_type(msg)])
+    truncated_explanation.extend(["", str(msg)])
     return truncated_explanation
 
 

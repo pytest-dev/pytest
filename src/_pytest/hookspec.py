@@ -3,7 +3,6 @@ from pluggy import HookspecMarker
 
 from _pytest.deprecated import PYTEST_LOGWARNING
 
-
 hookspec = HookspecMarker("pytest")
 
 # -------------------------------------------------------------------------
@@ -100,7 +99,8 @@ def pytest_cmdline_parse(pluginmanager, args):
     Stops at first non-None result, see :ref:`firstresult`
 
     .. note::
-        This hook will not be called for ``conftest.py`` files, only for setuptools plugins.
+        This hook will only be called for plugin classes passed to the ``plugins`` arg when using `pytest.main`_ to
+        perform an in-process test run.
 
     :param _pytest.config.PytestPluginManager pluginmanager: pytest plugin manager
     :param list[str] args: list of arguments passed on the command line
@@ -188,7 +188,7 @@ def pytest_ignore_collect(path, config):
 
     Stops at first non-None result, see :ref:`firstresult`
 
-    :param str path: the path to analyze
+    :param path: a :py:class:`py.path.local` - the path to analyze
     :param _pytest.config.Config config: pytest config object
     """
 
@@ -199,7 +199,7 @@ def pytest_collect_directory(path, parent):
 
     Stops at first non-None result, see :ref:`firstresult`
 
-    :param str path: the path to analyze
+    :param path: a :py:class:`py.path.local` - the path to analyze
     """
 
 
@@ -207,7 +207,7 @@ def pytest_collect_file(path, parent):
     """ return collection Node or None for the given path. Any new node
     needs to have the specified ``parent`` as a parent.
 
-    :param str path: the path to collect
+    :param path: a :py:class:`py.path.local` - the path to collect
     """
 
 
@@ -227,7 +227,7 @@ def pytest_collectreport(report):
 
 
 def pytest_deselected(items):
-    """ called for test items deselected by keyword. """
+    """ called for test items deselected, e.g. by keyword. """
 
 
 @hookspec(firstresult=True)
@@ -249,7 +249,10 @@ def pytest_pycollect_makemodule(path, parent):
     The pytest_collect_file hook needs to be used if you want to
     create test modules for files that do not match as a test module.
 
-    Stops at first non-None result, see :ref:`firstresult` """
+    Stops at first non-None result, see :ref:`firstresult`
+
+    :param path: a :py:class:`py.path.local` - the path of module to collect
+    """
 
 
 @hookspec(firstresult=True)
@@ -376,6 +379,41 @@ def pytest_runtest_logreport(report):
     the respective phase of executing a test. """
 
 
+@hookspec(firstresult=True)
+def pytest_report_to_serializable(config, report):
+    """
+    .. warning::
+        This hook is experimental and subject to change between pytest releases, even
+        bug fixes.
+
+        The intent is for this to be used by plugins maintained by the core-devs, such
+        as ``pytest-xdist``, ``pytest-subtests``, and as a replacement for the internal
+        'resultlog' plugin.
+
+        In the future it might become part of the public hook API.
+
+    Serializes the given report object into a data structure suitable for sending
+    over the wire, e.g. converted to JSON.
+    """
+
+
+@hookspec(firstresult=True)
+def pytest_report_from_serializable(config, data):
+    """
+    .. warning::
+        This hook is experimental and subject to change between pytest releases, even
+        bug fixes.
+
+        The intent is for this to be used by plugins maintained by the core-devs, such
+        as ``pytest-xdist``, ``pytest-subtests``, and as a replacement for the internal
+        'resultlog' plugin.
+
+        In the future it might become part of the public hook API.
+
+    Restores a report object previously serialized with pytest_report_to_serializable().
+    """
+
+
 # -------------------------------------------------------------------------
 # Fixture related hooks
 # -------------------------------------------------------------------------
@@ -481,19 +519,22 @@ def pytest_report_collectionfinish(config, startdir, items):
 
 
 @hookspec(firstresult=True)
-def pytest_report_teststatus(report):
+def pytest_report_teststatus(report, config):
     """ return result-category, shortletter and verbose word for reporting.
+
+    :param _pytest.config.Config config: pytest config object
 
     Stops at first non-None result, see :ref:`firstresult` """
 
 
-def pytest_terminal_summary(terminalreporter, exitstatus):
+def pytest_terminal_summary(terminalreporter, exitstatus, config):
     """Add a section to terminal summary reporting.
 
     :param _pytest.terminal.TerminalReporter terminalreporter: the internal terminal reporter object
     :param int exitstatus: the exit status that will be reported back to the OS
+    :param _pytest.config.Config config: pytest config object
 
-    .. versionadded:: 3.5
+    .. versionadded:: 4.2
         The ``config`` parameter.
     """
 

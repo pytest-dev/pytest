@@ -22,11 +22,11 @@
 .. image:: https://travis-ci.org/pytest-dev/pytest.svg?branch=master
     :target: https://travis-ci.org/pytest-dev/pytest
 
-.. image:: https://ci.appveyor.com/api/projects/status/mrgbjaua7t33pg6b?svg=true
-    :target: https://ci.appveyor.com/project/pytestbot/pytest
+.. image:: https://dev.azure.com/pytest-dev/pytest/_apis/build/status/pytest-CI?branchName=master
+    :target: https://dev.azure.com/pytest-dev/pytest
 
 .. image:: https://img.shields.io/badge/code%20style-black-000000.svg
-    :target: https://github.com/ambv/black
+    :target: https://github.com/python/black
 
 .. image:: https://www.codetriage.com/pytest-dev/pytest/badges/users.svg
     :target: https://www.codetriage.com/pytest-dev/pytest
@@ -85,7 +85,7 @@ Features
 - Can run `unittest <https://docs.pytest.org/en/latest/unittest.html>`_ (or trial),
   `nose <https://docs.pytest.org/en/latest/nose.html>`_ test suites out of the box;
 
-- Python 2.7, Python 3.4+, PyPy 2.3, Jython 2.5 (untested);
+- Python 3.5+ and PyPy3;
 
 - Rich plugin architecture, with over 315+ `external plugins <http://plugincompat.herokuapp.com>`_ and thriving community;
 
@@ -106,6 +106,26 @@ Changelog
 ---------
 
 Consult the `Changelog <https://docs.pytest.org/en/latest/changelog.html>`__ page for fixes and enhancements of each version.
+
+
+Support pytest
+--------------
+
+You can support pytest by obtaining a `Tideflift subscription`_.
+
+Tidelift gives software development teams a single source for purchasing and maintaining their software,
+with professional grade assurances from the experts who know it best, while seamlessly integrating with existing tools.
+
+
+.. _`Tideflift subscription`: https://tidelift.com/subscription/pkg/pypi-pytest?utm_source=pypi-pytest&utm_medium=referral&utm_campaign=readme
+
+
+Security
+^^^^^^^^
+
+pytest has never been associated with a security vunerability, but in any case, to report a
+security vulnerability please use the `Tidelift security contact <https://tidelift.com/security>`_.
+Tidelift will coordinate the fix and disclosure.
 
 
 License

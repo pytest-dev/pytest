@@ -1,13 +1,6 @@
-# -*- coding: utf8 -*-
-from __future__ import unicode_literals
-
-import sys
 import warnings
 
-import six
-
 import pytest
-
 
 WARNINGS_SUMMARY_HEADER = "warnings summary"
 
@@ -96,10 +89,12 @@ def test_as_errors(testdir, pyfile_with_warnings, method):
         testdir.makeini(
             """
             [pytest]
-            filterwarnings= error
+            filterwarnings=error
             """
         )
-    result = testdir.runpytest(*args)
+    # Use a subprocess, since changing logging level affects other threads
+    # (xdist).
+    result = testdir.runpytest_subprocess(*args)
     result.stdout.fnmatch_lines(
         [
             "E       UserWarning: user warning",
@@ -125,95 +120,29 @@ def test_ignore(testdir, pyfile_with_warnings, method):
     assert WARNINGS_SUMMARY_HEADER not in result.stdout.str()
 
 
-@pytest.mark.skipif(
-    sys.version_info < (3, 0), reason="warnings message is unicode is ok in python3"
-)
 @pytest.mark.filterwarnings("always")
 def test_unicode(testdir, pyfile_with_warnings):
     testdir.makepyfile(
-        """
-        # -*- coding: utf8 -*-
+        """\
         import warnings
         import pytest
 
 
         @pytest.fixture
         def fix():
-            warnings.warn(u"测试")
+            warnings.warn("测试")
             yield
 
         def test_func(fix):
             pass
-    """
+        """
     )
     result = testdir.runpytest()
     result.stdout.fnmatch_lines(
         [
             "*== %s ==*" % WARNINGS_SUMMARY_HEADER,
-            "*test_unicode.py:8: UserWarning: \u6d4b\u8bd5*",
+            "*test_unicode.py:7: UserWarning: \u6d4b\u8bd5*",
             "* 1 passed, 1 warnings*",
-        ]
-    )
-
-
-@pytest.mark.skipif(
-    sys.version_info >= (3, 0),
-    reason="warnings message is broken as it is not str instance",
-)
-def test_py2_unicode(testdir, pyfile_with_warnings):
-    if getattr(sys, "pypy_version_info", ())[:2] == (5, 9) and sys.platform.startswith(
-        "win"
-    ):
-        pytest.xfail("fails with unicode error on PyPy2 5.9 and Windows (#2905)")
-    testdir.makepyfile(
-        """
-        # -*- coding: utf8 -*-
-        import warnings
-        import pytest
-
-
-        @pytest.fixture
-        def fix():
-            warnings.warn(u"测试")
-            yield
-
-        @pytest.mark.filterwarnings('always')
-        def test_func(fix):
-            pass
-    """
-    )
-    result = testdir.runpytest()
-    result.stdout.fnmatch_lines(
-        [
-            "*== %s ==*" % WARNINGS_SUMMARY_HEADER,
-            "*test_py2_unicode.py:8: UserWarning: \\u6d4b\\u8bd5",
-            '*warnings.warn(u"\u6d4b\u8bd5")',
-            "*warnings.py:*: UnicodeWarning: Warning is using unicode non*",
-            "* 1 passed, 2 warnings*",
-        ]
-    )
-
-
-def test_py2_unicode_ascii(testdir):
-    """Ensure that our warning about 'unicode warnings containing non-ascii messages'
-    does not trigger with ascii-convertible messages"""
-    testdir.makeini("[pytest]")
-    testdir.makepyfile(
-        """
-        import pytest
-        import warnings
-
-        @pytest.mark.filterwarnings('always')
-        def test_func():
-            warnings.warn(u"hello")
-    """
-    )
-    result = testdir.runpytest()
-    result.stdout.fnmatch_lines(
-        [
-            "*== %s ==*" % WARNINGS_SUMMARY_HEADER,
-            '*warnings.warn(u"hello")',
-            "* 1 passed, 1 warnings in*",
         ]
     )
 
@@ -278,13 +207,13 @@ def test_filterwarnings_mark(testdir, default_config):
 def test_non_string_warning_argument(testdir):
     """Non-str argument passed to warning breaks pytest (#2956)"""
     testdir.makepyfile(
-        """
+        """\
         import warnings
         import pytest
 
         def test():
-            warnings.warn(UserWarning(1, u'foo'))
-    """
+            warnings.warn(UserWarning(1, 'foo'))
+        """
     )
     result = testdir.runpytest("-W", "always")
     result.stdout.fnmatch_lines(["*= 1 passed, 1 warnings in *"])
@@ -301,7 +230,7 @@ def test_filterwarnings_mark_registration(testdir):
             pass
     """
     )
-    result = testdir.runpytest("--strict")
+    result = testdir.runpytest("--strict-markers")
     assert result.ret == 0
 
 
@@ -563,36 +492,9 @@ class TestDeprecationWarningsByDefault:
 
     def test_hidden_by_system(self, testdir, monkeypatch):
         self.create_file(testdir)
-        monkeypatch.setenv(str("PYTHONWARNINGS"), str("once::UserWarning"))
+        monkeypatch.setenv("PYTHONWARNINGS", "once::UserWarning")
         result = testdir.runpytest_subprocess()
         assert WARNINGS_SUMMARY_HEADER not in result.stdout.str()
-
-
-@pytest.mark.skipif(six.PY3, reason="Python 2 only issue")
-def test_infinite_loop_warning_against_unicode_usage_py2(testdir):
-    """
-    We need to be careful when raising the warning about unicode usage with "warnings.warn"
-    because it might be overwritten by users and this itself causes another warning (#3691).
-    """
-    testdir.makepyfile(
-        """
-        # -*- coding: utf8 -*-
-        from __future__ import unicode_literals
-        import warnings
-        import pytest
-
-        def _custom_showwarning(message, *a, **b):
-            return "WARNING: {}".format(message)
-
-        warnings.formatwarning = _custom_showwarning
-
-        @pytest.mark.filterwarnings("default")
-        def test_custom_warning_formatter():
-            warnings.warn("¥")
-    """
-    )
-    result = testdir.runpytest_subprocess()
-    result.stdout.fnmatch_lines(["*1 passed, * warnings in*"])
 
 
 @pytest.mark.parametrize("change_default", [None, "ini", "cmdline"])
@@ -626,10 +528,41 @@ def test_removed_in_pytest4_warning_as_error(testdir, change_default):
         result.stdout.fnmatch_lines(["* 1 passed in *"])
 
 
+@pytest.mark.parametrize("change_default", [None, "ini", "cmdline"])
+def test_deprecation_warning_as_error(testdir, change_default):
+    testdir.makepyfile(
+        """
+        import warnings, pytest
+        def test():
+            warnings.warn(pytest.PytestDeprecationWarning("some warning"))
+    """
+    )
+    if change_default == "ini":
+        testdir.makeini(
+            """
+            [pytest]
+            filterwarnings =
+                ignore::pytest.PytestDeprecationWarning
+        """
+        )
+
+    args = (
+        ("-Wignore::pytest.PytestDeprecationWarning",)
+        if change_default == "cmdline"
+        else ()
+    )
+    result = testdir.runpytest(*args)
+    if change_default is None:
+        result.stdout.fnmatch_lines(["* 1 failed in *"])
+    else:
+        assert change_default in ("ini", "cmdline")
+        result.stdout.fnmatch_lines(["* 1 passed in *"])
+
+
 class TestAssertionWarnings:
     @staticmethod
     def assert_result_warns(result, msg):
-        result.stdout.fnmatch_lines(["*PytestWarning: %s*" % msg])
+        result.stdout.fnmatch_lines(["*PytestAssertRewriteWarning: %s*" % msg])
 
     def test_tuple_warning(self, testdir):
         testdir.makepyfile(
@@ -693,3 +626,22 @@ def test_warnings_checker_twice():
         warnings.warn("Message A", UserWarning)
     with expectation:
         warnings.warn("Message B", UserWarning)
+
+
+@pytest.mark.filterwarnings("always")
+def test_group_warnings_by_message(testdir):
+    testdir.copy_example("warnings/test_group_warnings_by_message.py")
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines(
+        [
+            "test_group_warnings_by_message.py::test_foo[0]",
+            "test_group_warnings_by_message.py::test_foo[1]",
+            "test_group_warnings_by_message.py::test_foo[2]",
+            "test_group_warnings_by_message.py::test_foo[3]",
+            "test_group_warnings_by_message.py::test_foo[4]",
+            "test_group_warnings_by_message.py::test_bar",
+        ]
+    )
+    warning_code = 'warnings.warn(UserWarning("foo"))'
+    assert warning_code in result.stdout.str()
+    assert result.stdout.str().count(warning_code) == 1

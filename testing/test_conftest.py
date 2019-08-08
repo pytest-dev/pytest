@@ -1,27 +1,10 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 import textwrap
 
 import py
 
 import pytest
 from _pytest.config import PytestPluginManager
-from _pytest.main import EXIT_NOTESTSCOLLECTED
-from _pytest.main import EXIT_OK
-from _pytest.main import EXIT_USAGEERROR
-
-
-@pytest.fixture(scope="module", params=["global", "inpackage"])
-def basedir(request, tmpdir_factory):
-    tmpdir = tmpdir_factory.mktemp("basedir", numbered=True)
-    tmpdir.ensure("adir/conftest.py").write("a=1 ; Directory = 3")
-    tmpdir.ensure("adir/b/conftest.py").write("b=2 ; a = 1.5")
-    if request.param == "inpackage":
-        tmpdir.ensure("adir/__init__.py")
-        tmpdir.ensure("adir/b/__init__.py")
-    return tmpdir
+from _pytest.main import ExitCode
 
 
 def ConftestWithSetinitial(path):
@@ -31,7 +14,7 @@ def ConftestWithSetinitial(path):
 
 
 def conftest_setinitial(conftest, args, confcutdir=None):
-    class Namespace(object):
+    class Namespace:
         def __init__(self):
             self.file_or_dir = args
             self.confcutdir = str(confcutdir)
@@ -41,7 +24,19 @@ def conftest_setinitial(conftest, args, confcutdir=None):
     conftest._set_initial_conftests(Namespace())
 
 
-class TestConftestValueAccessGlobal(object):
+@pytest.mark.usefixtures("_sys_snapshot")
+class TestConftestValueAccessGlobal:
+    @pytest.fixture(scope="module", params=["global", "inpackage"])
+    def basedir(self, request, tmpdir_factory):
+        tmpdir = tmpdir_factory.mktemp("basedir", numbered=True)
+        tmpdir.ensure("adir/conftest.py").write("a=1 ; Directory = 3")
+        tmpdir.ensure("adir/b/conftest.py").write("b=2 ; a = 1.5")
+        if request.param == "inpackage":
+            tmpdir.ensure("adir/__init__.py")
+            tmpdir.ensure("adir/b/__init__.py")
+
+        yield tmpdir
+
     def test_basic_init(self, basedir):
         conftest = PytestPluginManager()
         p = basedir.join("adir")
@@ -49,10 +44,10 @@ class TestConftestValueAccessGlobal(object):
 
     def test_immediate_initialiation_and_incremental_are_the_same(self, basedir):
         conftest = PytestPluginManager()
-        len(conftest._dirpath2confmods)
+        assert not len(conftest._dirpath2confmods)
         conftest._getconftestmodules(basedir)
         snap1 = len(conftest._dirpath2confmods)
-        # assert len(conftest._dirpath2confmods) == snap1 + 1
+        assert snap1 == 1
         conftest._getconftestmodules(basedir.join("adir"))
         assert len(conftest._dirpath2confmods) == snap1 + 1
         conftest._getconftestmodules(basedir.join("b"))
@@ -80,7 +75,7 @@ class TestConftestValueAccessGlobal(object):
         assert path.purebasename.startswith("conftest")
 
 
-def test_conftest_in_nonpkg_with_init(tmpdir):
+def test_conftest_in_nonpkg_with_init(tmpdir, _sys_snapshot):
     tmpdir.ensure("adir-1.0/conftest.py").write("a=1 ; Directory = 3")
     tmpdir.ensure("adir-1.0/b/conftest.py").write("b=2 ; a = 1.5")
     tmpdir.ensure("adir-1.0/b/__init__.py")
@@ -226,11 +221,11 @@ def test_conftest_symlink(testdir):
             "PASSED",
         ]
     )
-    assert result.ret == EXIT_OK
+    assert result.ret == ExitCode.OK
 
     # Should not cause "ValueError: Plugin already registered" (#4174).
     result = testdir.runpytest("-vs", "symlink")
-    assert result.ret == EXIT_OK
+    assert result.ret == ExitCode.OK
 
     realtests.ensure("__init__.py")
     result = testdir.runpytest("-vs", "symlinktests/test_foo.py::test1")
@@ -241,16 +236,52 @@ def test_conftest_symlink(testdir):
             "PASSED",
         ]
     )
-    assert result.ret == EXIT_OK
+    assert result.ret == ExitCode.OK
+
+
+@pytest.mark.skipif(
+    not hasattr(py.path.local, "mksymlinkto"),
+    reason="symlink not available on this platform",
+)
+def test_conftest_symlink_files(testdir):
+    """Check conftest.py loading when running in directory with symlinks."""
+    real = testdir.tmpdir.mkdir("real")
+    source = {
+        "app/test_foo.py": "def test1(fixture): pass",
+        "app/__init__.py": "",
+        "app/conftest.py": textwrap.dedent(
+            """
+            import pytest
+
+            print("conftest_loaded")
+
+            @pytest.fixture
+            def fixture():
+                print("fixture_used")
+            """
+        ),
+    }
+    testdir.makepyfile(**{"real/%s" % k: v for k, v in source.items()})
+
+    # Create a build directory that contains symlinks to actual files
+    # but doesn't symlink actual directories.
+    build = testdir.tmpdir.mkdir("build")
+    build.mkdir("app")
+    for f in source:
+        build.join(f).mksymlinkto(real.join(f))
+    build.chdir()
+    result = testdir.runpytest("-vs", "app/test_foo.py")
+    result.stdout.fnmatch_lines(["*conftest_loaded*", "PASSED"])
+    assert result.ret == ExitCode.OK
 
 
 def test_no_conftest(testdir):
     testdir.makeconftest("assert 0")
     result = testdir.runpytest("--noconftest")
-    assert result.ret == EXIT_NOTESTSCOLLECTED
+    assert result.ret == ExitCode.NO_TESTS_COLLECTED
 
     result = testdir.runpytest()
-    assert result.ret == EXIT_USAGEERROR
+    assert result.ret == ExitCode.USAGE_ERROR
 
 
 def test_conftest_existing_resultlog(testdir):
@@ -363,7 +394,7 @@ def test_conftest_found_with_double_dash(testdir):
     )
 
 
-class TestConftestVisibility(object):
+class TestConftestVisibility:
     def _setup_tree(self, testdir):  # for issue616
         # example mostly taken from:
         # https://mail.python.org/pipermail/pytest-dev/2014-September/002617.html
@@ -454,10 +485,10 @@ class TestConftestVisibility(object):
             ("snc", ".", 1),
         ],
     )
-    @pytest.mark.issue616
     def test_parsefactories_relative_node_ids(
         self, testdir, chdir, testarg, expect_ntests_passed
     ):
+        """#616"""
         dirs = self._setup_tree(testdir)
         print("pytest run in cwd: %s" % (dirs[chdir].relto(testdir.tmpdir)))
         print("pytestarg        : %s" % (testarg))

@@ -1,8 +1,3 @@
-# -*- coding: utf-8 -*-
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 import inspect
 import os
 import sys
@@ -18,7 +13,7 @@ from _pytest import reports
 from _pytest import runner
 
 
-class TestSetupState(object):
+class TestSetupState:
     def test_setup(self, testdir):
         ss = runner.SetupState()
         item = testdir.getitem("def test_func(): pass")
@@ -106,7 +101,7 @@ class TestSetupState(object):
         assert module_teardown
 
 
-class BaseFunctionalTests(object):
+class BaseFunctionalTests:
     def test_passfunction(self, testdir):
         reports = testdir.runitem(
             """
@@ -441,7 +436,7 @@ class TestExecutionForked(BaseFunctionalTests):
         assert rep.when == "???"
 
 
-class TestSessionReports(object):
+class TestSessionReports:
     def test_collect_result(self, testdir):
         col = testdir.getmodulecol(
             """
@@ -465,12 +460,7 @@ class TestSessionReports(object):
         assert res[1].name == "TestClass"
 
 
-reporttypes = [
-    reports.BaseReport,
-    reports.TestReport,
-    reports.TeardownErrorReport,
-    reports.CollectReport,
-]
+reporttypes = [reports.BaseReport, reports.TestReport, reports.CollectReport]
 
 
 @pytest.mark.parametrize(
@@ -585,7 +575,30 @@ def test_pytest_exit_returncode(testdir):
     """
     )
     result = testdir.runpytest()
+    result.stdout.fnmatch_lines(["*! *Exit: some exit msg !*"])
+    # Assert no output on stderr, except for unreliable ResourceWarnings.
+    # (https://github.com/pytest-dev/pytest/issues/5088)
+    assert [
+        x
+        for x in result.stderr.lines
+        if not x.startswith("Exception ignored in:")
+        and not x.startswith("ResourceWarning")
+    ] == [""]
     assert result.ret == 99
+
+    # It prints to stderr also in case of exit during pytest_sessionstart.
+    testdir.makeconftest(
+        """
+        import pytest
+
+        def pytest_sessionstart():
+            pytest.exit("during_sessionstart", 98)
+        """
+    )
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines(["*! *Exit: during_sessionstart !*"])
+    assert result.stderr.lines == ["Exit: during_sessionstart", ""]
+    assert result.ret == 98
 
 
 def test_pytest_fail_notrace_runtest(testdir):
@@ -619,34 +632,28 @@ def test_pytest_fail_notrace_collection(testdir):
     assert "def some_internal_function()" not in result.stdout.str()
 
 
-@pytest.mark.parametrize("str_prefix", ["u", ""])
-def test_pytest_fail_notrace_non_ascii(testdir, str_prefix):
+def test_pytest_fail_notrace_non_ascii(testdir):
     """Fix pytest.fail with pytrace=False with non-ascii characters (#1178).
 
     This tests with native and unicode strings containing non-ascii chars.
     """
     testdir.makepyfile(
-        u"""
-        # coding: utf-8
+        """\
         import pytest
 
         def test_hello():
-            pytest.fail(%s'oh oh: ☺', pytrace=False)
-    """
-        % str_prefix
+            pytest.fail('oh oh: ☺', pytrace=False)
+        """
     )
     result = testdir.runpytest()
-    if sys.version_info[0] >= 3:
-        result.stdout.fnmatch_lines(["*test_hello*", "oh oh: ☺"])
-    else:
-        result.stdout.fnmatch_lines(["*test_hello*", "oh oh: *"])
+    result.stdout.fnmatch_lines(["*test_hello*", "oh oh: ☺"])
     assert "def test_hello" not in result.stdout.str()
 
 
 def test_pytest_no_tests_collected_exit_status(testdir):
     result = testdir.runpytest()
-    result.stdout.fnmatch_lines("*collected 0 items*")
-    assert result.ret == main.EXIT_NOTESTSCOLLECTED
+    result.stdout.fnmatch_lines(["*collected 0 items*"])
+    assert result.ret == main.ExitCode.NO_TESTS_COLLECTED
 
     testdir.makepyfile(
         test_foo="""
@@ -655,14 +662,14 @@ def test_pytest_no_tests_collected_exit_status(testdir):
     """
     )
     result = testdir.runpytest()
-    result.stdout.fnmatch_lines("*collected 1 item*")
-    result.stdout.fnmatch_lines("*1 passed*")
-    assert result.ret == main.EXIT_OK
+    result.stdout.fnmatch_lines(["*collected 1 item*"])
+    result.stdout.fnmatch_lines(["*1 passed*"])
+    assert result.ret == main.ExitCode.OK
 
     result = testdir.runpytest("-k nonmatch")
-    result.stdout.fnmatch_lines("*collected 1 item*")
-    result.stdout.fnmatch_lines("*1 deselected*")
-    assert result.ret == main.EXIT_NOTESTSCOLLECTED
+    result.stdout.fnmatch_lines(["*collected 1 item*"])
+    result.stdout.fnmatch_lines(["*1 deselected*"])
+    assert result.ret == main.ExitCode.NO_TESTS_COLLECTED
 
 
 def test_exception_printing_skip():
@@ -774,16 +781,15 @@ def test_pytest_cmdline_main(testdir):
 
 def test_unicode_in_longrepr(testdir):
     testdir.makeconftest(
-        """
-        # -*- coding: utf-8 -*-
+        """\
         import pytest
         @pytest.hookimpl(hookwrapper=True)
         def pytest_runtest_makereport():
             outcome = yield
             rep = outcome.get_result()
             if rep.when == "call":
-                rep.longrepr = u'ä'
-    """
+                rep.longrepr = 'ä'
+        """
     )
     testdir.makepyfile(
         """
@@ -858,7 +864,7 @@ def test_store_except_info_on_error():
     sys.last_traceback and friends.
     """
     # Simulate item that might raise a specific exception, depending on `raise_error` class var
-    class ItemMightRaise(object):
+    class ItemMightRaise:
         nodeid = "item_that_raises"
         raise_error = True
 
@@ -915,7 +921,7 @@ def test_current_test_env_var(testdir, monkeypatch):
     assert "PYTEST_CURRENT_TEST" not in os.environ
 
 
-class TestReportContents(object):
+class TestReportContents:
     """
     Test user-level API of ``TestReport`` objects.
     """

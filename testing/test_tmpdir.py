@@ -1,11 +1,6 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 import sys
 
 import attr
-import six
 
 import pytest
 from _pytest import pathlib
@@ -16,7 +11,7 @@ from _pytest.warnings import SHOW_PYTEST_WARNINGS_ARG
 def test_tmpdir_fixture(testdir):
     p = testdir.copy_example("tmpdir/tmpdir_fixture.py")
     results = testdir.runpytest(p)
-    results.stdout.fnmatch_lines("*1 passed*")
+    results.stdout.fnmatch_lines(["*1 passed*"])
 
 
 def test_ensuretemp(recwarn):
@@ -27,9 +22,8 @@ def test_ensuretemp(recwarn):
 
 
 @attr.s
-class FakeConfig(object):
+class FakeConfig:
     basetemp = attr.ib()
-    trace = attr.ib(default=None)
 
     @property
     def trace(self):
@@ -43,7 +37,7 @@ class FakeConfig(object):
         return self
 
 
-class TestTempdirHandler(object):
+class TestTempdirHandler:
     def test_mktemp(self, tmp_path):
 
         from _pytest.tmpdir import TempdirFactory, TempPathFactory
@@ -58,8 +52,8 @@ class TestTempdirHandler(object):
         assert tmp2.relto(t.getbasetemp()).startswith("this")
         assert tmp2 != tmp
 
-    @pytest.mark.issue(4425)
     def test_tmppath_relative_basetemp_absolute(self, tmp_path, monkeypatch):
+        """#4425"""
         from _pytest.tmpdir import TempPathFactory
 
         monkeypatch.chdir(tmp_path)
@@ -68,7 +62,7 @@ class TestTempdirHandler(object):
         assert t.getbasetemp().resolve() == (tmp_path / "hello").resolve()
 
 
-class TestConfigTmpdir(object):
+class TestConfigTmpdir:
     def test_getbasetemp_custom_removes_old(self, testdir):
         mytemp = testdir.tmpdir.join("xyz")
         p = testdir.makepyfile(
@@ -233,7 +227,7 @@ def test_get_user(monkeypatch):
     assert get_user() is None
 
 
-class TestNumberedDir(object):
+class TestNumberedDir:
     PREFIX = "fun-"
 
     def test_make(self, tmp_path):
@@ -347,9 +341,11 @@ class TestNumberedDir(object):
 def attempt_symlink_to(path, to_path):
     """Try to make a symlink from "path" to "to_path", skipping in case this platform
     does not support it or we don't have sufficient privileges (common on Windows)."""
-    if sys.platform.startswith("win") and six.PY2:
-        pytest.skip("pathlib for some reason cannot make symlinks on Python 2")
     try:
         Path(path).symlink_to(Path(to_path))
     except OSError:
         pytest.skip("could not create symbolic link")
+
+
+def test_tmpdir_equals_tmp_path(tmpdir, tmp_path):
+    assert Path(tmpdir) == tmp_path

@@ -22,7 +22,9 @@ it's an **xpass** and will be reported in the test summary.
 ``pytest`` counts and lists *skip* and *xfail* tests separately. Detailed
 information about skipped/xfailed tests is not shown by default to avoid
 cluttering the output.  You can use the ``-r`` option to see details
-corresponding to the "short" letters shown in the test progress::
+corresponding to the "short" letters shown in the test progress:
+
+.. code-block:: bash
 
     pytest -rxXs  # show extra info on xfailed, xpassed, and skipped tests
 
@@ -37,7 +39,7 @@ More details on the ``-r`` option can be found by running ``pytest -h``.
 Skipping test functions
 -----------------------
 
-.. versionadded:: 2.9
+
 
 The simplest way to skip a test function is to mark it with the ``skip`` decorator
 which may be passed an optional ``reason``:
@@ -78,35 +80,47 @@ It is also possible to skip the whole module using
 ``skipif``
 ~~~~~~~~~~
 
-.. versionadded:: 2.0
+
 
 If you wish to skip something conditionally then you can use ``skipif`` instead.
 Here is an example of marking a test function to be skipped
-when run on an interpreter earlier than Python3.6 ::
+when run on an interpreter earlier than Python3.6:
+
+.. code-block:: python
 
     import sys
-    @pytest.mark.skipif(sys.version_info < (3,6),
-                        reason="requires python3.6 or higher")
+
+
+    @pytest.mark.skipif(sys.version_info < (3, 6), reason="requires python3.6 or higher")
     def test_function():
         ...
 
 If the condition evaluates to ``True`` during collection, the test function will be skipped,
 with the specified reason appearing in the summary when using ``-rs``.
 
-You can share ``skipif`` markers between modules.  Consider this test module::
+You can share ``skipif`` markers between modules.  Consider this test module:
+
+.. code-block:: python
 
     # content of test_mymodule.py
     import mymodule
-    minversion = pytest.mark.skipif(mymodule.__versioninfo__ < (1,1),
-                                    reason="at least mymodule-1.1 required")
+
+    minversion = pytest.mark.skipif(
+        mymodule.__versioninfo__ < (1, 1), reason="at least mymodule-1.1 required"
+    )
+
+
     @minversion
     def test_function():
         ...
 
-You can import the marker and reuse it in another test module::
+You can import the marker and reuse it in another test module:
+
+.. code-block:: python
 
     # test_myothermodule.py
     from test_mymodule import minversion
+
 
     @minversion
     def test_anotherfunction():
@@ -126,12 +140,12 @@ so they are supported mainly for backward compatibility reasons.
 Skip all test functions of a class or module
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-You can use the ``skipif`` marker (as any other marker) on classes::
+You can use the ``skipif`` marker (as any other marker) on classes:
 
-    @pytest.mark.skipif(sys.platform == 'win32',
-                        reason="does not run on windows")
+.. code-block:: python
+
+    @pytest.mark.skipif(sys.platform == "win32", reason="does not run on windows")
     class TestPosixCalls(object):
-
         def test_function(self):
             "will not be setup or run under 'win32' platform"
 
@@ -194,7 +208,7 @@ Here's a quick guide on how to skip tests in a module in different situations:
 
   .. code-block:: python
 
-        pytestmark = pytest.mark.skipif(sys.platform == "win32", "tests for linux only")
+        pytestmark = pytest.mark.skipif(sys.platform == "win32", reason="tests for linux only")
 
 3. Skip all tests in a module if some import is missing:
 
@@ -240,7 +254,7 @@ internally by raising a known exception.
 ``strict`` parameter
 ~~~~~~~~~~~~~~~~~~~~
 
-.. versionadded:: 2.9
+
 
 Both ``XFAIL`` and ``XPASS`` don't fail the test suite, unless the ``strict`` keyword-only
 parameter is passed as ``True``:
@@ -267,10 +281,11 @@ You can change the default value of the ``strict`` parameter using the
 ~~~~~~~~~~~~~~~~~~~~
 
 As with skipif_ you can also mark your expectation of a failure
-on a particular platform::
+on a particular platform:
 
-    @pytest.mark.xfail(sys.version_info >= (3,6),
-                       reason="python3.6 api changes")
+.. code-block:: python
+
+    @pytest.mark.xfail(sys.version_info >= (3, 6), reason="python3.6 api changes")
     def test_function():
         ...
 
@@ -309,7 +324,9 @@ investigated later.
 Ignoring xfail
 ~~~~~~~~~~~~~~
 
-By specifying on the commandline::
+By specifying on the commandline:
+
+.. code-block:: bash
 
     pytest --runxfail
 
@@ -330,10 +347,12 @@ Running it with the report-on-xfail option gives this output:
     example $ pytest -rx xfail_demo.py
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-4.x.y, py-1.x.y, pluggy-0.x.y
-    rootdir: $REGENDOC_TMPDIR/example, inifile:
+    cachedir: $PYTHON_PREFIX/.pytest_cache
+    rootdir: $REGENDOC_TMPDIR/example
     collected 7 items
 
     xfail_demo.py xxxxxxx                                                [100%]
+
     ========================= short test summary info ==========================
     XFAIL xfail_demo.py::test_hello
     XFAIL xfail_demo.py::test_hello2
@@ -347,7 +366,6 @@ Running it with the report-on-xfail option gives this output:
     XFAIL xfail_demo.py::test_hello6
       reason: reason
     XFAIL xfail_demo.py::test_hello7
-
     ======================== 7 xfailed in 0.12 seconds =========================
 
 .. _`skip/xfail with parametrize`:

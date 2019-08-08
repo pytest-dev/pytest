@@ -1,7 +1,3 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 import re
 import warnings
 
@@ -30,7 +26,7 @@ def test_recwarn_functional(testdir):
     reprec.assertoutcome(passed=1)
 
 
-class TestWarningsRecorderChecker(object):
+class TestWarningsRecorderChecker:
     def test_recording(self):
         rec = WarningsRecorder()
         with rec:
@@ -47,8 +43,8 @@ class TestWarningsRecorderChecker(object):
             assert values is rec.list
             pytest.raises(AssertionError, rec.pop)
 
-    @pytest.mark.issue(4243)
     def test_warn_stacklevel(self):
+        """#4243"""
         rec = WarningsRecorder()
         with rec:
             warnings.warn("test", DeprecationWarning, 2)
@@ -77,7 +73,7 @@ class TestWarningsRecorderChecker(object):
                         pass  # can't enter twice
 
 
-class TestDeprecatedCall(object):
+class TestDeprecatedCall:
     """test pytest.deprecated_call()"""
 
     def dep(self, i, j=None):
@@ -209,7 +205,7 @@ class TestDeprecatedCall(object):
                 warnings.warn("this is not here", DeprecationWarning)
 
 
-class TestWarns(object):
+class TestWarns:
     def test_strings(self):
         # different messages, b/c Python suppresses multiple identical warnings
         source1 = "warnings.warn('w1', RuntimeWarning)"

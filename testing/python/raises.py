@@ -1,13 +1,11 @@
 import sys
 
-import six
-
 import pytest
 from _pytest.outcomes import Failed
 from _pytest.warning_types import PytestDeprecationWarning
 
 
-class TestRaises(object):
+class TestRaises:
     def test_raises(self):
         source = "int('qwe')"
         with pytest.warns(PytestDeprecationWarning):
@@ -35,7 +33,7 @@ class TestRaises(object):
         pytest.raises(ValueError, int, "hello")
 
     def test_raises_callable_no_exception(self):
-        class A(object):
+        class A:
             def __call__(self):
                 pass
 
@@ -94,6 +92,54 @@ class TestRaises(object):
         result = testdir.runpytest()
         result.stdout.fnmatch_lines(["*3 passed*"])
 
+    def test_does_not_raise(self, testdir):
+        testdir.makepyfile(
+            """
+            from contextlib import contextmanager
+            import pytest
+
+            @contextmanager
+            def does_not_raise():
+                yield
+
+            @pytest.mark.parametrize('example_input,expectation', [
+                (3, does_not_raise()),
+                (2, does_not_raise()),
+                (1, does_not_raise()),
+                (0, pytest.raises(ZeroDivisionError)),
+            ])
+            def test_division(example_input, expectation):
+                '''Test how much I know division.'''
+                with expectation:
+                    assert (6 / example_input) is not None
+        """
+        )
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines(["*4 passed*"])
+
+    def test_does_not_raise_does_raise(self, testdir):
+        testdir.makepyfile(
+            """
+            from contextlib import contextmanager
+            import pytest
+
+            @contextmanager
+            def does_not_raise():
+                yield
+
+            @pytest.mark.parametrize('example_input,expectation', [
+                (0, does_not_raise()),
+                (1, pytest.raises(ZeroDivisionError)),
+            ])
+            def test_division(example_input, expectation):
+                '''Test how much I know division.'''
+                with expectation:
+                    assert (6 / example_input) is not None
+        """
+        )
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines(["*2 failed*"])
+
     def test_noclass(self):
         with pytest.raises(TypeError):
             pytest.raises("wrong", lambda: None)
@@ -141,7 +187,7 @@ class TestRaises(object):
         """
         import gc
 
-        class T(object):
+        class T:
             def __call__(self):
                 raise ValueError
 
@@ -189,17 +235,14 @@ class TestRaises(object):
                 int("asdf")
 
     def test_raises_exception_looks_iterable(self):
-        from six import add_metaclass
-
-        class Meta(type(object)):
+        class Meta(type):
             def __getitem__(self, item):
                 return 1 / 0
 
             def __len__(self):
                 return 1
 
-        @add_metaclass(Meta)
-        class ClassLooksIterableException(Exception):
+        class ClassLooksIterableException(Exception, metaclass=Meta):
             pass
 
         with pytest.raises(
@@ -216,16 +259,7 @@ class TestRaises(object):
             def __class__(self):
                 assert False, "via __class__"
 
-        if six.PY2:
-            with pytest.raises(pytest.fail.Exception) as excinfo:
-                with pytest.raises(CrappyClass()):
-                    pass
-            assert "DID NOT RAISE" in excinfo.value.args[0]
-
-            with pytest.raises(CrappyClass) as excinfo:
-                raise CrappyClass()
-        else:
-            with pytest.raises(AssertionError) as excinfo:
-                with pytest.raises(CrappyClass()):
-                    pass
-            assert "via __class__" in excinfo.value.args[0]
+        with pytest.raises(AssertionError) as excinfo:
+            with pytest.raises(CrappyClass()):
+                pass
+        assert "via __class__" in excinfo.value.args[0]
