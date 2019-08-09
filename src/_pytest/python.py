@@ -873,18 +873,6 @@ class CallSpec2:
         self._idlist.append(id)
         self.marks.extend(normalize_mark_list(marks))
 
-    def setall(self, funcargs, id, param):
-        for x in funcargs:
-            self._checkargnotcontained(x)
-        self.funcargs.update(funcargs)
-        if id is not NOTSET:
-            self._idlist.append(id)
-        if param is not NOTSET:
-            assert self._globalparam is NOTSET
-            self._globalparam = param
-        for arg in funcargs:
-            self._arg2scopenum[arg] = fixtures.scopenum_function
-
 
 class Metafunc(fixtures.FuncargnamesCompatAttr):
     """
