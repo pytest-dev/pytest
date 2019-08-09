@@ -617,6 +617,43 @@ class TestCaptureFixture:
             assert "test_normal executed" not in result.stdout.str()
 
     @pytest.mark.parametrize("fixture", ["capsys", "capfd"])
+    @pytest.mark.parametrize("no_capture", [True, False])
+    def test_enabled_capture_fixture(self, testdir, fixture, no_capture):
+
+        if no_capture:
+            expected_capture = "captured before\ncaptured after\n"
+        else:
+            expected_capture = "captured before\nwhile capture is enabled\ncaptured after\n"
+
+        testdir.makepyfile(
+            """\
+            def test_enabled({fixture}):
+                print('captured before')
+                with {fixture}.enabled():
+                    print('while capture is enabled')
+                print('captured after')
+                assert {fixture}.readouterr() == ({expected_capture}, '')
+
+            def test_normal():
+                print('test_normal executed')
+        """.format(
+                fixture=fixture,
+                expected_capture=repr(expected_capture)
+            )
+        )
+        args = ("-s",) if no_capture else ()
+        result = testdir.runpytest_subprocess(*args)
+        assert "while capture is enabled" not in result.stdout.str()
+        if no_capture:
+            assert "captured before" in result.stdout.str()
+            assert "captured after" in result.stdout.str()
+            assert "test_normal executed" in result.stdout.str()
+        else:
+            assert "captured before" not in result.stdout.str()
+            assert "captured after" not in result.stdout.str()
+            assert "test_normal executed" not in result.stdout.str()
+
+    @pytest.mark.parametrize("fixture", ["capsys", "capfd"])
     def test_fixture_use_by_other_fixtures(self, testdir, fixture):
         """
         Ensure that capsys and capfd can be used by other fixtures during setup and teardown.

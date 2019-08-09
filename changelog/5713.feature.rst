@@ -1,0 +1,3 @@
+Add ``capsys/capfd.enabled()`` context manager to force output capture
+even if it is disabled globally.
+(`#5713 <https://github.com/pytest-dev/pytest/pull/5713>`_)

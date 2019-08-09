@@ -178,6 +178,15 @@ class CaptureManager:
             self.resume()
 
     @contextlib.contextmanager
+    def global_and_fixture_enabled(self):
+        """Context manager to temporarily disable global and current fixture capturing."""
+        self.resume()
+        try:
+            yield
+        finally:
+            self.suspend()
+
+    @contextlib.contextmanager
     def item_capture(self, when, item):
         self.resume_global_capture()
         self.activate_fixture(item)
@@ -388,6 +397,13 @@ class CaptureFixture:
         """Temporarily disables capture while inside the 'with' block."""
         capmanager = self.request.config.pluginmanager.getplugin("capturemanager")
         with capmanager.global_and_fixture_disabled():
+            yield
+
+    @contextlib.contextmanager
+    def enabled(self):
+        """Temporarily disables capture while inside the 'with' block."""
+        capmanager = self.request.config.pluginmanager.getplugin("capturemanager")
+        with capmanager.global_and_fixture_enabled():
             yield
 
 

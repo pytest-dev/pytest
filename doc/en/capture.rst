@@ -155,4 +155,18 @@ as a context manager, disabling capture inside the ``with`` block:
             print("output not captured, going directly to sys.stdout")
         print("this output is also captured")
 
+
+
+
+Alternatively, one can ensure that the fixture is enabled in a target block,
+even if it is disabled globally with ``-s``.
+
+.. code-block:: python
+
+    def test_enabling_capturing(capsys):
+        with capsys.enabled():
+            print("this output is always captured")
+        captured = capsys.readouterr()
+        assert captured.out == "this output is always captured\n"
+
 .. include:: links.inc
