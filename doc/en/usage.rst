@@ -652,7 +652,7 @@ to all tests.
         record_testsuite_property("STORAGE_TYPE", "CEPH")
 
 
-    class TestMe(object):
+    class TestMe:
         def test_foo(self):
             assert True
 
@@ -754,23 +754,32 @@ Calling pytest from Python code
 
 
 
-You can invoke ``pytest`` from Python code directly::
+You can invoke ``pytest`` from Python code directly:
+
+.. code-block:: python
 
     pytest.main()
 
 this acts as if you would call "pytest" from the command line.
 It will not raise ``SystemExit`` but return the exitcode instead.
-You can pass in options and arguments::
+You can pass in options and arguments:
 
-    pytest.main(['-x', 'mytestdir'])
+.. code-block:: python
 
-You can specify additional plugins to ``pytest.main``::
+    pytest.main(["-x", "mytestdir"])
+
+You can specify additional plugins to ``pytest.main``:
+
+.. code-block:: python
 
     # content of myinvoke.py
     import pytest
-    class MyPlugin(object):
+
+
+    class MyPlugin:
         def pytest_sessionfinish(self):
             print("*** test run reporting finishing")
+
 
     pytest.main(["-qq"], plugins=[MyPlugin()])
 

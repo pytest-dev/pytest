@@ -90,10 +90,14 @@ provide a temporary directory unique to the test invocation,
 created in the `base temporary directory`_.
 
 ``tmpdir`` is a `py.path.local`_ object which offers ``os.path`` methods
-and more.  Here is an example test usage::
+and more.  Here is an example test usage:
+
+.. code-block:: python
 
     # content of test_tmpdir.py
     import os
+
+
     def test_create_file(tmpdir):
         p = tmpdir.mkdir("sub").join("hello.txt")
         p.write("content")

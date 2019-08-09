@@ -1146,7 +1146,7 @@ def test_unorderable_types(testdir):
 def test_collect_functools_partial(testdir):
     """
     Test that collection of functools.partial object works, and arguments
-    to the wrapped functions are dealt correctly (see #811).
+    to the wrapped functions are dealt with correctly (see #811).
     """
     testdir.makepyfile(
         """

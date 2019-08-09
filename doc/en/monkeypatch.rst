@@ -272,7 +272,7 @@ to do this using the ``setenv`` and ``delenv`` method. Our example code to test:
         username = os.getenv("USER")
 
         if username is None:
-            raise EnvironmentError("USER environment is not set.")
+            raise OSError("USER environment is not set.")
 
         return username.lower()
 
@@ -296,7 +296,7 @@ both paths can be safely tested without impacting the running environment:
         """Remove the USER env var and assert EnvironmentError is raised."""
         monkeypatch.delenv("USER", raising=False)
 
-        with pytest.raises(EnvironmentError):
+        with pytest.raises(OSError):
             _ = get_os_user_lower()
 
 This behavior can be moved into ``fixture`` structures and shared across tests:
@@ -323,7 +323,7 @@ This behavior can be moved into ``fixture`` structures and shared across tests:
 
 
     def test_raise_exception(mock_env_missing):
-        with pytest.raises(EnvironmentError):
+        with pytest.raises(OSError):
             _ = get_os_user_lower()
 
 

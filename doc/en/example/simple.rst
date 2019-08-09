@@ -238,7 +238,7 @@ Example:
     def checkconfig(x):
         __tracebackhide__ = True
         if not hasattr(x, "config"):
-            pytest.fail("not configured: %s" % (x,))
+            pytest.fail("not configured: {}".format(x))
 
 
     def test_something():
@@ -280,7 +280,7 @@ this to make sure unexpected exception types aren't hidden:
     def checkconfig(x):
         __tracebackhide__ = operator.methodcaller("errisinstance", ConfigException)
         if not hasattr(x, "config"):
-            raise ConfigException("not configured: %s" % (x,))
+            raise ConfigException("not configured: {}".format(x))
 
 
     def test_something():
@@ -491,7 +491,7 @@ tests in a class.  Here is a test module example:
 
 
     @pytest.mark.incremental
-    class TestUserHandling(object):
+    class TestUserHandling:
         def test_login(self):
             pass
 
@@ -556,7 +556,7 @@ Here is an example for making a ``db`` fixture available in a directory:
     import pytest
 
 
-    class DB(object):
+    class DB:
         pass
 
 

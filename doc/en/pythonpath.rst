@@ -22,7 +22,9 @@ Consider this file and directory layout::
              |- test_foo.py
 
 
-When executing::
+When executing:
+
+.. code-block:: bash
 
     pytest root/
 
@@ -54,7 +56,9 @@ Consider this file and directory layout::
              |- test_foo.py
 
 
-When executing::
+When executing:
+
+.. code-block:: bash
 
     pytest root/
 
