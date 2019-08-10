@@ -617,7 +617,7 @@ class TestTerminalFunctional:
                     pluggy.__version__,
                 ),
                 "*test_header_trailer_info.py .*",
-                "=* 1 passed*in *.[0-9][0-9] seconds *=",
+                "=* 1 passed*in *.[0-9][0-9]s *=",
             ]
         )
         if request.config.pluginmanager.list_plugin_distinfo():
@@ -1678,3 +1678,20 @@ def test_line_with_reprcrash(monkeypatch):
     check("😄😄😄😄😄\n2nd line", 41, "FAILED nodeid::😄::withunicode - 😄😄...")
     check("😄😄😄😄😄\n2nd line", 42, "FAILED nodeid::😄::withunicode - 😄😄😄...")
     check("😄😄😄😄😄\n2nd line", 80, "FAILED nodeid::😄::withunicode - 😄😄😄😄😄")
+
+
+@pytest.mark.parametrize(
+    "seconds, expected",
+    [
+        (10.0, "10.00s"),
+        (10.34, "10.34s"),
+        (59.99, "59.99s"),
+        (60.55, "60.55s (0:01:00)"),
+        (123.55, "123.55s (0:02:03)"),
+        (60 * 60 + 0.5, "3600.50s (1:00:00)"),
+    ],
+)
+def test_format_session_duration(seconds, expected):
+    from _pytest.terminal import format_session_duration
+
+    assert format_session_duration(seconds) == expected
