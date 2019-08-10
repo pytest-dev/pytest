@@ -633,7 +633,7 @@ class Testdir:
         """Copy file from project's directory into the testdir.
 
         :param str name: The name of the file for copy.
-        :return: self.tmpdir
+        :return: path to the copied directory (inside ``self.tmpdir``).
 
         """
         import warnings
