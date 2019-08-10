@@ -49,20 +49,25 @@ argument. For each argument name, a fixture function with that name provides
 the fixture object.  Fixture functions are registered by marking them with
 :py:func:`@pytest.fixture <_pytest.python.fixture>`.  Let's look at a simple
 self-contained test module containing a fixture and a test function
-using it::
+using it:
+
+.. code-block:: python
 
     # content of ./test_smtpsimple.py
     import pytest
 
+
     @pytest.fixture
     def smtp_connection():
         import smtplib
+
         return smtplib.SMTP("smtp.gmail.com", 587, timeout=5)
+
 
     def test_ehlo(smtp_connection):
         response, msg = smtp_connection.ehlo()
         assert response == 250
-        assert 0 # for demo purposes
+        assert 0  # for demo purposes
 
 Here, the ``test_ehlo`` needs the ``smtp_connection`` fixture value.  pytest
 will discover and call the :py:func:`@pytest.fixture <_pytest.python.fixture>`
@@ -180,11 +185,14 @@ Possible values for ``scope`` are: ``function``, ``class``, ``module``, ``packag
 
 The next example puts the fixture function into a separate ``conftest.py`` file
 so that tests from multiple test modules in the directory can
-access the fixture function::
+access the fixture function:
+
+.. code-block:: python
 
     # content of conftest.py
     import pytest
     import smtplib
+
 
     @pytest.fixture(scope="module")
     def smtp_connection():
@@ -193,15 +201,19 @@ access the fixture function::
 The name of the fixture again is ``smtp_connection`` and you can access its
 result by listing the name ``smtp_connection`` as an input parameter in any
 test or fixture function (in or below the directory where ``conftest.py`` is
-located)::
+located):
+
+.. code-block:: python
 
     # content of test_module.py
+
 
     def test_ehlo(smtp_connection):
         response, msg = smtp_connection.ehlo()
         assert response == 250
         assert b"smtp.gmail.com" in msg
         assert 0  # for demo purposes
+
 
     def test_noop(smtp_connection):
         response, msg = smtp_connection.noop()
@@ -477,18 +489,21 @@ Fixtures can introspect the requesting test context
 Fixture functions can accept the :py:class:`request <FixtureRequest>` object
 to introspect the "requesting" test function, class or module context.
 Further extending the previous ``smtp_connection`` fixture example, let's
-read an optional server URL from the test module which uses our fixture::
+read an optional server URL from the test module which uses our fixture:
+
+.. code-block:: python
 
     # content of conftest.py
     import pytest
     import smtplib
+
 
     @pytest.fixture(scope="module")
     def smtp_connection(request):
         server = getattr(request.module, "smtpserver", "smtp.gmail.com")
         smtp_connection = smtplib.SMTP(server, 587, timeout=5)
         yield smtp_connection
-        print("finalizing %s (%s)" % (smtp_connection, server))
+        print("finalizing {} ({})".format(smtp_connection, server))
         smtp_connection.close()
 
 We use the ``request.module`` attribute to optionally obtain an
@@ -503,11 +518,14 @@ again, nothing much has changed:
     2 failed in 0.12 seconds
 
 Let's quickly create another test module that actually sets the
-server URL in its module namespace::
+server URL in its module namespace:
+
+.. code-block:: python
 
     # content of test_anothersmtp.py
 
     smtpserver = "mail.python.org"  # will be read by smtp fixture
+
 
     def test_showhelo(smtp_connection):
         assert 0, smtp_connection.helo()
@@ -540,16 +558,14 @@ of a fixture is needed multiple times in a single test. Instead of returning
 data directly, the fixture instead returns a function which generates the data.
 This function can then be called multiple times in the test.
 
-Factories can have parameters as needed::
+Factories can have parameters as needed:
+
+.. code-block:: python
 
     @pytest.fixture
     def make_customer_record():
-
         def _make_customer_record(name):
-            return {
-                "name": name,
-                "orders": []
-            }
+            return {"name": name, "orders": []}
 
         return _make_customer_record
 
@@ -559,7 +575,9 @@ Factories can have parameters as needed::
         customer_2 = make_customer_record("Mike")
         customer_3 = make_customer_record("Meredith")
 
-If the data created by the factory requires managing, the fixture can take care of that::
+If the data created by the factory requires managing, the fixture can take care of that:
+
+.. code-block:: python
 
     @pytest.fixture
     def make_customer_record():
@@ -598,14 +616,16 @@ configured in multiple ways.
 Extending the previous example, we can flag the fixture to create two
 ``smtp_connection`` fixture instances which will cause all tests using the fixture
 to run twice.  The fixture function gets access to each parameter
-through the special :py:class:`request <FixtureRequest>` object::
+through the special :py:class:`request <FixtureRequest>` object:
+
+.. code-block:: python
 
     # content of conftest.py
     import pytest
     import smtplib
 
-    @pytest.fixture(scope="module",
-                    params=["smtp.gmail.com", "mail.python.org"])
+
+    @pytest.fixture(scope="module", params=["smtp.gmail.com", "mail.python.org"])
     def smtp_connection(request):
         smtp_connection = smtplib.SMTP(request.param, 587, timeout=5)
         yield smtp_connection
@@ -690,17 +710,22 @@ Numbers, strings, booleans and None will have their usual string
 representation used in the test ID. For other objects, pytest will
 make a string based on the argument name.  It is possible to customise
 the string used in a test ID for a certain fixture value by using the
-``ids`` keyword argument::
+``ids`` keyword argument:
+
+.. code-block:: python
 
    # content of test_ids.py
    import pytest
+
 
    @pytest.fixture(params=[0, 1], ids=["spam", "ham"])
    def a(request):
        return request.param
 
+
    def test_a(a):
        pass
+
 
    def idfn(fixture_value):
        if fixture_value == 0:
@@ -708,9 +733,11 @@ the string used in a test ID for a certain fixture value by using the
        else:
            return None
 
+
    @pytest.fixture(params=[0, 1], ids=idfn)
    def b(request):
        return request.param
+
 
    def test_b(b):
        pass
@@ -754,13 +781,18 @@ Using marks with parametrized fixtures
 :func:`pytest.param` can be used to apply marks in values sets of parametrized fixtures in the same way
 that they can be used with :ref:`@pytest.mark.parametrize <@pytest.mark.parametrize>`.
 
-Example::
+Example:
+
+.. code-block:: python
 
     # content of test_fixture_marks.py
     import pytest
+
+
     @pytest.fixture(params=[0, 1, pytest.param(2, marks=pytest.mark.skip)])
     def data_set(request):
         return request.param
+
 
     def test_data(data_set):
         pass
@@ -792,19 +824,24 @@ can use other fixtures themselves.  This contributes to a modular design
 of your fixtures and allows re-use of framework-specific fixtures across
 many projects.  As a simple example, we can extend the previous example
 and instantiate an object ``app`` where we stick the already defined
-``smtp_connection`` resource into it::
+``smtp_connection`` resource into it:
+
+.. code-block:: python
 
     # content of test_appsetup.py
 
     import pytest
 
-    class App(object):
+
+    class App:
         def __init__(self, smtp_connection):
             self.smtp_connection = smtp_connection
+
 
     @pytest.fixture(scope="module")
     def app(smtp_connection):
         return App(smtp_connection)
+
 
     def test_smtp_connection_exists(app):
         assert app.smtp_connection
@@ -854,10 +891,13 @@ this eases testing of applications which create and use global state.
 
 The following example uses two parametrized fixtures, one of which is
 scoped on a per-module basis, and all the functions perform ``print`` calls
-to show the setup/teardown flow::
+to show the setup/teardown flow:
+
+.. code-block:: python
 
     # content of test_module.py
     import pytest
+
 
     @pytest.fixture(scope="module", params=["mod1", "mod2"])
     def modarg(request):
@@ -866,19 +906,25 @@ to show the setup/teardown flow::
         yield param
         print("  TEARDOWN modarg %s" % param)
 
-    @pytest.fixture(scope="function", params=[1,2])
+
+    @pytest.fixture(scope="function", params=[1, 2])
     def otherarg(request):
         param = request.param
         print("  SETUP otherarg %s" % param)
         yield param
         print("  TEARDOWN otherarg %s" % param)
 
+
     def test_0(otherarg):
         print("  RUN test0 with otherarg %s" % otherarg)
+
+
     def test_1(modarg):
         print("  RUN test1 with modarg %s" % modarg)
+
+
     def test_2(otherarg, modarg):
-        print("  RUN test2 with otherarg %s and modarg %s" % (otherarg, modarg))
+        print("  RUN test2 with otherarg {} and modarg {}".format(otherarg, modarg))
 
 
 Let's run the tests in verbose mode and with looking at the print-output:
@@ -953,7 +999,9 @@ current working directory but otherwise do not care for the concrete
 directory.  Here is how you can use the standard `tempfile
 <http://docs.python.org/library/tempfile.html>`_ and pytest fixtures to
 achieve it.  We separate the creation of the fixture into a conftest.py
-file::
+file:
+
+.. code-block:: python
 
     # content of conftest.py
 
@@ -961,19 +1009,23 @@ file::
     import tempfile
     import os
 
+
     @pytest.fixture()
     def cleandir():
         newpath = tempfile.mkdtemp()
         os.chdir(newpath)
 
-and declare its use in a test module via a ``usefixtures`` marker::
+and declare its use in a test module via a ``usefixtures`` marker:
+
+.. code-block:: python
 
     # content of test_setenv.py
     import os
     import pytest
 
+
     @pytest.mark.usefixtures("cleandir")
-    class TestDirectoryInit(object):
+    class TestDirectoryInit:
         def test_cwd_starts_empty(self):
             assert os.listdir(os.getcwd()) == []
             with open("myfile", "w") as f:
@@ -1050,25 +1102,32 @@ without declaring a function argument explicitly or a `usefixtures`_ decorator.
 As a practical example, suppose we have a database fixture which has a
 begin/rollback/commit architecture and we want to automatically surround
 each test method by a transaction and a rollback.  Here is a dummy
-self-contained implementation of this idea::
+self-contained implementation of this idea:
+
+.. code-block:: python
 
     # content of test_db_transact.py
 
     import pytest
 
-    class DB(object):
+
+    class DB:
         def __init__(self):
             self.intransaction = []
+
         def begin(self, name):
             self.intransaction.append(name)
+
         def rollback(self):
             self.intransaction.pop()
+
 
     @pytest.fixture(scope="module")
     def db():
         return DB()
 
-    class TestClass(object):
+
+    class TestClass:
         @pytest.fixture(autouse=True)
         def transact(self, request, db):
             db.begin(request.function.__name__)
@@ -1116,7 +1175,9 @@ Here is how autouse fixtures work in other scopes:
 Note that the above ``transact`` fixture may very well be a fixture that
 you want to make available in your project without having it generally
 active.  The canonical way to do that is to put the transact definition
-into a conftest.py file **without** using ``autouse``::
+into a conftest.py file **without** using ``autouse``:
+
+.. code-block:: python
 
     # content of conftest.py
     @pytest.fixture
@@ -1125,10 +1186,12 @@ into a conftest.py file **without** using ``autouse``::
         yield
         db.rollback()
 
-and then e.g. have a TestClass using it by declaring the need::
+and then e.g. have a TestClass using it by declaring the need:
+
+.. code-block:: python
 
     @pytest.mark.usefixtures("transact")
-    class TestClass(object):
+    class TestClass:
         def test_method1(self):
             ...
 

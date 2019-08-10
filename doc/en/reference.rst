@@ -469,9 +469,11 @@ testdir
 This fixture provides a :class:`Testdir` instance useful for black-box testing of test files, making it ideal to
 test plugins.
 
-To use it, include in your top-most ``conftest.py`` file::
+To use it, include in your top-most ``conftest.py`` file:
 
-    pytest_plugins = 'pytester'
+.. code-block:: python
+
+    pytest_plugins = "pytester"
 
 
 
@@ -1000,6 +1002,8 @@ passed multiple times. The expected format is ``name=value``. For example::
         addopts = --maxfail=2 -rf  # exit after 2 failures, report fail info
 
    issuing ``pytest test_hello.py`` actually means::
+
+   .. code-block:: bash
 
         pytest --maxfail=2 -rf test_hello.py
 
