@@ -4,6 +4,7 @@ This is a good source for looking at the various reporting hooks.
 """
 import argparse
 import collections
+import datetime
 import platform
 import sys
 import time
@@ -861,7 +862,7 @@ class TerminalReporter:
     def summary_stats(self):
         session_duration = time.time() - self._sessionstarttime
         (line, color) = build_summary_stats_line(self.stats)
-        msg = "{} in {:.2f} seconds".format(line, session_duration)
+        msg = "{} in {}".format(line, format_session_duration(session_duration))
         markup = {color: True, "bold": True}
 
         if self.verbosity >= 0:
@@ -1055,3 +1056,12 @@ def _plugin_nameversions(plugininfo):
         if name not in values:
             values.append(name)
     return values
+
+
+def format_session_duration(seconds):
+    """Format the given seconds in a human readable manner to show in the final summary"""
+    if seconds < 60:
+        return "{:.2f}s".format(seconds)
+    else:
+        dt = datetime.timedelta(seconds=int(seconds))
+        return "{:.2f}s ({})".format(seconds, dt)

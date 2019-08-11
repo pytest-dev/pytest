@@ -1,0 +1,4 @@
+Time taken to run the test suite now includes a human-readable representation when it takes over
+60 seconds, for example::
+
+    ===== 2 failed in 102.70s (0:01:42) =====
