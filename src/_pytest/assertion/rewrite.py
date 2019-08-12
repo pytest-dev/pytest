@@ -33,6 +33,9 @@ PYTEST_TAG = "{}-pytest-{}".format(sys.implementation.cache_tag, version)
 PYC_EXT = ".py" + (__debug__ and "c" or "o")
 PYC_TAIL = "." + PYTEST_TAG + PYC_EXT
 
+AST_IS = ast.Is()
+AST_NONE = ast.NameConstant(None)
+
 
 class AssertionRewritingHook:
     """PEP302/PEP451 import hook which rewrites asserts."""
@@ -854,10 +857,7 @@ class AssertionRewriter(ast.NodeVisitor):
         internally already.
         See issue #3191 for more details.
         """
-
-        # Using parse because it is different between py2 and py3.
-        AST_NONE = ast.parse("None").body[0].value
-        val_is_none = ast.Compare(node, [ast.Is()], [AST_NONE])
+        val_is_none = ast.Compare(node, [AST_IS], [AST_NONE])
         send_warning = ast.parse(
             """\
 from _pytest.warning_types import PytestAssertRewriteWarning
