@@ -478,7 +478,7 @@ an ``incremental`` marker which is to be used on classes:
         if "incremental" in item.keywords:
             previousfailed = getattr(item.parent, "_previousfailed", None)
             if previousfailed is not None:
-                pytest.xfail("previous test failed (%s)" % previousfailed.name)
+                pytest.xfail("previous test failed ({})".format(previousfailed.name))
 
 These two hook implementations work together to abort incremental-marked
 tests in a class.  Here is a test module example:
@@ -684,7 +684,7 @@ case we just write some information out to a ``failures`` file:
             with open("failures", mode) as f:
                 # let's also access a fixture for the fun of it
                 if "tmpdir" in item.fixturenames:
-                    extra = " (%s)" % item.funcargs["tmpdir"]
+                    extra = " ({})".format(item.funcargs["tmpdir"])
                 else:
                     extra = ""
 

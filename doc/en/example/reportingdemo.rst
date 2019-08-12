@@ -434,7 +434,7 @@ Here is a nice run of several failures and how ``pytest`` presents things:
 
         def test_reinterpret_fails_with_print_for_the_fun_of_it(self):
             items = [1, 2, 3]
-            print("items is %r" % items)
+            print("items is {!r}".format(items))
     >       a, b = items.pop()
     E       TypeError: 'int' object is not iterable
 

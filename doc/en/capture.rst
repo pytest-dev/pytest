@@ -57,7 +57,7 @@ is that you can use print statements for debugging:
 
 
     def setup_function(function):
-        print("setting up %s" % function)
+        print("setting up", function)
 
 
     def test_func1():
