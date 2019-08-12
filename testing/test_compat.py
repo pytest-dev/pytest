@@ -91,9 +91,6 @@ def test_is_generator_asyncio(testdir):
     result.stdout.fnmatch_lines(["*1 passed*"])
 
 
-@pytest.mark.skipif(
-    sys.version_info < (3, 5), reason="async syntax available in Python 3.5+"
-)
 def test_is_generator_async_syntax(testdir):
     testdir.makepyfile(
         """
@@ -104,6 +101,29 @@ def test_is_generator_async_syntax(testdir):
 
             async def bar():
                 pass
+
+            assert not is_generator(foo)
+            assert not is_generator(bar)
+    """
+    )
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines(["*1 passed*"])
+
+
+@pytest.mark.skipif(
+    sys.version_info < (3, 6), reason="async gen syntax available in Python 3.6+"
+)
+def test_is_generator_async_gen_syntax(testdir):
+    testdir.makepyfile(
+        """
+        from _pytest.compat import is_generator
+        def test_is_generator_py36():
+            async def foo():
+                yield
+                await foo()
+
+            async def bar():
+                yield
 
             assert not is_generator(foo)
             assert not is_generator(bar)
