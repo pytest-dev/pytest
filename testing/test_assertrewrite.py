@@ -200,6 +200,16 @@ class TestAssertionRewrite:
         else:
             assert msg == ["assert cls == 42"]
 
+    def test_assertrepr_compare_same_width(self, request):
+        """Should use same width/truncation with same initial width."""
+
+        def f():
+            assert "1234567890" * 5 + "A" == "1234567890" * 5 + "B"
+
+        assert getmsg(f).splitlines()[0] == (
+            "assert '123456789012...901234567890A' == '123456789012...901234567890B'"
+        )
+
     def test_dont_rewrite_if_hasattr_fails(self, request):
         class Y:
             """ A class whos getattr fails, but not with `AttributeError` """

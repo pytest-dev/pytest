@@ -119,9 +119,9 @@ def isiterable(obj):
 
 def assertrepr_compare(config, op, left, right):
     """Return specialised explanations for some operators/operands"""
-    width = 80 - 15 - len(op) - 2  # 15 chars indentation, 1 space around op
-    left_repr = saferepr(left, maxsize=int(width // 2))
-    right_repr = saferepr(right, maxsize=width - len(left_repr))
+    maxsize = (80 - 15 - len(op) - 2) // 2  # 15 chars indentation, 1 space around op
+    left_repr = saferepr(left, maxsize=maxsize)
+    right_repr = saferepr(right, maxsize=maxsize)
 
     summary = "{} {} {}".format(left_repr, op, right_repr)
 
