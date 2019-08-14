@@ -179,8 +179,8 @@ information.
 Skipping on a missing import dependency
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-You can skip tests on a missing import by using :ref:`pytest.importorskip ref`
-at module level or within a test or test setup function.
+You can skip tests on a missing import by using :ref:`pytest.importorskip`
+at module level, within a test, or test setup function.
 
 .. code-block:: python
 
