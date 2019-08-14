@@ -55,7 +55,7 @@ class TestPasteCapture:
             ]
         )
 
-    def test_non_ascii_paste_text(self, testdir):
+    def test_non_ascii_paste_text(self, testdir, pastebinlist):
         """Make sure that text which contains non-ascii characters is pasted
         correctly. See #1219.
         """
@@ -74,6 +74,7 @@ class TestPasteCapture:
                 "*Sending information to Paste Service*",
             ]
         )
+        assert len(pastebinlist) == 1
 
 
 class TestPaste:
