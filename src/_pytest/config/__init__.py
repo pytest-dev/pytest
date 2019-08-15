@@ -642,7 +642,9 @@ class Config:
     def _do_configure(self):
         assert not self._configured
         self._configured = True
-        self.hook.pytest_configure.call_historic(kwargs=dict(config=self))
+        with warnings.catch_warnings():
+            warnings.simplefilter("default")
+            self.hook.pytest_configure.call_historic(kwargs=dict(config=self))
 
     def _ensure_unconfigure(self):
         if self._configured:
