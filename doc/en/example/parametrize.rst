@@ -262,8 +262,8 @@ Deferring the setup of parametrized resources
 The parametrization of test functions happens at collection
 time.  It is a good idea to setup expensive resources like DB
 connections or subprocess only when the actual test is run.
-Here is a simple example how you can achieve that, first
-the actual test requiring a ``db`` object:
+Here is a simple example how you can achieve that. This test
+requires a ``db`` object fixture:
 
 .. code-block:: python
 
