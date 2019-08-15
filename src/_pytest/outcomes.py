@@ -157,14 +157,21 @@ xfail.Exception = XFailed  # type: ignore
 def importorskip(
     modname: str, minversion: Optional[str] = None, reason: Optional[str] = None
 ) -> Any:
-    """Imports and returns the requested module ``modname``, or skip the current test
-    if the module cannot be imported.
+    """Imports and returns the requested module ``modname``, or skip the
+    current test if the module cannot be imported.
 
     :param str modname: the name of the module to import
-    :param str minversion: if given, the imported module ``__version__`` attribute must be
-        at least this minimal version, otherwise the test is still skipped.
-    :param str reason: if given, this reason is shown as the message when the module
-        cannot be imported.
+    :param str minversion: if given, the imported module's ``__version__``
+        attribute must be at least this minimal version, otherwise the test is
+        still skipped.
+    :param str reason: if given, this reason is shown as the message when the
+        module cannot be imported.
+    :returns: The imported module. This should be assigned to its canonical
+        name.
+
+    Example::
+
+        docutils = pytest.importorskip("docutils")
     """
     import warnings
 

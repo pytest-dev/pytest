@@ -1143,52 +1143,6 @@ def test_unorderable_types(testdir):
     assert result.ret == ExitCode.NO_TESTS_COLLECTED
 
 
-def test_collect_functools_partial(testdir):
-    """
-    Test that collection of functools.partial object works, and arguments
-    to the wrapped functions are dealt with correctly (see #811).
-    """
-    testdir.makepyfile(
-        """
-        import functools
-        import pytest
-
-        @pytest.fixture
-        def fix1():
-            return 'fix1'
-
-        @pytest.fixture
-        def fix2():
-            return 'fix2'
-
-        def check1(i, fix1):
-            assert i == 2
-            assert fix1 == 'fix1'
-
-        def check2(fix1, i):
-            assert i == 2
-            assert fix1 == 'fix1'
-
-        def check3(fix1, i, fix2):
-            assert i == 2
-            assert fix1 == 'fix1'
-            assert fix2 == 'fix2'
-
-        test_ok_1 = functools.partial(check1, i=2)
-        test_ok_2 = functools.partial(check1, i=2, fix1='fix1')
-        test_ok_3 = functools.partial(check1, 2)
-        test_ok_4 = functools.partial(check2, i=2)
-        test_ok_5 = functools.partial(check3, i=2)
-        test_ok_6 = functools.partial(check3, i=2, fix1='fix1')
-
-        test_fail_1 = functools.partial(check2, 2)
-        test_fail_2 = functools.partial(check3, 2)
-    """
-    )
-    result = testdir.inline_run()
-    result.assertoutcome(passed=6, failed=2)
-
-
 @pytest.mark.filterwarnings("default")
 def test_dont_collect_non_function_callable(testdir):
     """Test for issue https://github.com/pytest-dev/pytest/issues/331

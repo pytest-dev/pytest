@@ -1,0 +1,1 @@
+Fix collection of ``staticmethod`` objects defined with ``functools.partial``.

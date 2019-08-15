@@ -33,13 +33,13 @@ class YamlItem(pytest.Item):
             return "\n".join(
                 [
                     "usecase execution failed",
-                    "   spec failed: %r: %r" % excinfo.value.args[1:3],
+                    "   spec failed: {1!r}: {2!r}".format(*excinfo.value.args),
                     "   no further details known at this point.",
                 ]
             )
 
     def reportinfo(self):
-        return self.fspath, 0, "usecase: %s" % self.name
+        return self.fspath, 0, "usecase: {}".format(self.name)
 
 
 class YamlException(Exception):

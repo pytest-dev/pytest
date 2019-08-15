@@ -1,0 +1,1 @@
+Add docstring for ``Testdir.copy_example``.
