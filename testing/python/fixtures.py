@@ -10,7 +10,9 @@ from _pytest.pytester import get_public_names
 from _pytest.warnings import SHOW_PYTEST_WARNINGS_ARG
 
 
-def test_getfuncargnames():
+def test_getfuncargnames_functions():
+    """Test getfuncargnames for normal functions"""
+
     def f():
         pass
 
@@ -31,16 +33,54 @@ def test_getfuncargnames():
 
     assert fixtures.getfuncargnames(j) == ("arg1", "arg2")
 
+
+def test_getfuncargnames_methods():
+    """Test getfuncargnames for normal methods"""
+
     class A:
         def f(self, arg1, arg2="hello"):
             pass
 
+    assert fixtures.getfuncargnames(A().f) == ("arg1",)
+
+
+def test_getfuncargnames_staticmethod():
+    """Test getfuncargnames for staticmethods"""
+
+    class A:
         @staticmethod
-        def static(arg1, arg2):
+        def static(arg1, arg2, x=1):
             pass
 
-    assert fixtures.getfuncargnames(A().f) == ("arg1",)
     assert fixtures.getfuncargnames(A.static, cls=A) == ("arg1", "arg2")
+
+
+def test_getfuncargnames_partial():
+    """Check getfuncargnames for methods defined with functools.partial (#5701)"""
+    import functools
+
+    def check(arg1, arg2, i):
+        pass
+
+    class T:
+        test_ok = functools.partial(check, i=2)
+
+    values = fixtures.getfuncargnames(T().test_ok, name="test_ok")
+    assert values == ("arg1", "arg2")
+
+
+def test_getfuncargnames_staticmethod_partial():
+    """Check getfuncargnames for staticmethods defined with functools.partial (#5701)"""
+    import functools
+
+    def check(arg1, arg2, i):
+        pass
+
+    class T:
+        test_ok = staticmethod(functools.partial(check, i=2))
+
+    values = fixtures.getfuncargnames(T().test_ok, name="test_ok")
+    assert values == ("arg1", "arg2")
 
 
 @pytest.mark.pytester_example_path("fixtures/fill_fixtures")

@@ -1,4 +1,5 @@
 import sys
+from functools import partial
 from functools import wraps
 
 import pytest
@@ -70,6 +71,16 @@ def test_get_real_func():
     # a function was wrapped by pytest itself
     wrapped_func2.__pytest_wrapped__ = _PytestWrapper(wrapped_func)
     assert get_real_func(wrapped_func2) is wrapped_func
+
+
+def test_get_real_func_partial():
+    """Test get_real_func handles partial instances correctly"""
+
+    def foo(x):
+        return x
+
+    assert get_real_func(foo) is foo
+    assert get_real_func(partial(foo)) is foo
 
 
 def test_is_generator_asyncio(testdir):
