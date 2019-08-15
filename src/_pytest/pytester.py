@@ -632,7 +632,7 @@ class Testdir:
     def copy_example(self, name=None):
         """Copy file from project's directory into the testdir.
 
-        :param str name: The name of the file for copy.
+        :param str name: The name of the file to copy.
         :return: path to the copied directory (inside ``self.tmpdir``).
 
         """
