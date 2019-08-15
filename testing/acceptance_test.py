@@ -1192,6 +1192,8 @@ def test_warn_on_async_function(testdir):
             pass
         async def test_2():
             pass
+        def test_3():
+            return test_2()
     """
     )
     result = testdir.runpytest()
@@ -1199,8 +1201,9 @@ def test_warn_on_async_function(testdir):
         [
             "test_async.py::test_1",
             "test_async.py::test_2",
+            "test_async.py::test_3",
             "*async def functions are not natively supported*",
-            "*2 skipped, 2 warnings in*",
+            "*3 skipped, 3 warnings in*",
         ]
     )
     # ensure our warning message appears only once
@@ -1220,6 +1223,8 @@ def test_warn_on_async_gen_function(testdir):
             yield
         async def test_2():
             yield
+        def test_3():
+            return test_2()
     """
     )
     result = testdir.runpytest()
@@ -1227,8 +1232,9 @@ def test_warn_on_async_gen_function(testdir):
         [
             "test_async.py::test_1",
             "test_async.py::test_2",
+            "test_async.py::test_3",
             "*async def functions are not natively supported*",
-            "*2 skipped, 2 warnings in*",
+            "*3 skipped, 3 warnings in*",
         ]
     )
     # ensure our warning message appears only once
