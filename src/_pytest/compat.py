@@ -46,14 +46,16 @@ def is_generator(func):
 
 
 def iscoroutinefunction(func):
-    """Return True if func is a decorated coroutine function.
-
-    Note: copied and modified from Python 3.5's builtin couroutines.py to avoid import asyncio directly,
-    which in turns also initializes the "logging" module as side-effect (see issue #8).
     """
-    return getattr(func, "_is_coroutine", False) or (
-        hasattr(inspect, "iscoroutinefunction") and inspect.iscoroutinefunction(func)
-    )
+    Return True if func is a coroutine function (a function defined with async
+    def syntax, and doesn't contain yield), or a function decorated with
+    @asyncio.coroutine.
+
+    Note: copied and modified from Python 3.5's builtin couroutines.py to avoid
+    importing asyncio directly, which in turns also initializes the "logging"
+    module as a side-effect (see issue #8).
+    """
+    return inspect.iscoroutinefunction(func) or getattr(func, "_is_coroutine", False)
 
 
 def getlocation(function, curdir=None):
@@ -84,7 +86,7 @@ def num_mock_patch_args(function):
     )
 
 
-def getfuncargnames(function, is_method=False, cls=None):
+def getfuncargnames(function, *, name: str = "", is_method=False, cls=None):
     """Returns the names of a function's mandatory arguments.
 
     This should return the names of all function arguments that:
@@ -97,11 +99,12 @@ def getfuncargnames(function, is_method=False, cls=None):
     be treated as a bound method even though it's not unless, only in
     the case of cls, the function is a static method.
 
+    The name parameter should be the original name in which the function was collected.
+
     @RonnyPfannschmidt: This function should be refactored when we
     revisit fixtures. The fixture mechanism should ask the node for
     the fixture names, and not try to obtain directly from the
     function object well after collection has occurred.
-
     """
     # The parameters attribute of a Signature object contains an
     # ordered mapping of parameter names to Parameter instances.  This
@@ -124,11 +127,14 @@ def getfuncargnames(function, is_method=False, cls=None):
         )
         and p.default is Parameter.empty
     )
+    if not name:
+        name = function.__name__
+
     # If this function should be treated as a bound method even though
     # it's passed as an unbound method or function, remove the first
     # parameter name.
     if is_method or (
-        cls and not isinstance(cls.__dict__.get(function.__name__, None), staticmethod)
+        cls and not isinstance(cls.__dict__.get(name, None), staticmethod)
     ):
         arg_names = arg_names[1:]
     # Remove any names that will be replaced with mocks.
@@ -251,7 +257,7 @@ def get_real_method(obj, holder):
     try:
         is_method = hasattr(obj, "__func__")
         obj = get_real_func(obj)
-    except Exception:
+    except Exception:  # pragma: no cover
         return obj
     if is_method and hasattr(obj, "__get__") and callable(obj.__get__):
         obj = obj.__get__(holder)

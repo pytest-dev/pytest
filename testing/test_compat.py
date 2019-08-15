@@ -1,4 +1,5 @@
 import sys
+from functools import partial
 from functools import wraps
 
 import pytest
@@ -72,6 +73,16 @@ def test_get_real_func():
     assert get_real_func(wrapped_func2) is wrapped_func
 
 
+def test_get_real_func_partial():
+    """Test get_real_func handles partial instances correctly"""
+
+    def foo(x):
+        return x
+
+    assert get_real_func(foo) is foo
+    assert get_real_func(partial(foo)) is foo
+
+
 def test_is_generator_asyncio(testdir):
     testdir.makepyfile(
         """
@@ -91,9 +102,6 @@ def test_is_generator_asyncio(testdir):
     result.stdout.fnmatch_lines(["*1 passed*"])
 
 
-@pytest.mark.skipif(
-    sys.version_info < (3, 5), reason="async syntax available in Python 3.5+"
-)
 def test_is_generator_async_syntax(testdir):
     testdir.makepyfile(
         """
@@ -104,6 +112,29 @@ def test_is_generator_async_syntax(testdir):
 
             async def bar():
                 pass
+
+            assert not is_generator(foo)
+            assert not is_generator(bar)
+    """
+    )
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines(["*1 passed*"])
+
+
+@pytest.mark.skipif(
+    sys.version_info < (3, 6), reason="async gen syntax available in Python 3.6+"
+)
+def test_is_generator_async_gen_syntax(testdir):
+    testdir.makepyfile(
+        """
+        from _pytest.compat import is_generator
+        def test_is_generator_py36():
+            async def foo():
+                yield
+                await foo()
+
+            async def bar():
+                yield
 
             assert not is_generator(foo)
             assert not is_generator(bar)

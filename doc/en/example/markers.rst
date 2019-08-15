@@ -384,7 +384,7 @@ specifies via named environments:
         envnames = [mark.args[0] for mark in item.iter_markers(name="env")]
         if envnames:
             if item.config.getoption("-E") not in envnames:
-                pytest.skip("test requires env in %r" % envnames)
+                pytest.skip("test requires env in {!r}".format(envnames))
 
 A test file using this local plugin:
 
@@ -578,7 +578,7 @@ for your particular platform, you could use the following plugin:
         supported_platforms = ALL.intersection(mark.name for mark in item.iter_markers())
         plat = sys.platform
         if supported_platforms and plat not in supported_platforms:
-            pytest.skip("cannot run on platform %s" % (plat))
+            pytest.skip("cannot run on platform {}".format(plat))
 
 then tests will be skipped if they were specified for a different platform.
 Let's do a little test file to show how this looks like:

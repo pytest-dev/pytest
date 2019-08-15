@@ -629,7 +629,7 @@ through the special :py:class:`request <FixtureRequest>` object:
     def smtp_connection(request):
         smtp_connection = smtplib.SMTP(request.param, 587, timeout=5)
         yield smtp_connection
-        print("finalizing %s" % smtp_connection)
+        print("finalizing {}".format(smtp_connection))
         smtp_connection.close()
 
 The main change is the declaration of ``params`` with
@@ -902,25 +902,25 @@ to show the setup/teardown flow:
     @pytest.fixture(scope="module", params=["mod1", "mod2"])
     def modarg(request):
         param = request.param
-        print("  SETUP modarg %s" % param)
+        print("  SETUP modarg", param)
         yield param
-        print("  TEARDOWN modarg %s" % param)
+        print("  TEARDOWN modarg", param)
 
 
     @pytest.fixture(scope="function", params=[1, 2])
     def otherarg(request):
         param = request.param
-        print("  SETUP otherarg %s" % param)
+        print("  SETUP otherarg", param)
         yield param
-        print("  TEARDOWN otherarg %s" % param)
+        print("  TEARDOWN otherarg", param)
 
 
     def test_0(otherarg):
-        print("  RUN test0 with otherarg %s" % otherarg)
+        print("  RUN test0 with otherarg", otherarg)
 
 
     def test_1(modarg):
-        print("  RUN test1 with modarg %s" % modarg)
+        print("  RUN test1 with modarg", modarg)
 
 
     def test_2(otherarg, modarg):
