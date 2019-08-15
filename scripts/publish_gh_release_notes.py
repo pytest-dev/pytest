@@ -25,9 +25,10 @@ import github3
 import pypandoc
 
 
-def publish_github_release(token, tag_name, body):
+def publish_github_release(slug, token, tag_name, body):
     github = github3.login(token=token)
-    repo = github.repository("pytest-dev", "pytest")
+    owner, repo = slug.split("/")
+    repo = github.repository(owner, repo)
     return repo.create_release(tag_name=tag_name, body=body)
 
 
@@ -71,14 +72,22 @@ def main(argv):
         print("GH_RELEASE_NOTES_TOKEN not set", file=sys.stderr)
         return 1
 
+    slug = os.environ.get("TRAVIS_REPO_SLUG")
+    if not slug:
+        print("TRAVIS_REPO_SLUG not set", file=sys.stderr)
+        return 1
+
     rst_body = parse_changelog(tag_name)
     md_body = convert_rst_to_md(rst_body)
-    if not publish_github_release(token, tag_name, md_body):
+    if not publish_github_release(slug, token, tag_name, md_body):
         print("Could not publish release notes:", file=sys.stderr)
         print(md_body, file=sys.stderr)
         return 5
 
-    print(f"Release notes for {tag_name} published successfully")
+    print()
+    print(f"Release notes for {tag_name} published successfully:")
+    print(f"https://github.com/{slug}/releases/tag/{tag_name}")
+    print()
     return 0
 
 
