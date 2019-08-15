@@ -40,14 +40,16 @@ def is_generator(func):
 
 
 def iscoroutinefunction(func):
-    """Return True if func is a decorated coroutine function.
-
-    Note: copied and modified from Python 3.5's builtin couroutines.py to avoid import asyncio directly,
-    which in turns also initializes the "logging" module as side-effect (see issue #8).
     """
-    return getattr(func, "_is_coroutine", False) or (
-        hasattr(inspect, "iscoroutinefunction") and inspect.iscoroutinefunction(func)
-    )
+    Return True if func is a coroutine function (a function defined with async
+    def syntax, and doesn't contain yield), or a function decorated with
+    @asyncio.coroutine.
+
+    Note: copied and modified from Python 3.5's builtin couroutines.py to avoid
+    importing asyncio directly, which in turns also initializes the "logging"
+    module as a side-effect (see issue #8).
+    """
+    return inspect.iscoroutinefunction(func) or getattr(func, "_is_coroutine", False)
 
 
 def getlocation(function, curdir):
