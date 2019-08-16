@@ -1,5 +1,6 @@
 """ recording warnings during test function execution. """
 import re
+import sys
 import warnings
 from types import TracebackType
 from typing import Any
@@ -17,6 +18,11 @@ from _pytest.outcomes import fail
 
 if False:  # TYPE_CHECKING
     from typing import Type
+
+if sys.version_info <= (3, 5, 1):
+
+    def overload(f):  # noqa: F811
+        return f
 
 
 @yield_fixture
@@ -58,26 +64,26 @@ def deprecated_call(func=None, *args, **kwargs):
 def warns(
     expected_warning: Union["Type[Warning]", Tuple["Type[Warning]", ...]],
     *,
-    match: Optional[Union[str, Pattern]] = ...
+    match: "Optional[Union[str, Pattern]]" = ...
 ) -> "WarningsChecker":
     ...  # pragma: no cover
 
 
-@overload
+@overload  # noqa: F811
 def warns(
     expected_warning: Union["Type[Warning]", Tuple["Type[Warning]", ...]],
     func: Callable,
     *args: Any,
-    match: Optional[Union[str, Pattern]] = ...,
+    match: Optional[Union[str, "Pattern"]] = ...,
     **kwargs: Any
 ) -> Union[Any]:
     ...  # pragma: no cover
 
 
-def warns(
+def warns(  # noqa: F811
     expected_warning: Union["Type[Warning]", Tuple["Type[Warning]", ...]],
     *args: Any,
-    match: Optional[Union[str, Pattern]] = None,
+    match: Optional[Union[str, "Pattern"]] = None,
     **kwargs: Any
 ) -> Union["WarningsChecker", Any]:
     r"""Assert that code raises a particular class of warning.
@@ -207,7 +213,7 @@ class WarningsChecker(WarningsRecorder):
         expected_warning: Optional[
             Union["Type[Warning]", Tuple["Type[Warning]", ...]]
         ] = None,
-        match_expr: Optional[Union[str, Pattern]] = None,
+        match_expr: Optional[Union[str, "Pattern"]] = None,
     ) -> None:
         super().__init__()
 

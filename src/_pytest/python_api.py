@@ -1,6 +1,7 @@
 import inspect
 import math
 import pprint
+import sys
 from collections.abc import Iterable
 from collections.abc import Mapping
 from collections.abc import Sized
@@ -27,6 +28,12 @@ from _pytest.outcomes import fail
 
 if False:  # TYPE_CHECKING
     from typing import Type  # noqa: F401 (used in type string)
+
+if sys.version_info <= (3, 5, 1):
+
+    def overload(f):  # noqa: F811
+        return f
+
 
 BASE_TYPE = (type, STRING_TYPES)
 
@@ -547,12 +554,12 @@ _E = TypeVar("_E", bound=BaseException)
 def raises(
     expected_exception: Union["Type[_E]", Tuple["Type[_E]", ...]],
     *,
-    match: Optional[Union[str, Pattern]] = ...
+    match: "Optional[Union[str, Pattern]]" = ...
 ) -> "RaisesContext[_E]":
     ...  # pragma: no cover
 
 
-@overload
+@overload  # noqa: F811
 def raises(
     expected_exception: Union["Type[_E]", Tuple["Type[_E]", ...]],
     func: Callable,
@@ -563,10 +570,10 @@ def raises(
     ...  # pragma: no cover
 
 
-def raises(
+def raises(  # noqa: F811
     expected_exception: Union["Type[_E]", Tuple["Type[_E]", ...]],
     *args: Any,
-    match: Optional[Union[str, Pattern]] = None,
+    match: Optional[Union[str, "Pattern"]] = None,
     **kwargs: Any
 ) -> Union["RaisesContext[_E]", Optional[_pytest._code.ExceptionInfo[_E]]]:
     r"""
@@ -724,7 +731,7 @@ class RaisesContext(Generic[_E]):
         self,
         expected_exception: Union["Type[_E]", Tuple["Type[_E]", ...]],
         message: str,
-        match_expr: Optional[Union[str, Pattern]] = None,
+        match_expr: Optional[Union[str, "Pattern"]] = None,
     ) -> None:
         self.expected_exception = expected_exception
         self.message = message
