@@ -3,7 +3,6 @@ import warnings
 
 import pytest
 from _pytest.recwarn import WarningsRecorder
-from _pytest.warning_types import PytestDeprecationWarning
 
 
 def test_recwarn_stacklevel(recwarn):
@@ -206,22 +205,17 @@ class TestDeprecatedCall:
 
 
 class TestWarns:
-    def test_strings(self):
+    def test_check_callable(self):
+        source = "warnings.warn('w1', RuntimeWarning)"
+        with pytest.raises(TypeError, match=r".* must be callable"):
+            pytest.warns(RuntimeWarning, source)
+
+    def test_several_messages(self):
         # different messages, b/c Python suppresses multiple identical warnings
-        source1 = "warnings.warn('w1', RuntimeWarning)"
-        source2 = "warnings.warn('w2', RuntimeWarning)"
-        source3 = "warnings.warn('w3', RuntimeWarning)"
-        with pytest.warns(PytestDeprecationWarning) as warninfo:  # yo dawg
-            pytest.warns(RuntimeWarning, source1)
-            pytest.raises(
-                pytest.fail.Exception, lambda: pytest.warns(UserWarning, source2)
-            )
-            pytest.warns(RuntimeWarning, source3)
-        assert len(warninfo) == 3
-        for w in warninfo:
-            assert w.filename == __file__
-            msg, = w.message.args
-            assert msg.startswith("warns(..., 'code(as_a_string)') is deprecated")
+        pytest.warns(RuntimeWarning, lambda: warnings.warn("w1", RuntimeWarning))
+        with pytest.raises(pytest.fail.Exception):
+            pytest.warns(UserWarning, lambda: warnings.warn("w2", RuntimeWarning))
+        pytest.warns(RuntimeWarning, lambda: warnings.warn("w3", RuntimeWarning))
 
     def test_function(self):
         pytest.warns(
@@ -380,3 +374,9 @@ class TestWarns:
         assert f() == 10
         assert pytest.warns(UserWarning, f) == 10
         assert pytest.warns(UserWarning, f) == 10
+
+    def test_warns_context_manager_with_kwargs(self):
+        with pytest.raises(TypeError) as excinfo:
+            with pytest.warns(UserWarning, foo="bar"):
+                pass
+        assert "Unexpected keyword arguments" in str(excinfo.value)

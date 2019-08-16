@@ -946,7 +946,7 @@ def test_collection_collect_only_live_logging(testdir, verbose):
         expected_lines.extend(
             [
                 "*test_collection_collect_only_live_logging.py::test_simple*",
-                "no tests ran in * seconds",
+                "no tests ran in 0.[0-9][0-9]s",
             ]
         )
     elif verbose == "-qq":

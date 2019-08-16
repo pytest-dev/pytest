@@ -498,38 +498,15 @@ class TestDeprecationWarningsByDefault:
 
 
 @pytest.mark.parametrize("change_default", [None, "ini", "cmdline"])
-def test_removed_in_pytest4_warning_as_error(testdir, change_default):
-    testdir.makepyfile(
-        """
-        import warnings, pytest
-        def test():
-            warnings.warn(pytest.RemovedInPytest4Warning("some warning"))
-    """
-    )
-    if change_default == "ini":
-        testdir.makeini(
-            """
-            [pytest]
-            filterwarnings =
-                ignore::pytest.RemovedInPytest4Warning
-        """
-        )
-
-    args = (
-        ("-Wignore::pytest.RemovedInPytest4Warning",)
-        if change_default == "cmdline"
-        else ()
-    )
-    result = testdir.runpytest(*args)
-    if change_default is None:
-        result.stdout.fnmatch_lines(["* 1 failed in *"])
-    else:
-        assert change_default in ("ini", "cmdline")
-        result.stdout.fnmatch_lines(["* 1 passed in *"])
-
-
-@pytest.mark.parametrize("change_default", [None, "ini", "cmdline"])
+@pytest.mark.skip(
+    reason="This test should be enabled again before pytest 6.0 is released"
+)
 def test_deprecation_warning_as_error(testdir, change_default):
+    """This ensures that PytestDeprecationWarnings raised by pytest are turned into errors.
+
+    This test should be enabled as part of each major release, and skipped again afterwards
+    to ensure our deprecations are turning into warnings as expected.
+    """
     testdir.makepyfile(
         """
         import warnings, pytest

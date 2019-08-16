@@ -103,16 +103,6 @@ class PytestUnknownMarkWarning(PytestWarning):
     __module__ = "pytest"
 
 
-class RemovedInPytest4Warning(PytestDeprecationWarning):
-    """
-    Bases: :class:`pytest.PytestDeprecationWarning`.
-
-    Warning class for features scheduled to be removed in pytest 4.0.
-    """
-
-    __module__ = "pytest"
-
-
 @attr.s
 class UnformattedWarning:
     """Used to hold warnings that need to format their message at runtime, as opposed to a direct message.

@@ -44,7 +44,7 @@ from _pytest.warning_types import PytestExperimentalApiWarning
 from _pytest.warning_types import PytestUnhandledCoroutineWarning
 from _pytest.warning_types import PytestUnknownMarkWarning
 from _pytest.warning_types import PytestWarning
-from _pytest.warning_types import RemovedInPytest4Warning
+
 
 set_trace = __pytestPDB.set_trace
 
@@ -84,7 +84,6 @@ __all__ = [
     "PytestWarning",
     "raises",
     "register_assert_rewrite",
-    "RemovedInPytest4Warning",
     "Session",
     "set_trace",
     "skip",

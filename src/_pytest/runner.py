@@ -249,10 +249,11 @@ def pytest_make_collect_report(collector):
     if not call.excinfo:
         outcome = "passed"
     else:
-        from _pytest import nose
-
-        skip_exceptions = (Skipped,) + nose.get_skip_exceptions()
-        if call.excinfo.errisinstance(skip_exceptions):
+        skip_exceptions = [Skipped]
+        unittest = sys.modules.get("unittest")
+        if unittest is not None:
+            skip_exceptions.append(unittest.SkipTest)
+        if call.excinfo.errisinstance(tuple(skip_exceptions)):
             outcome = "skipped"
             r = collector._repr_failure_py(call.excinfo, "line").reprcrash
             longrepr = (str(r.path), r.lineno, r.message)
@@ -277,10 +278,7 @@ class SetupState:
         self._finalizers = {}
 
     def addfinalizer(self, finalizer, colitem):
-        """ attach a finalizer to the given colitem.
-        if colitem is None, this will add a finalizer that
-        is called at the end of teardown_all().
-        """
+        """ attach a finalizer to the given colitem. """
         assert colitem and not isinstance(colitem, tuple)
         assert callable(finalizer)
         # assert colitem in self.stack  # some unit tests don't setup stack :/
@@ -308,12 +306,9 @@ class SetupState:
 
     def _teardown_with_finalization(self, colitem):
         self._callfinalizers(colitem)
-        if hasattr(colitem, "teardown"):
-            colitem.teardown()
+        colitem.teardown()
         for colitem in self._finalizers:
-            assert (
-                colitem is None or colitem in self.stack or isinstance(colitem, tuple)
-            )
+            assert colitem in self.stack
 
     def teardown_all(self):
         while self.stack:

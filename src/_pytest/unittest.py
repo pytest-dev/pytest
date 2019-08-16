@@ -12,6 +12,7 @@ from _pytest.outcomes import skip
 from _pytest.outcomes import xfail
 from _pytest.python import Class
 from _pytest.python import Function
+from _pytest.runner import CallInfo
 
 
 def pytest_pycollect_makeitem(collector, name, obj):
@@ -228,6 +229,14 @@ def pytest_runtest_makereport(item, call):
                 del call.result
             except AttributeError:
                 pass
+
+    unittest = sys.modules.get("unittest")
+    if unittest and call.excinfo and call.excinfo.errisinstance(unittest.SkipTest):
+        # let's substitute the excinfo with a pytest.skip one
+        call2 = CallInfo.from_call(
+            lambda: pytest.skip(str(call.excinfo.value)), call.when
+        )
+        call.excinfo = call2.excinfo
 
 
 # twisted trial support

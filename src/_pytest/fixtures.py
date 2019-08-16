@@ -2,7 +2,6 @@ import functools
 import inspect
 import itertools
 import sys
-import warnings
 from collections import defaultdict
 from collections import deque
 from collections import OrderedDict
@@ -28,8 +27,6 @@ from _pytest.compat import getlocation
 from _pytest.compat import is_generator
 from _pytest.compat import NOTSET
 from _pytest.compat import safe_getattr
-from _pytest.deprecated import FIXTURE_FUNCTION_CALL
-from _pytest.deprecated import FIXTURE_NAMED_REQUEST
 from _pytest.outcomes import fail
 from _pytest.outcomes import TEST_OUTCOME
 
@@ -474,13 +471,6 @@ class FixtureRequest(FuncargnamesCompatAttr):
         or test function body.
         """
         return self._get_active_fixturedef(argname).cached_result[0]
-
-    def getfuncargvalue(self, argname):
-        """ Deprecated, use getfixturevalue. """
-        from _pytest import deprecated
-
-        warnings.warn(deprecated.GETFUNCARGVALUE, stacklevel=2)
-        return self.getfixturevalue(argname)
 
     def _get_active_fixturedef(self, argname):
         try:
@@ -945,9 +935,12 @@ def wrap_function_to_error_out_if_called_directly(function, fixture_marker):
     """Wrap the given fixture function so we can raise an error about it being called directly,
     instead of used as an argument in a test function.
     """
-    message = FIXTURE_FUNCTION_CALL.format(
-        name=fixture_marker.name or function.__name__
-    )
+    message = (
+        'Fixture "{name}" called directly. Fixtures are not meant to be called directly,\n'
+        "but are created automatically when test functions request them as parameters.\n"
+        "See https://docs.pytest.org/en/latest/fixture.html for more information about fixtures, and\n"
+        "https://docs.pytest.org/en/latest/deprecations.html#calling-fixtures-directly about how to update your code."
+    ).format(name=fixture_marker.name or function.__name__)
 
     @functools.wraps(function)
     def result(*args, **kwargs):
@@ -982,7 +975,13 @@ class FixtureFunctionMarker:
 
         name = self.name or function.__name__
         if name == "request":
-            warnings.warn(FIXTURE_NAMED_REQUEST)
+            location = getlocation(function)
+            fail(
+                "'request' is a reserved word for fixtures, use another name:\n  {}".format(
+                    location
+                ),
+                pytrace=False,
+            )
         function._pytestfixturefunction = self
         return function
 

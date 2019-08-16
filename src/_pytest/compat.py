@@ -26,6 +26,12 @@ MODULE_NOT_FOUND_ERROR = (
 )
 
 
+if sys.version_info >= (3, 8):
+    from importlib import metadata as importlib_metadata  # noqa
+else:
+    import importlib_metadata  # noqa
+
+
 def _format_args(func):
     return str(signature(func))
 
@@ -52,11 +58,11 @@ def iscoroutinefunction(func):
     return inspect.iscoroutinefunction(func) or getattr(func, "_is_coroutine", False)
 
 
-def getlocation(function, curdir):
+def getlocation(function, curdir=None):
     function = get_real_func(function)
     fn = py.path.local(inspect.getfile(function))
     lineno = function.__code__.co_firstlineno
-    if fn.relto(curdir):
+    if curdir is not None and fn.relto(curdir):
         fn = fn.relto(curdir)
     return "%s:%d" % (fn, lineno + 1)
 

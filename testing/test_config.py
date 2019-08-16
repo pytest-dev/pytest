@@ -1,10 +1,11 @@
+import os
 import sys
 import textwrap
-
-import importlib_metadata
+from pathlib import Path
 
 import _pytest._code
 import pytest
+from _pytest.compat import importlib_metadata
 from _pytest.config import _iter_rewritable_modules
 from _pytest.config.exceptions import UsageError
 from _pytest.config.findpaths import determine_setup
@@ -446,7 +447,7 @@ class TestConfigFromdictargs:
         assert config.option.capture == "no"
         assert config.args == args
 
-    def test_origargs(self, _sys_snapshot):
+    def test_invocation_params_args(self, _sys_snapshot):
         """Show that fromdictargs can handle args in their "orig" format"""
         from _pytest.config import Config
 
@@ -455,7 +456,7 @@ class TestConfigFromdictargs:
 
         config = Config.fromdictargs(option_dict, args)
         assert config.args == ["a", "b"]
-        assert config._origargs == args
+        assert config.invocation_params.args == args
         assert config.option.verbose == 4
         assert config.option.capture == "no"
 
@@ -1205,6 +1206,29 @@ def test_config_does_not_load_blocked_plugin_from_args(testdir):
     assert result.ret == ExitCode.USAGE_ERROR
 
 
+def test_invocation_args(testdir):
+    """Ensure that Config.invocation_* arguments are correctly defined"""
+
+    class DummyPlugin:
+        pass
+
+    p = testdir.makepyfile("def test(): pass")
+    plugin = DummyPlugin()
+    rec = testdir.inline_run(p, "-v", plugins=[plugin])
+    calls = rec.getcalls("pytest_runtest_protocol")
+    assert len(calls) == 1
+    call = calls[0]
+    config = call.item.config
+
+    assert config.invocation_params.args == [p, "-v"]
+    assert config.invocation_params.dir == Path(str(testdir.tmpdir))
+
+    plugins = config.invocation_params.plugins
+    assert len(plugins) == 2
+    assert plugins[0] is plugin
+    assert type(plugins[1]).__name__ == "Collect"  # installed by testdir.inline_run()
+
+
 @pytest.mark.parametrize(
     "plugin",
     [
@@ -1248,3 +1272,140 @@ def test_config_blocked_default_plugins(testdir, plugin):
         result.stdout.fnmatch_lines(["* 1 failed in *"])
     else:
         assert result.stdout.lines == [""]
+
+
+class TestSetupCfg:
+    def test_pytest_setup_cfg_unsupported(self, testdir):
+        testdir.makefile(
+            ".cfg",
+            setup="""
+            [pytest]
+            addopts = --verbose
+        """,
+        )
+        with pytest.raises(pytest.fail.Exception):
+            testdir.runpytest()
+
+    def test_pytest_custom_cfg_unsupported(self, testdir):
+        testdir.makefile(
+            ".cfg",
+            custom="""
+            [pytest]
+            addopts = --verbose
+        """,
+        )
+        with pytest.raises(pytest.fail.Exception):
+            testdir.runpytest("-c", "custom.cfg")
+
+
+class TestPytestPluginsVariable:
+    def test_pytest_plugins_in_non_top_level_conftest_unsupported(self, testdir):
+        testdir.makepyfile(
+            **{
+                "subdirectory/conftest.py": """
+            pytest_plugins=['capture']
+        """
+            }
+        )
+        testdir.makepyfile(
+            """
+            def test_func():
+                pass
+        """
+        )
+        res = testdir.runpytest()
+        assert res.ret == 2
+        msg = "Defining 'pytest_plugins' in a non-top-level conftest is no longer supported"
+        res.stdout.fnmatch_lines(
+            [
+                "*{msg}*".format(msg=msg),
+                "*subdirectory{sep}conftest.py*".format(sep=os.sep),
+            ]
+        )
+
+    @pytest.mark.parametrize("use_pyargs", [True, False])
+    def test_pytest_plugins_in_non_top_level_conftest_unsupported_pyargs(
+        self, testdir, use_pyargs
+    ):
+        """When using --pyargs, do not emit the warning about non-top-level conftest warnings (#4039, #4044)"""
+
+        files = {
+            "src/pkg/__init__.py": "",
+            "src/pkg/conftest.py": "",
+            "src/pkg/test_root.py": "def test(): pass",
+            "src/pkg/sub/__init__.py": "",
+            "src/pkg/sub/conftest.py": "pytest_plugins=['capture']",
+            "src/pkg/sub/test_bar.py": "def test(): pass",
+        }
+        testdir.makepyfile(**files)
+        testdir.syspathinsert(testdir.tmpdir.join("src"))
+
+        args = ("--pyargs", "pkg") if use_pyargs else ()
+        res = testdir.runpytest(*args)
+        assert res.ret == (0 if use_pyargs else 2)
+        msg = (
+            msg
+        ) = "Defining 'pytest_plugins' in a non-top-level conftest is no longer supported"
+        if use_pyargs:
+            assert msg not in res.stdout.str()
+        else:
+            res.stdout.fnmatch_lines(["*{msg}*".format(msg=msg)])
+
+    def test_pytest_plugins_in_non_top_level_conftest_unsupported_no_top_level_conftest(
+        self, testdir
+    ):
+        subdirectory = testdir.tmpdir.join("subdirectory")
+        subdirectory.mkdir()
+        testdir.makeconftest(
+            """
+            pytest_plugins=['capture']
+        """
+        )
+        testdir.tmpdir.join("conftest.py").move(subdirectory.join("conftest.py"))
+
+        testdir.makepyfile(
+            """
+            def test_func():
+                pass
+        """
+        )
+
+        res = testdir.runpytest_subprocess()
+        assert res.ret == 2
+        msg = "Defining 'pytest_plugins' in a non-top-level conftest is no longer supported"
+        res.stdout.fnmatch_lines(
+            [
+                "*{msg}*".format(msg=msg),
+                "*subdirectory{sep}conftest.py*".format(sep=os.sep),
+            ]
+        )
+
+    def test_pytest_plugins_in_non_top_level_conftest_unsupported_no_false_positives(
+        self, testdir
+    ):
+        subdirectory = testdir.tmpdir.join("subdirectory")
+        subdirectory.mkdir()
+        testdir.makeconftest(
+            """
+            pass
+        """
+        )
+        testdir.tmpdir.join("conftest.py").move(subdirectory.join("conftest.py"))
+
+        testdir.makeconftest(
+            """
+            import warnings
+            warnings.filterwarnings('always', category=DeprecationWarning)
+            pytest_plugins=['capture']
+        """
+        )
+        testdir.makepyfile(
+            """
+            def test_func():
+                pass
+        """
+        )
+        res = testdir.runpytest_subprocess()
+        assert res.ret == 0
+        msg = "Defining 'pytest_plugins' in a non-top-level conftest is no longer supported"
+        assert msg not in res.stdout.str()

@@ -939,9 +939,7 @@ def test_class_method_containing_test_issue1558(testdir):
     reprec.assertoutcome(passed=1)
 
 
-@pytest.mark.parametrize(
-    "base", ["builtins.object", "unittest.TestCase", "unittest2.TestCase"]
-)
+@pytest.mark.parametrize("base", ["builtins.object", "unittest.TestCase"])
 def test_usefixtures_marker_on_unittest(base, testdir):
     """#3498"""
     module = base.rsplit(".", 1)[0]

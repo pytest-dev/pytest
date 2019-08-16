@@ -8,8 +8,9 @@ import sys
 import types
 import warnings
 from functools import lru_cache
+from pathlib import Path
 
-import importlib_metadata
+import attr
 import py
 from packaging.version import Version
 from pluggy import HookimplMarker
@@ -18,6 +19,7 @@ from pluggy import PluginManager
 
 import _pytest._code
 import _pytest.assertion
+import _pytest.deprecated
 import _pytest.hookspec  # the extension point definitions
 from .exceptions import PrintHelp
 from .exceptions import UsageError
@@ -25,6 +27,7 @@ from .findpaths import determine_setup
 from .findpaths import exists
 from _pytest._code import ExceptionInfo
 from _pytest._code import filter_traceback
+from _pytest.compat import importlib_metadata
 from _pytest.outcomes import fail
 from _pytest.outcomes import Skipped
 from _pytest.warning_types import PytestConfigWarning
@@ -147,10 +150,15 @@ builtin_plugins = set(default_plugins)
 builtin_plugins.add("pytester")
 
 
-def get_config(args=None):
+def get_config(args=None, plugins=None):
     # subsequent calls to main will create a fresh instance
     pluginmanager = PytestPluginManager()
-    config = Config(pluginmanager)
+    config = Config(
+        pluginmanager,
+        invocation_params=Config.InvocationParams(
+            args=args, plugins=plugins, dir=Path().resolve()
+        ),
+    )
 
     if args is not None:
         # Handle any "-p no:plugin" args.
@@ -183,7 +191,7 @@ def _prepareconfig(args=None, plugins=None):
         msg = "`args` parameter expected to be a list or tuple of strings, got: {!r} (type: {})"
         raise TypeError(msg.format(args, type(args)))
 
-    config = get_config(args)
+    config = get_config(args, plugins)
     pluginmanager = config.pluginmanager
     try:
         if plugins:
@@ -202,6 +210,19 @@ def _prepareconfig(args=None, plugins=None):
     except BaseException:
         config._ensure_unconfigure()
         raise
+
+
+def _fail_on_non_top_pytest_plugins(conftestpath, confcutdir):
+    msg = (
+        "Defining 'pytest_plugins' in a non-top-level conftest is no longer supported:\n"
+        "It affects the entire test suite instead of just below the conftest as expected.\n"
+        "  {}\n"
+        "Please move it to a top level conftest file at the rootdir:\n"
+        "  {}\n"
+        "For more information, visit:\n"
+        "  https://docs.pytest.org/en/latest/deprecations.html#pytest-plugins-in-non-top-level-conftest-files"
+    )
+    fail(msg.format(conftestpath, confcutdir), pytrace=False)
 
 
 class PytestPluginManager(PluginManager):
@@ -424,16 +445,7 @@ class PytestPluginManager(PluginManager):
                     and self._configured
                     and not self._using_pyargs
                 ):
-                    from _pytest.deprecated import (
-                        PYTEST_PLUGINS_FROM_NON_TOP_LEVEL_CONFTEST,
-                    )
-
-                    fail(
-                        PYTEST_PLUGINS_FROM_NON_TOP_LEVEL_CONFTEST.format(
-                            conftestpath, self._confcutdir
-                        ),
-                        pytrace=False,
-                    )
+                    _fail_on_non_top_pytest_plugins(conftestpath, self._confcutdir)
             except Exception:
                 raise ConftestImportFailure(conftestpath, sys.exc_info())
 
@@ -608,20 +620,57 @@ def _iter_rewritable_modules(package_files):
 
 
 class Config:
-    """ access to configuration values, pluginmanager and plugin hooks.  """
+    """
+    Access to configuration values, pluginmanager and plugin hooks.
 
-    def __init__(self, pluginmanager):
-        #: access to command line option as attributes.
-        #: (deprecated), use :py:func:`getoption() <_pytest.config.Config.getoption>` instead
-        self.option = argparse.Namespace()
+    :ivar PytestPluginManager pluginmanager: the plugin manager handles plugin registration and hook invocation.
+
+    :ivar argparse.Namespace option: access to command line option as attributes.
+
+    :ivar InvocationParams invocation_params:
+
+        Object containing the parameters regarding the ``pytest.main``
+        invocation.
+
+        Contains the following read-only attributes:
+
+        * ``args``: list of command-line arguments as passed to ``pytest.main()``.
+        * ``plugins``: list of extra plugins, might be None.
+        * ``dir``: directory where ``pytest.main()`` was invoked from.
+    """
+
+    @attr.s(frozen=True)
+    class InvocationParams:
+        """Holds parameters passed during ``pytest.main()``
+
+        .. note::
+
+            Currently the environment variable PYTEST_ADDOPTS is also handled by
+            pytest implicitly, not being part of the invocation.
+
+            Plugins accessing ``InvocationParams`` must be aware of that.
+        """
+
+        args = attr.ib()
+        plugins = attr.ib()
+        dir = attr.ib()
+
+    def __init__(self, pluginmanager, *, invocation_params=None):
         from .argparsing import Parser, FILE_OR_DIR
+
+        if invocation_params is None:
+            invocation_params = self.InvocationParams(
+                args=(), plugins=None, dir=Path().resolve()
+            )
+
+        self.option = argparse.Namespace()
+        self.invocation_params = invocation_params
 
         _a = FILE_OR_DIR
         self._parser = Parser(
             usage="%(prog)s [options] [{}] [{}] [...]".format(_a, _a),
             processopt=self._processopt,
         )
-        #: a pluginmanager instance
         self.pluginmanager = pluginmanager
         self.trace = self.pluginmanager.trace.root.get("config")
         self.hook = self.pluginmanager.hook
@@ -631,8 +680,12 @@ class Config:
         self._cleanup = []
         self.pluginmanager.register(self, "pytestconfig")
         self._configured = False
-        self.invocation_dir = py.path.local()
         self.hook.pytest_addoption.call_historic(kwargs=dict(parser=self._parser))
+
+    @property
+    def invocation_dir(self):
+        """Backward compatibility"""
+        return py.path.local(str(self.invocation_params.dir))
 
     def add_cleanup(self, func):
         """ Add a function to be called when the config object gets out of
@@ -864,7 +917,7 @@ class Config:
         assert not hasattr(
             self, "args"
         ), "can only parse cmdline args at most once per Config object"
-        self._origargs = args
+        assert self.invocation_params.args == args
         self.hook.pytest_addhooks.call_historic(
             kwargs=dict(pluginmanager=self.pluginmanager)
         )

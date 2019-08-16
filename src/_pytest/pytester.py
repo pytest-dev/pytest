@@ -340,7 +340,10 @@ def _config_for_test():
     config._ensure_unconfigure()  # cleanup, e.g. capman closing tmpfiles.
 
 
-rex_outcome = re.compile(r"(\d+) ([\w-]+)")
+# regex to match the session duration string in the summary: "74.34s"
+rex_session_duration = re.compile(r"\d+\.\d\ds")
+# regex to match all the counts and phrases in the summary line: "34 passed, 111 skipped"
+rex_outcome = re.compile(r"(\d+) (\w+)")
 
 
 class RunResult:
@@ -379,14 +382,11 @@ class RunResult:
 
         """
         for line in reversed(self.outlines):
-            if "seconds" in line:
+            if rex_session_duration.search(line):
                 outcomes = rex_outcome.findall(line)
-                if outcomes:
-                    d = {}
-                    for num, cat in outcomes:
-                        d[cat] = int(num)
-                    return d
-        raise ValueError("Pytest terminal report not found")
+                return {noun: int(count) for (count, noun) in outcomes}
+
+        raise ValueError("Pytest terminal summary report not found")
 
     def assert_outcomes(
         self, passed=0, skipped=0, failed=0, error=0, xpassed=0, xfailed=0
@@ -632,7 +632,7 @@ class Testdir:
     def copy_example(self, name=None):
         """Copy file from project's directory into the testdir.
 
-        :param str name: The name of the file for copy.
+        :param str name: The name of the file to copy.
         :return: path to the copied directory (inside ``self.tmpdir``).
 
         """
@@ -1194,6 +1194,8 @@ class Testdir:
             pytest.skip("pypy-64 bit not supported")
         if sys.platform.startswith("freebsd"):
             pytest.xfail("pexpect does not work reliably on freebsd")
+        if not hasattr(pexpect, "spawn"):
+            pytest.skip("pexpect.spawn not available")
         logfile = self.tmpdir.join("spawn.out").open("wb")
 
         # Do not load user config.

@@ -75,7 +75,7 @@ them in turn:
     E        +  where 54 = eval('6*9')
 
     test_expectation.py:6: AssertionError
-    ==================== 1 failed, 2 passed in 0.12 seconds ====================
+    ======================= 1 failed, 2 passed in 0.05s ========================
 
 .. note::
 
@@ -128,7 +128,7 @@ Let's run this:
 
     test_expectation.py ..x                                              [100%]
 
-    =================== 2 passed, 1 xfailed in 0.12 seconds ====================
+    ======================= 2 passed, 1 xfailed in 0.06s =======================
 
 The one parameter set which caused a failure previously now
 shows up as an "xfailed (expected to fail)" test.
@@ -205,7 +205,7 @@ If we now pass two stringinput values, our test will run twice:
 
     $ pytest -q --stringinput="hello" --stringinput="world" test_strings.py
     ..                                                                   [100%]
-    2 passed in 0.12 seconds
+    2 passed in 0.01s
 
 Let's also run with a stringinput that will lead to a failing test:
 
@@ -225,7 +225,7 @@ Let's also run with a stringinput that will lead to a failing test:
     E        +    where <built-in method isalpha of str object at 0xdeadbeef> = '!'.isalpha
 
     test_strings.py:4: AssertionError
-    1 failed in 0.12 seconds
+    1 failed in 0.05s
 
 As expected our test function fails.
 
@@ -239,7 +239,7 @@ list:
     s                                                                    [100%]
     ========================= short test summary info ==========================
     SKIPPED [1] test_strings.py: got empty parameter set ['stringinput'], function test_valid_string at $REGENDOC_TMPDIR/test_strings.py:2
-    1 skipped in 0.12 seconds
+    1 skipped in 0.01s
 
 Note that when calling ``metafunc.parametrize`` multiple times with different parameter sets, all parameter names across
 those sets cannot be duplicated, otherwise an error will be raised.

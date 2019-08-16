@@ -42,15 +42,10 @@ repos:
     hooks:
     -   id: rst-backticks
 -   repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v0.711
+    rev: v0.720
     hooks:
     -   id: mypy
-        name: mypy (src)
-        files: ^src/
-        args: []
-    -   id: mypy
-        name: mypy (testing)
-        files: ^testing/
+        files: ^(src/|testing/)
         args: []
 -   repo: local
     hooks:
@@ -64,7 +59,7 @@ repos:
         name: changelog filenames
         language: fail
         entry: 'changelog files must be named ####.(feature|bugfix|doc|deprecation|removal|vendor|trivial).rst'
-        exclude: changelog/(\d+\.(feature|bugfix|doc|deprecation|removal|vendor|trivial).rst|README.rst|_template.rst)
+        exclude: changelog/(\d+\.(feature|improvement|bugfix|doc|deprecation|removal|vendor|trivial).rst|README.rst|_template.rst)
         files: ^changelog/
     -   id: py-deprecated
         name: py library is deprecated

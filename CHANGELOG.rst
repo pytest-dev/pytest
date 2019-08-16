@@ -18,6 +18,164 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+pytest 5.1.0 (2019-08-15)
+=========================
+
+Removals
+--------
+
+- `#5180 <https://github.com/pytest-dev/pytest/issues/5180>`_: As per our policy, the following features have been deprecated in the 4.X series and are now
+  removed:
+
+  * ``Request.getfuncargvalue``: use ``Request.getfixturevalue`` instead.
+
+  * ``pytest.raises`` and ``pytest.warns`` no longer support strings as the second argument.
+
+  * ``message`` parameter of ``pytest.raises``.
+
+  * ``pytest.raises``, ``pytest.warns`` and ``ParameterSet.param`` now use native keyword-only
+    syntax. This might change the exception message from previous versions, but they still raise
+    ``TypeError`` on unknown keyword arguments as before.
+
+  * ``pytest.config`` global variable.
+
+  * ``tmpdir_factory.ensuretemp`` method.
+
+  * ``pytest_logwarning`` hook.
+
+  * ``RemovedInPytest4Warning`` warning type.
+
+  * ``request`` is now a reserved name for fixtures.
+
+
+  For more information consult
+  `Deprecations and Removals <https://docs.pytest.org/en/latest/deprecations.html>`__ in the docs.
+
+
+- `#5565 <https://github.com/pytest-dev/pytest/issues/5565>`_: Removed unused support code for `unittest2 <https://pypi.org/project/unittest2/>`__.
+
+  The ``unittest2`` backport module is no longer
+  necessary since Python 3.3+, and the small amount of code in pytest to support it also doesn't seem
+  to be used: after removed, all tests still pass unchanged.
+
+  Although our policy is to introduce a deprecation period before removing any features or support
+  for third party libraries, because this code is apparently not used
+  at all (even if ``unittest2`` is used by a test suite executed by pytest), it was decided to
+  remove it in this release.
+
+  If you experience a regression because of this, please
+  `file an issue <https://github.com/pytest-dev/pytest/issues/new>`__.
+
+
+- `#5615 <https://github.com/pytest-dev/pytest/issues/5615>`_: ``pytest.fail``, ``pytest.xfail`` and ``pytest.skip`` no longer support bytes for the message argument.
+
+  This was supported for Python 2 where it was tempting to use ``"message"``
+  instead of ``u"message"``.
+
+  Python 3 code is unlikely to pass ``bytes`` to these functions. If you do,
+  please decode it to an ``str`` beforehand.
+
+
+
+Features
+--------
+
+- `#5564 <https://github.com/pytest-dev/pytest/issues/5564>`_: New ``Config.invocation_args`` attribute containing the unchanged arguments passed to ``pytest.main()``.
+
+
+- `#5576 <https://github.com/pytest-dev/pytest/issues/5576>`_: New `NUMBER <https://docs.pytest.org/en/latest/doctest.html#using-doctest-options>`__
+  option for doctests to ignore irrelevant differences in floating-point numbers.
+  Inspired by Sébastien Boisgérault's `numtest <https://github.com/boisgera/numtest>`__
+  extension for doctest.
+
+
+
+Improvements
+------------
+
+- `#5471 <https://github.com/pytest-dev/pytest/issues/5471>`_: JUnit XML now includes a timestamp and hostname in the testsuite tag.
+
+
+- `#5707 <https://github.com/pytest-dev/pytest/issues/5707>`_: Time taken to run the test suite now includes a human-readable representation when it takes over
+  60 seconds, for example::
+
+      ===== 2 failed in 102.70s (0:01:42) =====
+
+
+
+Bug Fixes
+---------
+
+- `#4344 <https://github.com/pytest-dev/pytest/issues/4344>`_: Fix RuntimeError/StopIteration when trying to collect package with "__init__.py" only.
+
+
+- `#5115 <https://github.com/pytest-dev/pytest/issues/5115>`_: Warnings issued during ``pytest_configure`` are explicitly not treated as errors, even if configured as such, because it otherwise completely breaks pytest.
+
+
+- `#5477 <https://github.com/pytest-dev/pytest/issues/5477>`_: The XML file produced by ``--junitxml`` now correctly contain a ``<testsuites>`` root element.
+
+
+- `#5523 <https://github.com/pytest-dev/pytest/issues/5523>`_: Fixed using multiple short options together in the command-line (for example ``-vs``) in Python 3.8+.
+
+
+- `#5524 <https://github.com/pytest-dev/pytest/issues/5524>`_: Fix issue where ``tmp_path`` and ``tmpdir`` would not remove directories containing files marked as read-only,
+  which could lead to pytest crashing when executed a second time with the ``--basetemp`` option.
+
+
+- `#5537 <https://github.com/pytest-dev/pytest/issues/5537>`_: Replace ``importlib_metadata`` backport with ``importlib.metadata`` from the
+  standard library on Python 3.8+.
+
+
+- `#5578 <https://github.com/pytest-dev/pytest/issues/5578>`_: Improve type checking for some exception-raising functions (``pytest.xfail``, ``pytest.skip``, etc)
+  so they provide better error messages when users meant to use marks (for example ``@pytest.xfail``
+  instead of ``@pytest.mark.xfail``).
+
+
+- `#5606 <https://github.com/pytest-dev/pytest/issues/5606>`_: Fixed internal error when test functions were patched with objects that cannot be compared
+  for truth values against others, like ``numpy`` arrays.
+
+
+- `#5634 <https://github.com/pytest-dev/pytest/issues/5634>`_: ``pytest.exit`` is now correctly handled in ``unittest`` cases.
+  This makes ``unittest`` cases handle ``quit`` from pytest's pdb correctly.
+
+
+- `#5650 <https://github.com/pytest-dev/pytest/issues/5650>`_: Improved output when parsing an ini configuration file fails.
+
+
+- `#5701 <https://github.com/pytest-dev/pytest/issues/5701>`_: Fix collection of ``staticmethod`` objects defined with ``functools.partial``.
+
+
+- `#5734 <https://github.com/pytest-dev/pytest/issues/5734>`_: Skip async generator test functions, and update the warning message to refer to ``async def`` functions.
+
+
+
+Improved Documentation
+----------------------
+
+- `#5669 <https://github.com/pytest-dev/pytest/issues/5669>`_: Add docstring for ``Testdir.copy_example``.
+
+
+
+Trivial/Internal Changes
+------------------------
+
+- `#5095 <https://github.com/pytest-dev/pytest/issues/5095>`_: XML files of the ``xunit2`` family are now validated against the schema by pytest's own test suite
+  to avoid future regressions.
+
+
+- `#5516 <https://github.com/pytest-dev/pytest/issues/5516>`_: Cache node splitting function which can improve collection performance in very large test suites.
+
+
+- `#5603 <https://github.com/pytest-dev/pytest/issues/5603>`_: Simplified internal ``SafeRepr`` class and removed some dead code.
+
+
+- `#5664 <https://github.com/pytest-dev/pytest/issues/5664>`_: When invoking pytest's own testsuite with ``PYTHONDONTWRITEBYTECODE=1``,
+  the ``test_xfail_handling`` test no longer fails.
+
+
+- `#5684 <https://github.com/pytest-dev/pytest/issues/5684>`_: Replace manual handling of ``OSError.errno`` in the codebase by new ``OSError`` subclasses (``PermissionError``, ``FileNotFoundError``, etc.).
+
+
 pytest 5.0.1 (2019-07-04)
 =========================
 

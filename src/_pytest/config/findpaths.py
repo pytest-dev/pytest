@@ -20,8 +20,6 @@ def getcfg(args, config=None):
 
     note: config is optional and used only to issue warnings explicitly (#2891).
     """
-    from _pytest.deprecated import CFG_PYTEST_SECTION
-
     inibasenames = ["pytest.ini", "tox.ini", "setup.cfg"]
     args = [x for x in args if not str(x).startswith("-")]
     if not args:
@@ -101,6 +99,9 @@ def get_dirs_from_args(args):
     return [get_dir_from_path(path) for path in possible_paths if path.exists()]
 
 
+CFG_PYTEST_SECTION = "[pytest] section in {filename} files is no longer supported, change to [tool:pytest] instead."
+
+
 def determine_setup(inifile, args, rootdir_cmd_arg=None, config=None):
     dirs = get_dirs_from_args(args)
     if inifile:
@@ -111,8 +112,6 @@ def determine_setup(inifile, args, rootdir_cmd_arg=None, config=None):
             try:
                 inicfg = iniconfig[section]
                 if is_cfg_file and section == "pytest" and config is not None:
-                    from _pytest.deprecated import CFG_PYTEST_SECTION
-
                     fail(
                         CFG_PYTEST_SECTION.format(filename=str(inifile)), pytrace=False
                     )

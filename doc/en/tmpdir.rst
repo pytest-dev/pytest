@@ -64,7 +64,7 @@ Running this would result in a passed test except for the last
     E       assert 0
 
     test_tmp_path.py:13: AssertionError
-    ========================= 1 failed in 0.12 seconds =========================
+    ============================ 1 failed in 0.06s =============================
 
 .. _`tmp_path_factory example`:
 
@@ -132,8 +132,8 @@ Running this would result in a passed test except for the last
     >       assert 0
     E       assert 0
 
-    test_tmpdir.py:7: AssertionError
-    ========================= 1 failed in 0.12 seconds =========================
+    test_tmpdir.py:9: AssertionError
+    ============================ 1 failed in 0.05s =============================
 
 .. _`tmpdir factory example`:
 

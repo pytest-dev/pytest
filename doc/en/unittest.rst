@@ -151,22 +151,22 @@ the ``self.db`` values in the traceback:
 
         def test_method1(self):
             assert hasattr(self, "db")
-    >       assert 0, self.db   # fail for demo purposes
+    >       assert 0, self.db  # fail for demo purposes
     E       AssertionError: <conftest.db_class.<locals>.DummyDB object at 0xdeadbeef>
     E       assert 0
 
-    test_unittest_db.py:9: AssertionError
+    test_unittest_db.py:10: AssertionError
     ___________________________ MyTest.test_method2 ____________________________
 
     self = <test_unittest_db.MyTest testMethod=test_method2>
 
         def test_method2(self):
-    >       assert 0, self.db   # fail for demo purposes
+    >       assert 0, self.db  # fail for demo purposes
     E       AssertionError: <conftest.db_class.<locals>.DummyDB object at 0xdeadbeef>
     E       assert 0
 
-    test_unittest_db.py:12: AssertionError
-    ========================= 2 failed in 0.12 seconds =========================
+    test_unittest_db.py:13: AssertionError
+    ============================ 2 failed in 0.07s =============================
 
 This default pytest traceback shows that the two test methods
 share the same ``self.db`` instance which was our intention
@@ -219,7 +219,7 @@ Running this test module ...:
 
     $ pytest -q test_unittest_cleandir.py
     .                                                                    [100%]
-    1 passed in 0.12 seconds
+    1 passed in 0.02s
 
 ... gives us one passed test because the ``initdir`` fixture function
 was executed ahead of the ``test_method``.

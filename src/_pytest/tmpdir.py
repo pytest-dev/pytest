@@ -2,7 +2,6 @@
 import os
 import re
 import tempfile
-import warnings
 
 import attr
 import py
@@ -88,19 +87,6 @@ class TempdirFactory:
 
     _tmppath_factory = attr.ib()
 
-    def ensuretemp(self, string, dir=1):
-        """ (deprecated) return temporary directory path with
-            the given string as the trailing part.  It is usually
-            better to use the 'tmpdir' function argument which
-            provides an empty unique-per-test-invocation directory
-            and is guaranteed to be empty.
-        """
-        # py.log._apiwarn(">1.1", "use tmpdir function argument")
-        from .deprecated import PYTEST_ENSURETEMP
-
-        warnings.warn(PYTEST_ENSURETEMP, stacklevel=2)
-        return self.getbasetemp().ensure(string, dir=dir)
-
     def mktemp(self, basename, numbered=True):
         """Create a subdirectory of the base temporary directory and return it.
         If ``numbered``, ensure the directory is unique by adding a number
@@ -138,7 +124,6 @@ def pytest_configure(config):
     config._cleanup.append(mp.undo)
     mp.setattr(config, "_tmp_path_factory", tmppath_handler, raising=False)
     mp.setattr(config, "_tmpdirhandler", t, raising=False)
-    mp.setattr(pytest, "ensuretemp", t.ensuretemp, raising=False)
 
 
 @pytest.fixture(scope="session")

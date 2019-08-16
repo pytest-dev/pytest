@@ -58,11 +58,19 @@ class TWMock:
     fullwidth = 80
 
 
-def test_excinfo_simple():
+def test_excinfo_simple() -> None:
     try:
         raise ValueError
     except ValueError:
         info = _pytest._code.ExceptionInfo.from_current()
+    assert info.type == ValueError
+
+
+def test_excinfo_from_exc_info_simple():
+    try:
+        raise ValueError
+    except ValueError as e:
+        info = _pytest._code.ExceptionInfo.from_exc_info((type(e), e, e.__traceback__))
     assert info.type == ValueError
 
 

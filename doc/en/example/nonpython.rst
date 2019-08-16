@@ -41,7 +41,7 @@ now execute the test specification:
     usecase execution failed
        spec failed: 'some': 'other'
        no further details known at this point.
-    ==================== 1 failed, 1 passed in 0.12 seconds ====================
+    ======================= 1 failed, 1 passed in 0.06s ========================
 
 .. regendoc:wipe
 
@@ -77,7 +77,7 @@ consulted when reporting in ``verbose`` mode:
     usecase execution failed
        spec failed: 'some': 'other'
        no further details known at this point.
-    ==================== 1 failed, 1 passed in 0.12 seconds ====================
+    ======================= 1 failed, 1 passed in 0.07s ========================
 
 .. regendoc:wipe
 
@@ -97,4 +97,4 @@ interesting to just look at the collection tree:
         <YamlItem hello>
         <YamlItem ok>
 
-    ======================= no tests ran in 0.12 seconds =======================
+    ========================== no tests ran in 0.05s ===========================

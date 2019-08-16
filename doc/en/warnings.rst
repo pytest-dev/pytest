@@ -41,7 +41,7 @@ Running pytest now produces this output:
         warnings.warn(UserWarning("api v1, should use functions from v2"))
 
     -- Docs: https://docs.pytest.org/en/latest/warnings.html
-    =================== 1 passed, 1 warnings in 0.12 seconds ===================
+    ====================== 1 passed, 1 warnings in 0.01s =======================
 
 The ``-W`` flag can be passed to control which warnings will be displayed or even turn
 them into errors:
@@ -64,7 +64,7 @@ them into errors:
     E       UserWarning: api v1, should use functions from v2
 
     test_show_warnings.py:5: UserWarning
-    1 failed in 0.12 seconds
+    1 failed in 0.05s
 
 The same option can be set in the ``pytest.ini`` file using the ``filterwarnings`` ini option.
 For example, the configuration below will ignore all user warnings, but will transform
@@ -407,7 +407,7 @@ defines an ``__init__`` constructor, as this prevents the class from being insta
         class Test:
 
     -- Docs: https://docs.pytest.org/en/latest/warnings.html
-    1 warnings in 0.12 seconds
+    1 warnings in 0.01s
 
 These warnings might be filtered using the same builtin mechanisms used to filter other types of warnings.
 
@@ -433,5 +433,3 @@ The following warning types are used by pytest and are part of the public API:
 .. autoclass:: pytest.PytestUnhandledCoroutineWarning
 
 .. autoclass:: pytest.PytestUnknownMarkWarning
-
-.. autoclass:: pytest.RemovedInPytest4Warning

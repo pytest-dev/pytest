@@ -10,9 +10,11 @@ src/main/resources/org/jenkinsci/plugins/xunit/types/model/xsd/junit-10.xsd
 """
 import functools
 import os
+import platform
 import re
 import sys
 import time
+from datetime import datetime
 
 import py
 
@@ -657,18 +659,19 @@ class LogXML:
         )
         logfile.write('<?xml version="1.0" encoding="utf-8"?>')
 
-        logfile.write(
-            Junit.testsuite(
-                self._get_global_properties_node(),
-                [x.to_xml() for x in self.node_reporters_ordered],
-                name=self.suite_name,
-                errors=self.stats["error"],
-                failures=self.stats["failure"],
-                skipped=self.stats["skipped"],
-                tests=numtests,
-                time="%.3f" % suite_time_delta,
-            ).unicode(indent=0)
+        suite_node = Junit.testsuite(
+            self._get_global_properties_node(),
+            [x.to_xml() for x in self.node_reporters_ordered],
+            name=self.suite_name,
+            errors=self.stats["error"],
+            failures=self.stats["failure"],
+            skipped=self.stats["skipped"],
+            tests=numtests,
+            time="%.3f" % suite_time_delta,
+            timestamp=datetime.fromtimestamp(self.suite_start_time).isoformat(),
+            hostname=platform.node(),
         )
+        logfile.write(Junit.testsuites([suite_node]).unicode(indent=0))
         logfile.close()
 
     def pytest_terminal_summary(self, terminalreporter):

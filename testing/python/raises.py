@@ -2,35 +2,20 @@ import sys
 
 import pytest
 from _pytest.outcomes import Failed
-from _pytest.warning_types import PytestDeprecationWarning
 
 
 class TestRaises:
+    def test_check_callable(self):
+        with pytest.raises(TypeError, match=r".* must be callable"):
+            pytest.raises(RuntimeError, "int('qwe')")
+
     def test_raises(self):
-        source = "int('qwe')"
-        with pytest.warns(PytestDeprecationWarning):
-            excinfo = pytest.raises(ValueError, source)
-        code = excinfo.traceback[-1].frame.code
-        s = str(code.fullsource)
-        assert s == source
-
-    def test_raises_exec(self):
-        with pytest.warns(PytestDeprecationWarning) as warninfo:
-            pytest.raises(ValueError, "a,x = []")
-        assert warninfo[0].filename == __file__
-
-    def test_raises_exec_correct_filename(self):
-        with pytest.warns(PytestDeprecationWarning):
-            excinfo = pytest.raises(ValueError, 'int("s")')
-            assert __file__ in excinfo.traceback[-1].path
-
-    def test_raises_syntax_error(self):
-        with pytest.warns(PytestDeprecationWarning) as warninfo:
-            pytest.raises(SyntaxError, "qwe qwe qwe")
-        assert warninfo[0].filename == __file__
+        excinfo = pytest.raises(ValueError, int, "qwe")
+        assert "invalid literal" in str(excinfo.value)
 
     def test_raises_function(self):
-        pytest.raises(ValueError, int, "hello")
+        excinfo = pytest.raises(ValueError, int, "hello")
+        assert "invalid literal" in str(excinfo.value)
 
     def test_raises_callable_no_exception(self):
         class A:
@@ -169,17 +154,6 @@ class TestRaises:
         else:
             assert False, "Expected pytest.raises.Exception"
 
-    def test_custom_raise_message(self):
-        message = "TEST_MESSAGE"
-        try:
-            with pytest.warns(PytestDeprecationWarning):
-                with pytest.raises(ValueError, message=message):
-                    pass
-        except pytest.raises.Exception as e:
-            assert e.msg == message
-        else:
-            assert False, "Expected pytest.raises.Exception"
-
     @pytest.mark.parametrize("method", ["function", "with"])
     def test_raises_cyclic_reference(self, method):
         """
@@ -274,3 +248,9 @@ class TestRaises:
             with pytest.raises(CrappyClass()):
                 pass
         assert "via __class__" in excinfo.value.args[0]
+
+    def test_raises_context_manager_with_kwargs(self):
+        with pytest.raises(TypeError) as excinfo:
+            with pytest.raises(Exception, foo="bar"):
+                pass
+        assert "Unexpected keyword arguments" in str(excinfo.value)

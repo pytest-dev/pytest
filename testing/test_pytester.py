@@ -72,8 +72,7 @@ def test_make_hook_recorder(testdir):
 def test_parseconfig(testdir):
     config1 = testdir.parseconfig()
     config2 = testdir.parseconfig()
-    assert config2 != config1
-    assert config1 != pytest.config
+    assert config2 is not config1
 
 
 def test_testdir_runs_with_plugin(testdir):
@@ -279,7 +278,7 @@ def test_assert_outcomes_after_pytest_error(testdir):
     testdir.makepyfile("def test_foo(): assert True")
 
     result = testdir.runpytest("--unexpected-argument")
-    with pytest.raises(ValueError, match="Pytest terminal report not found"):
+    with pytest.raises(ValueError, match="Pytest terminal summary report not found"):
         result.assert_outcomes(passed=0)
 
 

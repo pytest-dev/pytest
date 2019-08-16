@@ -119,7 +119,7 @@ Here is a nice run of several failures and how ``pytest`` presents things:
             a = "1" * 100 + "a" + "2" * 100
             b = "1" * 100 + "b" + "2" * 100
     >       assert a == b
-    E       AssertionError: assert '111111111111...2222222222222' == '1111111111111...2222222222222'
+    E       AssertionError: assert '111111111111...2222222222222' == '111111111111...2222222222222'
     E         Skipping 90 identical leading characters in diff, use -v to show
     E         Skipping 91 identical trailing characters in diff, use -v to show
     E         - 1111111111a222222222
@@ -136,7 +136,7 @@ Here is a nice run of several failures and how ``pytest`` presents things:
             a = "1\n" * 100 + "a" + "2\n" * 100
             b = "1\n" * 100 + "b" + "2\n" * 100
     >       assert a == b
-    E       AssertionError: assert '1\n1\n1\n1\n...n2\n2\n2\n2\n' == '1\n1\n1\n1\n1...n2\n2\n2\n2\n'
+    E       AssertionError: assert '1\n1\n1\n1\n...n2\n2\n2\n2\n' == '1\n1\n1\n1\n...n2\n2\n2\n2\n'
     E         Skipping 190 identical leading characters in diff, use -v to show
     E         Skipping 191 identical trailing characters in diff, use -v to show
     E           1
@@ -235,7 +235,7 @@ Here is a nice run of several failures and how ``pytest`` presents things:
         def test_not_in_text_multiline(self):
             text = "some multiline\ntext\nwhich\nincludes foo\nand a\ntail"
     >       assert "foo" not in text
-    E       AssertionError: assert 'foo' not in 'some multiline\ntext\nw...ncludes foo\nand a\ntail'
+    E       AssertionError: assert 'foo' not in 'some multil...nand a\ntail'
     E         'foo' is contained here:
     E           some multiline
     E           text
@@ -267,7 +267,7 @@ Here is a nice run of several failures and how ``pytest`` presents things:
         def test_not_in_text_single_long(self):
             text = "head " * 50 + "foo " + "tail " * 20
     >       assert "foo" not in text
-    E       AssertionError: assert 'foo' not in 'head head head head hea...ail tail tail tail tail '
+    E       AssertionError: assert 'foo' not in 'head head h...l tail tail '
     E         'foo' is contained here:
     E           head head foo tail tail tail tail tail tail tail tail tail tail tail tail tail tail tail tail tail tail tail tail
     E         ?           +++
@@ -280,7 +280,7 @@ Here is a nice run of several failures and how ``pytest`` presents things:
         def test_not_in_text_single_long_term(self):
             text = "head " * 50 + "f" * 70 + "tail " * 20
     >       assert "f" * 70 not in text
-    E       AssertionError: assert 'fffffffffff...ffffffffffff' not in 'head head he...l tail tail '
+    E       AssertionError: assert 'fffffffffff...ffffffffffff' not in 'head head h...l tail tail '
     E         'ffffffffffffffffff...fffffffffffffffffff' is contained here:
     E           head head fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffftail tail tail tail tail tail tail tail tail tail tail tail tail tail tail tail tail tail tail tail
     E         ?           ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -301,7 +301,7 @@ Here is a nice run of several failures and how ``pytest`` presents things:
             left = Foo(1, "b")
             right = Foo(1, "c")
     >       assert left == right
-    E       AssertionError: assert TestSpecialis...oo(a=1, b='b') == TestSpecialise...oo(a=1, b='c')
+    E       AssertionError: assert TestSpecialis...oo(a=1, b='b') == TestSpecialis...oo(a=1, b='c')
     E         Omitting 1 identical items, use -vv to show
     E         Differing attributes:
     E         b: 'b' != 'c'
@@ -650,4 +650,4 @@ Here is a nice run of several failures and how ``pytest`` presents things:
     E        +  where 1 = This is JSON\n{\n  'foo': 'bar'\n}.a
 
     failure_demo.py:282: AssertionError
-    ======================== 44 failed in 0.12 seconds =========================
+    ============================ 44 failed in 0.82s ============================
