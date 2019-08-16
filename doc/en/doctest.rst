@@ -36,7 +36,7 @@ then you can just invoke ``pytest`` directly:
 
     test_example.txt .                                                   [100%]
 
-    ========================= 1 passed in 0.12 seconds =========================
+    ============================ 1 passed in 0.02s =============================
 
 By default, pytest will collect ``test*.txt`` files looking for doctest directives, but you
 can pass additional globs using the ``--doctest-glob`` option (multi-allowed).
@@ -66,7 +66,7 @@ and functions, including from test modules:
     mymodule.py .                                                        [ 50%]
     test_example.txt .                                                   [100%]
 
-    ========================= 2 passed in 0.12 seconds =========================
+    ============================ 2 passed in 0.03s =============================
 
 You can make these changes permanent in your project by
 putting them into a pytest.ini file like this:

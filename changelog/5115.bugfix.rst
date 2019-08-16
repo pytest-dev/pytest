@@ -1,1 +1,0 @@
-Warnings issued during ``pytest_configure`` are explicitly not treated as errors, even if configured as such, because it otherwise completely breaks pytest.

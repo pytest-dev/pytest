@@ -81,4 +81,4 @@ If you run this without output capturing:
     .test other
     .test_unit1 method called
     .
-    4 passed in 0.12 seconds
+    4 passed in 0.02s
