@@ -405,6 +405,12 @@ class DropShorterLongHelpFormatter(argparse.HelpFormatter):
     - cache result on action object as this is called at least 2 times
     """
 
+    def __init__(self, *args, **kwargs):
+        """Use more accurate terminal width via pylib."""
+        if "width" not in kwargs:
+            kwargs["width"] = py.io.get_terminal_width()
+        super().__init__(*args, **kwargs)
+
     def _format_action_invocation(self, action):
         orgstr = argparse.HelpFormatter._format_action_invocation(self, action)
         if orgstr and orgstr[0] != "-":  # only optional arguments
