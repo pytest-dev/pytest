@@ -162,46 +162,46 @@ class TestImportHookInstallation:
                     return check
             """,
             "spamplugin.py": """\
-            import pytest
-            from hampkg import check_first2
+                import pytest
+                from hampkg import check_first2
 
-            @pytest.fixture
-            def check_first():
-                def check(values, value):
-                    assert values.pop(0) == value
-                return check
+                @pytest.fixture
+                def check_first():
+                    def check(values, value):
+                        assert values.pop(0) == value
+                    return check
             """,
             "mainwrapper.py": """\
-            import pytest
-            from _pytest.compat import importlib_metadata
+                import pytest
+                from _pytest.compat import importlib_metadata
 
-            class DummyEntryPoint(object):
-                name = 'spam'
-                module_name = 'spam.py'
-                group = 'pytest11'
+                class DummyEntryPoint(object):
+                    name = 'spam'
+                    module_name = 'spam.py'
+                    group = 'pytest11'
 
-                def load(self):
-                    import spamplugin
-                    return spamplugin
+                    def load(self):
+                        import spamplugin
+                        return spamplugin
 
-            class DummyDistInfo(object):
-                version = '1.0'
-                files = ('spamplugin.py', 'hampkg/__init__.py')
-                entry_points = (DummyEntryPoint(),)
-                metadata = {'name': 'foo'}
+                class DummyDistInfo(object):
+                    version = '1.0'
+                    files = ('spamplugin.py', 'hampkg/__init__.py')
+                    entry_points = (DummyEntryPoint(),)
+                    metadata = {'name': 'foo'}
 
-            def distributions():
-                return (DummyDistInfo(),)
+                def distributions():
+                    return (DummyDistInfo(),)
 
-            importlib_metadata.distributions = distributions
-            pytest.main()
-            """,
+                importlib_metadata.distributions = distributions
+                pytest.main()
+                """,
             "test_foo.py": """\
-            def test(check_first):
-                check_first([10, 30], 30)
+                def test(check_first):
+                    check_first([10, 30], 30)
 
-            def test2(check_first2):
-                check_first([10, 30], 30)
+                def test2(check_first2):
+                    check_first([10, 30], 30)
             """,
         }
         testdir.makepyfile(**contents)
