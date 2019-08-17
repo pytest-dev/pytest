@@ -1302,3 +1302,23 @@ def test_exit_from_assertrepr_compare(monkeypatch):
 
     with pytest.raises(outcomes.Exit, match="Quitting debugger"):
         callequal(1, 1)
+
+
+def test_assertion_location_with_coverage(testdir):
+    """This used to report the wrong location when run with coverage (#5754)."""
+    p = testdir.makepyfile(
+        """
+        def test():
+            assert False, 1
+            assert False, 2
+        """
+    )
+    result = testdir.runpytest(str(p))
+    result.stdout.fnmatch_lines(
+        [
+            ">       assert False, 1",
+            "E       AssertionError: 1",
+            "E       assert False",
+            "*= 1 failed in*",
+        ]
+    )
