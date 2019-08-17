@@ -490,7 +490,6 @@ class TestAssert_reprcompare:
         assert len(expl) > 1
 
     def test_Sequence(self):
-
         if not hasattr(collections_abc, "MutableSequence"):
             pytest.skip("cannot import MutableSequence")
         MutableSequence = collections_abc.MutableSequence
@@ -806,9 +805,6 @@ class TestFormatExplanation:
 
 
 class TestTruncateExplanation:
-
-    """ Confirm assertion output is truncated as expected """
-
     # The number of lines in the truncation explanation message. Used
     # to calculate that results have the expected length.
     LINES_IN_TRUNCATION_MSG = 2
@@ -969,7 +965,13 @@ def test_pytest_assertrepr_compare_integration(testdir):
     )
     result = testdir.runpytest()
     result.stdout.fnmatch_lines(
-        ["*def test_hello():*", "*assert x == y*", "*E*Extra items*left*", "*E*50*"]
+        [
+            "*def test_hello():*",
+            "*assert x == y*",
+            "*E*Extra items*left*",
+            "*E*50*",
+            "*= 1 failed in*",
+        ]
     )
 
 
