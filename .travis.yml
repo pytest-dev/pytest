@@ -23,6 +23,7 @@ install:
 jobs:
   include:
     - env: TOXENV=py35-xdist
+      dist: trusty
       python: '3.5.0'
 
 matrix:
