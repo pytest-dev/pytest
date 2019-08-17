@@ -94,11 +94,6 @@ jobs:
           tags: true
           repo: pytest-dev/pytest
 
-matrix:
-  allow_failures:
-    - python: '3.8-dev'
-      env: TOXENV=py38-xdist
-
 before_script:
   - |
     # Do not (re-)upload coverage with cron runs.
