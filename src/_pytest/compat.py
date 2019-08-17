@@ -27,9 +27,9 @@ MODULE_NOT_FOUND_ERROR = (
 
 
 if sys.version_info >= (3, 8):
-    from importlib import metadata as importlib_metadata  # noqa
+    from importlib import metadata as importlib_metadata  # noqa: F401
 else:
-    import importlib_metadata  # noqa
+    import importlib_metadata  # noqa: F401
 
 
 def _format_args(func):
