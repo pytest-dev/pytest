@@ -490,7 +490,6 @@ class TestAssert_reprcompare:
         assert len(expl) > 1
 
     def test_Sequence(self):
-
         if not hasattr(collections_abc, "MutableSequence"):
             pytest.skip("cannot import MutableSequence")
         MutableSequence = collections_abc.MutableSequence
@@ -806,9 +805,6 @@ class TestFormatExplanation:
 
 
 class TestTruncateExplanation:
-
-    """ Confirm assertion output is truncated as expected """
-
     # The number of lines in the truncation explanation message. Used
     # to calculate that results have the expected length.
     LINES_IN_TRUNCATION_MSG = 2
@@ -969,7 +965,13 @@ def test_pytest_assertrepr_compare_integration(testdir):
     )
     result = testdir.runpytest()
     result.stdout.fnmatch_lines(
-        ["*def test_hello():*", "*assert x == y*", "*E*Extra items*left*", "*E*50*"]
+        [
+            "*def test_hello():*",
+            "*assert x == y*",
+            "*E*Extra items*left*",
+            "*E*50*",
+            "*= 1 failed in*",
+        ]
     )
 
 
@@ -1302,3 +1304,23 @@ def test_exit_from_assertrepr_compare(monkeypatch):
 
     with pytest.raises(outcomes.Exit, match="Quitting debugger"):
         callequal(1, 1)
+
+
+def test_assertion_location_with_coverage(testdir):
+    """This used to report the wrong location when run with coverage (#5754)."""
+    p = testdir.makepyfile(
+        """
+        def test():
+            assert False, 1
+            assert False, 2
+        """
+    )
+    result = testdir.runpytest(str(p))
+    result.stdout.fnmatch_lines(
+        [
+            ">       assert False, 1",
+            "E       AssertionError: 1",
+            "E       assert False",
+            "*= 1 failed in*",
+        ]
+    )
