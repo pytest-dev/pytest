@@ -9,6 +9,7 @@ import sys
 from contextlib import contextmanager
 from inspect import Parameter
 from inspect import signature
+from typing import overload
 
 import attr
 import py
@@ -347,3 +348,9 @@ class FuncargnamesCompatAttr:
 
         warnings.warn(FUNCARGNAMES, stacklevel=2)
         return self.fixturenames
+
+
+if sys.version_info < (3, 5, 2):
+
+    def overload(f):  # noqa: F811
+        return f

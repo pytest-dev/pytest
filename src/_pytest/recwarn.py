@@ -1,6 +1,5 @@
 """ recording warnings during test function execution. """
 import re
-import sys
 import warnings
 from types import TracebackType
 from typing import Any
@@ -8,21 +7,16 @@ from typing import Callable
 from typing import Iterator
 from typing import List
 from typing import Optional
-from typing import overload
 from typing import Pattern
 from typing import Tuple
 from typing import Union
 
+from _pytest.compat import overload
 from _pytest.fixtures import yield_fixture
 from _pytest.outcomes import fail
 
 if False:  # TYPE_CHECKING
     from typing import Type
-
-if sys.version_info <= (3, 5, 1):
-
-    def overload(f):  # noqa: F811
-        return f
 
 
 @yield_fixture

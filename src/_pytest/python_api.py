@@ -1,7 +1,6 @@
 import inspect
 import math
 import pprint
-import sys
 from collections.abc import Iterable
 from collections.abc import Mapping
 from collections.abc import Sized
@@ -14,7 +13,6 @@ from typing import Callable
 from typing import cast
 from typing import Generic
 from typing import Optional
-from typing import overload
 from typing import Pattern
 from typing import Tuple
 from typing import TypeVar
@@ -23,16 +21,12 @@ from typing import Union
 from more_itertools.more import always_iterable
 
 import _pytest._code
+from _pytest.compat import overload
 from _pytest.compat import STRING_TYPES
 from _pytest.outcomes import fail
 
 if False:  # TYPE_CHECKING
     from typing import Type  # noqa: F401 (used in type string)
-
-if sys.version_info <= (3, 5, 1):
-
-    def overload(f):  # noqa: F811
-        return f
 
 
 BASE_TYPE = (type, STRING_TYPES)
