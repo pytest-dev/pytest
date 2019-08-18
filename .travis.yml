@@ -22,7 +22,7 @@ install:
 
 jobs:
   include:
-    - env: TOXENV=py38-xdist
+    - env: TOXENV=py38-pluggymaster-xdist
       python: '3.8-dev'
 
 before_script:
