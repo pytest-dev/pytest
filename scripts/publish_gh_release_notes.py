@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Script used to publish GitHub release notes extracted from CHANGELOG.rst.
 
