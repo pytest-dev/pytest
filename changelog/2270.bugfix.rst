@@ -1,0 +1,1 @@
+Fix ``self`` reference in function scoped fixtures that are in a plugin class

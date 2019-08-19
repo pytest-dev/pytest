@@ -897,6 +897,10 @@ def resolve_fixture_function(fixturedef, request):
         # request.instance so that code working with "fixturedef" behaves
         # as expected.
         if request.instance is not None:
+            if hasattr(fixturefunc, "__self__") and not isinstance(
+                request.instance, fixturefunc.__self__.__class__
+            ):
+                return fixturefunc
             fixturefunc = getimfunc(fixturedef.func)
             if fixturefunc != fixturedef.func:
                 fixturefunc = fixturefunc.__get__(request.instance)
