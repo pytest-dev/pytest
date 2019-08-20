@@ -350,7 +350,7 @@ class FuncargnamesCompatAttr:
         return self.fixturenames
 
 
-if sys.version_info < (3, 5, 2):
+if sys.version_info < (3, 5, 2):  # pragma: no cover
 
     def overload(f):  # noqa: F811
         return f
