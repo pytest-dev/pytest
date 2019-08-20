@@ -1,0 +1,1 @@
+Fixed ``TypeError`` when importing pytest on Python 3.5.0 and 3.5.1.

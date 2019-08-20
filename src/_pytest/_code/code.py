@@ -591,7 +591,7 @@ class ExceptionInfo(Generic[_E]):
         )
         return fmt.repr_excinfo(self)
 
-    def match(self, regexp: Union[str, Pattern]) -> bool:
+    def match(self, regexp: "Union[str, Pattern]") -> bool:
         """
         Check whether the regular expression 'regexp' is found in the string
         representation of the exception using ``re.search``. If it matches
