@@ -42,7 +42,10 @@ jobs:
     - env: TOXENV=pypy3-xdist
       python: 'pypy3'
 
-    - env: TOXENV=py35-xdist
+    # Coverage for:
+    # - test_supports_breakpoint_module_global
+    # - code specific to 3.5.0
+    - env: TOXENV=py35-xdist PYTEST_COVERAGE=1
       dist: trusty
       python: '3.5.0'
 
