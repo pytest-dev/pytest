@@ -159,6 +159,7 @@ class TestRaises:
         """
         Ensure pytest.raises does not leave a reference cycle (#1965).
         """
+        import gc
 
         class T:
             def __call__(self):
@@ -170,7 +171,7 @@ class TestRaises:
                 raise ValueError
 
         t = T()
-        refcount = sys.getrefcount(t)
+        refcount = len(gc.get_referrers(t))
 
         if method == "function":
             pytest.raises(ValueError, t)
@@ -181,7 +182,7 @@ class TestRaises:
         # ensure both forms of pytest.raises don't leave exceptions in sys.exc_info()
         assert sys.exc_info() == (None, None, None)
 
-        assert sys.getrefcount(t) == refcount
+        assert refcount == len(gc.get_referrers(t))
 
     def test_raises_match(self):
         msg = r"with base \d+"
