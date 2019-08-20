@@ -2,6 +2,7 @@
 support for presenting detailed information in failing assertions.
 """
 import sys
+from typing import Optional
 
 from _pytest.assertion import rewrite
 from _pytest.assertion import truncate
@@ -52,7 +53,9 @@ def register_assert_rewrite(*names):
             importhook = hook
             break
     else:
-        importhook = DummyRewriteHook()
+        # TODO(typing): Add a protocol for mark_rewrite() and use it
+        # for importhook and for PytestPluginManager.rewrite_hook.
+        importhook = DummyRewriteHook()  # type: ignore
     importhook.mark_rewrite(*names)
 
 
@@ -69,7 +72,7 @@ class AssertionState:
     def __init__(self, config, mode):
         self.mode = mode
         self.trace = config.trace.root.get("assertion")
-        self.hook = None
+        self.hook = None  # type: Optional[rewrite.AssertionRewritingHook]
 
 
 def install_importhook(config):
@@ -108,6 +111,7 @@ def pytest_runtest_setup(item):
     """
 
     def callbinrepr(op, left, right):
+        # type: (str, object, object) -> Optional[str]
         """Call the pytest_assertrepr_compare hook and prepare the result
 
         This uses the first result from the hook and then ensures the
@@ -133,12 +137,13 @@ def pytest_runtest_setup(item):
                 if item.config.getvalue("assertmode") == "rewrite":
                     res = res.replace("%", "%%")
                 return res
+        return None
 
     util._reprcompare = callbinrepr
 
     if item.ihook.pytest_assertion_pass.get_hookimpls():
 
-        def call_assertion_pass_hook(lineno, expl, orig):
+        def call_assertion_pass_hook(lineno, orig, expl):
             item.ihook.pytest_assertion_pass(
                 item=item, lineno=lineno, orig=orig, expl=expl
             )

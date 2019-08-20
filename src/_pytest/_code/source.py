@@ -7,6 +7,7 @@ import tokenize
 import warnings
 from ast import PyCF_ONLY_AST as _AST_FLAG
 from bisect import bisect_right
+from typing import List
 
 import py
 
@@ -19,11 +20,11 @@ class Source:
     _compilecounter = 0
 
     def __init__(self, *parts, **kwargs):
-        self.lines = lines = []
+        self.lines = lines = []  # type: List[str]
         de = kwargs.get("deindent", True)
         for part in parts:
             if not part:
-                partlines = []
+                partlines = []  # type: List[str]
             elif isinstance(part, Source):
                 partlines = part.lines
             elif isinstance(part, (tuple, list)):
@@ -157,8 +158,7 @@ class Source:
         source = "\n".join(self.lines) + "\n"
         try:
             co = compile(source, filename, mode, flag)
-        except SyntaxError:
-            ex = sys.exc_info()[1]
+        except SyntaxError as ex:
             # re-represent syntax errors from parsing python strings
             msglines = self.lines[: ex.lineno]
             if ex.offset:
@@ -173,7 +173,8 @@ class Source:
             if flag & _AST_FLAG:
                 return co
             lines = [(x + "\n") for x in self.lines]
-            linecache.cache[filename] = (1, None, lines, filename)
+            # Type ignored because linecache.cache is private.
+            linecache.cache[filename] = (1, None, lines, filename)  # type: ignore
             return co
 
 
@@ -282,7 +283,7 @@ def get_statement_startend2(lineno, node):
     return start, end
 
 
-def getstatementrange_ast(lineno, source, assertion=False, astnode=None):
+def getstatementrange_ast(lineno, source: Source, assertion=False, astnode=None):
     if astnode is None:
         content = str(source)
         # See #4260:

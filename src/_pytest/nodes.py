@@ -1,13 +1,25 @@
 import os
 import warnings
 from functools import lru_cache
+from typing import Any
+from typing import Dict
+from typing import List
+from typing import Set
+from typing import Tuple
+from typing import Union
 
 import py
 
 import _pytest._code
 from _pytest.compat import getfslineno
+from _pytest.mark.structures import Mark
+from _pytest.mark.structures import MarkDecorator
 from _pytest.mark.structures import NodeKeywords
 from _pytest.outcomes import fail
+
+if False:  # TYPE_CHECKING
+    # Imported here due to circular import.
+    from _pytest.fixtures import FixtureDef
 
 SEP = "/"
 
@@ -78,13 +90,13 @@ class Node:
         self.keywords = NodeKeywords(self)
 
         #: the marker objects belonging to this node
-        self.own_markers = []
+        self.own_markers = []  # type: List[Mark]
 
         #: allow adding of extra keywords to use for matching
-        self.extra_keyword_matches = set()
+        self.extra_keyword_matches = set()  # type: Set[str]
 
         # used for storing artificial fixturedefs for direct parametrization
-        self._name2pseudofixturedef = {}
+        self._name2pseudofixturedef = {}  # type: Dict[str, FixtureDef]
 
         if nodeid is not None:
             assert "::()" not in nodeid
@@ -127,7 +139,8 @@ class Node:
                 )
             )
         path, lineno = get_fslocation_from_item(self)
-        warnings.warn_explicit(
+        # Type ignored: https://github.com/python/typeshed/pull/3121
+        warnings.warn_explicit(  # type: ignore
             warning,
             category=None,
             filename=str(path),
@@ -160,7 +173,9 @@ class Node:
         chain.reverse()
         return chain
 
-    def add_marker(self, marker, append=True):
+    def add_marker(
+        self, marker: Union[str, MarkDecorator], append: bool = True
+    ) -> None:
         """dynamically add a marker object to the node.
 
         :type marker: ``str`` or ``pytest.mark.*``  object
@@ -168,17 +183,19 @@ class Node:
             ``append=True`` whether to append the marker,
             if ``False`` insert at position ``0``.
         """
-        from _pytest.mark import MarkDecorator, MARK_GEN
+        from _pytest.mark import MARK_GEN
 
-        if isinstance(marker, str):
-            marker = getattr(MARK_GEN, marker)
-        elif not isinstance(marker, MarkDecorator):
-            raise ValueError("is not a string or pytest.mark.* Marker")
-        self.keywords[marker.name] = marker
-        if append:
-            self.own_markers.append(marker.mark)
+        if isinstance(marker, MarkDecorator):
+            marker_ = marker
+        elif isinstance(marker, str):
+            marker_ = getattr(MARK_GEN, marker)
         else:
-            self.own_markers.insert(0, marker.mark)
+            raise ValueError("is not a string or pytest.mark.* Marker")
+        self.keywords[marker_.name] = marker
+        if append:
+            self.own_markers.append(marker_.mark)
+        else:
+            self.own_markers.insert(0, marker_.mark)
 
     def iter_markers(self, name=None):
         """
@@ -211,7 +228,7 @@ class Node:
 
     def listextrakeywords(self):
         """ Return a set of all extra keywords in self and any parents."""
-        extra_keywords = set()
+        extra_keywords = set()  # type: Set[str]
         for item in self.listchain():
             extra_keywords.update(item.extra_keyword_matches)
         return extra_keywords
@@ -239,7 +256,8 @@ class Node:
         pass
 
     def _repr_failure_py(self, excinfo, style=None):
-        if excinfo.errisinstance(fail.Exception):
+        # Type ignored: see comment where fail.Exception is defined.
+        if excinfo.errisinstance(fail.Exception):  # type: ignore
             if not excinfo.value.pytrace:
                 return str(excinfo.value)
         fm = self.session._fixturemanager
@@ -385,13 +403,13 @@ class Item(Node):
 
     def __init__(self, name, parent=None, config=None, session=None, nodeid=None):
         super().__init__(name, parent, config, session, nodeid=nodeid)
-        self._report_sections = []
+        self._report_sections = []  # type: List[Tuple[str, str, str]]
 
         #: user properties is a list of tuples (name, value) that holds user
         #: defined properties for this test.
-        self.user_properties = []
+        self.user_properties = []  # type: List[Tuple[str, Any]]
 
-    def add_report_section(self, when, key, content):
+    def add_report_section(self, when: str, key: str, content: str) -> None:
         """
         Adds a new report section, similar to what's done internally to add stdout and
         stderr captured output::

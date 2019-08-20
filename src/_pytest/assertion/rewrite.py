@@ -2,6 +2,7 @@
 import ast
 import errno
 import functools
+import importlib.abc
 import importlib.machinery
 import importlib.util
 import io
@@ -16,6 +17,7 @@ from typing import Dict
 from typing import List
 from typing import Optional
 from typing import Set
+from typing import Tuple
 
 import atomicwrites
 
@@ -37,7 +39,7 @@ AST_IS = ast.Is()
 AST_NONE = ast.NameConstant(None)
 
 
-class AssertionRewritingHook:
+class AssertionRewritingHook(importlib.abc.MetaPathFinder):
     """PEP302/PEP451 import hook which rewrites asserts."""
 
     def __init__(self, config):
@@ -47,13 +49,13 @@ class AssertionRewritingHook:
         except ValueError:
             self.fnpats = ["test_*.py", "*_test.py"]
         self.session = None
-        self._rewritten_names = set()
-        self._must_rewrite = set()
+        self._rewritten_names = set()  # type: Set[str]
+        self._must_rewrite = set()  # type: Set[str]
         # flag to guard against trying to rewrite a pyc file while we are already writing another pyc file,
         # which might result in infinite recursion (#3506)
         self._writing_pyc = False
         self._basenames_to_check_rewrite = {"conftest"}
-        self._marked_for_rewrite_cache = {}
+        self._marked_for_rewrite_cache = {}  # type: Dict[str, bool]
         self._session_paths_checked = False
 
     def set_session(self, session):
@@ -202,7 +204,7 @@ class AssertionRewritingHook:
 
         return self._is_marked_for_rewrite(name, state)
 
-    def _is_marked_for_rewrite(self, name, state):
+    def _is_marked_for_rewrite(self, name: str, state):
         try:
             return self._marked_for_rewrite_cache[name]
         except KeyError:
@@ -217,7 +219,7 @@ class AssertionRewritingHook:
             self._marked_for_rewrite_cache[name] = False
             return False
 
-    def mark_rewrite(self, *names):
+    def mark_rewrite(self, *names: str) -> None:
         """Mark import names as needing to be rewritten.
 
         The named module or package as well as any nested modules will
@@ -384,6 +386,7 @@ def _format_boolop(explanations, is_or):
 
 
 def _call_reprcompare(ops, results, expls, each_obj):
+    # type: (Tuple[str, ...], Tuple[bool, ...], Tuple[str, ...], Tuple[object, ...]) -> str
     for i, res, expl in zip(range(len(ops)), results, expls):
         try:
             done = not res
@@ -399,11 +402,13 @@ def _call_reprcompare(ops, results, expls, each_obj):
 
 
 def _call_assertion_pass(lineno, orig, expl):
+    # type: (int, str, str) -> None
     if util._assertion_pass is not None:
-        util._assertion_pass(lineno=lineno, orig=orig, expl=expl)
+        util._assertion_pass(lineno, orig, expl)
 
 
 def _check_if_assertion_pass_impl():
+    # type: () -> bool
     """Checks if any plugins implement the pytest_assertion_pass hook
     in order not to generate explanation unecessarily (might be expensive)"""
     return True if util._assertion_pass else False
@@ -577,7 +582,7 @@ class AssertionRewriter(ast.NodeVisitor):
     def _assert_expr_to_lineno(self):
         return _get_assertion_exprs(self.source)
 
-    def run(self, mod):
+    def run(self, mod: ast.Module) -> None:
         """Find all assert statements in *mod* and rewrite them."""
         if not mod.body:
             # Nothing to do.
@@ -619,12 +624,12 @@ class AssertionRewriter(ast.NodeVisitor):
         ]
         mod.body[pos:pos] = imports
         # Collect asserts.
-        nodes = [mod]
+        nodes = [mod]  # type: List[ast.AST]
         while nodes:
             node = nodes.pop()
             for name, field in ast.iter_fields(node):
                 if isinstance(field, list):
-                    new = []
+                    new = []  # type: List
                     for i, child in enumerate(field):
                         if isinstance(child, ast.Assert):
                             # Transform assert.
@@ -698,7 +703,7 @@ class AssertionRewriter(ast.NodeVisitor):
         .explanation_param().
 
         """
-        self.explanation_specifiers = {}
+        self.explanation_specifiers = {}  # type: Dict[str, ast.expr]
         self.stack.append(self.explanation_specifiers)
 
     def pop_format_context(self, expl_expr):
@@ -741,7 +746,8 @@ class AssertionRewriter(ast.NodeVisitor):
             from _pytest.warning_types import PytestAssertRewriteWarning
             import warnings
 
-            warnings.warn_explicit(
+            # Ignore type: typeshed bug https://github.com/python/typeshed/pull/3121
+            warnings.warn_explicit(  # type: ignore
                 PytestAssertRewriteWarning(
                     "assertion is always true, perhaps remove parentheses?"
                 ),
@@ -750,15 +756,15 @@ class AssertionRewriter(ast.NodeVisitor):
                 lineno=assert_.lineno,
             )
 
-        self.statements = []
-        self.variables = []
+        self.statements = []  # type: List[ast.stmt]
+        self.variables = []  # type: List[str]
         self.variable_counter = itertools.count()
 
         if self.enable_assertion_pass_hook:
-            self.format_variables = []
+            self.format_variables = []  # type: List[str]
 
-        self.stack = []
-        self.expl_stmts = []
+        self.stack = []  # type: List[Dict[str, ast.expr]]
+        self.expl_stmts = []  # type: List[ast.stmt]
         self.push_format_context()
         # Rewrite assert into a bunch of statements.
         top_condition, explanation = self.visit(assert_.test)
@@ -896,7 +902,7 @@ warn_explicit(
         # Process each operand, short-circuiting if needed.
         for i, v in enumerate(boolop.values):
             if i:
-                fail_inner = []
+                fail_inner = []  # type: List[ast.stmt]
                 # cond is set in a prior loop iteration below
                 self.expl_stmts.append(ast.If(cond, fail_inner, []))  # noqa
                 self.expl_stmts = fail_inner
@@ -907,10 +913,10 @@ warn_explicit(
             call = ast.Call(app, [expl_format], [])
             self.expl_stmts.append(ast.Expr(call))
             if i < levels:
-                cond = res
+                cond = res  # type: ast.expr
                 if is_or:
                     cond = ast.UnaryOp(ast.Not(), cond)
-                inner = []
+                inner = []  # type: List[ast.stmt]
                 self.statements.append(ast.If(cond, inner, []))
                 self.statements = body = inner
         self.statements = save
@@ -976,7 +982,7 @@ warn_explicit(
         expl = pat % (res_expl, res_expl, value_expl, attr.attr)
         return res, expl
 
-    def visit_Compare(self, comp):
+    def visit_Compare(self, comp: ast.Compare):
         self.push_format_context()
         left_res, left_expl = self.visit(comp.left)
         if isinstance(comp.left, (ast.Compare, ast.BoolOp)):
@@ -1009,7 +1015,7 @@ warn_explicit(
             ast.Tuple(results, ast.Load()),
         )
         if len(comp.ops) > 1:
-            res = ast.BoolOp(ast.And(), load_names)
+            res = ast.BoolOp(ast.And(), load_names)  # type: ast.expr
         else:
             res = load_names[0]
         return res, self.explanation_param(self.pop_format_context(expl_call))
