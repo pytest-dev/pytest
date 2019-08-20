@@ -18,6 +18,15 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+pytest 5.1.1 (2019-08-20)
+=========================
+
+Bug Fixes
+---------
+
+- `#5751 <https://github.com/pytest-dev/pytest/issues/5751>`_: Fixed ``TypeError`` when importing pytest on Python 3.5.0 and 3.5.1.
+
+
 pytest 5.1.0 (2019-08-15)
 =========================
 

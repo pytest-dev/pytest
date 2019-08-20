@@ -65,7 +65,7 @@ Let's run this without supplying our new option:
     test_sample.py:6: AssertionError
     --------------------------- Captured stdout call ---------------------------
     first
-    1 failed in 0.06s
+    1 failed in 0.02s
 
 And now with supplying a command line option:
 
@@ -89,7 +89,7 @@ And now with supplying a command line option:
     test_sample.py:6: AssertionError
     --------------------------- Captured stdout call ---------------------------
     second
-    1 failed in 0.06s
+    1 failed in 0.02s
 
 You can see that the command line option arrived in our test.  This
 completes the basic pattern.  However, one often rather wants to process
@@ -132,7 +132,7 @@ directory with the above conftest.py:
     rootdir: $REGENDOC_TMPDIR
     collected 0 items
 
-    ========================== no tests ran in 0.01s ===========================
+    ========================== no tests ran in 0.00s ===========================
 
 .. _`excontrolskip`:
 
@@ -261,7 +261,7 @@ Let's run our little function:
     E       Failed: not configured: 42
 
     test_checkconfig.py:11: Failed
-    1 failed in 0.05s
+    1 failed in 0.02s
 
 If you only want to hide certain exceptions, you can set ``__tracebackhide__``
 to a callable which gets the ``ExceptionInfo`` object. You can for example use
@@ -445,9 +445,9 @@ Now we can profile which test functions execute the slowest:
 
     ========================= slowest 3 test durations =========================
     0.30s call     test_some_are_slow.py::test_funcslow2
-    0.25s call     test_some_are_slow.py::test_funcslow1
+    0.20s call     test_some_are_slow.py::test_funcslow1
     0.10s call     test_some_are_slow.py::test_funcfast
-    ============================ 3 passed in 0.68s =============================
+    ============================ 3 passed in 0.61s =============================
 
 incremental testing - test steps
 ---------------------------------------------------
@@ -531,7 +531,7 @@ If we run this:
     ========================= short test summary info ==========================
     XFAIL test_step.py::TestUserHandling::test_deletion
       reason: previous test failed (test_modification)
-    ================== 1 failed, 2 passed, 1 xfailed in 0.07s ==================
+    ================== 1 failed, 2 passed, 1 xfailed in 0.03s ==================
 
 We'll see that ``test_deletion`` was not executed because ``test_modification``
 failed.  It is reported as an "expected failure".
@@ -644,7 +644,7 @@ We can run this:
     E       assert 0
 
     a/test_db2.py:2: AssertionError
-    ============= 3 failed, 2 passed, 1 xfailed, 1 error in 0.10s ==============
+    ============= 3 failed, 2 passed, 1 xfailed, 1 error in 0.05s ==============
 
 The two test modules in the ``a`` directory see the same ``db`` fixture instance
 while the one test in the sister-directory ``b`` doesn't see it.  We could of course
@@ -733,7 +733,7 @@ and run them:
     E       assert 0
 
     test_module.py:6: AssertionError
-    ============================ 2 failed in 0.07s =============================
+    ============================ 2 failed in 0.02s =============================
 
 you will have a "failures" file which contains the failing test ids:
 
@@ -848,7 +848,7 @@ and run it:
     E       assert 0
 
     test_module.py:19: AssertionError
-    ======================== 2 failed, 1 error in 0.07s ========================
+    ======================== 2 failed, 1 error in 0.02s ========================
 
 You'll see that the fixture finalizers could use the precise reporting
 information.

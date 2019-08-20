@@ -96,7 +96,7 @@ marked ``smtp_connection`` fixture function.  Running the test looks like this:
     E       assert 0
 
     test_smtpsimple.py:14: AssertionError
-    ============================ 1 failed in 0.57s =============================
+    ============================ 1 failed in 0.18s =============================
 
 In the failure traceback we see that the test function was called with a
 ``smtp_connection`` argument, the ``smtplib.SMTP()`` instance created by the fixture
@@ -258,7 +258,7 @@ inspect what is going on and can now run the tests:
     E       assert 0
 
     test_module.py:13: AssertionError
-    ============================ 2 failed in 0.76s =============================
+    ============================ 2 failed in 0.20s =============================
 
 You see the two ``assert 0`` failing and more importantly you can also see
 that the same (module-scoped) ``smtp_connection`` object was passed into the
@@ -361,7 +361,7 @@ Let's execute it:
     $ pytest -s -q --tb=no
     FFteardown smtp
 
-    2 failed in 0.76s
+    2 failed in 0.20s
 
 We see that the ``smtp_connection`` instance is finalized after the two
 tests finished execution.  Note that if we decorated our fixture
@@ -515,7 +515,7 @@ again, nothing much has changed:
     $ pytest -s -q --tb=no
     FFfinalizing <smtplib.SMTP object at 0xdeadbeef> (smtp.gmail.com)
 
-    2 failed in 0.76s
+    2 failed in 0.21s
 
 Let's quickly create another test module that actually sets the
 server URL in its module namespace:
@@ -692,7 +692,7 @@ So let's just do another run:
     test_module.py:13: AssertionError
     ------------------------- Captured stdout teardown -------------------------
     finalizing <smtplib.SMTP object at 0xdeadbeef>
-    4 failed in 1.77s
+    4 failed in 0.89s
 
 We see that our two test functions each ran twice, against the different
 ``smtp_connection`` instances.  Note also, that with the ``mail.python.org``
@@ -771,7 +771,7 @@ Running the above tests results in the following test IDs being used:
      <Function test_ehlo[mail.python.org]>
      <Function test_noop[mail.python.org]>
 
-   ========================== no tests ran in 0.04s ===========================
+   ========================== no tests ran in 0.01s ===========================
 
 .. _`fixture-parametrize-marks`:
 
@@ -861,7 +861,7 @@ Here we declare an ``app`` fixture which receives the previously defined
     test_appsetup.py::test_smtp_connection_exists[smtp.gmail.com] PASSED [ 50%]
     test_appsetup.py::test_smtp_connection_exists[mail.python.org] PASSED [100%]
 
-    ============================ 2 passed in 0.79s =============================
+    ============================ 2 passed in 0.44s =============================
 
 Due to the parametrization of ``smtp_connection``, the test will run twice with two
 different ``App`` instances and respective smtp servers.  There is no
@@ -971,7 +971,7 @@ Let's run the tests in verbose mode and with looking at the print-output:
       TEARDOWN modarg mod2
 
 
-    ============================ 8 passed in 0.02s =============================
+    ============================ 8 passed in 0.01s =============================
 
 You can see that the parametrized module-scoped ``modarg`` resource caused an
 ordering of test execution that lead to the fewest possible "active" resources.
@@ -1043,7 +1043,7 @@ to verify our fixture is activated and the tests pass:
 
     $ pytest -q
     ..                                                                   [100%]
-    2 passed in 0.02s
+    2 passed in 0.01s
 
 You can specify multiple fixtures like this:
 
@@ -1151,7 +1151,7 @@ If we run it, we get two passing tests:
 
     $ pytest -q
     ..                                                                   [100%]
-    2 passed in 0.02s
+    2 passed in 0.01s
 
 Here is how autouse fixtures work in other scopes:
 
