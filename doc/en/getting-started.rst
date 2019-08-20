@@ -69,7 +69,7 @@ That’s it. You can now execute the test function:
     E        +  where 4 = func(3)
 
     test_sample.py:6: AssertionError
-    ============================ 1 failed in 0.05s =============================
+    ============================ 1 failed in 0.02s =============================
 
 This test returns a failure report because ``func(3)`` does not return ``5``.
 
@@ -108,7 +108,7 @@ Execute the test function with “quiet” reporting mode:
 
     $ pytest -q test_sysexit.py
     .                                                                    [100%]
-    1 passed in 0.01s
+    1 passed in 0.00s
 
 Group multiple tests in a class
 --------------------------------------------------------------
@@ -145,7 +145,7 @@ Once you develop multiple tests, you may want to group them into a class. pytest
     E        +  where False = hasattr('hello', 'check')
 
     test_class.py:8: AssertionError
-    1 failed, 1 passed in 0.05s
+    1 failed, 1 passed in 0.02s
 
 The first test passed and the second failed. You can easily see the intermediate values in the assertion to help you understand the reason for the failure.
 
@@ -180,7 +180,7 @@ List the name ``tmpdir`` in the test function signature and ``pytest`` will look
     test_tmpdir.py:3: AssertionError
     --------------------------- Captured stdout call ---------------------------
     PYTEST_TMPDIR/test_needsfiles0
-    1 failed in 0.05s
+    1 failed in 0.02s
 
 More info on tmpdir handling is available at :ref:`Temporary directories and files <tmpdir handling>`.
 

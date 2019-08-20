@@ -221,7 +221,7 @@ You can always peek at the collection tree without running tests like this:
           <Function test_method>
           <Function test_anothermethod>
 
-    ========================== no tests ran in 0.01s ===========================
+    ========================== no tests ran in 0.00s ===========================
 
 .. _customizing-test-collection:
 
@@ -297,7 +297,7 @@ file will be left out:
     rootdir: $REGENDOC_TMPDIR, inifile: pytest.ini
     collected 0 items
 
-    ========================== no tests ran in 0.04s ===========================
+    ========================== no tests ran in 0.01s ===========================
 
 It's also possible to ignore files based on Unix shell-style wildcards by adding
 patterns to ``collect_ignore_glob``.

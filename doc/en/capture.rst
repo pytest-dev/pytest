@@ -91,7 +91,7 @@ of the failing function and hide the other one:
     test_module.py:12: AssertionError
     -------------------------- Captured stdout setup ---------------------------
     setting up <function test_func2 at 0xdeadbeef>
-    ======================= 1 failed, 1 passed in 0.05s ========================
+    ======================= 1 failed, 1 passed in 0.02s ========================
 
 Accessing captured output from a test function
 ---------------------------------------------------
