@@ -1,0 +1,3 @@
+The ``scope`` parameter of ``@pytest.fixture`` can now be a callable that receives
+the fixture name and the ``config`` object as keyword-only parameters.
+See `the docs <https://docs.pytest.org/en/fixture.html#dynamic-scope>`__ for more information.
