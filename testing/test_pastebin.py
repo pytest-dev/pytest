@@ -116,3 +116,15 @@ class TestPaste:
         assert "lexer=%s" % lexer in data.decode()
         assert "code=full-paste-contents" in data.decode()
         assert "expiry=1week" in data.decode()
+
+    def test_create_new_paste_failure(self, pastebin, monkeypatch):
+        import io
+        import urllib.request
+
+        def response(url, data):
+            stream = io.BytesIO(b"something bad occurred")
+            return stream
+
+        monkeypatch.setattr(urllib.request, "urlopen", response)
+        result = pastebin.create_new_paste(b"full-paste-contents")
+        assert result == "bad response: something bad occurred"
