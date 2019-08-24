@@ -823,6 +823,27 @@ class FixtureDef:
         self.ids = ids
         self._finalizers = []
 
+    @property
+    def argnames(self):
+        return self._argnames
+
+    @argnames.setter
+    def argnames(self, value):
+        # TODO: Check who calls this setter
+        self._argnames = value
+
+    @property
+    def usefixtureargnames(self):
+        markers = getattr(self.func, "pytestmark", [])
+        usefixtureargs = tuple(
+            itertools.chain.from_iterable(
+                mark.args
+                for mark in markers
+                if getattr(mark, "name", None) == "usefixtures"
+            )
+        )
+        return usefixtureargs
+
     def addfinalizer(self, finalizer):
         self._finalizers.append(finalizer)
 
@@ -906,10 +927,12 @@ def resolve_fixture_function(fixturedef, request):
 def pytest_fixture_setup(fixturedef, request):
     """ Execution of fixture setup. """
     kwargs = {}
-    for argname in fixturedef.argnames:
+    for argname in fixturedef.argnames + fixturedef.usefixtureargnames:
         fixdef = request._get_active_fixturedef(argname)
         result, arg_cache_key, exc = fixdef.cached_result
         request._check_scope(argname, request.scope, fixdef.scope)
+        if argname not in fixturedef.argnames:
+            continue
         kwargs[argname] = result
 
     fixturefunc = resolve_fixture_function(fixturedef, request)
