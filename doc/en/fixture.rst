@@ -315,15 +315,15 @@ Consider the code below:
 
 .. literalinclude:: example/fixtures/test_fixtures_order.py
 
-The fixtures requested by ``test_foo`` will be instantiated in the following order:
+The fixtures requested by ``test_order`` will be instantiated in the following order:
 
 1. ``s1``: is the highest-scoped fixture (``session``).
 2. ``m1``: is the second highest-scoped fixture (``module``).
 3. ``a1``: is a ``function``-scoped ``autouse`` fixture: it will be instantiated before other fixtures
    within the same scope.
 4. ``f3``: is a ``function``-scoped fixture, required by ``f1``: it needs to be instantiated at this point
-5. ``f1``: is the first ``function``-scoped fixture in ``test_foo`` parameter list.
-6. ``f2``: is the last ``function``-scoped fixture in ``test_foo`` parameter list.
+5. ``f1``: is the first ``function``-scoped fixture in ``test_order`` parameter list.
+6. ``f2``: is the last ``function``-scoped fixture in ``test_order`` parameter list.
 
 
 .. _`finalization`:
