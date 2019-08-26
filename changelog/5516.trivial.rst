@@ -1,1 +1,0 @@
-Cache node splitting function which can improve collection performance in very large test suites.

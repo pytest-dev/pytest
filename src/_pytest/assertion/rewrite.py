@@ -35,9 +35,6 @@ PYTEST_TAG = "{}-pytest-{}".format(sys.implementation.cache_tag, version)
 PYC_EXT = ".py" + (__debug__ and "c" or "o")
 PYC_TAIL = "." + PYTEST_TAG + PYC_EXT
 
-AST_IS = ast.Is()
-AST_NONE = ast.NameConstant(None)
-
 
 class AssertionRewritingHook(importlib.abc.MetaPathFinder):
     """PEP302/PEP451 import hook which rewrites asserts."""
@@ -863,7 +860,7 @@ class AssertionRewriter(ast.NodeVisitor):
         internally already.
         See issue #3191 for more details.
         """
-        val_is_none = ast.Compare(node, [AST_IS], [AST_NONE])
+        val_is_none = ast.Compare(node, [ast.Is()], [ast.NameConstant(None)])
         send_warning = ast.parse(
             """\
 from _pytest.warning_types import PytestAssertRewriteWarning

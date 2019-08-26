@@ -1,4 +1,0 @@
-New `NUMBER <https://docs.pytest.org/en/latest/doctest.html#using-doctest-options>`__
-option for doctests to ignore irrelevant differences in floating-point numbers.
-Inspired by Sébastien Boisgérault's `numtest <https://github.com/boisgera/numtest>`__
-extension for doctest.

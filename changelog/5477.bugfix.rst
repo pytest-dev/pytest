@@ -1,1 +1,0 @@
-The XML file produced by ``--junitxml`` now correctly contain a ``<testsuites>`` root element.

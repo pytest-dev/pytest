@@ -163,9 +163,16 @@ class TestRaises:
 
         class T:
             def __call__(self):
+                # Early versions of Python 3.5 have some bug causing the
+                # __call__ frame to still refer to t even after everything
+                # is done. This makes the test pass for them.
+                if sys.version_info < (3, 5, 2):  # pragma: no cover
+                    del self
                 raise ValueError
 
         t = T()
+        refcount = len(gc.get_referrers(t))
+
         if method == "function":
             pytest.raises(ValueError, t)
         else:
@@ -175,14 +182,7 @@ class TestRaises:
         # ensure both forms of pytest.raises don't leave exceptions in sys.exc_info()
         assert sys.exc_info() == (None, None, None)
 
-        del t
-        # Make sure this does get updated in locals dict
-        # otherwise it could keep a reference
-        locals()
-
-        # ensure the t instance is not stuck in a cyclic reference
-        for o in gc.get_objects():
-            assert type(o) is not T
+        assert refcount == len(gc.get_referrers(t))
 
     def test_raises_match(self):
         msg = r"with base \d+"

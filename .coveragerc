@@ -16,3 +16,11 @@ source = src/
   */lib/python*/site-packages/
   */pypy*/site-packages/
   *\Lib\site-packages\
+
+[report]
+skip_covered = True
+show_missing = True
+exclude_lines =
+    \#\s*pragma: no cover
+    ^\s*raise NotImplementedError\b
+    ^\s*return NotImplemented\b

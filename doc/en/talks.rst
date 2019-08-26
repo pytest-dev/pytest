@@ -4,7 +4,6 @@ Talks and Tutorials
 
 .. sidebar:: Next Open Trainings
 
-   - `Training at Workshoptage 2019 <https://workshoptage.ch/workshops/2019/test-driven-development-fuer-python-mit-pytest/>`_ (German), 10th September 2019, Rapperswil, Switzerland.
    - `3 day hands-on workshop covering pytest, tox and devpi: "Professional Testing with Python" <https://python-academy.com/courses/specialtopics/python_course_testing.html>`_ (English), October 21 - 23, 2019, Leipzig, Germany.
 
 .. _`funcargs`: funcargs.html
