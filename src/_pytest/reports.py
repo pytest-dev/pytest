@@ -3,6 +3,7 @@ from typing import Optional
 
 import py
 
+from _pytest._code.code import ExceptionChainRepr
 from _pytest._code.code import ExceptionInfo
 from _pytest._code.code import ReprEntry
 from _pytest._code.code import ReprEntryNative
@@ -160,7 +161,7 @@ class BaseReport:
 
         Experimental method.
         """
-        return _test_report_to_json(self)
+        return _report_to_json(self)
 
     @classmethod
     def _from_json(cls, reportdict):
@@ -172,7 +173,7 @@ class BaseReport:
 
         Experimental method.
         """
-        kwargs = _test_report_kwargs_from_json(reportdict)
+        kwargs = _report_kwargs_from_json(reportdict)
         return cls(**kwargs)
 
 
@@ -340,7 +341,7 @@ def pytest_report_from_serializable(data):
         )
 
 
-def _test_report_to_json(test_report):
+def _report_to_json(report):
     """
     This was originally the serialize_report() function from xdist (ca03269).
 
@@ -366,22 +367,35 @@ def _test_report_to_json(test_report):
         return reprcrash.__dict__.copy()
 
     def serialize_longrepr(rep):
-        return {
+        result = {
             "reprcrash": serialize_repr_crash(rep.longrepr.reprcrash),
             "reprtraceback": serialize_repr_traceback(rep.longrepr.reprtraceback),
             "sections": rep.longrepr.sections,
         }
-
-    d = test_report.__dict__.copy()
-    if hasattr(test_report.longrepr, "toterminal"):
-        if hasattr(test_report.longrepr, "reprtraceback") and hasattr(
-            test_report.longrepr, "reprcrash"
-        ):
-            d["longrepr"] = serialize_longrepr(test_report)
+        if isinstance(rep.longrepr, ExceptionChainRepr):
+            result["chain"] = []
+            for repr_traceback, repr_crash, description in rep.longrepr.chain:
+                result["chain"].append(
+                    (
+                        serialize_repr_traceback(repr_traceback),
+                        serialize_repr_crash(repr_crash),
+                        description,
+                    )
+                )
         else:
-            d["longrepr"] = str(test_report.longrepr)
+            result["chain"] = None
+        return result
+
+    d = report.__dict__.copy()
+    if hasattr(report.longrepr, "toterminal"):
+        if hasattr(report.longrepr, "reprtraceback") and hasattr(
+            report.longrepr, "reprcrash"
+        ):
+            d["longrepr"] = serialize_longrepr(report)
+        else:
+            d["longrepr"] = str(report.longrepr)
     else:
-        d["longrepr"] = test_report.longrepr
+        d["longrepr"] = report.longrepr
     for name in d:
         if isinstance(d[name], (py.path.local, Path)):
             d[name] = str(d[name])
@@ -390,12 +404,11 @@ def _test_report_to_json(test_report):
     return d
 
 
-def _test_report_kwargs_from_json(reportdict):
+def _report_kwargs_from_json(reportdict):
     """
     This was originally the serialize_report() function from xdist (ca03269).
 
-    Factory method that returns either a TestReport or CollectReport, depending on the calling
-    class. It's the callers responsibility to know which class to pass here.
+    Returns **kwargs that can be used to construct a TestReport or CollectReport instance.
     """
 
     def deserialize_repr_entry(entry_data):
@@ -439,12 +452,26 @@ def _test_report_kwargs_from_json(reportdict):
         and "reprcrash" in reportdict["longrepr"]
         and "reprtraceback" in reportdict["longrepr"]
     ):
-        exception_info = ReprExceptionInfo(
-            reprtraceback=deserialize_repr_traceback(
-                reportdict["longrepr"]["reprtraceback"]
-            ),
-            reprcrash=deserialize_repr_crash(reportdict["longrepr"]["reprcrash"]),
+
+        reprtraceback = deserialize_repr_traceback(
+            reportdict["longrepr"]["reprtraceback"]
         )
+        reprcrash = deserialize_repr_crash(reportdict["longrepr"]["reprcrash"])
+        if reportdict["longrepr"]["chain"]:
+            chain = []
+            for repr_traceback_data, repr_crash_data, description in reportdict[
+                "longrepr"
+            ]["chain"]:
+                chain.append(
+                    (
+                        deserialize_repr_traceback(repr_traceback_data),
+                        deserialize_repr_crash(repr_crash_data),
+                        description,
+                    )
+                )
+            exception_info = ExceptionChainRepr(chain)
+        else:
+            exception_info = ReprExceptionInfo(reprtraceback, reprcrash)
 
         for section in reportdict["longrepr"]["sections"]:
             exception_info.addsection(*section)
