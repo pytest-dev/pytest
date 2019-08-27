@@ -1,11 +1,12 @@
+import os.path
 import textwrap
 
 import py
 
 import pytest
-from _pytest.config import PytestPluginManager, _uniquepath
+from _pytest.config import _uniquepath
+from _pytest.config import PytestPluginManager
 from _pytest.main import ExitCode
-import os.path
 
 
 def ConftestWithSetinitial(path):
@@ -275,18 +276,15 @@ def test_conftest_symlink_files(testdir):
     result.stdout.fnmatch_lines(["*conftest_loaded*", "PASSED"])
     assert result.ret == ExitCode.OK
 
+
 @pytest.mark.skipif(
-    os.path.normcase('x') != os.path.normcase('X'),
+    os.path.normcase("x") != os.path.normcase("X"),
     reason="only relevant for case insensitive file systems",
 )
 def test_conftest_badcase(testdir):
     """Check conftest.py loading when directory casing is wrong."""
     testdir.tmpdir.mkdir("JenkinsRoot").mkdir("test")
-    source = {
-        "setup.py": "",
-        "test/__init__.py": "",
-        "test/conftest.py": ""
-    }
+    source = {"setup.py": "", "test/__init__.py": "", "test/conftest.py": ""}
     testdir.makepyfile(**{"JenkinsRoot/%s" % k: v for k, v in source.items()})
 
     testdir.tmpdir.join("jenkinsroot/test").chdir()
