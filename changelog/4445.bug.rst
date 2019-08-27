@@ -1,0 +1,1 @@
+Acceptance tests for config warnings stack level

@@ -901,6 +901,29 @@ def test_rewritten():
         hook.mark_rewrite("test_remember_rewritten_modules")
         assert warnings == []
 
+    def test_remember_rewritten_modules_warnings_stack_level(
+        self, pytestconfig, testdir, monkeypatch
+    ):
+        """
+        AssertionRewriteHook should raise warning with expected stack level
+        """
+
+        def mock__issue_warning_captured(warning, hook, stacklevel=0):
+            assert 5 == stacklevel
+
+        monkeypatch.syspath_prepend(testdir.tmpdir)
+        monkeypatch.setattr(
+            _pytest.warnings, "_issue_warning_captured", mock__issue_warning_captured
+        )
+
+        testdir.makepyfile(test_remember_rewritten_modules="")
+        hook = AssertionRewritingHook(pytestconfig)
+        spec = hook.find_spec("test_remember_rewritten_modules")
+        module = importlib.util.module_from_spec(spec)
+        hook.exec_module(module)
+
+        hook.mark_rewrite(*{"builtins": "<module 'builtins' (built-in)>"})
+
     def test_rewrite_warning_using_pytest_plugins(self, testdir):
         testdir.makepyfile(
             **{

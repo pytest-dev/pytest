@@ -193,6 +193,19 @@ def test_no_resultlog_on_slaves(testdir):
     assert not hasattr(config, "_resultlog")
 
 
+def test_result_log_warning_capture_with_stack_level(testdir, monkeypatch):
+    config = testdir.parseconfig("-p", "resultlog", "--resultlog=resultlog")
+
+    def mock__issue_warning_captured(warning, hook, stacklevel=0):
+        assert 2 == stacklevel
+
+    monkeypatch.setattr(
+        _pytest.warnings, "_issue_warning_captured", mock__issue_warning_captured
+    )
+
+    pytest_configure(config)
+
+
 def test_failure_issue380(testdir):
     testdir.makeconftest(
         """
