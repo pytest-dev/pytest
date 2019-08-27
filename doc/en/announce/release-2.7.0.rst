@@ -52,7 +52,7 @@ holger krekel
 - add ability to set command line options by environment variable PYTEST_ADDOPTS.
 
 - added documentation on the new pytest-dev teams on bitbucket and
-  github.  See https://pytest.org/latest/contributing.html .
+  github.  See https://pytest.org/en/latest/contributing.html .
   Thanks to Anatoly for pushing and initial work on this.
 
 - fix issue650: new option ``--docttest-ignore-import-errors`` which
