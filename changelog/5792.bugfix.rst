@@ -1,0 +1,3 @@
+Windows: Fix error that occurs in certain circumstances when loading
+``conftest.py`` from a working directory that has casing other than the one stored
+in the filesystem (e.g., ``c:\test`` instead of ``C:\test``).
