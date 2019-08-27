@@ -54,7 +54,7 @@ This means that we only run 2 tests if we do not pass ``--all``:
 
     $ pytest -q test_compute.py
     ..                                                                   [100%]
-    2 passed in 0.12 seconds
+    2 passed in 0.01s
 
 We run only two computations, so we see two dots.
 let's run the full monty:
@@ -72,8 +72,8 @@ let's run the full monty:
     >       assert param1 < 4
     E       assert 4 < 4
 
-    test_compute.py:3: AssertionError
-    1 failed, 4 passed in 0.12 seconds
+    test_compute.py:4: AssertionError
+    1 failed, 4 passed in 0.02s
 
 As expected when running the full range of ``param1`` values
 we'll get an error on the last one.
@@ -172,7 +172,7 @@ objects, they are still using the default pytest representation:
       <Function test_timedistance_v3[forward]>
       <Function test_timedistance_v3[backward]>
 
-    ======================= no tests ran in 0.12 seconds =======================
+    ========================== no tests ran in 0.01s ===========================
 
 In ``test_timedistance_v3``, we used ``pytest.param`` to specify the test IDs
 together with the actual data, instead of listing them separately.
@@ -229,7 +229,7 @@ this is a fully self-contained example which you can run with:
 
     test_scenarios.py ....                                               [100%]
 
-    ========================= 4 passed in 0.12 seconds =========================
+    ============================ 4 passed in 0.01s =============================
 
 If you just collect tests you'll also nicely see 'advanced' and 'basic' as variants for the test function:
 
@@ -248,7 +248,7 @@ If you just collect tests you'll also nicely see 'advanced' and 'basic' as varia
           <Function test_demo1[advanced]>
           <Function test_demo2[advanced]>
 
-    ======================= no tests ran in 0.12 seconds =======================
+    ========================== no tests ran in 0.01s ===========================
 
 Note that we told ``metafunc.parametrize()`` that your scenario values
 should be considered class-scoped.  With pytest-2.3 this leads to a
@@ -262,8 +262,8 @@ Deferring the setup of parametrized resources
 The parametrization of test functions happens at collection
 time.  It is a good idea to setup expensive resources like DB
 connections or subprocess only when the actual test is run.
-Here is a simple example how you can achieve that, first
-the actual test requiring a ``db`` object:
+Here is a simple example how you can achieve that. This test
+requires a ``db`` object fixture:
 
 .. code-block:: python
 
@@ -323,7 +323,7 @@ Let's first see how it looks like at collection time:
       <Function test_db_initialized[d1]>
       <Function test_db_initialized[d2]>
 
-    ======================= no tests ran in 0.12 seconds =======================
+    ========================== no tests ran in 0.00s ===========================
 
 And then when we run the test:
 
@@ -342,8 +342,8 @@ And then when we run the test:
     >           pytest.fail("deliberately failing for demo purposes")
     E           Failed: deliberately failing for demo purposes
 
-    test_backends.py:6: Failed
-    1 failed, 1 passed in 0.12 seconds
+    test_backends.py:8: Failed
+    1 failed, 1 passed in 0.02s
 
 The first invocation with ``db == "DB1"`` passed while the second with ``db == "DB2"`` failed.  Our ``db`` fixture function has instantiated each of the DB values during the setup phase while the ``pytest_generate_tests`` generated two according calls to the ``test_db_initialized`` during the collection phase.
 
@@ -394,7 +394,7 @@ The result of this test will be successful:
     <Module test_indirect_list.py>
       <Function test_indirect[a-b]>
 
-    ======================= no tests ran in 0.12 seconds =======================
+    ========================== no tests ran in 0.00s ===========================
 
 .. regendoc:wipe
 
@@ -453,8 +453,8 @@ argument sets to use for each test function.  Let's run it:
     >       assert a == b
     E       assert 1 == 2
 
-    test_parametrize.py:18: AssertionError
-    1 failed, 2 passed in 0.12 seconds
+    test_parametrize.py:21: AssertionError
+    1 failed, 2 passed in 0.03s
 
 Indirect parametrization with multiple fixtures
 --------------------------------------------------------------
@@ -475,11 +475,10 @@ Running it results in some skips if we don't have all the python interpreters in
 .. code-block:: pytest
 
    . $ pytest -rs -q multipython.py
-   ssssssssssss...ssssssssssss                                          [100%]
+   ssssssssssss......sss......                                          [100%]
    ========================= short test summary info ==========================
-   SKIPPED [12] $REGENDOC_TMPDIR/CWD/multipython.py:30: 'python3.5' not found
-   SKIPPED [12] $REGENDOC_TMPDIR/CWD/multipython.py:30: 'python3.7' not found
-   3 passed, 24 skipped in 0.12 seconds
+   SKIPPED [15] $REGENDOC_TMPDIR/CWD/multipython.py:30: 'python3.5' not found
+   12 passed, 15 skipped in 0.62s
 
 Indirect parametrization of optional implementations/imports
 --------------------------------------------------------------------
@@ -547,8 +546,8 @@ If you run this with reporting for skips enabled:
     test_module.py .s                                                    [100%]
 
     ========================= short test summary info ==========================
-    SKIPPED [1] $REGENDOC_TMPDIR/conftest.py:11: could not import 'opt2': No module named 'opt2'
-    =================== 1 passed, 1 skipped in 0.12 seconds ====================
+    SKIPPED [1] $REGENDOC_TMPDIR/conftest.py:13: could not import 'opt2': No module named 'opt2'
+    ======================= 1 passed, 1 skipped in 0.01s =======================
 
 You'll see that we don't have an ``opt2`` module and thus the second test run
 of our ``test_func1`` was skipped.  A few notes:
@@ -610,7 +609,7 @@ Then run ``pytest`` with verbose mode and with only the ``basic`` marker:
     test_pytest_param_example.py::test_eval[basic_2+4] PASSED            [ 66%]
     test_pytest_param_example.py::test_eval[basic_6*9] XFAIL             [100%]
 
-    ============ 2 passed, 15 deselected, 1 xfailed in 0.12 seconds ============
+    =============== 2 passed, 15 deselected, 1 xfailed in 0.08s ================
 
 As the result:
 

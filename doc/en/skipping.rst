@@ -371,7 +371,7 @@ Running it with the report-on-xfail option gives this output:
     XFAIL xfail_demo.py::test_hello6
       reason: reason
     XFAIL xfail_demo.py::test_hello7
-    ======================== 7 xfailed in 0.12 seconds =========================
+    ============================ 7 xfailed in 0.05s ============================
 
 .. _`skip/xfail with parametrize`:
 

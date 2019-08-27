@@ -7,11 +7,11 @@ from typing import Callable
 from typing import Iterator
 from typing import List
 from typing import Optional
-from typing import overload
 from typing import Pattern
 from typing import Tuple
 from typing import Union
 
+from _pytest.compat import overload
 from _pytest.fixtures import yield_fixture
 from _pytest.outcomes import fail
 
@@ -58,26 +58,26 @@ def deprecated_call(func=None, *args, **kwargs):
 def warns(
     expected_warning: Union["Type[Warning]", Tuple["Type[Warning]", ...]],
     *,
-    match: Optional[Union[str, Pattern]] = ...
+    match: "Optional[Union[str, Pattern]]" = ...
 ) -> "WarningsChecker":
     ...  # pragma: no cover
 
 
-@overload
+@overload  # noqa: F811
 def warns(
     expected_warning: Union["Type[Warning]", Tuple["Type[Warning]", ...]],
     func: Callable,
     *args: Any,
-    match: Optional[Union[str, Pattern]] = ...,
+    match: Optional[Union[str, "Pattern"]] = ...,
     **kwargs: Any
 ) -> Union[Any]:
     ...  # pragma: no cover
 
 
-def warns(
+def warns(  # noqa: F811
     expected_warning: Union["Type[Warning]", Tuple["Type[Warning]", ...]],
     *args: Any,
-    match: Optional[Union[str, Pattern]] = None,
+    match: Optional[Union[str, "Pattern"]] = None,
     **kwargs: Any
 ) -> Union["WarningsChecker", Any]:
     r"""Assert that code raises a particular class of warning.
@@ -207,7 +207,7 @@ class WarningsChecker(WarningsRecorder):
         expected_warning: Optional[
             Union["Type[Warning]", Tuple["Type[Warning]", ...]]
         ] = None,
-        match_expr: Optional[Union[str, Pattern]] = None,
+        match_expr: Optional[Union[str, "Pattern"]] = None,
     ) -> None:
         super().__init__()
 

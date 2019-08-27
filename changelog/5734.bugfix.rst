@@ -1,1 +1,0 @@
-Skip async generator test functions, and update the warning message to refer to ``async def`` functions.

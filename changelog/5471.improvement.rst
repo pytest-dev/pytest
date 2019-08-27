@@ -1,1 +1,0 @@
-JUnit XML now includes a timestamp and hostname in the testsuite tag.

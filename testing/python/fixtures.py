@@ -13,22 +13,22 @@ def test_getfuncargnames_functions():
     """Test getfuncargnames for normal functions"""
 
     def f():
-        pass
+        raise NotImplementedError()
 
     assert not fixtures.getfuncargnames(f)
 
     def g(arg):
-        pass
+        raise NotImplementedError()
 
     assert fixtures.getfuncargnames(g) == ("arg",)
 
     def h(arg1, arg2="hello"):
-        pass
+        raise NotImplementedError()
 
     assert fixtures.getfuncargnames(h) == ("arg1",)
 
     def j(arg1, arg2, arg3="hello"):
-        pass
+        raise NotImplementedError()
 
     assert fixtures.getfuncargnames(j) == ("arg1", "arg2")
 
@@ -38,7 +38,7 @@ def test_getfuncargnames_methods():
 
     class A:
         def f(self, arg1, arg2="hello"):
-            pass
+            raise NotImplementedError()
 
     assert fixtures.getfuncargnames(A().f) == ("arg1",)
 
@@ -49,7 +49,7 @@ def test_getfuncargnames_staticmethod():
     class A:
         @staticmethod
         def static(arg1, arg2, x=1):
-            pass
+            raise NotImplementedError()
 
     assert fixtures.getfuncargnames(A.static, cls=A) == ("arg1", "arg2")
 
@@ -59,7 +59,7 @@ def test_getfuncargnames_partial():
     import functools
 
     def check(arg1, arg2, i):
-        pass
+        raise NotImplementedError()
 
     class T:
         test_ok = functools.partial(check, i=2)
@@ -73,7 +73,7 @@ def test_getfuncargnames_staticmethod_partial():
     import functools
 
     def check(arg1, arg2, i):
-        pass
+        raise NotImplementedError()
 
     class T:
         test_ok = staticmethod(functools.partial(check, i=2))
@@ -3325,7 +3325,7 @@ class TestShowFixtures:
             @pytest.fixture
             @pytest.fixture
             def foo():
-                pass
+                raise NotImplementedError()
 
 
 class TestContextManagerFixtureFuncs:
@@ -3951,7 +3951,7 @@ def test_call_fixture_function_error():
 
     @pytest.fixture
     def fix():
-        return 1
+        raise NotImplementedError()
 
     with pytest.raises(pytest.fail.Exception):
         assert fix() == 1

@@ -92,11 +92,11 @@ marked ``smtp_connection`` fixture function.  Running the test looks like this:
         def test_ehlo(smtp_connection):
             response, msg = smtp_connection.ehlo()
             assert response == 250
-    >       assert 0 # for demo purposes
+    >       assert 0  # for demo purposes
     E       assert 0
 
-    test_smtpsimple.py:11: AssertionError
-    ========================= 1 failed in 0.12 seconds =========================
+    test_smtpsimple.py:14: AssertionError
+    ============================ 1 failed in 0.18s =============================
 
 In the failure traceback we see that the test function was called with a
 ``smtp_connection`` argument, the ``smtplib.SMTP()`` instance created by the fixture
@@ -246,7 +246,7 @@ inspect what is going on and can now run the tests:
     >       assert 0  # for demo purposes
     E       assert 0
 
-    test_module.py:6: AssertionError
+    test_module.py:7: AssertionError
     ________________________________ test_noop _________________________________
 
     smtp_connection = <smtplib.SMTP object at 0xdeadbeef>
@@ -257,8 +257,8 @@ inspect what is going on and can now run the tests:
     >       assert 0  # for demo purposes
     E       assert 0
 
-    test_module.py:11: AssertionError
-    ========================= 2 failed in 0.12 seconds =========================
+    test_module.py:13: AssertionError
+    ============================ 2 failed in 0.20s =============================
 
 You see the two ``assert 0`` failing and more importantly you can also see
 that the same (module-scoped) ``smtp_connection`` object was passed into the
@@ -315,15 +315,15 @@ Consider the code below:
 
 .. literalinclude:: example/fixtures/test_fixtures_order.py
 
-The fixtures requested by ``test_foo`` will be instantiated in the following order:
+The fixtures requested by ``test_order`` will be instantiated in the following order:
 
 1. ``s1``: is the highest-scoped fixture (``session``).
 2. ``m1``: is the second highest-scoped fixture (``module``).
 3. ``a1``: is a ``function``-scoped ``autouse`` fixture: it will be instantiated before other fixtures
    within the same scope.
 4. ``f3``: is a ``function``-scoped fixture, required by ``f1``: it needs to be instantiated at this point
-5. ``f1``: is the first ``function``-scoped fixture in ``test_foo`` parameter list.
-6. ``f2``: is the last ``function``-scoped fixture in ``test_foo`` parameter list.
+5. ``f1``: is the first ``function``-scoped fixture in ``test_order`` parameter list.
+6. ``f2``: is the last ``function``-scoped fixture in ``test_order`` parameter list.
 
 
 .. _`finalization`:
@@ -361,7 +361,7 @@ Let's execute it:
     $ pytest -s -q --tb=no
     FFteardown smtp
 
-    2 failed in 0.12 seconds
+    2 failed in 0.20s
 
 We see that the ``smtp_connection`` instance is finalized after the two
 tests finished execution.  Note that if we decorated our fixture
@@ -515,7 +515,7 @@ again, nothing much has changed:
     $ pytest -s -q --tb=no
     FFfinalizing <smtplib.SMTP object at 0xdeadbeef> (smtp.gmail.com)
 
-    2 failed in 0.12 seconds
+    2 failed in 0.21s
 
 Let's quickly create another test module that actually sets the
 server URL in its module namespace:
@@ -538,7 +538,7 @@ Running it:
     F                                                                    [100%]
     ================================= FAILURES =================================
     ______________________________ test_showhelo _______________________________
-    test_anothersmtp.py:5: in test_showhelo
+    test_anothersmtp.py:6: in test_showhelo
         assert 0, smtp_connection.helo()
     E   AssertionError: (250, b'mail.python.org')
     E   assert 0
@@ -654,7 +654,7 @@ So let's just do another run:
     >       assert 0  # for demo purposes
     E       assert 0
 
-    test_module.py:6: AssertionError
+    test_module.py:7: AssertionError
     ________________________ test_noop[smtp.gmail.com] _________________________
 
     smtp_connection = <smtplib.SMTP object at 0xdeadbeef>
@@ -665,7 +665,7 @@ So let's just do another run:
     >       assert 0  # for demo purposes
     E       assert 0
 
-    test_module.py:11: AssertionError
+    test_module.py:13: AssertionError
     ________________________ test_ehlo[mail.python.org] ________________________
 
     smtp_connection = <smtplib.SMTP object at 0xdeadbeef>
@@ -676,7 +676,7 @@ So let's just do another run:
     >       assert b"smtp.gmail.com" in msg
     E       AssertionError: assert b'smtp.gmail.com' in b'mail.python.org\nPIPELINING\nSIZE 51200000\nETRN\nSTARTTLS\nAUTH DIGEST-MD5 NTLM CRAM-MD5\nENHANCEDSTATUSCODES\n8BITMIME\nDSN\nSMTPUTF8\nCHUNKING'
 
-    test_module.py:5: AssertionError
+    test_module.py:6: AssertionError
     -------------------------- Captured stdout setup ---------------------------
     finalizing <smtplib.SMTP object at 0xdeadbeef>
     ________________________ test_noop[mail.python.org] ________________________
@@ -689,10 +689,10 @@ So let's just do another run:
     >       assert 0  # for demo purposes
     E       assert 0
 
-    test_module.py:11: AssertionError
+    test_module.py:13: AssertionError
     ------------------------- Captured stdout teardown -------------------------
     finalizing <smtplib.SMTP object at 0xdeadbeef>
-    4 failed in 0.12 seconds
+    4 failed in 0.89s
 
 We see that our two test functions each ran twice, against the different
 ``smtp_connection`` instances.  Note also, that with the ``mail.python.org``
@@ -771,7 +771,7 @@ Running the above tests results in the following test IDs being used:
      <Function test_ehlo[mail.python.org]>
      <Function test_noop[mail.python.org]>
 
-   ======================= no tests ran in 0.12 seconds =======================
+   ========================== no tests ran in 0.01s ===========================
 
 .. _`fixture-parametrize-marks`:
 
@@ -812,7 +812,7 @@ Running this test will *skip* the invocation of ``data_set`` with value ``2``:
     test_fixture_marks.py::test_data[1] PASSED                           [ 66%]
     test_fixture_marks.py::test_data[2] SKIPPED                          [100%]
 
-    =================== 2 passed, 1 skipped in 0.12 seconds ====================
+    ======================= 2 passed, 1 skipped in 0.01s =======================
 
 .. _`interdependent fixtures`:
 
@@ -861,7 +861,7 @@ Here we declare an ``app`` fixture which receives the previously defined
     test_appsetup.py::test_smtp_connection_exists[smtp.gmail.com] PASSED [ 50%]
     test_appsetup.py::test_smtp_connection_exists[mail.python.org] PASSED [100%]
 
-    ========================= 2 passed in 0.12 seconds =========================
+    ============================ 2 passed in 0.44s =============================
 
 Due to the parametrization of ``smtp_connection``, the test will run twice with two
 different ``App`` instances and respective smtp servers.  There is no
@@ -971,7 +971,7 @@ Let's run the tests in verbose mode and with looking at the print-output:
       TEARDOWN modarg mod2
 
 
-    ========================= 8 passed in 0.12 seconds =========================
+    ============================ 8 passed in 0.01s =============================
 
 You can see that the parametrized module-scoped ``modarg`` resource caused an
 ordering of test execution that lead to the fewest possible "active" resources.
@@ -1043,7 +1043,7 @@ to verify our fixture is activated and the tests pass:
 
     $ pytest -q
     ..                                                                   [100%]
-    2 passed in 0.12 seconds
+    2 passed in 0.01s
 
 You can specify multiple fixtures like this:
 
@@ -1151,7 +1151,7 @@ If we run it, we get two passing tests:
 
     $ pytest -q
     ..                                                                   [100%]
-    2 passed in 0.12 seconds
+    2 passed in 0.01s
 
 Here is how autouse fixtures work in other scopes:
 
