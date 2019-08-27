@@ -64,7 +64,7 @@ Talks and blog postings
 - `pytest introduction from Brian Okken (January 2013)
   <http://pythontesting.net/framework/pytest-introduction/>`_
 
-- pycon australia 2012 pytest talk from Brianna Laugher (`video <http://www.youtube.com/watch?v=DTNejE9EraI>`_, `slides <http://www.slideshare.net/pfctdayelise/funcargs-other-fun-with-pytest>`_, `code <https://gist.github.com/3386951>`_)
+- pycon australia 2012 pytest talk from Brianna Laugher (`video <http://www.youtube.com/watch?v=DTNejE9EraI>`_, `slides <https://www.slideshare.net/pfctdayelise/funcargs-other-fun-with-pytest>`_, `code <https://gist.github.com/3386951>`_)
 - `pycon 2012 US talk video from Holger Krekel <http://www.youtube.com/watch?v=9LVqBQcFmyw>`_
 
 - `monkey patching done right`_ (blog post, consult `monkeypatch plugin`_ for up-to-date API)
