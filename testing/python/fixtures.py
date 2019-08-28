@@ -449,7 +449,8 @@ class TestFillFixtures:
                 "*ERROR at setup of test_lookup_error*",
                 "  def test_lookup_error(unknown):*",
                 "E       fixture 'unknown' not found",
-                ">       available fixtures:*a_fixture,*b_fixture,*c_fixture,*d_fixture*monkeypatch,*",  # sorted
+                ">       available fixtures:*a_fixture,*b_fixture,*c_fixture,*d_fixture*monkeypatch,*",
+                # sorted
                 ">       use 'py*test --fixtures *' for help on them.",
                 "*1 error*",
             ]
@@ -4009,3 +4010,45 @@ def test_fixture_named_request(testdir):
             "  *test_fixture_named_request.py:5",
         ]
     )
+
+
+def test_indirect_fixture(testdir):
+    testdir.makepyfile(
+        """
+        from collections import Counter
+
+        import pytest
+
+
+        @pytest.fixture(scope="session")
+        def fixture_1(request, count=Counter()):
+            count[request.param] += 1
+            yield count[request.param]
+
+
+        @pytest.fixture(scope="session")
+        def fixture_2(request):
+            yield request.param
+
+
+        scenarios = [
+            ("a", "a1"),
+            ("a", "a2"),
+            ("b", "b1"),
+            ("b", "b2"),
+            ("c", "c1"),
+            ("c", "c2"),
+        ]
+
+
+        @pytest.mark.parametrize(
+            "fixture_1,fixture_2", scenarios, indirect=["fixture_1", "fixture_2"]
+        )
+        def test_it(fixture_1, fixture_2):
+            assert fixture_1 == 1
+            assert fixture_2[1] in ("1", "2")
+
+    """
+    )
+    result = testdir.runpytest()
+    result.assert_outcomes(passed=6)
