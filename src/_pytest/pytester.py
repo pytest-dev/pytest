@@ -1124,7 +1124,7 @@ class Testdir(object):
 
             if timeout is None:
                 ret = popen.wait()
-            elif six.PY3:
+            elif not six.PY2:
                 try:
                     ret = popen.wait(timeout)
                 except subprocess.TimeoutExpired:

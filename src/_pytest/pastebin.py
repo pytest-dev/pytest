@@ -79,7 +79,7 @@ def create_new_paste(contents):
 
     params = {
         "code": contents,
-        "lexer": "python3" if sys.version_info[0] == 3 else "python",
+        "lexer": "python3" if sys.version_info[0] >= 3 else "python",
         "expiry": "1week",
     }
     url = "https://bpaste.net"
