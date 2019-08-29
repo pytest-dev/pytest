@@ -289,7 +289,7 @@ class TestUnicodeHandling:
 
     success = dummy_context_manager
     py2_only = pytest.mark.skipif(
-        six.PY3, reason="bytes in raises only supported in Python 2"
+        not six.PY2, reason="bytes in raises only supported in Python 2"
     )
 
     @pytest.mark.parametrize(

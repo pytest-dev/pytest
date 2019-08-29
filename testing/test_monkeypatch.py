@@ -209,7 +209,7 @@ class TestEnvironWarnings(object):
 
     VAR_NAME = u"PYTEST_INTERNAL_MY_VAR"
 
-    @pytest.mark.skipif(six.PY3, reason="Python 2 only test")
+    @pytest.mark.skipif(not six.PY2, reason="Python 2 only test")
     def test_setenv_unicode_key(self, monkeypatch):
         with pytest.warns(
             pytest.PytestWarning,
@@ -217,7 +217,7 @@ class TestEnvironWarnings(object):
         ):
             monkeypatch.setenv(self.VAR_NAME, "2")
 
-    @pytest.mark.skipif(six.PY3, reason="Python 2 only test")
+    @pytest.mark.skipif(not six.PY2, reason="Python 2 only test")
     def test_delenv_unicode_key(self, monkeypatch):
         with pytest.warns(
             pytest.PytestWarning,

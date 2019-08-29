@@ -223,7 +223,7 @@ class TestGeneralUsage(object):
                 "conftest.py:2: in foo",
                 "    import qwerty",
                 "E   {}: No module named {q}qwerty{q}".format(
-                    exc_name, q="'" if six.PY3 else ""
+                    exc_name, q="" if six.PY2 else "'"
                 ),
             ]
         )

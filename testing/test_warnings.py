@@ -569,7 +569,7 @@ class TestDeprecationWarningsByDefault:
         assert WARNINGS_SUMMARY_HEADER not in result.stdout.str()
 
 
-@pytest.mark.skipif(six.PY3, reason="Python 2 only issue")
+@pytest.mark.skipif(not six.PY2, reason="Python 2 only issue")
 def test_infinite_loop_warning_against_unicode_usage_py2(testdir):
     """
     We need to be careful when raising the warning about unicode usage with "warnings.warn"

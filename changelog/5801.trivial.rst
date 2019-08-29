@@ -1,0 +1,1 @@
+Fixes python version checks (detected by ``flake8-2020``) in case python4 becomes a thing.
