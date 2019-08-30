@@ -1,1 +1,2 @@
-Fix ``self`` reference in function scoped fixtures that are in a plugin class
+Fixed ``self`` reference in function-scoped fixtures defined plugin classes: previously ``self``
+would be a reference to a *test* class, not the *plugin* class.

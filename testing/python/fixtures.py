@@ -3946,6 +3946,9 @@ class TestScopeOrdering:
         reprec.assertoutcome(passed=2)
 
     def test_class_fixture_self_instance(self, testdir):
+        """Check that plugin classes which implement fixtures receive the plugin instance
+        as self (see #2270).
+        """
         testdir.makeconftest(
             """
             import pytest

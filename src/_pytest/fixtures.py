@@ -897,6 +897,8 @@ def resolve_fixture_function(fixturedef, request):
         # request.instance so that code working with "fixturedef" behaves
         # as expected.
         if request.instance is not None:
+            # handle the case where fixture is defined not in a test class, but some other class
+            # (for example a plugin class with a fixture), see #2270
             if hasattr(fixturefunc, "__self__") and not isinstance(
                 request.instance, fixturefunc.__self__.__class__
             ):
