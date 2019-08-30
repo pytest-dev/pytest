@@ -3946,6 +3946,38 @@ class TestScopeOrdering:
         reprec = testdir.inline_run()
         reprec.assertoutcome(passed=2)
 
+    def test_class_fixture_self_instance(self, testdir):
+        """Check that plugin classes which implement fixtures receive the plugin instance
+        as self (see #2270).
+        """
+        testdir.makeconftest(
+            """
+            import pytest
+
+            def pytest_configure(config):
+                config.pluginmanager.register(MyPlugin())
+
+            class MyPlugin():
+                def __init__(self):
+                    self.arg = 1
+
+                @pytest.fixture(scope='function')
+                def myfix(self):
+                    assert isinstance(self, MyPlugin)
+                    return self.arg
+        """
+        )
+
+        testdir.makepyfile(
+            """
+            class TestClass(object):
+                def test_1(self, myfix):
+                    assert myfix == 1
+        """
+        )
+        reprec = testdir.inline_run()
+        reprec.assertoutcome(passed=1)
+
 
 def test_call_fixture_function_error():
     """Check if an error is raised if a fixture function is called directly (#4545)"""
