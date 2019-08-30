@@ -11,6 +11,7 @@ from functools import partial
 from os.path import expanduser
 from os.path import expandvars
 from os.path import isabs
+from os.path import normcase
 from os.path import sep
 from posixpath import sep as posix_sep
 
@@ -334,3 +335,12 @@ def fnmatch_ex(pattern, path):
 def parts(s):
     parts = s.split(sep)
     return {sep.join(parts[: i + 1]) or sep for i in range(len(parts))}
+
+
+def unique_path(path):
+    """Returns a unique path in case-insensitive (but case-preserving) file
+    systems such as Windows.
+
+    This is needed only for ``py.path.local``; ``pathlib.Path`` handles this
+    natively with ``resolve()``."""
+    return type(path)(normcase(str(path.realpath())))

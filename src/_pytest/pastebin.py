@@ -72,7 +72,7 @@ def create_new_paste(contents):
     if m:
         return "{}/show/{}".format(url, m.group(1))
     else:
-        return "bad response: " + response
+        return "bad response: " + response.decode("utf-8")
 
 
 def pytest_terminal_summary(terminalreporter):

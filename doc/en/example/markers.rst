@@ -69,7 +69,7 @@ Or the inverse, running all tests except the webtest ones:
     test_server.py::test_another PASSED                                  [ 66%]
     test_server.py::TestClass::test_method PASSED                        [100%]
 
-    ===================== 3 passed, 1 deselected in 0.02s ======================
+    ===================== 3 passed, 1 deselected in 0.01s ======================
 
 Selecting tests based on their node ID
 --------------------------------------
@@ -120,7 +120,7 @@ Or select multiple nodes:
     test_server.py::TestClass::test_method PASSED                        [ 50%]
     test_server.py::test_send_http PASSED                                [100%]
 
-    ============================ 2 passed in 0.02s =============================
+    ============================ 2 passed in 0.01s =============================
 
 .. _node-id:
 
@@ -176,7 +176,7 @@ And you can also run all tests except the ones that match the keyword:
     test_server.py::test_another PASSED                                  [ 66%]
     test_server.py::TestClass::test_method PASSED                        [100%]
 
-    ===================== 3 passed, 1 deselected in 0.02s ======================
+    ===================== 3 passed, 1 deselected in 0.01s ======================
 
 Or to select "http" and "quick" tests:
 
@@ -192,7 +192,7 @@ Or to select "http" and "quick" tests:
     test_server.py::test_send_http PASSED                                [ 50%]
     test_server.py::test_something_quick PASSED                          [100%]
 
-    ===================== 2 passed, 2 deselected in 0.02s ======================
+    ===================== 2 passed, 2 deselected in 0.01s ======================
 
 .. note::
 
@@ -413,7 +413,7 @@ the test needs:
 
     test_someenv.py s                                                    [100%]
 
-    ============================ 1 skipped in 0.01s ============================
+    ============================ 1 skipped in 0.00s ============================
 
 and here is one that specifies exactly the environment needed:
 
@@ -499,7 +499,7 @@ The output is as follows:
     $ pytest -q -s
     Mark(name='my_marker', args=(<function hello_world at 0xdeadbeef>,), kwargs={})
     .
-    1 passed in 0.01s
+    1 passed in 0.00s
 
 We can see that the custom marker has its argument set extended with the function ``hello_world``. This is the key difference between creating a custom marker as a callable, which invokes ``__call__`` behind the scenes, and using ``with_args``.
 
@@ -623,7 +623,7 @@ then you will see two tests skipped and two executed tests as expected:
 
     ========================= short test summary info ==========================
     SKIPPED [2] $REGENDOC_TMPDIR/conftest.py:13: cannot run on platform linux
-    ======================= 2 passed, 2 skipped in 0.02s =======================
+    ======================= 2 passed, 2 skipped in 0.01s =======================
 
 Note that if you specify a platform via the marker-command line option like this:
 
@@ -711,7 +711,7 @@ We can now use the ``-m option`` to select one set:
     test_module.py:8: in test_interface_complex
         assert 0
     E   assert 0
-    ===================== 2 failed, 2 deselected in 0.07s ======================
+    ===================== 2 failed, 2 deselected in 0.02s ======================
 
 or to select both "event" and "interface" tests:
 
@@ -739,4 +739,4 @@ or to select both "event" and "interface" tests:
     test_module.py:12: in test_event_simple
         assert 0
     E   assert 0
-    ===================== 3 failed, 1 deselected in 0.07s ======================
+    ===================== 3 failed, 1 deselected in 0.03s ======================

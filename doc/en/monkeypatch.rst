@@ -50,7 +50,7 @@ these patches.
 :py:meth:`monkeypatch.chdir` to change the context of the current working directory
 during a test.
 
-5. Use py:meth:`monkeypatch.syspath_prepend` to modify ``sys.path`` which will also
+5. Use :py:meth:`monkeypatch.syspath_prepend` to modify ``sys.path`` which will also
 call :py:meth:`pkg_resources.fixup_namespace_packages` and :py:meth:`importlib.invalidate_caches`.
 
 See the `monkeypatch blog post`_ for some introduction material

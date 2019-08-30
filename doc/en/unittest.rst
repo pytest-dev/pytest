@@ -166,7 +166,7 @@ the ``self.db`` values in the traceback:
     E       assert 0
 
     test_unittest_db.py:13: AssertionError
-    ============================ 2 failed in 0.07s =============================
+    ============================ 2 failed in 0.02s =============================
 
 This default pytest traceback shows that the two test methods
 share the same ``self.db`` instance which was our intention
@@ -219,7 +219,7 @@ Running this test module ...:
 
     $ pytest -q test_unittest_cleandir.py
     .                                                                    [100%]
-    1 passed in 0.02s
+    1 passed in 0.01s
 
 ... gives us one passed test because the ``initdir`` fixture function
 was executed ahead of the ``test_method``.

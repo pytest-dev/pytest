@@ -650,4 +650,4 @@ Here is a nice run of several failures and how ``pytest`` presents things:
     E        +  where 1 = This is JSON\n{\n  'foo': 'bar'\n}.a
 
     failure_demo.py:282: AssertionError
-    ============================ 44 failed in 0.82s ============================
+    ============================ 44 failed in 0.26s ============================
