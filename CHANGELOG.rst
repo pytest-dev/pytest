@@ -18,6 +18,32 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+pytest 5.1.2 (2019-08-30)
+=========================
+
+Bug Fixes
+---------
+
+- `#2270 <https://github.com/pytest-dev/pytest/issues/2270>`_: Fixed ``self`` reference in function-scoped fixtures defined plugin classes: previously ``self``
+  would be a reference to a *test* class, not the *plugin* class.
+
+
+- `#570 <https://github.com/pytest-dev/pytest/issues/570>`_: Fixed long standing issue where fixture scope was not respected when indirect fixtures were used during
+  parametrization.
+
+
+- `#5782 <https://github.com/pytest-dev/pytest/issues/5782>`_: Fix decoding error when printing an error response from ``--pastebin``.
+
+
+- `#5786 <https://github.com/pytest-dev/pytest/issues/5786>`_: Chained exceptions in test and collection reports are now correctly serialized, allowing plugins like
+  ``pytest-xdist`` to display them properly.
+
+
+- `#5792 <https://github.com/pytest-dev/pytest/issues/5792>`_: Windows: Fix error that occurs in certain circumstances when loading
+  ``conftest.py`` from a working directory that has casing other than the one stored
+  in the filesystem (e.g., ``c:\test`` instead of ``C:\test``).
+
+
 pytest 5.1.1 (2019-08-20)
 =========================
 

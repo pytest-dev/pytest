@@ -172,7 +172,7 @@ objects, they are still using the default pytest representation:
       <Function test_timedistance_v3[forward]>
       <Function test_timedistance_v3[backward]>
 
-    ========================== no tests ran in 0.01s ===========================
+    ========================== no tests ran in 0.12s ===========================
 
 In ``test_timedistance_v3``, we used ``pytest.param`` to specify the test IDs
 together with the actual data, instead of listing them separately.
@@ -229,7 +229,7 @@ this is a fully self-contained example which you can run with:
 
     test_scenarios.py ....                                               [100%]
 
-    ============================ 4 passed in 0.01s =============================
+    ============================ 4 passed in 0.12s =============================
 
 If you just collect tests you'll also nicely see 'advanced' and 'basic' as variants for the test function:
 
@@ -248,7 +248,7 @@ If you just collect tests you'll also nicely see 'advanced' and 'basic' as varia
           <Function test_demo1[advanced]>
           <Function test_demo2[advanced]>
 
-    ========================== no tests ran in 0.01s ===========================
+    ========================== no tests ran in 0.12s ===========================
 
 Note that we told ``metafunc.parametrize()`` that your scenario values
 should be considered class-scoped.  With pytest-2.3 this leads to a
@@ -323,7 +323,7 @@ Let's first see how it looks like at collection time:
       <Function test_db_initialized[d1]>
       <Function test_db_initialized[d2]>
 
-    ========================== no tests ran in 0.00s ===========================
+    ========================== no tests ran in 0.12s ===========================
 
 And then when we run the test:
 
@@ -394,7 +394,7 @@ The result of this test will be successful:
     <Module test_indirect_list.py>
       <Function test_indirect[a-b]>
 
-    ========================== no tests ran in 0.00s ===========================
+    ========================== no tests ran in 0.12s ===========================
 
 .. regendoc:wipe
 
@@ -475,10 +475,11 @@ Running it results in some skips if we don't have all the python interpreters in
 .. code-block:: pytest
 
    . $ pytest -rs -q multipython.py
-   ssssssssssss......sss......                                          [100%]
+   ssssssssssss...ssssssssssss                                          [100%]
    ========================= short test summary info ==========================
-   SKIPPED [15] $REGENDOC_TMPDIR/CWD/multipython.py:30: 'python3.5' not found
-   12 passed, 15 skipped in 0.62s
+   SKIPPED [12] $REGENDOC_TMPDIR/CWD/multipython.py:30: 'python3.5' not found
+   SKIPPED [12] $REGENDOC_TMPDIR/CWD/multipython.py:30: 'python3.7' not found
+   3 passed, 24 skipped in 0.24s
 
 Indirect parametrization of optional implementations/imports
 --------------------------------------------------------------------
@@ -547,7 +548,7 @@ If you run this with reporting for skips enabled:
 
     ========================= short test summary info ==========================
     SKIPPED [1] $REGENDOC_TMPDIR/conftest.py:13: could not import 'opt2': No module named 'opt2'
-    ======================= 1 passed, 1 skipped in 0.01s =======================
+    ======================= 1 passed, 1 skipped in 0.12s =======================
 
 You'll see that we don't have an ``opt2`` module and thus the second test run
 of our ``test_func1`` was skipped.  A few notes:
@@ -609,7 +610,7 @@ Then run ``pytest`` with verbose mode and with only the ``basic`` marker:
     test_pytest_param_example.py::test_eval[basic_2+4] PASSED            [ 66%]
     test_pytest_param_example.py::test_eval[basic_6*9] XFAIL             [100%]
 
-    =============== 2 passed, 15 deselected, 1 xfailed in 0.08s ================
+    =============== 2 passed, 15 deselected, 1 xfailed in 0.12s ================
 
 As the result:
 
