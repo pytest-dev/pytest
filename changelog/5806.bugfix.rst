@@ -1,0 +1,1 @@
+Fix "lexer" being used when uploading to bpaste.net from ``--pastebin`` to "text".
