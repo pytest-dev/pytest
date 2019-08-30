@@ -1,2 +1,0 @@
-Chained exceptions in test and collection reports are now correctly serialized, allowing plugins like
-``pytest-xdist`` to display them properly.
