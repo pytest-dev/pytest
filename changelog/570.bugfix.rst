@@ -1,1 +1,2 @@
-Fix the scope behavior with indirect fixtures.
+Fixed long standing issue where fixture scope was not respected when indirect fixtures were used during
+parametrization.

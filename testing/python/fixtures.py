@@ -4012,43 +4012,53 @@ def test_fixture_named_request(testdir):
     )
 
 
-def test_indirect_fixture(testdir):
+def test_indirect_fixture_does_not_break_scope(testdir):
+    """Ensure that fixture scope is respected when using indirect fixtures (#570)"""
     testdir.makepyfile(
         """
-        from collections import Counter
-
         import pytest
 
+        instantiated  = []
 
         @pytest.fixture(scope="session")
-        def fixture_1(request, count=Counter()):
-            count[request.param] += 1
-            yield count[request.param]
+        def fixture_1(request):
+            instantiated.append(("fixture_1", request.param))
 
 
         @pytest.fixture(scope="session")
         def fixture_2(request):
-            yield request.param
+            instantiated.append(("fixture_2", request.param))
 
 
         scenarios = [
-            ("a", "a1"),
-            ("a", "a2"),
-            ("b", "b1"),
-            ("b", "b2"),
-            ("c", "c1"),
-            ("c", "c2"),
+            ("A", "a1"),
+            ("A", "a2"),
+            ("B", "b1"),
+            ("B", "b2"),
+            ("C", "c1"),
+            ("C", "c2"),
         ]
-
 
         @pytest.mark.parametrize(
             "fixture_1,fixture_2", scenarios, indirect=["fixture_1", "fixture_2"]
         )
-        def test_it(fixture_1, fixture_2):
-            assert fixture_1 == 1
-            assert fixture_2[1] in ("1", "2")
+        def test_create_fixtures(fixture_1, fixture_2):
+            pass
 
+
+        def test_check_fixture_instantiations():
+            assert instantiated == [
+                ('fixture_1', 'A'),
+                ('fixture_2', 'a1'),
+                ('fixture_2', 'a2'),
+                ('fixture_1', 'B'),
+                ('fixture_2', 'b1'),
+                ('fixture_2', 'b2'),
+                ('fixture_1', 'C'),
+                ('fixture_2', 'c1'),
+                ('fixture_2', 'c2'),
+            ]
     """
     )
     result = testdir.runpytest()
-    result.assert_outcomes(passed=6)
+    result.assert_outcomes(passed=7)
