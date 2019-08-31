@@ -65,7 +65,7 @@ def create_new_paste(contents):
     from urllib.request import urlopen
     from urllib.parse import urlencode
 
-    params = {"code": contents, "lexer": "python3", "expiry": "1week"}
+    params = {"code": contents, "lexer": "text", "expiry": "1week"}
     url = "https://bpaste.net"
     try:
         response = (
