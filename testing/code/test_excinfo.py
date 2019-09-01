@@ -399,6 +399,13 @@ def test_match_raises_error(testdir):
     result = testdir.runpytest()
     assert result.ret != 0
     result.stdout.fnmatch_lines(["*AssertionError*Pattern*[123]*not found*"])
+    assert "__tracebackhide__ = True" not in result.stdout.str()
+
+    result = testdir.runpytest("--fulltrace")
+    assert result.ret != 0
+    result.stdout.fnmatch_lines(
+        ["*__tracebackhide__ = True*", "*AssertionError*Pattern*[123]*not found*"]
+    )
 
 
 class TestFormattedExcinfo:
