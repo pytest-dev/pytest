@@ -88,7 +88,7 @@ This has the following benefits:
 
 .. note::
 
-    See :ref:`pythonpath` for more information about the difference between calling ``pytest`` and
+    See :ref:`pytest vs python -m pytest` for more information about the difference between calling ``pytest`` and
     ``python -m pytest``.
 
 Note that using this scheme your test files must have **unique names**, because
