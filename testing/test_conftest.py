@@ -292,6 +292,16 @@ def test_conftest_badcase(testdir):
     assert result.ret == ExitCode.NO_TESTS_COLLECTED
 
 
+def test_conftest_uppercase(testdir):
+    """Check conftest.py loading when directory casing is wrong."""
+    source = {"__init__.py": "", "Foo/conftest.py": "", "Foo/__init__.py": ""}
+    testdir.makepyfile(**source)
+
+    testdir.tmpdir.chdir()
+    result = testdir.runpytest()
+    assert result.ret == ExitCode.NO_TESTS_COLLECTED
+
+
 def test_no_conftest(testdir):
     testdir.makeconftest("assert 0")
     result = testdir.runpytest("--noconftest")

@@ -11,7 +11,6 @@ from functools import partial
 from os.path import expanduser
 from os.path import expandvars
 from os.path import isabs
-from os.path import normcase
 from os.path import sep
 from posixpath import sep as posix_sep
 
@@ -343,4 +342,4 @@ def unique_path(path):
 
     This is needed only for ``py.path.local``; ``pathlib.Path`` handles this
     natively with ``resolve()``."""
-    return type(path)(normcase(str(path.realpath())))
+    return type(path)(Path(str(path.realpath())).resolve())
