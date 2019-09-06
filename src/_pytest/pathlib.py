@@ -342,4 +342,4 @@ def unique_path(path):
 
     This is needed only for ``py.path.local``; ``pathlib.Path`` handles this
     natively with ``resolve()``."""
-    return type(path)(Path(str(path.realpath())).resolve())
+    return type(path)(Path(str(path)).resolve())
