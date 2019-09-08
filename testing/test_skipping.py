@@ -1162,3 +1162,26 @@ def test_importorskip():
         match="^could not import 'doesnotexist': No module named .*",
     ):
         pytest.importorskip("doesnotexist")
+
+
+def test_skip_package(testdir):
+    testdir.makepyfile(
+        __init__="""
+        import pytest
+        pytestmark = pytest.mark.skip
+    """
+    )
+
+    testdir.makepyfile(
+        """
+        import pytest
+        def test_skip1():
+            assert 0
+        def test_skip2():
+            assert 0
+    """
+    )
+
+    result = testdir.inline_run()
+    _, skipped, _ = result.listoutcomes()
+    assert len(skipped) == 2
