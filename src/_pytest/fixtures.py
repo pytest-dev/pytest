@@ -1012,7 +1012,16 @@ FIXTURE_ARGS_ORDER = ("scope", "params", "autouse", "ids", "name")
 
 
 def _parse_fixture_args(callable_or_scope, *args, **kwargs):
-    arguments = dict(scope="function", params=None, autouse=False, ids=None, name=None)
+    arguments = {
+        "scope": "function",
+        "params": None,
+        "autouse": False,
+        "ids": None,
+        "name": None,
+    }
+    kwargs = {
+        key: value for key, value in kwargs.items() if arguments.get(key) != value
+    }
 
     fixture_function = None
     if isinstance(callable_or_scope, str):
@@ -1041,7 +1050,15 @@ def _parse_fixture_args(callable_or_scope, *args, **kwargs):
     return fixture_function, arguments
 
 
-def fixture(callable_or_scope=None, *args, **kwargs):
+def fixture(
+    callable_or_scope=None,
+    *args,
+    scope="function",
+    params=None,
+    autouse=False,
+    ids=None,
+    name=None
+):
     """Decorator to mark a fixture factory function.
 
     This decorator can be used, with or without parameters, to define a
@@ -1088,7 +1105,13 @@ def fixture(callable_or_scope=None, *args, **kwargs):
                 ``@pytest.fixture(name='<fixturename>')``.
     """
     fixture_function, arguments = _parse_fixture_args(
-        callable_or_scope, *args, **kwargs
+        callable_or_scope,
+        *args,
+        scope=scope,
+        params=params,
+        autouse=autouse,
+        ids=ids,
+        name=name
     )
     scope = arguments.get("scope")
     params = arguments.get("params")
@@ -1107,13 +1130,29 @@ def fixture(callable_or_scope=None, *args, **kwargs):
     return FixtureFunctionMarker(scope, params, autouse, ids=ids, name=name)
 
 
-def yield_fixture(callable_or_scope=None, *args, **kwargs):
+def yield_fixture(
+    callable_or_scope=None,
+    *args,
+    scope="function",
+    params=None,
+    autouse=False,
+    ids=None,
+    name=None
+):
     """ (return a) decorator to mark a yield-fixture factory function.
 
     .. deprecated:: 3.0
         Use :py:func:`pytest.fixture` directly instead.
     """
-    return fixture(callable_or_scope=callable_or_scope, *args, **kwargs)
+    return fixture(
+        callable_or_scope,
+        *args,
+        scope=scope,
+        params=params,
+        autouse=autouse,
+        ids=ids,
+        name=name
+    )
 
 
 defaultfuncargprefixmarker = fixture()
