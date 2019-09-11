@@ -548,6 +548,15 @@ class Module(nodes.File, PyCollector):
         return mod
 
 
+class InitModule(Module):
+    _ALLOW_MARKERS = False
+
+    def __repr__(self):
+        if type(self) == InitModule:
+            return "<{} {}>".format(Module.__name__, getattr(self, "name", None))
+        return super().__repr__()
+
+
 class Package(Module):
     def __init__(self, fspath, parent=None, config=None, session=None, nodeid=None):
         session = parent.session
@@ -637,7 +646,7 @@ class Package(Module):
         if init_module.check(file=1) and path_matches_patterns(
             init_module, self.config.getini("python_files")
         ):
-            yield Module(init_module, self)
+            yield InitModule(init_module, self)
         pkg_prefixes = set()
         for path in this_path.visit(rec=self._recurse, bf=True, sort=True):
             # We will visit our own __init__.py file, in which case we skip it.
