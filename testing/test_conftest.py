@@ -1,4 +1,3 @@
-import os.path
 import textwrap
 
 import py
@@ -6,7 +5,6 @@ import py
 import pytest
 from _pytest.config import PytestPluginManager
 from _pytest.main import ExitCode
-from _pytest.pathlib import unique_path
 
 
 def ConftestWithSetinitial(path):
@@ -143,11 +141,11 @@ def test_conftestcutdir(testdir):
     # but we can still import a conftest directly
     conftest._importconftest(conf)
     values = conftest._getconftestmodules(conf.dirpath())
-    assert values[0].__file__.startswith(str(unique_path(conf)))
+    assert values[0].__file__.startswith(str(conf))
     # and all sub paths get updated properly
     values = conftest._getconftestmodules(p)
     assert len(values) == 1
-    assert values[0].__file__.startswith(str(unique_path(conf)))
+    assert values[0].__file__.startswith(str(conf))
 
 
 def test_conftestcutdir_inplace_considered(testdir):
@@ -156,7 +154,7 @@ def test_conftestcutdir_inplace_considered(testdir):
     conftest_setinitial(conftest, [conf.dirpath()], confcutdir=conf.dirpath())
     values = conftest._getconftestmodules(conf.dirpath())
     assert len(values) == 1
-    assert values[0].__file__.startswith(str(unique_path(conf)))
+    assert values[0].__file__.startswith(str(conf))
 
 
 @pytest.mark.parametrize("name", "test tests whatever .dotdir".split())
@@ -166,7 +164,7 @@ def test_setinitial_conftest_subdirs(testdir, name):
     conftest = PytestPluginManager()
     conftest_setinitial(conftest, [sub.dirpath()], confcutdir=testdir.tmpdir)
     if name not in ("whatever", ".dotdir"):
-        assert unique_path(subconftest) in conftest._conftestpath2mod
+        assert subconftest in conftest._conftestpath2mod
         assert len(conftest._conftestpath2mod) == 1
     else:
         assert subconftest not in conftest._conftestpath2mod
@@ -275,21 +273,6 @@ def test_conftest_symlink_files(testdir):
     result = testdir.runpytest("-vs", "app/test_foo.py")
     result.stdout.fnmatch_lines(["*conftest_loaded*", "PASSED"])
     assert result.ret == ExitCode.OK
-
-
-@pytest.mark.skipif(
-    os.path.normcase("x") != os.path.normcase("X"),
-    reason="only relevant for case insensitive file systems",
-)
-def test_conftest_badcase(testdir):
-    """Check conftest.py loading when directory casing is wrong."""
-    testdir.tmpdir.mkdir("JenkinsRoot").mkdir("test")
-    source = {"setup.py": "", "test/__init__.py": "", "test/conftest.py": ""}
-    testdir.makepyfile(**{"JenkinsRoot/%s" % k: v for k, v in source.items()})
-
-    testdir.tmpdir.join("jenkinsroot/test").chdir()
-    result = testdir.runpytest()
-    assert result.ret == ExitCode.NO_TESTS_COLLECTED
 
 
 def test_no_conftest(testdir):

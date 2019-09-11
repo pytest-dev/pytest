@@ -30,7 +30,6 @@ from _pytest._code import filter_traceback
 from _pytest.compat import importlib_metadata
 from _pytest.outcomes import fail
 from _pytest.outcomes import Skipped
-from _pytest.pathlib import unique_path
 from _pytest.warning_types import PytestConfigWarning
 
 hookimpl = HookimplMarker("pytest")
@@ -367,7 +366,7 @@ class PytestPluginManager(PluginManager):
         """
         current = py.path.local()
         self._confcutdir = (
-            unique_path(current.join(namespace.confcutdir, abs=True))
+            current.join(namespace.confcutdir, abs=True)
             if namespace.confcutdir
             else None
         )
@@ -406,18 +405,19 @@ class PytestPluginManager(PluginManager):
         else:
             directory = path
 
-        directory = unique_path(directory)
-
         # XXX these days we may rather want to use config.rootdir
         # and allow users to opt into looking into the rootdir parent
         # directories instead of requiring to specify confcutdir
         clist = []
-        for parent in directory.parts():
+        for parent in directory.realpath().parts():
             if self._confcutdir and self._confcutdir.relto(parent):
                 continue
             conftestpath = parent.join("conftest.py")
             if conftestpath.isfile():
-                mod = self._importconftest(conftestpath)
+                # Use realpath to avoid loading the same conftest twice
+                # with build systems that create build directories containing
+                # symlinks to actual files.
+                mod = self._importconftest(conftestpath.realpath())
                 clist.append(mod)
         self._dirpath2confmods[directory] = clist
         return clist
@@ -432,10 +432,6 @@ class PytestPluginManager(PluginManager):
         raise KeyError(name)
 
     def _importconftest(self, conftestpath):
-        # Use realpath to avoid loading the same conftest twice
-        # with build systems that create build directories containing
-        # symlinks to actual files.
-        conftestpath = unique_path(conftestpath)
         try:
             return self._conftestpath2mod[conftestpath]
         except KeyError:
