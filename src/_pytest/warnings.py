@@ -66,6 +66,8 @@ def catch_warnings_for_item(config, ihook, when, item):
     cmdline_filters = config.getoption("pythonwarnings") or []
     inifilters = config.getini("filterwarnings")
     with warnings.catch_warnings(record=True) as log:
+        # mypy can't infer that record=True means log is not None; help it.
+        assert log is not None
 
         if not sys.warnoptions:
             # if user is not explicitly configuring warning filters, show deprecation warnings by default (#2908)
@@ -145,6 +147,8 @@ def _issue_warning_captured(warning, hook, stacklevel):
     with warnings.catch_warnings(record=True) as records:
         warnings.simplefilter("always", type(warning))
         warnings.warn(warning, stacklevel=stacklevel)
+    # Mypy can't infer that record=True means records is not None; help it.
+    assert records is not None
     hook.pytest_warning_captured.call_historic(
         kwargs=dict(warning_message=records[0], when="config", item=None)
     )
