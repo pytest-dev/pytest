@@ -105,6 +105,11 @@ class ParameterSet(namedtuple("ParameterSet", "values, marks, id")):
 
     @staticmethod
     def _parse_parametrize_parameters(argvalues, force_tuple):
+        if isinstance(argvalues, dict):
+            return [
+                v if isinstance(v, ParameterSet) else ParameterSet(v, marks=[], id=k)
+                for k, v in argvalues.items()
+            ]
         return [
             ParameterSet.extract_from(x, force_tuple=force_tuple) for x in argvalues
         ]

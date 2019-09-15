@@ -1252,6 +1252,26 @@ class TestMetafuncFunctional:
         reprec = testdir.inline_run("--collect-only")
         assert not reprec.getcalls("pytest_internalerror")
 
+    def test_parametrize_with_dict(self, testdir):
+        p1 = testdir.makepyfile(
+            """
+            import pytest
+
+            @pytest.mark.parametrize('arg1,arg2,expected_id', {
+                "myid_12": [1, 2, "[myid_12]"],
+                "ignored_id": pytest.param(3, 4, "[myid_34]", id="myid_34"),
+                "should_maybe_be_used?": pytest.param(5, 6, None),
+            })
+            def test_parametrize_dict(request, arg1, arg2, expected_id):
+                if expected_id is None:
+                    expected_id = "[%d-%d-None]" % (arg1, arg2)
+                assert request.node.nodeid.endswith(expected_id)
+            """
+        )
+        result = testdir.runpytest_subprocess(str(p1))
+        assert result.ret == 0
+        result.stdout.fnmatch_lines(["*= 3 passed in*"])
+
     def test_usefixtures_seen_in_generate_tests(self, testdir):
         testdir.makepyfile(
             """
