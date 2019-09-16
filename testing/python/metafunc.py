@@ -1259,8 +1259,8 @@ class TestMetafuncFunctional:
 
             @pytest.mark.parametrize('arg1,arg2,expected_id', {
                 "myid_12": [1, 2, "[myid_12]"],
-                "ignored_id": pytest.param(3, 4, "[myid_34]", id="myid_34"),
-                "should_maybe_be_used?": pytest.param(5, 6, None),
+                "replaced_id": pytest.param(3, 4, "[replaced_id]", id="myid_34"),
+                "myid_56": pytest.param(5, 6, "[myid_56]"),
             })
             def test_parametrize_dict(request, arg1, arg2, expected_id):
                 if expected_id is None:
