@@ -1272,6 +1272,22 @@ class TestMetafuncFunctional:
         assert result.ret == 0
         result.stdout.fnmatch_lines(["*= 3 passed in*"])
 
+    def test_parametrize_with_dict_single_string_arg(self, testdir):
+        p1 = testdir.makepyfile(
+            """
+            import pytest
+
+            @pytest.mark.parametrize('arg1', {
+                "myid": "single_string_arg",
+            })
+            def test_parametrize_dict_single_arg(request, arg1):
+                assert request.node.nodeid.endswith("[myid]")
+            """
+        )
+        result = testdir.runpytest_subprocess(str(p1))
+        assert result.ret == 0
+        result.stdout.fnmatch_lines(["*= 1 passed in*"])
+
     def test_usefixtures_seen_in_generate_tests(self, testdir):
         testdir.makepyfile(
             """
