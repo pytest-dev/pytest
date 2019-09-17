@@ -263,7 +263,6 @@ class Node:
         fm = self.session._fixturemanager
         if excinfo.errisinstance(fm.FixtureLookupError):
             return excinfo.value.formatrepr()
-        tbfilter = True
         if self.config.getoption("fulltrace", False):
             style = "long"
         else:
@@ -271,7 +270,6 @@ class Node:
             self._prunetraceback(excinfo)
             if len(excinfo.traceback) == 0:
                 excinfo.traceback = tb
-            tbfilter = False  # prunetraceback already does it
             if style == "auto":
                 style = "long"
         # XXX should excinfo.getrepr record all data and toterminal() process it?
@@ -297,7 +295,7 @@ class Node:
             abspath=abspath,
             showlocals=self.config.getoption("showlocals", False),
             style=style,
-            tbfilter=tbfilter,
+            tbfilter=False,  # pruned already, or in --fulltrace mode.
             truncate_locals=truncate_locals,
         )
 

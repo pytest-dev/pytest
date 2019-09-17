@@ -853,7 +853,7 @@ class TestDebuggingBreakpoints:
         Test that supports breakpoint global marks on Python 3.7+ and not on
         CPython 3.5, 2.7
         """
-        if sys.version_info.major == 3 and sys.version_info.minor >= 7:
+        if sys.version_info >= (3, 7):
             assert SUPPORTS_BREAKPOINT_BUILTIN is True
         if sys.version_info.major == 3 and sys.version_info.minor == 5:
             assert SUPPORTS_BREAKPOINT_BUILTIN is False

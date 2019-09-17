@@ -431,10 +431,7 @@ class PytestPluginManager(PluginManager):
                 continue
             conftestpath = parent.join("conftest.py")
             if conftestpath.isfile():
-                # Use realpath to avoid loading the same conftest twice
-                # with build systems that create build directories containing
-                # symlinks to actual files.
-                mod = self._importconftest(conftestpath.realpath())
+                mod = self._importconftest(conftestpath)
                 clist.append(mod)
         self._dirpath2confmods[directory] = clist
         return clist
@@ -449,8 +446,14 @@ class PytestPluginManager(PluginManager):
         raise KeyError(name)
 
     def _importconftest(self, conftestpath):
+        # Use a resolved Path object as key to avoid loading the same conftest twice
+        # with build systems that create build directories containing
+        # symlinks to actual files.
+        # Using Path().resolve() is better than py.path.realpath because
+        # it resolves to the correct path/drive in case-insensitive file systems (#5792)
+        key = Path(str(conftestpath)).resolve()
         try:
-            return self._conftestpath2mod[conftestpath]
+            return self._conftestpath2mod[key]
         except KeyError:
             pkgpath = conftestpath.pypkgpath()
             if pkgpath is None:
@@ -467,7 +470,7 @@ class PytestPluginManager(PluginManager):
                 raise ConftestImportFailure(conftestpath, sys.exc_info())
 
             self._conftest_plugins.add(mod)
-            self._conftestpath2mod[conftestpath] = mod
+            self._conftestpath2mod[key] = mod
             dirpath = conftestpath.dirpath()
             if dirpath in self._dirpath2confmods:
                 for path, mods in self._dirpath2confmods.items():

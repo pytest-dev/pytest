@@ -75,7 +75,7 @@ them in turn:
     E        +  where 54 = eval('6*9')
 
     test_expectation.py:6: AssertionError
-    ======================= 1 failed, 2 passed in 0.02s ========================
+    ======================= 1 failed, 2 passed in 0.12s ========================
 
 .. note::
 
@@ -128,7 +128,7 @@ Let's run this:
 
     test_expectation.py ..x                                              [100%]
 
-    ======================= 2 passed, 1 xfailed in 0.02s =======================
+    ======================= 2 passed, 1 xfailed in 0.12s =======================
 
 The one parameter set which caused a failure previously now
 shows up as an "xfailed (expected to fail)" test.

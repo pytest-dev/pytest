@@ -72,6 +72,8 @@ imported in the global import namespace.
 
 This is also discussed in details in :ref:`test discovery`.
 
+.. _`pytest vs python -m pytest`:
+
 Invoking ``pytest`` versus ``python -m pytest``
 -----------------------------------------------
 

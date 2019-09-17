@@ -69,7 +69,7 @@ That’s it. You can now execute the test function:
     E        +  where 4 = func(3)
 
     test_sample.py:6: AssertionError
-    ============================ 1 failed in 0.02s =============================
+    ============================ 1 failed in 0.12s =============================
 
 This test returns a failure report because ``func(3)`` does not return ``5``.
 
@@ -108,7 +108,7 @@ Execute the test function with “quiet” reporting mode:
 
     $ pytest -q test_sysexit.py
     .                                                                    [100%]
-    1 passed in 0.00s
+    1 passed in 0.01s
 
 Group multiple tests in a class
 --------------------------------------------------------------
