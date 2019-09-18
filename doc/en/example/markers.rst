@@ -499,7 +499,7 @@ The output is as follows:
     $ pytest -q -s
     Mark(name='my_marker', args=(<function hello_world at 0xdeadbeef>,), kwargs={})
     .
-    1 passed in 0.01s
+    1 passed in 0.12s
 
 We can see that the custom marker has its argument set extended with the function ``hello_world``. This is the key difference between creating a custom marker as a callable, which invokes ``__call__`` behind the scenes, and using ``with_args``.
 
@@ -551,7 +551,7 @@ Let's run this without capturing output and see what we get:
     glob args=('class',) kwargs={'x': 2}
     glob args=('module',) kwargs={'x': 1}
     .
-    1 passed in 0.02s
+    1 passed in 0.12s
 
 marking platform specific tests with pytest
 --------------------------------------------------------------

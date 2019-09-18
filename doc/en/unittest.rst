@@ -219,7 +219,7 @@ Running this test module ...:
 
     $ pytest -q test_unittest_cleandir.py
     .                                                                    [100%]
-    1 passed in 0.01s
+    1 passed in 0.12s
 
 ... gives us one passed test because the ``initdir`` fixture function
 was executed ahead of the ``test_method``.

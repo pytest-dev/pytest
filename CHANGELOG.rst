@@ -18,6 +18,22 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+pytest 5.1.3 (2019-09-18)
+=========================
+
+Bug Fixes
+---------
+
+- `#5807 <https://github.com/pytest-dev/pytest/issues/5807>`_: Fix pypy3.6 (nightly) on windows.
+
+
+- `#5811 <https://github.com/pytest-dev/pytest/issues/5811>`_: Handle ``--fulltrace`` correctly with ``pytest.raises``.
+
+
+- `#5819 <https://github.com/pytest-dev/pytest/issues/5819>`_: Windows: Fix regression with conftest whose qualified name contains uppercase
+  characters (introduced by #5792).
+
+
 pytest 5.1.2 (2019-08-30)
 =========================
 

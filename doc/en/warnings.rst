@@ -64,7 +64,7 @@ them into errors:
     E       UserWarning: api v1, should use functions from v2
 
     test_show_warnings.py:5: UserWarning
-    1 failed in 0.02s
+    1 failed in 0.12s
 
 The same option can be set in the ``pytest.ini`` file using the ``filterwarnings`` ini option.
 For example, the configuration below will ignore all user warnings, but will transform
@@ -407,7 +407,7 @@ defines an ``__init__`` constructor, as this prevents the class from being insta
         class Test:
 
     -- Docs: https://docs.pytest.org/en/latest/warnings.html
-    1 warnings in 0.00s
+    1 warnings in 0.12s
 
 These warnings might be filtered using the same builtin mechanisms used to filter other types of warnings.
 

@@ -54,7 +54,7 @@ This means that we only run 2 tests if we do not pass ``--all``:
 
     $ pytest -q test_compute.py
     ..                                                                   [100%]
-    2 passed in 0.01s
+    2 passed in 0.12s
 
 We run only two computations, so we see two dots.
 let's run the full monty:
@@ -73,7 +73,7 @@ let's run the full monty:
     E       assert 4 < 4
 
     test_compute.py:4: AssertionError
-    1 failed, 4 passed in 0.02s
+    1 failed, 4 passed in 0.12s
 
 As expected when running the full range of ``param1`` values
 we'll get an error on the last one.
@@ -343,7 +343,7 @@ And then when we run the test:
     E           Failed: deliberately failing for demo purposes
 
     test_backends.py:8: Failed
-    1 failed, 1 passed in 0.02s
+    1 failed, 1 passed in 0.12s
 
 The first invocation with ``db == "DB1"`` passed while the second with ``db == "DB2"`` failed.  Our ``db`` fixture function has instantiated each of the DB values during the setup phase while the ``pytest_generate_tests`` generated two according calls to the ``test_db_initialized`` during the collection phase.
 
@@ -454,7 +454,7 @@ argument sets to use for each test function.  Let's run it:
     E       assert 1 == 2
 
     test_parametrize.py:21: AssertionError
-    1 failed, 2 passed in 0.03s
+    1 failed, 2 passed in 0.12s
 
 Indirect parametrization with multiple fixtures
 --------------------------------------------------------------
@@ -479,7 +479,7 @@ Running it results in some skips if we don't have all the python interpreters in
    ========================= short test summary info ==========================
    SKIPPED [12] $REGENDOC_TMPDIR/CWD/multipython.py:30: 'python3.5' not found
    SKIPPED [12] $REGENDOC_TMPDIR/CWD/multipython.py:30: 'python3.7' not found
-   3 passed, 24 skipped in 0.24s
+   3 passed, 24 skipped in 0.12s
 
 Indirect parametrization of optional implementations/imports
 --------------------------------------------------------------------

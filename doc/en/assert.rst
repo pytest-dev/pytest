@@ -279,7 +279,7 @@ the conftest file:
    E            vals: 1 != 2
 
    test_foocompare.py:12: AssertionError
-   1 failed in 0.02s
+   1 failed in 0.12s
 
 .. _assert-details:
 .. _`assert introspection`:
