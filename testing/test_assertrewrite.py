@@ -9,6 +9,7 @@ import sys
 import textwrap
 import zipfile
 from functools import partial
+from pathlib import Path
 
 import py
 
@@ -17,6 +18,8 @@ import pytest
 from _pytest.assertion import util
 from _pytest.assertion.rewrite import _get_assertion_exprs
 from _pytest.assertion.rewrite import AssertionRewritingHook
+from _pytest.assertion.rewrite import get_cache_dir
+from _pytest.assertion.rewrite import PYC_TAIL
 from _pytest.assertion.rewrite import PYTEST_TAG
 from _pytest.assertion.rewrite import rewrite_asserts
 from _pytest.main import ExitCode
@@ -1564,7 +1567,7 @@ def test_try_mkdir(monkeypatch, tmp_path):
     assert try_mkdir(str(p))
 
     # monkeypatch to simulate all error situations
-    def fake_mkdir(p, *, exc):
+    def fake_mkdir(p, mode, *, exc):
         assert isinstance(p, str)
         raise exc
 
@@ -1589,3 +1592,59 @@ def test_try_mkdir(monkeypatch, tmp_path):
     with pytest.raises(OSError) as exc_info:
         try_mkdir(str(p))
     assert exc_info.value.errno == errno.ECHILD
+
+
+class TestPyCacheDir:
+    @pytest.mark.parametrize(
+        "prefix, source, expected",
+        [
+            ("c:/tmp/pycs", "d:/projects/src/foo.py", "c:/tmp/pycs/projects/src"),
+            (None, "d:/projects/src/foo.py", "d:/projects/src/__pycache__"),
+            ("/tmp/pycs", "/home/projects/src/foo.py", "/tmp/pycs/home/projects/src"),
+            (None, "/home/projects/src/foo.py", "/home/projects/src/__pycache__"),
+        ],
+    )
+    def test_get_cache_dir(self, monkeypatch, prefix, source, expected):
+        if prefix:
+            if sys.version_info < (3, 8):
+                pytest.skip("pycache_prefix not available in py<38")
+            monkeypatch.setattr(sys, "pycache_prefix", prefix)
+
+        assert get_cache_dir(Path(source)) == Path(expected)
+
+    @pytest.mark.skipif(
+        sys.version_info < (3, 8), reason="pycache_prefix not available in py<38"
+    )
+    def test_sys_pycache_prefix_integration(self, tmp_path, monkeypatch, testdir):
+        """Integration test for sys.pycache_prefix (#4730)."""
+        pycache_prefix = tmp_path / "my/pycs"
+        monkeypatch.setattr(sys, "pycache_prefix", str(pycache_prefix))
+        monkeypatch.setattr(sys, "dont_write_bytecode", False)
+
+        testdir.makepyfile(
+            **{
+                "src/test_foo.py": """
+                import bar
+                def test_foo():
+                    pass
+            """,
+                "src/bar/__init__.py": "",
+            }
+        )
+        result = testdir.runpytest()
+        assert result.ret == 0
+
+        test_foo = Path(testdir.tmpdir) / "src/test_foo.py"
+        bar_init = Path(testdir.tmpdir) / "src/bar/__init__.py"
+        assert test_foo.is_file()
+        assert bar_init.is_file()
+
+        # test file: rewritten, custom pytest cache tag
+        test_foo_pyc = get_cache_dir(test_foo) / ("test_foo" + PYC_TAIL)
+        assert test_foo_pyc.is_file()
+
+        # normal file: not touched by pytest, normal cache tag
+        bar_init_pyc = get_cache_dir(bar_init) / "__init__.{cache_tag}.pyc".format(
+            cache_tag=sys.implementation.cache_tag
+        )
+        assert bar_init_pyc.is_file()
