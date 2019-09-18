@@ -881,7 +881,7 @@ class FixtureDef:
             if argname != "request":
                 fixturedef.addfinalizer(functools.partial(self.finish, request=request))
 
-        my_cache_key = request.param_index
+        my_cache_key = self.cache_key(request)
         cached_result = getattr(self, "cached_result", None)
         if cached_result is not None:
             result, cache_key, err = cached_result
@@ -898,6 +898,9 @@ class FixtureDef:
 
         hook = self._fixturemanager.session.gethookproxy(request.node.fspath)
         return hook.pytest_fixture_setup(fixturedef=self, request=request)
+
+    def cache_key(self, request):
+        return request.param_index if not hasattr(request, "param") else request.param
 
     def __repr__(self):
         return "<FixtureDef argname={!r} scope={!r} baseid={!r}>".format(
@@ -919,6 +922,12 @@ def resolve_fixture_function(fixturedef, request):
         # request.instance so that code working with "fixturedef" behaves
         # as expected.
         if request.instance is not None:
+            # handle the case where fixture is defined not in a test class, but some other class
+            # (for example a plugin class with a fixture), see #2270
+            if hasattr(fixturefunc, "__self__") and not isinstance(
+                request.instance, fixturefunc.__self__.__class__
+            ):
+                return fixturefunc
             fixturefunc = getimfunc(fixturedef.func)
             if fixturefunc != fixturedef.func:
                 fixturefunc = fixturefunc.__get__(request.instance)
@@ -935,7 +944,7 @@ def pytest_fixture_setup(fixturedef, request):
         kwargs[argname] = result
 
     fixturefunc = resolve_fixture_function(fixturedef, request)
-    my_cache_key = request.param_index
+    my_cache_key = fixturedef.cache_key(request)
     try:
         result = call_fixture_func(fixturefunc, request, kwargs)
     except TEST_OUTCOME:

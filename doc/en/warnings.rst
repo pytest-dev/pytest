@@ -41,7 +41,7 @@ Running pytest now produces this output:
         warnings.warn(UserWarning("api v1, should use functions from v2"))
 
     -- Docs: https://docs.pytest.org/en/latest/warnings.html
-    ====================== 1 passed, 1 warnings in 0.00s =======================
+    ====================== 1 passed, 1 warnings in 0.12s =======================
 
 The ``-W`` flag can be passed to control which warnings will be displayed or even turn
 them into errors:

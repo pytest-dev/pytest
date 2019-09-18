@@ -1,0 +1,1 @@
+Fix pypy3.6 (nightly) on windows.

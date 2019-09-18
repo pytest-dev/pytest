@@ -1,4 +1,6 @@
+import os
 import textwrap
+from pathlib import Path
 
 import py
 
@@ -163,11 +165,12 @@ def test_setinitial_conftest_subdirs(testdir, name):
     subconftest = sub.ensure("conftest.py")
     conftest = PytestPluginManager()
     conftest_setinitial(conftest, [sub.dirpath()], confcutdir=testdir.tmpdir)
+    key = Path(str(subconftest)).resolve()
     if name not in ("whatever", ".dotdir"):
-        assert subconftest in conftest._conftestpath2mod
+        assert key in conftest._conftestpath2mod
         assert len(conftest._conftestpath2mod) == 1
     else:
-        assert subconftest not in conftest._conftestpath2mod
+        assert key not in conftest._conftestpath2mod
         assert len(conftest._conftestpath2mod) == 0
 
 
@@ -273,6 +276,31 @@ def test_conftest_symlink_files(testdir):
     result = testdir.runpytest("-vs", "app/test_foo.py")
     result.stdout.fnmatch_lines(["*conftest_loaded*", "PASSED"])
     assert result.ret == ExitCode.OK
+
+
+@pytest.mark.skipif(
+    os.path.normcase("x") != os.path.normcase("X"),
+    reason="only relevant for case insensitive file systems",
+)
+def test_conftest_badcase(testdir):
+    """Check conftest.py loading when directory casing is wrong (#5792)."""
+    testdir.tmpdir.mkdir("JenkinsRoot").mkdir("test")
+    source = {"setup.py": "", "test/__init__.py": "", "test/conftest.py": ""}
+    testdir.makepyfile(**{"JenkinsRoot/%s" % k: v for k, v in source.items()})
+
+    testdir.tmpdir.join("jenkinsroot/test").chdir()
+    result = testdir.runpytest()
+    assert result.ret == ExitCode.NO_TESTS_COLLECTED
+
+
+def test_conftest_uppercase(testdir):
+    """Check conftest.py whose qualified name contains uppercase characters (#5819)"""
+    source = {"__init__.py": "", "Foo/conftest.py": "", "Foo/__init__.py": ""}
+    testdir.makepyfile(**source)
+
+    testdir.tmpdir.chdir()
+    result = testdir.runpytest()
+    assert result.ret == ExitCode.NO_TESTS_COLLECTED
 
 
 def test_no_conftest(testdir):

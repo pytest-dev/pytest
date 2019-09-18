@@ -449,7 +449,8 @@ class TestFillFixtures:
                 "*ERROR at setup of test_lookup_error*",
                 "  def test_lookup_error(unknown):*",
                 "E       fixture 'unknown' not found",
-                ">       available fixtures:*a_fixture,*b_fixture,*c_fixture,*d_fixture*monkeypatch,*",  # sorted
+                ">       available fixtures:*a_fixture,*b_fixture,*c_fixture,*d_fixture*monkeypatch,*",
+                # sorted
                 ">       use 'py*test --fixtures *' for help on them.",
                 "*1 error*",
             ]
@@ -4007,6 +4008,38 @@ class TestScopeOrdering:
         reprec = testdir.inline_run()
         reprec.assertoutcome(passed=2)
 
+    def test_class_fixture_self_instance(self, testdir):
+        """Check that plugin classes which implement fixtures receive the plugin instance
+        as self (see #2270).
+        """
+        testdir.makeconftest(
+            """
+            import pytest
+
+            def pytest_configure(config):
+                config.pluginmanager.register(MyPlugin())
+
+            class MyPlugin():
+                def __init__(self):
+                    self.arg = 1
+
+                @pytest.fixture(scope='function')
+                def myfix(self):
+                    assert isinstance(self, MyPlugin)
+                    return self.arg
+        """
+        )
+
+        testdir.makepyfile(
+            """
+            class TestClass(object):
+                def test_1(self, myfix):
+                    assert myfix == 1
+        """
+        )
+        reprec = testdir.inline_run()
+        reprec.assertoutcome(passed=1)
+
 
 def test_call_fixture_function_error():
     """Check if an error is raised if a fixture function is called directly (#4545)"""
@@ -4074,6 +4107,7 @@ def test_fixture_named_request(testdir):
 
 
 def test_fixture_duplicated_arguments(testdir):
+    """Raise error if there are positional and keyword arguments for the same parameter (#1682)."""
     testdir.makepyfile(
         """
         import pytest
@@ -4099,7 +4133,7 @@ def test_fixture_duplicated_arguments(testdir):
 
 
 def test_fixture_with_positionals(testdir):
-    """Raise warning, but the positionals should still works."""
+    """Raise warning, but the positionals should still works (#1682)."""
     testdir.makepyfile(
         """
         import os
@@ -4122,3 +4156,54 @@ def test_fixture_with_positionals(testdir):
 
     reprec = testdir.inline_run()
     reprec.assertoutcome(passed=1)
+
+
+def test_indirect_fixture_does_not_break_scope(testdir):
+    """Ensure that fixture scope is respected when using indirect fixtures (#570)"""
+    testdir.makepyfile(
+        """
+        import pytest
+        instantiated  = []
+
+        @pytest.fixture(scope="session")
+        def fixture_1(request):
+            instantiated.append(("fixture_1", request.param))
+
+
+        @pytest.fixture(scope="session")
+        def fixture_2(request):
+            instantiated.append(("fixture_2", request.param))
+
+
+        scenarios = [
+            ("A", "a1"),
+            ("A", "a2"),
+            ("B", "b1"),
+            ("B", "b2"),
+            ("C", "c1"),
+            ("C", "c2"),
+        ]
+
+        @pytest.mark.parametrize(
+            "fixture_1,fixture_2", scenarios, indirect=["fixture_1", "fixture_2"]
+        )
+        def test_create_fixtures(fixture_1, fixture_2):
+            pass
+
+
+        def test_check_fixture_instantiations():
+            assert instantiated == [
+                ('fixture_1', 'A'),
+                ('fixture_2', 'a1'),
+                ('fixture_2', 'a2'),
+                ('fixture_1', 'B'),
+                ('fixture_2', 'b1'),
+                ('fixture_2', 'b2'),
+                ('fixture_1', 'C'),
+                ('fixture_2', 'c1'),
+                ('fixture_2', 'c2'),
+            ]
+    """
+    )
+    result = testdir.runpytest()
+    result.assert_outcomes(passed=7)

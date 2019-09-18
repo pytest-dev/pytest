@@ -75,7 +75,7 @@ If you run this for the first time you will see two failures:
     E           Failed: bad luck
 
     test_50.py:7: Failed
-    2 failed, 48 passed in 0.08s
+    2 failed, 48 passed in 0.07s
 
 If you then run it with ``--lf``:
 
@@ -114,7 +114,7 @@ If you then run it with ``--lf``:
     E           Failed: bad luck
 
     test_50.py:7: Failed
-    ===================== 2 failed, 48 deselected in 0.02s =====================
+    ===================== 2 failed, 48 deselected in 0.12s =====================
 
 You have run only the two failing tests from the last run, while the 48 passing
 tests have not been run ("deselected").
@@ -158,7 +158,7 @@ of ``FF`` and dots):
     E           Failed: bad luck
 
     test_50.py:7: Failed
-    ======================= 2 failed, 48 passed in 0.07s =======================
+    ======================= 2 failed, 48 passed in 0.12s =======================
 
 .. _`config.cache`:
 
@@ -283,7 +283,7 @@ You can always peek at the content of the cache using the
     example/value contains:
       42
 
-    ========================== no tests ran in 0.00s ===========================
+    ========================== no tests ran in 0.12s ===========================
 
 ``--cache-show`` takes an optional argument to specify a glob pattern for
 filtering:
@@ -300,7 +300,7 @@ filtering:
     example/value contains:
       42
 
-    ========================== no tests ran in 0.00s ===========================
+    ========================== no tests ran in 0.12s ===========================
 
 Clearing Cache content
 ----------------------

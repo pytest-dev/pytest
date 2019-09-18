@@ -43,8 +43,7 @@ jobs:
       python: 'pypy3'
 
     - env: TOXENV=py35-xdist
-      dist: trusty
-      python: '3.5.0'
+      python: '3.5'
 
     # Coverage for:
     # - pytester's LsofFdLeakChecker

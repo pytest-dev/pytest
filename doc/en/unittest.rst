@@ -166,7 +166,7 @@ the ``self.db`` values in the traceback:
     E       assert 0
 
     test_unittest_db.py:13: AssertionError
-    ============================ 2 failed in 0.02s =============================
+    ============================ 2 failed in 0.12s =============================
 
 This default pytest traceback shows that the two test methods
 share the same ``self.db`` instance which was our intention

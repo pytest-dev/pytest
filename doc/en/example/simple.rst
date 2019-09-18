@@ -132,7 +132,7 @@ directory with the above conftest.py:
     rootdir: $REGENDOC_TMPDIR
     collected 0 items
 
-    ========================== no tests ran in 0.00s ===========================
+    ========================== no tests ran in 0.12s ===========================
 
 .. _`excontrolskip`:
 
@@ -201,7 +201,7 @@ and when running it will see a skipped "slow" test:
 
     ========================= short test summary info ==========================
     SKIPPED [1] test_module.py:8: need --runslow option to run
-    ======================= 1 passed, 1 skipped in 0.01s =======================
+    ======================= 1 passed, 1 skipped in 0.12s =======================
 
 Or run it including the ``slow`` marked test:
 
@@ -216,7 +216,7 @@ Or run it including the ``slow`` marked test:
 
     test_module.py ..                                                    [100%]
 
-    ============================ 2 passed in 0.01s =============================
+    ============================ 2 passed in 0.12s =============================
 
 Writing well integrated assertion helpers
 --------------------------------------------------
@@ -358,7 +358,7 @@ which will add the string to the test header accordingly:
     rootdir: $REGENDOC_TMPDIR
     collected 0 items
 
-    ========================== no tests ran in 0.00s ===========================
+    ========================== no tests ran in 0.12s ===========================
 
 .. regendoc:wipe
 
@@ -388,7 +388,7 @@ which will add info only when run with "--v":
     rootdir: $REGENDOC_TMPDIR
     collecting ... collected 0 items
 
-    ========================== no tests ran in 0.00s ===========================
+    ========================== no tests ran in 0.12s ===========================
 
 and nothing when run plainly:
 
@@ -401,7 +401,7 @@ and nothing when run plainly:
     rootdir: $REGENDOC_TMPDIR
     collected 0 items
 
-    ========================== no tests ran in 0.00s ===========================
+    ========================== no tests ran in 0.12s ===========================
 
 profiling test duration
 --------------------------
@@ -447,7 +447,7 @@ Now we can profile which test functions execute the slowest:
     0.30s call     test_some_are_slow.py::test_funcslow2
     0.20s call     test_some_are_slow.py::test_funcslow1
     0.10s call     test_some_are_slow.py::test_funcfast
-    ============================ 3 passed in 0.61s =============================
+    ============================ 3 passed in 0.12s =============================
 
 incremental testing - test steps
 ---------------------------------------------------
@@ -531,7 +531,7 @@ If we run this:
     ========================= short test summary info ==========================
     XFAIL test_step.py::TestUserHandling::test_deletion
       reason: previous test failed (test_modification)
-    ================== 1 failed, 2 passed, 1 xfailed in 0.03s ==================
+    ================== 1 failed, 2 passed, 1 xfailed in 0.12s ==================
 
 We'll see that ``test_deletion`` was not executed because ``test_modification``
 failed.  It is reported as an "expected failure".
@@ -644,7 +644,7 @@ We can run this:
     E       assert 0
 
     a/test_db2.py:2: AssertionError
-    ============= 3 failed, 2 passed, 1 xfailed, 1 error in 0.05s ==============
+    ============= 3 failed, 2 passed, 1 xfailed, 1 error in 0.12s ==============
 
 The two test modules in the ``a`` directory see the same ``db`` fixture instance
 while the one test in the sister-directory ``b`` doesn't see it.  We could of course
@@ -733,7 +733,7 @@ and run them:
     E       assert 0
 
     test_module.py:6: AssertionError
-    ============================ 2 failed in 0.02s =============================
+    ============================ 2 failed in 0.12s =============================
 
 you will have a "failures" file which contains the failing test ids:
 
@@ -848,7 +848,7 @@ and run it:
     E       assert 0
 
     test_module.py:19: AssertionError
-    ======================== 2 failed, 1 error in 0.02s ========================
+    ======================== 2 failed, 1 error in 0.12s ========================
 
 You'll see that the fixture finalizers could use the precise reporting
 information.

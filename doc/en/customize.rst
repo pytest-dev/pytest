@@ -107,8 +107,8 @@ check for ini-files as follows:
 
     # first look for pytest.ini files
     path/pytest.ini
-    path/setup.cfg  # must also contain [tool:pytest] section to match
     path/tox.ini    # must also contain [pytest] section to match
+    path/setup.cfg  # must also contain [tool:pytest] section to match
     pytest.ini
     ... # all the way down to the root
 
