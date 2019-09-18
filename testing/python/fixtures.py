@@ -4108,54 +4108,34 @@ def test_fixture_named_request(testdir):
 
 def test_fixture_duplicated_arguments(testdir):
     """Raise error if there are positional and keyword arguments for the same parameter (#1682)."""
-    testdir.makepyfile(
-        """
-        import pytest
+    with pytest.raises(TypeError) as excinfo:
 
-        with pytest.raises(TypeError) as excinfo:
+        @pytest.fixture("session", scope="session")
+        def arg(arg):
+            pass
 
-            @pytest.fixture("session", scope="session")
-            def arg(arg):
-                pass
-
-        def test_error():
-            assert (
-                str(excinfo.value)
-                == "The fixture arguments are defined as positional and keyword: scope. "
-                "Use only keyword arguments."
-            )
-
-    """
+    assert (
+        str(excinfo.value)
+        == "The fixture arguments are defined as positional and keyword: scope. "
+        "Use only keyword arguments."
     )
-
-    reprec = testdir.inline_run()
-    reprec.assertoutcome(passed=1)
 
 
 def test_fixture_with_positionals(testdir):
     """Raise warning, but the positionals should still works (#1682)."""
-    testdir.makepyfile(
-        """
-        import os
+    from _pytest.deprecated import FIXTURE_POSITIONAL_ARGUMENTS
 
-        import pytest
-        from _pytest.deprecated import FIXTURE_POSITIONAL_ARGUMENTS
+    with pytest.warns(pytest.PytestDeprecationWarning) as warnings:
 
-        with pytest.warns(pytest.PytestDeprecationWarning) as warnings:
-            @pytest.fixture("function", [0], True)
-            def arg(monkeypatch):
-                monkeypatch.setenv("AUTOUSE_WORKS", "1")
+        @pytest.fixture("function", [0], True)
+        def arg(monkeypatch):
+            monkeypatch.setenv("AUTOUSE_WORKS", "1")
 
+    assert str(warnings[0].message) == str(FIXTURE_POSITIONAL_ARGUMENTS)
 
-        def test_autouse():
-            assert os.environ.get("AUTOUSE_WORKS") == "1"
-            assert str(warnings[0].message) == str(FIXTURE_POSITIONAL_ARGUMENTS)
-
-    """
-    )
-
-    reprec = testdir.inline_run()
-    reprec.assertoutcome(passed=1)
+    assert arg._pytestfixturefunction.scope == "function"
+    assert arg._pytestfixturefunction.params == (0,)
+    assert arg._pytestfixturefunction.autouse
 
 
 def test_indirect_fixture_does_not_break_scope(testdir):
