@@ -4128,14 +4128,14 @@ def test_fixture_with_positionals(testdir):
     with pytest.warns(pytest.PytestDeprecationWarning) as warnings:
 
         @pytest.fixture("function", [0], True)
-        def arg(monkeypatch):
-            monkeypatch.setenv("AUTOUSE_WORKS", "1")
+        def fixture_with_positionals():
+            pass
 
     assert str(warnings[0].message) == str(FIXTURE_POSITIONAL_ARGUMENTS)
 
-    assert arg._pytestfixturefunction.scope == "function"
-    assert arg._pytestfixturefunction.params == (0,)
-    assert arg._pytestfixturefunction.autouse
+    assert fixture_with_positionals._pytestfixturefunction.scope == "function"
+    assert fixture_with_positionals._pytestfixturefunction.params == (0,)
+    assert fixture_with_positionals._pytestfixturefunction.autouse
 
 
 def test_indirect_fixture_does_not_break_scope(testdir):
