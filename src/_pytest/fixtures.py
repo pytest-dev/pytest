@@ -2,6 +2,7 @@ import functools
 import inspect
 import itertools
 import sys
+import warnings
 from collections import defaultdict
 from collections import deque
 from collections import OrderedDict
@@ -27,6 +28,7 @@ from _pytest.compat import getlocation
 from _pytest.compat import is_generator
 from _pytest.compat import NOTSET
 from _pytest.compat import safe_getattr
+from _pytest.deprecated import FIXTURE_POSITIONAL_ARGUMENTS
 from _pytest.outcomes import fail
 from _pytest.outcomes import TEST_OUTCOME
 
@@ -57,7 +59,6 @@ def pytest_sessionstart(session):
 
 
 scopename2class = {}  # type: Dict[str, Type[nodes.Node]]
-
 
 scope2props = dict(session=())  # type: Dict[str, Tuple[str, ...]]
 scope2props["package"] = ("fspath",)
@@ -792,6 +793,25 @@ def _teardown_yield_fixture(fixturefunc, it):
         )
 
 
+def _eval_scope_callable(scope_callable, fixture_name, config):
+    try:
+        result = scope_callable(fixture_name=fixture_name, config=config)
+    except Exception:
+        raise TypeError(
+            "Error evaluating {} while defining fixture '{}'.\n"
+            "Expected a function with the signature (*, fixture_name, config)".format(
+                scope_callable, fixture_name
+            )
+        )
+    if not isinstance(result, str):
+        fail(
+            "Expected {} to return a 'str' while defining fixture '{}', but it returned:\n"
+            "{!r}".format(scope_callable, fixture_name, result),
+            pytrace=False,
+        )
+    return result
+
+
 class FixtureDef:
     """ A container for a factory definition. """
 
@@ -811,6 +831,8 @@ class FixtureDef:
         self.has_location = baseid is not None
         self.func = func
         self.argname = argname
+        if callable(scope):
+            scope = _eval_scope_callable(scope, argname, fixturemanager.config)
         self.scope = scope
         self.scopenum = scope2index(
             scope or "function",
@@ -995,7 +1017,57 @@ class FixtureFunctionMarker:
         return function
 
 
-def fixture(scope="function", params=None, autouse=False, ids=None, name=None):
+FIXTURE_ARGS_ORDER = ("scope", "params", "autouse", "ids", "name")
+
+
+def _parse_fixture_args(callable_or_scope, *args, **kwargs):
+    arguments = {
+        "scope": "function",
+        "params": None,
+        "autouse": False,
+        "ids": None,
+        "name": None,
+    }
+    kwargs = {
+        key: value for key, value in kwargs.items() if arguments.get(key) != value
+    }
+
+    fixture_function = None
+    if isinstance(callable_or_scope, str):
+        args = list(args)
+        args.insert(0, callable_or_scope)
+    else:
+        fixture_function = callable_or_scope
+
+    positionals = set()
+    for positional, argument_name in zip(args, FIXTURE_ARGS_ORDER):
+        arguments[argument_name] = positional
+        positionals.add(argument_name)
+
+    duplicated_kwargs = {kwarg for kwarg in kwargs.keys() if kwarg in positionals}
+    if duplicated_kwargs:
+        raise TypeError(
+            "The fixture arguments are defined as positional and keyword: {}. "
+            "Use only keyword arguments.".format(", ".join(duplicated_kwargs))
+        )
+
+    if positionals:
+        warnings.warn(FIXTURE_POSITIONAL_ARGUMENTS, stacklevel=2)
+
+    arguments.update(kwargs)
+
+    return fixture_function, arguments
+
+
+def fixture(
+    callable_or_scope=None,
+    *args,
+    scope="function",
+    params=None,
+    autouse=False,
+    ids=None,
+    name=None
+):
     """Decorator to mark a fixture factory function.
 
     This decorator can be used, with or without parameters, to define a
@@ -1041,21 +1113,55 @@ def fixture(scope="function", params=None, autouse=False, ids=None, name=None):
                 ``fixture_<fixturename>`` and then use
                 ``@pytest.fixture(name='<fixturename>')``.
     """
-    if callable(scope) and params is None and autouse is False:
+    fixture_function, arguments = _parse_fixture_args(
+        callable_or_scope,
+        *args,
+        scope=scope,
+        params=params,
+        autouse=autouse,
+        ids=ids,
+        name=name
+    )
+    scope = arguments.get("scope")
+    params = arguments.get("params")
+    autouse = arguments.get("autouse")
+    ids = arguments.get("ids")
+    name = arguments.get("name")
+
+    if fixture_function and params is None and autouse is False:
         # direct decoration
-        return FixtureFunctionMarker("function", params, autouse, name=name)(scope)
+        return FixtureFunctionMarker(scope, params, autouse, name=name)(
+            fixture_function
+        )
+
     if params is not None and not isinstance(params, (list, tuple)):
         params = list(params)
     return FixtureFunctionMarker(scope, params, autouse, ids=ids, name=name)
 
 
-def yield_fixture(scope="function", params=None, autouse=False, ids=None, name=None):
+def yield_fixture(
+    callable_or_scope=None,
+    *args,
+    scope="function",
+    params=None,
+    autouse=False,
+    ids=None,
+    name=None
+):
     """ (return a) decorator to mark a yield-fixture factory function.
 
     .. deprecated:: 3.0
         Use :py:func:`pytest.fixture` directly instead.
     """
-    return fixture(scope=scope, params=params, autouse=autouse, ids=ids, name=name)
+    return fixture(
+        callable_or_scope,
+        *args,
+        scope=scope,
+        params=params,
+        autouse=autouse,
+        ids=ids,
+        name=name
+    )
 
 
 defaultfuncargprefixmarker = fixture()
