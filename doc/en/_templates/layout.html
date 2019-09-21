@@ -17,46 +17,4 @@
   })();
 
 </script>
-<script type="text/javascript">
-  var DIGITAL_CLIMATE_STRIKE_OPTIONS = {
-
-    /**
-     * Allow you to override the iFrame hostname. Defaults to https://assets.digitalclimatestrike.net
-     */
-    iframeHost: 'https://assets.digitalclimatestrike.net', // @type {string}
-
-    /**
-     * Prevents the widget iframe from loading Google Analytics. Defaults to
-     * false. (Google Analytics will also be disabled if doNotTrack is set on
-     * the user's browser.)
-     */
-    disableGoogleAnalytics: false, // @type {boolean}
-
-    /**
-     * Always show the widget, even when someone has closed the widget and set the cookie on their device.
-     * Useful for testing. Defaults to false.
-     */
-    alwaysShowWidget: false, // @type {boolean}
-
-    /**
-     * Automatically makes the widget full page. Defaults to false.
-     */
-    forceFullPageWidget: false, // @type {boolean}
-
-    /**
-    * For the full page widget, shows a close button "x" and hides the message about the site being
-    * available tomorrow. Defaults to false.
-    */
-    showCloseButtonOnFullPageWidget: true, // @type {boolean}
-
-
-    /**
-     * The date when the full page widget should showing on your web site for 24 hours.
-     * Note: the month is one integer less than the number of the month. E.g. 8 is September, not August.
-     * Defaults to new Date(2019, 8, 20) (September 20th, 2019)
-     */
-    fullPageDisplayStartDate: new Date(2019, 8, 20), //@ type {Date object}
-  };
-</script>
-<script src="https://assets.digitalclimatestrike.net/widget.js" async></script>
 {% endblock %}
