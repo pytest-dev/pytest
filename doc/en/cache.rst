@@ -75,7 +75,7 @@ If you run this for the first time you will see two failures:
     E           Failed: bad luck
 
     test_50.py:7: Failed
-    2 failed, 48 passed in 0.07s
+    2 failed, 48 passed in 0.12s
 
 If you then run it with ``--lf``:
 
@@ -230,7 +230,7 @@ If you run this command for the first time, you can see the print statement:
     test_caching.py:20: AssertionError
     -------------------------- Captured stdout setup ---------------------------
     running expensive computation...
-    1 failed in 0.02s
+    1 failed in 0.12s
 
 If you run it a second time, the value will be retrieved from
 the cache and nothing will be printed:
@@ -249,7 +249,7 @@ the cache and nothing will be printed:
     E       assert 42 == 23
 
     test_caching.py:20: AssertionError
-    1 failed in 0.02s
+    1 failed in 0.12s
 
 See the :ref:`cache-api` for more details.
 
