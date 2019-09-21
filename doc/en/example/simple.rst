@@ -65,7 +65,7 @@ Let's run this without supplying our new option:
     test_sample.py:6: AssertionError
     --------------------------- Captured stdout call ---------------------------
     first
-    1 failed in 0.02s
+    1 failed in 0.12s
 
 And now with supplying a command line option:
 
@@ -89,7 +89,7 @@ And now with supplying a command line option:
     test_sample.py:6: AssertionError
     --------------------------- Captured stdout call ---------------------------
     second
-    1 failed in 0.02s
+    1 failed in 0.12s
 
 You can see that the command line option arrived in our test.  This
 completes the basic pattern.  However, one often rather wants to process
@@ -261,7 +261,7 @@ Let's run our little function:
     E       Failed: not configured: 42
 
     test_checkconfig.py:11: Failed
-    1 failed in 0.02s
+    1 failed in 0.12s
 
 If you only want to hide certain exceptions, you can set ``__tracebackhide__``
 to a callable which gets the ``ExceptionInfo`` object. You can for example use
@@ -445,7 +445,7 @@ Now we can profile which test functions execute the slowest:
 
     ========================= slowest 3 test durations =========================
     0.30s call     test_some_are_slow.py::test_funcslow2
-    0.20s call     test_some_are_slow.py::test_funcslow1
+    0.21s call     test_some_are_slow.py::test_funcslow1
     0.10s call     test_some_are_slow.py::test_funcfast
     ============================ 3 passed in 0.12s =============================
 

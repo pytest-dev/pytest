@@ -361,7 +361,7 @@ Let's execute it:
     $ pytest -s -q --tb=no
     FFteardown smtp
 
-    2 failed in 0.79s
+    2 failed in 0.12s
 
 We see that the ``smtp_connection`` instance is finalized after the two
 tests finished execution.  Note that if we decorated our fixture
@@ -515,7 +515,7 @@ again, nothing much has changed:
     $ pytest -s -q --tb=no
     FFfinalizing <smtplib.SMTP object at 0xdeadbeef> (smtp.gmail.com)
 
-    2 failed in 0.77s
+    2 failed in 0.12s
 
 Let's quickly create another test module that actually sets the
 server URL in its module namespace:
@@ -692,7 +692,7 @@ So let's just do another run:
     test_module.py:13: AssertionError
     ------------------------- Captured stdout teardown -------------------------
     finalizing <smtplib.SMTP object at 0xdeadbeef>
-    4 failed in 1.69s
+    4 failed in 0.12s
 
 We see that our two test functions each ran twice, against the different
 ``smtp_connection`` instances.  Note also, that with the ``mail.python.org``
@@ -1043,7 +1043,7 @@ to verify our fixture is activated and the tests pass:
 
     $ pytest -q
     ..                                                                   [100%]
-    2 passed in 0.01s
+    2 passed in 0.12s
 
 You can specify multiple fixtures like this:
 
@@ -1151,7 +1151,7 @@ If we run it, we get two passing tests:
 
     $ pytest -q
     ..                                                                   [100%]
-    2 passed in 0.01s
+    2 passed in 0.12s
 
 Here is how autouse fixtures work in other scopes:
 
