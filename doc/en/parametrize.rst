@@ -205,7 +205,7 @@ If we now pass two stringinput values, our test will run twice:
 
     $ pytest -q --stringinput="hello" --stringinput="world" test_strings.py
     ..                                                                   [100%]
-    2 passed in 0.01s
+    2 passed in 0.12s
 
 Let's also run with a stringinput that will lead to a failing test:
 
@@ -225,7 +225,7 @@ Let's also run with a stringinput that will lead to a failing test:
     E        +    where <built-in method isalpha of str object at 0xdeadbeef> = '!'.isalpha
 
     test_strings.py:4: AssertionError
-    1 failed in 0.02s
+    1 failed in 0.12s
 
 As expected our test function fails.
 
@@ -239,7 +239,7 @@ list:
     s                                                                    [100%]
     ========================= short test summary info ==========================
     SKIPPED [1] test_strings.py: got empty parameter set ['stringinput'], function test_valid_string at $REGENDOC_TMPDIR/test_strings.py:2
-    1 skipped in 0.00s
+    1 skipped in 0.12s
 
 Note that when calling ``metafunc.parametrize`` multiple times with different parameter sets, all parameter names across
 those sets cannot be duplicated, otherwise an error will be raised.

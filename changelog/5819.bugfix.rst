@@ -1,2 +1,0 @@
-Windows: Fix regression with conftest whose qualified name contains uppercase
-characters (introduced by #5792).
