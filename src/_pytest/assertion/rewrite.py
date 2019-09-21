@@ -28,6 +28,7 @@ from _pytest.assertion import util
 from _pytest.assertion.util import (  # noqa: F401
     format_explanation as _format_explanation,
 )
+from _pytest.compat import fspath
 from _pytest.pathlib import fnmatch_ex
 from _pytest.pathlib import PurePath
 
@@ -120,7 +121,7 @@ class AssertionRewritingHook(importlib.abc.MetaPathFinder):
         write = not sys.dont_write_bytecode
         cache_dir = get_cache_dir(fn)
         if write:
-            ok = try_mkdir(cache_dir)
+            ok = try_makedirs(cache_dir)
             if not ok:
                 write = False
                 state.trace("read only directory: {}".format(cache_dir))
@@ -259,7 +260,7 @@ def _write_pyc(state, co, source_stat, pyc):
     # (C)Python, since these "pycs" should never be seen by builtin
     # import. However, there's little reason deviate.
     try:
-        with atomicwrites.atomic_write(str(pyc), mode="wb", overwrite=True) as fp:
+        with atomicwrites.atomic_write(fspath(pyc), mode="wb", overwrite=True) as fp:
             fp.write(importlib.util.MAGIC_NUMBER)
             # as of now, bytecode header expects 32-bit numbers for size and mtime (#4903)
             mtime = int(source_stat.st_mtime) & 0xFFFFFFFF
@@ -278,7 +279,7 @@ def _write_pyc(state, co, source_stat, pyc):
 
 def _rewrite_test(fn, config):
     """read and rewrite *fn* and return the code object."""
-    fn = str(fn)
+    fn = fspath(fn)
     stat = os.stat(fn)
     with open(fn, "rb") as f:
         source = f.read()
@@ -294,12 +295,12 @@ def _read_pyc(source, pyc, trace=lambda x: None):
     Return rewritten code if successful or None if not.
     """
     try:
-        fp = open(str(pyc), "rb")
+        fp = open(fspath(pyc), "rb")
     except IOError:
         return None
     with fp:
         try:
-            stat_result = os.stat(str(source))
+            stat_result = os.stat(fspath(source))
             mtime = int(stat_result.st_mtime)
             size = stat_result.st_size
             data = fp.read(12)
@@ -751,7 +752,7 @@ class AssertionRewriter(ast.NodeVisitor):
                     "assertion is always true, perhaps remove parentheses?"
                 ),
                 category=None,
-                filename=str(self.module_path),
+                filename=fspath(self.module_path),
                 lineno=assert_.lineno,
             )
 
@@ -874,7 +875,7 @@ warn_explicit(
     lineno={lineno},
 )
             """.format(
-                filename=str(module_path), lineno=lineno
+                filename=fspath(module_path), lineno=lineno
             )
         ).body
         return ast.If(val_is_none, send_warning, [])
@@ -1020,18 +1021,15 @@ warn_explicit(
         return res, self.explanation_param(self.pop_format_context(expl_call))
 
 
-def try_mkdir(cache_dir):
-    """Attempts to create the given directory, returns True if successful"""
+def try_makedirs(cache_dir) -> bool:
+    """Attempts to create the given directory and sub-directories exist, returns True if
+    successful or it already exists"""
     try:
-        os.makedirs(str(cache_dir))
-    except FileExistsError:
-        # Either the pycache directory already exists (the
-        # common case) or it's blocked by a non-dir node. In the
-        # latter case, we'll ignore it in _write_pyc.
-        return True
-    except (FileNotFoundError, NotADirectoryError):
-        # One of the path components was not a directory, likely
-        # because we're in a zip file.
+        os.makedirs(fspath(cache_dir), exist_ok=True)
+    except (FileNotFoundError, NotADirectoryError, FileExistsError):
+        # One of the path components was not a directory:
+        # - we're in a zip file
+        # - it is a file
         return False
     except PermissionError:
         return False
