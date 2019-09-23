@@ -1,6 +1,7 @@
 import argparse
 import distutils.spawn
 import os
+import shlex
 import sys
 
 import py
@@ -300,7 +301,7 @@ def test_argcomplete(testdir, monkeypatch):
         # so we use bash
         fp.write(
             'COMP_WORDBREAKS="$COMP_WORDBREAKS" {} -m pytest 8>&1 9>&2'.format(
-                sys.executable
+                shlex.quote(sys.executable)
             )
         )
     # alternative would be exteneded Testdir.{run(),_run(),popen()} to be able
