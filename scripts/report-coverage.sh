@@ -13,4 +13,5 @@ fi
 python -m coverage combine
 python -m coverage xml
 python -m coverage report -m
-bash <(curl -s https://codecov.io/bash) -Z -X gcov -X coveragepy -X search -X xcode -X gcovout -X fix -f coverage.xml
+curl -S -L --retry 3 -s https://codecov.io/bash -o codecov-upload.sh
+bash codecov-upload.sh -Z -X fix -f coverage.xml
