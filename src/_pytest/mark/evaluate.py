@@ -51,8 +51,6 @@ class MarkEvaluator:
         except TEST_OUTCOME:
             self.exc = sys.exc_info()
             if isinstance(self.exc[1], SyntaxError):
-                # TODO: Investigate why SyntaxError.offset is Optional, and if it can be None here.
-                assert self.exc[1].offset is not None
                 msg = [" " * (self.exc[1].offset + 4) + "^"]
                 msg.append("SyntaxError: invalid syntax")
             else:

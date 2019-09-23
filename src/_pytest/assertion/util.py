@@ -1,9 +1,6 @@
 """Utilities for assertion debugging"""
 import pprint
 from collections.abc import Sequence
-from typing import Callable
-from typing import List
-from typing import Optional
 
 import _pytest._code
 from _pytest import outcomes
@@ -13,11 +10,11 @@ from _pytest._io.saferepr import saferepr
 # interpretation code and assertion rewriter to detect this plugin was
 # loaded and in turn call the hooks defined here as part of the
 # DebugInterpreter.
-_reprcompare = None  # type: Optional[Callable[[str, object, object], Optional[str]]]
+_reprcompare = None
 
 # Works similarly as _reprcompare attribute. Is populated with the hook call
 # when pytest_runtest_setup is called.
-_assertion_pass = None  # type: Optional[Callable[[int, str, str], None]]
+_assertion_pass = None
 
 
 def format_explanation(explanation):
@@ -180,7 +177,7 @@ def _diff_text(left, right, verbose=0):
     """
     from difflib import ndiff
 
-    explanation = []  # type: List[str]
+    explanation = []
 
     def escape_for_readable_diff(binary_text):
         """
@@ -238,7 +235,7 @@ def _compare_eq_verbose(left, right):
     left_lines = repr(left).splitlines(keepends)
     right_lines = repr(right).splitlines(keepends)
 
-    explanation = []  # type: List[str]
+    explanation = []
     explanation += ["-" + line for line in left_lines]
     explanation += ["+" + line for line in right_lines]
 
@@ -262,7 +259,7 @@ def _compare_eq_iterable(left, right, verbose=0):
 
 def _compare_eq_sequence(left, right, verbose=0):
     comparing_bytes = isinstance(left, bytes) and isinstance(right, bytes)
-    explanation = []  # type: List[str]
+    explanation = []
     len_left = len(left)
     len_right = len(right)
     for i in range(min(len_left, len_right)):
@@ -330,7 +327,7 @@ def _compare_eq_set(left, right, verbose=0):
 
 
 def _compare_eq_dict(left, right, verbose=0):
-    explanation = []  # type: List[str]
+    explanation = []
     set_left = set(left)
     set_right = set(right)
     common = set_left.intersection(set_right)

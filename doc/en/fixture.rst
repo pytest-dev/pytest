@@ -301,32 +301,6 @@ are finalized when the last test of a *package* finishes.
     Use this new feature sparingly and please make sure to report any issues you find.
 
 
-Dynamic scope
-^^^^^^^^^^^^^
-
-In some cases, you might want to change the scope of the fixture without changing the code.
-To do that, pass a callable to ``scope``. The callable must return a string with a valid scope
-and will be executed only once - during the fixture definition. It will be called with two
-keyword arguments - ``fixture_name`` as a string and ``config`` with a configuration object.
-
-This can be especially useful when dealing with fixtures that need time for setup, like spawning
-a docker container. You can use the command-line argument to control the scope of the spawned
-containers for different environments. See the example below.
-
-.. code-block:: python
-
-    def determine_scope(fixture_name, config):
-        if config.getoption("--keep-containers"):
-            return "session"
-        return "function"
-
-
-    @pytest.fixture(scope=determine_scope)
-    def docker_container():
-        yield spawn_container()
-
-
-
 Order: Higher-scoped fixtures are instantiated first
 ----------------------------------------------------
 

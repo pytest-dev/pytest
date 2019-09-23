@@ -1,6 +1,5 @@
 from pprint import pprint
 from typing import Optional
-from typing import Union
 
 import py
 
@@ -268,8 +267,7 @@ class TestReport(BaseReport):
             if not isinstance(excinfo, ExceptionInfo):
                 outcome = "failed"
                 longrepr = excinfo
-            # Type ignored -- see comment where skip.Exception is defined.
-            elif excinfo.errisinstance(skip.Exception):  # type: ignore
+            elif excinfo.errisinstance(skip.Exception):
                 outcome = "skipped"
                 r = excinfo._getreprcrash()
                 longrepr = (str(r.path), r.lineno, r.message)
@@ -433,7 +431,7 @@ def _report_kwargs_from_json(reportdict):
                 reprlocals=reprlocals,
                 filelocrepr=reprfileloc,
                 style=data["style"],
-            )  # type: Union[ReprEntry, ReprEntryNative]
+            )
         elif entry_type == "ReprEntryNative":
             reprentry = ReprEntryNative(data["lines"])
         else:

@@ -2217,68 +2217,6 @@ class TestFixtureMarker:
             ["*ScopeMismatch*You tried*function*session*request*"]
         )
 
-    def test_dynamic_scope(self, testdir):
-        testdir.makeconftest(
-            """
-            import pytest
-
-
-            def pytest_addoption(parser):
-                parser.addoption("--extend-scope", action="store_true", default=False)
-
-
-            def dynamic_scope(fixture_name, config):
-                if config.getoption("--extend-scope"):
-                    return "session"
-                return "function"
-
-
-            @pytest.fixture(scope=dynamic_scope)
-            def dynamic_fixture(calls=[]):
-                calls.append("call")
-                return len(calls)
-
-        """
-        )
-
-        testdir.makepyfile(
-            """
-            def test_first(dynamic_fixture):
-                assert dynamic_fixture == 1
-
-
-            def test_second(dynamic_fixture):
-                assert dynamic_fixture == 2
-
-        """
-        )
-
-        reprec = testdir.inline_run()
-        reprec.assertoutcome(passed=2)
-
-        reprec = testdir.inline_run("--extend-scope")
-        reprec.assertoutcome(passed=1, failed=1)
-
-    def test_dynamic_scope_bad_return(self, testdir):
-        testdir.makepyfile(
-            """
-            import pytest
-
-            def dynamic_scope(**_):
-                return "wrong-scope"
-
-            @pytest.fixture(scope=dynamic_scope)
-            def fixture():
-                pass
-
-        """
-        )
-        result = testdir.runpytest()
-        result.stdout.fnmatch_lines(
-            "Fixture 'fixture' from test_dynamic_scope_bad_return.py "
-            "got an unexpected scope value 'wrong-scope'"
-        )
-
     def test_register_only_with_mark(self, testdir):
         testdir.makeconftest(
             """
@@ -4106,43 +4044,12 @@ def test_fixture_named_request(testdir):
     )
 
 
-def test_fixture_duplicated_arguments(testdir):
-    """Raise error if there are positional and keyword arguments for the same parameter (#1682)."""
-    with pytest.raises(TypeError) as excinfo:
-
-        @pytest.fixture("session", scope="session")
-        def arg(arg):
-            pass
-
-    assert (
-        str(excinfo.value)
-        == "The fixture arguments are defined as positional and keyword: scope. "
-        "Use only keyword arguments."
-    )
-
-
-def test_fixture_with_positionals(testdir):
-    """Raise warning, but the positionals should still works (#1682)."""
-    from _pytest.deprecated import FIXTURE_POSITIONAL_ARGUMENTS
-
-    with pytest.warns(pytest.PytestDeprecationWarning) as warnings:
-
-        @pytest.fixture("function", [0], True)
-        def fixture_with_positionals():
-            pass
-
-    assert str(warnings[0].message) == str(FIXTURE_POSITIONAL_ARGUMENTS)
-
-    assert fixture_with_positionals._pytestfixturefunction.scope == "function"
-    assert fixture_with_positionals._pytestfixturefunction.params == (0,)
-    assert fixture_with_positionals._pytestfixturefunction.autouse
-
-
 def test_indirect_fixture_does_not_break_scope(testdir):
     """Ensure that fixture scope is respected when using indirect fixtures (#570)"""
     testdir.makepyfile(
         """
         import pytest
+
         instantiated  = []
 
         @pytest.fixture(scope="session")
