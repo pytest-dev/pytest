@@ -292,7 +292,7 @@ class MarkGenerator:
     _config = None
     _markers = set()  # type: Set[str]
 
-    def __getattr__(self, name):
+    def __getattr__(self, name: str) -> MarkDecorator:
         if name[0] == "_":
             raise AttributeError("Marker name must NOT start with underscore")
 

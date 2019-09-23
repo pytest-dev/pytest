@@ -1,0 +1,1 @@
+New behavior of the ``--pastebin`` option: failures to connect to the pastebin server are reported, without failing the pytest run
