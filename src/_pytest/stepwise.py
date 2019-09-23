@@ -31,7 +31,10 @@ class StepwisePlugin:
         self.report_status = ""
 
         if self.active:
-            self.lastfailed = config.cache.get("cache/stepwise", None)
+            lastfailed = config.cache.get("cache/stepwise", [])
+            self.lastfailed = (
+                lastfailed if isinstance(lastfailed, list) else [lastfailed]
+            )
             self.skip = config.getvalue("stepwise_skip")
 
     def pytest_sessionstart(self, session):
@@ -49,7 +52,7 @@ class StepwisePlugin:
 
         # Make a list of all tests that have been run before the last failing one.
         for item in items:
-            if item.nodeid == self.lastfailed:
+            if item.nodeid in self.lastfailed:
                 found = True
                 break
             else:
@@ -78,13 +81,15 @@ class StepwisePlugin:
             if self.skip:
                 # Remove test from the failed ones (if it exists) and unset the skip option
                 # to make sure the following tests will not be skipped.
-                if report.nodeid == self.lastfailed:
-                    self.lastfailed = None
+                try:
+                    self.lastfailed.remove(report.nodeid)
+                except ValueError:
+                    pass
 
                 self.skip = False
             else:
                 # Mark test as the last failing and interrupt the test session.
-                self.lastfailed = report.nodeid
+                self.lastfailed.append(report.nodeid)
                 self.session.shouldstop = (
                     "Test failed, continuing from this test next run."
                 )
@@ -93,8 +98,10 @@ class StepwisePlugin:
             # If the test was actually run and did pass.
             if report.when == "call":
                 # Remove test from the failed ones, if exists.
-                if report.nodeid == self.lastfailed:
-                    self.lastfailed = None
+                try:
+                    self.lastfailed.remove(report.nodeid)
+                except ValueError:
+                    pass
 
     def pytest_report_collectionfinish(self):
         if self.active and self.config.getoption("verbose") >= 0 and self.report_status:
