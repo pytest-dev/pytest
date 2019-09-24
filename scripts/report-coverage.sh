@@ -13,5 +13,5 @@ fi
 python -m coverage combine
 python -m coverage xml
 python -m coverage report -m
-curl -S -L --retry 3 -s https://codecov.io/bash -o codecov-upload.sh
+curl -S -L --retry 6 -s https://codecov.io/bash -o codecov-upload.sh
 bash codecov-upload.sh -Z -X fix -f coverage.xml
