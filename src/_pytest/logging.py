@@ -210,6 +210,18 @@ def get_option_ini(config: Config, *names: str):
         if ret:
             return ret
 
+def pytest_declare_configuration(configsetup):
+    # for_plugin will auto-map from plugin name to distribution name for toml tool keys
+    pluginsetup = configsetup.for_plugin(__name__)
+
+    def add_option_ini(option, dest, default=None, type=None, **kwargs):
+    
+        configitem = pluginsetup.declare_configuration(dest)
+        configitem.declare_legacy_ini(
+            dest, default=default, type=type, help="default value for " + option
+        )
+        configitem.declare_option(option, **kwargs)
+
 
 def pytest_addoption(parser: Parser) -> None:
     """Add options to control log capturing."""
