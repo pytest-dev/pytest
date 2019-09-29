@@ -88,3 +88,30 @@ def tw_mock():
         fullwidth = 80
 
     return TWMock()
+
+
+@pytest.fixture
+def dummy_yaml_custom_test(testdir):
+    """Writes a conftest file that collects and executes a dummy yaml test.
+
+    Taken from the docs, but stripped down to the bare minimum, useful for
+    tests which needs custom items collected.
+    """
+    testdir.makeconftest(
+        """
+        import pytest
+
+        def pytest_collect_file(parent, path):
+            if path.ext == ".yaml" and path.basename.startswith("test"):
+                return YamlFile(path, parent)
+
+        class YamlFile(pytest.File):
+            def collect(self):
+                yield YamlItem(self.fspath.basename, self)
+
+        class YamlItem(pytest.Item):
+            def runtest(self):
+                pass
+    """
+    )
+    testdir.makefile(".yaml", test1="")

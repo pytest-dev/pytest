@@ -107,8 +107,8 @@ def show_test_item(item):
     tw = item.config.get_terminal_writer()
     tw.line()
     tw.write(" " * 8)
-    tw.write(item._nodeid)
-    used_fixtures = sorted(item._fixtureinfo.name2fixturedefs.keys())
+    tw.write(item.nodeid)
+    used_fixtures = sorted(getattr(item, "fixturenames", []))
     if used_fixtures:
         tw.write(" (fixtures used: {})".format(", ".join(used_fixtures)))
 
