@@ -1,1 +1,0 @@
-The HelpFormatter uses ``py.io.get_terminal_width`` for better width detection.

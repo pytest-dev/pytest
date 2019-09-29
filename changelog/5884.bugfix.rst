@@ -1,1 +1,0 @@
-Fix ``--setup-only`` and ``--setup-show`` for custom pytest items.
