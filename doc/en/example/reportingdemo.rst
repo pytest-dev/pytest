@@ -436,7 +436,7 @@ Here is a nice run of several failures and how ``pytest`` presents things:
             items = [1, 2, 3]
             print("items is {!r}".format(items))
     >       a, b = items.pop()
-    E       TypeError: 'int' object is not iterable
+    E       TypeError: cannot unpack non-iterable int object
 
     failure_demo.py:181: TypeError
     --------------------------- Captured stdout call ---------------------------
@@ -516,7 +516,7 @@ Here is a nice run of several failures and how ``pytest`` presents things:
         def test_z2_type_error(self):
             items = 3
     >       a, b = items
-    E       TypeError: 'int' object is not iterable
+    E       TypeError: cannot unpack non-iterable int object
 
     failure_demo.py:222: TypeError
     ______________________ TestMoreErrors.test_startswith ______________________
