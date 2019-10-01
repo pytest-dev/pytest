@@ -6,8 +6,14 @@ import warnings
 from collections import defaultdict
 from collections import deque
 from collections import OrderedDict
+from typing import Any
+from typing import Callable
 from typing import Dict
+from typing import Iterable
+from typing import List
+from typing import Optional
 from typing import Tuple
+from typing import Union
 
 import attr
 import py
@@ -1060,14 +1066,14 @@ def _parse_fixture_args(callable_or_scope, *args, **kwargs):
 
 
 def fixture(
-    callable_or_scope=None,
+    callable_or_scope: Union[Callable[..., Any], str] = None,
     *args,
-    scope="function",
-    params=None,
-    autouse=False,
-    ids=None,
-    name=None
-):
+    scope: str = "function",
+    params: Optional[Iterable[Any]] = None,
+    autouse: bool = False,
+    ids: Optional[List[str]] = None,
+    name: Optional[str] = None
+) -> Callable[..., Any]:
     """Decorator to mark a fixture factory function.
 
     This decorator can be used, with or without parameters, to define a
