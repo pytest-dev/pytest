@@ -8,6 +8,7 @@ from typing import Set
 import attr
 
 from ..compat import ascii_escaped
+from ..compat import attrs_no_eq
 from ..compat import getfslineno
 from ..compat import NOTSET
 from _pytest.outcomes import fail
@@ -367,7 +368,7 @@ class NodeKeywords(MutableMapping):
         return "<NodeKeywords for node {}>".format(self.node)
 
 
-@attr.s(cmp=False, hash=False)
+@attr.s(hash=False, **attrs_no_eq)  # type: ignore
 class NodeMarkers:
     """
     internal structure for storing marks belonging to a node
