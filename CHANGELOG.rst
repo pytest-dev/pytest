@@ -34,7 +34,7 @@ Features
 
 - `#1682 <https://github.com/pytest-dev/pytest/issues/1682>`_: The ``scope`` parameter of ``@pytest.fixture`` can now be a callable that receives
   the fixture name and the ``config`` object as keyword-only parameters.
-  See `the docs <https://docs.pytest.org/en/fixture.html#dynamic-scope>`__ for more information.
+  See `the docs <https://docs.pytest.org/en/latest/fixture.html#dynamic-scope>`__ for more information.
 
 
 - `#5764 <https://github.com/pytest-dev/pytest/issues/5764>`_: New behavior of the ``--pastebin`` option: failures to connect to the pastebin server are reported, without failing the pytest run
