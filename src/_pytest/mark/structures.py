@@ -367,7 +367,7 @@ class NodeKeywords(MutableMapping):
         return "<NodeKeywords for node {}>".format(self.node)
 
 
-@attr.s(cmp=False, hash=False)
+@attr.s(eq=False, order=False, hash=False)
 class NodeMarkers:
     """
     internal structure for storing marks belonging to a node
