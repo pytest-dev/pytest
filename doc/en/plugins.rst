@@ -8,7 +8,9 @@ Installing and Using plugins
 This section talks about installing and using third party plugins.
 For writing your own plugins, please refer to :ref:`writing-plugins`.
 
-Installing a third party plugin can be easily done with ``pip``::
+Installing a third party plugin can be easily done with ``pip``:
+
+.. code-block:: bash
 
     pip install pytest-NAME
     pip uninstall pytest-NAME
@@ -20,67 +22,74 @@ Here is a little annotated list for some popular plugins:
 
 .. _`django`: https://www.djangoproject.com/
 
-* `pytest-django <http://pypi.python.org/pypi/pytest-django>`_: write tests
+* `pytest-django <https://pypi.org/project/pytest-django/>`_: write tests
   for `django`_ apps, using pytest integration.
 
-* `pytest-twisted <http://pypi.python.org/pypi/pytest-twisted>`_: write tests
+* `pytest-twisted <https://pypi.org/project/pytest-twisted/>`_: write tests
   for `twisted <http://twistedmatrix.com>`_ apps, starting a reactor and
   processing deferreds from test functions.
 
-* `pytest-catchlog <http://pypi.python.org/pypi/pytest-catchlog>`_:
-  to capture and assert about messages from the logging module
-
-* `pytest-cov <http://pypi.python.org/pypi/pytest-cov>`_:
+* `pytest-cov <https://pypi.org/project/pytest-cov/>`__:
   coverage reporting, compatible with distributed testing
 
-* `pytest-xdist <http://pypi.python.org/pypi/pytest-xdist>`_:
+* `pytest-xdist <https://pypi.org/project/pytest-xdist/>`_:
   to distribute tests to CPUs and remote hosts, to run in boxed
   mode which allows to survive segmentation faults, to run in
   looponfailing mode, automatically re-running failing tests
-  on file changes, see also :ref:`xdist`
+  on file changes.
 
-* `pytest-instafail <http://pypi.python.org/pypi/pytest-instafail>`_:
+* `pytest-instafail <https://pypi.org/project/pytest-instafail/>`_:
   to report failures while the test run is happening.
 
-* `pytest-bdd <http://pypi.python.org/pypi/pytest-bdd>`_ and
-  `pytest-konira <http://pypi.python.org/pypi/pytest-konira>`_
+* `pytest-bdd <https://pypi.org/project/pytest-bdd/>`_ and
+  `pytest-konira <https://pypi.org/project/pytest-konira/>`_
   to write tests using behaviour-driven testing.
 
-* `pytest-timeout <http://pypi.python.org/pypi/pytest-timeout>`_:
+* `pytest-timeout <https://pypi.org/project/pytest-timeout/>`_:
   to timeout tests based on function marks or global definitions.
 
-* `pytest-pep8 <http://pypi.python.org/pypi/pytest-pep8>`_:
+* `pytest-pep8 <https://pypi.org/project/pytest-pep8/>`_:
   a ``--pep8`` option to enable PEP8 compliance checking.
 
-* `pytest-flakes <https://pypi.python.org/pypi/pytest-flakes>`_:
+* `pytest-flakes <https://pypi.org/project/pytest-flakes/>`_:
   check source code with pyflakes.
 
-* `oejskit <http://pypi.python.org/pypi/oejskit>`_:
+* `oejskit <https://pypi.org/project/oejskit/>`_:
   a plugin to run javascript unittests in live browsers.
 
 To see a complete list of all plugins with their latest testing
-status against different py.test and Python versions, please visit
+status against different pytest and Python versions, please visit
 `plugincompat <http://plugincompat.herokuapp.com/>`_.
 
-You may also discover more plugins through a `pytest- pypi.python.org search`_.
+You may also discover more plugins through a `pytest- pypi.org search`_.
+
+.. _`pytest- pypi.org search`: https://pypi.org/search/?q=pytest-
+
 
 .. _`available installable plugins`:
-.. _`pytest- pypi.python.org search`: http://pypi.python.org/pypi?%3Aaction=search&term=pytest-&submit=search
-
 
 Requiring/Loading plugins in a test module or conftest file
 -----------------------------------------------------------
 
-You can require plugins in a test module or a conftest file like this::
+You can require plugins in a test module or a conftest file like this:
 
-    pytest_plugins = "myapp.testsupport.myplugin",
+.. code-block:: python
+
+    pytest_plugins = ("myapp.testsupport.myplugin",)
 
 When the test module or conftest plugin is loaded the specified plugins
 will be loaded as well.
 
-    pytest_plugins = "myapp.testsupport.myplugin"
+.. note::
+    Requiring plugins using a ``pytest_plugins`` variable in non-root
+    ``conftest.py`` files is deprecated. See
+    :ref:`full explanation <requiring plugins in non-root conftests>`
+    in the Writing plugins section.
 
-which will import the specified module as a ``pytest`` plugin.
+.. note::
+   The name ``pytest_plugins`` is reserved and should not be used as a
+   name for a custom plugin module.
+
 
 .. _`findpluginname`:
 
@@ -88,22 +97,26 @@ Finding out which plugins are active
 ------------------------------------
 
 If you want to find out which plugins are active in your
-environment you can type::
+environment you can type:
 
-    py.test --trace-config
+.. code-block:: bash
+
+    pytest --trace-config
 
 and will get an extended test header which shows activated plugins
 and their names. It will also print local plugins aka
-:ref:`conftest.py <conftest>` files when they are loaded.
+:ref:`conftest.py <conftest.py plugins>` files when they are loaded.
 
 .. _`cmdunregister`:
 
 Deactivating / unregistering a plugin by name
 ---------------------------------------------
 
-You can prevent plugins from loading or unregister them::
+You can prevent plugins from loading or unregister them:
 
-    py.test -p no:NAME
+.. code-block:: bash
+
+    pytest -p no:NAME
 
 This means that any subsequent try to activate/load the named
 plugin will not work.
@@ -123,37 +136,3 @@ CI server), you can set ``PYTEST_ADDOPTS`` environment variable to
 See :ref:`findpluginname` for how to obtain the name of a plugin.
 
 .. _`builtin plugins`:
-
-Pytest default plugin reference
--------------------------------
-
-
-You can find the source code for the following plugins
-in the `pytest repository <https://github.com/pytest-dev/pytest>`_.
-
-.. autosummary::
-
-    _pytest.assertion
-    _pytest.cacheprovider
-    _pytest.capture
-    _pytest.config
-    _pytest.doctest
-    _pytest.genscript
-    _pytest.helpconfig
-    _pytest.junitxml
-    _pytest.mark
-    _pytest.monkeypatch
-    _pytest.nose
-    _pytest.pastebin
-    _pytest.pdb
-    _pytest.pytester
-    _pytest.python
-    _pytest.recwarn
-    _pytest.resultlog
-    _pytest.runner
-    _pytest.main
-    _pytest.skipping
-    _pytest.terminal
-    _pytest.tmpdir
-    _pytest.unittest
-

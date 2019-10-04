@@ -4,18 +4,69 @@ Doctest integration for modules and test files
 
 By default all files matching the ``test*.txt`` pattern will
 be run through the python standard ``doctest`` module.  You
-can change the pattern by issuing::
+can change the pattern by issuing:
 
-    py.test --doctest-glob='*.rst'
+.. code-block:: bash
 
-on the command line. Since version ``2.9``, ``--doctest-glob``
-can be given multiple times in the command-line.
+    pytest --doctest-glob='*.rst'
 
-You can also trigger running of doctests
-from docstrings in all python modules (including regular
-python test modules)::
+on the command line. ``--doctest-glob`` can be given multiple times in the command-line.
 
-    py.test --doctest-modules
+If you then have a text file like this:
+
+.. code-block:: text
+
+    # content of test_example.txt
+
+    hello this is a doctest
+    >>> x = 3
+    >>> x
+    3
+
+then you can just invoke ``pytest`` directly:
+
+.. code-block:: pytest
+
+    $ pytest
+    =========================== test session starts ============================
+    platform linux -- Python 3.x.y, pytest-5.x.y, py-1.x.y, pluggy-0.x.y
+    cachedir: $PYTHON_PREFIX/.pytest_cache
+    rootdir: $REGENDOC_TMPDIR
+    collected 1 item
+
+    test_example.txt .                                                   [100%]
+
+    ============================ 1 passed in 0.12s =============================
+
+By default, pytest will collect ``test*.txt`` files looking for doctest directives, but you
+can pass additional globs using the ``--doctest-glob`` option (multi-allowed).
+
+In addition to text files, you can also execute doctests directly from docstrings of your classes
+and functions, including from test modules:
+
+.. code-block:: python
+
+    # content of mymodule.py
+    def something():
+        """ a doctest in a docstring
+        >>> something()
+        42
+        """
+        return 42
+
+.. code-block:: bash
+
+    $ pytest --doctest-modules
+    =========================== test session starts ============================
+    platform linux -- Python 3.x.y, pytest-5.x.y, py-1.x.y, pluggy-0.x.y
+    cachedir: $PYTHON_PREFIX/.pytest_cache
+    rootdir: $REGENDOC_TMPDIR
+    collected 2 items
+
+    mymodule.py .                                                        [ 50%]
+    test_example.txt .                                                   [100%]
+
+    ============================ 2 passed in 0.12s =============================
 
 You can make these changes permanent in your project by
 putting them into a pytest.ini file like this:
@@ -26,38 +77,127 @@ putting them into a pytest.ini file like this:
     [pytest]
     addopts = --doctest-modules
 
-If you then have a text file like this::
+.. note::
 
-    # content of example.rst
+    The builtin pytest doctest supports only ``doctest`` blocks, but if you are looking
+    for more advanced checking over *all* your documentation,
+    including doctests, ``.. codeblock:: python`` Sphinx directive support,
+    and any other examples your documentation may include, you may wish to
+    consider `Sybil <https://sybil.readthedocs.io/en/latest/index.html>`__.
+    It provides pytest integration out of the box.
 
-    hello this is a doctest
-    >>> x = 3
-    >>> x
-    3
 
-and another like this::
+Encoding
+--------
 
-    # content of mymodule.py
-    def something():
-        """ a doctest in a docstring
-        >>> something()
-        42
-        """
-        return 42
+The default encoding is **UTF-8**, but you can specify the encoding
+that will be used for those doctest files using the
+``doctest_encoding`` ini option:
 
-then you can just invoke ``py.test`` without command line options::
+.. code-block:: ini
 
-    $ py.test
-    ======= test session starts ========
-    platform linux -- Python 3.5.1, pytest-2.9.2, py-1.4.31, pluggy-0.3.1
-    rootdir: $REGENDOC_TMPDIR, inifile: pytest.ini
-    collected 1 items
-    
-    mymodule.py .
-    
-    ======= 1 passed in 0.12 seconds ========
+    # content of pytest.ini
+    [pytest]
+    doctest_encoding = latin1
 
-It is possible to use fixtures using the ``getfixture`` helper::
+Using 'doctest' options
+-----------------------
+
+Python's standard ``doctest`` module provides some `options <https://docs.python.org/3/library/doctest.html#option-flags>`__
+to configure the strictness of doctest tests. In pytest, you can enable those flags using the
+configuration file.
+
+For example, to make pytest ignore trailing whitespaces and ignore
+lengthy exception stack traces you can just write:
+
+.. code-block:: ini
+
+    [pytest]
+    doctest_optionflags= NORMALIZE_WHITESPACE IGNORE_EXCEPTION_DETAIL
+
+Alternatively, options can be enabled by an inline comment in the doc test
+itself:
+
+.. code-block:: rst
+
+    >>> something_that_raises()  # doctest: +IGNORE_EXCEPTION_DETAIL
+    Traceback (most recent call last):
+    ValueError: ...
+
+pytest also introduces new options:
+
+* ``ALLOW_UNICODE``: when enabled, the ``u`` prefix is stripped from unicode
+  strings in expected doctest output. This allows doctests to run in Python 2
+  and Python 3 unchanged.
+
+* ``ALLOW_BYTES``: similarly, the ``b`` prefix is stripped from byte strings
+  in expected doctest output.
+
+* ``NUMBER``: when enabled, floating-point numbers only need to match as far as
+  the precision you have written in the expected doctest output. For example,
+  the following output would only need to match to 2 decimal places::
+
+      >>> math.pi
+      3.14
+
+  If you wrote ``3.1416`` then the actual output would need to match to 4
+  decimal places; and so on.
+
+  This avoids false positives caused by limited floating-point precision, like
+  this::
+
+      Expected:
+          0.233
+      Got:
+          0.23300000000000001
+
+  ``NUMBER`` also supports lists of floating-point numbers -- in fact, it
+  matches floating-point numbers appearing anywhere in the output, even inside
+  a string! This means that it may not be appropriate to enable globally in
+  ``doctest_optionflags`` in your configuration file.
+
+
+Continue on failure
+-------------------
+
+By default, pytest would report only the first failure for a given doctest. If
+you want to continue the test even when you have failures, do:
+
+.. code-block:: bash
+
+    pytest --doctest-modules --doctest-continue-on-failure
+
+
+Output format
+-------------
+
+You can change the diff output format on failure for your doctests
+by using one of standard doctest modules format in options
+(see :data:`python:doctest.REPORT_UDIFF`, :data:`python:doctest.REPORT_CDIFF`,
+:data:`python:doctest.REPORT_NDIFF`, :data:`python:doctest.REPORT_ONLY_FIRST_FAILURE`):
+
+.. code-block:: bash
+
+    pytest --doctest-modules --doctest-report none
+    pytest --doctest-modules --doctest-report udiff
+    pytest --doctest-modules --doctest-report cdiff
+    pytest --doctest-modules --doctest-report ndiff
+    pytest --doctest-modules --doctest-report only_first_failure
+
+
+pytest-specific features
+------------------------
+
+Some features are provided to make writing doctests easier or with better integration with
+your existing test suite. Keep in mind however that by using those features you will make
+your doctests incompatible with the standard ``doctests`` module.
+
+Using fixtures
+^^^^^^^^^^^^^^
+
+It is possible to use fixtures using the ``getfixture`` helper:
+
+.. code-block:: text
 
     # content of example.rst
     >>> tmp = getfixture('tmpdir')
@@ -67,39 +207,56 @@ It is possible to use fixtures using the ``getfixture`` helper::
 Also, :ref:`usefixtures` and :ref:`autouse` fixtures are supported
 when executing text doctest files.
 
-The standard ``doctest`` module provides some setting flags to configure the
-strictness of doctest tests. In py.test You can enable those flags those flags
-using the configuration file. To make pytest ignore trailing whitespaces and
-ignore lengthy exception stack traces you can just write:
 
-.. code-block:: ini
+.. _`doctest_namespace`:
 
-    [pytest]
-    doctest_optionflags= NORMALIZE_WHITESPACE IGNORE_EXCEPTION_DETAIL
+'doctest_namespace' fixture
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-py.test also introduces new options to allow doctests to run in Python 2 and
-Python 3 unchanged:
+The ``doctest_namespace`` fixture can be used to inject items into the
+namespace in which your doctests run. It is intended to be used within
+your own fixtures to provide the tests that use them with context.
 
-* ``ALLOW_UNICODE``: when enabled, the ``u`` prefix is stripped from unicode
-  strings in expected doctest output.
+``doctest_namespace`` is a standard ``dict`` object into which you
+place the objects you want to appear in the doctest namespace:
 
-* ``ALLOW_BYTES``: when enabled, the ``b`` prefix is stripped from byte strings
-  in expected doctest output.
+.. code-block:: python
 
-As with any other option flag, these flags can be enabled in ``pytest.ini`` using
-the ``doctest_optionflags`` ini option:
-
-.. code-block:: ini
-
-    [pytest]
-    doctest_optionflags = ALLOW_UNICODE ALLOW_BYTES
+    # content of conftest.py
+    import numpy
 
 
-Alternatively, it can be enabled by an inline comment in the doc test
-itself::
+    @pytest.fixture(autouse=True)
+    def add_np(doctest_namespace):
+        doctest_namespace["np"] = numpy
 
-    # content of example.rst
-    >>> get_unicode_greeting()  # doctest: +ALLOW_UNICODE
-    'Hello'
+which can then be used in your doctests directly:
 
+.. code-block:: python
 
+    # content of numpy.py
+    def arange():
+        """
+        >>> a = np.arange(10)
+        >>> len(a)
+        10
+        """
+        pass
+
+Note that like the normal ``conftest.py``, the fixtures are discovered in the directory tree conftest is in.
+Meaning that if you put your doctest with your source code, the relevant conftest.py needs to be in the same directory tree.
+Fixtures will not be discovered in a sibling directory tree!
+
+Skipping tests dynamically
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. versionadded:: 4.4
+
+You can use ``pytest.skip`` to dynamically skip doctests. For example:
+
+.. code-block:: text
+
+    >>> import sys, pytest
+    >>> if sys.platform.startswith('win'):
+    ...     pytest.skip('this doctest does not work on Windows')
+    ...

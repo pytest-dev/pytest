@@ -1,8 +1,8 @@
 
 .. _examples:
 
-Usages and Examples
-===========================================
+Examples and customization tricks
+=================================
 
 Here is a (growing) list of examples. :ref:`Contact <contact>` us if you
 need more examples or have questions. Also take a look at the

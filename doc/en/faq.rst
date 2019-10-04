@@ -30,14 +30,14 @@ and does not handle Deferreds returned from a test in pytest style.
 If you are using trial's unittest.TestCase chances are that you can
 just run your tests even if you return Deferreds.  In addition,
 there also is a dedicated `pytest-twisted
-<http://pypi.python.org/pypi/pytest-twisted>`_ plugin which allows you to
+<https://pypi.org/project/pytest-twisted/>`_ plugin which allows you to
 return deferreds from pytest-style tests, allowing the use of
 :ref:`fixtures` and other features.
 
 how does pytest work with Django?
 ++++++++++++++++++++++++++++++++++++++++++++++
 
-In 2012, some work is going into the `pytest-django plugin <http://pypi.python.org/pypi/pytest-django>`_.  It substitutes the usage of Django's
+In 2012, some work is going into the `pytest-django plugin <https://pypi.org/project/pytest-django/>`_.  It substitutes the usage of Django's
 ``manage.py test`` and allows the use of all pytest features_ most of which
 are not available from Django directly.
 
@@ -66,14 +66,6 @@ This completely avoids previous issues of confusing assertion-reporting.
 It also means, that you can use Python's ``-O`` optimization without losing
 assertions in test modules.
 
-``pytest`` contains a second, mostly obsolete, assert debugging technique
-invoked via ``--assert=reinterpret``: When an ``assert`` statement fails, ``pytest`` re-interprets
-the expression part to show intermediate values.  This technique suffers
-from a caveat that the rewriting does not: If your expression has side
-effects (better to avoid them anyway!) the intermediate values may not
-be the same, confusing the reinterpreter and obfuscating the initial
-error (this is also explained at the command line if it happens).
-
 You can also turn off all assertion interaction using the
 ``--assert=plain`` option.
 
@@ -81,18 +73,17 @@ You can also turn off all assertion interaction using the
 .. _`py/__init__.py`: http://bitbucket.org/hpk42/py-trunk/src/trunk/py/__init__.py
 
 
-Why a ``py.test`` instead of a ``pytest`` command?
-++++++++++++++++++++++++++++++++++++++++++++++++++
+Why can I use both ``pytest`` and ``py.test`` commands?
++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-Some of the reasons are historic, others are practical.  ``pytest``
-used to be part of the ``py`` package which provided several developer
-utilities, all starting with ``py.<TAB>``, thus providing nice
-TAB-completion. If
-you install ``pip install pycmd`` you get these tools from a separate
-package.  These days the command line tool could be called ``pytest``
-but since many people have gotten used to the old name and there
-is another tool named "pytest" we just decided to stick with
-``py.test`` for now.
+pytest used to be part of the py package, which provided several developer
+utilities, all starting with ``py.<TAB>``, thus providing nice TAB-completion.
+If you install ``pip install pycmd`` you get these tools from a separate
+package. Once ``pytest`` became a separate package, the ``py.test`` name was
+retained due to avoid a naming conflict with another tool. This conflict was
+eventually resolved, and the ``pytest`` command was therefore introduced. In
+future versions of pytest, we may deprecate and later remove the ``py.test``
+command to avoid perpetuating the confusion.
 
 pytest fixtures, parametrized tests
 -------------------------------------------------------

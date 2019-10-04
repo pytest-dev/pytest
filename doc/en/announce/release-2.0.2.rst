@@ -63,9 +63,9 @@ Changes between 2.0.1 and 2.0.2
   this.
 
 - fixed typos in the docs (thanks Victor Garcia, Brianna Laugher) and particular
-  thanks to Laura Creighton who also revieved parts of the documentation.
+  thanks to Laura Creighton who also reviewed parts of the documentation.
 
-- fix slighly wrong output of verbose progress reporting for classes
+- fix slightly wrong output of verbose progress reporting for classes
   (thanks Amaury)
 
 - more precise (avoiding of) deprecation warnings for node.Class|Function accesses

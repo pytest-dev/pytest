@@ -1,0 +1,77 @@
+exclude: doc/en/example/py2py3/test_py2.py
+repos:
+-   repo: https://github.com/psf/black
+    rev: 19.3b0
+    hooks:
+    -   id: black
+        args: [--safe, --quiet]
+-   repo: https://github.com/asottile/blacken-docs
+    rev: v1.0.0
+    hooks:
+    -   id: blacken-docs
+        additional_dependencies: [black==19.3b0]
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v2.2.3
+    hooks:
+    -   id: trailing-whitespace
+    -   id: end-of-file-fixer
+    -   id: fix-encoding-pragma
+        args: [--remove]
+    -   id: check-yaml
+    -   id: debug-statements
+        exclude: _pytest/debugging.py
+        language_version: python3
+-   repo: https://gitlab.com/pycqa/flake8
+    rev: 3.7.7
+    hooks:
+    -   id: flake8
+        language_version: python3
+        additional_dependencies: [flake8-typing-imports==1.3.0]
+-   repo: https://github.com/asottile/reorder_python_imports
+    rev: v1.4.0
+    hooks:
+    -   id: reorder-python-imports
+        args: ['--application-directories=.:src', --py3-plus]
+-   repo: https://github.com/asottile/pyupgrade
+    rev: v1.18.0
+    hooks:
+    -   id: pyupgrade
+        args: [--py3-plus]
+-   repo: https://github.com/pre-commit/pygrep-hooks
+    rev: v1.4.0
+    hooks:
+    -   id: rst-backticks
+-   repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v0.720
+    hooks:
+    -   id: mypy
+        files: ^(src/|testing/)
+        args: []
+-   repo: local
+    hooks:
+    -   id: rst
+        name: rst
+        entry: rst-lint --encoding utf-8
+        files: ^(CHANGELOG.rst|HOWTORELEASE.rst|README.rst|TIDELIFT.rst|changelog/.*)$
+        language: python
+        additional_dependencies: [pygments, restructuredtext_lint]
+    -   id: changelogs-rst
+        name: changelog filenames
+        language: fail
+        entry: 'changelog files must be named ####.(feature|bugfix|doc|deprecation|removal|vendor|trivial).rst'
+        exclude: changelog/(\d+\.(feature|improvement|bugfix|doc|deprecation|removal|vendor|trivial).rst|README.rst|_template.rst)
+        files: ^changelog/
+    -   id: py-deprecated
+        name: py library is deprecated
+        language: pygrep
+        entry: >
+            (?x)\bpy\.(
+                _code\.|
+                builtin\.|
+                code\.|
+                io\.(BytesIO|saferepr)|
+                path\.local\.sysfind|
+                process\.|
+                std\.
+            )
+        types: [python]

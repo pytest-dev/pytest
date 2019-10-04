@@ -10,35 +10,38 @@ A basic example for specifying tests in Yaml files
 --------------------------------------------------------------
 
 .. _`pytest-yamlwsgi`: http://bitbucket.org/aafshar/pytest-yamlwsgi/src/tip/pytest_yamlwsgi.py
-.. _`PyYAML`: http://pypi.python.org/pypi/PyYAML/
+.. _`PyYAML`: https://pypi.org/project/PyYAML/
 
-Here is an example ``conftest.py`` (extracted from Ali Afshnars special purpose `pytest-yamlwsgi`_ plugin).   This ``conftest.py`` will  collect ``test*.yml`` files and will execute the yaml-formatted content as custom tests:
+Here is an example ``conftest.py`` (extracted from Ali Afshnars special purpose `pytest-yamlwsgi`_ plugin).   This ``conftest.py`` will  collect ``test*.yaml`` files and will execute the yaml-formatted content as custom tests:
 
 .. include:: nonpython/conftest.py
     :literal:
 
 You can create a simple example file:
 
-.. include:: nonpython/test_simple.yml
+.. include:: nonpython/test_simple.yaml
     :literal:
 
 and if you installed `PyYAML`_ or a compatible YAML-parser you can
-now execute the test specification::
+now execute the test specification:
 
-    nonpython $ py.test test_simple.yml
-    ======= test session starts ========
-    platform linux -- Python 3.5.1, pytest-2.9.2, py-1.4.31, pluggy-0.3.1
-    rootdir: $REGENDOC_TMPDIR/nonpython, inifile: 
+.. code-block:: pytest
+
+    nonpython $ pytest test_simple.yaml
+    =========================== test session starts ============================
+    platform linux -- Python 3.x.y, pytest-5.x.y, py-1.x.y, pluggy-0.x.y
+    cachedir: $PYTHON_PREFIX/.pytest_cache
+    rootdir: $REGENDOC_TMPDIR/nonpython
     collected 2 items
-    
-    test_simple.yml .F
-    
-    ======= FAILURES ========
-    _______ usecase: hello ________
+
+    test_simple.yaml F.                                                  [100%]
+
+    ================================= FAILURES =================================
+    ______________________________ usecase: hello ______________________________
     usecase execution failed
        spec failed: 'some': 'other'
        no further details known at this point.
-    ======= 1 failed, 1 passed in 0.12 seconds ========
+    ======================= 1 failed, 1 passed in 0.12s ========================
 
 .. regendoc:wipe
 
@@ -55,37 +58,43 @@ your own domain specific testing language this way.
     will be reported as a (red) string.
 
 ``reportinfo()`` is used for representing the test location and is also
-consulted when reporting in ``verbose`` mode::
+consulted when reporting in ``verbose`` mode:
 
-    nonpython $ py.test -v
-    ======= test session starts ========
-    platform linux -- Python 3.5.1, pytest-2.9.2, py-1.4.31, pluggy-0.3.1 -- $PYTHON_PREFIX/bin/python3.5
-    cachedir: .cache
-    rootdir: $REGENDOC_TMPDIR/nonpython, inifile: 
+.. code-block:: pytest
+
+    nonpython $ pytest -v
+    =========================== test session starts ============================
+    platform linux -- Python 3.x.y, pytest-5.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python
+    cachedir: $PYTHON_PREFIX/.pytest_cache
+    rootdir: $REGENDOC_TMPDIR/nonpython
     collecting ... collected 2 items
-    
-    test_simple.yml::ok PASSED
-    test_simple.yml::hello FAILED
-    
-    ======= FAILURES ========
-    _______ usecase: hello ________
+
+    test_simple.yaml::hello FAILED                                       [ 50%]
+    test_simple.yaml::ok PASSED                                          [100%]
+
+    ================================= FAILURES =================================
+    ______________________________ usecase: hello ______________________________
     usecase execution failed
        spec failed: 'some': 'other'
        no further details known at this point.
-    ======= 1 failed, 1 passed in 0.12 seconds ========
+    ======================= 1 failed, 1 passed in 0.12s ========================
 
 .. regendoc:wipe
 
 While developing your custom test collection and execution it's also
-interesting to just look at the collection tree::
+interesting to just look at the collection tree:
 
-    nonpython $ py.test --collect-only
-    ======= test session starts ========
-    platform linux -- Python 3.5.1, pytest-2.9.2, py-1.4.31, pluggy-0.3.1
-    rootdir: $REGENDOC_TMPDIR/nonpython, inifile: 
+.. code-block:: pytest
+
+    nonpython $ pytest --collect-only
+    =========================== test session starts ============================
+    platform linux -- Python 3.x.y, pytest-5.x.y, py-1.x.y, pluggy-0.x.y
+    cachedir: $PYTHON_PREFIX/.pytest_cache
+    rootdir: $REGENDOC_TMPDIR/nonpython
     collected 2 items
-    <YamlFile 'test_simple.yml'>
-      <YamlItem 'ok'>
-      <YamlItem 'hello'>
-    
-    ======= no tests ran in 0.12 seconds ========
+    <Package $REGENDOC_TMPDIR/nonpython>
+      <YamlFile test_simple.yaml>
+        <YamlItem hello>
+        <YamlItem ok>
+
+    ========================== no tests ran in 0.12s ===========================

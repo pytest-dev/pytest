@@ -32,7 +32,7 @@ The py.test Development Team
   explanations.  Thanks Carl Meyer for the report and test case.
 
 - fix issue553: properly handling inspect.getsourcelines failures in
-  FixtureLookupError which would lead to to an internal error,
+  FixtureLookupError which would lead to an internal error,
   obfuscating the original problem. Thanks talljosh for initial
   diagnose/patch and Bruno Oliveira for final patch.
 

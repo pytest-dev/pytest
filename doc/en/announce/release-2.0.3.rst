@@ -1,4 +1,4 @@
-py.test 2.0.3: bug fixes and speed ups 
+py.test 2.0.3: bug fixes and speed ups
 ===========================================================================
 
 Welcome to pytest-2.0.3, a maintenance and bug fix release of pytest,
@@ -13,7 +13,7 @@ If you want to install or upgrade pytest, just type one of::
     easy_install -U pytest
 
 There also is a bugfix release 1.6 of pytest-xdist, the plugin
-that enables seemless distributed and "looponfail" testing for Python.
+that enables seamless distributed and "looponfail" testing for Python.
 
 best,
 holger krekel
@@ -33,8 +33,7 @@ Changes between 2.0.2 and 2.0.3
 - don't require zlib (and other libs) for genscript plugin without
   --genscript actually being used.
 
-- speed up skips (by not doing a full traceback represenation
+- speed up skips (by not doing a full traceback representation
   internally)
 
 - fix issue37: avoid invalid characters in junitxml's output
-

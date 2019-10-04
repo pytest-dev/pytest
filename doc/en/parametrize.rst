@@ -9,17 +9,16 @@
 Parametrizing fixtures and test functions
 ==========================================================================
 
-pytest supports test parametrization in several well-integrated ways:
+pytest enables test parametrization at several levels:
 
-- :py:func:`pytest.fixture` allows to define :ref:`parametrization
-  at the level of fixture functions <fixture-parametrize>`.
+- :py:func:`pytest.fixture` allows one to :ref:`parametrize fixture
+  functions <fixture-parametrize>`.
 
-* `@pytest.mark.parametrize`_ allows to define parametrization at the
-  function or class level, provides multiple argument/fixture sets
-  for a particular test function or class.
+* `@pytest.mark.parametrize`_ allows one to define multiple sets of
+  arguments and fixtures at the test function or class.
 
-* `pytest_generate_tests`_ enables implementing your own custom
-  dynamic parametrization scheme or extensions.
+* `pytest_generate_tests`_ allows one to define custom parametrization
+  schemes or extensions.
 
 .. _parametrizemark:
 .. _`@pytest.mark.parametrize`:
@@ -30,54 +29,68 @@ pytest supports test parametrization in several well-integrated ways:
 
 .. regendoc: wipe
 
-.. versionadded:: 2.2
-.. versionchanged:: 2.4
+
+
     Several improvements.
 
-The builtin ``pytest.mark.parametrize`` decorator enables
+The builtin :ref:`pytest.mark.parametrize ref` decorator enables
 parametrization of arguments for a test function.  Here is a typical example
 of a test function that implements checking that a certain input leads
-to an expected output::
+to an expected output:
+
+.. code-block:: python
 
     # content of test_expectation.py
     import pytest
-    @pytest.mark.parametrize("test_input,expected", [
-        ("3+5", 8),
-        ("2+4", 6),
-        ("6*9", 42),
-    ])
+
+
+    @pytest.mark.parametrize("test_input,expected", [("3+5", 8), ("2+4", 6), ("6*9", 42)])
     def test_eval(test_input, expected):
         assert eval(test_input) == expected
 
 Here, the ``@parametrize`` decorator defines three different ``(test_input,expected)``
 tuples so that the ``test_eval`` function will run three times using
-them in turn::
+them in turn:
 
-    $ py.test
-    ======= test session starts ========
-    platform linux -- Python 3.5.1, pytest-2.9.2, py-1.4.31, pluggy-0.3.1
-    rootdir: $REGENDOC_TMPDIR, inifile: 
+.. code-block:: pytest
+
+    $ pytest
+    =========================== test session starts ============================
+    platform linux -- Python 3.x.y, pytest-5.x.y, py-1.x.y, pluggy-0.x.y
+    cachedir: $PYTHON_PREFIX/.pytest_cache
+    rootdir: $REGENDOC_TMPDIR
     collected 3 items
-    
-    test_expectation.py ..F
-    
-    ======= FAILURES ========
-    _______ test_eval[6*9-42] ________
-    
+
+    test_expectation.py ..F                                              [100%]
+
+    ================================= FAILURES =================================
+    ____________________________ test_eval[6*9-42] _____________________________
+
     test_input = '6*9', expected = 42
-    
-        @pytest.mark.parametrize("test_input,expected", [
-            ("3+5", 8),
-            ("2+4", 6),
-            ("6*9", 42),
-        ])
+
+        @pytest.mark.parametrize("test_input,expected", [("3+5", 8), ("2+4", 6), ("6*9", 42)])
         def test_eval(test_input, expected):
     >       assert eval(test_input) == expected
-    E       assert 54 == 42
+    E       AssertionError: assert 54 == 42
     E        +  where 54 = eval('6*9')
-    
-    test_expectation.py:8: AssertionError
-    ======= 1 failed, 2 passed in 0.12 seconds ========
+
+    test_expectation.py:6: AssertionError
+    ======================= 1 failed, 2 passed in 0.12s ========================
+
+.. note::
+
+    pytest by default escapes any non-ascii characters used in unicode strings
+    for the parametrization because it has several downsides.
+    If however you would like to use unicode strings in parametrization and see them in the terminal as is (non-escaped), use this option in your ``pytest.ini``:
+
+    .. code-block:: ini
+
+        [pytest]
+        disable_test_id_escaping_and_forfeit_all_rights_to_community_support = True
+
+    Keep in mind however that this might cause unwanted side effects and
+    even bugs depending on the OS used and plugins currently installed, so use it at your own risk.
+
 
 As designed in this example, only one pair of input/output values fails
 the simple test function.  And as usual with test function arguments,
@@ -87,51 +100,58 @@ Note that you could also use the parametrize marker on a class or a module
 (see :ref:`mark`) which would invoke several functions with the argument sets.
 
 It is also possible to mark individual test instances within parametrize,
-for example with the builtin ``mark.xfail``::
+for example with the builtin ``mark.xfail``:
+
+.. code-block:: python
 
     # content of test_expectation.py
     import pytest
-    @pytest.mark.parametrize("test_input,expected", [
-        ("3+5", 8),
-        ("2+4", 6),
-        pytest.mark.xfail(("6*9", 42)),
-    ])
+
+
+    @pytest.mark.parametrize(
+        "test_input,expected",
+        [("3+5", 8), ("2+4", 6), pytest.param("6*9", 42, marks=pytest.mark.xfail)],
+    )
     def test_eval(test_input, expected):
         assert eval(test_input) == expected
 
-Let's run this::
+Let's run this:
 
-    $ py.test
-    ======= test session starts ========
-    platform linux -- Python 3.5.1, pytest-2.9.2, py-1.4.31, pluggy-0.3.1
-    rootdir: $REGENDOC_TMPDIR, inifile: 
+.. code-block:: pytest
+
+    $ pytest
+    =========================== test session starts ============================
+    platform linux -- Python 3.x.y, pytest-5.x.y, py-1.x.y, pluggy-0.x.y
+    cachedir: $PYTHON_PREFIX/.pytest_cache
+    rootdir: $REGENDOC_TMPDIR
     collected 3 items
-    
-    test_expectation.py ..x
-    
-    ======= 2 passed, 1 xfailed in 0.12 seconds ========
+
+    test_expectation.py ..x                                              [100%]
+
+    ======================= 2 passed, 1 xfailed in 0.12s =======================
 
 The one parameter set which caused a failure previously now
 shows up as an "xfailed (expected to fail)" test.
 
+In case the values provided to ``parametrize`` result in an empty list - for
+example, if they're dynamically generated by some function - the behaviour of
+pytest is defined by the :confval:`empty_parameter_set_mark` option.
+
 To get all combinations of multiple parametrized arguments you can stack
-``parametrize`` decorators::
+``parametrize`` decorators:
+
+.. code-block:: python
 
     import pytest
+
+
     @pytest.mark.parametrize("x", [0, 1])
     @pytest.mark.parametrize("y", [2, 3])
     def test_foo(x, y):
         pass
 
-This will run the test with the arguments set to x=0/y=2, x=0/y=3, x=1/y=2 and
-x=1/y=3.
-
-.. note::
-
-    In versions prior to 2.4 one needed to specify the argument
-    names as a tuple.  This remains valid but the simpler ``"name1,name2,..."``
-    comma-separated-string syntax is now advertised first because
-    it's easier to write and produces less line noise.
+This will run the test with the arguments set to ``x=0/y=2``, ``x=1/y=2``,
+``x=0/y=3``, and ``x=1/y=3`` exhausting parameters in the order of the decorators.
 
 .. _`pytest_generate_tests`:
 
@@ -148,72 +168,84 @@ parametrization.
 
 For example, let's say we want to run a test taking string inputs which
 we want to set via a new ``pytest`` command line option.  Let's first write
-a simple test accepting a ``stringinput`` fixture function argument::
+a simple test accepting a ``stringinput`` fixture function argument:
+
+.. code-block:: python
 
     # content of test_strings.py
+
 
     def test_valid_string(stringinput):
         assert stringinput.isalpha()
 
 Now we add a ``conftest.py`` file containing the addition of a
-command line option and the parametrization of our test function::
+command line option and the parametrization of our test function:
+
+.. code-block:: python
 
     # content of conftest.py
 
+
     def pytest_addoption(parser):
-        parser.addoption("--stringinput", action="append", default=[],
-            help="list of stringinputs to pass to test functions")
+        parser.addoption(
+            "--stringinput",
+            action="append",
+            default=[],
+            help="list of stringinputs to pass to test functions",
+        )
+
 
     def pytest_generate_tests(metafunc):
-        if 'stringinput' in metafunc.fixturenames:
-            metafunc.parametrize("stringinput",
-                                 metafunc.config.option.stringinput)
+        if "stringinput" in metafunc.fixturenames:
+            metafunc.parametrize("stringinput", metafunc.config.getoption("stringinput"))
 
-If we now pass two stringinput values, our test will run twice::
+If we now pass two stringinput values, our test will run twice:
 
-    $ py.test -q --stringinput="hello" --stringinput="world" test_strings.py
-    ..
-    2 passed in 0.12 seconds
+.. code-block:: pytest
 
-Let's also run with a stringinput that will lead to a failing test::
+    $ pytest -q --stringinput="hello" --stringinput="world" test_strings.py
+    ..                                                                   [100%]
+    2 passed in 0.12s
 
-    $ py.test -q --stringinput="!" test_strings.py
-    F
-    ======= FAILURES ========
-    _______ test_valid_string[!] ________
-    
+Let's also run with a stringinput that will lead to a failing test:
+
+.. code-block:: pytest
+
+    $ pytest -q --stringinput="!" test_strings.py
+    F                                                                    [100%]
+    ================================= FAILURES =================================
+    ___________________________ test_valid_string[!] ___________________________
+
     stringinput = '!'
-    
+
         def test_valid_string(stringinput):
     >       assert stringinput.isalpha()
-    E       assert <built-in method isalpha of str object at 0xdeadbeef>()
-    E        +  where <built-in method isalpha of str object at 0xdeadbeef> = '!'.isalpha
-    
-    test_strings.py:3: AssertionError
-    1 failed in 0.12 seconds
+    E       AssertionError: assert False
+    E        +  where False = <built-in method isalpha of str object at 0xdeadbeef>()
+    E        +    where <built-in method isalpha of str object at 0xdeadbeef> = '!'.isalpha
+
+    test_strings.py:4: AssertionError
+    1 failed in 0.12s
 
 As expected our test function fails.
 
 If you don't specify a stringinput it will be skipped because
 ``metafunc.parametrize()`` will be called with an empty parameter
-list::
+list:
 
-    $ py.test -q -rs test_strings.py
-    s
-    ======= short test summary info ========
-    SKIP [1] test_strings.py:1: got empty parameter set ['stringinput'], function test_valid_string at $REGENDOC_TMPDIR/test_strings.py:1
-    1 skipped in 0.12 seconds
+.. code-block:: pytest
+
+    $ pytest -q -rs test_strings.py
+    s                                                                    [100%]
+    ========================= short test summary info ==========================
+    SKIPPED [1] test_strings.py: got empty parameter set ['stringinput'], function test_valid_string at $REGENDOC_TMPDIR/test_strings.py:2
+    1 skipped in 0.12s
+
+Note that when calling ``metafunc.parametrize`` multiple times with different parameter sets, all parameter names across
+those sets cannot be duplicated, otherwise an error will be raised.
+
+More examples
+-------------
 
 For further examples, you might want to look at :ref:`more
 parametrization examples <paramexamples>`.
-
-.. _`metafunc object`:
-
-The **metafunc** object
--------------------------------------------
-
-.. currentmodule:: _pytest.python
-.. autoclass:: Metafunc
-
-    .. automethod:: Metafunc.parametrize
-    .. automethod:: Metafunc.addcall(funcargs=None,id=_notexists,param=_notexists)

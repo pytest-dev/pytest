@@ -8,11 +8,12 @@
 
 {% set page_width = '1020px' %}
 {% set sidebar_width = '220px' %}
-/* orange of logo is #d67c29 but we use black for links for now */
-{% set link_color = '#000' %}
-{% set link_hover_color = '#000' %}
+/* muted version of green logo color #C9D22A */
+{% set link_color = '#606413' %}
+/* blue logo color */
+{% set link_hover_color = '#009de0' %}
 {% set base_font = 'sans-serif' %}
-{% set header_font = 'serif' %}
+{% set header_font = 'sans-serif' %}
 
 @import url("basic.css");
 
@@ -20,7 +21,7 @@
 
 body {
     font-family: {{ base_font }};
-    font-size: 17px;
+    font-size: 16px;
     background-color: white;
     color: #000;
     margin: 0;
@@ -78,13 +79,13 @@ div.related {
 }
 
 div.sphinxsidebar a {
-    color: #444;
     text-decoration: none;
-    border-bottom: 1px dotted #999;
+    border-bottom: none;
 }
 
 div.sphinxsidebar a:hover {
-    border-bottom: 1px solid #999;
+    color: {{ link_hover_color }};
+    border-bottom: 1px solid {{ link_hover_color }};
 }
 
 div.sphinxsidebar {
@@ -106,14 +107,14 @@ div.sphinxsidebar h3,
 div.sphinxsidebar h4 {
     font-family: {{ header_font }};
     color: #444;
-    font-size: 24px;
+    font-size: 21px;
     font-weight: normal;
-    margin: 0 0 5px 0;
+    margin: 16px 0 0 0;
     padding: 0;
 }
 
 div.sphinxsidebar h4 {
-    font-size: 20px;
+    font-size: 18px;
 }
 
 div.sphinxsidebar h3 a {
@@ -205,21 +206,28 @@ div.body p, div.body dd, div.body li {
     line-height: 1.4em;
 }
 
+ul.simple li {
+    margin-bottom: 0.5em;
+}
+
+div.topic ul.simple li {
+    margin-bottom: 0;
+}
+
+div.topic li > p:first-child {
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
 div.admonition {
     background: #fafafa;
-    margin: 20px -30px;
-    padding: 10px 30px;
+    padding: 10px 20px;
     border-top: 1px solid #ccc;
     border-bottom: 1px solid #ccc;
 }
 
 div.admonition tt.xref, div.admonition a tt {
     border-bottom: 1px solid #fafafa;
-}
-
-dd div.admonition {
-    margin-left: -60px;
-    padding-left: 60px;
 }
 
 div.admonition p.admonition-title {
@@ -231,7 +239,7 @@ div.admonition p.admonition-title {
     line-height: 1;
 }
 
-div.admonition p.last {
+div.admonition :last-child {
     margin-bottom: 0;
 }
 
@@ -243,7 +251,7 @@ dt:target, .highlight {
     background: #FAF3E8;
 }
 
-div.note {
+div.note, div.warning {
     background-color: #eee;
     border: 1px solid #ccc;
 }
@@ -255,6 +263,11 @@ div.seealso {
 
 div.topic {
     background-color: #eee;
+}
+
+div.topic a {
+    text-decoration: none;
+    border-bottom: none;
 }
 
 p.admonition-title {
@@ -358,19 +371,8 @@ ul, ol {
 
 pre {
     background: #eee;
-    padding: 7px 30px;
-    margin: 15px -30px;
+    padding: 7px 12px;
     line-height: 1.3em;
-}
-
-dl pre, blockquote pre, li pre {
-    margin-left: -60px;
-    padding-left: 60px;
-}
-
-dl dl pre {
-    margin-left: -90px;
-    padding-left: 90px;
 }
 
 tt {
@@ -393,6 +395,20 @@ a.reference:hover {
     border-bottom: 1px solid {{ link_hover_color }};
 }
 
+li.toctree-l1 a.reference,
+li.toctree-l2 a.reference,
+li.toctree-l3 a.reference,
+li.toctree-l4 a.reference {
+    border-bottom: none;
+}
+
+li.toctree-l1 a.reference:hover,
+li.toctree-l2 a.reference:hover,
+li.toctree-l3 a.reference:hover,
+li.toctree-l4 a.reference:hover {
+    border-bottom: 1px solid {{ link_hover_color }};
+}
+
 a.footnote-reference {
     text-decoration: none;
     font-size: 0.7em;
@@ -408,6 +424,56 @@ a:hover tt {
     background: #EEE;
 }
 
+#reference div.section h2 {
+    /* separate code elements in the reference section */
+    border-top: 2px solid #ccc;
+    padding-top: 0.5em;
+}
+
+#reference div.section h3 {
+    /* separate code elements in the reference section */
+    border-top: 1px solid #ccc;
+    padding-top: 0.5em;
+}
+
+dl.class, dl.function {
+    margin-top: 1em;
+    margin-bottom: 1em;
+}
+
+dl.class > dd {
+    border-left: 3px solid #ccc;
+    margin-left: 0px;
+    padding-left: 30px;
+}
+
+dl.field-list {
+    flex-direction: column;
+}
+
+dl.field-list dd {
+    padding-left: 4em;
+    border-left: 3px solid #ccc;
+    margin-bottom: 0.5em;
+}
+
+dl.field-list dd > ul {
+    list-style: none;
+    padding-left: 0px;
+}
+
+dl.field-list dd > ul > li li :first-child {
+    text-indent: 0;
+}
+
+dl.field-list dd > ul > li :first-child {
+    text-indent: -2em;
+    padding-left: 0px;
+}
+
+dl.field-list dd > p:first-child {
+    text-indent: -2em;
+}
 
 @media screen and (max-width: 870px) {
 

@@ -14,25 +14,25 @@ As usual, you can upgrade from pypi via::
 
 Thanks to all who contributed to this release, among them:
 
-    Anatoly Bubenkov                                                                                                                                                                                                         
-    Bruno Oliveira                                                                                                                                                                                                           
-    Buck Golemon                                                                                                                                                                                                             
-    David Vierra                                                                                                                                                                                                             
-    Florian Bruhin                                                                                                                                                                                                           
-    Galaczi Endre                                                                                                                                                                                                            
-    Georgy Dyuldin                                                                                                                                                                                                           
-    Lukas Bednar                                                                                                                                                                                                             
-    Luke Murphy                                                                                                                                                                                                              
-    Marcin Biernat                                                                                                                                                                                                           
-    Matt Williams                                                                                                                                                                                                            
-    Michael Aquilina                                                                                                                                                                                                         
-    Raphael Pierzina                                                                                                                                                                                                         
-    Ronny Pfannschmidt                                                                                                                                                                                                       
-    Ryan Wooden                                                                                                                                                                                                              
-    Tiemo Kieft                                                                                                                                                                                                              
-    TomV                                                                                                                                                                                                                     
-    holger krekel                                                                                                                                                                                                            
-    jab   
+    Anatoly Bubenkov
+    Bruno Oliveira
+    Buck Golemon
+    David Vierra
+    Florian Bruhin
+    Galaczi Endre
+    Georgy Dyuldin
+    Lukas Bednar
+    Luke Murphy
+    Marcin Biernat
+    Matt Williams
+    Michael Aquilina
+    Raphael Pierzina
+    Ronny Pfannschmidt
+    Ryan Wooden
+    Tiemo Kieft
+    TomV
+    holger krekel
+    jab
 
 
 Happy testing,
@@ -75,20 +75,20 @@ The py.test Development Team
 
 **Changes**
 
-* **Important**: `py.code <https://pylib.readthedocs.io/en/latest/code.html>`_ has been
-  merged into the ``pytest`` repository as ``pytest._code``. This decision 
-  was made because ``py.code`` had very few uses outside ``pytest`` and the 
-  fact that it was in a different repository made it difficult to fix bugs on 
+* **Important**: `py.code <https://pylib.readthedocs.io/en/stable/code.html>`_ has been
+  merged into the ``pytest`` repository as ``pytest._code``. This decision
+  was made because ``py.code`` had very few uses outside ``pytest`` and the
+  fact that it was in a different repository made it difficult to fix bugs on
   its code in a timely manner. The team hopes with this to be able to better
   refactor out and improve that code.
   This change shouldn't affect users, but it is useful to let users aware
   if they encounter any strange behavior.
-  
-  Keep in mind that the code for ``pytest._code`` is **private** and 
+
+  Keep in mind that the code for ``pytest._code`` is **private** and
   **experimental**, so you definitely should not import it explicitly!
 
-  Please note that the original ``py.code`` is still available in 
-  `pylib <https://pylib.readthedocs.io>`_.
+  Please note that the original ``py.code`` is still available in
+  `pylib <https://pylib.readthedocs.io/en/stable/>`_.
 
 * ``pytest_enter_pdb`` now optionally receives the pytest config object.
   Thanks `@nicoddemus`_ for the PR.
@@ -124,13 +124,13 @@ The py.test Development Team
   Thanks `@biern`_ for the PR.
 
 * Fix `traceback style docs`_ to describe all of the available options
-  (auto/long/short/line/native/no), with `auto` being the default since v2.6.
+  (auto/long/short/line/native/no), with ``auto`` being the default since v2.6.
   Thanks `@hackebrot`_ for the PR.
 
 * Fix (`#1422`_): junit record_xml_property doesn't allow multiple records
   with same name.
-  
-  
+
+
 .. _`traceback style docs`: https://pytest.org/latest/usage.html#modifying-python-traceback-printing
 
 .. _#1422: https://github.com/pytest-dev/pytest/issues/1422

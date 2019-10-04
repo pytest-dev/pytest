@@ -14,17 +14,17 @@ As usual, you can upgrade from pypi via::
 
 Thanks to all who contributed to this release, among them:
 
-    Bruno Oliveira                                                                                                                                                                                                                            
-    Daniel Hahler                                                                                                                                                                                                                             
-    Dmitry Malinovsky                                                                                                                                                                                                                         
-    Florian Bruhin                                                                                                                                                                                                                            
-    Floris Bruynooghe                                                                                                                                                                                                                         
-    Matt Bachmann                                                                                                                                                                                                                             
-    Ronny Pfannschmidt                                                                                                                                                                                                                        
-    TomV                                                                                                                                                                                                                                      
-    Vladimir Bolshakov                                                                                                                                                                                                                        
-    Zearin                                                                                                                                                                                                                                     
-    palaviv   
+    Bruno Oliveira
+    Daniel Hahler
+    Dmitry Malinovsky
+    Florian Bruhin
+    Floris Bruynooghe
+    Matt Bachmann
+    Ronny Pfannschmidt
+    TomV
+    Vladimir Bolshakov
+    Zearin
+    palaviv
 
 
 Happy testing,
@@ -63,3 +63,5 @@ The py.test Development Team
 .. _#649: https://github.com/pytest-dev/pytest/issues/649
 
 .. _@asottile: https://github.com/asottile
+.. _@nicoddemus: https://github.com/nicoddemus
+.. _@tomviner: https://github.com/tomviner

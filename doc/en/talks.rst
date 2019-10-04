@@ -4,12 +4,31 @@ Talks and Tutorials
 
 .. sidebar:: Next Open Trainings
 
-   `professional testing with pytest and tox <http://www.python-academy.com/courses/specialtopics/python_course_testing.html>`_, 27-29th June 2016, Freiburg, Germany
+   - `3 day hands-on workshop covering pytest, tox and devpi: "Professional Testing with Python" <https://python-academy.com/courses/specialtopics/python_course_testing.html>`_ (English), October 21 - 23, 2019, Leipzig, Germany.
 
 .. _`funcargs`: funcargs.html
 
+Books
+---------------------------------------------
+
+- `pytest Quick Start Guide, by Bruno Oliveira (2018)
+  <https://www.packtpub.com/web-development/pytest-quick-start-guide>`_.
+
+- `Python Testing with pytest, by Brian Okken (2017)
+  <https://pragprog.com/book/bopytest/python-testing-with-pytest>`_.
+
 Talks and blog postings
 ---------------------------------------------
+
+- `pytest: recommendations, basic packages for testing in Python and Django, Andreu Vallbona, PyBCN June 2019 <https://www.slideshare.net/AndreuVallbonaPlazas/pybcn-pytest-recomendaciones-paquetes-bsicos-para-testing-en-python-y-django>`_.
+
+- pytest: recommendations, basic packages for testing in Python and Django, Andreu Vallbona, PyconES 2017 (`slides in english <http://talks.apsl.io/testing-pycones-2017/>`_, `video in spanish <https://www.youtube.com/watch?v=K20GeR-lXDk>`_)
+
+- `pytest advanced, Andrew Svetlov (Russian, PyCon Russia, 2016)
+  <https://www.youtube.com/watch?v=7KgihdKTWY4>`_.
+
+- `Pythonic testing, Igor Starikov (Russian, PyNsk, November 2016)
+  <https://www.youtube.com/watch?v=_92nfdd5nK8>`_.
 
 - `pytest - Rapid Simple Testing, Florian Bruhin, Swiss Python Summit 2016
   <https://www.youtube.com/watch?v=rCBHkQ_LVIs>`_.
@@ -86,8 +105,3 @@ Plugin specific examples:
 .. _`parametrizing tests, generalized`: http://tetamap.wordpress.com/2009/05/13/parametrizing-python-tests-generalized/
 .. _`generating parametrized tests with fixtures`: parametrize.html#test-generators
 .. _`test generators and cached setup`: http://bruynooghe.blogspot.com/2010/06/pytest-test-generators-and-cached-setup.html
-
-
-
-
-

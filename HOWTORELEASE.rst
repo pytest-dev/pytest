@@ -1,92 +1,60 @@
-How to release pytest
---------------------------------------------
+Release Procedure
+-----------------
 
-Note: this assumes you have already registered on pypi.
+Our current policy for releasing is to aim for a bugfix every few weeks and a minor release every 2-3 months. The idea
+is to get fixes and new features out instead of trying to cram a ton of features into a release and by consequence
+taking a lot of time to make a new one.
 
-0. create the branch release-VERSION
-   use features as base for minor/major releases
-   and master as base for bugfix releases
+.. important::
 
-1. Bump version numbers in _pytest/__init__.py (setup.py reads it)
+    pytest releases must be prepared on **Linux** because the docs and examples expect
+    to be executed in that platform.
 
-2. Check and finalize CHANGELOG
+#. Create a branch ``release-X.Y.Z`` with the version for the release.
 
-3. Write doc/en/announce/release-VERSION.txt and include
-   it in doc/en/announce/index.txt::
+   * **maintenance releases**: from ``4.6-maintenance``;
 
-        git log 2.8.2..HEAD --format='%aN' | sort -u # lists the names of authors involved
+   * **patch releases**: from the latest ``master``;
 
-4. Use devpi for uploading a release tarball to a staging area::
+   * **minor releases**: from the latest ``features``; then merge with the latest ``master``;
 
-     devpi use https://devpi.net/USER/dev
-     devpi upload --formats sdist,bdist_wheel
+   Ensure your are in a clean work tree.
 
-5. Run from multiple machines::
+#. Using ``tox``, generate docs, changelog, announcements::
 
-     devpi use https://devpi.net/USER/dev
-     devpi test pytest==VERSION
+    $ tox -e release -- <VERSION>
 
-6. Check that tests pass for relevant combinations with::
+   This will generate a commit with all the changes ready for pushing.
 
-       devpi list pytest
+#. Open a PR for this branch targeting ``master`` (or ``4.6-maintenance`` for
+   maintenance releases).
 
-   or look at failures with "devpi list -f pytest".
+#. After all tests pass and the PR has been approved, publish to PyPI by pushing the tag::
 
-7. Regenerate the docs examples using tox, and check for regressions::
+     git tag <VERSION>
+     git push git@github.com:pytest-dev/pytest.git <VERSION>
 
-      tox -e regen
-      git diff
+   Wait for the deploy to complete, then make sure it is `available on PyPI <https://pypi.org/project/pytest>`_.
 
+#. Merge the PR.
 
-8. Build the docs, you need a virtualenv with py and sphinx
-   installed::
+#. If this is a maintenance release, cherry-pick the CHANGELOG / announce
+   files to the ``master`` branch::
 
-      cd doc/en
-      make html
+       git fetch --all --prune
+       git checkout origin/master -b cherry-pick-maintenance-release
+       git cherry-pick --no-commit -m1 origin/4.6-maintenance
+       git checkout origin/master -- changelog
+       git commit  # no arguments
 
-   Commit any changes before tagging the release.
+#. Send an email announcement with the contents from::
 
-9. Tag the release::
+     doc/en/announce/release-<VERSION>.rst
 
-      git tag VERSION
-      git push
+   To the following mailing lists:
 
-10. Upload the docs using doc/en/Makefile::
+   * pytest-dev@python.org (all releases)
+   * python-announce-list@python.org (all releases)
+   * testing-in-python@lists.idyll.org (only major/minor releases)
 
-      cd doc/en
-      make install  # or "installall" if you have LaTeX installed for PDF
-
-    This requires ssh-login permission on pytest.org because it uses
-    rsync.
-    Note that the ``install`` target of ``doc/en/Makefile`` defines where the
-    rsync goes to, typically to the "latest" section of pytest.org.
-
-    If you are making a minor release (e.g. 5.4), you also need to manually
-    create a symlink for "latest"::
-
-       ssh pytest-dev@pytest.org
-       ln -s 5.4 latest
-
-    Browse to pytest.org to verify.
-
-11. Publish to pypi::
-
-      devpi push pytest==VERSION pypi:NAME
-
-    where NAME is the name of pypi.python.org as configured in your ``~/.pypirc``
-    file `for devpi <http://doc.devpi.net/latest/quickstart-releaseprocess.html?highlight=pypirc#devpi-push-releasing-to-an-external-index>`_.
-
-
-12. Send release announcement to mailing lists:
-
-    - pytest-dev
-    - testing-in-python
-    - python-announce-list@python.org
-
-
-13. **after the release** Bump the version number in ``_pytest/__init__.py``,
-    to the next Minor release version (i.e. if you released ``pytest-2.8.0``,
-    set it to ``pytest-2.9.0.dev1``).
-
-14. merge the actual release into the master branch and do a pull request against it
-15. merge from master to features
+   And announce it on `Twitter <https://twitter.com/>`_ with the ``#pytest`` hashtag.

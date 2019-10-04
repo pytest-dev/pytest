@@ -46,7 +46,7 @@ The py.test Development Team
   Thanks `@astraw38`_ for reporting the issue (`#1496`_) and `@tomviner`_
   for PR the (`#1524`_).
 
-* Fix win32 path issue when puttinging custom config file with absolute path
+* Fix win32 path issue when putting custom config file with absolute path
   in ``pytest.main("-c your_absolute_path")``.
 
 * Fix maximum recursion depth detection when raised error class is not aware
@@ -66,8 +66,13 @@ The py.test Development Team
 
 .. _#510: https://github.com/pytest-dev/pytest/issues/510
 .. _#1506: https://github.com/pytest-dev/pytest/pull/1506
-.. _#1496: https://github.com/pytest-dev/pytest/issue/1496
-.. _#1524: https://github.com/pytest-dev/pytest/issue/1524
+.. _#1496: https://github.com/pytest-dev/pytest/issues/1496
+.. _#1524: https://github.com/pytest-dev/pytest/pull/1524
 
-.. _@prusse-martin: https://github.com/prusse-martin
 .. _@astraw38: https://github.com/astraw38
+.. _@hackebrot: https://github.com/hackebrot
+.. _@omarkohl: https://github.com/omarkohl
+.. _@pquentin: https://github.com/pquentin
+.. _@prusse-martin: https://github.com/prusse-martin
+.. _@RonnyPfannschmidt: https://github.com/RonnyPfannschmidt
+.. _@tomviner: https://github.com/tomviner

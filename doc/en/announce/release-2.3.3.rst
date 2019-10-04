@@ -1,12 +1,12 @@
-pytest-2.3.3: integration fixes, py24 suport, ``*/**`` shown in traceback
+pytest-2.3.3: integration fixes, py24 support, ``*/**`` shown in traceback
 ===========================================================================
 
-pytest-2.3.3 is a another stabilization release of the py.test tool
+pytest-2.3.3 is another stabilization release of the py.test tool
 which offers uebersimple assertions, scalable fixture mechanisms
 and deep customization for testing with Python.  Particularly,
 this release provides:
 
-- integration fixes and improvements related to flask, numpy, nose, 
+- integration fixes and improvements related to flask, numpy, nose,
   unittest, mock
 
 - makes pytest work on py24 again (yes, people sometimes still need to use it)
@@ -16,7 +16,7 @@ this release provides:
 Thanks to Manuel Jacob, Thomas Waldmann, Ronny Pfannschmidt, Pavel Repin
 and Andreas Taumoefolau for providing patches and all for the issues.
 
-See 
+See
 
      http://pytest.org/
 
@@ -46,7 +46,7 @@ Changes between 2.3.2 and 2.3.3
 - fix issue209 - reintroduce python2.4 support by depending on newer
   pylib which re-introduced statement-finding for pre-AST interpreters
 
-- nose support: only call setup if its a callable, thanks Andrew
+- nose support: only call setup if it's a callable, thanks Andrew
   Taumoefolau
 
 - fix issue219 - add py2.4-3.3 classifiers to TROVE list
@@ -59,4 +59,3 @@ Changes between 2.3.2 and 2.3.3
 
 - fix issue127 - improve documentation for pytest_addoption() and
   add a ``config.getoption(name)`` helper function for consistency.
-

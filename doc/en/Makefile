@@ -13,16 +13,21 @@ PAPEROPT_letter = -D latex_paper_size=letter
 ALLSPHINXOPTS   = -d $(BUILDDIR)/doctrees $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) .
 
 REGENDOC_ARGS := \
-	--normalize "/={8,} (.*) ={8,}/======= \1 ========/" \
-	--normalize "/_{8,} (.*) _{8,}/_______ \1 ________/" \
-	--normalize "/in \d+.\d+ seconds/in 0.12 seconds/" \
+	--normalize "/[ \t]+\n/\n/" \
+	--normalize "~\$$REGENDOC_TMPDIR~/home/sweet/project~" \
+	--normalize "~/path/to/example~/home/sweet/project~" \
+	--normalize "/in \d.\d\ds/in 0.12s/" \
 	--normalize "@/tmp/pytest-of-.*/pytest-\d+@PYTEST_TMPDIR@" \
-
-
+	--normalize "@pytest-(\d+)\\.[^ ,]+@pytest-\1.x.y@" \
+	--normalize "@(This is pytest version )(\d+)\\.[^ ,]+@\1\2.x.y@" \
+	--normalize "@py-(\d+)\\.[^ ,]+@py-\1.x.y@" \
+	--normalize "@pluggy-(\d+)\\.[.\d,]+@pluggy-\1.x.y@" \
+	--normalize "@hypothesis-(\d+)\\.[.\d,]+@hypothesis-\1.x.y@" \
+	--normalize "@Python (\d+)\\.[^ ,]+@Python \1.x.y@"
 
 .PHONY: help clean html dirhtml singlehtml pickle json htmlhelp qthelp devhelp epub latex latexpdf text man changes linkcheck doctest
 
-    
+
 help:
 	@echo "Please use \`make <target>' where <target> is one of"
 	@echo "  html       to make standalone HTML files"
@@ -36,24 +41,9 @@ help:
 clean:
 	-rm -rf $(BUILDDIR)/*
 
-SITETARGET=$(shell ./_getdoctarget.py)
-
-showtarget:
-	@echo $(SITETARGET)
-
-install: html
-	 # for access talk to someone with login rights to
-	 # pytest-dev@pytest.org to add your ssh key
-	 rsync -avz _build/html/ pytest-dev@pytest.org:pytest.org/$(SITETARGET)
-
-installpdf: latexpdf
-	@scp $(BUILDDIR)/latex/pytest.pdf pytest-dev@pytest.org:pytest.org/$(SITETARGET)
-
-installall: clean install installpdf
-	@echo "done"
-
+regen: REGENDOC_FILES:=*.rst */*.rst
 regen:
-	PYTHONDONTWRITEBYTECODE=1 COLUMNS=76 regendoc --update *.rst */*.rst ${REGENDOC_ARGS}
+	PYTHONDONTWRITEBYTECODE=1 PYTEST_ADDOPTS="-pno:hypothesis -Wignore::pytest.PytestUnknownMarkWarning" COLUMNS=76 regendoc --update ${REGENDOC_FILES} ${REGENDOC_ARGS}
 
 html:
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html

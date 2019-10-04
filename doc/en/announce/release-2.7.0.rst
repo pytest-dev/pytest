@@ -62,7 +62,7 @@ holger krekel
 - fix issue655: work around different ways that cause python2/3
   to leak sys.exc_info into fixtures/tests causing failures in 3rd party code
 
-- fix issue615: assertion re-writing did not correctly escape % signs
+- fix issue615: assertion rewriting did not correctly escape % signs
   when formatting boolean operations, which tripped over mixing
   booleans with modulo operators.  Thanks to Tom Viner for the report,
   triaging and fix.
@@ -98,4 +98,3 @@ holger krekel
 - On failure, the ``sys.last_value``, ``sys.last_type`` and
   ``sys.last_traceback`` are set, so that a user can inspect the error
   via postmortem debugging (almarklein).
-

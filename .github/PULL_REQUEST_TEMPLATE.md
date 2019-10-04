@@ -1,11 +1,16 @@
+<!--
 Thanks for submitting a PR, your contribution is really appreciated!
 
-Here's a quick checklist that should be present in PRs:
+Here is a quick checklist that should be present in PRs.
+(please delete this text from the final description, this is just a guideline)
+-->
 
-- [ ] Target: for bug or doc fixes, target `master`; for new features, target `features`;
-- [ ] Make sure to include one or more tests for your change;
-- [ ] Add yourself to `AUTHORS`;
-- [ ] Add a new entry to `CHANGELOG.rst`
-  * Choose any open position to avoid merge conflicts with other PRs.
-  * Add a link to the issue you are fixing (if any) using RST syntax.
-  * The pytest team likes to have people to acknowledged in the `CHANGELOG`, so please add a thank note to yourself ("Thanks @user for the PR") and a link to your GitHub profile. It may sound weird thanking yourself, but otherwise a maintainer would have to do it manually before or after merging instead of just using GitHub's merge button. This makes it easier on the maintainers to merge PRs. 
+- [ ] Target the `master` branch for bug fixes, documentation updates and trivial changes.
+- [ ] Target the `features` branch for new features, improvements, and removals/deprecations.
+- [ ] Include documentation when adding new features.
+- [ ] Include new tests or update existing tests when applicable.
+
+Unless your change is trivial or a small documentation fix (e.g.,  a typo or reword of a small section) please:
+
+- [ ] Create a new changelog file in the `changelog` folder, with a name like `<ISSUE NUMBER>.<TYPE>.rst`. See [changelog/README.rst](https://github.com/pytest-dev/pytest/blob/master/changelog/README.rst) for details.
+- [ ] Add yourself to `AUTHORS` in alphabetical order;
