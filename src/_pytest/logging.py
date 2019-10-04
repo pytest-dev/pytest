@@ -377,18 +377,21 @@ def get_actual_log_level(config, *setting_names):
             break
     else:
         return
-
-    if isinstance(log_level, str):
-        log_level = log_level.upper()
+        
     try:
-        return int(getattr(logging, log_level, log_level))
+        return int(log_level)
     except ValueError:
-        # Python logging does not recognise this as a logging level
-        raise pytest.UsageError(
-            "'{}' is not recognized as a logging level name for "
-            "'{}'. Please consider passing the "
-            "logging level num instead.".format(log_level, setting_name)
-        )
+        try:
+            assert isinstance(log_level, str)
+            log_level = log_level.upper()
+            return getattr(logging, log_level)
+        except (AssertionError, AttributeError):
+            # Python logging does not recognise this as a logging level
+            raise pytest.UsageError(
+                "'{}' is not recognized as a logging level name for "
+                "'{}'. Please consider passing the "
+                "logging level num instead.".format(log_level, setting_name)
+            )
 
 
 # run after terminalreporter/capturemanager are configured
