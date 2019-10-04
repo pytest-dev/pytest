@@ -1,0 +1,1 @@
+fix `AttributeError` when passing number into log_level parameter
