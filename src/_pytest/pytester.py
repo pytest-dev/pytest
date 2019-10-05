@@ -1318,8 +1318,7 @@ class LineMatcher:
 
         The argument is a list of lines which have to match and can use glob
         wildcards.  If they do not match a pytest.fail() is called.  The
-        matches and non-matches are also printed on stdout.
-
+        matches and non-matches are also shown as part of the error message.
         """
         __tracebackhide__ = True
         self._match_lines(lines2, fnmatch, "fnmatch")
@@ -1330,8 +1329,7 @@ class LineMatcher:
         The argument is a list of lines which have to match using ``re.match``.
         If they do not match a pytest.fail() is called.
 
-        The matches and non-matches are also printed on stdout.
-
+        The matches and non-matches are also shown as part of the error message.
         """
         __tracebackhide__ = True
         self._match_lines(lines2, lambda name, pat: re.match(pat, name), "re.match")
@@ -1374,3 +1372,40 @@ class LineMatcher:
             else:
                 self._log("remains unmatched: {!r}".format(line))
                 pytest.fail(self._log_text)
+
+    def no_fnmatch_line(self, pat):
+        """Ensure captured lines do not match the given pattern, using ``fnmatch.fnmatch``.
+
+        :param str pat: the pattern to match lines.
+        """
+        __tracebackhide__ = True
+        self._no_match_line(pat, fnmatch, "fnmatch")
+
+    def no_re_match_line(self, pat):
+        """Ensure captured lines do not match the given pattern, using ``re.match``.
+
+        :param str pat: the regular expression to match lines.
+        """
+        __tracebackhide__ = True
+        self._no_match_line(pat, lambda name, pat: re.match(pat, name), "re.match")
+
+    def _no_match_line(self, pat, match_func, match_nickname):
+        """Ensure captured lines does not have a the given pattern, using ``fnmatch.fnmatch``
+
+        :param str pat: the pattern to match lines
+        """
+        __tracebackhide__ = True
+        nomatch_printed = False
+        try:
+            for line in self.lines:
+                if match_func(line, pat):
+                    self._log("%s:" % match_nickname, repr(pat))
+                    self._log("   with:", repr(line))
+                    pytest.fail(self._log_text)
+                else:
+                    if not nomatch_printed:
+                        self._log("nomatch:", repr(pat))
+                        nomatch_printed = True
+                    self._log("    and:", repr(line))
+        finally:
+            self._log_output = []
