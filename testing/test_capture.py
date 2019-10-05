@@ -609,12 +609,12 @@ class TestCaptureFixture:
             *while capture is disabled*
         """
         )
-        assert "captured before" not in result.stdout.str()
-        assert "captured after" not in result.stdout.str()
+        result.stdout.no_fnmatch_line("*captured before*")
+        result.stdout.no_fnmatch_line("*captured after*")
         if no_capture:
             assert "test_normal executed" in result.stdout.str()
         else:
-            assert "test_normal executed" not in result.stdout.str()
+            result.stdout.no_fnmatch_line("*test_normal executed*")
 
     @pytest.mark.parametrize("fixture", ["capsys", "capfd"])
     def test_fixture_use_by_other_fixtures(self, testdir, fixture):
@@ -650,8 +650,8 @@ class TestCaptureFixture:
         )
         result = testdir.runpytest_subprocess()
         result.stdout.fnmatch_lines(["*1 passed*"])
-        assert "stdout contents begin" not in result.stdout.str()
-        assert "stderr contents begin" not in result.stdout.str()
+        result.stdout.no_fnmatch_line("*stdout contents begin*")
+        result.stdout.no_fnmatch_line("*stderr contents begin*")
 
     @pytest.mark.parametrize("cap", ["capsys", "capfd"])
     def test_fixture_use_by_other_fixtures_teardown(self, testdir, cap):
@@ -721,7 +721,7 @@ def test_capture_conftest_runtest_setup(testdir):
     testdir.makepyfile("def test_func(): pass")
     result = testdir.runpytest()
     assert result.ret == 0
-    assert "hello19" not in result.stdout.str()
+    result.stdout.no_fnmatch_line("*hello19*")
 
 
 def test_capture_badoutput_issue412(testdir):
@@ -1388,7 +1388,7 @@ def test_crash_on_closing_tmpfile_py27(testdir):
     result = testdir.runpytest_subprocess(str(p))
     assert result.ret == 0
     assert result.stderr.str() == ""
-    assert "IOError" not in result.stdout.str()
+    result.stdout.no_fnmatch_line("*IOError*")
 
 
 def test_pickling_and_unpickling_encoded_file():

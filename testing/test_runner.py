@@ -615,7 +615,7 @@ def test_pytest_fail_notrace_runtest(testdir):
     )
     result = testdir.runpytest()
     result.stdout.fnmatch_lines(["world", "hello"])
-    assert "def teardown_function" not in result.stdout.str()
+    result.stdout.no_fnmatch_line("*def teardown_function*")
 
 
 def test_pytest_fail_notrace_collection(testdir):
@@ -630,7 +630,7 @@ def test_pytest_fail_notrace_collection(testdir):
     )
     result = testdir.runpytest()
     result.stdout.fnmatch_lines(["hello"])
-    assert "def some_internal_function()" not in result.stdout.str()
+    result.stdout.no_fnmatch_line("*def some_internal_function()*")
 
 
 def test_pytest_fail_notrace_non_ascii(testdir):
@@ -648,7 +648,7 @@ def test_pytest_fail_notrace_non_ascii(testdir):
     )
     result = testdir.runpytest()
     result.stdout.fnmatch_lines(["*test_hello*", "oh oh: ☺"])
-    assert "def test_hello" not in result.stdout.str()
+    result.stdout.no_fnmatch_line("*def test_hello*")
 
 
 def test_pytest_no_tests_collected_exit_status(testdir):
@@ -813,7 +813,7 @@ def test_failure_in_setup(testdir):
     """
     )
     result = testdir.runpytest("--tb=line")
-    assert "def setup_module" not in result.stdout.str()
+    result.stdout.no_fnmatch_line("*def setup_module*")
 
 
 def test_makereport_getsource(testdir):
@@ -825,7 +825,7 @@ def test_makereport_getsource(testdir):
     """
     )
     result = testdir.runpytest()
-    assert "INTERNALERROR" not in result.stdout.str()
+    result.stdout.no_fnmatch_line("*INTERNALERROR*")
     result.stdout.fnmatch_lines(["*else: assert False*"])
 
 
@@ -856,7 +856,7 @@ def test_makereport_getsource_dynamic_code(testdir, monkeypatch):
     """
     )
     result = testdir.runpytest("-vv")
-    assert "INTERNALERROR" not in result.stdout.str()
+    result.stdout.no_fnmatch_line("*INTERNALERROR*")
     result.stdout.fnmatch_lines(["*test_fix*", "*fixture*'missing'*not found*"])
 
 

@@ -246,7 +246,7 @@ class TestGeneralUsage:
         )
         result = testdir.runpytest()
         assert result.ret == ExitCode.NO_TESTS_COLLECTED
-        assert "should not be seen" not in result.stdout.str()
+        result.stdout.no_fnmatch_line("*should not be seen*")
         assert "stderr42" not in result.stderr.str()
 
     def test_conftest_printing_shows_if_error(self, testdir):
@@ -954,7 +954,7 @@ class TestDurations:
         result.stdout.fnmatch_lines(["*Interrupted: 1 errors during collection*"])
         # Collection errors abort test execution, therefore no duration is
         # output
-        assert "duration" not in result.stdout.str()
+        result.stdout.no_fnmatch_line("*duration*")
 
     def test_with_not(self, testdir):
         testdir.makepyfile(self.source)
@@ -1008,7 +1008,7 @@ def test_zipimport_hook(testdir, tmpdir):
     result = testdir.runpython(target)
     assert result.ret == 0
     result.stderr.fnmatch_lines(["*not found*foo*"])
-    assert "INTERNALERROR>" not in result.stdout.str()
+    result.stdout.no_fnmatch_line("*INTERNALERROR>*")
 
 
 def test_import_plugin_unicode_name(testdir):

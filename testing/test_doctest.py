@@ -239,8 +239,8 @@ class TestDoctests:
             ]
         )
         # lines below should be trimmed out
-        assert "text-line-2" not in result.stdout.str()
-        assert "text-line-after" not in result.stdout.str()
+        result.stdout.no_fnmatch_line("*text-line-2*")
+        result.stdout.no_fnmatch_line("*text-line-after*")
 
     def test_docstring_full_context_around_error(self, testdir):
         """Test that we show the whole context before the actual line of a failing
@@ -1177,7 +1177,7 @@ class TestDoctestAutoUseFixtures:
             """
             )
         result = testdir.runpytest("--doctest-modules")
-        assert "FAILURES" not in str(result.stdout.str())
+        result.stdout.no_fnmatch_line("*FAILURES*")
         result.stdout.fnmatch_lines(["*=== 1 passed in *"])
 
     @pytest.mark.parametrize("scope", SCOPES)
@@ -1209,7 +1209,7 @@ class TestDoctestAutoUseFixtures:
         """
         )
         result = testdir.runpytest("--doctest-modules")
-        assert "FAILURES" not in str(result.stdout.str())
+        str(result.stdout.no_fnmatch_line("*FAILURES*"))
         result.stdout.fnmatch_lines(["*=== 1 passed in *"])
 
 

@@ -949,7 +949,7 @@ def test_xfail_test_setup_exception(testdir):
     result = testdir.runpytest(p)
     assert result.ret == 0
     assert "xfailed" in result.stdout.str()
-    assert "xpassed" not in result.stdout.str()
+    result.stdout.no_fnmatch_line("*xpassed*")
 
 
 def test_imperativeskip_on_xfail_test(testdir):

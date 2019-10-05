@@ -109,7 +109,7 @@ def test_log_cli_level_log_level_interaction(testdir):
             "=* 1 failed in *=",
         ]
     )
-    assert "DEBUG" not in result.stdout.str()
+    result.stdout.no_re_match_line("DEBUG")
 
 
 def test_setup_logging(testdir):
@@ -282,7 +282,7 @@ def test_log_cli_default_level(testdir):
             "WARNING*test_log_cli_default_level.py* message will be shown*",
         ]
     )
-    assert "INFO message won't be shown" not in result.stdout.str()
+    result.stdout.no_fnmatch_line("*INFO message won't be shown*")
     # make sure that that we get a '0' exit code for the testsuite
     assert result.ret == 0
 
@@ -566,7 +566,7 @@ def test_log_cli_level(testdir):
             "PASSED",  # 'PASSED' on its own line because the log message prints a new line
         ]
     )
-    assert "This log message won't be shown" not in result.stdout.str()
+    result.stdout.no_fnmatch_line("*This log message won't be shown*")
 
     # make sure that that we get a '0' exit code for the testsuite
     assert result.ret == 0
@@ -580,7 +580,7 @@ def test_log_cli_level(testdir):
             "PASSED",  # 'PASSED' on its own line because the log message prints a new line
         ]
     )
-    assert "This log message won't be shown" not in result.stdout.str()
+    result.stdout.no_fnmatch_line("*This log message won't be shown*")
 
     # make sure that that we get a '0' exit code for the testsuite
     assert result.ret == 0
@@ -616,7 +616,7 @@ def test_log_cli_ini_level(testdir):
             "PASSED",  # 'PASSED' on its own line because the log message prints a new line
         ]
     )
-    assert "This log message won't be shown" not in result.stdout.str()
+    result.stdout.no_fnmatch_line("*This log message won't be shown*")
 
     # make sure that that we get a '0' exit code for the testsuite
     assert result.ret == 0
@@ -942,7 +942,7 @@ def test_collection_collect_only_live_logging(testdir, verbose):
             ]
         )
     elif verbose == "-q":
-        assert "collected 1 item*" not in result.stdout.str()
+        result.stdout.no_fnmatch_line("*collected 1 item**")
         expected_lines.extend(
             [
                 "*test_collection_collect_only_live_logging.py::test_simple*",
@@ -950,7 +950,7 @@ def test_collection_collect_only_live_logging(testdir, verbose):
             ]
         )
     elif verbose == "-qq":
-        assert "collected 1 item*" not in result.stdout.str()
+        result.stdout.no_fnmatch_line("*collected 1 item**")
         expected_lines.extend(["*test_collection_collect_only_live_logging.py: 1*"])
 
     result.stdout.fnmatch_lines(expected_lines)
@@ -983,7 +983,7 @@ def test_collection_logging_to_file(testdir):
 
     result = testdir.runpytest()
 
-    assert "--- live log collection ---" not in result.stdout.str()
+    result.stdout.no_fnmatch_line("*--- live log collection ---*")
 
     assert result.ret == 0
     assert os.path.isfile(log_file)

@@ -399,7 +399,7 @@ def test_match_raises_error(testdir):
     result = testdir.runpytest()
     assert result.ret != 0
     result.stdout.fnmatch_lines(["*AssertionError*Pattern*[123]*not found*"])
-    assert "__tracebackhide__ = True" not in result.stdout.str()
+    result.stdout.no_fnmatch_line("*__tracebackhide__ = True*")
 
     result = testdir.runpytest("--fulltrace")
     assert result.ret != 0
@@ -1343,7 +1343,8 @@ def test_cwd_deleted(testdir):
     )
     result = testdir.runpytest()
     result.stdout.fnmatch_lines(["* 1 failed in *"])
-    assert "INTERNALERROR" not in result.stdout.str() + result.stderr.str()
+    result.stdout.no_fnmatch_line("*INTERNALERROR*")
+    result.stderr.no_fnmatch_line("*INTERNALERROR*")
 
 
 @pytest.mark.usefixtures("limited_recursion_depth")
