@@ -455,7 +455,7 @@ class TestFillFixtures:
                 "*1 error*",
             ]
         )
-        assert "INTERNAL" not in result.stdout.str()
+        result.stdout.no_fnmatch_line("*INTERNAL*")
 
     def test_fixture_excinfo_leak(self, testdir):
         # on python2 sys.excinfo would leak into fixture executions
@@ -2647,7 +2647,7 @@ class TestFixtureMarker:
             *3 passed*
         """
         )
-        assert "error" not in result.stdout.str()
+        result.stdout.no_fnmatch_line("*error*")
 
     def test_fixture_finalizer(self, testdir):
         testdir.makeconftest(
@@ -3151,7 +3151,7 @@ class TestShowFixtures:
             *hello world*
         """
         )
-        assert "arg0" not in result.stdout.str()
+        result.stdout.no_fnmatch_line("*arg0*")
 
     @pytest.mark.parametrize("testmod", [True, False])
     def test_show_fixtures_conftest(self, testdir, testmod):

@@ -1034,7 +1034,7 @@ def test_assertion_options(testdir):
     result = testdir.runpytest()
     assert "3 == 4" in result.stdout.str()
     result = testdir.runpytest_subprocess("--assert=plain")
-    assert "3 == 4" not in result.stdout.str()
+    result.stdout.no_fnmatch_line("*3 == 4*")
 
 
 def test_triple_quoted_string_issue113(testdir):
@@ -1046,7 +1046,7 @@ def test_triple_quoted_string_issue113(testdir):
     )
     result = testdir.runpytest("--fulltrace")
     result.stdout.fnmatch_lines(["*1 failed*"])
-    assert "SyntaxError" not in result.stdout.str()
+    result.stdout.no_fnmatch_line("*SyntaxError*")
 
 
 def test_traceback_failure(testdir):

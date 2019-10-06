@@ -914,7 +914,7 @@ def test_rewritten():
         testdir.chdir()
         result = testdir.runpytest_subprocess()
         result.stdout.fnmatch_lines(["*= 1 passed in *=*"])
-        assert "pytest-warning summary" not in result.stdout.str()
+        result.stdout.no_fnmatch_line("*pytest-warning summary*")
 
     def test_rewrite_warning_using_pytest_plugins_env_var(self, testdir, monkeypatch):
         monkeypatch.setenv("PYTEST_PLUGINS", "plugin")
@@ -932,7 +932,7 @@ def test_rewritten():
         testdir.chdir()
         result = testdir.runpytest_subprocess()
         result.stdout.fnmatch_lines(["*= 1 passed in *=*"])
-        assert "pytest-warning summary" not in result.stdout.str()
+        result.stdout.no_fnmatch_line("*pytest-warning summary*")
 
 
 class TestAssertionRewriteHookDetails:
@@ -1124,7 +1124,7 @@ def test_issue731(testdir):
     """
     )
     result = testdir.runpytest()
-    assert "unbalanced braces" not in result.stdout.str()
+    result.stdout.no_fnmatch_line("*unbalanced braces*")
 
 
 class TestIssue925:

@@ -1139,7 +1139,7 @@ def test_unorderable_types(testdir):
     """
     )
     result = testdir.runpytest()
-    assert "TypeError" not in result.stdout.str()
+    result.stdout.no_fnmatch_line("*TypeError*")
     assert result.ret == ExitCode.NO_TESTS_COLLECTED
 
 

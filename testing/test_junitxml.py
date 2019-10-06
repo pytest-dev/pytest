@@ -1216,7 +1216,7 @@ def test_runs_twice(testdir, run_and_parse):
     )
 
     result, dom = run_and_parse(f, f)
-    assert "INTERNALERROR" not in result.stdout.str()
+    result.stdout.no_fnmatch_line("*INTERNALERROR*")
     first, second = [x["classname"] for x in dom.find_by_tag("testcase")]
     assert first == second
 
@@ -1231,7 +1231,7 @@ def test_runs_twice_xdist(testdir, run_and_parse):
     )
 
     result, dom = run_and_parse(f, "--dist", "each", "--tx", "2*popen")
-    assert "INTERNALERROR" not in result.stdout.str()
+    result.stdout.no_fnmatch_line("*INTERNALERROR*")
     first, second = [x["classname"] for x in dom.find_by_tag("testcase")]
     assert first == second
 
@@ -1271,7 +1271,7 @@ def test_fancy_items_regression(testdir, run_and_parse):
 
     result, dom = run_and_parse()
 
-    assert "INTERNALERROR" not in result.stdout.str()
+    result.stdout.no_fnmatch_line("*INTERNALERROR*")
 
     items = sorted("%(classname)s %(name)s" % x for x in dom.find_by_tag("testcase"))
     import pprint
