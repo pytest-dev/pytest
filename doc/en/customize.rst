@@ -134,8 +134,11 @@ progress output, you can write it into a configuration file:
 .. code-block:: ini
 
     # content of pytest.ini or tox.ini
-    # setup.cfg files should use [tool:pytest] section instead
     [pytest]
+    addopts = -ra -q
+
+    # content of setup.cfg
+    [tool:pytest]
     addopts = -ra -q
 
 Alternatively, you can set a ``PYTEST_ADDOPTS`` environment variable to add command

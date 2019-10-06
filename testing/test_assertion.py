@@ -9,6 +9,7 @@ import pytest
 from _pytest import outcomes
 from _pytest.assertion import truncate
 from _pytest.assertion import util
+from _pytest.compat import ATTRS_EQ_FIELD
 
 
 def mock_config():
@@ -687,7 +688,7 @@ class TestAssert_reprcompare_attrsclass:
         @attr.s
         class SimpleDataObject:
             field_a = attr.ib()
-            field_b = attr.ib(cmp=False)
+            field_b = attr.ib(**{ATTRS_EQ_FIELD: False})
 
         left = SimpleDataObject(1, "b")
         right = SimpleDataObject(1, "b")

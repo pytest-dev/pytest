@@ -351,15 +351,14 @@ class RunResult:
 
     Attributes:
 
-    :ret: the return value
-    :outlines: list of lines captured from stdout
-    :errlines: list of lines captures from stderr
-    :stdout: :py:class:`LineMatcher` of stdout, use ``stdout.str()`` to
+    :ivar ret: the return value
+    :ivar outlines: list of lines captured from stdout
+    :ivar errlines: list of lines captured from stderr
+    :ivar stdout: :py:class:`LineMatcher` of stdout, use ``stdout.str()`` to
        reconstruct stdout or the commonly used ``stdout.fnmatch_lines()``
        method
-    :stderr: :py:class:`LineMatcher` of stderr
-    :duration: duration in seconds
-
+    :ivar stderr: :py:class:`LineMatcher` of stderr
+    :ivar duration: duration in seconds
     """
 
     def __init__(self, ret, outlines, errlines, duration):
@@ -454,9 +453,9 @@ class Testdir:
 
     Attributes:
 
-    :tmpdir: The :py:class:`py.path.local` instance of the temporary directory.
+    :ivar tmpdir: The :py:class:`py.path.local` instance of the temporary directory.
 
-    :plugins: A list of plugins to use with :py:meth:`parseconfig` and
+    :ivar plugins: A list of plugins to use with :py:meth:`parseconfig` and
        :py:meth:`runpytest`.  Initially this is an empty list but plugins can
        be added to the list.  The type of items to add to the list depends on
        the method using them so refer to them for details.

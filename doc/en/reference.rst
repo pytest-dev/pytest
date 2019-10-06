@@ -1003,7 +1003,7 @@ passed multiple times. The expected format is ``name=value``. For example::
         [pytest]
         addopts = --maxfail=2 -rf  # exit after 2 failures, report fail info
 
-   issuing ``pytest test_hello.py`` actually means::
+   issuing ``pytest test_hello.py`` actually means:
 
    .. code-block:: bash
 
