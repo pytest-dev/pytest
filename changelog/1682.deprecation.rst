@@ -1,2 +1,0 @@
-Passing arguments to pytest.fixture() as positional arguments is deprecated - pass them
-as a keyword argument instead.

@@ -6,8 +6,8 @@ def mode(request):
     return request.param
 
 
-def test_show_only_active_fixtures(testdir, mode):
-    p = testdir.makepyfile(
+def test_show_only_active_fixtures(testdir, mode, dummy_yaml_custom_test):
+    testdir.makepyfile(
         '''
         import pytest
         @pytest.fixture
@@ -21,7 +21,7 @@ def test_show_only_active_fixtures(testdir, mode):
     '''
     )
 
-    result = testdir.runpytest(mode, p)
+    result = testdir.runpytest(mode)
     assert result.ret == 0
 
     result.stdout.fnmatch_lines(

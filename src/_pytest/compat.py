@@ -354,3 +354,9 @@ if sys.version_info < (3, 5, 2):  # pragma: no cover
 
     def overload(f):  # noqa: F811
         return f
+
+
+if getattr(attr, "__version_info__", ()) >= (19, 2):
+    ATTRS_EQ_FIELD = "eq"
+else:
+    ATTRS_EQ_FIELD = "cmp"
