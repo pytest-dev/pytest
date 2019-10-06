@@ -1238,3 +1238,40 @@ def test_warn_on_async_gen_function(testdir):
     assert (
         result.stdout.str().count("async def functions are not natively supported") == 1
     )
+
+
+def test_pdb_can_be_rewritten(testdir):
+    testdir.makepyfile(
+        **{
+            "conftest.py": """
+                import pytest
+                pytest.register_assert_rewrite("pdb")
+                """,
+            "__init__.py": "",
+            "pdb.py": """
+                def check():
+                    assert 1 == 2
+                """,
+            "test_pdb.py": """
+                def test():
+                    import pdb
+                    assert pdb.check()
+                """,
+        }
+    )
+    # Disable debugging plugin itself to avoid:
+    # > INTERNALERROR> AttributeError: module 'pdb' has no attribute 'set_trace'
+    result = testdir.runpytest_subprocess("-p", "no:debugging", "-vv")
+    result.stdout.fnmatch_lines(
+        [
+            "    def check():",
+            ">       assert 1 == 2",
+            "E       assert 1 == 2",
+            "E         -1",
+            "E         +2",
+            "",
+            "pdb.py:2: AssertionError",
+            "*= 1 failed in *",
+        ]
+    )
+    assert result.ret == 1
