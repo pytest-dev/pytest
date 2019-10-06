@@ -18,6 +18,15 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+pytest 5.2.1 (2019-10-06)
+=========================
+
+Bug Fixes
+---------
+
+- `#5902 <https://github.com/pytest-dev/pytest/issues/5902>`_: Fix warnings about deprecated ``cmp`` attribute in ``attrs>=19.2``.
+
+
 pytest 5.2.0 (2019-09-28)
 =========================
 
