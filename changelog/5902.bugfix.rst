@@ -1,1 +1,0 @@
-Fix warnings about deprecated ``cmp`` attribute in ``attrs>=19.2``.
