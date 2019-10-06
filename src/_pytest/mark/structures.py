@@ -8,6 +8,7 @@ import attr
 import six
 
 from ..compat import ascii_escaped
+from ..compat import ATTRS_EQ_FIELD
 from ..compat import getfslineno
 from ..compat import MappingMixin
 from ..compat import NOTSET
@@ -377,7 +378,8 @@ class NodeKeywords(MappingMixin):
         return "<NodeKeywords for node %s>" % (self.node,)
 
 
-@attr.s(cmp=False, hash=False)
+# mypy cannot find this overload, remove when on attrs>=19.2
+@attr.s(hash=False, **{ATTRS_EQ_FIELD: False})  # type: ignore
 class NodeMarkers(object):
     """
     internal structure for storing marks belonging to a node
