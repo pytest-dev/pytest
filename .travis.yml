@@ -49,8 +49,9 @@ jobs:
     # - pytester's LsofFdLeakChecker
     # - TestArgComplete (linux only)
     # - numpy
+    # - old attrs
     # Empty PYTEST_ADDOPTS to run this non-verbose.
-    - env: TOXENV=py37-lsof-numpy-twisted-xdist PYTEST_COVERAGE=1 PYTEST_ADDOPTS=
+    - env: TOXENV=py37-lsof-oldattrs-numpy-twisted-xdist PYTEST_COVERAGE=1 PYTEST_ADDOPTS=
 
     # Specialized factors for py37.
     # Coverage for:
