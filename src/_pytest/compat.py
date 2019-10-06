@@ -356,8 +356,7 @@ if sys.version_info < (3, 5, 2):  # pragma: no cover
         return f
 
 
-attrs_has_eq = getattr(attr, "__version_info__", (0, 0)) >= (19, 2)
-if attrs_has_eq:
-    attrs_no_eq = {"eq": False}
+if getattr(attr, "__version_info__", ()) >= (19, 2):
+    ATTRS_EQ_FIELD = "eq"
 else:
-    attrs_no_eq = {"cmp": False}
+    ATTRS_EQ_FIELD = "cmp"

@@ -8,7 +8,7 @@ from typing import Optional
 import _pytest._code
 from _pytest import outcomes
 from _pytest._io.saferepr import saferepr
-from _pytest.compat import attrs_has_eq
+from _pytest.compat import ATTRS_EQ_FIELD
 
 # The _reprcompare attribute on the util module is used by the new assertion
 # interpretation code and assertion rewriter to detect this plugin was
@@ -111,18 +111,6 @@ def isdatacls(obj):
 
 def isattrs(obj):
     return getattr(obj, "__attrs_attrs__", None) is not None
-
-
-if attrs_has_eq:
-
-    def attrsfieldhaseq(a):
-        return a.eq
-
-
-else:
-
-    def attrsfieldhaseq(a):
-        return a.cmp
 
 
 def isiterable(obj):
@@ -388,7 +376,9 @@ def _compare_eq_cls(left, right, verbose, type_fns):
         fields_to_check = [field for field, info in all_fields.items() if info.compare]
     elif isattrs(left):
         all_fields = left.__attrs_attrs__
-        fields_to_check = [field.name for field in all_fields if attrsfieldhaseq(field)]
+        fields_to_check = [
+            field.name for field in all_fields if getattr(field, ATTRS_EQ_FIELD)
+        ]
 
     same = []
     diff = []
