@@ -8,11 +8,13 @@ from collections import deque
 from collections import OrderedDict
 from typing import Any
 from typing import Callable
+from typing import cast
 from typing import Dict
 from typing import Iterable
 from typing import List
 from typing import Optional
 from typing import Tuple
+from typing import TypeVar
 from typing import Union
 
 import attr
@@ -1065,15 +1067,18 @@ def _parse_fixture_args(callable_or_scope, *args, **kwargs):
     return fixture_function, arguments
 
 
+_T = TypeVar("_T")
+
+
 def fixture(
-    callable_or_scope: Union[Callable[..., Any], str] = None,
-    *args,
+    callable_or_scope: Optional[Union[Callable[..., Any], str]] = None,
+    *args: Any,
     scope: str = "function",
     params: Optional[Iterable[Any]] = None,
     autouse: bool = False,
     ids: Optional[List[str]] = None,
     name: Optional[str] = None
-) -> Callable[..., Any]:
+) -> Callable[[_T], _T]:
     """Decorator to mark a fixture factory function.
 
     This decorator can be used, with or without parameters, to define a
@@ -1136,13 +1141,13 @@ def fixture(
 
     if fixture_function and params is None and autouse is False:
         # direct decoration
-        return FixtureFunctionMarker(scope, params, autouse, name=name)(
+        return cast(_T, FixtureFunctionMarker(scope, params, autouse, name=name)(
             fixture_function
-        )
+        ))
 
     if params is not None and not isinstance(params, (list, tuple)):
         params = list(params)
-    return FixtureFunctionMarker(scope, params, autouse, ids=ids, name=name)
+    return cast(_T, FixtureFunctionMarker(scope, params, autouse, ids=ids, name=name))
 
 
 def yield_fixture(
