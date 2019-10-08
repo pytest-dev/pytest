@@ -413,6 +413,55 @@ class TestAssert_reprcompare:
         expl = callequal([0, 1, 2], [0, 1])
         assert len(expl) > 1
 
+    def test_list_wrap_for_multiple_lines(self):
+        long_d = "d" * 80
+        l1 = ["a", "b", "c"]
+        l2 = ["a", "b", "c", long_d]
+        diff = callequal(l1, l2, verbose=True)
+        assert diff == [
+            "['a', 'b', 'c'] == ['a', 'b', 'c...dddddddddddd']",
+            "Right contains one more item: '" + long_d + "'",
+            "Full diff:",
+            "  [",
+            "   'a',",
+            "   'b',",
+            "   'c',",
+            "+  '" + long_d + "',",
+            "  ]",
+        ]
+
+        diff = callequal(l2, l1, verbose=True)
+        assert diff == [
+            "['a', 'b', 'c...dddddddddddd'] == ['a', 'b', 'c']",
+            "Left contains one more item: '" + long_d + "'",
+            "Full diff:",
+            "  [",
+            "   'a',",
+            "   'b',",
+            "   'c',",
+            "-  '" + long_d + "',",
+            "  ]",
+        ]
+
+    def test_list_wrap_for_width_rewrap_same_length(self):
+        long_a = "a" * 30
+        long_b = "b" * 30
+        long_c = "c" * 30
+        l1 = [long_a, long_b, long_c]
+        l2 = [long_b, long_c, long_a]
+        diff = callequal(l1, l2, verbose=True)
+        assert diff == [
+            "['aaaaaaaaaaa...cccccccccccc'] == ['bbbbbbbbbbb...aaaaaaaaaaaa']",
+            "At index 0 diff: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' != 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'",
+            "Full diff:",
+            "  [",
+            "-  'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',",
+            "   'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',",
+            "   'cccccccccccccccccccccccccccccc',",
+            "+  'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',",
+            "  ]",
+        ]
+
     def test_dict(self):
         expl = callequal({"a": 0}, {"a": 1})
         assert len(expl) > 1

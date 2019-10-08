@@ -246,6 +246,18 @@ def _compare_eq_verbose(left, right):
     return explanation
 
 
+def _surrounding_parens_on_own_lines(lines):  # type: (List) -> None
+    """Move opening/closing parenthesis/bracket to own lines."""
+    opening = lines[0][:1]
+    if opening in ["(", "[", "{"]:
+        lines[0] = " " + lines[0][1:]
+        lines[:] = [opening] + lines
+    closing = lines[-1][-1:]
+    if closing in [")", "]", "}"]:
+        lines[-1] = lines[-1][:-1] + ","
+        lines[:] = lines + [closing]
+
+
 def _compare_eq_iterable(left, right, verbose=0):
     if not verbose:
         return ["Use -v to get the full diff"]
@@ -254,9 +266,27 @@ def _compare_eq_iterable(left, right, verbose=0):
 
     left_formatting = pprint.pformat(left).splitlines()
     right_formatting = pprint.pformat(right).splitlines()
+
+    # Re-format for different output lengths.
+    lines_left = len(left_formatting)
+    lines_right = len(right_formatting)
+    if lines_left != lines_right:
+        if lines_left > lines_right:
+            max_width = min(len(x) for x in left_formatting)
+            right_formatting = pprint.pformat(right, width=max_width).splitlines()
+            lines_right = len(right_formatting)
+        else:
+            max_width = min(len(x) for x in right_formatting)
+            left_formatting = pprint.pformat(left, width=max_width).splitlines()
+            lines_left = len(left_formatting)
+
+    if lines_left > 1 or lines_right > 1:
+        _surrounding_parens_on_own_lines(left_formatting)
+        _surrounding_parens_on_own_lines(right_formatting)
+
     explanation = ["Full diff:"]
     explanation.extend(
-        line.strip() for line in difflib.ndiff(left_formatting, right_formatting)
+        line.rstrip() for line in difflib.ndiff(left_formatting, right_formatting)
     )
     return explanation
 
