@@ -567,9 +567,19 @@ def test_pytest_exit_msg(testdir):
     result.stderr.fnmatch_lines(["Exit: oh noes"])
 
 
+def _strip_resource_warnings(lines):
+    # Assert no output on stderr, except for unreliable ResourceWarnings.
+    # (https://github.com/pytest-dev/pytest/issues/5088)
+    return [
+        x
+        for x in lines
+        if not x.startswith(("Exception ignored in:", "ResourceWarning"))
+    ]
+
+
 def test_pytest_exit_returncode(testdir):
     testdir.makepyfile(
-        """
+        """\
         import pytest
         def test_foo():
             pytest.exit("some exit msg", 99)
@@ -577,19 +587,13 @@ def test_pytest_exit_returncode(testdir):
     )
     result = testdir.runpytest()
     result.stdout.fnmatch_lines(["*! *Exit: some exit msg !*"])
-    # Assert no output on stderr, except for unreliable ResourceWarnings.
-    # (https://github.com/pytest-dev/pytest/issues/5088)
-    assert [
-        x
-        for x in result.stderr.lines
-        if not x.startswith("Exception ignored in:")
-        and not x.startswith("ResourceWarning")
-    ] == [""]
+
+    assert _strip_resource_warnings(result.stderr.lines) == [""]
     assert result.ret == 99
 
     # It prints to stderr also in case of exit during pytest_sessionstart.
     testdir.makeconftest(
-        """
+        """\
         import pytest
 
         def pytest_sessionstart():
@@ -598,7 +602,10 @@ def test_pytest_exit_returncode(testdir):
     )
     result = testdir.runpytest()
     result.stdout.fnmatch_lines(["*! *Exit: during_sessionstart !*"])
-    assert result.stderr.lines == ["Exit: during_sessionstart", ""]
+    assert _strip_resource_warnings(result.stderr.lines) == [
+        "Exit: during_sessionstart",
+        "",
+    ]
     assert result.ret == 98
 
 
