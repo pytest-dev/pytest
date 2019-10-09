@@ -64,8 +64,7 @@ scope2props = dict(session=())  # type: Dict[str, Tuple[str, ...]]
 scope2props["package"] = ("fspath",)
 scope2props["module"] = ("fspath", "module")
 scope2props["class"] = scope2props["module"] + ("cls",)
-scope2props["instance"] = scope2props["class"] + ("instance",)
-scope2props["function"] = scope2props["instance"] + ("function", "keywords")
+scope2props["function"] = scope2props["class"] + ("function", "keywords")
 
 
 def scopeproperty(name=None, doc=None):
@@ -398,16 +397,6 @@ class FixtureRequest(FuncargnamesCompatAttr):
         clscol = self._pyfuncitem.getparent(_pytest.python.Class)
         if clscol:
             return clscol.obj
-
-    @property
-    def instance(self):
-        """ instance (can be None) on which test function was collected. """
-        # unittest support hack, see _pytest.unittest.TestCaseFunction
-        try:
-            return self._pyfuncitem._testcase
-        except AttributeError:
-            function = getattr(self, "function", None)
-            return getattr(function, "__self__", None)
 
     @scopeproperty()
     def module(self):

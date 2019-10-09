@@ -258,8 +258,7 @@ class PyobjMixin(PyobjContext):
             self._obj = obj = self._getobj()
             # XXX evil hack
             # used to avoid Instance collector marker duplication
-            if self._ALLOW_MARKERS:
-                self.own_markers.extend(get_unpacked_marks(self.obj))
+            self.own_markers.extend(get_unpacked_marks(self.obj))
         return obj
 
     @obj.setter

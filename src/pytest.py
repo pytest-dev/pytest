@@ -65,7 +65,6 @@ __all__ = [
     "hookimpl",
     "hookspec",
     "importorskip",
-    "Instance",
     "Item",
     "main",
     "mark",
