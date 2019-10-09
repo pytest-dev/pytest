@@ -226,10 +226,15 @@ class TestAssertionRewrite:
         def f():
             assert cls().foo == 2  # noqa
 
-        # XXX: looks like the "where" should also be there in verbose mode?!
         message = getmsg(f, {"cls": Y}).splitlines()
         if request.config.getoption("verbose") > 0:
-            assert message == ["assert 3 == 2", "  -3", "  +2"]
+            assert message == [
+                "assert 3 == 2",
+                " +  where 3 = Y.foo",
+                " +    where Y = cls()",
+                "  -3",
+                "  +2",
+            ]
         else:
             assert message == [
                 "assert 3 == 2",
