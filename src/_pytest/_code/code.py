@@ -507,7 +507,9 @@ class ExceptionInfo(Generic[_E]):
     def __repr__(self) -> str:
         if self._excinfo is None:
             return "<ExceptionInfo for raises contextmanager>"
-        return "<ExceptionInfo %s tblen=%d>" % (self.typename, len(self.traceback))
+        return "<{} {} tblen={}>".format(
+            self.__class__.__name__, saferepr(self._excinfo[1]), len(self.traceback)
+        )
 
     def exconly(self, tryshort: bool = False) -> str:
         """ return the exception as a string

@@ -316,8 +316,19 @@ def test_excinfo_exconly():
 
 def test_excinfo_repr_str():
     excinfo = pytest.raises(ValueError, h)
-    assert repr(excinfo) == "<ExceptionInfo ValueError tblen=4>"
-    assert str(excinfo) == "<ExceptionInfo ValueError tblen=4>"
+    assert repr(excinfo) == "<ExceptionInfo ValueError() tblen=4>"
+    assert str(excinfo) == "<ExceptionInfo ValueError() tblen=4>"
+
+    class CustomException(Exception):
+        def __repr__(self):
+            return "custom_repr"
+
+    def raises():
+        raise CustomException()
+
+    excinfo = pytest.raises(CustomException, raises)
+    assert repr(excinfo) == "<ExceptionInfo custom_repr tblen=2>"
+    assert str(excinfo) == "<ExceptionInfo custom_repr tblen=2>"
 
 
 def test_excinfo_for_later():
