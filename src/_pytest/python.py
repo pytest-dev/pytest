@@ -167,6 +167,9 @@ def pytest_pyfunc_call(pyfuncitem):
         async_warn()
     funcargs = pyfuncitem.funcargs
     testargs = {arg: funcargs[arg] for arg in pyfuncitem._fixtureinfo.argnames}
+    if isinstance(pyfuncitem.parent, Class):
+        inst = pyfuncitem.parent.obj()
+        testfunction = testfunction.__get__(inst, type(inst))
     result = testfunction(**testargs)
     if hasattr(result, "__await__") or hasattr(result, "__aiter__"):
         async_warn()
@@ -242,7 +245,6 @@ def pytest_make_parametrize_id(config, val, argname=None):
 class PyobjContext:
     module = pyobj_property("Module")
     cls = pyobj_property("Class")
-    instance = pyobj_property("Instance")
 
 
 class PyobjMixin(PyobjContext):
@@ -274,8 +276,6 @@ class PyobjMixin(PyobjContext):
         chain.reverse()
         parts = []
         for node in chain:
-            if isinstance(node, Instance):
-                continue
             name = node.name
             if isinstance(node, Module):
                 name = os.path.splitext(name)[0]
@@ -709,7 +709,7 @@ class Class(PyCollector):
         self._inject_setup_class_fixture()
         self._inject_setup_method_fixture()
 
-        return [Instance(name="()", parent=self)]
+        return super().collect()
 
     def _inject_setup_class_fixture(self):
         """Injects a hidden autouse, class scoped fixture into the collected class object
@@ -761,33 +761,13 @@ class Class(PyCollector):
         self.obj.__pytest_setup_method = xunit_setup_method_fixture
 
 
-class Instance(PyCollector):
-    _ALLOW_MARKERS = False  # hack, destroy later
-    # instances share the object with their parents in a way
-    # that duplicates markers instances if not taken out
-    # can be removed at node structure reorganization time
-
-    def _getobj(self):
-        return self.parent.obj()
-
-    def collect(self):
-        self.session._fixturemanager.parsefactories(self)
-        return super().collect()
-
-    def newinstance(self):
-        self.obj = self._getobj()
-        return self.obj
-
-
 class FunctionMixin(PyobjMixin):
     """ mixin for the code common to Function and Generator.
     """
 
     def setup(self):
         """ perform setup for this test function. """
-        if isinstance(self.parent, Instance):
-            self.parent.newinstance()
-            self.obj = self._getobj()
+        self.obj = self._getobj()
 
     def _prunetraceback(self, excinfo):
         if hasattr(self, "_obj") and not self.config.getoption("fulltrace", False):

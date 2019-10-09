@@ -102,9 +102,7 @@ class Node:
             assert "::()" not in nodeid
             self._nodeid = nodeid
         else:
-            self._nodeid = self.parent.nodeid
-            if self.name != "()":
-                self._nodeid += "::" + self.name
+            self._nodeid = self.parent.nodeid + "::" + self.name
 
     @property
     def ihook(self):

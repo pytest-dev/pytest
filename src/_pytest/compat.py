@@ -308,7 +308,6 @@ COLLECT_FAKEMODULE_ATTRIBUTES = (
     "Collector",
     "Module",
     "Function",
-    "Instance",
     "Session",
     "Item",
     "Class",
