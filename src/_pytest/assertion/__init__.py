@@ -110,8 +110,8 @@ def pytest_runtest_setup(item):
     comparison for the test.
     """
 
-    def callbinrepr(op, left, right):
-        # type: (str, object, object) -> Optional[str]
+    def callbinrepr(op, left, right, expl):
+        # type: (str, object, object, str) -> Optional[str]
         """Call the pytest_assertrepr_compare hook and prepare the result
 
         This uses the first result from the hook and then ensures the
@@ -127,10 +127,13 @@ def pytest_runtest_setup(item):
         pretty printing.
         """
         hook_result = item.ihook.pytest_assertrepr_compare(
-            config=item.config, op=op, left=left, right=right
+            config=item.config, op=op, left=left, right=right, expl=expl
         )
         for new_expl in hook_result:
             if new_expl:
+                if isinstance(new_expl, str):
+                    return new_expl
+
                 new_expl = truncate.truncate_if_required(new_expl, item)
                 new_expl = [line.replace("\n", "\\n") for line in new_expl]
                 res = "\n~".join(new_expl)

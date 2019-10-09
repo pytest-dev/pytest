@@ -472,7 +472,7 @@ def pytest_unconfigure(config):
 # -------------------------------------------------------------------------
 
 
-def pytest_assertrepr_compare(config, op, left, right):
+def pytest_assertrepr_compare(config, op, left, right, expl):
     """return explanation for comparisons in failing assert expressions.
 
     Return None for no custom explanation, otherwise return a list

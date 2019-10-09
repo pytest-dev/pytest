@@ -392,7 +392,7 @@ def _call_reprcompare(ops, results, expls, each_obj):
         if done:
             break
     if util._reprcompare is not None:
-        custom = util._reprcompare(ops[i], each_obj[i], each_obj[i + 1])
+        custom = util._reprcompare(ops[i], each_obj[i], each_obj[i + 1], expl)
         if custom is not None:
             return custom
     return expl

@@ -14,7 +14,9 @@ from _pytest.compat import ATTRS_EQ_FIELD
 # interpretation code and assertion rewriter to detect this plugin was
 # loaded and in turn call the hooks defined here as part of the
 # DebugInterpreter.
-_reprcompare = None  # type: Optional[Callable[[str, object, object], Optional[str]]]
+_reprcompare = (
+    None
+)  # type: Optional[Callable[[str, object, object, str], Optional[str]]]
 
 # Works similarly as _reprcompare attribute. Is populated with the hook call
 # when pytest_runtest_setup is called.
@@ -121,7 +123,7 @@ def isiterable(obj):
         return False
 
 
-def assertrepr_compare(config, op, left, right):
+def assertrepr_compare(config, op, left, right, expl):
     """Return specialised explanations for some operators/operands"""
     maxsize = (80 - 15 - len(op) - 2) // 2  # 15 chars indentation, 1 space around op
     left_repr = saferepr(left, maxsize=maxsize)
@@ -146,7 +148,7 @@ def assertrepr_compare(config, op, left, right):
                     type_fn = (isdatacls, isattrs)
                     explanation = _compare_eq_cls(left, right, verbose, type_fn)
                 elif verbose > 0:
-                    explanation = _compare_eq_verbose(left, right)
+                    return expl + "\n~" + "\n~".join(_compare_eq_verbose(left, right))
                 if isiterable(left) and isiterable(right):
                     expl = _compare_eq_iterable(left, right, verbose)
                     if explanation is not None:
