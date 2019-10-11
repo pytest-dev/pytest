@@ -13,6 +13,7 @@ import re
 import sys
 from contextlib import contextmanager
 
+import attr
 import py
 import six
 from six import text_type
@@ -406,8 +407,8 @@ def _setup_collect_fakemodule():
 
     pytest.collect = ModuleType("pytest.collect")
     pytest.collect.__all__ = []  # used for setns
-    for attr in COLLECT_FAKEMODULE_ATTRIBUTES:
-        setattr(pytest.collect, attr, getattr(pytest, attr))
+    for attribute in COLLECT_FAKEMODULE_ATTRIBUTES:
+        setattr(pytest.collect, attribute, getattr(pytest, attribute))
 
 
 if _PY2:
@@ -455,3 +456,8 @@ if six.PY2:
 
 else:
     from functools import lru_cache  # noqa: F401
+
+if getattr(attr, "__version_info__", ()) >= (19, 2):
+    ATTRS_EQ_FIELD = "eq"
+else:
+    ATTRS_EQ_FIELD = "cmp"
