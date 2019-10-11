@@ -12,13 +12,11 @@ from _pytest.assertion import util
 from _pytest.compat import ATTRS_EQ_FIELD
 
 
-def mock_config():
+def mock_config(verbose=0):
     class Config:
-        verbose = False
-
         def getoption(self, name):
             if name == "verbose":
-                return self.verbose
+                return verbose
             raise KeyError("Not mocked out: %s" % name)
 
     return Config()
@@ -296,9 +294,8 @@ class TestBinReprIntegration:
         result.stdout.fnmatch_lines(["*test_hello*FAIL*", "*test_check*PASS*"])
 
 
-def callequal(left, right, verbose=False):
-    config = mock_config()
-    config.verbose = verbose
+def callequal(left, right, verbose=0):
+    config = mock_config(verbose=verbose)
     return plugin.pytest_assertrepr_compare(config, "==", left, right)
 
 
@@ -322,7 +319,7 @@ class TestAssert_reprcompare:
             assert "a" * 50 not in line
 
     def test_text_skipping_verbose(self):
-        lines = callequal("a" * 50 + "spam", "a" * 50 + "eggs", verbose=True)
+        lines = callequal("a" * 50 + "spam", "a" * 50 + "eggs", verbose=1)
         assert "- " + "a" * 50 + "spam" in lines
         assert "+ " + "a" * 50 + "eggs" in lines
 
@@ -345,7 +342,7 @@ class TestAssert_reprcompare:
 
     def test_bytes_diff_verbose(self):
         """Check special handling for bytes diff (#5260)"""
-        diff = callequal(b"spam", b"eggs", verbose=True)
+        diff = callequal(b"spam", b"eggs", verbose=1)
         assert diff == [
             "b'spam' == b'eggs'",
             "At index 0 diff: b's' != b'e'",
@@ -402,9 +399,9 @@ class TestAssert_reprcompare:
         When verbose is False, then just a -v notice to get the diff is rendered,
         when verbose is True, then ndiff of the pprint is returned.
         """
-        expl = callequal(left, right, verbose=False)
+        expl = callequal(left, right, verbose=0)
         assert expl[-1] == "Use -v to get the full diff"
-        expl = "\n".join(callequal(left, right, verbose=True))
+        expl = "\n".join(callequal(left, right, verbose=1))
         assert expl.endswith(textwrap.dedent(expected).strip())
 
     def test_list_different_lengths(self):
