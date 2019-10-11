@@ -6,10 +6,9 @@ from __future__ import print_function
 import sys
 import textwrap
 
-import importlib_metadata
-
 import _pytest._code
 import pytest
+from _pytest.compat import importlib_metadata
 from _pytest.config import _iter_rewritable_modules
 from _pytest.config.exceptions import UsageError
 from _pytest.config.findpaths import determine_setup

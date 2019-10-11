@@ -9,11 +9,11 @@ import textwrap
 import types
 
 import attr
-import importlib_metadata
 import py
 import six
 
 import pytest
+from _pytest.compat import importlib_metadata
 from _pytest.main import EXIT_NOTESTSCOLLECTED
 from _pytest.main import EXIT_USAGEERROR
 from _pytest.warnings import SHOW_PYTEST_WARNINGS_ARG

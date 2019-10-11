@@ -62,6 +62,12 @@ else:
         return None
 
 
+if sys.version_info >= (3, 8):
+    from importlib import metadata as importlib_metadata  # noqa
+else:
+    import importlib_metadata  # noqa
+
+
 def _format_args(func):
     return str(signature(func))
 
