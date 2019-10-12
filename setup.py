@@ -28,6 +28,7 @@ def main():
                 "mock",
                 "nose",
                 "requests",
+                "numpy",
                 "xmlschema",
             ]
         },

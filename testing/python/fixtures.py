@@ -4187,3 +4187,21 @@ def test_indirect_fixture_does_not_break_scope(testdir):
     )
     result = testdir.runpytest()
     result.assert_outcomes(passed=7)
+
+
+def test_fixture_parametrization_nparray(testdir):
+    testdir.makepyfile(
+    """
+        from numpy import linspace
+        from pytest import fixture
+
+        @fixture(params=linspace(1, 10, 10))
+        def value(request):
+            return request.param
+
+        def test_bug(value):
+            assert value == value
+    """
+    )
+    result = testdir.runpytest()
+    result.assert_outcomes(passed=10)

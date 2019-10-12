@@ -1113,6 +1113,9 @@ def fixture(
                 ``fixture_<fixturename>`` and then use
                 ``@pytest.fixture(name='<fixturename>')``.
     """
+    if params is not None and not isinstance(params, (list, tuple)):
+        params = list(params)
+
     fixture_function, arguments = _parse_fixture_args(
         callable_or_scope,
         *args,
@@ -1134,8 +1137,6 @@ def fixture(
             fixture_function
         )
 
-    if params is not None and not isinstance(params, (list, tuple)):
-        params = list(params)
     return FixtureFunctionMarker(scope, params, autouse, ids=ids, name=name)
 
 
