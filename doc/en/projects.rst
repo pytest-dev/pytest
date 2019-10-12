@@ -38,7 +38,7 @@ Here are some examples of projects using ``pytest`` (please send notes via :ref:
 * `execnet <http://codespeak.net/execnet>`_ rapid multi-Python deployment
 * `pylib <https://pylib.readthedocs.io/en/stable/>`_ cross-platform path, IO, dynamic code library
 * `bbfreeze <https://pypi.org/project/bbfreeze/>`_ create standalone executables from Python scripts
-* `pdb++ <http://bitbucket.org/antocuni/pdb>`_ a fancier version of PDB
+* `pdb++ <https://github.com/pdbpp/pdbpp>`_ a fancier version of PDB
 * `py-s3fuse <http://code.google.com/p/py-s3fuse/>`_ Amazon S3 FUSE based filesystem
 * `waskr <http://code.google.com/p/waskr/>`_ WSGI Stats Middleware
 * `guachi <http://code.google.com/p/guachi/>`_ global persistent configs for Python modules
