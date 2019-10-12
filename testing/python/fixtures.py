@@ -4191,7 +4191,7 @@ def test_indirect_fixture_does_not_break_scope(testdir):
 
 def test_fixture_parametrization_nparray(testdir):
     testdir.makepyfile(
-    """
+        """
         from numpy import linspace
         from pytest import fixture
 
