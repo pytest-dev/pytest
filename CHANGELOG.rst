@@ -27,33 +27,6 @@ Bug Fixes
 - `#5902 <https://github.com/pytest-dev/pytest/issues/5902>`_: Fix warnings about deprecated ``cmp`` attribute in ``attrs>=19.2``.
 
 
-pytest 4.6.6 (2019-10-11)
-=========================
-
-Bug Fixes
----------
-
-- `#5523 <https://github.com/pytest-dev/pytest/issues/5523>`_: Fixed using multiple short options together in the command-line (for example ``-vs``) in Python 3.8+.
-
-
-- `#5537 <https://github.com/pytest-dev/pytest/issues/5537>`_: Replace ``importlib_metadata`` backport with ``importlib.metadata`` from the
-  standard library on Python 3.8+.
-
-
-- `#5806 <https://github.com/pytest-dev/pytest/issues/5806>`_: Fix "lexer" being used when uploading to bpaste.net from ``--pastebin`` to "text".
-
-
-- `#5902 <https://github.com/pytest-dev/pytest/issues/5902>`_: Fix warnings about deprecated ``cmp`` attribute in ``attrs>=19.2``.
-
-
-
-Trivial/Internal Changes
-------------------------
-
-- `#5801 <https://github.com/pytest-dev/pytest/issues/5801>`_: Fixes python version checks (detected by ``flake8-2020``) in case python4 becomes a thing.
-
-
-
 pytest 5.2.0 (2019-09-28)
 =========================
 
@@ -239,9 +212,6 @@ Bug Fixes
 
 
 - `#5477 <https://github.com/pytest-dev/pytest/issues/5477>`_: The XML file produced by ``--junitxml`` now correctly contain a ``<testsuites>`` root element.
-
-
-- `#5523 <https://github.com/pytest-dev/pytest/issues/5523>`_: Fixed using multiple short options together in the command-line (for example ``-vs``) in Python 3.8+.
 
 
 - `#5524 <https://github.com/pytest-dev/pytest/issues/5524>`_: Fix issue where ``tmp_path`` and ``tmpdir`` would not remove directories containing files marked as read-only,
@@ -525,90 +495,6 @@ Improved Documentation
 
 
 - `#5416 <https://github.com/pytest-dev/pytest/issues/5416>`_: Fix PytestUnknownMarkWarning in run/skip example.
-
-
-pytest 4.6.5 (2019-08-05)
-=========================
-
-Bug Fixes
----------
-
-- `#4344 <https://github.com/pytest-dev/pytest/issues/4344>`_: Fix RuntimeError/StopIteration when trying to collect package with "__init__.py" only.
-
-
-- `#5478 <https://github.com/pytest-dev/pytest/issues/5478>`_: Fix encode error when using unicode strings in exceptions with ``pytest.raises``.
-
-
-- `#5524 <https://github.com/pytest-dev/pytest/issues/5524>`_: Fix issue where ``tmp_path`` and ``tmpdir`` would not remove directories containing files marked as read-only,
-  which could lead to pytest crashing when executed a second time with the ``--basetemp`` option.
-
-
-- `#5547 <https://github.com/pytest-dev/pytest/issues/5547>`_: ``--step-wise`` now handles ``xfail(strict=True)`` markers properly.
-
-
-- `#5650 <https://github.com/pytest-dev/pytest/issues/5650>`_: Improved output when parsing an ini configuration file fails.
-
-pytest 4.6.4 (2019-06-28)
-=========================
-
-Bug Fixes
----------
-
-- `#5404 <https://github.com/pytest-dev/pytest/issues/5404>`_: Emit a warning when attempting to unwrap a broken object raises an exception,
-  for easier debugging (`#5080 <https://github.com/pytest-dev/pytest/issues/5080>`__).
-
-
-- `#5444 <https://github.com/pytest-dev/pytest/issues/5444>`_: Fix ``--stepwise`` mode when the first file passed on the command-line fails to collect.
-
-
-- `#5482 <https://github.com/pytest-dev/pytest/issues/5482>`_: Fix bug introduced in 4.6.0 causing collection errors when passing
-  more than 2 positional arguments to ``pytest.mark.parametrize``.
-
-
-- `#5505 <https://github.com/pytest-dev/pytest/issues/5505>`_: Fix crash when discovery fails while using ``-p no:terminal``.
-
-
-pytest 4.6.3 (2019-06-11)
-=========================
-
-Bug Fixes
----------
-
-- `#5383 <https://github.com/pytest-dev/pytest/issues/5383>`_: ``-q`` has again an impact on the style of the collected items
-  (``--collect-only``) when ``--log-cli-level`` is used.
-
-
-- `#5389 <https://github.com/pytest-dev/pytest/issues/5389>`_: Fix regressions of `#5063 <https://github.com/pytest-dev/pytest/pull/5063>`__ for ``importlib_metadata.PathDistribution`` which have their ``files`` attribute being ``None``.
-
-
-- `#5390 <https://github.com/pytest-dev/pytest/issues/5390>`_: Fix regression where the ``obj`` attribute of ``TestCase`` items was no longer bound to methods.
-
-
-pytest 4.6.2 (2019-06-03)
-=========================
-
-Bug Fixes
----------
-
-- `#5370 <https://github.com/pytest-dev/pytest/issues/5370>`_: Revert unrolling of ``all()`` to fix ``NameError`` on nested comprehensions.
-
-
-- `#5371 <https://github.com/pytest-dev/pytest/issues/5371>`_: Revert unrolling of ``all()`` to fix incorrect handling of generators with ``if``.
-
-
-- `#5372 <https://github.com/pytest-dev/pytest/issues/5372>`_: Revert unrolling of ``all()`` to fix incorrect assertion when using ``all()`` in an expression.
-
-
-pytest 4.6.1 (2019-06-02)
-=========================
-
-Bug Fixes
----------
-
-- `#5354 <https://github.com/pytest-dev/pytest/issues/5354>`_: Fix ``pytest.mark.parametrize`` when the argvalues is an iterator.
-
-
-- `#5358 <https://github.com/pytest-dev/pytest/issues/5358>`_: Fix assertion rewriting of ``all()`` calls to deal with non-generators.
 
 
 pytest 4.6.0 (2019-05-31)
