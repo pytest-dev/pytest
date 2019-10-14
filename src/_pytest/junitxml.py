@@ -207,6 +207,8 @@ class _NodeReporter:
             else:
                 content = content_err
 
+            # XXX: flaky in test suite, trying to figure out why.
+            assert content, repr([content, content_log, content_err])
             if content:
                 tag = getattr(Junit, "system-err")
                 self.append(tag(bin_xml_escape(content)))
