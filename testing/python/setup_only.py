@@ -244,7 +244,12 @@ def test_capturing(testdir):
 
     result = testdir.runpytest("--setup-only", p)
     result.stdout.fnmatch_lines(
-        ["this should be captured", "this should also be captured"]
+        [
+            "*- Captured stdout setup -*",
+            "this should be captured",
+            "*- Captured stderr setup -*",
+            "this should also be captured",
+        ]
     )
 
 
