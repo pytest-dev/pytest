@@ -4,4 +4,4 @@ coverage:
     patch: true
     changes: true
 
-comment: off
+comment: false
