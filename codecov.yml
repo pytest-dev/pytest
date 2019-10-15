@@ -3,5 +3,6 @@ coverage:
     project: true
     patch: true
     changes: true
-
 comment: off
+notify:
+  require_ci_to_pass: yes
