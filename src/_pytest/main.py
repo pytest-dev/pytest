@@ -20,6 +20,8 @@ from _pytest.runner import collect_one_node
 
 class ExitCode(enum.IntEnum):
     """
+    .. versionadded:: 5.0
+
     Encodes the valid exit codes by pytest.
 
     Currently users and plugins may supply other exit codes as well.
