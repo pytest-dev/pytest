@@ -915,6 +915,10 @@ class Testdir:
 
         import _pytest.config
 
+        capman = self.request.config.pluginmanager.getplugin("capturemanager")
+        if capman and not capman.is_capturing():
+            args = ["-p", "no:capture"] + args
+
         config = _pytest.config._prepareconfig(args, self.plugins)
         # we don't know what the test will do with this half-setup config
         # object and thus we make sure it gets unconfigured properly in any

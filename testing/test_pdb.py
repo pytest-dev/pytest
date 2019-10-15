@@ -1217,3 +1217,22 @@ def test_pdb_wrapper_class_is_reused(testdir):
     result.stdout.fnmatch_lines(
         ["*set_trace_called*", "*set_trace_called*", "* 1 passed in *"]
     )
+
+
+def test_capture_with_testdir_parseconfig(testdir):
+    """Test capturing with inner node of config setup.  Also tests #4330."""
+    p = testdir.makepyfile(
+        """
+        def test_inner(testdir):
+            hello = testdir.makefile(".py", hello="world")
+            __import__('pdb').set_trace()
+            node = testdir.parseconfig(hello)
+    """
+    )
+    child = testdir.spawn_pytest("-s -p pytester %s" % p)
+    child.expect(r"\(Pdb")
+    child.sendline("n")
+    child.sendline("c")
+    rest = child.read().decode("utf8")
+    TestPDB.flush(child)
+    assert child.exitstatus == 0, rest
