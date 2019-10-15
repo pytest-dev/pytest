@@ -477,22 +477,25 @@ class TestPython:
         assert "ValueError" in fnode.toxml()
         systemout = fnode.next_sibling
         assert systemout.tag == "system-out"
-        assert "hello-stdout" in systemout.toxml()
-        assert "info msg" not in systemout.toxml()
+        systemout_xml = systemout.toxml()
+        assert "hello-stdout" in systemout_xml
+        assert "info msg" not in systemout_xml
         systemerr = systemout.next_sibling
         assert systemerr.tag == "system-err"
-        assert "hello-stderr" in systemerr.toxml()
-        assert "info msg" not in systemerr.toxml()
+        systemerr_xml = systemerr.toxml()
+        assert "hello-stderr" in systemerr_xml
+        assert "info msg" not in systemerr_xml
 
         if junit_logging == "system-out":
-            assert "warning msg" in systemout.toxml()
-            assert "warning msg" not in systemerr.toxml()
+            assert "warning msg" in systemout_xml
+            assert "warning msg" not in systemerr_xml
         elif junit_logging == "system-err":
-            assert "warning msg" not in systemout.toxml()
-            assert "warning msg" in systemerr.toxml()
-        elif junit_logging == "no":
-            assert "warning msg" not in systemout.toxml()
-            assert "warning msg" not in systemerr.toxml()
+            assert "warning msg" not in systemout_xml
+            assert "warning msg" in systemerr_xml
+        else:
+            assert junit_logging == "no"
+            assert "warning msg" not in systemout_xml
+            assert "warning msg" not in systemerr_xml
 
     @parametrize_families
     def test_failure_verbose_message(self, testdir, run_and_parse, xunit_family):
