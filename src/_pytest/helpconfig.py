@@ -152,7 +152,7 @@ def showhelp(config):
     indent_len = 24  # based on argparse's max_help_position=24
     indent = " " * indent_len
     for name in config._parser._ininames:
-        help, type, default = config._parser._inidict[name]
+        help, type, default, choices = config._parser._inidict[name]
         if type is None:
             type = "string"
         spec = "{} ({}):".format(name, type)

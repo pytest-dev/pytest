@@ -29,7 +29,9 @@ class Parser:
         self._groups = []  # type: List[OptionGroup]
         self._processopt = processopt
         self._usage = usage
-        self._inidict = {}  # type: Dict[str, Tuple[str, Optional[str], Any]]
+        self._inidict = (
+            {}
+        )  # type: Dict[str, Tuple[str, Optional[str], Any, Optional[List]]]
         self._ininames = []  # type: List[str]
         self.extra_info = {}  # type: Dict[str, Any]
 
@@ -65,9 +67,8 @@ class Parser:
         """ register a command line option.
 
         :opts: option names, can be short or long options.
-        :attrs: same attributes which the ``add_option()`` function of the
-           `argparse library
-           <http://docs.python.org/2/library/argparse.html>`_
+        :attrs: same attributes which the ``add_argument()`` function of the
+           `argparse library <https://docs.python.org/3.7/library/argparse.html>`_
            accepts.
 
         After command line parsing options are available on the pytest config
@@ -127,19 +128,24 @@ class Parser:
         args = [str(x) if isinstance(x, py.path.local) else x for x in args]
         return optparser.parse_known_args(args, namespace=namespace)
 
-    def addini(self, name, help, type=None, default=None):
+    def addini(self, name, help, type=None, default=None, choices=None):
         """ register an ini-file option.
 
         :name: name of the ini-variable
-        :type: type of the variable, can be ``pathlist``, ``args``, ``linelist``
-               or ``bool``.
+        :type: type of the variable, can be ``pathlist``, ``args``, ``linelist``,
+               ``bool``, or ``type``.
         :default: default value if no ini-file option exists but is queried.
 
         The value of ini-variables can be retrieved via a call to
         :py:func:`config.getini(name) <_pytest.config.Config.getini>`.
         """
-        assert type in (None, "pathlist", "args", "linelist", "bool")
-        self._inidict[name] = (help, type, default)
+        # TODO: callable type?
+        if type == "choice":
+            if choices is None:
+                raise ValueError("need to pass choices with type=choice")
+        else:
+            assert type in (None, "pathlist", "args", "linelist", "bool")
+        self._inidict[name] = (help, type, default, choices)
         self._ininames.append(name)
 
 

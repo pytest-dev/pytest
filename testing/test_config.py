@@ -365,6 +365,52 @@ class TestConfigAPI:
         config = testdir.parseconfig()
         assert config.getini("strip") is bool_val
 
+    def test_addini_choices(self, testdir):
+        testdir.makeconftest(
+            """
+            def pytest_addoption(parser):
+                parser.addini("mychoice", "", type="choice", default="def", choices=["one", "two"])
+        """
+        )
+        config = testdir.parseconfig()
+        assert config.getini("mychoice") == "def"
+
+        testdir.makeini(
+            """
+            [pytest]
+            mychoice=invalid
+        """
+        )
+        config = testdir.parseconfig()
+        with pytest.raises(UsageError, match="invalid value for mychoice: 'invalid'"):
+            config.getini("mychoice")
+
+        p1 = testdir.makepyfile(
+            """
+            def test_pass(pytestconfig):
+                ini_val = pytestconfig.getini("mychoice")
+                print('\\nmychoice:%s\\n' % ini_val)"""
+        )
+        result = testdir.runpytest("-s", str(p1))
+        result.stdout.fnmatch_lines(
+            ["E *UsageError: invalid value for mychoice: 'invalid'", "*= 1 failed in *"]
+        )
+        assert result.ret == ExitCode.TESTS_FAILED
+
+        p1 = testdir.makepyfile(
+            """
+            def test_pass(pytestconfig):
+                ini_val = pytestconfig.getini("mychoice")
+                print('\\nmychoice:%s\\n' % ini_val)"""
+        )
+        result = testdir.runpytest("-s", "-o", "mychoice=one", str(p1))
+        result.stdout.fnmatch_lines(["mychoice:one"])
+        assert result.ret == ExitCode.OK
+
+        result = testdir.runpytest("-o", "mychoice=invalid2", str(p1))
+        result.stderr.fnmatch_lines(["ERROR: invalid value for mychoice: 'invalid2'"])
+        assert result.ret == ExitCode.USAGE_ERROR
+
     def test_addinivalue_line_existing(self, testdir):
         testdir.makeconftest(
             """

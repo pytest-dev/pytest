@@ -915,6 +915,25 @@ class Config:
             else:
                 raise
 
+        if ns.override_ini:
+            for ini_config in ns.override_ini:
+                try:
+                    key, user_ini_value = ini_config.split("=", 1)
+                except ValueError:
+                    raise UsageError("-o/--override-ini expects option=value style.")
+                else:
+                    try:
+                        _, type, _, choices = self._parser._inidict[key]
+                    except KeyError:
+                        raise UsageError(
+                            "unknown configurations ini value: {!r}".format(key)
+                        )
+                    if type == "choice":
+                        if user_ini_value not in choices:
+                            raise UsageError(
+                                "invalid value for {}: {!r}".format(key, user_ini_value)
+                            )
+
     def _checkversion(self):
         import pytest
 
@@ -978,7 +997,7 @@ class Config:
 
     def _getini(self, name: str) -> Any:
         try:
-            description, type, default = self._parser._inidict[name]
+            description, type, default, choices = self._parser._inidict[name]
         except KeyError:
             raise ValueError("unknown configuration value: {!r}".format(name))
         value = self._get_override_ini_value(name)
@@ -1003,6 +1022,8 @@ class Config:
             return [t for t in map(lambda x: x.strip(), value.split("\n")) if t]
         elif type == "bool":
             return bool(_strtobool(value.strip()))
+        elif type == "choice":
+            return self._validate_ini_value(name, value)
         else:
             assert type is None
             return value
@@ -1033,7 +1054,17 @@ class Config:
                 raise UsageError("-o/--override-ini expects option=value style.")
             else:
                 if key == name:
-                    value = user_ini_value
+                    value = self._validate_ini_value(name, user_ini_value)
+        return value
+
+    def _validate_ini_value(self, name: str, value: str) -> str:
+        try:
+            _, type, _, choices = self._parser._inidict[name]
+        except KeyError:
+            raise UsageError("unknown configurations ini value: {!r}".format(name))
+        if type == "choice":
+            if value not in choices:
+                raise UsageError("invalid value for {}: {!r}".format(name, value))
         return value
 
     def getoption(self, name: str, default=notset, skip: bool = False):
