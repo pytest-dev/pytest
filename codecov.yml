@@ -1,8 +1,9 @@
+codecov:
+  notify:
+    after_n_builds: 6
 coverage:
   status:
     project: true
     patch: true
     changes: true
 comment: off
-notify:
-  require_ci_to_pass: yes
