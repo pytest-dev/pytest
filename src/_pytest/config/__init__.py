@@ -154,6 +154,7 @@ default_plugins = essential_plugins + (
     "assertion",
     "junitxml",
     "resultlog",
+    "report_log",
     "doctest",
     "cacheprovider",
     "freeze_support",

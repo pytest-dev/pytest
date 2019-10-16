@@ -329,18 +329,18 @@ class CollectErrorRepr(TerminalRepr):
 def pytest_report_to_serializable(report):
     if isinstance(report, (TestReport, CollectReport)):
         data = report._to_json()
-        data["_report_type"] = report.__class__.__name__
+        data["$report_type"] = report.__class__.__name__
         return data
 
 
 def pytest_report_from_serializable(data):
-    if "_report_type" in data:
-        if data["_report_type"] == "TestReport":
+    if "$report_type" in data:
+        if data["$report_type"] == "TestReport":
             return TestReport._from_json(data)
-        elif data["_report_type"] == "CollectReport":
+        elif data["$report_type"] == "CollectReport":
             return CollectReport._from_json(data)
         assert False, "Unknown report_type unserialize data: {}".format(
-            data["_report_type"]
+            data["$report_type"]
         )
 
 

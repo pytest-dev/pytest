@@ -27,6 +27,7 @@ Full pytest documentation
    unittest
    nose
    xunit_setup
+   report_log
    plugins
    writing_plugins
    logging

@@ -330,7 +330,7 @@ class TestHooks:
             data = pytestconfig.hook.pytest_report_to_serializable(
                 config=pytestconfig, report=rep
             )
-            assert data["_report_type"] == "TestReport"
+            assert data["$report_type"] == "TestReport"
             new_rep = pytestconfig.hook.pytest_report_from_serializable(
                 config=pytestconfig, data=data
             )
@@ -352,7 +352,7 @@ class TestHooks:
             data = pytestconfig.hook.pytest_report_to_serializable(
                 config=pytestconfig, report=rep
             )
-            assert data["_report_type"] == "CollectReport"
+            assert data["$report_type"] == "CollectReport"
             new_rep = pytestconfig.hook.pytest_report_from_serializable(
                 config=pytestconfig, data=data
             )
@@ -376,7 +376,7 @@ class TestHooks:
         data = pytestconfig.hook.pytest_report_to_serializable(
             config=pytestconfig, report=rep
         )
-        data["_report_type"] = "Unknown"
+        data["$report_type"] = "Unknown"
         with pytest.raises(AssertionError):
             _ = pytestconfig.hook.pytest_report_from_serializable(
                 config=pytestconfig, data=data
