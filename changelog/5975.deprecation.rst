@@ -1,0 +1,6 @@
+Deprecate using direct constructors for ``Nodes``.
+
+Instead they are new constructed via ``Node.from_parent``.
+
+This transitional mechanism enables us to detangle the very intensely
+entangled ``Node`` relationships by enforcing more controlled creation/configruation patterns.
