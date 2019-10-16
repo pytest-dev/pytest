@@ -30,7 +30,7 @@ class TestMetafunc:
 
         names = fixtures.getfuncargnames(func)
         fixtureinfo = FixtureInfo(names)
-        definition = DefinitionMock(func)
+        definition = DefinitionMock._create(func)
         return python.Metafunc(definition, fixtureinfo, config)
 
     def test_no_funcargs(self, testdir):

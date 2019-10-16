@@ -10,7 +10,7 @@ class TestOEJSKITSpecials:
             import pytest
             def pytest_pycollect_makeitem(collector, name, obj):
                 if name == "MyClass":
-                    return MyCollector(name, parent=collector)
+                    return MyCollector.from_parent(collector, name=name)
             class MyCollector(pytest.Collector):
                 def reportinfo(self):
                     return self.fspath, 3, "xyz"
@@ -40,7 +40,7 @@ class TestOEJSKITSpecials:
             import pytest
             def pytest_pycollect_makeitem(collector, name, obj):
                 if name == "MyClass":
-                    return MyCollector(name, parent=collector)
+                    return MyCollector.from_parent(collector, name=name)
             class MyCollector(pytest.Collector):
                 def reportinfo(self):
                     return self.fspath, 3, "xyz"

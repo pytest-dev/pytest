@@ -23,7 +23,7 @@ def pytest_pycollect_makeitem(collector, name, obj):
     except Exception:
         return
     # yes, so let's collect it
-    return UnitTestCase(name, parent=collector)
+    return UnitTestCase.from_parent(collector, name=name, obj=obj)
 
 
 class UnitTestCase(Class):
@@ -51,7 +51,7 @@ class UnitTestCase(Class):
             if not getattr(x, "__test__", True):
                 continue
             funcobj = getimfunc(x)
-            yield TestCaseFunction(name, parent=self, callobj=funcobj)
+            yield TestCaseFunction.from_parent(self, name=name, callobj=funcobj)
             foundsomething = True
 
         if not foundsomething:
@@ -59,7 +59,8 @@ class UnitTestCase(Class):
             if runtest is not None:
                 ut = sys.modules.get("twisted.trial.unittest", None)
                 if ut is None or runtest != ut.TestCase.runTest:
-                    yield TestCaseFunction("runTest", parent=self)
+                    # TODO: callobj consistency
+                    yield TestCaseFunction.from_parent(self, name="runTest")
 
     def _inject_setup_teardown_fixtures(self, cls):
         """Injects a hidden auto-use fixture to invoke setUpClass/setup_method and corresponding
@@ -190,20 +191,21 @@ class TestCaseFunction(Function):
     def _handle_skip(self):
         # implements the skipping machinery (see #2137)
         # analog to pythons Lib/unittest/case.py:run
-        testMethod = getattr(self._testcase, self._testcase._testMethodName)
+        test_method = getattr(self._testcase, self._testcase._testMethodName)
         if getattr(self._testcase.__class__, "__unittest_skip__", False) or getattr(
-            testMethod, "__unittest_skip__", False
+            test_method, "__unittest_skip__", False
         ):
             # If the class or method was skipped.
             skip_why = getattr(
                 self._testcase.__class__, "__unittest_skip_why__", ""
-            ) or getattr(testMethod, "__unittest_skip_why__", "")
+            ) or getattr(test_method, "__unittest_skip_why__", "")
             self._testcase._addSkip(self, self._testcase, skip_why)
             return True
         return False
 
     def runtest(self):
         if self.config.pluginmanager.get_plugin("pdbinvoke") is None:
+            # TODO: move testcase reporter into separate class, this shouldnt be on item
             self._testcase(result=self)
         else:
             # disables tearDown and cleanups for post mortem debugging (see #1890)
