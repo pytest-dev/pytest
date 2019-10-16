@@ -1088,9 +1088,13 @@ def fixture(
 
     :arg scope: the scope for which this fixture is shared, one of
                 ``"function"`` (default), ``"class"``, ``"module"``,
-                ``"package"`` or ``"session"``.
+                ``"package"`` or ``"session"`` (``"package"`` is considered **experimental**
+                at this time).
 
-                ``"package"`` is considered **experimental** at this time.
+                This parameter may also be a callable which receives ``(fixture_name, config)``
+                as parameters, and must return a ``str`` with one of the values mentioned above.
+
+                See :ref:`dynamic scope` in the docs for more information.
 
     :arg params: an optional list of parameters which will cause multiple
                 invocations of the fixture function and all of the tests

@@ -488,6 +488,8 @@ def pytest_assertion_pass(item, lineno, orig, expl):
     """
     **(Experimental)**
 
+    .. versionadded:: 5.0
+
     Hook called whenever an assertion *passes*.
 
     Use this hook to do some processing after a passing assertion.

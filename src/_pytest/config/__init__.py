@@ -663,6 +663,8 @@ class Config:
     class InvocationParams:
         """Holds parameters passed during ``pytest.main()``
 
+        .. versionadded:: 5.1
+
         .. note::
 
             Currently the environment variable PYTEST_ADDOPTS is also handled by
