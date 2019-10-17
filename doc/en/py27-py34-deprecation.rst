@@ -24,3 +24,8 @@ branch will continue to exist so the community itself can contribute patches. Th
 be happy to accept those patches and make new ``4.6`` releases **until mid-2020**.
 
 .. _`python_requires`: https://packaging.python.org/guides/distributing-packages-using-setuptools/#python-requires
+
+Technical Aspects
+-----------------
+
+The technical aspects of the Python 2.7 and 3.4 support plan (such as when releases will occurr, how to backport fixes, etc) is described in issue `#5275 <https://github.com/pytest-dev/pytest/issues/5275>`__.

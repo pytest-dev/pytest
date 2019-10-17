@@ -2,10 +2,6 @@
 Talks and Tutorials
 ==========================
 
-.. sidebar:: Next Open Trainings
-
-   - `3 day hands-on workshop covering pytest, tox and devpi: "Professional Testing with Python" <https://python-academy.com/courses/specialtopics/python_course_testing.html>`_ (English), October 21 - 23, 2019, Leipzig, Germany.
-
 .. _`funcargs`: funcargs.html
 
 Books

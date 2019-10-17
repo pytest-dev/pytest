@@ -718,6 +718,11 @@ for example ``-x`` if you only want to send one particular failure.
 
 Currently only pasting to the http://bpaste.net service is implemented.
 
+.. versionchanged:: 5.2
+
+If creating the URL fails for any reason, a warning is generated instead of failing the
+entire test suite.
+
 Early loading plugins
 ---------------------
 
