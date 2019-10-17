@@ -29,7 +29,6 @@ Thanks to all who contributed to this release, among them:
 * Michael Goerz
 * Ran Benita
 * Tomáš Chvátal
-* aklajnert
 
 
 Happy testing,
