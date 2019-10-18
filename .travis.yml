@@ -35,7 +35,9 @@ jobs:
         - test $(python -c 'import sys; print("%d%d" % sys.version_info[0:2])') = 37
 
     # Full run of latest supported version, without xdist.
-    - env: TOXENV=py37
+    # Coverage for:
+    # - test_sys_breakpoint_interception (via pexpect).
+    - env: TOXENV=py37-pexpect PYTEST_COVERAGE=1
       python: '3.7'
 
     # Coverage tracking is slow with pypy, skip it.
@@ -54,9 +56,6 @@ jobs:
     - env: TOXENV=py37-lsof-oldattrs-numpy-twisted-xdist PYTEST_COVERAGE=1 PYTEST_ADDOPTS=
 
     # Specialized factors for py37.
-    # Coverage for:
-    # - test_sys_breakpoint_interception (via pexpect).
-    - env: TOXENV=py37-pexpect PYTEST_COVERAGE=1
     - env: TOXENV=py37-pluggymaster-xdist
     - env: TOXENV=py37-freeze
 

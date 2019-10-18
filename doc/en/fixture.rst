@@ -301,8 +301,12 @@ are finalized when the last test of a *package* finishes.
     Use this new feature sparingly and please make sure to report any issues you find.
 
 
+.. _dynamic scope:
+
 Dynamic scope
 ^^^^^^^^^^^^^
+
+.. versionadded:: 5.2
 
 In some cases, you might want to change the scope of the fixture without changing the code.
 To do that, pass a callable to ``scope``. The callable must return a string with a valid scope

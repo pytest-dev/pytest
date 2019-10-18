@@ -1,0 +1,1 @@
+Fixed issue when parametrizing fixtures with numpy arrays (and possibly other sequence-like types).
