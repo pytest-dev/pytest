@@ -220,9 +220,8 @@ def _prepareconfig(args=None, plugins=None):
         return pluginmanager.hook.pytest_cmdline_parse(
             pluginmanager=pluginmanager, args=args
         )
-    except BaseException:
+    finally:
         config._ensure_unconfigure()
-        raise
 
 
 def _fail_on_non_top_pytest_plugins(conftestpath, confcutdir):
