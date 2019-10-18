@@ -66,7 +66,11 @@ def pytest_addoption(parser):
         help="decrease verbosity.",
     ),
     group._addoption(
-        "--verbosity", dest="verbose", type=int, default=0, help="set verbosity"
+        "--verbosity",
+        dest="verbose",
+        type=int,
+        default=0,
+        help="set verbosity. Default is 0.",
     )
     group._addoption(
         "-r",
