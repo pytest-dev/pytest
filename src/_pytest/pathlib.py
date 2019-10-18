@@ -49,10 +49,7 @@ def on_rm_rf_error(func, path: str, exc, *, start_path):
         return
 
     if func not in (os.rmdir, os.remove, os.unlink):
-        warnings.warn(
-            PytestWarning("(rm_rf) error removing {}: {}".format(path, excvalue))
-        )
-        return
+        raise
 
     # Chmod + retry.
     import stat
