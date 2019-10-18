@@ -1088,9 +1088,13 @@ def fixture(
 
     :arg scope: the scope for which this fixture is shared, one of
                 ``"function"`` (default), ``"class"``, ``"module"``,
-                ``"package"`` or ``"session"``.
+                ``"package"`` or ``"session"`` (``"package"`` is considered **experimental**
+                at this time).
 
-                ``"package"`` is considered **experimental** at this time.
+                This parameter may also be a callable which receives ``(fixture_name, config)``
+                as parameters, and must return a ``str`` with one of the values mentioned above.
+
+                See :ref:`dynamic scope` in the docs for more information.
 
     :arg params: an optional list of parameters which will cause multiple
                 invocations of the fixture function and all of the tests
@@ -1113,6 +1117,9 @@ def fixture(
                 ``fixture_<fixturename>`` and then use
                 ``@pytest.fixture(name='<fixturename>')``.
     """
+    if params is not None:
+        params = list(params)
+
     fixture_function, arguments = _parse_fixture_args(
         callable_or_scope,
         *args,
@@ -1134,8 +1141,6 @@ def fixture(
             fixture_function
         )
 
-    if params is not None and not isinstance(params, (list, tuple)):
-        params = list(params)
     return FixtureFunctionMarker(scope, params, autouse, ids=ids, name=name)
 
 
