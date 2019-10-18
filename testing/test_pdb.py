@@ -17,6 +17,14 @@ else:
 _ENVIRON_PYTHONBREAKPOINT = os.environ.get("PYTHONBREAKPOINT", "")
 
 
+@pytest.fixture(autouse=True)
+def pdb_env(request):
+    if "testdir" in request.fixturenames:
+        # Disable pdb++ with inner tests.
+        testdir = request.getfixturevalue("testdir")
+        testdir._env_run_update["PDBPP_HIJACK_PDB"] = "0"
+
+
 def runpdb_and_get_report(testdir, source):
     p = testdir.makepyfile(source)
     result = testdir.runpytest_inprocess("--pdb", p)
