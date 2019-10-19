@@ -236,16 +236,9 @@ class CallInfo:
         return cls(start=start, stop=stop, when=when, result=result, excinfo=excinfo)
 
     def __repr__(self):
-        if self.excinfo is not None:
-            status = "exception"
-            value = self.excinfo.value
-        else:
-            # TODO: investigate unification
-            value = repr(self._result)
-            status = "result"
-        return "<CallInfo when={when!r} {status}: {value}>".format(
-            when=self.when, value=value, status=status
-        )
+        if self.excinfo is None:
+            return "<CallInfo when={!r} result: {!r}>".format(self.when, self._result)
+        return "<CallInfo when={!r} excinfo={!r}>".format(self.when, self.excinfo)
 
 
 def pytest_runtest_makereport(item, call):

@@ -483,13 +483,22 @@ def test_callinfo():
     assert ci.result == 0
     assert "result" in repr(ci)
     assert repr(ci) == "<CallInfo when='123' result: 0>"
+    assert str(ci) == "<CallInfo when='123' result: 0>"
 
     ci = runner.CallInfo.from_call(lambda: 0 / 0, "123")
     assert ci.when == "123"
     assert not hasattr(ci, "result")
-    assert repr(ci) == "<CallInfo when='123' exception: division by zero>"
+    assert repr(ci) == "<CallInfo when='123' excinfo={!r}>".format(ci.excinfo)
+    assert str(ci) == repr(ci)
     assert ci.excinfo
-    assert "exc" in repr(ci)
+
+    # Newlines are escaped.
+    def raise_assertion():
+        assert 0, "assert_msg"
+
+    ci = runner.CallInfo.from_call(raise_assertion, "call")
+    assert repr(ci) == "<CallInfo when='call' excinfo={!r}>".format(ci.excinfo)
+    assert "\n" not in repr(ci)
 
 
 # design question: do we want general hooks in python files?
