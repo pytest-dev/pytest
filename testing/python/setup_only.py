@@ -267,3 +267,39 @@ def test_show_fixtures_and_execute_test(testdir):
     result.stdout.fnmatch_lines(
         ["*SETUP    F arg*", "*test_arg (fixtures used: arg)F*", "*TEARDOWN F arg*"]
     )
+
+
+def test_setup_show_with_KeyboardInterrupt_in_test(testdir):
+    """ Verifies that setups are shown and tests are executed even if there was a KeyboardInterrupt in a test. """
+    p = testdir.makepyfile(
+        """
+        import pytest
+        @pytest.fixture
+        def arg():
+            assert True
+        def test_arg(arg):
+            raise KeyboardInterrupt()
+    """
+    )
+    result = testdir.runpytest("--setup-show", p, no_reraise_ctrlc=True)
+    assert result.ret == 2
+    result.stdout.fnmatch_lines(
+        ["*SETUP    F arg*", "*test_arg (fixtures used: arg)*", "*TEARDOWN F arg*"]
+    )
+
+
+def test_setup_show_with_KeyboardInterrupt_in_fixture(testdir):
+    """ Verifies that setups are shown and tests are executed even if there was a KeyboardInterrupt in a fixture. """
+    p = testdir.makepyfile(
+        """
+        import pytest
+        @pytest.fixture
+        def arg():
+            raise KeyboardInterrupt()
+        def test_arg(arg):
+            assert True
+    """
+    )
+    result = testdir.runpytest("--setup-show", p, no_reraise_ctrlc=True)
+    assert result.ret == 2
+    result.stdout.fnmatch_lines(["*SETUP    F arg*", "*KeyboardInterrupt*"])
