@@ -678,4 +678,4 @@ Or, if desired, you can ``pip install contextlib2`` and use:
 
 .. code-block:: python
 
-    from contextlib2 import ExitStack as does_not_raise
+    from contextlib2 import nullcontext as does_not_raise
