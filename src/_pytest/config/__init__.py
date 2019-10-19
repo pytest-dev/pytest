@@ -169,7 +169,7 @@ def get_config(args=None, plugins=None):
     config = Config(
         pluginmanager,
         invocation_params=Config.InvocationParams(
-            args=args, plugins=plugins, dir=Path().resolve()
+            args=args or (), plugins=plugins, dir=Path().resolve()
         ),
     )
 
@@ -654,7 +654,7 @@ class Config:
 
         Contains the following read-only attributes:
 
-        * ``args``: list of command-line arguments as passed to ``pytest.main()``.
+        * ``args``: tuple of command-line arguments as passed to ``pytest.main()``.
         * ``plugins``: list of extra plugins, might be None.
         * ``dir``: directory where ``pytest.main()`` was invoked from.
     """
@@ -667,13 +667,13 @@ class Config:
 
         .. note::
 
-            Currently the environment variable PYTEST_ADDOPTS is also handled by
-            pytest implicitly, not being part of the invocation.
+            Note that the environment variable ``PYTEST_ADDOPTS`` and the ``addopts``
+            ini option are handled by pytest, not being included in the ``args`` attribute.
 
             Plugins accessing ``InvocationParams`` must be aware of that.
         """
 
-        args = attr.ib()
+        args = attr.ib(converter=tuple)
         plugins = attr.ib()
         dir = attr.ib(type=Path)
 
@@ -938,7 +938,6 @@ class Config:
         assert not hasattr(
             self, "args"
         ), "can only parse cmdline args at most once per Config object"
-        assert self.invocation_params.args == args
         self.hook.pytest_addhooks.call_historic(
             kwargs=dict(pluginmanager=self.pluginmanager)
         )
