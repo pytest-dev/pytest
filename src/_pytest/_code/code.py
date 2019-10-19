@@ -448,7 +448,7 @@ class ExceptionInfo(Generic[_E]):
         assert tup[1] is not None, "no current exception"
         assert tup[2] is not None, "no current exception"
         exc_info = (tup[0], tup[1], tup[2])
-        return cls.from_exc_info(exc_info)
+        return cls.from_exc_info(exc_info, exprinfo)
 
     @classmethod
     def for_later(cls) -> "ExceptionInfo[_E]":
