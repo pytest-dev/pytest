@@ -758,7 +758,17 @@ class TestTerminalFunctional:
 
 def test_fail_extra_reporting(testdir, monkeypatch):
     monkeypatch.setenv("COLUMNS", "80")
-    testdir.makepyfile("def test_this(): assert 0, 'this_failed' * 100")
+    testdir.makepyfile(
+        """
+        def test_this():
+            assert 0, 'this_failed' * 100
+
+        def test_linematcher():
+            from _pytest.pytester import LineMatcher
+
+            LineMatcher(["1", "2", "3"]).fnmatch_lines(["2", "last_unmatched"])
+    """
+    )
     result = testdir.runpytest()
     result.stdout.no_fnmatch_line("*short test summary*")
     result = testdir.runpytest("-rf")
@@ -766,6 +776,8 @@ def test_fail_extra_reporting(testdir, monkeypatch):
         [
             "*test summary*",
             "FAILED test_fail_extra_reporting.py::test_this - AssertionError: this_failedt...",
+            "FAILED test_fail_extra_reporting.py::test_linematcher - remains unmatched: 'l...",
+            "*= 2 failed in *",
         ]
     )
 

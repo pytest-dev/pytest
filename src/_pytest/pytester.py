@@ -1387,7 +1387,9 @@ class LineMatcher:
                 extralines.append(nextline)
             else:
                 self._log("remains unmatched: {!r}".format(line))
-                pytest.fail(self._log_text.lstrip())
+                pytest.fail(
+                    self._log_text, short_msg="remains unmatched: {!r}".format(line)
+                )
 
     def no_fnmatch_line(self, pat):
         """Ensure captured lines do not match the given pattern, using ``fnmatch.fnmatch``.

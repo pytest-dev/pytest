@@ -27,6 +27,7 @@ import py
 import _pytest
 from _pytest._io.saferepr import safeformat
 from _pytest._io.saferepr import saferepr
+from _pytest.outcomes import OutcomeException
 
 if False:  # TYPE_CHECKING
     from typing import Type
@@ -520,6 +521,13 @@ class ExceptionInfo(Generic[_E]):
             the exception representation is returned (so 'AssertionError: ' is
             removed from the beginning)
         """
+        if (
+            tryshort
+            and isinstance(self.value, OutcomeException)
+            and self.value.short_msg
+        ):
+            return self.value.short_msg
+
         lines = format_exception_only(self.type, self.value)
         text = "".join(lines)
         text = text.rstrip()

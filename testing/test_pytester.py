@@ -493,6 +493,21 @@ def test_linematcher_match_failure():
     ]
 
 
+def test_linematcher_fnmatch_lines():
+    lm = LineMatcher(["1", "2", "3"])
+    with pytest.raises(pytest.fail.Exception) as excinfo:
+        lm.fnmatch_lines(["2", "last_unmatched"])
+    assert excinfo.value.short_msg == "remains unmatched: 'last_unmatched'"
+    assert str(excinfo.value).splitlines() == [
+        "nomatch: '2'",
+        "    and: '1'",
+        "exact match: '2'",
+        "nomatch: 'last_unmatched'",
+        "    and: '3'",
+        "remains unmatched: 'last_unmatched'",
+    ]
+
+
 @pytest.mark.parametrize("function", ["no_fnmatch_line", "no_re_match_line"])
 def test_no_matching(function):
     if function == "no_fnmatch_line":

@@ -559,8 +559,13 @@ def test_pytest_exit():
 def test_pytest_fail():
     with pytest.raises(pytest.fail.Exception) as excinfo:
         pytest.fail("hello")
-    s = excinfo.exconly(tryshort=True)
-    assert s.startswith("Failed")
+    assert excinfo.exconly(tryshort=True) == "Failed: hello"
+    assert excinfo.exconly(tryshort=False) == "Failed: hello"
+
+    with pytest.raises(pytest.fail.Exception) as excinfo:
+        pytest.fail("hello", short_msg="short message")
+    assert excinfo.exconly(tryshort=True) == "short message"
+    assert excinfo.exconly(tryshort=False) == "Failed: hello"
 
 
 def test_pytest_exit_msg(testdir):
