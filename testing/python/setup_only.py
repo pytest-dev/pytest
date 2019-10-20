@@ -284,7 +284,13 @@ def test_setup_show_with_KeyboardInterrupt_in_test(testdir):
     result = testdir.runpytest("--setup-show", p, no_reraise_ctrlc=True)
     assert result.ret == 2
     result.stdout.fnmatch_lines(
-        ["*SETUP    F arg*", "*test_arg (fixtures used: arg)*", "*TEARDOWN F arg*"]
+        [
+            "*SETUP    F arg*",
+            "*test_arg (fixtures used: arg)*",
+            "*TEARDOWN F arg*",
+            "*! KeyboardInterrupt !*",
+            "*= no tests ran in *",
+        ]
     )
 
 
@@ -302,4 +308,6 @@ def test_setup_show_with_KeyboardInterrupt_in_fixture(testdir):
     )
     result = testdir.runpytest("--setup-show", p, no_reraise_ctrlc=True)
     assert result.ret == 2
-    result.stdout.fnmatch_lines(["*SETUP    F arg*", "*KeyboardInterrupt*"])
+    result.stdout.fnmatch_lines(
+        ["*SETUP    F arg*", "*! KeyboardInterrupt !*", "*= no tests ran in *"]
+    )
