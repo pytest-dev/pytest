@@ -233,7 +233,7 @@ def test_unittest_skip_issue148(testdir):
 def test_method_and_teardown_failing_reporting(testdir):
     testdir.makepyfile(
         """
-        import unittest, pytest
+        import unittest
         class TC(unittest.TestCase):
             def tearDown(self):
                 assert 0, "down1"
@@ -530,19 +530,31 @@ class TestTrialUnittest:
                 # will crash both at test time and at teardown
         """
         )
-        result = testdir.runpytest()
+        # Ignore DeprecationWarning (for `cmp`) from attrs through twisted,
+        # for stable test results.
+        result = testdir.runpytest(
+            "-vv", "-oconsole_output_style=classic", "-W", "ignore::DeprecationWarning"
+        )
         result.stdout.fnmatch_lines(
             [
+                "test_trial_error.py::TC::test_four FAILED",
+                "test_trial_error.py::TC::test_four ERROR",
+                "test_trial_error.py::TC::test_one FAILED",
+                "test_trial_error.py::TC::test_three FAILED",
+                "test_trial_error.py::TC::test_two FAILED",
                 "*ERRORS*",
+                "*_ ERROR at teardown of TC.test_four _*",
                 "*DelayedCalls*",
-                "*test_four*",
+                "*= FAILURES =*",
+                "*_ TC.test_four _*",
                 "*NameError*crash*",
-                "*test_one*",
+                "*_ TC.test_one _*",
                 "*NameError*crash*",
-                "*test_three*",
+                "*_ TC.test_three _*",
                 "*DelayedCalls*",
-                "*test_two*",
-                "*crash*",
+                "*_ TC.test_two _*",
+                "*NameError*crash*",
+                "*= 4 failed, 1 error in *",
             ]
         )
 
