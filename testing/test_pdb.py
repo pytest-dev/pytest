@@ -160,6 +160,7 @@ class TestPDB:
             child.wait()
         assert not child.isalive()
 
+    @pytest.mark.xfail(reason="running .debug() all the time is bad (#5991)")
     def test_pdb_unittest_postmortem(self, testdir):
         p1 = testdir.makepyfile(
             """
@@ -181,21 +182,37 @@ class TestPDB:
         self.flush(child)
 
     def test_pdb_unittest_skip(self, testdir):
-        """Test for issue #2137"""
+        """Test for issues #2137 and #5991"""
         p1 = testdir.makepyfile(
             """
             import unittest
+
             @unittest.skipIf(True, 'Skipping also with pdb active')
             class MyTestCase(unittest.TestCase):
                 def test_one(self):
                     assert 0
+
+            class MyOtherTestCase(unittest.TestCase):
+                def setUp(self):
+                    print("\\nsetUp_called\\n")
+
+                def tearDown(self):
+                    print("\\ntearDown_called\\n")
+
+                def test_two(self):
+                    self.skipTest("skip_two")
         """
         )
-        child = testdir.spawn_pytest("-rs --pdb %s" % p1)
-        child.expect("Skipping also with pdb active")
-        child.expect("1 skipped in")
-        child.sendeof()
-        self.flush(child)
+        result = testdir.runpytest("-s", "-rs", "--pdb", str(p1))
+        result.stdout.fnmatch_lines(
+            ["setUp_called", "tearDown_called", "*= 2 skipped in *"]
+        )
+        result.stdout.fnmatch_lines_random(
+            [
+                "SKIPPED [1] test_pdb_unittest_skip.py:5: Skipping also with pdb active",
+                "SKIPPED [1] test_pdb_unittest_skip.py:15: skip_two",
+            ]
+        )
 
     def test_pdb_print_captured_stdout_and_stderr(self, testdir):
         p1 = testdir.makepyfile(
