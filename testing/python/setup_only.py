@@ -1,4 +1,5 @@
 import pytest
+from _pytest.main import ExitCode
 
 
 @pytest.fixture(params=["--setup-only", "--setup-plan", "--setup-show"], scope="module")
@@ -270,19 +271,17 @@ def test_show_fixtures_and_execute_test(testdir):
 
 
 def test_setup_show_with_KeyboardInterrupt_in_test(testdir):
-    """ Verifies that setups are shown and tests are executed even if there was a KeyboardInterrupt in a test. """
     p = testdir.makepyfile(
         """
         import pytest
         @pytest.fixture
         def arg():
-            assert True
+            pass
         def test_arg(arg):
             raise KeyboardInterrupt()
     """
     )
     result = testdir.runpytest("--setup-show", p, no_reraise_ctrlc=True)
-    assert result.ret == 2
     result.stdout.fnmatch_lines(
         [
             "*SETUP    F arg*",
@@ -292,22 +291,4 @@ def test_setup_show_with_KeyboardInterrupt_in_test(testdir):
             "*= no tests ran in *",
         ]
     )
-
-
-def test_setup_show_with_KeyboardInterrupt_in_fixture(testdir):
-    """ Verifies that setups are shown and tests are executed even if there was a KeyboardInterrupt in a fixture. """
-    p = testdir.makepyfile(
-        """
-        import pytest
-        @pytest.fixture
-        def arg():
-            raise KeyboardInterrupt()
-        def test_arg(arg):
-            assert True
-    """
-    )
-    result = testdir.runpytest("--setup-show", p, no_reraise_ctrlc=True)
-    assert result.ret == 2
-    result.stdout.fnmatch_lines(
-        ["*SETUP    F arg*", "*! KeyboardInterrupt !*", "*= no tests ran in *"]
-    )
+    assert result.ret == ExitCode.INTERRUPTED
