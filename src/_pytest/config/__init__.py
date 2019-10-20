@@ -195,7 +195,6 @@ def get_plugin_manager():
 
 
 def _prepareconfig(args=None, plugins=None):
-    warning = None
     if args is None:
         args = sys.argv[1:]
     elif isinstance(args, py.path.local):
@@ -213,10 +212,6 @@ def _prepareconfig(args=None, plugins=None):
                     pluginmanager.consider_pluginarg(plugin)
                 else:
                     pluginmanager.register(plugin)
-        if warning:
-            from _pytest.warnings import _issue_warning_captured
-
-            _issue_warning_captured(warning, hook=config.hook, stacklevel=4)
         return pluginmanager.hook.pytest_cmdline_parse(
             pluginmanager=pluginmanager, args=args
         )

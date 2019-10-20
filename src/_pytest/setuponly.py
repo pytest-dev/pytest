@@ -1,5 +1,3 @@
-import sys
-
 import pytest
 
 
@@ -51,7 +49,6 @@ def _show_fixture_action(fixturedef, msg):
     capman = config.pluginmanager.getplugin("capturemanager")
     if capman:
         capman.suspend_global_capture()
-        out, err = capman.read_global_capture()
 
     tw = config.get_terminal_writer()
     tw.line()
@@ -74,8 +71,6 @@ def _show_fixture_action(fixturedef, msg):
 
     if capman:
         capman.resume_global_capture()
-        sys.stdout.write(out)
-        sys.stderr.write(err)
 
 
 @pytest.hookimpl(tryfirst=True)

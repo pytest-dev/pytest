@@ -1029,7 +1029,7 @@ def test_gitignore(testdir):
     config = testdir.parseconfig()
     cache = Cache.for_config(config)
     cache.set("foo", "bar")
-    msg = "# Created by pytest automatically.\n*"
+    msg = "# Created by pytest automatically.\n*\n"
     gitignore_path = cache._cachedir.joinpath(".gitignore")
     assert gitignore_path.read_text(encoding="UTF-8") == msg
 
