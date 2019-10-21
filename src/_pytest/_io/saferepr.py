@@ -46,13 +46,13 @@ class SafeRepr(reprlib.Repr):
         return _ellipsize(s, self.maxsize)
 
 
-def safeformat(obj):
+def safeformat(obj, **kwargs):
     """return a pretty printed string for the given object.
     Failing __repr__ functions of user instances will be represented
     with a short exception info.
     """
     try:
-        return pprint.pformat(obj)
+        return pprint.pformat(obj, **kwargs)
     except Exception as exc:
         return _format_repr_exception(exc, obj)
 
