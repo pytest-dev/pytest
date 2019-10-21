@@ -299,7 +299,7 @@ class TestBinReprIntegration:
 def callequal(left, right, verbose=False):
     config = mock_config()
     config.verbose = verbose
-    return plugin.pytest_assertrepr_compare(config, "==", left, right)
+    return plugin.pytest_assertrepr_compare(config, "==", left, right, "XXX")
 
 
 class TestAssert_reprcompare:
@@ -938,13 +938,15 @@ def test_rewritten(testdir):
 
 def test_reprcompare_notin():
     config = mock_config()
-    detail = plugin.pytest_assertrepr_compare(config, "not in", "foo", "aaafoobbb")[1:]
+    detail = plugin.pytest_assertrepr_compare(
+        config, "not in", "foo", "aaafoobbb", "XXX"
+    )[1:]
     assert detail == ["'foo' is contained here:", "  aaafoobbb", "?    +++"]
 
 
 def test_reprcompare_whitespaces():
     config = mock_config()
-    detail = plugin.pytest_assertrepr_compare(config, "==", "\r\n", "\n")
+    detail = plugin.pytest_assertrepr_compare(config, "==", "\r\n", "\n", "XXX")
     assert detail == [
         r"'\r\n' == '\n'",
         r"Strings contain only whitespace, escaping them using repr()",

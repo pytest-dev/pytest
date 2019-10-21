@@ -626,7 +626,7 @@ class TestAssertionRewrite:
             assert msg == "assert 10 == 11\n +  where 10 = len([0, 1, 2, 3, 4, 5, ...])"
 
     def test_custom_reprcompare(self, monkeypatch):
-        def my_reprcompare(op, left, right):
+        def my_reprcompare(op, left, right, expl):
             return "42"
 
         monkeypatch.setattr(util, "_reprcompare", my_reprcompare)
@@ -636,7 +636,7 @@ class TestAssertionRewrite:
 
         assert getmsg(f) == "assert 42"
 
-        def my_reprcompare(op, left, right):
+        def my_reprcompare(op, left, right, expl):
             return "{} {} {}".format(left, op, right)
 
         monkeypatch.setattr(util, "_reprcompare", my_reprcompare)
