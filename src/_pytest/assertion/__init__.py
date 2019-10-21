@@ -147,7 +147,7 @@ def pytest_runtest_setup(item):
     def call_assertion_display_hook(obj):
         verbose = item.config.getoption("verbose")
         if verbose > 1:
-            return safeformat(obj).replace("\n", "\n~")
+            return safeformat(obj, compact=True).replace("\n", "\n~")
         return saferepr(obj).replace("\n", "\\n")
 
     util._reprdisplay = call_assertion_display_hook
