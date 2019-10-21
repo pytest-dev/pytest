@@ -618,7 +618,10 @@ class TestAssertionRewrite:
 
         msg = getmsg(f)
         if request.config.getoption("verbose") > 0:
-            assert msg == "assert 10 == 11\n  -10\n  +11"
+            assert (
+                msg
+                == "assert 10 == 11\n +  where 10 = len([0, 1, 2, 3, 4, 5, ...])\n  -10\n  +11"
+            )
         else:
             assert msg == "assert 10 == 11\n +  where 10 = len([0, 1, 2, 3, 4, 5, ...])"
 
