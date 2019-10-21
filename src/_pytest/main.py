@@ -40,6 +40,14 @@ class ExitCode(enum.IntEnum):
     #: pytest couldn't find tests
     NO_TESTS_COLLECTED = 5
 
+    @classmethod
+    def _missing_(cls, value):
+        pseudo_member = int.__new__(cls, value)
+        pseudo_member._name_ = "CUSTOM"
+        pseudo_member._value_ = value
+        cls._value2member_map_[value] = pseudo_member
+        return pseudo_member
+
 
 def pytest_addoption(parser):
     parser.addini(
