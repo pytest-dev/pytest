@@ -773,14 +773,10 @@ class FormattedExcinfo:
             extraline = None
 
         last = traceback[-1]
-        crashentry = traceback.getcrashentry()
         entries = []
         for index, entry in enumerate(traceback):
             einfo = (last == entry) and excinfo or None
             reprentry = self.repr_traceback_entry(entry, einfo)
-
-            # Store this for toterminal.
-            reprentry._is_crashentry = entry == crashentry
 
             entries.append(reprentry)
         return ReprTraceback(entries, extraline, style=self.style)
@@ -968,8 +964,6 @@ class ReprEntryNative(TerminalRepr):
 
 
 class ReprEntry(TerminalRepr):
-    _is_crashentry = None
-
     def __init__(self, lines, reprfuncargs, reprlocals, filelocrepr, style):
         self.lines = lines
         self.reprfuncargs = reprfuncargs
@@ -982,9 +976,7 @@ class ReprEntry(TerminalRepr):
             self.reprfileloc.toterminal(tw, style="short")
             for line in self.lines:
                 is_error = line.startswith("E   ")
-                red = is_error
-                bold = is_error or self._is_crashentry
-                tw.line(line, bold=bold, red=red)
+                tw.line(line, bold=is_error, red=is_error)
             return
 
         if self.reprfuncargs:
@@ -1021,7 +1013,7 @@ class ReprFileLocation(TerminalRepr):
             msg = msg[:i]
         bold = style != "short"
         tw.write("%s" % self.path, bold=bold)
-        tw.line(":%s: %s" % (self.lineno, msg))
+        tw.line(":{}: {}".format(self.lineno, msg))
 
 
 class ReprLocals(TerminalRepr):
