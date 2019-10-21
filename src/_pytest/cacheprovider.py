@@ -135,7 +135,7 @@ class Cache:
         readme_path.write_text(README_CONTENT)
 
         gitignore_path = self._cachedir.joinpath(".gitignore")
-        msg = "# Created by pytest automatically.\n*"
+        msg = "# Created by pytest automatically.\n*\n"
         gitignore_path.write_text(msg, encoding="UTF-8")
 
         cachedir_tag_path = self._cachedir.joinpath("CACHEDIR.TAG")
