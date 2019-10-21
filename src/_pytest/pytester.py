@@ -1344,7 +1344,6 @@ class LineMatcher:
             pattern
         :param str match_nickname: the nickname for the match function that
             will be logged to stdout when a match occurs
-
         """
         assert isinstance(lines2, Sequence)
         lines2 = self._getlines(lines2)
@@ -1352,6 +1351,7 @@ class LineMatcher:
         nextline = None
         extralines = []
         __tracebackhide__ = True
+        wnick = len(match_nickname) + 1
         for line in lines2:
             nomatchprinted = False
             while lines1:
@@ -1361,17 +1361,21 @@ class LineMatcher:
                     break
                 elif match_func(nextline, line):
                     self._log("%s:" % match_nickname, repr(line))
-                    self._log("   with:", repr(nextline))
+                    self._log(
+                        "{:>{width}}".format("with:", width=wnick), repr(nextline)
+                    )
                     break
                 else:
                     if not nomatchprinted:
-                        self._log("nomatch:", repr(line))
+                        self._log(
+                            "{:>{width}}".format("nomatch:", width=wnick), repr(line)
+                        )
                         nomatchprinted = True
-                    self._log("    and:", repr(nextline))
+                    self._log("{:>{width}}".format("and:", width=wnick), repr(nextline))
                 extralines.append(nextline)
             else:
                 self._log("remains unmatched: {!r}".format(line))
-                pytest.fail(self._log_text)
+                pytest.fail(self._log_text.lstrip())
 
     def no_fnmatch_line(self, pat):
         """Ensure captured lines do not match the given pattern, using ``fnmatch.fnmatch``.
@@ -1396,16 +1400,19 @@ class LineMatcher:
         """
         __tracebackhide__ = True
         nomatch_printed = False
+        wnick = len(match_nickname) + 1
         try:
             for line in self.lines:
                 if match_func(line, pat):
                     self._log("%s:" % match_nickname, repr(pat))
-                    self._log("   with:", repr(line))
-                    pytest.fail(self._log_text)
+                    self._log("{:>{width}}".format("with:", width=wnick), repr(line))
+                    pytest.fail(self._log_text.lstrip())
                 else:
                     if not nomatch_printed:
-                        self._log("nomatch:", repr(pat))
+                        self._log(
+                            "{:>{width}}".format("nomatch:", width=wnick), repr(pat)
+                        )
                         nomatch_printed = True
-                    self._log("    and:", repr(line))
+                    self._log("{:>{width}}".format("and:", width=wnick), repr(line))
         finally:
             self._log_output = []
