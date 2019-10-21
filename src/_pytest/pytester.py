@@ -847,7 +847,7 @@ class Testdir:
             for finalizer in finalizers:
                 finalizer()
 
-    def runpytest_inprocess(self, *args, **kwargs):
+    def runpytest_inprocess(self, *args, stdin=CLOSE_STDIN, **kwargs):
         """Return result of running pytest in-process, providing a similar
         interface to what self.runpytest() provides.
         """
@@ -856,7 +856,18 @@ class Testdir:
         if syspathinsert:
             self.syspathinsert()
         now = time.time()
-        capture = MultiCapture(Capture=SysCapture)
+        if stdin is self.CLOSE_STDIN:
+            Capture = SysCapture
+        else:
+            if isinstance(stdin, str):
+                import io
+                import functools
+
+                Capture = functools.partial(SysCapture, stdin=io.StringIO(stdin))
+            else:
+                Capture = stdin
+
+        capture = MultiCapture(Capture=Capture)
         capture.start_capturing()
         try:
             try:
