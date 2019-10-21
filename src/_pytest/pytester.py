@@ -11,6 +11,7 @@ import traceback
 from collections.abc import Sequence
 from fnmatch import fnmatch
 from io import StringIO
+from typing import Union
 from weakref import WeakKeyDictionary
 
 import py
@@ -362,9 +363,9 @@ class RunResult:
     :ivar duration: duration in seconds
     """
 
-    def __init__(self, ret, outlines, errlines, duration):
+    def __init__(self, ret: Union[int, ExitCode], outlines, errlines, duration) -> None:
         try:
-            self.ret = pytest.ExitCode(ret)
+            self.ret = pytest.ExitCode(ret)  # type: Union[int, ExitCode]
         except ValueError:
             self.ret = ret
         self.outlines = outlines
@@ -483,11 +484,7 @@ class Testdir:
         self._sys_modules_snapshot = self.__take_sys_modules_snapshot()
         self.chdir()
         self.request.addfinalizer(self.finalize)
-        method = self.request.config.getoption("--runpytest")
-        if method == "inprocess":
-            self._runpytest_method = self.runpytest_inprocess
-        elif method == "subprocess":
-            self._runpytest_method = self.runpytest_subprocess
+        self._method = self.request.config.getoption("--runpytest")
 
         mp = self.monkeypatch = MonkeyPatch()
         mp.setenv("PYTEST_DEBUG_TEMPROOT", str(self.test_tmproot))
@@ -835,7 +832,7 @@ class Testdir:
                 reprec = rec.pop()
             else:
 
-                class reprec:
+                class reprec:  # type: ignore
                     pass
 
             reprec.ret = ret
@@ -851,7 +848,7 @@ class Testdir:
             for finalizer in finalizers:
                 finalizer()
 
-    def runpytest_inprocess(self, *args, **kwargs):
+    def runpytest_inprocess(self, *args, **kwargs) -> RunResult:
         """Return result of running pytest in-process, providing a similar
         interface to what self.runpytest() provides.
         """
@@ -866,15 +863,20 @@ class Testdir:
             try:
                 reprec = self.inline_run(*args, **kwargs)
             except SystemExit as e:
+                ret = e.args[0]
+                try:
+                    ret = ExitCode(e.args[0])
+                except ValueError:
+                    pass
 
-                class reprec:
-                    ret = e.args[0]
+                class reprec:  # type: ignore
+                    ret = ret
 
             except Exception:
                 traceback.print_exc()
 
-                class reprec:
-                    ret = 3
+                class reprec:  # type: ignore
+                    ret = ExitCode(3)
 
         finally:
             out, err = capture.readouterr()
@@ -885,16 +887,20 @@ class Testdir:
         res = RunResult(
             reprec.ret, out.splitlines(), err.splitlines(), time.time() - now
         )
-        res.reprec = reprec
+        res.reprec = reprec  # type: ignore
         return res
 
-    def runpytest(self, *args, **kwargs):
+    def runpytest(self, *args, **kwargs) -> RunResult:
         """Run pytest inline or in a subprocess, depending on the command line
         option "--runpytest" and return a :py:class:`RunResult`.
 
         """
         args = self._ensure_basetemp(args)
-        return self._runpytest_method(*args, **kwargs)
+        if self._method == "inprocess":
+            return self.runpytest_inprocess(*args, **kwargs)
+        elif self._method == "subprocess":
+            return self.runpytest_subprocess(*args, **kwargs)
+        raise RuntimeError("Unrecognized runpytest option: {}".format(self._method))
 
     def _ensure_basetemp(self, args):
         args = list(args)
@@ -1051,7 +1057,7 @@ class Testdir:
 
         return popen
 
-    def run(self, *cmdargs, timeout=None, stdin=CLOSE_STDIN):
+    def run(self, *cmdargs, timeout=None, stdin=CLOSE_STDIN) -> RunResult:
         """Run a command with arguments.
 
         Run a process using subprocess.Popen saving the stdout and stderr.
@@ -1069,9 +1075,9 @@ class Testdir:
         """
         __tracebackhide__ = True
 
-        cmdargs = [
+        cmdargs = tuple(
             str(arg) if isinstance(arg, py.path.local) else arg for arg in cmdargs
-        ]
+        )
         p1 = self.tmpdir.join("stdout")
         p2 = self.tmpdir.join("stderr")
         print("running:", *cmdargs)
@@ -1122,6 +1128,10 @@ class Testdir:
             f2.close()
         self._dump_lines(out, sys.stdout)
         self._dump_lines(err, sys.stderr)
+        try:
+            ret = ExitCode(ret)
+        except ValueError:
+            pass
         return RunResult(ret, out, err, time.time() - now)
 
     def _dump_lines(self, lines, fp):
@@ -1134,7 +1144,7 @@ class Testdir:
     def _getpytestargs(self):
         return sys.executable, "-mpytest"
 
-    def runpython(self, script):
+    def runpython(self, script) -> RunResult:
         """Run a python script using sys.executable as interpreter.
 
         Returns a :py:class:`RunResult`.
@@ -1146,7 +1156,7 @@ class Testdir:
         """Run python -c "command", return a :py:class:`RunResult`."""
         return self.run(sys.executable, "-c", command)
 
-    def runpytest_subprocess(self, *args, timeout=None):
+    def runpytest_subprocess(self, *args, timeout=None) -> RunResult:
         """Run pytest as a subprocess with given arguments.
 
         Any plugins added to the :py:attr:`plugins` list will be added using the
