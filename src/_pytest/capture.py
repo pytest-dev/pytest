@@ -633,16 +633,20 @@ class FDCapture(FDCaptureBinary):
 
 class SysCapture:
 
+    CLOSE_STDIN = object
     EMPTY_BUFFER = str()
     _state = None
 
-    def __init__(self, fd, tmpfile=None):
+    def __init__(self, fd, tmpfile=None, stdin=CLOSE_STDIN):
         name = patchsysdict[fd]
         self._old = getattr(sys, name)
         self.name = name
         if tmpfile is None:
             if name == "stdin":
-                tmpfile = DontReadFromInput()
+                if stdin is self.CLOSE_STDIN:
+                    tmpfile = DontReadFromInput()
+                else:
+                    tmpfile = stdin
             else:
                 tmpfile = CaptureIO()
         self.tmpfile = tmpfile
