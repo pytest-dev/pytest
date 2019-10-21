@@ -859,11 +859,19 @@ class Testdir:
         if stdin is self.CLOSE_STDIN:
             Capture = SysCapture
         else:
+            old_stdin = sys.stdin
             if isinstance(stdin, str):
                 import io
                 import functools
 
-                Capture = functools.partial(SysCapture, stdin=io.StringIO(stdin))
+                class EchoingInput(io.StringIO):
+                    def readline(self, *args, **kwargs):
+                        ret = super().readline(*args, **kwargs)
+                        if ret is not None:
+                            sys.stdout.write(ret)
+                        return ret
+
+                Capture = functools.partial(SysCapture, stdin=EchoingInput(stdin))
             else:
                 Capture = stdin
 
@@ -888,6 +896,9 @@ class Testdir:
             capture.stop_capturing()
             sys.stdout.write(out)
             sys.stderr.write(err)
+
+            if stdin is not self.CLOSE_STDIN:
+                sys.stdin = old_stdin
 
         res = RunResult(reprec.ret, out.split("\n"), err.split("\n"), time.time() - now)
         res.reprec = reprec
