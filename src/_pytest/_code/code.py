@@ -26,6 +26,7 @@ import py
 import _pytest
 from _pytest._io.saferepr import safeformat
 from _pytest._io.saferepr import saferepr
+from _pytest.outcomes import OutcomeException
 
 if False:  # TYPE_CHECKING
     from typing import Type
@@ -520,6 +521,10 @@ class ExceptionInfo(Generic[_E]):
             removed from the beginning)
         """
         lines = format_exception_only(self.type, self.value)
+        if isinstance(self.value, OutcomeException):
+            # Remove module prefix.
+            assert lines[0].startswith(self.type.__module__), (lines[0], self.type)
+            lines[0] = lines[0][len(self.type.__module__) + 1 :]
         text = "".join(lines)
         text = text.rstrip()
         if tryshort:

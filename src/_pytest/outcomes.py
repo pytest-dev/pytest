@@ -40,10 +40,6 @@ TEST_OUTCOME = (OutcomeException, Exception)
 
 
 class Skipped(OutcomeException):
-    # XXX hackish: on 3k we fake to live in the builtins
-    # in order to have Skipped exception printing shorter/nicer
-    __module__ = "builtins"
-
     def __init__(
         self,
         msg: Optional[str] = None,
@@ -56,8 +52,6 @@ class Skipped(OutcomeException):
 
 class Failed(OutcomeException):
     """ raised from an explicit call to pytest.fail() """
-
-    __module__ = "builtins"
 
 
 class Exit(Exception):
