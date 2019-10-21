@@ -724,17 +724,21 @@ class TestPDB:
             """
             import pytest
             def pytest_generate_tests(metafunc):
-                pytest.set_trace()
                 x = 5
+                pytest.set_trace()
+
             def test_foo(a):
                 pass
         """
         )
-        child = testdir.spawn_pytest(str(p1))
-        child.expect("x = 5")
-        child.expect("Pdb")
-        child.sendeof()
-        self.flush(child)
+        result = testdir.runpytest(str(p1), stdin="p 'x=' + str(x)\nq\n")
+        result.stdout.fnmatch_lines(
+            [
+                "*> PDB set_trace (IO-capturing turned off) >*",
+                "'x=5'",
+                "E   _pytest.outcomes.Exit: Quitting debugger",
+            ]
+        )
 
     def test_pdb_collection_failure_is_shown(self, testdir):
         p1 = testdir.makepyfile("xxx")
