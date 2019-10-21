@@ -398,6 +398,10 @@ def _call_reprcompare(ops, results, expls, each_obj):
     return expl
 
 
+def _call_reprdisplay(obj):
+    return util._reprdisplay(obj)
+
+
 def _call_assertion_pass(lineno, orig, expl):
     # type: (int, str, str) -> None
     if util._assertion_pass is not None:
@@ -662,8 +666,7 @@ class AssertionRewriter(ast.NodeVisitor):
         return ast.Name(name, ast.Load())
 
     def display(self, expr):
-        """Call saferepr on the expression."""
-        return self.helper("_saferepr", expr)
+        return self.helper("_call_reprdisplay", expr)
 
     def helper(self, name, *args):
         """Call a helper in this module."""

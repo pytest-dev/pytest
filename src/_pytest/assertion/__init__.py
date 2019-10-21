@@ -141,6 +141,17 @@ def pytest_runtest_setup(item):
 
     util._reprcompare = callbinrepr
 
+    from _pytest._io.saferepr import safeformat
+    from _pytest._io.saferepr import saferepr
+
+    def call_assertion_display_hook(obj):
+        verbose = item.config.getoption("verbose")
+        if verbose > 1:
+            return safeformat(obj)
+        return saferepr(obj).replace("\n", "\\n")
+
+    util._reprdisplay = call_assertion_display_hook
+
     if item.ihook.pytest_assertion_pass.get_hookimpls():
 
         def call_assertion_pass_hook(lineno, orig, expl):
@@ -153,6 +164,7 @@ def pytest_runtest_setup(item):
 
 def pytest_runtest_teardown(item):
     util._reprcompare = None
+    util._reprdisplay = None
     util._assertion_pass = None
 
 
