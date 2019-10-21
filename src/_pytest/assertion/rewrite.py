@@ -399,7 +399,10 @@ def _call_reprcompare(ops, results, expls, each_obj):
 
 
 def _call_reprdisplay(obj):
-    return util._reprdisplay(obj)
+    if util._reprdisplay is not None:
+        return util._reprdisplay(obj)
+    # XXX: happens/used with testing/test_assertion.py::TestImportHookInstallation::test_rewrite_assertions_pytester_plugin  # noqa: E501
+    return _saferepr(obj)
 
 
 def _call_assertion_pass(lineno, orig, expl):
