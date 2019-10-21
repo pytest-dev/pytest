@@ -18,6 +18,7 @@ from typing import Optional
 from typing import Sequence
 from typing import Set
 from typing import Tuple
+from typing import Union
 
 import attr
 import py
@@ -56,7 +57,7 @@ class ConftestImportFailure(Exception):
         self.excinfo = excinfo  # type: Tuple[Type[Exception], Exception, TracebackType]
 
 
-def main(args=None, plugins=None):
+def main(args=None, plugins=None) -> "Union[int, _pytest.main.ExitCode]":
     """ return exit code, after performing an in-process test run.
 
     :arg args: list of command line arguments.
@@ -84,10 +85,16 @@ def main(args=None, plugins=None):
             formatted_tb = str(exc_repr)
             for line in formatted_tb.splitlines():
                 tw.line(line.rstrip(), red=True)
-            return 4
+            return ExitCode.USAGE_ERROR
         else:
             try:
-                return config.hook.pytest_cmdline_main(config=config)
+                ret = config.hook.pytest_cmdline_main(
+                    config=config
+                )  # type: Union[ExitCode, int]
+                try:
+                    return ExitCode(ret)
+                except ValueError:
+                    return ret
             finally:
                 config._ensure_unconfigure()
     except UsageError as e:
