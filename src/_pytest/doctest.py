@@ -1,4 +1,5 @@
 """ discover and run doctests in modules and test files."""
+import bdb
 import inspect
 import platform
 import sys
@@ -7,6 +8,7 @@ import warnings
 from contextlib import contextmanager
 
 import pytest
+from _pytest import outcomes
 from _pytest._code.code import ExceptionInfo
 from _pytest._code.code import ReprFileLocation
 from _pytest._code.code import TerminalRepr
@@ -155,6 +157,8 @@ def _init_runner_class():
         def report_unexpected_exception(self, out, test, example, exc_info):
             if isinstance(exc_info[1], Skipped):
                 raise exc_info[1]
+            if isinstance(exc_info[1], bdb.BdbQuit):
+                outcomes.exit("Quitting debugger")
             failure = doctest.UnexpectedException(test, example, exc_info)
             if self.continue_on_failure:
                 out.append(failure)

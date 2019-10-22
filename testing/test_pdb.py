@@ -466,7 +466,6 @@ class TestPDB:
     def test_pdb_interaction_doctest(self, testdir, monkeypatch):
         p1 = testdir.makepyfile(
             """
-            import pytest
             def function_1():
                 '''
                 >>> i = 0
@@ -485,8 +484,31 @@ class TestPDB:
 
         child.sendeof()
         rest = child.read().decode("utf8")
+        assert "! _pytest.outcomes.Exit: Quitting debugger !" in rest
+        assert "BdbQuit" not in rest
         assert "1 failed" in rest
         self.flush(child)
+
+    def test_doctest_set_trace_quit(self, testdir, monkeypatch):
+        p1 = testdir.makepyfile(
+            """
+            def function_1():
+                '''
+                >>> __import__('pdb').set_trace()
+                '''
+        """
+        )
+        # NOTE: does not use pytest.set_trace, but Python's patched pdb,
+        #       therefore "-s" is required.
+        child = testdir.spawn_pytest("--doctest-modules --pdb -s %s" % p1)
+        child.expect("Pdb")
+        child.sendline("q")
+        rest = child.read().decode("utf8")
+
+        assert "! _pytest.outcomes.Exit: Quitting debugger !" in rest
+        assert "= no tests ran in" in rest
+        assert "BdbQuit" not in rest
+        assert "UNEXPECTED EXCEPTION" not in rest
 
     def test_pdb_interaction_capturing_twice(self, testdir):
         p1 = testdir.makepyfile(
