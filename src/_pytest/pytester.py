@@ -927,11 +927,9 @@ class Testdir:
 
         This returns a new :py:class:`_pytest.config.Config` instance like
         :py:meth:`parseconfig`, but also calls the pytest_configure hook.
-
         """
         config = self.parseconfig(*args)
         config._do_configure()
-        self.request.addfinalizer(config._ensure_unconfigure)
         return config
 
     def getitem(self, source, funcname="test_func"):
