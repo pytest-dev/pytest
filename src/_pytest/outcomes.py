@@ -17,7 +17,7 @@ class OutcomeException(BaseException):
         contain info about test and collection outcomes.
     """
 
-    def __init__(self, msg: Optional[str] = None, pytrace: bool = True) -> None:
+    def __init__(self, msg: str = None, pytrace: bool = True) -> None:
         if msg is not None and not isinstance(msg, str):
             error_msg = (
                 "{} expected string as 'msg' parameter, got '{}' instead.\n"
@@ -45,10 +45,7 @@ class Skipped(OutcomeException):
     __module__ = "builtins"
 
     def __init__(
-        self,
-        msg: Optional[str] = None,
-        pytrace: bool = True,
-        allow_module_level: bool = False,
+        self, msg: str = None, pytrace: bool = True, allow_module_level: bool = False
     ) -> None:
         OutcomeException.__init__(self, msg=msg, pytrace=pytrace)
         self.allow_module_level = allow_module_level
@@ -63,9 +60,7 @@ class Failed(OutcomeException):
 class Exit(Exception):
     """ raised for immediate program exits (no tracebacks/summaries)"""
 
-    def __init__(
-        self, msg: str = "unknown reason", returncode: Optional[int] = None
-    ) -> None:
+    def __init__(self, msg: str = "unknown reason", returncode: int = None) -> None:
         self.msg = msg
         self.returncode = returncode
         super().__init__(msg)
@@ -74,7 +69,7 @@ class Exit(Exception):
 # exposed helper methods
 
 
-def exit(msg: str, returncode: Optional[int] = None) -> "NoReturn":
+def exit(msg: str, returncode: int = None) -> "NoReturn":
     """
     Exit testing process.
 
@@ -155,7 +150,7 @@ xfail.Exception = XFailed  # type: ignore
 
 
 def importorskip(
-    modname: str, minversion: Optional[str] = None, reason: Optional[str] = None
+    modname: str, minversion: str = None, reason: Optional[str] = None
 ) -> Any:
     """Imports and returns the requested module ``modname``, or skip the
     current test if the module cannot be imported.

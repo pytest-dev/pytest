@@ -1,6 +1,5 @@
 import os
 from typing import List
-from typing import Optional
 
 import py
 
@@ -108,10 +107,7 @@ CFG_PYTEST_SECTION = "[pytest] section in {filename} files is no longer supporte
 
 
 def determine_setup(
-    inifile: str,
-    args: List[str],
-    rootdir_cmd_arg: Optional[str] = None,
-    config: Optional["Config"] = None,
+    inifile: str, args: List[str], rootdir_cmd_arg: str = None, config: "Config" = None
 ):
     dirs = get_dirs_from_args(args)
     if inifile:

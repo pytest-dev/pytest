@@ -403,9 +403,7 @@ class ExceptionInfo(Generic[_E]):
 
     @classmethod
     def from_exc_info(
-        cls,
-        exc_info: Tuple["Type[_E]", "_E", TracebackType],
-        exprinfo: Optional[str] = None,
+        cls, exc_info: Tuple["Type[_E]", "_E", TracebackType], exprinfo: str = None
     ) -> "ExceptionInfo[_E]":
         """returns an ExceptionInfo for an existing exc_info tuple.
 
@@ -429,9 +427,7 @@ class ExceptionInfo(Generic[_E]):
         return cls(exc_info, _striptext)
 
     @classmethod
-    def from_current(
-        cls, exprinfo: Optional[str] = None
-    ) -> "ExceptionInfo[BaseException]":
+    def from_current(cls, exprinfo: str = None) -> "ExceptionInfo[BaseException]":
         """returns an ExceptionInfo matching the current traceback
 
         .. warning::

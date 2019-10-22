@@ -567,7 +567,7 @@ def raises(
 def raises(  # noqa: F811
     expected_exception: Union["Type[_E]", Tuple["Type[_E]", ...]],
     *args: Any,
-    match: Optional[Union[str, "Pattern"]] = None,
+    match: Union[str, "Pattern"] = None,
     **kwargs: Any
 ) -> Union["RaisesContext[_E]", Optional[_pytest._code.ExceptionInfo[_E]]]:
     r"""
@@ -725,7 +725,7 @@ class RaisesContext(Generic[_E]):
         self,
         expected_exception: Union["Type[_E]", Tuple["Type[_E]", ...]],
         message: str,
-        match_expr: Optional[Union[str, "Pattern"]] = None,
+        match_expr: Union[str, "Pattern"] = None,
     ) -> None:
         self.expected_exception = expected_exception
         self.message = message

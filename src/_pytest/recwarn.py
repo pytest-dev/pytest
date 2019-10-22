@@ -77,7 +77,7 @@ def warns(
 def warns(  # noqa: F811
     expected_warning: Union["Type[Warning]", Tuple["Type[Warning]", ...]],
     *args: Any,
-    match: Optional[Union[str, "Pattern"]] = None,
+    match: Union[str, "Pattern"] = None,
     **kwargs: Any
 ) -> Union["WarningsChecker", Any]:
     r"""Assert that code raises a particular class of warning.
@@ -207,7 +207,7 @@ class WarningsChecker(WarningsRecorder):
         expected_warning: Optional[
             Union["Type[Warning]", Tuple["Type[Warning]", ...]]
         ] = None,
-        match_expr: Optional[Union[str, "Pattern"]] = None,
+        match_expr: Union[str, "Pattern"] = None,
     ) -> None:
         super().__init__()
 
