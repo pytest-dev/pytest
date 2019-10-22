@@ -237,7 +237,7 @@ def test_setup_funcarg_setup_when_outer_scope_fails(testdir):
             "*2 error*",
         ]
     )
-    assert "xyz43" not in result.stdout.str()
+    result.stdout.no_fnmatch_line("*xyz43*")
 
 
 @pytest.mark.parametrize("arg", ["", "arg"])

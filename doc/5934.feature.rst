@@ -1,0 +1,1 @@
+``repr`` of ``ExceptionInfo`` objects has been improved to honor the ``__repr__`` method of the underlying exception.

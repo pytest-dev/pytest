@@ -36,7 +36,7 @@ then you can just invoke ``pytest`` directly:
 
     test_example.txt .                                                   [100%]
 
-    ========================= 1 passed in 0.12 seconds =========================
+    ============================ 1 passed in 0.12s =============================
 
 By default, pytest will collect ``test*.txt`` files looking for doctest directives, but you
 can pass additional globs using the ``--doctest-glob`` option (multi-allowed).
@@ -66,7 +66,7 @@ and functions, including from test modules:
     mymodule.py .                                                        [ 50%]
     test_example.txt .                                                   [100%]
 
-    ========================= 2 passed in 0.12 seconds =========================
+    ============================ 2 passed in 0.12s =============================
 
 You can make these changes permanent in your project by
 putting them into a pytest.ini file like this:
@@ -156,6 +156,8 @@ pytest also introduces new options:
   a string! This means that it may not be appropriate to enable globally in
   ``doctest_optionflags`` in your configuration file.
 
+  .. versionadded:: 5.1
+
 
 Continue on failure
 -------------------
@@ -218,15 +220,21 @@ namespace in which your doctests run. It is intended to be used within
 your own fixtures to provide the tests that use them with context.
 
 ``doctest_namespace`` is a standard ``dict`` object into which you
-place the objects you want to appear in the doctest namespace::
+place the objects you want to appear in the doctest namespace:
+
+.. code-block:: python
 
     # content of conftest.py
     import numpy
+
+
     @pytest.fixture(autouse=True)
     def add_np(doctest_namespace):
-        doctest_namespace['np'] = numpy
+        doctest_namespace["np"] = numpy
 
-which can then be used in your doctests directly::
+which can then be used in your doctests directly:
+
+.. code-block:: python
 
     # content of numpy.py
     def arange():
@@ -246,7 +254,9 @@ Skipping tests dynamically
 
 .. versionadded:: 4.4
 
-You can use ``pytest.skip`` to dynamically skip doctests. For example::
+You can use ``pytest.skip`` to dynamically skip doctests. For example:
+
+.. code-block:: text
 
     >>> import sys, pytest
     >>> if sys.platform.startswith('win'):

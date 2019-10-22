@@ -33,7 +33,7 @@ You can "mark" a test function with custom metadata like this:
         pass
 
 
-    class TestClass(object):
+    class TestClass:
         def test_method(self):
             pass
 
@@ -52,7 +52,7 @@ You can then restrict a test run to only run tests marked with ``webtest``:
 
     test_server.py::test_send_http PASSED                                [100%]
 
-    ================== 1 passed, 3 deselected in 0.12 seconds ==================
+    ===================== 1 passed, 3 deselected in 0.12s ======================
 
 Or the inverse, running all tests except the webtest ones:
 
@@ -69,7 +69,7 @@ Or the inverse, running all tests except the webtest ones:
     test_server.py::test_another PASSED                                  [ 66%]
     test_server.py::TestClass::test_method PASSED                        [100%]
 
-    ================== 3 passed, 1 deselected in 0.12 seconds ==================
+    ===================== 3 passed, 1 deselected in 0.12s ======================
 
 Selecting tests based on their node ID
 --------------------------------------
@@ -89,7 +89,7 @@ tests based on their module, class, method, or function name:
 
     test_server.py::TestClass::test_method PASSED                        [100%]
 
-    ========================= 1 passed in 0.12 seconds =========================
+    ============================ 1 passed in 0.12s =============================
 
 You can also select on the class:
 
@@ -104,7 +104,7 @@ You can also select on the class:
 
     test_server.py::TestClass::test_method PASSED                        [100%]
 
-    ========================= 1 passed in 0.12 seconds =========================
+    ============================ 1 passed in 0.12s =============================
 
 Or select multiple nodes:
 
@@ -120,7 +120,7 @@ Or select multiple nodes:
     test_server.py::TestClass::test_method PASSED                        [ 50%]
     test_server.py::test_send_http PASSED                                [100%]
 
-    ========================= 2 passed in 0.12 seconds =========================
+    ============================ 2 passed in 0.12s =============================
 
 .. _node-id:
 
@@ -159,7 +159,7 @@ select tests based on their names:
 
     test_server.py::test_send_http PASSED                                [100%]
 
-    ================== 1 passed, 3 deselected in 0.12 seconds ==================
+    ===================== 1 passed, 3 deselected in 0.12s ======================
 
 And you can also run all tests except the ones that match the keyword:
 
@@ -176,7 +176,7 @@ And you can also run all tests except the ones that match the keyword:
     test_server.py::test_another PASSED                                  [ 66%]
     test_server.py::TestClass::test_method PASSED                        [100%]
 
-    ================== 3 passed, 1 deselected in 0.12 seconds ==================
+    ===================== 3 passed, 1 deselected in 0.12s ======================
 
 Or to select "http" and "quick" tests:
 
@@ -192,7 +192,7 @@ Or to select "http" and "quick" tests:
     test_server.py::test_send_http PASSED                                [ 50%]
     test_server.py::test_something_quick PASSED                          [100%]
 
-    ================== 2 passed, 2 deselected in 0.12 seconds ==================
+    ===================== 2 passed, 2 deselected in 0.12s ======================
 
 .. note::
 
@@ -278,7 +278,7 @@ its test methods:
 
 
     @pytest.mark.webtest
-    class TestClass(object):
+    class TestClass:
         def test_startup(self):
             pass
 
@@ -295,7 +295,7 @@ Due to legacy reasons, it is possible to set the ``pytestmark`` attribute on a T
     import pytest
 
 
-    class TestClass(object):
+    class TestClass:
         pytestmark = pytest.mark.webtest
 
 or if you need to use multiple markers you can use a list:
@@ -305,7 +305,7 @@ or if you need to use multiple markers you can use a list:
     import pytest
 
 
-    class TestClass(object):
+    class TestClass:
         pytestmark = [pytest.mark.webtest, pytest.mark.slowtest]
 
 You can also set a module level marker::
@@ -336,7 +336,7 @@ apply a marker to an individual test instance:
 
     @pytest.mark.foo
     @pytest.mark.parametrize(
-        ("n", "expected"), [(1, 2), pytest.param((1, 3), marks=pytest.mark.bar), (2, 3)]
+        ("n", "expected"), [(1, 2), pytest.param(1, 3, marks=pytest.mark.bar), (2, 3)]
     )
     def test_increment(n, expected):
         assert n + 1 == expected
@@ -384,7 +384,7 @@ specifies via named environments:
         envnames = [mark.args[0] for mark in item.iter_markers(name="env")]
         if envnames:
             if item.config.getoption("-E") not in envnames:
-                pytest.skip("test requires env in %r" % envnames)
+                pytest.skip("test requires env in {!r}".format(envnames))
 
 A test file using this local plugin:
 
@@ -413,7 +413,7 @@ the test needs:
 
     test_someenv.py s                                                    [100%]
 
-    ======================== 1 skipped in 0.12 seconds =========================
+    ============================ 1 skipped in 0.12s ============================
 
 and here is one that specifies exactly the environment needed:
 
@@ -428,7 +428,7 @@ and here is one that specifies exactly the environment needed:
 
     test_someenv.py .                                                    [100%]
 
-    ========================= 1 passed in 0.12 seconds =========================
+    ============================ 1 passed in 0.12s =============================
 
 The ``--markers`` option always gives you a list of available markers:
 
@@ -499,7 +499,7 @@ The output is as follows:
     $ pytest -q -s
     Mark(name='my_marker', args=(<function hello_world at 0xdeadbeef>,), kwargs={})
     .
-    1 passed in 0.12 seconds
+    1 passed in 0.12s
 
 We can see that the custom marker has its argument set extended with the function ``hello_world``. This is the key difference between creating a custom marker as a callable, which invokes ``__call__`` behind the scenes, and using ``with_args``.
 
@@ -523,7 +523,7 @@ code you can read over all such settings.  Example:
 
 
     @pytest.mark.glob("class", x=2)
-    class TestClass(object):
+    class TestClass:
         @pytest.mark.glob("function", x=3)
         def test_something(self):
             pass
@@ -539,7 +539,7 @@ test function.  From a conftest file we can read it like this:
 
     def pytest_runtest_setup(item):
         for mark in item.iter_markers(name="glob"):
-            print("glob args=%s kwargs=%s" % (mark.args, mark.kwargs))
+            print("glob args={} kwargs={}".format(mark.args, mark.kwargs))
             sys.stdout.flush()
 
 Let's run this without capturing output and see what we get:
@@ -551,7 +551,7 @@ Let's run this without capturing output and see what we get:
     glob args=('class',) kwargs={'x': 2}
     glob args=('module',) kwargs={'x': 1}
     .
-    1 passed in 0.12 seconds
+    1 passed in 0.12s
 
 marking platform specific tests with pytest
 --------------------------------------------------------------
@@ -578,7 +578,7 @@ for your particular platform, you could use the following plugin:
         supported_platforms = ALL.intersection(mark.name for mark in item.iter_markers())
         plat = sys.platform
         if supported_platforms and plat not in supported_platforms:
-            pytest.skip("cannot run on platform %s" % (plat))
+            pytest.skip("cannot run on platform {}".format(plat))
 
 then tests will be skipped if they were specified for a different platform.
 Let's do a little test file to show how this looks like:
@@ -623,7 +623,7 @@ then you will see two tests skipped and two executed tests as expected:
 
     ========================= short test summary info ==========================
     SKIPPED [2] $REGENDOC_TMPDIR/conftest.py:13: cannot run on platform linux
-    =================== 2 passed, 2 skipped in 0.12 seconds ====================
+    ======================= 2 passed, 2 skipped in 0.12s =======================
 
 Note that if you specify a platform via the marker-command line option like this:
 
@@ -638,7 +638,7 @@ Note that if you specify a platform via the marker-command line option like this
 
     test_plat.py .                                                       [100%]
 
-    ================== 1 passed, 3 deselected in 0.12 seconds ==================
+    ===================== 1 passed, 3 deselected in 0.12s ======================
 
 then the unmarked-tests will not be run.  It is thus a way to restrict the run to the specific tests.
 
@@ -711,7 +711,7 @@ We can now use the ``-m option`` to select one set:
     test_module.py:8: in test_interface_complex
         assert 0
     E   assert 0
-    ================== 2 failed, 2 deselected in 0.12 seconds ==================
+    ===================== 2 failed, 2 deselected in 0.12s ======================
 
 or to select both "event" and "interface" tests:
 
@@ -739,4 +739,4 @@ or to select both "event" and "interface" tests:
     test_module.py:12: in test_event_simple
         assert 0
     E   assert 0
-    ================== 3 failed, 1 deselected in 0.12 seconds ==================
+    ===================== 3 failed, 1 deselected in 0.12s ======================

@@ -2,6 +2,7 @@ import functools
 import inspect
 import itertools
 import sys
+import warnings
 from collections import defaultdict
 from collections import deque
 from collections import OrderedDict
@@ -27,6 +28,7 @@ from _pytest.compat import getlocation
 from _pytest.compat import is_generator
 from _pytest.compat import NOTSET
 from _pytest.compat import safe_getattr
+from _pytest.deprecated import FIXTURE_POSITIONAL_ARGUMENTS
 from _pytest.outcomes import fail
 from _pytest.outcomes import TEST_OUTCOME
 
@@ -57,7 +59,6 @@ def pytest_sessionstart(session):
 
 
 scopename2class = {}  # type: Dict[str, Type[nodes.Node]]
-
 
 scope2props = dict(session=())  # type: Dict[str, Tuple[str, ...]]
 scope2props["package"] = ("fspath",)
@@ -792,6 +793,25 @@ def _teardown_yield_fixture(fixturefunc, it):
         )
 
 
+def _eval_scope_callable(scope_callable, fixture_name, config):
+    try:
+        result = scope_callable(fixture_name=fixture_name, config=config)
+    except Exception:
+        raise TypeError(
+            "Error evaluating {} while defining fixture '{}'.\n"
+            "Expected a function with the signature (*, fixture_name, config)".format(
+                scope_callable, fixture_name
+            )
+        )
+    if not isinstance(result, str):
+        fail(
+            "Expected {} to return a 'str' while defining fixture '{}', but it returned:\n"
+            "{!r}".format(scope_callable, fixture_name, result),
+            pytrace=False,
+        )
+    return result
+
+
 class FixtureDef:
     """ A container for a factory definition. """
 
@@ -811,6 +831,8 @@ class FixtureDef:
         self.has_location = baseid is not None
         self.func = func
         self.argname = argname
+        if callable(scope):
+            scope = _eval_scope_callable(scope, argname, fixturemanager.config)
         self.scope = scope
         self.scopenum = scope2index(
             scope or "function",
@@ -818,7 +840,7 @@ class FixtureDef:
             where=baseid,
         )
         self.params = params
-        self.argnames = getfuncargnames(func, is_method=unittest)
+        self.argnames = getfuncargnames(func, name=argname, is_method=unittest)
         self.unittest = unittest
         self.ids = ids
         self._finalizers = []
@@ -859,7 +881,7 @@ class FixtureDef:
             if argname != "request":
                 fixturedef.addfinalizer(functools.partial(self.finish, request=request))
 
-        my_cache_key = request.param_index
+        my_cache_key = self.cache_key(request)
         cached_result = getattr(self, "cached_result", None)
         if cached_result is not None:
             result, cache_key, err = cached_result
@@ -876,6 +898,9 @@ class FixtureDef:
 
         hook = self._fixturemanager.session.gethookproxy(request.node.fspath)
         return hook.pytest_fixture_setup(fixturedef=self, request=request)
+
+    def cache_key(self, request):
+        return request.param_index if not hasattr(request, "param") else request.param
 
     def __repr__(self):
         return "<FixtureDef argname={!r} scope={!r} baseid={!r}>".format(
@@ -897,6 +922,12 @@ def resolve_fixture_function(fixturedef, request):
         # request.instance so that code working with "fixturedef" behaves
         # as expected.
         if request.instance is not None:
+            # handle the case where fixture is defined not in a test class, but some other class
+            # (for example a plugin class with a fixture), see #2270
+            if hasattr(fixturefunc, "__self__") and not isinstance(
+                request.instance, fixturefunc.__self__.__class__
+            ):
+                return fixturefunc
             fixturefunc = getimfunc(fixturedef.func)
             if fixturefunc != fixturedef.func:
                 fixturefunc = fixturefunc.__get__(request.instance)
@@ -913,7 +944,7 @@ def pytest_fixture_setup(fixturedef, request):
         kwargs[argname] = result
 
     fixturefunc = resolve_fixture_function(fixturedef, request)
-    my_cache_key = request.param_index
+    my_cache_key = fixturedef.cache_key(request)
     try:
         result = call_fixture_func(fixturefunc, request, kwargs)
     except TEST_OUTCOME:
@@ -986,7 +1017,57 @@ class FixtureFunctionMarker:
         return function
 
 
-def fixture(scope="function", params=None, autouse=False, ids=None, name=None):
+FIXTURE_ARGS_ORDER = ("scope", "params", "autouse", "ids", "name")
+
+
+def _parse_fixture_args(callable_or_scope, *args, **kwargs):
+    arguments = {
+        "scope": "function",
+        "params": None,
+        "autouse": False,
+        "ids": None,
+        "name": None,
+    }
+    kwargs = {
+        key: value for key, value in kwargs.items() if arguments.get(key) != value
+    }
+
+    fixture_function = None
+    if isinstance(callable_or_scope, str):
+        args = list(args)
+        args.insert(0, callable_or_scope)
+    else:
+        fixture_function = callable_or_scope
+
+    positionals = set()
+    for positional, argument_name in zip(args, FIXTURE_ARGS_ORDER):
+        arguments[argument_name] = positional
+        positionals.add(argument_name)
+
+    duplicated_kwargs = {kwarg for kwarg in kwargs.keys() if kwarg in positionals}
+    if duplicated_kwargs:
+        raise TypeError(
+            "The fixture arguments are defined as positional and keyword: {}. "
+            "Use only keyword arguments.".format(", ".join(duplicated_kwargs))
+        )
+
+    if positionals:
+        warnings.warn(FIXTURE_POSITIONAL_ARGUMENTS, stacklevel=2)
+
+    arguments.update(kwargs)
+
+    return fixture_function, arguments
+
+
+def fixture(
+    callable_or_scope=None,
+    *args,
+    scope="function",
+    params=None,
+    autouse=False,
+    ids=None,
+    name=None
+):
     """Decorator to mark a fixture factory function.
 
     This decorator can be used, with or without parameters, to define a
@@ -1007,9 +1088,13 @@ def fixture(scope="function", params=None, autouse=False, ids=None, name=None):
 
     :arg scope: the scope for which this fixture is shared, one of
                 ``"function"`` (default), ``"class"``, ``"module"``,
-                ``"package"`` or ``"session"``.
+                ``"package"`` or ``"session"`` (``"package"`` is considered **experimental**
+                at this time).
 
-                ``"package"`` is considered **experimental** at this time.
+                This parameter may also be a callable which receives ``(fixture_name, config)``
+                as parameters, and must return a ``str`` with one of the values mentioned above.
+
+                See :ref:`dynamic scope` in the docs for more information.
 
     :arg params: an optional list of parameters which will cause multiple
                 invocations of the fixture function and all of the tests
@@ -1032,21 +1117,56 @@ def fixture(scope="function", params=None, autouse=False, ids=None, name=None):
                 ``fixture_<fixturename>`` and then use
                 ``@pytest.fixture(name='<fixturename>')``.
     """
-    if callable(scope) and params is None and autouse is False:
-        # direct decoration
-        return FixtureFunctionMarker("function", params, autouse, name=name)(scope)
-    if params is not None and not isinstance(params, (list, tuple)):
+    if params is not None:
         params = list(params)
+
+    fixture_function, arguments = _parse_fixture_args(
+        callable_or_scope,
+        *args,
+        scope=scope,
+        params=params,
+        autouse=autouse,
+        ids=ids,
+        name=name
+    )
+    scope = arguments.get("scope")
+    params = arguments.get("params")
+    autouse = arguments.get("autouse")
+    ids = arguments.get("ids")
+    name = arguments.get("name")
+
+    if fixture_function and params is None and autouse is False:
+        # direct decoration
+        return FixtureFunctionMarker(scope, params, autouse, name=name)(
+            fixture_function
+        )
+
     return FixtureFunctionMarker(scope, params, autouse, ids=ids, name=name)
 
 
-def yield_fixture(scope="function", params=None, autouse=False, ids=None, name=None):
+def yield_fixture(
+    callable_or_scope=None,
+    *args,
+    scope="function",
+    params=None,
+    autouse=False,
+    ids=None,
+    name=None
+):
     """ (return a) decorator to mark a yield-fixture factory function.
 
     .. deprecated:: 3.0
         Use :py:func:`pytest.fixture` directly instead.
     """
-    return fixture(scope=scope, params=params, autouse=autouse, ids=ids, name=name)
+    return fixture(
+        callable_or_scope,
+        *args,
+        scope=scope,
+        params=params,
+        autouse=autouse,
+        ids=ids,
+        name=name
+    )
 
 
 defaultfuncargprefixmarker = fixture()
@@ -1142,7 +1262,7 @@ class FixtureManager:
 
     def getfixtureinfo(self, node, func, cls, funcargs=True):
         if funcargs and not getattr(node, "nofuncargs", False):
-            argnames = getfuncargnames(func, cls=cls)
+            argnames = getfuncargnames(func, name=node.name, cls=cls)
         else:
             argnames = ()
 

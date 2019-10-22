@@ -1,5 +1,5 @@
-Reference
-=========
+API Reference
+=============
 
 This page contains the full reference to pytest's API.
 
@@ -26,6 +26,8 @@ pytest.skip
 ~~~~~~~~~~~
 
 .. autofunction:: _pytest.outcomes.skip(msg, [allow_module_level=False])
+
+.. _`pytest.importorskip ref`:
 
 pytest.importorskip
 ~~~~~~~~~~~~~~~~~~~
@@ -57,7 +59,7 @@ pytest.raises
 
 **Tutorial**: :ref:`assertraises`.
 
-.. autofunction:: pytest.raises(expected_exception: Exception, [match], [message])
+.. autofunction:: pytest.raises(expected_exception: Exception, [match])
     :with: excinfo
 
 pytest.deprecated_call
@@ -469,9 +471,11 @@ testdir
 This fixture provides a :class:`Testdir` instance useful for black-box testing of test files, making it ideal to
 test plugins.
 
-To use it, include in your top-most ``conftest.py`` file::
+To use it, include in your top-most ``conftest.py`` file:
 
-    pytest_plugins = 'pytester'
+.. code-block:: python
+
+    pytest_plugins = "pytester"
 
 
 
@@ -999,7 +1003,9 @@ passed multiple times. The expected format is ``name=value``. For example::
         [pytest]
         addopts = --maxfail=2 -rf  # exit after 2 failures, report fail info
 
-   issuing ``pytest test_hello.py`` actually means::
+   issuing ``pytest test_hello.py`` actually means:
+
+   .. code-block:: bash
 
         pytest --maxfail=2 -rf test_hello.py
 

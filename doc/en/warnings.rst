@@ -41,7 +41,7 @@ Running pytest now produces this output:
         warnings.warn(UserWarning("api v1, should use functions from v2"))
 
     -- Docs: https://docs.pytest.org/en/latest/warnings.html
-    =================== 1 passed, 1 warnings in 0.12 seconds ===================
+    ====================== 1 passed, 1 warnings in 0.12s =======================
 
 The ``-W`` flag can be passed to control which warnings will be displayed or even turn
 them into errors:
@@ -64,7 +64,7 @@ them into errors:
     E       UserWarning: api v1, should use functions from v2
 
     test_show_warnings.py:5: UserWarning
-    1 failed in 0.12 seconds
+    1 failed in 0.12s
 
 The same option can be set in the ``pytest.ini`` file using the ``filterwarnings`` ini option.
 For example, the configuration below will ignore all user warnings, but will transform
@@ -127,7 +127,7 @@ decorator or to all tests in a module by setting the ``pytestmark`` variable:
 *Credits go to Florian Schulze for the reference implementation in the* `pytest-warnings`_
 *plugin.*
 
-.. _`-W option`: https://docs.python.org/3/using/cmdline.html?highlight=#cmdoption-W
+.. _`-W option`: https://docs.python.org/3/using/cmdline.html#cmdoption-w
 .. _warnings.simplefilter: https://docs.python.org/3/library/warnings.html#warnings.simplefilter
 .. _`pytest-warnings`: https://github.com/fschulze/pytest-warnings
 
@@ -180,6 +180,7 @@ This will ignore all warnings of type ``DeprecationWarning`` where the start of 
 the regular expression ``".*U.*mode is deprecated"``.
 
 .. note::
+
     If warnings are configured at the interpreter level, using
     the `PYTHONWARNINGS <https://docs.python.org/3/using/cmdline.html#envvar-PYTHONWARNINGS>`_ environment variable or the
     ``-W`` command-line option, pytest will not configure any filters by default.
@@ -277,7 +278,9 @@ argument ``match`` to assert that the exception matches a text or regex::
       ...
     Failed: DID NOT WARN. No warnings of type ...UserWarning... was emitted...
 
-You can also call ``pytest.warns`` on a function or code string::
+You can also call ``pytest.warns`` on a function or code string:
+
+.. code-block:: python
 
     pytest.warns(expected_warning, func, *args, **kwargs)
     pytest.warns(expected_warning, "func(*args, **kwargs)")
@@ -404,14 +407,14 @@ defines an ``__init__`` constructor, as this prevents the class from being insta
         class Test:
 
     -- Docs: https://docs.pytest.org/en/latest/warnings.html
-    1 warnings in 0.12 seconds
+    1 warnings in 0.12s
 
 These warnings might be filtered using the same builtin mechanisms used to filter other types of warnings.
 
 Please read our :ref:`backwards-compatibility` to learn how we proceed about deprecating and eventually removing
 features.
 
-The following warning types ares used by pytest and are part of the public API:
+The following warning types are used by pytest and are part of the public API:
 
 .. autoclass:: pytest.PytestWarning
 

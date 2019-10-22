@@ -1,5 +1,4 @@
 import atexit
-import errno
 import fnmatch
 import itertools
 import operator
@@ -7,12 +6,15 @@ import os
 import shutil
 import sys
 import uuid
+import warnings
+from functools import partial
 from os.path import expanduser
 from os.path import expandvars
 from os.path import isabs
 from os.path import sep
 from posixpath import sep as posix_sep
 
+from _pytest.warning_types import PytestWarning
 
 if sys.version_info[:2] >= (3, 6):
     from pathlib import Path, PurePath
@@ -32,17 +34,53 @@ def ensure_reset_dir(path):
     ensures the given path is an empty directory
     """
     if path.exists():
-        rmtree(path, force=True)
+        rm_rf(path)
     path.mkdir()
 
 
-def rmtree(path, force=False):
-    if force:
-        # NOTE: ignore_errors might leave dead folders around.
-        #       Python needs a rm -rf as a followup.
-        shutil.rmtree(str(path), ignore_errors=True)
-    else:
-        shutil.rmtree(str(path))
+def on_rm_rf_error(func, path: str, exc, *, start_path):
+    """Handles known read-only errors during rmtree."""
+    excvalue = exc[1]
+
+    if not isinstance(excvalue, PermissionError):
+        warnings.warn(
+            PytestWarning("(rm_rf) error removing {}: {}".format(path, excvalue))
+        )
+        return
+
+    if func not in (os.rmdir, os.remove, os.unlink):
+        warnings.warn(
+            PytestWarning("(rm_rf) error removing {}: {}".format(path, excvalue))
+        )
+        return
+
+    # Chmod + retry.
+    import stat
+
+    def chmod_rw(p: str):
+        mode = os.stat(p).st_mode
+        os.chmod(p, mode | stat.S_IRUSR | stat.S_IWUSR)
+
+    # For files, we need to recursively go upwards in the directories to
+    # ensure they all are also writable.
+    p = Path(path)
+    if p.is_file():
+        for parent in p.parents:
+            chmod_rw(str(parent))
+            # stop when we reach the original path passed to rm_rf
+            if parent == start_path:
+                break
+    chmod_rw(str(path))
+
+    func(path)
+
+
+def rm_rf(path: Path):
+    """Remove the path contents recursively, even if some elements
+    are read-only.
+    """
+    onerror = partial(on_rm_rf_error, start_path=path)
+    shutil.rmtree(str(path), onerror=onerror)
 
 
 def find_prefixed(root, prefix):
@@ -82,9 +120,9 @@ def _force_symlink(root, target, link_to):
     """helper to create the current symlink
 
     it's full of race conditions that are reasonably ok to ignore
-    for the context of best effort linking to the latest testrun
+    for the context of best effort linking to the latest test run
 
-    the presumption being thatin case of much parallelism
+    the presumption being that in case of much parallelism
     the inaccuracy is going to be acceptable
     """
     current_symlink = root.joinpath(target)
@@ -124,14 +162,8 @@ def create_cleanup_lock(p):
     lock_path = get_lock_path(p)
     try:
         fd = os.open(str(lock_path), os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o644)
-    except OSError as e:
-        if e.errno == errno.EEXIST:
-            raise EnvironmentError(
-                "cannot create lockfile in {path}".format(path=p)
-            ) from e
-
-        else:
-            raise
+    except FileExistsError as e:
+        raise EnvironmentError("cannot create lockfile in {path}".format(path=p)) from e
     else:
         pid = os.getpid()
         spid = str(pid).encode()
@@ -168,7 +200,7 @@ def maybe_delete_a_numbered_dir(path):
 
         garbage = parent.joinpath("garbage-{}".format(uuid.uuid4()))
         path.rename(garbage)
-        rmtree(garbage, force=True)
+        rm_rf(garbage)
     except (OSError, EnvironmentError):
         #  known races:
         #  * other process did a cleanup at the same time

@@ -23,6 +23,7 @@ from _pytest.compat import getfslineno
 from _pytest.compat import getimfunc
 from _pytest.compat import getlocation
 from _pytest.compat import is_generator
+from _pytest.compat import iscoroutinefunction
 from _pytest.compat import NOTSET
 from _pytest.compat import REGEX_TYPE
 from _pytest.compat import safe_getattr
@@ -150,19 +151,25 @@ def pytest_configure(config):
 
 @hookimpl(trylast=True)
 def pytest_pyfunc_call(pyfuncitem):
-    testfunction = pyfuncitem.obj
-    iscoroutinefunction = getattr(inspect, "iscoroutinefunction", None)
-    if iscoroutinefunction is not None and iscoroutinefunction(testfunction):
-        msg = "Coroutine functions are not natively supported and have been skipped.\n"
+    def async_warn():
+        msg = "async def functions are not natively supported and have been skipped.\n"
         msg += "You need to install a suitable plugin for your async framework, for example:\n"
         msg += "  - pytest-asyncio\n"
         msg += "  - pytest-trio\n"
         msg += "  - pytest-tornasync"
         warnings.warn(PytestUnhandledCoroutineWarning(msg.format(pyfuncitem.nodeid)))
-        skip(msg="coroutine function and no async plugin installed (see warnings)")
+        skip(msg="async def function and no async plugin installed (see warnings)")
+
+    testfunction = pyfuncitem.obj
+    if iscoroutinefunction(testfunction) or (
+        sys.version_info >= (3, 6) and inspect.isasyncgenfunction(testfunction)
+    ):
+        async_warn()
     funcargs = pyfuncitem.funcargs
     testargs = {arg: funcargs[arg] for arg in pyfuncitem._fixtureinfo.argnames}
-    testfunction(**testargs)
+    result = testfunction(**testargs)
+    if hasattr(result, "__await__") or hasattr(result, "__aiter__"):
+        async_warn()
     return True
 
 
@@ -873,18 +880,6 @@ class CallSpec2:
         self._idlist.append(id)
         self.marks.extend(normalize_mark_list(marks))
 
-    def setall(self, funcargs, id, param):
-        for x in funcargs:
-            self._checkargnotcontained(x)
-        self.funcargs.update(funcargs)
-        if id is not NOTSET:
-            self._idlist.append(id)
-        if param is not NOTSET:
-            assert self._globalparam is NOTSET
-            self._globalparam = param
-        for arg in funcargs:
-            self._arg2scopenum[arg] = fixtures.scopenum_function
-
 
 class Metafunc(fixtures.FuncargnamesCompatAttr):
     """
@@ -1164,7 +1159,7 @@ def _idval(val, argname, idx, idfn, item, config):
         return str(val)
     elif isinstance(val, REGEX_TYPE):
         return ascii_escaped(val.pattern)
-    elif enum is not None and isinstance(val, enum.Enum):
+    elif isinstance(val, enum.Enum):
         return str(val)
     elif (inspect.isclass(val) or inspect.isfunction(val)) and hasattr(val, "__name__"):
         return val.__name__

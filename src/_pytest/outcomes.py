@@ -18,16 +18,19 @@ class OutcomeException(BaseException):
     """
 
     def __init__(self, msg: Optional[str] = None, pytrace: bool = True) -> None:
+        if msg is not None and not isinstance(msg, str):
+            error_msg = (
+                "{} expected string as 'msg' parameter, got '{}' instead.\n"
+                "Perhaps you meant to use a mark?"
+            )
+            raise TypeError(error_msg.format(type(self).__name__, type(msg).__name__))
         BaseException.__init__(self, msg)
         self.msg = msg
         self.pytrace = pytrace
 
     def __repr__(self) -> str:
         if self.msg:
-            val = self.msg
-            if isinstance(val, bytes):
-                val = val.decode("UTF-8", errors="replace")
-            return val
+            return self.msg
         return "<{} instance>".format(self.__class__.__name__)
 
     __str__ = __repr__
@@ -154,14 +157,21 @@ xfail.Exception = XFailed  # type: ignore
 def importorskip(
     modname: str, minversion: Optional[str] = None, reason: Optional[str] = None
 ) -> Any:
-    """Imports and returns the requested module ``modname``, or skip the current test
-    if the module cannot be imported.
+    """Imports and returns the requested module ``modname``, or skip the
+    current test if the module cannot be imported.
 
     :param str modname: the name of the module to import
-    :param str minversion: if given, the imported module ``__version__`` attribute must be
-        at least this minimal version, otherwise the test is still skipped.
-    :param str reason: if given, this reason is shown as the message when the module
-        cannot be imported.
+    :param str minversion: if given, the imported module's ``__version__``
+        attribute must be at least this minimal version, otherwise the test is
+        still skipped.
+    :param str reason: if given, this reason is shown as the message when the
+        module cannot be imported.
+    :returns: The imported module. This should be assigned to its canonical
+        name.
+
+    Example::
+
+        docutils = pytest.importorskip("docutils")
     """
     import warnings
 

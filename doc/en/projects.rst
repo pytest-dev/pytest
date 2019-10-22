@@ -28,7 +28,6 @@ Here are some examples of projects using ``pytest`` (please send notes via :ref:
 * `sentry <https://getsentry.com/welcome/>`_, realtime app-maintenance and exception tracking
 * `Astropy <http://www.astropy.org/>`_ and `affiliated packages <http://www.astropy.org/affiliated/index.html>`_
 * `tox <http://testrun.org/tox>`_, virtualenv/Hudson integration tool
-* `PIDA <http://pida.co.uk>`_ framework for integrated development
 * `PyPM <http://code.activestate.com/pypm/>`_ ActiveState's package manager
 * `Fom <http://packages.python.org/Fom/>`_ a fluid object mapper for FluidDB
 * `applib <https://github.com/ActiveState/applib>`_ cross-platform utilities
@@ -37,10 +36,10 @@ Here are some examples of projects using ``pytest`` (please send notes via :ref:
 * `mwlib <https://pypi.org/project/mwlib/>`_ mediawiki parser and utility library
 * `The Translate Toolkit <http://translate.sourceforge.net/wiki/toolkit/index>`_ for localization and conversion
 * `execnet <http://codespeak.net/execnet>`_ rapid multi-Python deployment
-* `pylib <https://py.readthedocs.io>`_ cross-platform path, IO, dynamic code library
-* `Pacha <http://pacha.cafepais.com/>`_ configuration management in five minutes
+* `pylib <https://pylib.readthedocs.io/en/stable/>`_ cross-platform path, IO, dynamic code library
 * `bbfreeze <https://pypi.org/project/bbfreeze/>`_ create standalone executables from Python scripts
-* `pdb++ <http://bitbucket.org/antocuni/pdb>`_ a fancier version of PDB
+* `pdb++ <https://github.com/pdbpp/pdbpp>`_ a fancier version of PDB
+* `pudb <https://github.com/inducer/pudb>`_ full-screen console debugger for python
 * `py-s3fuse <http://code.google.com/p/py-s3fuse/>`_ Amazon S3 FUSE based filesystem
 * `waskr <http://code.google.com/p/waskr/>`_ WSGI Stats Middleware
 * `guachi <http://code.google.com/p/guachi/>`_ global persistent configs for Python modules
@@ -77,7 +76,7 @@ Some organisations using pytest
 * `Tandberg <http://www.tandberg.com/>`_
 * `Shootq <http://web.shootq.com/>`_
 * `Stups department of Heinrich Heine University Duesseldorf <http://www.stups.uni-duesseldorf.de/projects.php>`_
-* `cellzome <http://www.cellzome.com/>`_
+* cellzome
 * `Open End, Gothenborg <http://www.openend.se>`_
 * `Laboratory of Bioinformatics, Warsaw <http://genesilico.pl/>`_
 * `merlinux, Germany <http://merlinux.eu>`_

@@ -16,7 +16,7 @@ REGENDOC_ARGS := \
 	--normalize "/[ \t]+\n/\n/" \
 	--normalize "~\$$REGENDOC_TMPDIR~/home/sweet/project~" \
 	--normalize "~/path/to/example~/home/sweet/project~" \
-	--normalize "/in \d+.\d+ seconds/in 0.12 seconds/" \
+	--normalize "/in \d.\d\ds/in 0.12s/" \
 	--normalize "@/tmp/pytest-of-.*/pytest-\d+@PYTEST_TMPDIR@" \
 	--normalize "@pytest-(\d+)\\.[^ ,]+@pytest-\1.x.y@" \
 	--normalize "@(This is pytest version )(\d+)\\.[^ ,]+@\1\2.x.y@" \

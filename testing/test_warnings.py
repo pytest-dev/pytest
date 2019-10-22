@@ -622,3 +622,21 @@ def test_group_warnings_by_message(testdir):
     warning_code = 'warnings.warn(UserWarning("foo"))'
     assert warning_code in result.stdout.str()
     assert result.stdout.str().count(warning_code) == 1
+
+
+def test_pytest_configure_warning(testdir, recwarn):
+    """Issue 5115."""
+    testdir.makeconftest(
+        """
+        def pytest_configure():
+            import warnings
+
+            warnings.warn("from pytest_configure")
+        """
+    )
+
+    result = testdir.runpytest()
+    assert result.ret == 5
+    assert "INTERNALERROR" not in result.stderr.str()
+    warning = recwarn.pop()
+    assert str(warning.message) == "from pytest_configure"

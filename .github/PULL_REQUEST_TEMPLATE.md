@@ -6,7 +6,7 @@ Here is a quick checklist that should be present in PRs.
 -->
 
 - [ ] Target the `master` branch for bug fixes, documentation updates and trivial changes.
-- [ ] Target the `features` branch for new features and removals/deprecations.
+- [ ] Target the `features` branch for new features, improvements, and removals/deprecations.
 - [ ] Include documentation when adding new features.
 - [ ] Include new tests or update existing tests when applicable.
 

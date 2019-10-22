@@ -1,8 +1,6 @@
 """ interactive debugging with PDB, the Python Debugger. """
 import argparse
-import pdb
 import sys
-from doctest import UnexpectedException
 
 from _pytest import outcomes
 from _pytest.config import hookimpl
@@ -45,6 +43,8 @@ def pytest_addoption(parser):
 
 
 def pytest_configure(config):
+    import pdb
+
     if config.getvalue("trace"):
         config.pluginmanager.register(PdbTrace(), "pdbtrace")
     if config.getvalue("usepdb"):
@@ -87,6 +87,8 @@ class pytestPDB:
     @classmethod
     def _import_pdb_cls(cls, capman):
         if not cls._config:
+            import pdb
+
             # Happens when using pytest.set_trace outside of a test.
             return pdb.Pdb
 
@@ -113,6 +115,8 @@ class pytestPDB:
                     "--pdbcls: could not import {!r}: {}".format(value, exc)
                 )
         else:
+            import pdb
+
             pdb_cls = pdb.Pdb
 
         wrapped_cls = cls._get_pdb_wrapper_class(pdb_cls, capman)
@@ -313,6 +317,8 @@ def _enter_pdb(node, excinfo, rep):
 
 
 def _postmortem_traceback(excinfo):
+    from doctest import UnexpectedException
+
     if isinstance(excinfo.value, UnexpectedException):
         # A doctest.UnexpectedException is not useful for post_mortem.
         # Use the underlying exception instead:

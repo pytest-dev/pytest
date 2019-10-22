@@ -5,7 +5,7 @@ from setuptools import setup
 INSTALL_REQUIRES = [
     "py>=1.5.0",
     "packaging",
-    "attrs>=17.4.0",
+    "attrs>=17.4.0",  # should match oldattrs tox env.
     "more-itertools>=4.0.0",
     "atomicwrites>=1.0",
     'pathlib2>=2.2.0;python_version<"3.6"',
@@ -21,7 +21,6 @@ def main():
         use_scm_version={"write_to": "src/_pytest/_version.py"},
         setup_requires=["setuptools-scm", "setuptools>=40.0"],
         package_dir={"": "src"},
-        # fmt: off
         extras_require={
             "testing": [
                 "argcomplete",
@@ -29,9 +28,9 @@ def main():
                 "mock",
                 "nose",
                 "requests",
-            ],
+                "xmlschema",
+            ]
         },
-        # fmt: on
         install_requires=INSTALL_REQUIRES,
     )
 

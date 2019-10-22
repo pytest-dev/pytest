@@ -20,6 +20,8 @@ from _pytest.runner import collect_one_node
 
 class ExitCode(enum.IntEnum):
     """
+    .. versionadded:: 5.0
+
     Encodes the valid exit codes by pytest.
 
     Currently users and plugins may supply other exit codes as well.
@@ -562,7 +564,13 @@ class Session(nodes.FSCollector):
             # Module itself, so just use that. If this special case isn't taken, then all
             # the files in the package will be yielded.
             if argpath.basename == "__init__.py":
-                yield next(m[0].collect())
+                try:
+                    yield next(m[0].collect())
+                except StopIteration:
+                    # The package collects nothing with only an __init__.py
+                    # file in it, which gets ignored by the default
+                    # "python_files" option.
+                    pass
                 return
             yield from m
 

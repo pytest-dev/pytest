@@ -1,4 +1,5 @@
 import pytest
+from _pytest.main import ExitCode
 
 
 @pytest.fixture(params=["--setup-only", "--setup-plan", "--setup-show"], scope="module")
@@ -6,8 +7,8 @@ def mode(request):
     return request.param
 
 
-def test_show_only_active_fixtures(testdir, mode):
-    p = testdir.makepyfile(
+def test_show_only_active_fixtures(testdir, mode, dummy_yaml_custom_test):
+    testdir.makepyfile(
         '''
         import pytest
         @pytest.fixture
@@ -21,13 +22,13 @@ def test_show_only_active_fixtures(testdir, mode):
     '''
     )
 
-    result = testdir.runpytest(mode, p)
+    result = testdir.runpytest(mode)
     assert result.ret == 0
 
     result.stdout.fnmatch_lines(
         ["*SETUP    F arg1*", "*test_arg1 (fixtures used: arg1)*", "*TEARDOWN F arg1*"]
     )
-    assert "_arg0" not in result.stdout.str()
+    result.stdout.no_fnmatch_line("*_arg0*")
 
 
 def test_show_different_scopes(testdir, mode):
@@ -267,3 +268,27 @@ def test_show_fixtures_and_execute_test(testdir):
     result.stdout.fnmatch_lines(
         ["*SETUP    F arg*", "*test_arg (fixtures used: arg)F*", "*TEARDOWN F arg*"]
     )
+
+
+def test_setup_show_with_KeyboardInterrupt_in_test(testdir):
+    p = testdir.makepyfile(
+        """
+        import pytest
+        @pytest.fixture
+        def arg():
+            pass
+        def test_arg(arg):
+            raise KeyboardInterrupt()
+    """
+    )
+    result = testdir.runpytest("--setup-show", p, no_reraise_ctrlc=True)
+    result.stdout.fnmatch_lines(
+        [
+            "*SETUP    F arg*",
+            "*test_arg (fixtures used: arg)*",
+            "*TEARDOWN F arg*",
+            "*! KeyboardInterrupt !*",
+            "*= no tests ran in *",
+        ]
+    )
+    assert result.ret == ExitCode.INTERRUPTED

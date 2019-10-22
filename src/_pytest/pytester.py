@@ -340,7 +340,10 @@ def _config_for_test():
     config._ensure_unconfigure()  # cleanup, e.g. capman closing tmpfiles.
 
 
-rex_outcome = re.compile(r"(\d+) ([\w-]+)")
+# regex to match the session duration string in the summary: "74.34s"
+rex_session_duration = re.compile(r"\d+\.\d\ds")
+# regex to match all the counts and phrases in the summary line: "34 passed, 111 skipped"
+rex_outcome = re.compile(r"(\d+) (\w+)")
 
 
 class RunResult:
@@ -348,15 +351,14 @@ class RunResult:
 
     Attributes:
 
-    :ret: the return value
-    :outlines: list of lines captured from stdout
-    :errlines: list of lines captures from stderr
-    :stdout: :py:class:`LineMatcher` of stdout, use ``stdout.str()`` to
+    :ivar ret: the return value
+    :ivar outlines: list of lines captured from stdout
+    :ivar errlines: list of lines captured from stderr
+    :ivar stdout: :py:class:`LineMatcher` of stdout, use ``stdout.str()`` to
        reconstruct stdout or the commonly used ``stdout.fnmatch_lines()``
        method
-    :stderr: :py:class:`LineMatcher` of stderr
-    :duration: duration in seconds
-
+    :ivar stderr: :py:class:`LineMatcher` of stderr
+    :ivar duration: duration in seconds
     """
 
     def __init__(self, ret, outlines, errlines, duration):
@@ -379,14 +381,11 @@ class RunResult:
 
         """
         for line in reversed(self.outlines):
-            if "seconds" in line:
+            if rex_session_duration.search(line):
                 outcomes = rex_outcome.findall(line)
-                if outcomes:
-                    d = {}
-                    for num, cat in outcomes:
-                        d[cat] = int(num)
-                    return d
-        raise ValueError("Pytest terminal report not found")
+                return {noun: int(count) for (count, noun) in outcomes}
+
+        raise ValueError("Pytest terminal summary report not found")
 
     def assert_outcomes(
         self, passed=0, skipped=0, failed=0, error=0, xpassed=0, xfailed=0
@@ -454,9 +453,9 @@ class Testdir:
 
     Attributes:
 
-    :tmpdir: The :py:class:`py.path.local` instance of the temporary directory.
+    :ivar tmpdir: The :py:class:`py.path.local` instance of the temporary directory.
 
-    :plugins: A list of plugins to use with :py:meth:`parseconfig` and
+    :ivar plugins: A list of plugins to use with :py:meth:`parseconfig` and
        :py:meth:`runpytest`.  Initially this is an empty list but plugins can
        be added to the list.  The type of items to add to the list depends on
        the method using them so refer to them for details.
@@ -630,6 +629,12 @@ class Testdir:
         return p
 
     def copy_example(self, name=None):
+        """Copy file from project's directory into the testdir.
+
+        :param str name: The name of the file to copy.
+        :return: path to the copied directory (inside ``self.tmpdir``).
+
+        """
         import warnings
         from _pytest.warning_types import PYTESTER_COPY_EXAMPLE
 
@@ -1188,6 +1193,8 @@ class Testdir:
             pytest.skip("pypy-64 bit not supported")
         if sys.platform.startswith("freebsd"):
             pytest.xfail("pexpect does not work reliably on freebsd")
+        if not hasattr(pexpect, "spawn"):
+            pytest.skip("pexpect.spawn not available")
         logfile = self.tmpdir.join("spawn.out").open("wb")
 
         # Do not load user config.
@@ -1311,8 +1318,7 @@ class LineMatcher:
 
         The argument is a list of lines which have to match and can use glob
         wildcards.  If they do not match a pytest.fail() is called.  The
-        matches and non-matches are also printed on stdout.
-
+        matches and non-matches are also shown as part of the error message.
         """
         __tracebackhide__ = True
         self._match_lines(lines2, fnmatch, "fnmatch")
@@ -1323,8 +1329,7 @@ class LineMatcher:
         The argument is a list of lines which have to match using ``re.match``.
         If they do not match a pytest.fail() is called.
 
-        The matches and non-matches are also printed on stdout.
-
+        The matches and non-matches are also shown as part of the error message.
         """
         __tracebackhide__ = True
         self._match_lines(lines2, lambda name, pat: re.match(pat, name), "re.match")
@@ -1367,3 +1372,40 @@ class LineMatcher:
             else:
                 self._log("remains unmatched: {!r}".format(line))
                 pytest.fail(self._log_text)
+
+    def no_fnmatch_line(self, pat):
+        """Ensure captured lines do not match the given pattern, using ``fnmatch.fnmatch``.
+
+        :param str pat: the pattern to match lines.
+        """
+        __tracebackhide__ = True
+        self._no_match_line(pat, fnmatch, "fnmatch")
+
+    def no_re_match_line(self, pat):
+        """Ensure captured lines do not match the given pattern, using ``re.match``.
+
+        :param str pat: the regular expression to match lines.
+        """
+        __tracebackhide__ = True
+        self._no_match_line(pat, lambda name, pat: re.match(pat, name), "re.match")
+
+    def _no_match_line(self, pat, match_func, match_nickname):
+        """Ensure captured lines does not have a the given pattern, using ``fnmatch.fnmatch``
+
+        :param str pat: the pattern to match lines
+        """
+        __tracebackhide__ = True
+        nomatch_printed = False
+        try:
+            for line in self.lines:
+                if match_func(line, pat):
+                    self._log("%s:" % match_nickname, repr(pat))
+                    self._log("   with:", repr(line))
+                    pytest.fail(self._log_text)
+                else:
+                    if not nomatch_printed:
+                        self._log("nomatch:", repr(pat))
+                        nomatch_printed = True
+                    self._log("    and:", repr(line))
+        finally:
+            self._log_output = []

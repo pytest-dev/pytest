@@ -65,7 +65,7 @@ Let's run this without supplying our new option:
     test_sample.py:6: AssertionError
     --------------------------- Captured stdout call ---------------------------
     first
-    1 failed in 0.12 seconds
+    1 failed in 0.12s
 
 And now with supplying a command line option:
 
@@ -89,7 +89,7 @@ And now with supplying a command line option:
     test_sample.py:6: AssertionError
     --------------------------- Captured stdout call ---------------------------
     second
-    1 failed in 0.12 seconds
+    1 failed in 0.12s
 
 You can see that the command line option arrived in our test.  This
 completes the basic pattern.  However, one often rather wants to process
@@ -132,7 +132,7 @@ directory with the above conftest.py:
     rootdir: $REGENDOC_TMPDIR
     collected 0 items
 
-    ======================= no tests ran in 0.12 seconds =======================
+    ========================== no tests ran in 0.12s ===========================
 
 .. _`excontrolskip`:
 
@@ -201,7 +201,7 @@ and when running it will see a skipped "slow" test:
 
     ========================= short test summary info ==========================
     SKIPPED [1] test_module.py:8: need --runslow option to run
-    =================== 1 passed, 1 skipped in 0.12 seconds ====================
+    ======================= 1 passed, 1 skipped in 0.12s =======================
 
 Or run it including the ``slow`` marked test:
 
@@ -216,7 +216,7 @@ Or run it including the ``slow`` marked test:
 
     test_module.py ..                                                    [100%]
 
-    ========================= 2 passed in 0.12 seconds =========================
+    ============================ 2 passed in 0.12s =============================
 
 Writing well integrated assertion helpers
 --------------------------------------------------
@@ -238,7 +238,7 @@ Example:
     def checkconfig(x):
         __tracebackhide__ = True
         if not hasattr(x, "config"):
-            pytest.fail("not configured: %s" % (x,))
+            pytest.fail("not configured: {}".format(x))
 
 
     def test_something():
@@ -261,7 +261,7 @@ Let's run our little function:
     E       Failed: not configured: 42
 
     test_checkconfig.py:11: Failed
-    1 failed in 0.12 seconds
+    1 failed in 0.12s
 
 If you only want to hide certain exceptions, you can set ``__tracebackhide__``
 to a callable which gets the ``ExceptionInfo`` object. You can for example use
@@ -280,7 +280,7 @@ this to make sure unexpected exception types aren't hidden:
     def checkconfig(x):
         __tracebackhide__ = operator.methodcaller("errisinstance", ConfigException)
         if not hasattr(x, "config"):
-            raise ConfigException("not configured: %s" % (x,))
+            raise ConfigException("not configured: {}".format(x))
 
 
     def test_something():
@@ -358,7 +358,7 @@ which will add the string to the test header accordingly:
     rootdir: $REGENDOC_TMPDIR
     collected 0 items
 
-    ======================= no tests ran in 0.12 seconds =======================
+    ========================== no tests ran in 0.12s ===========================
 
 .. regendoc:wipe
 
@@ -388,7 +388,7 @@ which will add info only when run with "--v":
     rootdir: $REGENDOC_TMPDIR
     collecting ... collected 0 items
 
-    ======================= no tests ran in 0.12 seconds =======================
+    ========================== no tests ran in 0.12s ===========================
 
 and nothing when run plainly:
 
@@ -401,7 +401,7 @@ and nothing when run plainly:
     rootdir: $REGENDOC_TMPDIR
     collected 0 items
 
-    ======================= no tests ran in 0.12 seconds =======================
+    ========================== no tests ran in 0.12s ===========================
 
 profiling test duration
 --------------------------
@@ -447,7 +447,7 @@ Now we can profile which test functions execute the slowest:
     0.30s call     test_some_are_slow.py::test_funcslow2
     0.20s call     test_some_are_slow.py::test_funcslow1
     0.10s call     test_some_are_slow.py::test_funcfast
-    ========================= 3 passed in 0.12 seconds =========================
+    ============================ 3 passed in 0.12s =============================
 
 incremental testing - test steps
 ---------------------------------------------------
@@ -478,7 +478,7 @@ an ``incremental`` marker which is to be used on classes:
         if "incremental" in item.keywords:
             previousfailed = getattr(item.parent, "_previousfailed", None)
             if previousfailed is not None:
-                pytest.xfail("previous test failed (%s)" % previousfailed.name)
+                pytest.xfail("previous test failed ({})".format(previousfailed.name))
 
 These two hook implementations work together to abort incremental-marked
 tests in a class.  Here is a test module example:
@@ -491,7 +491,7 @@ tests in a class.  Here is a test module example:
 
 
     @pytest.mark.incremental
-    class TestUserHandling(object):
+    class TestUserHandling:
         def test_login(self):
             pass
 
@@ -531,7 +531,7 @@ If we run this:
     ========================= short test summary info ==========================
     XFAIL test_step.py::TestUserHandling::test_deletion
       reason: previous test failed (test_modification)
-    ============== 1 failed, 2 passed, 1 xfailed in 0.12 seconds ===============
+    ================== 1 failed, 2 passed, 1 xfailed in 0.12s ==================
 
 We'll see that ``test_deletion`` was not executed because ``test_modification``
 failed.  It is reported as an "expected failure".
@@ -556,7 +556,7 @@ Here is an example for making a ``db`` fixture available in a directory:
     import pytest
 
 
-    class DB(object):
+    class DB:
         pass
 
 
@@ -644,7 +644,7 @@ We can run this:
     E       assert 0
 
     a/test_db2.py:2: AssertionError
-    ========== 3 failed, 2 passed, 1 xfailed, 1 error in 0.12 seconds ==========
+    ============= 3 failed, 2 passed, 1 xfailed, 1 error in 0.12s ==============
 
 The two test modules in the ``a`` directory see the same ``db`` fixture instance
 while the one test in the sister-directory ``b`` doesn't see it.  We could of course
@@ -684,7 +684,7 @@ case we just write some information out to a ``failures`` file:
             with open("failures", mode) as f:
                 # let's also access a fixture for the fun of it
                 if "tmpdir" in item.fixturenames:
-                    extra = " (%s)" % item.funcargs["tmpdir"]
+                    extra = " ({})".format(item.funcargs["tmpdir"])
                 else:
                     extra = ""
 
@@ -733,7 +733,7 @@ and run them:
     E       assert 0
 
     test_module.py:6: AssertionError
-    ========================= 2 failed in 0.12 seconds =========================
+    ============================ 2 failed in 0.12s =============================
 
 you will have a "failures" file which contains the failing test ids:
 
@@ -848,7 +848,7 @@ and run it:
     E       assert 0
 
     test_module.py:19: AssertionError
-    ==================== 2 failed, 1 error in 0.12 seconds =====================
+    ======================== 2 failed, 1 error in 0.12s ========================
 
 You'll see that the fixture finalizers could use the precise reporting
 information.

@@ -22,7 +22,9 @@ Consider this file and directory layout::
              |- test_foo.py
 
 
-When executing::
+When executing:
+
+.. code-block:: bash
 
     pytest root/
 
@@ -54,7 +56,9 @@ Consider this file and directory layout::
              |- test_foo.py
 
 
-When executing::
+When executing:
+
+.. code-block:: bash
 
     pytest root/
 
@@ -67,6 +71,8 @@ For this reason this layout cannot have test modules with the same name, as they
 imported in the global import namespace.
 
 This is also discussed in details in :ref:`test discovery`.
+
+.. _`pytest vs python -m pytest`:
 
 Invoking ``pytest`` versus ``python -m pytest``
 -----------------------------------------------

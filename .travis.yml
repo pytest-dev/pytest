@@ -13,6 +13,10 @@ env:
   global:
     - PYTEST_ADDOPTS=-vv
 
+# setuptools-scm needs all tags in order to obtain a proper version
+git:
+  depth: false
+
 install:
   - python -m pip install --upgrade --pre tox
 
@@ -31,7 +35,9 @@ jobs:
         - test $(python -c 'import sys; print("%d%d" % sys.version_info[0:2])') = 37
 
     # Full run of latest supported version, without xdist.
-    - env: TOXENV=py37
+    # Coverage for:
+    # - test_sys_breakpoint_interception (via pexpect).
+    - env: TOXENV=py37-pexpect PYTEST_COVERAGE=1
       python: '3.7'
 
     # Coverage tracking is slow with pypy, skip it.
@@ -45,13 +51,11 @@ jobs:
     # - pytester's LsofFdLeakChecker
     # - TestArgComplete (linux only)
     # - numpy
+    # - old attrs
     # Empty PYTEST_ADDOPTS to run this non-verbose.
-    - env: TOXENV=py37-lsof-numpy-twisted-xdist PYTEST_COVERAGE=1 PYTEST_ADDOPTS=
+    - env: TOXENV=py37-lsof-oldattrs-numpy-twisted-xdist PYTEST_COVERAGE=1 PYTEST_ADDOPTS=
 
     # Specialized factors for py37.
-    # Coverage for:
-    # - test_sys_breakpoint_interception (via pexpect).
-    - env: TOXENV=py37-pexpect PYTEST_COVERAGE=1
     - env: TOXENV=py37-pluggymaster-xdist
     - env: TOXENV=py37-freeze
 
@@ -68,8 +72,17 @@ jobs:
 
     - stage: deploy
       python: '3.6'
-      install: pip install -U setuptools setuptools_scm
+      install: pip install -U setuptools setuptools_scm tox
       script: skip
+      # token to upload github release notes: GH_RELEASE_NOTES_TOKEN
+      env:
+        - secure: "OjOeL7/0JUDkV00SsTs732e8vQjHynpbG9FKTNtZZJ+1Zn4Cib+hAlwmlBnvVukML0X60YpcfjnC4quDOIGLPsh5zeXnvJmYtAIIUNQXjWz8NhcGYrhyzuP1rqV22U68RTCdmOq3lMYU/W2acwHP7T49PwJtOiUM5kF120UAQ0Zi5EmkqkIvH8oM5mO9Dlver+/U7Htpz9rhKrHBXQNCMZI6yj2aUyukqB2PN2fjAlDbCF//+FmvYw9NjT4GeFOSkTCf4ER9yfqs7yglRfwiLtOCZ2qKQhWZNsSJDB89rxIRXWavJUjJKeY2EW2/NkomYJDpqJLIF4JeFRw/HhA47CYPeo6BJqyyNV+0CovL1frpWfi9UQw2cMbgFUkUIUk3F6DD59PHNIOX2R/HX56dQsw7WKl3QuHlCOkICXYg8F7Ta684IoKjeTX03/6QNOkURfDBwfGszY0FpbxrjCSWKom6RyZdyidnESaxv9RzjcIRZVh1rp8KMrwS1OrwRSdG0zjlsPr49hWMenN/8fKgcHTV4/r1Tj6mip0dorSRCrgUNIeRBKgmui6FS8642ab5JNKOxMteVPVR2sFuhjOQ0Jy+PmvceYY9ZMWc3+/B/KVh0dZ3hwvLGZep/vxDS2PwCA5/xw31714vT5LxidKo8yECjBynMU/wUTTS695D3NY="
+      addons:
+        apt:
+          packages:
+            # required by publish_gh_release_notes
+            - pandoc
+      after_deploy: tox -e publish_gh_release_notes
       deploy:
         provider: pypi
         user: nicoddemus

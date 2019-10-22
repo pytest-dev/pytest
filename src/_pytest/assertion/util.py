@@ -1,20 +1,24 @@
 """Utilities for assertion debugging"""
 import pprint
 from collections.abc import Sequence
+from typing import Callable
+from typing import List
+from typing import Optional
 
 import _pytest._code
 from _pytest import outcomes
 from _pytest._io.saferepr import saferepr
+from _pytest.compat import ATTRS_EQ_FIELD
 
 # The _reprcompare attribute on the util module is used by the new assertion
 # interpretation code and assertion rewriter to detect this plugin was
 # loaded and in turn call the hooks defined here as part of the
 # DebugInterpreter.
-_reprcompare = None
+_reprcompare = None  # type: Optional[Callable[[str, object, object], Optional[str]]]
 
 # Works similarly as _reprcompare attribute. Is populated with the hook call
 # when pytest_runtest_setup is called.
-_assertion_pass = None
+_assertion_pass = None  # type: Optional[Callable[[int, str, str], None]]
 
 
 def format_explanation(explanation):
@@ -119,9 +123,9 @@ def isiterable(obj):
 
 def assertrepr_compare(config, op, left, right):
     """Return specialised explanations for some operators/operands"""
-    width = 80 - 15 - len(op) - 2  # 15 chars indentation, 1 space around op
-    left_repr = saferepr(left, maxsize=int(width // 2))
-    right_repr = saferepr(right, maxsize=width - len(left_repr))
+    maxsize = (80 - 15 - len(op) - 2) // 2  # 15 chars indentation, 1 space around op
+    left_repr = saferepr(left, maxsize=maxsize)
+    right_repr = saferepr(right, maxsize=maxsize)
 
     summary = "{} {} {}".format(left_repr, op, right_repr)
 
@@ -177,7 +181,7 @@ def _diff_text(left, right, verbose=0):
     """
     from difflib import ndiff
 
-    explanation = []
+    explanation = []  # type: List[str]
 
     def escape_for_readable_diff(binary_text):
         """
@@ -235,11 +239,23 @@ def _compare_eq_verbose(left, right):
     left_lines = repr(left).splitlines(keepends)
     right_lines = repr(right).splitlines(keepends)
 
-    explanation = []
+    explanation = []  # type: List[str]
     explanation += ["-" + line for line in left_lines]
     explanation += ["+" + line for line in right_lines]
 
     return explanation
+
+
+def _surrounding_parens_on_own_lines(lines):  # type: (List) -> None
+    """Move opening/closing parenthesis/bracket to own lines."""
+    opening = lines[0][:1]
+    if opening in ["(", "[", "{"]:
+        lines[0] = " " + lines[0][1:]
+        lines[:] = [opening] + lines
+    closing = lines[-1][-1:]
+    if closing in [")", "]", "}"]:
+        lines[-1] = lines[-1][:-1] + ","
+        lines[:] = lines + [closing]
 
 
 def _compare_eq_iterable(left, right, verbose=0):
@@ -250,16 +266,34 @@ def _compare_eq_iterable(left, right, verbose=0):
 
     left_formatting = pprint.pformat(left).splitlines()
     right_formatting = pprint.pformat(right).splitlines()
+
+    # Re-format for different output lengths.
+    lines_left = len(left_formatting)
+    lines_right = len(right_formatting)
+    if lines_left != lines_right:
+        if lines_left > lines_right:
+            max_width = min(len(x) for x in left_formatting)
+            right_formatting = pprint.pformat(right, width=max_width).splitlines()
+            lines_right = len(right_formatting)
+        else:
+            max_width = min(len(x) for x in right_formatting)
+            left_formatting = pprint.pformat(left, width=max_width).splitlines()
+            lines_left = len(left_formatting)
+
+    if lines_left > 1 or lines_right > 1:
+        _surrounding_parens_on_own_lines(left_formatting)
+        _surrounding_parens_on_own_lines(right_formatting)
+
     explanation = ["Full diff:"]
     explanation.extend(
-        line.strip() for line in difflib.ndiff(left_formatting, right_formatting)
+        line.rstrip() for line in difflib.ndiff(left_formatting, right_formatting)
     )
     return explanation
 
 
 def _compare_eq_sequence(left, right, verbose=0):
     comparing_bytes = isinstance(left, bytes) and isinstance(right, bytes)
-    explanation = []
+    explanation = []  # type: List[str]
     len_left = len(left)
     len_right = len(right)
     for i in range(min(len_left, len_right)):
@@ -327,7 +361,7 @@ def _compare_eq_set(left, right, verbose=0):
 
 
 def _compare_eq_dict(left, right, verbose=0):
-    explanation = []
+    explanation = []  # type: List[str]
     set_left = set(left)
     set_right = set(right)
     common = set_left.intersection(set_right)
@@ -372,7 +406,9 @@ def _compare_eq_cls(left, right, verbose, type_fns):
         fields_to_check = [field for field, info in all_fields.items() if info.compare]
     elif isattrs(left):
         all_fields = left.__attrs_attrs__
-        fields_to_check = [field.name for field in all_fields if field.cmp]
+        fields_to_check = [
+            field.name for field in all_fields if getattr(field, ATTRS_EQ_FIELD)
+        ]
 
     same = []
     diff = []

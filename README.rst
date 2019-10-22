@@ -26,7 +26,7 @@
     :target: https://dev.azure.com/pytest-dev/pytest
 
 .. image:: https://img.shields.io/badge/code%20style-black-000000.svg
-    :target: https://github.com/python/black
+    :target: https://github.com/psf/black
 
 .. image:: https://www.codetriage.com/pytest-dev/pytest/badges/users.svg
     :target: https://www.codetriage.com/pytest-dev/pytest
@@ -111,13 +111,13 @@ Consult the `Changelog <https://docs.pytest.org/en/latest/changelog.html>`__ pag
 Support pytest
 --------------
 
-You can support pytest by obtaining a `Tideflift subscription`_.
+You can support pytest by obtaining a `Tidelift subscription`_.
 
 Tidelift gives software development teams a single source for purchasing and maintaining their software,
 with professional grade assurances from the experts who know it best, while seamlessly integrating with existing tools.
 
 
-.. _`Tideflift subscription`: https://tidelift.com/subscription/pkg/pypi-pytest?utm_source=pypi-pytest&utm_medium=referral&utm_campaign=readme
+.. _`Tidelift subscription`: https://tidelift.com/subscription/pkg/pypi-pytest?utm_source=pypi-pytest&utm_medium=referral&utm_campaign=readme
 
 
 Security

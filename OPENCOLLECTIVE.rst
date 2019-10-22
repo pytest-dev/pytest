@@ -9,7 +9,7 @@ What is it
 ==========
 
 Open Collective is an online funding platform for open and transparent communities.
-It provide tools to raise money and share your finances in full transparency.
+It provides tools to raise money and share your finances in full transparency.
 
 It is the platform of choice for individuals and companies that want to make one-time or
 monthly donations directly to the project.
@@ -19,7 +19,7 @@ Funds
 
 The OpenCollective funds donated to pytest will be used to fund overall maintenance,
 local sprints, merchandising (stickers to distribute in conferences for example), and future
-gatherings of pytest developers (Sprints).
+gatherings of pytest developers (sprints).
 
 `Core contributors`_ which are contributing on a continuous basis are free to submit invoices
 to bill maintenance hours using the platform. How much each contributor should request is still an

@@ -17,6 +17,14 @@ else:
 _ENVIRON_PYTHONBREAKPOINT = os.environ.get("PYTHONBREAKPOINT", "")
 
 
+@pytest.fixture(autouse=True)
+def pdb_env(request):
+    if "testdir" in request.fixturenames:
+        # Disable pdb++ with inner tests.
+        testdir = request.getfixturevalue("testdir")
+        testdir._env_run_update["PDBPP_HIJACK_PDB"] = "0"
+
+
 def runpdb_and_get_report(testdir, source):
     p = testdir.makepyfile(source)
     result = testdir.runpytest_inprocess("--pdb", p)
@@ -875,7 +883,7 @@ class TestDebuggingBreakpoints:
         Test that supports breakpoint global marks on Python 3.7+ and not on
         CPython 3.5, 2.7
         """
-        if sys.version_info.major == 3 and sys.version_info.minor >= 7:
+        if sys.version_info >= (3, 7):
             assert SUPPORTS_BREAKPOINT_BUILTIN is True
         if sys.version_info.major == 3 and sys.version_info.minor == 5:
             assert SUPPORTS_BREAKPOINT_BUILTIN is False

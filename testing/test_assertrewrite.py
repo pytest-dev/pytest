@@ -1,4 +1,5 @@
 import ast
+import errno
 import glob
 import importlib
 import os
@@ -7,6 +8,7 @@ import stat
 import sys
 import textwrap
 import zipfile
+from functools import partial
 
 import py
 
@@ -197,6 +199,16 @@ class TestAssertionRewrite:
             ]
         else:
             assert msg == ["assert cls == 42"]
+
+    def test_assertrepr_compare_same_width(self, request):
+        """Should use same width/truncation with same initial width."""
+
+        def f():
+            assert "1234567890" * 5 + "A" == "1234567890" * 5 + "B"
+
+        assert getmsg(f).splitlines()[0] == (
+            "assert '123456789012...901234567890A' == '123456789012...901234567890B'"
+        )
 
     def test_dont_rewrite_if_hasattr_fails(self, request):
         class Y:
@@ -902,7 +914,7 @@ def test_rewritten():
         testdir.chdir()
         result = testdir.runpytest_subprocess()
         result.stdout.fnmatch_lines(["*= 1 passed in *=*"])
-        assert "pytest-warning summary" not in result.stdout.str()
+        result.stdout.no_fnmatch_line("*pytest-warning summary*")
 
     def test_rewrite_warning_using_pytest_plugins_env_var(self, testdir, monkeypatch):
         monkeypatch.setenv("PYTEST_PLUGINS", "plugin")
@@ -920,7 +932,7 @@ def test_rewritten():
         testdir.chdir()
         result = testdir.runpytest_subprocess()
         result.stdout.fnmatch_lines(["*= 1 passed in *=*"])
-        assert "pytest-warning summary" not in result.stdout.str()
+        result.stdout.no_fnmatch_line("*pytest-warning summary*")
 
 
 class TestAssertionRewriteHookDetails:
@@ -1112,7 +1124,7 @@ def test_issue731(testdir):
     """
     )
     result = testdir.runpytest()
-    assert "unbalanced braces" not in result.stdout.str()
+    result.stdout.no_fnmatch_line("*unbalanced braces*")
 
 
 class TestIssue925:
@@ -1528,3 +1540,43 @@ class TestAssertionPass:
 )
 def test_get_assertion_exprs(src, expected):
     assert _get_assertion_exprs(src) == expected
+
+
+def test_try_mkdir(monkeypatch, tmp_path):
+    from _pytest.assertion.rewrite import try_mkdir
+
+    p = tmp_path / "foo"
+
+    # create
+    assert try_mkdir(str(p))
+    assert p.is_dir()
+
+    # already exist
+    assert try_mkdir(str(p))
+
+    # monkeypatch to simulate all error situations
+    def fake_mkdir(p, *, exc):
+        assert isinstance(p, str)
+        raise exc
+
+    monkeypatch.setattr(os, "mkdir", partial(fake_mkdir, exc=FileNotFoundError()))
+    assert not try_mkdir(str(p))
+
+    monkeypatch.setattr(os, "mkdir", partial(fake_mkdir, exc=NotADirectoryError()))
+    assert not try_mkdir(str(p))
+
+    monkeypatch.setattr(os, "mkdir", partial(fake_mkdir, exc=PermissionError()))
+    assert not try_mkdir(str(p))
+
+    err = OSError()
+    err.errno = errno.EROFS
+    monkeypatch.setattr(os, "mkdir", partial(fake_mkdir, exc=err))
+    assert not try_mkdir(str(p))
+
+    # unhandled OSError should raise
+    err = OSError()
+    err.errno = errno.ECHILD
+    monkeypatch.setattr(os, "mkdir", partial(fake_mkdir, exc=err))
+    with pytest.raises(OSError) as exc_info:
+        try_mkdir(str(p))
+    assert exc_info.value.errno == errno.ECHILD

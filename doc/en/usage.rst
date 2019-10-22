@@ -33,7 +33,19 @@ Running ``pytest`` can result in six different exit codes:
 :Exit code 4: pytest command line usage error
 :Exit code 5: No tests were collected
 
-They are represented by the :class:`_pytest.main.ExitCode` enum.
+They are represented by the :class:`_pytest.main.ExitCode` enum. The exit codes being a part of the public API can be imported and accessed directly using:
+
+.. code-block:: python
+
+    from pytest import ExitCode
+
+.. note::
+
+    If you would like to customize the exit code in some scenarios, specially when
+    no tests are collected, consider using the
+    `pytest-custom_exit_code <https://github.com/yashtodi94/pytest-custom_exit_code>`__
+    plugin.
+
 
 Getting help on version, option names, environment variables
 --------------------------------------------------------------
@@ -235,7 +247,7 @@ Example:
     XPASS test_example.py::test_xpass always xfail
     ERROR test_example.py::test_error - assert 0
     FAILED test_example.py::test_fail - assert 0
-    = 1 failed, 1 passed, 1 skipped, 1 xfailed, 1 xpassed, 1 error in 0.12 seconds =
+    == 1 failed, 1 passed, 1 skipped, 1 xfailed, 1 xpassed, 1 error in 0.12s ===
 
 The ``-r`` options accepts a number of characters after it, with ``a`` used
 above meaning "all except passes".
@@ -285,7 +297,7 @@ More than one character can be used, so for example to only see failed and skipp
     ========================= short test summary info ==========================
     FAILED test_example.py::test_fail - assert 0
     SKIPPED [1] $REGENDOC_TMPDIR/test_example.py:23: skipping this test
-    = 1 failed, 1 passed, 1 skipped, 1 xfailed, 1 xpassed, 1 error in 0.12 seconds =
+    == 1 failed, 1 passed, 1 skipped, 1 xfailed, 1 xpassed, 1 error in 0.12s ===
 
 Using ``p`` lists the passing tests, whilst ``P`` adds an extra section "PASSES" with those tests that passed but had
 captured output:
@@ -324,7 +336,7 @@ captured output:
     ok
     ========================= short test summary info ==========================
     PASSED test_example.py::test_ok
-    = 1 failed, 1 passed, 1 skipped, 1 xfailed, 1 xpassed, 1 error in 0.12 seconds =
+    == 1 failed, 1 passed, 1 skipped, 1 xfailed, 1 xpassed, 1 error in 0.12s ===
 
 .. _pdb-option:
 
@@ -640,7 +652,7 @@ to all tests.
         record_testsuite_property("STORAGE_TYPE", "CEPH")
 
 
-    class TestMe(object):
+    class TestMe:
         def test_foo(self):
             assert True
 
@@ -706,6 +718,11 @@ for example ``-x`` if you only want to send one particular failure.
 
 Currently only pasting to the http://bpaste.net service is implemented.
 
+.. versionchanged:: 5.2
+
+If creating the URL fails for any reason, a warning is generated instead of failing the
+entire test suite.
+
 Early loading plugins
 ---------------------
 
@@ -742,23 +759,32 @@ Calling pytest from Python code
 
 
 
-You can invoke ``pytest`` from Python code directly::
+You can invoke ``pytest`` from Python code directly:
+
+.. code-block:: python
 
     pytest.main()
 
 this acts as if you would call "pytest" from the command line.
 It will not raise ``SystemExit`` but return the exitcode instead.
-You can pass in options and arguments::
+You can pass in options and arguments:
 
-    pytest.main(['-x', 'mytestdir'])
+.. code-block:: python
 
-You can specify additional plugins to ``pytest.main``::
+    pytest.main(["-x", "mytestdir"])
+
+You can specify additional plugins to ``pytest.main``:
+
+.. code-block:: python
 
     # content of myinvoke.py
     import pytest
-    class MyPlugin(object):
+
+
+    class MyPlugin:
         def pytest_sessionfinish(self):
             print("*** test run reporting finishing")
+
 
     pytest.main(["-qq"], plugins=[MyPlugin()])
 

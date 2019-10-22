@@ -12,13 +12,17 @@ pip_ for installing your application and any dependencies,
 as well as the ``pytest`` package itself.
 This ensures your code and dependencies are isolated from your system Python installation.
 
-Next, place a ``setup.py`` file in the root of your package with the following minimum content::
+Next, place a ``setup.py`` file in the root of your package with the following minimum content:
+
+.. code-block:: python
 
     from setuptools import setup, find_packages
 
     setup(name="PACKAGENAME", packages=find_packages())
 
-Where ``PACKAGENAME`` is the name of your package. You can then install your package in "editable" mode by running from the same directory::
+Where ``PACKAGENAME`` is the name of your package. You can then install your package in "editable" mode by running from the same directory:
+
+.. code-block:: bash
 
      pip install -e .
 
@@ -60,7 +64,9 @@ Tests outside application code
 
 Putting tests into an extra directory outside your actual application code
 might be useful if you have many functional tests or for other reasons want
-to keep tests separate from actual application code (often a good idea)::
+to keep tests separate from actual application code (often a good idea):
+
+.. code-block:: text
 
     setup.py
     mypkg/
@@ -82,7 +88,7 @@ This has the following benefits:
 
 .. note::
 
-    See :ref:`pythonpath` for more information about the difference between calling ``pytest`` and
+    See :ref:`pytest vs python -m pytest` for more information about the difference between calling ``pytest`` and
     ``python -m pytest``.
 
 Note that using this scheme your test files must have **unique names**, because
@@ -92,7 +98,9 @@ be imported as ``test_app`` and ``test_view`` top-level modules by adding ``test
 ``sys.path``.
 
 If you need to have test modules with the same name, you might add ``__init__.py`` files to your
-``tests`` folder and subfolders, changing them to packages::
+``tests`` folder and subfolders, changing them to packages:
+
+.. code-block:: text
 
     setup.py
     mypkg/
@@ -114,7 +122,9 @@ This is problematic if you are using a tool like `tox`_ to test your package in 
 because you want to test the *installed* version of your package, not the local code from the repository.
 
 In this situation, it is **strongly** suggested to use a ``src`` layout where application root package resides in a
-sub-directory of your root::
+sub-directory of your root:
+
+.. code-block:: text
 
     setup.py
     src/
@@ -140,7 +150,9 @@ Tests as part of application code
 
 Inlining test directories into your application package
 is useful if you have direct relation between tests and application modules and
-want to distribute them along with your application::
+want to distribute them along with your application:
+
+.. code-block:: text
 
     setup.py
     mypkg/
@@ -153,7 +165,9 @@ want to distribute them along with your application::
             test_view.py
             ...
 
-In this scheme, it is easy to run your tests using the ``--pyargs`` option::
+In this scheme, it is easy to run your tests using the ``--pyargs`` option:
+
+.. code-block:: bash
 
     pytest --pyargs mypkg
 

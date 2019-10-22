@@ -246,7 +246,7 @@ class TestGeneralUsage:
         )
         result = testdir.runpytest()
         assert result.ret == ExitCode.NO_TESTS_COLLECTED
-        assert "should not be seen" not in result.stdout.str()
+        result.stdout.no_fnmatch_line("*should not be seen*")
         assert "stderr42" not in result.stderr.str()
 
     def test_conftest_printing_shows_if_error(self, testdir):
@@ -954,7 +954,7 @@ class TestDurations:
         result.stdout.fnmatch_lines(["*Interrupted: 1 errors during collection*"])
         # Collection errors abort test execution, therefore no duration is
         # output
-        assert "duration" not in result.stdout.str()
+        result.stdout.no_fnmatch_line("*duration*")
 
     def test_with_not(self, testdir):
         testdir.makepyfile(self.source)
@@ -1008,7 +1008,7 @@ def test_zipimport_hook(testdir, tmpdir):
     result = testdir.runpython(target)
     assert result.ret == 0
     result.stderr.fnmatch_lines(["*not found*foo*"])
-    assert "INTERNALERROR>" not in result.stdout.str()
+    result.stdout.no_fnmatch_line("*INTERNALERROR>*")
 
 
 def test_import_plugin_unicode_name(testdir):
@@ -1189,6 +1189,8 @@ def test_warn_on_async_function(testdir):
             pass
         async def test_2():
             pass
+        def test_3():
+            return test_2()
     """
     )
     result = testdir.runpytest()
@@ -1196,11 +1198,80 @@ def test_warn_on_async_function(testdir):
         [
             "test_async.py::test_1",
             "test_async.py::test_2",
-            "*Coroutine functions are not natively supported*",
-            "*2 skipped, 2 warnings in*",
+            "test_async.py::test_3",
+            "*async def functions are not natively supported*",
+            "*3 skipped, 3 warnings in*",
         ]
     )
     # ensure our warning message appears only once
     assert (
-        result.stdout.str().count("Coroutine functions are not natively supported") == 1
+        result.stdout.str().count("async def functions are not natively supported") == 1
     )
+
+
+@pytest.mark.filterwarnings("default")
+@pytest.mark.skipif(
+    sys.version_info < (3, 6), reason="async gen syntax available in Python 3.6+"
+)
+def test_warn_on_async_gen_function(testdir):
+    testdir.makepyfile(
+        test_async="""
+        async def test_1():
+            yield
+        async def test_2():
+            yield
+        def test_3():
+            return test_2()
+    """
+    )
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines(
+        [
+            "test_async.py::test_1",
+            "test_async.py::test_2",
+            "test_async.py::test_3",
+            "*async def functions are not natively supported*",
+            "*3 skipped, 3 warnings in*",
+        ]
+    )
+    # ensure our warning message appears only once
+    assert (
+        result.stdout.str().count("async def functions are not natively supported") == 1
+    )
+
+
+def test_pdb_can_be_rewritten(testdir):
+    testdir.makepyfile(
+        **{
+            "conftest.py": """
+                import pytest
+                pytest.register_assert_rewrite("pdb")
+                """,
+            "__init__.py": "",
+            "pdb.py": """
+                def check():
+                    assert 1 == 2
+                """,
+            "test_pdb.py": """
+                def test():
+                    import pdb
+                    assert pdb.check()
+                """,
+        }
+    )
+    # Disable debugging plugin itself to avoid:
+    # > INTERNALERROR> AttributeError: module 'pdb' has no attribute 'set_trace'
+    result = testdir.runpytest_subprocess("-p", "no:debugging", "-vv")
+    result.stdout.fnmatch_lines(
+        [
+            "    def check():",
+            ">       assert 1 == 2",
+            "E       assert 1 == 2",
+            "E         -1",
+            "E         +2",
+            "",
+            "pdb.py:2: AssertionError",
+            "*= 1 failed in *",
+        ]
+    )
+    assert result.ret == 1

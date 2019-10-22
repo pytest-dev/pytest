@@ -1,9 +1,14 @@
 import os
+from typing import List
+from typing import Optional
 
 import py
 
 from .exceptions import UsageError
 from _pytest.outcomes import fail
+
+if False:
+    from . import Config  # noqa: F401
 
 
 def exists(path, ignore=EnvironmentError):
@@ -30,7 +35,11 @@ def getcfg(args, config=None):
             for inibasename in inibasenames:
                 p = base.join(inibasename)
                 if exists(p):
-                    iniconfig = py.iniconfig.IniConfig(p)
+                    try:
+                        iniconfig = py.iniconfig.IniConfig(p)
+                    except py.iniconfig.ParseError as exc:
+                        raise UsageError(str(exc))
+
                     if (
                         inibasename == "setup.cfg"
                         and "tool:pytest" in iniconfig.sections
@@ -98,7 +107,12 @@ def get_dirs_from_args(args):
 CFG_PYTEST_SECTION = "[pytest] section in {filename} files is no longer supported, change to [tool:pytest] instead."
 
 
-def determine_setup(inifile, args, rootdir_cmd_arg=None, config=None):
+def determine_setup(
+    inifile: str,
+    args: List[str],
+    rootdir_cmd_arg: Optional[str] = None,
+    config: Optional["Config"] = None,
+):
     dirs = get_dirs_from_args(args)
     if inifile:
         iniconfig = py.iniconfig.IniConfig(inifile)

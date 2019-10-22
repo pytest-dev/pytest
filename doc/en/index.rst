@@ -44,7 +44,7 @@ To execute it:
     E        +  where 4 = inc(3)
 
     test_sample.py:6: AssertionError
-    ========================= 1 failed in 0.12 seconds =========================
+    ============================ 1 failed in 0.12s =============================
 
 Due to ``pytest``'s detailed assertion introspection, only plain ``assert`` statements are used.
 See :ref:`Getting Started <getstarted>` for more examples.
@@ -61,7 +61,7 @@ Features
 
 - Can run :ref:`unittest <unittest>` (including trial) and :ref:`nose <noseintegration>` test suites out of the box;
 
-- Python Python 3.5+ and PyPy 3;
+- Python 3.5+ and PyPy 3;
 
 - Rich plugin architecture, with over 315+ `external plugins <http://plugincompat.herokuapp.com>`_ and thriving community;
 

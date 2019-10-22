@@ -204,7 +204,7 @@ class TestTerminal:
         result = testdir.runpytest("-vv")
         assert result.ret == 0
         result.stdout.fnmatch_lines(["*a123/test_hello123.py*PASS*"])
-        assert " <- " not in result.stdout.str()
+        result.stdout.no_fnmatch_line("* <- *")
 
     def test_keyboard_interrupt(self, testdir, option):
         testdir.makepyfile(
@@ -233,7 +233,7 @@ class TestTerminal:
             )
         else:
             result.stdout.fnmatch_lines(
-                ["(to show a full traceback on KeyboardInterrupt use --fulltrace)"]
+                ["(to show a full traceback on KeyboardInterrupt use --full-trace)"]
             )
         result.stdout.fnmatch_lines(["*KeyboardInterrupt*"])
 
@@ -559,7 +559,7 @@ class TestTerminalFunctional:
                 "*= 2 passed, 1 deselected in * =*",
             ]
         )
-        assert "= 1 deselected =" not in result.stdout.str()
+        result.stdout.no_fnmatch_line("*= 1 deselected =*")
         assert result.ret == 0
 
     def test_no_skip_summary_if_failure(self, testdir):
@@ -617,7 +617,7 @@ class TestTerminalFunctional:
                     pluggy.__version__,
                 ),
                 "*test_header_trailer_info.py .*",
-                "=* 1 passed*in *.[0-9][0-9] seconds *=",
+                "=* 1 passed*in *.[0-9][0-9]s *=",
             ]
         )
         if request.config.pluginmanager.list_plugin_distinfo():
@@ -759,7 +759,7 @@ def test_fail_extra_reporting(testdir, monkeypatch):
     monkeypatch.setenv("COLUMNS", "80")
     testdir.makepyfile("def test_this(): assert 0, 'this_failed' * 100")
     result = testdir.runpytest()
-    assert "short test summary" not in result.stdout.str()
+    result.stdout.no_fnmatch_line("*short test summary*")
     result = testdir.runpytest("-rf")
     result.stdout.fnmatch_lines(
         [
@@ -772,13 +772,13 @@ def test_fail_extra_reporting(testdir, monkeypatch):
 def test_fail_reporting_on_pass(testdir):
     testdir.makepyfile("def test_this(): assert 1")
     result = testdir.runpytest("-rf")
-    assert "short test summary" not in result.stdout.str()
+    result.stdout.no_fnmatch_line("*short test summary*")
 
 
 def test_pass_extra_reporting(testdir):
     testdir.makepyfile("def test_this(): assert 1")
     result = testdir.runpytest()
-    assert "short test summary" not in result.stdout.str()
+    result.stdout.no_fnmatch_line("*short test summary*")
     result = testdir.runpytest("-rp")
     result.stdout.fnmatch_lines(["*test summary*", "PASS*test_pass_extra_reporting*"])
 
@@ -786,7 +786,7 @@ def test_pass_extra_reporting(testdir):
 def test_pass_reporting_on_fail(testdir):
     testdir.makepyfile("def test_this(): assert 0")
     result = testdir.runpytest("-rp")
-    assert "short test summary" not in result.stdout.str()
+    result.stdout.no_fnmatch_line("*short test summary*")
 
 
 def test_pass_output_reporting(testdir):
@@ -829,7 +829,7 @@ def test_color_no(testdir):
     testdir.makepyfile("def test_this(): assert 1")
     result = testdir.runpytest("--color=no")
     assert "test session starts" in result.stdout.str()
-    assert "\x1b[1m" not in result.stdout.str()
+    result.stdout.no_fnmatch_line("*\x1b[1m*")
 
 
 @pytest.mark.parametrize("verbose", [True, False])
@@ -851,7 +851,7 @@ def test_color_yes_collection_on_non_atty(testdir, verbose):
     result = testdir.runpytest(*args)
     assert "test session starts" in result.stdout.str()
     assert "\x1b[1m" in result.stdout.str()
-    assert "collecting 10 items" not in result.stdout.str()
+    result.stdout.no_fnmatch_line("*collecting 10 items*")
     if verbose:
         assert "collecting ..." in result.stdout.str()
     assert "collected 10 items" in result.stdout.str()
@@ -1214,7 +1214,7 @@ def test_terminal_summary_warnings_are_displayed(testdir):
             "*== 1 failed, 2 warnings in *",
         ]
     )
-    assert "None" not in result.stdout.str()
+    result.stdout.no_fnmatch_line("*None*")
     stdout = result.stdout.str()
     assert stdout.count("warning_from_test") == 1
     assert stdout.count("=== warnings summary ") == 2
@@ -1239,7 +1239,7 @@ def test_terminal_summary_warnings_header_once(testdir):
             "*== 1 failed, 1 warnings in *",
         ]
     )
-    assert "None" not in result.stdout.str()
+    result.stdout.no_fnmatch_line("*None*")
     stdout = result.stdout.str()
     assert stdout.count("warning_from_test") == 1
     assert stdout.count("=== warnings summary ") == 1
@@ -1402,7 +1402,7 @@ class TestProgressOutputStyle:
         """
         )
         output = testdir.runpytest()
-        assert "ZeroDivisionError" not in output.stdout.str()
+        output.stdout.no_fnmatch_line("*ZeroDivisionError*")
         output.stdout.fnmatch_lines(["=* 2 passed in *="])
 
     def test_normal(self, many_tests_files, testdir):
@@ -1494,7 +1494,7 @@ class TestProgressOutputStyle:
         )
 
         output = testdir.runpytest("--capture=no")
-        assert "%]" not in output.stdout.str()
+        output.stdout.no_fnmatch_line("*%]*")
 
 
 class TestProgressWithTeardown:
@@ -1678,3 +1678,20 @@ def test_line_with_reprcrash(monkeypatch):
     check("😄😄😄😄😄\n2nd line", 41, "FAILED nodeid::😄::withunicode - 😄😄...")
     check("😄😄😄😄😄\n2nd line", 42, "FAILED nodeid::😄::withunicode - 😄😄😄...")
     check("😄😄😄😄😄\n2nd line", 80, "FAILED nodeid::😄::withunicode - 😄😄😄😄😄")
+
+
+@pytest.mark.parametrize(
+    "seconds, expected",
+    [
+        (10.0, "10.00s"),
+        (10.34, "10.34s"),
+        (59.99, "59.99s"),
+        (60.55, "60.55s (0:01:00)"),
+        (123.55, "123.55s (0:02:03)"),
+        (60 * 60 + 0.5, "3600.50s (1:00:00)"),
+    ],
+)
+def test_format_session_duration(seconds, expected):
+    from _pytest.terminal import format_session_duration
+
+    assert format_session_duration(seconds) == expected

@@ -160,9 +160,12 @@ For information about fixtures, see :ref:`fixtures`. To see a complete list of a
             in python < 3.6 this is a pathlib2.Path
 
 
-    no tests ran in 0.12 seconds
+    no tests ran in 0.12s
 
-You can also interactively ask for help, e.g. by typing on the Python interactive prompt something like::
+You can also interactively ask for help, e.g. by typing on the Python interactive prompt something like:
+
+.. code-block:: python
 
     import pytest
+
     help(pytest)

@@ -327,7 +327,7 @@ class TestLastFailed:
         result = testdir.runpytest("--lf", "--ff")
         # Test order will be failing tests firs
         result.stdout.fnmatch_lines(["test_b.py*"])
-        assert "test_a.py" not in result.stdout.str()
+        result.stdout.no_fnmatch_line("*test_a.py*")
 
     def test_lastfailed_difference_invocations(self, testdir, monkeypatch):
         monkeypatch.setenv("PYTHONDONTWRITEBYTECODE", "1")
@@ -660,11 +660,11 @@ class TestLastFailed:
         if quiet:
             args.append("-q")
         result = testdir.runpytest(*args)
-        assert "run all" not in result.stdout.str()
+        result.stdout.no_fnmatch_line("*run all*")
 
         result = testdir.runpytest(*args)
         if quiet:
-            assert "run all" not in result.stdout.str()
+            result.stdout.no_fnmatch_line("*run all*")
         else:
             assert "rerun previous" in result.stdout.str()
 
@@ -1029,7 +1029,7 @@ def test_gitignore(testdir):
     config = testdir.parseconfig()
     cache = Cache.for_config(config)
     cache.set("foo", "bar")
-    msg = "# Created by pytest automatically.\n*"
+    msg = "# Created by pytest automatically.\n*\n"
     gitignore_path = cache._cachedir.joinpath(".gitignore")
     assert gitignore_path.read_text(encoding="UTF-8") == msg
 

@@ -46,7 +46,7 @@ def test_change_level_undo(testdir):
     )
     result = testdir.runpytest()
     result.stdout.fnmatch_lines(["*log from test1*", "*2 failed in *"])
-    assert "log from test2" not in result.stdout.str()
+    result.stdout.no_fnmatch_line("*log from test2*")
 
 
 def test_with_statement(caplog):

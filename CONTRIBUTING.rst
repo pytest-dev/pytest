@@ -5,8 +5,9 @@ Contribution getting started
 Contributions are highly welcomed and appreciated.  Every little help counts,
 so do not hesitate!
 
-.. contents:: Contribution links
+.. contents::
    :depth: 2
+   :backlinks: none
 
 
 .. _submitfeedback:
@@ -166,7 +167,7 @@ Short version
 #. Enable and install `pre-commit <https://pre-commit.com>`_ to ensure style-guides and code checks are followed.
 #. Target ``master`` for bugfixes and doc changes.
 #. Target ``features`` for new features or functionality changes.
-#. Follow **PEP-8** for naming and `black <https://github.com/python/black>`_ for formatting.
+#. Follow **PEP-8** for naming and `black <https://github.com/psf/black>`_ for formatting.
 #. Tests are run using ``tox``::
 
     tox -e linting,py37

@@ -164,7 +164,7 @@ If a package is installed this way, ``pytest`` will load
 .. note::
 
     Make sure to include ``Framework :: Pytest`` in your list of
-    `PyPI classifiers <https://python-packaging-user-guide.readthedocs.io/distributing/#classifiers>`_
+    `PyPI classifiers <https://pypi.org/classifiers/>`_
     to make it easy for users to find your plugin.
 
 
@@ -442,7 +442,7 @@ additionally it is possible to copy examples for an example folder before runnin
         testdir.copy_example("test_example.py")
 
     -- Docs: https://docs.pytest.org/en/latest/warnings.html
-    =================== 2 passed, 1 warnings in 0.12 seconds ===================
+    ====================== 2 passed, 1 warnings in 0.12s =======================
 
 For more information about the result object that ``runpytest()`` returns, and
 the methods that it provides please check out the :py:class:`RunResult
@@ -693,7 +693,7 @@ declaring the hook functions directly in your plugin module, for example:
     # contents of myplugin.py
 
 
-    class DeferPlugin(object):
+    class DeferPlugin:
         """Simple plugin to defer pytest-xdist hook functions."""
 
         def pytest_testnodedown(self, node, error):

@@ -7,8 +7,8 @@ Python 3.4's last release is scheduled for
 `March 2019 <https://www.python.org/dev/peps/pep-0429/#release-schedule>`__. pytest is one of
 the participating projects of the https://python3statement.org.
 
-The **pytest 4.6** series will be the last to support Python 2.7 and 3.4, and is scheduled
-to be released by **mid-2019**. **pytest 5.0** and onwards will support only Python 3.5+.
+The **pytest 4.6** series is the last to support Python 2.7 and 3.4, and was released in
+**June 2019**. **pytest 5.0** and onwards will support only Python 3.5+.
 
 Thanks to the `python_requires`_ ``setuptools`` option,
 Python 2.7 and Python 3.4 users using a modern ``pip`` version
@@ -24,3 +24,8 @@ branch will continue to exist so the community itself can contribute patches. Th
 be happy to accept those patches and make new ``4.6`` releases **until mid-2020**.
 
 .. _`python_requires`: https://packaging.python.org/guides/distributing-packages-using-setuptools/#python-requires
+
+Technical Aspects
+-----------------
+
+The technical aspects of the Python 2.7 and 3.4 support plan (such as when releases will occurr, how to backport fixes, etc) is described in issue `#5275 <https://github.com/pytest-dev/pytest/issues/5275>`__.

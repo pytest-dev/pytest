@@ -64,7 +64,7 @@ Running this would result in a passed test except for the last
     E       assert 0
 
     test_tmp_path.py:13: AssertionError
-    ========================= 1 failed in 0.12 seconds =========================
+    ============================ 1 failed in 0.12s =============================
 
 .. _`tmp_path_factory example`:
 
@@ -90,10 +90,14 @@ provide a temporary directory unique to the test invocation,
 created in the `base temporary directory`_.
 
 ``tmpdir`` is a `py.path.local`_ object which offers ``os.path`` methods
-and more.  Here is an example test usage::
+and more.  Here is an example test usage:
+
+.. code-block:: python
 
     # content of test_tmpdir.py
     import os
+
+
     def test_create_file(tmpdir):
         p = tmpdir.mkdir("sub").join("hello.txt")
         p.write("content")
@@ -128,8 +132,8 @@ Running this would result in a passed test except for the last
     >       assert 0
     E       assert 0
 
-    test_tmpdir.py:7: AssertionError
-    ========================= 1 failed in 0.12 seconds =========================
+    test_tmpdir.py:9: AssertionError
+    ============================ 1 failed in 0.12s =============================
 
 .. _`tmpdir factory example`:
 

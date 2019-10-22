@@ -10,7 +10,9 @@ It's meant for leveraging existing ``unittest``-based test suites
 to use pytest as a test runner and also allow to incrementally adapt
 the test suite to take full advantage of pytest's features.
 
-To run an existing ``unittest``-style test suite using ``pytest``, type::
+To run an existing ``unittest``-style test suite using ``pytest``, type:
+
+.. code-block:: bash
 
     pytest tests
 
@@ -78,7 +80,9 @@ Running your unittest with ``pytest`` allows you to use its
 tests.  Assuming you have at least skimmed the pytest fixture features,
 let's jump-start into an example that integrates a pytest ``db_class``
 fixture, setting up a class-cached database object, and then reference
-it from a unittest-style test::
+it from a unittest-style test:
+
+.. code-block:: python
 
     # content of conftest.py
 
@@ -87,10 +91,12 @@ it from a unittest-style test::
 
     import pytest
 
+
     @pytest.fixture(scope="class")
     def db_class(request):
-        class DummyDB(object):
+        class DummyDB:
             pass
+
         # set a class attribute on the invoking test context
         request.cls.db = DummyDB()
 
@@ -103,21 +109,24 @@ as the ``cls`` attribute, denoting the class from which the fixture
 is used.  This architecture de-couples fixture writing from actual test
 code and allows re-use of the fixture by a minimal reference, the fixture
 name.  So let's write an actual ``unittest.TestCase`` class using our
-fixture definition::
+fixture definition:
+
+.. code-block:: python
 
     # content of test_unittest_db.py
 
     import unittest
     import pytest
 
+
     @pytest.mark.usefixtures("db_class")
     class MyTest(unittest.TestCase):
         def test_method1(self):
             assert hasattr(self, "db")
-            assert 0, self.db   # fail for demo purposes
+            assert 0, self.db  # fail for demo purposes
 
         def test_method2(self):
-            assert 0, self.db   # fail for demo purposes
+            assert 0, self.db  # fail for demo purposes
 
 The ``@pytest.mark.usefixtures("db_class")`` class-decorator makes sure that
 the pytest fixture function ``db_class`` is called once per class.
@@ -142,22 +151,22 @@ the ``self.db`` values in the traceback:
 
         def test_method1(self):
             assert hasattr(self, "db")
-    >       assert 0, self.db   # fail for demo purposes
+    >       assert 0, self.db  # fail for demo purposes
     E       AssertionError: <conftest.db_class.<locals>.DummyDB object at 0xdeadbeef>
     E       assert 0
 
-    test_unittest_db.py:9: AssertionError
+    test_unittest_db.py:10: AssertionError
     ___________________________ MyTest.test_method2 ____________________________
 
     self = <test_unittest_db.MyTest testMethod=test_method2>
 
         def test_method2(self):
-    >       assert 0, self.db   # fail for demo purposes
+    >       assert 0, self.db  # fail for demo purposes
     E       AssertionError: <conftest.db_class.<locals>.DummyDB object at 0xdeadbeef>
     E       assert 0
 
-    test_unittest_db.py:12: AssertionError
-    ========================= 2 failed in 0.12 seconds =========================
+    test_unittest_db.py:13: AssertionError
+    ============================ 2 failed in 0.12s =============================
 
 This default pytest traceback shows that the two test methods
 share the same ``self.db`` instance which was our intention
@@ -179,17 +188,19 @@ Let's look at an ``initdir`` fixture which makes all test methods of a
 ``TestCase`` class execute in a temporary directory with a
 pre-initialized ``samplefile.ini``.  Our ``initdir`` fixture itself uses
 the pytest builtin :ref:`tmpdir <tmpdir>` fixture to delegate the
-creation of a per-test temporary directory::
+creation of a per-test temporary directory:
+
+.. code-block:: python
 
     # content of test_unittest_cleandir.py
     import pytest
     import unittest
 
-    class MyTest(unittest.TestCase):
 
+    class MyTest(unittest.TestCase):
         @pytest.fixture(autouse=True)
         def initdir(self, tmpdir):
-            tmpdir.chdir() # change to pytest-provided temporary directory
+            tmpdir.chdir()  # change to pytest-provided temporary directory
             tmpdir.join("samplefile.ini").write("# testdata")
 
         def test_method(self):
@@ -208,7 +219,7 @@ Running this test module ...:
 
     $ pytest -q test_unittest_cleandir.py
     .                                                                    [100%]
-    1 passed in 0.12 seconds
+    1 passed in 0.12s
 
 ... gives us one passed test because the ``initdir`` fixture function
 was executed ahead of the ``test_method``.

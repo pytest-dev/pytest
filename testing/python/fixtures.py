@@ -9,37 +9,77 @@ from _pytest.pathlib import Path
 from _pytest.pytester import get_public_names
 
 
-def test_getfuncargnames():
+def test_getfuncargnames_functions():
+    """Test getfuncargnames for normal functions"""
+
     def f():
-        pass
+        raise NotImplementedError()
 
     assert not fixtures.getfuncargnames(f)
 
     def g(arg):
-        pass
+        raise NotImplementedError()
 
     assert fixtures.getfuncargnames(g) == ("arg",)
 
     def h(arg1, arg2="hello"):
-        pass
+        raise NotImplementedError()
 
     assert fixtures.getfuncargnames(h) == ("arg1",)
 
     def j(arg1, arg2, arg3="hello"):
-        pass
+        raise NotImplementedError()
 
     assert fixtures.getfuncargnames(j) == ("arg1", "arg2")
 
+
+def test_getfuncargnames_methods():
+    """Test getfuncargnames for normal methods"""
+
     class A:
         def f(self, arg1, arg2="hello"):
-            pass
-
-        @staticmethod
-        def static(arg1, arg2):
-            pass
+            raise NotImplementedError()
 
     assert fixtures.getfuncargnames(A().f) == ("arg1",)
+
+
+def test_getfuncargnames_staticmethod():
+    """Test getfuncargnames for staticmethods"""
+
+    class A:
+        @staticmethod
+        def static(arg1, arg2, x=1):
+            raise NotImplementedError()
+
     assert fixtures.getfuncargnames(A.static, cls=A) == ("arg1", "arg2")
+
+
+def test_getfuncargnames_partial():
+    """Check getfuncargnames for methods defined with functools.partial (#5701)"""
+    import functools
+
+    def check(arg1, arg2, i):
+        raise NotImplementedError()
+
+    class T:
+        test_ok = functools.partial(check, i=2)
+
+    values = fixtures.getfuncargnames(T().test_ok, name="test_ok")
+    assert values == ("arg1", "arg2")
+
+
+def test_getfuncargnames_staticmethod_partial():
+    """Check getfuncargnames for staticmethods defined with functools.partial (#5701)"""
+    import functools
+
+    def check(arg1, arg2, i):
+        raise NotImplementedError()
+
+    class T:
+        test_ok = staticmethod(functools.partial(check, i=2))
+
+    values = fixtures.getfuncargnames(T().test_ok, name="test_ok")
+    assert values == ("arg1", "arg2")
 
 
 @pytest.mark.pytester_example_path("fixtures/fill_fixtures")
@@ -409,12 +449,13 @@ class TestFillFixtures:
                 "*ERROR at setup of test_lookup_error*",
                 "  def test_lookup_error(unknown):*",
                 "E       fixture 'unknown' not found",
-                ">       available fixtures:*a_fixture,*b_fixture,*c_fixture,*d_fixture*monkeypatch,*",  # sorted
+                ">       available fixtures:*a_fixture,*b_fixture,*c_fixture,*d_fixture*monkeypatch,*",
+                # sorted
                 ">       use 'py*test --fixtures *' for help on them.",
                 "*1 error*",
             ]
         )
-        assert "INTERNAL" not in result.stdout.str()
+        result.stdout.no_fnmatch_line("*INTERNAL*")
 
     def test_fixture_excinfo_leak(self, testdir):
         # on python2 sys.excinfo would leak into fixture executions
@@ -2176,6 +2217,68 @@ class TestFixtureMarker:
             ["*ScopeMismatch*You tried*function*session*request*"]
         )
 
+    def test_dynamic_scope(self, testdir):
+        testdir.makeconftest(
+            """
+            import pytest
+
+
+            def pytest_addoption(parser):
+                parser.addoption("--extend-scope", action="store_true", default=False)
+
+
+            def dynamic_scope(fixture_name, config):
+                if config.getoption("--extend-scope"):
+                    return "session"
+                return "function"
+
+
+            @pytest.fixture(scope=dynamic_scope)
+            def dynamic_fixture(calls=[]):
+                calls.append("call")
+                return len(calls)
+
+        """
+        )
+
+        testdir.makepyfile(
+            """
+            def test_first(dynamic_fixture):
+                assert dynamic_fixture == 1
+
+
+            def test_second(dynamic_fixture):
+                assert dynamic_fixture == 2
+
+        """
+        )
+
+        reprec = testdir.inline_run()
+        reprec.assertoutcome(passed=2)
+
+        reprec = testdir.inline_run("--extend-scope")
+        reprec.assertoutcome(passed=1, failed=1)
+
+    def test_dynamic_scope_bad_return(self, testdir):
+        testdir.makepyfile(
+            """
+            import pytest
+
+            def dynamic_scope(**_):
+                return "wrong-scope"
+
+            @pytest.fixture(scope=dynamic_scope)
+            def fixture():
+                pass
+
+        """
+        )
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines(
+            "Fixture 'fixture' from test_dynamic_scope_bad_return.py "
+            "got an unexpected scope value 'wrong-scope'"
+        )
+
     def test_register_only_with_mark(self, testdir):
         testdir.makeconftest(
             """
@@ -2544,7 +2647,7 @@ class TestFixtureMarker:
             *3 passed*
         """
         )
-        assert "error" not in result.stdout.str()
+        result.stdout.no_fnmatch_line("*error*")
 
     def test_fixture_finalizer(self, testdir):
         testdir.makeconftest(
@@ -3048,7 +3151,7 @@ class TestShowFixtures:
             *hello world*
         """
         )
-        assert "arg0" not in result.stdout.str()
+        result.stdout.no_fnmatch_line("*arg0*")
 
     @pytest.mark.parametrize("testmod", [True, False])
     def test_show_fixtures_conftest(self, testdir, testmod):
@@ -3285,7 +3388,7 @@ class TestShowFixtures:
             @pytest.fixture
             @pytest.fixture
             def foo():
-                pass
+                raise NotImplementedError()
 
 
 class TestContextManagerFixtureFuncs:
@@ -3905,13 +4008,45 @@ class TestScopeOrdering:
         reprec = testdir.inline_run()
         reprec.assertoutcome(passed=2)
 
+    def test_class_fixture_self_instance(self, testdir):
+        """Check that plugin classes which implement fixtures receive the plugin instance
+        as self (see #2270).
+        """
+        testdir.makeconftest(
+            """
+            import pytest
+
+            def pytest_configure(config):
+                config.pluginmanager.register(MyPlugin())
+
+            class MyPlugin():
+                def __init__(self):
+                    self.arg = 1
+
+                @pytest.fixture(scope='function')
+                def myfix(self):
+                    assert isinstance(self, MyPlugin)
+                    return self.arg
+        """
+        )
+
+        testdir.makepyfile(
+            """
+            class TestClass(object):
+                def test_1(self, myfix):
+                    assert myfix == 1
+        """
+        )
+        reprec = testdir.inline_run()
+        reprec.assertoutcome(passed=1)
+
 
 def test_call_fixture_function_error():
     """Check if an error is raised if a fixture function is called directly (#4545)"""
 
     @pytest.fixture
     def fix():
-        return 1
+        raise NotImplementedError()
 
     with pytest.raises(pytest.fail.Exception):
         assert fix() == 1
@@ -3969,3 +4104,106 @@ def test_fixture_named_request(testdir):
             "  *test_fixture_named_request.py:5",
         ]
     )
+
+
+def test_fixture_duplicated_arguments(testdir):
+    """Raise error if there are positional and keyword arguments for the same parameter (#1682)."""
+    with pytest.raises(TypeError) as excinfo:
+
+        @pytest.fixture("session", scope="session")
+        def arg(arg):
+            pass
+
+    assert (
+        str(excinfo.value)
+        == "The fixture arguments are defined as positional and keyword: scope. "
+        "Use only keyword arguments."
+    )
+
+
+def test_fixture_with_positionals(testdir):
+    """Raise warning, but the positionals should still works (#1682)."""
+    from _pytest.deprecated import FIXTURE_POSITIONAL_ARGUMENTS
+
+    with pytest.warns(pytest.PytestDeprecationWarning) as warnings:
+
+        @pytest.fixture("function", [0], True)
+        def fixture_with_positionals():
+            pass
+
+    assert str(warnings[0].message) == str(FIXTURE_POSITIONAL_ARGUMENTS)
+
+    assert fixture_with_positionals._pytestfixturefunction.scope == "function"
+    assert fixture_with_positionals._pytestfixturefunction.params == (0,)
+    assert fixture_with_positionals._pytestfixturefunction.autouse
+
+
+def test_indirect_fixture_does_not_break_scope(testdir):
+    """Ensure that fixture scope is respected when using indirect fixtures (#570)"""
+    testdir.makepyfile(
+        """
+        import pytest
+        instantiated  = []
+
+        @pytest.fixture(scope="session")
+        def fixture_1(request):
+            instantiated.append(("fixture_1", request.param))
+
+
+        @pytest.fixture(scope="session")
+        def fixture_2(request):
+            instantiated.append(("fixture_2", request.param))
+
+
+        scenarios = [
+            ("A", "a1"),
+            ("A", "a2"),
+            ("B", "b1"),
+            ("B", "b2"),
+            ("C", "c1"),
+            ("C", "c2"),
+        ]
+
+        @pytest.mark.parametrize(
+            "fixture_1,fixture_2", scenarios, indirect=["fixture_1", "fixture_2"]
+        )
+        def test_create_fixtures(fixture_1, fixture_2):
+            pass
+
+
+        def test_check_fixture_instantiations():
+            assert instantiated == [
+                ('fixture_1', 'A'),
+                ('fixture_2', 'a1'),
+                ('fixture_2', 'a2'),
+                ('fixture_1', 'B'),
+                ('fixture_2', 'b1'),
+                ('fixture_2', 'b2'),
+                ('fixture_1', 'C'),
+                ('fixture_2', 'c1'),
+                ('fixture_2', 'c2'),
+            ]
+    """
+    )
+    result = testdir.runpytest()
+    result.assert_outcomes(passed=7)
+
+
+def test_fixture_parametrization_nparray(testdir):
+    pytest.importorskip("numpy")
+
+    testdir.makepyfile(
+        """
+        from numpy import linspace
+        from pytest import fixture
+
+        @fixture(params=linspace(1, 10, 10))
+        def value(request):
+            return request.param
+
+        def test_bug(value):
+            assert value == value
+    """
+    )
+    result = testdir.runpytest()
+    result.assert_outcomes(passed=10)

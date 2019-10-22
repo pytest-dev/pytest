@@ -145,7 +145,7 @@ You can use the ``skipif`` marker (as any other marker) on classes:
 .. code-block:: python
 
     @pytest.mark.skipif(sys.platform == "win32", reason="does not run on windows")
-    class TestPosixCalls(object):
+    class TestPosixCalls:
         def test_function(self):
             "will not be setup or run under 'win32' platform"
 
@@ -179,14 +179,17 @@ information.
 Skipping on a missing import dependency
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-You can use the following helper at module level
-or within a test or test setup function::
+You can skip tests on a missing import by using :ref:`pytest.importorskip ref`
+at module level, within a test, or test setup function.
+
+.. code-block:: python
 
     docutils = pytest.importorskip("docutils")
 
-If ``docutils`` cannot be imported here, this will lead to a
-skip outcome of the test.  You can also skip based on the
-version number of a library::
+If ``docutils`` cannot be imported here, this will lead to a skip outcome of
+the test. You can also skip based on the version number of a library:
+
+.. code-block:: python
 
     docutils = pytest.importorskip("docutils", minversion="0.3")
 
@@ -223,7 +226,9 @@ XFail: mark test functions as expected to fail
 ----------------------------------------------
 
 You can use the ``xfail`` marker to indicate that you
-expect a test to fail::
+expect a test to fail:
+
+.. code-block:: python
 
     @pytest.mark.xfail
     def test_function():
@@ -366,7 +371,7 @@ Running it with the report-on-xfail option gives this output:
     XFAIL xfail_demo.py::test_hello6
       reason: reason
     XFAIL xfail_demo.py::test_hello7
-    ======================== 7 xfailed in 0.12 seconds =========================
+    ============================ 7 xfailed in 0.12s ============================
 
 .. _`skip/xfail with parametrize`:
 

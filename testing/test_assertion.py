@@ -9,15 +9,14 @@ import pytest
 from _pytest import outcomes
 from _pytest.assertion import truncate
 from _pytest.assertion import util
+from _pytest.compat import ATTRS_EQ_FIELD
 
 
-def mock_config():
+def mock_config(verbose=0):
     class Config:
-        verbose = False
-
         def getoption(self, name):
             if name == "verbose":
-                return self.verbose
+                return verbose
             raise KeyError("Not mocked out: %s" % name)
 
     return Config()
@@ -295,9 +294,8 @@ class TestBinReprIntegration:
         result.stdout.fnmatch_lines(["*test_hello*FAIL*", "*test_check*PASS*"])
 
 
-def callequal(left, right, verbose=False):
-    config = mock_config()
-    config.verbose = verbose
+def callequal(left, right, verbose=0):
+    config = mock_config(verbose=verbose)
     return plugin.pytest_assertrepr_compare(config, "==", left, right)
 
 
@@ -321,7 +319,7 @@ class TestAssert_reprcompare:
             assert "a" * 50 not in line
 
     def test_text_skipping_verbose(self):
-        lines = callequal("a" * 50 + "spam", "a" * 50 + "eggs", verbose=True)
+        lines = callequal("a" * 50 + "spam", "a" * 50 + "eggs", verbose=1)
         assert "- " + "a" * 50 + "spam" in lines
         assert "+ " + "a" * 50 + "eggs" in lines
 
@@ -344,7 +342,7 @@ class TestAssert_reprcompare:
 
     def test_bytes_diff_verbose(self):
         """Check special handling for bytes diff (#5260)"""
-        diff = callequal(b"spam", b"eggs", verbose=True)
+        diff = callequal(b"spam", b"eggs", verbose=1)
         assert diff == [
             "b'spam' == b'eggs'",
             "At index 0 diff: b's' != b'e'",
@@ -401,9 +399,9 @@ class TestAssert_reprcompare:
         When verbose is False, then just a -v notice to get the diff is rendered,
         when verbose is True, then ndiff of the pprint is returned.
         """
-        expl = callequal(left, right, verbose=False)
+        expl = callequal(left, right, verbose=0)
         assert expl[-1] == "Use -v to get the full diff"
-        expl = "\n".join(callequal(left, right, verbose=True))
+        expl = "\n".join(callequal(left, right, verbose=1))
         assert expl.endswith(textwrap.dedent(expected).strip())
 
     def test_list_different_lengths(self):
@@ -411,6 +409,55 @@ class TestAssert_reprcompare:
         assert len(expl) > 1
         expl = callequal([0, 1, 2], [0, 1])
         assert len(expl) > 1
+
+    def test_list_wrap_for_multiple_lines(self):
+        long_d = "d" * 80
+        l1 = ["a", "b", "c"]
+        l2 = ["a", "b", "c", long_d]
+        diff = callequal(l1, l2, verbose=True)
+        assert diff == [
+            "['a', 'b', 'c'] == ['a', 'b', 'c...dddddddddddd']",
+            "Right contains one more item: '" + long_d + "'",
+            "Full diff:",
+            "  [",
+            "   'a',",
+            "   'b',",
+            "   'c',",
+            "+  '" + long_d + "',",
+            "  ]",
+        ]
+
+        diff = callequal(l2, l1, verbose=True)
+        assert diff == [
+            "['a', 'b', 'c...dddddddddddd'] == ['a', 'b', 'c']",
+            "Left contains one more item: '" + long_d + "'",
+            "Full diff:",
+            "  [",
+            "   'a',",
+            "   'b',",
+            "   'c',",
+            "-  '" + long_d + "',",
+            "  ]",
+        ]
+
+    def test_list_wrap_for_width_rewrap_same_length(self):
+        long_a = "a" * 30
+        long_b = "b" * 30
+        long_c = "c" * 30
+        l1 = [long_a, long_b, long_c]
+        l2 = [long_b, long_c, long_a]
+        diff = callequal(l1, l2, verbose=True)
+        assert diff == [
+            "['aaaaaaaaaaa...cccccccccccc'] == ['bbbbbbbbbbb...aaaaaaaaaaaa']",
+            "At index 0 diff: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' != 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'",
+            "Full diff:",
+            "  [",
+            "-  'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',",
+            "   'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',",
+            "   'cccccccccccccccccccccccccccccc',",
+            "+  'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',",
+            "  ]",
+        ]
 
     def test_dict(self):
         expl = callequal({"a": 0}, {"a": 1})
@@ -490,7 +537,6 @@ class TestAssert_reprcompare:
         assert len(expl) > 1
 
     def test_Sequence(self):
-
         if not hasattr(collections_abc, "MutableSequence"):
             pytest.skip("cannot import MutableSequence")
         MutableSequence = collections_abc.MutableSequence
@@ -688,7 +734,7 @@ class TestAssert_reprcompare_attrsclass:
         @attr.s
         class SimpleDataObject:
             field_a = attr.ib()
-            field_b = attr.ib(cmp=False)
+            field_b = attr.ib(**{ATTRS_EQ_FIELD: False})
 
         left = SimpleDataObject(1, "b")
         right = SimpleDataObject(1, "b")
@@ -806,9 +852,6 @@ class TestFormatExplanation:
 
 
 class TestTruncateExplanation:
-
-    """ Confirm assertion output is truncated as expected """
-
     # The number of lines in the truncation explanation message. Used
     # to calculate that results have the expected length.
     LINES_IN_TRUNCATION_MSG = 2
@@ -969,7 +1012,13 @@ def test_pytest_assertrepr_compare_integration(testdir):
     )
     result = testdir.runpytest()
     result.stdout.fnmatch_lines(
-        ["*def test_hello():*", "*assert x == y*", "*E*Extra items*left*", "*E*50*"]
+        [
+            "*def test_hello():*",
+            "*assert x == y*",
+            "*E*Extra items*left*",
+            "*E*50*",
+            "*= 1 failed in*",
+        ]
     )
 
 
@@ -1031,7 +1080,7 @@ def test_assertion_options(testdir):
     result = testdir.runpytest()
     assert "3 == 4" in result.stdout.str()
     result = testdir.runpytest_subprocess("--assert=plain")
-    assert "3 == 4" not in result.stdout.str()
+    result.stdout.no_fnmatch_line("*3 == 4*")
 
 
 def test_triple_quoted_string_issue113(testdir):
@@ -1043,7 +1092,7 @@ def test_triple_quoted_string_issue113(testdir):
     )
     result = testdir.runpytest("--fulltrace")
     result.stdout.fnmatch_lines(["*1 failed*"])
-    assert "SyntaxError" not in result.stdout.str()
+    result.stdout.no_fnmatch_line("*SyntaxError*")
 
 
 def test_traceback_failure(testdir):
@@ -1302,3 +1351,23 @@ def test_exit_from_assertrepr_compare(monkeypatch):
 
     with pytest.raises(outcomes.Exit, match="Quitting debugger"):
         callequal(1, 1)
+
+
+def test_assertion_location_with_coverage(testdir):
+    """This used to report the wrong location when run with coverage (#5754)."""
+    p = testdir.makepyfile(
+        """
+        def test():
+            assert False, 1
+            assert False, 2
+        """
+    )
+    result = testdir.runpytest(str(p))
+    result.stdout.fnmatch_lines(
+        [
+            ">       assert False, 1",
+            "E       AssertionError: 1",
+            "E       assert False",
+            "*= 1 failed in*",
+        ]
+    )

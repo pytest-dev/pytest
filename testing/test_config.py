@@ -7,6 +7,7 @@ import _pytest._code
 import pytest
 from _pytest.compat import importlib_metadata
 from _pytest.config import _iter_rewritable_modules
+from _pytest.config import Config
 from _pytest.config.exceptions import UsageError
 from _pytest.config.findpaths import determine_setup
 from _pytest.config.findpaths import get_common_ancestor
@@ -122,6 +123,12 @@ class TestParseIni:
         )
         config = testdir.parseconfigure(sub)
         assert config.getini("minversion") == "2.0"
+
+    def test_ini_parse_error(self, testdir):
+        testdir.tmpdir.join("pytest.ini").write("addopts = -x")
+        result = testdir.runpytest()
+        assert result.ret != 0
+        result.stderr.fnmatch_lines(["ERROR: *pytest.ini:1: no section header defined"])
 
     @pytest.mark.xfail(reason="probably not needed")
     def test_confcutdir(self, testdir):
@@ -441,7 +448,7 @@ class TestConfigFromdictargs:
         assert config.option.capture == "no"
         assert config.args == args
 
-    def test_origargs(self, _sys_snapshot):
+    def test_invocation_params_args(self, _sys_snapshot):
         """Show that fromdictargs can handle args in their "orig" format"""
         from _pytest.config import Config
 
@@ -450,7 +457,7 @@ class TestConfigFromdictargs:
 
         config = Config.fromdictargs(option_dict, args)
         assert config.args == ["a", "b"]
-        assert config._origargs == args
+        assert config.invocation_params.args == tuple(args)
         assert config.option.verbose == 4
         assert config.option.capture == "no"
 
@@ -1188,6 +1195,21 @@ def test_help_and_version_after_argument_error(testdir):
     assert result.ret == ExitCode.USAGE_ERROR
 
 
+def test_help_formatter_uses_py_get_terminal_width(testdir, monkeypatch):
+    from _pytest.config.argparsing import DropShorterLongHelpFormatter
+
+    monkeypatch.setenv("COLUMNS", "90")
+    formatter = DropShorterLongHelpFormatter("prog")
+    assert formatter._width == 90
+
+    monkeypatch.setattr("py.io.get_terminal_width", lambda: 160)
+    formatter = DropShorterLongHelpFormatter("prog")
+    assert formatter._width == 160
+
+    formatter = DropShorterLongHelpFormatter("prog", width=42)
+    assert formatter._width == 42
+
+
 def test_config_does_not_load_blocked_plugin_from_args(testdir):
     """This tests that pytest's config setup handles "-p no:X"."""
     p = testdir.makepyfile("def test(capfd): pass")
@@ -1214,13 +1236,17 @@ def test_invocation_args(testdir):
     call = calls[0]
     config = call.item.config
 
-    assert config.invocation_params.args == [p, "-v"]
+    assert config.invocation_params.args == (p, "-v")
     assert config.invocation_params.dir == Path(str(testdir.tmpdir))
 
     plugins = config.invocation_params.plugins
     assert len(plugins) == 2
     assert plugins[0] is plugin
     assert type(plugins[1]).__name__ == "Collect"  # installed by testdir.inline_run()
+
+    # args cannot be None
+    with pytest.raises(TypeError):
+        Config.InvocationParams(args=None, plugins=None, dir=Path())
 
 
 @pytest.mark.parametrize(

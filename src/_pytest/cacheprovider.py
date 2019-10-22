@@ -14,7 +14,7 @@ import py
 import pytest
 from .pathlib import Path
 from .pathlib import resolve_from_str
-from .pathlib import rmtree
+from .pathlib import rm_rf
 
 README_CONTENT = """\
 # pytest cache directory #
@@ -44,7 +44,7 @@ class Cache:
     def for_config(cls, config):
         cachedir = cls.cache_dir_from_config(config)
         if config.getoption("cacheclear") and cachedir.exists():
-            rmtree(cachedir, force=True)
+            rm_rf(cachedir)
             cachedir.mkdir()
         return cls(cachedir, config)
 
@@ -135,7 +135,7 @@ class Cache:
         readme_path.write_text(README_CONTENT)
 
         gitignore_path = self._cachedir.joinpath(".gitignore")
-        msg = "# Created by pytest automatically.\n*"
+        msg = "# Created by pytest automatically.\n*\n"
         gitignore_path.write_text(msg, encoding="UTF-8")
 
         cachedir_tag_path = self._cachedir.joinpath("CACHEDIR.TAG")

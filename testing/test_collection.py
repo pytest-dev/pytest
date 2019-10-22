@@ -139,7 +139,7 @@ class TestCollectFS:
 
         # by default, ignore tests inside a virtualenv
         result = testdir.runpytest()
-        assert "test_invenv" not in result.stdout.str()
+        result.stdout.no_fnmatch_line("*test_invenv*")
         # allow test collection if user insists
         result = testdir.runpytest("--collect-in-virtualenv")
         assert "test_invenv" in result.stdout.str()
@@ -165,7 +165,7 @@ class TestCollectFS:
         testfile = testdir.tmpdir.ensure(".virtual", "test_invenv.py")
         testfile.write("def test_hello(): pass")
         result = testdir.runpytest("--collect-in-virtualenv")
-        assert "test_invenv" not in result.stdout.str()
+        result.stdout.no_fnmatch_line("*test_invenv*")
         # ...unless the virtualenv is explicitly given on the CLI
         result = testdir.runpytest("--collect-in-virtualenv", ".virtual")
         assert "test_invenv" in result.stdout.str()
@@ -364,7 +364,7 @@ class TestCustomConftests:
         testdir.makepyfile(test_world="def test_hello(): pass")
         result = testdir.runpytest()
         assert result.ret == ExitCode.NO_TESTS_COLLECTED
-        assert "passed" not in result.stdout.str()
+        result.stdout.no_fnmatch_line("*passed*")
         result = testdir.runpytest("--XX")
         assert result.ret == 0
         assert "passed" in result.stdout.str()
@@ -857,7 +857,7 @@ def test_exit_on_collection_with_maxfail_smaller_than_n_errors(testdir):
         ["*ERROR collecting test_02_import_error.py*", "*No module named *asdfa*"]
     )
 
-    assert "test_03" not in res.stdout.str()
+    res.stdout.no_fnmatch_line("*test_03*")
 
 
 def test_exit_on_collection_with_maxfail_bigger_than_n_errors(testdir):
@@ -996,12 +996,12 @@ def test_collect_init_tests(testdir):
     result.stdout.fnmatch_lines(
         ["<Package */tests>", "  <Module test_foo.py>", "    <Function test_foo>"]
     )
-    assert "test_init" not in result.stdout.str()
+    result.stdout.no_fnmatch_line("*test_init*")
     result = testdir.runpytest("./tests/__init__.py", "--collect-only")
     result.stdout.fnmatch_lines(
         ["<Package */tests>", "  <Module __init__.py>", "    <Function test_init>"]
     )
-    assert "test_foo" not in result.stdout.str()
+    result.stdout.no_fnmatch_line("*test_foo*")
 
 
 def test_collect_invalid_signature_message(testdir):
@@ -1201,6 +1201,18 @@ def test_collect_pkg_init_and_file_in_args(testdir):
             "*2 passed in*",
         ]
     )
+
+
+def test_collect_pkg_init_only(testdir):
+    subdir = testdir.mkdir("sub")
+    init = subdir.ensure("__init__.py")
+    init.write("def test_init(): pass")
+
+    result = testdir.runpytest(str(init))
+    result.stdout.fnmatch_lines(["*no tests ran in*"])
+
+    result = testdir.runpytest("-v", "-o", "python_files=*.py", str(init))
+    result.stdout.fnmatch_lines(["sub/__init__.py::test_init PASSED*", "*1 passed in*"])
 
 
 @pytest.mark.skipif(

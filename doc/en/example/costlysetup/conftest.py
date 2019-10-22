@@ -1,7 +1,7 @@
 import pytest
 
 
-@pytest.fixture("session")
+@pytest.fixture(scope="session")
 def setup(request):
     setup = CostlySetup()
     yield setup

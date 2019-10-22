@@ -5,10 +5,15 @@ import traceback
 from inspect import CO_VARARGS
 from inspect import CO_VARKEYWORDS
 from traceback import format_exception_only
+from types import CodeType
 from types import TracebackType
+from typing import Any
+from typing import Dict
 from typing import Generic
+from typing import List
 from typing import Optional
 from typing import Pattern
+from typing import Set
 from typing import Tuple
 from typing import TypeVar
 from typing import Union
@@ -29,7 +34,7 @@ if False:  # TYPE_CHECKING
 class Code:
     """ wrapper around Python code objects """
 
-    def __init__(self, rawcode):
+    def __init__(self, rawcode) -> None:
         if not hasattr(rawcode, "co_filename"):
             rawcode = getrawcode(rawcode)
         try:
@@ -38,7 +43,7 @@ class Code:
             self.name = rawcode.co_name
         except AttributeError:
             raise TypeError("not a code object: {!r}".format(rawcode))
-        self.raw = rawcode
+        self.raw = rawcode  # type: CodeType
 
     def __eq__(self, other):
         return self.raw == other.raw
@@ -351,7 +356,7 @@ class Traceback(list):
         """ return the index of the frame/TracebackEntry where recursion
             originates if appropriate, None if no recursion occurred
         """
-        cache = {}
+        cache = {}  # type: Dict[Tuple[Any, int, int], List[Dict[str, Any]]]
         for i, entry in enumerate(self):
             # id for the code.raw is needed to work around
             # the strange metaprogramming in the decorator lib from pypi
@@ -443,7 +448,7 @@ class ExceptionInfo(Generic[_E]):
         assert tup[1] is not None, "no current exception"
         assert tup[2] is not None, "no current exception"
         exc_info = (tup[0], tup[1], tup[2])
-        return cls.from_exc_info(exc_info)
+        return cls.from_exc_info(exc_info, exprinfo)
 
     @classmethod
     def for_later(cls) -> "ExceptionInfo[_E]":
@@ -502,7 +507,9 @@ class ExceptionInfo(Generic[_E]):
     def __repr__(self) -> str:
         if self._excinfo is None:
             return "<ExceptionInfo for raises contextmanager>"
-        return "<ExceptionInfo %s tblen=%d>" % (self.typename, len(self.traceback))
+        return "<{} {} tblen={}>".format(
+            self.__class__.__name__, saferepr(self._excinfo[1]), len(self.traceback)
+        )
 
     def exconly(self, tryshort: bool = False) -> str:
         """ return the exception as a string
@@ -520,7 +527,9 @@ class ExceptionInfo(Generic[_E]):
                 text = text[len(self._striptext) :]
         return text
 
-    def errisinstance(self, exc: "Type[BaseException]") -> bool:
+    def errisinstance(
+        self, exc: Union["Type[BaseException]", Tuple["Type[BaseException]", ...]]
+    ) -> bool:
         """ return True if the exception is an instance of exc """
         return isinstance(self.value, exc)
 
@@ -589,7 +598,7 @@ class ExceptionInfo(Generic[_E]):
         )
         return fmt.repr_excinfo(self)
 
-    def match(self, regexp: Union[str, Pattern]) -> bool:
+    def match(self, regexp: "Union[str, Pattern]") -> bool:
         """
         Check whether the regular expression 'regexp' is found in the string
         representation of the exception using ``re.search``. If it matches
@@ -648,7 +657,7 @@ class FormattedExcinfo:
                 args.append((argname, saferepr(argvalue)))
             return ReprFuncArgs(args)
 
-    def get_source(self, source, line_index=-1, excinfo=None, short=False):
+    def get_source(self, source, line_index=-1, excinfo=None, short=False) -> List[str]:
         """ return formatted and marked up source lines. """
         import _pytest._code
 
@@ -720,7 +729,7 @@ class FormattedExcinfo:
         else:
             line_index = entry.lineno - entry.getfirstlinesource()
 
-        lines = []
+        lines = []  # type: List[str]
         style = entry._repr_style
         if style is None:
             style = self.style
@@ -797,7 +806,7 @@ class FormattedExcinfo:
                 exc_msg=str(e),
                 max_frames=max_frames,
                 total=len(traceback),
-            )
+            )  # type: Optional[str]
             traceback = traceback[:max_frames] + traceback[-max_frames:]
         else:
             if recursionindex is not None:
@@ -810,10 +819,12 @@ class FormattedExcinfo:
 
     def repr_excinfo(self, excinfo):
 
-        repr_chain = []
+        repr_chain = (
+            []
+        )  # type: List[Tuple[ReprTraceback, Optional[ReprFileLocation], Optional[str]]]
         e = excinfo.value
         descr = None
-        seen = set()
+        seen = set()  # type: Set[int]
         while e is not None and id(e) not in seen:
             seen.add(id(e))
             if excinfo:
@@ -866,8 +877,8 @@ class TerminalRepr:
 
 
 class ExceptionRepr(TerminalRepr):
-    def __init__(self):
-        self.sections = []
+    def __init__(self) -> None:
+        self.sections = []  # type: List[Tuple[str, str, str]]
 
     def addsection(self, name, content, sep="-"):
         self.sections.append((name, content, sep))

@@ -47,7 +47,7 @@ you will see the return value of the function call:
     E        +  where 3 = f()
 
     test_assert1.py:6: AssertionError
-    ========================= 1 failed in 0.12 seconds =========================
+    ============================ 1 failed in 0.12s =============================
 
 ``pytest`` has support for showing the values of the most common subexpressions
 including calls, attributes, comparisons, and binary and unary
@@ -208,7 +208,7 @@ if you run this module:
     E         Use -v to get the full diff
 
     test_assert2.py:6: AssertionError
-    ========================= 1 failed in 0.12 seconds =========================
+    ============================ 1 failed in 0.12s =============================
 
 Special comparisons are done for a number of cases:
 
@@ -238,14 +238,17 @@ file which provides an alternative explanation for ``Foo`` objects:
 
    def pytest_assertrepr_compare(op, left, right):
        if isinstance(left, Foo) and isinstance(right, Foo) and op == "==":
-           return ["Comparing Foo instances:", "   vals: %s != %s" % (left.val, right.val)]
+           return [
+               "Comparing Foo instances:",
+               "   vals: {} != {}".format(left.val, right.val),
+           ]
 
 now, given this test module:
 
 .. code-block:: python
 
    # content of test_foocompare.py
-   class Foo(object):
+   class Foo:
        def __init__(self, val):
            self.val = val
 
@@ -276,7 +279,7 @@ the conftest file:
    E            vals: 1 != 2
 
    test_foocompare.py:12: AssertionError
-   1 failed in 0.12 seconds
+   1 failed in 0.12s
 
 .. _assert-details:
 .. _`assert introspection`:
