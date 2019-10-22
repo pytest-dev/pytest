@@ -166,3 +166,10 @@ notifications:
     skip_join: true
   email:
     - pytest-commit@python.org
+
+branches:
+  only:
+    - master
+    - features
+    - 4.6-maintenance
+    - /^\d+(\.\d+)+$/
