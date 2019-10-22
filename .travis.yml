@@ -22,53 +22,11 @@ install:
 
 jobs:
   include:
-    # OSX tests - first (in test stage), since they are the slower ones.
-    - os: osx
-      osx_image: xcode10.1
-      language: generic
-      env: TOXENV=py37-xdist PYTEST_COVERAGE=1
-      before_install:
-        - which python3
-        - python3 -V
-        - ln -sfn "$(which python3)" /usr/local/bin/python
-        - python -V
-        - test $(python -c 'import sys; print("%d%d" % sys.version_info[0:2])') = 37
-
     # Full run of latest supported version, without xdist.
     # Coverage for:
     # - test_sys_breakpoint_interception (via pexpect).
     - env: TOXENV=py37-pexpect PYTEST_COVERAGE=1 COLUMNS=192
       python: '3.7'
-
-    # Coverage tracking is slow with pypy, skip it.
-    - env: TOXENV=pypy3-xdist
-      python: 'pypy3'
-
-    - env: TOXENV=py35-xdist
-      python: '3.5'
-
-    # Coverage for:
-    # - pytester's LsofFdLeakChecker
-    # - TestArgComplete (linux only)
-    # - numpy
-    # - old attrs
-    # Empty PYTEST_ADDOPTS to run this non-verbose.
-    - env: TOXENV=py37-lsof-oldattrs-numpy-twisted-xdist PYTEST_COVERAGE=1 PYTEST_ADDOPTS=
-
-    # Specialized factors for py37.
-    - env: TOXENV=py37-pluggymaster-xdist
-    - env: TOXENV=py37-freeze
-
-    - env: TOXENV=py38-xdist
-      python: '3.8-dev'
-
-    - stage: baseline
-      env: TOXENV=py36-xdist
-      python: '3.6'
-    - env: TOXENV=linting,docs,doctesting PYTEST_COVERAGE=1
-      cache:
-        directories:
-          - $HOME/.cache/pre-commit
 
     - stage: deploy
       python: '3.6'
