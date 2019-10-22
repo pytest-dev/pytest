@@ -37,7 +37,7 @@ jobs:
     # Full run of latest supported version, without xdist.
     # Coverage for:
     # - test_sys_breakpoint_interception (via pexpect).
-    - env: TOXENV=py37-pexpect PYTEST_COVERAGE=1
+    - env: TOXENV=py37-pexpect PYTEST_COVERAGE=1 COLUMNS=192
       python: '3.7'
 
     # Coverage tracking is slow with pypy, skip it.
