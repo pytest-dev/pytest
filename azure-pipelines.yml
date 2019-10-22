@@ -57,7 +57,7 @@ jobs:
         export COVERAGE_FILE="$PWD/.coverage"
         export COVERAGE_PROCESS_START="$PWD/.coveragerc"
       fi
-      python -m tox -e $(tox.env)
+      python -m tox -e $(tox.env) -vv
     displayName: 'Run tests'
 
   - task: PublishTestResults@2
