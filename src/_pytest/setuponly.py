@@ -20,8 +20,7 @@ def pytest_addoption(parser):
 @pytest.hookimpl(hookwrapper=True)
 def pytest_fixture_setup(fixturedef, request):
     yield
-    config = request.config
-    if config.option.setupshow:
+    if request.config.option.setupshow:
         if hasattr(request, "param"):
             # Save the fixture parameter so ._show_fixture_action() can
             # display it now and during the teardown (in .finish()).

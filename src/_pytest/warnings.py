@@ -42,7 +42,7 @@ def pytest_addoption(parser):
         type="linelist",
         help="Each line specifies a pattern for "
         "warnings.filterwarnings. "
-        "Processed after -W and --pythonwarnings.",
+        "Processed after -W/--pythonwarnings.",
     )
 
 
