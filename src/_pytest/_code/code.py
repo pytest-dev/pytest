@@ -971,18 +971,30 @@ class ReprEntry(TerminalRepr):
         self.reprfileloc = filelocrepr
         self.style = style
 
+    @staticmethod
+    def _color_error_lines(tw, lines):
+        bold_before = False
+        for line in lines:
+            if line.startswith("E   "):
+                if bold_before:
+                    markup = tw.markup("E   ", red=True, bold=True)
+                    markup += tw.markup(line[4:])
+                else:
+                    markup = tw.markup(line, red=True, bold=True)
+                    bold_before = True
+            else:
+                bold_before = False
+                markup = line
+            tw.line(markup)
+
     def toterminal(self, tw):
         if self.style == "short":
             self.reprfileloc.toterminal(tw)
-            for line in self.lines:
-                red = line.startswith("E   ")
-                tw.line(line, bold=True, red=red)
+            self._color_error_lines(tw, self.lines)
             return
         if self.reprfuncargs:
             self.reprfuncargs.toterminal(tw)
-        for line in self.lines:
-            red = line.startswith("E   ")
-            tw.line(line, bold=True, red=red)
+        self._color_error_lines(tw, self.lines)
         if self.reprlocals:
             tw.line("")
             self.reprlocals.toterminal(tw)
