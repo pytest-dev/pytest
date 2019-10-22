@@ -859,16 +859,21 @@ class TestInvocationVariants:
             4
         """,
         )
-        result = testdir.runpytest("-rf")
-        lines = result.stdout.str().splitlines()
-        for line in lines:
-            if line.startswith(("FAIL ", "FAILED ")):
-                _fail, _sep, testid = line.partition(" ")
-                break
-        result = testdir.runpytest(testid, "-rf")
-        result.stdout.fnmatch_lines(
-            ["FAILED test_doctest_id.txt::test_doctest_id.txt", "*1 failed*"]
-        )
+        testid = "test_doctest_id.txt::test_doctest_id.txt"
+        expected_lines = [
+            "*= FAILURES =*",
+            "*_ ?doctest? test_doctest_id.txt _*",
+            "FAILED test_doctest_id.txt::test_doctest_id.txt",
+            "*= 1 failed in*",
+        ]
+        result = testdir.runpytest(testid, "-rf", "--tb=short")
+        result.stdout.fnmatch_lines(expected_lines)
+
+        # Ensure that re-running it will still handle it as
+        # doctest.DocTestFailure, which was not the case before when
+        # re-importing doctest, but not creating a new RUNNER_CLASS.
+        result = testdir.runpytest(testid, "-rf", "--tb=short")
+        result.stdout.fnmatch_lines(expected_lines)
 
     def test_core_backward_compatibility(self):
         """Test backward compatibility for get_plugin_manager function. See #787."""
