@@ -1490,3 +1490,47 @@ def test_typeerror_encodedfile_write(testdir):
     result_with_capture.stdout.fnmatch_lines(
         ["E * TypeError: write() argument must be str, not bytes"]
     )
+
+
+def test_logging_in_atexit(testdir):
+    p = testdir.makepyfile(
+        """
+        import atexit
+        import logging
+        import sys
+
+        cur_stdout = sys.stdout
+        LOGGER = logging.getLogger(__name__)
+
+        def test_fail():
+            assert 0
+
+        def _atexit():
+            print("test-print in atexit", cur_stdout)
+            LOGGER.error("test-log in atexit")
+
+        print()
+        print("test-register")
+        print()
+        atexit.register(_atexit)
+        logging.basicConfig()
+
+        LOGGER.error("log_setup_not_shown_from_collection")
+
+        print(sys.stderr, id(sys.stderr))
+    """
+    )
+    result = testdir.runpytest_subprocess(str(p))
+    result.stdout.fnmatch_lines(
+        [
+            "*= 1 failed in *",
+            "test-print in atexit <_pytest.capture.EncodedFile object *",
+        ]
+    )
+    assert result.stderr.lines == ["ERROR:test_logging_in_atexit:test-log in atexit"]
+    assert result.ret == 1
+
+    output = str(result.stdout) + str(result.stderr)
+    assert "test-register" not in output
+    assert "*- Captured stderr call -*" not in output
+    assert "log_setup_not_shown_from_collection" not in output
