@@ -108,8 +108,7 @@ def warns(  # noqa: F811
         ...     warnings.warn("this is not here", UserWarning)
         Traceback (most recent call last):
           ...
-        Failed: DID NOT WARN. No warnings of type ...UserWarning... was emitted...
-
+        _pytest.outcomes.Failed: DID NOT WARN. No warnings of type ...UserWarning... was emitted...
     """
     __tracebackhide__ = True
     if not args:
