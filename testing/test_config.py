@@ -1291,7 +1291,7 @@ def test_config_blocked_default_plugins(testdir, plugin):
     if plugin != "terminal":
         result.stdout.fnmatch_lines(["* 1 failed in *"])
     else:
-        assert result.stdout.lines == [""]
+        assert result.stdout.lines == []
 
 
 class TestSetupCfg:
