@@ -703,7 +703,9 @@ class DontReadFromInput:
     encoding = None
 
     def read(self, *args):
-        raise IOError("reading from stdin while output is captured")
+        raise IOError(
+            "pytest: reading from stdin while output is captured!  Consider using `-s`."
+        )
 
     readline = read
     readlines = read
