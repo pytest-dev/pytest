@@ -38,21 +38,35 @@ def ensure_reset_dir(path):
     path.mkdir()
 
 
-def on_rm_rf_error(func, path: str, exc, *, start_path):
-    """Handles known read-only errors during rmtree."""
-    excvalue = exc[1]
+def on_rm_rf_error(func, path: str, exc, *, start_path) -> bool:
+    """Handles known read-only errors during rmtree.
+
+    The returned value is used only by our own tests.
+    """
+    exctype, excvalue = exc[:2]
+
+    # another process removed the file in the middle of the "rm_rf" (xdist for example)
+    # more context: https://github.com/pytest-dev/pytest/issues/5974#issuecomment-543799018
+    if isinstance(excvalue, FileNotFoundError):
+        return False
 
     if not isinstance(excvalue, PermissionError):
         warnings.warn(
-            PytestWarning("(rm_rf) error removing {}: {}".format(path, excvalue))
+            PytestWarning(
+                "(rm_rf) error removing {}\n{}: {}".format(path, exctype, excvalue)
+            )
         )
-        return
+        return False
 
     if func not in (os.rmdir, os.remove, os.unlink):
         warnings.warn(
-            PytestWarning("(rm_rf) error removing {}: {}".format(path, excvalue))
+            PytestWarning(
+                "(rm_rf) unknown function {} when removing {}:\n{}: {}".format(
+                    path, func, exctype, excvalue
+                )
+            )
         )
-        return
+        return False
 
     # Chmod + retry.
     import stat
@@ -73,6 +87,7 @@ def on_rm_rf_error(func, path: str, exc, *, start_path):
     chmod_rw(str(path))
 
     func(path)
+    return True
 
 
 def rm_rf(path: Path):
