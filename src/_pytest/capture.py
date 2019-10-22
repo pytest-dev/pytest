@@ -2,6 +2,7 @@
 per-test stdout/stderr capturing mechanism.
 
 """
+import atexit
 import collections
 import contextlib
 import io
@@ -595,9 +596,8 @@ class FDCaptureBinary:
         os.close(targetfd_save)
         self.syscapture.done()
         # Redirect any remaining output.
-        os.dup2(self.targetfd, self.tmpfile.buffer.fileno())
-        # TODO: atexit?
-        # self.tmpfile.close()
+        os.dup2(self.targetfd, self.tmpfile_fd)
+        atexit.register(self.tmpfile.close)
         self._state = "done"
 
     def suspend(self):
@@ -668,8 +668,7 @@ class SysCapture:
     def done(self):
         setattr(sys, self.name, self._old)
         del self._old
-        # TODO: atexit?
-        # self.tmpfile.close()
+        atexit.register(self.tmpfile.close)
         self._state = "done"
 
     def suspend(self):
