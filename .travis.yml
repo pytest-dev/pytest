@@ -1,11 +1,5 @@
 language: python
 dist: xenial
-stages:
-- baseline
-- name: test
-  if: repo = pytest-dev/pytest AND tag IS NOT present
-- name: deploy
-  if: repo = pytest-dev/pytest AND tag IS present
 python: '3.7'
 cache: false
 
@@ -22,30 +16,11 @@ install:
 
 jobs:
   include:
-    # OSX tests - first (in test stage), since they are the slower ones.
-    - os: osx
-      osx_image: xcode10.1
-      language: generic
-      env: TOXENV=py37-xdist PYTEST_COVERAGE=1
-      before_install:
-        - which python3
-        - python3 -V
-        - ln -sfn "$(which python3)" /usr/local/bin/python
-        - python -V
-        - test $(python -c 'import sys; print("%d%d" % sys.version_info[0:2])') = 37
-
     # Full run of latest supported version, without xdist.
     # Coverage for:
     # - test_sys_breakpoint_interception (via pexpect).
     - env: TOXENV=py37-pexpect PYTEST_COVERAGE=1
       python: '3.7'
-
-    # Coverage tracking is slow with pypy, skip it.
-    - env: TOXENV=pypy3-xdist
-      python: 'pypy3'
-
-    - env: TOXENV=py35-xdist
-      python: '3.5'
 
     # Coverage for:
     # - pytester's LsofFdLeakChecker
@@ -55,49 +30,10 @@ jobs:
     # Empty PYTEST_ADDOPTS to run this non-verbose.
     - env: TOXENV=py37-lsof-oldattrs-numpy-twisted-xdist PYTEST_COVERAGE=1 PYTEST_ADDOPTS=
 
-    # Specialized factors for py37.
-    - env: TOXENV=py37-pluggymaster-xdist
-    - env: TOXENV=py37-freeze
-
-    - env: TOXENV=py38-xdist
-      python: '3.8-dev'
-
-    - stage: baseline
-      env: TOXENV=py36-xdist
-      python: '3.6'
     - env: TOXENV=linting,docs,doctesting PYTEST_COVERAGE=1
       cache:
         directories:
           - $HOME/.cache/pre-commit
-
-    - stage: deploy
-      python: '3.6'
-      install: pip install -U setuptools setuptools_scm tox
-      script: skip
-      # token to upload github release notes: GH_RELEASE_NOTES_TOKEN
-      env:
-        - secure: "OjOeL7/0JUDkV00SsTs732e8vQjHynpbG9FKTNtZZJ+1Zn4Cib+hAlwmlBnvVukML0X60YpcfjnC4quDOIGLPsh5zeXnvJmYtAIIUNQXjWz8NhcGYrhyzuP1rqV22U68RTCdmOq3lMYU/W2acwHP7T49PwJtOiUM5kF120UAQ0Zi5EmkqkIvH8oM5mO9Dlver+/U7Htpz9rhKrHBXQNCMZI6yj2aUyukqB2PN2fjAlDbCF//+FmvYw9NjT4GeFOSkTCf4ER9yfqs7yglRfwiLtOCZ2qKQhWZNsSJDB89rxIRXWavJUjJKeY2EW2/NkomYJDpqJLIF4JeFRw/HhA47CYPeo6BJqyyNV+0CovL1frpWfi9UQw2cMbgFUkUIUk3F6DD59PHNIOX2R/HX56dQsw7WKl3QuHlCOkICXYg8F7Ta684IoKjeTX03/6QNOkURfDBwfGszY0FpbxrjCSWKom6RyZdyidnESaxv9RzjcIRZVh1rp8KMrwS1OrwRSdG0zjlsPr49hWMenN/8fKgcHTV4/r1Tj6mip0dorSRCrgUNIeRBKgmui6FS8642ab5JNKOxMteVPVR2sFuhjOQ0Jy+PmvceYY9ZMWc3+/B/KVh0dZ3hwvLGZep/vxDS2PwCA5/xw31714vT5LxidKo8yECjBynMU/wUTTS695D3NY="
-      addons:
-        apt:
-          packages:
-            # required by publish_gh_release_notes
-            - pandoc
-      after_deploy: tox -e publish_gh_release_notes
-      deploy:
-        provider: pypi
-        user: nicoddemus
-        distributions: sdist bdist_wheel
-        skip_upload_docs: true
-        password:
-          secure: xanTgTUu6XDQVqB/0bwJQXoDMnU5tkwZc5koz6mBkkqZhKdNOi2CLoC1XhiSZ+ah24l4V1E0GAqY5kBBcy9d7NVe4WNg4tD095LsHw+CRU6/HCVIFfyk2IZ+FPAlguesCcUiJSXOrlBF+Wj68wEvLoK7EoRFbJeiZ/f91Ww1sbtDlqXABWGHrmhPJL5Wva7o7+wG7JwJowqdZg1pbQExsCc7b53w4v2RBu3D6TJaTAzHiVsW+nUSI67vKI/uf+cR/OixsTfy37wlHgSwihYmrYLFls3V0bSpahCim3bCgMaFZx8S8xrdgJ++PzBCof2HeflFKvW+VCkoYzGEG4NrTWJoNz6ni4red9GdvfjGH3YCjAKS56h9x58zp2E5rpsb/kVq5/45xzV+dq6JRuhQ1nJWjBC6fSKAc/bfwnuFK3EBxNLkvBssLHvsNjj5XG++cB8DdS9wVGUqjpoK4puaXUWFqy4q3S9F86HEsKNgExtieA9qNx+pCIZVs6JCXZNjr0I5eVNzqJIyggNgJG6RyravsU35t9Zd9doL5g4Y7UKmAGTn1Sz24HQ4sMQgXdm2SyD8gEK5je4tlhUvfGtDvMSlstq71kIn9nRpFnqB6MFlbYSEAZmo8dGbCquoUc++6Rum208wcVbrzzVtGlXB/Ow9AbFMYeAGA0+N/K1e59c=
-        on:
-          tags: true
-          repo: pytest-dev/pytest
-
-matrix:
-  allow_failures:
-    - python: '3.8-dev'
-      env: TOXENV=py38-xdist
 
 before_script:
   - |
@@ -120,13 +56,3 @@ after_success:
     if [[ "$PYTEST_COVERAGE" = 1 ]]; then
       env CODECOV_NAME="$TOXENV-$TRAVIS_OS_NAME" scripts/report-coverage.sh
     fi
-
-notifications:
-  irc:
-    channels:
-      - "chat.freenode.net#pytest"
-    on_success: change
-    on_failure: change
-    skip_join: true
-  email:
-    - pytest-commit@python.org
