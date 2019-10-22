@@ -1,3 +1,4 @@
+import os
 import sys
 
 import pytest
@@ -27,6 +28,10 @@ def pytest_collection_modifyitems(config, items):
     slow_items = []
     slowest_items = []
     neutral_items = []
+
+    if not int(os.environ.get("PYTEST_REORDER_TESTS", 1)):
+        yield
+        return
 
     spawn_names = {"spawn_pytest", "spawn"}
 
