@@ -7,6 +7,7 @@ from typing import Optional
 
 import _pytest._code
 from _pytest import outcomes
+from _pytest._io.saferepr import safeformat
 from _pytest._io.saferepr import saferepr
 from _pytest.compat import ATTRS_EQ_FIELD
 
@@ -123,13 +124,21 @@ def isiterable(obj):
 
 def assertrepr_compare(config, op, left, right):
     """Return specialised explanations for some operators/operands"""
-    maxsize = (80 - 15 - len(op) - 2) // 2  # 15 chars indentation, 1 space around op
-    left_repr = saferepr(left, maxsize=maxsize)
-    right_repr = saferepr(right, maxsize=maxsize)
+    verbose = config.getoption("verbose")
+    if verbose > 1:
+        left_repr = safeformat(left)
+        right_repr = safeformat(right)
+    else:
+        # XXX: "15 chars indentation" is wrong
+        #      ("E       AssertionError: assert "); should use term width.
+        maxsize = (
+            80 - 15 - len(op) - 2
+        ) // 2  # 15 chars indentation, 1 space around op
+        left_repr = saferepr(left, maxsize=maxsize)
+        right_repr = saferepr(right, maxsize=maxsize)
 
     summary = "{} {} {}".format(left_repr, op, right_repr)
 
-    verbose = config.getoption("verbose")
     explanation = None
     try:
         if op == "==":

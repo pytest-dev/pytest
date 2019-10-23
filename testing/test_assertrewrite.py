@@ -190,11 +190,12 @@ class TestAssertionRewrite:
             pass
 
         msg = getmsg(f, {"cls": X}).splitlines()
-        if verbose > 0:
-
+        if verbose > 1:
+            assert msg == ["assert {!r} == 42".format(X), "  -{!r}".format(X), "  +42"]
+        elif verbose > 0:
             assert msg == [
                 "assert <class 'test_...e.<locals>.X'> == 42",
-                "  -<class 'test_assertrewrite.TestAssertionRewrite.test_name.<locals>.X'>",
+                "  -{!r}".format(X),
                 "  +42",
             ]
         else:
@@ -206,9 +207,17 @@ class TestAssertionRewrite:
         def f():
             assert "1234567890" * 5 + "A" == "1234567890" * 5 + "B"
 
-        assert getmsg(f).splitlines()[0] == (
-            "assert '123456789012...901234567890A' == '123456789012...901234567890B'"
-        )
+        msg = getmsg(f).splitlines()[0]
+        if request.config.getoption("verbose") > 1:
+            assert msg == (
+                "assert '12345678901234567890123456789012345678901234567890A' "
+                "== '12345678901234567890123456789012345678901234567890B'"
+            )
+        else:
+            assert msg == (
+                "assert '123456789012...901234567890A' "
+                "== '123456789012...901234567890B'"
+            )
 
     def test_dont_rewrite_if_hasattr_fails(self, request):
         class Y:
