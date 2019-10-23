@@ -584,7 +584,7 @@ raise ValueError()
         reprlocals = p.repr_locals(loc)
         assert reprlocals.lines
         assert reprlocals.lines[0] == "__builtins__ = <builtins>"
-        assert '[NotImplementedError("") raised in repr()]' in reprlocals.lines[1]
+        assert "[NotImplementedError() raised in repr()]" in reprlocals.lines[1]
 
     def test_repr_local_with_exception_in_class_property(self):
         class ExceptionWithBrokenClass(Exception):
@@ -602,7 +602,7 @@ raise ValueError()
         reprlocals = p.repr_locals(loc)
         assert reprlocals.lines
         assert reprlocals.lines[0] == "__builtins__ = <builtins>"
-        assert '[ExceptionWithBrokenClass("") raised in repr()]' in reprlocals.lines[1]
+        assert "[ExceptionWithBrokenClass() raised in repr()]" in reprlocals.lines[1]
 
     def test_repr_local_truncated(self):
         loc = {"l": [i for i in range(10)]}

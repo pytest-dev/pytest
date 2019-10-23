@@ -3,14 +3,24 @@ import reprlib
 from typing import Any
 
 
-def _format_repr_exception(exc: Exception, obj: Any) -> str:
-    exc_name = type(exc).__name__
+def _try_repr_or_str(obj):
     try:
-        exc_info = str(exc)
-    except Exception:
-        exc_info = "unknown"
-    return '<[{}("{}") raised in repr()] {} object at 0x{:x}>'.format(
-        exc_name, exc_info, obj.__class__.__name__, id(obj)
+        return repr(obj)
+    except (KeyboardInterrupt, SystemExit):
+        raise
+    except BaseException:
+        return '{}("{}")'.format(type(obj).__name__, obj)
+
+
+def _format_repr_exception(exc: BaseException, obj: Any) -> str:
+    try:
+        exc_info = _try_repr_or_str(exc)
+    except (KeyboardInterrupt, SystemExit):
+        raise
+    except BaseException as exc:
+        exc_info = "unpresentable exception ({})".format(_try_repr_or_str(exc))
+    return "<[{} raised in repr()] {} object at 0x{:x}>".format(
+        exc_info, obj.__class__.__name__, id(obj)
     )
 
 
@@ -35,14 +45,18 @@ class SafeRepr(reprlib.Repr):
     def repr(self, x: Any) -> str:
         try:
             s = super().repr(x)
-        except Exception as exc:
+        except (KeyboardInterrupt, SystemExit):
+            raise
+        except BaseException as exc:
             s = _format_repr_exception(exc, x)
         return _ellipsize(s, self.maxsize)
 
     def repr_instance(self, x: Any, level: int) -> str:
         try:
             s = repr(x)
-        except Exception as exc:
+        except (KeyboardInterrupt, SystemExit):
+            raise
+        except BaseException as exc:
             s = _format_repr_exception(exc, x)
         return _ellipsize(s, self.maxsize)
 

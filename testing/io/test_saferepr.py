@@ -1,3 +1,4 @@
+import pytest
 from _pytest._io.saferepr import saferepr
 
 
@@ -40,9 +41,80 @@ def test_exceptions():
     assert "TypeError" in s
     assert "TypeError" in saferepr(BrokenRepr("string"))
 
-    s2 = saferepr(BrokenRepr(BrokenReprException("omg even worse")))
-    assert "NameError" not in s2
-    assert "unknown" in s2
+    try:
+        None()
+    except Exception as exc:
+        exp_exc = repr(exc)
+    obj = BrokenRepr(BrokenReprException("omg even worse"))
+    s2 = saferepr(obj)
+    assert s2 == (
+        "<[unpresentable exception ({!s}) raised in repr()] BrokenRepr object at 0x{:x}>".format(
+            exp_exc, id(obj)
+        )
+    )
+
+
+def test_baseexception():
+    """Test saferepr() with BaseExceptions, which includes pytest outcomes."""
+
+    class RaisingOnStrRepr(BaseException):
+        def __init__(self, exc_types):
+            self.exc_types = exc_types
+
+        def raise_exc(self, *args):
+            try:
+                self.exc_type = self.exc_types.pop(0)
+            except IndexError:
+                pass
+            if hasattr(self.exc_type, "__call__"):
+                raise self.exc_type(*args)
+            raise self.exc_type
+
+        def __str__(self):
+            self.raise_exc("__str__")
+
+        def __repr__(self):
+            self.raise_exc("__repr__")
+
+    class BrokenObj:
+        def __init__(self, exc):
+            self.exc = exc
+
+        def __repr__(self):
+            raise self.exc
+
+        __str__ = __repr__
+
+    baseexc_str = BaseException("__str__")
+    obj = BrokenObj(RaisingOnStrRepr([BaseException]))
+    assert saferepr(obj) == (
+        "<[unpresentable exception ({!r}) "
+        "raised in repr()] BrokenObj object at 0x{:x}>".format(baseexc_str, id(obj))
+    )
+    obj = BrokenObj(RaisingOnStrRepr([RaisingOnStrRepr([BaseException])]))
+    assert saferepr(obj) == (
+        "<[{!r} raised in repr()] BrokenObj object at 0x{:x}>".format(
+            baseexc_str, id(obj)
+        )
+    )
+
+    with pytest.raises(KeyboardInterrupt):
+        saferepr(BrokenObj(KeyboardInterrupt()))
+
+    with pytest.raises(SystemExit):
+        saferepr(BrokenObj(SystemExit()))
+
+    with pytest.raises(KeyboardInterrupt):
+        saferepr(BrokenObj(RaisingOnStrRepr([KeyboardInterrupt])))
+
+    with pytest.raises(SystemExit):
+        saferepr(BrokenObj(RaisingOnStrRepr([SystemExit])))
+
+    with pytest.raises(KeyboardInterrupt):
+        print(saferepr(BrokenObj(RaisingOnStrRepr([BaseException, KeyboardInterrupt]))))
+
+    with pytest.raises(SystemExit):
+        saferepr(BrokenObj(RaisingOnStrRepr([BaseException, SystemExit])))
 
 
 def test_buggy_builtin_repr():
