@@ -881,7 +881,9 @@ class Testdir:
             sys.stdout.write(out)
             sys.stderr.write(err)
 
-        res = RunResult(reprec.ret, out.split("\n"), err.split("\n"), time.time() - now)
+        res = RunResult(
+            reprec.ret, out.splitlines(), err.splitlines(), time.time() - now
+        )
         res.reprec = reprec
         return res
 

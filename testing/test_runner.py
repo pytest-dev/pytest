@@ -597,7 +597,7 @@ def test_pytest_exit_returncode(testdir):
     result = testdir.runpytest()
     result.stdout.fnmatch_lines(["*! *Exit: some exit msg !*"])
 
-    assert _strip_resource_warnings(result.stderr.lines) == [""]
+    assert _strip_resource_warnings(result.stderr.lines) == []
     assert result.ret == 99
 
     # It prints to stderr also in case of exit during pytest_sessionstart.
@@ -612,8 +612,7 @@ def test_pytest_exit_returncode(testdir):
     result = testdir.runpytest()
     result.stdout.fnmatch_lines(["*! *Exit: during_sessionstart !*"])
     assert _strip_resource_warnings(result.stderr.lines) == [
-        "Exit: during_sessionstart",
-        "",
+        "Exit: during_sessionstart"
     ]
     assert result.ret == 98
 
