@@ -6,6 +6,8 @@ import sys
 import traceback
 import warnings
 from contextlib import contextmanager
+from typing import Sequence
+from typing import Tuple
 
 import pytest
 from _pytest import outcomes
@@ -119,11 +121,12 @@ def _is_doctest(config, path, parent):
 
 
 class ReprFailDoctest(TerminalRepr):
-    def __init__(self, reprlocation_lines):
-        # List of (reprlocation, lines) tuples
+    def __init__(
+        self, reprlocation_lines: Sequence[Tuple[ReprFileLocation, Sequence[str]]]
+    ):
         self.reprlocation_lines = reprlocation_lines
 
-    def toterminal(self, tw):
+    def toterminal(self, tw) -> None:
         for reprlocation, lines in self.reprlocation_lines:
             for line in lines:
                 tw.line(line)
