@@ -506,7 +506,7 @@ class TestPDB:
         rest = child.read().decode("utf8")
 
         assert "! _pytest.outcomes.Exit: Quitting debugger !" in rest
-        assert "= no tests ran in" in rest
+        assert "= \x1b[33mno tests ran\x1b[0m\x1b[33m in" in rest
         assert "BdbQuit" not in rest
         assert "UNEXPECTED EXCEPTION" not in rest
 
