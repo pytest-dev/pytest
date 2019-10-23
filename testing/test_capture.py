@@ -6,6 +6,8 @@ import subprocess
 import sys
 import textwrap
 from io import UnsupportedOperation
+from typing import List
+from typing import TextIO
 
 import py
 
@@ -857,8 +859,8 @@ def tmpfile(testdir):
 
 
 @needsosdup
-def test_dupfile(tmpfile):
-    flist = []
+def test_dupfile(tmpfile) -> None:
+    flist = []  # type: List[TextIO]
     for i in range(5):
         nf = capture.safe_text_dupfile(tmpfile, "wb")
         assert nf != tmpfile

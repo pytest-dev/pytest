@@ -2,6 +2,10 @@
 import logging
 import re
 from contextlib import contextmanager
+from typing import AbstractSet
+from typing import Dict
+from typing import List
+from typing import Mapping
 
 import py
 
@@ -32,14 +36,15 @@ class ColoredLevelFormatter(logging.Formatter):
         logging.INFO: {"green"},
         logging.DEBUG: {"purple"},
         logging.NOTSET: set(),
-    }
+    }  # type: Mapping[int, AbstractSet[str]]
     LEVELNAME_FMT_REGEX = re.compile(r"%\(levelname\)([+-.]?\d*s)")
 
-    def __init__(self, terminalwriter, *args, **kwargs):
+    def __init__(self, terminalwriter, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self._original_fmt = self._style._fmt
-        self._level_to_fmt_mapping = {}
+        self._level_to_fmt_mapping = {}  # type: Dict[int, str]
 
+        assert self._fmt is not None
         levelname_fmt_match = self.LEVELNAME_FMT_REGEX.search(self._fmt)
         if not levelname_fmt_match:
             return
@@ -216,17 +221,17 @@ def catching_logs(handler, formatter=None, level=None):
 class LogCaptureHandler(logging.StreamHandler):
     """A logging handler that stores log records and the log text."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Creates a new log handler."""
         logging.StreamHandler.__init__(self, py.io.TextIO())
-        self.records = []
+        self.records = []  # type: List[logging.LogRecord]
 
-    def emit(self, record):
+    def emit(self, record: logging.LogRecord) -> None:
         """Keep the log records in a list in addition to the log text."""
         self.records.append(record)
         logging.StreamHandler.emit(self, record)
 
-    def reset(self):
+    def reset(self) -> None:
         self.records = []
         self.stream = py.io.TextIO()
 
@@ -234,13 +239,13 @@ class LogCaptureHandler(logging.StreamHandler):
 class LogCaptureFixture:
     """Provides access and control of log capturing."""
 
-    def __init__(self, item):
+    def __init__(self, item) -> None:
         """Creates a new funcarg."""
         self._item = item
         # dict of log name -> log level
-        self._initial_log_levels = {}  # Dict[str, int]
+        self._initial_log_levels = {}  # type: Dict[str, int]
 
-    def _finalize(self):
+    def _finalize(self) -> None:
         """Finalizes the fixture.
 
         This restores the log levels changed by :meth:`set_level`.
@@ -453,7 +458,7 @@ class LoggingPlugin:
         ):
             formatter = ColoredLevelFormatter(
                 create_terminal_writer(self._config), log_format, log_date_format
-            )
+            )  # type: logging.Formatter
         else:
             formatter = logging.Formatter(log_format, log_date_format)
 

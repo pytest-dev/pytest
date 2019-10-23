@@ -839,7 +839,8 @@ class TestLiterals:
         reprec = testdir.inline_run()
         reprec.assertoutcome(failed=1)
 
-    def test_number_re(self):
+    def test_number_re(self) -> None:
+        _number_re = _get_checker()._number_re  # type: ignore
         for s in [
             "1.",
             "+1.",
@@ -861,12 +862,12 @@ class TestLiterals:
             "-1.2e-3",
         ]:
             print(s)
-            m = _get_checker()._number_re.match(s)
+            m = _number_re.match(s)
             assert m is not None
             assert float(m.group()) == pytest.approx(float(s))
         for s in ["1", "abc"]:
             print(s)
-            assert _get_checker()._number_re.match(s) is None
+            assert _number_re.match(s) is None
 
     @pytest.mark.parametrize("config_mode", ["ini", "comment"])
     def test_number_precision(self, testdir, config_mode):

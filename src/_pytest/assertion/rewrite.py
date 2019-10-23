@@ -78,7 +78,8 @@ class AssertionRewritingHook(importlib.abc.MetaPathFinder):
             # there's nothing to rewrite there
             # python3.5 - python3.6: `namespace`
             # python3.7+: `None`
-            or spec.origin in {None, "namespace"}
+            or spec.origin == "namespace"
+            or spec.origin is None
             # we can only rewrite source files
             or not isinstance(spec.loader, importlib.machinery.SourceFileLoader)
             # if the file doesn't exist, we can't rewrite it
@@ -743,8 +744,7 @@ class AssertionRewriter(ast.NodeVisitor):
             from _pytest.warning_types import PytestAssertRewriteWarning
             import warnings
 
-            # Ignore type: typeshed bug https://github.com/python/typeshed/pull/3121
-            warnings.warn_explicit(  # type: ignore
+            warnings.warn_explicit(
                 PytestAssertRewriteWarning(
                     "assertion is always true, perhaps remove parentheses?"
                 ),

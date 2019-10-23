@@ -7,6 +7,7 @@ ignores the external pytest-cache
 import json
 import os
 from collections import OrderedDict
+from typing import List
 
 import attr
 import py
@@ -15,6 +16,9 @@ import pytest
 from .pathlib import Path
 from .pathlib import resolve_from_str
 from .pathlib import rm_rf
+from _pytest import nodes
+from _pytest.config import Config
+from _pytest.main import Session
 
 README_CONTENT = """\
 # pytest cache directory #
@@ -263,10 +267,12 @@ class NFPlugin:
         self.active = config.option.newfirst
         self.cached_nodeids = config.cache.get("cache/nodeids", [])
 
-    def pytest_collection_modifyitems(self, session, config, items):
+    def pytest_collection_modifyitems(
+        self, session: Session, config: Config, items: List[nodes.Item]
+    ) -> None:
         if self.active:
-            new_items = OrderedDict()
-            other_items = OrderedDict()
+            new_items = OrderedDict()  # type: OrderedDict[str, nodes.Item]
+            other_items = OrderedDict()  # type: OrderedDict[str, nodes.Item]
             for item in items:
                 if item.nodeid not in self.cached_nodeids:
                     new_items[item.nodeid] = item
