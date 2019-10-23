@@ -368,9 +368,7 @@ class DoctestTextfile(pytest.Module):
         )
 
         parser = doctest.DocTestParser()
-        # Remove ignore once this reaches mypy:
-        # https://github.com/python/typeshed/commit/3e4a251b2b6da6bb43137acf5abf81ecfa7ba8ee
-        test = parser.get_doctest(text, globs, name, filename, 0)  # type: ignore
+        test = parser.get_doctest(text, globs, name, filename, 0)
         if test.examples:
             yield DoctestItem(test.name, self, runner, test)
 

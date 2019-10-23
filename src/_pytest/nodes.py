@@ -139,8 +139,7 @@ class Node:
                 )
             )
         path, lineno = get_fslocation_from_item(self)
-        # Type ignored: https://github.com/python/typeshed/pull/3121
-        warnings.warn_explicit(  # type: ignore
+        warnings.warn_explicit(
             warning,
             category=None,
             filename=str(path),
