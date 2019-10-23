@@ -398,9 +398,14 @@ class TestRmRf:
             on_rm_rf_error(os.unlink, str(fn), exc_info, start_path=tmp_path)
             assert fn.is_file()
 
+        # we ignore FileNotFoundError
+        file_not_found = OSError()
+        file_not_found.errno = errno.ENOENT
+        exc_info = (None, file_not_found, None)
+        assert not on_rm_rf_error(None, str(fn), exc_info, start_path=tmp_path)
+
         permission_error = OSError()
         permission_error.errno = errno.EACCES
-
         # unknown function
         with pytest.warns(pytest.PytestWarning):
             exc_info = (None, permission_error, None)
