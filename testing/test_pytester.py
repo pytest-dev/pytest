@@ -121,17 +121,6 @@ def test_runresult_assertion_on_xpassed(testdir):
     assert result.ret == 0
 
 
-def test_runresult_repr():
-    from _pytest.pytester import RunResult
-
-    assert (
-        repr(
-            RunResult(ret="ret", outlines=[""], errlines=["some", "errors"], duration=1)
-        )
-        == "<RunResult ret='ret' len(stdout.lines)=1 len(stderr.lines)=2 duration=1.00s>"
-    )
-
-
 def test_xpassed_with_strict_is_considered_a_failure(testdir):
     testdir.makepyfile(
         """
@@ -616,3 +605,22 @@ def test_spawn_uses_tmphome(testdir):
     child = testdir.spawn_pytest(str(p1))
     out = child.read()
     assert child.wait() == 0, out.decode("utf8")
+
+
+def test_run_result_repr():
+    outlines = ["some", "normal", "output"]
+    errlines = ["some", "nasty", "errors", "happened"]
+
+    # known exit code
+    r = pytester.RunResult(1, outlines, errlines, duration=0.5)
+    assert (
+        repr(r) == "<RunResult ret=ExitCode.TESTS_FAILED len(stdout.lines)=3"
+        " len(stderr.lines)=4 duration=0.50s>"
+    )
+
+    # unknown exit code: just the number
+    r = pytester.RunResult(99, outlines, errlines, duration=0.5)
+    assert (
+        repr(r) == "<RunResult ret=99 len(stdout.lines)=3"
+        " len(stderr.lines)=4 duration=0.50s>"
+    )

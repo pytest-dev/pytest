@@ -362,7 +362,10 @@ class RunResult:
     """
 
     def __init__(self, ret, outlines, errlines, duration):
-        self.ret = ret
+        try:
+            self.ret = pytest.ExitCode(ret)
+        except ValueError:
+            self.ret = ret
         self.outlines = outlines
         self.errlines = errlines
         self.stdout = LineMatcher(outlines)
@@ -371,7 +374,7 @@ class RunResult:
 
     def __repr__(self):
         return (
-            "<RunResult ret=%r len(stdout.lines)=%d len(stderr.lines)=%d duration=%.2fs>"
+            "<RunResult ret=%s len(stdout.lines)=%d len(stderr.lines)=%d duration=%.2fs>"
             % (self.ret, len(self.stdout.lines), len(self.stderr.lines), self.duration)
         )
 
