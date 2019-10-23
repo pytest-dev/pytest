@@ -1,0 +1,3 @@
+Properly ignore ``FileNotFoundError`` exceptions when trying to remove old temporary directories,
+for instance when multiple processes try to remove the same directory (common with ``pytest-xdist``
+for example).
