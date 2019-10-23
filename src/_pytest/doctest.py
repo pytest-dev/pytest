@@ -86,6 +86,12 @@ def pytest_addoption(parser):
     )
 
 
+def pytest_unconfigure():
+    global RUNNER_CLASS
+
+    RUNNER_CLASS = None
+
+
 def pytest_collect_file(path, parent):
     config = parent.config
     if path.ext == ".py":
