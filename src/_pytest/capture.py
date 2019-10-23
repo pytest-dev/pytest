@@ -12,6 +12,7 @@ from io import UnsupportedOperation
 from tempfile import TemporaryFile
 from typing import Callable
 from typing import List
+from typing import Optional
 
 import pytest
 from _pytest.compat import CaptureIO
@@ -464,7 +465,12 @@ class MultiCapture:
     _state = None
 
     def __init__(
-        self, out=True, err=True, in_=True, Capture=None, capman: CaptureManager = None
+        self,
+        out=True,
+        err=True,
+        in_=True,
+        Capture=None,
+        capman: Optional[CaptureManager] = None,
     ):
         if in_:
             self.in_ = Capture(0, capman=capman)
@@ -554,7 +560,7 @@ class FDCaptureBinary:
     EMPTY_BUFFER = b""
     _state = None
 
-    def __init__(self, targetfd, tmpfile=None, capman: CaptureManager = None):
+    def __init__(self, targetfd, tmpfile=None, capman: Optional[CaptureManager] = None):
         self.targetfd = targetfd
         self._capman = capman
         try:
@@ -667,7 +673,7 @@ class SysCapture:
     EMPTY_BUFFER = str()
     _state = None
 
-    def __init__(self, fd, tmpfile=None, capman: CaptureManager = None):
+    def __init__(self, fd, tmpfile=None, capman: Optional[CaptureManager] = None):
         name = patchsysdict[fd]
         self._capman = capman
         self._old = getattr(sys, name)
