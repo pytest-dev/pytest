@@ -187,7 +187,7 @@ class WarningsRecorder(warnings.catch_warnings):
         exc_type: Optional["Type[BaseException]"],
         exc_val: Optional[BaseException],
         exc_tb: Optional[TracebackType],
-    ) -> bool:
+    ) -> None:
         if not self._entered:
             __tracebackhide__ = True
             raise RuntimeError("Cannot exit %r without entering first" % self)
@@ -197,8 +197,6 @@ class WarningsRecorder(warnings.catch_warnings):
         # Built-in catch_warnings does not reset entered state so we do it
         # manually here for this context manager to become reusable.
         self._entered = False
-
-        return False
 
 
 class WarningsChecker(WarningsRecorder):
@@ -232,7 +230,7 @@ class WarningsChecker(WarningsRecorder):
         exc_type: Optional["Type[BaseException]"],
         exc_val: Optional[BaseException],
         exc_tb: Optional[TracebackType],
-    ) -> bool:
+    ) -> None:
         super().__exit__(exc_type, exc_val, exc_tb)
 
         __tracebackhide__ = True
@@ -263,4 +261,3 @@ class WarningsChecker(WarningsRecorder):
                                 [each.message for each in self],
                             )
                         )
-        return False
