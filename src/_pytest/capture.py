@@ -80,7 +80,7 @@ class CaptureManager:
         self._method = method
         self._global_capturing = None
         self._current_item = None
-        self._atexit_funcs: List[Callable] = []
+        self._atexit_funcs = []  # type: List[Callable]
         atexit.register(self._atexit_run)
         self._tmpfiles = {}
 
