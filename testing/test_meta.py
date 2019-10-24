@@ -15,6 +15,7 @@ def _modules():
     )
 
 
+@pytest.mark.slow
 @pytest.mark.parametrize("module", _modules())
 def test_no_warnings(module):
     # fmt: off
