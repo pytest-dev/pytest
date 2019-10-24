@@ -38,19 +38,24 @@ Full pytest documentation
    customize
    example/index
    bash-completion
+   faq
 
    backwards-compatibility
    deprecations
    py27-py34-deprecation
-   historical-notes
-   license
+
    contributing
    development_guide
+
+   sponsor
+   tidelift
+   license
+   contact
+
+   historical-notes
    talks
    projects
-   faq
-   contact
-   sponsor
+
 
 .. only:: html
 
