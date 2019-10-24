@@ -1,1 +1,0 @@
-Fix crash with ``KeyboardInterrupt`` during ``--setup-show``.

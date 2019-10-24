@@ -104,6 +104,7 @@ For information about fixtures, see :ref:`fixtures`. To see a complete list of a
 
         Captured logs are available through the following properties/methods::
 
+        * caplog.messages        -> list of format-interpolated log messages
         * caplog.text            -> string containing formatted log output
         * caplog.records         -> list of logging.LogRecord instances
         * caplog.record_tuples   -> list of (logger_name, level, message) tuples
