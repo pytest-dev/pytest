@@ -446,16 +446,39 @@ def test_linematcher_with_nonlist():
     assert lm._getlines(set()) == set()
 
 
+def test_linematcher_match_failure():
+    lm = LineMatcher(["foo", "foo", "bar"])
+    with pytest.raises(pytest.fail.Exception) as e:
+        lm.fnmatch_lines(["foo", "f*", "baz"])
+    assert e.value.msg.splitlines() == [
+        "exact match: 'foo'",
+        "fnmatch: 'f*'",
+        "   with: 'foo'",
+        "nomatch: 'baz'",
+        "    and: 'bar'",
+        "remains unmatched: 'baz'",
+    ]
+
+    lm = LineMatcher(["foo", "foo", "bar"])
+    with pytest.raises(pytest.fail.Exception) as e:
+        lm.re_match_lines(["foo", "^f.*", "baz"])
+    assert e.value.msg.splitlines() == [
+        "exact match: 'foo'",
+        "re.match: '^f.*'",
+        "    with: 'foo'",
+        " nomatch: 'baz'",
+        "     and: 'bar'",
+        "remains unmatched: 'baz'",
+    ]
+
+
 @pytest.mark.parametrize("function", ["no_fnmatch_line", "no_re_match_line"])
 def test_no_matching(function):
-    """"""
     if function == "no_fnmatch_line":
-        match_func_name = "fnmatch"
         good_pattern = "*.py OK*"
         bad_pattern = "*X.py OK*"
     else:
         assert function == "no_re_match_line"
-        match_func_name = "re.match"
         good_pattern = r".*py OK"
         bad_pattern = r".*Xpy OK"
 
@@ -469,24 +492,30 @@ def test_no_matching(function):
         ]
     )
 
-    def check_failure_lines(lines):
-        expected = [
-            "nomatch: '{}'".format(good_pattern),
-            "    and: 'cachedir: .pytest_cache'",
-            "    and: 'collecting ... collected 1 item'",
-            "    and: ''",
-            "{}: '{}'".format(match_func_name, good_pattern),
-            "   with: 'show_fixtures_per_test.py OK'",
-        ]
-        assert lines == expected
-
     # check the function twice to ensure we don't accumulate the internal buffer
     for i in range(2):
         with pytest.raises(pytest.fail.Exception) as e:
             func = getattr(lm, function)
             func(good_pattern)
         obtained = str(e.value).splitlines()
-        check_failure_lines(obtained)
+        if function == "no_fnmatch_line":
+            assert obtained == [
+                "nomatch: '{}'".format(good_pattern),
+                "    and: 'cachedir: .pytest_cache'",
+                "    and: 'collecting ... collected 1 item'",
+                "    and: ''",
+                "fnmatch: '{}'".format(good_pattern),
+                "   with: 'show_fixtures_per_test.py OK'",
+            ]
+        else:
+            assert obtained == [
+                "nomatch: '{}'".format(good_pattern),
+                "     and: 'cachedir: .pytest_cache'",
+                "     and: 'collecting ... collected 1 item'",
+                "     and: ''",
+                "re.match: '{}'".format(good_pattern),
+                "    with: 'show_fixtures_per_test.py OK'",
+            ]
 
     func = getattr(lm, function)
     func(bad_pattern)  # bad pattern does not match any line: passes
