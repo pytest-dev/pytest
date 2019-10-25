@@ -1,1 +1,0 @@
-Fix ``--nf`` to not forget about known nodeids with partial test selection.
