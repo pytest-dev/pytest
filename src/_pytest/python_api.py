@@ -227,7 +227,7 @@ class ApproxScalar(ApproxBase):
         """
 
         # Infinities aren't compared using tolerances, so don't show a
-        # tolerance.
+        # tolerance. Need to call abs to handle complex numbers, e.g. (inf + 1j)
         if math.isinf(abs(self.expected)):
             return str(self.expected)
 
