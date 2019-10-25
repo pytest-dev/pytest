@@ -982,8 +982,13 @@ class TestNewFirst:
         )
         testdir.tmpdir.join("test_1/test_1.py").setmtime(1)
 
-        result = testdir.runpytest("-v", "--nf")
+        # Running only a subset does not forget about existing ones.
+        result = testdir.runpytest("-v", "--nf", "test_2/test_2.py")
+        result.stdout.fnmatch_lines(
+            ["*test_2/test_2.py::test_1[1*", "*test_2/test_2.py::test_1[2*"]
+        )
 
+        result = testdir.runpytest("-v", "--nf")
         result.stdout.fnmatch_lines(
             [
                 "*test_1/test_1.py::test_1[3*",

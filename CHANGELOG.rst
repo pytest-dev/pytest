@@ -18,6 +18,26 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+pytest 5.2.2 (2019-10-24)
+=========================
+
+Bug Fixes
+---------
+
+- `#5206 <https://github.com/pytest-dev/pytest/issues/5206>`_: Fix ``--nf`` to not forget about known nodeids with partial test selection.
+
+
+- `#5906 <https://github.com/pytest-dev/pytest/issues/5906>`_: Fix crash with ``KeyboardInterrupt`` during ``--setup-show``.
+
+
+- `#5946 <https://github.com/pytest-dev/pytest/issues/5946>`_: Fixed issue when parametrizing fixtures with numpy arrays (and possibly other sequence-like types).
+
+
+- `#6044 <https://github.com/pytest-dev/pytest/issues/6044>`_: Properly ignore ``FileNotFoundError`` exceptions when trying to remove old temporary directories,
+  for instance when multiple processes try to remove the same directory (common with ``pytest-xdist``
+  for example).
+
+
 pytest 5.2.1 (2019-10-06)
 =========================
 

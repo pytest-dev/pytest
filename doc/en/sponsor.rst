@@ -8,18 +8,6 @@ compensation when possible is welcome to justify time away from friends, family 
 Money is also used to fund local sprints, merchandising (stickers to distribute in conferences for example)
 and every few years a large sprint involving all members.
 
-If you or your company benefit from pytest and would like to contribute to the project financially,
-we are members of two online donation platforms to better suit your needs.
-
-Tidelift
---------
-
-`Tidelift`_ aims to make Open Source sustainable by offering subscriptions to companies which rely
-on Open Source packages. This subscription allows it to pay maintainers of those Open Source
-packages to aid sustainability of the work.
-
-You can help pytest and the ecosystem by obtaining a `Tidelift subscription`_.
-
 OpenCollective
 --------------
 
@@ -30,7 +18,6 @@ It is the platform of choice for individuals and companies that want to make one
 monthly donations directly to the project.
 
 See more datails in the `pytest collective`_.
-
 
 
 .. _Tidelift: https://tidelift.com
