@@ -24,55 +24,50 @@ class MyDocTestRunner(doctest.DocTestRunner):
 
 
 class TestApprox:
-    @pytest.fixture
-    def plus_minus(self):
-        return "\u00b1"
-
-    def test_repr_string(self, plus_minus):
-        tol1, tol2, infr = "1.0e-06", "2.0e-06", "inf"
-        assert repr(approx(1.0)) == "1.0 {pm} {tol1}".format(pm=plus_minus, tol1=tol1)
-        assert repr(
-            approx([1.0, 2.0])
-        ) == "approx([1.0 {pm} {tol1}, 2.0 {pm} {tol2}])".format(
-            pm=plus_minus, tol1=tol1, tol2=tol2
-        )
-        assert repr(
-            approx((1.0, 2.0))
-        ) == "approx((1.0 {pm} {tol1}, 2.0 {pm} {tol2}))".format(
-            pm=plus_minus, tol1=tol1, tol2=tol2
-        )
+    def test_repr_string(self):
+        assert repr(approx(1.0)) == "1.0 ± 1.0e-06"
+        assert repr(approx([1.0, 2.0])) == "approx([1.0 ± 1.0e-06, 2.0 ± 2.0e-06])"
+        assert repr(approx((1.0, 2.0))) == "approx((1.0 ± 1.0e-06, 2.0 ± 2.0e-06))"
         assert repr(approx(inf)) == "inf"
-        assert repr(approx(1.0, rel=nan)) == "1.0 {pm} ???".format(pm=plus_minus)
-        assert repr(approx(1.0, rel=inf)) == "1.0 {pm} {infr}".format(
-            pm=plus_minus, infr=infr
-        )
-        assert repr(approx(1.0j, rel=inf)) == "1j"
+        assert repr(approx(1.0, rel=nan)) == "1.0 ± ???"
+        assert repr(approx(1.0, rel=inf)) == "1.0 ± inf"
 
         # Dictionaries aren't ordered, so we need to check both orders.
         assert repr(approx({"a": 1.0, "b": 2.0})) in (
-            "approx({{'a': 1.0 {pm} {tol1}, 'b': 2.0 {pm} {tol2}}})".format(
-                pm=plus_minus, tol1=tol1, tol2=tol2
-            ),
-            "approx({{'b': 2.0 {pm} {tol2}, 'a': 1.0 {pm} {tol1}}})".format(
-                pm=plus_minus, tol1=tol1, tol2=tol2
-            ),
+            "approx({'a': 1.0 ± 1.0e-06, 'b': 2.0 ± 2.0e-06})",
+            "approx({'b': 2.0 ± 2.0e-06, 'a': 1.0 ± 1.0e-06})",
         )
 
+    def test_repr_complex_numbers(self):
+        assert repr(approx(inf + 1j)) == "(inf+1j)"
+        assert repr(approx(1.0j, rel=inf)) == "1j ± inf"
+
+        # can't compute a sensible tolerance
+        assert repr(approx(nan + 1j)) == "(nan+1j) ± ???"
+
+        assert repr(approx(1.0j)) == "1j ± 1.0e-06 ∠ ±180°"
+
+        # relative tolerance is scaled to |3+4j| = 5
+        assert repr(approx(3 + 4 * 1j)) == "(3+4j) ± 5.0e-06 ∠ ±180°"
+
+        # absolute tolerance is not scaled
+        assert repr(approx(3.3 + 4.4 * 1j, abs=0.02)) == "(3.3+4.4j) ± 2.0e-02 ∠ ±180°"
+
     @pytest.mark.parametrize(
-        "value, repr_string",
+        "value, expected_repr_string",
         [
-            (5.0, "approx(5.0 {pm} 5.0e-06)"),
-            ([5.0], "approx([5.0 {pm} 5.0e-06])"),
-            ([[5.0]], "approx([[5.0 {pm} 5.0e-06]])"),
-            ([[5.0, 6.0]], "approx([[5.0 {pm} 5.0e-06, 6.0 {pm} 6.0e-06]])"),
-            ([[5.0], [6.0]], "approx([[5.0 {pm} 5.0e-06], [6.0 {pm} 6.0e-06]])"),
+            (5.0, "approx(5.0 ± 5.0e-06)"),
+            ([5.0], "approx([5.0 ± 5.0e-06])"),
+            ([[5.0]], "approx([[5.0 ± 5.0e-06]])"),
+            ([[5.0, 6.0]], "approx([[5.0 ± 5.0e-06, 6.0 ± 6.0e-06]])"),
+            ([[5.0], [6.0]], "approx([[5.0 ± 5.0e-06], [6.0 ± 6.0e-06]])"),
         ],
     )
-    def test_repr_nd_array(self, plus_minus, value, repr_string):
+    def test_repr_nd_array(self, value, expected_repr_string):
         """Make sure that arrays of all different dimensions are repr'd correctly."""
         np = pytest.importorskip("numpy")
         np_array = np.array(value)
-        assert repr(approx(np_array)) == repr_string.format(pm=plus_minus)
+        assert repr(approx(np_array)) == expected_repr_string
 
     def test_operator_overloading(self):
         assert 1 == approx(1, rel=1e-6, abs=1e-12)
