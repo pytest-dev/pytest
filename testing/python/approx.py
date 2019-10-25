@@ -46,7 +46,6 @@ class TestApprox:
         assert repr(approx(1.0, rel=inf)) == "1.0 {pm} {infr}".format(
             pm=plus_minus, infr=infr
         )
-        assert repr(approx(1.0j, rel=inf)) == "1j"
 
         # Dictionaries aren't ordered, so we need to check both orders.
         assert repr(approx({"a": 1.0, "b": 2.0})) in (
@@ -57,6 +56,21 @@ class TestApprox:
                 pm=plus_minus, tol1=tol1, tol2=tol2
             ),
         )
+
+    def test_repr_complex_numbers(self):
+        assert repr(approx(inf + 1j)) == "(inf+1j)"
+        assert repr(approx(1.0j, rel=inf)) == "1j ± inf"
+
+        # can't compute a sensible tolerance
+        assert repr(approx(nan + 1j)) == "(nan+1j) ± ???"
+
+        assert repr(approx(1.0j)) == "1j ± 1.0e-06 ∠ ±180°"
+
+        # relative tolerance is scaled to |3+4j| = 5
+        assert repr(approx(3 + 4 * 1j)) == "(3+4j) ± 5.0e-06 ∠ ±180°"
+
+        # absolute tolerance is not scaled
+        assert repr(approx(3.3 + 4.4 * 1j, abs=0.02)) == "(3.3+4.4j) ± 2.0e-02 ∠ ±180°"
 
     @pytest.mark.parametrize(
         "value, repr_string",
