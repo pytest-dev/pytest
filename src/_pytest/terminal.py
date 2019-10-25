@@ -187,7 +187,13 @@ def pytest_report_teststatus(report):
         letter = "F"
         if report.when != "call":
             letter = "f"
-    return report.outcome, letter, report.outcome.upper()
+
+    # Report failed CollectReports as "error" (in line with pytest_collectreport).
+    outcome = report.outcome
+    if report.when == "collect" and outcome == "failed":
+        outcome = "error"
+
+    return outcome, letter, outcome.upper()
 
 
 @attr.s
