@@ -1,0 +1,1 @@
+Fix buffering with capsys fixture on Python 2.

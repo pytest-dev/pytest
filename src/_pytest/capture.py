@@ -685,11 +685,25 @@ class SysCapture(object):
         self._state = "done"
 
     def suspend(self):
+        if (
+            six.PY2
+            and self.name in ("stdout", "stderr")
+            and getattr(sys, "__{}__".format(self.name)) is self._old
+            and not hasattr(self, "_fdopen_done")
+            and not sys.platform.startswith("win32")
+        ):
+            self._fdopen_done = True
+            try:
+                # Ensure fd is unbuffered (#5134).
+                self._old = os.fdopen(self._old.fileno(), "wb+", 0)
+            except (UnsupportedOperation, OSError):
+                pass
         setattr(sys, self.name, self._old)
         self._state = "suspended"
 
     def resume(self):
         setattr(sys, self.name, self.tmpfile)
+        # setattr(sys, self.name, os.fdopen(self.tmpfile.fileno(), "w", 0))
         self._state = "resumed"
 
     def writeorg(self, data):

@@ -1577,3 +1577,54 @@ def test_typeerror_encodedfile_write(testdir):
         )
     else:
         assert result_with_capture.ret == 0
+
+
+def test_syscapture_is_unbuffered_when_suspended(testdir, LineMatcher):
+    import time
+
+    stampfile = testdir.tmpdir.join("stampfile")
+    testdir.makepyfile(
+        **{
+            "conftest.py": """
+            import ctypes
+
+            libc = ctypes.CDLL(None)
+            libc.puts(b'this comes from C via conftest')
+        """,
+            "test_pass.py": """
+            import os
+            import time
+
+            def test_capfd(capfd):
+                print("test_capfd_start")
+                with capfd.disabled():
+                    for i in range(0, 50):
+                        print("test_capfd_loop: %d" % i)
+                        time.sleep(0.1)
+                        if os.path.exists({stampfile!r}):
+                            break
+        """.format(
+                stampfile=str(stampfile)
+            ),
+        }
+    )
+
+    child = testdir.spawn_pytest("-s --color=no -vv test_pass.py")
+    start = time.time()
+    child.expect_exact("test_capfd_loop: 0\r\n")
+    duration = time.time() - start
+    stampfile.ensure()
+    out = child.before + child.buffer + child.after
+
+    out += child.read()
+    lm = LineMatcher(out.decode().splitlines())
+    lm.fnmatch_lines(
+        [
+            "this comes from C via conftest",
+            "test_pass.py::test_capfd test_capfd_loop: 0",
+            "*= 1 passed in *",
+        ]
+    )
+    assert duration < 5
+    child.wait()
+    assert child.exitstatus == 0
