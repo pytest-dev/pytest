@@ -13,6 +13,7 @@ import struct
 import sys
 import tokenize
 import types
+from pathlib import Path
 from typing import Dict
 from typing import List
 from typing import Optional
@@ -27,10 +28,11 @@ from _pytest.assertion import util
 from _pytest.assertion.util import (  # noqa: F401
     format_explanation as _format_explanation,
 )
+from _pytest.compat import fspath
 from _pytest.pathlib import fnmatch_ex
 from _pytest.pathlib import PurePath
 
-# pytest caches rewritten pycs in __pycache__.
+# pytest caches rewritten pycs in pycache dirs
 PYTEST_TAG = "{}-pytest-{}".format(sys.implementation.cache_tag, version)
 PYC_EXT = ".py" + (__debug__ and "c" or "o")
 PYC_TAIL = "." + PYTEST_TAG + PYC_EXT
@@ -103,7 +105,7 @@ class AssertionRewritingHook(importlib.abc.MetaPathFinder):
         return None  # default behaviour is fine
 
     def exec_module(self, module):
-        fn = module.__spec__.origin
+        fn = Path(module.__spec__.origin)
         state = self.config._assertstate
 
         self._rewritten_names.add(module.__name__)
@@ -117,15 +119,15 @@ class AssertionRewritingHook(importlib.abc.MetaPathFinder):
         # cached pyc is always a complete, valid pyc. Operations on it must be
         # atomic. POSIX's atomic rename comes in handy.
         write = not sys.dont_write_bytecode
-        cache_dir = os.path.join(os.path.dirname(fn), "__pycache__")
+        cache_dir = get_cache_dir(fn)
         if write:
-            ok = try_mkdir(cache_dir)
+            ok = try_makedirs(cache_dir)
             if not ok:
                 write = False
-                state.trace("read only directory: {}".format(os.path.dirname(fn)))
+                state.trace("read only directory: {}".format(cache_dir))
 
-        cache_name = os.path.basename(fn)[:-3] + PYC_TAIL
-        pyc = os.path.join(cache_dir, cache_name)
+        cache_name = fn.name[:-3] + PYC_TAIL
+        pyc = cache_dir / cache_name
         # Notice that even if we're in a read-only directory, I'm going
         # to check for a cached pyc. This may not be optimal...
         co = _read_pyc(fn, pyc, state.trace)
@@ -139,7 +141,7 @@ class AssertionRewritingHook(importlib.abc.MetaPathFinder):
                 finally:
                     self._writing_pyc = False
         else:
-            state.trace("found cached rewritten pyc for {!r}".format(fn))
+            state.trace("found cached rewritten pyc for {}".format(fn))
         exec(co, module.__dict__)
 
     def _early_rewrite_bailout(self, name, state):
@@ -258,7 +260,7 @@ def _write_pyc(state, co, source_stat, pyc):
     # (C)Python, since these "pycs" should never be seen by builtin
     # import. However, there's little reason deviate.
     try:
-        with atomicwrites.atomic_write(pyc, mode="wb", overwrite=True) as fp:
+        with atomicwrites.atomic_write(fspath(pyc), mode="wb", overwrite=True) as fp:
             fp.write(importlib.util.MAGIC_NUMBER)
             # as of now, bytecode header expects 32-bit numbers for size and mtime (#4903)
             mtime = int(source_stat.st_mtime) & 0xFFFFFFFF
@@ -269,7 +271,7 @@ def _write_pyc(state, co, source_stat, pyc):
     except EnvironmentError as e:
         state.trace("error writing pyc file at {}: errno={}".format(pyc, e.errno))
         # we ignore any failure to write the cache file
-        # there are many reasons, permission-denied, __pycache__ being a
+        # there are many reasons, permission-denied, pycache dir being a
         # file etc.
         return False
     return True
@@ -277,6 +279,7 @@ def _write_pyc(state, co, source_stat, pyc):
 
 def _rewrite_test(fn, config):
     """read and rewrite *fn* and return the code object."""
+    fn = fspath(fn)
     stat = os.stat(fn)
     with open(fn, "rb") as f:
         source = f.read()
@@ -292,12 +295,12 @@ def _read_pyc(source, pyc, trace=lambda x: None):
     Return rewritten code if successful or None if not.
     """
     try:
-        fp = open(pyc, "rb")
+        fp = open(fspath(pyc), "rb")
     except IOError:
         return None
     with fp:
         try:
-            stat_result = os.stat(source)
+            stat_result = os.stat(fspath(source))
             mtime = int(stat_result.st_mtime)
             size = stat_result.st_size
             data = fp.read(12)
@@ -749,7 +752,7 @@ class AssertionRewriter(ast.NodeVisitor):
                     "assertion is always true, perhaps remove parentheses?"
                 ),
                 category=None,
-                filename=self.module_path,
+                filename=fspath(self.module_path),
                 lineno=assert_.lineno,
             )
 
@@ -872,7 +875,7 @@ warn_explicit(
     lineno={lineno},
 )
             """.format(
-                filename=module_path, lineno=lineno
+                filename=fspath(module_path), lineno=lineno
             )
         ).body
         return ast.If(val_is_none, send_warning, [])
@@ -1018,18 +1021,15 @@ warn_explicit(
         return res, self.explanation_param(self.pop_format_context(expl_call))
 
 
-def try_mkdir(cache_dir):
-    """Attempts to create the given directory, returns True if successful"""
+def try_makedirs(cache_dir) -> bool:
+    """Attempts to create the given directory and sub-directories exist, returns True if
+    successful or it already exists"""
     try:
-        os.mkdir(cache_dir)
-    except FileExistsError:
-        # Either the __pycache__ directory already exists (the
-        # common case) or it's blocked by a non-dir node. In the
-        # latter case, we'll ignore it in _write_pyc.
-        return True
-    except (FileNotFoundError, NotADirectoryError):
-        # One of the path components was not a directory, likely
-        # because we're in a zip file.
+        os.makedirs(fspath(cache_dir), exist_ok=True)
+    except (FileNotFoundError, NotADirectoryError, FileExistsError):
+        # One of the path components was not a directory:
+        # - we're in a zip file
+        # - it is a file
         return False
     except PermissionError:
         return False
@@ -1039,3 +1039,17 @@ def try_mkdir(cache_dir):
             return False
         raise
     return True
+
+
+def get_cache_dir(file_path: Path) -> Path:
+    """Returns the cache directory to write .pyc files for the given .py file path"""
+    if sys.version_info >= (3, 8) and sys.pycache_prefix:
+        # given:
+        #   prefix = '/tmp/pycs'
+        #   path = '/home/user/proj/test_app.py'
+        # we want:
+        #   '/tmp/pycs/home/user/proj'
+        return Path(sys.pycache_prefix) / Path(*file_path.parts[1:-1])
+    else:
+        # classic pycache directory
+        return file_path.parent / "__pycache__"

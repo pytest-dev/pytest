@@ -1,0 +1,3 @@
+When ``sys.pycache_prefix`` (Python 3.8+) is set, it will be used by pytest to cache test files changed by the assertion rewriting mechanism.
+
+This makes it easier to benefit of cached ``.pyc`` files even on file systems without permissions.
