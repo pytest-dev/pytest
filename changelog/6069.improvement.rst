@@ -1,0 +1,1 @@
+``pytester.spawn`` does not skip/xfail tests on FreeBSD anymore unconditionally.
