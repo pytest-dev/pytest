@@ -133,17 +133,17 @@ class TestReportSerialization:
         """
         reprec = testdir.inline_runsource(
             """
-            import py
+            import pytest
             def test_pass(): pass
             def test_fail(): 0/0
-            @py.test.mark.skipif("True")
+            @pytest.mark.skipif("True")
             def test_skip(): pass
             def test_skip_imperative():
-                py.test.skip("hello")
-            @py.test.mark.xfail("True")
+                pytest.skip("hello")
+            @pytest.mark.xfail("True")
             def test_xfail(): 0/0
             def test_xfail_imperative():
-                py.test.xfail("hello")
+                pytest.xfail("hello")
         """
         )
         reports = reprec.getreports("pytest_runtest_logreport")
