@@ -10,6 +10,7 @@ import time
 import traceback
 from collections.abc import Sequence
 from fnmatch import fnmatch
+from io import StringIO
 from weakref import WeakKeyDictionary
 
 import py
@@ -1218,7 +1219,7 @@ def getdecoded(out):
 
 class LineComp:
     def __init__(self):
-        self.stringio = py.io.TextIO()
+        self.stringio = StringIO()
 
     def assert_contains_lines(self, lines2):
         """Assert that lines2 are contained (linearly) in lines1.
