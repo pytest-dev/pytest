@@ -1,6 +1,5 @@
 import os
-
-import py
+from io import StringIO
 
 import _pytest._code
 import pytest
@@ -13,7 +12,7 @@ pytestmark = pytest.mark.filterwarnings("ignore:--result-log is deprecated")
 
 def test_write_log_entry():
     reslog = ResultLog(None, None)
-    reslog.logfile = py.io.TextIO()
+    reslog.logfile = StringIO()
     reslog.write_log_entry("name", ".", "")
     entry = reslog.logfile.getvalue()
     assert entry[-1] == "\n"
@@ -21,7 +20,7 @@ def test_write_log_entry():
     assert len(entry_lines) == 1
     assert entry_lines[0] == ". name"
 
-    reslog.logfile = py.io.TextIO()
+    reslog.logfile = StringIO()
     reslog.write_log_entry("name", "s", "Skipped")
     entry = reslog.logfile.getvalue()
     assert entry[-1] == "\n"
@@ -30,7 +29,7 @@ def test_write_log_entry():
     assert entry_lines[0] == "s name"
     assert entry_lines[1] == " Skipped"
 
-    reslog.logfile = py.io.TextIO()
+    reslog.logfile = StringIO()
     reslog.write_log_entry("name", "s", "Skipped\n")
     entry = reslog.logfile.getvalue()
     assert entry[-1] == "\n"
@@ -39,7 +38,7 @@ def test_write_log_entry():
     assert entry_lines[0] == "s name"
     assert entry_lines[1] == " Skipped"
 
-    reslog.logfile = py.io.TextIO()
+    reslog.logfile = StringIO()
     longrepr = " tb1\n tb 2\nE tb3\nSome Error"
     reslog.write_log_entry("name", "F", longrepr)
     entry = reslog.logfile.getvalue()
@@ -118,7 +117,7 @@ class TestWithFunctionIntegration:
             raise ValueError
         except ValueError:
             excinfo = _pytest._code.ExceptionInfo.from_current()
-        reslog = ResultLog(None, py.io.TextIO())
+        reslog = ResultLog(None, StringIO())
         reslog.pytest_internalerror(excinfo.getrepr(style=style))
         entry = reslog.logfile.getvalue()
         entry_lines = entry.splitlines()

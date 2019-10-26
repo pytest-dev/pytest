@@ -5,9 +5,8 @@ import pickle
 import subprocess
 import sys
 import textwrap
+from io import StringIO
 from io import UnsupportedOperation
-
-import py
 
 import pytest
 from _pytest import capture
@@ -892,10 +891,10 @@ def test_dupfile_on_bytesio():
 
 
 def test_dupfile_on_textio():
-    tio = py.io.TextIO()
-    f = capture.safe_text_dupfile(tio, "wb")
+    sio = StringIO()
+    f = capture.safe_text_dupfile(sio, "wb")
     f.write("hello")
-    assert tio.getvalue() == "hello"
+    assert sio.getvalue() == "hello"
     assert not hasattr(f, "name")
 
 

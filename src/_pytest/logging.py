@@ -2,8 +2,7 @@
 import logging
 import re
 from contextlib import contextmanager
-
-import py
+from io import StringIO
 
 import pytest
 from _pytest.compat import nullcontext
@@ -218,7 +217,7 @@ class LogCaptureHandler(logging.StreamHandler):
 
     def __init__(self):
         """Creates a new log handler."""
-        logging.StreamHandler.__init__(self, py.io.TextIO())
+        logging.StreamHandler.__init__(self, StringIO())
         self.records = []
 
     def emit(self, record):
@@ -228,7 +227,7 @@ class LogCaptureHandler(logging.StreamHandler):
 
     def reset(self):
         self.records = []
-        self.stream = py.io.TextIO()
+        self.stream = StringIO()
 
 
 class LogCaptureFixture:
