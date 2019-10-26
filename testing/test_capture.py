@@ -605,11 +605,7 @@ class TestCaptureFixture:
         )
         args = ("-s",) if no_capture else ()
         result = testdir.runpytest_subprocess(*args)
-        result.stdout.fnmatch_lines(
-            """
-            *while capture is disabled*
-        """
-        )
+        result.stdout.fnmatch_lines(["*while capture is disabled*", "*= 2 passed in *"])
         result.stdout.no_fnmatch_line("*captured before*")
         result.stdout.no_fnmatch_line("*captured after*")
         if no_capture:
