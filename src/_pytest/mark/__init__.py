@@ -8,6 +8,7 @@ from .structures import MARK_GEN
 from .structures import MarkDecorator
 from .structures import MarkGenerator
 from .structures import ParameterSet
+from _pytest.config import hookimpl
 from _pytest.config import UsageError
 
 __all__ = ["Mark", "MarkDecorator", "MarkGenerator", "get_empty_parameterset_mark"]
@@ -74,6 +75,7 @@ def pytest_addoption(parser):
     parser.addini(EMPTY_PARAMETERSET_OPTION, "default marker for empty parametersets")
 
 
+@hookimpl(tryfirst=True)
 def pytest_cmdline_main(config):
     import _pytest.config
 
@@ -89,10 +91,6 @@ def pytest_cmdline_main(config):
             tw.line()
         config._ensure_unconfigure()
         return 0
-
-
-# Ignore type because of https://github.com/python/mypy/issues/2087.
-pytest_cmdline_main.tryfirst = True  # type: ignore
 
 
 def deselect_by_keyword(items, config):
