@@ -8,6 +8,7 @@ from .structures import MARK_GEN
 from .structures import MarkDecorator
 from .structures import MarkGenerator
 from .structures import ParameterSet
+from _pytest.config import hookimpl
 from _pytest.config import UsageError
 
 __all__ = ["Mark", "MarkDecorator", "MarkGenerator", "get_empty_parameterset_mark"]
@@ -93,6 +94,29 @@ def pytest_cmdline_main(config):
 
 # Ignore type because of https://github.com/python/mypy/issues/2087.
 pytest_cmdline_main.tryfirst = True  # type: ignore
+
+
+@hookimpl(hookwrapper=True, trylast=True)  # after python
+def pytest_pycollect_makeitem(collector, name, obj):
+    outcome = yield
+    items = outcome.get_result()
+    if items:
+        if not isinstance(items, list):
+            items = [items]
+
+        new_items = []
+        for item in items:
+            if collector.istestfunction(obj, name):
+                filter_items = [item]
+                deselect_by_keyword(filter_items, item.config)
+                deselect_by_mark(filter_items, item.config)
+                if not filter_items:
+                    continue
+            new_items.append(item)
+
+        outcome.force_result(new_items)
+        return new_items
+    return items
 
 
 def deselect_by_keyword(items, config):
