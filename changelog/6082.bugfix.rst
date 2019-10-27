@@ -1,0 +1,1 @@
+Fix line detection for doctest samples inside ``property`` docstrings, as a workaround to `bpo-17446 <https://bugs.python.org/issue17446>`__.
