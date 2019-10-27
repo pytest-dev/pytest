@@ -5,6 +5,7 @@ import collections
 import os
 import sys
 import textwrap
+from io import StringIO
 
 import pluggy
 import py
@@ -268,7 +269,7 @@ class TestTerminal:
 
     def test_rewrite(self, testdir, monkeypatch):
         config = testdir.parseconfig()
-        f = py.io.TextIO()
+        f = StringIO()
         monkeypatch.setattr(f, "isatty", lambda *args: True)
         tr = TerminalReporter(config, f)
         tr._tw.fullwidth = 10

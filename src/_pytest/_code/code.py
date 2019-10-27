@@ -4,6 +4,7 @@ import sys
 import traceback
 from inspect import CO_VARARGS
 from inspect import CO_VARKEYWORDS
+from io import StringIO
 from traceback import format_exception_only
 from types import CodeType
 from types import TracebackType
@@ -867,7 +868,7 @@ class TerminalRepr:
     def __str__(self):
         # FYI this is called from pytest-xdist's serialization of exception
         # information.
-        io = py.io.TextIO()
+        io = StringIO()
         tw = py.io.TerminalWriter(file=io)
         self.toterminal(tw)
         return io.getvalue().strip()
