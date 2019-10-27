@@ -39,8 +39,13 @@ jobs:
 
     # Full run of latest supported version, without xdist.
     # Coverage for:
+    # - pytester's LsofFdLeakChecker
+    # - TestArgComplete (linux only)
+    # - numpy
+    # - old attrs
+    # - verbose=0
     # - test_sys_breakpoint_interception (via pexpect).
-    - env: TOXENV=py37-pexpect PYTEST_COVERAGE=1
+    - env: TOXENV=py37-lsof-numpy-oldattrs-pexpect-twisted PYTEST_COVERAGE=1 PYTEST_ADDOPTS=
       python: '3.7'
 
     # Coverage tracking is slow with pypy, skip it.
@@ -49,14 +54,6 @@ jobs:
 
     - env: TOXENV=py35-xdist
       python: '3.5'
-
-    # Coverage for:
-    # - pytester's LsofFdLeakChecker
-    # - TestArgComplete (linux only)
-    # - numpy
-    # - old attrs
-    # - verbose=0
-    - env: TOXENV=py37-lsof-oldattrs-numpy-twisted-xdist PYTEST_COVERAGE=1 PYTEST_ADDOPTS=
 
     # Specialized factors for py37.
     - env: TOXENV=py37-pluggymaster-xdist
