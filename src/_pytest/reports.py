@@ -1,3 +1,4 @@
+from io import StringIO
 from pprint import pprint
 from typing import Optional
 from typing import Union
@@ -180,7 +181,7 @@ class BaseReport:
 
 def _report_unserialization_failure(type_name, report_class, reportdict):
     url = "https://github.com/pytest-dev/pytest/issues"
-    stream = py.io.TextIO()
+    stream = StringIO()
     pprint("-" * 100, stream=stream)
     pprint("INTERNALERROR: Unknown entry type returned: %s" % type_name, stream=stream)
     pprint("report_name: %s" % report_class, stream=stream)

@@ -47,33 +47,6 @@ Bug Fixes
 - `#5902 <https://github.com/pytest-dev/pytest/issues/5902>`_: Fix warnings about deprecated ``cmp`` attribute in ``attrs>=19.2``.
 
 
-pytest 4.6.6 (2019-10-11)
-=========================
-
-Bug Fixes
----------
-
-- `#5523 <https://github.com/pytest-dev/pytest/issues/5523>`_: Fixed using multiple short options together in the command-line (for example ``-vs``) in Python 3.8+.
-
-
-- `#5537 <https://github.com/pytest-dev/pytest/issues/5537>`_: Replace ``importlib_metadata`` backport with ``importlib.metadata`` from the
-  standard library on Python 3.8+.
-
-
-- `#5806 <https://github.com/pytest-dev/pytest/issues/5806>`_: Fix "lexer" being used when uploading to bpaste.net from ``--pastebin`` to "text".
-
-
-- `#5902 <https://github.com/pytest-dev/pytest/issues/5902>`_: Fix warnings about deprecated ``cmp`` attribute in ``attrs>=19.2``.
-
-
-
-Trivial/Internal Changes
-------------------------
-
-- `#5801 <https://github.com/pytest-dev/pytest/issues/5801>`_: Fixes python version checks (detected by ``flake8-2020``) in case python4 becomes a thing.
-
-
-
 pytest 5.2.0 (2019-09-28)
 =========================
 
@@ -542,6 +515,32 @@ Improved Documentation
 
 
 - `#5416 <https://github.com/pytest-dev/pytest/issues/5416>`_: Fix PytestUnknownMarkWarning in run/skip example.
+
+
+pytest 4.6.6 (2019-10-11)
+=========================
+
+Bug Fixes
+---------
+
+- `#5523 <https://github.com/pytest-dev/pytest/issues/5523>`_: Fixed using multiple short options together in the command-line (for example ``-vs``) in Python 3.8+.
+
+
+- `#5537 <https://github.com/pytest-dev/pytest/issues/5537>`_: Replace ``importlib_metadata`` backport with ``importlib.metadata`` from the
+  standard library on Python 3.8+.
+
+
+- `#5806 <https://github.com/pytest-dev/pytest/issues/5806>`_: Fix "lexer" being used when uploading to bpaste.net from ``--pastebin`` to "text".
+
+
+- `#5902 <https://github.com/pytest-dev/pytest/issues/5902>`_: Fix warnings about deprecated ``cmp`` attribute in ``attrs>=19.2``.
+
+
+
+Trivial/Internal Changes
+------------------------
+
+- `#5801 <https://github.com/pytest-dev/pytest/issues/5801>`_: Fixes python version checks (detected by ``flake8-2020``) in case python4 becomes a thing.
 
 
 pytest 4.6.5 (2019-08-05)

@@ -1148,7 +1148,7 @@ def test_dont_collect_non_function_callable(testdir):
     """Test for issue https://github.com/pytest-dev/pytest/issues/331
 
     In this case an INTERNALERROR occurred trying to report the failure of
-    a test like this one because py test failed to get the source lines.
+    a test like this one because pytest failed to get the source lines.
     """
     testdir.makepyfile(
         """
