@@ -11,16 +11,32 @@ from pytest import approx
 inf, nan = float("inf"), float("nan")
 
 
-class MyDocTestRunner(doctest.DocTestRunner):
-    def __init__(self):
-        doctest.DocTestRunner.__init__(self)
+@pytest.fixture
+def mocked_doctest_runner(monkeypatch):
+    class MockedPdb:
+        def __init__(self, out):
+            pass
 
-    def report_failure(self, out, test, example, got):
-        raise AssertionError(
-            "'{}' evaluates to '{}', not '{}'".format(
-                example.source.strip(), got.strip(), example.want.strip()
+        def set_trace(self):
+            pass
+
+        def reset(self):
+            pass
+
+        def set_continue(self):
+            pass
+
+    monkeypatch.setattr("doctest._OutputRedirectingPdb", MockedPdb)
+
+    class MyDocTestRunner(doctest.DocTestRunner):
+        def report_failure(self, out, test, example, got):
+            raise AssertionError(
+                "'{}' evaluates to '{}', not '{}'".format(
+                    example.source.strip(), got.strip(), example.want.strip()
+                )
             )
-        )
+
+    return MyDocTestRunner()
 
 
 class TestApprox:
@@ -411,13 +427,12 @@ class TestApprox:
         assert a12 != approx(a21)
         assert a21 != approx(a12)
 
-    def test_doctests(self):
+    def test_doctests(self, mocked_doctest_runner):
         parser = doctest.DocTestParser()
         test = parser.get_doctest(
             approx.__doc__, {"approx": approx}, approx.__name__, None, None
         )
-        runner = MyDocTestRunner()
-        runner.run(test)
+        mocked_doctest_runner.run(test)
 
     def test_unicode_plus_minus(self, testdir):
         """
