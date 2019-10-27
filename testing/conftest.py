@@ -39,8 +39,11 @@ def pytest_collection_modifyitems(config, items):
             neutral_items.append(item)
         else:
             if "testdir" in fixtures:
-                if spawn_names.intersection(item.function.__code__.co_names):
+                co_names = item.function.__code__.co_names
+                if spawn_names.intersection(co_names):
                     item.add_marker(pytest.mark.uses_pexpect)
+                    slowest_items.append(item)
+                elif "runpytest_subprocess" in co_names:
                     slowest_items.append(item)
                 else:
                     slow_items.append(item)
