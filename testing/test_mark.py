@@ -891,7 +891,7 @@ def test_parameterset_for_fail_at_collect(testdir):
     result = testdir.runpytest(str(p1))
     result.stdout.fnmatch_lines(
         [
-            "collected 0 items / 1 errors",
+            "collected 0 items / 1 error",
             "* ERROR collecting test_parameterset_for_fail_at_collect.py *",
             "Empty parameter set in 'test' at line 3",
             "*= 1 error in *",

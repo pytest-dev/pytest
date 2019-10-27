@@ -334,7 +334,7 @@ class TestDoctests:
             [
                 "*ERROR collecting hello.py*",
                 "*{e}: No module named *asdals*".format(e=MODULE_NOT_FOUND_ERROR),
-                "*Interrupted: 1 errors during collection*",
+                "*Interrupted: 1 error during collection*",
             ]
         )
 

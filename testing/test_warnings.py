@@ -142,7 +142,7 @@ def test_unicode(testdir, pyfile_with_warnings):
         [
             "*== %s ==*" % WARNINGS_SUMMARY_HEADER,
             "*test_unicode.py:7: UserWarning: \u6d4b\u8bd5*",
-            "* 1 passed, 1 warnings*",
+            "* 1 passed, 1 warning*",
         ]
     )
 
@@ -201,7 +201,7 @@ def test_filterwarnings_mark(testdir, default_config):
     """
     )
     result = testdir.runpytest("-W always" if default_config == "cmdline" else "")
-    result.stdout.fnmatch_lines(["*= 1 failed, 2 passed, 1 warnings in *"])
+    result.stdout.fnmatch_lines(["*= 1 failed, 2 passed, 1 warning in *"])
 
 
 def test_non_string_warning_argument(testdir):
@@ -216,7 +216,7 @@ def test_non_string_warning_argument(testdir):
         """
     )
     result = testdir.runpytest("-W", "always")
-    result.stdout.fnmatch_lines(["*= 1 passed, 1 warnings in *"])
+    result.stdout.fnmatch_lines(["*= 1 passed, 1 warning in *"])
 
 
 def test_filterwarnings_mark_registration(testdir):
@@ -302,7 +302,7 @@ def test_collection_warnings(testdir):
             "*== %s ==*" % WARNINGS_SUMMARY_HEADER,
             "  *collection_warnings.py:3: UserWarning: collection warning",
             '    warnings.warn(UserWarning("collection warning"))',
-            "* 1 passed, 1 warnings*",
+            "* 1 passed, 1 warning*",
         ]
     )
 
@@ -358,7 +358,7 @@ def test_hide_pytest_internal_warnings(testdir, ignore_pytest_warnings):
             [
                 "*== %s ==*" % WARNINGS_SUMMARY_HEADER,
                 "*test_hide_pytest_internal_warnings.py:4: PytestWarning: some internal warning",
-                "* 1 passed, 1 warnings *",
+                "* 1 passed, 1 warning *",
             ]
         )
 
@@ -476,7 +476,7 @@ class TestDeprecationWarningsByDefault:
             [
                 "*== %s ==*" % WARNINGS_SUMMARY_HEADER,
                 "*test_hidden_by_mark.py:3: DeprecationWarning: collection",
-                "* 1 passed, 1 warnings*",
+                "* 1 passed, 1 warning*",
             ]
         )
 

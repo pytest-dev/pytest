@@ -453,7 +453,7 @@ class TestCaptureFixture:
                 "E*capfd*capsys*same*time*",
                 "*ERROR*setup*test_two*",
                 "E*capsys*capfd*same*time*",
-                "*2 error*",
+                "*2 errors*",
             ]
         )
 

@@ -886,7 +886,7 @@ def test_errors_in_xfail_skip_expressions(testdir):
             "    syntax error",
             markline,
             "SyntaxError: invalid syntax",
-            "*1 pass*2 error*",
+            "*1 pass*2 errors*",
         ]
     )
 

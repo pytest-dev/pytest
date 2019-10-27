@@ -234,7 +234,7 @@ def test_setup_funcarg_setup_when_outer_scope_fails(testdir):
             "*ValueError*42*",
             "*function2*",
             "*ValueError*42*",
-            "*2 error*",
+            "*2 errors*",
         ]
     )
     result.stdout.no_fnmatch_line("*xyz43*")

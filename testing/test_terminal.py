@@ -1237,7 +1237,7 @@ def test_terminal_summary_warnings_header_once(testdir):
             "*= warnings summary =*",
             "*warning_from_test*",
             "*= short test summary info =*",
-            "*== 1 failed, 1 warnings in *",
+            "*== 1 failed, 1 warning in *",
         ]
     )
     result.stdout.no_fnmatch_line("*None*")
@@ -1263,6 +1263,7 @@ def test_terminal_summary_warnings_header_once(testdir):
             {"failed": (1,), "passed": (1,)},
         ),
         ("red", [("1 error", {"bold": True, "red": True})], {"error": (1,)}),
+        ("red", [("2 errors", {"bold": True, "red": True})], {"error": (1, 2)}),
         (
             "red",
             [
@@ -1281,16 +1282,12 @@ def test_terminal_summary_warnings_header_once(testdir):
             ],
             {"weird": (1,), "passed": (1,)},
         ),
-        (
-            "yellow",
-            [("1 warnings", {"bold": True, "yellow": True})],
-            {"warnings": (1,)},
-        ),
+        ("yellow", [("1 warning", {"bold": True, "yellow": True})], {"warnings": (1,)}),
         (
             "yellow",
             [
                 ("1 passed", {"bold": False, "green": True}),
-                ("1 warnings", {"bold": True, "yellow": True}),
+                ("1 warning", {"bold": True, "yellow": True}),
             ],
             {"warnings": (1,), "passed": (1,)},
         ),

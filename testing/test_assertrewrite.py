@@ -122,7 +122,7 @@ class TestAssertionRewrite:
         }
         testdir.makepyfile(**contents)
         result = testdir.runpytest_subprocess()
-        assert "warnings" not in "".join(result.outlines)
+        assert "warning" not in "".join(result.outlines)
 
     def test_rewrites_plugin_as_a_package(self, testdir):
         pkgdir = testdir.mkpydir("plugin")

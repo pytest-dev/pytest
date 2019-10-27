@@ -3081,7 +3081,7 @@ class TestErrors:
             *KeyError*
             *ERROR*teardown*test_2*
             *KeyError*
-            *3 pass*2 error*
+            *3 pass*2 errors*
         """
         )
 
