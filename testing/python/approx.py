@@ -1,4 +1,3 @@
-import doctest
 import operator
 from decimal import Decimal
 from fractions import Fraction
@@ -13,12 +12,14 @@ inf, nan = float("inf"), float("nan")
 
 @pytest.fixture
 def mocked_doctest_runner(monkeypatch):
+    import doctest
+
     class MockedPdb:
         def __init__(self, out):
             pass
 
         def set_trace(self):
-            pass
+            raise NotImplementedError("not used")
 
         def reset(self):
             pass
@@ -428,6 +429,8 @@ class TestApprox:
         assert a21 != approx(a12)
 
     def test_doctests(self, mocked_doctest_runner):
+        import doctest
+
         parser = doctest.DocTestParser()
         test = parser.get_doctest(
             approx.__doc__, {"approx": approx}, approx.__name__, None, None
