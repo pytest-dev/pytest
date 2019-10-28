@@ -579,6 +579,7 @@ class FDCaptureBinary:
                         assert not tmpfile.closed
                     except KeyError:
                         tmpfile = open(os.devnull, "r")
+                        capman._tmpfiles[targetfd] = tmpfile
                 else:
                     tmpfile = open(os.devnull, "r")
                 self.syscapture = SysCapture(targetfd)
