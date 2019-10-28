@@ -386,6 +386,8 @@ class Session(nodes.FSCollector):
 
         self.config.pluginmanager.register(self, name="session")
 
+        self._collected = set()
+
     def __repr__(self):
         return "<%s %s exitstatus=%r testsfailed=%d testscollected=%d>" % (
             self.__class__.__name__,
@@ -575,6 +577,10 @@ class Session(nodes.FSCollector):
             yield from m
 
     def _collectfile(self, path, handle_dupes=True):
+        key = (path, handle_dupes)
+        assert key not in self._collected, key
+        self._collected.add(key)
+
         assert (
             path.isfile()
         ), "{!r} is not a file (isdir={!r}, exists={!r}, islink={!r})".format(
