@@ -539,7 +539,7 @@ class TerminalReporter:
             str(self._numcollected) + " item" + ("" if self._numcollected == 1 else "s")
         )
         if errors:
-            line += " / %d errors" % errors
+            line += " / %d error%s" % (errors, "s" if errors != 1 else "")
         if deselected:
             line += " / %d deselected" % deselected
         if skipped:
@@ -1056,6 +1056,19 @@ _color_for_type = {
 _color_for_type_default = "yellow"
 
 
+def _make_plural(count, noun):
+    # No need to pluralize words such as `failed` or `passed`.
+    if noun not in ["error", "warnings"]:
+        return count, noun
+
+    # The `warnings` key is plural. To avoid API breakage, we keep it that way but
+    # set it to singular here so we can determine plurality in the same way as we do
+    # for `error`.
+    noun = noun.replace("warnings", "warning")
+
+    return count, noun + "s" if count != 1 else noun
+
+
 def build_summary_stats_line(stats):
     known_types = (
         "failed passed skipped deselected xfailed xpassed warnings error".split()
@@ -1086,7 +1099,7 @@ def build_summary_stats_line(stats):
             )
             color = _color_for_type.get(key, _color_for_type_default)
             markup = {color: True, "bold": color == main_color}
-            parts.append(("%d %s" % (count, key), markup))
+            parts.append(("%d %s" % _make_plural(count, key), markup))
 
     if not parts:
         parts = [("no tests ran", {_color_for_type_default: True})]

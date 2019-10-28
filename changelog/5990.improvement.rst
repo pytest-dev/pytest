@@ -1,0 +1,1 @@
+Fix plurality mismatch in test summary (e.g. display "1 error" instead of "1 errors").

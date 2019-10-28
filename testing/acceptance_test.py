@@ -628,7 +628,7 @@ class TestInvocationVariants:
         result = testdir.runpytest("--pyargs", "tpkg.test_hello", syspathinsert=True)
         assert result.ret != 0
 
-        result.stdout.fnmatch_lines(["collected*0*items*/*1*errors"])
+        result.stdout.fnmatch_lines(["collected*0*items*/*1*error"])
 
     def test_pyargs_only_imported_once(self, testdir):
         pkg = testdir.mkpydir("foo")
@@ -956,7 +956,7 @@ class TestDurations:
         testdir.makepyfile(test_collecterror="""xyz""")
         result = testdir.runpytest("--durations=2", "-k test_1")
         assert result.ret == 2
-        result.stdout.fnmatch_lines(["*Interrupted: 1 errors during collection*"])
+        result.stdout.fnmatch_lines(["*Interrupted: 1 error during collection*"])
         # Collection errors abort test execution, therefore no duration is
         # output
         result.stdout.no_fnmatch_line("*duration*")
