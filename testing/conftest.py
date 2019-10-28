@@ -2,6 +2,13 @@ import sys
 
 import pytest
 
+
+def pytest_addoption(parser):
+    parser.addoption(
+        "--run-integration-tests", action="store_true", help=("Run integration tests.")
+    )
+
+
 if sys.gettrace():
 
     @pytest.fixture(autouse=True)
@@ -14,6 +21,23 @@ if sys.gettrace():
         yield
         if sys.gettrace() != orig_trace:
             sys.settrace(orig_trace)
+
+
+@pytest.hookimpl
+def pytest_runtest_setup(item):
+    mark = "integration"
+    option = "--run-integration-tests"
+    if mark not in item.keywords or item.config.getoption(option):
+        return
+
+    # Run the test anyway if it was provided via its nodeid as arg.
+    # NOTE: do not use startswith: should skip
+    # "tests/test_foo.py::test_bar" with
+    # "tests/test_foo.py" in invocation args.
+    if any(item.nodeid == arg for arg in item.config.invocation_params.args):
+        return
+
+    pytest.skip("Not running {} test (use {})".format(mark, option))
 
 
 @pytest.hookimpl(hookwrapper=True, tryfirst=True)

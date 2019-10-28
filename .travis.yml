@@ -11,7 +11,7 @@ cache: false
 
 env:
   global:
-    - PYTEST_ADDOPTS=-vv
+    - PYTEST_ADDOPTS=-vv --run-integration-tests
 
 # setuptools-scm needs all tags in order to obtain a proper version
 git:

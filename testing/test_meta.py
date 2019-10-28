@@ -5,6 +5,8 @@ import sys
 import _pytest
 import pytest
 
+pytestmark = ["integration", "slow"]
+
 
 def _modules():
     return sorted(
@@ -15,7 +17,6 @@ def _modules():
     )
 
 
-@pytest.mark.slow
 @pytest.mark.parametrize("module", _modules())
 def test_no_warnings(module):
     # fmt: off
