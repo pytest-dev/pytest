@@ -386,6 +386,13 @@ class TerminalReporter:
     def pytest_runtest_logstart(self, nodeid, location):
         # ensure that the path is printed before the
         # 1st test of a module starts running
+        if hasattr(self, "_last_tw"):
+            assert self._tw._file == self._last_tw
+        self._last_tw = self._tw._file
+
+        if hasattr(self, "_last_out"):
+            assert sys.stdout == self._last_out, (self._last_out, sys.stdout)
+        self._last_out = sys.stdout
         if self.showlongtestinfo:
             line = self._locationline(nodeid, *location)
             self.write_ensure_prefix(line, "")
