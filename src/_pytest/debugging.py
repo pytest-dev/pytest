@@ -102,7 +102,8 @@ class pytestPDB:
                     tw.sep(">", "%s (IO-capturing turned off)" % header)
                 else:
                     tw.sep(
-                        ">", "%s (IO-capturing turned off for %s)" % (header, capturing)
+                        ">",
+                        "{} (IO-capturing turned off for {})".format(header, capturing),
                     )
             else:
                 tw.sep(">", header)
@@ -231,36 +232,12 @@ class pytestPDB:
     @classmethod
     def _init_pdb(cls, method, *args, **kwargs):
         """ Initialize PDB debugging, dropping any IO capturing. """
-        import _pytest.config
-
         if cls._pluginmanager is not None:
             capman = cls._pluginmanager.getplugin("capturemanager")
         else:
             capman = None
         if capman:
             cls._suspend_capturing(capman, header=kwargs.pop("header", None))
-
-        if cls._config:
-            tw = _pytest.config.create_terminal_writer(cls._config)
-            tw.line()
-
-            if cls._recursive_debug == 0:
-                # Handle header similar to pdb.set_trace in py37+.
-                header = kwargs.pop("header", None)
-                if header is not None:
-                    tw.sep(">", header)
-                else:
-                    capturing = cls._is_capturing(capman)
-                    if capturing == "global":
-                        tw.sep(">", "PDB {} (IO-capturing turned off)".format(method))
-                    elif capturing:
-                        tw.sep(
-                            ">",
-                            "PDB %s (IO-capturing turned off for %s)"
-                            % (method, capturing),
-                        )
-                    else:
-                        tw.sep(">", "PDB {}".format(method))
 
         _pdb = cls._import_pdb_cls(capman)(**kwargs)
 
