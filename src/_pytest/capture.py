@@ -486,6 +486,7 @@ class MultiCapture:
         return out, err
 
     def suspend_capturing(self, in_=False):
+        assert self._state in ("resumed", "started"), self._state
         self._state = "suspended"
         if self.out:
             self.out.suspend()
@@ -496,6 +497,7 @@ class MultiCapture:
             self._in_suspended = True
 
     def resume_capturing(self):
+        assert self._state in ("suspended", "started"), self._state
         self._state = "resumed"
         if self.out:
             self.out.resume()
