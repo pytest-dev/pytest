@@ -7,7 +7,11 @@ ignores the external pytest-cache
 import json
 import os
 from collections import OrderedDict
+from typing import Dict
+from typing import Generator
 from typing import List
+from typing import Optional
+from typing import Set
 
 import attr
 import py
@@ -16,10 +20,12 @@ import pytest
 from .pathlib import Path
 from .pathlib import resolve_from_str
 from .pathlib import rm_rf
+from .reports import CollectReport
 from _pytest import nodes
 from _pytest._io import TerminalWriter
 from _pytest.config import Config
 from _pytest.main import Session
+from _pytest.python import Module
 
 README_CONTENT = """\
 # pytest cache directory #
@@ -161,42 +167,88 @@ class Cache:
         cachedir_tag_path.write_bytes(CACHEDIR_TAG_CONTENT)
 
 
+class LFPluginCollWrapper:
+    def __init__(self, lfplugin: "LFPlugin"):
+        self.lfplugin = lfplugin
+        self._collected_at_least_one_failure = False
+
+    @pytest.hookimpl(hookwrapper=True)
+    def pytest_make_collect_report(self, collector) -> Generator:
+        if isinstance(collector, Session):
+            out = yield
+            res = out.get_result()  # type: CollectReport
+
+            # Sort any lf-paths to the beginning.
+            lf_paths = self.lfplugin._last_failed_paths
+            res.result = sorted(
+                res.result, key=lambda x: 0 if Path(x.fspath) in lf_paths else 1,
+            )
+            out.force_result(res)
+            return
+
+        elif isinstance(collector, Module):
+            if Path(collector.fspath) in self.lfplugin._last_failed_paths:
+                out = yield
+                res = out.get_result()
+
+                filtered_result = [
+                    x for x in res.result if x.nodeid in self.lfplugin.lastfailed
+                ]
+                if filtered_result:
+                    res.result = filtered_result
+                    out.force_result(res)
+
+                    if not self._collected_at_least_one_failure:
+                        self.lfplugin.config.pluginmanager.register(
+                            LFPluginCollSkipfiles(self.lfplugin), "lfplugin-collskip"
+                        )
+                        self._collected_at_least_one_failure = True
+                return res
+        yield
+
+
+class LFPluginCollSkipfiles:
+    def __init__(self, lfplugin: "LFPlugin"):
+        self.lfplugin = lfplugin
+
+    @pytest.hookimpl
+    def pytest_make_collect_report(self, collector) -> Optional[CollectReport]:
+        if isinstance(collector, Module):
+            if Path(collector.fspath) not in self.lfplugin._last_failed_paths:
+                self.lfplugin._skipped_files += 1
+
+                return CollectReport(
+                    collector.nodeid, "passed", longrepr=None, result=[]
+                )
+        return None
+
+
 class LFPlugin:
     """ Plugin which implements the --lf (run last-failing) option """
 
-    def __init__(self, config):
+    def __init__(self, config: Config) -> None:
         self.config = config
         active_keys = "lf", "failedfirst"
         self.active = any(config.getoption(key) for key in active_keys)
-        self.lastfailed = config.cache.get("cache/lastfailed", {})
+        assert config.cache
+        self.lastfailed = config.cache.get(
+            "cache/lastfailed", {}
+        )  # type: Dict[str, bool]
         self._previously_failed_count = None
         self._report_status = None
         self._skipped_files = 0  # count skipped files during collection due to --lf
 
-    def last_failed_paths(self):
-        """Returns a set with all Paths()s of the previously failed nodeids (cached).
-        """
-        try:
-            return self._last_failed_paths
-        except AttributeError:
-            rootpath = Path(self.config.rootdir)
-            result = {rootpath / nodeid.split("::")[0] for nodeid in self.lastfailed}
-            result = {x for x in result if x.exists()}
-            self._last_failed_paths = result
-            return result
+        if config.getoption("lf"):
+            self._last_failed_paths = self.get_last_failed_paths()
+            config.pluginmanager.register(
+                LFPluginCollWrapper(self), "lfplugin-collwrapper"
+            )
 
-    def pytest_ignore_collect(self, path):
-        """
-        Ignore this file path if we are in --lf mode and it is not in the list of
-        previously failed files.
-        """
-        if self.active and self.config.getoption("lf") and path.isfile():
-            last_failed_paths = self.last_failed_paths()
-            if last_failed_paths:
-                skip_it = Path(path) not in self.last_failed_paths()
-                if skip_it:
-                    self._skipped_files += 1
-                return skip_it
+    def get_last_failed_paths(self) -> Set[Path]:
+        """Returns a set with all Paths()s of the previously failed nodeids."""
+        rootpath = Path(self.config.rootdir)
+        result = {rootpath / nodeid.split("::")[0] for nodeid in self.lastfailed}
+        return {x for x in result if x.exists()}
 
     def pytest_report_collectionfinish(self):
         if self.active and self.config.getoption("verbose") >= 0:
@@ -380,7 +432,7 @@ def pytest_cmdline_main(config):
 
 
 @pytest.hookimpl(tryfirst=True)
-def pytest_configure(config):
+def pytest_configure(config: Config) -> None:
     config.cache = Cache.for_config(config)
     config.pluginmanager.register(LFPlugin(config), "lfplugin")
     config.pluginmanager.register(NFPlugin(config), "nfplugin")
