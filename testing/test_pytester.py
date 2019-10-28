@@ -395,6 +395,27 @@ def test_testdir_subprocess(testdir):
     assert testdir.runpytest_subprocess(testfile).ret == 0
 
 
+def test_testdir_subprocess_via_runpytest_arg(testdir) -> None:
+    testfile = testdir.makepyfile(
+        """
+        def test_testdir_subprocess(testdir):
+            import os
+            testfile = testdir.makepyfile(
+                \"""
+                import os
+                def test_one():
+                    assert {} != os.getpid()
+                \""".format(os.getpid())
+            )
+            assert testdir.runpytest(testfile).ret == 0
+        """
+    )
+    result = testdir.runpytest_subprocess(
+        "-p", "pytester", "--runpytest", "subprocess", testfile
+    )
+    assert result.ret == 0
+
+
 def test_unicode_args(testdir):
     result = testdir.runpytest("-k", "💩")
     assert result.ret == ExitCode.NO_TESTS_COLLECTED
