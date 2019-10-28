@@ -573,7 +573,14 @@ class FDCaptureBinary:
             self.done = self._done
             if targetfd == 0:
                 assert not tmpfile, "cannot set tmpfile with stdin"
-                tmpfile = open(os.devnull, "r")
+                if capman:
+                    try:
+                        tmpfile = capman._tmpfiles[0]
+                        assert not tmpfile.closed
+                    except KeyError:
+                        tmpfile = open(os.devnull, "r")
+                else:
+                    tmpfile = open(os.devnull, "r")
                 self.syscapture = SysCapture(targetfd)
             else:
                 if tmpfile is None:
