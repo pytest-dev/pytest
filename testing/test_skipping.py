@@ -731,23 +731,37 @@ def test_skipif_class(testdir):
 def test_skipped_reasons_functional(testdir):
     testdir.makepyfile(
         test_one="""
+            import pytest
             from conftest import doskip
+
             def setup_function(func):
                 doskip()
+
             def test_func():
                 pass
+
             class TestClass(object):
                 def test_method(self):
                     doskip()
-       """,
+
+                @pytest.mark.skip("via_decorator")
+                def test_deco(self):
+                    assert 0
+        """,
         conftest="""
-            import pytest
+            import pytest, sys
             def doskip():
+                assert sys._getframe().f_lineno == 3
                 pytest.skip('test')
         """,
     )
     result = testdir.runpytest("-rs")
-    result.stdout.fnmatch_lines(["*SKIP*2*conftest.py:4: test"])
+    result.stdout.fnmatch_lines_random(
+        [
+            "SKIPPED [[]2[]] */conftest.py:4: test",
+            "SKIPPED [[]1[]] test_one.py:14: via_decorator",
+        ]
+    )
     assert result.ret == 0
 
 
