@@ -1,0 +1,9 @@
+New ``--report-log=FILE`` option that writes *report logs* into a file as the test session executes.
+
+Each line of the report log contains a self contained JSON object corresponding to a testing event,
+such as a collection or a test result report. The file is guaranteed to be flushed after writing
+each line, so systems can read and process events in real-time.
+
+This option is meant to replace ``--resultlog``, which is deprecated and meant to be removed
+in a future release. If you use ``--resultlog``, please try out ``--report-log`` and
+provide feedback.

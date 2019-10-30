@@ -679,12 +679,6 @@ Creating resultlog format files
 ----------------------------------------------------
 
 
-
-    This option is rarely used and is scheduled for removal in 5.0.
-
-    See `the deprecation docs <https://docs.pytest.org/en/latest/deprecations.html#result-log-result-log>`__
-    for more information.
-
 To create plain-text machine-readable result files you can issue:
 
 .. code-block:: bash
@@ -693,6 +687,16 @@ To create plain-text machine-readable result files you can issue:
 
 and look at the content at the ``path`` location.  Such files are used e.g.
 by the `PyPy-test`_ web page to show test results over several revisions.
+
+.. warning::
+
+    This option is rarely used and is scheduled for removal in pytest 6.0.
+
+    If you use this option, consider using the new :ref:`--result-log <report_log>`.
+
+    See `the deprecation docs <https://docs.pytest.org/en/latest/deprecations.html#result-log-result-log>`__
+    for more information.
+
 
 .. _`PyPy-test`: http://buildbot.pypy.org/summary
 
