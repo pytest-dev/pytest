@@ -21,6 +21,10 @@ from _pytest.terminal import getreportopt
 from _pytest.terminal import TerminalReporter
 
 DistInfo = collections.namedtuple("DistInfo", ["project_name", "version"])
+RED = r"\x1b\[31m"
+GREEN = r"\x1b\[32m"
+YELLOW = r"\x1b\[33m"
+RESET = r"\x1b\[0m"
 
 
 class Option:
@@ -1494,6 +1498,43 @@ class TestProgressOutputStyle:
             ]
         )
 
+    def test_colored_progress(self, testdir, monkeypatch):
+        monkeypatch.setenv("PY_COLORS", "1")
+        testdir.makepyfile(
+            test_bar="""
+                import pytest
+                @pytest.mark.parametrize('i', range(10))
+                def test_bar(i): pass
+            """,
+            test_foo="""
+                import pytest
+                import warnings
+                @pytest.mark.parametrize('i', range(5))
+                def test_foo(i):
+                    warnings.warn(DeprecationWarning("collection"))
+                    pass
+            """,
+            test_foobar="""
+                import pytest
+                @pytest.mark.parametrize('i', range(5))
+                def test_foobar(i): raise ValueError()
+            """,
+        )
+        output = testdir.runpytest()
+        output.stdout.re_match_lines(
+            [
+                r"test_bar.py ({green}\.{reset}){{10}}{green} \s+ \[ 50%\]{reset}".format(
+                    green=GREEN, reset=RESET
+                ),
+                r"test_foo.py ({green}\.{reset}){{5}}{yellow} \s+ \[ 75%\]{reset}".format(
+                    green=GREEN, reset=RESET, yellow=YELLOW
+                ),
+                r"test_foobar.py ({red}F{reset}){{5}}{red} \s+ \[100%\]{reset}".format(
+                    reset=RESET, red=RED
+                ),
+            ]
+        )
+
     def test_count(self, many_tests_files, testdir):
         testdir.makeini(
             """
@@ -1781,13 +1822,13 @@ def test_collecterror(testdir):
     result = testdir.runpytest("-ra", str(p1))
     result.stdout.fnmatch_lines(
         [
-            "collected 0 items / 1 errors",
+            "collected 0 items / 1 error",
             "*= ERRORS =*",
             "*_ ERROR collecting test_collecterror.py _*",
             "E   SyntaxError: *",
             "*= short test summary info =*",
             "ERROR test_collecterror.py",
-            "*! Interrupted: 1 errors during collection !*",
+            "*! Interrupted: 1 error during collection !*",
             "*= 1 error in *",
         ]
     )
