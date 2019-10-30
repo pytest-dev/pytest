@@ -697,7 +697,9 @@ class Config:
         self._cleanup = []  # type: List[Callable[[], None]]
         self.pluginmanager.register(self, "pytestconfig")
         self._configured = False
-        self.hook.pytest_addoption.call_historic(kwargs=dict(parser=self._parser))
+        self.hook.pytest_addoption.call_historic(
+            kwargs=dict(parser=self._parser, pluginmanager=self.pluginmanager)
+        )
 
     @property
     def invocation_dir(self):

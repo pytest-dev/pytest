@@ -36,7 +36,7 @@ Now we add a test configuration like this:
     # content of conftest.py
 
 
-    def pytest_addoption(parser):
+    def pytest_addoption(parser, pluginmanager):
         parser.addoption("--all", action="store_true", help="run all combinations")
 
 

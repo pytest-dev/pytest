@@ -35,7 +35,7 @@ def pytest_plugin_registered(plugin, manager):
 
 
 @hookspec(historic=True)
-def pytest_addoption(parser):
+def pytest_addoption(parser, pluginmanager):
     """register argparse-style options and ini-style config values,
     called once at the beginning of a test run.
 
@@ -49,6 +49,11 @@ def pytest_addoption(parser):
         :py:func:`parser.addoption(...) <_pytest.config.Parser.addoption>`.
         To add ini-file values call :py:func:`parser.addini(...)
         <_pytest.config.Parser.addini>`.
+
+    :arg _pytest.config.PytestPluginManager pluginmanager: pytest plugin manager,
+        which can be used to install :py:func:`hookspec`'s or :py:func:`hookimpl`'s
+        and allow one plugin to call another plugin's hooks to change how
+        command line options are added.
 
     Options can later be accessed through the
     :py:class:`config <_pytest.config.Config>` object, respectively:

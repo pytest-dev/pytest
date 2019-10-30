@@ -33,7 +33,7 @@ provide the ``cmdopt`` through a :ref:`fixture function <fixture function>`:
     import pytest
 
 
-    def pytest_addoption(parser):
+    def pytest_addoption(parser, pluginmanager):
         parser.addoption(
             "--cmdopt", action="store", default="type1", help="my option: type1 or type2"
         )
@@ -151,7 +151,7 @@ line option to control skipping of ``pytest.mark.slow`` marked tests:
     import pytest
 
 
-    def pytest_addoption(parser):
+    def pytest_addoption(parser, pluginmanager):
         parser.addoption(
             "--runslow", action="store_true", default=False, help="run slow tests"
         )
