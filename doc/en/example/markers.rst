@@ -364,7 +364,7 @@ specifies via named environments:
     import pytest
 
 
-    def pytest_addoption(parser, pluginmanager):
+    def pytest_addoption(parser):
         parser.addoption(
             "-E",
             action="store",

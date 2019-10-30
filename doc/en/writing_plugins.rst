@@ -338,7 +338,7 @@ string value of ``Hello World!`` if we do not supply a value or ``Hello
     import pytest
 
 
-    def pytest_addoption(parser, pluginmanager):
+    def pytest_addoption(parser):
         group = parser.getgroup("helloworld")
         group.addoption(
             "--name",
