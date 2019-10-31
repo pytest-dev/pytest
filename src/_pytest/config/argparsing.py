@@ -47,7 +47,7 @@ class Parser:
 
         The returned group object has an ``addoption`` method with the same
         signature as :py:func:`parser.addoption
-        <_pytest.config.Parser.addoption>` but will be shown in the
+        <_pytest.config.argparsing.Parser.addoption>` but will be shown in the
         respective group in the output of ``pytest. --help``.
         """
         for group in self._groups:
