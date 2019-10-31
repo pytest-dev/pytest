@@ -1,5 +1,4 @@
 """ discover and run doctests in modules and test files."""
-import bdb
 import inspect
 import platform
 import sys
@@ -174,6 +173,8 @@ def _init_runner_class() -> "Type[doctest.DocTestRunner]":
                 raise failure
 
         def report_unexpected_exception(self, out, test, example, exc_info):
+            import bdb
+
             if isinstance(exc_info[1], Skipped):
                 raise exc_info[1]
             if isinstance(exc_info[1], bdb.BdbQuit):
