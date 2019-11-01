@@ -1,0 +1,1 @@
+Fix ``--trace`` when used with parametrized functions.
