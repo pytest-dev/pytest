@@ -15,7 +15,7 @@ class TestMetafunc:
     def Metafunc(self, func, config=None):
         # the unit tests of this class check if things work correctly
         # on the funcarg level, so we don't need a full blown
-        # initiliazation
+        # initialization
         class FixtureInfo:
             name2fixturedefs = None
 

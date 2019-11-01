@@ -429,7 +429,7 @@ class Session(nodes.FSCollector):
             # one or more conftests are not in use at this fspath
             proxy = FSHookProxy(fspath, pm, remove_mods)
         else:
-            # all plugis are active for this fspath
+            # all plugins are active for this fspath
             proxy = self.config.hook
         return proxy
 
