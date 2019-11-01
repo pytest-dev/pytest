@@ -10,6 +10,7 @@ from typing import Tuple
 
 import py
 
+from _pytest.config import notset
 from _pytest.config.exceptions import UsageError
 
 FILE_OR_DIR = "file_or_dir"
@@ -127,7 +128,7 @@ class Parser:
         args = [str(x) if isinstance(x, py.path.local) else x for x in args]
         return optparser.parse_known_args(args, namespace=namespace)
 
-    def addini(self, name, help, type=None, default=None):
+    def addini(self, name, help, type=None, default=notset):
         """ register an ini-file option.
 
         :name: name of the ini-variable

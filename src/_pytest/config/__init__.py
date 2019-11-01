@@ -990,7 +990,7 @@ class Config:
             try:
                 value = self.inicfg[name]
             except KeyError:
-                if default is not None:
+                if default is not notset:
                     return default
                 if type is None:
                     return ""

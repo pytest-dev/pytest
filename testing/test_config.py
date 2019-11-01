@@ -268,6 +268,7 @@ class TestConfigAPI:
             """
             def pytest_addoption(parser):
                 parser.addini("myname", "my new ini value")
+                parser.addini("defaultunset", "allow None", default=None)
         """
         )
         testdir.makeini(
@@ -279,6 +280,7 @@ class TestConfigAPI:
         config = testdir.parseconfig()
         val = config.getini("myname")
         assert val == "hello"
+        assert config.getini("defaultunset") is None
         pytest.raises(ValueError, config.getini, "other")
 
     def test_addini_pathlist(self, testdir):

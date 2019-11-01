@@ -1,0 +1,3 @@
+Ini options (typically added via ``parser.addini`` in ``pytest_addoption``)
+allow for using ``default=None``, where previously the default would be ``[]``
+then.
