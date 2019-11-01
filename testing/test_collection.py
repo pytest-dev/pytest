@@ -402,7 +402,7 @@ class TestCustomConftests:
         )
         testdir.mkdir("sub")
         testdir.makepyfile("def test_x(): pass")
-        result = testdir.runpytest("--collect-only")
+        result = testdir.runpytest("--co")
         result.stdout.fnmatch_lines(["*MyModule*", "*test_x*"])
 
     def test_pytest_collect_file_from_sister_dir(self, testdir):
@@ -433,7 +433,7 @@ class TestCustomConftests:
         p = testdir.makepyfile("def test_x(): pass")
         p.copy(sub1.join(p.basename))
         p.copy(sub2.join(p.basename))
-        result = testdir.runpytest("--collect-only")
+        result = testdir.runpytest("--co")
         result.stdout.fnmatch_lines(["*MyModule1*", "*MyModule2*", "*test_x*"])
 
 
