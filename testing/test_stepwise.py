@@ -4,7 +4,7 @@ import pytest
 @pytest.fixture
 def stepwise_testdir(testdir):
     # Rather than having to modify our testfile between tests, we introduce
-    # a flag for wether or not the second test should fail.
+    # a flag for whether or not the second test should fail.
     testdir.makeconftest(
         """
 def pytest_addoption(parser):

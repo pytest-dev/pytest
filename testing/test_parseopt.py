@@ -304,7 +304,7 @@ def test_argcomplete(testdir, monkeypatch):
                 shlex.quote(sys.executable)
             )
         )
-    # alternative would be exteneded Testdir.{run(),_run(),popen()} to be able
+    # alternative would be extended Testdir.{run(),_run(),popen()} to be able
     # to handle a keyword argument env that replaces os.environ in popen or
     # extends the copy, advantage: could not forget to restore
     monkeypatch.setenv("_ARGCOMPLETE", "1")

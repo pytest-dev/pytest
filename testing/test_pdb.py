@@ -581,7 +581,7 @@ class TestPDB:
         # No extra newline.
         assert child.before.endswith(b"c\r\nprint_from_foo\r\n")
 
-        # set_debug should not raise outcomes.Exit, if used recrursively.
+        # set_debug should not raise outcomes. Exit, if used recursively.
         child.sendline("debug 42")
         child.sendline("q")
         child.expect("LEAVING RECURSIVE DEBUGGER")

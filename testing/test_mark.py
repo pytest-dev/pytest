@@ -482,7 +482,7 @@ class TestFunctional:
         items, rec = testdir.inline_genitems(p)
         base_item, sub_item, sub_item_other = items
         print(items, [x.nodeid for x in items])
-        # new api seregates
+        # new api segregates
         assert not list(base_item.iter_markers(name="b"))
         assert not list(sub_item_other.iter_markers(name="b"))
         assert list(sub_item.iter_markers(name="b"))
