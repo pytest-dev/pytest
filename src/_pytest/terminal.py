@@ -707,7 +707,7 @@ class TerminalReporter:
     def _report_keyboardinterrupt(self):
         excrepr = self._keyboardinterrupt_memo
         msg = excrepr.reprcrash.message
-        self.write_sep("!", msg)
+        self.write_sep("!", msg, red=True)
         if "KeyboardInterrupt" in msg:
             if self.config.option.fulltrace:
                 excrepr.toterminal(self._tw)
