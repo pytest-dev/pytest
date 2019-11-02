@@ -488,22 +488,22 @@ class Session(nodes.FSCollector):
 
     def collect(self):
         for initialpart in self._initialparts:
-            arg = "::".join(map(str, initialpart))
-            self.trace("processing argument", arg)
+            self.trace("processing argument", initialpart)
             self.trace.root.indent += 1
             try:
-                yield from self._collect(arg)
+                yield from self._collect(initialpart)
             except NoMatch:
+                report_arg = "::".join(map(str, initialpart))
                 # we are inside a make_report hook so
                 # we cannot directly pass through the exception
-                self._notfound.append((arg, sys.exc_info()[1]))
+                self._notfound.append((report_arg, sys.exc_info()[1]))
 
             self.trace.root.indent -= 1
 
     def _collect(self, arg):
         from _pytest.python import Package
 
-        names = self._parsearg(arg)
+        names = arg[:]
         argpath = names.pop(0)
 
         # Start with a Session root, and delve to argpath item (dir or file)
