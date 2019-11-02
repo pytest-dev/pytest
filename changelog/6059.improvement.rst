@@ -1,0 +1,1 @@
+Collection errors are reported as errors (and not failures like before) in the terminal's short test summary.

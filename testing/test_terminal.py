@@ -1774,3 +1774,20 @@ def test_format_session_duration(seconds, expected):
     from _pytest.terminal import format_session_duration
 
     assert format_session_duration(seconds) == expected
+
+
+def test_collecterror(testdir):
+    p1 = testdir.makepyfile("raise SyntaxError()")
+    result = testdir.runpytest("-ra", str(p1))
+    result.stdout.fnmatch_lines(
+        [
+            "collected 0 items / 1 errors",
+            "*= ERRORS =*",
+            "*_ ERROR collecting test_collecterror.py _*",
+            "E   SyntaxError: *",
+            "*= short test summary info =*",
+            "ERROR test_collecterror.py",
+            "*! Interrupted: 1 errors during collection !*",
+            "*= 1 error in *",
+        ]
+    )
