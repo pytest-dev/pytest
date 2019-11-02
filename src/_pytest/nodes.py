@@ -364,8 +364,9 @@ def _check_initialpaths_for_relpath(session, fspath):
 
 
 class FSCollector(Collector):
-    def __init__(self, fspath, parent=None, config=None, session=None, nodeid=None):
-        fspath = py.path.local(fspath)  # xxx only for test_resultlog.py?
+    def __init__(
+        self, fspath: py.path.local, parent=None, config=None, session=None, nodeid=None
+    ) -> None:
         name = fspath.basename
         if parent is not None:
             rel = fspath.relto(parent.fspath)
