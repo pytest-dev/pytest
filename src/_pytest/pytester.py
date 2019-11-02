@@ -544,11 +544,12 @@ class Testdir:
         mp.delenv("TOX_ENV_DIR", raising=False)
         # Discard outer pytest options.
         mp.delenv("PYTEST_ADDOPTS", raising=False)
-
-        # Environment (updates) for inner runs.
+        # Ensure no user config is used.
         tmphome = str(self.tmpdir)
         mp.setenv("HOME", tmphome)
         mp.setenv("USERPROFILE", tmphome)
+        # Do not use colors for inner runs by default.
+        mp.setenv("PY_COLORS", "0")
 
     def __repr__(self):
         return "<Testdir {!r}>".format(self.tmpdir)

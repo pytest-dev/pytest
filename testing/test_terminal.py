@@ -154,6 +154,8 @@ class TestTerminal:
                 "test2.py": "def test_2(): pass",
             }
         )
+        # Explicitly test colored output.
+        testdir.monkeypatch.setenv("PY_COLORS", "1")
 
         child = testdir.spawn_pytest("-v test1.py test2.py")
         child.expect(r"collecting \.\.\.")
