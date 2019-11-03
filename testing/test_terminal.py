@@ -1781,13 +1781,13 @@ def test_collecterror(testdir):
     result = testdir.runpytest("-ra", str(p1))
     result.stdout.fnmatch_lines(
         [
-            "collected 0 items / 1 errors",
+            "collected 0 items / 1 error",
             "*= ERRORS =*",
             "*_ ERROR collecting test_collecterror.py _*",
             "E   SyntaxError: *",
             "*= short test summary info =*",
             "ERROR test_collecterror.py",
-            "*! Interrupted: 1 errors during collection !*",
+            "*! Interrupted: 1 error during collection !*",
             "*= 1 error in *",
         ]
     )
