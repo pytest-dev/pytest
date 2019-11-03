@@ -181,32 +181,15 @@ def assertrepr_compare(config, op, left, right):
 
 
 def _diff_text(left, right, verbose=0):
-    """Return the explanation for the diff between text or bytes.
+    """Return the explanation for the diff between text.
 
     Unless --verbose is used this will skip leading and trailing
     characters which are identical to keep the diff minimal.
-
-    If the input are bytes they will be safely converted to text.
     """
     from difflib import ndiff
 
     explanation = []  # type: List[str]
 
-    def escape_for_readable_diff(binary_text):
-        """
-        Ensures that the internal string is always valid unicode, converting any bytes safely to valid unicode.
-        This is done using repr() which then needs post-processing to fix the encompassing quotes and un-escape
-        newlines and carriage returns (#429).
-        """
-        r = str(repr(binary_text)[1:-1])
-        r = r.replace(r"\n", "\n")
-        r = r.replace(r"\r", "\r")
-        return r
-
-    if isinstance(left, bytes):
-        left = escape_for_readable_diff(left)
-    if isinstance(right, bytes):
-        right = escape_for_readable_diff(right)
     if verbose < 1:
         i = 0  # just in case left or right has zero length
         for i in range(min(len(left), len(right))):
