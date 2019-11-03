@@ -530,7 +530,7 @@ def test_no_matching(function):
             ]
         else:
             assert obtained == [
-                "nomatch: '{}'".format(good_pattern),
+                " nomatch: '{}'".format(good_pattern),
                 "     and: 'cachedir: .pytest_cache'",
                 "     and: 'collecting ... collected 1 item'",
                 "     and: ''",
@@ -540,6 +540,14 @@ def test_no_matching(function):
 
     func = getattr(lm, function)
     func(bad_pattern)  # bad pattern does not match any line: passes
+
+
+def test_no_matching_after_match():
+    lm = LineMatcher(["1", "2", "3"])
+    lm.fnmatch_lines(["1", "3"])
+    with pytest.raises(pytest.fail.Exception) as e:
+        lm.no_fnmatch_line("*")
+    assert str(e.value).splitlines() == ["fnmatch: '*'", "   with: '1'"]
 
 
 def test_pytester_addopts(request, monkeypatch):
