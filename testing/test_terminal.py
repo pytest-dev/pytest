@@ -24,27 +24,19 @@ DistInfo = collections.namedtuple("DistInfo", ["project_name", "version"])
 
 
 class Option:
-    def __init__(self, verbosity=0, fulltrace=False):
+    def __init__(self, verbosity=0):
         self.verbosity = verbosity
-        self.fulltrace = fulltrace
 
     @property
     def args(self):
         values = []
         values.append("--verbosity=%d" % self.verbosity)
-        if self.fulltrace:
-            values.append("--fulltrace")
         return values
 
 
 @pytest.fixture(
-    params=[
-        Option(verbosity=0),
-        Option(verbosity=1),
-        Option(verbosity=-1),
-        Option(fulltrace=True),
-    ],
-    ids=["default", "verbose", "quiet", "fulltrace"],
+    params=[Option(verbosity=0), Option(verbosity=1), Option(verbosity=-1)],
+    ids=["default", "verbose", "quiet"],
 )
 def option(request):
     return request.param
@@ -207,7 +199,8 @@ class TestTerminal:
         result.stdout.fnmatch_lines(["*a123/test_hello123.py*PASS*"])
         result.stdout.no_fnmatch_line("* <- *")
 
-    def test_keyboard_interrupt(self, testdir, option):
+    @pytest.mark.parametrize("fulltrace", ("", "--fulltrace"))
+    def test_keyboard_interrupt(self, testdir, fulltrace):
         testdir.makepyfile(
             """
             def test_foobar():
@@ -219,7 +212,7 @@ class TestTerminal:
         """
         )
 
-        result = testdir.runpytest(*option.args, no_reraise_ctrlc=True)
+        result = testdir.runpytest(fulltrace, no_reraise_ctrlc=True)
         result.stdout.fnmatch_lines(
             [
                 "    def test_foobar():",
@@ -228,7 +221,7 @@ class TestTerminal:
                 "*_keyboard_interrupt.py:6: KeyboardInterrupt*",
             ]
         )
-        if option.fulltrace:
+        if fulltrace:
             result.stdout.fnmatch_lines(
                 ["*raise KeyboardInterrupt   # simulating the user*"]
             )
