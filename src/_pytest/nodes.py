@@ -4,6 +4,7 @@ from functools import lru_cache
 from typing import Any
 from typing import Dict
 from typing import List
+from typing import Optional
 from typing import Set
 from typing import Tuple
 from typing import Union
@@ -11,15 +12,21 @@ from typing import Union
 import py
 
 import _pytest._code
+from _pytest._code.code import ExceptionChainRepr
+from _pytest._code.code import ExceptionInfo
+from _pytest._code.code import ReprExceptionInfo
 from _pytest.compat import getfslineno
+from _pytest.fixtures import FixtureDef
+from _pytest.fixtures import FixtureLookupError
+from _pytest.fixtures import FixtureLookupErrorRepr
 from _pytest.mark.structures import Mark
 from _pytest.mark.structures import MarkDecorator
 from _pytest.mark.structures import NodeKeywords
-from _pytest.outcomes import fail
+from _pytest.outcomes import Failed
 
 if False:  # TYPE_CHECKING
     # Imported here due to circular import.
-    from _pytest.fixtures import FixtureDef
+    from _pytest.main import Session  # noqa: F401
 
 SEP = "/"
 
@@ -69,8 +76,14 @@ class Node:
     Collector subclasses have children, Items are terminal nodes."""
 
     def __init__(
-        self, name, parent=None, config=None, session=None, fspath=None, nodeid=None
-    ):
+        self,
+        name,
+        parent=None,
+        config=None,
+        session: Optional["Session"] = None,
+        fspath=None,
+        nodeid=None,
+    ) -> None:
         #: a unique name within the scope of the parent node
         self.name = name
 
@@ -81,7 +94,11 @@ class Node:
         self.config = config or parent.config
 
         #: the session this node is part of
-        self.session = session or parent.session
+        if session is None:
+            assert parent.session is not None
+            self.session = parent.session
+        else:
+            self.session = session
 
         #: filesystem path where this node was collected from (can be None)
         self.fspath = fspath or getattr(parent, "fspath", None)
@@ -254,13 +271,13 @@ class Node:
     def _prunetraceback(self, excinfo):
         pass
 
-    def _repr_failure_py(self, excinfo, style=None):
-        # Type ignored: see comment where fail.Exception is defined.
-        if excinfo.errisinstance(fail.Exception):  # type: ignore
+    def _repr_failure_py(
+        self, excinfo: ExceptionInfo[Union[Failed, FixtureLookupError]], style=None
+    ) -> Union[str, ReprExceptionInfo, ExceptionChainRepr, FixtureLookupErrorRepr]:
+        if isinstance(excinfo.value, Failed):
             if not excinfo.value.pytrace:
                 return str(excinfo.value)
-        fm = self.session._fixturemanager
-        if excinfo.errisinstance(fm.FixtureLookupError):
+        if isinstance(excinfo.value, FixtureLookupError):
             return excinfo.value.formatrepr()
         if self.config.getoption("fulltrace", False):
             style = "long"
@@ -298,7 +315,9 @@ class Node:
             truncate_locals=truncate_locals,
         )
 
-    def repr_failure(self, excinfo, style=None):
+    def repr_failure(
+        self, excinfo, style=None
+    ) -> Union[str, ReprExceptionInfo, ExceptionChainRepr, FixtureLookupErrorRepr]:
         return self._repr_failure_py(excinfo, style)
 
 
@@ -425,16 +444,20 @@ class Item(Node):
         if content:
             self._report_sections.append((when, key, content))
 
-    def reportinfo(self):
+    def reportinfo(self) -> Tuple[str, Optional[int], str]:
         return self.fspath, None, ""
 
     @property
-    def location(self):
+    def location(self) -> Tuple[str, Optional[int], str]:
         try:
             return self._location
         except AttributeError:
             location = self.reportinfo()
             fspath = self.session._node_location_to_relpath(location[0])
-            location = (fspath, location[1], str(location[2]))
-            self._location = location
-            return location
+            assert type(location[2]) is str
+            self._location = (
+                fspath,
+                location[1],
+                location[2],
+            )  # type: Tuple[str, Optional[int], str]
+            return self._location

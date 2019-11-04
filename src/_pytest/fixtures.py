@@ -7,13 +7,13 @@ from collections import defaultdict
 from collections import deque
 from collections import OrderedDict
 from typing import Dict
+from typing import List
 from typing import Tuple
 
 import attr
 import py
 
 import _pytest
-from _pytest import nodes
 from _pytest._code.code import FormattedExcinfo
 from _pytest._code.code import TerminalRepr
 from _pytest.compat import _format_args
@@ -34,6 +34,8 @@ from _pytest.outcomes import TEST_OUTCOME
 
 if False:  # TYPE_CHECKING
     from typing import Type
+
+    from _pytest import nodes
 
 
 @attr.s(frozen=True)
@@ -689,8 +691,8 @@ class FixtureLookupError(LookupError):
         self.fixturestack = request._get_fixturestack()
         self.msg = msg
 
-    def formatrepr(self):
-        tblines = []
+    def formatrepr(self) -> "FixtureLookupErrorRepr":
+        tblines = []  # type: List[str]
         addline = tblines.append
         stack = [self.request._pyfuncitem.obj]
         stack.extend(map(lambda x: x.func, self.fixturestack))
@@ -742,7 +744,7 @@ class FixtureLookupErrorRepr(TerminalRepr):
         self.firstlineno = firstlineno
         self.argname = argname
 
-    def toterminal(self, tw):
+    def toterminal(self, tw) -> None:
         # tw.line("FixtureLookupError: %s" %(self.argname), red=True)
         for tbline in self.tblines:
             tw.line(tbline.rstrip())
@@ -1283,6 +1285,8 @@ class FixtureManager:
         except AttributeError:
             pass
         else:
+            from _pytest import nodes
+
             # construct the base nodeid which is later used to check
             # what fixtures are visible for particular tests (as denoted
             # by their test id)
@@ -1459,6 +1463,8 @@ class FixtureManager:
         return tuple(self._matchfactories(fixturedefs, nodeid))
 
     def _matchfactories(self, fixturedefs, nodeid):
+        from _pytest import nodes
+
         for fixturedef in fixturedefs:
             if nodes.ischildnode(fixturedef.baseid, nodeid):
                 yield fixturedef

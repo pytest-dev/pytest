@@ -9,6 +9,7 @@ from collections import Counter
 from collections.abc import Sequence
 from functools import partial
 from textwrap import dedent
+from typing import Tuple
 
 import py
 
@@ -288,7 +289,7 @@ class PyobjMixin(PyobjContext):
         s = ".".join(parts)
         return s.replace(".[", "[")
 
-    def reportinfo(self):
+    def reportinfo(self) -> Tuple[str, int, str]:
         # XXX caching?
         obj = self.obj
         compat_co_firstlineno = getattr(obj, "compat_co_firstlineno", None)
