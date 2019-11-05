@@ -1,5 +1,6 @@
 import os
 import shutil
+import stat
 import sys
 import textwrap
 
@@ -45,14 +46,17 @@ class TestNewAPI:
     )
     def test_cache_writefail_permissions(self, testdir):
         testdir.makeini("[pytest]")
+        mode = os.stat(testdir.tmpdir.ensure_dir(".pytest_cache"))[stat.ST_MODE]
         testdir.tmpdir.ensure_dir(".pytest_cache").chmod(0)
         config = testdir.parseconfigure()
         cache = config.cache
         cache.set("test/broken", [])
+        testdir.tmpdir.ensure_dir(".pytest_cache").chmod(mode)
 
     @pytest.mark.skipif(sys.platform.startswith("win"), reason="no chmod on windows")
     @pytest.mark.filterwarnings("default")
     def test_cache_failure_warns(self, testdir):
+        mode = os.stat(testdir.tmpdir.ensure_dir(".pytest_cache"))[stat.ST_MODE]
         testdir.tmpdir.ensure_dir(".pytest_cache").chmod(0)
         testdir.makepyfile(
             """
@@ -62,6 +66,7 @@ class TestNewAPI:
         """
         )
         result = testdir.runpytest("-rw")
+        testdir.tmpdir.ensure_dir(".pytest_cache").chmod(mode)
         assert result.ret == 1
         # warnings from nodeids, lastfailed, and stepwise
         result.stdout.fnmatch_lines(["*could not create cache path*", "*3 warnings*"])
