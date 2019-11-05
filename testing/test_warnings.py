@@ -605,6 +605,7 @@ def test_warnings_checker_twice():
         warnings.warn("Message B", UserWarning)
 
 
+@pytest.mark.filterwarnings("ignore::pytest.PytestExperimentalApiWarning")
 @pytest.mark.filterwarnings("always")
 def test_group_warnings_by_message(testdir):
     testdir.copy_example("warnings/test_group_warnings_by_message.py")
