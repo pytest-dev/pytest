@@ -48,28 +48,36 @@ class TestNewAPI:
         testdir.makeini("[pytest]")
         mode = os.stat(testdir.tmpdir.ensure_dir(".pytest_cache"))[stat.ST_MODE]
         testdir.tmpdir.ensure_dir(".pytest_cache").chmod(0)
-        config = testdir.parseconfigure()
-        cache = config.cache
-        cache.set("test/broken", [])
-        testdir.tmpdir.ensure_dir(".pytest_cache").chmod(mode)
+        try:
+            config = testdir.parseconfigure()
+            cache = config.cache
+            cache.set("test/broken", [])
+        finally:
+            testdir.tmpdir.ensure_dir(".pytest_cache").chmod(mode)
 
     @pytest.mark.skipif(sys.platform.startswith("win"), reason="no chmod on windows")
-    @pytest.mark.filterwarnings("default")
+    @pytest.mark.filterwarnings(
+        "ignore:could not create cache path:pytest.PytestWarning"
+    )
     def test_cache_failure_warns(self, testdir):
         mode = os.stat(testdir.tmpdir.ensure_dir(".pytest_cache"))[stat.ST_MODE]
         testdir.tmpdir.ensure_dir(".pytest_cache").chmod(0)
-        testdir.makepyfile(
-            """
-            def test_error():
-                raise Exception
+        try:
+            testdir.makepyfile(
+                """
+                def test_error():
+                    raise Exception
 
-        """
-        )
-        result = testdir.runpytest("-rw")
-        testdir.tmpdir.ensure_dir(".pytest_cache").chmod(mode)
-        assert result.ret == 1
-        # warnings from nodeids, lastfailed, and stepwise
-        result.stdout.fnmatch_lines(["*could not create cache path*", "*3 warnings*"])
+            """
+            )
+            result = testdir.runpytest("-rw")
+            assert result.ret == 1
+            # warnings from nodeids, lastfailed, and stepwise
+            result.stdout.fnmatch_lines(
+                ["*could not create cache path*", "*3 warnings*"]
+            )
+        finally:
+            testdir.tmpdir.ensure_dir(".pytest_cache").chmod(mode)
 
     def test_config_cache(self, testdir):
         testdir.makeconftest(
