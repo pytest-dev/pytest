@@ -46,7 +46,8 @@ class TestNewAPI:
     )
     def test_cache_writefail_permissions(self, testdir):
         testdir.makeini("[pytest]")
-        mode = os.stat(testdir.tmpdir.ensure_dir(".pytest_cache"))[stat.ST_MODE]
+        cache_dir = str(testdir.tmpdir.ensure_dir(".pytest_cache"))
+        mode = os.stat(cache_dir)[stat.ST_MODE]
         testdir.tmpdir.ensure_dir(".pytest_cache").chmod(0)
         try:
             config = testdir.parseconfigure()
@@ -60,7 +61,8 @@ class TestNewAPI:
         "ignore:could not create cache path:pytest.PytestWarning"
     )
     def test_cache_failure_warns(self, testdir):
-        mode = os.stat(testdir.tmpdir.ensure_dir(".pytest_cache"))[stat.ST_MODE]
+        cache_dir = str(testdir.tmpdir.ensure_dir(".pytest_cache"))
+        mode = os.stat(cache_dir)[stat.ST_MODE]
         testdir.tmpdir.ensure_dir(".pytest_cache").chmod(0)
         try:
             testdir.makepyfile(
