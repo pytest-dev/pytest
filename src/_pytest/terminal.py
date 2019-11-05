@@ -15,6 +15,7 @@ from typing import List
 from typing import Mapping
 from typing import Optional
 from typing import Set
+from typing import Tuple
 
 import attr
 import pluggy
@@ -458,18 +459,20 @@ class TerminalReporter:
             else:
                 progress_length = len(" [100%]")
 
+            main_color, _ = _get_main_color(self.stats)
+
             self._progress_nodeids_reported.add(nodeid)
             is_last_item = (
                 len(self._progress_nodeids_reported) == self._session.testscollected
             )
             if is_last_item:
-                self._write_progress_information_filling_space()
+                self._write_progress_information_filling_space(color=main_color)
             else:
                 w = self._width_of_current_line
                 past_edge = w + progress_length + 1 >= self._screen_width
                 if past_edge:
                     msg = self._get_progress_information_message()
-                    self._tw.write(msg + "\n", cyan=True)
+                    self._tw.write(msg + "\n", **{main_color: True})
 
     def _get_progress_information_message(self):
         collected = self._session.testscollected
@@ -486,11 +489,13 @@ class TerminalReporter:
                 return " [{:3d}%]".format(progress)
             return " [100%]"
 
-    def _write_progress_information_filling_space(self):
+    def _write_progress_information_filling_space(self, color=None):
+        if not color:
+            color, _ = _get_main_color(self.stats)
         msg = self._get_progress_information_message()
         w = self._width_of_current_line
         fill = self._tw.fullwidth - w - 1
-        self.write(msg.rjust(fill), cyan=True)
+        self.write(msg.rjust(fill), **{color: True})
 
     @property
     def _width_of_current_line(self):
@@ -1075,7 +1080,7 @@ def _make_plural(count, noun):
     return count, noun + "s" if count != 1 else noun
 
 
-def build_summary_stats_line(stats):
+def _get_main_color(stats) -> Tuple[str, List[str]]:
     known_types = (
         "failed passed skipped deselected xfailed xpassed warnings error".split()
     )
@@ -1095,6 +1100,12 @@ def build_summary_stats_line(stats):
         main_color = "green"
     else:
         main_color = "yellow"
+
+    return main_color, known_types
+
+
+def build_summary_stats_line(stats):
+    main_color, known_types = _get_main_color(stats)
 
     parts = []
     for key in known_types:

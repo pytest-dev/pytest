@@ -1,0 +1,1 @@
+The "[XXX%]" indicator in the test summary is colored according to the final (new) multi-colored line's main color.
