@@ -305,7 +305,7 @@ class DoctestItem(pytest.Item):
         else:
             return super().repr_failure(excinfo)
 
-    def reportinfo(self):
+    def reportinfo(self) -> Tuple[str, int, str]:
         return self.fspath, self.dtest.lineno, "[doctest] %s" % self.name
 
 

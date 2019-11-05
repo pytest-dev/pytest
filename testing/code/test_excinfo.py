@@ -902,7 +902,7 @@ raise ValueError()
         from _pytest._code.code import TerminalRepr
 
         class MyRepr(TerminalRepr):
-            def toterminal(self, tw):
+            def toterminal(self, tw) -> None:
                 tw.line("я")
 
         x = str(MyRepr())
