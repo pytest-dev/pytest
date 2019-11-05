@@ -1,0 +1,11 @@
+Allow selective auto-indentation of multiline log messages.
+
+Adds command line option ``--log-auto-indent``, config option
+``log_auto_indent`` and support for per-entry configuration of
+indentation behavior on calls to ``logging.log()``.
+
+Alters the default for auto-indention from ``on`` to ``off``. This
+restores the older behavior that existed prior to v4.6.0. This
+reversion to earlier behavior was done because it is better to
+activate new features that may lead to broken tests explicitly
+rather than implicitly.
