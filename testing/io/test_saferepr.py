@@ -41,9 +41,10 @@ def test_exceptions():
     assert "TypeError" in s
     assert "TypeError" in saferepr(BrokenRepr("string"))
 
+    none = None
     try:
-        None()
-    except Exception as exc:
+        none()
+    except BaseException as exc:
         exp_exc = repr(exc)
     obj = BrokenRepr(BrokenReprException("omg even worse"))
     s2 = saferepr(obj)
