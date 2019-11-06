@@ -273,12 +273,13 @@ def _compare_eq_iterable(
     if lines_left != lines_right:
         if lines_left > lines_right:
             max_width = min(len(x) for x in left_formatting)
-            right_formatting = pprint.pformat(right, width=max_width).splitlines()
-            lines_right = len(right_formatting)
         else:
             max_width = min(len(x) for x in right_formatting)
-            left_formatting = pprint.pformat(left, width=max_width).splitlines()
-            lines_left = len(left_formatting)
+
+        right_formatting = pprint.pformat(right, width=max_width).splitlines()
+        lines_right = len(right_formatting)
+        left_formatting = pprint.pformat(left, width=max_width).splitlines()
+        lines_left = len(left_formatting)
 
     if lines_left > 1 or lines_right > 1:
         _surrounding_parens_on_own_lines(left_formatting)
