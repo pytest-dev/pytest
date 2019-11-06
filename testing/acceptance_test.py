@@ -104,6 +104,8 @@ class TestGeneralUsage:
 
     @pytest.mark.parametrize("load_cov_early", [True, False])
     def test_early_load_setuptools_name(self, testdir, monkeypatch, load_cov_early):
+        del testdir._env_run_update["PYTEST_DISABLE_PLUGIN_AUTOLOAD"]
+
         testdir.makepyfile(mytestplugin1_module="")
         testdir.makepyfile(mytestplugin2_module="")
         testdir.makepyfile(mycov_module="")
