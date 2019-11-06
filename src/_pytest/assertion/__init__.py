@@ -163,5 +163,5 @@ def pytest_sessionfinish(session):
             assertstate.hook.set_session(None)
 
 
-# Expose this plugin's implementation for the pytest_assertrepr_compare hook
-pytest_assertrepr_compare = util.assertrepr_compare
+def pytest_assertrepr_compare(config, op, left, right):
+    return util.assertrepr_compare(config=config, op=op, left=left, right=right)
