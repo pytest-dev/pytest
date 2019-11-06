@@ -1,5 +1,6 @@
 """ interactive debugging with PDB, the Python Debugger. """
 import argparse
+import functools
 import sys
 
 from _pytest import outcomes
@@ -278,13 +279,16 @@ class PdbTrace:
 def _test_pytest_function(pyfuncitem):
     _pdb = pytestPDB._init_pdb("runcall")
     testfunction = pyfuncitem.obj
-    pyfuncitem.obj = _pdb.runcall
-    if "func" in pyfuncitem._fixtureinfo.argnames:  # pragma: no branch
-        raise ValueError("--trace can't be used with a fixture named func!")
-    pyfuncitem.funcargs["func"] = testfunction
-    new_list = list(pyfuncitem._fixtureinfo.argnames)
-    new_list.append("func")
-    pyfuncitem._fixtureinfo.argnames = tuple(new_list)
+
+    # we can't just return `partial(pdb.runcall, testfunction)` because (on
+    # python < 3.7.4) runcall's first param is `func`, which means we'd get
+    # an exception if one of the kwargs to testfunction was called `func`
+    @functools.wraps(testfunction)
+    def wrapper(*args, **kwargs):
+        func = functools.partial(testfunction, *args, **kwargs)
+        _pdb.runcall(func)
+
+    pyfuncitem.obj = wrapper
 
 
 def _enter_pdb(node, excinfo, rep):

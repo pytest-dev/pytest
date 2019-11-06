@@ -38,7 +38,6 @@ def format_explanation(explanation: str) -> str:
     for when one explanation needs to span multiple lines, e.g. when
     displaying diffs.
     """
-    explanation = explanation
     lines = _split_explanation(explanation)
     result = _format_lines(lines)
     return "\n".join(result)

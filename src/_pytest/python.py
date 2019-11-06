@@ -211,8 +211,8 @@ def pytest_pycollect_makeitem(collector, name, obj):
         # mock seems to store unbound methods (issue473), normalize it
         obj = getattr(obj, "__func__", obj)
         # We need to try and unwrap the function if it's a functools.partial
-        # or a funtools.wrapped.
-        # We musn't if it's been wrapped with mock.patch (python 2 only)
+        # or a functools.wrapped.
+        # We mustn't if it's been wrapped with mock.patch (python 2 only)
         if not (inspect.isfunction(obj) or inspect.isfunction(get_real_func(obj))):
             filename, lineno = getfslineno(obj)
             warnings.warn_explicit(
@@ -596,7 +596,7 @@ class Package(Module):
             # one or more conftests are not in use at this fspath
             proxy = FSHookProxy(fspath, pm, remove_mods)
         else:
-            # all plugis are active for this fspath
+            # all plugins are active for this fspath
             proxy = self.config.hook
         return proxy
 

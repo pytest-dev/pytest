@@ -513,7 +513,7 @@ class LogXML:
         key = nodeid, slavenode
 
         if key in self.node_reporters:
-            # TODO: breasks for --dist=each
+            # TODO: breaks for --dist=each
             return self.node_reporters[key]
 
         reporter = _NodeReporter(nodeid, self)

@@ -1,6 +1,6 @@
 """
 this is a place where we put datastructures used by legacy apis
-we hope ot remove
+we hope to remove
 """
 import keyword
 
