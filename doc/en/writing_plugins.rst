@@ -677,6 +677,56 @@ Example:
         print(config.hook)
 
 
+.. _`addoptionhooks`:
+
+
+Using hooks in pytest_addoption
+-------------------------------
+
+Occasionally, it is necessary to change the way in which command line options
+are defined by one plugin based on hooks in another plugin. For example,
+a plugin may expose a command line option for which another plugin needs
+to define the default value. The pluginmanager can be used to install and
+use hooks to accomplish this. The plugin would define and add the hooks
+and use pytest_addoption as follows:
+
+.. code-block:: python
+
+   # contents of hooks.py
+
+   # Use firstresult=True because we only want one plugin to define this
+   # default value
+   @hookspec(firstresult=True)
+   def pytest_config_file_default_value():
+       """ Return the default value for the config file command line option. """
+
+
+   # contents of myplugin.py
+
+
+   def pytest_addhooks(pluginmanager):
+       """ This example assumes the hooks are grouped in the 'hooks' module. """
+       from . import hook
+
+       pluginmanager.add_hookspecs(hook)
+
+
+   def pytest_addoption(parser, pluginmanager):
+       default_value = pluginmanager.hook.pytest_config_file_default_value()
+       parser.addoption(
+           "--config-file",
+           help="Config file to use, defaults to %(default)s",
+           default=default_value,
+       )
+
+The conftest.py that is using myplugin would simply define the hook as follows:
+
+.. code-block:: python
+
+    def pytest_config_file_default_value():
+        return "config.yaml"
+
+
 Optionally using hooks from 3rd party plugins
 ---------------------------------------------
 

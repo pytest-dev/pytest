@@ -1,0 +1,4 @@
+Adding the pluginmanager as an option ``pytest_addoption``
+so that hooks can be invoked when setting up command line options. This is
+useful for having one plugin communicate things to another plugin,
+such as default values or which set of command line options to add.
