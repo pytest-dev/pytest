@@ -459,6 +459,43 @@ class TestAssert_reprcompare:
             "  ]",
         ]
 
+    def test_dict_wrap(self):
+        d1 = {"common": 1, "env": {"env1": 1}}
+        d2 = {"common": 1, "env": {"env1": 1, "env2": 2}}
+
+        diff = callequal(d1, d2, verbose=True)
+        assert diff == [
+            "{'common': 1,...: {'env1': 1}} == {'common': 1,...1, 'env2': 2}}",
+            "Omitting 1 identical items, use -vv to show",
+            "Differing items:",
+            "{'env': {'env1': 1}} != {'env': {'env1': 1, 'env2': 2}}",
+            "Full diff:",
+            "- {'common': 1, 'env': {'env1': 1}}",
+            "+ {'common': 1, 'env': {'env1': 1, 'env2': 2}}",
+            "?                                +++++++++++",
+        ]
+
+        long_a = "a" * 80
+        sub = {"long_a": long_a, "sub1": {"long_a": "substring that gets wrapped"}}
+        d1 = {"env": {"sub": sub}}
+        d2 = {"env": {"sub": sub}, "new": 1}
+        diff = callequal(d1, d2, verbose=True)
+        assert diff == [
+            "{'env': {'sub...s wrapped'}}}} == {'env': {'sub...}}}, 'new': 1}",
+            "Omitting 1 identical items, use -vv to show",
+            "Right contains 1 more item:",
+            "{'new': 1}",
+            "Full diff:",
+            "  {",
+            "   'env': {'sub': {'long_a': '" + long_a + "',",
+            "                   'sub1': {'long_a': 'substring '",
+            "                                      'that '",
+            "                                      'gets '",
+            "                                      'wrapped'}}},",
+            "+  'new': 1,",
+            "  }",
+        ]
+
     def test_dict(self):
         expl = callequal({"a": 0}, {"a": 1})
         assert len(expl) > 1
