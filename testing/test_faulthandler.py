@@ -58,13 +58,13 @@ def test_timeout(testdir, enabled):
         """
     import time
     def test_timeout():
-        time.sleep(2.0)
+        time.sleep(0.1)
     """
     )
     testdir.makeini(
         """
         [pytest]
-        faulthandler_timeout = 1
+        faulthandler_timeout = 0.01
         """
     )
     args = ["-p", "no:faulthandler"] if not enabled else []
