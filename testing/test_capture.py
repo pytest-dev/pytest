@@ -888,9 +888,9 @@ def lsof_check():
     pid = os.getpid()
     try:
         out = subprocess.check_output(("lsof", "-p", str(pid))).decode()
-    except (OSError, subprocess.CalledProcessError, UnicodeDecodeError):
+    except (OSError, subprocess.CalledProcessError, UnicodeDecodeError) as exc:
         # about UnicodeDecodeError, see note on pytester
-        pytest.skip("could not run 'lsof'")
+        pytest.skip("could not run 'lsof' ({!r})".format(exc))
     yield
     out2 = subprocess.check_output(("lsof", "-p", str(pid))).decode()
     len1 = len([x for x in out.split("\n") if "REG" in x])
