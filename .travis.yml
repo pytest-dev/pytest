@@ -60,7 +60,7 @@ jobs:
     - env: TOXENV=py37-freeze
 
     - env: TOXENV=py38-xdist
-      python: '3.8-dev'
+      python: '3.8'
 
     - stage: baseline
       env: TOXENV=py36-xdist
@@ -93,11 +93,6 @@ jobs:
         on:
           tags: true
           repo: pytest-dev/pytest
-
-matrix:
-  allow_failures:
-    - python: '3.8-dev'
-      env: TOXENV=py38-xdist
 
 before_script:
   - |
