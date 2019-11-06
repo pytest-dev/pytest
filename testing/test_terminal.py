@@ -595,6 +595,7 @@ class TestTerminalFunctional:
         assert result.ret == 0
 
     def test_header_trailer_info(self, testdir, request):
+        del testdir._env_run_update["PYTEST_DISABLE_PLUGIN_AUTOLOAD"]
         testdir.makepyfile(
             """
             def test_passes():
@@ -705,6 +706,7 @@ class TestTerminalFunctional:
         if not pytestconfig.pluginmanager.get_plugin("xdist"):
             pytest.skip("xdist plugin not installed")
 
+        del testdir._env_run_update["PYTEST_DISABLE_PLUGIN_AUTOLOAD"]
         result = testdir.runpytest(
             verbose_testfile, "-v", "-n 1", "-Walways::pytest.PytestWarning"
         )
