@@ -4,6 +4,7 @@ from functools import wraps
 
 import pytest
 from _pytest.compat import _PytestWrapper
+from _pytest.compat import cached_property
 from _pytest.compat import get_real_func
 from _pytest.compat import is_generator
 from _pytest.compat import safe_getattr
@@ -178,3 +179,23 @@ def test_safe_isclass():
             assert False, "Should be ignored"
 
     assert safe_isclass(CrappyClass()) is False
+
+
+def test_cached_property() -> None:
+    ncalls = 0
+
+    class Class:
+        @cached_property
+        def prop(self) -> int:
+            nonlocal ncalls
+            ncalls += 1
+            return ncalls
+
+    c1 = Class()
+    assert ncalls == 0
+    assert c1.prop == 1
+    assert c1.prop == 1
+    c2 = Class()
+    assert ncalls == 1
+    assert c2.prop == 2
+    assert c1.prop == 1
