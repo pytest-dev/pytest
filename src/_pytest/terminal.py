@@ -965,7 +965,7 @@ class TerminalReporter:
                 if lineno is not None:
                     lines.append(
                         "%s [%d] %s:%d: %s"
-                        % (verbose_word, num, fspath, lineno + 1, reason)
+                        % (verbose_word, num, fspath, lineno, reason)
                     )
                 else:
                     lines.append("%s [%d] %s: %s" % (verbose_word, num, fspath, reason))

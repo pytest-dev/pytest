@@ -161,9 +161,9 @@ def pytest_runtest_makereport(item, call):
         # skipped by mark.skipif; change the location of the failure
         # to point to the item definition, otherwise it will display
         # the location of where the skip exception was raised within pytest
-        filename, line, reason = rep.longrepr
+        _, _, reason = rep.longrepr
         filename, line = item.location[:2]
-        rep.longrepr = filename, line, reason
+        rep.longrepr = filename, line + 1, reason
 
 
 # called by terminalreporter progress reporting
