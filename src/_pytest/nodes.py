@@ -15,6 +15,7 @@ import _pytest._code
 from _pytest._code.code import ExceptionChainRepr
 from _pytest._code.code import ExceptionInfo
 from _pytest._code.code import ReprExceptionInfo
+from _pytest.compat import cached_property
 from _pytest.compat import getfslineno
 from _pytest.fixtures import FixtureDef
 from _pytest.fixtures import FixtureLookupError
@@ -448,17 +449,9 @@ class Item(Node):
     def reportinfo(self) -> Tuple[str, Optional[int], str]:
         return self.fspath, None, ""
 
-    @property
+    @cached_property
     def location(self) -> Tuple[str, Optional[int], str]:
-        try:
-            return self._location
-        except AttributeError:
-            location = self.reportinfo()
-            fspath = self.session._node_location_to_relpath(location[0])
-            assert type(location[2]) is str
-            self._location = (
-                fspath,
-                location[1],
-                location[2],
-            )  # type: Tuple[str, Optional[int], str]
-            return self._location
+        location = self.reportinfo()
+        fspath = self.session._node_location_to_relpath(location[0])
+        assert type(location[2]) is str
+        return (fspath, location[1], location[2])
