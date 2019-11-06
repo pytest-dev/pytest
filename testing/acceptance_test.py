@@ -178,8 +178,14 @@ class TestGeneralUsage:
         p1 = testdir.makepyfile("")
         p2 = testdir.makefile(".pyc", "123")
         result = testdir.runpytest(p1, p2)
-        assert result.ret
-        result.stderr.fnmatch_lines(["*ERROR: not found:*{}".format(p2.basename)])
+        assert result.ret == ExitCode.USAGE_ERROR
+        result.stderr.fnmatch_lines(
+            [
+                "ERROR: not found: {}".format(p2),
+                "(no name {!r} in any of [[][]])".format(str(p2)),
+                "",
+            ]
+        )
 
     @pytest.mark.filterwarnings("default")
     def test_better_reporting_on_conftest_load_failure(self, testdir, request):

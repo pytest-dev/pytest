@@ -476,7 +476,6 @@ class Session(nodes.FSCollector):
             for arg, exc in self._notfound:
                 line = "(no name {!r} in any of {!r})".format(arg, exc.args[0])
                 errors.append("not found: {}\n{}".format(arg, line))
-                # XXX: test this
             raise UsageError(*errors)
         if not genitems:
             return rep.result
