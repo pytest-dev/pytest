@@ -822,26 +822,13 @@ def test_dontreadfrominput():
     from _pytest.capture import DontReadFromInput
 
     f = DontReadFromInput()
+    assert f.buffer is f
     assert not f.isatty()
     pytest.raises(IOError, f.read)
     pytest.raises(IOError, f.readlines)
     iter_f = iter(f)
     pytest.raises(IOError, next, iter_f)
     pytest.raises(UnsupportedOperation, f.fileno)
-    f.close()  # just for completeness
-
-
-def test_dontreadfrominput_buffer_python3():
-    from _pytest.capture import DontReadFromInput
-
-    f = DontReadFromInput()
-    fb = f.buffer
-    assert not fb.isatty()
-    pytest.raises(IOError, fb.read)
-    pytest.raises(IOError, fb.readlines)
-    iter_f = iter(f)
-    pytest.raises(IOError, next, iter_f)
-    pytest.raises(ValueError, fb.fileno)
     f.close()  # just for completeness
 
 
