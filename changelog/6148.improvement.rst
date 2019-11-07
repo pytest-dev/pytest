@@ -1,0 +1,1 @@
+``atomicwrites`` is now only used on Windows, fixing a performance regression with assertion rewriting on Unix.
