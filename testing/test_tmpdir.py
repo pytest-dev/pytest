@@ -388,10 +388,20 @@ class TestRmRf:
         assert not on_rm_rf_error(None, str(fn), exc_info, start_path=tmp_path)
 
         # unknown function
-        with pytest.warns(pytest.PytestWarning):
+        with pytest.warns(
+            pytest.PytestWarning,
+            match=r"^\(rm_rf\) unknown function None when removing .*foo.txt:\nNone: ",
+        ):
             exc_info = (None, PermissionError(), None)
             on_rm_rf_error(None, str(fn), exc_info, start_path=tmp_path)
             assert fn.is_file()
+
+        # ignored function
+        with pytest.warns(None) as warninfo:
+            exc_info = (None, PermissionError(), None)
+            on_rm_rf_error(os.open, str(fn), exc_info, start_path=tmp_path)
+            assert fn.is_file()
+        assert not [x.message for x in warninfo]
 
         exc_info = (None, PermissionError(), None)
         on_rm_rf_error(os.unlink, str(fn), exc_info, start_path=tmp_path)
