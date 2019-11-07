@@ -13,7 +13,7 @@ with advance notice in the **Deprecations** section of releases.
     file is managed by towncrier. You *may* edit previous change logs to
     fix problems like typo corrections or such.
     To add a new change log entry, please see
-    https://pip.pypa.io/en/latest/development/#adding-a-news-entry
+    https://pip.pypa.io/en/latest/development/contributing/#news-entries
     we named the news folder changelog
 
 .. towncrier release notes start

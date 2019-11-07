@@ -122,7 +122,7 @@ def pytest_runtest_makereport(item, call):
     outcome = yield
     rep = outcome.get_result()
     evalxfail = getattr(item, "_evalxfail", None)
-    # unitttest special case, see setting of _unexpectedsuccess
+    # unittest special case, see setting of _unexpectedsuccess
     if hasattr(item, "_unexpectedsuccess") and rep.when == "call":
 
         if item._unexpectedsuccess:
@@ -132,7 +132,7 @@ def pytest_runtest_makereport(item, call):
         rep.outcome = "failed"
 
     elif item.config.option.runxfail:
-        pass  # don't interefere
+        pass  # don't interfere
     elif call.excinfo and call.excinfo.errisinstance(xfail.Exception):
         rep.wasxfail = "reason: " + call.excinfo.value.msg
         rep.outcome = "skipped"
