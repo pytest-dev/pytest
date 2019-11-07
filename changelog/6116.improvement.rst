@@ -1,0 +1,1 @@
+Add ``--co`` as a synonym to ``--collect-only``.
