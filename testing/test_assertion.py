@@ -358,7 +358,7 @@ class TestAssert_reprcompare:
     @pytest.mark.parametrize(
         ["left", "right", "expected"],
         [
-            (
+            pytest.param(
                 [0, 1],
                 [0, 2],
                 """
@@ -368,8 +368,9 @@ class TestAssert_reprcompare:
                 + [0, 2]
                 ?     ^
             """,
+                id="lists",
             ),
-            (
+            pytest.param(
                 {0: 1},
                 {0: 2},
                 """
@@ -379,8 +380,9 @@ class TestAssert_reprcompare:
                 + {0: 2}
                 ?     ^
             """,
+                id="dicts",
             ),
-            (
+            pytest.param(
                 {0, 1},
                 {0, 2},
                 """
@@ -390,6 +392,7 @@ class TestAssert_reprcompare:
                 + {0, 2}
                 ?     ^
             """,
+                id="sets",
             ),
         ],
     )
