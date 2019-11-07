@@ -115,9 +115,10 @@ def pytest_cmdline_parse():
 
 
 def showversion(config):
-    p = py.path.local(pytest.__file__)
     sys.stderr.write(
-        "This is pytest version {}, imported from {}\n".format(pytest.__version__, p)
+        "This is pytest version {}, imported from {}\n".format(
+            pytest.__version__, pytest.__file__
+        )
     )
     plugininfo = getpluginversioninfo(config)
     if plugininfo:
