@@ -20,8 +20,6 @@ from typing import Optional
 from typing import Set
 from typing import Tuple
 
-import atomicwrites
-
 from _pytest._io.saferepr import saferepr
 from _pytest._version import version
 from _pytest.assertion import util
@@ -255,26 +253,59 @@ class AssertionRewritingHook(importlib.abc.MetaPathFinder):
             return f.read()
 
 
-def _write_pyc(state, co, source_stat, pyc):
+def _write_pyc_fp(fp, source_stat, co):
     # Technically, we don't have to have the same pyc format as
     # (C)Python, since these "pycs" should never be seen by builtin
     # import. However, there's little reason deviate.
-    try:
-        with atomicwrites.atomic_write(fspath(pyc), mode="wb", overwrite=True) as fp:
-            fp.write(importlib.util.MAGIC_NUMBER)
-            # as of now, bytecode header expects 32-bit numbers for size and mtime (#4903)
-            mtime = int(source_stat.st_mtime) & 0xFFFFFFFF
-            size = source_stat.st_size & 0xFFFFFFFF
-            # "<LL" stands for 2 unsigned longs, little-ending
-            fp.write(struct.pack("<LL", mtime, size))
-            fp.write(marshal.dumps(co))
-    except EnvironmentError as e:
-        state.trace("error writing pyc file at {}: errno={}".format(pyc, e.errno))
-        # we ignore any failure to write the cache file
-        # there are many reasons, permission-denied, pycache dir being a
-        # file etc.
-        return False
-    return True
+    fp.write(importlib.util.MAGIC_NUMBER)
+    # as of now, bytecode header expects 32-bit numbers for size and mtime (#4903)
+    mtime = int(source_stat.st_mtime) & 0xFFFFFFFF
+    size = source_stat.st_size & 0xFFFFFFFF
+    # "<LL" stands for 2 unsigned longs, little-ending
+    fp.write(struct.pack("<LL", mtime, size))
+    fp.write(marshal.dumps(co))
+
+
+if sys.platform == "win32":
+    from atomicwrites import atomic_write
+
+    def _write_pyc(state, co, source_stat, pyc):
+        try:
+            with atomic_write(fspath(pyc), mode="wb", overwrite=True) as fp:
+                _write_pyc_fp(fp, source_stat, co)
+        except EnvironmentError as e:
+            state.trace("error writing pyc file at {}: errno={}".format(pyc, e.errno))
+            # we ignore any failure to write the cache file
+            # there are many reasons, permission-denied, pycache dir being a
+            # file etc.
+            return False
+        return True
+
+
+else:
+
+    def _write_pyc(state, co, source_stat, pyc):
+        proc_pyc = "{}.{}".format(pyc, os.getpid())
+        try:
+            fp = open(proc_pyc, "wb")
+        except EnvironmentError as e:
+            state.trace(
+                "error writing pyc file at {}: errno={}".format(proc_pyc, e.errno)
+            )
+            return False
+
+        try:
+            _write_pyc_fp(fp, source_stat, co)
+            os.rename(proc_pyc, fspath(pyc))
+        except BaseException as e:
+            state.trace("error writing pyc file at {}: errno={}".format(pyc, e.errno))
+            # we ignore any failure to write the cache file
+            # there are many reasons, permission-denied, pycache dir being a
+            # file etc.
+            return False
+        finally:
+            fp.close()
+        return True
 
 
 def _rewrite_test(fn, config):

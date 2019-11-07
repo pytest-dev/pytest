@@ -959,24 +959,34 @@ class TestAssertionRewriteHookDetails:
     def test_write_pyc(self, testdir, tmpdir, monkeypatch):
         from _pytest.assertion.rewrite import _write_pyc
         from _pytest.assertion import AssertionState
-        import atomicwrites
-        from contextlib import contextmanager
 
         config = testdir.parseconfig([])
         state = AssertionState(config, "rewrite")
-        source_path = tmpdir.ensure("source.py")
+        source_path = str(tmpdir.ensure("source.py"))
         pycpath = tmpdir.join("pyc").strpath
-        assert _write_pyc(state, [1], os.stat(source_path.strpath), pycpath)
+        assert _write_pyc(state, [1], os.stat(source_path), pycpath)
 
-        @contextmanager
-        def atomic_write_failed(fn, mode="r", overwrite=False):
-            e = IOError()
-            e.errno = 10
-            raise e
-            yield
+        if sys.platform == "win32":
+            from contextlib import contextmanager
 
-        monkeypatch.setattr(atomicwrites, "atomic_write", atomic_write_failed)
-        assert not _write_pyc(state, [1], source_path.stat(), pycpath)
+            @contextmanager
+            def atomic_write_failed(fn, mode="r", overwrite=False):
+                e = IOError()
+                e.errno = 10
+                raise e
+                yield
+
+            monkeypatch.setattr(
+                _pytest.assertion.rewrite, "atomic_write", atomic_write_failed
+            )
+        else:
+
+            def raise_ioerror(*args):
+                raise IOError()
+
+            monkeypatch.setattr("os.rename", raise_ioerror)
+
+        assert not _write_pyc(state, [1], os.stat(source_path), pycpath)
 
     def test_resources_provider_for_loader(self, testdir):
         """

@@ -7,7 +7,7 @@ INSTALL_REQUIRES = [
     "packaging",
     "attrs>=17.4.0",  # should match oldattrs tox env.
     "more-itertools>=4.0.0",
-    "atomicwrites>=1.0",
+    'atomicwrites>=1.0;sys_platform=="win32"',
     'pathlib2>=2.2.0;python_version<"3.6"',
     'colorama;sys_platform=="win32"',
     "pluggy>=0.12,<1.0",
