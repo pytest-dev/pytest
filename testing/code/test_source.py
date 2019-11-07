@@ -127,14 +127,15 @@ def test_isparseable():
 
 
 class TestAccesses:
-    source = Source(
-        """\
-        def f(x):
-            pass
-        def g(x):
-            pass
-    """
-    )
+    def setup_class(self):
+        self.source = Source(
+            """\
+            def f(x):
+                pass
+            def g(x):
+                pass
+        """
+        )
 
     def test_getrange(self):
         x = self.source[0:2]
@@ -155,14 +156,15 @@ class TestAccesses:
 
 
 class TestSourceParsingAndCompiling:
-    source = Source(
-        """\
-        def f(x):
-            assert (x ==
-                    3 +
-                    4)
-    """
-    ).strip()
+    def setup_class(self):
+        self.source = Source(
+            """\
+            def f(x):
+                assert (x ==
+                        3 +
+                        4)
+        """
+        ).strip()
 
     def test_compile(self):
         co = _pytest._code.compile("x=3")
@@ -619,7 +621,8 @@ x = 3
 
 
 class TestTry:
-    source = """\
+    def setup_class(self):
+        self.source = """\
 try:
     raise ValueError
 except Something:
@@ -646,7 +649,8 @@ else:
 
 
 class TestTryFinally:
-    source = """\
+    def setup_class(self):
+        self.source = """\
 try:
     raise ValueError
 finally:
@@ -663,7 +667,8 @@ finally:
 
 
 class TestIf:
-    source = """\
+    def setup_class(self):
+        self.source = """\
 if 1:
     y = 3
 elif False:
