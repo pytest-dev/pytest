@@ -1086,7 +1086,7 @@ class TestTraceOption:
             child.sendline("c")
             child.expect_exact("> PDB continue (IO-capturing resumed) >")
         rest = child.read().decode("utf8")
-        assert "6 passed in" in rest
+        assert "= \x1b[32m\x1b[1m6 passed\x1b[0m\x1b[32m in" in rest
         assert "reading from stdin while output" not in rest
         # Only printed once - not on stderr.
         assert "Exit: Quitting debugger" not in child.before.decode("utf8")
