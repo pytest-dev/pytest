@@ -1229,13 +1229,15 @@ raise ValueError()
     @pytest.mark.parametrize(
         "reason, description",
         [
-            (
+            pytest.param(
                 "cause",
                 "The above exception was the direct cause of the following exception:",
+                id="cause",
             ),
-            (
+            pytest.param(
                 "context",
                 "During handling of the above exception, another exception occurred:",
+                id="context",
             ),
         ],
     )
