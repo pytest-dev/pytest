@@ -1,0 +1,1 @@
+pytester: fix order of arguments in ``rm_rf`` warning when cleaning up temporary directories, and do not emit warnings for errors with ``os.open``.
