@@ -102,15 +102,20 @@ class SessionTests:
         p = testdir.makepyfile(
             """
             import pytest
+
+            class reprexc(BaseException):
+                def __str__(self):
+                    return "Ha Ha fooled you, I'm a broken repr()."
+
             class BrokenRepr1(object):
                 foo=0
                 def __repr__(self):
-                    raise Exception("Ha Ha fooled you, I'm a broken repr().")
+                    raise reprexc
 
             class TestBrokenClass(object):
                 def test_explicit_bad_repr(self):
                     t = BrokenRepr1()
-                    with pytest.raises(Exception, match="I'm a broken repr"):
+                    with pytest.raises(BaseException, match="broken repr"):
                         repr(t)
 
                 def test_implicit_bad_repr1(self):
@@ -123,12 +128,7 @@ class SessionTests:
         passed, skipped, failed = reprec.listoutcomes()
         assert (len(passed), len(skipped), len(failed)) == (1, 0, 1)
         out = failed[0].longrepr.reprcrash.message
-        assert (
-            out.find(
-                """[Exception("Ha Ha fooled you, I'm a broken repr().") raised in repr()]"""
-            )
-            != -1
-        )
+        assert out.find("<[reprexc() raised in repr()] BrokenRepr1") != -1
 
     def test_broken_repr_with_showlocals_verbose(self, testdir):
         p = testdir.makepyfile(
@@ -151,7 +151,7 @@ class SessionTests:
         assert repr_locals.lines
         assert len(repr_locals.lines) == 1
         assert repr_locals.lines[0].startswith(
-            'x          = <[NotImplementedError("") raised in repr()] ObjWithErrorInRepr'
+            "x          = <[NotImplementedError() raised in repr()] ObjWithErrorInRepr"
         )
 
     def test_skip_file_by_conftest(self, testdir):

@@ -1,0 +1,1 @@
+BaseExceptions are handled in ``saferepr``, which includes ``pytest.fail.Exception`` etc.
