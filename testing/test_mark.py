@@ -314,6 +314,21 @@ def test_keyword_option_parametrize(spec, testdir):
     assert list(passed) == list(passed_result)
 
 
+def test_parametrize_with_module(testdir):
+    testdir.makepyfile(
+        """
+        import pytest
+        @pytest.mark.parametrize("arg", [pytest,])
+        def test_func(arg):
+            pass
+    """
+    )
+    rec = testdir.inline_run()
+    passed, skipped, fail = rec.listoutcomes()
+    expected_id = "test_func[" + pytest.__name__ + "]"
+    assert passed[0].nodeid.split("::")[-1] == expected_id
+
+
 @pytest.mark.parametrize(
     "spec",
     [
