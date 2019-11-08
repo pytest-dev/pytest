@@ -462,6 +462,29 @@ class TestAssert_reprcompare:
             "  ]",
         ]
 
+    def test_list_dont_wrap_strings(self):
+        long_a = "a" * 10
+        l1 = ["a"] + [long_a for _ in range(0, 7)]
+        l2 = ["should not get wrapped"]
+        diff = callequal(l1, l2, verbose=True)
+        assert diff == [
+            "['a', 'aaaaaa...aaaaaaa', ...] == ['should not get wrapped']",
+            "At index 0 diff: 'a' != 'should not get wrapped'",
+            "Left contains 7 more items, first extra item: 'aaaaaaaaaa'",
+            "Full diff:",
+            "  [",
+            "+  'should not get wrapped',",
+            "-  'a',",
+            "-  'aaaaaaaaaa',",
+            "-  'aaaaaaaaaa',",
+            "-  'aaaaaaaaaa',",
+            "-  'aaaaaaaaaa',",
+            "-  'aaaaaaaaaa',",
+            "-  'aaaaaaaaaa',",
+            "-  'aaaaaaaaaa',",
+            "  ]",
+        ]
+
     def test_dict_wrap(self):
         d1 = {"common": 1, "env": {"env1": 1}}
         d2 = {"common": 1, "env": {"env1": 1, "env2": 2}}
@@ -479,22 +502,20 @@ class TestAssert_reprcompare:
         ]
 
         long_a = "a" * 80
-        sub = {"long_a": long_a, "sub1": {"long_a": "substring that gets wrapped"}}
+        sub = {"long_a": long_a, "sub1": {"long_a": "substring that gets wrapped " * 2}}
         d1 = {"env": {"sub": sub}}
         d2 = {"env": {"sub": sub}, "new": 1}
         diff = callequal(d1, d2, verbose=True)
         assert diff == [
-            "{'env': {'sub...s wrapped'}}}} == {'env': {'sub...}}}, 'new': 1}",
+            "{'env': {'sub... wrapped '}}}} == {'env': {'sub...}}}, 'new': 1}",
             "Omitting 1 identical items, use -vv to show",
             "Right contains 1 more item:",
             "{'new': 1}",
             "Full diff:",
             "  {",
             "   'env': {'sub': {'long_a': '" + long_a + "',",
-            "                   'sub1': {'long_a': 'substring '",
-            "                                      'that '",
-            "                                      'gets '",
-            "                                      'wrapped'}}},",
+            "                   'sub1': {'long_a': 'substring that gets wrapped substring '",
+            "                                      'that gets wrapped '}}},",
             "+  'new': 1,",
             "  }",
         ]
