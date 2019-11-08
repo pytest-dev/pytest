@@ -1,0 +1,1 @@
+Now parametrization will use the ``__name__`` attribute of any object for the id, if present. Previously it would only use ``__name__`` for functions and classes.
