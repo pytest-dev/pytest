@@ -1162,7 +1162,8 @@ def _idval(val, argname, idx, idfn, item, config):
         return ascii_escaped(val.pattern)
     elif isinstance(val, enum.Enum):
         return str(val)
-    elif (inspect.isclass(val) or inspect.isfunction(val)) and hasattr(val, "__name__"):
+    elif hasattr(val, "__name__") and isinstance(val.__name__, str):
+        # name of a class, function, module, etc.
         return val.__name__
     return str(argname) + str(idx)
 
