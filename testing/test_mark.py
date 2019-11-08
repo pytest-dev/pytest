@@ -831,6 +831,12 @@ class TestMarkDecorator:
     def test__eq__(self, lhs, rhs, expected):
         assert (lhs == rhs) == expected
 
+    def test_aliases(self) -> None:
+        md = pytest.mark.foo(1, "2", three=3)
+        assert md.name == "foo"
+        assert md.args == (1, "2")
+        assert md.kwargs == {"three": 3}
+
 
 @pytest.mark.parametrize("mark", [None, "", "skip", "xfail"])
 def test_parameterset_for_parametrize_marks(testdir, mark):

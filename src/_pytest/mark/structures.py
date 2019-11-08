@@ -2,7 +2,6 @@ import inspect
 import warnings
 from collections import namedtuple
 from collections.abc import MutableMapping
-from operator import attrgetter
 from typing import Set
 
 import attr
@@ -15,16 +14,6 @@ from _pytest.outcomes import fail
 from _pytest.warning_types import PytestUnknownMarkWarning
 
 EMPTY_PARAMETERSET_OPTION = "empty_parameter_set_mark"
-
-
-def alias(name, warning=None):
-    getter = attrgetter(name)
-
-    def warned(self):
-        warnings.warn(warning, stacklevel=2)
-        return getter(self)
-
-    return property(getter if warning is None else warned, doc="alias for " + name)
 
 
 def istestfunc(func):
@@ -205,16 +194,24 @@ class MarkDecorator:
 
     mark = attr.ib(validator=attr.validators.instance_of(Mark))
 
-    name = alias("mark.name")
-    args = alias("mark.args")
-    kwargs = alias("mark.kwargs")
+    @property
+    def name(self):
+        """alias for mark.name"""
+        return self.mark.name
+
+    @property
+    def args(self):
+        """alias for mark.args"""
+        return self.mark.args
+
+    @property
+    def kwargs(self):
+        """alias for mark.kwargs"""
+        return self.mark.kwargs
 
     @property
     def markname(self):
         return self.name  # for backward-compat (2.4.1 had this attr)
-
-    def __eq__(self, other):
-        return self.mark == other.mark if isinstance(other, MarkDecorator) else False
 
     def __repr__(self):
         return "<MarkDecorator {!r}>".format(self.mark)
