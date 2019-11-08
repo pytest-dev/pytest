@@ -411,7 +411,7 @@ class DoctestModule(pytest.Module):
                     )
 
         if self.fspath.basename == "conftest.py":
-            module = self.config.pluginmanager._importconftest(self.fspath)
+            module = self.config.pluginmanager._importconftest(self.fspath.realpath())
         else:
             try:
                 module = self.fspath.pyimport()
