@@ -470,8 +470,10 @@ class PytestPluginManager(PluginManager):
             if dirpath in self._dirpath2confmods:
                 for path, mods in self._dirpath2confmods.items():
                     if path and path.relto(dirpath) or path == dirpath:
-                        assert mod not in mods
-                        mods.append(mod)
+                        if mod in mods:
+                            assert Path(str(path)).resolve() == key, (path, key)
+                        else:
+                            mods.append(mod)
             self.trace("loaded conftestmodule %r" % (mod))
             self.consider_conftest(mod)
             return mod
