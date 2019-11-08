@@ -36,7 +36,7 @@ def getslaveinfoline(node):
 
 class BaseReport:
     when = None  # type: Optional[str]
-    location = None
+    location = None  # type: Optional[Tuple[str, Optional[int], str]]
     longrepr = None
     sections = []  # type: List[Tuple[str, str]]
     nodeid = None  # type: str
@@ -207,7 +207,7 @@ class TestReport(BaseReport):
     def __init__(
         self,
         nodeid,
-        location,
+        location: Tuple[str, Optional[int], str],
         keywords,
         outcome,
         longrepr,
@@ -216,14 +216,14 @@ class TestReport(BaseReport):
         duration=0,
         user_properties=None,
         **extra
-    ):
+    ) -> None:
         #: normalized collection node id
         self.nodeid = nodeid
 
         #: a (filesystempath, lineno, domaininfo) tuple indicating the
         #: actual location of a test item - it might be different from the
         #: collected one e.g. if a method is inherited from a different module.
-        self.location = location
+        self.location = location  # type: Tuple[str, Optional[int], str]
 
         #: a name -> value dictionary containing all keywords and
         #: markers associated with a test invocation.
