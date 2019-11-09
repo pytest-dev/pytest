@@ -16,6 +16,7 @@ from _pytest._code.code import ExceptionChainRepr
 from _pytest._code.code import ExceptionInfo
 from _pytest._code.code import ReprExceptionInfo
 from _pytest.compat import getfslineno
+from _pytest.config import Config
 from _pytest.fixtures import FixtureDef
 from _pytest.fixtures import FixtureLookupError
 from _pytest.fixtures import FixtureLookupErrorRepr
@@ -78,11 +79,11 @@ class Node:
     def __init__(
         self,
         name,
-        parent=None,
-        config=None,
+        parent: Optional["Node"] = None,
+        config: Optional[Config] = None,
         session: Optional["Session"] = None,
-        fspath=None,
-        nodeid=None,
+        fspath: Optional[py.path.local] = None,
+        nodeid: Optional[str] = None,
     ) -> None:
         #: a unique name within the scope of the parent node
         self.name = name
@@ -91,14 +92,20 @@ class Node:
         self.parent = parent
 
         #: the pytest config object
-        self.config = config or parent.config
+        if config:
+            self.config = config
+        else:
+            if not parent:
+                raise TypeError("config or parent must be provided")
+            self.config = parent.config
 
         #: the session this node is part of
-        if session is None:
-            assert parent.session is not None
-            self.session = parent.session
-        else:
+        if session:
             self.session = session
+        else:
+            if not parent:
+                raise TypeError("session or parent must be provided")
+            self.session = parent.session
 
         #: filesystem path where this node was collected from (can be None)
         self.fspath = fspath or getattr(parent, "fspath", None)
@@ -119,6 +126,8 @@ class Node:
             assert "::()" not in nodeid
             self._nodeid = nodeid
         else:
+            if not self.parent:
+                raise TypeError("nodeid or parent must be provided")
             self._nodeid = self.parent.nodeid
             if self.name != "()":
                 self._nodeid += "::" + self.name
@@ -182,7 +191,7 @@ class Node:
         """ return list of all parent collectors up to self,
             starting from root of collection tree. """
         chain = []
-        item = self
+        item = self  # type: Optional[Node]
         while item is not None:
             chain.append(item)
             item = item.parent
@@ -263,7 +272,7 @@ class Node:
     def getparent(self, cls):
         """ get the next parent node (including ourself)
         which is an instance of the given class"""
-        current = self
+        current = self  # type: Optional[Node]
         while current and not isinstance(current, cls):
             current = current.parent
         return current
