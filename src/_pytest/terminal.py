@@ -9,6 +9,7 @@ import platform
 import sys
 import time
 from functools import partial
+from typing import Any
 from typing import Callable
 from typing import Dict
 from typing import List
@@ -24,7 +25,11 @@ from more_itertools import collapse
 
 import pytest
 from _pytest import nodes
+from _pytest.config import Config
 from _pytest.main import ExitCode
+from _pytest.main import Session
+from _pytest.reports import CollectReport
+from _pytest.reports import TestReport
 
 REPORT_COLLECTING_RESOLUTION = 0.5
 
@@ -148,7 +153,7 @@ def pytest_addoption(parser):
     )
 
 
-def pytest_configure(config):
+def pytest_configure(config: Config) -> None:
     reporter = TerminalReporter(config, sys.stdout)
     config.pluginmanager.register(reporter, "terminalreporter")
     if config.option.debug or config.option.traceconfig:
@@ -160,7 +165,7 @@ def pytest_configure(config):
         config.trace.root.setprocessor("pytest:config", mywriter)
 
 
-def getreportopt(config):
+def getreportopt(config: Config) -> str:
     reportopts = ""
     reportchars = config.option.reportchars
     if not config.option.disable_warnings and "w" not in reportchars:
@@ -179,7 +184,7 @@ def getreportopt(config):
 
 
 @pytest.hookimpl(trylast=True)  # after _pytest.runner
-def pytest_report_teststatus(report):
+def pytest_report_teststatus(report: TestReport) -> Tuple[str, str, str]:
     if report.passed:
         letter = "."
     elif report.skipped:
@@ -233,15 +238,15 @@ class WarningReport:
 
 
 class TerminalReporter:
-    def __init__(self, config, file=None):
+    def __init__(self, config: Config, file=None) -> None:
         import _pytest.config
 
         self.config = config
         self._numcollected = 0
-        self._session = None
+        self._session = None  # type: Optional[Session]
         self._showfspath = None
 
-        self.stats = {}
+        self.stats = {}  # type: Dict[str, List[Any]]
         self.startdir = config.invocation_dir
         if file is None:
             file = sys.stdout
@@ -249,13 +254,13 @@ class TerminalReporter:
         # self.writer will be deprecated in pytest-3.4
         self.writer = self._tw
         self._screen_width = self._tw.fullwidth
-        self.currentfspath = None
+        self.currentfspath = None  # type: Optional[int]
         self.reportchars = getreportopt(config)
         self.hasmarkup = self._tw.hasmarkup
         self.isatty = file.isatty()
         self._progress_nodeids_reported = set()  # type: Set[str]
         self._show_progress_info = self._determine_show_progress_info()
-        self._collect_report_last_write = None
+        self._collect_report_last_write = None  # type: Optional[float]
 
     def _determine_show_progress_info(self):
         """Return True if we should display progress information based on the current config"""
@@ -400,7 +405,7 @@ class TerminalReporter:
             fsid = nodeid.split("::")[0]
             self.write_fspath_result(fsid, "")
 
-    def pytest_runtest_logreport(self, report):
+    def pytest_runtest_logreport(self, report: TestReport) -> None:
         self._tests_ran = True
         rep = report
         res = self.config.hook.pytest_report_teststatus(report=rep, config=self.config)
@@ -440,7 +445,7 @@ class TerminalReporter:
                     self._write_progress_information_filling_space()
             else:
                 self.ensure_newline()
-                self._tw.write("[%s]" % rep.node.gateway.id)
+                self._tw.write("[%s]" % rep.node.gateway.id)  # type: ignore
                 if self._show_progress_info:
                     self._tw.write(
                         self._get_progress_information_message() + " ", cyan=True
@@ -452,6 +457,7 @@ class TerminalReporter:
                 self.currentfspath = -2
 
     def pytest_runtest_logfinish(self, nodeid):
+        assert self._session
         if self.verbosity <= 0 and self._show_progress_info:
             if self._show_progress_info == "count":
                 num_tests = self._session.testscollected
@@ -474,7 +480,8 @@ class TerminalReporter:
                     msg = self._get_progress_information_message()
                     self._tw.write(msg + "\n", **{main_color: True})
 
-    def _get_progress_information_message(self):
+    def _get_progress_information_message(self) -> str:
+        assert self._session
         collected = self._session.testscollected
         if self._show_progress_info == "count":
             if collected:
@@ -485,8 +492,9 @@ class TerminalReporter:
             return " [ {} / {} ]".format(collected, collected)
         else:
             if collected:
-                progress = len(self._progress_nodeids_reported) * 100 // collected
-                return " [{:3d}%]".format(progress)
+                return " [{:3d}%]".format(
+                    len(self._progress_nodeids_reported) * 100 // collected
+                )
             return " [100%]"
 
     def _write_progress_information_filling_space(self, color=None):
@@ -514,7 +522,7 @@ class TerminalReporter:
         elif self.config.option.verbose >= 1:
             self.write("collecting ... ", bold=True)
 
-    def pytest_collectreport(self, report):
+    def pytest_collectreport(self, report: CollectReport) -> None:
         if report.failed:
             self.stats.setdefault("error", []).append(report)
         elif report.skipped:
@@ -565,7 +573,7 @@ class TerminalReporter:
             self.write_line(line)
 
     @pytest.hookimpl(trylast=True)
-    def pytest_sessionstart(self, session):
+    def pytest_sessionstart(self, session: Session) -> None:
         self._session = session
         self._sessionstarttime = time.time()
         if not self.showheader:
@@ -573,9 +581,10 @@ class TerminalReporter:
         self.write_sep("=", "test session starts", bold=True)
         verinfo = platform.python_version()
         msg = "platform {} -- Python {}".format(sys.platform, verinfo)
-        if hasattr(sys, "pypy_version_info"):
-            verinfo = ".".join(map(str, sys.pypy_version_info[:3]))
-            msg += "[pypy-{}-{}]".format(verinfo, sys.pypy_version_info[3])
+        pypy_version_info = getattr(sys, "pypy_version_info", None)
+        if pypy_version_info:
+            verinfo = ".".join(map(str, pypy_version_info[:3]))
+            msg += "[pypy-{}-{}]".format(verinfo, pypy_version_info[3])
         msg += ", pytest-{}, py-{}, pluggy-{}".format(
             pytest.__version__, py.__version__, pluggy.__version__
         )
@@ -625,9 +634,10 @@ class TerminalReporter:
         self._write_report_lines_from_hooks(lines)
 
         if self.config.getoption("collectonly"):
-            if self.stats.get("failed"):
+            failed = self.stats.get("failed")
+            if failed:
                 self._tw.sep("!", "collection failures")
-                for rep in self.stats.get("failed"):
+                for rep in failed:
                     rep.toterminal(self._tw)
 
     def _printcollecteditems(self, items):
