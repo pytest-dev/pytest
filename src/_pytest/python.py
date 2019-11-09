@@ -369,6 +369,8 @@ class PyCollector(PyobjMixin, nodes.Collector):
             for name, obj in list(dic.items()):
                 if name in seen:
                     continue
+                if name.startswith("__"):
+                    continue
                 seen[name] = True
                 res = self._makeitem(name, obj)
                 if res is None:
