@@ -441,8 +441,9 @@ class RunResult:
     ) -> None:
         """Assert that the specified outcomes appear with the respective
         numbers (0 means it didn't occur) in the text output from a test run.
-
         """
+        __tracebackhide__ = True
+
         d = self.parseoutcomes()
         obtained = {
             "passed": d.get("passed", 0),
