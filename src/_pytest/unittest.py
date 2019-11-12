@@ -108,7 +108,6 @@ class TestCaseFunction(Function):
     nofuncargs = True
     _excinfo = None
     _testcase = None
-    _need_tearDown = None
 
     def setup(self):
         self._testcase = self.parent.obj(self.name)
@@ -117,8 +116,6 @@ class TestCaseFunction(Function):
             self._request._fillfixtures()
 
     def teardown(self):
-        if self._need_tearDown:
-            self._testcase.tearDown()
         self._testcase = None
         self._obj = None
 
@@ -191,45 +188,44 @@ class TestCaseFunction(Function):
     def stopTest(self, testcase):
         pass
 
+    def _expecting_failure(self, test_method) -> bool:
+        """Return True if the given unittest method (or the entire class) is marked
+        with @expectedFailure"""
+        expecting_failure_method = getattr(
+            test_method, "__unittest_expecting_failure__", False
+        )
+        expecting_failure_class = getattr(self, "__unittest_expecting_failure__", False)
+        return bool(expecting_failure_class or expecting_failure_method)
+
     def runtest(self):
+        import unittest
+
         testMethod = getattr(self._testcase, self._testcase._testMethodName)
 
         class _GetOutOf_testPartExecutor(KeyboardInterrupt):
-            """Helper exception to get out of unittests's testPartExecutor."""
-
-        unittest = sys.modules.get("unittest")
-
-        reraise = ()
-        if unittest:
-            reraise += (unittest.SkipTest,)
+            """Helper exception to get out of unittests's testPartExecutor (see TestCase.run)."""
 
         @functools.wraps(testMethod)
         def wrapped_testMethod(*args, **kwargs):
+            """Wrap the original method to call into pytest's machinery, so other pytest
+            features can have a chance to kick in (notably --pdb)"""
             try:
                 self.ihook.pytest_pyfunc_call(pyfuncitem=self)
-            except reraise:
+            except unittest.SkipTest:
                 raise
             except Exception as exc:
-                expecting_failure_method = getattr(
-                    testMethod, "__unittest_expecting_failure__", False
-                )
-                expecting_failure_class = getattr(
-                    self, "__unittest_expecting_failure__", False
-                )
-                expecting_failure = expecting_failure_class or expecting_failure_method
-                self._need_tearDown = True
-
+                expecting_failure = self._expecting_failure(testMethod)
                 if expecting_failure:
                     raise
-
                 raise _GetOutOf_testPartExecutor(exc)
 
-        self._testcase._wrapped_testMethod = wrapped_testMethod
-        self._testcase._testMethodName = "_wrapped_testMethod"
+        setattr(self._testcase, self._testcase._testMethodName, wrapped_testMethod)
         try:
             self._testcase(result=self)
         except _GetOutOf_testPartExecutor as exc:
             raise exc.args[0] from exc.args[0]
+        finally:
+            delattr(self._testcase, self._testcase._testMethodName)
 
     def _prunetraceback(self, excinfo):
         Function._prunetraceback(self, excinfo)
