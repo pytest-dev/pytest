@@ -302,34 +302,31 @@ running from a test you can do something like this:
 
 .. code-block:: python
 
+    # content of your_module.py
+
+
+    _called_from_test = False
+
+.. code-block:: python
+
     # content of conftest.py
 
 
     def pytest_configure(config):
-        import sys
+        your_module._called_from_test = True
 
-        sys._called_from_test = True
-
-
-    def pytest_unconfigure(config):
-        import sys
-
-        del sys._called_from_test
-
-and then check for the ``sys._called_from_test`` flag:
+and then check for the ``your_module._called_from_test`` flag:
 
 .. code-block:: python
 
-    if hasattr(sys, "_called_from_test"):
+    if your_module._called_from_test:
         # called from within a test run
         ...
     else:
         # called "normally"
         ...
 
-accordingly in your application.  It's also a good idea
-to use your own application module rather than ``sys``
-for handling flag.
+accordingly in your application.
 
 Adding info to test report header
 --------------------------------------------------------------
