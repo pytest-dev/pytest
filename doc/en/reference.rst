@@ -59,7 +59,7 @@ pytest.raises
 
 **Tutorial**: :ref:`assertraises`.
 
-.. autofunction:: pytest.raises(expected_exception: Exception, [match])
+.. autofunction:: pytest.raises(expected_exception: Exception [, *, match])
     :with: excinfo
 
 pytest.deprecated_call
