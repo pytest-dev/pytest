@@ -110,12 +110,15 @@ class TestCaseFunction(Function):
     _testcase = None
 
     def setup(self):
+        self._needs_explicit_tearDown = False
         self._testcase = self.parent.obj(self.name)
         self._obj = getattr(self._testcase, self.name)
         if hasattr(self, "_request"):
             self._request._fillfixtures()
 
     def teardown(self):
+        if self._needs_explicit_tearDown:
+            self._testcase.tearDown()
         self._testcase = None
         self._obj = None
 
@@ -217,6 +220,7 @@ class TestCaseFunction(Function):
                 expecting_failure = self._expecting_failure(testMethod)
                 if expecting_failure:
                     raise
+                self._needs_explicit_tearDown = True
                 raise _GetOutOf_testPartExecutor(exc)
 
         setattr(self._testcase, self._testcase._testMethodName, wrapped_testMethod)
