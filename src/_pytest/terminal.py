@@ -254,7 +254,7 @@ class TerminalReporter:
         # self.writer will be deprecated in pytest-3.4
         self.writer = self._tw
         self._screen_width = self._tw.fullwidth
-        self.currentfspath = None  # type: Optional[int]
+        self.currentfspath = None  # type: Any
         self.reportchars = getreportopt(config)
         self.hasmarkup = self._tw.hasmarkup
         self.isatty = file.isatty()
