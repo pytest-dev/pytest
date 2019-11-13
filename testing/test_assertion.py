@@ -70,7 +70,14 @@ class TestImportHookInstallation:
         """
         )
         result = testdir.runpytest_subprocess()
-        result.stdout.fnmatch_lines(["*assert 1 == 0*"])
+        result.stdout.fnmatch_lines(
+            [
+                "E * AssertionError: ([[][]], [[][]], [[]<TestReport *>[]])*",
+                "E * assert"
+                " {'failed': 1, 'passed': 0, 'skipped': 0} =="
+                " {'failed': 0, 'passed': 1, 'skipped': 0}",
+            ]
+        )
 
     @pytest.mark.parametrize("mode", ["plain", "rewrite"])
     def test_pytest_plugins_rewrite(self, testdir, mode):
