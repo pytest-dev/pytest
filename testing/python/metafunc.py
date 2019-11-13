@@ -72,6 +72,19 @@ class TestMetafunc:
         ):
             metafunc.parametrize("x", [1], scope="doggy")
 
+    def test_parametrize_request_name(self, testdir):
+        """Show proper error  when 'request' is used as a parameter name in parametrize (#6183)"""
+
+        def func(request):
+            raise NotImplementedError()
+
+        metafunc = self.Metafunc(func)
+        with pytest.raises(
+            pytest.fail.Exception,
+            match=r"'request' is a reserved name and cannot be used in @pytest.mark.parametrize",
+        ):
+            metafunc.parametrize("request", [1])
+
     def test_find_parametrized_scope(self):
         """unittest for _find_parametrized_scope (#3941)"""
         from _pytest.python import _find_parametrized_scope

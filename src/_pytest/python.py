@@ -977,6 +977,12 @@ class Metafunc(fixtures.FuncargnamesCompatAttr):
         )
         del argvalues
 
+        if "request" in argnames:
+            fail(
+                "'request' is a reserved name and cannot be used in @pytest.mark.parametrize",
+                pytrace=False,
+            )
+
         if scope is None:
             scope = _find_parametrized_scope(argnames, self._arg2fixturedefs, indirect)
 
