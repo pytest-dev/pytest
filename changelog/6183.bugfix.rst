@@ -1,0 +1,2 @@
+Using ``request`` as a parameter name in ``@pytest.mark.parametrize`` now produces a more
+user-friendly error.
