@@ -1538,27 +1538,6 @@ class TestMarkersWithParametrization:
         assert len(skipped) == 0
         assert len(fail) == 0
 
-    @pytest.mark.xfail(reason="is this important to support??")
-    def test_nested_marks(self, testdir):
-        s = """
-            import pytest
-            mastermark = pytest.mark.foo(pytest.mark.bar)
-
-            @pytest.mark.parametrize(("n", "expected"), [
-                (1, 2),
-                mastermark((1, 3)),
-                (2, 3),
-            ])
-            def test_increment(n, expected):
-                assert n + 1 == expected
-        """
-        items = testdir.getitems(s)
-        assert len(items) == 3
-        for mark in ["foo", "bar"]:
-            assert mark not in items[0].keywords
-            assert mark in items[1].keywords
-            assert mark not in items[2].keywords
-
     def test_simple_xfail(self, testdir):
         s = """
             import pytest
