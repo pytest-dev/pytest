@@ -19,8 +19,10 @@ from datetime import datetime
 import py
 
 import pytest
+from _pytest import deprecated
 from _pytest import nodes
 from _pytest.config import filename_arg
+from _pytest.warnings import _issue_warning_captured
 
 
 class Junit(py.xml.Namespace):
@@ -421,9 +423,7 @@ def pytest_addoption(parser):
         default="total",
     )  # choices=['total', 'call'])
     parser.addini(
-        "junit_family",
-        "Emit XML for schema: one of legacy|xunit1|xunit2",
-        default="xunit1",
+        "junit_family", "Emit XML for schema: one of legacy|xunit1|xunit2", default=None
     )
 
 
@@ -431,13 +431,17 @@ def pytest_configure(config):
     xmlpath = config.option.xmlpath
     # prevent opening xmllog on slave nodes (xdist)
     if xmlpath and not hasattr(config, "slaveinput"):
+        junit_family = config.getini("junit_family")
+        if not junit_family:
+            _issue_warning_captured(deprecated.JUNIT_XML_DEFAULT_FAMILY, config.hook, 2)
+            junit_family = "xunit1"
         config._xml = LogXML(
             xmlpath,
             config.option.junitprefix,
             config.getini("junit_suite_name"),
             config.getini("junit_logging"),
             config.getini("junit_duration_report"),
-            config.getini("junit_family"),
+            junit_family,
             config.getini("junit_log_passing_tests"),
         )
         config.pluginmanager.register(config._xml)
