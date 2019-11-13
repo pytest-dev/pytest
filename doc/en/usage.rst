@@ -66,8 +66,8 @@ To stop the testing process after the first (N) failures:
 
 .. code-block:: bash
 
-    pytest -x            # stop after first failure
-    pytest --maxfail=2    # stop after two failures
+    pytest -x           # stop after first failure
+    pytest --maxfail=2  # stop after two failures
 
 .. _select-tests:
 
