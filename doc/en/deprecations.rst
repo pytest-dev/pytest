@@ -19,6 +19,7 @@ Below is a complete list of all pytest features which are considered deprecated.
 :class:`_pytest.warning_types.PytestWarning` or subclasses, which can be filtered using
 :ref:`standard warning filters <warnings>`.
 
+<<<<<<< HEAD
 ``--no-print-logs`` command-line option
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -29,6 +30,28 @@ provide feedback.
 
 ``--show-capture`` command-line option was added in ``pytest 3.5.0` and allows to specify how to
 display captured output when tests fail: ``no``, ``stdout``, ``stderr``, ``log`` or ``all`` (the default).
+=======
+``junit_family`` default value change to "xunit2"
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 5.2
+
+The default value of ``junit_family`` option will change to ``xunit2`` in pytest 6.0, given
+that this is the version supported by default in modern tools that manipulate this type of file.
+
+In order to smooth the transition, pytest will issue a warning in case the ``--junitxml`` option
+is given in the command line but ``junit_family`` is not explicitly configured in ``pytest.ini``::
+
+    PytestDeprecationWarning: The 'junit_family' default value will change to 'xunit2' in pytest 6.0.
+      Add 'junit_family=legacy' to your pytest.ini file to silence this warning and make your suite compatible.
+
+In order to silence this warning, users just need to configure the ``junit_family`` option explicitly:
+
+.. code-block:: ini
+
+    [pytest]
+    junit_family=legacy
+>>>>>>> 2a67637ac... Issue a warning to prepare change of 'junit_family' default value
 
 
 ``funcargnames`` alias for ``fixturenames``

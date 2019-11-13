@@ -46,6 +46,7 @@ def test_external_plugins_integrated(testdir, plugin):
         testdir.parseconfig("-p", plugin)
 
 
+<<<<<<< HEAD
 @pytest.mark.filterwarnings("default")
 @pytest.mark.parametrize("config_mode", ["ini", "cmdline"])
 def test_noprintlogs_is_deprecated_ini(testdir, config_mode):
@@ -61,10 +62,16 @@ def test_noprintlogs_is_deprecated_ini(testdir, config_mode):
         assert config_mode == "cmdline"
         args = ("--no-print-logs",)
 
+=======
+@pytest.mark.parametrize("junit_family", [None, "legacy", "xunit2"])
+def test_warn_about_imminent_junit_family_default_change(testdir, junit_family):
+    """Show a warning if junit_family is not defined and --junitxml is used (#6179)"""
+>>>>>>> 2a67637ac... Issue a warning to prepare change of 'junit_family' default value
     testdir.makepyfile(
         """
         def test_foo():
             pass
+<<<<<<< HEAD
         """
     )
 
@@ -75,3 +82,25 @@ def test_noprintlogs_is_deprecated_ini(testdir, config_mode):
             "*Please use --show-capture instead.*",
         ]
     )
+=======
+    """
+    )
+    if junit_family:
+        testdir.makeini(
+            """
+            [pytest]
+            junit_family={junit_family}
+        """.format(
+                junit_family=junit_family
+            )
+        )
+
+    result = testdir.runpytest("--junit-xml=foo.xml")
+    warning_msg = (
+        "*PytestDeprecationWarning: The 'junit_family' default value will change*"
+    )
+    if junit_family:
+        result.stdout.no_fnmatch_line(warning_msg)
+    else:
+        result.stdout.fnmatch_lines([warning_msg])
+>>>>>>> 2a67637ac... Issue a warning to prepare change of 'junit_family' default value
