@@ -1,0 +1,1 @@
+The reason for a stopped session, e.g. with ``--maxfail`` / ``-x`` gets reported.

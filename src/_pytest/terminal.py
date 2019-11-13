@@ -676,7 +676,7 @@ class TerminalReporter:
                             self._tw.line("{}{}".format(indent + "  ", line.strip()))
 
     @pytest.hookimpl(hookwrapper=True)
-    def pytest_sessionfinish(self, exitstatus):
+    def pytest_sessionfinish(self, session: Session, exitstatus: ExitCode):
         outcome = yield
         outcome.get_result()
         self._tw.line("")
@@ -691,9 +691,13 @@ class TerminalReporter:
             self.config.hook.pytest_terminal_summary(
                 terminalreporter=self, exitstatus=exitstatus, config=self.config
             )
+        if session.shouldfail:
+            self.write_sep("!", session.shouldfail, red=True)
         if exitstatus == ExitCode.INTERRUPTED:
             self._report_keyboardinterrupt()
             del self._keyboardinterrupt_memo
+        elif session.shouldstop:
+            self.write_sep("!", session.shouldstop, red=True)
         self.summary_stats()
 
     @pytest.hookimpl(hookwrapper=True)
