@@ -332,10 +332,17 @@ class HookRecorder:
         return [len(x) for x in self.listoutcomes()]
 
     def assertoutcome(self, passed: int = 0, skipped: int = 0, failed: int = 0) -> None:
-        realpassed, realskipped, realfailed = self.listoutcomes()
-        assert passed == len(realpassed)
-        assert skipped == len(realskipped)
-        assert failed == len(realfailed)
+        __tracebackhide__ = True
+
+        outcomes = self.listoutcomes()
+        realpassed, realskipped, realfailed = outcomes
+        obtained = {
+            "passed": len(realpassed),
+            "skipped": len(realskipped),
+            "failed": len(realfailed),
+        }
+        expected = {"passed": passed, "skipped": skipped, "failed": failed}
+        assert obtained == expected, outcomes
 
     def clear(self) -> None:
         self.calls[:] = []
