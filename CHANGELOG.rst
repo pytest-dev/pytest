@@ -24,7 +24,7 @@ pytest 5.2.3 (2019-11-14)
 Bug Fixes
 ---------
 
-- `#5830 <https://github.com/pytest-dev/pytest/issues/5830>`_: Fix fail skipping the first test in package marked as ``skip``
+- `#5830 <https://github.com/pytest-dev/pytest/issues/5830>`_: The first test in a package (``__init__.py``) marked with ``@pytest.mark.skip`` is now correctly skipped.
 
 
 - `#6099 <https://github.com/pytest-dev/pytest/issues/6099>`_: Fix ``--trace`` when used with parametrized functions.
