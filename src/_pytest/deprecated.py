@@ -26,7 +26,7 @@ FUNCARGNAMES = PytestDeprecationWarning(
 
 
 RESULT_LOG = PytestDeprecationWarning(
-    "--result-log is deprecated and scheduled for removal in pytest 6.0.\n"
+    "--result-log is deprecated, please try the new pytest-reportlog plugin.\n"
     "See https://docs.pytest.org/en/latest/deprecations.html#result-log-result-log for more information."
 )
 
