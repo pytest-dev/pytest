@@ -859,63 +859,35 @@ class TestNewFirst:
             **{
                 "test_1/test_1.py": """
                 def test_1(): assert 1
-                def test_2(): assert 1
-                def test_3(): assert 1
             """,
                 "test_2/test_2.py": """
                 def test_1(): assert 1
-                def test_2(): assert 1
-                def test_3(): assert 1
             """,
             }
         )
-
         testdir.tmpdir.join("test_1/test_1.py").setmtime(1)
 
         result = testdir.runpytest("-v")
         result.stdout.fnmatch_lines(
-            [
-                "*test_1/test_1.py::test_1 PASSED*",
-                "*test_1/test_1.py::test_2 PASSED*",
-                "*test_1/test_1.py::test_3 PASSED*",
-                "*test_2/test_2.py::test_1 PASSED*",
-                "*test_2/test_2.py::test_2 PASSED*",
-                "*test_2/test_2.py::test_3 PASSED*",
-            ]
+            ["*test_1/test_1.py::test_1 PASSED*", "*test_2/test_2.py::test_1 PASSED*"]
         )
 
         result = testdir.runpytest("-v", "--nf")
-
         result.stdout.fnmatch_lines(
-            [
-                "*test_2/test_2.py::test_1 PASSED*",
-                "*test_2/test_2.py::test_2 PASSED*",
-                "*test_2/test_2.py::test_3 PASSED*",
-                "*test_1/test_1.py::test_1 PASSED*",
-                "*test_1/test_1.py::test_2 PASSED*",
-                "*test_1/test_1.py::test_3 PASSED*",
-            ]
+            ["*test_2/test_2.py::test_1 PASSED*", "*test_1/test_1.py::test_1 PASSED*"]
         )
 
         testdir.tmpdir.join("test_1/test_1.py").write(
-            "def test_1(): assert 1\n"
-            "def test_2(): assert 1\n"
-            "def test_3(): assert 1\n"
-            "def test_4(): assert 1\n"
+            "def test_1(): assert 1\n" "def test_2(): assert 1\n"
         )
         testdir.tmpdir.join("test_1/test_1.py").setmtime(1)
 
         result = testdir.runpytest("-v", "--nf")
-
         result.stdout.fnmatch_lines(
             [
-                "*test_1/test_1.py::test_4 PASSED*",
-                "*test_2/test_2.py::test_1 PASSED*",
-                "*test_2/test_2.py::test_2 PASSED*",
-                "*test_2/test_2.py::test_3 PASSED*",
-                "*test_1/test_1.py::test_1 PASSED*",
                 "*test_1/test_1.py::test_2 PASSED*",
-                "*test_1/test_1.py::test_3 PASSED*",
+                "*test_2/test_2.py::test_1 PASSED*",
+                "*test_1/test_1.py::test_1 PASSED*",
             ]
         )
 
