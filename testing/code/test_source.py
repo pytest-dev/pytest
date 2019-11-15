@@ -478,7 +478,7 @@ def test_getfslineno():
     fspath, lineno = getfslineno(f)
 
     assert fspath.basename == "test_source.py"
-    assert lineno == _pytest._code.getrawcode(f).co_firstlineno - 1  # see findsource
+    assert lineno == f.__code__.co_firstlineno - 1  # see findsource
 
     class A:
         pass

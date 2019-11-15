@@ -59,9 +59,9 @@ def test_excinfo_getstatement():
     except ValueError:
         excinfo = _pytest._code.ExceptionInfo.from_current()
     linenumbers = [
-        _pytest._code.getrawcode(f).co_firstlineno - 1 + 4,
-        _pytest._code.getrawcode(f).co_firstlineno - 1 + 1,
-        _pytest._code.getrawcode(g).co_firstlineno - 1 + 1,
+        f.__code__.co_firstlineno - 1 + 4,
+        f.__code__.co_firstlineno - 1 + 1,
+        g.__code__.co_firstlineno - 1 + 1,
     ]
     values = list(excinfo.traceback)
     foundlinenumbers = [x.lineno for x in values]
