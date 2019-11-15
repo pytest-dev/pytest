@@ -9,7 +9,6 @@ import sys
 import textwrap
 import zipfile
 from functools import partial
-from pathlib import Path
 
 import py
 
@@ -23,6 +22,7 @@ from _pytest.assertion.rewrite import PYC_TAIL
 from _pytest.assertion.rewrite import PYTEST_TAG
 from _pytest.assertion.rewrite import rewrite_asserts
 from _pytest.main import ExitCode
+from _pytest.pathlib import Path
 
 
 def setup_module(mod):

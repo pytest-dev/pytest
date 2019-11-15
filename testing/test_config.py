@@ -1,7 +1,6 @@
 import os
 import sys
 import textwrap
-from pathlib import Path
 
 import _pytest._code
 import pytest
@@ -13,6 +12,7 @@ from _pytest.config.findpaths import determine_setup
 from _pytest.config.findpaths import get_common_ancestor
 from _pytest.config.findpaths import getcfg
 from _pytest.main import ExitCode
+from _pytest.pathlib import Path
 
 
 class TestParseIni:

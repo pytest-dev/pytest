@@ -1,12 +1,12 @@
 import os
 import textwrap
-from pathlib import Path
 
 import py
 
 import pytest
 from _pytest.config import PytestPluginManager
 from _pytest.main import ExitCode
+from _pytest.pathlib import Path
 
 
 def ConftestWithSetinitial(path):
