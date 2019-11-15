@@ -253,7 +253,7 @@ def test_cache_show(testdir):
 
 class TestLastFailed:
     def test_lastfailed_usecase(self, testdir, monkeypatch):
-        monkeypatch.setenv("PYTHONDONTWRITEBYTECODE", "1")
+        monkeypatch.setattr("sys.dont_write_bytecode", True)
         p = testdir.makepyfile(
             """
             def test_1():
@@ -345,7 +345,7 @@ class TestLastFailed:
         result.stdout.no_fnmatch_line("*test_a.py*")
 
     def test_lastfailed_difference_invocations(self, testdir, monkeypatch):
-        monkeypatch.setenv("PYTHONDONTWRITEBYTECODE", "1")
+        monkeypatch.setattr("sys.dont_write_bytecode", True)
         testdir.makepyfile(
             test_a="""\
             def test_a1():
@@ -379,7 +379,7 @@ class TestLastFailed:
         result.stdout.fnmatch_lines(["*1 failed*1 desel*"])
 
     def test_lastfailed_usecase_splice(self, testdir, monkeypatch):
-        monkeypatch.setenv("PYTHONDONTWRITEBYTECODE", "1")
+        monkeypatch.setattr("sys.dont_write_bytecode", True)
         testdir.makepyfile(
             """\
             def test_1():
