@@ -3,6 +3,7 @@ import os
 import queue
 import sys
 import textwrap
+from typing import Union
 
 import py
 
@@ -224,23 +225,25 @@ class TestTraceback_f_g_h:
         repr = excinfo.getrepr()
         assert "RuntimeError: hello" in str(repr.reprcrash)
 
-    def test_traceback_no_recursion_index(self):
-        def do_stuff():
+    def test_traceback_no_recursion_index(self) -> None:
+        def do_stuff() -> None:
             raise RuntimeError
 
-        def reraise_me():
+        def reraise_me() -> None:
             import sys
 
             exc, val, tb = sys.exc_info()
+            assert val is not None
             raise val.with_traceback(tb)
 
-        def f(n):
+        def f(n: int) -> None:
             try:
                 do_stuff()
             except:  # noqa
                 reraise_me()
 
         excinfo = pytest.raises(RuntimeError, f, 8)
+        assert excinfo is not None
         traceback = excinfo.traceback
         recindex = traceback.recursionindex()
         assert recindex is None
@@ -596,7 +599,6 @@ raise ValueError()
         assert lines[3] == "E       world"
         assert not lines[4:]
 
-        loc = repr_entry.reprlocals is not None
         loc = repr_entry.reprfileloc
         assert loc.path == mod.__file__
         assert loc.lineno == 3
@@ -1286,9 +1288,10 @@ raise ValueError()
 @pytest.mark.parametrize("style", ["short", "long"])
 @pytest.mark.parametrize("encoding", [None, "utf8", "utf16"])
 def test_repr_traceback_with_unicode(style, encoding):
-    msg = "☹"
-    if encoding is not None:
-        msg = msg.encode(encoding)
+    if encoding is None:
+        msg = "☹"  # type: Union[str, bytes]
+    else:
+        msg = "☹".encode(encoding)
     try:
         raise RuntimeError(msg)
     except RuntimeError:
