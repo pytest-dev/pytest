@@ -18,6 +18,18 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+pytest 5.2.4 (2019-11-15)
+=========================
+
+Bug Fixes
+---------
+
+- `#6194 <https://github.com/pytest-dev/pytest/issues/6194>`_: Fix incorrect discovery of non-test ``__init__.py`` files.
+
+
+- `#6197 <https://github.com/pytest-dev/pytest/issues/6197>`_: Revert "The first test in a package (``__init__.py``) marked with ``@pytest.mark.skip`` is now correctly skipped.".
+
+
 pytest 5.2.3 (2019-11-14)
 =========================
 
