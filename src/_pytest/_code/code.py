@@ -1054,8 +1054,6 @@ def getrawcode(obj, trycall=True):
     try:
         return obj.__code__
     except AttributeError:
-        obj = getattr(obj, "im_func", obj)
-        obj = getattr(obj, "func_code", obj)
         obj = getattr(obj, "f_code", obj)
         obj = getattr(obj, "__code__", obj)
         if trycall and not hasattr(obj, "co_firstlineno"):
