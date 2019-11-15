@@ -8,7 +8,6 @@ import sys
 import types
 import warnings
 from functools import lru_cache
-from pathlib import Path
 from types import TracebackType
 from typing import Any
 from typing import Callable
@@ -40,6 +39,7 @@ from _pytest._code import filter_traceback
 from _pytest.compat import importlib_metadata
 from _pytest.outcomes import fail
 from _pytest.outcomes import Skipped
+from _pytest.pathlib import Path
 from _pytest.warning_types import PytestConfigWarning
 
 if False:  # TYPE_CHECKING
