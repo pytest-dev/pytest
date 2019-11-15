@@ -361,21 +361,6 @@ class CaptureIO(io.TextIOWrapper):
         return self.buffer.getvalue().decode("UTF-8")
 
 
-class FuncargnamesCompatAttr:
-    """ helper class so that Metafunc, Function and FixtureRequest
-    don't need to each define the "funcargnames" compatibility attribute.
-    """
-
-    @property
-    def funcargnames(self):
-        """ alias attribute for ``fixturenames`` for pre-2.3 compatibility"""
-        import warnings
-        from _pytest.deprecated import FUNCARGNAMES
-
-        warnings.warn(FUNCARGNAMES, stacklevel=2)
-        return self.fixturenames
-
-
 if sys.version_info < (3, 5, 2):  # pragma: no cover
 
     def overload(f):  # noqa: F811
