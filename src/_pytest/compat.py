@@ -40,7 +40,8 @@ MODULE_NOT_FOUND_ERROR = (
 
 
 if sys.version_info >= (3, 8):
-    from importlib import metadata as importlib_metadata  # noqa: F401
+    # Type ignored until next mypy release.
+    from importlib import metadata as importlib_metadata  # type: ignore
 else:
     import importlib_metadata  # noqa: F401
 
@@ -407,7 +408,9 @@ else:
             raise NotImplementedError()
 
         @overload  # noqa: F811
-        def __get__(self, instance: _S, owner: Optional["Type[_S]"] = ...) -> _T:
+        def __get__(  # noqa: F811
+            self, instance: _S, owner: Optional["Type[_S]"] = ...
+        ) -> _T:
             raise NotImplementedError()
 
         def __get__(self, instance, owner=None):  # noqa: F811
