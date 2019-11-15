@@ -31,6 +31,7 @@ from _pytest.compat import safe_getattr
 from _pytest.compat import safe_isclass
 from _pytest.compat import STRING_TYPES
 from _pytest.config import hookimpl
+from _pytest.deprecated import FUNCARGNAMES
 from _pytest.main import FSHookProxy
 from _pytest.mark import MARK_GEN
 from _pytest.mark.structures import get_unpacked_marks
@@ -882,7 +883,7 @@ class CallSpec2:
         self.marks.extend(normalize_mark_list(marks))
 
 
-class Metafunc(fixtures.FuncargnamesCompatAttr):
+class Metafunc:
     """
     Metafunc objects are passed to the :func:`pytest_generate_tests <_pytest.hookspec.pytest_generate_tests>` hook.
     They help to inspect a test function and to generate tests according to
@@ -915,6 +916,12 @@ class Metafunc(fixtures.FuncargnamesCompatAttr):
         self._calls = []
         self._ids = set()
         self._arg2fixturedefs = fixtureinfo.name2fixturedefs
+
+    @property
+    def funcargnames(self):
+        """ alias attribute for ``fixturenames`` for pre-2.3 compatibility"""
+        warnings.warn(FUNCARGNAMES, stacklevel=2)
+        return self.fixturenames
 
     def parametrize(self, argnames, argvalues, indirect=False, ids=None, scope=None):
         """ Add new invocations to the underlying test function using the list
@@ -1333,7 +1340,7 @@ def write_docstring(tw, doc, indent="    "):
             tw.write(indent + line + "\n")
 
 
-class Function(FunctionMixin, nodes.Item, fixtures.FuncargnamesCompatAttr):
+class Function(FunctionMixin, nodes.Item):
     """ a Function Item is responsible for setting up and executing a
     Python test function.
     """
@@ -1419,6 +1426,12 @@ class Function(FunctionMixin, nodes.Item, fixtures.FuncargnamesCompatAttr):
     def _pyfuncitem(self):
         "(compatonly) for code expecting pytest-2.2 style request objects"
         return self
+
+    @property
+    def funcargnames(self):
+        """ alias attribute for ``fixturenames`` for pre-2.3 compatibility"""
+        warnings.warn(FUNCARGNAMES, stacklevel=2)
+        return self.fixturenames
 
     def runtest(self):
         """ execute the underlying test function. """
