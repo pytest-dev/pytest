@@ -312,7 +312,7 @@ class HookRecorder:
         return self.getfailures("pytest_collectreport")
 
     def listoutcomes(
-        self
+        self,
     ) -> Tuple[List[TestReport], List[TestReport], List[TestReport]]:
         passed = []
         skipped = []

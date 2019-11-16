@@ -205,7 +205,7 @@ class TestRaises:
         with pytest.raises(AssertionError) as excinfo:
             with pytest.raises(AssertionError, match="'foo"):
                 raise AssertionError("'bar")
-        msg, = excinfo.value.args
+        (msg,) = excinfo.value.args
         assert msg == 'Pattern "\'foo" not found in "\'bar"'
 
     def test_raises_match_wrong_type(self):
