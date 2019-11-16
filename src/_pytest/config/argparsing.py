@@ -395,7 +395,7 @@ class MyOptionParser(argparse.ArgumentParser):
                     options = ", ".join(option for _, option, _ in option_tuples)
                     self.error(msg % {"option": arg_string, "matches": options})
                 elif len(option_tuples) == 1:
-                    option_tuple, = option_tuples
+                    (option_tuple,) = option_tuples
                     return option_tuple
             if self._negative_number_matcher.match(arg_string):
                 if not self._has_negative_number_optionals:

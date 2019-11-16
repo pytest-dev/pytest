@@ -486,7 +486,7 @@ class TestSession:
         p = testdir.makepyfile("def test_func(): pass")
         id = "::".join([p.basename, "test_func"])
         items, hookrec = testdir.inline_genitems(id)
-        item, = items
+        (item,) = items
         assert item.name == "test_func"
         newid = item.nodeid
         assert newid == id
@@ -605,9 +605,9 @@ class TestSession:
         testdir.makepyfile("def test_func(): pass")
         items, hookrec = testdir.inline_genitems()
         assert len(items) == 1
-        item, = items
+        (item,) = items
         items2, hookrec = testdir.inline_genitems(item.nodeid)
-        item2, = items2
+        (item2,) = items2
         assert item2.name == item.name
         assert item2.fspath == item.fspath
 
@@ -622,7 +622,7 @@ class TestSession:
         arg = p.basename + "::TestClass::test_method"
         items, hookrec = testdir.inline_genitems(arg)
         assert len(items) == 1
-        item, = items
+        (item,) = items
         assert item.nodeid.endswith("TestClass::test_method")
         # ensure we are reporting the collection of the single test item (#2464)
         assert [x.name for x in self.get_reported_items(hookrec)] == ["test_method"]
