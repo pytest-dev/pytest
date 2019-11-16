@@ -502,65 +502,18 @@ raise ValueError()
         assert repr.reprtraceback.reprentries[1].lines[0] == ">   ???"
         assert repr.chain[0][0].reprentries[1].lines[0] == ">   ???"
 
-    def test_repr_source_failing_fullsource(self):
+    def test_repr_source_failing_fullsource(self, monkeypatch) -> None:
         pr = FormattedExcinfo()
 
-        class FakeCode:
-            class raw:
-                co_filename = "?"
+        try:
+            1 / 0
+        except ZeroDivisionError:
+            excinfo = ExceptionInfo.from_current()
 
-            path = "?"
-            firstlineno = 5
+        with monkeypatch.context() as m:
+            m.setattr(_pytest._code.Code, "fullsource", property(lambda self: None))
+            repr = pr.repr_excinfo(excinfo)
 
-            def fullsource(self):
-                return None
-
-            fullsource = property(fullsource)
-
-        class FakeFrame:
-            code = FakeCode()
-            f_locals = {}
-            f_globals = {}
-
-        class FakeTracebackEntry(_pytest._code.Traceback.Entry):
-            def __init__(self, tb, excinfo=None):
-                self.lineno = 5 + 3
-
-            @property
-            def frame(self):
-                return FakeFrame()
-
-        class Traceback(_pytest._code.Traceback):
-            Entry = FakeTracebackEntry
-
-        class FakeExcinfo(_pytest._code.ExceptionInfo):
-            typename = "Foo"
-            value = Exception()
-
-            def __init__(self):
-                pass
-
-            def exconly(self, tryshort):
-                return "EXC"
-
-            def errisinstance(self, cls):
-                return False
-
-        excinfo = FakeExcinfo()
-
-        class FakeRawTB:
-            tb_next = None
-
-        tb = FakeRawTB()
-        excinfo.traceback = Traceback(tb)
-
-        fail = IOError()
-        repr = pr.repr_excinfo(excinfo)
-        assert repr.reprtraceback.reprentries[0].lines[0] == ">   ???"
-        assert repr.chain[0][0].reprentries[0].lines[0] == ">   ???"
-
-        fail = py.error.ENOENT  # noqa
-        repr = pr.repr_excinfo(excinfo)
         assert repr.reprtraceback.reprentries[0].lines[0] == ">   ???"
         assert repr.chain[0][0].reprentries[0].lines[0] == ">   ???"
 

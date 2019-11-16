@@ -283,8 +283,6 @@ class Traceback(list):
         access to Traceback entries.
     """
 
-    Entry = TracebackEntry
-
     def __init__(self, tb, excinfo=None):
         """ initialize from given python traceback object and ExceptionInfo """
         self._excinfo = excinfo
@@ -292,7 +290,7 @@ class Traceback(list):
 
             def f(cur):
                 while cur is not None:
-                    yield self.Entry(cur, excinfo=excinfo)
+                    yield TracebackEntry(cur, excinfo=excinfo)
                     cur = cur.tb_next
 
             list.__init__(self, f(tb))
