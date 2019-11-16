@@ -136,7 +136,7 @@ class TestEvaluator(object):
         )
 
     def test_skipif_class(self, testdir):
-        item, = testdir.getitems(
+        (item,) = testdir.getitems(
             """
             import pytest
             class TestClass(object):

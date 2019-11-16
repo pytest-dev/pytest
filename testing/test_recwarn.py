@@ -225,7 +225,7 @@ class TestWarns(object):
         assert len(warninfo) == 3
         for w in warninfo:
             assert w.filename == __file__
-            msg, = w.message.args
+            (msg,) = w.message.args
             assert msg.startswith("warns(..., 'code(as_a_string)') is deprecated")
 
     def test_function(self):

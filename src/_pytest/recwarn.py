@@ -95,7 +95,7 @@ def warns(expected_warning, *args, **kwargs):
         return WarningsChecker(expected_warning, match_expr=match_expr)
     elif isinstance(args[0], str):
         warnings.warn(WARNS_EXEC, stacklevel=2)
-        code, = args
+        (code,) = args
         assert isinstance(code, str)
         frame = sys._getframe(1)
         loc = frame.f_locals.copy()

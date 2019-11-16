@@ -273,7 +273,7 @@ class TestNumberedDir(object):
         registry = []
         register_cleanup_lock_removal(lock, register=registry.append)
 
-        cleanup_func, = registry
+        (cleanup_func,) = registry
 
         assert lock.is_file()
 
