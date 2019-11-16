@@ -1011,7 +1011,7 @@ def test_markers_from_parametrize(testdir):
 def test_pytest_param_id_requires_string():
     with pytest.raises(TypeError) as excinfo:
         pytest.param(id=True)
-    msg, = excinfo.value.args
+    (msg,) = excinfo.value.args
     assert msg == "Expected id to be a string, got <class 'bool'>: True"
 
 
