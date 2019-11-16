@@ -388,7 +388,7 @@ def test_testcase_custom_exception_info(testdir, type):
 
 
 def test_testcase_totally_incompatible_exception_info(testdir):
-    item, = testdir.getitems(
+    (item,) = testdir.getitems(
         """
         from unittest import TestCase
         class MyTestCase(TestCase):

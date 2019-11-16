@@ -464,7 +464,7 @@ class TestRequestBasic(object):
         assert repr(req).find(req.function.__name__) != -1
 
     def test_request_attributes_method(self, testdir):
-        item, = testdir.getitems(
+        (item,) = testdir.getitems(
             """
             import pytest
             class TestB(object):
@@ -492,7 +492,7 @@ class TestRequestBasic(object):
                     pass
         """
         )
-        item1, = testdir.genitems([modcol])
+        (item1,) = testdir.genitems([modcol])
         assert item1.name == "test_method"
         arg2fixturedefs = fixtures.FixtureRequest(item1)._arg2fixturedefs
         assert len(arg2fixturedefs) == 1
@@ -756,7 +756,7 @@ class TestRequestBasic(object):
 
     def test_request_getmodulepath(self, testdir):
         modcol = testdir.getmodulecol("def test_somefunc(): pass")
-        item, = testdir.genitems([modcol])
+        (item,) = testdir.genitems([modcol])
         req = fixtures.FixtureRequest(item)
         assert req.fspath == modcol.fspath
 
