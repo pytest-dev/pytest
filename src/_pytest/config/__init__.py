@@ -116,13 +116,13 @@ def directory_arg(path, optname):
 
 
 # Plugins that cannot be disabled via "-p no:X" currently.
-essential_plugins = (  # fmt: off
+essential_plugins = (
     "mark",
     "main",
     "runner",
     "fixtures",
     "helpconfig",  # Provides -p.
-)  # fmt: on
+)
 
 default_plugins = essential_plugins + (
     "python",
