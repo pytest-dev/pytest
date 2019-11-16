@@ -1,0 +1,1 @@
+cacheprovider: improved robustness and performance with ``cache.set``.
