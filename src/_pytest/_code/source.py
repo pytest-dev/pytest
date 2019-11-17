@@ -8,6 +8,7 @@ import warnings
 from ast import PyCF_ONLY_AST as _AST_FLAG
 from bisect import bisect_right
 from types import FrameType
+from typing import Iterator
 from typing import List
 from typing import Optional
 from typing import Sequence
@@ -60,7 +61,7 @@ class Source:
         raise NotImplementedError()
 
     @overload  # noqa: F811
-    def __getitem__(self, key: slice) -> "Source":
+    def __getitem__(self, key: slice) -> "Source":  # noqa: F811
         raise NotImplementedError()
 
     def __getitem__(self, key: Union[int, slice]) -> Union[str, "Source"]:  # noqa: F811
@@ -72,6 +73,9 @@ class Source:
             newsource = Source()
             newsource.lines = self.lines[key.start : key.stop]
             return newsource
+
+    def __iter__(self) -> Iterator[str]:
+        return iter(self.lines)
 
     def __len__(self) -> int:
         return len(self.lines)

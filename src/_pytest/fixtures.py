@@ -18,7 +18,6 @@ from _pytest._code.code import FormattedExcinfo
 from _pytest._code.code import TerminalRepr
 from _pytest.compat import _format_args
 from _pytest.compat import _PytestWrapper
-from _pytest.compat import FuncargnamesCompatAttr
 from _pytest.compat import get_real_func
 from _pytest.compat import get_real_method
 from _pytest.compat import getfslineno
@@ -29,6 +28,7 @@ from _pytest.compat import is_generator
 from _pytest.compat import NOTSET
 from _pytest.compat import safe_getattr
 from _pytest.deprecated import FIXTURE_POSITIONAL_ARGUMENTS
+from _pytest.deprecated import FUNCARGNAMES
 from _pytest.outcomes import fail
 from _pytest.outcomes import TEST_OUTCOME
 
@@ -336,7 +336,7 @@ class FuncFixtureInfo:
         self.names_closure[:] = sorted(closure, key=self.names_closure.index)
 
 
-class FixtureRequest(FuncargnamesCompatAttr):
+class FixtureRequest:
     """ A request for a fixture from a test or fixture function.
 
     A request object gives access to the requesting test context
@@ -362,6 +362,12 @@ class FixtureRequest(FuncargnamesCompatAttr):
         result = list(self._pyfuncitem._fixtureinfo.names_closure)
         result.extend(set(self._fixture_defs).difference(result))
         return result
+
+    @property
+    def funcargnames(self):
+        """ alias attribute for ``fixturenames`` for pre-2.3 compatibility"""
+        warnings.warn(FUNCARGNAMES, stacklevel=2)
+        return self.fixturenames
 
     @property
     def node(self):

@@ -60,18 +60,18 @@ def warns(
     *,
     match: "Optional[Union[str, Pattern]]" = ...
 ) -> "WarningsChecker":
-    ...  # pragma: no cover
+    raise NotImplementedError()
 
 
 @overload  # noqa: F811
-def warns(
+def warns(  # noqa: F811
     expected_warning: Union["Type[Warning]", Tuple["Type[Warning]", ...]],
     func: Callable,
     *args: Any,
     match: Optional[Union[str, "Pattern"]] = ...,
     **kwargs: Any
 ) -> Union[Any]:
-    ...  # pragma: no cover
+    raise NotImplementedError()
 
 
 def warns(  # noqa: F811
