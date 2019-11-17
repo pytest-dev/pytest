@@ -35,15 +35,12 @@ def test_show_multi_test_fixture_setup_and_teardown_correctly_simple(testdir):
     testdir.makepyfile(
         """
         import pytest
-        
         @pytest.fixture(scope = 'class')
         def fix():
             return object()
-            
         class TestClass:
             def test_one(self, fix):
                 assert False
-            
             def test_two(self, fix):
                 assert False
     """
@@ -77,32 +74,23 @@ def test_show_multi_test_fixture_setup_and_teardown_same_as_setup_show(testdir):
     testdir.makepyfile(
         """
         import pytest
-        
         @pytest.fixture(scope = 'session')
         def sess():
             return True
-        
         @pytest.fixture(scope = 'module')
         def mod():
             return True
-        
         @pytest.fixture(scope = 'class')
         def cls():
             return True
-        
         @pytest.fixture(scope = 'function')
         def func():
             return True
-        
-        
         def test_outside(sess, mod, cls, func):
             assert True
-        
-        
         class TestCls:
             def test_one(self, sess, mod, cls, func):
                 assert True
-        
             def test_two(self, sess, mod, cls, func):
                 assert True
     """
