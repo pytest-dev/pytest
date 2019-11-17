@@ -1,0 +1,1 @@
+Fix ``-setup-plan`` showing inaccurate information about fixture lifetimes.
