@@ -206,7 +206,8 @@ class TracebackEntry:
     def statement(self) -> "Source":
         """ _pytest._code.Source object for the current statement """
         source = self.frame.code.fullsource
-        assert source is not None
+        if source is None:
+            raise AttributeError
         return source.getstatement(self.lineno)
 
     @property
