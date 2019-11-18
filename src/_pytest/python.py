@@ -1156,8 +1156,7 @@ def _idval(val, argname, idx, idfn, item, config):
             if generated_id is not None:
                 val = generated_id
         except Exception as e:
-            # See issue https://github.com/pytest-dev/pytest/issues/2169
-            msg = "{}: error raised while trying to determine id of parameter '{}' at position {}\n"
+            msg = "{}: error raised while trying to determine id of parameter '{}' at position {}"
             msg = msg.format(item.nodeid, argname, idx)
             raise ValueError(msg) from e
     elif config:
