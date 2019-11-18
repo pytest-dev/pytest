@@ -9,6 +9,7 @@ from collections import Counter
 from collections.abc import Sequence
 from functools import partial
 from textwrap import dedent
+from typing import List
 from typing import Tuple
 
 import py
@@ -894,11 +895,14 @@ class Metafunc:
     test function is defined.
     """
 
-    def __init__(self, definition, fixtureinfo, config, cls=None, module=None):
-        assert (
-            isinstance(definition, FunctionDefinition)
-            or type(definition).__name__ == "DefinitionMock"
-        )
+    def __init__(
+        self,
+        definition: "FunctionDefinition",
+        fixtureinfo,
+        config,
+        cls=None,
+        module=None,
+    ) -> None:
         self.definition = definition
 
         #: access to the :class:`_pytest.config.Config` object for the test session
@@ -916,7 +920,7 @@ class Metafunc:
         #: class object where the test function is defined in or ``None``.
         self.cls = cls
 
-        self._calls = []
+        self._calls = []  # type: List[CallSpec2]
         self._arg2fixturedefs = fixtureinfo.name2fixturedefs
 
     @property
