@@ -917,7 +917,6 @@ class Metafunc:
         self.cls = cls
 
         self._calls = []
-        self._ids = set()
         self._arg2fixturedefs = fixtureinfo.name2fixturedefs
 
     @property
