@@ -285,8 +285,7 @@ class PyobjMixin(PyobjContext):
                     break
             parts.append(name)
         parts.reverse()
-        s = ".".join(parts)
-        return s.replace(".[", "[")
+        return ".".join(parts)
 
     def reportinfo(self):
         # XXX caching?

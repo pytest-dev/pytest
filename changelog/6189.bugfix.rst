@@ -1,0 +1,1 @@
+Fix incorrect result of ``getmodpath`` method.
