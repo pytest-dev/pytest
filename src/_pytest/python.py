@@ -119,14 +119,17 @@ def pytest_cmdline_main(config):
         return 0
 
 
-def pytest_generate_tests(metafunc):
-    # those alternative spellings are common - raise a specific error to alert
-    # the user
-    alt_spellings = ["parameterize", "parametrise", "parameterise"]
-    for mark_name in alt_spellings:
+def _validate_parametrize_spelling(metafunc):
+    """Raise a specific error for common misspellings of "parametrize"."""
+    for mark_name in ["parameterize", "parametrise", "parameterise"]:
         if metafunc.definition.get_closest_marker(mark_name):
             msg = "{0} has '{1}' mark, spelling should be 'parametrize'"
             fail(msg.format(metafunc.function.__name__, mark_name), pytrace=False)
+
+
+def pytest_generate_tests(metafunc):
+    _validate_parametrize_spelling(metafunc)
+
     for marker in metafunc.definition.iter_markers(name="parametrize"):
         metafunc.parametrize(*marker.args, **marker.kwargs)
 
