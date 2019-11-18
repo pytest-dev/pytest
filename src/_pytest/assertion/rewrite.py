@@ -19,6 +19,7 @@ from typing import Optional
 from typing import Set
 from typing import Tuple
 
+from _pytest._io.saferepr import safeformat
 from _pytest._io.saferepr import saferepr
 from _pytest._version import version
 from _pytest.assertion import util
@@ -381,8 +382,7 @@ def _format_assertmsg(obj):
 
     For strings this simply replaces newlines with '\n~' so that
     util.format_explanation() will preserve them instead of escaping
-    newlines.  For other objects saferepr() is used first.
-
+    newlines.  For other objects ``safeformat()`` is used first.
     """
     # reprlib appears to have a bug which means that if a string
     # contains a newline it gets escaped, however if an object has a
@@ -390,8 +390,7 @@ def _format_assertmsg(obj):
     # However in either case we want to preserve the newline.
     replaces = [("\n", "\n~"), ("%", "%%")]
     if not isinstance(obj, str):
-        obj = saferepr(obj)
-        replaces.append(("\\n", "\n~"))
+        obj = safeformat(obj).replace("\\n", "\n~")
 
     for r1, r2 in replaces:
         obj = obj.replace(r1, r2)

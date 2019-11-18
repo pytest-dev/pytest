@@ -72,10 +72,11 @@ class TestImportHookInstallation:
         result = testdir.runpytest_subprocess()
         result.stdout.fnmatch_lines(
             [
-                "E * AssertionError: ([[][]], [[][]], [[]<TestReport *>[]])*",
-                "E * assert"
-                " {'failed': 1, 'passed': 0, 'skipped': 0} =="
-                " {'failed': 0, 'passed': 1, 'skipped': 0}",
+                ">       r.assertoutcome(passed=1)",
+                "E       AssertionError: ([],",
+                "E          [],",
+                "E          [<TestReport 'test_dummy_failure.py::test' when='call' outcome='failed'>])",
+                "E       assert {'failed': 1, 'passed': 0, 'skipped': 0} == {'failed': 0, 'passed': 1, 'skipped': 0}",
             ]
         )
 
@@ -1287,15 +1288,30 @@ def test_AssertionError_message(testdir):
         def test_hello():
             x,y = 1,2
             assert 0, (x,y)
+
+        def test_bytes():
+            assert 0, b'b' * 80
     """
     )
     result = testdir.runpytest()
     result.stdout.fnmatch_lines(
-        """
-        *def test_hello*
-        *assert 0, (x,y)*
-        *AssertionError: (1, 2)*
-    """
+        [
+            "    def test_hello():",
+            "        x,y = 1,2",
+            ">       assert 0, (x,y)",
+            "E       AssertionError: (1, 2)",
+            "E       assert 0",
+            "",
+            "test_AssertionError_message.py:3: AssertionError",
+            "    def test_bytes():",
+            ">       assert 0, b'b' * 80",
+            "E       AssertionError: (b'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'",
+            "E          b'bbbb')",
+            "E       assert 0",
+            "",
+            "test_AssertionError_message.py:6: AssertionError",
+            "*= 2 failed in *",
+        ]
     )
 
 
