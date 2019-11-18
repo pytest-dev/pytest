@@ -12,7 +12,7 @@ from _pytest import python
 
 
 class TestMetafunc:
-    def Metafunc(self, func, config=None):
+    def Metafunc(self, func, config=None) -> python.Metafunc:
         # the unit tests of this class check if things work correctly
         # on the funcarg level, so we don't need a full blown
         # initialization
@@ -23,7 +23,7 @@ class TestMetafunc:
                 self.names_closure = names
 
         @attr.s
-        class DefinitionMock:
+        class DefinitionMock(python.FunctionDefinition):
             obj = attr.ib()
 
         names = fixtures.getfuncargnames(func)
