@@ -547,7 +547,8 @@ class Testdir:
 
         # Environment (updates) for inner runs.
         tmphome = str(self.tmpdir)
-        self._env_run_update = {"HOME": tmphome, "USERPROFILE": tmphome}
+        mp.setenv("HOME", tmphome)
+        mp.setenv("USERPROFILE", tmphome)
 
     def __repr__(self):
         return "<Testdir {!r}>".format(self.tmpdir)
@@ -853,12 +854,6 @@ class Testdir:
         plugins = list(plugins)
         finalizers = []
         try:
-            # Do not load user config (during runs only).
-            mp_run = MonkeyPatch()
-            for k, v in self._env_run_update.items():
-                mp_run.setenv(k, v)
-            finalizers.append(mp_run.undo)
-
             # Any sys.module or sys.path changes done while running pytest
             # inline should be reverted after the test run completes to avoid
             # clashing with later inline tests run within the same pytest test,
@@ -1091,7 +1086,6 @@ class Testdir:
         env["PYTHONPATH"] = os.pathsep.join(
             filter(None, [os.getcwd(), env.get("PYTHONPATH", "")])
         )
-        env.update(self._env_run_update)
         kw["env"] = env
 
         if stdin is Testdir.CLOSE_STDIN:
@@ -1261,11 +1255,7 @@ class Testdir:
             pytest.skip("pexpect.spawn not available")
         logfile = self.tmpdir.join("spawn.out").open("wb")
 
-        # Do not load user config.
-        env = os.environ.copy()
-        env.update(self._env_run_update)
-
-        child = pexpect.spawn(cmd, logfile=logfile, env=env)
+        child = pexpect.spawn(cmd, logfile=logfile)
         self.request.addfinalizer(logfile.close)
         child.timeout = expect_timeout
         return child

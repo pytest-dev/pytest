@@ -22,7 +22,7 @@ def pdb_env(request):
     if "testdir" in request.fixturenames:
         # Disable pdb++ with inner tests.
         testdir = request.getfixturevalue("testdir")
-        testdir._env_run_update["PDBPP_HIJACK_PDB"] = "0"
+        testdir.monkeypatch.setenv("PDBPP_HIJACK_PDB", "0")
 
 
 def runpdb_and_get_report(testdir, source):
