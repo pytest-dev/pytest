@@ -1,1 +1,0 @@
-Improved failure reporting with pytester's ``Hookrecorder.assertoutcome``.

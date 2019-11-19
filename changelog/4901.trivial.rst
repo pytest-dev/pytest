@@ -1,2 +1,0 @@
-``RunResult`` from ``pytester`` now displays the mnemonic of the ``ret`` attribute when it is a
-valid ``pytest.ExitCode`` value.

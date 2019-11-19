@@ -475,10 +475,11 @@ Running it results in some skips if we don't have all the python interpreters in
 .. code-block:: pytest
 
    . $ pytest -rs -q multipython.py
-   ssssssssssss......sss......                                          [100%]
+   ssssssssssss...ssssssssssss                                          [100%]
    ========================= short test summary info ==========================
-   SKIPPED [15] $REGENDOC_TMPDIR/CWD/multipython.py:30: 'python3.5' not found
-   12 passed, 15 skipped in 0.12s
+   SKIPPED [12] $REGENDOC_TMPDIR/CWD/multipython.py:29: 'python3.5' not found
+   SKIPPED [12] $REGENDOC_TMPDIR/CWD/multipython.py:29: 'python3.7' not found
+   3 passed, 24 skipped in 0.12s
 
 Indirect parametrization of optional implementations/imports
 --------------------------------------------------------------------
@@ -546,7 +547,7 @@ If you run this with reporting for skips enabled:
     test_module.py .s                                                    [100%]
 
     ========================= short test summary info ==========================
-    SKIPPED [1] $REGENDOC_TMPDIR/conftest.py:13: could not import 'opt2': No module named 'opt2'
+    SKIPPED [1] $REGENDOC_TMPDIR/conftest.py:12: could not import 'opt2': No module named 'opt2'
     ======================= 1 passed, 1 skipped in 0.12s =======================
 
 You'll see that we don't have an ``opt2`` module and thus the second test run
