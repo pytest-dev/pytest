@@ -1,4 +1,5 @@
 """(disabled by default) support for testing pytest and pytest plugins."""
+import collections.abc
 import gc
 import importlib
 import os
@@ -8,9 +9,16 @@ import subprocess
 import sys
 import time
 import traceback
-from collections.abc import Sequence
 from fnmatch import fnmatch
 from io import StringIO
+from typing import Callable
+from typing import Dict
+from typing import Iterable
+from typing import List
+from typing import Optional
+from typing import Sequence
+from typing import Tuple
+from typing import Union
 from weakref import WeakKeyDictionary
 
 import py
@@ -20,10 +28,16 @@ from _pytest._code import Source
 from _pytest._io.saferepr import saferepr
 from _pytest.capture import MultiCapture
 from _pytest.capture import SysCapture
+from _pytest.fixtures import FixtureRequest
 from _pytest.main import ExitCode
 from _pytest.main import Session
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pathlib import Path
+from _pytest.reports import TestReport
+
+if False:  # TYPE_CHECKING
+    from typing import Type
+
 
 IGNORE_PAM = [  # filenames added when obtaining details about the current user
     "/var/lib/sss/mc/passwd"
@@ -141,7 +155,7 @@ class LsofFdLeakChecker:
 
 
 @pytest.fixture
-def _pytest(request):
+def _pytest(request: FixtureRequest) -> "PytestArg":
     """Return a helper which offers a gethookrecorder(hook) method which
     returns a HookRecorder instance which helps to make assertions about called
     hooks.
@@ -151,10 +165,10 @@ def _pytest(request):
 
 
 class PytestArg:
-    def __init__(self, request):
+    def __init__(self, request: FixtureRequest) -> None:
         self.request = request
 
-    def gethookrecorder(self, hook):
+    def gethookrecorder(self, hook) -> "HookRecorder":
         hookrecorder = HookRecorder(hook._pm)
         self.request.addfinalizer(hookrecorder.finish_recording)
         return hookrecorder
@@ -175,6 +189,11 @@ class ParsedCall:
         del d["_name"]
         return "<ParsedCall {!r}(**{!r})>".format(self._name, d)
 
+    if False:  # TYPE_CHECKING
+        # The class has undetermined attributes, this tells mypy about it.
+        def __getattr__(self, key):
+            raise NotImplementedError()
+
 
 class HookRecorder:
     """Record all hooks called in a plugin manager.
@@ -184,27 +203,27 @@ class HookRecorder:
 
     """
 
-    def __init__(self, pluginmanager):
+    def __init__(self, pluginmanager) -> None:
         self._pluginmanager = pluginmanager
-        self.calls = []
+        self.calls = []  # type: List[ParsedCall]
 
-        def before(hook_name, hook_impls, kwargs):
+        def before(hook_name: str, hook_impls, kwargs) -> None:
             self.calls.append(ParsedCall(hook_name, kwargs))
 
-        def after(outcome, hook_name, hook_impls, kwargs):
+        def after(outcome, hook_name: str, hook_impls, kwargs) -> None:
             pass
 
         self._undo_wrapping = pluginmanager.add_hookcall_monitoring(before, after)
 
-    def finish_recording(self):
+    def finish_recording(self) -> None:
         self._undo_wrapping()
 
-    def getcalls(self, names):
+    def getcalls(self, names: Union[str, Iterable[str]]) -> List[ParsedCall]:
         if isinstance(names, str):
             names = names.split()
         return [call for call in self.calls if call._name in names]
 
-    def assert_contains(self, entries):
+    def assert_contains(self, entries) -> None:
         __tracebackhide__ = True
         i = 0
         entries = list(entries)
@@ -225,7 +244,7 @@ class HookRecorder:
             else:
                 pytest.fail("could not find {!r} check {!r}".format(name, check))
 
-    def popcall(self, name):
+    def popcall(self, name: str) -> ParsedCall:
         __tracebackhide__ = True
         for i, call in enumerate(self.calls):
             if call._name == name:
@@ -235,20 +254,27 @@ class HookRecorder:
         lines.extend(["  %s" % x for x in self.calls])
         pytest.fail("\n".join(lines))
 
-    def getcall(self, name):
+    def getcall(self, name: str) -> ParsedCall:
         values = self.getcalls(name)
         assert len(values) == 1, (name, values)
         return values[0]
 
     # functionality for test reports
 
-    def getreports(self, names="pytest_runtest_logreport pytest_collectreport"):
+    def getreports(
+        self,
+        names: Union[
+            str, Iterable[str]
+        ] = "pytest_runtest_logreport pytest_collectreport",
+    ) -> List[TestReport]:
         return [x.report for x in self.getcalls(names)]
 
     def matchreport(
         self,
-        inamepart="",
-        names="pytest_runtest_logreport pytest_collectreport",
+        inamepart: str = "",
+        names: Union[
+            str, Iterable[str]
+        ] = "pytest_runtest_logreport pytest_collectreport",
         when=None,
     ):
         """return a testreport whose dotted import path matches"""
@@ -274,13 +300,20 @@ class HookRecorder:
             )
         return values[0]
 
-    def getfailures(self, names="pytest_runtest_logreport pytest_collectreport"):
+    def getfailures(
+        self,
+        names: Union[
+            str, Iterable[str]
+        ] = "pytest_runtest_logreport pytest_collectreport",
+    ) -> List[TestReport]:
         return [rep for rep in self.getreports(names) if rep.failed]
 
-    def getfailedcollections(self):
+    def getfailedcollections(self) -> List[TestReport]:
         return self.getfailures("pytest_collectreport")
 
-    def listoutcomes(self):
+    def listoutcomes(
+        self,
+    ) -> Tuple[List[TestReport], List[TestReport], List[TestReport]]:
         passed = []
         skipped = []
         failed = []
@@ -295,31 +328,38 @@ class HookRecorder:
                 failed.append(rep)
         return passed, skipped, failed
 
-    def countoutcomes(self):
+    def countoutcomes(self) -> List[int]:
         return [len(x) for x in self.listoutcomes()]
 
-    def assertoutcome(self, passed=0, skipped=0, failed=0):
-        realpassed, realskipped, realfailed = self.listoutcomes()
-        assert passed == len(realpassed)
-        assert skipped == len(realskipped)
-        assert failed == len(realfailed)
+    def assertoutcome(self, passed: int = 0, skipped: int = 0, failed: int = 0) -> None:
+        __tracebackhide__ = True
 
-    def clear(self):
+        outcomes = self.listoutcomes()
+        realpassed, realskipped, realfailed = outcomes
+        obtained = {
+            "passed": len(realpassed),
+            "skipped": len(realskipped),
+            "failed": len(realfailed),
+        }
+        expected = {"passed": passed, "skipped": skipped, "failed": failed}
+        assert obtained == expected, outcomes
+
+    def clear(self) -> None:
         self.calls[:] = []
 
 
 @pytest.fixture
-def linecomp(request):
+def linecomp(request: FixtureRequest) -> "LineComp":
     return LineComp()
 
 
 @pytest.fixture(name="LineMatcher")
-def LineMatcher_fixture(request):
+def LineMatcher_fixture(request: FixtureRequest) -> "Type[LineMatcher]":
     return LineMatcher
 
 
 @pytest.fixture
-def testdir(request, tmpdir_factory):
+def testdir(request: FixtureRequest, tmpdir_factory) -> "Testdir":
     return Testdir(request, tmpdir_factory)
 
 
@@ -362,21 +402,30 @@ class RunResult:
     :ivar duration: duration in seconds
     """
 
-    def __init__(self, ret, outlines, errlines, duration):
-        self.ret = ret
+    def __init__(
+        self,
+        ret: Union[int, ExitCode],
+        outlines: Sequence[str],
+        errlines: Sequence[str],
+        duration: float,
+    ) -> None:
+        try:
+            self.ret = pytest.ExitCode(ret)  # type: Union[int, ExitCode]
+        except ValueError:
+            self.ret = ret
         self.outlines = outlines
         self.errlines = errlines
         self.stdout = LineMatcher(outlines)
         self.stderr = LineMatcher(errlines)
         self.duration = duration
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return (
-            "<RunResult ret=%r len(stdout.lines)=%d len(stderr.lines)=%d duration=%.2fs>"
+            "<RunResult ret=%s len(stdout.lines)=%d len(stderr.lines)=%d duration=%.2fs>"
             % (self.ret, len(self.stdout.lines), len(self.stderr.lines), self.duration)
         )
 
-    def parseoutcomes(self):
+    def parseoutcomes(self) -> Dict[str, int]:
         """Return a dictionary of outcomestring->num from parsing the terminal
         output that the test process produced.
 
@@ -389,12 +438,19 @@ class RunResult:
         raise ValueError("Pytest terminal summary report not found")
 
     def assert_outcomes(
-        self, passed=0, skipped=0, failed=0, error=0, xpassed=0, xfailed=0
-    ):
+        self,
+        passed: int = 0,
+        skipped: int = 0,
+        failed: int = 0,
+        error: int = 0,
+        xpassed: int = 0,
+        xfailed: int = 0,
+    ) -> None:
         """Assert that the specified outcomes appear with the respective
         numbers (0 means it didn't occur) in the text output from a test run.
-
         """
+        __tracebackhide__ = True
+
         d = self.parseoutcomes()
         obtained = {
             "passed": d.get("passed", 0),
@@ -416,19 +472,19 @@ class RunResult:
 
 
 class CwdSnapshot:
-    def __init__(self):
+    def __init__(self) -> None:
         self.__saved = os.getcwd()
 
-    def restore(self):
+    def restore(self) -> None:
         os.chdir(self.__saved)
 
 
 class SysModulesSnapshot:
-    def __init__(self, preserve=None):
+    def __init__(self, preserve: Optional[Callable[[str], bool]] = None):
         self.__preserve = preserve
         self.__saved = dict(sys.modules)
 
-    def restore(self):
+    def restore(self) -> None:
         if self.__preserve:
             self.__saved.update(
                 (k, m) for k, m in sys.modules.items() if self.__preserve(k)
@@ -438,10 +494,10 @@ class SysModulesSnapshot:
 
 
 class SysPathsSnapshot:
-    def __init__(self):
+    def __init__(self) -> None:
         self.__saved = list(sys.path), list(sys.meta_path)
 
-    def restore(self):
+    def restore(self) -> None:
         sys.path[:], sys.meta_path[:] = self.__saved
 
 
@@ -480,11 +536,7 @@ class Testdir:
         self._sys_modules_snapshot = self.__take_sys_modules_snapshot()
         self.chdir()
         self.request.addfinalizer(self.finalize)
-        method = self.request.config.getoption("--runpytest")
-        if method == "inprocess":
-            self._runpytest_method = self.runpytest_inprocess
-        elif method == "subprocess":
-            self._runpytest_method = self.runpytest_subprocess
+        self._method = self.request.config.getoption("--runpytest")
 
         mp = self.monkeypatch = MonkeyPatch()
         mp.setenv("PYTEST_DEBUG_TEMPROOT", str(self.test_tmproot))
@@ -832,7 +884,7 @@ class Testdir:
                 reprec = rec.pop()
             else:
 
-                class reprec:
+                class reprec:  # type: ignore
                     pass
 
             reprec.ret = ret
@@ -848,7 +900,7 @@ class Testdir:
             for finalizer in finalizers:
                 finalizer()
 
-    def runpytest_inprocess(self, *args, **kwargs):
+    def runpytest_inprocess(self, *args, **kwargs) -> RunResult:
         """Return result of running pytest in-process, providing a similar
         interface to what self.runpytest() provides.
         """
@@ -863,15 +915,20 @@ class Testdir:
             try:
                 reprec = self.inline_run(*args, **kwargs)
             except SystemExit as e:
+                ret = e.args[0]
+                try:
+                    ret = ExitCode(e.args[0])
+                except ValueError:
+                    pass
 
-                class reprec:
-                    ret = e.args[0]
+                class reprec:  # type: ignore
+                    ret = ret
 
             except Exception:
                 traceback.print_exc()
 
-                class reprec:
-                    ret = 3
+                class reprec:  # type: ignore
+                    ret = ExitCode(3)
 
         finally:
             out, err = capture.readouterr()
@@ -879,17 +936,23 @@ class Testdir:
             sys.stdout.write(out)
             sys.stderr.write(err)
 
-        res = RunResult(reprec.ret, out.split("\n"), err.split("\n"), time.time() - now)
-        res.reprec = reprec
+        res = RunResult(
+            reprec.ret, out.splitlines(), err.splitlines(), time.time() - now
+        )
+        res.reprec = reprec  # type: ignore
         return res
 
-    def runpytest(self, *args, **kwargs):
+    def runpytest(self, *args, **kwargs) -> RunResult:
         """Run pytest inline or in a subprocess, depending on the command line
         option "--runpytest" and return a :py:class:`RunResult`.
 
         """
         args = self._ensure_basetemp(args)
-        return self._runpytest_method(*args, **kwargs)
+        if self._method == "inprocess":
+            return self.runpytest_inprocess(*args, **kwargs)
+        elif self._method == "subprocess":
+            return self.runpytest_subprocess(*args, **kwargs)
+        raise RuntimeError("Unrecognized runpytest option: {}".format(self._method))
 
     def _ensure_basetemp(self, args):
         args = list(args)
@@ -928,11 +991,9 @@ class Testdir:
 
         This returns a new :py:class:`_pytest.config.Config` instance like
         :py:meth:`parseconfig`, but also calls the pytest_configure hook.
-
         """
         config = self.parseconfig(*args)
         config._do_configure()
-        self.request.addfinalizer(config._ensure_unconfigure)
         return config
 
     def getitem(self, source, funcname="test_func"):
@@ -1048,7 +1109,7 @@ class Testdir:
 
         return popen
 
-    def run(self, *cmdargs, timeout=None, stdin=CLOSE_STDIN):
+    def run(self, *cmdargs, timeout=None, stdin=CLOSE_STDIN) -> RunResult:
         """Run a command with arguments.
 
         Run a process using subprocess.Popen saving the stdout and stderr.
@@ -1066,9 +1127,9 @@ class Testdir:
         """
         __tracebackhide__ = True
 
-        cmdargs = [
+        cmdargs = tuple(
             str(arg) if isinstance(arg, py.path.local) else arg for arg in cmdargs
-        ]
+        )
         p1 = self.tmpdir.join("stdout")
         p2 = self.tmpdir.join("stderr")
         print("running:", *cmdargs)
@@ -1119,6 +1180,10 @@ class Testdir:
             f2.close()
         self._dump_lines(out, sys.stdout)
         self._dump_lines(err, sys.stderr)
+        try:
+            ret = ExitCode(ret)
+        except ValueError:
+            pass
         return RunResult(ret, out, err, time.time() - now)
 
     def _dump_lines(self, lines, fp):
@@ -1131,7 +1196,7 @@ class Testdir:
     def _getpytestargs(self):
         return sys.executable, "-mpytest"
 
-    def runpython(self, script):
+    def runpython(self, script) -> RunResult:
         """Run a python script using sys.executable as interpreter.
 
         Returns a :py:class:`RunResult`.
@@ -1143,7 +1208,7 @@ class Testdir:
         """Run python -c "command", return a :py:class:`RunResult`."""
         return self.run(sys.executable, "-c", command)
 
-    def runpytest_subprocess(self, *args, timeout=None):
+    def runpytest_subprocess(self, *args, timeout=None) -> RunResult:
         """Run pytest as a subprocess with given arguments.
 
         Any plugins added to the :py:attr:`plugins` list will be added using the
@@ -1192,8 +1257,6 @@ class Testdir:
         pexpect = pytest.importorskip("pexpect", "3.0")
         if hasattr(sys, "pypy_version_info") and "64" in platform.machine():
             pytest.skip("pypy-64 bit not supported")
-        if sys.platform.startswith("freebsd"):
-            pytest.xfail("pexpect does not work reliably on freebsd")
         if not hasattr(pexpect, "spawn"):
             pytest.skip("pexpect.spawn not available")
         logfile = self.tmpdir.join("spawn.out").open("wb")
@@ -1319,8 +1382,7 @@ class LineMatcher:
 
         The argument is a list of lines which have to match and can use glob
         wildcards.  If they do not match a pytest.fail() is called.  The
-        matches and non-matches are also printed on stdout.
-
+        matches and non-matches are also shown as part of the error message.
         """
         __tracebackhide__ = True
         self._match_lines(lines2, fnmatch, "fnmatch")
@@ -1331,8 +1393,7 @@ class LineMatcher:
         The argument is a list of lines which have to match using ``re.match``.
         If they do not match a pytest.fail() is called.
 
-        The matches and non-matches are also printed on stdout.
-
+        The matches and non-matches are also shown as part of the error message.
         """
         __tracebackhide__ = True
         self._match_lines(lines2, lambda name, pat: re.match(pat, name), "re.match")
@@ -1347,14 +1408,14 @@ class LineMatcher:
             pattern
         :param str match_nickname: the nickname for the match function that
             will be logged to stdout when a match occurs
-
         """
-        assert isinstance(lines2, Sequence)
+        assert isinstance(lines2, collections.abc.Sequence)
         lines2 = self._getlines(lines2)
         lines1 = self.lines[:]
         nextline = None
         extralines = []
         __tracebackhide__ = True
+        wnick = len(match_nickname) + 1
         for line in lines2:
             nomatchprinted = False
             while lines1:
@@ -1364,14 +1425,58 @@ class LineMatcher:
                     break
                 elif match_func(nextline, line):
                     self._log("%s:" % match_nickname, repr(line))
-                    self._log("   with:", repr(nextline))
+                    self._log(
+                        "{:>{width}}".format("with:", width=wnick), repr(nextline)
+                    )
                     break
                 else:
                     if not nomatchprinted:
-                        self._log("nomatch:", repr(line))
+                        self._log(
+                            "{:>{width}}".format("nomatch:", width=wnick), repr(line)
+                        )
                         nomatchprinted = True
-                    self._log("    and:", repr(nextline))
+                    self._log("{:>{width}}".format("and:", width=wnick), repr(nextline))
                 extralines.append(nextline)
             else:
                 self._log("remains unmatched: {!r}".format(line))
-                pytest.fail(self._log_text)
+                pytest.fail(self._log_text.lstrip())
+
+    def no_fnmatch_line(self, pat):
+        """Ensure captured lines do not match the given pattern, using ``fnmatch.fnmatch``.
+
+        :param str pat: the pattern to match lines.
+        """
+        __tracebackhide__ = True
+        self._no_match_line(pat, fnmatch, "fnmatch")
+
+    def no_re_match_line(self, pat):
+        """Ensure captured lines do not match the given pattern, using ``re.match``.
+
+        :param str pat: the regular expression to match lines.
+        """
+        __tracebackhide__ = True
+        self._no_match_line(pat, lambda name, pat: re.match(pat, name), "re.match")
+
+    def _no_match_line(self, pat, match_func, match_nickname):
+        """Ensure captured lines does not have a the given pattern, using ``fnmatch.fnmatch``
+
+        :param str pat: the pattern to match lines
+        """
+        __tracebackhide__ = True
+        nomatch_printed = False
+        wnick = len(match_nickname) + 1
+        try:
+            for line in self.lines:
+                if match_func(line, pat):
+                    self._log("%s:" % match_nickname, repr(pat))
+                    self._log("{:>{width}}".format("with:", width=wnick), repr(line))
+                    pytest.fail(self._log_text.lstrip())
+                else:
+                    if not nomatch_printed:
+                        self._log(
+                            "{:>{width}}".format("nomatch:", width=wnick), repr(pat)
+                        )
+                        nomatch_printed = True
+                    self._log("{:>{width}}".format("and:", width=wnick), repr(line))
+        finally:
+            self._log_output = []

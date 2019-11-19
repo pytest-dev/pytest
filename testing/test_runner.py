@@ -483,13 +483,22 @@ def test_callinfo():
     assert ci.result == 0
     assert "result" in repr(ci)
     assert repr(ci) == "<CallInfo when='123' result: 0>"
+    assert str(ci) == "<CallInfo when='123' result: 0>"
 
     ci = runner.CallInfo.from_call(lambda: 0 / 0, "123")
     assert ci.when == "123"
     assert not hasattr(ci, "result")
-    assert repr(ci) == "<CallInfo when='123' exception: division by zero>"
+    assert repr(ci) == "<CallInfo when='123' excinfo={!r}>".format(ci.excinfo)
+    assert str(ci) == repr(ci)
     assert ci.excinfo
-    assert "exc" in repr(ci)
+
+    # Newlines are escaped.
+    def raise_assertion():
+        assert 0, "assert_msg"
+
+    ci = runner.CallInfo.from_call(raise_assertion, "call")
+    assert repr(ci) == "<CallInfo when='call' excinfo={!r}>".format(ci.excinfo)
+    assert "\n" not in repr(ci)
 
 
 # design question: do we want general hooks in python files?
@@ -588,7 +597,7 @@ def test_pytest_exit_returncode(testdir):
     result = testdir.runpytest()
     result.stdout.fnmatch_lines(["*! *Exit: some exit msg !*"])
 
-    assert _strip_resource_warnings(result.stderr.lines) == [""]
+    assert _strip_resource_warnings(result.stderr.lines) == []
     assert result.ret == 99
 
     # It prints to stderr also in case of exit during pytest_sessionstart.
@@ -603,8 +612,7 @@ def test_pytest_exit_returncode(testdir):
     result = testdir.runpytest()
     result.stdout.fnmatch_lines(["*! *Exit: during_sessionstart !*"])
     assert _strip_resource_warnings(result.stderr.lines) == [
-        "Exit: during_sessionstart",
-        "",
+        "Exit: during_sessionstart"
     ]
     assert result.ret == 98
 
@@ -622,7 +630,7 @@ def test_pytest_fail_notrace_runtest(testdir):
     )
     result = testdir.runpytest()
     result.stdout.fnmatch_lines(["world", "hello"])
-    assert "def teardown_function" not in result.stdout.str()
+    result.stdout.no_fnmatch_line("*def teardown_function*")
 
 
 def test_pytest_fail_notrace_collection(testdir):
@@ -637,7 +645,7 @@ def test_pytest_fail_notrace_collection(testdir):
     )
     result = testdir.runpytest()
     result.stdout.fnmatch_lines(["hello"])
-    assert "def some_internal_function()" not in result.stdout.str()
+    result.stdout.no_fnmatch_line("*def some_internal_function()*")
 
 
 def test_pytest_fail_notrace_non_ascii(testdir):
@@ -655,7 +663,7 @@ def test_pytest_fail_notrace_non_ascii(testdir):
     )
     result = testdir.runpytest()
     result.stdout.fnmatch_lines(["*test_hello*", "oh oh: ☺"])
-    assert "def test_hello" not in result.stdout.str()
+    result.stdout.no_fnmatch_line("*def test_hello*")
 
 
 def test_pytest_no_tests_collected_exit_status(testdir):
@@ -820,7 +828,7 @@ def test_failure_in_setup(testdir):
     """
     )
     result = testdir.runpytest("--tb=line")
-    assert "def setup_module" not in result.stdout.str()
+    result.stdout.no_fnmatch_line("*def setup_module*")
 
 
 def test_makereport_getsource(testdir):
@@ -832,7 +840,7 @@ def test_makereport_getsource(testdir):
     """
     )
     result = testdir.runpytest()
-    assert "INTERNALERROR" not in result.stdout.str()
+    result.stdout.no_fnmatch_line("*INTERNALERROR*")
     result.stdout.fnmatch_lines(["*else: assert False*"])
 
 
@@ -863,7 +871,7 @@ def test_makereport_getsource_dynamic_code(testdir, monkeypatch):
     """
     )
     result = testdir.runpytest("-vv")
-    assert "INTERNALERROR" not in result.stdout.str()
+    result.stdout.no_fnmatch_line("*INTERNALERROR*")
     result.stdout.fnmatch_lines(["*test_fix*", "*fixture*'missing'*not found*"])
 
 

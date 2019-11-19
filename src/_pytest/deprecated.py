@@ -26,11 +26,16 @@ FUNCARGNAMES = PytestDeprecationWarning(
 
 
 RESULT_LOG = PytestDeprecationWarning(
-    "--result-log is deprecated and scheduled for removal in pytest 6.0.\n"
+    "--result-log is deprecated, please try the new pytest-reportlog plugin.\n"
     "See https://docs.pytest.org/en/latest/deprecations.html#result-log-result-log for more information."
 )
 
 FIXTURE_POSITIONAL_ARGUMENTS = PytestDeprecationWarning(
     "Passing arguments to pytest.fixture() as positional arguments is deprecated - pass them "
     "as a keyword argument instead."
+)
+
+JUNIT_XML_DEFAULT_FAMILY = PytestDeprecationWarning(
+    "The 'junit_family' default value will change to 'xunit2' in pytest 6.0.\n"
+    "Add 'junit_family=legacy' to your pytest.ini file to silence this warning and make your suite compatible."
 )

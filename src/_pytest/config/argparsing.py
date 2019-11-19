@@ -47,7 +47,7 @@ class Parser:
 
         The returned group object has an ``addoption`` method with the same
         signature as :py:func:`parser.addoption
-        <_pytest.config.Parser.addoption>` but will be shown in the
+        <_pytest.config.argparsing.Parser.addoption>` but will be shown in the
         respective group in the output of ``pytest. --help``.
         """
         for group in self._groups:
@@ -395,7 +395,7 @@ class MyOptionParser(argparse.ArgumentParser):
                     options = ", ".join(option for _, option, _ in option_tuples)
                     self.error(msg % {"option": arg_string, "matches": options})
                 elif len(option_tuples) == 1:
-                    option_tuple, = option_tuples
+                    (option_tuple,) = option_tuples
                     return option_tuple
             if self._negative_number_matcher.match(arg_string):
                 if not self._has_negative_number_optionals:

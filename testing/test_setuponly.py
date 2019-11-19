@@ -28,7 +28,7 @@ def test_show_only_active_fixtures(testdir, mode, dummy_yaml_custom_test):
     result.stdout.fnmatch_lines(
         ["*SETUP    F arg1*", "*test_arg1 (fixtures used: arg1)*", "*TEARDOWN F arg1*"]
     )
-    assert "_arg0" not in result.stdout.str()
+    result.stdout.no_fnmatch_line("*_arg0*")
 
 
 def test_show_different_scopes(testdir, mode):

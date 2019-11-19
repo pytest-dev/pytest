@@ -12,7 +12,7 @@ from _pytest import python
 
 
 class TestMetafunc:
-    def Metafunc(self, func, config=None):
+    def Metafunc(self, func, config=None) -> python.Metafunc:
         # the unit tests of this class check if things work correctly
         # on the funcarg level, so we don't need a full blown
         # initialization
@@ -23,7 +23,7 @@ class TestMetafunc:
                 self.names_closure = names
 
         @attr.s
-        class DefinitionMock:
+        class DefinitionMock(python.FunctionDefinition):
             obj = attr.ib()
 
         names = fixtures.getfuncargnames(func)
@@ -1323,25 +1323,29 @@ class TestMetafuncFunctional:
         reprec = testdir.runpytest()
         reprec.assert_outcomes(passed=4)
 
-    @pytest.mark.parametrize("attr", ["parametrise", "parameterize", "parameterise"])
-    def test_parametrize_misspelling(self, testdir, attr):
+    def test_parametrize_misspelling(self, testdir):
         """#463"""
         testdir.makepyfile(
             """
             import pytest
 
-            @pytest.mark.{}("x", range(2))
+            @pytest.mark.parametrise("x", range(2))
             def test_foo(x):
                 pass
-        """.format(
-                attr
-            )
+        """
         )
         result = testdir.runpytest("--collectonly")
         result.stdout.fnmatch_lines(
             [
-                "test_foo has '{}' mark, spelling should be 'parametrize'".format(attr),
-                "*1 error in*",
+                "collected 0 items / 1 error",
+                "",
+                "*= ERRORS =*",
+                "*_ ERROR collecting test_parametrize_misspelling.py _*",
+                "test_parametrize_misspelling.py:3: in <module>",
+                '    @pytest.mark.parametrise("x", range(2))',
+                "E   Failed: Unknown 'parametrise' mark, did you mean 'parametrize'?",
+                "*! Interrupted: 1 error during collection !*",
+                "*= 1 error in *",
             ]
         )
 
@@ -1550,27 +1554,6 @@ class TestMarkersWithParametrization:
         assert len(passed) == 1
         assert len(skipped) == 0
         assert len(fail) == 0
-
-    @pytest.mark.xfail(reason="is this important to support??")
-    def test_nested_marks(self, testdir):
-        s = """
-            import pytest
-            mastermark = pytest.mark.foo(pytest.mark.bar)
-
-            @pytest.mark.parametrize(("n", "expected"), [
-                (1, 2),
-                mastermark((1, 3)),
-                (2, 3),
-            ])
-            def test_increment(n, expected):
-                assert n + 1 == expected
-        """
-        items = testdir.getitems(s)
-        assert len(items) == 3
-        for mark in ["foo", "bar"]:
-            assert mark not in items[0].keywords
-            assert mark in items[1].keywords
-            assert mark not in items[2].keywords
 
     def test_simple_xfail(self, testdir):
         s = """

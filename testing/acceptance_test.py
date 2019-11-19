@@ -178,8 +178,14 @@ class TestGeneralUsage:
         p1 = testdir.makepyfile("")
         p2 = testdir.makefile(".pyc", "123")
         result = testdir.runpytest(p1, p2)
-        assert result.ret
-        result.stderr.fnmatch_lines(["*ERROR: not found:*{}".format(p2.basename)])
+        assert result.ret == ExitCode.USAGE_ERROR
+        result.stderr.fnmatch_lines(
+            [
+                "ERROR: not found: {}".format(p2),
+                "(no name {!r} in any of [[][]])".format(str(p2)),
+                "",
+            ]
+        )
 
     @pytest.mark.filterwarnings("default")
     def test_better_reporting_on_conftest_load_failure(self, testdir, request):
@@ -246,7 +252,7 @@ class TestGeneralUsage:
         )
         result = testdir.runpytest()
         assert result.ret == ExitCode.NO_TESTS_COLLECTED
-        assert "should not be seen" not in result.stdout.str()
+        result.stdout.no_fnmatch_line("*should not be seen*")
         assert "stderr42" not in result.stderr.str()
 
     def test_conftest_printing_shows_if_error(self, testdir):
@@ -628,7 +634,7 @@ class TestInvocationVariants:
         result = testdir.runpytest("--pyargs", "tpkg.test_hello", syspathinsert=True)
         assert result.ret != 0
 
-        result.stdout.fnmatch_lines(["collected*0*items*/*1*errors"])
+        result.stdout.fnmatch_lines(["collected*0*items*/*1*error"])
 
     def test_pyargs_only_imported_once(self, testdir):
         pkg = testdir.mkpydir("foo")
@@ -858,16 +864,21 @@ class TestInvocationVariants:
             4
         """,
         )
-        result = testdir.runpytest("-rf")
-        lines = result.stdout.str().splitlines()
-        for line in lines:
-            if line.startswith(("FAIL ", "FAILED ")):
-                _fail, _sep, testid = line.partition(" ")
-                break
-        result = testdir.runpytest(testid, "-rf")
-        result.stdout.fnmatch_lines(
-            ["FAILED test_doctest_id.txt::test_doctest_id.txt", "*1 failed*"]
-        )
+        testid = "test_doctest_id.txt::test_doctest_id.txt"
+        expected_lines = [
+            "*= FAILURES =*",
+            "*_ ?doctest? test_doctest_id.txt _*",
+            "FAILED test_doctest_id.txt::test_doctest_id.txt",
+            "*= 1 failed in*",
+        ]
+        result = testdir.runpytest(testid, "-rf", "--tb=short")
+        result.stdout.fnmatch_lines(expected_lines)
+
+        # Ensure that re-running it will still handle it as
+        # doctest.DocTestFailure, which was not the case before when
+        # re-importing doctest, but not creating a new RUNNER_CLASS.
+        result = testdir.runpytest(testid, "-rf", "--tb=short")
+        result.stdout.fnmatch_lines(expected_lines)
 
     def test_core_backward_compatibility(self):
         """Test backward compatibility for get_plugin_manager function. See #787."""
@@ -950,10 +961,10 @@ class TestDurations:
         testdir.makepyfile(test_collecterror="""xyz""")
         result = testdir.runpytest("--durations=2", "-k test_1")
         assert result.ret == 2
-        result.stdout.fnmatch_lines(["*Interrupted: 1 errors during collection*"])
+        result.stdout.fnmatch_lines(["*Interrupted: 1 error during collection*"])
         # Collection errors abort test execution, therefore no duration is
         # output
-        assert "duration" not in result.stdout.str()
+        result.stdout.no_fnmatch_line("*duration*")
 
     def test_with_not(self, testdir):
         testdir.makepyfile(self.source)
@@ -1007,7 +1018,7 @@ def test_zipimport_hook(testdir, tmpdir):
     result = testdir.runpython(target)
     assert result.ret == 0
     result.stderr.fnmatch_lines(["*not found*foo*"])
-    assert "INTERNALERROR>" not in result.stdout.str()
+    result.stdout.no_fnmatch_line("*INTERNALERROR>*")
 
 
 def test_import_plugin_unicode_name(testdir):
@@ -1237,3 +1248,40 @@ def test_warn_on_async_gen_function(testdir):
     assert (
         result.stdout.str().count("async def functions are not natively supported") == 1
     )
+
+
+def test_pdb_can_be_rewritten(testdir):
+    testdir.makepyfile(
+        **{
+            "conftest.py": """
+                import pytest
+                pytest.register_assert_rewrite("pdb")
+                """,
+            "__init__.py": "",
+            "pdb.py": """
+                def check():
+                    assert 1 == 2
+                """,
+            "test_pdb.py": """
+                def test():
+                    import pdb
+                    assert pdb.check()
+                """,
+        }
+    )
+    # Disable debugging plugin itself to avoid:
+    # > INTERNALERROR> AttributeError: module 'pdb' has no attribute 'set_trace'
+    result = testdir.runpytest_subprocess("-p", "no:debugging", "-vv")
+    result.stdout.fnmatch_lines(
+        [
+            "    def check():",
+            ">       assert 1 == 2",
+            "E       assert 1 == 2",
+            "E         -1",
+            "E         +2",
+            "",
+            "pdb.py:2: AssertionError",
+            "*= 1 failed in *",
+        ]
+    )
+    assert result.ret == 1

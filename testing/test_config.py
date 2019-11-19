@@ -1,17 +1,18 @@
 import os
 import sys
 import textwrap
-from pathlib import Path
 
 import _pytest._code
 import pytest
 from _pytest.compat import importlib_metadata
 from _pytest.config import _iter_rewritable_modules
+from _pytest.config import Config
 from _pytest.config.exceptions import UsageError
 from _pytest.config.findpaths import determine_setup
 from _pytest.config.findpaths import get_common_ancestor
 from _pytest.config.findpaths import getcfg
 from _pytest.main import ExitCode
+from _pytest.pathlib import Path
 
 
 class TestParseIni:
@@ -456,7 +457,7 @@ class TestConfigFromdictargs:
 
         config = Config.fromdictargs(option_dict, args)
         assert config.args == ["a", "b"]
-        assert config.invocation_params.args == args
+        assert config.invocation_params.args == tuple(args)
         assert config.option.verbose == 4
         assert config.option.capture == "no"
 
@@ -1235,13 +1236,17 @@ def test_invocation_args(testdir):
     call = calls[0]
     config = call.item.config
 
-    assert config.invocation_params.args == [p, "-v"]
+    assert config.invocation_params.args == (p, "-v")
     assert config.invocation_params.dir == Path(str(testdir.tmpdir))
 
     plugins = config.invocation_params.plugins
     assert len(plugins) == 2
     assert plugins[0] is plugin
     assert type(plugins[1]).__name__ == "Collect"  # installed by testdir.inline_run()
+
+    # args cannot be None
+    with pytest.raises(TypeError):
+        Config.InvocationParams(args=None, plugins=None, dir=Path())
 
 
 @pytest.mark.parametrize(
@@ -1286,7 +1291,7 @@ def test_config_blocked_default_plugins(testdir, plugin):
     if plugin != "terminal":
         result.stdout.fnmatch_lines(["* 1 failed in *"])
     else:
-        assert result.stdout.lines == [""]
+        assert result.stdout.lines == []
 
 
 class TestSetupCfg:

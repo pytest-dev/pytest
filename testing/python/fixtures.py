@@ -455,7 +455,7 @@ class TestFillFixtures:
                 "*1 error*",
             ]
         )
-        assert "INTERNAL" not in result.stdout.str()
+        result.stdout.no_fnmatch_line("*INTERNAL*")
 
     def test_fixture_excinfo_leak(self, testdir):
         # on python2 sys.excinfo would leak into fixture executions
@@ -503,7 +503,7 @@ class TestRequestBasic:
         assert repr(req).find(req.function.__name__) != -1
 
     def test_request_attributes_method(self, testdir):
-        item, = testdir.getitems(
+        (item,) = testdir.getitems(
             """
             import pytest
             class TestB(object):
@@ -531,7 +531,7 @@ class TestRequestBasic:
                     pass
         """
         )
-        item1, = testdir.genitems([modcol])
+        (item1,) = testdir.genitems([modcol])
         assert item1.name == "test_method"
         arg2fixturedefs = fixtures.FixtureRequest(item1)._arg2fixturedefs
         assert len(arg2fixturedefs) == 1
@@ -781,7 +781,7 @@ class TestRequestBasic:
 
     def test_request_getmodulepath(self, testdir):
         modcol = testdir.getmodulecol("def test_somefunc(): pass")
-        item, = testdir.genitems([modcol])
+        (item,) = testdir.genitems([modcol])
         req = fixtures.FixtureRequest(item)
         assert req.fspath == modcol.fspath
 
@@ -2647,7 +2647,7 @@ class TestFixtureMarker:
             *3 passed*
         """
         )
-        assert "error" not in result.stdout.str()
+        result.stdout.no_fnmatch_line("*error*")
 
     def test_fixture_finalizer(self, testdir):
         testdir.makeconftest(
@@ -3081,7 +3081,7 @@ class TestErrors:
             *KeyError*
             *ERROR*teardown*test_2*
             *KeyError*
-            *3 pass*2 error*
+            *3 pass*2 errors*
         """
         )
 
@@ -3151,7 +3151,7 @@ class TestShowFixtures:
             *hello world*
         """
         )
-        assert "arg0" not in result.stdout.str()
+        result.stdout.no_fnmatch_line("*arg0*")
 
     @pytest.mark.parametrize("testmod", [True, False])
     def test_show_fixtures_conftest(self, testdir, testmod):

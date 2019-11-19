@@ -9,6 +9,8 @@ from collections import Counter
 from collections.abc import Sequence
 from functools import partial
 from textwrap import dedent
+from typing import List
+from typing import Tuple
 
 import py
 
@@ -30,6 +32,7 @@ from _pytest.compat import safe_getattr
 from _pytest.compat import safe_isclass
 from _pytest.compat import STRING_TYPES
 from _pytest.config import hookimpl
+from _pytest.deprecated import FUNCARGNAMES
 from _pytest.main import FSHookProxy
 from _pytest.mark import MARK_GEN
 from _pytest.mark.structures import get_unpacked_marks
@@ -118,13 +121,6 @@ def pytest_cmdline_main(config):
 
 
 def pytest_generate_tests(metafunc):
-    # those alternative spellings are common - raise a specific error to alert
-    # the user
-    alt_spellings = ["parameterize", "parametrise", "parameterise"]
-    for mark_name in alt_spellings:
-        if metafunc.definition.get_closest_marker(mark_name):
-            msg = "{0} has '{1}' mark, spelling should be 'parametrize'"
-            fail(msg.format(metafunc.function.__name__, mark_name), pytrace=False)
     for marker in metafunc.definition.iter_markers(name="parametrize"):
         metafunc.parametrize(*marker.args, **marker.kwargs)
 
@@ -235,10 +231,6 @@ def pytest_pycollect_makeitem(collector, name, obj):
             outcome.force_result(res)
 
 
-def pytest_make_parametrize_id(config, val, argname=None):
-    return None
-
-
 class PyobjContext:
     module = pyobj_property("Module")
     cls = pyobj_property("Class")
@@ -287,7 +279,7 @@ class PyobjMixin(PyobjContext):
         parts.reverse()
         return ".".join(parts)
 
-    def reportinfo(self):
+    def reportinfo(self) -> Tuple[str, int, str]:
         # XXX caching?
         obj = self.obj
         compat_co_firstlineno = getattr(obj, "compat_co_firstlineno", None)
@@ -880,7 +872,7 @@ class CallSpec2:
         self.marks.extend(normalize_mark_list(marks))
 
 
-class Metafunc(fixtures.FuncargnamesCompatAttr):
+class Metafunc:
     """
     Metafunc objects are passed to the :func:`pytest_generate_tests <_pytest.hookspec.pytest_generate_tests>` hook.
     They help to inspect a test function and to generate tests according to
@@ -888,11 +880,14 @@ class Metafunc(fixtures.FuncargnamesCompatAttr):
     test function is defined.
     """
 
-    def __init__(self, definition, fixtureinfo, config, cls=None, module=None):
-        assert (
-            isinstance(definition, FunctionDefinition)
-            or type(definition).__name__ == "DefinitionMock"
-        )
+    def __init__(
+        self,
+        definition: "FunctionDefinition",
+        fixtureinfo,
+        config,
+        cls=None,
+        module=None,
+    ) -> None:
         self.definition = definition
 
         #: access to the :class:`_pytest.config.Config` object for the test session
@@ -910,9 +905,14 @@ class Metafunc(fixtures.FuncargnamesCompatAttr):
         #: class object where the test function is defined in or ``None``.
         self.cls = cls
 
-        self._calls = []
-        self._ids = set()
+        self._calls = []  # type: List[CallSpec2]
         self._arg2fixturedefs = fixtureinfo.name2fixturedefs
+
+    @property
+    def funcargnames(self):
+        """ alias attribute for ``fixturenames`` for pre-2.3 compatibility"""
+        warnings.warn(FUNCARGNAMES, stacklevel=2)
+        return self.fixturenames
 
     def parametrize(self, argnames, argvalues, indirect=False, ids=None, scope=None):
         """ Add new invocations to the underlying test function using the list
@@ -1166,7 +1166,8 @@ def _idval(val, argname, idx, idfn, item, config):
         return ascii_escaped(val.pattern)
     elif isinstance(val, enum.Enum):
         return str(val)
-    elif (inspect.isclass(val) or inspect.isfunction(val)) and hasattr(val, "__name__"):
+    elif hasattr(val, "__name__") and isinstance(val.__name__, str):
+        # name of a class, function, module, etc.
         return val.__name__
     return str(argname) + str(idx)
 
@@ -1336,7 +1337,7 @@ def write_docstring(tw, doc, indent="    "):
             tw.write(indent + line + "\n")
 
 
-class Function(FunctionMixin, nodes.Item, fixtures.FuncargnamesCompatAttr):
+class Function(FunctionMixin, nodes.Item):
     """ a Function Item is responsible for setting up and executing a
     Python test function.
     """
@@ -1422,6 +1423,12 @@ class Function(FunctionMixin, nodes.Item, fixtures.FuncargnamesCompatAttr):
     def _pyfuncitem(self):
         "(compatonly) for code expecting pytest-2.2 style request objects"
         return self
+
+    @property
+    def funcargnames(self):
+        """ alias attribute for ``fixturenames`` for pre-2.3 compatibility"""
+        warnings.warn(FUNCARGNAMES, stacklevel=2)
+        return self.fixturenames
 
     def runtest(self):
         """ execute the underlying test function. """

@@ -139,7 +139,7 @@ class TestCollectFS:
 
         # by default, ignore tests inside a virtualenv
         result = testdir.runpytest()
-        assert "test_invenv" not in result.stdout.str()
+        result.stdout.no_fnmatch_line("*test_invenv*")
         # allow test collection if user insists
         result = testdir.runpytest("--collect-in-virtualenv")
         assert "test_invenv" in result.stdout.str()
@@ -165,7 +165,7 @@ class TestCollectFS:
         testfile = testdir.tmpdir.ensure(".virtual", "test_invenv.py")
         testfile.write("def test_hello(): pass")
         result = testdir.runpytest("--collect-in-virtualenv")
-        assert "test_invenv" not in result.stdout.str()
+        result.stdout.no_fnmatch_line("*test_invenv*")
         # ...unless the virtualenv is explicitly given on the CLI
         result = testdir.runpytest("--collect-in-virtualenv", ".virtual")
         assert "test_invenv" in result.stdout.str()
@@ -364,7 +364,7 @@ class TestCustomConftests:
         testdir.makepyfile(test_world="def test_hello(): pass")
         result = testdir.runpytest()
         assert result.ret == ExitCode.NO_TESTS_COLLECTED
-        assert "passed" not in result.stdout.str()
+        result.stdout.no_fnmatch_line("*passed*")
         result = testdir.runpytest("--XX")
         assert result.ret == 0
         assert "passed" in result.stdout.str()
@@ -402,7 +402,7 @@ class TestCustomConftests:
         )
         testdir.mkdir("sub")
         testdir.makepyfile("def test_x(): pass")
-        result = testdir.runpytest("--collect-only")
+        result = testdir.runpytest("--co")
         result.stdout.fnmatch_lines(["*MyModule*", "*test_x*"])
 
     def test_pytest_collect_file_from_sister_dir(self, testdir):
@@ -433,7 +433,7 @@ class TestCustomConftests:
         p = testdir.makepyfile("def test_x(): pass")
         p.copy(sub1.join(p.basename))
         p.copy(sub2.join(p.basename))
-        result = testdir.runpytest("--collect-only")
+        result = testdir.runpytest("--co")
         result.stdout.fnmatch_lines(["*MyModule1*", "*MyModule2*", "*test_x*"])
 
 
@@ -486,7 +486,7 @@ class TestSession:
         p = testdir.makepyfile("def test_func(): pass")
         id = "::".join([p.basename, "test_func"])
         items, hookrec = testdir.inline_genitems(id)
-        item, = items
+        (item,) = items
         assert item.name == "test_func"
         newid = item.nodeid
         assert newid == id
@@ -605,9 +605,9 @@ class TestSession:
         testdir.makepyfile("def test_func(): pass")
         items, hookrec = testdir.inline_genitems()
         assert len(items) == 1
-        item, = items
+        (item,) = items
         items2, hookrec = testdir.inline_genitems(item.nodeid)
-        item2, = items2
+        (item2,) = items2
         assert item2.name == item.name
         assert item2.fspath == item.fspath
 
@@ -622,7 +622,7 @@ class TestSession:
         arg = p.basename + "::TestClass::test_method"
         items, hookrec = testdir.inline_genitems(arg)
         assert len(items) == 1
-        item, = items
+        (item,) = items
         assert item.nodeid.endswith("TestClass::test_method")
         # ensure we are reporting the collection of the single test item (#2464)
         assert [x.name for x in self.get_reported_items(hookrec)] == ["test_method"]
@@ -859,12 +859,16 @@ def test_exit_on_collection_with_maxfail_smaller_than_n_errors(testdir):
 
     res = testdir.runpytest("--maxfail=1")
     assert res.ret == 1
-
     res.stdout.fnmatch_lines(
-        ["*ERROR collecting test_02_import_error.py*", "*No module named *asdfa*"]
+        [
+            "collected 1 item / 1 error",
+            "*ERROR collecting test_02_import_error.py*",
+            "*No module named *asdfa*",
+            "*! stopping after 1 failures !*",
+            "*= 1 error in *",
+        ]
     )
-
-    assert "test_03" not in res.stdout.str()
+    res.stdout.no_fnmatch_line("*test_03*")
 
 
 def test_exit_on_collection_with_maxfail_bigger_than_n_errors(testdir):
@@ -876,7 +880,6 @@ def test_exit_on_collection_with_maxfail_bigger_than_n_errors(testdir):
 
     res = testdir.runpytest("--maxfail=4")
     assert res.ret == 2
-
     res.stdout.fnmatch_lines(
         [
             "collected 2 items / 2 errors",
@@ -884,6 +887,8 @@ def test_exit_on_collection_with_maxfail_bigger_than_n_errors(testdir):
             "*No module named *asdfa*",
             "*ERROR collecting test_03_import_error.py*",
             "*No module named *asdfa*",
+            "*! Interrupted: 2 errors during collection !*",
+            "*= 2 errors in *",
         ]
     )
 
@@ -899,7 +904,7 @@ def test_continue_on_collection_errors(testdir):
     assert res.ret == 1
 
     res.stdout.fnmatch_lines(
-        ["collected 2 items / 2 errors", "*1 failed, 1 passed, 2 error*"]
+        ["collected 2 items / 2 errors", "*1 failed, 1 passed, 2 errors*"]
     )
 
 
@@ -916,7 +921,7 @@ def test_continue_on_collection_errors_maxfail(testdir):
     res = testdir.runpytest("--continue-on-collection-errors", "--maxfail=3")
     assert res.ret == 1
 
-    res.stdout.fnmatch_lines(["collected 2 items / 2 errors", "*1 failed, 2 error*"])
+    res.stdout.fnmatch_lines(["collected 2 items / 2 errors", "*1 failed, 2 errors*"])
 
 
 def test_fixture_scope_sibling_conftests(testdir):
@@ -1003,12 +1008,12 @@ def test_collect_init_tests(testdir):
     result.stdout.fnmatch_lines(
         ["<Package */tests>", "  <Module test_foo.py>", "    <Function test_foo>"]
     )
-    assert "test_init" not in result.stdout.str()
+    result.stdout.no_fnmatch_line("*test_init*")
     result = testdir.runpytest("./tests/__init__.py", "--collect-only")
     result.stdout.fnmatch_lines(
         ["<Package */tests>", "  <Module __init__.py>", "    <Function test_init>"]
     )
-    assert "test_foo" not in result.stdout.str()
+    result.stdout.no_fnmatch_line("*test_foo*")
 
 
 def test_collect_invalid_signature_message(testdir):
@@ -1260,7 +1265,7 @@ def test_collector_respects_tbstyle(testdir):
             '  File "*/test_collector_respects_tbstyle.py", line 1, in <module>',
             "    assert 0",
             "AssertionError: assert 0",
-            "*! Interrupted: 1 errors during collection !*",
+            "*! Interrupted: 1 error during collection !*",
             "*= 1 error in *",
         ]
     )

@@ -164,7 +164,7 @@ def test_stop_on_collection_errors(broken_testdir, broken_first):
     if broken_first:
         files.reverse()
     result = broken_testdir.runpytest("-v", "--strict-markers", "--stepwise", *files)
-    result.stdout.fnmatch_lines("*errors during collection*")
+    result.stdout.fnmatch_lines("*error during collection*")
 
 
 def test_xfail_handling(testdir):

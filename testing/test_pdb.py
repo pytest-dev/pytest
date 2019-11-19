@@ -193,7 +193,7 @@ class TestPDB:
         )
         child = testdir.spawn_pytest("-rs --pdb %s" % p1)
         child.expect("Skipping also with pdb active")
-        child.expect("1 skipped in")
+        child.expect_exact("= \x1b[33m\x1b[1m1 skipped\x1b[0m\x1b[33m in")
         child.sendeof()
         self.flush(child)
 
@@ -221,7 +221,7 @@ class TestPDB:
         child.sendeof()
         rest = child.read().decode("utf8")
         assert "Exit: Quitting debugger" in rest
-        assert "= 1 failed in" in rest
+        assert "= \x1b[31m\x1b[1m1 failed\x1b[0m\x1b[31m in" in rest
         assert "def test_1" not in rest
         assert "get rekt" not in rest
         self.flush(child)
@@ -466,7 +466,6 @@ class TestPDB:
     def test_pdb_interaction_doctest(self, testdir, monkeypatch):
         p1 = testdir.makepyfile(
             """
-            import pytest
             def function_1():
                 '''
                 >>> i = 0
@@ -485,8 +484,31 @@ class TestPDB:
 
         child.sendeof()
         rest = child.read().decode("utf8")
+        assert "! _pytest.outcomes.Exit: Quitting debugger !" in rest
+        assert "BdbQuit" not in rest
         assert "1 failed" in rest
         self.flush(child)
+
+    def test_doctest_set_trace_quit(self, testdir, monkeypatch):
+        p1 = testdir.makepyfile(
+            """
+            def function_1():
+                '''
+                >>> __import__('pdb').set_trace()
+                '''
+        """
+        )
+        # NOTE: does not use pytest.set_trace, but Python's patched pdb,
+        #       therefore "-s" is required.
+        child = testdir.spawn_pytest("--doctest-modules --pdb -s %s" % p1)
+        child.expect("Pdb")
+        child.sendline("q")
+        rest = child.read().decode("utf8")
+
+        assert "! _pytest.outcomes.Exit: Quitting debugger !" in rest
+        assert "= \x1b[33mno tests ran\x1b[0m\x1b[33m in" in rest
+        assert "BdbQuit" not in rest
+        assert "UNEXPECTED EXCEPTION" not in rest
 
     def test_pdb_interaction_capturing_twice(self, testdir):
         p1 = testdir.makepyfile(
@@ -703,7 +725,7 @@ class TestPDB:
             assert "> PDB continue (IO-capturing resumed) >" in rest
         else:
             assert "> PDB continue >" in rest
-        assert "1 passed in" in rest
+        assert "= \x1b[32m\x1b[1m1 passed\x1b[0m\x1b[32m in" in rest
 
     def test_pdb_used_outside_test(self, testdir):
         p1 = testdir.makepyfile(
@@ -1019,7 +1041,7 @@ class TestTraceOption:
         child.sendline("q")
         child.expect_exact("Exit: Quitting debugger")
         rest = child.read().decode("utf8")
-        assert "2 passed in" in rest
+        assert "= \x1b[32m\x1b[1m2 passed\x1b[0m\x1b[32m in" in rest
         assert "reading from stdin while output" not in rest
         # Only printed once - not on stderr.
         assert "Exit: Quitting debugger" not in child.before.decode("utf8")
@@ -1064,7 +1086,7 @@ class TestTraceOption:
             child.sendline("c")
             child.expect_exact("> PDB continue (IO-capturing resumed) >")
         rest = child.read().decode("utf8")
-        assert "6 passed in" in rest
+        assert "= \x1b[32m\x1b[1m6 passed\x1b[0m\x1b[32m in" in rest
         assert "reading from stdin while output" not in rest
         # Only printed once - not on stderr.
         assert "Exit: Quitting debugger" not in child.before.decode("utf8")
@@ -1175,7 +1197,7 @@ def test_pdb_suspends_fixture_capturing(testdir, fixture):
 
     TestPDB.flush(child)
     assert child.exitstatus == 0
-    assert "= 1 passed in " in rest
+    assert "= \x1b[32m\x1b[1m1 passed\x1b[0m\x1b[32m in" in rest
     assert "> PDB continue (IO-capturing resumed for fixture %s) >" % (fixture) in rest
 
 

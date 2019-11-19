@@ -1,19 +1,30 @@
 import pprint
 import reprlib
+from typing import Any
 
 
-def _format_repr_exception(exc, obj):
-    exc_name = type(exc).__name__
+def _try_repr_or_str(obj):
     try:
-        exc_info = str(exc)
-    except Exception:
-        exc_info = "unknown"
-    return '<[{}("{}") raised in repr()] {} object at 0x{:x}>'.format(
-        exc_name, exc_info, obj.__class__.__name__, id(obj)
+        return repr(obj)
+    except (KeyboardInterrupt, SystemExit):
+        raise
+    except BaseException:
+        return '{}("{}")'.format(type(obj).__name__, obj)
+
+
+def _format_repr_exception(exc: BaseException, obj: Any) -> str:
+    try:
+        exc_info = _try_repr_or_str(exc)
+    except (KeyboardInterrupt, SystemExit):
+        raise
+    except BaseException as exc:
+        exc_info = "unpresentable exception ({})".format(_try_repr_or_str(exc))
+    return "<[{} raised in repr()] {} object at 0x{:x}>".format(
+        exc_info, obj.__class__.__name__, id(obj)
     )
 
 
-def _ellipsize(s, maxsize):
+def _ellipsize(s: str, maxsize: int) -> str:
     if len(s) > maxsize:
         i = max(0, (maxsize - 3) // 2)
         j = max(0, maxsize - 3 - i)
@@ -26,27 +37,31 @@ class SafeRepr(reprlib.Repr):
     and includes information on exceptions raised during the call.
     """
 
-    def __init__(self, maxsize):
+    def __init__(self, maxsize: int) -> None:
         super().__init__()
         self.maxstring = maxsize
         self.maxsize = maxsize
 
-    def repr(self, x):
+    def repr(self, x: Any) -> str:
         try:
             s = super().repr(x)
-        except Exception as exc:
+        except (KeyboardInterrupt, SystemExit):
+            raise
+        except BaseException as exc:
             s = _format_repr_exception(exc, x)
         return _ellipsize(s, self.maxsize)
 
-    def repr_instance(self, x, level):
+    def repr_instance(self, x: Any, level: int) -> str:
         try:
             s = repr(x)
-        except Exception as exc:
+        except (KeyboardInterrupt, SystemExit):
+            raise
+        except BaseException as exc:
             s = _format_repr_exception(exc, x)
         return _ellipsize(s, self.maxsize)
 
 
-def safeformat(obj):
+def safeformat(obj: Any) -> str:
     """return a pretty printed string for the given object.
     Failing __repr__ functions of user instances will be represented
     with a short exception info.
@@ -57,7 +72,7 @@ def safeformat(obj):
         return _format_repr_exception(exc, obj)
 
 
-def saferepr(obj, maxsize=240):
+def saferepr(obj: Any, maxsize: int = 240) -> str:
     """return a size-limited safe repr-string for the given object.
     Failing __repr__ functions of user instances will be represented
     with a short exception info and 'saferepr' generally takes

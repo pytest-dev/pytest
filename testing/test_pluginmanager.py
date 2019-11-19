@@ -135,6 +135,36 @@ class TestPytestPluginInteractions:
         ihook_b = session.gethookproxy(testdir.tmpdir.join("tests"))
         assert ihook_a is not ihook_b
 
+    def test_hook_with_addoption(self, testdir):
+        """Test that hooks can be used in a call to pytest_addoption"""
+        testdir.makepyfile(
+            newhooks="""
+            import pytest
+            @pytest.hookspec(firstresult=True)
+            def pytest_default_value():
+                pass
+        """
+        )
+        testdir.makepyfile(
+            myplugin="""
+            import newhooks
+            def pytest_addhooks(pluginmanager):
+                pluginmanager.add_hookspecs(newhooks)
+            def pytest_addoption(parser, pluginmanager):
+                default_value = pluginmanager.hook.pytest_default_value()
+                parser.addoption("--config", help="Config, defaults to %(default)s", default=default_value)
+        """
+        )
+        testdir.makeconftest(
+            """
+            pytest_plugins=("myplugin",)
+            def pytest_default_value():
+                return "default_value"
+        """
+        )
+        res = testdir.runpytest("--help")
+        res.stdout.fnmatch_lines(["*--config=CONFIG*default_value*"])
+
 
 def test_default_markers(testdir):
     result = testdir.runpytest("--markers")

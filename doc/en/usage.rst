@@ -66,8 +66,8 @@ To stop the testing process after the first (N) failures:
 
 .. code-block:: bash
 
-    pytest -x            # stop after first failure
-    pytest --maxfail=2    # stop after two failures
+    pytest -x           # stop after first failure
+    pytest --maxfail=2  # stop after two failures
 
 .. _select-tests:
 
@@ -241,7 +241,7 @@ Example:
 
     test_example.py:14: AssertionError
     ========================= short test summary info ==========================
-    SKIPPED [1] $REGENDOC_TMPDIR/test_example.py:23: skipping this test
+    SKIPPED [1] $REGENDOC_TMPDIR/test_example.py:22: skipping this test
     XFAIL test_example.py::test_xfail
       reason: xfailing this test
     XPASS test_example.py::test_xpass always xfail
@@ -296,7 +296,7 @@ More than one character can be used, so for example to only see failed and skipp
     test_example.py:14: AssertionError
     ========================= short test summary info ==========================
     FAILED test_example.py::test_fail - assert 0
-    SKIPPED [1] $REGENDOC_TMPDIR/test_example.py:23: skipping this test
+    SKIPPED [1] $REGENDOC_TMPDIR/test_example.py:22: skipping this test
     == 1 failed, 1 passed, 1 skipped, 1 xfailed, 1 xpassed, 1 error in 0.12s ===
 
 Using ``p`` lists the passing tests, whilst ``P`` adds an extra section "PASSES" with those tests that passed but had
@@ -679,12 +679,6 @@ Creating resultlog format files
 ----------------------------------------------------
 
 
-
-    This option is rarely used and is scheduled for removal in 5.0.
-
-    See `the deprecation docs <https://docs.pytest.org/en/latest/deprecations.html#result-log-result-log>`__
-    for more information.
-
 To create plain-text machine-readable result files you can issue:
 
 .. code-block:: bash
@@ -693,6 +687,16 @@ To create plain-text machine-readable result files you can issue:
 
 and look at the content at the ``path`` location.  Such files are used e.g.
 by the `PyPy-test`_ web page to show test results over several revisions.
+
+.. warning::
+
+    This option is rarely used and is scheduled for removal in pytest 6.0.
+
+    If you use this option, consider using the new `pytest-reportlog <https://github.com/pytest-dev/pytest-reportlog>`__ plugin instead.
+
+    See `the deprecation docs <https://docs.pytest.org/en/latest/deprecations.html#result-log-result-log>`__
+    for more information.
+
 
 .. _`PyPy-test`: http://buildbot.pypy.org/summary
 

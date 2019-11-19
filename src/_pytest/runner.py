@@ -6,6 +6,7 @@ from time import time
 from typing import Callable
 from typing import Dict
 from typing import List
+from typing import Optional
 from typing import Tuple
 
 import attr
@@ -207,8 +208,7 @@ class CallInfo:
     """ Result/Exception info a function invocation. """
 
     _result = attr.ib()
-    # Optional[ExceptionInfo]
-    excinfo = attr.ib()
+    excinfo = attr.ib(type=Optional[ExceptionInfo])
     start = attr.ib()
     stop = attr.ib()
     when = attr.ib()
@@ -220,7 +220,7 @@ class CallInfo:
         return self._result
 
     @classmethod
-    def from_call(cls, func, when, reraise=None):
+    def from_call(cls, func, when, reraise=None) -> "CallInfo":
         #: context of invocation: one of "setup", "call",
         #: "teardown", "memocollect"
         start = time()
@@ -236,16 +236,9 @@ class CallInfo:
         return cls(start=start, stop=stop, when=when, result=result, excinfo=excinfo)
 
     def __repr__(self):
-        if self.excinfo is not None:
-            status = "exception"
-            value = self.excinfo.value
-        else:
-            # TODO: investigate unification
-            value = repr(self._result)
-            status = "result"
-        return "<CallInfo when={when!r} {status}: {value}>".format(
-            when=self.when, value=value, status=status
-        )
+        if self.excinfo is None:
+            return "<CallInfo when={!r} result: {!r}>".format(self.when, self._result)
+        return "<CallInfo when={!r} excinfo={!r}>".format(self.when, self.excinfo)
 
 
 def pytest_runtest_makereport(item, call):

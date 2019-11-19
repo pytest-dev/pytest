@@ -8,7 +8,6 @@ import sys
 import types
 import warnings
 from functools import lru_cache
-from pathlib import Path
 from types import TracebackType
 from typing import Any
 from typing import Callable
@@ -18,6 +17,7 @@ from typing import Optional
 from typing import Sequence
 from typing import Set
 from typing import Tuple
+from typing import Union
 
 import attr
 import py
@@ -39,6 +39,7 @@ from _pytest._code import filter_traceback
 from _pytest.compat import importlib_metadata
 from _pytest.outcomes import fail
 from _pytest.outcomes import Skipped
+from _pytest.pathlib import Path
 from _pytest.warning_types import PytestConfigWarning
 
 if False:  # TYPE_CHECKING
@@ -56,7 +57,7 @@ class ConftestImportFailure(Exception):
         self.excinfo = excinfo  # type: Tuple[Type[Exception], Exception, TracebackType]
 
 
-def main(args=None, plugins=None):
+def main(args=None, plugins=None) -> "Union[int, _pytest.main.ExitCode]":
     """ return exit code, after performing an in-process test run.
 
     :arg args: list of command line arguments.
@@ -84,10 +85,16 @@ def main(args=None, plugins=None):
             formatted_tb = str(exc_repr)
             for line in formatted_tb.splitlines():
                 tw.line(line.rstrip(), red=True)
-            return 4
+            return ExitCode.USAGE_ERROR
         else:
             try:
-                return config.hook.pytest_cmdline_main(config=config)
+                ret = config.hook.pytest_cmdline_main(
+                    config=config
+                )  # type: Union[ExitCode, int]
+                try:
+                    return ExitCode(ret)
+                except ValueError:
+                    return ret
             finally:
                 config._ensure_unconfigure()
     except UsageError as e:
@@ -124,13 +131,13 @@ def directory_arg(path, optname):
 
 
 # Plugins that cannot be disabled via "-p no:X" currently.
-essential_plugins = (  # fmt: off
+essential_plugins = (
     "mark",
     "main",
     "runner",
     "fixtures",
     "helpconfig",  # Provides -p.
-)  # fmt: on
+)
 
 default_plugins = essential_plugins + (
     "python",
@@ -169,7 +176,7 @@ def get_config(args=None, plugins=None):
     config = Config(
         pluginmanager,
         invocation_params=Config.InvocationParams(
-            args=args, plugins=plugins, dir=Path().resolve()
+            args=args or (), plugins=plugins, dir=Path().resolve()
         ),
     )
 
@@ -649,7 +656,7 @@ class Config:
 
         Contains the following read-only attributes:
 
-        * ``args``: list of command-line arguments as passed to ``pytest.main()``.
+        * ``args``: tuple of command-line arguments as passed to ``pytest.main()``.
         * ``plugins``: list of extra plugins, might be None.
         * ``dir``: directory where ``pytest.main()`` was invoked from.
     """
@@ -662,13 +669,13 @@ class Config:
 
         .. note::
 
-            Currently the environment variable PYTEST_ADDOPTS is also handled by
-            pytest implicitly, not being part of the invocation.
+            Note that the environment variable ``PYTEST_ADDOPTS`` and the ``addopts``
+            ini option are handled by pytest, not being included in the ``args`` attribute.
 
             Plugins accessing ``InvocationParams`` must be aware of that.
         """
 
-        args = attr.ib()
+        args = attr.ib(converter=tuple)
         plugins = attr.ib()
         dir = attr.ib(type=Path)
 
@@ -697,7 +704,9 @@ class Config:
         self._cleanup = []  # type: List[Callable[[], None]]
         self.pluginmanager.register(self, "pytestconfig")
         self._configured = False
-        self.hook.pytest_addoption.call_historic(kwargs=dict(parser=self._parser))
+        self.hook.pytest_addoption.call_historic(
+            kwargs=dict(parser=self._parser, pluginmanager=self.pluginmanager)
+        )
 
     @property
     def invocation_dir(self):
@@ -933,7 +942,6 @@ class Config:
         assert not hasattr(
             self, "args"
         ), "can only parse cmdline args at most once per Config object"
-        assert self.invocation_params.args == args
         self.hook.pytest_addhooks.call_historic(
             kwargs=dict(pluginmanager=self.pluginmanager)
         )
@@ -965,7 +973,7 @@ class Config:
     def getini(self, name: str):
         """ return configuration value from an :ref:`ini file <inifiles>`. If the
         specified name hasn't been registered through a prior
-        :py:func:`parser.addini <_pytest.config.Parser.addini>`
+        :py:func:`parser.addini <_pytest.config.argparsing.Parser.addini>`
         call (usually from a plugin), a ValueError is raised. """
         try:
             return self._inicache[name]

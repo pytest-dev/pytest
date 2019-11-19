@@ -314,6 +314,21 @@ def test_keyword_option_parametrize(spec, testdir):
     assert list(passed) == list(passed_result)
 
 
+def test_parametrize_with_module(testdir):
+    testdir.makepyfile(
+        """
+        import pytest
+        @pytest.mark.parametrize("arg", [pytest,])
+        def test_func(arg):
+            pass
+    """
+    )
+    rec = testdir.inline_run()
+    passed, skipped, fail = rec.listoutcomes()
+    expected_id = "test_func[" + pytest.__name__ + "]"
+    assert passed[0].nodeid.split("::")[-1] == expected_id
+
+
 @pytest.mark.parametrize(
     "spec",
     [
@@ -831,6 +846,12 @@ class TestMarkDecorator:
     def test__eq__(self, lhs, rhs, expected):
         assert (lhs == rhs) == expected
 
+    def test_aliases(self) -> None:
+        md = pytest.mark.foo(1, "2", three=3)
+        assert md.name == "foo"
+        assert md.args == (1, "2")
+        assert md.kwargs == {"three": 3}
+
 
 @pytest.mark.parametrize("mark", [None, "", "skip", "xfail"])
 def test_parameterset_for_parametrize_marks(testdir, mark):
@@ -891,7 +912,7 @@ def test_parameterset_for_fail_at_collect(testdir):
     result = testdir.runpytest(str(p1))
     result.stdout.fnmatch_lines(
         [
-            "collected 0 items / 1 errors",
+            "collected 0 items / 1 error",
             "* ERROR collecting test_parameterset_for_fail_at_collect.py *",
             "Empty parameter set in 'test' at line 3",
             "*= 1 error in *",
@@ -990,7 +1011,7 @@ def test_markers_from_parametrize(testdir):
 def test_pytest_param_id_requires_string():
     with pytest.raises(TypeError) as excinfo:
         pytest.param(id=True)
-    msg, = excinfo.value.args
+    (msg,) = excinfo.value.args
     assert msg == "Expected id to be a string, got <class 'bool'>: True"
 
 

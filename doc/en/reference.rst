@@ -1192,6 +1192,29 @@ passed multiple times. The expected format is ``name=value``. For example::
         [pytest]
         junit_suite_name = my_suite
 
+.. confval:: log_auto_indent
+
+    Allow selective auto-indentation of multiline log messages.
+
+    Supports command line option ``--log-auto-indent [value]``
+    and config option ``log_auto_indent = [value]`` to set the
+    auto-indentation behavior for all logging.
+
+    ``[value]`` can be:
+        * True or "On" - Dynamically auto-indent multiline log messages
+        * False or "Off" or 0 - Do not auto-indent multiline log messages (the default behavior)
+        * [positive integer] - auto-indent multiline log messages by [value] spaces
+
+    .. code-block:: ini
+
+        [pytest]
+        log_auto_indent = False
+
+    Supports passing kwarg ``extra={"auto_indent": [value]}`` to
+    calls to ``logging.log()`` to specify auto-indentation behavior for
+    a specific entry in the log. ``extra`` kwarg overrides the value specified
+    on the command line or in the config.
+
 
 .. confval:: log_cli_date_format
 

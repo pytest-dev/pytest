@@ -7,6 +7,7 @@ ignores the external pytest-cache
 import json
 import os
 from collections import OrderedDict
+from typing import List
 
 import attr
 import py
@@ -15,6 +16,9 @@ import pytest
 from .pathlib import Path
 from .pathlib import resolve_from_str
 from .pathlib import rm_rf
+from _pytest import nodes
+from _pytest.config import Config
+from _pytest.main import Session
 
 README_CONTENT = """\
 # pytest cache directory #
@@ -121,13 +125,14 @@ class Cache:
             return
         if not cache_dir_exists_already:
             self._ensure_supporting_files()
+        data = json.dumps(value, indent=2, sort_keys=True)
         try:
             f = path.open("w")
         except (IOError, OSError):
             self.warn("cache could not write path {path}", path=path)
         else:
             with f:
-                json.dump(value, f, indent=2, sort_keys=True)
+                f.write(data)
 
     def _ensure_supporting_files(self):
         """Create supporting files in the cache dir that are not really part of the cache."""
@@ -263,10 +268,12 @@ class NFPlugin:
         self.active = config.option.newfirst
         self.cached_nodeids = config.cache.get("cache/nodeids", [])
 
-    def pytest_collection_modifyitems(self, session, config, items):
-        new_items = OrderedDict()
+    def pytest_collection_modifyitems(
+        self, session: Session, config: Config, items: List[nodes.Item]
+    ) -> None:
+        new_items = OrderedDict()  # type: OrderedDict[str, nodes.Item]
         if self.active:
-            other_items = OrderedDict()
+            other_items = OrderedDict()  # type: OrderedDict[str, nodes.Item]
             for item in items:
                 if item.nodeid not in self.cached_nodeids:
                     new_items[item.nodeid] = item

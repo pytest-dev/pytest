@@ -1,12 +1,12 @@
 import os
 import textwrap
-from pathlib import Path
 
 import py
 
 import pytest
 from _pytest.config import PytestPluginManager
 from _pytest.main import ExitCode
+from _pytest.pathlib import Path
 
 
 def ConftestWithSetinitial(path):
@@ -187,7 +187,7 @@ def test_conftest_confcutdir(testdir):
     )
     result = testdir.runpytest("-h", "--confcutdir=%s" % x, x)
     result.stdout.fnmatch_lines(["*--xyz*"])
-    assert "warning: could not load initial" not in result.stdout.str()
+    result.stdout.no_fnmatch_line("*warning: could not load initial*")
 
 
 @pytest.mark.skipif(
@@ -648,5 +648,5 @@ def test_required_option_help(testdir):
         )
     )
     result = testdir.runpytest("-h", x)
-    assert "argument --xyz is required" not in result.stdout.str()
+    result.stdout.no_fnmatch_line("*argument --xyz is required*")
     assert "general:" in result.stdout.str()

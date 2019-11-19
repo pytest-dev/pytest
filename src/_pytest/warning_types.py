@@ -1,4 +1,12 @@
+from typing import Any
+from typing import Generic
+from typing import TypeVar
+
 import attr
+
+
+if False:  # TYPE_CHECKING
+    from typing import Type  # noqa: F401 (used in type string)
 
 
 class PytestWarning(UserWarning):
@@ -72,7 +80,7 @@ class PytestExperimentalApiWarning(PytestWarning, FutureWarning):
     __module__ = "pytest"
 
     @classmethod
-    def simple(cls, apiname):
+    def simple(cls, apiname: str) -> "PytestExperimentalApiWarning":
         return cls(
             "{apiname} is an experimental api that may change over time".format(
                 apiname=apiname
@@ -103,17 +111,20 @@ class PytestUnknownMarkWarning(PytestWarning):
     __module__ = "pytest"
 
 
+_W = TypeVar("_W", bound=PytestWarning)
+
+
 @attr.s
-class UnformattedWarning:
+class UnformattedWarning(Generic[_W]):
     """Used to hold warnings that need to format their message at runtime, as opposed to a direct message.
 
     Using this class avoids to keep all the warning types and messages in this module, avoiding misuse.
     """
 
-    category = attr.ib()
-    template = attr.ib()
+    category = attr.ib(type="Type[_W]")
+    template = attr.ib(type=str)
 
-    def format(self, **kwargs):
+    def format(self, **kwargs: Any) -> _W:
         """Returns an instance of the warning category, formatted with given kwargs"""
         return self.category(self.template.format(**kwargs))
 

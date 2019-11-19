@@ -12,13 +12,11 @@ from _pytest.assertion import util
 from _pytest.compat import ATTRS_EQ_FIELD
 
 
-def mock_config():
+def mock_config(verbose=0):
     class Config:
-        verbose = False
-
         def getoption(self, name):
             if name == "verbose":
-                return self.verbose
+                return verbose
             raise KeyError("Not mocked out: %s" % name)
 
     return Config()
@@ -72,7 +70,14 @@ class TestImportHookInstallation:
         """
         )
         result = testdir.runpytest_subprocess()
-        result.stdout.fnmatch_lines(["*assert 1 == 0*"])
+        result.stdout.fnmatch_lines(
+            [
+                "E * AssertionError: ([[][]], [[][]], [[]<TestReport *>[]])*",
+                "E * assert"
+                " {'failed': 1, 'passed': 0, 'skipped': 0} =="
+                " {'failed': 0, 'passed': 1, 'skipped': 0}",
+            ]
+        )
 
     @pytest.mark.parametrize("mode", ["plain", "rewrite"])
     def test_pytest_plugins_rewrite(self, testdir, mode):
@@ -296,9 +301,8 @@ class TestBinReprIntegration:
         result.stdout.fnmatch_lines(["*test_hello*FAIL*", "*test_check*PASS*"])
 
 
-def callequal(left, right, verbose=False):
-    config = mock_config()
-    config.verbose = verbose
+def callequal(left, right, verbose=0):
+    config = mock_config(verbose=verbose)
     return plugin.pytest_assertrepr_compare(config, "==", left, right)
 
 
@@ -322,7 +326,7 @@ class TestAssert_reprcompare:
             assert "a" * 50 not in line
 
     def test_text_skipping_verbose(self):
-        lines = callequal("a" * 50 + "spam", "a" * 50 + "eggs", verbose=True)
+        lines = callequal("a" * 50 + "spam", "a" * 50 + "eggs", verbose=1)
         assert "- " + "a" * 50 + "spam" in lines
         assert "+ " + "a" * 50 + "eggs" in lines
 
@@ -345,7 +349,7 @@ class TestAssert_reprcompare:
 
     def test_bytes_diff_verbose(self):
         """Check special handling for bytes diff (#5260)"""
-        diff = callequal(b"spam", b"eggs", verbose=True)
+        diff = callequal(b"spam", b"eggs", verbose=1)
         assert diff == [
             "b'spam' == b'eggs'",
             "At index 0 diff: b's' != b'e'",
@@ -361,7 +365,7 @@ class TestAssert_reprcompare:
     @pytest.mark.parametrize(
         ["left", "right", "expected"],
         [
-            (
+            pytest.param(
                 [0, 1],
                 [0, 2],
                 """
@@ -371,8 +375,9 @@ class TestAssert_reprcompare:
                 + [0, 2]
                 ?     ^
             """,
+                id="lists",
             ),
-            (
+            pytest.param(
                 {0: 1},
                 {0: 2},
                 """
@@ -382,8 +387,9 @@ class TestAssert_reprcompare:
                 + {0: 2}
                 ?     ^
             """,
+                id="dicts",
             ),
-            (
+            pytest.param(
                 {0, 1},
                 {0, 2},
                 """
@@ -393,6 +399,7 @@ class TestAssert_reprcompare:
                 + {0, 2}
                 ?     ^
             """,
+                id="sets",
             ),
         ],
     )
@@ -402,9 +409,9 @@ class TestAssert_reprcompare:
         When verbose is False, then just a -v notice to get the diff is rendered,
         when verbose is True, then ndiff of the pprint is returned.
         """
-        expl = callequal(left, right, verbose=False)
+        expl = callequal(left, right, verbose=0)
         assert expl[-1] == "Use -v to get the full diff"
-        expl = "\n".join(callequal(left, right, verbose=True))
+        expl = "\n".join(callequal(left, right, verbose=1))
         assert expl.endswith(textwrap.dedent(expected).strip())
 
     def test_list_different_lengths(self):
@@ -412,6 +419,113 @@ class TestAssert_reprcompare:
         assert len(expl) > 1
         expl = callequal([0, 1, 2], [0, 1])
         assert len(expl) > 1
+
+    def test_list_wrap_for_multiple_lines(self):
+        long_d = "d" * 80
+        l1 = ["a", "b", "c"]
+        l2 = ["a", "b", "c", long_d]
+        diff = callequal(l1, l2, verbose=True)
+        assert diff == [
+            "['a', 'b', 'c'] == ['a', 'b', 'c...dddddddddddd']",
+            "Right contains one more item: '" + long_d + "'",
+            "Full diff:",
+            "  [",
+            "   'a',",
+            "   'b',",
+            "   'c',",
+            "+  '" + long_d + "',",
+            "  ]",
+        ]
+
+        diff = callequal(l2, l1, verbose=True)
+        assert diff == [
+            "['a', 'b', 'c...dddddddddddd'] == ['a', 'b', 'c']",
+            "Left contains one more item: '" + long_d + "'",
+            "Full diff:",
+            "  [",
+            "   'a',",
+            "   'b',",
+            "   'c',",
+            "-  '" + long_d + "',",
+            "  ]",
+        ]
+
+    def test_list_wrap_for_width_rewrap_same_length(self):
+        long_a = "a" * 30
+        long_b = "b" * 30
+        long_c = "c" * 30
+        l1 = [long_a, long_b, long_c]
+        l2 = [long_b, long_c, long_a]
+        diff = callequal(l1, l2, verbose=True)
+        assert diff == [
+            "['aaaaaaaaaaa...cccccccccccc'] == ['bbbbbbbbbbb...aaaaaaaaaaaa']",
+            "At index 0 diff: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' != 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'",
+            "Full diff:",
+            "  [",
+            "-  'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',",
+            "   'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',",
+            "   'cccccccccccccccccccccccccccccc',",
+            "+  'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',",
+            "  ]",
+        ]
+
+    def test_list_dont_wrap_strings(self):
+        long_a = "a" * 10
+        l1 = ["a"] + [long_a for _ in range(0, 7)]
+        l2 = ["should not get wrapped"]
+        diff = callequal(l1, l2, verbose=True)
+        assert diff == [
+            "['a', 'aaaaaa...aaaaaaa', ...] == ['should not get wrapped']",
+            "At index 0 diff: 'a' != 'should not get wrapped'",
+            "Left contains 7 more items, first extra item: 'aaaaaaaaaa'",
+            "Full diff:",
+            "  [",
+            "+  'should not get wrapped',",
+            "-  'a',",
+            "-  'aaaaaaaaaa',",
+            "-  'aaaaaaaaaa',",
+            "-  'aaaaaaaaaa',",
+            "-  'aaaaaaaaaa',",
+            "-  'aaaaaaaaaa',",
+            "-  'aaaaaaaaaa',",
+            "-  'aaaaaaaaaa',",
+            "  ]",
+        ]
+
+    def test_dict_wrap(self):
+        d1 = {"common": 1, "env": {"env1": 1}}
+        d2 = {"common": 1, "env": {"env1": 1, "env2": 2}}
+
+        diff = callequal(d1, d2, verbose=True)
+        assert diff == [
+            "{'common': 1,...: {'env1': 1}} == {'common': 1,...1, 'env2': 2}}",
+            "Omitting 1 identical items, use -vv to show",
+            "Differing items:",
+            "{'env': {'env1': 1}} != {'env': {'env1': 1, 'env2': 2}}",
+            "Full diff:",
+            "- {'common': 1, 'env': {'env1': 1}}",
+            "+ {'common': 1, 'env': {'env1': 1, 'env2': 2}}",
+            "?                                +++++++++++",
+        ]
+
+        long_a = "a" * 80
+        sub = {"long_a": long_a, "sub1": {"long_a": "substring that gets wrapped " * 2}}
+        d1 = {"env": {"sub": sub}}
+        d2 = {"env": {"sub": sub}, "new": 1}
+        diff = callequal(d1, d2, verbose=True)
+        assert diff == [
+            "{'env': {'sub... wrapped '}}}} == {'env': {'sub...}}}, 'new': 1}",
+            "Omitting 1 identical items, use -vv to show",
+            "Right contains 1 more item:",
+            "{'new': 1}",
+            "Full diff:",
+            "  {",
+            "   'env': {'sub': {'long_a': '" + long_a + "',",
+            "                   'sub1': {'long_a': 'substring that gets wrapped substring '",
+            "                                      'that gets wrapped '}}},",
+            "+  'new': 1,",
+            "  }",
+        ]
 
     def test_dict(self):
         expl = callequal({"a": 0}, {"a": 1})
@@ -1034,7 +1148,7 @@ def test_assertion_options(testdir):
     result = testdir.runpytest()
     assert "3 == 4" in result.stdout.str()
     result = testdir.runpytest_subprocess("--assert=plain")
-    assert "3 == 4" not in result.stdout.str()
+    result.stdout.no_fnmatch_line("*3 == 4*")
 
 
 def test_triple_quoted_string_issue113(testdir):
@@ -1046,7 +1160,7 @@ def test_triple_quoted_string_issue113(testdir):
     )
     result = testdir.runpytest("--fulltrace")
     result.stdout.fnmatch_lines(["*1 failed*"])
-    assert "SyntaxError" not in result.stdout.str()
+    result.stdout.no_fnmatch_line("*SyntaxError*")
 
 
 def test_traceback_failure(testdir):

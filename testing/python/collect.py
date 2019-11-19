@@ -1139,7 +1139,7 @@ def test_unorderable_types(testdir):
     """
     )
     result = testdir.runpytest()
-    assert "TypeError" not in result.stdout.str()
+    result.stdout.no_fnmatch_line("*TypeError*")
     assert result.ret == ExitCode.NO_TESTS_COLLECTED
 
 
@@ -1167,7 +1167,7 @@ def test_dont_collect_non_function_callable(testdir):
         [
             "*collected 1 item*",
             "*test_dont_collect_non_function_callable.py:2: *cannot collect 'test_a' because it is not a function*",
-            "*1 passed, 1 warnings in *",
+            "*1 passed, 1 warning in *",
         ]
     )
 

@@ -3,9 +3,14 @@ import logging
 import re
 from contextlib import contextmanager
 from io import StringIO
+from typing import AbstractSet
+from typing import Dict
+from typing import List
+from typing import Mapping
 
 import pytest
 from _pytest.compat import nullcontext
+from _pytest.config import _strtobool
 from _pytest.config import create_terminal_writer
 from _pytest.pathlib import Path
 
@@ -31,14 +36,15 @@ class ColoredLevelFormatter(logging.Formatter):
         logging.INFO: {"green"},
         logging.DEBUG: {"purple"},
         logging.NOTSET: set(),
-    }
+    }  # type: Mapping[int, AbstractSet[str]]
     LEVELNAME_FMT_REGEX = re.compile(r"%\(levelname\)([+-.]?\d*s)")
 
-    def __init__(self, terminalwriter, *args, **kwargs):
+    def __init__(self, terminalwriter, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self._original_fmt = self._style._fmt
-        self._level_to_fmt_mapping = {}
+        self._level_to_fmt_mapping = {}  # type: Dict[int, str]
 
+        assert self._fmt is not None
         levelname_fmt_match = self.LEVELNAME_FMT_REGEX.search(self._fmt)
         if not levelname_fmt_match:
             return
@@ -71,24 +77,87 @@ class PercentStyleMultiline(logging.PercentStyle):
     formats the message as if each line were logged separately.
     """
 
+    def __init__(self, fmt, auto_indent):
+        super().__init__(fmt)
+        self._auto_indent = self._get_auto_indent(auto_indent)
+
     @staticmethod
     def _update_message(record_dict, message):
         tmp = record_dict.copy()
         tmp["message"] = message
         return tmp
 
+    @staticmethod
+    def _get_auto_indent(auto_indent_option) -> int:
+        """Determines the current auto indentation setting
+
+        Specify auto indent behavior (on/off/fixed) by passing in
+        extra={"auto_indent": [value]} to the call to logging.log() or
+        using a --log-auto-indent [value] command line or the
+        log_auto_indent [value] config option.
+
+        Default behavior is auto-indent off.
+
+        Using the string "True" or "on" or the boolean True as the value
+        turns auto indent on, using the string "False" or "off" or the
+        boolean False or the int 0 turns it off, and specifying a
+        positive integer fixes the indentation position to the value
+        specified.
+
+        Any other values for the option are invalid, and will silently be
+        converted to the default.
+
+        :param any auto_indent_option: User specified option for indentation
+            from command line, config or extra kwarg. Accepts int, bool or str.
+            str option accepts the same range of values as boolean config options,
+            as well as positive integers represented in str form.
+
+        :returns: indentation value, which can be
+            -1 (automatically determine indentation) or
+            0 (auto-indent turned off) or
+            >0 (explicitly set indentation position).
+        """
+
+        if type(auto_indent_option) is int:
+            return int(auto_indent_option)
+        elif type(auto_indent_option) is str:
+            try:
+                return int(auto_indent_option)
+            except ValueError:
+                pass
+            try:
+                if _strtobool(auto_indent_option):
+                    return -1
+            except ValueError:
+                return 0
+        elif type(auto_indent_option) is bool:
+            if auto_indent_option:
+                return -1
+
+        return 0
+
     def format(self, record):
         if "\n" in record.message:
-            lines = record.message.splitlines()
-            formatted = self._fmt % self._update_message(record.__dict__, lines[0])
-            # TODO optimize this by introducing an option that tells the
-            # logging framework that the indentation doesn't
-            # change. This allows to compute the indentation only once.
-            indentation = _remove_ansi_escape_sequences(formatted).find(lines[0])
-            lines[0] = formatted
-            return ("\n" + " " * indentation).join(lines)
-        else:
-            return self._fmt % record.__dict__
+            if hasattr(record, "auto_indent"):
+                # passed in from the "extra={}" kwarg on the call to logging.log()
+                auto_indent = self._get_auto_indent(record.auto_indent)
+            else:
+                auto_indent = self._auto_indent
+
+            if auto_indent:
+                lines = record.message.splitlines()
+                formatted = self._fmt % self._update_message(record.__dict__, lines[0])
+
+                if auto_indent < 0:
+                    indentation = _remove_ansi_escape_sequences(formatted).find(
+                        lines[0]
+                    )
+                else:
+                    # optimizes logging by allowing a fixed indentation
+                    indentation = auto_indent
+                lines[0] = formatted
+                return ("\n" + " " * indentation).join(lines)
+        return self._fmt % record.__dict__
 
 
 def get_option_ini(config, *names):
@@ -182,6 +251,12 @@ def pytest_addoption(parser):
         default=DEFAULT_LOG_DATE_FORMAT,
         help="log date format as used by the logging module.",
     )
+    add_option_ini(
+        "--log-auto-indent",
+        dest="log_auto_indent",
+        default=None,
+        help="Auto-indent multiline messages passed to the logging module. Accepts true|on, false|off or an integer.",
+    )
 
 
 @contextmanager
@@ -215,17 +290,17 @@ def catching_logs(handler, formatter=None, level=None):
 class LogCaptureHandler(logging.StreamHandler):
     """A logging handler that stores log records and the log text."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Creates a new log handler."""
         logging.StreamHandler.__init__(self, StringIO())
-        self.records = []
+        self.records = []  # type: List[logging.LogRecord]
 
-    def emit(self, record):
+    def emit(self, record: logging.LogRecord) -> None:
         """Keep the log records in a list in addition to the log text."""
         self.records.append(record)
         logging.StreamHandler.emit(self, record)
 
-    def reset(self):
+    def reset(self) -> None:
         self.records = []
         self.stream = StringIO()
 
@@ -233,13 +308,13 @@ class LogCaptureHandler(logging.StreamHandler):
 class LogCaptureFixture:
     """Provides access and control of log capturing."""
 
-    def __init__(self, item):
+    def __init__(self, item) -> None:
         """Creates a new funcarg."""
         self._item = item
         # dict of log name -> log level
-        self._initial_log_levels = {}  # Dict[str, int]
+        self._initial_log_levels = {}  # type: Dict[str, int]
 
-    def _finalize(self):
+    def _finalize(self) -> None:
         """Finalizes the fixture.
 
         This restores the log levels changed by :meth:`set_level`.
@@ -413,6 +488,7 @@ class LoggingPlugin:
         self.formatter = self._create_formatter(
             get_option_ini(config, "log_format"),
             get_option_ini(config, "log_date_format"),
+            get_option_ini(config, "log_auto_indent"),
         )
         self.log_level = get_actual_log_level(config, "log_level")
 
@@ -444,7 +520,7 @@ class LoggingPlugin:
         if self._log_cli_enabled():
             self._setup_cli_logging()
 
-    def _create_formatter(self, log_format, log_date_format):
+    def _create_formatter(self, log_format, log_date_format, auto_indent):
         # color option doesn't exist if terminal plugin is disabled
         color = getattr(self._config.option, "color", "no")
         if color != "no" and ColoredLevelFormatter.LEVELNAME_FMT_REGEX.search(
@@ -452,11 +528,14 @@ class LoggingPlugin:
         ):
             formatter = ColoredLevelFormatter(
                 create_terminal_writer(self._config), log_format, log_date_format
-            )
+            )  # type: logging.Formatter
         else:
             formatter = logging.Formatter(log_format, log_date_format)
 
-        formatter._style = PercentStyleMultiline(formatter._style._fmt)
+        formatter._style = PercentStyleMultiline(
+            formatter._style._fmt, auto_indent=auto_indent
+        )
+
         return formatter
 
     def _setup_cli_logging(self):
@@ -473,6 +552,7 @@ class LoggingPlugin:
         log_cli_formatter = self._create_formatter(
             get_option_ini(config, "log_cli_format", "log_format"),
             get_option_ini(config, "log_cli_date_format", "log_date_format"),
+            get_option_ini(config, "log_auto_indent"),
         )
 
         log_cli_level = get_actual_log_level(config, "log_cli_level", "log_level")

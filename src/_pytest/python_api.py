@@ -223,26 +223,24 @@ class ApproxScalar(ApproxBase):
     def __repr__(self):
         """
         Return a string communicating both the expected value and the tolerance
-        for the comparison being made, e.g. '1.0 +- 1e-6'.  Use the unicode
-        plus/minus symbol if this is python3 (it's too hard to get right for
-        python2).
+        for the comparison being made, e.g. '1.0 ± 1e-6', '(3+4j) ± 5e-6 ∠ ±180°'.
         """
-        if isinstance(self.expected, complex):
-            return str(self.expected)
 
         # Infinities aren't compared using tolerances, so don't show a
-        # tolerance.
-        if math.isinf(self.expected):
+        # tolerance. Need to call abs to handle complex numbers, e.g. (inf + 1j)
+        if math.isinf(abs(self.expected)):
             return str(self.expected)
 
         # If a sensible tolerance can't be calculated, self.tolerance will
         # raise a ValueError.  In this case, display '???'.
         try:
             vetted_tolerance = "{:.1e}".format(self.tolerance)
+            if isinstance(self.expected, complex) and not math.isinf(self.tolerance):
+                vetted_tolerance += " ∠ ±180°"
         except ValueError:
             vetted_tolerance = "???"
 
-        return "{} \u00b1 {}".format(self.expected, vetted_tolerance)
+        return "{} ± {}".format(self.expected, vetted_tolerance)
 
     def __eq__(self, actual):
         """
@@ -554,7 +552,7 @@ def raises(
 
 
 @overload  # noqa: F811
-def raises(
+def raises(  # noqa: F811
     expected_exception: Union["Type[_E]", Tuple["Type[_E]", ...]],
     func: Callable,
     *args: Any,

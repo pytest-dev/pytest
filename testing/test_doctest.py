@@ -239,8 +239,8 @@ class TestDoctests:
             ]
         )
         # lines below should be trimmed out
-        assert "text-line-2" not in result.stdout.str()
-        assert "text-line-after" not in result.stdout.str()
+        result.stdout.no_fnmatch_line("*text-line-2*")
+        result.stdout.no_fnmatch_line("*text-line-after*")
 
     def test_docstring_full_context_around_error(self, testdir):
         """Test that we show the whole context before the actual line of a failing
@@ -334,7 +334,7 @@ class TestDoctests:
             [
                 "*ERROR collecting hello.py*",
                 "*{e}: No module named *asdals*".format(e=MODULE_NOT_FOUND_ERROR),
-                "*Interrupted: 1 errors during collection*",
+                "*Interrupted: 1 error during collection*",
             ]
         )
 
@@ -839,7 +839,8 @@ class TestLiterals:
         reprec = testdir.inline_run()
         reprec.assertoutcome(failed=1)
 
-    def test_number_re(self):
+    def test_number_re(self) -> None:
+        _number_re = _get_checker()._number_re  # type: ignore
         for s in [
             "1.",
             "+1.",
@@ -861,12 +862,12 @@ class TestLiterals:
             "-1.2e-3",
         ]:
             print(s)
-            m = _get_checker()._number_re.match(s)
+            m = _number_re.match(s)
             assert m is not None
             assert float(m.group()) == pytest.approx(float(s))
         for s in ["1", "abc"]:
             print(s)
-            assert _get_checker()._number_re.match(s) is None
+            assert _number_re.match(s) is None
 
     @pytest.mark.parametrize("config_mode", ["ini", "comment"])
     def test_number_precision(self, testdir, config_mode):
@@ -1177,7 +1178,7 @@ class TestDoctestAutoUseFixtures:
             """
             )
         result = testdir.runpytest("--doctest-modules")
-        assert "FAILURES" not in str(result.stdout.str())
+        result.stdout.no_fnmatch_line("*FAILURES*")
         result.stdout.fnmatch_lines(["*=== 1 passed in *"])
 
     @pytest.mark.parametrize("scope", SCOPES)
@@ -1209,7 +1210,7 @@ class TestDoctestAutoUseFixtures:
         """
         )
         result = testdir.runpytest("--doctest-modules")
-        assert "FAILURES" not in str(result.stdout.str())
+        str(result.stdout.no_fnmatch_line("*FAILURES*"))
         result.stdout.fnmatch_lines(["*=== 1 passed in *"])
 
 

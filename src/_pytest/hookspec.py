@@ -35,7 +35,7 @@ def pytest_plugin_registered(plugin, manager):
 
 
 @hookspec(historic=True)
-def pytest_addoption(parser):
+def pytest_addoption(parser, pluginmanager):
     """register argparse-style options and ini-style config values,
     called once at the beginning of a test run.
 
@@ -45,10 +45,15 @@ def pytest_addoption(parser):
         files situated at the tests root directory due to how pytest
         :ref:`discovers plugins during startup <pluginorder>`.
 
-    :arg _pytest.config.Parser parser: To add command line options, call
-        :py:func:`parser.addoption(...) <_pytest.config.Parser.addoption>`.
+    :arg _pytest.config.argparsing.Parser parser: To add command line options, call
+        :py:func:`parser.addoption(...) <_pytest.config.argparsing.Parser.addoption>`.
         To add ini-file values call :py:func:`parser.addini(...)
-        <_pytest.config.Parser.addini>`.
+        <_pytest.config.argparsing.Parser.addini>`.
+
+    :arg _pytest.config.PytestPluginManager pluginmanager: pytest plugin manager,
+        which can be used to install :py:func:`hookspec`'s or :py:func:`hookimpl`'s
+        and allow one plugin to call another plugin's hooks to change how
+        command line options are added.
 
     Options can later be accessed through the
     :py:class:`config <_pytest.config.Config>` object, respectively:
@@ -143,7 +148,7 @@ def pytest_load_initial_conftests(early_config, parser, args):
 
     :param _pytest.config.Config early_config: pytest config object
     :param list[str] args: list of arguments passed on the command line
-    :param _pytest.config.Parser parser: to add command line options
+    :param _pytest.config.argparsing.Parser parser: to add command line options
     """
 
 
@@ -381,16 +386,6 @@ def pytest_runtest_logreport(report):
 @hookspec(firstresult=True)
 def pytest_report_to_serializable(config, report):
     """
-    .. warning::
-        This hook is experimental and subject to change between pytest releases, even
-        bug fixes.
-
-        The intent is for this to be used by plugins maintained by the core-devs, such
-        as ``pytest-xdist``, ``pytest-subtests``, and as a replacement for the internal
-        'resultlog' plugin.
-
-        In the future it might become part of the public hook API.
-
     Serializes the given report object into a data structure suitable for sending
     over the wire, e.g. converted to JSON.
     """
@@ -399,16 +394,6 @@ def pytest_report_to_serializable(config, report):
 @hookspec(firstresult=True)
 def pytest_report_from_serializable(config, data):
     """
-    .. warning::
-        This hook is experimental and subject to change between pytest releases, even
-        bug fixes.
-
-        The intent is for this to be used by plugins maintained by the core-devs, such
-        as ``pytest-xdist``, ``pytest-subtests``, and as a replacement for the internal
-        'resultlog' plugin.
-
-        In the future it might become part of the public hook API.
-
     Restores a report object previously serialized with pytest_report_to_serializable().
     """
 

@@ -21,30 +21,26 @@ from _pytest.terminal import getreportopt
 from _pytest.terminal import TerminalReporter
 
 DistInfo = collections.namedtuple("DistInfo", ["project_name", "version"])
+RED = r"\x1b\[31m"
+GREEN = r"\x1b\[32m"
+YELLOW = r"\x1b\[33m"
+RESET = r"\x1b\[0m"
 
 
 class Option:
-    def __init__(self, verbosity=0, fulltrace=False):
+    def __init__(self, verbosity=0):
         self.verbosity = verbosity
-        self.fulltrace = fulltrace
 
     @property
     def args(self):
         values = []
         values.append("--verbosity=%d" % self.verbosity)
-        if self.fulltrace:
-            values.append("--fulltrace")
         return values
 
 
 @pytest.fixture(
-    params=[
-        Option(verbosity=0),
-        Option(verbosity=1),
-        Option(verbosity=-1),
-        Option(fulltrace=True),
-    ],
-    ids=["default", "verbose", "quiet", "fulltrace"],
+    params=[Option(verbosity=0), Option(verbosity=1), Option(verbosity=-1)],
+    ids=["default", "verbose", "quiet"],
 )
 def option(request):
     return request.param
@@ -165,7 +161,7 @@ class TestTerminal:
         child.expect(r"collecting 2 items")
         child.expect(r"collected 2 items")
         rest = child.read().decode("utf8")
-        assert "2 passed in" in rest
+        assert "= \x1b[32m\x1b[1m2 passed\x1b[0m\x1b[32m in" in rest
 
     def test_itemreport_subclasses_show_subclassed_file(self, testdir):
         testdir.makepyfile(
@@ -205,9 +201,10 @@ class TestTerminal:
         result = testdir.runpytest("-vv")
         assert result.ret == 0
         result.stdout.fnmatch_lines(["*a123/test_hello123.py*PASS*"])
-        assert " <- " not in result.stdout.str()
+        result.stdout.no_fnmatch_line("* <- *")
 
-    def test_keyboard_interrupt(self, testdir, option):
+    @pytest.mark.parametrize("fulltrace", ("", "--fulltrace"))
+    def test_keyboard_interrupt(self, testdir, fulltrace):
         testdir.makepyfile(
             """
             def test_foobar():
@@ -219,7 +216,7 @@ class TestTerminal:
         """
         )
 
-        result = testdir.runpytest(*option.args, no_reraise_ctrlc=True)
+        result = testdir.runpytest(fulltrace, no_reraise_ctrlc=True)
         result.stdout.fnmatch_lines(
             [
                 "    def test_foobar():",
@@ -228,7 +225,7 @@ class TestTerminal:
                 "*_keyboard_interrupt.py:6: KeyboardInterrupt*",
             ]
         )
-        if option.fulltrace:
+        if fulltrace:
             result.stdout.fnmatch_lines(
                 ["*raise KeyboardInterrupt   # simulating the user*"]
             )
@@ -560,7 +557,7 @@ class TestTerminalFunctional:
                 "*= 2 passed, 1 deselected in * =*",
             ]
         )
-        assert "= 1 deselected =" not in result.stdout.str()
+        result.stdout.no_fnmatch_line("*= 1 deselected =*")
         assert result.ret == 0
 
     def test_no_skip_summary_if_failure(self, testdir):
@@ -760,7 +757,7 @@ def test_fail_extra_reporting(testdir, monkeypatch):
     monkeypatch.setenv("COLUMNS", "80")
     testdir.makepyfile("def test_this(): assert 0, 'this_failed' * 100")
     result = testdir.runpytest()
-    assert "short test summary" not in result.stdout.str()
+    result.stdout.no_fnmatch_line("*short test summary*")
     result = testdir.runpytest("-rf")
     result.stdout.fnmatch_lines(
         [
@@ -773,13 +770,13 @@ def test_fail_extra_reporting(testdir, monkeypatch):
 def test_fail_reporting_on_pass(testdir):
     testdir.makepyfile("def test_this(): assert 1")
     result = testdir.runpytest("-rf")
-    assert "short test summary" not in result.stdout.str()
+    result.stdout.no_fnmatch_line("*short test summary*")
 
 
 def test_pass_extra_reporting(testdir):
     testdir.makepyfile("def test_this(): assert 1")
     result = testdir.runpytest()
-    assert "short test summary" not in result.stdout.str()
+    result.stdout.no_fnmatch_line("*short test summary*")
     result = testdir.runpytest("-rp")
     result.stdout.fnmatch_lines(["*test summary*", "PASS*test_pass_extra_reporting*"])
 
@@ -787,7 +784,7 @@ def test_pass_extra_reporting(testdir):
 def test_pass_reporting_on_fail(testdir):
     testdir.makepyfile("def test_this(): assert 0")
     result = testdir.runpytest("-rp")
-    assert "short test summary" not in result.stdout.str()
+    result.stdout.no_fnmatch_line("*short test summary*")
 
 
 def test_pass_output_reporting(testdir):
@@ -830,7 +827,7 @@ def test_color_no(testdir):
     testdir.makepyfile("def test_this(): assert 1")
     result = testdir.runpytest("--color=no")
     assert "test session starts" in result.stdout.str()
-    assert "\x1b[1m" not in result.stdout.str()
+    result.stdout.no_fnmatch_line("*\x1b[1m*")
 
 
 @pytest.mark.parametrize("verbose", [True, False])
@@ -852,7 +849,7 @@ def test_color_yes_collection_on_non_atty(testdir, verbose):
     result = testdir.runpytest(*args)
     assert "test session starts" in result.stdout.str()
     assert "\x1b[1m" in result.stdout.str()
-    assert "collecting 10 items" not in result.stdout.str()
+    result.stdout.no_fnmatch_line("*collecting 10 items*")
     if verbose:
         assert "collecting ..." in result.stdout.str()
     assert "collected 10 items" in result.stdout.str()
@@ -966,7 +963,31 @@ class TestGenericReporting:
         )
         result = testdir.runpytest("--maxfail=2", *option.args)
         result.stdout.fnmatch_lines(
-            ["*def test_1():*", "*def test_2():*", "*2 failed*"]
+            [
+                "*def test_1():*",
+                "*def test_2():*",
+                "*! stopping after 2 failures !*",
+                "*2 failed*",
+            ]
+        )
+
+    def test_maxfailures_with_interrupted(self, testdir):
+        testdir.makepyfile(
+            """
+            def test(request):
+                request.session.shouldstop = "session_interrupted"
+                assert 0
+        """
+        )
+        result = testdir.runpytest("--maxfail=1", "-ra")
+        result.stdout.fnmatch_lines(
+            [
+                "*= short test summary info =*",
+                "FAILED *",
+                "*! stopping after 1 failures !*",
+                "*! session_interrupted !*",
+                "*= 1 failed in*",
+            ]
         )
 
     def test_tb_option(self, testdir, option):
@@ -1215,7 +1236,7 @@ def test_terminal_summary_warnings_are_displayed(testdir):
             "*== 1 failed, 2 warnings in *",
         ]
     )
-    assert "None" not in result.stdout.str()
+    result.stdout.no_fnmatch_line("*None*")
     stdout = result.stdout.str()
     assert stdout.count("warning_from_test") == 1
     assert stdout.count("=== warnings summary ") == 2
@@ -1237,10 +1258,10 @@ def test_terminal_summary_warnings_header_once(testdir):
             "*= warnings summary =*",
             "*warning_from_test*",
             "*= short test summary info =*",
-            "*== 1 failed, 1 warnings in *",
+            "*== 1 failed, 1 warning in *",
         ]
     )
-    assert "None" not in result.stdout.str()
+    result.stdout.no_fnmatch_line("*None*")
     stdout = result.stdout.str()
     assert stdout.count("warning_from_test") == 1
     assert stdout.count("=== warnings summary ") == 1
@@ -1253,42 +1274,120 @@ def test_terminal_summary_warnings_header_once(testdir):
         # dict value, not the actual contents, so tuples of anything
         # suffice
         # Important statuses -- the highest priority of these always wins
-        ("red", "1 failed", {"failed": (1,)}),
-        ("red", "1 failed, 1 passed", {"failed": (1,), "passed": (1,)}),
-        ("red", "1 error", {"error": (1,)}),
-        ("red", "1 passed, 1 error", {"error": (1,), "passed": (1,)}),
+        ("red", [("1 failed", {"bold": True, "red": True})], {"failed": (1,)}),
+        (
+            "red",
+            [
+                ("1 failed", {"bold": True, "red": True}),
+                ("1 passed", {"bold": False, "green": True}),
+            ],
+            {"failed": (1,), "passed": (1,)},
+        ),
+        ("red", [("1 error", {"bold": True, "red": True})], {"error": (1,)}),
+        ("red", [("2 errors", {"bold": True, "red": True})], {"error": (1, 2)}),
+        (
+            "red",
+            [
+                ("1 passed", {"bold": False, "green": True}),
+                ("1 error", {"bold": True, "red": True}),
+            ],
+            {"error": (1,), "passed": (1,)},
+        ),
         # (a status that's not known to the code)
-        ("yellow", "1 weird", {"weird": (1,)}),
-        ("yellow", "1 passed, 1 weird", {"weird": (1,), "passed": (1,)}),
-        ("yellow", "1 warnings", {"warnings": (1,)}),
-        ("yellow", "1 passed, 1 warnings", {"warnings": (1,), "passed": (1,)}),
-        ("green", "5 passed", {"passed": (1, 2, 3, 4, 5)}),
+        ("yellow", [("1 weird", {"bold": True, "yellow": True})], {"weird": (1,)}),
+        (
+            "yellow",
+            [
+                ("1 passed", {"bold": False, "green": True}),
+                ("1 weird", {"bold": True, "yellow": True}),
+            ],
+            {"weird": (1,), "passed": (1,)},
+        ),
+        ("yellow", [("1 warning", {"bold": True, "yellow": True})], {"warnings": (1,)}),
+        (
+            "yellow",
+            [
+                ("1 passed", {"bold": False, "green": True}),
+                ("1 warning", {"bold": True, "yellow": True}),
+            ],
+            {"warnings": (1,), "passed": (1,)},
+        ),
+        (
+            "green",
+            [("5 passed", {"bold": True, "green": True})],
+            {"passed": (1, 2, 3, 4, 5)},
+        ),
         # "Boring" statuses.  These have no effect on the color of the summary
         # line.  Thus, if *every* test has a boring status, the summary line stays
         # at its default color, i.e. yellow, to warn the user that the test run
         # produced no useful information
-        ("yellow", "1 skipped", {"skipped": (1,)}),
-        ("green", "1 passed, 1 skipped", {"skipped": (1,), "passed": (1,)}),
-        ("yellow", "1 deselected", {"deselected": (1,)}),
-        ("green", "1 passed, 1 deselected", {"deselected": (1,), "passed": (1,)}),
-        ("yellow", "1 xfailed", {"xfailed": (1,)}),
-        ("green", "1 passed, 1 xfailed", {"xfailed": (1,), "passed": (1,)}),
-        ("yellow", "1 xpassed", {"xpassed": (1,)}),
-        ("green", "1 passed, 1 xpassed", {"xpassed": (1,), "passed": (1,)}),
+        ("yellow", [("1 skipped", {"bold": True, "yellow": True})], {"skipped": (1,)}),
+        (
+            "green",
+            [
+                ("1 passed", {"bold": True, "green": True}),
+                ("1 skipped", {"bold": False, "yellow": True}),
+            ],
+            {"skipped": (1,), "passed": (1,)},
+        ),
+        (
+            "yellow",
+            [("1 deselected", {"bold": True, "yellow": True})],
+            {"deselected": (1,)},
+        ),
+        (
+            "green",
+            [
+                ("1 passed", {"bold": True, "green": True}),
+                ("1 deselected", {"bold": False, "yellow": True}),
+            ],
+            {"deselected": (1,), "passed": (1,)},
+        ),
+        ("yellow", [("1 xfailed", {"bold": True, "yellow": True})], {"xfailed": (1,)}),
+        (
+            "green",
+            [
+                ("1 passed", {"bold": True, "green": True}),
+                ("1 xfailed", {"bold": False, "yellow": True}),
+            ],
+            {"xfailed": (1,), "passed": (1,)},
+        ),
+        ("yellow", [("1 xpassed", {"bold": True, "yellow": True})], {"xpassed": (1,)}),
+        (
+            "green",
+            [
+                ("1 passed", {"bold": True, "green": True}),
+                ("1 xpassed", {"bold": False, "yellow": True}),
+            ],
+            {"xpassed": (1,), "passed": (1,)},
+        ),
         # Likewise if no tests were found at all
-        ("yellow", "no tests ran", {}),
+        ("yellow", [("no tests ran", {"yellow": True})], {}),
         # Test the empty-key special case
-        ("yellow", "no tests ran", {"": (1,)}),
-        ("green", "1 passed", {"": (1,), "passed": (1,)}),
+        ("yellow", [("no tests ran", {"yellow": True})], {"": (1,)}),
+        (
+            "green",
+            [("1 passed", {"bold": True, "green": True})],
+            {"": (1,), "passed": (1,)},
+        ),
         # A couple more complex combinations
         (
             "red",
-            "1 failed, 2 passed, 3 xfailed",
+            [
+                ("1 failed", {"bold": True, "red": True}),
+                ("2 passed", {"bold": False, "green": True}),
+                ("3 xfailed", {"bold": False, "yellow": True}),
+            ],
             {"passed": (1, 2), "failed": (1,), "xfailed": (1, 2, 3)},
         ),
         (
             "green",
-            "1 passed, 2 skipped, 3 deselected, 2 xfailed",
+            [
+                ("1 passed", {"bold": True, "green": True}),
+                ("2 skipped", {"bold": False, "yellow": True}),
+                ("3 deselected", {"bold": False, "yellow": True}),
+                ("2 xfailed", {"bold": False, "yellow": True}),
+            ],
             {
                 "passed": (1,),
                 "skipped": (1, 2),
@@ -1314,11 +1413,11 @@ def test_skip_counting_towards_summary():
     r1 = DummyReport()
     r2 = DummyReport()
     res = build_summary_stats_line({"failed": (r1, r2)})
-    assert res == ("2 failed", "red")
+    assert res == ([("2 failed", {"bold": True, "red": True})], "red")
 
     r1.count_towards_summary = False
     res = build_summary_stats_line({"failed": (r1, r2)})
-    assert res == ("1 failed", "red")
+    assert res == ([("1 failed", {"bold": True, "red": True})], "red")
 
 
 class TestClassicOutputStyle:
@@ -1403,7 +1502,7 @@ class TestProgressOutputStyle:
         """
         )
         output = testdir.runpytest()
-        assert "ZeroDivisionError" not in output.stdout.str()
+        output.stdout.no_fnmatch_line("*ZeroDivisionError*")
         output.stdout.fnmatch_lines(["=* 2 passed in *="])
 
     def test_normal(self, many_tests_files, testdir):
@@ -1413,6 +1512,43 @@ class TestProgressOutputStyle:
                 r"test_bar.py \.{10} \s+ \[ 50%\]",
                 r"test_foo.py \.{5} \s+ \[ 75%\]",
                 r"test_foobar.py \.{5} \s+ \[100%\]",
+            ]
+        )
+
+    def test_colored_progress(self, testdir, monkeypatch):
+        monkeypatch.setenv("PY_COLORS", "1")
+        testdir.makepyfile(
+            test_bar="""
+                import pytest
+                @pytest.mark.parametrize('i', range(10))
+                def test_bar(i): pass
+            """,
+            test_foo="""
+                import pytest
+                import warnings
+                @pytest.mark.parametrize('i', range(5))
+                def test_foo(i):
+                    warnings.warn(DeprecationWarning("collection"))
+                    pass
+            """,
+            test_foobar="""
+                import pytest
+                @pytest.mark.parametrize('i', range(5))
+                def test_foobar(i): raise ValueError()
+            """,
+        )
+        output = testdir.runpytest()
+        output.stdout.re_match_lines(
+            [
+                r"test_bar.py ({green}\.{reset}){{10}}{green} \s+ \[ 50%\]{reset}".format(
+                    green=GREEN, reset=RESET
+                ),
+                r"test_foo.py ({green}\.{reset}){{5}}{yellow} \s+ \[ 75%\]{reset}".format(
+                    green=GREEN, reset=RESET, yellow=YELLOW
+                ),
+                r"test_foobar.py ({red}F{reset}){{5}}{red} \s+ \[100%\]{reset}".format(
+                    reset=RESET, red=RED
+                ),
             ]
         )
 
@@ -1495,7 +1631,7 @@ class TestProgressOutputStyle:
         )
 
         output = testdir.runpytest("--capture=no")
-        assert "%]" not in output.stdout.str()
+        output.stdout.no_fnmatch_line("*%]*")
 
 
 class TestProgressWithTeardown:
@@ -1696,3 +1832,20 @@ def test_format_session_duration(seconds, expected):
     from _pytest.terminal import format_session_duration
 
     assert format_session_duration(seconds) == expected
+
+
+def test_collecterror(testdir):
+    p1 = testdir.makepyfile("raise SyntaxError()")
+    result = testdir.runpytest("-ra", str(p1))
+    result.stdout.fnmatch_lines(
+        [
+            "collected 0 items / 1 error",
+            "*= ERRORS =*",
+            "*_ ERROR collecting test_collecterror.py _*",
+            "E   SyntaxError: *",
+            "*= short test summary info =*",
+            "ERROR test_collecterror.py",
+            "*! Interrupted: 1 error during collection !*",
+            "*= 1 error in *",
+        ]
+    )

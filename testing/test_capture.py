@@ -7,6 +7,8 @@ import sys
 import textwrap
 from io import StringIO
 from io import UnsupportedOperation
+from typing import List
+from typing import TextIO
 
 import pytest
 from _pytest import capture
@@ -90,8 +92,6 @@ class TestCaptureManager:
 
 @pytest.mark.parametrize("method", ["fd", "sys"])
 def test_capturing_unicode(testdir, method):
-    if hasattr(sys, "pypy_version_info") and sys.pypy_version_info < (2, 2):
-        pytest.xfail("does not work on pypy < 2.2")
     obj = "'b\u00f6y'"
     testdir.makepyfile(
         """\
@@ -451,7 +451,7 @@ class TestCaptureFixture:
                 "E*capfd*capsys*same*time*",
                 "*ERROR*setup*test_two*",
                 "E*capsys*capfd*same*time*",
-                "*2 error*",
+                "*2 errors*",
             ]
         )
 
@@ -603,17 +603,13 @@ class TestCaptureFixture:
         )
         args = ("-s",) if no_capture else ()
         result = testdir.runpytest_subprocess(*args)
-        result.stdout.fnmatch_lines(
-            """
-            *while capture is disabled*
-        """
-        )
-        assert "captured before" not in result.stdout.str()
-        assert "captured after" not in result.stdout.str()
+        result.stdout.fnmatch_lines(["*while capture is disabled*", "*= 2 passed in *"])
+        result.stdout.no_fnmatch_line("*captured before*")
+        result.stdout.no_fnmatch_line("*captured after*")
         if no_capture:
             assert "test_normal executed" in result.stdout.str()
         else:
-            assert "test_normal executed" not in result.stdout.str()
+            result.stdout.no_fnmatch_line("*test_normal executed*")
 
     @pytest.mark.parametrize("fixture", ["capsys", "capfd"])
     def test_fixture_use_by_other_fixtures(self, testdir, fixture):
@@ -649,8 +645,8 @@ class TestCaptureFixture:
         )
         result = testdir.runpytest_subprocess()
         result.stdout.fnmatch_lines(["*1 passed*"])
-        assert "stdout contents begin" not in result.stdout.str()
-        assert "stderr contents begin" not in result.stdout.str()
+        result.stdout.no_fnmatch_line("*stdout contents begin*")
+        result.stdout.no_fnmatch_line("*stderr contents begin*")
 
     @pytest.mark.parametrize("cap", ["capsys", "capfd"])
     def test_fixture_use_by_other_fixtures_teardown(self, testdir, cap):
@@ -720,7 +716,7 @@ def test_capture_conftest_runtest_setup(testdir):
     testdir.makepyfile("def test_func(): pass")
     result = testdir.runpytest()
     assert result.ret == 0
-    assert "hello19" not in result.stdout.str()
+    result.stdout.no_fnmatch_line("*hello19*")
 
 
 def test_capture_badoutput_issue412(testdir):
@@ -824,26 +820,13 @@ def test_dontreadfrominput():
     from _pytest.capture import DontReadFromInput
 
     f = DontReadFromInput()
+    assert f.buffer is f
     assert not f.isatty()
     pytest.raises(IOError, f.read)
     pytest.raises(IOError, f.readlines)
     iter_f = iter(f)
     pytest.raises(IOError, next, iter_f)
     pytest.raises(UnsupportedOperation, f.fileno)
-    f.close()  # just for completeness
-
-
-def test_dontreadfrominput_buffer_python3():
-    from _pytest.capture import DontReadFromInput
-
-    f = DontReadFromInput()
-    fb = f.buffer
-    assert not fb.isatty()
-    pytest.raises(IOError, fb.read)
-    pytest.raises(IOError, fb.readlines)
-    iter_f = iter(f)
-    pytest.raises(IOError, next, iter_f)
-    pytest.raises(ValueError, fb.fileno)
     f.close()  # just for completeness
 
 
@@ -856,8 +839,8 @@ def tmpfile(testdir):
 
 
 @needsosdup
-def test_dupfile(tmpfile):
-    flist = []
+def test_dupfile(tmpfile) -> None:
+    flist = []  # type: List[TextIO]
     for i in range(5):
         nf = capture.safe_text_dupfile(tmpfile, "wb")
         assert nf != tmpfile
@@ -903,9 +886,9 @@ def lsof_check():
     pid = os.getpid()
     try:
         out = subprocess.check_output(("lsof", "-p", str(pid))).decode()
-    except (OSError, subprocess.CalledProcessError, UnicodeDecodeError):
+    except (OSError, subprocess.CalledProcessError, UnicodeDecodeError) as exc:
         # about UnicodeDecodeError, see note on pytester
-        pytest.skip("could not run 'lsof'")
+        pytest.skip("could not run 'lsof' ({!r})".format(exc))
     yield
     out2 = subprocess.check_output(("lsof", "-p", str(pid))).decode()
     len1 = len([x for x in out.split("\n") if "REG" in x])
@@ -1387,7 +1370,7 @@ def test_crash_on_closing_tmpfile_py27(testdir):
     result = testdir.runpytest_subprocess(str(p))
     assert result.ret == 0
     assert result.stderr.str() == ""
-    assert "IOError" not in result.stdout.str()
+    result.stdout.no_fnmatch_line("*IOError*")
 
 
 def test_pickling_and_unpickling_encoded_file():
@@ -1501,11 +1484,9 @@ def test_typeerror_encodedfile_write(testdir):
     """
     )
     result_without_capture = testdir.runpytest("-s", str(p))
-
     result_with_capture = testdir.runpytest(str(p))
 
     assert result_with_capture.ret == result_without_capture.ret
-
     result_with_capture.stdout.fnmatch_lines(
-        ["E           TypeError: write() argument must be str, not bytes"]
+        ["E * TypeError: write() argument must be str, not bytes"]
     )

@@ -233,7 +233,7 @@ def test_unittest_skip_issue148(testdir):
 def test_method_and_teardown_failing_reporting(testdir):
     testdir.makepyfile(
         """
-        import unittest, pytest
+        import unittest
         class TC(unittest.TestCase):
             def tearDown(self):
                 assert 0, "down1"
@@ -270,7 +270,7 @@ def test_setup_failure_is_shown(testdir):
     result = testdir.runpytest("-s")
     assert result.ret == 1
     result.stdout.fnmatch_lines(["*setUp*", "*assert 0*down1*", "*1 failed*"])
-    assert "never42" not in result.stdout.str()
+    result.stdout.no_fnmatch_line("*never42*")
 
 
 def test_setup_setUpClass(testdir):
@@ -342,7 +342,7 @@ def test_testcase_adderrorandfailure_defers(testdir, type):
         % (type, type)
     )
     result = testdir.runpytest()
-    assert "should not raise" not in result.stdout.str()
+    result.stdout.no_fnmatch_line("*should not raise*")
 
 
 @pytest.mark.parametrize("type", ["Error", "Failure"])
@@ -383,7 +383,7 @@ def test_testcase_custom_exception_info(testdir, type):
 
 
 def test_testcase_totally_incompatible_exception_info(testdir):
-    item, = testdir.getitems(
+    (item,) = testdir.getitems(
         """
         from unittest import TestCase
         class MyTestCase(TestCase):
@@ -530,19 +530,31 @@ class TestTrialUnittest:
                 # will crash both at test time and at teardown
         """
         )
-        result = testdir.runpytest()
+        # Ignore DeprecationWarning (for `cmp`) from attrs through twisted,
+        # for stable test results.
+        result = testdir.runpytest(
+            "-vv", "-oconsole_output_style=classic", "-W", "ignore::DeprecationWarning"
+        )
         result.stdout.fnmatch_lines(
             [
+                "test_trial_error.py::TC::test_four FAILED",
+                "test_trial_error.py::TC::test_four ERROR",
+                "test_trial_error.py::TC::test_one FAILED",
+                "test_trial_error.py::TC::test_three FAILED",
+                "test_trial_error.py::TC::test_two FAILED",
                 "*ERRORS*",
+                "*_ ERROR at teardown of TC.test_four _*",
                 "*DelayedCalls*",
-                "*test_four*",
+                "*= FAILURES =*",
+                "*_ TC.test_four _*",
                 "*NameError*crash*",
-                "*test_one*",
+                "*_ TC.test_one _*",
                 "*NameError*crash*",
-                "*test_three*",
+                "*_ TC.test_three _*",
                 "*DelayedCalls*",
-                "*test_two*",
-                "*crash*",
+                "*_ TC.test_two _*",
+                "*NameError*crash*",
+                "*= 4 failed, 1 error in *",
             ]
         )
 
@@ -684,7 +696,7 @@ def test_unittest_not_shown_in_traceback(testdir):
     """
     )
     res = testdir.runpytest()
-    assert "failUnlessEqual" not in res.stdout.str()
+    res.stdout.no_fnmatch_line("*failUnlessEqual*")
 
 
 def test_unorderable_types(testdir):
@@ -703,7 +715,7 @@ def test_unorderable_types(testdir):
     """
     )
     result = testdir.runpytest()
-    assert "TypeError" not in result.stdout.str()
+    result.stdout.no_fnmatch_line("*TypeError*")
     assert result.ret == ExitCode.NO_TESTS_COLLECTED
 
 
@@ -1020,7 +1032,7 @@ def test_testcase_handles_init_exceptions(testdir):
     )
     result = testdir.runpytest()
     assert "should raise this exception" in result.stdout.str()
-    assert "ERROR at teardown of MyTestCase.test_hello" not in result.stdout.str()
+    result.stdout.no_fnmatch_line("*ERROR at teardown of MyTestCase.test_hello*")
 
 
 def test_error_message_with_parametrized_fixtures(testdir):

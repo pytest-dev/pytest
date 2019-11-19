@@ -5,6 +5,7 @@ import functools
 import importlib
 import os
 import sys
+from typing import Dict
 
 import attr
 import py
@@ -16,6 +17,7 @@ from _pytest.config import hookimpl
 from _pytest.config import UsageError
 from _pytest.outcomes import exit
 from _pytest.runner import collect_one_node
+from _pytest.runner import SetupState
 
 
 class ExitCode(enum.IntEnum):
@@ -107,6 +109,7 @@ def pytest_addoption(parser):
     group.addoption(
         "--collectonly",
         "--collect-only",
+        "--co",
         action="store_true",
         help="only collect tests, don't execute them.",
     ),
@@ -248,7 +251,10 @@ def pytest_collection(session):
 
 def pytest_runtestloop(session):
     if session.testsfailed and not session.config.option.continue_on_collection_errors:
-        raise session.Interrupted("%d errors during collection" % session.testsfailed)
+        raise session.Interrupted(
+            "%d error%s during collection"
+            % (session.testsfailed, "s" if session.testsfailed != 1 else "")
+        )
 
     if session.config.option.collectonly:
         return True
@@ -356,8 +362,8 @@ class Failed(Exception):
 class _bestrelpath_cache(dict):
     path = attr.ib()
 
-    def __missing__(self, path):
-        r = self.path.bestrelpath(path)
+    def __missing__(self, path: str) -> str:
+        r = self.path.bestrelpath(path)  # type: str
         self[path] = r
         return r
 
@@ -365,6 +371,7 @@ class _bestrelpath_cache(dict):
 class Session(nodes.FSCollector):
     Interrupted = Interrupted
     Failed = Failed
+    _setupstate = None  # type: SetupState
 
     def __init__(self, config):
         nodes.FSCollector.__init__(
@@ -380,7 +387,9 @@ class Session(nodes.FSCollector):
         self._initialpaths = frozenset()
         # Keep track of any collected nodes in here, so we don't duplicate fixtures
         self._node_cache = {}
-        self._bestrelpathcache = _bestrelpath_cache(config.rootdir)
+        self._bestrelpathcache = _bestrelpath_cache(
+            config.rootdir
+        )  # type: Dict[str, str]
         # Dirnames of pkgs with dunder-init files.
         self._pkg_roots = {}
 
@@ -395,7 +404,7 @@ class Session(nodes.FSCollector):
             self.testscollected,
         )
 
-    def _node_location_to_relpath(self, node_path):
+    def _node_location_to_relpath(self, node_path: str) -> str:
         # bestrelpath is a quite slow function
         return self._bestrelpathcache[node_path]
 
@@ -468,7 +477,6 @@ class Session(nodes.FSCollector):
             for arg, exc in self._notfound:
                 line = "(no name {!r} in any of {!r})".format(arg, exc.args[0])
                 errors.append("not found: {}\n{}".format(arg, line))
-                # XXX: test this
             raise UsageError(*errors)
         if not genitems:
             return rep.result
@@ -480,22 +488,22 @@ class Session(nodes.FSCollector):
 
     def collect(self):
         for initialpart in self._initialparts:
-            arg = "::".join(map(str, initialpart))
-            self.trace("processing argument", arg)
+            self.trace("processing argument", initialpart)
             self.trace.root.indent += 1
             try:
-                yield from self._collect(arg)
+                yield from self._collect(initialpart)
             except NoMatch:
+                report_arg = "::".join(map(str, initialpart))
                 # we are inside a make_report hook so
                 # we cannot directly pass through the exception
-                self._notfound.append((arg, sys.exc_info()[1]))
+                self._notfound.append((report_arg, sys.exc_info()[1]))
 
             self.trace.root.indent -= 1
 
     def _collect(self, arg):
         from _pytest.python import Package
 
-        names = self._parsearg(arg)
+        names = arg[:]
         argpath = names.pop(0)
 
         # Start with a Session root, and delve to argpath item (dir or file)

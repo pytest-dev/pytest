@@ -121,17 +121,6 @@ def test_runresult_assertion_on_xpassed(testdir):
     assert result.ret == 0
 
 
-def test_runresult_repr():
-    from _pytest.pytester import RunResult
-
-    assert (
-        repr(
-            RunResult(ret="ret", outlines=[""], errlines=["some", "errors"], duration=1)
-        )
-        == "<RunResult ret='ret' len(stdout.lines)=1 len(stderr.lines)=2 duration=1.00s>"
-    )
-
-
 def test_xpassed_with_strict_is_considered_a_failure(testdir):
     testdir.makepyfile(
         """
@@ -406,6 +395,27 @@ def test_testdir_subprocess(testdir):
     assert testdir.runpytest_subprocess(testfile).ret == 0
 
 
+def test_testdir_subprocess_via_runpytest_arg(testdir) -> None:
+    testfile = testdir.makepyfile(
+        """
+        def test_testdir_subprocess(testdir):
+            import os
+            testfile = testdir.makepyfile(
+                \"""
+                import os
+                def test_one():
+                    assert {} != os.getpid()
+                \""".format(os.getpid())
+            )
+            assert testdir.runpytest(testfile).ret == 0
+        """
+    )
+    result = testdir.runpytest_subprocess(
+        "-p", "pytester", "--runpytest", "subprocess", testfile
+    )
+    assert result.ret == 0
+
+
 def test_unicode_args(testdir):
     result = testdir.runpytest("-k", "💩")
     assert result.ret == ExitCode.NO_TESTS_COLLECTED
@@ -455,6 +465,81 @@ def test_linematcher_with_nonlist():
 
     assert lm._getlines({}) == {}
     assert lm._getlines(set()) == set()
+
+
+def test_linematcher_match_failure():
+    lm = LineMatcher(["foo", "foo", "bar"])
+    with pytest.raises(pytest.fail.Exception) as e:
+        lm.fnmatch_lines(["foo", "f*", "baz"])
+    assert e.value.msg.splitlines() == [
+        "exact match: 'foo'",
+        "fnmatch: 'f*'",
+        "   with: 'foo'",
+        "nomatch: 'baz'",
+        "    and: 'bar'",
+        "remains unmatched: 'baz'",
+    ]
+
+    lm = LineMatcher(["foo", "foo", "bar"])
+    with pytest.raises(pytest.fail.Exception) as e:
+        lm.re_match_lines(["foo", "^f.*", "baz"])
+    assert e.value.msg.splitlines() == [
+        "exact match: 'foo'",
+        "re.match: '^f.*'",
+        "    with: 'foo'",
+        " nomatch: 'baz'",
+        "     and: 'bar'",
+        "remains unmatched: 'baz'",
+    ]
+
+
+@pytest.mark.parametrize("function", ["no_fnmatch_line", "no_re_match_line"])
+def test_no_matching(function):
+    if function == "no_fnmatch_line":
+        good_pattern = "*.py OK*"
+        bad_pattern = "*X.py OK*"
+    else:
+        assert function == "no_re_match_line"
+        good_pattern = r".*py OK"
+        bad_pattern = r".*Xpy OK"
+
+    lm = LineMatcher(
+        [
+            "cachedir: .pytest_cache",
+            "collecting ... collected 1 item",
+            "",
+            "show_fixtures_per_test.py OK",
+            "=== elapsed 1s ===",
+        ]
+    )
+
+    # check the function twice to ensure we don't accumulate the internal buffer
+    for i in range(2):
+        with pytest.raises(pytest.fail.Exception) as e:
+            func = getattr(lm, function)
+            func(good_pattern)
+        obtained = str(e.value).splitlines()
+        if function == "no_fnmatch_line":
+            assert obtained == [
+                "nomatch: '{}'".format(good_pattern),
+                "    and: 'cachedir: .pytest_cache'",
+                "    and: 'collecting ... collected 1 item'",
+                "    and: ''",
+                "fnmatch: '{}'".format(good_pattern),
+                "   with: 'show_fixtures_per_test.py OK'",
+            ]
+        else:
+            assert obtained == [
+                "nomatch: '{}'".format(good_pattern),
+                "     and: 'cachedir: .pytest_cache'",
+                "     and: 'collecting ... collected 1 item'",
+                "     and: ''",
+                "re.match: '{}'".format(good_pattern),
+                "    with: 'show_fixtures_per_test.py OK'",
+            ]
+
+    func = getattr(lm, function)
+    func(bad_pattern)  # bad pattern does not match any line: passes
 
 
 def test_pytester_addopts(request, monkeypatch):
@@ -570,3 +655,22 @@ def test_spawn_uses_tmphome(testdir):
     child = testdir.spawn_pytest(str(p1))
     out = child.read()
     assert child.wait() == 0, out.decode("utf8")
+
+
+def test_run_result_repr():
+    outlines = ["some", "normal", "output"]
+    errlines = ["some", "nasty", "errors", "happened"]
+
+    # known exit code
+    r = pytester.RunResult(1, outlines, errlines, duration=0.5)
+    assert (
+        repr(r) == "<RunResult ret=ExitCode.TESTS_FAILED len(stdout.lines)=3"
+        " len(stderr.lines)=4 duration=0.50s>"
+    )
+
+    # unknown exit code: just the number
+    r = pytester.RunResult(99, outlines, errlines, duration=0.5)
+    assert (
+        repr(r) == "<RunResult ret=99 len(stdout.lines)=3"
+        " len(stderr.lines)=4 duration=0.50s>"
+    )
