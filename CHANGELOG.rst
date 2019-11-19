@@ -1901,7 +1901,8 @@ Features
   live-logging is enabled and/or when they are logged to a file.
 
 
-- `#3985 <https://github.com/pytest-dev/pytest/issues/3985>`_: Introduce ``tmp_path`` as a fixture providing a Path object.
+- `#3985 <https://github.com/pytest-dev/pytest/issues/3985>`_: Introduce ``tmp_path`` as a fixture providing a Path object. Also introduce ``tmp_path_factory`` as
+  a session-scoped fixture for creating arbitrary temporary directories from any other fixture or test.
 
 
 - `#4013 <https://github.com/pytest-dev/pytest/issues/4013>`_: Deprecation warnings are now shown even if you customize the warnings filters yourself. In the previous version
