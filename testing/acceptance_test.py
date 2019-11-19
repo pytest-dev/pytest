@@ -754,7 +754,6 @@ class TestInvocationVariants:
         result = testdir.runpytest(str(p) + "::test", "--doctest-modules")
         result.stdout.fnmatch_lines(["*1 passed*"])
 
-    @pytest.mark.skipif(not hasattr(os, "symlink"), reason="requires symlinks")
     def test_cmdline_python_package_symlink(self, testdir, monkeypatch):
         """
         test --pyargs option with packages with path containing symlink can
