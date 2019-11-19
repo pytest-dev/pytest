@@ -241,10 +241,6 @@ def pytest_pycollect_makeitem(collector, name, obj):
             outcome.force_result(res)
 
 
-def pytest_make_parametrize_id(config, val, argname=None):
-    return None
-
-
 class PyobjContext:
     module = pyobj_property("Module")
     cls = pyobj_property("Class")
