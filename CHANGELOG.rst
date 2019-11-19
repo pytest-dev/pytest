@@ -88,12 +88,12 @@ Features
   But the new functions produce best output on failure.
 
 
-- `#6057 <https://github.com/pytest-dev/pytest/issues/6057>`_: Add tolerances to complex values when printing ``pytest.approx``.
+- `#6057 <https://github.com/pytest-dev/pytest/issues/6057>`_: Added tolerances to complex values when printing ``pytest.approx``.
 
   For example, ``repr(pytest.approx(3+4j))`` returns ``(3+4j) ± 5e-06 ∠ ±180°``. This is polar notation indicating a circle around the expected value, with a radius of 5e-06. For ``approx`` comparisons to return ``True``, the actual value should fall within this circle.
 
 
-- `#6061 <https://github.com/pytest-dev/pytest/issues/6061>`_: Adding the pluginmanager as an option ``pytest_addoption``
+- `#6061 <https://github.com/pytest-dev/pytest/issues/6061>`_: Added the pluginmanager as an argument to ``pytest_addoption``
   so that hooks can be invoked when setting up command line options. This is
   useful for having one plugin communicate things to another plugin,
   such as default values or which set of command line options to add.
@@ -109,7 +109,7 @@ Improvements
 - `#5630 <https://github.com/pytest-dev/pytest/issues/5630>`_: Quitting from debuggers is now properly handled in ``doctest`` items.
 
 
-- `#5924 <https://github.com/pytest-dev/pytest/issues/5924>`_: Improve verbose diff output with sequences.
+- `#5924 <https://github.com/pytest-dev/pytest/issues/5924>`_: Improved verbose diff output with sequences.
 
   Before:
 
@@ -148,14 +148,14 @@ Improvements
 - `#5936 <https://github.com/pytest-dev/pytest/issues/5936>`_: Display untruncated assertion message with ``-vv``.
 
 
-- `#5990 <https://github.com/pytest-dev/pytest/issues/5990>`_: Fix plurality mismatch in test summary (e.g. display "1 error" instead of "1 errors").
+- `#5990 <https://github.com/pytest-dev/pytest/issues/5990>`_: Fixed plurality mismatch in test summary (e.g. display "1 error" instead of "1 errors").
 
 
 - `#6008 <https://github.com/pytest-dev/pytest/issues/6008>`_: ``Config.InvocationParams.args`` is now always a ``tuple`` to better convey that it should be
   immutable and avoid accidental modifications.
 
 
-- `#6023 <https://github.com/pytest-dev/pytest/issues/6023>`_: ``pytest.main`` returns a ``pytest.ExitCode`` instance now, except for when custom exit codes are used (where it returns ``int`` then still).
+- `#6023 <https://github.com/pytest-dev/pytest/issues/6023>`_: ``pytest.main`` now returns a ``pytest.ExitCode`` instance now, except for when custom exit codes are used (where it returns ``int`` then still).
 
 
 - `#6026 <https://github.com/pytest-dev/pytest/issues/6026>`_: Align prefixes in output of pytester's ``LineMatcher``.
@@ -167,10 +167,10 @@ Improvements
 - `#6069 <https://github.com/pytest-dev/pytest/issues/6069>`_: ``pytester.spawn`` does not skip/xfail tests on FreeBSD anymore unconditionally.
 
 
-- `#6097 <https://github.com/pytest-dev/pytest/issues/6097>`_: The "[XXX%]" indicator in the test summary is colored according to the final (new) multi-colored line's main color.
+- `#6097 <https://github.com/pytest-dev/pytest/issues/6097>`_: The "[XXX%]" indicator in the test summary is now colored according to the final (new) multi-colored line's main color.
 
 
-- `#6116 <https://github.com/pytest-dev/pytest/issues/6116>`_: Add ``--co`` as a synonym to ``--collect-only``.
+- `#6116 <https://github.com/pytest-dev/pytest/issues/6116>`_: Added ``--co`` as a synonym to ``--collect-only``.
 
 
 - `#6148 <https://github.com/pytest-dev/pytest/issues/6148>`_: ``atomicwrites`` is now only used on Windows, fixing a performance regression with assertion rewriting on Unix.
@@ -182,34 +182,34 @@ Improvements
 - `#6176 <https://github.com/pytest-dev/pytest/issues/6176>`_: Improved failure reporting with pytester's ``Hookrecorder.assertoutcome``.
 
 
-- `#6181 <https://github.com/pytest-dev/pytest/issues/6181>`_: The reason for a stopped session, e.g. with ``--maxfail`` / ``-x`` gets reported.
+- `#6181 <https://github.com/pytest-dev/pytest/issues/6181>`_: The reason for a stopped session, e.g. with ``--maxfail`` / ``-x``, now gets reported in the test summary.
 
 
-- `#6206 <https://github.com/pytest-dev/pytest/issues/6206>`_: cacheprovider: improved robustness and performance with ``cache.set``.
+- `#6206 <https://github.com/pytest-dev/pytest/issues/6206>`_: Improved ``cache.set`` robustness and performance.
 
 
 
 Bug Fixes
 ---------
 
-- `#2049 <https://github.com/pytest-dev/pytest/issues/2049>`_: Fix ``-setup-plan`` showing inaccurate information about fixture lifetimes.
+- `#2049 <https://github.com/pytest-dev/pytest/issues/2049>`_: Fixed ``--setup-plan`` showing inaccurate information about fixture lifetimes.
 
 
-- `#2548 <https://github.com/pytest-dev/pytest/issues/2548>`_: Fix line offset mismatch with skipped tests in terminal summary.
+- `#2548 <https://github.com/pytest-dev/pytest/issues/2548>`_: Fixed line offset mismatch of skipped tests in terminal summary.
 
 
-- `#6039 <https://github.com/pytest-dev/pytest/issues/6039>`_: The ``PytestDoctestRunner`` is properly invalidated when unconfiguring the doctest plugin.
+- `#6039 <https://github.com/pytest-dev/pytest/issues/6039>`_: The ``PytestDoctestRunner`` is now properly invalidated when unconfiguring the doctest plugin.
 
   This is important when used with ``pytester``'s ``runpytest_inprocess``.
 
 
-- `#6047 <https://github.com/pytest-dev/pytest/issues/6047>`_: BaseExceptions are handled in ``saferepr``, which includes ``pytest.fail.Exception`` etc.
+- `#6047 <https://github.com/pytest-dev/pytest/issues/6047>`_: BaseExceptions are now handled in ``saferepr``, which includes ``pytest.fail.Exception`` etc.
 
 
-- `#6074 <https://github.com/pytest-dev/pytest/issues/6074>`_: pytester: fix order of arguments in ``rm_rf`` warning when cleaning up temporary directories, and do not emit warnings for errors with ``os.open``.
+- `#6074 <https://github.com/pytest-dev/pytest/issues/6074>`_: pytester: fixed order of arguments in ``rm_rf`` warning when cleaning up temporary directories, and do not emit warnings for errors with ``os.open``.
 
 
-- `#6189 <https://github.com/pytest-dev/pytest/issues/6189>`_: Fix incorrect result of ``getmodpath`` method.
+- `#6189 <https://github.com/pytest-dev/pytest/issues/6189>`_: Fixed result of ``getmodpath`` method.
 
 
 
