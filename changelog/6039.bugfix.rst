@@ -1,3 +1,0 @@
-The ``PytestDoctestRunner`` is properly invalidated when unconfiguring the doctest plugin.
-
-This is important when used with ``pytester``'s ``runpytest_inprocess``.

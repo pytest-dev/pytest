@@ -1,2 +1,0 @@
-``Config.InvocationParams.args`` is now always a ``tuple`` to better convey that it should be
-immutable and avoid accidental modifications.
