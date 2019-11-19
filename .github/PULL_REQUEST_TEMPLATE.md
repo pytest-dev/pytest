@@ -11,5 +11,13 @@ Here is a quick checklist that should be present in PRs.
 Unless your change is trivial or a small documentation fix (e.g., a typo or reword of a small section) please:
 
 - [ ] Create a new changelog file in the `changelog` folder, with a name like `<ISSUE NUMBER>.<TYPE>.rst`. See [changelog/README.rst](https://github.com/pytest-dev/pytest/blob/master/changelog/README.rst) for details.
+
+  Write sentences in the **past or present tense**, examples:
+
+  * *Improved verbose diff output with sequences.*
+  * *Terminal summary statistics now use multiple colors.*
+
+  Also make sure to end the sentence with a `.`.
+
 - [ ] Add yourself to `AUTHORS` in alphabetical order.
 -->
