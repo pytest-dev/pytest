@@ -1323,25 +1323,29 @@ class TestMetafuncFunctional:
         reprec = testdir.runpytest()
         reprec.assert_outcomes(passed=4)
 
-    @pytest.mark.parametrize("attr", ["parametrise", "parameterize", "parameterise"])
-    def test_parametrize_misspelling(self, testdir, attr):
+    def test_parametrize_misspelling(self, testdir):
         """#463"""
         testdir.makepyfile(
             """
             import pytest
 
-            @pytest.mark.{}("x", range(2))
+            @pytest.mark.parametrise("x", range(2))
             def test_foo(x):
                 pass
-        """.format(
-                attr
-            )
+        """
         )
         result = testdir.runpytest("--collectonly")
         result.stdout.fnmatch_lines(
             [
-                "test_foo has '{}' mark, spelling should be 'parametrize'".format(attr),
-                "*1 error in*",
+                "collected 0 items / 1 error",
+                "",
+                "*= ERRORS =*",
+                "*_ ERROR collecting test_parametrize_misspelling.py _*",
+                "test_parametrize_misspelling.py:3: in <module>",
+                '    @pytest.mark.parametrise("x", range(2))',
+                "E   Failed: Unknown 'parametrise' mark, did you mean 'parametrize'?",
+                "*! Interrupted: 1 error during collection !*",
+                "*= 1 error in *",
             ]
         )
 

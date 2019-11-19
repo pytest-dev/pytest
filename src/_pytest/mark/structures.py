@@ -314,13 +314,18 @@ class MarkGenerator:
                         "{!r} not found in `markers` configuration option".format(name),
                         pytrace=False,
                     )
-                else:
-                    warnings.warn(
-                        "Unknown pytest.mark.%s - is this a typo?  You can register "
-                        "custom marks to avoid this warning - for details, see "
-                        "https://docs.pytest.org/en/latest/mark.html" % name,
-                        PytestUnknownMarkWarning,
-                    )
+
+                # Raise a specific error for common misspellings of "parametrize".
+                if name in ["parameterize", "parametrise", "parameterise"]:
+                    __tracebackhide__ = True
+                    fail("Unknown '{}' mark, did you mean 'parametrize'?".format(name))
+
+                warnings.warn(
+                    "Unknown pytest.mark.%s - is this a typo?  You can register "
+                    "custom marks to avoid this warning - for details, see "
+                    "https://docs.pytest.org/en/latest/mark.html" % name,
+                    PytestUnknownMarkWarning,
+                )
 
         return MarkDecorator(Mark(name, (), {}))
 
