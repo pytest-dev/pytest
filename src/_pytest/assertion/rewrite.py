@@ -807,8 +807,9 @@ class AssertionRewriter(ast.NodeVisitor):
                 )
             )
 
+        negation = ast.UnaryOp(ast.Not(), top_condition)
+
         if self.enable_assertion_pass_hook:  # Experimental pytest_assertion_pass hook
-            negation = ast.UnaryOp(ast.Not(), top_condition)
             msg = self.pop_format_context(ast.Str(explanation))
 
             # Failed
@@ -860,7 +861,6 @@ class AssertionRewriter(ast.NodeVisitor):
         else:  # Original assertion rewriting
             # Create failure message.
             body = self.expl_stmts
-            negation = ast.UnaryOp(ast.Not(), top_condition)
             self.statements.append(ast.If(negation, body, []))
             if assert_.msg:
                 assertmsg = self.helper("_format_assertmsg", assert_.msg)
