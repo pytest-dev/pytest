@@ -544,7 +544,7 @@ class TestAssertionWarnings:
 
     def test_tuple_warning(self, testdir):
         testdir.makepyfile(
-            """
+            """\
             def test_foo():
                 assert (1,2)
             """
@@ -553,48 +553,6 @@ class TestAssertionWarnings:
         self.assert_result_warns(
             result, "assertion is always true, perhaps remove parentheses?"
         )
-
-    @staticmethod
-    def create_file(testdir, return_none):
-        testdir.makepyfile(
-            """
-            def foo(return_none):
-                if return_none:
-                    return None
-                else:
-                    return False
-
-            def test_foo():
-                assert foo({return_none})
-            """.format(
-                return_none=return_none
-            )
-        )
-
-    def test_none_function_warns(self, testdir):
-        self.create_file(testdir, True)
-        result = testdir.runpytest()
-        self.assert_result_warns(
-            result, 'asserting the value None, please use "assert is None"'
-        )
-
-    def test_assert_is_none_no_warn(self, testdir):
-        testdir.makepyfile(
-            """
-            def foo():
-                return None
-
-            def test_foo():
-                assert foo() is None
-            """
-        )
-        result = testdir.runpytest()
-        result.stdout.fnmatch_lines(["*1 passed in*"])
-
-    def test_false_function_no_warn(self, testdir):
-        self.create_file(testdir, False)
-        result = testdir.runpytest()
-        result.stdout.fnmatch_lines(["*1 failed in*"])
 
 
 def test_warnings_checker_twice():
