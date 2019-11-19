@@ -310,9 +310,9 @@ class MarkGenerator:
             # then it really is time to issue a warning or an error.
             if name not in self._markers:
                 if self._config.option.strict_markers:
+                    __tracebackhide__ = True
                     fail(
                         "{!r} not found in `markers` configuration option".format(name),
-                        pytrace=False,
                     )
                 else:
                     warnings.warn(

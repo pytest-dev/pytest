@@ -192,7 +192,17 @@ def test_strict_prohibits_unregistered_markers(testdir, option_name):
     result = testdir.runpytest(option_name)
     assert result.ret != 0
     result.stdout.fnmatch_lines(
-        ["'unregisteredmark' not found in `markers` configuration option"]
+        [
+            "collected 0 items / 1 error",
+            "",
+            "*= ERRORS =*",
+            "*_ ERROR collecting test_strict_prohibits_unregistered_markers.py _*",
+            "test_strict_prohibits_unregistered_markers.py:2: in <module>",
+            "    @pytest.mark.unregisteredmark",
+            "E   Failed: 'unregisteredmark' not found in `markers` configuration option",
+            "*! Interrupted: 1 error during collection !*",
+            "*= 1 error in *",
+        ]
     )
 
 
