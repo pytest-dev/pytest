@@ -1,1 +1,0 @@
-Use multiple colors with terminal summary statistics.

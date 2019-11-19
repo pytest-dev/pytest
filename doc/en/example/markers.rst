@@ -622,7 +622,7 @@ then you will see two tests skipped and two executed tests as expected:
     test_plat.py s.s.                                                    [100%]
 
     ========================= short test summary info ==========================
-    SKIPPED [2] $REGENDOC_TMPDIR/conftest.py:13: cannot run on platform linux
+    SKIPPED [2] $REGENDOC_TMPDIR/conftest.py:12: cannot run on platform linux
     ======================= 2 passed, 2 skipped in 0.12s =======================
 
 Note that if you specify a platform via the marker-command line option like this:
