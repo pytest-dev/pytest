@@ -67,7 +67,7 @@ Features
   rather than implicitly.
 
 
-- `#5914 <https://github.com/pytest-dev/pytest/issues/5914>`_: ``pytester`` learned two new functions, `no_fnmatch_line <https://docs.pytest.org/en/latest/reference.html#_pytest.pytester.LineMatcher.no_fnmatch_line>`_ and
+- `#5914 <https://github.com/pytest-dev/pytest/issues/5914>`_: `testdir <https://docs.pytest.org/en/latest/reference.html#testdir>`__ learned two new functions, `no_fnmatch_line <https://docs.pytest.org/en/latest/reference.html#_pytest.pytester.LineMatcher.no_fnmatch_line>`_ and
   `no_re_match_line <https://docs.pytest.org/en/latest/reference.html#_pytest.pytester.LineMatcher.no_re_match_line>`_.
 
   The functions are used to ensure the captured text *does not* match the given
@@ -77,12 +77,14 @@ Features
 
   .. code-block:: python
 
+      result = testdir.runpytest()
       assert re.match(pat, result.stdout.str()) is None
 
   Or the ``in`` operator:
 
   .. code-block:: python
 
+      result = testdir.runpytest()
       assert text in result.stdout.str()
 
   But the new functions produce best output on failure.
