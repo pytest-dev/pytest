@@ -13,6 +13,7 @@ from typing import Tuple
 
 import _pytest._code
 from _pytest import outcomes
+from _pytest._io.saferepr import _pformat_dispatch
 from _pytest._io.saferepr import safeformat
 from _pytest._io.saferepr import saferepr
 from _pytest.compat import ATTRS_EQ_FIELD
@@ -26,27 +27,6 @@ _reprcompare = None  # type: Optional[Callable[[str, object, object], Optional[s
 # Works similarly as _reprcompare attribute. Is populated with the hook call
 # when pytest_runtest_setup is called.
 _assertion_pass = None  # type: Optional[Callable[[int, str, str], None]]
-
-
-class AlwaysDispatchingPrettyPrinter(pprint.PrettyPrinter):
-    """PrettyPrinter that always dispatches (regardless of width)."""
-
-    def _format(self, object, stream, indent, allowance, context, level):
-        p = self._dispatch.get(type(object).__repr__, None)
-
-        objid = id(object)
-        if objid in context or p is None:
-            return super()._format(object, stream, indent, allowance, context, level)
-
-        context[objid] = 1
-        p(self, object, stream, indent, allowance, context, level + 1)
-        del context[objid]
-
-
-def _pformat_dispatch(object, indent=1, width=80, depth=None, *, compact=False):
-    return AlwaysDispatchingPrettyPrinter(
-        indent=1, width=80, depth=None, compact=False
-    ).pformat(object)
 
 
 def format_explanation(explanation: str) -> str:
