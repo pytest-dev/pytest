@@ -9,6 +9,7 @@ from hypothesis import strategies
 import pytest
 from _pytest import fixtures
 from _pytest import python
+from _pytest.python import _idval
 
 
 class TestMetafunc:
@@ -209,8 +210,6 @@ class TestMetafunc:
         deadline=400.0
     )  # very close to std deadline and CI boxes are not reliable in CPU power
     def test_idval_hypothesis(self, value):
-        from _pytest.python import _idval
-
         escaped = _idval(value, "a", 6, None, item=None, config=None)
         assert isinstance(escaped, str)
         escaped.encode("ascii")
@@ -221,8 +220,6 @@ class TestMetafunc:
         escapes if they're not.
 
         """
-        from _pytest.python import _idval
-
         values = [
             ("", ""),
             ("ascii", "ascii"),
@@ -242,7 +239,6 @@ class TestMetafunc:
         disable_test_id_escaping_and_forfeit_all_rights_to_community_support
         option. (#5294)
         """
-        from _pytest.python import _idval
 
         class MockConfig:
             def __init__(self, config):
@@ -274,8 +270,6 @@ class TestMetafunc:
         "binary escape", where any byte < 127 is escaped into its hex form.
         - python3: bytes objects are always escaped using "binary escape".
         """
-        from _pytest.python import _idval
-
         values = [
             (b"", ""),
             (b"\xc3\xb4\xff\xe4", "\\xc3\\xb4\\xff\\xe4"),
@@ -289,7 +283,6 @@ class TestMetafunc:
         """unittest for the expected behavior to obtain ids for parametrized
         values that are classes or functions: their __name__.
         """
-        from _pytest.python import _idval
 
         class TestClass:
             pass
