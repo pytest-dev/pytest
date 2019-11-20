@@ -365,12 +365,14 @@ class Collector(Node):
 
     def repr_failure(self, excinfo):
         """ represent a collection failure. """
-        if excinfo.errisinstance(self.CollectError):
+        if excinfo.errisinstance(self.CollectError) and not self.config.getoption(
+            "fulltrace", False
+        ):
             exc = excinfo.value
             return str(exc.args[0])
 
         # Respect explicit tbstyle option, but default to "short"
-        # (None._repr_failure_py defaults to "long" without "fulltrace" option).
+        # (_repr_failure_py uses "long" with "fulltrace" option always).
         tbstyle = self.config.getoption("tbstyle", "auto")
         if tbstyle == "auto":
             tbstyle = "short"
