@@ -205,11 +205,11 @@ class TestParser:
         )
         parser.add_argument(
             "-t", "--twoword", "--duo", "--two-word", "--two", help="foo"
-        ).map_long_option = {"two": "two-word"}
+        )
         # throws error on --deux only!
         parser.add_argument(
             "-d", "--deuxmots", "--deux-mots", action="store_true", help="foo"
-        ).map_long_option = {"deux": "deux-mots"}
+        )
         parser.add_argument("-s", action="store_true", help="single short")
         parser.add_argument("--abc", "-a", action="store_true", help="bar")
         parser.add_argument("--klm", "-k", "--kl-m", action="store_true", help="bar")
@@ -221,7 +221,7 @@ class TestParser:
         )
         parser.add_argument(
             "-x", "--exit-on-first", "--exitfirst", action="store_true", help="spam"
-        ).map_long_option = {"exitfirst": "exit-on-first"}
+        )
         parser.add_argument("files_and_dirs", nargs="*")
         args = parser.parse_args(["-k", "--duo", "hallo", "--exitfirst"])
         assert args.twoword == "hallo"
