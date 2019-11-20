@@ -4,7 +4,6 @@ from datetime import datetime
 from xml.dom import minidom
 
 import py
-import xmlschema
 
 import pytest
 from _pytest.junitxml import LogXML
@@ -15,6 +14,7 @@ from _pytest.reports import BaseReport
 @pytest.fixture(scope="session")
 def schema():
     """Returns a xmlschema.XMLSchema object for the junit-10.xsd file"""
+    xmlschema = pytest.importorskip("xmlschema")
     fn = Path(__file__).parent / "example_scripts/junit-10.xsd"
     with fn.open() as f:
         return xmlschema.XMLSchema(f)
