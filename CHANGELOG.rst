@@ -113,7 +113,7 @@ Improvements
 
   Before:
 
-  .. code-block:: pytest
+  ::
 
       E   AssertionError: assert ['version', '...version_info'] == ['version', '...version', ...]
       E     Right contains 3 more items, first extra item: ' '
@@ -129,7 +129,7 @@ Improvements
 
   After:
 
-  .. code-block:: pytest
+  ::
 
       E   AssertionError: assert ['version', '...version_info'] == ['version', '...version', ...]
       E     Right contains 3 more items, first extra item: ' '
@@ -144,6 +144,8 @@ Improvements
       E     +  'sys.version_info',
       E       ]
 
+
+- `#5934 <https://github.com/pytest-dev/pytest/issues/5934>`_: ``repr`` of ``ExceptionInfo`` objects has been improved to honor the ``__repr__`` method of the underlying exception.
 
 - `#5936 <https://github.com/pytest-dev/pytest/issues/5936>`_: Display untruncated assertion message with ``-vv``.
 
