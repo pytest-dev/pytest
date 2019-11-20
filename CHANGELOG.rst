@@ -113,7 +113,7 @@ Improvements
 
   Before:
 
-  .. code-block::
+  .. code-block:: pytest
 
       E   AssertionError: assert ['version', '...version_info'] == ['version', '...version', ...]
       E     Right contains 3 more items, first extra item: ' '
@@ -129,7 +129,7 @@ Improvements
 
   After:
 
-  .. code-block::
+  .. code-block:: pytest
 
       E   AssertionError: assert ['version', '...version_info'] == ['version', '...version', ...]
       E     Right contains 3 more items, first extra item: ' '
