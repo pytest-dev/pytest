@@ -409,8 +409,6 @@ class DropShorterLongHelpFormatter(argparse.HelpFormatter):
     """shorten help for long options that differ only in extra hyphens
 
     - collapse **long** options that are the same except for extra hyphens
-    - special action attribute map_long_option allows suppressing additional
-      long options
     - shortcut if there are only two options and one of them is a short one
     - cache result on action object as this is called at least 2 times
     """
@@ -434,9 +432,6 @@ class DropShorterLongHelpFormatter(argparse.HelpFormatter):
             action._formatted_action_invocation = orgstr
             return orgstr
         return_list = []
-        option_map = getattr(action, "map_long_option", {})
-        if option_map is None:
-            option_map = {}
         short_long = {}  # type: Dict[str, str]
         for option in options:
             if len(option) == 2 or option[2] == " ":
@@ -446,12 +441,11 @@ class DropShorterLongHelpFormatter(argparse.HelpFormatter):
                     'long optional argument without "--": [%s]' % (option), self
                 )
             xxoption = option[2:]
-            if xxoption.split()[0] not in option_map:
-                shortened = xxoption.replace("-", "")
-                if shortened not in short_long or len(short_long[shortened]) < len(
-                    xxoption
-                ):
-                    short_long[shortened] = xxoption
+            shortened = xxoption.replace("-", "")
+            if shortened not in short_long or len(short_long[shortened]) < len(
+                xxoption
+            ):
+                short_long[shortened] = xxoption
         # now short_long has been filled out to the longest with dashes
         # **and** we keep the right option ordering from add_argument
         for option in options:
