@@ -1088,7 +1088,18 @@ def test_module_level_skip_error(testdir):
     )
     result = testdir.runpytest()
     result.stdout.fnmatch_lines(
-        ["*Using pytest.skip outside of a test is not allowed*"]
+        [
+            "collected 0 items / 1 error",
+            "",
+            "*= ERRORS =*",
+            "*_ ERROR collecting test_module_level_skip_error.py _*",
+            "Using pytest.skip outside of a test is not allowed."
+            " To decorate a test function, use the @pytest.mark.skip or"
+            " @pytest.mark.skipif decorators instead, and to skip a module"
+            " use `pytestmark = pytest.mark.{skip,skipif}.",
+            "*! Interrupted: 1 error during collection !*",
+            "*= 1 error in *",
+        ]
     )
 
 
