@@ -121,7 +121,12 @@ def pytest_runtest_setup(item):
 
 def pytest_runtest_call(item):
     _update_current_test_var(item, "call")
-    sys.last_type, sys.last_value, sys.last_traceback = (None, None, None)
+    try:
+        del sys.last_type
+        del sys.last_value
+        del sys.last_traceback
+    except AttributeError:
+        pass
     try:
         item.runtest()
     except Exception:
