@@ -37,10 +37,6 @@ repos:
     hooks:
     -   id: pyupgrade
         args: [--py3-plus]
--   repo: https://github.com/pre-commit/pygrep-hooks
-    rev: v1.4.0
-    hooks:
-    -   id: rst-backticks
 -   repo: https://github.com/pre-commit/mirrors-mypy
     rev: v0.740
     hooks:

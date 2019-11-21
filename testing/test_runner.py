@@ -900,9 +900,9 @@ def test_store_except_info_on_error():
     # The next run should clear the exception info stored by the previous run
     ItemMightRaise.raise_error = False
     runner.pytest_runtest_call(ItemMightRaise())
-    assert sys.last_type is None
-    assert sys.last_value is None
-    assert sys.last_traceback is None
+    assert not hasattr(sys, "last_type")
+    assert not hasattr(sys, "last_value")
+    assert not hasattr(sys, "last_traceback")
 
 
 def test_current_test_env_var(testdir, monkeypatch):

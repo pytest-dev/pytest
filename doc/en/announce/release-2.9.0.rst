@@ -131,7 +131,7 @@ The py.test Development Team
   with same name.
 
 
-.. _`traceback style docs`: https://pytest.org/latest/usage.html#modifying-python-traceback-printing
+.. _`traceback style docs`: https://pytest.org/en/latest/usage.html#modifying-python-traceback-printing
 
 .. _#1422: https://github.com/pytest-dev/pytest/issues/1422
 .. _#1379: https://github.com/pytest-dev/pytest/issues/1379

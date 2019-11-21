@@ -79,12 +79,19 @@ def fix_formatting():
     call(["pre-commit", "run", "--all-files"])
 
 
+def check_links():
+    """Runs sphinx-build to check links"""
+    print(f"{Fore.CYAN}[generate.check_links] {Fore.RESET}Checking links")
+    check_call(["tox", "-e", "docs-checklinks"])
+
+
 def pre_release(version):
     """Generates new docs, release announcements and creates a local tag."""
     announce(version)
     regen()
     changelog(version, write_out=True)
     fix_formatting()
+    check_links()
 
     msg = "Preparing release version {}".format(version)
     check_call(["git", "commit", "-a", "-m", msg])
