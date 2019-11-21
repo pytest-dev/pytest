@@ -73,7 +73,6 @@ Some organisations using pytest
 
 * `Square Kilometre Array, Cape Town <http://ska.ac.za/>`_
 * `Some Mozilla QA people <http://www.theautomatedtester.co.uk/blog/2011/pytest_and_xdist_plugin.html>`_ use pytest to distribute their Selenium tests
-* `Tandberg <http://www.tandberg.com/>`_
 * `Shootq <http://web.shootq.com/>`_
 * `Stups department of Heinrich Heine University Duesseldorf <http://www.stups.uni-duesseldorf.de/projects.php>`_
 * cellzome
