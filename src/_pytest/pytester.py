@@ -1481,6 +1481,7 @@ class LineMatcher:
         self._log_output = []
 
     def _fail(self, msg):
+        __tracebackhide__ = True
         log_text = self._log_text
         self._log_output = []
         pytest.fail(log_text)
