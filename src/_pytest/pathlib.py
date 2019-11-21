@@ -296,19 +296,19 @@ def make_numbered_dir_with_cleanup(
 ) -> Path:
     """creates a numbered dir with a cleanup lock and removes old ones"""
     e = None
+    # Register a cleanup for program exit
+    consider_lock_dead_if_created_before = p.stat().st_mtime - lock_timeout
+    atexit.register(
+        cleanup_numbered_dir,
+        root,
+        prefix,
+        keep,
+        consider_lock_dead_if_created_before,
+    )
     for i in range(10):
         try:
             p = make_numbered_dir(root, prefix)
-            consider_lock_dead_if_created_before = p.stat().st_mtime - lock_timeout
             lock_path = create_cleanup_lock(p)
-            # Register a cleanup for program exit
-            atexit.register(
-                cleanup_numbered_dir,
-                root,
-                prefix,
-                keep,
-                consider_lock_dead_if_created_before,
-            )
             register_cleanup_lock_removal(lock_path)
         except Exception as exc:
             e = exc
