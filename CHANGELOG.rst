@@ -157,7 +157,7 @@ Improvements
   immutable and avoid accidental modifications.
 
 
-- `#6023 <https://github.com/pytest-dev/pytest/issues/6023>`_: ``pytest.main`` now returns a ``pytest.ExitCode`` instance now, except for when custom exit codes are used (where it returns ``int`` then still).
+- `#6023 <https://github.com/pytest-dev/pytest/issues/6023>`_: ``pytest.main`` returns a ``pytest.ExitCode`` instance now, except for when custom exit codes are used (where it returns ``int`` then still).
 
 
 - `#6026 <https://github.com/pytest-dev/pytest/issues/6026>`_: Align prefixes in output of pytester's ``LineMatcher``.
@@ -169,7 +169,7 @@ Improvements
 - `#6069 <https://github.com/pytest-dev/pytest/issues/6069>`_: ``pytester.spawn`` does not skip/xfail tests on FreeBSD anymore unconditionally.
 
 
-- `#6097 <https://github.com/pytest-dev/pytest/issues/6097>`_: The "[XXX%]" indicator in the test summary is now colored according to the final (new) multi-colored line's main color.
+- `#6097 <https://github.com/pytest-dev/pytest/issues/6097>`_: The "[...%]" indicator in the test summary is now colored according to the final (new) multi-colored line's main color.
 
 
 - `#6116 <https://github.com/pytest-dev/pytest/issues/6116>`_: Added ``--co`` as a synonym to ``--collect-only``.
