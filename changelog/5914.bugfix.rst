@@ -1,0 +1,1 @@
+pytester: fix ``no_fnmatch_line`` when used after positive matching.

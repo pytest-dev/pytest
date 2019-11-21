@@ -92,7 +92,7 @@ exclude_patterns = [
 
 
 # The reST default role (used for this markup: `text`) to use for all documents.
-# default_role = None
+default_role = "literal"
 
 # If true, '()' will be appended to :func: etc. cross-reference text.
 # add_function_parentheses = True
@@ -111,6 +111,19 @@ pygments_style = "sphinx"
 
 # A list of ignored prefixes for module index sorting.
 # modindex_common_prefix = []
+
+# A list of regular expressions that match URIs that should not be checked when
+# doing a linkcheck.
+linkcheck_ignore = [
+    "https://github.com/numpy/numpy/blob/master/doc/release/1.16.0-notes.rst#new-deprecations",
+    "https://blogs.msdn.microsoft.com/bharry/2017/06/28/testing-in-a-cloud-delivery-cadence/",
+    "http://pythontesting.net/framework/pytest-introduction/",
+    r"https://github.com/pytest-dev/pytest/issues/\d+",
+    r"https://github.com/pytest-dev/pytest/pull/\d+",
+]
+
+# The number of worker threads to use when checking links (default=5).
+linkcheck_workers = 5
 
 
 # -- Options for HTML output ---------------------------------------------------

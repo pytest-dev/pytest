@@ -1438,8 +1438,10 @@ class LineMatcher:
                     self._log("{:>{width}}".format("and:", width=wnick), repr(nextline))
                 extralines.append(nextline)
             else:
-                self._log("remains unmatched: {!r}".format(line))
-                pytest.fail(self._log_text.lstrip())
+                msg = "remains unmatched: {!r}".format(line)
+                self._log(msg)
+                self._fail(msg)
+        self._log_output = []
 
     def no_fnmatch_line(self, pat):
         """Ensure captured lines do not match the given pattern, using ``fnmatch.fnmatch``.
@@ -1465,18 +1467,21 @@ class LineMatcher:
         __tracebackhide__ = True
         nomatch_printed = False
         wnick = len(match_nickname) + 1
-        try:
-            for line in self.lines:
-                if match_func(line, pat):
-                    self._log("%s:" % match_nickname, repr(pat))
-                    self._log("{:>{width}}".format("with:", width=wnick), repr(line))
-                    pytest.fail(self._log_text.lstrip())
-                else:
-                    if not nomatch_printed:
-                        self._log(
-                            "{:>{width}}".format("nomatch:", width=wnick), repr(pat)
-                        )
-                        nomatch_printed = True
-                    self._log("{:>{width}}".format("and:", width=wnick), repr(line))
-        finally:
-            self._log_output = []
+        for line in self.lines:
+            if match_func(line, pat):
+                msg = "{}: {!r}".format(match_nickname, pat)
+                self._log(msg)
+                self._log("{:>{width}}".format("with:", width=wnick), repr(line))
+                self._fail(msg)
+            else:
+                if not nomatch_printed:
+                    self._log("{:>{width}}".format("nomatch:", width=wnick), repr(pat))
+                    nomatch_printed = True
+                self._log("{:>{width}}".format("and:", width=wnick), repr(line))
+        self._log_output = []
+
+    def _fail(self, msg):
+        __tracebackhide__ = True
+        log_text = self._log_text
+        self._log_output = []
+        pytest.fail(log_text)

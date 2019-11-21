@@ -1,12 +1,14 @@
 This directory contains "newsfragments" which are short files that contain a small **ReST**-formatted
 text that will be added to the next ``CHANGELOG``.
 
-The ``CHANGELOG`` will be read by users, so this description should be aimed to pytest users
+The ``CHANGELOG`` will be read by **users**, so this description should be aimed to pytest users
 instead of describing internal changes which are only relevant to the developers.
 
-Make sure to use full sentences with correct case and punctuation, for example::
+Make sure to use full sentences in the **past or present tense** and use punctuation, examples::
 
-    Fix issue with non-ascii messages from the ``warnings`` module.
+    Improved verbose diff output with sequences.
+
+    Terminal summary statistics now use multiple colors.
 
 Each file should be named like ``<ISSUE>.<TYPE>.rst``, where
 ``<ISSUE>`` is an issue number, and ``<TYPE>`` is one of:
