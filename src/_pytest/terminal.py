@@ -1099,7 +1099,7 @@ def _get_main_color(stats) -> Tuple[str, List[str]]:
         "failed passed skipped deselected xfailed xpassed warnings error".split()
     )
     unknown_type_seen = False
-    for found_type in stats:
+    for found_type in stats.keys():
         if found_type not in known_types:
             if found_type:  # setup/teardown reports have an empty key, ignore them
                 known_types.append(found_type)
