@@ -1,0 +1,1 @@
+Report ``PytestUnknownMarkWarning`` at the level of the user's code, not ``pytest``'s.

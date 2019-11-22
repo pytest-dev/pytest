@@ -1,0 +1,1 @@
+The ``pytest_warning_captured`` hook now receives a ``location`` parameter with the code location that generated the warning.
