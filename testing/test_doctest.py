@@ -288,12 +288,67 @@ class TestDoctests:
         )
         result = testdir.runpytest("--doctest-modules")
         result.stdout.fnmatch_lines(
+            ["*hello*", "006*>>> 1/0*", "*UNEXPECTED*ZeroDivision*", "*1 failed*"]
+        )
+
+    def test_doctest_linedata_on_property(self, testdir):
+        testdir.makepyfile(
+            """
+            class Sample(object):
+                @property
+                def some_property(self):
+                    '''
+                    >>> Sample().some_property
+                    'another thing'
+                    '''
+                    return 'something'
+            """
+        )
+        result = testdir.runpytest("--doctest-modules")
+        result.stdout.fnmatch_lines(
             [
-                "*hello*",
-                "*EXAMPLE LOCATION UNKNOWN, not showing all tests of that example*",
-                "*1/0*",
-                "*UNEXPECTED*ZeroDivision*",
-                "*1 failed*",
+                "*= FAILURES =*",
+                "*_ [[]doctest[]] test_doctest_linedata_on_property.Sample.some_property _*",
+                "004 ",
+                "005         >>> Sample().some_property",
+                "Expected:",
+                "    'another thing'",
+                "Got:",
+                "    'something'",
+                "",
+                "*/test_doctest_linedata_on_property.py:5: DocTestFailure",
+                "*= 1 failed in *",
+            ]
+        )
+
+    def test_doctest_no_linedata_on_overriden_property(self, testdir):
+        testdir.makepyfile(
+            """
+            class Sample(object):
+                @property
+                def some_property(self):
+                    '''
+                    >>> Sample().some_property
+                    'another thing'
+                    '''
+                    return 'something'
+                some_property = property(some_property.__get__, None, None, some_property.__doc__)
+            """
+        )
+        result = testdir.runpytest("--doctest-modules")
+        result.stdout.fnmatch_lines(
+            [
+                "*= FAILURES =*",
+                "*_ [[]doctest[]] test_doctest_no_linedata_on_overriden_property.Sample.some_property _*",
+                "EXAMPLE LOCATION UNKNOWN, not showing all tests of that example",
+                "[?][?][?] >>> Sample().some_property",
+                "Expected:",
+                "    'another thing'",
+                "Got:",
+                "    'something'",
+                "",
+                "*/test_doctest_no_linedata_on_overriden_property.py:None: DocTestFailure",
+                "*= 1 failed in *",
             ]
         )
 
