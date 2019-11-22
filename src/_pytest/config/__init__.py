@@ -133,13 +133,7 @@ def directory_arg(path, optname):
 
 
 # Plugins that cannot be disabled via "-p no:X" currently.
-essential_plugins = (
-    "mark",
-    "main",
-    "runner",
-    "fixtures",
-    "helpconfig",  # Provides -p.
-)
+essential_plugins = ("mark", "main", "runner", "fixtures", "helpconfig")  # Provides -p.
 
 default_plugins = essential_plugins + (
     "python",
@@ -589,7 +583,7 @@ class PytestPluginManager(PluginManager):
             _issue_warning_captured(
                 PytestConfigWarning("skipped plugin {!r}: {}".format(modname, e.msg)),
                 self.hook,
-                stacklevel=1,
+                stacklevel=2,
             )
         else:
             mod = sys.modules[importspec]

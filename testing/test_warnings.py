@@ -1,3 +1,4 @@
+import os
 import warnings
 
 import pytest
@@ -641,3 +642,160 @@ def test_pytest_configure_warning(testdir, recwarn):
     assert "INTERNALERROR" not in result.stderr.str()
     warning = recwarn.pop()
     assert str(warning.message) == "from pytest_configure"
+
+
+class TestStackLevel:
+    @pytest.fixture
+    def capwarn(self, testdir):
+        class CapturedWarnings:
+            captured = []
+
+            @classmethod
+            def pytest_warning_captured(cls, warning_message, when, item, location):
+                cls.captured.append((warning_message, location))
+
+        testdir.plugins = [CapturedWarnings()]
+
+        return CapturedWarnings
+
+    def test_issue4445_rewrite(self, testdir, capwarn):
+        """#4445: Make sure the warning points to a reasonable location
+        See origin of _issue_warning_captured at: _pytest.assertion.rewrite.py:241
+        """
+        testdir.makepyfile(some_mod="")
+        conftest = testdir.makeconftest(
+            """
+                import some_mod
+                import pytest
+
+                pytest.register_assert_rewrite("some_mod")
+            """
+        )
+        testdir.parseconfig()
+
+        # with stacklevel=5 the warning originates from register_assert_rewrite
+        # function in the created conftest.py
+        assert len(capwarn.captured) == 1
+        warning, location = capwarn.captured.pop()
+        file, lineno, func = location
+
+        assert "Module already imported" in str(warning.message)
+        assert file == str(conftest)
+        assert func == "<module>"  # the above conftest.py
+        assert lineno == 4
+
+    def test_issue4445_preparse(self, testdir, capwarn):
+        """#4445: Make sure the warning points to a reasonable location
+        See origin of _issue_warning_captured at: _pytest.config.__init__.py:910
+        """
+        testdir.makeconftest(
+            """
+            import nothing
+            """
+        )
+        testdir.parseconfig("--help")
+
+        # with stacklevel=2 the warning should originate from config._preparse and is
+        # thrown by an errorneous conftest.py
+        assert len(capwarn.captured) == 1
+        warning, location = capwarn.captured.pop()
+        file, _, func = location
+
+        assert "could not load initial conftests" in str(warning.message)
+        assert "config{sep}__init__.py".format(sep=os.sep) in file
+        assert func == "_preparse"
+
+    def test_issue4445_import_plugin(self, testdir, capwarn):
+        """#4445: Make sure the warning points to a reasonable location
+        See origin of _issue_warning_captured at: _pytest.config.__init__.py:585
+        """
+        testdir.makepyfile(
+            some_plugin="""
+            import pytest
+            pytest.skip("thing", allow_module_level=True)
+            """
+        )
+        testdir.syspathinsert()
+        testdir.parseconfig("-p", "some_plugin")
+
+        # with stacklevel=2 the warning should originate from
+        # config.PytestPluginManager.import_plugin is thrown by a skipped plugin
+
+        # During config parsing the the pluginargs are checked in a while loop
+        # that as a result of the argument count runs import_plugin twice, hence
+        # two identical warnings are captured (is this intentional?).
+        assert len(capwarn.captured) == 2
+        warning, location = capwarn.captured.pop()
+        file, _, func = location
+
+        assert "skipped plugin 'some_plugin': thing" in str(warning.message)
+        assert "config{sep}__init__.py".format(sep=os.sep) in file
+        assert func == "import_plugin"
+
+    def test_issue4445_resultlog(self, testdir, capwarn):
+        """#4445: Make sure the warning points to a reasonable location
+        See origin of _issue_warning_captured at: _pytest.resultlog.py:35
+        """
+        testdir.makepyfile(
+            """
+            def test_dummy():
+                pass
+        """
+        )
+        # Use parseconfigure() because the warning in resultlog.py is triggered in
+        # the pytest_configure hook
+        testdir.parseconfigure(
+            "--result-log={dir}".format(dir=testdir.tmpdir.join("result.log"))
+        )
+
+        # with stacklevel=2 the warning originates from resultlog.pytest_configure
+        # and is thrown when --result-log is used
+        warning, location = capwarn.captured.pop()
+        file, _, func = location
+
+        assert "--result-log is deprecated" in str(warning.message)
+        assert "resultlog.py" in file
+        assert func == "pytest_configure"
+
+    def test_issue4445_cacheprovider_set(self, testdir, capwarn):
+        """#4445: Make sure the warning points to a reasonable location
+        See origin of _issue_warning_captured at: _pytest.cacheprovider.py:59
+        """
+        testdir.tmpdir.join(".pytest_cache").write("something wrong")
+        testdir.runpytest(plugins=[capwarn()])
+
+        # with stacklevel=3 the warning originates from one stacklevel above
+        # _issue_warning_captured in cacheprovider.Cache.set and is thrown
+        # when there are errors during cache folder creation
+
+        # set is called twice (in module stepwise and in cacheprovider) so emits
+        # two warnings when there are errors during cache folder creation. (is this intentional?)
+        assert len(capwarn.captured) == 2
+        warning, location = capwarn.captured.pop()
+        file, lineno, func = location
+
+        assert "could not create cache path" in str(warning.message)
+        assert "cacheprovider.py" in file
+        assert func == "set"
+
+    def test_issue4445_issue5928_mark_generator(self, testdir):
+        """#4445 and #5928: Make sure the warning from an unknown mark points to
+        the test file where this mark is used.
+        """
+        testfile = testdir.makepyfile(
+            """
+            import pytest
+
+            @pytest.mark.unknown
+            def test_it():
+                pass
+            """
+        )
+        result = testdir.runpytest_subprocess()
+        # with stacklevel=2 the warning should originate from the above created test file
+        result.stdout.fnmatch_lines_random(
+            [
+                "*{testfile}:3*".format(testfile=str(testfile)),
+                "*Unknown pytest.mark.unknown*",
+            ]
+        )
