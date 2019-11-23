@@ -19,6 +19,16 @@ Below is a complete list of all pytest features which are considered deprecated.
 :class:`_pytest.warning_types.PytestWarning` or subclasses, which can be filtered using
 :ref:`standard warning filters <warnings>`.
 
+
+Node Construction changed to ``Node.from_parent``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 5.3
+
+The construction of nodes new should use the named constructor ``from_parent``.
+This limitation in api surface intends to enable better/simpler refactoring of the collection tree.
+
+
 ``junit_family`` default value change to "xunit2"
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
