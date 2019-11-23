@@ -20,6 +20,7 @@ Below is a complete list of all pytest features which are considered deprecated.
 :ref:`standard warning filters <warnings>`.
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 ``--no-print-logs`` command-line option
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -31,6 +32,18 @@ provide feedback.
 ``--show-capture`` command-line option was added in ``pytest 3.5.0` and allows to specify how to
 display captured output when tests fail: ``no``, ``stdout``, ``stderr``, ``log`` or ``all`` (the default).
 =======
+=======
+
+Node Construction changed to ``Node.from_parent``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 5.3
+
+The construction of nodes new should use the named constructor ``from_parent``.
+This limitation in api surface intends to enable better/simpler refactoring of the collection tree.
+
+
+>>>>>>> 15ffe6320... update  doc examples **untested**
 ``junit_family`` default value change to "xunit2"
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

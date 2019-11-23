@@ -13,4 +13,4 @@ class DummyCollector(pytest.collect.File):
 def pytest_pycollect_makemodule(path, parent):
     bn = path.basename
     if "py3" in bn and not py3 or ("py2" in bn and py3):
-        return DummyCollector(path, parent=parent)
+        return DummyCollector.from_parent(parent, fspath=path)
