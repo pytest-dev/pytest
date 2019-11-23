@@ -281,10 +281,10 @@ class TestFunction:
         from _pytest.fixtures import FixtureManager
 
         config = testdir.parseconfigure()
-        session = testdir.Session(config)
+        session = testdir.Session.from_config(config)
         session._fixturemanager = FixtureManager(session)
 
-        return pytest.Function(config=config, parent=session, **kwargs)
+        return pytest.Function.from_parent(config=config, parent=session, **kwargs)
 
     def test_function_equality(self, testdir, tmpdir):
         def func1():
@@ -1024,7 +1024,7 @@ class TestReportInfo:
                     return "ABCDE", 42, "custom"
             def pytest_pycollect_makeitem(collector, name, obj):
                 if name == "test_func":
-                    return MyFunction(name, parent=collector)
+                    return MyFunction.from_parent(name=name, parent=collector)
         """
         )
         item = testdir.getitem("def test_func(): pass")

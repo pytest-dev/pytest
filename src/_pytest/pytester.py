@@ -744,7 +744,7 @@ class Testdir:
         :param arg: a :py:class:`py.path.local` instance of the file
 
         """
-        session = Session(config)
+        session = Session.from_config(config)
         assert "::" not in str(arg)
         p = py.path.local(arg)
         config.hook.pytest_sessionstart(session=session)
@@ -762,7 +762,7 @@ class Testdir:
 
         """
         config = self.parseconfigure(path)
-        session = Session(config)
+        session = Session.from_config(config)
         x = session.fspath.bestrelpath(path)
         config.hook.pytest_sessionstart(session=session)
         res = session.perform_collect([x], genitems=False)[0]

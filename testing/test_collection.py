@@ -75,7 +75,7 @@ class TestCollector:
                 pass
             def pytest_collect_file(path, parent):
                 if path.ext == ".xxx":
-                    return CustomFile(path, parent=parent)
+                    return CustomFile.from_parent(fspath=path, parent=parent)
         """
         )
         node = testdir.getpathnode(hello)
@@ -446,7 +446,7 @@ class TestSession:
         p.move(target)
         subdir.chdir()
         config = testdir.parseconfig(p.basename)
-        rcol = Session(config=config)
+        rcol = Session.from_config(config)
         assert rcol.fspath == subdir
         parts = rcol._parsearg(p.basename)
 
@@ -463,7 +463,7 @@ class TestSession:
         # XXX migrate to collectonly? (see below)
         config = testdir.parseconfig(id)
         topdir = testdir.tmpdir
-        rcol = Session(config)
+        rcol = Session.from_config(config)
         assert topdir == rcol.fspath
         # rootid = rcol.nodeid
         # root2 = rcol.perform_collect([rcol.nodeid], genitems=False)[0]
