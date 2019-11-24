@@ -591,6 +591,7 @@ class LogXML:
             if report.when == "call":
                 reporter.append_failure(report)
                 self.open_reports.append(report)
+                reporter.write_captured_output(report)
             else:
                 reporter.append_error(report)
         elif report.skipped:
