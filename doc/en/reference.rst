@@ -1215,6 +1215,15 @@ passed multiple times. The expected format is ``name=value``. For example::
     a specific entry in the log. ``extra`` kwarg overrides the value specified
     on the command line or in the config.
 
+.. confval:: log_cli
+
+    Enable log display during test run (also known as :ref:`"live logging" <live_logs>`).
+    The default is ``False``.
+
+    .. code-block:: ini
+
+        [pytest]
+        log_cli = True
 
 .. confval:: log_cli_date_format
 
