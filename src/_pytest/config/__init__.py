@@ -784,7 +784,7 @@ class Config:
 
     @classmethod
     def fromdictargs(cls, option_dict, args):
-        """ constructor useable for subprocesses. """
+        """ constructor usable for subprocesses. """
         config = get_config(args)
         config.option.__dict__.update(option_dict)
         config.parse(args, addopts=False)
