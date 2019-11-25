@@ -20,6 +20,10 @@ import sys
 
 from _pytest import __version__ as version
 
+if False:  # TYPE_CHECKING
+    import sphinx.application
+
+
 release = ".".join(version.split(".")[:2])
 
 # If extensions (or modules to document with autodoc) are in another directory,
@@ -342,7 +346,30 @@ texinfo_documents = [
 intersphinx_mapping = {"python": ("https://docs.python.org/3", None)}
 
 
-def setup(app):
+def configure_logging(app: "sphinx.application.Sphinx") -> None:
+    """Configure Sphinx's WarningHandler to handle (expected) missing include."""
+    import sphinx.util.logging
+    import logging
+
+    class WarnLogFilter(logging.Filter):
+        def filter(self, record: logging.LogRecord) -> bool:
+            """Ignore warnings about missing include with "only" directive.
+
+            Ref: https://github.com/sphinx-doc/sphinx/issues/2150."""
+            if (
+                record.msg.startswith('Problems with "include" directive path:')
+                and "_changelog_towncrier_draft.rst" in record.msg
+            ):
+                return False
+            return True
+
+    logger = logging.getLogger(sphinx.util.logging.NAMESPACE)
+    warn_handler = [x for x in logger.handlers if x.level == logging.WARNING]
+    assert len(warn_handler) == 1, warn_handler
+    warn_handler[0].filters.insert(0, WarnLogFilter())
+
+
+def setup(app: "sphinx.application.Sphinx") -> None:
     # from sphinx.ext.autodoc import cut_lines
     # app.connect('autodoc-process-docstring', cut_lines(4, what=['module']))
     app.add_object_type(
@@ -351,3 +378,4 @@ def setup(app):
         objname="configuration value",
         indextemplate="pair: %s; configuration value",
     )
+    configure_logging(app)
