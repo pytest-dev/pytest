@@ -463,6 +463,8 @@ monkeypatch
 .. autoclass:: _pytest.monkeypatch.MonkeyPatch
     :members:
 
+.. _testdir:
+
 testdir
 ~~~~~~~
 
