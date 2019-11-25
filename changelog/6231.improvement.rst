@@ -1,1 +1,0 @@
-Improve check for misspelling of ``pytest.mark.parametrize``.

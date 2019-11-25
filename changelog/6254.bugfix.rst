@@ -1,1 +1,0 @@
-Fix compatibility with pytest-parallel (regression in pytest 5.3.0).

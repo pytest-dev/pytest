@@ -1,1 +1,0 @@
-Handle `exit.Exception` raised in `notify_exception` (via `pytest_internalerror`), e.g. when quitting pdb from post mortem.
