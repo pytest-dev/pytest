@@ -5,7 +5,6 @@ import sys
 import textwrap
 import tokenize
 import warnings
-from ast import PyCF_ONLY_AST as _AST_FLAG
 from bisect import bisect_right
 from types import FrameType
 from typing import Iterator
@@ -196,7 +195,7 @@ class Source:
             newex.text = ex.text
             raise newex
         else:
-            if flag & _AST_FLAG:
+            if flag & ast.PyCF_ONLY_AST:
                 return co
             lines = [(x + "\n") for x in self.lines]
             # Type ignored because linecache.cache is private.
@@ -321,7 +320,7 @@ def getstatementrange_ast(
         # don't produce duplicate warnings when compiling source to find ast
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            astnode = compile(content, "source", "exec", _AST_FLAG)
+            astnode = ast.parse(content, "source", "exec")
 
     start, end = get_statement_startend2(lineno, astnode)
     # we need to correct the end:
