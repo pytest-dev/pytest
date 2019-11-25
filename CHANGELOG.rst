@@ -18,6 +18,42 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+pytest 5.3.1 (2019-11-25)
+=========================
+
+No significant changes.
+
+
+pytest 5.3.1 (2019-11-25)
+=========================
+
+Improvements
+------------
+
+- `#6231 <https://github.com/pytest-dev/pytest/issues/6231>`_: Improve check for misspelling of ``pytest.mark.parametrize``.
+
+
+- `#6257 <https://github.com/pytest-dev/pytest/issues/6257>`_: Handle `exit.Exception` raised in `notify_exception` (via `pytest_internalerror`), e.g. when quitting pdb from post mortem.
+
+
+
+Bug Fixes
+---------
+
+- `#5914 <https://github.com/pytest-dev/pytest/issues/5914>`_: pytester: fix ``no_fnmatch_line`` when used after positive matching.
+
+
+- `#6082 <https://github.com/pytest-dev/pytest/issues/6082>`_: Fix line detection for doctest samples inside ``property`` docstrings, as a workaround to `bpo-17446 <https://bugs.python.org/issue17446>`__.
+
+
+- `#6254 <https://github.com/pytest-dev/pytest/issues/6254>`_: Fix compatibility with pytest-parallel (regression in pytest 5.3.0).
+
+
+- `#6255 <https://github.com/pytest-dev/pytest/issues/6255>`_: Clear the ``sys.last_traceback``, ``sys.last_type`` and ``sys.last_value``
+  attributes by deleting them instead of setting them to ``None``. This better
+  matches the behaviour of the Python standard library.
+
+
 pytest 5.3.0 (2019-11-19)
 =========================
 
