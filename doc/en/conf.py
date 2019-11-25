@@ -353,6 +353,9 @@ def configure_logging(app: "sphinx.application.Sphinx") -> None:
 
     class WarnLogFilter(logging.Filter):
         def filter(self, record: logging.LogRecord) -> bool:
+            """Ignore warnings about missing include with "only" directive.
+
+            Ref: https://github.com/sphinx-doc/sphinx/issues/2150."""
             if (
                 record.msg.startswith('Problems with "include" directive path:')
                 and "_changelog_towncrier_draft.rst" in record.msg
