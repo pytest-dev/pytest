@@ -34,3 +34,5 @@ If you are not sure what issue type to use, don't hesitate to ask in your PR.
 other than ``features`` it is usually better to stick to a single paragraph to keep it concise. You can install
 ``towncrier`` and then run ``towncrier --draft``
 if you want to get a preview of how your change will look in the final release notes.
+Alternatively you can also use ``tox -e docs-draft`` to build the documentation
+with the draft changelog (``doc/en/_build/changelog.html``).
