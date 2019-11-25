@@ -1,1 +1,1 @@
-Handle `exit.Exception` raised in `notify_exception` (via `pytest_internalerror`), e.g. when quitting pdb from post mortem.
+Handle :py:func:`_pytest.outcomes.exit` being used via :py:func:`~_pytest.hookspec.pytest_internalerror`, e.g. when quitting pdb from post mortem.

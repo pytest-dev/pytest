@@ -1,1 +1,1 @@
-pytester: fix ``no_fnmatch_line`` when used after positive matching.
+pytester: fix :py:func:`~_pytest.pytester.LineMatcher.no_fnmatch_line` when used after positive matching.

@@ -1,1 +1,1 @@
-Improve check for misspelling of ``pytest.mark.parametrize``.
+Improve check for misspelling of :ref:`pytest.mark.parametrize ref`.
