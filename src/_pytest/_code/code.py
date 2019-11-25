@@ -67,7 +67,7 @@ class Code:
         return not self == other
 
     @property
-    def path(self):
+    def path(self) -> Union[py.path.local, str]:
         """ return a path object pointing to source code (note that it
         might not point to an actually existing file). """
         try:
@@ -335,7 +335,7 @@ class Traceback(List[TracebackEntry]):
                 (path is None or codepath == path)
                 and (
                     excludepath is None
-                    or not hasattr(codepath, "relto")
+                    or not isinstance(codepath, py.path.local)
                     or not codepath.relto(excludepath)
                 )
                 and (lineno is None or x.lineno == lineno)
