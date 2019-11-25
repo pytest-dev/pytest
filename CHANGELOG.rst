@@ -24,11 +24,11 @@ pytest 5.3.0 (2019-11-19)
 Deprecations
 ------------
 
-- `#6179 <https://github.com/pytest-dev/pytest/issues/6179>`_: The default value of ``junit_family`` option will change to ``xunit2`` in pytest 6.0, given
+- `#6179 <https://github.com/pytest-dev/pytest/issues/6179>`_: The default value of :confval:`junit_family` option will change to ``"xunit2"`` in pytest 6.0, given
   that this is the version supported by default in modern tools that manipulate this type of file.
 
   In order to smooth the transition, pytest will issue a warning in case the ``--junitxml`` option
-  is given in the command line but ``junit_family`` is not explicitly configured in ``pytest.ini``.
+  is given in the command line but :confval:`junit_family` is not explicitly configured in ``pytest.ini``.
 
   For more information, `see the docs <https://docs.pytest.org/en/latest/deprecations.html#junit-family-default-value-change-to-xunit2>`__.
 
@@ -49,7 +49,7 @@ Features
   provide feedback.
 
 
-- `#4730 <https://github.com/pytest-dev/pytest/issues/4730>`_: When ``sys.pycache_prefix`` (Python 3.8+) is set, it will be used by pytest to cache test files changed by the assertion rewriting mechanism.
+- `#4730 <https://github.com/pytest-dev/pytest/issues/4730>`_: When :py:data:`sys.pycache_prefix` (Python 3.8+) is set, it will be used by pytest to cache test files changed by the assertion rewriting mechanism.
 
   This makes it easier to benefit of cached ``.pyc`` files even on file systems without permissions.
 
@@ -57,23 +57,23 @@ Features
 - `#5515 <https://github.com/pytest-dev/pytest/issues/5515>`_: Allow selective auto-indentation of multiline log messages.
 
   Adds command line option ``--log-auto-indent``, config option
-  ``log_auto_indent`` and support for per-entry configuration of
-  indentation behavior on calls to ``logging.log()``.
+  :confval:`log_auto_indent` and support for per-entry configuration of
+  indentation behavior on calls to :py:func:`python:logging.log()`.
 
-  Alters the default for auto-indention from ``on`` to ``off``. This
+  Alters the default for auto-indention from ``"on"`` to ``"off"``. This
   restores the older behavior that existed prior to v4.6.0. This
   reversion to earlier behavior was done because it is better to
   activate new features that may lead to broken tests explicitly
   rather than implicitly.
 
 
-- `#5914 <https://github.com/pytest-dev/pytest/issues/5914>`_: `testdir <https://docs.pytest.org/en/latest/reference.html#testdir>`__ learned two new functions, `no_fnmatch_line <https://docs.pytest.org/en/latest/reference.html#_pytest.pytester.LineMatcher.no_fnmatch_line>`_ and
-  `no_re_match_line <https://docs.pytest.org/en/latest/reference.html#_pytest.pytester.LineMatcher.no_re_match_line>`_.
+- `#5914 <https://github.com/pytest-dev/pytest/issues/5914>`_: :ref:`testdir` learned two new functions, :py:func:`~_pytest.pytester.LineMatcher.no_fnmatch_line` and
+  :py:func:`~_pytest.pytester.LineMatcher.no_re_match_line`.
 
   The functions are used to ensure the captured text *does not* match the given
   pattern.
 
-  The previous idiom was to use ``re.match``:
+  The previous idiom was to use :py:func:`python:re.match`:
 
   .. code-block:: python
 
