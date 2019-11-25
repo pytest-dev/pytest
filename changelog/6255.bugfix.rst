@@ -1,4 +1,4 @@
-Clear the :py:attr:`sys.last_traceback`, :py:attr:`sys.last_type`
-and :py:attr:`sys.last_value` attributes by deleting them instead
+Clear the :py:data:`sys.last_traceback`, :py:data:`sys.last_type`
+and :py:data:`sys.last_value` attributes by deleting them instead
 of setting them to ``None``. This better matches the behaviour of
 the Python standard library.
