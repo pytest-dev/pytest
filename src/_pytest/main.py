@@ -427,7 +427,9 @@ class Session(nodes.FSCollector):
             self.testsfailed += 1
             maxfail = self.config.getvalue("maxfail")
             if maxfail and self.testsfailed >= maxfail:
-                self.shouldfail = "stopping after %d failures" % (self.testsfailed)
+                self.shouldfail = "stopping after {} failure{}".format(
+                    self.testsfailed, "s" if self.testsfailed > 1 else ""
+                )
 
     pytest_collectreport = pytest_runtest_logreport
 

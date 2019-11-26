@@ -964,12 +964,36 @@ class TestGenericReporting:
         """
         )
         result = testdir.runpytest("--maxfail=2", *option.args)
+        if option.verbosity <= -1:
+            result.stdout.fnmatch_lines(
+                [
+                    "*def test_1():*",
+                    "*def test_2():*",
+                    "2 failed in *s (stopping after 2 failures)",
+                ]
+            )
+        else:
+            result.stdout.fnmatch_lines(
+                [
+                    "*def test_1():*",
+                    "*def test_2():*",
+                    "*= 2 failed in *s (stopping after 2 failures) =*",
+                ]
+            )
+
+    def test_maxfailures_veryquiet(self, testdir):
+        testdir.makepyfile(
+            """
+            def test_1(): assert 0
+            def test_2(): assert 0
+        """
+        )
+        result = testdir.runpytest("-x", "-qq")
         result.stdout.fnmatch_lines(
             [
                 "*def test_1():*",
-                "*def test_2():*",
-                "*! stopping after 2 failures !*",
-                "*2 failed*",
+                "test_maxfailures_veryquiet.py:1: AssertionError",
+                "!! stopping after 1 failure !!",
             ]
         )
 
@@ -986,9 +1010,8 @@ class TestGenericReporting:
             [
                 "*= short test summary info =*",
                 "FAILED *",
-                "*! stopping after 1 failures !*",
                 "*! session_interrupted !*",
-                "*= 1 failed in*",
+                "*= 1 failed in *s (stopping after 1 failure) =*",
             ]
         )
 

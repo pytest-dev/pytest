@@ -864,8 +864,7 @@ def test_exit_on_collection_with_maxfail_smaller_than_n_errors(testdir):
             "collected 1 item / 1 error",
             "*ERROR collecting test_02_import_error.py*",
             "*No module named *asdfa*",
-            "*! stopping after 1 failures !*",
-            "*= 1 error in *",
+            "*= 1 error in *s (stopping after 1 failure) =*",
         ]
     )
     res.stdout.no_fnmatch_line("*test_03*")

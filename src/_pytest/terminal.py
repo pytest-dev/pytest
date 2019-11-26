@@ -691,14 +691,16 @@ class TerminalReporter:
             self.config.hook.pytest_terminal_summary(
                 terminalreporter=self, exitstatus=exitstatus, config=self.config
             )
-        if session.shouldfail:
-            self.write_sep("!", session.shouldfail, red=True)
         if exitstatus == ExitCode.INTERRUPTED:
             self._report_keyboardinterrupt()
             del self._keyboardinterrupt_memo
         elif session.shouldstop:
             self.write_sep("!", session.shouldstop, red=True)
-        self.summary_stats()
+        if self.verbosity < -1:
+            if session.shouldfail:
+                self.write_line("!! {} !!".format(session.shouldfail), red=True)
+        else:
+            self.summary_stats(session)
 
     @pytest.hookimpl(hookwrapper=True)
     def pytest_terminal_summary(self):
@@ -898,10 +900,7 @@ class TerminalReporter:
                 content = content[:-1]
             self._tw.line(content)
 
-    def summary_stats(self):
-        if self.verbosity < -1:
-            return
-
+    def summary_stats(self, session: Session) -> None:
         session_duration = time.time() - self._sessionstarttime
         (parts, main_color) = build_summary_stats_line(self.stats)
         line_parts = []
@@ -929,6 +928,9 @@ class TerminalReporter:
                 markup_for_end_sep = markup_for_end_sep[:-4]
             fullwidth += len(markup_for_end_sep)
             msg += markup_for_end_sep
+
+        if session.shouldfail:
+            msg += " ({})".format(session.shouldfail)
 
         if display_sep:
             self.write_sep("=", msg, fullwidth=fullwidth, **main_markup)
