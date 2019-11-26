@@ -18,11 +18,6 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
-pytest 5.3.1 (2019-11-25)
-=========================
-
-No significant changes.
-
 
 pytest 5.3.1 (2019-11-25)
 =========================
