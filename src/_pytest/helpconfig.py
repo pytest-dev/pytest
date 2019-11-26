@@ -2,11 +2,18 @@
 import os
 import sys
 from argparse import Action
+from typing import Generator
+from typing import List
+from typing import Optional
 
 import py
 
 import pytest
+from _pytest.config import Config
 from _pytest.config import PrintHelp
+
+if False:  # TYPE_CHECKING
+    from typing_extensions import Literal  # noqa: F401
 
 
 class HelpAction(Action):
@@ -84,9 +91,9 @@ def pytest_addoption(parser):
 
 
 @pytest.hookimpl(hookwrapper=True)
-def pytest_cmdline_parse():
+def pytest_cmdline_parse() -> Generator:
     outcome = yield
-    config = outcome.get_result()
+    config = outcome.get_result()  # type: Config
     if config.option.debug:
         path = os.path.abspath("pytestdebug.log")
         debugfile = open(path, "w")
@@ -114,7 +121,7 @@ def pytest_cmdline_parse():
         config.add_cleanup(unset_tracing)
 
 
-def showversion(config):
+def showversion(config: Config) -> None:
     sys.stderr.write(
         "This is pytest version {}, imported from {}\n".format(
             pytest.__version__, pytest.__file__
@@ -126,7 +133,7 @@ def showversion(config):
             sys.stderr.write(line + "\n")
 
 
-def pytest_cmdline_main(config):
+def pytest_cmdline_main(config: Config) -> Optional["Literal[0]"]:
     if config.option.version:
         showversion(config)
         return 0
@@ -135,9 +142,10 @@ def pytest_cmdline_main(config):
         showhelp(config)
         config._ensure_unconfigure()
         return 0
+    return None
 
 
-def showhelp(config):
+def showhelp(config: Config) -> None:
     import textwrap
 
     reporter = config.pluginmanager.get_plugin("terminalreporter")
@@ -210,7 +218,7 @@ def showhelp(config):
 conftest_options = [("pytest_plugins", "list of plugin names to load")]
 
 
-def getpluginversioninfo(config):
+def getpluginversioninfo(config: Config) -> List[str]:
     lines = []
     plugininfo = config.pluginmanager.list_plugin_distinfo()
     if plugininfo:
@@ -222,7 +230,7 @@ def getpluginversioninfo(config):
     return lines
 
 
-def pytest_report_header(config):
+def pytest_report_header(config: Config) -> List[str]:
     lines = []
     if config.option.debug or config.option.traceconfig:
         lines.append(
