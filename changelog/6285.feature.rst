@@ -1,0 +1,2 @@
+Use `pytest.FixtureLookupError` to catch exceptions when calling `request.getfixturevalue`.
+
