@@ -63,6 +63,7 @@ __all__ = [
     "fail",
     "File",
     "fixture",
+    "FixtureLookupError",
     "freeze_includes",
     "Function",
     "hookimpl",
