@@ -44,13 +44,26 @@ class Cache:
     _cachedir = attr.ib(repr=False)
     _config = attr.ib(repr=False)
 
+    # sub-directory under cache-dir for directories created by "makedir"
+    _CACHE_PREFIX_DIRS = "d"
+
+    # sub-directory under cache-dir for values created by "set"
+    _CACHE_PREFIX_VALUES = "v"
+
     @classmethod
     def for_config(cls, config):
         cachedir = cls.cache_dir_from_config(config)
-        if config.getoption("cacheclear") and cachedir.exists():
-            rm_rf(cachedir)
-            cachedir.mkdir()
+        if config.getoption("cacheclear") and cachedir.is_dir():
+            cls.clear_cache(cachedir)
         return cls(cachedir, config)
+
+    @classmethod
+    def clear_cache(cls, cachedir: Path):
+        """Clears the sub-directories used to hold cached directories and values."""
+        for prefix in (cls._CACHE_PREFIX_DIRS, cls._CACHE_PREFIX_VALUES):
+            d = cachedir / prefix
+            if d.is_dir():
+                rm_rf(d)
 
     @staticmethod
     def cache_dir_from_config(config):
@@ -79,12 +92,12 @@ class Cache:
         name = Path(name)
         if len(name.parts) > 1:
             raise ValueError("name is not allowed to contain path separators")
-        res = self._cachedir.joinpath("d", name)
+        res = self._cachedir.joinpath(self._CACHE_PREFIX_DIRS, name)
         res.mkdir(exist_ok=True, parents=True)
         return py.path.local(res)
 
     def _getvaluepath(self, key):
-        return self._cachedir.joinpath("v", Path(key))
+        return self._cachedir.joinpath(self._CACHE_PREFIX_VALUES, Path(key))
 
     def get(self, key, default):
         """ return cached value for the given key.  If no value
@@ -417,7 +430,7 @@ def cacheshow(config, session):
 
     dummy = object()
     basedir = config.cache._cachedir
-    vdir = basedir / "v"
+    vdir = basedir / Cache._CACHE_PREFIX_VALUES
     tw.sep("-", "cache values for %r" % glob)
     for valpath in sorted(x for x in vdir.rglob(glob) if x.is_file()):
         key = valpath.relative_to(vdir)
@@ -429,7 +442,7 @@ def cacheshow(config, session):
             for line in pformat(val).splitlines():
                 tw.line("  " + line)
 
-    ddir = basedir / "d"
+    ddir = basedir / Cache._CACHE_PREFIX_DIRS
     if ddir.is_dir():
         contents = sorted(ddir.rglob(glob))
         tw.sep("-", "cache directories for %r" % glob)
