@@ -47,6 +47,16 @@ class DomNode(object):
     def _by_tag(self, tag):
         return self.__node.getElementsByTagName(tag)
 
+    @property
+    def children(self):
+        return [type(self)(x) for x in self.__node.childNodes]
+
+    @property
+    def get_unique_child(self):
+        children = self.children
+        assert len(children) == 1
+        return children[0]
+
     def find_nth_by_tag(self, tag, n):
         items = self._by_tag(tag)
         try:
@@ -81,7 +91,7 @@ class DomNode(object):
         return self.__node.tagName
 
     @property
-    def next_siebling(self):
+    def next_sibling(self):
         return type(self)(self.__node.nextSibling)
 
 
@@ -390,11 +400,11 @@ class TestPython(object):
         fnode = tnode.find_first_by_tag("failure")
         fnode.assert_attr(message="ValueError: 42")
         assert "ValueError" in fnode.toxml()
-        systemout = fnode.next_siebling
+        systemout = fnode.next_sibling
         assert systemout.tag == "system-out"
         assert "hello-stdout" in systemout.toxml()
         assert "info msg" not in systemout.toxml()
-        systemerr = systemout.next_siebling
+        systemerr = systemout.next_sibling
         assert systemerr.tag == "system-err"
         assert "hello-stderr" in systemerr.toxml()
         assert "info msg" not in systemerr.toxml()
@@ -1099,6 +1109,20 @@ def test_random_report_log_xdist(testdir, monkeypatch):
             failed.append(case_node["name"])
 
     assert failed == ["test_x[22]"]
+
+
+def test_root_testsuites_tag(testdir):
+    testdir.makepyfile(
+        """
+        def test_x():
+            pass
+    """
+    )
+    _, dom = runandparse(testdir)
+    root = dom.get_unique_child
+    assert root.tag == "testsuites"
+    suite_node = root.get_unique_child
+    assert suite_node.tag == "testsuite"
 
 
 def test_runs_twice(testdir):
