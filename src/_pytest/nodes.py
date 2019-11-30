@@ -2,6 +2,7 @@ import os
 import warnings
 from functools import lru_cache
 from typing import Any
+from typing import cast
 from typing import Dict
 from typing import List
 from typing import Optional
@@ -17,7 +18,6 @@ from _pytest._code.code import ExceptionInfo
 from _pytest._code.code import ReprExceptionInfo
 from _pytest.compat import cached_property
 from _pytest.compat import getfslineno
-from _pytest.config import Config
 from _pytest.deprecated import NODE_USE_FROM_PARENT
 from _pytest.fixtures import FixtureDef
 from _pytest.fixtures import FixtureLookupError
@@ -30,6 +30,7 @@ from _pytest.outcomes import Failed
 if False:  # TYPE_CHECKING
     # Imported here due to circular import.
     from _pytest.main import Session  # noqa: F401
+    from _pytest.config import Config  # noqa: F401
 
 SEP = "/"
 
@@ -90,9 +91,7 @@ class Node(metaclass=NodeMeta):
     def __init__(
         self,
         name,
-        parent: Optional["Node"] = None,
-        config: Optional[Config] = None,
-        session: Optional["Session"] = None,
+        parent: Union["Node", "Session"],
         fspath: Optional[py.path.local] = None,
         nodeid: Optional[str] = None,
     ) -> None:
@@ -100,27 +99,19 @@ class Node(metaclass=NodeMeta):
         self.name = name
 
         #: the parent collector node.
-        self.parent = parent
-
-        #: the pytest config object
-        if config:
-            self.config = config
+        if parent is self:
+            self.parent: Optional["Node"] = None  # temporary hack for session
+            self.session = cast("Session", parent)
         else:
-            if not parent:
-                raise TypeError("config or parent must be provided")
-            self.config = parent.config
-
-        #: the session this node is part of
-        if session:
-            self.session = session
-        else:
-            if not parent:
-                raise TypeError("session or parent must be provided")
+            self.parent = parent
+            #: the session this node is part of
             self.session = parent.session
 
-        #: filesystem path where this node was collected from (can be None)
-        self.fspath = fspath or getattr(parent, "fspath", None)
+        #: the pytest config object
+        self.config: "Config" = parent.config
 
+        #: filesystem path where this node was collected from (can be None)
+        self.fspath: py.path.local = fspath or parent.fspath
         #: keywords/markers collected from all scopes
         self.keywords = NodeKeywords(self)
 
@@ -409,9 +400,7 @@ def _check_initialpaths_for_relpath(session, fspath):
 
 
 class FSCollector(Collector):
-    def __init__(
-        self, fspath: py.path.local, parent=None, config=None, session=None, nodeid=None
-    ) -> None:
+    def __init__(self, fspath: py.path.local, parent, nodeid=None) -> None:
         name = fspath.basename
         if parent is not None:
             rel = fspath.relto(parent.fspath)
@@ -420,7 +409,7 @@ class FSCollector(Collector):
             name = name.replace(os.sep, SEP)
         self.fspath = fspath
 
-        session = session or parent.session
+        session = parent.session
 
         if nodeid is None:
             nodeid = self.fspath.relto(session.config.rootdir)
@@ -430,7 +419,7 @@ class FSCollector(Collector):
             if nodeid and os.sep != SEP:
                 nodeid = nodeid.replace(os.sep, SEP)
 
-        super().__init__(name, parent, config, session, nodeid=nodeid, fspath=fspath)
+        super().__init__(name=name, parent=parent, nodeid=nodeid, fspath=fspath)
 
     @classmethod
     def from_parent(cls, parent, *, fspath):
@@ -448,8 +437,8 @@ class Item(Node):
 
     nextitem = None
 
-    def __init__(self, name, parent=None, config=None, session=None, nodeid=None):
-        super().__init__(name, parent, config, session, nodeid=nodeid)
+    def __init__(self, name, parent=None, nodeid=None):
+        super().__init__(name=name, parent=parent, nodeid=nodeid)
         self._report_sections = []  # type: List[Tuple[str, str, str]]
 
         #: user properties is a list of tuples (name, value) that holds user

@@ -79,14 +79,26 @@ def test_warn_about_imminent_junit_family_default_change(testdir, junit_family):
 
 
 def test_node_direct_ctor_warning():
-    class MockConfig:
-        pass
+    class MockAll:
+        @property
+        def parent(self):
+            return None
 
-    ms = MockConfig()
+        @property
+        def config(self):
+            return self
+
+        @property
+        def session(self):
+            return self
+
+        fspath = None
+
+    ms = MockAll()
     with pytest.warns(
         DeprecationWarning,
         match="direct construction of .* has been deprecated, please use .*.from_parent",
     ) as w:
-        nodes.Node(name="test", config=ms, session=ms, nodeid="None")
+        nodes.Node(name="test", parent=ms, nodeid="None")
     assert w[0].lineno == inspect.currentframe().f_lineno - 1
     assert w[0].filename == __file__

@@ -539,11 +539,9 @@ class Module(nodes.File, PyCollector):
 
 
 class Package(Module):
-    def __init__(self, fspath, parent=None, config=None, session=None, nodeid=None):
+    def __init__(self, fspath, parent=None, nodeid=None):
         session = parent.session
-        nodes.FSCollector.__init__(
-            self, fspath, parent=parent, config=config, session=session, nodeid=nodeid
-        )
+        nodes.FSCollector.__init__(self, fspath, parent=parent, nodeid=nodeid)
         self.name = fspath.dirname
         self.trace = session.trace
         self._norecursepatterns = session._norecursepatterns
@@ -1405,15 +1403,13 @@ class Function(FunctionMixin, nodes.Item):
         name,
         parent,
         args=None,
-        config=None,
         callspec=None,
         callobj=NOTSET,
         keywords=None,
-        session=None,
         fixtureinfo=None,
         originalname=None,
     ):
-        super().__init__(name, parent, config=config, session=session)
+        super().__init__(name=name, parent=parent)
         self._args = args
         if callobj is not NOTSET:
             self.obj = callobj

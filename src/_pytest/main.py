@@ -374,9 +374,11 @@ class Session(nodes.FSCollector):
     _setupstate = None  # type: SetupState
 
     def __init__(self, config):
-        nodes.FSCollector.__init__(
-            self, config.rootdir, parent=None, config=config, session=self, nodeid=""
-        )
+        self.config = config
+        self.fspath = config.rootdir
+        self.session = self
+        super().__init__(fspath=config.rootdir, parent=self, nodeid="")
+        self.parent = None
         self.testsfailed = 0
         self.testscollected = 0
         self.shouldstop = False

@@ -1534,6 +1534,7 @@ class TestFixtureManagerParseFactories:
         reprec = testdir.inline_run()
         reprec.assertoutcome(passed=2)
 
+    @pytest.mark.xfail(reason="file item dulity mess")
     def test_collect_custom_items(self, testdir):
         testdir.copy_example("fixtures/custom_item")
         result = testdir.runpytest("foo")

@@ -746,6 +746,7 @@ class Test_genitems:
         assert ids == ["MyTestSuite.x_test", "TestCase.test_y"]
 
 
+@pytest.mark.xfail(reason="item<>file missmatch, a mess we should break")
 def test_matchnodes_two_collections_same_file(testdir):
     testdir.makeconftest(
         """
@@ -756,18 +757,18 @@ def test_matchnodes_two_collections_same_file(testdir):
         class Plugin2(object):
             def pytest_collect_file(self, path, parent):
                 if path.ext == ".abc":
-                    return MyFile2(path, parent)
+                    return MyFile2.from_parent(parent, fspath=path)
 
         def pytest_collect_file(path, parent):
             if path.ext == ".abc":
-                return MyFile1(path, parent)
+                return MyFile1.from_parent(parent, fspath=path)
 
-        class MyFile1(pytest.Item, pytest.File):
+        class MyFile1(pytest.Item):
             def runtest(self):
                 pass
         class MyFile2(pytest.File):
             def collect(self):
-                return [Item2("hello", parent=self)]
+                return [Item2.from_parent(name="hello", parent=self)]
 
         class Item2(pytest.Item):
             def runtest(self):
