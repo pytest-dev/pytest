@@ -1045,14 +1045,13 @@ def try_makedirs(cache_dir) -> bool:
 
 def get_cache_dir(file_path: Path) -> Path:
     """Returns the cache directory to write .pyc files for the given .py file path"""
-    # Type ignored until added in next mypy release.
-    if sys.version_info >= (3, 8) and sys.pycache_prefix:  # type: ignore
+    if sys.version_info >= (3, 8) and sys.pycache_prefix:
         # given:
         #   prefix = '/tmp/pycs'
         #   path = '/home/user/proj/test_app.py'
         # we want:
         #   '/tmp/pycs/home/user/proj'
-        return Path(sys.pycache_prefix) / Path(*file_path.parts[1:-1])  # type: ignore
+        return Path(sys.pycache_prefix) / Path(*file_path.parts[1:-1])
     else:
         # classic pycache directory
         return file_path.parent / "__pycache__"

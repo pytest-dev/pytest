@@ -43,8 +43,7 @@ MODULE_NOT_FOUND_ERROR = (
 
 
 if sys.version_info >= (3, 8):
-    # Type ignored until next mypy release.
-    from importlib import metadata as importlib_metadata  # type: ignore
+    from importlib import metadata as importlib_metadata
 else:
     import importlib_metadata  # noqa: F401
 
@@ -385,9 +384,7 @@ else:
 
 
 if sys.version_info >= (3, 8):
-    # TODO: Remove type ignore on next mypy update.
-    # https://github.com/python/typeshed/commit/add0b5e930a1db16560fde45a3b710eefc625709
-    from functools import cached_property  # type: ignore
+    from functools import cached_property
 else:
 
     class cached_property(Generic[_S, _T]):
