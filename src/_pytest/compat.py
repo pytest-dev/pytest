@@ -13,6 +13,7 @@ from inspect import signature
 from typing import Any
 from typing import Callable
 from typing import Generic
+from typing import IO
 from typing import Optional
 from typing import overload
 from typing import Tuple
@@ -369,6 +370,16 @@ class CaptureIO(io.TextIOWrapper):
     def getvalue(self) -> str:
         assert isinstance(self.buffer, io.BytesIO)
         return self.buffer.getvalue().decode("UTF-8")
+
+
+class CaptureAndPassthroughIO(CaptureIO):
+    def __init__(self, other: IO) -> None:
+        self._other = other
+        super().__init__()
+
+    def write(self, s) -> int:
+        super().write(s)
+        return self._other.write(s)
 
 
 if sys.version_info < (3, 5, 2):  # pragma: no cover
