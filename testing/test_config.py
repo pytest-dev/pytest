@@ -422,15 +422,21 @@ class TestConfigAPI:
     @pytest.mark.parametrize(
         "names, expected",
         [
+            # dist-info based distributions root are files as will be put in PYTHONPATH
             (["bar.py"], ["bar"]),
-            (["foo", "bar.py"], []),
-            (["foo", "bar.pyc"], []),
-            (["foo", "__init__.py"], ["foo"]),
-            (["foo", "bar", "__init__.py"], []),
+            (["foo/bar.py"], ["bar"]),
+            (["foo/bar.pyc"], []),
+            (["foo/__init__.py"], ["foo"]),
+            (["bar/__init__.py", "xz.py"], ["bar", "xz"]),
+            (["setup.py"], []),
+            # egg based distributions root contain the files from the dist root
+            (["src/bar/__init__.py"], ["bar"]),
+            (["src/bar/__init__.py", "setup.py"], ["bar"]),
+            (["source/python/bar/__init__.py", "setup.py"], ["bar"]),
         ],
     )
     def test_iter_rewritable_modules(self, names, expected):
-        assert list(_iter_rewritable_modules(["/".join(names)])) == expected
+        assert list(_iter_rewritable_modules(names)) == expected
 
 
 class TestConfigFromdictargs:
