@@ -85,13 +85,14 @@ def check_links():
     check_call(["tox", "-e", "docs-checklinks"])
 
 
-def pre_release(version):
+def pre_release(version, *, skip_check_links):
     """Generates new docs, release announcements and creates a local tag."""
     announce(version)
     regen()
     changelog(version, write_out=True)
     fix_formatting()
-    check_links()
+    if not skip_check_links:
+        check_links()
 
     msg = "Preparing release version {}".format(version)
     check_call(["git", "commit", "-a", "-m", msg])
@@ -114,8 +115,9 @@ def main():
     init(autoreset=True)
     parser = argparse.ArgumentParser()
     parser.add_argument("version", help="Release version")
+    parser.add_argument("--skip-check-links", action="store_true", default=False)
     options = parser.parse_args()
-    pre_release(options.version)
+    pre_release(options.version, skip_check_links=options.skip_check_links)
 
 
 if __name__ == "__main__":

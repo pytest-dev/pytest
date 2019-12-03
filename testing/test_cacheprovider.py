@@ -270,6 +270,7 @@ class TestLastFailed:
         )
         result = testdir.runpytest(str(p), "--lf", "--cache-clear")
         result.stdout.fnmatch_lines(["*1 failed*2 passed*"])
+        assert testdir.tmpdir.join(".pytest_cache", "README.md").isfile()
 
         # Run this again to make sure clear-cache is robust
         if os.path.isdir(".pytest_cache"):

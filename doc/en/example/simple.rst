@@ -442,7 +442,7 @@ Now we can profile which test functions execute the slowest:
 
     ========================= slowest 3 test durations =========================
     0.30s call     test_some_are_slow.py::test_funcslow2
-    0.20s call     test_some_are_slow.py::test_funcslow1
+    0.21s call     test_some_are_slow.py::test_funcslow1
     0.11s call     test_some_are_slow.py::test_funcfast
     ============================ 3 passed in 0.12s =============================
 
