@@ -530,7 +530,7 @@ def test_no_matching(function):
             ]
         else:
             assert obtained == [
-                "nomatch: '{}'".format(good_pattern),
+                " nomatch: '{}'".format(good_pattern),
                 "     and: 'cachedir: .pytest_cache'",
                 "     and: 'collecting ... collected 1 item'",
                 "     and: ''",
@@ -542,17 +542,23 @@ def test_no_matching(function):
     func(bad_pattern)  # bad pattern does not match any line: passes
 
 
-def test_pytester_addopts(request, monkeypatch):
+def test_no_matching_after_match():
+    lm = LineMatcher(["1", "2", "3"])
+    lm.fnmatch_lines(["1", "3"])
+    with pytest.raises(pytest.fail.Exception) as e:
+        lm.no_fnmatch_line("*")
+    assert str(e.value).splitlines() == ["fnmatch: '*'", "   with: '1'"]
+
+
+def test_pytester_addopts_before_testdir(request, monkeypatch):
+    orig = os.environ.get("PYTEST_ADDOPTS", None)
     monkeypatch.setenv("PYTEST_ADDOPTS", "--orig-unused")
-
     testdir = request.getfixturevalue("testdir")
-
-    try:
-        assert "PYTEST_ADDOPTS" not in os.environ
-    finally:
-        testdir.finalize()
-
-    assert os.environ["PYTEST_ADDOPTS"] == "--orig-unused"
+    assert "PYTEST_ADDOPTS" not in os.environ
+    testdir.finalize()
+    assert os.environ.get("PYTEST_ADDOPTS") == "--orig-unused"
+    monkeypatch.undo()
+    assert os.environ.get("PYTEST_ADDOPTS") == orig
 
 
 def test_run_stdin(testdir):
@@ -632,14 +638,10 @@ def test_popen_default_stdin_stderr_and_stdin_None(testdir):
 
 
 def test_spawn_uses_tmphome(testdir):
-    import os
-
     tmphome = str(testdir.tmpdir)
+    assert os.environ.get("HOME") == tmphome
 
-    # Does use HOME only during run.
-    assert os.environ.get("HOME") != tmphome
-
-    testdir._env_run_update["CUSTOMENV"] = "42"
+    testdir.monkeypatch.setenv("CUSTOMENV", "42")
 
     p1 = testdir.makepyfile(
         """

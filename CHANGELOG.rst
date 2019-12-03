@@ -18,6 +18,238 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+pytest 5.3.0 (2019-11-19)
+=========================
+
+Deprecations
+------------
+
+- `#6179 <https://github.com/pytest-dev/pytest/issues/6179>`_: The default value of ``junit_family`` option will change to ``xunit2`` in pytest 6.0, given
+  that this is the version supported by default in modern tools that manipulate this type of file.
+
+  In order to smooth the transition, pytest will issue a warning in case the ``--junitxml`` option
+  is given in the command line but ``junit_family`` is not explicitly configured in ``pytest.ini``.
+
+  For more information, `see the docs <https://docs.pytest.org/en/latest/deprecations.html#junit-family-default-value-change-to-xunit2>`__.
+
+
+
+Features
+--------
+
+- `#4488 <https://github.com/pytest-dev/pytest/issues/4488>`_: The pytest team has created the `pytest-reportlog <https://github.com/pytest-dev/pytest-reportlog>`__
+  plugin, which provides a new ``--report-log=FILE`` option that writes *report logs* into a file as the test session executes.
+
+  Each line of the report log contains a self contained JSON object corresponding to a testing event,
+  such as a collection or a test result report. The file is guaranteed to be flushed after writing
+  each line, so systems can read and process events in real-time.
+
+  The plugin is meant to replace the ``--resultlog`` option, which is deprecated and meant to be removed
+  in a future release. If you use ``--resultlog``, please try out ``pytest-reportlog`` and
+  provide feedback.
+
+
+- `#4730 <https://github.com/pytest-dev/pytest/issues/4730>`_: When ``sys.pycache_prefix`` (Python 3.8+) is set, it will be used by pytest to cache test files changed by the assertion rewriting mechanism.
+
+  This makes it easier to benefit of cached ``.pyc`` files even on file systems without permissions.
+
+
+- `#5515 <https://github.com/pytest-dev/pytest/issues/5515>`_: Allow selective auto-indentation of multiline log messages.
+
+  Adds command line option ``--log-auto-indent``, config option
+  ``log_auto_indent`` and support for per-entry configuration of
+  indentation behavior on calls to ``logging.log()``.
+
+  Alters the default for auto-indention from ``on`` to ``off``. This
+  restores the older behavior that existed prior to v4.6.0. This
+  reversion to earlier behavior was done because it is better to
+  activate new features that may lead to broken tests explicitly
+  rather than implicitly.
+
+
+- `#5914 <https://github.com/pytest-dev/pytest/issues/5914>`_: ``pytester`` learned two new functions, `no_fnmatch_line <https://docs.pytest.org/en/latest/reference.html#_pytest.pytester.LineMatcher.no_fnmatch_line>`_ and
+  `no_re_match_line <https://docs.pytest.org/en/latest/reference.html#_pytest.pytester.LineMatcher.no_re_match_line>`_.
+
+  The functions are used to ensure the captured text *does not* match the given
+  pattern.
+
+  The previous idiom was to use ``re.match``:
+
+  .. code-block:: python
+
+      assert re.match(pat, result.stdout.str()) is None
+
+  Or the ``in`` operator:
+
+  .. code-block:: python
+
+      assert text in result.stdout.str()
+
+  But the new functions produce best output on failure.
+
+
+- `#6057 <https://github.com/pytest-dev/pytest/issues/6057>`_: Added tolerances to complex values when printing ``pytest.approx``.
+
+  For example, ``repr(pytest.approx(3+4j))`` returns ``(3+4j) ± 5e-06 ∠ ±180°``. This is polar notation indicating a circle around the expected value, with a radius of 5e-06. For ``approx`` comparisons to return ``True``, the actual value should fall within this circle.
+
+
+- `#6061 <https://github.com/pytest-dev/pytest/issues/6061>`_: Added the pluginmanager as an argument to ``pytest_addoption``
+  so that hooks can be invoked when setting up command line options. This is
+  useful for having one plugin communicate things to another plugin,
+  such as default values or which set of command line options to add.
+
+
+
+Improvements
+------------
+
+- `#5061 <https://github.com/pytest-dev/pytest/issues/5061>`_: Use multiple colors with terminal summary statistics.
+
+
+- `#5630 <https://github.com/pytest-dev/pytest/issues/5630>`_: Quitting from debuggers is now properly handled in ``doctest`` items.
+
+
+- `#5924 <https://github.com/pytest-dev/pytest/issues/5924>`_: Improved verbose diff output with sequences.
+
+  Before:
+
+  ::
+
+      E   AssertionError: assert ['version', '...version_info'] == ['version', '...version', ...]
+      E     Right contains 3 more items, first extra item: ' '
+      E     Full diff:
+      E     - ['version', 'version_info', 'sys.version', 'sys.version_info']
+      E     + ['version',
+      E     +  'version_info',
+      E     +  'sys.version',
+      E     +  'sys.version_info',
+      E     +  ' ',
+      E     +  'sys.version',
+      E     +  'sys.version_info']
+
+  After:
+
+  ::
+
+      E   AssertionError: assert ['version', '...version_info'] == ['version', '...version', ...]
+      E     Right contains 3 more items, first extra item: ' '
+      E     Full diff:
+      E       [
+      E        'version',
+      E        'version_info',
+      E        'sys.version',
+      E        'sys.version_info',
+      E     +  ' ',
+      E     +  'sys.version',
+      E     +  'sys.version_info',
+      E       ]
+
+
+- `#5934 <https://github.com/pytest-dev/pytest/issues/5934>`_: ``repr`` of ``ExceptionInfo`` objects has been improved to honor the ``__repr__`` method of the underlying exception.
+
+- `#5936 <https://github.com/pytest-dev/pytest/issues/5936>`_: Display untruncated assertion message with ``-vv``.
+
+
+- `#5990 <https://github.com/pytest-dev/pytest/issues/5990>`_: Fixed plurality mismatch in test summary (e.g. display "1 error" instead of "1 errors").
+
+
+- `#6008 <https://github.com/pytest-dev/pytest/issues/6008>`_: ``Config.InvocationParams.args`` is now always a ``tuple`` to better convey that it should be
+  immutable and avoid accidental modifications.
+
+
+- `#6023 <https://github.com/pytest-dev/pytest/issues/6023>`_: ``pytest.main`` returns a ``pytest.ExitCode`` instance now, except for when custom exit codes are used (where it returns ``int`` then still).
+
+
+- `#6026 <https://github.com/pytest-dev/pytest/issues/6026>`_: Align prefixes in output of pytester's ``LineMatcher``.
+
+
+- `#6059 <https://github.com/pytest-dev/pytest/issues/6059>`_: Collection errors are reported as errors (and not failures like before) in the terminal's short test summary.
+
+
+- `#6069 <https://github.com/pytest-dev/pytest/issues/6069>`_: ``pytester.spawn`` does not skip/xfail tests on FreeBSD anymore unconditionally.
+
+
+- `#6097 <https://github.com/pytest-dev/pytest/issues/6097>`_: The "[...%]" indicator in the test summary is now colored according to the final (new) multi-colored line's main color.
+
+
+- `#6116 <https://github.com/pytest-dev/pytest/issues/6116>`_: Added ``--co`` as a synonym to ``--collect-only``.
+
+
+- `#6148 <https://github.com/pytest-dev/pytest/issues/6148>`_: ``atomicwrites`` is now only used on Windows, fixing a performance regression with assertion rewriting on Unix.
+
+
+- `#6152 <https://github.com/pytest-dev/pytest/issues/6152>`_: Now parametrization will use the ``__name__`` attribute of any object for the id, if present. Previously it would only use ``__name__`` for functions and classes.
+
+
+- `#6176 <https://github.com/pytest-dev/pytest/issues/6176>`_: Improved failure reporting with pytester's ``Hookrecorder.assertoutcome``.
+
+
+- `#6181 <https://github.com/pytest-dev/pytest/issues/6181>`_: The reason for a stopped session, e.g. with ``--maxfail`` / ``-x``, now gets reported in the test summary.
+
+
+- `#6206 <https://github.com/pytest-dev/pytest/issues/6206>`_: Improved ``cache.set`` robustness and performance.
+
+
+
+Bug Fixes
+---------
+
+- `#2049 <https://github.com/pytest-dev/pytest/issues/2049>`_: Fixed ``--setup-plan`` showing inaccurate information about fixture lifetimes.
+
+
+- `#2548 <https://github.com/pytest-dev/pytest/issues/2548>`_: Fixed line offset mismatch of skipped tests in terminal summary.
+
+
+- `#6039 <https://github.com/pytest-dev/pytest/issues/6039>`_: The ``PytestDoctestRunner`` is now properly invalidated when unconfiguring the doctest plugin.
+
+  This is important when used with ``pytester``'s ``runpytest_inprocess``.
+
+
+- `#6047 <https://github.com/pytest-dev/pytest/issues/6047>`_: BaseExceptions are now handled in ``saferepr``, which includes ``pytest.fail.Exception`` etc.
+
+
+- `#6074 <https://github.com/pytest-dev/pytest/issues/6074>`_: pytester: fixed order of arguments in ``rm_rf`` warning when cleaning up temporary directories, and do not emit warnings for errors with ``os.open``.
+
+
+- `#6189 <https://github.com/pytest-dev/pytest/issues/6189>`_: Fixed result of ``getmodpath`` method.
+
+
+
+Trivial/Internal Changes
+------------------------
+
+- `#4901 <https://github.com/pytest-dev/pytest/issues/4901>`_: ``RunResult`` from ``pytester`` now displays the mnemonic of the ``ret`` attribute when it is a
+  valid ``pytest.ExitCode`` value.
+
+
+pytest 5.2.4 (2019-11-15)
+=========================
+
+Bug Fixes
+---------
+
+- `#6194 <https://github.com/pytest-dev/pytest/issues/6194>`_: Fix incorrect discovery of non-test ``__init__.py`` files.
+
+
+- `#6197 <https://github.com/pytest-dev/pytest/issues/6197>`_: Revert "The first test in a package (``__init__.py``) marked with ``@pytest.mark.skip`` is now correctly skipped.".
+
+
+pytest 5.2.3 (2019-11-14)
+=========================
+
+Bug Fixes
+---------
+
+- `#5830 <https://github.com/pytest-dev/pytest/issues/5830>`_: The first test in a package (``__init__.py``) marked with ``@pytest.mark.skip`` is now correctly skipped.
+
+
+- `#6099 <https://github.com/pytest-dev/pytest/issues/6099>`_: Fix ``--trace`` when used with parametrized functions.
+
+
+- `#6183 <https://github.com/pytest-dev/pytest/issues/6183>`_: Using ``request`` as a parameter name in ``@pytest.mark.parametrize`` now produces a more
+  user-friendly error.
+
+
 pytest 5.2.2 (2019-10-24)
 =========================
 
@@ -1873,7 +2105,8 @@ Features
   live-logging is enabled and/or when they are logged to a file.
 
 
-- `#3985 <https://github.com/pytest-dev/pytest/issues/3985>`_: Introduce ``tmp_path`` as a fixture providing a Path object.
+- `#3985 <https://github.com/pytest-dev/pytest/issues/3985>`_: Introduce ``tmp_path`` as a fixture providing a Path object. Also introduce ``tmp_path_factory`` as
+  a session-scoped fixture for creating arbitrary temporary directories from any other fixture or test.
 
 
 - `#4013 <https://github.com/pytest-dev/pytest/issues/4013>`_: Deprecation warnings are now shown even if you customize the warnings filters yourself. In the previous version
@@ -3462,7 +3695,7 @@ Deprecations and Removals
 
 - ``pytest.approx`` no longer supports ``>``, ``>=``, ``<`` and ``<=``
   operators to avoid surprising/inconsistent behavior. See `the approx docs
-  <https://docs.pytest.org/en/latest/builtin.html#pytest.approx>`_ for more
+  <https://docs.pytest.org/en/latest/reference.html#pytest-approx>`_ for more
   information. (`#2003 <https://github.com/pytest-dev/pytest/issues/2003>`_)
 
 - All old-style specific behavior in current classes in the pytest's API is
@@ -4819,7 +5052,7 @@ time or change existing behaviors in order to make them less surprising/more use
 * Fix (`#1422`_): junit record_xml_property doesn't allow multiple records
   with same name.
 
-.. _`traceback style docs`: https://pytest.org/latest/usage.html#modifying-python-traceback-printing
+.. _`traceback style docs`: https://pytest.org/en/latest/usage.html#modifying-python-traceback-printing
 
 .. _#1609: https://github.com/pytest-dev/pytest/issues/1609
 .. _#1422: https://github.com/pytest-dev/pytest/issues/1422
@@ -5337,7 +5570,7 @@ time or change existing behaviors in order to make them less surprising/more use
 - add ability to set command line options by environment variable PYTEST_ADDOPTS.
 
 - added documentation on the new pytest-dev teams on bitbucket and
-  github.  See https://pytest.org/latest/contributing.html .
+  github.  See https://pytest.org/en/latest/contributing.html .
   Thanks to Anatoly for pushing and initial work on this.
 
 - fix issue650: new option ``--docttest-ignore-import-errors`` which
@@ -6078,7 +6311,7 @@ Bug fixes:
 - yielded test functions will now have autouse-fixtures active but
   cannot accept fixtures as funcargs - it's anyway recommended to
   rather use the post-2.0 parametrize features instead of yield, see:
-  http://pytest.org/latest/example/parametrize.html
+  http://pytest.org/en/latest/example/parametrize.html
 - fix autouse-issue where autouse-fixtures would not be discovered
   if defined in an a/conftest.py file and tests in a/tests/test_some.py
 - fix issue226 - LIFO ordering for fixture teardowns
@@ -6211,7 +6444,7 @@ Bug fixes:
 - pluginmanager.register(...) now raises ValueError if the
   plugin has been already registered or the name is taken
 
-- fix issue159: improve http://pytest.org/latest/faq.html
+- fix issue159: improve http://pytest.org/en/latest/faq.html
   especially with respect to the "magic" history, also mention
   pytest-django, trial and unittest integration.
 
@@ -6324,7 +6557,7 @@ Bug fixes:
   or through plugin hooks.  Also introduce a "--strict" option which
   will treat unregistered markers as errors
   allowing to avoid typos and maintain a well described set of markers
-  for your test suite.  See exaples at http://pytest.org/latest/mark.html
+  for your test suite.  See exaples at http://pytest.org/en/latest/mark.html
   and its links.
 - issue50: introduce "-m marker" option to select tests based on markers
   (this is a stricter and more predictable version of '-k' in that "-m"
@@ -6507,7 +6740,7 @@ Bug fixes:
 - refinements to "collecting" output on non-ttys
 - refine internal plugin registration and --traceconfig output
 - introduce a mechanism to prevent/unregister plugins from the
-  command line, see http://pytest.org/plugins.html#cmdunregister
+  command line, see http://pytest.org/en/latest/plugins.html#cmdunregister
 - activate resultlog plugin by default
 - fix regression wrt yielded tests which due to the
   collection-before-running semantics were not

@@ -9,6 +9,7 @@ All constants defined in this module should be either PytestWarning instances or
 in case of warnings which need to format their messages.
 """
 from _pytest.warning_types import PytestDeprecationWarning
+from _pytest.warning_types import UnformattedWarning
 
 # set of plugins which have been integrated into the core; we use this list to ignore
 # them during registration to avoid conflicts
@@ -26,11 +27,21 @@ FUNCARGNAMES = PytestDeprecationWarning(
 
 
 RESULT_LOG = PytestDeprecationWarning(
-    "--result-log is deprecated and scheduled for removal in pytest 6.0.\n"
+    "--result-log is deprecated, please try the new pytest-reportlog plugin.\n"
     "See https://docs.pytest.org/en/latest/deprecations.html#result-log-result-log for more information."
 )
 
 FIXTURE_POSITIONAL_ARGUMENTS = PytestDeprecationWarning(
     "Passing arguments to pytest.fixture() as positional arguments is deprecated - pass them "
     "as a keyword argument instead."
+)
+
+NODE_USE_FROM_PARENT = UnformattedWarning(
+    PytestDeprecationWarning,
+    "direct construction of {name} has been deprecated, please use {name}.from_parent",
+)
+
+JUNIT_XML_DEFAULT_FAMILY = PytestDeprecationWarning(
+    "The 'junit_family' default value will change to 'xunit2' in pytest 6.0.\n"
+    "Add 'junit_family=legacy' to your pytest.ini file to silence this warning and make your suite compatible."
 )

@@ -92,8 +92,6 @@ class TestCaptureManager:
 
 @pytest.mark.parametrize("method", ["fd", "sys"])
 def test_capturing_unicode(testdir, method):
-    if hasattr(sys, "pypy_version_info") and sys.pypy_version_info < (2, 2):
-        pytest.xfail("does not work on pypy < 2.2")
     obj = "'b\u00f6y'"
     testdir.makepyfile(
         """\

@@ -13,7 +13,6 @@ import struct
 import sys
 import tokenize
 import types
-from pathlib import Path
 from typing import Dict
 from typing import List
 from typing import Optional
@@ -28,6 +27,7 @@ from _pytest.assertion.util import (  # noqa: F401
 )
 from _pytest.compat import fspath
 from _pytest.pathlib import fnmatch_ex
+from _pytest.pathlib import Path
 from _pytest.pathlib import PurePath
 
 # pytest caches rewritten pycs in pycache dirs
@@ -807,8 +807,9 @@ class AssertionRewriter(ast.NodeVisitor):
                 )
             )
 
+        negation = ast.UnaryOp(ast.Not(), top_condition)
+
         if self.enable_assertion_pass_hook:  # Experimental pytest_assertion_pass hook
-            negation = ast.UnaryOp(ast.Not(), top_condition)
             msg = self.pop_format_context(ast.Str(explanation))
 
             # Failed
@@ -860,7 +861,6 @@ class AssertionRewriter(ast.NodeVisitor):
         else:  # Original assertion rewriting
             # Create failure message.
             body = self.expl_stmts
-            negation = ast.UnaryOp(ast.Not(), top_condition)
             self.statements.append(ast.If(negation, body, []))
             if assert_.msg:
                 assertmsg = self.helper("_format_assertmsg", assert_.msg)

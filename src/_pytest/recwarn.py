@@ -60,18 +60,18 @@ def warns(
     *,
     match: "Optional[Union[str, Pattern]]" = ...
 ) -> "WarningsChecker":
-    ...  # pragma: no cover
+    raise NotImplementedError()
 
 
 @overload  # noqa: F811
-def warns(
+def warns(  # noqa: F811
     expected_warning: Union["Type[Warning]", Tuple["Type[Warning]", ...]],
     func: Callable,
     *args: Any,
     match: Optional[Union[str, "Pattern"]] = ...,
     **kwargs: Any
 ) -> Union[Any]:
-    ...  # pragma: no cover
+    raise NotImplementedError()
 
 
 def warns(  # noqa: F811
@@ -129,7 +129,9 @@ def warns(  # noqa: F811
             return func(*args[1:], **kwargs)
 
 
-class WarningsRecorder(warnings.catch_warnings):
+# Type ignored until next mypy release. Regression fixed by:
+# https://github.com/python/typeshed/commit/41bf6a19822d6694973449d795f8bfe1d50d5a03
+class WarningsRecorder(warnings.catch_warnings):  # type: ignore
     """A context manager to record raised warnings.
 
     Adapted from `warnings.catch_warnings`.

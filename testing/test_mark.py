@@ -962,7 +962,11 @@ def test_mark_expressions_no_smear(testdir):
 
 
 def test_addmarker_order():
-    node = Node("Test", config=mock.Mock(), session=mock.Mock(), nodeid="Test")
+    session = mock.Mock()
+    session.own_markers = []
+    session.parent = None
+    session.nodeid = ""
+    node = Node.from_parent(session, name="Test")
     node.add_marker("foo")
     node.add_marker("bar")
     node.add_marker("baz", append=False)
@@ -1011,7 +1015,7 @@ def test_markers_from_parametrize(testdir):
 def test_pytest_param_id_requires_string():
     with pytest.raises(TypeError) as excinfo:
         pytest.param(id=True)
-    msg, = excinfo.value.args
+    (msg,) = excinfo.value.args
     assert msg == "Expected id to be a string, got <class 'bool'>: True"
 
 

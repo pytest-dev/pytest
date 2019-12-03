@@ -254,7 +254,7 @@ class TerminalReporter:
         # self.writer will be deprecated in pytest-3.4
         self.writer = self._tw
         self._screen_width = self._tw.fullwidth
-        self.currentfspath = None  # type: Optional[int]
+        self.currentfspath = None  # type: Any
         self.reportchars = getreportopt(config)
         self.hasmarkup = self._tw.hasmarkup
         self.isatty = file.isatty()
@@ -676,7 +676,7 @@ class TerminalReporter:
                             self._tw.line("{}{}".format(indent + "  ", line.strip()))
 
     @pytest.hookimpl(hookwrapper=True)
-    def pytest_sessionfinish(self, exitstatus):
+    def pytest_sessionfinish(self, session: Session, exitstatus: ExitCode):
         outcome = yield
         outcome.get_result()
         self._tw.line("")
@@ -691,9 +691,13 @@ class TerminalReporter:
             self.config.hook.pytest_terminal_summary(
                 terminalreporter=self, exitstatus=exitstatus, config=self.config
             )
+        if session.shouldfail:
+            self.write_sep("!", session.shouldfail, red=True)
         if exitstatus == ExitCode.INTERRUPTED:
             self._report_keyboardinterrupt()
             del self._keyboardinterrupt_memo
+        elif session.shouldstop:
+            self.write_sep("!", session.shouldstop, red=True)
         self.summary_stats()
 
     @pytest.hookimpl(hookwrapper=True)

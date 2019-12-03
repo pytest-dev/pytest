@@ -41,7 +41,7 @@ Running pytest now produces this output:
         warnings.warn(UserWarning("api v1, should use functions from v2"))
 
     -- Docs: https://docs.pytest.org/en/latest/warnings.html
-    ====================== 1 passed, 1 warnings in 0.12s =======================
+    ======================= 1 passed, 1 warning in 0.12s =======================
 
 The ``-W`` flag can be passed to control which warnings will be displayed or even turn
 them into errors:
@@ -407,7 +407,7 @@ defines an ``__init__`` constructor, as this prevents the class from being insta
         class Test:
 
     -- Docs: https://docs.pytest.org/en/latest/warnings.html
-    1 warnings in 0.12s
+    1 warning in 0.12s
 
 These warnings might be filtered using the same builtin mechanisms used to filter other types of warnings.
 

@@ -312,7 +312,7 @@ class HookRecorder:
         return self.getfailures("pytest_collectreport")
 
     def listoutcomes(
-        self
+        self,
     ) -> Tuple[List[TestReport], List[TestReport], List[TestReport]]:
         passed = []
         skipped = []
@@ -332,10 +332,17 @@ class HookRecorder:
         return [len(x) for x in self.listoutcomes()]
 
     def assertoutcome(self, passed: int = 0, skipped: int = 0, failed: int = 0) -> None:
-        realpassed, realskipped, realfailed = self.listoutcomes()
-        assert passed == len(realpassed)
-        assert skipped == len(realskipped)
-        assert failed == len(realfailed)
+        __tracebackhide__ = True
+
+        outcomes = self.listoutcomes()
+        realpassed, realskipped, realfailed = outcomes
+        obtained = {
+            "passed": len(realpassed),
+            "skipped": len(realskipped),
+            "failed": len(realfailed),
+        }
+        expected = {"passed": passed, "skipped": skipped, "failed": failed}
+        assert obtained == expected, outcomes
 
     def clear(self) -> None:
         self.calls[:] = []
@@ -441,8 +448,9 @@ class RunResult:
     ) -> None:
         """Assert that the specified outcomes appear with the respective
         numbers (0 means it didn't occur) in the text output from a test run.
-
         """
+        __tracebackhide__ = True
+
         d = self.parseoutcomes()
         obtained = {
             "passed": d.get("passed", 0),
@@ -536,10 +544,12 @@ class Testdir:
         mp.delenv("TOX_ENV_DIR", raising=False)
         # Discard outer pytest options.
         mp.delenv("PYTEST_ADDOPTS", raising=False)
-
-        # Environment (updates) for inner runs.
+        # Ensure no user config is used.
         tmphome = str(self.tmpdir)
-        self._env_run_update = {"HOME": tmphome, "USERPROFILE": tmphome}
+        mp.setenv("HOME", tmphome)
+        mp.setenv("USERPROFILE", tmphome)
+        # Do not use colors for inner runs by default.
+        mp.setenv("PY_COLORS", "0")
 
     def __repr__(self):
         return "<Testdir {!r}>".format(self.tmpdir)
@@ -735,7 +745,7 @@ class Testdir:
         :param arg: a :py:class:`py.path.local` instance of the file
 
         """
-        session = Session(config)
+        session = Session.from_config(config)
         assert "::" not in str(arg)
         p = py.path.local(arg)
         config.hook.pytest_sessionstart(session=session)
@@ -753,7 +763,7 @@ class Testdir:
 
         """
         config = self.parseconfigure(path)
-        session = Session(config)
+        session = Session.from_config(config)
         x = session.fspath.bestrelpath(path)
         config.hook.pytest_sessionstart(session=session)
         res = session.perform_collect([x], genitems=False)[0]
@@ -845,12 +855,6 @@ class Testdir:
         plugins = list(plugins)
         finalizers = []
         try:
-            # Do not load user config (during runs only).
-            mp_run = MonkeyPatch()
-            for k, v in self._env_run_update.items():
-                mp_run.setenv(k, v)
-            finalizers.append(mp_run.undo)
-
             # Any sys.module or sys.path changes done while running pytest
             # inline should be reverted after the test run completes to avoid
             # clashing with later inline tests run within the same pytest test,
@@ -1083,7 +1087,6 @@ class Testdir:
         env["PYTHONPATH"] = os.pathsep.join(
             filter(None, [os.getcwd(), env.get("PYTHONPATH", "")])
         )
-        env.update(self._env_run_update)
         kw["env"] = env
 
         if stdin is Testdir.CLOSE_STDIN:
@@ -1253,11 +1256,7 @@ class Testdir:
             pytest.skip("pexpect.spawn not available")
         logfile = self.tmpdir.join("spawn.out").open("wb")
 
-        # Do not load user config.
-        env = os.environ.copy()
-        env.update(self._env_run_update)
-
-        child = pexpect.spawn(cmd, logfile=logfile, env=env)
+        child = pexpect.spawn(cmd, logfile=logfile)
         self.request.addfinalizer(logfile.close)
         child.timeout = expect_timeout
         return child
@@ -1430,8 +1429,10 @@ class LineMatcher:
                     self._log("{:>{width}}".format("and:", width=wnick), repr(nextline))
                 extralines.append(nextline)
             else:
-                self._log("remains unmatched: {!r}".format(line))
-                pytest.fail(self._log_text.lstrip())
+                msg = "remains unmatched: {!r}".format(line)
+                self._log(msg)
+                self._fail(msg)
+        self._log_output = []
 
     def no_fnmatch_line(self, pat):
         """Ensure captured lines do not match the given pattern, using ``fnmatch.fnmatch``.
@@ -1457,18 +1458,21 @@ class LineMatcher:
         __tracebackhide__ = True
         nomatch_printed = False
         wnick = len(match_nickname) + 1
-        try:
-            for line in self.lines:
-                if match_func(line, pat):
-                    self._log("%s:" % match_nickname, repr(pat))
-                    self._log("{:>{width}}".format("with:", width=wnick), repr(line))
-                    pytest.fail(self._log_text.lstrip())
-                else:
-                    if not nomatch_printed:
-                        self._log(
-                            "{:>{width}}".format("nomatch:", width=wnick), repr(pat)
-                        )
-                        nomatch_printed = True
-                    self._log("{:>{width}}".format("and:", width=wnick), repr(line))
-        finally:
-            self._log_output = []
+        for line in self.lines:
+            if match_func(line, pat):
+                msg = "{}: {!r}".format(match_nickname, pat)
+                self._log(msg)
+                self._log("{:>{width}}".format("with:", width=wnick), repr(line))
+                self._fail(msg)
+            else:
+                if not nomatch_printed:
+                    self._log("{:>{width}}".format("nomatch:", width=wnick), repr(pat))
+                    nomatch_printed = True
+                self._log("{:>{width}}".format("and:", width=wnick), repr(line))
+        self._log_output = []
+
+    def _fail(self, msg):
+        __tracebackhide__ = True
+        log_text = self._log_text
+        self._log_output = []
+        pytest.fail(log_text)

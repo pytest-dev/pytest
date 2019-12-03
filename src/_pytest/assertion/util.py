@@ -13,6 +13,7 @@ from typing import Tuple
 
 import _pytest._code
 from _pytest import outcomes
+from _pytest._io.saferepr import _pformat_dispatch
 from _pytest._io.saferepr import safeformat
 from _pytest._io.saferepr import saferepr
 from _pytest.compat import ATTRS_EQ_FIELD
@@ -270,15 +271,8 @@ def _compare_eq_iterable(
     lines_left = len(left_formatting)
     lines_right = len(right_formatting)
     if lines_left != lines_right:
-        if lines_left > lines_right:
-            max_width = min(len(x) for x in left_formatting)
-        else:
-            max_width = min(len(x) for x in right_formatting)
-
-        right_formatting = pprint.pformat(right, width=max_width).splitlines()
-        lines_right = len(right_formatting)
-        left_formatting = pprint.pformat(left, width=max_width).splitlines()
-        lines_left = len(left_formatting)
+        left_formatting = _pformat_dispatch(left).splitlines()
+        right_formatting = _pformat_dispatch(right).splitlines()
 
     if lines_left > 1 or lines_right > 1:
         _surrounding_parens_on_own_lines(left_formatting)

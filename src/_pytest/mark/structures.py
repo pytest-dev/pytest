@@ -2,6 +2,8 @@ import inspect
 import warnings
 from collections import namedtuple
 from collections.abc import MutableMapping
+from typing import List
+from typing import Optional
 from typing import Set
 
 import attr
@@ -144,7 +146,15 @@ class Mark:
     #: keyword arguments of the mark decorator
     kwargs = attr.ib()  # Dict[str, object]
 
-    def combined_with(self, other):
+    #: source Mark for ids with parametrize Marks
+    _param_ids_from = attr.ib(type=Optional["Mark"], default=None, repr=False)
+    #: resolved/generated ids with parametrize Marks
+    _param_ids_generated = attr.ib(type=Optional[List[str]], default=None, repr=False)
+
+    def _has_param_ids(self):
+        return "ids" in self.kwargs or len(self.args) >= 4
+
+    def combined_with(self, other: "Mark") -> "Mark":
         """
         :param other: the mark to combine with
         :type other: Mark
@@ -153,8 +163,20 @@ class Mark:
         combines by appending args and merging the mappings
         """
         assert self.name == other.name
+
+        # Remember source of ids with parametrize Marks.
+        param_ids_from = None  # type: Optional[Mark]
+        if self.name == "parametrize":
+            if other._has_param_ids():
+                param_ids_from = other
+            elif self._has_param_ids():
+                param_ids_from = self
+
         return Mark(
-            self.name, self.args + other.args, dict(self.kwargs, **other.kwargs)
+            self.name,
+            self.args + other.args,
+            dict(self.kwargs, **other.kwargs),
+            param_ids_from=param_ids_from,
         )
 
 
@@ -314,13 +336,19 @@ class MarkGenerator:
                         "{!r} not found in `markers` configuration option".format(name),
                         pytrace=False,
                     )
-                else:
-                    warnings.warn(
-                        "Unknown pytest.mark.%s - is this a typo?  You can register "
-                        "custom marks to avoid this warning - for details, see "
-                        "https://docs.pytest.org/en/latest/mark.html" % name,
-                        PytestUnknownMarkWarning,
-                    )
+
+                # Raise a specific error for common misspellings of "parametrize".
+                if name in ["parameterize", "parametrise", "parameterise"]:
+                    __tracebackhide__ = True
+                    fail("Unknown '{}' mark, did you mean 'parametrize'?".format(name))
+
+                warnings.warn(
+                    "Unknown pytest.mark.%s - is this a typo?  You can register "
+                    "custom marks to avoid this warning - for details, see "
+                    "https://docs.pytest.org/en/latest/mark.html" % name,
+                    PytestUnknownMarkWarning,
+                    2,
+                )
 
         return MarkDecorator(Mark(name, (), {}))
 

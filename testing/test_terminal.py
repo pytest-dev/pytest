@@ -154,6 +154,8 @@ class TestTerminal:
                 "test2.py": "def test_2(): pass",
             }
         )
+        # Explicitly test colored output.
+        testdir.monkeypatch.setenv("PY_COLORS", "1")
 
         child = testdir.spawn_pytest("-v test1.py test2.py")
         child.expect(r"collecting \.\.\.")
@@ -963,7 +965,31 @@ class TestGenericReporting:
         )
         result = testdir.runpytest("--maxfail=2", *option.args)
         result.stdout.fnmatch_lines(
-            ["*def test_1():*", "*def test_2():*", "*2 failed*"]
+            [
+                "*def test_1():*",
+                "*def test_2():*",
+                "*! stopping after 2 failures !*",
+                "*2 failed*",
+            ]
+        )
+
+    def test_maxfailures_with_interrupted(self, testdir):
+        testdir.makepyfile(
+            """
+            def test(request):
+                request.session.shouldstop = "session_interrupted"
+                assert 0
+        """
+        )
+        result = testdir.runpytest("--maxfail=1", "-ra")
+        result.stdout.fnmatch_lines(
+            [
+                "*= short test summary info =*",
+                "FAILED *",
+                "*! stopping after 1 failures !*",
+                "*! session_interrupted !*",
+                "*= 1 failed in*",
+            ]
         )
 
     def test_tb_option(self, testdir, option):

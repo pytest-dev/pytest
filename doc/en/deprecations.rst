@@ -20,6 +20,37 @@ Below is a complete list of all pytest features which are considered deprecated.
 :ref:`standard warning filters <warnings>`.
 
 
+Node Construction changed to ``Node.from_parent``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 5.3
+
+The construction of nodes new should use the named constructor ``from_parent``.
+This limitation in api surface intends to enable better/simpler refactoring of the collection tree.
+
+
+``junit_family`` default value change to "xunit2"
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 5.2
+
+The default value of ``junit_family`` option will change to ``xunit2`` in pytest 6.0, given
+that this is the version supported by default in modern tools that manipulate this type of file.
+
+In order to smooth the transition, pytest will issue a warning in case the ``--junitxml`` option
+is given in the command line but ``junit_family`` is not explicitly configured in ``pytest.ini``::
+
+    PytestDeprecationWarning: The 'junit_family' default value will change to 'xunit2' in pytest 6.0.
+      Add 'junit_family=legacy' to your pytest.ini file to silence this warning and make your suite compatible.
+
+In order to silence this warning, users just need to configure the ``junit_family`` option explicitly:
+
+.. code-block:: ini
+
+    [pytest]
+    junit_family=legacy
+
+
 ``funcargnames`` alias for ``fixturenames``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -43,11 +74,12 @@ The ``--result-log`` option produces a stream of test reports which can be
 analysed at runtime, but it uses a custom format which requires users to implement their own
 parser.
 
-The :ref:`--report-log <report_log>` option provides a more standard and extensible alternative, producing
+The  `pytest-reportlog <https://github.com/pytest-dev/pytest-reportlog>`__ plugin provides a ``--report-log`` option, a more standard and extensible alternative, producing
 one JSON object per-line, and should cover the same use cases. Please try it out and provide feedback.
 
-The plan is remove the ``--result-log`` option in pytest 6.0 after ``--result-log`` proves satisfactory
-to all users and is deemed stable.
+The plan is remove the ``--result-log`` option in pytest 6.0 if ``pytest-reportlog`` proves satisfactory
+to all users and is deemed stable. The ``pytest-reportlog`` plugin might even be merged into the core
+at some point, depending on the plans for the plugins and number of users using it.
 
 
 Removed Features

@@ -138,7 +138,7 @@ def _issue_warning_captured(warning, hook, stacklevel):
     """
     This function should be used instead of calling ``warnings.warn`` directly when we are in the "configure" stage:
     at this point the actual options might not have been set, so we manually trigger the pytest_warning_captured
-    hook so we can display this warnings in the terminal. This is a hack until we can sort out #2891.
+    hook so we can display these warnings in the terminal. This is a hack until we can sort out #2891.
 
     :param warning: the warning instance.
     :param hook: the hook caller
@@ -149,6 +149,10 @@ def _issue_warning_captured(warning, hook, stacklevel):
         warnings.warn(warning, stacklevel=stacklevel)
     # Mypy can't infer that record=True means records is not None; help it.
     assert records is not None
+    frame = sys._getframe(stacklevel - 1)
+    location = frame.f_code.co_filename, frame.f_lineno, frame.f_code.co_name
     hook.pytest_warning_captured.call_historic(
-        kwargs=dict(warning_message=records[0], when="config", item=None)
+        kwargs=dict(
+            warning_message=records[0], when="config", item=None, location=location
+        )
     )

@@ -75,7 +75,7 @@ class TestCollector:
                 pass
             def pytest_collect_file(path, parent):
                 if path.ext == ".xxx":
-                    return CustomFile(path, parent=parent)
+                    return CustomFile.from_parent(fspath=path, parent=parent)
         """
         )
         node = testdir.getpathnode(hello)
@@ -446,7 +446,7 @@ class TestSession:
         p.move(target)
         subdir.chdir()
         config = testdir.parseconfig(p.basename)
-        rcol = Session(config=config)
+        rcol = Session.from_config(config)
         assert rcol.fspath == subdir
         parts = rcol._parsearg(p.basename)
 
@@ -463,7 +463,7 @@ class TestSession:
         # XXX migrate to collectonly? (see below)
         config = testdir.parseconfig(id)
         topdir = testdir.tmpdir
-        rcol = Session(config)
+        rcol = Session.from_config(config)
         assert topdir == rcol.fspath
         # rootid = rcol.nodeid
         # root2 = rcol.perform_collect([rcol.nodeid], genitems=False)[0]
@@ -486,7 +486,7 @@ class TestSession:
         p = testdir.makepyfile("def test_func(): pass")
         id = "::".join([p.basename, "test_func"])
         items, hookrec = testdir.inline_genitems(id)
-        item, = items
+        (item,) = items
         assert item.name == "test_func"
         newid = item.nodeid
         assert newid == id
@@ -605,9 +605,9 @@ class TestSession:
         testdir.makepyfile("def test_func(): pass")
         items, hookrec = testdir.inline_genitems()
         assert len(items) == 1
-        item, = items
+        (item,) = items
         items2, hookrec = testdir.inline_genitems(item.nodeid)
-        item2, = items2
+        (item2,) = items2
         assert item2.name == item.name
         assert item2.fspath == item.fspath
 
@@ -622,7 +622,7 @@ class TestSession:
         arg = p.basename + "::TestClass::test_method"
         items, hookrec = testdir.inline_genitems(arg)
         assert len(items) == 1
-        item, = items
+        (item,) = items
         assert item.nodeid.endswith("TestClass::test_method")
         # ensure we are reporting the collection of the single test item (#2464)
         assert [x.name for x in self.get_reported_items(hookrec)] == ["test_method"]
@@ -685,6 +685,8 @@ class Test_genitems:
     def test_example_items1(self, testdir):
         p = testdir.makepyfile(
             """
+            import pytest
+
             def testone():
                 pass
 
@@ -693,19 +695,24 @@ class Test_genitems:
                     pass
 
             class TestY(TestX):
-                pass
+                @pytest.mark.parametrize("arg0", [".["])
+                def testmethod_two(self, arg0):
+                    pass
         """
         )
         items, reprec = testdir.inline_genitems(p)
-        assert len(items) == 3
+        assert len(items) == 4
         assert items[0].name == "testone"
         assert items[1].name == "testmethod_one"
         assert items[2].name == "testmethod_one"
+        assert items[3].name == "testmethod_two[.[]"
 
         # let's also test getmodpath here
         assert items[0].getmodpath() == "testone"
         assert items[1].getmodpath() == "TestX.testmethod_one"
         assert items[2].getmodpath() == "TestY.testmethod_one"
+        # PR #6202: Fix incorrect result of getmodpath method. (Resolves issue #6189)
+        assert items[3].getmodpath() == "TestY.testmethod_two[.[]"
 
         s = items[0].getmodpath(stopatmodule=False)
         assert s.endswith("test_example_items1.testone")
@@ -852,11 +859,15 @@ def test_exit_on_collection_with_maxfail_smaller_than_n_errors(testdir):
 
     res = testdir.runpytest("--maxfail=1")
     assert res.ret == 1
-
     res.stdout.fnmatch_lines(
-        ["*ERROR collecting test_02_import_error.py*", "*No module named *asdfa*"]
+        [
+            "collected 1 item / 1 error",
+            "*ERROR collecting test_02_import_error.py*",
+            "*No module named *asdfa*",
+            "*! stopping after 1 failures !*",
+            "*= 1 error in *",
+        ]
     )
-
     res.stdout.no_fnmatch_line("*test_03*")
 
 
@@ -869,7 +880,6 @@ def test_exit_on_collection_with_maxfail_bigger_than_n_errors(testdir):
 
     res = testdir.runpytest("--maxfail=4")
     assert res.ret == 2
-
     res.stdout.fnmatch_lines(
         [
             "collected 2 items / 2 errors",
@@ -877,6 +887,8 @@ def test_exit_on_collection_with_maxfail_bigger_than_n_errors(testdir):
             "*No module named *asdfa*",
             "*ERROR collecting test_03_import_error.py*",
             "*No module named *asdfa*",
+            "*! Interrupted: 2 errors during collection !*",
+            "*= 2 errors in *",
         ]
     )
 
@@ -1257,3 +1269,24 @@ def test_collector_respects_tbstyle(testdir):
             "*= 1 error in *",
         ]
     )
+
+
+def test_does_not_eagerly_collect_packages(testdir):
+    testdir.makepyfile("def test(): pass")
+    pydir = testdir.mkpydir("foopkg")
+    pydir.join("__init__.py").write("assert False")
+    result = testdir.runpytest()
+    assert result.ret == ExitCode.OK
+
+
+def test_does_not_put_src_on_path(testdir):
+    # `src` is not on sys.path so it should not be importable
+    testdir.tmpdir.join("src/nope/__init__.py").ensure()
+    testdir.makepyfile(
+        "import pytest\n"
+        "def test():\n"
+        "    with pytest.raises(ImportError):\n"
+        "        import nope\n"
+    )
+    result = testdir.runpytest()
+    assert result.ret == ExitCode.OK

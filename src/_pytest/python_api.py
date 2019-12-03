@@ -552,7 +552,7 @@ def raises(
 
 
 @overload  # noqa: F811
-def raises(
+def raises(  # noqa: F811
     expected_exception: Union["Type[_E]", Tuple["Type[_E]", ...]],
     func: Callable,
     *args: Any,

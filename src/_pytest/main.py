@@ -15,6 +15,7 @@ from _pytest import nodes
 from _pytest.config import directory_arg
 from _pytest.config import hookimpl
 from _pytest.config import UsageError
+from _pytest.fixtures import FixtureManager
 from _pytest.outcomes import exit
 from _pytest.runner import collect_one_node
 from _pytest.runner import SetupState
@@ -184,7 +185,7 @@ def pytest_addoption(parser):
 
 def wrap_session(config, doit):
     """Skeleton command line program"""
-    session = Session(config)
+    session = Session.from_config(config)
     session.exitstatus = ExitCode.OK
     initstate = 0
     try:
@@ -372,6 +373,7 @@ class Session(nodes.FSCollector):
     Interrupted = Interrupted
     Failed = Failed
     _setupstate = None  # type: SetupState
+    _fixturemanager = None  # type: FixtureManager
 
     def __init__(self, config):
         nodes.FSCollector.__init__(
@@ -394,6 +396,10 @@ class Session(nodes.FSCollector):
         self._pkg_roots = {}
 
         self.config.pluginmanager.register(self, name="session")
+
+    @classmethod
+    def from_config(cls, config):
+        return cls._create(config)
 
     def __repr__(self):
         return "<%s %s exitstatus=%r testsfailed=%d testscollected=%d>" % (

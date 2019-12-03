@@ -24,7 +24,7 @@ def pytest_pycollect_makeitem(collector, name, obj):
     except Exception:
         return
     # yes, so let's collect it
-    return UnitTestCase(name, parent=collector)
+    return UnitTestCase.from_parent(collector, name=name, obj=obj)
 
 
 class UnitTestCase(Class):
@@ -52,7 +52,7 @@ class UnitTestCase(Class):
             if not getattr(x, "__test__", True):
                 continue
             funcobj = getimfunc(x)
-            yield TestCaseFunction(name, parent=self, callobj=funcobj)
+            yield TestCaseFunction.from_parent(self, name=name, callobj=funcobj)
             foundsomething = True
 
         if not foundsomething:
@@ -60,7 +60,8 @@ class UnitTestCase(Class):
             if runtest is not None:
                 ut = sys.modules.get("twisted.trial.unittest", None)
                 if ut is None or runtest != ut.TestCase.runTest:
-                    yield TestCaseFunction("runTest", parent=self)
+                    # TODO: callobj consistency
+                    yield TestCaseFunction.from_parent(self, name="runTest")
 
     def _inject_setup_teardown_fixtures(self, cls):
         """Injects a hidden auto-use fixture to invoke setUpClass/setup_method and corresponding
@@ -201,6 +202,7 @@ class TestCaseFunction(Function):
         return bool(expecting_failure_class or expecting_failure_method)
 
     def runtest(self):
+        # TODO: move testcase reporter into separate class, this shouldnt be on item
         import unittest
 
         testMethod = getattr(self._testcase, self._testcase._testMethodName)
