@@ -537,24 +537,28 @@ class TestTrialUnittest:
         )
         result.stdout.fnmatch_lines(
             [
-                "test_trial_error.py::TC::test_four FAILED",
+                "test_trial_error.py::TC::test_four SKIPPED",
                 "test_trial_error.py::TC::test_four ERROR",
                 "test_trial_error.py::TC::test_one FAILED",
                 "test_trial_error.py::TC::test_three FAILED",
-                "test_trial_error.py::TC::test_two FAILED",
+                "test_trial_error.py::TC::test_two SKIPPED",
+                "test_trial_error.py::TC::test_two ERROR",
                 "*ERRORS*",
                 "*_ ERROR at teardown of TC.test_four _*",
+                "NOTE: Incompatible Exception Representation, displaying natively:",
+                "*DelayedCalls*",
+                "*_ ERROR at teardown of TC.test_two _*",
+                "NOTE: Incompatible Exception Representation, displaying natively:",
                 "*DelayedCalls*",
                 "*= FAILURES =*",
-                "*_ TC.test_four _*",
-                "*NameError*crash*",
+                # "*_ TC.test_four _*",
+                # "*NameError*crash*",
                 "*_ TC.test_one _*",
                 "*NameError*crash*",
                 "*_ TC.test_three _*",
+                "NOTE: Incompatible Exception Representation, displaying natively:",
                 "*DelayedCalls*",
-                "*_ TC.test_two _*",
-                "*NameError*crash*",
-                "*= 4 failed, 1 error in *",
+                "*= 2 failed, 2 skipped, 2 errors in *",
             ]
         )
 
@@ -1096,3 +1100,32 @@ def test_exit_outcome(testdir):
     )
     result = testdir.runpytest()
     result.stdout.fnmatch_lines(["*Exit: pytest_exit called*", "*= no tests ran in *"])
+
+
+def test_trace(testdir, monkeypatch):
+    calls = []
+
+    def check_call(*args, **kwargs):
+        calls.append((args, kwargs))
+        assert args == ("runcall",)
+
+        class _pdb:
+            def runcall(*args, **kwargs):
+                calls.append((args, kwargs))
+
+        return _pdb
+
+    monkeypatch.setattr("_pytest.debugging.pytestPDB._init_pdb", check_call)
+
+    p1 = testdir.makepyfile(
+        """
+        import unittest
+
+        class MyTestCase(unittest.TestCase):
+            def test(self):
+                self.assertEqual('foo', 'foo')
+    """
+    )
+    result = testdir.runpytest("--trace", str(p1))
+    assert len(calls) == 2
+    assert result.ret == 0

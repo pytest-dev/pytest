@@ -1,4 +1,5 @@
 """ discovery and running of std-library "unittest" style tests. """
+import functools
 import sys
 import traceback
 
@@ -110,12 +111,15 @@ class TestCaseFunction(Function):
     _testcase = None
 
     def setup(self):
+        self._needs_explicit_tearDown = False
         self._testcase = self.parent.obj(self.name)
         self._obj = getattr(self._testcase, self.name)
         if hasattr(self, "_request"):
             self._request._fillfixtures()
 
     def teardown(self):
+        if self._needs_explicit_tearDown:
+            self._testcase.tearDown()
         self._testcase = None
         self._obj = None
 
@@ -188,30 +192,46 @@ class TestCaseFunction(Function):
     def stopTest(self, testcase):
         pass
 
-    def _handle_skip(self):
-        # implements the skipping machinery (see #2137)
-        # analog to pythons Lib/unittest/case.py:run
-        test_method = getattr(self._testcase, self._testcase._testMethodName)
-        if getattr(self._testcase.__class__, "__unittest_skip__", False) or getattr(
-            test_method, "__unittest_skip__", False
-        ):
-            # If the class or method was skipped.
-            skip_why = getattr(
-                self._testcase.__class__, "__unittest_skip_why__", ""
-            ) or getattr(test_method, "__unittest_skip_why__", "")
-            self._testcase._addSkip(self, self._testcase, skip_why)
-            return True
-        return False
+    def _expecting_failure(self, test_method) -> bool:
+        """Return True if the given unittest method (or the entire class) is marked
+        with @expectedFailure"""
+        expecting_failure_method = getattr(
+            test_method, "__unittest_expecting_failure__", False
+        )
+        expecting_failure_class = getattr(self, "__unittest_expecting_failure__", False)
+        return bool(expecting_failure_class or expecting_failure_method)
 
     def runtest(self):
-        if self.config.pluginmanager.get_plugin("pdbinvoke") is None:
-            # TODO: move testcase reporter into separate class, this shouldnt be on item
+        # TODO: move testcase reporter into separate class, this shouldnt be on item
+        import unittest
+
+        testMethod = getattr(self._testcase, self._testcase._testMethodName)
+
+        class _GetOutOf_testPartExecutor(KeyboardInterrupt):
+            """Helper exception to get out of unittests's testPartExecutor (see TestCase.run)."""
+
+        @functools.wraps(testMethod)
+        def wrapped_testMethod(*args, **kwargs):
+            """Wrap the original method to call into pytest's machinery, so other pytest
+            features can have a chance to kick in (notably --pdb)"""
+            try:
+                self.ihook.pytest_pyfunc_call(pyfuncitem=self)
+            except unittest.SkipTest:
+                raise
+            except Exception as exc:
+                expecting_failure = self._expecting_failure(testMethod)
+                if expecting_failure:
+                    raise
+                self._needs_explicit_tearDown = True
+                raise _GetOutOf_testPartExecutor(exc)
+
+        setattr(self._testcase, self._testcase._testMethodName, wrapped_testMethod)
+        try:
             self._testcase(result=self)
-        else:
-            # disables tearDown and cleanups for post mortem debugging (see #1890)
-            if self._handle_skip():
-                return
-            self._testcase.debug()
+        except _GetOutOf_testPartExecutor as exc:
+            raise exc.args[0] from exc.args[0]
+        finally:
+            delattr(self._testcase, self._testcase._testMethodName)
 
     def _prunetraceback(self, excinfo):
         Function._prunetraceback(self, excinfo)
