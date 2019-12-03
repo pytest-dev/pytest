@@ -10,7 +10,7 @@ build-backend = "setuptools.build_meta"
 [tool.towncrier]
 package = "pytest"
 package_dir = "src"
-filename = "CHANGELOG.rst"
+filename = "doc/en/changelog.rst"
 directory = "changelog/"
 title_format = "pytest {version} ({project_date})"
 template = "changelog/_template.rst"

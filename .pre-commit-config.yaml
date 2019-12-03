@@ -1,4 +1,3 @@
-exclude: doc/en/example/py2py3/test_py2.py
 repos:
 -   repo: https://github.com/psf/black
     rev: 19.10b0
@@ -48,7 +47,7 @@ repos:
     -   id: rst
         name: rst
         entry: rst-lint --encoding utf-8
-        files: ^(CHANGELOG.rst|HOWTORELEASE.rst|README.rst|TIDELIFT.rst|changelog/.*)$
+        files: ^(HOWTORELEASE.rst|README.rst|TIDELIFT.rst)$
         language: python
         additional_dependencies: [pygments, restructuredtext_lint]
     -   id: changelogs-rst

@@ -1,0 +1,3 @@
+Revert "A warning is now issued when assertions are made for ``None``".
+The warning proved to be less useful than initially expected and had quite a
+few false positive cases.

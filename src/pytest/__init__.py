@@ -4,6 +4,7 @@ pytest: unit and functional testing with Python.
 """
 from _pytest import __version__
 from _pytest.assertion import register_assert_rewrite
+from _pytest.compat import _setup_collect_fakemodule
 from _pytest.config import cmdline
 from _pytest.config import hookimpl
 from _pytest.config import hookspec
@@ -93,14 +94,6 @@ __all__ = [
     "yield_fixture",
 ]
 
-if __name__ == "__main__":
-    # if run as a script or by 'python -m pytest'
-    # we trigger the below "else" condition by the following import
-    import pytest
 
-    raise SystemExit(pytest.main())
-else:
-
-    from _pytest.compat import _setup_collect_fakemodule
-
-    _setup_collect_fakemodule()
+_setup_collect_fakemodule()
+del _setup_collect_fakemodule
