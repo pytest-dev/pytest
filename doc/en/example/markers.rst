@@ -148,7 +148,7 @@ which implements a substring match on the test names instead of the
 exact match on markers that ``-m`` provides.  This makes it easy to
 select tests based on their names:
 
-.. versionadded: 5.3.1/6.0
+.. versionadded: 5.4
 
 The expression matching is now case-insensitive.
 
