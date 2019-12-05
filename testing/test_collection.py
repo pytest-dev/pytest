@@ -836,12 +836,15 @@ class TestNodekeywords:
                 def test(self):
                     assert True
 
+            def test_failing_5():
+                assert False, "This should not match"
+
         """
         )
-        num_all_tests_passed = 4
+        num_matching_tests = 4
         for expression in ("specifictopic", "SPECIFICTOPIC", "SpecificTopic"):
             reprec = testdir.inline_run("-k " + expression)
-            reprec.assertoutcome(passed=num_all_tests_passed, failed=0)
+            reprec.assertoutcome(passed=num_matching_tests, failed=0)
 
 
 COLLECTION_ERROR_PY_FILES = dict(
