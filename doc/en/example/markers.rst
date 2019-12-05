@@ -130,7 +130,7 @@ Or select multiple nodes:
     ``module.py::function``.  Node IDs control which tests are
     collected, so ``module.py::class`` will select all test methods
     on the class.  Nodes are also created for each parameter of a
-    parametrized fixture or test, so selecting a parametrized test
+    parameterized fixture or test, so selecting a parameterized test
     must include the parameter value, e.g.
     ``module.py::function[param]``.
 
@@ -206,7 +206,7 @@ Or to select "http" and "quick" tests:
 
     However, if the ``"-k"`` argument is a simple string, no such restrictions
     apply. Also ``"-k 'not STRING'"`` has no restrictions.  You can also
-    specify numbers like ``"-k 1.3"`` to match tests which are parametrized
+    specify numbers like ``"-k 1.3"`` to match tests which are parameterized
     with the float ``"1.3"``.
 
 Registering markers
@@ -354,7 +354,7 @@ Custom marker and command line option to control test runs
 
 Plugins can provide custom markers and implement specific behaviour
 based on it. This is a self-contained example which adds a command
-line option and a parametrized test function marker to run tests
+line option and a parameterized test function marker to run tests
 specifies via named environments:
 
 .. code-block:: python

@@ -215,8 +215,8 @@ class TestFillFixtures:
         result = testdir.runpytest()
         assert result.ret == 0
 
-    def test_override_parametrized_fixture_conftest_module(self, testdir):
-        """Test override of the parametrized fixture with non-parametrized one on the test module level."""
+    def test_override_parameterized_fixture_conftest_module(self, testdir):
+        """Test override of the parameterized fixture with non-parameterized one on the test module level."""
         testdir.makeconftest(
             """
             import pytest
@@ -243,8 +243,8 @@ class TestFillFixtures:
         result = testdir.runpytest(testfile)
         result.stdout.fnmatch_lines(["*1 passed*"])
 
-    def test_override_parametrized_fixture_conftest_conftest(self, testdir):
-        """Test override of the parametrized fixture with non-parametrized one on the conftest level."""
+    def test_override_parameterized_fixture_conftest_conftest(self, testdir):
+        """Test override of the parameterized fixture with non-parameterized one on the conftest level."""
         testdir.makeconftest(
             """
             import pytest
@@ -280,8 +280,8 @@ class TestFillFixtures:
         result = testdir.runpytest(testfile)
         result.stdout.fnmatch_lines(["*1 passed*"])
 
-    def test_override_non_parametrized_fixture_conftest_module(self, testdir):
-        """Test override of the non-parametrized fixture with parametrized one on the test module level."""
+    def test_override_non_parameterized_fixture_conftest_module(self, testdir):
+        """Test override of the non-parameterized fixture with parameterized one on the test module level."""
         testdir.makeconftest(
             """
             import pytest
@@ -311,8 +311,8 @@ class TestFillFixtures:
         result = testdir.runpytest(testfile)
         result.stdout.fnmatch_lines(["*3 passed*"])
 
-    def test_override_non_parametrized_fixture_conftest_conftest(self, testdir):
-        """Test override of the non-parametrized fixture with parametrized one on the conftest level."""
+    def test_override_non_parameterized_fixture_conftest_conftest(self, testdir):
+        """Test override of the non-parameterized fixture with parameterized one on the conftest level."""
         testdir.makeconftest(
             """
             import pytest
@@ -351,10 +351,10 @@ class TestFillFixtures:
         result = testdir.runpytest(testfile)
         result.stdout.fnmatch_lines(["*3 passed*"])
 
-    def test_override_autouse_fixture_with_parametrized_fixture_conftest_conftest(
+    def test_override_autouse_fixture_with_parameterized_fixture_conftest_conftest(
         self, testdir
     ):
-        """Test override of the autouse fixture with parametrized one on the conftest level.
+        """Test override of the autouse fixture with parameterized one on the conftest level.
         This test covers the issue explained in issue 1601
         """
         testdir.makeconftest(
@@ -1102,7 +1102,7 @@ class TestFixtureUsages:
             "*Fixture 'badscope' from test_invalid_scope.py got an unexpected scope value 'functions'"
         )
 
-    def test_funcarg_parametrized_and_used_twice(self, testdir):
+    def test_funcarg_parameterized_and_used_twice(self, testdir):
         testdir.makepyfile(
             """
             import pytest
@@ -1246,7 +1246,7 @@ class TestFixtureUsages:
         reprec = testdir.inline_run()
         reprec.assertoutcome(passed=1)
 
-    def test_fixture_parametrized_with_iterator(self, testdir):
+    def test_fixture_parameterized_with_iterator(self, testdir):
         testdir.makepyfile(
             """
             import pytest
@@ -1770,7 +1770,7 @@ class TestAutouseManagement:
         reprec = testdir.inline_run()
         reprec.assertoutcome(passed=2)
 
-    def test_uses_parametrized_resource(self, testdir):
+    def test_uses_parameterized_resource(self, testdir):
         testdir.makepyfile(
             """
             import pytest
@@ -1796,7 +1796,7 @@ class TestAutouseManagement:
         reprec = testdir.inline_run("-s")
         reprec.assertoutcome(passed=2)
 
-    def test_session_parametrized_function(self, testdir):
+    def test_session_parameterized_function(self, testdir):
         testdir.makepyfile(
             """
             import pytest
@@ -2004,8 +2004,8 @@ class TestFixtureMarker:
         "param_args",
         ["'fixt, val'", "'fixt,val'", "['fixt', 'val']", "('fixt', 'val')"],
     )
-    def test_override_parametrized_fixture_issue_979(self, testdir, param_args):
-        """Make sure a parametrized argument can override a parametrized fixture.
+    def test_override_parameterized_fixture_issue_979(self, testdir, param_args):
+        """Make sure a parameterized argument can override a parameterized fixture.
 
         This was a regression introduced in the fix for #736.
         """
@@ -2364,7 +2364,7 @@ class TestFixtureMarker:
         values = reprec.getcalls("pytest_runtest_call")[0].item.module.values
         assert values == [1, 1, 2, 2]
 
-    def test_module_parametrized_ordering(self, testdir):
+    def test_module_parameterized_ordering(self, testdir):
         testdir.makeini(
             """
             [pytest]
@@ -2423,7 +2423,7 @@ class TestFixtureMarker:
         """
         )
 
-    def test_dynamic_parametrized_ordering(self, testdir):
+    def test_dynamic_parameterized_ordering(self, testdir):
         testdir.makeini(
             """
             [pytest]
@@ -2461,14 +2461,14 @@ class TestFixtureMarker:
         result = testdir.runpytest("-v")
         result.stdout.fnmatch_lines(
             """
-            test_dynamic_parametrized_ordering.py::test[flavor1-vxlan] PASSED
-            test_dynamic_parametrized_ordering.py::test2[flavor1-vxlan] PASSED
-            test_dynamic_parametrized_ordering.py::test[flavor2-vxlan] PASSED
-            test_dynamic_parametrized_ordering.py::test2[flavor2-vxlan] PASSED
-            test_dynamic_parametrized_ordering.py::test[flavor2-vlan] PASSED
-            test_dynamic_parametrized_ordering.py::test2[flavor2-vlan] PASSED
-            test_dynamic_parametrized_ordering.py::test[flavor1-vlan] PASSED
-            test_dynamic_parametrized_ordering.py::test2[flavor1-vlan] PASSED
+            test_dynamic_parameterized_ordering.py::test[flavor1-vxlan] PASSED
+            test_dynamic_parameterized_ordering.py::test2[flavor1-vxlan] PASSED
+            test_dynamic_parameterized_ordering.py::test[flavor2-vxlan] PASSED
+            test_dynamic_parameterized_ordering.py::test2[flavor2-vxlan] PASSED
+            test_dynamic_parameterized_ordering.py::test[flavor2-vlan] PASSED
+            test_dynamic_parameterized_ordering.py::test2[flavor2-vlan] PASSED
+            test_dynamic_parameterized_ordering.py::test[flavor1-vlan] PASSED
+            test_dynamic_parameterized_ordering.py::test2[flavor1-vlan] PASSED
         """
         )
 
@@ -2608,7 +2608,7 @@ class TestFixtureMarker:
         pprint.pprint(list(zip(values, expected)))
         assert values == expected
 
-    def test_parametrized_fixture_teardown_order(self, testdir):
+    def test_parameterized_fixture_teardown_order(self, testdir):
         testdir.makepyfile(
             """
             import pytest
@@ -4053,7 +4053,7 @@ def test_call_fixture_function_error():
 
 
 def test_fixture_param_shadowing(testdir):
-    """Parametrized arguments would be shadowed if a fixture with the same name also exists (#5036)"""
+    """parameterized arguments would be shadowed if a fixture with the same name also exists (#5036)"""
     testdir.makepyfile(
         """
         import pytest
@@ -4066,12 +4066,12 @@ def test_fixture_param_shadowing(testdir):
         def arg(argroot):
             return argroot
 
-        # This should only be parametrized directly
+        # This should only be parameterized directly
         @pytest.mark.parametrize("arg", [1])
         def test_direct(arg):
             assert arg == 1
 
-        # This should be parametrized based on the fixtures
+        # This should be parameterized based on the fixtures
         def test_normal_fixture(arg):
             assert isinstance(arg, str)
 

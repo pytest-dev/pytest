@@ -421,8 +421,8 @@ class TestFunction:
         rec = testdir.inline_run()
         rec.assertoutcome(passed=3)
 
-    def test_parametrize_overrides_parametrized_fixture(self, testdir):
-        """Test parametrization when parameter overrides existing parametrized fixture with same name."""
+    def test_parametrize_overrides_parameterized_fixture(self, testdir):
+        """Test parametrization when parameter overrides existing parameterized fixture with same name."""
         testdir.makepyfile(
             """
             import pytest
@@ -1190,7 +1190,7 @@ def test_class_injection_does_not_break_collection(testdir):
         test_inject='''
          class TestClass(object):
             def test_injection(self):
-                """Test being parametrized."""
+                """Test being parameterized."""
                 pass
     '''
     )

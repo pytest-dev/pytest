@@ -1035,8 +1035,8 @@ def test_testcase_handles_init_exceptions(testdir):
     result.stdout.no_fnmatch_line("*ERROR at teardown of MyTestCase.test_hello*")
 
 
-def test_error_message_with_parametrized_fixtures(testdir):
-    testdir.copy_example("unittest/test_parametrized_fixture_error_message.py")
+def test_error_message_with_parameterized_fixtures(testdir):
+    testdir.copy_example("unittest/test_parameterized_fixture_error_message.py")
     result = testdir.runpytest()
     result.stdout.fnmatch_lines(
         [

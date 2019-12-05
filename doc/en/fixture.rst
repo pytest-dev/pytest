@@ -282,7 +282,7 @@ Finally, the ``class`` scope will invoke the fixture once per test *class*.
 .. note::
 
     Pytest will only cache one instance of a fixture at a time.
-    This means that when using a parametrized fixture, pytest may invoke a fixture more than once in the given scope.
+    This means that when using a parameterized fixture, pytest may invoke a fixture more than once in the given scope.
 
 
 ``package`` scope (experimental)
@@ -636,7 +636,7 @@ If the data created by the factory requires managing, the fixture can take care 
 Parametrizing fixtures
 -----------------------------------------------------------------
 
-Fixture functions can be parametrized in which case they will be called
+Fixture functions can be parameterized in which case they will be called
 multiple times, each time executing the set of dependent tests, i. e. the
 tests that depend on this fixture.  Test functions usually do not need
 to be aware of their re-running.  Fixture parametrization helps to
@@ -730,7 +730,7 @@ connection the second test fails in ``test_ehlo`` because a
 different server string is expected than what arrived.
 
 pytest will build a string that is the test ID for each fixture value
-in a parametrized fixture, e.g. ``test_ehlo[smtp.gmail.com]`` and
+in a parameterized fixture, e.g. ``test_ehlo[smtp.gmail.com]`` and
 ``test_ehlo[mail.python.org]`` in the above examples.  These IDs can
 be used with ``-k`` to select specific cases to run, and they will
 also identify the specific case when one is failing.  Running pytest
@@ -805,10 +805,10 @@ Running the above tests results in the following test IDs being used:
 
 .. _`fixture-parametrize-marks`:
 
-Using marks with parametrized fixtures
+Using marks with parameterized fixtures
 --------------------------------------
 
-:func:`pytest.param` can be used to apply marks in values sets of parametrized fixtures in the same way
+:func:`pytest.param` can be used to apply marks in values sets of parameterized fixtures in the same way
 that they can be used with :ref:`@pytest.mark.parametrize <@pytest.mark.parametrize>`.
 
 Example:
@@ -914,12 +914,12 @@ Automatic grouping of tests by fixture instances
 .. regendoc: wipe
 
 pytest minimizes the number of active fixtures during test runs.
-If you have a parametrized fixture, then all the tests using it will
+If you have a parameterized fixture, then all the tests using it will
 first execute with one instance and then finalizers are called
 before the next fixture instance is created.  Among other things,
 this eases testing of applications which create and use global state.
 
-The following example uses two parametrized fixtures, one of which is
+The following example uses two parameterized fixtures, one of which is
 scoped on a per-module basis, and all the functions perform ``print`` calls
 to show the setup/teardown flow:
 
@@ -1003,16 +1003,16 @@ Let's run the tests in verbose mode and with looking at the print-output:
 
     ============================ 8 passed in 0.12s =============================
 
-You can see that the parametrized module-scoped ``modarg`` resource caused an
+You can see that the parameterized module-scoped ``modarg`` resource caused an
 ordering of test execution that lead to the fewest possible "active" resources.
-The finalizer for the ``mod1`` parametrized resource was executed before the
+The finalizer for the ``mod1`` parameterized resource was executed before the
 ``mod2`` resource was setup.
 
 In particular notice that test_0 is completely independent and finishes first.
 Then test_1 is executed with ``mod1``, then test_2 with ``mod1``, then test_1
 with ``mod2`` and finally test_2 with ``mod2``.
 
-The ``otherarg`` parametrized resource (having function scope) was set up before
+The ``otherarg`` parameterized resource (having function scope) was set up before
 and teared down after every test that used it.
 
 
@@ -1359,7 +1359,7 @@ In the example above, a fixture value is overridden by the test parameter value.
 can be overridden this way even if the test doesn't use it directly (doesn't mention it in the function prototype).
 
 
-Override a parametrized fixture with non-parametrized one and vice versa
+Override a parameterized fixture with non-parameterized one and vice versa
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Given the tests file structure is:
@@ -1374,11 +1374,11 @@ Given the tests file structure is:
             import pytest
 
             @pytest.fixture(params=['one', 'two', 'three'])
-            def parametrized_username(request):
+            def parameterized_username(request):
                 return request.param
 
             @pytest.fixture
-            def non_parametrized_username(request):
+            def non_parameterized_username(request):
                 return 'username'
 
         test_something.py
@@ -1386,27 +1386,27 @@ Given the tests file structure is:
             import pytest
 
             @pytest.fixture
-            def parametrized_username():
+            def parameterized_username():
                 return 'overridden-username'
 
             @pytest.fixture(params=['one', 'two', 'three'])
-            def non_parametrized_username(request):
+            def non_parameterized_username(request):
                 return request.param
 
-            def test_username(parametrized_username):
-                assert parametrized_username == 'overridden-username'
+            def test_username(parameterized_username):
+                assert parameterized_username == 'overridden-username'
 
-            def test_parametrized_username(non_parametrized_username):
-                assert non_parametrized_username in ['one', 'two', 'three']
+            def test_parameterized_username(non_parameterized_username):
+                assert non_parameterized_username in ['one', 'two', 'three']
 
         test_something_else.py
             # content of tests/test_something_else.py
-            def test_username(parametrized_username):
-                assert parametrized_username in ['one', 'two', 'three']
+            def test_username(parameterized_username):
+                assert parameterized_username in ['one', 'two', 'three']
 
-            def test_username(non_parametrized_username):
-                assert non_parametrized_username == 'username'
+            def test_username(non_parameterized_username):
+                assert non_parameterized_username == 'username'
 
-In the example above, a parametrized fixture is overridden with a non-parametrized version, and
-a non-parametrized fixture is overridden with a parametrized version for certain test module.
+In the example above, a parameterized fixture is overridden with a non-parameterized version, and
+a non-parameterized fixture is overridden with a parameterized version for certain test module.
 The same applies for the test folder level obviously.

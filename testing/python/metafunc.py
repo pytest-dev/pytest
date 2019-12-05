@@ -85,9 +85,9 @@ class TestMetafunc:
         ):
             metafunc.parametrize("request", [1])
 
-    def test_find_parametrized_scope(self):
-        """unittest for _find_parametrized_scope (#3941)"""
-        from _pytest.python import _find_parametrized_scope
+    def test_find_parameterized_scope(self):
+        """unittest for _find_parameterized_scope (#3941)"""
+        from _pytest.python import _find_parameterized_scope
 
         @attr.s
         class DummyFixtureDef:
@@ -104,7 +104,7 @@ class TestMetafunc:
         # use arguments to determine narrow scope; the cause of the bug is that it would look on all
         # fixture defs given to the method
         def find_scope(argnames, indirect):
-            return _find_parametrized_scope(argnames, fixtures_defs, indirect=indirect)
+            return _find_parameterized_scope(argnames, fixtures_defs, indirect=indirect)
 
         assert find_scope(["func_fix"], indirect=True) == "function"
         assert find_scope(["class_fix"], indirect=True) == "class"
@@ -268,7 +268,7 @@ class TestMetafunc:
             assert _idval(val, "a", 6, None, item=None, config=config) == expected
 
     def test_bytes_idval(self):
-        """unittest for the expected behavior to obtain ids for parametrized
+        """unittest for the expected behavior to obtain ids for parameterized
         bytes values:
         - python2: non-ascii strings are considered bytes and formatted using
         "binary escape", where any byte < 127 is escaped into its hex form.
@@ -286,7 +286,7 @@ class TestMetafunc:
             assert _idval(val, "a", 6, idfn=None, item=None, config=None) == expected
 
     def test_class_or_function_idval(self):
-        """unittest for the expected behavior to obtain ids for parametrized
+        """unittest for the expected behavior to obtain ids for parameterized
         values that are classes or functions: their __name__.
         """
         from _pytest.python import _idval
@@ -1154,8 +1154,8 @@ class TestMetafuncFunctional:
             ]
         )
 
-    def test_fixture_parametrized_empty_ids(self, testdir):
-        """Fixtures parametrized with empty ids cause an internal error (#1849)."""
+    def test_fixture_parameterized_empty_ids(self, testdir):
+        """Fixtures parameterized with empty ids cause an internal error (#1849)."""
         testdir.makepyfile(
             """
             import pytest
@@ -1171,8 +1171,8 @@ class TestMetafuncFunctional:
         result = testdir.runpytest()
         result.stdout.fnmatch_lines(["* 1 skipped *"])
 
-    def test_parametrized_empty_ids(self, testdir):
-        """Tests parametrized with empty ids cause an internal error (#1849)."""
+    def test_parameterized_empty_ids(self, testdir):
+        """Tests parameterized with empty ids cause an internal error (#1849)."""
         testdir.makepyfile(
             """
             import pytest
@@ -1185,8 +1185,8 @@ class TestMetafuncFunctional:
         result = testdir.runpytest()
         result.stdout.fnmatch_lines(["* 1 skipped *"])
 
-    def test_parametrized_ids_invalid_type(self, testdir):
-        """Tests parametrized with ids as non-strings (#1857)."""
+    def test_parameterized_ids_invalid_type(self, testdir):
+        """Tests parameterized with ids as non-strings (#1857)."""
         testdir.makepyfile(
             """
             import pytest
@@ -1352,7 +1352,7 @@ class TestMetafuncFunctional:
 
 class TestMetafuncFunctionalAuto:
     """
-    Tests related to automatically find out the correct scope for parametrized tests (#1832).
+    Tests related to automatically find out the correct scope for parameterized tests (#1832).
     """
 
     def test_parametrize_auto_scope(self, testdir):

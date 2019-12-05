@@ -353,7 +353,7 @@ class TestLastFailed:
         assert lastfailed == -1
 
     def test_non_serializable_parametrize(self, testdir):
-        """Test that failed parametrized tests with unmarshable parameters
+        """Test that failed parameterized tests with unmarshable parameters
         don't break pytest-cache.
         """
         testdir.makepyfile(

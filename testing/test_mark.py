@@ -352,8 +352,8 @@ def test_keyword_option_wrong_arguments(spec, testdir, capsys):
     assert expected_result in out
 
 
-def test_parametrized_collected_from_command_line(testdir):
-    """Parametrized test not collected if test named specified
+def test_parameterized_collected_from_command_line(testdir):
+    """parameterized test not collected if test named specified
        in command line issue#649.
     """
     py_file = testdir.makepyfile(
@@ -369,8 +369,8 @@ def test_parametrized_collected_from_command_line(testdir):
     rec.assertoutcome(passed=3)
 
 
-def test_parametrized_collect_with_wrong_args(testdir):
-    """Test collect parametrized func with wrong number of args."""
+def test_parameterized_collect_with_wrong_args(testdir):
+    """Test collect parameterized func with wrong number of args."""
     py_file = testdir.makepyfile(
         """
         import pytest
@@ -384,7 +384,7 @@ def test_parametrized_collect_with_wrong_args(testdir):
     result = testdir.runpytest(py_file)
     result.stdout.fnmatch_lines(
         [
-            'test_parametrized_collect_with_wrong_args.py::test_func: in "parametrize" the number of names (2):',
+            'test_parameterized_collect_with_wrong_args.py::test_func: in "parametrize" the number of names (2):',
             "  ['foo', 'bar']",
             "must be equal to the number of values (3):",
             "  (1, 2, 3)",
@@ -392,8 +392,8 @@ def test_parametrized_collect_with_wrong_args(testdir):
     )
 
 
-def test_parametrized_with_kwargs(testdir):
-    """Test collect parametrized func with wrong number of args."""
+def test_parameterized_with_kwargs(testdir):
+    """Test collect parameterized func with wrong number of args."""
     py_file = testdir.makepyfile(
         """
         import pytest
@@ -984,8 +984,8 @@ def test_markers_from_parametrize(testdir):
             custom_mark = list(request.node.iter_markers('custom_mark'))
             print("Custom mark %s" % custom_mark)
 
-        @custom_mark("custom mark non parametrized")
-        def test_custom_mark_non_parametrized():
+        @custom_mark("custom mark non parameterized")
+        def test_custom_mark_non_parameterized():
             print("Hey from test")
 
         @pytest.mark.parametrize(
@@ -999,7 +999,7 @@ def test_markers_from_parametrize(testdir):
                 custom_mark("custom mark2")("vm"),  # Tried also this
             ]
         )
-        def test_custom_mark_parametrized(obj_type):
+        def test_custom_mark_parameterized(obj_type):
             print("obj_type is:", obj_type)
     """
     )

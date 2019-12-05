@@ -16,7 +16,7 @@ __all__ = ["Mark", "MarkDecorator", "MarkGenerator", "get_empty_parameterset_mar
 
 def param(*values, **kw):
     """Specify a parameter in `pytest.mark.parametrize`_ calls or
-    :ref:`parametrized fixtures <fixture-parametrize-marks>`.
+    :ref:`parameterized fixtures <fixture-parametrize-marks>`.
 
     .. code-block:: python
 

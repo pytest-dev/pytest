@@ -972,7 +972,7 @@ def test_logxml_check_isdir(testdir):
     result.stderr.fnmatch_lines(["*--junitxml must be a filename*"])
 
 
-def test_escaped_parametrized_names_xml(testdir, run_and_parse):
+def test_escaped_parameterized_names_xml(testdir, run_and_parse):
     testdir.makepyfile(
         """\
         import pytest

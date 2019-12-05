@@ -85,7 +85,7 @@ eventually resolved, and the ``pytest`` command was therefore introduced. In
 future versions of pytest, we may deprecate and later remove the ``py.test``
 command to avoid perpetuating the confusion.
 
-pytest fixtures, parametrized tests
+pytest fixtures, parameterized tests
 -------------------------------------------------------
 
 .. _funcargs: funcargs.html
@@ -95,7 +95,7 @@ Is using pytest fixtures versus xUnit setup a style question?
 
 For simple applications and for people experienced with nose_ or
 unittest-style test setup using `xUnit style setup`_ probably
-feels natural.  For larger test suites, parametrized testing
+feels natural.  For larger test suites, parameterized testing
 or setup of complex test resources using fixtures_ may feel more natural.
 Moreover, fixtures are ideal for writing advanced test support
 code (like e.g. the monkeypatch_, the tmpdir_ or capture_ fixtures)

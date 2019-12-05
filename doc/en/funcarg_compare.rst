@@ -53,14 +53,14 @@ There are several limitations and difficulties with this approach:
    ``extrakey`` parameter containing ``request.param`` to the
    :py:func:`~python.Request.cached_setup` call.
 
-3. Multiple parametrized session-scoped resources will be active
+3. Multiple parameterized session-scoped resources will be active
    at the same time, making it hard for them to affect global state
    of the application under test.
 
 4. there is no way how you can make use of funcarg factories
    in xUnit setup methods.
 
-5. A non-parametrized fixture function cannot use a parametrized
+5. A non-parameterized fixture function cannot use a parameterized
    funcarg resource if it isn't stated in the test function signature.
 
 All of these limitations are addressed with pytest-2.3 and its
@@ -112,7 +112,7 @@ the tests requiring "db" will run twice as well.  The "mysql" and
 This new way of parametrizing funcarg factories should in many cases
 allow to re-use already written factories because effectively
 ``request.param`` was already used when test functions/classes were
-parametrized via
+parameterized via
 :py:func:`~_pytest.python.Metafunc.parametrize(indirect=True)` calls.
 
 Of course it's perfectly fine to combine parametrization and scoping:

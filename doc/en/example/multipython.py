@@ -1,5 +1,5 @@
 """
-module containing a parametrized tests testing cross-python
+module containing a parameterized tests testing cross-python
 serialization via the pickle module.
 """
 import shutil

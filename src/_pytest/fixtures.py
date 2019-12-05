@@ -177,8 +177,8 @@ def getfixturemarker(obj):
         return None
 
 
-def get_parametrized_fixture_keys(item, scopenum):
-    """ return list of keys for all parametrized arguments which match
+def get_parameterized_fixture_keys(item, scopenum):
+    """ return list of keys for all parameterized arguments which match
     the specified scope. """
     assert scopenum < scopenum_function  # function
     try:
@@ -188,7 +188,7 @@ def get_parametrized_fixture_keys(item, scopenum):
     else:
         # cs.indices.items() is random order of argnames.  Need to
         # sort this so that different calls to
-        # get_parametrized_fixture_keys will be deterministic.
+        # get_parameterized_fixture_keys will be deterministic.
         for argname, param_index in sorted(cs.indices.items()):
             if cs._arg2scopenum[argname] != scopenum:
                 continue
@@ -203,7 +203,7 @@ def get_parametrized_fixture_keys(item, scopenum):
             yield key
 
 
-# algorithm for sorting on a per-parametrized resource setup basis
+# algorithm for sorting on a per-parameterized resource setup basis
 # it is called for scopenum==0 (session) first and performs sorting
 # down to the lower scopes such as to minimize number of "high scope"
 # setups and teardowns
@@ -216,7 +216,7 @@ def reorder_items(items):
         argkeys_cache[scopenum] = d = {}
         items_by_argkey[scopenum] = item_d = defaultdict(deque)
         for item in items:
-            keys = OrderedDict.fromkeys(get_parametrized_fixture_keys(item, scopenum))
+            keys = OrderedDict.fromkeys(get_parameterized_fixture_keys(item, scopenum))
             if keys:
                 d[item] = keys
                 for key in keys:
@@ -341,7 +341,7 @@ class FixtureRequest:
 
     A request object gives access to the requesting test context
     and has an optional ``param`` attribute in case
-    the fixture is parametrized indirectly.
+    the fixture is parameterized indirectly.
     """
 
     def __init__(self, pyfuncitem):
@@ -899,7 +899,7 @@ class FixtureDef:
                     raise val.with_traceback(tb)
                 else:
                     return result
-            # we have a previous but differently parametrized fixture instance
+            # we have a previous but differently parameterized fixture instance
             # so we need to tear it down before creating a new one
             self.finish(request)
             assert not hasattr(self, "cached_result")
@@ -1395,7 +1395,7 @@ class FixtureManager:
                 continue  # will raise FixtureLookupError at setup time
 
     def pytest_collection_modifyitems(self, items):
-        # separate parametrized setups
+        # separate parameterized setups
         items[:] = reorder_items(items)
 
     def parsefactories(self, node_or_obj, nodeid=NOTSET, unittest=False):

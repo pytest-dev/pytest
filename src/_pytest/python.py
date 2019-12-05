@@ -829,7 +829,7 @@ class CallSpec2:
         self.params = {}
         self._globalid = NOTSET
         self._globalparam = NOTSET
-        self._arg2scopenum = {}  # used for sorting parametrized resources
+        self._arg2scopenum = {}  # used for sorting parameterized resources
         self.marks = []
         self.indices = {}
 
@@ -971,7 +971,7 @@ class Metafunc:
             )
 
         if scope is None:
-            scope = _find_parametrized_scope(argnames, self._arg2fixturedefs, indirect)
+            scope = _find_parameterized_scope(argnames, self._arg2fixturedefs, indirect)
 
         self._validate_if_using_arg_names(argnames, indirect)
 
@@ -1007,9 +1007,9 @@ class Metafunc:
         to ``parametrize``.
 
         :param List[str] argnames: list of argument names passed to ``parametrize()``.
-        :param ids: the ids parameter of the parametrized call (see docs).
+        :param ids: the ids parameter of the parameterized call (see docs).
         :param List[ParameterSet] parameters: the list of parameter values, same size as ``argnames``.
-        :param Item item: the item that generated this parametrized call.
+        :param Item item: the item that generated this parameterized call.
         :rtype: List[str]
         :return: the list of ids for each argname given
         """
@@ -1035,15 +1035,15 @@ class Metafunc:
         return ids
 
     def _resolve_arg_value_types(self, argnames, indirect):
-        """Resolves if each parametrized argument must be considered a parameter to a fixture or a "funcarg"
-        to the function, based on the ``indirect`` parameter of the parametrized() call.
+        """Resolves if each parameterized argument must be considered a parameter to a fixture or a "funcarg"
+        to the function, based on the ``indirect`` parameter of the parameterized() call.
 
         :param List[str] argnames: list of argument names passed to ``parametrize()``.
         :param indirect: same ``indirect`` parameter of ``parametrize()``.
         :rtype: Dict[str, str]
             A dict mapping each arg name to either:
             * "params" if the argname should be the parameter of a fixture of the same name.
-            * "funcargs" if the argname should be a parameter to the parametrized test function.
+            * "funcargs" if the argname should be a parameter to the parameterized test function.
         """
         if isinstance(indirect, bool):
             valtypes = dict.fromkeys(argnames, "params" if indirect else "funcargs")
@@ -1097,12 +1097,12 @@ class Metafunc:
                     )
 
 
-def _find_parametrized_scope(argnames, arg2fixturedefs, indirect):
-    """Find the most appropriate scope for a parametrized call based on its arguments.
+def _find_parameterized_scope(argnames, arg2fixturedefs, indirect):
+    """Find the most appropriate scope for a parameterized call based on its arguments.
 
     When there's at least one direct argument, always use "function" scope.
 
-    When a test function is parametrized and all its arguments are indirect
+    When a test function is parameterized and all its arguments are indirect
     (e.g. fixtures), return the most narrow scope based on the fixtures used.
 
     Related to issue #1832, based on code posted by @Kingdread.

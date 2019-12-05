@@ -260,7 +260,7 @@ Metafunc.addcall
 
 .. versionremoved:: 4.0
 
-:meth:`_pytest.python.Metafunc.addcall` was a precursor to the current parametrized mechanism. Users should use
+:meth:`_pytest.python.Metafunc.addcall` was a precursor to the current parameterized mechanism. Users should use
 :meth:`_pytest.python.Metafunc.parametrize` instead.
 
 Example:

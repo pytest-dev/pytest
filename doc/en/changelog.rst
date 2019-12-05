@@ -290,7 +290,7 @@ Bug Fixes
 - `#5830 <https://github.com/pytest-dev/pytest/issues/5830>`_: The first test in a package (``__init__.py``) marked with ``@pytest.mark.skip`` is now correctly skipped.
 
 
-- `#6099 <https://github.com/pytest-dev/pytest/issues/6099>`_: Fix ``--trace`` when used with parametrized functions.
+- `#6099 <https://github.com/pytest-dev/pytest/issues/6099>`_: Fix ``--trace`` when used with parameterized functions.
 
 
 - `#6183 <https://github.com/pytest-dev/pytest/issues/6183>`_: Using ``request`` as a parameter name in ``@pytest.mark.parametrize`` now produces a more
@@ -955,7 +955,7 @@ Bug Fixes
 - `#4908 <https://github.com/pytest-dev/pytest/issues/4908>`_: The ``pytest_enter_pdb`` hook gets called with post-mortem (``--pdb``).
 
 
-- `#5036 <https://github.com/pytest-dev/pytest/issues/5036>`_: Fix issue where fixtures dependent on other parametrized fixtures would be erroneously parametrized.
+- `#5036 <https://github.com/pytest-dev/pytest/issues/5036>`_: Fix issue where fixtures dependent on other parameterized fixtures would be erroneously parameterized.
 
 
 - `#5256 <https://github.com/pytest-dev/pytest/issues/5256>`_: Handle internal error due to a lone surrogate unicode character not being representable in Jython.
@@ -967,7 +967,7 @@ Bug Fixes
 - `#5278 <https://github.com/pytest-dev/pytest/issues/5278>`_: Pytest's internal python plugin can be disabled using ``-p no:python`` again.
 
 
-- `#5286 <https://github.com/pytest-dev/pytest/issues/5286>`_: Fix issue with ``disable_test_id_escaping_and_forfeit_all_rights_to_community_support`` option not working when using a list of test IDs in parametrized tests.
+- `#5286 <https://github.com/pytest-dev/pytest/issues/5286>`_: Fix issue with ``disable_test_id_escaping_and_forfeit_all_rights_to_community_support`` option not working when using a list of test IDs in parameterized tests.
 
 
 - `#5330 <https://github.com/pytest-dev/pytest/issues/5330>`_: Show the test module being collected when emitting ``PytestCollectionWarning`` messages for
@@ -1180,7 +1180,7 @@ Features
   Previously ``async`` functions would not execute at all but still be marked as "passed".
 
 
-- `#2482 <https://github.com/pytest-dev/pytest/issues/2482>`_: Include new ``disable_test_id_escaping_and_forfeit_all_rights_to_community_support`` option to disable ascii-escaping in parametrized values. This may cause a series of problems and as the name makes clear, use at your own risk.
+- `#2482 <https://github.com/pytest-dev/pytest/issues/2482>`_: Include new ``disable_test_id_escaping_and_forfeit_all_rights_to_community_support`` option to disable ascii-escaping in parameterized values. This may cause a series of problems and as the name makes clear, use at your own risk.
 
 
 - `#4718 <https://github.com/pytest-dev/pytest/issues/4718>`_: The ``-p`` option can now be used to early-load plugins also by entry-point name, instead of just
@@ -1431,7 +1431,7 @@ Improved Documentation
 - `#3899 <https://github.com/pytest-dev/pytest/issues/3899>`_: Add note to ``plugins.rst`` that ``pytest_plugins`` should not be used as a name for a user module containing plugins.
 
 
-- `#4324 <https://github.com/pytest-dev/pytest/issues/4324>`_: Document how to use ``raises`` and ``does_not_raise`` to write parametrized tests with conditional raises.
+- `#4324 <https://github.com/pytest-dev/pytest/issues/4324>`_: Document how to use ``raises`` and ``does_not_raise`` to write parameterized tests with conditional raises.
 
 
 - `#4709 <https://github.com/pytest-dev/pytest/issues/4709>`_: Document how to customize test failure messages when using
@@ -2179,7 +2179,7 @@ Features
 Bug Fixes
 ---------
 
-- `#2535 <https://github.com/pytest-dev/pytest/issues/2535>`_: Improve error message when test functions of ``unittest.TestCase`` subclasses use a parametrized fixture.
+- `#2535 <https://github.com/pytest-dev/pytest/issues/2535>`_: Improve error message when test functions of ``unittest.TestCase`` subclasses use a parameterized fixture.
 
 
 - `#3057 <https://github.com/pytest-dev/pytest/issues/3057>`_: ``request.fixturenames`` now correctly returns the name of fixtures created by ``request.getfixturevalue()``.
@@ -2309,7 +2309,7 @@ Bug Fixes
       TypeError: object of type 'Package' has no len()
 
 
-- `#3941 <https://github.com/pytest-dev/pytest/issues/3941>`_: Fix bug where indirect parametrization would consider the scope of all fixtures used by the test function to determine the parametrization scope, and not only the scope of the fixtures being parametrized.
+- `#3941 <https://github.com/pytest-dev/pytest/issues/3941>`_: Fix bug where indirect parametrization would consider the scope of all fixtures used by the test function to determine the parametrization scope, and not only the scope of the fixtures being parameterized.
 
 
 - `#3973 <https://github.com/pytest-dev/pytest/issues/3973>`_: Fix crash of the assertion rewriter if a test changed the current working directory without restoring it afterwards.
@@ -3122,7 +3122,7 @@ Bug Fixes
   test which was giving false negatives about output capturing. (`#3052
   <https://github.com/pytest-dev/pytest/issues/3052>`_)
 
-- Fix ordering of tests using parametrized fixtures which can lead to fixtures
+- Fix ordering of tests using parameterized fixtures which can lead to fixtures
   being created more than necessary. (`#3161
   <https://github.com/pytest-dev/pytest/issues/3161>`_)
 
@@ -3290,7 +3290,7 @@ Trivial/Internal Changes
   the ``import`` keyword in expressions). (`#2953
   <https://github.com/pytest-dev/pytest/issues/2953>`_)
 
-- Change parametrized automatic test id generation to use the ``__name__``
+- Change parameterized automatic test id generation to use the ``__name__``
   attribute of functions instead of the fallback argument name plus counter.
   (`#2976 <https://github.com/pytest-dev/pytest/issues/2976>`_)
 
@@ -3324,7 +3324,7 @@ Bug Fixes
 Improved Documentation
 ----------------------
 
-- Add clarifying note about behavior of multiple parametrized arguments (`#3001
+- Add clarifying note about behavior of multiple parameterized arguments (`#3001
   <https://github.com/pytest-dev/pytest/issues/3001>`_)
 
 
@@ -4051,7 +4051,7 @@ Changes
   this is to prepare the removal of preloadconfig in pytest 4.0
   Thanks to `@RonnyPfannschmidt`_ for the PR.
 
-* pytest now warns when a callable ids raises in a parametrized test. Thanks `@fogo`_ for the PR.
+* pytest now warns when a callable ids raises in a parameterized test. Thanks `@fogo`_ for the PR.
 
 * It is now possible to skip test classes from being collected by setting a
   ``__test__`` attribute to ``False`` in the class body (`#2007`_). Thanks
@@ -4556,7 +4556,7 @@ time or change existing behaviors in order to make them less surprising/more use
 
 * Renamed the pytest ``pdb`` module (plugin) into ``debugging`` to avoid clashes with the builtin ``pdb`` module.
 
-* Raise a helpful failure message when requesting a parametrized fixture at runtime,
+* Raise a helpful failure message when requesting a parameterized fixture at runtime,
   e.g. with ``request.getfixturevalue``. Previously these parameters were simply
   never defined, so a fixture decorated like ``@pytest.fixture(params=[0, 1, 2])``
   only ran once (`#460`_).
@@ -4769,7 +4769,7 @@ time or change existing behaviors in order to make them less surprising/more use
   Thanks `@bagerard`_ for reporting (`#1503`_). Thanks to `@davehunt`_ and
   `@tomviner`_ for PR.
 
-* Better message in case of not using parametrized variable (see `#1539`_).
+* Better message in case of not using parameterized variable (see `#1539`_).
   Thanks to `@tramwaj29`_ for the PR.
 
 * Updated docstrings with a more uniform style.
@@ -4995,7 +4995,7 @@ time or change existing behaviors in order to make them less surprising/more use
 * Fix (`#1437`_): When passing in a bytestring regex pattern to parameterize
   attempt to decode it as utf-8 ignoring errors.
 
-* Fix (`#649`_): parametrized test nodes cannot be specified to run on the command line.
+* Fix (`#649`_): parameterized test nodes cannot be specified to run on the command line.
 
 * Fix (`#138`_): better reporting for python 3.3+ chained exceptions
 
@@ -5287,7 +5287,7 @@ time or change existing behaviors in order to make them less surprising/more use
   to make them always serializable.
   Thanks Andy Freeland for the report and Bruno Oliveira for the PR.
 
-- Python 2: if unicode parametrized values are convertible to ascii, their
+- Python 2: if unicode parameterized values are convertible to ascii, their
   ascii representation is used for the node id.
 
 - Fix issue #411: Add __eq__ method to assertion comparison example.
@@ -5656,7 +5656,7 @@ time or change existing behaviors in order to make them less surprising/more use
 - "python_classes" and "python_functions" options now support glob-patterns
   for test discovery, as discussed in issue600. Thanks Ldiary Translations.
 
-- allow to override parametrized fixtures with non-parametrized ones and vice versa (bubenkoff).
+- allow to override parameterized fixtures with non-parameterized ones and vice versa (bubenkoff).
 
 - fix issue463: raise specific error for 'parameterize' misspelling (pfctdayelise).
 
@@ -5678,7 +5678,7 @@ time or change existing behaviors in order to make them less surprising/more use
 
 - fix issue557: with "-k" we only allow the old style "-" for negation
   at the beginning of strings and even that is deprecated.  Use "not" instead.
-  This should allow to pick parametrized tests where "-" appeared in the parameter.
+  This should allow to pick parameterized tests where "-" appeared in the parameter.
 
 - fix issue604: Escape % character in the assertion message.
 
@@ -5943,7 +5943,7 @@ time or change existing behaviors in order to make them less surprising/more use
   with this release we believe).
 
 - simplified and fixed implementation for calling finalizers when
-  parametrized fixtures or function arguments are involved.  finalization
+  parameterized fixtures or function arguments are involved.  finalization
   is now performed lazily at setup time instead of in the "teardown phase".
   While this might sound odd at first, it helps to ensure that we are
   correctly handling setup/teardown even in complex code.  User-level code
@@ -5958,7 +5958,7 @@ time or change existing behaviors in order to make them less surprising/more use
   thanks to Floris Bruynooghe for the complete PR.  Also means
   we depend on py>=1.4.19 now.
 
-- fix issue396 - correctly sort and finalize class-scoped parametrized
+- fix issue396 - correctly sort and finalize class-scoped parameterized
   tests independently from number of methods on the class.
 
 - refix issue323 in a better way -- parametrization should now never
@@ -5976,7 +5976,7 @@ time or change existing behaviors in order to make them less surprising/more use
   interacts with PEP420-namespace packages.
 
 - fix issue246 fix finalizer order to be LIFO on independent fixtures
-  depending on a parametrized higher-than-function scoped fixture.
+  depending on a parameterized higher-than-function scoped fixture.
   (was quite some effort so please bear with the complexity of this sentence :)
   Thanks Ralph Schmitt for the precise failure example.
 
@@ -5995,7 +5995,7 @@ time or change existing behaviors in order to make them less surprising/more use
 
 - fix issue357 - special case "-k" expressions to allow for
   filtering with simple strings that are not valid python expressions.
-  Examples: "-k 1.3" matches all tests parametrized with 1.3.
+  Examples: "-k 1.3" matches all tests parameterized with 1.3.
   "-k None" filters all tests that have "None" in their name
   and conversely "-k 'not None'".
   Previously these examples would raise syntax errors.
@@ -6414,7 +6414,7 @@ Bug fixes:
   pytest_pycollect_makemodule and pytest_pycollect_makeitem
   now work properly
 
-- fix teardown-ordering for parametrized setups
+- fix teardown-ordering for parameterized setups
 
 - fix issue127 - better documentation for pytest_addoption
   and related objects.
@@ -6453,12 +6453,12 @@ Bug fixes:
 2.3.0 (2012-10-19)
 ==================
 
-- fix issue202 - better automatic names for parametrized test functions
+- fix issue202 - better automatic names for parameterized test functions
 - fix issue139 - introduce @pytest.fixture which allows direct scoping
   and parametrization of funcarg factories.
 - fix issue198 - conftest fixtures were not found on windows32 in some
   circumstances with nested directory structures due to path manipulation issues
-- fix issue193 skip test functions with were parametrized with empty
+- fix issue193 skip test functions with were parameterized with empty
   parameter sets
 - fix python3.3 compat, mostly reporting bits that previously depended
   on dict ordering
@@ -6946,7 +6946,7 @@ Bug fixes:
 - issue91: introduce new py.test.xfail(reason) helper
   to imperatively mark a test as expected to fail. Can
   be used from within setup and test functions. This is
-  useful especially for parametrized tests when certain
+  useful especially for parameterized tests when certain
   configurations are expected-to-fail.  In this case the
   declarative approach with the @py.test.mark.xfail cannot
   be used as it would mark all configurations as xfail.

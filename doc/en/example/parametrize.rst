@@ -83,7 +83,7 @@ Different options for test IDs
 ------------------------------------
 
 pytest will build a string that is the test ID for each set of values in a
-parametrized test. These IDs can be used with ``-k`` to select specific cases
+parameterized test. These IDs can be used with ``-k`` to select specific cases
 to run, and they will also identify the specific case when one is failing.
 Running pytest with ``--collect-only`` will show the generated IDs.
 
@@ -254,7 +254,7 @@ Note that we told ``metafunc.parametrize()`` that your scenario values
 should be considered class-scoped.  With pytest-2.3 this leads to a
 resource-based ordering.
 
-Deferring the setup of parametrized resources
+Deferring the setup of parameterized resources
 ---------------------------------------------------
 
 .. regendoc:wipe
@@ -459,7 +459,7 @@ argument sets to use for each test function.  Let's run it:
 Indirect parametrization with multiple fixtures
 --------------------------------------------------------------
 
-Here is a stripped down real-life example of using parametrized
+Here is a stripped down real-life example of using parameterized
 testing for testing serialization of objects between different python
 interpreters.  We define a ``test_basic_objects`` function which
 is to be run with different sets of arguments for its three arguments:
@@ -564,10 +564,10 @@ of our ``test_func1`` was skipped.  A few notes:
   values as well.
 
 
-Set marks or test ID for individual parametrized test
+Set marks or test ID for individual parameterized test
 --------------------------------------------------------------------
 
-Use ``pytest.param`` to apply marks or set test ID to individual parametrized test.
+Use ``pytest.param`` to apply marks or set test ID to individual parameterized test.
 For example:
 
 .. code-block:: python
@@ -590,8 +590,8 @@ For example:
     def test_eval(test_input, expected):
         assert eval(test_input) == expected
 
-In this example, we have 4 parametrized tests. Except for the first test,
-we mark the rest three parametrized tests with the custom marker ``basic``,
+In this example, we have 4 parameterized tests. Except for the first test,
+we mark the rest three parameterized tests with the custom marker ``basic``,
 and for the fourth test we also use the built-in mark ``xfail`` to indicate this
 test is expected to fail. For explicitness, we set test ids for some tests.
 
@@ -627,7 +627,7 @@ Parametrizing conditional raising
 --------------------------------------------------------------------
 
 Use :func:`pytest.raises` with the
-:ref:`pytest.mark.parametrize ref` decorator to write parametrized tests
+:ref:`pytest.mark.parametrize ref` decorator to write parameterized tests
 in which some tests raise exceptions and others do not.
 
 It is helpful to define a no-op context manager ``does_not_raise`` to serve

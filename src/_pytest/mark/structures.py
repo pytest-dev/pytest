@@ -164,7 +164,7 @@ class MarkDecorator:
     it will create :class:`Mark` objects which are often created like this::
 
         mark1 = pytest.mark.NAME              # simple MarkDecorator
-        mark2 = pytest.mark.NAME(name1=value) # parametrized MarkDecorator
+        mark2 = pytest.mark.NAME(name1=value) # parameterized MarkDecorator
 
     and can then be applied as decorators to test functions::
 

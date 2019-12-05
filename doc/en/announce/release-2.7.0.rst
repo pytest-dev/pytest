@@ -91,7 +91,7 @@ holger krekel
 - "python_classes" and "python_functions" options now support glob-patterns
   for test discovery, as discussed in issue600. Thanks Ldiary Translations.
 
-- allow to override parametrized fixtures with non-parametrized ones and vice versa (bubenkoff).
+- allow to override parameterized fixtures with non-parameterized ones and vice versa (bubenkoff).
 
 - fix issue463: raise specific error for 'parameterize' misspelling (pfctdayelise).
 

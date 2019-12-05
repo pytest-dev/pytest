@@ -2,7 +2,7 @@ pytest-2.3: improved fixtures / better unittest integration
 =============================================================================
 
 pytest-2.3 comes with many major improvements for fixture/funcarg management
-and parametrized testing in Python.  It is now easier, more efficient and
+and parameterized testing in Python.  It is now easier, more efficient and
 more predicatable to re-run the same tests with different fixture
 instances.  Also, you can directly declare the caching "scope" of
 fixtures so that dependent tests throughout your whole test suite can
@@ -55,13 +55,13 @@ holger krekel
 Changes between 2.2.4 and 2.3.0
 -----------------------------------
 
-- fix issue202 - better automatic names for parametrized test functions
+- fix issue202 - better automatic names for parameterized test functions
 - fix issue139 - introduce @pytest.fixture which allows direct scoping
   and parametrization of funcarg factories.  Introduce new @pytest.setup
   marker to allow the writing of setup functions which accept funcargs.
 - fix issue198 - conftest fixtures were not found on windows32 in some
   circumstances with nested directory structures due to path manipulation issues
-- fix issue193 skip test functions with were parametrized with empty
+- fix issue193 skip test functions with were parameterized with empty
   parameter sets
 - fix python3.3 compat, mostly reporting bits that previously depended
   on dict ordering
