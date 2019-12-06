@@ -45,8 +45,17 @@ class TempPathFactory:
             given_basetemp=config.option.basetemp, trace=config.trace.get("tmpdir")
         )
 
+    def _ensure_relative_to_basetemp(self, basename: str):
+        basename = os.path.normpath(basename)
+        if (self.getbasetemp() / basename).resolve().parent != self.getbasetemp():
+            raise ValueError(
+                "{} is not a normalized and relative path".format(basename)
+            )
+        return basename
+
     def mktemp(self, basename: str, numbered: bool = True) -> Path:
         """makes a temporary directory managed by the factory"""
+        basename = self._ensure_relative_to_basetemp(basename)
         if not numbered:
             p = self.getbasetemp().joinpath(basename)
             p.mkdir()
