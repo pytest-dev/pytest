@@ -1,0 +1,1 @@
+Fix assertion rewriting for egg-based distributions and ``editable`` installs (``pip install --editable``).
