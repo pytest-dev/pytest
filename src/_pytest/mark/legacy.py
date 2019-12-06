@@ -63,7 +63,7 @@ class KeywordMapping:
 
         """
         subname = subname.lower()
-        names = [name.lower() for name in self._names]
+        names = (name.lower() for name in self._names)
 
         for name in names:
             if subname in name:
