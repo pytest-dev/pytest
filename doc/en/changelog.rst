@@ -796,6 +796,20 @@ Improved Documentation
 - `#5416 <https://github.com/pytest-dev/pytest/issues/5416>`_: Fix PytestUnknownMarkWarning in run/skip example.
 
 
+pytest 4.6.7 (2019-12-05)
+=========================
+
+Bug Fixes
+---------
+
+- `#5477 <https://github.com/pytest-dev/pytest/issues/5477>`_: The XML file produced by ``--junitxml`` now correctly contain a ``<testsuites>`` root element.
+
+
+- `#6044 <https://github.com/pytest-dev/pytest/issues/6044>`_: Properly ignore ``FileNotFoundError`` (``OSError.errno == NOENT`` in Python 2) exceptions when trying to remove old temporary directories,
+  for instance when multiple processes try to remove the same directory (common with ``pytest-xdist``
+  for example).
+
+
 pytest 4.6.6 (2019-10-11)
 =========================
 
