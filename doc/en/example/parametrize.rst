@@ -398,6 +398,9 @@ The result of this test will be successful:
 
 .. regendoc:wipe
 
+Note, that each argument in `parametrize` list should be explicitly declared in corresponding
+python test function or via `indirect`.
+
 Parametrizing test methods through per-class configuration
 --------------------------------------------------------------
 

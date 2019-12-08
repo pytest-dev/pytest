@@ -463,7 +463,7 @@ class TestFunction:
                return '3'
 
             @pytest.mark.parametrize('fix2', ['2'])
-            def test_it(fix1):
+            def test_it(fix1, fix2):
                assert fix1 == '21'
                assert not fix3_instantiated
         """
