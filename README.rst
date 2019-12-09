@@ -137,7 +137,7 @@ Save time, reduce risk, and improve code health, while paying the maintainers of
 Security
 ^^^^^^^^
 
-pytest has never been associated with a security vunerability, but in any case, to report a
+pytest has never been associated with a security vulnerability, but in any case, to report a
 security vulnerability please use the `Tidelift security contact <https://tidelift.com/security>`_.
 Tidelift will coordinate the fix and disclosure.
 
