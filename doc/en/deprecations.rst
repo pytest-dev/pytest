@@ -19,20 +19,20 @@ Below is a complete list of all pytest features which are considered deprecated.
 :class:`_pytest.warning_types.PytestWarning` or subclasses, which can be filtered using
 :ref:`standard warning filters <warnings>`.
 
-<<<<<<< HEAD
-<<<<<<< HEAD
+
 ``--no-print-logs`` command-line option
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. deprecated:: 5.4
+
 
 Option ``--no-print-logs`` is deprecated and meant to be removed in a future release. If you use ``--no-print-logs``, please try out ``--show-capture`` and
 provide feedback.
 
 ``--show-capture`` command-line option was added in ``pytest 3.5.0` and allows to specify how to
 display captured output when tests fail: ``no``, ``stdout``, ``stderr``, ``log`` or ``all`` (the default).
-=======
-=======
+
+
 
 Node Construction changed to ``Node.from_parent``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -43,7 +43,6 @@ The construction of nodes new should use the named constructor ``from_parent``.
 This limitation in api surface intends to enable better/simpler refactoring of the collection tree.
 
 
->>>>>>> 15ffe6320... update  doc examples **untested**
 ``junit_family`` default value change to "xunit2"
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -64,7 +63,6 @@ In order to silence this warning, users just need to configure the ``junit_famil
 
     [pytest]
     junit_family=legacy
->>>>>>> 2a67637ac... Issue a warning to prepare change of 'junit_family' default value
 
 
 ``funcargnames`` alias for ``fixturenames``

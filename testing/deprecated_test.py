@@ -114,4 +114,35 @@ def test_node_direct_ctor_warning():
         nodes.Node(name="test", config=ms, session=ms, nodeid="None")
     assert w[0].lineno == inspect.currentframe().f_lineno - 1
     assert w[0].filename == __file__
->>>>>>> c99c7d0f9... deprecate direct node construction and introduce Node.from_parent
+
+
+@pytest.mark.filterwarnings("default")
+@pytest.mark.parametrize("config_mode", ["ini", "cmdline"])
+def test_noprintlogs_is_deprecated_ini(testdir, config_mode):
+    if config_mode == "ini":
+        args = ()
+        testdir.makeini(
+            """
+            [pytest]
+            log_print=False
+            """
+        )
+    else:
+        assert config_mode == "cmdline"
+        args = ("--no-print-logs",)
+
+    testdir.makepyfile(
+        """
+        def test_foo():
+            pass
+        """
+    )
+
+    result = testdir.runpytest(*args)
+    result.stdout.fnmatch_lines(
+        [
+            "*--no-print-logs is deprecated and scheduled for removal in pytest 6.0*",
+            "*Please use --show-capture instead.*",
+        ]
+    )
+    
