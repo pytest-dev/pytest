@@ -34,3 +34,8 @@ FIXTURE_POSITIONAL_ARGUMENTS = PytestDeprecationWarning(
     "Passing arguments to pytest.fixture() as positional arguments is deprecated - pass them "
     "as a keyword argument instead."
 )
+
+NO_PRINT_LOGS = PytestDeprecationWarning(
+    "--no-print-logs is deprecated and scheduled for removal in pytest 6.0.\n"
+    "Please use --show-capture instead."
+)

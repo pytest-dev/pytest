@@ -19,6 +19,17 @@ Below is a complete list of all pytest features which are considered deprecated.
 :class:`_pytest.warning_types.PytestWarning` or subclasses, which can be filtered using
 :ref:`standard warning filters <warnings>`.
 
+No Print logs (``--no-print-logs)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 5.0
+
+Option ``--no-print-logs`` is deprecated and meant to be removed in a future release. If you use ``--no-print-logs``, please try out ``--show-capture`` and
+provide feedback.
+
+``--show-capture`` command-line option was added in ``pytest 3.5.0` and allows to specify how to
+display captured output when tests fail: ``no``, ``stdout``, ``stderr``, ``log`` or ``all`` (the default).
+
 
 ``funcargnames`` alias for ``fixturenames``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
