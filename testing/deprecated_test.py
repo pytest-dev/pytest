@@ -46,37 +46,29 @@ def test_external_plugins_integrated(testdir, plugin):
         testdir.parseconfig("-p", plugin)
 
 
-def test_noprintlogs_is_deprecated(testdir):
-    testdir.makepyfile(
-        """
-        def test_foo():
-            pass
-        """
-    )
-    result = testdir.runpytest("--no-print-logs")
-    result.stdout.fnmatch_lines(
-        [
-            "*--no-print-logs is deprecated and scheduled for removal in pytest 6.0*",
-            "*Please use --show-capture instead.*",
-        ]
-    )
-
-
 @pytest.mark.filterwarnings("default")
-def test_noprintlogs_is_deprecated_ini(testdir):
-    testdir.makeini(
-        """
-        [pytest]
-        log_print=False
-        """
-    )
+@pytest.mark.parametrize("config_mode", ["ini", "cmdline"])
+def test_noprintlogs_is_deprecated_ini(testdir, config_mode):
+    if config_mode == "ini":
+        args = ()
+        testdir.makeini(
+            """
+            [pytest]
+            log_print=False
+            """
+        )
+    else:
+        assert config_mode == "cmdline"
+        args = ("--no-print-logs",)
+
     testdir.makepyfile(
         """
         def test_foo():
             pass
         """
     )
-    result = testdir.runpytest()
+
+    result = testdir.runpytest(*args)
     result.stdout.fnmatch_lines(
         [
             "*--no-print-logs is deprecated and scheduled for removal in pytest 6.0*",
