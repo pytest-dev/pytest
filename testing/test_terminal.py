@@ -755,6 +755,7 @@ class TestTerminalFunctional:
         result.stdout.fnmatch_lines(["collected 3 items", "hello from hook: 3 items"])
 
     def test_summary_f_alias(self, testdir):
+        """Test that 'f' and 'F' report chars are aliases and don't show up twice in the summary (#6334)"""
         testdir.makepyfile(
             """
             def test():
@@ -763,6 +764,22 @@ class TestTerminalFunctional:
         )
         result = testdir.runpytest("-rfF")
         expected = "FAILED test_summary_f_alias.py::test - assert False"
+        result.stdout.fnmatch_lines([expected])
+        assert result.stdout.lines.count(expected) == 1
+
+    def test_summary_s_alias(self, testdir):
+        """Test that 's' and 'S' report chars are aliases and don't show up twice in the summary"""
+        testdir.makepyfile(
+            """
+            import pytest
+
+            @pytest.mark.skip
+            def test():
+                pass
+            """
+        )
+        result = testdir.runpytest("-rsS")
+        expected = "SKIPPED [1] test_summary_s_alias.py:3: unconditional skip"
         result.stdout.fnmatch_lines([expected])
         assert result.stdout.lines.count(expected) == 1
 

@@ -172,10 +172,11 @@ def getreportopt(config: Config) -> str:
         reportchars += "w"
     elif config.option.disable_warnings and "w" in reportchars:
         reportchars = reportchars.replace("w", "")
+    aliases = {"F", "S"}
     for char in reportchars:
-        # f and F are aliases
-        if char == "F":
-            char = "f"
+        # handle old aliases
+        if char in aliases:
+            char = char.lower()
         if char == "a":
             reportopts = "sxXwEf"
         elif char == "A":
@@ -989,7 +990,6 @@ class TerminalReporter:
             "X": show_xpassed,
             "f": partial(show_simple, "failed"),
             "s": show_skipped,
-            "S": show_skipped,
             "p": partial(show_simple, "passed"),
             "E": partial(show_simple, "error"),
         }  # type: Mapping[str, Callable[[List[str]], None]]
