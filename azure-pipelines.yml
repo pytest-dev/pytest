@@ -48,12 +48,6 @@ jobs:
       # pypy3:
       #   python.version: 'pypy3'
       #   tox.env: 'pypy3'
-      py34-xdist:
-        python.version: '3.4'
-        tox.env: 'py34-xdist'
-        # Coverage for:
-        # - _pytest.compat._bytes_to_ascii
-        PYTEST_COVERAGE: '1'
       py35-xdist:
         python.version: '3.5'
         tox.env: 'py35-xdist'
