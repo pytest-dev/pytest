@@ -1411,19 +1411,15 @@ def test_logging_passing_tests_disabled_does_not_log_test_output(testdir):
     assert len(node.find_by_tag("system-out")) == 0
 
 
-@parametrize_families
 @pytest.mark.parametrize("junit_logging", ["no", "system-out", "system-err"])
 def test_logging_passing_tests_disabled_logs_output_for_failing_test_issue5430(
-    testdir, junit_logging, run_and_parse, xunit_family
+    testdir, junit_logging
 ):
     testdir.makeini(
         """
         [pytest]
         junit_log_passing_tests=False
-        junit_family={family}
-    """.format(
-            family=xunit_family
-        )
+    """
     )
     testdir.makepyfile(
         """
@@ -1436,9 +1432,7 @@ def test_logging_passing_tests_disabled_logs_output_for_failing_test_issue5430(
             assert 0
     """
     )
-    result, dom = run_and_parse(
-        "-o", "junit_logging=%s" % junit_logging, family=xunit_family
-    )
+    result, dom = runandparse(testdir, "-o", "junit_logging=%s" % junit_logging)
     assert result.ret == 1
     node = dom.find_first_by_tag("testcase")
     if junit_logging == "system-out":
