@@ -13,7 +13,7 @@ INSTALL_REQUIRES = [
     "atomicwrites>=1.0",
     'funcsigs>=1.0;python_version<"3.0"',
     'pathlib2>=2.2.0;python_version<"3.6"',
-    'colorama;sys_platform=="win32"',
+    'colorama<=0.4.1;sys_platform=="win32"',
     "pluggy>=0.12,<1.0",
     'importlib-metadata>=0.12;python_version<"3.8"',
     "wcwidth",
