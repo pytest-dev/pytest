@@ -1,0 +1,1 @@
+Pin ``colorama`` to ``0.4.1`` as later versions no longer support Python 3.4.
