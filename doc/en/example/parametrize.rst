@@ -475,10 +475,10 @@ Running it results in some skips if we don't have all the python interpreters in
 .. code-block:: pytest
 
    . $ pytest -rs -q multipython.py
-   ssssssssssssssssssssssss...                                          [100%]
+   ssssssssssss...ssssssssssss                                          [100%]
    ========================= short test summary info ==========================
    SKIPPED [12] $REGENDOC_TMPDIR/CWD/multipython.py:29: 'python3.5' not found
-   SKIPPED [12] $REGENDOC_TMPDIR/CWD/multipython.py:29: 'python3.6' not found
+   SKIPPED [12] $REGENDOC_TMPDIR/CWD/multipython.py:29: 'python3.7' not found
    3 passed, 24 skipped in 0.12s
 
 Indirect parametrization of optional implementations/imports
@@ -604,13 +604,13 @@ Then run ``pytest`` with verbose mode and with only the ``basic`` marker:
     platform linux -- Python 3.x.y, pytest-5.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python
     cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR
-    collecting ... collected 18 items / 15 deselected / 3 selected
+    collecting ... collected 17 items / 14 deselected / 3 selected
 
     test_pytest_param_example.py::test_eval[1+7-8] PASSED                [ 33%]
     test_pytest_param_example.py::test_eval[basic_2+4] PASSED            [ 66%]
     test_pytest_param_example.py::test_eval[basic_6*9] XFAIL             [100%]
 
-    =============== 2 passed, 15 deselected, 1 xfailed in 0.12s ================
+    =============== 2 passed, 14 deselected, 1 xfailed in 0.12s ================
 
 As the result:
 
