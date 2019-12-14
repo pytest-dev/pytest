@@ -20,7 +20,6 @@ Thanks to all who contributed to this release, among them:
 * Ran Benita
 * Ronny Pfannschmidt
 * Zac Hatfield-Dodds
-* zupermanzupereroe
 
 
 Happy testing,
