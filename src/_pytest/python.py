@@ -6,6 +6,7 @@ import os
 import sys
 import warnings
 from collections import Counter
+from collections import defaultdict
 from collections.abc import Sequence
 from functools import partial
 from textwrap import dedent
@@ -1190,14 +1191,23 @@ def idmaker(argnames, parametersets, idfn=None, ids=None, config=None, item=None
         _idvalset(valindex, parameterset, argnames, idfn, ids, config=config, item=item)
         for valindex, parameterset in enumerate(parametersets)
     ]
-    if len(set(ids)) != len(ids):
-        # The ids are not unique
-        duplicates = [testid for testid in ids if ids.count(testid) > 1]
-        counters = Counter()
-        for index, testid in enumerate(ids):
-            if testid in duplicates:
-                ids[index] = testid + str(counters[testid])
-                counters[testid] += 1
+
+    # All IDs must be unique!
+    unique_ids = set(ids)
+    if len(unique_ids) != len(ids):
+
+        # Record the number of occurrences of each test ID
+        test_id_counts = Counter(ids)
+
+        # Map the test ID to its next suffix
+        test_id_suffixes = defaultdict(int)
+
+        # Suffix non-unique IDs to make them unique
+        for index, test_id in enumerate(ids):
+            if test_id_counts[test_id] > 1:
+                ids[index] = "{}{}".format(test_id, test_id_suffixes[test_id])
+                test_id_suffixes[test_id] += 1
+
     return ids
 
 
