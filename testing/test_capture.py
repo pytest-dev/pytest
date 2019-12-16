@@ -287,6 +287,7 @@ class TestLoggingInteraction:
     def test_logging_stream_ownership(self, testdir):
         p = testdir.makepyfile(
             """\
+            from _pytest import capture
             def test_logging():
                 import logging
                 import pytest
