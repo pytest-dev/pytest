@@ -203,7 +203,7 @@ def create_cleanup_lock(p: Path) -> Path:
 
 def register_cleanup_lock_removal(lock_path: Path, register=atexit.register):
     """registers a cleanup function for removing a lock, by default on atexit"""
-
+    return
     pid = os.getpid()
 
     def cleanup_on_exit(lock_path: Path = lock_path, original_pid: int = pid) -> None:
