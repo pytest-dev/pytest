@@ -3,7 +3,7 @@ trigger:
 - features
 
 variables:
-  PYTEST_ADDOPTS: "--junitxml=build/test-results/$(tox.env).xml"
+  PYTEST_ADDOPTS: "--junitxml=build/test-results/$(tox.env).xml testing/test_pytester.py"
   PYTEST_COVERAGE: '0'
 
 jobs:
