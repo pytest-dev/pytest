@@ -626,15 +626,66 @@ notset = Notset()
 
 
 def _iter_rewritable_modules(package_files):
+    """
+    Given an iterable of file names in a source distribution, return the "names" that should
+    be marked for assertion rewrite (for example the package "pytest_mock/__init__.py" should
+    be added as "pytest_mock" in the assertion rewrite mechanism.
+
+    This function has to deal with dist-info based distributions and egg based distributions
+    (which are still very much in use for "editable" installs).
+
+    Here are the file names as seen in a dist-info based distribution:
+
+        pytest_mock/__init__.py
+        pytest_mock/_version.py
+        pytest_mock/plugin.py
+        pytest_mock.egg-info/PKG-INFO
+
+    Here are the file names as seen in an egg based distribution:
+
+        src/pytest_mock/__init__.py
+        src/pytest_mock/_version.py
+        src/pytest_mock/plugin.py
+        src/pytest_mock.egg-info/PKG-INFO
+        LICENSE
+        setup.py
+
+    We have to take in account those two distribution flavors in order to determine which
+    names should be considered for assertion rewriting.
+
+    More information:
+        https://github.com/pytest-dev/pytest-mock/issues/167
+    """
+    package_files = list(package_files)
+    seen_some = False
     for fn in package_files:
         is_simple_module = "/" not in fn and fn.endswith(".py")
         is_package = fn.count("/") == 1 and fn.endswith("__init__.py")
         if is_simple_module:
             module_name, _ = os.path.splitext(fn)
-            yield module_name
+            # we ignore "setup.py" at the root of the distribution
+            if module_name != "setup":
+                seen_some = True
+                yield module_name
         elif is_package:
             package_name = os.path.dirname(fn)
+            seen_some = True
             yield package_name
+
+    if not seen_some:
+        # at this point we did not find any packages or modules suitable for assertion
+        # rewriting, so we try again by stripping the first path component (to account for
+        # "src" based source trees for example)
+        # this approach lets us have the common case continue to be fast, as egg-distributions
+        # are rarer
+        new_package_files = []
+        for fn in package_files:
+            parts = fn.split("/")
+            new_fn = "/".join(parts[1:])
+            if new_fn:
+                new_package_files.append(new_fn)
+        if new_package_files:
+            yield from _iter_rewritable_modules(new_package_files)
 
 
 class Config:

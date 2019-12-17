@@ -1,1 +1,0 @@
-The supporting files in the ``.pytest_cache`` directory are kept with ``--cache-clear``, which only clears cached values now.

@@ -28,7 +28,7 @@ Install ``pytest``
 .. code-block:: bash
 
     $ pytest --version
-    This is pytest version 5.x.y, imported from $PYTHON_PREFIX/lib/python3.7/site-packages/pytest.py
+    This is pytest version 5.x.y, imported from $PYTHON_PREFIX/lib/python3.6/site-packages/pytest/__init__.py
 
 .. _`simpletest`:
 
