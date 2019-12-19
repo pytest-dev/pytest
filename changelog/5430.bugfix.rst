@@ -1,1 +1,0 @@
-junitxml: Logs for failed test are now passed to junit report in case the test fails during call phase.
