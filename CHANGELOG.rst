@@ -18,6 +18,29 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+pytest 4.6.8 (2019-12-19)
+=========================
+
+Features
+--------
+
+- `#5471 <https://github.com/pytest-dev/pytest/issues/5471>`_: JUnit XML now includes a timestamp and hostname in the testsuite tag.
+
+
+
+Bug Fixes
+---------
+
+- `#5430 <https://github.com/pytest-dev/pytest/issues/5430>`_: junitxml: Logs for failed test are now passed to junit report in case the test fails during call phase.
+
+
+
+Trivial/Internal Changes
+------------------------
+
+- `#6345 <https://github.com/pytest-dev/pytest/issues/6345>`_: Pin ``colorama`` to ``0.4.1`` only for Python 3.4 so newer Python versions can still receive colorama updates.
+
+
 pytest 4.6.7 (2019-12-05)
 =========================
 
