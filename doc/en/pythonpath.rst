@@ -74,7 +74,7 @@ This is also discussed in details in :ref:`test discovery`.
 
 .. _`pytest vs python -m pytest`:
 
-Invoking ``pytest`` versus ``python -m pytest``
+Invoking ``python -m pytest`` versus ``pytest`` 
 -----------------------------------------------
 
 Running pytest with ``python -m pytest [...]`` instead of ``pytest [...]`` yields nearly
