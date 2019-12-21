@@ -1035,15 +1035,19 @@ file:
 
     # content of conftest.py
 
-    import pytest
-    import tempfile
     import os
+    import shutil
+    import tempfile
+
+    import pytest
 
 
     @pytest.fixture()
     def cleandir():
         newpath = tempfile.mkdtemp()
         os.chdir(newpath)
+        yield
+        shutil.rmtree(newpath)
 
 and declare its use in a test module via a ``usefixtures`` marker:
 
