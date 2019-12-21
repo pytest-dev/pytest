@@ -80,9 +80,9 @@ jobs:
       addons:
         apt:
           packages:
-            # required by publish_gh_release_notes
+            # required by publish-gh-release-notes
             - pandoc
-      after_deploy: tox -e publish_gh_release_notes
+      after_deploy: tox -e publish-gh-release-notes
       deploy:
         provider: pypi
         user: nicoddemus
