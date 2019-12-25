@@ -681,7 +681,8 @@ def _iter_rewritable_modules(package_files):
             if new_fn:
                 new_package_files.append(new_fn)
         if new_package_files:
-            yield from _iter_rewritable_modules(new_package_files)
+            for _module in _iter_rewritable_modules(new_package_files):
+                yield _module
 
 
 class Config(object):
