@@ -28,7 +28,10 @@ jobs:
           "windows-py36",
           "windows-py37",
           "windows-py37-pluggy",
-          "windows-py38",
+
+          # skipping windows py38 for now due to:
+          # https://github.com/pytest-dev/pytest/pull/6159
+          # "windows-py38",
 
           "ubuntu-py35",
           "ubuntu-py36",
