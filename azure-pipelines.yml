@@ -39,6 +39,9 @@ jobs:
       py37-pluggymaster-xdist:
         python.version: '3.7'
         tox.env: 'py37-pluggymaster-xdist'
+      py38-xdist:
+        python.version: '3.8'
+        tox.env: 'py38-xdist'
     maxParallel: 10
 
   steps:
