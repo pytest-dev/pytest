@@ -682,3 +682,23 @@ def test_run_result_repr():
         repr(r) == "<RunResult ret=99 len(stdout.lines)=3"
         " len(stderr.lines)=4 duration=0.50s>"
     )
+
+
+def test_run_pytester_with_single_test(testdir):
+    testcode = """
+        import pytest
+
+        @pytest.fixture
+        def bad_fixture():
+            raise Exception("bad")
+
+        def test_error1(bad_fixture):
+            pass
+
+        def test_error2(bad_fixture):
+            pass
+    """
+
+    testdir.makepyfile(testcode)
+    result = testdir.runpytest()
+    result.assert_outcomes(error=2)

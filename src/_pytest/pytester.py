@@ -456,7 +456,7 @@ class RunResult:
             "passed": d.get("passed", 0),
             "skipped": d.get("skipped", 0),
             "failed": d.get("failed", 0),
-            "error": d.get("error", 0),
+            "error": d.get("error", 0) + d.get("errors", 0),
             "xpassed": d.get("xpassed", 0),
             "xfailed": d.get("xfailed", 0),
         }

@@ -1,0 +1,1 @@
+Fix problem with ``testdir`` not recognizing errors correctly in runs with a single test.
