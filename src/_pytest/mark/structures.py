@@ -325,6 +325,7 @@ class MarkGenerator:
                     "custom marks to avoid this warning - for details, see "
                     "https://docs.pytest.org/en/latest/mark.html" % name,
                     PytestUnknownMarkWarning,
+                    stacklevel=2,
                 )
 
         return MarkDecorator(Mark(name, (), {}))
