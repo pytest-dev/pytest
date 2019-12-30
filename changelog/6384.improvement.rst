@@ -1,0 +1,1 @@
+Make `--showlocals` work also with `--tb=short`.
