@@ -684,8 +684,9 @@ def test_run_result_repr():
     )
 
 
-def test_run_pytester_with_single_test(testdir):
-    testcode = """
+def test_testdir_outcomes_with_multiple_errors(testdir):
+    p1 = testdir.makepyfile(
+        """
         import pytest
 
         @pytest.fixture
@@ -698,7 +699,8 @@ def test_run_pytester_with_single_test(testdir):
         def test_error2(bad_fixture):
             pass
     """
-
-    testdir.makepyfile(testcode)
-    result = testdir.runpytest()
+    )
+    result = testdir.runpytest(str(p1))
     result.assert_outcomes(error=2)
+
+    assert result.parseoutcomes() == {"error": 2}
