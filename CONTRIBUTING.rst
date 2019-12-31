@@ -51,7 +51,8 @@ Fix bugs
 
 Look through the `GitHub issues for bugs <https://github.com/pytest-dev/pytest/labels/type:%20bug>`_.
 
-:ref:`Talk <contact>` to developers to find out how you can fix specific bugs.
+:ref:`Talk <contact>` to developers to find out how you can fix specific bugs. To indicate that you are going
+to work on a particular issue, add a comment to that effect on the specific issue.
 
 Don't forget to check the issue trackers of your favourite plugins, too!
 
