@@ -33,7 +33,7 @@ def pytest_addoption(parser):
     )
 
 
-def register_assert_rewrite(*names):
+def register_assert_rewrite(*names) -> None:
     """Register one or more module names to be rewritten on import.
 
     This function will make sure that this module or all modules inside

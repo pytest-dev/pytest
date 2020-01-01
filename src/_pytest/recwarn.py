@@ -129,9 +129,7 @@ def warns(  # noqa: F811
             return func(*args[1:], **kwargs)
 
 
-# Type ignored until next mypy release. Regression fixed by:
-# https://github.com/python/typeshed/commit/41bf6a19822d6694973449d795f8bfe1d50d5a03
-class WarningsRecorder(warnings.catch_warnings):  # type: ignore
+class WarningsRecorder(warnings.catch_warnings):
     """A context manager to record raised warnings.
 
     Adapted from `warnings.catch_warnings`.
