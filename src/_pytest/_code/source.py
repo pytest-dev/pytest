@@ -339,9 +339,7 @@ def getstatementrange_ast(
         block_finder.started = source.lines[start][0].isspace()
         it = ((x + "\n") for x in source.lines[start:end])
         try:
-            # Type ignored until next mypy release.
-            # https://github.com/python/typeshed/commit/c0d46a20353b733befb85d8b9cc24e5b0bcd8f9a
-            for tok in tokenize.generate_tokens(lambda: next(it)):  # type: ignore
+            for tok in tokenize.generate_tokens(lambda: next(it)):
                 block_finder.tokeneater(*tok)
         except (inspect.EndOfBlock, IndentationError):
             end = block_finder.last + start

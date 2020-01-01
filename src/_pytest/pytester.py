@@ -829,7 +829,7 @@ class Testdir:
         items = [x.item for x in rec.getcalls("pytest_itemcollected")]
         return items, rec
 
-    def inline_run(self, *args, plugins=(), no_reraise_ctrlc=False):
+    def inline_run(self, *args, plugins=(), no_reraise_ctrlc: bool = False):
         """Run ``pytest.main()`` in-process, returning a HookRecorder.
 
         Runs the :py:func:`pytest.main` function to run all of pytest inside
