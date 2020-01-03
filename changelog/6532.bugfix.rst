@@ -1,1 +1,1 @@
-Fix problem with ``testdir`` not recognizing errors correctly in runs with a single test.
+Fix parsing of outcomes containing multiple errors with ``testdir`` results (regression in 5.3.0).
