@@ -97,6 +97,31 @@ class TestTerminal:
             ["    def test_func():", ">       assert 0", "E       assert 0"]
         )
 
+    def test_parametrize_relative_path(self, testdir):
+        """
+        Test demonstrating #6363
+        """
+        tests_subdir = testdir.mkdir("tests")
+        tests_subdir.join("pytest.ini").write("")
+        tests_subdir.join("test_f.py").write(
+            textwrap.dedent(
+                """\
+                import pytest
+
+                @pytest.mark.parametrize("p", ["/p/../", "/p/../../", "/p//"])
+                def test_fn(p):
+                    pass
+                """
+            )
+        )
+        testdir.runpytest("tests", "--verbosity=1").stdout.re_match_lines(
+            [
+                r"tests/test_f.py::test_fn\[/p/\.\./] PASSED \s+ \[ 33%\]",
+                r"tests/test_f.py::test_fn\[/p/\.\./\.\./] PASSED \s+ \[ 66%\]",
+                r"tests/test_f.py::test_fn\[/p//] PASSED \s+ \[100%\]",
+            ]
+        )
+
     def test_internalerror(self, testdir, linecomp):
         modcol = testdir.getmodulecol("def test_one(): pass")
         rep = TerminalReporter(modcol.config, file=linecomp.stringio)

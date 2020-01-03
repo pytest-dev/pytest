@@ -827,11 +827,15 @@ class Config:
                 sys.stderr.flush()
 
     def cwd_relative_nodeid(self, nodeid):
+        if self.invocation_dir == self.rootdir:
+            return nodeid
         # nodeid's are relative to the rootpath, compute relative to cwd
-        if self.invocation_dir != self.rootdir:
-            fullpath = self.rootdir.join(nodeid)
-            nodeid = self.invocation_dir.bestrelpath(fullpath)
-        return nodeid
+        filepath, separator, rest = nodeid.partition("::")
+        return (
+            self.invocation_dir.bestrelpath(self.rootdir.join(filepath))
+            + separator
+            + rest
+        )
 
     @classmethod
     def fromdictargs(cls, option_dict, args):
