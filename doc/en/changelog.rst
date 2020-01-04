@@ -815,6 +815,15 @@ Improved Documentation
 - `#5416 <https://github.com/pytest-dev/pytest/issues/5416>`_: Fix PytestUnknownMarkWarning in run/skip example.
 
 
+pytest 4.6.9 (2020-01-04)
+=========================
+
+Bug Fixes
+---------
+
+- `#6301 <https://github.com/pytest-dev/pytest/issues/6301>`_: Fix assertion rewriting for egg-based distributions and ``editable`` installs (``pip install --editable``).
+
+
 pytest 4.6.8 (2019-12-19)
 =========================
 

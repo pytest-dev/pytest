@@ -20,6 +20,7 @@ Release announcements
    release-5.1.0
    release-5.0.1
    release-5.0.0
+   release-4.6.9
    release-4.6.8
    release-4.6.7
    release-4.6.6
