@@ -87,7 +87,7 @@ Consult the :ref:`Changelog <changelog>` page for fixes and enhancements of each
 License
 -------
 
-Copyright Holger Krekel and others, 2004-2017.
+Copyright Holger Krekel and others, 2004-2020.
 
 Distributed under the terms of the `MIT`_ license, pytest is free and open source software.
 

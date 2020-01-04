@@ -275,7 +275,7 @@ man_pages = [("usage", "pytest", u"pytest usage", [u"holger krekel at merlinux e
 epub_title = u"pytest"
 epub_author = u"holger krekel at merlinux eu"
 epub_publisher = u"holger krekel at merlinux eu"
-epub_copyright = u"2013, holger krekel et alii"
+epub_copyright = u"2013-2020, holger krekel et alii"
 
 # The language of the text. It defaults to the language option
 # or en if the language is not set.
