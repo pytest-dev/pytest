@@ -136,26 +136,6 @@ class Source:
         newsource.lines[:] = deindent(self.lines)
         return newsource
 
-    def isparseable(self, deindent: bool = True) -> bool:
-        """ return True if source is parseable, heuristically
-            deindenting it by default.
-        """
-        from parser import suite as syntax_checker
-
-        if deindent:
-            source = str(self.deindent())
-        else:
-            source = str(self)
-        try:
-            # compile(source+'\n', "x", "exec")
-            syntax_checker(source + "\n")
-        except KeyboardInterrupt:
-            raise
-        except Exception:
-            return False
-        else:
-            return True
-
     def __str__(self) -> str:
         return "\n".join(self.lines)
 
