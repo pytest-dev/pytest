@@ -126,15 +126,6 @@ def test_syntaxerror_rerepresentation():
     assert ex.value.text.strip(), "x x"
 
 
-def test_isparseable():
-    assert Source("hello").isparseable()
-    assert Source("if 1:\n  pass").isparseable()
-    assert Source(" \nif 1:\n  pass").isparseable()
-    assert not Source("if 1:\n").isparseable()
-    assert not Source(" \nif 1:\npass").isparseable()
-    assert not Source(chr(0)).isparseable()
-
-
 class TestAccesses(object):
     source = Source(
         """\
@@ -147,7 +138,6 @@ class TestAccesses(object):
 
     def test_getrange(self):
         x = self.source[0:2]
-        assert x.isparseable()
         assert len(x.lines) == 2
         assert str(x) == "def f(x):\n    pass"
 
