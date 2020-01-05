@@ -140,18 +140,13 @@ class Source:
         """ return True if source is parseable, heuristically
             deindenting it by default.
         """
-        from parser import suite as syntax_checker
-
         if deindent:
             source = str(self.deindent())
         else:
             source = str(self)
         try:
-            # compile(source+'\n', "x", "exec")
-            syntax_checker(source + "\n")
-        except KeyboardInterrupt:
-            raise
-        except Exception:
+            ast.parse(source)
+        except (SyntaxError, ValueError, TypeError):
             return False
         else:
             return True
