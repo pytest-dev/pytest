@@ -11,13 +11,13 @@ from io import StringIO
 import pluggy
 import py
 
+import _pytest.config
 import pytest
 from _pytest.main import ExitCode
 from _pytest.reports import BaseReport
 from _pytest.terminal import _folded_skips
 from _pytest.terminal import _get_line_with_reprcrash_message
 from _pytest.terminal import _plugin_nameversions
-from _pytest.terminal import build_summary_stats_line
 from _pytest.terminal import getreportopt
 from _pytest.terminal import TerminalReporter
 
@@ -1344,6 +1344,12 @@ def test_terminal_summary_warnings_header_once(testdir):
     assert stdout.count("=== warnings summary ") == 1
 
 
+@pytest.fixture(scope="session")
+def tr():
+    config = _pytest.config._prepareconfig()
+    return TerminalReporter(config)
+
+
 @pytest.mark.parametrize(
     "exp_color, exp_line, stats_arg",
     [
@@ -1431,10 +1437,10 @@ def test_terminal_summary_warnings_header_once(testdir):
         ),
         ("yellow", [("1 xpassed", {"bold": True, "yellow": True})], {"xpassed": (1,)}),
         (
-            "green",
+            "yellow",
             [
-                ("1 passed", {"bold": True, "green": True}),
-                ("1 xpassed", {"bold": False, "yellow": True}),
+                ("1 passed", {"bold": False, "green": True}),
+                ("1 xpassed", {"bold": True, "yellow": True}),
             ],
             {"xpassed": (1,), "passed": (1,)},
         ),
@@ -1474,26 +1480,42 @@ def test_terminal_summary_warnings_header_once(testdir):
         ),
     ],
 )
-def test_summary_stats(exp_line, exp_color, stats_arg):
+def test_summary_stats(tr, exp_line, exp_color, stats_arg):
+    tr.stats = stats_arg
+
+    # Fake "_is_last_item" to be True.
+    class fake_session:
+        testscollected = 0
+
+    tr._session = fake_session
+    assert tr._is_last_item
+
+    # Reset cache.
+    tr._main_color = None
+
     print("Based on stats: %s" % stats_arg)
     print('Expect summary: "{}"; with color "{}"'.format(exp_line, exp_color))
-    (line, color) = build_summary_stats_line(stats_arg)
+    (line, color) = tr.build_summary_stats_line()
     print('Actually got:   "{}"; with color "{}"'.format(line, color))
     assert line == exp_line
     assert color == exp_color
 
 
-def test_skip_counting_towards_summary():
+def test_skip_counting_towards_summary(tr):
     class DummyReport(BaseReport):
         count_towards_summary = True
 
     r1 = DummyReport()
     r2 = DummyReport()
-    res = build_summary_stats_line({"failed": (r1, r2)})
+    tr.stats = {"failed": (r1, r2)}
+    tr._main_color = None
+    res = tr.build_summary_stats_line()
     assert res == ([("2 failed", {"bold": True, "red": True})], "red")
 
     r1.count_towards_summary = False
-    res = build_summary_stats_line({"failed": (r1, r2)})
+    tr.stats = {"failed": (r1, r2)}
+    tr._main_color = None
+    res = tr.build_summary_stats_line()
     assert res == ([("1 failed", {"bold": True, "red": True})], "red")
 
 
@@ -1595,6 +1617,11 @@ class TestProgressOutputStyle:
     def test_colored_progress(self, testdir, monkeypatch):
         monkeypatch.setenv("PY_COLORS", "1")
         testdir.makepyfile(
+            test_axfail="""
+                import pytest
+                @pytest.mark.xfail
+                def test_axfail(): assert 0
+            """,
             test_bar="""
                 import pytest
                 @pytest.mark.parametrize('i', range(10))
@@ -1619,9 +1646,22 @@ class TestProgressOutputStyle:
             [
                 line.format(**RE_COLORS)
                 for line in [
-                    r"test_bar.py ({green}\.{reset}){{10}}{green} \s+ \[ 50%\]{reset}",
-                    r"test_foo.py ({green}\.{reset}){{5}}{yellow} \s+ \[ 75%\]{reset}",
+                    r"test_axfail.py {yellow}x{reset}{green} \s+ \[  4%\]{reset}",
+                    r"test_bar.py ({green}\.{reset}){{10}}{green} \s+ \[ 52%\]{reset}",
+                    r"test_foo.py ({green}\.{reset}){{5}}{yellow} \s+ \[ 76%\]{reset}",
                     r"test_foobar.py ({red}F{reset}){{5}}{red} \s+ \[100%\]{reset}",
+                ]
+            ]
+        )
+
+        # Only xfail should have yellow progress indicator.
+        result = testdir.runpytest("test_axfail.py")
+        result.stdout.re_match_lines(
+            [
+                line.format(**RE_COLORS)
+                for line in [
+                    r"test_axfail.py {yellow}x{reset}{yellow} \s+ \[100%\]{reset}",
+                    r"^{yellow}=+ ({yellow}{bold}|{bold}{yellow})1 xfailed{reset}{yellow} in ",
                 ]
             ]
         )
