@@ -258,7 +258,7 @@ class LFPlugin:
             self._report_status = "no previously failed tests, "
             if self.config.getoption("last_failed_no_failures") == "none":
                 self._report_status += "deselecting all items."
-                config.hook.pytest_deselected(items=items)
+                config.hook.pytest_deselected(items=items[:])
                 items[:] = []
             else:
                 self._report_status += "not deselecting items."

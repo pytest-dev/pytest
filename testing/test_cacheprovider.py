@@ -681,11 +681,28 @@ class TestLastFailed:
         result.stdout.fnmatch_lines(["*2 passed*"])
         result = testdir.runpytest("--lf", "--lfnf", "all")
         result.stdout.fnmatch_lines(["*2 passed*"])
+
+        # Ensure the list passed to pytest_deselected is a copy,
+        # and not a reference which is cleared right after.
+        testdir.makeconftest(
+            """
+            deselected = []
+
+            def pytest_deselected(items):
+                global deselected
+                deselected = items
+
+            def pytest_sessionfinish():
+                print("\\ndeselected={}".format(len(deselected)))
+        """
+        )
+
         result = testdir.runpytest("--lf", "--lfnf", "none")
         result.stdout.fnmatch_lines(
             [
                 "collected 2 items / 2 deselected",
                 "run-last-failure: no previously failed tests, deselecting all items.",
+                "deselected=2",
                 "* 2 deselected in *",
             ]
         )
