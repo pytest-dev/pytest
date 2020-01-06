@@ -214,7 +214,7 @@ class MarkDecorator:
 
     """
 
-    mark = attr.ib(validator=attr.validators.instance_of(Mark))
+    mark = attr.ib()
 
     @property
     def name(self):
@@ -278,20 +278,13 @@ def normalize_mark_list(mark_list):
     :type mark_list: List[Union[Mark, Markdecorator]]
     :rtype: List[Mark]
     """
-    extracted = [
-        getattr(mark, "mark", mark) for mark in mark_list
-    ]  # unpack MarkDecorator
-    for mark in extracted:
-        if not isinstance(mark, Mark):
-            raise TypeError("got {!r} instead of Mark".format(mark))
-    return [x for x in extracted if isinstance(x, Mark)]
+    return [getattr(mark, "mark", mark) for mark in mark_list]  # unpack MarkDecorator
 
 
 def store_mark(obj, mark):
     """store a Mark on an object
     this is used to implement the Mark declarations/decorators correctly
     """
-    assert isinstance(mark, Mark), mark
     # always reassign name to avoid updating pytestmark
     # in a reference that was only borrowed
     obj.pytestmark = get_unpacked_marks(obj) + [mark]
@@ -351,6 +344,9 @@ class MarkGenerator:
                 )
 
         return MarkDecorator(Mark(name, (), {}))
+
+    def __call__(self, m):
+        return MarkDecorator(m)
 
 
 MARK_GEN = MarkGenerator()
