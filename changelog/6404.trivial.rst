@@ -1,1 +1,1 @@
-Removed unused ``_pytest.code.Source.isparseable`` function.
+Remove usage of ``parser`` module, deprecated in Python 3.9.
