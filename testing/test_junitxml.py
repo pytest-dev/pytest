@@ -480,7 +480,7 @@ class TestPython:
         if junit_logging == "log":
             logdata = tnode.find_first_by_tag("log")
             log_xml = logdata.toxml()
-            assert logdata.tag == "log", f"Expected tag: log"
+            assert logdata.tag == "log", "Expected tag: log"
             assert (
                 "info msg" not in log_xml
             ), "Missing INFO message"  # TODO where log capture lvl is stored?
