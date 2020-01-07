@@ -17,7 +17,6 @@ import time
 from datetime import datetime
 
 import py
-
 import pytest
 from _pytest import deprecated
 from _pytest import nodes
@@ -169,18 +168,15 @@ class _NodeReporter:
         content_err = report.capstderr
         if self.xml.logging == "no":
             return
-        if content_log and self.xml.logging in ["log", "all"]:
+        if self.xml.logging in ["log", "all"]:
             self._write_content(report, content_log, " Captured Log ", "log")
-        if content_out and self.xml.logging in ["system-out", "out-err", "all"]:
-            self._write_content(report, content_out, " Captured Stdout ", "system-out")
-        if content_err and self.xml.logging in ["system-err", "out-err", "all"]:
-            self._write_content(report, content_err, " Captured Stderr ", "system-err")
+        if self.xml.logging in ["system-out", "out-err", "all"]:
+            self._write_content(report, content_out, " Captured Out ", "system-out")
+        if self.xml.logging in ["system-err", "out-err", "all"]:
+            self._write_content(report, content_err, " Captured Err ", "system-err")
 
     def _write_content(self, report, content, header, jheader):
-        result = "\n".join(
-            [header.center(80, "-"),
-             content,
-             ""])
+        result = "\n".join([header.center(80, "-"), content, ""])
         tag = getattr(Junit, jheader)
         self.append(tag(bin_xml_escape(result)))
 

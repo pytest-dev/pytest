@@ -77,6 +77,7 @@ THE SOFTWARE.
 
     <xs:element name="system-err" type="xs:string"/>
     <xs:element name="system-out" type="xs:string"/>
+    <xs:element name="log" type="xs:string"/>
     <xs:element name="rerunFailure" type="rerunType"/>
     <xs:element name="rerunError" type="rerunType"/>
     <xs:element name="flakyFailure" type="rerunType"/>
@@ -95,6 +96,7 @@ THE SOFTWARE.
                     <xs:element ref="flakyError" minOccurs="0" maxOccurs="unbounded"/>
                     <xs:element ref="system-out"/>
                     <xs:element ref="system-err"/>
+                    <xs:element ref="log"/>
                 </xs:choice>
             </xs:sequence>
             <xs:attribute name="name" type="xs:string" use="required"/>
