@@ -125,12 +125,12 @@ jobs:
         _PYTEST_TOX_COVERAGE_RUN: "coverage run -m"
         _PYTEST_TOX_EXTRA_DEP: "coverage-enable-subprocess"
       # testing\test_session.py is temporary
-      run: tox -e ${{ matrix.tox_env }} -- testing/test_session.py
-    - name: Codecov
       run: |
+        tox -e ${{ matrix.tox_env }} -- testing/test_session.py
         python -m coverage combine
         python -m coverage xml
         python -m coverage report -m
+    - name: Codecov
       uses: codecov/codecov-action@v1
       with:
         token: ${{ secrets.codecov }}
