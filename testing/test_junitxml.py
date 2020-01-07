@@ -489,9 +489,7 @@ class TestPython:
         elif junit_logging in ["system-out", "out-err", "all"]:
             systemout = tnode.find_first_by_tag("system-out")
             systemout_xml = systemout.toxml()
-            assert (
-                systemout.tag == "system-out"
-            ), f"Expected tag: system-out, actual: {systemout.tag}"
+            assert systemout.tag == "system-out", "Expected tag: system-out"
             assert "info msg" not in systemout_xml, "INFO message found in system-out"
             assert (
                 "hello-stdout" in systemout_xml
@@ -502,9 +500,7 @@ class TestPython:
         elif junit_logging in ["system-err", "out-err", "all"]:
             systemerr = tnode.find_first_by_tag("system-err")
             systemerr_xml = systemerr.toxml()
-            assert (
-                systemerr.tag == "system-err"
-            ), f"Expected tag: system-err, actual: {systemerr.tag}"
+            assert systemerr.tag == "system-err", "Expected tag: system-err"
             assert "info msg" not in systemerr_xml, "INFO message found in system-err"
             assert (
                 "hello-stderr" in systemerr_xml
@@ -513,7 +509,7 @@ class TestPython:
                 "warning msg" not in systemerr_xml
             ), "WARN message found in system-err"
         else:
-            assert junit_logging == "no", f"Expected: no, actual: {junit_logging}"
+            assert junit_logging == "no", "Expected: no"
             assert not tnode.find_by_tag("log"), "Found unexpected content: log"
             assert not tnode.find_by_tag(
                 "system-out"
@@ -938,7 +934,7 @@ def test_nullbyte(testdir, junit_logging):
     """
     )
     xmlf = testdir.tmpdir.join("junit.xml")
-    testdir.runpytest("--junitxml=%s" % xmlf, "-o", f"junit_logging={junit_logging}")
+    testdir.runpytest("--junitxml=%s" % xmlf, "-o", "junit_logging=%s" % junit_logging)
     text = xmlf.read()
     assert "\x00" not in text
     if junit_logging == "system-out":
@@ -960,7 +956,7 @@ def test_nullbyte_replace(testdir, junit_logging):
     """
     )
     xmlf = testdir.tmpdir.join("junit.xml")
-    testdir.runpytest("--junitxml=%s" % xmlf, "-o", f"junit_logging={junit_logging}")
+    testdir.runpytest("--junitxml=%s" % xmlf, "-o", "junit_logging=%s" % junit_logging)
     text = xmlf.read()
     if junit_logging == "system-out":
         assert "#x0" in text
