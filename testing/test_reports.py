@@ -320,25 +320,19 @@ class TestReportSerialization:
         """Regression test for tracebacks without a reprcrash (#5971)
 
         This happens notably on exceptions raised by multiprocess.pool: the exception transfer
-        from subprocess to main process creates an artificial exception which, ExceptionInfo
+        from subprocess to main process creates an artificial exception, which ExceptionInfo
         can't obtain the ReprFileLocation from.
         """
         testdir.makepyfile(
             """
-            # equivalent of multiprocessing.pool.RemoteTraceback
-            class RemoteTraceback(Exception):
-                def __init__(self, tb):
-                    self.tb = tb
-                def __str__(self):
-                    return self.tb
+            from concurrent.futures import ProcessPoolExecutor
+
+            def func():
+                raise ValueError('value error')
 
             def test_a():
-                try:
-                    raise ValueError('value error')
-                except ValueError as e:
-                    # equivalent to how multiprocessing.pool.rebuild_exc does it
-                    e.__cause__ = RemoteTraceback('runtime error')
-                    raise e
+                with ProcessPoolExecutor() as p:
+                    p.submit(func).result()
         """
         )
         reprec = testdir.inline_run()
@@ -352,8 +346,8 @@ class TestReportSerialization:
             tb1, fileloc1, desc1 = entry1
             tb2, fileloc2, desc2 = entry2
 
-            assert "RemoteTraceback: runtime error" in str(tb1)
-            assert "ValueError('value error')" in str(tb2)
+            assert "RemoteTraceback" in str(tb1)
+            assert "ValueError: value error" in str(tb2)
 
             assert fileloc1 is None
             assert fileloc2.message == "ValueError: value error"
