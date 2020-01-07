@@ -121,9 +121,9 @@ jobs:
         pip install tox
     - name: Test
       env:
-        COVERAGE_PROCESS_START="$PWD/.coveragerc"
-        _PYTEST_TOX_COVERAGE_RUN="coverage run -m"
-        _PYTEST_TOX_EXTRA_DEP=coverage-enable-subprocess
+        COVERAGE_PROCESS_START: ".coveragerc"
+        _PYTEST_TOX_COVERAGE_RUN: "coverage run -m"
+        _PYTEST_TOX_EXTRA_DEP: "coverage-enable-subprocess"
       # testing\test_session.py is temporary
       run: tox -e ${{ matrix.tox_env }} -- testing/test_session.py
     - name: Codecov
