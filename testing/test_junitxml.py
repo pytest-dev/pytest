@@ -477,16 +477,13 @@ class TestPython:
         fnode.assert_attr(message="ValueError: 42")
         assert "ValueError" in fnode.toxml(), "ValueError not included"
 
-        if junit_logging == "log":
-            logdata = tnode.find_first_by_tag("log")
+        if junit_logging in ["log", "all"]:
+            logdata = tnode.find_first_by_tag("system-out")
             log_xml = logdata.toxml()
-            assert logdata.tag == "log", "Expected tag: log"
-            assert (
-                "info msg" not in log_xml
-            ), "Missing INFO message"  # TODO where log capture lvl is stored?
+            assert logdata.tag == "system-out", "Expected tag: system-out"
+            assert "info msg" not in log_xml, "Unexpected INFO message"
             assert "warning msg" in log_xml, "Missing WARN message"
-            assert "hello-stdout" not in log_xml, "'hello-stdout' found in log"
-        elif junit_logging in ["system-out", "out-err", "all"]:
+        if junit_logging in ["system-out", "out-err", "all"]:
             systemout = tnode.find_first_by_tag("system-out")
             systemout_xml = systemout.toxml()
             assert systemout.tag == "system-out", "Expected tag: system-out"
@@ -494,10 +491,7 @@ class TestPython:
             assert (
                 "hello-stdout" in systemout_xml
             ), "Missing 'hello-stdout' in system-out"
-            assert (
-                "warning msg" not in systemout_xml
-            ), "WARN message found in system-out"
-        elif junit_logging in ["system-err", "out-err", "all"]:
+        if junit_logging in ["system-err", "out-err", "all"]:
             systemerr = tnode.find_first_by_tag("system-err")
             systemerr_xml = systemerr.toxml()
             assert systemerr.tag == "system-err", "Expected tag: system-err"
@@ -508,8 +502,7 @@ class TestPython:
             assert (
                 "warning msg" not in systemerr_xml
             ), "WARN message found in system-err"
-        else:
-            assert junit_logging == "no", "Expected: no"
+        if junit_logging == "no":
             assert not tnode.find_by_tag("log"), "Found unexpected content: log"
             assert not tnode.find_by_tag(
                 "system-out"
@@ -644,7 +637,7 @@ class TestPython:
         else:
             assert len(tnode.find_by_tag("system-err")) == 0
 
-        if junit_logging in ["system-out", "out-err", "all"]:
+        if junit_logging in ["log", "system-out", "out-err", "all"]:
             assert len(tnode.find_by_tag("system-out")) == 1
         else:
             assert len(tnode.find_by_tag("system-out")) == 0

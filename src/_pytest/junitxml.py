@@ -168,17 +168,26 @@ class _NodeReporter:
         content_err = report.capstderr
         if self.xml.logging == "no":
             return
+        content_all = ""
         if self.xml.logging in ["log", "all"]:
-            self._write_content(report, content_log, " Captured Log ", "log")
+            content_all = self._prepare_content(content_log, " Captured Log ")
         if self.xml.logging in ["system-out", "out-err", "all"]:
-            self._write_content(report, content_out, " Captured Out ", "system-out")
+            content_all += self._prepare_content(content_out, " Captured Out ")
+            self._write_content(report, content_all, "system-out")
+            content_all = ""
         if self.xml.logging in ["system-err", "out-err", "all"]:
-            self._write_content(report, content_err, " Captured Err ", "system-err")
+            content_all += self._prepare_content(content_err, " Captured Err ")
+            self._write_content(report, content_all, "system-err")
+            content_all = ""
+        if content_all:
+            self._write_content(report, content_all, "system-out")
 
-    def _write_content(self, report, content, header, jheader):
-        result = "\n".join([header.center(80, "-"), content, ""])
+    def _prepare_content(self, content, header):
+        return "\n".join([header.center(80, "-"), content, ""])
+
+    def _write_content(self, report, content, jheader):
         tag = getattr(Junit, jheader)
-        self.append(tag(bin_xml_escape(result)))
+        self.append(tag(bin_xml_escape(content)))
 
     def append_pass(self, report):
         self.add_stats("passed")
