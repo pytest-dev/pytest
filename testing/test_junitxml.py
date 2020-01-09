@@ -4,8 +4,9 @@ from datetime import datetime
 from xml.dom import minidom
 
 import py
-import pytest
 import xmlschema
+
+import pytest
 from _pytest.junitxml import LogXML
 from _pytest.pathlib import Path
 from _pytest.reports import BaseReport
