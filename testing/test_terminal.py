@@ -1385,10 +1385,10 @@ def test_terminal_summary_warnings_header_once(testdir):
         ),
         ("yellow", [("1 xpassed", {"bold": True, "yellow": True})], {"xpassed": (1,)}),
         (
-            "green",
+            "yellow",
             [
-                ("1 passed", {"bold": True, "green": True}),
-                ("1 xpassed", {"bold": False, "yellow": True}),
+                ("1 passed", {"bold": False, "green": True}),
+                ("1 xpassed", {"bold": True, "yellow": True}),
             ],
             {"xpassed": (1,), "passed": (1,)},
         ),

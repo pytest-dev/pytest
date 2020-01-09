@@ -1107,7 +1107,7 @@ def _get_main_color(stats) -> Tuple[str, List[str]]:
     # main color
     if "failed" in stats or "error" in stats:
         main_color = "red"
-    elif "warnings" in stats or unknown_type_seen:
+    elif "warnings" in stats or "xpassed" in stats or unknown_type_seen:
         main_color = "yellow"
     elif "passed" in stats:
         main_color = "green"
