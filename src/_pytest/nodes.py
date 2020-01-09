@@ -362,8 +362,7 @@ class Node(metaclass=NodeMeta):
             truncate_locals = True
 
         try:
-            os.getcwd()
-            abspath = False
+            abspath = os.getcwd() != str(self.config.invocation_dir)
         except OSError:
             abspath = True
 
