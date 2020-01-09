@@ -52,7 +52,8 @@ def pytest_addoption(parser):
         "-k 'not test_method and not test_other' will eliminate the matches. "
         "Additionally keywords are matched to classes and functions "
         "containing extra names in their 'extra_keyword_matches' set, "
-        "as well as functions which have names assigned directly to them.",
+        "as well as functions which have names assigned directly to them. "
+        "The matching is case-insensitive.",
     )
 
     group._addoption(

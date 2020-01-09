@@ -24,12 +24,31 @@ with advance notice in the **Deprecations** section of releases.
 
     .. include:: _changelog_towncrier_draft.rst
 
-
-
-
-
-
 .. towncrier release notes start
+
+pytest 5.3.2 (2019-12-13)
+=========================
+
+Improvements
+------------
+
+- `#4639 <https://github.com/pytest-dev/pytest/issues/4639>`_: Revert "A warning is now issued when assertions are made for ``None``".
+
+  The warning proved to be less useful than initially expected and had quite a
+  few false positive cases.
+
+
+
+Bug Fixes
+---------
+
+- `#5430 <https://github.com/pytest-dev/pytest/issues/5430>`_: junitxml: Logs for failed test are now passed to junit report in case the test fails during call phase.
+
+
+- `#6290 <https://github.com/pytest-dev/pytest/issues/6290>`_: The supporting files in the ``.pytest_cache`` directory are kept with ``--cache-clear``, which only clears cached values now.
+
+
+- `#6301 <https://github.com/pytest-dev/pytest/issues/6301>`_: Fix assertion rewriting for egg-based distributions and ``editable`` installs (``pip install --editable``).
 
 
 pytest 5.3.1 (2019-11-25)
@@ -794,6 +813,20 @@ Improved Documentation
 
 
 - `#5416 <https://github.com/pytest-dev/pytest/issues/5416>`_: Fix PytestUnknownMarkWarning in run/skip example.
+
+
+pytest 4.6.7 (2019-12-05)
+=========================
+
+Bug Fixes
+---------
+
+- `#5477 <https://github.com/pytest-dev/pytest/issues/5477>`_: The XML file produced by ``--junitxml`` now correctly contain a ``<testsuites>`` root element.
+
+
+- `#6044 <https://github.com/pytest-dev/pytest/issues/6044>`_: Properly ignore ``FileNotFoundError`` (``OSError.errno == NOENT`` in Python 2) exceptions when trying to remove old temporary directories,
+  for instance when multiple processes try to remove the same directory (common with ``pytest-xdist``
+  for example).
 
 
 pytest 4.6.6 (2019-10-11)

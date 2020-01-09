@@ -19,12 +19,10 @@ DEPRECATED_EXTERNAL_PLUGINS = {
     "pytest_faulthandler",
 }
 
-
 FUNCARGNAMES = PytestDeprecationWarning(
     "The `funcargnames` attribute was an alias for `fixturenames`, "
     "since pytest 2.3 - use the newer attribute instead."
 )
-
 
 RESULT_LOG = PytestDeprecationWarning(
     "--result-log is deprecated, please try the new pytest-reportlog plugin.\n"
@@ -43,5 +41,11 @@ NODE_USE_FROM_PARENT = UnformattedWarning(
 
 JUNIT_XML_DEFAULT_FAMILY = PytestDeprecationWarning(
     "The 'junit_family' default value will change to 'xunit2' in pytest 6.0.\n"
-    "Add 'junit_family=legacy' to your pytest.ini file to silence this warning and make your suite compatible."
+    "Add 'junit_family=xunit1' to your pytest.ini file to keep the current format "
+    "in future versions of pytest and silence this warning."
+)
+
+NO_PRINT_LOGS = PytestDeprecationWarning(
+    "--no-print-logs is deprecated and scheduled for removal in pytest 6.0.\n"
+    "Please use --show-capture instead."
 )

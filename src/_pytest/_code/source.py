@@ -140,18 +140,13 @@ class Source:
         """ return True if source is parseable, heuristically
             deindenting it by default.
         """
-        from parser import suite as syntax_checker
-
         if deindent:
             source = str(self.deindent())
         else:
             source = str(self)
         try:
-            # compile(source+'\n', "x", "exec")
-            syntax_checker(source + "\n")
-        except KeyboardInterrupt:
-            raise
-        except Exception:
+            ast.parse(source)
+        except (SyntaxError, ValueError, TypeError):
             return False
         else:
             return True
@@ -339,9 +334,7 @@ def getstatementrange_ast(
         block_finder.started = source.lines[start][0].isspace()
         it = ((x + "\n") for x in source.lines[start:end])
         try:
-            # Type ignored until next mypy release.
-            # https://github.com/python/typeshed/commit/c0d46a20353b733befb85d8b9cc24e5b0bcd8f9a
-            for tok in tokenize.generate_tokens(lambda: next(it)):  # type: ignore
+            for tok in tokenize.generate_tokens(lambda: next(it)):
                 block_finder.tokeneater(*tok)
         except (inspect.EndOfBlock, IndentationError):
             end = block_finder.last + start

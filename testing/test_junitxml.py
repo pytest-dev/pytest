@@ -1477,3 +1477,45 @@ def test_logging_passing_tests_disabled_does_not_log_test_output(
     node = dom.find_first_by_tag("testcase")
     assert len(node.find_by_tag("system-err")) == 0
     assert len(node.find_by_tag("system-out")) == 0
+
+
+@parametrize_families
+@pytest.mark.parametrize("junit_logging", ["no", "system-out", "system-err"])
+def test_logging_passing_tests_disabled_logs_output_for_failing_test_issue5430(
+    testdir, junit_logging, run_and_parse, xunit_family
+):
+    testdir.makeini(
+        """
+        [pytest]
+        junit_log_passing_tests=False
+        junit_family={family}
+    """.format(
+            family=xunit_family
+        )
+    )
+    testdir.makepyfile(
+        """
+        import pytest
+        import logging
+        import sys
+
+        def test_func():
+            logging.warning('hello')
+            assert 0
+    """
+    )
+    result, dom = run_and_parse(
+        "-o", "junit_logging=%s" % junit_logging, family=xunit_family
+    )
+    assert result.ret == 1
+    node = dom.find_first_by_tag("testcase")
+    if junit_logging == "system-out":
+        assert len(node.find_by_tag("system-err")) == 0
+        assert len(node.find_by_tag("system-out")) == 1
+    elif junit_logging == "system-err":
+        assert len(node.find_by_tag("system-err")) == 1
+        assert len(node.find_by_tag("system-out")) == 0
+    else:
+        assert junit_logging == "no"
+        assert len(node.find_by_tag("system-err")) == 0
+        assert len(node.find_by_tag("system-out")) == 0

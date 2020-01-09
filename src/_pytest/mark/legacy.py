@@ -57,7 +57,15 @@ class KeywordMapping:
         return cls(mapped_names)
 
     def __getitem__(self, subname):
-        for name in self._names:
+        """Return whether subname is included within stored names.
+
+        The string inclusion check is case-insensitive.
+
+        """
+        subname = subname.lower()
+        names = (name.lower() for name in self._names)
+
+        for name in names:
             if subname in name:
                 return True
         return False
