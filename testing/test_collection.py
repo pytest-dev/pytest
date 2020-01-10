@@ -1327,3 +1327,26 @@ def test_does_not_put_src_on_path(testdir):
     )
     result = testdir.runpytest()
     assert result.ret == ExitCode.OK
+
+
+def test_collectreport_skipped(testdir):
+    testdir.makeconftest(
+        """
+        from _pytest.reports import CollectReport
+
+
+        def pytest_make_collect_report(collector):
+            return CollectReport(
+                collector.nodeid, "skipped", longrepr=None, result=[]
+            )
+        """
+    )
+    result = testdir.runpytest("-ra")
+    assert result.ret == ExitCode.INTERNAL_ERROR
+    result.stdout.fnmatch_lines(["collected 0 items / 1 skipped"])
+    result.stderr.fnmatch_lines(
+        [
+            "    assert key and len(key) == 3, (event, key)",
+            "AssertionError: (<CollectReport '' lenresult=0 outcome='skipped'>, None)",
+        ]
+    )

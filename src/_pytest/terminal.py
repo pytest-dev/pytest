@@ -1053,7 +1053,7 @@ def _folded_skips(skipped):
     d = {}
     for event in skipped:
         key = event.longrepr
-        assert len(key) == 3, (event, key)
+        assert key and len(key) == 3, (event, key)
         keywords = getattr(event, "keywords", {})
         # folding reports with global pytestmark variable
         # this is workaround, because for now we cannot identify the scope of a skip marker
