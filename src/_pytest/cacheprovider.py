@@ -212,7 +212,6 @@ class LFPlugin:
         if passed:
             if report.nodeid in self.lastfailed:
                 self.lastfailed.pop(report.nodeid)
-                self.lastfailed.update((item.nodeid, True) for item in report.result)
         else:
             self.lastfailed[report.nodeid] = True
 
