@@ -143,10 +143,12 @@ class AssertionRewritingHook(importlib.abc.MetaPathFinder):
         exec(co, module.__dict__)
 
     def _early_rewrite_bailout(self, name, state):
-        """This is a fast way to get out of rewriting modules. Profiling has
-        shown that the call to PathFinder.find_spec (inside of the find_spec
-        from this class) is a major slowdown, so, this method tries to
-        filter what we're sure won't be rewritten before getting to it.
+        """This is a fast way to get out of rewriting modules.
+
+        Profiling has shown that the call to PathFinder.find_spec (inside of
+        the find_spec from this class) is a major slowdown, so, this method
+        tries to filter what we're sure won't be rewritten before getting to
+        it.
         """
         if self.session is not None and not self._session_paths_checked:
             self._session_paths_checked = True

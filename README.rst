@@ -112,12 +112,12 @@ Support pytest
 --------------
 
 `Open Collective`_ is an online funding platform for open and transparent communities.
-It provide tools to raise money and share your finances in full transparency.
+It provides tools to raise money and share your finances in full transparency.
 
 It is the platform of choice for individuals and companies that want to make one-time or
 monthly donations directly to the project.
 
-See more datails in the `pytest collective`_.
+See more details in the `pytest collective`_.
 
 .. _Open Collective: https://opencollective.com
 .. _pytest collective: https://opencollective.com/pytest
@@ -145,7 +145,7 @@ Tidelift will coordinate the fix and disclosure.
 License
 -------
 
-Copyright Holger Krekel and others, 2004-2019.
+Copyright Holger Krekel and others, 2004-2020.
 
 Distributed under the terms of the `MIT`_ license, pytest is free and open source software.
 

@@ -35,7 +35,7 @@ holger krekel
 - fix issue435: make reload() work when assert rewriting is active.
   Thanks Daniel Hahler.
 
-- fix issue616: conftest.py files and their contained fixutres are now
+- fix issue616: conftest.py files and their contained fixtures are now
   properly considered for visibility, independently from the exact
   current working directory and test arguments that are used.
   Many thanks to Eric Siegerman and his PR235 which contains

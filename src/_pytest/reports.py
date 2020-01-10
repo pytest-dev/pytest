@@ -374,8 +374,11 @@ def _report_to_json(report):
         ]
         return result
 
-    def serialize_repr_crash(reprcrash):
-        return reprcrash.__dict__.copy()
+    def serialize_repr_crash(reprcrash: Optional[ReprFileLocation]):
+        if reprcrash is not None:
+            return reprcrash.__dict__.copy()
+        else:
+            return None
 
     def serialize_longrepr(rep):
         result = {
@@ -455,8 +458,11 @@ def _report_kwargs_from_json(reportdict):
         ]
         return ReprTraceback(**repr_traceback_dict)
 
-    def deserialize_repr_crash(repr_crash_dict):
-        return ReprFileLocation(**repr_crash_dict)
+    def deserialize_repr_crash(repr_crash_dict: Optional[dict]):
+        if repr_crash_dict is not None:
+            return ReprFileLocation(**repr_crash_dict)
+        else:
+            return None
 
     if (
         reportdict["longrepr"]

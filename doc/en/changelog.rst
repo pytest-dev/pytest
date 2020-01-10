@@ -1,3 +1,5 @@
+.. _`changelog`:
+
 =========
 Changelog
 =========
@@ -813,6 +815,38 @@ Improved Documentation
 
 
 - `#5416 <https://github.com/pytest-dev/pytest/issues/5416>`_: Fix PytestUnknownMarkWarning in run/skip example.
+
+
+pytest 4.6.9 (2020-01-04)
+=========================
+
+Bug Fixes
+---------
+
+- `#6301 <https://github.com/pytest-dev/pytest/issues/6301>`_: Fix assertion rewriting for egg-based distributions and ``editable`` installs (``pip install --editable``).
+
+
+pytest 4.6.8 (2019-12-19)
+=========================
+
+Features
+--------
+
+- `#5471 <https://github.com/pytest-dev/pytest/issues/5471>`_: JUnit XML now includes a timestamp and hostname in the testsuite tag.
+
+
+
+Bug Fixes
+---------
+
+- `#5430 <https://github.com/pytest-dev/pytest/issues/5430>`_: junitxml: Logs for failed test are now passed to junit report in case the test fails during call phase.
+
+
+
+Trivial/Internal Changes
+------------------------
+
+- `#6345 <https://github.com/pytest-dev/pytest/issues/6345>`_: Pin ``colorama`` to ``0.4.1`` only for Python 3.4 so newer Python versions can still receive colorama updates.
 
 
 pytest 4.6.7 (2019-12-05)
@@ -5343,7 +5377,7 @@ time or change existing behaviors in order to make them less surprising/more use
   Thanks Ronny Pfannschmidt for most of the merging work.
 
 - "-r" option now accepts "a" to include all possible reports, similar
-  to passing "fEsxXw" explicitly (isse960).
+  to passing "fEsxXw" explicitly (issue960).
   Thanks Abhijeet Kasurde for the PR.
 
 - avoid python3.5 deprecation warnings by introducing version
@@ -5633,7 +5667,7 @@ time or change existing behaviors in order to make them less surprising/more use
 - fix issue435: make reload() work when assert rewriting is active.
   Thanks Daniel Hahler.
 
-- fix issue616: conftest.py files and their contained fixutres are now
+- fix issue616: conftest.py files and their contained fixtures are now
   properly considered for visibility, independently from the exact
   current working directory and test arguments that are used.
   Many thanks to Eric Siegerman and his PR235 which contains
@@ -7180,7 +7214,7 @@ Bug fixes:
 
 - streamlined plugin loading: order is now as documented in
   customize.html: setuptools, ENV, commandline, conftest.
-  also setuptools entry point names are turned to canonical namees ("pytest_*")
+  also setuptools entry point names are turned to canonical names ("pytest_*")
 
 - automatically skip tests that need 'capfd' but have no os.dup
 

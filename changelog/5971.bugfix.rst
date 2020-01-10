@@ -1,0 +1,2 @@
+Fix a ``pytest-xdist`` crash when dealing with exceptions raised in subprocesses created by the
+``multiprocessing`` module.

@@ -305,11 +305,67 @@ class TestReportSerialization:
 
         data = report._to_json()
         loaded_report = report_class._from_json(data)
+
+        assert loaded_report.failed
         check_longrepr(loaded_report.longrepr)
 
         # make sure we don't blow up on ``toterminal`` call; we don't test the actual output because it is very
         # brittle and hard to maintain, but we can assume it is correct because ``toterminal`` is already tested
         # elsewhere and we do check the contents of the longrepr object after loading it.
+        loaded_report.longrepr.toterminal(tw_mock)
+
+    def test_chained_exceptions_no_reprcrash(
+        self, testdir, tw_mock,
+    ):
+        """Regression test for tracebacks without a reprcrash (#5971)
+
+        This happens notably on exceptions raised by multiprocess.pool: the exception transfer
+        from subprocess to main process creates an artificial exception, which ExceptionInfo
+        can't obtain the ReprFileLocation from.
+        """
+        testdir.makepyfile(
+            """
+            from concurrent.futures import ProcessPoolExecutor
+
+            def func():
+                raise ValueError('value error')
+
+            def test_a():
+                with ProcessPoolExecutor() as p:
+                    p.submit(func).result()
+        """
+        )
+        reprec = testdir.inline_run()
+
+        reports = reprec.getreports("pytest_runtest_logreport")
+
+        def check_longrepr(longrepr):
+            assert isinstance(longrepr, ExceptionChainRepr)
+            assert len(longrepr.chain) == 2
+            entry1, entry2 = longrepr.chain
+            tb1, fileloc1, desc1 = entry1
+            tb2, fileloc2, desc2 = entry2
+
+            assert "RemoteTraceback" in str(tb1)
+            assert "ValueError: value error" in str(tb2)
+
+            assert fileloc1 is None
+            assert fileloc2.message == "ValueError: value error"
+
+        # 3 reports: setup/call/teardown: get the call report
+        assert len(reports) == 3
+        report = reports[1]
+
+        assert report.failed
+        check_longrepr(report.longrepr)
+
+        data = report._to_json()
+        loaded_report = TestReport._from_json(data)
+
+        assert loaded_report.failed
+        check_longrepr(loaded_report.longrepr)
+
+        # for same reasons as previous test, ensure we don't blow up here
         loaded_report.longrepr.toterminal(tw_mock)
 
 
