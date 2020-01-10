@@ -31,6 +31,7 @@ import py
 import _pytest
 from _pytest._io.saferepr import safeformat
 from _pytest._io.saferepr import saferepr
+from _pytest.compat import cached_property
 from _pytest.compat import overload
 
 if False:  # TYPE_CHECKING
@@ -65,7 +66,7 @@ class Code:
     def __ne__(self, other):
         return not self == other
 
-    @property
+    @cached_property
     def path(self):
         """ return a path object pointing to source code (note that it
         might not point to an actually existing file). """
@@ -81,7 +82,7 @@ class Code:
 
         return p
 
-    @property
+    @cached_property
     def fullsource(self) -> Optional["Source"]:
         """ return a _pytest._code.Source object for the full source file of the code
         """
@@ -124,7 +125,7 @@ class Frame:
         self.raw = frame
         self.code = Code(frame.f_code)
 
-    @property
+    @cached_property
     def statement(self) -> "Source":
         """ statement this frame is at """
         import _pytest._code
@@ -191,7 +192,7 @@ class TracebackEntry:
         assert mode in ("short", "long")
         self._repr_style = mode
 
-    @property
+    @cached_property
     def frame(self) -> Frame:
         return Frame(self._rawentry.tb_frame)
 
