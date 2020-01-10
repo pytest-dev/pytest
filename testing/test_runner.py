@@ -468,10 +468,7 @@ reporttypes = [reports.BaseReport, reports.TestReport, reports.CollectReport]
     "reporttype", reporttypes, ids=[x.__name__ for x in reporttypes]
 )
 def test_report_extra_parameters(reporttype):
-    if hasattr(inspect, "signature"):
-        args = list(inspect.signature(reporttype.__init__).parameters.keys())[1:]
-    else:
-        args = inspect.getargspec(reporttype.__init__)[0][1:]
+    args = list(inspect.signature(reporttype.__init__).parameters.keys())[1:]
     basekw = dict.fromkeys(args, [])
     report = reporttype(newthing=1, **basekw)
     assert report.newthing == 1

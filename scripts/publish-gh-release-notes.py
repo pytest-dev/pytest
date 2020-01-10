@@ -6,7 +6,13 @@ This script is meant to be executed after a successful deployment in Travis.
 Uses the following environment variables:
 
 * GIT_TAG: the name of the tag of the current commit.
-* GH_RELEASE_NOTES_TOKEN: a personal access token with 'repo' permissions. It should be encrypted using:
+* GH_RELEASE_NOTES_TOKEN: a personal access token with 'repo' permissions.
+
+  Create one at:
+
+    https://github.com/settings/tokens
+
+  It should be encrypted using:
 
     $travis encrypt GH_RELEASE_NOTES_TOKEN=<token> -r pytest-dev/pytest
 
@@ -33,7 +39,7 @@ def publish_github_release(slug, token, tag_name, body):
 
 
 def parse_changelog(tag_name):
-    p = Path(__file__).parent.parent / "CHANGELOG.rst"
+    p = Path(__file__).parent.parent / "doc/en/changelog.rst"
     changelog_lines = p.read_text(encoding="UTF-8").splitlines()
 
     title_regex = re.compile(r"pytest (\d\.\d+\.\d+) \(\d{4}-\d{2}-\d{2}\)")

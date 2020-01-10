@@ -1,0 +1,123 @@
+# evaluating GitHub actions for CI, disconsider failures when evaluating PRs
+#
+# this is still missing:
+# - deploy
+# - coverage
+# - upload github notes
+#
+name: main
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build:
+
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        name: [
+          "windows-py35",
+          "windows-py36",
+          "windows-py37",
+          "windows-py37-pluggy",
+          "windows-py38",
+
+          "ubuntu-py35",
+          "ubuntu-py36",
+          "ubuntu-py37",
+          "ubuntu-py37-pluggy",
+          "ubuntu-py37-freeze",
+          "ubuntu-py38",
+          "ubuntu-pypy3",
+
+          "macos-py37",
+          "macos-py38",
+
+          "linting",
+        ]
+
+        include:
+          - name: "windows-py35"
+            python: "3.5"
+            os: windows-latest
+            tox_env: "py35-xdist"
+          - name: "windows-py36"
+            python: "3.6"
+            os: windows-latest
+            tox_env: "py36-xdist"
+          - name: "windows-py37"
+            python: "3.7"
+            os: windows-latest
+            tox_env: "py37-twisted-numpy"
+          - name: "windows-py37-pluggy"
+            python: "3.7"
+            os: windows-latest
+            tox_env: "py37-pluggymaster-xdist"
+          - name: "windows-py38"
+            python: "3.8"
+            os: windows-latest
+            tox_env: "py38"
+
+          - name: "ubuntu-py35"
+            python: "3.5"
+            os: ubuntu-latest
+            tox_env: "py35-xdist"
+          - name: "ubuntu-py36"
+            python: "3.6"
+            os: ubuntu-latest
+            tox_env: "py36-xdist"
+          - name: "ubuntu-py37"
+            python: "3.7"
+            os: ubuntu-latest
+            tox_env: "py37-lsof-numpy-oldattrs-pexpect-twisted"
+          - name: "ubuntu-py37-pluggy"
+            python: "3.7"
+            os: ubuntu-latest
+            tox_env: "py37-pluggymaster-xdist"
+          - name: "ubuntu-py37-freeze"
+            python: "3.7"
+            os: ubuntu-latest
+            tox_env: "py37-freeze"
+          - name: "ubuntu-py38"
+            python: "3.8"
+            os: ubuntu-latest
+            tox_env: "py38-xdist"
+          - name: "ubuntu-pypy3"
+            python: "pypy3"
+            os: ubuntu-latest
+            tox_env: "pypy3-xdist"
+
+          - name: "macos-py37"
+            python: "3.7"
+            os: macos-latest
+            tox_env: "py37-xdist"
+          - name: "macos-py38"
+            python: "3.8"
+            os: macos-latest
+            tox_env: "py38-xdist"
+
+          - name: "linting"
+            python: "3.7"
+            os: ubuntu-latest
+            tox_env: "linting,docs,doctesting"
+
+    steps:
+    - uses: actions/checkout@v1
+    - name: Set up Python ${{ matrix.python }}
+      uses: actions/setup-python@v1
+      with:
+        python-version: ${{ matrix.python }}
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install tox
+    - name: Test
+      run: tox -e ${{ matrix.tox_env }}
