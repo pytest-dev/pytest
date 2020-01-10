@@ -4,8 +4,9 @@ from typing import TypeVar
 
 import attr
 
+from _pytest.compat import TYPE_CHECKING
 
-if False:  # TYPE_CHECKING
+if TYPE_CHECKING:
     from typing import Type  # noqa: F401 (used in type string)
 
 

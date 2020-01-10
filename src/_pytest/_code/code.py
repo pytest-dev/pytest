@@ -32,8 +32,9 @@ import _pytest
 from _pytest._io.saferepr import safeformat
 from _pytest._io.saferepr import saferepr
 from _pytest.compat import overload
+from _pytest.compat import TYPE_CHECKING
 
-if False:  # TYPE_CHECKING
+if TYPE_CHECKING:
     from typing import Type
     from typing_extensions import Literal
     from weakref import ReferenceType  # noqa: F401

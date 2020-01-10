@@ -23,9 +23,10 @@ from more_itertools.more import always_iterable
 import _pytest._code
 from _pytest.compat import overload
 from _pytest.compat import STRING_TYPES
+from _pytest.compat import TYPE_CHECKING
 from _pytest.outcomes import fail
 
-if False:  # TYPE_CHECKING
+if TYPE_CHECKING:
     from typing import Type  # noqa: F401 (used in type string)
 
 

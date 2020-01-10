@@ -37,12 +37,13 @@ from .findpaths import exists
 from _pytest._code import ExceptionInfo
 from _pytest._code import filter_traceback
 from _pytest.compat import importlib_metadata
+from _pytest.compat import TYPE_CHECKING
 from _pytest.outcomes import fail
 from _pytest.outcomes import Skipped
 from _pytest.pathlib import Path
 from _pytest.warning_types import PytestConfigWarning
 
-if False:  # TYPE_CHECKING
+if TYPE_CHECKING:
     from typing import Type
 
 
