@@ -679,10 +679,7 @@ class TestStackLevel:
         # with stacklevel=2 the warning should originate from
         # config.PytestPluginManager.import_plugin is thrown by a skipped plugin
 
-        # During config parsing the the pluginargs are checked in a while loop
-        # that as a result of the argument count runs import_plugin twice, hence
-        # two identical warnings are captured (is this intentional?).
-        assert len(capwarn.captured) == 2
+        assert len(capwarn.captured) == 1
         warning, location = capwarn.captured.pop()
         file, _, func = location
 
