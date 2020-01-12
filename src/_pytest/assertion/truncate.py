@@ -40,6 +40,8 @@ def _truncate_explanation(input_lines, max_lines=None, max_chars=None):
 
     Truncates to either 8 lines, or 640 characters - whichever the input reaches
     first. The remaining lines will be replaced by a usage message.
+
+    Check https://github.com/pytest-dev/pytest/issues/6267 for corner cases
     """
 
     if max_lines is None:
@@ -48,6 +50,7 @@ def _truncate_explanation(input_lines, max_lines=None, max_chars=None):
         max_chars = DEFAULT_MAX_CHARS
 
     # Check if truncation required
+
     input_char_count = len("".join(input_lines))
     if len(input_lines) <= max_lines and input_char_count <= max_chars:
         return input_lines
@@ -62,12 +65,18 @@ def _truncate_explanation(input_lines, max_lines=None, max_chars=None):
 
     # Append useful message to explanation
     truncated_line_count = len(input_lines) - len(truncated_explanation)
-    truncated_line_count += 1  # Account for the part-truncated final line
     msg = "...Full output truncated"
+    last_truncated = not (
+        input_lines[len(truncated_explanation) - 1] in truncated_explanation[-1]
+    )
     if truncated_line_count == 1:
-        msg += " ({} line hidden)".format(truncated_line_count)
+        msg += " ({} line hidden".format(truncated_line_count)
     else:
-        msg += " ({} lines hidden)".format(truncated_line_count)
+        msg += " ({} lines hidden".format(truncated_line_count)
+    if last_truncated:
+        msg += ",1 truncated)"
+    else:
+        msg += ")"
     msg += ", {}".format(USAGE_MSG)
     truncated_explanation.extend(["", str(msg)])
     return truncated_explanation
