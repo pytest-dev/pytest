@@ -29,7 +29,10 @@ def main():
                 "nose",
                 "requests",
                 "xmlschema",
-            ]
+            ],
+            "checkqa-mypy": [
+                "mypy==v0.761",  # keep this in sync with .pre-commit-config.yaml.
+            ],
         },
         install_requires=INSTALL_REQUIRES,
     )
