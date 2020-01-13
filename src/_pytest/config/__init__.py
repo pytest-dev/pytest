@@ -172,7 +172,10 @@ builtin_plugins = set(default_plugins)
 builtin_plugins.add("pytester")
 
 
-def get_config(args=None, plugins=None):
+def get_config(
+    args: Optional[Union[List, Tuple]] = None,
+    plugins: Optional[Sequence[Union[str, object]]] = None,
+) -> "Config":
     # subsequent calls to main will create a fresh instance
     pluginmanager = PytestPluginManager()
     config = Config(
@@ -191,7 +194,7 @@ def get_config(args=None, plugins=None):
     return config
 
 
-def get_plugin_manager():
+def get_plugin_manager() -> PluginManager:
     """
     Obtain a new instance of the
     :py:class:`_pytest.config.PytestPluginManager`, with default plugins
@@ -203,7 +206,10 @@ def get_plugin_manager():
     return get_config().pluginmanager
 
 
-def _prepareconfig(args=None, plugins=None):
+def _prepareconfig(
+    args: Optional[Union[List, Tuple]] = None,
+    plugins: Optional[Sequence[Union[str, object]]] = None,
+):
     if args is None:
         args = sys.argv[1:]
     elif isinstance(args, py.path.local):
@@ -732,7 +738,9 @@ class Config:
         plugins = attr.ib()
         dir = attr.ib(type=Path)
 
-    def __init__(self, pluginmanager, *, invocation_params=None):
+    def __init__(
+        self, pluginmanager: "PytestPluginManager", *, invocation_params=None
+    ) -> None:
         from .argparsing import Parser, FILE_OR_DIR
 
         if invocation_params is None:
