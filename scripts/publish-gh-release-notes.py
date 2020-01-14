@@ -68,19 +68,21 @@ def main(argv):
     if len(argv) > 1:
         tag_name = argv[1]
     else:
-        tag_name = os.environ.get("TRAVIS_TAG")
+        tag_name = os.environ.get("GITHUB_REF")
         if not tag_name:
-            print("tag_name not given and $TRAVIS_TAG not set", file=sys.stderr)
+            print("tag_name not given and $GITHUB_REF not set", file=sys.stderr)
             return 1
+        if tag_name.startswith("refs/tags/"):
+            tag_name = tag_name[len("refs/tags/") :]
 
     token = os.environ.get("GH_RELEASE_NOTES_TOKEN")
     if not token:
         print("GH_RELEASE_NOTES_TOKEN not set", file=sys.stderr)
         return 1
 
-    slug = os.environ.get("TRAVIS_REPO_SLUG")
+    slug = os.environ.get("GITHUB_REPOSITORY")
     if not slug:
-        print("TRAVIS_REPO_SLUG not set", file=sys.stderr)
+        print("GITHUB_REPOSITORY not set", file=sys.stderr)
         return 1
 
     rst_body = parse_changelog(tag_name)
