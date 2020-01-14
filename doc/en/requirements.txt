@@ -1,4 +1,4 @@
-sphinx_theme
+sphinx_rtd_theme
 pygments-pytest>=1.1.0
 sphinx-removed-in>=0.2.0
 sphinx>=1.8.2,<2.1
