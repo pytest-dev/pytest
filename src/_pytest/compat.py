@@ -371,7 +371,7 @@ class CaptureIO(io.TextIOWrapper):
         return self.buffer.getvalue().decode("UTF-8")
 
 
-if sys.version_info < (3, 5, 2):  # pragma: no cover
+if sys.version_info < (3, 5, 2):
 
     def overload(f):  # noqa: F811
         return f
