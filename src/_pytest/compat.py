@@ -382,7 +382,7 @@ class CaptureAndPassthroughIO(CaptureIO):
         return self._other.write(s)
 
 
-if sys.version_info < (3, 5, 2):  # pragma: no cover
+if sys.version_info < (3, 5, 2):
 
     def overload(f):  # noqa: F811
         return f
