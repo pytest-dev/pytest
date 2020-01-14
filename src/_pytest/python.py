@@ -545,15 +545,23 @@ class Module(nodes.File, PyCollector):
 
 
 class Package(Module):
-    def __init__(self, fspath, parent=None, config=None, session=None, nodeid=None):
+    def __init__(
+        self,
+        fspath: py.path.local,
+        parent: nodes.Collector,
+        # NOTE: following args are unused:
+        config=None,
+        session=None,
+        nodeid=None,
+    ) -> None:
+        # NOTE: could be just the following, but kept as-is for compat.
+        # nodes.FSCollector.__init__(self, fspath, parent=parent)
         session = parent.session
         nodes.FSCollector.__init__(
             self, fspath, parent=parent, config=config, session=session, nodeid=nodeid
         )
+
         self.name = fspath.dirname
-        self.trace = session.trace
-        self._norecursepatterns = session._norecursepatterns
-        self.fspath = fspath
 
     def setup(self):
         # not using fixtures to call setup_module here because autouse fixtures
