@@ -445,7 +445,9 @@ class DoctestModule(pytest.Module):
                     obj = getattr(obj, "fget", obj)
                 return doctest.DocTestFinder._find_lineno(self, obj, source_lines)
 
-            def _find(self, tests, obj, name, module, source_lines, globs, seen):
+            def _find(
+                self, tests, obj, name, module, source_lines, globs, seen
+            ) -> None:
                 if _is_mocked(obj):
                     return
                 with _patch_unwrap_mock_aware():

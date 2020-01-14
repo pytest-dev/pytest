@@ -250,7 +250,7 @@ def pytest_runtest_makereport(item, call):
     return TestReport.from_item_and_call(item, call)
 
 
-def pytest_make_collect_report(collector):
+def pytest_make_collect_report(collector) -> CollectReport:
     call = CallInfo.from_call(lambda: list(collector.collect()), "collect")
     longrepr = None
     if not call.excinfo:

@@ -318,16 +318,12 @@ class TestSourceParsingAndCompiling:
 
     @pytest.mark.parametrize("name", ["", None, "my"])
     def test_compilefuncs_and_path_sanity(self, name: Optional[str]) -> None:
-        def check(comp, name):
+        def check(comp, name) -> None:
             co = comp(self.source, name)
             if not name:
                 expected = "codegen %s:%d>" % (mypath, mylineno + 2 + 2)  # type: ignore
             else:
-                expected = "codegen %r %s:%d>" % (
-                    name,
-                    mypath,  # type: ignore
-                    mylineno + 2 + 2,  # type: ignore
-                )  # type: ignore
+                expected = "codegen %r %s:%d>" % (name, mypath, mylineno + 2 + 2)  # type: ignore
             fn = co.co_filename
             assert fn.endswith(expected)
 

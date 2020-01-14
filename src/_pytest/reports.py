@@ -259,7 +259,7 @@ class TestReport(BaseReport):
         )
 
     @classmethod
-    def from_item_and_call(cls, item, call):
+    def from_item_and_call(cls, item, call) -> "TestReport":
         """
         Factory method to create and fill a TestReport with standard item and call info.
         """
