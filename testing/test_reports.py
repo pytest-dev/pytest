@@ -1,3 +1,5 @@
+import sys
+
 import pytest
 from _pytest._code.code import ExceptionChainRepr
 from _pytest.pathlib import Path
@@ -314,27 +316,52 @@ class TestReportSerialization:
         # elsewhere and we do check the contents of the longrepr object after loading it.
         loaded_report.longrepr.toterminal(tw_mock)
 
-    def test_chained_exceptions_no_reprcrash(
-        self, testdir, tw_mock,
-    ):
+    def test_chained_exceptions_no_reprcrash(self, testdir, tw_mock):
         """Regression test for tracebacks without a reprcrash (#5971)
 
         This happens notably on exceptions raised by multiprocess.pool: the exception transfer
         from subprocess to main process creates an artificial exception, which ExceptionInfo
         can't obtain the ReprFileLocation from.
         """
-        testdir.makepyfile(
+        # somehow in Python 3.5 on Windows this test fails with:
+        #   File "c:\...\3.5.4\x64\Lib\multiprocessing\connection.py", line 302, in _recv_bytes
+        #     overlapped=True)
+        # OSError: [WinError 6] The handle is invalid
+        #
+        # so in this platform we opted to use a mock traceback which is identical to the
+        # one produced by the multiprocessing module
+        if sys.version_info[:2] <= (3, 5) and sys.platform.startswith("win"):
+            testdir.makepyfile(
+                """
+                # equivalent of multiprocessing.pool.RemoteTraceback
+                class RemoteTraceback(Exception):
+                    def __init__(self, tb):
+                        self.tb = tb
+                    def __str__(self):
+                        return self.tb
+                def test_a():
+                    try:
+                        raise ValueError('value error')
+                    except ValueError as e:
+                        # equivalent to how multiprocessing.pool.rebuild_exc does it
+                        e.__cause__ = RemoteTraceback('runtime error')
+                        raise e
             """
-            from concurrent.futures import ProcessPoolExecutor
+            )
+        else:
+            testdir.makepyfile(
+                """
+                from concurrent.futures import ProcessPoolExecutor
 
-            def func():
-                raise ValueError('value error')
+                def func():
+                    raise ValueError('value error')
 
-            def test_a():
-                with ProcessPoolExecutor() as p:
-                    p.submit(func).result()
-        """
-        )
+                def test_a():
+                    with ProcessPoolExecutor() as p:
+                        p.submit(func).result()
+            """
+            )
+
         reprec = testdir.inline_run()
 
         reports = reprec.getreports("pytest_runtest_logreport")
