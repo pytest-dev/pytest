@@ -1,8 +1,7 @@
-# evaluating GitHub actions for CI, disconsider failures when evaluating PRs
+# evaluating GitHub actions for CI, disregard failures when evaluating PRs
 #
 # this is still missing:
 # - deploy
-# - coverage
 # - upload github notes
 #
 name: main
@@ -17,7 +16,6 @@ on:
 
 jobs:
   build:
-
     runs-on: ${{ matrix.os }}
 
     strategy:
@@ -86,6 +84,8 @@ jobs:
             python: "3.7"
             os: ubuntu-latest
             tox_env: "py37-freeze"
+            # coverage does not apply for freeze test, skip it
+            skip_coverage: true
           - name: "ubuntu-py38"
             python: "3.8"
             os: ubuntu-latest
@@ -94,6 +94,8 @@ jobs:
             python: "pypy3"
             os: ubuntu-latest
             tox_env: "pypy3-xdist"
+            # coverage too slow with pypy3, skip it
+            skip_coverage: true
 
           - name: "macos-py37"
             python: "3.7"
@@ -118,6 +120,37 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install tox
-    - name: Test
-      run: tox -e ${{ matrix.tox_env }}
+        pip install tox coverage
+
+    - name: Test without coverage
+      if: "matrix.skip_coverage"
+      run: "tox -e ${{ matrix.tox_env }}"
+
+    - name: Test with coverage
+      if: "! matrix.skip_coverage"
+      env:
+        _PYTEST_TOX_COVERAGE_RUN: "coverage run -m"
+        COVERAGE_PROCESS_START: ".coveragerc"
+        _PYTEST_TOX_EXTRA_DEP: "coverage-enable-subprocess"
+      run: "tox -e ${{ matrix.tox_env }}"
+
+    - name: Prepare coverage token
+      if: success() && !matrix.skip_coverage && ( github.repository == 'pytest-dev/pytest' || github.event_name == 'pull_request' )
+      run: |
+        python scripts/append_codecov_token.py
+
+    - name: Combine coverage
+      if: success() && !matrix.skip_coverage
+      run: |
+        python -m coverage combine
+        python -m coverage xml
+
+    - name: Codecov upload
+      if: success() && !matrix.skip_coverage
+      uses: codecov/codecov-action@v1
+      with:
+        token: ${{ secrets.codecov }}
+        file: ./coverage.xml
+        flags: ${{ runner.os }}
+        fail_ci_if_error: false
+        name: ${{ matrix.name }}
