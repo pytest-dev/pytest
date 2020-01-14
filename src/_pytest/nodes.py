@@ -49,7 +49,7 @@ def _splitnode(nodeid):
         []
         ['testing', 'code']
         ['testing', 'code', 'test_excinfo.py']
-        ['testing', 'code', 'test_excinfo.py', 'TestFormattedExcinfo', '()']
+        ['testing', 'code', 'test_excinfo.py', 'TestFormattedExcinfo']
     """
     if nodeid == "":
         # If there is no root node at all, return an empty list so the caller's logic can remain sane
