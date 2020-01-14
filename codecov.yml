@@ -1,5 +1,3 @@
-# note: `.github/codecov-upstream.yml` is basically a copy of this file, please propagate
-# changes as needed
 coverage:
   status:
     project: true
