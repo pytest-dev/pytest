@@ -35,7 +35,6 @@ from _pytest.compat import safe_isclass
 from _pytest.compat import STRING_TYPES
 from _pytest.config import hookimpl
 from _pytest.deprecated import FUNCARGNAMES
-from _pytest.main import FSHookProxy
 from _pytest.mark import MARK_GEN
 from _pytest.mark.structures import get_unpacked_marks
 from _pytest.mark.structures import normalize_mark_list
@@ -579,32 +578,8 @@ class Package(Module):
             func = partial(_call_with_optional_argument, teardown_module, self.obj)
             self.addfinalizer(func)
 
-    def _recurse(self, dirpath: py.path.local) -> bool:
-        if dirpath.basename == "__pycache__":
-            return False
-        ihook = self.gethookproxy(dirpath.dirpath())
-        if ihook.pytest_ignore_collect(path=dirpath, config=self.config):
-            return False
-        for pat in self._norecursepatterns:
-            if dirpath.check(fnmatch=pat):
-                return False
-        ihook = self.gethookproxy(dirpath)
-        ihook.pytest_collect_directory(path=dirpath, parent=self)
-        return True
-
     def gethookproxy(self, fspath):
-        # check if we have the common case of running
-        # hooks with all conftest.py files
-        pm = self.config.pluginmanager
-        my_conftestmodules = pm._getconftestmodules(fspath)
-        remove_mods = pm._conftest_plugins.difference(my_conftestmodules)
-        if remove_mods:
-            # one or more conftests are not in use at this fspath
-            proxy = FSHookProxy(fspath, pm, remove_mods)
-        else:
-            # all plugins are active for this fspath
-            proxy = self.config.hook
-        return proxy
+        return super()._gethookproxy(fspath)
 
     def _collectfile(self, path, handle_dupes=True):
         assert (
