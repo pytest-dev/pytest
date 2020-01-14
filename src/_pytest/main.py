@@ -625,7 +625,7 @@ class Session(nodes.FSCollector):
 
         return ihook.pytest_collect_file(path=path, parent=self)
 
-    def _recurse(self, dirpath):
+    def _recurse(self, dirpath: py.path.local) -> bool:
         if dirpath.basename == "__pycache__":
             return False
         ihook = self.gethookproxy(dirpath.dirpath())

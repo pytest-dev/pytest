@@ -571,12 +571,12 @@ class Package(Module):
             func = partial(_call_with_optional_argument, teardown_module, self.obj)
             self.addfinalizer(func)
 
-    def _recurse(self, dirpath):
+    def _recurse(self, dirpath: py.path.local) -> bool:
         if dirpath.basename == "__pycache__":
             return False
         ihook = self.gethookproxy(dirpath.dirpath())
         if ihook.pytest_ignore_collect(path=dirpath, config=self.config):
-            return
+            return False
         for pat in self._norecursepatterns:
             if dirpath.check(fnmatch=pat):
                 return False
