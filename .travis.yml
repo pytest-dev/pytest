@@ -52,8 +52,10 @@ jobs:
     - env: TOXENV=pypy3-xdist
       python: 'pypy3'
 
-    - env: TOXENV=py35-xdist
-      python: '3.5'
+    # Coverage for Python 3.5.{0,1} specific code, mostly typing related.
+    - env: TOXENV=py35 PYTEST_COVERAGE=1 PYTEST_ADDOPTS="-k test_raises_cyclic_reference"
+      python: '3.5.1'
+      dist: trusty
 
     # Specialized factors for py37.
     - env: TOXENV=py37-pluggymaster-xdist

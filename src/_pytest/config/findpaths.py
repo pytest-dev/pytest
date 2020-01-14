@@ -108,7 +108,7 @@ CFG_PYTEST_SECTION = "[pytest] section in {filename} files is no longer supporte
 
 
 def determine_setup(
-    inifile: str,
+    inifile: Optional[str],
     args: List[str],
     rootdir_cmd_arg: Optional[str] = None,
     config: Optional["Config"] = None,
