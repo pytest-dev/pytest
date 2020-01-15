@@ -1,0 +1,2 @@
+When output is close to truncation limit, we now write 'N lines hidden [1 truncated]',
+instead of 'N+1 lines hidden' - last line which we show isn't really hidden always, neither it's always really truncated.
