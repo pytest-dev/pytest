@@ -25,7 +25,12 @@ repos:
     hooks:
     -   id: flake8
         language_version: python3
-        additional_dependencies: [flake8-typing-imports==1.3.0]
+        additional_dependencies: [
+          flake8-typing-imports==1.3.0,
+          # To handle PEP 484 type comments with following text.
+          # (https://github.com/PyCQA/pyflakes/pull/455)
+          'git+https://github.com/PyCQA/pyflakes.git@1911c20#egg=pyflakes',
+        ]
 -   repo: https://github.com/asottile/reorder_python_imports
     rev: v1.4.0
     hooks:
