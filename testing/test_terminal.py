@@ -186,10 +186,14 @@ class TestTerminal:
         """
         )
         result = testdir.runpytest(p2)
-        result.stdout.fnmatch_lines(["*test_p2.py .*", "*1 passed*"])
-        result = testdir.runpytest("-vv", p2)
+        result.stdout.fnmatch_lines(["test_p2.py .*", "=* 1 passed in *"])
+        result = testdir.runpytest("-vv", "-rA", p2)
         result.stdout.fnmatch_lines(
-            ["*test_p2.py::TestMore::test_p1* <- *test_p1.py*PASSED*"]
+            [
+                "test_p2.py::TestMore::test_p1 <- test_p1.py PASSED *",
+                "*= short test summary info =*",
+                "PASSED test_p2.py::TestMore::test_p1",
+            ]
         )
 
     def test_itemreport_directclasses_not_shown_as_subclasses(self, testdir):
