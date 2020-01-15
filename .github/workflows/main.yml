@@ -20,6 +20,8 @@ on:
 jobs:
   build:
     runs-on: ${{ matrix.os }}
+    env:
+      PYTEST_ADDOPTS: "-vv"
 
     strategy:
       fail-fast: false
