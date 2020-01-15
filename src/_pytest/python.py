@@ -10,7 +10,9 @@ from collections import defaultdict
 from collections.abc import Sequence
 from functools import partial
 from textwrap import dedent
+from typing import Dict
 from typing import List
+from typing import Optional
 from typing import Tuple
 from typing import Union
 
@@ -839,7 +841,7 @@ class CallSpec2:
         self._globalparam = NOTSET
         self._arg2scopenum = {}  # used for sorting parametrized resources
         self.marks = []
-        self.indices = {}
+        self.indices = {}  # type: Dict[str, int]
 
     def copy(self):
         cs = CallSpec2(self.metafunc)
@@ -1368,7 +1370,7 @@ class Function(FunctionMixin, nodes.Item):
         parent,
         args=None,
         config=None,
-        callspec=None,
+        callspec: Optional[CallSpec2] = None,
         callobj=NOTSET,
         keywords=None,
         session=None,

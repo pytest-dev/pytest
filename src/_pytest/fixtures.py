@@ -7,8 +7,10 @@ from collections import defaultdict
 from collections import deque
 from collections import OrderedDict
 from typing import Dict
+from typing import Generator
 from typing import List
 from typing import Tuple
+from typing import Union
 
 import attr
 import py
@@ -38,6 +40,9 @@ if TYPE_CHECKING:
     from typing import Type
 
     from _pytest import nodes
+    from _pytest.main import Session
+    from _pytest.python import Class  # noqa: F401
+    from _pytest.python import Function
 
 
 @attr.s(frozen=True)
@@ -46,7 +51,7 @@ class PseudoFixtureDef:
     scope = attr.ib()
 
 
-def pytest_sessionstart(session):
+def pytest_sessionstart(session: "Session") -> None:
     import _pytest.python
     import _pytest.nodes
 
@@ -179,30 +184,43 @@ def getfixturemarker(obj):
         return None
 
 
-def get_parametrized_fixture_keys(item, scopenum):
+def get_parametrized_fixture_keys(
+    item: "nodes.Item",  # only used for Function (with callspec), kept for B/C.
+    scopenum: int,
+) -> Generator[
+    Union[
+        Tuple[str, int],
+        Tuple[str, int, py.path.local],
+        Tuple[str, int, py.path.local, "Class"],
+    ],
+    None,
+    None,
+]:
     """ return list of keys for all parametrized arguments which match
     the specified scope. """
-    assert scopenum < scopenum_function  # function
+    assert scopenum < scopenum_function, (scopenum, scopenum_function)
+
     try:
-        cs = item.callspec
+        cs = item.callspec  # type: ignore[attr-defined]
     except AttributeError:
-        pass
-    else:
-        # cs.indices.items() is random order of argnames.  Need to
-        # sort this so that different calls to
-        # get_parametrized_fixture_keys will be deterministic.
-        for argname, param_index in sorted(cs.indices.items()):
-            if cs._arg2scopenum[argname] != scopenum:
-                continue
+        return
+    if TYPE_CHECKING:
+        assert isinstance(item, Function)
+
+    # cs.indices.items() is random order of argnames.  Need to
+    # sort this so that different calls to
+    # get_parametrized_fixture_keys will be deterministic.
+    for argname, param_index in sorted(cs.indices.items()):
+        if cs._arg2scopenum[argname] == scopenum:
             if scopenum == 0:  # session
-                key = (argname, param_index)
+                yield (argname, param_index)
             elif scopenum == 1:  # package
-                key = (argname, param_index, item.fspath.dirpath())
+                yield (argname, param_index, item.fspath.dirpath())
             elif scopenum == 2:  # module
-                key = (argname, param_index, item.fspath)
-            elif scopenum == 3:  # class
-                key = (argname, param_index, item.fspath, item.cls)
-            yield key
+                yield (argname, param_index, item.fspath)
+            else:  # class
+                assert scopenum == 3, scopenum
+                yield (argname, param_index, item.fspath, item.cls)
 
 
 # algorithm for sorting on a per-parametrized resource setup basis
