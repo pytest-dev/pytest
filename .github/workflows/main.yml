@@ -140,7 +140,7 @@ jobs:
     - name: Prepare coverage token
       if: success() && !matrix.skip_coverage && ( github.repository == 'pytest-dev/pytest' || github.event_name == 'pull_request' )
       run: |
-        python scripts/append_codecov_token.py
+        python scripts/append-codecov-token.py
 
     - name: Combine coverage
       if: success() && !matrix.skip_coverage
