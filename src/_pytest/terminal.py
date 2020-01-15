@@ -833,8 +833,20 @@ class TerminalReporter:
                         msg = self._getfailureheadline(rep)
                         self.write_sep("_", msg, green=True, bold=True)
                         self._outrep_summary(rep)
+                    self._handle_teardown_sections(rep.nodeid)
 
-    def print_teardown_sections(self, rep):
+    def _get_teardown_reports(self, nodeid: str) -> List[TestReport]:
+        return [
+            report
+            for report in self.getreports("")
+            if report.when == "teardown" and report.nodeid == nodeid
+        ]
+
+    def _handle_teardown_sections(self, nodeid: str) -> None:
+        for report in self._get_teardown_reports(nodeid):
+            self.print_teardown_sections(report)
+
+    def print_teardown_sections(self, rep: TestReport) -> None:
         showcapture = self.config.option.showcapture
         if showcapture == "no":
             return
@@ -858,17 +870,11 @@ class TerminalReporter:
                     line = self._getcrashline(rep)
                     self.write_line(line)
             else:
-                teardown_sections = {}
-                for report in self.getreports(""):
-                    if report.when == "teardown":
-                        teardown_sections.setdefault(report.nodeid, []).append(report)
-
                 for rep in reports:
                     msg = self._getfailureheadline(rep)
                     self.write_sep("_", msg, red=True, bold=True)
                     self._outrep_summary(rep)
-                    for report in teardown_sections.get(rep.nodeid, []):
-                        self.print_teardown_sections(report)
+                    self._handle_teardown_sections(rep.nodeid)
 
     def summary_errors(self):
         if self.config.option.tbstyle != "no":
