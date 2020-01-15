@@ -170,29 +170,52 @@ class TestTerminal:
 
     def test_itemreport_subclasses_show_subclassed_file(self, testdir):
         testdir.makepyfile(
-            test_p1="""
+            **{
+                "tests/test_p1": """
             class BaseTests(object):
+                fail = False
+
                 def test_p1(self):
-                    pass
-            class TestClass(BaseTests):
-                pass
-        """
-        )
-        p2 = testdir.makepyfile(
-            test_p2="""
+                    if self.fail: assert 0
+                """,
+                "tests/test_p2": """
             from test_p1 import BaseTests
-            class TestMore(BaseTests):
-                pass
-        """
+
+            class TestMore(BaseTests): pass
+                """,
+                "tests/test_p3.py": """
+            from test_p1 import BaseTests
+
+            BaseTests.fail = True
+
+            class TestMore(BaseTests): pass
+        """,
+            }
         )
-        result = testdir.runpytest(p2)
-        result.stdout.fnmatch_lines(["test_p2.py .*", "=* 1 passed in *"])
-        result = testdir.runpytest("-vv", "-rA", p2)
+        result = testdir.runpytest("tests/test_p2.py", "--rootdir=tests")
+        result.stdout.fnmatch_lines(["tests/test_p2.py .*", "=* 1 passed in *"])
+
+        result = testdir.runpytest("-vv", "-rA", "tests/test_p2.py", "--rootdir=tests")
         result.stdout.fnmatch_lines(
             [
-                "test_p2.py::TestMore::test_p1 <- test_p1.py PASSED *",
+                "tests/test_p2.py::TestMore::test_p1 <- test_p1.py PASSED *",
                 "*= short test summary info =*",
-                "PASSED test_p2.py::TestMore::test_p1",
+                "PASSED tests/test_p2.py::TestMore::test_p1",
+            ]
+        )
+        result = testdir.runpytest("-vv", "-rA", "tests/test_p3.py", "--rootdir=tests")
+        result.stdout.fnmatch_lines(
+            [
+                "tests/test_p3.py::TestMore::test_p1 <- test_p1.py FAILED *",
+                "*_ TestMore.test_p1 _*",
+                "    def test_p1(self):",
+                ">       if self.fail: assert 0",
+                "E       assert 0",
+                "",
+                "tests/test_p1.py:5: AssertionError",
+                "*= short test summary info =*",
+                "FAILED tests/test_p3.py::TestMore::test_p1 - assert 0",
+                "*= 1 failed in *",
             ]
         )
 
