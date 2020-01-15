@@ -80,6 +80,13 @@ jobs:
           - name: "ubuntu-py37"
             python: "3.7"
             os: ubuntu-latest
+            # Coverage for:
+            # - pytester's LsofFdLeakChecker
+            # - TestArgComplete (linux only)
+            # - numpy
+            # - old attrs
+            # - verbose=0
+            # - test_sys_breakpoint_interception (via pexpect).
             tox_env: "py37-lsof-numpy-oldattrs-pexpect-twisted"
           - name: "ubuntu-py37-pluggy"
             python: "3.7"
@@ -106,6 +113,9 @@ jobs:
             python: "3.7"
             os: macos-latest
             tox_env: "py37-xdist"
+            env:
+              # Cover verbose=1.
+              PYTEST_ADDOPTS: -v
           - name: "macos-py38"
             python: "3.8"
             os: macos-latest
