@@ -156,7 +156,6 @@ jobs:
       with:
         token: ${{ secrets.codecov }}
         file: ./coverage.xml
-        flags: ${{ runner.os }}
         fail_ci_if_error: false
         name: ${{ matrix.name }}
 
