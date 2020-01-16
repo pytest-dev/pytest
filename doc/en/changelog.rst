@@ -4842,7 +4842,7 @@ time or change existing behaviors in order to make them less surprising/more use
 * Updated docstrings with a more uniform style.
 
 * Add stderr write for ``pytest.exit(msg)`` during startup. Previously the message was never shown.
-  Thanks `@BeyondEvil`_ for reporting `#1210`_. Thanks to `@jgsonesen`_ and
+  Thanks `@BeyondEvil`_ for reporting `#1210`_. Thanks to @jgsonesen and
   `@tomviner`_ for the PR.
 
 * No longer display the incorrect test deselection reason (`#1372`_).
@@ -4974,7 +4974,6 @@ time or change existing behaviors in order to make them less surprising/more use
 .. _@gprasad84: https://github.com/gprasad84
 .. _@graingert: https://github.com/graingert
 .. _@hartym: https://github.com/hartym
-.. _@jgsonesen: https://github.com/jgsonesen
 .. _@kalekundert: https://github.com/kalekundert
 .. _@kvas-it: https://github.com/kvas-it
 .. _@marscher: https://github.com/marscher
