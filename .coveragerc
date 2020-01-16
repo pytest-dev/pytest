@@ -24,3 +24,5 @@ exclude_lines =
     \#\s*pragma: no cover
     ^\s*raise NotImplementedError\b
     ^\s*return NotImplemented\b
+
+    ^\s*if TYPE_CHECKING:

@@ -17,6 +17,7 @@ from _pytest._code.code import ExceptionInfo
 from _pytest._code.code import ReprExceptionInfo
 from _pytest.compat import cached_property
 from _pytest.compat import getfslineno
+from _pytest.compat import TYPE_CHECKING
 from _pytest.config import Config
 from _pytest.deprecated import NODE_USE_FROM_PARENT
 from _pytest.fixtures import FixtureDef
@@ -27,7 +28,7 @@ from _pytest.mark.structures import MarkDecorator
 from _pytest.mark.structures import NodeKeywords
 from _pytest.outcomes import Failed
 
-if False:  # TYPE_CHECKING
+if TYPE_CHECKING:
     # Imported here due to circular import.
     from _pytest.main import Session  # noqa: F401
 
@@ -50,7 +51,7 @@ def _splitnode(nodeid):
         []
         ['testing', 'code']
         ['testing', 'code', 'test_excinfo.py']
-        ['testing', 'code', 'test_excinfo.py', 'TestFormattedExcinfo', '()']
+        ['testing', 'code', 'test_excinfo.py', 'TestFormattedExcinfo']
     """
     if nodeid == "":
         # If there is no root node at all, return an empty list so the caller's logic can remain sane

@@ -12,10 +12,11 @@ from typing import Tuple
 from typing import Union
 
 from _pytest.compat import overload
+from _pytest.compat import TYPE_CHECKING
 from _pytest.fixtures import yield_fixture
 from _pytest.outcomes import fail
 
-if False:  # TYPE_CHECKING
+if TYPE_CHECKING:
     from typing import Type
 
 
