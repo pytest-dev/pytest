@@ -27,7 +27,13 @@ from _pytest._io.saferepr import saferepr
 from _pytest.outcomes import fail
 from _pytest.outcomes import TEST_OUTCOME
 
-if False:  # TYPE_CHECKING
+if sys.version_info < (3, 5, 2):
+    TYPE_CHECKING = False  # type: bool
+else:
+    from typing import TYPE_CHECKING
+
+
+if TYPE_CHECKING:
     from typing import Type  # noqa: F401 (used in type string)
 
 

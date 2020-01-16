@@ -19,12 +19,13 @@ from _pytest._code.code import ExceptionInfo
 from _pytest._code.code import ReprFileLocation
 from _pytest._code.code import TerminalRepr
 from _pytest.compat import safe_getattr
+from _pytest.compat import TYPE_CHECKING
 from _pytest.fixtures import FixtureRequest
 from _pytest.outcomes import Skipped
 from _pytest.python_api import approx
 from _pytest.warning_types import PytestWarning
 
-if False:  # TYPE_CHECKING
+if TYPE_CHECKING:
     import doctest
     from typing import Type
 

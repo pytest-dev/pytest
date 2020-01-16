@@ -27,12 +27,13 @@ from _pytest.compat import getlocation
 from _pytest.compat import is_generator
 from _pytest.compat import NOTSET
 from _pytest.compat import safe_getattr
+from _pytest.compat import TYPE_CHECKING
 from _pytest.deprecated import FIXTURE_POSITIONAL_ARGUMENTS
 from _pytest.deprecated import FUNCARGNAMES
 from _pytest.outcomes import fail
 from _pytest.outcomes import TEST_OUTCOME
 
-if False:  # TYPE_CHECKING
+if TYPE_CHECKING:
     from typing import Type
 
     from _pytest import nodes

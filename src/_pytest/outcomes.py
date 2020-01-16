@@ -8,7 +8,9 @@ from typing import Optional
 
 from packaging.version import Version
 
-if False:  # TYPE_CHECKING
+TYPE_CHECKING = False  # avoid circular import through compat
+
+if TYPE_CHECKING:
     from typing import NoReturn
 
 

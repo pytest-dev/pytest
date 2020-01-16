@@ -17,6 +17,7 @@ from _pytest._code.code import ExceptionInfo
 from _pytest._code.code import ReprExceptionInfo
 from _pytest.compat import cached_property
 from _pytest.compat import getfslineno
+from _pytest.compat import TYPE_CHECKING
 from _pytest.config import Config
 from _pytest.fixtures import FixtureDef
 from _pytest.fixtures import FixtureLookupError
@@ -26,7 +27,7 @@ from _pytest.mark.structures import MarkDecorator
 from _pytest.mark.structures import NodeKeywords
 from _pytest.outcomes import Failed
 
-if False:  # TYPE_CHECKING
+if TYPE_CHECKING:
     # Imported here due to circular import.
     from _pytest.main import Session  # noqa: F401
 

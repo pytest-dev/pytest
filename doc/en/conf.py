@@ -19,8 +19,9 @@ import os
 import sys
 
 from _pytest import __version__ as version
+from _pytest.compat import TYPE_CHECKING
 
-if False:  # TYPE_CHECKING
+if TYPE_CHECKING:
     import sphinx.application
 
 
