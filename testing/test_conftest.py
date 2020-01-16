@@ -357,7 +357,7 @@ def test_conftest_import_order(testdir, monkeypatch):
     assert conftest._getconftestmodules(sub) == [ct1, ct2]
 
 
-def test_fixture_dependency(testdir, monkeypatch):
+def test_fixture_dependency(testdir):
     ct1 = testdir.makeconftest("")
     ct1 = testdir.makepyfile("__init__.py")
     ct1.write("")

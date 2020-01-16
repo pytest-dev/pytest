@@ -31,7 +31,7 @@ class TestMetafunc:
         definition = DefinitionMock(func)
         return python.Metafunc(definition, fixtureinfo, config)
 
-    def test_no_funcargs(self, testdir):
+    def test_no_funcargs(self):
         def function():
             pass
 
@@ -61,7 +61,7 @@ class TestMetafunc:
         pytest.raises(ValueError, lambda: metafunc.parametrize("y", [5, 6]))
         pytest.raises(ValueError, lambda: metafunc.parametrize("y", [5, 6]))
 
-    def test_parametrize_bad_scope(self, testdir):
+    def test_parametrize_bad_scope(self):
         def func(x):
             pass
 
@@ -153,7 +153,7 @@ class TestMetafunc:
         ids = [x.id for x in metafunc._calls]
         assert ids == ["basic", "advanced"]
 
-    def test_parametrize_with_wrong_number_of_ids(self, testdir):
+    def test_parametrize_with_wrong_number_of_ids(self):
         def func(x, y):
             pass
 
@@ -652,7 +652,7 @@ class TestMetafunc:
         result = testdir.runpytest("-v")
         result.stdout.fnmatch_lines(["*test_simple*a-b*", "*1 passed*"])
 
-    def test_parametrize_indirect_list_error(self, testdir):
+    def test_parametrize_indirect_list_error(self):
         """#714"""
 
         def func(x, y):

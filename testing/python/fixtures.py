@@ -4238,7 +4238,7 @@ def test_fixture_named_request(testdir):
     )
 
 
-def test_fixture_duplicated_arguments(testdir):
+def test_fixture_duplicated_arguments():
     """Raise error if there are positional and keyword arguments for the same parameter (#1682)."""
     with pytest.raises(TypeError) as excinfo:
 
@@ -4253,7 +4253,7 @@ def test_fixture_duplicated_arguments(testdir):
     )
 
 
-def test_fixture_with_positionals(testdir):
+def test_fixture_with_positionals():
     """Raise warning, but the positionals should still works (#1682)."""
     from _pytest.deprecated import FIXTURE_POSITIONAL_ARGUMENTS
 
