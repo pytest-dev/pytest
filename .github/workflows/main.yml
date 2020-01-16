@@ -159,7 +159,7 @@ jobs:
         name: ${{ matrix.name }}
 
   deploy:
-    if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags')
+    if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags') && github.repository == 'pytest-dev/pytest'
 
     runs-on: ubuntu-latest
 
