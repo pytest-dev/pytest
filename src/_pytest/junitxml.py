@@ -167,51 +167,28 @@ class _NodeReporter:
         content_out = report.capstdout
         content_log = report.caplog
         content_err = report.capstderr
+        if self.xml.logging == "no":
+            return
+        content_all = ""
+        if self.xml.logging in ["log", "all"]:
+            content_all = self._prepare_content(content_log, " Captured Log ")
+        if self.xml.logging in ["system-out", "out-err", "all"]:
+            content_all += self._prepare_content(content_out, " Captured Out ")
+            self._write_content(report, content_all, "system-out")
+            content_all = ""
+        if self.xml.logging in ["system-err", "out-err", "all"]:
+            content_all += self._prepare_content(content_err, " Captured Err ")
+            self._write_content(report, content_all, "system-err")
+            content_all = ""
+        if content_all:
+            self._write_content(report, content_all, "system-out")
 
-        if content_log or content_out:
-            if content_log and self.xml.logging == "system-out":
-                if content_out:
-                    # syncing stdout and the log-output is not done yet. It's
-                    # probably not worth the effort. Therefore, first the captured
-                    # stdout is shown and then the captured logs.
-                    content = "\n".join(
-                        [
-                            " Captured Stdout ".center(80, "-"),
-                            content_out,
-                            "",
-                            " Captured Log ".center(80, "-"),
-                            content_log,
-                        ]
-                    )
-                else:
-                    content = content_log
-            else:
-                content = content_out
+    def _prepare_content(self, content, header):
+        return "\n".join([header.center(80, "-"), content, ""])
 
-            if content:
-                tag = getattr(Junit, "system-out")
-                self.append(tag(bin_xml_escape(content)))
-
-        if content_log or content_err:
-            if content_log and self.xml.logging == "system-err":
-                if content_err:
-                    content = "\n".join(
-                        [
-                            " Captured Stderr ".center(80, "-"),
-                            content_err,
-                            "",
-                            " Captured Log ".center(80, "-"),
-                            content_log,
-                        ]
-                    )
-                else:
-                    content = content_log
-            else:
-                content = content_err
-
-            if content:
-                tag = getattr(Junit, "system-err")
-                self.append(tag(bin_xml_escape(content)))
+    def _write_content(self, report, content, jheader):
+        tag = getattr(Junit, jheader)
+        self.append(tag(bin_xml_escape(content)))
 
     def append_pass(self, report):
         self.add_stats("passed")
@@ -408,9 +385,9 @@ def pytest_addoption(parser):
     parser.addini(
         "junit_logging",
         "Write captured log messages to JUnit report: "
-        "one of no|system-out|system-err",
+        "one of no|log|system-out|system-err|out-err|all",
         default="no",
-    )  # choices=['no', 'stdout', 'stderr'])
+    )
     parser.addini(
         "junit_log_passing_tests",
         "Capture log information for passing tests to JUnit report: ",
