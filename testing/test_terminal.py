@@ -621,7 +621,7 @@ class TestTerminalFunctional:
         if request.config.pluginmanager.list_plugin_distinfo():
             result.stdout.fnmatch_lines(["plugins: *"])
 
-    def test_header(self, testdir, request):
+    def test_header(self, testdir):
         testdir.tmpdir.join("tests").ensure_dir()
         testdir.tmpdir.join("gui").ensure_dir()
 
@@ -687,7 +687,7 @@ class TestTerminalFunctional:
         """
         )
 
-    def test_verbose_reporting(self, verbose_testfile, testdir, pytestconfig):
+    def test_verbose_reporting(self, verbose_testfile, testdir):
         result = testdir.runpytest(
             verbose_testfile, "-v", "-Walways::pytest.PytestWarning"
         )
@@ -943,7 +943,7 @@ def test_tbstyle_short(testdir):
     assert "assert x" in s
 
 
-def test_traceconfig(testdir, monkeypatch):
+def test_traceconfig(testdir):
     result = testdir.runpytest("--traceconfig")
     result.stdout.fnmatch_lines(["*active plugins*"])
     assert result.ret == ExitCode.NO_TESTS_COLLECTED

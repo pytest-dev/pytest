@@ -71,7 +71,7 @@ class TestPytestPluginInteractions:
         values = []
 
         class A:
-            def pytest_configure(self, config):
+            def pytest_configure(self):
                 values.append(self)
 
         config.pluginmanager.register(A())
