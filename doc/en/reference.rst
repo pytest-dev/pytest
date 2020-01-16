@@ -1166,7 +1166,7 @@ passed multiple times. The expected format is ``name=value``. For example::
     .. versionadded:: 3.5
 
     Configures if stdout/stderr should be written to the JUnit XML file. Valid values are
-    ``system-out``, ``system-err``, and ``no`` (the default).
+    ``log``, ``out-err``, ``all``, ``system-out``, ``system-err``, and ``no`` (the default).
 
     .. code-block:: ini
 

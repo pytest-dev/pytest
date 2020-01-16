@@ -1,0 +1,1 @@
+User can set ``junit_logging`` to one of ``no|log|system-out|system-err|out-err|all`` in order to put selected output in xml file.

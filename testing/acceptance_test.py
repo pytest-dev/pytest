@@ -1297,7 +1297,11 @@ def test_tee_stdio_captures_and_live_prints(testdir):
     """
     )
     result = testdir.runpytest_subprocess(
-        testpath, "--capture=tee-sys", "--junitxml=output.xml"
+        testpath,
+        "--capture=tee-sys",
+        "--junitxml=output.xml",
+        "-o",
+        "junit_logging=all",
     )
 
     # ensure stdout/stderr were 'live printed'
@@ -1307,6 +1311,5 @@ def test_tee_stdio_captures_and_live_prints(testdir):
     # now ensure the output is in the junitxml
     with open(os.path.join(testdir.tmpdir.strpath, "output.xml"), "r") as f:
         fullXml = f.read()
-
-    assert "<system-out>@this is stdout@\n</system-out>" in fullXml
-    assert "<system-err>@this is stderr@\n</system-err>" in fullXml
+    assert "@this is stdout@\n" in fullXml
+    assert "@this is stderr@\n" in fullXml
