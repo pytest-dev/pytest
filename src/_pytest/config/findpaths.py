@@ -5,9 +5,10 @@ from typing import Optional
 import py
 
 from .exceptions import UsageError
+from _pytest.compat import TYPE_CHECKING
 from _pytest.outcomes import fail
 
-if False:
+if TYPE_CHECKING:
     from . import Config  # noqa: F401
 
 

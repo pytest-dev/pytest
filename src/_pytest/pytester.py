@@ -28,6 +28,7 @@ from _pytest._code import Source
 from _pytest._io.saferepr import saferepr
 from _pytest.capture import MultiCapture
 from _pytest.capture import SysCapture
+from _pytest.compat import TYPE_CHECKING
 from _pytest.fixtures import FixtureRequest
 from _pytest.main import ExitCode
 from _pytest.main import Session
@@ -35,7 +36,7 @@ from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pathlib import Path
 from _pytest.reports import TestReport
 
-if False:  # TYPE_CHECKING
+if TYPE_CHECKING:
     from typing import Type
 
 
@@ -189,7 +190,7 @@ class ParsedCall:
         del d["_name"]
         return "<ParsedCall {!r}(**{!r})>".format(self._name, d)
 
-    if False:  # TYPE_CHECKING
+    if TYPE_CHECKING:
         # The class has undetermined attributes, this tells mypy about it.
         def __getattr__(self, key):
             raise NotImplementedError()

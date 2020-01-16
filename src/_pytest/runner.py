@@ -15,12 +15,13 @@ from .reports import CollectErrorRepr
 from .reports import CollectReport
 from .reports import TestReport
 from _pytest._code.code import ExceptionInfo
+from _pytest.compat import TYPE_CHECKING
 from _pytest.nodes import Node
 from _pytest.outcomes import Exit
 from _pytest.outcomes import Skipped
 from _pytest.outcomes import TEST_OUTCOME
 
-if False:  # TYPE_CHECKING
+if TYPE_CHECKING:
     from typing import Type
 
 #

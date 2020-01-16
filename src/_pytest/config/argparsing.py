@@ -15,9 +15,10 @@ from typing import Union
 
 import py
 
+from _pytest.compat import TYPE_CHECKING
 from _pytest.config.exceptions import UsageError
 
-if False:  # TYPE_CHECKING
+if TYPE_CHECKING:
     from typing import NoReturn
     from typing_extensions import Literal  # noqa: F401
 

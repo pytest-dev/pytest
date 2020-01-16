@@ -821,8 +821,15 @@ def test_pass_reporting_on_fail(testdir):
 def test_pass_output_reporting(testdir):
     testdir.makepyfile(
         """
+        def setup_module():
+            print("setup_module")
+
+        def teardown_module():
+            print("teardown_module")
+
         def test_pass_has_output():
             print("Four score and seven years ago...")
+
         def test_pass_no_output():
             pass
     """
@@ -837,8 +844,12 @@ def test_pass_output_reporting(testdir):
         [
             "*= PASSES =*",
             "*_ test_pass_has_output _*",
+            "*- Captured stdout setup -*",
+            "setup_module",
             "*- Captured stdout call -*",
             "Four score and seven years ago...",
+            "*- Captured stdout teardown -*",
+            "teardown_module",
             "*= short test summary info =*",
             "PASSED test_pass_output_reporting.py::test_pass_has_output",
             "PASSED test_pass_output_reporting.py::test_pass_no_output",

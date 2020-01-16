@@ -147,11 +147,15 @@ def test_is_generator_async_gen_syntax(testdir):
 
 class ErrorsHelper:
     @property
+    def raise_baseexception(self):
+        raise BaseException("base exception should be raised")
+
+    @property
     def raise_exception(self):
         raise Exception("exception should be catched")
 
     @property
-    def raise_fail(self):
+    def raise_fail_outcome(self):
         pytest.fail("fail should be catched")
 
 
@@ -160,13 +164,15 @@ def test_helper_failures():
     with pytest.raises(Exception):
         helper.raise_exception
     with pytest.raises(OutcomeException):
-        helper.raise_fail
+        helper.raise_fail_outcome
 
 
 def test_safe_getattr():
     helper = ErrorsHelper()
     assert safe_getattr(helper, "raise_exception", "default") == "default"
-    assert safe_getattr(helper, "raise_fail", "default") == "default"
+    assert safe_getattr(helper, "raise_fail_outcome", "default") == "default"
+    with pytest.raises(BaseException):
+        assert safe_getattr(helper, "raise_baseexception", "default")
 
 
 def test_safe_isclass():
