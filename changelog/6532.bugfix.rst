@@ -1,1 +1,0 @@
-Fix parsing of outcomes containing multiple errors with ``testdir`` results (regression in 5.3.0).

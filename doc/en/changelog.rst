@@ -28,6 +28,34 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+pytest 5.3.3 (2020-01-16)
+=========================
+
+Bug Fixes
+---------
+
+- `#2780 <https://github.com/pytest-dev/pytest/issues/2780>`_: Captured output during teardown is shown with ``-rP``.
+
+
+- `#5971 <https://github.com/pytest-dev/pytest/issues/5971>`_: Fix a ``pytest-xdist`` crash when dealing with exceptions raised in subprocesses created by the
+  ``multiprocessing`` module.
+
+
+- `#6436 <https://github.com/pytest-dev/pytest/issues/6436>`_: :class:`FixtureDef <_pytest.fixtures.FixtureDef>` objects now properly register their finalizers with autouse and
+  parameterized fixtures that execute before them in the fixture stack so they are torn
+  down at the right times, and in the right order.
+
+
+- `#6532 <https://github.com/pytest-dev/pytest/issues/6532>`_: Fix parsing of outcomes containing multiple errors with ``testdir`` results (regression in 5.3.0).
+
+
+
+Trivial/Internal Changes
+------------------------
+
+- `#6350 <https://github.com/pytest-dev/pytest/issues/6350>`_: Optimized automatic renaming of test parameter IDs.
+
+
 pytest 5.3.2 (2019-12-13)
 =========================
 
