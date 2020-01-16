@@ -148,6 +148,7 @@ jobs:
       if: success() && !matrix.skip_coverage
       run: |
         python -m coverage combine
+        python -m coverage report --show-missing
         python -m coverage xml
 
     - name: Codecov upload
