@@ -670,6 +670,26 @@ class TestTerminalFunctional:
             ]
         )
 
+    def test_showlocals_short(self, testdir):
+        p1 = testdir.makepyfile(
+            """
+            def test_showlocals_short():
+                x = 3
+                y = "xxxx"
+                assert 0
+        """
+        )
+        result = testdir.runpytest(p1, "-l", "--tb=short")
+        result.stdout.fnmatch_lines(
+            [
+                "test_showlocals_short.py:*",
+                "    assert 0",
+                "E   assert 0",
+                "        x          = 3",
+                "        y          = 'xxxx'",
+            ]
+        )
+
     @pytest.fixture
     def verbose_testfile(self, testdir):
         return testdir.makepyfile(
