@@ -41,7 +41,7 @@ if TYPE_CHECKING:
 
     from _pytest._code import Source
 
-    _TracebackStyle = Literal["long", "short", "no", "native"]
+    _TracebackStyle = Literal["long", "short", "line", "no", "native"]
 
 
 class Code:
