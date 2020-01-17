@@ -424,7 +424,7 @@ class FixtureRequest:
         return self._pyfuncitem.getparent(_pytest.python.Module).obj
 
     @scopeproperty()
-    def fspath(self):
+    def fspath(self) -> py.path.local:
         """ the file system path of the test module which collected this test. """
         return self._pyfuncitem.fspath
 
