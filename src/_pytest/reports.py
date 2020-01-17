@@ -317,10 +317,7 @@ class CollectReport(BaseReport):
         self.result = result or []
         self.sections = list(sections)
         self.__dict__.update(extra)
-
-    @property
-    def location(self):
-        return (self.fspath, None, self.fspath)
+        self.location = (self.fspath, None, self.fspath)
 
     def __repr__(self):
         return "<CollectReport {!r} lenresult={} outcome={!r}>".format(
