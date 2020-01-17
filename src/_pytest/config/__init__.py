@@ -47,6 +47,8 @@ from _pytest.warning_types import PytestConfigWarning
 if TYPE_CHECKING:
     from typing import Type
 
+    _PluggyPlugin = object
+
 
 hookimpl = HookimplMarker("pytest")
 hookspec = HookspecMarker("pytest")
@@ -208,7 +210,7 @@ def get_plugin_manager() -> PluginManager:
 
 def _prepareconfig(
     args: Optional[Union[List, Tuple]] = None,
-    plugins: Optional[Sequence[Union[str, object]]] = None,
+    plugins: Optional[Sequence[Union[str, "_PluggyPlugin"]]] = None,
 ):
     if args is None:
         args = sys.argv[1:]
