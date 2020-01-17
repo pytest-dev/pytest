@@ -100,7 +100,7 @@ def pre_release(version, *, skip_check_links):
     print()
     print(f"{Fore.CYAN}[generate.pre_release] {Fore.GREEN}All done!")
     print()
-    print(f"Please push your branch and open a PR.")
+    print("Please push your branch and open a PR.")
 
 
 def changelog(version, write_out=False):
