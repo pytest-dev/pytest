@@ -15,6 +15,8 @@ from _pytest.outcomes import fail
 if TYPE_CHECKING:
     from . import Config  # noqa: F401
 
+    from py.iniconfig import _SectionWrapper  # noqa: F401
+
 
 def exists(path, ignore=EnvironmentError):
     try:
@@ -24,11 +26,11 @@ def exists(path, ignore=EnvironmentError):
 
 
 def getcfg(
-    args: Iterable[py.path.local], config: Optional[Config] = None
+    args: Iterable[py.path.local], config: Optional["Config"] = None
 ) -> Tuple[
     Optional[py.path.local],
     Optional[py.path.local],
-    Union[py.iniconfig.SectionWrapper, Dict, None],
+    Union["_SectionWrapper", Dict, None],
 ]:
     """
     Search the list of arguments for a valid ini-file for pytest,
@@ -123,7 +125,7 @@ def determine_setup(
     args: List[str],
     rootdir_cmd_arg: Optional[str] = None,
     config: Optional["Config"] = None,
-) -> Tuple[py.path.local, py.path.local, Union[py.iniconfig.SectionWrapper, Dict]]:
+) -> Tuple[py.path.local, py.path.local, Union["_SectionWrapper", Dict]]:
     dirs = get_dirs_from_args(args)
     if inifile:
         iniconfig = py.iniconfig.IniConfig(inifile)

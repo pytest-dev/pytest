@@ -1093,7 +1093,7 @@ class Config:
                     return ""
                 return []
         if type == "pathlist":
-            assert isinstance(self.inicfg, py.iniconfig.SectionWrapper)
+            assert isinstance(self.inicfg, py.iniconfig._SectionWrapper), self.inicfg
             dp = py.path.local(self.inicfg.config.path).dirpath()
             values = []
             for relpath in shlex.split(value):
