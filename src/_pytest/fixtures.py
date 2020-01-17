@@ -202,7 +202,7 @@ def get_parametrized_fixture_keys(
     assert scopenum < scopenum_function, (scopenum, scopenum_function)
 
     try:
-        cs = item.callspec  # type: ignore[attr-defined]
+        cs = item.callspec  # type: ignore[attr-defined]  # noqa: F821
     except AttributeError:
         return
     if TYPE_CHECKING:
