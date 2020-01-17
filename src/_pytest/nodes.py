@@ -80,7 +80,7 @@ class Node:
 
     def __init__(
         self,
-        name,
+        name: str,
         parent: Optional["Node"] = None,
         config: Optional[Config] = None,
         session: Optional["Session"] = None,
