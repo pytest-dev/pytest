@@ -31,6 +31,7 @@ from _pytest.compat import is_generator
 from _pytest.compat import NOTSET
 from _pytest.compat import safe_getattr
 from _pytest.compat import TYPE_CHECKING
+from _pytest.config import Config
 from _pytest.deprecated import FIXTURE_POSITIONAL_ARGUMENTS
 from _pytest.deprecated import FUNCARGNAMES
 from _pytest.outcomes import fail
@@ -364,7 +365,7 @@ class FixtureRequest:
     the fixture is parametrized indirectly.
     """
 
-    def __init__(self, pyfuncitem):
+    def __init__(self, pyfuncitem: "Function") -> None:
         self._pyfuncitem = pyfuncitem
         #: fixture for which this request is being performed
         self.fixturename = None
@@ -373,7 +374,7 @@ class FixtureRequest:
         self._fixture_defs = {}  # type: Dict[str, FixtureDef]
         fixtureinfo = pyfuncitem._fixtureinfo
         self._arg2fixturedefs = fixtureinfo.name2fixturedefs.copy()
-        self._arg2index = {}
+        self._arg2index = {}  # type: Dict[str, int]
         self._fixturemanager = pyfuncitem.session._fixturemanager
 
     @property
@@ -411,7 +412,7 @@ class FixtureRequest:
         return fixturedefs[index]
 
     @property
-    def config(self):
+    def config(self) -> Config:
         """ the pytest config object associated with this request. """
         return self._pyfuncitem.config
 
@@ -1204,7 +1205,7 @@ defaultfuncargprefixmarker = fixture()
 
 
 @fixture(scope="session")
-def pytestconfig(request):
+def pytestconfig(request: FixtureRequest) -> Config:
     """Session-scoped fixture that returns the :class:`_pytest.config.Config` object.
 
     Example::
