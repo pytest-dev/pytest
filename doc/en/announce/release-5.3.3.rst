@@ -17,7 +17,7 @@ Thanks to all who contributed to this release, among them:
 * Bruno Oliveira
 * Chris NeJame
 * Daniel Hahler
-* Hugo
+* Hugo van Kemenade
 * Marcelo Duarte Trevisani
 * PaulC
 * Ran Benita
