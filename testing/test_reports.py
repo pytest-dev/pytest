@@ -464,3 +464,18 @@ class TestHooks:
             _ = pytestconfig.hook.pytest_report_from_serializable(
                 config=pytestconfig, data=data
             )
+
+
+def test_basereport_fspath_from_location() -> None:
+    from _pytest.reports import BaseReport
+
+    location = ("fspath", None, "domain")
+
+    rep = BaseReport(location=location)
+    assert rep.fspath == "fspath"
+
+    rep = BaseReport(nodeid="path/to/file.py")
+    assert rep.fspath == "path/to/file.py"
+
+    rep = BaseReport(location=location, nodeid="path/to/file.py")
+    assert rep.fspath == "fspath"

@@ -41,7 +41,7 @@ class BaseReport:
     sections = []  # type: List[Tuple[str, str]]
     nodeid = None  # type: str
 
-    def __init__(self, **kw):
+    def __init__(self, **kw) -> None:
         self.__dict__.update(kw)
 
     def toterminal(self, out) -> None:
@@ -66,7 +66,7 @@ class BaseReport:
                 yield prefix, content
 
     @property
-    def longreprtext(self):
+    def longreprtext(self) -> str:
         """
         Read-only property that returns the full string representation
         of ``longrepr``.
@@ -77,10 +77,10 @@ class BaseReport:
         tw.hasmarkup = False
         self.toterminal(tw)
         exc = tw.stringio.getvalue()
-        return exc.strip()
+        return exc.strip()  # type: ignore[no-any-return]
 
     @property
-    def caplog(self):
+    def caplog(self) -> str:
         """Return captured log lines, if log capturing is enabled
 
         .. versionadded:: 3.5
@@ -90,7 +90,7 @@ class BaseReport:
         )
 
     @property
-    def capstdout(self):
+    def capstdout(self) -> str:
         """Return captured text from stdout, if capturing is enabled
 
         .. versionadded:: 3.0
@@ -100,7 +100,7 @@ class BaseReport:
         )
 
     @property
-    def capstderr(self):
+    def capstderr(self) -> str:
         """Return captured text from stderr, if capturing is enabled
 
         .. versionadded:: 3.0
@@ -115,6 +115,8 @@ class BaseReport:
 
     @property
     def fspath(self) -> str:
+        if self.location:
+            return self.location[0]
         return self.nodeid.split("::")[0]
 
     @property
