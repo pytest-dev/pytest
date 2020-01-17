@@ -114,7 +114,7 @@ class BaseReport:
     skipped = property(lambda x: x.outcome == "skipped")
 
     @property
-    def fspath(self):
+    def fspath(self) -> str:
         return self.nodeid.split("::")[0]
 
     @property
