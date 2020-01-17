@@ -20,6 +20,8 @@ on:
 jobs:
   build:
     runs-on: ${{ matrix.os }}
+    # when pushing a tag to publish a release, skip most jobs except those with "release_checker: true"
+    if: "!startsWith(github.event.ref, 'refs/tags') || matrix.release_checker"
 
     strategy:
       fail-fast: false
@@ -93,6 +95,7 @@ jobs:
             python: "3.8"
             os: ubuntu-latest
             tox_env: "py38-xdist"
+            release_checker: true
           - name: "ubuntu-pypy3"
             python: "pypy3"
             os: ubuntu-latest
@@ -113,6 +116,7 @@ jobs:
             python: "3.7"
             os: ubuntu-latest
             tox_env: "linting,docs,doctesting"
+            release_checker: true
 
     steps:
     - uses: actions/checkout@v1
