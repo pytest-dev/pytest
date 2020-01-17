@@ -317,6 +317,7 @@ class CollectReport(BaseReport):
         self.result = result or []
         self.sections = list(sections)
         self.__dict__.update(extra)
+        assert not self.location, self.location
         self.location = (self.fspath, None, self.fspath)
 
     def __repr__(self):
