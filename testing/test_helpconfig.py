@@ -5,10 +5,10 @@ from _pytest.main import ExitCode
 def test_version(testdir, pytestconfig):
     result = testdir.runpytest("--version")
     assert result.ret == 0
-    # p = py.path.local(py.__file__).dirpath()
     result.stderr.fnmatch_lines(
         ["*pytest*{}*imported from*".format(pytest.__version__)]
     )
+    assert pytest.__version__[0] == "5"
     if pytestconfig.pluginmanager.list_plugin_distinfo():
         result.stderr.fnmatch_lines(["*setuptools registered plugins:", "*at*"])
 
