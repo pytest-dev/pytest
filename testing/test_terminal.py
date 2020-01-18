@@ -3,6 +3,7 @@ terminal reporting of the full testing process.
 """
 import collections
 import os
+import re
 import sys
 import textwrap
 from io import StringIO
@@ -21,10 +22,14 @@ from _pytest.terminal import getreportopt
 from _pytest.terminal import TerminalReporter
 
 DistInfo = collections.namedtuple("DistInfo", ["project_name", "version"])
-RED = r"\x1b\[31m"
-GREEN = r"\x1b\[32m"
-YELLOW = r"\x1b\[33m"
-RESET = r"\x1b\[0m"
+
+COLORS = {
+    "red": "\x1b[31m",
+    "green": "\x1b[32m",
+    "yellow": "\x1b[33m",
+    "reset": "\x1b[0m",
+}
+RE_COLORS = {k: re.escape(v) for k, v in COLORS.items()}
 
 
 class Option:
@@ -1548,18 +1553,15 @@ class TestProgressOutputStyle:
                 def test_foobar(i): raise ValueError()
             """,
         )
-        output = testdir.runpytest()
-        output.stdout.re_match_lines(
+        result = testdir.runpytest()
+        result.stdout.re_match_lines(
             [
-                r"test_bar.py ({green}\.{reset}){{10}}{green} \s+ \[ 50%\]{reset}".format(
-                    green=GREEN, reset=RESET
-                ),
-                r"test_foo.py ({green}\.{reset}){{5}}{yellow} \s+ \[ 75%\]{reset}".format(
-                    green=GREEN, reset=RESET, yellow=YELLOW
-                ),
-                r"test_foobar.py ({red}F{reset}){{5}}{red} \s+ \[100%\]{reset}".format(
-                    reset=RESET, red=RED
-                ),
+                line.format(**RE_COLORS)
+                for line in [
+                    r"test_bar.py ({green}\.{reset}){{10}}{green} \s+ \[ 50%\]{reset}",
+                    r"test_foo.py ({green}\.{reset}){{5}}{yellow} \s+ \[ 75%\]{reset}",
+                    r"test_foobar.py ({red}F{reset}){{5}}{red} \s+ \[100%\]{reset}",
+                ]
             ]
         )
 
