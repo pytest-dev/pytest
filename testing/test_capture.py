@@ -1367,6 +1367,8 @@ def test_crash_on_closing_tmpfile_py27(testdir):
             printing.wait()
     """
     )
+    # Do not consider plugins like hypothesis, which might output to stderr.
+    testdir.monkeypatch.setenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD", "1")
     result = testdir.runpytest_subprocess(str(p))
     assert result.ret == 0
     assert result.stderr.str() == ""
