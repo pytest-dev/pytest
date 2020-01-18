@@ -887,7 +887,7 @@ class FixtureDef:
             fixturedef = request._get_active_fixturedef(argname)
             if argname != "request":
                 for fin in fixturedef._finalizers:
-                    if "request" in fin.keywords:
+                    if "request" in getattr(fin, "keywords", {}):
                         if self == fin.keywords["request"]._fixturedef:
                             break
                 else:
