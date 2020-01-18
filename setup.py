@@ -18,7 +18,10 @@ INSTALL_REQUIRES = [
 
 def main():
     setup(
-        use_scm_version={"write_to": "src/_pytest/_version.py"},
+        use_scm_version={
+            "write_to": "src/_pytest/_version.py",
+            "git_describe_command": "git describe --dirty --tags --long --match *.*",
+        },
         setup_requires=["setuptools-scm", "setuptools>=40.0"],
         package_dir={"": "src"},
         extras_require={
