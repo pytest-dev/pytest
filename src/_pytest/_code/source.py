@@ -5,8 +5,8 @@ import sys
 import textwrap
 import tokenize
 import warnings
-from ast import PyCF_ONLY_AST as _AST_FLAG
 from bisect import bisect_right
+from types import CodeType
 from types import FrameType
 from typing import Iterator
 from typing import List
@@ -18,6 +18,10 @@ from typing import Union
 import py
 
 from _pytest.compat import overload
+from _pytest.compat import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from typing_extensions import Literal
 
 
 class Source:
@@ -121,7 +125,7 @@ class Source:
         start, end = self.getstatementrange(lineno)
         return self[start:end]
 
-    def getstatementrange(self, lineno: int):
+    def getstatementrange(self, lineno: int) -> Tuple[int, int]:
         """ return (start, end) tuple which spans the minimal
             statement region which containing the given lineno.
         """
@@ -159,14 +163,36 @@ class Source:
     def __str__(self) -> str:
         return "\n".join(self.lines)
 
+    @overload
     def compile(
         self,
-        filename=None,
-        mode="exec",
+        filename: Optional[str] = ...,
+        mode: str = ...,
+        flag: "Literal[0]" = ...,
+        dont_inherit: int = ...,
+        _genframe: Optional[FrameType] = ...,
+    ) -> CodeType:
+        raise NotImplementedError()
+
+    @overload  # noqa: F811
+    def compile(  # noqa: F811
+        self,
+        filename: Optional[str] = ...,
+        mode: str = ...,
+        flag: int = ...,
+        dont_inherit: int = ...,
+        _genframe: Optional[FrameType] = ...,
+    ) -> Union[CodeType, ast.AST]:
+        raise NotImplementedError()
+
+    def compile(  # noqa: F811
+        self,
+        filename: Optional[str] = None,
+        mode: str = "exec",
         flag: int = 0,
         dont_inherit: int = 0,
         _genframe: Optional[FrameType] = None,
-    ):
+    ) -> Union[CodeType, ast.AST]:
         """ return compiled code object. if filename is None
             invent an artificial filename which displays
             the source/line position of the caller frame.
@@ -196,8 +222,10 @@ class Source:
             newex.text = ex.text
             raise newex
         else:
-            if flag & _AST_FLAG:
+            if flag & ast.PyCF_ONLY_AST:
+                assert isinstance(co, ast.AST)
                 return co
+            assert isinstance(co, CodeType)
             lines = [(x + "\n") for x in self.lines]
             # Type ignored because linecache.cache is private.
             linecache.cache[filename] = (1, None, lines, filename)  # type: ignore
@@ -209,7 +237,35 @@ class Source:
 #
 
 
-def compile_(source, filename=None, mode="exec", flags: int = 0, dont_inherit: int = 0):
+@overload
+def compile_(
+    source: Union[str, bytes, ast.mod, ast.AST],
+    filename: Optional[str] = ...,
+    mode: str = ...,
+    flags: "Literal[0]" = ...,
+    dont_inherit: int = ...,
+) -> CodeType:
+    raise NotImplementedError()
+
+
+@overload  # noqa: F811
+def compile_(  # noqa: F811
+    source: Union[str, bytes, ast.mod, ast.AST],
+    filename: Optional[str] = ...,
+    mode: str = ...,
+    flags: int = ...,
+    dont_inherit: int = ...,
+) -> Union[CodeType, ast.AST]:
+    raise NotImplementedError()
+
+
+def compile_(  # noqa: F811
+    source: Union[str, bytes, ast.mod, ast.AST],
+    filename: Optional[str] = None,
+    mode: str = "exec",
+    flags: int = 0,
+    dont_inherit: int = 0,
+) -> Union[CodeType, ast.AST]:
     """ compile the given source to a raw code object,
         and maintain an internal cache which allows later
         retrieval of the source code for the code object
@@ -217,14 +273,16 @@ def compile_(source, filename=None, mode="exec", flags: int = 0, dont_inherit: i
     """
     if isinstance(source, ast.AST):
         # XXX should Source support having AST?
-        return compile(source, filename, mode, flags, dont_inherit)
+        assert filename is not None
+        co = compile(source, filename, mode, flags, dont_inherit)
+        assert isinstance(co, (CodeType, ast.AST))
+        return co
     _genframe = sys._getframe(1)  # the caller
     s = Source(source)
-    co = s.compile(filename, mode, flags, _genframe=_genframe)
-    return co
+    return s.compile(filename, mode, flags, _genframe=_genframe)
 
 
-def getfslineno(obj):
+def getfslineno(obj) -> Tuple[Union[str, py.path.local], int]:
     """ Return source location (path, lineno) for the given object.
     If the source cannot be determined return ("", -1).
 
@@ -321,7 +379,7 @@ def getstatementrange_ast(
         # don't produce duplicate warnings when compiling source to find ast
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            astnode = compile(content, "source", "exec", _AST_FLAG)
+            astnode = ast.parse(content, "source", "exec")
 
     start, end = get_statement_startend2(lineno, astnode)
     # we need to correct the end:

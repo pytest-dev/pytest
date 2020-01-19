@@ -57,7 +57,7 @@ def deprecated_call(func=None, *args, **kwargs):
 
 @overload
 def warns(
-    expected_warning: Union["Type[Warning]", Tuple["Type[Warning]", ...]],
+    expected_warning: Optional[Union["Type[Warning]", Tuple["Type[Warning]", ...]]],
     *,
     match: "Optional[Union[str, Pattern]]" = ...
 ) -> "WarningsChecker":
@@ -66,7 +66,7 @@ def warns(
 
 @overload  # noqa: F811
 def warns(  # noqa: F811
-    expected_warning: Union["Type[Warning]", Tuple["Type[Warning]", ...]],
+    expected_warning: Optional[Union["Type[Warning]", Tuple["Type[Warning]", ...]]],
     func: Callable,
     *args: Any,
     match: Optional[Union[str, "Pattern"]] = ...,
@@ -76,7 +76,7 @@ def warns(  # noqa: F811
 
 
 def warns(  # noqa: F811
-    expected_warning: Union["Type[Warning]", Tuple["Type[Warning]", ...]],
+    expected_warning: Optional[Union["Type[Warning]", Tuple["Type[Warning]", ...]]],
     *args: Any,
     match: Optional[Union[str, "Pattern"]] = None,
     **kwargs: Any
