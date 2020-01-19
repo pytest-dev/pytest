@@ -121,7 +121,9 @@ def determine_setup(
         sections = ["tool:pytest", "pytest"] if is_cfg_file else ["pytest"]
         for section in sections:
             try:
-                inicfg = iniconfig[section]
+                inicfg = iniconfig[
+                    section
+                ]  # type: Optional[py.iniconfig._SectionWrapper]
                 if is_cfg_file and section == "pytest" and config is not None:
                     fail(
                         CFG_PYTEST_SECTION.format(filename=str(inifile)), pytrace=False
