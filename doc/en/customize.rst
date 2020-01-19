@@ -20,7 +20,9 @@ which were registered by installed plugins.
 Initialization: determining rootdir and inifile
 -----------------------------------------------
 
-pytest determines a ``rootdir`` for each test run which depends on
+Pytest defines ``rootdir`` parameter which is determined for each test run.
+It should't be consufed with ``--rootdir`` command-line argument (please see `https://github.com/pytest-dev/pytest/issues/6359` for example).
+Pytest determines a ``rootdir`` for each test run which depends on
 the command line arguments (specified test files, paths) and on
 the existence of *ini-files*.  The determined ``rootdir`` and *ini-file* are
 printed as part of the pytest header during startup.
@@ -118,8 +120,6 @@ check for ini-files as follows:
 
 .. _`how to change command line options defaults`:
 .. _`adding default options`:
-
-
 
 How to change command line options defaults
 ------------------------------------------------
