@@ -1018,10 +1018,10 @@ class TestReportInfo:
     def test_itemreport_reportinfo(self, testdir):
         testdir.makeconftest(
             """
-            import pytest
+            import pytest, py
             class MyFunction(pytest.Function):
                 def reportinfo(self):
-                    return "ABCDE", 42, "custom"
+                    return py.path.local("foo"), 42, "custom"
             def pytest_pycollect_makeitem(collector, name, obj):
                 if name == "test_func":
                     return MyFunction(name, parent=collector)
@@ -1029,7 +1029,7 @@ class TestReportInfo:
         )
         item = testdir.getitem("def test_func(): pass")
         item.config.pluginmanager.getplugin("runner")
-        assert item.location == ("ABCDE", 42, "custom")
+        assert item.location == ("foo", 42, "custom")
 
     def test_func_reportinfo(self, testdir):
         item = testdir.getitem("def test_func(): pass")
