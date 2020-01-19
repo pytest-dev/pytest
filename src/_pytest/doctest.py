@@ -13,6 +13,8 @@ from typing import Sequence
 from typing import Tuple
 from typing import Union
 
+import py
+
 import pytest
 from _pytest import outcomes
 from _pytest._code.code import ExceptionInfo
@@ -137,7 +139,7 @@ class ReprFailDoctest(TerminalRepr):
     ):
         self.reprlocation_lines = reprlocation_lines
 
-    def toterminal(self, tw) -> None:
+    def toterminal(self, tw: py.io.TerminalWriter) -> None:
         for reprlocation, lines in self.reprlocation_lines:
             for line in lines:
                 tw.line(line)

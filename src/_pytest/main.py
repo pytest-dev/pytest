@@ -15,6 +15,7 @@ from _pytest import nodes
 from _pytest.config import directory_arg
 from _pytest.config import hookimpl
 from _pytest.config import UsageError
+from _pytest.fixtures import FixtureManager
 from _pytest.outcomes import exit
 from _pytest.runner import collect_one_node
 from _pytest.runner import SetupState
@@ -377,7 +378,10 @@ class _bestrelpath_cache(dict):
 class Session(nodes.FSCollector):
     Interrupted = Interrupted
     Failed = Failed
+    # Set on the session by runner.pytest_sessionstart.
     _setupstate = None  # type: SetupState
+    # Set on the session by fixtures.pytest_sessionstart.
+    _fixturemanager = None  # type: FixtureManager
 
     def __init__(self, config):
         nodes.FSCollector.__init__(
