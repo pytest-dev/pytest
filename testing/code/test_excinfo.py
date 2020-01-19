@@ -21,8 +21,6 @@ except ImportError:
 else:
     invalidate_import_caches = getattr(importlib, "invalidate_caches", None)
 
-pytest_version_info = tuple(map(int, pytest.__version__.split(".")[:3]))
-
 
 @pytest.fixture
 def limited_recursion_depth():
