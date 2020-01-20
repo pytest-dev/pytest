@@ -351,7 +351,7 @@ class FixtureRequest:
         self.fixturename = None
         #: Scope string, one of "function", "class", "module", "session"
         self.scope = "function"
-        self._fixture_defs = {}  # type: Dict[str, FixtureDef]
+        self._fixture_defs = {}  # argname -> FixtureDef
         fixtureinfo = pyfuncitem._fixtureinfo
         self._arg2fixturedefs = fixtureinfo.name2fixturedefs.copy()
         self._arg2index = {}
@@ -426,8 +426,7 @@ class FixtureRequest:
     @scopeproperty()
     def fspath(self) -> py.path.local:
         """ the file system path of the test module which collected this test. """
-        # TODO: Remove ignore once _pyfuncitem is properly typed.
-        return self._pyfuncitem.fspath  # type: ignore
+        return self._pyfuncitem.fspath
 
     @property
     def keywords(self):
@@ -550,9 +549,7 @@ class FixtureRequest:
                 source_lineno = frameinfo.lineno
                 source_path = py.path.local(source_path)
                 if source_path.relto(funcitem.config.rootdir):
-                    source_path_str = source_path.relto(funcitem.config.rootdir)
-                else:
-                    source_path_str = str(source_path)
+                    source_path = source_path.relto(funcitem.config.rootdir)
                 msg = (
                     "The requested fixture has no parameter defined for test:\n"
                     "    {}\n\n"
@@ -561,7 +558,7 @@ class FixtureRequest:
                         funcitem.nodeid,
                         fixturedef.argname,
                         getlocation(fixturedef.func, funcitem.config.rootdir),
-                        source_path_str,
+                        source_path,
                         source_lineno,
                     )
                 )
