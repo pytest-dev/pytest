@@ -369,6 +369,9 @@ def configure_logging(app: "sphinx.application.Sphinx") -> None:
     warn_handler[0].filters.insert(0, WarnLogFilter())
 
 
+# html_static_path = ['_static']
+
+
 def setup(app: "sphinx.application.Sphinx") -> None:
     # from sphinx.ext.autodoc import cut_lines
     # app.connect('autodoc-process-docstring', cut_lines(4, what=['module']))
@@ -379,3 +382,5 @@ def setup(app: "sphinx.application.Sphinx") -> None:
         indextemplate="pair: %s; configuration value",
     )
     configure_logging(app)
+
+    app.add_stylesheet("css/theme.css")
