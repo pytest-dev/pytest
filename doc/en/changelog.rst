@@ -28,6 +28,16 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+pytest 5.3.4 (2020-01-20)
+=========================
+
+Bug Fixes
+---------
+
+- `#6496 <https://github.com/pytest-dev/pytest/issues/6496>`_: Revert `#6436 <https://github.com/pytest-dev/pytest/issues/6436>`__: unfortunately this change has caused a number of regressions in many suites,
+  so the team decided to revert this change and make a new release while we continue to look for a solution.
+
+
 pytest 5.3.3 (2020-01-16)
 =========================
 
