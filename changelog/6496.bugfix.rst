@@ -1,0 +1,2 @@
+Revert `#6436 <https://github.com/pytest-dev/pytest/issues/6436>`__: unfortunately this change has caused a number of regressions in many suites,
+so the team decided to revert this change and make a new release while we continue to look for a solution.
