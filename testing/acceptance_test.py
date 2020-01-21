@@ -20,6 +20,7 @@ def prepend_pythonpath(*dirs):
 
 class TestGeneralUsage:
     def test_config_error(self, testdir):
+        assert 0, "test failure"
         testdir.copy_example("conftest_usageerror/conftest.py")
         result = testdir.runpytest(testdir.tmpdir)
         assert result.ret == ExitCode.USAGE_ERROR
