@@ -195,7 +195,21 @@ def test_conftest_confcutdir(testdir):
     reason="symlink not available on this platform",
 )
 def test_conftest_symlink(testdir):
-    """Ensure that conftest.py is used for resolved symlinks."""
+    """
+    Ensure that conftest.py is not found unless it's not a parent in the current
+    directory structure (i.e.: symlinks are not resolved).
+    """
+    # Structure:
+    # /real
+    # /real/conftest.py
+    # /real/app
+    # /real/app/tests
+    # /real/app/tests/test_foo.py
+
+    # Links:
+    # /symlinktests -> /real/app/tests (running at symlinktests should fail)
+    # /symlink -> /real (running at /symlink should work)
+
     real = testdir.tmpdir.mkdir("real")
     realtests = real.mkdir("app").mkdir("tests")
     testdir.tmpdir.join("symlinktests").mksymlinkto(realtests)
@@ -216,29 +230,14 @@ def test_conftest_symlink(testdir):
             ),
         }
     )
+
+    # Should fail because conftest cannot be found from the link structure.
     result = testdir.runpytest("-vs", "symlinktests")
-    result.stdout.fnmatch_lines(
-        [
-            "*conftest_loaded*",
-            "real/app/tests/test_foo.py::test1 fixture_used",
-            "PASSED",
-        ]
-    )
-    assert result.ret == ExitCode.OK
+    result.stdout.fnmatch_lines(["*fixture 'fixture' not found*"])
+    assert result.ret == ExitCode.TESTS_FAILED
 
     # Should not cause "ValueError: Plugin already registered" (#4174).
     result = testdir.runpytest("-vs", "symlink")
-    assert result.ret == ExitCode.OK
-
-    realtests.ensure("__init__.py")
-    result = testdir.runpytest("-vs", "symlinktests/test_foo.py::test1")
-    result.stdout.fnmatch_lines(
-        [
-            "*conftest_loaded*",
-            "real/app/tests/test_foo.py::test1 fixture_used",
-            "PASSED",
-        ]
-    )
     assert result.ret == ExitCode.OK
 
 

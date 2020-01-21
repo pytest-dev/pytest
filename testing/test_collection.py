@@ -1173,13 +1173,13 @@ def test_collect_symlink_file_arg(testdir):
     real = testdir.makepyfile(
         real="""
         def test_nodeid(request):
-            assert request.node.nodeid == "real.py::test_nodeid"
+            assert request.node.nodeid == "symlink.py::test_nodeid"
         """
     )
     symlink = testdir.tmpdir.join("symlink.py")
     symlink.mksymlinkto(real)
     result = testdir.runpytest("-v", symlink)
-    result.stdout.fnmatch_lines(["real.py::test_nodeid PASSED*", "*1 passed in*"])
+    result.stdout.fnmatch_lines(["symlink.py::test_nodeid PASSED*", "*1 passed in*"])
     assert result.ret == 0
 
 

@@ -233,7 +233,7 @@ def get_config(args=None, plugins=None):
     config = Config(
         pluginmanager,
         invocation_params=Config.InvocationParams(
-            args=args or (), plugins=plugins, dir=Path().resolve()
+            args=args or (), plugins=plugins, dir=Path.cwd()
         ),
     )
 
@@ -478,7 +478,7 @@ class PytestPluginManager(PluginManager):
         # and allow users to opt into looking into the rootdir parent
         # directories instead of requiring to specify confcutdir
         clist = []
-        for parent in directory.realpath().parts():
+        for parent in directory.parts():
             if self._confcutdir and self._confcutdir.relto(parent):
                 continue
             conftestpath = parent.join("conftest.py")
@@ -799,7 +799,7 @@ class Config:
 
         if invocation_params is None:
             invocation_params = self.InvocationParams(
-                args=(), plugins=None, dir=Path().resolve()
+                args=(), plugins=None, dir=Path.cwd()
             )
 
         self.option = argparse.Namespace()

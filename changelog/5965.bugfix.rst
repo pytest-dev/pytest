@@ -1,0 +1,1 @@
+No longer resolve symlinks so that the current directory remains correct with drives mapped with subst on Windows or symlinks on Linux.
