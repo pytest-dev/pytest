@@ -12,6 +12,7 @@ from functools import partial
 from textwrap import dedent
 from typing import List
 from typing import Tuple
+from typing import Union
 
 import py
 
@@ -280,15 +281,16 @@ class PyobjMixin(PyobjContext):
         parts.reverse()
         return ".".join(parts)
 
-    def reportinfo(self) -> Tuple[str, int, str]:
+    def reportinfo(self) -> Tuple[Union[py.path.local, str], int, str]:
         # XXX caching?
         obj = self.obj
         compat_co_firstlineno = getattr(obj, "compat_co_firstlineno", None)
         if isinstance(compat_co_firstlineno, int):
             # nose compatibility
-            fspath = sys.modules[obj.__module__].__file__
-            if fspath.endswith(".pyc"):
-                fspath = fspath[:-1]
+            file_path = sys.modules[obj.__module__].__file__
+            if file_path.endswith(".pyc"):
+                file_path = file_path[:-1]
+            fspath = file_path  # type: Union[py.path.local, str]
             lineno = compat_co_firstlineno
         else:
             fspath, lineno = getfslineno(obj)
