@@ -376,9 +376,9 @@ class Failed(Exception):
 
 @attr.s
 class _bestrelpath_cache(dict):
-    path = attr.ib()
+    path = attr.ib(type=py.path.local)
 
-    def __missing__(self, path: str) -> str:
+    def __missing__(self, path: py.path.local) -> str:
         r = self.path.bestrelpath(path)  # type: str
         self[path] = r
         return r
@@ -412,7 +412,7 @@ class Session(nodes.FSCollector):
 
         self._bestrelpathcache = _bestrelpath_cache(
             config.rootdir
-        )  # type: Dict[str, str]
+        )  # type: Dict[py.path.local, str]
 
         self.config.pluginmanager.register(self, name="session")
 
@@ -425,7 +425,7 @@ class Session(nodes.FSCollector):
             self.testscollected,
         )
 
-    def _node_location_to_relpath(self, node_path: str) -> str:
+    def _node_location_to_relpath(self, node_path: py.path.local) -> str:
         # bestrelpath is a quite slow function
         return self._bestrelpathcache[node_path]
 
