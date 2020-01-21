@@ -395,9 +395,12 @@ def test_raises(testdir):
             raise BaseException
         """
     )
-    result = testdir.runpytest()
+    result = testdir.runpytest("-vv")
     result.stdout.fnmatch_lines(
         [
+            "test_raises.py::test_raises_runtimeerror PASSED*",
+            "test_raises.py::test_raises_baseexception_not_caught FAILED*",
+            "test_raises.py::test_raises_baseexception_caught PASSED*",
             "*= FAILURES =*",
             "*_ test_raises_baseexception_not_caught _*",
             "",
