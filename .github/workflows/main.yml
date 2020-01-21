@@ -138,18 +138,18 @@ jobs:
       run: "tox -e ${{ matrix.tox_env }}"
 
     - name: Prepare coverage token
-      if: success() && !matrix.skip_coverage && ( github.repository == 'pytest-dev/pytest' || github.event_name == 'pull_request' )
+      if: (!matrix.skip_coverage && ( github.repository == 'pytest-dev/pytest' || github.event_name == 'pull_request' ))
       run: |
         python scripts/append_codecov_token.py
 
     - name: Combine coverage
-      if: success() && !matrix.skip_coverage
+      if: (!matrix.skip_coverage)
       run: |
         python -m coverage combine
         python -m coverage xml
 
     - name: Codecov upload
-      if: success() && !matrix.skip_coverage
+      if: (!matrix.skip_coverage)
       uses: codecov/codecov-action@v1
       with:
         token: ${{ secrets.codecov }}
