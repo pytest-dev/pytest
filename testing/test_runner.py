@@ -557,7 +557,7 @@ def test_outcomeexception_passes_except_Exception() -> None:
         try:
             raise outcomes.OutcomeException("test")
         except Exception:
-            pass
+            raise NotImplementedError()
 
 
 def test_pytest_exit() -> None:
@@ -740,8 +740,9 @@ def test_importorskip(monkeypatch) -> None:
         mod2 = pytest.importorskip("hello123", minversion="1.3")
         assert mod2 == mod
     except Skipped:
-        print(_pytest._code.ExceptionInfo.from_current())
-        pytest.fail("spurious skip")
+        raise NotImplementedError(
+            "spurious skip: {}".format(_pytest._code.ExceptionInfo.from_current())
+        )
 
 
 def test_importorskip_imports_last_module_part() -> None:
@@ -759,8 +760,9 @@ def test_importorskip_dev_module(monkeypatch) -> None:
         with pytest.raises(Skipped):
             pytest.importorskip("mockmodule1", minversion="0.14.0")
     except Skipped:
-        print(_pytest._code.ExceptionInfo.from_current())
-        pytest.fail("spurious skip")
+        raise NotImplementedError(
+            "spurious skip: {}".format(_pytest._code.ExceptionInfo.from_current())
+        )
 
 
 def test_importorskip_module_level(testdir) -> None:
@@ -1030,7 +1032,7 @@ def test_outcome_exception_bad_msg() -> None:
     """Check that OutcomeExceptions validate their input to prevent confusing errors (#5578)"""
 
     def func() -> None:
-        pass
+        raise NotImplementedError()
 
     expected = (
         "OutcomeException expected string as 'msg' parameter, got 'function' instead.\n"
