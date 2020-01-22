@@ -6,19 +6,28 @@ import importlib
 import os
 import sys
 from typing import Dict
+from typing import FrozenSet
+from typing import List
 
 import attr
 import py
 
 import _pytest._code
 from _pytest import nodes
+from _pytest.compat import TYPE_CHECKING
+from _pytest.config import Config
 from _pytest.config import directory_arg
 from _pytest.config import hookimpl
 from _pytest.config import UsageError
 from _pytest.fixtures import FixtureManager
+from _pytest.nodes import Node
 from _pytest.outcomes import exit
 from _pytest.runner import collect_one_node
 from _pytest.runner import SetupState
+
+
+if TYPE_CHECKING:
+    from _pytest.python import Package
 
 
 class ExitCode(enum.IntEnum):
@@ -383,7 +392,7 @@ class Session(nodes.FSCollector):
     # Set on the session by fixtures.pytest_sessionstart.
     _fixturemanager = None  # type: FixtureManager
 
-    def __init__(self, config):
+    def __init__(self, config: Config) -> None:
         nodes.FSCollector.__init__(
             self, config.rootdir, parent=None, config=config, session=self, nodeid=""
         )
@@ -394,14 +403,16 @@ class Session(nodes.FSCollector):
         self.trace = config.trace.root.get("collection")
         self._norecursepatterns = config.getini("norecursedirs")
         self.startdir = config.invocation_dir
-        self._initialpaths = frozenset()
+        self._initialpaths = frozenset()  # type: FrozenSet[py.path.local]
+
         # Keep track of any collected nodes in here, so we don't duplicate fixtures
-        self._node_cache = {}
+        self._node_cache = {}  # type: Dict[str, List[Node]]
+        # Dirnames of pkgs with dunder-init files.
+        self._pkg_roots = {}  # type: Dict[py.path.local, Package]
+
         self._bestrelpathcache = _bestrelpath_cache(
             config.rootdir
         )  # type: Dict[str, str]
-        # Dirnames of pkgs with dunder-init files.
-        self._pkg_roots = {}
 
         self.config.pluginmanager.register(self, name="session")
 
