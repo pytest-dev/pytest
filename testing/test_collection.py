@@ -243,7 +243,7 @@ class TestCollectPluginHookRelay:
         wascalled = []
 
         class Plugin:
-            def pytest_collect_file(self, path, parent):
+            def pytest_collect_file(self, path):
                 if not path.basename.startswith("."):
                     # Ignore hidden files, e.g. .testmondata.
                     wascalled.append(path)
@@ -257,7 +257,7 @@ class TestCollectPluginHookRelay:
         wascalled = []
 
         class Plugin:
-            def pytest_collect_directory(self, path, parent):
+            def pytest_collect_directory(self, path):
                 wascalled.append(path.basename)
 
         testdir.mkdir("hello")
@@ -1210,7 +1210,7 @@ def test_collect_symlink_out_of_tree(testdir):
     assert result.ret == 0
 
 
-def test_collectignore_via_conftest(testdir, monkeypatch):
+def test_collectignore_via_conftest(testdir):
     """collect_ignore in parent conftest skips importing child (issue #4592)."""
     tests = testdir.mkpydir("tests")
     tests.ensure("conftest.py").write("collect_ignore = ['ignore_me']")

@@ -4,9 +4,12 @@
 import ast
 import inspect
 import sys
+from types import CodeType
 from typing import Any
 from typing import Dict
 from typing import Optional
+
+import py
 
 import _pytest._code
 import pytest
@@ -146,6 +149,10 @@ class TestAccesses:
         assert x.isparseable()
         assert len(x.lines) == 2
         assert str(x) == "def f(x):\n    pass"
+
+    def test_getrange_step_not_supported(self) -> None:
+        with pytest.raises(IndexError, match=r"step"):
+            self.source[::2]
 
     def test_getline(self) -> None:
         x = self.source[0]
@@ -449,6 +456,14 @@ def test_idem_compile_and_getsource() -> None:
     assert src == expected
 
 
+def test_compile_ast() -> None:
+    # We don't necessarily want to support this.
+    # This test was added just for coverage.
+    stmt = ast.parse("def x(): pass")
+    co = _pytest._code.compile(stmt, filename="foo.py")
+    assert isinstance(co, CodeType)
+
+
 def test_findsource_fallback() -> None:
     from _pytest._code.source import findsource
 
@@ -488,6 +503,7 @@ def test_getfslineno() -> None:
 
     fspath, lineno = getfslineno(f)
 
+    assert isinstance(fspath, py.path.local)
     assert fspath.basename == "test_source.py"
     assert lineno == f.__code__.co_firstlineno - 1  # see findsource
 

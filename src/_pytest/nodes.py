@@ -90,7 +90,7 @@ class Node(metaclass=NodeMeta):
 
     def __init__(
         self,
-        name,
+        name: str,
         parent: Optional["Node"] = None,
         config: Optional[Config] = None,
         session: Optional["Session"] = None,
@@ -476,7 +476,7 @@ class Item(Node):
         if content:
             self._report_sections.append((when, key, content))
 
-    def reportinfo(self) -> Tuple[str, Optional[int], str]:
+    def reportinfo(self) -> Tuple[Union[py.path.local, str], Optional[int], str]:
         return self.fspath, None, ""
 
     @cached_property

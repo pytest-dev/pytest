@@ -1,1 +1,0 @@
-Captured output during teardown is shown with ``-rP``.

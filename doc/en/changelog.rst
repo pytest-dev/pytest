@@ -28,6 +28,44 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+pytest 5.3.4 (2020-01-20)
+=========================
+
+Bug Fixes
+---------
+
+- `#6496 <https://github.com/pytest-dev/pytest/issues/6496>`_: Revert `#6436 <https://github.com/pytest-dev/pytest/issues/6436>`__: unfortunately this change has caused a number of regressions in many suites,
+  so the team decided to revert this change and make a new release while we continue to look for a solution.
+
+
+pytest 5.3.3 (2020-01-16)
+=========================
+
+Bug Fixes
+---------
+
+- `#2780 <https://github.com/pytest-dev/pytest/issues/2780>`_: Captured output during teardown is shown with ``-rP``.
+
+
+- `#5971 <https://github.com/pytest-dev/pytest/issues/5971>`_: Fix a ``pytest-xdist`` crash when dealing with exceptions raised in subprocesses created by the
+  ``multiprocessing`` module.
+
+
+- `#6436 <https://github.com/pytest-dev/pytest/issues/6436>`_: :class:`FixtureDef <_pytest.fixtures.FixtureDef>` objects now properly register their finalizers with autouse and
+  parameterized fixtures that execute before them in the fixture stack so they are torn
+  down at the right times, and in the right order.
+
+
+- `#6532 <https://github.com/pytest-dev/pytest/issues/6532>`_: Fix parsing of outcomes containing multiple errors with ``testdir`` results (regression in 5.3.0).
+
+
+
+Trivial/Internal Changes
+------------------------
+
+- `#6350 <https://github.com/pytest-dev/pytest/issues/6350>`_: Optimized automatic renaming of test parameter IDs.
+
+
 pytest 5.3.2 (2019-12-13)
 =========================
 
@@ -4842,7 +4880,7 @@ time or change existing behaviors in order to make them less surprising/more use
 * Updated docstrings with a more uniform style.
 
 * Add stderr write for ``pytest.exit(msg)`` during startup. Previously the message was never shown.
-  Thanks `@BeyondEvil`_ for reporting `#1210`_. Thanks to `@jgsonesen`_ and
+  Thanks `@BeyondEvil`_ for reporting `#1210`_. Thanks to @jgsonesen and
   `@tomviner`_ for the PR.
 
 * No longer display the incorrect test deselection reason (`#1372`_).
@@ -4974,7 +5012,6 @@ time or change existing behaviors in order to make them less surprising/more use
 .. _@gprasad84: https://github.com/gprasad84
 .. _@graingert: https://github.com/graingert
 .. _@hartym: https://github.com/hartym
-.. _@jgsonesen: https://github.com/jgsonesen
 .. _@kalekundert: https://github.com/kalekundert
 .. _@kvas-it: https://github.com/kvas-it
 .. _@marscher: https://github.com/marscher

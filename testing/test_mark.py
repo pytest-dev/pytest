@@ -41,7 +41,7 @@ class TestMark:
             mark._some_name
 
 
-def test_marked_class_run_twice(testdir, request):
+def test_marked_class_run_twice(testdir):
     """Test fails file is run twice that contains marked class.
     See issue#683.
     """

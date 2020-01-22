@@ -251,14 +251,14 @@ class TestParser:
         assert args.func_arg is False
         assert args.file_or_dir == ["abcd"]
 
-    def test_drop_short_help0(self, parser: parseopt.Parser, capsys) -> None:
+    def test_drop_short_help0(self, parser: parseopt.Parser) -> None:
         parser.addoption("--func-args", "--doit", help="foo", action="store_true")
         parser.parse([])
         help = parser.optparser.format_help()
         assert "--func-args, --doit  foo" in help
 
     # testing would be more helpful with all help generated
-    def test_drop_short_help1(self, parser: parseopt.Parser, capsys) -> None:
+    def test_drop_short_help1(self, parser: parseopt.Parser) -> None:
         group = parser.getgroup("general")
         group.addoption("--doit", "--func-args", action="store_true", help="foo")
         group._addoption(
