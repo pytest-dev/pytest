@@ -1,5 +1,6 @@
 from io import StringIO
 from pprint import pprint
+from typing import Any
 from typing import List
 from typing import Optional
 from typing import Tuple
@@ -17,6 +18,7 @@ from _pytest._code.code import ReprFuncArgs
 from _pytest._code.code import ReprLocals
 from _pytest._code.code import ReprTraceback
 from _pytest._code.code import TerminalRepr
+from _pytest.compat import TYPE_CHECKING
 from _pytest.nodes import Node
 from _pytest.outcomes import skip
 from _pytest.pathlib import Path
@@ -41,8 +43,13 @@ class BaseReport:
     sections = []  # type: List[Tuple[str, str]]
     nodeid = None  # type: str
 
-    def __init__(self, **kw):
+    def __init__(self, **kw: Any) -> None:
         self.__dict__.update(kw)
+
+    if TYPE_CHECKING:
+        # Can have arbitrary fields given to __init__().
+        def __getattr__(self, key: str) -> Any:
+            raise NotImplementedError()
 
     def toterminal(self, out) -> None:
         if hasattr(self, "node"):
@@ -114,7 +121,7 @@ class BaseReport:
     skipped = property(lambda x: x.outcome == "skipped")
 
     @property
-    def fspath(self):
+    def fspath(self) -> str:
         return self.nodeid.split("::")[0]
 
     @property

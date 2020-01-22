@@ -626,7 +626,7 @@ def test_log_cli_ini_level(testdir):
     "cli_args",
     ["", "--log-level=WARNING", "--log-file-level=WARNING", "--log-cli-level=WARNING"],
 )
-def test_log_cli_auto_enable(testdir, request, cli_args):
+def test_log_cli_auto_enable(testdir, cli_args):
     """Check that live logs are enabled if --log-level or --log-cli-level is passed on the CLI.
     It should not be auto enabled if the same configs are set on the INI file.
     """

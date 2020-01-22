@@ -32,7 +32,7 @@ class TestParseIni:
                 )
             )
         )
-        rootdir, inifile, cfg = getcfg([sub])
+        _, _, cfg = getcfg([sub])
         assert cfg["name"] == "value"
         config = testdir.parseconfigure(sub)
         assert config.inicfg["name"] == "value"
@@ -441,8 +441,6 @@ class TestConfigAPI:
 
 class TestConfigFromdictargs:
     def test_basic_behavior(self, _sys_snapshot):
-        from _pytest.config import Config
-
         option_dict = {"verbose": 444, "foo": "bar", "capture": "no"}
         args = ["a", "b"]
 
@@ -456,8 +454,6 @@ class TestConfigFromdictargs:
 
     def test_invocation_params_args(self, _sys_snapshot):
         """Show that fromdictargs can handle args in their "orig" format"""
-        from _pytest.config import Config
-
         option_dict = {}
         args = ["-vvvv", "-s", "a", "b"]
 
@@ -476,8 +472,6 @@ class TestConfigFromdictargs:
                 """
             )
         )
-
-        from _pytest.config import Config
 
         inifile = "../../foo/bar.ini"
         option_dict = {"inifilename": inifile, "capture": "no"}
@@ -771,23 +765,23 @@ def test_notify_exception(testdir, capfd):
     with pytest.raises(ValueError) as excinfo:
         raise ValueError(1)
     config.notify_exception(excinfo, config.option)
-    out, err = capfd.readouterr()
+    _, err = capfd.readouterr()
     assert "ValueError" in err
 
     class A:
-        def pytest_internalerror(self, excrepr):
+        def pytest_internalerror(self):
             return True
 
     config.pluginmanager.register(A())
     config.notify_exception(excinfo, config.option)
-    out, err = capfd.readouterr()
+    _, err = capfd.readouterr()
     assert not err
 
     config = testdir.parseconfig("-p", "no:terminal")
     with pytest.raises(ValueError) as excinfo:
         raise ValueError(1)
     config.notify_exception(excinfo, config.option)
-    out, err = capfd.readouterr()
+    _, err = capfd.readouterr()
     assert "ValueError" in err
 
 
@@ -797,7 +791,7 @@ def test_no_terminal_discovery_error(testdir):
     assert result.ret == ExitCode.INTERRUPTED
 
 
-def test_load_initial_conftest_last_ordering(testdir, _config_for_test):
+def test_load_initial_conftest_last_ordering(_config_for_test):
     pm = _config_for_test.pluginmanager
 
     class My:
@@ -866,21 +860,21 @@ class TestRootdir:
         a = tmpdir.mkdir("a")
         b = a.mkdir("b")
         for args in ([tmpdir], [a], [b]):
-            rootdir, inifile, inicfg = determine_setup(None, args)
+            rootdir, parsed_inifile, _ = determine_setup(None, args)
             assert rootdir == tmpdir
-            assert inifile == inifile
-        rootdir, inifile, inicfg = determine_setup(None, [b, a])
+            assert parsed_inifile == inifile
+        rootdir, parsed_inifile, _ = determine_setup(None, [b, a])
         assert rootdir == tmpdir
-        assert inifile == inifile
+        assert parsed_inifile == inifile
 
     @pytest.mark.parametrize("name", "setup.cfg tox.ini".split())
     def test_pytestini_overrides_empty_other(self, tmpdir, name) -> None:
         inifile = tmpdir.ensure("pytest.ini")
         a = tmpdir.mkdir("a")
         a.ensure(name)
-        rootdir, inifile, inicfg = determine_setup(None, [a])
+        rootdir, parsed_inifile, _ = determine_setup(None, [a])
         assert rootdir == tmpdir
-        assert inifile == inifile
+        assert parsed_inifile == inifile
 
     def test_setuppy_fallback(self, tmpdir) -> None:
         a = tmpdir.mkdir("a")
@@ -900,7 +894,7 @@ class TestRootdir:
 
     def test_with_specific_inifile(self, tmpdir) -> None:
         inifile = tmpdir.ensure("pytest.ini")
-        rootdir, inifile, inicfg = determine_setup(inifile, [tmpdir])
+        rootdir, _, _ = determine_setup(inifile, [tmpdir])
         assert rootdir == tmpdir
 
 
@@ -1043,7 +1037,7 @@ class TestOverrideIniArgs:
         monkeypatch.chdir(str(tmpdir))
         a = tmpdir.mkdir("a")
         b = tmpdir.mkdir("b")
-        rootdir, inifile, inicfg = determine_setup(None, [a, b])
+        rootdir, inifile, _ = determine_setup(None, [a, b])
         assert rootdir == tmpdir
         assert inifile is None
 
@@ -1051,14 +1045,14 @@ class TestOverrideIniArgs:
         a = tmpdir.mkdir("a")
         b = tmpdir.mkdir("b")
         inifile = a.ensure("pytest.ini")
-        rootdir, parsed_inifile, inicfg = determine_setup(None, [a, b])
+        rootdir, parsed_inifile, _ = determine_setup(None, [a, b])
         assert rootdir == a
         assert inifile == parsed_inifile
 
     @pytest.mark.parametrize("dirs", ([], ["does-not-exist"], ["a/does-not-exist"]))
     def test_with_non_dir_arg(self, dirs, tmpdir) -> None:
         with tmpdir.ensure(dir=True).as_cwd():
-            rootdir, inifile, inicfg = determine_setup(None, dirs)
+            rootdir, inifile, _ = determine_setup(None, dirs)
             assert rootdir == tmpdir
             assert inifile is None
 
@@ -1066,7 +1060,7 @@ class TestOverrideIniArgs:
         a = tmpdir.mkdir("a")
         a.ensure("exist")
         with tmpdir.as_cwd():
-            rootdir, inifile, inicfg = determine_setup(None, ["a/exist"])
+            rootdir, inifile, _ = determine_setup(None, ["a/exist"])
             assert rootdir == tmpdir
             assert inifile is None
 
@@ -1111,7 +1105,7 @@ class TestOverrideIniArgs:
         config._preparse(["-o", "cache_dir=/cache", "/some/test/path"])
         assert config._override_ini == ["cache_dir=/cache"]
 
-    def test_multiple_override_ini_options(self, testdir, request):
+    def test_multiple_override_ini_options(self, testdir):
         """Ensure a file path following a '-o' option does not generate an error (#3103)"""
         testdir.makepyfile(
             **{
@@ -1201,7 +1195,7 @@ def test_help_and_version_after_argument_error(testdir):
     assert result.ret == ExitCode.USAGE_ERROR
 
 
-def test_help_formatter_uses_py_get_terminal_width(testdir, monkeypatch):
+def test_help_formatter_uses_py_get_terminal_width(monkeypatch):
     from _pytest.config.argparsing import DropShorterLongHelpFormatter
 
     monkeypatch.setenv("COLUMNS", "90")

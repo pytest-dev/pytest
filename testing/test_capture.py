@@ -960,7 +960,7 @@ class TestFDCapture:
         cap.done()
         assert s == "hello\n"
 
-    def test_stdin(self, tmpfile):
+    def test_stdin(self):
         cap = capture.FDCapture(0)
         cap.start()
         x = os.read(0, 100).strip()
@@ -981,7 +981,7 @@ class TestFDCapture:
             stmp = stmp_file.read()
             assert stmp == data2
 
-    def test_simple_resume_suspend(self, tmpfile):
+    def test_simple_resume_suspend(self):
         with saved_fd(1):
             cap = capture.FDCapture(1)
             cap.start()

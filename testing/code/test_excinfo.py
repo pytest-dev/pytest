@@ -21,8 +21,6 @@ except ImportError:
 else:
     invalidate_import_caches = getattr(importlib, "invalidate_caches", None)
 
-pytest_version_info = tuple(map(int, pytest.__version__.split(".")[:3]))
-
 
 @pytest.fixture
 def limited_recursion_depth():
@@ -857,7 +855,7 @@ raise ValueError()
         from _pytest._code.code import TerminalRepr
 
         class MyRepr(TerminalRepr):
-            def toterminal(self, tw) -> None:
+            def toterminal(self, tw: py.io.TerminalWriter) -> None:
                 tw.line("я")
 
         x = str(MyRepr())

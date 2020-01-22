@@ -39,6 +39,8 @@ from _pytest.reports import TestReport
 if TYPE_CHECKING:
     from typing import Type
 
+    import pexpect
+
 
 IGNORE_PAM = [  # filenames added when obtaining details about the current user
     "/var/lib/sss/mc/passwd"
@@ -1235,7 +1237,9 @@ class Testdir:
         args = self._getpytestargs() + args
         return self.run(*args, timeout=timeout)
 
-    def spawn_pytest(self, string, expect_timeout=10.0):
+    def spawn_pytest(
+        self, string: str, expect_timeout: float = 10.0
+    ) -> "pexpect.spawn":
         """Run pytest using pexpect.
 
         This makes sure to use the right pytest and sets up the temporary
@@ -1249,7 +1253,7 @@ class Testdir:
         cmd = "{} --basetemp={} {}".format(invoke, basetemp, string)
         return self.spawn(cmd, expect_timeout=expect_timeout)
 
-    def spawn(self, cmd, expect_timeout=10.0):
+    def spawn(self, cmd: str, expect_timeout: float = 10.0) -> "pexpect.spawn":
         """Run a command using pexpect.
 
         The pexpect child is returned.

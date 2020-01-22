@@ -57,7 +57,7 @@ def test_traceconfig(testdir):
     result.stdout.fnmatch_lines(["*using*pytest*py*", "*active plugins*"])
 
 
-def test_debug(testdir, monkeypatch):
+def test_debug(testdir):
     result = testdir.runpytest_subprocess("--debug")
     assert result.ret == ExitCode.NO_TESTS_COLLECTED
     p = testdir.tmpdir.join("pytestdebug.log")

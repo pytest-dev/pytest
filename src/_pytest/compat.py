@@ -98,8 +98,10 @@ def getlocation(function, curdir=None) -> str:
     function = get_real_func(function)
     fn = py.path.local(inspect.getfile(function))
     lineno = function.__code__.co_firstlineno
-    if curdir is not None and fn.relto(curdir):
-        fn = fn.relto(curdir)
+    if curdir is not None:
+        relfn = fn.relto(curdir)
+        if relfn:
+            return "%s:%d" % (relfn, lineno + 1)
     return "%s:%d" % (fn, lineno + 1)
 
 

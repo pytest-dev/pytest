@@ -82,7 +82,7 @@ def test_timeout(testdir, enabled):
 
 
 @pytest.mark.parametrize("hook_name", ["pytest_enter_pdb", "pytest_exception_interact"])
-def test_cancel_timeout_on_hook(monkeypatch, pytestconfig, hook_name):
+def test_cancel_timeout_on_hook(monkeypatch, hook_name):
     """Make sure that we are cancelling any scheduled traceback dumping due
     to timeout before entering pdb (pytest-dev/pytest-faulthandler#12) or any other interactive
     exception (pytest-dev/pytest-faulthandler#14).

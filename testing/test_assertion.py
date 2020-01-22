@@ -1299,7 +1299,7 @@ def test_AssertionError_message(testdir):
     )
 
 
-def test_diff_newline_at_end(monkeypatch, testdir):
+def test_diff_newline_at_end(testdir):
     testdir.makepyfile(
         r"""
         def test_diff():
@@ -1354,7 +1354,7 @@ def test_assert_indirect_tuple_no_warning(testdir):
     assert "WR1" not in output
 
 
-def test_assert_with_unicode(monkeypatch, testdir):
+def test_assert_with_unicode(testdir):
     testdir.makepyfile(
         """\
         def test_unicode():

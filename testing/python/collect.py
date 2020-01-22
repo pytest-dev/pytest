@@ -286,7 +286,7 @@ class TestFunction:
 
         return pytest.Function.from_parent(config=config, parent=session, **kwargs)
 
-    def test_function_equality(self, testdir, tmpdir):
+    def test_function_equality(self, testdir):
         def func1():
             pass
 
@@ -492,7 +492,7 @@ class TestFunction:
         )
         assert "foo" in keywords[1] and "bar" in keywords[1] and "baz" in keywords[1]
 
-    def test_function_equality_with_callspec(self, testdir, tmpdir):
+    def test_function_equality_with_callspec(self, testdir):
         items = testdir.getitems(
             """
             import pytest
@@ -509,11 +509,11 @@ class TestFunction:
         config = item.config
 
         class MyPlugin1:
-            def pytest_pyfunc_call(self, pyfuncitem):
+            def pytest_pyfunc_call(self):
                 raise ValueError
 
         class MyPlugin2:
-            def pytest_pyfunc_call(self, pyfuncitem):
+            def pytest_pyfunc_call(self):
                 return True
 
         config.pluginmanager.register(MyPlugin1())
@@ -1015,7 +1015,7 @@ class TestTracebackCutting:
 
 
 class TestReportInfo:
-    def test_itemreport_reportinfo(self, testdir, linecomp):
+    def test_itemreport_reportinfo(self, testdir):
         testdir.makeconftest(
             """
             import pytest

@@ -378,7 +378,9 @@ class _bestrelpath_cache(dict):
 class Session(nodes.FSCollector):
     Interrupted = Interrupted
     Failed = Failed
+    # Set on the session by runner.pytest_sessionstart.
     _setupstate = None  # type: SetupState
+    # Set on the session by fixtures.pytest_sessionstart.
     _fixturemanager = None  # type: FixtureManager
 
     def __init__(self, config):
