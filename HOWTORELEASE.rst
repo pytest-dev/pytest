@@ -8,7 +8,7 @@ taking a lot of time to make a new one.
 .. important::
 
     pytest releases must be prepared on **Linux** because the docs and examples expect
-    to be executed in that platform.
+    to be executed on that platform.
 
 #. Create a branch ``release-X.Y.Z`` with the version for the release.
 
