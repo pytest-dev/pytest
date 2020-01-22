@@ -16,6 +16,7 @@ from _pytest.pytester import HookRecorder
 from _pytest.pytester import LineMatcher
 from _pytest.pytester import SysModulesSnapshot
 from _pytest.pytester import SysPathsSnapshot
+from _pytest.pytester import Testdir
 
 
 def test_make_hook_recorder(testdir) -> None:
@@ -273,7 +274,8 @@ def test_assert_outcomes_after_pytest_error(testdir) -> None:
         result.assert_outcomes(passed=0)
 
 
-def test_cwd_snapshot(tmpdir) -> None:
+def test_cwd_snapshot(testdir: Testdir) -> None:
+    tmpdir = testdir.tmpdir
     foo = tmpdir.ensure("foo", dir=1)
     bar = tmpdir.ensure("bar", dir=1)
     foo.chdir()
