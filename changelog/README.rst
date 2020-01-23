@@ -15,7 +15,7 @@ Each file should be named like ``<ISSUE>.<TYPE>.rst``, where
 
 * ``feature``: new user facing features, like new command-line options and new behavior.
 * ``improvement``: improvement of existing functionality, usually without requiring user intervention (for example, new fields being written in ``--junitxml``, improved colors in terminal, etc).
-* ``bugfix``: fixes a reported bug.
+* ``bugfix``: fixes a bug.
 * ``doc``: documentation improvement, like rewording an entire session or adding missing docs.
 * ``deprecation``: feature deprecation.
 * ``removal``: feature removal.

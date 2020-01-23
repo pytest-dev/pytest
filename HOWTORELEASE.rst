@@ -1,7 +1,7 @@
 Release Procedure
 -----------------
 
-Our current policy for releasing is to aim for a bugfix every few weeks and a minor release every 2-3 months. The idea
+Our current policy for releasing is to aim for a bug-fix release every few weeks and a minor release every 2-3 months. The idea
 is to get fixes and new features out instead of trying to cram a ton of features into a release and by consequence
 taking a lot of time to make a new one.
 
