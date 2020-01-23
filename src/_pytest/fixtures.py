@@ -963,7 +963,7 @@ class FixtureDef:
 
         stack_slice_index = min([current_fix_index, *parent_fixture_indexes])
         active_fixture_argnames = all_fix_names[:stack_slice_index]
-        return {*active_fixture_argnames, *self.argnames}
+        return tuple(active_fixture_argnames) + self.argnames
 
     def cache_key(self, request):
         return request.param_index if not hasattr(request, "param") else request.param
