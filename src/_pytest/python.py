@@ -369,7 +369,12 @@ class PyCollector(PyobjMixin, nodes.Collector):
                 if not isinstance(res, list):
                     res = [res]
                 values.extend(res)
-        values.sort(key=lambda item: item.reportinfo()[:2])
+
+        def sort_key(item):
+            fspath, lineno, _ = item.reportinfo()
+            return (str(fspath), lineno)
+
+        values.sort(key=sort_key)
         return values
 
     def _makeitem(self, name, obj):
