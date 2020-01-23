@@ -282,7 +282,7 @@ def compile_(  # noqa: F811
     return s.compile(filename, mode, flags, _genframe=_genframe)
 
 
-def getfslineno(obj) -> Tuple[Union[str, py.path.local], int]:
+def getfslineno(obj) -> Tuple[Optional[Union["Literal['']", py.path.local]], int]:
     """ Return source location (path, lineno) for the given object.
     If the source cannot be determined return ("", -1).
 
