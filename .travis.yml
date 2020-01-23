@@ -42,11 +42,6 @@ jobs:
     - env: TOXENV=py37-lsof-numpy-oldattrs-pexpect-twisted PYTEST_COVERAGE=1 PYTEST_ADDOPTS=
       python: '3.7'
 
-    # Coverage for Python 3.5.{0,1} specific code, mostly typing related.
-    - env: TOXENV=py35 PYTEST_COVERAGE=1 PYTEST_ADDOPTS="-k test_raises_cyclic_reference"
-      python: '3.5.1'
-      dist: trusty
-
 before_script:
   - |
     # Do not (re-)upload coverage with cron runs.
