@@ -20,7 +20,8 @@ from _pytest._code.code import ReprTraceback
 from _pytest._code.code import TerminalRepr
 from _pytest._io import TerminalWriter
 from _pytest.compat import TYPE_CHECKING
-from _pytest.nodes import Node
+from _pytest.nodes import Collector
+from _pytest.nodes import Item
 from _pytest.outcomes import skip
 from _pytest.pathlib import Path
 
@@ -315,7 +316,13 @@ class CollectReport(BaseReport):
     when = "collect"
 
     def __init__(
-        self, nodeid: str, outcome, longrepr, result: List[Node], sections=(), **extra
+        self,
+        nodeid: str,
+        outcome,
+        longrepr,
+        result: Optional[List[Union[Item, Collector]]],
+        sections=(),
+        **extra
     ) -> None:
         self.nodeid = nodeid
         self.outcome = outcome
