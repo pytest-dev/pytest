@@ -462,9 +462,10 @@ class Item(Node):
     @cached_property
     def location(self) -> Tuple[str, Optional[int], str]:
         location = self.reportinfo()
-        fspath = location[0]
-        if not isinstance(fspath, py.path.local):
-            fspath = py.path.local(fspath)
-        fspath = self.session._node_location_to_relpath(fspath)
+        if isinstance(location[0], py.path.local):
+            fspath = location[0]
+        else:
+            fspath = py.path.local(location[0])
+        relfspath = self.session._node_location_to_relpath(fspath)
         assert type(location[2]) is str
-        return (fspath, location[1], location[2])
+        return (relfspath, location[1], location[2])
