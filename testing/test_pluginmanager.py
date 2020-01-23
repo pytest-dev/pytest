@@ -256,7 +256,7 @@ class TestPytestPluginManager:
         )
         p.copy(p.dirpath("skipping2.py"))
         monkeypatch.setenv("PYTEST_PLUGINS", "skipping2")
-        result = testdir.runpytest("-rw", "-p", "skipping1", syspathinsert=True)
+        result = testdir.runpytest("-p", "skipping1", syspathinsert=True)
         assert result.ret == ExitCode.NO_TESTS_COLLECTED
         result.stdout.fnmatch_lines(
             ["*skipped plugin*skipping1*hello*", "*skipped plugin*skipping2*hello*"]

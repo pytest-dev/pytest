@@ -1349,7 +1349,7 @@ def test_assert_indirect_tuple_no_warning(testdir):
             assert tpl
     """
     )
-    result = testdir.runpytest("-rw")
+    result = testdir.runpytest()
     output = "\n".join(result.stdout.lines)
     assert "WR1" not in output
 
