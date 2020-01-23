@@ -1042,11 +1042,13 @@ file:
     import pytest
 
 
-    @pytest.fixture()
+    @pytest.fixture
     def cleandir():
+        old_cwd = os.getcwd()
         newpath = tempfile.mkdtemp()
         os.chdir(newpath)
         yield
+        os.chdir(old_cwd)
         shutil.rmtree(newpath)
 
 and declare its use in a test module via a ``usefixtures`` marker:
