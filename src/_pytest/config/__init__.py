@@ -36,6 +36,7 @@ from .findpaths import determine_setup
 from .findpaths import exists
 from _pytest._code import ExceptionInfo
 from _pytest._code import filter_traceback
+from _pytest._io import TerminalWriter
 from _pytest.compat import importlib_metadata
 from _pytest.compat import TYPE_CHECKING
 from _pytest.outcomes import fail
@@ -73,7 +74,7 @@ def main(args=None, plugins=None) -> "Union[int, _pytest.main.ExitCode]":
             config = _prepareconfig(args, plugins)
         except ConftestImportFailure as e:
             exc_info = ExceptionInfo(e.excinfo)
-            tw = py.io.TerminalWriter(sys.stderr)
+            tw = TerminalWriter(sys.stderr)
             tw.line(
                 "ImportError while loading conftest '{e.path}'.".format(e=e), red=True
             )
@@ -99,7 +100,7 @@ def main(args=None, plugins=None) -> "Union[int, _pytest.main.ExitCode]":
             finally:
                 config._ensure_unconfigure()
     except UsageError as e:
-        tw = py.io.TerminalWriter(sys.stderr)
+        tw = TerminalWriter(sys.stderr)
         for msg in e.args:
             tw.line("ERROR: {}\n".format(msg), red=True)
         return ExitCode.USAGE_ERROR
@@ -1175,12 +1176,12 @@ def setns(obj, dic):
             setattr(pytest, name, value)
 
 
-def create_terminal_writer(config, *args, **kwargs):
+def create_terminal_writer(config: Config, *args, **kwargs) -> TerminalWriter:
     """Create a TerminalWriter instance configured according to the options
     in the config object. Every code which requires a TerminalWriter object
     and has access to a config object should use this function.
     """
-    tw = py.io.TerminalWriter(*args, **kwargs)
+    tw = TerminalWriter(*args, **kwargs)
     if config.option.color == "yes":
         tw.hasmarkup = True
     if config.option.color == "no":

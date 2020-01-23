@@ -12,6 +12,7 @@ import pytest
 from _pytest._code.code import ExceptionChainRepr
 from _pytest._code.code import ExceptionInfo
 from _pytest._code.code import FormattedExcinfo
+from _pytest._io import TerminalWriter
 
 
 try:
@@ -855,7 +856,7 @@ raise ValueError()
         from _pytest._code.code import TerminalRepr
 
         class MyRepr(TerminalRepr):
-            def toterminal(self, tw: py.io.TerminalWriter) -> None:
+            def toterminal(self, tw: TerminalWriter) -> None:
                 tw.line("я")
 
         x = str(MyRepr())
@@ -1005,7 +1006,7 @@ raise ValueError()
         """
         )
         excinfo = pytest.raises(ValueError, mod.f)
-        tw = py.io.TerminalWriter(stringio=True)
+        tw = TerminalWriter(stringio=True)
         repr = excinfo.getrepr(**reproptions)
         repr.toterminal(tw)
         assert tw.stringio.getvalue()
@@ -1225,7 +1226,7 @@ raise ValueError()
         getattr(excinfo.value, attr).__traceback__ = None
 
         r = excinfo.getrepr()
-        tw = py.io.TerminalWriter(stringio=True)
+        tw = TerminalWriter(stringio=True)
         tw.hasmarkup = False
         r.toterminal(tw)
 
