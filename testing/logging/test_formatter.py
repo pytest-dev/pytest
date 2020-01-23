@@ -1,7 +1,6 @@
 import logging
 
-import py.io
-
+from _pytest._io import TerminalWriter
 from _pytest.logging import ColoredLevelFormatter
 
 
@@ -22,7 +21,7 @@ def test_coloredlogformatter():
         class option:
             pass
 
-    tw = py.io.TerminalWriter()
+    tw = TerminalWriter()
     tw.hasmarkup = True
     formatter = ColoredLevelFormatter(tw, logfmt)
     output = formatter.format(record)
@@ -142,7 +141,7 @@ def test_colored_short_level():
         class option:
             pass
 
-    tw = py.io.TerminalWriter()
+    tw = TerminalWriter()
     tw.hasmarkup = True
     formatter = ColoredLevelFormatter(tw, logfmt)
     output = formatter.format(record)

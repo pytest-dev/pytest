@@ -13,13 +13,14 @@ from typing import Sequence
 from typing import Tuple
 from typing import Union
 
-import py
+import py.path
 
 import pytest
 from _pytest import outcomes
 from _pytest._code.code import ExceptionInfo
 from _pytest._code.code import ReprFileLocation
 from _pytest._code.code import TerminalRepr
+from _pytest._io import TerminalWriter
 from _pytest.compat import safe_getattr
 from _pytest.compat import TYPE_CHECKING
 from _pytest.fixtures import FixtureRequest
@@ -139,7 +140,7 @@ class ReprFailDoctest(TerminalRepr):
     ):
         self.reprlocation_lines = reprlocation_lines
 
-    def toterminal(self, tw: py.io.TerminalWriter) -> None:
+    def toterminal(self, tw: TerminalWriter) -> None:
         for reprlocation, lines in self.reprlocation_lines:
             for line in lines:
                 tw.line(line)
