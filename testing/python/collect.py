@@ -68,7 +68,7 @@ class TestModule:
     def test_invalid_test_module_name(self, testdir):
         a = testdir.mkdir("a")
         a.ensure("test_one.part1.py")
-        result = testdir.runpytest("-rw")
+        result = testdir.runpytest()
         result.stdout.fnmatch_lines(
             [
                 "ImportError while importing test module*test_one.part1*",
@@ -137,7 +137,7 @@ class TestClass:
                     pass
         """
         )
-        result = testdir.runpytest("-rw")
+        result = testdir.runpytest()
         result.stdout.fnmatch_lines(
             [
                 "*cannot collect test class 'TestClass1' because it has "
@@ -153,7 +153,7 @@ class TestClass:
                     pass
         """
         )
-        result = testdir.runpytest("-rw")
+        result = testdir.runpytest()
         result.stdout.fnmatch_lines(
             [
                 "*cannot collect test class 'TestClass1' because it has "
@@ -230,7 +230,7 @@ class TestClass:
             TestCase = collections.namedtuple('TestCase', ['a'])
         """
         )
-        result = testdir.runpytest("-rw")
+        result = testdir.runpytest()
         result.stdout.fnmatch_lines(
             "*cannot collect test class 'TestCase' "
             "because it has a __new__ constructor*"
@@ -1162,7 +1162,7 @@ def test_dont_collect_non_function_callable(testdir):
             pass
     """
     )
-    result = testdir.runpytest("-rw")
+    result = testdir.runpytest()
     result.stdout.fnmatch_lines(
         [
             "*collected 1 item*",
