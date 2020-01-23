@@ -43,6 +43,8 @@ jobs:
           "macos-py38",
 
           "linting",
+          "docs",
+          "doctesting",
         ]
 
         include:
@@ -112,7 +114,17 @@ jobs:
           - name: "linting"
             python: "3.7"
             os: ubuntu-latest
-            tox_env: "linting,docs,doctesting"
+            tox_env: "linting"
+            skip_coverage: true
+          - name: "docs"
+            python: "3.7"
+            os: ubuntu-latest
+            tox_env: "docs"
+            skip_coverage: true
+          - name: "doctesting"
+            python: "3.7"
+            os: ubuntu-latest
+            tox_env: "doctesting"
 
     steps:
     - uses: actions/checkout@v1
