@@ -71,7 +71,7 @@ script: tox
 after_success:
   - |
     if [[ "$PYTEST_COVERAGE" = 1 ]]; then
-      env CODECOV_NAME="$TOXENV-$TRAVIS_OS_NAME" scripts/report-coverage.sh
+      env CODECOV_NAME="$TOXENV-$TRAVIS_OS_NAME" scripts/report-coverage.sh -F Travis
     fi
 
 notifications:
