@@ -3,6 +3,7 @@ import warnings
 from functools import lru_cache
 from typing import Any
 from typing import Dict
+from typing import Iterable
 from typing import List
 from typing import Optional
 from typing import Set
@@ -205,7 +206,7 @@ class Node(metaclass=NodeMeta):
 
     # methods for ordering nodes
     @property
-    def nodeid(self):
+    def nodeid(self) -> str:
         """ a ::-separated string denoting its collection tree address. """
         return self._nodeid
 
@@ -390,7 +391,7 @@ class Collector(Node):
     class CollectError(Exception):
         """ an error during collection, contains a custom message. """
 
-    def collect(self):
+    def collect(self) -> Iterable[Union["Item", "Collector"]]:
         """ returns a list of children (items and collectors)
             for this collection node.
         """

@@ -796,7 +796,7 @@ class Config:
         )
 
     @property
-    def invocation_dir(self):
+    def invocation_dir(self) -> py.path.local:
         """Backward compatibility"""
         return py.path.local(str(self.invocation_params.dir))
 

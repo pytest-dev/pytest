@@ -4,14 +4,17 @@ import fnmatch
 import inspect
 import os
 import sys
+import typing
 import warnings
 from collections import Counter
 from collections import defaultdict
 from collections.abc import Sequence
 from functools import partial
 from typing import Dict
+from typing import Iterable
 from typing import List
 from typing import Optional
+from typing import Set
 from typing import Tuple
 from typing import Union
 
@@ -177,16 +180,20 @@ def pytest_pyfunc_call(pyfuncitem: "Function"):
     return True
 
 
-def pytest_collect_file(path, parent):
+def pytest_collect_file(path: py.path.local, parent) -> Optional["Module"]:
     ext = path.ext
     if ext == ".py":
         if not parent.session.isinitpath(path):
             if not path_matches_patterns(
                 path, parent.config.getini("python_files") + ["__init__.py"]
             ):
-                return
+                return None
         ihook = parent.session.gethookproxy(path)
-        return ihook.pytest_pycollect_makemodule(path=path, parent=parent)
+        module = ihook.pytest_pycollect_makemodule(
+            path=path, parent=parent
+        )  # type: Module
+        return module
+    return None
 
 
 def path_matches_patterns(path, patterns):
@@ -194,14 +201,16 @@ def path_matches_patterns(path, patterns):
     return any(path.fnmatch(pattern) for pattern in patterns)
 
 
-def pytest_pycollect_makemodule(path, parent):
+def pytest_pycollect_makemodule(path: py.path.local, parent) -> "Module":
     if path.basename == "__init__.py":
-        return Package.from_parent(parent, fspath=path)
-    return Module.from_parent(parent, fspath=path)
+        pkg = Package.from_parent(parent, fspath=path)  # type: Package
+        return pkg
+    mod = Module.from_parent(parent, fspath=path)  # type: Module
+    return mod
 
 
 @hookimpl(hookwrapper=True)
-def pytest_pycollect_makeitem(collector, name, obj):
+def pytest_pycollect_makeitem(collector: "PyCollector", name: str, obj):
     outcome = yield
     res = outcome.get_result()
     if res is not None:
@@ -353,7 +362,7 @@ class PyCollector(PyobjMixin, nodes.Collector):
                 return True
         return False
 
-    def collect(self):
+    def collect(self) -> Iterable[Union[nodes.Item, nodes.Collector]]:
         if not getattr(self.obj, "__test__", True):
             return []
 
@@ -362,8 +371,8 @@ class PyCollector(PyobjMixin, nodes.Collector):
         dicts = [getattr(self.obj, "__dict__", {})]
         for basecls in inspect.getmro(self.obj.__class__):
             dicts.append(basecls.__dict__)
-        seen = {}
-        values = []
+        seen = {}  # type: Dict[str, bool]
+        values = []  # type: List[Union[nodes.Item, nodes.Collector]]
         for dic in dicts:
             for name, obj in list(dic.items()):
                 if name in seen:
@@ -383,9 +392,16 @@ class PyCollector(PyobjMixin, nodes.Collector):
         values.sort(key=sort_key)
         return values
 
-    def _makeitem(self, name, obj):
+    def _makeitem(
+        self, name: str, obj
+    ) -> Union[
+        None, nodes.Item, nodes.Collector, List[Union[nodes.Item, nodes.Collector]]
+    ]:
         # assert self.ihook.fspath == self.fspath, self
-        return self.ihook.pytest_pycollect_makeitem(collector=self, name=name, obj=obj)
+        item = self.ihook.pytest_pycollect_makeitem(
+            collector=self, name=name, obj=obj
+        )  # type: Union[None, nodes.Item, nodes.Collector, List[Union[nodes.Item, nodes.Collector]]]
+        return item
 
     def _genfunctions(self, name, funcobj):
         module = self.getparent(Module).obj
@@ -437,7 +453,7 @@ class Module(nodes.File, PyCollector):
     def _getobj(self):
         return self._importtestmodule()
 
-    def collect(self):
+    def collect(self) -> Iterable[Union[nodes.Item, nodes.Collector]]:
         self._inject_setup_module_fixture()
         self._inject_setup_function_fixture()
         self.session._fixturemanager.parsefactories(self)
@@ -584,7 +600,9 @@ class Package(Module):
     def gethookproxy(self, fspath: py.path.local):
         return super()._gethookproxy(fspath)
 
-    def _collectfile(self, path, handle_dupes=True):
+    def _collectfile(
+        self, path: py.path.local, handle_dupes: bool = True
+    ) -> typing.Sequence[nodes.Collector]:
         assert (
             path.isfile()
         ), "{!r} is not a file (isdir={!r}, exists={!r}, islink={!r})".format(
@@ -607,19 +625,22 @@ class Package(Module):
         if self.fspath == path:  # __init__.py
             return [self]
 
-        return ihook.pytest_collect_file(path=path, parent=self)
+        collectors = ihook.pytest_collect_file(
+            path=path, parent=self
+        )  # type: List[nodes.Collector]
+        return collectors
 
-    def isinitpath(self, path):
+    def isinitpath(self, path: py.path.local) -> bool:
         return path in self.session._initialpaths
 
-    def collect(self):
+    def collect(self) -> Iterable[Union[nodes.Item, nodes.Collector]]:
         this_path = self.fspath.dirpath()
         init_module = this_path.join("__init__.py")
         if init_module.check(file=1) and path_matches_patterns(
             init_module, self.config.getini("python_files")
         ):
             yield Module.from_parent(self, fspath=init_module)
-        pkg_prefixes = set()
+        pkg_prefixes = set()  # type: Set[py.path.local]
         for path in this_path.visit(rec=self._recurse, bf=True, sort=True):
             # We will visit our own __init__.py file, in which case we skip it.
             is_file = path.isfile()
@@ -676,10 +697,11 @@ class Class(PyCollector):
         """
         return super().from_parent(name=name, parent=parent)
 
-    def collect(self):
+    def collect(self) -> Iterable[Union[nodes.Item, nodes.Collector]]:
         if not safe_getattr(self.obj, "__test__", True):
             return []
         if hasinit(self.obj):
+            assert self.parent is not None
             self.warn(
                 PytestCollectionWarning(
                     "cannot collect test class %r because it has a "
@@ -689,6 +711,7 @@ class Class(PyCollector):
             )
             return []
         elif hasnew(self.obj):
+            assert self.parent is not None
             self.warn(
                 PytestCollectionWarning(
                     "cannot collect test class %r because it has a "
@@ -762,7 +785,7 @@ class Instance(PyCollector):
     def _getobj(self):
         return self.parent.obj()
 
-    def collect(self):
+    def collect(self) -> Iterable[Union[nodes.Item, nodes.Collector]]:
         self.session._fixturemanager.parsefactories(self)
         return super().collect()
 

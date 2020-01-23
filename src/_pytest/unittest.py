@@ -2,29 +2,40 @@
 import functools
 import sys
 import traceback
+from typing import Iterable
+from typing import Optional
+from typing import Union
 
 import _pytest._code
 import pytest
 from _pytest.compat import getimfunc
 from _pytest.config import hookimpl
+from _pytest.nodes import Collector
+from _pytest.nodes import Item
 from _pytest.outcomes import exit
 from _pytest.outcomes import fail
 from _pytest.outcomes import skip
 from _pytest.outcomes import xfail
 from _pytest.python import Class
 from _pytest.python import Function
+from _pytest.python import PyCollector
 from _pytest.runner import CallInfo
 
 
-def pytest_pycollect_makeitem(collector, name, obj):
+def pytest_pycollect_makeitem(
+    collector: PyCollector, name: str, obj
+) -> Optional["UnitTestCase"]:
     # has unittest been imported and is obj a subclass of its TestCase?
     try:
-        if not issubclass(obj, sys.modules["unittest"].TestCase):
-            return
+        ut = sys.modules["unittest"]
+        # Type ignored because `ut` is an opaque module.
+        if not issubclass(obj, ut.TestCase):  # type: ignore
+            return None
     except Exception:
-        return
+        return None
     # yes, so let's collect it
-    return UnitTestCase.from_parent(collector, name=name, obj=obj)
+    item = UnitTestCase.from_parent(collector, name=name, obj=obj)  # type: UnitTestCase
+    return item
 
 
 class UnitTestCase(Class):
@@ -32,7 +43,7 @@ class UnitTestCase(Class):
     # to declare that our children do not support funcargs
     nofuncargs = True
 
-    def collect(self):
+    def collect(self) -> Iterable[Union[Item, Collector]]:
         from unittest import TestLoader
 
         cls = self.obj
@@ -59,8 +70,8 @@ class UnitTestCase(Class):
             runtest = getattr(self.obj, "runTest", None)
             if runtest is not None:
                 ut = sys.modules.get("twisted.trial.unittest", None)
-                if ut is None or runtest != ut.TestCase.runTest:
-                    # TODO: callobj consistency
+                # Type ignored because `ut` is an opaque module.
+                if ut is None or runtest != ut.TestCase.runTest:  # type: ignore
                     yield TestCaseFunction.from_parent(self, name="runTest")
 
     def _inject_setup_teardown_fixtures(self, cls):
