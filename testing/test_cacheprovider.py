@@ -66,7 +66,7 @@ class TestNewAPI:
         testdir.tmpdir.ensure_dir(".pytest_cache").chmod(0)
         try:
             testdir.makepyfile("def test_error(): raise Exception")
-            result = testdir.runpytest("-rw")
+            result = testdir.runpytest()
             assert result.ret == 1
             # warnings from nodeids, lastfailed, and stepwise
             result.stdout.fnmatch_lines(

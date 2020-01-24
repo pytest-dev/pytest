@@ -12,7 +12,8 @@ import pytest
 from _pytest._code.code import ExceptionChainRepr
 from _pytest._code.code import ExceptionInfo
 from _pytest._code.code import FormattedExcinfo
-
+from _pytest._io import TerminalWriter
+from _pytest.pytester import LineMatcher
 
 try:
     import importlib
@@ -775,14 +776,43 @@ raise ValueError()
         )
         excinfo = pytest.raises(ValueError, mod.entry)
 
-        p = FormattedExcinfo()
+        p = FormattedExcinfo(abspath=False)
+
+        raised = 0
+
+        orig_getcwd = os.getcwd
 
         def raiseos():
-            raise OSError(2)
+            nonlocal raised
+            if sys._getframe().f_back.f_code.co_name == "checked_call":
+                # Only raise with expected calls, but not via e.g. inspect for
+                # py38-windows.
+                raised += 1
+                raise OSError(2, "custom_oserror")
+            return orig_getcwd()
 
         monkeypatch.setattr(os, "getcwd", raiseos)
         assert p._makepath(__file__) == __file__
-        p.repr_traceback(excinfo)
+        assert raised == 1
+        repr_tb = p.repr_traceback(excinfo)
+
+        matcher = LineMatcher(str(repr_tb).splitlines())
+        matcher.fnmatch_lines(
+            [
+                "def entry():",
+                ">       f(0)",
+                "",
+                "{}:5: ".format(mod.__file__),
+                "_ _ *",
+                "",
+                "    def f(x):",
+                ">       raise ValueError(x)",
+                "E       ValueError: 0",
+                "",
+                "{}:3: ValueError".format(mod.__file__),
+            ]
+        )
+        assert raised == 3
 
     def test_repr_excinfo_addouterr(self, importasmod, tw_mock):
         mod = importasmod(
@@ -855,7 +885,7 @@ raise ValueError()
         from _pytest._code.code import TerminalRepr
 
         class MyRepr(TerminalRepr):
-            def toterminal(self, tw: py.io.TerminalWriter) -> None:
+            def toterminal(self, tw: TerminalWriter) -> None:
                 tw.line("я")
 
         x = str(MyRepr())
@@ -1005,7 +1035,7 @@ raise ValueError()
         """
         )
         excinfo = pytest.raises(ValueError, mod.f)
-        tw = py.io.TerminalWriter(stringio=True)
+        tw = TerminalWriter(stringio=True)
         repr = excinfo.getrepr(**reproptions)
         repr.toterminal(tw)
         assert tw.stringio.getvalue()
@@ -1200,8 +1230,6 @@ raise ValueError()
         real traceback, such as those raised in a subprocess submitted by the multiprocessing
         module (#1984).
         """
-        from _pytest.pytester import LineMatcher
-
         exc_handling_code = " from e" if reason == "cause" else ""
         mod = importasmod(
             """
@@ -1225,7 +1253,7 @@ raise ValueError()
         getattr(excinfo.value, attr).__traceback__ = None
 
         r = excinfo.getrepr()
-        tw = py.io.TerminalWriter(stringio=True)
+        tw = TerminalWriter(stringio=True)
         tw.hasmarkup = False
         r.toterminal(tw)
 
@@ -1320,7 +1348,6 @@ def test_exception_repr_extraction_error_on_recursion():
     Ensure we can properly detect a recursion error even
     if some locals raise error on comparison (#2459).
     """
-    from _pytest.pytester import LineMatcher
 
     class numpy_like:
         def __eq__(self, other):

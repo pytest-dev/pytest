@@ -308,7 +308,7 @@ def get_real_method(obj, holder):
     return obj
 
 
-def getfslineno(obj):
+def getfslineno(obj) -> Tuple[Union[str, py.path.local], int]:
     # xxx let decorators etc specify a sane ordering
     obj = get_real_func(obj)
     if hasattr(obj, "place_as"):

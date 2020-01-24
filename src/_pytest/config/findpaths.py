@@ -1,6 +1,9 @@
 import os
+from typing import Any
+from typing import Iterable
 from typing import List
 from typing import Optional
+from typing import Tuple
 
 import py
 
@@ -60,7 +63,7 @@ def getcfg(args, config=None):
     return None, None, None
 
 
-def get_common_ancestor(paths):
+def get_common_ancestor(paths: Iterable[py.path.local]) -> py.path.local:
     common_ancestor = None
     for path in paths:
         if not path.exists():
@@ -113,7 +116,7 @@ def determine_setup(
     args: List[str],
     rootdir_cmd_arg: Optional[str] = None,
     config: Optional["Config"] = None,
-):
+) -> Tuple[py.path.local, Optional[str], Any]:
     dirs = get_dirs_from_args(args)
     if inifile:
         iniconfig = py.iniconfig.IniConfig(inifile)
