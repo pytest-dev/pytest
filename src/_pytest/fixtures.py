@@ -887,16 +887,13 @@ class FixtureDef:
 
     def execute(self, request):
         for argname in self._dependee_fixture_argnames(request):
+            if argname == "request":
+                continue
             fixturedef = request._get_active_fixturedef(argname)
-            if argname != "request":
-                for fin in fixturedef._finalizers:
-                    if "request" in getattr(fin, "keywords", {}):
-                        if self == fin.keywords["request"]._fixturedef:
-                            break
-                else:
-                    fixturedef.addfinalizer(
-                        functools.partial(self.finish, request=request)
-                    )
+            if not self._will_be_finalized_by_fixture(fixturedef):
+                fixturedef.addfinalizer(
+                    functools.partial(self.finish, request=request)
+                )
 
         my_cache_key = self.cache_key(request)
         if self.cached_result is not None:
@@ -916,6 +913,25 @@ class FixtureDef:
 
         hook = self._fixturemanager.session.gethookproxy(request.node.fspath)
         return hook.pytest_fixture_setup(fixturedef=self, request=request)
+
+    def _will_be_finalized_by_fixture(self, fixturedef):
+        """Whether or not this fixture be finalized by the passed fixture.
+
+        Every ``:class:FixtureDef`` keeps a list of all the finishers (tear downs) of
+        other ``:class:FixtureDef`` instances that it should run before running its own.
+        Finishers are added to this list not by this ``:class:FixtureDef``, but by the
+        other ``:class:FixtureDef`` instances. They tell this instance that it's
+        responsible for tearing them down before it tears itself down.
+
+        This method allows a ``:class:FixtureDef`` to check if it has already told
+        another ``:class:FixtureDef`` that the latter ``:class:FixtureDef`` is
+        responsible for tearing down this ``:class:FixtureDef``.
+        """
+        for finalizer in fixturedef._finalizers:
+            if "request" in getattr(finalizer, "keywords", {}):
+                if self == finalizer.keywords["request"]._fixturedef:
+                    return True
+        return False
 
     def _dependee_fixture_argnames(self, request):
         """A list of argnames for fixtures that this fixture depends on.
