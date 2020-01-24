@@ -167,7 +167,7 @@ jobs:
         token: ${{ secrets.codecov }}
         file: ./coverage.xml
         flags: GHA
-        fail_ci_if_error: false
+        fail_ci_if_error: true
         name: ${{ matrix.name }}
 
   deploy:
