@@ -156,7 +156,9 @@ jobs:
 
     - name: Report coverage
       if: (!matrix.skip_coverage)
-      run: bash scripts/report-coverage.sh -F GHA
+      env:
+        CODECOV_NAME: ${{ matrix.name }}
+      run: bash scripts/report-coverage.sh -F GHA,${{ runner.os }}
 
   deploy:
     if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags') && github.repository == 'pytest-dev/pytest'
