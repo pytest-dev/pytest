@@ -1,14 +1,14 @@
 Release Procedure
 -----------------
 
-Our current policy for releasing is to aim for a bugfix every few weeks and a minor release every 2-3 months. The idea
+Our current policy for releasing is to aim for a bug-fix release every few weeks and a minor release every 2-3 months. The idea
 is to get fixes and new features out instead of trying to cram a ton of features into a release and by consequence
 taking a lot of time to make a new one.
 
 .. important::
 
     pytest releases must be prepared on **Linux** because the docs and examples expect
-    to be executed in that platform.
+    to be executed on that platform.
 
 #. Create a branch ``release-X.Y.Z`` with the version for the release.
 
