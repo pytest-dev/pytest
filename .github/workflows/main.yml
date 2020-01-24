@@ -154,21 +154,9 @@ jobs:
       run: |
         python scripts/append_codecov_token.py
 
-    - name: Combine coverage
+    - name: Report coverage
       if: (!matrix.skip_coverage)
-      run: |
-        python -m coverage combine
-        python -m coverage xml
-
-    - name: Codecov upload
-      if: (!matrix.skip_coverage)
-      uses: codecov/codecov-action@v1
-      with:
-        token: ${{ secrets.codecov }}
-        file: ./coverage.xml
-        flags: GHA
-        fail_ci_if_error: false
-        name: ${{ matrix.name }}
+      run: bash scripts/report-coverage.sh -F GHA
 
   deploy:
     if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags') && github.repository == 'pytest-dev/pytest'
