@@ -31,17 +31,6 @@ jobs:
         - python -V
         - test $(python -c 'import sys; print("%d%d" % sys.version_info[0:2])') = 37
 
-    # Full run of latest supported version, without xdist.
-    # Coverage for:
-    # - pytester's LsofFdLeakChecker
-    # - TestArgComplete (linux only)
-    # - numpy
-    # - old attrs
-    # - verbose=0
-    # - test_sys_breakpoint_interception (via pexpect).
-    - env: TOXENV=py37-lsof-numpy-oldattrs-pexpect-twisted PYTEST_COVERAGE=1 PYTEST_ADDOPTS=
-      python: '3.7'
-
     # Coverage for Python 3.5.{0,1} specific code, mostly typing related.
     - env: TOXENV=py35 PYTEST_COVERAGE=1 PYTEST_ADDOPTS="-k test_raises_cyclic_reference"
       python: '3.5.1'
