@@ -1492,3 +1492,8 @@ def test_typeerror_encodedfile_write(testdir):
     result_with_capture.stdout.fnmatch_lines(
         ["E * TypeError: write() argument must be str, not bytes"]
     )
+
+
+def test_stderr_write_returns_len(capsys):
+    """Write on Encoded files, namely captured stderr, should return number of characters written."""
+    assert sys.stderr.write("Foo") == 3
