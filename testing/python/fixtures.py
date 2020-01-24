@@ -4207,3 +4207,38 @@ def test_fixture_parametrization_nparray(testdir):
     )
     result = testdir.runpytest()
     result.assert_outcomes(passed=10)
+
+
+def test_fixture_arg_ordering(testdir):
+    """
+    This test describes how fixtures in the same scope but without explicit dependencies
+    between them are created. While users should make dependencies explicit, often
+    they rely on this order, so this test exists to catch regressions in this regard.
+    See #6540 and #6492.
+    """
+    p1 = testdir.makepyfile(
+        """
+        import pytest
+
+        suffixes = []
+
+        @pytest.fixture
+        def fix_1(): suffixes.append("fix_1")
+        @pytest.fixture
+        def fix_2(): suffixes.append("fix_2")
+        @pytest.fixture
+        def fix_3(): suffixes.append("fix_3")
+        @pytest.fixture
+        def fix_4(): suffixes.append("fix_4")
+        @pytest.fixture
+        def fix_5(): suffixes.append("fix_5")
+
+        @pytest.fixture
+        def fix_combined(fix_1, fix_2, fix_3, fix_4, fix_5): pass
+
+        def test_suffix(fix_combined):
+            assert suffixes == ["fix_1", "fix_2", "fix_3", "fix_4", "fix_5"]
+        """
+    )
+    result = testdir.runpytest("-vv", str(p1))
+    assert result.ret == 0
