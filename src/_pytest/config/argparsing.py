@@ -102,8 +102,8 @@ class Parser:
 
         self.optparser = self._getparser()
         try_argcomplete(self.optparser)
-        args = [str(x) if isinstance(x, py.path.local) else x for x in args]
-        return self.optparser.parse_args(args, namespace=namespace)
+        strargs = [str(x) if isinstance(x, py.path.local) else x for x in args]
+        return self.optparser.parse_args(strargs, namespace=namespace)
 
     def _getparser(self) -> "MyOptionParser":
         from _pytest._argcomplete import filescompleter
@@ -154,8 +154,8 @@ class Parser:
         the remaining arguments unknown at this point.
         """
         optparser = self._getparser()
-        args = [str(x) if isinstance(x, py.path.local) else x for x in args]
-        return optparser.parse_known_args(args, namespace=namespace)
+        strargs = [str(x) if isinstance(x, py.path.local) else x for x in args]
+        return optparser.parse_known_args(strargs, namespace=namespace)
 
     def addini(
         self,

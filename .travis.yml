@@ -47,11 +47,6 @@ jobs:
       python: '3.5.1'
       dist: trusty
 
-    - env: TOXENV=linting,docs,doctesting PYTEST_COVERAGE=1
-      cache:
-        directories:
-          - $HOME/.cache/pre-commit
-
 before_script:
   - |
     # Do not (re-)upload coverage with cron runs.
@@ -71,7 +66,7 @@ script: tox
 after_success:
   - |
     if [[ "$PYTEST_COVERAGE" = 1 ]]; then
-      env CODECOV_NAME="$TOXENV-$TRAVIS_OS_NAME" scripts/report-coverage.sh
+      env CODECOV_NAME="$TOXENV-$TRAVIS_OS_NAME" scripts/report-coverage.sh -F Travis
     fi
 
 notifications:

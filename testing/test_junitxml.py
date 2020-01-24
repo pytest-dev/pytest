@@ -1134,13 +1134,14 @@ def test_record_property(testdir, run_and_parse):
             record_property("foo", "<1");
     """
     )
-    result, dom = run_and_parse("-rwv")
+    result, dom = run_and_parse()
     node = dom.find_first_by_tag("testsuite")
     tnode = node.find_first_by_tag("testcase")
     psnode = tnode.find_first_by_tag("properties")
     pnodes = psnode.find_by_tag("property")
     pnodes[0].assert_attr(name="bar", value="1")
     pnodes[1].assert_attr(name="foo", value="<1")
+    result.stdout.fnmatch_lines(["*= 1 passed in *"])
 
 
 def test_record_property_same_name(testdir, run_and_parse):
@@ -1151,7 +1152,7 @@ def test_record_property_same_name(testdir, run_and_parse):
             record_property("foo", "baz")
     """
     )
-    result, dom = run_and_parse("-rw")
+    result, dom = run_and_parse()
     node = dom.find_first_by_tag("testsuite")
     tnode = node.find_first_by_tag("testcase")
     psnode = tnode.find_first_by_tag("properties")
@@ -1193,7 +1194,7 @@ def test_record_attribute(testdir, run_and_parse):
             record_xml_attribute("foo", "<1");
     """
     )
-    result, dom = run_and_parse("-rw")
+    result, dom = run_and_parse()
     node = dom.find_first_by_tag("testsuite")
     tnode = node.find_first_by_tag("testcase")
     tnode.assert_attr(bar="1")
@@ -1228,7 +1229,7 @@ def test_record_fixtures_xunit2(testdir, fixture_name, run_and_parse):
         )
     )
 
-    result, dom = run_and_parse("-rw", family=None)
+    result, dom = run_and_parse(family=None)
     expected_lines = []
     if fixture_name == "record_xml_attribute":
         expected_lines.append(

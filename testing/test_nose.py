@@ -377,15 +377,48 @@ def test_skip_test_with_unicode(testdir):
     result.stdout.fnmatch_lines(["* 1 skipped *"])
 
 
-def test_issue_6517(testdir):
+def test_raises(testdir):
     testdir.makepyfile(
         """
         from nose.tools import raises
 
         @raises(RuntimeError)
-        def test_fail_without_tcp():
+        def test_raises_runtimeerror():
             raise RuntimeError
+
+        @raises(Exception)
+        def test_raises_baseexception_not_caught():
+            raise BaseException
+
+        @raises(BaseException)
+        def test_raises_baseexception_caught():
+            raise BaseException
         """
     )
-    result = testdir.runpytest()
-    result.stdout.fnmatch_lines(["* 1 passed *"])
+    result = testdir.runpytest("-vv")
+    result.stdout.fnmatch_lines(
+        [
+            "test_raises.py::test_raises_runtimeerror PASSED*",
+            "test_raises.py::test_raises_baseexception_not_caught FAILED*",
+            "test_raises.py::test_raises_baseexception_caught PASSED*",
+            "*= FAILURES =*",
+            "*_ test_raises_baseexception_not_caught _*",
+            "",
+            "arg = (), kw = {}",
+            "",
+            "    def newfunc(*arg, **kw):",
+            "        try:",
+            ">           func(*arg, **kw)",
+            "",
+            "*/nose/*: ",
+            "_ _ *",
+            "",
+            "    @raises(Exception)",
+            "    def test_raises_baseexception_not_caught():",
+            ">       raise BaseException",
+            "E       BaseException",
+            "",
+            "test_raises.py:9: BaseException",
+            "* 1 failed, 2 passed *",
+        ]
+    )

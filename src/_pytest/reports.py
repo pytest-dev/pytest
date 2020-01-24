@@ -18,6 +18,7 @@ from _pytest._code.code import ReprFuncArgs
 from _pytest._code.code import ReprLocals
 from _pytest._code.code import ReprTraceback
 from _pytest._code.code import TerminalRepr
+from _pytest._io import TerminalWriter
 from _pytest.compat import TYPE_CHECKING
 from _pytest.nodes import Node
 from _pytest.outcomes import skip
@@ -80,7 +81,7 @@ class BaseReport:
 
         .. versionadded:: 3.0
         """
-        tw = py.io.TerminalWriter(stringio=True)
+        tw = TerminalWriter(stringio=True)
         tw.hasmarkup = False
         self.toterminal(tw)
         exc = tw.stringio.getvalue()

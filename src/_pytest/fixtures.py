@@ -16,6 +16,7 @@ import py
 import _pytest
 from _pytest._code.code import FormattedExcinfo
 from _pytest._code.code import TerminalRepr
+from _pytest._io import TerminalWriter
 from _pytest.compat import _format_args
 from _pytest.compat import _PytestWrapper
 from _pytest.compat import get_real_func
@@ -352,7 +353,7 @@ class FixtureRequest:
         self.fixturename = None
         #: Scope string, one of "function", "class", "module", "session"
         self.scope = "function"
-        self._fixture_defs = {}  # argname -> FixtureDef
+        self._fixture_defs = {}  # type: Dict[str, FixtureDef]
         fixtureinfo = pyfuncitem._fixtureinfo
         self._arg2fixturedefs = fixtureinfo.name2fixturedefs.copy()
         self._arg2index = {}
@@ -427,7 +428,8 @@ class FixtureRequest:
     @scopeproperty()
     def fspath(self) -> py.path.local:
         """ the file system path of the test module which collected this test. """
-        return self._pyfuncitem.fspath
+        # TODO: Remove ignore once _pyfuncitem is properly typed.
+        return self._pyfuncitem.fspath  # type: ignore
 
     @property
     def keywords(self):
@@ -547,7 +549,9 @@ class FixtureRequest:
                 source_path = py.path.local(frameinfo.filename)
                 source_lineno = frameinfo.lineno
                 if source_path.relto(funcitem.config.rootdir):
-                    source_path = source_path.relto(funcitem.config.rootdir)
+                    source_path_str = source_path.relto(funcitem.config.rootdir)
+                else:
+                    source_path_str = str(source_path)
                 msg = (
                     "The requested fixture has no parameter defined for test:\n"
                     "    {}\n\n"
@@ -556,7 +560,7 @@ class FixtureRequest:
                         funcitem.nodeid,
                         fixturedef.argname,
                         getlocation(fixturedef.func, funcitem.config.rootdir),
-                        source_path,
+                        source_path_str,
                         source_lineno,
                     )
                 )
@@ -749,7 +753,7 @@ class FixtureLookupErrorRepr(TerminalRepr):
         self.firstlineno = firstlineno
         self.argname = argname
 
-    def toterminal(self, tw: py.io.TerminalWriter) -> None:
+    def toterminal(self, tw: TerminalWriter) -> None:
         # tw.line("FixtureLookupError: %s" %(self.argname), red=True)
         for tbline in self.tblines:
             tw.line(tbline.rstrip())

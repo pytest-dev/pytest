@@ -13,6 +13,7 @@ from textwrap import dedent
 from typing import List
 from typing import Optional
 from typing import Tuple
+from typing import Union
 
 import py
 
@@ -282,15 +283,16 @@ class PyobjMixin(PyobjContext):
         parts.reverse()
         return ".".join(parts)
 
-    def reportinfo(self) -> Tuple[str, int, str]:
+    def reportinfo(self) -> Tuple[Union[py.path.local, str], int, str]:
         # XXX caching?
         obj = self.obj
         compat_co_firstlineno = getattr(obj, "compat_co_firstlineno", None)
         if isinstance(compat_co_firstlineno, int):
             # nose compatibility
-            fspath = sys.modules[obj.__module__].__file__
-            if fspath.endswith(".pyc"):
-                fspath = fspath[:-1]
+            file_path = sys.modules[obj.__module__].__file__
+            if file_path.endswith(".pyc"):
+                file_path = file_path[:-1]
+            fspath = file_path  # type: Union[py.path.local, str]
             lineno = compat_co_firstlineno
         else:
             fspath, lineno = getfslineno(obj)
@@ -369,7 +371,12 @@ class PyCollector(PyobjMixin, nodes.Collector):
                 if not isinstance(res, list):
                     res = [res]
                 values.extend(res)
-        values.sort(key=lambda item: item.reportinfo()[:2])
+
+        def sort_key(item):
+            fspath, lineno, _ = item.reportinfo()
+            return (str(fspath), lineno)
+
+        values.sort(key=sort_key)
         return values
 
     def _makeitem(self, name, obj):
