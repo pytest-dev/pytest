@@ -9,6 +9,7 @@ import os
 import sys
 from io import UnsupportedOperation
 from tempfile import TemporaryFile
+from typing import List
 
 import pytest
 from _pytest.compat import CaptureIO
@@ -426,9 +427,8 @@ class EncodedFile:
             )
         return self.buffer.write(obj)
 
-    def writelines(self, linelist):
-        data = "".join(linelist)
-        self.write(data)
+    def writelines(self, linelist: List[str]) -> None:
+        self.buffer.writelines([x.encode(self.encoding, "replace") for x in linelist])
 
     @property
     def name(self):
