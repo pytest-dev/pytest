@@ -898,7 +898,9 @@ class FixtureDef:
         cached_result = getattr(self, "cached_result", None)
         if cached_result is not None:
             result, cache_key, err = cached_result
-            if my_cache_key == cache_key:
+            # note: comparison with `==` can fail (or be expensive) for e.g.
+            # numpy arrays (#6497)
+            if my_cache_key is cache_key:
                 if err is not None:
                     _, val, tb = err
                     raise val.with_traceback(tb)

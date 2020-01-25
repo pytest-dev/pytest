@@ -1,0 +1,4 @@
+Fix bug in the comparison of request key with cached key in fixture.
+
+A construct ``if key == cached_key:`` can fail either because ``==`` is explicitly disallowed, or for, e.g., NumPy arrays, where the result of ``a == b`` cannot generally be converted to `bool`.
+The implemented fix replaces `==` with ``is``.
