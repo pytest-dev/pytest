@@ -7,6 +7,9 @@ import re
 import sys
 import textwrap
 from io import StringIO
+from typing import Dict
+from typing import List
+from typing import Tuple
 
 import pluggy
 import py
@@ -1345,7 +1348,7 @@ def test_terminal_summary_warnings_header_once(testdir):
 
 
 @pytest.fixture(scope="session")
-def tr():
+def tr() -> TerminalReporter:
     config = _pytest.config._prepareconfig()
     return TerminalReporter(config)
 
@@ -1480,14 +1483,19 @@ def tr():
         ),
     ],
 )
-def test_summary_stats(tr, exp_line, exp_color, stats_arg):
+def test_summary_stats(
+    tr: TerminalReporter,
+    exp_line: List[Tuple[str, Dict[str, bool]]],
+    exp_color: str,
+    stats_arg: Dict[str, List],
+) -> None:
     tr.stats = stats_arg
 
     # Fake "_is_last_item" to be True.
     class fake_session:
         testscollected = 0
 
-    tr._session = fake_session
+    tr._session = fake_session  # type: ignore[assignment]  # noqa: F821
     assert tr._is_last_item
 
     # Reset cache.
