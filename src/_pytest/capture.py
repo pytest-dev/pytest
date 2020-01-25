@@ -427,7 +427,7 @@ class EncodedFile:
             raise TypeError(
                 "write() argument must be str, not {}".format(type(obj).__name__)
             )
-        self.buffer.write(obj)
+        return self.buffer.write(obj)
 
     def writelines(self, linelist):
         data = "".join(linelist)

@@ -76,7 +76,7 @@ def pytest_addoption(parser):
         dest="maxfail",
         const=1,
         help="exit instantly on first error or failed test.",
-    ),
+    )
     group._addoption(
         "--maxfail",
         metavar="num",
@@ -123,7 +123,7 @@ def pytest_addoption(parser):
         "--co",
         action="store_true",
         help="only collect tests, don't execute them.",
-    ),
+    )
     group.addoption(
         "--pyargs",
         action="store_true",
