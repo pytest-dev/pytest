@@ -8,6 +8,7 @@ import textwrap
 from io import StringIO
 from io import UnsupportedOperation
 from typing import BinaryIO
+from typing import Generator
 from typing import List
 from typing import TextIO
 
@@ -832,7 +833,7 @@ def test_dontreadfrominput():
 
 
 @pytest.fixture
-def tmpfile(testdir):
+def tmpfile(testdir) -> Generator[BinaryIO, None, None]:
     f = testdir.makepyfile("").open("wb+")
     yield f
     if not f.closed:
