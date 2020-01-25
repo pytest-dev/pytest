@@ -47,7 +47,7 @@ repos:
     -   id: rst
         name: rst
         entry: rst-lint --encoding utf-8
-        files: ^(HOWTORELEASE.rst|README.rst|TIDELIFT.rst)$
+        files: ^(RELEASING.rst|README.rst|TIDELIFT.rst)$
         language: python
         additional_dependencies: [pygments, restructuredtext_lint]
     -   id: changelogs-rst
