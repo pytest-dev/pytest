@@ -9,6 +9,7 @@ import os
 import sys
 from io import UnsupportedOperation
 from tempfile import TemporaryFile
+from typing import BinaryIO
 from typing import List
 
 import pytest
@@ -414,29 +415,27 @@ def safe_text_dupfile(f, mode, default_encoding="UTF8"):
 class EncodedFile:
     errors = "strict"  # possibly needed by py3 code (issue555)
 
-    def __init__(self, buffer, encoding):
+    def __init__(self, buffer: BinaryIO, encoding: str) -> None:
         self.buffer = buffer
         self.encoding = encoding
 
-    def write(self, obj):
-        if isinstance(obj, str):
-            obj = obj.encode(self.encoding, "replace")
-        else:
+    def write(self, obj: str) -> int:
+        if not isinstance(obj, str):
             raise TypeError(
                 "write() argument must be str, not {}".format(type(obj).__name__)
             )
-        return self.buffer.write(obj)
+        return self.buffer.write(obj.encode(self.encoding, "replace"))
 
     def writelines(self, linelist: List[str]) -> None:
         self.buffer.writelines([x.encode(self.encoding, "replace") for x in linelist])
 
     @property
-    def name(self):
+    def name(self) -> str:
         """Ensure that file.name is a string."""
         return repr(self.buffer)
 
     @property
-    def mode(self):
+    def mode(self) -> str:
         return self.buffer.mode.replace("b", "")
 
     def __getattr__(self, name):

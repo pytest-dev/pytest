@@ -7,6 +7,7 @@ import sys
 import textwrap
 from io import StringIO
 from io import UnsupportedOperation
+from typing import BinaryIO
 from typing import List
 from typing import TextIO
 
@@ -1499,7 +1500,7 @@ def test_stderr_write_returns_len(capsys):
     assert sys.stderr.write("Foo") == 3
 
 
-def test_encodedfile_writelines(tmpfile) -> None:
+def test_encodedfile_writelines(tmpfile: BinaryIO) -> None:
     ef = capture.EncodedFile(tmpfile, "utf-8")
     with pytest.raises(AttributeError):
         ef.writelines([b"line1", b"line2"])  # type: ignore[list-item]  # noqa: F821
