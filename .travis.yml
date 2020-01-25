@@ -87,6 +87,5 @@ notifications:
 branches:
   only:
     - master
-    - features
     - 4.6-maintenance
-    - /^\d+(\.\d+)+$/
+    - /^\d+\.\d+\.x$/
