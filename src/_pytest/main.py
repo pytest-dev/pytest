@@ -8,6 +8,7 @@ import sys
 from typing import Dict
 from typing import FrozenSet
 from typing import List
+from typing import Tuple
 
 import attr
 import py
@@ -486,13 +487,13 @@ class Session(nodes.FSCollector):
         self.trace("perform_collect", self, args)
         self.trace.root.indent += 1
         self._notfound = []
-        initialpaths = []
-        self._initialparts = []
+        initialpaths = []  # type: List[py.path.local]
+        self._initial_parts = []  # type: List[Tuple[py.path.local, List[str]]]
         self.items = items = []
         for arg in args:
-            parts = self._parsearg(arg)
-            self._initialparts.append(parts)
-            initialpaths.append(parts[0])
+            fspath, parts = self._parsearg(arg)
+            self._initial_parts.append((fspath, parts))
+            initialpaths.append(fspath)
         self._initialpaths = frozenset(initialpaths)
         rep = collect_one_node(self)
         self.ihook.pytest_collectreport(report=rep)
@@ -512,13 +513,13 @@ class Session(nodes.FSCollector):
             return items
 
     def collect(self):
-        for initialpart in self._initialparts:
-            self.trace("processing argument", initialpart)
+        for fspath, parts in self._initial_parts:
+            self.trace("processing argument", (fspath, parts))
             self.trace.root.indent += 1
             try:
-                yield from self._collect(initialpart)
+                yield from self._collect(fspath, parts)
             except NoMatch:
-                report_arg = "::".join(map(str, initialpart))
+                report_arg = "::".join((str(fspath), *parts))
                 # we are inside a make_report hook so
                 # we cannot directly pass through the exception
                 self._notfound.append((report_arg, sys.exc_info()[1]))
@@ -527,11 +528,8 @@ class Session(nodes.FSCollector):
         self._collection_node_cache.clear()
         self._collection_pkg_roots.clear()
 
-    def _collect(self, arg):
+    def _collect(self, argpath, names):
         from _pytest.python import Package
-
-        names = arg[:]
-        argpath = names.pop(0)
 
         # Start with a Session root, and delve to argpath item (dir or file)
         # and stack all Packages found on the way.
@@ -556,7 +554,7 @@ class Session(nodes.FSCollector):
         # If it's a directory argument, recurse and look for any Subpackages.
         # Let the Package collector deal with subnodes, don't collect here.
         if argpath.check(dir=1):
-            assert not names, "invalid arg {!r}".format(arg)
+            assert not names, "invalid arg {!r}".format((argpath, names))
 
             seen_dirs = set()
             for path in argpath.visit(
@@ -666,19 +664,19 @@ class Session(nodes.FSCollector):
 
     def _parsearg(self, arg):
         """ return (fspath, names) tuple after checking the file exists. """
-        parts = str(arg).split("::")
+        strpath, *parts = str(arg).split("::")
         if self.config.option.pyargs:
-            parts[0] = self._tryconvertpyarg(parts[0])
-        relpath = parts[0].replace("/", os.sep)
-        path = self.config.invocation_dir.join(relpath, abs=True)
-        if not path.check():
+            strpath = self._tryconvertpyarg(strpath)
+        relpath = strpath.replace("/", os.sep)
+        fspath = self.config.invocation_dir.join(relpath, abs=True)
+        if not fspath.check():
             if self.config.option.pyargs:
                 raise UsageError(
                     "file or package not found: " + arg + " (missing __init__.py?)"
                 )
             raise UsageError("file not found: " + arg)
-        parts[0] = path.realpath()
-        return parts
+        fspath = fspath.realpath()
+        return (fspath, parts)
 
     def matchnodes(self, matching, names):
         self.trace("matchnodes", matching, names)
