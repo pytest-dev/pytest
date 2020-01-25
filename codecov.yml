@@ -1,1 +1,5 @@
 comment: off
+coverage:
+  status:
+    changes:
+      default: on
