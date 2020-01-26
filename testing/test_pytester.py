@@ -710,3 +710,9 @@ def test_testdir_outcomes_with_multiple_errors(testdir):
     result.assert_outcomes(error=2)
 
     assert result.parseoutcomes() == {"error": 2}
+
+
+def test_makefile_abs(testdir):
+    path = str(testdir.tmpdir / "absfile")
+    p1 = testdir.makepyfile(**{path: "..."})
+    assert str(p1) == path + ".py"

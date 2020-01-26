@@ -614,7 +614,7 @@ class Testdir:
 
         ret = None
         for basename, value in items:
-            p = self.tmpdir.join(basename).new(ext=ext)
+            p = self.tmpdir.join(basename, abs=True).new(ext=ext)
             p.dirpath().ensure_dir()
             source = Source(value)
             source = "\n".join(to_text(line) for line in source.lines)
