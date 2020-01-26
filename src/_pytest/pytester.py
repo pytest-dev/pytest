@@ -35,6 +35,7 @@ from _pytest.main import Session
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pathlib import Path
 from _pytest.reports import TestReport
+from _pytest.tmpdir import TempdirFactory
 
 if TYPE_CHECKING:
     from typing import Type
@@ -534,13 +535,13 @@ class Testdir:
     class TimeoutExpired(Exception):
         pass
 
-    def __init__(self, request, tmpdir_factory):
+    def __init__(self, request: FixtureRequest, tmpdir_factory: TempdirFactory) -> None:
         self.request = request
-        self._mod_collections = WeakKeyDictionary()
+        self._mod_collections = WeakKeyDictionary()  # type: ignore[var-annotated] # noqa: F821
         name = request.function.__name__
         self.tmpdir = tmpdir_factory.mktemp(name, numbered=True)
         self.test_tmproot = tmpdir_factory.mktemp("tmp-" + name, numbered=True)
-        self.plugins = []
+        self.plugins = []  # type: ignore[var-annotated] # noqa: F821
         self._cwd_snapshot = CwdSnapshot()
         self._sys_path_snapshot = SysPathsSnapshot()
         self._sys_modules_snapshot = self.__take_sys_modules_snapshot()
