@@ -10,7 +10,7 @@ import sys
 from io import UnsupportedOperation
 from tempfile import TemporaryFile
 from typing import BinaryIO
-from typing import List
+from typing import Iterable
 
 import pytest
 from _pytest.compat import CaptureIO
@@ -419,15 +419,15 @@ class EncodedFile:
         self.buffer = buffer
         self.encoding = encoding
 
-    def write(self, obj: str) -> int:
-        if not isinstance(obj, str):
+    def write(self, s: str) -> int:
+        if not isinstance(s, str):
             raise TypeError(
-                "write() argument must be str, not {}".format(type(obj).__name__)
+                "write() argument must be str, not {}".format(type(s).__name__)
             )
-        return self.buffer.write(obj.encode(self.encoding, "replace"))
+        return self.buffer.write(s.encode(self.encoding, "replace"))
 
-    def writelines(self, linelist: List[str]) -> None:
-        self.buffer.writelines([x.encode(self.encoding, "replace") for x in linelist])
+    def writelines(self, lines: Iterable[str]) -> None:
+        self.buffer.writelines(x.encode(self.encoding, "replace") for x in lines)
 
     @property
     def name(self) -> str:
