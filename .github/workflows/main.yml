@@ -45,6 +45,7 @@ jobs:
           "linting",
           "docs",
           "doctesting",
+          "mypy",
         ]
 
         include:
@@ -124,6 +125,11 @@ jobs:
             os: ubuntu-latest
             tox_env: "doctesting"
             use_coverage: true
+          - name: "mypy"
+            python: "3.7"
+            os: ubuntu-latest
+            tox_env: "mypy"
+            skip_coverage: true
 
     steps:
     - uses: actions/checkout@v1
