@@ -29,6 +29,7 @@ from _pytest._io.saferepr import saferepr
 from _pytest.capture import MultiCapture
 from _pytest.capture import SysCapture
 from _pytest.compat import TYPE_CHECKING
+from _pytest.config import _PluggyPlugin
 from _pytest.fixtures import FixtureRequest
 from _pytest.main import ExitCode
 from _pytest.main import Session
@@ -546,7 +547,7 @@ class Testdir:
         name = request.function.__name__
         self.tmpdir = tmpdir_factory.mktemp(name, numbered=True)
         self.test_tmproot = tmpdir_factory.mktemp("tmp-" + name, numbered=True)
-        self.plugins = []  # type: ignore[var-annotated] # noqa: F821
+        self.plugins = []  # type: List[Union[str, _PluggyPlugin]]
         self._cwd_snapshot = CwdSnapshot()
         self._sys_path_snapshot = SysPathsSnapshot()
         self._sys_modules_snapshot = self.__take_sys_modules_snapshot()
