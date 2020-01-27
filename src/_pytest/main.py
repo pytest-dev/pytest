@@ -436,7 +436,7 @@ class Session(nodes.FSCollector):
     def isinitpath(self, path):
         return path in self._initialpaths
 
-    def gethookproxy(self, fspath):
+    def gethookproxy(self, fspath: py.path.local):
         return super()._gethookproxy(fspath)
 
     def perform_collect(self, args=None, genitems=True):

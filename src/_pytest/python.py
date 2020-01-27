@@ -578,7 +578,7 @@ class Package(Module):
             func = partial(_call_with_optional_argument, teardown_module, self.obj)
             self.addfinalizer(func)
 
-    def gethookproxy(self, fspath):
+    def gethookproxy(self, fspath: py.path.local):
         return super()._gethookproxy(fspath)
 
     def _collectfile(self, path, handle_dupes=True):
