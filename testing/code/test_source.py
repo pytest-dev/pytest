@@ -740,7 +740,7 @@ def something():
     assert str(source) == "def func(): raise ValueError(42)"
 
 
-def XXX_test_expression_multiline() -> None:
+def test_expression_multiline() -> None:
     source = """\
 something
 '''
