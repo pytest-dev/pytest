@@ -513,6 +513,7 @@ def test_getfslineno() -> None:
     fspath, lineno = getfslineno(A)
 
     _, A_lineno = inspect.findsource(A)
+    assert isinstance(fspath, py.path.local)
     assert fspath.basename == "test_source.py"
     assert lineno == A_lineno
 
