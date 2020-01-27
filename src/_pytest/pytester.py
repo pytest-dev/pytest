@@ -33,7 +33,10 @@ from _pytest.fixtures import FixtureRequest
 from _pytest.main import ExitCode
 from _pytest.main import Session
 from _pytest.monkeypatch import MonkeyPatch
+from _pytest.nodes import Collector
+from _pytest.nodes import Item
 from _pytest.pathlib import Path
+from _pytest.python import Module
 from _pytest.reports import TestReport
 from _pytest.tmpdir import TempdirFactory
 
@@ -537,7 +540,9 @@ class Testdir:
 
     def __init__(self, request: FixtureRequest, tmpdir_factory: TempdirFactory) -> None:
         self.request = request
-        self._mod_collections = WeakKeyDictionary()  # type: ignore[var-annotated] # noqa: F821
+        self._mod_collections = (
+            WeakKeyDictionary()
+        )  # type: WeakKeyDictionary[Module, List[Union[Item, Collector]]]
         name = request.function.__name__
         self.tmpdir = tmpdir_factory.mktemp(name, numbered=True)
         self.test_tmproot = tmpdir_factory.mktemp("tmp-" + name, numbered=True)
@@ -1065,7 +1070,9 @@ class Testdir:
         self.config = config = self.parseconfigure(path, *configargs)
         return self.getnode(config, path)
 
-    def collect_by_name(self, modcol, name):
+    def collect_by_name(
+        self, modcol: Module, name: str
+    ) -> Optional[Union[Item, Collector]]:
         """Return the collection node for name from the module collection.
 
         This will search a module collection node for a collection node
@@ -1074,13 +1081,13 @@ class Testdir:
         :param modcol: a module collection node; see :py:meth:`getmodulecol`
 
         :param name: the name of the node to return
-
         """
         if modcol not in self._mod_collections:
             self._mod_collections[modcol] = list(modcol.collect())
         for colitem in self._mod_collections[modcol]:
             if colitem.name == name:
                 return colitem
+        return None
 
     def popen(
         self,
