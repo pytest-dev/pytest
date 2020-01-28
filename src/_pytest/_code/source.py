@@ -8,7 +8,6 @@ import warnings
 from bisect import bisect_right
 from types import CodeType
 from types import FrameType
-from typing import Any
 from typing import Iterator
 from typing import List
 from typing import Optional
@@ -283,7 +282,7 @@ def compile_(  # noqa: F811
     return s.compile(filename, mode, flags, _genframe=_genframe)
 
 
-def getfslineno(obj: Any) -> Tuple[Optional[Union[str, py.path.local]], int]:
+def getfslineno(obj: object) -> Tuple[Optional[Union[str, py.path.local]], int]:
     """ Return source location (path, lineno) for the given object.
     If the source cannot be determined return ("", -1).
 
@@ -295,7 +294,7 @@ def getfslineno(obj: Any) -> Tuple[Optional[Union[str, py.path.local]], int]:
         code = Code(obj)
     except TypeError:
         try:
-            fn = inspect.getsourcefile(obj) or inspect.getfile(obj)
+            fn = inspect.getsourcefile(obj) or inspect.getfile(obj)  # type: ignore[arg-type]  # noqa: F821
         except TypeError:
             return "", -1
 
