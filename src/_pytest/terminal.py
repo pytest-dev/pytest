@@ -15,7 +15,6 @@ from typing import Dict
 from typing import List
 from typing import Mapping
 from typing import Optional
-from typing import Set
 from typing import Tuple
 
 import attr
@@ -258,7 +257,7 @@ class TerminalReporter:
         self.reportchars = getreportopt(config)
         self.hasmarkup = self._tw.hasmarkup
         self.isatty = file.isatty()
-        self._progress_nodeids_reported = set()  # type: Set[str]
+        self._numreported = 0
         self._show_progress_info = self._determine_show_progress_info()
         self._collect_report_last_write = None  # type: Optional[float]
 
@@ -437,7 +436,8 @@ class TerminalReporter:
             else:
                 self._tw.write(letter, **markup)
         else:
-            self._progress_nodeids_reported.add(rep.nodeid)
+            if rep.when == "call":
+                self._numreported += 1
             line = self._locationline(rep.nodeid, *rep.location)
             if not running_xdist:
                 self.write_ensure_prefix(line, word, **markup)
@@ -467,10 +467,8 @@ class TerminalReporter:
 
             main_color, _ = _get_main_color(self.stats)
 
-            self._progress_nodeids_reported.add(nodeid)
-            is_last_item = (
-                len(self._progress_nodeids_reported) == self._session.testscollected
-            )
+            self._numreported += 1
+            is_last_item = self._numreported == self._session.testscollected
             if is_last_item:
                 self._write_progress_information_filling_space(color=main_color)
             else:
@@ -485,16 +483,13 @@ class TerminalReporter:
         collected = self._session.testscollected
         if self._show_progress_info == "count":
             if collected:
-                progress = self._progress_nodeids_reported
                 counter_format = "{{:{}d}}".format(len(str(collected)))
                 format_string = " [{}/{{}}]".format(counter_format)
-                return format_string.format(len(progress), collected)
+                return format_string.format(self._numreported, collected)
             return " [ {} / {} ]".format(collected, collected)
         else:
             if collected:
-                return " [{:3d}%]".format(
-                    len(self._progress_nodeids_reported) * 100 // collected
-                )
+                return " [{:3d}%]".format(self._numreported * 100 // collected)
             return " [100%]"
 
     def _write_progress_information_filling_space(self, color=None):

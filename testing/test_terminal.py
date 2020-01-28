@@ -1597,6 +1597,31 @@ class TestProgressOutputStyle:
             ]
         )
 
+    def test_same_nodeids(self, testdir: Testdir) -> None:
+        p1 = testdir.makepyfile(
+            """
+            import pytest
+
+            @pytest.mark.parametrize("v", ["", " "])
+            @pytest.mark.parametrize("w", ["", " "])
+            def test(v, w):
+                pass
+            """
+        )
+        result = testdir.runpytest("-v", str(p1))
+        trans = str.maketrans({"[": "[[]", "]": "[]]"})
+        result.stdout.fnmatch_lines(
+            [
+                line.translate(trans)
+                for line in [
+                    "test_same_nodeids.py::test[] PASSED * [ 25%]",
+                    "test_same_nodeids.py::test[ ] PASSED * [ 50%]",
+                    "test_same_nodeids.py::test[ ] PASSED * [ 75%]",
+                    "test_same_nodeids.py::test[ - ] PASSED * [100%]",
+                ]
+            ]
+        )
+
     def test_colored_progress(self, testdir, monkeypatch):
         monkeypatch.setenv("PY_COLORS", "1")
         testdir.makepyfile(
