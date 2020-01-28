@@ -550,8 +550,9 @@ class FixtureRequest:
                 source_path = frameinfo.filename
                 source_lineno = frameinfo.lineno
                 source_path = py.path.local(source_path)
-                if source_path.relto(funcitem.config.rootdir):
-                    source_path_str = source_path.relto(funcitem.config.rootdir)
+                rel_source_path = source_path.relto(funcitem.config.rootdir)
+                if rel_source_path:
+                    source_path_str = rel_source_path
                 else:
                     source_path_str = str(source_path)
                 msg = (
