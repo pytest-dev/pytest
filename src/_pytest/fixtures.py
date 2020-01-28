@@ -5,8 +5,10 @@ import warnings
 from collections import defaultdict
 from collections import deque
 from collections import OrderedDict
+from typing import Any
 from typing import Dict
 from typing import List
+from typing import Optional
 from typing import Tuple
 
 import attr
@@ -885,15 +887,13 @@ class FixtureDef:
             self.cached_result = None
             self._finalizers = []
 
-    def execute(self, request):
+    def execute(self, request: SubRequest) -> Optional[Any]:
         for argname in self._dependee_fixture_argnames(request):
             if argname == "request":
                 continue
             fixturedef = request._get_active_fixturedef(argname)
             if not self._will_be_finalized_by_fixture(fixturedef):
-                fixturedef.addfinalizer(
-                    functools.partial(self.finish, request=request)
-                )
+                fixturedef.addfinalizer(functools.partial(self.finish, request=request))
 
         my_cache_key = self.cache_key(request)
         if self.cached_result is not None:
@@ -914,7 +914,7 @@ class FixtureDef:
         hook = self._fixturemanager.session.gethookproxy(request.node.fspath)
         return hook.pytest_fixture_setup(fixturedef=self, request=request)
 
-    def _will_be_finalized_by_fixture(self, fixturedef):
+    def _will_be_finalized_by_fixture(self, fixturedef: "FixtureDef") -> bool:
         """Whether or not this fixture be finalized by the passed fixture.
 
         Every ``:class:FixtureDef`` keeps a list of all the finishers (tear downs) of
@@ -933,7 +933,7 @@ class FixtureDef:
                     return True
         return False
 
-    def _dependee_fixture_argnames(self, request):
+    def _dependee_fixture_argnames(self, request: SubRequest) -> Tuple[str, ...]:
         """A list of argnames for fixtures that this fixture depends on.
 
         Given a request, this looks at the currently known list of fixture argnames, and
@@ -976,7 +976,7 @@ class FixtureDef:
             current_fix_index = len(request.fixturenames)
         parent_fixture_indexes = set()
 
-        parent_request = request._parent_request
+        parent_request = getattr(request, "_parent_request")
         while hasattr(parent_request, "_parent_request"):
             if hasattr(parent_request, "_fixturedef"):
                 parent_fix_name = parent_request._fixturedef.argname
@@ -986,7 +986,7 @@ class FixtureDef:
 
         stack_slice_index = min([current_fix_index, *parent_fixture_indexes])
         active_fixture_argnames = all_fix_names[:stack_slice_index]
-        return tuple(active_fixture_argnames) + self.argnames
+        return tuple(tuple(active_fixture_argnames) + self.argnames)
 
     def cache_key(self, request):
         return request.param_index if not hasattr(request, "param") else request.param
