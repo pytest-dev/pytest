@@ -9,6 +9,7 @@ import pytest
 from _pytest.main import _in_venv
 from _pytest.main import ExitCode
 from _pytest.main import Session
+from _pytest.pytester import Testdir
 
 
 class TestCollector:
@@ -18,7 +19,7 @@ class TestCollector:
         assert not issubclass(Collector, Item)
         assert not issubclass(Item, Collector)
 
-    def test_check_equality(self, testdir):
+    def test_check_equality(self, testdir: Testdir) -> None:
         modcol = testdir.getmodulecol(
             """
             def test_pass(): pass
@@ -40,11 +41,14 @@ class TestCollector:
         assert fn1 != fn3
 
         for fn in fn1, fn2, fn3:
-            assert fn != 3
+            assert isinstance(fn, pytest.Function)
+            assert fn != 3  # type: ignore[comparison-overlap]  # noqa: F821
             assert fn != modcol
-            assert fn != [1, 2, 3]
-            assert [1, 2, 3] != fn
+            assert fn != [1, 2, 3]  # type: ignore[comparison-overlap]  # noqa: F821
+            assert [1, 2, 3] != fn  # type: ignore[comparison-overlap]  # noqa: F821
             assert modcol != fn
+
+        assert testdir.collect_by_name(modcol, "doesnotexist") is None
 
     def test_getparent(self, testdir):
         modcol = testdir.getmodulecol(

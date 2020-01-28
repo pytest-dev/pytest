@@ -7,6 +7,8 @@ import sys
 import textwrap
 from io import StringIO
 from io import UnsupportedOperation
+from typing import BinaryIO
+from typing import Generator
 from typing import List
 from typing import TextIO
 
@@ -854,7 +856,7 @@ def test_dontreadfrominput():
 
 
 @pytest.fixture
-def tmpfile(testdir):
+def tmpfile(testdir) -> Generator[BinaryIO, None, None]:
     f = testdir.makepyfile("").open("wb+")
     yield f
     if not f.closed:
@@ -1537,3 +1539,15 @@ def test_typeerror_encodedfile_write(testdir):
 def test_stderr_write_returns_len(capsys):
     """Write on Encoded files, namely captured stderr, should return number of characters written."""
     assert sys.stderr.write("Foo") == 3
+
+
+def test_encodedfile_writelines(tmpfile: BinaryIO) -> None:
+    ef = capture.EncodedFile(tmpfile, "utf-8")
+    with pytest.raises(AttributeError):
+        ef.writelines([b"line1", b"line2"])  # type: ignore[list-item]  # noqa: F821
+    assert ef.writelines(["line1", "line2"]) is None  # type: ignore[func-returns-value]  # noqa: F821
+    tmpfile.seek(0)
+    assert tmpfile.read() == b"line1line2"
+    tmpfile.close()
+    with pytest.raises(ValueError):
+        ef.read()

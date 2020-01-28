@@ -50,6 +50,13 @@ if TYPE_CHECKING:
     from .argparsing import Argument
 
 
+_PluggyPlugin = object
+"""A type to represent plugin objects.
+Plugins can be any namespace, so we can't narrow it down much, but we use an
+alias to make the intent clear.
+Ideally this type would be provided by pluggy itself."""
+
+
 hookimpl = HookimplMarker("pytest")
 hookspec = HookspecMarker("pytest")
 
