@@ -1102,6 +1102,38 @@ class TestFixtureUsages:
             "*Fixture 'badscope' from test_invalid_scope.py got an unexpected scope value 'functions'"
         )
 
+    @pytest.mark.parametrize("scope", ["function", "session"])
+    def test_parameters_without_eq_semantics(self, scope, testdir):
+        testdir.makepyfile(
+            """
+            class NoEq1:  # fails on `a == b` statement
+                def __eq__(self, _):
+                    raise RuntimeError
+
+            class NoEq2:  # fails on `if a == b:` statement
+                def __eq__(self, _):
+                    class NoBool:
+                        def __bool__(self):
+                            raise RuntimeError
+                    return NoBool()
+
+            import pytest
+            @pytest.fixture(params=[NoEq1(), NoEq2()], scope={scope!r})
+            def no_eq(request):
+                return request.param
+
+            def test1(no_eq):
+                pass
+
+            def test2(no_eq):
+                pass
+        """.format(
+                scope=scope
+            )
+        )
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines(["*4 passed*"])
+
     def test_funcarg_parametrized_and_used_twice(self, testdir):
         testdir.makepyfile(
             """
