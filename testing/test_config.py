@@ -670,6 +670,32 @@ def test_disable_plugin_autoload(testdir, monkeypatch, parse_args, should_load):
     assert has_loaded == should_load
 
 
+def test_plugin_loading_order(testdir):
+    """Test order of plugin loading with `-p`."""
+    p1 = testdir.makepyfile(
+        """
+        def test_terminal_plugin(request):
+            import myplugin
+            assert myplugin.terminal_plugin == [True, True]
+        """,
+        **{
+            "myplugin": """
+            terminal_plugin = []
+
+            def pytest_configure(config):
+                terminal_plugin.append(bool(config.pluginmanager.get_plugin("terminalreporter")))
+
+            def pytest_sessionstart(session):
+                config = session.config
+                terminal_plugin.append(bool(config.pluginmanager.get_plugin("terminalreporter")))
+            """
+        }
+    )
+    testdir.syspathinsert()
+    result = testdir.runpytest("-p", "myplugin", str(p1))
+    assert result.ret == 0
+
+
 def test_cmdline_processargs_simple(testdir):
     testdir.makeconftest(
         """
