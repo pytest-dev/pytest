@@ -1,8 +1,10 @@
 import sys
 import warnings
 from contextlib import contextmanager
+from typing import Generator
 
 import pytest
+from _pytest.main import Session
 
 
 def _setoption(wmod, arg):
@@ -117,7 +119,7 @@ def pytest_runtest_protocol(item):
 
 
 @pytest.hookimpl(hookwrapper=True, tryfirst=True)
-def pytest_collection(session):
+def pytest_collection(session: Session) -> Generator[None, None, None]:
     config = session.config
     with catch_warnings_for_item(
         config=config, ihook=config.hook, when="collect", item=None

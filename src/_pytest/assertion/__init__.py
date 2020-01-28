@@ -7,6 +7,10 @@ from typing import Optional
 from _pytest.assertion import rewrite
 from _pytest.assertion import truncate
 from _pytest.assertion import util
+from _pytest.compat import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from _pytest.main import Session
 
 
 def pytest_addoption(parser):
@@ -91,7 +95,7 @@ def install_importhook(config):
     return hook
 
 
-def pytest_collection(session):
+def pytest_collection(session: "Session") -> None:
     # this hook is only called when test modules are collected
     # so for example not in the master process of pytest-xdist
     # (which does not collect test modules)
