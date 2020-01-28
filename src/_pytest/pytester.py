@@ -7,6 +7,7 @@ import platform
 import re
 import subprocess
 import sys
+import textwrap
 import time
 import traceback
 from fnmatch import fnmatch
@@ -671,6 +672,32 @@ class Testdir:
     def maketxtfile(self, *args, **kwargs):
         """Shortcut for .makefile() with a .txt extension."""
         return self._makefile(".txt", args, kwargs)
+
+    def makefiles(
+        self, files: Dict[str, str], allow_outside_tmpdir=False
+    ) -> List[Path]:
+        """Create the given set of files.
+
+        Unlike other helpers like :func:`makepyfile` this allows to specify
+        absolute paths, which need to be below :attr:`tmpdir` by default
+        (use `allow_outside_tmpdir` to write arbitrary files).
+        """
+        paths = []
+        if allow_outside_tmpdir:
+            validated_files = tuple((Path(k), v) for k, v in files.items())
+        else:
+            tmpdir_path = Path(self.tmpdir)
+            validated_files = tuple(
+                (Path(k).absolute().relative_to(tmpdir_path), v)
+                for k, v in files.items()
+            )
+
+        for fpath, content in validated_files:
+            path = Path(self.tmpdir).joinpath(fpath)
+            with open(str(path), "w") as fp:
+                fp.write(textwrap.dedent(content))
+            paths.append(path)
+        return paths
 
     def syspathinsert(self, path=None):
         """Prepend a directory to sys.path, defaults to :py:attr:`tmpdir`.

@@ -1,0 +1,1 @@
+Add :py:func:`~_pytest.pytester.Testdir.makefiles` helper to :ref:`testdir`, which allows to more easily create files with absolute paths.

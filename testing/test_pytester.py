@@ -1,7 +1,11 @@
+import builtins
 import os
+import re
 import subprocess
 import sys
 import time
+from collections import OrderedDict
+from contextlib import contextmanager
 from typing import List
 
 import py.path
@@ -11,9 +15,11 @@ import pytest
 from _pytest.config import PytestPluginManager
 from _pytest.main import ExitCode
 from _pytest.outcomes import Failed
+from _pytest.pathlib import Path
 from _pytest.pytester import CwdSnapshot
 from _pytest.pytester import HookRecorder
 from _pytest.pytester import LineMatcher
+from _pytest.pytester import MonkeyPatch
 from _pytest.pytester import SysModulesSnapshot
 from _pytest.pytester import SysPathsSnapshot
 from _pytest.pytester import Testdir
@@ -710,3 +716,53 @@ def test_testdir_outcomes_with_multiple_errors(testdir):
     result.assert_outcomes(error=2)
 
     assert result.parseoutcomes() == {"error": 2}
+
+
+def test_testdir_makefiles(testdir: Testdir, monkeypatch: MonkeyPatch) -> None:
+    tmpdir = testdir.tmpdir
+
+    abspath = str(tmpdir / "bar")
+    created_paths = testdir.makefiles(OrderedDict({"foo": "", abspath: ""}))
+    p1 = created_paths[0]
+    assert isinstance(p1, Path)
+    relpath = tmpdir / "foo"
+    assert str(p1) == str(relpath)
+
+    p2 = created_paths[1]
+    assert p2.exists()
+    assert str(p2) == abspath
+
+    assert testdir.makefiles({}) == []
+
+    # Disallows creation outside of tmpdir by default.
+    with pytest.raises(
+        ValueError,
+        match="'/abspath' does not start with '{}'".format(re.escape(str(tmpdir))),
+    ):
+        testdir.makefiles({"shouldnotbecreated": "", "/abspath": ""})
+    # Validation before creating anything.
+    assert not Path("shouldnotbecreated").exists()
+
+    # Support writing arbitrary files on request.
+    open_calls = []
+    orig_open = builtins.open
+
+    @contextmanager
+    def mocked_open(*args):
+        open_calls.append(["__enter__", args])
+        with orig_open(os.devnull, *args[1:]) as fp:
+            yield fp
+
+    with monkeypatch.context() as mp:
+        mp.setattr(builtins, "open", mocked_open)
+        created_paths = testdir.makefiles({"/abspath": ""}, allow_outside_tmpdir=True)
+    assert created_paths == [Path("/abspath")]
+    assert open_calls == [["__enter__", ("/abspath", "w")]]
+
+    # Duplicated files (absolute and relative).
+    created_paths = testdir.makefiles(OrderedDict({"bar": "1", abspath: "2"}))
+    with open("bar", "r") as fp:
+        assert fp.read() == "2"
+    created_paths = testdir.makefiles(OrderedDict({abspath: "2", "bar": "1"}))
+    with open("bar", "r") as fp:
+        assert fp.read() == "1"
