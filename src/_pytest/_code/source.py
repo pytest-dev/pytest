@@ -293,7 +293,6 @@ def getfslineno(obj: Any) -> Tuple[Optional[Union[str, py.path.local]], int]:
 
     try:
         code = Code(obj)
-        return code.path, code.firstlineno
     except TypeError:
         try:
             fn = inspect.getsourcefile(obj) or inspect.getfile(obj)
@@ -308,6 +307,7 @@ def getfslineno(obj: Any) -> Tuple[Optional[Union[str, py.path.local]], int]:
             except IOError:
                 pass
         return fspath, lineno
+    return code.path, code.firstlineno
 
 
 #
