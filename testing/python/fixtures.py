@@ -3662,9 +3662,26 @@ class TestParameterizedSubRequest:
                 "    test_foos.py::test_foo",
                 "",
                 "Requested fixture 'fix_with_param' defined in:",
-                "*fix.py:4",
+                "{}:4".format(fixfile),
                 "Requested here:",
                 "test_foos.py:4",
+                "*1 failed*",
+            ]
+        )
+
+        # With non-overlapping rootdir, passing tests_dir.
+        rootdir = testdir.mkdir("rootdir")
+        rootdir.chdir()
+        result = testdir.runpytest("--rootdir", rootdir, tests_dir)
+        result.stdout.fnmatch_lines(
+            [
+                "The requested fixture has no parameter defined for test:",
+                "    test_foos.py::test_foo",
+                "",
+                "Requested fixture 'fix_with_param' defined in:",
+                "{}:4".format(fixfile),
+                "Requested here:",
+                "{}:4".format(testfile),
                 "*1 failed*",
             ]
         )
