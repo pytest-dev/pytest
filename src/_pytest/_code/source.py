@@ -283,27 +283,20 @@ def getfslineno(obj) -> Tuple[Optional[Union["Literal['']", py.path.local]], int
 
     The line number is 0-based.
     """
-    from .code import Code
-
     try:
-        code = Code(obj)
+        fn = inspect.getsourcefile(obj) or inspect.getfile(obj)  # type: ignore[arg-type]  # noqa: F821
     except TypeError:
-        try:
-            fn = inspect.getsourcefile(obj) or inspect.getfile(obj)
-        except TypeError:
-            return "", -1
+        return "", -1
 
-        fspath = fn and py.path.local(fn) or None
-        lineno = -1
-        if fspath:
-            try:
-                _, lineno = findsource(obj)
-            except IOError:
-                pass
-    else:
-        fspath = code.path
-        lineno = code.firstlineno
-    assert isinstance(lineno, int)
+    assert fn, repr(fn)
+
+    fspath = fn and py.path.local(fn) or None
+    lineno = -1
+    if fspath:
+        try:
+            _, lineno = findsource(obj)
+        except IOError:
+            pass
     return fspath, lineno
 
 
