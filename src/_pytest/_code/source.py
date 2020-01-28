@@ -298,6 +298,8 @@ def getfslineno(obj: object) -> Tuple[Optional[Union[str, py.path.local]], int]:
         except TypeError:
             return "", -1
 
+        assert fn, repr(fn)
+
         fspath = fn and py.path.local(fn) or None
         lineno = -1
         if fspath:
