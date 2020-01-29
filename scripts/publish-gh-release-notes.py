@@ -61,7 +61,7 @@ def parse_changelog(tag_name):
 
 
 def convert_rst_to_md(text):
-    return pypandoc.convert_text(text, "md", format="rst")
+    return pypandoc.convert_text(text, "md", format="rst", extra_args=["--wrap=none"])
 
 
 def main(argv):
