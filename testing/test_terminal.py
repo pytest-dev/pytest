@@ -33,6 +33,8 @@ COLORS = {
 }
 RE_COLORS = {k: re.escape(v) for k, v in COLORS.items()}
 
+TRANS_FNMATCH = str.maketrans({"[": "[[]", "]": "[]]"})
+
 
 class Option:
     def __init__(self, verbosity=0):
@@ -1772,14 +1774,19 @@ class TestProgressWithTeardown:
             [r"test_bar.py (\.E){5}\s+\[ 25%\]", r"test_foo.py (\.E){15}\s+\[100%\]"]
         )
 
-    def test_teardown_many_verbose(self, testdir, many_files):
-        output = testdir.runpytest("-v")
-        output.stdout.re_match_lines(
+    def test_teardown_many_verbose(self, testdir: Testdir, many_files) -> None:
+        result = testdir.runpytest("-v")
+        result.stdout.fnmatch_lines(
             [
-                r"test_bar.py::test_bar\[0\] PASSED\s+\[  5%\]",
-                r"test_bar.py::test_bar\[0\] ERROR\s+\[  5%\]",
-                r"test_bar.py::test_bar\[4\] PASSED\s+\[ 25%\]",
-                r"test_bar.py::test_bar\[4\] ERROR\s+\[ 25%\]",
+                line.translate(TRANS_FNMATCH)
+                for line in [
+                    "test_bar.py::test_bar[0] PASSED  * [  5%]",
+                    "test_bar.py::test_bar[0] ERROR   * [  5%]",
+                    "test_bar.py::test_bar[4] PASSED  * [ 25%]",
+                    "test_foo.py::test_foo[14] PASSED * [100%]",
+                    "test_foo.py::test_foo[14] ERROR  * [100%]",
+                    "=* 20 passed, 20 errors in *",
+                ]
             ]
         )
 
