@@ -187,7 +187,7 @@ class TestReprFuncArgs:
 
 def test_getfslineno() -> None:
     def f(x) -> None:
-        pass
+        raise NotImplementedError()
 
     fspath, lineno = getfslineno(f)
 
