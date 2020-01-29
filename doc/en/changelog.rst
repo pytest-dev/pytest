@@ -28,6 +28,15 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+pytest 5.3.5 (2020-01-29)
+=========================
+
+Bug Fixes
+---------
+
+- `#6517 <https://github.com/pytest-dev/pytest/issues/6517>`_: Fix regression in pytest 5.3.4 causing an INTERNALERROR due to a wrong assertion.
+
+
 pytest 5.3.4 (2020-01-20)
 =========================
 
