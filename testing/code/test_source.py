@@ -495,36 +495,6 @@ def test_findsource() -> None:
     assert src[lineno] == "    def x():"
 
 
-def test_getfslineno() -> None:
-    from _pytest._code import getfslineno
-
-    def f(x) -> None:
-        pass
-
-    fspath, lineno = getfslineno(f)
-
-    assert isinstance(fspath, py.path.local)
-    assert fspath.basename == "test_source.py"
-    assert lineno == f.__code__.co_firstlineno - 1  # see findsource
-
-    class A:
-        pass
-
-    fspath, lineno = getfslineno(A)
-
-    _, A_lineno = inspect.findsource(A)
-    assert fspath.basename == "test_source.py"
-    assert lineno == A_lineno
-
-    assert getfslineno(3) == ("", -1)
-
-    class B:
-        pass
-
-    B.__name__ = "B2"
-    assert getfslineno(B)[1] == -1
-
-
 def test_code_of_object_instance_with_call() -> None:
     class A:
         pass

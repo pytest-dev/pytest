@@ -1,9 +1,13 @@
+import inspect
 import sys
 from types import FrameType
 from unittest import mock
 
+import py.path
+
 import _pytest._code
 import pytest
+from _pytest._code import getfslineno
 
 
 def test_ne() -> None:
@@ -179,3 +183,32 @@ class TestReprFuncArgs:
             tw_mock.lines[0]
             == r"unicode_string = São Paulo, utf8_string = b'S\xc3\xa3o Paulo'"
         )
+
+
+def test_getfslineno() -> None:
+    def f(x) -> None:
+        raise NotImplementedError()
+
+    fspath, lineno = getfslineno(f)
+
+    assert isinstance(fspath, py.path.local)
+    assert fspath.basename == "test_code.py"
+    assert lineno == f.__code__.co_firstlineno - 1  # see findsource
+
+    class A:
+        pass
+
+    fspath, lineno = getfslineno(A)
+
+    _, A_lineno = inspect.findsource(A)
+    assert isinstance(fspath, py.path.local)
+    assert fspath.basename == "test_code.py"
+    assert lineno == A_lineno
+
+    assert getfslineno(3) == ("", -1)
+
+    class B:
+        pass
+
+    B.__name__ = "B2"
+    assert getfslineno(B)[1] == -1
