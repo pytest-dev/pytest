@@ -33,6 +33,8 @@ from _pytest.reports import TestReport
 
 REPORT_COLLECTING_RESOLUTION = 0.5
 
+_REPORTCHARS_DEFAULT = "fE"
+
 
 class MoreQuietAction(argparse.Action):
     """
@@ -88,12 +90,13 @@ def pytest_addoption(parser):
         "-r",
         action="store",
         dest="reportchars",
-        default="",
+        default=_REPORTCHARS_DEFAULT,
         metavar="chars",
         help="show extra test summary info as specified by chars: (f)ailed, "
         "(E)rror, (s)kipped, (x)failed, (X)passed, "
         "(p)assed, (P)assed with output, (a)ll except passed (p/P), or (A)ll. "
-        "(w)arnings are enabled by default (see --disable-warnings).",
+        "(w)arnings are enabled by default (see --disable-warnings), "
+        "'N' can be used to reset the list. (default: 'fE').",
     )
     group._addoption(
         "--disable-warnings",
@@ -166,24 +169,27 @@ def pytest_configure(config: Config) -> None:
 
 
 def getreportopt(config: Config) -> str:
-    reportopts = ""
     reportchars = config.option.reportchars
-    if not config.option.disable_warnings and "w" not in reportchars:
-        reportchars += "w"
-    elif config.option.disable_warnings and "w" in reportchars:
-        reportchars = reportchars.replace("w", "")
-    aliases = {"F", "S"}
+
+    old_aliases = {"F", "S"}
+    reportopts = ""
     for char in reportchars:
-        # handle old aliases
-        if char in aliases:
+        if char in old_aliases:
             char = char.lower()
         if char == "a":
-            reportopts = "sxXwEf"
+            reportopts = "sxXEf"
         elif char == "A":
-            reportopts = "PpsxXwEf"
-            break
+            reportopts = "PpsxXEf"
+        elif char == "N":
+            reportopts = ""
         elif char not in reportopts:
             reportopts += char
+
+    if not config.option.disable_warnings and "w" not in reportopts:
+        reportopts = "w" + reportopts
+    elif config.option.disable_warnings and "w" in reportopts:
+        reportopts = reportopts.replace("w", "")
+
     return reportopts
 
 

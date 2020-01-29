@@ -169,10 +169,10 @@ option you make sure a trace is shown.
 Detailed summary report
 -----------------------
 
-
-
 The ``-r`` flag can be used to display a "short test summary info" at the end of the test session,
 making it easy in large test suites to get a clear picture of all failures, skips, xfails, etc.
+
+It defaults to ``fE`` to list failures and errors.
 
 Example:
 
@@ -261,8 +261,12 @@ Here is the full list of available characters that can be used:
  - ``X`` - xpassed
  - ``p`` - passed
  - ``P`` - passed with output
+
+Special characters for (de)selection of groups:
+
  - ``a`` - all except ``pP``
  - ``A`` - all
+ - ``N`` - none, this can be used to display nothing (since ``fE`` is the default)
 
 More than one character can be used, so for example to only see failed and skipped tests, you can execute:
 

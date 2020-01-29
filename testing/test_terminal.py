@@ -814,9 +814,9 @@ class TestTerminalFunctional:
 def test_fail_extra_reporting(testdir, monkeypatch):
     monkeypatch.setenv("COLUMNS", "80")
     testdir.makepyfile("def test_this(): assert 0, 'this_failed' * 100")
-    result = testdir.runpytest()
+    result = testdir.runpytest("-rN")
     result.stdout.no_fnmatch_line("*short test summary*")
-    result = testdir.runpytest("-rf")
+    result = testdir.runpytest()
     result.stdout.fnmatch_lines(
         [
             "*test summary*",
@@ -985,37 +985,62 @@ def test_color_yes_collection_on_non_atty(testdir, verbose):
 
 
 def test_getreportopt():
+    from _pytest.terminal import _REPORTCHARS_DEFAULT
+
     class Config:
         class Option:
-            reportchars = ""
-            disable_warnings = True
+            reportchars = _REPORTCHARS_DEFAULT
+            disable_warnings = False
 
         option = Option()
 
     config = Config()
 
+    assert _REPORTCHARS_DEFAULT == "fE"
+
+    # Default.
+    assert getreportopt(config) == "wfE"
+
     config.option.reportchars = "sf"
-    assert getreportopt(config) == "sf"
+    assert getreportopt(config) == "wsf"
+
+    config.option.reportchars = "sfxw"
+    assert getreportopt(config) == "sfxw"
+
+    config.option.reportchars = "a"
+    assert getreportopt(config) == "wsxXEf"
+
+    config.option.reportchars = "N"
+    assert getreportopt(config) == "w"
+
+    config.option.reportchars = "NwfE"
+    assert getreportopt(config) == "wfE"
+
+    config.option.reportchars = "NfENx"
+    assert getreportopt(config) == "wx"
+
+    # Now with --disable-warnings.
+    config.option.disable_warnings = True
+    config.option.reportchars = "a"
+    assert getreportopt(config) == "sxXEf"
+
+    config.option.reportchars = "sfx"
+    assert getreportopt(config) == "sfx"
 
     config.option.reportchars = "sfxw"
     assert getreportopt(config) == "sfx"
 
-    # Now with --disable-warnings.
-    config.option.disable_warnings = False
     config.option.reportchars = "a"
-    assert getreportopt(config) == "sxXwEf"  # NOTE: "w" included!
-
-    config.option.reportchars = "sfx"
-    assert getreportopt(config) == "sfxw"
-
-    config.option.reportchars = "sfxw"
-    assert getreportopt(config) == "sfxw"
-
-    config.option.reportchars = "a"
-    assert getreportopt(config) == "sxXwEf"  # NOTE: "w" included!
+    assert getreportopt(config) == "sxXEf"
 
     config.option.reportchars = "A"
-    assert getreportopt(config) == "PpsxXwEf"
+    assert getreportopt(config) == "PpsxXEf"
+
+    config.option.reportchars = "AN"
+    assert getreportopt(config) == ""
+
+    config.option.reportchars = "NwfE"
+    assert getreportopt(config) == "fE"
 
 
 def test_terminalreporter_reportopt_addopts(testdir):
@@ -1132,7 +1157,7 @@ class TestGenericReporting:
         )
         for tbopt in ["long", "short", "no"]:
             print("testing --tb=%s..." % tbopt)
-            result = testdir.runpytest("--tb=%s" % tbopt)
+            result = testdir.runpytest("-rN", "--tb=%s" % tbopt)
             s = result.stdout.str()
             if tbopt == "long":
                 assert "print(6*7)" in s
