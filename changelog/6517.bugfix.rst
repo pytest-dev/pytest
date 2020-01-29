@@ -1,1 +1,0 @@
-Fix regression in pytest 5.3.4 causing an INTERNALERROR due to wrong assertion.
