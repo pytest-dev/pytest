@@ -284,7 +284,7 @@ class TestFunction:
         session = testdir.Session.from_config(config)
         session._fixturemanager = FixtureManager(session)
 
-        return pytest.Function.from_parent(config=config, parent=session, **kwargs)
+        return pytest.Function.from_parent(parent=session, **kwargs)
 
     def test_function_equality(self, testdir):
         def func1():

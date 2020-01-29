@@ -687,7 +687,10 @@ class Class(PyCollector):
 
     @classmethod
     def from_parent(cls, parent, *, name, obj=None):
-        return cls._create(name=name, parent=parent)
+        """
+        The public constructor
+        """
+        return super().from_parent(name=name, parent=parent)
 
     def collect(self):
         if not safe_getattr(self.obj, "__test__", True):
@@ -1475,8 +1478,11 @@ class Function(FunctionMixin, nodes.Item):
         self.originalname = originalname
 
     @classmethod
-    def from_parent(cls, parent, **kw):
-        return cls._create(parent=parent, **kw)
+    def from_parent(cls, parent, **kw):  # todo: determine sound type limitations
+        """
+        The public  constructor
+        """
+        return super().from_parent(parent=parent, **kw)
 
     def _initrequest(self):
         self.funcargs = {}

@@ -145,8 +145,22 @@ class Node(metaclass=NodeMeta):
                 self._nodeid += "::" + self.name
 
     @classmethod
-    def from_parent(cls, parent, *, name):
-        return cls._create(parent=parent, name=name)
+    def from_parent(cls, parent: "Node", **kw):
+        """
+        Public Constructor for Nodes
+
+        This indirection got introduced in order to enable removing
+        the fragile logic from the node constructors.
+
+        Subclasses can use ``super().from_parent(...)`` when overriding the construction
+
+        :param parent: the parent node of this test Node
+        """
+        if "config" in kw:
+            raise TypeError("config is not a valid argument for from_parent")
+        if "session" in kw:
+            raise TypeError("session is not a valid argument for from_parent")
+        return cls._create(parent=parent, **kw)
 
     @property
     def ihook(self):
@@ -435,7 +449,10 @@ class FSCollector(Collector):
 
     @classmethod
     def from_parent(cls, parent, *, fspath):
-        return cls._create(parent=parent, fspath=fspath)
+        """
+        The public constructor
+        """
+        return super().from_parent(parent=parent, fspath=fspath)
 
 
 class File(FSCollector):

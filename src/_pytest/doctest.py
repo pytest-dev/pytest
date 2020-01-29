@@ -220,8 +220,14 @@ class DoctestItem(pytest.Item):
         self.fixture_request = None
 
     @classmethod
-    def from_parent(cls, parent, *, name, runner, dtest):
-        return cls._create(name=name, parent=parent, runner=runner, dtest=dtest)
+    def from_parent(  # type: ignore
+        cls, parent: "Union[DoctestTextfile, DoctestModule]", *, name, runner, dtest
+    ):
+        # incompatible signature due to to imposed limits on sublcass
+        """
+        the public named constructor
+        """
+        return super().from_parent(name=name, parent=parent, runner=runner, dtest=dtest)
 
     def setup(self):
         if self.dtest is not None:
