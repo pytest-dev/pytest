@@ -492,6 +492,19 @@ class TestFunction:
         )
         assert "foo" in keywords[1] and "bar" in keywords[1] and "baz" in keywords[1]
 
+    def test_parametrize_with_empty_string_arguments(self, testdir):
+        items = testdir.getitems(
+            """\
+            import pytest
+
+            @pytest.mark.parametrize('v', ('', ' '))
+            @pytest.mark.parametrize('w', ('', ' '))
+            def test(v, w): ...
+            """
+        )
+        names = {item.name for item in items}
+        assert names == {"test[-]", "test[ -]", "test[- ]", "test[ - ]"}
+
     def test_function_equality_with_callspec(self, testdir):
         items = testdir.getitems(
             """
