@@ -375,3 +375,17 @@ def test_skip_test_with_unicode(testdir):
     )
     result = testdir.runpytest()
     result.stdout.fnmatch_lines(["* 1 skipped *"])
+
+
+def test_issue_6517(testdir):
+    testdir.makepyfile(
+        """
+        from nose.tools import raises
+
+        @raises(RuntimeError)
+        def test_fail_without_tcp():
+            raise RuntimeError
+        """
+    )
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines(["* 1 passed *"])
