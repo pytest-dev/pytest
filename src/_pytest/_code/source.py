@@ -305,11 +305,9 @@ def getfslineno(obj) -> Tuple[Optional[Union["Literal['']", py.path.local]], int
                 _, lineno = findsource(obj)
             except IOError:
                 pass
+        return fspath, lineno
     else:
-        fspath = code.path
-        lineno = code.firstlineno
-    assert isinstance(lineno, int)
-    return fspath, lineno
+        return code.path, code.firstlineno
 
 
 #
