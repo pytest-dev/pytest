@@ -704,3 +704,13 @@ def test_testdir_outcomes_with_multiple_errors(testdir):
     result.assert_outcomes(error=2)
 
     assert result.parseoutcomes() == {"error": 2}
+
+
+def test_makefile_joins_absolute_path(testdir: Testdir) -> None:
+    absfile = testdir.tmpdir / "absfile"
+    if sys.platform == "win32":
+        with pytest.raises(OSError):
+            testdir.makepyfile(**{str(absfile): ""})
+    else:
+        p1 = testdir.makepyfile(**{str(absfile): ""})
+        assert str(p1) == (testdir.tmpdir / absfile) + ".py"

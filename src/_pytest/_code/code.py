@@ -77,12 +77,11 @@ class Code:
             # maybe don't try this checking
             if not p.check():
                 raise OSError("py.path check failed.")
+            return p
         except OSError:
             # XXX maybe try harder like the weird logic
             # in the standard lib [linecache.updatecache] does?
-            p = self.raw.co_filename
-
-        return p
+            return self.raw.co_filename
 
     @property
     def fullsource(self) -> Optional["Source"]:
