@@ -387,7 +387,7 @@ class PyCollector(PyobjMixin, nodes.Collector):
         fm = self.session._fixturemanager
 
         definition = FunctionDefinition(name=name, parent=self, callobj=funcobj)
-        fixtureinfo = fm.getfixtureinfo(definition, funcobj, cls)
+        fixtureinfo = definition._fixtureinfo
 
         metafunc = Metafunc(
             definition, fixtureinfo, self.config, cls=cls, module=module
