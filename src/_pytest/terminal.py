@@ -33,6 +33,17 @@ from _pytest.reports import TestReport
 
 REPORT_COLLECTING_RESOLUTION = 0.5
 
+KNOWN_TYPES = (
+    "failed",
+    "passed",
+    "skipped",
+    "deselected",
+    "xfailed",
+    "xpassed",
+    "warnings",
+    "error",
+)
+
 
 class MoreQuietAction(argparse.Action):
     """
@@ -1028,20 +1039,18 @@ class TerminalReporter:
 
     def _set_main_color(self) -> Tuple[str, List[str]]:
         stats = self.stats
-        known_types = (
-            "failed passed skipped deselected xfailed xpassed warnings error".split()
-        )
-        unknown_type_seen = False
+
+        unknown_types: List[str] = []
         for found_type in stats.keys():
-            if found_type not in known_types:
-                if found_type:  # setup/teardown reports have an empty key, ignore them
-                    known_types.append(found_type)
-                    unknown_type_seen = True
+            if found_type:  # setup/teardown reports have an empty key, ignore them
+                if found_type not in KNOWN_TYPES and found_type not in unknown_types:
+                    unknown_types.append(found_type)
+        known_types = list(KNOWN_TYPES) + unknown_types
 
         # main color
         if "failed" in stats or "error" in stats:
             main_color = "red"
-        elif "warnings" in stats or "xpassed" in stats or unknown_type_seen:
+        elif "warnings" in stats or "xpassed" in stats or unknown_types:
             main_color = "yellow"
         elif "passed" in stats or not self._is_last_item:
             main_color = "green"
