@@ -1037,27 +1037,27 @@ class TerminalReporter:
             assert self._known_types
         return self._main_color, self._known_types
 
-    def _set_main_color(self) -> Tuple[str, List[str]]:
+    def _determine_main_color(self, unknown_type_seen: bool) -> str:
         stats = self.stats
-
-        unknown_types: List[str] = []
-        for found_type in stats.keys():
-            if found_type:  # setup/teardown reports have an empty key, ignore them
-                if found_type not in KNOWN_TYPES and found_type not in unknown_types:
-                    unknown_types.append(found_type)
-        known_types = list(KNOWN_TYPES) + unknown_types
-
-        # main color
         if "failed" in stats or "error" in stats:
             main_color = "red"
-        elif "warnings" in stats or "xpassed" in stats or unknown_types:
+        elif "warnings" in stats or "xpassed" in stats or unknown_type_seen:
             main_color = "yellow"
         elif "passed" in stats or not self._is_last_item:
             main_color = "green"
         else:
             main_color = "yellow"
-        self._main_color, self._known_types = main_color, known_types
-        return main_color, known_types
+        return main_color
+
+    def _set_main_color(self) -> Tuple[str, List[str]]:
+        unknown_types = []  # type: List[str]
+        for found_type in self.stats.keys():
+            if found_type:  # setup/teardown reports have an empty key, ignore them
+                if found_type not in KNOWN_TYPES and found_type not in unknown_types:
+                    unknown_types.append(found_type)
+        self._known_types = list(KNOWN_TYPES) + unknown_types
+        self._main_color = self._determine_main_color(bool(unknown_types))
+        return self._main_color, self._known_types
 
     def build_summary_stats_line(self) -> Tuple[List[Tuple[str, Dict[str, bool]]], str]:
         main_color, known_types = self._get_main_color()
