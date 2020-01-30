@@ -19,6 +19,7 @@ from _pytest.compat import cached_property
 from _pytest.compat import getfslineno
 from _pytest.compat import TYPE_CHECKING
 from _pytest.config import Config
+from _pytest.config import PytestPluginManager
 from _pytest.fixtures import FixtureDef
 from _pytest.fixtures import FixtureLookupError
 from _pytest.fixtures import FixtureLookupErrorRepr
@@ -393,6 +394,20 @@ def _check_initialpaths_for_relpath(session, fspath):
             return fspath.relto(initial_path)
 
 
+class FSHookProxy:
+    def __init__(
+        self, fspath: py.path.local, pm: PytestPluginManager, remove_mods
+    ) -> None:
+        self.fspath = fspath
+        self.pm = pm
+        self.remove_mods = remove_mods
+
+    def __getattr__(self, name: str):
+        x = self.pm.subset_hook_caller(name, remove_plugins=self.remove_mods)
+        self.__dict__[name] = x
+        return x
+
+
 class FSCollector(Collector):
     def __init__(
         self, fspath: py.path.local, parent=None, config=None, session=None, nodeid=None
@@ -416,6 +431,35 @@ class FSCollector(Collector):
                 nodeid = nodeid.replace(os.sep, SEP)
 
         super().__init__(name, parent, config, session, nodeid=nodeid, fspath=fspath)
+
+        self._norecursepatterns = self.config.getini("norecursedirs")
+
+    def _gethookproxy(self, fspath: py.path.local):
+        # check if we have the common case of running
+        # hooks with all conftest.py files
+        pm = self.config.pluginmanager
+        my_conftestmodules = pm._getconftestmodules(fspath)
+        remove_mods = pm._conftest_plugins.difference(my_conftestmodules)
+        if remove_mods:
+            # one or more conftests are not in use at this fspath
+            proxy = FSHookProxy(fspath, pm, remove_mods)
+        else:
+            # all plugins are active for this fspath
+            proxy = self.config.hook
+        return proxy
+
+    def _recurse(self, dirpath: py.path.local) -> bool:
+        if dirpath.basename == "__pycache__":
+            return False
+        ihook = self._gethookproxy(dirpath.dirpath())
+        if ihook.pytest_ignore_collect(path=dirpath, config=self.config):
+            return False
+        for pat in self._norecursepatterns:
+            if dirpath.check(fnmatch=pat):
+                return False
+        ihook = self._gethookproxy(dirpath)
+        ihook.pytest_collect_directory(path=dirpath, parent=self)
+        return True
 
 
 class File(FSCollector):
