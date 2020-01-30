@@ -9,10 +9,11 @@ from typing import Any
 from typing import Dict
 from typing import Optional
 
-import py
+import py.path
 
 import _pytest._code
 import pytest
+from _pytest._code import getfslineno
 from _pytest._code import Source
 
 
@@ -493,6 +494,35 @@ def test_findsource() -> None:
     assert src is not None
     assert "if 1:" in str(src)
     assert src[lineno] == "    def x():"
+
+
+def test_getfslineno() -> None:
+    def f(x) -> None:
+        raise NotImplementedError()
+
+    fspath, lineno = getfslineno(f)
+
+    assert isinstance(fspath, py.path.local)
+    assert fspath.basename == "test_source.py"
+    assert lineno == f.__code__.co_firstlineno - 1  # see findsource
+
+    class A:
+        pass
+
+    fspath, lineno = getfslineno(A)
+
+    _, A_lineno = inspect.findsource(A)
+    assert isinstance(fspath, py.path.local)
+    assert fspath.basename == "test_source.py"
+    assert lineno == A_lineno
+
+    assert getfslineno(3) == ("", -1)
+
+    class B:
+        pass
+
+    B.__name__ = "B2"
+    assert getfslineno(B)[1] == -1
 
 
 def test_code_of_object_instance_with_call() -> None:
