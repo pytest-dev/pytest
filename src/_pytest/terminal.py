@@ -514,7 +514,7 @@ class TerminalReporter:
             # py < 1.6.0
             return self._tw.chars_on_current_line
 
-    def pytest_collection(self):
+    def pytest_collection(self) -> None:
         if self.isatty:
             if self.config.option.verbose >= 0:
                 self.write("collecting ... ", bold=True)

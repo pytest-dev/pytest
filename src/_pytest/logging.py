@@ -5,6 +5,7 @@ from contextlib import contextmanager
 from io import StringIO
 from typing import AbstractSet
 from typing import Dict
+from typing import Generator
 from typing import List
 from typing import Mapping
 
@@ -591,7 +592,7 @@ class LoggingPlugin:
         ) is not None or self._config.getini("log_cli")
 
     @pytest.hookimpl(hookwrapper=True, tryfirst=True)
-    def pytest_collection(self):
+    def pytest_collection(self) -> Generator[None, None, None]:
         with self.live_logs_context():
             if self.log_cli_handler:
                 self.log_cli_handler.set_when("collection")
