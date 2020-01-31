@@ -36,7 +36,6 @@ from _pytest.compat import safe_isclass
 from _pytest.compat import STRING_TYPES
 from _pytest.config import hookimpl
 from _pytest.deprecated import FUNCARGNAMES
-from _pytest.main import FSHookProxy
 from _pytest.mark import MARK_GEN
 from _pytest.mark.structures import get_unpacked_marks
 from _pytest.mark.structures import Mark
@@ -149,27 +148,30 @@ def pytest_configure(config):
     )
 
 
-@hookimpl(trylast=True)
-def pytest_pyfunc_call(pyfuncitem):
-    def async_warn():
-        msg = "async def functions are not natively supported and have been skipped.\n"
-        msg += "You need to install a suitable plugin for your async framework, for example:\n"
-        msg += "  - pytest-asyncio\n"
-        msg += "  - pytest-trio\n"
-        msg += "  - pytest-tornasync"
-        warnings.warn(PytestUnhandledCoroutineWarning(msg.format(pyfuncitem.nodeid)))
-        skip(msg="async def function and no async plugin installed (see warnings)")
+def async_warn(nodeid: str) -> None:
+    msg = "async def functions are not natively supported and have been skipped.\n"
+    msg += (
+        "You need to install a suitable plugin for your async framework, for example:\n"
+    )
+    msg += "  - pytest-asyncio\n"
+    msg += "  - pytest-trio\n"
+    msg += "  - pytest-tornasync"
+    warnings.warn(PytestUnhandledCoroutineWarning(msg.format(nodeid)))
+    skip(msg="async def function and no async plugin installed (see warnings)")
 
+
+@hookimpl(trylast=True)
+def pytest_pyfunc_call(pyfuncitem: "Function"):
     testfunction = pyfuncitem.obj
     if iscoroutinefunction(testfunction) or (
         sys.version_info >= (3, 6) and inspect.isasyncgenfunction(testfunction)
     ):
-        async_warn()
+        async_warn(pyfuncitem.nodeid)
     funcargs = pyfuncitem.funcargs
     testargs = {arg: funcargs[arg] for arg in pyfuncitem._fixtureinfo.argnames}
     result = testfunction(**testargs)
     if hasattr(result, "__await__") or hasattr(result, "__aiter__"):
-        async_warn()
+        async_warn(pyfuncitem.nodeid)
     return True
 
 
@@ -547,15 +549,23 @@ class Module(nodes.File, PyCollector):
 
 
 class Package(Module):
-    def __init__(self, fspath, parent=None, config=None, session=None, nodeid=None):
+    def __init__(
+        self,
+        fspath: py.path.local,
+        parent: nodes.Collector,
+        # NOTE: following args are unused:
+        config=None,
+        session=None,
+        nodeid=None,
+    ) -> None:
+        # NOTE: could be just the following, but kept as-is for compat.
+        # nodes.FSCollector.__init__(self, fspath, parent=parent)
         session = parent.session
         nodes.FSCollector.__init__(
             self, fspath, parent=parent, config=config, session=session, nodeid=nodeid
         )
+
         self.name = fspath.dirname
-        self.trace = session.trace
-        self._norecursepatterns = session._norecursepatterns
-        self.fspath = fspath
 
     def setup(self):
         # not using fixtures to call setup_module here because autouse fixtures
@@ -573,32 +583,8 @@ class Package(Module):
             func = partial(_call_with_optional_argument, teardown_module, self.obj)
             self.addfinalizer(func)
 
-    def _recurse(self, dirpath):
-        if dirpath.basename == "__pycache__":
-            return False
-        ihook = self.gethookproxy(dirpath.dirpath())
-        if ihook.pytest_ignore_collect(path=dirpath, config=self.config):
-            return
-        for pat in self._norecursepatterns:
-            if dirpath.check(fnmatch=pat):
-                return False
-        ihook = self.gethookproxy(dirpath)
-        ihook.pytest_collect_directory(path=dirpath, parent=self)
-        return True
-
-    def gethookproxy(self, fspath):
-        # check if we have the common case of running
-        # hooks with all conftest.py filesall conftest.py
-        pm = self.config.pluginmanager
-        my_conftestmodules = pm._getconftestmodules(fspath)
-        remove_mods = pm._conftest_plugins.difference(my_conftestmodules)
-        if remove_mods:
-            # one or more conftests are not in use at this fspath
-            proxy = FSHookProxy(fspath, pm, remove_mods)
-        else:
-            # all plugins are active for this fspath
-            proxy = self.config.hook
-        return proxy
+    def gethookproxy(self, fspath: py.path.local):
+        return super()._gethookproxy(fspath)
 
     def _collectfile(self, path, handle_dupes=True):
         assert (

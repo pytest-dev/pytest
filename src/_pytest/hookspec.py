@@ -1,5 +1,13 @@
 """ hook specifications for pytest plugins, invoked from main.py and builtin plugins.  """
+from typing import Any
+from typing import Optional
+
 from pluggy import HookspecMarker
+
+from _pytest.compat import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from _pytest.main import Session
 
 
 hookspec = HookspecMarker("pytest")
@@ -158,7 +166,7 @@ def pytest_load_initial_conftests(early_config, parser, args):
 
 
 @hookspec(firstresult=True)
-def pytest_collection(session):
+def pytest_collection(session: "Session") -> Optional[Any]:
     """Perform the collection protocol for the given session.
 
     Stops at first non-None result, see :ref:`firstresult`.
