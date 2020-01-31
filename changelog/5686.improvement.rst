@@ -1,0 +1,1 @@
+``tmpdir_factory.mktemp`` now fails when given absolute and non-normalized paths.

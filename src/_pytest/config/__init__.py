@@ -47,6 +47,8 @@ from _pytest.warning_types import PytestConfigWarning
 if TYPE_CHECKING:
     from typing import Type
 
+    from .argparsing import Argument
+
 
 _PluggyPlugin = object
 """A type to represent plugin objects.
@@ -596,7 +598,7 @@ class PytestPluginManager(PluginManager):
             _issue_warning_captured(
                 PytestConfigWarning("skipped plugin {!r}: {}".format(modname, e.msg)),
                 self.hook,
-                stacklevel=1,
+                stacklevel=2,
             )
         else:
             mod = sys.modules[importspec]
@@ -739,7 +741,7 @@ class Config:
         plugins = attr.ib()
         dir = attr.ib(type=Path)
 
-    def __init__(self, pluginmanager, *, invocation_params=None):
+    def __init__(self, pluginmanager, *, invocation_params=None) -> None:
         from .argparsing import Parser, FILE_OR_DIR
 
         if invocation_params is None:
@@ -852,11 +854,11 @@ class Config:
             config.pluginmanager.consider_pluginarg(x)
         return config
 
-    def _processopt(self, opt):
+    def _processopt(self, opt: "Argument") -> None:
         for name in opt._short_opts + opt._long_opts:
             self._opt2dest[name] = opt.dest
 
-        if hasattr(opt, "default") and opt.dest:
+        if hasattr(opt, "default"):
             if not hasattr(self.option, opt.dest):
                 setattr(self.option, opt.dest, opt.default)
 
@@ -864,7 +866,7 @@ class Config:
     def pytest_load_initial_conftests(self, early_config):
         self.pluginmanager._set_initial_conftests(early_config.known_args_namespace)
 
-    def _initini(self, args) -> None:
+    def _initini(self, args: Sequence[str]) -> None:
         ns, unknown_args = self._parser.parse_known_and_unknown_args(
             args, namespace=copy.copy(self.option)
         )
@@ -881,7 +883,7 @@ class Config:
         self._parser.addini("minversion", "minimally required pytest version")
         self._override_ini = ns.override_ini or ()
 
-    def _consider_importhook(self, args):
+    def _consider_importhook(self, args: Sequence[str]) -> None:
         """Install the PEP 302 import hook if using assertion rewriting.
 
         Needs to parse the --assert=<mode> option from the commandline
@@ -921,19 +923,19 @@ class Config:
         for name in _iter_rewritable_modules(package_files):
             hook.mark_rewrite(name)
 
-    def _validate_args(self, args, via):
+    def _validate_args(self, args: List[str], via: str) -> List[str]:
         """Validate known args."""
-        self._parser._config_source_hint = via
+        self._parser._config_source_hint = via  # type: ignore
         try:
             self._parser.parse_known_and_unknown_args(
                 args, namespace=copy.copy(self.option)
             )
         finally:
-            del self._parser._config_source_hint
+            del self._parser._config_source_hint  # type: ignore
 
         return args
 
-    def _preparse(self, args, addopts=True):
+    def _preparse(self, args: List[str], addopts: bool = True) -> None:
         if addopts:
             env_addopts = os.environ.get("PYTEST_ADDOPTS", "")
             if len(env_addopts):
@@ -997,7 +999,7 @@ class Config:
                     )
                 )
 
-    def parse(self, args, addopts=True):
+    def parse(self, args: List[str], addopts: bool = True) -> None:
         # parse given cmdline arguments into this config object.
         assert not hasattr(
             self, "args"
@@ -1008,7 +1010,7 @@ class Config:
         self._preparse(args, addopts=addopts)
         # XXX deprecated hook:
         self.hook.pytest_cmdline_preparse(config=self, args=args)
-        self._parser.after_preparse = True
+        self._parser.after_preparse = True  # type: ignore
         try:
             args = self._parser.parse_setoption(
                 args, self.option, namespace=self.option

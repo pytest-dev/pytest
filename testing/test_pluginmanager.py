@@ -122,7 +122,7 @@ class TestPytestPluginInteractions:
     def test_hook_proxy(self, testdir):
         """Test the gethookproxy function(#2016)"""
         config = testdir.parseconfig()
-        session = Session(config)
+        session = Session.from_config(config)
         testdir.makepyfile(**{"tests/conftest.py": "", "tests/subdir/conftest.py": ""})
 
         conftest1 = testdir.tmpdir.join("tests/conftest.py")

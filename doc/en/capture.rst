@@ -21,17 +21,24 @@ file descriptors.  This allows to capture output from simple
 print statements as well as output from a subprocess started by
 a test.
 
+.. _capture-method:
+
 Setting capturing methods or disabling capturing
 -------------------------------------------------
 
-There are two ways in which ``pytest`` can perform capturing:
+There are three ways in which ``pytest`` can perform capturing:
 
-* file descriptor (FD) level capturing (default): All writes going to the
+* ``fd`` (file descriptor) level capturing (default): All writes going to the
   operating system file descriptors 1 and 2 will be captured.
 
 * ``sys`` level capturing: Only writes to Python files ``sys.stdout``
   and ``sys.stderr`` will be captured.  No capturing of writes to
   filedescriptors is performed.
+
+* ``tee-sys`` capturing: Python writes to ``sys.stdout`` and ``sys.stderr``
+  will be captured, however the writes will also be passed-through to
+  the actual ``sys.stdout`` and ``sys.stderr``. This allows output to be
+  'live printed' and captured for plugin use, such as junitxml (new in pytest 5.4).
 
 .. _`disable capturing`:
 
@@ -39,9 +46,11 @@ You can influence output capturing mechanisms from the command line:
 
 .. code-block:: bash
 
-    pytest -s            # disable all capturing
-    pytest --capture=sys # replace sys.stdout/stderr with in-mem files
-    pytest --capture=fd  # also point filedescriptors 1 and 2 to temp file
+    pytest -s                  # disable all capturing
+    pytest --capture=sys       # replace sys.stdout/stderr with in-mem files
+    pytest --capture=fd        # also point filedescriptors 1 and 2 to temp file
+    pytest --capture=tee-sys   # combines 'sys' and '-s', capturing sys.stdout/stderr
+                               # and passing it along to the actual sys.stdout/stderr
 
 .. _printdebugging:
 

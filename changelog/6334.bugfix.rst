@@ -1,0 +1,3 @@
+Fix summary entries appearing twice when ``f/F`` and ``s/S`` report chars were used at the same time in the ``-r`` command-line option (for example ``-rFf``).
+
+The upper case variants were never documented and the preferred form should be the lower case.

@@ -1164,9 +1164,17 @@ passed multiple times. The expected format is ``name=value``. For example::
 .. confval:: junit_logging
 
     .. versionadded:: 3.5
+    .. versionchanged:: 5.4
+        ``log``, ``all``, ``out-err`` options added.
 
-    Configures if stdout/stderr should be written to the JUnit XML file. Valid values are
-    ``system-out``, ``system-err``, and ``no`` (the default).
+    Configures if captured output should be written to the JUnit XML file. Valid values are:
+
+    * ``log``: write only ``logging`` captured output.
+    * ``system-out``: write captured ``stdout`` contents.
+    * ``system-err``: write captured ``stderr`` contents.
+    * ``out-err``: write both captured ``stdout`` and ``stderr`` contents.
+    * ``all``: write captured ``logging``, ``stdout`` and ``stderr`` contents.
+    * ``no`` (the default): no captured output is written.
 
     .. code-block:: ini
 

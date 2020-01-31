@@ -1,5 +1,8 @@
+import inspect
+
 import pytest
 from _pytest import deprecated
+from _pytest import nodes
 
 
 @pytest.mark.filterwarnings("default")
@@ -73,3 +76,58 @@ def test_warn_about_imminent_junit_family_default_change(testdir, junit_family):
         result.stdout.no_fnmatch_line(warning_msg)
     else:
         result.stdout.fnmatch_lines([warning_msg])
+
+
+def test_node_direct_ctor_warning():
+    class MockConfig:
+        pass
+
+    ms = MockConfig()
+    with pytest.warns(
+        DeprecationWarning,
+        match="direct construction of .* has been deprecated, please use .*.from_parent",
+    ) as w:
+        nodes.Node(name="test", config=ms, session=ms, nodeid="None")
+    assert w[0].lineno == inspect.currentframe().f_lineno - 1
+    assert w[0].filename == __file__
+
+
+def assert_no_print_logs(testdir, args):
+    result = testdir.runpytest(*args)
+    result.stdout.fnmatch_lines(
+        [
+            "*--no-print-logs is deprecated and scheduled for removal in pytest 6.0*",
+            "*Please use --show-capture instead.*",
+        ]
+    )
+
+
+@pytest.mark.filterwarnings("default")
+def test_noprintlogs_is_deprecated_cmdline(testdir):
+    testdir.makepyfile(
+        """
+        def test_foo():
+            pass
+        """
+    )
+
+    assert_no_print_logs(testdir, ("--no-print-logs",))
+
+
+@pytest.mark.filterwarnings("default")
+def test_noprintlogs_is_deprecated_ini(testdir):
+    testdir.makeini(
+        """
+        [pytest]
+        log_print=False
+        """
+    )
+
+    testdir.makepyfile(
+        """
+        def test_foo():
+            pass
+        """
+    )
+
+    assert_no_print_logs(testdir, ())

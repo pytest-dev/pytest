@@ -1,0 +1,1 @@
+New :ref:`--capture=tee-sys <capture-method>` option to allow both live printing and capturing of test output.

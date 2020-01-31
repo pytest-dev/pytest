@@ -20,6 +20,7 @@ from _pytest.compat import getfslineno
 from _pytest.compat import TYPE_CHECKING
 from _pytest.config import Config
 from _pytest.config import PytestPluginManager
+from _pytest.deprecated import NODE_USE_FROM_PARENT
 from _pytest.fixtures import FixtureDef
 from _pytest.fixtures import FixtureLookupError
 from _pytest.fixtures import FixtureLookupErrorRepr
@@ -75,7 +76,16 @@ def ischildnode(baseid, nodeid):
     return node_parts[: len(base_parts)] == base_parts
 
 
-class Node:
+class NodeMeta(type):
+    def __call__(self, *k, **kw):
+        warnings.warn(NODE_USE_FROM_PARENT.format(name=self.__name__), stacklevel=2)
+        return super().__call__(*k, **kw)
+
+    def _create(self, *k, **kw):
+        return super().__call__(*k, **kw)
+
+
+class Node(metaclass=NodeMeta):
     """ base class for Collector and Item the test collection tree.
     Collector subclasses have children, Items are terminal nodes."""
 
@@ -134,6 +144,24 @@ class Node:
             self._nodeid = self.parent.nodeid
             if self.name != "()":
                 self._nodeid += "::" + self.name
+
+    @classmethod
+    def from_parent(cls, parent: "Node", **kw):
+        """
+        Public Constructor for Nodes
+
+        This indirection got introduced in order to enable removing
+        the fragile logic from the node constructors.
+
+        Subclasses can use ``super().from_parent(...)`` when overriding the construction
+
+        :param parent: the parent node of this test Node
+        """
+        if "config" in kw:
+            raise TypeError("config is not a valid argument for from_parent")
+        if "session" in kw:
+            raise TypeError("session is not a valid argument for from_parent")
+        return cls._create(parent=parent, **kw)
 
     @property
     def ihook(self):
@@ -367,12 +395,14 @@ class Collector(Node):
 
     def repr_failure(self, excinfo):
         """ represent a collection failure. """
-        if excinfo.errisinstance(self.CollectError):
+        if excinfo.errisinstance(self.CollectError) and not self.config.getoption(
+            "fulltrace", False
+        ):
             exc = excinfo.value
             return str(exc.args[0])
 
         # Respect explicit tbstyle option, but default to "short"
-        # (None._repr_failure_py defaults to "long" without "fulltrace" option).
+        # (_repr_failure_py uses "long" with "fulltrace" option always).
         tbstyle = self.config.getoption("tbstyle", "auto")
         if tbstyle == "auto":
             tbstyle = "short"
@@ -433,6 +463,13 @@ class FSCollector(Collector):
         super().__init__(name, parent, config, session, nodeid=nodeid, fspath=fspath)
 
         self._norecursepatterns = self.config.getini("norecursedirs")
+
+    @classmethod
+    def from_parent(cls, parent, *, fspath):
+        """
+        The public constructor
+        """
+        return super().from_parent(parent=parent, fspath=fspath)
 
     def _gethookproxy(self, fspath: py.path.local):
         # check if we have the common case of running

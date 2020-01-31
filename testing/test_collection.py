@@ -79,7 +79,7 @@ class TestCollector:
                 pass
             def pytest_collect_file(path, parent):
                 if path.ext == ".xxx":
-                    return CustomFile(path, parent=parent)
+                    return CustomFile.from_parent(fspath=path, parent=parent)
         """
         )
         node = testdir.getpathnode(hello)
@@ -442,7 +442,7 @@ class TestCustomConftests:
 
 
 class TestSession:
-    def test_parsearg(self, testdir):
+    def test_parsearg(self, testdir) -> None:
         p = testdir.makepyfile("def test_func(): pass")
         subdir = testdir.mkdir("sub")
         subdir.ensure("__init__.py")
@@ -450,16 +450,16 @@ class TestSession:
         p.move(target)
         subdir.chdir()
         config = testdir.parseconfig(p.basename)
-        rcol = Session(config=config)
+        rcol = Session.from_config(config)
         assert rcol.fspath == subdir
-        parts = rcol._parsearg(p.basename)
+        fspath, parts = rcol._parsearg(p.basename)
 
-        assert parts[0] == target
+        assert fspath == target
+        assert len(parts) == 0
+        fspath, parts = rcol._parsearg(p.basename + "::test_func")
+        assert fspath == target
+        assert parts[0] == "test_func"
         assert len(parts) == 1
-        parts = rcol._parsearg(p.basename + "::test_func")
-        assert parts[0] == target
-        assert parts[1] == "test_func"
-        assert len(parts) == 2
 
     def test_collect_topdir(self, testdir):
         p = testdir.makepyfile("def test_func(): pass")
@@ -467,7 +467,7 @@ class TestSession:
         # XXX migrate to collectonly? (see below)
         config = testdir.parseconfig(id)
         topdir = testdir.tmpdir
-        rcol = Session(config)
+        rcol = Session.from_config(config)
         assert topdir == rcol.fspath
         # rootid = rcol.nodeid
         # root2 = rcol.perform_collect([rcol.nodeid], genitems=False)[0]
@@ -812,6 +812,43 @@ class TestNodekeywords:
         )
         reprec = testdir.inline_run("-k repr")
         reprec.assertoutcome(passed=1, failed=0)
+
+    def test_keyword_matching_is_case_insensitive_by_default(self, testdir):
+        """Check that selection via -k EXPRESSION is case-insensitive.
+
+        Since markers are also added to the node keywords, they too can
+        be matched without having to think about case sensitivity.
+
+        """
+        testdir.makepyfile(
+            """
+            import pytest
+
+            def test_sPeCiFiCToPiC_1():
+                assert True
+
+            class TestSpecificTopic_2:
+                def test(self):
+                    assert True
+
+            @pytest.mark.sPeCiFiCToPic_3
+            def test():
+                assert True
+
+            @pytest.mark.sPeCiFiCToPic_4
+            class Test:
+                def test(self):
+                    assert True
+
+            def test_failing_5():
+                assert False, "This should not match"
+
+        """
+        )
+        num_matching_tests = 4
+        for expression in ("specifictopic", "SPECIFICTOPIC", "SpecificTopic"):
+            reprec = testdir.inline_run("-k " + expression)
+            reprec.assertoutcome(passed=num_matching_tests, failed=0)
 
 
 COLLECTION_ERROR_PY_FILES = dict(

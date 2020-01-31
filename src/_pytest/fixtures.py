@@ -39,6 +39,7 @@ if TYPE_CHECKING:
     from typing import Type
 
     from _pytest import nodes
+    from _pytest.main import Session
 
 
 @attr.s(frozen=True)
@@ -47,7 +48,7 @@ class PseudoFixtureDef:
     scope = attr.ib()
 
 
-def pytest_sessionstart(session):
+def pytest_sessionstart(session: "Session"):
     import _pytest.python
     import _pytest.nodes
 
@@ -514,13 +515,11 @@ class FixtureRequest:
             values.append(fixturedef)
             current = current._parent_request
 
-    def _compute_fixture_value(self, fixturedef):
+    def _compute_fixture_value(self, fixturedef: "FixtureDef") -> None:
         """
         Creates a SubRequest based on "self" and calls the execute method of the given fixturedef object. This will
         force the FixtureDef object to throw away any previous results and compute a new fixture value, which
         will be stored into the FixtureDef object itself.
-
-        :param FixtureDef fixturedef:
         """
         # prepare a subrequest object before calling fixture function
         # (latter managed by fixturedef)

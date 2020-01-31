@@ -556,17 +556,15 @@ def test_no_matching_after_match() -> None:
     assert str(e.value).splitlines() == ["fnmatch: '*'", "   with: '1'"]
 
 
-def test_pytester_addopts(request, monkeypatch) -> None:
+def test_pytester_addopts_before_testdir(request, monkeypatch) -> None:
+    orig = os.environ.get("PYTEST_ADDOPTS", None)
     monkeypatch.setenv("PYTEST_ADDOPTS", "--orig-unused")
-
     testdir = request.getfixturevalue("testdir")
-
-    try:
-        assert "PYTEST_ADDOPTS" not in os.environ
-    finally:
-        testdir.finalize()
-
-    assert os.environ["PYTEST_ADDOPTS"] == "--orig-unused"
+    assert "PYTEST_ADDOPTS" not in os.environ
+    testdir.finalize()
+    assert os.environ.get("PYTEST_ADDOPTS") == "--orig-unused"
+    monkeypatch.undo()
+    assert os.environ.get("PYTEST_ADDOPTS") == orig
 
 
 def test_run_stdin(testdir) -> None:
@@ -646,14 +644,10 @@ def test_popen_default_stdin_stderr_and_stdin_None(testdir) -> None:
 
 
 def test_spawn_uses_tmphome(testdir) -> None:
-    import os
-
     tmphome = str(testdir.tmpdir)
+    assert os.environ.get("HOME") == tmphome
 
-    # Does use HOME only during run.
-    assert os.environ.get("HOME") != tmphome
-
-    testdir._env_run_update["CUSTOMENV"] = "42"
+    testdir.monkeypatch.setenv("CUSTOMENV", "42")
 
     p1 = testdir.makepyfile(
         """

@@ -13,6 +13,7 @@ from typing import BinaryIO
 from typing import Iterable
 
 import pytest
+from _pytest.compat import CaptureAndPassthroughIO
 from _pytest.compat import CaptureIO
 from _pytest.fixtures import FixtureRequest
 
@@ -26,8 +27,8 @@ def pytest_addoption(parser):
         action="store",
         default="fd" if hasattr(os, "dup") else "sys",
         metavar="method",
-        choices=["fd", "sys", "no"],
-        help="per-test capturing method: one of fd|sys|no.",
+        choices=["fd", "sys", "no", "tee-sys"],
+        help="per-test capturing method: one of fd|sys|no|tee-sys.",
     )
     group._addoption(
         "-s",
@@ -92,6 +93,8 @@ class CaptureManager:
             return MultiCapture(out=True, err=True, Capture=SysCapture)
         elif method == "no":
             return MultiCapture(out=False, err=False, in_=False)
+        elif method == "tee-sys":
+            return MultiCapture(out=True, err=True, in_=False, Capture=TeeSysCapture)
         raise ValueError("unknown capturing method: %r" % method)  # pragma: no cover
 
     def is_capturing(self):
@@ -678,6 +681,19 @@ class SysCapture:
     def writeorg(self, data):
         self._old.write(data)
         self._old.flush()
+
+
+class TeeSysCapture(SysCapture):
+    def __init__(self, fd, tmpfile=None):
+        name = patchsysdict[fd]
+        self._old = getattr(sys, name)
+        self.name = name
+        if tmpfile is None:
+            if name == "stdin":
+                tmpfile = DontReadFromInput()
+            else:
+                tmpfile = CaptureAndPassthroughIO(self._old)
+        self.tmpfile = tmpfile
 
 
 class SysCaptureBinary(SysCapture):

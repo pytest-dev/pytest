@@ -1,0 +1,1 @@
+Fix interaction with ``--pdb`` and unittests: do not use unittest's ``TestCase.debug()``.

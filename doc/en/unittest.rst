@@ -240,17 +240,6 @@ was executed ahead of the ``test_method``.
 
 .. note::
 
-    Running tests from ``unittest.TestCase`` subclasses with ``--pdb`` will
-    disable tearDown and cleanup methods for the case that an Exception
-    occurs. This allows proper post mortem debugging for all applications
-    which have significant logic in their tearDown machinery. However,
-    supporting this feature has the following side effect: If people
-    overwrite ``unittest.TestCase`` ``__call__`` or ``run``, they need to
-    to overwrite ``debug`` in the same way  (this is also true for standard
-    unittest).
-
-.. note::
-
     Due to architectural differences between the two frameworks, setup and
     teardown for ``unittest``-based tests is performed during the ``call`` phase
     of testing instead of in ``pytest``'s standard ``setup`` and ``teardown``

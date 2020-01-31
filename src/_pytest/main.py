@@ -9,6 +9,8 @@ from typing import Dict
 from typing import FrozenSet
 from typing import List
 from typing import Optional
+from typing import Sequence
+from typing import Tuple
 from typing import Union
 
 import attr
@@ -22,13 +24,15 @@ from _pytest.config import directory_arg
 from _pytest.config import hookimpl
 from _pytest.config import UsageError
 from _pytest.fixtures import FixtureManager
-from _pytest.nodes import Node
 from _pytest.outcomes import exit
+from _pytest.reports import CollectReport
 from _pytest.runner import collect_one_node
 from _pytest.runner import SetupState
 
 
 if TYPE_CHECKING:
+    from typing import Type
+
     from _pytest.python import Package
 
 
@@ -196,7 +200,7 @@ def pytest_addoption(parser):
 
 def wrap_session(config, doit):
     """Skeleton command line program"""
-    session = Session(config)
+    session = Session.from_config(config)
     session.exitstatus = ExitCode.OK
     initstate = 0
     try:
@@ -396,15 +400,28 @@ class Session(nodes.FSCollector):
         self._initialpaths = frozenset()  # type: FrozenSet[py.path.local]
 
         # Keep track of any collected nodes in here, so we don't duplicate fixtures
-        self._node_cache = {}  # type: Dict[str, List[Node]]
+        self._collection_node_cache1 = (
+            {}
+        )  # type: Dict[py.path.local, Sequence[nodes.Collector]]
+        self._collection_node_cache2 = (
+            {}
+        )  # type: Dict[Tuple[Type[nodes.Collector], py.path.local], nodes.Collector]
+        self._collection_node_cache3 = (
+            {}
+        )  # type: Dict[Tuple[Type[nodes.Collector], str], CollectReport]
+
         # Dirnames of pkgs with dunder-init files.
-        self._pkg_roots = {}  # type: Dict[py.path.local, Package]
+        self._collection_pkg_roots = {}  # type: Dict[py.path.local, Package]
 
         self._bestrelpathcache = _bestrelpath_cache(
             config.rootdir
         )  # type: Dict[py.path.local, str]
 
         self.config.pluginmanager.register(self, name="session")
+
+    @classmethod
+    def from_config(cls, config):
+        return cls._create(config)
 
     def __repr__(self):
         return "<%s %s exitstatus=%r testsfailed=%d testscollected=%d>" % (
@@ -461,13 +478,13 @@ class Session(nodes.FSCollector):
         self.trace("perform_collect", self, args)
         self.trace.root.indent += 1
         self._notfound = []
-        initialpaths = []
-        self._initialparts = []
+        initialpaths = []  # type: List[py.path.local]
+        self._initial_parts = []  # type: List[Tuple[py.path.local, List[str]]]
         self.items = items = []
         for arg in args:
-            parts = self._parsearg(arg)
-            self._initialparts.append(parts)
-            initialpaths.append(parts[0])
+            fspath, parts = self._parsearg(arg)
+            self._initial_parts.append((fspath, parts))
+            initialpaths.append(fspath)
         self._initialpaths = frozenset(initialpaths)
         rep = collect_one_node(self)
         self.ihook.pytest_collectreport(report=rep)
@@ -487,24 +504,25 @@ class Session(nodes.FSCollector):
             return items
 
     def collect(self):
-        for initialpart in self._initialparts:
-            self.trace("processing argument", initialpart)
+        for fspath, parts in self._initial_parts:
+            self.trace("processing argument", (fspath, parts))
             self.trace.root.indent += 1
             try:
-                yield from self._collect(initialpart)
+                yield from self._collect(fspath, parts)
             except NoMatch:
-                report_arg = "::".join(map(str, initialpart))
+                report_arg = "::".join((str(fspath), *parts))
                 # we are inside a make_report hook so
                 # we cannot directly pass through the exception
                 self._notfound.append((report_arg, sys.exc_info()[1]))
 
             self.trace.root.indent -= 1
+        self._collection_node_cache1.clear()
+        self._collection_node_cache2.clear()
+        self._collection_node_cache3.clear()
+        self._collection_pkg_roots.clear()
 
-    def _collect(self, arg):
+    def _collect(self, argpath, names):
         from _pytest.python import Package
-
-        names = arg[:]
-        argpath = names.pop(0)
 
         # Start with a Session root, and delve to argpath item (dir or file)
         # and stack all Packages found on the way.
@@ -518,18 +536,18 @@ class Session(nodes.FSCollector):
                 if parent.isdir():
                     pkginit = parent.join("__init__.py")
                     if pkginit.isfile():
-                        if pkginit not in self._node_cache:
+                        if pkginit not in self._collection_node_cache1:
                             col = self._collectfile(pkginit, handle_dupes=False)
                             if col:
                                 if isinstance(col[0], Package):
-                                    self._pkg_roots[parent] = col[0]
+                                    self._collection_pkg_roots[parent] = col[0]
                                 # always store a list in the cache, matchnodes expects it
-                                self._node_cache[col[0].fspath] = [col[0]]
+                                self._collection_node_cache1[col[0].fspath] = [col[0]]
 
         # If it's a directory argument, recurse and look for any Subpackages.
         # Let the Package collector deal with subnodes, don't collect here.
         if argpath.check(dir=1):
-            assert not names, "invalid arg {!r}".format(arg)
+            assert not names, "invalid arg {!r}".format((argpath, names))
 
             seen_dirs = set()
             for path in argpath.visit(
@@ -544,28 +562,28 @@ class Session(nodes.FSCollector):
                         for x in self._collectfile(pkginit):
                             yield x
                             if isinstance(x, Package):
-                                self._pkg_roots[dirpath] = x
-                if dirpath in self._pkg_roots:
+                                self._collection_pkg_roots[dirpath] = x
+                if dirpath in self._collection_pkg_roots:
                     # Do not collect packages here.
                     continue
 
                 for x in self._collectfile(path):
                     key = (type(x), x.fspath)
-                    if key in self._node_cache:
-                        yield self._node_cache[key]
+                    if key in self._collection_node_cache2:
+                        yield self._collection_node_cache2[key]
                     else:
-                        self._node_cache[key] = x
+                        self._collection_node_cache2[key] = x
                         yield x
         else:
             assert argpath.check(file=1)
 
-            if argpath in self._node_cache:
-                col = self._node_cache[argpath]
+            if argpath in self._collection_node_cache1:
+                col = self._collection_node_cache1[argpath]
             else:
-                collect_root = self._pkg_roots.get(argpath.dirname, self)
+                collect_root = self._collection_pkg_roots.get(argpath.dirname, self)
                 col = collect_root._collectfile(argpath, handle_dupes=False)
                 if col:
-                    self._node_cache[argpath] = col
+                    self._collection_node_cache1[argpath] = col
             m = self.matchnodes(col, names)
             # If __init__.py was the only file requested, then the matched node will be
             # the corresponding Package, and the first yielded item will be the __init__
@@ -626,19 +644,19 @@ class Session(nodes.FSCollector):
 
     def _parsearg(self, arg):
         """ return (fspath, names) tuple after checking the file exists. """
-        parts = str(arg).split("::")
+        strpath, *parts = str(arg).split("::")
         if self.config.option.pyargs:
-            parts[0] = self._tryconvertpyarg(parts[0])
-        relpath = parts[0].replace("/", os.sep)
-        path = self.config.invocation_dir.join(relpath, abs=True)
-        if not path.check():
+            strpath = self._tryconvertpyarg(strpath)
+        relpath = strpath.replace("/", os.sep)
+        fspath = self.config.invocation_dir.join(relpath, abs=True)
+        if not fspath.check():
             if self.config.option.pyargs:
                 raise UsageError(
                     "file or package not found: " + arg + " (missing __init__.py?)"
                 )
             raise UsageError("file not found: " + arg)
-        parts[0] = path.realpath()
-        return parts
+        fspath = fspath.realpath()
+        return (fspath, parts)
 
     def matchnodes(self, matching, names):
         self.trace("matchnodes", matching, names)
@@ -665,11 +683,11 @@ class Session(nodes.FSCollector):
                 continue
             assert isinstance(node, nodes.Collector)
             key = (type(node), node.nodeid)
-            if key in self._node_cache:
-                rep = self._node_cache[key]
+            if key in self._collection_node_cache3:
+                rep = self._collection_node_cache3[key]
             else:
                 rep = collect_one_node(node)
-                self._node_cache[key] = rep
+                self._collection_node_cache3[key] = rep
             if rep.passed:
                 has_matched = False
                 for x in rep.result:

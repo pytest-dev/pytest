@@ -1285,3 +1285,31 @@ def test_pdb_can_be_rewritten(testdir):
         ]
     )
     assert result.ret == 1
+
+
+def test_tee_stdio_captures_and_live_prints(testdir):
+    testpath = testdir.makepyfile(
+        """
+        import sys
+        def test_simple():
+            print ("@this is stdout@")
+            print ("@this is stderr@", file=sys.stderr)
+    """
+    )
+    result = testdir.runpytest_subprocess(
+        testpath,
+        "--capture=tee-sys",
+        "--junitxml=output.xml",
+        "-o",
+        "junit_logging=all",
+    )
+
+    # ensure stdout/stderr were 'live printed'
+    result.stdout.fnmatch_lines(["*@this is stdout@*"])
+    result.stderr.fnmatch_lines(["*@this is stderr@*"])
+
+    # now ensure the output is in the junitxml
+    with open(os.path.join(testdir.tmpdir.strpath, "output.xml"), "r") as f:
+        fullXml = f.read()
+    assert "@this is stdout@\n" in fullXml
+    assert "@this is stderr@\n" in fullXml

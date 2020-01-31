@@ -163,6 +163,8 @@ class TestTerminal:
                 "test2.py": "def test_2(): pass",
             }
         )
+        # Explicitly test colored output.
+        testdir.monkeypatch.setenv("PY_COLORS", "1")
 
         child = testdir.spawn_pytest("-v test1.py test2.py")
         child.expect(r"collecting \.\.\.")
@@ -677,6 +679,26 @@ class TestTerminalFunctional:
             ]
         )
 
+    def test_showlocals_short(self, testdir):
+        p1 = testdir.makepyfile(
+            """
+            def test_showlocals_short():
+                x = 3
+                y = "xxxx"
+                assert 0
+        """
+        )
+        result = testdir.runpytest(p1, "-l", "--tb=short")
+        result.stdout.fnmatch_lines(
+            [
+                "test_showlocals_short.py:*",
+                "    assert 0",
+                "E   assert 0",
+                "        x          = 3",
+                "        y          = 'xxxx'",
+            ]
+        )
+
     @pytest.fixture
     def verbose_testfile(self, testdir):
         return testdir.makepyfile(
@@ -761,13 +783,42 @@ class TestTerminalFunctional:
         result = testdir.runpytest(*params)
         result.stdout.fnmatch_lines(["collected 3 items", "hello from hook: 3 items"])
 
+    def test_summary_f_alias(self, testdir):
+        """Test that 'f' and 'F' report chars are aliases and don't show up twice in the summary (#6334)"""
+        testdir.makepyfile(
+            """
+            def test():
+                assert False
+            """
+        )
+        result = testdir.runpytest("-rfF")
+        expected = "FAILED test_summary_f_alias.py::test - assert False"
+        result.stdout.fnmatch_lines([expected])
+        assert result.stdout.lines.count(expected) == 1
+
+    def test_summary_s_alias(self, testdir):
+        """Test that 's' and 'S' report chars are aliases and don't show up twice in the summary"""
+        testdir.makepyfile(
+            """
+            import pytest
+
+            @pytest.mark.skip
+            def test():
+                pass
+            """
+        )
+        result = testdir.runpytest("-rsS")
+        expected = "SKIPPED [1] test_summary_s_alias.py:3: unconditional skip"
+        result.stdout.fnmatch_lines([expected])
+        assert result.stdout.lines.count(expected) == 1
+
 
 def test_fail_extra_reporting(testdir, monkeypatch):
     monkeypatch.setenv("COLUMNS", "80")
     testdir.makepyfile("def test_this(): assert 0, 'this_failed' * 100")
-    result = testdir.runpytest()
+    result = testdir.runpytest("-rN")
     result.stdout.no_fnmatch_line("*short test summary*")
-    result = testdir.runpytest("-rf")
+    result = testdir.runpytest()
     result.stdout.fnmatch_lines(
         [
             "*test summary*",
@@ -936,37 +987,62 @@ def test_color_yes_collection_on_non_atty(testdir, verbose):
 
 
 def test_getreportopt():
+    from _pytest.terminal import _REPORTCHARS_DEFAULT
+
     class Config:
         class Option:
-            reportchars = ""
-            disable_warnings = True
+            reportchars = _REPORTCHARS_DEFAULT
+            disable_warnings = False
 
         option = Option()
 
     config = Config()
 
+    assert _REPORTCHARS_DEFAULT == "fE"
+
+    # Default.
+    assert getreportopt(config) == "wfE"
+
     config.option.reportchars = "sf"
-    assert getreportopt(config) == "sf"
+    assert getreportopt(config) == "wsf"
+
+    config.option.reportchars = "sfxw"
+    assert getreportopt(config) == "sfxw"
+
+    config.option.reportchars = "a"
+    assert getreportopt(config) == "wsxXEf"
+
+    config.option.reportchars = "N"
+    assert getreportopt(config) == "w"
+
+    config.option.reportchars = "NwfE"
+    assert getreportopt(config) == "wfE"
+
+    config.option.reportchars = "NfENx"
+    assert getreportopt(config) == "wx"
+
+    # Now with --disable-warnings.
+    config.option.disable_warnings = True
+    config.option.reportchars = "a"
+    assert getreportopt(config) == "sxXEf"
+
+    config.option.reportchars = "sfx"
+    assert getreportopt(config) == "sfx"
 
     config.option.reportchars = "sfxw"
     assert getreportopt(config) == "sfx"
 
-    # Now with --disable-warnings.
-    config.option.disable_warnings = False
     config.option.reportchars = "a"
-    assert getreportopt(config) == "sxXwEf"  # NOTE: "w" included!
-
-    config.option.reportchars = "sfx"
-    assert getreportopt(config) == "sfxw"
-
-    config.option.reportchars = "sfxw"
-    assert getreportopt(config) == "sfxw"
-
-    config.option.reportchars = "a"
-    assert getreportopt(config) == "sxXwEf"  # NOTE: "w" included!
+    assert getreportopt(config) == "sxXEf"
 
     config.option.reportchars = "A"
-    assert getreportopt(config) == "PpsxXwEf"
+    assert getreportopt(config) == "PpsxXEf"
+
+    config.option.reportchars = "AN"
+    assert getreportopt(config) == ""
+
+    config.option.reportchars = "NwfE"
+    assert getreportopt(config) == "fE"
 
 
 def test_terminalreporter_reportopt_addopts(testdir):
@@ -1083,7 +1159,7 @@ class TestGenericReporting:
         )
         for tbopt in ["long", "short", "no"]:
             print("testing --tb=%s..." % tbopt)
-            result = testdir.runpytest("--tb=%s" % tbopt)
+            result = testdir.runpytest("-rN", "--tb=%s" % tbopt)
             s = result.stdout.str()
             if tbopt == "long":
                 assert "print(6*7)" in s
@@ -1434,10 +1510,10 @@ def test_terminal_summary_warnings_header_once(testdir):
         ),
         ("yellow", [("1 xpassed", {"bold": True, "yellow": True})], {"xpassed": (1,)}),
         (
-            "green",
+            "yellow",
             [
-                ("1 passed", {"bold": True, "green": True}),
-                ("1 xpassed", {"bold": False, "yellow": True}),
+                ("1 passed", {"bold": False, "green": True}),
+                ("1 xpassed", {"bold": True, "yellow": True}),
             ],
             {"xpassed": (1,), "passed": (1,)},
         ),
@@ -1760,12 +1836,16 @@ class TestProgressWithTeardown:
         testdir.makepyfile(
             """
             def test_foo(fail_teardown):
-                assert False
+                assert 0
         """
         )
-        output = testdir.runpytest()
+        output = testdir.runpytest("-rfE")
         output.stdout.re_match_lines(
-            [r"test_teardown_with_test_also_failing.py FE\s+\[100%\]"]
+            [
+                r"test_teardown_with_test_also_failing.py FE\s+\[100%\]",
+                "FAILED test_teardown_with_test_also_failing.py::test_foo - assert 0",
+                "ERROR test_teardown_with_test_also_failing.py::test_foo - assert False",
+            ]
         )
 
     def test_teardown_many(self, testdir, many_files):
