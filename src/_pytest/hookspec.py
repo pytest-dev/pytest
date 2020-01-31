@@ -315,10 +315,6 @@ def pytest_runtestloop(session):
     """
 
 
-def pytest_itemstart(item, node):
-    """(**Deprecated**) use pytest_runtest_logstart. """
-
-
 @hookspec(firstresult=True)
 def pytest_runtest_protocol(item, nextitem):
     """ implements the runtest_setup/call/teardown protocol for
