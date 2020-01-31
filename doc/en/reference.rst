@@ -243,6 +243,8 @@ Will create and attach a :class:`Mark <_pytest.mark.structures.Mark>` object to 
     mark.kwargs == {"method": "thread"}
 
 
+.. _`fixtures-api`:
+
 Fixtures
 --------
 
@@ -273,6 +275,8 @@ Example of a fixture requiring another fixture:
 For more details, consult the full :ref:`fixtures docs <fixture>`.
 
 
+.. _`pytest.fixture-api`:
+
 @pytest.fixture
 ~~~~~~~~~~~~~~~
 
@@ -301,6 +305,8 @@ Under the hood, the cache plugin uses the simple
 .. automethod:: Cache.makedir
 
 
+.. _`capsys-api`:
+
 capsys
 ~~~~~~
 
@@ -326,6 +332,8 @@ capsys
     :members:
 
 
+.. _`capsysbinary-api`:
+
 capsysbinary
 ~~~~~~~~~~~~
 
@@ -345,6 +353,8 @@ capsysbinary
             captured = capsysbinary.readouterr()
             assert captured.out == b"hello\n"
 
+
+.. _`capfd-api`:
 
 capfd
 ~~~~~~
@@ -366,6 +376,8 @@ capfd
             assert captured.out == "hello\n"
 
 
+.. _`capfdbinary-api`:
+
 capfdbinary
 ~~~~~~~~~~~~
 
@@ -386,6 +398,8 @@ capfdbinary
             assert captured.out == b"hello\n"
 
 
+.. _`doctest_namespace-api`:
+
 doctest_namespace
 ~~~~~~~~~~~~~~~~~
 
@@ -404,6 +418,8 @@ doctest_namespace
     For more details: :ref:`doctest_namespace`.
 
 
+.. _`request-api`:
+
 request
 ~~~~~~~
 
@@ -415,11 +431,15 @@ The ``request`` fixture is a special fixture providing information of the reques
     :members:
 
 
+.. _`pytestconfig-api`:
+
 pytestconfig
 ~~~~~~~~~~~~
 
 .. autofunction:: _pytest.fixtures.pytestconfig()
 
+
+.. _`record_property-api`:
 
 record_property
 ~~~~~~~~~~~~~~~~~~~
@@ -429,12 +449,17 @@ record_property
 .. autofunction:: _pytest.junitxml.record_property()
 
 
+.. _`record_testsuite_property-api`:
+
 record_testsuite_property
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **Tutorial**: :ref:`record_testsuite_property example`.
 
 .. autofunction:: _pytest.junitxml.record_testsuite_property()
+
+
+.. _`caplog-api`:
 
 caplog
 ~~~~~~
@@ -450,6 +475,8 @@ caplog
     :members:
 
 
+.. _`monkeypatch-api`:
+
 monkeypatch
 ~~~~~~~~~~~
 
@@ -464,6 +491,7 @@ monkeypatch
 
 .. autoclass:: _pytest.monkeypatch.MonkeyPatch
     :members:
+
 
 .. _testdir:
 
@@ -493,6 +521,8 @@ To use it, include in your top-most ``conftest.py`` file:
     :members:
 
 
+.. _`recwarn-api`:
+
 recwarn
 ~~~~~~~
 
@@ -516,6 +546,8 @@ Each recorded warning is an instance of :class:`warnings.WarningMessage`.
     differently; see :ref:`ensuring_function_triggers`.
 
 
+.. _`tmp_path-api`:
+
 tmp_path
 ~~~~~~~~
 
@@ -526,6 +558,8 @@ tmp_path
 .. autofunction:: tmp_path()
     :no-auto-options:
 
+
+.. _`tmp_path_factory-api`:
 
 tmp_path_factory
 ~~~~~~~~~~~~~~~~
@@ -542,6 +576,8 @@ tmp_path_factory
 .. automethod:: TempPathFactory.getbasetemp
 
 
+.. _`tmpdir-api`:
+
 tmpdir
 ~~~~~~
 
@@ -552,6 +588,8 @@ tmpdir
 .. autofunction:: tmpdir()
     :no-auto-options:
 
+
+.. _`tmpdir_factory-api`:
 
 tmpdir_factory
 ~~~~~~~~~~~~~~

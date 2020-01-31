@@ -34,6 +34,76 @@ both styles, moving incrementally from classic to new style, as you
 prefer.  You can also start out from existing :ref:`unittest.TestCase
 style <unittest.TestCase>` or :ref:`nose based <nosestyle>` projects.
 
+The built-in pytest :ref:`fixtures <fixtures-api>` are, in order of
+introduction:
+
+   :ref:`record_property-api`
+       Add extra properties to the test
+
+   :ref:`record_testsuite_property-api`
+       Add extra properties to the test suite
+
+   :ref:`pytest.fixture-api`
+       Function decorator; the decorated function becomes a new
+       fixture
+
+   :ref:`request-api`
+       Provide information on the executing test function
+
+   :ref:`monkeypatch-api`
+       Temporarily modify classes, functions, dictionaries,
+       ``os.environ``, and other objects
+
+   :ref:`tmp_path-api`
+       Provide a :class:`pathlib.Path` object to a temporary directory
+       which is unique to each test function
+
+   :ref:`tmp_path_factory-api`
+        Make session-scoped temporary directories and return
+        :class:`pathlib.Path` objects
+
+   :ref:`tmpdir-api`
+        Provide a :class:`py.path.local` object to a temporary
+        directory which is unique to each test function;
+        replaced by :doc:`tmp_path <tmpdir>`
+
+        .. _`py.path.local`: https://py.readthedocs.io/en/latest/path.html
+
+   :ref:`tmpdir_factory-api`
+        Make session-scoped temporary directories and return
+        :class:`py.path.local` objects;
+        replaced by :ref:`tmp_path_factory <tmp_path_factory example>`
+
+   :ref:`capsys-api`
+        Capture writes to ``sys.stdout`` and ``sys.stderr``
+
+   :ref:`capsysbinary-api`
+        Capture writes to ``sys.stdout`` and ``sys.stderr``
+
+   :ref:`capfd-api`
+        Capture writes to file descriptors ``1`` and ``2``
+
+   :ref:`capfdbinary-api`
+        Capture writes to file descriptors ``1`` and ``2``
+
+   :ref:`recwarn-api`
+        Record warnings emitted by test functions
+
+   :ref:`doctest_namespace-api`
+        Provide a dict injected into the docstests namespace
+
+   :ref:`cache-api`
+        Store and retrieve values across pytest runs
+
+   :ref:`testdir`
+        Provide a temporary test directory to aid in running, and
+        testing, pytest
+
+   :ref:`pytestconfig-api`
+        Access to configuration values, pluginmanager and plugin hooks
+
+   :ref:`caplog-api`
+        Access, and control, logging
 
 .. _`funcargs`:
 .. _`funcarg mechanism`:
