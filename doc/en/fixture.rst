@@ -849,7 +849,7 @@ Running this test will *skip* the invocation of ``data_set`` with value ``2``:
 Modularity: using fixtures from a fixture function
 ----------------------------------------------------------
 
-You can not only use fixtures in test functions but fixture functions
+In addition to using fixtures in test functions, fixture functions
 can use other fixtures themselves.  This contributes to a modular design
 of your fixtures and allows re-use of framework-specific fixtures across
 many projects.  As a simple example, we can extend the previous example

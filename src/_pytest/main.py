@@ -8,8 +8,10 @@ import sys
 from typing import Dict
 from typing import FrozenSet
 from typing import List
+from typing import Optional
 from typing import Sequence
 from typing import Tuple
+from typing import Union
 
 import attr
 import py
@@ -253,7 +255,7 @@ def pytest_cmdline_main(config):
     return wrap_session(config, _main)
 
 
-def _main(config, session):
+def _main(config: Config, session: "Session") -> Optional[Union[int, ExitCode]]:
     """ default command line protocol for initialization, session,
     running tests and reporting. """
     config.hook.pytest_collection(session=session)
@@ -263,6 +265,7 @@ def _main(config, session):
         return ExitCode.TESTS_FAILED
     elif session.testscollected == 0:
         return ExitCode.NO_TESTS_COLLECTED
+    return None
 
 
 def pytest_collection(session):
@@ -352,18 +355,6 @@ def pytest_collection_modifyitems(items, config):
         items[:] = remaining
 
 
-class FSHookProxy:
-    def __init__(self, fspath, pm, remove_mods):
-        self.fspath = fspath
-        self.pm = pm
-        self.remove_mods = remove_mods
-
-    def __getattr__(self, name):
-        x = self.pm.subset_hook_caller(name, remove_plugins=self.remove_mods)
-        self.__dict__[name] = x
-        return x
-
-
 class NoMatch(Exception):
     """ raised if matching cannot locate a matching names. """
 
@@ -405,7 +396,6 @@ class Session(nodes.FSCollector):
         self.shouldstop = False
         self.shouldfail = False
         self.trace = config.trace.root.get("collection")
-        self._norecursepatterns = config.getini("norecursedirs")
         self.startdir = config.invocation_dir
         self._initialpaths = frozenset()  # type: FrozenSet[py.path.local]
 
@@ -466,19 +456,8 @@ class Session(nodes.FSCollector):
     def isinitpath(self, path):
         return path in self._initialpaths
 
-    def gethookproxy(self, fspath):
-        # check if we have the common case of running
-        # hooks with all conftest.py files
-        pm = self.config.pluginmanager
-        my_conftestmodules = pm._getconftestmodules(fspath)
-        remove_mods = pm._conftest_plugins.difference(my_conftestmodules)
-        if remove_mods:
-            # one or more conftests are not in use at this fspath
-            proxy = FSHookProxy(fspath, pm, remove_mods)
-        else:
-            # all plugins are active for this fspath
-            proxy = self.config.hook
-        return proxy
+    def gethookproxy(self, fspath: py.path.local):
+        return super()._gethookproxy(fspath)
 
     def perform_collect(self, args=None, genitems=True):
         hook = self.config.hook
@@ -642,19 +621,6 @@ class Session(nodes.FSCollector):
                     duplicate_paths.add(path)
 
         return ihook.pytest_collect_file(path=path, parent=self)
-
-    def _recurse(self, dirpath):
-        if dirpath.basename == "__pycache__":
-            return False
-        ihook = self.gethookproxy(dirpath.dirpath())
-        if ihook.pytest_ignore_collect(path=dirpath, config=self.config):
-            return False
-        for pat in self._norecursepatterns:
-            if dirpath.check(fnmatch=pat):
-                return False
-        ihook = self.gethookproxy(dirpath)
-        ihook.pytest_collect_directory(path=dirpath, parent=self)
-        return True
 
     @staticmethod
     def _visit_filter(f):

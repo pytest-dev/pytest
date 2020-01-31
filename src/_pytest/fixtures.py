@@ -31,6 +31,7 @@ from _pytest.compat import safe_getattr
 from _pytest.compat import TYPE_CHECKING
 from _pytest.deprecated import FIXTURE_POSITIONAL_ARGUMENTS
 from _pytest.deprecated import FUNCARGNAMES
+from _pytest.mark import ParameterSet
 from _pytest.outcomes import fail
 from _pytest.outcomes import TEST_OUTCOME
 
@@ -1262,8 +1263,6 @@ class FixtureManager:
         This things are done later as well when dealing with parametrization
         so this could be improved
         """
-        from _pytest.mark import ParameterSet
-
         parametrize_argnames = []
         for marker in node.iter_markers(name="parametrize"):
             if not marker.kwargs.get("indirect", False):
