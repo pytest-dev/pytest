@@ -157,8 +157,11 @@ def pytest_runtest_setup(item):
 
 
 def pytest_runtest_teardown(item):
-    util._reprcompare, util._assertion_pass = item._saved_assert_hooks
-    del item._saved_assert_hooks
+    if hasattr(item, "_saved_assert_hooks"):
+        util._reprcompare, util._assertion_pass = item._saved_assert_hooks
+        del item._saved_assert_hooks
+    else:
+        util._reprcompare, util._assertion_pass = None, None
 
 
 def pytest_sessionfinish(session):
