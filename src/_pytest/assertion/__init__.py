@@ -13,9 +13,6 @@ if TYPE_CHECKING:
     from _pytest.main import Session
 
 
-saved_hooks = []
-
-
 def pytest_addoption(parser):
     group = parser.getgroup("debugconfig")
     group.addoption(
@@ -38,14 +35,6 @@ def pytest_addoption(parser):
         help="Enables the pytest_assertion_pass hook."
         "Make sure to delete any previously generated pyc cache files.",
     )
-
-
-def pytest_configure():
-    saved_hooks.append((util._reprcompare, util._assertion_pass))
-
-
-def pytest_unconfigure():
-    util._reprcompare, util._assertion_pass = saved_hooks.pop()
 
 
 def register_assert_rewrite(*names) -> None:
@@ -154,6 +143,7 @@ def pytest_runtest_setup(item):
                 return res
         return None
 
+    item._saved_assert_hooks = util._reprcompare, util._assertion_pass
     util._reprcompare = callbinrepr
 
     if item.ihook.pytest_assertion_pass.get_hookimpls():
@@ -167,7 +157,8 @@ def pytest_runtest_setup(item):
 
 
 def pytest_runtest_teardown(item):
-    util._reprcompare, util._assertion_pass = saved_hooks[-1]
+    util._reprcompare, util._assertion_pass = item._saved_assert_hooks
+    del item._saved_assert_hooks
 
 
 def pytest_sessionfinish(session):
