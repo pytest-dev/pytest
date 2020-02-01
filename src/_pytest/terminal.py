@@ -324,9 +324,8 @@ class TerminalReporter:
             self.currentfspath = -2
 
     def ensure_newline(self):
-        if self.currentfspath:
+        if self._width_of_current_line:
             self._tw.line()
-            self.currentfspath = None
 
     def write(self, content, **markup):
         self._tw.write(content, **markup)
@@ -859,11 +858,18 @@ class TerminalReporter:
                     content = content[:-1]
                 self._tw.line(content)
 
+    def _enforce_newline_for_summary(self):
+        if not getattr(self, "_enforced_newline_for_summary", False):
+            self.ensure_newline()
+            self._tw.line()
+            self._enforced_newline_for_summary = True
+
     def summary_failures(self):
         if self.config.option.tbstyle != "no":
             reports = self.getreports("failed")
             if not reports:
                 return
+            self._enforce_newline_for_summary()
             self.write_sep("=", "FAILURES")
             if self.config.option.tbstyle == "line":
                 for rep in reports:
@@ -881,6 +887,7 @@ class TerminalReporter:
             reports = self.getreports("error")
             if not reports:
                 return
+            self._enforce_newline_for_summary()
             self.write_sep("=", "ERRORS")
             for rep in self.stats["error"]:
                 msg = self._getfailureheadline(rep)
@@ -899,6 +906,7 @@ class TerminalReporter:
         for secname, content in rep.sections:
             if showcapture != "all" and showcapture not in secname:
                 continue
+            self._enforce_newline_for_summary()
             self._tw.sep("-", secname)
             if content[-1:] == "\n":
                 content = content[:-1]

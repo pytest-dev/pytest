@@ -1268,6 +1268,7 @@ def test_terminal_summary(testdir):
         """
         def pytest_terminal_summary(terminalreporter, exitstatus):
             w = terminalreporter
+            assert w.currentfspath is None
             w.section("hello")
             w.line("world")
             w.line("exitstatus: {0}".format(exitstatus))
