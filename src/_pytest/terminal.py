@@ -359,7 +359,7 @@ class TerminalReporter:
         self._tw.sep(sep, title, **markup)
 
     def section(self, title, sep="=", **kw):
-        self._tw.sep(sep, title, **kw)
+        self.write_sep(sep, title, **kw)
 
     def line(self, msg, **kw):
         self._tw.line(msg, **kw)

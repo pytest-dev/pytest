@@ -1,0 +1,1 @@
+`TerminalReporter.section` starts on a new line always now (given that the previous line was written with it also).
