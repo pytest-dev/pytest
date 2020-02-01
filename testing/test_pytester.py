@@ -459,14 +459,12 @@ def test_testdir_run_timeout_expires(testdir) -> None:
 def test_linematcher_with_nonlist() -> None:
     """Test LineMatcher with regard to passing in a set (accidentally)."""
     lm = LineMatcher([])
-
     with pytest.raises(AssertionError):
         lm.fnmatch_lines(set())
     with pytest.raises(AssertionError):
         lm.fnmatch_lines({})
     lm.fnmatch_lines([])
     lm.fnmatch_lines(())
-
     assert lm._getlines({}) == {}
     assert lm._getlines(set()) == set()
 
@@ -500,7 +498,7 @@ def test_linematcher_match_failure() -> None:
 
 
 @pytest.mark.parametrize("function", ["no_fnmatch_line", "no_re_match_line"])
-def test_no_matching(function) -> None:
+def test_linematcher_no_matching(function) -> None:
     if function == "no_fnmatch_line":
         good_pattern = "*.py OK*"
         bad_pattern = "*X.py OK*"
@@ -548,7 +546,7 @@ def test_no_matching(function) -> None:
     func(bad_pattern)  # bad pattern does not match any line: passes
 
 
-def test_no_matching_after_match() -> None:
+def test_linematcher_no_matching_after_match() -> None:
     lm = LineMatcher(["1", "2", "3"])
     lm.fnmatch_lines(["1", "3"])
     with pytest.raises(Failed) as e:
