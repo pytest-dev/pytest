@@ -1341,29 +1341,18 @@ class LineMatcher:
         return lines2
 
     def fnmatch_lines_random(self, lines2: Sequence[str]) -> None:
-        """Check lines exist in the output using in any order.
-
-        Lines are checked using ``fnmatch.fnmatch``. The argument is a list of
-        lines which have to occur in the output, in any order.
+        """Check lines exist in the output in any order (using :func:`python:fnmatch.fnmatch`).
         """
         self._match_lines_random(lines2, fnmatch)
 
     def re_match_lines_random(self, lines2: Sequence[str]) -> None:
-        """Check lines exist in the output using ``re.match``, in any order.
-
-        The argument is a list of lines which have to occur in the output, in
-        any order.
+        """Check lines exist in the output in any order (using :func:`python:re.match`).
         """
         self._match_lines_random(lines2, lambda name, pat: bool(re.match(pat, name)))
 
     def _match_lines_random(
         self, lines2: Sequence[str], match_func: Callable[[str, str], bool]
     ) -> None:
-        """Check lines exist in the output.
-
-        The argument is a list of lines which have to occur in the output, in
-        any order.  Each line can contain glob whildcards.
-        """
         lines2 = self._getlines(lines2)
         for line in lines2:
             for x in self.lines:
@@ -1392,22 +1381,26 @@ class LineMatcher:
         return "\n".join(self._log_output)
 
     def fnmatch_lines(self, lines2: Sequence[str]) -> None:
-        """Search captured text for matching lines using ``fnmatch.fnmatch``.
+        """Check lines exist in the output (using :func:`python:fnmatch.fnmatch`).
 
         The argument is a list of lines which have to match and can use glob
         wildcards.  If they do not match a pytest.fail() is called.  The
         matches and non-matches are also shown as part of the error message.
+
+        :param lines2: string patterns to match.
         """
         __tracebackhide__ = True
         self._match_lines(lines2, fnmatch, "fnmatch")
 
     def re_match_lines(self, lines2: Sequence[str]) -> None:
-        """Search captured text for matching lines using ``re.match``.
+        """Check lines exist in the output (using :func:`python:re.match`).
 
         The argument is a list of lines which have to match using ``re.match``.
         If they do not match a pytest.fail() is called.
 
         The matches and non-matches are also shown as part of the error message.
+
+        :param lines2: string patterns to match.
         """
         __tracebackhide__ = True
         self._match_lines(
