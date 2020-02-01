@@ -8,7 +8,7 @@ from _pytest.assertion import rewrite
 from _pytest.assertion import truncate
 from _pytest.assertion import util
 from _pytest.compat import TYPE_CHECKING
-from _pytest.config import hookimpl
+from _pytest.config.plugin import hookimpl
 
 if TYPE_CHECKING:
     from _pytest.main import Session

@@ -22,8 +22,6 @@ from typing import Union
 import attr
 import py
 from packaging.version import Version
-from pluggy import HookimplMarker
-from pluggy import HookspecMarker
 from pluggy import PluginManager
 
 import _pytest._code
@@ -34,6 +32,8 @@ from .exceptions import PrintHelp
 from .exceptions import UsageError
 from .findpaths import determine_setup
 from .findpaths import exists
+from .plugin import hookimpl
+from .plugin import hookspec  # noqa: F401
 from _pytest._code import ExceptionInfo
 from _pytest._code import filter_traceback
 from _pytest._io import TerminalWriter
@@ -53,10 +53,6 @@ _PluggyPlugin = object
 Plugins can be any namespace, so we can't narrow it down much, but we use an
 alias to make the intent clear.
 Ideally this type would be provided by pluggy itself."""
-
-
-hookimpl = HookimplMarker("pytest")
-hookspec = HookspecMarker("pytest")
 
 
 class ConftestImportFailure(Exception):
