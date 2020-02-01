@@ -458,15 +458,26 @@ def test_testdir_run_timeout_expires(testdir) -> None:
 
 def test_linematcher_with_nonlist() -> None:
     """Test LineMatcher with regard to passing in a set (accidentally)."""
+    from _pytest._code.source import Source
+
     lm = LineMatcher([])
-    with pytest.raises(AssertionError):
+    with pytest.raises(TypeError, match="invalid type for lines2: set"):
         lm.fnmatch_lines(set())
-    with pytest.raises(AssertionError):
+    with pytest.raises(TypeError, match="invalid type for lines2: dict"):
         lm.fnmatch_lines({})
+    with pytest.raises(TypeError, match="invalid type for lines2: set"):
+        lm.re_match_lines(set())
+    with pytest.raises(TypeError, match="invalid type for lines2: dict"):
+        lm.re_match_lines({})
+    with pytest.raises(TypeError, match="invalid type for lines2: Source"):
+        lm.fnmatch_lines(Source())
     lm.fnmatch_lines([])
     lm.fnmatch_lines(())
+    lm.fnmatch_lines("")
     assert lm._getlines({}) == {}
     assert lm._getlines(set()) == set()
+    assert lm._getlines(Source()) == []
+    assert lm._getlines(Source("pass\npass")) == ["pass", "pass"]
 
 
 def test_linematcher_match_failure() -> None:
