@@ -120,9 +120,7 @@ class TestTerminal:
         rep.write_fspath_result(modcol.nodeid, ".")
         rep.write_line("hello world")
         lines = linecomp.stringio.getvalue().split("\n")
-        assert not lines[0]
-        assert lines[1].endswith(modcol.name + " .")
-        assert lines[2] == "hello world"
+        assert lines == ["", "{} .".format(modcol.name), "hello world", ""]
 
     def test_show_runtest_logstart(self, testdir, linecomp):
         item = testdir.getitem("def test_func(): pass")
