@@ -629,7 +629,7 @@ def test_pytest_exit_returncode(testdir) -> None:
     assert result.ret == 98
 
 
-def test_pytest_fail_notrace_runtest(testdir) -> None:
+def test_pytest_fail_pytrace_false_runtest(testdir) -> None:
     """Test pytest.fail(..., pytrace=False) does not show tracebacks during test run."""
     testdir.makepyfile(
         """
@@ -645,7 +645,23 @@ def test_pytest_fail_notrace_runtest(testdir) -> None:
     result.stdout.no_fnmatch_line("*def teardown_function*")
 
 
-def test_pytest_fail_notrace_collection(testdir) -> None:
+def test_pytest_fail_notrace_pytrace_true_runtest(testdir) -> None:
+    """Test pytest.fail(..., pytrace=True) does not show tracebacks when passing --no-trace."""
+    testdir.makepyfile(
+        """
+        import pytest
+        def test_hello():
+            pytest.fail("hello", pytrace=True)
+        def teardown_function(function):
+            pytest.fail("world", pytrace=True)
+    """
+    )
+    result = testdir.runpytest("--no-trace")
+    result.stdout.fnmatch_lines(["world", "hello"])
+    result.stdout.no_fnmatch_line("*def teardown_function*")
+
+
+def test_pytest_fail_pytrace_false_collection(testdir) -> None:
     """Test pytest.fail(..., pytrace=False) does not show tracebacks during collection."""
     testdir.makepyfile(
         """
@@ -660,7 +676,7 @@ def test_pytest_fail_notrace_collection(testdir) -> None:
     result.stdout.no_fnmatch_line("*def some_internal_function()*")
 
 
-def test_pytest_fail_notrace_non_ascii(testdir) -> None:
+def test_pytest_fail_pytrace_false_non_ascii(testdir) -> None:
     """Fix pytest.fail with pytrace=False with non-ascii characters (#1178).
 
     This tests with native and unicode strings containing non-ascii chars.

@@ -287,7 +287,9 @@ class Node:
         self, excinfo: ExceptionInfo[Union[Failed, FixtureLookupError]], style=None
     ) -> Union[str, ReprExceptionInfo, ExceptionChainRepr, FixtureLookupErrorRepr]:
         if isinstance(excinfo.value, Failed):
-            if not excinfo.value.pytrace:
+            if (
+                self.config is not None and self.config.getoption("notrace")
+            ) or not excinfo.value.pytrace:
                 return str(excinfo.value)
         if isinstance(excinfo.value, FixtureLookupError):
             return excinfo.value.formatrepr()

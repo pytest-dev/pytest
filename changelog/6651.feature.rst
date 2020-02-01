@@ -1,0 +1,2 @@
+Add the --no-trace flag, allowing to override `pytrace=True` for `pytest.fail` calls.
+This is useful to avoid automated `pytest` runs outputting unwanted information.

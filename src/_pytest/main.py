@@ -180,6 +180,13 @@ def pytest_addoption(parser):
         default=False,
         help="Don't ignore tests in a local virtualenv directory",
     )
+    group.addoption(
+        "--notrace",
+        "--no-trace",
+        action="store_true",
+        default=False,
+        help="Do not output any traceback in case of failure, even when passing pytrace=True",
+    )
 
     group = parser.getgroup("debugconfig", "test session debugging and configuration")
     group.addoption(
