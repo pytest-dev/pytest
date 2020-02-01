@@ -508,6 +508,26 @@ def test_linematcher_match_failure() -> None:
     ]
 
 
+def test_linematcher_consecutive():
+    lm = LineMatcher(["1", "", "2"])
+    with pytest.raises(pytest.fail.Exception) as excinfo:
+        lm.fnmatch_lines(["1", "2"], consecutive=True)
+    assert str(excinfo.value).splitlines() == [
+        "exact match: '1'",
+        "no consecutive match: '2'",
+        "   with: ''",
+    ]
+
+    lm.re_match_lines(["1", r"\d?", "2"], consecutive=True)
+    with pytest.raises(pytest.fail.Exception) as excinfo:
+        lm.re_match_lines(["1", r"\d", "2"], consecutive=True)
+    assert str(excinfo.value).splitlines() == [
+        "exact match: '1'",
+        r"no consecutive match: '\\d'",
+        "    with: ''",
+    ]
+
+
 @pytest.mark.parametrize("function", ["no_fnmatch_line", "no_re_match_line"])
 def test_linematcher_no_matching(function) -> None:
     if function == "no_fnmatch_line":

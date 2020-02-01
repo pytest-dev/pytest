@@ -1380,7 +1380,9 @@ class LineMatcher:
     def _log_text(self) -> str:
         return "\n".join(self._log_output)
 
-    def fnmatch_lines(self, lines2: Sequence[str]) -> None:
+    def fnmatch_lines(
+        self, lines2: Sequence[str], *, consecutive: bool = False
+    ) -> None:
         """Check lines exist in the output (using :func:`python:fnmatch.fnmatch`).
 
         The argument is a list of lines which have to match and can use glob
@@ -1388,11 +1390,14 @@ class LineMatcher:
         matches and non-matches are also shown as part of the error message.
 
         :param lines2: string patterns to match.
+        :param consecutive: match lines consecutive?
         """
         __tracebackhide__ = True
-        self._match_lines(lines2, fnmatch, "fnmatch")
+        self._match_lines(lines2, fnmatch, "fnmatch", consecutive=consecutive)
 
-    def re_match_lines(self, lines2: Sequence[str]) -> None:
+    def re_match_lines(
+        self, lines2: Sequence[str], *, consecutive: bool = False
+    ) -> None:
         """Check lines exist in the output (using :func:`python:re.match`).
 
         The argument is a list of lines which have to match using ``re.match``.
@@ -1401,10 +1406,14 @@ class LineMatcher:
         The matches and non-matches are also shown as part of the error message.
 
         :param lines2: string patterns to match.
+        :param consecutive: match lines consecutively?
         """
         __tracebackhide__ = True
         self._match_lines(
-            lines2, lambda name, pat: bool(re.match(pat, name)), "re.match"
+            lines2,
+            lambda name, pat: bool(re.match(pat, name)),
+            "re.match",
+            consecutive=consecutive,
         )
 
     def _match_lines(
@@ -1412,6 +1421,8 @@ class LineMatcher:
         lines2: Sequence[str],
         match_func: Callable[[str, str], bool],
         match_nickname: str,
+        *,
+        consecutive: bool = False
     ) -> None:
         """Underlying implementation of ``fnmatch_lines`` and ``re_match_lines``.
 
@@ -1422,6 +1433,7 @@ class LineMatcher:
             pattern
         :param str match_nickname: the nickname for the match function that
             will be logged to stdout when a match occurs
+        :param consecutive: match lines consecutively?
         """
         if not isinstance(lines2, collections.abc.Sequence):
             raise TypeError("invalid type for lines2: {}".format(type(lines2).__name__))
@@ -1431,20 +1443,30 @@ class LineMatcher:
         extralines = []
         __tracebackhide__ = True
         wnick = len(match_nickname) + 1
+        started = False
         for line in lines2:
             nomatchprinted = False
             while lines1:
                 nextline = lines1.pop(0)
                 if line == nextline:
                     self._log("exact match:", repr(line))
+                    started = True
                     break
                 elif match_func(nextline, line):
                     self._log("%s:" % match_nickname, repr(line))
                     self._log(
                         "{:>{width}}".format("with:", width=wnick), repr(nextline)
                     )
+                    started = True
                     break
                 else:
+                    if consecutive and started:
+                        msg = "no consecutive match: {!r}".format(line)
+                        self._log(msg)
+                        self._log(
+                            "{:>{width}}".format("with:", width=wnick), repr(nextline)
+                        )
+                        self._fail(msg)
                     if not nomatchprinted:
                         self._log(
                             "{:>{width}}".format("nomatch:", width=wnick), repr(line)
