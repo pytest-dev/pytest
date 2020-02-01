@@ -72,10 +72,19 @@ class TestImportHookInstallation:
         result = testdir.runpytest_subprocess()
         result.stdout.fnmatch_lines(
             [
-                "E * AssertionError: ([[][]], [[][]], [[]<TestReport *>[]])*",
-                "E * assert"
-                " {'failed': 1, 'passed': 0, 'skipped': 0} =="
-                " {'failed': 0, 'passed': 1, 'skipped': 0}",
+                ">       r.assertoutcome(passed=1)",
+                "E       AssertionError: ([[][]], [[][]], [[]<TestReport *>[]])*",
+                "E       assert {'failed': 1,... 'skipped': 0} == {'failed': 0,... 'skipped': 0}",
+                "E         Omitting 1 identical items, use -vv to show",
+                "E         Differing items:",
+                "E         Use -v to get the full diff",
+            ]
+        )
+        # XXX: unstable output.
+        result.stdout.fnmatch_lines_random(
+            [
+                "E         {'failed': 1} != {'failed': 0}",
+                "E         {'passed': 0} != {'passed': 1}",
             ]
         )
 
