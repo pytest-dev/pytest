@@ -5,6 +5,7 @@ import functools
 import importlib
 import os
 import sys
+from typing import Callable
 from typing import Dict
 from typing import FrozenSet
 from typing import List
@@ -23,7 +24,7 @@ from _pytest.config import hookimpl
 from _pytest.config import UsageError
 from _pytest.fixtures import FixtureManager
 from _pytest.nodes import Node
-from _pytest.outcomes import exit
+from _pytest.outcomes import Exit
 from _pytest.runner import collect_one_node
 from _pytest.runner import SetupState
 
@@ -194,7 +195,9 @@ def pytest_addoption(parser):
     )
 
 
-def wrap_session(config, doit):
+def wrap_session(
+    config: Config, doit: Callable[[Config, "Session"], Optional[Union[int, ExitCode]]]
+) -> Union[int, ExitCode]:
     """Skeleton command line program"""
     session = Session(config)
     session.exitstatus = ExitCode.OK
@@ -211,10 +214,10 @@ def wrap_session(config, doit):
             raise
         except Failed:
             session.exitstatus = ExitCode.TESTS_FAILED
-        except (KeyboardInterrupt, exit.Exception):
+        except (KeyboardInterrupt, Exit):
             excinfo = _pytest._code.ExceptionInfo.from_current()
-            exitstatus = ExitCode.INTERRUPTED
-            if isinstance(excinfo.value, exit.Exception):
+            exitstatus = ExitCode.INTERRUPTED  # type: Union[int, ExitCode]
+            if isinstance(excinfo.value, Exit):
                 if excinfo.value.returncode is not None:
                     exitstatus = excinfo.value.returncode
                 if initstate < 2:
@@ -228,7 +231,7 @@ def wrap_session(config, doit):
             excinfo = _pytest._code.ExceptionInfo.from_current()
             try:
                 config.notify_exception(excinfo, config.option)
-            except exit.Exception as exc:
+            except Exit as exc:
                 if exc.returncode is not None:
                     session.exitstatus = exc.returncode
                 sys.stderr.write("{}: {}\n".format(type(exc).__name__, exc))
@@ -237,7 +240,8 @@ def wrap_session(config, doit):
                     sys.stderr.write("mainloop: caught unexpected SystemExit!\n")
 
     finally:
-        excinfo = None  # Explicitly break reference cycle.
+        # Explicitly break reference cycle.
+        excinfo = None  # type: ignore
         session.startdir.chdir()
         if initstate >= 2:
             config.hook.pytest_sessionfinish(
@@ -382,6 +386,7 @@ class Session(nodes.FSCollector):
     _setupstate = None  # type: SetupState
     # Set on the session by fixtures.pytest_sessionstart.
     _fixturemanager = None  # type: FixtureManager
+    exitstatus = None  # type: Union[int, ExitCode]
 
     def __init__(self, config: Config) -> None:
         nodes.FSCollector.__init__(
