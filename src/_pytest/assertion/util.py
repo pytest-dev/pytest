@@ -438,6 +438,49 @@ def _compare_eq_cls(
     return explanation
 
 
+def _call_regex(callable, pattern, string, flags, result):
+    import re, regex
+
+    def mark_errors(errors):
+        markers = [' '] * (max(errors) + 1)
+        for i in errors:
+            markers[i] = '^'
+        return ''.join(markers)
+
+    fuzzy_matchers = {
+            re.match: regex.match,
+            re.search: regex.search,
+            re.fullmatch: regex.fullmatch,
+    }
+    fuzzy_matcher = fuzzy_matchers.get(callable, callable)
+    fuzzy_pattern = '(?:%s){e}' % pattern
+    fuzzy_match = fuzzy_matcher(
+            fuzzy_pattern, 
+            string,
+            flags | regex.ENHANCEMATCH,
+    )
+    errors = fuzzy_match.fuzzy_changes
+    error_names = (
+            f'insertions:   ',
+            f'deletions:    ',
+            f'substitutions:',
+    )
+
+    trunc = lambda x: x[:17] + '...' if len(x) > 20 else x
+    lines = [
+            f'{callable.__module__}.{callable.__qualname__}({trunc(pattern)}, {trunc(string)}, flags={flags})'
+            f'',
+            f'',
+            f'pattern:       {pattern}',
+            f'string:        {string}',
+    ]
+    for error, name in zip(errors, error_names):
+        if error:
+            lines += [f'{name} {mark_errors(error)}']
+
+    return '\n'.join(lines)
+
+
 def _notin_text(term: str, text: str, verbose: int = 0) -> List[str]:
     index = text.find(term)
     head = text[:index]

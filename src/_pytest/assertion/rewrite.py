@@ -435,11 +435,22 @@ def _call_reprcompare(ops, results, expls, each_obj):
     return expl
 
 
-def _call_reprcall(callable, args, kwargs, result, default):
-    if hasattr(result, '_pytest_raw_repr'):
-        return saferepr(result).replace('\n', '\n~')
+def _call_reprcall(callable, args, kwargs, result, expl_callable, expl_result):
+    import re, regex
+    regex_callables = {
+            re.match, regex.match,
+            re.search, regex.search,
+            re.fullmatch, regex.fullmatch,
+    }
+    if callable in regex_callables:
+        # I'll have to figure out how to deal with kwargs/optional flags.
+        pattern, string = args
+        return util._call_regex(callable, pattern, string, 0, result).replace('\n', '\n~')
+
     else:
-        return default
+        return "{}\n{{{} = {}\n}}".format(expl_result, expl_result, expl_callable)
+
+
 
 
 def _call_assertion_pass(lineno, orig, expl):
@@ -972,14 +983,14 @@ class AssertionRewriter(ast.NodeVisitor):
         new_call = ast.Call(new_func, new_args, new_kwargs)
         res = self.assign(new_call)
         res_expl = self.explanation_param(self.display(res))
-        outer_expl = "{}\n{{{} = {}\n}}".format(res_expl, res_expl, expl)
         expl_call = self.helper(
             "_call_reprcall",
             new_func,
             ast.List(new_args, ast.Load()),
             ast.List(new_kwargs, ast.Load()),
             res,
-            ast.Str(outer_expl),
+            ast.Str(expl),
+            ast.Str(res_expl),
         )
         return res, self.explanation_param(expl_call)
 
