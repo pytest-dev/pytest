@@ -244,9 +244,14 @@ def wrap_session(
         excinfo = None  # type: ignore
         session.startdir.chdir()
         if initstate >= 2:
-            config.hook.pytest_sessionfinish(
-                session=session, exitstatus=session.exitstatus
-            )
+            try:
+                config.hook.pytest_sessionfinish(
+                    session=session, exitstatus=session.exitstatus
+                )
+            except Exit as exc:
+                if exc.returncode is not None:
+                    session.exitstatus = exc.returncode
+                sys.stderr.write("{}: {}\n".format(type(exc).__name__, exc))
         config._ensure_unconfigure()
     return session.exitstatus
 
