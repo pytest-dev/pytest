@@ -30,6 +30,12 @@ COLORS = {
     "yellow": "\x1b[33m",
     "bold": "\x1b[1m",
     "reset": "\x1b[0m",
+    "kw": "\x1b[94m",
+    "hl-reset": "\x1b[39;49;00m",
+    "function": "\x1b[92m",
+    "number": "\x1b[94m",
+    "str": "\x1b[33m",
+    "print": "\x1b[96m",
 }
 RE_COLORS = {k: re.escape(v) for k, v in COLORS.items()}
 
@@ -918,14 +924,14 @@ def test_color_yes(testdir):
                 "=*= FAILURES =*=",
                 "{red}{bold}_*_ test_this _*_{reset}",
                 "",
-                "{bold}    def test_this():{reset}",
-                "{bold}>       fail(){reset}",
+                "    {kw}def{hl-reset} {function}test_this{hl-reset}():",
+                ">       fail()",
                 "",
                 "{bold}{red}test_color_yes.py{reset}:5: ",
                 "_ _ * _ _*",
                 "",
-                "{bold}    def fail():{reset}",
-                "{bold}>       assert 0{reset}",
+                "    {kw}def{hl-reset} {function}fail{hl-reset}():",
+                ">       {kw}assert{hl-reset} {number}0{hl-reset}",
                 "{bold}{red}E       assert 0{reset}",
                 "",
                 "{bold}{red}test_color_yes.py{reset}:2: AssertionError",
@@ -946,9 +952,9 @@ def test_color_yes(testdir):
                 "=*= FAILURES =*=",
                 "{red}{bold}_*_ test_this _*_{reset}",
                 "{bold}{red}test_color_yes.py{reset}:5: in test_this",
-                "{bold}    fail(){reset}",
+                "    fail()",
                 "{bold}{red}test_color_yes.py{reset}:2: in fail",
-                "{bold}    assert 0{reset}",
+                "    {kw}assert{hl-reset} {number}0{hl-reset}",
                 "{bold}{red}E   assert 0{reset}",
                 "{red}=*= {red}{bold}1 failed{reset}{red} in *s{reset}{red} =*={reset}",
             ]
@@ -2021,3 +2027,45 @@ def test_via_exec(testdir: Testdir) -> None:
     result.stdout.fnmatch_lines(
         ["test_via_exec.py::test_via_exec <- <string> PASSED*", "*= 1 passed in *"]
     )
+
+
+class TestCodeHighlight:
+    def test_code_highlight_simple(self, testdir: Testdir) -> None:
+        testdir.makepyfile(
+            """
+            def test_foo():
+                assert 1 == 10
+        """
+        )
+        result = testdir.runpytest("--color=yes")
+        result.stdout.fnmatch_lines(
+            [
+                line.format(**COLORS).replace("[", "[[]")
+                for line in [
+                    "    {kw}def{hl-reset} {function}test_foo{hl-reset}():",
+                    ">       {kw}assert{hl-reset} {number}1{hl-reset} == {number}10{hl-reset}",
+                    "{bold}{red}E       assert 1 == 10{reset}",
+                ]
+            ]
+        )
+
+    def test_code_highlight_continuation(self, testdir: Testdir) -> None:
+        testdir.makepyfile(
+            """
+            def test_foo():
+                print('''
+                '''); assert 0
+        """
+        )
+        result = testdir.runpytest("--color=yes")
+        result.stdout.fnmatch_lines(
+            [
+                line.format(**COLORS).replace("[", "[[]")
+                for line in [
+                    "    {kw}def{hl-reset} {function}test_foo{hl-reset}():",
+                    "        {print}print{hl-reset}({str}'''{hl-reset}{str}{hl-reset}",
+                    ">   {str}    {hl-reset}{str}'''{hl-reset}); {kw}assert{hl-reset} {number}0{hl-reset}",
+                    "{bold}{red}E       assert 0{reset}",
+                ]
+            ]
+        )

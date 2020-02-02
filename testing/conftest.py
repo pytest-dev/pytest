@@ -78,6 +78,12 @@ def tw_mock():
         def write(self, msg, **kw):
             self.lines.append((TWMock.WRITE, msg))
 
+        def _write_source(self, lines, indents=()):
+            if not indents:
+                indents = [""] * len(lines)
+            for indent, line in zip(indents, lines):
+                self.line(indent + line)
+
         def line(self, line, **kw):
             self.lines.append(line)
 
