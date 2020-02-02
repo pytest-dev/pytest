@@ -715,7 +715,6 @@ def raises(  # noqa: F811
             )
     fail(message)
 
-
 raises.Exception = fail.Exception  # type: ignore
 
 
@@ -755,3 +754,70 @@ class RaisesContext(Generic[_E]):
         if self.match_expr is not None:
             self.excinfo.match(self.match_expr)
         return True
+
+
+# builtin regular expression helpers
+
+
+def match(pattern, string, flags=0):
+    import regex as re
+    return RegexDebugger(re.match, pattern, string, flags)
+
+def search(pattern, string, flags=0):
+    import regex as re
+    return RegexDebugger(re.search, pattern, string, flags)
+
+def fullmatch(pattern, string, flags=0):
+    import regex as re
+    return RegexDebugger(re.fullmatch, pattern, string, flags)
+
+class RegexDebugger:
+    _pytest_raw_repr = True
+
+    def __init__(self, matcher, pattern, string, flags):
+        self.caller = inspect.stack()[1]
+        self.matcher = matcher
+        self.pattern = pattern
+        self.string = string
+        self.flags = flags
+
+    def __bool__(self):
+        return self.matcher(self.pattern, self.string, self.flags) is not None
+
+    def __repr__(self):
+        import regex as re
+        from textwrap import shorten
+
+        def mark_errors(errors):
+            markers = [' '] * (max(errors) + 1)
+            for i in errors:
+                markers[i] = '^'
+            return ''.join(markers)
+            
+        fuzzy_pattern = '(?:%s){e}' % self.pattern
+        fuzzy_match = self.matcher(
+                fuzzy_pattern, 
+                self.string,
+                self.flags | re.ENHANCEMATCH,
+        )
+        errors = fuzzy_match.fuzzy_changes
+        error_names = (
+                f'insertions:   ',
+                f'deletions:    ',
+                f'substitutions:',
+        )
+
+
+        s = lambda x: shorten(repr(x), width=20, placeholder='...')
+        lines = [
+                f'pytest.{self.caller.function}({s(self.pattern)}, {s(self.string)}, flags={self.flags})'
+                f'',
+                f'',
+                f'pattern:       {self.pattern}',
+                f'string:        {self.string}',
+        ]
+        for error, name in zip(errors, error_names):
+            if error:
+                lines += [f'{name} {mark_errors(error)}']
+
+        return '\n'.join(lines)

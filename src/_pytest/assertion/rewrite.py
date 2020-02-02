@@ -435,6 +435,13 @@ def _call_reprcompare(ops, results, expls, each_obj):
     return expl
 
 
+def _call_reprcall(callable, args, kwargs, result, default):
+    if hasattr(result, '_pytest_raw_repr'):
+        return saferepr(result).replace('\n', '\n~')
+    else:
+        return default
+
+
 def _call_assertion_pass(lineno, orig, expl):
     # type: (int, str, str) -> None
     if util._assertion_pass is not None:
@@ -966,7 +973,15 @@ class AssertionRewriter(ast.NodeVisitor):
         res = self.assign(new_call)
         res_expl = self.explanation_param(self.display(res))
         outer_expl = "{}\n{{{} = {}\n}}".format(res_expl, res_expl, expl)
-        return res, outer_expl
+        expl_call = self.helper(
+            "_call_reprcall",
+            new_func,
+            ast.List(new_args, ast.Load()),
+            ast.List(new_kwargs, ast.Load()),
+            res,
+            ast.Str(outer_expl),
+        )
+        return res, self.explanation_param(expl_call)
 
     def visit_Starred(self, starred):
         # From Python 3.5, a Starred node can appear in a function call

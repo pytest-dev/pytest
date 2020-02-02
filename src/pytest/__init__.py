@@ -34,6 +34,9 @@ from _pytest.python import Module
 from _pytest.python import Package
 from _pytest.python_api import approx
 from _pytest.python_api import raises
+from _pytest.python_api import match
+from _pytest.python_api import search
+from _pytest.python_api import fullmatch
 from _pytest.recwarn import deprecated_call
 from _pytest.recwarn import warns
 from _pytest.warning_types import PytestAssertRewriteWarning
