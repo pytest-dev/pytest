@@ -20,10 +20,10 @@ import _pytest
 from _pytest import fixtures
 from _pytest import nodes
 from _pytest._code import filter_traceback
+from _pytest._code.source import getfslineno
 from _pytest.compat import ascii_escaped
 from _pytest.compat import get_default_arg_names
 from _pytest.compat import get_real_func
-from _pytest.compat import getfslineno
 from _pytest.compat import getimfunc
 from _pytest.compat import getlocation
 from _pytest.compat import is_generator

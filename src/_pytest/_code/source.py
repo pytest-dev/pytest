@@ -17,6 +17,7 @@ from typing import Union
 
 import py
 
+from _pytest.compat import get_real_func
 from _pytest.compat import overload
 from _pytest.compat import TYPE_CHECKING
 
@@ -289,6 +290,13 @@ def getfslineno(obj) -> Tuple[Optional[Union["Literal['']", py.path.local]], int
     The line number is 0-based.
     """
     from .code import Code
+
+    # xxx let decorators etc specify a sane ordering
+    # NOTE: this used to be done in _pytest.compat.getfslineno, initially added
+    #       in 6ec13a2b9.  It ("place_as") appears to be something very custom.
+    obj = get_real_func(obj)
+    if hasattr(obj, "place_as"):
+        obj = obj.place_as
 
     try:
         code = Code(obj)
