@@ -20,4 +20,7 @@ Unless your change is trivial or a small documentation fix (e.g., a typo or rewo
   Also make sure to end the sentence with a `.`.
 
 - [ ] Add yourself to `AUTHORS` in alphabetical order.
+
+If you leave the *Allow edits from maintainers* checked, the mainteiners might squash your commits before merging. If unchecked, maintainers
+will probably ask you to squash yourself then.
 -->
