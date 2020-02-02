@@ -466,7 +466,8 @@ def _call_regex(callable, pattern, string, flags, result):
             f'substitutions:',
     )
 
-    trunc = lambda x: x[:17] + '...' if len(x) > 20 else x
+    n = 8
+    trunc = lambda x: f"'{x[:n-1]}…'" if len(x) > n else repr(x)
     lines = [
             f'{callable.__module__}.{callable.__qualname__}({trunc(pattern)}, {trunc(string)}, flags={flags})'
             f'',
