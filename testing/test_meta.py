@@ -16,14 +16,19 @@ def _modules():
 
 
 @pytest.mark.slow
+@pytest.mark.parametrize("type_checking", (0, 1))
 @pytest.mark.parametrize("module", _modules())
-def test_no_warnings(module):
-    # fmt: off
-    subprocess.check_call((
-        sys.executable,
-        "-W", "error",
-        # https://github.com/pytest-dev/pytest/issues/5901
-        "-W", "ignore:The usage of `cmp` is deprecated and will be removed on or after 2021-06-01.  Please use `eq` and `order` instead.:DeprecationWarning",  # noqa: E501
-        "-c", "import {}".format(module),
-    ))
-    # fmt: on
+def test_no_warnings(module, type_checking):
+    subprocess.check_call(
+        (
+            sys.executable,
+            "-W",
+            "error",
+            # https://github.com/pytest-dev/pytest/issues/5901
+            "-W",
+            "ignore:The usage of `cmp` is deprecated and will be removed on or after 2021-06-01.  Please use `eq` and `order` instead.:DeprecationWarning",  # noqa: E501
+            "-c",
+            ("import typing; typing.TYPE_CHECKING = True;" if type_checking else "")
+            + "import {}".format(module),
+        )
+    )
