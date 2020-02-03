@@ -308,9 +308,9 @@ def get_real_method(obj, holder):
 
 def getfslineno(obj) -> Tuple[Union[str, py.path.local], int]:
     """(**Deprecated**, use _pytest._code.source.getfslineno directly)"""
-    from _pytest._code.source import getfslineno
+    import _pytest._code.source
 
-    return getfslineno(obj)
+    return _pytest._code.source.getfslineno(obj)
 
 
 def getimfunc(func):
