@@ -326,27 +326,23 @@ class LogCaptureFixture:
             logger.setLevel(level)
 
     @property
-    def handler(self):
-        """
-        :rtype: LogCaptureHandler
-        """
-        return self._item.catch_log_handler
+    def handler(self) -> LogCaptureHandler:
+        return self._item.catch_log_handler  # type: ignore[no-any-return]  # noqa: F723
 
-    def get_records(self, when):
+    def get_records(self, when: str) -> List[logging.LogRecord]:
         """
         Get the logging records for one of the possible test phases.
 
-        :param str when:
+        :param when:
             Which test phase to obtain the records from. Valid values are: "setup", "call" and "teardown".
 
-        :rtype: List[logging.LogRecord]
         :return: the list of captured records at the given stage
 
         .. versionadded:: 3.4
         """
         handler = self._item.catch_log_handlers.get(when)
         if handler:
-            return handler.records
+            return handler.records  # type: ignore[no-any-return]  # noqa: F723
         else:
             return []
 
@@ -613,7 +609,7 @@ class LoggingPlugin:
                 yield
 
     @contextmanager
-    def _runtest_for_main(self, item, when):
+    def _runtest_for_main(self, item, when: str) -> Generator[None, None, None]:
         """Implements the internals of pytest_runtest_xxx() hook."""
         with catching_logs(
             LogCaptureHandler(), formatter=self.formatter, level=self.log_level

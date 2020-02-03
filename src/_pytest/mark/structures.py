@@ -2,7 +2,9 @@ import inspect
 import warnings
 from collections import namedtuple
 from collections.abc import MutableMapping
+from typing import List
 from typing import Set
+from typing import Union
 
 import attr
 
@@ -147,8 +149,6 @@ class Mark:
     def combined_with(self, other):
         """
         :param other: the mark to combine with
-        :type other: Mark
-        :rtype: Mark
 
         combines by appending args and merging the mappings
         """
@@ -249,13 +249,8 @@ def get_unpacked_marks(obj):
     return normalize_mark_list(mark_list)
 
 
-def normalize_mark_list(mark_list):
-    """
-    normalizes marker decorating helpers to mark objects
-
-    :type mark_list: List[Union[Mark, Markdecorator]]
-    :rtype: List[Mark]
-    """
+def normalize_mark_list(mark_list: List[Union[Mark, MarkDecorator]]) -> List[Mark]:
+    """normalizes marker decorating helpers to mark objects"""
     extracted = [
         getattr(mark, "mark", mark) for mark in mark_list
     ]  # unpack MarkDecorator
