@@ -24,7 +24,7 @@ from _pytest._io import TerminalWriter
 from _pytest.compat import safe_getattr
 from _pytest.compat import TYPE_CHECKING
 from _pytest.fixtures import FixtureRequest
-from _pytest.outcomes import Skipped
+from _pytest.outcomes import OutcomeException
 from _pytest.python_api import approx
 from _pytest.warning_types import PytestWarning
 
@@ -178,7 +178,7 @@ def _init_runner_class() -> "Type[doctest.DocTestRunner]":
                 raise failure
 
         def report_unexpected_exception(self, out, test, example, exc_info):
-            if isinstance(exc_info[1], Skipped):
+            if isinstance(exc_info[1], OutcomeException):
                 raise exc_info[1]
             if isinstance(exc_info[1], bdb.BdbQuit):
                 outcomes.exit("Quitting debugger")
