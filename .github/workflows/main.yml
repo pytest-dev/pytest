@@ -25,26 +25,7 @@ jobs:
       fail-fast: false
       matrix:
         name: [
-          "windows-py35",
-          "windows-py36",
-          "windows-py37",
-          "windows-py37-pluggy",
-          "windows-py38",
-
-          "ubuntu-py35",
-          "ubuntu-py36",
-          "ubuntu-py37",
-          "ubuntu-py37-pluggy",
-          "ubuntu-py37-freeze",
-          "ubuntu-py38",
-          "ubuntu-pypy3",
-
-          "macos-py37",
-          "macos-py38",
-
-          "linting",
           "docs",
-          "doctesting",
         ]
 
         include:
