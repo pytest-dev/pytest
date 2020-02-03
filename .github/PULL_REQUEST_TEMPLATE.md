@@ -7,6 +7,7 @@ Here is a quick checklist that should be present in PRs.
 - [ ] Target the `features` branch for new features, improvements, and removals/deprecations.
 - [ ] Include documentation when adding new features.
 - [ ] Include new tests or update existing tests when applicable.
+- [X] Allow maintainers to push and squash when merging my commits. Please uncheck this if you prefer to squash the commits yourself.
 
 Unless your change is trivial or a small documentation fix (e.g., a typo or reword of a small section) please:
 
