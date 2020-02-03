@@ -21,6 +21,7 @@ import _pytest
 from _pytest import fixtures
 from _pytest import nodes
 from _pytest._code import filter_traceback
+from _pytest._code.code import ExceptionInfo
 from _pytest.compat import ascii_escaped
 from _pytest.compat import get_default_arg_names
 from _pytest.compat import get_real_func
@@ -1468,7 +1469,7 @@ class Function(PyobjMixin, nodes.Item):
             self.obj = self._getobj()
         fixtures.fillfixtures(self)
 
-    def _prunetraceback(self, excinfo):
+    def _prunetraceback(self, excinfo: ExceptionInfo) -> None:
         if hasattr(self, "_obj") and not self.config.getoption("fulltrace", False):
             code = _pytest._code.Code(get_real_func(self.obj))
             path, firstlineno = code.path, code.firstlineno
