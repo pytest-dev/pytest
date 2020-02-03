@@ -504,9 +504,7 @@ class Module(nodes.File, PyCollector):
         try:
             mod = self.fspath.pyimport(ensuresyspath=importmode)
         except SyntaxError:
-            raise self.CollectError(
-                _pytest._code.ExceptionInfo.from_current().getrepr(style="short")
-            )
+            raise self.CollectError(ExceptionInfo.from_current().getrepr(style="short"))
         except self.fspath.ImportMismatchError:
             e = sys.exc_info()[1]
             raise self.CollectError(
@@ -519,8 +517,6 @@ class Module(nodes.File, PyCollector):
                 "unique basename for your test file modules" % e.args
             )
         except ImportError:
-            from _pytest._code.code import ExceptionInfo
-
             exc_info = ExceptionInfo.from_current()
             if self.config.getoption("verbose") < 2:
                 exc_info.traceback = exc_info.traceback.filter(filter_traceback)
@@ -1463,7 +1459,7 @@ class Function(PyobjMixin, nodes.Item):
         """ execute the underlying test function. """
         self.ihook.pytest_pyfunc_call(pyfuncitem=self)
 
-    def setup(self):
+    def setup(self) -> None:
         if isinstance(self.parent, Instance):
             self.parent.newinstance()
             self.obj = self._getobj()
