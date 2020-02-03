@@ -9,7 +9,6 @@ from collections import Counter
 from collections import defaultdict
 from collections.abc import Sequence
 from functools import partial
-from textwrap import dedent
 from typing import List
 from typing import Optional
 from typing import Tuple
@@ -1247,7 +1246,7 @@ def _show_fixtures_per_test(config, session):
         else:
             funcargspec = argname
         tw.line(funcargspec, green=True)
-        fixture_doc = fixture_def.func.__doc__
+        fixture_doc = inspect.getdoc(fixture_def.func)
         if fixture_doc:
             write_docstring(tw, fixture_doc)
         else:
@@ -1332,7 +1331,7 @@ def _showfixtures_main(config, session):
             tw.write(" -- %s" % bestrel, yellow=True)
         tw.write("\n")
         loc = getlocation(fixturedef.func, curdir)
-        doc = fixturedef.func.__doc__ or ""
+        doc = inspect.getdoc(fixturedef.func)
         if doc:
             write_docstring(tw, doc)
         else:
@@ -1341,18 +1340,8 @@ def _showfixtures_main(config, session):
 
 
 def write_docstring(tw, doc, indent="    "):
-    doc = doc.rstrip()
-    if "\n" in doc:
-        firstline, rest = doc.split("\n", 1)
-    else:
-        firstline, rest = doc, ""
-
-    if firstline.strip():
-        tw.line(indent + firstline.strip())
-
-    if rest:
-        for line in dedent(rest).split("\n"):
-            tw.write(indent + line + "\n")
+    for line in doc.split("\n"):
+        tw.write(indent + line + "\n")
 
 
 class Function(PyobjMixin, nodes.Item):
