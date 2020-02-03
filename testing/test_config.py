@@ -659,6 +659,13 @@ def test_disable_plugin_autoload(testdir, monkeypatch, parse_args, should_load):
     class PseudoPlugin:
         x = 42
 
+        attrs_used = []
+
+        def __getattr__(self, name):
+            assert name == "__loader__"
+            self.attrs_used.append(name)
+            return object()
+
     def distributions():
         return (Distribution(),)
 
@@ -668,6 +675,10 @@ def test_disable_plugin_autoload(testdir, monkeypatch, parse_args, should_load):
     config = testdir.parseconfig(*parse_args)
     has_loaded = config.pluginmanager.get_plugin("mytestplugin") is not None
     assert has_loaded == should_load
+    if should_load:
+        assert PseudoPlugin.attrs_used == ["__loader__"]
+    else:
+        assert PseudoPlugin.attrs_used == []
 
 
 def test_plugin_loading_order(testdir):
@@ -676,7 +687,7 @@ def test_plugin_loading_order(testdir):
         """
         def test_terminal_plugin(request):
             import myplugin
-            assert myplugin.terminal_plugin == [True, True]
+            assert myplugin.terminal_plugin == [False, True]
         """,
         **{
             "myplugin": """
