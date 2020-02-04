@@ -380,7 +380,7 @@ class CaptureIO(io.TextIOWrapper):
         return self.buffer.getvalue().decode("UTF-8")
 
 
-class CaptureAndPassthroughIO(CaptureIO):
+class PassthroughCaptureIO(CaptureIO):
     def __init__(self, other: IO) -> None:
         self._other = other
         super().__init__()

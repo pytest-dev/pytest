@@ -822,10 +822,10 @@ class TestCaptureIO:
         assert f.getvalue() == "foo\r\n"
 
 
-class TestCaptureAndPassthroughIO(TestCaptureIO):
+class TestPassthroughCaptureIO(TestCaptureIO):
     def test_text(self):
         sio = io.StringIO()
-        f = capture.CaptureAndPassthroughIO(sio)
+        f = capture.PassthroughCaptureIO(sio)
         f.write("hello")
         s1 = f.getvalue()
         assert s1 == "hello"
@@ -836,7 +836,7 @@ class TestCaptureAndPassthroughIO(TestCaptureIO):
 
     def test_unicode_and_str_mixture(self):
         sio = io.StringIO()
-        f = capture.CaptureAndPassthroughIO(sio)
+        f = capture.PassthroughCaptureIO(sio)
         f.write("\u00f6")
         pytest.raises(TypeError, f.write, b"hello")
 
