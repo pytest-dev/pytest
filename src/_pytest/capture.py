@@ -11,10 +11,9 @@ from io import UnsupportedOperation
 from tempfile import TemporaryFile
 from typing import Generator
 from typing import Optional
+from typing import TextIO
 
 import pytest
-from _pytest.compat import CaptureAndPassthroughIO
-from _pytest.compat import CaptureIO
 from _pytest.compat import TYPE_CHECKING
 from _pytest.config import Config
 from _pytest.fixtures import FixtureRequest
@@ -318,6 +317,25 @@ def capfdbinary(request):
     capman = request.config.pluginmanager.getplugin("capturemanager")
     with capman._capturing_for_request(request) as fixture:
         yield fixture
+
+
+class CaptureIO(io.TextIOWrapper):
+    def __init__(self) -> None:
+        super().__init__(io.BytesIO(), encoding="UTF-8", newline="", write_through=True)
+
+    def getvalue(self) -> str:
+        assert isinstance(self.buffer, io.BytesIO)
+        return self.buffer.getvalue().decode("UTF-8")
+
+
+class TeeCaptureIO(CaptureIO):
+    def __init__(self, other: TextIO) -> None:
+        self._other = other
+        super().__init__()
+
+    def write(self, s: str) -> int:
+        super().write(s)
+        return self._other.write(s)
 
 
 class CaptureFixture:
@@ -673,7 +691,7 @@ class TeeSysCapture(SysCapture):
             if name == "stdin":
                 tmpfile = DontReadFromInput()
             else:
-                tmpfile = CaptureAndPassthroughIO(self._old)
+                tmpfile = TeeCaptureIO(self._old)
         self.tmpfile = tmpfile
 
 

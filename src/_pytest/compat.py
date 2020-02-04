@@ -3,7 +3,6 @@ python version compatibility code
 """
 import functools
 import inspect
-import io
 import os
 import re
 import sys
@@ -13,7 +12,6 @@ from inspect import signature
 from typing import Any
 from typing import Callable
 from typing import Generic
-from typing import IO
 from typing import Optional
 from typing import overload
 from typing import Tuple
@@ -341,25 +339,6 @@ def safe_isclass(obj: object) -> bool:
         return inspect.isclass(obj)
     except Exception:
         return False
-
-
-class CaptureIO(io.TextIOWrapper):
-    def __init__(self) -> None:
-        super().__init__(io.BytesIO(), encoding="UTF-8", newline="", write_through=True)
-
-    def getvalue(self) -> str:
-        assert isinstance(self.buffer, io.BytesIO)
-        return self.buffer.getvalue().decode("UTF-8")
-
-
-class CaptureAndPassthroughIO(CaptureIO):
-    def __init__(self, other: IO) -> None:
-        self._other = other
-        super().__init__()
-
-    def write(self, s) -> int:
-        super().write(s)
-        return self._other.write(s)
 
 
 if sys.version_info < (3, 5, 2):
