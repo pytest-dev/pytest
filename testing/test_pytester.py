@@ -458,17 +458,26 @@ def test_testdir_run_timeout_expires(testdir) -> None:
 
 def test_linematcher_with_nonlist() -> None:
     """Test LineMatcher with regard to passing in a set (accidentally)."""
-    lm = LineMatcher([])
+    from _pytest._code.source import Source
 
-    with pytest.raises(AssertionError):
-        lm.fnmatch_lines(set())
-    with pytest.raises(AssertionError):
-        lm.fnmatch_lines({})
+    lm = LineMatcher([])
+    with pytest.raises(TypeError, match="invalid type for lines2: set"):
+        lm.fnmatch_lines(set())  # type: ignore[arg-type]  # noqa: F821
+    with pytest.raises(TypeError, match="invalid type for lines2: dict"):
+        lm.fnmatch_lines({})  # type: ignore[arg-type]  # noqa: F821
+    with pytest.raises(TypeError, match="invalid type for lines2: set"):
+        lm.re_match_lines(set())  # type: ignore[arg-type]  # noqa: F821
+    with pytest.raises(TypeError, match="invalid type for lines2: dict"):
+        lm.re_match_lines({})  # type: ignore[arg-type]  # noqa: F821
+    with pytest.raises(TypeError, match="invalid type for lines2: Source"):
+        lm.fnmatch_lines(Source())  # type: ignore[arg-type]  # noqa: F821
     lm.fnmatch_lines([])
     lm.fnmatch_lines(())
-
-    assert lm._getlines({}) == {}
-    assert lm._getlines(set()) == set()
+    lm.fnmatch_lines("")
+    assert lm._getlines({}) == {}  # type: ignore[arg-type,comparison-overlap]  # noqa: F821
+    assert lm._getlines(set()) == set()  # type: ignore[arg-type,comparison-overlap]  # noqa: F821
+    assert lm._getlines(Source()) == []
+    assert lm._getlines(Source("pass\npass")) == ["pass", "pass"]
 
 
 def test_linematcher_match_failure() -> None:
@@ -499,8 +508,28 @@ def test_linematcher_match_failure() -> None:
     ]
 
 
+def test_linematcher_consecutive():
+    lm = LineMatcher(["1", "", "2"])
+    with pytest.raises(pytest.fail.Exception) as excinfo:
+        lm.fnmatch_lines(["1", "2"], consecutive=True)
+    assert str(excinfo.value).splitlines() == [
+        "exact match: '1'",
+        "no consecutive match: '2'",
+        "   with: ''",
+    ]
+
+    lm.re_match_lines(["1", r"\d?", "2"], consecutive=True)
+    with pytest.raises(pytest.fail.Exception) as excinfo:
+        lm.re_match_lines(["1", r"\d", "2"], consecutive=True)
+    assert str(excinfo.value).splitlines() == [
+        "exact match: '1'",
+        r"no consecutive match: '\\d'",
+        "    with: ''",
+    ]
+
+
 @pytest.mark.parametrize("function", ["no_fnmatch_line", "no_re_match_line"])
-def test_no_matching(function) -> None:
+def test_linematcher_no_matching(function) -> None:
     if function == "no_fnmatch_line":
         good_pattern = "*.py OK*"
         bad_pattern = "*X.py OK*"
@@ -548,7 +577,7 @@ def test_no_matching(function) -> None:
     func(bad_pattern)  # bad pattern does not match any line: passes
 
 
-def test_no_matching_after_match() -> None:
+def test_linematcher_no_matching_after_match() -> None:
     lm = LineMatcher(["1", "2", "3"])
     lm.fnmatch_lines(["1", "3"])
     with pytest.raises(Failed) as e:
