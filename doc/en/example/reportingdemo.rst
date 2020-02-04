@@ -81,8 +81,8 @@ Here is a nice run of several failures and how ``pytest`` presents things:
         def test_eq_text(self):
     >       assert "spam" == "eggs"
     E       AssertionError: assert 'spam' == 'eggs'
-    E         - spam
-    E         + eggs
+    E         - eggs
+    E         + spam
 
     failure_demo.py:45: AssertionError
     _____________ TestSpecialisedExplanations.test_eq_similar_text _____________
@@ -92,9 +92,9 @@ Here is a nice run of several failures and how ``pytest`` presents things:
         def test_eq_similar_text(self):
     >       assert "foo 1 bar" == "foo 2 bar"
     E       AssertionError: assert 'foo 1 bar' == 'foo 2 bar'
-    E         - foo 1 bar
+    E         - foo 2 bar
     E         ?     ^
-    E         + foo 2 bar
+    E         + foo 1 bar
     E         ?     ^
 
     failure_demo.py:48: AssertionError
@@ -106,8 +106,8 @@ Here is a nice run of several failures and how ``pytest`` presents things:
     >       assert "foo\nspam\nbar" == "foo\neggs\nbar"
     E       AssertionError: assert 'foo\nspam\nbar' == 'foo\neggs\nbar'
     E           foo
-    E         - spam
-    E         + eggs
+    E         - eggs
+    E         + spam
     E           bar
 
     failure_demo.py:51: AssertionError
@@ -122,9 +122,9 @@ Here is a nice run of several failures and how ``pytest`` presents things:
     E       AssertionError: assert '111111111111...2222222222222' == '111111111111...2222222222222'
     E         Skipping 90 identical leading characters in diff, use -v to show
     E         Skipping 91 identical trailing characters in diff, use -v to show
-    E         - 1111111111a222222222
+    E         - 1111111111b222222222
     E         ?           ^
-    E         + 1111111111b222222222
+    E         + 1111111111a222222222
     E         ?           ^
 
     failure_demo.py:56: AssertionError
