@@ -72,6 +72,8 @@ class Code:
         """ return a path object pointing to source code (or a str in case
         of OSError / non-existing file).
         """
+        if not self.raw.co_filename:
+            return ""
         try:
             p = py.path.local(self.raw.co_filename)
             # maybe don't try this checking

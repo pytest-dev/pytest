@@ -16,12 +16,12 @@ import py
 import _pytest
 from _pytest._code.code import FormattedExcinfo
 from _pytest._code.code import TerminalRepr
+from _pytest._code.source import getfslineno
 from _pytest._io import TerminalWriter
 from _pytest.compat import _format_args
 from _pytest.compat import _PytestWrapper
 from _pytest.compat import get_real_func
 from _pytest.compat import get_real_method
-from _pytest.compat import getfslineno
 from _pytest.compat import getfuncargnames
 from _pytest.compat import getimfunc
 from _pytest.compat import getlocation
