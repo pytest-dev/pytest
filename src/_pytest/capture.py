@@ -82,11 +82,11 @@ class CaptureManager:
     def __init__(self, method) -> None:
         self._method = method
         self._global_capturing = None
-        self._current_item_fixture = None  # type: Optional[CaptureFixture]
+        self._item_capture = None  # type: Optional[CaptureFixture]
 
     def __repr__(self):
-        return "<CaptureManager _method={!r} _global_capturing={!r} _current_item_fixture={!r}>".format(
-            self._method, self._global_capturing, self._current_item_fixture
+        return "<CaptureManager _method={!r} _global_capturing={!r} _item_capture={!r}>".format(
+            self._method, self._global_capturing, self._item_capture
         )
 
     def _getcapture(self, method):
@@ -103,8 +103,8 @@ class CaptureManager:
     def is_capturing(self):
         if self.is_globally_capturing():
             return "global"
-        if self._current_item_fixture:
-            return "fixture %s" % self._current_item_fixture.request.fixturename
+        if self._item_capture:
+            return "fixture %s" % self._item_capture.request.fixturename
         return False
 
     # Global capturing control
@@ -152,12 +152,11 @@ class CaptureManager:
     def _item_fixture(
         self, request: FixtureRequest
     ) -> Generator["CaptureFixture", None, None]:
-        cur_fix = self._current_item_fixture
-        if cur_fix:
+        if self._item_capture:
             other_name = next(
                 k
-                for k in map_fixname_class
-                if map_fixname_class[k] is cur_fix.captureclass
+                for k, v in map_fixname_class.items()
+                if v is self._item_capture.captureclass
             )
             raise request.raiseerror(
                 "cannot use {} and {} at the same time".format(
@@ -165,31 +164,31 @@ class CaptureManager:
                 )
             )
         capture_class = map_fixname_class[request.fixturename]
-        self._current_item_fixture = fixture = CaptureFixture(capture_class, request)
+        self._item_capture = CaptureFixture(capture_class, request)
         self.activate_fixture()
-        yield fixture
-        fixture.close()
-        self._current_item_fixture = None
+        yield self._item_capture
+        self._item_capture.close()
+        self._item_capture = None
 
     def activate_fixture(self):
         """If the current item is using ``capsys`` or ``capfd``, activate them so they take precedence over
         the global capture.
         """
-        if self._current_item_fixture:
-            self._current_item_fixture._start()
+        if self._item_capture:
+            self._item_capture._start()
 
     def deactivate_fixture(self):
         """Deactivates the ``capsys`` or ``capfd`` fixture of this item, if any."""
-        if self._current_item_fixture:
-            self._current_item_fixture.close()
+        if self._item_capture:
+            self._item_capture.close()
 
     def suspend_fixture(self):
-        if self._current_item_fixture:
-            self._current_item_fixture._suspend()
+        if self._item_capture:
+            self._item_capture._suspend()
 
     def resume_fixture(self):
-        if self._current_item_fixture:
-            self._current_item_fixture._resume()
+        if self._item_capture:
+            self._item_capture._resume()
 
     # Helper context managers
 
