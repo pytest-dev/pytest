@@ -27,7 +27,6 @@ from pluggy import HookspecMarker
 from pluggy import PluginManager
 
 import _pytest._code
-import _pytest.assertion
 import _pytest.deprecated
 import _pytest.hookspec  # the extension point definitions
 from .exceptions import PrintHelp
@@ -260,6 +259,8 @@ class PytestPluginManager(PluginManager):
     """
 
     def __init__(self):
+        import _pytest.assertion
+
         super().__init__("pytest")
         # The objects are module objects, only used generically.
         self._conftest_plugins = set()  # type: Set[object]
@@ -891,6 +892,8 @@ class Config:
         ns, unknown_args = self._parser.parse_known_and_unknown_args(args)
         mode = getattr(ns, "assertmode", "plain")
         if mode == "rewrite":
+            import _pytest.assertion
+
             try:
                 hook = _pytest.assertion.install_importhook(self)
             except SystemError:
