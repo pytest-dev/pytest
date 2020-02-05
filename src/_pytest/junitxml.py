@@ -410,7 +410,7 @@ def pytest_addoption(parser):
         "Write captured log messages to JUnit report: "
         "one of no|system-out|system-err",
         default="no",
-    )  # choices=['no', 'stdout', 'stderr'])
+    )
     parser.addini(
         "junit_log_passing_tests",
         "Capture log information for passing tests to JUnit report: ",
