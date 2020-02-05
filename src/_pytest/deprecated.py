@@ -36,7 +36,10 @@ FIXTURE_POSITIONAL_ARGUMENTS = PytestDeprecationWarning(
 
 NODE_USE_FROM_PARENT = UnformattedWarning(
     PytestDeprecationWarning,
-    "direct construction of {name} has been deprecated, please use {name}.from_parent",
+    "Direct construction of {name} has been deprecated, please use {name}.from_parent.\n"
+    "See "
+    "https://docs.pytest.org/en/latest/deprecations.html#node-construction-changed-to-node-from-parent"
+    " for more details.",
 )
 
 JUNIT_XML_DEFAULT_FAMILY = PytestDeprecationWarning(
