@@ -1,6 +1,5 @@
 import functools
 import inspect
-import itertools
 import sys
 import warnings
 from collections import defaultdict
@@ -1279,10 +1278,8 @@ class FixtureManager:
         else:
             argnames = ()
 
-        usefixtures = itertools.chain.from_iterable(
-            mark.args for mark in node.iter_markers(name="usefixtures")
-        )
-        initialnames = tuple(usefixtures) + argnames
+        usefixtures = get_use_fixtures_for_node(node)
+        initialnames = usefixtures + argnames
         fm = node.session._fixturemanager
         initialnames, names_closure, arg2fixturedefs = fm.getfixtureclosure(
             initialnames, node, ignore_args=self._get_direct_parametrize_args(node)
@@ -1479,3 +1476,12 @@ class FixtureManager:
         for fixturedef in fixturedefs:
             if nodes.ischildnode(fixturedef.baseid, nodeid):
                 yield fixturedef
+
+
+def get_use_fixtures_for_node(node) -> Tuple[str, ...]:
+    """Returns the names of all the usefixtures() marks on the given node"""
+    return tuple(
+        str(name)
+        for mark in node.iter_markers(name="usefixtures")
+        for name in mark.args
+    )

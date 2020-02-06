@@ -1,0 +1,2 @@
+Now all arguments to ``@pytest.mark.parametrize`` need to be explicitly declared in the function signature or via ``indirect``.
+Previously it was possible to omit an argument if a fixture with the same name existed, which was just an accident of implementation and was not meant to be a part of the API.
