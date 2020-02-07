@@ -82,11 +82,11 @@ class CaptureManager:
     def __init__(self, method) -> None:
         self._method = method
         self._global_capturing = None
-        self._item_capture = None  # type: Optional[CaptureFixture]
+        self._capture_fixture = None  # type: Optional[CaptureFixture]
 
     def __repr__(self):
         return "<CaptureManager _method={!r} _global_capturing={!r} _item_capture={!r}>".format(
-            self._method, self._global_capturing, self._item_capture
+            self._method, self._global_capturing, self._capture_fixture
         )
 
     def _getcapture(self, method):
@@ -103,8 +103,8 @@ class CaptureManager:
     def is_capturing(self):
         if self.is_globally_capturing():
             return "global"
-        if self._item_capture:
-            return "fixture %s" % self._item_capture.request.fixturename
+        if self._capture_fixture:
+            return "fixture %s" % self._capture_fixture.request.fixturename
         return False
 
     # Global capturing control
@@ -149,14 +149,14 @@ class CaptureManager:
     # Fixture Control (it's just forwarding, think about removing this later)
 
     @contextlib.contextmanager
-    def _item_fixture(
+    def _capturing_for_request(
         self, request: FixtureRequest
     ) -> Generator["CaptureFixture", None, None]:
-        if self._item_capture:
+        if self._capture_fixture:
             other_name = next(
                 k
                 for k, v in map_fixname_class.items()
-                if v is self._item_capture.captureclass
+                if v is self._capture_fixture.captureclass
             )
             raise request.raiseerror(
                 "cannot use {} and {} at the same time".format(
@@ -164,31 +164,31 @@ class CaptureManager:
                 )
             )
         capture_class = map_fixname_class[request.fixturename]
-        self._item_capture = CaptureFixture(capture_class, request)
+        self._capture_fixture = CaptureFixture(capture_class, request)
         self.activate_fixture()
-        yield self._item_capture
-        self._item_capture.close()
-        self._item_capture = None
+        yield self._capture_fixture
+        self._capture_fixture.close()
+        self._capture_fixture = None
 
     def activate_fixture(self):
         """If the current item is using ``capsys`` or ``capfd``, activate them so they take precedence over
         the global capture.
         """
-        if self._item_capture:
-            self._item_capture._start()
+        if self._capture_fixture:
+            self._capture_fixture._start()
 
     def deactivate_fixture(self):
         """Deactivates the ``capsys`` or ``capfd`` fixture of this item, if any."""
-        if self._item_capture:
-            self._item_capture.close()
+        if self._capture_fixture:
+            self._capture_fixture.close()
 
     def suspend_fixture(self):
-        if self._item_capture:
-            self._item_capture._suspend()
+        if self._capture_fixture:
+            self._capture_fixture._suspend()
 
     def resume_fixture(self):
-        if self._item_capture:
-            self._item_capture._resume()
+        if self._capture_fixture:
+            self._capture_fixture._resume()
 
     # Helper context managers
 
@@ -264,9 +264,8 @@ def capsys(request):
     calls, which return a ``(out, err)`` namedtuple.
     ``out`` and ``err`` will be ``text`` objects.
     """
-    with request.config.pluginmanager.getplugin("capturemanager")._item_fixture(
-        request
-    ) as fixture:
+    capman = request.config.pluginmanager.getplugin("capturemanager")
+    with capman._capturing_for_request(request) as fixture:
         yield fixture
 
 
@@ -278,9 +277,8 @@ def capsysbinary(request):
     method calls, which return a ``(out, err)`` namedtuple.
     ``out`` and ``err`` will be ``bytes`` objects.
     """
-    with request.config.pluginmanager.getplugin("capturemanager")._item_fixture(
-        request
-    ) as fixture:
+    capman = request.config.pluginmanager.getplugin("capturemanager")
+    with capman._capturing_for_request(request) as fixture:
         yield fixture
 
 
@@ -296,9 +294,8 @@ def capfd(request):
         pytest.skip(
             "capfd fixture needs os.dup function which is not available in this system"
         )
-    with request.config.pluginmanager.getplugin("capturemanager")._item_fixture(
-        request
-    ) as fixture:
+    capman = request.config.pluginmanager.getplugin("capturemanager")
+    with capman._capturing_for_request(request) as fixture:
         yield fixture
 
 
@@ -314,9 +311,8 @@ def capfdbinary(request):
         pytest.skip(
             "capfdbinary fixture needs os.dup function which is not available in this system"
         )
-    with request.config.pluginmanager.getplugin("capturemanager")._item_fixture(
-        request
-    ) as fixture:
+    capman = request.config.pluginmanager.getplugin("capturemanager")
+    with capman._capturing_for_request(request) as fixture:
         yield fixture
 
 
