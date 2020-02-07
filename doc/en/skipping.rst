@@ -234,11 +234,11 @@ expect a test to fail:
     def test_function():
         ...
 
-This test will be run but no traceback will be reported
-when it fails. Instead terminal reporting will list it in the
-"expected to fail" (``XFAIL``) or "unexpectedly passing" (``XPASS``) sections.
+This test will run but no traceback will be reported when it fails. Instead terminal
+reporting will list it in the "expected to fail" (``XFAIL``) or "unexpectedly
+passing" (``XPASS``) sections.
 
-Alternatively, you can also mark a test as ``XFAIL`` from within a test or setup function
+Alternatively, you can mark tests as ``XFAIL`` from within a test or setup function
 imperatively:
 
 .. code-block:: python
@@ -247,9 +247,20 @@ imperatively:
         if not valid_config():
             pytest.xfail("failing configuration (but should work)")
 
-This will unconditionally make ``test_function`` ``XFAIL``. Note that no other code is executed
-after ``pytest.xfail`` call, differently from the marker. That's because it is implemented
-internally by raising a known exception.
+.. code-block:: python
+
+    def test_function2():
+        import slow_module
+
+        if slow_module.slow_function():
+            pytest.xfail("slow_module taking too long")
+
+These two examples illustrate situations where you don't want to check for a condition
+at the module level, which is when a condition would otherwise be evaluated for marks.
+
+They will unconditionally make the two examples ``XFAIL``. Note that no other code is executed
+after a ``pytest.xfail`` call, which is different from a marker. This is because current
+implementation raises an internally known exception.
 
 **Reference**: :ref:`pytest.mark.xfail ref`
 
@@ -261,7 +272,7 @@ internally by raising a known exception.
 
 
 
-Both ``XFAIL`` and ``XPASS`` don't fail the test suite, unless the ``strict`` keyword-only
+Both ``XFAIL`` and ``XPASS`` don't fail the test suite unless the ``strict`` keyword-only
 parameter is passed as ``True``:
 
 .. code-block:: python
