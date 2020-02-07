@@ -10,11 +10,14 @@ import sys
 from io import UnsupportedOperation
 from tempfile import TemporaryFile
 from typing import BinaryIO
+from typing import Generator
 from typing import Iterable
+from typing import Optional
 
 import pytest
 from _pytest.compat import CaptureAndPassthroughIO
 from _pytest.compat import CaptureIO
+from _pytest.config import Config
 from _pytest.fixtures import FixtureRequest
 
 patchsysdict = {0: "stdin", 1: "stdout", 2: "stderr"}
@@ -40,7 +43,7 @@ def pytest_addoption(parser):
 
 
 @pytest.hookimpl(hookwrapper=True)
-def pytest_load_initial_conftests(early_config, parser, args):
+def pytest_load_initial_conftests(early_config: Config):
     ns = early_config.known_args_namespace
     if ns.capture == "fd":
         _py36_windowsconsoleio_workaround(sys.stdout)
@@ -76,14 +79,14 @@ class CaptureManager:
       case special handling is needed to ensure the fixtures take precedence over the global capture.
     """
 
-    def __init__(self, method):
+    def __init__(self, method) -> None:
         self._method = method
         self._global_capturing = None
-        self._current_item = None
+        self._capture_fixture = None  # type: Optional[CaptureFixture]
 
     def __repr__(self):
-        return "<CaptureManager _method={!r} _global_capturing={!r} _current_item={!r}>".format(
-            self._method, self._global_capturing, self._current_item
+        return "<CaptureManager _method={!r} _global_capturing={!r} _item_capture={!r}>".format(
+            self._method, self._global_capturing, self._capture_fixture
         )
 
     def _getcapture(self, method):
@@ -100,11 +103,8 @@ class CaptureManager:
     def is_capturing(self):
         if self.is_globally_capturing():
             return "global"
-        capture_fixture = getattr(self._current_item, "_capture_fixture", None)
-        if capture_fixture is not None:
-            return (
-                "fixture %s" % self._current_item._capture_fixture.request.fixturename
-            )
+        if self._capture_fixture:
+            return "fixture %s" % self._capture_fixture.request.fixturename
         return False
 
     # Global capturing control
@@ -136,41 +136,59 @@ class CaptureManager:
 
     def suspend(self, in_=False):
         # Need to undo local capsys-et-al if it exists before disabling global capture.
-        self.suspend_fixture(self._current_item)
+        self.suspend_fixture()
         self.suspend_global_capture(in_)
 
     def resume(self):
         self.resume_global_capture()
-        self.resume_fixture(self._current_item)
+        self.resume_fixture()
 
     def read_global_capture(self):
         return self._global_capturing.readouterr()
 
     # Fixture Control (it's just forwarding, think about removing this later)
 
-    def activate_fixture(self, item):
+    @contextlib.contextmanager
+    def _capturing_for_request(
+        self, request: FixtureRequest
+    ) -> Generator["CaptureFixture", None, None]:
+        if self._capture_fixture:
+            other_name = next(
+                k
+                for k, v in map_fixname_class.items()
+                if v is self._capture_fixture.captureclass
+            )
+            raise request.raiseerror(
+                "cannot use {} and {} at the same time".format(
+                    request.fixturename, other_name
+                )
+            )
+        capture_class = map_fixname_class[request.fixturename]
+        self._capture_fixture = CaptureFixture(capture_class, request)
+        self.activate_fixture()
+        yield self._capture_fixture
+        self._capture_fixture.close()
+        self._capture_fixture = None
+
+    def activate_fixture(self):
         """If the current item is using ``capsys`` or ``capfd``, activate them so they take precedence over
         the global capture.
         """
-        fixture = getattr(item, "_capture_fixture", None)
-        if fixture is not None:
-            fixture._start()
+        if self._capture_fixture:
+            self._capture_fixture._start()
 
-    def deactivate_fixture(self, item):
+    def deactivate_fixture(self):
         """Deactivates the ``capsys`` or ``capfd`` fixture of this item, if any."""
-        fixture = getattr(item, "_capture_fixture", None)
-        if fixture is not None:
-            fixture.close()
+        if self._capture_fixture:
+            self._capture_fixture.close()
 
-    def suspend_fixture(self, item):
-        fixture = getattr(item, "_capture_fixture", None)
-        if fixture is not None:
-            fixture._suspend()
+    def suspend_fixture(self):
+        if self._capture_fixture:
+            self._capture_fixture._suspend()
 
-    def resume_fixture(self, item):
-        fixture = getattr(item, "_capture_fixture", None)
-        if fixture is not None:
-            fixture._resume()
+    def resume_fixture(self):
+        if self._capture_fixture:
+            self._capture_fixture._resume()
 
     # Helper context managers
 
@@ -186,11 +204,11 @@ class CaptureManager:
     @contextlib.contextmanager
     def item_capture(self, when, item):
         self.resume_global_capture()
-        self.activate_fixture(item)
+        self.activate_fixture()
         try:
             yield
         finally:
-            self.deactivate_fixture(item)
+            self.deactivate_fixture()
             self.suspend_global_capture(in_=False)
 
         out, err = self.read_global_capture()
@@ -213,12 +231,6 @@ class CaptureManager:
                 rep.sections.append(("Captured stderr", err))
         else:
             yield
-
-    @pytest.hookimpl(hookwrapper=True)
-    def pytest_runtest_protocol(self, item):
-        self._current_item = item
-        yield
-        self._current_item = None
 
     @pytest.hookimpl(hookwrapper=True)
     def pytest_runtest_setup(self, item):
@@ -244,18 +256,6 @@ class CaptureManager:
         self.stop_global_capturing()
 
 
-capture_fixtures = {"capfd", "capfdbinary", "capsys", "capsysbinary"}
-
-
-def _ensure_only_one_capture_fixture(request: FixtureRequest, name):
-    fixtures = sorted(set(request.fixturenames) & capture_fixtures - {name})
-    if fixtures:
-        arg = fixtures[0] if len(fixtures) == 1 else fixtures
-        raise request.raiseerror(
-            "cannot use {} and {} at the same time".format(arg, name)
-        )
-
-
 @pytest.fixture
 def capsys(request):
     """Enable text capturing of writes to ``sys.stdout`` and ``sys.stderr``.
@@ -264,8 +264,8 @@ def capsys(request):
     calls, which return a ``(out, err)`` namedtuple.
     ``out`` and ``err`` will be ``text`` objects.
     """
-    _ensure_only_one_capture_fixture(request, "capsys")
-    with _install_capture_fixture_on_item(request, SysCapture) as fixture:
+    capman = request.config.pluginmanager.getplugin("capturemanager")
+    with capman._capturing_for_request(request) as fixture:
         yield fixture
 
 
@@ -277,8 +277,8 @@ def capsysbinary(request):
     method calls, which return a ``(out, err)`` namedtuple.
     ``out`` and ``err`` will be ``bytes`` objects.
     """
-    _ensure_only_one_capture_fixture(request, "capsysbinary")
-    with _install_capture_fixture_on_item(request, SysCaptureBinary) as fixture:
+    capman = request.config.pluginmanager.getplugin("capturemanager")
+    with capman._capturing_for_request(request) as fixture:
         yield fixture
 
 
@@ -290,12 +290,12 @@ def capfd(request):
     calls, which return a ``(out, err)`` namedtuple.
     ``out`` and ``err`` will be ``text`` objects.
     """
-    _ensure_only_one_capture_fixture(request, "capfd")
     if not hasattr(os, "dup"):
         pytest.skip(
             "capfd fixture needs os.dup function which is not available in this system"
         )
-    with _install_capture_fixture_on_item(request, FDCapture) as fixture:
+    capman = request.config.pluginmanager.getplugin("capturemanager")
+    with capman._capturing_for_request(request) as fixture:
         yield fixture
 
 
@@ -307,33 +307,13 @@ def capfdbinary(request):
     calls, which return a ``(out, err)`` namedtuple.
     ``out`` and ``err`` will be ``byte`` objects.
     """
-    _ensure_only_one_capture_fixture(request, "capfdbinary")
     if not hasattr(os, "dup"):
         pytest.skip(
             "capfdbinary fixture needs os.dup function which is not available in this system"
         )
-    with _install_capture_fixture_on_item(request, FDCaptureBinary) as fixture:
+    capman = request.config.pluginmanager.getplugin("capturemanager")
+    with capman._capturing_for_request(request) as fixture:
         yield fixture
-
-
-@contextlib.contextmanager
-def _install_capture_fixture_on_item(request, capture_class):
-    """
-    Context manager which creates a ``CaptureFixture`` instance and "installs" it on
-    the item/node of the given request. Used by ``capsys`` and ``capfd``.
-
-    The CaptureFixture is added as attribute of the item because it needs to accessed
-    by ``CaptureManager`` during its ``pytest_runtest_*`` hooks.
-    """
-    request.node._capture_fixture = fixture = CaptureFixture(capture_class, request)
-    capmanager = request.config.pluginmanager.getplugin("capturemanager")
-    # Need to active this fixture right away in case it is being used by another fixture (setup phase).
-    # If this fixture is being used only by a test function (call phase), then we wouldn't need this
-    # activation, but it doesn't hurt.
-    capmanager.activate_fixture(request.node)
-    yield fixture
-    fixture.close()
-    del request.node._capture_fixture
 
 
 class CaptureFixture:
@@ -705,6 +685,14 @@ class SysCaptureBinary(SysCapture):
         self.tmpfile.seek(0)
         self.tmpfile.truncate()
         return res
+
+
+map_fixname_class = {
+    "capfd": FDCapture,
+    "capfdbinary": FDCaptureBinary,
+    "capsys": SysCapture,
+    "capsysbinary": SysCaptureBinary,
+}
 
 
 class DontReadFromInput:

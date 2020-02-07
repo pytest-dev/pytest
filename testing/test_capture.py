@@ -477,9 +477,9 @@ class TestCaptureFixture:
         result.stdout.fnmatch_lines(
             [
                 "*test_one*",
-                "*capsys*capfd*same*time*",
+                "E * cannot use capfd and capsys at the same time",
                 "*test_two*",
-                "*capfd*capsys*same*time*",
+                "E * cannot use capsys and capfd at the same time",
                 "*2 failed in*",
             ]
         )
