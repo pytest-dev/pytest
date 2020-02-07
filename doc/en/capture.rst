@@ -93,6 +93,11 @@ of the failing function and hide the other one:
     setting up <function test_func2 at 0xdeadbeef>
     ======================= 1 failed, 1 passed in 0.12s ========================
 
+.. note:: The ``[100%]`` (or other right-aligned percentages on the same line
+    as a ``test_….py`` file) indicate the `progress of running all test cases
+    <https://blog.pytest.org/2017/whats-new-in-pytest-33/>`_, not the code coverage.
+    To obtain the latter, use `pytest-cov <https://pypi.org/project/pytest-cov/>`_.
+
 Accessing captured output from a test function
 ---------------------------------------------------
 
