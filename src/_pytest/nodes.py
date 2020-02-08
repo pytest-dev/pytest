@@ -15,8 +15,8 @@ import _pytest._code
 from _pytest._code.code import ExceptionChainRepr
 from _pytest._code.code import ExceptionInfo
 from _pytest._code.code import ReprExceptionInfo
+from _pytest._code.source import getfslineno
 from _pytest.compat import cached_property
-from _pytest.compat import getfslineno
 from _pytest.compat import TYPE_CHECKING
 from _pytest.config import Config
 from _pytest.config import PytestPluginManager

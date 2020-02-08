@@ -21,10 +21,10 @@ from _pytest import fixtures
 from _pytest import nodes
 from _pytest._code import filter_traceback
 from _pytest._code.code import ExceptionInfo
+from _pytest._code.source import getfslineno
 from _pytest.compat import ascii_escaped
 from _pytest.compat import get_default_arg_names
 from _pytest.compat import get_real_func
-from _pytest.compat import getfslineno
 from _pytest.compat import getimfunc
 from _pytest.compat import getlocation
 from _pytest.compat import is_generator
@@ -392,7 +392,7 @@ class PyCollector(PyobjMixin, nodes.Collector):
         fm = self.session._fixturemanager
 
         definition = FunctionDefinition.from_parent(self, name=name, callobj=funcobj)
-        fixtureinfo = fm.getfixtureinfo(definition, funcobj, cls)
+        fixtureinfo = definition._fixtureinfo
 
         metafunc = Metafunc(
             definition, fixtureinfo, self.config, cls=cls, module=module

@@ -23,7 +23,6 @@ from typing import Union
 import attr
 import py
 
-import _pytest
 from _pytest._io.saferepr import saferepr
 from _pytest.outcomes import fail
 from _pytest.outcomes import TEST_OUTCOME
@@ -306,16 +305,6 @@ def get_real_method(obj, holder):
     if is_method and hasattr(obj, "__get__") and callable(obj.__get__):
         obj = obj.__get__(holder)
     return obj
-
-
-def getfslineno(obj) -> Tuple[Union[str, py.path.local], int]:
-    # xxx let decorators etc specify a sane ordering
-    obj = get_real_func(obj)
-    if hasattr(obj, "place_as"):
-        obj = obj.place_as
-    fslineno = _pytest._code.getfslineno(obj)
-    assert isinstance(fslineno[1], int), obj
-    return fslineno
 
 
 def getimfunc(func):

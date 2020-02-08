@@ -1300,6 +1300,7 @@ def test_runs_twice(testdir, run_and_parse):
 
 def test_runs_twice_xdist(testdir, run_and_parse):
     pytest.importorskip("xdist")
+    testdir.monkeypatch.delenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD")
     f = testdir.makepyfile(
         """
         def test_pass():

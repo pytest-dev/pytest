@@ -610,14 +610,14 @@ class Testdir:
         """
         self.tmpdir.chdir()
 
-    def _makefile(self, ext, args, kwargs, encoding="utf-8"):
-        items = list(kwargs.items())
+    def _makefile(self, ext, lines, files, encoding="utf-8"):
+        items = list(files.items())
 
         def to_text(s):
             return s.decode(encoding) if isinstance(s, bytes) else str(s)
 
-        if args:
-            source = "\n".join(to_text(x) for x in args)
+        if lines:
+            source = "\n".join(to_text(x) for x in lines)
             basename = self.request.function.__name__
             items.insert(0, (basename, source))
 

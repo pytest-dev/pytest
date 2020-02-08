@@ -8,9 +8,9 @@ from typing import Set
 
 import attr
 
+from .._code.source import getfslineno
 from ..compat import ascii_escaped
 from ..compat import ATTRS_EQ_FIELD
-from ..compat import getfslineno
 from ..compat import NOTSET
 from _pytest.outcomes import fail
 from _pytest.warning_types import PytestUnknownMarkWarning
