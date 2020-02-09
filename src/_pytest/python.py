@@ -10,6 +10,7 @@ from collections import defaultdict
 from collections.abc import Sequence
 from functools import partial
 from textwrap import dedent
+from typing import Dict
 from typing import List
 from typing import Tuple
 from typing import Union
@@ -36,6 +37,7 @@ from _pytest.compat import STRING_TYPES
 from _pytest.config import hookimpl
 from _pytest.deprecated import FUNCARGNAMES
 from _pytest.mark import MARK_GEN
+from _pytest.mark import ParameterSet
 from _pytest.mark.structures import get_unpacked_marks
 from _pytest.mark.structures import normalize_mark_list
 from _pytest.outcomes import fail
@@ -947,7 +949,6 @@ class Metafunc:
             to set a dynamic scope using test context or configuration.
         """
         from _pytest.fixtures import scope2index
-        from _pytest.mark import ParameterSet
 
         argnames, parameters = ParameterSet._for_parametrize(
             argnames,
@@ -996,7 +997,9 @@ class Metafunc:
                 newcalls.append(newcallspec)
         self._calls = newcalls
 
-    def _resolve_arg_ids(self, argnames, ids, parameters, item):
+    def _resolve_arg_ids(
+        self, argnames: List[str], ids, parameters: List[ParameterSet], item: nodes.Item
+    ):
         """Resolves the actual ids for the given argnames, based on the ``ids`` parameter given
         to ``parametrize``.
 
@@ -1028,7 +1031,7 @@ class Metafunc:
         ids = idmaker(argnames, parameters, idfn, ids, self.config, item=item)
         return ids
 
-    def _resolve_arg_value_types(self, argnames, indirect):
+    def _resolve_arg_value_types(self, argnames: List[str], indirect) -> Dict[str, str]:
         """Resolves if each parametrized argument must be considered a parameter to a fixture or a "funcarg"
         to the function, based on the ``indirect`` parameter of the parametrized() call.
 
