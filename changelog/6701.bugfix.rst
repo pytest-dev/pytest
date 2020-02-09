@@ -1,0 +1,1 @@
+Node ids for paths outside of the rootdir are generated properly, e.g. for ``pytest testing --rootdir=/tmp -vv``.

@@ -3690,6 +3690,7 @@ class TestParameterizedSubRequest:
         result = testdir.runpytest()
         result.stdout.fnmatch_lines(
             [
+                "test_foos.py F *",
                 "The requested fixture has no parameter defined for test:",
                 "    test_foos.py::test_foo",
                 "",
@@ -3707,8 +3708,9 @@ class TestParameterizedSubRequest:
         result = testdir.runpytest("--rootdir", rootdir, tests_dir)
         result.stdout.fnmatch_lines(
             [
+                "../tests/test_foos.py F *",
                 "The requested fixture has no parameter defined for test:",
-                "    test_foos.py::test_foo",
+                "    ../tests/test_foos.py::test_foo",
                 "",
                 "Requested fixture 'fix_with_param' defined in:",
                 "{}:4".format(fixfile),

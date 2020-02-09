@@ -274,7 +274,14 @@ def test_conftest_symlink_files(testdir):
         build.join(f).mksymlinkto(real.join(f))
     build.chdir()
     result = testdir.runpytest("-vs", "app/test_foo.py")
-    result.stdout.fnmatch_lines(["*conftest_loaded*", "PASSED"])
+    result.stdout.fnmatch_lines(
+        [
+            "conftest_loaded",
+            "../real/app/test_foo.py::test1 fixture_used",
+            "PASSED",
+            "*= 1 passed in *",
+        ]
+    )
     assert result.ret == ExitCode.OK
 
 

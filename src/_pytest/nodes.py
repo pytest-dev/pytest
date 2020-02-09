@@ -422,12 +422,6 @@ class Collector(Node):
             excinfo.traceback = ntraceback.filter()
 
 
-def _check_initialpaths_for_relpath(session, fspath):
-    for initial_path in session._initialpaths:
-        if fspath.common(initial_path) == initial_path:
-            return fspath.relto(initial_path)
-
-
 class FSHookProxy:
     def __init__(
         self, fspath: py.path.local, pm: PytestPluginManager, remove_mods
@@ -444,7 +438,12 @@ class FSHookProxy:
 
 class FSCollector(Collector):
     def __init__(
-        self, fspath: py.path.local, parent=None, config=None, session=None, nodeid=None
+        self,
+        fspath: py.path.local,
+        parent=None,
+        config=None,
+        session=None,
+        nodeid: Optional[str] = None,
     ) -> None:
         name = fspath.basename
         if parent is not None:
@@ -457,11 +456,8 @@ class FSCollector(Collector):
         session = session or parent.session
 
         if nodeid is None:
-            nodeid = self.fspath.relto(session.config.rootdir)
-
-            if not nodeid:
-                nodeid = _check_initialpaths_for_relpath(session, fspath)
-            if nodeid and os.sep != SEP:
+            nodeid = session._node_location_to_relpath(self.fspath)
+            if os.sep != SEP:
                 nodeid = nodeid.replace(os.sep, SEP)
 
         super().__init__(name, parent, config, session, nodeid=nodeid, fspath=fspath)

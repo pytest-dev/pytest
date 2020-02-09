@@ -730,8 +730,8 @@ class TestInvocationVariants:
         assert result.ret == 0
         result.stdout.fnmatch_lines(
             [
-                "test_hello.py::test_hello*PASSED*",
-                "test_hello.py::test_other*PASSED*",
+                "../hello/ns_pkg/hello/test_hello.py::test_hello PASSED *",
+                "../hello/ns_pkg/hello/test_hello.py::test_other PASSED *",
                 "ns_pkg/world/test_world.py::test_world*PASSED*",
                 "ns_pkg/world/test_world.py::test_other*PASSED*",
                 "*4 passed in*",

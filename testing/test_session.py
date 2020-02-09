@@ -1,5 +1,8 @@
+import os
+
 import pytest
 from _pytest.config import ExitCode
+from _pytest.pytester import Testdir
 
 
 class SessionTests:
@@ -334,7 +337,7 @@ def test_sessionfinish_with_start(testdir):
 
 
 @pytest.mark.parametrize("path", ["root", "{relative}/root", "{environment}/root"])
-def test_rootdir_option_arg(testdir, monkeypatch, path):
+def test_rootdir_option_arg(testdir: Testdir, monkeypatch, path: str) -> None:
     monkeypatch.setenv("PY_ROOTDIR_PATH", str(testdir.tmpdir))
     path = path.format(relative=str(testdir.tmpdir), environment="$PY_ROOTDIR_PATH")
 
@@ -344,18 +347,19 @@ def test_rootdir_option_arg(testdir, monkeypatch, path):
         """
         import os
         def test_one():
-            assert 1
-    """
+            assert os.getcwd() == {!r}
+    """.format(
+            os.getcwd()
+        )
     )
 
+    expected = [
+        "*rootdir: {}/root".format(testdir.tmpdir),
+        "test_rootdir_option_arg.py *",
+        "*1 passed*",
+    ]
     result = testdir.runpytest("--rootdir={}".format(path))
-    result.stdout.fnmatch_lines(
-        [
-            "*rootdir: {}/root".format(testdir.tmpdir),
-            "root/test_rootdir_option_arg.py *",
-            "*1 passed*",
-        ]
-    )
+    result.stdout.fnmatch_lines(expected)
 
 
 def test_rootdir_wrong_option_arg(testdir):
