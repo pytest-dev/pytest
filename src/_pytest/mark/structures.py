@@ -147,7 +147,7 @@ class Mark:
     #: keyword arguments of the mark decorator
     kwargs = attr.ib()  # Dict[str, object]
 
-    def combined_with(self, other: "Mark"):
+    def combined_with(self, other: "Mark") -> "Mark":
         """
         :param other: the mark to combine with
         :type other: Mark
