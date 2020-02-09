@@ -467,7 +467,6 @@ class TerminalReporter:
 
             main_color, _ = _get_main_color(self.stats)
 
-            self._numreported += 1
             is_last_item = self._numreported == self._session.testscollected
             if is_last_item:
                 self._write_progress_information_filling_space(color=main_color)
