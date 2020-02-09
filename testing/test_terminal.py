@@ -1598,26 +1598,26 @@ class TestProgressOutputStyle:
         )
 
     def test_same_nodeids(self, testdir: Testdir) -> None:
+        p1 = testdir.makeconftest(
+            """
+            def pytest_collection_modifyitems(items):
+                assert len(items) == 2
+                items[1]._nodeid = items[0].nodeid
+            """
+        )
         p1 = testdir.makepyfile(
             """
-            import pytest
-
-            @pytest.mark.parametrize("v", ["", " "])
-            @pytest.mark.parametrize("w", ["", " "])
-            def test(v, w):
-                pass
+            def test1(): pass
+            def test2(): pass
             """
         )
         result = testdir.runpytest("-v", str(p1))
-        trans = str.maketrans({"[": "[[]", "]": "[]]"})
         result.stdout.fnmatch_lines(
             [
-                line.translate(trans)
+                line.translate(TRANS_FNMATCH)
                 for line in [
-                    "test_same_nodeids.py::test[] PASSED * [ 25%]",
-                    "test_same_nodeids.py::test[ ] PASSED * [ 50%]",
-                    "test_same_nodeids.py::test[ ] PASSED * [ 75%]",
-                    "test_same_nodeids.py::test[ - ] PASSED * [100%]",
+                    "test_same_nodeids.py::test1 PASSED * [50%]",
+                    "test_same_nodeids.py::test2 PASSED * [100%]",
                 ]
             ]
         )
