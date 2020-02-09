@@ -1601,14 +1601,27 @@ class TestProgressOutputStyle:
         p1 = testdir.makeconftest(
             """
             def pytest_collection_modifyitems(items):
-                assert len(items) == 2
-                items[1]._nodeid = items[0].nodeid
+                for item in items[1:]:
+                    item._nodeid = items[0].nodeid
             """
         )
         p1 = testdir.makepyfile(
             """
-            def test1(): pass
-            def test2(): pass
+            import pytest
+
+            @pytest.fixture
+            def err_setup():
+                assert 0, "setup-error"
+
+            @pytest.fixture
+            def err_teardown():
+                yield
+                assert 0, "teardown-error"
+
+            def test1(err_setup): pass
+            def test2(err_teardown): pass
+            def test3(): pass
+            def test4(): pass
             """
         )
         result = testdir.runpytest("-v", str(p1))
@@ -1616,8 +1629,11 @@ class TestProgressOutputStyle:
             [
                 line.translate(TRANS_FNMATCH)
                 for line in [
-                    "test_same_nodeids.py::test1 PASSED * [50%]",
-                    "test_same_nodeids.py::test2 PASSED * [100%]",
+                    "test_same_nodeids.py::test1 ERROR  * [ 25%]",
+                    "test_same_nodeids.py::test1 PASSED * [ 50%]",
+                    "test_same_nodeids.py::test1 ERROR  * [ 50%]",
+                    "test_same_nodeids.py::test1 PASSED * [ 75%]",
+                    "test_same_nodeids.py::test1 PASSED * [100%]",
                 ]
             ]
         )

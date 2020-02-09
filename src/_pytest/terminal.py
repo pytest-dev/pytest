@@ -414,6 +414,8 @@ class TerminalReporter:
         else:
             markup = None
         self.stats.setdefault(category, []).append(rep)
+        if rep.when == "setup":
+            self._numreported += 1
         if not letter and not word:
             # probably passed setup/teardown
             return
@@ -436,8 +438,6 @@ class TerminalReporter:
             else:
                 self._tw.write(letter, **markup)
         else:
-            if rep.when == "call":
-                self._numreported += 1
             line = self._locationline(rep.nodeid, *rep.location)
             if not running_xdist:
                 self.write_ensure_prefix(line, word, **markup)
