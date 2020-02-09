@@ -342,7 +342,7 @@ def get_fslocation_from_item(
     * "obj": a Python object that the item wraps.
     * "fspath": just a path
 
-    :return: filename and line number
+    :rtype: a tuple of (str|LocalPath, int) with filename and line number.
     """
     try:
         return item.location[:2]

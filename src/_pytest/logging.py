@@ -327,15 +327,19 @@ class LogCaptureFixture:
 
     @property
     def handler(self) -> LogCaptureHandler:
+        """
+        :rtype: LogCaptureHandler
+        """
         return self._item.catch_log_handler  # type: ignore[no-any-return]  # noqa: F723
 
     def get_records(self, when: str) -> List[logging.LogRecord]:
         """
         Get the logging records for one of the possible test phases.
 
-        :param when:
+        :param str when:
             Which test phase to obtain the records from. Valid values are: "setup", "call" and "teardown".
 
+        :rtype: List[logging.LogRecord]
         :return: the list of captured records at the given stage
 
         .. versionadded:: 3.4

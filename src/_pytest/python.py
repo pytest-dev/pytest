@@ -1003,10 +1003,11 @@ class Metafunc:
         """Resolves the actual ids for the given argnames, based on the ``ids`` parameter given
         to ``parametrize``.
 
-        :param argnames: list of argument names passed to ``parametrize()``.
+        :param List[str] argnames: list of argument names passed to ``parametrize()``.
         :param ids: the ids parameter of the parametrized call (see docs).
-        :param parameters: the list of parameter values, same size as ``argnames``.
-        :param item: the item that generated this parametrized call.
+        :param List[ParameterSet] parameters: the list of parameter values, same size as ``argnames``.
+        :param Item item: the item that generated this parametrized call.
+        :rtype: List[str]
         :return: the list of ids for each argname given
         """
         from _pytest._io.saferepr import saferepr
@@ -1034,9 +1035,9 @@ class Metafunc:
         """Resolves if each parametrized argument must be considered a parameter to a fixture or a "funcarg"
         to the function, based on the ``indirect`` parameter of the parametrized() call.
 
-        :param argnames: list of argument names passed to ``parametrize()``.
+        :param List[str] argnames: list of argument names passed to ``parametrize()``.
         :param indirect: same ``indirect`` parameter of ``parametrize()``.
-        :return:
+        :rtype: Dict[str, str]
             A dict mapping each arg name to either:
             * "params" if the argname should be the parameter of a fixture of the same name.
             * "funcargs" if the argname should be a parameter to the parametrized test function.

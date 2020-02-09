@@ -45,7 +45,6 @@ todo_include_todos = 1
 extensions = [
     "pygments_pytest",
     "sphinx.ext.autodoc",
-    "sphinx_autodoc_typehints",
     "sphinx.ext.autosummary",
     "sphinx.ext.intersphinx",
     "sphinx.ext.todo",
@@ -346,10 +345,6 @@ texinfo_documents = [
 
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {"python": ("https://docs.python.org/3", None)}
-
-# sphinx_autodoc_typehints
-set_type_checking_flag = True
-always_document_param_types = True
 
 
 def configure_logging(app: "sphinx.application.Sphinx") -> None:

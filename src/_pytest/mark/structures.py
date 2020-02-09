@@ -146,9 +146,11 @@ class Mark:
     #: keyword arguments of the mark decorator
     kwargs = attr.ib()  # Dict[str, object]
 
-    def combined_with(self, other):
+    def combined_with(self, other: "Mark"):
         """
         :param other: the mark to combine with
+        :type other: Mark
+        :rtype: Mark
 
         combines by appending args and merging the mappings
         """
@@ -250,7 +252,12 @@ def get_unpacked_marks(obj):
 
 
 def normalize_mark_list(mark_list: List[Union[Mark, MarkDecorator]]) -> List[Mark]:
-    """normalizes marker decorating helpers to mark objects"""
+    """
+    normalizes marker decorating helpers to mark objects
+
+    :type mark_list: List[Union[Mark, Markdecorator]]
+    :rtype: List[Mark]
+    """
     extracted = [
         getattr(mark, "mark", mark) for mark in mark_list
     ]  # unpack MarkDecorator
