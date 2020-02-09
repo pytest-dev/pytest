@@ -85,7 +85,7 @@ class CaptureManager:
         self._capture_fixture = None  # type: Optional[CaptureFixture]
 
     def __repr__(self):
-        return "<CaptureManager _method={!r} _global_capturing={!r} _item_capture={!r}>".format(
+        return "<CaptureManager _method={!r} _global_capturing={!r} _capture_fixture={!r}>".format(
             self._method, self._global_capturing, self._capture_fixture
         )
 
