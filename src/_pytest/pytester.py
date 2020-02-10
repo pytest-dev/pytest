@@ -30,8 +30,8 @@ from _pytest.capture import MultiCapture
 from _pytest.capture import SysCapture
 from _pytest.compat import TYPE_CHECKING
 from _pytest.config import _PluggyPlugin
+from _pytest.config import ExitCode
 from _pytest.fixtures import FixtureRequest
-from _pytest.main import ExitCode
 from _pytest.main import Session
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.nodes import Collector

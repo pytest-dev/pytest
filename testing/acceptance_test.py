@@ -8,7 +8,7 @@ import py
 
 import pytest
 from _pytest.compat import importlib_metadata
-from _pytest.main import ExitCode
+from _pytest.config import ExitCode
 
 
 def prepend_pythonpath(*dirs):
@@ -412,7 +412,7 @@ class TestGeneralUsage:
     def test_report_all_failed_collections_initargs(self, testdir):
         testdir.makeconftest(
             """
-            from _pytest.main import ExitCode
+            from _pytest.config import ExitCode
 
             def pytest_sessionfinish(exitstatus):
                 assert exitstatus == ExitCode.USAGE_ERROR

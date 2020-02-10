@@ -1,7 +1,7 @@
 import gc
 
 import pytest
-from _pytest.main import ExitCode
+from _pytest.config import ExitCode
 
 
 def test_simple_unittest(testdir):

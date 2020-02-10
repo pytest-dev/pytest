@@ -6,7 +6,7 @@ import sys
 import py
 
 import pytest
-from _pytest.main import ExitCode
+from _pytest.config import ExitCode
 
 pytest_plugins = ("pytester",)
 

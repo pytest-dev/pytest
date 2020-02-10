@@ -15,7 +15,7 @@ from typing import TextIO
 import pytest
 from _pytest import capture
 from _pytest.capture import CaptureManager
-from _pytest.main import ExitCode
+from _pytest.config import ExitCode
 
 # note: py.io capture tests where copied from
 # pylib 1.4.20.dev2 (rev 13d9af95547e)

@@ -8,8 +8,8 @@ import py.path
 
 import _pytest.pytester as pytester
 import pytest
+from _pytest.config import ExitCode
 from _pytest.config import PytestPluginManager
-from _pytest.main import ExitCode
 from _pytest.outcomes import Failed
 from _pytest.pytester import CwdSnapshot
 from _pytest.pytester import HookRecorder
