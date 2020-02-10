@@ -7,6 +7,8 @@ from pluggy import HookspecMarker
 from _pytest.compat import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    from _pytest.fixtures import FixtureDef
+    from _pytest.fixtures import SubRequest
     from _pytest.main import Session
 
 
@@ -408,7 +410,9 @@ def pytest_report_from_serializable(config, data):
 
 
 @hookspec(firstresult=True)
-def pytest_fixture_setup(fixturedef, request):
+def pytest_fixture_setup(
+    fixturedef: "FixtureDef", request: "SubRequest"
+) -> Optional[object]:
     """ performs fixture setup execution.
 
     :return: The return value of the call to the fixture function
@@ -422,7 +426,9 @@ def pytest_fixture_setup(fixturedef, request):
     """
 
 
-def pytest_fixture_post_finalizer(fixturedef, request):
+def pytest_fixture_post_finalizer(
+    fixturedef: "FixtureDef", request: "SubRequest"
+) -> None:
     """Called after fixture teardown, but before the cache is cleared, so
     the fixture result ``fixturedef.cached_result`` is still available (not
     ``None``)."""

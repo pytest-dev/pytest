@@ -1,4 +1,8 @@
+from typing import Optional
+
 import pytest
+from _pytest.fixtures import FixtureDef
+from _pytest.fixtures import SubRequest
 
 
 def pytest_addoption(parser):
@@ -13,12 +17,15 @@ def pytest_addoption(parser):
 
 
 @pytest.hookimpl(tryfirst=True)
-def pytest_fixture_setup(fixturedef, request):
+def pytest_fixture_setup(
+    fixturedef: FixtureDef, request: SubRequest
+) -> Optional[object]:
     # Will return a dummy fixture if the setuponly option is provided.
     if request.config.option.setupplan:
         my_cache_key = fixturedef.cache_key(request)
         fixturedef.cached_result = (None, my_cache_key, None)
         return fixturedef.cached_result
+    return None
 
 
 @pytest.hookimpl(tryfirst=True)

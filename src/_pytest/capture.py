@@ -19,7 +19,7 @@ from _pytest.compat import CaptureAndPassthroughIO
 from _pytest.compat import CaptureIO
 from _pytest.compat import TYPE_CHECKING
 from _pytest.config import Config
-from _pytest.fixtures import FixtureRequest
+from _pytest.fixtures import SubRequest
 
 if TYPE_CHECKING:
     from typing_extensions import Literal
@@ -157,7 +157,7 @@ class CaptureManager:
 
     @contextlib.contextmanager
     def _capturing_for_request(
-        self, request: FixtureRequest
+        self, request: SubRequest,
     ) -> Generator["CaptureFixture", None, None]:
         """
         Context manager that creates a ``CaptureFixture`` instance for the

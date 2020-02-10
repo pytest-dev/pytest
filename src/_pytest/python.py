@@ -41,6 +41,7 @@ from _pytest.compat import REGEX_TYPE
 from _pytest.compat import safe_getattr
 from _pytest.compat import safe_isclass
 from _pytest.compat import STRING_TYPES
+from _pytest.compat import TYPE_CHECKING
 from _pytest.config import Config
 from _pytest.config import hookimpl
 from _pytest.deprecated import FUNCARGNAMES
@@ -55,6 +56,9 @@ from _pytest.outcomes import skip
 from _pytest.pathlib import parts
 from _pytest.warning_types import PytestCollectionWarning
 from _pytest.warning_types import PytestUnhandledCoroutineWarning
+
+if TYPE_CHECKING:
+    from _pytest.fixtures import _Scope
 
 
 def pyobj_property(name):
@@ -890,7 +894,7 @@ class Metafunc:
                 Callable[[object], Optional[object]],
             ]
         ] = None,
-        scope: "Optional[str]" = None,
+        scope: "Optional[_Scope]" = None,
         *,
         _param_mark: Optional[Mark] = None
     ) -> None:
