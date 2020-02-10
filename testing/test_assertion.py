@@ -1081,40 +1081,14 @@ def test_reprcompare_whitespaces():
     ]
 
 
-def test_reprcompare_escape_sequences():
-    config = mock_config()
-    detail = plugin.pytest_assertrepr_compare(
-        config, "==", "\x1b[31mred", "\x1b[31mgreen"
-    )
-    assert detail == [
+def test_reprcompare_escape_sequences_strings():
+    assert callequal("\x1b[31mred", "\x1b[31mgreen") == [
         "'\\x1b[31mred' == '\\x1b[31mgreen'",
         "Strings contain non-printable/escape characters, escaping them using repr()",
         "- '\\x1b[31mred'",
         "?            ^",
         "+ '\\x1b[31mgreen'",
         "?          +  ^^",
-    ]
-
-    detail = plugin.pytest_assertrepr_compare(
-        config, "==", ["\x1b[31mred"], ["\x1b[31mgreen"]
-    )
-    assert detail == [
-        "['\\x1b[31mred'] == ['\\x1b[31mgreen']",
-        "At index 0 diff: '\\x1b[31mred' != '\\x1b[31mgreen'",
-        "Use -v to get the full diff",
-    ]
-    config = mock_config(verbose=2)
-    detail = plugin.pytest_assertrepr_compare(
-        config, "==", ["\x1b[31mred"], ["\x1b[31mgreen"]
-    )
-    assert detail == [
-        "['\\x1b[31mred'] == ['\\x1b[31mgreen']",
-        "At index 0 diff: '\\x1b[31mred' != '\\x1b[31mgreen'",
-        "Full diff:",
-        "- ['\\x1b[31mred']",
-        "?             ^",
-        "+ ['\\x1b[31mgreen']",
-        "?           +  ^^",
     ]
 
 
