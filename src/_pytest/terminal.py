@@ -70,7 +70,7 @@ def pytest_addoption(parser):
         default=0,
         dest="verbose",
         help="increase verbosity.",
-    ),
+    )
     group._addoption(
         "-q",
         "--quiet",
@@ -78,7 +78,7 @@ def pytest_addoption(parser):
         default=0,
         dest="verbose",
         help="decrease verbosity.",
-    ),
+    )
     group._addoption(
         "--verbosity",
         dest="verbose",

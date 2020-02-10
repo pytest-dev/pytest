@@ -66,7 +66,7 @@ def pytest_addoption(parser):
         action="store_true",
         default=False,
         help="trace considerations of conftest.py files.",
-    ),
+    )
     group.addoption(
         "--debug",
         action="store_true",
