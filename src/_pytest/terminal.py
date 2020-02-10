@@ -468,6 +468,9 @@ class TerminalReporter:
 
             is_last_item = self._numreported == self._session.testscollected
             if is_last_item:
+                if hasattr(self, "_last_item_reported"):
+                    assert 0, self._last_item_reported
+                self._last_item_reported = nodeid
                 self._write_progress_information_filling_space(color=main_color)
             else:
                 w = self._width_of_current_line
