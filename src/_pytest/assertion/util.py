@@ -193,6 +193,7 @@ def _diff_text(left: str, right: str, verbose: int = 0) -> List[str]:
     characters which are identical to keep the diff minimal.
     """
     from difflib import ndiff
+    from wcwidth import wcswidth
 
     explanation = []  # type: List[str]
 
@@ -225,10 +226,18 @@ def _diff_text(left: str, right: str, verbose: int = 0) -> List[str]:
         left = repr(str(left))
         right = repr(str(right))
         explanation += ["Strings contain only whitespace, escaping them using repr()"]
-    explanation += [
-        line.strip("\n")
-        for line in ndiff(left.splitlines(keepends), right.splitlines(keepends))
-    ]
+
+    left_lines = left.splitlines(keepends)
+    right_lines = right.splitlines(keepends)
+
+    if any(wcswidth(x) == -1 for x in left_lines + right_lines):
+        left_lines = [repr(x) for x in left_lines]
+        right_lines = [repr(x) for x in right_lines]
+        explanation += [
+            "Strings contain non-printable/escape characters, escaping them using repr()"
+        ]
+
+    explanation += [line.strip("\n") for line in ndiff(left_lines, right_lines)]
     return explanation
 
 
