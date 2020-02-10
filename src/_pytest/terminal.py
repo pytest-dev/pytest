@@ -480,7 +480,11 @@ class TerminalReporter:
     def pytest_runtestloop(self) -> Generator[None, None, None]:
         """Write final progress indicator."""
         yield
-        if self.verbosity <= 0 and self._show_progress_info:
+        if (
+            getattr(self, "_tests_ran", False)
+            and self.verbosity <= 0
+            and self._show_progress_info
+        ):
             self._write_progress_information_filling_space()
 
     def _get_progress_information_message(self) -> str:
