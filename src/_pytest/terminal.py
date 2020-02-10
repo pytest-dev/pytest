@@ -414,8 +414,6 @@ class TerminalReporter:
         else:
             markup = None
         self.stats.setdefault(category, []).append(rep)
-        if rep.when == "setup":
-            self._numreported += 1
         if not letter and not word:
             # probably passed setup/teardown
             return
@@ -458,6 +456,7 @@ class TerminalReporter:
 
     def pytest_runtest_logfinish(self, nodeid):
         assert self._session
+        self._numreported += 1
         if self.verbosity <= 0 and self._show_progress_info:
             if self._show_progress_info == "count":
                 num_tests = self._session.testscollected
