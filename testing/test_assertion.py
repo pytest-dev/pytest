@@ -1074,9 +1074,7 @@ def test_reprcompare_notin():
 
 
 def test_reprcompare_whitespaces():
-    config = mock_config()
-    detail = plugin.pytest_assertrepr_compare(config, "==", "\r\n", "\n")
-    assert detail == [
+    assert callequal("\r\n", "\n") == [
         r"'\r\n' == '\n'",
         r"Strings contain only whitespace, escaping them using repr()",
         r"- '\n'",
