@@ -1249,7 +1249,6 @@ class FixtureManager:
         self.config = session.config
         self._arg2fixturedefs = {}
         self._holderobjseen = set()
-        self._arg2finish = {}
         self._nodeid_and_autousenames = [("", self.config.getini("usefixtures"))]
         session.config.pluginmanager.register(self, "funcmanage")
 
