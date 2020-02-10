@@ -12,6 +12,7 @@ from functools import partial
 from typing import Any
 from typing import Callable
 from typing import Dict
+from typing import Generator
 from typing import List
 from typing import Mapping
 from typing import Optional
@@ -257,7 +258,7 @@ class TerminalReporter:
         self.reportchars = getreportopt(config)
         self.hasmarkup = self._tw.hasmarkup
         self.isatty = file.isatty()
-        self._numreported = 0
+        self._progress_items_reported = 0
         self._show_progress_info = self._determine_show_progress_info()
         self._collect_report_last_write = None  # type: Optional[float]
 
@@ -414,6 +415,8 @@ class TerminalReporter:
         else:
             markup = None
         self.stats.setdefault(category, []).append(rep)
+        if rep.when == "setup":
+            self._progress_items_reported += 1
         if not letter and not word:
             # probably passed setup/teardown
             return
@@ -454,30 +457,31 @@ class TerminalReporter:
                 self._tw.write(" " + line)
                 self.currentfspath = -2
 
-    def pytest_runtest_logfinish(self, nodeid):
-        assert self._session
-        self._numreported += 1
-        if self.verbosity <= 0 and self._show_progress_info:
-            if self._show_progress_info == "count":
-                num_tests = self._session.testscollected
-                progress_length = len(" [{}/{}]".format(str(num_tests), str(num_tests)))
-            else:
-                progress_length = len(" [100%]")
+    def pytest_runtest_teardown(self) -> None:
+        """Write progress if past edge."""
+        if self.verbosity >= 0 or not self._show_progress_info:
+            return
 
+        if self._show_progress_info == "count":
+            assert self._session
+            num_tests = self._session.testscollected
+            progress_length = len(" [{0}/{0}]".format(num_tests))
+        else:
+            progress_length = len(" [100%]")
+
+        w = self._width_of_current_line
+        past_edge = w + progress_length + 1 >= self._screen_width
+        if past_edge:
+            msg = self._get_progress_information_message()
             main_color, _ = _get_main_color(self.stats)
+            self._tw.write(msg + "\n", **{main_color: True})
 
-            is_last_item = self._numreported == self._session.testscollected
-            if is_last_item:
-                if hasattr(self, "_last_item_reported"):
-                    assert 0, self._last_item_reported
-                self._last_item_reported = nodeid
-                self._write_progress_information_filling_space(color=main_color)
-            else:
-                w = self._width_of_current_line
-                past_edge = w + progress_length + 1 >= self._screen_width
-                if past_edge:
-                    msg = self._get_progress_information_message()
-                    self._tw.write(msg + "\n", **{main_color: True})
+    @pytest.hookimpl(hookwrapper=True)
+    def pytest_runtestloop(self) -> Generator[None, None, None]:
+        """Write final progress indicator."""
+        yield
+        if self.verbosity <= 0 and self._show_progress_info:
+            self._write_progress_information_filling_space()
 
     def _get_progress_information_message(self) -> str:
         assert self._session
@@ -486,11 +490,13 @@ class TerminalReporter:
             if collected:
                 counter_format = "{{:{}d}}".format(len(str(collected)))
                 format_string = " [{}/{{}}]".format(counter_format)
-                return format_string.format(self._numreported, collected)
+                return format_string.format(self._progress_items_reported, collected)
             return " [ {} / {} ]".format(collected, collected)
         else:
             if collected:
-                return " [{:3d}%]".format(self._numreported * 100 // collected)
+                return " [{:3d}%]".format(
+                    self._progress_items_reported * 100 // collected
+                )
             return " [100%]"
 
     def _write_progress_information_filling_space(self, color=None):
