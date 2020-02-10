@@ -9,7 +9,6 @@ from typing import Set
 import attr
 
 from ..compat import ascii_escaped
-from ..compat import ATTRS_EQ_FIELD
 from ..compat import getfslineno
 from ..compat import NOTSET
 from _pytest.outcomes import fail
@@ -391,35 +390,3 @@ class NodeKeywords(MutableMapping):
 
     def __repr__(self):
         return "<NodeKeywords for node {}>".format(self.node)
-
-
-# mypy cannot find this overload, remove when on attrs>=19.2
-@attr.s(hash=False, **{ATTRS_EQ_FIELD: False})  # type: ignore
-class NodeMarkers:
-    """
-    internal structure for storing marks belonging to a node
-
-    ..warning::
-
-        unstable api
-
-    """
-
-    own_markers = attr.ib(default=attr.Factory(list))
-
-    def update(self, add_markers):
-        """update the own markers
-        """
-        self.own_markers.extend(add_markers)
-
-    def find(self, name):
-        """
-        find markers in own nodes or parent nodes
-        needs a better place
-        """
-        for mark in self.own_markers:
-            if mark.name == name:
-                yield mark
-
-    def __iter__(self):
-        return iter(self.own_markers)
