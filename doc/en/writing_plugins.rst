@@ -180,7 +180,8 @@ modifies the parsed AST before it gets compiled to bytecode.  This is
 done via a :pep:`302` import hook which gets installed early on when
 ``pytest`` starts up and will perform this rewriting when modules get
 imported.  However since we do not want to test different bytecode
-then you will run in production this hook only rewrites test modules
+then you will run in production this hook only rewrites
+:confval:`test modules <python_files>`
 themselves as well as any modules which are part of plugins.  Any
 other imported module will not be rewritten and normal assertion
 behaviour will happen.
