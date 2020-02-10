@@ -46,6 +46,9 @@ jobs:
     - env: TOXENV=py35 PYTEST_COVERAGE=1 PYTEST_ADDOPTS="-k test_raises_cyclic_reference"
       python: '3.5.1'
       dist: trusty
+      before_install:
+        # Work around https://github.com/jaraco/zipp/issues/40.
+        - python -m pip install -U pip 'setuptools>=34.4.0' virtualenv
 
 before_script:
   - |
