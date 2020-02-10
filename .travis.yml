@@ -1,6 +1,6 @@
 language: python
-dist: xenial
-python: '3.7'
+dist: trusty
+python: '3.5.1'
 cache: false
 
 env:
@@ -16,36 +16,8 @@ install:
 
 jobs:
   include:
-    # OSX tests - first (in test stage), since they are the slower ones.
-    # Coverage for:
-    # - osx
-    # - verbose=1
-    - os: osx
-      osx_image: xcode10.1
-      language: generic
-      env: TOXENV=py37-xdist PYTEST_COVERAGE=1 PYTEST_ADDOPTS=-v
-      before_install:
-        - which python3
-        - python3 -V
-        - ln -sfn "$(which python3)" /usr/local/bin/python
-        - python -V
-        - test $(python -c 'import sys; print("%d%d" % sys.version_info[0:2])') = 37
-
-    # Full run of latest supported version, without xdist.
-    # Coverage for:
-    # - pytester's LsofFdLeakChecker
-    # - TestArgComplete (linux only)
-    # - numpy
-    # - old attrs
-    # - verbose=0
-    # - test_sys_breakpoint_interception (via pexpect).
-    - env: TOXENV=py37-lsof-numpy-oldattrs-pexpect-twisted PYTEST_COVERAGE=1 PYTEST_ADDOPTS=
-      python: '3.7'
-
     # Coverage for Python 3.5.{0,1} specific code, mostly typing related.
     - env: TOXENV=py35 PYTEST_COVERAGE=1 PYTEST_ADDOPTS="-k test_raises_cyclic_reference"
-      python: '3.5.1'
-      dist: trusty
       before_install:
         # Work around https://github.com/jaraco/zipp/issues/40.
         - python -m pip install -U pip 'setuptools>=34.4.0' virtualenv
