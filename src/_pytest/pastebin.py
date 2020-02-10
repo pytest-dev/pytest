@@ -2,9 +2,11 @@
 import tempfile
 
 import pytest
+from _pytest.config import Config
+from _pytest.config.argparsing import Parser
 
 
-def pytest_addoption(parser):
+def pytest_addoption(parser: Parser) -> None:
     group = parser.getgroup("terminal reporting")
     group._addoption(
         "--pastebin",
@@ -18,7 +20,7 @@ def pytest_addoption(parser):
 
 
 @pytest.hookimpl(trylast=True)
-def pytest_configure(config):
+def pytest_configure(config: Config) -> None:
     if config.option.pastebin == "all":
         tr = config.pluginmanager.getplugin("terminalreporter")
         # if no terminal reporter plugin is present, nothing we can do here;
@@ -26,7 +28,8 @@ def pytest_configure(config):
         # when using pytest-xdist, for example
         if tr is not None:
             # pastebin file will be utf-8 encoded binary file
-            config._pastebinfile = tempfile.TemporaryFile("w+b")
+            # Type ignored: pending mechanism to store typed objects scoped to config.
+            config._pastebinfile = tempfile.TemporaryFile("w+b")  # type: ignore # noqa: F821
             oldwrite = tr._tw.write
 
             def tee_write(s, **kwargs):
@@ -38,13 +41,14 @@ def pytest_configure(config):
             tr._tw.write = tee_write
 
 
-def pytest_unconfigure(config):
+def pytest_unconfigure(config: Config) -> None:
     if hasattr(config, "_pastebinfile"):
         # get terminal contents and delete file
-        config._pastebinfile.seek(0)
-        sessionlog = config._pastebinfile.read()
-        config._pastebinfile.close()
-        del config._pastebinfile
+        pastebinfile = config._pastebinfile  # type: ignore[attr-defined] # noqa: F821
+        del config._pastebinfile  # type: ignore[attr-defined] # noqa: F821
+        pastebinfile.seek(0)
+        sessionlog = pastebinfile.read()
+        pastebinfile.close()
         # undo our patching in the terminal reporter
         tr = config.pluginmanager.getplugin("terminalreporter")
         del tr._tw.__dict__["write"]

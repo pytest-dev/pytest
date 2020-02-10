@@ -18,12 +18,12 @@ import pytest
 from _pytest.compat import CaptureAndPassthroughIO
 from _pytest.compat import CaptureIO
 from _pytest.config import Config
-from _pytest.fixtures import FixtureRequest
+from _pytest.config.argparsing import Parser
 
 patchsysdict = {0: "stdin", 1: "stdout", 2: "stderr"}
 
 
-def pytest_addoption(parser):
+def pytest_addoption(parser: Parser) -> None:
     group = parser.getgroup("general")
     group._addoption(
         "--capture",
@@ -150,7 +150,7 @@ class CaptureManager:
 
     @contextlib.contextmanager
     def _capturing_for_request(
-        self, request: FixtureRequest
+        self, request
     ) -> Generator["CaptureFixture", None, None]:
         if self._capture_fixture:
             other_name = next(

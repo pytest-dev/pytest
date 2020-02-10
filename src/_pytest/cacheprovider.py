@@ -8,6 +8,8 @@ import json
 import os
 from collections import OrderedDict
 from typing import List
+from typing import Optional
+from typing import Union
 
 import attr
 import py
@@ -19,6 +21,8 @@ from .pathlib import rm_rf
 from _pytest import nodes
 from _pytest._io import TerminalWriter
 from _pytest.config import Config
+from _pytest.config import ExitCode
+from _pytest.config.argparsing import Parser
 from _pytest.main import Session
 
 README_CONTENT = """\
@@ -264,7 +268,7 @@ class LFPlugin:
             else:
                 self._report_status += "not deselecting items."
 
-    def pytest_sessionfinish(self, session):
+    def pytest_sessionfinish(self, session: Session) -> None:
         config = self.config
         if config.getoption("cacheshow") or hasattr(config, "slaveinput"):
             return
@@ -306,7 +310,7 @@ class NFPlugin:
     def _get_increasing_order(self, items):
         return sorted(items, key=lambda item: item.fspath.mtime(), reverse=True)
 
-    def pytest_sessionfinish(self, session):
+    def pytest_sessionfinish(self, session: Session) -> None:
         config = self.config
         if config.getoption("cacheshow") or hasattr(config, "slaveinput"):
             return
@@ -314,7 +318,7 @@ class NFPlugin:
         config.cache.set("cache/nodeids", self.cached_nodeids)
 
 
-def pytest_addoption(parser):
+def pytest_addoption(parser: Parser) -> None:
     group = parser.getgroup("general")
     group.addoption(
         "--lf",
@@ -372,16 +376,18 @@ def pytest_addoption(parser):
     )
 
 
-def pytest_cmdline_main(config):
+def pytest_cmdline_main(config: Config) -> Optional[Union[int, ExitCode]]:
     if config.option.cacheshow:
         from _pytest.main import wrap_session
 
         return wrap_session(config, cacheshow)
+    return None
 
 
 @pytest.hookimpl(tryfirst=True)
-def pytest_configure(config):
-    config.cache = Cache.for_config(config)
+def pytest_configure(config: Config) -> None:
+    # Type ignored: pending mechanism to store typed objects scoped to config.
+    config.cache = Cache.for_config(config)  # type: ignore # noqa: F821
     config.pluginmanager.register(LFPlugin(config), "lfplugin")
     config.pluginmanager.register(NFPlugin(config), "nfplugin")
 

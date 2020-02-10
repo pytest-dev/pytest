@@ -227,7 +227,7 @@ def _bytes_to_ascii(val: bytes) -> str:
     return val.decode("ascii", "backslashreplace")
 
 
-def ascii_escaped(val: Union[bytes, str]):
+def ascii_escaped(val: Union[bytes, str]) -> str:
     """If val is pure ascii, returns it as a str().  Otherwise, escapes
     bytes objects into a sequence of escaped bytes:
 

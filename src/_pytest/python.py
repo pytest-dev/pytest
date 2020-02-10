@@ -13,6 +13,7 @@ from functools import partial
 from typing import Dict
 from typing import Iterable
 from typing import List
+from typing import Mapping
 from typing import Optional
 from typing import Set
 from typing import Tuple
@@ -26,6 +27,7 @@ from _pytest import nodes
 from _pytest._code import filter_traceback
 from _pytest._code.code import ExceptionInfo
 from _pytest._code.source import getfslineno
+from _pytest._io import TerminalWriter
 from _pytest.compat import ascii_escaped
 from _pytest.compat import get_default_arg_names
 from _pytest.compat import get_real_func
@@ -38,8 +40,14 @@ from _pytest.compat import REGEX_TYPE
 from _pytest.compat import safe_getattr
 from _pytest.compat import safe_isclass
 from _pytest.compat import STRING_TYPES
+from _pytest.compat import TYPE_CHECKING
+from _pytest.config import Config
+from _pytest.config import ExitCode
 from _pytest.config import hookimpl
+from _pytest.config.argparsing import Parser
 from _pytest.deprecated import FUNCARGNAMES
+from _pytest.fixtures import FuncFixtureInfo
+from _pytest.main import Session
 from _pytest.mark import MARK_GEN
 from _pytest.mark import ParameterSet
 from _pytest.mark.structures import get_unpacked_marks
@@ -50,6 +58,11 @@ from _pytest.outcomes import skip
 from _pytest.pathlib import parts
 from _pytest.warning_types import PytestCollectionWarning
 from _pytest.warning_types import PytestUnhandledCoroutineWarning
+
+if TYPE_CHECKING:
+    from typing_extensions import Literal
+
+    from _pytest.fixtures import _Scope
 
 
 def pyobj_property(name):
@@ -64,7 +77,7 @@ def pyobj_property(name):
     return property(get, None, None, doc)
 
 
-def pytest_addoption(parser):
+def pytest_addoption(parser: Parser) -> None:
     group = parser.getgroup("general")
     group.addoption(
         "--fixtures",
@@ -119,21 +132,23 @@ def pytest_addoption(parser):
     )
 
 
-def pytest_cmdline_main(config):
+def pytest_cmdline_main(config: Config) -> Optional[Union[int, ExitCode]]:
     if config.option.showfixtures:
         showfixtures(config)
         return 0
     if config.option.show_fixtures_per_test:
         show_fixtures_per_test(config)
         return 0
+    return None
 
 
-def pytest_generate_tests(metafunc):
+def pytest_generate_tests(metafunc: "Metafunc") -> None:
     for marker in metafunc.definition.iter_markers(name="parametrize"):
-        metafunc.parametrize(*marker.args, **marker.kwargs, _param_mark=marker)
+        # TODO: Fix this type-ignore (overlapping kwargs).
+        metafunc.parametrize(*marker.args, **marker.kwargs, _param_mark=marker)  # type: ignore[misc] # noqa: F821
 
 
-def pytest_configure(config):
+def pytest_configure(config: Config) -> None:
     config.addinivalue_line(
         "markers",
         "parametrize(argnames, argvalues): call a test function multiple "
@@ -807,18 +822,19 @@ def hasnew(obj):
 
 
 class CallSpec2:
-    def __init__(self, metafunc):
+    def __init__(self, metafunc: "Metafunc") -> None:
         self.metafunc = metafunc
-        self.funcargs = {}
-        self._idlist = []
-        self.params = {}
+        self.funcargs = {}  # type: Dict[str, object]
+        self._idlist = []  # type: List[str]
+        self.params = {}  # type: Dict[str, object]
         self._globalid = NOTSET
         self._globalparam = NOTSET
-        self._arg2scopenum = {}  # used for sorting parametrized resources
-        self.marks = []
-        self.indices = {}
+        # Used for sorting parametrized resources.
+        self._arg2scopenum = {}  # type: Dict[str, int]
+        self.marks = []  # type: List[Mark]
+        self.indices = {}  # type: Dict[str, int]
 
-    def copy(self):
+    def copy(self) -> "CallSpec2":
         cs = CallSpec2(self.metafunc)
         cs.funcargs.update(self.funcargs)
         cs.params.update(self.params)
@@ -830,11 +846,11 @@ class CallSpec2:
         cs._globalparam = self._globalparam
         return cs
 
-    def _checkargnotcontained(self, arg):
+    def _checkargnotcontained(self, arg: str) -> None:
         if arg in self.params or arg in self.funcargs:
             raise ValueError("duplicate {!r}".format(arg))
 
-    def getparam(self, name):
+    def getparam(self, name: str):
         try:
             return self.params[name]
         except KeyError:
@@ -843,14 +859,28 @@ class CallSpec2:
             return self._globalparam
 
     @property
-    def id(self):
+    def id(self) -> str:
         return "-".join(map(str, self._idlist))
 
-    def setmulti2(self, valtypes, argnames, valset, id, marks, scopenum, param_index):
+    def setmulti2(
+        self,
+        valtypes: "Mapping[str, Literal['params', 'funcargs']]",
+        argnames: typing.Sequence[str],
+        valset: Iterable[object],
+        id: str,
+        marks,
+        scopenum: int,
+        param_index: int,
+    ) -> None:
         for arg, val in zip(argnames, valset):
             self._checkargnotcontained(arg)
             valtype_for_arg = valtypes[arg]
-            getattr(self, valtype_for_arg)[arg] = val
+            if valtype_for_arg == "params":
+                self.params[arg] = val
+            elif valtype_for_arg == "funcargs":
+                self.funcargs[arg] = val
+            else:
+                assert False, "Unhandled valtype for arg: {}".format(valtype_for_arg)
             self.indices[arg] = param_index
             self._arg2scopenum[arg] = scopenum
         self._idlist.append(id)
@@ -868,8 +898,8 @@ class Metafunc:
     def __init__(
         self,
         definition: "FunctionDefinition",
-        fixtureinfo,
-        config,
+        fixtureinfo: fixtures.FuncFixtureInfo,
+        config: Config,
         cls=None,
         module=None,
     ) -> None:
@@ -894,21 +924,21 @@ class Metafunc:
         self._arg2fixturedefs = fixtureinfo.name2fixturedefs
 
     @property
-    def funcargnames(self):
+    def funcargnames(self) -> List[str]:
         """ alias attribute for ``fixturenames`` for pre-2.3 compatibility"""
         warnings.warn(FUNCARGNAMES, stacklevel=2)
         return self.fixturenames
 
     def parametrize(
         self,
-        argnames,
-        argvalues,
+        argnames: Union[str, List[str], Tuple[str, ...]],
+        argvalues: Iterable[Union[ParameterSet, typing.Sequence[object], object]],
         indirect=False,
         ids=None,
-        scope=None,
+        scope: "Optional[_Scope]" = None,
         *,
         _param_mark: Optional[Mark] = None
-    ):
+    ) -> None:
         """ Add new invocations to the underlying test function using the list
         of argvalues for the given argnames.  Parametrization is performed
         during the collection phase.  If you need to setup expensive resources
@@ -1017,8 +1047,12 @@ class Metafunc:
         self._calls = newcalls
 
     def _resolve_arg_ids(
-        self, argnames: List[str], ids, parameters: List[ParameterSet], item: nodes.Item
-    ):
+        self,
+        argnames: typing.Sequence[str],
+        ids,
+        parameters: typing.Sequence[ParameterSet],
+        item,
+    ) -> List[str]:
         """Resolves the actual ids for the given argnames, based on the ``ids`` parameter given
         to ``parametrize``.
 
@@ -1036,8 +1070,7 @@ class Metafunc:
         if ids:
             func_name = self.function.__name__
             ids = self._validate_ids(ids, parameters, func_name)
-        ids = idmaker(argnames, parameters, idfn, ids, self.config, item=item)
-        return ids
+        return idmaker(argnames, parameters, idfn, ids, self.config, item=item)
 
     def _validate_ids(self, ids, parameters, func_name):
         try:
@@ -1071,7 +1104,9 @@ class Metafunc:
                     )
         return new_ids
 
-    def _resolve_arg_value_types(self, argnames: List[str], indirect) -> Dict[str, str]:
+    def _resolve_arg_value_types(
+        self, argnames: typing.Sequence[str], indirect
+    ) -> "Dict[str, Literal['params', 'funcargs']]":
         """Resolves if each parametrized argument must be considered a parameter to a fixture or a "funcarg"
         to the function, based on the ``indirect`` parameter of the parametrized() call.
 
@@ -1083,7 +1118,9 @@ class Metafunc:
             * "funcargs" if the argname should be a parameter to the parametrized test function.
         """
         if isinstance(indirect, bool):
-            valtypes = dict.fromkeys(argnames, "params" if indirect else "funcargs")
+            valtypes = dict.fromkeys(
+                argnames, "params" if indirect else "funcargs"
+            )  # type: Dict[str, Literal['params', 'funcargs']]
         elif isinstance(indirect, Sequence):
             valtypes = dict.fromkeys(argnames, "funcargs")
             for arg in indirect:
@@ -1198,17 +1235,20 @@ def _find_parametrized_scope(argnames, arg2fixturedefs, indirect):
     return "function"
 
 
-def _ascii_escaped_by_config(val, config):
+def _ascii_escaped_by_config(val: Union[str, bytes], config: Optional[Config]) -> str:
     if config is None:
         escape_option = False
     else:
         escape_option = config.getini(
             "disable_test_id_escaping_and_forfeit_all_rights_to_community_support"
         )
-    return val if escape_option else ascii_escaped(val)
+    # TODO: If escaping is turned off and the user passes bytes,
+    #       will return a bytes. For now we ignore this but the
+    #       code *probably* doesn't handle this case.
+    return val if escape_option else ascii_escaped(val)  # type: ignore
 
 
-def _idval(val, argname, idx, idfn, item, config):
+def _idval(val, argname, idx, idfn, item, config: Optional[Config]) -> str:
     if idfn:
         try:
             generated_id = idfn(val)
@@ -1221,7 +1261,7 @@ def _idval(val, argname, idx, idfn, item, config):
     elif config:
         hook_id = config.hook.pytest_make_parametrize_id(
             config=config, val=val, argname=argname
-        )
+        )  # type: Optional[str]
         if hook_id:
             return hook_id
 
@@ -1239,7 +1279,15 @@ def _idval(val, argname, idx, idfn, item, config):
     return str(argname) + str(idx)
 
 
-def _idvalset(idx, parameterset, argnames, idfn, ids, item, config):
+def _idvalset(
+    idx,
+    parameterset: ParameterSet,
+    argnames: Iterable[str],
+    idfn,
+    ids,
+    item,
+    config: Optional[Config],
+) -> str:
     if parameterset.id is not None:
         return parameterset.id
     if ids is None or (idx >= len(ids) or ids[idx] is None):
@@ -1252,29 +1300,36 @@ def _idvalset(idx, parameterset, argnames, idfn, ids, item, config):
         return _ascii_escaped_by_config(ids[idx], config)
 
 
-def idmaker(argnames, parametersets, idfn=None, ids=None, config=None, item=None):
-    ids = [
+def idmaker(
+    argnames: Iterable[str],
+    parametersets: Iterable[ParameterSet],
+    idfn=None,
+    ids=None,
+    config: Optional[Config] = None,
+    item=None,
+) -> List[str]:
+    resolved_ids = [
         _idvalset(valindex, parameterset, argnames, idfn, ids, config=config, item=item)
         for valindex, parameterset in enumerate(parametersets)
     ]
 
     # All IDs must be unique!
-    unique_ids = set(ids)
-    if len(unique_ids) != len(ids):
+    unique_ids = set(resolved_ids)
+    if len(unique_ids) != len(resolved_ids):
 
         # Record the number of occurrences of each test ID
-        test_id_counts = Counter(ids)
+        test_id_counts = Counter(resolved_ids)
 
         # Map the test ID to its next suffix
-        test_id_suffixes = defaultdict(int)
+        test_id_suffixes = defaultdict(int)  # type: Dict[str, int]
 
         # Suffix non-unique IDs to make them unique
-        for index, test_id in enumerate(ids):
+        for index, test_id in enumerate(resolved_ids):
             if test_id_counts[test_id] > 1:
-                ids[index] = "{}{}".format(test_id, test_id_suffixes[test_id])
+                resolved_ids[index] = "{}{}".format(test_id, test_id_suffixes[test_id])
                 test_id_suffixes[test_id] += 1
 
-    return ids
+    return resolved_ids
 
 
 def show_fixtures_per_test(config):
@@ -1335,13 +1390,13 @@ def _show_fixtures_per_test(config, session):
         write_item(session_item)
 
 
-def showfixtures(config):
+def showfixtures(config: Config) -> Union[int, ExitCode]:
     from _pytest.main import wrap_session
 
     return wrap_session(config, _showfixtures_main)
 
 
-def _showfixtures_main(config, session):
+def _showfixtures_main(config: Config, session: Session) -> None:
     import _pytest.config
 
     session.perform_collect()
@@ -1352,7 +1407,7 @@ def _showfixtures_main(config, session):
     fm = session._fixturemanager
 
     available = []
-    seen = set()
+    seen = set()  # type: Set[Tuple[str, str]]
 
     for argname, fixturedefs in fm._arg2fixturedefs.items():
         assert fixturedefs is not None
@@ -1398,7 +1453,7 @@ def _showfixtures_main(config, session):
         tw.line()
 
 
-def write_docstring(tw, doc, indent="    "):
+def write_docstring(tw: TerminalWriter, doc: str, indent: str = "    ") -> None:
     for line in doc.split("\n"):
         tw.write(indent + line + "\n")
 
@@ -1417,13 +1472,13 @@ class Function(PyobjMixin, nodes.Item):
         parent,
         args=None,
         config=None,
-        callspec=None,
+        callspec: Optional[CallSpec2] = None,
         callobj=NOTSET,
         keywords=None,
         session=None,
-        fixtureinfo=None,
+        fixtureinfo: Optional[FuncFixtureInfo] = None,
         originalname=None,
-    ):
+    ) -> None:
         super().__init__(name, parent, config=config, session=session)
         self._args = args
         if callobj is not NOTSET:
@@ -1459,7 +1514,7 @@ class Function(PyobjMixin, nodes.Item):
             fixtureinfo = self.session._fixturemanager.getfixtureinfo(
                 self, self.obj, self.cls, funcargs=True
             )
-        self._fixtureinfo = fixtureinfo
+        self._fixtureinfo = fixtureinfo  # type: FuncFixtureInfo
         self.fixturenames = fixtureinfo.names_closure
         self._initrequest()
 

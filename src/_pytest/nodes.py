@@ -2,6 +2,7 @@ import os
 import warnings
 from functools import lru_cache
 from typing import Any
+from typing import Callable
 from typing import Dict
 from typing import Iterable
 from typing import List
@@ -107,7 +108,7 @@ class Node(metaclass=NodeMeta):
 
         #: the pytest config object
         if config:
-            self.config = config
+            self.config = config  # type: Config
         else:
             if not parent:
                 raise TypeError("config or parent must be provided")
@@ -293,7 +294,7 @@ class Node(metaclass=NodeMeta):
     def listnames(self):
         return [x.name for x in self.listchain()]
 
-    def addfinalizer(self, fin):
+    def addfinalizer(self, fin: Callable[[], object]) -> None:
         """ register a function to be called when this node is finalized.
 
         This method can only be called when this node is active

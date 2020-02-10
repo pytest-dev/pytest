@@ -5,8 +5,11 @@ import os
 
 import py
 
+from _pytest.config import Config
+from _pytest.config.argparsing import Parser
 
-def pytest_addoption(parser):
+
+def pytest_addoption(parser: Parser) -> None:
     group = parser.getgroup("terminal reporting", "resultlog plugin options")
     group.addoption(
         "--resultlog",
@@ -18,7 +21,7 @@ def pytest_addoption(parser):
     )
 
 
-def pytest_configure(config):
+def pytest_configure(config: Config) -> None:
     resultlog = config.option.resultlog
     # prevent opening resultlog on slave nodes (xdist)
     if resultlog and not hasattr(config, "slaveinput"):
@@ -26,8 +29,9 @@ def pytest_configure(config):
         if not os.path.isdir(dirname):
             os.makedirs(dirname)
         logfile = open(resultlog, "w", 1)  # line buffered
-        config._resultlog = ResultLog(config, logfile)
-        config.pluginmanager.register(config._resultlog)
+        # Type ignored: pending mechanism to store typed objects scoped to config.
+        _resultlog = config._resultlog = ResultLog(config, logfile)  # type: ignore # noqa: F821
+        config.pluginmanager.register(_resultlog)
 
         from _pytest.deprecated import RESULT_LOG
         from _pytest.warnings import _issue_warning_captured
@@ -35,11 +39,11 @@ def pytest_configure(config):
         _issue_warning_captured(RESULT_LOG, config.hook, stacklevel=2)
 
 
-def pytest_unconfigure(config):
+def pytest_unconfigure(config: Config) -> None:
     resultlog = getattr(config, "_resultlog", None)
     if resultlog:
+        del config._resultlog  # type: ignore[attr-defined] # noqa: F821
         resultlog.logfile.close()
-        del config._resultlog
         config.pluginmanager.unregister(resultlog)
 
 

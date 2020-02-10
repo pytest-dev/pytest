@@ -1,11 +1,13 @@
 import inspect
 import warnings
-from collections import namedtuple
 from collections.abc import MutableMapping
 from typing import Iterable
 from typing import List
+from typing import NamedTuple
 from typing import Optional
+from typing import Sequence
 from typing import Set
+from typing import Tuple
 from typing import Union
 
 import attr
@@ -13,20 +15,21 @@ import attr
 from .._code.source import getfslineno
 from ..compat import ascii_escaped
 from ..compat import NOTSET
+from _pytest.config import Config
 from _pytest.outcomes import fail
 from _pytest.warning_types import PytestUnknownMarkWarning
 
 EMPTY_PARAMETERSET_OPTION = "empty_parameter_set_mark"
 
 
-def istestfunc(func):
+def istestfunc(func) -> bool:
     return (
         hasattr(func, "__call__")
         and getattr(func, "__name__", "<lambda>") != "<lambda>"
     )
 
 
-def get_empty_parameterset_mark(config, argnames, func):
+def get_empty_parameterset_mark(config: Config, argnames, func) -> "MarkDecorator":
     from ..nodes import Collector
 
     requested_mark = config.getini(EMPTY_PARAMETERSET_OPTION)
@@ -49,12 +52,26 @@ def get_empty_parameterset_mark(config, argnames, func):
         fs,
         lineno,
     )
-    return mark(reason=reason)
+    # Type ignored because MarkDecorator.__call__() is a bit tough to
+    # annotate ATM.
+    return mark(reason=reason)  # type: ignore[no-any-return] # noqa: F723
 
 
-class ParameterSet(namedtuple("ParameterSet", "values, marks, id")):
+class ParameterSet(
+    NamedTuple(
+        "ParameterSet",
+        [
+            ("values", Sequence[object]),
+            # TODO: Work on this type.
+            ("marks", Union[Tuple, List, Set]),
+            ("id", Optional[str]),
+        ],
+    )
+):
     @classmethod
-    def param(cls, *values, marks=(), id=None):
+    def param(
+        cls, *values: object, marks=(), id: Optional[str] = None
+    ) -> "ParameterSet":
         if isinstance(marks, MarkDecorator):
             marks = (marks,)
         else:
@@ -69,7 +86,11 @@ class ParameterSet(namedtuple("ParameterSet", "values, marks, id")):
         return cls(values, marks, id)
 
     @classmethod
-    def extract_from(cls, parameterset, force_tuple=False):
+    def extract_from(
+        cls,
+        parameterset: Union["ParameterSet", Sequence[object], object],
+        force_tuple: bool = False,
+    ) -> "ParameterSet":
         """
         :param parameterset:
             a legacy style parameterset that may or may not be a tuple,
@@ -85,10 +106,20 @@ class ParameterSet(namedtuple("ParameterSet", "values, marks, id")):
         if force_tuple:
             return cls.param(parameterset)
         else:
-            return cls(parameterset, marks=[], id=None)
+            # TODO: Refactor to fix this type-ignore. Currently the following
+            # type-checks but crashes:
+            #
+            #   @pytest.mark.parametrize(('x', 'y'), [1, 2])
+            #   def test_foo(x, y): pass
+            return cls(parameterset, marks=[], id=None)  # type: ignore[arg-type] # noqa: F821
 
     @staticmethod
-    def _parse_parametrize_args(argnames, argvalues, *args, **kwargs):
+    def _parse_parametrize_args(
+        argnames: Union[str, List[str], Tuple[str, ...]],
+        argvalues: Iterable[Union["ParameterSet", Sequence[object], object]],
+        *args,
+        **kwargs
+    ) -> Tuple[Union[List[str], Tuple[str, ...]], bool]:
         if not isinstance(argnames, (tuple, list)):
             argnames = [x.strip() for x in argnames.split(",") if x.strip()]
             force_tuple = len(argnames) == 1
@@ -97,13 +128,23 @@ class ParameterSet(namedtuple("ParameterSet", "values, marks, id")):
         return argnames, force_tuple
 
     @staticmethod
-    def _parse_parametrize_parameters(argvalues, force_tuple):
+    def _parse_parametrize_parameters(
+        argvalues: Iterable[Union["ParameterSet", Sequence[object], object]],
+        force_tuple: bool,
+    ) -> List["ParameterSet"]:
         return [
             ParameterSet.extract_from(x, force_tuple=force_tuple) for x in argvalues
         ]
 
     @classmethod
-    def _for_parametrize(cls, argnames, argvalues, func, config, function_definition):
+    def _for_parametrize(
+        cls,
+        argnames: Union[str, List[str], Tuple[str, ...]],
+        argvalues: Iterable[Union["ParameterSet", Sequence[object], object]],
+        func,
+        config: Config,
+        function_definition,
+    ) -> Tuple[Union[List[str], Tuple[str, ...]], List["ParameterSet"]]:
         argnames, force_tuple = cls._parse_parametrize_args(argnames, argvalues)
         parameters = cls._parse_parametrize_parameters(argvalues, force_tuple)
         del argvalues
@@ -152,7 +193,7 @@ class Mark:
     #: resolved/generated ids with parametrize Marks
     _param_ids_generated = attr.ib(type=Optional[List[str]], default=None, repr=False)
 
-    def _has_param_ids(self):
+    def _has_param_ids(self) -> bool:
         return "ids" in self.kwargs or len(self.args) >= 4
 
     def combined_with(self, other: "Mark") -> "Mark":
@@ -215,10 +256,10 @@ class MarkDecorator:
 
     """
 
-    mark = attr.ib(validator=attr.validators.instance_of(Mark))
+    mark = attr.ib(type=Mark, validator=attr.validators.instance_of(Mark))
 
     @property
-    def name(self):
+    def name(self) -> str:
         """alias for mark.name"""
         return self.mark.name
 
@@ -233,13 +274,13 @@ class MarkDecorator:
         return self.mark.kwargs
 
     @property
-    def markname(self):
+    def markname(self) -> str:
         return self.name  # for backward-compat (2.4.1 had this attr)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "<MarkDecorator {!r}>".format(self.mark)
 
-    def with_args(self, *args, **kwargs):
+    def with_args(self, *args, **kwargs) -> "MarkDecorator":
         """ return a MarkDecorator with extra arguments added
 
         unlike call this can be used even if the sole argument is a callable/class
@@ -262,7 +303,7 @@ class MarkDecorator:
         return self.with_args(*args, **kwargs)
 
 
-def get_unpacked_marks(obj):
+def get_unpacked_marks(obj) -> List[Mark]:
     """
     obtain the unpacked marks that are stored on an object
     """
@@ -288,7 +329,7 @@ def normalize_mark_list(mark_list: Iterable[Union[Mark, MarkDecorator]]) -> List
     return [x for x in extracted if isinstance(x, Mark)]
 
 
-def store_mark(obj, mark):
+def store_mark(obj, mark: Mark) -> None:
     """store a Mark on an object
     this is used to implement the Mark declarations/decorators correctly
     """
@@ -310,7 +351,7 @@ class MarkGenerator:
     will set a 'slowtest' :class:`MarkInfo` object
     on the ``test_function`` object. """
 
-    _config = None
+    _config = None  # type: Optional[Config]
     _markers = set()  # type: Set[str]
 
     def __getattr__(self, name: str) -> MarkDecorator:
@@ -387,8 +428,8 @@ class NodeKeywords(MutableMapping):
             seen.update(self.parent.keywords)
         return seen
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self._seen())
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "<NodeKeywords for node {}>".format(self.node)

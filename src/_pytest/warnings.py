@@ -4,10 +4,12 @@ from contextlib import contextmanager
 from typing import Generator
 
 import pytest
+from _pytest.config import Config
+from _pytest.config.argparsing import Parser
 from _pytest.main import Session
 
 
-def _setoption(wmod, arg):
+def _setoption(wmod, arg) -> None:
     """
     Copy of the warning._setoption function but does not escape arguments.
     """
@@ -31,7 +33,7 @@ def _setoption(wmod, arg):
     wmod.filterwarnings(action, message, category, module, lineno)
 
 
-def pytest_addoption(parser):
+def pytest_addoption(parser: Parser) -> None:
     group = parser.getgroup("pytest-warnings")
     group.addoption(
         "-W",
@@ -48,7 +50,7 @@ def pytest_addoption(parser):
     )
 
 
-def pytest_configure(config):
+def pytest_configure(config: Config) -> None:
     config.addinivalue_line(
         "markers",
         "filterwarnings(warning): add a warning filter to the given test. "

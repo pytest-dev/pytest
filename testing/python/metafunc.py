@@ -34,7 +34,7 @@ class TestMetafunc:
         names = fixtures.getfuncargnames(func)
         fixtureinfo = FixtureInfo(names)
         definition = DefinitionMock._create(func)
-        return python.Metafunc(definition, fixtureinfo, config)
+        return python.Metafunc(definition, fixtureinfo, config)  # type: ignore[arg-type] # noqa: F821
 
     def test_no_funcargs(self):
         def function():
@@ -318,7 +318,8 @@ class TestMetafunc:
             ("ação", MockConfig({option: False}), "a\\xe7\\xe3o"),
         ]
         for val, config, expected in values:
-            assert _idval(val, "a", 6, None, item=None, config=config) == expected
+            actual = _idval(val, "a", 6, None, item=None, config=config)  # type: ignore[arg-type] # noqa: F821
+            assert actual == expected
 
     def test_bytes_idval(self):
         """unittest for the expected behavior to obtain ids for parametrized
@@ -511,7 +512,10 @@ class TestMetafunc:
         ]
         for config, expected in values:
             result = idmaker(
-                ("a",), [pytest.param("string")], idfn=lambda _: "ação", config=config
+                ("a",),
+                [pytest.param("string")],
+                idfn=lambda _: "ação",
+                config=config,  # type: ignore[arg-type] # noqa: F821
             )
             assert result == [expected]
 
@@ -544,7 +548,10 @@ class TestMetafunc:
         ]
         for config, expected in values:
             result = idmaker(
-                ("a",), [pytest.param("string")], ids=["ação"], config=config
+                ("a",),
+                [pytest.param("string")],
+                ids=["ação"],
+                config=config,  # type: ignore[arg-type] # noqa: F821
             )
             assert result == [expected]
 

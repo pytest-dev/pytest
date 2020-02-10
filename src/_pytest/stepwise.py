@@ -1,7 +1,10 @@
 import pytest
+from _pytest.config import Config
+from _pytest.config.argparsing import Parser
+from _pytest.main import Session
 
 
-def pytest_addoption(parser):
+def pytest_addoption(parser: Parser) -> None:
     group = parser.getgroup("general")
     group.addoption(
         "--sw",
@@ -19,7 +22,7 @@ def pytest_addoption(parser):
 
 
 @pytest.hookimpl
-def pytest_configure(config):
+def pytest_configure(config: Config) -> None:
     config.pluginmanager.register(StepwisePlugin(config), "stepwiseplugin")
 
 
@@ -34,7 +37,7 @@ class StepwisePlugin:
             self.lastfailed = config.cache.get("cache/stepwise", None)
             self.skip = config.getvalue("stepwise_skip")
 
-    def pytest_sessionstart(self, session):
+    def pytest_sessionstart(self, session: Session) -> None:
         self.session = session
 
     def pytest_collection_modifyitems(self, session, config, items):
@@ -100,7 +103,7 @@ class StepwisePlugin:
         if self.active and self.config.getoption("verbose") >= 0 and self.report_status:
             return "stepwise: %s" % self.report_status
 
-    def pytest_sessionfinish(self, session):
+    def pytest_sessionfinish(self, session: Session) -> None:
         if self.active:
             self.config.cache.set("cache/stepwise", self.lastfailed)
         else:

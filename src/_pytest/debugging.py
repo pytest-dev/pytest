@@ -4,7 +4,10 @@ import functools
 import sys
 
 from _pytest import outcomes
+from _pytest.config import Config
 from _pytest.config import hookimpl
+from _pytest.config import PytestPluginManager
+from _pytest.config.argparsing import Parser
 from _pytest.config.exceptions import UsageError
 
 
@@ -19,7 +22,7 @@ def _validate_usepdb_cls(value):
     return (modname, classname)
 
 
-def pytest_addoption(parser):
+def pytest_addoption(parser: Parser) -> None:
     group = parser.getgroup("general")
     group._addoption(
         "--pdb",
@@ -43,7 +46,7 @@ def pytest_addoption(parser):
     )
 
 
-def pytest_configure(config):
+def pytest_configure(config: Config) -> None:
     import pdb
 
     if config.getvalue("trace"):
@@ -73,8 +76,8 @@ def pytest_configure(config):
 class pytestPDB:
     """ Pseudo PDB that defers to the real pdb. """
 
-    _pluginmanager = None
-    _config = None
+    _pluginmanager = None  # type: PytestPluginManager
+    _config = None  # type: Config
     _saved = []  # type: list
     _recursive_debug = 0
     _wrapped_pdb_cls = None

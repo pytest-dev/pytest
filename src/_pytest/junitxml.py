@@ -21,7 +21,9 @@ import py
 import pytest
 from _pytest import deprecated
 from _pytest import nodes
+from _pytest.config import Config
 from _pytest.config import filename_arg
+from _pytest.config.argparsing import Parser
 from _pytest.warnings import _issue_warning_captured
 
 
@@ -359,7 +361,7 @@ def record_testsuite_property(request):
     return record_func
 
 
-def pytest_addoption(parser):
+def pytest_addoption(parser: Parser) -> None:
     group = parser.getgroup("terminal reporting")
     group.addoption(
         "--junitxml",
@@ -404,7 +406,7 @@ def pytest_addoption(parser):
     )
 
 
-def pytest_configure(config):
+def pytest_configure(config: Config) -> None:
     xmlpath = config.option.xmlpath
     # prevent opening xmllog on slave nodes (xdist)
     if xmlpath and not hasattr(config, "slaveinput"):
@@ -412,7 +414,8 @@ def pytest_configure(config):
         if not junit_family:
             _issue_warning_captured(deprecated.JUNIT_XML_DEFAULT_FAMILY, config.hook, 2)
             junit_family = "xunit1"
-        config._xml = LogXML(
+        # Type ignored: pending mechanism to store typed objects scoped to config.
+        _xml = config._xml = LogXML(  # type: ignore # noqa: F821
             xmlpath,
             config.option.junitprefix,
             config.getini("junit_suite_name"),
@@ -421,13 +424,13 @@ def pytest_configure(config):
             junit_family,
             config.getini("junit_log_passing_tests"),
         )
-        config.pluginmanager.register(config._xml)
+        config.pluginmanager.register(_xml)
 
 
-def pytest_unconfigure(config):
+def pytest_unconfigure(config: Config) -> None:
     xml = getattr(config, "_xml", None)
     if xml:
-        del config._xml
+        del config._xml  # type: ignore[attr-defined] # noqa: F821
         config.pluginmanager.unregister(xml)
 
 
@@ -622,10 +625,10 @@ class LogXML:
         reporter.attrs.update(classname="pytest", name="internal")
         reporter._add_simple(Junit.error, "internal error", excrepr)
 
-    def pytest_sessionstart(self):
+    def pytest_sessionstart(self) -> None:
         self.suite_start_time = time.time()
 
-    def pytest_sessionfinish(self):
+    def pytest_sessionfinish(self) -> None:
         dirname = os.path.dirname(os.path.abspath(self.logfile))
         if not os.path.isdir(dirname):
             os.makedirs(dirname)
