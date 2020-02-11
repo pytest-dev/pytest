@@ -56,9 +56,7 @@ class TestNewAPI:
             testdir.tmpdir.ensure_dir(".pytest_cache").chmod(mode)
 
     @pytest.mark.skipif(sys.platform.startswith("win"), reason="no chmod on windows")
-    @pytest.mark.filterwarnings(
-        "ignore:could not create cache path:pytest.PytestWarning"
-    )
+    @pytest.mark.filterwarnings("default")
     def test_cache_failure_warns(self, testdir, monkeypatch):
         monkeypatch.setenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD", "1")
         cache_dir = str(testdir.tmpdir.ensure_dir(".pytest_cache"))
