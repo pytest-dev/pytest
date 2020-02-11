@@ -3,7 +3,7 @@ import sys
 from unittest import mock
 
 import pytest
-from _pytest.main import ExitCode
+from _pytest.config import ExitCode
 from _pytest.mark import EMPTY_PARAMETERSET_OPTION
 from _pytest.mark import MarkGenerator as Mark
 from _pytest.nodes import Collector

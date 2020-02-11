@@ -4,8 +4,8 @@ import textwrap
 import py
 
 import pytest
+from _pytest.config import ExitCode
 from _pytest.config import PytestPluginManager
-from _pytest.main import ExitCode
 from _pytest.pathlib import Path
 
 

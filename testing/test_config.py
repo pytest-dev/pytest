@@ -7,11 +7,11 @@ import pytest
 from _pytest.compat import importlib_metadata
 from _pytest.config import _iter_rewritable_modules
 from _pytest.config import Config
+from _pytest.config import ExitCode
 from _pytest.config.exceptions import UsageError
 from _pytest.config.findpaths import determine_setup
 from _pytest.config.findpaths import get_common_ancestor
 from _pytest.config.findpaths import getcfg
-from _pytest.main import ExitCode
 from _pytest.pathlib import Path
 
 
@@ -1134,7 +1134,7 @@ class TestOverrideIniArgs:
                 % (testdir.request.config._parser.optparser.prog,)
             ]
         )
-        assert result.ret == _pytest.main.ExitCode.USAGE_ERROR
+        assert result.ret == _pytest.config.ExitCode.USAGE_ERROR
 
     def test_override_ini_does_not_contain_paths(self, _config_for_test, _sys_snapshot):
         """Check that -o no longer swallows all options after it (#3103)"""

@@ -26,7 +26,7 @@ from more_itertools import collapse
 import pytest
 from _pytest import nodes
 from _pytest.config import Config
-from _pytest.main import ExitCode
+from _pytest.config import ExitCode
 from _pytest.main import Session
 from _pytest.reports import CollectReport
 from _pytest.reports import TestReport

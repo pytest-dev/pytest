@@ -4,7 +4,7 @@ import textwrap
 
 import _pytest._code
 import pytest
-from _pytest.main import ExitCode
+from _pytest.config import ExitCode
 from _pytest.nodes import Collector
 
 

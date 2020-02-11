@@ -1,5 +1,4 @@
 """ core implementation of testing process: init, session, runtest loop. """
-import enum
 import fnmatch
 import functools
 import importlib
@@ -21,6 +20,7 @@ from _pytest import nodes
 from _pytest.compat import TYPE_CHECKING
 from _pytest.config import Config
 from _pytest.config import directory_arg
+from _pytest.config import ExitCode
 from _pytest.config import hookimpl
 from _pytest.config import UsageError
 from _pytest.fixtures import FixtureManager
@@ -34,29 +34,6 @@ if TYPE_CHECKING:
     from typing import Type
 
     from _pytest.python import Package
-
-
-class ExitCode(enum.IntEnum):
-    """
-    .. versionadded:: 5.0
-
-    Encodes the valid exit codes by pytest.
-
-    Currently users and plugins may supply other exit codes as well.
-    """
-
-    #: tests passed
-    OK = 0
-    #: tests failed
-    TESTS_FAILED = 1
-    #: pytest was interrupted
-    INTERRUPTED = 2
-    #: an internal error got in the way
-    INTERNAL_ERROR = 3
-    #: pytest was misused
-    USAGE_ERROR = 4
-    #: pytest couldn't find tests
-    NO_TESTS_COLLECTED = 5
 
 
 def pytest_addoption(parser):

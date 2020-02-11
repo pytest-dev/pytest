@@ -6,6 +6,7 @@ from _pytest import __version__
 from _pytest.assertion import register_assert_rewrite
 from _pytest.compat import _setup_collect_fakemodule
 from _pytest.config import cmdline
+from _pytest.config import ExitCode
 from _pytest.config import hookimpl
 from _pytest.config import hookspec
 from _pytest.config import main
@@ -15,7 +16,6 @@ from _pytest.fixtures import fillfixtures as _fillfuncargs
 from _pytest.fixtures import fixture
 from _pytest.fixtures import yield_fixture
 from _pytest.freeze_support import freeze_includes
-from _pytest.main import ExitCode
 from _pytest.main import Session
 from _pytest.mark import MARK_GEN as mark
 from _pytest.mark import param

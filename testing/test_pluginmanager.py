@@ -3,9 +3,9 @@ import sys
 import types
 
 import pytest
+from _pytest.config import ExitCode
 from _pytest.config import PytestPluginManager
 from _pytest.config.exceptions import UsageError
-from _pytest.main import ExitCode
 from _pytest.main import Session
 
 

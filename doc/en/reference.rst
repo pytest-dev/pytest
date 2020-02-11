@@ -738,7 +738,7 @@ ExceptionInfo
 pytest.ExitCode
 ~~~~~~~~~~~~~~~
 
-.. autoclass:: _pytest.main.ExitCode
+.. autoclass:: _pytest.config.ExitCode
     :members:
 
 

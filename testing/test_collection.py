@@ -6,8 +6,8 @@ import textwrap
 import py
 
 import pytest
+from _pytest.config import ExitCode
 from _pytest.main import _in_venv
-from _pytest.main import ExitCode
 from _pytest.main import Session
 from _pytest.pytester import Testdir
 
