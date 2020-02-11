@@ -1,0 +1,1 @@
+:func:`pytest.exit() <_pytest.outcomes.exit>` is handled when emitted from the :func:`pytest_sessionfinish <_pytest.hookspec.pytest_sessionfinish>` hook.  This includes quitting from a debugger.

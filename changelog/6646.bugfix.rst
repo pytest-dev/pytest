@@ -1,0 +1,1 @@
+Assertion rewriting hooks are (re)stored for the current item, which fixes them being still used after e.g. pytester's :func:`testdir.runpytest <_pytest.pytester.Testdir.runpytest>` etc.

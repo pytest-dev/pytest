@@ -2,14 +2,16 @@ import inspect
 import warnings
 from collections import namedtuple
 from collections.abc import MutableMapping
+from typing import Iterable
 from typing import List
 from typing import Optional
 from typing import Set
+from typing import Union
 
 import attr
 
+from .._code.source import getfslineno
 from ..compat import ascii_escaped
-from ..compat import getfslineno
 from ..compat import NOTSET
 from _pytest.outcomes import fail
 from _pytest.warning_types import PytestUnknownMarkWarning
@@ -270,7 +272,7 @@ def get_unpacked_marks(obj):
     return normalize_mark_list(mark_list)
 
 
-def normalize_mark_list(mark_list):
+def normalize_mark_list(mark_list: Iterable[Union[Mark, MarkDecorator]]) -> List[Mark]:
     """
     normalizes marker decorating helpers to mark objects
 

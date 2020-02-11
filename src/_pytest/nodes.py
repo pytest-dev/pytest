@@ -15,8 +15,8 @@ import _pytest._code
 from _pytest._code.code import ExceptionChainRepr
 from _pytest._code.code import ExceptionInfo
 from _pytest._code.code import ReprExceptionInfo
+from _pytest._code.source import getfslineno
 from _pytest.compat import cached_property
-from _pytest.compat import getfslineno
 from _pytest.compat import TYPE_CHECKING
 from _pytest.config import Config
 from _pytest.config import PytestPluginManager
@@ -361,7 +361,9 @@ class Node(metaclass=NodeMeta):
         return self._repr_failure_py(excinfo, style)
 
 
-def get_fslocation_from_item(item):
+def get_fslocation_from_item(
+    item: "Item",
+) -> Tuple[Union[str, py.path.local], Optional[int]]:
     """Tries to extract the actual location from an item, depending on available attributes:
 
     * "fslocation": a pair (path, lineno)
@@ -370,9 +372,10 @@ def get_fslocation_from_item(item):
 
     :rtype: a tuple of (str|LocalPath, int) with filename and line number.
     """
-    result = getattr(item, "location", None)
-    if result is not None:
-        return result[:2]
+    try:
+        return item.location[:2]
+    except AttributeError:
+        pass
     obj = getattr(item, "obj", None)
     if obj is not None:
         return getfslineno(obj)
