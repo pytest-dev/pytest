@@ -129,11 +129,11 @@ def dummy_yaml_custom_test(testdir):
     testdir.makefile(".yaml", test1="")
 
 
-
 @pytest.fixture
 def testdir(testdir: Testdir) -> Testdir:
     testdir.monkeypatch.setenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD", "1")
     return testdir
+
 
 @pytest.fixture(scope="session")
 def color_mapping():
@@ -142,21 +142,20 @@ def color_mapping():
 
     Used by tests which check the actual colors output by pytest.
     """
-    from colorama import Fore, Style
 
     class ColorMapping:
         COLORS = {
-            "red": Fore.RED,
-            "green": Fore.GREEN,
-            "yellow": Fore.YELLOW,
-            "bold": Style.BRIGHT,
-            "reset": Style.RESET_ALL,
-            "kw": Fore.LIGHTBLUE_EX,
+            "red": "\x1b[31m",
+            "green": "\x1b[32m",
+            "yellow": "\x1b[33m",
+            "bold": "\x1b[1m",
+            "reset": "\x1b[0m",
+            "kw": "\x1b[94m",
             "hl-reset": "\x1b[39;49;00m",
-            "function": Fore.LIGHTGREEN_EX,
-            "number": Fore.LIGHTBLUE_EX,
-            "str": Fore.YELLOW,
-            "print": Fore.LIGHTCYAN_EX,
+            "function": "\x1b[92m",
+            "number": "\x1b[94m",
+            "str": "\x1b[33m",
+            "print": "\x1b[96m",
         }
         RE_COLORS = {k: re.escape(v) for k, v in COLORS.items()}
 
@@ -176,4 +175,3 @@ def color_mapping():
             return [line.format(**cls.RE_COLORS) for line in lines]
 
     return ColorMapping
-
