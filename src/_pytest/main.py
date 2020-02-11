@@ -270,7 +270,7 @@ def pytest_collection(session):
 
 def pytest_runtestloop(session):
     if session.testsfailed and not session.config.option.continue_on_collection_errors:
-        raise session.Interrupted("%d error%s during collection" % session.testfailed)
+        raise session.Interrupted("%d errors during collection" % session.testfailed)
 
     if session.config.option.collectonly:
         return True
