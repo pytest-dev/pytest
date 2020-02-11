@@ -141,9 +141,9 @@ class CaptureManager:
         self.resume_fixture(self._current_item)
 
     def read_global_capture(self):
-        if not self._global_capturing:
-            return CaptureResult("", "")
-        return self._global_capturing.readouterr()
+        if self._global_capturing:
+            return self._global_capturing.readouterr()
+        return CaptureResult("", "")
 
     # Fixture Control (it's just forwarding, think about removing this later)
 
