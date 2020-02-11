@@ -1,4 +1,6 @@
+import re
 import sys
+from typing import List
 
 import pytest
 from _pytest.pytester import Testdir
@@ -127,7 +129,51 @@ def dummy_yaml_custom_test(testdir):
     testdir.makefile(".yaml", test1="")
 
 
+
 @pytest.fixture
 def testdir(testdir: Testdir) -> Testdir:
     testdir.monkeypatch.setenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD", "1")
     return testdir
+
+@pytest.fixture(scope="session")
+def color_mapping():
+    """Returns a utility class which can replace keys in strings in the form "{NAME}"
+    by their equivalent ASCII codes in the terminal.
+
+    Used by tests which check the actual colors output by pytest.
+    """
+    from colorama import Fore, Style
+
+    class ColorMapping:
+        COLORS = {
+            "red": Fore.RED,
+            "green": Fore.GREEN,
+            "yellow": Fore.YELLOW,
+            "bold": Style.BRIGHT,
+            "reset": Style.RESET_ALL,
+            "kw": Fore.LIGHTBLUE_EX,
+            "hl-reset": "\x1b[39;49;00m",
+            "function": Fore.LIGHTGREEN_EX,
+            "number": Fore.LIGHTBLUE_EX,
+            "str": Fore.YELLOW,
+            "print": Fore.LIGHTCYAN_EX,
+        }
+        RE_COLORS = {k: re.escape(v) for k, v in COLORS.items()}
+
+        @classmethod
+        def format(cls, lines: List[str]) -> List[str]:
+            """Straightforward replacement of color names to their ASCII codes."""
+            return [line.format(**cls.COLORS) for line in lines]
+
+        @classmethod
+        def format_for_fnmatch(cls, lines: List[str]) -> List[str]:
+            """Replace color names for use with LineMatcher.fnmatch_lines"""
+            return [line.format(**cls.COLORS).replace("[", "[[]") for line in lines]
+
+        @classmethod
+        def format_for_rematch(cls, lines: List[str]) -> List[str]:
+            """Replace color names for use with LineMatcher.re_match_lines"""
+            return [line.format(**cls.RE_COLORS) for line in lines]
+
+    return ColorMapping
+

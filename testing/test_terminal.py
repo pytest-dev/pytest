@@ -3,15 +3,12 @@ terminal reporting of the full testing process.
 """
 import collections
 import os
-import re
 import sys
 import textwrap
 from io import StringIO
 
 import pluggy
 import py
-from colorama import Fore
-from colorama import Style
 
 import pytest
 from _pytest.config import ExitCode
@@ -26,20 +23,6 @@ from _pytest.terminal import TerminalReporter
 
 DistInfo = collections.namedtuple("DistInfo", ["project_name", "version"])
 
-COLORS = {
-    "red": Fore.RED,
-    "green": Fore.GREEN,
-    "yellow": Fore.YELLOW,
-    "bold": Style.BRIGHT,
-    "reset": Style.RESET_ALL,
-    "kw": Fore.LIGHTBLUE_EX,
-    "hl-reset": "\x1b[39;49;00m",
-    "function": Fore.LIGHTGREEN_EX,
-    "number": Fore.LIGHTBLUE_EX,
-    "str": Fore.YELLOW,
-    "print": Fore.LIGHTCYAN_EX,
-}
-RE_COLORS = {k: re.escape(v) for k, v in COLORS.items()}
 
 TRANS_FNMATCH = str.maketrans({"[": "[[]", "]": "[]]"})
 
@@ -897,7 +880,7 @@ def test_pass_output_reporting(testdir):
     )
 
 
-def test_color_yes(testdir):
+def test_color_yes(testdir, color_mapping):
     p1 = testdir.makepyfile(
         """
         def fail():
@@ -915,9 +898,8 @@ def test_color_yes(testdir):
         assert "\x1b[1m" in output
         return
     result.stdout.fnmatch_lines(
-        [
-            line.format(**COLORS).replace("[", "[[]")
-            for line in [
+        color_mapping.format_for_fnmatch(
+            [
                 "{bold}=*= test session starts =*={reset}",
                 "collected 1 item",
                 "",
@@ -939,13 +921,12 @@ def test_color_yes(testdir):
                 "{bold}{red}test_color_yes.py{reset}:2: AssertionError",
                 "{red}=*= {red}{bold}1 failed{reset}{red} in *s{reset}{red} =*={reset}",
             ]
-        ]
+        )
     )
     result = testdir.runpytest("--color=yes", "--tb=short", str(p1))
     result.stdout.fnmatch_lines(
-        [
-            line.format(**COLORS).replace("[", "[[]")
-            for line in [
+        color_mapping.format_for_fnmatch(
+            [
                 "{bold}=*= test session starts =*={reset}",
                 "collected 1 item",
                 "",
@@ -960,7 +941,7 @@ def test_color_yes(testdir):
                 "{bold}{red}E   assert 0{reset}",
                 "{red}=*= {red}{bold}1 failed{reset}{red} in *s{reset}{red} =*={reset}",
             ]
-        ]
+        )
     )
 
 
@@ -1681,7 +1662,7 @@ class TestProgressOutputStyle:
             ]
         )
 
-    def test_colored_progress(self, testdir, monkeypatch):
+    def test_colored_progress(self, testdir, monkeypatch, color_mapping):
         monkeypatch.setenv("PY_COLORS", "1")
         testdir.makepyfile(
             test_bar="""
@@ -1705,14 +1686,13 @@ class TestProgressOutputStyle:
         )
         result = testdir.runpytest()
         result.stdout.re_match_lines(
-            [
-                line.format(**RE_COLORS)
-                for line in [
+            color_mapping.format_for_rematch(
+                [
                     r"test_bar.py ({green}\.{reset}){{10}}{green} \s+ \[ 50%\]{reset}",
                     r"test_foo.py ({green}\.{reset}){{5}}{yellow} \s+ \[ 75%\]{reset}",
                     r"test_foobar.py ({red}F{reset}){{5}}{red} \s+ \[100%\]{reset}",
                 ]
-            ]
+            )
         )
 
     def test_count(self, many_tests_files, testdir):
@@ -1864,12 +1844,13 @@ class TestProgressWithTeardown:
             [r"test_bar.py (\.E){5}\s+\[ 25%\]", r"test_foo.py (\.E){15}\s+\[100%\]"]
         )
 
-    def test_teardown_many_verbose(self, testdir: Testdir, many_files) -> None:
+    def test_teardown_many_verbose(
+        self, testdir: Testdir, many_files, color_mapping
+    ) -> None:
         result = testdir.runpytest("-v")
         result.stdout.fnmatch_lines(
-            [
-                line.translate(TRANS_FNMATCH)
-                for line in [
+            color_mapping.format_for_fnmatch(
+                [
                     "test_bar.py::test_bar[0] PASSED  * [  5%]",
                     "test_bar.py::test_bar[0] ERROR   * [  5%]",
                     "test_bar.py::test_bar[4] PASSED  * [ 25%]",
@@ -1877,7 +1858,7 @@ class TestProgressWithTeardown:
                     "test_foo.py::test_foo[14] ERROR  * [100%]",
                     "=* 20 passed, 20 errors in *",
                 ]
-            ]
+            )
         )
 
     def test_xdist_normal(self, many_files, testdir, monkeypatch):
@@ -2032,7 +2013,7 @@ def test_via_exec(testdir: Testdir) -> None:
 
 
 class TestCodeHighlight:
-    def test_code_highlight_simple(self, testdir: Testdir) -> None:
+    def test_code_highlight_simple(self, testdir: Testdir, color_mapping) -> None:
         testdir.makepyfile(
             """
             def test_foo():
@@ -2041,17 +2022,16 @@ class TestCodeHighlight:
         )
         result = testdir.runpytest("--color=yes")
         result.stdout.fnmatch_lines(
-            [
-                line.format(**COLORS).replace("[", "[[]")
-                for line in [
+            color_mapping.format_for_fnmatch(
+                [
                     "    {kw}def{hl-reset} {function}test_foo{hl-reset}():",
                     ">       {kw}assert{hl-reset} {number}1{hl-reset} == {number}10{hl-reset}",
                     "{bold}{red}E       assert 1 == 10{reset}",
                 ]
-            ]
+            )
         )
 
-    def test_code_highlight_continuation(self, testdir: Testdir) -> None:
+    def test_code_highlight_continuation(self, testdir: Testdir, color_mapping) -> None:
         testdir.makepyfile(
             """
             def test_foo():
@@ -2061,13 +2041,12 @@ class TestCodeHighlight:
         )
         result = testdir.runpytest("--color=yes")
         result.stdout.fnmatch_lines(
-            [
-                line.format(**COLORS).replace("[", "[[]")
-                for line in [
+            color_mapping.format_for_fnmatch(
+                [
                     "    {kw}def{hl-reset} {function}test_foo{hl-reset}():",
                     "        {print}print{hl-reset}({str}'''{hl-reset}{str}{hl-reset}",
                     ">   {str}    {hl-reset}{str}'''{hl-reset}); {kw}assert{hl-reset} {number}0{hl-reset}",
                     "{bold}{red}E       assert 0{reset}",
                 ]
-            ]
+            )
         )

@@ -5,23 +5,6 @@ import pytest
 from _pytest._io import TerminalWriter
 
 
-# TODO: move this and the other two related attributes from test_terminal.py into conftest as a
-# fixture
-COLORS = {
-    "red": "\x1b[31m",
-    "green": "\x1b[32m",
-    "yellow": "\x1b[33m",
-    "bold": "\x1b[1m",
-    "reset": "\x1b[0m",
-    "kw": "\x1b[94m",
-    "hl-reset": "\x1b[39;49;00m",
-    "function": "\x1b[92m",
-    "number": "\x1b[94m",
-    "str": "\x1b[33m",
-    "print": "\x1b[96m",
-}
-
-
 @pytest.mark.parametrize(
     "has_markup, expected",
     [
@@ -31,12 +14,12 @@ COLORS = {
         pytest.param(False, "assert 0\n", id="no markup"),
     ],
 )
-def test_code_highlight(has_markup, expected):
+def test_code_highlight(has_markup, expected, color_mapping):
     f = StringIO()
     tw = TerminalWriter(f)
     tw.hasmarkup = has_markup
     tw._write_source(["assert 0"])
-    assert f.getvalue() == expected.format(**COLORS)
+    assert f.getvalue().splitlines(keepends=True) == color_mapping.format([expected])
 
     with pytest.raises(
         ValueError,
