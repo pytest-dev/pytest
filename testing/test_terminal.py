@@ -891,12 +891,7 @@ def test_color_yes(testdir, color_mapping):
         """
     )
     result = testdir.runpytest("--color=yes", str(p1))
-    if sys.version_info < (3, 6):
-        # py36 required for ordered markup
-        output = result.stdout.str()
-        assert "test session starts" in output
-        assert "\x1b[1m" in output
-        return
+    color_mapping.requires_ordered_markup(result)
     result.stdout.fnmatch_lines(
         color_mapping.format_for_fnmatch(
             [
@@ -2021,6 +2016,7 @@ class TestCodeHighlight:
         """
         )
         result = testdir.runpytest("--color=yes")
+        color_mapping.requires_ordered_markup(result)
         result.stdout.fnmatch_lines(
             color_mapping.format_for_fnmatch(
                 [
@@ -2040,6 +2036,8 @@ class TestCodeHighlight:
         """
         )
         result = testdir.runpytest("--color=yes")
+        color_mapping.requires_ordered_markup(result)
+
         result.stdout.fnmatch_lines(
             color_mapping.format_for_fnmatch(
                 [
