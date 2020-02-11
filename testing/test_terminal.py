@@ -10,6 +10,8 @@ from io import StringIO
 
 import pluggy
 import py
+from colorama import Fore
+from colorama import Style
 
 import pytest
 from _pytest.config import ExitCode
@@ -25,17 +27,17 @@ from _pytest.terminal import TerminalReporter
 DistInfo = collections.namedtuple("DistInfo", ["project_name", "version"])
 
 COLORS = {
-    "red": "\x1b[31m",
-    "green": "\x1b[32m",
-    "yellow": "\x1b[33m",
-    "bold": "\x1b[1m",
-    "reset": "\x1b[0m",
-    "kw": "\x1b[94m",
+    "red": Fore.RED,
+    "green": Fore.GREEN,
+    "yellow": Fore.YELLOW,
+    "bold": Style.BRIGHT,
+    "reset": Style.RESET_ALL,
+    "kw": Fore.LIGHTBLUE_EX,
     "hl-reset": "\x1b[39;49;00m",
-    "function": "\x1b[92m",
-    "number": "\x1b[94m",
-    "str": "\x1b[33m",
-    "print": "\x1b[96m",
+    "function": Fore.LIGHTGREEN_EX,
+    "number": Fore.LIGHTBLUE_EX,
+    "str": Fore.YELLOW,
+    "print": Fore.LIGHTCYAN_EX,
 }
 RE_COLORS = {k: re.escape(v) for k, v in COLORS.items()}
 
