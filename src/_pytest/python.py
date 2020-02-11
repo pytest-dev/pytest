@@ -9,6 +9,7 @@ from collections import Counter
 from collections import defaultdict
 from collections.abc import Sequence
 from functools import partial
+from typing import Dict
 from typing import List
 from typing import Optional
 from typing import Tuple
@@ -21,10 +22,10 @@ from _pytest import fixtures
 from _pytest import nodes
 from _pytest._code import filter_traceback
 from _pytest._code.code import ExceptionInfo
+from _pytest._code.source import getfslineno
 from _pytest.compat import ascii_escaped
 from _pytest.compat import get_default_arg_names
 from _pytest.compat import get_real_func
-from _pytest.compat import getfslineno
 from _pytest.compat import getimfunc
 from _pytest.compat import getlocation
 from _pytest.compat import is_generator
@@ -37,6 +38,7 @@ from _pytest.compat import STRING_TYPES
 from _pytest.config import hookimpl
 from _pytest.deprecated import FUNCARGNAMES
 from _pytest.mark import MARK_GEN
+from _pytest.mark import ParameterSet
 from _pytest.mark.structures import get_unpacked_marks
 from _pytest.mark.structures import Mark
 from _pytest.mark.structures import normalize_mark_list
@@ -392,7 +394,7 @@ class PyCollector(PyobjMixin, nodes.Collector):
         fm = self.session._fixturemanager
 
         definition = FunctionDefinition.from_parent(self, name=name, callobj=funcobj)
-        fixtureinfo = fm.getfixtureinfo(definition, funcobj, cls)
+        fixtureinfo = definition._fixtureinfo
 
         metafunc = Metafunc(
             definition, fixtureinfo, self.config, cls=cls, module=module
@@ -931,7 +933,6 @@ class Metafunc:
             to set a dynamic scope using test context or configuration.
         """
         from _pytest.fixtures import scope2index
-        from _pytest.mark import ParameterSet
 
         argnames, parameters = ParameterSet._for_parametrize(
             argnames,
@@ -992,7 +993,9 @@ class Metafunc:
                 newcalls.append(newcallspec)
         self._calls = newcalls
 
-    def _resolve_arg_ids(self, argnames, ids, parameters, item):
+    def _resolve_arg_ids(
+        self, argnames: List[str], ids, parameters: List[ParameterSet], item: nodes.Item
+    ):
         """Resolves the actual ids for the given argnames, based on the ``ids`` parameter given
         to ``parametrize``.
 
@@ -1045,7 +1048,7 @@ class Metafunc:
                     )
         return new_ids
 
-    def _resolve_arg_value_types(self, argnames, indirect):
+    def _resolve_arg_value_types(self, argnames: List[str], indirect) -> Dict[str, str]:
         """Resolves if each parametrized argument must be considered a parameter to a fixture or a "funcarg"
         to the function, based on the ``indirect`` parameter of the parametrized() call.
 

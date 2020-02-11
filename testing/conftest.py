@@ -1,6 +1,7 @@
 import sys
 
 import pytest
+from _pytest.pytester import Testdir
 
 if sys.gettrace():
 
@@ -118,3 +119,9 @@ def dummy_yaml_custom_test(testdir):
     """
     )
     testdir.makefile(".yaml", test1="")
+
+
+@pytest.fixture
+def testdir(testdir: Testdir) -> Testdir:
+    testdir.monkeypatch.setenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD", "1")
+    return testdir

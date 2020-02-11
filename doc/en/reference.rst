@@ -901,8 +901,8 @@ Can be either a ``str`` or ``Sequence[str]``.
     pytest_plugins = ("myapp.testsupport.tools", "myapp.testsupport.regression")
 
 
-pytest_mark
-~~~~~~~~~~~
+pytestmark
+~~~~~~~~~~
 
 **Tutorial**: :ref:`scoped-marking`
 

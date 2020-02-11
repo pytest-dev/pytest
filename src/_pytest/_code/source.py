@@ -8,6 +8,7 @@ import warnings
 from bisect import bisect_right
 from types import CodeType
 from types import FrameType
+from typing import Any
 from typing import Iterator
 from typing import List
 from typing import Optional
@@ -17,6 +18,7 @@ from typing import Union
 
 import py
 
+from _pytest.compat import get_real_func
 from _pytest.compat import overload
 from _pytest.compat import TYPE_CHECKING
 
@@ -277,13 +279,20 @@ def compile_(  # noqa: F811
     return s.compile(filename, mode, flags, _genframe=_genframe)
 
 
-def getfslineno(obj) -> Tuple[Optional[Union["Literal['']", py.path.local]], int]:
+def getfslineno(obj: Any) -> Tuple[Union[str, py.path.local], int]:
     """ Return source location (path, lineno) for the given object.
     If the source cannot be determined return ("", -1).
 
     The line number is 0-based.
     """
     from .code import Code
+
+    # xxx let decorators etc specify a sane ordering
+    # NOTE: this used to be done in _pytest.compat.getfslineno, initially added
+    #       in 6ec13a2b9.  It ("place_as") appears to be something very custom.
+    obj = get_real_func(obj)
+    if hasattr(obj, "place_as"):
+        obj = obj.place_as
 
     try:
         code = Code(obj)
@@ -293,18 +302,16 @@ def getfslineno(obj) -> Tuple[Optional[Union["Literal['']", py.path.local]], int
         except TypeError:
             return "", -1
 
-        fspath = fn and py.path.local(fn) or None
+        fspath = fn and py.path.local(fn) or ""
         lineno = -1
         if fspath:
             try:
                 _, lineno = findsource(obj)
             except IOError:
                 pass
+        return fspath, lineno
     else:
-        fspath = code.path
-        lineno = code.firstlineno
-    assert isinstance(lineno, int)
-    return fspath, lineno
+        return code.path, code.firstlineno
 
 
 #

@@ -1,7 +1,7 @@
 import argparse
-import distutils.spawn
 import os
 import shlex
+import shutil
 import sys
 
 import py
@@ -288,7 +288,7 @@ class TestParser:
 
 
 def test_argcomplete(testdir, monkeypatch) -> None:
-    if not distutils.spawn.find_executable("bash"):
+    if not shutil.which("bash"):
         pytest.skip("bash not available")
     script = str(testdir.tmpdir.join("test_argcomplete"))
 
