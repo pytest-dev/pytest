@@ -190,10 +190,10 @@ class TestGeneralUsage:
         )
 
     @pytest.mark.filterwarnings("default")
-    def test_better_reporting_on_conftest_load_failure(self, testdir, request):
+    def test_better_reporting_on_conftest_load_failure(self, testdir):
         """Show a user-friendly traceback on conftest import failures (#486, #3332)"""
         testdir.makepyfile("")
-        testdir.makeconftest(
+        conftest = testdir.makeconftest(
             """
             def foo():
                 import qwerty
@@ -208,22 +208,18 @@ class TestGeneralUsage:
         """
         )
         result = testdir.runpytest()
-        dirname = request.node.name + "0"
         exc_name = (
             "ModuleNotFoundError" if sys.version_info >= (3, 6) else "ImportError"
         )
-        result.stderr.fnmatch_lines(
-            [
-                "ImportError while loading conftest '*{sep}{dirname}{sep}conftest.py'.".format(
-                    dirname=dirname, sep=os.sep
-                ),
-                "conftest.py:3: in <module>",
-                "    foo()",
-                "conftest.py:2: in foo",
-                "    import qwerty",
-                "E   {}: No module named 'qwerty'".format(exc_name),
-            ]
-        )
+        assert result.stdout.lines == []
+        assert result.stderr.lines == [
+            "ImportError while loading conftest '{}'.".format(conftest),
+            "conftest.py:3: in <module>",
+            "    foo()",
+            "conftest.py:2: in foo",
+            "    import qwerty",
+            "E   {}: No module named 'qwerty'".format(exc_name),
+        ]
 
     def test_early_skip(self, testdir):
         testdir.mkdir("xyz")
