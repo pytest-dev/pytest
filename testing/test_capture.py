@@ -77,6 +77,8 @@ class TestCaptureManager:
             if method != "no":
                 assert out == "hello\n"
             capman.stop_global_capturing()
+            # Reading after stopping does not crash, but returns empty values.
+            assert capman.read_global_capture() == capture.CaptureResult("", "")
         finally:
             capouter.stop_capturing()
 
