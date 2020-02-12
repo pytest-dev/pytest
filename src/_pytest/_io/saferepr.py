@@ -99,5 +99,5 @@ class AlwaysDispatchingPrettyPrinter(pprint.PrettyPrinter):
 
 def _pformat_dispatch(object, indent=1, width=80, depth=None, *, compact=False):
     return AlwaysDispatchingPrettyPrinter(
-        indent=1, width=80, depth=None, compact=False
+        indent=indent, width=width, depth=depth, compact=compact
     ).pformat(object)
