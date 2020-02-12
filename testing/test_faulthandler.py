@@ -88,7 +88,7 @@ def test_cancel_timeout_on_hook(monkeypatch, hook_name):
     exception (pytest-dev/pytest-faulthandler#14).
     """
     import faulthandler
-    from _pytest import faulthandler as plugin_module
+    from _pytest.faulthandler import FaultHandlerHooks
 
     called = []
 
@@ -98,6 +98,35 @@ def test_cancel_timeout_on_hook(monkeypatch, hook_name):
 
     # call our hook explicitly, we can trust that pytest will call the hook
     # for us at the appropriate moment
-    hook_func = getattr(plugin_module, hook_name)
-    hook_func()
+    hook_func = getattr(FaultHandlerHooks, hook_name)
+    hook_func(self=None)
     assert called == [1]
+
+
+@pytest.mark.parametrize("faulthandler_timeout", [0, 2])
+def test_already_initialized(faulthandler_timeout, testdir):
+    """Test for faulthandler being initialized earlier than pytest (#6575)"""
+    testdir.makepyfile(
+        """
+        def test():
+            import faulthandler
+            assert faulthandler.is_enabled()
+    """
+    )
+    result = testdir.run(
+        sys.executable,
+        "-X",
+        "faulthandler",
+        "-mpytest",
+        testdir.tmpdir,
+        "-o",
+        "faulthandler_timeout={}".format(faulthandler_timeout),
+    )
+    # ensure warning is emitted if faulthandler_timeout is configured
+    warning_line = "*faulthandler.py*faulthandler module enabled before*"
+    if faulthandler_timeout > 0:
+        result.stdout.fnmatch_lines(warning_line)
+    else:
+        result.stdout.no_fnmatch_line(warning_line)
+    result.stdout.fnmatch_lines("*1 passed*")
+    assert result.ret == 0

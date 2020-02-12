@@ -1,0 +1,3 @@
+Fix internal crash when ``faulthandler`` starts initialized
+(for example with ``PYTHONFAULTHANDLER=1`` environment variable set) and ``faulthandler_timeout`` defined
+in the configuration file.
