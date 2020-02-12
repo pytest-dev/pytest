@@ -21,7 +21,7 @@ from _pytest.assertion.rewrite import get_cache_dir
 from _pytest.assertion.rewrite import PYC_TAIL
 from _pytest.assertion.rewrite import PYTEST_TAG
 from _pytest.assertion.rewrite import rewrite_asserts
-from _pytest.main import ExitCode
+from _pytest.config import ExitCode
 from _pytest.pathlib import Path
 
 

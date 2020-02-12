@@ -487,6 +487,12 @@ class LoggingPlugin:
         self._config = config
 
         self.print_logs = get_option_ini(config, "log_print")
+        if not self.print_logs:
+            from _pytest.warnings import _issue_warning_captured
+            from _pytest.deprecated import NO_PRINT_LOGS
+
+            _issue_warning_captured(NO_PRINT_LOGS, self._config.hook, stacklevel=2)
+
         self.formatter = self._create_formatter(
             get_option_ini(config, "log_format"),
             get_option_ini(config, "log_date_format"),

@@ -4,7 +4,7 @@ import pytest
 
 def pytest_collect_file(parent, path):
     if path.ext == ".yaml" and path.basename.startswith("test"):
-        return YamlFile(path, parent)
+        return YamlFile.from_parent(parent, fspath=path)
 
 
 class YamlFile(pytest.File):
@@ -13,7 +13,7 @@ class YamlFile(pytest.File):
 
         raw = yaml.safe_load(self.fspath.open())
         for name, spec in sorted(raw.items()):
-            yield YamlItem(name, self, spec)
+            yield YamlItem.from_parent(self, name=name, spec=spec)
 
 
 class YamlItem(pytest.Item):

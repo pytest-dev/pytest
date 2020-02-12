@@ -1,6 +1,9 @@
+import re
 import sys
+from typing import List
 
 import pytest
+from _pytest.pytester import RunResult
 from _pytest.pytester import Testdir
 
 if sys.gettrace():
@@ -78,6 +81,12 @@ def tw_mock():
         def write(self, msg, **kw):
             self.lines.append((TWMock.WRITE, msg))
 
+        def _write_source(self, lines, indents=()):
+            if not indents:
+                indents = [""] * len(lines)
+            for indent, line in zip(indents, lines):
+                self.line(indent + line)
+
         def line(self, line, **kw):
             self.lines.append(line)
 
@@ -125,3 +134,64 @@ def dummy_yaml_custom_test(testdir):
 def testdir(testdir: Testdir) -> Testdir:
     testdir.monkeypatch.setenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD", "1")
     return testdir
+
+
+@pytest.fixture(scope="session")
+def color_mapping():
+    """Returns a utility class which can replace keys in strings in the form "{NAME}"
+    by their equivalent ASCII codes in the terminal.
+
+    Used by tests which check the actual colors output by pytest.
+    """
+
+    class ColorMapping:
+        COLORS = {
+            "red": "\x1b[31m",
+            "green": "\x1b[32m",
+            "yellow": "\x1b[33m",
+            "bold": "\x1b[1m",
+            "reset": "\x1b[0m",
+            "kw": "\x1b[94m",
+            "hl-reset": "\x1b[39;49;00m",
+            "function": "\x1b[92m",
+            "number": "\x1b[94m",
+            "str": "\x1b[33m",
+            "print": "\x1b[96m",
+        }
+        RE_COLORS = {k: re.escape(v) for k, v in COLORS.items()}
+
+        @classmethod
+        def format(cls, lines: List[str]) -> List[str]:
+            """Straightforward replacement of color names to their ASCII codes."""
+            return [line.format(**cls.COLORS) for line in lines]
+
+        @classmethod
+        def format_for_fnmatch(cls, lines: List[str]) -> List[str]:
+            """Replace color names for use with LineMatcher.fnmatch_lines"""
+            return [line.format(**cls.COLORS).replace("[", "[[]") for line in lines]
+
+        @classmethod
+        def format_for_rematch(cls, lines: List[str]) -> List[str]:
+            """Replace color names for use with LineMatcher.re_match_lines"""
+            return [line.format(**cls.RE_COLORS) for line in lines]
+
+        @classmethod
+        def requires_ordered_markup(cls, result: RunResult):
+            """Should be called if a test expects markup to appear in the output
+            in the order they were passed, for example:
+
+                tw.write(line, bold=True, red=True)
+
+            In Python 3.5 there's no guarantee that the generated markup will appear
+            in the order called, so we do some limited color testing and skip the rest of
+            the test.
+            """
+            if sys.version_info < (3, 6):
+                # terminal writer.write accepts keyword arguments, so
+                # py36+ is required so the markup appears in the expected order
+                output = result.stdout.str()
+                assert "test session starts" in output
+                assert "\x1b[1m" in output
+                pytest.skip("doing limited testing because lacking ordered markup")
+
+    return ColorMapping
