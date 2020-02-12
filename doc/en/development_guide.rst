@@ -57,4 +57,4 @@ Issues created at those events should have other relevant labels added as well.
 Those labels should be removed after they are no longer relevant.
 
 
-.. include:: ../../HOWTORELEASE.rst
+.. include:: ../../RELEASING.rst

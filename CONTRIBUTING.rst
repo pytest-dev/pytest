@@ -166,8 +166,6 @@ Short version
 
 #. Fork the repository.
 #. Enable and install `pre-commit <https://pre-commit.com>`_ to ensure style-guides and code checks are followed.
-#. Target ``master`` for bug fixes and doc changes.
-#. Target ``features`` for new features or functionality changes.
 #. Follow **PEP-8** for naming and `black <https://github.com/psf/black>`_ for formatting.
 #. Tests are run using ``tox``::
 
@@ -204,13 +202,9 @@ Here is a simple overview, with pytest-specific bits:
 
     $ git clone git@github.com:YOUR_GITHUB_USERNAME/pytest.git
     $ cd pytest
-    # now, to fix a bug create your own branch off "master":
+    # now, create your own branch off "master":
 
         $ git checkout -b your-bugfix-branch-name master
-
-    # or to instead add a feature create your own branch off "features":
-
-        $ git checkout -b your-feature-branch-name features
 
    Given we have "major.minor.micro" version numbers, bug fixes will usually
    be released in micro releases whereas features will be released in
@@ -294,8 +288,7 @@ Here is a simple overview, with pytest-specific bits:
     compare: your-branch-name
 
     base-fork: pytest-dev/pytest
-    base: master          # if it's a bug fix
-    base: features        # if it's a feature
+    base: master
 
 
 Writing Tests
