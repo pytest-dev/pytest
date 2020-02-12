@@ -1,0 +1,4 @@
+Code is now highlighted in tracebacks when ``pygments`` is installed.
+
+Users are encouraged to install ``pygments`` into their environment and provide feedback, because
+the plan is to make ``pygments`` a regular dependency in the future.
