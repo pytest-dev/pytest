@@ -225,9 +225,11 @@ def _diff_text(left: str, right: str, verbose: int = 0) -> List[str]:
         left = repr(str(left))
         right = repr(str(right))
         explanation += ["Strings contain only whitespace, escaping them using repr()"]
+    # "right" is the expected base against which we compare "left",
+    # see https://github.com/pytest-dev/pytest/issues/3333
     explanation += [
         line.strip("\n")
-        for line in ndiff(left.splitlines(keepends), right.splitlines(keepends))
+        for line in ndiff(right.splitlines(keepends), left.splitlines(keepends))
     ]
     return explanation
 
@@ -238,8 +240,8 @@ def _compare_eq_verbose(left: Any, right: Any) -> List[str]:
     right_lines = repr(right).splitlines(keepends)
 
     explanation = []  # type: List[str]
-    explanation += ["-" + line for line in left_lines]
-    explanation += ["+" + line for line in right_lines]
+    explanation += ["+" + line for line in left_lines]
+    explanation += ["-" + line for line in right_lines]
 
     return explanation
 
@@ -279,8 +281,10 @@ def _compare_eq_iterable(
         _surrounding_parens_on_own_lines(right_formatting)
 
     explanation = ["Full diff:"]
+    # "right" is the expected base against which we compare "left",
+    # see https://github.com/pytest-dev/pytest/issues/3333
     explanation.extend(
-        line.rstrip() for line in difflib.ndiff(left_formatting, right_formatting)
+        line.rstrip() for line in difflib.ndiff(right_formatting, left_formatting)
     )
     return explanation
 
@@ -315,8 +319,9 @@ def _compare_eq_sequence(
             break
 
     if comparing_bytes:
-        # when comparing bytes, it doesn't help to show the "sides contain one or more items"
-        # longer explanation, so skip it
+        # when comparing bytes, it doesn't help to show the "sides contain one or more
+        # items" longer explanation, so skip it
+
         return explanation
 
     len_diff = len_left - len_right
@@ -443,7 +448,7 @@ def _notin_text(term: str, text: str, verbose: int = 0) -> List[str]:
     head = text[:index]
     tail = text[index + len(term) :]
     correct_text = head + tail
-    diff = _diff_text(correct_text, text, verbose)
+    diff = _diff_text(text, correct_text, verbose)
     newdiff = ["%s is contained here:" % saferepr(term, maxsize=42)]
     for line in diff:
         if line.startswith("Skipping"):

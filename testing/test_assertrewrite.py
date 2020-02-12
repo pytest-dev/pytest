@@ -180,8 +180,8 @@ class TestAssertionRewrite:
         if verbose > 0:
             assert msg == (
                 "assert <module 'sys' (built-in)> == 42\n"
-                "  -<module 'sys' (built-in)>\n"
-                "  +42"
+                "  +<module 'sys' (built-in)>\n"
+                "  -42"
             )
         else:
             assert msg == "assert sys == 42"
@@ -194,12 +194,12 @@ class TestAssertionRewrite:
 
         msg = getmsg(f, {"cls": X}).splitlines()
         if verbose > 1:
-            assert msg == ["assert {!r} == 42".format(X), "  -{!r}".format(X), "  +42"]
+            assert msg == ["assert {!r} == 42".format(X), "  +{!r}".format(X), "  -42"]
         elif verbose > 0:
             assert msg == [
                 "assert <class 'test_...e.<locals>.X'> == 42",
-                "  -{!r}".format(X),
-                "  +42",
+                "  +{!r}".format(X),
+                "  -42",
             ]
         else:
             assert msg == ["assert cls == 42"]
@@ -241,7 +241,7 @@ class TestAssertionRewrite:
         # XXX: looks like the "where" should also be there in verbose mode?!
         message = getmsg(f, {"cls": Y}).splitlines()
         if request.config.getoption("verbose") > 0:
-            assert message == ["assert 3 == 2", "  -3", "  +2"]
+            assert message == ["assert 3 == 2", "  +3", "  -2"]
         else:
             assert message == [
                 "assert 3 == 2",
@@ -625,7 +625,7 @@ class TestAssertionRewrite:
 
         msg = getmsg(f)
         if request.config.getoption("verbose") > 0:
-            assert msg == "assert 10 == 11\n  -10\n  +11"
+            assert msg == "assert 10 == 11\n  +10\n  -11"
         else:
             assert msg == "assert 10 == 11\n +  where 10 = len([0, 1, 2, 3, 4, 5, ...])"
 
@@ -688,7 +688,7 @@ class TestAssertionRewrite:
 
         lines = util._format_lines([getmsg(f)])
         if request.config.getoption("verbose") > 0:
-            assert lines == ["assert 0 == 1\n  -0\n  +1"]
+            assert lines == ["assert 0 == 1\n  +0\n  -1"]
         else:
             assert lines == ["assert 0 == 1\n +  where 1 = \\n{ \\n~ \\n}.a"]
 
