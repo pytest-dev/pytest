@@ -1049,7 +1049,7 @@ class TerminalReporter:
             main_color = "yellow"
         return main_color
 
-    def _set_main_color(self) -> Tuple[str, List[str]]:
+    def _set_main_color(self) -> None:
         unknown_types = []  # type: List[str]
         for found_type in self.stats.keys():
             if found_type:  # setup/teardown reports have an empty key, ignore them
@@ -1057,7 +1057,6 @@ class TerminalReporter:
                     unknown_types.append(found_type)
         self._known_types = list(KNOWN_TYPES) + unknown_types
         self._main_color = self._determine_main_color(bool(unknown_types))
-        return self._main_color, self._known_types
 
     def build_summary_stats_line(self) -> Tuple[List[Tuple[str, Dict[str, bool]]], str]:
         main_color, known_types = self._get_main_color()
