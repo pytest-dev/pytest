@@ -1,6 +1,5 @@
 import functools
 import inspect
-import itertools
 import sys
 import warnings
 from collections import defaultdict
@@ -39,6 +38,7 @@ if TYPE_CHECKING:
     from typing import Type
 
     from _pytest import nodes
+    from _pytest.main import Session
 
 
 @attr.s(frozen=True)
@@ -47,7 +47,7 @@ class PseudoFixtureDef:
     scope = attr.ib()
 
 
-def pytest_sessionstart(session):
+def pytest_sessionstart(session: "Session"):
     import _pytest.python
     import _pytest.nodes
 
@@ -514,13 +514,11 @@ class FixtureRequest:
             values.append(fixturedef)
             current = current._parent_request
 
-    def _compute_fixture_value(self, fixturedef):
+    def _compute_fixture_value(self, fixturedef: "FixtureDef") -> None:
         """
         Creates a SubRequest based on "self" and calls the execute method of the given fixturedef object. This will
         force the FixtureDef object to throw away any previous results and compute a new fixture value, which
         will be stored into the FixtureDef object itself.
-
-        :param FixtureDef fixturedef:
         """
         # prepare a subrequest object before calling fixture function
         # (latter managed by fixturedef)
@@ -1251,7 +1249,6 @@ class FixtureManager:
         self.config = session.config
         self._arg2fixturedefs = {}
         self._holderobjseen = set()
-        self._arg2finish = {}
         self._nodeid_and_autousenames = [("", self.config.getini("usefixtures"))]
         session.config.pluginmanager.register(self, "funcmanage")
 
@@ -1280,10 +1277,8 @@ class FixtureManager:
         else:
             argnames = ()
 
-        usefixtures = itertools.chain.from_iterable(
-            mark.args for mark in node.iter_markers(name="usefixtures")
-        )
-        initialnames = tuple(usefixtures) + argnames
+        usefixtures = get_use_fixtures_for_node(node)
+        initialnames = usefixtures + argnames
         fm = node.session._fixturemanager
         initialnames, names_closure, arg2fixturedefs = fm.getfixtureclosure(
             initialnames, node, ignore_args=self._get_direct_parametrize_args(node)
@@ -1480,3 +1475,12 @@ class FixtureManager:
         for fixturedef in fixturedefs:
             if nodes.ischildnode(fixturedef.baseid, nodeid):
                 yield fixturedef
+
+
+def get_use_fixtures_for_node(node) -> Tuple[str, ...]:
+    """Returns the names of all the usefixtures() marks on the given node"""
+    return tuple(
+        str(name)
+        for mark in node.iter_markers(name="usefixtures")
+        for name in mark.args
+    )

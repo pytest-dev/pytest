@@ -74,19 +74,38 @@ class TestConfigTmpdir:
         assert not mytemp.join("hello").check()
 
 
-def test_basetemp(testdir):
+testdata = [
+    ("mypath", True),
+    ("/mypath1", False),
+    ("./mypath1", True),
+    ("../mypath3", False),
+    ("../../mypath4", False),
+    ("mypath5/..", False),
+    ("mypath6/../mypath6", True),
+    ("mypath7/../mypath7/..", False),
+]
+
+
+@pytest.mark.parametrize("basename, is_ok", testdata)
+def test_mktemp(testdir, basename, is_ok):
     mytemp = testdir.tmpdir.mkdir("mytemp")
     p = testdir.makepyfile(
         """
         import pytest
-        def test_1(tmpdir_factory):
-            tmpdir_factory.mktemp('hello', numbered=False)
-    """
+        def test_abs_path(tmpdir_factory):
+            tmpdir_factory.mktemp('{}', numbered=False)
+        """.format(
+            basename
+        )
     )
+
     result = testdir.runpytest(p, "--basetemp=%s" % mytemp)
-    assert result.ret == 0
-    print(mytemp)
-    assert mytemp.join("hello").check()
+    if is_ok:
+        assert result.ret == 0
+        assert mytemp.join(basename).check()
+    else:
+        assert result.ret == 1
+        result.stdout.fnmatch_lines("*ValueError*")
 
 
 def test_tmpdir_always_is_realpath(testdir):

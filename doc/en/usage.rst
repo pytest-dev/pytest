@@ -33,7 +33,7 @@ Running ``pytest`` can result in six different exit codes:
 :Exit code 4: pytest command line usage error
 :Exit code 5: No tests were collected
 
-They are represented by the :class:`_pytest.main.ExitCode` enum. The exit codes being a part of the public API can be imported and accessed directly using:
+They are represented by the :class:`_pytest.config.ExitCode` enum. The exit codes being a part of the public API can be imported and accessed directly using:
 
 .. code-block:: python
 
@@ -94,8 +94,8 @@ Pytest supports several ways to run and select tests from the command-line.
 
     pytest -k "MyClass and not method"
 
-This will run tests which contain names that match the given *string expression*, which can
-include Python operators that use filenames, class names and function names as variables.
+This will run tests which contain names that match the given *string expression* (case-insensitive),
+which can include Python operators that use filenames, class names and function names as variables.
 The example above will run ``TestMyClass.test_something``  but not ``TestMyClass.test_method_simple``.
 
 .. _nodeids:
@@ -169,10 +169,10 @@ option you make sure a trace is shown.
 Detailed summary report
 -----------------------
 
-
-
 The ``-r`` flag can be used to display a "short test summary info" at the end of the test session,
 making it easy in large test suites to get a clear picture of all failures, skips, xfails, etc.
+
+It defaults to ``fE`` to list failures and errors.
 
 Example:
 
@@ -261,8 +261,12 @@ Here is the full list of available characters that can be used:
  - ``X`` - xpassed
  - ``p`` - passed
  - ``P`` - passed with output
+
+Special characters for (de)selection of groups:
+
  - ``a`` - all except ``pP``
  - ``A`` - all
+ - ``N`` - none, this can be used to display nothing (since ``fE`` is the default)
 
 More than one character can be used, so for example to only see failed and skipped tests, you can execute:
 

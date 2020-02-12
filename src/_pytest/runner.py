@@ -39,7 +39,7 @@ def pytest_addoption(parser):
         default=None,
         metavar="N",
         help="show N slowest setup/test durations (N=0 for all).",
-    ),
+    )
 
 
 def pytest_terminal_summary(terminalreporter):

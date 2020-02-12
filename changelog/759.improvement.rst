@@ -1,0 +1,1 @@
+``pytest.mark.parametrize`` supports iterators and generators for ``ids``.

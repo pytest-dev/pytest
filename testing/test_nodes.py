@@ -22,6 +22,13 @@ def test_ischildnode(baseid, nodeid, expected):
     assert result is expected
 
 
+def test_node_from_parent_disallowed_arguments():
+    with pytest.raises(TypeError, match="session is"):
+        nodes.Node.from_parent(None, session=None)
+    with pytest.raises(TypeError, match="config is"):
+        nodes.Node.from_parent(None, config=None)
+
+
 def test_std_warn_not_pytestwarning(testdir):
     items = testdir.getitems(
         """

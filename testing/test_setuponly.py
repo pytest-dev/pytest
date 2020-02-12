@@ -1,5 +1,5 @@
 import pytest
-from _pytest.main import ExitCode
+from _pytest.config import ExitCode
 
 
 @pytest.fixture(params=["--setup-only", "--setup-plan", "--setup-show"], scope="module")

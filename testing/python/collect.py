@@ -4,7 +4,7 @@ import textwrap
 
 import _pytest._code
 import pytest
-from _pytest.main import ExitCode
+from _pytest.config import ExitCode
 from _pytest.nodes import Collector
 
 
@@ -281,10 +281,10 @@ class TestFunction:
         from _pytest.fixtures import FixtureManager
 
         config = testdir.parseconfigure()
-        session = testdir.Session(config)
+        session = testdir.Session.from_config(config)
         session._fixturemanager = FixtureManager(session)
 
-        return pytest.Function(config=config, parent=session, **kwargs)
+        return pytest.Function.from_parent(parent=session, **kwargs)
 
     def test_function_equality(self, testdir):
         def func1():
@@ -463,7 +463,7 @@ class TestFunction:
                return '3'
 
             @pytest.mark.parametrize('fix2', ['2'])
-            def test_it(fix1):
+            def test_it(fix1, fix2):
                assert fix1 == '21'
                assert not fix3_instantiated
         """
@@ -491,6 +491,19 @@ class TestFunction:
             and "baz" not in keywords[0]
         )
         assert "foo" in keywords[1] and "bar" in keywords[1] and "baz" in keywords[1]
+
+    def test_parametrize_with_empty_string_arguments(self, testdir):
+        items = testdir.getitems(
+            """\
+            import pytest
+
+            @pytest.mark.parametrize('v', ('', ' '))
+            @pytest.mark.parametrize('w', ('', ' '))
+            def test(v, w): ...
+            """
+        )
+        names = {item.name for item in items}
+        assert names == {"test[-]", "test[ -]", "test[- ]", "test[ - ]"}
 
     def test_function_equality_with_callspec(self, testdir):
         items = testdir.getitems(
@@ -1024,7 +1037,7 @@ class TestReportInfo:
                     return "ABCDE", 42, "custom"
             def pytest_pycollect_makeitem(collector, name, obj):
                 if name == "test_func":
-                    return MyFunction(name, parent=collector)
+                    return MyFunction.from_parent(name=name, parent=collector)
         """
         )
         item = testdir.getitem("def test_func(): pass")
@@ -1208,6 +1221,28 @@ def test_syntax_error_with_non_ascii_chars(testdir):
     testdir.makepyfile("☃")
     result = testdir.runpytest()
     result.stdout.fnmatch_lines(["*ERROR collecting*", "*SyntaxError*", "*1 error in*"])
+
+
+def test_collecterror_with_fulltrace(testdir):
+    testdir.makepyfile("assert 0")
+    result = testdir.runpytest("--fulltrace")
+    result.stdout.fnmatch_lines(
+        [
+            "collected 0 items / 1 error",
+            "",
+            "*= ERRORS =*",
+            "*_ ERROR collecting test_collecterror_with_fulltrace.py _*",
+            "",
+            "*/_pytest/python.py:*: ",
+            "_ _ _ _ _ _ _ _ *",
+            "",
+            ">   assert 0",
+            "E   assert 0",
+            "",
+            "test_collecterror_with_fulltrace.py:1: AssertionError",
+            "*! Interrupted: 1 error during collection !*",
+        ]
+    )
 
 
 def test_skip_duplicates_by_default(testdir):
