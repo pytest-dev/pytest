@@ -770,7 +770,7 @@ class Config:
         self,
         pluginmanager: PytestPluginManager,
         *,
-        invocation_params: Optional[InvocationParams] = None,
+        invocation_params: Optional[InvocationParams] = None
     ) -> None:
         from .argparsing import Parser, FILE_OR_DIR
 

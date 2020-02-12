@@ -47,9 +47,9 @@ from _pytest.outcomes import fail
 from _pytest.outcomes import TEST_OUTCOME
 
 if TYPE_CHECKING:
-    from typing import Literal
     from typing import NoReturn
     from typing import Type
+    from typing_extensions import Literal
 
     from _pytest import nodes
     from _pytest.main import Session
