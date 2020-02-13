@@ -1,11 +1,14 @@
+import collections.abc
 import inspect
+import typing
 import warnings
-from collections import namedtuple
-from collections.abc import MutableMapping
 from typing import Iterable
 from typing import List
+from typing import NamedTuple
 from typing import Optional
+from typing import Sequence
 from typing import Set
+from typing import Tuple
 from typing import Union
 
 import attr
@@ -13,20 +16,29 @@ import attr
 from .._code.source import getfslineno
 from ..compat import ascii_escaped
 from ..compat import NOTSET
+from ..compat import NotSetType
+from ..compat import TYPE_CHECKING
+from _pytest.config import Config
 from _pytest.outcomes import fail
 from _pytest.warning_types import PytestUnknownMarkWarning
+
+if TYPE_CHECKING:
+    from _pytest.python import FunctionDefinition
+
 
 EMPTY_PARAMETERSET_OPTION = "empty_parameter_set_mark"
 
 
-def istestfunc(func):
+def istestfunc(func) -> bool:
     return (
         hasattr(func, "__call__")
         and getattr(func, "__name__", "<lambda>") != "<lambda>"
     )
 
 
-def get_empty_parameterset_mark(config, argnames, func):
+def get_empty_parameterset_mark(
+    config: Config, argnames: Sequence[str], func
+) -> "MarkDecorator":
     from ..nodes import Collector
 
     requested_mark = config.getini(EMPTY_PARAMETERSET_OPTION)
@@ -49,16 +61,33 @@ def get_empty_parameterset_mark(config, argnames, func):
         fs,
         lineno,
     )
-    return mark(reason=reason)
+    # Type ignored because MarkDecorator.__call__() is a bit tough to
+    # annotate ATM.
+    return mark(reason=reason)  # type: ignore[no-any-return] # noqa: F723
 
 
-class ParameterSet(namedtuple("ParameterSet", "values, marks, id")):
+class ParameterSet(
+    NamedTuple(
+        "ParameterSet",
+        [
+            ("values", Sequence[Union[object, NotSetType]]),
+            ("marks", "typing.Collection[Union[MarkDecorator, Mark]]"),
+            ("id", Optional[str]),
+        ],
+    )
+):
     @classmethod
-    def param(cls, *values, marks=(), id=None):
+    def param(
+        cls,
+        *values: object,
+        marks: "Union[MarkDecorator, typing.Collection[Union[MarkDecorator, Mark]]]" = (),
+        id: Optional[str] = None
+    ) -> "ParameterSet":
         if isinstance(marks, MarkDecorator):
             marks = (marks,)
         else:
-            assert isinstance(marks, (tuple, list, set))
+            # TODO(py36): Change to collections.abc.Collection.
+            assert isinstance(marks, (collections.abc.Sequence, set))
 
         if id is not None:
             if not isinstance(id, str):
@@ -69,7 +98,11 @@ class ParameterSet(namedtuple("ParameterSet", "values, marks, id")):
         return cls(values, marks, id)
 
     @classmethod
-    def extract_from(cls, parameterset, force_tuple=False):
+    def extract_from(
+        cls,
+        parameterset: Union["ParameterSet", Sequence[object], object],
+        force_tuple: bool = False,
+    ) -> "ParameterSet":
         """
         :param parameterset:
             a legacy style parameterset that may or may not be a tuple,
@@ -85,10 +118,20 @@ class ParameterSet(namedtuple("ParameterSet", "values, marks, id")):
         if force_tuple:
             return cls.param(parameterset)
         else:
-            return cls(parameterset, marks=[], id=None)
+            # TODO: Refactor to fix this type-ignore. Currently the following
+            # type-checks but crashes:
+            #
+            #   @pytest.mark.parametrize(('x', 'y'), [1, 2])
+            #   def test_foo(x, y): pass
+            return cls(parameterset, marks=[], id=None)  # type: ignore[arg-type] # noqa: F821
 
     @staticmethod
-    def _parse_parametrize_args(argnames, argvalues, *args, **kwargs):
+    def _parse_parametrize_args(
+        argnames: Union[str, List[str], Tuple[str, ...]],
+        argvalues: Iterable[Union["ParameterSet", Sequence[object], object]],
+        *args,
+        **kwargs
+    ) -> Tuple[Union[List[str], Tuple[str, ...]], bool]:
         if not isinstance(argnames, (tuple, list)):
             argnames = [x.strip() for x in argnames.split(",") if x.strip()]
             force_tuple = len(argnames) == 1
@@ -97,13 +140,23 @@ class ParameterSet(namedtuple("ParameterSet", "values, marks, id")):
         return argnames, force_tuple
 
     @staticmethod
-    def _parse_parametrize_parameters(argvalues, force_tuple):
+    def _parse_parametrize_parameters(
+        argvalues: Iterable[Union["ParameterSet", Sequence[object], object]],
+        force_tuple: bool,
+    ) -> List["ParameterSet"]:
         return [
             ParameterSet.extract_from(x, force_tuple=force_tuple) for x in argvalues
         ]
 
     @classmethod
-    def _for_parametrize(cls, argnames, argvalues, func, config, function_definition):
+    def _for_parametrize(
+        cls,
+        argnames: Union[str, List[str], Tuple[str, ...]],
+        argvalues: Iterable[Union["ParameterSet", Sequence[object], object]],
+        func,
+        config: Config,
+        function_definition: "FunctionDefinition",
+    ) -> Tuple[Union[List[str], Tuple[str, ...]], List["ParameterSet"]]:
         argnames, force_tuple = cls._parse_parametrize_args(argnames, argvalues)
         parameters = cls._parse_parametrize_parameters(argvalues, force_tuple)
         del argvalues
@@ -357,7 +410,7 @@ class MarkGenerator:
 MARK_GEN = MarkGenerator()
 
 
-class NodeKeywords(MutableMapping):
+class NodeKeywords(collections.abc.MutableMapping):
     def __init__(self, node):
         self.node = node
         self.parent = node.parent

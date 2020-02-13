@@ -1,6 +1,7 @@
 """
 python version compatibility code
 """
+import enum
 import functools
 import inspect
 import io
@@ -35,13 +36,20 @@ else:
 
 if TYPE_CHECKING:
     from typing import Type  # noqa: F401 (used in type string)
+    from typing_extensions import Final
 
 
 _T = TypeVar("_T")
 _S = TypeVar("_S")
 
 
-NOTSET = object()
+# fmt: off
+# Singleton type for NOTSET, as described in:
+# https://www.python.org/dev/peps/pep-0484/#support-for-singleton-types-in-unions
+class NotSetType(enum.Enum):
+    token = 0
+NOTSET = NotSetType.token  # type: Final # noqa: E305
+# fmt: on
 
 MODULE_NOT_FOUND_ERROR = (
     "ModuleNotFoundError" if sys.version_info[:2] >= (3, 6) else "ImportError"
