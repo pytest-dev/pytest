@@ -789,8 +789,6 @@ class CallSpec2:
         self.funcargs = {}
         self._idlist = []
         self.params = {}
-        self._globalid = NOTSET
-        self._globalparam = NOTSET
         self._arg2scopenum = {}  # used for sorting parametrized resources
         self.marks = []
         self.indices = {}
@@ -803,8 +801,6 @@ class CallSpec2:
         cs.indices.update(self.indices)
         cs._arg2scopenum.update(self._arg2scopenum)
         cs._idlist = list(self._idlist)
-        cs._globalid = self._globalid
-        cs._globalparam = self._globalparam
         return cs
 
     def _checkargnotcontained(self, arg):
@@ -815,9 +811,7 @@ class CallSpec2:
         try:
             return self.params[name]
         except KeyError:
-            if self._globalparam is NOTSET:
-                raise ValueError(name)
-            return self._globalparam
+            raise ValueError(name)
 
     @property
     def id(self):
