@@ -16,6 +16,7 @@ from typing import Dict
 from typing import Iterable
 from typing import List
 from typing import Optional
+from typing import Set
 from typing import Tuple
 from typing import Union
 
@@ -42,9 +43,12 @@ from _pytest.compat import safe_getattr
 from _pytest.compat import safe_isclass
 from _pytest.compat import STRING_TYPES
 from _pytest.config import Config
+from _pytest.config import ExitCode
 from _pytest.config import hookimpl
+from _pytest.config.argparsing import Parser
 from _pytest.deprecated import FUNCARGNAMES
 from _pytest.fixtures import FuncFixtureInfo
+from _pytest.main import Session
 from _pytest.mark import MARK_GEN
 from _pytest.mark import ParameterSet
 from _pytest.mark.structures import get_unpacked_marks
@@ -69,7 +73,7 @@ def pyobj_property(name):
     return property(get, None, None, doc)
 
 
-def pytest_addoption(parser):
+def pytest_addoption(parser: Parser) -> None:
     group = parser.getgroup("general")
     group.addoption(
         "--fixtures",
@@ -124,13 +128,14 @@ def pytest_addoption(parser):
     )
 
 
-def pytest_cmdline_main(config):
+def pytest_cmdline_main(config: Config) -> Optional[Union[int, ExitCode]]:
     if config.option.showfixtures:
         showfixtures(config)
         return 0
     if config.option.show_fixtures_per_test:
         show_fixtures_per_test(config)
         return 0
+    return None
 
 
 def pytest_generate_tests(metafunc: "Metafunc") -> None:
@@ -139,7 +144,7 @@ def pytest_generate_tests(metafunc: "Metafunc") -> None:
         metafunc.parametrize(*marker.args, **marker.kwargs, _param_mark=marker)  # type: ignore[misc] # noqa: F821
 
 
-def pytest_configure(config):
+def pytest_configure(config: Config) -> None:
     config.addinivalue_line(
         "markers",
         "parametrize(argnames, argvalues): call a test function multiple "
@@ -1369,13 +1374,13 @@ def _show_fixtures_per_test(config, session):
         write_item(session_item)
 
 
-def showfixtures(config):
+def showfixtures(config: Config) -> Union[int, ExitCode]:
     from _pytest.main import wrap_session
 
     return wrap_session(config, _showfixtures_main)
 
 
-def _showfixtures_main(config, session):
+def _showfixtures_main(config: Config, session: Session) -> None:
     import _pytest.config
 
     session.perform_collect()
@@ -1386,7 +1391,7 @@ def _showfixtures_main(config, session):
     fm = session._fixturemanager
 
     available = []
-    seen = set()
+    seen = set()  # type: Set[Tuple[str, str]]
 
     for argname, fixturedefs in fm._arg2fixturedefs.items():
         assert fixturedefs is not None

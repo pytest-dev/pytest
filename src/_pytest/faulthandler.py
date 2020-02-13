@@ -3,9 +3,11 @@ import os
 import sys
 
 import pytest
+from _pytest.config import Config
+from _pytest.config.argparsing import Parser
 
 
-def pytest_addoption(parser):
+def pytest_addoption(parser: Parser) -> None:
     help = (
         "Dump the traceback of all threads if a test takes "
         "more than TIMEOUT seconds to finish.\n"
@@ -14,7 +16,7 @@ def pytest_addoption(parser):
     parser.addini("faulthandler_timeout", help, default=0.0)
 
 
-def pytest_configure(config):
+def pytest_configure(config: Config) -> None:
     import faulthandler
 
     if not faulthandler.is_enabled():
@@ -42,14 +44,16 @@ class FaultHandlerHooks:
     """Implements hooks that will actually install fault handler before tests execute,
     as well as correctly handle pdb and internal errors."""
 
-    def pytest_configure(self, config):
+    def pytest_configure(self, config: Config) -> None:
         import faulthandler
 
         stderr_fd_copy = os.dup(self._get_stderr_fileno())
-        config.fault_handler_stderr = os.fdopen(stderr_fd_copy, "w")
-        faulthandler.enable(file=config.fault_handler_stderr)
+        fault_handler_stderr = os.fdopen(stderr_fd_copy, "w")
+        # Type ignored: pending mechanism to store typed objects scoped to config.
+        config.fault_handler_stderr = fault_handler_stderr  # type: ignore # noqa: F821
+        faulthandler.enable(file=fault_handler_stderr)
 
-    def pytest_unconfigure(self, config):
+    def pytest_unconfigure(self, config: Config) -> None:
         import faulthandler
 
         faulthandler.disable()
@@ -57,8 +61,8 @@ class FaultHandlerHooks:
         # re-enable the faulthandler, attaching it to the default sys.stderr
         # so we can see crashes after pytest has finished, usually during
         # garbage collection during interpreter shutdown
-        config.fault_handler_stderr.close()
-        del config.fault_handler_stderr
+        config.fault_handler_stderr.close()  # type: ignore[attr-defined] # noqa: F821
+        del config.fault_handler_stderr  # type: ignore[attr-defined] # noqa: F821
         faulthandler.enable(file=self._get_stderr_fileno())
 
     @staticmethod

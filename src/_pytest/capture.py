@@ -19,6 +19,7 @@ from _pytest.compat import CaptureAndPassthroughIO
 from _pytest.compat import CaptureIO
 from _pytest.compat import TYPE_CHECKING
 from _pytest.config import Config
+from _pytest.config.argparsing import Parser
 from _pytest.fixtures import FixtureRequest
 
 if TYPE_CHECKING:
@@ -29,7 +30,7 @@ if TYPE_CHECKING:
 patchsysdict = {0: "stdin", 1: "stdout", 2: "stderr"}
 
 
-def pytest_addoption(parser):
+def pytest_addoption(parser: Parser) -> None:
     group = parser.getgroup("general")
     group._addoption(
         "--capture",

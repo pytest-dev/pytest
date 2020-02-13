@@ -1,12 +1,14 @@
 """ support for skip/xfail functions and markers. """
+from _pytest.config import Config
 from _pytest.config import hookimpl
+from _pytest.config.argparsing import Parser
 from _pytest.mark.evaluate import MarkEvaluator
 from _pytest.outcomes import fail
 from _pytest.outcomes import skip
 from _pytest.outcomes import xfail
 
 
-def pytest_addoption(parser):
+def pytest_addoption(parser: Parser) -> None:
     group = parser.getgroup("general")
     group.addoption(
         "--runxfail",
@@ -25,7 +27,7 @@ def pytest_addoption(parser):
     )
 
 
-def pytest_configure(config):
+def pytest_configure(config: Config) -> None:
     if config.option.runxfail:
         # yay a hack
         import pytest
@@ -36,7 +38,7 @@ def pytest_configure(config):
         def nop(*args, **kwargs):
             pass
 
-        nop.Exception = xfail.Exception
+        nop.Exception = xfail.Exception  # type: ignore[attr-defined] # noqa: F821
         setattr(pytest, "xfail", nop)
 
     config.addinivalue_line(

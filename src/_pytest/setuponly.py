@@ -1,7 +1,13 @@
+from typing import Optional
+from typing import Union
+
 import pytest
+from _pytest.config import Config
+from _pytest.config import ExitCode
+from _pytest.config.argparsing import Parser
 
 
-def pytest_addoption(parser):
+def pytest_addoption(parser: Parser) -> None:
     group = parser.getgroup("debugconfig")
     group.addoption(
         "--setuponly",
@@ -73,6 +79,7 @@ def _show_fixture_action(fixturedef, msg):
 
 
 @pytest.hookimpl(tryfirst=True)
-def pytest_cmdline_main(config):
+def pytest_cmdline_main(config: Config) -> Optional[Union[int, ExitCode]]:
     if config.option.setuponly:
         config.option.setupshow = True
+    return None

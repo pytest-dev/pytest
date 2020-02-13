@@ -13,6 +13,7 @@ import attr
 from .._code.source import getfslineno
 from ..compat import ascii_escaped
 from ..compat import NOTSET
+from _pytest.config import Config
 from _pytest.outcomes import fail
 from _pytest.warning_types import PytestUnknownMarkWarning
 
@@ -310,7 +311,7 @@ class MarkGenerator:
     will set a 'slowtest' :class:`MarkInfo` object
     on the ``test_function`` object. """
 
-    _config = None
+    _config = None  # type: Optional[Config]
     _markers = set()  # type: Set[str]
 
     def __getattr__(self, name: str) -> MarkDecorator:

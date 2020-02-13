@@ -28,6 +28,7 @@ from _pytest.compat import is_generator
 from _pytest.compat import NOTSET
 from _pytest.compat import safe_getattr
 from _pytest.compat import TYPE_CHECKING
+from _pytest.config.argparsing import Parser
 from _pytest.deprecated import FIXTURE_POSITIONAL_ARGUMENTS
 from _pytest.deprecated import FUNCARGNAMES
 from _pytest.mark import ParameterSet
@@ -47,7 +48,7 @@ class PseudoFixtureDef:
     scope = attr.ib()
 
 
-def pytest_sessionstart(session: "Session"):
+def pytest_sessionstart(session: "Session") -> None:
     import _pytest.python
     import _pytest.nodes
 
@@ -1200,7 +1201,7 @@ def pytestconfig(request):
     return request.config
 
 
-def pytest_addoption(parser):
+def pytest_addoption(parser: Parser) -> None:
     parser.addini(
         "usefixtures",
         type="args",

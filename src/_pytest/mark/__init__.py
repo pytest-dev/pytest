@@ -1,4 +1,7 @@
 """ generic mechanism for marking and selecting python functions. """
+from typing import Optional
+from typing import Union
+
 from .legacy import matchkeyword
 from .legacy import matchmark
 from .structures import EMPTY_PARAMETERSET_OPTION
@@ -8,8 +11,12 @@ from .structures import MARK_GEN
 from .structures import MarkDecorator
 from .structures import MarkGenerator
 from .structures import ParameterSet
+from _pytest.config import Config
+from _pytest.config import ExitCode
 from _pytest.config import hookimpl
 from _pytest.config import UsageError
+from _pytest.config.argparsing import Parser
+
 
 __all__ = ["Mark", "MarkDecorator", "MarkGenerator", "get_empty_parameterset_mark"]
 
@@ -34,7 +41,7 @@ def param(*values, **kw):
     return ParameterSet.param(*values, **kw)
 
 
-def pytest_addoption(parser):
+def pytest_addoption(parser: Parser) -> None:
     group = parser.getgroup("general")
     group._addoption(
         "-k",
@@ -77,7 +84,7 @@ def pytest_addoption(parser):
 
 
 @hookimpl(tryfirst=True)
-def pytest_cmdline_main(config):
+def pytest_cmdline_main(config: Config) -> Optional[Union[int, ExitCode]]:
     import _pytest.config
 
     if config.option.markers:
@@ -92,6 +99,8 @@ def pytest_cmdline_main(config):
             tw.line()
         config._ensure_unconfigure()
         return 0
+
+    return None
 
 
 def deselect_by_keyword(items, config):
@@ -144,8 +153,9 @@ def pytest_collection_modifyitems(items, config):
     deselect_by_mark(items, config)
 
 
-def pytest_configure(config):
-    config._old_mark_config = MARK_GEN._config
+def pytest_configure(config: Config) -> None:
+    # Type ignored: pending mechanism to store typed objects scoped to config.
+    config._old_mark_config = MARK_GEN._config  # type: ignore[attr-defined] # noqa: F821
     MARK_GEN._config = config
 
     empty_parameterset = config.getini(EMPTY_PARAMETERSET_OPTION)
@@ -157,5 +167,5 @@ def pytest_configure(config):
         )
 
 
-def pytest_unconfigure(config):
+def pytest_unconfigure(config: Config) -> None:
     MARK_GEN._config = getattr(config, "_old_mark_config", None)

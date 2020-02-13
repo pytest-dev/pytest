@@ -13,7 +13,9 @@ import pytest
 from _pytest import nodes
 from _pytest.compat import nullcontext
 from _pytest.config import _strtobool
+from _pytest.config import Config
 from _pytest.config import create_terminal_writer
+from _pytest.config.argparsing import Parser
 from _pytest.pathlib import Path
 
 DEFAULT_LOG_FORMAT = "%(levelname)-8s %(name)s:%(filename)s:%(lineno)d %(message)s"
@@ -171,7 +173,7 @@ def get_option_ini(config, *names):
             return ret
 
 
-def pytest_addoption(parser):
+def pytest_addoption(parser: Parser) -> None:
     """Add options to control log capturing."""
     group = parser.getgroup("logging")
 
@@ -470,7 +472,7 @@ def get_actual_log_level(config, *setting_names):
 
 # run after terminalreporter/capturemanager are configured
 @pytest.hookimpl(trylast=True)
-def pytest_configure(config):
+def pytest_configure(config: Config) -> None:
     config.pluginmanager.register(LoggingPlugin(config), "logging-plugin")
 
 
@@ -478,7 +480,7 @@ class LoggingPlugin:
     """Attaches to the logging module and captures log messages for each test.
     """
 
-    def __init__(self, config):
+    def __init__(self, config: Config) -> None:
         """Creates a new plugin to capture log messages.
 
         The formatter can be safely shared across all handlers so
@@ -510,13 +512,13 @@ class LoggingPlugin:
         )
 
         log_file = get_option_ini(config, "log_file")
-        if log_file:
+        if not log_file:
+            self.log_file_handler = None
+        else:
             self.log_file_handler = logging.FileHandler(
                 log_file, mode="w", encoding="UTF-8"
             )
             self.log_file_handler.setFormatter(self.log_file_formatter)
-        else:
-            self.log_file_handler = None
 
         self.log_cli_handler = None
 
@@ -683,7 +685,7 @@ class LoggingPlugin:
             yield
 
     @pytest.hookimpl(hookwrapper=True, tryfirst=True)
-    def pytest_sessionfinish(self):
+    def pytest_sessionfinish(self) -> Generator[None, None, None]:
         with self.live_logs_context():
             if self.log_cli_handler:
                 self.log_cli_handler.set_when("sessionfinish")
@@ -701,7 +703,7 @@ class LoggingPlugin:
                 yield
 
     @pytest.hookimpl(hookwrapper=True, tryfirst=True)
-    def pytest_sessionstart(self):
+    def pytest_sessionstart(self) -> Generator[None, None, None]:
         with self.live_logs_context():
             if self.log_cli_handler:
                 self.log_cli_handler.set_when("sessionstart")
