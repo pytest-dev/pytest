@@ -908,7 +908,7 @@ def test_continue_on_collection_errors(testdir):
     assert res.ret == 1
 
     res.stdout.fnmatch_lines(
-        ["collected 2 items / 2 errors", "*1 failed, 1 passed, 2 errors*"]
+        ["collected 2 items / 2 errors", "*1 failed, 1 passed, 2 error*"]
     )
 
 
@@ -925,7 +925,7 @@ def test_continue_on_collection_errors_maxfail(testdir):
     res = testdir.runpytest("--continue-on-collection-errors", "--maxfail=3")
     assert res.ret == 1
 
-    res.stdout.fnmatch_lines(["collected 2 items / 2 errors", "*1 failed, 2 errors*"])
+    res.stdout.fnmatch_lines(["collected 2 items / 2 errors", "*1 failed, 2 error*"])
 
 
 def test_fixture_scope_sibling_conftests(testdir):
@@ -1269,7 +1269,7 @@ def test_collector_respects_tbstyle(testdir):
             '  File "*/test_collector_respects_tbstyle.py", line 1, in <module>',
             "    assert 0",
             "AssertionError: assert 0",
-            "*! Interrupted: 1 error during collection !*",
+            "*! Interrupted: 1 errors during collection !*",
             "*= 1 error in *",
         ]
     )
