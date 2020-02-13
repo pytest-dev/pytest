@@ -677,8 +677,14 @@ class TestAssert_reprcompare:
 
         expl = callequal([], [A()])
         assert "ValueError" in "".join(expl)
-        expl = callequal({}, {"1": A()})
-        assert "faulty" in "".join(expl)
+        expl = callequal({}, {"1": A()}, verbose=2)
+        assert expl[0].startswith("{} == <[ValueError")
+        assert "raised in repr" in expl[0]
+        assert expl[1:] == [
+            "(pytest_assertion plugin: representation of details failed:"
+            " {}:720: ValueError: 42.".format(__file__),
+            " Probably an object has a faulty __repr__.)",
+        ]
 
     def test_one_repr_empty(self):
         """
