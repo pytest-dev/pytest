@@ -152,6 +152,13 @@ class CaptureManager:
     def _capturing_for_request(
         self, request: FixtureRequest
     ) -> Generator["CaptureFixture", None, None]:
+        """
+        Context manager that creates a ``CaptureFixture`` instance for the
+        given ``request``, ensuring there is only a single one being requested
+        at the same time.
+
+        This is used as a helper with ``capsys``, ``capfd`` etc.
+        """
         if self._capture_fixture:
             other_name = next(
                 k
