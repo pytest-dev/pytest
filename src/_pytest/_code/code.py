@@ -1100,11 +1100,11 @@ class ReprEntry(TerminalRepr):
         )
 
 
+@attr.s
 class ReprFileLocation(TerminalRepr):
-    def __init__(self, path, lineno: int, message: str) -> None:
-        self.path = str(path)
-        self.lineno = lineno
-        self.message = message
+    path = attr.ib(type=str, converter=str)
+    lineno = attr.ib(type=int)
+    message = attr.ib(type=str)
 
     def toterminal(self, tw: TerminalWriter) -> None:
         # filename and lineno output for each entry,
