@@ -682,7 +682,9 @@ class TestAssert_reprcompare:
         assert "raised in repr" in expl[0]
         assert expl[1:] == [
             "(pytest_assertion plugin: representation of details failed:"
-            " {}:720: ValueError: 42.".format(__file__),
+            " {}:{}: ValueError: 42.".format(
+                __file__, A.__repr__.__code__.co_firstlineno + 1
+            ),
             " Probably an object has a faulty __repr__.)",
         ]
 
