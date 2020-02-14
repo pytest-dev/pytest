@@ -1,0 +1,7 @@
+The ``cached_result`` attribute of ``FixtureDef`` is now set to ``None`` when
+the result is unavailable, instead of being deleted.
+
+If your plugin perform checks like ``hasattr(fixturedef, 'cached_result')``,
+for example in a ``pytest_fixture_post_finalizer`` hook implementation, replace
+it with ``fixturedef.cached_result is not None``. If you ``del`` the attribute,
+set it to ``None`` instead.

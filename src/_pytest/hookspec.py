@@ -423,9 +423,9 @@ def pytest_fixture_setup(fixturedef, request):
 
 
 def pytest_fixture_post_finalizer(fixturedef, request):
-    """ called after fixture teardown, but before the cache is cleared so
-    the fixture result cache ``fixturedef.cached_result`` can
-    still be accessed."""
+    """Called after fixture teardown, but before the cache is cleared, so
+    the fixture result ``fixturedef.cached_result`` is still available (not
+    ``None``)."""
 
 
 # -------------------------------------------------------------------------

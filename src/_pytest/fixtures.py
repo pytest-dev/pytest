@@ -855,6 +855,7 @@ class FixtureDef:
         self.argnames = getfuncargnames(func, name=argname, is_method=unittest)
         self.unittest = unittest
         self.ids = ids
+        self.cached_result = None
         self._finalizers = []
 
     def addfinalizer(self, finalizer):
@@ -881,8 +882,7 @@ class FixtureDef:
             # the cached fixture value and remove
             # all finalizers because they may be bound methods which will
             # keep instances alive
-            if hasattr(self, "cached_result"):
-                del self.cached_result
+            self.cached_result = None
             self._finalizers = []
 
     def execute(self, request):
@@ -894,9 +894,8 @@ class FixtureDef:
                 fixturedef.addfinalizer(functools.partial(self.finish, request=request))
 
         my_cache_key = self.cache_key(request)
-        cached_result = getattr(self, "cached_result", None)
-        if cached_result is not None:
-            result, cache_key, err = cached_result
+        if self.cached_result is not None:
+            result, cache_key, err = self.cached_result
             # note: comparison with `==` can fail (or be expensive) for e.g.
             # numpy arrays (#6497)
             if my_cache_key is cache_key:
@@ -908,7 +907,7 @@ class FixtureDef:
             # we have a previous but differently parametrized fixture instance
             # so we need to tear it down before creating a new one
             self.finish(request)
-            assert not hasattr(self, "cached_result")
+            assert self.cached_result is None
 
         hook = self._fixturemanager.session.gethookproxy(request.node.fspath)
         return hook.pytest_fixture_setup(fixturedef=self, request=request)
@@ -953,6 +952,7 @@ def pytest_fixture_setup(fixturedef, request):
     kwargs = {}
     for argname in fixturedef.argnames:
         fixdef = request._get_active_fixturedef(argname)
+        assert fixdef.cached_result is not None
         result, arg_cache_key, exc = fixdef.cached_result
         request._check_scope(argname, request.scope, fixdef.scope)
         kwargs[argname] = result
