@@ -975,18 +975,13 @@ class ReprExceptionInfo(ExceptionRepr):
         super().toterminal(tw)
 
 
+@attr.s
 class ReprTraceback(TerminalRepr):
-    entrysep = "_ "
+    reprentries = attr.ib(type=Sequence[Union["ReprEntry", "ReprEntryNative"]])
+    extraline = attr.ib(type=Optional[str])
+    style = attr.ib(type="_TracebackStyle")
 
-    def __init__(
-        self,
-        reprentries: Sequence[Union["ReprEntry", "ReprEntryNative"]],
-        extraline: Optional[str],
-        style: "_TracebackStyle",
-    ) -> None:
-        self.reprentries = reprentries
-        self.extraline = extraline
-        self.style = style
+    entrysep = "_ "
 
     def toterminal(self, tw: TerminalWriter) -> None:
         # the entries might have different styles
@@ -1105,11 +1100,11 @@ class ReprEntry(TerminalRepr):
         )
 
 
+@attr.s
 class ReprFileLocation(TerminalRepr):
-    def __init__(self, path, lineno: int, message: str) -> None:
-        self.path = str(path)
-        self.lineno = lineno
-        self.message = message
+    path = attr.ib(type=str, converter=str)
+    lineno = attr.ib(type=int)
+    message = attr.ib(type=str)
 
     def toterminal(self, tw: TerminalWriter) -> None:
         # filename and lineno output for each entry,

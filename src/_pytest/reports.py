@@ -6,6 +6,7 @@ from typing import Optional
 from typing import Tuple
 from typing import Union
 
+import attr
 import py
 
 from _pytest._code.code import ExceptionChainRepr
@@ -375,8 +376,8 @@ def _report_to_json(report):
                 entry_data["data"][key] = value.__dict__.copy()
         return entry_data
 
-    def serialize_repr_traceback(reprtraceback):
-        result = reprtraceback.__dict__.copy()
+    def serialize_repr_traceback(reprtraceback: ReprTraceback):
+        result = attr.asdict(reprtraceback)
         result["reprentries"] = [
             serialize_repr_entry(x) for x in reprtraceback.reprentries
         ]
@@ -384,7 +385,7 @@ def _report_to_json(report):
 
     def serialize_repr_crash(reprcrash: Optional[ReprFileLocation]):
         if reprcrash is not None:
-            return reprcrash.__dict__.copy()
+            return attr.asdict(reprcrash)
         else:
             return None
 
