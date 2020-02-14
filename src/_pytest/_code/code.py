@@ -910,6 +910,7 @@ class FormattedExcinfo:
         return ExceptionChainRepr(repr_chain)
 
 
+@attr.s
 class TerminalRepr:
     def __str__(self) -> str:
         # FYI this is called from pytest-xdist's serialization of exception
@@ -926,8 +927,9 @@ class TerminalRepr:
         raise NotImplementedError()
 
 
+@attr.s
 class ExceptionRepr(TerminalRepr):
-    def __init__(self) -> None:
+    def __attrs_post_init__(self) -> None:
         self.sections = []  # type: List[Tuple[str, str, str]]
 
     def addsection(self, name: str, content: str, sep: str = "-") -> None:
@@ -939,19 +941,22 @@ class ExceptionRepr(TerminalRepr):
             tw.line(content)
 
 
+@attr.s
+# XXX: missing/ignore sections from ExceptionRepr
+# class ExceptionChainRepr(TerminalRepr):
 class ExceptionChainRepr(ExceptionRepr):
-    def __init__(
-        self,
-        chain: Sequence[
+    chain = attr.ib(
+        type=Sequence[
             Tuple["ReprTraceback", Optional["ReprFileLocation"], Optional[str]]
-        ],
-    ) -> None:
-        super().__init__()
-        self.chain = chain
+        ]
+    )
+
+    def __attrs_post_init__(self):
+        super().__attrs_post_init__()
         # reprcrash and reprtraceback of the outermost (the newest) exception
         # in the chain
-        self.reprtraceback = chain[-1][0]
-        self.reprcrash = chain[-1][1]
+        self.reprtraceback = self.chain[-1][0]
+        self.reprcrash = self.chain[-1][1]
 
     def toterminal(self, tw: TerminalWriter) -> None:
         for element in self.chain:
@@ -1009,30 +1014,23 @@ class ReprTracebackNative(ReprTraceback):
         self.extraline = None
 
 
+@attr.s
 class ReprEntryNative(TerminalRepr):
+    lines = attr.ib(type=Sequence[str])
     style = "native"  # type: _TracebackStyle
-
-    def __init__(self, tblines: Sequence[str]) -> None:
-        self.lines = tblines
 
     def toterminal(self, tw: TerminalWriter) -> None:
         tw.write("".join(self.lines))
 
 
+@attr.s
 class ReprEntry(TerminalRepr):
-    def __init__(
-        self,
-        lines: Sequence[str],
-        reprfuncargs: Optional["ReprFuncArgs"],
-        reprlocals: Optional["ReprLocals"],
-        filelocrepr: Optional["ReprFileLocation"],
-        style: "_TracebackStyle",
-    ) -> None:
-        self.lines = lines
-        self.reprfuncargs = reprfuncargs
-        self.reprlocals = reprlocals
-        self.reprfileloc = filelocrepr
-        self.style = style
+    lines = attr.ib(type=Sequence[str])
+    reprfuncargs = attr.ib(type=Optional["ReprFuncArgs"])
+    reprlocals = attr.ib(type=Optional["ReprLocals"])
+    # XXX/NOTE: changed arg name: filelocrepr => reprfileloc
+    reprfileloc = attr.ib(type=Optional["ReprFileLocation"])
+    style = attr.ib(type="_TracebackStyle")
 
     def _write_entry_lines(self, tw: TerminalWriter) -> None:
         """Writes the source code portions of a list of traceback entries with syntax highlighting.
@@ -1117,18 +1115,18 @@ class ReprFileLocation(TerminalRepr):
         tw.line(":{}: {}".format(self.lineno, msg))
 
 
+@attr.s
 class ReprLocals(TerminalRepr):
-    def __init__(self, lines: Sequence[str]) -> None:
-        self.lines = lines
+    lines = attr.ib(type=Sequence[str])
 
     def toterminal(self, tw: TerminalWriter, indent="") -> None:
         for line in self.lines:
             tw.line(indent + line)
 
 
+@attr.s
 class ReprFuncArgs(TerminalRepr):
-    def __init__(self, args: Sequence[Tuple[str, object]]) -> None:
-        self.args = args
+    args = attr.ib(type=Sequence[Tuple[str, object]])
 
     def toterminal(self, tw: TerminalWriter) -> None:
         if self.args:

@@ -370,10 +370,10 @@ def _report_to_json(report):
     """
 
     def serialize_repr_entry(entry):
-        entry_data = {"type": type(entry).__name__, "data": entry.__dict__.copy()}
+        entry_data = {"type": type(entry).__name__, "data": attr.asdict(entry)}
         for key, value in entry_data["data"].items():
             if hasattr(value, "__dict__"):
-                entry_data["data"][key] = value.__dict__.copy()
+                entry_data["data"][key] = attr.asdict(value)
         return entry_data
 
     def serialize_repr_traceback(reprtraceback: ReprTraceback):
@@ -409,7 +409,7 @@ def _report_to_json(report):
             result["chain"] = None
         return result
 
-    d = report.__dict__.copy()
+    d = attr.asdict(report)
     if hasattr(report.longrepr, "toterminal"):
         if hasattr(report.longrepr, "reprtraceback") and hasattr(
             report.longrepr, "reprcrash"
