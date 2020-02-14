@@ -786,7 +786,11 @@ class TestInvocationVariants:
 
         d_local = testdir.mkdir("local")
         symlink_location = os.path.join(str(d_local), "lib")
-        symlink_or_skip(str(d), symlink_location, target_is_directory=True)
+        try:
+            symlink_or_skip(str(d), symlink_location, target_is_directory=True)
+            has_symlinks = True
+        except pytest.skip.Exception:
+            has_symlinks = False
 
         # The structure of the test directory is now:
         # .
@@ -808,16 +812,24 @@ class TestInvocationVariants:
 
         # module picked up in symlink-ed directory:
         # It picks up local/lib/foo/bar (symlink) via sys.path.
-        result = testdir.runpytest("--pyargs", "-v", "foo.bar")
-        testdir.chdir()
+        result = testdir.runpytest("--pyargs", "-vv", "foo.bar")
         assert result.ret == 0
-        result.stdout.fnmatch_lines(
-            [
-                "lib/foo/bar/test_bar.py::test_bar PASSED*",
-                "lib/foo/bar/test_bar.py::test_other PASSED*",
-                "*2 passed*",
-            ]
-        )
+        if has_symlinks:
+            result.stdout.fnmatch_lines(
+                [
+                    "lib/foo/bar/test_bar.py::test_bar <- local/lib/foo/bar/test_bar.py PASSED*",
+                    "lib/foo/bar/test_bar.py::test_other <- local/lib/foo/bar/test_bar.py PASSED*",
+                    "*2 passed*",
+                ]
+            )
+        else:
+            result.stdout.fnmatch_lines(
+                [
+                    "*lib/foo/bar/test_bar.py::test_bar PASSED*",
+                    "*lib/foo/bar/test_bar.py::test_other PASSED*",
+                    "*2 passed*",
+                ]
+            )
 
     def test_cmdline_python_package_not_exists(self, testdir):
         result = testdir.runpytest("--pyargs", "tpkgwhatv")
