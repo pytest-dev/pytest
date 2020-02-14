@@ -268,10 +268,6 @@ class TestGeneralUsage:
         assert result.ret != 0
         assert "should be seen" in result.stdout.str()
 
-    @pytest.mark.skipif(
-        not hasattr(py.path.local, "mksymlinkto"),
-        reason="symlink not available on this platform",
-    )
     def test_chdir(self, testdir):
         testdir.tmpdir.join("py").mksymlinkto(py._pydir)
         p = testdir.tmpdir.join("main.py")
@@ -819,22 +815,13 @@ class TestInvocationVariants:
         result = testdir.runpytest("--pyargs", "-v", "foo.bar")
         testdir.chdir()
         assert result.ret == 0
-        if hasattr(py.path.local, "mksymlinkto"):
-            result.stdout.fnmatch_lines(
-                [
-                    "lib/foo/bar/test_bar.py::test_bar PASSED*",
-                    "lib/foo/bar/test_bar.py::test_other PASSED*",
-                    "*2 passed*",
-                ]
-            )
-        else:
-            result.stdout.fnmatch_lines(
-                [
-                    "local/lib/foo/bar/test_bar.py::test_bar PASSED*",
-                    "local/lib/foo/bar/test_bar.py::test_other PASSED*",
-                    "*2 passed*",
-                ]
-            )
+        result.stdout.fnmatch_lines(
+            [
+                "local/lib/foo/bar/test_bar.py::test_bar PASSED*",
+                "local/lib/foo/bar/test_bar.py::test_other PASSED*",
+                "*2 passed*",
+            ]
+        )
 
     def test_cmdline_python_package_not_exists(self, testdir):
         result = testdir.runpytest("--pyargs", "tpkgwhatv")
