@@ -762,21 +762,13 @@ class TestInvocationVariants:
         result = testdir.runpytest(str(p) + "::test", "--doctest-modules")
         result.stdout.fnmatch_lines(["*1 passed*"])
 
-    def test_cmdline_python_package_symlink(self, testdir, monkeypatch):
+    def test_cmdline_python_package_symlink(
+        self, testdir, monkeypatch, symlink_or_skip
+    ):
         """
         test --pyargs option with packages with path containing symlink can
         have conftest.py in their package (#2985)
         """
-        # dummy check that we can actually create symlinks: on Windows `os.symlink` is available,
-        # but normal users require special admin privileges to create symlinks.
-        if sys.platform == "win32":
-            try:
-                os.symlink(
-                    str(testdir.tmpdir.ensure("tmpfile")),
-                    str(testdir.tmpdir.join("tmpfile2")),
-                )
-            except OSError as e:
-                pytest.skip(str(e.args[0]))
         monkeypatch.delenv("PYTHONDONTWRITEBYTECODE", raising=False)
 
         dirname = "lib"
@@ -794,7 +786,7 @@ class TestInvocationVariants:
 
         d_local = testdir.mkdir("local")
         symlink_location = os.path.join(str(d_local), "lib")
-        os.symlink(str(d), symlink_location, target_is_directory=True)
+        symlink_or_skip(str(d), symlink_location, target_is_directory=True)
 
         # The structure of the test directory is now:
         # .
