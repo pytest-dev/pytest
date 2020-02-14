@@ -152,7 +152,7 @@ class Mark:
     #: resolved/generated ids with parametrize Marks
     _param_ids_generated = attr.ib(type=Optional[List[str]], default=None, repr=False)
 
-    def _has_param_ids(self):
+    def _has_param_ids(self) -> bool:
         return "ids" in self.kwargs or len(self.args) >= 4
 
     def combined_with(self, other: "Mark") -> "Mark":
@@ -215,10 +215,10 @@ class MarkDecorator:
 
     """
 
-    mark = attr.ib(validator=attr.validators.instance_of(Mark))
+    mark = attr.ib(type=Mark, validator=attr.validators.instance_of(Mark))
 
     @property
-    def name(self):
+    def name(self) -> str:
         """alias for mark.name"""
         return self.mark.name
 
@@ -233,13 +233,13 @@ class MarkDecorator:
         return self.mark.kwargs
 
     @property
-    def markname(self):
+    def markname(self) -> str:
         return self.name  # for backward-compat (2.4.1 had this attr)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "<MarkDecorator {!r}>".format(self.mark)
 
-    def with_args(self, *args, **kwargs):
+    def with_args(self, *args, **kwargs) -> "MarkDecorator":
         """ return a MarkDecorator with extra arguments added
 
         unlike call this can be used even if the sole argument is a callable/class
@@ -262,7 +262,7 @@ class MarkDecorator:
         return self.with_args(*args, **kwargs)
 
 
-def get_unpacked_marks(obj):
+def get_unpacked_marks(obj) -> List[Mark]:
     """
     obtain the unpacked marks that are stored on an object
     """
@@ -288,7 +288,7 @@ def normalize_mark_list(mark_list: Iterable[Union[Mark, MarkDecorator]]) -> List
     return [x for x in extracted if isinstance(x, Mark)]
 
 
-def store_mark(obj, mark):
+def store_mark(obj, mark: Mark) -> None:
     """store a Mark on an object
     this is used to implement the Mark declarations/decorators correctly
     """
@@ -387,8 +387,8 @@ class NodeKeywords(MutableMapping):
             seen.update(self.parent.keywords)
         return seen
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self._seen())
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "<NodeKeywords for node {}>".format(self.node)

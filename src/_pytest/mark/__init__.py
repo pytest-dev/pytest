@@ -8,6 +8,7 @@ from .structures import MARK_GEN
 from .structures import MarkDecorator
 from .structures import MarkGenerator
 from .structures import ParameterSet
+from _pytest.config import Config
 from _pytest.config import hookimpl
 from _pytest.config import UsageError
 
@@ -94,7 +95,7 @@ def pytest_cmdline_main(config):
         return 0
 
 
-def deselect_by_keyword(items, config):
+def deselect_by_keyword(items, config: Config) -> None:
     keywordexpr = config.option.keyword.lstrip()
     if not keywordexpr:
         return
@@ -121,7 +122,7 @@ def deselect_by_keyword(items, config):
         items[:] = remaining
 
 
-def deselect_by_mark(items, config):
+def deselect_by_mark(items, config: Config) -> None:
     matchexpr = config.option.markexpr
     if not matchexpr:
         return
@@ -139,7 +140,7 @@ def deselect_by_mark(items, config):
         items[:] = remaining
 
 
-def pytest_collection_modifyitems(items, config):
+def pytest_collection_modifyitems(items, config: Config) -> None:
     deselect_by_keyword(items, config)
     deselect_by_mark(items, config)
 

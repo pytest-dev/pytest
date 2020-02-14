@@ -7,7 +7,7 @@ import pytest
 from _pytest.main import Session
 
 
-def _setoption(wmod, arg):
+def _setoption(wmod, arg) -> None:
     """
     Copy of the warning._setoption function but does not escape arguments.
     """
