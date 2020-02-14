@@ -139,7 +139,7 @@ def testdir(testdir: Testdir) -> Testdir:
 
 @pytest.fixture
 def symlink_or_skip():
-    """Return a function to create symlinks or skip the test.
+    """Return a function that creates a symlink or raises ``Skip``.
 
     On Windows `os.symlink` is available, but normal users require special
     admin privileges to create symlinks.
