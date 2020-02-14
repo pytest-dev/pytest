@@ -927,10 +927,13 @@ class TerminalRepr:
         raise NotImplementedError()
 
 
-@attr.s
-class ExceptionRepr(TerminalRepr):
-    def __attrs_post_init__(self) -> None:
-        self.sections = []  # type: List[Tuple[str, str, str]]
+class _SectionsRepr:
+    """Mixin for handling sections.
+
+    Only `ExceptionRepr` takes it in `__init__`, but others use it also.
+    """
+
+    sections = []  # type: List[Tuple[str, str, str]]
 
     def addsection(self, name: str, content: str, sep: str = "-") -> None:
         self.sections.append((name, content, sep))
@@ -942,9 +945,12 @@ class ExceptionRepr(TerminalRepr):
 
 
 @attr.s
-# XXX: missing/ignore sections from ExceptionRepr
-# class ExceptionChainRepr(TerminalRepr):
-class ExceptionChainRepr(ExceptionRepr):
+class ExceptionRepr(_SectionsRepr, TerminalRepr):
+    sections = attr.ib(type=List[Tuple[str, str, str]])
+
+
+@attr.s
+class ExceptionChainRepr(_SectionsRepr, TerminalRepr):
     chain = attr.ib(
         type=Sequence[
             Tuple["ReprTraceback", Optional["ReprFileLocation"], Optional[str]]
@@ -952,7 +958,6 @@ class ExceptionChainRepr(ExceptionRepr):
     )
 
     def __attrs_post_init__(self):
-        super().__attrs_post_init__()
         # reprcrash and reprtraceback of the outermost (the newest) exception
         # in the chain
         self.reprtraceback = self.chain[-1][0]
@@ -967,13 +972,10 @@ class ExceptionChainRepr(ExceptionRepr):
         super().toterminal(tw)
 
 
-class ReprExceptionInfo(ExceptionRepr):
-    def __init__(
-        self, reprtraceback: "ReprTraceback", reprcrash: "ReprFileLocation"
-    ) -> None:
-        super().__init__()
-        self.reprtraceback = reprtraceback
-        self.reprcrash = reprcrash
+@attr.s
+class ReprExceptionInfo(_SectionsRepr, TerminalRepr):
+    reprtraceback = attr.ib(type="ReprTraceback")
+    reprcrash = attr.ib(type="ReprFileLocation")
 
     def toterminal(self, tw: TerminalWriter) -> None:
         self.reprtraceback.toterminal(tw)
