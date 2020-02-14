@@ -1,5 +1,6 @@
 """Utilities for assertion debugging"""
 import collections.abc
+import itertools
 import pprint
 from typing import AbstractSet
 from typing import Any
@@ -193,7 +194,7 @@ def _diff_text(left: str, right: str, verbose: int = 0) -> List[str]:
     characters which are identical to keep the diff minimal.
     """
     from difflib import ndiff
-    from wcwidth import wcswidth
+    from wcwidth import wcwidth
 
     explanation = []  # type: List[str]
 
@@ -230,11 +231,14 @@ def _diff_text(left: str, right: str, verbose: int = 0) -> List[str]:
     left_lines = left.splitlines(keepends)
     right_lines = right.splitlines(keepends)
 
-    if any(wcswidth(x) == -1 for x in left_lines + right_lines):
+    if any(
+        wcwidth(ch) <= -1
+        for ch in itertools.chain.from_iterable([x for x in left_lines + right_lines])
+    ):
         left_lines = [repr(x) for x in left_lines]
         right_lines = [repr(x) for x in right_lines]
         explanation += [
-            "Strings contain non-printable/escape characters, escaping them using repr()"
+            "NOTE: Strings contain non-printable/zero-width characters. Escaping them using repr()."
         ]
 
     explanation += [line.strip("\n") for line in ndiff(left_lines, right_lines)]

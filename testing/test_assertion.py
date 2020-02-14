@@ -335,12 +335,12 @@ class TestAssert_reprcompare:
         right = "foo\neggs\nbar"
         diff = callequal(left, right)
         assert diff == [
-            "'foo\\nspam\\nbar' == 'foo\\neggs\\nbar'",
-            "Strings contain non-printable/escape characters, escaping them using repr()",
-            "  'foo\\n'",
-            "- 'spam\\n'",
-            "+ 'eggs\\n'",
-            "  'bar'",
+            r"'foo\nspam\nbar' == 'foo\neggs\nbar'",
+            r"NOTE: Strings contain non-printable/zero-width characters. Escaping them using repr().",
+            r"  'foo\n'",
+            r"- 'spam\n'",
+            r"+ 'eggs\n'",
+            r"  'bar'",
         ]
 
     def test_bytes_diff_normal(self):
@@ -1013,17 +1013,17 @@ class TestTruncateExplanation:
         # without -vv, truncate the message showing a few diff lines only
         result.stdout.fnmatch_lines(
             [
-                ">       assert a == b",
-                "E       AssertionError: assert '000000000000...6666666666666' == '000000000000...6666666666666'",
-                "E         Skipping 91 identical leading characters in diff, use -v to show",
-                "E         Strings contain non-printable/escape characters, escaping them using repr()",
-                "E           '000000000\\n'",
-                "E         - '1*\\n'",
-                "E           '2*\\n'",
-                "E         - '3*\\n'",
-                "E           '4*\\...",
-                "E         ",
-                "*truncated (%d lines hidden)*use*-vv*" % expected_truncated_lines,
+                r">       assert a == b",
+                r"E       AssertionError: assert '000000000000...6666666666666' == '000000000000...6666666666666'",
+                r"E         Skipping 91 identical leading characters in diff, use -v to show",
+                r"E         NOTE: Strings contain non-printable/zero-width characters. Escaping them using repr().",
+                r"E           '000000000\n'",
+                r"E         - '1*\n'",
+                r"E           '2*\n'",
+                r"E         - '3*\n'",
+                r"E           '4*",
+                r"E         ",
+                r"*truncated (%d lines hidden)*use*-vv*" % expected_truncated_lines,
             ]
         )
 
@@ -1081,12 +1081,12 @@ def test_reprcompare_whitespaces():
     ]
 
 
-def test_reprcompare_escape_sequences_strings():
-    assert callequal("\x1b[31mred", "\x1b[31mgreen") == [
-        "'\\x1b[31mred' == '\\x1b[31mgreen'",
-        "Strings contain non-printable/escape characters, escaping them using repr()",
-        "- '\\x1b[31mred'",
-        "?            ^",
+def test_reprcompare_zerowidth_and_non_printable():
+    assert callequal("\x00\x1b[31mred", "\x1b[31mgreen") == [
+        "'\\x00\\x1b[31mred' == '\\x1b[31mgreen'",
+        "NOTE: Strings contain non-printable/zero-width characters. Escaping them using repr().",
+        "- '\\x00\\x1b[31mred'",
+        "?  ----          ^",
         "+ '\\x1b[31mgreen'",
         "?          +  ^^",
     ]
@@ -1335,7 +1335,8 @@ def test_diff_newline_at_end(testdir):
     result.stdout.fnmatch_lines(
         r"""
         *assert 'asdf' == 'asdf\n'
-        E         Strings contain non-printable/escape characters, escaping them using repr()
+        E       AssertionError: assert 'asdf' == 'asdf\n'
+        E         NOTE: Strings contain non-printable/zero-width characters. Escaping them using repr().
         *  - 'asdf'
         *  + 'asdf\n'
         *  ?      ++
