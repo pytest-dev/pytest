@@ -34,8 +34,8 @@ def pytest_fixture_setup(fixturedef, request):
         _show_fixture_action(fixturedef, "SETUP")
 
 
-def pytest_fixture_post_finalizer(fixturedef):
-    if hasattr(fixturedef, "cached_result"):
+def pytest_fixture_post_finalizer(fixturedef) -> None:
+    if fixturedef.cached_result is not None:
         config = fixturedef._fixturemanager.config
         if config.option.setupshow:
             _show_fixture_action(fixturedef, "TEARDOWN")
