@@ -336,7 +336,7 @@ class TestAssert_reprcompare:
         diff = callequal(left, right)
         assert diff == [
             r"'foo\nspam\nbar' == 'foo\neggs\nbar'",
-            r"NOTE: Strings contain non-printable/zero-width characters. Escaping them using repr().",
+            r"NOTE: Strings contain non-printable characters. Escaping them using repr().",
             r"  'foo\n'",
             r"- 'spam\n'",
             r"+ 'eggs\n'",
@@ -1016,7 +1016,7 @@ class TestTruncateExplanation:
                 r">       assert a == b",
                 r"E       AssertionError: assert '000000000000...6666666666666' == '000000000000...6666666666666'",
                 r"E         Skipping 91 identical leading characters in diff, use -v to show",
-                r"E         NOTE: Strings contain non-printable/zero-width characters. Escaping them using repr().",
+                r"E         NOTE: Strings contain non-printable characters. Escaping them using repr().",
                 r"E           '000000000\n'",
                 r"E         - '1*\n'",
                 r"E           '2*\n'",
@@ -1084,7 +1084,7 @@ def test_reprcompare_whitespaces():
 def test_reprcompare_zerowidth_and_non_printable():
     assert callequal("\x00\x1b[31mred", "\x1b[31mgreen") == [
         r"'\x00\x1b[31mred' == '\x1b[31mgreen'",
-        r"NOTE: Strings contain non-printable/zero-width characters. Escaping them using repr().",
+        r"NOTE: Strings contain non-printable characters. Escaping them using repr().",
         r"- '\x00\x1b[31mred'",
         r"?  ----          ^",
         r"+ '\x1b[31mgreen'",
@@ -1336,7 +1336,7 @@ def test_diff_newline_at_end(testdir):
         r"""
         *assert 'asdf' == 'asdf\n'
         E       AssertionError: assert 'asdf' == 'asdf\n'
-        E         NOTE: Strings contain non-printable/zero-width characters. Escaping them using repr().
+        E         NOTE: Strings contain non-printable characters. Escaping them using repr().
         *  - 'asdf'
         *  + 'asdf\n'
         *  ?      ++

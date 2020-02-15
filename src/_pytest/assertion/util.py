@@ -238,7 +238,7 @@ def _diff_text(left: str, right: str, verbose: int = 0) -> List[str]:
         left_lines = [repr(x) for x in left_lines]
         right_lines = [repr(x) for x in right_lines]
         explanation += [
-            "NOTE: Strings contain non-printable/zero-width characters. Escaping them using repr()."
+            "NOTE: Strings contain non-printable characters. Escaping them using repr()."
         ]
 
     explanation += [line.strip("\n") for line in ndiff(left_lines, right_lines)]
