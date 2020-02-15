@@ -45,8 +45,7 @@ class TestSpecialisedExplanations:
         assert "spam" == "eggs"
 
     def test_eq_similar_text(self):
-        x = "foo\n1 bar\n"
-        assert x == "foo\n1 bar"
+        assert "foo 1 bar" == "foo 2 bar"
 
     def test_eq_multiline_text(self):
         assert "foo\nspam\nbar" == "foo\neggs\nbar"
