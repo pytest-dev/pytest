@@ -68,7 +68,15 @@ class TestNewAPI:
             assert result.ret == 1
             # warnings from nodeids, lastfailed, and stepwise
             result.stdout.fnmatch_lines(
-                ["*could not create cache path*", "*3 warnings*"]
+                [
+                    # Validate location/stacklevel of warning from cacheprovider.
+                    "*= warnings summary =*",
+                    "*/cacheprovider.py:314",
+                    "  */cacheprovider.py:314: PytestCacheWarning: could not create cache path "
+                    "{}/v/cache/nodeids".format(cache_dir),
+                    '    config.cache.set("cache/nodeids", self.cached_nodeids)',
+                    "*1 failed, 3 warnings in*",
+                ]
             )
         finally:
             testdir.tmpdir.ensure_dir(".pytest_cache").chmod(mode)

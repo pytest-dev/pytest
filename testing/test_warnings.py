@@ -712,27 +712,6 @@ class TestStackLevel:
         assert "resultlog.py" in file
         assert func == "pytest_configure"
 
-    def test_issue4445_cacheprovider_set(self, testdir, capwarn):
-        """#4445: Make sure the warning points to a reasonable location
-        See origin of _issue_warning_captured at: _pytest.cacheprovider.py:59
-        """
-        testdir.tmpdir.join(".pytest_cache").write("something wrong")
-        testdir.runpytest(plugins=[capwarn()])
-
-        # with stacklevel=3 the warning originates from one stacklevel above
-        # _issue_warning_captured in cacheprovider.Cache.set and is thrown
-        # when there are errors during cache folder creation
-
-        # set is called twice (in module stepwise and in cacheprovider) so emits
-        # two warnings when there are errors during cache folder creation. (is this intentional?)
-        assert len(capwarn.captured) == 2
-        warning, location = capwarn.captured.pop()
-        file, lineno, func = location
-
-        assert "could not create cache path" in str(warning.message)
-        assert "cacheprovider.py" in file
-        assert func == "set"
-
     def test_issue4445_issue5928_mark_generator(self, testdir):
         """#4445 and #5928: Make sure the warning from an unknown mark points to
         the test file where this mark is used.
