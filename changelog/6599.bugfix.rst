@@ -1,0 +1,1 @@
+Fix percentage progress report with duplicate nodeids.

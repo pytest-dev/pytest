@@ -1,0 +1,1 @@
+pytester: the ``testdir`` fixture respects environment settings from the ``monkeypatch`` fixture for inner runs.

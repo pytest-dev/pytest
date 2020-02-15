@@ -315,10 +315,6 @@ def pytest_runtestloop(session):
     """
 
 
-def pytest_itemstart(item, node):
-    """(**Deprecated**) use pytest_runtest_logstart. """
-
-
 @hookspec(firstresult=True)
 def pytest_runtest_protocol(item, nextitem):
     """ implements the runtest_setup/call/teardown protocol for
@@ -427,9 +423,9 @@ def pytest_fixture_setup(fixturedef, request):
 
 
 def pytest_fixture_post_finalizer(fixturedef, request):
-    """ called after fixture teardown, but before the cache is cleared so
-    the fixture result cache ``fixturedef.cached_result`` can
-    still be accessed."""
+    """Called after fixture teardown, but before the cache is cleared, so
+    the fixture result ``fixturedef.cached_result`` is still available (not
+    ``None``)."""
 
 
 # -------------------------------------------------------------------------
@@ -570,7 +566,7 @@ def pytest_terminal_summary(terminalreporter, exitstatus, config):
 
 
 @hookspec(historic=True)
-def pytest_warning_captured(warning_message, when, item):
+def pytest_warning_captured(warning_message, when, item, location):
     """
     Process a warning captured by the internal pytest warnings plugin.
 
@@ -590,6 +586,10 @@ def pytest_warning_captured(warning_message, when, item):
         in a future release.
 
         The item being executed if ``when`` is ``"runtest"``, otherwise ``None``.
+
+    :param tuple location:
+        Holds information about the execution context of the captured warning (filename, linenumber, function).
+        ``function`` evaluates to <module> when the execution context is at the module level.
     """
 
 

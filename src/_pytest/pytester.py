@@ -30,8 +30,8 @@ from _pytest.capture import MultiCapture
 from _pytest.capture import SysCapture
 from _pytest.compat import TYPE_CHECKING
 from _pytest.config import _PluggyPlugin
+from _pytest.config import ExitCode
 from _pytest.fixtures import FixtureRequest
-from _pytest.main import ExitCode
 from _pytest.main import Session
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.nodes import Collector
@@ -413,8 +413,8 @@ class RunResult:
     def __init__(
         self,
         ret: Union[int, ExitCode],
-        outlines: Sequence[str],
-        errlines: Sequence[str],
+        outlines: List[str],
+        errlines: List[str],
         duration: float,
     ) -> None:
         try:
@@ -561,10 +561,12 @@ class Testdir:
         mp.delenv("TOX_ENV_DIR", raising=False)
         # Discard outer pytest options.
         mp.delenv("PYTEST_ADDOPTS", raising=False)
-
-        # Environment (updates) for inner runs.
+        # Ensure no user config is used.
         tmphome = str(self.tmpdir)
-        self._env_run_update = {"HOME": tmphome, "USERPROFILE": tmphome}
+        mp.setenv("HOME", tmphome)
+        mp.setenv("USERPROFILE", tmphome)
+        # Do not use colors for inner runs by default.
+        mp.setenv("PY_COLORS", "0")
 
     def __repr__(self):
         return "<Testdir {!r}>".format(self.tmpdir)
@@ -760,7 +762,7 @@ class Testdir:
         :param arg: a :py:class:`py.path.local` instance of the file
 
         """
-        session = Session(config)
+        session = Session.from_config(config)
         assert "::" not in str(arg)
         p = py.path.local(arg)
         config.hook.pytest_sessionstart(session=session)
@@ -778,7 +780,7 @@ class Testdir:
 
         """
         config = self.parseconfigure(path)
-        session = Session(config)
+        session = Session.from_config(config)
         x = session.fspath.bestrelpath(path)
         config.hook.pytest_sessionstart(session=session)
         res = session.perform_collect([x], genitems=False)[0]
@@ -870,12 +872,6 @@ class Testdir:
         plugins = list(plugins)
         finalizers = []
         try:
-            # Do not load user config (during runs only).
-            mp_run = MonkeyPatch()
-            for k, v in self._env_run_update.items():
-                mp_run.setenv(k, v)
-            finalizers.append(mp_run.undo)
-
             # Any sys.module or sys.path changes done while running pytest
             # inline should be reverted after the test run completes to avoid
             # clashing with later inline tests run within the same pytest test,
@@ -1110,7 +1106,6 @@ class Testdir:
         env["PYTHONPATH"] = os.pathsep.join(
             filter(None, [os.getcwd(), env.get("PYTHONPATH", "")])
         )
-        env.update(self._env_run_update)
         kw["env"] = env
 
         if stdin is Testdir.CLOSE_STDIN:
@@ -1282,11 +1277,7 @@ class Testdir:
             pytest.skip("pexpect.spawn not available")
         logfile = self.tmpdir.join("spawn.out").open("wb")
 
-        # Do not load user config.
-        env = os.environ.copy()
-        env.update(self._env_run_update)
-
-        child = pexpect.spawn(cmd, logfile=logfile, env=env)
+        child = pexpect.spawn(cmd, logfile=logfile)
         self.request.addfinalizer(logfile.close)
         child.timeout = expect_timeout
         return child
@@ -1327,49 +1318,32 @@ class LineMatcher:
 
     The constructor takes a list of lines without their trailing newlines, i.e.
     ``text.splitlines()``.
-
     """
 
-    def __init__(self, lines):
+    def __init__(self, lines: List[str]) -> None:
         self.lines = lines
-        self._log_output = []
+        self._log_output = []  # type: List[str]
 
-    def str(self):
-        """Return the entire original text."""
-        return "\n".join(self.lines)
-
-    def _getlines(self, lines2):
+    def _getlines(self, lines2: Union[str, Sequence[str], Source]) -> Sequence[str]:
         if isinstance(lines2, str):
             lines2 = Source(lines2)
         if isinstance(lines2, Source):
             lines2 = lines2.strip().lines
         return lines2
 
-    def fnmatch_lines_random(self, lines2):
-        """Check lines exist in the output using in any order.
-
-        Lines are checked using ``fnmatch.fnmatch``. The argument is a list of
-        lines which have to occur in the output, in any order.
-
+    def fnmatch_lines_random(self, lines2: Sequence[str]) -> None:
+        """Check lines exist in the output in any order (using :func:`python:fnmatch.fnmatch`).
         """
         self._match_lines_random(lines2, fnmatch)
 
-    def re_match_lines_random(self, lines2):
-        """Check lines exist in the output using ``re.match``, in any order.
-
-        The argument is a list of lines which have to occur in the output, in
-        any order.
-
+    def re_match_lines_random(self, lines2: Sequence[str]) -> None:
+        """Check lines exist in the output in any order (using :func:`python:re.match`).
         """
-        self._match_lines_random(lines2, lambda name, pat: re.match(pat, name))
+        self._match_lines_random(lines2, lambda name, pat: bool(re.match(pat, name)))
 
-    def _match_lines_random(self, lines2, match_func):
-        """Check lines exist in the output.
-
-        The argument is a list of lines which have to occur in the output, in
-        any order.  Each line can contain glob whildcards.
-
-        """
+    def _match_lines_random(
+        self, lines2: Sequence[str], match_func: Callable[[str, str], bool]
+    ) -> None:
         lines2 = self._getlines(lines2)
         for line in lines2:
             for x in self.lines:
@@ -1380,46 +1354,67 @@ class LineMatcher:
                 self._log("line %r not found in output" % line)
                 raise ValueError(self._log_text)
 
-    def get_lines_after(self, fnline):
+    def get_lines_after(self, fnline: str) -> Sequence[str]:
         """Return all lines following the given line in the text.
 
         The given line can contain glob wildcards.
-
         """
         for i, line in enumerate(self.lines):
             if fnline == line or fnmatch(line, fnline):
                 return self.lines[i + 1 :]
         raise ValueError("line %r not found in output" % fnline)
 
-    def _log(self, *args):
+    def _log(self, *args) -> None:
         self._log_output.append(" ".join(str(x) for x in args))
 
     @property
-    def _log_text(self):
+    def _log_text(self) -> str:
         return "\n".join(self._log_output)
 
-    def fnmatch_lines(self, lines2):
-        """Search captured text for matching lines using ``fnmatch.fnmatch``.
+    def fnmatch_lines(
+        self, lines2: Sequence[str], *, consecutive: bool = False
+    ) -> None:
+        """Check lines exist in the output (using :func:`python:fnmatch.fnmatch`).
 
         The argument is a list of lines which have to match and can use glob
         wildcards.  If they do not match a pytest.fail() is called.  The
         matches and non-matches are also shown as part of the error message.
+
+        :param lines2: string patterns to match.
+        :param consecutive: match lines consecutive?
         """
         __tracebackhide__ = True
-        self._match_lines(lines2, fnmatch, "fnmatch")
+        self._match_lines(lines2, fnmatch, "fnmatch", consecutive=consecutive)
 
-    def re_match_lines(self, lines2):
-        """Search captured text for matching lines using ``re.match``.
+    def re_match_lines(
+        self, lines2: Sequence[str], *, consecutive: bool = False
+    ) -> None:
+        """Check lines exist in the output (using :func:`python:re.match`).
 
         The argument is a list of lines which have to match using ``re.match``.
         If they do not match a pytest.fail() is called.
 
         The matches and non-matches are also shown as part of the error message.
+
+        :param lines2: string patterns to match.
+        :param consecutive: match lines consecutively?
         """
         __tracebackhide__ = True
-        self._match_lines(lines2, lambda name, pat: re.match(pat, name), "re.match")
+        self._match_lines(
+            lines2,
+            lambda name, pat: bool(re.match(pat, name)),
+            "re.match",
+            consecutive=consecutive,
+        )
 
-    def _match_lines(self, lines2, match_func, match_nickname):
+    def _match_lines(
+        self,
+        lines2: Sequence[str],
+        match_func: Callable[[str, str], bool],
+        match_nickname: str,
+        *,
+        consecutive: bool = False
+    ) -> None:
         """Underlying implementation of ``fnmatch_lines`` and ``re_match_lines``.
 
         :param list[str] lines2: list of string patterns to match. The actual
@@ -1429,28 +1424,40 @@ class LineMatcher:
             pattern
         :param str match_nickname: the nickname for the match function that
             will be logged to stdout when a match occurs
+        :param consecutive: match lines consecutively?
         """
-        assert isinstance(lines2, collections.abc.Sequence)
+        if not isinstance(lines2, collections.abc.Sequence):
+            raise TypeError("invalid type for lines2: {}".format(type(lines2).__name__))
         lines2 = self._getlines(lines2)
         lines1 = self.lines[:]
         nextline = None
         extralines = []
         __tracebackhide__ = True
         wnick = len(match_nickname) + 1
+        started = False
         for line in lines2:
             nomatchprinted = False
             while lines1:
                 nextline = lines1.pop(0)
                 if line == nextline:
                     self._log("exact match:", repr(line))
+                    started = True
                     break
                 elif match_func(nextline, line):
                     self._log("%s:" % match_nickname, repr(line))
                     self._log(
                         "{:>{width}}".format("with:", width=wnick), repr(nextline)
                     )
+                    started = True
                     break
                 else:
+                    if consecutive and started:
+                        msg = "no consecutive match: {!r}".format(line)
+                        self._log(msg)
+                        self._log(
+                            "{:>{width}}".format("with:", width=wnick), repr(nextline)
+                        )
+                        self._fail(msg)
                     if not nomatchprinted:
                         self._log(
                             "{:>{width}}".format("nomatch:", width=wnick), repr(line)
@@ -1464,7 +1471,7 @@ class LineMatcher:
                 self._fail(msg)
         self._log_output = []
 
-    def no_fnmatch_line(self, pat):
+    def no_fnmatch_line(self, pat: str) -> None:
         """Ensure captured lines do not match the given pattern, using ``fnmatch.fnmatch``.
 
         :param str pat: the pattern to match lines.
@@ -1472,15 +1479,19 @@ class LineMatcher:
         __tracebackhide__ = True
         self._no_match_line(pat, fnmatch, "fnmatch")
 
-    def no_re_match_line(self, pat):
+    def no_re_match_line(self, pat: str) -> None:
         """Ensure captured lines do not match the given pattern, using ``re.match``.
 
         :param str pat: the regular expression to match lines.
         """
         __tracebackhide__ = True
-        self._no_match_line(pat, lambda name, pat: re.match(pat, name), "re.match")
+        self._no_match_line(
+            pat, lambda name, pat: bool(re.match(pat, name)), "re.match"
+        )
 
-    def _no_match_line(self, pat, match_func, match_nickname):
+    def _no_match_line(
+        self, pat: str, match_func: Callable[[str, str], bool], match_nickname: str
+    ) -> None:
         """Ensure captured lines does not have a the given pattern, using ``fnmatch.fnmatch``
 
         :param str pat: the pattern to match lines
@@ -1501,8 +1512,12 @@ class LineMatcher:
                 self._log("{:>{width}}".format("and:", width=wnick), repr(line))
         self._log_output = []
 
-    def _fail(self, msg):
+    def _fail(self, msg: str) -> None:
         __tracebackhide__ = True
         log_text = self._log_text
         self._log_output = []
         pytest.fail(log_text)
+
+    def str(self) -> str:
+        """Return the entire original text."""
+        return "\n".join(self.lines)

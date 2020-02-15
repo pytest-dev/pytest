@@ -1,1 +1,1 @@
-Fix percentage progress report with duplicate nodeids.
+Fix node ids which contain a parametrized empty-string variable.

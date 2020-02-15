@@ -136,6 +136,15 @@ def pytest_terminal_summary(terminalreporter):
         yield
 
 
+@pytest.hookimpl(hookwrapper=True)
+def pytest_sessionfinish(session):
+    config = session.config
+    with catch_warnings_for_item(
+        config=config, ihook=config.hook, when="config", item=None
+    ):
+        yield
+
+
 def _issue_warning_captured(warning, hook, stacklevel):
     """
     This function should be used instead of calling ``warnings.warn`` directly when we are in the "configure" stage:
@@ -151,6 +160,10 @@ def _issue_warning_captured(warning, hook, stacklevel):
         warnings.warn(warning, stacklevel=stacklevel)
     # Mypy can't infer that record=True means records is not None; help it.
     assert records is not None
+    frame = sys._getframe(stacklevel - 1)
+    location = frame.f_code.co_filename, frame.f_lineno, frame.f_code.co_name
     hook.pytest_warning_captured.call_historic(
-        kwargs=dict(warning_message=records[0], when="config", item=None)
+        kwargs=dict(
+            warning_message=records[0], when="config", item=None, location=location
+        )
     )

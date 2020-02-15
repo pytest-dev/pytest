@@ -1,6 +1,7 @@
 """ command line options, ini-file and conftest.py processing. """
 import argparse
 import copy
+import enum
 import inspect
 import os
 import shlex
@@ -46,6 +47,8 @@ from _pytest.warning_types import PytestConfigWarning
 if TYPE_CHECKING:
     from typing import Type
 
+    from .argparsing import Argument
+
 
 _PluggyPlugin = object
 """A type to represent plugin objects.
@@ -58,6 +61,29 @@ hookimpl = HookimplMarker("pytest")
 hookspec = HookspecMarker("pytest")
 
 
+class ExitCode(enum.IntEnum):
+    """
+    .. versionadded:: 5.0
+
+    Encodes the valid exit codes by pytest.
+
+    Currently users and plugins may supply other exit codes as well.
+    """
+
+    #: tests passed
+    OK = 0
+    #: tests failed
+    TESTS_FAILED = 1
+    #: pytest was interrupted
+    INTERRUPTED = 2
+    #: an internal error got in the way
+    INTERNAL_ERROR = 3
+    #: pytest was misused
+    USAGE_ERROR = 4
+    #: pytest couldn't find tests
+    NO_TESTS_COLLECTED = 5
+
+
 class ConftestImportFailure(Exception):
     def __init__(self, path, excinfo):
         Exception.__init__(self, path, excinfo)
@@ -65,7 +91,7 @@ class ConftestImportFailure(Exception):
         self.excinfo = excinfo  # type: Tuple[Type[Exception], Exception, TracebackType]
 
 
-def main(args=None, plugins=None) -> "Union[int, _pytest.main.ExitCode]":
+def main(args=None, plugins=None) -> Union[int, ExitCode]:
     """ return exit code, after performing an in-process test run.
 
     :arg args: list of command line arguments.
@@ -73,8 +99,6 @@ def main(args=None, plugins=None) -> "Union[int, _pytest.main.ExitCode]":
     :arg plugins: list of plugin objects to be auto-registered during
                   initialization.
     """
-    from _pytest.main import ExitCode
-
     try:
         try:
             config = _prepareconfig(args, plugins)
@@ -190,7 +214,7 @@ def get_config(args=None, plugins=None):
 
     if args is not None:
         # Handle any "-p no:plugin" args.
-        pluginmanager.consider_preparse(args)
+        pluginmanager.consider_preparse(args, exclude_only=True)
 
     for spec in default_plugins:
         pluginmanager.import_plugin(spec)
@@ -498,7 +522,7 @@ class PytestPluginManager(PluginManager):
     #
     #
 
-    def consider_preparse(self, args):
+    def consider_preparse(self, args, *, exclude_only=False):
         i = 0
         n = len(args)
         while i < n:
@@ -514,6 +538,8 @@ class PytestPluginManager(PluginManager):
                 elif opt.startswith("-p"):
                     parg = opt[2:]
                 else:
+                    continue
+                if exclude_only and not parg.startswith("no:"):
                     continue
                 self.consider_pluginarg(parg)
 
@@ -597,7 +623,7 @@ class PytestPluginManager(PluginManager):
             _issue_warning_captured(
                 PytestConfigWarning("skipped plugin {!r}: {}".format(modname, e.msg)),
                 self.hook,
-                stacklevel=1,
+                stacklevel=2,
             )
         else:
             mod = sys.modules[importspec]
@@ -740,7 +766,7 @@ class Config:
         plugins = attr.ib()
         dir = attr.ib(type=Path)
 
-    def __init__(self, pluginmanager, *, invocation_params=None):
+    def __init__(self, pluginmanager, *, invocation_params=None) -> None:
         from .argparsing import Parser, FILE_OR_DIR
 
         if invocation_params is None:
@@ -853,11 +879,11 @@ class Config:
             config.pluginmanager.consider_pluginarg(x)
         return config
 
-    def _processopt(self, opt):
+    def _processopt(self, opt: "Argument") -> None:
         for name in opt._short_opts + opt._long_opts:
             self._opt2dest[name] = opt.dest
 
-        if hasattr(opt, "default") and opt.dest:
+        if hasattr(opt, "default"):
             if not hasattr(self.option, opt.dest):
                 setattr(self.option, opt.dest, opt.default)
 
@@ -865,7 +891,7 @@ class Config:
     def pytest_load_initial_conftests(self, early_config):
         self.pluginmanager._set_initial_conftests(early_config.known_args_namespace)
 
-    def _initini(self, args) -> None:
+    def _initini(self, args: Sequence[str]) -> None:
         ns, unknown_args = self._parser.parse_known_and_unknown_args(
             args, namespace=copy.copy(self.option)
         )
@@ -882,7 +908,7 @@ class Config:
         self._parser.addini("minversion", "minimally required pytest version")
         self._override_ini = ns.override_ini or ()
 
-    def _consider_importhook(self, args):
+    def _consider_importhook(self, args: Sequence[str]) -> None:
         """Install the PEP 302 import hook if using assertion rewriting.
 
         Needs to parse the --assert=<mode> option from the commandline
@@ -924,19 +950,19 @@ class Config:
         for name in _iter_rewritable_modules(package_files):
             hook.mark_rewrite(name)
 
-    def _validate_args(self, args, via):
+    def _validate_args(self, args: List[str], via: str) -> List[str]:
         """Validate known args."""
-        self._parser._config_source_hint = via
+        self._parser._config_source_hint = via  # type: ignore
         try:
             self._parser.parse_known_and_unknown_args(
                 args, namespace=copy.copy(self.option)
             )
         finally:
-            del self._parser._config_source_hint
+            del self._parser._config_source_hint  # type: ignore
 
         return args
 
-    def _preparse(self, args, addopts=True):
+    def _preparse(self, args: List[str], addopts: bool = True) -> None:
         if addopts:
             env_addopts = os.environ.get("PYTEST_ADDOPTS", "")
             if len(env_addopts):
@@ -952,7 +978,7 @@ class Config:
 
         self._checkversion()
         self._consider_importhook(args)
-        self.pluginmanager.consider_preparse(args)
+        self.pluginmanager.consider_preparse(args, exclude_only=False)
         if not os.environ.get("PYTEST_DISABLE_PLUGIN_AUTOLOAD"):
             # Don't autoload from setuptools entry point. Only explicitly specified
             # plugins are going to be loaded.
@@ -1000,7 +1026,7 @@ class Config:
                     )
                 )
 
-    def parse(self, args, addopts=True):
+    def parse(self, args: List[str], addopts: bool = True) -> None:
         # parse given cmdline arguments into this config object.
         assert not hasattr(
             self, "args"
@@ -1011,7 +1037,7 @@ class Config:
         self._preparse(args, addopts=addopts)
         # XXX deprecated hook:
         self.hook.pytest_cmdline_preparse(config=self, args=args)
-        self._parser.after_preparse = True
+        self._parser.after_preparse = True  # type: ignore
         try:
             args = self._parser.parse_setoption(
                 args, self.option, namespace=self.option

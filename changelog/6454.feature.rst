@@ -1,0 +1,1 @@
+Changed default for `-r` to `fE`, which displays failures and errors in the :ref:`short test summary <pytest.detailed_failed_tests_usage>`.  `-rN` can be used to disable it (the old behavior).

@@ -1,0 +1,1 @@
+New options have been added to the :confval:`junit_logging` option: ``log``, ``out-err``, and ``all``.

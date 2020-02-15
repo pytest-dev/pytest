@@ -1,0 +1,1 @@
+Matching of ``-k EXPRESSION`` to test names is now case-insensitive.

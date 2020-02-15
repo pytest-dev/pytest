@@ -8,7 +8,7 @@ import py
 
 import pytest
 from _pytest.compat import importlib_metadata
-from _pytest.main import ExitCode
+from _pytest.config import ExitCode
 
 
 def prepend_pythonpath(*dirs):
@@ -190,10 +190,10 @@ class TestGeneralUsage:
         )
 
     @pytest.mark.filterwarnings("default")
-    def test_better_reporting_on_conftest_load_failure(self, testdir, request):
+    def test_better_reporting_on_conftest_load_failure(self, testdir):
         """Show a user-friendly traceback on conftest import failures (#486, #3332)"""
         testdir.makepyfile("")
-        testdir.makeconftest(
+        conftest = testdir.makeconftest(
             """
             def foo():
                 import qwerty
@@ -208,22 +208,18 @@ class TestGeneralUsage:
         """
         )
         result = testdir.runpytest()
-        dirname = request.node.name + "0"
         exc_name = (
             "ModuleNotFoundError" if sys.version_info >= (3, 6) else "ImportError"
         )
-        result.stderr.fnmatch_lines(
-            [
-                "ImportError while loading conftest '*{sep}{dirname}{sep}conftest.py'.".format(
-                    dirname=dirname, sep=os.sep
-                ),
-                "conftest.py:3: in <module>",
-                "    foo()",
-                "conftest.py:2: in foo",
-                "    import qwerty",
-                "E   {}: No module named 'qwerty'".format(exc_name),
-            ]
-        )
+        assert result.stdout.lines == []
+        assert result.stderr.lines == [
+            "ImportError while loading conftest '{}'.".format(conftest),
+            "conftest.py:3: in <module>",
+            "    foo()",
+            "conftest.py:2: in foo",
+            "    import qwerty",
+            "E   {}: No module named 'qwerty'".format(exc_name),
+        ]
 
     def test_early_skip(self, testdir):
         testdir.mkdir("xyz")
@@ -414,7 +410,7 @@ class TestGeneralUsage:
     def test_report_all_failed_collections_initargs(self, testdir):
         testdir.makeconftest(
             """
-            from _pytest.main import ExitCode
+            from _pytest.config import ExitCode
 
             def pytest_sessionfinish(exitstatus):
                 assert exitstatus == ExitCode.USAGE_ERROR
@@ -1279,11 +1275,39 @@ def test_pdb_can_be_rewritten(testdir):
             "    def check():",
             ">       assert 1 == 2",
             "E       assert 1 == 2",
-            "E         -1",
-            "E         +2",
+            "E         +1",
+            "E         -2",
             "",
             "pdb.py:2: AssertionError",
             "*= 1 failed in *",
         ]
     )
     assert result.ret == 1
+
+
+def test_tee_stdio_captures_and_live_prints(testdir):
+    testpath = testdir.makepyfile(
+        """
+        import sys
+        def test_simple():
+            print ("@this is stdout@")
+            print ("@this is stderr@", file=sys.stderr)
+    """
+    )
+    result = testdir.runpytest_subprocess(
+        testpath,
+        "--capture=tee-sys",
+        "--junitxml=output.xml",
+        "-o",
+        "junit_logging=all",
+    )
+
+    # ensure stdout/stderr were 'live printed'
+    result.stdout.fnmatch_lines(["*@this is stdout@*"])
+    result.stderr.fnmatch_lines(["*@this is stderr@*"])
+
+    # now ensure the output is in the junitxml
+    with open(os.path.join(testdir.tmpdir.strpath, "output.xml"), "r") as f:
+        fullXml = f.read()
+    assert "@this is stdout@\n" in fullXml
+    assert "@this is stderr@\n" in fullXml

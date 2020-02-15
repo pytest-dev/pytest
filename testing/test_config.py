@@ -7,11 +7,11 @@ import pytest
 from _pytest.compat import importlib_metadata
 from _pytest.config import _iter_rewritable_modules
 from _pytest.config import Config
+from _pytest.config import ExitCode
 from _pytest.config.exceptions import UsageError
 from _pytest.config.findpaths import determine_setup
 from _pytest.config.findpaths import get_common_ancestor
 from _pytest.config.findpaths import getcfg
-from _pytest.main import ExitCode
 from _pytest.pathlib import Path
 
 
@@ -659,6 +659,13 @@ def test_disable_plugin_autoload(testdir, monkeypatch, parse_args, should_load):
     class PseudoPlugin:
         x = 42
 
+        attrs_used = []
+
+        def __getattr__(self, name):
+            assert name == "__loader__"
+            self.attrs_used.append(name)
+            return object()
+
     def distributions():
         return (Distribution(),)
 
@@ -668,6 +675,10 @@ def test_disable_plugin_autoload(testdir, monkeypatch, parse_args, should_load):
     config = testdir.parseconfig(*parse_args)
     has_loaded = config.pluginmanager.get_plugin("mytestplugin") is not None
     assert has_loaded == should_load
+    if should_load:
+        assert PseudoPlugin.attrs_used == ["__loader__"]
+    else:
+        assert PseudoPlugin.attrs_used == []
 
 
 def test_plugin_loading_order(testdir):
@@ -676,7 +687,7 @@ def test_plugin_loading_order(testdir):
         """
         def test_terminal_plugin(request):
             import myplugin
-            assert myplugin.terminal_plugin == [True, True]
+            assert myplugin.terminal_plugin == [False, True]
         """,
         **{
             "myplugin": """
@@ -828,7 +839,7 @@ def test_load_initial_conftest_last_ordering(_config_for_test):
     pm.register(m)
     hc = pm.hook.pytest_load_initial_conftests
     values = hc._nonwrappers + hc._wrappers
-    expected = ["_pytest.config", "test_config", "_pytest.capture"]
+    expected = ["_pytest.config", m.__module__, "_pytest.capture"]
     assert [x.function.__module__ for x in values] == expected
 
 
@@ -1123,7 +1134,7 @@ class TestOverrideIniArgs:
                 % (testdir.request.config._parser.optparser.prog,)
             ]
         )
-        assert result.ret == _pytest.main.ExitCode.USAGE_ERROR
+        assert result.ret == _pytest.config.ExitCode.USAGE_ERROR
 
     def test_override_ini_does_not_contain_paths(self, _config_for_test, _sys_snapshot):
         """Check that -o no longer swallows all options after it (#3103)"""
