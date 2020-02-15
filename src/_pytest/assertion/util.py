@@ -232,8 +232,8 @@ def _diff_text(left: str, right: str, verbose: int = 0) -> List[str]:
     right_lines = right.splitlines(keepends)
 
     if any(
-        wcwidth(ch) <= -1
-        for ch in itertools.chain.from_iterable([x for x in left_lines + right_lines])
+        wcwidth(ch) <= 0
+        for ch in itertools.chain.from_iterable(x for x in left_lines + right_lines)
     ):
         left_lines = [repr(x) for x in left_lines]
         right_lines = [repr(x) for x in right_lines]
