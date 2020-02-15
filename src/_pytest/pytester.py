@@ -1334,16 +1334,19 @@ class LineMatcher:
     def fnmatch_lines_random(self, lines2: Sequence[str]) -> None:
         """Check lines exist in the output in any order (using :func:`python:fnmatch.fnmatch`).
         """
+        __tracebackhide__ = True
         self._match_lines_random(lines2, fnmatch)
 
     def re_match_lines_random(self, lines2: Sequence[str]) -> None:
         """Check lines exist in the output in any order (using :func:`python:re.match`).
         """
+        __tracebackhide__ = True
         self._match_lines_random(lines2, lambda name, pat: bool(re.match(pat, name)))
 
     def _match_lines_random(
         self, lines2: Sequence[str], match_func: Callable[[str, str], bool]
     ) -> None:
+        __tracebackhide__ = True
         lines2 = self._getlines(lines2)
         for line in lines2:
             for x in self.lines:
