@@ -1,0 +1,1 @@
+Fallback to green (instead of yellow) for non-last items without previous passes with colored terminal progress indicator.
