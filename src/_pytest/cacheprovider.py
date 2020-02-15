@@ -71,10 +71,10 @@ class Cache:
         return resolve_from_str(config.getini("cache_dir"), config.rootdir)
 
     def warn(self, fmt, **args):
-        from _pytest.warnings import _issue_warning_captured
+        import warnings
         from _pytest.warning_types import PytestCacheWarning
 
-        _issue_warning_captured(
+        warnings.warn(
             PytestCacheWarning(fmt.format(**args) if args else fmt),
             self._config.hook,
             stacklevel=3,

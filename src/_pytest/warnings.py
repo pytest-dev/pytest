@@ -136,6 +136,15 @@ def pytest_terminal_summary(terminalreporter):
         yield
 
 
+@pytest.hookimpl(hookwrapper=True)
+def pytest_sessionfinish(session):
+    config = session.config
+    with catch_warnings_for_item(
+        config=config, ihook=config.hook, when="config", item=None
+    ):
+        yield
+
+
 def _issue_warning_captured(warning, hook, stacklevel):
     """
     This function should be used instead of calling ``warnings.warn`` directly when we are in the "configure" stage:
