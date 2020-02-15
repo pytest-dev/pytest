@@ -409,7 +409,7 @@ def _report_to_json(report):
             result["chain"] = None
         return result
 
-    d = attr.asdict(report)
+    d = report.__dict__.copy()
     if hasattr(report.longrepr, "toterminal"):
         if hasattr(report.longrepr, "reprtraceback") and hasattr(
             report.longrepr, "reprcrash"
