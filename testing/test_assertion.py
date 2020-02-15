@@ -1358,6 +1358,26 @@ def test_diff_newline_at_end(testdir):
     )
 
 
+def test_diff_different_line_endings():
+    assert callequal("asdf\n", "asdf", verbose=2) == [
+        r"'asdf\n' == 'asdf'",
+        r"NOTE: Strings contain different line-endings. Escaping them using repr().",
+        r"- asdf\n",
+        r"?     --",
+        r"+ asdf",
+        r"- ",
+    ]
+
+    assert callequal("line1\r\nline2", "line1\nline2", verbose=2) == [
+        r"'line1\r\nline2' == 'line1\nline2'",
+        r"NOTE: Strings contain different line-endings. Escaping them using repr().",
+        r"- line1\r\n",
+        r"?       --",
+        r"+ line1\n",
+        r"  line2",
+    ]
+
+
 @pytest.mark.filterwarnings("default")
 def test_assert_tuple_warning(testdir):
     msg = "assertion is always true"
