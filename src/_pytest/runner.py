@@ -25,6 +25,7 @@ from _pytest.outcomes import TEST_OUTCOME
 
 if TYPE_CHECKING:
     from typing import Type
+    from typing_extensions import Literal
 
 #
 # pytest plugin hooks
@@ -181,7 +182,9 @@ def pytest_report_teststatus(report):
 # Implementation
 
 
-def call_and_report(item, when, log=True, **kwds):
+def call_and_report(
+    item, when: "Literal['setup', 'call', 'teardown']", log=True, **kwds
+):
     call = call_runtest_hook(item, when, **kwds)
     hook = item.ihook
     report = hook.pytest_runtest_makereport(item=item, call=call)
@@ -200,9 +203,15 @@ def check_interactive_exception(call, report):
     )
 
 
-def call_runtest_hook(item, when, **kwds):
-    hookname = "pytest_runtest_" + when
-    ihook = getattr(item.ihook, hookname)
+def call_runtest_hook(item, when: "Literal['setup', 'call', 'teardown']", **kwds):
+    if when == "setup":
+        ihook = item.ihook.pytest_runtest_setup
+    elif when == "call":
+        ihook = item.ihook.pytest_runtest_call
+    elif when == "teardown":
+        ihook = item.ihook.pytest_runtest_teardown
+    else:
+        assert False, "Unhandled runtest hook case: {}".format(when)
     reraise = (Exit,)  # type: Tuple[Type[BaseException], ...]
     if not item.config.getoption("usepdb", False):
         reraise += (KeyboardInterrupt,)
