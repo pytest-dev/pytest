@@ -2,6 +2,7 @@
 import collections.abc
 import itertools
 import pprint
+import re
 from typing import AbstractSet
 from typing import Any
 from typing import Callable
@@ -222,14 +223,15 @@ def _diff_text(left: str, right: str, verbose: int = 0) -> List[str]:
                 ]
                 left = left[:-i]
                 right = right[:-i]
-    keepends = True
     if left.isspace() or right.isspace():
         left = repr(str(left))
         right = repr(str(right))
         explanation += ["Strings contain only whitespace, escaping them using repr()"]
 
-    left_lines = left.splitlines(keepends)
-    right_lines = right.splitlines(keepends)
+    left_split = len(left) and re.split("(\r?\n)", left) or []
+    left_lines = left_split[::2]
+    right_split = len(right) and re.split("(\r?\n)", right) or []
+    right_lines = right_split[::2]
 
     if any(
         wcwidth(ch) <= 0
@@ -240,6 +242,33 @@ def _diff_text(left: str, right: str, verbose: int = 0) -> List[str]:
         explanation += [
             "NOTE: Strings contain non-printable characters. Escaping them using repr()."
         ]
+    else:
+        max_lines = max(len(left_lines), len(right_lines))
+        left_ends = left_split[1:max_lines:2]
+        right_ends = right_split[1:max_lines:2]
+        if left_ends != right_ends:
+            explanation += [
+                "NOTE: Strings contain different line-endings. Escaping them using repr()."
+            ]
+            left_lines = [line for line in left_lines]
+            right_lines = [line for line in right_lines]
+
+            for idx, (left_line, right_line) in enumerate(
+                itertools.zip_longest(left_lines, right_lines, fillvalue="")
+            ):
+                try:
+                    left_end = left_ends[idx]
+                except IndexError:
+                    left_end = ""
+                try:
+                    right_end = right_ends[idx]
+                except IndexError:
+                    right_end = ""
+                if left_end != right_end:
+                    left_lines[idx] += repr(left_end)[1:-1]
+                    right_lines[idx] += repr(right_end)[1:-1]
+                if not left_end or not right_end:
+                    break
 
     explanation += [line.strip("\n") for line in ndiff(left_lines, right_lines)]
     return explanation

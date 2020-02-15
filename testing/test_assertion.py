@@ -336,11 +336,11 @@ class TestAssert_reprcompare:
         diff = callequal(left, right)
         assert diff == [
             r"'foo\nspam\nbar' == 'foo\neggs\nbar'",
-            r"NOTE: Strings contain non-printable characters. Escaping them using repr().",
-            r"  'foo\n'",
-            r"- 'spam\n'",
-            r"+ 'eggs\n'",
-            r"  'bar'",
+            # r"NOTE: Strings contain different line-endings. Escaping them using repr().",
+            r"  foo",
+            r"- spam",
+            r"+ eggs",
+            r"  bar",
         ]
 
     def test_bytes_diff_normal(self):
@@ -995,7 +995,7 @@ class TestTruncateExplanation:
 
         line_count = 7
         line_len = 100
-        expected_truncated_lines = 3
+        expected_truncated_lines = 2
         testdir.makepyfile(
             r"""
             def test_many_lines():
@@ -1016,23 +1016,37 @@ class TestTruncateExplanation:
                 r">       assert a == b",
                 r"E       AssertionError: assert '000000000000...6666666666666' == '000000000000...6666666666666'",
                 r"E         Skipping 91 identical leading characters in diff, use -v to show",
-                r"E         NOTE: Strings contain non-printable characters. Escaping them using repr().",
-                r"E           '000000000\n'",
-                r"E         - '1*\n'",
-                r"E           '2*\n'",
-                r"E         - '3*\n'",
-                r"E           '4*",
+                r"E           000000000",
+                r"E         - 1*",
+                r"E           2*",
+                r"E         - 3*",
+                r"E           4*",
                 r"E         ",
                 r"*truncated (%d lines hidden)*use*-vv*" % expected_truncated_lines,
             ]
         )
 
         result = testdir.runpytest("-vv")
-        result.stdout.fnmatch_lines(["* '6*"])
+        result.stdout.fnmatch_lines(
+            [
+                r">       assert a == b",
+                r"E       AssertionError: assert ('0*0\n'\n * '5*5\n'\n '6*6')"
+                r" == ('0*0\n'\n '2*2\n'\n '4*4\n'\n '6*6')",
+                r"E           0*0",
+                r"E         - 1*1",
+                r"E           2*2",
+                r"E         - 3*3",
+                r"E           4*4",
+                r"E         - 5*5",
+                r"E           6*6",
+                r"",
+            ],
+            consecutive=True,
+        )
 
         monkeypatch.setenv("CI", "1")
         result = testdir.runpytest()
-        result.stdout.fnmatch_lines(["* '6*"])
+        result.stdout.fnmatch_lines(["* 6*"])
 
 
 def test_python25_compile_issue257(testdir):
@@ -1336,10 +1350,10 @@ def test_diff_newline_at_end(testdir):
         r"""
         *assert 'asdf' == 'asdf\n'
         E       AssertionError: assert 'asdf' == 'asdf\n'
-        E         NOTE: Strings contain non-printable characters. Escaping them using repr().
-        *  - 'asdf'
-        *  + 'asdf\n'
-        *  ?      ++
+        E         NOTE: Strings contain different line-endings. Escaping them using repr().
+        *  - asdf
+        *  + asdf\n
+        *  ?     ++
     """
     )
 
