@@ -1474,7 +1474,7 @@ class Function(PyobjMixin, nodes.Item):
         warnings.warn(FUNCARGNAMES, stacklevel=2)
         return self.fixturenames
 
-    def runtest(self):
+    def runtest(self) -> None:
         """ execute the underlying test function. """
         self.ihook.pytest_pyfunc_call(pyfuncitem=self)
 
@@ -1519,7 +1519,7 @@ class FunctionDefinition(Function):
     crappy metafunc hack
     """
 
-    def runtest(self):
+    def runtest(self) -> None:
         raise RuntimeError("function definitions are not supposed to be used")
 
     setup = runtest
