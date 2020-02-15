@@ -6,7 +6,7 @@ import sys
 import py
 
 import pytest
-from _pytest.main import ExitCode
+from _pytest.config import ExitCode
 
 pytest_plugins = ("pytester",)
 
@@ -56,9 +56,7 @@ class TestNewAPI:
             testdir.tmpdir.ensure_dir(".pytest_cache").chmod(mode)
 
     @pytest.mark.skipif(sys.platform.startswith("win"), reason="no chmod on windows")
-    @pytest.mark.filterwarnings(
-        "ignore:could not create cache path:pytest.PytestWarning"
-    )
+    @pytest.mark.filterwarnings("default")
     def test_cache_failure_warns(self, testdir, monkeypatch):
         monkeypatch.setenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD", "1")
         cache_dir = str(testdir.tmpdir.ensure_dir(".pytest_cache"))
@@ -70,7 +68,15 @@ class TestNewAPI:
             assert result.ret == 1
             # warnings from nodeids, lastfailed, and stepwise
             result.stdout.fnmatch_lines(
-                ["*could not create cache path*", "*3 warnings*"]
+                [
+                    # Validate location/stacklevel of warning from cacheprovider.
+                    "*= warnings summary =*",
+                    "*/cacheprovider.py:314",
+                    "  */cacheprovider.py:314: PytestCacheWarning: could not create cache path "
+                    "{}/v/cache/nodeids".format(cache_dir),
+                    '    config.cache.set("cache/nodeids", self.cached_nodeids)',
+                    "*1 failed, 3 warnings in*",
+                ]
             )
         finally:
             testdir.tmpdir.ensure_dir(".pytest_cache").chmod(mode)
@@ -683,11 +689,28 @@ class TestLastFailed:
         result.stdout.fnmatch_lines(["*2 passed*"])
         result = testdir.runpytest("--lf", "--lfnf", "all")
         result.stdout.fnmatch_lines(["*2 passed*"])
+
+        # Ensure the list passed to pytest_deselected is a copy,
+        # and not a reference which is cleared right after.
+        testdir.makeconftest(
+            """
+            deselected = []
+
+            def pytest_deselected(items):
+                global deselected
+                deselected = items
+
+            def pytest_sessionfinish():
+                print("\\ndeselected={}".format(len(deselected)))
+        """
+        )
+
         result = testdir.runpytest("--lf", "--lfnf", "none")
         result.stdout.fnmatch_lines(
             [
                 "collected 2 items / 2 deselected",
                 "run-last-failure: no previously failed tests, deselecting all items.",
+                "deselected=2",
                 "* 2 deselected in *",
             ]
         )

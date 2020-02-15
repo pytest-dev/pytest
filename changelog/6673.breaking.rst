@@ -1,0 +1,1 @@
+Reversed / fix meaning of "+/-" in error diffs.  "-" means that sth. expected is missing in the result and "+" means that there are unexpected extras in the result.

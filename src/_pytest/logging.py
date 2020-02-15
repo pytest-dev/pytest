@@ -5,10 +5,12 @@ from contextlib import contextmanager
 from io import StringIO
 from typing import AbstractSet
 from typing import Dict
+from typing import Generator
 from typing import List
 from typing import Mapping
 
 import pytest
+from _pytest import nodes
 from _pytest.compat import nullcontext
 from _pytest.config import _strtobool
 from _pytest.config import create_terminal_writer
@@ -325,13 +327,13 @@ class LogCaptureFixture:
             logger.setLevel(level)
 
     @property
-    def handler(self):
+    def handler(self) -> LogCaptureHandler:
         """
         :rtype: LogCaptureHandler
         """
-        return self._item.catch_log_handler
+        return self._item.catch_log_handler  # type: ignore[no-any-return]  # noqa: F723
 
-    def get_records(self, when):
+    def get_records(self, when: str) -> List[logging.LogRecord]:
         """
         Get the logging records for one of the possible test phases.
 
@@ -345,7 +347,7 @@ class LogCaptureFixture:
         """
         handler = self._item.catch_log_handlers.get(when)
         if handler:
-            return handler.records
+            return handler.records  # type: ignore[no-any-return]  # noqa: F723
         else:
             return []
 
@@ -485,6 +487,12 @@ class LoggingPlugin:
         self._config = config
 
         self.print_logs = get_option_ini(config, "log_print")
+        if not self.print_logs:
+            from _pytest.warnings import _issue_warning_captured
+            from _pytest.deprecated import NO_PRINT_LOGS
+
+            _issue_warning_captured(NO_PRINT_LOGS, self._config.hook, stacklevel=2)
+
         self.formatter = self._create_formatter(
             get_option_ini(config, "log_format"),
             get_option_ini(config, "log_date_format"),
@@ -591,7 +599,7 @@ class LoggingPlugin:
         ) is not None or self._config.getini("log_cli")
 
     @pytest.hookimpl(hookwrapper=True, tryfirst=True)
-    def pytest_collection(self):
+    def pytest_collection(self) -> Generator[None, None, None]:
         with self.live_logs_context():
             if self.log_cli_handler:
                 self.log_cli_handler.set_when("collection")
@@ -612,7 +620,9 @@ class LoggingPlugin:
                 yield
 
     @contextmanager
-    def _runtest_for_main(self, item, when):
+    def _runtest_for_main(
+        self, item: nodes.Item, when: str
+    ) -> Generator[None, None, None]:
         """Implements the internals of pytest_runtest_xxx() hook."""
         with catching_logs(
             LogCaptureHandler(), formatter=self.formatter, level=self.log_level
@@ -625,15 +635,15 @@ class LoggingPlugin:
                 return
 
             if not hasattr(item, "catch_log_handlers"):
-                item.catch_log_handlers = {}
-            item.catch_log_handlers[when] = log_handler
-            item.catch_log_handler = log_handler
+                item.catch_log_handlers = {}  # type: ignore[attr-defined]  # noqa: F821
+            item.catch_log_handlers[when] = log_handler  # type: ignore[attr-defined]  # noqa: F821
+            item.catch_log_handler = log_handler  # type: ignore[attr-defined]  # noqa: F821
             try:
                 yield  # run test
             finally:
                 if when == "teardown":
-                    del item.catch_log_handler
-                    del item.catch_log_handlers
+                    del item.catch_log_handler  # type: ignore[attr-defined]  # noqa: F821
+                    del item.catch_log_handlers  # type: ignore[attr-defined]  # noqa: F821
 
             if self.print_logs:
                 # Add a captured log section to the report.

@@ -72,17 +72,18 @@ class Code:
         """ return a path object pointing to source code (or a str in case
         of OSError / non-existing file).
         """
+        if not self.raw.co_filename:
+            return ""
         try:
             p = py.path.local(self.raw.co_filename)
             # maybe don't try this checking
             if not p.check():
                 raise OSError("py.path check failed.")
+            return p
         except OSError:
             # XXX maybe try harder like the weird logic
             # in the standard lib [linecache.updatecache] does?
-            p = self.raw.co_filename
-
-        return p
+            return self.raw.co_filename
 
     @property
     def fullsource(self) -> Optional["Source"]:
@@ -788,9 +789,7 @@ class FormattedExcinfo:
                 message = excinfo and excinfo.typename or ""
             path = self._makepath(entry.path)
             filelocrepr = ReprFileLocation(path, entry.lineno + 1, message)
-            localsrepr = None
-            if not short:
-                localsrepr = self.repr_locals(entry.locals)
+            localsrepr = self.repr_locals(entry.locals)
             return ReprEntry(lines, reprargs, localsrepr, filelocrepr, style)
         if excinfo:
             lines.extend(self.get_exconly(excinfo, indent=4))
@@ -976,18 +975,13 @@ class ReprExceptionInfo(ExceptionRepr):
         super().toterminal(tw)
 
 
+@attr.s
 class ReprTraceback(TerminalRepr):
-    entrysep = "_ "
+    reprentries = attr.ib(type=Sequence[Union["ReprEntry", "ReprEntryNative"]])
+    extraline = attr.ib(type=Optional[str])
+    style = attr.ib(type="_TracebackStyle")
 
-    def __init__(
-        self,
-        reprentries: Sequence[Union["ReprEntry", "ReprEntryNative"]],
-        extraline: Optional[str],
-        style: "_TracebackStyle",
-    ) -> None:
-        self.reprentries = reprentries
-        self.extraline = extraline
-        self.style = style
+    entrysep = "_ "
 
     def toterminal(self, tw: TerminalWriter) -> None:
         # the entries might have different styles
@@ -1040,19 +1034,58 @@ class ReprEntry(TerminalRepr):
         self.reprfileloc = filelocrepr
         self.style = style
 
+    def _write_entry_lines(self, tw: TerminalWriter) -> None:
+        """Writes the source code portions of a list of traceback entries with syntax highlighting.
+
+        Usually entries are lines like these:
+
+            "     x = 1"
+            ">    assert x == 2"
+            "E    assert 1 == 2"
+
+        This function takes care of rendering the "source" portions of it (the lines without
+        the "E" prefix) using syntax highlighting, taking care to not highlighting the ">"
+        character, as doing so might break line continuations.
+        """
+
+        indent_size = 4
+
+        def is_fail(line):
+            return line.startswith("{}   ".format(FormattedExcinfo.fail_marker))
+
+        if not self.lines:
+            return
+
+        # separate indents and source lines that are not failures: we want to
+        # highlight the code but not the indentation, which may contain markers
+        # such as ">   assert 0"
+        indents = []
+        source_lines = []
+        for line in self.lines:
+            if not is_fail(line):
+                indents.append(line[:indent_size])
+                source_lines.append(line[indent_size:])
+
+        tw._write_source(source_lines, indents)
+
+        # failure lines are always completely red and bold
+        for line in (x for x in self.lines if is_fail(x)):
+            tw.line(line, bold=True, red=True)
+
     def toterminal(self, tw: TerminalWriter) -> None:
         if self.style == "short":
             assert self.reprfileloc is not None
             self.reprfileloc.toterminal(tw)
-            for line in self.lines:
-                red = line.startswith("E   ")
-                tw.line(line, bold=True, red=red)
+            self._write_entry_lines(tw)
+            if self.reprlocals:
+                self.reprlocals.toterminal(tw, indent=" " * 8)
             return
+
         if self.reprfuncargs:
             self.reprfuncargs.toterminal(tw)
-        for line in self.lines:
-            red = line.startswith("E   ")
-            tw.line(line, bold=True, red=red)
+
+        self._write_entry_lines(tw)
+
         if self.reprlocals:
             tw.line("")
             self.reprlocals.toterminal(tw)
@@ -1067,11 +1100,11 @@ class ReprEntry(TerminalRepr):
         )
 
 
+@attr.s
 class ReprFileLocation(TerminalRepr):
-    def __init__(self, path, lineno: int, message: str) -> None:
-        self.path = str(path)
-        self.lineno = lineno
-        self.message = message
+    path = attr.ib(type=str, converter=str)
+    lineno = attr.ib(type=int)
+    message = attr.ib(type=str)
 
     def toterminal(self, tw: TerminalWriter) -> None:
         # filename and lineno output for each entry,
@@ -1088,9 +1121,9 @@ class ReprLocals(TerminalRepr):
     def __init__(self, lines: Sequence[str]) -> None:
         self.lines = lines
 
-    def toterminal(self, tw: TerminalWriter) -> None:
+    def toterminal(self, tw: TerminalWriter, indent="") -> None:
         for line in self.lines:
-            tw.line(line)
+            tw.line(indent + line)
 
 
 class ReprFuncArgs(TerminalRepr):

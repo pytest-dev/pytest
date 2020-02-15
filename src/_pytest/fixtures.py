@@ -1,6 +1,5 @@
 import functools
 import inspect
-import itertools
 import sys
 import warnings
 from collections import defaultdict
@@ -16,12 +15,12 @@ import py
 import _pytest
 from _pytest._code.code import FormattedExcinfo
 from _pytest._code.code import TerminalRepr
+from _pytest._code.source import getfslineno
 from _pytest._io import TerminalWriter
 from _pytest.compat import _format_args
 from _pytest.compat import _PytestWrapper
 from _pytest.compat import get_real_func
 from _pytest.compat import get_real_method
-from _pytest.compat import getfslineno
 from _pytest.compat import getfuncargnames
 from _pytest.compat import getimfunc
 from _pytest.compat import getlocation
@@ -31,6 +30,7 @@ from _pytest.compat import safe_getattr
 from _pytest.compat import TYPE_CHECKING
 from _pytest.deprecated import FIXTURE_POSITIONAL_ARGUMENTS
 from _pytest.deprecated import FUNCARGNAMES
+from _pytest.mark import ParameterSet
 from _pytest.outcomes import fail
 from _pytest.outcomes import TEST_OUTCOME
 
@@ -38,6 +38,7 @@ if TYPE_CHECKING:
     from typing import Type
 
     from _pytest import nodes
+    from _pytest.main import Session
 
 
 @attr.s(frozen=True)
@@ -46,7 +47,7 @@ class PseudoFixtureDef:
     scope = attr.ib()
 
 
-def pytest_sessionstart(session):
+def pytest_sessionstart(session: "Session"):
     import _pytest.python
     import _pytest.nodes
 
@@ -513,13 +514,11 @@ class FixtureRequest:
             values.append(fixturedef)
             current = current._parent_request
 
-    def _compute_fixture_value(self, fixturedef):
+    def _compute_fixture_value(self, fixturedef: "FixtureDef") -> None:
         """
         Creates a SubRequest based on "self" and calls the execute method of the given fixturedef object. This will
         force the FixtureDef object to throw away any previous results and compute a new fixture value, which
         will be stored into the FixtureDef object itself.
-
-        :param FixtureDef fixturedef:
         """
         # prepare a subrequest object before calling fixture function
         # (latter managed by fixturedef)
@@ -547,11 +546,11 @@ class FixtureRequest:
             if has_params:
                 frame = inspect.stack()[3]
                 frameinfo = inspect.getframeinfo(frame[0])
-                source_path = frameinfo.filename
+                source_path = py.path.local(frameinfo.filename)
                 source_lineno = frameinfo.lineno
-                source_path = py.path.local(source_path)
-                if source_path.relto(funcitem.config.rootdir):
-                    source_path_str = source_path.relto(funcitem.config.rootdir)
+                rel_source_path = source_path.relto(funcitem.config.rootdir)
+                if rel_source_path:
+                    source_path_str = rel_source_path
                 else:
                     source_path_str = str(source_path)
                 msg = (
@@ -856,6 +855,7 @@ class FixtureDef:
         self.argnames = getfuncargnames(func, name=argname, is_method=unittest)
         self.unittest = unittest
         self.ids = ids
+        self.cached_result = None
         self._finalizers = []
 
     def addfinalizer(self, finalizer):
@@ -882,8 +882,7 @@ class FixtureDef:
             # the cached fixture value and remove
             # all finalizers because they may be bound methods which will
             # keep instances alive
-            if hasattr(self, "cached_result"):
-                del self.cached_result
+            self.cached_result = None
             self._finalizers = []
 
     def execute(self, request):
@@ -895,10 +894,11 @@ class FixtureDef:
                 fixturedef.addfinalizer(functools.partial(self.finish, request=request))
 
         my_cache_key = self.cache_key(request)
-        cached_result = getattr(self, "cached_result", None)
-        if cached_result is not None:
-            result, cache_key, err = cached_result
-            if my_cache_key == cache_key:
+        if self.cached_result is not None:
+            result, cache_key, err = self.cached_result
+            # note: comparison with `==` can fail (or be expensive) for e.g.
+            # numpy arrays (#6497)
+            if my_cache_key is cache_key:
                 if err is not None:
                     _, val, tb = err
                     raise val.with_traceback(tb)
@@ -907,7 +907,7 @@ class FixtureDef:
             # we have a previous but differently parametrized fixture instance
             # so we need to tear it down before creating a new one
             self.finish(request)
-            assert not hasattr(self, "cached_result")
+            assert self.cached_result is None
 
         hook = self._fixturemanager.session.gethookproxy(request.node.fspath)
         return hook.pytest_fixture_setup(fixturedef=self, request=request)
@@ -952,6 +952,7 @@ def pytest_fixture_setup(fixturedef, request):
     kwargs = {}
     for argname in fixturedef.argnames:
         fixdef = request._get_active_fixturedef(argname)
+        assert fixdef.cached_result is not None
         result, arg_cache_key, exc = fixdef.cached_result
         request._check_scope(argname, request.scope, fixdef.scope)
         kwargs[argname] = result
@@ -1248,7 +1249,6 @@ class FixtureManager:
         self.config = session.config
         self._arg2fixturedefs = {}
         self._holderobjseen = set()
-        self._arg2finish = {}
         self._nodeid_and_autousenames = [("", self.config.getini("usefixtures"))]
         session.config.pluginmanager.register(self, "funcmanage")
 
@@ -1261,8 +1261,6 @@ class FixtureManager:
         This things are done later as well when dealing with parametrization
         so this could be improved
         """
-        from _pytest.mark import ParameterSet
-
         parametrize_argnames = []
         for marker in node.iter_markers(name="parametrize"):
             if not marker.kwargs.get("indirect", False):
@@ -1279,10 +1277,8 @@ class FixtureManager:
         else:
             argnames = ()
 
-        usefixtures = itertools.chain.from_iterable(
-            mark.args for mark in node.iter_markers(name="usefixtures")
-        )
-        initialnames = tuple(usefixtures) + argnames
+        usefixtures = get_use_fixtures_for_node(node)
+        initialnames = usefixtures + argnames
         fm = node.session._fixturemanager
         initialnames, names_closure, arg2fixturedefs = fm.getfixtureclosure(
             initialnames, node, ignore_args=self._get_direct_parametrize_args(node)
@@ -1479,3 +1475,12 @@ class FixtureManager:
         for fixturedef in fixturedefs:
             if nodes.ischildnode(fixturedef.baseid, nodeid):
                 yield fixturedef
+
+
+def get_use_fixtures_for_node(node) -> Tuple[str, ...]:
+    """Returns the names of all the usefixtures() marks on the given node"""
+    return tuple(
+        str(name)
+        for mark in node.iter_markers(name="usefixtures")
+        for name in mark.args
+    )

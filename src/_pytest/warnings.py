@@ -1,8 +1,10 @@
 import sys
 import warnings
 from contextlib import contextmanager
+from typing import Generator
 
 import pytest
+from _pytest.main import Session
 
 
 def _setoption(wmod, arg):
@@ -117,7 +119,7 @@ def pytest_runtest_protocol(item):
 
 
 @pytest.hookimpl(hookwrapper=True, tryfirst=True)
-def pytest_collection(session):
+def pytest_collection(session: Session) -> Generator[None, None, None]:
     config = session.config
     with catch_warnings_for_item(
         config=config, ihook=config.hook, when="collect", item=None
@@ -128,6 +130,15 @@ def pytest_collection(session):
 @pytest.hookimpl(hookwrapper=True)
 def pytest_terminal_summary(terminalreporter):
     config = terminalreporter.config
+    with catch_warnings_for_item(
+        config=config, ihook=config.hook, when="config", item=None
+    ):
+        yield
+
+
+@pytest.hookimpl(hookwrapper=True)
+def pytest_sessionfinish(session):
+    config = session.config
     with catch_warnings_for_item(
         config=config, ihook=config.hook, when="config", item=None
     ):
@@ -149,6 +160,10 @@ def _issue_warning_captured(warning, hook, stacklevel):
         warnings.warn(warning, stacklevel=stacklevel)
     # Mypy can't infer that record=True means records is not None; help it.
     assert records is not None
+    frame = sys._getframe(stacklevel - 1)
+    location = frame.f_code.co_filename, frame.f_lineno, frame.f_code.co_name
     hook.pytest_warning_captured.call_historic(
-        kwargs=dict(warning_message=records[0], when="config", item=None)
+        kwargs=dict(
+            warning_message=records[0], when="config", item=None, location=location
+        )
     )

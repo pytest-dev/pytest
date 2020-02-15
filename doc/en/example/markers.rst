@@ -148,6 +148,10 @@ which implements a substring match on the test names instead of the
 exact match on markers that ``-m`` provides.  This makes it easy to
 select tests based on their names:
 
+.. versionadded: 5.4
+
+The expression matching is now case-insensitive.
+
 .. code-block:: pytest
 
     $ pytest -v -k http  # running with the above defined example module

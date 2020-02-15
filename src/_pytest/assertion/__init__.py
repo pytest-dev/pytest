@@ -7,6 +7,11 @@ from typing import Optional
 from _pytest.assertion import rewrite
 from _pytest.assertion import truncate
 from _pytest.assertion import util
+from _pytest.compat import TYPE_CHECKING
+from _pytest.config import hookimpl
+
+if TYPE_CHECKING:
+    from _pytest.main import Session
 
 
 def pytest_addoption(parser):
@@ -91,7 +96,7 @@ def install_importhook(config):
     return hook
 
 
-def pytest_collection(session):
+def pytest_collection(session: "Session") -> None:
     # this hook is only called when test modules are collected
     # so for example not in the master process of pytest-xdist
     # (which does not collect test modules)
@@ -101,7 +106,8 @@ def pytest_collection(session):
             assertstate.hook.set_session(session)
 
 
-def pytest_runtest_setup(item):
+@hookimpl(tryfirst=True, hookwrapper=True)
+def pytest_runtest_protocol(item):
     """Setup the pytest_assertrepr_compare and pytest_assertion_pass hooks
 
     The newinterpret and rewrite modules will use util._reprcompare if
@@ -139,6 +145,7 @@ def pytest_runtest_setup(item):
                 return res
         return None
 
+    saved_assert_hooks = util._reprcompare, util._assertion_pass
     util._reprcompare = callbinrepr
 
     if item.ihook.pytest_assertion_pass.get_hookimpls():
@@ -150,10 +157,9 @@ def pytest_runtest_setup(item):
 
         util._assertion_pass = call_assertion_pass_hook
 
+    yield
 
-def pytest_runtest_teardown(item):
-    util._reprcompare = None
-    util._assertion_pass = None
+    util._reprcompare, util._assertion_pass = saved_assert_hooks
 
 
 def pytest_sessionfinish(session):

@@ -15,10 +15,12 @@ import _pytest._code
 from _pytest._code.code import ExceptionChainRepr
 from _pytest._code.code import ExceptionInfo
 from _pytest._code.code import ReprExceptionInfo
+from _pytest._code.source import getfslineno
 from _pytest.compat import cached_property
-from _pytest.compat import getfslineno
 from _pytest.compat import TYPE_CHECKING
 from _pytest.config import Config
+from _pytest.config import PytestPluginManager
+from _pytest.deprecated import NODE_USE_FROM_PARENT
 from _pytest.fixtures import FixtureDef
 from _pytest.fixtures import FixtureLookupError
 from _pytest.fixtures import FixtureLookupErrorRepr
@@ -74,7 +76,16 @@ def ischildnode(baseid, nodeid):
     return node_parts[: len(base_parts)] == base_parts
 
 
-class Node:
+class NodeMeta(type):
+    def __call__(self, *k, **kw):
+        warnings.warn(NODE_USE_FROM_PARENT.format(name=self.__name__), stacklevel=2)
+        return super().__call__(*k, **kw)
+
+    def _create(self, *k, **kw):
+        return super().__call__(*k, **kw)
+
+
+class Node(metaclass=NodeMeta):
     """ base class for Collector and Item the test collection tree.
     Collector subclasses have children, Items are terminal nodes."""
 
@@ -133,6 +144,24 @@ class Node:
             self._nodeid = self.parent.nodeid
             if self.name != "()":
                 self._nodeid += "::" + self.name
+
+    @classmethod
+    def from_parent(cls, parent: "Node", **kw):
+        """
+        Public Constructor for Nodes
+
+        This indirection got introduced in order to enable removing
+        the fragile logic from the node constructors.
+
+        Subclasses can use ``super().from_parent(...)`` when overriding the construction
+
+        :param parent: the parent node of this test Node
+        """
+        if "config" in kw:
+            raise TypeError("config is not a valid argument for from_parent")
+        if "session" in kw:
+            raise TypeError("session is not a valid argument for from_parent")
+        return cls._create(parent=parent, **kw)
 
     @property
     def ihook(self):
@@ -332,7 +361,9 @@ class Node:
         return self._repr_failure_py(excinfo, style)
 
 
-def get_fslocation_from_item(item):
+def get_fslocation_from_item(
+    item: "Item",
+) -> Tuple[Union[str, py.path.local], Optional[int]]:
     """Tries to extract the actual location from an item, depending on available attributes:
 
     * "fslocation": a pair (path, lineno)
@@ -341,9 +372,10 @@ def get_fslocation_from_item(item):
 
     :rtype: a tuple of (str|LocalPath, int) with filename and line number.
     """
-    result = getattr(item, "location", None)
-    if result is not None:
-        return result[:2]
+    try:
+        return item.location[:2]
+    except AttributeError:
+        pass
     obj = getattr(item, "obj", None)
     if obj is not None:
         return getfslineno(obj)
@@ -366,12 +398,14 @@ class Collector(Node):
 
     def repr_failure(self, excinfo):
         """ represent a collection failure. """
-        if excinfo.errisinstance(self.CollectError):
+        if excinfo.errisinstance(self.CollectError) and not self.config.getoption(
+            "fulltrace", False
+        ):
             exc = excinfo.value
             return str(exc.args[0])
 
         # Respect explicit tbstyle option, but default to "short"
-        # (None._repr_failure_py defaults to "long" without "fulltrace" option).
+        # (_repr_failure_py uses "long" with "fulltrace" option always).
         tbstyle = self.config.getoption("tbstyle", "auto")
         if tbstyle == "auto":
             tbstyle = "short"
@@ -391,6 +425,20 @@ def _check_initialpaths_for_relpath(session, fspath):
     for initial_path in session._initialpaths:
         if fspath.common(initial_path) == initial_path:
             return fspath.relto(initial_path)
+
+
+class FSHookProxy:
+    def __init__(
+        self, fspath: py.path.local, pm: PytestPluginManager, remove_mods
+    ) -> None:
+        self.fspath = fspath
+        self.pm = pm
+        self.remove_mods = remove_mods
+
+    def __getattr__(self, name: str):
+        x = self.pm.subset_hook_caller(name, remove_plugins=self.remove_mods)
+        self.__dict__[name] = x
+        return x
 
 
 class FSCollector(Collector):
@@ -416,6 +464,42 @@ class FSCollector(Collector):
                 nodeid = nodeid.replace(os.sep, SEP)
 
         super().__init__(name, parent, config, session, nodeid=nodeid, fspath=fspath)
+
+        self._norecursepatterns = self.config.getini("norecursedirs")
+
+    @classmethod
+    def from_parent(cls, parent, *, fspath):
+        """
+        The public constructor
+        """
+        return super().from_parent(parent=parent, fspath=fspath)
+
+    def _gethookproxy(self, fspath: py.path.local):
+        # check if we have the common case of running
+        # hooks with all conftest.py files
+        pm = self.config.pluginmanager
+        my_conftestmodules = pm._getconftestmodules(fspath)
+        remove_mods = pm._conftest_plugins.difference(my_conftestmodules)
+        if remove_mods:
+            # one or more conftests are not in use at this fspath
+            proxy = FSHookProxy(fspath, pm, remove_mods)
+        else:
+            # all plugins are active for this fspath
+            proxy = self.config.hook
+        return proxy
+
+    def _recurse(self, dirpath: py.path.local) -> bool:
+        if dirpath.basename == "__pycache__":
+            return False
+        ihook = self._gethookproxy(dirpath.dirpath())
+        if ihook.pytest_ignore_collect(path=dirpath, config=self.config):
+            return False
+        for pat in self._norecursepatterns:
+            if dirpath.check(fnmatch=pat):
+                return False
+        ihook = self._gethookproxy(dirpath)
+        ihook.pytest_collect_directory(path=dirpath, parent=self)
+        return True
 
 
 class File(FSCollector):

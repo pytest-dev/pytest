@@ -18,7 +18,7 @@ Each file should be named like ``<ISSUE>.<TYPE>.rst``, where
 * ``bugfix``: fixes a bug.
 * ``doc``: documentation improvement, like rewording an entire session or adding missing docs.
 * ``deprecation``: feature deprecation.
-* ``removal``: feature removal.
+* ``breaking``: a change which may break existing suites, such as feature removal or behavior change.
 * ``vendor``: changes in packages vendored in pytest.
 * ``trivial``: fixing a small typo or internal change that might be noteworthy.
 

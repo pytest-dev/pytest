@@ -8,8 +8,8 @@ import py.path
 
 import _pytest.pytester as pytester
 import pytest
+from _pytest.config import ExitCode
 from _pytest.config import PytestPluginManager
-from _pytest.main import ExitCode
 from _pytest.outcomes import Failed
 from _pytest.pytester import CwdSnapshot
 from _pytest.pytester import HookRecorder
@@ -458,17 +458,26 @@ def test_testdir_run_timeout_expires(testdir) -> None:
 
 def test_linematcher_with_nonlist() -> None:
     """Test LineMatcher with regard to passing in a set (accidentally)."""
-    lm = LineMatcher([])
+    from _pytest._code.source import Source
 
-    with pytest.raises(AssertionError):
-        lm.fnmatch_lines(set())
-    with pytest.raises(AssertionError):
-        lm.fnmatch_lines({})
+    lm = LineMatcher([])
+    with pytest.raises(TypeError, match="invalid type for lines2: set"):
+        lm.fnmatch_lines(set())  # type: ignore[arg-type]  # noqa: F821
+    with pytest.raises(TypeError, match="invalid type for lines2: dict"):
+        lm.fnmatch_lines({})  # type: ignore[arg-type]  # noqa: F821
+    with pytest.raises(TypeError, match="invalid type for lines2: set"):
+        lm.re_match_lines(set())  # type: ignore[arg-type]  # noqa: F821
+    with pytest.raises(TypeError, match="invalid type for lines2: dict"):
+        lm.re_match_lines({})  # type: ignore[arg-type]  # noqa: F821
+    with pytest.raises(TypeError, match="invalid type for lines2: Source"):
+        lm.fnmatch_lines(Source())  # type: ignore[arg-type]  # noqa: F821
     lm.fnmatch_lines([])
     lm.fnmatch_lines(())
-
-    assert lm._getlines({}) == {}
-    assert lm._getlines(set()) == set()
+    lm.fnmatch_lines("")
+    assert lm._getlines({}) == {}  # type: ignore[arg-type,comparison-overlap]  # noqa: F821
+    assert lm._getlines(set()) == set()  # type: ignore[arg-type,comparison-overlap]  # noqa: F821
+    assert lm._getlines(Source()) == []
+    assert lm._getlines(Source("pass\npass")) == ["pass", "pass"]
 
 
 def test_linematcher_match_failure() -> None:
@@ -499,8 +508,28 @@ def test_linematcher_match_failure() -> None:
     ]
 
 
+def test_linematcher_consecutive():
+    lm = LineMatcher(["1", "", "2"])
+    with pytest.raises(pytest.fail.Exception) as excinfo:
+        lm.fnmatch_lines(["1", "2"], consecutive=True)
+    assert str(excinfo.value).splitlines() == [
+        "exact match: '1'",
+        "no consecutive match: '2'",
+        "   with: ''",
+    ]
+
+    lm.re_match_lines(["1", r"\d?", "2"], consecutive=True)
+    with pytest.raises(pytest.fail.Exception) as excinfo:
+        lm.re_match_lines(["1", r"\d", "2"], consecutive=True)
+    assert str(excinfo.value).splitlines() == [
+        "exact match: '1'",
+        r"no consecutive match: '\\d'",
+        "    with: ''",
+    ]
+
+
 @pytest.mark.parametrize("function", ["no_fnmatch_line", "no_re_match_line"])
-def test_no_matching(function) -> None:
+def test_linematcher_no_matching(function) -> None:
     if function == "no_fnmatch_line":
         good_pattern = "*.py OK*"
         bad_pattern = "*X.py OK*"
@@ -548,7 +577,7 @@ def test_no_matching(function) -> None:
     func(bad_pattern)  # bad pattern does not match any line: passes
 
 
-def test_no_matching_after_match() -> None:
+def test_linematcher_no_matching_after_match() -> None:
     lm = LineMatcher(["1", "2", "3"])
     lm.fnmatch_lines(["1", "3"])
     with pytest.raises(Failed) as e:
@@ -556,17 +585,15 @@ def test_no_matching_after_match() -> None:
     assert str(e.value).splitlines() == ["fnmatch: '*'", "   with: '1'"]
 
 
-def test_pytester_addopts(request, monkeypatch) -> None:
+def test_pytester_addopts_before_testdir(request, monkeypatch) -> None:
+    orig = os.environ.get("PYTEST_ADDOPTS", None)
     monkeypatch.setenv("PYTEST_ADDOPTS", "--orig-unused")
-
     testdir = request.getfixturevalue("testdir")
-
-    try:
-        assert "PYTEST_ADDOPTS" not in os.environ
-    finally:
-        testdir.finalize()
-
-    assert os.environ["PYTEST_ADDOPTS"] == "--orig-unused"
+    assert "PYTEST_ADDOPTS" not in os.environ
+    testdir.finalize()
+    assert os.environ.get("PYTEST_ADDOPTS") == "--orig-unused"
+    monkeypatch.undo()
+    assert os.environ.get("PYTEST_ADDOPTS") == orig
 
 
 def test_run_stdin(testdir) -> None:
@@ -646,14 +673,10 @@ def test_popen_default_stdin_stderr_and_stdin_None(testdir) -> None:
 
 
 def test_spawn_uses_tmphome(testdir) -> None:
-    import os
-
     tmphome = str(testdir.tmpdir)
+    assert os.environ.get("HOME") == tmphome
 
-    # Does use HOME only during run.
-    assert os.environ.get("HOME") != tmphome
-
-    testdir._env_run_update["CUSTOMENV"] = "42"
+    testdir.monkeypatch.setenv("CUSTOMENV", "42")
 
     p1 = testdir.makepyfile(
         """
@@ -710,3 +733,13 @@ def test_testdir_outcomes_with_multiple_errors(testdir):
     result.assert_outcomes(error=2)
 
     assert result.parseoutcomes() == {"error": 2}
+
+
+def test_makefile_joins_absolute_path(testdir: Testdir) -> None:
+    absfile = testdir.tmpdir / "absfile"
+    if sys.platform == "win32":
+        with pytest.raises(OSError):
+            testdir.makepyfile(**{str(absfile): ""})
+    else:
+        p1 = testdir.makepyfile(**{str(absfile): ""})
+        assert str(p1) == (testdir.tmpdir / absfile) + ".py"

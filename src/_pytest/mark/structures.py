@@ -2,13 +2,16 @@ import inspect
 import warnings
 from collections import namedtuple
 from collections.abc import MutableMapping
+from typing import Iterable
+from typing import List
+from typing import Optional
 from typing import Set
+from typing import Union
 
 import attr
 
+from .._code.source import getfslineno
 from ..compat import ascii_escaped
-from ..compat import ATTRS_EQ_FIELD
-from ..compat import getfslineno
 from ..compat import NOTSET
 from _pytest.outcomes import fail
 from _pytest.warning_types import PytestUnknownMarkWarning
@@ -144,7 +147,15 @@ class Mark:
     #: keyword arguments of the mark decorator
     kwargs = attr.ib()  # Dict[str, object]
 
-    def combined_with(self, other):
+    #: source Mark for ids with parametrize Marks
+    _param_ids_from = attr.ib(type=Optional["Mark"], default=None, repr=False)
+    #: resolved/generated ids with parametrize Marks
+    _param_ids_generated = attr.ib(type=Optional[List[str]], default=None, repr=False)
+
+    def _has_param_ids(self):
+        return "ids" in self.kwargs or len(self.args) >= 4
+
+    def combined_with(self, other: "Mark") -> "Mark":
         """
         :param other: the mark to combine with
         :type other: Mark
@@ -153,8 +164,20 @@ class Mark:
         combines by appending args and merging the mappings
         """
         assert self.name == other.name
+
+        # Remember source of ids with parametrize Marks.
+        param_ids_from = None  # type: Optional[Mark]
+        if self.name == "parametrize":
+            if other._has_param_ids():
+                param_ids_from = other
+            elif self._has_param_ids():
+                param_ids_from = self
+
         return Mark(
-            self.name, self.args + other.args, dict(self.kwargs, **other.kwargs)
+            self.name,
+            self.args + other.args,
+            dict(self.kwargs, **other.kwargs),
+            param_ids_from=param_ids_from,
         )
 
 
@@ -249,7 +272,7 @@ def get_unpacked_marks(obj):
     return normalize_mark_list(mark_list)
 
 
-def normalize_mark_list(mark_list):
+def normalize_mark_list(mark_list: Iterable[Union[Mark, MarkDecorator]]) -> List[Mark]:
     """
     normalizes marker decorating helpers to mark objects
 
@@ -325,6 +348,7 @@ class MarkGenerator:
                     "custom marks to avoid this warning - for details, see "
                     "https://docs.pytest.org/en/latest/mark.html" % name,
                     PytestUnknownMarkWarning,
+                    2,
                 )
 
         return MarkDecorator(Mark(name, (), {}))
@@ -368,35 +392,3 @@ class NodeKeywords(MutableMapping):
 
     def __repr__(self):
         return "<NodeKeywords for node {}>".format(self.node)
-
-
-# mypy cannot find this overload, remove when on attrs>=19.2
-@attr.s(hash=False, **{ATTRS_EQ_FIELD: False})  # type: ignore
-class NodeMarkers:
-    """
-    internal structure for storing marks belonging to a node
-
-    ..warning::
-
-        unstable api
-
-    """
-
-    own_markers = attr.ib(default=attr.Factory(list))
-
-    def update(self, add_markers):
-        """update the own markers
-        """
-        self.own_markers.extend(add_markers)
-
-    def find(self, name):
-        """
-        find markers in own nodes or parent nodes
-        needs a better place
-        """
-        for mark in self.own_markers:
-            if mark.name == name:
-                yield mark
-
-    def __iter__(self):
-        return iter(self.own_markers)

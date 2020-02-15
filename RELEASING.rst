@@ -10,40 +10,38 @@ taking a lot of time to make a new one.
     pytest releases must be prepared on **Linux** because the docs and examples expect
     to be executed on that platform.
 
-#. Create a branch ``release-X.Y.Z`` with the version for the release.
+To release a version ``MAJOR.MINOR.PATCH``, follow these steps:
 
-   * **maintenance releases**: from ``4.6-maintenance``;
+#. For major and minor releases, create a new branch ``MAJOR.MINOR.x`` from the
+   latest ``master`` and push it to the ``pytest-dev/pytest`` repo.
 
-   * **patch releases**: from the latest ``master``;
+#. Create a branch ``release-MAJOR.MINOR.PATCH`` from the ``MAJOR.MINOR.x`` branch.
 
-   * **minor releases**: from the latest ``features``; then merge with the latest ``master``;
-
-   Ensure your are in a clean work tree.
+   Ensure your are updated and in a clean working tree.
 
 #. Using ``tox``, generate docs, changelog, announcements::
 
-    $ tox -e release -- <VERSION>
+    $ tox -e release -- MAJOR.MINOR.PATCH
 
    This will generate a commit with all the changes ready for pushing.
 
-#. Open a PR for this branch targeting ``master`` (or ``4.6-maintenance`` for
-   maintenance releases).
+#. Open a PR for the ``release-MAJOR.MINOR.PATCH`` branch targeting ``MAJOR.MINOR.x``.
 
-#. After all tests pass and the PR has been approved, publish to PyPI by pushing the tag::
+#. After all tests pass and the PR has been approved, tag the release commit
+   in the ``MAJOR.MINOR.x`` branch and push it. This will publish to PyPI::
 
-     git tag <VERSION>
-     git push git@github.com:pytest-dev/pytest.git <VERSION>
+     git tag MAJOR.MINOR.PATCH
+     git push git@github.com:pytest-dev/pytest.git MAJOR.MINOR.PATCH
 
    Wait for the deploy to complete, then make sure it is `available on PyPI <https://pypi.org/project/pytest>`_.
 
 #. Merge the PR.
 
-#. If this is a maintenance release, cherry-pick the CHANGELOG / announce
-   files to the ``master`` branch::
+#. Cherry-pick the CHANGELOG / announce files to the ``master`` branch::
 
        git fetch --all --prune
-       git checkout origin/master -b cherry-pick-maintenance-release
-       git cherry-pick --no-commit -m1 origin/4.6-maintenance
+       git checkout origin/master -b cherry-pick-release
+       git cherry-pick --no-commit -m1 origin/MAJOR.MINOR.x
        git checkout origin/master -- changelog
        git commit  # no arguments
 

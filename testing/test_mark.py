@@ -3,7 +3,7 @@ import sys
 from unittest import mock
 
 import pytest
-from _pytest.main import ExitCode
+from _pytest.config import ExitCode
 from _pytest.mark import EMPTY_PARAMETERSET_OPTION
 from _pytest.mark import MarkGenerator as Mark
 from _pytest.nodes import Collector
@@ -962,7 +962,11 @@ def test_mark_expressions_no_smear(testdir):
 
 
 def test_addmarker_order():
-    node = Node("Test", config=mock.Mock(), session=mock.Mock(), nodeid="Test")
+    session = mock.Mock()
+    session.own_markers = []
+    session.parent = None
+    session.nodeid = ""
+    node = Node.from_parent(session, name="Test")
     node.add_marker("foo")
     node.add_marker("bar")
     node.add_marker("baz", append=False)

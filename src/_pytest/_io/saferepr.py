@@ -80,3 +80,24 @@ def saferepr(obj: Any, maxsize: int = 240) -> str:
     around the Repr/reprlib functionality of the standard 2.6 lib.
     """
     return SafeRepr(maxsize).repr(obj)
+
+
+class AlwaysDispatchingPrettyPrinter(pprint.PrettyPrinter):
+    """PrettyPrinter that always dispatches (regardless of width)."""
+
+    def _format(self, object, stream, indent, allowance, context, level):
+        p = self._dispatch.get(type(object).__repr__, None)
+
+        objid = id(object)
+        if objid in context or p is None:
+            return super()._format(object, stream, indent, allowance, context, level)
+
+        context[objid] = 1
+        p(self, object, stream, indent, allowance, context, level + 1)
+        del context[objid]
+
+
+def _pformat_dispatch(object, indent=1, width=80, depth=None, *, compact=False):
+    return AlwaysDispatchingPrettyPrinter(
+        indent=indent, width=width, depth=depth, compact=compact
+    ).pformat(object)

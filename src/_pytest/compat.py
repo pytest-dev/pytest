@@ -13,6 +13,7 @@ from inspect import signature
 from typing import Any
 from typing import Callable
 from typing import Generic
+from typing import IO
 from typing import Optional
 from typing import overload
 from typing import Tuple
@@ -22,7 +23,6 @@ from typing import Union
 import attr
 import py
 
-import _pytest
 from _pytest._io.saferepr import saferepr
 from _pytest.outcomes import fail
 from _pytest.outcomes import TEST_OUTCOME
@@ -143,12 +143,12 @@ def getfuncargnames(
     the case of cls, the function is a static method.
 
     The name parameter should be the original name in which the function was collected.
-
-    @RonnyPfannschmidt: This function should be refactored when we
-    revisit fixtures. The fixture mechanism should ask the node for
-    the fixture names, and not try to obtain directly from the
-    function object well after collection has occurred.
     """
+    # TODO(RonnyPfannschmidt): This function should be refactored when we
+    # revisit fixtures. The fixture mechanism should ask the node for
+    # the fixture names, and not try to obtain directly from the
+    # function object well after collection has occurred.
+
     # The parameters attribute of a Signature object contains an
     # ordered mapping of parameter names to Parameter instances.  This
     # creates a tuple of the names of the parameters that don't have
@@ -307,16 +307,6 @@ def get_real_method(obj, holder):
     return obj
 
 
-def getfslineno(obj) -> Tuple[Union[str, py.path.local], int]:
-    # xxx let decorators etc specify a sane ordering
-    obj = get_real_func(obj)
-    if hasattr(obj, "place_as"):
-        obj = obj.place_as
-    fslineno = _pytest._code.getfslineno(obj)
-    assert isinstance(fslineno[1], int), obj
-    return fslineno
-
-
 def getimfunc(func):
     try:
         return func.__func__
@@ -377,6 +367,16 @@ class CaptureIO(io.TextIOWrapper):
     def getvalue(self) -> str:
         assert isinstance(self.buffer, io.BytesIO)
         return self.buffer.getvalue().decode("UTF-8")
+
+
+class CaptureAndPassthroughIO(CaptureIO):
+    def __init__(self, other: IO) -> None:
+        self._other = other
+        super().__init__()
+
+    def write(self, s) -> int:
+        super().write(s)
+        return self._other.write(s)
 
 
 if sys.version_info < (3, 5, 2):

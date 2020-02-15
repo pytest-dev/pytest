@@ -26,7 +26,7 @@ from more_itertools import collapse
 import pytest
 from _pytest import nodes
 from _pytest.config import Config
-from _pytest.main import ExitCode
+from _pytest.config import ExitCode
 from _pytest.main import Session
 from _pytest.reports import CollectReport
 from _pytest.reports import TestReport
@@ -43,6 +43,8 @@ KNOWN_TYPES = (
     "warnings",
     "error",
 )
+
+_REPORTCHARS_DEFAULT = "fE"
 
 
 class MoreQuietAction(argparse.Action):
@@ -79,7 +81,7 @@ def pytest_addoption(parser):
         default=0,
         dest="verbose",
         help="increase verbosity.",
-    ),
+    )
     group._addoption(
         "-q",
         "--quiet",
@@ -87,7 +89,7 @@ def pytest_addoption(parser):
         default=0,
         dest="verbose",
         help="decrease verbosity.",
-    ),
+    )
     group._addoption(
         "--verbosity",
         dest="verbose",
@@ -99,12 +101,13 @@ def pytest_addoption(parser):
         "-r",
         action="store",
         dest="reportchars",
-        default="",
+        default=_REPORTCHARS_DEFAULT,
         metavar="chars",
         help="show extra test summary info as specified by chars: (f)ailed, "
         "(E)rror, (s)kipped, (x)failed, (X)passed, "
         "(p)assed, (P)assed with output, (a)ll except passed (p/P), or (A)ll. "
-        "(w)arnings are enabled by default (see --disable-warnings).",
+        "(w)arnings are enabled by default (see --disable-warnings), "
+        "'N' can be used to reset the list. (default: 'fE').",
     )
     group._addoption(
         "--disable-warnings",
@@ -177,38 +180,42 @@ def pytest_configure(config: Config) -> None:
 
 
 def getreportopt(config: Config) -> str:
-    reportopts = ""
     reportchars = config.option.reportchars
-    if not config.option.disable_warnings and "w" not in reportchars:
-        reportchars += "w"
-    elif config.option.disable_warnings and "w" in reportchars:
-        reportchars = reportchars.replace("w", "")
+
+    old_aliases = {"F", "S"}
+    reportopts = ""
     for char in reportchars:
+        if char in old_aliases:
+            char = char.lower()
         if char == "a":
-            reportopts = "sxXwEf"
+            reportopts = "sxXEf"
         elif char == "A":
-            reportopts = "PpsxXwEf"
-            break
+            reportopts = "PpsxXEf"
+        elif char == "N":
+            reportopts = ""
         elif char not in reportopts:
             reportopts += char
+
+    if not config.option.disable_warnings and "w" not in reportopts:
+        reportopts = "w" + reportopts
+    elif config.option.disable_warnings and "w" in reportopts:
+        reportopts = reportopts.replace("w", "")
+
     return reportopts
 
 
 @pytest.hookimpl(trylast=True)  # after _pytest.runner
 def pytest_report_teststatus(report: TestReport) -> Tuple[str, str, str]:
+    letter = "F"
     if report.passed:
         letter = "."
     elif report.skipped:
         letter = "s"
-    elif report.failed:
-        letter = "F"
-        if report.when != "call":
-            letter = "f"
 
-    # Report failed CollectReports as "error" (in line with pytest_collectreport).
     outcome = report.outcome
-    if report.when == "collect" and outcome == "failed":
+    if report.when in ("collect", "setup", "teardown") and outcome == "failed":
         outcome = "error"
+        letter = "E"
 
     return outcome, letter, outcome.upper()
 
@@ -532,7 +539,7 @@ class TerminalReporter:
             # py < 1.6.0
             return self._tw.chars_on_current_line
 
-    def pytest_collection(self):
+    def pytest_collection(self) -> None:
         if self.isatty:
             if self.config.option.verbose >= 0:
                 self.write("collecting ... ", bold=True)
@@ -1012,9 +1019,7 @@ class TerminalReporter:
             "x": show_xfailed,
             "X": show_xpassed,
             "f": partial(show_simple, "failed"),
-            "F": partial(show_simple, "failed"),
             "s": show_skipped,
-            "S": show_skipped,
             "p": partial(show_simple, "passed"),
             "E": partial(show_simple, "error"),
         }  # type: Mapping[str, Callable[[List[str]], None]]

@@ -29,9 +29,9 @@ Maintenance of 4.6.X versions
 -----------------------------
 
 Until January 2020, the pytest core team ported many bug-fixes from the main release into the
-``4.6-maintenance`` branch, with several 4.6.X releases being made along the year.
+``4.6.x`` branch, with several 4.6.X releases being made along the year.
 
-From now on, the core team will **no longer actively backport patches**, but the ``4.6-maintenance``
+From now on, the core team will **no longer actively backport patches**, but the ``4.6.x``
 branch will continue to exist so the community itself can contribute patches.
 
 The core team will be happy to accept those patches, and make new 4.6.X releases **until mid-2020**
@@ -74,7 +74,7 @@ Please follow these instructions:
 
 #. ``git fetch --all --prune``
 
-#. ``git checkout origin/4.6-maintenance -b backport-XXXX`` # use the PR number here
+#. ``git checkout origin/4.6.x -b backport-XXXX`` # use the PR number here
 
 #. Locate the merge commit on the PR, in the *merged* message, for example:
 
@@ -82,14 +82,14 @@ Please follow these instructions:
 
 #. ``git cherry-pick -m1 REVISION`` # use the revision you found above (``0f8b462``).
 
-#. Open a PR targeting ``4.6-maintenance``:
+#. Open a PR targeting ``4.6.x``:
 
    * Prefix the message with ``[4.6]`` so it is an obvious backport
    * Delete the PR body, it usually contains a duplicate commit message.
 
 **Providing new PRs to 4.6**
 
-Fresh pull requests to ``4.6-maintenance`` will be accepted provided that
+Fresh pull requests to ``4.6.x`` will be accepted provided that
 the equivalent code in the active branches does not contain that bug (for example, a bug is specific
 to Python 2 only).
 

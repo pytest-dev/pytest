@@ -7,13 +7,15 @@ import sys
 import textwrap
 from io import StringIO
 from io import UnsupportedOperation
+from typing import BinaryIO
+from typing import Generator
 from typing import List
 from typing import TextIO
 
 import pytest
 from _pytest import capture
 from _pytest.capture import CaptureManager
-from _pytest.main import ExitCode
+from _pytest.config import ExitCode
 
 # note: py.io capture tests where copied from
 # pylib 1.4.20.dev2 (rev 13d9af95547e)
@@ -30,6 +32,10 @@ def StdCaptureFD(out=True, err=True, in_=True):
 
 def StdCapture(out=True, err=True, in_=True):
     return capture.MultiCapture(out, err, in_, Capture=capture.SysCapture)
+
+
+def TeeStdCapture(out=True, err=True, in_=True):
+    return capture.MultiCapture(out, err, in_, Capture=capture.TeeSysCapture)
 
 
 class TestCaptureManager:
@@ -471,9 +477,9 @@ class TestCaptureFixture:
         result.stdout.fnmatch_lines(
             [
                 "*test_one*",
-                "*capsys*capfd*same*time*",
+                "E * cannot use capfd and capsys at the same time",
                 "*test_two*",
-                "*capfd*capsys*same*time*",
+                "E * cannot use capsys and capfd at the same time",
                 "*2 failed in*",
             ]
         )
@@ -816,6 +822,25 @@ class TestCaptureIO:
         assert f.getvalue() == "foo\r\n"
 
 
+class TestCaptureAndPassthroughIO(TestCaptureIO):
+    def test_text(self):
+        sio = io.StringIO()
+        f = capture.CaptureAndPassthroughIO(sio)
+        f.write("hello")
+        s1 = f.getvalue()
+        assert s1 == "hello"
+        s2 = sio.getvalue()
+        assert s2 == s1
+        f.close()
+        sio.close()
+
+    def test_unicode_and_str_mixture(self):
+        sio = io.StringIO()
+        f = capture.CaptureAndPassthroughIO(sio)
+        f.write("\u00f6")
+        pytest.raises(TypeError, f.write, b"hello")
+
+
 def test_dontreadfrominput():
     from _pytest.capture import DontReadFromInput
 
@@ -831,7 +856,7 @@ def test_dontreadfrominput():
 
 
 @pytest.fixture
-def tmpfile(testdir):
+def tmpfile(testdir) -> Generator[BinaryIO, None, None]:
     f = testdir.makepyfile("").open("wb+")
     yield f
     if not f.closed:
@@ -1112,6 +1137,23 @@ class TestStdCapture:
             pytest.raises(IOError, sys.stdin.read)
 
 
+class TestTeeStdCapture(TestStdCapture):
+    captureclass = staticmethod(TeeStdCapture)
+
+    def test_capturing_error_recursive(self):
+        """ for TeeStdCapture since we passthrough stderr/stdout, cap1
+        should get all output, while cap2 should only get "cap2\n" """
+
+        with self.getcapture() as cap1:
+            print("cap1")
+            with self.getcapture() as cap2:
+                print("cap2")
+                out2, err2 = cap2.readouterr()
+                out1, err1 = cap1.readouterr()
+        assert out1 == "cap1\ncap2\n"
+        assert out2 == "cap2\n"
+
+
 class TestStdCaptureFD(TestStdCapture):
     pytestmark = needsosdup
     captureclass = staticmethod(StdCaptureFD)
@@ -1252,7 +1294,7 @@ def test_close_and_capture_again(testdir):
     )
 
 
-@pytest.mark.parametrize("method", ["SysCapture", "FDCapture"])
+@pytest.mark.parametrize("method", ["SysCapture", "FDCapture", "TeeSysCapture"])
 def test_capturing_and_logging_fundamentals(testdir, method):
     if method == "StdCaptureFD" and not hasattr(os, "dup"):
         pytest.skip("need os.dup")
@@ -1497,3 +1539,15 @@ def test_typeerror_encodedfile_write(testdir):
 def test_stderr_write_returns_len(capsys):
     """Write on Encoded files, namely captured stderr, should return number of characters written."""
     assert sys.stderr.write("Foo") == 3
+
+
+def test_encodedfile_writelines(tmpfile: BinaryIO) -> None:
+    ef = capture.EncodedFile(tmpfile, "utf-8")
+    with pytest.raises(AttributeError):
+        ef.writelines([b"line1", b"line2"])  # type: ignore[list-item]  # noqa: F821
+    assert ef.writelines(["line1", "line2"]) is None  # type: ignore[func-returns-value]  # noqa: F821
+    tmpfile.seek(0)
+    assert tmpfile.read() == b"line1line2"
+    tmpfile.close()
+    with pytest.raises(ValueError):
+        ef.read()
