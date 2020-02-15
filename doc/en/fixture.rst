@@ -10,15 +10,16 @@ pytest fixtures: explicit, modular, scalable
 
 
 .. _`xUnit`: https://en.wikipedia.org/wiki/XUnit
-.. _`Fixtures initialize`: https://en.wikipedia.org/wiki/Test_fixture#Software
+.. _`Software test fixtures`: https://en.wikipedia.org/wiki/Test_fixture#Software
 .. _`Dependency injection`: https://en.wikipedia.org/wiki/Dependency_injection
 
-`Fixtures initialize`_ software tests.  They provide a fixed baseline
-so that tests execute reliably and produce consistent, repeatable,
-results.  Initialization may setup services, state, or other operating
-environments.  These are accessed by test functions though arguments;
-for each fixture used by a test function there is typically a
-parameter (named after the fixture) in the test function's definition.
+`Software test fixtures`_ initialize test functions.  They provide a
+fixed baseline so that tests execute reliably and produce consistent,
+repeatable, results.  Initialization may setup services, state, or
+other operating environments.  These are accessed by test functions
+though arguments; for each fixture used by a test function there is
+typically a parameter (named after the fixture) in the test function's
+definition.
 
 pytest fixtures offer dramatic improvements over the classic xUnit
 style of setup/teardown functions:
