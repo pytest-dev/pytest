@@ -452,7 +452,7 @@ def _report_kwargs_from_json(reportdict):
                 lines=data["lines"],
                 reprfuncargs=reprfuncargs,
                 reprlocals=reprlocals,
-                filelocrepr=reprfileloc,
+                reprfileloc=reprfileloc,
                 style=data["style"],
             )  # type: Union[ReprEntry, ReprEntryNative]
         elif entry_type == "ReprEntryNative":

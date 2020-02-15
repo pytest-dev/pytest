@@ -788,9 +788,9 @@ class FormattedExcinfo:
             else:
                 message = excinfo and excinfo.typename or ""
             path = self._makepath(entry.path)
-            filelocrepr = ReprFileLocation(path, entry.lineno + 1, message)
+            reprfileloc = ReprFileLocation(path, entry.lineno + 1, message)
             localsrepr = self.repr_locals(entry.locals)
-            return ReprEntry(lines, reprargs, localsrepr, filelocrepr, style)
+            return ReprEntry(lines, reprargs, localsrepr, reprfileloc, style)
         if excinfo:
             lines.extend(self.get_exconly(excinfo, indent=4))
         return ReprEntry(lines, None, None, None, style)
