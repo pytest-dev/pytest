@@ -1083,12 +1083,12 @@ def test_reprcompare_whitespaces():
 
 def test_reprcompare_zerowidth_and_non_printable():
     assert callequal("\x00\x1b[31mred", "\x1b[31mgreen") == [
-        "'\\x00\\x1b[31mred' == '\\x1b[31mgreen'",
-        "NOTE: Strings contain non-printable/zero-width characters. Escaping them using repr().",
-        "- '\\x00\\x1b[31mred'",
-        "?  ----          ^",
-        "+ '\\x1b[31mgreen'",
-        "?          +  ^^",
+        r"'\x00\x1b[31mred' == '\x1b[31mgreen'",
+        r"NOTE: Strings contain non-printable/zero-width characters. Escaping them using repr().",
+        r"- '\x00\x1b[31mred'",
+        r"?  ----          ^",
+        r"+ '\x1b[31mgreen'",
+        r"?          +  ^^",
     ]
 
 
