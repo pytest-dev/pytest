@@ -933,7 +933,8 @@ class _SectionsRepr:
     Only `ExceptionRepr` takes it in `__init__`, but others use it also.
     """
 
-    sections = []  # type: List[Tuple[str, str, str]]
+    def __attrs_post_init__(self):
+        self.sections = []  # type: List[Tuple[str, str, str]]
 
     def addsection(self, name: str, content: str, sep: str = "-") -> None:
         self.sections.append((name, content, sep))
@@ -958,6 +959,7 @@ class ExceptionChainRepr(_SectionsRepr, TerminalRepr):
     )
 
     def __attrs_post_init__(self):
+        super().__attrs_post_init__()
         # reprcrash and reprtraceback of the outermost (the newest) exception
         # in the chain
         self.reprtraceback = self.chain[-1][0]
