@@ -1351,8 +1351,9 @@ class LineMatcher:
                     self._log("matched: ", repr(line))
                     break
             else:
-                self._log("line %r not found in output" % line)
-                raise ValueError(self._log_text)
+                msg = "line %r not found in output" % line
+                self._log(msg)
+                self._fail(msg)
 
     def get_lines_after(self, fnline: str) -> Sequence[str]:
         """Return all lines following the given line in the text.
