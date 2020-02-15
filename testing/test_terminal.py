@@ -1761,6 +1761,22 @@ class TestProgressOutputStyle:
                 r"\[gw\d\] \[\s*\d+%\] PASSED test_foobar.py::test_foobar\[1\]",
             ]
         )
+        output.stdout.fnmatch_lines_random(
+            [
+                line.translate(TRANS_FNMATCH)
+                for line in [
+                    "test_bar.py::test_bar[0] ",
+                    "test_foo.py::test_foo[0] ",
+                    "test_foobar.py::test_foobar[0] ",
+                    "[gw?] [  5%] PASSED test_*[?] ",
+                    "[gw?] [ 10%] PASSED test_*[?] ",
+                    "[gw?] [ 55%] PASSED test_*[?] ",
+                    "[gw?] [ 60%] PASSED test_*[?] ",
+                    "[gw?] [ 95%] PASSED test_*[?] ",
+                    "[gw?] [100%] PASSED test_*[?] ",
+                ]
+            ]
+        )
 
     def test_capture_no(self, many_tests_files, testdir):
         output = testdir.runpytest("-s")
