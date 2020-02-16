@@ -10,7 +10,6 @@ import _pytest.pytester as pytester
 import pytest
 from _pytest.config import ExitCode
 from _pytest.config import PytestPluginManager
-from _pytest.outcomes import Failed
 from _pytest.pytester import CwdSnapshot
 from _pytest.pytester import HookRecorder
 from _pytest.pytester import LineMatcher
@@ -171,7 +170,7 @@ def test_hookrecorder_basic(holder) -> None:
     call = rec.popcall("pytest_xyz")
     assert call.arg == 123
     assert call._name == "pytest_xyz"
-    pytest.raises(Failed, rec.popcall, "abc")
+    pytest.raises(pytest.fail.Exception, rec.popcall, "abc")
     pm.hook.pytest_xyz_noarg()
     call = rec.popcall("pytest_xyz_noarg")
     assert call._name == "pytest_xyz_noarg"
@@ -482,7 +481,7 @@ def test_linematcher_with_nonlist() -> None:
 
 def test_linematcher_match_failure() -> None:
     lm = LineMatcher(["foo", "foo", "bar"])
-    with pytest.raises(Failed) as e:
+    with pytest.raises(pytest.fail.Exception) as e:
         lm.fnmatch_lines(["foo", "f*", "baz"])
     assert e.value.msg is not None
     assert e.value.msg.splitlines() == [
@@ -495,7 +494,7 @@ def test_linematcher_match_failure() -> None:
     ]
 
     lm = LineMatcher(["foo", "foo", "bar"])
-    with pytest.raises(Failed) as e:
+    with pytest.raises(pytest.fail.Exception) as e:
         lm.re_match_lines(["foo", "^f.*", "baz"])
     assert e.value.msg is not None
     assert e.value.msg.splitlines() == [
@@ -550,7 +549,7 @@ def test_linematcher_no_matching(function) -> None:
 
     # check the function twice to ensure we don't accumulate the internal buffer
     for i in range(2):
-        with pytest.raises(Failed) as e:
+        with pytest.raises(pytest.fail.Exception) as e:
             func = getattr(lm, function)
             func(good_pattern)
         obtained = str(e.value).splitlines()
@@ -580,7 +579,7 @@ def test_linematcher_no_matching(function) -> None:
 def test_linematcher_no_matching_after_match() -> None:
     lm = LineMatcher(["1", "2", "3"])
     lm.fnmatch_lines(["1", "3"])
-    with pytest.raises(Failed) as e:
+    with pytest.raises(pytest.fail.Exception) as e:
         lm.no_fnmatch_line("*")
     assert str(e.value).splitlines() == ["fnmatch: '*'", "   with: '1'"]
 

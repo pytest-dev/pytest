@@ -25,7 +25,7 @@ from _pytest.config import ExitCode
 from _pytest.config import hookimpl
 from _pytest.config import UsageError
 from _pytest.fixtures import FixtureManager
-from _pytest.outcomes import Exit
+from _pytest.outcomes import exit
 from _pytest.reports import CollectReport
 from _pytest.runner import collect_one_node
 from _pytest.runner import SetupState
@@ -195,10 +195,10 @@ def wrap_session(
             raise
         except Failed:
             session.exitstatus = ExitCode.TESTS_FAILED
-        except (KeyboardInterrupt, Exit):
+        except (KeyboardInterrupt, exit.Exception):
             excinfo = _pytest._code.ExceptionInfo.from_current()
             exitstatus = ExitCode.INTERRUPTED  # type: Union[int, ExitCode]
-            if isinstance(excinfo.value, Exit):
+            if isinstance(excinfo.value, exit.Exception):
                 if excinfo.value.returncode is not None:
                     exitstatus = excinfo.value.returncode
                 if initstate < 2:
@@ -212,7 +212,7 @@ def wrap_session(
             excinfo = _pytest._code.ExceptionInfo.from_current()
             try:
                 config.notify_exception(excinfo, config.option)
-            except Exit as exc:
+            except exit.Exception as exc:
                 if exc.returncode is not None:
                     session.exitstatus = exc.returncode
                 sys.stderr.write("{}: {}\n".format(type(exc).__name__, exc))
@@ -229,7 +229,7 @@ def wrap_session(
                 config.hook.pytest_sessionfinish(
                     session=session, exitstatus=session.exitstatus
                 )
-            except Exit as exc:
+            except exit.Exception as exc:
                 if exc.returncode is not None:
                     session.exitstatus = exc.returncode
                 sys.stderr.write("{}: {}\n".format(type(exc).__name__, exc))

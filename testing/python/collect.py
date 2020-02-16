@@ -904,6 +904,8 @@ class TestTracebackCutting:
             pytest.skip("xxx")
         assert excinfo.traceback[-1].frame.code.name == "skip"
         assert excinfo.traceback[-1].ishidden()
+        assert excinfo.traceback[-2].frame.code.name == "test_skip_simple"
+        assert not excinfo.traceback[-2].ishidden()
 
     def test_traceback_argsetup(self, testdir):
         testdir.makeconftest(

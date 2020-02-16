@@ -284,8 +284,7 @@ class TestReport(BaseReport):
             if not isinstance(excinfo, ExceptionInfo):
                 outcome = "failed"
                 longrepr = excinfo
-            # Type ignored -- see comment where skip.Exception is defined.
-            elif excinfo.errisinstance(skip.Exception):  # type: ignore
+            elif excinfo.errisinstance(skip.Exception):
                 outcome = "skipped"
                 r = excinfo._getreprcrash()
                 longrepr = (str(r.path), r.lineno, r.message)
