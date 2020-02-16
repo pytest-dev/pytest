@@ -438,6 +438,7 @@ CaptureResult = collections.namedtuple("CaptureResult", ["out", "err"])
 class MultiCapture:
     out = err = in_ = None
     _state = None
+    _in_suspended = False
 
     def __init__(self, out=True, err=True, in_=True, Capture=None):
         if in_:
@@ -449,11 +450,7 @@ class MultiCapture:
 
     def __repr__(self):
         return "<MultiCapture out={!r} err={!r} in_={!r} _state={!r} _in_suspended={!r}>".format(
-            self.out,
-            self.err,
-            self.in_,
-            self._state,
-            getattr(self, "_in_suspended", "<UNSET>"),
+            self.out, self.err, self.in_, self._state, self._in_suspended,
         )
 
     def start_capturing(self):
@@ -490,9 +487,9 @@ class MultiCapture:
             self.out.resume()
         if self.err:
             self.err.resume()
-        if hasattr(self, "_in_suspended"):
+        if self._in_suspended:
             self.in_.resume()
-            del self._in_suspended
+            self._in_suspended = False
 
     def stop_capturing(self):
         """ stop capturing and reset capturing streams """
@@ -653,7 +650,7 @@ class SysCapture:
 
     def done(self):
         setattr(sys, self.name, self._old)
-        del self._old
+        self._old = None
         self.tmpfile.close()
         self._state = "done"
 
