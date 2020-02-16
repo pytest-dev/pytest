@@ -39,66 +39,66 @@ style <unittest.TestCase>` or :ref:`nose based <nosestyle>` projects.
 below <funcargs>`. Pytest has useful built-in fixtures, listed here
 for reference:
 
-   :ref:`capfd-api`
+   :fixture:`capfd`
         Capture, as text, output to file descriptors ``1`` and ``2``
 
-   :ref:`capfdbinary-api`
+   :fixture:`capfdbinary`
         Capture, as bytes, output to file descriptors ``1`` and ``2``
 
-   :ref:`caplog-api`
+   :fixture:`caplog`
         Control logging and access log entries
 
-   :ref:`capsys-api`
+   :fixture:`capsys`
         Capture, as text, output to ``sys.stdout`` and ``sys.stderr``
 
-   :ref:`capsysbinary-api`
+   :fixture:`capsysbinary`
         Capture, as bytes, output to ``sys.stdout`` and ``sys.stderr``
 
-   :ref:`cache-api`
+   :fixture:`cache`
         Store and retrieve values across pytest runs
 
-   :ref:`doctest_namespace-api`
+   :fixture:`doctest_namespace`
         Provide a dict injected into the docstests namespace
 
-   :ref:`monkeypatch-api`
+   :fixture:`monkeypatch`
        Temporarily modify classes, functions, dictionaries,
        ``os.environ``, and other objects
 
-   :ref:`pytestconfig-api`
+   :fixture:`pytestconfig`
         Access to configuration values, pluginmanager and plugin hooks
 
-   :ref:`record_property-api`
+   :fixture:`record_property`
        Add extra properties to the test
 
-   :ref:`record_testsuite_property-api`
+   :fixture:`record_testsuite_property`
        Add extra properties to the test suite
 
-   :ref:`recwarn-api`
+   :fixture:`recwarn`
         Record warnings emitted by test functions
 
-   :ref:`request-api`
+   :fixture:`request`
        Provide information on the executing test function
 
-   :ref:`testdir`
+   :fixture:`testdir`
         Provide a temporary test directory to aid in running, and
         testing, pytest plugins
 
-   :ref:`tmp_path-api`
+   :fixture:`tmp_path`
        Provide a :class:`pathlib.Path` object to a temporary directory
        which is unique to each test function
 
-   :ref:`tmp_path_factory-api`
+   :fixture:`tmp_path_factory`
         Make session-scoped temporary directories and return
         :class:`pathlib.Path` objects
 
-   :ref:`tmpdir-api`
+   :fixture:`tmpdir`
         Provide a :class:`py.path.local` object to a temporary
         directory which is unique to each test function;
         replaced by :doc:`tmp_path <tmpdir>`
 
         .. _`py.path.local`: https://py.readthedocs.io/en/latest/path.html
 
-   :ref:`tmpdir_factory-api`
+   :fixture:`tmpdir_factory`
         Make session-scoped temporary directories and return
         :class:`py.path.local` objects;
         replaced by :ref:`tmp_path_factory <tmp_path_factory example>`

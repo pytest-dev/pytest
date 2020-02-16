@@ -284,6 +284,7 @@ For more details, consult the full :ref:`fixtures docs <fixture>`.
     :decorator:
 
 
+.. fixture:: cache
 .. _`cache-api`:
 
 config.cache
@@ -305,7 +306,7 @@ Under the hood, the cache plugin uses the simple
 .. automethod:: Cache.makedir
 
 
-.. _`capsys-api`:
+.. fixture:: capsys
 
 capsys
 ~~~~~~
@@ -332,7 +333,7 @@ capsys
     :members:
 
 
-.. _`capsysbinary-api`:
+.. fixture:: capsysbinary
 
 capsysbinary
 ~~~~~~~~~~~~
@@ -354,7 +355,7 @@ capsysbinary
             assert captured.out == b"hello\n"
 
 
-.. _`capfd-api`:
+.. fixture:: capfd
 
 capfd
 ~~~~~~
@@ -376,7 +377,7 @@ capfd
             assert captured.out == "hello\n"
 
 
-.. _`capfdbinary-api`:
+.. fixture:: capfdbinary
 
 capfdbinary
 ~~~~~~~~~~~~
@@ -398,7 +399,7 @@ capfdbinary
             assert captured.out == b"hello\n"
 
 
-.. _`doctest_namespace-api`:
+.. fixture:: doctest_namespace
 
 doctest_namespace
 ~~~~~~~~~~~~~~~~~
@@ -418,7 +419,7 @@ doctest_namespace
     For more details: :ref:`doctest_namespace`.
 
 
-.. _`request-api`:
+.. fixture:: request
 
 request
 ~~~~~~~
@@ -431,7 +432,7 @@ The ``request`` fixture is a special fixture providing information of the reques
     :members:
 
 
-.. _`pytestconfig-api`:
+.. fixture:: pytestconfig
 
 pytestconfig
 ~~~~~~~~~~~~
@@ -439,7 +440,7 @@ pytestconfig
 .. autofunction:: _pytest.fixtures.pytestconfig()
 
 
-.. _`record_property-api`:
+.. fixture:: record_property
 
 record_property
 ~~~~~~~~~~~~~~~~~~~
@@ -449,7 +450,7 @@ record_property
 .. autofunction:: _pytest.junitxml.record_property()
 
 
-.. _`record_testsuite_property-api`:
+.. fixture:: record_testsuite_property
 
 record_testsuite_property
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -459,7 +460,7 @@ record_testsuite_property
 .. autofunction:: _pytest.junitxml.record_testsuite_property()
 
 
-.. _`caplog-api`:
+.. fixture:: caplog
 
 caplog
 ~~~~~~
@@ -475,7 +476,7 @@ caplog
     :members:
 
 
-.. _`monkeypatch-api`:
+.. fixture:: monkeypatch
 
 monkeypatch
 ~~~~~~~~~~~
@@ -493,6 +494,7 @@ monkeypatch
     :members:
 
 
+.. fixture:: testdir
 .. _testdir:
 
 testdir
@@ -521,7 +523,7 @@ To use it, include in your top-most ``conftest.py`` file:
     :members:
 
 
-.. _`recwarn-api`:
+.. fixture:: recwarn
 
 recwarn
 ~~~~~~~
@@ -546,7 +548,7 @@ Each recorded warning is an instance of :class:`warnings.WarningMessage`.
     differently; see :ref:`ensuring_function_triggers`.
 
 
-.. _`tmp_path-api`:
+.. fixture:: tmp_path
 
 tmp_path
 ~~~~~~~~
@@ -559,7 +561,7 @@ tmp_path
     :no-auto-options:
 
 
-.. _`tmp_path_factory-api`:
+.. fixture:: tmp_path_factory
 
 tmp_path_factory
 ~~~~~~~~~~~~~~~~
@@ -576,7 +578,7 @@ tmp_path_factory
 .. automethod:: TempPathFactory.getbasetemp
 
 
-.. _`tmpdir-api`:
+.. fixture:: tmpdir
 
 tmpdir
 ~~~~~~
@@ -589,7 +591,7 @@ tmpdir
     :no-auto-options:
 
 
-.. _`tmpdir_factory-api`:
+.. fixture:: tmpdir_factory
 
 tmpdir_factory
 ~~~~~~~~~~~~~~
