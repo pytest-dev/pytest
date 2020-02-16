@@ -285,7 +285,6 @@ For more details, consult the full :ref:`fixtures docs <fixture>`.
 
 
 .. fixture:: cache
-.. _`cache-api`:
 
 config.cache
 ~~~~~~~~~~~~
@@ -495,7 +494,6 @@ monkeypatch
 
 
 .. fixture:: testdir
-.. _testdir:
 
 testdir
 ~~~~~~~
