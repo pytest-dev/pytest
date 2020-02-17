@@ -1,2 +1,3 @@
-Handle ``match`` with :py:func:`pytest.raises` used as a function, passing it to the function.
-Previously it was ignored.
+Pass `match` keyword argument to the tested function with
+:py:func:`pytest.raises` used as a function - previously it was ignored
+(regression in pytest 5.1.0).
