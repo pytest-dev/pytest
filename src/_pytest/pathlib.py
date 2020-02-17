@@ -99,11 +99,23 @@ def on_rm_rf_error(func, path: str, exc, *, start_path: Path) -> bool:
     func(path)
     return True
 
+def create_long_path(path: Path) -> Path:
+    """Construct a path which will work on Windows if greater
+    than 260 characters. Resolves into a absolute path which
+    bypasses the typical MAX_PATH limitation:
+    https://docs.microsoft.com/en-us/windows/win32/fileio/naming-a-file#maximum-path-length-limitation"""
+    if sys.platform.startswith("win32"):
+        path = path.resolve()
+        # for the API
+        if not str(path).startswith(r"\\?\"):
+            path = Path(r"\\?\" + str(path))
+    return path
 
 def rm_rf(path: Path) -> None:
     """Remove the path contents recursively, even if some elements
     are read-only.
     """
+    path = create_long_path(path)
     onerror = partial(on_rm_rf_error, start_path=path)
     shutil.rmtree(str(path), onerror=onerror)
 
