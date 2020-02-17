@@ -238,7 +238,7 @@ This test will run but no traceback will be reported when it fails. Instead term
 reporting will list it in the "expected to fail" (``XFAIL``) or "unexpectedly
 passing" (``XPASS``) sections.
 
-Alternatively, you can mark tests as ``XFAIL`` from within a test or setup function
+Alternatively, you can also mark a test as ``XFAIL`` from within the test or its setup function
 imperatively:
 
 .. code-block:: python
@@ -258,9 +258,9 @@ imperatively:
 These two examples illustrate situations where you don't want to check for a condition
 at the module level, which is when a condition would otherwise be evaluated for marks.
 
-They will unconditionally make the two examples ``XFAIL``. Note that no other code is executed
-after a ``pytest.xfail`` call, which is different from a marker. This is because current
-implementation raises an internally known exception.
+This will make ``test_function`` ``XFAIL``. Note that no other code is executed after
+``pytest.xfail`` call, differently from the marker. That's because it is implemented
+internally by raising a known exception.
 
 **Reference**: :ref:`pytest.mark.xfail ref`
 
@@ -272,8 +272,8 @@ implementation raises an internally known exception.
 
 
 
-Both ``XFAIL`` and ``XPASS`` don't fail the test suite unless the ``strict`` keyword-only
-parameter is passed as ``True``:
+Both ``XFAIL`` and ``XPASS`` don't fail the test suite by default.
+You can change this by setting the ``strict`` keyword-only parameter to ``True``:
 
 .. code-block:: python
 
