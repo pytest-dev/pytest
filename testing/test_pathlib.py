@@ -95,7 +95,7 @@ def test_long_path_during_cleanup(tmp_path):
     path = tmp_path / ("a" * 200)
     if sys.platform == "win32":
         dirname = path.resolve()
-        dirname = r"\\?\" + str(path)
+        dirname = "\\\\?\\" + str(path)
         os.mkdir(dirname)
 
     lock_path = get_lock_path(path)

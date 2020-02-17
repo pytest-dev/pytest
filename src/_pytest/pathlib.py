@@ -107,8 +107,8 @@ def create_long_path(path: Path) -> Path:
     if sys.platform.startswith("win32"):
         path = path.resolve()
         # for the API
-        if not str(path).startswith(r"\\?\"):
-            path = Path(r"\\?\" + str(path))
+        if not str(path).startswith("\\\\?\\"):
+            path = Path("\\\\?\\" + str(path))
     return path
 
 def rm_rf(path: Path) -> None:
