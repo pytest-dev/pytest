@@ -580,7 +580,7 @@ def raises(  # noqa: F811
         (This is only used when ``pytest.raises`` is used as a context manager,
         and passed through to the function otherwise.
         When using ``pytest.raises`` as a function, you can use:
-        ``pytest.raises(Exc, func, …).match("my pattern")``.)
+        ``pytest.raises(Exc, func, match="passed on").match("my pattern")``.)
 
         __ https://docs.python.org/3/library/re.html#regular-expression-syntax
 
