@@ -710,6 +710,15 @@ def raises(  # noqa: F811
         except expected_exception as e:
             # We just caught the exception - there is a traceback.
             assert e.__traceback__ is not None
+            if match:
+                excinfo = _pytest._code.ExceptionInfo.from_exc_info(
+                    (type(e), e, e.__traceback__)
+                )
+                excinfo.match(match)
+                try:
+                    return excinfo
+                finally:
+                    del excinfo
             return _pytest._code.ExceptionInfo.from_exc_info(
                 (type(e), e, e.__traceback__)
             )

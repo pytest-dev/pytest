@@ -1,0 +1,1 @@
+Handle ``match`` with :py:func:`pytest.raises` used as a function.
