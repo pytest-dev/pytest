@@ -99,6 +99,7 @@ def on_rm_rf_error(func, path: str, exc, *, start_path: Path) -> bool:
     func(path)
     return True
 
+
 def create_long_path(path: Path) -> Path:
     """Construct a path which will work on Windows if greater
     than 260 characters. Resolves into a absolute path which
@@ -110,6 +111,7 @@ def create_long_path(path: Path) -> Path:
         if not str(path).startswith("\\\\?\\"):
             path = Path("\\\\?\\" + str(path))
     return path
+
 
 def rm_rf(path: Path) -> None:
     """Remove the path contents recursively, even if some elements

@@ -1,1 +1,1 @@
-Support deleting paths longer than 260 characters on windows created inside tmpdir. 
+Support deleting paths longer than 260 characters on windows created inside tmpdir.
