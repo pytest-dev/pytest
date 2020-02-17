@@ -75,3 +75,30 @@ def test_wrap_session_exit_sessionfinish(
         assert result.ret == ExitCode.NO_TESTS_COLLECTED
     assert result.stdout.lines[-1] == "collected 0 items"
     assert result.stderr.lines == ["Exit: exit_pytest_sessionfinish"]
+
+
+def test_session_shouldfail_from_failed(testdir: Testdir) -> None:
+    testdir.makeconftest(
+        """
+        import pytest
+        def pytest_runtestloop(session):
+            raise session.Failed("session_failed")
+    """
+    )
+    result = testdir.runpytest()
+    assert result.ret == 1
+    result.stdout.fnmatch_lines(["*= no tests ran in *s (session_failed) =*"])
+
+
+def test_session_shouldfail_with_different_failed(testdir: Testdir) -> None:
+    testdir.makeconftest(
+        """
+        import pytest
+        def pytest_runtestloop(session):
+            session.shouldfail = "session_shouldfail"
+            raise session.Failed("session_failed")
+    """
+    )
+    result = testdir.runpytest()
+    assert result.ret == 1
+    result.stdout.fnmatch_lines(["*= no tests ran in *s (session_shouldfail) =*"])

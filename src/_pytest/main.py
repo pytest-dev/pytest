@@ -193,7 +193,11 @@ def wrap_session(
         except UsageError:
             session.exitstatus = ExitCode.USAGE_ERROR
             raise
-        except Failed:
+        except Failed as exc:
+            if not session.shouldfail:
+                # Typically Failed is raised when session.shouldfail has been
+                # set.  This sets it for when the exception was raised only.
+                session.shouldfail = exc.args[0]
             session.exitstatus = ExitCode.TESTS_FAILED
         except (KeyboardInterrupt, Exit):
             excinfo = _pytest._code.ExceptionInfo.from_current()
