@@ -1,1 +1,2 @@
-Handle ``match`` with :py:func:`pytest.raises` used as a function.
+Handle ``match`` with :py:func:`pytest.raises` used as a function, passing it to the function.
+Previously it was ignored.

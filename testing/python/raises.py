@@ -177,7 +177,7 @@ class TestRaises:
         if method == "function":
             pytest.raises(ValueError, t)
         elif method == "function_match":
-            pytest.raises(ValueError, t, match="^$")
+            pytest.raises(ValueError, t).match("^$")
         else:
             with pytest.raises(ValueError):
                 t()
@@ -205,10 +205,18 @@ class TestRaises:
                 int("asdf", base=10)
 
         # "match" without context manager.
-        pytest.raises(ValueError, int, "asdf", match="invalid literal")
+        pytest.raises(ValueError, int, "asdf").match("invalid literal")
         with pytest.raises(AssertionError) as excinfo:
-            pytest.raises(ValueError, int, "asdf", match=msg)
+            pytest.raises(ValueError, int, "asdf").match(msg)
         assert str(excinfo.value) == expr
+
+        pytest.raises(TypeError, int, match="invalid")
+
+        def tfunc(match):
+            raise ValueError("match={}".format(match))
+
+        excinfo = pytest.raises(ValueError, tfunc, match="asdf").match("match=asdf")
+        excinfo = pytest.raises(ValueError, tfunc, match="").match("match=")
 
     def test_match_failure_string_quoting(self):
         with pytest.raises(AssertionError) as excinfo:
