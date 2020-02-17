@@ -258,9 +258,9 @@ imperatively:
 These two examples illustrate situations where you don't want to check for a condition
 at the module level, which is when a condition would otherwise be evaluated for marks.
 
-This will make ``test_function`` ``XFAIL``. Note that no other code is
-executed after ``pytest.xfail`` call, differently from the marker. That's because it is
-implemented internally by raising a known exception.
+This will make ``test_function`` ``XFAIL``. Note that no other code is executed after
+``pytest.xfail`` call, differently from the marker. That's because it is implemented
+internally by raising a known exception.
 
 **Reference**: :ref:`pytest.mark.xfail ref`
 
