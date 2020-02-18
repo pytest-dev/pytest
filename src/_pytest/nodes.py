@@ -521,6 +521,9 @@ class Item(Node):
         #: defined properties for this test.
         self.user_properties = []  # type: List[Tuple[str, Any]]
 
+    def runtest(self) -> None:
+        raise NotImplementedError("runtest must be implemented by Item subclass")
+
     def add_report_section(self, when: str, key: str, content: str) -> None:
         """
         Adds a new report section, similar to what's done internally to add stdout and

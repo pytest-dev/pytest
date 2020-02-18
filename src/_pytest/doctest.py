@@ -239,7 +239,7 @@ class DoctestItem(pytest.Item):
                 globs[name] = value
             self.dtest.globs.update(globs)
 
-    def runtest(self):
+    def runtest(self) -> None:
         _check_all_skipped(self.dtest)
         self._disable_output_capturing_for_darwin()
         failures = []  # type: List[doctest.DocTestFailure]
