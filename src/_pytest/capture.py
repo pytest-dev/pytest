@@ -552,12 +552,12 @@ class FDCaptureBinary:
             self.tmpfile_fd = tmpfile.fileno()
 
     def __repr__(self):
-        return "<{} {} oldfd={} _state={!r} tmpfile={!r}>".format(
+        return "<{} {} oldfd={} _state={!r} tmpfile={}>".format(
             self.__class__.__name__,
             self.targetfd,
             getattr(self, "targetfd_save", "<UNSET>"),
             self._state,
-            self.tmpfile,
+            hasattr(self, "tmpfile") and repr(self.tmpfile) or "<UNSET>",
         )
 
     def _start(self):
