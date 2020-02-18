@@ -29,7 +29,7 @@ Below is a complete list of all pytest features which are considered deprecated.
 Option ``--no-print-logs`` is deprecated and meant to be removed in a future release. If you use ``--no-print-logs``, please try out ``--show-capture`` and
 provide feedback.
 
-``--show-capture`` command-line option was added in ``pytest 3.5.0` and allows to specify how to
+``--show-capture`` command-line option was added in ``pytest 3.5.0`` and allows to specify how to
 display captured output when tests fail: ``no``, ``stdout``, ``stderr``, ``log`` or ``all`` (the default).
 
 
@@ -39,8 +39,12 @@ Node Construction changed to ``Node.from_parent``
 
 .. deprecated:: 5.4
 
-The construction of nodes new should use the named constructor ``from_parent``.
+The construction of nodes now should use the named constructor ``from_parent``.
 This limitation in api surface intends to enable better/simpler refactoring of the collection tree.
+
+This means that instead of :code:`MyItem(name="foo", parent=collector, obj=42)`
+one now has to invoke :code:`MyItem.from_parent(collector, name="foo")`.
+
 
 
 ``junit_family`` default value change to "xunit2"
