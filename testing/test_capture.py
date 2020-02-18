@@ -1005,6 +1005,18 @@ class TestFDCapture:
             cap.done()
             pytest.raises(AttributeError, cap.suspend)
 
+            assert repr(cap) == (
+                "<FDCapture 1 oldfd=<UNSET> _state='done' tmpfile={!r}>".format(
+                    cap.tmpfile
+                )
+            )
+            # Should not crash with missing "_old".
+            assert repr(cap.syscapture) == (
+                "<SysCapture stdout _old=<UNSET> _state='done' tmpfile={!r}>".format(
+                    cap.syscapture.tmpfile
+                )
+            )
+
     def test_capfd_sys_stdout_mode(self, capfd):
         assert "b" not in sys.stdout.mode
 

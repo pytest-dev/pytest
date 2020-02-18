@@ -552,8 +552,12 @@ class FDCaptureBinary:
             self.tmpfile_fd = tmpfile.fileno()
 
     def __repr__(self):
-        return "<FDCapture {} oldfd={} _state={!r}>".format(
-            self.targetfd, getattr(self, "targetfd_save", None), self._state
+        return "<{} {} oldfd={} _state={!r} tmpfile={!r}>".format(
+            self.__class__.__name__,
+            self.targetfd,
+            getattr(self, "targetfd_save", "<UNSET>"),
+            self._state,
+            self.tmpfile,
         )
 
     def _start(self):
@@ -634,8 +638,12 @@ class SysCapture:
         self.tmpfile = tmpfile
 
     def __repr__(self):
-        return "<SysCapture {} _old={!r}, tmpfile={!r} _state={!r}>".format(
-            self.name, self._old, self.tmpfile, self._state
+        return "<{} {} _old={} _state={!r} tmpfile={!r}>".format(
+            self.__class__.__name__,
+            self.name,
+            hasattr(self, "_old") and repr(self._old) or "<UNSET>",
+            self._state,
+            self.tmpfile,
         )
 
     def start(self):
@@ -650,7 +658,7 @@ class SysCapture:
 
     def done(self):
         setattr(sys, self.name, self._old)
-        self._old = None
+        del self._old
         self.tmpfile.close()
         self._state = "done"
 
