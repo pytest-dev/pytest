@@ -234,7 +234,7 @@ expect a test to fail:
     def test_function():
         ...
 
-This test will run but no traceback will be reported when it fails. Instead terminal
+This test will run but no traceback will be reported when it fails. Instead, terminal
 reporting will list it in the "expected to fail" (``XFAIL``) or "unexpectedly
 passing" (``XPASS``) sections.
 
