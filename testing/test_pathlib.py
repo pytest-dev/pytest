@@ -4,6 +4,7 @@ import sys
 import py
 
 import pytest
+from _pytest.pathlib import create_long_path
 from _pytest.pathlib import fnmatch_ex
 from _pytest.pathlib import get_lock_path
 from _pytest.pathlib import maybe_delete_a_numbered_dir
@@ -101,4 +102,5 @@ def test_long_path_during_cleanup(tmp_path):
 
     lock_path = get_lock_path(path)
     maybe_delete_a_numbered_dir(path)
-    assert not lock_path.is_file()
+    # is_file also fails on the long path
+    assert not os.path.exists(create_long_path(lock_path))
