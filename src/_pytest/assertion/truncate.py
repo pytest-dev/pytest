@@ -73,7 +73,7 @@ def _truncate_explanation(input_lines, max_lines=None, max_chars=None):
     else:
         msg += " ({} lines hidden".format(truncated_line_count)
     if last_truncated:
-        msg += ",1 truncated)"
+        msg += ", 1 truncated)"
     else:
         msg += ")"
     msg += ", {}".format(USAGE_MSG)
