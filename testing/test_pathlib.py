@@ -98,7 +98,7 @@ def test_long_path_during_cleanup(tmp_path):
         dirname = path.resolve()
         # make sure that the full path is > 260 characters without any
         # component being over 260 characters
-        assert len(path) > 260
+        assert len(str(path)) > 260
         dirname = "\\\\?\\" + str(path)
         os.mkdir(dirname)
     lock_path = get_lock_path(path)
