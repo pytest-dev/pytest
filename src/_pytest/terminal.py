@@ -482,6 +482,10 @@ class TerminalReporter:
                 self._tw.write(" " + line)
                 self.currentfspath = -2
 
+    @property
+    def _is_last_item(self):
+        return self._progress_items_reported == self._session.testscollected
+
     def pytest_runtest_teardown(self) -> None:
         """Write progress if past edge."""
         if self.verbosity >= 0 or not self._show_progress_info:
@@ -1039,10 +1043,6 @@ class TerminalReporter:
             self.write_sep("=", "short test summary info")
             for line in lines:
                 self.write_line(line)
-
-    @property
-    def _is_last_item(self):
-        return self._progress_items_reported == self._session.testscollected
 
     def _get_main_color(self) -> Tuple[str, List[str]]:
         if self._main_color is None or self._known_types is None or self._is_last_item:
