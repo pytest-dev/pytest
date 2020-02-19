@@ -533,7 +533,8 @@ class Testdir:
 
     __test__ = False
 
-    CLOSE_STDIN = object
+    class CLOSE_STDIN:
+        pass
 
     class TimeoutExpired(Exception):
         pass
