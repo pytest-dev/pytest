@@ -1005,6 +1005,18 @@ class TestFDCapture:
             cap.done()
             pytest.raises(AttributeError, cap.suspend)
 
+            assert repr(cap) == (
+                "<FDCapture 1 oldfd=<UNSET> _state='done' tmpfile={!r}>".format(
+                    cap.tmpfile
+                )
+            )
+            # Should not crash with missing "_old".
+            assert repr(cap.syscapture) == (
+                "<SysCapture stdout _old=<UNSET> _state='done' tmpfile={!r}>".format(
+                    cap.syscapture.tmpfile
+                )
+            )
+
     def test_capfd_sys_stdout_mode(self, capfd):
         assert "b" not in sys.stdout.mode
 
@@ -1212,19 +1224,19 @@ class TestStdCaptureFDinvalidFD:
             def test_stdout():
                 os.close(1)
                 cap = StdCaptureFD(out=True, err=False, in_=False)
-                assert repr(cap.out) == "<FDCapture 1 oldfd=None _state=None>"
+                assert repr(cap.out) == "<FDCapture 1 oldfd=<UNSET> _state=None tmpfile=<UNSET>>"
                 cap.stop_capturing()
 
             def test_stderr():
                 os.close(2)
                 cap = StdCaptureFD(out=False, err=True, in_=False)
-                assert repr(cap.err) == "<FDCapture 2 oldfd=None _state=None>"
+                assert repr(cap.err) == "<FDCapture 2 oldfd=<UNSET> _state=None tmpfile=<UNSET>>"
                 cap.stop_capturing()
 
             def test_stdin():
                 os.close(0)
                 cap = StdCaptureFD(out=False, err=False, in_=True)
-                assert repr(cap.in_) == "<FDCapture 0 oldfd=None _state=None>"
+                assert repr(cap.in_) == "<FDCapture 0 oldfd=<UNSET> _state=None tmpfile=<UNSET>>"
                 cap.stop_capturing()
         """
         )
