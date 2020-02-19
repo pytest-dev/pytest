@@ -93,12 +93,14 @@ def test_access_denied_during_cleanup(tmp_path, monkeypatch):
 
 def test_long_path_during_cleanup(tmp_path):
     """Ensure that deleting long path works (particularly on Windows (#6775))."""
-    path = tmp_path / ("a" * 200)
+    path = tmp_path / ("a" * 250)
     if sys.platform == "win32":
         dirname = path.resolve()
+        # make sure that the full path is > 260 characters without any
+        # component being over 260 characters
+        assert len(path) > 260
         dirname = "\\\\?\\" + str(path)
         os.mkdir(dirname)
-
     lock_path = get_lock_path(path)
     maybe_delete_a_numbered_dir(path)
     assert not lock_path.is_file()
