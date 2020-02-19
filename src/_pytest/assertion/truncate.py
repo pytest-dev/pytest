@@ -50,7 +50,6 @@ def _truncate_explanation(input_lines, max_lines=None, max_chars=None):
         max_chars = DEFAULT_MAX_CHARS
 
     # Check if truncation required
-
     input_char_count = len("".join(input_lines))
     if len(input_lines) <= max_lines and input_char_count <= max_chars:
         return input_lines
