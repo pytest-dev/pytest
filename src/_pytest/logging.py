@@ -528,22 +528,23 @@ class LoggingPlugin:
         if self._log_cli_enabled():
             self._setup_cli_logging()
 
-    def _create_formatter(self, log_format, log_date_format, auto_indent):
+    def _create_formatter(
+        self, log_format, log_date_format, auto_indent
+    ) -> logging.Formatter:
         # color option doesn't exist if terminal plugin is disabled
         color = getattr(self._config.option, "color", "no")
-        if color != "no" and ColoredLevelFormatter.LEVELNAME_FMT_REGEX.search(
+        if color == "no" or not ColoredLevelFormatter.LEVELNAME_FMT_REGEX.search(
             log_format
         ):
-            formatter = ColoredLevelFormatter(
-                create_terminal_writer(self._config), log_format, log_date_format
-            )  # type: logging.Formatter
-        else:
             formatter = logging.Formatter(log_format, log_date_format)
+        else:
+            tr = self._config.pluginmanager.getplugin("terminalreporter")
+            tw = tr._tw if tr else create_terminal_writer(self._config)
+            formatter = ColoredLevelFormatter(tw, log_format, log_date_format)
 
         formatter._style = PercentStyleMultiline(
             formatter._style._fmt, auto_indent=auto_indent
         )
-
         return formatter
 
     def _setup_cli_logging(self):
