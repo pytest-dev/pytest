@@ -1387,16 +1387,18 @@ def test_diff_different_line_endings():
         r"?       ++",
     ]
 
-    # More on left: escapes them also.
+    # More on left.
     assert callequal("line1\r\nline2\r\nline3\r\n", "line1\nline2", verbose=2) == [
         r"'line1\r\nline2\r\nline3\r\n' == 'line1\nline2'",
         r"NOTE: Strings contain different line-endings. Escaping them using repr().",
         r"- line1\r\n",
         r"?       --",
         r"+ line1\n",
-        r"+ line2",
         r"- line2\r\n",
-        r"- line3\r\n",
+        r"- line3",
+        r"?     ^",
+        r"+ line2",
+        r"?     ^",
         r"- ",
     ]
 
