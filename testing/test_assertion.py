@@ -1394,11 +1394,8 @@ def test_diff_different_line_endings():
         r"- line1\r\n",
         r"?       --",
         r"+ line1\n",
-        r"- line2\r\n",
+        r"  line2",
         r"- line3",
-        r"?     ^",
-        r"+ line2",
-        r"?     ^",
         r"- ",
     ]
 
