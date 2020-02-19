@@ -1074,10 +1074,13 @@ def test_rewritten(testdir):
     assert testdir.runpytest().ret == 0
 
 
-def test_reprcompare_notin():
-    config = mock_config()
-    detail = plugin.pytest_assertrepr_compare(config, "not in", "foo", "aaafoobbb")[1:]
-    assert detail == ["'foo' is contained here:", "  aaafoobbb", "?    +++"]
+def test_reprcompare_notin() -> None:
+    assert callop("not in", "foo", "aaafoobbb") == [
+        "'foo' not in 'aaafoobbb'",
+        "'foo' is contained here:",
+        "  aaafoobbb",
+        "?    +++",
+    ]
 
 
 def test_reprcompare_whitespaces():
