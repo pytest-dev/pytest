@@ -186,17 +186,41 @@ class TestDoctests:
             ]
         )
 
-    def test_doctest_skip(self, testdir):
+    def test_doctest_outcomes(self, testdir):
         testdir.maketxtfile(
-            """
+            test_skip="""
             >>> 1
             1
             >>> import pytest
             >>> pytest.skip("")
-        """
+            >>> 2
+            3
+            """,
+            test_xfail="""
+            >>> import pytest
+            >>> pytest.xfail("xfail_reason")
+            >>> foo
+            bar
+            """,
+            test_importorskip="""
+            >>> import pytest
+            >>> pytest.importorskip("doesnotexist")
+            >>> foo
+            bar
+            """,
         )
         result = testdir.runpytest("--doctest-modules")
-        result.stdout.fnmatch_lines(["*1 skipped*"])
+        result.stdout.fnmatch_lines(
+            [
+                "collected 3 items",
+                "",
+                "test_importorskip.txt s *",
+                "test_skip.txt s *",
+                "test_xfail.txt x *",
+                "",
+                "*= 2 skipped, 1 xfailed in *",
+            ]
+        )
 
     def test_docstring_partial_context_around_error(self, testdir):
         """Test that we show some context before the actual line of a failing
