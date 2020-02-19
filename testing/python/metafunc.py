@@ -16,7 +16,7 @@ from hypothesis import strategies
 import pytest
 from _pytest import fixtures
 from _pytest import python
-from _pytest.outcomes import Failed
+from _pytest.outcomes import fail
 from _pytest.pytester import Testdir
 from _pytest.python import _idval
 
@@ -99,7 +99,7 @@ class TestMetafunc:
             ({"x": 2}, "2"),
         ]
         with pytest.raises(
-            Failed,
+            fail.Exception,
             match=(
                 r"In func: ids must be list of string/float/int/bool, found:"
                 r" Exc\(from_gen\) \(type: <class .*Exc'>\) at index 2"
@@ -113,7 +113,7 @@ class TestMetafunc:
 
         metafunc = self.Metafunc(func)
         with pytest.raises(
-            Failed,
+            fail.Exception,
             match=r"parametrize\(\) call in func got an unexpected scope value 'doggy'",
         ):
             metafunc.parametrize("x", [1], scope="doggy")
@@ -126,7 +126,7 @@ class TestMetafunc:
 
         metafunc = self.Metafunc(func)
         with pytest.raises(
-            Failed,
+            fail.Exception,
             match=r"'request' is a reserved name and cannot be used in @pytest.mark.parametrize",
         ):
             metafunc.parametrize("request", [1])
@@ -205,10 +205,10 @@ class TestMetafunc:
 
         metafunc = self.Metafunc(func)
 
-        with pytest.raises(Failed):
+        with pytest.raises(fail.Exception):
             metafunc.parametrize("x", [1, 2], ids=["basic"])
 
-        with pytest.raises(Failed):
+        with pytest.raises(fail.Exception):
             metafunc.parametrize(
                 ("x", "y"), [("abc", "def"), ("ghi", "jkl")], ids=["one"]
             )
@@ -689,7 +689,7 @@ class TestMetafunc:
 
         metafunc = self.Metafunc(func)
         with pytest.raises(
-            Failed,
+            fail.Exception,
             match="In func: expected Sequence or boolean for indirect, got dict",
         ):
             metafunc.parametrize("x, y", [("a", "b")], indirect={})  # type: ignore[arg-type] # noqa: F821
@@ -730,7 +730,7 @@ class TestMetafunc:
             pass
 
         metafunc = self.Metafunc(func)
-        with pytest.raises(Failed):
+        with pytest.raises(fail.Exception):
             metafunc.parametrize("x, y", [("a", "b")], indirect=["x", "z"])
 
     def test_parametrize_uses_no_fixture_error_indirect_false(

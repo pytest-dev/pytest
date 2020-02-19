@@ -27,6 +27,7 @@ from _pytest.fixtures import FixtureLookupErrorRepr
 from _pytest.mark.structures import Mark
 from _pytest.mark.structures import MarkDecorator
 from _pytest.mark.structures import NodeKeywords
+from _pytest.outcomes import fail
 from _pytest.outcomes import Failed
 
 if TYPE_CHECKING:
@@ -314,7 +315,7 @@ class Node(metaclass=NodeMeta):
     def _repr_failure_py(
         self, excinfo: ExceptionInfo[Union[Failed, FixtureLookupError]], style=None
     ) -> Union[str, ReprExceptionInfo, ExceptionChainRepr, FixtureLookupErrorRepr]:
-        if isinstance(excinfo.value, Failed):
+        if isinstance(excinfo.value, fail.Exception):
             if not excinfo.value.pytrace:
                 return str(excinfo.value)
         if isinstance(excinfo.value, FixtureLookupError):

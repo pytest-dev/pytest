@@ -4,7 +4,10 @@ as well as functions creating them
 """
 import sys
 from typing import Any
+from typing import Callable
+from typing import cast
 from typing import Optional
+from typing import TypeVar
 
 from packaging.version import Version
 
@@ -12,6 +15,15 @@ TYPE_CHECKING = False  # avoid circular import through compat
 
 if TYPE_CHECKING:
     from typing import NoReturn
+    from typing import Type  # noqa: F401 (Used in string type annotation.)
+    from typing_extensions import Protocol
+else:
+    # typing.Protocol is only available starting from Python 3.8. It is also
+    # available from typing_extensions, but we don't want a runtime dependency
+    # on that. So use a dummy runtime implementation.
+    from typing import Generic
+
+    Protocol = Generic
 
 
 class OutcomeException(BaseException):
@@ -73,9 +85,31 @@ class Exit(Exception):
         super().__init__(msg)
 
 
+# Elaborate hack to work around https://github.com/python/mypy/issues/2087.
+# Ideally would just be `exit.Exception = Exit` etc.
+
+_F = TypeVar("_F", bound=Callable)
+_ET = TypeVar("_ET", bound="Type[BaseException]")
+
+
+class _WithException(Protocol[_F, _ET]):
+    Exception = None  # type: _ET
+    __call__ = None  # type: _F
+
+
+def _with_exception(exception_type: _ET) -> Callable[[_F], _WithException[_F, _ET]]:
+    def decorate(func: _F) -> _WithException[_F, _ET]:
+        func_with_exception = cast(_WithException[_F, _ET], func)
+        func_with_exception.Exception = exception_type
+        return func_with_exception
+
+    return decorate
+
+
 # exposed helper methods
 
 
+@_with_exception(Exit)
 def exit(msg: str, returncode: Optional[int] = None) -> "NoReturn":
     """
     Exit testing process.
@@ -87,10 +121,7 @@ def exit(msg: str, returncode: Optional[int] = None) -> "NoReturn":
     raise Exit(msg, returncode)
 
 
-# Ignore type because of https://github.com/python/mypy/issues/2087.
-exit.Exception = Exit  # type: ignore
-
-
+@_with_exception(Skipped)
 def skip(msg: str = "", *, allow_module_level: bool = False) -> "NoReturn":
     """
     Skip an executing test with the given message.
@@ -114,10 +145,7 @@ def skip(msg: str = "", *, allow_module_level: bool = False) -> "NoReturn":
     raise Skipped(msg=msg, allow_module_level=allow_module_level)
 
 
-# Ignore type because of https://github.com/python/mypy/issues/2087.
-skip.Exception = Skipped  # type: ignore
-
-
+@_with_exception(Failed)
 def fail(msg: str = "", pytrace: bool = True) -> "NoReturn":
     """
     Explicitly fail an executing test with the given message.
@@ -130,14 +158,11 @@ def fail(msg: str = "", pytrace: bool = True) -> "NoReturn":
     raise Failed(msg=msg, pytrace=pytrace)
 
 
-# Ignore type because of https://github.com/python/mypy/issues/2087.
-fail.Exception = Failed  # type: ignore
-
-
 class XFailed(Failed):
     """ raised from an explicit call to pytest.xfail() """
 
 
+@_with_exception(XFailed)
 def xfail(reason: str = "") -> "NoReturn":
     """
     Imperatively xfail an executing test or setup functions with the given reason.
@@ -150,10 +175,6 @@ def xfail(reason: str = "") -> "NoReturn":
     """
     __tracebackhide__ = True
     raise XFailed(reason)
-
-
-# Ignore type because of https://github.com/python/mypy/issues/2087.
-xfail.Exception = XFailed  # type: ignore
 
 
 def importorskip(
