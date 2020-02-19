@@ -255,11 +255,12 @@ def _diff_text(left: str, right: str, verbose: int = 0) -> List[str]:
                     left_lines, right_lines, left_ends, right_ends, fillvalue=None
                 )
             ):
-                if left_end != right_end:
-                    if left_end is not None:
-                        left_lines[idx] += repr(left_end)[1:-1]
-                    if right_end is not None:
-                        right_lines[idx] += repr(right_end)[1:-1]
+                if left_end == right_end:
+                    continue
+                if left_end is not None:
+                    left_lines[idx] += repr(left_end)[1:-1]
+                if right_end is not None:
+                    right_lines[idx] += repr(right_end)[1:-1]
 
     explanation += [line.strip("\n") for line in ndiff(left_lines, right_lines)]
     return explanation
