@@ -1222,7 +1222,7 @@ class Testdir:
         """Run python -c "command", return a :py:class:`RunResult`."""
         return self.run(sys.executable, "-c", command)
 
-    def runpytest_subprocess(self, *args, timeout=None) -> RunResult:
+    def runpytest_subprocess(self, *args, stdin=CLOSE_STDIN, timeout=None) -> RunResult:
         """Run pytest as a subprocess with given arguments.
 
         Any plugins added to the :py:attr:`plugins` list will be added using the
@@ -1234,6 +1234,7 @@ class Testdir:
         :param args: the sequence of arguments to pass to the pytest subprocess
         :param timeout: the period in seconds after which to timeout and raise
             :py:class:`Testdir.TimeoutExpired`
+        :kwarg stdin: optional standard input.  Passed through to :func:`run`.
 
         Returns a :py:class:`RunResult`.
         """
@@ -1246,7 +1247,7 @@ class Testdir:
         if plugins:
             args = ("-p", plugins[0]) + args
         args = self._getpytestargs() + args
-        return self.run(*args, timeout=timeout)
+        return self.run(*args, timeout=timeout, stdin=stdin)
 
     def spawn_pytest(
         self, string: str, expect_timeout: float = 10.0
