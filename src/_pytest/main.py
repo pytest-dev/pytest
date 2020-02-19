@@ -128,7 +128,7 @@ def pytest_addoption(parser):
         "--deselect",
         action="append",
         metavar="nodeid_prefix",
-        help="deselect item during collection (multi-allowed).",
+        help="deselect item (via node id prefix) during collection (multi-allowed).",
     )
     # when changing this to --conf-cut-dir, config.py Conftest.setinitial
     # needs upgrading as well
