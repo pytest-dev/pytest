@@ -1,0 +1,1 @@
+Fix ``--last-failed`` to collect new tests from files with known failures.

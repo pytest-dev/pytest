@@ -265,7 +265,13 @@ class TestLastFailed:
             """
         )
         result = testdir.runpytest(str(p), "--lf")
-        result.stdout.fnmatch_lines(["*2 passed*1 desel*"])
+        result.stdout.fnmatch_lines(
+            [
+                "collected 2 items",
+                "run-last-failure: rerun previous 2 failures",
+                "*= 2 passed in *",
+            ]
+        )
         result = testdir.runpytest(str(p), "--lf")
         result.stdout.fnmatch_lines(
             [
@@ -295,8 +301,15 @@ class TestLastFailed:
         # Test order will be collection order; alphabetical
         result.stdout.fnmatch_lines(["test_a.py*", "test_b.py*"])
         result = testdir.runpytest("--ff")
-        # Test order will be failing tests firs
-        result.stdout.fnmatch_lines(["test_b.py*", "test_a.py*"])
+        # Test order will be failing tests first
+        result.stdout.fnmatch_lines(
+            [
+                "collected 2 items",
+                "run-last-failure: rerun previous 1 failure first",
+                "test_b.py*",
+                "test_a.py*",
+            ]
+        )
 
     def test_lastfailed_failedfirst_order(self, testdir):
         testdir.makepyfile(
@@ -307,7 +320,7 @@ class TestLastFailed:
         # Test order will be collection order; alphabetical
         result.stdout.fnmatch_lines(["test_a.py*", "test_b.py*"])
         result = testdir.runpytest("--lf", "--ff")
-        # Test order will be failing tests firs
+        # Test order will be failing tests first
         result.stdout.fnmatch_lines(["test_b.py*"])
         result.stdout.no_fnmatch_line("*test_a.py*")
 
@@ -332,7 +345,7 @@ class TestLastFailed:
         result = testdir.runpytest("--lf", p2)
         result.stdout.fnmatch_lines(["*1 passed*"])
         result = testdir.runpytest("--lf", p)
-        result.stdout.fnmatch_lines(["*1 failed*1 desel*"])
+        result.stdout.fnmatch_lines(["collected 1 item", "*= 1 failed in *"])
 
     def test_lastfailed_usecase_splice(self, testdir, monkeypatch):
         monkeypatch.setattr("sys.dont_write_bytecode", True)
@@ -658,7 +671,13 @@ class TestLastFailed:
         assert self.get_cached_last_failed(testdir) == ["test_foo.py::test_foo_4"]
 
         result = testdir.runpytest("--last-failed")
-        result.stdout.fnmatch_lines(["*1 failed, 1 deselected*"])
+        result.stdout.fnmatch_lines(
+            [
+                "collected 1 item",
+                "run-last-failure: rerun previous 1 failure (skipped 1 file)",
+                "*= 1 failed in *",
+            ]
+        )
         assert self.get_cached_last_failed(testdir) == ["test_foo.py::test_foo_4"]
 
         # 3. fix test_foo_4, run only test_foo.py
@@ -669,7 +688,13 @@ class TestLastFailed:
         """
         )
         result = testdir.runpytest(test_foo, "--last-failed")
-        result.stdout.fnmatch_lines(["*1 passed, 1 deselected*"])
+        result.stdout.fnmatch_lines(
+            [
+                "collected 1 item",
+                "run-last-failure: rerun previous 1 failure",
+                "*= 1 passed in *",
+            ]
+        )
         assert self.get_cached_last_failed(testdir) == []
 
         result = testdir.runpytest("--last-failed")
@@ -759,9 +784,9 @@ class TestLastFailed:
         result = testdir.runpytest("--lf")
         result.stdout.fnmatch_lines(
             [
-                "collected 5 items / 3 deselected / 2 selected",
+                "collected 2 items",
                 "run-last-failure: rerun previous 2 failures (skipped 1 file)",
-                "*2 failed*3 deselected*",
+                "*= 2 failed in *",
             ]
         )
 
@@ -776,9 +801,9 @@ class TestLastFailed:
         result = testdir.runpytest("--lf")
         result.stdout.fnmatch_lines(
             [
-                "collected 5 items / 3 deselected / 2 selected",
+                "collected 2 items",
                 "run-last-failure: rerun previous 2 failures (skipped 2 files)",
-                "*2 failed*3 deselected*",
+                "*= 2 failed in *",
             ]
         )
 
@@ -815,12 +840,15 @@ class TestLastFailed:
 
         # Remove/rename test.
         testdir.makepyfile(**{"pkg1/test_1.py": """def test_renamed(): assert 0"""})
-        result = testdir.runpytest("--lf")
+        result = testdir.runpytest("--lf", "-rf")
         result.stdout.fnmatch_lines(
             [
-                "collected 1 item",
-                "run-last-failure: 1 known failures not in selected tests (skipped 1 file)",
-                "* 1 failed in *",
+                "collected 2 items",
+                "run-last-failure: 1 known failures not in selected tests",
+                "pkg1/test_1.py F *",
+                "pkg1/test_2.py . *",
+                "FAILED pkg1/test_1.py::test_renamed - assert 0",
+                "* 1 failed, 1 passed in *",
             ]
         )
 
