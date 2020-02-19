@@ -93,7 +93,7 @@ def test_access_denied_during_cleanup(tmp_path, monkeypatch):
 
 def test_long_path_during_cleanup(tmp_path):
     """Ensure that deleting long path works (particularly on Windows (#6775))."""
-    path = tmp_path / ("a" * 300)
+    path = tmp_path / ("a" * 200)
     if sys.platform == "win32":
         dirname = path.resolve()
         dirname = "\\\\?\\" + str(path)
