@@ -243,32 +243,23 @@ def _diff_text(left: str, right: str, verbose: int = 0) -> List[str]:
             "NOTE: Strings contain non-printable characters. Escaping them using repr()."
         ]
     else:
-        max_lines = max(len(left_lines), len(right_lines))
-        left_ends = left_split[1:max_lines:2]
-        right_ends = right_split[1:max_lines:2]
+        max_split = max(len(left_split), len(right_split))
+        left_ends = left_split[1:max_split:2]
+        right_ends = right_split[1:max_split:2]
         if left_ends != right_ends:
             explanation += [
                 "NOTE: Strings contain different line-endings. Escaping them using repr()."
             ]
-            left_lines = [line for line in left_lines]
-            right_lines = [line for line in right_lines]
-
-            for idx, (left_line, right_line) in enumerate(
-                itertools.zip_longest(left_lines, right_lines, fillvalue="")
+            for idx, (left_line, right_line, left_end, right_end) in enumerate(
+                itertools.zip_longest(
+                    left_lines, right_lines, left_ends, right_ends, fillvalue=None
+                )
             ):
-                try:
-                    left_end = left_ends[idx]
-                except IndexError:
-                    left_end = ""
-                try:
-                    right_end = right_ends[idx]
-                except IndexError:
-                    right_end = ""
                 if left_end != right_end:
-                    left_lines[idx] += repr(left_end)[1:-1]
-                    right_lines[idx] += repr(right_end)[1:-1]
-                if not left_end or not right_end:
-                    break
+                    if left_end is not None:
+                        left_lines[idx] += repr(left_end)[1:-1]
+                    if right_end is not None:
+                        right_lines[idx] += repr(right_end)[1:-1]
 
     explanation += [line.strip("\n") for line in ndiff(left_lines, right_lines)]
     return explanation

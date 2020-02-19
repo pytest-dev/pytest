@@ -1377,6 +1377,29 @@ def test_diff_different_line_endings():
         r"  line2",
     ]
 
+    # Only '\r' is considered non-printable
+    assert callequal("line1\r\nline2", "line1\nline2\r", verbose=2) == [
+        r"'line1\r\nline2' == 'line1\nline2\r'",
+        r"NOTE: Strings contain non-printable characters. Escaping them using repr().",
+        r"  'line1'",
+        r"- 'line2'",
+        r"+ 'line2\r'",
+        r"?       ++",
+    ]
+
+    # More on left: escapes them also.
+    assert callequal("line1\r\nline2\r\nline3\r\n", "line1\nline2", verbose=2) == [
+        r"'line1\r\nline2\r\nline3\r\n' == 'line1\nline2'",
+        r"NOTE: Strings contain different line-endings. Escaping them using repr().",
+        r"- line1\r\n",
+        r"?       --",
+        r"+ line1\n",
+        r"+ line2",
+        r"- line2\r\n",
+        r"- line3\r\n",
+        r"- ",
+    ]
+
 
 @pytest.mark.filterwarnings("default")
 def test_assert_tuple_warning(testdir):
