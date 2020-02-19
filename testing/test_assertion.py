@@ -1,6 +1,9 @@
 import collections.abc as collections_abc
 import sys
 import textwrap
+from typing import Any
+from typing import List
+from typing import Optional
 
 import attr
 
@@ -310,9 +313,13 @@ class TestBinReprIntegration:
         result.stdout.fnmatch_lines(["*test_hello*FAIL*", "*test_check*PASS*"])
 
 
-def callequal(left, right, verbose=0):
+def callop(op: str, left: Any, right: Any, verbose: int = 0) -> Optional[List[str]]:
     config = mock_config(verbose=verbose)
-    return plugin.pytest_assertrepr_compare(config, "==", left, right)
+    return plugin.pytest_assertrepr_compare(config, op, left, right)
+
+
+def callequal(left: Any, right: Any, verbose: int = 0) -> Optional[List[str]]:
+    return callop("==", left, right, verbose)
 
 
 class TestAssert_reprcompare:
