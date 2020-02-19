@@ -270,9 +270,7 @@ class TerminalReporter:
         self.startdir = config.invocation_dir
         if file is None:
             file = sys.stdout
-        self._tw = _pytest.config.create_terminal_writer(config, file)
-        # self.writer will be deprecated in pytest-3.4
-        self.writer = self._tw
+        self.writer = self._tw = _pytest.config.create_terminal_writer(config, file)
         self._screen_width = self._tw.fullwidth
         self.currentfspath = None  # type: Any
         self.reportchars = getreportopt(config)
