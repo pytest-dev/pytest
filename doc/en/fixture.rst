@@ -94,14 +94,14 @@ for reference:
    :fixture:`tmpdir`
         Provide a :class:`py.path.local` object to a temporary
         directory which is unique to each test function;
-        replaced by :doc:`tmp_path <tmpdir>`.
+        replaced by :fixture:`tmp_path`.
 
         .. _`py.path.local`: https://py.readthedocs.io/en/latest/path.html
 
    :fixture:`tmpdir_factory`
         Make session-scoped temporary directories and return
         :class:`py.path.local` objects;
-        replaced by :ref:`tmp_path_factory <tmp_path_factory example>`.
+        replaced by :fixture:`tmp_path_factory`.
 
 .. _`funcargs`:
 .. _`funcarg mechanism`:
