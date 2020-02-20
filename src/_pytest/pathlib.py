@@ -114,7 +114,7 @@ def ensure_extended_length_path(path: Path) -> Path:
     """
     if sys.platform.startswith("win32"):
         path = path.resolve()
-        path = Path(get_extended_length_path_str(path))
+        path = Path(get_extended_length_path_str(str(path)))
     return path
 
 
