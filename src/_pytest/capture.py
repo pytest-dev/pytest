@@ -621,9 +621,9 @@ class FDCapture(FDCaptureBinary):
         return res
 
 
-class SysCapture:
+class SysCaptureBinary:
 
-    EMPTY_BUFFER = str()
+    EMPTY_BUFFER = b""
     _state = None
 
     def __init__(self, fd, tmpfile=None):
@@ -651,7 +651,7 @@ class SysCapture:
         self._state = "started"
 
     def snap(self):
-        res = self.tmpfile.getvalue()
+        res = self.tmpfile.buffer.getvalue()
         self.tmpfile.seek(0)
         self.tmpfile.truncate()
         return res
@@ -675,6 +675,16 @@ class SysCapture:
         self._old.flush()
 
 
+class SysCapture(SysCaptureBinary):
+    EMPTY_BUFFER = str()  # type: ignore[assignment]  # noqa: F821
+
+    def snap(self):
+        res = self.tmpfile.getvalue()
+        self.tmpfile.seek(0)
+        self.tmpfile.truncate()
+        return res
+
+
 class TeeSysCapture(SysCapture):
     def __init__(self, fd, tmpfile=None):
         name = patchsysdict[fd]
@@ -686,17 +696,6 @@ class TeeSysCapture(SysCapture):
             else:
                 tmpfile = CaptureAndPassthroughIO(self._old)
         self.tmpfile = tmpfile
-
-
-class SysCaptureBinary(SysCapture):
-    # Ignore type because it doesn't match the type in the superclass (str).
-    EMPTY_BUFFER = b""  # type: ignore
-
-    def snap(self):
-        res = self.tmpfile.buffer.getvalue()
-        self.tmpfile.seek(0)
-        self.tmpfile.truncate()
-        return res
 
 
 map_fixname_class = {
