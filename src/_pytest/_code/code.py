@@ -641,8 +641,9 @@ class ExceptionInfo(Generic[_E]):
         If it doesn't match an `AssertionError` is raised.
         """
         __tracebackhide__ = True
-        if not re.search(regexp, str(self.value)):
-            assert 0, "Pattern {!r} not found in {!r}".format(regexp, str(self.value))
+        assert re.search(
+            regexp, str(self.value)
+        ), "Pattern {!r} not found in {!r}".format(regexp, str(self.value))
         # Return True to allow for "assert excinfo.match()".
         return True
 
