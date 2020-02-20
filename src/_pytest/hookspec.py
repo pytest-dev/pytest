@@ -198,7 +198,8 @@ def pytest_ignore_collect(path, config):
     This hook is consulted for all files and directories prior to calling
     more specific hooks.
 
-    Stops at first non-None result, see :ref:`firstresult`
+    Stops at first non-None result, see :ref:`firstresult`, i.e. you should
+    only return `False` if the file should never get ignored (by other hooks).
 
     :param path: a :py:class:`py.path.local` - the path to analyze
     :param _pytest.config.Config config: pytest config object

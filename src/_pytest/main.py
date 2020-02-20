@@ -320,8 +320,6 @@ def pytest_ignore_collect(path, config):
     if not allow_in_venv and _in_venv(path):
         return True
 
-    return False
-
 
 def pytest_collection_modifyitems(items, config):
     deselect_prefixes = tuple(config.getoption("deselect") or [])
