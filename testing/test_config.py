@@ -409,7 +409,7 @@ class TestConfigAPI:
 
     def test_confcutdir_check_isdir(self, testdir):
         """Give an error if --confcutdir is not a valid directory (#2078)"""
-        exp_match = "^--confcutdir must be a directory, given: "
+        exp_match = r"^--confcutdir must be a directory, given: "
         with pytest.raises(pytest.UsageError, match=exp_match):
             testdir.parseconfig(
                 "--confcutdir", testdir.tmpdir.join("file").ensure(file=1)
