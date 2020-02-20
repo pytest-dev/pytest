@@ -100,24 +100,41 @@ def on_rm_rf_error(func, path: str, exc, *, start_path: Path) -> bool:
     return True
 
 
-def create_long_path(path: Path) -> Path:
-    """Construct a path which will work on Windows if greater
-    than 260 characters. Resolves into a absolute path which
-    bypasses the typical MAX_PATH limitation:
-    https://docs.microsoft.com/en-us/windows/win32/fileio/naming-a-file#maximum-path-length-limitation"""
+def ensure_extended_length_path(path: Path) -> Path:
+    """Get the extended-length version of a path (Windows).
+
+    On Windows, by default, the maximum length of a path (MAX_PATH) is 260
+    characters, and operations on paths longer than that fail. But it is possible
+    to overcome this by converting the path to "extended-length" form before
+    performing the operation:
+    https://docs.microsoft.com/en-us/windows/win32/fileio/naming-a-file#maximum-path-length-limitation
+
+    On Windows, this function returns the extended-length absolute version of path.
+    On other platforms it returns path unchanged.
+    """
     if sys.platform.startswith("win32"):
         path = path.resolve()
-        # for the API
-        if not str(path).startswith("\\\\?\\"):
-            path = Path("\\\\?\\" + str(path))
+        path = Path(get_extended_length_path_str(path))
     return path
+
+
+def get_extended_length_path_str(path: str) -> str:
+    """Converts to extended length path as a str"""
+    long_path_prefix = "\\\\?\\"
+    unc_long_path_prefix = "\\\\?\\UNC\\"
+    if path.startswith((long_path_prefix, unc_long_path_prefix)):
+        return path
+    # UNC
+    if path.startswith("\\\\"):
+        return unc_long_path_prefix + path[2:]
+    return long_path_prefix + path
 
 
 def rm_rf(path: Path) -> None:
     """Remove the path contents recursively, even if some elements
     are read-only.
     """
-    path = create_long_path(path)
+    path = ensure_extended_length_path(path)
     onerror = partial(on_rm_rf_error, start_path=path)
     shutil.rmtree(str(path), onerror=onerror)
 

@@ -5,6 +5,7 @@ import py
 
 import pytest
 from _pytest.pathlib import fnmatch_ex
+from _pytest.pathlib import get_extended_length_path_str
 from _pytest.pathlib import get_lock_path
 from _pytest.pathlib import maybe_delete_a_numbered_dir
 from _pytest.pathlib import Path
@@ -104,3 +105,10 @@ def test_long_path_during_cleanup(tmp_path):
     lock_path = get_lock_path(path)
     maybe_delete_a_numbered_dir(path)
     assert not lock_path.is_file()
+
+
+def test_get_extended_length_path_str():
+    assert get_extended_length_path_str(r"c:\foo") == r"\\?\c:\foo"
+    assert get_extended_length_path_str(r"\\share\foo") == r"\\?\UNC\share\foo"
+    assert get_extended_length_path_str(r"\\?\UNC\share\foo") == r"\\?\UNC\share\foo"
+    assert get_extended_length_path_str(r"\\?\c:\foo") == r"\\?\c:\foo"
