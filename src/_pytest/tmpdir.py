@@ -14,7 +14,6 @@ from .pathlib import make_numbered_dir
 from .pathlib import make_numbered_dir_with_cleanup
 from .pathlib import Path
 from _pytest.fixtures import FixtureRequest
-from _pytest.monkeypatch import MonkeyPatch
 
 
 @attr.s
@@ -135,35 +134,18 @@ def get_user() -> Optional[str]:
         return None
 
 
-def pytest_configure(config) -> None:
-    """Create a TempdirFactory and attach it to the config object.
-
-    This is to comply with existing plugins which expect the handler to be
-    available at pytest_configure time, but ideally should be moved entirely
-    to the tmpdir_factory session fixture.
-    """
-    mp = MonkeyPatch()
-    tmppath_handler = TempPathFactory.from_config(config)
-    t = TempdirFactory(tmppath_handler)
-    config._cleanup.append(mp.undo)
-    mp.setattr(config, "_tmp_path_factory", tmppath_handler, raising=False)
-    mp.setattr(config, "_tmpdirhandler", t, raising=False)
-
-
 @pytest.fixture(scope="session")
-def tmpdir_factory(request: FixtureRequest) -> TempdirFactory:
+def tmpdir_factory(tmp_path_factory) -> TempdirFactory:
     """Return a :class:`_pytest.tmpdir.TempdirFactory` instance for the test session.
     """
-    # Set dynamically by pytest_configure() above.
-    return request.config._tmpdirhandler  # type: ignore
+    return TempdirFactory(tmp_path_factory)
 
 
 @pytest.fixture(scope="session")
 def tmp_path_factory(request: FixtureRequest) -> TempPathFactory:
     """Return a :class:`_pytest.tmpdir.TempPathFactory` instance for the test session.
     """
-    # Set dynamically by pytest_configure() above.
-    return request.config._tmp_path_factory  # type: ignore
+    return TempPathFactory.from_config(request.config)
 
 
 def _mk_tmp(request: FixtureRequest, factory: TempPathFactory) -> Path:
