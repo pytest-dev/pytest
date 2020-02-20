@@ -5,6 +5,24 @@ Our current policy for releasing is to aim for a bug-fix release every few weeks
 is to get fixes and new features out instead of trying to cram a ton of features into a release and by consequence
 taking a lot of time to make a new one.
 
+Preparing: Automatic Method
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+We have developed an automated workflow for releases, that uses GitHub workflows and is triggered
+by opening an issue or issuing a comment one.
+
+The comment must be in the form::
+
+    @pytestbot please prepare release from BRANCH
+
+Where ``BRANCH`` is ``master`` or one of the maintenance branches.
+
+After that, the workflow should publish a PR and notify that it has done so as a comment
+in the original issue.
+
+Preparing: Manual Method
+~~~~~~~~~~~~~~~~~~~~~~~~
+
 .. important::
 
     pytest releases must be prepared on **Linux** because the docs and examples expect
@@ -26,6 +44,12 @@ To release a version ``MAJOR.MINOR.PATCH``, follow these steps:
    This will generate a commit with all the changes ready for pushing.
 
 #. Open a PR for the ``release-MAJOR.MINOR.PATCH`` branch targeting ``MAJOR.MINOR.x``.
+
+
+Releasing
+~~~~~~~~~
+
+Both automatic and manual processes described above follow the same steps from this point onward.
 
 #. After all tests pass and the PR has been approved, tag the release commit
    in the ``MAJOR.MINOR.x`` branch and push it. This will publish to PyPI::

@@ -1,0 +1,26 @@
+# part of our release process, see `release-on-comment.py`
+name: release on comment
+
+on:
+  issues:
+    types: [opened, edited]
+  issue_comment:
+    types: [created, edited]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v1
+    - name: Set up Python
+      uses: actions/setup-python@v1
+      with:
+        python-version: "3.8"
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install --upgrade setuptools tox
+    - name: Prepare release
+      run: |
+        tox -e release-on-comment -- $GITHUB_EVENT_PATH ${{ secrets.chatops }}
