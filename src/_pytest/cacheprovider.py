@@ -181,13 +181,13 @@ class LFPluginCollWrapper:
             # Sort any lf-paths to the beginning.
             lf_paths = self.lfplugin._last_failed_paths
             res.result = sorted(
-                res.result, key=lambda x: 0 if Path(x.fspath) in lf_paths else 1,
+                res.result, key=lambda x: 0 if Path(str(x.fspath)) in lf_paths else 1,
             )
             out.force_result(res)
             return
 
         elif isinstance(collector, Module):
-            if Path(collector.fspath) in self.lfplugin._last_failed_paths:
+            if Path(str(collector.fspath)) in self.lfplugin._last_failed_paths:
                 out = yield
                 res = out.get_result()
 
@@ -214,7 +214,7 @@ class LFPluginCollSkipfiles:
     @pytest.hookimpl
     def pytest_make_collect_report(self, collector) -> Optional[CollectReport]:
         if isinstance(collector, Module):
-            if Path(collector.fspath) not in self.lfplugin._last_failed_paths:
+            if Path(str(collector.fspath)) not in self.lfplugin._last_failed_paths:
                 self.lfplugin._skipped_files += 1
 
                 return CollectReport(
@@ -246,7 +246,7 @@ class LFPlugin:
 
     def get_last_failed_paths(self) -> Set[Path]:
         """Returns a set with all Paths()s of the previously failed nodeids."""
-        rootpath = Path(self.config.rootdir)
+        rootpath = Path(str(self.config.rootdir))
         result = {rootpath / nodeid.split("::")[0] for nodeid in self.lastfailed}
         return {x for x in result if x.exists()}
 
