@@ -637,13 +637,13 @@ class ExceptionInfo(Generic[_E]):
         """
         Check whether the regular expression `regexp` matches the string
         representation of the exception using :func:`python:re.search`.
-        If it matches `True` is returned (so that it is possible to write
-        :code:`assert excinfo.match()`).
-        If it doesn't match an ``AssertionError`` is raised.
+        If it matches `True` is returned.
+        If it doesn't match an `AssertionError` is raised.
         """
         __tracebackhide__ = True
         if not re.search(regexp, str(self.value)):
             assert 0, "Pattern {!r} not found in {!r}".format(regexp, str(self.value))
+        # Return True to allow for "assert excinfo.match()".
         return True
 
 
