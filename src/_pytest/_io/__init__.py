@@ -26,7 +26,7 @@ class TerminalWriter(BaseTerminalWriter):
             self.line(indent + new_line)
 
     def _highlight(self, source):
-        """Highlight the given source code according to the "code_highlight" option"""
+        """Highlight the given source code if we have markup support"""
         if not self.hasmarkup:
             return source
         try:
