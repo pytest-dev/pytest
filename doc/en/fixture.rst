@@ -40,68 +40,68 @@ below <funcargs>`. Pytest has useful built-in fixtures, listed here
 for reference:
 
    :fixture:`capfd`
-        Capture, as text, output to file descriptors ``1`` and ``2``
+        Capture, as text, output to file descriptors ``1`` and ``2``.
 
    :fixture:`capfdbinary`
-        Capture, as bytes, output to file descriptors ``1`` and ``2``
+        Capture, as bytes, output to file descriptors ``1`` and ``2``.
 
    :fixture:`caplog`
-        Control logging and access log entries
+        Control logging and access log entries.
 
    :fixture:`capsys`
-        Capture, as text, output to ``sys.stdout`` and ``sys.stderr``
+        Capture, as text, output to ``sys.stdout`` and ``sys.stderr``.
 
    :fixture:`capsysbinary`
-        Capture, as bytes, output to ``sys.stdout`` and ``sys.stderr``
+        Capture, as bytes, output to ``sys.stdout`` and ``sys.stderr``.
 
    :fixture:`cache`
-        Store and retrieve values across pytest runs
+        Store and retrieve values across pytest runs.
 
    :fixture:`doctest_namespace`
-        Provide a dict injected into the docstests namespace
+        Provide a dict injected into the docstests namespace.
 
    :fixture:`monkeypatch`
        Temporarily modify classes, functions, dictionaries,
-       ``os.environ``, and other objects
+       ``os.environ``, and other objects.
 
    :fixture:`pytestconfig`
-        Access to configuration values, pluginmanager and plugin hooks
+        Access to configuration values, pluginmanager and plugin hooks.
 
    :fixture:`record_property`
-       Add extra properties to the test
+       Add extra properties to the test.
 
    :fixture:`record_testsuite_property`
-       Add extra properties to the test suite
+       Add extra properties to the test suite.
 
    :fixture:`recwarn`
-        Record warnings emitted by test functions
+        Record warnings emitted by test functions.
 
    :fixture:`request`
-       Provide information on the executing test function
+       Provide information on the executing test function.
 
    :fixture:`testdir`
         Provide a temporary test directory to aid in running, and
-        testing, pytest plugins
+        testing, pytest plugins.
 
    :fixture:`tmp_path`
        Provide a :class:`pathlib.Path` object to a temporary directory
-       which is unique to each test function
+       which is unique to each test function.
 
    :fixture:`tmp_path_factory`
         Make session-scoped temporary directories and return
-        :class:`pathlib.Path` objects
+        :class:`pathlib.Path` objects.
 
    :fixture:`tmpdir`
         Provide a :class:`py.path.local` object to a temporary
         directory which is unique to each test function;
-        replaced by :doc:`tmp_path <tmpdir>`
+        replaced by :doc:`tmp_path <tmpdir>`.
 
         .. _`py.path.local`: https://py.readthedocs.io/en/latest/path.html
 
    :fixture:`tmpdir_factory`
         Make session-scoped temporary directories and return
         :class:`py.path.local` objects;
-        replaced by :ref:`tmp_path_factory <tmp_path_factory example>`
+        replaced by :ref:`tmp_path_factory <tmp_path_factory example>`.
 
 .. _`funcargs`:
 .. _`funcarg mechanism`:
