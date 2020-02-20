@@ -643,7 +643,7 @@ class ExceptionInfo(Generic[_E]):
         __tracebackhide__ = True
         assert re.search(
             regexp, str(self.value)
-        ), "Pattern {!r} not found in {!r}".format(regexp, str(self.value))
+        ), "Pattern {!r} does not match {!r}".format(regexp, str(self.value))
         # Return True to allow for "assert excinfo.match()".
         return True
 
