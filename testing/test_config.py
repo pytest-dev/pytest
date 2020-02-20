@@ -1,4 +1,5 @@
 import os
+import re
 import sys
 import textwrap
 
@@ -408,11 +409,12 @@ class TestConfigAPI:
 
     def test_confcutdir_check_isdir(self, testdir):
         """Give an error if --confcutdir is not a valid directory (#2078)"""
-        with pytest.raises(pytest.UsageError):
+        exp_match = "^--confcutdir must be a directory, given: "
+        with pytest.raises(pytest.UsageError, match=exp_match):
             testdir.parseconfig(
                 "--confcutdir", testdir.tmpdir.join("file").ensure(file=1)
             )
-        with pytest.raises(pytest.UsageError):
+        with pytest.raises(pytest.UsageError, match=exp_match):
             testdir.parseconfig("--confcutdir", testdir.tmpdir.join("inexistant"))
         config = testdir.parseconfig(
             "--confcutdir", testdir.tmpdir.join("dir").ensure(dir=1)
@@ -846,9 +848,17 @@ def test_load_initial_conftest_last_ordering(_config_for_test):
 def test_get_plugin_specs_as_list():
     from _pytest.config import _get_plugin_specs_as_list
 
-    with pytest.raises(pytest.UsageError):
+    def exp_match(val):
+        return (
+            "Plugin specs must be a ','-separated string"
+            " or a list/tuple of strings for plugin names. Given: {}".format(
+                re.escape(repr(val))
+            )
+        )
+
+    with pytest.raises(pytest.UsageError, match=exp_match({"foo"})):
         _get_plugin_specs_as_list({"foo"})
-    with pytest.raises(pytest.UsageError):
+    with pytest.raises(pytest.UsageError, match=exp_match({})):
         _get_plugin_specs_as_list(dict())
 
     assert _get_plugin_specs_as_list(None) == []
