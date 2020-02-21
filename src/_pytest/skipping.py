@@ -7,9 +7,9 @@ from _pytest.outcomes import xfail
 from _pytest.store import StoreToken
 
 
-skipped_by_mark_token = StoreToken.mint(bool)
-evalxfail_token = StoreToken.mint(MarkEvaluator)
-unexpectedsuccess_token = StoreToken.mint(str)
+skipped_by_mark_token = StoreToken[bool].mint()
+evalxfail_token = StoreToken[MarkEvaluator].mint()
+unexpectedsuccess_token = StoreToken[str].mint()
 
 
 def pytest_addoption(parser):

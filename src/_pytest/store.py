@@ -5,11 +5,6 @@ from typing import Generic
 from typing import TypeVar
 from typing import Union
 
-from _pytest.compat import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from typing import Type
-
 
 __all__ = ["Store", "StoreToken"]
 
@@ -29,7 +24,7 @@ class StoreToken(Generic[T]):
     __slots__ = ()
 
     @classmethod
-    def mint(self, value_type: "Type[T]") -> "StoreToken[T]":
+    def mint(self) -> "StoreToken[T]":
         """Create a new token."""
         return StoreToken()
 
@@ -50,8 +45,8 @@ class Store:
 
     .. code-block:: python
 
-        some_str_token = StoreToken.mint(str)
-        some_bool_token = StoreToken.mint(bool)
+        some_str_token = StoreToken[str].mint()
+        some_bool_token = StoreToken[bool].mint()
 
     To store information:
 
