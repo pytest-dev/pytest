@@ -233,13 +233,15 @@ def get_plugin_manager():
     return get_config().pluginmanager
 
 
-def _prepareconfig(args=None, plugins=None):
+def _prepareconfig(
+    args: Optional[Union[py.path.local, List[str]]] = None, plugins=None
+):
     if args is None:
         args = sys.argv[1:]
     elif isinstance(args, py.path.local):
         args = [str(args)]
-    elif not isinstance(args, (tuple, list)):
-        msg = "`args` parameter expected to be a list or tuple of strings, got: {!r} (type: {})"
+    elif not isinstance(args, list):
+        msg = "`args` parameter expected to be a list of strings, got: {!r} (type: {})"
         raise TypeError(msg.format(args, type(args)))
 
     config = get_config(args, plugins)
