@@ -382,7 +382,7 @@ class BaseFunctionalTests:
             """
             )
         except SystemExit:
-            pytest.fail("runner did not catch SystemExit")
+            assert False, "runner did not catch SystemExit"
         rep = reports[1]
         assert rep.failed
         assert rep.when == "call"
@@ -399,7 +399,7 @@ class BaseFunctionalTests:
         except pytest.exit.Exception:
             pass
         else:
-            pytest.fail("did not raise")
+            assert False, "did not raise"
 
 
 class TestExecutionNonForked(BaseFunctionalTests):
@@ -420,7 +420,7 @@ class TestExecutionNonForked(BaseFunctionalTests):
         except KeyboardInterrupt:
             pass
         else:
-            pytest.fail("did not raise")
+            assert False, "did not raise"
 
 
 class TestExecutionForked(BaseFunctionalTests):
@@ -735,9 +735,9 @@ def test_importorskip(monkeypatch) -> None:
             pytest.importorskip("hello123", minversion="1.3.1")
         mod2 = pytest.importorskip("hello123", minversion="1.3")
         assert mod2 == mod
-    except pytest.skip.Exception:
-        raise NotImplementedError(
-            "spurious skip: {}".format(_pytest._code.ExceptionInfo.from_current())
+    except pytest.skip.Exception:  # pragma: no cover
+        assert False, "spurious skip: {}".format(
+            _pytest._code.ExceptionInfo.from_current()
         )
 
 
@@ -755,9 +755,9 @@ def test_importorskip_dev_module(monkeypatch) -> None:
         assert mod2 == mod
         with pytest.raises(pytest.skip.Exception):
             pytest.importorskip("mockmodule1", minversion="0.14.0")
-    except pytest.skip.Exception:
-        raise NotImplementedError(
-            "spurious skip: {}".format(_pytest._code.ExceptionInfo.from_current())
+    except pytest.skip.Exception:  # pragma: no cover
+        assert False, "spurious skip: {}".format(
+            _pytest._code.ExceptionInfo.from_current()
         )
 
 
