@@ -319,6 +319,7 @@ def pytest_ignore_collect(path, config):
     allow_in_venv = config.getoption("collect_in_virtualenv")
     if not allow_in_venv and _in_venv(path):
         return True
+    return None
 
 
 def pytest_collection_modifyitems(items, config):
