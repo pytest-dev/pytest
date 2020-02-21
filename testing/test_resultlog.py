@@ -6,6 +6,7 @@ import pytest
 from _pytest.resultlog import pytest_configure
 from _pytest.resultlog import pytest_unconfigure
 from _pytest.resultlog import ResultLog
+from _pytest.resultlog import resultlog_key
 
 pytestmark = pytest.mark.filterwarnings("ignore:--result-log is deprecated")
 
@@ -179,17 +180,17 @@ def test_makedir_for_resultlog(testdir, LineMatcher):
 def test_no_resultlog_on_slaves(testdir):
     config = testdir.parseconfig("-p", "resultlog", "--resultlog=resultlog")
 
-    assert not hasattr(config, "_resultlog")
+    assert resultlog_key not in config._store
     pytest_configure(config)
-    assert hasattr(config, "_resultlog")
+    assert resultlog_key in config._store
     pytest_unconfigure(config)
-    assert not hasattr(config, "_resultlog")
+    assert resultlog_key not in config._store
 
     config.slaveinput = {}
     pytest_configure(config)
-    assert not hasattr(config, "_resultlog")
+    assert resultlog_key not in config._store
     pytest_unconfigure(config)
-    assert not hasattr(config, "_resultlog")
+    assert resultlog_key not in config._store
 
 
 def test_failure_issue380(testdir):
