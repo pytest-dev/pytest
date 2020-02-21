@@ -163,7 +163,9 @@ def getfuncargnames(function, is_method=False, cls=None):
     # it's passed as an unbound method or function, remove the first
     # parameter name.
     if is_method or (
-        cls and not isinstance(cls.__dict__.get(function.__name__, None), staticmethod) and not function.__self__
+        cls
+        and not isinstance(cls.__dict__.get(function.__name__, None), staticmethod)
+        and not function.__self__
     ):
         arg_names = arg_names[1:]
     # Remove any names that will be replaced with mocks.
