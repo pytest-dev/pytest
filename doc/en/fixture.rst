@@ -326,7 +326,7 @@ containers for different environments. See the example below.
 .. code-block:: python
 
     def determine_scope(fixture_name, config):
-        if config.getoption("--keep-containers"):
+        if config.getoption("--keep-containers", None):
             return "session"
         return "function"
 
