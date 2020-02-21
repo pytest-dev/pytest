@@ -10,6 +10,7 @@ import pytest
 from _pytest.junitxml import LogXML
 from _pytest.pathlib import Path
 from _pytest.reports import BaseReport
+from _pytest.store import Store
 
 
 @pytest.fixture(scope="session")
@@ -865,6 +866,7 @@ def test_dont_configure_on_slaves(tmpdir):
         def __init__(self):
             self.pluginmanager = self
             self.option = self
+            self._store = Store()
 
         def getini(self, name):
             return "pytest"

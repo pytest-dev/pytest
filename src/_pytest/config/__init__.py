@@ -42,6 +42,7 @@ from _pytest.compat import TYPE_CHECKING
 from _pytest.outcomes import fail
 from _pytest.outcomes import Skipped
 from _pytest.pathlib import Path
+from _pytest.store import Store
 from _pytest.warning_types import PytestConfigWarning
 
 if TYPE_CHECKING:
@@ -789,6 +790,9 @@ class Config:
         self._override_ini = ()  # type: Sequence[str]
         self._opt2dest = {}  # type: Dict[str, str]
         self._cleanup = []  # type: List[Callable[[], None]]
+        # A place where plugins can store information on the config for their
+        # own use. Currently only intended for internal plugins.
+        self._store = Store()
         self.pluginmanager.register(self, "pytestconfig")
         self._configured = False
         self.hook.pytest_addoption.call_historic(

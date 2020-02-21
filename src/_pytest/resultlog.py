@@ -5,6 +5,11 @@ import os
 
 import py
 
+from _pytest.store import StoreToken
+
+
+resultlog_token = StoreToken["ResultLog"].mint()
+
 
 def pytest_addoption(parser):
     group = parser.getgroup("terminal reporting", "resultlog plugin options")
@@ -26,8 +31,8 @@ def pytest_configure(config):
         if not os.path.isdir(dirname):
             os.makedirs(dirname)
         logfile = open(resultlog, "w", 1)  # line buffered
-        config._resultlog = ResultLog(config, logfile)
-        config.pluginmanager.register(config._resultlog)
+        config._store[resultlog_token] = ResultLog(config, logfile)
+        config.pluginmanager.register(config._store[resultlog_token])
 
         from _pytest.deprecated import RESULT_LOG
         from _pytest.warnings import _issue_warning_captured
@@ -36,10 +41,10 @@ def pytest_configure(config):
 
 
 def pytest_unconfigure(config):
-    resultlog = getattr(config, "_resultlog", None)
+    resultlog = config._store.get(resultlog_token, None)
     if resultlog:
         resultlog.logfile.close()
-        del config._resultlog
+        del config._store[resultlog_token]
         config.pluginmanager.unregister(resultlog)
 
 
