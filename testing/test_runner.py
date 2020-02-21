@@ -382,7 +382,7 @@ class BaseFunctionalTests:
             """
             )
         except SystemExit:
-            pytest.fail("runner did not catch SystemExit")
+            assert False, "runner did not catch SystemExit"
         rep = reports[1]
         assert rep.failed
         assert rep.when == "call"
@@ -420,7 +420,7 @@ class TestExecutionNonForked(BaseFunctionalTests):
         except KeyboardInterrupt:
             pass
         else:
-            pytest.fail("did not raise")
+            assert False, "did not raise"
 
 
 class TestExecutionForked(BaseFunctionalTests):
