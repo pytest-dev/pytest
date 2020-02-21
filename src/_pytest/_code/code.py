@@ -633,17 +633,18 @@ class ExceptionInfo(Generic[_E]):
         )
         return fmt.repr_excinfo(self)
 
-    def match(self, regexp: "Union[str, Pattern]") -> bool:
+    def match(self, regexp: "Union[str, Pattern]") -> "Literal[True]":
         """
-        Check whether the regular expression 'regexp' is found in the string
-        representation of the exception using ``re.search``. If it matches
-        then True is returned (so that it is possible to write
-        ``assert excinfo.match()``). If it doesn't match an AssertionError is
-        raised.
+        Check whether the regular expression `regexp` matches the string
+        representation of the exception using :func:`python:re.search`.
+        If it matches `True` is returned.
+        If it doesn't match an `AssertionError` is raised.
         """
         __tracebackhide__ = True
-        if not re.search(regexp, str(self.value)):
-            assert 0, "Pattern {!r} not found in {!r}".format(regexp, str(self.value))
+        assert re.search(
+            regexp, str(self.value)
+        ), "Pattern {!r} does not match {!r}".format(regexp, str(self.value))
+        # Return True to allow for "assert excinfo.match()".
         return True
 
 

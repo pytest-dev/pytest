@@ -411,13 +411,15 @@ def test_match_raises_error(testdir):
     )
     result = testdir.runpytest()
     assert result.ret != 0
-    result.stdout.fnmatch_lines(["*AssertionError*Pattern*[123]*not found*"])
+
+    exc_msg = "Pattern '[[]123[]]+' does not match 'division by zero'"
+    result.stdout.fnmatch_lines(["E * AssertionError: {}".format(exc_msg)])
     result.stdout.no_fnmatch_line("*__tracebackhide__ = True*")
 
     result = testdir.runpytest("--fulltrace")
     assert result.ret != 0
     result.stdout.fnmatch_lines(
-        ["*__tracebackhide__ = True*", "*AssertionError*Pattern*[123]*not found*"]
+        ["*__tracebackhide__ = True*", "E * AssertionError: {}".format(exc_msg)]
     )
 
 
