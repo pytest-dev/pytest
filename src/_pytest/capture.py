@@ -66,6 +66,18 @@ def pytest_load_initial_conftests(early_config: Config):
         sys.stderr.write(err)
 
 
+def _get_multicapture(method: str) -> "MultiCapture":
+    if method == "fd":
+        return MultiCapture(out=True, err=True, Capture=FDCapture)
+    elif method == "sys":
+        return MultiCapture(out=True, err=True, Capture=SysCapture)
+    elif method == "no":
+        return MultiCapture(out=False, err=False, in_=False)
+    elif method == "tee-sys":
+        return MultiCapture(out=True, err=True, in_=False, Capture=TeeSysCapture)
+    raise ValueError("unknown capturing method: {!r}".format(method))
+
+
 class CaptureManager:
     """
     Capture plugin, manages that the appropriate capture method is enabled/disabled during collection and each
@@ -89,17 +101,6 @@ class CaptureManager:
             self._method, self._global_capturing, self._capture_fixture
         )
 
-    def _getcapture(self, method):
-        if method == "fd":
-            return MultiCapture(out=True, err=True, Capture=FDCapture)
-        elif method == "sys":
-            return MultiCapture(out=True, err=True, Capture=SysCapture)
-        elif method == "no":
-            return MultiCapture(out=False, err=False, in_=False)
-        elif method == "tee-sys":
-            return MultiCapture(out=True, err=True, in_=False, Capture=TeeSysCapture)
-        raise ValueError("unknown capturing method: %r" % method)  # pragma: no cover
-
     def is_capturing(self):
         if self.is_globally_capturing():
             return "global"
@@ -114,7 +115,7 @@ class CaptureManager:
 
     def start_global_capturing(self):
         assert self._global_capturing is None
-        self._global_capturing = self._getcapture(self._method)
+        self._global_capturing = _get_multicapture(self._method)
         self._global_capturing.start_capturing()
 
     def stop_global_capturing(self):

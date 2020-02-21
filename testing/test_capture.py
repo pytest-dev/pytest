@@ -14,7 +14,9 @@ from typing import TextIO
 
 import pytest
 from _pytest import capture
+from _pytest.capture import _get_multicapture
 from _pytest.capture import CaptureManager
+from _pytest.capture import MultiCapture
 from _pytest.config import ExitCode
 
 # note: py.io capture tests where copied from
@@ -1563,3 +1565,10 @@ def test_encodedfile_writelines(tmpfile: BinaryIO) -> None:
     tmpfile.close()
     with pytest.raises(ValueError):
         ef.read()
+
+
+def test__get_multicapture():
+    assert isinstance(_get_multicapture("fd"), MultiCapture)
+    pytest.raises(ValueError, _get_multicapture, "unknown").match(
+        r"^unknown capturing method: 'unknown'"
+    )
