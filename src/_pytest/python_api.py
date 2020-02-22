@@ -557,18 +557,16 @@ def raises(  # noqa: F811
     expected_exception: Union["Type[_E]", Tuple["Type[_E]", ...]],
     func: Callable,
     *args: Any,
-    match: Optional[str] = ...,
     **kwargs: Any
-) -> Optional[_pytest._code.ExceptionInfo[_E]]:
+) -> _pytest._code.ExceptionInfo[_E]:
     ...  # pragma: no cover
 
 
 def raises(  # noqa: F811
     expected_exception: Union["Type[_E]", Tuple["Type[_E]", ...]],
     *args: Any,
-    match: Optional[Union[str, "Pattern"]] = None,
     **kwargs: Any
-) -> Union["RaisesContext[_E]", Optional[_pytest._code.ExceptionInfo[_E]]]:
+) -> Union["RaisesContext[_E]", _pytest._code.ExceptionInfo[_E]]:
     r"""
     Assert that a code block/function call raises ``expected_exception``
     or raise a failure exception otherwise.
@@ -579,8 +577,12 @@ def raises(  # noqa: F811
         string that may contain `special characters`__, the pattern can
         first be escaped with ``re.escape``.
 
-        __ https://docs.python.org/3/library/re.html#regular-expression-syntax
+        (This is only used when ``pytest.raises`` is used as a context manager,
+        and passed through to the function otherwise.
+        When using ``pytest.raises`` as a function, you can use:
+        ``pytest.raises(Exc, func, match="passed on").match("my pattern")``.)
 
+        __ https://docs.python.org/3/library/re.html#regular-expression-syntax
 
     .. currentmodule:: _pytest._code
 
@@ -684,6 +686,7 @@ def raises(  # noqa: F811
     message = "DID NOT RAISE {}".format(expected_exception)
 
     if not args:
+        match = kwargs.pop("match", None)
         if kwargs:
             msg = "Unexpected keyword arguments passed to pytest.raises: "
             msg += ", ".join(sorted(kwargs))

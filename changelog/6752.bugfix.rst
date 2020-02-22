@@ -1,0 +1,3 @@
+When :py:func:`pytest.raises` is used as a function (as opposed to a context manager),
+a `match` keyword argument is now passed through to the tested function. Previously
+it was swallowed and ignored (regression in pytest 5.1.0).
