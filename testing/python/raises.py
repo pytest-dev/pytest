@@ -187,7 +187,7 @@ class TestRaises:
 
         assert refcount == len(gc.get_referrers(t))
 
-    def test_raises_match(self):
+    def test_raises_match(self) -> None:
         msg = r"with base \d+"
         with pytest.raises(ValueError, match=msg):
             int("asdf")
@@ -215,8 +215,8 @@ class TestRaises:
         def tfunc(match):
             raise ValueError("match={}".format(match))
 
-        excinfo = pytest.raises(ValueError, tfunc, match="asdf").match("match=asdf")
-        excinfo = pytest.raises(ValueError, tfunc, match="").match("match=")
+        pytest.raises(ValueError, tfunc, match="asdf").match("match=asdf")
+        pytest.raises(ValueError, tfunc, match="").match("match=")
 
     def test_match_failure_string_quoting(self):
         with pytest.raises(AssertionError) as excinfo:

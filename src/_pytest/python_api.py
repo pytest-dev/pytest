@@ -558,7 +558,7 @@ def raises(  # noqa: F811
     func: Callable,
     *args: Any,
     **kwargs: Any
-) -> Optional[_pytest._code.ExceptionInfo[_E]]:
+) -> _pytest._code.ExceptionInfo[_E]:
     ...  # pragma: no cover
 
 
