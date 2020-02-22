@@ -17,8 +17,14 @@ from typing import Optional
 import pytest
 from _pytest.compat import CaptureAndPassthroughIO
 from _pytest.compat import CaptureIO
+from _pytest.compat import TYPE_CHECKING
 from _pytest.config import Config
 from _pytest.fixtures import FixtureRequest
+
+if TYPE_CHECKING:
+    from typing_extensions import Literal
+
+    _CaptureMethod = Literal["fd", "sys", "no", "tee-sys"]
 
 patchsysdict = {0: "stdin", 1: "stdout", 2: "stderr"}
 
@@ -66,7 +72,7 @@ def pytest_load_initial_conftests(early_config: Config):
         sys.stderr.write(err)
 
 
-def _get_multicapture(method: str) -> "MultiCapture":
+def _get_multicapture(method: "_CaptureMethod") -> "MultiCapture":
     if method == "fd":
         return MultiCapture(out=True, err=True, Capture=FDCapture)
     elif method == "sys":
@@ -91,7 +97,7 @@ class CaptureManager:
       case special handling is needed to ensure the fixtures take precedence over the global capture.
     """
 
-    def __init__(self, method) -> None:
+    def __init__(self, method: "_CaptureMethod") -> None:
         self._method = method
         self._global_capturing = None
         self._capture_fixture = None  # type: Optional[CaptureFixture]
