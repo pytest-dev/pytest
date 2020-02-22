@@ -17,8 +17,14 @@ from typing import Optional
 import pytest
 from _pytest.compat import CaptureAndPassthroughIO
 from _pytest.compat import CaptureIO
+from _pytest.compat import TYPE_CHECKING
 from _pytest.config import Config
 from _pytest.fixtures import FixtureRequest
+
+if TYPE_CHECKING:
+    from typing_extensions import Literal
+
+    _CaptureMethod = Literal["fd", "sys", "no", "tee-sys"]
 
 patchsysdict = {0: "stdin", 1: "stdout", 2: "stderr"}
 
@@ -66,6 +72,18 @@ def pytest_load_initial_conftests(early_config: Config):
         sys.stderr.write(err)
 
 
+def _get_multicapture(method: "_CaptureMethod") -> "MultiCapture":
+    if method == "fd":
+        return MultiCapture(out=True, err=True, Capture=FDCapture)
+    elif method == "sys":
+        return MultiCapture(out=True, err=True, Capture=SysCapture)
+    elif method == "no":
+        return MultiCapture(out=False, err=False, in_=False)
+    elif method == "tee-sys":
+        return MultiCapture(out=True, err=True, in_=False, Capture=TeeSysCapture)
+    raise ValueError("unknown capturing method: {!r}".format(method))
+
+
 class CaptureManager:
     """
     Capture plugin, manages that the appropriate capture method is enabled/disabled during collection and each
@@ -79,7 +97,7 @@ class CaptureManager:
       case special handling is needed to ensure the fixtures take precedence over the global capture.
     """
 
-    def __init__(self, method) -> None:
+    def __init__(self, method: "_CaptureMethod") -> None:
         self._method = method
         self._global_capturing = None
         self._capture_fixture = None  # type: Optional[CaptureFixture]
@@ -88,17 +106,6 @@ class CaptureManager:
         return "<CaptureManager _method={!r} _global_capturing={!r} _capture_fixture={!r}>".format(
             self._method, self._global_capturing, self._capture_fixture
         )
-
-    def _getcapture(self, method):
-        if method == "fd":
-            return MultiCapture(out=True, err=True, Capture=FDCapture)
-        elif method == "sys":
-            return MultiCapture(out=True, err=True, Capture=SysCapture)
-        elif method == "no":
-            return MultiCapture(out=False, err=False, in_=False)
-        elif method == "tee-sys":
-            return MultiCapture(out=True, err=True, in_=False, Capture=TeeSysCapture)
-        raise ValueError("unknown capturing method: %r" % method)  # pragma: no cover
 
     def is_capturing(self):
         if self.is_globally_capturing():
@@ -114,7 +121,7 @@ class CaptureManager:
 
     def start_global_capturing(self):
         assert self._global_capturing is None
-        self._global_capturing = self._getcapture(self._method)
+        self._global_capturing = _get_multicapture(self._method)
         self._global_capturing.start_capturing()
 
     def stop_global_capturing(self):
