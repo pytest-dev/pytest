@@ -251,7 +251,7 @@ the cache and nothing will be printed:
     test_caching.py:20: AssertionError
     1 failed in 0.12s
 
-See the :ref:`cache-api` for more details.
+See the :fixture:`cache-api` for more details.
 
 
 Inspecting Cache content

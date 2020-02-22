@@ -180,7 +180,7 @@ Features
   rather than implicitly.
 
 
-- `#5914 <https://github.com/pytest-dev/pytest/issues/5914>`_: :ref:`testdir` learned two new functions, :py:func:`~_pytest.pytester.LineMatcher.no_fnmatch_line` and
+- `#5914 <https://github.com/pytest-dev/pytest/issues/5914>`_: :fixture:`testdir` learned two new functions, :py:func:`~_pytest.pytester.LineMatcher.no_fnmatch_line` and
   :py:func:`~_pytest.pytester.LineMatcher.no_re_match_line`.
 
   The functions are used to ensure the captured text *does not* match the given

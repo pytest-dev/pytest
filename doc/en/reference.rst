@@ -243,6 +243,8 @@ Will create and attach a :class:`Mark <_pytest.mark.structures.Mark>` object to 
     mark.kwargs == {"method": "thread"}
 
 
+.. _`fixtures-api`:
+
 Fixtures
 --------
 
@@ -273,6 +275,8 @@ Example of a fixture requiring another fixture:
 For more details, consult the full :ref:`fixtures docs <fixture>`.
 
 
+.. _`pytest.fixture-api`:
+
 @pytest.fixture
 ~~~~~~~~~~~~~~~
 
@@ -280,7 +284,7 @@ For more details, consult the full :ref:`fixtures docs <fixture>`.
     :decorator:
 
 
-.. _`cache-api`:
+.. fixture:: cache
 
 config.cache
 ~~~~~~~~~~~~
@@ -300,6 +304,8 @@ Under the hood, the cache plugin uses the simple
 .. automethod:: Cache.set
 .. automethod:: Cache.makedir
 
+
+.. fixture:: capsys
 
 capsys
 ~~~~~~
@@ -326,6 +332,8 @@ capsys
     :members:
 
 
+.. fixture:: capsysbinary
+
 capsysbinary
 ~~~~~~~~~~~~
 
@@ -345,6 +353,8 @@ capsysbinary
             captured = capsysbinary.readouterr()
             assert captured.out == b"hello\n"
 
+
+.. fixture:: capfd
 
 capfd
 ~~~~~~
@@ -366,6 +376,8 @@ capfd
             assert captured.out == "hello\n"
 
 
+.. fixture:: capfdbinary
+
 capfdbinary
 ~~~~~~~~~~~~
 
@@ -386,6 +398,8 @@ capfdbinary
             assert captured.out == b"hello\n"
 
 
+.. fixture:: doctest_namespace
+
 doctest_namespace
 ~~~~~~~~~~~~~~~~~
 
@@ -404,6 +418,8 @@ doctest_namespace
     For more details: :ref:`doctest_namespace`.
 
 
+.. fixture:: request
+
 request
 ~~~~~~~
 
@@ -415,11 +431,15 @@ The ``request`` fixture is a special fixture providing information of the reques
     :members:
 
 
+.. fixture:: pytestconfig
+
 pytestconfig
 ~~~~~~~~~~~~
 
 .. autofunction:: _pytest.fixtures.pytestconfig()
 
+
+.. fixture:: record_property
 
 record_property
 ~~~~~~~~~~~~~~~~~~~
@@ -429,12 +449,17 @@ record_property
 .. autofunction:: _pytest.junitxml.record_property()
 
 
+.. fixture:: record_testsuite_property
+
 record_testsuite_property
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **Tutorial**: :ref:`record_testsuite_property example`.
 
 .. autofunction:: _pytest.junitxml.record_testsuite_property()
+
+
+.. fixture:: caplog
 
 caplog
 ~~~~~~
@@ -449,6 +474,8 @@ caplog
 .. autoclass:: _pytest.logging.LogCaptureFixture
     :members:
 
+
+.. fixture:: monkeypatch
 
 monkeypatch
 ~~~~~~~~~~~
@@ -465,7 +492,8 @@ monkeypatch
 .. autoclass:: _pytest.monkeypatch.MonkeyPatch
     :members:
 
-.. _testdir:
+
+.. fixture:: testdir
 
 testdir
 ~~~~~~~
@@ -493,6 +521,8 @@ To use it, include in your top-most ``conftest.py`` file:
     :members:
 
 
+.. fixture:: recwarn
+
 recwarn
 ~~~~~~~
 
@@ -516,6 +546,8 @@ Each recorded warning is an instance of :class:`warnings.WarningMessage`.
     differently; see :ref:`ensuring_function_triggers`.
 
 
+.. fixture:: tmp_path
+
 tmp_path
 ~~~~~~~~
 
@@ -526,6 +558,8 @@ tmp_path
 .. autofunction:: tmp_path()
     :no-auto-options:
 
+
+.. fixture:: tmp_path_factory
 
 tmp_path_factory
 ~~~~~~~~~~~~~~~~
@@ -542,6 +576,8 @@ tmp_path_factory
 .. automethod:: TempPathFactory.getbasetemp
 
 
+.. fixture:: tmpdir
+
 tmpdir
 ~~~~~~
 
@@ -552,6 +588,8 @@ tmpdir
 .. autofunction:: tmpdir()
     :no-auto-options:
 
+
+.. fixture:: tmpdir_factory
 
 tmpdir_factory
 ~~~~~~~~~~~~~~

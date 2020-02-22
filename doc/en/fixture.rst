@@ -40,6 +40,74 @@ both styles, moving incrementally from classic to new style, as you
 prefer.  You can also start out from existing :ref:`unittest.TestCase
 style <unittest.TestCase>` or :ref:`nose based <nosestyle>` projects.
 
+:ref:`Fixtures <fixtures-api>` are defined using the
+:ref:`@pytest.fixture <pytest.fixture-api>` decorator, :ref:`described
+below <funcargs>`. Pytest has useful built-in fixtures, listed here
+for reference:
+
+   :fixture:`capfd`
+        Capture, as text, output to file descriptors ``1`` and ``2``.
+
+   :fixture:`capfdbinary`
+        Capture, as bytes, output to file descriptors ``1`` and ``2``.
+
+   :fixture:`caplog`
+        Control logging and access log entries.
+
+   :fixture:`capsys`
+        Capture, as text, output to ``sys.stdout`` and ``sys.stderr``.
+
+   :fixture:`capsysbinary`
+        Capture, as bytes, output to ``sys.stdout`` and ``sys.stderr``.
+
+   :fixture:`cache`
+        Store and retrieve values across pytest runs.
+
+   :fixture:`doctest_namespace`
+        Provide a dict injected into the docstests namespace.
+
+   :fixture:`monkeypatch`
+       Temporarily modify classes, functions, dictionaries,
+       ``os.environ``, and other objects.
+
+   :fixture:`pytestconfig`
+        Access to configuration values, pluginmanager and plugin hooks.
+
+   :fixture:`record_property`
+       Add extra properties to the test.
+
+   :fixture:`record_testsuite_property`
+       Add extra properties to the test suite.
+
+   :fixture:`recwarn`
+        Record warnings emitted by test functions.
+
+   :fixture:`request`
+       Provide information on the executing test function.
+
+   :fixture:`testdir`
+        Provide a temporary test directory to aid in running, and
+        testing, pytest plugins.
+
+   :fixture:`tmp_path`
+       Provide a :class:`pathlib.Path` object to a temporary directory
+       which is unique to each test function.
+
+   :fixture:`tmp_path_factory`
+        Make session-scoped temporary directories and return
+        :class:`pathlib.Path` objects.
+
+   :fixture:`tmpdir`
+        Provide a :class:`py.path.local` object to a temporary
+        directory which is unique to each test function;
+        replaced by :fixture:`tmp_path`.
+
+        .. _`py.path.local`: https://py.readthedocs.io/en/latest/path.html
+
+   :fixture:`tmpdir_factory`
+        Make session-scoped temporary directories and return
+        :class:`py.path.local` objects;
+        replaced by :fixture:`tmp_path_factory`.
 
 .. _`funcargs`:
 .. _`funcarg mechanism`:

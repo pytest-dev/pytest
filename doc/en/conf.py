@@ -373,10 +373,18 @@ def configure_logging(app: "sphinx.application.Sphinx") -> None:
 def setup(app: "sphinx.application.Sphinx") -> None:
     # from sphinx.ext.autodoc import cut_lines
     # app.connect('autodoc-process-docstring', cut_lines(4, what=['module']))
+    app.add_crossref_type(
+        "fixture",
+        "fixture",
+        objname="built-in fixture",
+        indextemplate="pair: %s; fixture",
+    )
+
     app.add_object_type(
         "confval",
         "confval",
         objname="configuration value",
         indextemplate="pair: %s; configuration value",
     )
+
     configure_logging(app)
