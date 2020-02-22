@@ -678,10 +678,9 @@ def raises(  # noqa: F811
         the exception --> current frame stack --> local variables -->
         ``ExceptionInfo``) which makes Python keep all objects referenced
         from that cycle (including all local variables in the current
-        frame) alive until the next cyclic garbage collection run. See the
-        official Python ``try`` statement documentation for more detailed
-        information.
-
+        frame) alive until the next cyclic garbage collection run.
+        More detailed information can be found in the official Python
+        documentation for :ref:`the try statement <python:try>`.
     """
     __tracebackhide__ = True
     for exc in filterfalse(
