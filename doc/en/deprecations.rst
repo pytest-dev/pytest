@@ -45,6 +45,8 @@ This limitation in api surface intends to enable better/simpler refactoring of t
 This means that instead of :code:`MyItem(name="foo", parent=collector, obj=42)`
 one now has to invoke :code:`MyItem.from_parent(collector, name="foo")`.
 
+Note that ``from_parent`` should only be called with keyword arguments for the parameters.
+
 
 
 ``junit_family`` default value change to "xunit2"
