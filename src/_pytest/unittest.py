@@ -14,8 +14,8 @@ from _pytest.outcomes import xfail
 from _pytest.python import Class
 from _pytest.python import Function
 from _pytest.runner import CallInfo
-from _pytest.skipping import skipped_by_mark_token
-from _pytest.skipping import unexpectedsuccess_token
+from _pytest.skipping import skipped_by_mark_key
+from _pytest.skipping import unexpectedsuccess_key
 
 
 def pytest_pycollect_makeitem(collector, name, obj):
@@ -176,7 +176,7 @@ class TestCaseFunction(Function):
         try:
             skip(reason)
         except skip.Exception:
-            self._store[skipped_by_mark_token] = True
+            self._store[skipped_by_mark_key] = True
             self._addexcinfo(sys.exc_info())
 
     def addExpectedFailure(self, testcase, rawexcinfo, reason=""):
@@ -186,7 +186,7 @@ class TestCaseFunction(Function):
             self._addexcinfo(sys.exc_info())
 
     def addUnexpectedSuccess(self, testcase, reason=""):
-        self._store[unexpectedsuccess_token] = reason
+        self._store[unexpectedsuccess_key] = reason
 
     def addSuccess(self, testcase):
         pass

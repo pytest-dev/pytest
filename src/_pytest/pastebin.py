@@ -3,10 +3,10 @@ import tempfile
 from typing import IO
 
 import pytest
-from _pytest.store import StoreToken
+from _pytest.store import StoreKey
 
 
-pastebinfile_token = StoreToken[IO[bytes]].mint()
+pastebinfile_key = StoreKey[IO[bytes]]()
 
 
 def pytest_addoption(parser):
@@ -31,26 +31,26 @@ def pytest_configure(config):
         # when using pytest-xdist, for example
         if tr is not None:
             # pastebin file will be utf-8 encoded binary file
-            config._store[pastebinfile_token] = tempfile.TemporaryFile("w+b")
+            config._store[pastebinfile_key] = tempfile.TemporaryFile("w+b")
             oldwrite = tr._tw.write
 
             def tee_write(s, **kwargs):
                 oldwrite(s, **kwargs)
                 if isinstance(s, str):
                     s = s.encode("utf-8")
-                config._store[pastebinfile_token].write(s)
+                config._store[pastebinfile_key].write(s)
 
             tr._tw.write = tee_write
 
 
 def pytest_unconfigure(config):
-    if pastebinfile_token in config._store:
-        pastebinfile = config._store[pastebinfile_token]
+    if pastebinfile_key in config._store:
+        pastebinfile = config._store[pastebinfile_key]
         # get terminal contents and delete file
         pastebinfile.seek(0)
         sessionlog = pastebinfile.read()
         pastebinfile.close()
-        del config._store[pastebinfile_token]
+        del config._store[pastebinfile_key]
         # undo our patching in the terminal reporter
         tr = config.pluginmanager.getplugin("terminalreporter")
         del tr._tw.__dict__["write"]

@@ -5,10 +5,10 @@ import os
 
 import py
 
-from _pytest.store import StoreToken
+from _pytest.store import StoreKey
 
 
-resultlog_token = StoreToken["ResultLog"].mint()
+resultlog_key = StoreKey["ResultLog"]()
 
 
 def pytest_addoption(parser):
@@ -31,8 +31,8 @@ def pytest_configure(config):
         if not os.path.isdir(dirname):
             os.makedirs(dirname)
         logfile = open(resultlog, "w", 1)  # line buffered
-        config._store[resultlog_token] = ResultLog(config, logfile)
-        config.pluginmanager.register(config._store[resultlog_token])
+        config._store[resultlog_key] = ResultLog(config, logfile)
+        config.pluginmanager.register(config._store[resultlog_key])
 
         from _pytest.deprecated import RESULT_LOG
         from _pytest.warnings import _issue_warning_captured
@@ -41,10 +41,10 @@ def pytest_configure(config):
 
 
 def pytest_unconfigure(config):
-    resultlog = config._store.get(resultlog_token, None)
+    resultlog = config._store.get(resultlog_key, None)
     if resultlog:
         resultlog.logfile.close()
-        del config._store[resultlog_token]
+        del config._store[resultlog_key]
         config.pluginmanager.unregister(resultlog)
 
 

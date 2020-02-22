@@ -22,11 +22,11 @@ import pytest
 from _pytest import deprecated
 from _pytest import nodes
 from _pytest.config import filename_arg
-from _pytest.store import StoreToken
+from _pytest.store import StoreKey
 from _pytest.warnings import _issue_warning_captured
 
 
-xml_token = StoreToken["LogXML"].mint()
+xml_key = StoreKey["LogXML"]()
 
 
 class Junit(py.xml.Namespace):
@@ -264,7 +264,7 @@ def _warn_incompatibility_with_xunit2(request, fixture_name):
     """Emits a PytestWarning about the given fixture being incompatible with newer xunit revisions"""
     from _pytest.warning_types import PytestWarning
 
-    xml = request.config._store.get(xml_token, None)
+    xml = request.config._store.get(xml_key, None)
     if xml is not None and xml.family not in ("xunit1", "legacy"):
         request.node.warn(
             PytestWarning(
@@ -316,7 +316,7 @@ def record_xml_attribute(request):
 
     attr_func = add_attr_noop
 
-    xml = request.config._store.get(xml_token, None)
+    xml = request.config._store.get(xml_key, None)
     if xml is not None:
         node_reporter = xml.node_reporter(request.node.nodeid)
         attr_func = node_reporter.add_attribute
@@ -357,7 +357,7 @@ def record_testsuite_property(request):
         __tracebackhide__ = True
         _check_record_param_type("name", name)
 
-    xml = request.config._store.get(xml_token, None)
+    xml = request.config._store.get(xml_key, None)
     if xml is not None:
         record_func = xml.add_global_property  # noqa
     return record_func
@@ -416,7 +416,7 @@ def pytest_configure(config):
         if not junit_family:
             _issue_warning_captured(deprecated.JUNIT_XML_DEFAULT_FAMILY, config.hook, 2)
             junit_family = "xunit1"
-        config._store[xml_token] = LogXML(
+        config._store[xml_key] = LogXML(
             xmlpath,
             config.option.junitprefix,
             config.getini("junit_suite_name"),
@@ -425,13 +425,13 @@ def pytest_configure(config):
             junit_family,
             config.getini("junit_log_passing_tests"),
         )
-        config.pluginmanager.register(config._store[xml_token])
+        config.pluginmanager.register(config._store[xml_key])
 
 
 def pytest_unconfigure(config):
-    xml = config._store.get(xml_token, None)
+    xml = config._store.get(xml_key, None)
     if xml:
-        del config._store[xml_token]
+        del config._store[xml_key]
         config.pluginmanager.unregister(xml)
 
 

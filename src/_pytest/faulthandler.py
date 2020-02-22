@@ -4,10 +4,10 @@ import sys
 from typing import TextIO
 
 import pytest
-from _pytest.store import StoreToken
+from _pytest.store import StoreKey
 
 
-fault_handler_stderr_token = StoreToken[TextIO].mint()
+fault_handler_stderr_key = StoreKey[TextIO]()
 
 
 def pytest_addoption(parser):
@@ -51,8 +51,8 @@ class FaultHandlerHooks:
         import faulthandler
 
         stderr_fd_copy = os.dup(self._get_stderr_fileno())
-        config._store[fault_handler_stderr_token] = open(stderr_fd_copy, "w")
-        faulthandler.enable(file=config._store[fault_handler_stderr_token])
+        config._store[fault_handler_stderr_key] = open(stderr_fd_copy, "w")
+        faulthandler.enable(file=config._store[fault_handler_stderr_key])
 
     def pytest_unconfigure(self, config):
         import faulthandler
@@ -62,8 +62,8 @@ class FaultHandlerHooks:
         # re-enable the faulthandler, attaching it to the default sys.stderr
         # so we can see crashes after pytest has finished, usually during
         # garbage collection during interpreter shutdown
-        config._store[fault_handler_stderr_token].close()
-        del config._store[fault_handler_stderr_token]
+        config._store[fault_handler_stderr_key].close()
+        del config._store[fault_handler_stderr_key]
         faulthandler.enable(file=self._get_stderr_fileno())
 
     @staticmethod
@@ -83,7 +83,7 @@ class FaultHandlerHooks:
     @pytest.hookimpl(hookwrapper=True)
     def pytest_runtest_protocol(self, item):
         timeout = self.get_timeout_config_value(item.config)
-        stderr = item.config._store[fault_handler_stderr_token]
+        stderr = item.config._store[fault_handler_stderr_key]
         if timeout > 0 and stderr is not None:
             import faulthandler
 
