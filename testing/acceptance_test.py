@@ -606,7 +606,7 @@ class TestInvocationVariants:
 
     def test_invoke_with_invalid_type(self):
         with pytest.raises(
-            TypeError, match="expected to be a list or tuple of strings, got: '-h'"
+            TypeError, match="expected to be a list of strings, got: '-h'"
         ):
             pytest.main("-h")
 
