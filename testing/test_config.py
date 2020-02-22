@@ -944,6 +944,37 @@ class TestRootdir:
         rootdir, _, _ = determine_setup(inifile, [tmpdir])
         assert rootdir == tmpdir
 
+    def test_with_arg_outside_cwd_without_inifile(self, tmpdir, monkeypatch) -> None:
+        monkeypatch.chdir(str(tmpdir))
+        a = tmpdir.mkdir("a")
+        b = tmpdir.mkdir("b")
+        rootdir, inifile, _ = determine_setup(None, [a, b])
+        assert rootdir == tmpdir
+        assert inifile is None
+
+    def test_with_arg_outside_cwd_with_inifile(self, tmpdir) -> None:
+        a = tmpdir.mkdir("a")
+        b = tmpdir.mkdir("b")
+        inifile = a.ensure("pytest.ini")
+        rootdir, parsed_inifile, _ = determine_setup(None, [a, b])
+        assert rootdir == a
+        assert inifile == parsed_inifile
+
+    @pytest.mark.parametrize("dirs", ([], ["does-not-exist"], ["a/does-not-exist"]))
+    def test_with_non_dir_arg(self, dirs, tmpdir) -> None:
+        with tmpdir.ensure(dir=True).as_cwd():
+            rootdir, inifile, _ = determine_setup(None, dirs)
+            assert rootdir == tmpdir
+            assert inifile is None
+
+    def test_with_existing_file_in_subdir(self, tmpdir) -> None:
+        a = tmpdir.mkdir("a")
+        a.ensure("exist")
+        with tmpdir.as_cwd():
+            rootdir, inifile, _ = determine_setup(None, ["a/exist"])
+            assert rootdir == tmpdir
+            assert inifile is None
+
 
 class TestOverrideIniArgs:
     @pytest.mark.parametrize("name", "setup.cfg tox.ini pytest.ini".split())
@@ -1079,37 +1110,6 @@ class TestOverrideIniArgs:
         )
         result = testdir.runpytest("--override-ini", "python_files=unittest_*.py")
         result.stdout.fnmatch_lines(["*1 passed in*"])
-
-    def test_with_arg_outside_cwd_without_inifile(self, tmpdir, monkeypatch) -> None:
-        monkeypatch.chdir(str(tmpdir))
-        a = tmpdir.mkdir("a")
-        b = tmpdir.mkdir("b")
-        rootdir, inifile, _ = determine_setup(None, [a, b])
-        assert rootdir == tmpdir
-        assert inifile is None
-
-    def test_with_arg_outside_cwd_with_inifile(self, tmpdir) -> None:
-        a = tmpdir.mkdir("a")
-        b = tmpdir.mkdir("b")
-        inifile = a.ensure("pytest.ini")
-        rootdir, parsed_inifile, _ = determine_setup(None, [a, b])
-        assert rootdir == a
-        assert inifile == parsed_inifile
-
-    @pytest.mark.parametrize("dirs", ([], ["does-not-exist"], ["a/does-not-exist"]))
-    def test_with_non_dir_arg(self, dirs, tmpdir) -> None:
-        with tmpdir.ensure(dir=True).as_cwd():
-            rootdir, inifile, _ = determine_setup(None, dirs)
-            assert rootdir == tmpdir
-            assert inifile is None
-
-    def test_with_existing_file_in_subdir(self, tmpdir) -> None:
-        a = tmpdir.mkdir("a")
-        a.ensure("exist")
-        with tmpdir.as_cwd():
-            rootdir, inifile, _ = determine_setup(None, ["a/exist"])
-            assert rootdir == tmpdir
-            assert inifile is None
 
     def test_addopts_before_initini(self, monkeypatch, _config_for_test, _sys_snapshot):
         cache_dir = ".custom_cache"
