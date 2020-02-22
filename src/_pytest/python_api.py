@@ -610,14 +610,6 @@ def raises(  # noqa: F811
         >>> assert exc_info.type is ValueError
         >>> assert exc_info.value.args[0] == "value must be 42"
 
-    .. deprecated:: 4.1
-
-        In the context manager form you may use the keyword argument
-        ``message`` to specify a custom failure message that will be displayed
-        in case the ``pytest.raises`` check fails. This has been deprecated as it
-        is considered error prone as users often mean to use ``match`` instead.
-        See :ref:`the deprecation docs <raises message deprecated>` for a workaround.
-
     .. note::
 
        When using ``pytest.raises`` as a context manager, it's worthwhile to
