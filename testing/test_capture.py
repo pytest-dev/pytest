@@ -1567,7 +1567,7 @@ def test_encodedfile_writelines(tmpfile: BinaryIO) -> None:
         ef.read()
 
 
-def test__get_multicapture():
+def test__get_multicapture() -> None:
     assert isinstance(_get_multicapture("fd"), MultiCapture)
     pytest.raises(ValueError, _get_multicapture, "unknown").match(
         r"^unknown capturing method: 'unknown'"
