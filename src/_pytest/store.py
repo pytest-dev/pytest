@@ -6,27 +6,22 @@ from typing import TypeVar
 from typing import Union
 
 
-__all__ = ["Store", "StoreToken"]
+__all__ = ["Store", "StoreKey"]
 
 
 T = TypeVar("T")
 D = TypeVar("D")
 
 
-class StoreToken(Generic[T]):
-    """StoreToken is an object used as a key to a Store.
+class StoreKey(Generic[T]):
+    """StoreKey is an object used as a key to a Store.
 
-    A token is associated with the type T of the value of the key.
+    A StoreKey is associated with the type T of the value of the key.
 
-    A token is unique and cannot conflict with another token.
+    A StoreKey is unique and cannot conflict with another key.
     """
 
     __slots__ = ()
-
-    @classmethod
-    def mint(self) -> "StoreToken[T]":
-        """Create a new token."""
-        return StoreToken()
 
 
 class Store:
@@ -40,30 +35,30 @@ class Store:
 
         store: Store = some_object.store
 
-    If a module wants to store data in this Store, it mints tokens
+    If a module wants to store data in this Store, it creates StoreKeys
     for its keys (at the module level):
 
     .. code-block:: python
 
-        some_str_token = StoreToken[str].mint()
-        some_bool_token = StoreToken[bool].mint()
+        some_str_key = StoreKey[str]()
+        some_bool_key = StoreKey[bool]()
 
     To store information:
 
     .. code-block:: python
 
-        # Value type must match the token.
-        store[some_str_token] = "value"
-        store[some_bool_token] = True
+        # Value type must match the key.
+        store[some_str_key] = "value"
+        store[some_bool_key] = True
 
     To retrieve the information:
 
     .. code-block:: python
 
         # The static type of some_str is str.
-        some_str = store[some_str_token]
+        some_str = store[some_str_key]
         # The static type of some_bool is bool.
-        some_bool = store[some_bool_token]
+        some_bool = store[some_bool_key]
 
     Why use this?
     -------------
@@ -81,41 +76,41 @@ class Store:
     This doesn't work well because retrieved values are untyped.
 
     Good solution: module Internal adds a ``Store`` to the object. Module
-    External mints Tokens for its own keys. Module External stores and
-    retrieves its data using its tokens.
+    External mints StoreKeys for its own keys. Module External stores and
+    retrieves its data using its keys.
     """
 
     __slots__ = ("_store",)
 
     def __init__(self) -> None:
-        self._store = {}  # type: Dict[StoreToken[Any], object]
+        self._store = {}  # type: Dict[StoreKey[Any], object]
 
-    def __setitem__(self, token: StoreToken[T], value: T) -> None:
-        """Set a value for token."""
-        self._store[token] = value
+    def __setitem__(self, key: StoreKey[T], value: T) -> None:
+        """Set a value for key."""
+        self._store[key] = value
 
-    def __getitem__(self, token: StoreToken[T]) -> T:
-        """Get the value for token.
+    def __getitem__(self, key: StoreKey[T]) -> T:
+        """Get the value for key.
 
-        Raises KeyError if the token wasn't set before.
+        Raises KeyError if the key wasn't set before.
         """
-        return cast(T, self._store[token])
+        return cast(T, self._store[key])
 
-    def get(self, token: StoreToken[T], default: D) -> Union[T, D]:
-        """Get the value for token, or return a default if the
-        token wasn't set before."""
+    def get(self, key: StoreKey[T], default: D) -> Union[T, D]:
+        """Get the value for key, or return default if the key wasn't set
+        before."""
         try:
-            return self[token]
+            return self[key]
         except KeyError:
             return default
 
-    def __delitem__(self, token: StoreToken[T]) -> None:
-        """Delete the value for token.
+    def __delitem__(self, key: StoreKey[T]) -> None:
+        """Delete the value for key.
 
-        Raises KeyError if the token wasn't set before.
+        Raises KeyError if the key wasn't set before.
         """
-        del self._store[token]
+        del self._store[key]
 
-    def __contains__(self, token: StoreToken[T]) -> bool:
-        """Returns whether token was set."""
-        return token in self._store
+    def __contains__(self, key: StoreKey[T]) -> bool:
+        """Returns whether key was set."""
+        return key in self._store
