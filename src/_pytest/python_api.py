@@ -566,7 +566,7 @@ def raises(  # noqa: F811
     expected_exception: Union["Type[_E]", Tuple["Type[_E]", ...]],
     *args: Any,
     **kwargs: Any
-) -> Union["RaisesContext[_E]", Optional[_pytest._code.ExceptionInfo[_E]]]:
+) -> Union["RaisesContext[_E]", _pytest._code.ExceptionInfo[_E]]:
     r"""
     Assert that a code block/function call raises ``expected_exception``
     or raise a failure exception otherwise.
