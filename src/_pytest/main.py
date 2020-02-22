@@ -33,6 +33,7 @@ from _pytest.runner import SetupState
 
 if TYPE_CHECKING:
     from typing import Type
+    from typing_extensions import Literal
 
     from _pytest.python import Package
 
@@ -293,7 +294,9 @@ def _in_venv(path):
     return any([fname.basename in activates for fname in bindir.listdir()])
 
 
-def pytest_ignore_collect(path, config):
+def pytest_ignore_collect(
+    path: py.path.local, config: Config
+) -> "Optional[Literal[True]]":
     ignore_paths = config._getconftest_pathlist("collect_ignore", path=path.dirpath())
     ignore_paths = ignore_paths or []
     excludeopt = config.getoption("ignore")
@@ -317,8 +320,7 @@ def pytest_ignore_collect(path, config):
     allow_in_venv = config.getoption("collect_in_virtualenv")
     if not allow_in_venv and _in_venv(path):
         return True
-
-    return False
+    return None
 
 
 def pytest_collection_modifyitems(items, config):
