@@ -1450,27 +1450,16 @@ class TestPytestPluginsVariable:
     def test_pytest_plugins_in_non_top_level_conftest_unsupported_no_false_positives(
         self, testdir
     ):
-        subdirectory = testdir.tmpdir.join("subdirectory")
-        subdirectory.mkdir()
-        testdir.makeconftest(
-            """
-            pass
-        """
-        )
-        testdir.tmpdir.join("conftest.py").move(subdirectory.join("conftest.py"))
-
-        testdir.makeconftest(
-            """
-            import warnings
-            warnings.filterwarnings('always', category=DeprecationWarning)
-            pytest_plugins=['capture']
-        """
-        )
         testdir.makepyfile(
-            """
-            def test_func():
-                pass
-        """
+            "def test_func(): pass",
+            **{
+                "subdirectory/conftest": "pass",
+                "conftest": """
+                    import warnings
+                    warnings.filterwarnings('always', category=DeprecationWarning)
+                    pytest_plugins=['capture']
+                    """,
+            }
         )
         res = testdir.runpytest_subprocess()
         assert res.ret == 0
