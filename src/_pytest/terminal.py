@@ -226,12 +226,15 @@ class WarningReport:
     Simple structure to hold warnings information captured by ``pytest_warning_captured``.
 
     :ivar str message: user friendly message about the warning
+    :ivar str when: when the warning was emitted, e.g. "config", "collect", or
+      "runtest" (see :func:`_pytest.hookspec.pytest_warning_captured`)
     :ivar str|None nodeid: node id that generated the warning (see ``get_location``).
     :ivar tuple|py.path.local fslocation:
         file system location of the source of the warning (see ``get_location``).
     """
 
     message = attr.ib(type=str)
+    when = attr.ib(type=str)
     nodeid = attr.ib(type=Optional[str], default=None)
     fslocation = attr.ib(default=None)
     count_towards_summary = True
@@ -394,7 +397,7 @@ class TerminalReporter:
             self.write_line("INTERNALERROR> " + line)
         return 1
 
-    def pytest_warning_captured(self, warning_message, item):
+    def pytest_warning_captured(self, when: str, warning_message, item) -> None:
         # from _pytest.nodes import get_fslocation_from_item
         from _pytest.warnings import warning_record_to_str
 
@@ -403,7 +406,7 @@ class TerminalReporter:
 
         nodeid = item.nodeid if item is not None else ""
         warning_report = WarningReport(
-            fslocation=fslocation, message=message, nodeid=nodeid
+            fslocation=fslocation, message=message, nodeid=nodeid, when=when,
         )
         self._add_stats("warnings", [warning_report])
 
@@ -803,31 +806,36 @@ class TerminalReporter:
         return values
 
     def summary_warnings(self):
-        if self.hasopt("w"):
-            all_warnings = self.stats.get(
-                "warnings"
-            )  # type: Optional[List[WarningReport]]
-            if not all_warnings:
-                return
+        if not self.hasopt("w"):
+            return
 
-            final = hasattr(self, "_already_displayed_warnings")
-            if final:
-                warning_reports = all_warnings[self._already_displayed_warnings :]
-            else:
-                warning_reports = all_warnings
-            self._already_displayed_warnings = len(warning_reports)
-            if not warning_reports:
-                return
+        all_warnings = self.stats.get("warnings")  # type: Optional[List[WarningReport]]
+        if not all_warnings:
+            return
 
-            reports_grouped_by_message = (
-                collections.OrderedDict()
-            )  # type: collections.OrderedDict[str, List[WarningReport]]
-            for wr in warning_reports:
-                reports_grouped_by_message.setdefault(wr.message, []).append(wr)
+        final = hasattr(self, "_already_displayed_warnings")
+        if final:
+            warning_reports = all_warnings[self._already_displayed_warnings :]
+        else:
+            warning_reports = all_warnings
+        self._already_displayed_warnings = len(warning_reports)
+        if not warning_reports:
+            return
 
-            title = "warnings summary (final)" if final else "warnings summary"
+        grouped = (
+            collections.OrderedDict()
+        )  # type: collections.OrderedDict[str, List[WarningReport]]
+        for wr in warning_reports:
+            if wr.when not in grouped:
+                grouped[wr.when] = collections.OrderedDict()
+            grouped[wr.when].setdefault(wr.message, []).append(wr)
+
+        for when, grouped_by_message in grouped.items():
+            title = (
+                "warnings summary (final)" if final else "warnings summary"
+            ) + " [{}]".format(when)
             self.write_sep("=", title, yellow=True, bold=False)
-            for message, warning_reports in reports_grouped_by_message.items():
+            for message, warning_reports in grouped_by_message.items():
                 has_any_location = False
                 for w in warning_reports:
                     location = w.get_location(self.config)

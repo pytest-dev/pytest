@@ -42,7 +42,7 @@ def test_normal_flow(testdir, pyfile_with_warnings):
     result = testdir.runpytest()
     result.stdout.fnmatch_lines(
         [
-            "*== %s ==*" % WARNINGS_SUMMARY_HEADER,
+            "*== %s [[]runtest[]] ==*" % WARNINGS_SUMMARY_HEADER,
             "test_normal_flow.py::test_func",
             "*normal_flow_module.py:3: UserWarning: user warning",
             '*  warnings.warn(UserWarning("user warning"))',
@@ -73,7 +73,7 @@ def test_setup_teardown_warnings(testdir, pyfile_with_warnings):
     result = testdir.runpytest()
     result.stdout.fnmatch_lines(
         [
-            "*== %s ==*" % WARNINGS_SUMMARY_HEADER,
+            "*== %s [[]runtest[]] ==*" % WARNINGS_SUMMARY_HEADER,
             "*test_setup_teardown_warnings.py:6: UserWarning: warning during setup",
             '*warnings.warn(UserWarning("warning during setup"))',
             "*test_setup_teardown_warnings.py:8: UserWarning: warning during teardown",
@@ -141,7 +141,7 @@ def test_unicode(testdir, pyfile_with_warnings):
     result = testdir.runpytest()
     result.stdout.fnmatch_lines(
         [
-            "*== %s ==*" % WARNINGS_SUMMARY_HEADER,
+            "*== %s [[]runtest[]] ==*" % WARNINGS_SUMMARY_HEADER,
             "*test_unicode.py:7: UserWarning: \u6d4b\u8bd5*",
             "* 1 passed, 1 warning*",
         ]
@@ -300,7 +300,7 @@ def test_collection_warnings(testdir):
     result = testdir.runpytest()
     result.stdout.fnmatch_lines(
         [
-            "*== %s ==*" % WARNINGS_SUMMARY_HEADER,
+            "*== %s [[]collect[]] ==*" % WARNINGS_SUMMARY_HEADER,
             "  *collection_warnings.py:3: UserWarning: collection warning",
             '    warnings.warn(UserWarning("collection warning"))',
             "* 1 passed, 1 warning*",
@@ -357,7 +357,7 @@ def test_hide_pytest_internal_warnings(testdir, ignore_pytest_warnings):
     else:
         result.stdout.fnmatch_lines(
             [
-                "*== %s ==*" % WARNINGS_SUMMARY_HEADER,
+                "*== %s [[]collect[]] ==*" % WARNINGS_SUMMARY_HEADER,
                 "*test_hide_pytest_internal_warnings.py:4: PytestWarning: some internal warning",
                 "* 1 passed, 1 warning *",
             ]
@@ -444,8 +444,9 @@ class TestDeprecationWarningsByDefault:
         result = testdir.runpytest_subprocess()
         result.stdout.fnmatch_lines(
             [
-                "*== %s ==*" % WARNINGS_SUMMARY_HEADER,
+                "*== %s [[]collect[]] ==*" % WARNINGS_SUMMARY_HEADER,
                 "*test_shown_by_default.py:3: DeprecationWarning: collection",
+                "*== %s [[]runtest[]] ==*" % WARNINGS_SUMMARY_HEADER,
                 "*test_shown_by_default.py:7: PendingDeprecationWarning: test run",
                 "* 1 passed, 2 warnings*",
             ]
@@ -475,7 +476,7 @@ class TestDeprecationWarningsByDefault:
         result = testdir.runpytest_subprocess()
         result.stdout.fnmatch_lines(
             [
-                "*== %s ==*" % WARNINGS_SUMMARY_HEADER,
+                "*== %s [[]collect[]] ==*" % WARNINGS_SUMMARY_HEADER,
                 "*test_hidden_by_mark.py:3: DeprecationWarning: collection",
                 "* 1 passed, 1 warning*",
             ]
