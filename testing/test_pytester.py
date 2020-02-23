@@ -89,6 +89,23 @@ def test_testdir_runs_with_plugin(testdir) -> None:
     result.assert_outcomes(passed=1)
 
 
+def test_testdir_with_doctest(testdir):
+    """Check that testdir can be used within doctests.
+
+    It used to use `request.function`, which is `None` with doctests."""
+    p1 = testdir.makepyfile(
+        """
+        '''
+        >>> testdir = getfixture("testdir")
+        >>> testdir.makepyfile("content")
+        local('.../test_testdir_with_doctest.py')
+        '''
+    """
+    )
+    result = testdir.runpytest("-p", "pytester", "--doctest-modules", str(p1))
+    assert result.ret == 0
+
+
 def test_runresult_assertion_on_xfail(testdir) -> None:
     testdir.makepyfile(
         """
