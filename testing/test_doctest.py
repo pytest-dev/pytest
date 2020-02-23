@@ -179,11 +179,21 @@ class TestDoctests:
         result = testdir.runpytest("--doctest-modules")
         result.stdout.fnmatch_lines(
             [
-                "*unexpected_exception*",
-                "*>>> i = 0*",
-                "*>>> 0 / i*",
-                "*UNEXPECTED*ZeroDivision*",
-            ]
+                "test_doctest_unexpected_exception.txt F *",
+                "",
+                "*= FAILURES =*",
+                "*_ [[]doctest[]] test_doctest_unexpected_exception.txt _*",
+                "001 >>> i = 0",
+                "002 >>> 0 / i",
+                "UNEXPECTED EXCEPTION: ZeroDivisionError('division by zero')",
+                "Traceback (most recent call last):",
+                '  File "*/doctest.py", line *, in __run',
+                "    *",
+                '  File "<doctest test_doctest_unexpected_exception.txt[1]>", line 1, in <module>',
+                "ZeroDivisionError: division by zero",
+                "*/test_doctest_unexpected_exception.txt:2: UnexpectedException",
+            ],
+            consecutive=True,
         )
 
     def test_doctest_outcomes(self, testdir):
