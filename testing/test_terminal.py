@@ -1412,6 +1412,15 @@ def test_terminal_summary_warnings_are_displayed(testdir):
     stdout = result.stdout.str()
     assert stdout.count("warning_from_test") == 1
     assert stdout.count("=== warnings summary ") == 2
+    assert stdout.count(" 1 failed, 2 warnings ") == 1
+    assert result.ret == 1
+
+    result = testdir.runpytest("--disable-warnings")
+    stdout = result.stdout.str()
+    assert stdout.count("warning_from_test") == 0
+    assert stdout.count("=== warnings summary ") == 0
+    assert stdout.count(" 1 failed, 2 warnings ") == 1
+    assert result.ret == 1
 
 
 @pytest.mark.filterwarnings("default")
