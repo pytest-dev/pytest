@@ -70,7 +70,7 @@ class TestNewAPI:
             result.stdout.fnmatch_lines(
                 [
                     # Validate location/stacklevel of warning from cacheprovider.
-                    "*= warnings summary =*",
+                    "*= warnings summary [[]config[]] =*",
                     "*/cacheprovider.py:*",
                     "  */cacheprovider.py:*: PytestCacheWarning: could not create cache path "
                     "{}/v/cache/nodeids".format(cache_dir),
