@@ -545,7 +545,7 @@ class Testdir:
             WeakKeyDictionary()
         )  # type: WeakKeyDictionary[Module, List[Union[Item, Collector]]]
         if request.function:
-            name = request.function.__name__
+            name = request.function.__name__  # type: str
         else:
             name = request.node.name
         self._name = name
