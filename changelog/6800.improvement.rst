@@ -1,0 +1,1 @@
+The summary of warnings is grouped by when they were caught, e.g. `"runtest"` or `"collect"`.
