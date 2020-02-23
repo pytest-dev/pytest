@@ -185,7 +185,7 @@ class TestDoctests:
                 "*_ [[]doctest[]] test_doctest_unexpected_exception.txt _*",
                 "001 >>> i = 0",
                 "002 >>> 0 / i",
-                "UNEXPECTED EXCEPTION: ZeroDivisionError('division by zero')",
+                "UNEXPECTED EXCEPTION: ZeroDivisionError*",
                 "Traceback (most recent call last):",
                 '  File "*/doctest.py", line *, in __run',
                 "    *",
