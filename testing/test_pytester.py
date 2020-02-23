@@ -94,13 +94,16 @@ def test_testdir_with_doctest(testdir):
 
     It used to use `request.function`, which is `None` with doctests."""
     p1 = testdir.makepyfile(
-        """
+        **{
+            "sub/t-doctest.py": """
         '''
         >>> testdir = getfixture("testdir")
         >>> testdir.makepyfile("content")
-        local('.../test_testdir_with_doctest.py')
+        local('.../basetemp/sub.t-doctest0/sub.py')
         '''
-    """
+    """,
+            "sub/__init__.py": "",
+        }
     )
     result = testdir.runpytest("-p", "pytester", "--doctest-modules", str(p1))
     assert result.ret == 0
