@@ -544,7 +544,11 @@ class Testdir:
         self._mod_collections = (
             WeakKeyDictionary()
         )  # type: WeakKeyDictionary[Module, List[Union[Item, Collector]]]
-        name = request.node.name
+        if request.function:
+            name = request.function.__name__
+        else:
+            name = request.node.name
+        self._name = name
         self.tmpdir = tmpdir_factory.mktemp(name, numbered=True)
         self.test_tmproot = tmpdir_factory.mktemp("tmp-" + name, numbered=True)
         self.plugins = []  # type: List[Union[str, _PluggyPlugin]]
@@ -618,7 +622,7 @@ class Testdir:
 
         if lines:
             source = "\n".join(to_text(x) for x in lines)
-            basename = self.request.node.name
+            basename = self._name
             items.insert(0, (basename, source))
 
         ret = None
@@ -721,7 +725,7 @@ class Testdir:
             example_dir = example_dir.join(*extra_element.args)
 
         if name is None:
-            func_name = self.request.node.name
+            func_name = self._name
             maybe_dir = example_dir / func_name
             maybe_file = example_dir / (func_name + ".py")
 
@@ -1060,7 +1064,7 @@ class Testdir:
             path = self.tmpdir.join(str(source))
             assert not withinit, "not supported for paths"
         else:
-            kw = {self.request.node.name: Source(source).strip()}
+            kw = {self._name: Source(source).strip()}
             path = self.makepyfile(**kw)
         if withinit:
             self.makepyfile(__init__="#")
