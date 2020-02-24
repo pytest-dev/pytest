@@ -4,7 +4,6 @@ pytest: unit and functional testing with Python.
 """
 from _pytest import __version__
 from _pytest.assertion import register_assert_rewrite
-from _pytest.compat import _setup_collect_fakemodule
 from _pytest.config import cmdline
 from _pytest.config import ExitCode
 from _pytest.config import hookimpl
@@ -93,7 +92,3 @@ __all__ = [
     "xfail",
     "yield_fixture",
 ]
-
-
-_setup_collect_fakemodule()
-del _setup_collect_fakemodule
