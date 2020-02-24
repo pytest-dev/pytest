@@ -324,9 +324,11 @@ class TestAssert_reprcompare:
         assert len(summary) < 65
 
     def test_text_diff(self):
-        diff = callequal("spam", "eggs")[1:]
-        assert "- eggs" in diff
-        assert "+ spam" in diff
+        assert callequal("spam", "eggs") == [
+            "'spam' == 'eggs'",
+            "- eggs",
+            "+ spam",
+        ]
 
     def test_text_skipping(self):
         lines = callequal("a" * 50 + "spam", "a" * 50 + "eggs")
@@ -706,12 +708,11 @@ class TestAssert_reprcompare:
         assert "raised in repr()" not in expl
 
     def test_unicode(self):
-        left = "£€"
-        right = "£"
-        expl = callequal(left, right)
-        assert expl[0] == "'£€' == '£'"
-        assert expl[1] == "- £"
-        assert expl[2] == "+ £€"
+        assert callequal("£€", "£") == [
+            "'£€' == '£'",
+            "- £",
+            "+ £€",
+        ]
 
     def test_nonascii_text(self):
         """
