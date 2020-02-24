@@ -359,14 +359,6 @@ def test_rootdir_option_arg(testdir, monkeypatch, path):
 
 
 def test_rootdir_wrong_option_arg(testdir):
-    testdir.makepyfile(
-        """
-        import os
-        def test_one():
-            assert 1
-    """
-    )
-
     result = testdir.runpytest("--rootdir=wrong_dir")
     result.stderr.fnmatch_lines(
         ["*Directory *wrong_dir* not found. Check your '--rootdir' option.*"]
