@@ -313,7 +313,10 @@ class DoctestItem(pytest.Item):
                 else:
                     inner_excinfo = ExceptionInfo(failure.exc_info)
                     lines += ["UNEXPECTED EXCEPTION: %s" % repr(inner_excinfo.value)]
-                    lines += traceback.format_exception(*failure.exc_info)
+                    lines += [
+                        x.strip("\n")
+                        for x in traceback.format_exception(*failure.exc_info)
+                    ]
                 reprlocation_lines.append((reprlocation, lines))
             return ReprFailDoctest(reprlocation_lines)
         else:
