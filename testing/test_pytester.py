@@ -93,19 +93,22 @@ def test_testdir_with_doctest(testdir):
     """Check that testdir can be used within doctests.
 
     It used to use `request.function`, which is `None` with doctests."""
-    p1 = testdir.makepyfile(
+    testdir.makepyfile(
         **{
             "sub/t-doctest.py": """
         '''
+        >>> import os
         >>> testdir = getfixture("testdir")
-        >>> testdir.makepyfile("content")
-        local('.../basetemp/sub.t-doctest0/sub.py')
+        >>> str(testdir.makepyfile("content")).replace(os.sep, '/')
+        '.../basetemp/sub.t-doctest0/sub.py'
         '''
     """,
             "sub/__init__.py": "",
         }
     )
-    result = testdir.runpytest("-p", "pytester", "--doctest-modules", str(p1))
+    result = testdir.runpytest(
+        "-p", "pytester", "--doctest-modules", "sub/t-doctest.py"
+    )
     assert result.ret == 0
 
 
