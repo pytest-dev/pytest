@@ -13,11 +13,17 @@ import pytest
 
 
 def _modules():
-    return sorted(
-        n
-        for _, n, _ in pkgutil.walk_packages(
-            _pytest.__path__, prefix=_pytest.__name__ + "."
+    extra = [
+        "pytest.collect",
+    ]
+    return (
+        sorted(
+            n
+            for _, n, _ in pkgutil.walk_packages(
+                _pytest.__path__, prefix=_pytest.__name__ + "."
+            )
         )
+        + extra
     )
 
 
