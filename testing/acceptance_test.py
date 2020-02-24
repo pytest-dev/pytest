@@ -730,6 +730,7 @@ class TestInvocationVariants:
         assert result.ret == 0
         result.stdout.fnmatch_lines(
             [
+                "rootdir: {}/world".format(testdir.tmpdir),
                 "../hello/ns_pkg/hello/test_hello.py::test_hello PASSED *",
                 "../hello/ns_pkg/hello/test_hello.py::test_other PASSED *",
                 "ns_pkg/world/test_world.py::test_world*PASSED*",
@@ -745,7 +746,11 @@ class TestInvocationVariants:
         )
         assert result.ret == 0
         result.stdout.fnmatch_lines(
-            ["*test_world.py::test_other*PASSED*", "*1 passed*"]
+            [
+                "rootdir: {}".format(testdir.tmpdir),
+                "world/ns_pkg/world/test_world.py::test_other PASSED *",
+                "=* 1 passed in *=",
+            ]
         )
 
     def test_invoke_test_and_doctestmodules(self, testdir):
