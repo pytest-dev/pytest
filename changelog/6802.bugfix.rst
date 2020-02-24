@@ -1,0 +1,1 @@
+The :fixture:`testdir fixture <testdir>` works within doctests now.
