@@ -27,11 +27,12 @@ def pytest_addoption(parser):
         choices=("rewrite", "plain"),
         default="rewrite",
         metavar="MODE",
-        help="""Control assertion debugging tools.  'plain'
-                            performs no assertion debugging.  'rewrite'
-                            (the default) rewrites assert statements in
-                            test modules on import to provide assert
-                            expression information.""",
+        help=(
+            "Control assertion debugging tools.\n"
+            "'plain' performs no assertion debugging.\n"
+            "'rewrite' (the default) rewrites assert statements in test modules"
+            " on import to provide assert expression information."
+        ),
     )
     parser.addini(
         "enable_assertion_pass_hook",

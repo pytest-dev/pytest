@@ -397,9 +397,9 @@ def pytest_addoption(parser):
         "--failed-first",
         action="store_true",
         dest="failedfirst",
-        help="run all tests but run the last failures first.  "
+        help="run all tests, but run the last failures first.\n"
         "This may re-order tests and thus lead to "
-        "repeated fixture setup/teardown",
+        "repeated fixture setup/teardown.",
     )
     group.addoption(
         "--nf",
