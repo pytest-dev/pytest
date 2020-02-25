@@ -46,8 +46,57 @@ from _pytest.warning_types import PytestUnhandledCoroutineWarning
 from _pytest.warning_types import PytestUnknownMarkWarning
 from _pytest.warning_types import PytestWarning
 
+# For mypy Any type checking purposes.
+# This file sets disallow_any_expr to ensure that the public API
+# does not have dynamic typing via Any. Manually using each public API
+# type as an expression to enforce this.
+__version__ = __version__
+register_assert_rewrite = register_assert_rewrite
+_setup_collect_fakemodule = _setup_collect_fakemodule
+cmdline = cmdline
+ExitCode = ExitCode
+# hookimpl = hookimpl
+# hookspec = hookspec
+main = main
+UsageError = UsageError
+__pytestPDB = __pytestPDB
+_fillfuncargs = _fillfuncargs
+fixture = fixture
+yield_fixture = yield_fixture
+freeze_includes = freeze_includes
+Session = Session
+mark = mark
+param = param
+Collector = Collector
+File = File
+Item = Item
+exit = exit
+fail = fail
+importorskip = importorskip
+skip = skip
+xfail = xfail
+Class = Class
+Function = Function
+Instance = Instance
+Module = Module
+Package = Package
+approx = approx
+raises = raises
+deprecated_call = deprecated_call
+warns = warns
+PytestAssertRewriteWarning = PytestAssertRewriteWarning
+PytestCacheWarning = PytestCacheWarning
+PytestCollectionWarning = PytestCollectionWarning
+PytestConfigWarning = PytestConfigWarning
+PytestDeprecationWarning = PytestDeprecationWarning
+PytestExperimentalApiWarning = PytestExperimentalApiWarning
+PytestUnhandledCoroutineWarning = PytestUnhandledCoroutineWarning
+PytestUnknownMarkWarning = PytestUnknownMarkWarning
+PytestWarning = PytestWarning
 
-set_trace = __pytestPDB.set_trace
+
+# Allow set_trace() to be typed with None
+set_trace = __pytestPDB.set_trace  # type: ignore
 
 __all__ = [
     "__version__",
