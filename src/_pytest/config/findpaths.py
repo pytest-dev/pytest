@@ -86,14 +86,14 @@ def get_common_ancestor(paths: Iterable[py.path.local]) -> py.path.local:
     return common_ancestor
 
 
-def get_dirs_from_args(args):
-    def is_option(x):
-        return str(x).startswith("-")
+def get_dirs_from_args(args: List[str]) -> List[py.path.local]:
+    def is_option(x: str) -> bool:
+        return x.startswith("-")
 
-    def get_file_part_from_node_id(x):
-        return str(x).split("::")[0]
+    def get_file_part_from_node_id(x: str) -> str:
+        return x.split("::")[0]
 
-    def get_dir_from_path(path):
+    def get_dir_from_path(path: py.path.local) -> py.path.local:
         if path.isdir():
             return path
         return py.path.local(path.dirname)
