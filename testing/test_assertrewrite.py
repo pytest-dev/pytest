@@ -23,6 +23,7 @@ from _pytest.assertion.rewrite import PYTEST_TAG
 from _pytest.assertion.rewrite import rewrite_asserts
 from _pytest.config import ExitCode
 from _pytest.pathlib import Path
+from _pytest.pytester import Testdir
 
 
 def setup_module(mod):
@@ -956,11 +957,11 @@ class TestAssertionRewriteHookDetails:
         )
         assert testdir.runpytest().ret == 0
 
-    def test_write_pyc(self, testdir, tmpdir, monkeypatch):
+    def test_write_pyc(self, testdir: Testdir, tmpdir, monkeypatch) -> None:
         from _pytest.assertion.rewrite import _write_pyc
         from _pytest.assertion import AssertionState
 
-        config = testdir.parseconfig([])
+        config = testdir.parseconfig()
         state = AssertionState(config, "rewrite")
         source_path = str(tmpdir.ensure("source.py"))
         pycpath = tmpdir.join("pyc").strpath
