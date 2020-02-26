@@ -208,7 +208,7 @@ html_sidebars = {
 html_domain_indices = True
 
 # If false, no index is generated.
-html_use_index = False
+html_use_index = True
 
 # If true, the index is split into individual pages for each letter.
 # html_split_index = False
