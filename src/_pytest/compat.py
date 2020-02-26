@@ -164,8 +164,8 @@ def getfuncargnames(function, is_method=False, cls=None):
     # parameter name.
     if is_method or (
         cls
-        and not isinstance(cls.__dict__.get(function.__name__, None), staticmethod)
         and (not hasattr(function, "__self__") or not function.__self__)
+        and not isinstance(cls.__dict__.get(function.__name__, None), staticmethod)
     ):
         arg_names = arg_names[1:]
     # Remove any names that will be replaced with mocks.
