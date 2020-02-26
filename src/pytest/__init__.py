@@ -2,6 +2,8 @@
 """
 pytest: unit and functional testing with Python.
 """
+import sys
+
 from _pytest import __version__
 from _pytest.assertion import register_assert_rewrite
 from _pytest.config import cmdline
@@ -44,7 +46,6 @@ from _pytest.warning_types import PytestExperimentalApiWarning
 from _pytest.warning_types import PytestUnhandledCoroutineWarning
 from _pytest.warning_types import PytestUnknownMarkWarning
 from _pytest.warning_types import PytestWarning
-
 
 set_trace = __pytestPDB.set_trace
 
@@ -94,9 +95,18 @@ __all__ = [
 ]
 
 
-def __getattr__(name):
-    if name == "collect":
-        from _pytest.compat import _setup_collect_fakemodule
+if sys.version_info >= (3, 7):
 
-        return _setup_collect_fakemodule()
-    raise AttributeError(name)
+    def __getattr__(name):
+        if name == "collect":
+            from _pytest.compat import _setup_collect_fakemodule
+
+            return _setup_collect_fakemodule()
+        raise AttributeError(name)
+
+
+else:
+    from _pytest.compat import _setup_collect_fakemodule
+
+    collect = _setup_collect_fakemodule()
+    del _setup_collect_fakemodule
