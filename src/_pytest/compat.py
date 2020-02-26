@@ -34,6 +34,7 @@ else:
 
 
 if TYPE_CHECKING:
+    from types import ModuleType  # noqa: F401 (used in type string)
     from typing import Type  # noqa: F401 (used in type string)
 
 
@@ -334,6 +335,31 @@ def safe_isclass(obj: object) -> bool:
         return inspect.isclass(obj)
     except Exception:
         return False
+
+
+COLLECT_FAKEMODULE_ATTRIBUTES = (
+    "Collector",
+    "Module",
+    "Function",
+    "Instance",
+    "Session",
+    "Item",
+    "Class",
+    "File",
+    "_fillfuncargs",
+)
+
+
+def _setup_collect_fakemodule() -> "ModuleType":
+    from types import ModuleType
+    import pytest
+
+    # Types ignored because the module is created dynamically.
+    mod = ModuleType("pytest.collect")  # type: ignore
+    mod.__all__ = []  # type: ignore  # used for setns
+    for attr_name in COLLECT_FAKEMODULE_ATTRIBUTES:
+        setattr(mod, attr_name, getattr(pytest, attr_name))  # type: ignore
+    return mod
 
 
 class CaptureIO(io.TextIOWrapper):

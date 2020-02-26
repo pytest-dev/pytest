@@ -13,17 +13,11 @@ import pytest
 
 
 def _modules():
-    extra = [
-        "pytest.collect",
-    ]
-    return (
-        sorted(
-            n
-            for _, n, _ in pkgutil.walk_packages(
-                _pytest.__path__, prefix=_pytest.__name__ + "."
-            )
+    return sorted(
+        n
+        for _, n, _ in pkgutil.walk_packages(
+            _pytest.__path__, prefix=_pytest.__name__ + "."
         )
-        + extra
     )
 
 
@@ -42,8 +36,14 @@ def test_no_warnings(module):
 
 
 def test_pytest_collect_attribute(_sys_snapshot):
+    from types import ModuleType
+
     del sys.modules["pytest"]
 
     import pytest
 
-    assert pytest.collect
+    assert isinstance(pytest.collect, ModuleType)
+    assert pytest.collect.Item is pytest.Item
+
+    with pytest.raises(ImportError):
+        import pytest.collect
