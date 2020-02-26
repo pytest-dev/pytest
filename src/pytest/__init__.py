@@ -99,3 +99,4 @@ def __getattr__(name):
         from _pytest.compat import _setup_collect_fakemodule
 
         return _setup_collect_fakemodule()
+    raise AttributeError(name)

@@ -47,3 +47,6 @@ def test_pytest_collect_attribute(_sys_snapshot):
 
     with pytest.raises(ImportError):
         import pytest.collect
+
+    with pytest.raises(AttributeError, match=r"^doesnotexist$"):
+        pytest.doesnotexist
