@@ -39,3 +39,11 @@ def test_no_warnings(module):
         "-c", "import {}".format(module),
     ))
     # fmt: on
+
+
+def test_pytest_collect_attribute(_sys_snapshot):
+    del sys.modules["pytest"]
+
+    import pytest
+
+    assert pytest.collect
