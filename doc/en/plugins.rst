@@ -41,8 +41,7 @@ Here is a little annotated list for some popular plugins:
 * `pytest-instafail <https://pypi.org/project/pytest-instafail/>`_:
   to report failures while the test run is happening.
 
-* `pytest-bdd <https://pypi.org/project/pytest-bdd/>`_ and
-  `pytest-konira <https://pypi.org/project/pytest-konira/>`_
+* `pytest-bdd <https://pypi.org/project/pytest-bdd/>`_:
   to write tests using behaviour-driven testing.
 
 * `pytest-timeout <https://pypi.org/project/pytest-timeout/>`_:
