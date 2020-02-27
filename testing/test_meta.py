@@ -49,8 +49,12 @@ def test_pytest_collect_attribute(_sys_snapshot):
     with pytest.raises(ImportError):
         import pytest.collect
 
-    with pytest.raises(AttributeError, match=r"^doesnotexist$"):
-        pytest.doesnotexist
+    if sys.version_info >= (3, 7):
+        with pytest.raises(AttributeError, match=r"^doesnotexist$"):
+            pytest.doesnotexist
+    else:
+        with pytest.raises(AttributeError, match=r"doesnotexist"):
+            pytest.doesnotexist
 
 
 def test_pytest_circular_import(testdir: Testdir, symlink_or_skip) -> None:
