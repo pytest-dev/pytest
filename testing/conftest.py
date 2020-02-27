@@ -1,3 +1,4 @@
+import os
 import re
 import sys
 from typing import List
@@ -134,6 +135,27 @@ def dummy_yaml_custom_test(testdir):
 def testdir(testdir: Testdir) -> Testdir:
     testdir.monkeypatch.setenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD", "1")
     return testdir
+
+
+@pytest.fixture
+def symlink_or_skip():
+    """Return a function that creates a symlink or raises ``Skip``.
+
+    On Windows `os.symlink` is available, but normal users require special
+    admin privileges to create symlinks.
+    """
+
+    def wrap_os_symlink(src, dst, *args, **kwargs):
+        if os.path.islink(dst):
+            return
+
+        try:
+            os.symlink(src, dst, *args, **kwargs)
+        except OSError as e:
+            pytest.skip("os.symlink({!r}) failed: {!r}".format((src, dst), e))
+        assert os.path.islink(dst)
+
+    return wrap_os_symlink
 
 
 @pytest.fixture(scope="session")
