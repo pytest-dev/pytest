@@ -269,7 +269,9 @@ def test_exclude(testdir):
     testdir.makepyfile(test_ok="def test_pass(): pass")
     result = testdir.runpytest("--ignore=hello", "--ignore=hello2")
     assert result.ret == 0
-    result.stdout.fnmatch_lines(["*1 passed*"])
+    result.stdout.fnmatch_lines(
+        ["collected 1 item", "ignored 2 paths (via --ignore)", "*1 passed*"]
+    )
 
 
 def test_exclude_glob(testdir):
@@ -285,6 +287,9 @@ def test_exclude_glob(testdir):
     result = testdir.runpytest("--ignore-glob=*h[ea]llo*")
     assert result.ret == 0
     result.stdout.fnmatch_lines(["*1 passed*"])
+    result.stdout.fnmatch_lines(
+        ["collected 1 item", "ignored 4 paths (via ignore_glob)", "*1 passed*"]
+    )
 
 
 def test_deselect(testdir):

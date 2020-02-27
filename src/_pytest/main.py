@@ -294,35 +294,6 @@ def _in_venv(path):
     return any([fname.basename in activates for fname in bindir.listdir()])
 
 
-def pytest_ignore_collect(
-    path: py.path.local, config: Config
-) -> "Optional[Literal[True]]":
-    ignore_paths = config._getconftest_pathlist("collect_ignore", path=path.dirpath())
-    ignore_paths = ignore_paths or []
-    excludeopt = config.getoption("ignore")
-    if excludeopt:
-        ignore_paths.extend([py.path.local(x) for x in excludeopt])
-
-    if py.path.local(path) in ignore_paths:
-        return True
-
-    ignore_globs = config._getconftest_pathlist(
-        "collect_ignore_glob", path=path.dirpath()
-    )
-    ignore_globs = ignore_globs or []
-    excludeglobopt = config.getoption("ignore_glob")
-    if excludeglobopt:
-        ignore_globs.extend([py.path.local(x) for x in excludeglobopt])
-
-    if any(fnmatch.fnmatch(str(path), str(glob)) for glob in ignore_globs):
-        return True
-
-    allow_in_venv = config.getoption("collect_in_virtualenv")
-    if not allow_in_venv and _in_venv(path):
-        return True
-    return None
-
-
 def pytest_collection_modifyitems(items, config):
     deselect_prefixes = tuple(config.getoption("deselect") or [])
     if not deselect_prefixes:
@@ -406,6 +377,9 @@ class Session(nodes.FSCollector):
 
         self.config.pluginmanager.register(self, name="session")
 
+        #: Count of ignored paths (for reporting).
+        self._collect_ignored = {}  # type: Dict[str, int]
+
     @classmethod
     def from_config(cls, config):
         return cls._create(config)
@@ -429,6 +403,64 @@ class Session(nodes.FSCollector):
             raise self.Failed(self.shouldfail)
         if self.shouldstop:
             raise self.Interrupted(self.shouldstop)
+
+    def _register_collect_ignored(self, when: str) -> None:
+        self._collect_ignored.setdefault(when, 0)
+        self._collect_ignored[when] += 1
+
+    def pytest_ignore_collect(
+        self, path: py.path.local, config: Config
+    ) -> "Optional[Literal[True]]":
+        collect_ignore = config._getconftest_pathlist(
+            "collect_ignore", path=path.dirpath()
+        )
+        if collect_ignore and py.path.local(path) in collect_ignore:
+            self._register_collect_ignored("collect_ignore")
+            return True
+        excludeopt = config.getoption("ignore")
+        if excludeopt:
+            ignore_paths = [py.path.local(x) for x in excludeopt]
+            if py.path.local(path) in ignore_paths:
+                self._register_collect_ignored("--ignore")
+                return True
+
+        collect_ignore_glob = config._getconftest_pathlist(
+            "collect_ignore_glob", path=path.dirpath()
+        )
+        if collect_ignore_glob and any(
+            fnmatch.fnmatch(str(path), str(glob)) for glob in collect_ignore_glob
+        ):
+            self._register_collect_ignored("collect_ignore_glob")
+            return True
+        excludeglobopt = config.getoption("ignore_glob")
+        if excludeglobopt:
+            ignore_globs = [py.path.local(x) for x in excludeglobopt]
+            if any(fnmatch.fnmatch(str(path), str(glob)) for glob in ignore_globs):
+                self._register_collect_ignored("--ignore_glob")
+                return True
+
+        allow_in_venv = config.getoption("collect_in_virtualenv")
+        if not allow_in_venv and _in_venv(path):
+            self._register_collect_ignored("--collect-in-virtualenv")
+            return True
+        return None
+
+    def pytest_report_collectionfinish(self) -> Optional[List[str]]:
+        if self._collect_ignored:
+            total = 0
+            desc = []
+            for via, count in self._collect_ignored.items():
+                total += count
+                if len(self._collect_ignored) > 1:
+                    desc.append("{} ({})".format(via, count))
+                else:
+                    desc.append("via {}".format(via))
+            return [
+                "ignored {} {} ({})".format(
+                    total, "path" if total == 1 else "paths", ", ".join(desc)
+                )
+            ]
+        return None
 
     @hookimpl(tryfirst=True)
     def pytest_runtest_logreport(self, report):

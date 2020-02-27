@@ -144,12 +144,16 @@ class TestCollectFS:
         # by default, ignore tests inside a virtualenv
         result = testdir.runpytest()
         result.stdout.no_fnmatch_line("*test_invenv*")
+        result.stdout.fnmatch_lines(
+            ["collected 0 items", "ignored 1 path (via --collect-in-virtualenv)"]
+        )
         # allow test collection if user insists
         result = testdir.runpytest("--collect-in-virtualenv")
+        result.stdout.fnmatch_lines(["collected 1 item"])
         assert "test_invenv" in result.stdout.str()
         # allow test collection if user directly passes in the directory
         result = testdir.runpytest("virtual")
-        assert "test_invenv" in result.stdout.str()
+        result.stdout.fnmatch_lines(["collected 1 item", "virtual/test_invenv.py . *"])
 
     @pytest.mark.parametrize(
         "fname",
@@ -367,11 +371,26 @@ class TestCustomConftests:
         testdir.mkdir("hello")
         testdir.makepyfile(test_world="def test_hello(): pass")
         result = testdir.runpytest()
+        result.stdout.fnmatch_lines(
+            ["collected 0 items", "ignored 2 paths (via collect_ignore)"]
+        )
         assert result.ret == ExitCode.NO_TESTS_COLLECTED
         result.stdout.no_fnmatch_line("*passed*")
         result = testdir.runpytest("--XX")
         assert result.ret == 0
         assert "passed" in result.stdout.str()
+
+        # collect_ignore and --ignore.
+        testdir.makepyfile(test_ignore="")
+        result = testdir.runpytest("--ignore", "test_ignore.py")
+        result.stdout.fnmatch_lines(
+            [
+                "collected 0 items",
+                "ignored 3 paths (collect_ignore (2), --ignore (1))",
+                "*= no tests ran in *",
+            ]
+        )
+        assert result.ret == ExitCode.NO_TESTS_COLLECTED
 
     def test_collectignoreglob_exclude_on_option(self, testdir):
         testdir.makeconftest(
@@ -387,6 +406,9 @@ class TestCustomConftests:
         testdir.makepyfile(test_world="def test_hello(): pass")
         testdir.makepyfile(test_welt="def test_hallo(): pass")
         result = testdir.runpytest()
+        result.stdout.fnmatch_lines(
+            ["collected 0 items", "ignored 2 paths (via collect_ignore_glob)"]
+        )
         assert result.ret == ExitCode.NO_TESTS_COLLECTED
         result.stdout.fnmatch_lines(["*collected 0 items*"])
         result = testdir.runpytest("--XX")
