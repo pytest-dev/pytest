@@ -587,28 +587,6 @@ class Session(nodes.FSCollector):
                 return
             yield from m
 
-    def _collectfile(self, path, handle_dupes=True):
-        assert (
-            path.isfile()
-        ), "{!r} is not a file (isdir={!r}, exists={!r}, islink={!r})".format(
-            path, path.isdir(), path.exists(), path.islink()
-        )
-        ihook = self.gethookproxy(path)
-        if not self.isinitpath(path):
-            if ihook.pytest_ignore_collect(path=path, config=self.config):
-                return ()
-
-        if handle_dupes:
-            keepduplicates = self.config.getoption("keepduplicates")
-            if not keepduplicates:
-                duplicate_paths = self.config.pluginmanager._duplicatepaths
-                if path in duplicate_paths:
-                    return ()
-                else:
-                    duplicate_paths.add(path)
-
-        return ihook.pytest_collect_file(path=path, parent=self)
-
     @staticmethod
     def _visit_filter(f):
         return f.check(file=1)
