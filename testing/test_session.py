@@ -288,7 +288,7 @@ def test_exclude_glob(testdir):
     assert result.ret == 0
     result.stdout.fnmatch_lines(["*1 passed*"])
     result.stdout.fnmatch_lines(
-        ["collected 1 item", "ignored 4 paths (via ignore_glob)", "*1 passed*"]
+        ["collected 1 item", "ignored 4 paths (via --ignore_glob)", "*1 passed*"]
     )
 
 
