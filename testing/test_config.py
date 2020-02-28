@@ -1089,8 +1089,12 @@ class TestOverrideIniArgs:
             xdist_strict=False
         """
         )
-        result = testdir.runpytest("--override-ini", "xdist_strict True", "-s")
-        result.stderr.fnmatch_lines(["*ERROR* *expects option=value*"])
+        result = testdir.runpytest("--override-ini", "xdist_strict", "True")
+        result.stderr.fnmatch_lines(
+            [
+                "ERROR: -o/--override-ini expects option=value style (got: 'xdist_strict').",
+            ]
+        )
 
     @pytest.mark.parametrize("with_ini", [True, False])
     def test_override_ini_handled_asap(self, testdir, with_ini):

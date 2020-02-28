@@ -1131,7 +1131,11 @@ class Config:
             try:
                 key, user_ini_value = ini_config.split("=", 1)
             except ValueError:
-                raise UsageError("-o/--override-ini expects option=value style.")
+                raise UsageError(
+                    "-o/--override-ini expects option=value style (got: {!r}).".format(
+                        ini_config
+                    )
+                )
             else:
                 if key == name:
                     value = user_ini_value
