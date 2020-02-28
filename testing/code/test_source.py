@@ -630,7 +630,7 @@ def test_source_with_decorator() -> None:
 
     @pytest.mark.foo
     def deco_mark():
-        pass
+        assert False
 
     src = inspect.getsource(deco_mark)
     assert str(Source(deco_mark, deindent=False)) == src
@@ -638,10 +638,10 @@ def test_source_with_decorator() -> None:
 
     @pytest.fixture
     def deco_fixture():
-        pass
+        assert False
 
     src = inspect.getsource(deco_fixture)
-    assert src == "    @pytest.fixture\n    def deco_fixture():\n        pass\n"
+    assert src == "    @pytest.fixture\n    def deco_fixture():\n        assert False\n"
     assert str(Source(deco_fixture)).startswith("@functools.wraps(function)")
     assert str(Source(get_real_func(deco_fixture), deindent=False)) == src
 
