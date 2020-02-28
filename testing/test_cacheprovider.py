@@ -310,6 +310,25 @@ class TestLastFailed:
                 "test_a.py*",
             ]
         )
+        # Failing tests first with (plugin) pytest_collection_modifyitems hook.
+        testdir.makepyfile(
+            myplugin="""
+            def pytest_collection_modifyitems(items):
+                items[:] = sorted(items, key=lambda item: item.nodeid)
+                print("new_items:", items)
+            """
+        )
+        testdir.syspathinsert()
+        result = testdir.runpytest("--ff", "-p", "myplugin")
+        result.stdout.fnmatch_lines(
+            [
+                "new_items: *test_a.py*test_b.py*",
+                "collected 2 items",
+                "run-last-failure: rerun previous 1 failure first",
+                "test_b.py*",
+                "test_a.py*",
+            ]
+        )
 
     def test_lastfailed_failedfirst_order(self, testdir):
         testdir.makepyfile(
@@ -882,12 +901,31 @@ class TestNewFirst:
         )
         testdir.tmpdir.join("test_1/test_1.py").setmtime(1)
 
-        result = testdir.runpytest("-v", "--nf")
+        result = testdir.runpytest("--nf", "--collect-only", "-q")
         result.stdout.fnmatch_lines(
             [
-                "*test_1/test_1.py::test_2 PASSED*",
-                "*test_2/test_2.py::test_1 PASSED*",
-                "*test_1/test_1.py::test_1 PASSED*",
+                "test_1/test_1.py::test_2",
+                "test_2/test_2.py::test_1",
+                "test_1/test_1.py::test_1",
+            ]
+        )
+
+        # Newest first with (plugin) pytest_collection_modifyitems hook.
+        testdir.makepyfile(
+            myplugin="""
+            def pytest_collection_modifyitems(items):
+                items[:] = sorted(items, key=lambda item: item.nodeid)
+                print("new_items:", items)
+            """
+        )
+        testdir.syspathinsert()
+        result = testdir.runpytest("--nf", "-p", "myplugin", "--collect-only", "-q")
+        result.stdout.fnmatch_lines(
+            [
+                "new_items: *test_1.py*test_1.py*test_2.py*",
+                "test_1/test_1.py::test_2",
+                "test_2/test_2.py::test_1",
+                "test_1/test_1.py::test_1",
             ]
         )
 
@@ -920,7 +958,6 @@ class TestNewFirst:
         )
 
         result = testdir.runpytest("-v", "--nf")
-
         result.stdout.fnmatch_lines(
             [
                 "*test_2/test_2.py::test_1[1*",
