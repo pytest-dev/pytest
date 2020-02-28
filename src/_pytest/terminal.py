@@ -825,16 +825,32 @@ class TerminalReporter:
             for wr in warning_reports:
                 reports_grouped_by_message.setdefault(wr.message, []).append(wr)
 
-            title = "warnings summary (final)" if final else "warnings summary"
-            self.write_sep("=", title, yellow=True, bold=False)
-            for message, warning_reports in reports_grouped_by_message.items():
-                has_any_location = False
+            def collapsed_location_report(reports: List[WarningReport]):
+                locations = []
                 for w in warning_reports:
                     location = w.get_location(self.config)
                     if location:
-                        self._tw.line(str(location))
-                        has_any_location = True
-                if has_any_location:
+                        locations.append(location)
+
+                if len(locations) < 10:
+                    return "\n".join(map(str, locations))
+
+                counts_by_filename = collections.Counter(
+                    str(loc).split("::", 1)[0] for loc in locations
+                )
+                return "\n".join(
+                    "{0}: {1} test{2} with warning{2}".format(
+                        k, v, "s" if v > 1 else ""
+                    )
+                    for k, v in counts_by_filename.items()
+                )
+
+            title = "warnings summary (final)" if final else "warnings summary"
+            self.write_sep("=", title, yellow=True, bold=False)
+            for message, warning_reports in reports_grouped_by_message.items():
+                maybe_location = collapsed_location_report(warning_reports)
+                if maybe_location:
+                    self._tw.line(maybe_location)
                     lines = message.splitlines()
                     indented = "\n".join("  " + x for x in lines)
                     message = indented.rstrip()
