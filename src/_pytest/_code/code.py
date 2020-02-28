@@ -927,12 +927,8 @@ class TerminalRepr:
         raise NotImplementedError()
 
 
-class _SectionsRepr:
-    """Mixin for handling sections.
-
-    Only `ExceptionRepr` takes it in `__init__`, but others use it also.
-    """
-
+@attr.s
+class ExceptionRepr(TerminalRepr):
     def __attrs_post_init__(self):
         self.sections = []  # type: List[Tuple[str, str, str]]
 
@@ -946,12 +942,7 @@ class _SectionsRepr:
 
 
 @attr.s
-class ExceptionRepr(_SectionsRepr, TerminalRepr):
-    sections = attr.ib(type=List[Tuple[str, str, str]])
-
-
-@attr.s
-class ExceptionChainRepr(_SectionsRepr, TerminalRepr):
+class ExceptionChainRepr(ExceptionRepr):
     chain = attr.ib(
         type=Sequence[
             Tuple["ReprTraceback", Optional["ReprFileLocation"], Optional[str]]
@@ -975,7 +966,7 @@ class ExceptionChainRepr(_SectionsRepr, TerminalRepr):
 
 
 @attr.s
-class ReprExceptionInfo(_SectionsRepr, TerminalRepr):
+class ReprExceptionInfo(ExceptionRepr):
     reprtraceback = attr.ib(type="ReprTraceback")
     reprcrash = attr.ib(type="ReprFileLocation")
 
