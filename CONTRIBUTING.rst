@@ -86,7 +86,7 @@ without using a local copy.  This can be convenient for small fixes.
 
         $ tox -e docs
 
-    The built documentation should be available in the ``doc/en/_build/``.
+    The built documentation should be available in ``doc/en/_build/html``.
 
     Where 'en' refers to the documentation language.
 

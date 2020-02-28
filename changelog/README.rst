@@ -34,4 +34,4 @@ If you are not sure what issue type to use, don't hesitate to ask in your PR.
 other than ``features`` it is usually better to stick to a single paragraph to keep it concise.
 
 You can also run ``tox -e docs`` to build the documentation
-with the draft changelog (``doc/en/_build/changelog.html``) if you want to get a preview of how your change will look in the final release notes.
+with the draft changelog (``doc/en/_build/html/changelog.html``) if you want to get a preview of how your change will look in the final release notes.
