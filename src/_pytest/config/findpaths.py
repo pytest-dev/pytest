@@ -86,7 +86,7 @@ def get_common_ancestor(paths: Iterable[py.path.local]) -> py.path.local:
     return common_ancestor
 
 
-def get_dirs_from_args(args: List[str]) -> List[py.path.local]:
+def get_dirs_from_args(args: Iterable[str]) -> List[py.path.local]:
     def is_option(x: str) -> bool:
         return x.startswith("-")
 
