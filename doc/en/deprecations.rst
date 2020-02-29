@@ -37,7 +37,7 @@ display captured output when tests fail: ``no``, ``stdout``, ``stderr``, ``log``
 Node Construction changed to ``Node.from_parent``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. deprecated:: 5.3
+.. deprecated:: 5.4
 
 The construction of nodes new should use the named constructor ``from_parent``.
 This limitation in api surface intends to enable better/simpler refactoring of the collection tree.
@@ -94,6 +94,18 @@ one JSON object per-line, and should cover the same use cases. Please try it out
 The plan is remove the ``--result-log`` option in pytest 6.0 if ``pytest-reportlog`` proves satisfactory
 to all users and is deemed stable. The ``pytest-reportlog`` plugin might even be merged into the core
 at some point, depending on the plans for the plugins and number of users using it.
+
+TerminalReporter.writer
+~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 5.4
+
+The ``TerminalReporter.writer`` attribute has been deprecated and should no longer be used. This
+was inadvertently exposed as part of the public API of that plugin and ties it too much
+with ``py.io.TerminalWriter``.
+
+Plugins that used ``TerminalReporter.writer`` directly should instead use ``TerminalReporter``
+methods that provide the same functionality.
 
 
 Removed Features

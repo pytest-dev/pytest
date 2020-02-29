@@ -27,7 +27,7 @@ def test_resultlog_is_deprecated(testdir):
 
 def test_terminal_reporter_writer_attr(pytestconfig):
     """Check that TerminalReporter._tw is also available as 'writer' (#2984)
-    This attribute is planned to be deprecated in 3.4.
+    This attribute has been deprecated in 5.4.
     """
     try:
         import xdist  # noqa
@@ -36,7 +36,8 @@ def test_terminal_reporter_writer_attr(pytestconfig):
     except ImportError:
         pass
     terminal_reporter = pytestconfig.pluginmanager.get_plugin("terminalreporter")
-    assert terminal_reporter.writer is terminal_reporter._tw
+    with pytest.warns(pytest.PytestDeprecationWarning):
+        assert terminal_reporter.writer is terminal_reporter._tw
 
 
 @pytest.mark.parametrize("plugin", sorted(deprecated.DEPRECATED_EXTERNAL_PLUGINS))

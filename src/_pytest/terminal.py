@@ -8,6 +8,7 @@ import datetime
 import platform
 import sys
 import time
+import warnings
 from functools import partial
 from typing import Any
 from typing import Callable
@@ -25,6 +26,7 @@ from more_itertools import collapse
 
 import pytest
 from _pytest import nodes
+from _pytest._io import TerminalWriter
 from _pytest.config import Config
 from _pytest.config import ExitCode
 from _pytest.main import Session
@@ -270,7 +272,7 @@ class TerminalReporter:
         self.startdir = config.invocation_dir
         if file is None:
             file = sys.stdout
-        self.writer = self._tw = _pytest.config.create_terminal_writer(config, file)
+        self._tw = _pytest.config.create_terminal_writer(config, file)
         self._screen_width = self._tw.fullwidth
         self.currentfspath = None  # type: Any
         self.reportchars = getreportopt(config)
@@ -279,6 +281,16 @@ class TerminalReporter:
         self._progress_nodeids_reported = set()  # type: Set[str]
         self._show_progress_info = self._determine_show_progress_info()
         self._collect_report_last_write = None  # type: Optional[float]
+
+    @property
+    def writer(self) -> TerminalWriter:
+        warnings.warn(
+            pytest.PytestDeprecationWarning(
+                "TerminalReporter.writer attribute is deprecated, use TerminalReporter._tw instead at your own risk.\n"
+                "See https://docs.pytest.org/en/latest/deprecations.html#terminalreporter-writer for more information."
+            )
+        )
+        return self._tw
 
     def _determine_show_progress_info(self):
         """Return True if we should display progress information based on the current config"""
@@ -972,7 +984,7 @@ class TerminalReporter:
             failed = self.stats.get(stat, [])
             if not failed:
                 return
-            termwidth = self.writer.fullwidth
+            termwidth = self._tw.fullwidth
             config = self.config
             for rep in failed:
                 line = _get_line_with_reprcrash_message(config, rep, termwidth)
