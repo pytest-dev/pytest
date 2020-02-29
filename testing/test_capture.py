@@ -1533,7 +1533,10 @@ def test_capture_with_live_logging(testdir, capture_fixture):
 
 
 def test_typeerror_encodedfile_write(testdir):
-    """It should behave the same with and without output capturing (#4861)."""
+    """It should behave the same with and without output capturing (#4861).
+
+    The reported location differs however.
+    """
     p = testdir.makepyfile(
         """
         def test_fails():
@@ -1541,12 +1544,24 @@ def test_typeerror_encodedfile_write(testdir):
             sys.stdout.write(b"foo")
     """
     )
-    result_without_capture = testdir.runpytest("-s", str(p))
     result_with_capture = testdir.runpytest(str(p))
-
-    assert result_with_capture.ret == result_without_capture.ret
     result_with_capture.stdout.fnmatch_lines(
-        ["E * TypeError: write() argument must be str, not bytes"]
+        [
+            '>       sys.stdout.write(b"foo")',
+            ">           raise TypeError*",
+            "E           TypeError: write() argument must be str, not bytes",
+            "FAILED test_typeerror_encodedfile_write.py:3::test_fails"
+            " - TypeError: write() argument must be str, not bytes",
+        ]
+    )
+    result_without_capture = testdir.runpytest("-s", str(p))
+    result_without_capture.stdout.fnmatch_lines(
+        [
+            '>       sys.stdout.write(b"foo")',
+            "E       TypeError: write() argument must be str, not bytes",
+            "FAILED test_typeerror_encodedfile_write.py:3::test_fails"
+            " - TypeError: write() argument must be str, not bytes",
+        ]
     )
 
 
