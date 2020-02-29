@@ -593,31 +593,6 @@ class Package(Module):
     def gethookproxy(self, fspath: py.path.local):
         return super()._gethookproxy(fspath)
 
-    def _collectfile(self, path, handle_dupes=True):
-        assert (
-            path.isfile()
-        ), "{!r} is not a file (isdir={!r}, exists={!r}, islink={!r})".format(
-            path, path.isdir(), path.exists(), path.islink()
-        )
-        ihook = self.gethookproxy(path)
-        if not self.isinitpath(path):
-            if ihook.pytest_ignore_collect(path=path, config=self.config):
-                return ()
-
-        if handle_dupes:
-            keepduplicates = self.config.getoption("keepduplicates")
-            if not keepduplicates:
-                duplicate_paths = self.config.pluginmanager._duplicatepaths
-                if path in duplicate_paths:
-                    return ()
-                else:
-                    duplicate_paths.add(path)
-
-        if self.fspath == path:  # __init__.py
-            return [self]
-
-        return ihook.pytest_collect_file(path=path, parent=self)
-
     def isinitpath(self, path):
         return path in self.session._initialpaths
 
