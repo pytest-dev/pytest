@@ -36,7 +36,7 @@ PYC_EXT = ".py" + (__debug__ and "c" or "o")
 PYC_TAIL = "." + PYTEST_TAG + PYC_EXT
 
 
-class AssertionRewritingHook(importlib.abc.MetaPathFinder):
+class AssertionRewritingHook(importlib.abc.MetaPathFinder, importlib.abc.Loader):
     """PEP302/PEP451 import hook which rewrites asserts."""
 
     def __init__(self, config):
