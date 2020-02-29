@@ -299,7 +299,7 @@ else:
         try:
             _write_pyc_fp(fp, source_stat, co)
             os.rename(proc_pyc, fspath(pyc))
-        except BaseException as e:
+        except OSError as e:
             state.trace("error writing pyc file at {}: errno={}".format(pyc, e.errno))
             # we ignore any failure to write the cache file
             # there are many reasons, permission-denied, pycache dir being a
