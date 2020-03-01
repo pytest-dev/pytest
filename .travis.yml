@@ -20,6 +20,7 @@ jobs:
     # Coverage for Python 3.5.{0,1} specific code, mostly typing related.
     - env: TOXENV=py35 PYTEST_COVERAGE=1 PYTEST_ADDOPTS="-k test_raises_cyclic_reference"
       before_install:
+        - python -m pip install -U pip==19.3.1
         # Work around https://github.com/jaraco/zipp/issues/40.
         - python -m pip install -U 'setuptools>=34.4.0' virtualenv==16.7.9
 
