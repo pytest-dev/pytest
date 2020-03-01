@@ -8,11 +8,13 @@ from typing import Dict
 from typing import Generator
 from typing import List
 from typing import Mapping
+from typing import Optional
 
 import pytest
 from _pytest import nodes
 from _pytest.compat import nullcontext
 from _pytest.config import _strtobool
+from _pytest.config import Config
 from _pytest.config import create_terminal_writer
 from _pytest.pathlib import Path
 
@@ -448,9 +450,7 @@ def caplog(request):
     result._finalize()
 
 
-def get_actual_log_level(config, *setting_names):
-    """Return the actual logging level."""
-
+def get_log_level_for_setting(config: Config, *setting_names: str) -> Optional[int]:
     for setting_name in setting_names:
         log_level = config.getoption(setting_name)
         if log_level is None:
@@ -458,7 +458,7 @@ def get_actual_log_level(config, *setting_names):
         if log_level:
             break
     else:
-        return
+        return None
 
     if isinstance(log_level, str):
         log_level = log_level.upper()
@@ -483,7 +483,7 @@ class LoggingPlugin:
     """Attaches to the logging module and captures log messages for each test.
     """
 
-    def __init__(self, config):
+    def __init__(self, config: Config) -> None:
         """Creates a new plugin to capture log messages.
 
         The formatter can be safely shared across all handlers so
@@ -503,9 +503,9 @@ class LoggingPlugin:
             get_option_ini(config, "log_date_format"),
             get_option_ini(config, "log_auto_indent"),
         )
-        self.log_level = get_actual_log_level(config, "log_level")
+        self.log_level = get_log_level_for_setting(config, "log_level")
 
-        self.log_file_level = get_actual_log_level(config, "log_file_level")
+        self.log_file_level = get_log_level_for_setting(config, "log_file_level")
         self.log_file_format = get_option_ini(config, "log_file_format", "log_format")
         self.log_file_date_format = get_option_ini(
             config, "log_file_date_format", "log_date_format"
@@ -518,7 +518,7 @@ class LoggingPlugin:
         if log_file:
             self.log_file_handler = logging.FileHandler(
                 log_file, mode="w", encoding="UTF-8"
-            )
+            )  # type: Optional[logging.FileHandler]
             self.log_file_handler.setFormatter(self.log_file_formatter)
         else:
             self.log_file_handler = None
@@ -568,7 +568,7 @@ class LoggingPlugin:
             get_option_ini(config, "log_auto_indent"),
         )
 
-        log_cli_level = get_actual_log_level(config, "log_cli_level", "log_level")
+        log_cli_level = get_log_level_for_setting(config, "log_cli_level", "log_level")
         self.log_cli_handler = log_cli_handler
         self.live_logs_context = lambda: catching_logs(
             log_cli_handler, formatter=log_cli_formatter, level=log_cli_level
