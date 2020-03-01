@@ -584,6 +584,24 @@ def test_group_warnings_by_message(testdir):
     assert result.stdout.str().count(warning_code) == 1
 
 
+@pytest.mark.filterwarnings("ignore::pytest.PytestExperimentalApiWarning")
+@pytest.mark.filterwarnings("always")
+def test_group_warnings_by_message_summary(testdir):
+    testdir.copy_example("warnings/test_group_warnings_by_message_summary.py")
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines(
+        [
+            "*== %s ==*" % WARNINGS_SUMMARY_HEADER,
+            "test_group_warnings_by_message_summary.py: 120 tests with warnings",
+            "*test_group_warnings_by_message_summary.py:7: UserWarning: foo",
+        ],
+        consecutive=True,
+    )
+    warning_code = 'warnings.warn(UserWarning("foo"))'
+    assert warning_code in result.stdout.str()
+    assert result.stdout.str().count(warning_code) == 1
+
+
 def test_pytest_configure_warning(testdir, recwarn):
     """Issue 5115."""
     testdir.makeconftest(
