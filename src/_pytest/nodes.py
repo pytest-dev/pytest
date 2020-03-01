@@ -29,6 +29,7 @@ from _pytest.mark.structures import MarkDecorator
 from _pytest.mark.structures import NodeKeywords
 from _pytest.outcomes import fail
 from _pytest.outcomes import Failed
+from _pytest.store import Store
 
 if TYPE_CHECKING:
     # Imported here due to circular import.
@@ -145,6 +146,10 @@ class Node(metaclass=NodeMeta):
             self._nodeid = self.parent.nodeid
             if self.name != "()":
                 self._nodeid += "::" + self.name
+
+        # A place where plugins can store information on the node for their
+        # own use. Currently only intended for internal plugins.
+        self._store = Store()
 
     @classmethod
     def from_parent(cls, parent: "Node", **kw):

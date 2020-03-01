@@ -1,4 +1,6 @@
 """ generic mechanism for marking and selecting python functions. """
+from typing import Optional
+
 from .legacy import matchkeyword
 from .legacy import matchmark
 from .structures import EMPTY_PARAMETERSET_OPTION
@@ -8,10 +10,15 @@ from .structures import MARK_GEN
 from .structures import MarkDecorator
 from .structures import MarkGenerator
 from .structures import ParameterSet
+from _pytest.config import Config
 from _pytest.config import hookimpl
 from _pytest.config import UsageError
+from _pytest.store import StoreKey
 
 __all__ = ["Mark", "MarkDecorator", "MarkGenerator", "get_empty_parameterset_mark"]
+
+
+old_mark_config_key = StoreKey[Optional[Config]]()
 
 
 def param(*values, **kw):
@@ -145,7 +152,7 @@ def pytest_collection_modifyitems(items, config):
 
 
 def pytest_configure(config):
-    config._old_mark_config = MARK_GEN._config
+    config._store[old_mark_config_key] = MARK_GEN._config
     MARK_GEN._config = config
 
     empty_parameterset = config.getini(EMPTY_PARAMETERSET_OPTION)
@@ -158,4 +165,4 @@ def pytest_configure(config):
 
 
 def pytest_unconfigure(config):
-    MARK_GEN._config = getattr(config, "_old_mark_config", None)
+    MARK_GEN._config = config._store.get(old_mark_config_key, None)

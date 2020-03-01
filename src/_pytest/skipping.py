@@ -4,6 +4,12 @@ from _pytest.mark.evaluate import MarkEvaluator
 from _pytest.outcomes import fail
 from _pytest.outcomes import skip
 from _pytest.outcomes import xfail
+from _pytest.store import StoreKey
+
+
+skipped_by_mark_key = StoreKey[bool]()
+evalxfail_key = StoreKey[MarkEvaluator]()
+unexpectedsuccess_key = StoreKey[str]()
 
 
 def pytest_addoption(parser):
@@ -68,14 +74,14 @@ def pytest_configure(config):
 @hookimpl(tryfirst=True)
 def pytest_runtest_setup(item):
     # Check if skip or skipif are specified as pytest marks
-    item._skipped_by_mark = False
+    item._store[skipped_by_mark_key] = False
     eval_skipif = MarkEvaluator(item, "skipif")
     if eval_skipif.istrue():
-        item._skipped_by_mark = True
+        item._store[skipped_by_mark_key] = True
         skip(eval_skipif.getexplanation())
 
     for skip_info in item.iter_markers(name="skip"):
-        item._skipped_by_mark = True
+        item._store[skipped_by_mark_key] = True
         if "reason" in skip_info.kwargs:
             skip(skip_info.kwargs["reason"])
         elif skip_info.args:
@@ -83,7 +89,7 @@ def pytest_runtest_setup(item):
         else:
             skip("unconditional skip")
 
-    item._evalxfail = MarkEvaluator(item, "xfail")
+    item._store[evalxfail_key] = MarkEvaluator(item, "xfail")
     check_xfail_no_run(item)
 
 
@@ -99,7 +105,7 @@ def pytest_pyfunc_call(pyfuncitem):
 def check_xfail_no_run(item):
     """check xfail(run=False)"""
     if not item.config.option.runxfail:
-        evalxfail = item._evalxfail
+        evalxfail = item._store[evalxfail_key]
         if evalxfail.istrue():
             if not evalxfail.get("run", True):
                 xfail("[NOTRUN] " + evalxfail.getexplanation())
@@ -107,12 +113,12 @@ def check_xfail_no_run(item):
 
 def check_strict_xfail(pyfuncitem):
     """check xfail(strict=True) for the given PASSING test"""
-    evalxfail = pyfuncitem._evalxfail
+    evalxfail = pyfuncitem._store[evalxfail_key]
     if evalxfail.istrue():
         strict_default = pyfuncitem.config.getini("xfail_strict")
         is_strict_xfail = evalxfail.get("strict", strict_default)
         if is_strict_xfail:
-            del pyfuncitem._evalxfail
+            del pyfuncitem._store[evalxfail_key]
             explanation = evalxfail.getexplanation()
             fail("[XPASS(strict)] " + explanation, pytrace=False)
 
@@ -121,12 +127,12 @@ def check_strict_xfail(pyfuncitem):
 def pytest_runtest_makereport(item, call):
     outcome = yield
     rep = outcome.get_result()
-    evalxfail = getattr(item, "_evalxfail", None)
-    # unittest special case, see setting of _unexpectedsuccess
-    if hasattr(item, "_unexpectedsuccess") and rep.when == "call":
-
-        if item._unexpectedsuccess:
-            rep.longrepr = "Unexpected success: {}".format(item._unexpectedsuccess)
+    evalxfail = item._store.get(evalxfail_key, None)
+    # unittest special case, see setting of unexpectedsuccess_key
+    if unexpectedsuccess_key in item._store and rep.when == "call":
+        reason = item._store[unexpectedsuccess_key]
+        if reason:
+            rep.longrepr = "Unexpected success: {}".format(reason)
         else:
             rep.longrepr = "Unexpected success"
         rep.outcome = "failed"
@@ -154,7 +160,7 @@ def pytest_runtest_makereport(item, call):
                 rep.outcome = "passed"
                 rep.wasxfail = explanation
     elif (
-        getattr(item, "_skipped_by_mark", False)
+        item._store.get(skipped_by_mark_key, True)
         and rep.skipped
         and type(rep.longrepr) is tuple
     ):
