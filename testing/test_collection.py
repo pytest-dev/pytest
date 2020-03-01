@@ -257,6 +257,7 @@ class TestCollectPluginHookRelay:
         assert len(wascalled) == 1
         assert wascalled[0].ext == ".abc"
 
+    @pytest.mark.filterwarnings("ignore:.*pytest_collect_directory.*")
     def test_pytest_collect_directory(self, testdir):
         wascalled = []
 
