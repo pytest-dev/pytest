@@ -194,7 +194,12 @@ def pytest_addoption(parser):
         "--log-level",
         dest="log_level",
         default=None,
-        help="logging level used by the logging module",
+        metavar="LEVEL",
+        help=(
+            "level of messages to catch/display.\n"
+            "Not set by default, so it depends on the root/parent log handler's"
+            ' effective level, where it is "WARNING" by default.'
+        ),
     )
     add_option_ini(
         "--log-format",
