@@ -712,6 +712,25 @@ def test_run_result_repr() -> None:
     )
 
 
+def test_testdir_outcomes_with_single_error(testdir):
+    p1 = testdir.makepyfile(
+        """
+        import pytest
+
+        @pytest.fixture
+        def bad_fixture():
+            raise Exception("bad")
+
+        def test_error1(bad_fixture):
+            pass
+    """
+    )
+    result = testdir.runpytest(str(p1))
+    result.assert_outcomes(error=1)
+
+    assert result.parseoutcomes() == {"errors": 1}
+
+
 def test_testdir_outcomes_with_multiple_errors(testdir):
     p1 = testdir.makepyfile(
         """
@@ -731,7 +750,7 @@ def test_testdir_outcomes_with_multiple_errors(testdir):
     result = testdir.runpytest(str(p1))
     result.assert_outcomes(error=2)
 
-    assert result.parseoutcomes() == {"error": 2}
+    assert result.parseoutcomes() == {"errors": 2}
 
 
 def test_makefile_joins_absolute_path(testdir: Testdir) -> None:
