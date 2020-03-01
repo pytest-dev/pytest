@@ -4,6 +4,7 @@ from typing import Optional
 
 from pluggy import HookspecMarker
 
+from .deprecated import COLLECT_DIRECTORY_HOOK
 from _pytest.compat import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -205,7 +206,7 @@ def pytest_ignore_collect(path, config):
     """
 
 
-@hookspec(firstresult=True)
+@hookspec(firstresult=True, warn_on_impl=COLLECT_DIRECTORY_HOOK)
 def pytest_collect_directory(path, parent):
     """ called before traversing a directory for collection files.
 
