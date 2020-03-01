@@ -51,6 +51,6 @@ NO_PRINT_LOGS = PytestDeprecationWarning(
 )
 
 COLLECT_DIRECTORY_HOOK = PytestDeprecationWarning(
-    "the pytest_collect_directory was intended to be deprecated since 2014\n"
-    "as it's missaligned since the removal of Directory as collector in 2010"
+    "The pytest_collect_directory hook is not working.\n"
+    "Please use collect_ignore in conftests or pytest_collection_modifyitems."
 )
