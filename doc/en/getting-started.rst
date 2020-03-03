@@ -73,11 +73,9 @@ That’s it. You can now execute the test function:
 
 The ``[100%]`` refer to the overall progress of running all test cases. After it finishes, pytest then shows a failure report because ``func(3)`` does not return ``5``.
 
-
 .. note::
 
     You can use the ``assert`` statement to verify test expectations. pytest’s `Advanced assertion introspection <http://docs.python.org/reference/simple_stmts.html#the-assert-statement>`_ will intelligently report intermediate values of the assert expression so you can avoid the many names `of JUnit legacy methods <http://docs.python.org/library/unittest.html#test-cases>`_.
-
 
 Run multiple tests
 ----------------------------------------------------------
