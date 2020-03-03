@@ -71,7 +71,7 @@ That’s it. You can now execute the test function:
     test_sample.py:6: AssertionError
     ============================ 1 failed in 0.12s =============================
 
-The ``[100%]`` refer to the overall progress of running all test cases. After it finishes, pytest then shows a failure report because ``func(3)`` does not return ``5``.
+The ``[100%]`` refers to the overall progress of running all test cases. After it finishes, pytest then shows a failure report because ``func(3)`` does not return ``5``.
 
 .. note::
 
