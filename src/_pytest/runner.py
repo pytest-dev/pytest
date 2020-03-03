@@ -14,8 +14,8 @@ import attr
 from .reports import CollectErrorRepr
 from .reports import CollectReport
 from .reports import TestReport
+from _pytest._code.code import ExceptionChainRepr
 from _pytest._code.code import ExceptionInfo
-from _pytest._code.code import ExceptionRepr
 from _pytest.compat import TYPE_CHECKING
 from _pytest.nodes import Collector
 from _pytest.nodes import Node
@@ -276,7 +276,7 @@ def pytest_make_collect_report(collector: Collector) -> CollectReport:
         if call.excinfo.errisinstance(tuple(skip_exceptions)):
             outcome = "skipped"
             r_ = collector._repr_failure_py(call.excinfo, "line")
-            assert isinstance(r_, ExceptionRepr), r_
+            assert isinstance(r_, ExceptionChainRepr), repr(r_)
             r = r_.reprcrash
             assert r
             longrepr = (str(r.path), r.lineno, r.message)
