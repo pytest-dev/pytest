@@ -106,5 +106,5 @@ def matchkeyword(colitem, keywordexpr):
             )
     try:
         return eval(keywordexpr, {}, mapping)
-    except SyntaxError:
+    except Exception:
         raise UsageError("Wrong expression passed to '-k': {}".format(keywordexpr))
