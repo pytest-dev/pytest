@@ -71,7 +71,6 @@ contacted individually:
 - Brianna Laugher ([@pfctdayelise](https://github.com/pfctdayelise)): brianna@laugher.id.au
 - Bruno Oliveira ([@nicoddemus](https://github.com/nicoddemus)): nicoddemus@gmail.com
 - Florian Bruhin ([@the-compiler](https://github.com/the-compiler)): pytest@the-compiler.org
-- Ronny Pfannschmidt ([@RonnyPfannschmidt](https://github.com/RonnyPfannschmidt)): ich@ronnypfannschmidt.de
 
 ## Attribution
 
