@@ -482,6 +482,9 @@ class FixtureRequest:
         But if you can only decide whether to use another fixture at test
         setup time, you may use this function to retrieve it inside a fixture
         or test function body.
+
+        :raise pytest.FixtureLookupError:
+            If the given fixture could not be found.
         """
         return self._get_active_fixturedef(argname).cached_result[0]
 
