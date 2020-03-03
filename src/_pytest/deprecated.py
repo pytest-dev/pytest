@@ -49,3 +49,8 @@ NO_PRINT_LOGS = PytestDeprecationWarning(
     "--no-print-logs is deprecated and scheduled for removal in pytest 6.0.\n"
     "Please use --show-capture instead."
 )
+
+COLLECT_DIRECTORY_HOOK = PytestDeprecationWarning(
+    "The pytest_collect_directory hook is not working.\n"
+    "Please use collect_ignore in conftests or pytest_collection_modifyitems."
+)

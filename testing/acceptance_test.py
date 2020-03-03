@@ -221,6 +221,7 @@ class TestGeneralUsage:
             "E   {}: No module named 'qwerty'".format(exc_name),
         ]
 
+    @pytest.mark.filterwarnings("always::pytest.PytestDeprecationWarning")
     def test_early_skip(self, testdir):
         testdir.mkdir("xyz")
         testdir.makeconftest(
