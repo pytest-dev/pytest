@@ -71,18 +71,13 @@ That’s it. You can now execute the test function:
     test_sample.py:6: AssertionError
     ============================ 1 failed in 0.12s =============================
 
-This test returns a failure report because ``func(3)`` does not return ``5``.
+The ``[100%]`` refer to the overall progress of running all test cases. After it finishes, pytest then shows a failure report because ``func(3)`` does not return ``5``.
+
 
 .. note::
 
     You can use the ``assert`` statement to verify test expectations. pytest’s `Advanced assertion introspection <http://docs.python.org/reference/simple_stmts.html#the-assert-statement>`_ will intelligently report intermediate values of the assert expression so you can avoid the many names `of JUnit legacy methods <http://docs.python.org/library/unittest.html#test-cases>`_.
 
-.. note::
-
-    The ``[100%]`` (or other right-aligned percentages on the same line
-    as a ``test_….py`` file) indicate the `progress of running all test cases
-    <https://blog.pytest.org/2017/whats-new-in-pytest-33/>`_, not the code coverage.
-    To obtain the latter, use `pytest-cov <https://pypi.org/project/pytest-cov/>`_.
 
 Run multiple tests
 ----------------------------------------------------------
