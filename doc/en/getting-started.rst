@@ -203,5 +203,3 @@ Check out additional pytest resources to help you customize tests for your uniqu
 * ":ref:`fixtures`" for providing a functional baseline to your tests
 * ":ref:`plugins`" for managing and writing plugins
 * ":ref:`goodpractices`" for virtualenv and test layouts
-
-.. include:: links.inc

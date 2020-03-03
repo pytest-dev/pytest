@@ -168,5 +168,3 @@ as a context manager, disabling capture inside the ``with`` block:
         with capsys.disabled():
             print("output not captured, going directly to sys.stdout")
         print("this output is also captured")
-
-.. include:: links.inc

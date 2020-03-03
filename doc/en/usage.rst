@@ -831,5 +831,4 @@ hook was invoked:
     multiple calls to ``pytest.main()`` from the same process (in order to re-run
     tests, for example) is not recommended.
 
-
-.. include:: links.inc
+.. _jenkins: http://jenkins-ci.org/
