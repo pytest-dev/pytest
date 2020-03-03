@@ -1023,7 +1023,6 @@ class ReprEntry(TerminalRepr):
     lines = attr.ib(type=Sequence[str])
     reprfuncargs = attr.ib(type=Optional["ReprFuncArgs"])
     reprlocals = attr.ib(type=Optional["ReprLocals"])
-    # XXX/NOTE: changed arg name: filelocrepr => reprfileloc
     reprfileloc = attr.ib(type=Optional["ReprFileLocation"])
     style = attr.ib(type="_TracebackStyle")
 
