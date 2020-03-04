@@ -356,7 +356,7 @@ class HookRecorder:
 
 
 @pytest.fixture
-def linecomp(request: FixtureRequest) -> "LineComp":
+def linecomp() -> "LineComp":
     return LineComp()
 
 
@@ -1283,21 +1283,21 @@ class Testdir:
 
 
 class LineComp:
-    def __init__(self):
+    def __init__(self) -> None:
         self.stringio = StringIO()
+        """:class:`python:io.StringIO()` instance used for input."""
 
-    def assert_contains_lines(self, lines2):
-        """Assert that lines2 are contained (linearly) in lines1.
+    def assert_contains_lines(self, lines2: Sequence[str]) -> None:
+        """Assert that ``lines2`` are contained (linearly) in :attr:`stringio`'s value.
 
-        Return a list of extralines found.
-
+        Lines are matched using :func:`LineMatcher.fnmatch_lines`.
         """
         __tracebackhide__ = True
         val = self.stringio.getvalue()
         self.stringio.truncate(0)
         self.stringio.seek(0)
         lines1 = val.split("\n")
-        return LineMatcher(lines1).fnmatch_lines(lines2)
+        LineMatcher(lines1).fnmatch_lines(lines2)
 
 
 class LineMatcher:
