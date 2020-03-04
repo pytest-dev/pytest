@@ -45,6 +45,19 @@ This limitation in api surface intends to enable better/simpler refactoring of t
 This means that instead of :code:`MyItem(name="foo", parent=collector, obj=42)`
 one now has to invoke :code:`MyItem.from_parent(collector, name="foo")`.
 
+Plugins that wish to support older versions of pytest and suppress the warning can use
+`hasattr` to check if `from_parent` exists in that version:
+
+.. code-block:: python
+
+    def pytest_pycollect_makeitem(collector, name, obj):
+        if hasattr(MyItem, "from_parent"):
+            item = MyItem.from_parent(collector, name="foo")
+            item.obj = 42
+            return item
+        else:
+            return MyItem(name="foo", parent=collector, obj=42)
+
 Note that ``from_parent`` should only be called with keyword arguments for the parameters.
 
 
