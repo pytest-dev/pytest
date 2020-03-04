@@ -3,10 +3,15 @@ this is a place where we put datastructures used by legacy apis
 we hope to remove
 """
 import keyword
+from typing import Set
 
 import attr
 
+from _pytest.compat import TYPE_CHECKING
 from _pytest.config import UsageError
+
+if TYPE_CHECKING:
+    from _pytest.nodes import Item  # noqa: F401 (used in type string)
 
 
 @attr.s
@@ -25,16 +30,16 @@ class MarkMapping:
         return name in self.own_mark_names
 
 
+@attr.s
 class KeywordMapping:
     """Provides a local mapping for keywords.
     Given a list of names, map any substring of one of these names to True.
     """
 
-    def __init__(self, names):
-        self._names = names
+    _names = attr.ib(type=Set[str])
 
     @classmethod
-    def from_item(cls, item):
+    def from_item(cls, item: "Item") -> "KeywordMapping":
         mapped_names = set()
 
         # Add the names of the current item and any parent items
@@ -48,15 +53,16 @@ class KeywordMapping:
         mapped_names.update(item.listextrakeywords())
 
         # Add the names attached to the current function through direct assignment
-        if hasattr(item, "function"):
-            mapped_names.update(item.function.__dict__)
+        function_obj = getattr(item, "function", None)
+        if function_obj:
+            mapped_names.update(function_obj.__dict__)
 
         # add the markers to the keywords as we no longer handle them correctly
         mapped_names.update(mark.name for mark in item.iter_markers())
 
         return cls(mapped_names)
 
-    def __getitem__(self, subname):
+    def __getitem__(self, subname: str) -> bool:
         """Return whether subname is included within stored names.
 
         The string inclusion check is case-insensitive.
