@@ -104,6 +104,15 @@ class Store:
         except KeyError:
             return default
 
+    def setdefault(self, key: StoreKey[T], default: T) -> T:
+        """Return the value of key if already set, otherwise set the value
+        of key to default and return default."""
+        try:
+            return self[key]
+        except KeyError:
+            self[key] = default
+            return default
+
     def __delitem__(self, key: StoreKey[T]) -> None:
         """Delete the value for key.
 
