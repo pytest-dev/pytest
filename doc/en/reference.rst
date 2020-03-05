@@ -886,8 +886,11 @@ TestReport
 _Result
 ~~~~~~~
 
+Result used within :ref:`hook wrappers <hookwrapper>`.
+
 .. autoclass:: pluggy.callers._Result
-    :members:
+.. automethod:: pluggy.callers._Result.get_result
+.. automethod:: pluggy.callers._Result.force_result
 
 Special Variables
 -----------------
