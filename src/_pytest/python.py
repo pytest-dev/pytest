@@ -166,7 +166,8 @@ def async_warn(nodeid: str) -> None:
     )
     msg += "  - pytest-asyncio\n"
     msg += "  - pytest-trio\n"
-    msg += "  - pytest-tornasync"
+    msg += "  - pytest-tornasync\n"
+    msg += "  - pytest-twisted"
     warnings.warn(PytestUnhandledCoroutineWarning(msg.format(nodeid)))
     skip(msg="async def function and no async plugin installed (see warnings)")
 
