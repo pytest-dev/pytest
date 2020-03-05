@@ -5,7 +5,8 @@ that is planned to be removed in the next pytest release.
 Keeping it in a central location makes it easy to track what is deprecated and should
 be removed when the time comes.
 
-All constants defined in this module should be either PytestWarning instances or UnformattedWarning
+All constants defined in this module should be either instances of
+:class:`PytestWarning`, or :class:`UnformattedWarning`
 in case of warnings which need to format their messages.
 """
 from _pytest.warning_types import PytestDeprecationWarning
