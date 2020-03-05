@@ -11,71 +11,46 @@ if TYPE_CHECKING:
 
 
 class PytestWarning(UserWarning):
-    """
-    Bases: :class:`UserWarning`.
-
-    Base class for all warnings emitted by pytest.
-    """
+    """Base class for all warnings emitted by pytest."""
 
     __module__ = "pytest"
 
 
 class PytestAssertRewriteWarning(PytestWarning):
-    """
-    Bases: :class:`PytestWarning`.
-
-    Warning emitted by the pytest assert rewrite module.
-    """
+    """Warning emitted by the pytest assert rewrite module."""
 
     __module__ = "pytest"
 
 
 class PytestCacheWarning(PytestWarning):
-    """
-    Bases: :class:`PytestWarning`.
-
-    Warning emitted by the cache plugin in various situations.
-    """
+    """Warning emitted by the cache plugin in various situations."""
 
     __module__ = "pytest"
 
 
 class PytestConfigWarning(PytestWarning):
-    """
-    Bases: :class:`PytestWarning`.
-
-    Warning emitted for configuration issues.
-    """
+    """Warning emitted for configuration issues."""
 
     __module__ = "pytest"
 
 
 class PytestCollectionWarning(PytestWarning):
-    """
-    Bases: :class:`PytestWarning`.
-
-    Warning emitted when pytest is not able to collect a file or symbol in a module.
-    """
+    """Warning emitted when pytest is not able to collect a file or symbol in a module."""
 
     __module__ = "pytest"
 
 
 class PytestDeprecationWarning(PytestWarning, DeprecationWarning):
-    """
-    Bases: :class:`pytest.PytestWarning`, :class:`DeprecationWarning`.
-
-    Warning class for features that will be removed in a future version.
-    """
+    """Warning class for features that will be removed in a future version."""
 
     __module__ = "pytest"
 
 
 class PytestExperimentalApiWarning(PytestWarning, FutureWarning):
-    """
-    Bases: :class:`pytest.PytestWarning`, :class:`FutureWarning`.
+    """Warning category used to denote experiments in pytest.
 
-    Warning category used to denote experiments in pytest. Use sparingly as the API might change or even be
-    removed completely in future version
+    Use sparingly as the API might change or even be removed completely in a
+    future version.
     """
 
     __module__ = "pytest"
@@ -90,22 +65,19 @@ class PytestExperimentalApiWarning(PytestWarning, FutureWarning):
 
 
 class PytestUnhandledCoroutineWarning(PytestWarning):
-    """
-    Bases: :class:`PytestWarning`.
+    """Warning emitted for an unhandled coroutine.
 
-    Warning emitted when pytest encounters a test function which is a coroutine,
-    but it was not handled by any async-aware plugin. Coroutine test functions
-    are not natively supported.
+    A coroutine was encountered when collecting test functions, but was not
+    handled by any async-aware plugin.
+    Coroutine test functions are not natively supported.
     """
 
     __module__ = "pytest"
 
 
 class PytestUnknownMarkWarning(PytestWarning):
-    """
-    Bases: :class:`PytestWarning`.
+    """Warning emitted on use of unknown markers.
 
-    Warning emitted on use of unknown markers.
     See https://docs.pytest.org/en/latest/mark.html for details.
     """
 

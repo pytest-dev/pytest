@@ -416,19 +416,28 @@ features.
 The following warning types are used by pytest and are part of the public API:
 
 .. autoclass:: pytest.PytestWarning
+   :show-inheritance:
 
 .. autoclass:: pytest.PytestAssertRewriteWarning
+   :show-inheritance:
 
 .. autoclass:: pytest.PytestCacheWarning
+   :show-inheritance:
 
 .. autoclass:: pytest.PytestCollectionWarning
+   :show-inheritance:
 
 .. autoclass:: pytest.PytestConfigWarning
+   :show-inheritance:
 
 .. autoclass:: pytest.PytestDeprecationWarning
+   :show-inheritance:
 
 .. autoclass:: pytest.PytestExperimentalApiWarning
+   :show-inheritance:
 
 .. autoclass:: pytest.PytestUnhandledCoroutineWarning
+   :show-inheritance:
 
 .. autoclass:: pytest.PytestUnknownMarkWarning
+   :show-inheritance:
