@@ -89,7 +89,10 @@ _W = TypeVar("_W", bound=PytestWarning)
 
 @attr.s
 class UnformattedWarning(Generic[_W]):
-    """Used to hold warnings that need to format their message at runtime, as opposed to a direct message.
+    """A warning meant to be formatted during runtime.
+
+    This is used to hold warnings that need to format their message at runtime,
+    as opposed to a direct message.
     """
 
     category = attr.ib(type="Type[_W]")
