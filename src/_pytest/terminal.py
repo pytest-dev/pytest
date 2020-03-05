@@ -486,7 +486,7 @@ class TerminalReporter:
     def _is_last_item(self):
         return self._progress_items_reported == self._session.testscollected
 
-    def pytest_runtest_teardown(self) -> None:
+    def pytest_runtest_logfinish(self) -> None:
         """Write progress if past edge."""
         if self.verbosity >= 0 or not self._show_progress_info:
             return
