@@ -17,9 +17,9 @@ are available on PyPI.
 
 While pytest ``5.0`` will be the new mainstream and development version, until **January 2020**
 the pytest core team plans to make bug-fix releases of the pytest ``4.6`` series by
-back-porting patches to the ``4.6-maintenance`` branch that affect Python 2 users.
+back-porting patches to the ``4.6.x`` branch that affect Python 2 users.
 
-**After 2020**, the core team will no longer actively backport patches, but the ``4.6-maintenance``
+**After 2020**, the core team will no longer actively backport patches, but the ``4.6.x``
 branch will continue to exist so the community itself can contribute patches. The core team will
 be happy to accept those patches and make new ``4.6`` releases **until mid-2020**.
 
