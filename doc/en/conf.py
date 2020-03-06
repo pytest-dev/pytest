@@ -83,7 +83,6 @@ copyright = "2015–2020, holger krekel and pytest-dev team"
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 exclude_patterns = [
-    "links.inc",
     "_build",
     "naming20.rst",
     "test/*",

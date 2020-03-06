@@ -153,4 +153,6 @@ As of mid-2013, there shouldn't be a problem anymore when you
 use the standard setuptools (note that distribute has been merged
 back into setuptools which is now shipped directly with virtualenv).
 
-.. include:: links.inc
+.. _nose: https://nose.readthedocs.io/en/latest/
+.. _pylib: https://py.readthedocs.io/en/latest/
+.. _`xUnit style setup`: xunit_setup.html

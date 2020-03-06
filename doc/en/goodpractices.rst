@@ -232,5 +232,4 @@ options.  It will run tests against the installed package and not
 against your source code checkout, helping to detect packaging
 glitches.
 
-
-.. include:: links.inc
+.. _`venv`: https://docs.python.org/3/library/venv.html

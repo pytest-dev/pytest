@@ -3,8 +3,6 @@
 Running tests written for nose
 =======================================
 
-.. include:: links.inc
-
 ``pytest`` has basic support for running tests written for nose_.
 
 .. _nosestyle:
@@ -72,3 +70,5 @@ Unsupported idioms / known issues
   There are no plans to fix this currently because ``yield``-tests
   are deprecated in pytest 3.0, with ``pytest.mark.parametrize``
   being the recommended alternative.
+
+.. _nose: https://nose.readthedocs.io/en/latest/
