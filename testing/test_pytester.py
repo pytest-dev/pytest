@@ -648,7 +648,7 @@ def test_run_stdin(testdir) -> None:
     assert result.ret == 0
 
 
-def test_popen_stdin_pipe(testdir) -> None:
+def test_popen_stdin_pipe(testdir: Testdir) -> None:
     proc = testdir.popen(
         [sys.executable, "-c", "import sys; print(sys.stdin.read())"],
         stdout=subprocess.PIPE,
@@ -662,7 +662,7 @@ def test_popen_stdin_pipe(testdir) -> None:
     assert proc.returncode == 0
 
 
-def test_popen_stdin_bytes(testdir) -> None:
+def test_popen_stdin_bytes(testdir: Testdir) -> None:
     proc = testdir.popen(
         [sys.executable, "-c", "import sys; print(sys.stdin.read())"],
         stdout=subprocess.PIPE,
@@ -675,7 +675,7 @@ def test_popen_stdin_bytes(testdir) -> None:
     assert proc.returncode == 0
 
 
-def test_popen_default_stdin_stderr_and_stdin_None(testdir) -> None:
+def test_popen_default_stdin_stderr_and_stdin_None(testdir: Testdir) -> None:
     # stdout, stderr default to pipes,
     # stdin can be None to not close the pipe, avoiding
     # "ValueError: flush of closed file" with `communicate()`.
@@ -691,6 +691,24 @@ def test_popen_default_stdin_stderr_and_stdin_None(testdir) -> None:
     stdout, stderr = proc.communicate(b"ignored")
     assert stdout.splitlines() == [b"", b"stdout"]
     assert stderr.splitlines() == [b"stderr"]
+    assert proc.returncode == 0
+
+
+def test_popen_encoding_and_close_stdin_sentinel(testdir: Testdir) -> None:
+    p1 = testdir.makepyfile(
+        """
+        import sys
+        print('stdout')
+        sys.stderr.write('stderr')
+        """
+    )
+    proc = testdir.popen(
+        [sys.executable, str(p1)], stdin=testdir.CLOSE_STDIN, encoding="utf8"
+    )
+    assert proc.wait() == 0
+    assert proc.stdout and proc.stderr
+    assert proc.stdout.read().splitlines() == ["stdout"]
+    assert proc.stderr.read().splitlines() == ["stderr"]
     assert proc.returncode == 0
 
 
