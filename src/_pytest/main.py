@@ -496,11 +496,11 @@ class Session(nodes.FSCollector):
             self.trace.root.indent += 1
             try:
                 yield from self._collect(fspath, parts)
-            except NoMatch:
+            except NoMatch as exc:
                 report_arg = "::".join((str(fspath), *parts))
                 # we are inside a make_report hook so
                 # we cannot directly pass through the exception
-                self._notfound.append((report_arg, sys.exc_info()[1]))
+                self._notfound.append((report_arg, exc))
 
             self.trace.root.indent -= 1
         self._collection_node_cache1.clear()

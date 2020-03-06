@@ -612,13 +612,9 @@ class PytestPluginManager(PluginManager):
         try:
             __import__(importspec)
         except ImportError as e:
-            new_exc_message = 'Error importing plugin "{}": {}'.format(
-                modname, str(e.args[0])
-            )
-            new_exc = ImportError(new_exc_message)
-            tb = sys.exc_info()[2]
-
-            raise new_exc.with_traceback(tb)
+            raise ImportError(
+                'Error importing plugin "{}": {}'.format(modname, str(e.args[0]))
+            ).with_traceback(e.__traceback__)
 
         except Skipped as e:
             from _pytest.warnings import _issue_warning_captured

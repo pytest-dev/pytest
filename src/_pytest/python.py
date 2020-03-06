@@ -516,8 +516,7 @@ class Module(nodes.File, PyCollector):
             mod = self.fspath.pyimport(ensuresyspath=importmode)
         except SyntaxError:
             raise self.CollectError(ExceptionInfo.from_current().getrepr(style="short"))
-        except self.fspath.ImportMismatchError:
-            e = sys.exc_info()[1]
+        except self.fspath.ImportMismatchError as e:
             raise self.CollectError(
                 "import file mismatch:\n"
                 "imported module %r has this __file__ attribute:\n"
