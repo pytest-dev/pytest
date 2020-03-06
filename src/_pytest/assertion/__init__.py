@@ -7,6 +7,7 @@ from typing import Optional
 from _pytest.assertion import rewrite
 from _pytest.assertion import truncate
 from _pytest.assertion import util
+from _pytest.assertion.rewrite import assertstate_key
 from _pytest.compat import TYPE_CHECKING
 from _pytest.config import hookimpl
 
@@ -82,13 +83,13 @@ class AssertionState:
 
 def install_importhook(config):
     """Try to install the rewrite hook, raise SystemError if it fails."""
-    config._assertstate = AssertionState(config, "rewrite")
-    config._assertstate.hook = hook = rewrite.AssertionRewritingHook(config)
+    config._store[assertstate_key] = AssertionState(config, "rewrite")
+    config._store[assertstate_key].hook = hook = rewrite.AssertionRewritingHook(config)
     sys.meta_path.insert(0, hook)
-    config._assertstate.trace("installed rewrite import hook")
+    config._store[assertstate_key].trace("installed rewrite import hook")
 
     def undo():
-        hook = config._assertstate.hook
+        hook = config._store[assertstate_key].hook
         if hook is not None and hook in sys.meta_path:
             sys.meta_path.remove(hook)
 
@@ -100,7 +101,7 @@ def pytest_collection(session: "Session") -> None:
     # this hook is only called when test modules are collected
     # so for example not in the master process of pytest-xdist
     # (which does not collect test modules)
-    assertstate = getattr(session.config, "_assertstate", None)
+    assertstate = session.config._store.get(assertstate_key, None)
     if assertstate:
         if assertstate.hook is not None:
             assertstate.hook.set_session(session)
@@ -163,7 +164,7 @@ def pytest_runtest_protocol(item):
 
 
 def pytest_sessionfinish(session):
-    assertstate = getattr(session.config, "_assertstate", None)
+    assertstate = session.config._store.get(assertstate_key, None)
     if assertstate:
         if assertstate.hook is not None:
             assertstate.hook.set_session(None)

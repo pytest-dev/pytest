@@ -2,21 +2,28 @@ import os
 import platform
 import sys
 import traceback
+from typing import Any
+from typing import Dict
 
 from ..outcomes import fail
 from ..outcomes import TEST_OUTCOME
+from _pytest.config import Config
+from _pytest.store import StoreKey
 
 
-def cached_eval(config, expr, d):
-    if not hasattr(config, "_evalcache"):
-        config._evalcache = {}
+evalcache_key = StoreKey[Dict[str, Any]]()
+
+
+def cached_eval(config: Config, expr: str, d: Dict[str, object]) -> Any:
+    default = {}  # type: Dict[str, object]
+    evalcache = config._store.setdefault(evalcache_key, default)
     try:
-        return config._evalcache[expr]
+        return evalcache[expr]
     except KeyError:
         import _pytest._code
 
         exprcode = _pytest._code.compile(expr, mode="eval")
-        config._evalcache[expr] = x = eval(exprcode, d)
+        evalcache[expr] = x = eval(exprcode, d)
         return x
 
 

@@ -37,6 +37,14 @@ def test_store() -> None:
     with pytest.raises(KeyError):
         store[key1]
 
+    # setdefault
+    store[key1] = "existing"
+    assert store.setdefault(key1, "default") == "existing"
+    assert store[key1] == "existing"
+    key_setdefault = StoreKey[bytes]()
+    assert store.setdefault(key_setdefault, b"default") == b"default"
+    assert store[key_setdefault] == b"default"
+
     # Can't accidentally add attributes to store object itself.
     with pytest.raises(AttributeError):
         store.foo = "nope"  # type: ignore[attr-defined] # noqa: F821
