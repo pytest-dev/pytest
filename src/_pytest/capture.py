@@ -9,9 +9,7 @@ import os
 import sys
 from io import UnsupportedOperation
 from tempfile import TemporaryFile
-from typing import BinaryIO
 from typing import Generator
-from typing import Iterable
 from typing import Optional
 
 import pytest
@@ -390,55 +388,6 @@ class CaptureFixture:
             yield
 
 
-def safe_text_dupfile(f, mode, default_encoding="UTF8"):
-    """ return an open text file object that's a duplicate of f on the
-        FD-level if possible.
-    """
-    encoding = getattr(f, "encoding", None)
-    try:
-        fd = f.fileno()
-    except Exception:
-        if "b" not in getattr(f, "mode", "") and hasattr(f, "encoding"):
-            # we seem to have a text stream, let's just use it
-            return f
-    else:
-        newfd = os.dup(fd)
-        if "b" not in mode:
-            mode += "b"
-        f = os.fdopen(newfd, mode, 0)  # no buffering
-    return EncodedFile(f, encoding or default_encoding)
-
-
-class EncodedFile:
-    errors = "strict"  # possibly needed by py3 code (issue555)
-
-    def __init__(self, buffer: BinaryIO, encoding: str) -> None:
-        self.buffer = buffer
-        self.encoding = encoding
-
-    def write(self, s: str) -> int:
-        if not isinstance(s, str):
-            raise TypeError(
-                "write() argument must be str, not {}".format(type(s).__name__)
-            )
-        return self.buffer.write(s.encode(self.encoding, "replace"))
-
-    def writelines(self, lines: Iterable[str]) -> None:
-        self.buffer.writelines(x.encode(self.encoding, "replace") for x in lines)
-
-    @property
-    def name(self) -> str:
-        """Ensure that file.name is a string."""
-        return repr(self.buffer)
-
-    @property
-    def mode(self) -> str:
-        return self.buffer.mode.replace("b", "")
-
-    def __getattr__(self, name):
-        return getattr(object.__getattribute__(self, "buffer"), name)
-
-
 CaptureResult = collections.namedtuple("CaptureResult", ["out", "err"])
 
 
@@ -548,9 +497,7 @@ class FDCaptureBinary:
                 self.syscapture = SysCapture(targetfd)
             else:
                 if tmpfile is None:
-                    f = TemporaryFile()
-                    with f:
-                        tmpfile = safe_text_dupfile(f, mode="wb+")
+                    tmpfile = TemporaryFile("wt+", encoding="utf-8", errors="replace")
                 if targetfd in patchsysdict:
                     self.syscapture = SysCapture(targetfd, tmpfile)
                 else:
@@ -579,7 +526,7 @@ class FDCaptureBinary:
 
     def snap(self):
         self.tmpfile.seek(0)
-        res = self.tmpfile.read()
+        res = self.tmpfile.buffer.read()
         self.tmpfile.seek(0)
         self.tmpfile.truncate()
         return res
@@ -621,10 +568,10 @@ class FDCapture(FDCaptureBinary):
     EMPTY_BUFFER = str()  # type: ignore
 
     def snap(self):
-        res = super().snap()
-        enc = getattr(self.tmpfile, "encoding", None)
-        if enc and isinstance(res, bytes):
-            res = str(res, enc, "replace")
+        self.tmpfile.seek(0)
+        res = self.tmpfile.read()
+        self.tmpfile.seek(0)
+        self.tmpfile.truncate()
         return res
 
 

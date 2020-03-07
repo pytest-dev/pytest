@@ -1,16 +1,12 @@
 import contextlib
 import io
 import os
-import pickle
 import subprocess
 import sys
 import textwrap
-from io import StringIO
 from io import UnsupportedOperation
 from typing import BinaryIO
 from typing import Generator
-from typing import List
-from typing import TextIO
 
 import pytest
 from _pytest import capture
@@ -865,49 +861,6 @@ def tmpfile(testdir) -> Generator[BinaryIO, None, None]:
         f.close()
 
 
-@needsosdup
-def test_dupfile(tmpfile) -> None:
-    flist = []  # type: List[TextIO]
-    for i in range(5):
-        nf = capture.safe_text_dupfile(tmpfile, "wb")
-        assert nf != tmpfile
-        assert nf.fileno() != tmpfile.fileno()
-        assert nf not in flist
-        print(i, end="", file=nf)
-        flist.append(nf)
-
-    fname_open = flist[0].name
-    assert fname_open == repr(flist[0].buffer)
-
-    for i in range(5):
-        f = flist[i]
-        f.close()
-    fname_closed = flist[0].name
-    assert fname_closed == repr(flist[0].buffer)
-    assert fname_closed != fname_open
-    tmpfile.seek(0)
-    s = tmpfile.read()
-    assert "01234" in repr(s)
-    tmpfile.close()
-    assert fname_closed == repr(flist[0].buffer)
-
-
-def test_dupfile_on_bytesio():
-    bio = io.BytesIO()
-    f = capture.safe_text_dupfile(bio, "wb")
-    f.write("hello")
-    assert bio.getvalue() == b"hello"
-    assert "BytesIO object" in f.name
-
-
-def test_dupfile_on_textio():
-    sio = StringIO()
-    f = capture.safe_text_dupfile(sio, "wb")
-    f.write("hello")
-    assert sio.getvalue() == "hello"
-    assert not hasattr(f, "name")
-
-
 @contextlib.contextmanager
 def lsof_check():
     pid = os.getpid()
@@ -1355,8 +1308,8 @@ def test_error_attribute_issue555(testdir):
         """
         import sys
         def test_capattr():
-            assert sys.stdout.errors == "strict"
-            assert sys.stderr.errors == "strict"
+            assert sys.stdout.errors == "replace"
+            assert sys.stderr.errors == "replace"
     """
     )
     reprec = testdir.inline_run()
@@ -1429,15 +1382,6 @@ def test_crash_on_closing_tmpfile_py27(testdir):
     assert result.ret == 0
     assert result.stderr.str() == ""
     result.stdout.no_fnmatch_line("*IOError*")
-
-
-def test_pickling_and_unpickling_encoded_file():
-    # See https://bitbucket.org/pytest-dev/pytest/pull-request/194
-    # pickle.loads() raises infinite recursion if
-    # EncodedFile.__getattr__ is not implemented properly
-    ef = capture.EncodedFile(None, None)
-    ef_as_str = pickle.dumps(ef)
-    pickle.loads(ef_as_str)
 
 
 def test_global_capture_with_live_logging(testdir):
@@ -1553,18 +1497,6 @@ def test_typeerror_encodedfile_write(testdir):
 def test_stderr_write_returns_len(capsys):
     """Write on Encoded files, namely captured stderr, should return number of characters written."""
     assert sys.stderr.write("Foo") == 3
-
-
-def test_encodedfile_writelines(tmpfile: BinaryIO) -> None:
-    ef = capture.EncodedFile(tmpfile, "utf-8")
-    with pytest.raises(AttributeError):
-        ef.writelines([b"line1", b"line2"])  # type: ignore[list-item]  # noqa: F821
-    assert ef.writelines(["line1", "line2"]) is None  # type: ignore[func-returns-value]  # noqa: F821
-    tmpfile.seek(0)
-    assert tmpfile.read() == b"line1line2"
-    tmpfile.close()
-    with pytest.raises(ValueError):
-        ef.read()
 
 
 def test__get_multicapture() -> None:
