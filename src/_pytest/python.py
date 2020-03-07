@@ -249,13 +249,10 @@ def pytest_pycollect_makeitem(collector, name, obj):
             outcome.force_result(res)
 
 
-class PyobjContext:
+class PyobjMixin:
     module = pyobj_property("Module")
     cls = pyobj_property("Class")
     instance = pyobj_property("Instance")
-
-
-class PyobjMixin(PyobjContext):
     _ALLOW_MARKERS = True
 
     @property
