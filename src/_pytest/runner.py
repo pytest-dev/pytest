@@ -153,9 +153,9 @@ def pytest_runtest_teardown(item, nextitem):
 
 def _update_current_test_var(item, when):
     """
-    Update PYTEST_CURRENT_TEST to reflect the current item and stage.
+    Update :envvar:`PYTEST_CURRENT_TEST` to reflect the current item and stage.
 
-    If ``when`` is None, delete PYTEST_CURRENT_TEST from the environment.
+    If ``when`` is None, delete ``PYTEST_CURRENT_TEST`` from the environment.
     """
     var_name = "PYTEST_CURRENT_TEST"
     if when:
