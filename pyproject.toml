@@ -54,3 +54,6 @@ template = "changelog/_template.rst"
   directory = "trivial"
   name = "Trivial/Internal Changes"
   showcontent = true
+
+[tool.black]
+target-version = ['py35']
