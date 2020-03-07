@@ -702,7 +702,7 @@ def test_plugin_loading_order(testdir):
                 config = session.config
                 terminal_plugin.append(bool(config.pluginmanager.get_plugin("terminalreporter")))
             """
-        }
+        },
     )
     testdir.syspathinsert()
     result = testdir.runpytest("-p", "myplugin", str(p1))
@@ -781,7 +781,7 @@ def test_config_in_subdirectory_colon_command_line_issue2148(testdir):
 
     testdir.makefile(
         ".ini",
-        **{"pytest": "[pytest]\nfoo = root", "subdir/pytest": "[pytest]\nfoo = subdir"}
+        **{"pytest": "[pytest]\nfoo = root", "subdir/pytest": "[pytest]\nfoo = subdir"},
     )
 
     testdir.makepyfile(

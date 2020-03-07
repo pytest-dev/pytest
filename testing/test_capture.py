@@ -439,7 +439,7 @@ class TestCaptureFixture:
                 out, err = capsys.readouterr()
                 assert out.startswith("42")
             """,
-            *opt
+            *opt,
         )
         reprec.assertoutcome(passed=1)
 
