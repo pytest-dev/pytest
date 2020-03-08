@@ -1548,7 +1548,7 @@ def test_typeerror_encodedfile_write(testdir):
     result_with_capture.stdout.fnmatch_lines(
         [
             '>       sys.stdout.write(b"foo")',
-            ">           raise TypeError*",
+            "    def write*",
             "E           TypeError: write() argument must be str, not bytes",
             "FAILED test_typeerror_encodedfile_write.py::test_fails - *",
         ]
