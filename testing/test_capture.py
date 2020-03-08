@@ -542,18 +542,33 @@ class TestCaptureFixture:
         reprec.assertoutcome(passed=1)
 
     def test_capsysbinary(self, testdir):
-        reprec = testdir.inline_runsource(
+        p1 = testdir.makepyfile(
             """\
             def test_hello(capsysbinary):
                 import sys
+
                 # some likely un-decodable bytes
                 sys.stdout.buffer.write(b'\\xfe\\x98\\x20')
+
                 out, err = capsysbinary.readouterr()
                 assert out == b'\\xfe\\x98\\x20'
                 assert err == b''
+
+                # handles writing strings
+                print("hello")
+                print("hello stderr", file=sys.stderr)
             """
         )
-        reprec.assertoutcome(passed=1)
+        result = testdir.runpytest(str(p1), "-rA")
+        result.stdout.fnmatch_lines(
+            [
+                "*- Captured stdout call -*",
+                "hello",
+                "*- Captured stderr call -*",
+                "hello stderr",
+                "*= 1 passed in *",
+            ]
+        )
 
     def test_partial_setup_failure(self, testdir):
         p = testdir.makepyfile(
