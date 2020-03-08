@@ -1550,8 +1550,7 @@ def test_typeerror_encodedfile_write(testdir):
             '>       sys.stdout.write(b"foo")',
             ">           raise TypeError*",
             "E           TypeError: write() argument must be str, not bytes",
-            "FAILED test_typeerror_encodedfile_write.py:3::test_fails"
-            " - TypeError: write() argument must be str, not bytes",
+            "FAILED test_typeerror_encodedfile_write.py::test_fails - *",
         ]
     )
     result_without_capture = testdir.runpytest("-s", str(p))
@@ -1559,8 +1558,7 @@ def test_typeerror_encodedfile_write(testdir):
         [
             '>       sys.stdout.write(b"foo")',
             "E       TypeError: write() argument must be str, not bytes",
-            "FAILED test_typeerror_encodedfile_write.py:3::test_fails"
-            " - TypeError: write() argument must be str, not bytes",
+            "FAILED test_typeerror_encodedfile_write.py::test_fails - *",
         ]
     )
 
