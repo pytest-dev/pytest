@@ -1141,7 +1141,7 @@ def fixture(
         params=params,
         autouse=autouse,
         ids=ids,
-        name=name
+        name=name,
     )
     scope = arguments.get("scope")
     params = arguments.get("params")
@@ -1179,7 +1179,7 @@ def yield_fixture(
         params=params,
         autouse=autouse,
         ids=ids,
-        name=name
+        name=name,
     )
 
 
