@@ -542,18 +542,40 @@ class TestCaptureFixture:
         reprec.assertoutcome(passed=1)
 
     def test_capsysbinary(self, testdir):
-        reprec = testdir.inline_runsource(
-            """\
+        p1 = testdir.makepyfile(
+            r"""
             def test_hello(capsysbinary):
                 import sys
-                # some likely un-decodable bytes
-                sys.stdout.buffer.write(b'\\xfe\\x98\\x20')
+
+                sys.stdout.buffer.write(b'hello')
+
+                # Some likely un-decodable bytes.
+                sys.stdout.buffer.write(b'\xfe\x98\x20')
+
+                sys.stdout.buffer.flush()
+
+                # Ensure writing in text mode still works and is captured.
+                # https://github.com/pytest-dev/pytest/issues/6871
+                print("world", flush=True)
+
                 out, err = capsysbinary.readouterr()
-                assert out == b'\\xfe\\x98\\x20'
+                assert out == b'hello\xfe\x98\x20world\n'
                 assert err == b''
+
+                print("stdout after")
+                print("stderr after", file=sys.stderr)
             """
         )
-        reprec.assertoutcome(passed=1)
+        result = testdir.runpytest(str(p1), "-rA")
+        result.stdout.fnmatch_lines(
+            [
+                "*- Captured stdout call -*",
+                "stdout after",
+                "*- Captured stderr call -*",
+                "stderr after",
+                "*= 1 passed in *",
+            ]
+        )
 
     def test_partial_setup_failure(self, testdir):
         p = testdir.makepyfile(
@@ -977,7 +999,7 @@ class TestFDCapture:
         cap.start()
         tmpfile.write(data1)
         tmpfile.flush()
-        cap.writeorg(data2)
+        cap.writeorg(data2.decode("ascii"))
         scap = cap.snap()
         cap.done()
         assert scap == data1.decode("ascii")
