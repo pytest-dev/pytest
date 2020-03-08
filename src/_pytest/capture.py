@@ -510,12 +510,16 @@ class MultiCapture:
         if self.in_:
             self.in_.done()
 
-    def readouterr(self):
-        """ return snapshot unicode value of stdout/stderr capturings. """
-        return CaptureResult(
-            self.out.snap() if self.out is not None else "",
-            self.err.snap() if self.err is not None else "",
-        )
+    def readouterr(self) -> CaptureResult:
+        if self.out:
+            out = self.out.snap()
+        else:
+            out = ""
+        if self.err:
+            err = self.err.snap()
+        else:
+            err = ""
+        return CaptureResult(out, err)
 
 
 class NoCapture:
