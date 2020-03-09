@@ -4426,7 +4426,6 @@ def test_fixture_arg_ordering(testdir):
 
 
 class TestFinalizerOnlyAddedOnce:
-
     @pytest.fixture(scope="class", autouse=True)
     def a(self):
         pass
