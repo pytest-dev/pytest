@@ -862,19 +862,19 @@ class FixtureDef:
         self._finalizers.append(finalizer)
 
     def finish(self, request):
-        exceptions = []
+        exc = None
         try:
             while self._finalizers:
                 try:
                     func = self._finalizers.pop()
                     func()
-                except:  # noqa
-                    exceptions.append(sys.exc_info())
-            if exceptions:
-                _, val, tb = exceptions[0]
-                # Ensure to not keep frame references through traceback.
-                del exceptions
-                raise val.with_traceback(tb)
+                except BaseException as e:
+                    # XXX Only first exception will be seen by user,
+                    #     ideally all should be reported.
+                    if exc is None:
+                        exc = e
+            if exc:
+                raise exc
         finally:
             hook = self._fixturemanager.session.gethookproxy(request.node.fspath)
             hook.pytest_fixture_post_finalizer(fixturedef=self, request=request)
