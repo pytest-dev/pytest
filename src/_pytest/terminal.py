@@ -43,7 +43,7 @@ KNOWN_TYPES = (
     "xfailed",
     "xpassed",
     "warnings",
-    "error",
+    "errors",
 )
 
 _REPORTCHARS_DEFAULT = "fE"
@@ -216,7 +216,7 @@ def pytest_report_teststatus(report: TestReport) -> Tuple[str, str, str]:
 
     outcome = report.outcome
     if report.when in ("collect", "setup", "teardown") and outcome == "failed":
-        outcome = "error"
+        outcome = "errors"
         letter = "E"
 
     return outcome, letter, outcome.upper()
@@ -559,7 +559,7 @@ class TerminalReporter:
 
     def pytest_collectreport(self, report: CollectReport) -> None:
         if report.failed:
-            self._add_stats("error", [report])
+            self._add_stats("errors", [report])
         elif report.skipped:
             self._add_stats("skipped", [report])
         items = [x for x in report.result if isinstance(x, pytest.Item)]
@@ -581,7 +581,7 @@ class TerminalReporter:
                 return
             self._collect_report_last_write = t
 
-        errors = len(self.stats.get("error", []))
+        errors = len(self.stats.get("errors", []))
         skipped = len(self.stats.get("skipped", []))
         deselected = len(self.stats.get("deselected", []))
         selected = self._numcollected - errors - skipped - deselected
@@ -929,11 +929,11 @@ class TerminalReporter:
 
     def summary_errors(self):
         if self.config.option.tbstyle != "no":
-            reports = self.getreports("error")
+            reports = self.getreports("errors")
             if not reports:
                 return
             self.write_sep("=", "ERRORS")
-            for rep in self.stats["error"]:
+            for rep in self.stats["errors"]:
                 msg = self._getfailureheadline(rep)
                 if rep.when == "collect":
                     msg = "ERROR collecting " + msg
@@ -1047,7 +1047,7 @@ class TerminalReporter:
             "f": partial(show_simple, "failed"),
             "s": show_skipped,
             "p": partial(show_simple, "passed"),
-            "E": partial(show_simple, "error"),
+            "E": partial(show_simple, "errors"),
         }  # type: Mapping[str, Callable[[List[str]], None]]
 
         lines = []  # type: List[str]
@@ -1070,7 +1070,7 @@ class TerminalReporter:
 
     def _determine_main_color(self, unknown_type_seen: bool) -> str:
         stats = self.stats
-        if "failed" in stats or "error" in stats:
+        if "failed" in stats or "errors" in stats:
             main_color = "red"
         elif "warnings" in stats or "xpassed" in stats or unknown_type_seen:
             main_color = "yellow"
@@ -1176,7 +1176,7 @@ def _folded_skips(skipped):
 
 _color_for_type = {
     "failed": "red",
-    "error": "red",
+    "errors": "red",
     "warnings": "yellow",
     "passed": "green",
 }
@@ -1185,12 +1185,12 @@ _color_for_type_default = "yellow"
 
 def _make_plural(count, noun):
     # No need to pluralize words such as `failed` or `passed`.
-    if noun not in ["error", "warnings"]:
+    if noun not in ["errors", "warnings"]:
         return count, noun
 
     # The `warnings` key is plural. To avoid API breakage, we keep it that way but
     # set it to singular here so we can determine plurality in the same way as we do
-    # for `error`.
+    # for `errors`.
     noun = noun.replace("warnings", "warning")
 
     return count, noun + "s" if count != 1 else noun
