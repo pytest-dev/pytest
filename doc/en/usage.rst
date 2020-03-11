@@ -821,6 +821,9 @@ hook was invoked:
     E       assert 0
 
     test_example.py:14: AssertionError
+    ========================= short test summary info ==========================
+    FAILED test_example.py::test_fail - assert 0
+    ERROR test_example.py::test_error - assert 0
 
 .. note::
 

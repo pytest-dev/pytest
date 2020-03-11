@@ -73,6 +73,8 @@ let's run the full monty:
     E       assert 4 < 4
 
     test_compute.py:4: AssertionError
+    ========================= short test summary info ==========================
+    FAILED test_compute.py::test_compute[4] - assert 4 < 4
     1 failed, 4 passed in 0.12s
 
 As expected when running the full range of ``param1`` values
@@ -343,6 +345,8 @@ And then when we run the test:
     E           Failed: deliberately failing for demo purposes
 
     test_backends.py:8: Failed
+    ========================= short test summary info ==========================
+    FAILED test_backends.py::test_db_initialized[d2] - Failed: deliberately f...
     1 failed, 1 passed in 0.12s
 
 The first invocation with ``db == "DB1"`` passed while the second with ``db == "DB2"`` failed.  Our ``db`` fixture function has instantiated each of the DB values during the setup phase while the ``pytest_generate_tests`` generated two according calls to the ``test_db_initialized`` during the collection phase.
@@ -457,6 +461,8 @@ argument sets to use for each test function.  Let's run it:
     E       assert 1 == 2
 
     test_parametrize.py:21: AssertionError
+    ========================= short test summary info ==========================
+    FAILED test_parametrize.py::TestClass::test_equals[1-2] - assert 1 == 2
     1 failed, 2 passed in 0.12s
 
 Indirect parametrization with multiple fixtures
@@ -478,11 +484,8 @@ Running it results in some skips if we don't have all the python interpreters in
 .. code-block:: pytest
 
    . $ pytest -rs -q multipython.py
-   ssssssssssss...ssssssssssss                                          [100%]
-   ========================= short test summary info ==========================
-   SKIPPED [12] $REGENDOC_TMPDIR/CWD/multipython.py:29: 'python3.5' not found
-   SKIPPED [12] $REGENDOC_TMPDIR/CWD/multipython.py:29: 'python3.7' not found
-   3 passed, 24 skipped in 0.12s
+   ...........................                                          [100%]
+   27 passed in 0.12s
 
 Indirect parametrization of optional implementations/imports
 --------------------------------------------------------------------
@@ -607,13 +610,13 @@ Then run ``pytest`` with verbose mode and with only the ``basic`` marker:
     platform linux -- Python 3.x.y, pytest-5.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python
     cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR
-    collecting ... collected 17 items / 14 deselected / 3 selected
+    collecting ... collected 14 items / 11 deselected / 3 selected
 
     test_pytest_param_example.py::test_eval[1+7-8] PASSED                [ 33%]
     test_pytest_param_example.py::test_eval[basic_2+4] PASSED            [ 66%]
     test_pytest_param_example.py::test_eval[basic_6*9] XFAIL             [100%]
 
-    =============== 2 passed, 14 deselected, 1 xfailed in 0.12s ================
+    =============== 2 passed, 11 deselected, 1 xfailed in 0.12s ================
 
 As the result:
 

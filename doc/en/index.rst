@@ -44,6 +44,8 @@ To execute it:
     E        +  where 4 = inc(3)
 
     test_sample.py:6: AssertionError
+    ========================= short test summary info ==========================
+    FAILED test_sample.py::test_answer - assert 4 == 5
     ============================ 1 failed in 0.12s =============================
 
 Due to ``pytest``'s detailed assertion introspection, only plain ``assert`` statements are used.

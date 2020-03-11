@@ -47,6 +47,8 @@ you will see the return value of the function call:
     E        +  where 3 = f()
 
     test_assert1.py:6: AssertionError
+    ========================= short test summary info ==========================
+    FAILED test_assert1.py::test_function - assert 3 == 4
     ============================ 1 failed in 0.12s =============================
 
 ``pytest`` has support for showing the values of the most common subexpressions
@@ -208,6 +210,8 @@ if you run this module:
     E         Use -v to get the full diff
 
     test_assert2.py:6: AssertionError
+    ========================= short test summary info ==========================
+    FAILED test_assert2.py::test_set_comparison - AssertionError: assert {'0'...
     ============================ 1 failed in 0.12s =============================
 
 Special comparisons are done for a number of cases:
@@ -279,6 +283,8 @@ the conftest file:
    E            vals: 1 != 2
 
    test_foocompare.py:12: AssertionError
+   ========================= short test summary info ==========================
+   FAILED test_foocompare.py::test_compare - assert Comparing Foo instances:
    1 failed in 0.12s
 
 .. _assert-details:

@@ -715,6 +715,9 @@ We can now use the ``-m option`` to select one set:
     test_module.py:8: in test_interface_complex
         assert 0
     E   assert 0
+    ========================= short test summary info ==========================
+    FAILED test_module.py::test_interface_simple - assert 0
+    FAILED test_module.py::test_interface_complex - assert 0
     ===================== 2 failed, 2 deselected in 0.12s ======================
 
 or to select both "event" and "interface" tests:
@@ -743,4 +746,8 @@ or to select both "event" and "interface" tests:
     test_module.py:12: in test_event_simple
         assert 0
     E   assert 0
+    ========================= short test summary info ==========================
+    FAILED test_module.py::test_interface_simple - assert 0
+    FAILED test_module.py::test_interface_complex - assert 0
+    FAILED test_module.py::test_event_simple - assert 0
     ===================== 3 failed, 1 deselected in 0.12s ======================
