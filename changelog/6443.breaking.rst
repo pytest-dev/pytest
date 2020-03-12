@@ -1,3 +1,0 @@
-Plugins specified with ``-p`` are now loaded after internal plugins, which results in their hooks being called *before* the internal ones.
-
-This makes the ``-p`` behavior consistent with ``PYTEST_PLUGINS``.

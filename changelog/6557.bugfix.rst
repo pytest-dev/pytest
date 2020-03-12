@@ -1,1 +1,0 @@
-Make capture output streams ``.write()`` method return the same return value from original streams.

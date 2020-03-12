@@ -1,1 +1,0 @@
-Fix ``EncodedFile.writelines`` to call the underlying buffer's ``writelines`` method.
