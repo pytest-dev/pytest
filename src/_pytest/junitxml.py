@@ -469,7 +469,7 @@ class LogXML:
         self.log_passing_tests = log_passing_tests
         self.report_duration = report_duration
         self.family = family
-        self.stats = dict.fromkeys(["error", "passed", "failure", "skipped"], 0)
+        self.stats = dict.fromkeys(["errors", "passed", "failure", "skipped"], 0)
         self.node_reporters = {}  # nodeid -> _NodeReporter
         self.node_reporters_ordered = []
         self.global_properties = []
@@ -641,7 +641,7 @@ class LogXML:
             self.stats["passed"]
             + self.stats["failure"]
             + self.stats["skipped"]
-            + self.stats["error"]
+            + self.stats["errors"]
             - self.cnt_double_fail_tests
         )
         logfile.write('<?xml version="1.0" encoding="utf-8"?>')
@@ -650,7 +650,7 @@ class LogXML:
             self._get_global_properties_node(),
             [x.to_xml() for x in self.node_reporters_ordered],
             name=self.suite_name,
-            errors=self.stats["error"],
+            errors=self.stats["errors"],
             failures=self.stats["failure"],
             skipped=self.stats["skipped"],
             tests=numtests,

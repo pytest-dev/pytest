@@ -171,7 +171,7 @@ def pytest_report_teststatus(report):
     if report.when in ("setup", "teardown"):
         if report.failed:
             #      category, shortletter, verbose-word
-            return "error", "E", "ERROR"
+            return "errors", "E", "ERROR"
         elif report.skipped:
             return "skipped", "s", "SKIPPED"
         else:

@@ -46,7 +46,7 @@ THE SOFTWARE.
         </xs:complexType>
     </xs:element>
 
-    <xs:element name="error">
+    <xs:element name="errors">
         <xs:complexType mixed="true">
             <xs:attribute name="type" type="xs:string"/>
             <xs:attribute name="message" type="xs:string"/>
@@ -87,7 +87,7 @@ THE SOFTWARE.
             <xs:sequence>
                 <xs:choice minOccurs="0" maxOccurs="unbounded">
                     <xs:element ref="skipped"/>
-                    <xs:element ref="error"/>
+                    <xs:element ref="errors"/>
                     <xs:element ref="failure"/>
                     <xs:element ref="rerunFailure" minOccurs="0" maxOccurs="unbounded"/>
                     <xs:element ref="rerunError" minOccurs="0" maxOccurs="unbounded"/>

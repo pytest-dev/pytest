@@ -444,9 +444,8 @@ class RunResult:
                 break
         else:
             raise ValueError("Pytest terminal summary report not found")
-        if "errors" in ret:
-            assert "error" not in ret
-            ret["error"] = ret.pop("errors")
+        if "error" in ret:
+            ret["errors"] = ret.pop("error")
         return ret
 
     def assert_outcomes(
@@ -468,7 +467,7 @@ class RunResult:
             "passed": d.get("passed", 0),
             "skipped": d.get("skipped", 0),
             "failed": d.get("failed", 0),
-            "error": d.get("error", 0),
+            "errors": d.get("errors", 0),
             "xpassed": d.get("xpassed", 0),
             "xfailed": d.get("xfailed", 0),
         }
@@ -476,7 +475,7 @@ class RunResult:
             "passed": passed,
             "skipped": skipped,
             "failed": failed,
-            "error": error,
+            "errors": error,
             "xpassed": xpassed,
             "xfailed": xfailed,
         }

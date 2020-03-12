@@ -1192,6 +1192,7 @@ def _make_plural(count, noun):
     # set it to singular here so we can determine plurality in the same way as we do
     # for `errors`.
     noun = noun.replace("warnings", "warning")
+    noun = noun.replace("errors", "error")
 
     return count, noun + "s" if count != 1 else noun
 

@@ -1461,15 +1461,15 @@ def tr() -> TerminalReporter:
             ],
             {"failed": (1,), "passed": (1,)},
         ),
-        ("red", [("1 error", {"bold": True, "red": True})], {"error": (1,)}),
-        ("red", [("2 errors", {"bold": True, "red": True})], {"error": (1, 2)}),
+        ("red", [("1 error", {"bold": True, "red": True})], {"errors": (1,)}),
+        ("red", [("2 errors", {"bold": True, "red": True})], {"errors": (1, 2)}),
         (
             "red",
             [
                 ("1 passed", {"bold": False, "green": True}),
                 ("1 error", {"bold": True, "red": True}),
             ],
-            {"error": (1,), "passed": (1,)},
+            {"errors": (1,), "passed": (1,)},
         ),
         # (a status that's not known to the code)
         ("yellow", [("1 weird", {"bold": True, "yellow": True})], {"weird": (1,)}),
@@ -2082,7 +2082,7 @@ def test_collecterror(testdir):
             "*_ ERROR collecting test_collecterror.py _*",
             "E   SyntaxError: *",
             "*= short test summary info =*",
-            "ERROR test_collecterror.py",
+            "ERRORS test_collecterror.py",
             "*! Interrupted: 1 error during collection !*",
             "*= 1 error in *",
         ]
