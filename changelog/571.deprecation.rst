@@ -1,3 +1,0 @@
-Deprecate the unused/broken `pytest_collect_directory` hook.
-It was misaligned since the removal of the ``Directory`` collector in 2010
-and incorrect/unusable as soon as collection was split from test execution.

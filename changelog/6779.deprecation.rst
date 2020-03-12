@@ -1,3 +1,0 @@
-The ``TerminalReporter.writer`` attribute has been deprecated and should no longer be used. This
-was inadvertently exposed as part of the public API of that plugin and ties it too much
-with ``py.io.TerminalWriter``.

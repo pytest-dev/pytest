@@ -1,3 +1,0 @@
-Removed the long-deprecated ``pytest_itemstart`` hook.
-
-This hook has been marked as deprecated and not been even called by pytest for over 10 years now.

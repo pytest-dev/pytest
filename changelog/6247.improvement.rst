@@ -1,1 +1,0 @@
-``--fulltrace`` is honored with collection errors.
