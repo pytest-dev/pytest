@@ -75,6 +75,8 @@ them in turn:
     E        +  where 54 = eval('6*9')
 
     test_expectation.py:6: AssertionError
+    ========================= short test summary info ==========================
+    FAILED test_expectation.py::test_eval[6*9-42] - AssertionError: assert 54...
     ======================= 1 failed, 2 passed in 0.12s ========================
 
 .. note::
@@ -225,6 +227,8 @@ Let's also run with a stringinput that will lead to a failing test:
     E        +    where <built-in method isalpha of str object at 0xdeadbeef> = '!'.isalpha
 
     test_strings.py:4: AssertionError
+    ========================= short test summary info ==========================
+    FAILED test_strings.py::test_valid_string[!] - AssertionError: assert False
     1 failed in 0.12s
 
 As expected our test function fails.

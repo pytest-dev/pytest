@@ -166,6 +166,9 @@ the ``self.db`` values in the traceback:
     E       assert 0
 
     test_unittest_db.py:13: AssertionError
+    ========================= short test summary info ==========================
+    FAILED test_unittest_db.py::MyTest::test_method1 - AssertionError: <conft...
+    FAILED test_unittest_db.py::MyTest::test_method2 - AssertionError: <conft...
     ============================ 2 failed in 0.12s =============================
 
 This default pytest traceback shows that the two test methods

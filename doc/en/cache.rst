@@ -75,6 +75,9 @@ If you run this for the first time you will see two failures:
     E           Failed: bad luck
 
     test_50.py:7: Failed
+    ========================= short test summary info ==========================
+    FAILED test_50.py::test_num[17] - Failed: bad luck
+    FAILED test_50.py::test_num[25] - Failed: bad luck
     2 failed, 48 passed in 0.12s
 
 If you then run it with ``--lf``:
@@ -86,7 +89,7 @@ If you then run it with ``--lf``:
     platform linux -- Python 3.x.y, pytest-5.x.y, py-1.x.y, pluggy-0.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR
-    collected 50 items / 48 deselected / 2 selected
+    collected 2 items
     run-last-failure: rerun previous 2 failures
 
     test_50.py FF                                                        [100%]
@@ -114,7 +117,10 @@ If you then run it with ``--lf``:
     E           Failed: bad luck
 
     test_50.py:7: Failed
-    ===================== 2 failed, 48 deselected in 0.12s =====================
+    ========================= short test summary info ==========================
+    FAILED test_50.py::test_num[17] - Failed: bad luck
+    FAILED test_50.py::test_num[25] - Failed: bad luck
+    ============================ 2 failed in 0.12s =============================
 
 You have run only the two failing tests from the last run, while the 48 passing
 tests have not been run ("deselected").
@@ -158,6 +164,9 @@ of ``FF`` and dots):
     E           Failed: bad luck
 
     test_50.py:7: Failed
+    ========================= short test summary info ==========================
+    FAILED test_50.py::test_num[17] - Failed: bad luck
+    FAILED test_50.py::test_num[25] - Failed: bad luck
     ======================= 2 failed, 48 passed in 0.12s =======================
 
 .. _`config.cache`:
@@ -230,6 +239,8 @@ If you run this command for the first time, you can see the print statement:
     test_caching.py:20: AssertionError
     -------------------------- Captured stdout setup ---------------------------
     running expensive computation...
+    ========================= short test summary info ==========================
+    FAILED test_caching.py::test_function - assert 42 == 23
     1 failed in 0.12s
 
 If you run it a second time, the value will be retrieved from
@@ -249,6 +260,8 @@ the cache and nothing will be printed:
     E       assert 42 == 23
 
     test_caching.py:20: AssertionError
+    ========================= short test summary info ==========================
+    FAILED test_caching.py::test_function - assert 42 == 23
     1 failed in 0.12s
 
 See the :fixture:`config.cache fixture <config.cache>` for more details.

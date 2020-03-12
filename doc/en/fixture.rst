@@ -170,6 +170,8 @@ marked ``smtp_connection`` fixture function.  Running the test looks like this:
     E       assert 0
 
     test_smtpsimple.py:14: AssertionError
+    ========================= short test summary info ==========================
+    FAILED test_smtpsimple.py::test_ehlo - assert 0
     ============================ 1 failed in 0.12s =============================
 
 In the failure traceback we see that the test function was called with a
@@ -332,6 +334,9 @@ inspect what is going on and can now run the tests:
     E       assert 0
 
     test_module.py:13: AssertionError
+    ========================= short test summary info ==========================
+    FAILED test_module.py::test_ehlo - assert 0
+    FAILED test_module.py::test_noop - assert 0
     ============================ 2 failed in 0.12s =============================
 
 You see the two ``assert 0`` failing and more importantly you can also see
@@ -465,6 +470,9 @@ Let's execute it:
     $ pytest -s -q --tb=no
     FFteardown smtp
 
+    ========================= short test summary info ==========================
+    FAILED test_module.py::test_ehlo - assert 0
+    FAILED test_module.py::test_noop - assert 0
     2 failed in 0.12s
 
 We see that the ``smtp_connection`` instance is finalized after the two
@@ -619,6 +627,9 @@ again, nothing much has changed:
     $ pytest -s -q --tb=no
     FFfinalizing <smtplib.SMTP object at 0xdeadbeef> (smtp.gmail.com)
 
+    ========================= short test summary info ==========================
+    FAILED test_module.py::test_ehlo - assert 0
+    FAILED test_module.py::test_noop - assert 0
     2 failed in 0.12s
 
 Let's quickly create another test module that actually sets the
@@ -648,6 +659,8 @@ Running it:
     E   assert 0
     ------------------------- Captured stdout teardown -------------------------
     finalizing <smtplib.SMTP object at 0xdeadbeef> (mail.python.org)
+    ========================= short test summary info ==========================
+    FAILED test_anothersmtp.py::test_showhelo - AssertionError: (250, b'mail....
 
 voila! The ``smtp_connection`` fixture function picked up our mail server name
 from the module namespace.
@@ -796,6 +809,11 @@ So let's just do another run:
     test_module.py:13: AssertionError
     ------------------------- Captured stdout teardown -------------------------
     finalizing <smtplib.SMTP object at 0xdeadbeef>
+    ========================= short test summary info ==========================
+    FAILED test_module.py::test_ehlo[smtp.gmail.com] - assert 0
+    FAILED test_module.py::test_noop[smtp.gmail.com] - assert 0
+    FAILED test_module.py::test_ehlo[mail.python.org] - AssertionError: asser...
+    FAILED test_module.py::test_noop[mail.python.org] - assert 0
     4 failed in 0.12s
 
 We see that our two test functions each ran twice, against the different
