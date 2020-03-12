@@ -34,7 +34,7 @@ def pytest_addoption(parser):
     group._addoption(
         "--capture",
         action="store",
-        default="fd" if hasattr(os, "dup") else "sys",
+        default="fd",
         metavar="method",
         choices=["fd", "sys", "no", "tee-sys"],
         help="per-test capturing method: one of fd|sys|no|tee-sys.",
@@ -304,10 +304,6 @@ def capfd(request):
     calls, which return a ``(out, err)`` namedtuple.
     ``out`` and ``err`` will be ``text`` objects.
     """
-    if not hasattr(os, "dup"):
-        pytest.skip(
-            "capfd fixture needs os.dup function which is not available in this system"
-        )
     capman = request.config.pluginmanager.getplugin("capturemanager")
     with capman._capturing_for_request(request) as fixture:
         yield fixture
@@ -321,10 +317,6 @@ def capfdbinary(request):
     calls, which return a ``(out, err)`` namedtuple.
     ``out`` and ``err`` will be ``byte`` objects.
     """
-    if not hasattr(os, "dup"):
-        pytest.skip(
-            "capfdbinary fixture needs os.dup function which is not available in this system"
-        )
     capman = request.config.pluginmanager.getplugin("capturemanager")
     with capman._capturing_for_request(request) as fixture:
         yield fixture
