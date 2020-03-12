@@ -126,7 +126,7 @@ Add warning filters to marked test items.
 
         .. code-block:: python
 
-            @pytest.mark.warnings("ignore:.*usage will be deprecated.*:DeprecationWarning")
+            @pytest.mark.filterwarnings("ignore:.*usage will be deprecated.*:DeprecationWarning")
             def test_foo():
                 ...
 
