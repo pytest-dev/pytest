@@ -36,9 +36,6 @@ class TestMetafunc:
         class DefinitionMock(python.FunctionDefinition):
             obj = attr.ib()
 
-            def listchain(self):
-                return []
-
         names = fixtures.getfuncargnames(func)
         fixtureinfo = FuncFixtureInfoMock(names)  # type: Any
         definition = DefinitionMock._create(func)  # type: Any
@@ -1900,53 +1897,5 @@ class TestMarkersWithParametrization:
                 "test_parametrize_iterator.py::test_converted_to_str[0] PASSED",
                 "test_parametrize_iterator.py::test_converted_to_str[1] PASSED",
                 "*= 6 passed in *",
-            ]
-        )
-
-    def test_parametrize_explicit_parameters_func(self, testdir: Testdir) -> None:
-        testdir.makepyfile(
-            """
-            import pytest
-
-
-            @pytest.fixture
-            def fixture(arg):
-                return arg
-
-            @pytest.mark.parametrize("arg", ["baz"])
-            def test_without_arg(fixture):
-                assert "baz" == fixture
-        """
-        )
-        result = testdir.runpytest()
-        result.assert_outcomes(error=1)
-        result.stdout.fnmatch_lines(
-            [
-                '*In function "test_without_arg"*',
-                '*Parameter "arg" should be declared explicitly via indirect or in function itself*',
-            ]
-        )
-
-    def test_parametrize_explicit_parameters_method(self, testdir: Testdir) -> None:
-        testdir.makepyfile(
-            """
-            import pytest
-
-            class Test:
-                @pytest.fixture
-                def test_fixture(self, argument):
-                    return argument
-
-                @pytest.mark.parametrize("argument", ["foobar"])
-                def test_without_argument(self, test_fixture):
-                    assert "foobar" == test_fixture
-        """
-        )
-        result = testdir.runpytest()
-        result.assert_outcomes(error=1)
-        result.stdout.fnmatch_lines(
-            [
-                '*In function "test_without_argument"*',
-                '*Parameter "argument" should be declared explicitly via indirect or in function itself*',
             ]
         )
