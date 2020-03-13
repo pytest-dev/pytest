@@ -28,6 +28,20 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+pytest 5.4.1 (2020-03-13)
+=========================
+
+Bug Fixes
+---------
+
+- `#6909 <https://github.com/pytest-dev/pytest/issues/6909>`_: Revert the change introduced by `#6330 <https://github.com/pytest-dev/pytest/pull/6330>`_, which required all arguments to ``@pytest.mark.parametrize`` to be explicitly defined in the function signature.
+
+  The intention of the original change was to remove what was expected to be an unintended/surprising behavior, but it turns out many people relied on it, so the restriction has been reverted.
+
+
+- `#6910 <https://github.com/pytest-dev/pytest/issues/6910>`_: Fix crash when plugins return an unknown stats while using the ``--reportlog`` option.
+
+
 pytest 5.4.0 (2020-03-12)
 =========================
 
