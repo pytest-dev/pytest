@@ -23,11 +23,6 @@ from _pytest.config import ExitCode
 # pylib 1.4.20.dev2 (rev 13d9af95547e)
 
 
-needsosdup = pytest.mark.skipif(
-    not hasattr(os, "dup"), reason="test needs os.dup, not available on this platform"
-)
-
-
 def StdCaptureFD(out=True, err=True, in_=True):
     return capture.MultiCapture(out, err, in_, Capture=capture.FDCapture)
 
@@ -41,22 +36,7 @@ def TeeStdCapture(out=True, err=True, in_=True):
 
 
 class TestCaptureManager:
-    def test_getmethod_default_no_fd(self, monkeypatch):
-        from _pytest.capture import pytest_addoption
-        from _pytest.config.argparsing import Parser
-
-        parser = Parser()
-        pytest_addoption(parser)
-        default = parser._groups[0].options[0].default
-        assert default == "fd" if hasattr(os, "dup") else "sys"
-        parser = Parser()
-        monkeypatch.delattr(os, "dup", raising=False)
-        pytest_addoption(parser)
-        assert parser._groups[0].options[0].default == "sys"
-
-    @pytest.mark.parametrize(
-        "method", ["no", "sys", pytest.param("fd", marks=needsosdup)]
-    )
+    @pytest.mark.parametrize("method", ["no", "sys", "fd"])
     def test_capturing_basic_api(self, method):
         capouter = StdCaptureFD()
         old = sys.stdout, sys.stderr, sys.stdin
@@ -86,7 +66,6 @@ class TestCaptureManager:
         finally:
             capouter.stop_capturing()
 
-    @needsosdup
     def test_init_capturing(self):
         capouter = StdCaptureFD()
         try:
@@ -512,7 +491,6 @@ class TestCaptureFixture:
         result = testdir.runpytest(p)
         result.stdout.fnmatch_lines(["xxx42xxx"])
 
-    @needsosdup
     def test_stdfd_functional(self, testdir):
         reprec = testdir.inline_runsource(
             """\
@@ -526,7 +504,6 @@ class TestCaptureFixture:
         )
         reprec.assertoutcome(passed=1)
 
-    @needsosdup
     def test_capfdbinary(self, testdir):
         reprec = testdir.inline_runsource(
             """\
@@ -565,7 +542,6 @@ class TestCaptureFixture:
         result = testdir.runpytest(p)
         result.stdout.fnmatch_lines(["*test_partial_setup_failure*", "*1 error*"])
 
-    @needsosdup
     def test_keyboardinterrupt_disables_capturing(self, testdir):
         p = testdir.makepyfile(
             """\
@@ -698,20 +674,6 @@ def test_setup_failure_does_not_kill_capturing(testdir):
     sub1.join("test_mod.py").write("def test_func1(): pass")
     result = testdir.runpytest(testdir.tmpdir, "--traceconfig")
     result.stdout.fnmatch_lines(["*ValueError(42)*", "*1 error*"])
-
-
-def test_fdfuncarg_skips_on_no_osdup(testdir):
-    testdir.makepyfile(
-        """
-        import os
-        if hasattr(os, 'dup'):
-            del os.dup
-        def test_hello(capfd):
-            pass
-    """
-    )
-    result = testdir.runpytest_subprocess("--capture=no")
-    result.stdout.fnmatch_lines(["*1 skipped*"])
 
 
 def test_capture_conftest_runtest_setup(testdir):
@@ -865,7 +827,6 @@ def tmpfile(testdir) -> Generator[BinaryIO, None, None]:
         f.close()
 
 
-@needsosdup
 def test_dupfile(tmpfile) -> None:
     flist = []  # type: List[TextIO]
     for i in range(5):
@@ -924,8 +885,6 @@ def lsof_check():
 
 
 class TestFDCapture:
-    pytestmark = needsosdup
-
     def test_simple(self, tmpfile):
         fd = tmpfile.fileno()
         cap = capture.FDCapture(fd)
@@ -1169,7 +1128,6 @@ class TestTeeStdCapture(TestStdCapture):
 
 
 class TestStdCaptureFD(TestStdCapture):
-    pytestmark = needsosdup
     captureclass = staticmethod(StdCaptureFD)
 
     def test_simple_only_fd(self, testdir):
@@ -1212,8 +1170,6 @@ class TestStdCaptureFD(TestStdCapture):
 
 
 class TestStdCaptureFDinvalidFD:
-    pytestmark = needsosdup
-
     def test_stdcapture_fd_invalid_fd(self, testdir):
         testdir.makepyfile(
             """
@@ -1269,7 +1225,6 @@ def test_capsys_results_accessible_by_attribute(capsys):
     assert capture_result.err == "eggs"
 
 
-@needsosdup
 @pytest.mark.parametrize("use", [True, False])
 def test_fdcapture_tmpfile_remains_the_same(tmpfile, use):
     if not use:
@@ -1285,7 +1240,6 @@ def test_fdcapture_tmpfile_remains_the_same(tmpfile, use):
     assert capfile2 == capfile
 
 
-@needsosdup
 def test_close_and_capture_again(testdir):
     testdir.makepyfile(
         """
@@ -1310,8 +1264,6 @@ def test_close_and_capture_again(testdir):
 
 @pytest.mark.parametrize("method", ["SysCapture", "FDCapture", "TeeSysCapture"])
 def test_capturing_and_logging_fundamentals(testdir, method):
-    if method == "StdCaptureFD" and not hasattr(os, "dup"):
-        pytest.skip("need os.dup")
     # here we check a fundamental feature
     p = testdir.makepyfile(
         """

@@ -1,0 +1,2 @@
+The ``os.dup()`` function is now assumed to exist. We are not aware of any
+supported Python 3 implementations which do not provide it.
