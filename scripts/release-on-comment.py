@@ -126,7 +126,9 @@ def trigger_release(payload_path: Path, token: str) -> None:
 
         print(f"Branch {Fore.CYAN}{release_branch}{Fore.RESET} created.")
 
-        check_call([sys.executable, "scripts/release.py", version])
+        check_call(
+            [sys.executable, "scripts/release.py", version, "--skip-check-links"]
+        )
 
         oauth_url = f"https://{token}:x-oauth-basic@github.com/{SLUG}.git"
         check_call(["git", "push", oauth_url, f"HEAD:{release_branch}", "--force"])
