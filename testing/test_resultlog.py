@@ -193,6 +193,42 @@ def test_no_resultlog_on_slaves(testdir):
     assert resultlog_key not in config._store
 
 
+def test_unknown_teststatus(testdir):
+    """Ensure resultlog correctly handles unknown status from pytest_report_teststatus
+
+    Inspired on pytest-rerunfailures.
+    """
+    testdir.makepyfile(
+        """
+        def test():
+            assert 0
+    """
+    )
+    testdir.makeconftest(
+        """
+        import pytest
+
+        def pytest_report_teststatus(report):
+            if report.outcome == 'rerun':
+                return "rerun", "r", "RERUN"
+
+        @pytest.hookimpl(hookwrapper=True)
+        def pytest_runtest_makereport():
+            res = yield
+            report = res.get_result()
+            if report.when == "call":
+                report.outcome = 'rerun'
+    """
+    )
+    result = testdir.runpytest("--resultlog=result.log")
+    result.stdout.fnmatch_lines(
+        ["test_unknown_teststatus.py r *[[]100%[]]", "* 1 rerun *"]
+    )
+
+    lines = testdir.tmpdir.join("result.log").readlines(cr=0)
+    assert lines[0] == "r test_unknown_teststatus.py::test"
+
+
 def test_failure_issue380(testdir):
     testdir.makeconftest(
         """

@@ -77,10 +77,10 @@ class ResultLog:
             longrepr = ""
         elif report.passed:
             longrepr = ""
-        elif report.failed:
-            longrepr = str(report.longrepr)
         elif report.skipped:
             longrepr = str(report.longrepr[2])
+        else:
+            longrepr = str(report.longrepr)
         self.log_outcome(report, code, longrepr)
 
     def pytest_collectreport(self, report):
