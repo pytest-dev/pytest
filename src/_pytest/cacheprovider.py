@@ -183,27 +183,35 @@ class LFPluginCollWrapper:
             res.result = sorted(
                 res.result, key=lambda x: 0 if Path(str(x.fspath)) in lf_paths else 1,
             )
-            out.force_result(res)
             return
 
         elif isinstance(collector, Module):
             if Path(str(collector.fspath)) in self.lfplugin._last_failed_paths:
                 out = yield
                 res = out.get_result()
+                result = res.result
+                lastfailed = self.lfplugin.lastfailed
 
-                filtered_result = [
-                    x for x in res.result if x.nodeid in self.lfplugin.lastfailed
+                # Only filter with known failures.
+                if not self._collected_at_least_one_failure:
+                    if not any(x.nodeid in lastfailed for x in result):
+                        return
+                    self.lfplugin.config.pluginmanager.register(
+                        LFPluginCollSkipfiles(self.lfplugin), "lfplugin-collskip"
+                    )
+                    self._collected_at_least_one_failure = True
+
+                session = collector.session
+                result[:] = [
+                    x
+                    for x in result
+                    if x.nodeid in lastfailed
+                    # Include any passed arguments (not trivial to filter).
+                    or session.isinitpath(x.fspath)
+                    # Keep all sub-collectors.
+                    or isinstance(x, nodes.Collector)
                 ]
-                if filtered_result:
-                    res.result = filtered_result
-                    out.force_result(res)
-
-                    if not self._collected_at_least_one_failure:
-                        self.lfplugin.config.pluginmanager.register(
-                            LFPluginCollSkipfiles(self.lfplugin), "lfplugin-collskip"
-                        )
-                        self._collected_at_least_one_failure = True
-                return res
+                return
         yield
 
 
@@ -234,8 +242,8 @@ class LFPlugin:
         self.lastfailed = config.cache.get(
             "cache/lastfailed", {}
         )  # type: Dict[str, bool]
-        self._previously_failed_count = None
-        self._report_status = None
+        self._previously_failed_count = None  # type: Optional[int]
+        self._report_status = None  # type: Optional[str]
         self._skipped_files = 0  # count skipped files during collection due to --lf
 
         if config.getoption("lf"):
@@ -269,7 +277,12 @@ class LFPlugin:
         else:
             self.lastfailed[report.nodeid] = True
 
-    def pytest_collection_modifyitems(self, session, config, items):
+    @pytest.hookimpl(hookwrapper=True, tryfirst=True)
+    def pytest_collection_modifyitems(
+        self, config: Config, items: List[nodes.Item]
+    ) -> Generator[None, None, None]:
+        yield
+
         if not self.active:
             return
 
@@ -334,9 +347,12 @@ class NFPlugin:
         self.active = config.option.newfirst
         self.cached_nodeids = set(config.cache.get("cache/nodeids", []))
 
+    @pytest.hookimpl(hookwrapper=True, tryfirst=True)
     def pytest_collection_modifyitems(
-        self, session: Session, config: Config, items: List[nodes.Item]
-    ) -> None:
+        self, items: List[nodes.Item]
+    ) -> Generator[None, None, None]:
+        yield
+
         if self.active:
             new_items = order_preserving_dict()  # type: Dict[str, nodes.Item]
             other_items = order_preserving_dict()  # type: Dict[str, nodes.Item]
@@ -356,11 +372,13 @@ class NFPlugin:
     def _get_increasing_order(self, items):
         return sorted(items, key=lambda item: item.fspath.mtime(), reverse=True)
 
-    def pytest_sessionfinish(self, session):
+    def pytest_sessionfinish(self) -> None:
         config = self.config
         if config.getoption("cacheshow") or hasattr(config, "slaveinput"):
             return
 
+        if config.getoption("collectonly"):
+            return
         config.cache.set("cache/nodeids", sorted(self.cached_nodeids))
 
 
