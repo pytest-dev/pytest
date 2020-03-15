@@ -284,7 +284,7 @@ For more details, consult the full :ref:`fixtures docs <fixture>`.
     :decorator:
 
 
-.. fixture:: config.cache
+.. fixture:: cache
 
 config.cache
 ~~~~~~~~~~~~
