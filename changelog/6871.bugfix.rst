@@ -1,0 +1,1 @@
+Fix crash with captured output when using the :fixture:`capsysbinary fixture <capsysbinary>`.

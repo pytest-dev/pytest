@@ -570,8 +570,6 @@ class FDCaptureBinary:
 
     def writeorg(self, data):
         """ write to original file descriptor. """
-        if isinstance(data, str):
-            data = data.encode("utf8")  # XXX use encoding of original stream
         os.write(self.targetfd_save, data)
 
 
@@ -590,6 +588,11 @@ class FDCapture(FDCaptureBinary):
         self.tmpfile.seek(0)
         self.tmpfile.truncate()
         return res
+
+    def writeorg(self, data):
+        """ write to original file descriptor. """
+        data = data.encode("utf-8")  # XXX use encoding of original stream
+        os.write(self.targetfd_save, data)
 
 
 class SysCaptureBinary:
@@ -642,8 +645,9 @@ class SysCaptureBinary:
         self._state = "resumed"
 
     def writeorg(self, data):
-        self._old.write(data)
         self._old.flush()
+        self._old.buffer.write(data)
+        self._old.buffer.flush()
 
 
 class SysCapture(SysCaptureBinary):
@@ -654,6 +658,10 @@ class SysCapture(SysCaptureBinary):
         self.tmpfile.seek(0)
         self.tmpfile.truncate()
         return res
+
+    def writeorg(self, data):
+        self._old.write(data)
+        self._old.flush()
 
 
 class TeeSysCapture(SysCapture):
