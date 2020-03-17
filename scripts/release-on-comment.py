@@ -33,6 +33,9 @@ import sys
 from pathlib import Path
 from subprocess import check_call
 from subprocess import check_output
+from subprocess import PIPE
+from subprocess import run
+from subprocess import STDOUT
 from textwrap import dedent
 from typing import Dict
 from typing import Optional
@@ -91,6 +94,7 @@ def print_and_exit(msg) -> None:
 
 
 def trigger_release(payload_path: Path, token: str) -> None:
+    error_contents = ""  # to be used to store error output in case any command fails
     payload, base_branch = validate_and_get_issue_comment_payload(payload_path)
     if base_branch is None:
         url = get_comment_data(payload)["html_url"]
@@ -119,19 +123,42 @@ def trigger_release(payload_path: Path, token: str) -> None:
 
         release_branch = f"release-{version}"
 
-        check_call(["git", "config", "user.name", "pytest bot"])
-        check_call(["git", "config", "user.email", "pytestbot@gmail.com"])
+        run(
+            ["git", "config", "user.name", "pytest bot"],
+            text=True,
+            check=True,
+            capture_output=True,
+        )
+        run(
+            ["git", "config", "user.email", "pytestbot@gmail.com"],
+            text=True,
+            check=True,
+            capture_output=True,
+        )
 
-        check_call(["git", "checkout", "-b", release_branch, f"origin/{base_branch}"])
+        run(
+            ["git", "checkout", "-b", release_branch, f"origin/{base_branch}"],
+            text=True,
+            check=True,
+            capture_output=True,
+        )
 
         print(f"Branch {Fore.CYAN}{release_branch}{Fore.RESET} created.")
 
-        check_call(
-            [sys.executable, "scripts/release.py", version, "--skip-check-links"]
+        run(
+            [sys.executable, "scripts/release.py", version, "--skip-check-links"],
+            text=True,
+            check=True,
+            capture_output=True,
         )
 
         oauth_url = f"https://{token}:x-oauth-basic@github.com/{SLUG}.git"
-        check_call(["git", "push", oauth_url, f"HEAD:{release_branch}", "--force"])
+        run(
+            ["git", "push", oauth_url, f"HEAD:{release_branch}", "--force"],
+            text=True,
+            check=True,
+            capture_output=True,
+        )
         print(f"Branch {Fore.CYAN}{release_branch}{Fore.RESET} pushed.")
 
         body = PR_BODY.format(
@@ -151,7 +178,10 @@ def trigger_release(payload_path: Path, token: str) -> None:
         print(f"Notified in original comment {Fore.CYAN}{comment.url}{Fore.RESET}.")
 
         print(f"{Fore.GREEN}Success.")
+    except CallProcessError as e:
+        error_contents = e.output
     except Exception as e:
+        error_contents = str(e)
         link = f"https://github.com/{SLUG}/actions/runs/{os.environ['GITHUB_RUN_ID']}"
         issue.create_comment(
             dedent(
@@ -164,6 +194,23 @@ def trigger_release(payload_path: Path, token: str) -> None:
 
             See: {link}.
             """
+            )
+        )
+        print_and_exit(f"{Fore.RED}{e}")
+
+    if error_contents:
+        link = f"https://github.com/{SLUG}/actions/runs/{os.environ['GITHUB_RUN_ID']}"
+        issue.create_comment(
+            dedent(
+                f"""
+                Sorry, the request to prepare release `{version}` from {base_branch} failed with:
+
+                ```
+                {error_contents}
+                ```
+
+                See: {link}.
+                """
             )
         )
         print_and_exit(f"{Fore.RED}{e}")
