@@ -915,7 +915,8 @@ class TestDurations:
             ["*durations*", "*call*test_3*", "*call*test_2*"]
         )
         result.stdout.fnmatch_lines(
-            ["(0.00 durations hidden.  Use -vv to show these durations.)"]
+            ["(8 items with duration < 0.005s hidden.  Use -vv to show these "
+             "durations.)"]
         )
 
     def test_calls_show_2(self, testdir):
