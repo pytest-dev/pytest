@@ -2,7 +2,7 @@
 import bdb
 import os
 import sys
-from time import time
+from time import time, perf_counter
 from typing import Callable
 from typing import Dict
 from typing import List
@@ -238,7 +238,8 @@ class CallInfo:
     def from_call(cls, func, when, reraise=None) -> "CallInfo":
         #: context of invocation: one of "setup", "call",
         #: "teardown", "memocollect"
-        start = time()
+        # start = time()  # --> we rather retrocompute 'start' later, see below
+        precise_start = perf_counter()
         excinfo = None
         try:
             result = func()
@@ -247,7 +248,11 @@ class CallInfo:
             if reraise is not None and excinfo.errisinstance(reraise):
                 raise
             result = None
+        precise_stop = perf_counter()
+        precise_duration = precise_stop - precise_start
+        # fill start and stop (API), while keeping a precise duration (diff)
         stop = time()
+        start = stop - precise_duration
         return cls(start=start, stop=stop, when=when, result=result, excinfo=excinfo)
 
     def __repr__(self):
