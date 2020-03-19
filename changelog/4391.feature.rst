@@ -1,0 +1,1 @@
+Improved time counter used to compute test durations. ``<CallInfo>.start`` is now retro-computed as ``<CallInfo>.stop - duration``, where ``duration`` is counted using ``time.perf_counter()``.
