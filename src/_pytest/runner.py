@@ -68,8 +68,10 @@ def pytest_terminal_summary(terminalreporter):
     for i, rep in enumerate(dlist):
         if verbose < 2 and rep.duration < 0.005:
             tr.write_line("")
-            tr.write_line("(%s items with duration < 0.005s hidden.  Use -vv to show these durations.)"
-                          % (len(dlist) - i))
+            tr.write_line(
+                "(%s items with duration < 0.005s hidden.  Use -vv to show these durations.)"
+                % (len(dlist) - i)
+            )
             break
         tr.write_line("{:02.2f}s {:<8} {}".format(rep.duration, rep.when, rep.nodeid))
 
