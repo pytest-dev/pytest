@@ -758,7 +758,7 @@ def test_skipped_reasons_functional(testdir):
     result = testdir.runpytest("-rs")
     result.stdout.fnmatch_lines_random(
         [
-            "SKIPPED [[]2[]] */conftest.py:4: test",
+            "SKIPPED [[]2[]] conftest.py:4: test",
             "SKIPPED [[]1[]] test_one.py:14: via_decorator",
         ]
     )
