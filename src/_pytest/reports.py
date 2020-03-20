@@ -278,7 +278,7 @@ class TestReport(BaseReport):
         when = call.when
         duration = call.duration
         try:  # python >= 3.7
-            duration_ns = {'duration_ns': call.duration_ns}
+            duration_ns = {"duration_ns": call.duration_ns}
         except AttributeError:
             duration_ns = dict()
         keywords = {x: 1 for x in item.keywords}
@@ -315,7 +315,7 @@ class TestReport(BaseReport):
             sections,
             duration,
             user_properties=item.user_properties,
-            **duration_ns
+            **duration_ns,
         )
 
 
