@@ -333,16 +333,18 @@ def make_numbered_dir_with_cleanup(
         try:
             p = make_numbered_dir(root, prefix)
             lock_path = create_cleanup_lock(p)
-            register_cleanup_lock_removal(lock_path)
+            register_cleanup_lock_removal(lock_path) 
         except Exception as exc:
             e = exc
         else:
             consider_lock_dead_if_created_before = p.stat().st_mtime - lock_timeout
-            cleanup_numbered_dir(
-                root=root,
-                prefix=prefix,
-                keep=keep,
-                consider_lock_dead_if_created_before=consider_lock_dead_if_created_before,
+            # Register a cleanup for program exit
+            atexit.register(
+                cleanup_numbered_dir,
+                root,
+                prefix,
+                keep,
+                consider_lock_dead_if_created_before,
             )
             return p
     assert e is not None
