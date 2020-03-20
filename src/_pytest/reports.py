@@ -223,6 +223,7 @@ class TestReport(BaseReport):
         when,
         sections=(),
         duration=0,
+        duration_ns=None,  # python >= 3.7
         user_properties=None,
         **extra
     ) -> None:
@@ -259,6 +260,8 @@ class TestReport(BaseReport):
 
         #: time it took to run just the test
         self.duration = duration
+        if duration_ns is not None:
+            self.duration_ns = duration_ns
 
         self.__dict__.update(extra)
 
@@ -273,7 +276,11 @@ class TestReport(BaseReport):
         Factory method to create and fill a TestReport with standard item and call info.
         """
         when = call.when
-        duration = call.stop - call.start
+        duration = call.duration
+        try:  # python >= 3.7
+            duration_ns = {'duration_ns': call.duration_ns}
+        except AttributeError:
+            duration_ns = dict()
         keywords = {x: 1 for x in item.keywords}
         excinfo = call.excinfo
         sections = []
@@ -308,6 +315,7 @@ class TestReport(BaseReport):
             sections,
             duration,
             user_properties=item.user_properties,
+            **duration_ns
         )
 
 

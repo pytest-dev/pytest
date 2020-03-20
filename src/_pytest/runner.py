@@ -2,6 +2,10 @@
 import bdb
 import os
 import sys
+try:
+    from time import perf_counter_ns
+except ImportError:
+    perf_counter_ns = None
 from time import perf_counter
 from time import time
 from typing import Callable
@@ -27,6 +31,8 @@ from _pytest.outcomes import TEST_OUTCOME
 if TYPE_CHECKING:
     from typing import Type
     from typing_extensions import Literal
+
+_USE_PY37_PERF_NS = perf_counter_ns is not None
 
 #
 # pytest plugin hooks
@@ -230,6 +236,9 @@ class CallInfo:
     excinfo = attr.ib(type=Optional[ExceptionInfo])
     start = attr.ib()
     stop = attr.ib()
+    duration = attr.ib()
+    if _USE_PY37_PERF_NS:
+        duration_ns = attr.ib()
     when = attr.ib()
 
     @property
@@ -242,8 +251,11 @@ class CallInfo:
     def from_call(cls, func, when, reraise=None) -> "CallInfo":
         #: context of invocation: one of "setup", "call",
         #: "teardown", "memocollect"
-        # start = time()  # --> we rather retrocompute 'start' later, see below
-        precise_start = perf_counter()
+        start = time()
+        if _USE_PY37_PERF_NS:
+            precise_start = perf_counter_ns()
+        else:
+            precise_start = perf_counter()
         excinfo = None
         try:
             result = func()
@@ -252,12 +264,34 @@ class CallInfo:
             if reraise is not None and excinfo.errisinstance(reraise):
                 raise
             result = None
-        precise_stop = perf_counter()
-        precise_duration = precise_stop - precise_start
-        # fill start and stop (API), while keeping a precise duration (diff)
-        stop = time()
-        start = stop - precise_duration
-        return cls(start=start, stop=stop, when=when, result=result, excinfo=excinfo)
+        if _USE_PY37_PERF_NS:
+            # use the new nanosecond-accurate perf counter
+            precise_stop = perf_counter_ns()
+            duration_ns = precise_stop - precise_start
+            duration = duration_ns * 1e-9
+            stop = time()
+            return cls(
+                start=start,
+                stop=stop,
+                duration=duration,
+                duration_ns=duration_ns,
+                when=when,
+                result=result,
+                excinfo=excinfo,
+            )
+        else:
+            # use the legacy perf counter
+            precise_stop = perf_counter()
+            duration = precise_stop - precise_start
+            stop = time()
+            return cls(
+                start=start,
+                stop=stop,
+                duration=duration,
+                when=when,
+                result=result,
+                excinfo=excinfo,
+            )
 
     def __repr__(self):
         if self.excinfo is None:
