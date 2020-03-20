@@ -914,9 +914,10 @@ class TestDurations:
         result.stdout.fnmatch_lines_random(
             ["*durations*", "*call*test_3*", "*call*test_2*"]
         )
+        # note: the number should be 8, but on macOS and windows it sometimes is 7 (test 1 lasts longer)
         result.stdout.fnmatch_lines(
             [
-                "(8 items with duration < 0.005s hidden.  Use -vv to show these "
+                "(* items with duration < 0.005s hidden.  Use -vv to show these "
                 "durations.)"
             ]
         )
