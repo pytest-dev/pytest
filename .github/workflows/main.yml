@@ -62,7 +62,7 @@ jobs:
           - name: "windows-py37"
             python: "3.7"
             os: windows-latest
-            tox_env: "py37-twisted-numpy"
+            tox_env: "py37-numpy"
           - name: "windows-py37-pluggy"
             python: "3.7"
             os: windows-latest
@@ -70,7 +70,7 @@ jobs:
           - name: "windows-py38"
             python: "3.8"
             os: windows-latest
-            tox_env: "py38"
+            tox_env: "py38-twisted"
             use_coverage: true
 
           - name: "ubuntu-py35"
@@ -84,7 +84,7 @@ jobs:
           - name: "ubuntu-py37"
             python: "3.7"
             os: ubuntu-latest
-            tox_env: "py37-lsof-numpy-oldattrs-pexpect-twisted"
+            tox_env: "py37-lsof-numpy-oldattrs-pexpect"
             use_coverage: true
           - name: "ubuntu-py37-pluggy"
             python: "3.7"
