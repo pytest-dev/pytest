@@ -91,7 +91,7 @@ Features
 
 - Python 3.5+ and PyPy3;
 
-- Rich plugin architecture, with over 315+ `external plugins <http://plugincompat.herokuapp.com>`_ and thriving community;
+- Rich plugin architecture, with over 850+ `external plugins <http://plugincompat.herokuapp.com>`_ and thriving community;
 
 
 Documentation
