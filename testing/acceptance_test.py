@@ -946,7 +946,7 @@ class TestDurations:
         assert result.ret == 0
 
         # on windows, test 2 (10ms) can actually sleep less than 5ms and become hidden
-        tested = "23" if system() == "Windows" else "3"
+        tested = "3" if system() == "Windows" else "23"
         for x in tested:
             for y in ("call",):  # 'setup', 'call', 'teardown':
                 for line in result.stdout.lines:
