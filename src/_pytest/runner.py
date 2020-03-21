@@ -67,16 +67,16 @@ def pytest_terminal_summary(terminalreporter):
     dlist.sort(key=lambda x: x.duration)
     dlist.reverse()
     if not durations:
-        tr.write_sep("=", "slowest test durations")
+        tr.write_sep("=", "slowest durations")
     else:
-        tr.write_sep("=", "slowest %s test durations" % durations)
+        tr.write_sep("=", "slowest %s durations" % durations)
         dlist = dlist[:durations]
 
     for i, rep in enumerate(dlist):
         if verbose < 2 and rep.duration < 0.005:
             tr.write_line("")
             tr.write_line(
-                "(%s items with duration < 0.005s hidden.  Use -vv to show these durations.)"
+                "(%s durations < 0.005s hidden.  Use -vv to show these durations.)"
                 % (len(dlist) - i)
             )
             break

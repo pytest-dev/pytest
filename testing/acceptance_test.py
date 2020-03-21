@@ -917,8 +917,7 @@ class TestDurations:
         # note: the number should be 8, but on macOS and windows it sometimes is 7 (test 1 lasts longer)
         result.stdout.fnmatch_lines(
             [
-                "(* items with duration < 0.005s hidden.  Use -vv to show these "
-                "durations.)"
+                "(* durations < 0.005s hidden.  Use -vv to show these durations.)"
             ]
         )
 
