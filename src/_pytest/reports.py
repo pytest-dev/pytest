@@ -260,8 +260,7 @@ class TestReport(BaseReport):
 
         #: time it took to run just the test
         self.duration = duration
-        if duration_ns is not None:
-            self.duration_ns = duration_ns
+        self.duration_ns = duration_ns
 
         self.__dict__.update(extra)
 
