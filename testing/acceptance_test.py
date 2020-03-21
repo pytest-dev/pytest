@@ -2,6 +2,7 @@ import os
 import sys
 import textwrap
 import types
+from platform import system
 
 import attr
 import py
@@ -896,28 +897,39 @@ class TestInvocationVariants:
 class TestDurations:
     source = """
         import time
-        frag = 0.002
+        frag = 0.002             # 2 ms
         def test_something():
             pass
         def test_2():
-            time.sleep(frag*5)
+            time.sleep(frag*5)   # 10 ms: on windows might sleep < 0.05s
         def test_1():
-            time.sleep(frag)
+            time.sleep(frag)     # 2 ms: on macOS/windows might sleep > 0.05s
         def test_3():
-            time.sleep(frag*10)
+            time.sleep(frag*10)  # 20 ms
     """
 
     def test_calls(self, testdir):
         testdir.makepyfile(self.source)
         result = testdir.runpytest("--durations=10")
         assert result.ret == 0
-        result.stdout.fnmatch_lines_random(
-            ["*durations*", "*call*test_3*", "*call*test_2*"]
-        )
-        # note: the number should be 8, but on macOS and windows it sometimes is 7 (test 1 lasts longer)
+
+        # on Windows, test 2 (10ms) can actually sleep less than 5ms and become hidden
+        if system() == "Windows":
+            to_match = ["*durations*", "*call*test_3*"]
+        else:
+            to_match = ["*durations*", "*call*test_3*", "*call*test_2*"]
+        result.stdout.fnmatch_lines_random(to_match)
+
+        # The number of hidden should be 8, but on macOS and windows it sometimes is 7
+        # - on MacOS and Windows test 1 can last longer and appear in the list
+        # - on Windows test 2 can last less and disappear from the list
+        if system() == "Linux":
+            nb_hidden = '8'
+        else:
+            nb_hidden = '*'
         result.stdout.fnmatch_lines(
             [
-                "(* durations < 0.005s hidden.  Use -vv to show these durations.)"
+                "(%s durations < 0.005s hidden.  Use -vv to show these durations.)" % nb_hidden
             ]
         )
 
@@ -932,7 +944,10 @@ class TestDurations:
         testdir.makepyfile(self.source)
         result = testdir.runpytest("--durations=0")
         assert result.ret == 0
-        for x in "23":
+
+        # on windows, test 2 (10ms) can actually sleep less than 5ms and become hidden
+        tested = "23" if system() == "Windows" else "3"
+        for x in tested:
             for y in ("call",):  # 'setup', 'call', 'teardown':
                 for line in result.stdout.lines:
                     if ("test_%s" % x) in line and y in line:
@@ -954,9 +969,10 @@ class TestDurations:
 
     def test_with_deselected(self, testdir):
         testdir.makepyfile(self.source)
-        result = testdir.runpytest("--durations=2", "-k test_2")
+        # on windows test 2 might sleep less than 0.05s and be hidden. Prefer test 3.
+        result = testdir.runpytest("--durations=2", "-k test_3")
         assert result.ret == 0
-        result.stdout.fnmatch_lines(["*durations*", "*call*test_2*"])
+        result.stdout.fnmatch_lines(["*durations*", "*call*test_3*"])
 
     def test_with_failing_collection(self, testdir):
         testdir.makepyfile(self.source)
@@ -978,7 +994,7 @@ class TestDurationWithFixture:
     source = """
         import pytest
         import time
-        frag = 0.01
+        frag = 0.02  # as on windows sleep(0.01) might take < 0.05s
 
         @pytest.fixture
         def setup_fixt():
