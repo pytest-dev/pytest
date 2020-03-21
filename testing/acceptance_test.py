@@ -924,12 +924,13 @@ class TestDurations:
         # - on MacOS and Windows test 1 can last longer and appear in the list
         # - on Windows test 2 can last less and disappear from the list
         if system() == "Linux":
-            nb_hidden = '8'
+            nb_hidden = "8"
         else:
-            nb_hidden = '*'
+            nb_hidden = "*"
         result.stdout.fnmatch_lines(
             [
-                "(%s durations < 0.005s hidden.  Use -vv to show these durations.)" % nb_hidden
+                "(%s durations < 0.005s hidden.  Use -vv to show these durations.)"
+                % nb_hidden
             ]
         )
 
