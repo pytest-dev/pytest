@@ -238,8 +238,7 @@ class CallInfo:
     start = attr.ib()
     stop = attr.ib()
     duration = attr.ib()
-    if _USE_PY37_PERF_NS:
-        duration_ns = attr.ib()
+    duration_ns = attr.ib()
     when = attr.ib()
 
     @property
@@ -254,7 +253,7 @@ class CallInfo:
         #: "teardown", "memocollect"
         start = time()
         if _USE_PY37_PERF_NS:
-            precise_start = perf_counter_ns()
+            precise_start_ns = perf_counter_ns()
         else:
             precise_start = perf_counter()
         excinfo = None
@@ -267,32 +266,24 @@ class CallInfo:
             result = None
         if _USE_PY37_PERF_NS:
             # use the new nanosecond-accurate perf counter
-            precise_stop = perf_counter_ns()
-            duration_ns = precise_stop - precise_start
+            precise_stop_ns = perf_counter_ns()
+            duration_ns = precise_stop_ns - precise_start_ns  # noqa
             duration = duration_ns * 1e-9
-            stop = time()
-            return cls(
-                start=start,
-                stop=stop,
-                duration=duration,
-                duration_ns=duration_ns,
-                when=when,
-                result=result,
-                excinfo=excinfo,
-            )
         else:
             # use the legacy perf counter
             precise_stop = perf_counter()
-            duration = precise_stop - precise_start
-            stop = time()
-            return cls(
-                start=start,
-                stop=stop,
-                duration=duration,
-                when=when,
-                result=result,
-                excinfo=excinfo,
-            )
+            duration = precise_stop - precise_start  # noqa
+            duration_ns = None
+        stop = time()
+        return cls(
+            start=start,
+            stop=stop,
+            duration=duration,
+            duration_ns=duration_ns,
+            when=when,
+            result=result,
+            excinfo=excinfo,
+        )
 
     def __repr__(self):
         if self.excinfo is None:

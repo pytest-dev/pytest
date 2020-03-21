@@ -277,10 +277,7 @@ class TestReport(BaseReport):
         """
         when = call.when
         duration = call.duration
-        try:  # python >= 3.7
-            duration_ns = {"duration_ns": call.duration_ns}
-        except AttributeError:
-            duration_ns = dict()
+        duration_ns = call.duration_ns
         keywords = {x: 1 for x in item.keywords}
         excinfo = call.excinfo
         sections = []
@@ -314,8 +311,8 @@ class TestReport(BaseReport):
             when,
             sections,
             duration,
+            duration_ns,
             user_properties=item.user_properties,
-            **duration_ns,
         )
 
 
