@@ -1,0 +1,1 @@
+Path in report skip reasons is always relative.
