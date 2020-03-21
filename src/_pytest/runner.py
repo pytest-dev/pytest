@@ -251,12 +251,13 @@ class CallInfo:
     def from_call(cls, func, when, reraise=None) -> "CallInfo":
         #: context of invocation: one of "setup", "call",
         #: "teardown", "memocollect"
+        duration_ns = None
+        excinfo = None
         start = time()
         if _USE_PY37_PERF_NS:
             precise_start_ns = perf_counter_ns()
         else:
             precise_start = perf_counter()
-        excinfo = None
         try:
             result = func()
         except:  # noqa
@@ -273,7 +274,6 @@ class CallInfo:
             # use the legacy perf counter
             precise_stop = perf_counter()
             duration = precise_stop - precise_start  # noqa
-            duration_ns = None
         stop = time()
         return cls(
             start=start,
