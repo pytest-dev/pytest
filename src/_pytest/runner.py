@@ -5,8 +5,10 @@ import sys
 
 try:
     from time import perf_counter_ns
+
+    _USE_PY37_PERF_NS = True
 except ImportError:
-    perf_counter_ns = None
+    _USE_PY37_PERF_NS = False
 from time import perf_counter
 from time import time
 from typing import Callable
@@ -32,8 +34,6 @@ from _pytest.outcomes import TEST_OUTCOME
 if TYPE_CHECKING:
     from typing import Type
     from typing_extensions import Literal
-
-_USE_PY37_PERF_NS = perf_counter_ns is not None
 
 #
 # pytest plugin hooks
