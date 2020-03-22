@@ -901,9 +901,9 @@ class TestDurations:
         def test_something():
             pass
         def test_2():
-            time.sleep(frag*5)   # 10 ms: on windows might sleep < 0.05s
+            time.sleep(frag*5)   # 10 ms: on windows might sleep < 0.005s
         def test_1():
-            time.sleep(frag)     # 2 ms: on macOS/windows might sleep > 0.05s
+            time.sleep(frag)     # 2 ms: on macOS/windows might sleep > 0.005s
         def test_3():
             time.sleep(frag*10)  # 20 ms
     """
@@ -970,7 +970,7 @@ class TestDurations:
 
     def test_with_deselected(self, testdir):
         testdir.makepyfile(self.source)
-        # on windows test 2 might sleep less than 0.05s and be hidden. Prefer test 3.
+        # on windows test 2 might sleep less than 0.005s and be hidden. Prefer test 3.
         result = testdir.runpytest("--durations=2", "-k test_3")
         assert result.ret == 0
         result.stdout.fnmatch_lines(["*durations*", "*call*test_3*"])
@@ -995,7 +995,7 @@ class TestDurationWithFixture:
     source = """
         import pytest
         import time
-        frag = 0.02  # as on windows sleep(0.01) might take < 0.05s
+        frag = 0.02  # as on windows sleep(0.01) might take < 0.005s
 
         @pytest.fixture
         def setup_fixt():
