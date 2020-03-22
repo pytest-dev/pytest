@@ -265,6 +265,22 @@ internally by raising a known exception.
 **Reference**: :ref:`pytest.mark.xfail ref`
 
 
+``condition`` parameter
+~~~~~~~~~~~~~~~~~~~~~~~
+
+If a test is only expected to fail under a certain condition, you can pass
+that condition as the first parameter:
+
+.. code-block:: python
+
+    @pytest.mark.xfail(sys.platform == "win32", reason="bug in a 3rd party library")
+    def test_function():
+        ...
+
+Note that you have to pass a reason as well (see the parameter description at
+:ref:`pytest.mark.xfail ref`).
+
+
 .. _`xfail strict tutorial`:
 
 ``strict`` parameter
