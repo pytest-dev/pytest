@@ -415,7 +415,7 @@ Order: Higher-scoped fixtures are instantiated first
 
 
 
-Within a function request for features, fixture of higher-scopes (such as ``session``) are instantiated first than
+Within a function request for fixtures, those of higher-scopes (such as ``session``) are instantiated before
 lower-scoped fixtures (such as ``function`` or ``class``). The relative order of fixtures of same scope follows
 the declared order in the test function and honours dependencies between fixtures. Autouse fixtures will be
 instantiated before explicitly used fixtures.
