@@ -139,18 +139,18 @@ class WarningsRecorder(warnings.catch_warnings):
     def __init__(self):
         super().__init__(record=True)
         self._entered = False
-        self._list = []  # type: List[warnings._Record]
+        self._list = []  # type: List[warnings.WarningMessage]
 
     @property
-    def list(self) -> List["warnings._Record"]:
+    def list(self) -> List["warnings.WarningMessage"]:
         """The list of recorded warnings."""
         return self._list
 
-    def __getitem__(self, i: int) -> "warnings._Record":
+    def __getitem__(self, i: int) -> "warnings.WarningMessage":
         """Get a recorded warning by index."""
         return self._list[i]
 
-    def __iter__(self) -> Iterator["warnings._Record"]:
+    def __iter__(self) -> Iterator["warnings.WarningMessage"]:
         """Iterate through the recorded warnings."""
         return iter(self._list)
 
@@ -158,7 +158,7 @@ class WarningsRecorder(warnings.catch_warnings):
         """The number of recorded warnings."""
         return len(self._list)
 
-    def pop(self, cls: "Type[Warning]" = Warning) -> "warnings._Record":
+    def pop(self, cls: "Type[Warning]" = Warning) -> "warnings.WarningMessage":
         """Pop the first recorded warning, raise exception if not exists."""
         for i, w in enumerate(self._list):
             if issubclass(w.category, cls):
