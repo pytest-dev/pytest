@@ -2,7 +2,7 @@
 Contribution getting started
 ============================
 
-Contributions are highly welcomed and appreciated.  Every little help counts,
+Contributions are highly welcomed and appreciated.  Every little bit of help counts,
 so do not hesitate!
 
 .. contents::
@@ -86,9 +86,8 @@ without using a local copy.  This can be convenient for small fixes.
 
         $ tox -e docs
 
-    The built documentation should be available in ``doc/en/_build/html``.
-
-    Where 'en' refers to the documentation language.
+    The built documentation should be available in ``doc/en/_build/html``,
+    where 'en' refers to the documentation language.
 
 .. _submitplugin:
 
@@ -130,7 +129,7 @@ the following:
 
 - an issue tracker for bug reports and enhancement requests.
 
-- a `changelog <http://keepachangelog.com/>`_
+- a `changelog <http://keepachangelog.com/>`_.
 
 If no contributor strongly objects and two agree, the repository can then be
 transferred to the ``pytest-dev`` organisation.
@@ -338,7 +337,7 @@ Joining the Development Team
 Anyone who has successfully seen through a pull request which did not
 require any extra work from the development team to merge will
 themselves gain commit access if they so wish (if we forget to ask please send a friendly
-reminder).  This does not mean your workflow to contribute changes,
+reminder).  This does not mean there is any change in your contribution workflow:
 everyone goes through the same pull-request-and-review process and
 no-one merges their own pull requests unless already approved.  It does however mean you can
 participate in the development process more fully since you can merge
