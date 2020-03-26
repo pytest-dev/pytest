@@ -113,15 +113,12 @@ class TestCaseFunction(Function):
     _testcase = None
 
     def setup(self):
-        self._needs_explicit_tearDown = False
         self._testcase = self.parent.obj(self.name)
         self._obj = getattr(self._testcase, self.name)
         if hasattr(self, "_request"):
             self._request._fillfixtures()
 
     def teardown(self):
-        if self._needs_explicit_tearDown:
-            self._testcase.tearDown()
         self._testcase = None
         self._obj = None
 
@@ -209,7 +206,7 @@ class TestCaseFunction(Function):
 
         testMethod = getattr(self._testcase, self._testcase._testMethodName)
 
-        class _GetOutOf_testPartExecutor(KeyboardInterrupt):
+        class _GetOutOf_testPartExecutor(Exception):
             """Helper exception to get out of unittests's testPartExecutor (see TestCase.run)."""
 
         @functools.wraps(testMethod)
@@ -218,13 +215,12 @@ class TestCaseFunction(Function):
             features can have a chance to kick in (notably --pdb)"""
             try:
                 self.ihook.pytest_pyfunc_call(pyfuncitem=self)
-            except unittest.SkipTest:
+            except (unittest.SkipTest, exit.Exception):
                 raise
             except Exception as exc:
                 expecting_failure = self._expecting_failure(testMethod)
                 if expecting_failure:
                     raise
-                self._needs_explicit_tearDown = True
                 raise _GetOutOf_testPartExecutor(exc)
 
         setattr(self._testcase, self._testcase._testMethodName, wrapped_testMethod)

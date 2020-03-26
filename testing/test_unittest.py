@@ -209,6 +209,91 @@ def test_teardown_issue1649(testdir):
         assert type(obj).__name__ != "TestCaseObjectsShouldBeCleanedUp"
 
 
+def test_cleanup_called_issue6947(testdir):
+    """
+    Are unittest.TestCase cleanup functions not invoked on test failure?
+    When a test fails and the cleanup is not called, all following tests may fail.
+    This is truly visible for test using a database when the transaction is not rolled back at the end.
+    """
+    testpath = testdir.makepyfile(
+        """
+        import unittest
+        import pytest
+
+        def increment_cleanup_count():
+            TestCaseObjectsShouldBeCleanedUp.cleanup_counter += 1
+
+        class TestCaseObjectsShouldBeCleanedUp(unittest.TestCase):
+            cleanup_counter = 0
+            def setUp(self):
+                self.addCleanup(increment_cleanup_count)
+            def test_1_goes_well(self):
+                # First test to be run
+                assert TestCaseObjectsShouldBeCleanedUp.cleanup_counter == 0
+            def test_2_that_fails(self):
+                # Second test to be run, should fail
+                assert False
+            def test_3_goes_well_after_failure(self):
+                # Third test to be run
+                assert TestCaseObjectsShouldBeCleanedUp.cleanup_counter == 2
+            def test_4_exit(self):
+                pytest.exit("pytest_exit called")
+            def test_5_not_run(self):
+                assert True
+    """
+    )
+    reprec = testdir.inline_run(testpath)
+    passed, skipped, failed = reprec.countoutcomes()
+    # test_1_goes_well passed
+    # test_2_that_fails failed
+    # test_3_goes_well_after_failure passed
+    # and finally test_4 quit
+    assert failed == 1, failed
+    assert passed == 2
+    assert passed + skipped + failed == 3
+
+
+def test_teardown_called_issue6947(testdir):
+    """
+    This test assert the TestCase.tearDown method is called once after every tests.
+
+    Looks very similar to test_cleanup_called_issue6947 but testing a different mechanism.
+    """
+    testpath = testdir.makepyfile(
+        """
+        import unittest
+        import pytest
+
+        class TestCaseObjectsShouldBeCleanedUp(unittest.TestCase):
+            cleanup_counter = 0
+            def tearDown(self):
+                TestCaseObjectsShouldBeCleanedUp.cleanup_counter += 1
+            def test_1_goes_well(self):
+                # First test to be run
+                assert TestCaseObjectsShouldBeCleanedUp.cleanup_counter == 0
+            def test_2_that_fails(self):
+                # Second test to be run, should fail
+                assert False
+            def test_3_goes_well_after_failure(self):
+                # Third test to be run
+                assert TestCaseObjectsShouldBeCleanedUp.cleanup_counter == 2
+            def test_4_exit(self):
+                pytest.exit("pytest_exit called")
+            def test_5_not_run(self):
+                assert True
+    """
+    )
+    reprec = testdir.inline_run(testpath)
+    passed, skipped, failed = reprec.countoutcomes()
+    # test_1_goes_well passed
+    # test_2_that_fails failed
+    # test_3_goes_well_after_failure passed
+    # and finally test_4 quit
+    assert failed == 1, failed
+    assert passed == 2
+    assert passed + skipped + failed == 3
+
+
 def test_unittest_skip_issue148(testdir):
     testpath = testdir.makepyfile(
         """
