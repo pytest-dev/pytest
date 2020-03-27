@@ -231,7 +231,15 @@ def call_runtest_hook(item, when: "Literal['setup', 'call', 'teardown']", **kwds
 
 @attr.s(repr=False)
 class CallInfo:
-    """ Result/Exception info a function invocation. """
+    """ Result/Exception info a function invocation.
+
+    :param excinfo: `ExceptionInfo` describing the captured exception if any
+    :param start: (float) The system time when the call started, in seconds since the epoch.
+    :param stop: (float) The system time when the call ended, in seconds since the epoch.
+    :param duration: (float) The call duration in seconds
+    :param duration_ns: (int) The call duration in nanoseconds. Only in python >= 3.7
+    :param when: context of invocation: "setup", "call", "teardown"...
+    """
 
     _result = attr.ib()
     excinfo = attr.ib(type=Optional[ExceptionInfo])
