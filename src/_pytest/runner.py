@@ -237,7 +237,7 @@ class CallInfo:
     :param start: (float) The system time when the call started, in seconds since the epoch.
     :param stop: (float) The system time when the call ended, in seconds since the epoch.
     :param duration: (float) The call duration in seconds
-    :param duration_ns: (int) The call duration in nanoseconds. Only in python >= 3.7
+    :param duration_ns: (int) The call duration, in nanoseconds. Only available in Python >= 3.7.
     :param when: The context of invocation: "setup", "call", "teardown", ...
     """
 
