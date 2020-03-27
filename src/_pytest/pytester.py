@@ -395,19 +395,7 @@ rex_outcome = re.compile(r"(\d+) (\w+)")
 
 
 class RunResult:
-    """The result of running a command.
-
-    Attributes:
-
-    :ivar ret: the return value
-    :ivar outlines: list of lines captured from stdout
-    :ivar errlines: list of lines captured from stderr
-    :ivar stdout: :py:class:`LineMatcher` of stdout, use ``stdout.str()`` to
-       reconstruct stdout or the commonly used ``stdout.fnmatch_lines()``
-       method
-    :ivar stderr: :py:class:`LineMatcher` of stderr
-    :ivar duration: duration in seconds
-    """
+    """The result of running a command."""
 
     def __init__(
         self,
@@ -418,13 +406,23 @@ class RunResult:
     ) -> None:
         try:
             self.ret = pytest.ExitCode(ret)  # type: Union[int, ExitCode]
+            """the return value"""
         except ValueError:
             self.ret = ret
         self.outlines = outlines
+        """list of lines captured from stdout"""
         self.errlines = errlines
+        """list of lines captured from stderr"""
         self.stdout = LineMatcher(outlines)
+        """:class:`LineMatcher` of stdout.
+
+        Use e.g. :func:`stdout.str() <LineMatcher.str()>` to reconstruct stdout, or the commonly used
+        :func:`stdout.fnmatch_lines() <LineMatcher.fnmatch_lines()>` method.
+        """
         self.stderr = LineMatcher(errlines)
+        """:class:`LineMatcher` of stderr"""
         self.duration = duration
+        """duration in seconds"""
 
     def __repr__(self) -> str:
         return (

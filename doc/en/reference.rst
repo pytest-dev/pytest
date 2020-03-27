@@ -881,13 +881,17 @@ TestReport
 
 .. autoclass:: _pytest.runner.TestReport()
     :members:
+    :show-inheritance:
     :inherited-members:
 
 _Result
 ~~~~~~~
 
+Result used within :ref:`hook wrappers <hookwrapper>`.
+
 .. autoclass:: pluggy.callers._Result
-    :members:
+.. automethod:: pluggy.callers._Result.get_result
+.. automethod:: pluggy.callers._Result.force_result
 
 Special Variables
 -----------------

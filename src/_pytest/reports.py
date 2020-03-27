@@ -131,7 +131,7 @@ class BaseReport:
         """
         **Experimental**
 
-        Returns True if this report should be counted towards the totals shown at the end of the
+        ``True`` if this report should be counted towards the totals shown at the end of the
         test session: "1 passed, 1 failure, etc".
 
         .. note::

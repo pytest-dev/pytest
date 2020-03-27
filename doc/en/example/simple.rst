@@ -222,8 +222,10 @@ Or run it including the ``slow`` marked test:
 
     ============================ 2 passed in 0.12s =============================
 
+.. _`__tracebackhide__`:
+
 Writing well integrated assertion helpers
---------------------------------------------------
+-----------------------------------------
 
 .. regendoc:wipe
 
