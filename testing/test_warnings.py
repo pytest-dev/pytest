@@ -32,7 +32,7 @@ def pyfile_with_warnings(testdir: Testdir, request: FixtureRequest) -> str:
                 warnings.warn(RuntimeWarning("runtime warning"))
                 return 1
             """,
-        }
+        },
     )
     return str(test_file)
 
