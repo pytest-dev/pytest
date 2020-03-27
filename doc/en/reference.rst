@@ -204,7 +204,8 @@ Marks a test function as *expected to fail*.
     :type condition: bool or str
     :param condition:
         Condition for marking the test function as xfail (``True/False`` or a
-        :ref:`condition string <string conditions>`).
+        :ref:`condition string <string conditions>`). If a bool, you also have
+        to specify ``reason`` (see :ref:`condition string <string conditions>`).
     :keyword str reason: Reason why the test function is marked as xfail.
     :keyword Exception raises: Exception subclass expected to be raised by the test function; other exceptions will fail the test.
     :keyword bool run:

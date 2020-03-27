@@ -265,33 +265,20 @@ internally by raising a known exception.
 **Reference**: :ref:`pytest.mark.xfail ref`
 
 
-.. _`xfail strict tutorial`:
+``condition`` parameter
+~~~~~~~~~~~~~~~~~~~~~~~
 
-``strict`` parameter
-~~~~~~~~~~~~~~~~~~~~
-
-
-
-Both ``XFAIL`` and ``XPASS`` don't fail the test suite by default.
-You can change this by setting the ``strict`` keyword-only parameter to ``True``:
+If a test is only expected to fail under a certain condition, you can pass
+that condition as the first parameter:
 
 .. code-block:: python
 
-    @pytest.mark.xfail(strict=True)
+    @pytest.mark.xfail(sys.platform == "win32", reason="bug in a 3rd party library")
     def test_function():
         ...
 
-
-This will make ``XPASS`` ("unexpectedly passing") results from this test to fail the test suite.
-
-You can change the default value of the ``strict`` parameter using the
-``xfail_strict`` ini option:
-
-.. code-block:: ini
-
-    [pytest]
-    xfail_strict=true
-
+Note that you have to pass a reason as well (see the parameter description at
+:ref:`pytest.mark.xfail ref`).
 
 ``reason`` parameter
 ~~~~~~~~~~~~~~~~~~~~
@@ -301,7 +288,7 @@ on a particular platform:
 
 .. code-block:: python
 
-    @pytest.mark.xfail(sys.version_info >= (3, 6), reason="python3.6 api changes")
+    @pytest.mark.xfail(reason="known parser issue")
     def test_function():
         ...
 
@@ -335,6 +322,31 @@ even executed, use the ``run`` parameter as ``False``:
 
 This is specially useful for xfailing tests that are crashing the interpreter and should be
 investigated later.
+
+.. _`xfail strict tutorial`:
+
+``strict`` parameter
+~~~~~~~~~~~~~~~~~~~~
+
+Both ``XFAIL`` and ``XPASS`` don't fail the test suite by default.
+You can change this by setting the ``strict`` keyword-only parameter to ``True``:
+
+.. code-block:: python
+
+    @pytest.mark.xfail(strict=True)
+    def test_function():
+        ...
+
+
+This will make ``XPASS`` ("unexpectedly passing") results from this test to fail the test suite.
+
+You can change the default value of the ``strict`` parameter using the
+``xfail_strict`` ini option:
+
+.. code-block:: ini
+
+    [pytest]
+    xfail_strict=true
 
 
 Ignoring xfail
