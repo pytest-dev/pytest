@@ -2,19 +2,28 @@ import os
 import warnings
 
 import pytest
+from _pytest.fixtures import FixtureRequest
+from _pytest.pytester import Testdir
 
 WARNINGS_SUMMARY_HEADER = "warnings summary"
 
 
 @pytest.fixture
-def pyfile_with_warnings(testdir, request):
+def pyfile_with_warnings(testdir: Testdir, request: FixtureRequest) -> str:
     """
     Create a test file which calls a function in a module which generates warnings.
     """
     testdir.syspathinsert()
     test_name = request.function.__name__
     module_name = test_name.lstrip("test_") + "_module"
-    testdir.makepyfile(
+    test_file = testdir.makepyfile(
+        """
+        import {module_name}
+        def test_func():
+            assert {module_name}.foo() == 1
+        """.format(
+            module_name=module_name
+        ),
         **{
             module_name: """
             import warnings
@@ -22,16 +31,10 @@ def pyfile_with_warnings(testdir, request):
                 warnings.warn(UserWarning("user warning"))
                 warnings.warn(RuntimeWarning("runtime warning"))
                 return 1
-        """,
-            test_name: """
-            import {module_name}
-            def test_func():
-                assert {module_name}.foo() == 1
-        """.format(
-                module_name=module_name
-            ),
+            """,
         }
     )
+    return str(test_file)
 
 
 @pytest.mark.filterwarnings("default")
@@ -39,7 +42,7 @@ def test_normal_flow(testdir, pyfile_with_warnings):
     """
     Check that the warnings section is displayed.
     """
-    result = testdir.runpytest()
+    result = testdir.runpytest(pyfile_with_warnings)
     result.stdout.fnmatch_lines(
         [
             "*== %s ==*" % WARNINGS_SUMMARY_HEADER,
@@ -54,7 +57,7 @@ def test_normal_flow(testdir, pyfile_with_warnings):
 
 
 @pytest.mark.filterwarnings("always")
-def test_setup_teardown_warnings(testdir, pyfile_with_warnings):
+def test_setup_teardown_warnings(testdir):
     testdir.makepyfile(
         """
         import warnings
@@ -95,7 +98,7 @@ def test_as_errors(testdir, pyfile_with_warnings, method):
         )
     # Use a subprocess, since changing logging level affects other threads
     # (xdist).
-    result = testdir.runpytest_subprocess(*args)
+    result = testdir.runpytest_subprocess(*args, pyfile_with_warnings)
     result.stdout.fnmatch_lines(
         [
             "E       UserWarning: user warning",
@@ -116,15 +119,15 @@ def test_ignore(testdir, pyfile_with_warnings, method):
         """
         )
 
-    result = testdir.runpytest(*args)
+    result = testdir.runpytest(*args, pyfile_with_warnings)
     result.stdout.fnmatch_lines(["* 1 passed in *"])
     assert WARNINGS_SUMMARY_HEADER not in result.stdout.str()
 
 
 @pytest.mark.filterwarnings("always")
-def test_unicode(testdir, pyfile_with_warnings):
+def test_unicode(testdir):
     testdir.makepyfile(
-        """\
+        """
         import warnings
         import pytest
 

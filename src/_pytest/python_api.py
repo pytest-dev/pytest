@@ -678,7 +678,7 @@ def raises(  # noqa: F811
     """
     __tracebackhide__ = True
     for exc in filterfalse(
-        inspect.isclass, always_iterable(expected_exception, BASE_TYPE)  # type: ignore[arg-type]  # noqa: F821
+        inspect.isclass, always_iterable(expected_exception, BASE_TYPE)
     ):
         msg = "exceptions must be derived from BaseException, not %s"
         raise TypeError(msg % type(exc))

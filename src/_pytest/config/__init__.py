@@ -731,25 +731,18 @@ class Config:
     """
     Access to configuration values, pluginmanager and plugin hooks.
 
-    :ivar PytestPluginManager pluginmanager: the plugin manager handles plugin registration and hook invocation.
+    :param PytestPluginManager pluginmanager:
 
-    :ivar argparse.Namespace option: access to command line option as attributes.
-
-    :ivar InvocationParams invocation_params:
-
+    :param InvocationParams invocation_params:
         Object containing the parameters regarding the ``pytest.main``
         invocation.
-
-        Contains the following read-only attributes:
-
-        * ``args``: tuple of command-line arguments as passed to ``pytest.main()``.
-        * ``plugins``: list of extra plugins, might be None.
-        * ``dir``: directory where ``pytest.main()`` was invoked from.
     """
 
     @attr.s(frozen=True)
     class InvocationParams:
         """Holds parameters passed during ``pytest.main()``
+
+        The object attributes are read-only.
 
         .. versionadded:: 5.1
 
@@ -762,10 +755,18 @@ class Config:
         """
 
         args = attr.ib(converter=tuple)
+        """tuple of command-line arguments as passed to ``pytest.main()``."""
         plugins = attr.ib()
+        """list of extra plugins, might be `None`."""
         dir = attr.ib(type=Path)
+        """directory where ``pytest.main()`` was invoked from."""
 
-    def __init__(self, pluginmanager, *, invocation_params=None) -> None:
+    def __init__(
+        self,
+        pluginmanager: PytestPluginManager,
+        *,
+        invocation_params: Optional[InvocationParams] = None
+    ) -> None:
         from .argparsing import Parser, FILE_OR_DIR
 
         if invocation_params is None:
@@ -774,6 +775,10 @@ class Config:
             )
 
         self.option = argparse.Namespace()
+        """access to command line option as attributes.
+
+          :type: argparse.Namespace"""
+
         self.invocation_params = invocation_params
 
         _a = FILE_OR_DIR
@@ -782,6 +787,10 @@ class Config:
             processopt=self._processopt,
         )
         self.pluginmanager = pluginmanager
+        """the plugin manager handles plugin registration and hook invocation.
+
+          :type: PytestPluginManager"""
+
         self.trace = self.pluginmanager.trace.root.get("config")
         self.hook = self.pluginmanager.hook
         self._inicache = {}  # type: Dict[str, Any]

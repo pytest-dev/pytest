@@ -55,7 +55,7 @@ class BaseReport:
 
     def toterminal(self, out) -> None:
         if hasattr(self, "node"):
-            out.line(getslaveinfoline(self.node))  # type: ignore
+            out.line(getslaveinfoline(self.node))
 
         longrepr = self.longrepr
         if longrepr is None:
@@ -131,7 +131,7 @@ class BaseReport:
         """
         **Experimental**
 
-        Returns True if this report should be counted towards the totals shown at the end of the
+        ``True`` if this report should be counted towards the totals shown at the end of the
         test session: "1 passed, 1 failure, etc".
 
         .. note::

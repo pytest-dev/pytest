@@ -43,7 +43,8 @@ Xfail strict
 PYTEST_CURRENT_TEST
 ~~~~~~~~~~~~~~~~~~~
 
-:ref:`pytest current test env` may be useful for figuring out "which test got stuck".
+:envvar:`PYTEST_CURRENT_TEST` may be useful for figuring out "which test got stuck".
+See :ref:`pytest current test env` for more details.
 
 
 Plugins
