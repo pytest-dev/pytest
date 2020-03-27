@@ -223,7 +223,6 @@ class TestReport(BaseReport):
         when,
         sections=(),
         duration=0,
-        duration_ns=None,  # python >= 3.7
         user_properties=None,
         **extra
     ) -> None:
@@ -260,7 +259,6 @@ class TestReport(BaseReport):
 
         #: time it took to run just the test
         self.duration = duration
-        self.duration_ns = duration_ns
 
         self.__dict__.update(extra)
 
@@ -276,7 +274,6 @@ class TestReport(BaseReport):
         """
         when = call.when
         duration = call.duration
-        duration_ns = call.duration_ns
         keywords = {x: 1 for x in item.keywords}
         excinfo = call.excinfo
         sections = []
@@ -310,7 +307,6 @@ class TestReport(BaseReport):
             when,
             sections,
             duration,
-            duration_ns,
             user_properties=item.user_properties,
         )
 

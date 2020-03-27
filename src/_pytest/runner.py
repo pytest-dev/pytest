@@ -2,13 +2,6 @@
 import bdb
 import os
 import sys
-
-try:
-    from time import perf_counter_ns
-
-    _USE_PY37_PERF_NS = True
-except ImportError:
-    _USE_PY37_PERF_NS = False
 from time import perf_counter
 from time import time
 from typing import Callable
@@ -237,7 +230,6 @@ class CallInfo:
     :param start: (float) The system time when the call started, in seconds since the epoch.
     :param stop: (float) The system time when the call ended, in seconds since the epoch.
     :param duration: (float) The call duration, in seconds.
-    :param duration_ns: (int) The call duration, in nanoseconds. Only available in Python >= 3.7.
     :param when: The context of invocation: "setup", "call", "teardown", ...
     """
 
@@ -246,7 +238,6 @@ class CallInfo:
     start = attr.ib(type=float)
     stop = attr.ib(type=float)
     duration = attr.ib(type=float)
-    duration_ns = attr.ib(type=Optional[int])
     when = attr.ib(type=str)
 
     @property
@@ -259,13 +250,9 @@ class CallInfo:
     def from_call(cls, func, when, reraise=None) -> "CallInfo":
         #: context of invocation: one of "setup", "call",
         #: "teardown", "memocollect"
-        duration_ns = None
         excinfo = None
         start = time()
-        if _USE_PY37_PERF_NS:
-            precise_start_ns = perf_counter_ns()
-        else:
-            precise_start = perf_counter()
+        precise_start = perf_counter()
         try:
             result = func()
         except:  # noqa
@@ -273,21 +260,14 @@ class CallInfo:
             if reraise is not None and excinfo.errisinstance(reraise):
                 raise
             result = None
-        if _USE_PY37_PERF_NS:
-            # use the new nanosecond-accurate perf counter
-            precise_stop_ns = perf_counter_ns()
-            duration_ns = precise_stop_ns - precise_start_ns  # noqa
-            duration = duration_ns * 1e-9
-        else:
-            # use the legacy perf counter
-            precise_stop = perf_counter()
-            duration = precise_stop - precise_start  # noqa
+        # use the perf counter
+        precise_stop = perf_counter()
+        duration = precise_stop - precise_start
         stop = time()
         return cls(
             start=start,
             stop=stop,
             duration=duration,
-            duration_ns=duration_ns,
             when=when,
             result=result,
             excinfo=excinfo,
