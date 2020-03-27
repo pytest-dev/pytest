@@ -168,6 +168,37 @@ class TestDoctests:
 
         result.stdout.fnmatch_lines(["*1 passed*"])
 
+    @pytest.mark.parametrize("test_string", ["True", "False", None])
+    def test_standalone_namespace(self, testdir, test_string):
+        if test_string is not None:
+            testdir.makeini(
+                """
+                [pytest]
+                doctest_standalone_namespace = {}
+                """.format(
+                    test_string
+                )
+            )
+        testdir.makepyfile(
+            """
+        def func():
+            '''
+            >>> func()
+            1
+            '''
+            return 1
+        """
+        )
+        result = testdir.runpytest("--doctest-modules")
+
+        if test_string in ["False", None]:
+            result.stdout.fnmatch_lines(["*1 passed*"])
+            result.stdout.no_fnmatch_line("*FAILED*")
+        else:
+            result.stdout.no_fnmatch_line("*1 passed*")
+            result.stdout.fnmatch_lines("*FAILED*")
+            result.stdout.fnmatch_lines("NameError: name 'func' is not defined")
+
     def test_doctest_unexpected_exception(self, testdir):
         testdir.maketxtfile(
             """

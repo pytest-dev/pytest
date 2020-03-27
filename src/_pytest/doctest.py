@@ -62,6 +62,12 @@ def pytest_addoption(parser):
     parser.addini(
         "doctest_encoding", "encoding used for doctest files", default="utf-8"
     )
+    parser.addini(
+        "doctest_standalone_namespace",
+        help="treat each module as having a standalone namespace",
+        type="bool",
+        default=False,
+    )
     group = parser.getgroup("collect")
     group.addoption(
         "--doctest-modules",
@@ -465,15 +471,19 @@ class DoctestModule(pytest.Module):
                 return doctest.DocTestFinder._find_lineno(self, obj, source_lines)
 
             def _find(
-                self, tests, obj, name, module, source_lines, globs, seen
+                _self, tests, obj, name, module, source_lines, globs, seen
             ) -> None:
                 if _is_mocked(obj):
                     return
+
+                if self.config.getini("doctest_standalone_namespace"):
+                    globs = {}
+
                 with _patch_unwrap_mock_aware():
 
                     # Type ignored because this is a private function.
                     doctest.DocTestFinder._find(  # type: ignore
-                        self, tests, obj, name, module, source_lines, globs, seen
+                        _self, tests, obj, name, module, source_lines, globs, seen
                     )
 
         if self.fspath.basename == "conftest.py":
