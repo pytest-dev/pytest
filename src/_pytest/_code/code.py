@@ -1041,28 +1041,35 @@ class ReprEntry(TerminalRepr):
         character, as doing so might break line continuations.
         """
 
-        indent_size = 4
-
-        def is_fail(line):
-            return line.startswith("{}   ".format(FormattedExcinfo.fail_marker))
-
         if not self.lines:
             return
 
         # separate indents and source lines that are not failures: we want to
         # highlight the code but not the indentation, which may contain markers
         # such as ">   assert 0"
+        fail_marker = "{}   ".format(FormattedExcinfo.fail_marker)
+        indent_size = len(fail_marker)
         indents = []
         source_lines = []
+        failure_lines = []
+        seeing_failures = False
         for line in self.lines:
-            if not is_fail(line):
+            is_source_line = not line.startswith(fail_marker)
+            if is_source_line:
+                assert not seeing_failures, (
+                    "Unexpected failure lines between source lines:\n"
+                    + "\n".join(self.lines)
+                )
                 indents.append(line[:indent_size])
                 source_lines.append(line[indent_size:])
+            else:
+                seeing_failures = True
+                failure_lines.append(line)
 
         tw._write_source(source_lines, indents)
 
         # failure lines are always completely red and bold
-        for line in (x for x in self.lines if is_fail(x)):
+        for line in failure_lines:
             tw.line(line, bold=True, red=True)
 
     def toterminal(self, tw: TerminalWriter) -> None:

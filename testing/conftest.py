@@ -192,6 +192,8 @@ def color_mapping():
                 output = result.stdout.str()
                 assert "test session starts" in output
                 assert "\x1b[1m" in output
-                pytest.skip("doing limited testing because lacking ordered markup")
+                pytest.skip(
+                    "doing limited testing because lacking ordered markup on py35"
+                )
 
     return ColorMapping
