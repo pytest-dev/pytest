@@ -243,11 +243,11 @@ class CallInfo:
 
     _result = attr.ib()
     excinfo = attr.ib(type=Optional[ExceptionInfo])
-    start = attr.ib()
-    stop = attr.ib()
-    duration = attr.ib()
-    duration_ns = attr.ib()
-    when = attr.ib()
+    start = attr.ib(type=float)
+    stop = attr.ib(type=float)
+    duration = attr.ib(type=float)
+    duration_ns = attr.ib(type=Optional[int])
+    when = attr.ib(type=str)
 
     @property
     def result(self):
