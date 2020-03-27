@@ -922,7 +922,7 @@ class TestDurations:
         # The number of hidden should be 8, but on macOS and windows it sometimes is 7
         # - on MacOS and Windows test 1 can last longer and appear in the list
         # - on Windows test 2 can last less and disappear from the list
-        if sys.platform in ('win32', 'darwin'):
+        if sys.platform in ("win32", "darwin"):
             nb_hidden = "*"
         else:
             nb_hidden = "8"
