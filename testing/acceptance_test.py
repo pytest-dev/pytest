@@ -2,7 +2,6 @@ import os
 import sys
 import textwrap
 import types
-from platform import system
 
 import attr
 import py
@@ -914,7 +913,7 @@ class TestDurations:
         assert result.ret == 0
 
         # on Windows, test 2 (10ms) can actually sleep less than 5ms and become hidden
-        if system() == "Windows":
+        if sys.platform == "win32":
             to_match = ["*durations*", "*call*test_3*"]
         else:
             to_match = ["*durations*", "*call*test_3*", "*call*test_2*"]
@@ -923,10 +922,11 @@ class TestDurations:
         # The number of hidden should be 8, but on macOS and windows it sometimes is 7
         # - on MacOS and Windows test 1 can last longer and appear in the list
         # - on Windows test 2 can last less and disappear from the list
-        if system() == "Linux":
-            nb_hidden = "8"
-        else:
+        if sys.platform in ('win32', 'darwin'):
             nb_hidden = "*"
+        else:
+            nb_hidden = "8"
+
         result.stdout.fnmatch_lines(
             [
                 "(%s durations < 0.005s hidden.  Use -vv to show these durations.)"
@@ -947,7 +947,7 @@ class TestDurations:
         assert result.ret == 0
 
         # on windows, test 2 (10ms) can actually sleep less than 5ms and become hidden
-        tested = "3" if system() == "Windows" else "23"
+        tested = "3" if sys.platform == "win32" else "23"
         for x in tested:
             for y in ("call",):  # 'setup', 'call', 'teardown':
                 for line in result.stdout.lines:
