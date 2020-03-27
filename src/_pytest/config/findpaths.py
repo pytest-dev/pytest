@@ -15,7 +15,7 @@ if TYPE_CHECKING:
     from . import Config  # noqa: F401
 
 
-def exists(path, ignore=EnvironmentError):
+def exists(path, ignore=OSError):
     try:
         return path.check()
     except ignore:

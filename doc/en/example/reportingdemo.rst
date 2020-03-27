@@ -406,7 +406,7 @@ Here is a nice run of several failures and how ``pytest`` presents things:
     self = <failure_demo.TestRaises object at 0xdeadbeef>
 
         def test_raises_doesnt(self):
-    >       raises(IOError, int, "3")
+    >       raises(OSError, int, "3")
     E       Failed: DID NOT RAISE <class 'OSError'>
 
     failure_demo.py:170: Failed

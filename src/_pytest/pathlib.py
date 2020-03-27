@@ -178,7 +178,7 @@ def make_numbered_dir(root: Path, prefix: str) -> Path:
             _force_symlink(root, prefix + "current", new_path)
             return new_path
     else:
-        raise EnvironmentError(
+        raise OSError(
             "could not create numbered dir with prefix "
             "{prefix} in {root} after 10 tries".format(prefix=prefix, root=root)
         )
@@ -190,14 +190,14 @@ def create_cleanup_lock(p: Path) -> Path:
     try:
         fd = os.open(str(lock_path), os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o644)
     except FileExistsError as e:
-        raise EnvironmentError("cannot create lockfile in {path}".format(path=p)) from e
+        raise OSError("cannot create lockfile in {path}".format(path=p)) from e
     else:
         pid = os.getpid()
         spid = str(pid).encode()
         os.write(fd, spid)
         os.close(fd)
         if not lock_path.is_file():
-            raise EnvironmentError("lock path got renamed after successful creation")
+            raise OSError("lock path got renamed after successful creation")
         return lock_path
 
 
@@ -212,7 +212,7 @@ def register_cleanup_lock_removal(lock_path: Path, register=atexit.register):
             return
         try:
             lock_path.unlink()
-        except (OSError, IOError):
+        except OSError:
             pass
 
     return register(cleanup_on_exit)
@@ -228,7 +228,7 @@ def maybe_delete_a_numbered_dir(path: Path) -> None:
         garbage = parent.joinpath("garbage-{}".format(uuid.uuid4()))
         path.rename(garbage)
         rm_rf(garbage)
-    except (OSError, EnvironmentError):
+    except OSError:
         #  known races:
         #  * other process did a cleanup at the same time
         #  * deletable folder was found
@@ -240,7 +240,7 @@ def maybe_delete_a_numbered_dir(path: Path) -> None:
         if lock_path is not None:
             try:
                 lock_path.unlink()
-            except (OSError, IOError):
+            except OSError:
                 pass
 
 

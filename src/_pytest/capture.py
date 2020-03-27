@@ -689,7 +689,7 @@ class DontReadFromInput:
     encoding = None
 
     def read(self, *args):
-        raise IOError(
+        raise OSError(
             "pytest: reading from stdin while output is captured!  Consider using `-s`."
         )
 

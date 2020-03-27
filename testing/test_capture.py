@@ -829,10 +829,10 @@ def test_dontreadfrominput():
     f = DontReadFromInput()
     assert f.buffer is f
     assert not f.isatty()
-    pytest.raises(IOError, f.read)
-    pytest.raises(IOError, f.readlines)
+    pytest.raises(OSError, f.read)
+    pytest.raises(OSError, f.readlines)
     iter_f = iter(f)
-    pytest.raises(IOError, next, iter_f)
+    pytest.raises(OSError, next, iter_f)
     pytest.raises(UnsupportedOperation, f.fileno)
     f.close()  # just for completeness
 
@@ -1083,7 +1083,7 @@ class TestStdCapture:
         print("XXX which indicates an error in the underlying capturing")
         print("XXX mechanisms")
         with self.getcapture():
-            pytest.raises(IOError, sys.stdin.read)
+            pytest.raises(OSError, sys.stdin.read)
 
 
 class TestTeeStdCapture(TestStdCapture):
@@ -1356,7 +1356,7 @@ def test_crash_on_closing_tmpfile_py27(testdir):
     result = testdir.runpytest_subprocess(str(p))
     assert result.ret == 0
     assert result.stderr.str() == ""
-    result.stdout.no_fnmatch_line("*IOError*")
+    result.stdout.no_fnmatch_line("*OSError*")
 
 
 def test_global_capture_with_live_logging(testdir):

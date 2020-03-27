@@ -307,7 +307,7 @@ def getfslineno(obj: Any) -> Tuple[Union[str, py.path.local], int]:
         if fspath:
             try:
                 _, lineno = findsource(obj)
-            except IOError:
+            except OSError:
                 pass
         return fspath, lineno
     else:

@@ -463,7 +463,7 @@ class TestGeneralUsage:
         p = testdir.makepyfile(
             """
             def raise_error(obj):
-                raise IOError('source code not available')
+                raise OSError('source code not available')
 
             import inspect
             inspect.getsourcelines = raise_error
