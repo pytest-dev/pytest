@@ -226,7 +226,7 @@ def call_runtest_hook(item, when: "Literal['setup', 'call', 'teardown']", **kwds
 class CallInfo:
     """ Result/Exception info a function invocation.
 
-    :param result: The return value of the call, if it didn't raise. Can only be accessed 
+    :param result: The return value of the call, if it didn't raise. Can only be accessed
         if excinfo is None.
     :param Optional[ExceptionInfo] excinfo: The captured exception of the call, if it raised.
     :param float start: The system time when the call started, in seconds since the epoch.
