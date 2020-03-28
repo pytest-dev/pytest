@@ -283,8 +283,7 @@ Note that you have to pass a reason as well (see the parameter description at
 ``reason`` parameter
 ~~~~~~~~~~~~~~~~~~~~
 
-As with skipif_ you can also mark your expectation of a failure
-on a particular platform:
+You can specify the motive of an expected failure with the ``reason`` parameter:
 
 .. code-block:: python
 
