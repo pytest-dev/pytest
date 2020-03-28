@@ -268,7 +268,7 @@ to do this using the ``setenv`` and ``delenv`` method. Our example code to test:
 
     def get_os_user_lower():
         """Simple retrieval function.
-        Returns lowercase USER or raises EnvironmentError."""
+        Returns lowercase USER or raises OSError."""
         username = os.getenv("USER")
 
         if username is None:
@@ -293,7 +293,7 @@ both paths can be safely tested without impacting the running environment:
 
 
     def test_raise_exception(monkeypatch):
-        """Remove the USER env var and assert EnvironmentError is raised."""
+        """Remove the USER env var and assert OSError is raised."""
         monkeypatch.delenv("USER", raising=False)
 
         with pytest.raises(OSError):

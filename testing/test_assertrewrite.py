@@ -971,7 +971,7 @@ class TestAssertionRewriteHookDetails:
 
             @contextmanager
             def atomic_write_failed(fn, mode="r", overwrite=False):
-                e = IOError()
+                e = OSError()
                 e.errno = 10
                 raise e
                 yield
@@ -981,10 +981,10 @@ class TestAssertionRewriteHookDetails:
             )
         else:
 
-            def raise_ioerror(*args):
-                raise IOError()
+            def raise_oserror(*args):
+                raise OSError()
 
-            monkeypatch.setattr("os.rename", raise_ioerror)
+            monkeypatch.setattr("os.rename", raise_oserror)
 
         assert not _write_pyc(state, [1], os.stat(source_path), pycpath)
 

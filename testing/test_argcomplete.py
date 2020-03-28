@@ -20,7 +20,7 @@ def equal_with_bash(prefix, ffc, fc, out=None):
 
 # copied from argcomplete.completers as import from there
 # also pulls in argcomplete.__init__ which opens filedescriptor 9
-# this gives an IOError at the end of testrun
+# this gives an OSError at the end of testrun
 
 
 def _wrapcall(*args, **kargs):

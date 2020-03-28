@@ -167,7 +167,7 @@ class TestRaises:
         raises(TypeError, int, s)
 
     def test_raises_doesnt(self):
-        raises(IOError, int, "3")
+        raises(OSError, int, "3")
 
     def test_raise(self):
         raise ValueError("demo error")
