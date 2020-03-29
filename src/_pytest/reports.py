@@ -273,7 +273,7 @@ class TestReport(BaseReport):
         Factory method to create and fill a TestReport with standard item and call info.
         """
         when = call.when
-        duration = call.stop - call.start
+        duration = call.duration
         keywords = {x: 1 for x in item.keywords}
         excinfo = call.excinfo
         sections = []

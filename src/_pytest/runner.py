@@ -2,6 +2,7 @@
 import bdb
 import os
 import sys
+from time import perf_counter
 from time import time
 from typing import Callable
 from typing import Dict
@@ -59,15 +60,18 @@ def pytest_terminal_summary(terminalreporter):
     dlist.sort(key=lambda x: x.duration)
     dlist.reverse()
     if not durations:
-        tr.write_sep("=", "slowest test durations")
+        tr.write_sep("=", "slowest durations")
     else:
-        tr.write_sep("=", "slowest %s test durations" % durations)
+        tr.write_sep("=", "slowest %s durations" % durations)
         dlist = dlist[:durations]
 
-    for rep in dlist:
+    for i, rep in enumerate(dlist):
         if verbose < 2 and rep.duration < 0.005:
             tr.write_line("")
-            tr.write_line("(0.00 durations hidden.  Use -vv to show these durations.)")
+            tr.write_line(
+                "(%s durations < 0.005s hidden.  Use -vv to show these durations.)"
+                % (len(dlist) - i)
+            )
             break
         tr.write_line("{:02.2f}s {:<8} {}".format(rep.duration, rep.when, rep.nodeid))
 
@@ -220,13 +224,23 @@ def call_runtest_hook(item, when: "Literal['setup', 'call', 'teardown']", **kwds
 
 @attr.s(repr=False)
 class CallInfo:
-    """ Result/Exception info a function invocation. """
+    """ Result/Exception info a function invocation.
+
+    :param result: The return value of the call, if it didn't raise. Can only be accessed
+        if excinfo is None.
+    :param Optional[ExceptionInfo] excinfo: The captured exception of the call, if it raised.
+    :param float start: The system time when the call started, in seconds since the epoch.
+    :param float stop: The system time when the call ended, in seconds since the epoch.
+    :param float duration: The call duration, in seconds.
+    :param str when: The context of invocation: "setup", "call", "teardown", ...
+    """
 
     _result = attr.ib()
     excinfo = attr.ib(type=Optional[ExceptionInfo])
-    start = attr.ib()
-    stop = attr.ib()
-    when = attr.ib()
+    start = attr.ib(type=float)
+    stop = attr.ib(type=float)
+    duration = attr.ib(type=float)
+    when = attr.ib(type=str)
 
     @property
     def result(self):
@@ -238,8 +252,9 @@ class CallInfo:
     def from_call(cls, func, when, reraise=None) -> "CallInfo":
         #: context of invocation: one of "setup", "call",
         #: "teardown", "memocollect"
-        start = time()
         excinfo = None
+        start = time()
+        precise_start = perf_counter()
         try:
             result = func()
         except:  # noqa
@@ -247,8 +262,18 @@ class CallInfo:
             if reraise is not None and excinfo.errisinstance(reraise):
                 raise
             result = None
+        # use the perf counter
+        precise_stop = perf_counter()
+        duration = precise_stop - precise_start
         stop = time()
-        return cls(start=start, stop=stop, when=when, result=result, excinfo=excinfo)
+        return cls(
+            start=start,
+            stop=stop,
+            duration=duration,
+            when=when,
+            result=result,
+            excinfo=excinfo,
+        )
 
     def __repr__(self):
         if self.excinfo is None:
