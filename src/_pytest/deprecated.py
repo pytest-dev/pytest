@@ -56,6 +56,12 @@ COLLECT_DIRECTORY_HOOK = PytestDeprecationWarning(
     "Please use collect_ignore in conftests or pytest_collection_modifyitems."
 )
 
+PYTEST_COLLECT_MODULE = UnformattedWarning(
+    PytestDeprecationWarning,
+    "pytest.collect.{name} was moved to pytest.{name}\n"
+    "Please update to the new name.",
+)
+
 
 TERMINALWRITER_WRITER = PytestDeprecationWarning(
     "The TerminalReporter.writer attribute is deprecated, use TerminalReporter._tw instead at your own risk.\n"

@@ -2,9 +2,9 @@
 """
 pytest: unit and functional testing with Python.
 """
+from . import collect
 from _pytest import __version__
 from _pytest.assertion import register_assert_rewrite
-from _pytest.compat import _setup_collect_fakemodule
 from _pytest.config import cmdline
 from _pytest.config import ExitCode
 from _pytest.config import hookimpl
@@ -46,7 +46,6 @@ from _pytest.warning_types import PytestUnhandledCoroutineWarning
 from _pytest.warning_types import PytestUnknownMarkWarning
 from _pytest.warning_types import PytestWarning
 
-
 set_trace = __pytestPDB.set_trace
 
 __all__ = [
@@ -55,6 +54,7 @@ __all__ = [
     "approx",
     "Class",
     "cmdline",
+    "collect",
     "Collector",
     "deprecated_call",
     "exit",
@@ -93,7 +93,3 @@ __all__ = [
     "xfail",
     "yield_fixture",
 ]
-
-
-_setup_collect_fakemodule()
-del _setup_collect_fakemodule
