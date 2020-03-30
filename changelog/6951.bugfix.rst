@@ -1,0 +1,1 @@
+Allow users to still set the deprecated ``TerminalReporter.writer`` attribute.
