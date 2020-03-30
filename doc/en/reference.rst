@@ -1028,7 +1028,7 @@ file, usually located at the root of your repository. All options must be under 
     down problems.
     When possible, it is recommended to use the latter files to hold your pytest configuration.
 
-Configuration file options may be overwritten in the command-line by using ``-o/--override``, which can also be
+Configuration file options may be overwritten in the command-line by using ``-o/--override-ini``, which can also be
 passed multiple times. The expected format is ``name=value``. For example::
 
    pytest -o console_output_style=classic -o cache_dir=/tmp/mycache
