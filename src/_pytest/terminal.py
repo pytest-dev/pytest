@@ -29,6 +29,7 @@ from _pytest import nodes
 from _pytest._io import TerminalWriter
 from _pytest.config import Config
 from _pytest.config import ExitCode
+from _pytest.deprecated import TERMINALWRITER_WRITER
 from _pytest.main import Session
 from _pytest.reports import CollectReport
 from _pytest.reports import TestReport
@@ -284,13 +285,13 @@ class TerminalReporter:
 
     @property
     def writer(self) -> TerminalWriter:
-        warnings.warn(
-            pytest.PytestDeprecationWarning(
-                "TerminalReporter.writer attribute is deprecated, use TerminalReporter._tw instead at your own risk.\n"
-                "See https://docs.pytest.org/en/latest/deprecations.html#terminalreporter-writer for more information."
-            )
-        )
+        warnings.warn(TERMINALWRITER_WRITER, stacklevel=2)
         return self._tw
+
+    @writer.setter
+    def writer(self, value: TerminalWriter):
+        warnings.warn(TERMINALWRITER_WRITER, stacklevel=2)
+        self._tw = value
 
     def _determine_show_progress_info(self):
         """Return True if we should display progress information based on the current config"""

@@ -36,8 +36,15 @@ def test_terminal_reporter_writer_attr(pytestconfig):
     except ImportError:
         pass
     terminal_reporter = pytestconfig.pluginmanager.get_plugin("terminalreporter")
+    expected_tw = terminal_reporter._tw
+
     with pytest.warns(pytest.PytestDeprecationWarning):
-        assert terminal_reporter.writer is terminal_reporter._tw
+        assert terminal_reporter.writer is expected_tw
+
+    with pytest.warns(pytest.PytestDeprecationWarning):
+        terminal_reporter.writer = expected_tw
+
+    assert terminal_reporter._tw is expected_tw
 
 
 @pytest.mark.parametrize("plugin", sorted(deprecated.DEPRECATED_EXTERNAL_PLUGINS))
