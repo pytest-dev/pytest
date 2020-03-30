@@ -175,15 +175,33 @@ def async_warn(nodeid: str) -> None:
 @hookimpl(trylast=True)
 def pytest_pyfunc_call(pyfuncitem: "Function"):
     testfunction = pyfuncitem.obj
-    if iscoroutinefunction(testfunction) or (
-        sys.version_info >= (3, 6) and inspect.isasyncgenfunction(testfunction)
-    ):
+
+    try:
+        # ignoring type as the import is  invalid in py37  and mypy thinks its a error
+        from unittest import IsolatedAsyncioTestCase  # type: ignore
+    except ImportError:
+        async_ok_in_stdlib = False
+    else:
+        async_ok_in_stdlib = isinstance(
+            getattr(testfunction, "__self__", None), IsolatedAsyncioTestCase
+        )
+
+    if (
+        iscoroutinefunction(testfunction)
+        or (sys.version_info >= (3, 6) and inspect.isasyncgenfunction(testfunction))
+    ) and not async_ok_in_stdlib:
         async_warn(pyfuncitem.nodeid)
     funcargs = pyfuncitem.funcargs
     testargs = {arg: funcargs[arg] for arg in pyfuncitem._fixtureinfo.argnames}
     result = testfunction(**testargs)
     if hasattr(result, "__await__") or hasattr(result, "__aiter__"):
-        async_warn(pyfuncitem.nodeid)
+        if async_ok_in_stdlib:
+            # todo: investigate moving this to the unittest plugin
+            #       by a test call result hook
+            testcase = testfunction.__self__
+            testcase._callMaybeAsync(lambda: result)
+        else:
+            async_warn(pyfuncitem.nodeid)
     return True
 
 

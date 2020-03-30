@@ -1129,3 +1129,11 @@ def test_trace(testdir, monkeypatch):
     result = testdir.runpytest("--trace", str(p1))
     assert len(calls) == 2
     assert result.ret == 0
+
+
+def test_async_support(testdir):
+    pytest.importorskip("unittest.async_case")
+
+    testdir.copy_example("unittest/test_unittest_asyncio.py")
+    reprec = testdir.inline_run()
+    reprec.assertoutcome(failed=1, passed=1)
