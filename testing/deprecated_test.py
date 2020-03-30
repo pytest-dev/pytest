@@ -25,6 +25,13 @@ def test_resultlog_is_deprecated(testdir):
     )
 
 
+@pytest.mark.parametrize("attribute", pytest.collect.__all__)  # type: ignore
+# false positive due to dynamic attribute
+def test_pytest_collect_module_deprecated(attribute):
+    with pytest.warns(DeprecationWarning, match=attribute):
+        getattr(pytest.collect, attribute)
+
+
 def test_terminal_reporter_writer_attr(pytestconfig):
     """Check that TerminalReporter._tw is also available as 'writer' (#2984)
     This attribute has been deprecated in 5.4.

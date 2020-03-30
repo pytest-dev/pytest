@@ -336,30 +336,6 @@ def safe_isclass(obj: object) -> bool:
         return False
 
 
-COLLECT_FAKEMODULE_ATTRIBUTES = (
-    "Collector",
-    "Module",
-    "Function",
-    "Instance",
-    "Session",
-    "Item",
-    "Class",
-    "File",
-    "_fillfuncargs",
-)
-
-
-def _setup_collect_fakemodule() -> None:
-    from types import ModuleType
-    import pytest
-
-    # Types ignored because the module is created dynamically.
-    pytest.collect = ModuleType("pytest.collect")  # type: ignore
-    pytest.collect.__all__ = []  # type: ignore  # used for setns
-    for attr_name in COLLECT_FAKEMODULE_ATTRIBUTES:
-        setattr(pytest.collect, attr_name, getattr(pytest, attr_name))  # type: ignore
-
-
 class CaptureIO(io.TextIOWrapper):
     def __init__(self) -> None:
         super().__init__(io.BytesIO(), encoding="UTF-8", newline="", write_through=True)
