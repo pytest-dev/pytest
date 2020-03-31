@@ -170,6 +170,8 @@ def pytest_load_initial_conftests(early_config, parser, args):
 def pytest_collection(session: "Session") -> Optional[Any]:
     """Perform the collection protocol for the given session.
 
+    The hook has to set `session.items` to a sequence of items.
+
     Stops at first non-None result, see :ref:`firstresult`.
 
     :param _pytest.main.Session session: the pytest session object
