@@ -32,7 +32,7 @@ just run your tests even if you return Deferreds.  In addition,
 there also is a dedicated `pytest-twisted
 <https://pypi.org/project/pytest-twisted/>`_ plugin which allows you to
 return deferreds from pytest-style tests, allowing the use of
-:ref:`fixtures` and other features.
+:ref:`fixtures <fixtures>` and other features.
 
 how does pytest work with Django?
 ++++++++++++++++++++++++++++++++++++++++++++++
