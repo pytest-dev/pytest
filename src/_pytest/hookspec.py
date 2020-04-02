@@ -170,7 +170,26 @@ def pytest_load_initial_conftests(early_config, parser, args):
 def pytest_collection(session: "Session") -> Optional[Any]:
     """Perform the collection protocol for the given session.
 
-    The hook has to set `session.items` to a sequence of items.
+    Usually plugins will implement this hook only to perform some action before
+    collection, for example the terminal plugin will use this to start displaying
+    the collection counter, so usually plugins return `None` from this hook after
+    performing the desired operation.
+    
+    However a plugin might decide to override the collection completely,
+    in which case it should return `True`, but then it is usually expected
+    that this hook will also need to perform the following operations 
+    that are usually part of the collection process:
+    
+      1. Call the pytest_collectstart hook.
+      2. Call the pytest_collectreport hook.
+      3. Call the pytest_collection_modifyitems hook.
+      4. Call the pytest_collection_finish hook.
+      5. Set session.testscollected to the amount of collect items.
+      6. Set `session.items` to a list of items.
+      
+    If a plugin just wants to skip collection entirely, like `pytest-xdist`
+    does for master nodes, then it is OK to not do anything other than
+    returning `True` from here.
 
     Stops at first non-None result, see :ref:`firstresult`.
 
