@@ -362,6 +362,7 @@ class TestReportSerialization:
             """
             )
 
+        testdir.syspathinsert()
         reprec = testdir.inline_run()
 
         reports = reprec.getreports("pytest_runtest_logreport")
