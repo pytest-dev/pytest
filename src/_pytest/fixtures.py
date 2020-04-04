@@ -1183,9 +1183,6 @@ def yield_fixture(
     )
 
 
-defaultfuncargprefixmarker = fixture()
-
-
 @fixture(scope="session")
 def pytestconfig(request):
     """Session-scoped fixture that returns the :class:`_pytest.config.Config` object.
