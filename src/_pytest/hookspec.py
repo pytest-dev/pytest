@@ -1,6 +1,9 @@
 """ hook specifications for pytest plugins, invoked from main.py and builtin plugins.  """
 from typing import Any
+from typing import Mapping
 from typing import Optional
+from typing import Tuple
+from typing import Union
 
 from pluggy import HookspecMarker
 
@@ -8,7 +11,9 @@ from .deprecated import COLLECT_DIRECTORY_HOOK
 from _pytest.compat import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    from _pytest.config import Config
     from _pytest.main import Session
+    from _pytest.reports import BaseReport
 
 
 hookspec = HookspecMarker("pytest")
@@ -546,12 +551,32 @@ def pytest_report_collectionfinish(config, startdir, items):
 
 
 @hookspec(firstresult=True)
-def pytest_report_teststatus(report, config):
-    """ return result-category, shortletter and verbose word for reporting.
+def pytest_report_teststatus(
+    report: "BaseReport", config: "Config"
+) -> Tuple[
+    str, str, Union[str, Mapping[str, bool]],
+]:
+    """Return result-category, shortletter and verbose word for status
+    reporting.
 
-    :param _pytest.config.Config config: pytest config object
+    The result-category is a category in which to count the result, for
+    example "passed", "skipped", "error" or the empty string.
 
-    Stops at first non-None result, see :ref:`firstresult` """
+    The shortletter is shown as testing progresses, for example ".", "s",
+    "E" or the empty string.
+
+    The verbose word is shown as testing progresses in verbose mode, for
+    example "PASSED", "SKIPPED", "ERROR" or the empty string.
+
+    pytest may style these implicitly according to the report outcome.
+    To provide explicit styling, return a tuple for the verbose word,
+    for example ``"rerun", "R", ("RERUN", {"yellow": True})``.
+
+    :param report: The report object whose status is to be returned.
+    :param _pytest.config.Config config: The pytest config object.
+
+    Stops at first non-None result, see :ref:`firstresult`.
+    """
 
 
 def pytest_terminal_summary(terminalreporter, exitstatus, config):
