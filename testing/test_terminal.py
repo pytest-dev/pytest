@@ -306,6 +306,29 @@ class TestTerminal:
         tr.rewrite("hey", erase=True)
         assert f.getvalue() == "hello" + "\r" + "hey" + (6 * " ")
 
+    def test_report_teststatus_explicit_markup(
+        self, testdir: Testdir, color_mapping
+    ) -> None:
+        """Test that TerminalReporter handles markup explicitly provided by
+        a pytest_report_teststatus hook."""
+        testdir.monkeypatch.setenv("PY_COLORS", "1")
+        testdir.makeconftest(
+            """
+            def pytest_report_teststatus(report):
+                return 'foo', 'F', ('FOO', {'red': True})
+        """
+        )
+        testdir.makepyfile(
+            """
+            def test_foobar():
+                pass
+        """
+        )
+        result = testdir.runpytest("-v")
+        result.stdout.fnmatch_lines(
+            color_mapping.format_for_fnmatch(["*{red}FOO{reset}*"])
+        )
+
 
 class TestCollectonly:
     def test_collectonly_basic(self, testdir):
