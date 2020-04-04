@@ -1264,6 +1264,7 @@ def test_exception_handling_no_traceback(testdir):
             multitask_job()
     """
     )
+    testdir.syspathinsert()
     result = testdir.runpytest(p1, "--tb=long")
     result.stdout.fnmatch_lines(
         [
