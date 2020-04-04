@@ -59,8 +59,8 @@ class TempPathFactory:
             Directory base name, must be a relative path.
 
         :param numbered:
-            If True, ensure the directory is unique by adding a number
-            prefix greater than any existing one: ``basename="foo"`` and ``numbered=True``
+            If ``True``, ensure the directory is unique by adding a numbered
+            suffix greater than any existing one: ``basename="foo-"`` and ``numbered=True``
             means that this function will create directories named ``"foo-0"``,
             ``"foo-1"``, ``"foo-2"`` and so on.
 
