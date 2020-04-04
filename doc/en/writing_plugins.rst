@@ -561,6 +561,7 @@ that result but it's probably better to avoid it.
 For more information, consult the
 :ref:`pluggy documentation about hookwrappers <pluggy:hookwrappers>`.
 
+.. _plugin-hookorder:
 
 Hook function ordering / call example
 -------------------------------------

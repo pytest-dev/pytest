@@ -523,10 +523,12 @@ def pytest_report_header(config, startdir):
     :param _pytest.config.Config config: pytest config object
     :param startdir: py.path object with the starting dir
 
-    .. note:
+    .. note::
 
-        The returned (set of) lines is reversed, i.e. `trylast=True` has to
-        be used when you want to have your line(s) at the beginning.
+        Lines returned by a plugin are displayed before those of plugins which
+        ran before it.
+        If you want to have your line(s) displayed first, use
+        :ref:`trylast=True <plugin-hookorder>`.
 
     .. note::
 
@@ -544,10 +546,12 @@ def pytest_report_collectionfinish(config, startdir, items):
 
     These strings will be displayed after the standard "collected X items" message.
 
-    .. note:
+    .. note::
 
-        The returned (set of) lines is reversed, i.e. `trylast=True` has to
-        be used when you want to have your line(s) at the beginning.
+        Lines returned by a plugin are displayed before those of plugins which
+        ran before it.
+        If you want to have your line(s) displayed first, use
+        :ref:`trylast=True <plugin-hookorder>`.
 
     :param _pytest.config.Config config: pytest config object
     :param startdir: py.path object with the starting dir
