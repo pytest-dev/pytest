@@ -6,7 +6,17 @@ import attr
 
 import pytest
 from _pytest import pathlib
+from _pytest.pathlib import cleanup_numbered_dir
+from _pytest.pathlib import create_cleanup_lock
+from _pytest.pathlib import make_numbered_dir
+from _pytest.pathlib import maybe_delete_a_numbered_dir
+from _pytest.pathlib import on_rm_rf_error
 from _pytest.pathlib import Path
+from _pytest.pathlib import register_cleanup_lock_removal
+from _pytest.pathlib import rm_rf
+from _pytest.tmpdir import get_user
+from _pytest.tmpdir import TempdirFactory
+from _pytest.tmpdir import TempPathFactory
 
 
 def test_tmpdir_fixture(testdir):
@@ -33,9 +43,6 @@ class FakeConfig:
 
 class TestTempdirHandler:
     def test_mktemp(self, tmp_path):
-
-        from _pytest.tmpdir import TempdirFactory, TempPathFactory
-
         config = FakeConfig(tmp_path)
         t = TempdirFactory(TempPathFactory.from_config(config))
         tmp = t.mktemp("world")
@@ -48,8 +55,6 @@ class TestTempdirHandler:
 
     def test_tmppath_relative_basetemp_absolute(self, tmp_path, monkeypatch):
         """#4425"""
-        from _pytest.tmpdir import TempPathFactory
-
         monkeypatch.chdir(tmp_path)
         config = FakeConfig("hello")
         t = TempPathFactory.from_config(config)
@@ -91,7 +96,6 @@ def test_mktemp(testdir, basename, is_ok):
     mytemp = testdir.tmpdir.mkdir("mytemp")
     p = testdir.makepyfile(
         """
-        import pytest
         def test_abs_path(tmpdir_factory):
             tmpdir_factory.mktemp('{}', numbered=False)
         """.format(
@@ -181,7 +185,6 @@ def test_tmpdir_fallback_tox_env(testdir, monkeypatch):
     monkeypatch.delenv("USERNAME", raising=False)
     testdir.makepyfile(
         """
-        import pytest
         def test_some(tmpdir):
             assert tmpdir.isdir()
     """
@@ -207,7 +210,6 @@ def test_tmpdir_fallback_uid_not_found(testdir):
 
     testdir.makepyfile(
         """
-        import pytest
         def test_some(tmpdir):
             assert tmpdir.isdir()
     """
@@ -223,8 +225,6 @@ def test_get_user_uid_not_found():
     user id does not correspond to a valid user (e.g. running pytest in a
     Docker container with 'docker run -u'.
     """
-    from _pytest.tmpdir import get_user
-
     assert get_user() is None
 
 
@@ -234,8 +234,6 @@ def test_get_user(monkeypatch):
     required by getpass module are missing from the environment on Windows
     (#1010).
     """
-    from _pytest.tmpdir import get_user
-
     monkeypatch.delenv("USER", raising=False)
     monkeypatch.delenv("USERNAME", raising=False)
     assert get_user() is None
@@ -245,8 +243,6 @@ class TestNumberedDir:
     PREFIX = "fun-"
 
     def test_make(self, tmp_path):
-        from _pytest.pathlib import make_numbered_dir
-
         for i in range(10):
             d = make_numbered_dir(root=tmp_path, prefix=self.PREFIX)
             assert d.name.startswith(self.PREFIX)
@@ -261,8 +257,6 @@ class TestNumberedDir:
     def test_cleanup_lock_create(self, tmp_path):
         d = tmp_path.joinpath("test")
         d.mkdir()
-        from _pytest.pathlib import create_cleanup_lock
-
         lockfile = create_cleanup_lock(d)
         with pytest.raises(OSError, match="cannot create lockfile in .*"):
             create_cleanup_lock(d)
@@ -270,8 +264,6 @@ class TestNumberedDir:
         lockfile.unlink()
 
     def test_lock_register_cleanup_removal(self, tmp_path):
-        from _pytest.pathlib import create_cleanup_lock, register_cleanup_lock_removal
-
         lock = create_cleanup_lock(tmp_path)
 
         registry = []
@@ -295,8 +287,6 @@ class TestNumberedDir:
 
     def _do_cleanup(self, tmp_path):
         self.test_make(tmp_path)
-        from _pytest.pathlib import cleanup_numbered_dir
-
         cleanup_numbered_dir(
             root=tmp_path,
             prefix=self.PREFIX,
@@ -310,12 +300,9 @@ class TestNumberedDir:
         print(a, b)
 
     def test_cleanup_locked(self, tmp_path):
+        p = make_numbered_dir(root=tmp_path, prefix=self.PREFIX)
 
-        from _pytest import pathlib
-
-        p = pathlib.make_numbered_dir(root=tmp_path, prefix=self.PREFIX)
-
-        pathlib.create_cleanup_lock(p)
+        create_cleanup_lock(p)
 
         assert not pathlib.ensure_deletable(
             p, consider_lock_dead_if_created_before=p.stat().st_mtime - 1
@@ -330,16 +317,14 @@ class TestNumberedDir:
         self._do_cleanup(tmp_path)
 
     def test_removal_accepts_lock(self, tmp_path):
-        folder = pathlib.make_numbered_dir(root=tmp_path, prefix=self.PREFIX)
-        pathlib.create_cleanup_lock(folder)
-        pathlib.maybe_delete_a_numbered_dir(folder)
+        folder = make_numbered_dir(root=tmp_path, prefix=self.PREFIX)
+        create_cleanup_lock(folder)
+        maybe_delete_a_numbered_dir(folder)
         assert folder.is_dir()
 
 
 class TestRmRf:
     def test_rm_rf(self, tmp_path):
-        from _pytest.pathlib import rm_rf
-
         adir = tmp_path / "adir"
         adir.mkdir()
         rm_rf(adir)
@@ -355,8 +340,6 @@ class TestRmRf:
 
     def test_rm_rf_with_read_only_file(self, tmp_path):
         """Ensure rm_rf can remove directories with read-only files in them (#5524)"""
-        from _pytest.pathlib import rm_rf
-
         fn = tmp_path / "dir/foo.txt"
         fn.parent.mkdir()
 
@@ -374,8 +357,6 @@ class TestRmRf:
 
     def test_rm_rf_with_read_only_directory(self, tmp_path):
         """Ensure rm_rf can remove read-only directories (#5524)"""
-        from _pytest.pathlib import rm_rf
-
         adir = tmp_path / "dir"
         adir.mkdir()
 
@@ -387,8 +368,6 @@ class TestRmRf:
         assert not adir.is_dir()
 
     def test_on_rm_rf_error(self, tmp_path):
-        from _pytest.pathlib import on_rm_rf_error
-
         adir = tmp_path / "dir"
         adir.mkdir()
 
