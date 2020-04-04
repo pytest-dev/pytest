@@ -546,16 +546,16 @@ def pytest_report_collectionfinish(config, startdir, items):
 
     These strings will be displayed after the standard "collected X items" message.
 
+    :param _pytest.config.Config config: pytest config object
+    :param startdir: py.path object with the starting dir
+    :param items: list of pytest items that are going to be executed; this list should not be modified.
+
     .. note::
 
         Lines returned by a plugin are displayed before those of plugins which
         ran before it.
         If you want to have your line(s) displayed first, use
         :ref:`trylast=True <plugin-hookorder>`.
-
-    :param _pytest.config.Config config: pytest config object
-    :param startdir: py.path object with the starting dir
-    :param items: list of pytest items that are going to be executed; this list should not be modified.
     """
 
 
