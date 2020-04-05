@@ -80,7 +80,7 @@ class FaultHandlerHooks:
     def get_timeout_config_value(config):
         return float(config.getini("faulthandler_timeout") or 0.0)
 
-    @pytest.hookimpl(hookwrapper=True)
+    @pytest.hookimpl(hookwrapper=True, trylast=True)
     def pytest_runtest_protocol(self, item):
         timeout = self.get_timeout_config_value(item.config)
         stderr = item.config._store[fault_handler_stderr_key]
