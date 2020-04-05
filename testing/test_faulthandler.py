@@ -58,7 +58,7 @@ def test_timeout(testdir, enabled):
         """
     import os, time
     def test_timeout():
-        time.sleep(1 if "CI" in os.environ else 0.1)
+        time.sleep(10 if "CI" in os.environ else 0.1)
     """
     )
     testdir.makeini(
@@ -71,8 +71,6 @@ def test_timeout(testdir, enabled):
 
     result = testdir.runpytest_subprocess(*args)
     tb_output = "most recent call first"
-    if sys.version_info[:2] == (3, 3):
-        tb_output = "Thread"
     if enabled:
         result.stderr.fnmatch_lines(["*%s*" % tb_output])
     else:
