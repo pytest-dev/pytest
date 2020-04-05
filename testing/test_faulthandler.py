@@ -2,6 +2,8 @@ import sys
 
 import pytest
 
+from _pytest.pytester import Testdir
+
 
 def test_enabled(testdir):
     """Test single crashing test displays a traceback."""
@@ -49,8 +51,19 @@ def test_disabled(testdir):
     assert result.ret == 0
 
 
-@pytest.mark.parametrize("enabled", [True, False])
-def test_timeout(testdir, enabled):
+@pytest.mark.parametrize(
+    "enabled",
+    [
+        pytest.param(
+            True,
+            marks=pytest.mark.skipif(
+                sys.platform.startswith("win"), reason="issue #7022",
+            ),
+        ),
+        False,
+    ],
+)
+def test_timeout(testdir: Testdir, enabled: bool) -> None:
     """Test option to dump tracebacks after a certain timeout.
     If faulthandler is disabled, no traceback will be dumped.
     """
@@ -71,8 +84,6 @@ def test_timeout(testdir, enabled):
 
     result = testdir.runpytest_subprocess(*args)
     tb_output = "most recent call first"
-    if sys.version_info[:2] == (3, 3):
-        tb_output = "Thread"
     if enabled:
         result.stderr.fnmatch_lines(["*%s*" % tb_output])
     else:
