@@ -1453,7 +1453,7 @@ class Function(PyobjMixin, nodes.Item):
         if callobj is not NOTSET:
             self.obj = callobj
 
-        #: original function name, without any decorations (for example
+        #: Original function name, without any decorations (for example
         #: parametrization adds a ``"[...]"`` suffix to function names).
         #:
         #: .. versionadded:: 3.0
