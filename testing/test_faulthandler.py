@@ -58,7 +58,7 @@ def test_timeout(testdir, enabled):
         """
     import os, time
     def test_timeout():
-        time.sleep(10 if "CI" in os.environ else 0.1)
+        time.sleep(1 if "CI" in os.environ else 0.1)
     """
     )
     testdir.makeini(
