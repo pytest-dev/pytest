@@ -6,9 +6,11 @@ import types
 import attr
 import py
 
+import _pytest.runner
 import pytest
 from _pytest.compat import importlib_metadata
 from _pytest.config import ExitCode
+from _pytest.monkeypatch import MonkeyPatch
 
 
 def prepend_pythonpath(*dirs):
@@ -893,61 +895,64 @@ class TestInvocationVariants:
         assert request.config.pluginmanager.hasplugin("python")
 
 
+def fake_time(monkeypatch: MonkeyPatch) -> None:
+    """Monkeypatch time functions to make TestDurations not rely on actual time."""
+    import time
+
+    current_time = 1586202699.9859412
+
+    def sleep(seconds: float) -> None:
+        nonlocal current_time
+        current_time += seconds
+
+    monkeypatch.setattr(time, "sleep", sleep)
+    monkeypatch.setattr(_pytest.runner, "time", lambda: current_time)
+    monkeypatch.setattr(_pytest.runner, "perf_counter", lambda: current_time)
+
+
 class TestDurations:
     source = """
         import time
-        frag = 0.002             # 2 ms
         def test_something():
             pass
         def test_2():
-            time.sleep(frag*5)   # 10 ms: on windows might sleep < 0.005s
+            time.sleep(0.010)
         def test_1():
-            time.sleep(frag)     # 2 ms: on macOS/windows might sleep > 0.005s
+            time.sleep(0.002)
         def test_3():
-            time.sleep(frag*10)  # 20 ms
+            time.sleep(0.020)
     """
 
     def test_calls(self, testdir):
         testdir.makepyfile(self.source)
-        result = testdir.runpytest("--durations=10")
+        fake_time(testdir.monkeypatch)
+        result = testdir.runpytest_inprocess("--durations=10")
         assert result.ret == 0
 
-        # on Windows, test 2 (10ms) can actually sleep less than 5ms and become hidden
-        if sys.platform == "win32":
-            to_match = ["*durations*", "*call*test_3*"]
-        else:
-            to_match = ["*durations*", "*call*test_3*", "*call*test_2*"]
-        result.stdout.fnmatch_lines_random(to_match)
-
-        # The number of hidden should be 8, but on macOS and windows it sometimes is 7
-        # - on MacOS and Windows test 1 can last longer and appear in the list
-        # - on Windows test 2 can last less and disappear from the list
-        if sys.platform in ("win32", "darwin"):
-            nb_hidden = "*"
-        else:
-            nb_hidden = "8"
+        result.stdout.fnmatch_lines_random(
+            ["*durations*", "*call*test_3*", "*call*test_2*"]
+        )
 
         result.stdout.fnmatch_lines(
-            [
-                "(%s durations < 0.005s hidden.  Use -vv to show these durations.)"
-                % nb_hidden
-            ]
+            ["(8 durations < 0.005s hidden.  Use -vv to show these durations.)"]
         )
 
     def test_calls_show_2(self, testdir):
         testdir.makepyfile(self.source)
-        result = testdir.runpytest("--durations=2")
+        fake_time(testdir.monkeypatch)
+        result = testdir.runpytest_inprocess("--durations=2")
         assert result.ret == 0
+
         lines = result.stdout.get_lines_after("*slowest*durations*")
         assert "4 passed" in lines[2]
 
     def test_calls_showall(self, testdir):
         testdir.makepyfile(self.source)
-        result = testdir.runpytest("--durations=0")
+        fake_time(testdir.monkeypatch)
+        result = testdir.runpytest_inprocess("--durations=0")
         assert result.ret == 0
 
-        # on windows, test 2 (10ms) can actually sleep less than 5ms and become hidden
-        tested = "3" if sys.platform == "win32" else "23"
+        tested = "3"
         for x in tested:
             for y in ("call",):  # 'setup', 'call', 'teardown':
                 for line in result.stdout.lines:
@@ -958,8 +963,10 @@ class TestDurations:
 
     def test_calls_showall_verbose(self, testdir):
         testdir.makepyfile(self.source)
-        result = testdir.runpytest("--durations=0", "-vv")
+        fake_time(testdir.monkeypatch)
+        result = testdir.runpytest_inprocess("--durations=0", "-vv")
         assert result.ret == 0
+
         for x in "123":
             for y in ("call",):  # 'setup', 'call', 'teardown':
                 for line in result.stdout.lines:
@@ -970,16 +977,19 @@ class TestDurations:
 
     def test_with_deselected(self, testdir):
         testdir.makepyfile(self.source)
-        # on windows test 2 might sleep less than 0.005s and be hidden. Prefer test 3.
-        result = testdir.runpytest("--durations=2", "-k test_3")
+        fake_time(testdir.monkeypatch)
+        result = testdir.runpytest_inprocess("--durations=2", "-k test_3")
         assert result.ret == 0
+
         result.stdout.fnmatch_lines(["*durations*", "*call*test_3*"])
 
     def test_with_failing_collection(self, testdir):
         testdir.makepyfile(self.source)
+        fake_time(testdir.monkeypatch)
         testdir.makepyfile(test_collecterror="""xyz""")
-        result = testdir.runpytest("--durations=2", "-k test_1")
+        result = testdir.runpytest_inprocess("--durations=2", "-k test_1")
         assert result.ret == 2
+
         result.stdout.fnmatch_lines(["*Interrupted: 1 error during collection*"])
         # Collection errors abort test execution, therefore no duration is
         # output
@@ -987,27 +997,28 @@ class TestDurations:
 
     def test_with_not(self, testdir):
         testdir.makepyfile(self.source)
-        result = testdir.runpytest("-k not 1")
+        fake_time(testdir.monkeypatch)
+        result = testdir.runpytest_inprocess("-k not 1")
         assert result.ret == 0
 
 
-class TestDurationWithFixture:
+class TestDurationsWithFixture:
     source = """
         import pytest
         import time
-        frag = 0.02  # as on windows sleep(0.01) might take < 0.005s
 
         @pytest.fixture
         def setup_fixt():
-            time.sleep(frag)
+            time.sleep(0.02)
 
         def test_1(setup_fixt):
-            time.sleep(frag)
+            time.sleep(0.02)
     """
 
     def test_setup_function(self, testdir):
         testdir.makepyfile(self.source)
-        result = testdir.runpytest("--durations=10")
+        fake_time(testdir.monkeypatch)
+        result = testdir.runpytest_inprocess("--durations=10")
         assert result.ret == 0
 
         result.stdout.fnmatch_lines_random(

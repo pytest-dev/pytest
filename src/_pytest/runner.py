@@ -2,8 +2,8 @@
 import bdb
 import os
 import sys
-from time import perf_counter
-from time import time
+from time import perf_counter  # Intentionally not `import time` to avoid being
+from time import time  # affected by tests which monkeypatch `time` (issue #185).
 from typing import Callable
 from typing import Dict
 from typing import List
