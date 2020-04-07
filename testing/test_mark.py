@@ -533,10 +533,10 @@ class TestFunctional:
             @pytest.mark.c(location="class")
             class Test:
                 @pytest.mark.c(location="function")
-                def test_has_own():
+                def test_has_own(self):
                     pass
 
-                def test_has_inherited():
+                def test_has_inherited(self):
                     pass
 
         """
