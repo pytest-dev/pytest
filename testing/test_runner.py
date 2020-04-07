@@ -423,27 +423,6 @@ class TestExecutionNonForked(BaseFunctionalTests):
             assert False, "did not raise"
 
 
-class TestExecutionForked(BaseFunctionalTests):
-    pytestmark = pytest.mark.skipif("not hasattr(os, 'fork')")
-
-    def getrunner(self):
-        # XXX re-arrange this test to live in pytest-xdist
-        boxed = pytest.importorskip("xdist.boxed")
-        return boxed.forked_run_report
-
-    def test_suicide(self, testdir) -> None:
-        reports = testdir.runitem(
-            """
-            def test_func():
-                import os
-                os.kill(os.getpid(), 15)
-        """
-        )
-        rep = reports[0]
-        assert rep.failed
-        assert rep.when == "???"
-
-
 class TestSessionReports:
     def test_collect_result(self, testdir) -> None:
         col = testdir.getmodulecol(
