@@ -876,6 +876,24 @@ def test_no_teardown_if_setupclass_failed(testdir):
     reprec.assertoutcome(passed=1, failed=1)
 
 
+def test_call_cleanup_functions_on_test_failure(testdir):
+    testdir.makepyfile(
+        """
+        import unittest
+        class TC(unittest.TestCase):
+            def setUp(self):
+                self.addCleanup(lambda: print("someCleanup()"))
+            def test_method(self):
+                assert False
+    """
+    )
+    result = testdir.runpytest("-s")
+    assert result.ret == 1
+    result.stdout.fnmatch_lines(
+        ["*someCleanup()*", "*test_method*", "*assert False*", "*1 failed*"]
+    )
+
+
 def test_issue333_result_clearing(testdir):
     testdir.makeconftest(
         """

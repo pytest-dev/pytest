@@ -122,6 +122,7 @@ class TestCaseFunction(Function):
     def teardown(self):
         if self._needs_explicit_tearDown:
             self._testcase.tearDown()
+            self._testcase.doCleanups()
         self._testcase = None
         self._obj = None
 
