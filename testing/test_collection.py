@@ -53,8 +53,8 @@ class TestCollector:
     def test_getparent(self, testdir):
         modcol = testdir.getmodulecol(
             """
-            class TestClass(object):
-                 def test_foo():
+            class TestClass:
+                 def test_foo(self):
                      pass
         """
         )
