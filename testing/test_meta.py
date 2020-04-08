@@ -14,12 +14,10 @@ import pytest
 
 
 def _modules() -> List[str]:
-    assert _pytest.__path__
+    pytest_pkg = _pytest.__path__  # type: ignore
     return sorted(
         n
-        for _, n, _ in pkgutil.walk_packages(
-            _pytest.__path__, prefix=_pytest.__name__ + "."
-        )
+        for _, n, _ in pkgutil.walk_packages(pytest_pkg, prefix=_pytest.__name__ + ".")
     )
 
 
