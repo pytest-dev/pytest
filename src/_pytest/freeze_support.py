@@ -21,13 +21,10 @@ def _iter_all_modules(package, prefix=""):
     """
     Iterates over the names of all modules that can be found in the given
     package, recursively.
-    Example:
-        _iter_all_modules(_pytest) ->
-            ['_pytest.assertion.newinterpret',
-             '_pytest.capture',
-             '_pytest.core',
-             ...
-            ]
+
+        >>> import _pytest
+        >>> list(_iter_all_modules(_pytest))
+        ['_pytest._argcomplete', '_pytest._code.code', ...]
     """
     import os
     import pkgutil
