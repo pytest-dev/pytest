@@ -680,7 +680,7 @@ def test_popen_default_stdin_stderr_and_stdin_None(testdir) -> None:
     # stdin can be None to not close the pipe, avoiding
     # "ValueError: flush of closed file" with `communicate()`.
     #
-    # Wraps the test to not make it hang when run with "-s".
+    # Wraps the test to make it not hang when run with "-s".
     p1 = testdir.makepyfile(
         '''
         import sys
