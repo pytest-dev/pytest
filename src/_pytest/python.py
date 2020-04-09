@@ -41,6 +41,7 @@ from _pytest.compat import REGEX_TYPE
 from _pytest.compat import safe_getattr
 from _pytest.compat import safe_isclass
 from _pytest.compat import STRING_TYPES
+from _pytest.compat import TYPE_CHECKING
 from _pytest.config import Config
 from _pytest.config import hookimpl
 from _pytest.deprecated import FUNCARGNAMES
@@ -267,11 +268,15 @@ def pytest_pycollect_makeitem(collector, name, obj):
             outcome.force_result(res)
 
 
-class PyobjMixin(nodes.Node):
+class PyobjMixin:
     module = pyobj_property("Module")
     cls = pyobj_property("Class")
     instance = pyobj_property("Instance")
-    _obj_markers = None
+    _obj_markers = None  # type: Optional[List[Mark]]
+
+    # Function and attributes that the mixin needs (for type-checking only).
+    if TYPE_CHECKING:
+        _own_markers = ([], [])  # type: Tuple[List[Mark], List[Mark]]
 
     @property
     def obj(self):
@@ -282,7 +287,7 @@ class PyobjMixin(nodes.Node):
         return obj
 
     @obj.setter
-    def obj(self, value):
+    def obj(self, value) -> None:
         self._obj = value
 
     def _getobj(self):
