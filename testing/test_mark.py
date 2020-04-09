@@ -3,11 +3,14 @@ import sys
 from unittest import mock
 
 import pytest
+from _pytest.config import Config
 from _pytest.config import ExitCode
 from _pytest.mark import EMPTY_PARAMETERSET_OPTION
 from _pytest.mark import MarkGenerator as Mark
+from _pytest.mark.structures import NodeKeywords
 from _pytest.nodes import Collector
 from _pytest.nodes import Node
+from _pytest.python import Function
 
 
 class TestMark:
@@ -961,7 +964,7 @@ def test_mark_expressions_no_smear(testdir):
     # assert skipped_k == failed_k == 0
 
 
-def test_addmarker_order():
+def test_addmarker_order(pytestconfig: Config, monkeypatch) -> None:
     session = mock.Mock()
     session.own_markers = []
     session.parent = None
@@ -972,6 +975,53 @@ def test_addmarker_order():
     node.add_marker("baz", append=False)
     extracted = [x.name for x in node.iter_markers()]
     assert extracted == ["baz", "foo", "bar"]
+
+    # Check marks/keywords with Function.
+    session.name = "session"
+    session.keywords = NodeKeywords(session)
+
+    # Register markers for `--strict-markers`.
+    added_markers = pytestconfig._inicache["markers"] + [
+        "funcmark",
+        "prepended",
+        "funcmark2",
+    ]
+    monkeypatch.setitem(pytestconfig._inicache, "markers", added_markers)
+
+    @pytest.mark.funcmark
+    def f1():
+        assert False, "don't call me"
+
+    func = Function.from_parent(node, name="func", callobj=f1)
+    expected_marks = ["funcmark", "baz", "foo", "bar"]
+    assert [x.name for x in func.iter_markers()] == expected_marks
+    func.add_marker("prepended", append=False)
+    assert [x.name for x in func.iter_markers()] == ["prepended"] + expected_marks
+    assert set(func.keywords) == {
+        "Test",
+        "bar",
+        "baz",
+        "foo",
+        "func",
+        "funcmark",
+        "prepended",
+        "pytestmark",
+        "session",
+    }
+
+    # Changing the "obj" updates marks and keywords (lazily).
+    @pytest.mark.funcmark2
+    def f2():
+        assert False, "don't call me"
+
+    func.obj = f2
+    assert [x.name for x in func.iter_markers()] == [
+        "prepended",
+        "funcmark2",
+        "baz",
+        "foo",
+        "bar",
+    ]
 
 
 @pytest.mark.filterwarnings("ignore")

@@ -289,6 +289,7 @@ class PyobjMixin:
     @obj.setter
     def obj(self, value) -> None:
         self._obj = value
+        self._obj_markers = None
 
     def _getobj(self):
         """Gets the underlying Python object. May be overwritten by subclasses."""
