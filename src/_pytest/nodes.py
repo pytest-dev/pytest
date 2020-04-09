@@ -128,8 +128,8 @@ class Node(metaclass=NodeMeta):
         #: keywords/markers collected from all scopes
         self.keywords = NodeKeywords(self)
 
-        #: the marker objects belonging to this node
-        self.own_markers = []  # type: List[Mark]
+        #: The (manually added) marks belonging to this node (start, end).
+        self._own_markers = ([], [])  # type: Tuple[List[Mark], List[Mark]]
 
         #: allow adding of extra keywords to use for matching
         self.extra_keyword_matches = set()  # type: Set[str]
@@ -173,6 +173,11 @@ class Node(metaclass=NodeMeta):
     def ihook(self):
         """ fspath sensitive hook proxy used to call pytest hooks"""
         return self.session.gethookproxy(self.fspath)
+
+    @property
+    def own_markers(self) -> List[Mark]:
+        """The marker objects belonging to this node."""
+        return self._own_markers[0] + self._own_markers[1]
 
     def __repr__(self):
         return "<{} {}>".format(self.__class__.__name__, getattr(self, "name", None))
@@ -255,9 +260,9 @@ class Node(metaclass=NodeMeta):
             raise ValueError("is not a string or pytest.mark.* Marker")
         self.keywords[marker_.name] = marker
         if append:
-            self.own_markers.append(marker_.mark)
+            self._own_markers[1].append(marker_.mark)
         else:
-            self.own_markers.insert(0, marker_.mark)
+            self._own_markers[0].insert(0, marker_.mark)
 
     def iter_markers(self, name=None):
         """
