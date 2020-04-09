@@ -7,6 +7,7 @@ import py
 import xmlschema
 
 import pytest
+from _pytest.junitxml import bin_xml_escape
 from _pytest.junitxml import LogXML
 from _pytest.pathlib import Path
 from _pytest.reports import BaseReport
@@ -969,11 +970,6 @@ def test_invalid_xml_escape():
     #     the higher ones.
     # XXX Testing 0xD (\r) is tricky as it overwrites the just written
     #     line in the output, so we skip it too.
-    global unichr
-    try:
-        unichr(65)
-    except NameError:
-        unichr = chr
     invalid = (
         0x00,
         0x1,
@@ -990,17 +986,15 @@ def test_invalid_xml_escape():
     valid = (0x9, 0xA, 0x20)
     # 0xD, 0xD7FF, 0xE000, 0xFFFD, 0x10000, 0x10FFFF)
 
-    from _pytest.junitxml import bin_xml_escape
-
     for i in invalid:
-        got = bin_xml_escape(unichr(i)).uniobj
+        got = bin_xml_escape(chr(i)).uniobj
         if i <= 0xFF:
             expected = "#x%02X" % i
         else:
             expected = "#x%04X" % i
         assert got == expected
     for i in valid:
-        assert chr(i) == bin_xml_escape(unichr(i)).uniobj
+        assert chr(i) == bin_xml_escape(chr(i)).uniobj
 
 
 def test_logxml_path_expansion(tmpdir, monkeypatch):
