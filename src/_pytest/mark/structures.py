@@ -17,10 +17,15 @@ import attr
 from .._code.source import getfslineno
 from ..compat import ascii_escaped
 from ..compat import NOTSET
+from ..compat import TYPE_CHECKING
 from _pytest.outcomes import fail
 from _pytest.warning_types import PytestUnknownMarkWarning
 
 EMPTY_PARAMETERSET_OPTION = "empty_parameter_set_mark"
+
+
+if TYPE_CHECKING:
+    from .. import nodes
 
 
 def istestfunc(func):
@@ -271,7 +276,7 @@ class MarkDecorator:
         return self.with_args(*args, **kwargs)
 
 
-def get_unpacked_marks(obj) -> List[Mark]:
+def get_unpacked_marks(obj: object) -> List[Mark]:
     """
     obtain the unpacked marks that are stored on an object
     """
@@ -371,7 +376,7 @@ MARK_GEN = MarkGenerator()
 
 
 class NodeKeywords(MutableMapping):
-    def __init__(self, node):
+    def __init__(self, node: "nodes.Node") -> None:
         self.node = node
         self.parent = node.parent
         self._markers = {node.name: True}

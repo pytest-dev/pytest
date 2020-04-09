@@ -3,6 +3,7 @@ import warnings
 from functools import lru_cache
 from typing import Any
 from typing import Dict
+from typing import Iterator
 from typing import List
 from typing import Optional
 from typing import Set
@@ -264,7 +265,7 @@ class Node(metaclass=NodeMeta):
         else:
             self._own_markers[0].insert(0, marker_.mark)
 
-    def iter_markers(self, name=None):
+    def iter_markers(self, name: Optional[str] = None) -> Iterator[Mark]:
         """
         :param name: if given, filter the results by the name attribute
 
