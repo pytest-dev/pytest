@@ -49,8 +49,16 @@ def test_disabled(testdir):
     assert result.ret == 0
 
 
-@pytest.mark.parametrize("enabled", [True, False])
-def test_timeout(testdir, enabled):
+@pytest.mark.parametrize(
+    "enabled",
+    [
+        pytest.param(
+            True, marks=pytest.mark.skip(reason="sometimes crashes on CI (#7022)")
+        ),
+        False,
+    ],
+)
+def test_timeout(testdir, enabled: bool) -> None:
     """Test option to dump tracebacks after a certain timeout.
     If faulthandler is disabled, no traceback will be dumped.
     """
