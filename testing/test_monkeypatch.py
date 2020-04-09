@@ -4,7 +4,11 @@ import sys
 import textwrap
 
 import pytest
+from _pytest.compat import TYPE_CHECKING
 from _pytest.monkeypatch import MonkeyPatch
+
+if TYPE_CHECKING:
+    from typing import Type
 
 
 @pytest.fixture
@@ -331,33 +335,20 @@ def test_importerror(testdir):
     )
 
 
-class SampleNew:
+class Sample:
     @staticmethod
-    def hello():
+    def hello() -> bool:
         return True
 
 
-class SampleNewInherit(SampleNew):
-    pass
-
-
-class SampleOld:
-    # oldstyle on python2
-    @staticmethod
-    def hello():
-        return True
-
-
-class SampleOldInherit(SampleOld):
+class SampleInherit(Sample):
     pass
 
 
 @pytest.mark.parametrize(
-    "Sample",
-    [SampleNew, SampleNewInherit, SampleOld, SampleOldInherit],
-    ids=["new", "new-inherit", "old", "old-inherit"],
+    "Sample", [Sample, SampleInherit], ids=["new", "new-inherit"],
 )
-def test_issue156_undo_staticmethod(Sample):
+def test_issue156_undo_staticmethod(Sample: "Type[Sample]") -> None:
     monkeypatch = MonkeyPatch()
 
     monkeypatch.setattr(Sample, "hello", None)
