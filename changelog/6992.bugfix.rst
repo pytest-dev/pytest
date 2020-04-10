@@ -1,0 +1,1 @@
+Revert "tmpdir: clean up indirection via config for factories" #6767 as it breaks pytest-xdist.
