@@ -54,3 +54,9 @@ COLLECT_DIRECTORY_HOOK = PytestDeprecationWarning(
     "The pytest_collect_directory hook is not working.\n"
     "Please use collect_ignore in conftests or pytest_collection_modifyitems."
 )
+
+
+TERMINALWRITER_WRITER = PytestDeprecationWarning(
+    "The TerminalReporter.writer attribute is deprecated, use TerminalReporter._tw instead at your own risk.\n"
+    "See https://docs.pytest.org/en/latest/deprecations.html#terminalreporter-writer for more information."
+)
