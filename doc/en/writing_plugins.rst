@@ -52,7 +52,7 @@ Plugin discovery order at tool startup
   your ``conftest.py`` file in the top level test or project root directory.
 
 * by recursively loading all plugins specified by the
-  :globalvar:`pytest_plugins` variable in ``conftest.py`` files
+  ``pytest_plugins`` variable in ``conftest.py`` files
 
 
 .. _`pytest/plugin`: http://bitbucket.org/pytest-dev/pytest/src/tip/pytest/plugin/
@@ -227,7 +227,7 @@ import ``helper.py`` normally.  The contents of
 Requiring/Loading plugins in a test module or conftest file
 -----------------------------------------------------------
 
-You can require plugins in a test module or a ``conftest.py`` file using :globalvar:`pytest_plugins`:
+You can require plugins in a test module or a ``conftest.py`` file like this:
 
 .. code-block:: python
 
@@ -241,31 +241,31 @@ application modules:
 
     pytest_plugins = "myapp.testsupport.myplugin"
 
-:globalvar:`pytest_plugins` are processed recursively, so note that in the example above
-if ``myapp.testsupport.myplugin`` also declares :globalvar:`pytest_plugins`, the contents
+``pytest_plugins`` variables are processed recursively, so note that in the example above
+if ``myapp.testsupport.myplugin`` also declares ``pytest_plugins``, the contents
 of the variable will also be loaded as plugins, and so on.
 
 .. _`requiring plugins in non-root conftests`:
 
 .. note::
-    Requiring plugins using :globalvar:`pytest_plugins` variable in non-root
+    Requiring plugins using a ``pytest_plugins`` variable in non-root
     ``conftest.py`` files is deprecated.
 
     This is important because ``conftest.py`` files implement per-directory
     hook implementations, but once a plugin is imported, it will affect the
     entire directory tree. In order to avoid confusion, defining
-    :globalvar:`pytest_plugins` in any ``conftest.py`` file which is not located in the
+    ``pytest_plugins`` in any ``conftest.py`` file which is not located in the
     tests root directory is deprecated, and will raise a warning.
 
 This mechanism makes it easy to share fixtures within applications or even
 external applications without the need to create external plugins using
 the ``setuptools``'s entry point technique.
 
-Plugins imported by :globalvar:`pytest_plugins` will also automatically be marked
+Plugins imported by ``pytest_plugins`` will also automatically be marked
 for assertion rewriting (see :func:`pytest.register_assert_rewrite`).
 However for this to have any effect the module must not be
 imported already; if it was already imported at the time the
-:globalvar:`pytest_plugins` statement is processed, a warning will result and
+``pytest_plugins`` statement is processed, a warning will result and
 assertions inside the plugin will not be rewritten.  To fix this you
 can either call :func:`pytest.register_assert_rewrite` yourself before
 the module is imported, or you can arrange the code to delay the
@@ -430,9 +430,9 @@ additionally it is possible to copy examples for an example folder before runnin
 
     $ pytest
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-6.x.y, py-1.x.y, pluggy-0.x.y
+    platform linux -- Python 3.x.y, pytest-5.x.y, py-1.x.y, pluggy-0.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: $REGENDOC_TMPDIR, configfile: pytest.ini
+    rootdir: $REGENDOC_TMPDIR, inifile: pytest.ini
     collected 2 items
 
     test_example.py ..                                                   [100%]
@@ -442,7 +442,7 @@ additionally it is possible to copy examples for an example folder before runnin
       $REGENDOC_TMPDIR/test_example.py:4: PytestExperimentalApiWarning: testdir.copy_example is an experimental api that may change over time
         testdir.copy_example("test_example.py")
 
-    -- Docs: https://docs.pytest.org/en/stable/warnings.html
+    -- Docs: https://docs.pytest.org/en/latest/warnings.html
     ======================= 2 passed, 1 warning in 0.12s =======================
 
 For more information about the result object that ``runpytest()`` returns, and
