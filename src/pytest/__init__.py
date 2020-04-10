@@ -14,6 +14,7 @@ from _pytest.config import UsageError
 from _pytest.debugging import pytestPDB as __pytestPDB
 from _pytest.fixtures import fillfixtures as _fillfuncargs
 from _pytest.fixtures import fixture
+from _pytest.fixtures import FixtureLookupError
 from _pytest.fixtures import yield_fixture
 from _pytest.freeze_support import freeze_includes
 from _pytest.main import Session
@@ -62,6 +63,7 @@ __all__ = [
     "fail",
     "File",
     "fixture",
+    "FixtureLookupError",
     "freeze_includes",
     "Function",
     "hookimpl",

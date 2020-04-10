@@ -3,7 +3,6 @@ import textwrap
 
 import pytest
 from _pytest import fixtures
-from _pytest.fixtures import FixtureLookupError
 from _pytest.fixtures import FixtureRequest
 from _pytest.pathlib import Path
 from _pytest.pytester import get_public_names
@@ -654,7 +653,7 @@ class TestRequestBasic:
         )
         req = item._request
 
-        with pytest.raises(FixtureLookupError):
+        with pytest.raises(pytest.FixtureLookupError):
             req.getfixturevalue("notexists")
         val = req.getfixturevalue("something")
         assert val == 1

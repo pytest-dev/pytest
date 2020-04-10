@@ -1,0 +1,2 @@
+Exposed the `pytest.FixtureLookupError` exception which is raised by `request.getfixturevalue()`
+(where `request` is a `FixtureRequest` fixture) when a fixture with the given name cannot be returned.
