@@ -1,0 +1,19 @@
+name: misspell
+
+on:
+  schedule:
+    - cron: '0 0 * * *'
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - uses: sobolevn/misspell-fixer-action@0.1.0
+    - uses: peter-evans/create-pull-request@v2.4.4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        commit-message: 'Fixes by misspell-fixer'
+        title: 'Typos fix by misspell-fixer'
