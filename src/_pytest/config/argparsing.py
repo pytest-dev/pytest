@@ -99,6 +99,7 @@ class Parser:
         namespace: Optional[argparse.Namespace] = None,
     ) -> argparse.Namespace:
         from _pytest._argcomplete import try_argcomplete
+
         self.optparser = self._getparser()
         try_argcomplete(self.optparser)
         strargs = [str(x) if isinstance(x, py.path.local) else x for x in args if x]
