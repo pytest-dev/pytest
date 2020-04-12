@@ -364,6 +364,14 @@ class Node(metaclass=NodeMeta):
     def repr_failure(
         self, excinfo, style=None
     ) -> Union[str, ReprExceptionInfo, ExceptionChainRepr, FixtureLookupErrorRepr]:
+        """
+        Return a string representation of a collection failure.
+
+        :param excinfo: Exception information for the failure as a tuple
+            (type, value, traceback), see sys.exc_info().
+        :param style: Style of the representation ('long', 'short', 'auto',
+            None).
+        """
         return self._repr_failure_py(excinfo, style)
 
 
@@ -403,7 +411,12 @@ class Collector(Node):
         raise NotImplementedError("abstract")
 
     def repr_failure(self, excinfo):
-        """ represent a collection failure. """
+        """
+        Return a string representation of a collection failure.
+
+        :param excinfo: Exception information for the failure as a tuple
+            (type, value, traceback), see sys.exc_info().
+        """
         if excinfo.errisinstance(self.CollectError) and not self.config.getoption(
             "fulltrace", False
         ):
