@@ -1332,3 +1332,14 @@ def test_does_not_put_src_on_path(testdir):
     )
     result = testdir.runpytest()
     assert result.ret == ExitCode.OK
+
+
+def test_collection_no_duplicates_with_extra_quotes(testdir):
+    foo = testdir.makepyfile(
+        """
+        def test_no_duplicate_double_quotes():
+            pass
+    """
+    )
+    items, _ = testdir.inline_genitems(foo, r"")
+    assert len(items) == 1
