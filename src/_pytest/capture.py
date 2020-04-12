@@ -9,14 +9,12 @@ import os
 import sys
 from io import UnsupportedOperation
 from tempfile import TemporaryFile
-from typing import Generator
 from typing import Optional
 from typing import TextIO
 
 import pytest
 from _pytest.compat import TYPE_CHECKING
 from _pytest.config import Config
-from _pytest.fixtures import FixtureRequest
 
 if TYPE_CHECKING:
     from typing_extensions import Literal
@@ -150,35 +148,20 @@ class CaptureManager:
     def read_global_capture(self):
         return self._global_capturing.readouterr()
 
-    # Fixture Control (it's just forwarding, think about removing this later)
+    # Fixture Control
 
-    @contextlib.contextmanager
-    def _capturing_for_request(
-        self, request: FixtureRequest
-    ) -> Generator["CaptureFixture", None, None]:
-        """
-        Context manager that creates a ``CaptureFixture`` instance for the
-        given ``request``, ensuring there is only a single one being requested
-        at the same time.
-
-        This is used as a helper with ``capsys``, ``capfd`` etc.
-        """
+    def set_fixture(self, capture_fixture: "CaptureFixture") -> None:
         if self._capture_fixture:
-            other_name = next(
-                k
-                for k, v in map_fixname_class.items()
-                if v is self._capture_fixture.captureclass
-            )
-            raise request.raiseerror(
+            current_fixture = self._capture_fixture.request.fixturename
+            requested_fixture = capture_fixture.request.fixturename
+            capture_fixture.request.raiseerror(
                 "cannot use {} and {} at the same time".format(
-                    request.fixturename, other_name
+                    requested_fixture, current_fixture
                 )
             )
-        capture_class = map_fixname_class[request.fixturename]
-        self._capture_fixture = CaptureFixture(capture_class, request)
-        self.activate_fixture()
-        yield self._capture_fixture
-        self._capture_fixture.close()
+        self._capture_fixture = capture_fixture
+
+    def unset_fixture(self) -> None:
         self._capture_fixture = None
 
     def activate_fixture(self):
@@ -276,8 +259,12 @@ def capsys(request):
     ``out`` and ``err`` will be ``text`` objects.
     """
     capman = request.config.pluginmanager.getplugin("capturemanager")
-    with capman._capturing_for_request(request) as fixture:
-        yield fixture
+    capture_fixture = CaptureFixture(SysCapture, request)
+    capman.set_fixture(capture_fixture)
+    capture_fixture._start()
+    yield capture_fixture
+    capture_fixture.close()
+    capman.unset_fixture()
 
 
 @pytest.fixture
@@ -289,8 +276,12 @@ def capsysbinary(request):
     ``out`` and ``err`` will be ``bytes`` objects.
     """
     capman = request.config.pluginmanager.getplugin("capturemanager")
-    with capman._capturing_for_request(request) as fixture:
-        yield fixture
+    capture_fixture = CaptureFixture(SysCaptureBinary, request)
+    capman.set_fixture(capture_fixture)
+    capture_fixture._start()
+    yield capture_fixture
+    capture_fixture.close()
+    capman.unset_fixture()
 
 
 @pytest.fixture
@@ -302,8 +293,12 @@ def capfd(request):
     ``out`` and ``err`` will be ``text`` objects.
     """
     capman = request.config.pluginmanager.getplugin("capturemanager")
-    with capman._capturing_for_request(request) as fixture:
-        yield fixture
+    capture_fixture = CaptureFixture(FDCapture, request)
+    capman.set_fixture(capture_fixture)
+    capture_fixture._start()
+    yield capture_fixture
+    capture_fixture.close()
+    capman.unset_fixture()
 
 
 @pytest.fixture
@@ -315,8 +310,12 @@ def capfdbinary(request):
     ``out`` and ``err`` will be ``byte`` objects.
     """
     capman = request.config.pluginmanager.getplugin("capturemanager")
-    with capman._capturing_for_request(request) as fixture:
-        yield fixture
+    capture_fixture = CaptureFixture(FDCaptureBinary, request)
+    capman.set_fixture(capture_fixture)
+    capture_fixture._start()
+    yield capture_fixture
+    capture_fixture.close()
+    capman.unset_fixture()
 
 
 class CaptureIO(io.TextIOWrapper):
@@ -699,14 +698,6 @@ class TeeSysCapture(SysCapture):
             else:
                 tmpfile = TeeCaptureIO(self._old)
         self.tmpfile = tmpfile
-
-
-map_fixname_class = {
-    "capfd": FDCapture,
-    "capfdbinary": FDCaptureBinary,
-    "capsys": SysCapture,
-    "capsysbinary": SysCaptureBinary,
-}
 
 
 class DontReadFromInput:
