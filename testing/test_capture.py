@@ -19,16 +19,28 @@ from _pytest.config import ExitCode
 # pylib 1.4.20.dev2 (rev 13d9af95547e)
 
 
-def StdCaptureFD(out=True, err=True, in_=True):
-    return capture.MultiCapture(out, err, in_, Capture=capture.FDCapture)
+def StdCaptureFD(out: bool = True, err: bool = True, in_: bool = True) -> MultiCapture:
+    return capture.MultiCapture(
+        in_=capture.FDCapture(0) if in_ else None,
+        out=capture.FDCapture(1) if out else None,
+        err=capture.FDCapture(2) if err else None,
+    )
 
 
-def StdCapture(out=True, err=True, in_=True):
-    return capture.MultiCapture(out, err, in_, Capture=capture.SysCapture)
+def StdCapture(out: bool = True, err: bool = True, in_: bool = True) -> MultiCapture:
+    return capture.MultiCapture(
+        in_=capture.SysCapture(0) if in_ else None,
+        out=capture.SysCapture(1) if out else None,
+        err=capture.SysCapture(2) if err else None,
+    )
 
 
-def TeeStdCapture(out=True, err=True, in_=True):
-    return capture.MultiCapture(out, err, in_, Capture=capture.TeeSysCapture)
+def TeeStdCapture(out: bool = True, err: bool = True, in_: bool = True) -> MultiCapture:
+    return capture.MultiCapture(
+        in_=capture.TeeSysCapture(0) if in_ else None,
+        out=capture.TeeSysCapture(1) if out else None,
+        err=capture.TeeSysCapture(2) if err else None,
+    )
 
 
 class TestCaptureManager:
@@ -1154,7 +1166,11 @@ class TestStdCaptureFDinvalidFD:
             from _pytest import capture
 
             def StdCaptureFD(out=True, err=True, in_=True):
-                return capture.MultiCapture(out, err, in_, Capture=capture.FDCapture)
+                return capture.MultiCapture(
+                    in_=capture.FDCapture(0) if in_ else None,
+                    out=capture.FDCapture(1) if out else None,
+                    err=capture.FDCapture(2) if err else None,
+                )
 
             def test_stdout():
                 os.close(1)
@@ -1284,8 +1300,11 @@ def test_capturing_and_logging_fundamentals(testdir, method):
         import sys, os
         import py, logging
         from _pytest import capture
-        cap = capture.MultiCapture(out=False, in_=False,
-                                     Capture=capture.%s)
+        cap = capture.MultiCapture(
+            in_=None,
+            out=None,
+            err=capture.%s(2),
+        )
         cap.start_capturing()
 
         logging.warning("hello1")

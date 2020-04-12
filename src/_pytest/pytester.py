@@ -25,8 +25,7 @@ import py
 
 import pytest
 from _pytest._code import Source
-from _pytest.capture import MultiCapture
-from _pytest.capture import SysCapture
+from _pytest.capture import _get_multicapture
 from _pytest.compat import TYPE_CHECKING
 from _pytest.config import _PluggyPlugin
 from _pytest.config import Config
@@ -972,7 +971,7 @@ class Testdir:
         if syspathinsert:
             self.syspathinsert()
         now = time.time()
-        capture = MultiCapture(Capture=SysCapture)
+        capture = _get_multicapture("sys")
         capture.start_capturing()
         try:
             try:

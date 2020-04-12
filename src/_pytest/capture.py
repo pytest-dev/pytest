@@ -71,13 +71,13 @@ def pytest_load_initial_conftests(early_config: Config):
 
 def _get_multicapture(method: "_CaptureMethod") -> "MultiCapture":
     if method == "fd":
-        return MultiCapture(out=True, err=True, Capture=FDCapture)
+        return MultiCapture(in_=FDCapture(0), out=FDCapture(1), err=FDCapture(2))
     elif method == "sys":
-        return MultiCapture(out=True, err=True, Capture=SysCapture)
+        return MultiCapture(in_=SysCapture(0), out=SysCapture(1), err=SysCapture(2))
     elif method == "no":
-        return MultiCapture(out=False, err=False, in_=False)
+        return MultiCapture(in_=None, out=None, err=None)
     elif method == "tee-sys":
-        return MultiCapture(out=True, err=True, in_=False, Capture=TeeSysCapture)
+        return MultiCapture(in_=None, out=TeeSysCapture(1), err=TeeSysCapture(2))
     raise ValueError("unknown capturing method: {!r}".format(method))
 
 
@@ -354,7 +354,7 @@ class CaptureFixture:
     def _start(self):
         if self._capture is None:
             self._capture = MultiCapture(
-                out=True, err=True, in_=False, Capture=self.captureclass
+                in_=None, out=self.captureclass(1), err=self.captureclass(2),
             )
             self._capture.start_capturing()
 
@@ -418,17 +418,13 @@ CaptureResult = collections.namedtuple("CaptureResult", ["out", "err"])
 
 
 class MultiCapture:
-    out = err = in_ = None
     _state = None
     _in_suspended = False
 
-    def __init__(self, out=True, err=True, in_=True, Capture=None):
-        if in_:
-            self.in_ = Capture(0)
-        if out:
-            self.out = Capture(1)
-        if err:
-            self.err = Capture(2)
+    def __init__(self, in_, out, err) -> None:
+        self.in_ = in_
+        self.out = out
+        self.err = err
 
     def __repr__(self):
         return "<MultiCapture out={!r} err={!r} in_={!r} _state={!r} _in_suspended={!r}>".format(
