@@ -362,7 +362,7 @@ class Node(metaclass=NodeMeta):
         )
 
     def repr_failure(
-        self, excinfo: ExceptionInfo[Union[Failed, FixtureLookupError]], style=None
+        self, excinfo, style=None
     ) -> Union[str, ReprExceptionInfo, ExceptionChainRepr, FixtureLookupErrorRepr]:
         """
         Return a representation of a collection or test failure.
@@ -407,11 +407,9 @@ class Collector(Node):
         """
         raise NotImplementedError("abstract")
 
-    def repr_failure(
-        self, excinfo: ExceptionInfo[Union[Failed, FixtureLookupError]]
-    ) -> Union[str, ReprExceptionInfo, ExceptionChainRepr, FixtureLookupErrorRepr]:
+    def repr_failure(self, excinfo):
         """
-        Return a representation of a collection or test failure.
+        Return a representation of a collection failure.
 
         :param excinfo: Exception information for the failure.
         """
