@@ -357,16 +357,33 @@ class HookRecorder:
 
 @pytest.fixture
 def linecomp() -> "LineComp":
+    """
+    A :class: `LineComp` instance for checking that an input linearly
+    contains a sequence of strings.
+    """
     return LineComp()
 
 
 @pytest.fixture(name="LineMatcher")
 def LineMatcher_fixture(request: FixtureRequest) -> "Type[LineMatcher]":
+    """
+    A reference to the :class: `LineMatcher`.
+
+    This is instantiable with a list of lines (without their trailing newlines).
+    This is useful for testing large texts, such as the output of commands.
+    """
     return LineMatcher
 
 
 @pytest.fixture
 def testdir(request: FixtureRequest, tmpdir_factory) -> "Testdir":
+    """
+    A :class: `TestDir` instance, that can be used to run and test pytest itself.
+
+    It is particularly useful for testing plugins. It is similar to the `tmpdir` fixture
+    but provides methods which aid in testing pytest itself.
+
+    """
     return Testdir(request, tmpdir_factory)
 
 
