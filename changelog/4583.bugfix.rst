@@ -1,0 +1,1 @@
+Prevent crashing and provide user friendly error(s) when marker expressions (-m) invoking of eval() raises a SyntaxError or TypeError

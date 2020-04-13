@@ -608,10 +608,13 @@ class TestFunctional:
                 pass
         """
         )
-        result = testdir.runpytest("-m bogus/")
-        result.stdout.fnmatch_lines(
-            ["INTERNALERROR> Marker expression must be valid Python!"]
+        expected = (
+            "ERROR: Marker expression provided to -m: bogus/ was not valid python syntax. Please "
+            "check the syntax provided and ensure it is correct"
         )
+        result = testdir.runpytest("-m bogus/")
+        result.stderr.fnmatch_lines([expected])
+        assert result.ret == ExitCode.USAGE_ERROR
 
     def test_keywords_at_node_level(self, testdir):
         testdir.makepyfile(
@@ -1022,3 +1025,41 @@ def test_pytest_param_id_requires_string():
 @pytest.mark.parametrize("s", (None, "hello world"))
 def test_pytest_param_id_allows_none_or_string(s):
     assert pytest.param(id=s)
+
+
+def test_ux_eval_syntax_error(testdir):
+    foo = testdir.makepyfile(
+        """
+        import pytest
+
+        @pytest.mark.internal_err
+        def test_foo():
+            pass
+        """
+    )
+    expected = (
+        "ERROR: Marker expression provided to -m: NOT internal_err was not valid python syntax. Please "
+        "check the syntax provided and ensure it is correct"
+    )
+    result = testdir.runpytest(foo, "-m NOT internal_err")
+    result.stderr.fnmatch_lines([expected])
+    assert result.ret == ExitCode.USAGE_ERROR
+
+
+def test_ux_eval_type_error(testdir):
+    foo = testdir.makepyfile(
+        """
+        import pytest
+
+        @pytest.mark.internal_err
+        def test_foo():
+            pass
+        """
+    )
+    expected = (
+        "ERROR: Marker expression provided to -m: NOT (internal_err) was not valid python syntax. Please "
+        "check the syntax provided and ensure it is correct"
+    )
+    result = testdir.runpytest(foo, "-m NOT (internal_err)")
+    result.stderr.fnmatch_lines([expected])
+    assert result.ret == ExitCode.USAGE_ERROR
