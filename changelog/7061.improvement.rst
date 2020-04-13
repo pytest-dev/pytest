@@ -1,0 +1,1 @@
+Raise a ValueError when a yielding fixture fails to yield a single value
