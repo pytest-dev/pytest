@@ -1341,5 +1341,7 @@ def test_collection_no_duplicates_with_extra_quotes(testdir):
             pass
     """
     )
-    items, _ = testdir.inline_genitems(foo, r"")
-    assert len(items) == 1
+    items1, _ = testdir.inline_genitems(foo, "")
+    assert len(items1) == 1
+    items2, _ = testdir.inline_genitems(foo, '')
+    assert len(items2) == 1

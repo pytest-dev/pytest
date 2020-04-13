@@ -1,0 +1,1 @@
+Fixed an issue where duplicate tests where collected when CLI passed empty quotes
