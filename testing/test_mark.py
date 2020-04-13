@@ -601,18 +601,6 @@ class TestFunctional:
         deselected_tests = dlist[0].items
         assert len(deselected_tests) == 2
 
-    def test_invalid_m_option(self, testdir):
-        testdir.makepyfile(
-            """
-            def test_a():
-                pass
-        """
-        )
-        result = testdir.runpytest("-m bogus/")
-        result.stdout.fnmatch_lines(
-            ["INTERNALERROR> Marker expression must be valid Python!"]
-        )
-
     def test_keywords_at_node_level(self, testdir):
         testdir.makepyfile(
             """
@@ -1022,3 +1010,20 @@ def test_pytest_param_id_requires_string():
 @pytest.mark.parametrize("s", (None, "hello world"))
 def test_pytest_param_id_allows_none_or_string(s):
     assert pytest.param(id=s)
+
+
+@pytest.mark.parametrize("expr", ("NOT internal_err", "NOT (internal_err)", "bogus/"))
+def test_marker_expr_eval_failure_handling(testdir, expr):
+    foo = testdir.makepyfile(
+        """
+        import pytest
+
+        @pytest.mark.internal_err
+        def test_foo():
+            pass
+        """
+    )
+    expected = "ERROR: Wrong expression passed to '-m': {}".format(expr)
+    result = testdir.runpytest(foo, "-m", expr)
+    result.stderr.fnmatch_lines([expected])
+    assert result.ret == ExitCode.USAGE_ERROR

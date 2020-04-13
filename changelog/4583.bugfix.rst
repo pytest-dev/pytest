@@ -1,0 +1,1 @@
+Prevent crashing and provide a user-friendly error when a marker expression (-m) invoking of eval() raises any exception.

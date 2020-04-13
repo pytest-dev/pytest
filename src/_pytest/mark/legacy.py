@@ -84,8 +84,8 @@ def matchmark(colitem, markexpr):
     """Tries to match on any marker names, attached to the given colitem."""
     try:
         return eval(markexpr, {}, MarkMapping.from_item(colitem))
-    except SyntaxError as e:
-        raise SyntaxError(str(e) + "\nMarker expression must be valid Python!")
+    except Exception:
+        raise UsageError("Wrong expression passed to '-m': {}".format(markexpr))
 
 
 def matchkeyword(colitem, keywordexpr):
