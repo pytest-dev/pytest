@@ -358,7 +358,7 @@ class HookRecorder:
 @pytest.fixture
 def linecomp() -> "LineComp":
     """
-    Return a :class" `LineComp`instance usable to check that the input linearly contains a sequence of strings.
+    A :class" `LineComp` instance for checking that an input linearly contains a sequence of strings.
 
     see: https://docs.pytest.org/en/latest/_modules/_pytest/pytester.html
     """
@@ -368,8 +368,10 @@ def linecomp() -> "LineComp":
 @pytest.fixture(name="LineMatcher")
 def LineMatcher_fixture(request: FixtureRequest) -> "Type[LineMatcher]":
     """
-    Return a :class: `LineMatcher` reference. This is instantiable with a list of lines (without their
-    trailing newlines).  This is a convenience class used for testing large texts, such as the output from commands.
+    A reference to the a :class: `LineMatcher` class.
+    
+    This is instantiable with a list of lines (without their trailing newlines).
+    This is a convenience class used for testing large texts, such as the output of commands.
 
     see: https://docs.pytest.org/en/latest/_modules/_pytest/pytester.html
     """
@@ -379,9 +381,10 @@ def LineMatcher_fixture(request: FixtureRequest) -> "Type[LineMatcher]":
 @pytest.fixture
 def testdir(request: FixtureRequest, tmpdir_factory) -> "Testdir":
     """
-    Return a :class: TestDir instance, this instance can be used to test/run pytest itself.  It is very useful
-    for testing plugins.  This is based on the ``tmpdir`` fixture but provides a number of methods which aid in
-    testing pytest itself.
+    A :class: `TestDir` instance, that can be used to run and test pytest itself.
+    
+    It is particularly useful for testing plugins. It is similar to the ``tmpdir`` fixture
+    but provides methods which aid in testing pytest itself.
 
     see: https://docs.pytest.org/en/latest/_modules/_pytest/pytester.html
     """
