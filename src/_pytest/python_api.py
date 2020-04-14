@@ -235,8 +235,8 @@ class ApproxScalar(ApproxBase):
         # If a sensible tolerance can't be calculated, self.tolerance will
         # raise a ValueError.  In this case, display '???'.
         try:
-            if (len(str(self.expected)) < 5):
-                vetted_tolerance = "{:.n}".format(self.tolerance)
+            if "e" in str(self.tolerance):
+                vetted_tolerance = "{}".format(self.tolerance)
             else:
                 vetted_tolerance = "{:.1e}".format(self.tolerance)
             if isinstance(self.expected, complex) and not math.isinf(self.tolerance):
