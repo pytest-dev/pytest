@@ -790,7 +790,9 @@ def call_fixture_func(fixturefunc, request, kwargs):
         try:
             fixture_result = next(generator)
         except StopIteration:
-            raise ValueError("Yielding fixture did not yield a single value") from None
+            raise ValueError(
+                "{} did not yield a value".format(request.fixturename)
+            ) from None
         finalizer = functools.partial(_teardown_yield_fixture, fixturefunc, generator)
         request.addfinalizer(finalizer)
     else:

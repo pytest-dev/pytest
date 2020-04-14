@@ -4297,18 +4297,16 @@ def test_yield_fixture_with_no_value(testdir):
     testdir.makepyfile(
         """
         import pytest
-        @pytest.fixture
+        @pytest.fixture(name='custom')
         def empty_yield():
             if False:
                 yield
 
-        def test_fixt(empty_yield):
+        def test_fixt(custom):
             pass
         """
     )
-    expected = (
-        "E               ValueError: Yielding fixture did not yield a single value"
-    )
+    expected = "E               ValueError: custom did not yield a value"
     result = testdir.runpytest()
     result.assert_outcomes(error=1)
     result.stdout.fnmatch_lines([expected])
