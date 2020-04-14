@@ -4306,7 +4306,9 @@ def test_yield_fixture_with_no_value(testdir):
             pass
         """
     )
-    expected = "E               ValueError: Fixture empty_yield did not yield a value"
+    expected = (
+        "E               ValueError: Yielding fixture did not yield a single value"
+    )
     result = testdir.runpytest()
     result.assert_outcomes(error=1)
     result.stdout.fnmatch_lines([expected])
