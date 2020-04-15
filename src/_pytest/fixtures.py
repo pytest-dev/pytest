@@ -786,13 +786,18 @@ def fail_fixturefunc(fixturefunc, msg):
 def call_fixture_func(fixturefunc, request, kwargs):
     yieldctx = is_generator(fixturefunc)
     if yieldctx:
-        it = fixturefunc(**kwargs)
-        res = next(it)
-        finalizer = functools.partial(_teardown_yield_fixture, fixturefunc, it)
+        generator = fixturefunc(**kwargs)
+        try:
+            fixture_result = next(generator)
+        except StopIteration:
+            raise ValueError(
+                "{} did not yield a value".format(request.fixturename)
+            ) from None
+        finalizer = functools.partial(_teardown_yield_fixture, fixturefunc, generator)
         request.addfinalizer(finalizer)
     else:
-        res = fixturefunc(**kwargs)
-    return res
+        fixture_result = fixturefunc(**kwargs)
+    return fixture_result
 
 
 def _teardown_yield_fixture(fixturefunc, it):

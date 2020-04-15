@@ -3,6 +3,7 @@ import textwrap
 
 import pytest
 from _pytest import fixtures
+from _pytest.config import ExitCode
 from _pytest.fixtures import FixtureRequest
 from _pytest.pathlib import Path
 from _pytest.pytester import get_public_names
@@ -4290,3 +4291,23 @@ def test_fixture_arg_ordering(testdir):
     )
     result = testdir.runpytest("-vv", str(p1))
     assert result.ret == 0
+
+
+def test_yield_fixture_with_no_value(testdir):
+    testdir.makepyfile(
+        """
+        import pytest
+        @pytest.fixture(name='custom')
+        def empty_yield():
+            if False:
+                yield
+
+        def test_fixt(custom):
+            pass
+        """
+    )
+    expected = "E               ValueError: custom did not yield a value"
+    result = testdir.runpytest()
+    result.assert_outcomes(error=1)
+    result.stdout.fnmatch_lines([expected])
+    assert result.ret == ExitCode.TESTS_FAILED
