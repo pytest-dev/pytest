@@ -282,14 +282,7 @@ class CallInfo:
 
 
 def pytest_runtest_makereport(item, call):
-    report = TestReport.from_item_and_call(item, call)
-    if isinstance(report.longrepr, tuple) and os.path.isabs(report.longrepr[0]):
-        report.longrepr = (
-            os.path.relpath(report.longrepr[0]),
-            report.longrepr[1],
-            report.longrepr[2],
-        )
-    return report
+    return TestReport.from_item_and_call(item, call)
 
 
 def pytest_make_collect_report(collector: Collector) -> CollectReport:
