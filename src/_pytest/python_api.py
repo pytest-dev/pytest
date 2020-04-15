@@ -244,7 +244,7 @@ class ApproxScalar(ApproxBase):
             #     vetted_tolerance = "{:.1e}".format(self.tolerance)
             if isinstance(self.tolerance, int):
                 vetted_tolerance = "{:n}".format(self.tolerance)
-            elif self.rel is not None and not math.isinf(self.tolerance) and "e" not in str(self.rel):
+            elif self.rel is not None and not math.isinf(self.tolerance):
                 vetted_tolerance = "{:.1%}".format(self.tolerance / self.expected)
             else:
                 vetted_tolerance = "{:.1e}".format(self.tolerance)
