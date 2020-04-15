@@ -236,7 +236,10 @@ class ApproxScalar(ApproxBase):
         # raise a ValueError.  In this case, display '???'.
         try:
             if "e" not in str(self.tolerance):
-                vetted_tolerance = "{}".format(self.tolerance)
+                if is_instance(self.tolerance, int):
+                    vetted_tolerance = "{}".format(self.tolerance)
+                else:
+                    vetted_tolerance = "{:.1%}".format(math.ceil(self.tolerance / self.expected))
             else:
                 vetted_tolerance = "{:.1e}".format(self.tolerance)
             if isinstance(self.expected, complex) and not math.isinf(self.tolerance):
