@@ -506,7 +506,7 @@ class FDCaptureBinary:
     EMPTY_BUFFER = b""
     _state = None
 
-    def __init__(self, targetfd, tmpfile=None):
+    def __init__(self, targetfd):
         self.targetfd = targetfd
 
         try:
@@ -530,22 +530,19 @@ class FDCaptureBinary:
         self.targetfd_save = os.dup(targetfd)
 
         if targetfd == 0:
-            assert not tmpfile, "cannot set tmpfile with stdin"
-            tmpfile = open(os.devnull)
+            self.tmpfile = open(os.devnull)
             self.syscapture = SysCapture(targetfd)
         else:
-            if tmpfile is None:
-                tmpfile = EncodedFile(
-                    TemporaryFile(buffering=0),
-                    encoding="utf-8",
-                    errors="replace",
-                    write_through=True,
-                )
+            self.tmpfile = EncodedFile(
+                TemporaryFile(buffering=0),
+                encoding="utf-8",
+                errors="replace",
+                write_through=True,
+            )
             if targetfd in patchsysdict:
-                self.syscapture = SysCapture(targetfd, tmpfile)
+                self.syscapture = SysCapture(targetfd, self.tmpfile)
             else:
                 self.syscapture = NoCapture()
-        self.tmpfile = tmpfile
 
     def __repr__(self):
         return "<{} {} oldfd={} _state={!r} tmpfile={!r}>".format(
