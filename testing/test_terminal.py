@@ -198,7 +198,7 @@ class TestTerminal:
         result = testdir.runpytest("-vv", "-rA", "tests/test_p2.py", "--rootdir=tests")
         result.stdout.fnmatch_lines(
             [
-                "tests/test_p2.py::TestMore::test_p1 <- test_p1.py PASSED *",
+                "tests/test_p2.py::TestMore::test_p1 <- tests/test_p1.py PASSED *",
                 "*= short test summary info =*",
                 "PASSED tests/test_p2.py::TestMore::test_p1",
             ]
@@ -206,7 +206,7 @@ class TestTerminal:
         result = testdir.runpytest("-vv", "-rA", "tests/test_p3.py", "--rootdir=tests")
         result.stdout.fnmatch_lines(
             [
-                "tests/test_p3.py::TestMore::test_p1 <- test_p1.py FAILED *",
+                "tests/test_p3.py::TestMore::test_p1 <- tests/test_p1.py FAILED *",
                 "*_ TestMore.test_p1 _*",
                 "    def test_p1(self):",
                 ">       if self.fail: assert 0",

@@ -401,7 +401,7 @@ class Session(nodes.FSCollector):
         self._collection_pkg_roots = {}  # type: Dict[py.path.local, Package]
 
         self._bestrelpathcache = _bestrelpath_cache(
-            config.rootdir
+            config.invocation_dir
         )  # type: Dict[py.path.local, str]
 
         self.config.pluginmanager.register(self, name="session")
