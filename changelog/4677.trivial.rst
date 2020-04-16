@@ -1,1 +1,1 @@
-Path in report skip reasons is always relative.
+The path shown in the summary report for SKIPPED tests is now always relative. Previously it was sometimes absolute.
