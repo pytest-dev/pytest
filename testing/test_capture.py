@@ -37,9 +37,9 @@ def StdCapture(out: bool = True, err: bool = True, in_: bool = True) -> MultiCap
 
 def TeeStdCapture(out: bool = True, err: bool = True, in_: bool = True) -> MultiCapture:
     return capture.MultiCapture(
-        in_=capture.TeeSysCapture(0) if in_ else None,
-        out=capture.TeeSysCapture(1) if out else None,
-        err=capture.TeeSysCapture(2) if err else None,
+        in_=capture.SysCapture(0, tee=True) if in_ else None,
+        out=capture.SysCapture(1, tee=True) if out else None,
+        err=capture.SysCapture(2, tee=True) if err else None,
     )
 
 
@@ -1292,8 +1292,10 @@ def test_close_and_capture_again(testdir):
     )
 
 
-@pytest.mark.parametrize("method", ["SysCapture", "FDCapture", "TeeSysCapture"])
-def test_capturing_and_logging_fundamentals(testdir, method):
+@pytest.mark.parametrize(
+    "method", ["SysCapture(2)", "SysCapture(2, tee=True)", "FDCapture(2)"]
+)
+def test_capturing_and_logging_fundamentals(testdir, method: str) -> None:
     # here we check a fundamental feature
     p = testdir.makepyfile(
         """
@@ -1303,7 +1305,7 @@ def test_capturing_and_logging_fundamentals(testdir, method):
         cap = capture.MultiCapture(
             in_=None,
             out=None,
-            err=capture.%s(2),
+            err=capture.%s,
         )
         cap.start_capturing()
 

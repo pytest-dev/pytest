@@ -75,7 +75,9 @@ def _get_multicapture(method: "_CaptureMethod") -> "MultiCapture":
     elif method == "no":
         return MultiCapture(in_=None, out=None, err=None)
     elif method == "tee-sys":
-        return MultiCapture(in_=None, out=TeeSysCapture(1), err=TeeSysCapture(2))
+        return MultiCapture(
+            in_=None, out=SysCapture(1, tee=True), err=SysCapture(2, tee=True)
+        )
     raise ValueError("unknown capturing method: {!r}".format(method))
 
 
@@ -620,7 +622,7 @@ class SysCaptureBinary:
     EMPTY_BUFFER = b""
     _state = None
 
-    def __init__(self, fd, tmpfile=None):
+    def __init__(self, fd, tmpfile=None, *, tee=False):
         name = patchsysdict[fd]
         self._old = getattr(sys, name)
         self.name = name
@@ -628,7 +630,7 @@ class SysCaptureBinary:
             if name == "stdin":
                 tmpfile = DontReadFromInput()
             else:
-                tmpfile = CaptureIO()
+                tmpfile = CaptureIO() if not tee else TeeCaptureIO(self._old)
         self.tmpfile = tmpfile
 
     def __repr__(self):
@@ -682,19 +684,6 @@ class SysCapture(SysCaptureBinary):
     def writeorg(self, data):
         self._old.write(data)
         self._old.flush()
-
-
-class TeeSysCapture(SysCapture):
-    def __init__(self, fd, tmpfile=None):
-        name = patchsysdict[fd]
-        self._old = getattr(sys, name)
-        self.name = name
-        if tmpfile is None:
-            if name == "stdin":
-                tmpfile = DontReadFromInput()
-            else:
-                tmpfile = TeeCaptureIO(self._old)
-        self.tmpfile = tmpfile
 
 
 class DontReadFromInput:
