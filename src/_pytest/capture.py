@@ -281,7 +281,8 @@ class SysCaptureBinary:
         self._state = "started"
 
     def snap(self):
-        res = self.tmpfile.buffer.getvalue()
+        self.tmpfile.seek(0)
+        res = self.tmpfile.buffer.read()
         self.tmpfile.seek(0)
         self.tmpfile.truncate()
         return res
