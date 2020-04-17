@@ -26,7 +26,6 @@ from _pytest.outcomes import TEST_OUTCOME
 
 if TYPE_CHECKING:
     from typing import Type
-    from typing_extensions import Literal
 
 #
 # pytest plugin hooks
@@ -85,41 +84,95 @@ def pytest_sessionfinish(session):
 
 
 def pytest_runtest_protocol(item, nextitem):
-    item.ihook.pytest_runtest_logstart(nodeid=item.nodeid, location=item.location)
     runtestprotocol(item, nextitem=nextitem)
-    item.ihook.pytest_runtest_logfinish(nodeid=item.nodeid, location=item.location)
     return True
 
 
 def runtestprotocol(item, log=True, nextitem=None):
+    if log:
+        item.ihook.pytest_runtest_logstart(nodeid=item.nodeid, location=item.location)
+
     hasrequest = hasattr(item, "_request")
     if hasrequest and not item._request:
         item._initrequest()
-    rep = call_and_report(item, "setup", log)
-    reports = [rep]
-    if rep.passed:
+
+    reraise = (Exit,)  # type: Tuple[Type[BaseException], ...]
+    if not item.config.getoption("usepdb", False):
+        reraise += (KeyboardInterrupt,)
+
+    reports = []
+
+    # Setup.
+    setup_call = CallInfo.from_call(
+        lambda: item.ihook.pytest_runtest_setup(item=item),
+        when="setup",
+        reraise=reraise,
+    )
+    setup_report = item.ihook.pytest_runtest_makereport(item=item, call=setup_call)
+    reports.append(setup_report)
+    if log:
+        item.ihook.pytest_runtest_logreport(report=setup_report)
+    if check_interactive_exception(setup_call, setup_report):
+        item.ihook.pytest_exception_interact(
+            node=item, call=setup_call, report=setup_report
+        )
+
+    if setup_report.passed:
         if item.config.getoption("setupshow", False):
-            show_test_item(item)
+            # Show test function, parameters and the fixtures of the test item.
+            tw = item.config.get_terminal_writer()
+            tw.line()
+            tw.write(" " * 8)
+            tw.write(item.nodeid)
+            used_fixtures = sorted(getattr(item, "fixturenames", []))
+            if used_fixtures:
+                tw.write(" (fixtures used: {})".format(", ".join(used_fixtures)))
+
         if not item.config.getoption("setuponly", False):
-            reports.append(call_and_report(item, "call", log))
-    reports.append(call_and_report(item, "teardown", log, nextitem=nextitem))
-    # after all teardown hooks have been called
-    # want funcargs and request info to go away
+            # Call.
+            call_call = CallInfo.from_call(
+                lambda: item.ihook.pytest_runtest_call(item=item),
+                when="call",
+                reraise=reraise,
+            )
+            call_report = item.ihook.pytest_runtest_makereport(
+                item=item, call=call_call
+            )
+            reports.append(call_report)
+            if log:
+                item.ihook.pytest_runtest_logreport(report=call_report)
+            if check_interactive_exception(call_call, call_report):
+                item.ihook.pytest_exception_interact(
+                    node=item, call=call_call, report=call_report
+                )
+
+    # Teardown.
+    teardown_call = CallInfo.from_call(
+        lambda: item.ihook.pytest_runtest_teardown(item=item, nextitem=nextitem),
+        when="teardown",
+        reraise=reraise,
+    )
+    teardown_report = item.ihook.pytest_runtest_makereport(
+        item=item, call=teardown_call
+    )
+    reports.append(teardown_report)
+    if log:
+        item.ihook.pytest_runtest_logreport(report=teardown_report)
+    if check_interactive_exception(teardown_call, teardown_report):
+        item.ihook.pytest_exception_interact(
+            node=item, call=teardown_call, report=teardown_report
+        )
+
+    # After all teardown hooks have been called, we want funcargs and request
+    # info to go away.
     if hasrequest:
         item._request = False
         item.funcargs = None
+
+    if log:
+        item.ihook.pytest_runtest_logfinish(nodeid=item.nodeid, location=item.location)
+
     return reports
-
-
-def show_test_item(item):
-    """Show test function, parameters and the fixtures of the test item."""
-    tw = item.config.get_terminal_writer()
-    tw.line()
-    tw.write(" " * 8)
-    tw.write(item.nodeid)
-    used_fixtures = sorted(getattr(item, "fixturenames", []))
-    if used_fixtures:
-        tw.write(" (fixtures used: {})".format(", ".join(used_fixtures)))
 
 
 def pytest_runtest_setup(item):
@@ -184,41 +237,11 @@ def pytest_report_teststatus(report):
 # Implementation
 
 
-def call_and_report(
-    item, when: "Literal['setup', 'call', 'teardown']", log=True, **kwds
-):
-    call = call_runtest_hook(item, when, **kwds)
-    hook = item.ihook
-    report = hook.pytest_runtest_makereport(item=item, call=call)
-    if log:
-        hook.pytest_runtest_logreport(report=report)
-    if check_interactive_exception(call, report):
-        hook.pytest_exception_interact(node=item, call=call, report=report)
-    return report
-
-
 def check_interactive_exception(call, report):
     return call.excinfo and not (
         hasattr(report, "wasxfail")
         or call.excinfo.errisinstance(Skipped)
         or call.excinfo.errisinstance(bdb.BdbQuit)
-    )
-
-
-def call_runtest_hook(item, when: "Literal['setup', 'call', 'teardown']", **kwds):
-    if when == "setup":
-        ihook = item.ihook.pytest_runtest_setup
-    elif when == "call":
-        ihook = item.ihook.pytest_runtest_call
-    elif when == "teardown":
-        ihook = item.ihook.pytest_runtest_teardown
-    else:
-        assert False, "Unhandled runtest hook case: {}".format(when)
-    reraise = (Exit,)  # type: Tuple[Type[BaseException], ...]
-    if not item.config.getoption("usepdb", False):
-        reraise += (KeyboardInterrupt,)
-    return CallInfo.from_call(
-        lambda: ihook(item=item, **kwds), when=when, reraise=reraise
     )
 
 
