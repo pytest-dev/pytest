@@ -28,6 +28,7 @@ from _pytest.compat import is_generator
 from _pytest.compat import NOTSET
 from _pytest.compat import safe_getattr
 from _pytest.compat import TYPE_CHECKING
+from _pytest.deprecated import FILLFUNCARGS
 from _pytest.deprecated import FIXTURE_POSITIONAL_ARGUMENTS
 from _pytest.deprecated import FUNCARGNAMES
 from _pytest.mark import ParameterSet
@@ -276,6 +277,7 @@ def reorder_items_atscope(items, argkeys_cache, items_by_argkey, scopenum):
 
 def fillfixtures(function):
     """ fill missing funcargs for a test function. """
+    warnings.warn(FILLFUNCARGS, stacklevel=2)
     function._request._fillfixtures()
 
 

@@ -20,6 +20,19 @@ Below is a complete list of all pytest features which are considered deprecated.
 :ref:`standard warning filters <warnings>`.
 
 
+The ``pytest._fillfuncargs`` function
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 5.5
+
+This function was kept for backward compatibility with an older plugin.
+
+It's functionality is not meant to be used directly, but if you must replace
+it, use `function._request._fillfixtures()` instead, though note this is not
+a public API and may break in the future.
+
+
+
 ``--no-print-logs`` command-line option
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
