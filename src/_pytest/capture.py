@@ -630,9 +630,8 @@ class CaptureManager:
             self._global_capturing.resume_capturing()
 
     def suspend_global_capture(self, in_=False):
-        cap = getattr(self, "_global_capturing", None)
-        if cap is not None:
-            cap.suspend_capturing(in_=in_)
+        if self._global_capturing is not None:
+            self._global_capturing.suspend_capturing(in_=in_)
 
     def suspend(self, in_=False):
         # Need to undo local capsys-et-al if it exists before disabling global capture.
