@@ -1,4 +1,5 @@
 import inspect
+from unittest import mock
 
 import pytest
 from _pytest import deprecated
@@ -146,3 +147,11 @@ def test_noprintlogs_is_deprecated_ini(testdir):
     )
 
     assert_no_print_logs(testdir, ())
+
+
+def test__fillfuncargs_is_deprecated() -> None:
+    with pytest.warns(
+        pytest.PytestDeprecationWarning,
+        match="The `_fillfuncargs` function is deprecated",
+    ):
+        pytest._fillfuncargs(mock.Mock())

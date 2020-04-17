@@ -110,7 +110,7 @@ class TestFillFixtures:
     def test_funcarg_basic(self, testdir):
         testdir.copy_example()
         item = testdir.getitem(Path("test_funcarg_basic.py"))
-        fixtures.fillfixtures(item)
+        item._request._fillfixtures()
         del item.funcargs["request"]
         assert len(get_public_names(item.funcargs)) == 2
         assert item.funcargs["some"] == "test_func"
@@ -664,7 +664,7 @@ class TestRequestBasic:
         assert val2 == 2
         val2 = req.getfixturevalue("other")  # see about caching
         assert val2 == 2
-        pytest._fillfuncargs(item)
+        item._request._fillfixtures()
         assert item.funcargs["something"] == 1
         assert len(get_public_names(item.funcargs)) == 2
         assert "request" in item.funcargs
@@ -681,7 +681,7 @@ class TestRequestBasic:
         """
         )
         item.session._setupstate.prepare(item)
-        pytest._fillfuncargs(item)
+        item._request._fillfixtures()
         # successively check finalization calls
         teardownlist = item.getparent(pytest.Module).obj.teardownlist
         ss = item.session._setupstate
