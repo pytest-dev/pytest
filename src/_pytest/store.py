@@ -27,7 +27,7 @@ class StoreKey(Generic[T]):
 class Store:
     """Store is a type-safe heterogenous mutable mapping that
     allows keys and value types to be defined separately from
-    where it is defined.
+    where it (the Store) is created.
 
     Usually you will be given an object which has a ``Store``:
 
@@ -77,7 +77,7 @@ class Store:
 
     Good solution: module Internal adds a ``Store`` to the object. Module
     External mints StoreKeys for its own keys. Module External stores and
-    retrieves its data using its keys.
+    retrieves its data using these keys.
     """
 
     __slots__ = ("_store",)
