@@ -1535,7 +1535,7 @@ class Function(PyobjMixin, nodes.Item):
         if isinstance(self.parent, Instance):
             self.parent.newinstance()
             self.obj = self._getobj()
-        fixtures.fillfixtures(self)
+        self._request._fillfixtures()
 
     def _prunetraceback(self, excinfo: ExceptionInfo) -> None:
         if hasattr(self, "_obj") and not self.config.getoption("fulltrace", False):

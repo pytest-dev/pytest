@@ -276,24 +276,7 @@ def reorder_items_atscope(items, argkeys_cache, items_by_argkey, scopenum):
 
 def fillfixtures(function):
     """ fill missing funcargs for a test function. """
-    try:
-        request = function._request
-    except AttributeError:
-        # XXX this special code path is only expected to execute
-        # with the oejskit plugin.  It uses classes with funcargs
-        # and we thus have to work a bit to allow this.
-        fm = function.session._fixturemanager
-        fi = fm.getfixtureinfo(function.parent, function.obj, None)
-        function._fixtureinfo = fi
-        request = function._request = FixtureRequest(function)
-        request._fillfixtures()
-        # prune out funcargs for jstests
-        newfuncargs = {}
-        for name in fi.argnames:
-            newfuncargs[name] = function.funcargs[name]
-        function.funcargs = newfuncargs
-    else:
-        request._fillfixtures()
+    function._request._fillfixtures()
 
 
 def get_direct_param_fixture_func(request):

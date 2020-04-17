@@ -53,9 +53,6 @@ Here is a little annotated list for some popular plugins:
 * `pytest-flakes <https://pypi.org/project/pytest-flakes/>`_:
   check source code with pyflakes.
 
-* `oejskit <https://pypi.org/project/oejskit/>`_:
-  a plugin to run javascript unittests in live browsers.
-
 To see a complete list of all plugins with their latest testing
 status against different pytest and Python versions, please visit
 `plugincompat <http://plugincompat.herokuapp.com/>`_.
