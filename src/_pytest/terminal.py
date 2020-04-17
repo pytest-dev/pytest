@@ -1027,7 +1027,7 @@ class TerminalReporter:
 
         def show_skipped(lines: List[str]) -> None:
             skipped = self.stats.get("skipped", [])
-            fskips = _folded_skips(skipped) if skipped else []
+            fskips = _folded_skips(self.startdir, skipped) if skipped else []
             if not fskips:
                 return
             verbose_word = skipped[0]._get_verbose_word(self.config)
@@ -1153,11 +1153,13 @@ def _get_line_with_reprcrash_message(config, rep, termwidth):
     return line
 
 
-def _folded_skips(skipped):
+def _folded_skips(startdir, skipped):
     d = {}
     for event in skipped:
-        key = event.longrepr
-        assert len(key) == 3, (event, key)
+        assert len(event.longrepr) == 3, (event, event.longrepr)
+        fspath, lineno, reason = event.longrepr
+        # For consistency, report all fspaths in relative form.
+        fspath = startdir.bestrelpath(py.path.local(fspath))
         keywords = getattr(event, "keywords", {})
         # folding reports with global pytestmark variable
         # this is workaround, because for now we cannot identify the scope of a skip marker
@@ -1167,7 +1169,9 @@ def _folded_skips(skipped):
             and "skip" in keywords
             and "pytestmark" not in keywords
         ):
-            key = (key[0], None, key[2])
+            key = (fspath, None, reason)
+        else:
+            key = (fspath, lineno, reason)
         d.setdefault(key, []).append(event)
     values = []
     for key, events in d.items():
