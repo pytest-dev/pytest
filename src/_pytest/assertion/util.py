@@ -131,6 +131,8 @@ def isiterable(obj: Any) -> bool:
 def assertrepr_compare(config, op: str, left: Any, right: Any) -> Optional[List[str]]:
     """Return specialised explanations for some operators/operands"""
     verbose = config.getoption("verbose")
+    screen_width = config.get_terminal_reporter().get_screen_width()
+
     if verbose > 1:
         left_repr = safeformat(left)
         right_repr = safeformat(right)
@@ -149,7 +151,7 @@ def assertrepr_compare(config, op: str, left: Any, right: Any) -> Optional[List[
     try:
         if op == "==":
             if istext(left) and istext(right):
-                explanation = _diff_text(left, right, verbose)
+                explanation = _diff_text(left, right, verbose, screen_width)
             else:
                 if issequence(left) and issequence(right):
                     explanation = _compare_eq_sequence(left, right, verbose)
@@ -170,7 +172,7 @@ def assertrepr_compare(config, op: str, left: Any, right: Any) -> Optional[List[
                         explanation = expl
         elif op == "not in":
             if istext(left) and istext(right):
-                explanation = _notin_text(left, right, verbose)
+                explanation = _notin_text(left, right, verbose, screen_width)
     except outcomes.Exit:
         raise
     except Exception:
@@ -187,7 +189,7 @@ def assertrepr_compare(config, op: str, left: Any, right: Any) -> Optional[List[
     return [summary] + explanation
 
 
-def _diff_text(left: str, right: str, verbose: int = 0) -> List[str]:
+def _diff_text(left: str, right: str, verbose: int = 0, screen_width: int = 80) -> List[str]:
     """Return the explanation for the diff between text.
 
     Unless --verbose is used this will skip leading and trailing
@@ -228,10 +230,32 @@ def _diff_text(left: str, right: str, verbose: int = 0) -> List[str]:
         explanation += ["Strings contain only whitespace, escaping them using repr()"]
     # "right" is the expected base against which we compare "left",
     # see https://github.com/pytest-dev/pytest/issues/3333
-    explanation += [
-        line.strip("\n")
-        for line in ndiff(right.splitlines(keepends), left.splitlines(keepends))
-    ]
+
+    from difflib import SequenceMatcher
+    stripped_left = ''.join(left.split())
+    stripped_right = ''.join(right.split())
+    s = SequenceMatcher(None, stripped_left, stripped_right)
+
+    nlines_left = left.count('\n')
+    nlines_right = right.count('\n')
+
+    if s.ratio() < 0.30 or max(nlines_left, nlines_right) < 5:
+        explanation += [
+            line.strip("\n")
+            for line in ndiff(right.splitlines(keepends), left.splitlines(keepends))
+        ]
+    else:
+        lines = ["=" * int((screen_width-18)/2) + " ACTUAL " + "=" * int((screen_width-18)/2)] 
+        if screen_width % 2 != 0:
+            lines[-1] += "="
+
+        lines += list(left.split("\n")) + ["=" * int((screen_width-20)/2) + " EXPECTED " + "=" * int((screen_width-20)/2)] 
+        if screen_width % 2 != 0:
+            lines[-1] += "="
+
+        lines += list(right.split("\n"))
+        explanation += lines
+
     return explanation
 
 
@@ -444,12 +468,12 @@ def _compare_eq_cls(
     return explanation
 
 
-def _notin_text(term: str, text: str, verbose: int = 0) -> List[str]:
+def _notin_text(term: str, text: str, verbose: int = 0, screen_width: int = 80) -> List[str]:
     index = text.find(term)
     head = text[:index]
     tail = text[index + len(term) :]
     correct_text = head + tail
-    diff = _diff_text(text, correct_text, verbose)
+    diff = _diff_text(text, correct_text, verbose, screen_width)
     newdiff = ["%s is contained here:" % saferepr(term, maxsize=42)]
     for line in diff:
         if line.startswith("Skipping"):

@@ -1,0 +1,1 @@
+Added new assertion view when similar strings are compered.

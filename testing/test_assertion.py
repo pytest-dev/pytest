@@ -22,6 +22,13 @@ def mock_config(verbose=0):
                 return verbose
             raise KeyError("Not mocked out: %s" % name)
 
+        def get_terminal_reporter(self):
+            class Terminal:
+                def get_screen_width(self):
+                    return 80
+
+            return Terminal()
+
     return Config()
 
 

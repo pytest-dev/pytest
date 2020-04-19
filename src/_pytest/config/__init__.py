@@ -867,9 +867,12 @@ class Config:
     def get_terminal_writer(self):
         return self.pluginmanager.get_plugin("terminalreporter")._tw
 
+    def get_terminal_reporter(self):
+        return self.pluginmanager.get_plugin("terminalreporter")
+
     def pytest_cmdline_parse(
         self, pluginmanager: PytestPluginManager, args: List[str]
-    ) -> object:
+        ) -> object:
         try:
             self.parse(args)
         except UsageError:
