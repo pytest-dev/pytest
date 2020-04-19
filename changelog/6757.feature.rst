@@ -1,1 +1,1 @@
-Added new assertion view when similar strings are compered.
+Added new assertion diff view when similar strings are compared.
