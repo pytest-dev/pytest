@@ -1,0 +1,1 @@
+TestReport.longrepr is always instance of ReprExceptionInfo. Previously it was string when test failed with pytrace=False.

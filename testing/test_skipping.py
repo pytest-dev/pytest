@@ -194,7 +194,7 @@ class TestXFail:
         assert len(reports) == 3
         callreport = reports[1]
         assert callreport.failed
-        assert callreport.longrepr == "[XPASS(strict)] nope"
+        assert str(callreport.longrepr) == "[XPASS(strict)] nope"
         assert not hasattr(callreport, "wasxfail")
 
     def test_xfail_run_anyway(self, testdir):
