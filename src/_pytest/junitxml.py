@@ -644,7 +644,7 @@ class LogXML:
             + self.stats["error"]
             - self.cnt_double_fail_tests
         )
-        logfile.write('<?xml version="1.0" encoding="utf-8"?>')
+        logfile.write('<?xml version="1.1" encoding="utf-8"?>')
 
         suite_node = Junit.testsuite(
             self._get_global_properties_node(),
