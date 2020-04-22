@@ -58,9 +58,9 @@ def bin_xml_escape(arg):
     def repl(matchobj):
         i = ord(matchobj.group())
         if i <= 0xFF:
-            return "#x%02X" % i
+            return "&#x%02X;" % i
         else:
-            return "#x%04X" % i
+            return "&#x%04X;" % i
 
     return py.xml.raw(illegal_xml_re.sub(repl, py.xml.escape(arg)))
 
