@@ -989,9 +989,9 @@ def test_invalid_xml_escape():
     for i in invalid:
         got = bin_xml_escape(chr(i)).uniobj
         if i <= 0xFF:
-            expected = "#x%02X" % i
+            expected = "&#x%02X;" % i
         else:
-            expected = "#x%04X" % i
+            expected = "&#x%04X;" % i
         assert got == expected
     for i in valid:
         assert chr(i) == bin_xml_escape(chr(i)).uniobj
