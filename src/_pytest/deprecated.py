@@ -27,7 +27,7 @@ FUNCARGNAMES = PytestDeprecationWarning(
 
 FILLFUNCARGS = PytestDeprecationWarning(
     "The `_fillfuncargs` function is deprecated, use "
-    "function._request._fillfixtures() instead if you must."
+    "function._request._fillfixtures() instead if you cannot avoid reaching into internals."
 )
 
 RESULT_LOG = PytestDeprecationWarning(
