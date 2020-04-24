@@ -117,6 +117,8 @@ class MonkeyPatch:
         .. code-block:: python
 
             import functools
+
+
             def test_partial(monkeypatch):
                 with monkeypatch.context() as m:
                     m.setattr(functools, "partial", 3)
