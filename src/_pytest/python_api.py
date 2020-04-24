@@ -123,7 +123,7 @@ class ApproxNumpy(ApproxBase):
         if not np.isscalar(actual):
             try:
                 actual = np.asarray(actual)
-            except:  # noqa
+            except BaseException:
                 raise TypeError("cannot compare '{}' to numpy.ndarray".format(actual))
 
         if not np.isscalar(actual) and actual.shape != self.expected.shape:

@@ -239,7 +239,7 @@ class TestTraceback_f_g_h:
         def f(n: int) -> None:
             try:
                 do_stuff()
-            except:  # noqa
+            except BaseException:
                 reraise_me()
 
         excinfo = pytest.raises(RuntimeError, f, 8)
@@ -445,7 +445,7 @@ class TestFormattedExcinfo:
             exec(source.compile())
         except KeyboardInterrupt:
             raise
-        except:  # noqa
+        except BaseException:
             return _pytest._code.ExceptionInfo.from_current()
         assert 0, "did not raise"
 

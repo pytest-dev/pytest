@@ -206,7 +206,7 @@ def wrap_session(
                     )
             config.hook.pytest_keyboard_interrupt(excinfo=excinfo)
             session.exitstatus = exitstatus
-        except:  # noqa
+        except BaseException:
             session.exitstatus = ExitCode.INTERNAL_ERROR
             excinfo = _pytest._code.ExceptionInfo.from_current()
             try:
