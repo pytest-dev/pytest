@@ -27,7 +27,7 @@ from _pytest.compat import TYPE_CHECKING
 from _pytest.outcomes import fail
 
 if TYPE_CHECKING:
-    from typing import Type  # noqa: F401 (used in type string)
+    from typing import Type
 
 
 BASE_TYPE = (type, STRING_TYPES)

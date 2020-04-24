@@ -44,7 +44,7 @@ from _pytest.compat import TYPE_CHECKING
 if TYPE_CHECKING:
     from typing import Type
     from typing_extensions import Literal
-    from weakref import ReferenceType  # noqa: F401
+    from weakref import ReferenceType
 
     _TracebackStyle = Literal["long", "short", "line", "no", "native"]
 

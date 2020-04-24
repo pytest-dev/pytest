@@ -12,7 +12,7 @@ from _pytest.mark.expression import evaluate
 from _pytest.mark.expression import ParseError
 
 if TYPE_CHECKING:
-    from _pytest.nodes import Item  # noqa: F401 (used in type string)
+    from _pytest.nodes import Item
 
 
 @attr.s

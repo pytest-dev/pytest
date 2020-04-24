@@ -15,7 +15,7 @@ TYPE_CHECKING = False  # avoid circular import through compat
 
 if TYPE_CHECKING:
     from typing import NoReturn
-    from typing import Type  # noqa: F401 (Used in string type annotation.)
+    from typing import Type  # noqa: F401 (used in type string)
     from typing_extensions import Protocol
 else:
     # typing.Protocol is only available starting from Python 3.8. It is also
