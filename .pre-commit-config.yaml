@@ -32,7 +32,7 @@ repos:
     -   id: reorder-python-imports
         args: ['--application-directories=.:src', --py3-plus]
 -   repo: https://github.com/asottile/pyupgrade
-    rev: v1.18.0
+    rev: v2.2.1
     hooks:
     -   id: pyupgrade
         args: [--py3-plus]

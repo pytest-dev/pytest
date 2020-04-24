@@ -1202,8 +1202,8 @@ class Testdir:
         finally:
             f1.close()
             f2.close()
-        f1 = open(str(p1), "r", encoding="utf8")
-        f2 = open(str(p2), "r", encoding="utf8")
+        f1 = open(str(p1), encoding="utf8")
+        f2 = open(str(p2), encoding="utf8")
         try:
             out = f1.read().splitlines()
             err = f2.read().splitlines()
