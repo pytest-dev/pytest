@@ -25,6 +25,11 @@ FUNCARGNAMES = PytestDeprecationWarning(
     "since pytest 2.3 - use the newer attribute instead."
 )
 
+FILLFUNCARGS = PytestDeprecationWarning(
+    "The `_fillfuncargs` function is deprecated, use "
+    "function._request._fillfixtures() instead if you cannot avoid reaching into internals."
+)
+
 RESULT_LOG = PytestDeprecationWarning(
     "--result-log is deprecated, please try the new pytest-reportlog plugin.\n"
     "See https://docs.pytest.org/en/latest/deprecations.html#result-log-result-log for more information."
