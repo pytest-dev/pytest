@@ -200,6 +200,8 @@ def test_strict_prohibits_unregistered_markers(testdir, option_name):
     "spec",
     [
         ("xyz", ("test_one",)),
+        ("(((  xyz))  )", ("test_one",)),
+        ("not not xyz", ("test_one",)),
         ("xyz and xyz2", ()),
         ("xyz2", ("test_two",)),
         ("xyz or xyz2", ("test_one", "test_two")),
@@ -258,9 +260,11 @@ def test_mark_option_custom(spec, testdir):
     "spec",
     [
         ("interface", ("test_interface",)),
-        ("not interface", ("test_nointer", "test_pass")),
+        ("not interface", ("test_nointer", "test_pass", "test_1", "test_2")),
         ("pass", ("test_pass",)),
-        ("not pass", ("test_interface", "test_nointer")),
+        ("not pass", ("test_interface", "test_nointer", "test_1", "test_2")),
+        ("not not not (pass)", ("test_interface", "test_nointer", "test_1", "test_2")),
+        ("1 or 2", ("test_1", "test_2")),
     ],
 )
 def test_keyword_option_custom(spec, testdir):
@@ -271,6 +275,10 @@ def test_keyword_option_custom(spec, testdir):
         def test_nointer():
             pass
         def test_pass():
+            pass
+        def test_1():
+            pass
+        def test_2():
             pass
     """
     )
@@ -293,7 +301,7 @@ def test_keyword_option_considers_mark(testdir):
     "spec",
     [
         ("None", ("test_func[None]",)),
-        ("1.3", ("test_func[1.3]",)),
+        ("[1.3]", ("test_func[1.3]",)),
         ("2-3", ("test_func[2-3]",)),
     ],
 )
@@ -333,10 +341,23 @@ def test_parametrize_with_module(testdir):
     "spec",
     [
         (
-            "foo or import",
-            "ERROR: Python keyword 'import' not accepted in expressions passed to '-k'",
+            "foo or",
+            "at column 7: expected not OR left parenthesis OR identifier; got end of input",
         ),
-        ("foo or", "ERROR: Wrong expression passed to '-k': foo or"),
+        (
+            "foo or or",
+            "at column 8: expected not OR left parenthesis OR identifier; got or",
+        ),
+        ("(foo", "at column 5: expected right parenthesis; got end of input",),
+        ("foo bar", "at column 5: expected end of input; got identifier",),
+        (
+            "or or",
+            "at column 1: expected not OR left parenthesis OR identifier; got or",
+        ),
+        (
+            "not or",
+            "at column 5: expected not OR left parenthesis OR identifier; got or",
+        ),
     ],
 )
 def test_keyword_option_wrong_arguments(spec, testdir, capsys):
@@ -798,10 +819,12 @@ class TestKeywordSelection:
         passed, skipped, failed = reprec.countoutcomes()
         assert passed + skipped + failed == 0
 
-    def test_no_magic_values(self, testdir):
+    @pytest.mark.parametrize(
+        "keyword", ["__", "+", ".."],
+    )
+    def test_no_magic_values(self, testdir, keyword: str) -> None:
         """Make sure the tests do not match on magic values,
-        no double underscored values, like '__dict__',
-        and no instance values, like '()'.
+        no double underscored values, like '__dict__' and '+'.
         """
         p = testdir.makepyfile(
             """
@@ -809,16 +832,12 @@ class TestKeywordSelection:
         """
         )
 
-        def assert_test_is_not_selected(keyword):
-            reprec = testdir.inline_run("-k", keyword, p)
-            passed, skipped, failed = reprec.countoutcomes()
-            dlist = reprec.getcalls("pytest_deselected")
-            assert passed + skipped + failed == 0
-            deselected_tests = dlist[0].items
-            assert len(deselected_tests) == 1
-
-        assert_test_is_not_selected("__")
-        assert_test_is_not_selected("()")
+        reprec = testdir.inline_run("-k", keyword, p)
+        passed, skipped, failed = reprec.countoutcomes()
+        dlist = reprec.getcalls("pytest_deselected")
+        assert passed + skipped + failed == 0
+        deselected_tests = dlist[0].items
+        assert len(deselected_tests) == 1
 
 
 class TestMarkDecorator:
@@ -1023,7 +1042,7 @@ def test_marker_expr_eval_failure_handling(testdir, expr):
             pass
         """
     )
-    expected = "ERROR: Wrong expression passed to '-m': {}".format(expr)
+    expected = "ERROR: Wrong expression passed to '-m': {}: *".format(expr)
     result = testdir.runpytest(foo, "-m", expr)
     result.stderr.fnmatch_lines([expected])
     assert result.ret == ExitCode.USAGE_ERROR
