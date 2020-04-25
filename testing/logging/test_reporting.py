@@ -1103,11 +1103,11 @@ def test_log_set_path(testdir):
         """
     )
     testdir.runpytest()
-    with open(os.path.join(report_dir_base, "test_first"), "r") as rfh:
+    with open(os.path.join(report_dir_base, "test_first")) as rfh:
         content = rfh.read()
         assert "message from test 1" in content
 
-    with open(os.path.join(report_dir_base, "test_second"), "r") as rfh:
+    with open(os.path.join(report_dir_base, "test_second")) as rfh:
         content = rfh.read()
         assert "message from test 2" in content
 

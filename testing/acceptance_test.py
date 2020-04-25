@@ -1339,7 +1339,7 @@ def test_tee_stdio_captures_and_live_prints(testdir):
     result.stderr.fnmatch_lines(["*@this is stderr@*"])
 
     # now ensure the output is in the junitxml
-    with open(os.path.join(testdir.tmpdir.strpath, "output.xml"), "r") as f:
+    with open(os.path.join(testdir.tmpdir.strpath, "output.xml")) as f:
         fullXml = f.read()
     assert "@this is stdout@\n" in fullXml
     assert "@this is stderr@\n" in fullXml

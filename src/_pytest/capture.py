@@ -505,7 +505,7 @@ class FDCaptureBinary:
             self.done = self._done
             if targetfd == 0:
                 assert not tmpfile, "cannot set tmpfile with stdin"
-                tmpfile = open(os.devnull, "r")
+                tmpfile = open(os.devnull)
                 self.syscapture = SysCapture(targetfd)
             else:
                 if tmpfile is None:
@@ -580,7 +580,7 @@ class FDCapture(FDCaptureBinary):
     """
 
     # Ignore type because it doesn't match the type in the superclass (bytes).
-    EMPTY_BUFFER = str()  # type: ignore
+    EMPTY_BUFFER = ""  # type: ignore
 
     def snap(self):
         self.tmpfile.seek(0)
@@ -651,7 +651,7 @@ class SysCaptureBinary:
 
 
 class SysCapture(SysCaptureBinary):
-    EMPTY_BUFFER = str()  # type: ignore[assignment]  # noqa: F821
+    EMPTY_BUFFER = ""  # type: ignore[assignment]  # noqa: F821
 
     def snap(self):
         res = self.tmpfile.getvalue()

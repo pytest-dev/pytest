@@ -1401,14 +1401,14 @@ def test_global_capture_with_live_logging(testdir):
     result = testdir.runpytest_subprocess("--log-cli-level=INFO")
     assert result.ret == 0
 
-    with open("caplog", "r") as f:
+    with open("caplog") as f:
         caplog = f.read()
 
     assert "fix setup" in caplog
     assert "something in test" in caplog
     assert "fix teardown" in caplog
 
-    with open("capstdout", "r") as f:
+    with open("capstdout") as f:
         capstdout = f.read()
 
     assert "fix setup" in capstdout
