@@ -8,7 +8,7 @@ can change the pattern by issuing:
 
 .. code-block:: bash
 
-    pytest --doctest-glob='*.rst'
+    pytest --doctest-glob="*.rst"
 
 on the command line. ``--doctest-glob`` can be given multiple times in the command-line.
 
