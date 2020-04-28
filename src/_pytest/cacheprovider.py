@@ -332,13 +332,13 @@ class NFPlugin:
     def __init__(self, config):
         self.config = config
         self.active = config.option.newfirst
-        self.cached_nodeids = config.cache.get("cache/nodeids", [])
+        self.cached_nodeids = set(config.cache.get("cache/nodeids", []))
 
     def pytest_collection_modifyitems(
         self, session: Session, config: Config, items: List[nodes.Item]
     ) -> None:
-        new_items = OrderedDict()  # type: OrderedDict[str, nodes.Item]
         if self.active:
+            new_items = OrderedDict()  # type: OrderedDict[str, nodes.Item]
             other_items = OrderedDict()  # type: OrderedDict[str, nodes.Item]
             for item in items:
                 if item.nodeid not in self.cached_nodeids:
@@ -349,11 +349,9 @@ class NFPlugin:
             items[:] = self._get_increasing_order(
                 new_items.values()
             ) + self._get_increasing_order(other_items.values())
+            self.cached_nodeids.update(new_items)
         else:
-            for item in items:
-                if item.nodeid not in self.cached_nodeids:
-                    new_items[item.nodeid] = item
-        self.cached_nodeids.extend(new_items)
+            self.cached_nodeids.update(item.nodeid for item in items)
 
     def _get_increasing_order(self, items):
         return sorted(items, key=lambda item: item.fspath.mtime(), reverse=True)
@@ -363,7 +361,7 @@ class NFPlugin:
         if config.getoption("cacheshow") or hasattr(config, "slaveinput"):
             return
 
-        config.cache.set("cache/nodeids", self.cached_nodeids)
+        config.cache.set("cache/nodeids", sorted(self.cached_nodeids))
 
 
 def pytest_addoption(parser):
