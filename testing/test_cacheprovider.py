@@ -31,7 +31,7 @@ class TestNewAPI:
         val = config.cache.get("key/name", -2)
         assert val == -2
 
-    @pytest.mark.filterwarnings("default")
+    @pytest.mark.filterwarnings("ignore:could not create cache path")
     def test_cache_writefail_cachfile_silent(self, testdir):
         testdir.makeini("[pytest]")
         testdir.tmpdir.join(".pytest_cache").write("gone wrong")
