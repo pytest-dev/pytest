@@ -1,15 +1,12 @@
 """Helper functions for writing to terminals and files."""
-import sys
 import os
+import shutil
+import sys
 import unicodedata
+from io import StringIO
 
-import py
-from py.builtin import text, bytes
 
 # This code was initially copied from py 1.8.1, file _io/terminalwriter.py.
-
-py3k = sys.version_info[0] >= 3
-py33 = sys.version_info >= (3, 3)
 
 
 win32_and_ctypes = False
@@ -20,35 +17,24 @@ if sys.platform == "win32":
     except ImportError:
         try:
             import ctypes
-
-            win32_and_ctypes = True
         except ImportError:
             pass
+        else:
+            win32_and_ctypes = True
 
 
 def _getdimensions():
-    if py33:
-        import shutil
-
-        size = shutil.get_terminal_size()
-        return size.lines, size.columns
-    else:
-        import termios
-        import fcntl
-        import struct
-
-        call = fcntl.ioctl(1, termios.TIOCGWINSZ, "\000" * 8)
-        height, width = struct.unpack("hhhh", call)[:2]
-        return height, width
+    size = shutil.get_terminal_size()
+    return size.lines, size.columns
 
 
 def get_terminal_width():
     width = 0
     try:
         _, width = _getdimensions()
-    except py.builtin._sysex:
+    except (KeyboardInterrupt, SystemExit, MemoryError, GeneratorExit):
         raise
-    except:
+    except BaseException:
         # pass to fallback below
         pass
 
@@ -150,7 +136,7 @@ def should_do_markup(file):
     )
 
 
-class TerminalWriter(object):
+class TerminalWriter:
     _esctable = dict(
         black=30,
         red=31,
@@ -178,12 +164,10 @@ class TerminalWriter(object):
     def __init__(self, file=None, stringio=False, encoding=None):
         if file is None:
             if stringio:
-                self.stringio = file = py.io.TextIO()
+                self.stringio = file = StringIO()
             else:
                 from sys import stdout as file
-        elif py.builtin.callable(file) and not (
-            hasattr(file, "write") and hasattr(file, "flush")
-        ):
+        elif callable(file) and not (hasattr(file, "write") and hasattr(file, "flush")):
             file = WriteFile(file, encoding=encoding)
         if hasattr(file, "isatty") and file.isatty() and colorama:
             file = colorama.AnsiToWin32(file).stream
@@ -236,7 +220,7 @@ class TerminalWriter(object):
         esc = []
         for name in kw:
             if name not in self._esctable:
-                raise ValueError("unknown markup: %r" % (name,))
+                raise ValueError("unknown markup: {!r}".format(name))
             if kw[name]:
                 esc.append(self._esctable[name])
         return self._escaped(text, tuple(esc))
@@ -259,7 +243,7 @@ class TerminalWriter(object):
             #         N <= (fullwidth - len(title) - 2) // (2*len(sepchar))
             N = max((fullwidth - len(title) - 2) // (2 * len(sepchar)), 1)
             fill = sepchar * N
-            line = "%s %s %s" % (fill, title, fill)
+            line = "{} {} {}".format(fill, title, fill)
         else:
             # we want len(sepchar)*N <= fullwidth
             # i.e.    N <= fullwidth // len(sepchar)
@@ -274,8 +258,8 @@ class TerminalWriter(object):
 
     def write(self, msg, **kw):
         if msg:
-            if not isinstance(msg, (bytes, text)):
-                msg = text(msg)
+            if not isinstance(msg, (bytes, str)):
+                msg = str(msg)
 
             self._update_chars_on_current_line(msg)
 
@@ -319,8 +303,8 @@ class TerminalWriter(object):
 class Win32ConsoleWriter(TerminalWriter):
     def write(self, msg, **kw):
         if msg:
-            if not isinstance(msg, (bytes, text)):
-                msg = text(msg)
+            if not isinstance(msg, (bytes, str)):
+                msg = str(msg)
 
             self._update_chars_on_current_line(msg)
 
@@ -350,7 +334,7 @@ class Win32ConsoleWriter(TerminalWriter):
                 SetConsoleTextAttribute(handle, oldcolors)
 
 
-class WriteFile(object):
+class WriteFile:
     def __init__(self, writemethod, encoding=None):
         self.encoding = encoding
         self._writemethod = writemethod
@@ -365,9 +349,11 @@ class WriteFile(object):
 
 
 if win32_and_ctypes:
-    TerminalWriter = Win32ConsoleWriter
-    import ctypes
+    import ctypes  # noqa: F811
     from ctypes import wintypes
+    from ctypes import windll  # type: ignore[attr-defined] # noqa: F821
+
+    TerminalWriter = Win32ConsoleWriter  # type: ignore[misc] # noqa: F821
 
     # ctypes access to the Windows console
     STD_OUTPUT_HANDLE = -11
@@ -407,18 +393,18 @@ if win32_and_ctypes:
             ("dwMaximumWindowSize", COORD),
         ]
 
-    _GetStdHandle = ctypes.windll.kernel32.GetStdHandle
+    _GetStdHandle = windll.kernel32.GetStdHandle
     _GetStdHandle.argtypes = [wintypes.DWORD]
     _GetStdHandle.restype = wintypes.HANDLE
 
     def GetStdHandle(kind):
         return _GetStdHandle(kind)
 
-    SetConsoleTextAttribute = ctypes.windll.kernel32.SetConsoleTextAttribute
+    SetConsoleTextAttribute = windll.kernel32.SetConsoleTextAttribute
     SetConsoleTextAttribute.argtypes = [wintypes.HANDLE, wintypes.WORD]
     SetConsoleTextAttribute.restype = wintypes.BOOL
 
-    _GetConsoleScreenBufferInfo = ctypes.windll.kernel32.GetConsoleScreenBufferInfo
+    _GetConsoleScreenBufferInfo = windll.kernel32.GetConsoleScreenBufferInfo
     _GetConsoleScreenBufferInfo.argtypes = [
         wintypes.HANDLE,
         ctypes.POINTER(CONSOLE_SCREEN_BUFFER_INFO),
@@ -430,7 +416,7 @@ if win32_and_ctypes:
         _GetConsoleScreenBufferInfo(handle, ctypes.byref(info))
         return info
 
-    def _getdimensions():
+    def _getdimensions():  # noqa: F811
         handle = GetStdHandle(STD_OUTPUT_HANDLE)
         info = GetConsoleInfo(handle)
         # Substract one from the width, otherwise the cursor wraps
