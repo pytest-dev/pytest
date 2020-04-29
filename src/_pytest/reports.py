@@ -82,10 +82,11 @@ class BaseReport:
 
         .. versionadded:: 3.0
         """
-        tw = TerminalWriter(stringio=True)
+        file = StringIO()
+        tw = TerminalWriter(file)
         tw.hasmarkup = False
         self.toterminal(tw)
-        exc = tw.stringio.getvalue()
+        exc = file.getvalue()
         return exc.strip()
 
     @property

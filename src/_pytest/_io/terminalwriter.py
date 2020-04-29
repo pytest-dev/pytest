@@ -4,7 +4,6 @@ import shutil
 import sys
 import unicodedata
 from functools import lru_cache
-from io import StringIO
 from typing import Sequence
 
 
@@ -83,13 +82,9 @@ class TerminalWriter:
         invert=7,
     )
 
-    # XXX deprecate stringio argument
-    def __init__(self, file=None, stringio=False):
+    def __init__(self, file=None):
         if file is None:
-            if stringio:
-                self.stringio = file = StringIO()
-            else:
-                from sys import stdout as file
+            file = sys.stdout
         if hasattr(file, "isatty") and file.isatty() and colorama:
             file = colorama.AnsiToWin32(file).stream
         self._file = file
