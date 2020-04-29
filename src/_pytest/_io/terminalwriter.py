@@ -155,7 +155,7 @@ class TerminalWriter:
 
         self.line(line, **kw)
 
-    def write(self, msg: str, **kw: bool) -> None:
+    def write(self, msg: str, *, flush: bool = False, **kw: bool) -> None:
         if msg:
             current_line = msg.rsplit("\n", 1)[-1]
             if "\n" in msg:
@@ -170,11 +170,15 @@ class TerminalWriter:
             else:
                 markupmsg = msg
             self._file.write(markupmsg)
-            self._file.flush()
+            if flush:
+                self.flush()
 
     def line(self, s: str = "", **kw: bool) -> None:
         self.write(s, **kw)
         self.write("\n")
+
+    def flush(self) -> None:
+        self._file.flush()
 
     def _write_source(self, lines: Sequence[str], indents: Sequence[str] = ()) -> None:
         """Write lines of source code possibly highlighted.

@@ -1424,7 +1424,7 @@ def _showfixtures_main(config, session):
 
 def write_docstring(tw: TerminalWriter, doc: str, indent: str = "    ") -> None:
     for line in doc.split("\n"):
-        tw.write(indent + line + "\n")
+        tw.line(indent + line)
 
 
 class Function(PyobjMixin, nodes.Item):

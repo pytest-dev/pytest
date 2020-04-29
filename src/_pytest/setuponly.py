@@ -68,6 +68,8 @@ def _show_fixture_action(fixturedef, msg):
     if hasattr(fixturedef, "cached_param"):
         tw.write("[{}]".format(fixturedef.cached_param))
 
+    tw.flush()
+
     if capman:
         capman.resume_global_capture()
 
