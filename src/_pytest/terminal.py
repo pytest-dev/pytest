@@ -550,11 +550,7 @@ class TerminalReporter:
     @property
     def _width_of_current_line(self):
         """Return the width of current line, using the superior implementation of py-1.6 when available"""
-        try:
-            return self._tw.width_of_current_line
-        except AttributeError:
-            # py < 1.6.0
-            return self._tw.chars_on_current_line
+        return self._tw.width_of_current_line
 
     def pytest_collection(self) -> None:
         if self.isatty:
