@@ -96,7 +96,6 @@ class TerminalWriter:
         self.encoding = encoding or getattr(file, "encoding", "utf-8")
         self._file = file
         self.hasmarkup = should_do_markup(file)
-        self._lastlen = 0
         self._chars_on_current_line = 0
         self._width_of_current_line = 0
 
@@ -114,11 +113,6 @@ class TerminalWriter:
     def chars_on_current_line(self):
         """Return the number of characters written so far in the current line.
 
-        Please note that this count does not produce correct results after a reline() call,
-        see #164.
-
-        .. versionadded:: 1.5.0
-
         :rtype: int
         """
         return self._chars_on_current_line
@@ -126,8 +120,6 @@ class TerminalWriter:
     @property
     def width_of_current_line(self):
         """Return an estimate of the width so far in the current line.
-
-        .. versionadded:: 1.6.0
 
         :rtype: int
         """
@@ -200,21 +192,7 @@ class TerminalWriter:
 
     def line(self, s: str = "", **kw):
         self.write(s, **kw)
-        self._checkfill(s)
         self.write("\n")
-
-    def reline(self, line: str, **kw):
-        if not self.hasmarkup:
-            raise ValueError("cannot use rewrite-line without terminal")
-        self.write(line, **kw)
-        self._checkfill(line)
-        self.write("\r")
-        self._lastlen = len(line)
-
-    def _checkfill(self, line: str) -> None:
-        diff2last = self._lastlen - len(line)
-        if diff2last > 0:
-            self.write(" " * diff2last)
 
 
 class WriteFile:
