@@ -157,7 +157,13 @@ class TerminalWriter:
 
     def write(self, msg: str, **kw: bool) -> None:
         if msg:
-            self._update_chars_on_current_line(msg)
+            current_line = msg.rsplit("\n", 1)[-1]
+            if "\n" in msg:
+                self._chars_on_current_line = len(current_line)
+                self._width_of_current_line = get_line_width(current_line)
+            else:
+                self._chars_on_current_line += len(current_line)
+                self._width_of_current_line += get_line_width(current_line)
 
             if self.hasmarkup and kw:
                 markupmsg = self.markup(msg, **kw)
@@ -165,15 +171,6 @@ class TerminalWriter:
                 markupmsg = msg
             self._file.write(markupmsg)
             self._file.flush()
-
-    def _update_chars_on_current_line(self, text: str) -> None:
-        current_line = text.rsplit("\n", 1)[-1]
-        if "\n" in text:
-            self._chars_on_current_line = len(current_line)
-            self._width_of_current_line = get_line_width(current_line)
-        else:
-            self._chars_on_current_line += len(current_line)
-            self._width_of_current_line += get_line_width(current_line)
 
     def line(self, s: str = "", **kw: bool) -> None:
         self.write(s, **kw)
