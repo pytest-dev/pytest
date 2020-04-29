@@ -85,10 +85,11 @@ class TerminalWriter:
         self.hasmarkup = should_do_markup(file)
         self._chars_on_current_line = 0
         self._width_of_current_line = 0
+        self._terminal_width = None  # type: Optional[int]
 
     @property
     def fullwidth(self) -> int:
-        if hasattr(self, "_terminal_width"):
+        if self._terminal_width is not None:
             return self._terminal_width
         return get_terminal_width()
 
