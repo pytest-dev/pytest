@@ -415,13 +415,6 @@ if win32_and_ctypes:
         _GetConsoleScreenBufferInfo(handle, ctypes.byref(info))
         return info
 
-    def _getdimensions():  # noqa: F811
-        handle = GetStdHandle(STD_OUTPUT_HANDLE)
-        info = GetConsoleInfo(handle)
-        # Substract one from the width, otherwise the cursor wraps
-        # and the ending \n causes an empty line to display.
-        return info.dwSize.Y, info.dwSize.X - 1
-
 
 def write_out(fil, msg):
     # XXX sometimes "msg" is of type bytes, sometimes text which
