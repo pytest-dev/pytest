@@ -83,7 +83,7 @@ class TerminalWriter:
                 assert file is not None
         self._file = file
         self.hasmarkup = should_do_markup(file)
-        self._width_of_current_line = 0
+        self._current_line = ""
         self._terminal_width = None  # type: Optional[int]
 
     @property
@@ -99,7 +99,7 @@ class TerminalWriter:
     @property
     def width_of_current_line(self) -> int:
         """Return an estimate of the width so far in the current line."""
-        return self._width_of_current_line
+        return get_line_width(self._current_line)
 
     def markup(self, text: str, **kw: bool) -> str:
         esc = []
@@ -153,9 +153,9 @@ class TerminalWriter:
         if msg:
             current_line = msg.rsplit("\n", 1)[-1]
             if "\n" in msg:
-                self._width_of_current_line = get_line_width(current_line)
+                self._current_line = current_line
             else:
-                self._width_of_current_line += get_line_width(current_line)
+                self._current_line += current_line
 
             if self.hasmarkup and kw:
                 markupmsg = self.markup(msg, **kw)
