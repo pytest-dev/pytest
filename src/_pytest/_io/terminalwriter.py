@@ -3,6 +3,7 @@ import os
 import shutil
 import sys
 import unicodedata
+from functools import lru_cache
 from io import StringIO
 
 
@@ -33,19 +34,15 @@ def get_terminal_width() -> int:
     return width
 
 
-char_width = {
-    "A": 1,  # "Ambiguous"
-    "F": 2,  # Fullwidth
-    "H": 1,  # Halfwidth
-    "N": 1,  # Neutral
-    "Na": 1,  # Narrow
-    "W": 2,  # Wide
-}
+@lru_cache(100)
+def char_width(c: str) -> int:
+    # Fullwidth and Wide -> 2, all else (including Ambiguous) -> 1.
+    return 2 if unicodedata.east_asian_width(c) in ("F", "W") else 1
 
 
 def get_line_width(text):
     text = unicodedata.normalize("NFC", text)
-    return sum(char_width.get(unicodedata.east_asian_width(c), 1) for c in text)
+    return sum(char_width(c) for c in text)
 
 
 # XXX unify with _escaped func below
