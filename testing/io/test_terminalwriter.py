@@ -1,0 +1,209 @@
+import io
+import os
+import shutil
+import sys
+from typing import Generator
+from unittest import mock
+
+import pytest
+from _pytest._io import terminalwriter
+from _pytest.monkeypatch import MonkeyPatch
+
+
+# These tests were initially copied from py 1.8.1.
+
+
+def test_terminal_width_COLUMNS(monkeypatch: MonkeyPatch) -> None:
+    monkeypatch.setenv("COLUMNS", "42")
+    assert terminalwriter.get_terminal_width() == 42
+    monkeypatch.delenv("COLUMNS", raising=False)
+
+
+def test_terminalwriter_width_bogus(monkeypatch: MonkeyPatch) -> None:
+    monkeypatch.setattr(shutil, "get_terminal_size", mock.Mock(return_value=(10, 10)))
+    monkeypatch.delenv("COLUMNS", raising=False)
+    tw = terminalwriter.TerminalWriter()
+    assert tw.fullwidth == 80
+
+
+def test_terminalwriter_computes_width(monkeypatch: MonkeyPatch) -> None:
+    monkeypatch.setattr(terminalwriter, "get_terminal_width", lambda: 42)
+    tw = terminalwriter.TerminalWriter()
+    assert tw.fullwidth == 42
+
+
+def test_terminalwriter_dumb_term_no_markup(monkeypatch: MonkeyPatch) -> None:
+    monkeypatch.setattr(os, "environ", {"TERM": "dumb", "PATH": ""})
+
+    class MyFile:
+        closed = False
+
+        def isatty(self):
+            return True
+
+    with monkeypatch.context() as m:
+        m.setattr(sys, "stdout", MyFile())
+        assert sys.stdout.isatty()
+        tw = terminalwriter.TerminalWriter()
+        assert not tw.hasmarkup
+
+
+win32 = int(sys.platform == "win32")
+
+
+class TestTerminalWriter:
+    @pytest.fixture(params=["path", "stringio"])
+    def tw(
+        self, request, tmpdir
+    ) -> Generator[terminalwriter.TerminalWriter, None, None]:
+        if request.param == "path":
+            p = tmpdir.join("tmpfile")
+            f = open(str(p), "w+", encoding="utf8")
+            tw = terminalwriter.TerminalWriter(f)
+
+            def getlines():
+                f.flush()
+                with open(str(p), encoding="utf8") as fp:
+                    return fp.readlines()
+
+        elif request.param == "stringio":
+            f = io.StringIO()
+            tw = terminalwriter.TerminalWriter(f)
+
+            def getlines():
+                f.seek(0)
+                return f.readlines()
+
+        tw.getlines = getlines  # type: ignore
+        tw.getvalue = lambda: "".join(getlines())  # type: ignore
+
+        with f:
+            yield tw
+
+    def test_line(self, tw) -> None:
+        tw.line("hello")
+        lines = tw.getlines()
+        assert len(lines) == 1
+        assert lines[0] == "hello\n"
+
+    def test_line_unicode(self, tw) -> None:
+        msg = "b\u00f6y"
+        tw.line(msg)
+        lines = tw.getlines()
+        assert lines[0] == msg + "\n"
+
+    def test_sep_no_title(self, tw) -> None:
+        tw.sep("-", fullwidth=60)
+        lines = tw.getlines()
+        assert len(lines) == 1
+        assert lines[0] == "-" * (60 - win32) + "\n"
+
+    def test_sep_with_title(self, tw) -> None:
+        tw.sep("-", "hello", fullwidth=60)
+        lines = tw.getlines()
+        assert len(lines) == 1
+        assert lines[0] == "-" * 26 + " hello " + "-" * (27 - win32) + "\n"
+
+    def test_sep_longer_than_width(self, tw) -> None:
+        tw.sep("-", "a" * 10, fullwidth=5)
+        (line,) = tw.getlines()
+        # even though the string is wider than the line, still have a separator
+        assert line == "- aaaaaaaaaa -\n"
+
+    @pytest.mark.skipif(sys.platform == "win32", reason="win32 has no native ansi")
+    def test_markup(self, tw) -> None:
+        for bold in (True, False):
+            for color in ("red", "green"):
+                text2 = tw.markup("hello", **{color: True, "bold": bold})
+                assert text2.find("hello") != -1
+        with pytest.raises(ValueError):
+            tw.markup("x", wronkw=3)
+        with pytest.raises(ValueError):
+            tw.markup("x", wronkw=0)
+
+    def test_line_write_markup(self, tw) -> None:
+        tw.hasmarkup = True
+        tw.line("x", bold=True)
+        tw.write("x\n", red=True)
+        lines = tw.getlines()
+        if sys.platform != "win32":
+            assert len(lines[0]) >= 2, lines
+            assert len(lines[1]) >= 2, lines
+
+    def test_attr_fullwidth(self, tw) -> None:
+        tw.sep("-", "hello", fullwidth=70)
+        tw.fullwidth = 70
+        tw.sep("-", "hello")
+        lines = tw.getlines()
+        assert len(lines[0]) == len(lines[1])
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="win32 has no native ansi")
+def test_attr_hasmarkup() -> None:
+    file = io.StringIO()
+    tw = terminalwriter.TerminalWriter(file)
+    assert not tw.hasmarkup
+    tw.hasmarkup = True
+    tw.line("hello", bold=True)
+    s = file.getvalue()
+    assert len(s) > len("hello\n")
+    assert "\x1b[1m" in s
+    assert "\x1b[0m" in s
+
+
+def test_should_do_markup_PY_COLORS_eq_1(monkeypatch: MonkeyPatch) -> None:
+    monkeypatch.setitem(os.environ, "PY_COLORS", "1")
+    file = io.StringIO()
+    tw = terminalwriter.TerminalWriter(file)
+    assert tw.hasmarkup
+    tw.line("hello", bold=True)
+    s = file.getvalue()
+    assert len(s) > len("hello\n")
+    assert "\x1b[1m" in s
+    assert "\x1b[0m" in s
+
+
+def test_should_do_markup_PY_COLORS_eq_0(monkeypatch: MonkeyPatch) -> None:
+    monkeypatch.setitem(os.environ, "PY_COLORS", "0")
+    f = io.StringIO()
+    f.isatty = lambda: True  # type: ignore
+    tw = terminalwriter.TerminalWriter(file=f)
+    assert not tw.hasmarkup
+    tw.line("hello", bold=True)
+    s = f.getvalue()
+    assert s == "hello\n"
+
+
+class TestTerminalWriterLineWidth:
+    def test_init(self) -> None:
+        tw = terminalwriter.TerminalWriter()
+        assert tw.width_of_current_line == 0
+
+    def test_update(self) -> None:
+        tw = terminalwriter.TerminalWriter()
+        tw.write("hello world")
+        assert tw.width_of_current_line == 11
+
+    def test_update_with_newline(self) -> None:
+        tw = terminalwriter.TerminalWriter()
+        tw.write("hello\nworld")
+        assert tw.width_of_current_line == 5
+
+    def test_update_with_wide_text(self) -> None:
+        tw = terminalwriter.TerminalWriter()
+        tw.write("乇乂ㄒ尺卂 ㄒ卄丨匚匚")
+        assert tw.width_of_current_line == 21  # 5*2 + 1 + 5*2
+
+    def test_composed(self) -> None:
+        tw = terminalwriter.TerminalWriter()
+        text = "café food"
+        assert len(text) == 9
+        tw.write(text)
+        assert tw.width_of_current_line == 9
+
+    def test_combining(self) -> None:
+        tw = terminalwriter.TerminalWriter()
+        text = "café food"
+        assert len(text) == 10
+        tw.write(text)
+        assert tw.width_of_current_line == 9
