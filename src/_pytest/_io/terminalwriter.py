@@ -118,11 +118,6 @@ class TerminalWriter:
         """
         return self._width_of_current_line
 
-    def _escaped(self, text, esc):
-        if esc and self.hasmarkup:
-            text = "".join(["\x1b[%sm" % cod for cod in esc]) + text + "\x1b[0m"
-        return text
-
     def markup(self, text, **kw):
         esc = []
         for name in kw:
@@ -130,7 +125,9 @@ class TerminalWriter:
                 raise ValueError("unknown markup: {!r}".format(name))
             if kw[name]:
                 esc.append(self._esctable[name])
-        return self._escaped(text, tuple(esc))
+        if esc and self.hasmarkup:
+            text = "".join("\x1b[%sm" % cod for cod in esc) + text + "\x1b[0m"
+        return text
 
     def sep(self, sepchar, title=None, fullwidth=None, **kw):
         if fullwidth is None:
