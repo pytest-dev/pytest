@@ -300,40 +300,6 @@ class TerminalWriter:
             self.write(" " * diff2last)
 
 
-class Win32ConsoleWriter(TerminalWriter):
-    def write(self, msg, **kw):
-        if msg:
-            if not isinstance(msg, (bytes, str)):
-                msg = str(msg)
-
-            self._update_chars_on_current_line(msg)
-
-            oldcolors = None
-            if self.hasmarkup and kw:
-                handle = GetStdHandle(STD_OUTPUT_HANDLE)
-                oldcolors = GetConsoleInfo(handle).wAttributes
-                default_bg = oldcolors & 0x00F0
-                attr = default_bg
-                if kw.pop("bold", False):
-                    attr |= FOREGROUND_INTENSITY
-
-                if kw.pop("red", False):
-                    attr |= FOREGROUND_RED
-                elif kw.pop("blue", False):
-                    attr |= FOREGROUND_BLUE
-                elif kw.pop("green", False):
-                    attr |= FOREGROUND_GREEN
-                elif kw.pop("yellow", False):
-                    attr |= FOREGROUND_GREEN | FOREGROUND_RED
-                else:
-                    attr |= oldcolors & 0x0007
-
-                SetConsoleTextAttribute(handle, attr)
-            write_out(self._file, msg)
-            if oldcolors:
-                SetConsoleTextAttribute(handle, oldcolors)
-
-
 class WriteFile:
     def __init__(self, writemethod, encoding=None):
         self.encoding = encoding
@@ -352,6 +318,39 @@ if win32_and_ctypes:
     import ctypes  # noqa: F811
     from ctypes import wintypes
     from ctypes import windll  # type: ignore[attr-defined] # noqa: F821
+
+    class Win32ConsoleWriter(TerminalWriter):
+        def write(self, msg, **kw):
+            if msg:
+                if not isinstance(msg, (bytes, str)):
+                    msg = str(msg)
+
+                self._update_chars_on_current_line(msg)
+
+                oldcolors = None
+                if self.hasmarkup and kw:
+                    handle = GetStdHandle(STD_OUTPUT_HANDLE)
+                    oldcolors = GetConsoleInfo(handle).wAttributes
+                    default_bg = oldcolors & 0x00F0
+                    attr = default_bg
+                    if kw.pop("bold", False):
+                        attr |= FOREGROUND_INTENSITY
+
+                    if kw.pop("red", False):
+                        attr |= FOREGROUND_RED
+                    elif kw.pop("blue", False):
+                        attr |= FOREGROUND_BLUE
+                    elif kw.pop("green", False):
+                        attr |= FOREGROUND_GREEN
+                    elif kw.pop("yellow", False):
+                        attr |= FOREGROUND_GREEN | FOREGROUND_RED
+                    else:
+                        attr |= oldcolors & 0x0007
+
+                    SetConsoleTextAttribute(handle, attr)
+                write_out(self._file, msg)
+                if oldcolors:
+                    SetConsoleTextAttribute(handle, oldcolors)
 
     TerminalWriter = Win32ConsoleWriter  # type: ignore[misc] # noqa: F821
 
