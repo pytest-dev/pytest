@@ -83,17 +83,14 @@ class TerminalWriter:
     )
 
     # XXX deprecate stringio argument
-    def __init__(self, file=None, stringio=False, encoding=None):
+    def __init__(self, file=None, stringio=False):
         if file is None:
             if stringio:
                 self.stringio = file = StringIO()
             else:
                 from sys import stdout as file
-        elif callable(file) and not (hasattr(file, "write") and hasattr(file, "flush")):
-            file = WriteFile(file, encoding=encoding)
         if hasattr(file, "isatty") and file.isatty() and colorama:
             file = colorama.AnsiToWin32(file).stream
-        self.encoding = encoding or getattr(file, "encoding", "utf-8")
         self._file = file
         self.hasmarkup = should_do_markup(file)
         self._chars_on_current_line = 0
@@ -193,20 +190,6 @@ class TerminalWriter:
     def line(self, s: str = "", **kw):
         self.write(s, **kw)
         self.write("\n")
-
-
-class WriteFile:
-    def __init__(self, writemethod, encoding=None):
-        self.encoding = encoding
-        self._writemethod = writemethod
-
-    def write(self, data):
-        if self.encoding:
-            data = data.encode(self.encoding, "replace")
-        self._writemethod(data)
-
-    def flush(self):
-        return
 
 
 if win32_and_ctypes:
