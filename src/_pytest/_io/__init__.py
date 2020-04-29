@@ -1,7 +1,7 @@
 from typing import List
 from typing import Sequence
 
-from py.io import TerminalWriter as BaseTerminalWriter  # noqa: F401
+from .terminalwriter import TerminalWriter as BaseTerminalWriter
 
 
 class TerminalWriter(BaseTerminalWriter):
