@@ -234,37 +234,32 @@ class TerminalWriter:
 
         self.line(line, **kw)
 
-    def write(self, msg, **kw):
+    def write(self, msg: str, **kw) -> None:
         if msg:
-            if not isinstance(msg, (bytes, str)):
-                msg = str(msg)
-
             self._update_chars_on_current_line(msg)
 
             if self.hasmarkup and kw:
                 markupmsg = self.markup(msg, **kw)
             else:
                 markupmsg = msg
-            write_out(self._file, markupmsg)
+            self._file.write(markupmsg)
+            self._file.flush()
 
-    def _update_chars_on_current_line(self, text_or_bytes):
-        newline = b"\n" if isinstance(text_or_bytes, bytes) else "\n"
-        current_line = text_or_bytes.rsplit(newline, 1)[-1]
-        if isinstance(current_line, bytes):
-            current_line = current_line.decode("utf-8", errors="replace")
-        if newline in text_or_bytes:
+    def _update_chars_on_current_line(self, text: str) -> None:
+        current_line = text.rsplit("\n", 1)[-1]
+        if "\n" in text:
             self._chars_on_current_line = len(current_line)
             self._width_of_current_line = get_line_width(current_line)
         else:
             self._chars_on_current_line += len(current_line)
             self._width_of_current_line += get_line_width(current_line)
 
-    def line(self, s="", **kw):
+    def line(self, s: str = "", **kw):
         self.write(s, **kw)
         self._checkfill(s)
         self.write("\n")
 
-    def reline(self, line, **kw):
+    def reline(self, line: str, **kw):
         if not self.hasmarkup:
             raise ValueError("cannot use rewrite-line without terminal")
         self.write(line, **kw)
@@ -272,7 +267,7 @@ class TerminalWriter:
         self.write("\r")
         self._lastlen = len(line)
 
-    def _checkfill(self, line):
+    def _checkfill(self, line: str) -> None:
         diff2last = self._lastlen - len(line)
         if diff2last > 0:
             self.write(" " * diff2last)
@@ -298,11 +293,8 @@ if win32_and_ctypes:
     from ctypes import windll  # type: ignore[attr-defined] # noqa: F821
 
     class Win32ConsoleWriter(TerminalWriter):
-        def write(self, msg, **kw):
+        def write(self, msg: str, **kw):
             if msg:
-                if not isinstance(msg, (bytes, str)):
-                    msg = str(msg)
-
                 self._update_chars_on_current_line(msg)
 
                 oldcolors = None
@@ -326,7 +318,8 @@ if win32_and_ctypes:
                         attr |= oldcolors & 0x0007
 
                     SetConsoleTextAttribute(handle, attr)
-                write_out(self._file, msg)
+                self._file.write(msg)
+                self._file.flush()
                 if oldcolors:
                     SetConsoleTextAttribute(handle, oldcolors)
 
@@ -392,28 +385,3 @@ if win32_and_ctypes:
         info = CONSOLE_SCREEN_BUFFER_INFO()
         _GetConsoleScreenBufferInfo(handle, ctypes.byref(info))
         return info
-
-
-def write_out(fil, msg):
-    # XXX sometimes "msg" is of type bytes, sometimes text which
-    # complicates the situation.  Should we try to enforce unicode?
-    try:
-        # on py27 and above writing out to sys.stdout with an encoding
-        # should usually work for unicode messages (if the encoding is
-        # capable of it)
-        fil.write(msg)
-    except UnicodeEncodeError:
-        # on py26 it might not work because stdout expects bytes
-        if fil.encoding:
-            try:
-                fil.write(msg.encode(fil.encoding))
-            except UnicodeEncodeError:
-                # it might still fail if the encoding is not capable
-                pass
-            else:
-                fil.flush()
-                return
-        # fallback: escape all unicode characters
-        msg = msg.encode("unicode-escape").decode("ascii")
-        fil.write(msg)
-    fil.flush()
