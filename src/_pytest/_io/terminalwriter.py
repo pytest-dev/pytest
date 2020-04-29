@@ -23,34 +23,15 @@ if sys.platform == "win32":
             win32_and_ctypes = True
 
 
-def _getdimensions():
-    size = shutil.get_terminal_size()
-    return size.lines, size.columns
+def get_terminal_width() -> int:
+    width, _ = shutil.get_terminal_size(fallback=(80, 24))
 
-
-def get_terminal_width():
-    width = 0
-    try:
-        _, width = _getdimensions()
-    except (KeyboardInterrupt, SystemExit, MemoryError, GeneratorExit):
-        raise
-    except BaseException:
-        # pass to fallback below
-        pass
-
-    if width == 0:
-        # FALLBACK:
-        # * some exception happened
-        # * or this is emacs terminal which reports (0,0)
-        width = int(os.environ.get("COLUMNS", 80))
-
-    # XXX the windows getdimensions may be bogus, let's sanify a bit
+    # The Windows get_terminal_size may be bogus, let's sanify a bit.
     if width < 40:
         width = 80
+
     return width
 
-
-terminal_width = get_terminal_width()
 
 char_width = {
     "A": 1,  # "Ambiguous"
