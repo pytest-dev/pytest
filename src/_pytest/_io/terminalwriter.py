@@ -10,20 +10,6 @@ from typing import Sequence
 # This code was initially copied from py 1.8.1, file _io/terminalwriter.py.
 
 
-win32_and_ctypes = False
-colorama = None
-if sys.platform == "win32":
-    try:
-        import colorama
-    except ImportError:
-        try:
-            import ctypes
-        except ImportError:
-            pass
-        else:
-            win32_and_ctypes = True
-
-
 def get_terminal_width() -> int:
     width, _ = shutil.get_terminal_size(fallback=(80, 24))
 
@@ -85,8 +71,13 @@ class TerminalWriter:
     def __init__(self, file=None):
         if file is None:
             file = sys.stdout
-        if hasattr(file, "isatty") and file.isatty() and colorama:
-            file = colorama.AnsiToWin32(file).stream
+        if hasattr(file, "isatty") and file.isatty() and sys.platform == "win32":
+            try:
+                import colorama
+            except ImportError:
+                pass
+            else:
+                file = colorama.AnsiToWin32(file).stream
         self._file = file
         self.hasmarkup = should_do_markup(file)
         self._chars_on_current_line = 0
@@ -216,103 +207,3 @@ class TerminalWriter:
             return source
         else:
             return highlight(source, PythonLexer(), TerminalFormatter(bg="dark"))
-
-
-if win32_and_ctypes:
-    import ctypes  # noqa: F811
-    from ctypes import wintypes
-    from ctypes import windll  # type: ignore[attr-defined] # noqa: F821
-
-    class Win32ConsoleWriter(TerminalWriter):
-        def write(self, msg: str, **kw):
-            if msg:
-                self._update_chars_on_current_line(msg)
-
-                oldcolors = None
-                if self.hasmarkup and kw:
-                    handle = GetStdHandle(STD_OUTPUT_HANDLE)
-                    oldcolors = GetConsoleInfo(handle).wAttributes
-                    default_bg = oldcolors & 0x00F0
-                    attr = default_bg
-                    if kw.pop("bold", False):
-                        attr |= FOREGROUND_INTENSITY
-
-                    if kw.pop("red", False):
-                        attr |= FOREGROUND_RED
-                    elif kw.pop("blue", False):
-                        attr |= FOREGROUND_BLUE
-                    elif kw.pop("green", False):
-                        attr |= FOREGROUND_GREEN
-                    elif kw.pop("yellow", False):
-                        attr |= FOREGROUND_GREEN | FOREGROUND_RED
-                    else:
-                        attr |= oldcolors & 0x0007
-
-                    SetConsoleTextAttribute(handle, attr)
-                self._file.write(msg)
-                self._file.flush()
-                if oldcolors:
-                    SetConsoleTextAttribute(handle, oldcolors)
-
-    TerminalWriter = Win32ConsoleWriter  # type: ignore[misc] # noqa: F821
-
-    # ctypes access to the Windows console
-    STD_OUTPUT_HANDLE = -11
-    STD_ERROR_HANDLE = -12
-    FOREGROUND_BLACK = 0x0000  # black text
-    FOREGROUND_BLUE = 0x0001  # text color contains blue.
-    FOREGROUND_GREEN = 0x0002  # text color contains green.
-    FOREGROUND_RED = 0x0004  # text color contains red.
-    FOREGROUND_WHITE = 0x0007
-    FOREGROUND_INTENSITY = 0x0008  # text color is intensified.
-    BACKGROUND_BLACK = 0x0000  # background color black
-    BACKGROUND_BLUE = 0x0010  # background color contains blue.
-    BACKGROUND_GREEN = 0x0020  # background color contains green.
-    BACKGROUND_RED = 0x0040  # background color contains red.
-    BACKGROUND_WHITE = 0x0070
-    BACKGROUND_INTENSITY = 0x0080  # background color is intensified.
-
-    SHORT = ctypes.c_short
-
-    class COORD(ctypes.Structure):
-        _fields_ = [("X", SHORT), ("Y", SHORT)]
-
-    class SMALL_RECT(ctypes.Structure):
-        _fields_ = [
-            ("Left", SHORT),
-            ("Top", SHORT),
-            ("Right", SHORT),
-            ("Bottom", SHORT),
-        ]
-
-    class CONSOLE_SCREEN_BUFFER_INFO(ctypes.Structure):
-        _fields_ = [
-            ("dwSize", COORD),
-            ("dwCursorPosition", COORD),
-            ("wAttributes", wintypes.WORD),
-            ("srWindow", SMALL_RECT),
-            ("dwMaximumWindowSize", COORD),
-        ]
-
-    _GetStdHandle = windll.kernel32.GetStdHandle
-    _GetStdHandle.argtypes = [wintypes.DWORD]
-    _GetStdHandle.restype = wintypes.HANDLE
-
-    def GetStdHandle(kind):
-        return _GetStdHandle(kind)
-
-    SetConsoleTextAttribute = windll.kernel32.SetConsoleTextAttribute
-    SetConsoleTextAttribute.argtypes = [wintypes.HANDLE, wintypes.WORD]
-    SetConsoleTextAttribute.restype = wintypes.BOOL
-
-    _GetConsoleScreenBufferInfo = windll.kernel32.GetConsoleScreenBufferInfo
-    _GetConsoleScreenBufferInfo.argtypes = [
-        wintypes.HANDLE,
-        ctypes.POINTER(CONSOLE_SCREEN_BUFFER_INFO),
-    ]
-    _GetConsoleScreenBufferInfo.restype = wintypes.BOOL
-
-    def GetConsoleInfo(handle):
-        info = CONSOLE_SCREEN_BUFFER_INFO()
-        _GetConsoleScreenBufferInfo(handle, ctypes.byref(info))
-        return info
