@@ -112,11 +112,13 @@ class TestTerminalWriter:
         assert line == "- aaaaaaaaaa -\n"
 
     @pytest.mark.skipif(sys.platform == "win32", reason="win32 has no native ansi")
-    def test_markup(self, tw) -> None:
-        for bold in (True, False):
-            for color in ("red", "green"):
-                text2 = tw.markup("hello", **{color: True, "bold": bold})
-                assert text2.find("hello") != -1
+    @pytest.mark.parametrize("bold", (True, False))
+    @pytest.mark.parametrize("color", ("red", "green"))
+    def test_markup(self, tw, bold: bool, color: str) -> None:
+        text = tw.markup("hello", **{color: True, "bold": bold})
+        assert "hello" in text
+
+    def test_markup_bad(self, tw) -> None:
         with pytest.raises(ValueError):
             tw.markup("x", wronkw=3)
         with pytest.raises(ValueError):

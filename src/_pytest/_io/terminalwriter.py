@@ -101,15 +101,14 @@ class TerminalWriter:
         """Return an estimate of the width so far in the current line."""
         return get_line_width(self._current_line)
 
-    def markup(self, text: str, **kw: bool) -> str:
-        esc = []
-        for name in kw:
+    def markup(self, text: str, **markup: bool) -> str:
+        for name in markup:
             if name not in self._esctable:
                 raise ValueError("unknown markup: {!r}".format(name))
-            if kw[name]:
-                esc.append(self._esctable[name])
-        if esc and self.hasmarkup:
-            text = "".join("\x1b[%sm" % cod for cod in esc) + text + "\x1b[0m"
+        if self.hasmarkup:
+            esc = [self._esctable[name] for name, on in markup.items() if on]
+            if esc:
+                text = "".join("\x1b[%sm" % cod for cod in esc) + text + "\x1b[0m"
         return text
 
     def sep(
@@ -117,7 +116,7 @@ class TerminalWriter:
         sepchar: str,
         title: Optional[str] = None,
         fullwidth: Optional[int] = None,
-        **kw: bool
+        **markup: bool
     ) -> None:
         if fullwidth is None:
             fullwidth = self.fullwidth
@@ -147,9 +146,9 @@ class TerminalWriter:
         if len(line) + len(sepchar.rstrip()) <= fullwidth:
             line += sepchar.rstrip()
 
-        self.line(line, **kw)
+        self.line(line, **markup)
 
-    def write(self, msg: str, *, flush: bool = False, **kw: bool) -> None:
+    def write(self, msg: str, *, flush: bool = False, **markup: bool) -> None:
         if msg:
             current_line = msg.rsplit("\n", 1)[-1]
             if "\n" in msg:
@@ -157,16 +156,14 @@ class TerminalWriter:
             else:
                 self._current_line += current_line
 
-            if self.hasmarkup and kw:
-                markupmsg = self.markup(msg, **kw)
-            else:
-                markupmsg = msg
-            self._file.write(markupmsg)
+            msg = self.markup(msg, **markup)
+
+            self._file.write(msg)
             if flush:
                 self.flush()
 
-    def line(self, s: str = "", **kw: bool) -> None:
-        self.write(s, **kw)
+    def line(self, s: str = "", **markup: bool) -> None:
+        self.write(s, **markup)
         self.write("\n")
 
     def flush(self) -> None:
