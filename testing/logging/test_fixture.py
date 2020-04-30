@@ -148,8 +148,9 @@ def test_ini_controls_global_log_level(testdir):
         def test_log_level_override(request, caplog):
             plugin = request.config.pluginmanager.getplugin('logging-plugin')
             assert plugin.log_level == logging.ERROR
-            logging.getLogger('catchlog').warning("WARNING message won't be shown")
-            logging.getLogger('catchlog').error("ERROR message will be shown")
+            logger = logging.getLogger('catchlog')
+            logger.warning("WARNING message won't be shown")
+            logger.error("ERROR message will be shown")
             assert 'WARNING' not in caplog.text
             assert 'ERROR' in caplog.text
     """
@@ -172,24 +173,24 @@ def test_caplog_can_override_global_log_level(testdir):
         import pytest
         import logging
         def test_log_level_override(request, caplog):
-            logger = 'catchlog'
+            logger = logging.getLogger('catchlog')
             plugin = request.config.pluginmanager.getplugin('logging-plugin')
             assert plugin.log_level == logging.WARNING
 
-            logging.getLogger(logger).info("INFO message won't be shown")
+            logger.info("INFO message won't be shown")
 
-            caplog.set_level(logging.INFO, logger)
+            caplog.set_level(logging.INFO, logger.name)
 
-            with caplog.at_level(logging.DEBUG, logger):
-                logging.getLogger(logger).debug("DEBUG message will be shown")
+            with caplog.at_level(logging.DEBUG, logger.name):
+                logger.debug("DEBUG message will be shown")
 
-            logging.getLogger(logger).debug("DEBUG message won't be shown")
+            logger.debug("DEBUG message won't be shown")
 
-            with caplog.at_level(logging.CRITICAL, logger):
-                logging.getLogger(logger).warning("WARNING message won't be shown")
+            with caplog.at_level(logging.CRITICAL, logger.name):
+                logger.warning("WARNING message won't be shown")
 
-            logging.getLogger(logger).debug("DEBUG message won't be shown")
-            logging.getLogger(logger).info("INFO message will be shown")
+            logger.debug("DEBUG message won't be shown")
+            logger.info("INFO message will be shown")
 
             assert "message won't be shown" not in caplog.text
     """
