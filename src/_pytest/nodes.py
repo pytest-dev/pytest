@@ -91,6 +91,19 @@ class Node(metaclass=NodeMeta):
     """ base class for Collector and Item the test collection tree.
     Collector subclasses have children, Items are terminal nodes."""
 
+    # Use __slots__ to make attribute access faster.
+    # Note that __dict__ is still available.
+    __slots__ = (
+        "name",
+        "parent",
+        "config",
+        "session",
+        "fspath",
+        "_nodeid",
+        "_store",
+        "__dict__",
+    )
+
     def __init__(
         self,
         name: str,
