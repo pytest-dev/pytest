@@ -3,7 +3,6 @@
 This is a good source for looking at the various reporting hooks.
 """
 import argparse
-import collections
 import datetime
 import inspect
 import platform
@@ -28,6 +27,7 @@ from more_itertools import collapse
 import pytest
 from _pytest import nodes
 from _pytest._io import TerminalWriter
+from _pytest.compat import order_preserving_dict
 from _pytest.config import Config
 from _pytest.config import ExitCode
 from _pytest.deprecated import TERMINALWRITER_WRITER
@@ -839,8 +839,8 @@ class TerminalReporter:
                 return
 
             reports_grouped_by_message = (
-                collections.OrderedDict()
-            )  # type: collections.OrderedDict[str, List[WarningReport]]
+                order_preserving_dict()
+            )  # type: Dict[str, List[WarningReport]]
             for wr in warning_reports:
                 reports_grouped_by_message.setdefault(wr.message, []).append(wr)
 
@@ -854,9 +854,7 @@ class TerminalReporter:
                 if len(locations) < 10:
                     return "\n".join(map(str, locations))
 
-                counts_by_filename = (
-                    collections.OrderedDict()
-                )  # type: collections.OrderedDict[str, int]
+                counts_by_filename = order_preserving_dict()  # type: Dict[str, int]
                 for loc in locations:
                     key = str(loc).split("::", 1)[0]
                     counts_by_filename[key] = counts_by_filename.get(key, 0) + 1

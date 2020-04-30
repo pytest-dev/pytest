@@ -4,7 +4,6 @@ import sys
 import warnings
 from collections import defaultdict
 from collections import deque
-from collections import OrderedDict
 from typing import Dict
 from typing import List
 from typing import Tuple
@@ -26,6 +25,7 @@ from _pytest.compat import getimfunc
 from _pytest.compat import getlocation
 from _pytest.compat import is_generator
 from _pytest.compat import NOTSET
+from _pytest.compat import order_preserving_dict
 from _pytest.compat import safe_getattr
 from _pytest.compat import TYPE_CHECKING
 from _pytest.deprecated import FILLFUNCARGS
@@ -220,12 +220,14 @@ def reorder_items(items):
         argkeys_cache[scopenum] = d = {}
         items_by_argkey[scopenum] = item_d = defaultdict(deque)
         for item in items:
-            keys = OrderedDict.fromkeys(get_parametrized_fixture_keys(item, scopenum))
+            keys = order_preserving_dict.fromkeys(
+                get_parametrized_fixture_keys(item, scopenum)
+            )
             if keys:
                 d[item] = keys
                 for key in keys:
                     item_d[key].append(item)
-    items = OrderedDict.fromkeys(items)
+    items = order_preserving_dict.fromkeys(items)
     return list(reorder_items_atscope(items, argkeys_cache, items_by_argkey, 0))
 
 
@@ -240,17 +242,17 @@ def reorder_items_atscope(items, argkeys_cache, items_by_argkey, scopenum):
         return items
     ignore = set()
     items_deque = deque(items)
-    items_done = OrderedDict()
+    items_done = order_preserving_dict()
     scoped_items_by_argkey = items_by_argkey[scopenum]
     scoped_argkeys_cache = argkeys_cache[scopenum]
     while items_deque:
-        no_argkey_group = OrderedDict()
+        no_argkey_group = order_preserving_dict()
         slicing_argkey = None
         while items_deque:
             item = items_deque.popleft()
             if item in items_done or item in no_argkey_group:
                 continue
-            argkeys = OrderedDict.fromkeys(
+            argkeys = order_preserving_dict.fromkeys(
                 k for k in scoped_argkeys_cache.get(item, []) if k not in ignore
             )
             if not argkeys:
