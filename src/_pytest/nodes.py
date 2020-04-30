@@ -216,7 +216,7 @@ class Node(metaclass=NodeMeta):
         return self._nodeid
 
     def __hash__(self):
-        return hash(self.nodeid)
+        return hash(self._nodeid)
 
     def setup(self):
         pass
