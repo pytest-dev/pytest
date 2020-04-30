@@ -138,3 +138,69 @@ def test_caplog_captures_for_all_stages(caplog, logging_during_setup_and_teardow
 
     # This reaches into private API, don't use this type of thing in real tests!
     assert set(caplog._item._store[catch_log_records_key]) == {"setup", "call"}
+
+
+def test_ini_controls_global_log_level(testdir):
+    testdir.makepyfile(
+        """
+        import pytest
+        import logging
+        def test_log_level_override(request, caplog):
+            plugin = request.config.pluginmanager.getplugin('logging-plugin')
+            assert plugin.log_level == logging.ERROR
+            logging.getLogger('catchlog').warning("WARNING message won't be shown")
+            logging.getLogger('catchlog').error("ERROR message will be shown")
+            assert 'WARNING' not in caplog.text
+            assert 'ERROR' in caplog.text
+    """
+    )
+    testdir.makeini(
+        """
+        [pytest]
+        log_level=ERROR
+    """
+    )
+
+    result = testdir.runpytest()
+    # make sure that that we get a '0' exit code for the testsuite
+    assert result.ret == 0
+
+
+def test_caplog_can_override_global_log_level(testdir):
+    testdir.makepyfile(
+        """
+        import pytest
+        import logging
+        def test_log_level_override(request, caplog):
+            logger = 'catchlog'
+            plugin = request.config.pluginmanager.getplugin('logging-plugin')
+            assert plugin.log_level == logging.WARNING
+
+            logging.getLogger(logger).info("INFO message won't be shown")
+
+            caplog.set_level(logging.INFO, logger)
+
+            with caplog.at_level(logging.DEBUG, logger):
+                logging.getLogger(logger).debug("DEBUG message will be shown")
+
+            logging.getLogger(logger).debug("DEBUG message won't be shown")
+
+            with caplog.at_level(logging.CRITICAL, logger):
+                logging.getLogger(logger).warning("WARNING message won't be shown")
+
+            logging.getLogger(logger).debug("DEBUG message won't be shown")
+            logging.getLogger(logger).info("INFO message will be shown")
+
+            assert "message won't be shown" not in caplog.text
+    """
+    )
+    testdir.makeini(
+        """
+        [pytest]
+        log_level=WARNING
+    """
+    )
+
+    result = testdir.runpytest()
+    assert result.ret == 0
+
