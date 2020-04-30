@@ -205,3 +205,34 @@ def test_caplog_can_override_global_log_level(testdir):
     result = testdir.runpytest()
     assert result.ret == 0
 
+
+def test_caplog_captures_despite_exception(testdir):
+    testdir.makepyfile(
+        """
+        import pytest
+        import logging
+        def test_log_level_override(request, caplog):
+            logger = logging.getLogger('catchlog')
+            plugin = request.config.pluginmanager.getplugin('logging-plugin')
+            assert plugin.log_level == logging.WARNING
+
+            logger.info("INFO message won't be shown")
+
+            caplog.set_level(logging.INFO, logger.name)
+
+            with caplog.at_level(logging.DEBUG, logger.name):
+                logger.debug("DEBUG message will be shown")
+                raise Exception()
+    """
+    )
+    testdir.makeini(
+        """
+        [pytest]
+        log_level=WARNING
+    """
+    )
+
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines(["*DEBUG message will be shown*"])
+    assert result.ret == 1
+
