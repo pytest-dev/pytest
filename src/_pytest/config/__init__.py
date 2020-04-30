@@ -308,7 +308,9 @@ class PytestPluginManager(PluginManager):
             err = sys.stderr
             encoding = getattr(err, "encoding", "utf8")
             try:
-                err = py.io.dupfile(err, encoding=encoding)
+                err = open(
+                    os.dup(err.fileno()), mode=err.mode, buffering=1, encoding=encoding,
+                )
             except Exception:
                 pass
             self.trace.root.setwriter(err.write)
