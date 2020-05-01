@@ -57,8 +57,9 @@ if TYPE_CHECKING:
 
     from _pytest import nodes
     from _pytest.main import Session
-    from _pytest.python import Metafunc
     from _pytest.python import CallSpec2
+    from _pytest.python import Function
+    from _pytest.python import Metafunc
 
     _Scope = Literal["session", "package", "module", "class", "function"]
 
@@ -189,29 +190,32 @@ def add_funcarg_pseudo_fixture_def(
             arg2fixturedefs[argname] = [node._name2pseudofixturedef[argname]]
         else:
             fixturedef = FixtureDef(
-                fixturemanager,
-                "",
-                argname,
-                get_direct_param_fixture_func,
-                arg2scope[argname],
-                valuelist,
-                False,
-                False,
+                fixturemanager=fixturemanager,
+                baseid="",
+                argname=argname,
+                func=get_direct_param_fixture_func,
+                scope=arg2scope[argname],
+                params=valuelist,
+                unittest=False,
+                ids=None,
             )
             arg2fixturedefs[argname] = [fixturedef]
             if node is not None:
                 node._name2pseudofixturedef[argname] = fixturedef
 
 
-def getfixturemarker(obj):
+def getfixturemarker(obj: object) -> Optional["FixtureFunctionMarker"]:
     """ return fixturemarker or None if it doesn't exist or raised
     exceptions."""
     try:
-        return getattr(obj, "_pytestfixturefunction", None)
+        fixturemarker = getattr(
+            obj, "_pytestfixturefunction", None
+        )  # type: Optional[FixtureFunctionMarker]
     except TEST_OUTCOME:
         # some objects raise errors like request (from flask import request)
         # we don't expect them to be fixture functions
         return None
+    return fixturemarker
 
 
 # Parametrized fixture key, helper alias for code below.
@@ -334,7 +338,7 @@ def reorder_items_atscope(
     return items_done
 
 
-def fillfixtures(function) -> None:
+def fillfixtures(function: "Function") -> None:
     """ fill missing funcargs for a test function. """
     warnings.warn(FILLFUNCARGS, stacklevel=2)
     try:
@@ -344,6 +348,7 @@ def fillfixtures(function) -> None:
         # with the oejskit plugin.  It uses classes with funcargs
         # and we thus have to work a bit to allow this.
         fm = function.session._fixturemanager
+        assert function.parent is not None
         fi = fm.getfixtureinfo(function.parent, function.obj, None)
         function._fixtureinfo = fi
         request = function._request = FixtureRequest(function)
@@ -866,7 +871,7 @@ def fail_fixturefunc(fixturefunc, msg: str) -> "NoReturn":
     fail(msg + ":\n\n" + str(source.indent()) + "\n" + location, pytrace=False)
 
 
-def call_fixture_func(fixturefunc, request: FixtureRequest, kwargs) -> object:
+def call_fixture_func(fixturefunc, request: FixtureRequest, kwargs):
     yieldctx = is_generator(fixturefunc)
     if yieldctx:
         generator = fixturefunc(**kwargs)
@@ -896,9 +901,15 @@ def _teardown_yield_fixture(fixturefunc, it) -> None:
         )
 
 
-def _eval_scope_callable(scope_callable, fixture_name: str, config: Config) -> str:
+def _eval_scope_callable(
+    scope_callable: "Callable[[str, Config], _Scope]",
+    fixture_name: str,
+    config: Config,
+) -> "_Scope":
     try:
-        result = scope_callable(fixture_name=fixture_name, config=config)
+        # Type ignored because there is no typing mechanism to specify
+        # keyword arguments, currently.
+        result = scope_callable(fixture_name=fixture_name, config=config)  # type: ignore[call-arg] # noqa: F821
     except Exception:
         raise TypeError(
             "Error evaluating {} while defining fixture '{}'.\n"
@@ -924,10 +935,15 @@ class FixtureDef:
         baseid,
         argname: str,
         func,
-        scope: str,
+        scope: "Union[_Scope, Callable[[str, Config], _Scope]]",
         params: Optional[Sequence[object]],
         unittest: bool = False,
-        ids=None,
+        ids: Optional[
+            Union[
+                Tuple[Union[None, str, float, int, bool], ...],
+                Callable[[object], Optional[object]],
+            ]
+        ] = None,
     ) -> None:
         self._fixturemanager = fixturemanager
         self.baseid = baseid or ""
@@ -935,16 +951,15 @@ class FixtureDef:
         self.func = func
         self.argname = argname
         if callable(scope):
-            scope = _eval_scope_callable(scope, argname, fixturemanager.config)
+            scope_ = _eval_scope_callable(scope, argname, fixturemanager.config)
+        else:
+            scope_ = scope
         self.scopenum = scope2index(
-            scope or "function",
+            scope_ or "function",
             descr="Fixture '{}'".format(func.__name__),
             where=baseid,
         )
-        # The cast is verified by scope2index.
-        # (Some of the type annotations below are supposed to be inferred,
-        # but mypy 0.761 has some trouble without them.)
-        self.scope = cast("_Scope", scope)  # type: _Scope
+        self.scope = scope_
         self.params = params  # type: Optional[Sequence[object]]
         self.argnames = getfuncargnames(
             func, name=argname, is_method=unittest
@@ -1068,9 +1083,21 @@ def pytest_fixture_setup(fixturedef: FixtureDef, request: SubRequest) -> object:
     return result
 
 
-def _ensure_immutable_ids(ids):
+def _ensure_immutable_ids(
+    ids: Optional[
+        Union[
+            Iterable[Union[None, str, float, int, bool]],
+            Callable[[object], Optional[object]],
+        ]
+    ],
+) -> Optional[
+    Union[
+        Tuple[Union[None, str, float, int, bool], ...],
+        Callable[[object], Optional[object]],
+    ]
+]:
     if ids is None:
-        return
+        return None
     if callable(ids):
         return ids
     return tuple(ids)
@@ -1102,10 +1129,16 @@ def wrap_function_to_error_out_if_called_directly(function, fixture_marker):
 class FixtureFunctionMarker:
     scope = attr.ib()
     params = attr.ib(converter=attr.converters.optional(tuple))
-    autouse = attr.ib(default=False)
-    # Ignore type because of https://github.com/python/mypy/issues/6172.
-    ids = attr.ib(default=None, converter=_ensure_immutable_ids)  # type: ignore
-    name = attr.ib(default=None)
+    autouse = attr.ib(type=bool, default=False)
+    ids = attr.ib(
+        type=Union[
+            Tuple[Union[None, str, float, int, bool], ...],
+            Callable[[object], Optional[object]],
+        ],
+        default=None,
+        converter=_ensure_immutable_ids,
+    )
+    name = attr.ib(type=Optional[str], default=None)
 
     def __call__(self, function):
         if inspect.isclass(function):
@@ -1133,12 +1166,17 @@ class FixtureFunctionMarker:
 
 def fixture(
     fixture_function=None,
-    *args,
-    scope="function",
+    *args: Any,
+    scope: "Union[_Scope, Callable[[str, Config], _Scope]]" = "function",
     params=None,
-    autouse=False,
-    ids=None,
-    name=None
+    autouse: bool = False,
+    ids: Optional[
+        Union[
+            Iterable[Union[None, str, float, int, bool]],
+            Callable[[object], Optional[object]],
+        ]
+    ] = None,
+    name: Optional[str] = None
 ):
     """Decorator to mark a fixture factory function.
 
@@ -1343,7 +1381,7 @@ class FixtureManager:
         ]  # type: List[Tuple[str, List[str]]]
         session.config.pluginmanager.register(self, "funcmanage")
 
-    def _get_direct_parametrize_args(self, node) -> List[str]:
+    def _get_direct_parametrize_args(self, node: "nodes.Node") -> List[str]:
         """This function returns all the direct parametrization
         arguments of a node, so we don't mistake them for fixtures
 
@@ -1362,7 +1400,9 @@ class FixtureManager:
 
         return parametrize_argnames
 
-    def getfixtureinfo(self, node, func, cls, funcargs: bool = True) -> FuncFixtureInfo:
+    def getfixtureinfo(
+        self, node: "nodes.Node", func, cls, funcargs: bool = True
+    ) -> FuncFixtureInfo:
         if funcargs and not getattr(node, "nofuncargs", False):
             argnames = getfuncargnames(func, name=node.name, cls=cls)
         else:
@@ -1526,12 +1566,12 @@ class FixtureManager:
             obj = get_real_method(obj, holderobj)
 
             fixture_def = FixtureDef(
-                self,
-                nodeid,
-                name,
-                obj,
-                marker.scope,
-                marker.params,
+                fixturemanager=self,
+                baseid=nodeid,
+                argname=name,
+                func=obj,
+                scope=marker.scope,
+                params=marker.params,
                 unittest=unittest,
                 ids=marker.ids,
             )
