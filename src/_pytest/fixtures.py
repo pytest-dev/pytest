@@ -1103,6 +1103,12 @@ def _ensure_immutable_ids(
     return tuple(ids)
 
 
+def _params_converter(
+    params: Optional[Iterable[object]],
+) -> Optional[Tuple[object, ...]]:
+    return tuple(params) if params is not None else None
+
+
 def wrap_function_to_error_out_if_called_directly(function, fixture_marker):
     """Wrap the given fixture function so we can raise an error about it being called directly,
     instead of used as an argument in a test function.
@@ -1127,8 +1133,8 @@ def wrap_function_to_error_out_if_called_directly(function, fixture_marker):
 
 @attr.s(frozen=True)
 class FixtureFunctionMarker:
-    scope = attr.ib()
-    params = attr.ib(converter=attr.converters.optional(tuple))
+    scope = attr.ib(type="Union[_Scope, Callable[[str, Config], _Scope]]")
+    params = attr.ib(type=Optional[Tuple[object, ...]], converter=_params_converter)
     autouse = attr.ib(type=bool, default=False)
     ids = attr.ib(
         type=Union[
@@ -1168,7 +1174,7 @@ def fixture(
     fixture_function=None,
     *args: Any,
     scope: "Union[_Scope, Callable[[str, Config], _Scope]]" = "function",
-    params=None,
+    params: Optional[Iterable[object]] = None,
     autouse: bool = False,
     ids: Optional[
         Union[
@@ -1273,9 +1279,6 @@ def fixture(
     if args:
         warnings.warn(FIXTURE_POSITIONAL_ARGUMENTS, stacklevel=2)
     # End backward compatiblity.
-
-    if params is not None:
-        params = list(params)
 
     fixture_marker = FixtureFunctionMarker(
         scope=scope, params=params, autouse=autouse, ids=ids, name=name,
