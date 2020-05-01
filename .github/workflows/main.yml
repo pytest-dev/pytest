@@ -70,7 +70,7 @@ jobs:
           - name: "windows-py38"
             python: "3.8"
             os: windows-latest
-            tox_env: "py38-twisted"
+            tox_env: "py38-unittestextras"
             use_coverage: true
 
           - name: "ubuntu-py35"
