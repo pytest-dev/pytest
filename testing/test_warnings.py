@@ -1,5 +1,8 @@
 import os
 import warnings
+from typing import List
+from typing import Optional
+from typing import Tuple
 
 import pytest
 from _pytest.fixtures import FixtureRequest
@@ -661,7 +664,9 @@ class TestStackLevel:
     @pytest.fixture
     def capwarn(self, testdir):
         class CapturedWarnings:
-            captured = []
+            captured = (
+                []
+            )  # type: List[Tuple[warnings.WarningMessage, Optional[Tuple[str, int, str]]]]
 
             @classmethod
             def pytest_warning_recorded(cls, warning_message, when, nodeid, location):

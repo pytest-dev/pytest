@@ -1,6 +1,8 @@
 import os
 import sys
 import textwrap
+from typing import Any
+from typing import Dict
 
 import _pytest._code
 import pytest
@@ -698,7 +700,7 @@ class TestFunction:
 
 
 class TestSorting:
-    def test_check_equality(self, testdir):
+    def test_check_equality(self, testdir) -> None:
         modcol = testdir.getmodulecol(
             """
             def test_pass(): pass
@@ -720,10 +722,10 @@ class TestSorting:
         assert fn1 != fn3
 
         for fn in fn1, fn2, fn3:
-            assert fn != 3
+            assert fn != 3  # type: ignore[comparison-overlap] # noqa: F821
             assert fn != modcol
-            assert fn != [1, 2, 3]
-            assert [1, 2, 3] != fn
+            assert fn != [1, 2, 3]  # type: ignore[comparison-overlap] # noqa: F821
+            assert [1, 2, 3] != fn  # type: ignore[comparison-overlap] # noqa: F821
             assert modcol != fn
 
     def test_allow_sane_sorting_for_decorators(self, testdir):
@@ -1006,7 +1008,7 @@ class TestTracebackCutting:
         assert "INTERNALERROR>" not in out
         result.stdout.fnmatch_lines(["*ValueError: fail me*", "* 1 error in *"])
 
-    def test_filter_traceback_generated_code(self):
+    def test_filter_traceback_generated_code(self) -> None:
         """test that filter_traceback() works with the fact that
         _pytest._code.code.Code.path attribute might return an str object.
         In this case, one of the entries on the traceback was produced by
@@ -1017,17 +1019,18 @@ class TestTracebackCutting:
         from _pytest.python import filter_traceback
 
         try:
-            ns = {}
+            ns = {}  # type: Dict[str, Any]
             exec("def foo(): raise ValueError", ns)
             ns["foo"]()
         except ValueError:
             _, _, tb = sys.exc_info()
 
-        tb = _pytest._code.Traceback(tb)
-        assert isinstance(tb[-1].path, str)
-        assert not filter_traceback(tb[-1])
+        assert tb is not None
+        traceback = _pytest._code.Traceback(tb)
+        assert isinstance(traceback[-1].path, str)
+        assert not filter_traceback(traceback[-1])
 
-    def test_filter_traceback_path_no_longer_valid(self, testdir):
+    def test_filter_traceback_path_no_longer_valid(self, testdir) -> None:
         """test that filter_traceback() works with the fact that
         _pytest._code.code.Code.path attribute might return an str object.
         In this case, one of the files in the traceback no longer exists.
@@ -1049,10 +1052,11 @@ class TestTracebackCutting:
         except ValueError:
             _, _, tb = sys.exc_info()
 
+        assert tb is not None
         testdir.tmpdir.join("filter_traceback_entry_as_str.py").remove()
-        tb = _pytest._code.Traceback(tb)
-        assert isinstance(tb[-1].path, str)
-        assert filter_traceback(tb[-1])
+        traceback = _pytest._code.Traceback(tb)
+        assert isinstance(traceback[-1].path, str)
+        assert filter_traceback(traceback[-1])
 
 
 class TestReportInfo:

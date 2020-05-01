@@ -1,10 +1,11 @@
 import logging
+from typing import Any
 
 from _pytest._io import TerminalWriter
 from _pytest.logging import ColoredLevelFormatter
 
 
-def test_coloredlogformatter():
+def test_coloredlogformatter() -> None:
     logfmt = "%(filename)-25s %(lineno)4d %(levelname)-8s %(message)s"
 
     record = logging.LogRecord(
@@ -14,7 +15,7 @@ def test_coloredlogformatter():
         lineno=10,
         msg="Test Message",
         args=(),
-        exc_info=False,
+        exc_info=None,
     )
 
     class ColorConfig:
@@ -35,7 +36,7 @@ def test_coloredlogformatter():
     assert output == ("dummypath                   10 INFO     Test Message")
 
 
-def test_multiline_message():
+def test_multiline_message() -> None:
     from _pytest.logging import PercentStyleMultiline
 
     logfmt = "%(filename)-25s %(lineno)4d %(levelname)-8s %(message)s"
@@ -47,8 +48,8 @@ def test_multiline_message():
         lineno=10,
         msg="Test Message line1\nline2",
         args=(),
-        exc_info=False,
-    )
+        exc_info=None,
+    )  # type: Any
     # this is called by logging.Formatter.format
     record.message = record.getMessage()
 
@@ -124,7 +125,7 @@ def test_multiline_message():
     )
 
 
-def test_colored_short_level():
+def test_colored_short_level() -> None:
     logfmt = "%(levelname).1s %(message)s"
 
     record = logging.LogRecord(
@@ -134,7 +135,7 @@ def test_colored_short_level():
         lineno=10,
         msg="Test Message",
         args=(),
-        exc_info=False,
+        exc_info=None,
     )
 
     class ColorConfig:

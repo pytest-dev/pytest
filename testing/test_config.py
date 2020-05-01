@@ -2,6 +2,9 @@ import os
 import re
 import sys
 import textwrap
+from typing import Dict
+from typing import List
+from typing import Sequence
 
 import py.path
 
@@ -264,9 +267,9 @@ class TestConfigCmdlineParsing:
 
 
 class TestConfigAPI:
-    def test_config_trace(self, testdir):
+    def test_config_trace(self, testdir) -> None:
         config = testdir.parseconfig()
-        values = []
+        values = []  # type: List[str]
         config.trace.root.setwriter(values.append)
         config.trace("hello")
         assert len(values) == 1
@@ -519,9 +522,9 @@ class TestConfigFromdictargs:
         assert config.option.capture == "no"
         assert config.args == args
 
-    def test_invocation_params_args(self, _sys_snapshot):
+    def test_invocation_params_args(self, _sys_snapshot) -> None:
         """Show that fromdictargs can handle args in their "orig" format"""
-        option_dict = {}
+        option_dict = {}  # type: Dict[str, object]
         args = ["-vvvv", "-s", "a", "b"]
 
         config = Config.fromdictargs(option_dict, args)
@@ -566,8 +569,8 @@ class TestConfigFromdictargs:
         assert config.inicfg.get("should_not_be_set") is None
 
 
-def test_options_on_small_file_do_not_blow_up(testdir):
-    def runfiletest(opts):
+def test_options_on_small_file_do_not_blow_up(testdir) -> None:
+    def runfiletest(opts: Sequence[str]) -> None:
         reprec = testdir.inline_run(*opts)
         passed, skipped, failed = reprec.countoutcomes()
         assert failed == 2
@@ -580,19 +583,16 @@ def test_options_on_small_file_do_not_blow_up(testdir):
     """
     )
 
-    for opts in (
-        [],
-        ["-l"],
-        ["-s"],
-        ["--tb=no"],
-        ["--tb=short"],
-        ["--tb=long"],
-        ["--fulltrace"],
-        ["--traceconfig"],
-        ["-v"],
-        ["-v", "-v"],
-    ):
-        runfiletest(opts + [path])
+    runfiletest([path])
+    runfiletest(["-l", path])
+    runfiletest(["-s", path])
+    runfiletest(["--tb=no", path])
+    runfiletest(["--tb=short", path])
+    runfiletest(["--tb=long", path])
+    runfiletest(["--fulltrace", path])
+    runfiletest(["--traceconfig", path])
+    runfiletest(["-v", path])
+    runfiletest(["-v", "-v", path])
 
 
 def test_preparse_ordering_with_setuptools(testdir, monkeypatch):
@@ -1360,7 +1360,7 @@ def test_invocation_args(testdir):
 
     # args cannot be None
     with pytest.raises(TypeError):
-        Config.InvocationParams(args=None, plugins=None, dir=Path())
+        Config.InvocationParams(args=None, plugins=None, dir=Path())  # type: ignore[arg-type] # noqa: F821
 
 
 @pytest.mark.parametrize(

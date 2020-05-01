@@ -634,13 +634,14 @@ class TestSession:
 
 
 class Test_getinitialnodes:
-    def test_global_file(self, testdir, tmpdir):
+    def test_global_file(self, testdir, tmpdir) -> None:
         x = tmpdir.ensure("x.py")
         with tmpdir.as_cwd():
             config = testdir.parseconfigure(x)
         col = testdir.getnode(config, x)
         assert isinstance(col, pytest.Module)
         assert col.name == "x.py"
+        assert col.parent is not None
         assert col.parent.parent is None
         for col in col.listchain():
             assert col.config is config

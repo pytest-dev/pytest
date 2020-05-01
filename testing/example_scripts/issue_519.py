@@ -1,4 +1,6 @@
 import pprint
+from typing import List
+from typing import Tuple
 
 import pytest
 
@@ -13,7 +15,7 @@ def pytest_generate_tests(metafunc):
 
 @pytest.fixture(scope="session")
 def checked_order():
-    order = []
+    order = []  # type: List[Tuple[str, str, str]]
 
     yield order
     pprint.pprint(order)

@@ -96,7 +96,7 @@ class PercentStyleMultiline(logging.PercentStyle):
     formats the message as if each line were logged separately.
     """
 
-    def __init__(self, fmt: str, auto_indent: Union[int, str, bool]) -> None:
+    def __init__(self, fmt: str, auto_indent: Union[int, str, bool, None]) -> None:
         super().__init__(fmt)
         self._auto_indent = self._get_auto_indent(auto_indent)
 
@@ -109,7 +109,7 @@ class PercentStyleMultiline(logging.PercentStyle):
         return tmp
 
     @staticmethod
-    def _get_auto_indent(auto_indent_option: Union[int, str, bool]) -> int:
+    def _get_auto_indent(auto_indent_option: Union[int, str, bool, None]) -> int:
         """Determines the current auto indentation setting
 
         Specify auto indent behavior (on/off/fixed) by passing in
@@ -139,7 +139,9 @@ class PercentStyleMultiline(logging.PercentStyle):
             >0 (explicitly set indentation position).
         """
 
-        if type(auto_indent_option) is int:
+        if auto_indent_option is None:
+            return 0
+        elif type(auto_indent_option) is int:
             return int(auto_indent_option)
         elif type(auto_indent_option) is str:
             try:
@@ -732,7 +734,9 @@ class _LiveLoggingStreamHandler(logging.StreamHandler):
     stream = None  # type: TerminalReporter # type: ignore
 
     def __init__(
-        self, terminal_reporter: TerminalReporter, capture_manager: CaptureManager
+        self,
+        terminal_reporter: TerminalReporter,
+        capture_manager: Optional[CaptureManager],
     ) -> None:
         """
         :param _pytest.terminal.TerminalReporter terminal_reporter:

@@ -712,6 +712,7 @@ def raises(  # noqa: F811
     fail(message)
 
 
+# This doesn't work with mypy for now. Use fail.Exception instead.
 raises.Exception = fail.Exception  # type: ignore
 
 

@@ -401,7 +401,7 @@ def _sys_snapshot():
 
 
 @pytest.fixture
-def _config_for_test():
+def _config_for_test() -> Generator[Config, None, None]:
     from _pytest.config import get_config
 
     config = get_config()

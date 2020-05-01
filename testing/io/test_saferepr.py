@@ -25,7 +25,7 @@ def test_maxsize_error_on_instance():
     assert s[0] == "(" and s[-1] == ")"
 
 
-def test_exceptions():
+def test_exceptions() -> None:
     class BrokenRepr:
         def __init__(self, ex):
             self.ex = ex
@@ -34,8 +34,8 @@ def test_exceptions():
             raise self.ex
 
     class BrokenReprException(Exception):
-        __str__ = None
-        __repr__ = None
+        __str__ = None  # type: ignore[assignment] # noqa: F821
+        __repr__ = None  # type: ignore[assignment] # noqa: F821
 
     assert "Exception" in saferepr(BrokenRepr(Exception("broken")))
     s = saferepr(BrokenReprException("really broken"))
@@ -44,7 +44,7 @@ def test_exceptions():
 
     none = None
     try:
-        none()
+        none()  # type: ignore[misc] # noqa: F821
     except BaseException as exc:
         exp_exc = repr(exc)
     obj = BrokenRepr(BrokenReprException("omg even worse"))
@@ -136,10 +136,10 @@ def test_big_repr():
     assert len(saferepr(range(1000))) <= len("[" + SafeRepr(0).maxlist * "1000" + "]")
 
 
-def test_repr_on_newstyle():
+def test_repr_on_newstyle() -> None:
     class Function:
         def __repr__(self):
-            return "<%s>" % (self.name)
+            return "<%s>" % (self.name)  # type: ignore[attr-defined] # noqa: F821
 
     assert saferepr(Function())
 

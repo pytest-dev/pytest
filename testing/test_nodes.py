@@ -2,6 +2,7 @@ import py
 
 import pytest
 from _pytest import nodes
+from _pytest.pytester import Testdir
 
 
 @pytest.mark.parametrize(
@@ -17,19 +18,19 @@ from _pytest import nodes
         ("foo/bar", "foo/bar::TestBop", True),
     ),
 )
-def test_ischildnode(baseid, nodeid, expected):
+def test_ischildnode(baseid: str, nodeid: str, expected: bool) -> None:
     result = nodes.ischildnode(baseid, nodeid)
     assert result is expected
 
 
-def test_node_from_parent_disallowed_arguments():
+def test_node_from_parent_disallowed_arguments() -> None:
     with pytest.raises(TypeError, match="session is"):
-        nodes.Node.from_parent(None, session=None)
+        nodes.Node.from_parent(None, session=None)  # type: ignore[arg-type] # noqa: F821
     with pytest.raises(TypeError, match="config is"):
-        nodes.Node.from_parent(None, config=None)
+        nodes.Node.from_parent(None, config=None)  # type: ignore[arg-type] # noqa: F821
 
 
-def test_std_warn_not_pytestwarning(testdir):
+def test_std_warn_not_pytestwarning(testdir: Testdir) -> None:
     items = testdir.getitems(
         """
         def test():
@@ -40,24 +41,24 @@ def test_std_warn_not_pytestwarning(testdir):
         items[0].warn(UserWarning("some warning"))
 
 
-def test__check_initialpaths_for_relpath():
+def test__check_initialpaths_for_relpath() -> None:
     """Ensure that it handles dirs, and does not always use dirname."""
     cwd = py.path.local()
 
-    class FakeSession:
+    class FakeSession1:
         _initialpaths = [cwd]
 
-    assert nodes._check_initialpaths_for_relpath(FakeSession, cwd) == ""
+    assert nodes._check_initialpaths_for_relpath(FakeSession1, cwd) == ""
 
     sub = cwd.join("file")
 
-    class FakeSession:
+    class FakeSession2:
         _initialpaths = [cwd]
 
-    assert nodes._check_initialpaths_for_relpath(FakeSession, sub) == "file"
+    assert nodes._check_initialpaths_for_relpath(FakeSession2, sub) == "file"
 
     outside = py.path.local("/outside")
-    assert nodes._check_initialpaths_for_relpath(FakeSession, outside) is None
+    assert nodes._check_initialpaths_for_relpath(FakeSession2, outside) is None
 
 
 def test_failure_with_changed_cwd(testdir):
