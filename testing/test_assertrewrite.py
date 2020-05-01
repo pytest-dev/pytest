@@ -952,7 +952,8 @@ class TestAssertionRewriteHookDetails:
         state = AssertionState(config, "rewrite")
         source_path = str(tmpdir.ensure("source.py"))
         pycpath = tmpdir.join("pyc").strpath
-        assert _write_pyc(state, [1], os.stat(source_path), pycpath)
+        co = compile("1", "f.py", "single")
+        assert _write_pyc(state, co, os.stat(source_path), pycpath)
 
         if sys.platform == "win32":
             from contextlib import contextmanager
@@ -974,7 +975,7 @@ class TestAssertionRewriteHookDetails:
 
             monkeypatch.setattr("os.rename", raise_oserror)
 
-        assert not _write_pyc(state, [1], os.stat(source_path), pycpath)
+        assert not _write_pyc(state, co, os.stat(source_path), pycpath)
 
     def test_resources_provider_for_loader(self, testdir):
         """

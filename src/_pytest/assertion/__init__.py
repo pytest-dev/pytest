@@ -46,7 +46,7 @@ def pytest_addoption(parser: Parser) -> None:
     )
 
 
-def register_assert_rewrite(*names) -> None:
+def register_assert_rewrite(*names: str) -> None:
     """Register one or more module names to be rewritten on import.
 
     This function will make sure that this module or all modules inside
@@ -75,27 +75,27 @@ def register_assert_rewrite(*names) -> None:
 class DummyRewriteHook:
     """A no-op import hook for when rewriting is disabled."""
 
-    def mark_rewrite(self, *names):
+    def mark_rewrite(self, *names: str) -> None:
         pass
 
 
 class AssertionState:
     """State for the assertion plugin."""
 
-    def __init__(self, config, mode):
+    def __init__(self, config: Config, mode) -> None:
         self.mode = mode
         self.trace = config.trace.root.get("assertion")
         self.hook = None  # type: Optional[rewrite.AssertionRewritingHook]
 
 
-def install_importhook(config):
+def install_importhook(config: Config) -> rewrite.AssertionRewritingHook:
     """Try to install the rewrite hook, raise SystemError if it fails."""
     config._store[assertstate_key] = AssertionState(config, "rewrite")
     config._store[assertstate_key].hook = hook = rewrite.AssertionRewritingHook(config)
     sys.meta_path.insert(0, hook)
     config._store[assertstate_key].trace("installed rewrite import hook")
 
-    def undo():
+    def undo() -> None:
         hook = config._store[assertstate_key].hook
         if hook is not None and hook in sys.meta_path:
             sys.meta_path.remove(hook)
