@@ -93,6 +93,13 @@ def iscoroutinefunction(func: object) -> bool:
     return inspect.iscoroutinefunction(func) or getattr(func, "_is_coroutine", False)
 
 
+def is_async_function(func: object) -> bool:
+    """Return True if the given function seems to be an async function or async generator"""
+    return iscoroutinefunction(func) or (
+        sys.version_info >= (3, 6) and inspect.isasyncgenfunction(func)
+    )
+
+
 def getlocation(function, curdir=None) -> str:
     function = get_real_func(function)
     fn = py.path.local(inspect.getfile(function))

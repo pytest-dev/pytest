@@ -34,8 +34,8 @@ from _pytest.compat import get_default_arg_names
 from _pytest.compat import get_real_func
 from _pytest.compat import getimfunc
 from _pytest.compat import getlocation
+from _pytest.compat import is_async_function
 from _pytest.compat import is_generator
-from _pytest.compat import iscoroutinefunction
 from _pytest.compat import NOTSET
 from _pytest.compat import REGEX_TYPE
 from _pytest.compat import safe_getattr
@@ -159,7 +159,7 @@ def pytest_configure(config):
     )
 
 
-def async_warn(nodeid: str) -> None:
+def async_warn_and_skip(nodeid: str) -> None:
     msg = "async def functions are not natively supported and have been skipped.\n"
     msg += (
         "You need to install a suitable plugin for your async framework, for example:\n"
@@ -175,33 +175,13 @@ def async_warn(nodeid: str) -> None:
 @hookimpl(trylast=True)
 def pytest_pyfunc_call(pyfuncitem: "Function"):
     testfunction = pyfuncitem.obj
-
-    try:
-        # ignoring type as the import is  invalid in py37  and mypy thinks its a error
-        from unittest import IsolatedAsyncioTestCase  # type: ignore
-    except ImportError:
-        async_ok_in_stdlib = False
-    else:
-        async_ok_in_stdlib = isinstance(
-            getattr(testfunction, "__self__", None), IsolatedAsyncioTestCase
-        )
-
-    if (
-        iscoroutinefunction(testfunction)
-        or (sys.version_info >= (3, 6) and inspect.isasyncgenfunction(testfunction))
-    ) and not async_ok_in_stdlib:
-        async_warn(pyfuncitem.nodeid)
+    if is_async_function(testfunction):
+        async_warn_and_skip(pyfuncitem.nodeid)
     funcargs = pyfuncitem.funcargs
     testargs = {arg: funcargs[arg] for arg in pyfuncitem._fixtureinfo.argnames}
     result = testfunction(**testargs)
     if hasattr(result, "__await__") or hasattr(result, "__aiter__"):
-        if async_ok_in_stdlib:
-            # todo: investigate moving this to the unittest plugin
-            #       by a test call result hook
-            testcase = testfunction.__self__
-            testcase._callMaybeAsync(lambda: result)
-        else:
-            async_warn(pyfuncitem.nodeid)
+        async_warn_and_skip(pyfuncitem.nodeid)
     return True
 
 
