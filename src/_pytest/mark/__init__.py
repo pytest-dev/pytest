@@ -1,7 +1,9 @@
 """ generic mechanism for marking and selecting python functions. """
+import typing
 import warnings
 from typing import AbstractSet
 from typing import Optional
+from typing import Union
 
 import attr
 
@@ -31,7 +33,11 @@ __all__ = ["Mark", "MarkDecorator", "MarkGenerator", "get_empty_parameterset_mar
 old_mark_config_key = StoreKey[Optional[Config]]()
 
 
-def param(*values, **kw):
+def param(
+    *values: object,
+    marks: "Union[MarkDecorator, typing.Collection[Union[MarkDecorator, Mark]]]" = (),
+    id: Optional[str] = None
+) -> ParameterSet:
     """Specify a parameter in `pytest.mark.parametrize`_ calls or
     :ref:`parametrized fixtures <fixture-parametrize-marks>`.
 
@@ -48,7 +54,7 @@ def param(*values, **kw):
     :keyword marks: a single mark or a list of marks to be applied to this parameter set.
     :keyword str id: the id to attribute to this parameter set.
     """
-    return ParameterSet.param(*values, **kw)
+    return ParameterSet.param(*values, marks=marks, id=id)
 
 
 def pytest_addoption(parser):

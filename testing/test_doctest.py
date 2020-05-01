@@ -1051,7 +1051,7 @@ class TestLiterals:
             ("1e3", "999"),
             # The current implementation doesn't understand that numbers inside
             # strings shouldn't be treated as numbers:
-            pytest.param("'3.1416'", "'3.14'", marks=pytest.mark.xfail),
+            pytest.param("'3.1416'", "'3.14'", marks=pytest.mark.xfail),  # type: ignore
         ],
     )
     def test_number_non_matches(self, testdir, expression, output):
