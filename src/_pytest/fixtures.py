@@ -57,6 +57,7 @@ if TYPE_CHECKING:
     from _pytest import nodes
     from _pytest.main import Session
     from _pytest.python import Metafunc
+    from _pytest.python import CallSpec2
 
     _Scope = Literal["session", "package", "module", "class", "function"]
 
@@ -217,10 +218,11 @@ def get_parametrized_fixture_keys(item, scopenum):
     the specified scope. """
     assert scopenum < scopenum_function  # function
     try:
-        cs = item.callspec
+        callspec = item.callspec  # type: ignore[attr-defined] # noqa: F821
     except AttributeError:
         pass
     else:
+        cs = callspec  # type: CallSpec2
         # cs.indices.items() is random order of argnames.  Need to
         # sort this so that different calls to
         # get_parametrized_fixture_keys will be deterministic.
@@ -434,9 +436,9 @@ class FixtureRequest:
         return fixturedefs[index]
 
     @property
-    def config(self):
+    def config(self) -> Config:
         """ the pytest config object associated with this request. """
-        return self._pyfuncitem.config
+        return self._pyfuncitem.config  # type: ignore[no-any-return] # noqa: F723
 
     @scopeproperty()
     def function(self):
@@ -1464,7 +1466,7 @@ class FixtureManager:
             else:
                 continue  # will raise FixtureLookupError at setup time
 
-    def pytest_collection_modifyitems(self, items):
+    def pytest_collection_modifyitems(self, items: "List[nodes.Item]") -> None:
         # separate parametrized setups
         items[:] = reorder_items(items)
 

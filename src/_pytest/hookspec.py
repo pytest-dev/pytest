@@ -223,7 +223,9 @@ def pytest_collection(session: "Session") -> Optional[Any]:
     """
 
 
-def pytest_collection_modifyitems(session: "Session", config: "Config", items):
+def pytest_collection_modifyitems(
+    session: "Session", config: "Config", items: List["Item"]
+) -> None:
     """ called after collection has been performed, may filter or re-order
     the items in-place.
 

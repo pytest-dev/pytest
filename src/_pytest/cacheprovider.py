@@ -8,6 +8,7 @@ import json
 import os
 from typing import Dict
 from typing import Generator
+from typing import Iterable
 from typing import List
 from typing import Optional
 from typing import Set
@@ -27,9 +28,11 @@ from _pytest.compat import order_preserving_dict
 from _pytest.config import Config
 from _pytest.config import ExitCode
 from _pytest.config.argparsing import Parser
+from _pytest.fixtures import FixtureRequest
 from _pytest.main import Session
 from _pytest.python import Module
 from _pytest.reports import TestReport
+
 
 README_CONTENT = """\
 # pytest cache directory #
@@ -52,8 +55,8 @@ Signature: 8a477f597d28d172789f06886806bc55
 
 @attr.s
 class Cache:
-    _cachedir = attr.ib(repr=False)
-    _config = attr.ib(repr=False)
+    _cachedir = attr.ib(type=Path, repr=False)
+    _config = attr.ib(type=Config, repr=False)
 
     # sub-directory under cache-dir for directories created by "makedir"
     _CACHE_PREFIX_DIRS = "d"
@@ -62,14 +65,14 @@ class Cache:
     _CACHE_PREFIX_VALUES = "v"
 
     @classmethod
-    def for_config(cls, config):
+    def for_config(cls, config: Config) -> "Cache":
         cachedir = cls.cache_dir_from_config(config)
         if config.getoption("cacheclear") and cachedir.is_dir():
             cls.clear_cache(cachedir)
         return cls(cachedir, config)
 
     @classmethod
-    def clear_cache(cls, cachedir: Path):
+    def clear_cache(cls, cachedir: Path) -> None:
         """Clears the sub-directories used to hold cached directories and values."""
         for prefix in (cls._CACHE_PREFIX_DIRS, cls._CACHE_PREFIX_VALUES):
             d = cachedir / prefix
@@ -77,10 +80,10 @@ class Cache:
                 rm_rf(d)
 
     @staticmethod
-    def cache_dir_from_config(config):
+    def cache_dir_from_config(config: Config):
         return resolve_from_str(config.getini("cache_dir"), config.rootdir)
 
-    def warn(self, fmt, **args):
+    def warn(self, fmt: str, **args: object) -> None:
         import warnings
         from _pytest.warning_types import PytestCacheWarning
 
@@ -90,7 +93,7 @@ class Cache:
             stacklevel=3,
         )
 
-    def makedir(self, name):
+    def makedir(self, name: str) -> py.path.local:
         """ return a directory path object with the given name.  If the
         directory does not yet exist, it will be created.  You can use it
         to manage files likes e. g. store/retrieve database
@@ -100,14 +103,14 @@ class Cache:
              Make sure the name contains your plugin or application
              identifiers to prevent clashes with other cache users.
         """
-        name = Path(name)
-        if len(name.parts) > 1:
+        path = Path(name)
+        if len(path.parts) > 1:
             raise ValueError("name is not allowed to contain path separators")
-        res = self._cachedir.joinpath(self._CACHE_PREFIX_DIRS, name)
+        res = self._cachedir.joinpath(self._CACHE_PREFIX_DIRS, path)
         res.mkdir(exist_ok=True, parents=True)
         return py.path.local(res)
 
-    def _getvaluepath(self, key):
+    def _getvaluepath(self, key: str) -> Path:
         return self._cachedir.joinpath(self._CACHE_PREFIX_VALUES, Path(key))
 
     def get(self, key, default):
@@ -128,7 +131,7 @@ class Cache:
         except (ValueError, OSError):
             return default
 
-    def set(self, key, value):
+    def set(self, key, value) -> None:
         """ save value for the given key.
 
         :param key: must be a ``/`` separated value. Usually the first
@@ -158,7 +161,7 @@ class Cache:
             with f:
                 f.write(data)
 
-    def _ensure_supporting_files(self):
+    def _ensure_supporting_files(self) -> None:
         """Create supporting files in the cache dir that are not really part of the cache."""
         readme_path = self._cachedir / "README.md"
         readme_path.write_text(README_CONTENT)
@@ -172,12 +175,12 @@ class Cache:
 
 
 class LFPluginCollWrapper:
-    def __init__(self, lfplugin: "LFPlugin"):
+    def __init__(self, lfplugin: "LFPlugin") -> None:
         self.lfplugin = lfplugin
         self._collected_at_least_one_failure = False
 
     @pytest.hookimpl(hookwrapper=True)
-    def pytest_make_collect_report(self, collector) -> Generator:
+    def pytest_make_collect_report(self, collector: nodes.Collector) -> Generator:
         if isinstance(collector, Session):
             out = yield
             res = out.get_result()  # type: CollectReport
@@ -220,11 +223,13 @@ class LFPluginCollWrapper:
 
 
 class LFPluginCollSkipfiles:
-    def __init__(self, lfplugin: "LFPlugin"):
+    def __init__(self, lfplugin: "LFPlugin") -> None:
         self.lfplugin = lfplugin
 
     @pytest.hookimpl
-    def pytest_make_collect_report(self, collector) -> Optional[CollectReport]:
+    def pytest_make_collect_report(
+        self, collector: nodes.Collector
+    ) -> Optional[CollectReport]:
         if isinstance(collector, Module):
             if Path(str(collector.fspath)) not in self.lfplugin._last_failed_paths:
                 self.lfplugin._skipped_files += 1
@@ -262,9 +267,10 @@ class LFPlugin:
         result = {rootpath / nodeid.split("::")[0] for nodeid in self.lastfailed}
         return {x for x in result if x.exists()}
 
-    def pytest_report_collectionfinish(self):
+    def pytest_report_collectionfinish(self) -> Optional[str]:
         if self.active and self.config.getoption("verbose") >= 0:
             return "run-last-failure: %s" % self._report_status
+        return None
 
     def pytest_runtest_logreport(self, report: TestReport) -> None:
         if (report.when == "call" and report.passed) or report.skipped:
@@ -347,9 +353,10 @@ class LFPlugin:
 class NFPlugin:
     """ Plugin which implements the --nf (run new-first) option """
 
-    def __init__(self, config):
+    def __init__(self, config: Config) -> None:
         self.config = config
         self.active = config.option.newfirst
+        assert config.cache is not None
         self.cached_nodeids = set(config.cache.get("cache/nodeids", []))
 
     @pytest.hookimpl(hookwrapper=True, tryfirst=True)
@@ -374,7 +381,7 @@ class NFPlugin:
         else:
             self.cached_nodeids.update(item.nodeid for item in items)
 
-    def _get_increasing_order(self, items):
+    def _get_increasing_order(self, items: Iterable[nodes.Item]) -> List[nodes.Item]:
         return sorted(items, key=lambda item: item.fspath.mtime(), reverse=True)
 
     def pytest_sessionfinish(self) -> None:
@@ -384,6 +391,8 @@ class NFPlugin:
 
         if config.getoption("collectonly"):
             return
+
+        assert config.cache is not None
         config.cache.set("cache/nodeids", sorted(self.cached_nodeids))
 
 
@@ -462,7 +471,7 @@ def pytest_configure(config: Config) -> None:
 
 
 @pytest.fixture
-def cache(request):
+def cache(request: FixtureRequest) -> Cache:
     """
     Return a cache object that can persist state between testing sessions.
 
@@ -474,12 +483,14 @@ def cache(request):
 
     Values can be any object handled by the json stdlib module.
     """
+    assert request.config.cache is not None
     return request.config.cache
 
 
-def pytest_report_header(config):
+def pytest_report_header(config: Config) -> Optional[str]:
     """Display cachedir with --cache-show and if non-default."""
     if config.option.verbose > 0 or config.getini("cache_dir") != ".pytest_cache":
+        assert config.cache is not None
         cachedir = config.cache._cachedir
         # TODO: evaluate generating upward relative paths
         # starting with .., ../.. if sensible
@@ -489,10 +500,13 @@ def pytest_report_header(config):
         except ValueError:
             displaypath = cachedir
         return "cachedir: {}".format(displaypath)
+    return None
 
 
-def cacheshow(config, session):
+def cacheshow(config: Config, session: Session) -> int:
     from pprint import pformat
+
+    assert config.cache is not None
 
     tw = TerminalWriter()
     tw.line("cachedir: " + str(config.cache._cachedir))

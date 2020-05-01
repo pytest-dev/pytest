@@ -647,8 +647,8 @@ class Testdir:
         for basename, value in items:
             p = self.tmpdir.join(basename).new(ext=ext)
             p.dirpath().ensure_dir()
-            source = Source(value)
-            source = "\n".join(to_text(line) for line in source.lines)
+            source_ = Source(value)
+            source = "\n".join(to_text(line) for line in source_.lines)
             p.write(source.strip().encode(encoding), "wb")
             if ret is None:
                 ret = p
@@ -839,7 +839,7 @@ class Testdir:
         config.hook.pytest_sessionfinish(session=session, exitstatus=ExitCode.OK)
         return res
 
-    def genitems(self, colitems):
+    def genitems(self, colitems: List[Union[Item, Collector]]) -> List[Item]:
         """Generate all test items from a collection node.
 
         This recurses into the collection node and returns a list of all the
@@ -847,7 +847,7 @@ class Testdir:
 
         """
         session = colitems[0].session
-        result = []
+        result = []  # type: List[Item]
         for colitem in colitems:
             result.extend(session.genitems(colitem))
         return result

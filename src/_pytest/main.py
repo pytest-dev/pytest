@@ -333,7 +333,7 @@ def pytest_ignore_collect(
     return None
 
 
-def pytest_collection_modifyitems(items, config: Config) -> None:
+def pytest_collection_modifyitems(items: List[nodes.Item], config: Config) -> None:
     deselect_prefixes = tuple(config.getoption("deselect") or [])
     if not deselect_prefixes:
         return
@@ -487,18 +487,18 @@ class Session(nodes.FSCollector):
     @overload
     def _perform_collect(
         self, args: Optional[Sequence[str]], genitems: "Literal[True]"
-    ) -> Sequence[nodes.Item]:
+    ) -> List[nodes.Item]:
         raise NotImplementedError()
 
     @overload  # noqa: F811
     def _perform_collect(  # noqa: F811
         self, args: Optional[Sequence[str]], genitems: bool
-    ) -> Sequence[Union[nodes.Item, nodes.Collector]]:
+    ) -> Union[List[Union[nodes.Item]], List[Union[nodes.Item, nodes.Collector]]]:
         raise NotImplementedError()
 
     def _perform_collect(  # noqa: F811
         self, args: Optional[Sequence[str]], genitems: bool
-    ) -> Sequence[Union[nodes.Item, nodes.Collector]]:
+    ) -> Union[List[Union[nodes.Item]], List[Union[nodes.Item, nodes.Collector]]]:
         if args is None:
             args = self.config.args
         self.trace("perform_collect", self, args)
