@@ -91,12 +91,12 @@ Deprecations
 
 - `#5975 <https://github.com/pytest-dev/pytest/issues/5975>`_: Deprecate using direct constructors for ``Nodes``.
 
-  Instead they are new constructed via ``Node.from_parent``.
+  Instead they are now constructed via ``Node.from_parent``.
 
-  This transitional mechanism enables us to detangle the very intensely
-  entangled ``Node`` relationships by enforcing more controlled creation/configruation patterns.
+  This transitional mechanism enables us to untangle the very intensely
+  entangled ``Node`` relationships by enforcing more controlled creation/configuration patterns.
 
-  As part of that session/config are already disallowed parameters and as we work on the details we might need disallow a few more as well.
+  As part of this change, session/config are already disallowed parameters and as we work on the details we might need disallow a few more as well.
 
   Subclasses are expected to use `super().from_parent` if they intend to expand the creation of `Nodes`.
 
