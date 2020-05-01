@@ -50,6 +50,7 @@ from _pytest.outcomes import fail
 from _pytest.outcomes import TEST_OUTCOME
 
 if TYPE_CHECKING:
+    from typing import Deque
     from typing import NoReturn
     from typing import Type
     from typing_extensions import Literal
@@ -213,7 +214,11 @@ def getfixturemarker(obj):
         return None
 
 
-def get_parametrized_fixture_keys(item, scopenum):
+# Parametrized fixture key, helper alias for code below.
+_Key = Tuple[object, ...]
+
+
+def get_parametrized_fixture_keys(item: "nodes.Item", scopenum: int) -> Iterator[_Key]:
     """ return list of keys for all parametrized arguments which match
     the specified scope. """
     assert scopenum < scopenum_function  # function
@@ -230,13 +235,14 @@ def get_parametrized_fixture_keys(item, scopenum):
             if cs._arg2scopenum[argname] != scopenum:
                 continue
             if scopenum == 0:  # session
-                key = (argname, param_index)
+                key = (argname, param_index)  # type: _Key
             elif scopenum == 1:  # package
                 key = (argname, param_index, item.fspath.dirpath())
             elif scopenum == 2:  # module
                 key = (argname, param_index, item.fspath)
             elif scopenum == 3:  # class
-                key = (argname, param_index, item.fspath, item.cls)
+                item_cls = item.cls  # type: ignore[attr-defined] # noqa: F821
+                key = (argname, param_index, item.fspath, item_cls)
             yield key
 
 
@@ -246,47 +252,65 @@ def get_parametrized_fixture_keys(item, scopenum):
 # setups and teardowns
 
 
-def reorder_items(items):
-    argkeys_cache = {}
-    items_by_argkey = {}
+def reorder_items(items: "Sequence[nodes.Item]") -> "List[nodes.Item]":
+    argkeys_cache = {}  # type: Dict[int, Dict[nodes.Item, Dict[_Key, None]]]
+    items_by_argkey = {}  # type: Dict[int, Dict[_Key, Deque[nodes.Item]]]
     for scopenum in range(0, scopenum_function):
-        argkeys_cache[scopenum] = d = {}
-        items_by_argkey[scopenum] = item_d = defaultdict(deque)
+        d = {}  # type: Dict[nodes.Item, Dict[_Key, None]]
+        argkeys_cache[scopenum] = d
+        item_d = defaultdict(deque)  # type: Dict[_Key, Deque[nodes.Item]]
+        items_by_argkey[scopenum] = item_d
         for item in items:
-            keys = order_preserving_dict.fromkeys(
-                get_parametrized_fixture_keys(item, scopenum)
+            # cast is a workaround for https://github.com/python/typeshed/issues/3800.
+            keys = cast(
+                "Dict[_Key, None]",
+                order_preserving_dict.fromkeys(
+                    get_parametrized_fixture_keys(item, scopenum), None
+                ),
             )
             if keys:
                 d[item] = keys
                 for key in keys:
                     item_d[key].append(item)
-    items = order_preserving_dict.fromkeys(items)
-    return list(reorder_items_atscope(items, argkeys_cache, items_by_argkey, 0))
+    # cast is a workaround for https://github.com/python/typeshed/issues/3800.
+    items_dict = cast(
+        "Dict[nodes.Item, None]", order_preserving_dict.fromkeys(items, None)
+    )
+    return list(reorder_items_atscope(items_dict, argkeys_cache, items_by_argkey, 0))
 
 
-def fix_cache_order(item, argkeys_cache, items_by_argkey) -> None:
+def fix_cache_order(
+    item: "nodes.Item",
+    argkeys_cache: "Dict[int, Dict[nodes.Item, Dict[_Key, None]]]",
+    items_by_argkey: "Dict[int, Dict[_Key, Deque[nodes.Item]]]",
+) -> None:
     for scopenum in range(0, scopenum_function):
         for key in argkeys_cache[scopenum].get(item, []):
             items_by_argkey[scopenum][key].appendleft(item)
 
 
-def reorder_items_atscope(items, argkeys_cache, items_by_argkey, scopenum):
+def reorder_items_atscope(
+    items: "Dict[nodes.Item, None]",
+    argkeys_cache: "Dict[int, Dict[nodes.Item, Dict[_Key, None]]]",
+    items_by_argkey: "Dict[int, Dict[_Key, Deque[nodes.Item]]]",
+    scopenum: int,
+) -> "Dict[nodes.Item, None]":
     if scopenum >= scopenum_function or len(items) < 3:
         return items
-    ignore = set()
+    ignore = set()  # type: Set[Optional[_Key]]
     items_deque = deque(items)
-    items_done = order_preserving_dict()
+    items_done = order_preserving_dict()  # type: Dict[nodes.Item, None]
     scoped_items_by_argkey = items_by_argkey[scopenum]
     scoped_argkeys_cache = argkeys_cache[scopenum]
     while items_deque:
-        no_argkey_group = order_preserving_dict()
+        no_argkey_group = order_preserving_dict()  # type: Dict[nodes.Item, None]
         slicing_argkey = None
         while items_deque:
             item = items_deque.popleft()
             if item in items_done or item in no_argkey_group:
                 continue
             argkeys = order_preserving_dict.fromkeys(
-                k for k in scoped_argkeys_cache.get(item, []) if k not in ignore
+                (k for k in scoped_argkeys_cache.get(item, []) if k not in ignore), None
             )
             if not argkeys:
                 no_argkey_group[item] = None
