@@ -47,7 +47,7 @@ if TYPE_CHECKING:
     from typing_extensions import Literal
     from weakref import ReferenceType
 
-    _TracebackStyle = Literal["long", "short", "line", "no", "native", "value"]
+    _TracebackStyle = Literal["long", "short", "line", "no", "native", "value", "auto"]
 
 
 class Code:

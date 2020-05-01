@@ -2,6 +2,7 @@
 import bdb
 import os
 import sys
+from typing import Any
 from typing import Callable
 from typing import cast
 from typing import Dict
@@ -256,7 +257,7 @@ class CallInfo(Generic[_T]):
     """
 
     _result = attr.ib(type="Optional[_T]")
-    excinfo = attr.ib(type=Optional[ExceptionInfo])
+    excinfo = attr.ib(type=Optional[ExceptionInfo[BaseException]])
     start = attr.ib(type=float)
     stop = attr.ib(type=float)
     duration = attr.ib(type=float)
@@ -313,7 +314,8 @@ def pytest_runtest_makereport(item: Item, call: CallInfo[None]) -> TestReport:
 
 def pytest_make_collect_report(collector: Collector) -> CollectReport:
     call = CallInfo.from_call(lambda: list(collector.collect()), "collect")
-    longrepr = None
+    # TODO: Better typing for longrepr.
+    longrepr = None  # type: Optional[Any]
     if not call.excinfo:
         outcome = "passed"  # type: Literal["passed", "skipped", "failed"]
     else:

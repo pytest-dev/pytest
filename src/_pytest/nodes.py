@@ -17,9 +17,8 @@ import py
 
 import _pytest._code
 from _pytest._code import getfslineno
-from _pytest._code.code import ExceptionChainRepr
 from _pytest._code.code import ExceptionInfo
-from _pytest._code.code import ReprExceptionInfo
+from _pytest._code.code import TerminalRepr
 from _pytest.compat import cached_property
 from _pytest.compat import overload
 from _pytest.compat import TYPE_CHECKING
@@ -29,7 +28,6 @@ from _pytest.config import PytestPluginManager
 from _pytest.deprecated import NODE_USE_FROM_PARENT
 from _pytest.fixtures import FixtureDef
 from _pytest.fixtures import FixtureLookupError
-from _pytest.fixtures import FixtureLookupErrorRepr
 from _pytest.mark.structures import Mark
 from _pytest.mark.structures import MarkDecorator
 from _pytest.mark.structures import NodeKeywords
@@ -43,6 +41,7 @@ if TYPE_CHECKING:
     # Imported here due to circular import.
     from _pytest.main import Session
     from _pytest.warning_types import PytestWarning
+    from _pytest._code.code import _TracebackStyle
 
 
 SEP = "/"
@@ -355,8 +354,10 @@ class Node(metaclass=NodeMeta):
         pass
 
     def _repr_failure_py(
-        self, excinfo: ExceptionInfo[BaseException], style=None,
-    ) -> Union[str, ReprExceptionInfo, ExceptionChainRepr, FixtureLookupErrorRepr]:
+        self,
+        excinfo: ExceptionInfo[BaseException],
+        style: "Optional[_TracebackStyle]" = None,
+    ) -> TerminalRepr:
         if isinstance(excinfo.value, ConftestImportFailure):
             excinfo = ExceptionInfo(excinfo.value.excinfo)
         if isinstance(excinfo.value, fail.Exception):
@@ -406,8 +407,10 @@ class Node(metaclass=NodeMeta):
         )
 
     def repr_failure(
-        self, excinfo, style=None
-    ) -> Union[str, ReprExceptionInfo, ExceptionChainRepr, FixtureLookupErrorRepr]:
+        self,
+        excinfo: ExceptionInfo[BaseException],
+        style: "Optional[_TracebackStyle]" = None,
+    ) -> Union[str, TerminalRepr]:
         """
         Return a representation of a collection or test failure.
 
@@ -453,13 +456,16 @@ class Collector(Node):
         """
         raise NotImplementedError("abstract")
 
-    def repr_failure(self, excinfo):
+    # TODO: This omits the style= parameter which breaks Liskov Substitution.
+    def repr_failure(  # type: ignore[override] # noqa: F821
+        self, excinfo: ExceptionInfo[BaseException]
+    ) -> Union[str, TerminalRepr]:
         """
         Return a representation of a collection failure.
 
         :param excinfo: Exception information for the failure.
         """
-        if excinfo.errisinstance(self.CollectError) and not self.config.getoption(
+        if isinstance(excinfo.value, self.CollectError) and not self.config.getoption(
             "fulltrace", False
         ):
             exc = excinfo.value

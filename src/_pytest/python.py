@@ -60,6 +60,7 @@ from _pytest.mark.structures import normalize_mark_list
 from _pytest.outcomes import fail
 from _pytest.outcomes import skip
 from _pytest.pathlib import parts
+from _pytest.reports import TerminalRepr
 from _pytest.warning_types import PytestCollectionWarning
 from _pytest.warning_types import PytestUnhandledCoroutineWarning
 
@@ -1591,7 +1592,10 @@ class Function(PyobjMixin, nodes.Item):
                     for entry in excinfo.traceback[1:-1]:
                         entry.set_repr_style("short")
 
-    def repr_failure(self, excinfo, outerr=None):
+    # TODO: Type ignored -- breaks Liskov Substitution.
+    def repr_failure(  # type: ignore[override] # noqa: F821
+        self, excinfo: ExceptionInfo[BaseException], outerr: None = None
+    ) -> Union[str, TerminalRepr]:
         assert outerr is None, "XXX outerr usage is deprecated"
         style = self.config.getoption("tbstyle", "auto")
         if style == "auto":

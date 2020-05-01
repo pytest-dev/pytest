@@ -300,7 +300,10 @@ class DoctestItem(pytest.Item):
             sys.stdout.write(out)
             sys.stderr.write(err)
 
-    def repr_failure(self, excinfo):
+    # TODO: Type ignored -- breaks Liskov Substitution.
+    def repr_failure(  # type: ignore[override] # noqa: F821
+        self, excinfo: ExceptionInfo[BaseException],
+    ) -> Union[str, TerminalRepr]:
         import doctest
 
         failures = (
