@@ -6,6 +6,7 @@ import traceback
 import _pytest._code
 import pytest
 from _pytest.compat import getimfunc
+from _pytest.compat import is_async_function
 from _pytest.config import hookimpl
 from _pytest.outcomes import exit
 from _pytest.outcomes import fail
@@ -227,13 +228,17 @@ class TestCaseFunction(Function):
                 self._needs_explicit_tearDown = True
                 raise _GetOutOf_testPartExecutor(exc)
 
-        setattr(self._testcase, self._testcase._testMethodName, wrapped_testMethod)
-        try:
-            self._testcase(result=self)
-        except _GetOutOf_testPartExecutor as exc:
-            raise exc.args[0] from exc.args[0]
-        finally:
-            delattr(self._testcase, self._testcase._testMethodName)
+        # let the unittest framework handle async functions
+        if is_async_function(self.obj):
+            self._testcase(self)
+        else:
+            setattr(self._testcase, self._testcase._testMethodName, wrapped_testMethod)
+            try:
+                self._testcase(result=self)
+            except _GetOutOf_testPartExecutor as exc:
+                raise exc.args[0] from exc.args[0]
+            finally:
+                delattr(self._testcase, self._testcase._testMethodName)
 
     def _prunetraceback(self, excinfo):
         Function._prunetraceback(self, excinfo)

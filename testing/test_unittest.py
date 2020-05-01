@@ -1136,4 +1136,13 @@ def test_async_support(testdir):
 
     testdir.copy_example("unittest/test_unittest_asyncio.py")
     reprec = testdir.inline_run()
-    reprec.assertoutcome(failed=1, passed=1)
+    reprec.assertoutcome(failed=1, passed=2)
+
+
+def test_asynctest_support(testdir):
+    """Check asynctest support (#7110)"""
+    pytest.importorskip("asynctest")
+
+    testdir.copy_example("unittest/test_unittest_asynctest.py")
+    reprec = testdir.inline_run()
+    reprec.assertoutcome(failed=1, passed=2)
