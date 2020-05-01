@@ -1152,13 +1152,15 @@ def fixture(
     if params is not None:
         params = list(params)
 
-    if fixture_function and params is None and autouse is False:
-        # direct decoration
-        return FixtureFunctionMarker(scope, params, autouse, name=name)(
-            fixture_function
-        )
+    fixture_marker = FixtureFunctionMarker(
+        scope=scope, params=params, autouse=autouse, ids=ids, name=name,
+    )
 
-    return FixtureFunctionMarker(scope, params, autouse, ids=ids, name=name)
+    # Direct decoration.
+    if fixture_function:
+        return fixture_marker(fixture_function)
+
+    return fixture_marker
 
 
 def yield_fixture(
