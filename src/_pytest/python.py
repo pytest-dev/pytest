@@ -423,7 +423,9 @@ class PyCollector(PyobjMixin, nodes.Collector):
         return item
 
     def _genfunctions(self, name, funcobj):
-        module = self.getparent(Module).obj
+        modulecol = self.getparent(Module)
+        assert modulecol is not None
+        module = modulecol.obj
         clscol = self.getparent(Class)
         cls = clscol and clscol.obj or None
         fm = self.session._fixturemanager
@@ -437,7 +439,7 @@ class PyCollector(PyobjMixin, nodes.Collector):
         methods = []
         if hasattr(module, "pytest_generate_tests"):
             methods.append(module.pytest_generate_tests)
-        if hasattr(cls, "pytest_generate_tests"):
+        if cls is not None and hasattr(cls, "pytest_generate_tests"):
             methods.append(cls().pytest_generate_tests)
 
         self.ihook.pytest_generate_tests.call_extra(methods, dict(metafunc=metafunc))
