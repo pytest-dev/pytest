@@ -721,7 +721,9 @@ class FixtureRequest:
             # this might also be a non-function Item despite its attribute name
             return self._pyfuncitem
         if scope == "package":
-            node = get_scope_package(self._pyfuncitem, self._fixturedef)
+            # FIXME: _fixturedef is not defined on FixtureRequest (this class),
+            # but on FixtureRequest (a subclass).
+            node = get_scope_package(self._pyfuncitem, self._fixturedef)  # type: ignore[attr-defined] # noqa: F821
         else:
             node = get_scope_node(self._pyfuncitem, scope)
         if node is None and scope == "class":
@@ -1158,7 +1160,7 @@ def wrap_function_to_error_out_if_called_directly(function, fixture_marker):
 
     # keep reference to the original function in our own custom attribute so we don't unwrap
     # further than this point and lose useful wrappings like @mock.patch (#3774)
-    result.__pytest_wrapped__ = _PytestWrapper(function)
+    result.__pytest_wrapped__ = _PytestWrapper(function)  # type: ignore[attr-defined] # noqa: F821
 
     return result
 

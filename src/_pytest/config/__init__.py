@@ -974,7 +974,7 @@ class Config:
                 self._mark_plugins_for_rewrite(hook)
         _warn_about_missing_assertion(mode)
 
-    def _mark_plugins_for_rewrite(self, hook):
+    def _mark_plugins_for_rewrite(self, hook) -> None:
         """
         Given an importhook, mark for rewrite any top-level
         modules or packages in the distribution package for
@@ -989,7 +989,9 @@ class Config:
         package_files = (
             str(file)
             for dist in importlib_metadata.distributions()
-            if any(ep.group == "pytest11" for ep in dist.entry_points)
+            # Type ignored due to missing stub:
+            # https://github.com/python/typeshed/pull/3795
+            if any(ep.group == "pytest11" for ep in dist.entry_points)  # type: ignore
             for file in dist.files or []
         )
 

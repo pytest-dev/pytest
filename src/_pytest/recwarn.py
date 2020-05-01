@@ -136,8 +136,9 @@ class WarningsRecorder(warnings.catch_warnings):
     Adapted from `warnings.catch_warnings`.
     """
 
-    def __init__(self):
-        super().__init__(record=True)
+    def __init__(self) -> None:
+        # Type ignored due to the way typeshed handles warnings.catch_warnings.
+        super().__init__(record=True)  # type: ignore[call-arg] # noqa: F821
         self._entered = False
         self._list = []  # type: List[warnings.WarningMessage]
 

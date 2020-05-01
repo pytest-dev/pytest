@@ -64,6 +64,7 @@ from _pytest.warning_types import PytestCollectionWarning
 from _pytest.warning_types import PytestUnhandledCoroutineWarning
 
 if TYPE_CHECKING:
+    from typing import Type
     from typing_extensions import Literal
     from _pytest.fixtures import _Scope
 
@@ -256,6 +257,18 @@ def pytest_pycollect_makeitem(collector: "PyCollector", name: str, obj):
 class PyobjMixin:
     _ALLOW_MARKERS = True
 
+    # Function and attributes that the mixin needs (for type-checking only).
+    if TYPE_CHECKING:
+        name = ""  # type: str
+        parent = None  # type: Optional[nodes.Node]
+        own_markers = []  # type: List[Mark]
+
+        def getparent(self, cls: Type[nodes._NodeType]) -> Optional[nodes._NodeType]:
+            ...
+
+        def listchain(self) -> List[nodes.Node]:
+            ...
+
     @property
     def module(self):
         """Python module object this node was collected from (can be None)."""
@@ -292,7 +305,10 @@ class PyobjMixin:
 
     def _getobj(self):
         """Gets the underlying Python object. May be overwritten by subclasses."""
-        return getattr(self.parent.obj, self.name)
+        # TODO: Improve the type of `parent` such that assert/ignore aren't needed.
+        assert self.parent is not None
+        obj = self.parent.obj  # type: ignore[attr-defined] # noqa: F821
+        return getattr(obj, self.name)
 
     def getmodpath(self, stopatmodule=True, includemodule=False):
         """ return python path relative to the containing module. """
@@ -772,7 +788,10 @@ class Instance(PyCollector):
     # can be removed at node structure reorganization time
 
     def _getobj(self):
-        return self.parent.obj()
+        # TODO: Improve the type of `parent` such that assert/ignore aren't needed.
+        assert self.parent is not None
+        obj = self.parent.obj  # type: ignore[attr-defined] # noqa: F821
+        return obj()
 
     def collect(self) -> Iterable[Union[nodes.Item, nodes.Collector]]:
         self.session._fixturemanager.parsefactories(self)
@@ -1527,7 +1546,8 @@ class Function(PyobjMixin, nodes.Item):
         return getimfunc(self.obj)
 
     def _getobj(self):
-        return getattr(self.parent.obj, self.originalname)
+        assert self.parent is not None
+        return getattr(self.parent.obj, self.originalname)  # type: ignore[attr-defined]
 
     @property
     def _pyfuncitem(self):

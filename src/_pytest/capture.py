@@ -519,10 +519,11 @@ class MultiCapture:
     def pop_outerr_to_orig(self):
         """ pop current snapshot out/err capture and flush to orig streams. """
         out, err = self.readouterr()
+        # TODO: Fix type ignores.
         if out:
-            self.out.writeorg(out)
+            self.out.writeorg(out)  # type: ignore[union-attr] # noqa: F821
         if err:
-            self.err.writeorg(err)
+            self.err.writeorg(err)  # type: ignore[union-attr] # noqa: F821
         return out, err
 
     def suspend_capturing(self, in_: bool = False) -> None:
@@ -542,7 +543,8 @@ class MultiCapture:
         if self.err:
             self.err.resume()
         if self._in_suspended:
-            self.in_.resume()
+            # TODO: Fix type ignore.
+            self.in_.resume()  # type: ignore[union-attr] # noqa: F821
             self._in_suspended = False
 
     def stop_capturing(self) -> None:

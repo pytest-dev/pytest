@@ -42,6 +42,8 @@ if TYPE_CHECKING:
 
     # Imported here due to circular import.
     from _pytest.main import Session
+    from _pytest.warning_types import PytestWarning
+
 
 SEP = "/"
 
@@ -118,9 +120,9 @@ class Node(metaclass=NodeMeta):
     def __init__(
         self,
         name: str,
-        parent: Optional["Node"] = None,
+        parent: "Optional[Node]" = None,
         config: Optional[Config] = None,
-        session: Optional["Session"] = None,
+        session: "Optional[Session]" = None,
         fspath: Optional[py.path.local] = None,
         nodeid: Optional[str] = None,
     ) -> None:
@@ -201,7 +203,7 @@ class Node(metaclass=NodeMeta):
     def __repr__(self) -> str:
         return "<{} {}>".format(self.__class__.__name__, getattr(self, "name", None))
 
-    def warn(self, warning):
+    def warn(self, warning: "PytestWarning") -> None:
         """Issue a warning for this item.
 
         Warnings will be displayed after the test session, unless explicitly suppressed
@@ -226,11 +228,9 @@ class Node(metaclass=NodeMeta):
                 )
             )
         path, lineno = get_fslocation_from_item(self)
+        assert lineno is not None
         warnings.warn_explicit(
-            warning,
-            category=None,
-            filename=str(path),
-            lineno=lineno + 1 if lineno is not None else None,
+            warning, category=None, filename=str(path), lineno=lineno + 1,
         )
 
     # methods for ordering nodes
@@ -417,24 +417,26 @@ class Node(metaclass=NodeMeta):
 
 
 def get_fslocation_from_item(
-    item: "Item",
+    node: "Node",
 ) -> Tuple[Union[str, py.path.local], Optional[int]]:
-    """Tries to extract the actual location from an item, depending on available attributes:
+    """Tries to extract the actual location from a node, depending on available attributes:
 
-    * "fslocation": a pair (path, lineno)
-    * "obj": a Python object that the item wraps.
+    * "location": a pair (path, lineno)
+    * "obj": a Python object that the node wraps.
     * "fspath": just a path
 
     :rtype: a tuple of (str|LocalPath, int) with filename and line number.
     """
-    try:
-        return item.location[:2]
-    except AttributeError:
-        pass
-    obj = getattr(item, "obj", None)
+    # See Item.location.
+    location = getattr(
+        node, "location", None
+    )  # type: Optional[Tuple[str, Optional[int], str]]
+    if location is not None:
+        return location[:2]
+    obj = getattr(node, "obj", None)
     if obj is not None:
         return getfslineno(obj)
-    return getattr(item, "fspath", "unknown location"), -1
+    return getattr(node, "fspath", "unknown location"), -1
 
 
 class Collector(Node):

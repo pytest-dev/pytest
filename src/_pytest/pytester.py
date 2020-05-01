@@ -1169,8 +1169,10 @@ class Testdir:
 
         popen = subprocess.Popen(cmdargs, stdout=stdout, stderr=stderr, **kw)
         if stdin is Testdir.CLOSE_STDIN:
+            assert popen.stdin is not None
             popen.stdin.close()
         elif isinstance(stdin, bytes):
+            assert popen.stdin is not None
             popen.stdin.write(stdin)
 
         return popen
