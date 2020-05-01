@@ -20,6 +20,8 @@ if TYPE_CHECKING:
     from _pytest.config import PytestPluginManager
     from _pytest.config import _PluggyPlugin
     from _pytest.config.argparsing import Parser
+    from _pytest.fixtures import FixtureDef
+    from _pytest.fixtures import SubRequest
     from _pytest.main import Session
     from _pytest.nodes import Collector
     from _pytest.nodes import Item
@@ -450,7 +452,9 @@ def pytest_report_from_serializable(config: "Config", data):
 
 
 @hookspec(firstresult=True)
-def pytest_fixture_setup(fixturedef, request):
+def pytest_fixture_setup(
+    fixturedef: "FixtureDef", request: "SubRequest"
+) -> Optional[object]:
     """ performs fixture setup execution.
 
     :return: The return value of the call to the fixture function
@@ -464,7 +468,9 @@ def pytest_fixture_setup(fixturedef, request):
     """
 
 
-def pytest_fixture_post_finalizer(fixturedef, request):
+def pytest_fixture_post_finalizer(
+    fixturedef: "FixtureDef", request: "SubRequest"
+) -> None:
     """Called after fixture teardown, but before the cache is cleared, so
     the fixture result ``fixturedef.cached_result`` is still available (not
     ``None``)."""

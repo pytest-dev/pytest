@@ -65,6 +65,7 @@ from _pytest.warning_types import PytestUnhandledCoroutineWarning
 
 if TYPE_CHECKING:
     from typing_extensions import Literal
+    from _pytest.fixtures import _Scope
 
 
 def pytest_addoption(parser: Parser) -> None:
@@ -905,7 +906,7 @@ class Metafunc:
                 Callable[[object], Optional[object]],
             ]
         ] = None,
-        scope: "Optional[str]" = None,
+        scope: "Optional[_Scope]" = None,
         *,
         _param_mark: Optional[Mark] = None
     ) -> None:
