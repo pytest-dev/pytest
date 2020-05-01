@@ -17,6 +17,7 @@ from _pytest.compat import TYPE_CHECKING
 if TYPE_CHECKING:
     import pdb
     import warnings
+    from typing_extensions import Literal
 
     from _pytest.config import Config
     from _pytest.config import ExitCode
@@ -675,8 +676,8 @@ def pytest_terminal_summary(
 @hookspec(historic=True, warn_on_impl=WARNING_CAPTURED_HOOK)
 def pytest_warning_captured(
     warning_message: "warnings.WarningMessage",
-    when: str,
-    item,
+    when: "Literal['config', 'collect', 'runtest']",
+    item: "Optional[Item]",
     location: Optional[Tuple[str, int, str]],
 ) -> None:
     """(**Deprecated**) Process a warning captured by the internal pytest warnings plugin.
@@ -710,7 +711,7 @@ def pytest_warning_captured(
 @hookspec(historic=True)
 def pytest_warning_recorded(
     warning_message: "warnings.WarningMessage",
-    when: str,
+    when: "Literal['config', 'collect', 'runtest']",
     nodeid: str,
     location: Optional[Tuple[str, int, str]],
 ) -> None:
