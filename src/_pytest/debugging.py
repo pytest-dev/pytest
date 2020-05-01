@@ -2,6 +2,9 @@
 import argparse
 import functools
 import sys
+from typing import Generator
+from typing import Tuple
+from typing import Union
 
 from _pytest import outcomes
 from _pytest.compat import TYPE_CHECKING
@@ -15,10 +18,11 @@ from _pytest.nodes import Node
 from _pytest.reports import BaseReport
 
 if TYPE_CHECKING:
+    from _pytest.capture import CaptureManager
     from _pytest.runner import CallInfo
 
 
-def _validate_usepdb_cls(value):
+def _validate_usepdb_cls(value: str) -> Tuple[str, str]:
     """Validate syntax of --pdbcls option."""
     try:
         modname, classname = value.split(":")
@@ -70,7 +74,7 @@ def pytest_configure(config: Config) -> None:
 
     # NOTE: not using pytest_unconfigure, since it might get called although
     #       pytest_configure was not (if another plugin raises UsageError).
-    def fin():
+    def fin() -> None:
         (
             pdb.set_trace,
             pytestPDB._pluginmanager,
@@ -90,13 +94,13 @@ class pytestPDB:
     _wrapped_pdb_cls = None
 
     @classmethod
-    def _is_capturing(cls, capman):
+    def _is_capturing(cls, capman: "CaptureManager") -> Union[str, bool]:
         if capman:
             return capman.is_capturing()
         return False
 
     @classmethod
-    def _import_pdb_cls(cls, capman):
+    def _import_pdb_cls(cls, capman: "CaptureManager"):
         if not cls._config:
             import pdb
 
@@ -135,10 +139,12 @@ class pytestPDB:
         return wrapped_cls
 
     @classmethod
-    def _get_pdb_wrapper_class(cls, pdb_cls, capman):
+    def _get_pdb_wrapper_class(cls, pdb_cls, capman: "CaptureManager"):
         import _pytest.config
 
-        class PytestPdbWrapper(pdb_cls):
+        # Type ignored because mypy doesn't support "dynamic"
+        # inheritance like this.
+        class PytestPdbWrapper(pdb_cls):  # type: ignore[valid-type,misc] # noqa: F821
             _pytest_capman = capman
             _continued = False
 
@@ -257,7 +263,7 @@ class pytestPDB:
         return _pdb
 
     @classmethod
-    def set_trace(cls, *args, **kwargs):
+    def set_trace(cls, *args, **kwargs) -> None:
         """Invoke debugging via ``Pdb.set_trace``, dropping any IO capturing."""
         frame = sys._getframe().f_back
         _pdb = cls._init_pdb("set_trace", *args, **kwargs)
@@ -276,14 +282,14 @@ class PdbInvoke:
             sys.stdout.write(err)
         _enter_pdb(node, call.excinfo, report)
 
-    def pytest_internalerror(self, excrepr, excinfo):
+    def pytest_internalerror(self, excrepr, excinfo) -> None:
         tb = _postmortem_traceback(excinfo)
         post_mortem(tb)
 
 
 class PdbTrace:
     @hookimpl(hookwrapper=True)
-    def pytest_pyfunc_call(self, pyfuncitem):
+    def pytest_pyfunc_call(self, pyfuncitem) -> Generator[None, None, None]:
         wrap_pytest_function_for_tracing(pyfuncitem)
         yield
 
@@ -358,7 +364,7 @@ def _postmortem_traceback(excinfo):
         return excinfo._excinfo[2]
 
 
-def post_mortem(t):
+def post_mortem(t) -> None:
     p = pytestPDB._init_pdb("post_mortem")
     p.reset()
     p.interaction(None, t)

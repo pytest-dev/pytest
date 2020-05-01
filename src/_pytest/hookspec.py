@@ -15,7 +15,9 @@ from .deprecated import WARNING_CAPTURED_HOOK
 from _pytest.compat import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    import pdb
     import warnings
+
     from _pytest.config import Config
     from _pytest.config import ExitCode
     from _pytest.config import PytestPluginManager
@@ -773,7 +775,7 @@ def pytest_exception_interact(
     """
 
 
-def pytest_enter_pdb(config: "Config", pdb):
+def pytest_enter_pdb(config: "Config", pdb: "pdb.Pdb") -> None:
     """ called upon pdb.set_trace(), can be used by plugins to take special
     action just before the python debugger enters in interactive mode.
 
@@ -782,7 +784,7 @@ def pytest_enter_pdb(config: "Config", pdb):
     """
 
 
-def pytest_leave_pdb(config: "Config", pdb):
+def pytest_leave_pdb(config: "Config", pdb: "pdb.Pdb") -> None:
     """ called when leaving pdb (e.g. with continue after pdb.set_trace()).
 
     Can be used by plugins to take special action just after the python
