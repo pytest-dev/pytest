@@ -67,7 +67,7 @@ def safeformat(obj: Any) -> str:
     with a short exception info.
     """
     try:
-        return pprint.pformat(obj, width=1_000_000)
+        return pprint.pformat(obj, width=1000000)
     except Exception as exc:
         return _format_repr_exception(exc, obj)
 
