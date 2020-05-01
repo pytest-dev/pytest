@@ -272,11 +272,15 @@ class PdbInvoke:
 class PdbTrace:
     @hookimpl(hookwrapper=True)
     def pytest_pyfunc_call(self, pyfuncitem):
-        _test_pytest_function(pyfuncitem)
+        wrap_pytest_function_for_tracing(pyfuncitem)
         yield
 
 
-def _test_pytest_function(pyfuncitem):
+def wrap_pytest_function_for_tracing(pyfuncitem):
+    """Changes the python function object of the given Function item by a wrapper which actually
+    enters pdb before calling the python function itself, effectively leaving the user
+    in the pdb prompt in the first statement of the function.
+    """
     _pdb = pytestPDB._init_pdb("runcall")
     testfunction = pyfuncitem.obj
 
@@ -289,6 +293,13 @@ def _test_pytest_function(pyfuncitem):
         _pdb.runcall(func)
 
     pyfuncitem.obj = wrapper
+
+
+def maybe_wrap_pytest_function_for_tracing(pyfuncitem):
+    """Wrap the given pytestfunct item for tracing support if --trace was given in
+    the command line"""
+    if pyfuncitem.config.getvalue("trace"):
+        wrap_pytest_function_for_tracing(pyfuncitem)
 
 
 def _enter_pdb(node, excinfo, rep):

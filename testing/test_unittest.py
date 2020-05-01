@@ -876,6 +876,37 @@ def test_no_teardown_if_setupclass_failed(testdir):
     reprec.assertoutcome(passed=1, failed=1)
 
 
+def test_cleanup_functions(testdir):
+    """Ensure functions added with addCleanup are always called after each test ends (#6947)"""
+    testdir.makepyfile(
+        """
+        import unittest
+
+        cleanups = []
+
+        class Test(unittest.TestCase):
+
+            def test_func_1(self):
+                self.addCleanup(cleanups.append, "test_func_1")
+
+            def test_func_2(self):
+                self.addCleanup(cleanups.append, "test_func_2")
+                assert 0
+
+            def test_func_3_check_cleanups(self):
+                assert cleanups == ["test_func_1", "test_func_2"]
+    """
+    )
+    result = testdir.runpytest("-v")
+    result.stdout.fnmatch_lines(
+        [
+            "*::test_func_1 PASSED *",
+            "*::test_func_2 FAILED *",
+            "*::test_func_3_check_cleanups PASSED *",
+        ]
+    )
+
+
 def test_issue333_result_clearing(testdir):
     testdir.makeconftest(
         """
@@ -1129,6 +1160,41 @@ def test_trace(testdir, monkeypatch):
     result = testdir.runpytest("--trace", str(p1))
     assert len(calls) == 2
     assert result.ret == 0
+
+
+def test_pdb_teardown_called(testdir, monkeypatch):
+    """Ensure tearDown() is always called when --pdb is given in the command-line.
+
+    We delay the normal tearDown() calls when --pdb is given, so this ensures we are calling
+    tearDown() eventually to avoid memory leaks when using --pdb.
+    """
+    teardowns = []
+    monkeypatch.setattr(
+        pytest, "test_pdb_teardown_called_teardowns", teardowns, raising=False
+    )
+
+    testdir.makepyfile(
+        """
+        import unittest
+        import pytest
+
+        class MyTestCase(unittest.TestCase):
+
+            def tearDown(self):
+                pytest.test_pdb_teardown_called_teardowns.append(self.id())
+
+            def test_1(self):
+                pass
+            def test_2(self):
+                pass
+    """
+    )
+    result = testdir.runpytest_inprocess("--pdb")
+    result.stdout.fnmatch_lines("* 2 passed in *")
+    assert teardowns == [
+        "test_pdb_teardown_called.MyTestCase.test_1",
+        "test_pdb_teardown_called.MyTestCase.test_2",
+    ]
 
 
 def test_async_support(testdir):
