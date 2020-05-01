@@ -1,7 +1,6 @@
 import os
 import warnings
 from functools import lru_cache
-from typing import Any
 from typing import Callable
 from typing import Dict
 from typing import Iterable
@@ -618,7 +617,7 @@ class Item(Node):
 
         #: user properties is a list of tuples (name, value) that holds user
         #: defined properties for this test.
-        self.user_properties = []  # type: List[Tuple[str, Any]]
+        self.user_properties = []  # type: List[Tuple[str, object]]
 
     def runtest(self) -> None:
         raise NotImplementedError("runtest must be implemented by Item subclass")
