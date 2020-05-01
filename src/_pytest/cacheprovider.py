@@ -29,6 +29,7 @@ from _pytest.config import ExitCode
 from _pytest.config.argparsing import Parser
 from _pytest.main import Session
 from _pytest.python import Module
+from _pytest.reports import TestReport
 
 README_CONTENT = """\
 # pytest cache directory #
@@ -265,7 +266,7 @@ class LFPlugin:
         if self.active and self.config.getoption("verbose") >= 0:
             return "run-last-failure: %s" % self._report_status
 
-    def pytest_runtest_logreport(self, report):
+    def pytest_runtest_logreport(self, report: TestReport) -> None:
         if (report.when == "call" and report.passed) or report.skipped:
             self.lastfailed.pop(report.nodeid, None)
         elif report.failed:

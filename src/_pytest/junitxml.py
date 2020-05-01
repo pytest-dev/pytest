@@ -24,7 +24,9 @@ from _pytest import timing
 from _pytest.config import Config
 from _pytest.config import filename_arg
 from _pytest.config.argparsing import Parser
+from _pytest.reports import TestReport
 from _pytest.store import StoreKey
+from _pytest.terminal import TerminalReporter
 from _pytest.warnings import _issue_warning_captured
 
 
@@ -517,7 +519,7 @@ class LogXML:
         reporter.record_testreport(report)
         return reporter
 
-    def pytest_runtest_logreport(self, report):
+    def pytest_runtest_logreport(self, report: TestReport) -> None:
         """handle a setup/call/teardown report, generating the appropriate
         xml tags as necessary.
 
@@ -661,7 +663,7 @@ class LogXML:
         logfile.write(Junit.testsuites([suite_node]).unicode(indent=0))
         logfile.close()
 
-    def pytest_terminal_summary(self, terminalreporter):
+    def pytest_terminal_summary(self, terminalreporter: TerminalReporter) -> None:
         terminalreporter.write_sep("-", "generated xml file: {}".format(self.logfile))
 
     def add_global_property(self, name, value):

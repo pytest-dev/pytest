@@ -2,6 +2,7 @@ import pytest
 from _pytest.config import Config
 from _pytest.config.argparsing import Parser
 from _pytest.main import Session
+from _pytest.reports import TestReport
 
 
 def pytest_addoption(parser: Parser) -> None:
@@ -73,7 +74,7 @@ class StepwisePlugin:
 
         config.hook.pytest_deselected(items=already_passed)
 
-    def pytest_runtest_logreport(self, report):
+    def pytest_runtest_logreport(self, report: TestReport) -> None:
         if not self.active:
             return
 

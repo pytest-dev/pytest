@@ -10,6 +10,7 @@ from typing import Tuple
 
 import attr
 
+from .reports import BaseReport
 from .reports import CollectErrorRepr
 from .reports import CollectReport
 from .reports import TestReport
@@ -19,6 +20,7 @@ from _pytest._code.code import ExceptionInfo
 from _pytest.compat import TYPE_CHECKING
 from _pytest.config.argparsing import Parser
 from _pytest.nodes import Collector
+from _pytest.nodes import Item
 from _pytest.nodes import Node
 from _pytest.outcomes import Exit
 from _pytest.outcomes import Skipped
@@ -29,6 +31,7 @@ if TYPE_CHECKING:
     from typing_extensions import Literal
 
     from _pytest.main import Session
+    from _pytest.terminal import TerminalReporter
 
 #
 # pytest plugin hooks
@@ -46,7 +49,7 @@ def pytest_addoption(parser: Parser) -> None:
     )
 
 
-def pytest_terminal_summary(terminalreporter):
+def pytest_terminal_summary(terminalreporter: "TerminalReporter") -> None:
     durations = terminalreporter.config.option.durations
     verbose = terminalreporter.config.getvalue("verbose")
     if durations is None:
@@ -86,17 +89,19 @@ def pytest_sessionfinish(session: "Session") -> None:
     session._setupstate.teardown_all()
 
 
-def pytest_runtest_protocol(item, nextitem):
+def pytest_runtest_protocol(item: Item, nextitem: Optional[Item]) -> bool:
     item.ihook.pytest_runtest_logstart(nodeid=item.nodeid, location=item.location)
     runtestprotocol(item, nextitem=nextitem)
     item.ihook.pytest_runtest_logfinish(nodeid=item.nodeid, location=item.location)
     return True
 
 
-def runtestprotocol(item, log=True, nextitem=None):
+def runtestprotocol(
+    item: Item, log: bool = True, nextitem: Optional[Item] = None
+) -> List[TestReport]:
     hasrequest = hasattr(item, "_request")
-    if hasrequest and not item._request:
-        item._initrequest()
+    if hasrequest and not item._request:  # type: ignore[attr-defined] # noqa: F821
+        item._initrequest()  # type: ignore[attr-defined] # noqa: F821
     rep = call_and_report(item, "setup", log)
     reports = [rep]
     if rep.passed:
@@ -108,12 +113,12 @@ def runtestprotocol(item, log=True, nextitem=None):
     # after all teardown hooks have been called
     # want funcargs and request info to go away
     if hasrequest:
-        item._request = False
-        item.funcargs = None
+        item._request = False  # type: ignore[attr-defined] # noqa: F821
+        item.funcargs = None  # type: ignore[attr-defined] # noqa: F821
     return reports
 
 
-def show_test_item(item):
+def show_test_item(item: Item) -> None:
     """Show test function, parameters and the fixtures of the test item."""
     tw = item.config.get_terminal_writer()
     tw.line()
@@ -125,12 +130,12 @@ def show_test_item(item):
     tw.flush()
 
 
-def pytest_runtest_setup(item):
+def pytest_runtest_setup(item: Item) -> None:
     _update_current_test_var(item, "setup")
     item.session._setupstate.prepare(item)
 
 
-def pytest_runtest_call(item):
+def pytest_runtest_call(item: Item) -> None:
     _update_current_test_var(item, "call")
     try:
         del sys.last_type
@@ -150,13 +155,15 @@ def pytest_runtest_call(item):
         raise e
 
 
-def pytest_runtest_teardown(item, nextitem):
+def pytest_runtest_teardown(item: Item, nextitem: Optional[Item]) -> None:
     _update_current_test_var(item, "teardown")
     item.session._setupstate.teardown_exact(item, nextitem)
     _update_current_test_var(item, None)
 
 
-def _update_current_test_var(item, when):
+def _update_current_test_var(
+    item: Item, when: Optional["Literal['setup', 'call', 'teardown']"]
+) -> None:
     """
     Update :envvar:`PYTEST_CURRENT_TEST` to reflect the current item and stage.
 
@@ -188,11 +195,11 @@ def pytest_report_teststatus(report):
 
 
 def call_and_report(
-    item, when: "Literal['setup', 'call', 'teardown']", log=True, **kwds
-):
+    item: Item, when: "Literal['setup', 'call', 'teardown']", log: bool = True, **kwds
+) -> TestReport:
     call = call_runtest_hook(item, when, **kwds)
     hook = item.ihook
-    report = hook.pytest_runtest_makereport(item=item, call=call)
+    report = hook.pytest_runtest_makereport(item=item, call=call)  # type: TestReport
     if log:
         hook.pytest_runtest_logreport(report=report)
     if check_interactive_exception(call, report):
@@ -200,15 +207,17 @@ def call_and_report(
     return report
 
 
-def check_interactive_exception(call, report):
-    return call.excinfo and not (
+def check_interactive_exception(call: "CallInfo", report: BaseReport) -> bool:
+    return call.excinfo is not None and not (
         hasattr(report, "wasxfail")
         or call.excinfo.errisinstance(Skipped)
         or call.excinfo.errisinstance(bdb.BdbQuit)
     )
 
 
-def call_runtest_hook(item, when: "Literal['setup', 'call', 'teardown']", **kwds):
+def call_runtest_hook(
+    item: Item, when: "Literal['setup', 'call', 'teardown']", **kwds
+) -> "CallInfo":
     if when == "setup":
         ihook = item.ihook.pytest_runtest_setup
     elif when == "call":
@@ -278,13 +287,13 @@ class CallInfo:
             excinfo=excinfo,
         )
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         if self.excinfo is None:
             return "<CallInfo when={!r} result: {!r}>".format(self.when, self._result)
         return "<CallInfo when={!r} excinfo={!r}>".format(self.when, self.excinfo)
 
 
-def pytest_runtest_makereport(item, call):
+def pytest_runtest_makereport(item: Item, call: CallInfo) -> TestReport:
     return TestReport.from_item_and_call(item, call)
 
 

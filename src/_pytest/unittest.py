@@ -1,6 +1,8 @@
 """ discovery and running of std-library "unittest" style tests. """
 import sys
 import traceback
+from typing import Any
+from typing import Generator
 from typing import Iterable
 from typing import Optional
 from typing import Union
@@ -253,7 +255,7 @@ class TestCaseFunction(Function):
 
 
 @hookimpl(tryfirst=True)
-def pytest_runtest_makereport(item, call):
+def pytest_runtest_makereport(item: Item, call: CallInfo) -> None:
     if isinstance(item, TestCaseFunction):
         if item._excinfo:
             call.excinfo = item._excinfo.pop(0)
@@ -263,7 +265,13 @@ def pytest_runtest_makereport(item, call):
                 pass
 
     unittest = sys.modules.get("unittest")
-    if unittest and call.excinfo and call.excinfo.errisinstance(unittest.SkipTest):
+    if (
+        unittest
+        and call.excinfo
+        and call.excinfo.errisinstance(
+            unittest.SkipTest  # type: ignore[attr-defined] # noqa: F821
+        )
+    ):
         # let's substitute the excinfo with a pytest.skip one
         call2 = CallInfo.from_call(
             lambda: pytest.skip(str(call.excinfo.value)), call.when
@@ -275,9 +283,9 @@ def pytest_runtest_makereport(item, call):
 
 
 @hookimpl(hookwrapper=True)
-def pytest_runtest_protocol(item):
+def pytest_runtest_protocol(item: Item) -> Generator[None, None, None]:
     if isinstance(item, TestCaseFunction) and "twisted.trial.unittest" in sys.modules:
-        ut = sys.modules["twisted.python.failure"]
+        ut = sys.modules["twisted.python.failure"]  # type: Any
         Failure__init__ = ut.Failure.__init__
         check_testcase_implements_trial_reporter()
 

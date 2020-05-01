@@ -173,7 +173,7 @@ def async_warn_and_skip(nodeid: str) -> None:
 
 
 @hookimpl(trylast=True)
-def pytest_pyfunc_call(pyfuncitem: "Function"):
+def pytest_pyfunc_call(pyfuncitem: "Function") -> Optional[object]:
     testfunction = pyfuncitem.obj
     if is_async_function(testfunction):
         async_warn_and_skip(pyfuncitem.nodeid)

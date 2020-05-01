@@ -25,10 +25,16 @@ if TYPE_CHECKING:
     from _pytest.main import Session
     from _pytest.nodes import Collector
     from _pytest.nodes import Item
+    from _pytest.nodes import Node
+    from _pytest.python import Function
     from _pytest.python import Metafunc
     from _pytest.python import Module
     from _pytest.python import PyCollector
     from _pytest.reports import BaseReport
+    from _pytest.reports import CollectReport
+    from _pytest.reports import TestReport
+    from _pytest.runner import CallInfo
+    from _pytest.terminal import TerminalReporter
 
 
 hookspec = HookspecMarker("pytest")
@@ -268,7 +274,7 @@ def pytest_collect_file(path: py.path.local, parent) -> "Optional[Collector]":
 # logging hooks for collection
 
 
-def pytest_collectstart(collector):
+def pytest_collectstart(collector: "Collector") -> None:
     """ collector starts collecting. """
 
 
@@ -285,7 +291,7 @@ def pytest_deselected(items):
 
 
 @hookspec(firstresult=True)
-def pytest_make_collect_report(collector):
+def pytest_make_collect_report(collector: "Collector") -> "Optional[CollectReport]":
     """ perform ``collector.collect()`` and return a CollectReport.
 
     Stops at first non-None result, see :ref:`firstresult` """
@@ -319,7 +325,7 @@ def pytest_pycollect_makeitem(
 
 
 @hookspec(firstresult=True)
-def pytest_pyfunc_call(pyfuncitem):
+def pytest_pyfunc_call(pyfuncitem: "Function") -> Optional[object]:
     """ call underlying test function.
 
     Stops at first non-None result, see :ref:`firstresult` """
@@ -330,7 +336,9 @@ def pytest_generate_tests(metafunc: "Metafunc") -> None:
 
 
 @hookspec(firstresult=True)
-def pytest_make_parametrize_id(config: "Config", val, argname) -> Optional[str]:
+def pytest_make_parametrize_id(
+    config: "Config", val: object, argname: str
+) -> Optional[str]:
     """Return a user-friendly string representation of the given ``val`` that will be used
     by @pytest.mark.parametrize calls. Return None if the hook doesn't know about ``val``.
     The parameter name is available as ``argname``, if required.
@@ -349,7 +357,7 @@ def pytest_make_parametrize_id(config: "Config", val, argname) -> Optional[str]:
 
 
 @hookspec(firstresult=True)
-def pytest_runtestloop(session: "Session"):
+def pytest_runtestloop(session: "Session") -> Optional[object]:
     """ called for performing the main runtest loop
     (after collection finished).
 
@@ -360,7 +368,9 @@ def pytest_runtestloop(session: "Session"):
 
 
 @hookspec(firstresult=True)
-def pytest_runtest_protocol(item, nextitem):
+def pytest_runtest_protocol(
+    item: "Item", nextitem: "Optional[Item]"
+) -> Optional[object]:
     """ implements the runtest_setup/call/teardown protocol for
     the given test item, including capturing exceptions and calling
     reporting hooks.
@@ -399,15 +409,15 @@ def pytest_runtest_logfinish(nodeid, location):
     """
 
 
-def pytest_runtest_setup(item):
+def pytest_runtest_setup(item: "Item") -> None:
     """ called before ``pytest_runtest_call(item)``. """
 
 
-def pytest_runtest_call(item):
+def pytest_runtest_call(item: "Item") -> None:
     """ called to execute the test ``item``. """
 
 
-def pytest_runtest_teardown(item, nextitem):
+def pytest_runtest_teardown(item: "Item", nextitem: "Optional[Item]") -> None:
     """ called after ``pytest_runtest_call``.
 
     :arg nextitem: the scheduled-to-be-next test item (None if no further
@@ -418,7 +428,7 @@ def pytest_runtest_teardown(item, nextitem):
 
 
 @hookspec(firstresult=True)
-def pytest_runtest_makereport(item, call):
+def pytest_runtest_makereport(item: "Item", call: "CallInfo") -> Optional[object]:
     """ return a :py:class:`_pytest.runner.TestReport` object
     for the given :py:class:`pytest.Item <_pytest.main.Item>` and
     :py:class:`_pytest.runner.CallInfo`.
@@ -426,7 +436,7 @@ def pytest_runtest_makereport(item, call):
     Stops at first non-None result, see :ref:`firstresult` """
 
 
-def pytest_runtest_logreport(report):
+def pytest_runtest_logreport(report: "TestReport") -> None:
     """ process a test setup/call/teardown report relating to
     the respective phase of executing a test. """
 
@@ -511,7 +521,9 @@ def pytest_unconfigure(config: "Config") -> None:
 # -------------------------------------------------------------------------
 
 
-def pytest_assertrepr_compare(config: "Config", op, left, right):
+def pytest_assertrepr_compare(
+    config: "Config", op: str, left: object, right: object
+) -> Optional[List[str]]:
     """return explanation for comparisons in failing assert expressions.
 
     Return None for no custom explanation, otherwise return a list
@@ -523,7 +535,7 @@ def pytest_assertrepr_compare(config: "Config", op, left, right):
     """
 
 
-def pytest_assertion_pass(item, lineno, orig, expl):
+def pytest_assertion_pass(item, lineno: int, orig: str, expl: str) -> None:
     """
     **(Experimental)**
 
@@ -637,7 +649,9 @@ def pytest_report_teststatus(
     """
 
 
-def pytest_terminal_summary(terminalreporter, exitstatus, config: "Config"):
+def pytest_terminal_summary(
+    terminalreporter: "TerminalReporter", exitstatus: "ExitCode", config: "Config",
+) -> None:
     """Add a section to terminal summary reporting.
 
     :param _pytest.terminal.TerminalReporter terminalreporter: the internal terminal reporter object
@@ -741,7 +755,9 @@ def pytest_keyboard_interrupt(excinfo):
     """ called for keyboard interrupt. """
 
 
-def pytest_exception_interact(node, call, report):
+def pytest_exception_interact(
+    node: "Node", call: "CallInfo", report: "BaseReport"
+) -> None:
     """called when an exception was raised which can potentially be
     interactively handled.
 

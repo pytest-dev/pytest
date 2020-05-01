@@ -11,6 +11,8 @@ from _pytest.compat import TYPE_CHECKING
 from _pytest.config import Config
 from _pytest.config.argparsing import Parser
 from _pytest.main import Session
+from _pytest.nodes import Item
+from _pytest.terminal import TerminalReporter
 
 if TYPE_CHECKING:
     from typing_extensions import Type
@@ -145,7 +147,7 @@ def warning_record_to_str(warning_message):
 
 
 @pytest.hookimpl(hookwrapper=True, tryfirst=True)
-def pytest_runtest_protocol(item):
+def pytest_runtest_protocol(item: Item) -> Generator[None, None, None]:
     with catch_warnings_for_item(
         config=item.config, ihook=item.ihook, when="runtest", item=item
     ):
@@ -162,7 +164,9 @@ def pytest_collection(session: Session) -> Generator[None, None, None]:
 
 
 @pytest.hookimpl(hookwrapper=True)
-def pytest_terminal_summary(terminalreporter):
+def pytest_terminal_summary(
+    terminalreporter: TerminalReporter,
+) -> Generator[None, None, None]:
     config = terminalreporter.config
     with catch_warnings_for_item(
         config=config, ihook=config.hook, when="config", item=None

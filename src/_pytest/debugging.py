@@ -4,12 +4,18 @@ import functools
 import sys
 
 from _pytest import outcomes
+from _pytest.compat import TYPE_CHECKING
 from _pytest.config import Config
 from _pytest.config import ConftestImportFailure
 from _pytest.config import hookimpl
 from _pytest.config import PytestPluginManager
 from _pytest.config.argparsing import Parser
 from _pytest.config.exceptions import UsageError
+from _pytest.nodes import Node
+from _pytest.reports import BaseReport
+
+if TYPE_CHECKING:
+    from _pytest.runner import CallInfo
 
 
 def _validate_usepdb_cls(value):
@@ -259,7 +265,9 @@ class pytestPDB:
 
 
 class PdbInvoke:
-    def pytest_exception_interact(self, node, call, report):
+    def pytest_exception_interact(
+        self, node: Node, call: "CallInfo", report: BaseReport
+    ) -> None:
         capman = node.config.pluginmanager.getplugin("capturemanager")
         if capman:
             capman.suspend_global_capture(in_=True)
@@ -306,7 +314,7 @@ def maybe_wrap_pytest_function_for_tracing(pyfuncitem):
         wrap_pytest_function_for_tracing(pyfuncitem)
 
 
-def _enter_pdb(node, excinfo, rep):
+def _enter_pdb(node: Node, excinfo, rep: BaseReport) -> BaseReport:
     # XXX we re-use the TerminalReporter's terminalwriter
     # because this seems to avoid some encoding related troubles
     # for not completely clear reasons.
@@ -330,7 +338,7 @@ def _enter_pdb(node, excinfo, rep):
     rep.toterminal(tw)
     tw.sep(">", "entering PDB")
     tb = _postmortem_traceback(excinfo)
-    rep._pdbshown = True
+    rep._pdbshown = True  # type: ignore[attr-defined] # noqa: F821
     post_mortem(tb)
     return rep
 

@@ -7,6 +7,7 @@ import py
 
 from _pytest.config import Config
 from _pytest.config.argparsing import Parser
+from _pytest.reports import TestReport
 from _pytest.store import StoreKey
 
 
@@ -66,7 +67,7 @@ class ResultLog:
             testpath = report.fspath
         self.write_log_entry(testpath, lettercode, longrepr)
 
-    def pytest_runtest_logreport(self, report):
+    def pytest_runtest_logreport(self, report: TestReport) -> None:
         if report.when != "call" and report.passed:
             return
         res = self.config.hook.pytest_report_teststatus(
@@ -80,6 +81,7 @@ class ResultLog:
         elif report.passed:
             longrepr = ""
         elif report.skipped:
+            assert report.longrepr is not None
             longrepr = str(report.longrepr[2])
         else:
             longrepr = str(report.longrepr)

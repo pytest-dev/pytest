@@ -26,6 +26,9 @@ from _pytest.nodes import Item
 from _pytest.outcomes import skip
 from _pytest.pathlib import Path
 
+if TYPE_CHECKING:
+    from _pytest.runner import CallInfo
+
 
 def getslaveinfoline(node):
     try:
@@ -42,7 +45,8 @@ def getslaveinfoline(node):
 class BaseReport:
     when = None  # type: Optional[str]
     location = None  # type: Optional[Tuple[str, Optional[int], str]]
-    longrepr = None
+    # TODO: Improve this Any.
+    longrepr = None  # type: Optional[Any]
     sections = []  # type: List[Tuple[str, str]]
     nodeid = None  # type: str
 
@@ -270,7 +274,7 @@ class TestReport(BaseReport):
         )
 
     @classmethod
-    def from_item_and_call(cls, item, call) -> "TestReport":
+    def from_item_and_call(cls, item: Item, call: "CallInfo") -> "TestReport":
         """
         Factory method to create and fill a TestReport with standard item and call info.
         """
@@ -281,7 +285,8 @@ class TestReport(BaseReport):
         sections = []
         if not call.excinfo:
             outcome = "passed"
-            longrepr = None
+            # TODO: Improve this Any.
+            longrepr = None  # type: Optional[Any]
         else:
             if not isinstance(excinfo, ExceptionInfo):
                 outcome = "failed"

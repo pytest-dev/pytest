@@ -1,11 +1,13 @@
 import io
 import os
 import sys
+from typing import Generator
 from typing import TextIO
 
 import pytest
 from _pytest.config import Config
 from _pytest.config.argparsing import Parser
+from _pytest.nodes import Item
 from _pytest.store import StoreKey
 
 
@@ -82,7 +84,7 @@ class FaultHandlerHooks:
         return float(config.getini("faulthandler_timeout") or 0.0)
 
     @pytest.hookimpl(hookwrapper=True, trylast=True)
-    def pytest_runtest_protocol(self, item):
+    def pytest_runtest_protocol(self, item: Item) -> Generator[None, None, None]:
         timeout = self.get_timeout_config_value(item.config)
         stderr = item.config._store[fault_handler_stderr_key]
         if timeout > 0 and stderr is not None:
@@ -105,7 +107,7 @@ class FaultHandlerHooks:
         faulthandler.cancel_dump_traceback_later()
 
     @pytest.hookimpl(tryfirst=True)
-    def pytest_exception_interact(self):
+    def pytest_exception_interact(self) -> None:
         """Cancel any traceback dumping due to an interactive exception being
         raised.
         """

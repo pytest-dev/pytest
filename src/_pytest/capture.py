@@ -17,6 +17,9 @@ import pytest
 from _pytest.compat import TYPE_CHECKING
 from _pytest.config import Config
 from _pytest.config.argparsing import Parser
+from _pytest.fixtures import SubRequest
+from _pytest.nodes import Collector
+from _pytest.nodes import Item
 
 if TYPE_CHECKING:
     from typing_extensions import Literal
@@ -710,7 +713,7 @@ class CaptureManager:
     # Hooks
 
     @pytest.hookimpl(hookwrapper=True)
-    def pytest_make_collect_report(self, collector):
+    def pytest_make_collect_report(self, collector: Collector):
         if isinstance(collector, pytest.File):
             self.resume_global_capture()
             outcome = yield
@@ -725,17 +728,17 @@ class CaptureManager:
             yield
 
     @pytest.hookimpl(hookwrapper=True)
-    def pytest_runtest_setup(self, item):
+    def pytest_runtest_setup(self, item: Item) -> Generator[None, None, None]:
         with self.item_capture("setup", item):
             yield
 
     @pytest.hookimpl(hookwrapper=True)
-    def pytest_runtest_call(self, item):
+    def pytest_runtest_call(self, item: Item) -> Generator[None, None, None]:
         with self.item_capture("call", item):
             yield
 
     @pytest.hookimpl(hookwrapper=True)
-    def pytest_runtest_teardown(self, item):
+    def pytest_runtest_teardown(self, item: Item) -> Generator[None, None, None]:
         with self.item_capture("teardown", item):
             yield
 

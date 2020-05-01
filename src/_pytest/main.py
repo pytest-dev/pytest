@@ -31,6 +31,7 @@ from _pytest.config.argparsing import Parser
 from _pytest.fixtures import FixtureManager
 from _pytest.outcomes import exit
 from _pytest.reports import CollectReport
+from _pytest.reports import TestReport
 from _pytest.runner import collect_one_node
 from _pytest.runner import SetupState
 
@@ -441,7 +442,7 @@ class Session(nodes.FSCollector):
             raise self.Interrupted(self.shouldstop)
 
     @hookimpl(tryfirst=True)
-    def pytest_runtest_logreport(self, report) -> None:
+    def pytest_runtest_logreport(self, report: TestReport) -> None:
         if report.failed and not hasattr(report, "wasxfail"):
             self.testsfailed += 1
             maxfail = self.config.getvalue("maxfail")

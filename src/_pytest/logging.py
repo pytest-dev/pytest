@@ -20,6 +20,7 @@ from _pytest.config import _strtobool
 from _pytest.config import Config
 from _pytest.config import create_terminal_writer
 from _pytest.config.argparsing import Parser
+from _pytest.main import Session
 from _pytest.pathlib import Path
 from _pytest.store import StoreKey
 
@@ -618,7 +619,7 @@ class LoggingPlugin:
                 yield
 
     @pytest.hookimpl(hookwrapper=True)
-    def pytest_runtestloop(self, session):
+    def pytest_runtestloop(self, session: Session) -> Generator[None, None, None]:
         """Runs all collected test items."""
 
         if session.config.option.collectonly:
@@ -655,20 +656,21 @@ class LoggingPlugin:
             item.add_report_section(when, "log", log)
 
     @pytest.hookimpl(hookwrapper=True)
-    def pytest_runtest_setup(self, item):
+    def pytest_runtest_setup(self, item: nodes.Item) -> Generator[None, None, None]:
         self.log_cli_handler.set_when("setup")
 
-        item._store[catch_log_records_key] = {}
+        empty = {}  # type: Dict[str, List[logging.LogRecord]]
+        item._store[catch_log_records_key] = empty
         yield from self._runtest_for(item, "setup")
 
     @pytest.hookimpl(hookwrapper=True)
-    def pytest_runtest_call(self, item):
+    def pytest_runtest_call(self, item: nodes.Item) -> Generator[None, None, None]:
         self.log_cli_handler.set_when("call")
 
         yield from self._runtest_for(item, "call")
 
     @pytest.hookimpl(hookwrapper=True)
-    def pytest_runtest_teardown(self, item):
+    def pytest_runtest_teardown(self, item: nodes.Item) -> Generator[None, None, None]:
         self.log_cli_handler.set_when("teardown")
 
         yield from self._runtest_for(item, "teardown")
@@ -676,7 +678,7 @@ class LoggingPlugin:
         del item._store[catch_log_handler_key]
 
     @pytest.hookimpl
-    def pytest_runtest_logfinish(self):
+    def pytest_runtest_logfinish(self) -> None:
         self.log_cli_handler.set_when("finish")
 
     @pytest.hookimpl(hookwrapper=True, tryfirst=True)

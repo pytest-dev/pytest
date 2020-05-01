@@ -12,6 +12,7 @@ from fnmatch import fnmatch
 from io import StringIO
 from typing import Callable
 from typing import Dict
+from typing import Generator
 from typing import Iterable
 from typing import List
 from typing import Optional
@@ -138,7 +139,7 @@ class LsofFdLeakChecker:
             return True
 
     @pytest.hookimpl(hookwrapper=True, tryfirst=True)
-    def pytest_runtest_protocol(self, item):
+    def pytest_runtest_protocol(self, item: Item) -> Generator[None, None, None]:
         lines1 = self.get_open_files()
         yield
         if hasattr(sys, "pypy_version_info"):

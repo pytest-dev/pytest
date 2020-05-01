@@ -12,6 +12,7 @@ from functools import partial
 from typing import Any
 from typing import Callable
 from typing import Dict
+from typing import Generator
 from typing import List
 from typing import Mapping
 from typing import Optional
@@ -30,14 +31,18 @@ from _pytest import timing
 from _pytest._io import TerminalWriter
 from _pytest._io.wcwidth import wcswidth
 from _pytest.compat import order_preserving_dict
+from _pytest.compat import TYPE_CHECKING
 from _pytest.config import _PluggyPlugin
 from _pytest.config import Config
 from _pytest.config import ExitCode
 from _pytest.config.argparsing import Parser
 from _pytest.deprecated import TERMINALWRITER_WRITER
-from _pytest.main import Session
 from _pytest.reports import CollectReport
 from _pytest.reports import TestReport
+
+if TYPE_CHECKING:
+    from _pytest.main import Session
+
 
 REPORT_COLLECTING_RESOLUTION = 0.5
 
@@ -610,7 +615,7 @@ class TerminalReporter:
             self.write_line(line)
 
     @pytest.hookimpl(trylast=True)
-    def pytest_sessionstart(self, session: Session) -> None:
+    def pytest_sessionstart(self, session: "Session") -> None:
         self._session = session
         self._sessionstarttime = timing.time()
         if not self.showheader:
@@ -720,7 +725,9 @@ class TerminalReporter:
                             self._tw.line("{}{}".format(indent + "  ", line))
 
     @pytest.hookimpl(hookwrapper=True)
-    def pytest_sessionfinish(self, session: Session, exitstatus: Union[int, ExitCode]):
+    def pytest_sessionfinish(
+        self, session: "Session", exitstatus: Union[int, ExitCode]
+    ):
         outcome = yield
         outcome.get_result()
         self._tw.line("")
@@ -745,7 +752,7 @@ class TerminalReporter:
         self.summary_stats()
 
     @pytest.hookimpl(hookwrapper=True)
-    def pytest_terminal_summary(self):
+    def pytest_terminal_summary(self) -> Generator[None, None, None]:
         self.summary_errors()
         self.summary_failures()
         self.summary_warnings()

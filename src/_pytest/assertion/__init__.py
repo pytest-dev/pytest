@@ -4,6 +4,7 @@ support for presenting detailed information in failing assertions.
 import sys
 from typing import Any
 from typing import List
+from typing import Generator
 from typing import Optional
 
 from _pytest.assertion import rewrite
@@ -14,6 +15,7 @@ from _pytest.compat import TYPE_CHECKING
 from _pytest.config import Config
 from _pytest.config import hookimpl
 from _pytest.config.argparsing import Parser
+from _pytest.nodes import Item
 
 if TYPE_CHECKING:
     from _pytest.main import Session
@@ -113,7 +115,7 @@ def pytest_collection(session: "Session") -> None:
 
 
 @hookimpl(tryfirst=True, hookwrapper=True)
-def pytest_runtest_protocol(item):
+def pytest_runtest_protocol(item: Item) -> Generator[None, None, None]:
     """Setup the pytest_assertrepr_compare and pytest_assertion_pass hooks
 
     The rewrite module will use util._reprcompare if
@@ -122,8 +124,7 @@ def pytest_runtest_protocol(item):
     comparison for the test.
     """
 
-    def callbinrepr(op, left, right):
-        # type: (str, object, object) -> Optional[str]
+    def callbinrepr(op, left: object, right: object) -> Optional[str]:
         """Call the pytest_assertrepr_compare hook and prepare the result
 
         This uses the first result from the hook and then ensures the
@@ -156,7 +157,7 @@ def pytest_runtest_protocol(item):
 
     if item.ihook.pytest_assertion_pass.get_hookimpls():
 
-        def call_assertion_pass_hook(lineno, orig, expl):
+        def call_assertion_pass_hook(lineno: int, orig: str, expl: str) -> None:
             item.ihook.pytest_assertion_pass(
                 item=item, lineno=lineno, orig=orig, expl=expl
             )

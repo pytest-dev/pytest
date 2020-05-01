@@ -444,14 +444,12 @@ def _call_reprcompare(ops, results, expls, each_obj):
     return expl
 
 
-def _call_assertion_pass(lineno, orig, expl):
-    # type: (int, str, str) -> None
+def _call_assertion_pass(lineno: int, orig: str, expl: str) -> None:
     if util._assertion_pass is not None:
         util._assertion_pass(lineno, orig, expl)
 
 
-def _check_if_assertion_pass_impl():
-    # type: () -> bool
+def _check_if_assertion_pass_impl() -> bool:
     """Checks if any plugins implement the pytest_assertion_pass hook
     in order not to generate explanation unecessarily (might be expensive)"""
     return True if util._assertion_pass else False
