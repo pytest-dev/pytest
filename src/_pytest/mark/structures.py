@@ -3,6 +3,7 @@ import inspect
 import typing
 import warnings
 from typing import Any
+from typing import Callable
 from typing import Iterable
 from typing import List
 from typing import Mapping
@@ -11,6 +12,7 @@ from typing import Optional
 from typing import Sequence
 from typing import Set
 from typing import Tuple
+from typing import TypeVar
 from typing import Union
 
 import attr
@@ -19,6 +21,7 @@ from .._code import getfslineno
 from ..compat import ascii_escaped
 from ..compat import NOTSET
 from ..compat import NotSetType
+from ..compat import overload
 from ..compat import TYPE_CHECKING
 from _pytest.config import Config
 from _pytest.outcomes import fail
@@ -240,6 +243,12 @@ class Mark:
         )
 
 
+# A generic parameter designating an object to which a Mark may
+# be applied -- a test function (callable) or class.
+# Note: a lambda is not allowed, but this can't be represented.
+_Markable = TypeVar("_Markable", bound=Union[Callable[..., object], type])
+
+
 @attr.s
 class MarkDecorator:
     """A decorator for applying a mark on test functions and classes.
@@ -311,7 +320,20 @@ class MarkDecorator:
         mark = Mark(self.name, args, kwargs)
         return self.__class__(self.mark.combined_with(mark))
 
-    def __call__(self, *args: object, **kwargs: object):
+    # Type ignored because the overloads overlap with an incompatible
+    # return type. Not much we can do about that. Thankfully mypy picks
+    # the first match so it works out even if we break the rules.
+    @overload
+    def __call__(self, arg: _Markable) -> _Markable:  # type: ignore[misc] # noqa: F821
+        raise NotImplementedError()
+
+    @overload  # noqa: F811
+    def __call__(  # noqa: F811
+        self, *args: object, **kwargs: object
+    ) -> "MarkDecorator":
+        raise NotImplementedError()
+
+    def __call__(self, *args: object, **kwargs: object):  # noqa: F811
         """Call the MarkDecorator."""
         if args and not kwargs:
             func = args[0]
