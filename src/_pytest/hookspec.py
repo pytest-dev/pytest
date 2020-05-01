@@ -6,6 +6,7 @@ from typing import Optional
 from typing import Tuple
 from typing import Union
 
+import py.path
 from pluggy import HookspecMarker
 
 from .deprecated import COLLECT_DIRECTORY_HOOK
@@ -20,8 +21,13 @@ if TYPE_CHECKING:
     from _pytest.config import _PluggyPlugin
     from _pytest.config.argparsing import Parser
     from _pytest.main import Session
+    from _pytest.nodes import Collector
+    from _pytest.nodes import Item
     from _pytest.python import Metafunc
+    from _pytest.python import Module
+    from _pytest.python import PyCollector
     from _pytest.reports import BaseReport
+
 
 hookspec = HookspecMarker("pytest")
 
@@ -249,7 +255,7 @@ def pytest_collect_directory(path, parent):
     """
 
 
-def pytest_collect_file(path, parent):
+def pytest_collect_file(path: py.path.local, parent) -> "Optional[Collector]":
     """ return collection Node or None for the given path. Any new node
     needs to have the specified ``parent`` as a parent.
 
@@ -289,7 +295,7 @@ def pytest_make_collect_report(collector):
 
 
 @hookspec(firstresult=True)
-def pytest_pycollect_makemodule(path, parent):
+def pytest_pycollect_makemodule(path: py.path.local, parent) -> "Optional[Module]":
     """ return a Module collector or None for the given path.
     This hook will be called for each matching test module path.
     The pytest_collect_file hook needs to be used if you want to
@@ -302,7 +308,9 @@ def pytest_pycollect_makemodule(path, parent):
 
 
 @hookspec(firstresult=True)
-def pytest_pycollect_makeitem(collector, name, obj):
+def pytest_pycollect_makeitem(
+    collector: "PyCollector", name: str, obj
+) -> "Union[None, Item, Collector, List[Union[Item, Collector]]]":
     """ return custom item/collector for a python object in a module, or None.
 
     Stops at first non-None result, see :ref:`firstresult` """

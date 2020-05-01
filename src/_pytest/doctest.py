@@ -7,6 +7,7 @@ import traceback
 import warnings
 from contextlib import contextmanager
 from typing import Dict
+from typing import Iterable
 from typing import List
 from typing import Optional
 from typing import Sequence
@@ -109,13 +110,18 @@ def pytest_unconfigure() -> None:
     RUNNER_CLASS = None
 
 
-def pytest_collect_file(path: py.path.local, parent):
+def pytest_collect_file(
+    path: py.path.local, parent
+) -> Optional[Union["DoctestModule", "DoctestTextfile"]]:
     config = parent.config
     if path.ext == ".py":
         if config.option.doctestmodules and not _is_setup_py(path):
-            return DoctestModule.from_parent(parent, fspath=path)
+            mod = DoctestModule.from_parent(parent, fspath=path)  # type: DoctestModule
+            return mod
     elif _is_doctest(config, path, parent):
-        return DoctestTextfile.from_parent(parent, fspath=path)
+        txt = DoctestTextfile.from_parent(parent, fspath=path)  # type: DoctestTextfile
+        return txt
+    return None
 
 
 def _is_setup_py(path: py.path.local) -> bool:
@@ -365,7 +371,7 @@ def _get_continue_on_failure(config):
 class DoctestTextfile(pytest.Module):
     obj = None
 
-    def collect(self):
+    def collect(self) -> Iterable[DoctestItem]:
         import doctest
 
         # inspired by doctest.testfile; ideally we would use it directly,
@@ -444,7 +450,7 @@ def _patch_unwrap_mock_aware():
 
 
 class DoctestModule(pytest.Module):
-    def collect(self):
+    def collect(self) -> Iterable[DoctestItem]:
         import doctest
 
         class MockAwareDocTestFinder(doctest.DocTestFinder):

@@ -43,9 +43,9 @@ from _pytest.compat import REGEX_TYPE
 from _pytest.compat import safe_getattr
 from _pytest.compat import safe_isclass
 from _pytest.compat import STRING_TYPES
+from _pytest.compat import TYPE_CHECKING
 from _pytest.config import Config
 from _pytest.config import ExitCode
-from _pytest.compat import TYPE_CHECKING
 from _pytest.config import hookimpl
 from _pytest.config.argparsing import Parser
 from _pytest.deprecated import FUNCARGNAMES
@@ -184,16 +184,20 @@ def pytest_pyfunc_call(pyfuncitem: "Function"):
     return True
 
 
-def pytest_collect_file(path, parent):
+def pytest_collect_file(path: py.path.local, parent) -> Optional["Module"]:
     ext = path.ext
     if ext == ".py":
         if not parent.session.isinitpath(path):
             if not path_matches_patterns(
                 path, parent.config.getini("python_files") + ["__init__.py"]
             ):
-                return
+                return None
         ihook = parent.session.gethookproxy(path)
-        return ihook.pytest_pycollect_makemodule(path=path, parent=parent)
+        module = ihook.pytest_pycollect_makemodule(
+            path=path, parent=parent
+        )  # type: Module
+        return module
+    return None
 
 
 def path_matches_patterns(path, patterns):
@@ -201,14 +205,16 @@ def path_matches_patterns(path, patterns):
     return any(path.fnmatch(pattern) for pattern in patterns)
 
 
-def pytest_pycollect_makemodule(path, parent):
+def pytest_pycollect_makemodule(path: py.path.local, parent) -> "Module":
     if path.basename == "__init__.py":
-        return Package.from_parent(parent, fspath=path)
-    return Module.from_parent(parent, fspath=path)
+        pkg = Package.from_parent(parent, fspath=path)  # type: Package
+        return pkg
+    mod = Module.from_parent(parent, fspath=path)  # type: Module
+    return mod
 
 
 @hookimpl(hookwrapper=True)
-def pytest_pycollect_makeitem(collector, name, obj):
+def pytest_pycollect_makeitem(collector: "PyCollector", name: str, obj):
     outcome = yield
     res = outcome.get_result()
     if res is not None:
@@ -372,7 +378,7 @@ class PyCollector(PyobjMixin, nodes.Collector):
                 return True
         return False
 
-    def collect(self):
+    def collect(self) -> Iterable[Union[nodes.Item, nodes.Collector]]:
         if not getattr(self.obj, "__test__", True):
             return []
 
@@ -381,8 +387,8 @@ class PyCollector(PyobjMixin, nodes.Collector):
         dicts = [getattr(self.obj, "__dict__", {})]
         for basecls in self.obj.__class__.__mro__:
             dicts.append(basecls.__dict__)
-        seen = set()
-        values = []
+        seen = set()  # type: Set[str]
+        values = []  # type: List[Union[nodes.Item, nodes.Collector]]
         for dic in dicts:
             # Note: seems like the dict can change during iteration -
             # be careful not to remove the list() without consideration.
@@ -404,9 +410,16 @@ class PyCollector(PyobjMixin, nodes.Collector):
         values.sort(key=sort_key)
         return values
 
-    def _makeitem(self, name, obj):
+    def _makeitem(
+        self, name: str, obj
+    ) -> Union[
+        None, nodes.Item, nodes.Collector, List[Union[nodes.Item, nodes.Collector]]
+    ]:
         # assert self.ihook.fspath == self.fspath, self
-        return self.ihook.pytest_pycollect_makeitem(collector=self, name=name, obj=obj)
+        item = self.ihook.pytest_pycollect_makeitem(
+            collector=self, name=name, obj=obj
+        )  # type: Union[None, nodes.Item, nodes.Collector, List[Union[nodes.Item, nodes.Collector]]]
+        return item
 
     def _genfunctions(self, name, funcobj):
         module = self.getparent(Module).obj
@@ -458,7 +471,7 @@ class Module(nodes.File, PyCollector):
     def _getobj(self):
         return self._importtestmodule()
 
-    def collect(self):
+    def collect(self) -> Iterable[Union[nodes.Item, nodes.Collector]]:
         self._inject_setup_module_fixture()
         self._inject_setup_function_fixture()
         self.session._fixturemanager.parsefactories(self)
@@ -603,17 +616,17 @@ class Package(Module):
     def gethookproxy(self, fspath: py.path.local):
         return super()._gethookproxy(fspath)
 
-    def isinitpath(self, path):
+    def isinitpath(self, path: py.path.local) -> bool:
         return path in self.session._initialpaths
 
-    def collect(self):
+    def collect(self) -> Iterable[Union[nodes.Item, nodes.Collector]]:
         this_path = self.fspath.dirpath()
         init_module = this_path.join("__init__.py")
         if init_module.check(file=1) and path_matches_patterns(
             init_module, self.config.getini("python_files")
         ):
             yield Module.from_parent(self, fspath=init_module)
-        pkg_prefixes = set()
+        pkg_prefixes = set()  # type: Set[py.path.local]
         for path in this_path.visit(rec=self._recurse, bf=True, sort=True):
             # We will visit our own __init__.py file, in which case we skip it.
             is_file = path.isfile()
@@ -670,10 +683,11 @@ class Class(PyCollector):
         """
         return super().from_parent(name=name, parent=parent)
 
-    def collect(self):
+    def collect(self) -> Iterable[Union[nodes.Item, nodes.Collector]]:
         if not safe_getattr(self.obj, "__test__", True):
             return []
         if hasinit(self.obj):
+            assert self.parent is not None
             self.warn(
                 PytestCollectionWarning(
                     "cannot collect test class %r because it has a "
@@ -683,6 +697,7 @@ class Class(PyCollector):
             )
             return []
         elif hasnew(self.obj):
+            assert self.parent is not None
             self.warn(
                 PytestCollectionWarning(
                     "cannot collect test class %r because it has a "
@@ -756,7 +771,7 @@ class Instance(PyCollector):
     def _getobj(self):
         return self.parent.obj()
 
-    def collect(self):
+    def collect(self) -> Iterable[Union[nodes.Item, nodes.Collector]]:
         self.session._fixturemanager.parsefactories(self)
         return super().collect()
 

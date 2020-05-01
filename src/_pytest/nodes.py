@@ -4,8 +4,10 @@ from functools import lru_cache
 from typing import Any
 from typing import Callable
 from typing import Dict
+from typing import Iterable
 from typing import List
 from typing import Optional
+from typing import Sequence
 from typing import Set
 from typing import Tuple
 from typing import Union
@@ -226,7 +228,7 @@ class Node(metaclass=NodeMeta):
 
     # methods for ordering nodes
     @property
-    def nodeid(self):
+    def nodeid(self) -> str:
         """ a ::-separated string denoting its collection tree address. """
         return self._nodeid
 
@@ -423,7 +425,7 @@ class Collector(Node):
     class CollectError(Exception):
         """ an error during collection, contains a custom message. """
 
-    def collect(self):
+    def collect(self) -> Iterable[Union["Item", "Collector"]]:
         """ returns a list of children (items and collectors)
             for this collection node.
         """
@@ -522,6 +524,9 @@ class FSCollector(Collector):
             proxy = self.config.hook
         return proxy
 
+    def gethookproxy(self, fspath: py.path.local):
+        raise NotImplementedError()
+
     def _recurse(self, dirpath: py.path.local) -> bool:
         if dirpath.basename == "__pycache__":
             return False
@@ -535,7 +540,12 @@ class FSCollector(Collector):
         ihook.pytest_collect_directory(path=dirpath, parent=self)
         return True
 
-    def _collectfile(self, path, handle_dupes=True):
+    def isinitpath(self, path: py.path.local) -> bool:
+        raise NotImplementedError()
+
+    def _collectfile(
+        self, path: py.path.local, handle_dupes: bool = True
+    ) -> Sequence[Collector]:
         assert (
             path.isfile()
         ), "{!r} is not a file (isdir={!r}, exists={!r}, islink={!r})".format(
@@ -555,7 +565,7 @@ class FSCollector(Collector):
                 else:
                     duplicate_paths.add(path)
 
-        return ihook.pytest_collect_file(path=path, parent=self)
+        return ihook.pytest_collect_file(path=path, parent=self)  # type: ignore[no-any-return] # noqa: F723
 
 
 class File(FSCollector):
