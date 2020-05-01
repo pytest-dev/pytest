@@ -537,28 +537,24 @@ class TestTrialUnittest:
         )
         result.stdout.fnmatch_lines(
             [
-                "test_trial_error.py::TC::test_four SKIPPED",
+                "test_trial_error.py::TC::test_four FAILED",
                 "test_trial_error.py::TC::test_four ERROR",
                 "test_trial_error.py::TC::test_one FAILED",
                 "test_trial_error.py::TC::test_three FAILED",
-                "test_trial_error.py::TC::test_two SKIPPED",
-                "test_trial_error.py::TC::test_two ERROR",
+                "test_trial_error.py::TC::test_two FAILED",
                 "*ERRORS*",
                 "*_ ERROR at teardown of TC.test_four _*",
-                "NOTE: Incompatible Exception Representation, displaying natively:",
-                "*DelayedCalls*",
-                "*_ ERROR at teardown of TC.test_two _*",
-                "NOTE: Incompatible Exception Representation, displaying natively:",
                 "*DelayedCalls*",
                 "*= FAILURES =*",
-                # "*_ TC.test_four _*",
-                # "*NameError*crash*",
+                "*_ TC.test_four _*",
+                "*NameError*crash*",
                 "*_ TC.test_one _*",
                 "*NameError*crash*",
                 "*_ TC.test_three _*",
-                "NOTE: Incompatible Exception Representation, displaying natively:",
                 "*DelayedCalls*",
-                "*= 2 failed, 2 skipped, 2 errors in *",
+                "*_ TC.test_two _*",
+                "*NameError*crash*",
+                "*= 4 failed, 1 error in *",
             ]
         )
 
