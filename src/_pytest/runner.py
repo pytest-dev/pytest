@@ -321,9 +321,9 @@ class SetupState:
 
     def __init__(self):
         self.stack = []  # type: List[Node]
-        self._finalizers = {}  # type: Dict[Node, List[Callable[[], None]]]
+        self._finalizers = {}  # type: Dict[Node, List[Callable[[], object]]]
 
-    def addfinalizer(self, finalizer, colitem):
+    def addfinalizer(self, finalizer: Callable[[], object], colitem) -> None:
         """ attach a finalizer to the given colitem. """
         assert colitem and not isinstance(colitem, tuple)
         assert callable(finalizer)
@@ -334,7 +334,7 @@ class SetupState:
         colitem = self.stack.pop()
         self._teardown_with_finalization(colitem)
 
-    def _callfinalizers(self, colitem):
+    def _callfinalizers(self, colitem) -> None:
         finalizers = self._finalizers.pop(colitem, None)
         exc = None
         while finalizers:
@@ -349,24 +349,24 @@ class SetupState:
         if exc:
             raise exc
 
-    def _teardown_with_finalization(self, colitem):
+    def _teardown_with_finalization(self, colitem) -> None:
         self._callfinalizers(colitem)
         colitem.teardown()
         for colitem in self._finalizers:
             assert colitem in self.stack
 
-    def teardown_all(self):
+    def teardown_all(self) -> None:
         while self.stack:
             self._pop_and_teardown()
         for key in list(self._finalizers):
             self._teardown_with_finalization(key)
         assert not self._finalizers
 
-    def teardown_exact(self, item, nextitem):
+    def teardown_exact(self, item, nextitem) -> None:
         needed_collectors = nextitem and nextitem.listchain() or []
         self._teardown_towards(needed_collectors)
 
-    def _teardown_towards(self, needed_collectors):
+    def _teardown_towards(self, needed_collectors) -> None:
         exc = None
         while self.stack:
             if self.stack == needed_collectors[: len(self.stack)]:
@@ -381,7 +381,7 @@ class SetupState:
         if exc:
             raise exc
 
-    def prepare(self, colitem):
+    def prepare(self, colitem) -> None:
         """ setup objects along the collector chain to the test-method
             and teardown previously setup objects."""
         needed_collectors = colitem.listchain()
@@ -390,14 +390,14 @@ class SetupState:
         # check if the last collection node has raised an error
         for col in self.stack:
             if hasattr(col, "_prepare_exc"):
-                exc = col._prepare_exc
+                exc = col._prepare_exc  # type: ignore[attr-defined] # noqa: F821
                 raise exc
         for col in needed_collectors[len(self.stack) :]:
             self.stack.append(col)
             try:
                 col.setup()
             except TEST_OUTCOME as e:
-                col._prepare_exc = e
+                col._prepare_exc = e  # type: ignore[attr-defined] # noqa: F821
                 raise e
 
 

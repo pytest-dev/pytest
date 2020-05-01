@@ -162,7 +162,7 @@ class KeywordMatcher:
         return False
 
 
-def deselect_by_keyword(items, config):
+def deselect_by_keyword(items, config: Config) -> None:
     keywordexpr = config.option.keyword.lstrip()
     if not keywordexpr:
         return
@@ -218,7 +218,7 @@ class MarkMatcher:
         return name in self.own_mark_names
 
 
-def deselect_by_mark(items, config):
+def deselect_by_mark(items, config: Config) -> None:
     matchexpr = config.option.markexpr
     if not matchexpr:
         return
@@ -243,7 +243,7 @@ def deselect_by_mark(items, config):
         items[:] = remaining
 
 
-def pytest_collection_modifyitems(items, config):
+def pytest_collection_modifyitems(items, config: Config) -> None:
     deselect_by_keyword(items, config)
     deselect_by_mark(items, config)
 

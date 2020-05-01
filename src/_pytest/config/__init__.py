@@ -14,6 +14,7 @@ from types import TracebackType
 from typing import Any
 from typing import Callable
 from typing import Dict
+from typing import IO
 from typing import List
 from typing import Optional
 from typing import Sequence
@@ -295,7 +296,7 @@ class PytestPluginManager(PluginManager):
     * ``conftest.py`` loading during start-up;
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         import _pytest.assertion
 
         super().__init__("pytest")
@@ -315,7 +316,7 @@ class PytestPluginManager(PluginManager):
         self.add_hookspecs(_pytest.hookspec)
         self.register(self)
         if os.environ.get("PYTEST_DEBUG"):
-            err = sys.stderr
+            err = sys.stderr  # type: IO[str]
             encoding = getattr(err, "encoding", "utf8")
             try:
                 err = open(
@@ -377,7 +378,7 @@ class PytestPluginManager(PluginManager):
                 }
         return opts
 
-    def register(self, plugin, name=None):
+    def register(self, plugin: _PluggyPlugin, name: Optional[str] = None):
         if name in _pytest.deprecated.DEPRECATED_EXTERNAL_PLUGINS:
             warnings.warn(
                 PytestConfigWarning(
@@ -552,7 +553,7 @@ class PytestPluginManager(PluginManager):
     #
     #
 
-    def consider_preparse(self, args, *, exclude_only=False):
+    def consider_preparse(self, args, *, exclude_only: bool = False) -> None:
         i = 0
         n = len(args)
         while i < n:
@@ -573,7 +574,7 @@ class PytestPluginManager(PluginManager):
                     continue
                 self.consider_pluginarg(parg)
 
-    def consider_pluginarg(self, arg):
+    def consider_pluginarg(self, arg) -> None:
         if arg.startswith("no:"):
             name = arg[3:]
             if name in essential_plugins:
@@ -598,13 +599,13 @@ class PytestPluginManager(PluginManager):
                     del self._name2plugin["pytest_" + name]
             self.import_plugin(arg, consider_entry_points=True)
 
-    def consider_conftest(self, conftestmodule):
+    def consider_conftest(self, conftestmodule) -> None:
         self.register(conftestmodule, name=conftestmodule.__file__)
 
-    def consider_env(self):
+    def consider_env(self) -> None:
         self._import_plugin_specs(os.environ.get("PYTEST_PLUGINS"))
 
-    def consider_module(self, mod):
+    def consider_module(self, mod: types.ModuleType) -> None:
         self._import_plugin_specs(getattr(mod, "pytest_plugins", []))
 
     def _import_plugin_specs(self, spec):
@@ -612,7 +613,7 @@ class PytestPluginManager(PluginManager):
         for import_spec in plugins:
             self.import_plugin(import_spec)
 
-    def import_plugin(self, modname, consider_entry_points=False):
+    def import_plugin(self, modname: str, consider_entry_points: bool = False) -> None:
         """
         Imports a plugin with ``modname``. If ``consider_entry_points`` is True, entry point
         names are also considered to find a plugin.
@@ -843,19 +844,19 @@ class Config:
         """Backward compatibility"""
         return py.path.local(str(self.invocation_params.dir))
 
-    def add_cleanup(self, func):
+    def add_cleanup(self, func) -> None:
         """ Add a function to be called when the config object gets out of
         use (usually coninciding with pytest_unconfigure)."""
         self._cleanup.append(func)
 
-    def _do_configure(self):
+    def _do_configure(self) -> None:
         assert not self._configured
         self._configured = True
         with warnings.catch_warnings():
             warnings.simplefilter("default")
             self.hook.pytest_configure.call_historic(kwargs=dict(config=self))
 
-    def _ensure_unconfigure(self):
+    def _ensure_unconfigure(self) -> None:
         if self._configured:
             self._configured = False
             self.hook.pytest_unconfigure(config=self)

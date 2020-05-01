@@ -271,7 +271,7 @@ class MarkDecorator:
         return self.with_args(*args, **kwargs)
 
 
-def get_unpacked_marks(obj):
+def get_unpacked_marks(obj) -> List[Mark]:
     """
     obtain the unpacked marks that are stored on an object
     """
@@ -400,8 +400,8 @@ class NodeKeywords(MutableMapping):
             seen.update(self.parent.keywords)
         return seen
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self._seen())
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "<NodeKeywords for node {}>".format(self.node)
