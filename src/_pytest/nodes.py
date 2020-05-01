@@ -474,11 +474,11 @@ class FSCollector(Collector):
         self._norecursepatterns = self.config.getini("norecursedirs")
 
     @classmethod
-    def from_parent(cls, parent, *, fspath):
+    def from_parent(cls, parent, *, fspath, **kw):
         """
         The public constructor
         """
-        return super().from_parent(parent=parent, fspath=fspath)
+        return super().from_parent(parent=parent, fspath=fspath, **kw)
 
     def _gethookproxy(self, fspath: py.path.local):
         # check if we have the common case of running
