@@ -1044,12 +1044,12 @@ class TestTruncateExplanation:
         result.stdout.fnmatch_lines(["* 6*"])
 
     @pytest.mark.parametrize(
-        argnames=['n'],
+        argnames=["n"],
         argvalues=[[26], [27]],
     )
     def test_more_than_52_not_garbage(self, n, monkeypatch, testdir):
-        a = 'a\n' * n
-        b = 'b\n' * n
+        a = "a\n" * n
+        b = "b\n" * n
 
         testdir.makepyfile(
             r"""
@@ -1057,11 +1057,13 @@ class TestTruncateExplanation:
                 a = {a!r}
                 b = {b!r}
                 assert a == b
-        """.format(a=a, b=b)
+        """.format(
+                a=a, b=b
+            )
         )
         monkeypatch.delenv("CI", raising=False)
 
-        result = testdir.runpytest('-vv')
+        result = testdir.runpytest("-vv")
 
         assert any(
             "AssertionError: assert {a!r} == {b!r}".format(a=a, b=b) in line
