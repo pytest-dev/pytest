@@ -10,6 +10,8 @@ from typing import Any
 from typing import Callable
 from typing import cast
 from typing import Dict
+from typing import Generator
+from typing import Generic
 from typing import Iterable
 from typing import Iterator
 from typing import List
@@ -17,6 +19,7 @@ from typing import Optional
 from typing import Sequence
 from typing import Set
 from typing import Tuple
+from typing import TypeVar
 from typing import Union
 
 import attr
@@ -37,6 +40,7 @@ from _pytest.compat import getlocation
 from _pytest.compat import is_generator
 from _pytest.compat import NOTSET
 from _pytest.compat import order_preserving_dict
+from _pytest.compat import overload
 from _pytest.compat import safe_getattr
 from _pytest.compat import TYPE_CHECKING
 from _pytest.config import _PluggyPlugin
@@ -64,13 +68,30 @@ if TYPE_CHECKING:
     _Scope = Literal["session", "package", "module", "class", "function"]
 
 
-_FixtureCachedResult = Tuple[
-    # The result.
-    Optional[object],
-    # Cache key.
-    object,
-    # Exc info if raised.
-    Optional[Tuple["Type[BaseException]", BaseException, TracebackType]],
+# The value of the fixture -- return/yield of the fixture function (type variable).
+_FixtureValue = TypeVar("_FixtureValue")
+# The type of the fixture function (type variable).
+_FixtureFunction = TypeVar("_FixtureFunction", bound=Callable[..., object])
+# The type of a fixture function (type alias generic in fixture value).
+_FixtureFunc = Union[
+    Callable[..., _FixtureValue], Callable[..., Generator[_FixtureValue, None, None]]
+]
+# The type of FixtureDef.cached_result (type alias generic in fixture value).
+_FixtureCachedResult = Union[
+    Tuple[
+        # The result.
+        _FixtureValue,
+        # Cache key.
+        object,
+        None,
+    ],
+    Tuple[
+        None,
+        # Cache key.
+        object,
+        # Exc info if raised.
+        Tuple["Type[BaseException]", BaseException, TracebackType],
+    ],
 ]
 
 
@@ -871,9 +892,13 @@ def fail_fixturefunc(fixturefunc, msg: str) -> "NoReturn":
     fail(msg + ":\n\n" + str(source.indent()) + "\n" + location, pytrace=False)
 
 
-def call_fixture_func(fixturefunc, request: FixtureRequest, kwargs):
-    yieldctx = is_generator(fixturefunc)
-    if yieldctx:
+def call_fixture_func(
+    fixturefunc: "_FixtureFunc[_FixtureValue]", request: FixtureRequest, kwargs
+) -> _FixtureValue:
+    if is_generator(fixturefunc):
+        fixturefunc = cast(
+            Callable[..., Generator[_FixtureValue, None, None]], fixturefunc
+        )
         generator = fixturefunc(**kwargs)
         try:
             fixture_result = next(generator)
@@ -884,6 +909,7 @@ def call_fixture_func(fixturefunc, request: FixtureRequest, kwargs):
         finalizer = functools.partial(_teardown_yield_fixture, fixturefunc, generator)
         request.addfinalizer(finalizer)
     else:
+        fixturefunc = cast(Callable[..., _FixtureValue], fixturefunc)
         fixture_result = fixturefunc(**kwargs)
     return fixture_result
 
@@ -926,7 +952,7 @@ def _eval_scope_callable(
     return result
 
 
-class FixtureDef:
+class FixtureDef(Generic[_FixtureValue]):
     """ A container for a factory definition. """
 
     def __init__(
@@ -934,7 +960,7 @@ class FixtureDef:
         fixturemanager: "FixtureManager",
         baseid,
         argname: str,
-        func,
+        func: "_FixtureFunc[_FixtureValue]",
         scope: "Union[_Scope, Callable[[str, Config], _Scope]]",
         params: Optional[Sequence[object]],
         unittest: bool = False,
@@ -966,7 +992,7 @@ class FixtureDef:
         )  # type: Tuple[str, ...]
         self.unittest = unittest
         self.ids = ids
-        self.cached_result = None  # type: Optional[_FixtureCachedResult]
+        self.cached_result = None  # type: Optional[_FixtureCachedResult[_FixtureValue]]
         self._finalizers = []  # type: List[Callable[[], object]]
 
     def addfinalizer(self, finalizer: Callable[[], object]) -> None:
@@ -996,7 +1022,7 @@ class FixtureDef:
             self.cached_result = None
             self._finalizers = []
 
-    def execute(self, request: SubRequest):
+    def execute(self, request: SubRequest) -> _FixtureValue:
         # get required arguments and register our own finish()
         # with their finalization
         for argname in self.argnames:
@@ -1008,14 +1034,15 @@ class FixtureDef:
 
         my_cache_key = self.cache_key(request)
         if self.cached_result is not None:
-            result, cache_key, err = self.cached_result
             # note: comparison with `==` can fail (or be expensive) for e.g.
             # numpy arrays (#6497)
+            cache_key = self.cached_result[1]
             if my_cache_key is cache_key:
-                if err is not None:
-                    _, val, tb = err
+                if self.cached_result[2] is not None:
+                    _, val, tb = self.cached_result[2]
                     raise val.with_traceback(tb)
                 else:
+                    result = self.cached_result[0]
                     return result
             # we have a previous but differently parametrized fixture instance
             # so we need to tear it down before creating a new one
@@ -1023,7 +1050,8 @@ class FixtureDef:
             assert self.cached_result is None
 
         hook = self._fixturemanager.session.gethookproxy(request.node.fspath)
-        return hook.pytest_fixture_setup(fixturedef=self, request=request)
+        result = hook.pytest_fixture_setup(fixturedef=self, request=request)
+        return result
 
     def cache_key(self, request: SubRequest) -> object:
         return request.param_index if not hasattr(request, "param") else request.param
@@ -1034,7 +1062,9 @@ class FixtureDef:
         )
 
 
-def resolve_fixture_function(fixturedef: FixtureDef, request: FixtureRequest):
+def resolve_fixture_function(
+    fixturedef: FixtureDef[_FixtureValue], request: FixtureRequest
+) -> "_FixtureFunc[_FixtureValue]":
     """Gets the actual callable that can be called to obtain the fixture value, dealing with unittest-specific
     instances and bound methods.
     """
@@ -1042,7 +1072,7 @@ def resolve_fixture_function(fixturedef: FixtureDef, request: FixtureRequest):
     if fixturedef.unittest:
         if request.instance is not None:
             # bind the unbound method to the TestCase instance
-            fixturefunc = fixturedef.func.__get__(request.instance)
+            fixturefunc = fixturedef.func.__get__(request.instance)  # type: ignore[union-attr] # noqa: F821
     else:
         # the fixture function needs to be bound to the actual
         # request.instance so that code working with "fixturedef" behaves
@@ -1051,16 +1081,18 @@ def resolve_fixture_function(fixturedef: FixtureDef, request: FixtureRequest):
             # handle the case where fixture is defined not in a test class, but some other class
             # (for example a plugin class with a fixture), see #2270
             if hasattr(fixturefunc, "__self__") and not isinstance(
-                request.instance, fixturefunc.__self__.__class__
+                request.instance, fixturefunc.__self__.__class__  # type: ignore[union-attr] # noqa: F821
             ):
                 return fixturefunc
             fixturefunc = getimfunc(fixturedef.func)
             if fixturefunc != fixturedef.func:
-                fixturefunc = fixturefunc.__get__(request.instance)
+                fixturefunc = fixturefunc.__get__(request.instance)  # type: ignore[union-attr] # noqa: F821
     return fixturefunc
 
 
-def pytest_fixture_setup(fixturedef: FixtureDef, request: SubRequest) -> object:
+def pytest_fixture_setup(
+    fixturedef: FixtureDef[_FixtureValue], request: SubRequest
+) -> _FixtureValue:
     """ Execution of fixture setup. """
     kwargs = {}
     for argname in fixturedef.argnames:
@@ -1146,7 +1178,7 @@ class FixtureFunctionMarker:
     )
     name = attr.ib(type=Optional[str], default=None)
 
-    def __call__(self, function):
+    def __call__(self, function: _FixtureFunction) -> _FixtureFunction:
         if inspect.isclass(function):
             raise ValueError("class fixtures not supported (maybe in the future)")
 
@@ -1166,12 +1198,50 @@ class FixtureFunctionMarker:
                 ),
                 pytrace=False,
             )
-        function._pytestfixturefunction = self
+
+        # Type ignored because https://github.com/python/mypy/issues/2087.
+        function._pytestfixturefunction = self  # type: ignore[attr-defined] # noqa: F821
         return function
 
 
+@overload
 def fixture(
-    fixture_function=None,
+    fixture_function: _FixtureFunction,
+    *,
+    scope: "Union[_Scope, Callable[[str, Config], _Scope]]" = ...,
+    params: Optional[Iterable[object]] = ...,
+    autouse: bool = ...,
+    ids: Optional[
+        Union[
+            Iterable[Union[None, str, float, int, bool]],
+            Callable[[object], Optional[object]],
+        ]
+    ] = ...,
+    name: Optional[str] = ...
+) -> _FixtureFunction:
+    raise NotImplementedError()
+
+
+@overload  # noqa: F811
+def fixture(  # noqa: F811
+    fixture_function: None = ...,
+    *,
+    scope: "Union[_Scope, Callable[[str, Config], _Scope]]" = ...,
+    params: Optional[Iterable[object]] = ...,
+    autouse: bool = ...,
+    ids: Optional[
+        Union[
+            Iterable[Union[None, str, float, int, bool]],
+            Callable[[object], Optional[object]],
+        ]
+    ] = ...,
+    name: Optional[str] = None
+) -> FixtureFunctionMarker:
+    raise NotImplementedError()
+
+
+def fixture(  # noqa: F811
+    fixture_function: Optional[_FixtureFunction] = None,
     *args: Any,
     scope: "Union[_Scope, Callable[[str, Config], _Scope]]" = "function",
     params: Optional[Iterable[object]] = None,
@@ -1183,7 +1253,7 @@ def fixture(
         ]
     ] = None,
     name: Optional[str] = None
-):
+) -> Union[FixtureFunctionMarker, _FixtureFunction]:
     """Decorator to mark a fixture factory function.
 
     This decorator can be used, with or without parameters, to define a
@@ -1317,7 +1387,7 @@ def yield_fixture(
 
 
 @fixture(scope="session")
-def pytestconfig(request: FixtureRequest):
+def pytestconfig(request: FixtureRequest) -> Config:
     """Session-scoped fixture that returns the :class:`_pytest.config.Config` object.
 
     Example::
