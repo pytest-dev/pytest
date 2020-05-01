@@ -1332,3 +1332,24 @@ def test_does_not_put_src_on_path(testdir):
     )
     result = testdir.runpytest()
     assert result.ret == ExitCode.OK
+
+
+def test_fscollector_from_parent(tmpdir, request):
+    """Ensure File.from_parent can forward custom arguments to the constructor.
+
+    Context: https://github.com/pytest-dev/pytest-cpp/pull/47
+    """
+
+    class MyCollector(pytest.File):
+        def __init__(self, fspath, parent, x):
+            super().__init__(fspath, parent)
+            self.x = x
+
+        @classmethod
+        def from_parent(cls, parent, *, fspath, x):
+            return super().from_parent(parent=parent, fspath=fspath, x=x)
+
+    collector = MyCollector.from_parent(
+        parent=request.session, fspath=tmpdir / "foo", x=10
+    )
+    assert collector.x == 10
