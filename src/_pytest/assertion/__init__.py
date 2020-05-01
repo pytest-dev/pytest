@@ -3,8 +3,8 @@ support for presenting detailed information in failing assertions.
 """
 import sys
 from typing import Any
-from typing import List
 from typing import Generator
+from typing import List
 from typing import Optional
 
 from _pytest.assertion import rewrite
