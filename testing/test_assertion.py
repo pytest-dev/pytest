@@ -1044,8 +1044,7 @@ class TestTruncateExplanation:
         result.stdout.fnmatch_lines(["* 6*"])
 
     @pytest.mark.parametrize(
-        argnames=["n"],
-        argvalues=[[26], [27]],
+        argnames=["n"], argvalues=[[26], [27]],
     )
     def test_more_than_52_not_garbage(self, n, monkeypatch, testdir):
         a = "a\n" * n
