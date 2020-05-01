@@ -1,0 +1,1 @@
+Fix ``File.from_constructor`` so it forwards extra keyword arguments to the constructor.
