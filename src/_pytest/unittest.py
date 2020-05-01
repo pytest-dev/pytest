@@ -255,7 +255,7 @@ class TestCaseFunction(Function):
 
 
 @hookimpl(tryfirst=True)
-def pytest_runtest_makereport(item: Item, call: CallInfo) -> None:
+def pytest_runtest_makereport(item: Item, call: CallInfo[None]) -> None:
     if isinstance(item, TestCaseFunction):
         if item._excinfo:
             call.excinfo = item._excinfo.pop(0)
@@ -272,9 +272,10 @@ def pytest_runtest_makereport(item: Item, call: CallInfo) -> None:
             unittest.SkipTest  # type: ignore[attr-defined] # noqa: F821
         )
     ):
+        excinfo = call.excinfo
         # let's substitute the excinfo with a pytest.skip one
-        call2 = CallInfo.from_call(
-            lambda: pytest.skip(str(call.excinfo.value)), call.when
+        call2 = CallInfo[None].from_call(
+            lambda: pytest.skip(str(excinfo.value)), call.when
         )
         call.excinfo = call2.excinfo
 

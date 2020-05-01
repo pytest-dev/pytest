@@ -7,6 +7,7 @@ import py
 
 from _pytest.config import Config
 from _pytest.config.argparsing import Parser
+from _pytest.reports import CollectReport
 from _pytest.reports import TestReport
 from _pytest.store import StoreKey
 
@@ -87,7 +88,7 @@ class ResultLog:
             longrepr = str(report.longrepr)
         self.log_outcome(report, code, longrepr)
 
-    def pytest_collectreport(self, report):
+    def pytest_collectreport(self, report: CollectReport) -> None:
         if not report.passed:
             if report.failed:
                 code = "F"
@@ -95,7 +96,7 @@ class ResultLog:
             else:
                 assert report.skipped
                 code = "S"
-                longrepr = "%s:%d: %s" % report.longrepr
+                longrepr = "%s:%d: %s" % report.longrepr  # type: ignore
             self.log_outcome(report, code, longrepr)
 
     def pytest_internalerror(self, excrepr):

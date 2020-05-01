@@ -278,7 +278,7 @@ class LFPlugin:
         elif report.failed:
             self.lastfailed[report.nodeid] = True
 
-    def pytest_collectreport(self, report):
+    def pytest_collectreport(self, report: CollectReport) -> None:
         passed = report.outcome in ("passed", "skipped")
         if passed:
             if report.nodeid in self.lastfailed:

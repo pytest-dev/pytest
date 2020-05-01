@@ -1,4 +1,7 @@
 """ support for skip/xfail functions and markers. """
+from typing import Optional
+from typing import Tuple
+
 from _pytest.config import Config
 from _pytest.config import hookimpl
 from _pytest.config.argparsing import Parser
@@ -8,6 +11,7 @@ from _pytest.outcomes import fail
 from _pytest.outcomes import skip
 from _pytest.outcomes import xfail
 from _pytest.python import Function
+from _pytest.reports import BaseReport
 from _pytest.runner import CallInfo
 from _pytest.store import StoreKey
 
@@ -129,7 +133,7 @@ def check_strict_xfail(pyfuncitem: Function) -> None:
 
 
 @hookimpl(hookwrapper=True)
-def pytest_runtest_makereport(item: Item, call: CallInfo):
+def pytest_runtest_makereport(item: Item, call: CallInfo[None]):
     outcome = yield
     rep = outcome.get_result()
     evalxfail = item._store.get(evalxfail_key, None)
@@ -181,9 +185,10 @@ def pytest_runtest_makereport(item: Item, call: CallInfo):
 # called by terminalreporter progress reporting
 
 
-def pytest_report_teststatus(report):
+def pytest_report_teststatus(report: BaseReport) -> Optional[Tuple[str, str, str]]:
     if hasattr(report, "wasxfail"):
         if report.skipped:
             return "xfailed", "x", "XFAIL"
         elif report.passed:
             return "xpassed", "X", "XPASS"
+    return None

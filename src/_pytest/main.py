@@ -442,7 +442,9 @@ class Session(nodes.FSCollector):
             raise self.Interrupted(self.shouldstop)
 
     @hookimpl(tryfirst=True)
-    def pytest_runtest_logreport(self, report: TestReport) -> None:
+    def pytest_runtest_logreport(
+        self, report: Union[TestReport, CollectReport]
+    ) -> None:
         if report.failed and not hasattr(report, "wasxfail"):
             self.testsfailed += 1
             maxfail = self.config.getvalue("maxfail")

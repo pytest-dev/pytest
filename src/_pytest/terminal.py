@@ -37,6 +37,7 @@ from _pytest.config import Config
 from _pytest.config import ExitCode
 from _pytest.config.argparsing import Parser
 from _pytest.deprecated import TERMINALWRITER_WRITER
+from _pytest.reports import BaseReport
 from _pytest.reports import CollectReport
 from _pytest.reports import TestReport
 
@@ -218,14 +219,14 @@ def getreportopt(config: Config) -> str:
 
 
 @pytest.hookimpl(trylast=True)  # after _pytest.runner
-def pytest_report_teststatus(report: TestReport) -> Tuple[str, str, str]:
+def pytest_report_teststatus(report: BaseReport) -> Tuple[str, str, str]:
     letter = "F"
     if report.passed:
         letter = "."
     elif report.skipped:
         letter = "s"
 
-    outcome = report.outcome
+    outcome = report.outcome  # type: str
     if report.when in ("collect", "setup", "teardown") and outcome == "failed":
         outcome = "error"
         letter = "E"
@@ -364,7 +365,7 @@ class TerminalReporter:
             self._tw.write(extra, **kwargs)
             self.currentfspath = -2
 
-    def ensure_newline(self):
+    def ensure_newline(self) -> None:
         if self.currentfspath:
             self._tw.line()
             self.currentfspath = None
@@ -375,7 +376,7 @@ class TerminalReporter:
     def flush(self) -> None:
         self._tw.flush()
 
-    def write_line(self, line, **markup):
+    def write_line(self, line: Union[str, bytes], **markup) -> None:
         if not isinstance(line, str):
             line = str(line, errors="replace")
         self.ensure_newline()
@@ -642,12 +643,12 @@ class TerminalReporter:
         )
         self._write_report_lines_from_hooks(lines)
 
-    def _write_report_lines_from_hooks(self, lines):
+    def _write_report_lines_from_hooks(self, lines) -> None:
         lines.reverse()
         for line in collapse(lines):
             self.write_line(line)
 
-    def pytest_report_header(self, config):
+    def pytest_report_header(self, config: Config) -> List[str]:
         line = "rootdir: %s" % config.rootdir
 
         if config.inifile:
@@ -664,7 +665,7 @@ class TerminalReporter:
             result.append("plugins: %s" % ", ".join(_plugin_nameversions(plugininfo)))
         return result
 
-    def pytest_collection_finish(self, session):
+    def pytest_collection_finish(self, session: "Session") -> None:
         self.report_collect(True)
 
         lines = self.config.hook.pytest_report_collectionfinish(

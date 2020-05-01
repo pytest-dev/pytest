@@ -3,6 +3,7 @@ from typing import Any
 from typing import List
 from typing import Mapping
 from typing import Optional
+from typing import Sequence
 from typing import Tuple
 from typing import Union
 
@@ -284,7 +285,7 @@ def pytest_itemcollected(item):
     """ we just collected a test item. """
 
 
-def pytest_collectreport(report):
+def pytest_collectreport(report: "CollectReport") -> None:
     """ collector finished collecting. """
 
 
@@ -430,7 +431,7 @@ def pytest_runtest_teardown(item: "Item", nextitem: "Optional[Item]") -> None:
 
 
 @hookspec(firstresult=True)
-def pytest_runtest_makereport(item: "Item", call: "CallInfo") -> Optional[object]:
+def pytest_runtest_makereport(item: "Item", call: "CallInfo[None]") -> Optional[object]:
     """ return a :py:class:`_pytest.runner.TestReport` object
     for the given :py:class:`pytest.Item <_pytest.main.Item>` and
     :py:class:`_pytest.runner.CallInfo`.
@@ -444,7 +445,7 @@ def pytest_runtest_logreport(report: "TestReport") -> None:
 
 
 @hookspec(firstresult=True)
-def pytest_report_to_serializable(config: "Config", report):
+def pytest_report_to_serializable(config: "Config", report: "BaseReport"):
     """
     Serializes the given report object into a data structure suitable for sending
     over the wire, e.g. converted to JSON.
@@ -580,7 +581,9 @@ def pytest_assertion_pass(item, lineno: int, orig: str, expl: str) -> None:
 # -------------------------------------------------------------------------
 
 
-def pytest_report_header(config: "Config", startdir):
+def pytest_report_header(
+    config: "Config", startdir: py.path.local
+) -> Union[str, List[str]]:
     """ return a string or list of strings to be displayed as header info for terminal reporting.
 
     :param _pytest.config.Config config: pytest config object
@@ -601,7 +604,9 @@ def pytest_report_header(config: "Config", startdir):
     """
 
 
-def pytest_report_collectionfinish(config: "Config", startdir, items):
+def pytest_report_collectionfinish(
+    config: "Config", startdir: py.path.local, items: "Sequence[Item]"
+) -> Union[str, List[str]]:
     """
     .. versionadded:: 3.2
 
@@ -758,7 +763,7 @@ def pytest_keyboard_interrupt(excinfo):
 
 
 def pytest_exception_interact(
-    node: "Node", call: "CallInfo", report: "BaseReport"
+    node: "Node", call: "CallInfo[object]", report: "Union[CollectReport, TestReport]"
 ) -> None:
     """called when an exception was raised which can potentially be
     interactively handled.

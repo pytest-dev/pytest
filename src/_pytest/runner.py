@@ -3,10 +3,14 @@ import bdb
 import os
 import sys
 from typing import Callable
+from typing import cast
 from typing import Dict
+from typing import Generic
 from typing import List
 from typing import Optional
 from typing import Tuple
+from typing import TypeVar
+from typing import Union
 
 import attr
 
@@ -179,7 +183,7 @@ def _update_current_test_var(
         os.environ.pop(var_name)
 
 
-def pytest_report_teststatus(report):
+def pytest_report_teststatus(report: BaseReport) -> Optional[Tuple[str, str, str]]:
     if report.when in ("setup", "teardown"):
         if report.failed:
             #      category, shortletter, verbose-word
@@ -188,6 +192,7 @@ def pytest_report_teststatus(report):
             return "skipped", "s", "SKIPPED"
         else:
             return "", "", ""
+    return None
 
 
 #
@@ -217,9 +222,9 @@ def check_interactive_exception(call: "CallInfo", report: BaseReport) -> bool:
 
 def call_runtest_hook(
     item: Item, when: "Literal['setup', 'call', 'teardown']", **kwds
-) -> "CallInfo":
+) -> "CallInfo[None]":
     if when == "setup":
-        ihook = item.ihook.pytest_runtest_setup
+        ihook = item.ihook.pytest_runtest_setup  # type: Callable[..., None]
     elif when == "call":
         ihook = item.ihook.pytest_runtest_call
     elif when == "teardown":
@@ -234,11 +239,14 @@ def call_runtest_hook(
     )
 
 
+_T = TypeVar("_T")
+
+
 @attr.s(repr=False)
-class CallInfo:
+class CallInfo(Generic[_T]):
     """ Result/Exception info a function invocation.
 
-    :param result: The return value of the call, if it didn't raise. Can only be accessed
+    :param T result: The return value of the call, if it didn't raise. Can only be accessed
         if excinfo is None.
     :param Optional[ExceptionInfo] excinfo: The captured exception of the call, if it raised.
     :param float start: The system time when the call started, in seconds since the epoch.
@@ -247,28 +255,34 @@ class CallInfo:
     :param str when: The context of invocation: "setup", "call", "teardown", ...
     """
 
-    _result = attr.ib()
+    _result = attr.ib(type="Optional[_T]")
     excinfo = attr.ib(type=Optional[ExceptionInfo])
     start = attr.ib(type=float)
     stop = attr.ib(type=float)
     duration = attr.ib(type=float)
-    when = attr.ib(type=str)
+    when = attr.ib(type="Literal['collect', 'setup', 'call', 'teardown']")
 
     @property
-    def result(self):
+    def result(self) -> _T:
         if self.excinfo is not None:
             raise AttributeError("{!r} has no valid result".format(self))
-        return self._result
+        # The cast is safe because an exception wasn't raised, hence
+        # _result has the expected function return type (which may be
+        #  None, that's why a cast and not an assert).
+        return cast(_T, self._result)
 
     @classmethod
-    def from_call(cls, func, when, reraise=None) -> "CallInfo":
-        #: context of invocation: one of "setup", "call",
-        #: "teardown", "memocollect"
+    def from_call(
+        cls,
+        func: "Callable[[], _T]",
+        when: "Literal['collect', 'setup', 'call', 'teardown']",
+        reraise: "Optional[Union[Type[BaseException], Tuple[Type[BaseException], ...]]]" = None,
+    ) -> "CallInfo[_T]":
         excinfo = None
         start = timing.time()
         precise_start = timing.perf_counter()
         try:
-            result = func()
+            result = func()  # type: Optional[_T]
         except BaseException:
             excinfo = ExceptionInfo.from_current()
             if reraise is not None and excinfo.errisinstance(reraise):
@@ -293,7 +307,7 @@ class CallInfo:
         return "<CallInfo when={!r} excinfo={!r}>".format(self.when, self.excinfo)
 
 
-def pytest_runtest_makereport(item: Item, call: CallInfo) -> TestReport:
+def pytest_runtest_makereport(item: Item, call: CallInfo[None]) -> TestReport:
     return TestReport.from_item_and_call(item, call)
 
 
@@ -301,7 +315,7 @@ def pytest_make_collect_report(collector: Collector) -> CollectReport:
     call = CallInfo.from_call(lambda: list(collector.collect()), "collect")
     longrepr = None
     if not call.excinfo:
-        outcome = "passed"
+        outcome = "passed"  # type: Literal["passed", "skipped", "failed"]
     else:
         skip_exceptions = [Skipped]
         unittest = sys.modules.get("unittest")
@@ -321,9 +335,8 @@ def pytest_make_collect_report(collector: Collector) -> CollectReport:
             if not hasattr(errorinfo, "toterminal"):
                 errorinfo = CollectErrorRepr(errorinfo)
             longrepr = errorinfo
-    rep = CollectReport(
-        collector.nodeid, outcome, longrepr, getattr(call, "result", None)
-    )
+    result = call.result if not call.excinfo else None
+    rep = CollectReport(collector.nodeid, outcome, longrepr, result)
     rep.call = call  # type: ignore # see collect_one_node
     return rep
 

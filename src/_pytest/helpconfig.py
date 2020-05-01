@@ -2,6 +2,7 @@
 import os
 import sys
 from argparse import Action
+from typing import List
 from typing import Optional
 from typing import Union
 
@@ -235,7 +236,7 @@ def getpluginversioninfo(config):
     return lines
 
 
-def pytest_report_header(config):
+def pytest_report_header(config: Config) -> List[str]:
     lines = []
     if config.option.debug or config.option.traceconfig:
         lines.append(
