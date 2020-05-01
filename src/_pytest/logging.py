@@ -19,6 +19,7 @@ from _pytest.compat import nullcontext
 from _pytest.config import _strtobool
 from _pytest.config import Config
 from _pytest.config import create_terminal_writer
+from _pytest.config.argparsing import Parser
 from _pytest.pathlib import Path
 from _pytest.store import StoreKey
 
@@ -180,7 +181,7 @@ def get_option_ini(config, *names):
             return ret
 
 
-def pytest_addoption(parser):
+def pytest_addoption(parser: Parser) -> None:
     """Add options to control log capturing."""
     group = parser.getgroup("logging")
 
@@ -478,7 +479,7 @@ def get_log_level_for_setting(config: Config, *setting_names: str) -> Optional[i
 
 # run after terminalreporter/capturemanager are configured
 @pytest.hookimpl(trylast=True)
-def pytest_configure(config):
+def pytest_configure(config: Config) -> None:
     config.pluginmanager.register(LoggingPlugin(config), "logging-plugin")
 
 
@@ -601,7 +602,7 @@ class LoggingPlugin:
         return True
 
     @pytest.hookimpl(hookwrapper=True, tryfirst=True)
-    def pytest_sessionstart(self):
+    def pytest_sessionstart(self) -> Generator[None, None, None]:
         self.log_cli_handler.set_when("sessionstart")
 
         with catching_logs(self.log_cli_handler, level=self.log_cli_level):
@@ -679,7 +680,7 @@ class LoggingPlugin:
         self.log_cli_handler.set_when("finish")
 
     @pytest.hookimpl(hookwrapper=True, tryfirst=True)
-    def pytest_sessionfinish(self):
+    def pytest_sessionfinish(self) -> Generator[None, None, None]:
         self.log_cli_handler.set_when("sessionfinish")
 
         with catching_logs(self.log_cli_handler, level=self.log_cli_level):
@@ -687,7 +688,7 @@ class LoggingPlugin:
                 yield
 
     @pytest.hookimpl
-    def pytest_unconfigure(self):
+    def pytest_unconfigure(self) -> None:
         # Close the FileHandler explicitly.
         # (logging.shutdown might have lost the weakref?!)
         self.log_file_handler.close()

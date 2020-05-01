@@ -2,11 +2,16 @@
 import os
 import sys
 from argparse import Action
+from typing import Optional
+from typing import Union
 
 import py
 
 import pytest
+from _pytest.config import Config
+from _pytest.config import ExitCode
 from _pytest.config import PrintHelp
+from _pytest.config.argparsing import Parser
 
 
 class HelpAction(Action):
@@ -36,7 +41,7 @@ class HelpAction(Action):
             raise PrintHelp
 
 
-def pytest_addoption(parser):
+def pytest_addoption(parser: Parser) -> None:
     group = parser.getgroup("debugconfig")
     group.addoption(
         "--version",
@@ -109,7 +114,7 @@ def pytest_cmdline_parse():
         undo_tracing = config.pluginmanager.enable_tracing()
         sys.stderr.write("writing pytestdebug information to %s\n" % path)
 
-        def unset_tracing():
+        def unset_tracing() -> None:
             debugfile.close()
             sys.stderr.write("wrote pytestdebug information to %s\n" % debugfile.name)
             config.trace.root.setwriter(None)
@@ -133,7 +138,7 @@ def showversion(config):
         sys.stderr.write("pytest {}\n".format(pytest.__version__))
 
 
-def pytest_cmdline_main(config):
+def pytest_cmdline_main(config: Config) -> Optional[Union[int, ExitCode]]:
     if config.option.version > 0:
         showversion(config)
         return 0
@@ -142,9 +147,10 @@ def pytest_cmdline_main(config):
         showhelp(config)
         config._ensure_unconfigure()
         return 0
+    return None
 
 
-def showhelp(config):
+def showhelp(config: Config) -> None:
     import textwrap
 
     reporter = config.pluginmanager.get_plugin("terminalreporter")

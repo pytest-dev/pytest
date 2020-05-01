@@ -17,6 +17,7 @@ from _pytest import timing
 from _pytest._code.code import ExceptionChainRepr
 from _pytest._code.code import ExceptionInfo
 from _pytest.compat import TYPE_CHECKING
+from _pytest.config.argparsing import Parser
 from _pytest.nodes import Collector
 from _pytest.nodes import Node
 from _pytest.outcomes import Exit
@@ -27,11 +28,13 @@ if TYPE_CHECKING:
     from typing import Type
     from typing_extensions import Literal
 
+    from _pytest.main import Session
+
 #
 # pytest plugin hooks
 
 
-def pytest_addoption(parser):
+def pytest_addoption(parser: Parser) -> None:
     group = parser.getgroup("terminal reporting", "reporting", after="general")
     group.addoption(
         "--durations",
@@ -75,11 +78,11 @@ def pytest_terminal_summary(terminalreporter):
         tr.write_line("{:02.2f}s {:<8} {}".format(rep.duration, rep.when, rep.nodeid))
 
 
-def pytest_sessionstart(session):
+def pytest_sessionstart(session: "Session") -> None:
     session._setupstate = SetupState()
 
 
-def pytest_sessionfinish(session):
+def pytest_sessionfinish(session: "Session") -> None:
     session._setupstate.teardown_all()
 
 

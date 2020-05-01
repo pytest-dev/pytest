@@ -16,6 +16,7 @@ from typing import Tuple
 import pytest
 from _pytest.compat import TYPE_CHECKING
 from _pytest.config import Config
+from _pytest.config.argparsing import Parser
 
 if TYPE_CHECKING:
     from typing_extensions import Literal
@@ -23,7 +24,7 @@ if TYPE_CHECKING:
     _CaptureMethod = Literal["fd", "sys", "no", "tee-sys"]
 
 
-def pytest_addoption(parser):
+def pytest_addoption(parser: Parser) -> None:
     group = parser.getgroup("general")
     group._addoption(
         "--capture",

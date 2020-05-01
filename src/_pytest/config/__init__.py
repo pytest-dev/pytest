@@ -407,7 +407,7 @@ class PytestPluginManager(PluginManager):
         """Return True if the plugin with the given name is registered."""
         return bool(self.get_plugin(name))
 
-    def pytest_configure(self, config):
+    def pytest_configure(self, config: "Config") -> None:
         # XXX now that the pluginmanager exposes hookimpl(tryfirst...)
         # we should remove tryfirst/trylast as markers
         config.addinivalue_line(
@@ -868,7 +868,9 @@ class Config:
     def get_terminal_writer(self):
         return self.pluginmanager.get_plugin("terminalreporter")._tw
 
-    def pytest_cmdline_parse(self, pluginmanager, args):
+    def pytest_cmdline_parse(
+        self, pluginmanager: PytestPluginManager, args: List[str]
+    ) -> object:
         try:
             self.parse(args)
         except UsageError:

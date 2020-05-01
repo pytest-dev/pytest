@@ -17,6 +17,7 @@ from typing import Mapping
 from typing import Optional
 from typing import Set
 from typing import Tuple
+from typing import Union
 
 import attr
 import pluggy
@@ -29,8 +30,10 @@ from _pytest import timing
 from _pytest._io import TerminalWriter
 from _pytest._io.wcwidth import wcswidth
 from _pytest.compat import order_preserving_dict
+from _pytest.config import _PluggyPlugin
 from _pytest.config import Config
 from _pytest.config import ExitCode
+from _pytest.config.argparsing import Parser
 from _pytest.deprecated import TERMINALWRITER_WRITER
 from _pytest.main import Session
 from _pytest.reports import CollectReport
@@ -77,7 +80,7 @@ class MoreQuietAction(argparse.Action):
         namespace.quiet = getattr(namespace, "quiet", 0) + 1
 
 
-def pytest_addoption(parser):
+def pytest_addoption(parser: Parser) -> None:
     group = parser.getgroup("terminal reporting", "reporting", after="general")
     group._addoption(
         "-v",
@@ -423,7 +426,7 @@ class TerminalReporter:
         )
         self._add_stats("warnings", [warning_report])
 
-    def pytest_plugin_registered(self, plugin):
+    def pytest_plugin_registered(self, plugin: _PluggyPlugin) -> None:
         if self.config.option.traceconfig:
             msg = "PLUGIN registered: {}".format(plugin)
             # XXX this event may happen during setup/teardown time
@@ -717,7 +720,7 @@ class TerminalReporter:
                             self._tw.line("{}{}".format(indent + "  ", line))
 
     @pytest.hookimpl(hookwrapper=True)
-    def pytest_sessionfinish(self, session: Session, exitstatus: ExitCode):
+    def pytest_sessionfinish(self, session: Session, exitstatus: Union[int, ExitCode]):
         outcome = yield
         outcome.get_result()
         self._tw.line("")
@@ -752,10 +755,10 @@ class TerminalReporter:
         # Display any extra warnings from teardown here (if any).
         self.summary_warnings()
 
-    def pytest_keyboard_interrupt(self, excinfo):
+    def pytest_keyboard_interrupt(self, excinfo) -> None:
         self._keyboardinterrupt_memo = excinfo.getrepr(funcargs=True)
 
-    def pytest_unconfigure(self):
+    def pytest_unconfigure(self) -> None:
         if hasattr(self, "_keyboardinterrupt_memo"):
             self._report_keyboardinterrupt()
 

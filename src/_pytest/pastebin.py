@@ -4,13 +4,15 @@ from io import StringIO
 from typing import IO
 
 import pytest
+from _pytest.config import Config
+from _pytest.config.argparsing import Parser
 from _pytest.store import StoreKey
 
 
 pastebinfile_key = StoreKey[IO[bytes]]()
 
 
-def pytest_addoption(parser):
+def pytest_addoption(parser: Parser) -> None:
     group = parser.getgroup("terminal reporting")
     group._addoption(
         "--pastebin",
@@ -24,7 +26,7 @@ def pytest_addoption(parser):
 
 
 @pytest.hookimpl(trylast=True)
-def pytest_configure(config):
+def pytest_configure(config: Config) -> None:
     if config.option.pastebin == "all":
         tr = config.pluginmanager.getplugin("terminalreporter")
         # if no terminal reporter plugin is present, nothing we can do here;
@@ -44,7 +46,7 @@ def pytest_configure(config):
             tr._tw.write = tee_write
 
 
-def pytest_unconfigure(config):
+def pytest_unconfigure(config: Config) -> None:
     if pastebinfile_key in config._store:
         pastebinfile = config._store[pastebinfile_key]
         # get terminal contents and delete file

@@ -374,7 +374,7 @@ class MarkGenerator:
     applies a 'slowtest' :class:`Mark` on ``test_function``.
     """
 
-    _config = None
+    _config = None  # type: Optional[Config]
     _markers = set()  # type: Set[str]
 
     def __getattr__(self, name: str) -> MarkDecorator:

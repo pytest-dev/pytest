@@ -23,6 +23,7 @@ from _pytest._code.code import TerminalRepr
 from _pytest._io import TerminalWriter
 from _pytest.compat import safe_getattr
 from _pytest.compat import TYPE_CHECKING
+from _pytest.config.argparsing import Parser
 from _pytest.fixtures import FixtureRequest
 from _pytest.outcomes import OutcomeException
 from _pytest.python_api import approx
@@ -52,7 +53,7 @@ RUNNER_CLASS = None
 CHECKER_CLASS = None  # type: Optional[Type[doctest.OutputChecker]]
 
 
-def pytest_addoption(parser):
+def pytest_addoption(parser: Parser) -> None:
     parser.addini(
         "doctest_optionflags",
         "option flags for doctests",
@@ -102,7 +103,7 @@ def pytest_addoption(parser):
     )
 
 
-def pytest_unconfigure():
+def pytest_unconfigure() -> None:
     global RUNNER_CLASS
 
     RUNNER_CLASS = None

@@ -13,12 +13,13 @@ from _pytest.assertion.rewrite import assertstate_key
 from _pytest.compat import TYPE_CHECKING
 from _pytest.config import Config
 from _pytest.config import hookimpl
+from _pytest.config.argparsing import Parser
 
 if TYPE_CHECKING:
     from _pytest.main import Session
 
 
-def pytest_addoption(parser):
+def pytest_addoption(parser: Parser) -> None:
     group = parser.getgroup("debugconfig")
     group.addoption(
         "--assert",
@@ -167,7 +168,7 @@ def pytest_runtest_protocol(item):
     util._reprcompare, util._assertion_pass = saved_assert_hooks
 
 
-def pytest_sessionfinish(session):
+def pytest_sessionfinish(session: "Session") -> None:
     assertstate = session.config._store.get(assertstate_key, None)
     if assertstate:
         if assertstate.hook is not None:

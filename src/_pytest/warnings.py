@@ -8,6 +8,8 @@ from typing import Tuple
 
 import pytest
 from _pytest.compat import TYPE_CHECKING
+from _pytest.config import Config
+from _pytest.config.argparsing import Parser
 from _pytest.main import Session
 
 if TYPE_CHECKING:
@@ -49,7 +51,7 @@ def _parse_filter(
     return (action, message, category, module, lineno)
 
 
-def pytest_addoption(parser):
+def pytest_addoption(parser: Parser) -> None:
     group = parser.getgroup("pytest-warnings")
     group.addoption(
         "-W",
@@ -66,7 +68,7 @@ def pytest_addoption(parser):
     )
 
 
-def pytest_configure(config):
+def pytest_configure(config: Config) -> None:
     config.addinivalue_line(
         "markers",
         "filterwarnings(warning): add a warning filter to the given test. "

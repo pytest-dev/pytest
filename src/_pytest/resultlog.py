@@ -5,13 +5,15 @@ import os
 
 import py
 
+from _pytest.config import Config
+from _pytest.config.argparsing import Parser
 from _pytest.store import StoreKey
 
 
 resultlog_key = StoreKey["ResultLog"]()
 
 
-def pytest_addoption(parser):
+def pytest_addoption(parser: Parser) -> None:
     group = parser.getgroup("terminal reporting", "resultlog plugin options")
     group.addoption(
         "--resultlog",
@@ -23,7 +25,7 @@ def pytest_addoption(parser):
     )
 
 
-def pytest_configure(config):
+def pytest_configure(config: Config) -> None:
     resultlog = config.option.resultlog
     # prevent opening resultlog on slave nodes (xdist)
     if resultlog and not hasattr(config, "slaveinput"):
@@ -40,7 +42,7 @@ def pytest_configure(config):
         _issue_warning_captured(RESULT_LOG, config.hook, stacklevel=2)
 
 
-def pytest_unconfigure(config):
+def pytest_unconfigure(config: Config) -> None:
     resultlog = config._store.get(resultlog_key, None)
     if resultlog:
         resultlog.logfile.close()

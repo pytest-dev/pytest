@@ -31,6 +31,7 @@ from _pytest.compat import TYPE_CHECKING
 from _pytest.config import _PluggyPlugin
 from _pytest.config import Config
 from _pytest.config import ExitCode
+from _pytest.config.argparsing import Parser
 from _pytest.fixtures import FixtureRequest
 from _pytest.main import Session
 from _pytest.monkeypatch import MonkeyPatch
@@ -53,7 +54,7 @@ IGNORE_PAM = [  # filenames added when obtaining details about the current user
 ]
 
 
-def pytest_addoption(parser):
+def pytest_addoption(parser: Parser) -> None:
     parser.addoption(
         "--lsof",
         action="store_true",
@@ -78,7 +79,7 @@ def pytest_addoption(parser):
     )
 
 
-def pytest_configure(config):
+def pytest_configure(config: Config) -> None:
     if config.getvalue("lsof"):
         checker = LsofFdLeakChecker()
         if checker.matching_platform():
@@ -938,7 +939,7 @@ class Testdir:
             rec = []
 
             class Collect:
-                def pytest_configure(x, config):
+                def pytest_configure(x, config: Config) -> None:
                     rec.append(self.make_hook_recorder(config.pluginmanager))
 
             plugins.append(Collect())

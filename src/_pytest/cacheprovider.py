@@ -11,6 +11,7 @@ from typing import Generator
 from typing import List
 from typing import Optional
 from typing import Set
+from typing import Union
 
 import attr
 import py
@@ -24,6 +25,8 @@ from _pytest import nodes
 from _pytest._io import TerminalWriter
 from _pytest.compat import order_preserving_dict
 from _pytest.config import Config
+from _pytest.config import ExitCode
+from _pytest.config.argparsing import Parser
 from _pytest.main import Session
 from _pytest.python import Module
 
@@ -329,11 +332,12 @@ class LFPlugin:
             else:
                 self._report_status += "not deselecting items."
 
-    def pytest_sessionfinish(self, session):
+    def pytest_sessionfinish(self, session: Session) -> None:
         config = self.config
         if config.getoption("cacheshow") or hasattr(config, "slaveinput"):
             return
 
+        assert config.cache is not None
         saved_lastfailed = config.cache.get("cache/lastfailed", {})
         if saved_lastfailed != self.lastfailed:
             config.cache.set("cache/lastfailed", self.lastfailed)
@@ -382,7 +386,7 @@ class NFPlugin:
         config.cache.set("cache/nodeids", sorted(self.cached_nodeids))
 
 
-def pytest_addoption(parser):
+def pytest_addoption(parser: Parser) -> None:
     group = parser.getgroup("general")
     group.addoption(
         "--lf",
@@ -440,16 +444,18 @@ def pytest_addoption(parser):
     )
 
 
-def pytest_cmdline_main(config):
+def pytest_cmdline_main(config: Config) -> Optional[Union[int, ExitCode]]:
     if config.option.cacheshow:
         from _pytest.main import wrap_session
 
         return wrap_session(config, cacheshow)
+    return None
 
 
 @pytest.hookimpl(tryfirst=True)
 def pytest_configure(config: Config) -> None:
-    config.cache = Cache.for_config(config)
+    # Type ignored: pending mechanism to store typed objects scoped to config.
+    config.cache = Cache.for_config(config)  # type: ignore # noqa: F821
     config.pluginmanager.register(LFPlugin(config), "lfplugin")
     config.pluginmanager.register(NFPlugin(config), "nfplugin")
 

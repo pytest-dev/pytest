@@ -4,13 +4,15 @@ import sys
 from typing import TextIO
 
 import pytest
+from _pytest.config import Config
+from _pytest.config.argparsing import Parser
 from _pytest.store import StoreKey
 
 
 fault_handler_stderr_key = StoreKey[TextIO]()
 
 
-def pytest_addoption(parser):
+def pytest_addoption(parser: Parser) -> None:
     help = (
         "Dump the traceback of all threads if a test takes "
         "more than TIMEOUT seconds to finish."
@@ -18,7 +20,7 @@ def pytest_addoption(parser):
     parser.addini("faulthandler_timeout", help, default=0.0)
 
 
-def pytest_configure(config):
+def pytest_configure(config: Config) -> None:
     import faulthandler
 
     if not faulthandler.is_enabled():
@@ -46,14 +48,14 @@ class FaultHandlerHooks:
     """Implements hooks that will actually install fault handler before tests execute,
     as well as correctly handle pdb and internal errors."""
 
-    def pytest_configure(self, config):
+    def pytest_configure(self, config: Config) -> None:
         import faulthandler
 
         stderr_fd_copy = os.dup(self._get_stderr_fileno())
         config._store[fault_handler_stderr_key] = open(stderr_fd_copy, "w")
         faulthandler.enable(file=config._store[fault_handler_stderr_key])
 
-    def pytest_unconfigure(self, config):
+    def pytest_unconfigure(self, config: Config) -> None:
         import faulthandler
 
         faulthandler.disable()

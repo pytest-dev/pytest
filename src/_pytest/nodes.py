@@ -123,7 +123,7 @@ class Node(metaclass=NodeMeta):
 
         #: the pytest config object
         if config:
-            self.config = config
+            self.config = config  # type: Config
         else:
             if not parent:
                 raise TypeError("config or parent must be provided")

@@ -18,14 +18,17 @@ from .structures import MarkGenerator
 from .structures import ParameterSet
 from _pytest.compat import TYPE_CHECKING
 from _pytest.config import Config
+from _pytest.config import ExitCode
 from _pytest.config import hookimpl
 from _pytest.config import UsageError
+from _pytest.config.argparsing import Parser
 from _pytest.deprecated import MINUS_K_COLON
 from _pytest.deprecated import MINUS_K_DASH
 from _pytest.store import StoreKey
 
 if TYPE_CHECKING:
     from _pytest.nodes import Item
+
 
 __all__ = ["Mark", "MarkDecorator", "MarkGenerator", "get_empty_parameterset_mark"]
 
@@ -57,7 +60,7 @@ def param(
     return ParameterSet.param(*values, marks=marks, id=id)
 
 
-def pytest_addoption(parser):
+def pytest_addoption(parser: Parser) -> None:
     group = parser.getgroup("general")
     group._addoption(
         "-k",
@@ -100,7 +103,7 @@ def pytest_addoption(parser):
 
 
 @hookimpl(tryfirst=True)
-def pytest_cmdline_main(config):
+def pytest_cmdline_main(config: Config) -> Optional[Union[int, ExitCode]]:
     import _pytest.config
 
     if config.option.markers:
@@ -115,6 +118,8 @@ def pytest_cmdline_main(config):
             tw.line()
         config._ensure_unconfigure()
         return 0
+
+    return None
 
 
 @attr.s(slots=True)
@@ -254,7 +259,7 @@ def pytest_collection_modifyitems(items, config: Config) -> None:
     deselect_by_mark(items, config)
 
 
-def pytest_configure(config):
+def pytest_configure(config: Config) -> None:
     config._store[old_mark_config_key] = MARK_GEN._config
     MARK_GEN._config = config
 
@@ -267,5 +272,5 @@ def pytest_configure(config):
         )
 
 
-def pytest_unconfigure(config):
+def pytest_unconfigure(config: Config) -> None:
     MARK_GEN._config = config._store.get(old_mark_config_key, None)
