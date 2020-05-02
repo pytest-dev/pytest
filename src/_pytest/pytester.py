@@ -35,6 +35,7 @@ from _pytest.main import Session
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.nodes import Collector
 from _pytest.nodes import Item
+from _pytest.pathlib import make_numbered_dir
 from _pytest.pathlib import Path
 from _pytest.python import Module
 from _pytest.reports import TestReport
@@ -1256,9 +1257,7 @@ class Testdir:
         Returns a :py:class:`RunResult`.
         """
         __tracebackhide__ = True
-        p = py.path.local.make_numbered_dir(
-            prefix="runpytest-", keep=None, rootdir=self.tmpdir
-        )
+        p = make_numbered_dir(root=Path(self.tmpdir), prefix="runpytest-")
         args = ("--basetemp=%s" % p,) + args
         plugins = [x for x in self.plugins if isinstance(x, str)]
         if plugins:
