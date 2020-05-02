@@ -1011,7 +1011,7 @@ class TestReportContents:
         """
         )
         rep = reports[1]
-        assert not isinstance(rep.longrepr, str)
+        assert isinstance(rep.longrepr, _pytest._code.code.ExceptionRepr)
 
 
 def test_outcome_exception_bad_msg() -> None:
