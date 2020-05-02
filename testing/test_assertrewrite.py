@@ -640,10 +640,10 @@ class TestAssertionRewrite:
 
         assert getmsg(f) == "assert 5 <= 4"
 
-    def test_assert_raising_nonzero_in_comparison(self):
+    def test_assert_raising__bool__in_comparison(self):
         def f():
             class A:
-                def __nonzero__(self):
+                def __bool__(self):
                     raise ValueError(42)
 
                 def __lt__(self, other):
