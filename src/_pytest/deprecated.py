@@ -49,9 +49,9 @@ NODE_USE_FROM_PARENT = UnformattedWarning(
 )
 
 JUNIT_XML_DEFAULT_FAMILY = PytestDeprecationWarning(
-    "The 'junit_family' default value will change to 'xunit2' in pytest 6.0.\n"
-    "Add 'junit_family=xunit1' to your pytest.ini file to keep the current format "
-    "in future versions of pytest and silence this warning."
+    "The 'junit_family' default value will change to 'xunit2' in pytest 6.0. See:\n"
+    "  https://docs.pytest.org/en/latest/deprecations.html#junit-family-default-value-change-to-xunit2\n"
+    "for more information."
 )
 
 NO_PRINT_LOGS = PytestDeprecationWarning(

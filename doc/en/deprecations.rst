@@ -80,21 +80,39 @@ Note that ``from_parent`` should only be called with keyword arguments for the p
 
 .. deprecated:: 5.2
 
-The default value of ``junit_family`` option will change to ``xunit2`` in pytest 6.0, given
-that this is the version supported by default in modern tools that manipulate this type of file.
+The default value of ``junit_family`` option will change to ``xunit2`` in pytest 6.0, which
+is an update of the old ``xunit1`` format and is supported by default in modern tools
+that manipulate this type of file (for example, Jenkins, Azure Pipelines, etc.).
 
-In order to smooth the transition, pytest will issue a warning in case the ``--junitxml`` option
-is given in the command line but ``junit_family`` is not explicitly configured in ``pytest.ini``::
+Users are recommended to try the new ``xunit2`` format and see if their tooling that consumes the JUnit
+XML file supports it.
 
-    PytestDeprecationWarning: The 'junit_family' default value will change to 'xunit2' in pytest 6.0.
-      Add 'junit_family=legacy' to your pytest.ini file to silence this warning and make your suite compatible.
+To use the new format, update your ``pytest.ini``:
 
-In order to silence this warning, users just need to configure the ``junit_family`` option explicitly:
+.. code-block:: ini
+
+    [pytest]
+    junit_family=xunit2
+
+If you discover that your tooling does not support the new format, and want to keep using the
+legacy version, set the option to ``legacy`` instead:
 
 .. code-block:: ini
 
     [pytest]
     junit_family=legacy
+
+By using ``legacy`` you will keep using the legacy/xunit1 format when upgrading to
+pytest 6.0, where the default format will be ``xunit2``.
+
+In order to let users know about the transition, pytest will issue a warning in case
+the ``--junitxml`` option is given in the command line but ``junit_family`` is not explicitly
+configured in ``pytest.ini``.
+
+Services known to support the ``xunit2`` format:
+
+* `Jenkins <https://www.jenkins.io/>`__ with the `JUnit <https://plugins.jenkins.io/junit>`__ plugin.
+* `Azure Pipelines <https://azure.microsoft.com/en-us/services/devops/pipelines>`__.
 
 
 ``funcargnames`` alias for ``fixturenames``
