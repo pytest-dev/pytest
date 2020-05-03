@@ -371,24 +371,24 @@ class TestAssert_reprcompare:
     def test_multiline_long_text_diff(self):
         left = r"""
         ________________________________________
-        / You have Egyptian flu: you're going to \ 
+        / You have Egyptian flu: you're going to \
         \ be a mummy.                            /
         ----------------------------------------
                 \   ^__^
                 \  (oo)\_______
-                    (__)\       )\/\ 
+                    (__)\       )\/\
                         ||----w |
                         ||     ||
         """
 
         right = r"""
             ________________________________________
-            / You have Egyptian flu: you're going to \ 
+            / You have Egyptian flu: you're going to \
             \ be a mummy.                            /
             ----------------------------------------
                     \   ^__^
                     \  (oo)\_______
-                        (__)\       )\/\ 
+                        (__)\       )\/\
                             ||----w |
                             ||     ||
         """
@@ -398,24 +398,24 @@ class TestAssert_reprcompare:
             '=============================== ACTUAL ===============================',
             '',
             '        ________________________________________',
-            "        / You have Egyptian flu: you're going to \\ ",
+            "        / You have Egyptian flu: you're going to \\",
             '        \\ be a mummy.                            /',
             '        ----------------------------------------',
             '                \\   ^__^',
             '                \\  (oo)\\_______',
-            '                    (__)\\       )\\/\\ ',
+            '                    (__)\\       )\\/\\',
             '                        ||----w |',
             '                        ||     ||',
             '        ',
             '============================== EXPECTED ==============================',
             '',
             '            ________________________________________',
-            "            / You have Egyptian flu: you're going to \\ ",
+            "            / You have Egyptian flu: you're going to \\",
             '            \\ be a mummy.                            /',
             '            ----------------------------------------',
             '                    \\   ^__^',
             '                    \\  (oo)\\_______',
-            '                        (__)\\       )\\/\\ ',
+            '                        (__)\\       )\\/\\',
             '                            ||----w |',
             '                            ||     ||',
             '        '

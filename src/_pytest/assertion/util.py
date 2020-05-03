@@ -262,7 +262,7 @@ def _diff_text(left: str, right: str, screen_width: int, verbose: int = 0) -> Li
         explanation += list(left.split("\n"))
         explanation += _text_header(" EXPECTED ", screen_width)
         explanation += list(right.split("\n"))
-        
+
     return explanation
 
 
