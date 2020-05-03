@@ -215,12 +215,10 @@ def test_caplog_captures_despite_exception(testdir):
             plugin = request.config.pluginmanager.getplugin('logging-plugin')
             assert plugin.log_level == logging.WARNING
 
-            logger.info("INFO message won't be shown")
-
-            caplog.set_level(logging.INFO, logger.name)
+            logger.error("ERROR message " + "will be shown")
 
             with caplog.at_level(logging.DEBUG, logger.name):
-                logger.debug("DEBUG message will be shown")
+                logger.debug("DEBUG message " + "won't be shown")
                 raise Exception()
     """
     )
@@ -232,5 +230,6 @@ def test_caplog_captures_despite_exception(testdir):
     )
 
     result = testdir.runpytest()
-    result.stdout.fnmatch_lines(["*DEBUG message will be shown*"])
+    result.stdout.fnmatch_lines(["*ERROR message will be shown*"])
+    result.stdout.no_fnmatch_line("*DEBUG message won't be shown*")
     assert result.ret == 1

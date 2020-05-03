@@ -635,7 +635,9 @@ class LoggingPlugin:
         """Implements the internals of pytest_runtest_xxx() hook."""
         with catching_logs(
             LogCaptureHandler(), formatter=self.formatter, level=self.log_level
-        ) as log_handler:
+        ) as caplog_handler, catching_logs(
+            LogCaptureHandler(), formatter=self.formatter, level=self.log_level
+        ) as report_handler:
             if self.log_cli_handler:
                 self.log_cli_handler.set_when(when)
 
@@ -645,8 +647,8 @@ class LoggingPlugin:
 
             if not hasattr(item, "catch_log_handlers"):
                 item.catch_log_handlers = {}  # type: ignore[attr-defined]  # noqa: F821
-            item.catch_log_handlers[when] = log_handler  # type: ignore[attr-defined]  # noqa: F821
-            item.catch_log_handler = log_handler  # type: ignore[attr-defined]  # noqa: F821
+            item.catch_log_handlers[when] = caplog_handler  # type: ignore[attr-defined]  # noqa: F821
+            item.catch_log_handler = caplog_handler  # type: ignore[attr-defined]  # noqa: F821
             try:
                 yield  # run test
             finally:
@@ -656,7 +658,7 @@ class LoggingPlugin:
 
             if self.print_logs:
                 # Add a captured log section to the report.
-                log = log_handler.stream.getvalue().strip()
+                log = report_handler.stream.getvalue().strip()
                 item.add_report_section(when, "log", log)
 
     @pytest.hookimpl(hookwrapper=True)
