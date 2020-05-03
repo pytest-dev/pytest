@@ -249,13 +249,14 @@ def _diff_text(left: str, right: str, screen_width: int, verbose: int = 0) -> Li
         def _text_header(header: str, screen_width: int, margin: int = 10) -> List[str]:
             hlength = len(header)
             lines = [
-                "=" * int((screen_width - hlength - margin)/2) 
+                "=" * int((screen_width - hlength - margin) / 2) 
                 + header 
-                + "=" * int((screen_width- hlength - margin)/2)] 
+                + "=" * int((screen_width - hlength - margin) / 2)] 
             if screen_width % 2 != 0:
                 lines[-1] += "="
 
             return lines
+
 
         explanation += _text_header(" ACTUAL ", screen_width) 
         explanation += list(left.split("\n")) 
