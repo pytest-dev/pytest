@@ -1,6 +1,7 @@
 """Utilities for assertion debugging"""
 import collections.abc
 import pprint
+from difflib import SequenceMatcher
 from typing import AbstractSet
 from typing import Any
 from typing import Callable
@@ -131,7 +132,7 @@ def isiterable(obj: Any) -> bool:
 def assertrepr_compare(config, op: str, left: Any, right: Any) -> Optional[List[str]]:
     """Return specialised explanations for some operators/operands"""
     verbose = config.getoption("verbose")
-    screen_width = config.get_terminal_reporter().get_screen_width()
+    screen_width = config.get_terminal_reporter().screen_width
 
     if verbose > 1:
         left_repr = safeformat(left)
@@ -151,7 +152,7 @@ def assertrepr_compare(config, op: str, left: Any, right: Any) -> Optional[List[
     try:
         if op == "==":
             if istext(left) and istext(right):
-                explanation = _diff_text(left, right, verbose, screen_width)
+                explanation = _diff_text(left, right, screen_width, verbose)
             else:
                 if issequence(left) and issequence(right):
                     explanation = _compare_eq_sequence(left, right, verbose)
@@ -189,7 +190,7 @@ def assertrepr_compare(config, op: str, left: Any, right: Any) -> Optional[List[
     return [summary] + explanation
 
 
-def _diff_text(left: str, right: str, verbose: int = 0, screen_width: int = 80) -> List[str]:
+def _diff_text(left: str, right: str, screen_width: int, verbose: int = 0) -> List[str]:
     """Return the explanation for the diff between text.
 
     Unless --verbose is used this will skip leading and trailing
@@ -231,13 +232,12 @@ def _diff_text(left: str, right: str, verbose: int = 0, screen_width: int = 80) 
     # "right" is the expected base against which we compare "left",
     # see https://github.com/pytest-dev/pytest/issues/3333
 
-    from difflib import SequenceMatcher
-    stripped_left = ''.join(left.split())
-    stripped_right = ''.join(right.split())
+    stripped_left = "".join(left.splitlines())
+    stripped_right = "".join(right.splitlines())
     s = SequenceMatcher(None, stripped_left, stripped_right)
 
-    nlines_left = left.count('\n')
-    nlines_right = right.count('\n')
+    nlines_left = left.count("\n")
+    nlines_right = right.count("\n")
 
     if s.ratio() < 0.30 or max(nlines_left, nlines_right) < 5:
         explanation += [
@@ -245,17 +245,22 @@ def _diff_text(left: str, right: str, verbose: int = 0, screen_width: int = 80) 
             for line in ndiff(right.splitlines(keepends), left.splitlines(keepends))
         ]
     else:
-        lines = ["=" * int((screen_width-18)/2) + " ACTUAL " + "=" * int((screen_width-18)/2)] 
-        if screen_width % 2 != 0:
-            lines[-1] += "="
+        def _text_header(header: str, screen_width: int, margin: int = 10) -> List[str]:
+            hlength = len(header)
+            lines = [
+                    "=" * int((screen_width - hlength - margin)/2) 
+                    + header 
+                    + "=" * int((screen_width- hlength - margin)/2)] 
+            if screen_width % 2 != 0:
+                lines[-1] += "="
 
-        lines += list(left.split("\n")) + ["=" * int((screen_width-20)/2) + " EXPECTED " + "=" * int((screen_width-20)/2)] 
-        if screen_width % 2 != 0:
-            lines[-1] += "="
+            return lines
 
-        lines += list(right.split("\n"))
-        explanation += lines
-
+        explanation += _text_header(" ACTUAL ", screen_width) 
+        explanation += list(left.split("\n")) 
+        explanation += _text_header(" EXPECTED ", screen_width) 
+        explanation += list(right.split("\n"))
+        
     return explanation
 
 
@@ -468,12 +473,12 @@ def _compare_eq_cls(
     return explanation
 
 
-def _notin_text(term: str, text: str, verbose: int = 0, screen_width: int = 80) -> List[str]:
+def _notin_text(term: str, text: str, screen_width: int, verbose: int = 0) -> List[str]:
     index = text.find(term)
     head = text[:index]
     tail = text[index + len(term) :]
     correct_text = head + tail
-    diff = _diff_text(text, correct_text, verbose, screen_width)
+    diff = _diff_text(text, correct_text, screen_width, verbose)
     newdiff = ["%s is contained here:" % saferepr(term, maxsize=42)]
     for line in diff:
         if line.startswith("Skipping"):

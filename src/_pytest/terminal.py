@@ -365,7 +365,10 @@ class TerminalReporter:
     def showlongtestinfo(self) -> bool:
         return self.verbosity > 0
 
-    def get_screen_width(self) -> int:
+    @property
+    def screen_width(self) -> int:
+        if self._screen_width is None:
+            return 80
         return self._screen_width
 
     def hasopt(self, char: str) -> bool:

@@ -1,0 +1,2 @@
+When displaying a comparison between two texts in an assertion failure, if the texts differ significantly (more than 30% of lines and more than 4 lines), they are now displayed one after the other rather than in an interleaved diff (+/-) view.
+In such cases, a diff is often incomprehensible, and it is easier to see the difference in full.
