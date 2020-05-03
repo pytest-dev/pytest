@@ -1187,12 +1187,9 @@ def test_relpath_rootdir(testdir):
         def test_pass():
             pass
             """,
-            "tests/sub_tests/test_empty.py": """
-        pass
-            """,
         }
     )
-    result = testdir.runpytest("-rs", "tests/test_1.py", "--rootdir=tests/sub_tests")
+    result = testdir.runpytest("-rs", "tests/test_1.py", "--rootdir=tests")
     result.stdout.fnmatch_lines(
         ["SKIPPED [[]1[]] tests/test_1.py:2: unconditional skip"]
     )
