@@ -418,7 +418,7 @@ class TestAssert_reprcompare:
             "                        (__)\\       )\\/\\",
             "                            ||----w |",
             "                            ||     ||",
-            "        "
+            "        ",
         ]
 
     def test_bytes_diff_normal(self):
