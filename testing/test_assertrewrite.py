@@ -10,8 +10,6 @@ import textwrap
 import zipfile
 from functools import partial
 
-import py
-
 import _pytest._code
 import pytest
 from _pytest.assertion import util
@@ -22,6 +20,7 @@ from _pytest.assertion.rewrite import PYC_TAIL
 from _pytest.assertion.rewrite import PYTEST_TAG
 from _pytest.assertion.rewrite import rewrite_asserts
 from _pytest.config import ExitCode
+from _pytest.pathlib import make_numbered_dir
 from _pytest.pathlib import Path
 
 
@@ -822,9 +821,7 @@ def test_rewritten():
                 "hello"
                 assert test_optimized.__doc__ is None"""
         )
-        p = py.path.local.make_numbered_dir(
-            prefix="runpytest-", keep=None, rootdir=testdir.tmpdir
-        )
+        p = make_numbered_dir(root=Path(testdir.tmpdir), prefix="runpytest-")
         tmp = "--basetemp=%s" % p
         monkeypatch.setenv("PYTHONOPTIMIZE", "2")
         monkeypatch.delenv("PYTHONDONTWRITEBYTECODE", raising=False)
