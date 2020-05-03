@@ -245,12 +245,13 @@ def _diff_text(left: str, right: str, screen_width: int, verbose: int = 0) -> Li
             for line in ndiff(right.splitlines(keepends), left.splitlines(keepends))
         ]
     else:
+
         def _text_header(header: str, screen_width: int, margin: int = 10) -> List[str]:
             hlength = len(header)
             lines = [
-                    "=" * int((screen_width - hlength - margin)/2) 
-                    + header 
-                    + "=" * int((screen_width- hlength - margin)/2)] 
+                "=" * int((screen_width - hlength - margin)/2) 
+                + header 
+                + "=" * int((screen_width- hlength - margin)/2)] 
             if screen_width % 2 != 0:
                 lines[-1] += "="
 
