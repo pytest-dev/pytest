@@ -368,6 +368,59 @@ class TestAssert_reprcompare:
         assert "- eggs" in diff
         assert "+ spam" in diff
 
+    def test_multiline_long_text_diff(self):
+        left = r"""
+        ________________________________________
+        / You have Egyptian flu: you're going to \ 
+        \ be a mummy.                            /
+        ----------------------------------------
+                \   ^__^
+                \  (oo)\_______
+                    (__)\       )\/\ 
+                        ||----w |
+                        ||     ||
+        """
+
+        right = r"""
+            ________________________________________
+            / You have Egyptian flu: you're going to \ 
+            \ be a mummy.                            /
+            ----------------------------------------
+                    \   ^__^
+                    \  (oo)\_______
+                        (__)\       )\/\ 
+                            ||----w |
+                            ||     ||
+        """
+        diff = callequal(left, right)
+
+        assert diff[1:] == [
+            '=============================== ACTUAL ===============================',
+            '',
+            '        ________________________________________',
+            "        / You have Egyptian flu: you're going to \\ ",
+            '        \\ be a mummy.                            /',
+            '        ----------------------------------------',
+            '                \\   ^__^',
+            '                \\  (oo)\\_______',
+            '                    (__)\\       )\\/\\ ',
+            '                        ||----w |',
+            '                        ||     ||',
+            '        ',
+            '============================== EXPECTED ==============================',
+            '',
+            '            ________________________________________',
+            "            / You have Egyptian flu: you're going to \\ ",
+            '            \\ be a mummy.                            /',
+            '            ----------------------------------------',
+            '                    \\   ^__^',
+            '                    \\  (oo)\\_______',
+            '                        (__)\\       )\\/\\ ',
+            '                            ||----w |',
+            '                            ||     ||',
+            '        '
+        ]
+
     def test_bytes_diff_normal(self):
         """Check special handling for bytes diff (#5260)"""
         diff = callequal(b"spam", b"eggs")
