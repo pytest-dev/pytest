@@ -322,7 +322,6 @@ class LogCaptureFixture:
         self._item = item
         # dict of log name -> log level
         self._initial_logger_levels = {}  # type: Dict[str, int]
-        self._initial_handler_level = None  # type: Optional[int]
 
     def _finalize(self) -> None:
         """Finalizes the fixture.
@@ -330,9 +329,6 @@ class LogCaptureFixture:
         This restores the log levels changed by :meth:`set_level`.
         """
         # restore log levels
-        if self._initial_handler_level is not None:
-            self.handler.setLevel(self._initial_handler_level)
-
         for logger_name, level in self._initial_logger_levels.items():
             logger = logging.getLogger(logger_name)
             logger.setLevel(level)
@@ -419,7 +415,6 @@ class LogCaptureFixture:
         # save the original log-level to restore it during teardown
         self._initial_logger_levels.setdefault(logger_name, logger.level)
         logger.setLevel(level)
-        self._initial_handler_level = self.handler.level
         self.handler.setLevel(level)
 
     @contextmanager
