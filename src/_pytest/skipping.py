@@ -169,6 +169,7 @@ def pytest_runtest_makereport(item, call):
         # the location of where the skip exception was raised within pytest
         _, _, reason = rep.longrepr
         filename, line = item.location[:2]
+        filename = item.config.rootdir.join(filename)
         rep.longrepr = filename, line + 1, reason
 
 
