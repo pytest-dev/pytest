@@ -168,9 +168,8 @@ def pytest_runtest_makereport(item, call):
         # to point to the item definition, otherwise it will display
         # the location of where the skip exception was raised within pytest
         _, _, reason = rep.longrepr
-        filename, line = item.location[:2]
-        filename = item.config.rootdir.join(filename)
-        rep.longrepr = filename, line + 1, reason
+        filename, line = item.reportinfo()[:2]
+        rep.longrepr = str(filename), line + 1, reason
 
 
 # called by terminalreporter progress reporting
