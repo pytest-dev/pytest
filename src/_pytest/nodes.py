@@ -335,7 +335,7 @@ class Node(metaclass=NodeMeta):
     ) -> Union[str, ReprExceptionInfo, ExceptionChainRepr, FixtureLookupErrorRepr]:
         if isinstance(excinfo.value, fail.Exception):
             if not excinfo.value.pytrace:
-                style = "no_pytrace"
+                style = "value"
         if isinstance(excinfo.value, FixtureLookupError):
             return excinfo.value.formatrepr()
         if self.config.getoption("fulltrace", False):

@@ -46,7 +46,7 @@ if TYPE_CHECKING:
     from typing_extensions import Literal
     from weakref import ReferenceType  # noqa: F401
 
-    _TracebackStyle = Literal["long", "short", "line", "no", "native", "no_pytrace"]
+    _TracebackStyle = Literal["long", "short", "line", "no", "native", "value"]
 
 
 class Code:
@@ -587,7 +587,7 @@ class ExceptionInfo(Generic[_E]):
             Show locals per traceback entry.
             Ignored if ``style=="native"``.
 
-        :param str style: long|short|no|native|no_pytrace traceback style
+        :param str style: long|short|no|native|value traceback style
 
         :param bool abspath:
             If paths should be changed to absolute or left unchanged.
@@ -788,7 +788,7 @@ class FormattedExcinfo:
             localsrepr = self.repr_locals(entry.locals)
             return ReprEntry(lines, reprargs, localsrepr, reprfileloc, style)
         if excinfo:
-            if style == "no_pytrace":
+            if style == "value":
                 lines.extend(str(excinfo.value).split("\n"))
             else:
                 lines.extend(self.get_exconly(excinfo, indent=4))
@@ -816,7 +816,7 @@ class FormattedExcinfo:
 
         last = traceback[-1]
         entries = []
-        if self.style == "no_pytrace":
+        if self.style == "value":
             reprentry = self.repr_traceback_entry(last, excinfo)
             entries.append(reprentry)
             return ReprTraceback(entries, None, style=self.style)
@@ -881,7 +881,7 @@ class FormattedExcinfo:
             if excinfo_:
                 reprtraceback = self.repr_traceback(excinfo_)
                 reprcrash = (
-                    excinfo_._getreprcrash() if self.style != "no_pytrace" else None
+                    excinfo_._getreprcrash() if self.style != "value" else None
                 )  # type: Optional[ReprFileLocation]
             else:
                 # fallback to native repr if the exception doesn't have a traceback:
@@ -1065,7 +1065,7 @@ class ReprEntry(TerminalRepr):
                     "Unexpected failure lines between source lines:\n"
                     + "\n".join(self.lines)
                 )
-                if self.style == "no_pytrace":
+                if self.style == "value":
                     source_lines.append(line)
                 else:
                     indents.append(line[:indent_size])
