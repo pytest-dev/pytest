@@ -679,19 +679,30 @@ def test_popen_default_stdin_stderr_and_stdin_None(testdir) -> None:
     # stdout, stderr default to pipes,
     # stdin can be None to not close the pipe, avoiding
     # "ValueError: flush of closed file" with `communicate()`.
+    #
+    # Wraps the test to make it not hang when run with "-s".
     p1 = testdir.makepyfile(
-        """
+        '''
         import sys
-        print(sys.stdin.read())  # empty
-        print('stdout')
-        sys.stderr.write('stderr')
-        """
+
+        def test_inner(testdir):
+            p1 = testdir.makepyfile(
+                """
+                import sys
+                print(sys.stdin.read())  # empty
+                print('stdout')
+                sys.stderr.write('stderr')
+                """
+            )
+            proc = testdir.popen([sys.executable, str(p1)], stdin=None)
+            stdout, stderr = proc.communicate(b"ignored")
+            assert stdout.splitlines() == [b"", b"stdout"]
+            assert stderr.splitlines() == [b"stderr"]
+            assert proc.returncode == 0
+        '''
     )
-    proc = testdir.popen([sys.executable, str(p1)], stdin=None)
-    stdout, stderr = proc.communicate(b"ignored")
-    assert stdout.splitlines() == [b"", b"stdout"]
-    assert stderr.splitlines() == [b"stderr"]
-    assert proc.returncode == 0
+    result = testdir.runpytest("-p", "pytester", str(p1))
+    assert result.ret == 0
 
 
 def test_spawn_uses_tmphome(testdir) -> None:
