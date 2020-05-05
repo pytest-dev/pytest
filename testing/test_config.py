@@ -3,6 +3,8 @@ import re
 import sys
 import textwrap
 
+import py.path
+
 import _pytest._code
 import pytest
 from _pytest.compat import importlib_metadata
@@ -900,55 +902,55 @@ class TestRootdir:
             assert get_common_ancestor([no_path.join("a")]) == tmpdir
 
     @pytest.mark.parametrize("name", "setup.cfg tox.ini pytest.ini".split())
-    def test_with_ini(self, tmpdir, name) -> None:
+    def test_with_ini(self, tmpdir: py.path.local, name: str) -> None:
         inifile = tmpdir.join(name)
         inifile.write("[pytest]\n" if name != "setup.cfg" else "[tool:pytest]\n")
 
         a = tmpdir.mkdir("a")
         b = a.mkdir("b")
-        for args in ([tmpdir], [a], [b]):
+        for args in ([str(tmpdir)], [str(a)], [str(b)]):
             rootdir, parsed_inifile, _ = determine_setup(None, args)
             assert rootdir == tmpdir
             assert parsed_inifile == inifile
-        rootdir, parsed_inifile, _ = determine_setup(None, [b, a])
+        rootdir, parsed_inifile, _ = determine_setup(None, [str(b), str(a)])
         assert rootdir == tmpdir
         assert parsed_inifile == inifile
 
     @pytest.mark.parametrize("name", "setup.cfg tox.ini".split())
-    def test_pytestini_overrides_empty_other(self, tmpdir, name) -> None:
+    def test_pytestini_overrides_empty_other(self, tmpdir: py.path.local, name) -> None:
         inifile = tmpdir.ensure("pytest.ini")
         a = tmpdir.mkdir("a")
         a.ensure(name)
-        rootdir, parsed_inifile, _ = determine_setup(None, [a])
+        rootdir, parsed_inifile, _ = determine_setup(None, [str(a)])
         assert rootdir == tmpdir
         assert parsed_inifile == inifile
 
-    def test_setuppy_fallback(self, tmpdir) -> None:
+    def test_setuppy_fallback(self, tmpdir: py.path.local) -> None:
         a = tmpdir.mkdir("a")
         a.ensure("setup.cfg")
         tmpdir.ensure("setup.py")
-        rootdir, inifile, inicfg = determine_setup(None, [a])
+        rootdir, inifile, inicfg = determine_setup(None, [str(a)])
         assert rootdir == tmpdir
         assert inifile is None
         assert inicfg == {}
 
-    def test_nothing(self, tmpdir, monkeypatch) -> None:
+    def test_nothing(self, tmpdir: py.path.local, monkeypatch) -> None:
         monkeypatch.chdir(str(tmpdir))
-        rootdir, inifile, inicfg = determine_setup(None, [tmpdir])
+        rootdir, inifile, inicfg = determine_setup(None, [str(tmpdir)])
         assert rootdir == tmpdir
         assert inifile is None
         assert inicfg == {}
 
-    def test_with_specific_inifile(self, tmpdir) -> None:
+    def test_with_specific_inifile(self, tmpdir: py.path.local) -> None:
         inifile = tmpdir.ensure("pytest.ini")
-        rootdir, _, _ = determine_setup(inifile, [tmpdir])
+        rootdir, _, _ = determine_setup(str(inifile), [str(tmpdir)])
         assert rootdir == tmpdir
 
     def test_with_arg_outside_cwd_without_inifile(self, tmpdir, monkeypatch) -> None:
         monkeypatch.chdir(str(tmpdir))
         a = tmpdir.mkdir("a")
         b = tmpdir.mkdir("b")
-        rootdir, inifile, _ = determine_setup(None, [a, b])
+        rootdir, inifile, _ = determine_setup(None, [str(a), str(b)])
         assert rootdir == tmpdir
         assert inifile is None
 
@@ -956,7 +958,7 @@ class TestRootdir:
         a = tmpdir.mkdir("a")
         b = tmpdir.mkdir("b")
         inifile = a.ensure("pytest.ini")
-        rootdir, parsed_inifile, _ = determine_setup(None, [a, b])
+        rootdir, parsed_inifile, _ = determine_setup(None, [str(a), str(b)])
         assert rootdir == a
         assert inifile == parsed_inifile
 
