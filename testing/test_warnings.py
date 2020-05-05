@@ -574,35 +574,54 @@ def test_group_warnings_by_message(testdir):
     result = testdir.runpytest()
     result.stdout.fnmatch_lines(
         [
-            "test_group_warnings_by_message.py::test_foo[0]",
-            "test_group_warnings_by_message.py::test_foo[1]",
-            "test_group_warnings_by_message.py::test_foo[2]",
-            "test_group_warnings_by_message.py::test_foo[3]",
-            "test_group_warnings_by_message.py::test_foo[4]",
-            "test_group_warnings_by_message.py::test_bar",
-        ]
+            "*== %s ==*" % WARNINGS_SUMMARY_HEADER,
+            "test_group_warnings_by_message.py::test_foo[[]0[]]",
+            "test_group_warnings_by_message.py::test_foo[[]1[]]",
+            "test_group_warnings_by_message.py::test_foo[[]2[]]",
+            "test_group_warnings_by_message.py::test_foo[[]3[]]",
+            "test_group_warnings_by_message.py::test_foo[[]4[]]",
+            "test_group_warnings_by_message.py::test_foo_1",
+            "  */test_group_warnings_by_message.py:*: UserWarning: foo",
+            "    warnings.warn(UserWarning(msg))",
+            "",
+            "test_group_warnings_by_message.py::test_bar[[]0[]]",
+            "test_group_warnings_by_message.py::test_bar[[]1[]]",
+            "test_group_warnings_by_message.py::test_bar[[]2[]]",
+            "test_group_warnings_by_message.py::test_bar[[]3[]]",
+            "test_group_warnings_by_message.py::test_bar[[]4[]]",
+            "  */test_group_warnings_by_message.py:*: UserWarning: bar",
+            "    warnings.warn(UserWarning(msg))",
+            "",
+            "-- Docs: *",
+            "*= 11 passed, 11 warnings *",
+        ],
+        consecutive=True,
     )
-    warning_code = 'warnings.warn(UserWarning("foo"))'
-    assert warning_code in result.stdout.str()
-    assert result.stdout.str().count(warning_code) == 1
 
 
 @pytest.mark.filterwarnings("ignore::pytest.PytestExperimentalApiWarning")
 @pytest.mark.filterwarnings("always")
 def test_group_warnings_by_message_summary(testdir):
-    testdir.copy_example("warnings/test_group_warnings_by_message_summary.py")
+    testdir.copy_example("warnings/test_group_warnings_by_message_summary")
+    testdir.syspathinsert()
     result = testdir.runpytest()
     result.stdout.fnmatch_lines(
         [
             "*== %s ==*" % WARNINGS_SUMMARY_HEADER,
-            "test_group_warnings_by_message_summary.py: 120 tests with warnings",
-            "*test_group_warnings_by_message_summary.py:7: UserWarning: foo",
+            "test_1.py: 21 warnings",
+            "test_2.py: 1 warning",
+            "  */test_1.py:7: UserWarning: foo",
+            "    warnings.warn(UserWarning(msg))",
+            "",
+            "test_1.py: 20 warnings",
+            "  */test_1.py:7: UserWarning: bar",
+            "    warnings.warn(UserWarning(msg))",
+            "",
+            "-- Docs: *",
+            "*= 42 passed, 42 warnings *",
         ],
         consecutive=True,
     )
-    warning_code = 'warnings.warn(UserWarning("foo"))'
-    assert warning_code in result.stdout.str()
-    assert result.stdout.str().count(warning_code) == 1
 
 
 def test_pytest_configure_warning(testdir, recwarn):
