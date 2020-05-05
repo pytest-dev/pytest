@@ -5,6 +5,7 @@ This is a good source for looking at the various reporting hooks.
 import argparse
 import collections
 import datetime
+import inspect
 import platform
 import sys
 import time
@@ -707,9 +708,14 @@ class TerminalReporter:
                 indent = (len(stack) - 1) * "  "
                 self._tw.line("{}{}".format(indent, col))
                 if self.config.option.verbose >= 1:
-                    if hasattr(col, "_obj") and col._obj.__doc__:
-                        for line in col._obj.__doc__.strip().splitlines():
-                            self._tw.line("{}{}".format(indent + "  ", line.strip()))
+                    try:
+                        obj = col.obj  # type: ignore
+                    except AttributeError:
+                        continue
+                    doc = inspect.getdoc(obj)
+                    if doc:
+                        for line in doc.splitlines():
+                            self._tw.line("{}{}".format(indent + "  ", line))
 
     @pytest.hookimpl(hookwrapper=True)
     def pytest_sessionfinish(self, session: Session, exitstatus: ExitCode):

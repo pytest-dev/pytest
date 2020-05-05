@@ -353,17 +353,33 @@ class TestCollectonly:
         result = testdir.runpytest("--collect-only", "-rs")
         result.stdout.fnmatch_lines(["*ERROR collecting*"])
 
-    def test_collectonly_display_test_description(self, testdir):
+    def test_collectonly_displays_test_description(
+        self, testdir: Testdir, dummy_yaml_custom_test
+    ) -> None:
+        """Used dummy_yaml_custom_test for an Item without ``obj``."""
         testdir.makepyfile(
             """
             def test_with_description():
-                \""" This test has a description.
-                \"""
-                assert True
-        """
+                '''  This test has a description.
+
+                  more1.
+                    more2.'''
+            """
         )
         result = testdir.runpytest("--collect-only", "--verbose")
-        result.stdout.fnmatch_lines(["    This test has a description."])
+        result.stdout.fnmatch_lines(
+            [
+                "<YamlFile test1.yaml>",
+                "  <YamlItem test1.yaml>",
+                "<Module test_collectonly_displays_test_description.py>",
+                "  <Function test_with_description>",
+                "    This test has a description.",
+                "    ",
+                "    more1.",
+                "      more2.",
+            ],
+            consecutive=True,
+        )
 
     def test_collectonly_failed_module(self, testdir):
         testdir.makepyfile("""raise ValueError(0)""")
