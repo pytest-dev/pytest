@@ -176,6 +176,21 @@ def pytest_collection(session: "Session") -> Optional[Any]:
     """Perform the collection protocol for the given session.
 
     Stops at first non-None result, see :ref:`firstresult`.
+    The return value is not used, but only stops further processing.
+
+    The hook is meant to set `session.items` to a sequence of items at least,
+    but normally should follow this procedure:
+
+      1. Call the pytest_collectstart hook.
+      2. Call the pytest_collectreport hook.
+      3. Call the pytest_collection_modifyitems hook.
+      4. Call the pytest_collection_finish hook.
+      5. Set session.testscollected to the amount of collect items.
+      6. Set `session.items` to a list of items.
+
+    You can implement this hook to only perform some action before collection,
+    for example the terminal plugin uses it to start displaying the collection
+    counter (and returns `None`).
 
     :param _pytest.main.Session session: the pytest session object
     """
