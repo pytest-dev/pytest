@@ -854,9 +854,12 @@ class TerminalReporter:
                 if len(locations) < 10:
                     return "\n".join(map(str, locations))
 
-                counts_by_filename = collections.Counter(
-                    str(loc).split("::", 1)[0] for loc in locations
-                )
+                counts_by_filename = (
+                    collections.OrderedDict()
+                )  # type: collections.OrderedDict[str, int]
+                for loc in locations:
+                    key = str(loc).split("::", 1)[0]
+                    counts_by_filename[key] = counts_by_filename.get(key, 0) + 1
                 return "\n".join(
                     "{}: {} warning{}".format(k, v, "s" if v > 1 else "")
                     for k, v in counts_by_filename.items()
