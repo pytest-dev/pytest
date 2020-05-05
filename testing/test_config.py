@@ -1465,7 +1465,7 @@ class TestPytestPluginsVariable:
                     warnings.filterwarnings('always', category=DeprecationWarning)
                     pytest_plugins=['capture']
                     """,
-            }
+            },
         )
         res = testdir.runpytest_subprocess()
         assert res.ret == 0
