@@ -1,0 +1,1 @@
+Raise exception if ``basetemp`` argument is empty string or . or parent folder of current working directory.
