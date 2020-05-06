@@ -25,8 +25,8 @@ import _pytest
 from _pytest import fixtures
 from _pytest import nodes
 from _pytest._code import filter_traceback
+from _pytest._code import getfslineno
 from _pytest._code.code import ExceptionInfo
-from _pytest._code.source import getfslineno
 from _pytest._io import TerminalWriter
 from _pytest._io.saferepr import saferepr
 from _pytest.compat import ascii_escaped

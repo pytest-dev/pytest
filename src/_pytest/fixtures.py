@@ -12,9 +12,9 @@ import attr
 import py
 
 import _pytest
+from _pytest._code import getfslineno
 from _pytest._code.code import FormattedExcinfo
 from _pytest._code.code import TerminalRepr
-from _pytest._code.source import getfslineno
 from _pytest._io import TerminalWriter
 from _pytest.compat import _format_args
 from _pytest.compat import _PytestWrapper

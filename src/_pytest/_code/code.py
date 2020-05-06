@@ -29,10 +29,15 @@ import pluggy
 import py
 
 import _pytest
+from _pytest._code.source import findsource
+from _pytest._code.source import getrawcode
+from _pytest._code.source import getstatementrange_ast
+from _pytest._code.source import Source
 from _pytest._io import TerminalWriter
 from _pytest._io.saferepr import safeformat
 from _pytest._io.saferepr import saferepr
 from _pytest.compat import ATTRS_EQ_FIELD
+from _pytest.compat import get_real_func
 from _pytest.compat import overload
 from _pytest.compat import TYPE_CHECKING
 
@@ -40,8 +45,6 @@ if TYPE_CHECKING:
     from typing import Type
     from typing_extensions import Literal
     from weakref import ReferenceType  # noqa: F401
-
-    from _pytest._code import Source
 
     _TracebackStyle = Literal["long", "short", "line", "no", "native"]
 
@@ -90,18 +93,14 @@ class Code:
     def fullsource(self) -> Optional["Source"]:
         """ return a _pytest._code.Source object for the full source file of the code
         """
-        from _pytest._code import source
-
-        full, _ = source.findsource(self.raw)
+        full, _ = findsource(self.raw)
         return full
 
     def source(self) -> "Source":
         """ return a _pytest._code.Source object for the code object's source only
         """
         # return source only for that part of code
-        import _pytest._code
-
-        return _pytest._code.Source(self.raw)
+        return Source(self.raw)
 
     def getargs(self, var: bool = False) -> Tuple[str, ...]:
         """ return a tuple with the argument names for the code object
@@ -132,10 +131,8 @@ class Frame:
     @property
     def statement(self) -> "Source":
         """ statement this frame is at """
-        import _pytest._code
-
         if self.code.fullsource is None:
-            return _pytest._code.Source("")
+            return Source("")
         return self.code.fullsource.getstatement(self.lineno)
 
     def eval(self, code, **vars):
@@ -231,8 +228,6 @@ class TracebackEntry:
         """ return failing source code. """
         # we use the passed in astcache to not reparse asttrees
         # within exception info printing
-        from _pytest._code.source import getstatementrange_ast
-
         source = self.frame.code.fullsource
         if source is None:
             return None
@@ -703,11 +698,9 @@ class FormattedExcinfo:
         short: bool = False,
     ) -> List[str]:
         """ return formatted and marked up source lines. """
-        import _pytest._code
-
         lines = []
         if source is None or line_index >= len(source.lines):
-            source = _pytest._code.Source("???")
+            source = Source("???")
             line_index = 0
         if line_index < 0:
             line_index += len(source)
@@ -769,11 +762,9 @@ class FormattedExcinfo:
     def repr_traceback_entry(
         self, entry: TracebackEntry, excinfo: Optional[ExceptionInfo] = None
     ) -> "ReprEntry":
-        import _pytest._code
-
         source = self._getentrysource(entry)
         if source is None:
-            source = _pytest._code.Source("???")
+            source = Source("???")
             line_index = 0
         else:
             line_index = entry.lineno - entry.getfirstlinesource()
@@ -1150,19 +1141,37 @@ class ReprFuncArgs(TerminalRepr):
             tw.line("")
 
 
-def getrawcode(obj, trycall: bool = True):
-    """ return code object for given function. """
+def getfslineno(obj: Any) -> Tuple[Union[str, py.path.local], int]:
+    """ Return source location (path, lineno) for the given object.
+    If the source cannot be determined return ("", -1).
+
+    The line number is 0-based.
+    """
+    # xxx let decorators etc specify a sane ordering
+    # NOTE: this used to be done in _pytest.compat.getfslineno, initially added
+    #       in 6ec13a2b9.  It ("place_as") appears to be something very custom.
+    obj = get_real_func(obj)
+    if hasattr(obj, "place_as"):
+        obj = obj.place_as
+
     try:
-        return obj.__code__
-    except AttributeError:
-        obj = getattr(obj, "f_code", obj)
-        obj = getattr(obj, "__code__", obj)
-        if trycall and not hasattr(obj, "co_firstlineno"):
-            if hasattr(obj, "__call__") and not inspect.isclass(obj):
-                x = getrawcode(obj.__call__, trycall=False)
-                if hasattr(x, "co_firstlineno"):
-                    return x
-        return obj
+        code = Code(obj)
+    except TypeError:
+        try:
+            fn = inspect.getsourcefile(obj) or inspect.getfile(obj)
+        except TypeError:
+            return "", -1
+
+        fspath = fn and py.path.local(fn) or ""
+        lineno = -1
+        if fspath:
+            try:
+                _, lineno = findsource(obj)
+            except OSError:
+                pass
+        return fspath, lineno
+    else:
+        return code.path, code.firstlineno
 
 
 # relative paths that we use to filter traceback entries from appearing to the user;

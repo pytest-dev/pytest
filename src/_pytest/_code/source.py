@@ -8,7 +8,6 @@ import warnings
 from bisect import bisect_right
 from types import CodeType
 from types import FrameType
-from typing import Any
 from typing import Iterator
 from typing import List
 from typing import Optional
@@ -18,7 +17,6 @@ from typing import Union
 
 import py
 
-from _pytest.compat import get_real_func
 from _pytest.compat import overload
 from _pytest.compat import TYPE_CHECKING
 
@@ -279,41 +277,6 @@ def compile_(  # noqa: F811
     return s.compile(filename, mode, flags, _genframe=_genframe)
 
 
-def getfslineno(obj: Any) -> Tuple[Union[str, py.path.local], int]:
-    """ Return source location (path, lineno) for the given object.
-    If the source cannot be determined return ("", -1).
-
-    The line number is 0-based.
-    """
-    from .code import Code
-
-    # xxx let decorators etc specify a sane ordering
-    # NOTE: this used to be done in _pytest.compat.getfslineno, initially added
-    #       in 6ec13a2b9.  It ("place_as") appears to be something very custom.
-    obj = get_real_func(obj)
-    if hasattr(obj, "place_as"):
-        obj = obj.place_as
-
-    try:
-        code = Code(obj)
-    except TypeError:
-        try:
-            fn = inspect.getsourcefile(obj) or inspect.getfile(obj)
-        except TypeError:
-            return "", -1
-
-        fspath = fn and py.path.local(fn) or ""
-        lineno = -1
-        if fspath:
-            try:
-                _, lineno = findsource(obj)
-            except OSError:
-                pass
-        return fspath, lineno
-    else:
-        return code.path, code.firstlineno
-
-
 #
 # helper functions
 #
@@ -329,9 +292,22 @@ def findsource(obj) -> Tuple[Optional[Source], int]:
     return source, lineno
 
 
-def getsource(obj, **kwargs) -> Source:
-    from .code import getrawcode
+def getrawcode(obj, trycall: bool = True):
+    """ return code object for given function. """
+    try:
+        return obj.__code__
+    except AttributeError:
+        obj = getattr(obj, "f_code", obj)
+        obj = getattr(obj, "__code__", obj)
+        if trycall and not hasattr(obj, "co_firstlineno"):
+            if hasattr(obj, "__call__") and not inspect.isclass(obj):
+                x = getrawcode(obj.__call__, trycall=False)
+                if hasattr(x, "co_firstlineno"):
+                    return x
+        return obj
 
+
+def getsource(obj, **kwargs) -> Source:
     obj = getrawcode(obj)
     try:
         strsrc = inspect.getsource(obj)
@@ -346,8 +322,6 @@ def deindent(lines: Sequence[str]) -> List[str]:
 
 
 def get_statement_startend2(lineno: int, node: ast.AST) -> Tuple[int, Optional[int]]:
-    import ast
-
     # flatten all statements and except handlers into one lineno-list
     # AST's line numbers start indexing at 1
     values = []  # type: List[int]

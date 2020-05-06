@@ -14,7 +14,7 @@ from typing import Union
 
 import attr
 
-from .._code.source import getfslineno
+from .._code import getfslineno
 from ..compat import ascii_escaped
 from ..compat import NOTSET
 from _pytest.outcomes import fail
