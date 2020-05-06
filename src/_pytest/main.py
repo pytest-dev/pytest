@@ -182,7 +182,7 @@ def validate_basetemp(path):
     # GH 7119
     cwd = pathlib.Path.cwd()
 
-    if path == "" or path == "." or path in str(cwd):
+    if path == "" or path == "." or str(cwd).startswith(path):
         msg = "basetemp should not be '' or . or any parent folder of the cwd"
         raise argparse.ArgumentTypeError(msg)
     return path
