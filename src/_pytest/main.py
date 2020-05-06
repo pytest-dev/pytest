@@ -12,6 +12,8 @@ from typing import Optional
 from typing import Sequence
 from typing import Tuple
 from typing import Union
+import pathlib
+import argparse
 
 import attr
 import py
@@ -167,12 +169,23 @@ def pytest_addoption(parser):
         "--basetemp",
         dest="basetemp",
         default=None,
+        type=validate_basetemp,
         metavar="dir",
         help=(
             "base temporary directory for this test run."
             "(warning: this directory is removed if it exists)"
         ),
     )
+
+def validate_basetemp(path):
+    # GH 7119
+    cwd = pathlib.Path.cwd()
+    given_path = pathlib.Path(path).resolve()
+
+    if given_path == cwd or str(given_path) in str(cwd):
+        msg = "basetemp should not be '' or . or any parent folder of the cwd"
+        raise argparse.ArgumentTypeError(msg)
+    return str(given_path)
 
 
 def wrap_session(
