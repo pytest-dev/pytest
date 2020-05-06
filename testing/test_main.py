@@ -1,7 +1,9 @@
+import argparse
 from typing import Optional
 
 import pytest
 from _pytest.config import ExitCode
+from _pytest.main import validate_basetemp
 from _pytest.pytester import Testdir
 
 
@@ -75,3 +77,10 @@ def test_wrap_session_exit_sessionfinish(
         assert result.ret == ExitCode.NO_TESTS_COLLECTED
     assert result.stdout.lines[-1] == "collected 0 items"
     assert result.stderr.lines == ["Exit: exit_pytest_sessionfinish"]
+
+
+@pytest.mark.parametrize("basetemp", ["", "."])
+def test_validate_basetemp(testdir, basetemp):
+    msg = "basetemp should not be '' or . or any parent folder of the cwd"
+    with pytest.raises(argparse.ArgumentTypeError, match=msg):
+        validate_basetemp(basetemp)
