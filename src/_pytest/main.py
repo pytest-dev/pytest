@@ -1,8 +1,10 @@
 """ core implementation of testing process: init, session, runtest loop. """
+import argparse
 import fnmatch
 import functools
 import importlib
 import os
+import pathlib
 import sys
 from typing import Callable
 from typing import Dict
@@ -12,8 +14,6 @@ from typing import Optional
 from typing import Sequence
 from typing import Tuple
 from typing import Union
-import pathlib
-import argparse
 
 import attr
 import py
@@ -176,6 +176,7 @@ def pytest_addoption(parser):
             "(warning: this directory is removed if it exists)"
         ),
     )
+
 
 def validate_basetemp(path):
     # GH 7119
