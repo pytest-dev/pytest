@@ -365,15 +365,17 @@ class PyCollector(PyobjMixin, nodes.Collector):
         # NB. we avoid random getattrs and peek in the __dict__ instead
         # (XXX originally introduced from a PyPy need, still true?)
         dicts = [getattr(self.obj, "__dict__", {})]
-        for basecls in inspect.getmro(self.obj.__class__):
+        for basecls in self.obj.__class__.__mro__:
             dicts.append(basecls.__dict__)
-        seen = {}
+        seen = set()
         values = []
         for dic in dicts:
+            # Note: seems like the dict can change during iteration -
+            # be careful not to remove the list() without consideration.
             for name, obj in list(dic.items()):
                 if name in seen:
                     continue
-                seen[name] = True
+                seen.add(name)
                 res = self._makeitem(name, obj)
                 if res is None:
                     continue
