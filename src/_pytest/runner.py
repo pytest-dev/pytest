@@ -120,6 +120,7 @@ def show_test_item(item):
     used_fixtures = sorted(getattr(item, "fixturenames", []))
     if used_fixtures:
         tw.write(" (fixtures used: {})".format(", ".join(used_fixtures)))
+    tw.flush()
 
 
 def pytest_runtest_setup(item):

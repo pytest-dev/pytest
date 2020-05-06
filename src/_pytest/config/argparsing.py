@@ -15,6 +15,7 @@ from typing import Union
 
 import py
 
+import _pytest._io
 from _pytest.compat import TYPE_CHECKING
 from _pytest.config.exceptions import UsageError
 
@@ -466,7 +467,7 @@ class DropShorterLongHelpFormatter(argparse.HelpFormatter):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         """Use more accurate terminal width via pylib."""
         if "width" not in kwargs:
-            kwargs["width"] = py.io.get_terminal_width()
+            kwargs["width"] = _pytest._io.get_terminal_width()
         super().__init__(*args, **kwargs)
 
     def _format_action_invocation(self, action: argparse.Action) -> str:
