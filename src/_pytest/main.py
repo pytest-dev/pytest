@@ -181,12 +181,11 @@ def pytest_addoption(parser):
 def validate_basetemp(path):
     # GH 7119
     cwd = pathlib.Path.cwd()
-    given_path = pathlib.Path(path).resolve()
 
-    if given_path == cwd or str(given_path) in str(cwd):
+    if path == "" or path == "." or path in str(cwd):
         msg = "basetemp should not be '' or . or any parent folder of the cwd"
         raise argparse.ArgumentTypeError(msg)
-    return str(given_path)
+    return path
 
 
 def wrap_session(
