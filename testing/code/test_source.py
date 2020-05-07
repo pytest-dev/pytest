@@ -122,7 +122,8 @@ def test_syntaxerror_rerepresentation() -> None:
     assert ex is not None
     assert ex.value.lineno == 1
     assert ex.value.offset in {5, 7}  # cpython: 7, pypy3.6 7.1.1: 5
-    assert ex.value.text == "xyz xyz\n"
+    assert ex.value.text
+    assert ex.value.text.rstrip("\n") == "xyz xyz"
 
 
 def test_isparseable() -> None:
@@ -521,7 +522,7 @@ def test_getfslineno() -> None:
     class B:
         pass
 
-    B.__name__ = "B2"
+    B.__name__ = B.__qualname__ = "B2"
     assert getfslineno(B)[1] == -1
 
     co = compile("...", "", "eval")
