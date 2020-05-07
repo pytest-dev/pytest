@@ -1,34 +1,52 @@
+import re
 import sys
 import warnings
 from contextlib import contextmanager
+from functools import lru_cache
 from typing import Generator
+from typing import Tuple
 
 import pytest
+from _pytest.compat import TYPE_CHECKING
 from _pytest.main import Session
 
+if TYPE_CHECKING:
+    from typing_extensions import Type
 
-def _setoption(wmod, arg):
-    """
-    Copy of the warning._setoption function but does not escape arguments.
+
+@lru_cache(maxsize=50)
+def _parse_filter(
+    arg: str, *, escape: bool
+) -> "Tuple[str, str, Type[Warning], str, int]":
+    """Parse a warnings filter string.
+
+    This is copied from warnings._setoption, but does not apply the filter,
+    only parses it, and makes the escaping optional.
     """
     parts = arg.split(":")
     if len(parts) > 5:
-        raise wmod._OptionError("too many fields (max 5): {!r}".format(arg))
+        raise warnings._OptionError("too many fields (max 5): {!r}".format(arg))
     while len(parts) < 5:
         parts.append("")
-    action, message, category, module, lineno = [s.strip() for s in parts]
-    action = wmod._getaction(action)
-    category = wmod._getcategory(category)
-    if lineno:
+    action_, message, category_, module, lineno_ = [s.strip() for s in parts]
+    action = warnings._getaction(action_)  # type: str # type: ignore[attr-defined]
+    category = warnings._getcategory(
+        category_
+    )  # type: Type[Warning] # type: ignore[attr-defined]
+    if message and escape:
+        message = re.escape(message)
+    if module and escape:
+        module = re.escape(module) + r"\Z"
+    if lineno_:
         try:
-            lineno = int(lineno)
+            lineno = int(lineno_)
             if lineno < 0:
                 raise ValueError
         except (ValueError, OverflowError):
-            raise wmod._OptionError("invalid lineno {!r}".format(lineno))
+            raise warnings._OptionError("invalid lineno {!r}".format(lineno_))
     else:
         lineno = 0
-    wmod.filterwarnings(action, message, category, module, lineno)
+    return (action, message, category, module, lineno)
 
 
 def pytest_addoption(parser):
@@ -79,15 +97,15 @@ def catch_warnings_for_item(config, ihook, when, item):
         # filters should have this precedence: mark, cmdline options, ini
         # filters should be applied in the inverse order of precedence
         for arg in inifilters:
-            _setoption(warnings, arg)
+            warnings.filterwarnings(*_parse_filter(arg, escape=False))
 
         for arg in cmdline_filters:
-            warnings._setoption(arg)
+            warnings.filterwarnings(*_parse_filter(arg, escape=True))
 
         if item is not None:
             for mark in item.iter_markers(name="filterwarnings"):
                 for arg in mark.args:
-                    _setoption(warnings, arg)
+                    warnings.filterwarnings(*_parse_filter(arg, escape=False))
 
         yield
 
