@@ -85,7 +85,7 @@ def pytest_addoption(parser):
         help="increase verbosity.",
     )
     group._addoption(
-        "-d",
+        "--dt",
         action="count",
         default=0,
         dest="terminal_verbosity",
@@ -508,7 +508,9 @@ class TerminalReporter:
 
     def pytest_runtest_logfinish(self, nodeid):
         assert self._session
-        if (self.verbosity <= 0 or self.terminal_verbosity > 0) and self._show_progress_info:
+        if (
+            self.verbosity <= 0 or self.terminal_verbosity > 0
+        ) and self._show_progress_info:
             if self._show_progress_info == "count":
                 num_tests = self._session.testscollected
                 progress_length = len(" [{}/{}]".format(str(num_tests), str(num_tests)))
