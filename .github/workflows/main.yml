@@ -123,6 +123,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+    # For setuptools_scm.
+    - run: git fetch --depth=1 origin +refs/tags/*:refs/tags/*
     - name: Set up Python ${{ matrix.python }}
       uses: actions/setup-python@v2
       with:
@@ -164,6 +166,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+    # For setuptools_scm.
+    - run: git fetch --depth=1 origin +refs/tags/*:refs/tags/*
     - name: Set up Python
       uses: actions/setup-python@v2
       with:
