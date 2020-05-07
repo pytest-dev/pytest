@@ -6,6 +6,7 @@ from . import collect
 from _pytest import __version__
 from _pytest.assertion import register_assert_rewrite
 from _pytest.config import cmdline
+from _pytest.config import console_main
 from _pytest.config import ExitCode
 from _pytest.config import hookimpl
 from _pytest.config import hookspec
@@ -57,6 +58,7 @@ __all__ = [
     "cmdline",
     "collect",
     "Collector",
+    "console_main",
     "deprecated_call",
     "exit",
     "ExitCode",
