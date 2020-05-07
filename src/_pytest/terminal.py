@@ -85,6 +85,13 @@ def pytest_addoption(parser):
         help="increase verbosity.",
     )
     group._addoption(
+        "-d",
+        action="count",
+        default=0,
+        dest="terminal_verbosity",
+        help="decrease terminal verbosity.",
+    )
+    group._addoption(
         "-q",
         "--quiet",
         action=MoreQuietAction,
@@ -310,6 +317,10 @@ class TerminalReporter:
         return self.config.option.verbose
 
     @property
+    def terminal_verbosity(self):
+        return self.config.option.terminal_verbosity
+
+    @property
     def showheader(self):
         return self.verbosity >= 0
 
@@ -433,7 +444,7 @@ class TerminalReporter:
     def pytest_runtest_logstart(self, nodeid, location):
         # ensure that the path is printed before the
         # 1st test of a module starts running
-        if self.showlongtestinfo:
+        if self.showlongtestinfo and self.terminal_verbosity < 1:
             line = self._locationline(nodeid, *location)
             self.write_ensure_prefix(line, "")
         elif self.showfspath:
@@ -466,7 +477,7 @@ class TerminalReporter:
                 markup = {"yellow": True}
             else:
                 markup = {}
-        if self.verbosity <= 0:
+        if self.verbosity <= 0 or self.terminal_verbosity > 0:
             if not running_xdist and self.showfspath:
                 self.write_fspath_result(rep.nodeid, letter, **markup)
             else:
@@ -497,7 +508,7 @@ class TerminalReporter:
 
     def pytest_runtest_logfinish(self, nodeid):
         assert self._session
-        if self.verbosity <= 0 and self._show_progress_info:
+        if (self.verbosity <= 0 or self.terminal_verbosity > 0) and self._show_progress_info:
             if self._show_progress_info == "count":
                 num_tests = self._session.testscollected
                 progress_length = len(" [{}/{}]".format(str(num_tests), str(num_tests)))
