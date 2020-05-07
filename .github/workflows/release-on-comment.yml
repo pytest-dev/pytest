@@ -15,8 +15,9 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    # For setuptools_scm.
-    - run: git fetch --depth=1 origin +refs/tags/*:refs/tags/*
+    # For setuptools-scm.
+    - run: git fetch --prune --unshallow
+
     - name: Set up Python
       uses: actions/setup-python@v2
       with:
