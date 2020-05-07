@@ -108,20 +108,20 @@ def pytest_unconfigure():
     RUNNER_CLASS = None
 
 
-def pytest_collect_file(path, parent):
+def pytest_collect_file(path: py.path.local, parent):
     config = parent.config
     if path.ext == ".py":
-        if config.option.doctestmodules and not _is_setup_py(config, path, parent):
+        if config.option.doctestmodules and not _is_setup_py(path):
             return DoctestModule.from_parent(parent, fspath=path)
     elif _is_doctest(config, path, parent):
         return DoctestTextfile.from_parent(parent, fspath=path)
 
 
-def _is_setup_py(config, path, parent):
+def _is_setup_py(path: py.path.local) -> bool:
     if path.basename != "setup.py":
         return False
-    contents = path.read()
-    return "setuptools" in contents or "distutils" in contents
+    contents = path.read_binary()
+    return b"setuptools" in contents or b"distutils" in contents
 
 
 def _is_doctest(config, path, parent):

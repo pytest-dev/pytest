@@ -1,0 +1,1 @@
+Fix ``_is_setup_py`` for files encoded differently than locale.
