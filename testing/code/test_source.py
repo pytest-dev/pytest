@@ -501,7 +501,7 @@ def test_getfslineno():
     class B(object):
         pass
 
-    B.__name__ = "B2"
+    B.__name__ = B.__qualname__ = "B2"
     assert getfslineno(B)[1] == -1
 
 
