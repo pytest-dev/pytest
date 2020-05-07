@@ -262,6 +262,7 @@ def test_mark_option_custom(expr: str, expected_passed: str, testdir) -> None:
         ("not pass", ["test_interface", "test_nointer", "test_1", "test_2"]),
         ("not not not (pass)", ["test_interface", "test_nointer", "test_1", "test_2"]),
         ("1 or 2", ["test_1", "test_2"]),
+        ("not (1 or 2)", ["test_interface", "test_nointer", "test_pass"]),
     ],
 )
 def test_keyword_option_custom(expr: str, expected_passed: str, testdir) -> None:
