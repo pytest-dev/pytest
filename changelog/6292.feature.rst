@@ -1,0 +1,1 @@
+New flag -d added which decrease terminal verbosity. Combined with -v/-vv allows to modify how to display test session progress in the terminal.
