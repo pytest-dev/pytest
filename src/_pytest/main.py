@@ -4,7 +4,6 @@ import fnmatch
 import functools
 import importlib
 import os
-from _pytest.pathlib import Path
 import sys
 from typing import Callable
 from typing import Dict
@@ -28,6 +27,7 @@ from _pytest.config import hookimpl
 from _pytest.config import UsageError
 from _pytest.fixtures import FixtureManager
 from _pytest.outcomes import exit
+from _pytest.pathlib import Path
 from _pytest.reports import CollectReport
 from _pytest.runner import collect_one_node
 from _pytest.runner import SetupState
@@ -180,11 +180,29 @@ def pytest_addoption(parser):
 
 def validate_basetemp(path: str) -> str:
     # GH 7119
-    cwd = pathlib.Path.cwd()
+    msg = "basetemp must not be empty, the current working directory or any parent directory of it"
 
-    if path == "" or path == "." or str(cwd).startswith(path):
-        msg = "basetemp must not be empty, the current working directory or any parent directory of it"
+    # empty path
+    if not path:
         raise argparse.ArgumentTypeError(msg)
+
+    def is_ancestor(base: Path, query: Path) -> bool:
+        """ return True if query is an ancestor of base, else False."""
+        if base == query:
+            return True
+        for parent in base.parents:
+            if parent == query:
+                return True
+        return False
+
+    # check if path is an ancestor of cwd
+    if is_ancestor(Path.cwd(), Path(path).absolute()):
+        raise argparse.ArgumentTypeError(msg)
+
+    # check symlinks for ancestors
+    if is_ancestor(Path.cwd().resolve(), Path(path).resolve()):
+        raise argparse.ArgumentTypeError(msg)
+
     return path
 
 
