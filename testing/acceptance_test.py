@@ -11,6 +11,7 @@ import pytest
 from _pytest.compat import importlib_metadata
 from _pytest.config import ExitCode
 from _pytest.monkeypatch import MonkeyPatch
+from _pytest.pytester import Testdir
 
 
 def prepend_pythonpath(*dirs):
@@ -1343,3 +1344,21 @@ def test_tee_stdio_captures_and_live_prints(testdir):
         fullXml = f.read()
     assert "@this is stdout@\n" in fullXml
     assert "@this is stderr@\n" in fullXml
+
+
+@pytest.mark.skipif(
+    sys.platform == "win32",
+    reason="Windows raises `OSError: [Errno 22] Invalid argument` instead",
+)
+def test_no_brokenpipeerror_message(testdir: Testdir) -> None:
+    """Ensure that the broken pipe error message is supressed.
+
+    In some Python versions, it reaches sys.unraisablehook, in others
+    a BrokenPipeError exception is propagated, but either way it prints
+    to stderr on shutdown, so checking nothing is printed is enough.
+    """
+    popen = testdir.popen((*testdir._getpytestargs(), "--help"))
+    popen.stdout.close()
+    ret = popen.wait()
+    assert popen.stderr.read() == b""
+    assert ret == 1

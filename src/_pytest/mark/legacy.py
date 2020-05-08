@@ -2,44 +2,46 @@
 this is a place where we put datastructures used by legacy apis
 we hope to remove
 """
-import keyword
 from typing import Set
 
 import attr
 
 from _pytest.compat import TYPE_CHECKING
 from _pytest.config import UsageError
+from _pytest.mark.expression import evaluate
+from _pytest.mark.expression import ParseError
 
 if TYPE_CHECKING:
     from _pytest.nodes import Item  # noqa: F401 (used in type string)
 
 
 @attr.s
-class MarkMapping:
-    """Provides a local mapping for markers where item access
-    resolves to True if the marker is present. """
+class MarkMatcher:
+    """A matcher for markers which are present."""
 
     own_mark_names = attr.ib()
 
     @classmethod
-    def from_item(cls, item):
+    def from_item(cls, item) -> "MarkMatcher":
         mark_names = {mark.name for mark in item.iter_markers()}
         return cls(mark_names)
 
-    def __getitem__(self, name):
+    def __call__(self, name: str) -> bool:
         return name in self.own_mark_names
 
 
 @attr.s
-class KeywordMapping:
-    """Provides a local mapping for keywords.
-    Given a list of names, map any substring of one of these names to True.
+class KeywordMatcher:
+    """A matcher for keywords.
+
+    Given a list of names, matches any substring of one of these names. The
+    string inclusion check is case-insensitive.
     """
 
     _names = attr.ib(type=Set[str])
 
     @classmethod
-    def from_item(cls, item: "Item") -> "KeywordMapping":
+    def from_item(cls, item: "Item") -> "KeywordMatcher":
         mapped_names = set()
 
         # Add the names of the current item and any parent items
@@ -62,12 +64,7 @@ class KeywordMapping:
 
         return cls(mapped_names)
 
-    def __getitem__(self, subname: str) -> bool:
-        """Return whether subname is included within stored names.
-
-        The string inclusion check is case-insensitive.
-
-        """
+    def __call__(self, subname: str) -> bool:
         subname = subname.lower()
         names = (name.lower() for name in self._names)
 
@@ -77,18 +74,17 @@ class KeywordMapping:
         return False
 
 
-python_keywords_allowed_list = ["or", "and", "not"]
-
-
-def matchmark(colitem, markexpr):
+def matchmark(colitem, markexpr: str) -> bool:
     """Tries to match on any marker names, attached to the given colitem."""
     try:
-        return eval(markexpr, {}, MarkMapping.from_item(colitem))
-    except Exception:
-        raise UsageError("Wrong expression passed to '-m': {}".format(markexpr))
+        return evaluate(markexpr, MarkMatcher.from_item(colitem))
+    except ParseError as e:
+        raise UsageError(
+            "Wrong expression passed to '-m': {}: {}".format(markexpr, e)
+        ) from None
 
 
-def matchkeyword(colitem, keywordexpr):
+def matchkeyword(colitem, keywordexpr: str) -> bool:
     """Tries to match given keyword expression to given collector item.
 
     Will match on the name of colitem, including the names of its parents.
@@ -97,20 +93,9 @@ def matchkeyword(colitem, keywordexpr):
     Additionally, matches on names in the 'extra_keyword_matches' set of
     any item, as well as names directly assigned to test functions.
     """
-    mapping = KeywordMapping.from_item(colitem)
-    if " " not in keywordexpr:
-        # special case to allow for simple "-k pass" and "-k 1.3"
-        return mapping[keywordexpr]
-    elif keywordexpr.startswith("not ") and " " not in keywordexpr[4:]:
-        return not mapping[keywordexpr[4:]]
-    for kwd in keywordexpr.split():
-        if keyword.iskeyword(kwd) and kwd not in python_keywords_allowed_list:
-            raise UsageError(
-                "Python keyword '{}' not accepted in expressions passed to '-k'".format(
-                    kwd
-                )
-            )
     try:
-        return eval(keywordexpr, {}, mapping)
-    except Exception:
-        raise UsageError("Wrong expression passed to '-k': {}".format(keywordexpr))
+        return evaluate(keywordexpr, KeywordMatcher.from_item(colitem))
+    except ParseError as e:
+        raise UsageError(
+            "Wrong expression passed to '-k': {}: {}".format(keywordexpr, e)
+        ) from None

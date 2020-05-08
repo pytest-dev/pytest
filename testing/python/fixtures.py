@@ -4155,7 +4155,7 @@ def test_fixture_named_request(testdir):
     )
 
 
-def test_fixture_duplicated_arguments():
+def test_fixture_duplicated_arguments() -> None:
     """Raise error if there are positional and keyword arguments for the same parameter (#1682)."""
     with pytest.raises(TypeError) as excinfo:
 
@@ -4169,8 +4169,31 @@ def test_fixture_duplicated_arguments():
         "Use only keyword arguments."
     )
 
+    with pytest.raises(TypeError) as excinfo:
 
-def test_fixture_with_positionals():
+        @pytest.fixture(
+            "function",
+            ["p1"],
+            True,
+            ["id1"],
+            "name",
+            scope="session",
+            params=["p1"],
+            autouse=True,
+            ids=["id1"],
+            name="name",
+        )
+        def arg2(request):
+            pass
+
+    assert (
+        str(excinfo.value)
+        == "The fixture arguments are defined as positional and keyword: scope, params, autouse, ids, name. "
+        "Use only keyword arguments."
+    )
+
+
+def test_fixture_with_positionals() -> None:
     """Raise warning, but the positionals should still works (#1682)."""
     from _pytest.deprecated import FIXTURE_POSITIONAL_ARGUMENTS
 
@@ -4185,6 +4208,18 @@ def test_fixture_with_positionals():
     assert fixture_with_positionals._pytestfixturefunction.scope == "function"
     assert fixture_with_positionals._pytestfixturefunction.params == (0,)
     assert fixture_with_positionals._pytestfixturefunction.autouse
+
+
+def test_fixture_with_too_many_positionals() -> None:
+    with pytest.raises(TypeError) as excinfo:
+
+        @pytest.fixture("function", [0], True, ["id"], "name", "extra")
+        def fixture_with_positionals():
+            pass
+
+    assert (
+        str(excinfo.value) == "fixture() takes 5 positional arguments but 6 were given"
+    )
 
 
 def test_indirect_fixture_does_not_break_scope(testdir):

@@ -137,6 +137,24 @@ def main(args=None, plugins=None) -> Union[int, ExitCode]:
         return ExitCode.USAGE_ERROR
 
 
+def console_main() -> int:
+    """pytest's CLI entry point.
+
+    This function is not meant for programmable use; use `main()` instead.
+    """
+    # https://docs.python.org/3/library/signal.html#note-on-sigpipe
+    try:
+        code = main()
+        sys.stdout.flush()
+        return code
+    except BrokenPipeError:
+        # Python flushes standard streams on exit; redirect remaining output
+        # to devnull to avoid another BrokenPipeError at shutdown
+        devnull = os.open(os.devnull, os.O_WRONLY)
+        os.dup2(devnull, sys.stdout.fileno())
+        return 1  # Python exits with error code 1 on EPIPE
+
+
 class cmdline:  # compatibility namespace
     main = staticmethod(main)
 

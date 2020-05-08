@@ -3,7 +3,6 @@
 This is a good source for looking at the various reporting hooks.
 """
 import argparse
-import collections
 import datetime
 import inspect
 import platform
@@ -28,6 +27,7 @@ from more_itertools import collapse
 import pytest
 from _pytest import nodes
 from _pytest._io import TerminalWriter
+from _pytest.compat import order_preserving_dict
 from _pytest.config import Config
 from _pytest.config import ExitCode
 from _pytest.deprecated import TERMINALWRITER_WRITER
@@ -344,7 +344,7 @@ class TerminalReporter:
             fspath = self.startdir.bestrelpath(fspath)
             self._tw.line()
             self._tw.write(fspath + " ")
-        self._tw.write(res, **markup)
+        self._tw.write(res, flush=True, **markup)
 
     def write_ensure_prefix(self, prefix, extra="", **kwargs):
         if self.currentfspath != prefix:
@@ -360,8 +360,11 @@ class TerminalReporter:
             self._tw.line()
             self.currentfspath = None
 
-    def write(self, content, **markup):
-        self._tw.write(content, **markup)
+    def write(self, content: str, *, flush: bool = False, **markup: bool) -> None:
+        self._tw.write(content, flush=flush, **markup)
+
+    def flush(self) -> None:
+        self._tw.flush()
 
     def write_line(self, line, **markup):
         if not isinstance(line, str):
@@ -438,9 +441,11 @@ class TerminalReporter:
         if self.showlongtestinfo:
             line = self._locationline(nodeid, *location)
             self.write_ensure_prefix(line, "")
+            self.flush()
         elif self.showfspath:
             fsid = nodeid.split("::")[0]
             self.write_fspath_result(fsid, "")
+            self.flush()
 
     def pytest_runtest_logreport(self, report: TestReport) -> None:
         self._tests_ran = True
@@ -492,6 +497,7 @@ class TerminalReporter:
                 self._tw.write(word, **markup)
                 self._tw.write(" " + line)
                 self.currentfspath = -2
+        self.flush()
 
     @property
     def _is_last_item(self):
@@ -540,24 +546,20 @@ class TerminalReporter:
         msg = self._get_progress_information_message()
         w = self._width_of_current_line
         fill = self._tw.fullwidth - w - 1
-        self.write(msg.rjust(fill), **{color: True})
+        self.write(msg.rjust(fill), flush=True, **{color: True})
 
     @property
     def _width_of_current_line(self):
         """Return the width of current line, using the superior implementation of py-1.6 when available"""
-        try:
-            return self._tw.width_of_current_line
-        except AttributeError:
-            # py < 1.6.0
-            return self._tw.chars_on_current_line
+        return self._tw.width_of_current_line
 
     def pytest_collection(self) -> None:
         if self.isatty:
             if self.config.option.verbose >= 0:
-                self.write("collecting ... ", bold=True)
+                self.write("collecting ... ", flush=True, bold=True)
                 self._collect_report_last_write = time.time()
         elif self.config.option.verbose >= 1:
-            self.write("collecting ... ", bold=True)
+            self.write("collecting ... ", flush=True, bold=True)
 
     def pytest_collectreport(self, report: CollectReport) -> None:
         if report.failed:
@@ -839,8 +841,8 @@ class TerminalReporter:
                 return
 
             reports_grouped_by_message = (
-                collections.OrderedDict()
-            )  # type: collections.OrderedDict[str, List[WarningReport]]
+                order_preserving_dict()
+            )  # type: Dict[str, List[WarningReport]]
             for wr in warning_reports:
                 reports_grouped_by_message.setdefault(wr.message, []).append(wr)
 
@@ -854,9 +856,7 @@ class TerminalReporter:
                 if len(locations) < 10:
                     return "\n".join(map(str, locations))
 
-                counts_by_filename = (
-                    collections.OrderedDict()
-                )  # type: collections.OrderedDict[str, int]
+                counts_by_filename = order_preserving_dict()  # type: Dict[str, int]
                 for loc in locations:
                     key = str(loc).split("::", 1)[0]
                     counts_by_filename[key] = counts_by_filename.get(key, 0) + 1
