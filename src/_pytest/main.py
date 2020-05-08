@@ -183,7 +183,7 @@ def validate_basetemp(path: str) -> str:
     cwd = pathlib.Path.cwd()
 
     if path == "" or path == "." or str(cwd).startswith(path):
-        msg = "basetemp should not be '' or . or any parent folder of the cwd"
+        msg = "basetemp must not be empty, the current working directory or any parent directory of it"
         raise argparse.ArgumentTypeError(msg)
     return path
 
