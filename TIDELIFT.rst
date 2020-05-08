@@ -23,7 +23,7 @@ members of the `contributors team`_ interested in receiving funding.
 
 The current list of contributors receiving funding are:
 
-*
+* `@nicoddemus`_
 
 Contributors interested in receiving a part of the funds just need to submit a PR adding their
 name to the list. Contributors that want to stop receiving the funds should also submit a PR
