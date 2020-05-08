@@ -212,9 +212,7 @@ Here is a simple overview, with pytest-specific bits:
    If you need some help with Git, follow this quick start
    guide: https://git.wiki.kernel.org/index.php/QuickStart
 
-#. Install `pre-commit <https://pre-commit.com>`_ and its hook on the pytest repo:
-
-   **Note: pre-commit must be installed as admin, as it will not function otherwise**::
+#. Install `pre-commit <https://pre-commit.com>`_ and its hook on the pytest repo::
 
      $ pip install --user pre-commit
      $ pre-commit install
