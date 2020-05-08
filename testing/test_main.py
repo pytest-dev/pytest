@@ -79,8 +79,22 @@ def test_wrap_session_exit_sessionfinish(
     assert result.stderr.lines == ["Exit: exit_pytest_sessionfinish"]
 
 
-@pytest.mark.parametrize("basetemp", ["", "."])
-def test_validate_basetemp(testdir, basetemp):
+@pytest.mark.parametrize("basetemp", ["foo", "foo/bar"])
+def test_validate_basetemp_ok(tmp_path, basetemp, monkeypatch):
+    monkeypatch.chdir(str(tmp_path))
+    validate_basetemp(tmp_path / basetemp)
+
+
+@pytest.mark.parametrize("basetemp", ["", ".", ".."])
+def test_validate_basetemp_fails(tmp_path, basetemp, monkeypatch):
+    monkeypatch.chdir(str(tmp_path))
     msg = "basetemp must not be empty, the current working directory or any parent directory of it"
     with pytest.raises(argparse.ArgumentTypeError, match=msg):
+        if basetemp:
+            basetemp = tmp_path / basetemp
         validate_basetemp(basetemp)
+
+
+def test_validate_basetemp_integration(testdir):
+    result = testdir.runpytest("--basetemp=.")
+    result.stderr.fnmatch_lines("*basetemp must not be*")
