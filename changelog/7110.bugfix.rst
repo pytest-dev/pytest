@@ -1,1 +1,0 @@
-Fixed regression: ``asyncbase.TestCase`` tests are executed correctly again.
