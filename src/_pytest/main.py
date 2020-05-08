@@ -4,7 +4,7 @@ import fnmatch
 import functools
 import importlib
 import os
-import pathlib
+from _pytest.pathlib import Path
 import sys
 from typing import Callable
 from typing import Dict
