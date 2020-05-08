@@ -1176,3 +1176,20 @@ def test_importorskip():
         match="^could not import 'doesnotexist': No module named .*",
     ):
         pytest.importorskip("doesnotexist")
+
+
+def test_relpath_rootdir(testdir):
+    testdir.makepyfile(
+        **{
+            "tests/test_1.py": """
+        import pytest
+        @pytest.mark.skip()
+        def test_pass():
+            pass
+            """,
+        }
+    )
+    result = testdir.runpytest("-rs", "tests/test_1.py", "--rootdir=tests")
+    result.stdout.fnmatch_lines(
+        ["SKIPPED [[]1[]] tests/test_1.py:2: unconditional skip"]
+    )
