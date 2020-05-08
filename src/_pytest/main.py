@@ -178,7 +178,7 @@ def pytest_addoption(parser):
     )
 
 
-def validate_basetemp(path):
+def validate_basetemp(path: str) -> str:
     # GH 7119
     cwd = pathlib.Path.cwd()
 
