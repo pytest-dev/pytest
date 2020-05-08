@@ -81,6 +81,6 @@ def test_wrap_session_exit_sessionfinish(
 
 @pytest.mark.parametrize("basetemp", ["", "."])
 def test_validate_basetemp(testdir, basetemp):
-    msg = "basetemp should not be '' or . or any parent folder of the cwd"
+    msg = "basetemp must not be empty, the current working directory or any parent directory of it"
     with pytest.raises(argparse.ArgumentTypeError, match=msg):
         validate_basetemp(basetemp)
