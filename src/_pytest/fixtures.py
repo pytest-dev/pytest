@@ -1043,50 +1043,8 @@ class FixtureFunctionMarker:
         return function
 
 
-FIXTURE_ARGS_ORDER = ("scope", "params", "autouse", "ids", "name")
-
-
-def _parse_fixture_args(callable_or_scope, *args, **kwargs):
-    arguments = {
-        "scope": "function",
-        "params": None,
-        "autouse": False,
-        "ids": None,
-        "name": None,
-    }
-    kwargs = {
-        key: value for key, value in kwargs.items() if arguments.get(key) != value
-    }
-
-    fixture_function = None
-    if isinstance(callable_or_scope, str):
-        args = list(args)
-        args.insert(0, callable_or_scope)
-    else:
-        fixture_function = callable_or_scope
-
-    positionals = set()
-    for positional, argument_name in zip(args, FIXTURE_ARGS_ORDER):
-        arguments[argument_name] = positional
-        positionals.add(argument_name)
-
-    duplicated_kwargs = {kwarg for kwarg in kwargs.keys() if kwarg in positionals}
-    if duplicated_kwargs:
-        raise TypeError(
-            "The fixture arguments are defined as positional and keyword: {}. "
-            "Use only keyword arguments.".format(", ".join(duplicated_kwargs))
-        )
-
-    if positionals:
-        warnings.warn(FIXTURE_POSITIONAL_ARGUMENTS, stacklevel=2)
-
-    arguments.update(kwargs)
-
-    return fixture_function, arguments
-
-
 def fixture(
-    callable_or_scope=None,
+    fixture_function=None,
     *args,
     scope="function",
     params=None,
@@ -1143,23 +1101,55 @@ def fixture(
                 ``fixture_<fixturename>`` and then use
                 ``@pytest.fixture(name='<fixturename>')``.
     """
+    # Positional arguments backward compatibility.
+    # If a kwarg is equal to its default, assume it was not explicitly
+    # passed, i.e. not duplicated. The more correct way is to use a
+    # **kwargs and check `in`, but that obfuscates the function signature.
+    if isinstance(fixture_function, str):
+        # It's actually the first positional argument, scope.
+        args = (fixture_function, *args)
+        fixture_function = None
+    duplicated_args = []
+    if len(args) > 0:
+        if scope == "function":
+            scope = args[0]
+        else:
+            duplicated_args.append("scope")
+    if len(args) > 1:
+        if params is None:
+            params = args[1]
+        else:
+            duplicated_args.append("params")
+    if len(args) > 2:
+        if autouse is False:
+            autouse = args[2]
+        else:
+            duplicated_args.append("autouse")
+    if len(args) > 3:
+        if ids is None:
+            ids = args[3]
+        else:
+            duplicated_args.append("ids")
+    if len(args) > 4:
+        if name is None:
+            name = args[4]
+        else:
+            duplicated_args.append("name")
+    if len(args) > 5:
+        raise TypeError(
+            "fixture() takes 5 positional arguments but {} were given".format(len(args))
+        )
+    if duplicated_args:
+        raise TypeError(
+            "The fixture arguments are defined as positional and keyword: {}. "
+            "Use only keyword arguments.".format(", ".join(duplicated_args))
+        )
+    if args:
+        warnings.warn(FIXTURE_POSITIONAL_ARGUMENTS, stacklevel=2)
+    # End backward compatiblity.
+
     if params is not None:
         params = list(params)
-
-    fixture_function, arguments = _parse_fixture_args(
-        callable_or_scope,
-        *args,
-        scope=scope,
-        params=params,
-        autouse=autouse,
-        ids=ids,
-        name=name,
-    )
-    scope = arguments.get("scope")
-    params = arguments.get("params")
-    autouse = arguments.get("autouse")
-    ids = arguments.get("ids")
-    name = arguments.get("name")
 
     if fixture_function and params is None and autouse is False:
         # direct decoration
@@ -1171,7 +1161,7 @@ def fixture(
 
 
 def yield_fixture(
-    callable_or_scope=None,
+    fixture_function=None,
     *args,
     scope="function",
     params=None,
@@ -1185,7 +1175,7 @@ def yield_fixture(
         Use :py:func:`pytest.fixture` directly instead.
     """
     return fixture(
-        callable_or_scope,
+        fixture_function,
         *args,
         scope=scope,
         params=params,
