@@ -1,1 +1,0 @@
-Fix TerminalRepr instances to be hashable again.

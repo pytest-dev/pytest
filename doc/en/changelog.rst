@@ -28,6 +28,42 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+pytest 5.4.2 (2020-05-08)
+=========================
+
+Bug Fixes
+---------
+
+- `#6871 <https://github.com/pytest-dev/pytest/issues/6871>`_: Fix crash with captured output when using the :fixture:`capsysbinary fixture <capsysbinary>`.
+
+
+- `#6924 <https://github.com/pytest-dev/pytest/issues/6924>`_: Ensure a ``unittest.IsolatedAsyncioTestCase`` is actually awaited.
+
+
+- `#6925 <https://github.com/pytest-dev/pytest/issues/6925>`_: Fix TerminalRepr instances to be hashable again.
+
+
+- `#6947 <https://github.com/pytest-dev/pytest/issues/6947>`_: Fix regression where functions registered with ``TestCase.addCleanup`` were not being called on test failures.
+
+
+- `#6951 <https://github.com/pytest-dev/pytest/issues/6951>`_: Allow users to still set the deprecated ``TerminalReporter.writer`` attribute.
+
+
+- `#6992 <https://github.com/pytest-dev/pytest/issues/6992>`_: Revert "tmpdir: clean up indirection via config for factories" #6767 as it breaks pytest-xdist.
+
+
+- `#7110 <https://github.com/pytest-dev/pytest/issues/7110>`_: Fixed regression: ``asyncbase.TestCase`` tests are executed correctly again.
+
+
+- `#7143 <https://github.com/pytest-dev/pytest/issues/7143>`_: Fix ``File.from_constructor`` so it forwards extra keyword arguments to the constructor.
+
+
+- `#7145 <https://github.com/pytest-dev/pytest/issues/7145>`_: Classes with broken ``__getattribute__`` methods are displayed correctly during failures.
+
+
+- `#7180 <https://github.com/pytest-dev/pytest/issues/7180>`_: Fix ``_is_setup_py`` for files encoded differently than locale.
+
+
 pytest 5.4.1 (2020-03-13)
 =========================
 

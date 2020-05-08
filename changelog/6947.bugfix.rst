@@ -1,1 +1,0 @@
-Fix regression where functions registered with ``TestCase.addCleanup`` were not being called on test failures.
