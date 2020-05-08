@@ -53,8 +53,8 @@ def pytest_configure(config):
     )
     config.addinivalue_line(
         "markers",
-        "skipif(condition): skip the given test function if eval(condition) "
-        "results in a True value.  Evaluation happens within the "
+        "skipif(condition, reason=None): skip the given test function if eval(condition) "
+        "results in a True value, reason is optional.  Evaluation happens within the "
         "module global context. Example: skipif('sys.platform == \"win32\"') "
         "skips the test if we are on the win32 platform. see "
         "https://docs.pytest.org/en/latest/skipping.html",

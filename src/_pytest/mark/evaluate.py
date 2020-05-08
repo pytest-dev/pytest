@@ -95,13 +95,6 @@ class MarkEvaluator:
                         d = self._getglobals()
                         result = cached_eval(self.item.config, expr, d)
                     else:
-                        if "reason" not in mark.kwargs:
-                            # XXX better be checked at collection time
-                            msg = (
-                                "you need to specify reason=STRING "
-                                "when using booleans as conditions."
-                            )
-                            fail(msg)
                         result = bool(expr)
                     if result:
                         self.result = True
@@ -123,7 +116,7 @@ class MarkEvaluator:
     def getexplanation(self):
         expl = getattr(self, "reason", None) or self.get("reason", None)
         if not expl:
-            if not hasattr(self, "expr"):
+            if not hasattr(self, "expr") or isinstance(self.expr, bool):
                 return ""
             else:
                 return "condition: " + str(self.expr)
