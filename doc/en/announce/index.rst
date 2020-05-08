@@ -6,6 +6,7 @@ Release announcements
    :maxdepth: 2
 
 
+   release-5.4.2
    release-5.4.1
    release-5.4.0
    release-5.3.5
