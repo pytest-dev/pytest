@@ -23,6 +23,7 @@ members of the `contributors team`_ interested in receiving funding.
 
 The current list of contributors receiving funding are:
 
+* `@asottile`_
 * `@nicoddemus`_
 
 Contributors interested in receiving a part of the funds just need to submit a PR adding their
@@ -53,4 +54,5 @@ funds. Just drop a line to one of the `@pytest-dev/tidelift-admins`_ or use the 
 .. _`@pytest-dev/tidelift-admins`: https://github.com/orgs/pytest-dev/teams/tidelift-admins/members
 .. _`agreement`: https://tidelift.com/docs/lifting/agreement
 
+.. _`@asottile`: https://github.com/asottile
 .. _`@nicoddemus`: https://github.com/nicoddemus
