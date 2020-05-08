@@ -18,6 +18,22 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+pytest 4.6.10 (2020-05-08)
+==========================
+
+Features
+--------
+
+- `#6870 <https://github.com/pytest-dev/pytest/issues/6870>`_: New ``Config.invocation_args`` attribute containing the unchanged arguments passed to ``pytest.main()``.
+
+  Remark: while this is technically a new feature and according to our `policy <https://docs.pytest.org/en/latest/py27-py34-deprecation.html#what-goes-into-4-6-x-releases>`_ it should not have been backported, we have opened an exception in this particular case because it fixes a serious interaction with ``pytest-xdist``, so it can also be considered a bugfix.
+
+Trivial/Internal Changes
+------------------------
+
+- `#6404 <https://github.com/pytest-dev/pytest/issues/6404>`_: Remove usage of ``parser`` module, deprecated in Python 3.9.
+
+
 pytest 4.6.9 (2020-01-04)
 =========================
 

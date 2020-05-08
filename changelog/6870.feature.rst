@@ -1,1 +1,0 @@
-New ``Config.invocation_args`` attribute containing the unchanged arguments passed to ``pytest.main()``.
