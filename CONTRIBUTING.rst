@@ -329,6 +329,36 @@ should go into ``test_cacheprovider.py``, given that this option is implemented 
 If in doubt, go ahead and open a PR with your best guess and we can discuss this over the code.
 
 
+Backporting bug fixes for the next patch release
+------------------------------------------------
+
+Pytest makes feature release every few weeks or months. In between, patch releases
+are made to the previous feature release, containing bug fixes only. The bug fixes
+usually fix regressions, but may be any change that should reach users before the
+next feature release.
+
+Suppose for example that the latest release was 1.2.3, and you want to include
+a bug fix in 1.2.4 (check https://github.com/pytest-dev/pytest/releases for the
+actual latest release). The procedure for this is:
+
+#. First, make sure the bug is fixed the ``master`` branch, with a regular pull
+   request, as described above. An exception to this is if the bug fix is not
+   applicable to ``master`` anymore.
+
+#. ``git checkout origin/1.2.x -b backport-XXXX`` # use the master PR number here
+
+#. Locate the merge commit on the PR, in the *merged* message, for example:
+
+    nicoddemus merged commit 0f8b462 into pytest-dev:master
+
+#. ``git cherry-pick -x -m1 REVISION`` # use the revision you found above (``0f8b462``).
+
+#. Open a PR targeting ``1.2.x``:
+
+   * Prefix the message with ``[1.2.x]``.
+   * Delete the PR body, it usually contains a duplicate commit message.
+
+
 Joining the Development Team
 ----------------------------
 
