@@ -1,3 +1,5 @@
+import sys
+
 import pytest
 from _pytest.config import ExitCode
 
@@ -292,3 +294,19 @@ def test_setup_show_with_KeyboardInterrupt_in_test(testdir):
         ]
     )
     assert result.ret == ExitCode.INTERRUPTED
+
+
+def test_parametrize_no_comparing_bytearray_error(testdir):
+    test_file = testdir.makepyfile(
+        """
+        import pytest
+
+        @pytest.mark.parametrize('data', [b'Hello World'])
+        def test_data(data):
+            pass
+        """
+    )
+    result = testdir.run(
+        sys.executable, "-bb", "-m", "pytest", "--setup-show", str(test_file)
+    )
+    assert result.ret == 0
