@@ -1,3 +1,3 @@
-Use ``saferepr`` to format bytes ``parametrize`` parameters  for ``--setup-show``
-output to prevent errors when Python is called with ``-bb`` to catch bytearray with
-unicode comparison.
+Switched to ``saferepr`` to format bytes ``parametrize`` parameters
+for ``--setup-show`` output to prevent errors when Python is called with ``-bb``
+to catch bytearray with unicode comparison.
