@@ -298,7 +298,7 @@ def test_setup_show_with_KeyboardInterrupt_in_test(testdir):
     assert result.ret == ExitCode.INTERRUPTED
 
 
-def test_show_fixture_action_with_bytearrays(testdir):
+def test_show_fixture_action_with_bytes(testdir):
     # Issue 7126, BytesWarning when using --setup-show with bytes parameter
     test_file = testdir.makepyfile(
         """
