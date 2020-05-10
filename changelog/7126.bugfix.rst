@@ -1,2 +1,2 @@
-``--setup-show`` now doesn't raise an error if bytearray is used as ``parametrize``
-parameter when Python is called with ``-bb`` flag.
+``--setup-show`` now doesn't raise an error when a bytes value is used as a ``parametrize``
+parameter when Python is called with the ``-bb`` flag.
