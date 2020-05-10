@@ -1267,9 +1267,9 @@ class Testdir:
         return self.run(*args, timeout=timeout)
 
     def spawn_pytest(
-        self, string: str, expect_timeout: float = 10.0
+        self, string: str, expect_timeout: float = 10.0, args: List[str]
     ) -> "pexpect.spawn":
-        """Run pytest using pexpect.
+        """Run pytest with specified command line arguments using pexpect.
 
         This makes sure to use the right pytest and sets up the temporary
         directory locations.
@@ -1278,7 +1278,7 @@ class Testdir:
 
         """
         basetemp = self.tmpdir.mkdir("temp-pexpect")
-        invoke = " ".join(map(str, self._getpytestargs()))
+        invoke = " ".join([*map(str, self._getpytestargs()), *args])
         cmd = "{} --basetemp={} {}".format(invoke, basetemp, string)
         return self.spawn(cmd, expect_timeout=expect_timeout)
 
