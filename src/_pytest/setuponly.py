@@ -67,11 +67,7 @@ def _show_fixture_action(fixturedef, msg):
             tw.write(" (fixtures used: {})".format(", ".join(deps)))
 
     if hasattr(fixturedef, "cached_param"):
-        if isinstance(fixturedef.cached_param, bytes):
-            param = saferepr(fixturedef.cached_param, maxsize=42)
-        else:
-            param = fixturedef.cached_param
-        tw.write("[{}]".format(param))
+        tw.write("[{}]".format(saferepr(fixturedef.cached_param, maxsize=42)))
 
     tw.flush()
 
