@@ -13,6 +13,7 @@ from functools import partial
 from pathlib import Path
 from typing import Any
 from typing import Callable
+from typing import cast
 from typing import Dict
 from typing import Generator
 from typing import List
@@ -545,6 +546,16 @@ class TerminalReporter:
             line = self._locationline(rep.nodeid, *rep.location)
             if not running_xdist:
                 self.write_ensure_prefix(line, word, **markup)
+                if rep.skipped or hasattr(report, "wasxfail"):
+                    available_width = (
+                        (self._tw.fullwidth - self._tw.width_of_current_line)
+                        - len(" [100%]")
+                        - 1
+                    )
+                    reason = _get_raw_skip_reason(rep)
+                    reason_ = _format_trimmed(" ({})", reason, available_width)
+                    if reason_ is not None:
+                        self._tw.write(reason_)
                 if self._show_progress_info:
                     self._write_progress_information_filling_space()
             else:
@@ -1249,6 +1260,31 @@ def _get_pos(config: Config, rep: BaseReport):
     return nodeid
 
 
+def _format_trimmed(format: str, msg: str, available_width: int) -> Optional[str]:
+    """Format msg into format, ellipsizing it if doesn't fit in available_width.
+
+    Returns None if even the ellipsis can't fit.
+    """
+    # Only use the first line.
+    i = msg.find("\n")
+    if i != -1:
+        msg = msg[:i]
+
+    ellipsis = "..."
+    format_width = wcswidth(format.format(""))
+    if format_width + len(ellipsis) > available_width:
+        return None
+
+    if format_width + wcswidth(msg) > available_width:
+        available_width -= len(ellipsis)
+        msg = msg[:available_width]
+        while format_width + wcswidth(msg) > available_width:
+            msg = msg[:-1]
+        msg += ellipsis
+
+    return format.format(msg)
+
+
 def _get_line_with_reprcrash_message(
     config: Config, rep: BaseReport, termwidth: int
 ) -> str:
@@ -1257,11 +1293,7 @@ def _get_line_with_reprcrash_message(
     pos = _get_pos(config, rep)
 
     line = f"{verbose_word} {pos}"
-    len_line = wcswidth(line)
-    ellipsis, len_ellipsis = "...", 3
-    if len_line > termwidth - len_ellipsis:
-        # No space for an additional message.
-        return line
+    line_width = wcswidth(line)
 
     try:
         # Type ignored intentionally -- possible AttributeError expected.
@@ -1269,22 +1301,11 @@ def _get_line_with_reprcrash_message(
     except AttributeError:
         pass
     else:
-        # Only use the first line.
-        i = msg.find("\n")
-        if i != -1:
-            msg = msg[:i]
-        len_msg = wcswidth(msg)
+        available_width = termwidth - line_width
+        msg = _format_trimmed(" - {}", msg, available_width)
+        if msg is not None:
+            line += msg
 
-        sep, len_sep = " - ", 3
-        max_len_msg = termwidth - len_line - len_sep
-        if max_len_msg >= len_ellipsis:
-            if len_msg > max_len_msg:
-                max_len_msg -= len_ellipsis
-                msg = msg[:max_len_msg]
-                while wcswidth(msg) > max_len_msg:
-                    msg = msg[:-1]
-                msg += ellipsis
-            line += sep + msg
     return line
 
 
@@ -1361,3 +1382,22 @@ def format_session_duration(seconds: float) -> str:
     else:
         dt = datetime.timedelta(seconds=int(seconds))
         return f"{seconds:.2f}s ({dt})"
+
+
+def _get_raw_skip_reason(report: TestReport) -> str:
+    """Get the reason string of a skip/xfail/xpass test report.
+
+    The string is just the part given by the user.
+    """
+    if hasattr(report, "wasxfail"):
+        reason = cast(str, report.wasxfail)
+        if reason.startswith("reason: "):
+            reason = reason[len("reason: ") :]
+        return reason
+    else:
+        assert report.skipped
+        assert isinstance(report.longrepr, tuple)
+        _, _, reason = report.longrepr
+        if reason.startswith("Skipped: "):
+            reason = reason[len("Skipped: ") :]
+        return reason

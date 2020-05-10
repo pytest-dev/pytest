@@ -5,6 +5,7 @@ import sys
 import textwrap
 from io import StringIO
 from pathlib import Path
+from types import SimpleNamespace
 from typing import cast
 from typing import Dict
 from typing import List
@@ -23,8 +24,11 @@ from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pytester import Pytester
 from _pytest.reports import BaseReport
 from _pytest.reports import CollectReport
+from _pytest.reports import TestReport
 from _pytest.terminal import _folded_skips
+from _pytest.terminal import _format_trimmed
 from _pytest.terminal import _get_line_with_reprcrash_message
+from _pytest.terminal import _get_raw_skip_reason
 from _pytest.terminal import _plugin_nameversions
 from _pytest.terminal import getreportopt
 from _pytest.terminal import TerminalReporter
@@ -340,6 +344,33 @@ class TestTerminal:
         result = pytester.runpytest("-v")
         result.stdout.fnmatch_lines(
             color_mapping.format_for_fnmatch(["*{red}FOO{reset}*"])
+        )
+
+    def test_verbose_skip_reason(self, pytester: Pytester) -> None:
+        pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.mark.skip(reason="123")
+            def test_1():
+                pass
+
+            @pytest.mark.xfail(reason="456")
+            def test_2():
+                pass
+
+            @pytest.mark.xfail(reason="789")
+            def test_3():
+                assert False
+        """
+        )
+        result = pytester.runpytest("-v")
+        result.stdout.fnmatch_lines(
+            [
+                "test_verbose_skip_reason.py::test_1 SKIPPED (123) *",
+                "test_verbose_skip_reason.py::test_2 XPASS (456) *",
+                "test_verbose_skip_reason.py::test_3 XFAIL (789) *",
+            ]
         )
 
 
@@ -2345,3 +2376,27 @@ class TestCodeHighlight:
                 ]
             )
         )
+
+
+def test_raw_skip_reason_skipped() -> None:
+    report = SimpleNamespace()
+    report.skipped = True
+    report.longrepr = ("xyz", 3, "Skipped: Just so")
+
+    reason = _get_raw_skip_reason(cast(TestReport, report))
+    assert reason == "Just so"
+
+
+def test_raw_skip_reason_xfail() -> None:
+    report = SimpleNamespace()
+    report.wasxfail = "reason: To everything there is a season"
+
+    reason = _get_raw_skip_reason(cast(TestReport, report))
+    assert reason == "To everything there is a season"
+
+
+def test_format_trimmed() -> None:
+    msg = "unconditional skip"
+
+    assert _format_trimmed(" ({}) ", msg, len(msg) + 4) == " (unconditional skip) "
+    assert _format_trimmed(" ({}) ", msg, len(msg) + 3) == " (unconditional ...) "
