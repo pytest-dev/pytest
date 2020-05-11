@@ -443,7 +443,7 @@ def test_testdir_subprocess_via_runpytest_arg(testdir) -> None:
 
 
 def test_unicode_args(testdir) -> None:
-    result = testdir.runpytest("-k", "💩")
+    result = testdir.runpytest("-k", "אבג")
     assert result.ret == ExitCode.NO_TESTS_COLLECTED
 
 
