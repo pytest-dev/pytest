@@ -8,7 +8,7 @@ import attr
 
 from _pytest.compat import TYPE_CHECKING
 from _pytest.config import UsageError
-from _pytest.mark.expression import evaluate
+from _pytest.mark.expression import Expression
 from _pytest.mark.expression import ParseError
 
 if TYPE_CHECKING:
@@ -77,11 +77,12 @@ class KeywordMatcher:
 def matchmark(colitem, markexpr: str) -> bool:
     """Tries to match on any marker names, attached to the given colitem."""
     try:
-        return evaluate(markexpr, MarkMatcher.from_item(colitem))
+        expression = Expression.compile(markexpr)
     except ParseError as e:
         raise UsageError(
             "Wrong expression passed to '-m': {}: {}".format(markexpr, e)
         ) from None
+    return expression.evaluate(MarkMatcher.from_item(colitem))
 
 
 def matchkeyword(colitem, keywordexpr: str) -> bool:
@@ -94,8 +95,9 @@ def matchkeyword(colitem, keywordexpr: str) -> bool:
     any item, as well as names directly assigned to test functions.
     """
     try:
-        return evaluate(keywordexpr, KeywordMatcher.from_item(colitem))
+        expression = Expression.compile(keywordexpr)
     except ParseError as e:
         raise UsageError(
             "Wrong expression passed to '-k': {}: {}".format(keywordexpr, e)
         ) from None
+    return expression.evaluate(KeywordMatcher.from_item(colitem))
