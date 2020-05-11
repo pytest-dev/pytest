@@ -389,16 +389,17 @@ The result of this test will be successful:
 
 .. code-block:: pytest
 
-    $ pytest test_indirect_list.py --collect-only
+    $ pytest -v test_indirect_list.py
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-5.x.y, py-1.x.y, pluggy-0.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR
     collected 1 item
-    <Module test_indirect_list.py>
-      <Function test_indirect[a-b]>
 
-    ========================== no tests ran in 0.12s ===========================
+    test_indirect_list.py::test_indirect[a-b] PASSED
+
+    ========================== 1 passed in 0.01s ===============================
+
 
 .. regendoc:wipe
 
