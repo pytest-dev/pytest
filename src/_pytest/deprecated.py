@@ -75,3 +75,13 @@ TERMINALWRITER_WRITER = PytestDeprecationWarning(
     "The TerminalReporter.writer attribute is deprecated, use TerminalReporter._tw instead at your own risk.\n"
     "See https://docs.pytest.org/en/latest/deprecations.html#terminalreporter-writer for more information."
 )
+
+
+MINUS_K_DASH = PytestDeprecationWarning(
+    "The `-k '-expr'` syntax to -k is deprecated.\nUse `-k 'not expr'` instead."
+)
+
+MINUS_K_COLON = PytestDeprecationWarning(
+    "The `-k 'expr:'` syntax to -k is deprecated.\n"
+    "Please open an issue if you use this and want a replacement."
+)

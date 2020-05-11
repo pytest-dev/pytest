@@ -164,3 +164,27 @@ def test__fillfuncargs_is_deprecated() -> None:
         match="The `_fillfuncargs` function is deprecated",
     ):
         pytest._fillfuncargs(mock.Mock())
+
+
+def test_minus_k_dash_is_deprecated(testdir) -> None:
+    threepass = testdir.makepyfile(
+        test_threepass="""
+        def test_one(): assert 1
+        def test_two(): assert 1
+        def test_three(): assert 1
+    """
+    )
+    result = testdir.runpytest("-k=-test_two", threepass)
+    result.stdout.fnmatch_lines(["*The `-k '-expr'` syntax*deprecated*"])
+
+
+def test_minus_k_colon_is_deprecated(testdir) -> None:
+    threepass = testdir.makepyfile(
+        test_threepass="""
+        def test_one(): assert 1
+        def test_two(): assert 1
+        def test_three(): assert 1
+    """
+    )
+    result = testdir.runpytest("-k", "test_two:", threepass)
+    result.stdout.fnmatch_lines(["*The `-k 'expr:'` syntax*deprecated*"])

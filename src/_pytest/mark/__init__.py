@@ -1,4 +1,5 @@
 """ generic mechanism for marking and selecting python functions. """
+import warnings
 from typing import Optional
 
 from .legacy import matchkeyword
@@ -13,6 +14,8 @@ from .structures import ParameterSet
 from _pytest.config import Config
 from _pytest.config import hookimpl
 from _pytest.config import UsageError
+from _pytest.deprecated import MINUS_K_COLON
+from _pytest.deprecated import MINUS_K_DASH
 from _pytest.store import StoreKey
 
 __all__ = ["Mark", "MarkDecorator", "MarkGenerator", "get_empty_parameterset_mark"]
@@ -107,9 +110,13 @@ def deselect_by_keyword(items, config):
         return
 
     if keywordexpr.startswith("-"):
+        # To be removed in pytest 7.0.0.
+        warnings.warn(MINUS_K_DASH, stacklevel=2)
         keywordexpr = "not " + keywordexpr[1:]
     selectuntil = False
     if keywordexpr[-1:] == ":":
+        # To be removed in pytest 7.0.0.
+        warnings.warn(MINUS_K_COLON, stacklevel=2)
         selectuntil = True
         keywordexpr = keywordexpr[:-1]
 
