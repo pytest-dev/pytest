@@ -619,46 +619,35 @@ class LoggingPlugin:
             else:
                 yield
 
-    def _runtest_for(
-        self, item: Optional[nodes.Item], when: str
-    ) -> Generator[None, None, None]:
+    def _runtest_for(self, item: nodes.Item, when: str) -> Generator[None, None, None]:
         """Implements the internals of pytest_runtest_xxx() hook."""
+        if self.log_cli_handler is not None:
+            self.log_cli_handler.set_when(when)
+
         with catching_logs(
             handler=self._runtest_log_capture_handler,
             formatter=self.formatter,
             level=self.log_level,
         ) as log_handler:
             log_handler.reset()
+            item._store[catch_log_handler_key] = log_handler
+            item._store[catch_log_records_key][when] = log_handler.records
 
-            if self.log_cli_handler:
-                self.log_cli_handler.set_when(when)
-
-            if item is not None:
-                empty = {}  # type: Dict[str, List[logging.LogRecord]]
-                item._store.setdefault(catch_log_records_key, empty)[
-                    when
-                ] = log_handler.records
-                item._store[catch_log_handler_key] = log_handler
-            try:
-                if self.log_file_handler is not None:
-                    with catching_logs(
-                        self.log_file_handler, level=self.log_file_level
-                    ):
-                        yield
-                else:
+            if self.log_file_handler is not None:
+                with catching_logs(self.log_file_handler, level=self.log_file_level):
                     yield
-            finally:
-                if item is not None and when == "teardown":
-                    del item._store[catch_log_records_key]
-                    del item._store[catch_log_handler_key]
+            else:
+                yield
 
-            if item is not None and self.print_logs:
+            if self.print_logs:
                 # Add a captured log section to the report.
                 log = log_handler.stream.getvalue().strip()
                 item.add_report_section(when, "log", log)
 
     @pytest.hookimpl(hookwrapper=True)
     def pytest_runtest_setup(self, item):
+        empty = {}  # type: Dict[str, List[logging.LogRecord]]
+        item._store[catch_log_records_key] = empty
         yield from self._runtest_for(item, "setup")
 
     @pytest.hookimpl(hookwrapper=True)
@@ -668,20 +657,28 @@ class LoggingPlugin:
     @pytest.hookimpl(hookwrapper=True)
     def pytest_runtest_teardown(self, item):
         yield from self._runtest_for(item, "teardown")
+        del item._store[catch_log_records_key]
+        del item._store[catch_log_handler_key]
 
     @pytest.hookimpl(hookwrapper=True)
     def pytest_runtest_logstart(self):
         if self.log_cli_handler:
             self.log_cli_handler.reset()
-        yield from self._runtest_for(None, "start")
+        if self.log_cli_handler is not None:
+            self.log_cli_handler.set_when("start")
+        yield
 
     @pytest.hookimpl(hookwrapper=True)
     def pytest_runtest_logfinish(self):
-        yield from self._runtest_for(None, "finish")
+        if self.log_cli_handler is not None:
+            self.log_cli_handler.set_when("finish")
+        yield
 
     @pytest.hookimpl(hookwrapper=True)
     def pytest_runtest_logreport(self):
-        yield from self._runtest_for(None, "logreport")
+        if self.log_cli_handler is not None:
+            self.log_cli_handler.set_when("logreport")
+        yield
 
     @pytest.hookimpl(hookwrapper=True, tryfirst=True)
     def pytest_sessionfinish(self):
