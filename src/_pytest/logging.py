@@ -27,7 +27,7 @@ DEFAULT_LOG_FORMAT = "%(levelname)-8s %(name)s:%(filename)s:%(lineno)d %(message
 DEFAULT_LOG_DATE_FORMAT = "%H:%M:%S"
 _ANSI_ESCAPE_SEQ = re.compile(r"\x1b\[[\d;]+m")
 catch_log_handler_key = StoreKey["LogCaptureHandler"]()
-catch_log_handlers_key = StoreKey[Dict[str, "LogCaptureHandler"]]()
+catch_log_records_key = StoreKey[Dict[str, List[logging.LogRecord]]]()
 
 
 def _remove_ansi_escape_sequences(text):
@@ -351,11 +351,7 @@ class LogCaptureFixture:
 
         .. versionadded:: 3.4
         """
-        handler = self._item._store[catch_log_handlers_key].get(when)
-        if handler:
-            return handler.records
-        else:
-            return []
+        return self._item._store[catch_log_records_key].get(when, [])
 
     @property
     def text(self):
@@ -497,6 +493,8 @@ class LoggingPlugin:
             get_option_ini(config, "log_auto_indent"),
         )
         self.log_level = get_log_level_for_setting(config, "log_level")
+        self.log_handler = LogCaptureHandler()
+        self.log_handler.setFormatter(self.formatter)
 
         # File logging.
         self.log_file_level = get_log_level_for_setting(config, "log_file_level")
@@ -639,10 +637,9 @@ class LoggingPlugin:
 
     def _runtest_for(self, item: nodes.Item, when: str) -> Generator[None, None, None]:
         """Implements the internals of pytest_runtest_xxx() hook."""
-        log_handler = LogCaptureHandler()
-        log_handler.setFormatter(self.formatter)
-        with catching_logs(log_handler, level=self.log_level):
-            item._store[catch_log_handlers_key][when] = log_handler
+        with catching_logs(self.log_handler, level=self.log_level) as log_handler:
+            log_handler.reset()
+            item._store[catch_log_records_key][when] = log_handler.records
             item._store[catch_log_handler_key] = log_handler
 
             yield
@@ -654,8 +651,7 @@ class LoggingPlugin:
     def pytest_runtest_setup(self, item):
         self.log_cli_handler.set_when("setup")
 
-        empty = {}  # type: Dict[str, LogCaptureHandler]
-        item._store[catch_log_handlers_key] = empty
+        item._store[catch_log_records_key] = {}
         yield from self._runtest_for(item, "setup")
 
     @pytest.hookimpl(hookwrapper=True)
@@ -669,7 +665,7 @@ class LoggingPlugin:
         self.log_cli_handler.set_when("teardown")
 
         yield from self._runtest_for(item, "teardown")
-        del item._store[catch_log_handlers_key]
+        del item._store[catch_log_records_key]
         del item._store[catch_log_handler_key]
 
     @pytest.hookimpl
