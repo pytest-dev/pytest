@@ -619,7 +619,6 @@ class LoggingPlugin:
             else:
                 yield
 
-    @contextmanager
     def _runtest_for(
         self, item: Optional[nodes.Item], when: str
     ) -> Generator[None, None, None]:
@@ -656,35 +655,29 @@ class LoggingPlugin:
 
     @pytest.hookimpl(hookwrapper=True)
     def pytest_runtest_setup(self, item):
-        with self._runtest_for(item, "setup"):
-            yield
+        yield from self._runtest_for(item, "setup")
 
     @pytest.hookimpl(hookwrapper=True)
     def pytest_runtest_call(self, item):
-        with self._runtest_for(item, "call"):
-            yield
+        yield from self._runtest_for(item, "call")
 
     @pytest.hookimpl(hookwrapper=True)
     def pytest_runtest_teardown(self, item):
-        with self._runtest_for(item, "teardown"):
-            yield
+        yield from self._runtest_for(item, "teardown")
 
     @pytest.hookimpl(hookwrapper=True)
     def pytest_runtest_logstart(self):
         if self.log_cli_handler:
             self.log_cli_handler.reset()
-        with self._runtest_for(None, "start"):
-            yield
+        yield from self._runtest_for(None, "start")
 
     @pytest.hookimpl(hookwrapper=True)
     def pytest_runtest_logfinish(self):
-        with self._runtest_for(None, "finish"):
-            yield
+        yield from self._runtest_for(None, "finish")
 
     @pytest.hookimpl(hookwrapper=True)
     def pytest_runtest_logreport(self):
-        with self._runtest_for(None, "logreport"):
-            yield
+        yield from self._runtest_for(None, "logreport")
 
     @pytest.hookimpl(hookwrapper=True, tryfirst=True)
     def pytest_sessionfinish(self):
