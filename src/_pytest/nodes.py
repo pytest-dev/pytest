@@ -33,7 +33,7 @@ from _pytest.store import Store
 
 if TYPE_CHECKING:
     # Imported here due to circular import.
-    from _pytest.main import Session  # noqa: F401
+    from _pytest.main import Session
 
 SEP = "/"
 

@@ -32,7 +32,7 @@ else:
 
 
 if TYPE_CHECKING:
-    from typing import Type  # noqa: F401 (used in type string)
+    from typing import Type
 
 
 _T = TypeVar("_T")

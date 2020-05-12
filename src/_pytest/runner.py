@@ -258,7 +258,7 @@ class CallInfo:
         precise_start = perf_counter()
         try:
             result = func()
-        except:  # noqa
+        except BaseException:
             excinfo = ExceptionInfo.from_current()
             if reraise is not None and excinfo.errisinstance(reraise):
                 raise

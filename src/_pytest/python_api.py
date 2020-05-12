@@ -27,7 +27,7 @@ from _pytest.compat import TYPE_CHECKING
 from _pytest.outcomes import fail
 
 if TYPE_CHECKING:
-    from typing import Type  # noqa: F401 (used in type string)
+    from typing import Type
 
 
 BASE_TYPE = (type, STRING_TYPES)
@@ -123,8 +123,10 @@ class ApproxNumpy(ApproxBase):
         if not np.isscalar(actual):
             try:
                 actual = np.asarray(actual)
-            except:  # noqa
-                raise TypeError("cannot compare '{}' to numpy.ndarray".format(actual))
+            except Exception as e:
+                raise TypeError(
+                    "cannot compare '{}' to numpy.ndarray".format(actual)
+                ) from e
 
         if not np.isscalar(actual) and actual.shape != self.expected.shape:
             return False

@@ -669,7 +669,7 @@ class SysCaptureBinary:
 
 
 class SysCapture(SysCaptureBinary):
-    EMPTY_BUFFER = ""  # type: ignore[assignment]  # noqa: F821
+    EMPTY_BUFFER = ""  # type: ignore[assignment]
 
     def snap(self):
         res = self.tmpfile.getvalue()

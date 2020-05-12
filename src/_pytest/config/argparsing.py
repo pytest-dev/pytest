@@ -21,7 +21,7 @@ from _pytest.config.exceptions import UsageError
 
 if TYPE_CHECKING:
     from typing import NoReturn
-    from typing_extensions import Literal  # noqa: F401
+    from typing_extensions import Literal
 
 FILE_OR_DIR = "file_or_dir"
 

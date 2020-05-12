@@ -12,7 +12,7 @@ from _pytest.compat import TYPE_CHECKING
 from _pytest.outcomes import fail
 
 if TYPE_CHECKING:
-    from . import Config  # noqa: F401
+    from . import Config
 
 
 def exists(path, ignore=OSError):

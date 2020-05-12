@@ -101,10 +101,14 @@ def test_show_multi_test_fixture_setup_and_teardown_same_as_setup_show(testdir):
 
     # the number and text of these lines should be identical
     plan_lines = [
-        l for l in plan_result.stdout.lines if "SETUP" in l or "TEARDOWN" in l
+        line
+        for line in plan_result.stdout.lines
+        if "SETUP" in line or "TEARDOWN" in line
     ]
     show_lines = [
-        l for l in show_result.stdout.lines if "SETUP" in l or "TEARDOWN" in l
+        line
+        for line in show_result.stdout.lines
+        if "SETUP" in line or "TEARDOWN" in line
     ]
 
     assert plan_lines == show_lines

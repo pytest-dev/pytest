@@ -136,7 +136,7 @@ def pytest_cmdline_main(config):
 def pytest_generate_tests(metafunc: "Metafunc") -> None:
     for marker in metafunc.definition.iter_markers(name="parametrize"):
         # TODO: Fix this type-ignore (overlapping kwargs).
-        metafunc.parametrize(*marker.args, **marker.kwargs, _param_mark=marker)  # type: ignore[misc] # noqa: F821
+        metafunc.parametrize(*marker.args, **marker.kwargs, _param_mark=marker)  # type: ignore[misc]
 
 
 def pytest_configure(config):
@@ -1013,7 +1013,7 @@ class Metafunc:
         func_name: str,
     ) -> List[Union[None, str]]:
         try:
-            num_ids = len(ids)  # type: ignore[arg-type] # noqa: F821
+            num_ids = len(ids)  # type: ignore[arg-type]
         except TypeError:
             try:
                 iter(ids)

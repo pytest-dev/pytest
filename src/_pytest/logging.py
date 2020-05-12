@@ -338,7 +338,7 @@ class LogCaptureFixture:
         """
         :rtype: LogCaptureHandler
         """
-        return self._item.catch_log_handler  # type: ignore[no-any-return]  # noqa: F723
+        return self._item.catch_log_handler  # type: ignore[no-any-return]
 
     def get_records(self, when: str) -> List[logging.LogRecord]:
         """
@@ -354,7 +354,7 @@ class LogCaptureFixture:
         """
         handler = self._item.catch_log_handlers.get(when)
         if handler:
-            return handler.records  # type: ignore[no-any-return]  # noqa: F723
+            return handler.records  # type: ignore[no-any-return]
         else:
             return []
 
@@ -640,15 +640,15 @@ class LoggingPlugin:
                 return
 
             if not hasattr(item, "catch_log_handlers"):
-                item.catch_log_handlers = {}  # type: ignore[attr-defined]  # noqa: F821
-            item.catch_log_handlers[when] = log_handler  # type: ignore[attr-defined]  # noqa: F821
-            item.catch_log_handler = log_handler  # type: ignore[attr-defined]  # noqa: F821
+                item.catch_log_handlers = {}  # type: ignore[attr-defined]
+            item.catch_log_handlers[when] = log_handler  # type: ignore[attr-defined]
+            item.catch_log_handler = log_handler  # type: ignore[attr-defined]
             try:
                 yield  # run test
             finally:
                 if when == "teardown":
-                    del item.catch_log_handler  # type: ignore[attr-defined]  # noqa: F821
-                    del item.catch_log_handlers  # type: ignore[attr-defined]  # noqa: F821
+                    del item.catch_log_handler  # type: ignore[attr-defined]
+                    del item.catch_log_handlers  # type: ignore[attr-defined]
 
             if self.print_logs:
                 # Add a captured log section to the report.
