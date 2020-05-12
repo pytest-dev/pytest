@@ -24,7 +24,7 @@ DEFAULT_LOG_FORMAT = "%(levelname)-8s %(name)s:%(filename)s:%(lineno)d %(message
 DEFAULT_LOG_DATE_FORMAT = "%H:%M:%S"
 _ANSI_ESCAPE_SEQ = re.compile(r"\x1b\[[\d;]+m")
 catch_log_handler_key = StoreKey["LogCaptureHandler"]()
-catch_log_handlers_key = StoreKey[Dict[str, "LogCaptureHandler"]]()
+catch_log_records_key = StoreKey[Dict[str, List[logging.LogRecord]]]()
 
 
 def _remove_ansi_escape_sequences(text):
@@ -305,13 +305,13 @@ class LogCaptureHandler(logging.StreamHandler):
 
     def __init__(self) -> None:
         """Creates a new log handler."""
-        logging.StreamHandler.__init__(self, StringIO())
+        super().__init__(StringIO())
         self.records = []  # type: List[logging.LogRecord]
 
     def emit(self, record: logging.LogRecord) -> None:
         """Keep the log records in a list in addition to the log text."""
         self.records.append(record)
-        logging.StreamHandler.emit(self, record)
+        super().emit(record)
 
     def reset(self) -> None:
         self.records = []
@@ -356,11 +356,7 @@ class LogCaptureFixture:
 
         .. versionadded:: 3.4
         """
-        handler = self._item._store[catch_log_handlers_key].get(when)
-        if handler:
-            return handler.records
-        else:
-            return []
+        return self._item._store[catch_log_records_key].get(when, [])
 
     @property
     def text(self):
@@ -537,6 +533,10 @@ class LoggingPlugin:
         if self._log_cli_enabled():
             self._setup_cli_logging()
 
+        # Instantiating a new LogCaptureHandler for each runtest is expensive.
+        # Reuse a single one and reset between runs.
+        self._runtest_log_capture_handler = LogCaptureHandler()
+
     def _create_formatter(self, log_format, log_date_format, auto_indent):
         # color option doesn't exist if terminal plugin is disabled
         color = getattr(self._config.option, "color", "no")
@@ -624,16 +624,20 @@ class LoggingPlugin:
     ) -> Generator[None, None, None]:
         """Implements the internals of pytest_runtest_xxx() hook."""
         with catching_logs(
-            LogCaptureHandler(), formatter=self.formatter, level=self.log_level
+            handler=self._runtest_log_capture_handler,
+            formatter=self.formatter,
+            level=self.log_level,
         ) as log_handler:
+            log_handler.reset()
+
             if self.log_cli_handler:
                 self.log_cli_handler.set_when(when)
 
             if item is not None:
-                empty = {}  # type: Dict[str, LogCaptureHandler]
-                item._store.setdefault(catch_log_handlers_key, empty)[
+                empty = {}  # type: Dict[str, List[logging.LogRecord]]
+                item._store.setdefault(catch_log_records_key, empty)[
                     when
-                ] = log_handler
+                ] = log_handler.records
                 item._store[catch_log_handler_key] = log_handler
             try:
                 if self.log_file_handler is not None:
@@ -645,7 +649,7 @@ class LoggingPlugin:
                     yield
             finally:
                 if item is not None and when == "teardown":
-                    del item._store[catch_log_handlers_key]
+                    del item._store[catch_log_records_key]
                     del item._store[catch_log_handler_key]
 
             if item is not None and self.print_logs:

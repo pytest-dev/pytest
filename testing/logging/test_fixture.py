@@ -1,7 +1,7 @@
 import logging
 
 import pytest
-from _pytest.logging import catch_log_handlers_key
+from _pytest.logging import catch_log_records_key
 
 logger = logging.getLogger(__name__)
 sublogger = logging.getLogger(__name__ + ".baz")
@@ -137,4 +137,4 @@ def test_caplog_captures_for_all_stages(caplog, logging_during_setup_and_teardow
     assert [x.message for x in caplog.get_records("setup")] == ["a_setup_log"]
 
     # This reaches into private API, don't use this type of thing in real tests!
-    assert set(caplog._item._store[catch_log_handlers_key].keys()) == {"setup", "call"}
+    assert set(caplog._item._store[catch_log_records_key].keys()) == {"setup", "call"}
