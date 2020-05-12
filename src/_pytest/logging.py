@@ -660,25 +660,22 @@ class LoggingPlugin:
         del item._store[catch_log_records_key]
         del item._store[catch_log_handler_key]
 
-    @pytest.hookimpl(hookwrapper=True)
+    @pytest.hookimpl
     def pytest_runtest_logstart(self):
         if self.log_cli_handler:
             self.log_cli_handler.reset()
         if self.log_cli_handler is not None:
             self.log_cli_handler.set_when("start")
-        yield
 
-    @pytest.hookimpl(hookwrapper=True)
+    @pytest.hookimpl
     def pytest_runtest_logfinish(self):
         if self.log_cli_handler is not None:
             self.log_cli_handler.set_when("finish")
-        yield
 
-    @pytest.hookimpl(hookwrapper=True)
+    @pytest.hookimpl
     def pytest_runtest_logreport(self):
         if self.log_cli_handler is not None:
             self.log_cli_handler.set_when("logreport")
-        yield
 
     @pytest.hookimpl(hookwrapper=True, tryfirst=True)
     def pytest_sessionfinish(self):
