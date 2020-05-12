@@ -1,6 +1,12 @@
+from typing import Callable
+
 import pytest
-from _pytest.mark.expression import evaluate
+from _pytest.mark.expression import Expression
 from _pytest.mark.expression import ParseError
+
+
+def evaluate(input: str, matcher: Callable[[str], bool]) -> bool:
+    return Expression.compile(input).evaluate(matcher)
 
 
 def test_empty_is_false() -> None:
