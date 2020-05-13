@@ -23,7 +23,6 @@ from typing import Union
 
 import attr
 import py
-from packaging.version import Version
 from pluggy import HookimplMarker
 from pluggy import HookspecMarker
 from pluggy import PluginManager
@@ -1059,6 +1058,9 @@ class Config:
 
         minver = self.inicfg.get("minversion", None)
         if minver:
+            # Imported lazily to improve start-up time.
+            from packaging.version import Version
+
             if Version(minver) > Version(pytest.__version__):
                 raise pytest.UsageError(
                     "%s:%d: requires pytest-%s, actual pytest-%s'"
