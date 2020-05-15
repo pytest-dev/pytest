@@ -1457,7 +1457,9 @@ class Function(PyobjMixin, nodes.Item):
         #: parametrization adds a ``"[...]"`` suffix to function names).
         #:
         #: .. versionadded:: 3.0
-        self.originalname = originalname if originalname is not None else name
+        self.originalname = originalname or name
+        # note: when FunctionDefinition is introduced, we should change this to a readonly
+        # property that returns FunctionDefinition.name
 
         self.keywords.update(self.obj.__dict__)
         self.own_markers.extend(get_unpacked_marks(self.obj))

@@ -680,7 +680,7 @@ class TestFunction:
         ]
 
     def test_function_with_square_brackets(self, testdir: Testdir) -> None:
-        """Check that Function._getobj uses originalname."""
+        """Check that functions with square brackets don't cause trouble."""
         p1 = testdir.makepyfile(
             """
             locals()["test_foo[name]"] = lambda: None
