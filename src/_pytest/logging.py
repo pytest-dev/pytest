@@ -613,7 +613,13 @@ class LoggingPlugin:
                 with catching_logs(self.log_file_handler, level=self.log_file_level):
                     yield
             else:
-                yield
+                # Add a dummy handler to ensure logging.root.handlers is not empty.
+                # If it were empty, then a `logging.warning()` call (and similar) during collection
+                # would trigger a `logging.basicConfig()` call, which would add a `StreamHandler`
+                # handler, which would cause all subsequent logs which reach the root to be also
+                # printed to stdout, which we don't want (issue #6240).
+                with catching_logs(logging.NullHandler()):
+                    yield
 
     @contextmanager
     def _runtest_for(self, item, when):

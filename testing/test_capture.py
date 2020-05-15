@@ -1493,3 +1493,32 @@ def test__get_multicapture() -> None:
     pytest.raises(ValueError, _get_multicapture, "unknown").match(
         r"^unknown capturing method: 'unknown'"
     )
+
+
+def test_logging_while_collecting(testdir):
+    """Issue #6240: Calls to logging.xxx() during collection causes all logging calls to be duplicated to stderr"""
+    p = testdir.makepyfile(
+        """\
+        import logging
+
+        logging.warning("during collection")
+
+        def test_logging():
+            logging.warning("during call")
+            assert False
+        """
+    )
+    result = testdir.runpytest_subprocess(p)
+    assert result.ret == ExitCode.TESTS_FAILED
+    result.stdout.fnmatch_lines(
+        [
+            "*test_*.py F*",
+            "====* FAILURES *====",
+            "____*____",
+            "*--- Captured log call*",
+            "WARNING * during call",
+            "*1 failed*",
+        ]
+    )
+    result.stdout.no_fnmatch_line("*Captured stderr call*")
+    result.stdout.no_fnmatch_line("*during collection*")
