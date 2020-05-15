@@ -664,15 +664,17 @@ class TerminalReporter:
     def pytest_collection_finish(self, session):
         self.report_collect(True)
 
-        if self.config.getoption("collectonly"):
-            self._printcollecteditems(session.items)
-
         lines = self.config.hook.pytest_report_collectionfinish(
             config=self.config, startdir=self.startdir, items=session.items
         )
         self._write_report_lines_from_hooks(lines)
 
         if self.config.getoption("collectonly"):
+            if session.items:
+                if self.config.option.verbose > -1:
+                    self._tw.line("")
+                self._printcollecteditems(session.items)
+
             failed = self.stats.get("failed")
             if failed:
                 self._tw.sep("!", "collection failures")
