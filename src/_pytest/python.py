@@ -936,8 +936,6 @@ class Metafunc:
 
         arg_values_types = self._resolve_arg_value_types(argnames, indirect)
 
-        self._validate_explicit_parameters(argnames, indirect)
-
         # Use any already (possibly) generated ids with parametrize Marks.
         if _param_mark and _param_mark._param_ids_from:
             generated_ids = _param_mark._param_ids_from._param_ids_generated
@@ -1109,39 +1107,6 @@ class Metafunc:
                         "In {}: function uses no {} '{}'".format(func_name, name, arg),
                         pytrace=False,
                     )
-
-    def _validate_explicit_parameters(
-        self,
-        argnames: typing.Sequence[str],
-        indirect: Union[bool, typing.Sequence[str]],
-    ) -> None:
-        """
-        The argnames in *parametrize* should either be declared explicitly via
-        indirect list or in the function signature
-
-        :param List[str] argnames: list of argument names passed to ``parametrize()``.
-        :param indirect: same ``indirect`` parameter of ``parametrize()``.
-        :raise ValueError: if validation fails
-        """
-        if isinstance(indirect, bool):
-            parametrized_argnames = [] if indirect else argnames
-        else:
-            parametrized_argnames = [arg for arg in argnames if arg not in indirect]
-
-        if not parametrized_argnames:
-            return
-
-        funcargnames = _pytest.compat.getfuncargnames(self.function)
-        usefixtures = fixtures.get_use_fixtures_for_node(self.definition)
-
-        for arg in parametrized_argnames:
-            if arg not in funcargnames and arg not in usefixtures:
-                func_name = self.function.__name__
-                msg = (
-                    'In function "{func_name}":\n'
-                    'Parameter "{arg}" should be declared explicitly via indirect or in function itself'
-                ).format(func_name=func_name, arg=arg)
-                fail(msg, pytrace=False)
 
 
 def _find_parametrized_scope(argnames, arg2fixturedefs, indirect):
