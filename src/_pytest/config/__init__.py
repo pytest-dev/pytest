@@ -88,9 +88,14 @@ class ExitCode(enum.IntEnum):
 
 class ConftestImportFailure(Exception):
     def __init__(self, path, excinfo):
-        Exception.__init__(self, path, excinfo)
+        super().__init__(path, excinfo)
         self.path = path
         self.excinfo = excinfo  # type: Tuple[Type[Exception], Exception, TracebackType]
+
+    def __str__(self):
+        return "{}: {} (from {})".format(
+            self.excinfo[0].__name__, self.excinfo[1], self.path
+        )
 
 
 def main(args=None, plugins=None) -> Union[int, ExitCode]:
