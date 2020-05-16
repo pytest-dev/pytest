@@ -1,1 +1,0 @@
-``-k`` no longer matches against the directory containing the test suite.

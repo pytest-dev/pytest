@@ -834,6 +834,36 @@ class TestKeywordSelection:
         deselected_tests = dlist[0].items
         assert len(deselected_tests) == 1
 
+    def test_no_match_directories_outside_the_suite(self, testdir):
+        """
+        -k should not match against directories containing the test suite (#7040).
+        """
+        test_contents = """
+            def test_aaa(): pass
+            def test_ddd(): pass
+        """
+        testdir.makepyfile(
+            **{"ddd/tests/__init__.py": "", "ddd/tests/test_foo.py": test_contents}
+        )
+
+        def get_collected_names(*args):
+            _, rec = testdir.inline_genitems(*args)
+            calls = rec.getcalls("pytest_collection_finish")
+            assert len(calls) == 1
+            return [x.name for x in calls[0].session.items]
+
+        # sanity check: collect both tests in normal runs
+        assert get_collected_names() == ["test_aaa", "test_ddd"]
+
+        # do not collect anything based on names outside the collection tree
+        assert get_collected_names("-k", testdir.tmpdir.basename) == []
+
+        # "-k ddd" should only collect "test_ddd", but not
+        # 'test_aaa' just because one of its parent directories is named "ddd";
+        # this was matched previously because Package.name would contain the full path
+        # to the package
+        assert get_collected_names("-k", "ddd") == ["test_ddd"]
+
 
 class TestMarkDecorator:
     @pytest.mark.parametrize(
