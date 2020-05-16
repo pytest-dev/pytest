@@ -31,11 +31,10 @@ import os
 import re
 import sys
 from pathlib import Path
+from subprocess import CalledProcessError
 from subprocess import check_call
 from subprocess import check_output
-from subprocess import PIPE
 from subprocess import run
-from subprocess import STDOUT
 from textwrap import dedent
 from typing import Dict
 from typing import Optional
@@ -178,7 +177,7 @@ def trigger_release(payload_path: Path, token: str) -> None:
         print(f"Notified in original comment {Fore.CYAN}{comment.url}{Fore.RESET}.")
 
         print(f"{Fore.GREEN}Success.")
-    except CallProcessError as e:
+    except CalledProcessError as e:
         error_contents = e.output
     except Exception as e:
         error_contents = str(e)
@@ -213,7 +212,7 @@ def trigger_release(payload_path: Path, token: str) -> None:
                 """
             )
         )
-        print_and_exit(f"{Fore.RED}{e}")
+        print_and_exit(f"{Fore.RED}{error_contents}")
 
 
 def find_next_version(base_branch: str) -> str:
