@@ -366,7 +366,7 @@ class CaptureFixture:
             self._capture.stop_capturing()
             self._capture = None
 
-    def readouterr(self):
+    def readouterr(self) -> "CaptureResult":
         """Read and return the captured output so far, resetting the internal buffer.
 
         :return: captured content as a namedtuple with ``out`` and ``err`` string attributes
@@ -379,6 +379,17 @@ class CaptureFixture:
         self._captured_out = self.captureclass.EMPTY_BUFFER
         self._captured_err = self.captureclass.EMPTY_BUFFER
         return CaptureResult(captured_out, captured_err)
+
+    def read_combined(self) -> str:
+        """
+        Read captured output with both stdout and stderr streams combined, with preserving
+        the correct order of messages.
+        """
+        if self.captureclass is not OrderedCapture:
+            raise AttributeError("Only capsys is able to combine streams.")
+        result = "".join(line[0] for line in OrderedCapture.streams)
+        OrderedCapture.flush()
+        return result
 
     def _suspend(self):
         """Suspends this fixture's own capturing temporarily."""
@@ -622,12 +633,16 @@ class SysCaptureBinary:
         name = patchsysdict[fd]
         self._old = getattr(sys, name)
         self.name = name
+        self.fd = fd
         if tmpfile is None:
             if name == "stdin":
                 tmpfile = DontReadFromInput()
             else:
-                tmpfile = CaptureIO()
+                tmpfile = self._get_writer()
         self.tmpfile = tmpfile
+
+    def _get_writer(self):
+        return CaptureIO()
 
     def __repr__(self):
         return "<{} {} _old={} _state={!r} tmpfile={!r}>".format(
@@ -695,12 +710,63 @@ class TeeSysCapture(SysCapture):
         self.tmpfile = tmpfile
 
 
+class OrderedCapture(SysCapture):
+    """Capture class that keeps streams in order."""
+
+    streams = collections.deque()  # type: collections.deque
+
+    def _get_writer(self):
+        return OrderedWriter(self.fd)
+
+    def snap(self):
+        res = self.tmpfile.getvalue()
+        if self.name == "stderr":
+            # both streams are being read one after another, while stderr is last - it will clear the queue
+            self.flush()
+        return res
+
+    @classmethod
+    def flush(cls) -> None:
+        """Clear streams."""
+        cls.streams.clear()
+
+    @classmethod
+    def close(cls) -> None:
+        cls.flush()
+
+
 map_fixname_class = {
     "capfd": FDCapture,
     "capfdbinary": FDCaptureBinary,
-    "capsys": SysCapture,
+    "capsys": OrderedCapture,
     "capsysbinary": SysCaptureBinary,
 }
+
+
+class OrderedWriter:
+    encoding = sys.getdefaultencoding()
+
+    def __init__(self, fd: int) -> None:
+        super().__init__()
+        self._fd = fd  # type: int
+
+    def write(self, text: str, **kwargs) -> int:
+        OrderedCapture.streams.append((text, self._fd))
+        return len(text)
+
+    def getvalue(self) -> str:
+        return "".join(
+            line[0] for line in OrderedCapture.streams if line[1] == self._fd
+        )
+
+    def flush(self) -> None:
+        pass
+
+    def isatty(self) -> bool:
+        return False
+
+    def close(self) -> None:
+        OrderedCapture.close()
 
 
 class DontReadFromInput:

@@ -170,3 +170,21 @@ as a context manager, disabling capture inside the ``with`` block:
         with capsys.disabled():
             print("output not captured, going directly to sys.stdout")
         print("this output is also captured")
+
+
+Preserving streams order
+------------------------
+
+The ``capsys`` fixture has an additional ``read_combined()`` method. This method returns single value
+with both ``stdout`` and ``stderr`` streams combined with preserved chronological order.
+
+.. code-block:: python
+
+    def test_combine(capsys):
+        print("I'm in stdout")
+        print("I'm in stderr", file=sys.stderr)
+        print("Hey, stdout again!")
+
+        output = capsys.read_combined()
+
+        assert output == "I'm in stdout\nI'm in stderr\nHey, stdout again!\n"

@@ -1,0 +1,1 @@
+Allow ``capsys`` to retrieve combined stdout + stderr streams with original order of messages.
