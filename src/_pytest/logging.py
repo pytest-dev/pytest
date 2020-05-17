@@ -617,10 +617,10 @@ class LoggingPlugin:
 
     @pytest.hookimpl(hookwrapper=True, tryfirst=True)
     def pytest_collection(self) -> Generator[None, None, None]:
-        with self.live_logs_context():
-            if self.log_cli_handler:
-                self.log_cli_handler.set_when("collection")
+        if self.log_cli_handler is not None:
+            self.log_cli_handler.set_when("collection")
 
+        with self.live_logs_context():
             with catching_logs(self.log_file_handler, level=self.log_file_level):
                 yield
 
@@ -631,9 +631,6 @@ class LoggingPlugin:
         log_handler = LogCaptureHandler()
         log_handler.setFormatter(self.formatter)
         with catching_logs(log_handler, level=self.log_level):
-            if self.log_cli_handler:
-                self.log_cli_handler.set_when(when)
-
             if item is not None:
                 empty = {}  # type: Dict[str, LogCaptureHandler]
                 item._store.setdefault(catch_log_handlers_key, empty)[
@@ -654,21 +651,30 @@ class LoggingPlugin:
 
     @pytest.hookimpl(hookwrapper=True)
     def pytest_runtest_setup(self, item):
+        if self.log_cli_handler is not None:
+            self.log_cli_handler.set_when("setup")
+
         yield from self._runtest_for(item, "setup")
 
     @pytest.hookimpl(hookwrapper=True)
     def pytest_runtest_call(self, item):
+        if self.log_cli_handler is not None:
+            self.log_cli_handler.set_when("call")
+
         yield from self._runtest_for(item, "call")
 
     @pytest.hookimpl(hookwrapper=True)
     def pytest_runtest_teardown(self, item):
+        if self.log_cli_handler is not None:
+            self.log_cli_handler.set_when("teardown")
+
         yield from self._runtest_for(item, "teardown")
 
     @pytest.hookimpl(hookwrapper=True)
     def pytest_runtest_logstart(self):
-        if self.log_cli_handler:
+        if self.log_cli_handler is not None:
             self.log_cli_handler.reset()
-        yield from self._runtest_for(None, "start")
+            self.log_cli_handler.set_when("start")
 
     @pytest.hookimpl(hookwrapper=True)
     def pytest_runtest_logfinish(self):
@@ -680,9 +686,10 @@ class LoggingPlugin:
 
     @pytest.hookimpl(hookwrapper=True, tryfirst=True)
     def pytest_sessionfinish(self):
+        if self.log_cli_handler is not None:
+            self.log_cli_handler.set_when("sessionfinish")
+
         with self.live_logs_context():
-            if self.log_cli_handler:
-                self.log_cli_handler.set_when("sessionfinish")
             try:
                 with catching_logs(self.log_file_handler, level=self.log_file_level):
                     yield
@@ -693,9 +700,10 @@ class LoggingPlugin:
 
     @pytest.hookimpl(hookwrapper=True, tryfirst=True)
     def pytest_sessionstart(self):
+        if self.log_cli_handler is not None:
+            self.log_cli_handler.set_when("sessionstart")
+
         with self.live_logs_context():
-            if self.log_cli_handler:
-                self.log_cli_handler.set_when("sessionstart")
             with catching_logs(self.log_file_handler, level=self.log_file_level):
                 yield
 
