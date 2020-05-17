@@ -273,12 +273,10 @@ def pytest_addoption(parser):
 
 
 @contextmanager
-def catching_logs(handler, formatter=None, level=None):
+def catching_logs(handler, level=None):
     """Context manager that prepares the whole logging machinery properly."""
     root_logger = logging.getLogger()
 
-    if formatter is not None:
-        handler.setFormatter(formatter)
     if level is not None:
         handler.setLevel(level)
 
@@ -303,15 +301,17 @@ def catching_logs(handler, formatter=None, level=None):
 class LogCaptureHandler(logging.StreamHandler):
     """A logging handler that stores log records and the log text."""
 
+    stream = None  # type: StringIO
+
     def __init__(self) -> None:
         """Creates a new log handler."""
-        logging.StreamHandler.__init__(self, StringIO())
+        super().__init__(StringIO())
         self.records = []  # type: List[logging.LogRecord]
 
     def emit(self, record: logging.LogRecord) -> None:
         """Keep the log records in a list in addition to the log text."""
         self.records.append(record)
-        logging.StreamHandler.emit(self, record)
+        super().emit(record)
 
     def reset(self) -> None:
         self.records = []
@@ -571,11 +571,12 @@ class LoggingPlugin:
             get_option_ini(config, "log_cli_date_format", "log_date_format"),
             get_option_ini(config, "log_auto_indent"),
         )
+        log_cli_handler.setFormatter(log_cli_formatter)
 
         log_cli_level = get_log_level_for_setting(config, "log_cli_level", "log_level")
         self.log_cli_handler = log_cli_handler
         self.live_logs_context = lambda: catching_logs(
-            log_cli_handler, formatter=log_cli_formatter, level=log_cli_level
+            log_cli_handler, level=log_cli_level
         )
 
     def set_log_path(self, fname):
@@ -629,9 +630,9 @@ class LoggingPlugin:
         self, item: Optional[nodes.Item], when: str
     ) -> Generator[None, None, None]:
         """Implements the internals of pytest_runtest_xxx() hook."""
-        with catching_logs(
-            LogCaptureHandler(), formatter=self.formatter, level=self.log_level
-        ) as log_handler:
+        log_handler = LogCaptureHandler()
+        log_handler.setFormatter(self.formatter)
+        with catching_logs(log_handler, level=self.log_level):
             if self.log_cli_handler:
                 self.log_cli_handler.set_when(when)
 
