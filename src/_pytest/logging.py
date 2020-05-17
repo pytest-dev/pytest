@@ -17,10 +17,14 @@ from _pytest.config import _strtobool
 from _pytest.config import Config
 from _pytest.config import create_terminal_writer
 from _pytest.pathlib import Path
+from _pytest.store import StoreKey
+
 
 DEFAULT_LOG_FORMAT = "%(levelname)-8s %(name)s:%(filename)s:%(lineno)d %(message)s"
 DEFAULT_LOG_DATE_FORMAT = "%H:%M:%S"
 _ANSI_ESCAPE_SEQ = re.compile(r"\x1b\[[\d;]+m")
+catch_log_handler_key = StoreKey["LogCaptureHandler"]()
+catch_log_handlers_key = StoreKey[Dict[str, "LogCaptureHandler"]]()
 
 
 def _remove_ansi_escape_sequences(text):
@@ -317,7 +321,7 @@ class LogCaptureHandler(logging.StreamHandler):
 class LogCaptureFixture:
     """Provides access and control of log capturing."""
 
-    def __init__(self, item) -> None:
+    def __init__(self, item: nodes.Node) -> None:
         """Creates a new funcarg."""
         self._item = item
         # dict of log name -> log level
@@ -338,7 +342,7 @@ class LogCaptureFixture:
         """
         :rtype: LogCaptureHandler
         """
-        return self._item.catch_log_handler  # type: ignore[no-any-return]
+        return self._item._store[catch_log_handler_key]
 
     def get_records(self, when: str) -> List[logging.LogRecord]:
         """
@@ -352,9 +356,9 @@ class LogCaptureFixture:
 
         .. versionadded:: 3.4
         """
-        handler = self._item.catch_log_handlers.get(when)
+        handler = self._item._store[catch_log_handlers_key].get(when)
         if handler:
-            return handler.records  # type: ignore[no-any-return]
+            return handler.records
         else:
             return []
 
@@ -645,16 +649,15 @@ class LoggingPlugin:
                 yield  # run the test
                 return
 
-            if not hasattr(item, "catch_log_handlers"):
-                item.catch_log_handlers = {}  # type: ignore[attr-defined]
-            item.catch_log_handlers[when] = log_handler  # type: ignore[attr-defined]
-            item.catch_log_handler = log_handler  # type: ignore[attr-defined]
+            empty = {}  # type: Dict[str, LogCaptureHandler]
+            item._store.setdefault(catch_log_handlers_key, empty)[when] = log_handler
+            item._store[catch_log_handler_key] = log_handler
             try:
                 yield  # run test
             finally:
                 if when == "teardown":
-                    del item.catch_log_handler  # type: ignore[attr-defined]
-                    del item.catch_log_handlers  # type: ignore[attr-defined]
+                    del item._store[catch_log_handlers_key]
+                    del item._store[catch_log_handler_key]
 
             if self.print_logs:
                 # Add a captured log section to the report.
