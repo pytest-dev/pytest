@@ -37,10 +37,10 @@ a public API and may break in the future.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. deprecated:: 5.4
+.. versionremoved:: 6.0
 
 
-Option ``--no-print-logs`` is deprecated and meant to be removed in a future release. If you use ``--no-print-logs``, please try out ``--show-capture`` and
-provide feedback.
+Option ``--no-print-logs`` is removed. If you used ``--no-print-logs``, please use ``--show-capture`` instead.
 
 ``--show-capture`` command-line option was added in ``pytest 3.5.0`` and allows to specify how to
 display captured output when tests fail: ``no``, ``stdout``, ``stderr``, ``log`` or ``all`` (the default).

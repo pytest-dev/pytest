@@ -117,47 +117,6 @@ def test_node_direct_ctor_warning():
     assert w[0].filename == __file__
 
 
-def assert_no_print_logs(testdir, args):
-    result = testdir.runpytest(*args)
-    result.stdout.fnmatch_lines(
-        [
-            "*--no-print-logs is deprecated and scheduled for removal in pytest 6.0*",
-            "*Please use --show-capture instead.*",
-        ]
-    )
-
-
-@pytest.mark.filterwarnings("default")
-def test_noprintlogs_is_deprecated_cmdline(testdir):
-    testdir.makepyfile(
-        """
-        def test_foo():
-            pass
-        """
-    )
-
-    assert_no_print_logs(testdir, ("--no-print-logs",))
-
-
-@pytest.mark.filterwarnings("default")
-def test_noprintlogs_is_deprecated_ini(testdir):
-    testdir.makeini(
-        """
-        [pytest]
-        log_print=False
-        """
-    )
-
-    testdir.makepyfile(
-        """
-        def test_foo():
-            pass
-        """
-    )
-
-    assert_no_print_logs(testdir, ())
-
-
 def test__fillfuncargs_is_deprecated() -> None:
     with pytest.warns(
         pytest.PytestDeprecationWarning,
