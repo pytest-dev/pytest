@@ -191,15 +191,6 @@ def pytest_addoption(parser):
         group.addoption(option, dest=dest, **kwargs)
 
     add_option_ini(
-        "--no-print-logs",
-        dest="log_print",
-        action="store_const",
-        const=False,
-        default=True,
-        type="bool",
-        help="disable printing caught logs on failed tests.",
-    )
-    add_option_ini(
         "--log-level",
         dest="log_level",
         default=None,
@@ -499,13 +490,6 @@ class LoggingPlugin:
         """
         self._config = config
 
-        self.print_logs = get_option_ini(config, "log_print")
-        if not self.print_logs:
-            from _pytest.warnings import _issue_warning_captured
-            from _pytest.deprecated import NO_PRINT_LOGS
-
-            _issue_warning_captured(NO_PRINT_LOGS, self._config.hook, stacklevel=2)
-
         # Report logging.
         self.formatter = self._create_formatter(
             get_option_ini(config, "log_format"),
@@ -630,10 +614,8 @@ class LoggingPlugin:
 
             yield
 
-            if self.print_logs:
-                # Add a captured log section to the report.
-                log = log_handler.stream.getvalue().strip()
-                item.add_report_section(when, "log", log)
+            log = log_handler.stream.getvalue().strip()
+            item.add_report_section(when, "log", log)
 
     @pytest.hookimpl(hookwrapper=True)
     def pytest_runtest_setup(self, item):
