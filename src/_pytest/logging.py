@@ -11,6 +11,7 @@ from typing import Generator
 from typing import List
 from typing import Mapping
 from typing import Optional
+from typing import Union
 
 import pytest
 from _pytest import nodes
@@ -529,11 +530,24 @@ class LoggingPlugin:
         self.log_file_handler.setFormatter(log_file_formatter)
 
         # CLI/live logging.
+        self.log_cli_level = get_log_level_for_setting(
+            config, "log_cli_level", "log_level"
+        )
         if self._log_cli_enabled():
-            self._setup_cli_logging()
+            terminal_reporter = config.pluginmanager.get_plugin("terminalreporter")
+            capture_manager = config.pluginmanager.get_plugin("capturemanager")
+            # if capturemanager plugin is disabled, live logging still works.
+            self.log_cli_handler = _LiveLoggingStreamHandler(
+                terminal_reporter, capture_manager
+            )  # type: Union[_LiveLoggingStreamHandler, _LiveLoggingNullHandler]
         else:
-            self.log_cli_handler = None
-            self.live_logs_context = nullcontext
+            self.log_cli_handler = _LiveLoggingNullHandler()
+        log_cli_formatter = self._create_formatter(
+            get_option_ini(config, "log_cli_format", "log_format"),
+            get_option_ini(config, "log_cli_date_format", "log_date_format"),
+            get_option_ini(config, "log_auto_indent"),
+        )
+        self.log_cli_handler.setFormatter(log_cli_formatter)
 
     def _create_formatter(self, log_format, log_date_format, auto_indent):
         # color option doesn't exist if terminal plugin is disabled
@@ -552,30 +566,6 @@ class LoggingPlugin:
         )
 
         return formatter
-
-    def _setup_cli_logging(self):
-        config = self._config
-        terminal_reporter = config.pluginmanager.get_plugin("terminalreporter")
-        if terminal_reporter is None:
-            # terminal reporter is disabled e.g. by pytest-xdist.
-            return
-
-        capture_manager = config.pluginmanager.get_plugin("capturemanager")
-        # if capturemanager plugin is disabled, live logging still works.
-        log_cli_handler = _LiveLoggingStreamHandler(terminal_reporter, capture_manager)
-
-        log_cli_formatter = self._create_formatter(
-            get_option_ini(config, "log_cli_format", "log_format"),
-            get_option_ini(config, "log_cli_date_format", "log_date_format"),
-            get_option_ini(config, "log_auto_indent"),
-        )
-        log_cli_handler.setFormatter(log_cli_formatter)
-
-        log_cli_level = get_log_level_for_setting(config, "log_cli_level", "log_level")
-        self.log_cli_handler = log_cli_handler
-        self.live_logs_context = lambda: catching_logs(
-            log_cli_handler, level=log_cli_level
-        )
 
     def set_log_path(self, fname):
         """Public method, which can set filename parameter for
@@ -608,19 +598,25 @@ class LoggingPlugin:
             old_stream.close()
 
     def _log_cli_enabled(self):
-        """Return True if log_cli should be considered enabled, either explicitly
-        or because --log-cli-level was given in the command-line.
-        """
-        return self._config.getoption(
+        """Return whether live logging is enabled."""
+        enabled = self._config.getoption(
             "--log-cli-level"
         ) is not None or self._config.getini("log_cli")
+        if not enabled:
+            return False
+
+        terminal_reporter = self._config.pluginmanager.get_plugin("terminalreporter")
+        if terminal_reporter is None:
+            # terminal reporter is disabled e.g. by pytest-xdist.
+            return False
+
+        return True
 
     @pytest.hookimpl(hookwrapper=True, tryfirst=True)
     def pytest_collection(self) -> Generator[None, None, None]:
-        if self.log_cli_handler is not None:
-            self.log_cli_handler.set_when("collection")
+        self.log_cli_handler.set_when("collection")
 
-        with self.live_logs_context():
+        with catching_logs(self.log_cli_handler, level=self.log_cli_level):
             with catching_logs(self.log_file_handler, level=self.log_file_level):
                 yield
 
@@ -641,8 +637,7 @@ class LoggingPlugin:
 
     @pytest.hookimpl(hookwrapper=True)
     def pytest_runtest_setup(self, item):
-        if self.log_cli_handler is not None:
-            self.log_cli_handler.set_when("setup")
+        self.log_cli_handler.set_when("setup")
 
         empty = {}  # type: Dict[str, LogCaptureHandler]
         item._store[catch_log_handlers_key] = empty
@@ -650,15 +645,13 @@ class LoggingPlugin:
 
     @pytest.hookimpl(hookwrapper=True)
     def pytest_runtest_call(self, item):
-        if self.log_cli_handler is not None:
-            self.log_cli_handler.set_when("call")
+        self.log_cli_handler.set_when("call")
 
         yield from self._runtest_for(item, "call")
 
     @pytest.hookimpl(hookwrapper=True)
     def pytest_runtest_teardown(self, item):
-        if self.log_cli_handler is not None:
-            self.log_cli_handler.set_when("teardown")
+        self.log_cli_handler.set_when("teardown")
 
         yield from self._runtest_for(item, "teardown")
         del item._store[catch_log_handlers_key]
@@ -666,40 +659,34 @@ class LoggingPlugin:
 
     @pytest.hookimpl
     def pytest_runtest_logstart(self):
-        if self.log_cli_handler is not None:
-            self.log_cli_handler.reset()
-            self.log_cli_handler.set_when("start")
+        self.log_cli_handler.reset()
+        self.log_cli_handler.set_when("start")
 
     @pytest.hookimpl
     def pytest_runtest_logfinish(self):
-        if self.log_cli_handler is not None:
-            self.log_cli_handler.set_when("finish")
+        self.log_cli_handler.set_when("finish")
 
     @pytest.hookimpl
     def pytest_runtest_logreport(self):
-        if self.log_cli_handler is not None:
-            self.log_cli_handler.set_when("logreport")
+        self.log_cli_handler.set_when("logreport")
 
     @pytest.hookimpl(hookwrapper=True, tryfirst=True)
     def pytest_sessionfinish(self):
-        if self.log_cli_handler is not None:
-            self.log_cli_handler.set_when("sessionfinish")
+        self.log_cli_handler.set_when("sessionfinish")
 
-        with self.live_logs_context():
-            try:
-                with catching_logs(self.log_file_handler, level=self.log_file_level):
-                    yield
-            finally:
-                # Close the FileHandler explicitly.
-                # (logging.shutdown might have lost the weakref?!)
-                self.log_file_handler.close()
+        with catching_logs(self.log_cli_handler, level=self.log_cli_level):
+            with catching_logs(self.log_file_handler, level=self.log_file_level):
+                yield
+
+        # Close the FileHandler explicitly.
+        # (logging.shutdown might have lost the weakref?!)
+        self.log_file_handler.close()
 
     @pytest.hookimpl(hookwrapper=True, tryfirst=True)
     def pytest_sessionstart(self):
-        if self.log_cli_handler is not None:
-            self.log_cli_handler.set_when("sessionstart")
+        self.log_cli_handler.set_when("sessionstart")
 
-        with self.live_logs_context():
+        with catching_logs(self.log_cli_handler, level=self.log_cli_level):
             with catching_logs(self.log_file_handler, level=self.log_file_level):
                 yield
 
@@ -715,7 +702,7 @@ class LoggingPlugin:
             # setting verbose flag is needed to avoid messy test progress output
             self._config.option.verbose = 1
 
-        with self.live_logs_context():
+        with catching_logs(self.log_cli_handler, level=self.log_cli_level):
             with catching_logs(self.log_file_handler, level=self.log_file_level):
                 yield  # run all the tests
 
@@ -768,4 +755,14 @@ class _LiveLoggingStreamHandler(logging.StreamHandler):
             if not self._section_name_shown and self._when:
                 self.stream.section("live log " + self._when, sep="-", bold=True)
                 self._section_name_shown = True
-            logging.StreamHandler.emit(self, record)
+            super().emit(record)
+
+
+class _LiveLoggingNullHandler(logging.NullHandler):
+    """A handler used when live logging is disabled."""
+
+    def reset(self):
+        pass
+
+    def set_when(self, when):
+        pass
