@@ -678,10 +678,6 @@ class LoggingPlugin:
             with catching_logs(self.log_file_handler, level=self.log_file_level):
                 yield
 
-        # Close the FileHandler explicitly.
-        # (logging.shutdown might have lost the weakref?!)
-        self.log_file_handler.close()
-
     @pytest.hookimpl(hookwrapper=True, tryfirst=True)
     def pytest_sessionstart(self):
         self.log_cli_handler.set_when("sessionstart")
@@ -705,6 +701,12 @@ class LoggingPlugin:
         with catching_logs(self.log_cli_handler, level=self.log_cli_level):
             with catching_logs(self.log_file_handler, level=self.log_file_level):
                 yield  # run all the tests
+
+    @pytest.hookimpl
+    def pytest_unconfigure(self):
+        # Close the FileHandler explicitly.
+        # (logging.shutdown might have lost the weakref?!)
+        self.log_file_handler.close()
 
 
 class _LiveLoggingStreamHandler(logging.StreamHandler):
