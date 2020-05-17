@@ -1,5 +1,6 @@
 """ command line options, ini-file and conftest.py processing. """
 import argparse
+import contextlib
 import copy
 import enum
 import inspect
@@ -87,9 +88,14 @@ class ExitCode(enum.IntEnum):
 
 class ConftestImportFailure(Exception):
     def __init__(self, path, excinfo):
-        Exception.__init__(self, path, excinfo)
+        super().__init__(path, excinfo)
         self.path = path
         self.excinfo = excinfo  # type: Tuple[Type[Exception], Exception, TracebackType]
+
+    def __str__(self):
+        return "{}: {} (from {})".format(
+            self.excinfo[0].__name__, self.excinfo[1], self.path
+        )
 
 
 def main(args=None, plugins=None) -> Union[int, ExitCode]:
@@ -278,19 +284,6 @@ def _prepareconfig(
     except BaseException:
         config._ensure_unconfigure()
         raise
-
-
-def _fail_on_non_top_pytest_plugins(conftestpath, confcutdir):
-    msg = (
-        "Defining 'pytest_plugins' in a non-top-level conftest is no longer supported:\n"
-        "It affects the entire test suite instead of just below the conftest as expected.\n"
-        "  {}\n"
-        "Please move it to a top level conftest file at the rootdir:\n"
-        "  {}\n"
-        "For more information, visit:\n"
-        "  https://docs.pytest.org/en/latest/deprecations.html#pytest-plugins-in-non-top-level-conftest-files"
-    )
-    fail(msg.format(conftestpath, confcutdir), pytrace=False)
 
 
 class PytestPluginManager(PluginManager):
@@ -511,34 +504,49 @@ class PytestPluginManager(PluginManager):
         # Using Path().resolve() is better than py.path.realpath because
         # it resolves to the correct path/drive in case-insensitive file systems (#5792)
         key = Path(str(conftestpath)).resolve()
-        try:
-            return self._conftestpath2mod[key]
-        except KeyError:
-            pkgpath = conftestpath.pypkgpath()
-            if pkgpath is None:
-                _ensure_removed_sysmodule(conftestpath.purebasename)
-            try:
-                mod = conftestpath.pyimport()
-                if (
-                    hasattr(mod, "pytest_plugins")
-                    and self._configured
-                    and not self._using_pyargs
-                ):
-                    _fail_on_non_top_pytest_plugins(conftestpath, self._confcutdir)
-            except Exception:
-                raise ConftestImportFailure(conftestpath, sys.exc_info())
 
-            self._conftest_plugins.add(mod)
-            self._conftestpath2mod[key] = mod
-            dirpath = conftestpath.dirpath()
-            if dirpath in self._dirpath2confmods:
-                for path, mods in self._dirpath2confmods.items():
-                    if path and path.relto(dirpath) or path == dirpath:
-                        assert mod not in mods
-                        mods.append(mod)
-            self.trace("loading conftestmodule {!r}".format(mod))
-            self.consider_conftest(mod)
-            return mod
+        with contextlib.suppress(KeyError):
+            return self._conftestpath2mod[key]
+
+        pkgpath = conftestpath.pypkgpath()
+        if pkgpath is None:
+            _ensure_removed_sysmodule(conftestpath.purebasename)
+
+        try:
+            mod = conftestpath.pyimport()
+        except Exception as e:
+            raise ConftestImportFailure(conftestpath, sys.exc_info()) from e
+
+        self._check_non_top_pytest_plugins(mod, conftestpath)
+
+        self._conftest_plugins.add(mod)
+        self._conftestpath2mod[key] = mod
+        dirpath = conftestpath.dirpath()
+        if dirpath in self._dirpath2confmods:
+            for path, mods in self._dirpath2confmods.items():
+                if path and path.relto(dirpath) or path == dirpath:
+                    assert mod not in mods
+                    mods.append(mod)
+        self.trace("loading conftestmodule {!r}".format(mod))
+        self.consider_conftest(mod)
+        return mod
+
+    def _check_non_top_pytest_plugins(self, mod, conftestpath):
+        if (
+            hasattr(mod, "pytest_plugins")
+            and self._configured
+            and not self._using_pyargs
+        ):
+            msg = (
+                "Defining 'pytest_plugins' in a non-top-level conftest is no longer supported:\n"
+                "It affects the entire test suite instead of just below the conftest as expected.\n"
+                "  {}\n"
+                "Please move it to a top level conftest file at the rootdir:\n"
+                "  {}\n"
+                "For more information, visit:\n"
+                "  https://docs.pytest.org/en/latest/deprecations.html#pytest-plugins-in-non-top-level-conftest-files"
+            )
+            fail(msg.format(conftestpath, self._confcutdir), pytrace=False)
 
     #
     # API for bootstrapping plugin loading

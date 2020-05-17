@@ -10,6 +10,7 @@ import pytest
 from _pytest.compat import importlib_metadata
 from _pytest.config import _iter_rewritable_modules
 from _pytest.config import Config
+from _pytest.config import ConftestImportFailure
 from _pytest.config import ExitCode
 from _pytest.config.exceptions import UsageError
 from _pytest.config.findpaths import determine_setup
@@ -1471,3 +1472,19 @@ class TestPytestPluginsVariable:
         assert res.ret == 0
         msg = "Defining 'pytest_plugins' in a non-top-level conftest is no longer supported"
         assert msg not in res.stdout.str()
+
+
+def test_conftest_import_error_repr(tmpdir):
+    """
+    ConftestImportFailure should use a short error message and readable path to the failed
+    conftest.py file
+    """
+    path = tmpdir.join("foo/conftest.py")
+    with pytest.raises(
+        ConftestImportFailure,
+        match=re.escape("RuntimeError: some error (from {})".format(path)),
+    ):
+        try:
+            raise RuntimeError("some error")
+        except Exception:
+            raise ConftestImportFailure(path, sys.exc_info())
