@@ -1028,74 +1028,36 @@ class TestAssertionRewriteHookDetails:
 
         assert _read_pyc(str(source), str(pyc)) is None  # no error
 
-    def test_reload_is_same(self, testdir):
-        # A file that will be picked up during collecting.
-        testdir.tmpdir.join("file.py").ensure()
-        testdir.tmpdir.join("pytest.ini").write(
-            textwrap.dedent(
-                """
+    def test_reload_is_same_and_reloads(self, testdir: Testdir) -> None:
+        """Reloading a (collected) module after change picks up the change."""
+        testdir.makeini(
+            """
             [pytest]
             python_files = *.py
-        """
-            )
-        )
-
-        testdir.makepyfile(
-            test_fun="""
-            import sys
-            try:
-                from imp import reload
-            except ImportError:
-                pass
-
-            def test_loader():
-                import file
-                assert sys.modules["file"] is reload(file)
             """
         )
-        result = testdir.runpytest("-s")
-        result.stdout.fnmatch_lines(["* 1 passed*"])
-
-    def test_reload_reloads(self, testdir):
-        """Reloading a module after change picks up the change."""
-        testdir.tmpdir.join("file.py").write(
-            textwrap.dedent(
-                """
+        testdir.makepyfile(
+            file="""
             def reloaded():
                 return False
 
             def rewrite_self():
                 with open(__file__, 'w') as self:
                     self.write('def reloaded(): return True')
-        """
-            )
-        )
-        testdir.tmpdir.join("pytest.ini").write(
-            textwrap.dedent(
-                """
-            [pytest]
-            python_files = *.py
-        """
-            )
-        )
-
-        testdir.makepyfile(
+            """,
             test_fun="""
             import sys
-            try:
-                from imp import reload
-            except ImportError:
-                pass
+            from importlib import reload
 
             def test_loader():
                 import file
                 assert not file.reloaded()
                 file.rewrite_self()
-                reload(file)
+                assert sys.modules["file"] is reload(file)
                 assert file.reloaded()
-            """
+            """,
         )
-        result = testdir.runpytest("-s")
+        result = testdir.runpytest()
         result.stdout.fnmatch_lines(["* 1 passed*"])
 
     def test_get_data_support(self, testdir):
