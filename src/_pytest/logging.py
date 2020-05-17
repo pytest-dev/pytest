@@ -597,12 +597,45 @@ class LoggingPlugin:
         return True
 
     @pytest.hookimpl(hookwrapper=True, tryfirst=True)
+    def pytest_sessionstart(self):
+        self.log_cli_handler.set_when("sessionstart")
+
+        with catching_logs(self.log_cli_handler, level=self.log_cli_level):
+            with catching_logs(self.log_file_handler, level=self.log_file_level):
+                yield
+
+    @pytest.hookimpl(hookwrapper=True, tryfirst=True)
     def pytest_collection(self) -> Generator[None, None, None]:
         self.log_cli_handler.set_when("collection")
 
         with catching_logs(self.log_cli_handler, level=self.log_cli_level):
             with catching_logs(self.log_file_handler, level=self.log_file_level):
                 yield
+
+    @pytest.hookimpl(hookwrapper=True)
+    def pytest_runtestloop(self, session):
+        """Runs all collected test items."""
+
+        if session.config.option.collectonly:
+            yield
+            return
+
+        if self._log_cli_enabled() and self._config.getoption("verbose") < 1:
+            # setting verbose flag is needed to avoid messy test progress output
+            self._config.option.verbose = 1
+
+        with catching_logs(self.log_cli_handler, level=self.log_cli_level):
+            with catching_logs(self.log_file_handler, level=self.log_file_level):
+                yield  # run all the tests
+
+    @pytest.hookimpl
+    def pytest_runtest_logstart(self):
+        self.log_cli_handler.reset()
+        self.log_cli_handler.set_when("start")
+
+    @pytest.hookimpl
+    def pytest_runtest_logreport(self):
+        self.log_cli_handler.set_when("logreport")
 
     def _runtest_for(self, item: nodes.Item, when: str) -> Generator[None, None, None]:
         """Implements the internals of pytest_runtest_xxx() hook."""
@@ -640,17 +673,8 @@ class LoggingPlugin:
         del item._store[catch_log_handler_key]
 
     @pytest.hookimpl
-    def pytest_runtest_logstart(self):
-        self.log_cli_handler.reset()
-        self.log_cli_handler.set_when("start")
-
-    @pytest.hookimpl
     def pytest_runtest_logfinish(self):
         self.log_cli_handler.set_when("finish")
-
-    @pytest.hookimpl
-    def pytest_runtest_logreport(self):
-        self.log_cli_handler.set_when("logreport")
 
     @pytest.hookimpl(hookwrapper=True, tryfirst=True)
     def pytest_sessionfinish(self):
@@ -659,30 +683,6 @@ class LoggingPlugin:
         with catching_logs(self.log_cli_handler, level=self.log_cli_level):
             with catching_logs(self.log_file_handler, level=self.log_file_level):
                 yield
-
-    @pytest.hookimpl(hookwrapper=True, tryfirst=True)
-    def pytest_sessionstart(self):
-        self.log_cli_handler.set_when("sessionstart")
-
-        with catching_logs(self.log_cli_handler, level=self.log_cli_level):
-            with catching_logs(self.log_file_handler, level=self.log_file_level):
-                yield
-
-    @pytest.hookimpl(hookwrapper=True)
-    def pytest_runtestloop(self, session):
-        """Runs all collected test items."""
-
-        if session.config.option.collectonly:
-            yield
-            return
-
-        if self._log_cli_enabled() and self._config.getoption("verbose") < 1:
-            # setting verbose flag is needed to avoid messy test progress output
-            self._config.option.verbose = 1
-
-        with catching_logs(self.log_cli_handler, level=self.log_cli_level):
-            with catching_logs(self.log_file_handler, level=self.log_file_level):
-                yield  # run all the tests
 
     @pytest.hookimpl
     def pytest_unconfigure(self):
