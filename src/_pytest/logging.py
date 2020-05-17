@@ -272,30 +272,31 @@ def pytest_addoption(parser):
     )
 
 
-@contextmanager
-def catching_logs(handler, level=None):
+# Not using @contextmanager for performance reasons.
+class catching_logs:
     """Context manager that prepares the whole logging machinery properly."""
-    root_logger = logging.getLogger()
 
-    if level is not None:
-        handler.setLevel(level)
+    __slots__ = ("handler", "level", "orig_level")
 
-    # Adding the same handler twice would confuse logging system.
-    # Just don't do that.
-    add_new_handler = handler not in root_logger.handlers
+    def __init__(self, handler, level=None):
+        self.handler = handler
+        self.level = level
 
-    if add_new_handler:
-        root_logger.addHandler(handler)
-    if level is not None:
-        orig_level = root_logger.level
-        root_logger.setLevel(min(orig_level, level))
-    try:
-        yield handler
-    finally:
-        if level is not None:
-            root_logger.setLevel(orig_level)
-        if add_new_handler:
-            root_logger.removeHandler(handler)
+    def __enter__(self):
+        root_logger = logging.getLogger()
+        if self.level is not None:
+            self.handler.setLevel(self.level)
+        root_logger.addHandler(self.handler)
+        if self.level is not None:
+            self.orig_level = root_logger.level
+            root_logger.setLevel(min(self.orig_level, self.level))
+        return self.handler
+
+    def __exit__(self, type, value, traceback):
+        root_logger = logging.getLogger()
+        if self.level is not None:
+            root_logger.setLevel(self.orig_level)
+        root_logger.removeHandler(self.handler)
 
 
 class LogCaptureHandler(logging.StreamHandler):
@@ -527,15 +528,11 @@ class LoggingPlugin:
         else:
             self.log_file_handler = None
 
-        self.log_cli_handler = None
-
-        self.live_logs_context = lambda: nullcontext()
-        # Note that the lambda for the live_logs_context is needed because
-        # live_logs_context can otherwise not be entered multiple times due
-        # to limitations of contextlib.contextmanager.
-
         if self._log_cli_enabled():
             self._setup_cli_logging()
+        else:
+            self.log_cli_handler = None
+            self.live_logs_context = nullcontext
 
     def _create_formatter(self, log_format, log_date_format, auto_indent):
         # color option doesn't exist if terminal plugin is disabled
