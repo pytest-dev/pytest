@@ -1,6 +1,8 @@
 """ Access and control log capturing. """
 import logging
+import os
 import re
+import sys
 from contextlib import contextmanager
 from io import StringIO
 from typing import AbstractSet
@@ -503,6 +505,7 @@ class LoggingPlugin:
 
             _issue_warning_captured(NO_PRINT_LOGS, self._config.hook, stacklevel=2)
 
+        # Report logging.
         self.formatter = self._create_formatter(
             get_option_ini(config, "log_format"),
             get_option_ini(config, "log_date_format"),
@@ -510,24 +513,22 @@ class LoggingPlugin:
         )
         self.log_level = get_log_level_for_setting(config, "log_level")
 
+        # File logging.
         self.log_file_level = get_log_level_for_setting(config, "log_file_level")
-        self.log_file_format = get_option_ini(config, "log_file_format", "log_format")
-        self.log_file_date_format = get_option_ini(
+        log_file = get_option_ini(config, "log_file") or os.devnull
+        self.log_file_handler = logging.FileHandler(
+            log_file, mode="w", encoding="UTF-8"
+        )
+        log_file_format = get_option_ini(config, "log_file_format", "log_format")
+        log_file_date_format = get_option_ini(
             config, "log_file_date_format", "log_date_format"
         )
-        self.log_file_formatter = logging.Formatter(
-            self.log_file_format, datefmt=self.log_file_date_format
+        log_file_formatter = logging.Formatter(
+            log_file_format, datefmt=log_file_date_format
         )
+        self.log_file_handler.setFormatter(log_file_formatter)
 
-        log_file = get_option_ini(config, "log_file")
-        if log_file:
-            self.log_file_handler = logging.FileHandler(
-                log_file, mode="w", encoding="UTF-8"
-            )  # type: Optional[logging.FileHandler]
-            self.log_file_handler.setFormatter(self.log_file_formatter)
-        else:
-            self.log_file_handler = None
-
+        # CLI/live logging.
         if self._log_cli_enabled():
             self._setup_cli_logging()
         else:
@@ -592,10 +593,19 @@ class LoggingPlugin:
         if not fname.parent.exists():
             fname.parent.mkdir(exist_ok=True, parents=True)
 
-        self.log_file_handler = logging.FileHandler(
-            str(fname), mode="w", encoding="UTF-8"
-        )
-        self.log_file_handler.setFormatter(self.log_file_formatter)
+        stream = fname.open(mode="w", encoding="UTF-8")
+        if sys.version_info >= (3, 7):
+            old_stream = self.log_file_handler.setStream(stream)
+        else:
+            old_stream = self.log_file_handler.stream
+            self.log_file_handler.acquire()
+            try:
+                self.log_file_handler.flush()
+                self.log_file_handler.stream = stream
+            finally:
+                self.log_file_handler.release()
+        if old_stream:
+            old_stream.close()
 
     def _log_cli_enabled(self):
         """Return True if log_cli should be considered enabled, either explicitly
@@ -611,17 +621,8 @@ class LoggingPlugin:
             if self.log_cli_handler:
                 self.log_cli_handler.set_when("collection")
 
-            if self.log_file_handler is not None:
-                with catching_logs(self.log_file_handler, level=self.log_file_level):
-                    yield
-            else:
-                # Add a dummy handler to ensure logging.root.handlers is not empty.
-                # If it were empty, then a `logging.warning()` call (and similar) during collection
-                # would trigger a `logging.basicConfig()` call, which would add a `StreamHandler`
-                # handler, which would cause all subsequent logs which reach the root to be also
-                # printed to stdout, which we don't want (issue #6240).
-                with catching_logs(logging.NullHandler()):
-                    yield
+            with catching_logs(self.log_file_handler, level=self.log_file_level):
+                yield
 
     def _runtest_for(
         self, item: Optional[nodes.Item], when: str
@@ -640,13 +641,7 @@ class LoggingPlugin:
                 ] = log_handler
                 item._store[catch_log_handler_key] = log_handler
             try:
-                if self.log_file_handler is not None:
-                    with catching_logs(
-                        self.log_file_handler, level=self.log_file_level
-                    ):
-                        yield
-                else:
-                    yield
+                yield
             finally:
                 if item is not None and when == "teardown":
                     del item._store[catch_log_handlers_key]
@@ -688,28 +683,20 @@ class LoggingPlugin:
         with self.live_logs_context():
             if self.log_cli_handler:
                 self.log_cli_handler.set_when("sessionfinish")
-            if self.log_file_handler is not None:
-                try:
-                    with catching_logs(
-                        self.log_file_handler, level=self.log_file_level
-                    ):
-                        yield
-                finally:
-                    # Close the FileHandler explicitly.
-                    # (logging.shutdown might have lost the weakref?!)
-                    self.log_file_handler.close()
-            else:
-                yield
+            try:
+                with catching_logs(self.log_file_handler, level=self.log_file_level):
+                    yield
+            finally:
+                # Close the FileHandler explicitly.
+                # (logging.shutdown might have lost the weakref?!)
+                self.log_file_handler.close()
 
     @pytest.hookimpl(hookwrapper=True, tryfirst=True)
     def pytest_sessionstart(self):
         with self.live_logs_context():
             if self.log_cli_handler:
                 self.log_cli_handler.set_when("sessionstart")
-            if self.log_file_handler is not None:
-                with catching_logs(self.log_file_handler, level=self.log_file_level):
-                    yield
-            else:
+            with catching_logs(self.log_file_handler, level=self.log_file_level):
                 yield
 
     @pytest.hookimpl(hookwrapper=True)
@@ -725,10 +712,7 @@ class LoggingPlugin:
             self._config.option.verbose = 1
 
         with self.live_logs_context():
-            if self.log_file_handler is not None:
-                with catching_logs(self.log_file_handler, level=self.log_file_level):
-                    yield  # run all the tests
-            else:
+            with catching_logs(self.log_file_handler, level=self.log_file_level):
                 yield  # run all the tests
 
 
