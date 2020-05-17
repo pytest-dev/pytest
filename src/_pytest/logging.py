@@ -626,17 +626,8 @@ class LoggingPlugin:
                     yield
 
     @contextmanager
-    def _runtest_for(self, item, when):
-        with self._runtest_for_main(item, when):
-            if self.log_file_handler is not None:
-                with catching_logs(self.log_file_handler, level=self.log_file_level):
-                    yield
-            else:
-                yield
-
-    @contextmanager
-    def _runtest_for_main(
-        self, item: nodes.Item, when: str
+    def _runtest_for(
+        self, item: Optional[nodes.Item], when: str
     ) -> Generator[None, None, None]:
         """Implements the internals of pytest_runtest_xxx() hook."""
         with catching_logs(
@@ -645,21 +636,26 @@ class LoggingPlugin:
             if self.log_cli_handler:
                 self.log_cli_handler.set_when(when)
 
-            if item is None:
-                yield  # run the test
-                return
-
-            empty = {}  # type: Dict[str, LogCaptureHandler]
-            item._store.setdefault(catch_log_handlers_key, empty)[when] = log_handler
-            item._store[catch_log_handler_key] = log_handler
+            if item is not None:
+                empty = {}  # type: Dict[str, LogCaptureHandler]
+                item._store.setdefault(catch_log_handlers_key, empty)[
+                    when
+                ] = log_handler
+                item._store[catch_log_handler_key] = log_handler
             try:
-                yield  # run test
+                if self.log_file_handler is not None:
+                    with catching_logs(
+                        self.log_file_handler, level=self.log_file_level
+                    ):
+                        yield
+                else:
+                    yield
             finally:
-                if when == "teardown":
+                if item is not None and when == "teardown":
                     del item._store[catch_log_handlers_key]
                     del item._store[catch_log_handler_key]
 
-            if self.print_logs:
+            if item is not None and self.print_logs:
                 # Add a captured log section to the report.
                 log = log_handler.stream.getvalue().strip()
                 item.add_report_section(when, "log", log)
