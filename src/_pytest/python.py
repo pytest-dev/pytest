@@ -1395,10 +1395,40 @@ class Function(PyobjMixin, nodes.Item):
         fixtureinfo: Optional[FuncFixtureInfo] = None,
         originalname=None,
     ) -> None:
+        """
+        param name: the full function name, including any decorations like those
+            added by parametrization (``my_func[my_param]``).
+        param parent: the parent Node.
+        param args: (unused)
+        param config: the pytest Config object
+        param callspec: if given, this is function has been parametrized and the callspec contains
+            meta information about the parametrization.
+        param callobj: if given, the object which will be called when the Function is invoked,
+            otherwise the callobj will be obtained from ``parent`` using ``originalname``
+        param keywords: keywords bound to the function object for "-k" matching.
+        param session: the pytest Session object
+        param fixtureinfo: fixture information already resolved at this fixture node.
+        param originalname:
+            The attribute name to use for accessing the underlying function object.
+            Defaults to ``name``. Set this if name is different from the original name,
+            for example when it contains decorations like those added by parametrization
+            (``my_func[my_param]``).
+        """
         super().__init__(name, parent, config=config, session=session)
         self._args = args
         if callobj is not NOTSET:
             self.obj = callobj
+
+        #: Original function name, without any decorations (for example
+        #: parametrization adds a ``"[...]"`` suffix to function names), used to access
+        #: the underlying function object from ``parent`` (in case ``callobj`` is not given
+        #: explicitly).
+        #:
+        #: .. versionadded:: 3.0
+        self.originalname = originalname or name
+
+        # note: when FunctionDefinition is introduced, we should change ``originalname``
+        # to a readonly property that returns FunctionDefinition.name
 
         self.keywords.update(self.obj.__dict__)
         self.own_markers.extend(get_unpacked_marks(self.obj))
@@ -1434,12 +1464,6 @@ class Function(PyobjMixin, nodes.Item):
         self.fixturenames = fixtureinfo.names_closure
         self._initrequest()
 
-        #: original function name, without any decorations (for example
-        #: parametrization adds a ``"[...]"`` suffix to function names).
-        #:
-        #: .. versionadded:: 3.0
-        self.originalname = originalname
-
     @classmethod
     def from_parent(cls, parent, **kw):  # todo: determine sound type limitations
         """
@@ -1457,11 +1481,7 @@ class Function(PyobjMixin, nodes.Item):
         return getimfunc(self.obj)
 
     def _getobj(self):
-        name = self.name
-        i = name.find("[")  # parametrization
-        if i != -1:
-            name = name[:i]
-        return getattr(self.parent.obj, name)
+        return getattr(self.parent.obj, self.originalname)
 
     @property
     def _pyfuncitem(self):

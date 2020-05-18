@@ -6,6 +6,7 @@ import _pytest._code
 import pytest
 from _pytest.config import ExitCode
 from _pytest.nodes import Collector
+from _pytest.pytester import Testdir
 
 
 class TestModule:
@@ -659,16 +660,39 @@ class TestFunction:
         result = testdir.runpytest()
         result.stdout.fnmatch_lines(["* 3 passed in *"])
 
-    def test_function_original_name(self, testdir):
+    def test_function_originalname(self, testdir: Testdir) -> None:
         items = testdir.getitems(
             """
             import pytest
+
             @pytest.mark.parametrize('arg', [1,2])
             def test_func(arg):
                 pass
+
+            def test_no_param():
+                pass
         """
         )
-        assert [x.originalname for x in items] == ["test_func", "test_func"]
+        assert [x.originalname for x in items] == [
+            "test_func",
+            "test_func",
+            "test_no_param",
+        ]
+
+    def test_function_with_square_brackets(self, testdir: Testdir) -> None:
+        """Check that functions with square brackets don't cause trouble."""
+        p1 = testdir.makepyfile(
+            """
+            locals()["test_foo[name]"] = lambda: None
+            """
+        )
+        result = testdir.runpytest("-v", str(p1))
+        result.stdout.fnmatch_lines(
+            [
+                "test_function_with_square_brackets.py::test_foo[[]name[]] PASSED *",
+                "*= 1 passed in *",
+            ]
+        )
 
 
 class TestSorting:
