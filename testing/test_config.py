@@ -1240,9 +1240,7 @@ def test_help_and_version_after_argument_error(testdir):
     assert result.ret == ExitCode.USAGE_ERROR
 
     result = testdir.runpytest("--version")
-    result.stderr.fnmatch_lines(
-        ["*pytest*{}*imported from*".format(pytest.__version__)]
-    )
+    result.stderr.fnmatch_lines(["pytest {}".format(pytest.__version__)])
     assert result.ret == ExitCode.USAGE_ERROR
 
 

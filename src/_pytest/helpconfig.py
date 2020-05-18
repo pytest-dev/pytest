@@ -42,7 +42,9 @@ def pytest_addoption(parser):
         "--version",
         "-V",
         action="count",
-        help="display pytest version and information about plugins.",
+        default=0,
+        help="display pytest version and information about plugins."
+        "When given twice, also display information about plugins.",
     )
     group._addoption(
         "-h",
@@ -127,11 +129,11 @@ def showversion(config):
             for line in plugininfo:
                 sys.stderr.write(line + "\n")
     else:
-        sys.stderr.write("pytest {}".format(pytest.__version__))
+        sys.stderr.write("pytest {}\n".format(pytest.__version__))
 
 
 def pytest_cmdline_main(config):
-    if config.option.version:
+    if config.option.version > 0:
         showversion(config)
         return 0
     elif config.option.help:
