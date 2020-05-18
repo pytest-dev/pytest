@@ -57,18 +57,6 @@ from _pytest.warning_types import PytestCollectionWarning
 from _pytest.warning_types import PytestUnhandledCoroutineWarning
 
 
-def pyobj_property(name):
-    def get(self):
-        node = self.getparent(getattr(__import__("pytest"), name))
-        if node is not None:
-            return node.obj
-
-    doc = "python {} object this node was collected from (can be None).".format(
-        name.lower()
-    )
-    return property(get, None, None, doc)
-
-
 def pytest_addoption(parser):
     group = parser.getgroup("general")
     group.addoption(
@@ -248,10 +236,25 @@ def pytest_pycollect_makeitem(collector, name, obj):
 
 
 class PyobjMixin:
-    module = pyobj_property("Module")
-    cls = pyobj_property("Class")
-    instance = pyobj_property("Instance")
     _ALLOW_MARKERS = True
+
+    @property
+    def module(self):
+        """Python module object this node was collected from (can be None)."""
+        node = self.getparent(Module)
+        return node.obj if node is not None else None
+
+    @property
+    def cls(self):
+        """Python class object this node was collected from (can be None)."""
+        node = self.getparent(Class)
+        return node.obj if node is not None else None
+
+    @property
+    def instance(self):
+        """Python instance object this node was collected from (can be None)."""
+        node = self.getparent(Instance)
+        return node.obj if node is not None else None
 
     @property
     def obj(self):
