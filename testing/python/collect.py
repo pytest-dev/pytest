@@ -294,9 +294,11 @@ class TestFunction:
         def func2():
             pass
 
-        f1 = self.make_function(testdir, name="name", args=(1,), callobj=func1)
+        f1 = self.make_function(testdir, name="name", callobj=func1)
         assert f1 == f1
-        f2 = self.make_function(testdir, name="name", callobj=func2)
+        f2 = self.make_function(
+            testdir, name="name", callobj=func2, originalname="foobar"
+        )
         assert f1 != f2
 
     def test_repr_produces_actual_test_id(self, testdir):

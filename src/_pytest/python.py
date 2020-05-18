@@ -1386,7 +1386,6 @@ class Function(PyobjMixin, nodes.Item):
         self,
         name,
         parent,
-        args=None,
         config=None,
         callspec: Optional[CallSpec2] = None,
         callobj=NOTSET,
@@ -1399,7 +1398,6 @@ class Function(PyobjMixin, nodes.Item):
         param name: the full function name, including any decorations like those
             added by parametrization (``my_func[my_param]``).
         param parent: the parent Node.
-        param args: (unused)
         param config: the pytest Config object
         param callspec: if given, this is function has been parametrized and the callspec contains
             meta information about the parametrization.
@@ -1415,7 +1413,7 @@ class Function(PyobjMixin, nodes.Item):
             (``my_func[my_param]``).
         """
         super().__init__(name, parent, config=config, session=session)
-        self._args = args
+
         if callobj is not NOTSET:
             self.obj = callobj
 
