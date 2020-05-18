@@ -1,0 +1,2 @@
+The ``originalname`` attribute of ``_pytest.python.Function`` now defaults to ``name`` if not
+provided explicitly, and is always set.
