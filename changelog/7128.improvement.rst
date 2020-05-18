@@ -1,0 +1,1 @@
+`pytest --version` now displays just the pytest version, while `pytest --version --version` displays more verbose information including plugins.
