@@ -73,7 +73,7 @@ That’s it. You can now execute the test function:
     FAILED test_sample.py::test_answer - assert 4 == 5
     ============================ 1 failed in 0.12s =============================
 
-This test returns a failure report because ``func(3)`` does not return ``5``.
+The ``[100%]`` refers to the overall progress of running all test cases. After it finishes, pytest then shows a failure report because ``func(3)`` does not return ``5``.
 
 .. note::
 
