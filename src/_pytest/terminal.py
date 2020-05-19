@@ -473,10 +473,7 @@ class TerminalReporter:
             else:
                 markup = {}
         if self.verbosity <= 0:
-            if not running_xdist and self.showfspath:
-                self.write_fspath_result(rep.nodeid, letter, **markup)
-            else:
-                self._tw.write(letter, **markup)
+            self._tw.write(letter, **markup)
         else:
             self._progress_nodeids_reported.add(rep.nodeid)
             line = self._locationline(rep.nodeid, *rep.location)
