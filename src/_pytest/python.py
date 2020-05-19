@@ -571,8 +571,7 @@ class Package(Module):
         nodes.FSCollector.__init__(
             self, fspath, parent=parent, config=config, session=session, nodeid=nodeid
         )
-
-        self.name = fspath.dirname
+        self.name = os.path.basename(str(fspath.dirname))
 
     def setup(self):
         # not using fixtures to call setup_module here because autouse fixtures

@@ -1004,7 +1004,7 @@ def test_collect_init_tests(testdir):
     result.stdout.fnmatch_lines(
         [
             "collected 2 items",
-            "<Package *",
+            "<Package tests>",
             "  <Module __init__.py>",
             "    <Function test_init>",
             "  <Module test_foo.py>",
@@ -1015,7 +1015,7 @@ def test_collect_init_tests(testdir):
     result.stdout.fnmatch_lines(
         [
             "collected 2 items",
-            "<Package *",
+            "<Package tests>",
             "  <Module __init__.py>",
             "    <Function test_init>",
             "  <Module test_foo.py>",
@@ -1027,7 +1027,7 @@ def test_collect_init_tests(testdir):
     result.stdout.fnmatch_lines(
         [
             "collected 2 items",
-            "<Package */tests>",
+            "<Package tests>",
             "  <Module __init__.py>",
             "    <Function test_init>",
             "  <Module test_foo.py>",
@@ -1039,7 +1039,7 @@ def test_collect_init_tests(testdir):
     result.stdout.fnmatch_lines(
         [
             "collected 2 items",
-            "<Package */tests>",
+            "<Package tests>",
             "  <Module __init__.py>",
             "    <Function test_init>",
             "  <Module test_foo.py>",
@@ -1048,12 +1048,12 @@ def test_collect_init_tests(testdir):
     )
     result = testdir.runpytest("./tests/test_foo.py", "--collect-only")
     result.stdout.fnmatch_lines(
-        ["<Package */tests>", "  <Module test_foo.py>", "    <Function test_foo>"]
+        ["<Package tests>", "  <Module test_foo.py>", "    <Function test_foo>"]
     )
     result.stdout.no_fnmatch_line("*test_init*")
     result = testdir.runpytest("./tests/__init__.py", "--collect-only")
     result.stdout.fnmatch_lines(
-        ["<Package */tests>", "  <Module __init__.py>", "    <Function test_init>"]
+        ["<Package tests>", "  <Module __init__.py>", "    <Function test_init>"]
     )
     result.stdout.no_fnmatch_line("*test_foo*")
 

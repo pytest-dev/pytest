@@ -136,7 +136,7 @@ class KeywordMatcher:
         import pytest
 
         for item in item.listchain():
-            if not isinstance(item, pytest.Instance):
+            if not isinstance(item, (pytest.Instance, pytest.Session)):
                 mapped_names.add(item.name)
 
         # Add the names added as extra keywords to current or parent items
