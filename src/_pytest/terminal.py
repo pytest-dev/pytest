@@ -443,8 +443,7 @@ class TerminalReporter:
             self.write_ensure_prefix(line, "")
             self.flush()
         elif self.showfspath:
-            fsid = nodeid.split("::")[0]
-            self.write_fspath_result(fsid, "")
+            self.write_fspath_result(nodeid, "")
             self.flush()
 
     def pytest_runtest_logreport(self, report: TestReport) -> None:
