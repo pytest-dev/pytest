@@ -624,6 +624,31 @@ def test_comment_in_statement() -> None:
         )
 
 
+def test_source_with_decorator() -> None:
+    """Test behavior with Source / Code().source with regard to decorators."""
+    from _pytest.compat import get_real_func
+
+    @pytest.mark.foo
+    def deco_mark():
+        assert False
+
+    src = inspect.getsource(deco_mark)
+    assert str(Source(deco_mark, deindent=False)) == src
+    assert src.startswith("    @pytest.mark.foo")
+
+    @pytest.fixture
+    def deco_fixture():
+        assert False
+
+    src = inspect.getsource(deco_fixture)
+    assert src == "    @pytest.fixture\n    def deco_fixture():\n        assert False\n"
+    # currenly Source does not unwrap decorators, testing the
+    # existing behavior here for explicitness, but perhaps we should revisit/change this
+    # in the future
+    assert str(Source(deco_fixture)).startswith("@functools.wraps(function)")
+    assert str(Source(get_real_func(deco_fixture), deindent=False)) == src
+
+
 def test_single_line_else() -> None:
     source = getstatement(1, "if False: 2\nelse: 3")
     assert str(source) == "else: 3"
