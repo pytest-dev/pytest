@@ -509,3 +509,15 @@ class DropShorterLongHelpFormatter(argparse.HelpFormatter):
         formatted_action_invocation = ", ".join(return_list)
         action._formatted_action_invocation = formatted_action_invocation  # type: ignore
         return formatted_action_invocation
+
+    def _split_lines(self, text, width):
+        """Wrap lines after splitting on original newlines.
+
+        This allows to have explicit line breaks in the help text.
+        """
+        import textwrap
+
+        lines = []
+        for line in text.splitlines():
+            lines.extend(textwrap.wrap(line.strip(), width))
+        return lines

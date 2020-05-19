@@ -19,7 +19,10 @@ def test_help(testdir):
     assert result.ret == 0
     result.stdout.fnmatch_lines(
         """
-        *-v*verbose*
+          -m MARKEXPR           only run tests matching given mark expression.
+                                For example: -m 'mark1 and not mark2'.
+        reporting:
+          --durations=N *
         *setup.cfg*
         *minversion*
         *to see*markers*pytest --markers*
