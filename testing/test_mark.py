@@ -1101,8 +1101,6 @@ def test_markexpr_multiple(testdir):
 def test_keywordexpr_multiple(testdir):
     testdir.makepyfile(
         """
-        import pytest
-
         def test_this_thing():
             pass
         def test_another_thing():
