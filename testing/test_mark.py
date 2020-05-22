@@ -1071,3 +1071,23 @@ def test_marker_expr_eval_failure_handling(testdir, expr):
     result = testdir.runpytest(foo, "-m", expr)
     result.stderr.fnmatch_lines([expected])
     assert result.ret == ExitCode.USAGE_ERROR
+
+
+def test_mark_multiple(testdir):
+    testdir.makepyfile(
+        """
+        import pytest
+
+        pytestmark = pytest.mark.c
+
+        @pytest.mark.a
+        def test_a():
+            pass
+
+        @pytest.mark.b
+        def test_b():
+            pass
+        """
+    )
+    result = testdir.runpytest("-m", "a or b", "-m", "c")
+    result.assert_outcomes(passed=2)
