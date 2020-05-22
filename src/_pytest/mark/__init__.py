@@ -80,7 +80,8 @@ def pytest_addoption(parser):
         nargs="+",
         metavar="MARKEXPR",
         help="only run tests matching given mark expression.\n"
-        "For example: -m 'mark1 and not mark2'.",
+        "For example: -m 'mark1 and not mark2'.\n"
+        "Multiple -m CLI options are appended with 'and'.\n",
     )
 
     group.addoption(
