@@ -700,7 +700,7 @@ class Testdir:
     def makepyfile(self, *args, **kwargs):
         r"""Shortcut for .makefile() with a .py extension
         defaults to the test name .py e.g test_foobar.py
-        Calling without kwargs will result in overwriting the initial file(s) contents
+        Calling without kwargs will result in overwriting the initial file contents
 
         Examples:
 
@@ -718,8 +718,8 @@ class Testdir:
 
     def maketxtfile(self, *args, **kwargs):
         r"""Shortcut for .makefile() with a .txt extension
-        defaults to the test name .py e.g test_foobar.txt
-        Calling without kwargs will result in overwriting the initial file(s) contents
+        defaults to the test name .txt e.g test_foobar.txt
+        Calling without kwargs will result in overwriting the initial file contents
 
         Examples:
 
