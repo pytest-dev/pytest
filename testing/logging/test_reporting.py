@@ -3,6 +3,7 @@ import os
 import re
 
 import pytest
+from _pytest.pytester import Testdir
 
 
 def test_nothing_logged(testdir):
@@ -1101,3 +1102,48 @@ def test_colored_ansi_esc_caplogtext(testdir):
     )
     result = testdir.runpytest("--log-level=INFO", "--color=yes")
     assert result.ret == 0
+
+
+def test_logging_emit_error(testdir: Testdir) -> None:
+    """
+    An exception raised during emit() should fail the test.
+
+    The default behavior of logging is to print "Logging error"
+    to stderr with the call stack and some extra details.
+
+    pytest overrides this behavior to propagate the exception.
+    """
+    testdir.makepyfile(
+        """
+        import logging
+
+        def test_bad_log():
+            logging.warning('oops', 'first', 2)
+        """
+    )
+    result = testdir.runpytest()
+    result.assert_outcomes(failed=1)
+    result.stdout.fnmatch_lines(
+        [
+            "====* FAILURES *====",
+            "*not all arguments converted during string formatting*",
+        ]
+    )
+
+
+def test_logging_emit_error_supressed(testdir: Testdir) -> None:
+    """
+    If logging is configured to silently ignore errors, pytest
+    doesn't propagate errors either.
+    """
+    testdir.makepyfile(
+        """
+        import logging
+
+        def test_bad_log(monkeypatch):
+            monkeypatch.setattr(logging, 'raiseExceptions', False)
+            logging.warning('oops', 'first', 2)
+        """
+    )
+    result = testdir.runpytest()
+    result.assert_outcomes(passed=1)

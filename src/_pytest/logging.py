@@ -312,6 +312,14 @@ class LogCaptureHandler(logging.StreamHandler):
         self.records = []
         self.stream = StringIO()
 
+    def handleError(self, record: logging.LogRecord) -> None:
+        if logging.raiseExceptions:
+            # Fail the test if the log message is bad (emit failed).
+            # The default behavior of logging is to print "Logging error"
+            # to stderr with the call stack and some extra details.
+            # pytest wants to make such mistakes visible during testing.
+            raise
+
 
 class LogCaptureFixture:
     """Provides access and control of log capturing."""
@@ -499,9 +507,7 @@ class LoggingPlugin:
         # File logging.
         self.log_file_level = get_log_level_for_setting(config, "log_file_level")
         log_file = get_option_ini(config, "log_file") or os.devnull
-        self.log_file_handler = logging.FileHandler(
-            log_file, mode="w", encoding="UTF-8"
-        )
+        self.log_file_handler = _FileHandler(log_file, mode="w", encoding="UTF-8")
         log_file_format = get_option_ini(config, "log_file_format", "log_format")
         log_file_date_format = get_option_ini(
             config, "log_file_date_format", "log_date_format"
@@ -687,6 +693,16 @@ class LoggingPlugin:
         self.log_file_handler.close()
 
 
+class _FileHandler(logging.FileHandler):
+    """
+    Custom FileHandler with pytest tweaks.
+    """
+
+    def handleError(self, record: logging.LogRecord) -> None:
+        # Handled by LogCaptureHandler.
+        pass
+
+
 class _LiveLoggingStreamHandler(logging.StreamHandler):
     """
     Custom StreamHandler used by the live logging feature: it will write a newline before the first log message
@@ -737,6 +753,10 @@ class _LiveLoggingStreamHandler(logging.StreamHandler):
                 self._section_name_shown = True
             super().emit(record)
 
+    def handleError(self, record: logging.LogRecord) -> None:
+        # Handled by LogCaptureHandler.
+        pass
+
 
 class _LiveLoggingNullHandler(logging.NullHandler):
     """A handler used when live logging is disabled."""
@@ -745,4 +765,8 @@ class _LiveLoggingNullHandler(logging.NullHandler):
         pass
 
     def set_when(self, when):
+        pass
+
+    def handleError(self, record: logging.LogRecord) -> None:
+        # Handled by LogCaptureHandler.
         pass
