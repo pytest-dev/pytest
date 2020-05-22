@@ -943,8 +943,8 @@ class TestFDCapture:
             pytest.raises(AttributeError, cap.suspend)
 
             assert repr(cap) == (
-                "<FDCapture 1 oldfd=<UNSET> _state='done' tmpfile={!r}>".format(
-                    cap.tmpfile
+                "<FDCapture 1 oldfd={} _state='done' tmpfile={!r}>".format(
+                    cap.targetfd_save, cap.tmpfile
                 )
             )
             # Should not crash with missing "_old".
@@ -1150,6 +1150,7 @@ class TestStdCaptureFDinvalidFD:
         testdir.makepyfile(
             """
             import os
+            from fnmatch import fnmatch
             from _pytest import capture
 
             def StdCaptureFD(out=True, err=True, in_=True):
@@ -1158,25 +1159,62 @@ class TestStdCaptureFDinvalidFD:
             def test_stdout():
                 os.close(1)
                 cap = StdCaptureFD(out=True, err=False, in_=False)
-                assert repr(cap.out) == "<FDCapture 1 oldfd=<UNSET> _state=None tmpfile=<UNSET>>"
+                assert fnmatch(repr(cap.out), "<FDCapture 1 oldfd=* _state=None tmpfile=*>")
+                cap.start_capturing()
+                os.write(1, b"stdout")
+                assert cap.readouterr() == ("stdout", "")
                 cap.stop_capturing()
 
             def test_stderr():
                 os.close(2)
                 cap = StdCaptureFD(out=False, err=True, in_=False)
-                assert repr(cap.err) == "<FDCapture 2 oldfd=<UNSET> _state=None tmpfile=<UNSET>>"
+                assert fnmatch(repr(cap.err), "<FDCapture 2 oldfd=* _state=None tmpfile=*>")
+                cap.start_capturing()
+                os.write(2, b"stderr")
+                assert cap.readouterr() == ("", "stderr")
                 cap.stop_capturing()
 
             def test_stdin():
                 os.close(0)
                 cap = StdCaptureFD(out=False, err=False, in_=True)
-                assert repr(cap.in_) == "<FDCapture 0 oldfd=<UNSET> _state=None tmpfile=<UNSET>>"
+                assert fnmatch(repr(cap.in_), "<FDCapture 0 oldfd=* _state=None tmpfile=*>")
                 cap.stop_capturing()
         """
         )
         result = testdir.runpytest_subprocess("--capture=fd")
         assert result.ret == 0
         assert result.parseoutcomes()["passed"] == 3
+
+    def test_fdcapture_invalid_fd_with_fd_reuse(self, testdir):
+        with saved_fd(1):
+            os.close(1)
+            cap = capture.FDCaptureBinary(1)
+            cap.start()
+            os.write(1, b"started")
+            cap.suspend()
+            os.write(1, b" suspended")
+            cap.resume()
+            os.write(1, b" resumed")
+            assert cap.snap() == b"started resumed"
+            cap.done()
+            with pytest.raises(OSError):
+                os.write(1, b"done")
+
+    def test_fdcapture_invalid_fd_without_fd_reuse(self, testdir):
+        with saved_fd(1), saved_fd(2):
+            os.close(1)
+            os.close(2)
+            cap = capture.FDCaptureBinary(2)
+            cap.start()
+            os.write(2, b"started")
+            cap.suspend()
+            os.write(2, b" suspended")
+            cap.resume()
+            os.write(2, b" resumed")
+            assert cap.snap() == b"started resumed"
+            cap.done()
+            with pytest.raises(OSError):
+                os.write(2, b"done")
 
 
 def test_capture_not_started_but_reset():

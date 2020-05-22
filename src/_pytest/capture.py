@@ -513,49 +513,57 @@ class FDCaptureBinary:
 
     def __init__(self, targetfd, tmpfile=None):
         self.targetfd = targetfd
+
         try:
-            self.targetfd_save = os.dup(self.targetfd)
+            os.fstat(targetfd)
         except OSError:
-            self.start = lambda: None
-            self.done = lambda: None
+            # FD capturing is conceptually simple -- create a temporary file,
+            # redirect the FD to it, redirect back when done. But when the
+            # target FD is invalid it throws a wrench into this loveley scheme.
+            #
+            # Tests themselves shouldn't care if the FD is valid, FD capturing
+            # should work regardless of external circumstances. So falling back
+            # to just sys capturing is not a good option.
+            #
+            # Further complications are the need to support suspend() and the
+            # possibility of FD reuse (e.g. the tmpfile getting the very same
+            # target FD). The following approach is robust, I believe.
+            self.targetfd_invalid = os.open(os.devnull, os.O_RDWR)
+            os.dup2(self.targetfd_invalid, targetfd)
         else:
-            self.start = self._start
-            self.done = self._done
-            if targetfd == 0:
-                assert not tmpfile, "cannot set tmpfile with stdin"
-                tmpfile = open(os.devnull)
-                self.syscapture = SysCapture(targetfd)
+            self.targetfd_invalid = None
+        self.targetfd_save = os.dup(targetfd)
+
+        if targetfd == 0:
+            assert not tmpfile, "cannot set tmpfile with stdin"
+            tmpfile = open(os.devnull)
+            self.syscapture = SysCapture(targetfd)
+        else:
+            if tmpfile is None:
+                tmpfile = EncodedFile(
+                    TemporaryFile(buffering=0),
+                    encoding="utf-8",
+                    errors="replace",
+                    write_through=True,
+                )
+            if targetfd in patchsysdict:
+                self.syscapture = SysCapture(targetfd, tmpfile)
             else:
-                if tmpfile is None:
-                    tmpfile = EncodedFile(
-                        TemporaryFile(buffering=0),
-                        encoding="utf-8",
-                        errors="replace",
-                        write_through=True,
-                    )
-                if targetfd in patchsysdict:
-                    self.syscapture = SysCapture(targetfd, tmpfile)
-                else:
-                    self.syscapture = NoCapture()
-            self.tmpfile = tmpfile
-            self.tmpfile_fd = tmpfile.fileno()
+                self.syscapture = NoCapture()
+        self.tmpfile = tmpfile
 
     def __repr__(self):
-        return "<{} {} oldfd={} _state={!r} tmpfile={}>".format(
+        return "<{} {} oldfd={} _state={!r} tmpfile={!r}>".format(
             self.__class__.__name__,
             self.targetfd,
-            getattr(self, "targetfd_save", "<UNSET>"),
+            self.targetfd_save,
             self._state,
-            hasattr(self, "tmpfile") and repr(self.tmpfile) or "<UNSET>",
+            self.tmpfile,
         )
 
-    def _start(self):
+    def start(self):
         """ Start capturing on targetfd using memorized tmpfile. """
-        try:
-            os.fstat(self.targetfd_save)
-        except (AttributeError, OSError):
-            raise ValueError("saved filedescriptor not valid anymore")
-        os.dup2(self.tmpfile_fd, self.targetfd)
+        os.dup2(self.tmpfile.fileno(), self.targetfd)
         self.syscapture.start()
         self._state = "started"
 
@@ -566,12 +574,15 @@ class FDCaptureBinary:
         self.tmpfile.truncate()
         return res
 
-    def _done(self):
+    def done(self):
         """ stop capturing, restore streams, return original capture file,
         seeked to position zero. """
-        targetfd_save = self.__dict__.pop("targetfd_save")
-        os.dup2(targetfd_save, self.targetfd)
-        os.close(targetfd_save)
+        os.dup2(self.targetfd_save, self.targetfd)
+        os.close(self.targetfd_save)
+        if self.targetfd_invalid is not None:
+            if self.targetfd_invalid != self.targetfd:
+                os.close(self.targetfd)
+            os.close(self.targetfd_invalid)
         self.syscapture.done()
         self.tmpfile.close()
         self._state = "done"
@@ -583,7 +594,7 @@ class FDCaptureBinary:
 
     def resume(self):
         self.syscapture.resume()
-        os.dup2(self.tmpfile_fd, self.targetfd)
+        os.dup2(self.tmpfile.fileno(), self.targetfd)
         self._state = "resumed"
 
     def writeorg(self, data):
@@ -609,8 +620,7 @@ class FDCapture(FDCaptureBinary):
 
     def writeorg(self, data):
         """ write to original file descriptor. """
-        data = data.encode("utf-8")  # XXX use encoding of original stream
-        os.write(self.targetfd_save, data)
+        super().writeorg(data.encode("utf-8"))  # XXX use encoding of original stream
 
 
 class SysCaptureBinary:
