@@ -17,7 +17,6 @@ from typing import Iterable
 from typing import List
 from typing import Optional
 from typing import Sequence
-from typing import Set
 from typing import Tuple
 from typing import Union
 from weakref import WeakKeyDictionary
@@ -575,7 +574,6 @@ class Testdir:
         self.chdir()
         self.request.addfinalizer(self.finalize)
         self._method = self.request.config.getoption("--runpytest")
-        self._created_files = set()  # type: Set[str]
 
         mp = self.monkeypatch = MonkeyPatch()
         mp.setenv("PYTEST_DEBUG_TEMPROOT", str(self.test_tmproot))
@@ -652,16 +650,7 @@ class Testdir:
             p.write(source.strip().encode(encoding), "wb")
             if ret is None:
                 ret = p
-                if ret.strpath not in self._created_files:
-                    self._created_files.add(ret.strpath)
         return ret
-
-    @property
-    def created_files(self) -> Set:
-        """
-        Return a set of created file paths which this instance of TestDir has created.
-        """
-        return self._created_files
 
     def makefile(self, ext, *args, **kwargs):
         r"""Create new file(s) in the testdir.
@@ -700,7 +689,6 @@ class Testdir:
     def makepyfile(self, *args, **kwargs):
         r"""Shortcut for .makefile() with a .py extension
         defaults to the test name .py e.g test_foobar.py
-        Calling without kwargs will result in overwriting the initial file contents
 
         Examples:
 
@@ -711,7 +699,7 @@ class Testdir:
                 testdir.makepyfile("foobar")
                 # to create multiple files, pass kwargs accordingly
                 testdir.makepyfile(custom="foobar")
-                # outcome is test_something.py & custom.py
+                # at this point, both 'test_something.py' & 'custom.py' exist in the test directory
 
         """
         return self._makefile(".py", args, kwargs)
@@ -719,7 +707,6 @@ class Testdir:
     def maketxtfile(self, *args, **kwargs):
         r"""Shortcut for .makefile() with a .txt extension
         defaults to the test name .txt e.g test_foobar.txt
-        Calling without kwargs will result in overwriting the initial file contents
 
         Examples:
 
@@ -730,7 +717,7 @@ class Testdir:
                 testdir.maketxtfile("foobar")
                 # to create multiple files, pass kwargs accordingly
                 testdir.maketxtfile(custom="foobar")
-                # outcome is test_something.txt & custom.txt
+                # at this point, both 'test_something.txt' & 'custom.txt' exist in the test directory
 
         """
         return self._makefile(".txt", args, kwargs)
