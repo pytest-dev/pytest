@@ -77,7 +77,6 @@ def pytest_addoption(parser):
         "-m",
         action="append",
         dest="markexpr",
-        nargs="+",
         metavar="MARKEXPR",
         help="only run tests matching given mark expression.\n"
         "For example: -m 'mark1 and not mark2'.\n"
@@ -225,7 +224,8 @@ def deselect_by_mark(items, config):
         return
 
     try:
-        matchexpr = " and ".join(expr[0] for expr in matchexpr)
+        # Not sure if a set() is completely suitable for the use case here, insertion order is necessary?
+        matchexpr = " and ".join(matchexpr)
         expression = Expression.compile(matchexpr)
     except ParseError as e:
         raise UsageError(
