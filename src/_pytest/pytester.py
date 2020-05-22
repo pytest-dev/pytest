@@ -711,7 +711,7 @@ class Testdir:
                 testdir.makepyfile("foobar")
                 # to create multiple files, pass kwargs accordingly
                 testdir.makepyfile(custom="foobar")
-                # outcome is test_something.py & foobar.py
+                # outcome is test_something.py & custom.py
 
         """
         return self._makefile(".py", args, kwargs)
@@ -730,7 +730,7 @@ class Testdir:
                 testdir.maketxtfile("foobar")
                 # to create multiple files, pass kwargs accordingly
                 testdir.maketxtfile(custom="foobar")
-                # outcome is test_something.txt & foobar.txt
+                # outcome is test_something.txt & custom.txt
 
         """
         return self._makefile(".txt", args, kwargs)

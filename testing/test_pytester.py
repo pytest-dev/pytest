@@ -784,14 +784,14 @@ def test_testdir_created_files_none(testdir):
 
 def test_testdir_duplicate_paths(testdir):
     testdir.makepyfile("foo")
-    two = testdir.makepyfile("bar")
-    assert {two} == testdir.created_files
+    testdir.makepyfile("bar")
+    assert len(testdir.created_files) == 1
 
 
 def test_files_by_name_are_correct(testdir):
-    one = testdir.maketxtfile("foo")
-    two = testdir.maketxtfile("custom=bar")
-    assert {one, two} == testdir.created_files
+    testdir.maketxtfile("foo")
+    testdir.maketxtfile(custom="foobar")
+    assert len(testdir.created_files) == 2
 
 
 def test_testdir_create_file_of_type(testdir):
