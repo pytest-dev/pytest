@@ -1,0 +1,7 @@
+``-k`` and ``-m`` now append duplicate cli options using an 'and' approach.
+
+for example:
+
+``pytest -m 'marker_a' -m 'marker_b'`` will result in a marker expression of `marker_a and marker_b`
+
+``pytest -k 'myclass' -k 'mytest'`` will result in a keyword expression of `myclass and mytest`
