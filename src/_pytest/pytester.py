@@ -575,7 +575,7 @@ class Testdir:
         self.chdir()
         self.request.addfinalizer(self.finalize)
         self._method = self.request.config.getoption("--runpytest")
-        self._created_files: Set[str] = set()
+        self._created_files = set()  # type: Set[str]
 
         mp = self.monkeypatch = MonkeyPatch()
         mp.setenv("PYTEST_DEBUG_TEMPROOT", str(self.test_tmproot))
