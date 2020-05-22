@@ -60,7 +60,7 @@ def test_help_keywordexpr(testdir):
                                 and functions containing extra names in their
                                 'extra_keyword_matches' set, as well as functions which
                                 have names assigned directly to them. The matching is
-                                case-insensitive.Multiple -k cli options are appended
+                                case-insensitive. Multiple -k cli options are appended
                                 with 'and'.
         *
         """

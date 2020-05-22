@@ -69,7 +69,7 @@ def pytest_addoption(parser):
         "Additionally keywords are matched to classes and functions "
         "containing extra names in their 'extra_keyword_matches' set, "
         "as well as functions which have names assigned directly to them. "
-        "The matching is case-insensitive."
+        "The matching is case-insensitive. "
         "Multiple -k cli options are appended with 'and'.",
     )
 
@@ -80,7 +80,7 @@ def pytest_addoption(parser):
         metavar="MARKEXPR",
         help="only run tests matching given mark expression.\n"
         "For example: -m 'mark1 and not mark2'.\n"
-        "Multiple -m cli options are appended with 'and'.\n",
+        "Multiple -m cli options are appended with 'and'.",
     )
 
     group.addoption(
