@@ -1073,7 +1073,7 @@ def test_marker_expr_eval_failure_handling(testdir, expr):
     assert result.ret == ExitCode.USAGE_ERROR
 
 
-def test_mark_multiple(testdir):
+def test_markexpr_multiple(testdir):
     testdir.makepyfile(
         """
         import pytest
@@ -1087,7 +1087,30 @@ def test_mark_multiple(testdir):
         @pytest.mark.b
         def test_b():
             pass
+
+        @pytest.mark.d
+        def test_d():
+            pass
         """
     )
-    result = testdir.runpytest("-m", "a or b", "-m", "c")
+    result = testdir.runpytest("-m", "  a or b", "-m", "c")
     result.assert_outcomes(passed=2)
+    result.stdout.fnmatch_lines("collected 3 items / 1 deselected / 2 selected")
+
+
+def test_keywordexpr_multiple(testdir):
+    testdir.makepyfile(
+        """
+        import pytest
+
+        def test_this_thing():
+            pass
+        def test_another_thing():
+            pass
+        def test_with_this_thing():
+            pass
+        """
+    )
+    result = testdir.runpytest("-k", "  test_", "-k", " not another")
+    result.assert_outcomes(passed=2)
+    result.stdout.fnmatch_lines("collected 3 items / 1 deselected / 2 selected")

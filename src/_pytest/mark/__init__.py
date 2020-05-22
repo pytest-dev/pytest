@@ -55,9 +55,8 @@ def pytest_addoption(parser):
     group = parser.getgroup("general")
     group._addoption(
         "-k",
-        action="store",
+        action="append",
         dest="keyword",
-        default="",
         metavar="EXPRESSION",
         help="only run tests which match the given substring expression. "
         "An expression is a python evaluatable expression "
@@ -70,7 +69,8 @@ def pytest_addoption(parser):
         "Additionally keywords are matched to classes and functions "
         "containing extra names in their 'extra_keyword_matches' set, "
         "as well as functions which have names assigned directly to them. "
-        "The matching is case-insensitive.",
+        "The matching is case-insensitive."
+        "Multiple -k cli options are appended with 'and'.",
     )
 
     group._addoption(
@@ -80,7 +80,7 @@ def pytest_addoption(parser):
         metavar="MARKEXPR",
         help="only run tests matching given mark expression.\n"
         "For example: -m 'mark1 and not mark2'.\n"
-        "Multiple -m CLI options are appended with 'and'.\n",
+        "Multiple -m cli options are appended with 'and'.\n",
     )
 
     group.addoption(
@@ -163,10 +163,11 @@ class KeywordMatcher:
 
 
 def deselect_by_keyword(items, config):
-    keywordexpr = config.option.keyword.lstrip()
+    keywordexpr = config.option.keyword
     if not keywordexpr:
         return
 
+    keywordexpr = " and ".join(expr.lstrip() for expr in keywordexpr)
     if keywordexpr.startswith("-"):
         # To be removed in pytest 7.0.0.
         warnings.warn(MINUS_K_DASH, stacklevel=2)
@@ -224,8 +225,7 @@ def deselect_by_mark(items, config):
         return
 
     try:
-        # Not sure if a set() is completely suitable for the use case here, insertion order is necessary?
-        matchexpr = " and ".join(matchexpr)
+        matchexpr = " and ".join(expr.lstrip() for expr in matchexpr)
         expression = Expression.compile(matchexpr)
     except ParseError as e:
         raise UsageError(
