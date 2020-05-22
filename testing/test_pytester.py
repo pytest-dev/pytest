@@ -776,3 +776,28 @@ def test_makefile_joins_absolute_path(testdir: Testdir) -> None:
     else:
         p1 = testdir.makepyfile(**{str(absfile): ""})
         assert str(p1) == (testdir.tmpdir / absfile) + ".py"
+
+
+def test_testdir_created_files_none(testdir):
+    assert set() == testdir.created_files
+
+
+def test_testdir_duplicate_paths(testdir):
+    testdir.makepyfile("foo")
+    two = testdir.makepyfile("bar")
+    assert {two} == testdir.created_files
+
+
+def test_files_by_name_are_correct(testdir):
+    one = testdir.maketxtfile("foo")
+    two = testdir.maketxtfile("custom=bar")
+    assert {one, two} == testdir.created_files
+
+
+def test_testdir_create_file_of_type(testdir):
+    data = "hello world"
+    one = testdir.makepyfile(data)
+    two = testdir.maketxtfile(data)
+    three = testdir.makeconftest(data)
+    four = testdir.makeini(data)
+    assert {one, two, three, four} == testdir.created_files
