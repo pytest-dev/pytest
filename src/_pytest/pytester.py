@@ -7,7 +7,6 @@ import platform
 import re
 import subprocess
 import sys
-import time
 import traceback
 from fnmatch import fnmatch
 from io import StringIO
@@ -24,6 +23,7 @@ from weakref import WeakKeyDictionary
 import py
 
 import pytest
+from _pytest import timing
 from _pytest._code import Source
 from _pytest.capture import MultiCapture
 from _pytest.capture import SysCapture
@@ -941,7 +941,7 @@ class Testdir:
 
         if syspathinsert:
             self.syspathinsert()
-        now = time.time()
+        now = timing.time()
         capture = MultiCapture(Capture=SysCapture)
         capture.start_capturing()
         try:
@@ -970,7 +970,7 @@ class Testdir:
             sys.stderr.write(err)
 
         res = RunResult(
-            reprec.ret, out.splitlines(), err.splitlines(), time.time() - now
+            reprec.ret, out.splitlines(), err.splitlines(), timing.time() - now
         )
         res.reprec = reprec  # type: ignore
         return res
@@ -1171,7 +1171,7 @@ class Testdir:
         f1 = open(str(p1), "w", encoding="utf8")
         f2 = open(str(p2), "w", encoding="utf8")
         try:
-            now = time.time()
+            now = timing.time()
             popen = self.popen(
                 cmdargs,
                 stdin=stdin,
@@ -1218,7 +1218,7 @@ class Testdir:
             ret = ExitCode(ret)
         except ValueError:
             pass
-        return RunResult(ret, out, err, time.time() - now)
+        return RunResult(ret, out, err, timing.time() - now)
 
     def _dump_lines(self, lines, fp):
         try:

@@ -2,8 +2,6 @@
 import bdb
 import os
 import sys
-from time import perf_counter  # Intentionally not `import time` to avoid being
-from time import time  # affected by tests which monkeypatch `time` (issue #185).
 from typing import Callable
 from typing import Dict
 from typing import List
@@ -15,6 +13,7 @@ import attr
 from .reports import CollectErrorRepr
 from .reports import CollectReport
 from .reports import TestReport
+from _pytest import timing
 from _pytest._code.code import ExceptionChainRepr
 from _pytest._code.code import ExceptionInfo
 from _pytest.compat import TYPE_CHECKING
@@ -254,8 +253,8 @@ class CallInfo:
         #: context of invocation: one of "setup", "call",
         #: "teardown", "memocollect"
         excinfo = None
-        start = time()
-        precise_start = perf_counter()
+        start = timing.time()
+        precise_start = timing.perf_counter()
         try:
             result = func()
         except BaseException:
@@ -264,9 +263,9 @@ class CallInfo:
                 raise
             result = None
         # use the perf counter
-        precise_stop = perf_counter()
+        precise_stop = timing.perf_counter()
         duration = precise_stop - precise_start
-        stop = time()
+        stop = timing.time()
         return cls(
             start=start,
             stop=stop,
