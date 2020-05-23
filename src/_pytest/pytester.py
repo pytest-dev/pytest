@@ -687,11 +687,41 @@ class Testdir:
         return py.iniconfig.IniConfig(p)["pytest"]
 
     def makepyfile(self, *args, **kwargs):
-        """Shortcut for .makefile() with a .py extension."""
+        r"""Shortcut for .makefile() with a .py extension.
+        Defaults to the test name with a '.py' extension, e.g test_foobar.py, overwriting
+        existing files.
+
+        Examples:
+
+        .. code-block:: python
+
+            def test_something(testdir):
+                # initial file is created test_something.py
+                testdir.makepyfile("foobar")
+                # to create multiple files, pass kwargs accordingly
+                testdir.makepyfile(custom="foobar")
+                # at this point, both 'test_something.py' & 'custom.py' exist in the test directory
+
+        """
         return self._makefile(".py", args, kwargs)
 
     def maketxtfile(self, *args, **kwargs):
-        """Shortcut for .makefile() with a .txt extension."""
+        r"""Shortcut for .makefile() with a .txt extension.
+        Defaults to the test name with a '.txt' extension, e.g test_foobar.txt, overwriting
+        existing files.
+
+        Examples:
+
+        .. code-block:: python
+
+            def test_something(testdir):
+                # initial file is created test_something.txt
+                testdir.maketxtfile("foobar")
+                # to create multiple files, pass kwargs accordingly
+                testdir.maketxtfile(custom="foobar")
+                # at this point, both 'test_something.txt' & 'custom.txt' exist in the test directory
+
+        """
         return self._makefile(".txt", args, kwargs)
 
     def syspathinsert(self, path=None):
