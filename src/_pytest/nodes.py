@@ -456,10 +456,7 @@ def _check_initialpaths_for_relpath(session, fspath):
 
 
 class FSHookProxy:
-    def __init__(
-        self, fspath: py.path.local, pm: PytestPluginManager, remove_mods
-    ) -> None:
-        self.fspath = fspath
+    def __init__(self, pm: PytestPluginManager, remove_mods) -> None:
         self.pm = pm
         self.remove_mods = remove_mods
 
@@ -510,7 +507,7 @@ class FSCollector(Collector):
         remove_mods = pm._conftest_plugins.difference(my_conftestmodules)
         if remove_mods:
             # one or more conftests are not in use at this fspath
-            proxy = FSHookProxy(fspath, pm, remove_mods)
+            proxy = FSHookProxy(pm, remove_mods)
         else:
             # all plugins are active for this fspath
             proxy = self.config.hook
