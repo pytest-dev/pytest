@@ -547,7 +547,9 @@ class FSCollector(Collector):
         # check if we have the common case of running
         # hooks with all conftest.py files
         pm = self.config.pluginmanager
-        my_conftestmodules = pm._getconftestmodules(fspath)
+        my_conftestmodules = pm._getconftestmodules(
+            fspath, self.config.getoption("importmode")
+        )
         remove_mods = pm._conftest_plugins.difference(my_conftestmodules)
         if remove_mods:
             # one or more conftests are not in use at this fspath

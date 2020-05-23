@@ -1342,3 +1342,41 @@ def test_fscollector_from_parent(tmpdir, request):
         parent=request.session, fspath=tmpdir / "foo", x=10
     )
     assert collector.x == 10
+
+
+class TestImportModeImportlib:
+    def test_collect_duplicate_names(self, testdir):
+        """--import-mode=importlib can import modules with same names that are not in packages."""
+        testdir.makepyfile(
+            **{
+                "tests_a/test_foo.py": "def test_foo1(): pass",
+                "tests_b/test_foo.py": "def test_foo2(): pass",
+            }
+        )
+        result = testdir.runpytest("-v", "--import-mode=importlib")
+        result.stdout.fnmatch_lines(
+            [
+                "tests_a/test_foo.py::test_foo1 *",
+                "tests_b/test_foo.py::test_foo2 *",
+                "* 2 passed in *",
+            ]
+        )
+
+    def test_conftest(self, testdir):
+        """Directory containing conftest modules are not put in sys.path as a side-effect of
+        importing them."""
+        tests_dir = testdir.tmpdir.join("tests")
+        testdir.makepyfile(
+            **{
+                "tests/conftest.py": "",
+                "tests/test_foo.py": """
+                import sys
+                def test_check():
+                    assert r"{tests_dir}" not in sys.path
+                """.format(
+                    tests_dir=tests_dir
+                ),
+            }
+        )
+        result = testdir.runpytest("-v", "--import-mode=importlib")
+        result.stdout.fnmatch_lines(["* 1 passed in *"])

@@ -450,21 +450,21 @@ class PytestPluginManager(PluginManager):
                 path = path[:i]
             anchor = current.join(path, abs=1)
             if anchor.exists():  # we found some file object
-                self._try_load_conftest(anchor)
+                self._try_load_conftest(anchor, namespace.importmode)
                 foundanchor = True
         if not foundanchor:
-            self._try_load_conftest(current)
+            self._try_load_conftest(current, namespace.importmode)
 
-    def _try_load_conftest(self, anchor):
-        self._getconftestmodules(anchor)
+    def _try_load_conftest(self, anchor, importmode):
+        self._getconftestmodules(anchor, importmode)
         # let's also consider test* subdirs
         if anchor.check(dir=1):
             for x in anchor.listdir("test*"):
                 if x.check(dir=1):
-                    self._getconftestmodules(x)
+                    self._getconftestmodules(x, importmode)
 
     @lru_cache(maxsize=128)
-    def _getconftestmodules(self, path):
+    def _getconftestmodules(self, path, importmode):
         if self._noconftest:
             return []
 
@@ -482,13 +482,13 @@ class PytestPluginManager(PluginManager):
                 continue
             conftestpath = parent.join("conftest.py")
             if conftestpath.isfile():
-                mod = self._importconftest(conftestpath)
+                mod = self._importconftest(conftestpath, importmode)
                 clist.append(mod)
         self._dirpath2confmods[directory] = clist
         return clist
 
-    def _rget_with_confmod(self, name, path):
-        modules = self._getconftestmodules(path)
+    def _rget_with_confmod(self, name, path, importmode):
+        modules = self._getconftestmodules(path, importmode)
         for mod in reversed(modules):
             try:
                 return mod, getattr(mod, name)
@@ -496,7 +496,7 @@ class PytestPluginManager(PluginManager):
                 continue
         raise KeyError(name)
 
-    def _importconftest(self, conftestpath):
+    def _importconftest(self, conftestpath, importmode):
         # Use a resolved Path object as key to avoid loading the same conftest twice
         # with build systems that create build directories containing
         # symlinks to actual files.
@@ -512,7 +512,7 @@ class PytestPluginManager(PluginManager):
             _ensure_removed_sysmodule(conftestpath.purebasename)
 
         try:
-            mod = conftestpath.pyimport()
+            mod = conftestpath.pyimport(ensuresyspath=importmode)
         except Exception as e:
             raise ConftestImportFailure(conftestpath, sys.exc_info()) from e
 
@@ -1213,7 +1213,9 @@ class Config:
 
     def _getconftest_pathlist(self, name, path):
         try:
-            mod, relroots = self.pluginmanager._rget_with_confmod(name, path)
+            mod, relroots = self.pluginmanager._rget_with_confmod(
+                name, path, self.getoption("importmode")
+            )
         except KeyError:
             return None
         modpath = py.path.local(mod.__file__).dirpath()

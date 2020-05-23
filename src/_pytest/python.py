@@ -118,7 +118,7 @@ def pytest_addoption(parser: Parser) -> None:
     group.addoption(
         "--import-mode",
         default="prepend",
-        choices=["prepend", "append"],
+        choices=["prepend", "append", "importlib"],
         dest="importmode",
         help="prepend/append to sys.path when importing test modules, "
         "default is to prepend.",

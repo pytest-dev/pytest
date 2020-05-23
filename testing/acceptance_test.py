@@ -147,7 +147,8 @@ class TestGeneralUsage:
         else:
             assert loaded == ["myplugin1", "myplugin2", "mycov"]
 
-    def test_assertion_magic(self, testdir):
+    @pytest.mark.parametrize("import_mode", ["prepend", "append", "importlib"])
+    def test_assertion_rewrite(self, testdir, import_mode):
         p = testdir.makepyfile(
             """
             def test_this():
@@ -155,7 +156,7 @@ class TestGeneralUsage:
                 assert x
         """
         )
-        result = testdir.runpytest(p)
+        result = testdir.runpytest(p, "--import-mode={}".format(import_mode))
         result.stdout.fnmatch_lines([">       assert x", "E       assert 0"])
         assert result.ret == 1
 
