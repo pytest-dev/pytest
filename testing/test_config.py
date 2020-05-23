@@ -82,12 +82,14 @@ class TestParseIni:
             ".ini",
             tox="""
             [pytest]
-            minversion=9.0
+            minversion=999.0
         """,
         )
         result = testdir.runpytest()
         assert result.ret != 0
-        result.stderr.fnmatch_lines(["*tox.ini:2*requires*9.0*actual*"])
+        result.stderr.fnmatch_lines(
+            ["*tox.ini: 'minversion' requires pytest-999.0, actual pytest-*"]
+        )
 
     @pytest.mark.parametrize(
         "section, name",

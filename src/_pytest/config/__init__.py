@@ -1064,13 +1064,8 @@ class Config:
 
             if Version(minver) > Version(pytest.__version__):
                 raise pytest.UsageError(
-                    "%s:%d: requires pytest-%s, actual pytest-%s'"
-                    % (
-                        self.inicfg.config.path,
-                        self.inicfg.lineof("minversion"),
-                        minver,
-                        pytest.__version__,
-                    )
+                    "%s: 'minversion' requires pytest-%s, actual pytest-%s'"
+                    % (self.inifile, minver, pytest.__version__,)
                 )
 
     def _validatekeys(self):
@@ -1144,7 +1139,7 @@ class Config:
                     return ""
                 return []
         if type == "pathlist":
-            dp = py.path.local(self.inicfg.config.path).dirpath()
+            dp = py.path.local(self.inifile).dirpath()
             values = []
             for relpath in shlex.split(value):
                 values.append(dp.join(relpath, abs=True))
