@@ -342,6 +342,15 @@ class TestPDB:
         child.sendeof()
         self.flush(child)
 
+    def test_pdb_prevent_ConftestImportFailure_hiding_exception(self, testdir):
+        testdir.makepyfile("def test_func(): pass")
+        sub_dir = testdir.tmpdir.join("ns").ensure_dir()
+        sub_dir.join("conftest").new(ext=".py").write("import unknown")
+        sub_dir.join("test_file").new(ext=".py").write("def test_func(): pass")
+
+        result = testdir.runpytest_subprocess("--pdb", ".")
+        result.stdout.fnmatch_lines(["-> import unknown"])
+
     def test_pdb_interaction_capturing_simple(self, testdir):
         p1 = testdir.makepyfile(
             """
