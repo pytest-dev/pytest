@@ -109,6 +109,16 @@ class TestParseIni:
         config = testdir.parseconfig()
         assert config.getini("minversion") == "1.0"
 
+    def test_pyproject_toml(self, testdir):
+        testdir.makepyprojecttoml(
+            """
+            [tool.pytest.ini]
+            minversion = "1.0"
+        """
+        )
+        config = testdir.parseconfig()
+        assert config.getini("minversion") == "1.0"
+
     def test_toxini_before_lower_pytestini(self, testdir):
         sub = testdir.tmpdir.mkdir("sub")
         sub.join("tox.ini").write(
@@ -349,7 +359,7 @@ class TestConfigAPI:
         assert val == "hello"
         pytest.raises(ValueError, config.getini, "other")
 
-    def test_addini_pathlist(self, testdir):
+    def make_conftest_for_pathlist(self, testdir):
         testdir.makeconftest(
             """
             def pytest_addoption(parser):
@@ -357,20 +367,36 @@ class TestConfigAPI:
                 parser.addini("abc", "abc value")
         """
         )
+
+    def test_addini_pathlist_ini_files(self, testdir):
+        self.make_conftest_for_pathlist(testdir)
         p = testdir.makeini(
             """
             [pytest]
             paths=hello world/sub.py
         """
         )
+        self.check_config_pathlist(testdir, p)
+
+    def test_addini_pathlist_pyproject_toml(self, testdir):
+        self.make_conftest_for_pathlist(testdir)
+        p = testdir.makepyprojecttoml(
+            """
+            [tool.pytest.ini]
+            paths=["hello", "world/sub.py"]
+        """
+        )
+        self.check_config_pathlist(testdir, p)
+
+    def check_config_pathlist(self, testdir, config_path):
         config = testdir.parseconfig()
         values = config.getini("paths")
         assert len(values) == 2
-        assert values[0] == p.dirpath("hello")
-        assert values[1] == p.dirpath("world/sub.py")
+        assert values[0] == config_path.dirpath("hello")
+        assert values[1] == config_path.dirpath("world/sub.py")
         pytest.raises(ValueError, config.getini, "other")
 
-    def test_addini_args(self, testdir):
+    def make_conftest_for_args(self, testdir):
         testdir.makeconftest(
             """
             def pytest_addoption(parser):
@@ -378,20 +404,35 @@ class TestConfigAPI:
                 parser.addini("a2", "", "args", default="1 2 3".split())
         """
         )
+
+    def test_addini_args_ini_files(self, testdir):
+        self.make_conftest_for_args(testdir)
         testdir.makeini(
             """
             [pytest]
             args=123 "123 hello" "this"
-        """
+            """
         )
+        self.check_config_args(testdir)
+
+    def test_addini_args_pyproject_toml(self, testdir):
+        self.make_conftest_for_args(testdir)
+        testdir.makepyprojecttoml(
+            """
+            [tool.pytest.ini]
+            args = ["123", "123 hello", "this"]
+            """
+        )
+        self.check_config_args(testdir)
+
+    def check_config_args(self, testdir):
         config = testdir.parseconfig()
         values = config.getini("args")
-        assert len(values) == 3
         assert values == ["123", "123 hello", "this"]
         values = config.getini("a2")
         assert values == list("123")
 
-    def test_addini_linelist(self, testdir):
+    def make_conftest_for_linelist(self, testdir):
         testdir.makeconftest(
             """
             def pytest_addoption(parser):
@@ -399,6 +440,9 @@ class TestConfigAPI:
                 parser.addini("a2", "", "linelist")
         """
         )
+
+    def test_addini_linelist_ini_files(self, testdir):
+        self.make_conftest_for_linelist(testdir)
         testdir.makeini(
             """
             [pytest]
@@ -406,6 +450,19 @@ class TestConfigAPI:
                 second line
         """
         )
+        self.check_config_linelist(testdir)
+
+    def test_addini_linelist_pprojecttoml(self, testdir):
+        self.make_conftest_for_linelist(testdir)
+        testdir.makepyprojecttoml(
+            """
+            [tool.pytest.ini]
+            xy = ["123 345", "second line"]
+        """
+        )
+        self.check_config_linelist(testdir)
+
+    def check_config_linelist(self, testdir):
         config = testdir.parseconfig()
         values = config.getini("xy")
         assert len(values) == 2

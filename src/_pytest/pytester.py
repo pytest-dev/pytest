@@ -686,6 +686,13 @@ class Testdir:
         p = self.makeini(source)
         return IniConfig(p)["pytest"]
 
+    def makepyprojecttoml(self, source):
+        """Write a pyproject.toml file with 'source' as contents.
+
+        .. versionadded:: 6.0
+        """
+        return self.makefile(".toml", pyproject=source)
+
     def makepyfile(self, *args, **kwargs):
         r"""Shortcut for .makefile() with a .py extension.
         Defaults to the test name with a '.py' extension, e.g test_foobar.py, overwriting

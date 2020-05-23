@@ -1138,16 +1138,22 @@ class Config:
                 if type is None:
                     return ""
                 return []
+        # coerce the values based on types
+        # note: some coercions are only required if we are reading from .ini files, because
+        # the file format doesn't contain type information; toml files however support
+        # data types and complex types such as lists directly, so many conversions are not
+        # necessary
         if type == "pathlist":
             dp = py.path.local(self.inifile).dirpath()
-            values = []
-            for relpath in shlex.split(value):
-                values.append(dp.join(relpath, abs=True))
-            return values
+            input_values = shlex.split(value) if isinstance(value, str) else value
+            return [dp.join(x, abs=True) for x in input_values]
         elif type == "args":
-            return shlex.split(value)
+            return shlex.split(value) if isinstance(value, str) else value
         elif type == "linelist":
-            return [t for t in map(lambda x: x.strip(), value.split("\n")) if t]
+            if isinstance(value, str):
+                return [t for t in map(lambda x: x.strip(), value.split("\n")) if t]
+            else:
+                return value
         elif type == "bool":
             return bool(_strtobool(value.strip()))
         else:
