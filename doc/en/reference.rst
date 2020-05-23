@@ -1447,6 +1447,11 @@ passed multiple times. The expected format is ``name=value``. For example::
             slow
             serial
 
+    .. note::
+        The use of ``--strict-markers`` is highly preferred. ``--strict`` was kept for
+        backward compatibility only and may be confusing for others as it only applies to
+        markers and not to other options.
+
 .. confval:: minversion
 
    Specifies a minimal pytest version required for running tests.
