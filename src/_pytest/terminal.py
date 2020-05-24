@@ -227,7 +227,7 @@ def pytest_report_teststatus(report: TestReport) -> Tuple[str, str, str]:
 @attr.s
 class WarningReport:
     """
-    Simple structure to hold warnings information captured by ``pytest_warning_captured``.
+    Simple structure to hold warnings information captured by ``pytest_warning_record``.
 
     :ivar str message: user friendly message about the warning
     :ivar str|None nodeid: node id that generated the warning (see ``get_location``).
@@ -412,13 +412,14 @@ class TerminalReporter:
         return 1
 
     def pytest_warning_captured(self, warning_message, item):
-        # from _pytest.nodes import get_fslocation_from_item
+        pass
+
+    def pytest_warning_record(self, warning_message, nodeid):
         from _pytest.warnings import warning_record_to_str
 
         fslocation = warning_message.filename, warning_message.lineno
         message = warning_record_to_str(warning_message)
 
-        nodeid = item.nodeid if item is not None else ""
         warning_report = WarningReport(
             fslocation=fslocation, message=message, nodeid=nodeid
         )

@@ -268,9 +268,8 @@ def test_warning_captured_hook(testdir):
     collected = []
 
     class WarningCollector:
-        def pytest_warning_captured(self, warning_message, when, item):
-            imge_name = item.name if item is not None else ""
-            collected.append((str(warning_message.message), when, imge_name))
+        def pytest_warning_record(self, warning_message, when, nodeid):
+            collected.append((str(warning_message.message), when, nodeid))
 
     result = testdir.runpytest(plugins=[WarningCollector()])
     result.stdout.fnmatch_lines(["*1 passed*"])
@@ -278,11 +277,11 @@ def test_warning_captured_hook(testdir):
     expected = [
         ("config warning", "config", ""),
         ("collect warning", "collect", ""),
-        ("setup warning", "runtest", "test_func"),
-        ("call warning", "runtest", "test_func"),
-        ("teardown warning", "runtest", "test_func"),
+        ("setup warning", "runtest", "test_warning_captured_hook.py::test_func"),
+        ("call warning", "runtest", "test_warning_captured_hook.py::test_func"),
+        ("teardown warning", "runtest", "test_warning_captured_hook.py::test_func"),
     ]
-    assert collected == expected
+    assert collected == expected, str(collected)
 
 
 @pytest.mark.filterwarnings("always")
@@ -649,7 +648,7 @@ class TestStackLevel:
             captured = []
 
             @classmethod
-            def pytest_warning_captured(cls, warning_message, when, item, location):
+            def pytest_warning_record(cls, warning_message, when, nodeid, location):
                 cls.captured.append((warning_message, location))
 
         testdir.plugins = [CapturedWarnings()]

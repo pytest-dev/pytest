@@ -81,7 +81,7 @@ def catch_warnings_for_item(config, ihook, when, item):
 
     ``item`` can be None if we are not in the context of an item execution.
 
-    Each warning captured triggers the ``pytest_warning_captured`` hook.
+    Each warning captured triggers the ``pytest_warning_record`` hook.
     """
     cmdline_filters = config.getoption("pythonwarnings") or []
     inifilters = config.getini("filterwarnings")
@@ -102,6 +102,7 @@ def catch_warnings_for_item(config, ihook, when, item):
         for arg in cmdline_filters:
             warnings.filterwarnings(*_parse_filter(arg, escape=True))
 
+        nodeid = "" if item is None else item.nodeid
         if item is not None:
             for mark in item.iter_markers(name="filterwarnings"):
                 for arg in mark.args:
@@ -110,8 +111,9 @@ def catch_warnings_for_item(config, ihook, when, item):
         yield
 
         for warning_message in log:
-            ihook.pytest_warning_captured.call_historic(
-                kwargs=dict(warning_message=warning_message, when=when, item=item)
+            # raise ValueError(ihook.pytest_warning_record)
+            ihook.pytest_warning_record.call_historic(
+                kwargs=dict(warning_message=warning_message, nodeid=nodeid, when=when)
             )
 
 
@@ -166,8 +168,9 @@ def pytest_sessionfinish(session):
 def _issue_warning_captured(warning, hook, stacklevel):
     """
     This function should be used instead of calling ``warnings.warn`` directly when we are in the "configure" stage:
-    at this point the actual options might not have been set, so we manually trigger the pytest_warning_captured
-    hook so we can display these warnings in the terminal. This is a hack until we can sort out #2891.
+    at this point the actual options might not have been set, so we manually trigger the pytest_warning_record hooks
+    so we can display these warnings in the terminal.
+    This is a hack until we can sort out #2891.
 
     :param warning: the warning instance.
     :param hook: the hook caller
@@ -180,8 +183,8 @@ def _issue_warning_captured(warning, hook, stacklevel):
     assert records is not None
     frame = sys._getframe(stacklevel - 1)
     location = frame.f_code.co_filename, frame.f_lineno, frame.f_code.co_name
-    hook.pytest_warning_captured.call_historic(
+    hook.pytest_warning_record.call_historic(
         kwargs=dict(
-            warning_message=records[0], when="config", item=None, location=location
+            warning_message=records[0], when="config", nodeid="", location=location
         )
     )

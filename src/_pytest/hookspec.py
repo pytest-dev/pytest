@@ -622,6 +622,33 @@ def pytest_terminal_summary(terminalreporter, exitstatus, config):
 
 @hookspec(historic=True)
 def pytest_warning_captured(warning_message, when, item, location):
+    """(**Deprecated**) Process a warning captured by the internal pytest warnings plugin.
+
+    This hook is considered deprecated and will be removed in a future pytest version.
+    Use :func:`pytest_warning_record` instead.
+
+    :param warnings.WarningMessage warning_message:
+        The captured warning. This is the same object produced by :py:func:`warnings.catch_warnings`, and contains
+        the same attributes as the parameters of :py:func:`warnings.showwarning`.
+
+    :param str when:
+        Indicates when the warning was captured. Possible values:
+
+        * ``"config"``: during pytest configuration/initialization stage.
+        * ``"collect"``: during test collection.
+        * ``"runtest"``: during test execution.
+
+    :param pytest.Item|None item:
+        The item being executed if ``when`` is ``"runtest"``, otherwise ``None``.
+
+    :param tuple location:
+        Holds information about the execution context of the captured warning (filename, linenumber, function).
+        ``function`` evaluates to <module> when the execution context is at the module level.
+    """
+
+
+@hookspec(historic=True)
+def pytest_warning_record(warning_message, when, nodeid, location):
     """
     Process a warning captured by the internal pytest warnings plugin.
 
@@ -636,11 +663,7 @@ def pytest_warning_captured(warning_message, when, item, location):
         * ``"collect"``: during test collection.
         * ``"runtest"``: during test execution.
 
-    :param pytest.Item|None item:
-        **DEPRECATED**: This parameter is incompatible with ``pytest-xdist``, and will always receive ``None``
-        in a future release.
-
-        The item being executed if ``when`` is ``"runtest"``, otherwise ``None``.
+    :param str nodeid: full id of the item
 
     :param tuple location:
         Holds information about the execution context of the captured warning (filename, linenumber, function).
