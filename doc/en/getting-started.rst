@@ -159,7 +159,7 @@ Grouping tests in classes can be beneficial for the following reasons:
  * Sharing fixtures for tests only in that particular class
  * Applying marks at the class level and having them implicitly apply to all tests
 
-Something to be aware of when grouping tests inside classes is that each has a unique instance of the class.
+Something to be aware of when grouping tests inside classes is that each test has a unique instance of the class.
 Having each test share the same class instance would be very detrimental to test isolation and would promote poor test practices.
 This is outlined below:
 
