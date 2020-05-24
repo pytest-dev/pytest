@@ -6,6 +6,7 @@ import itertools
 import os
 import sys
 import typing
+import uuid
 import warnings
 from collections import Counter
 from collections import defaultdict
@@ -1230,8 +1231,15 @@ def idmaker(
         _idvalset(valindex, parameterset, argnames, idfn, ids, config=config, item=item)
         for valindex, parameterset in enumerate(parametersets)
     ]
+    # rewrite parametrized ids greater than the overridable limit on windows
+    if os.name == "nt":
+        limit = 100
+        rewrite_template = "auto-generated-{}"
+        resolved_ids = [
+            x if len(x) < limit else rewrite_template.format(uuid.uuid4())
+            for x in resolved_ids
+        ]
 
-    # All IDs must be unique!
     unique_ids = set(resolved_ids)
     if len(unique_ids) != len(resolved_ids):
 

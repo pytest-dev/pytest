@@ -1,4 +1,5 @@
 import itertools
+import os
 import re
 import sys
 import textwrap
@@ -1899,3 +1900,28 @@ class TestMarkersWithParametrization:
                 "*= 6 passed in *",
             ]
         )
+
+
+def test_windows_autogen_result(monkeypatch, testdir):
+    # we use '93 in test 2 instead of 99 as parametrization is going to append '-False' onto the resolved_id.
+    # likewise true uses '95' as '-True' will be appended by resolved_id.
+    # This test implicitly covers the --win-long-id-limit default.
+    monkeypatch.setattr(os, "name", "nt")
+    testdir.makepyfile(
+        """
+        import pytest
+        @pytest.mark.parametrize('value, expected',
+            [('*' * 101, True),
+            ('*' * 93, False),
+            ('*' * 95, True), (True, False),
+            (2147000000, False)
+            ])
+        def test_something(request, value, expected):
+            node_id = request.node.nodeid
+            print('data was: {} ~ {}'.format(value, expected))
+            result = 'auto-generated-' in node_id
+            assert result == expected
+        """
+    )
+    result = testdir.runpytest()
+    result.assert_outcomes(passed=5)
