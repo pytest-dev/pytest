@@ -1905,7 +1905,6 @@ class TestMarkersWithParametrization:
 def test_windows_autogen_result(monkeypatch, testdir):
     # we use '93 in test 2 instead of 99 as parametrization is going to append '-False' onto the resolved_id.
     # likewise true uses '95' as '-True' will be appended by resolved_id.
-    # This test implicitly covers the --win-long-id-limit default.
     monkeypatch.setattr(os, "name", "nt")
     testdir.makepyfile(
         """

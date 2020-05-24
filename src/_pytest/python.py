@@ -1231,7 +1231,7 @@ def idmaker(
         _idvalset(valindex, parameterset, argnames, idfn, ids, config=config, item=item)
         for valindex, parameterset in enumerate(parametersets)
     ]
-    # rewrite parametrized ids greater than the overridable limit on windows
+    # rewrite parametrized ids greater than a 100 limit
     if os.name == "nt":
         limit = 100
         rewrite_template = "auto-generated-{}"
