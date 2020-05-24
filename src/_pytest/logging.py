@@ -639,6 +639,7 @@ class LoggingPlugin:
     @pytest.hookimpl(hookwrapper=True, tryfirst=True)
     def pytest_sessionstart(self) -> Generator[None, None, None]:
         self.log_cli_handler.set_when("sessionstart")
+        self.log_file_handler.set_when("sessionstart")
 
         with catching_logs(self.log_cli_handler, level=self.log_cli_level):
             with catching_logs(self.log_file_handler, level=self.log_file_level):
@@ -647,6 +648,7 @@ class LoggingPlugin:
     @pytest.hookimpl(hookwrapper=True, tryfirst=True)
     def pytest_collection(self) -> Generator[None, None, None]:
         self.log_cli_handler.set_when("collection")
+        self.log_file_handler.set_when("collection")
 
         with catching_logs(self.log_cli_handler, level=self.log_cli_level):
             with catching_logs(self.log_file_handler, level=self.log_file_level):
@@ -670,10 +672,23 @@ class LoggingPlugin:
     def pytest_runtest_logstart(self) -> None:
         self.log_cli_handler.reset()
         self.log_cli_handler.set_when("start")
+        self.log_file_handler.set_when("start")
 
     @pytest.hookimpl
-    def pytest_runtest_logreport(self) -> None:
+    def pytest_runtest_logreport(self, report) -> None:
         self.log_cli_handler.set_when("logreport")
+        self.log_file_handler.set_when("logreport", report.nodeid)
+        # this is a stripped-down version of the logreport hook used in
+        # junitxml.
+        if report.failed:
+            if report.when == "call":
+                if not hasattr(report, "wasxfail"):
+                    messages = [
+                        "\n".join(reprentry.lines)
+                        for reprentry in report.longrepr.reprtraceback.reprentries
+                    ]
+                    message = "\n\n".join(messages)
+                    logging.error("Exception:\n" + message)
 
     def _runtest_for(self, item: nodes.Item, when: str) -> Generator[None, None, None]:
         """Implement the internals of the pytest_runtest_xxx() hooks."""
@@ -695,6 +710,7 @@ class LoggingPlugin:
     @pytest.hookimpl(hookwrapper=True)
     def pytest_runtest_setup(self, item: nodes.Item) -> Generator[None, None, None]:
         self.log_cli_handler.set_when("setup")
+        self.log_file_handler.set_when("setup", item.nodeid)
 
         empty = {}  # type: Dict[str, List[logging.LogRecord]]
         item._store[caplog_records_key] = empty
@@ -703,12 +719,14 @@ class LoggingPlugin:
     @pytest.hookimpl(hookwrapper=True)
     def pytest_runtest_call(self, item: nodes.Item) -> Generator[None, None, None]:
         self.log_cli_handler.set_when("call")
+        self.log_file_handler.set_when("call", item.nodeid)
 
         yield from self._runtest_for(item, "call")
 
     @pytest.hookimpl(hookwrapper=True)
     def pytest_runtest_teardown(self, item: nodes.Item) -> Generator[None, None, None]:
         self.log_cli_handler.set_when("teardown")
+        self.log_file_handler.set_when("teardown", item.nodeid)
 
         yield from self._runtest_for(item, "teardown")
         del item._store[caplog_records_key]
@@ -717,10 +735,12 @@ class LoggingPlugin:
     @pytest.hookimpl
     def pytest_runtest_logfinish(self) -> None:
         self.log_cli_handler.set_when("finish")
+        self.log_file_handler.set_when("finish")
 
     @pytest.hookimpl(hookwrapper=True, tryfirst=True)
     def pytest_sessionfinish(self) -> Generator[None, None, None]:
         self.log_cli_handler.set_when("sessionfinish")
+        self.log_file_handler.set_when("sessionfinish")
 
         with catching_logs(self.log_cli_handler, level=self.log_cli_level):
             with catching_logs(self.log_file_handler, level=self.log_file_level):
@@ -736,9 +756,29 @@ class LoggingPlugin:
 class _FileHandler(logging.FileHandler):
     """A logging FileHandler with pytest tweaks."""
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._when = None
+        self._name = None
+        self._section_name_shown = False
+
     def handleError(self, record: logging.LogRecord) -> None:
         # Handled by LogCaptureHandler.
         pass
+
+    def set_when(self, when, name=""):
+        self._when = when
+        self._name = name
+        self._section_name_shown = False
+
+    def emit(self, record):
+        if not self._section_name_shown and self._when:
+            suffix = ": {}".format(self._name) if self._name else ""
+            self.stream.write(
+                str.center(" {}{} ".format(self._when, suffix), 80, "-") + "\n"
+            )
+            self._section_name_shown = True
+        super().emit(record)
 
 
 class _LiveLoggingStreamHandler(logging.StreamHandler):
