@@ -153,6 +153,55 @@ Once you develop multiple tests, you may want to group them into a class. pytest
 
 The first test passed and the second failed. You can easily see the intermediate values in the assertion to help you understand the reason for the failure.
 
+Some reasons why grouping tests in a class can be useful is:
+
+ * Structural or organizational reasons
+ * Sharing fixtures for tests only in that particular class
+ * Applying marks at the class level and having them implicitly apply to all tests
+
+Something to be aware of when grouping tests inside classes is that each test does not have the same instance of the class.
+Having each test share the same class instance would be very detrimental to test isolation and would promote poor test practices.
+This is outlined below:
+
+.. code-block:: python
+
+    class TestClassDemoInstance:
+        def test_one(self):
+            assert 0
+
+        def test_two(self):
+            assert 0
+
+
+.. code-block:: pytest
+
+    $ pytest -k TestClassDemoInstance -q
+
+    FF                                                                                                                                                                                                                               [100%]
+    ============================================================================================================== FAILURES ===============================================================================================================
+    ___________________________________________________________________________________________________ TestClassDemoInstance.test_one ____________________________________________________________________________________________________
+
+    self = <test_example.TestClassDemoInstance object at 0x000001F001A24EB8>, request = <FixtureRequest for <Function test_one>>
+
+        def test_one(self, request):
+    >       assert 0
+    E       assert 0
+
+    testing\test_example.py:4: AssertionError
+    ___________________________________________________________________________________________________ TestClassDemoInstance.test_two ____________________________________________________________________________________________________
+
+    self = <test_example.TestClassDemoInstance object at 0x000001F001A54908>, request = <FixtureRequest for <Function test_two>>
+
+        def test_two(self, request):
+    >       assert 0
+    E       assert 0
+
+    testing\test_example.py:7: AssertionError
+    ======================================================================================================= short test summary info =======================================================================================================
+    FAILED testing/test_example.py::TestClassDemoInstance::test_one - assert 0
+    FAILED testing/test_example.py::TestClassDemoInstance::test_two - assert 0
+    2 failed in 0.17s
+
 Request a unique temporary directory for functional tests
 --------------------------------------------------------------
 
