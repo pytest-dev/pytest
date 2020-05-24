@@ -1240,6 +1240,7 @@ def idmaker(
             for x in resolved_ids
         ]
 
+    # All IDs must be unique!
     unique_ids = set(resolved_ids)
     if len(unique_ids) != len(resolved_ids):
 
