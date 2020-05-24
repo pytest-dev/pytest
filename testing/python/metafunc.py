@@ -1,5 +1,4 @@
 import itertools
-import os
 import re
 import sys
 import textwrap
@@ -1902,11 +1901,9 @@ class TestMarkersWithParametrization:
         )
 
 
-@pytest.mark.skipif(os.name != "nt", reason="relies solely on windows based OS")
-def test_windows_autogen_result(monkeypatch, testdir):
+def test_auto_generated_long_parametrized_ids(testdir):
     # we use '93 in test 2 instead of 99 as parametrization is going to append '-False' onto the resolved_id.
     # likewise true uses '95' as '-True' will be appended by resolved_id.
-    monkeypatch.setattr(os, "name", "nt")
     testdir.makepyfile(
         """
         import pytest
