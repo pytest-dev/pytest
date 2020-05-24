@@ -1917,7 +1917,6 @@ def test_windows_autogen_result(monkeypatch, testdir):
             ])
         def test_something(request, value, expected):
             node_id = request.node.nodeid
-            print('data was: {} ~ {}'.format(value, expected))
             result = 'auto-generated-' in node_id
             assert result == expected
         """
