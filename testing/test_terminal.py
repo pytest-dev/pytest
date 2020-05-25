@@ -779,7 +779,7 @@ class TestTerminalFunctional:
         )
         result = testdir.runpytest("--no-summary")
         result.stdout.no_fnmatch_line("*= FAILURES =*")
-    
+
     def test_showlocals(self, testdir):
         p1 = testdir.makepyfile(
             """
