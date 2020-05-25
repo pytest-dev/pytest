@@ -1,6 +1,7 @@
 """(disabled by default) support for testing pytest and pytest plugins."""
 import collections.abc
 import gc
+import itertools
 import importlib
 import os
 import platform
@@ -1278,7 +1279,9 @@ class Testdir:
 
         """
         basetemp = self.tmpdir.mkdir("temp-pexpect")
-        invoke = " ".join([*map(str, self._getpytestargs()), *(args or [])])
+        if args is None:
+            args = []
+        invoke = " ".join(itertools.chain(map(str, self._getpytestargs()), args)
         cmd = "{} --basetemp={} {}".format(invoke, basetemp, string)
         return self.spawn(cmd, expect_timeout=expect_timeout)
 
