@@ -111,6 +111,9 @@ def catch_warnings_for_item(config, ihook, when, item):
         yield
 
         for warning_message in log:
+            ihook.pytest_warning_captured.call_historic(
+                kwargs=dict(warning_message=warning_message, when=when, item=item)
+            )
             ihook.pytest_warning_recorded.call_historic(
                 kwargs=dict(warning_message=warning_message, nodeid=nodeid, when=when)
             )
@@ -181,6 +184,11 @@ def _issue_warning_captured(warning, hook, stacklevel):
     assert records is not None
     frame = sys._getframe(stacklevel - 1)
     location = frame.f_code.co_filename, frame.f_lineno, frame.f_code.co_name
+    hook.pytest_warning_captured.call_historic(
+        kwargs=dict(
+            warning_message=records[0], when="config", item=None, location=location
+        )
+    )
     hook.pytest_warning_recorded.call_historic(
         kwargs=dict(
             warning_message=records[0], when="config", nodeid="", location=location

@@ -620,7 +620,12 @@ def pytest_terminal_summary(terminalreporter, exitstatus, config):
     """
 
 
-@hookspec(historic=True)
+@hookspec(
+    historic=True,
+    warn_on_impl=DeprecationWarning(
+        "pytest_warning_captured is deprecated and will be removed soon"
+    ),
+)
 def pytest_warning_captured(warning_message, when, item, location):
     """(**Deprecated**) Process a warning captured by the internal pytest warnings plugin.
 

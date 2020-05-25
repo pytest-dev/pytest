@@ -411,9 +411,6 @@ class TerminalReporter:
             self.write_line("INTERNALERROR> " + line)
         return 1
 
-    def pytest_warning_captured(self, warning_message, item):
-        pass
-
     def pytest_warning_recorded(self, warning_message, nodeid):
         from _pytest.warnings import warning_record_to_str
 
