@@ -1181,25 +1181,25 @@ def _idval(
         if hook_id:
             return hook_id
 
-    actual_val = None  # empty strings are valid as val
+    modified_val = None  # empty strings are valid as val
     if isinstance(val, STRING_TYPES):
-        actual_val = _ascii_escaped_by_config(val, config)
+        modified_val = _ascii_escaped_by_config(val, config)
     elif val is None or isinstance(val, (float, int, bool)):
-        actual_val = str(val)
+        modified_val = str(val)
     elif isinstance(val, REGEX_TYPE):
-        actual_val = ascii_escaped(val.pattern)
+        modified_val = ascii_escaped(val.pattern)
     elif isinstance(val, enum.Enum):
-        actual_val = str(val)
+        modified_val = str(val)
     elif isinstance(getattr(val, "__name__", None), str):
         # name of a class, function, module, etc.
-        actual_val = getattr(val, "__name__")
+        modified_val = getattr(val, "__name__")
 
     # Check if the post-checks value is greater than 100 chars in length and use auto id gen if so
-    # isinstance checks can return empty strings which is considered valid, so we explicitly check None on actual_val
+    # isinstance checks can return empty strings which is considered valid, so we explicitly check None on modified_val
     # for example @pytest.mark.parametrize('x', ('', ' ')) is acceptable
-    if actual_val is None or len(actual_val) > 100:
+    if modified_val is None or len(modified_val) > 100:
         return str(argname) + str(idx)
-    return actual_val
+    return modified_val
 
 
 def _idvalset(
