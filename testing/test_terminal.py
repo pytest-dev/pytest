@@ -709,14 +709,14 @@ class TestTerminalFunctional:
         result = testdir.runpytest("--no-header")
         verinfo = ".".join(map(str, sys.version_info[:3]))
         result.stdout.no_fnmatch_line(
-                "platform %s -- Python %s*pytest-%s*py-%s*pluggy-%s"
-                % (
-                    sys.platform,
-                    verinfo,
-                    pytest.__version__,
-                    py.__version__,
-                    pluggy.__version__,
-                )
+            "platform %s -- Python %s*pytest-%s*py-%s*pluggy-%s"
+            % (
+                sys.platform,
+                verinfo,
+                pytest.__version__,
+                py.__version__,
+                pluggy.__version__,
+            )
         )
         if request.config.pluginmanager.list_plugin_distinfo():
             result.stdout.no_fnmatch_line("plugins: *")
