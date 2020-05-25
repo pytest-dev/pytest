@@ -332,17 +332,21 @@ class Node(metaclass=NodeMeta):
         pass
 
     def _repr_failure_py(
-        self, excinfo: ExceptionInfo[Union[Failed, FixtureLookupError]], style=None
+        self,
+        excinfo: ExceptionInfo[
+            Union[Failed, FixtureLookupError, ConftestImportFailure]
+        ],
+        style=None,
     ) -> Union[str, ReprExceptionInfo, ExceptionChainRepr, FixtureLookupErrorRepr]:
         if isinstance(excinfo.value, fail.Exception):
             if not excinfo.value.pytrace:
                 return str(excinfo.value)
         if isinstance(excinfo.value, FixtureLookupError):
             return excinfo.value.formatrepr()
+        if isinstance(excinfo.value, ConftestImportFailure):
+            excinfo = ExceptionInfo(excinfo.value.excinfo)  # type: ignore
         if self.config.getoption("fulltrace", False):
             style = "long"
-        if excinfo.type is ConftestImportFailure:  # type: ignore
-            excinfo = ExceptionInfo.from_exc_info(excinfo.value.excinfo)  # type: ignore
         else:
             tb = _pytest._code.Traceback([excinfo.traceback[-1]])
             self._prunetraceback(excinfo)
