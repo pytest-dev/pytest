@@ -19,6 +19,7 @@ from _pytest._code.code import ReprExceptionInfo
 from _pytest.compat import cached_property
 from _pytest.compat import TYPE_CHECKING
 from _pytest.config import Config
+from _pytest.config import ConftestImportFailure
 from _pytest.config import PytestPluginManager
 from _pytest.deprecated import NODE_USE_FROM_PARENT
 from _pytest.fixtures import FixtureDef
@@ -340,6 +341,8 @@ class Node(metaclass=NodeMeta):
             return excinfo.value.formatrepr()
         if self.config.getoption("fulltrace", False):
             style = "long"
+        if excinfo.type is ConftestImportFailure:  # type: ignore
+            excinfo = ExceptionInfo.from_exc_info(excinfo.value.excinfo)  # type: ignore
         else:
             tb = _pytest._code.Traceback([excinfo.traceback[-1]])
             self._prunetraceback(excinfo)

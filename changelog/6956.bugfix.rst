@@ -1,0 +1,1 @@
+Prevent pytest from printing ConftestImportFailure traceback to stdout.
