@@ -625,7 +625,7 @@ def pytest_warning_captured(warning_message, when, item, location):
     """(**Deprecated**) Process a warning captured by the internal pytest warnings plugin.
 
     This hook is considered deprecated and will be removed in a future pytest version.
-    Use :func:`pytest_warning_record` instead.
+    Use :func:`pytest_warning_recorded` instead.
 
     :param warnings.WarningMessage warning_message:
         The captured warning. This is the same object produced by :py:func:`warnings.catch_warnings`, and contains
@@ -648,7 +648,7 @@ def pytest_warning_captured(warning_message, when, item, location):
 
 
 @hookspec(historic=True)
-def pytest_warning_record(warning_message, when, nodeid, location):
+def pytest_warning_recorded(warning_message, when, nodeid, location):
     """
     Process a warning captured by the internal pytest warnings plugin.
 

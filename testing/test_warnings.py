@@ -268,7 +268,7 @@ def test_warning_captured_hook(testdir):
     collected = []
 
     class WarningCollector:
-        def pytest_warning_record(self, warning_message, when, nodeid):
+        def pytest_warning_recorded(self, warning_message, when, nodeid):
             collected.append((str(warning_message.message), when, nodeid))
 
     result = testdir.runpytest(plugins=[WarningCollector()])
@@ -648,7 +648,7 @@ class TestStackLevel:
             captured = []
 
             @classmethod
-            def pytest_warning_record(cls, warning_message, when, nodeid, location):
+            def pytest_warning_recorded(cls, warning_message, when, nodeid, location):
                 cls.captured.append((warning_message, location))
 
         testdir.plugins = [CapturedWarnings()]
