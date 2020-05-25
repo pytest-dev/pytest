@@ -117,15 +117,15 @@ def pytest_addoption(parser: Parser) -> None:
     )
     group._addoption(
         "--no-header",
-        action="count",
-        default=0,
+        action="store_true",
+        default=False,
         dest="no_header",
         help="disable header",
     )
     group._addoption(
         "--no-summary",
-        action="count",
-        default=0,
+        action="store_true",
+        default=False,
         dest="no_summary",
         help="disable summary",
     )
@@ -682,7 +682,7 @@ class TerminalReporter:
             return
         self.write_sep("=", "test session starts", bold=True)
         verinfo = platform.python_version()
-        if self.no_header == 0:
+        if not self.no_header:
             msg = "platform {} -- Python {}".format(sys.platform, verinfo)
             pypy_version_info = getattr(sys, "pypy_version_info", None)
             if pypy_version_info:
@@ -798,7 +798,7 @@ class TerminalReporter:
             ExitCode.USAGE_ERROR,
             ExitCode.NO_TESTS_COLLECTED,
         )
-        if exitstatus in summary_exit_codes and self.no_summary == 0:
+        if exitstatus in summary_exit_codes and not self.no_summary:
             self.config.hook.pytest_terminal_summary(
                 terminalreporter=self, exitstatus=exitstatus, config=self.config
             )

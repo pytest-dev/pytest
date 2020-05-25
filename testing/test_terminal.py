@@ -698,6 +698,29 @@ class TestTerminalFunctional:
         if request.config.pluginmanager.list_plugin_distinfo():
             result.stdout.fnmatch_lines(["plugins: *"])
 
+    def test_no_header_trailer_info(self, testdir, request):
+        testdir.monkeypatch.delenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD")
+        testdir.makepyfile(
+            """
+            def test_passes():
+                pass
+        """
+        )
+        result = testdir.runpytest("--no-header")
+        verinfo = ".".join(map(str, sys.version_info[:3]))
+        result.stdout.no_fnmatch_line(
+                "platform %s -- Python %s*pytest-%s*py-%s*pluggy-%s"
+                % (
+                    sys.platform,
+                    verinfo,
+                    pytest.__version__,
+                    py.__version__,
+                    pluggy.__version__,
+                )
+        )
+        if request.config.pluginmanager.list_plugin_distinfo():
+            result.stdout.no_fnmatch_line("plugins: *")
+
     def test_header(self, testdir):
         testdir.tmpdir.join("tests").ensure_dir()
         testdir.tmpdir.join("gui").ensure_dir()
@@ -727,6 +750,36 @@ class TestTerminalFunctional:
         result = testdir.runpytest("tests")
         result.stdout.fnmatch_lines(["rootdir: *test_header0, configfile: tox.ini"])
 
+    def test_no_header(self, testdir):
+        testdir.tmpdir.join("tests").ensure_dir()
+        testdir.tmpdir.join("gui").ensure_dir()
+
+        # with testpaths option, and not passing anything in the command-line
+        testdir.makeini(
+            """
+            [pytest]
+            testpaths = tests gui
+        """
+        )
+        result = testdir.runpytest("--no-header")
+        result.stdout.no_fnmatch_line(
+            "rootdir: *test_header0, inifile: tox.ini, testpaths: tests, gui"
+        )
+
+        # with testpaths option, passing directory in command-line: do not show testpaths then
+        result = testdir.runpytest("tests", "--no-header")
+        result.stdout.no_fnmatch_line("rootdir: *test_header0, inifile: tox.ini")
+
+    def test_no_summary(self, testdir):
+        p1 = testdir.makepyfile(
+            """
+            def test_no_summary():
+                assert false
+        """
+        )
+        result = testdir.runpytest("--no-summary")
+        result.stdout.no_fnmatch_line("*= FAILURES =*")
+    
     def test_showlocals(self, testdir):
         p1 = testdir.makepyfile(
             """
@@ -1483,6 +1536,21 @@ def test_terminal_summary_warnings_header_once(testdir):
     assert stdout.count("=== warnings summary ") == 1
 
 
+@pytest.mark.filterwarnings("default")
+def test_terminal_no_summary_warnings_header_once(testdir):
+    testdir.makepyfile(
+        """
+        def test_failure():
+            import warnings
+            warnings.warn("warning_from_" + "test")
+            assert 0
+    """
+    )
+    result = testdir.runpytest("--no-summary")
+    result.stdout.no_fnmatch_line("*= warnings summary =*")
+    result.stdout.no_fnmatch_line("*= short test summary info =*")
+
+
 @pytest.fixture(scope="session")
 def tr() -> TerminalReporter:
     config = _pytest.config._prepareconfig()
@@ -2128,6 +2196,12 @@ def test_collecterror(testdir):
             "*= 1 error in *",
         ]
     )
+
+
+def test_no_summary_collecterror(testdir):
+    p1 = testdir.makepyfile("raise SyntaxError()")
+    result = testdir.runpytest("-ra", "--no-summary", str(p1))
+    result.stdout.no_fnmatch_line("*= ERRORS =*")
 
 
 def test_via_exec(testdir: Testdir) -> None:
