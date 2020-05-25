@@ -6,7 +6,6 @@ import itertools
 import os
 import sys
 import typing
-import uuid
 import warnings
 from collections import Counter
 from collections import defaultdict
@@ -1182,19 +1181,25 @@ def _idval(
         if hook_id:
             return hook_id
 
+    actual_val = None  # empty strings are valid as val
     if isinstance(val, STRING_TYPES):
-        return _ascii_escaped_by_config(val, config)
+        actual_val = _ascii_escaped_by_config(val, config)
     elif val is None or isinstance(val, (float, int, bool)):
-        return str(val)
+        actual_val = str(val)
     elif isinstance(val, REGEX_TYPE):
-        return ascii_escaped(val.pattern)
+        actual_val = ascii_escaped(val.pattern)
     elif isinstance(val, enum.Enum):
-        return str(val)
+        actual_val = str(val)
     elif isinstance(getattr(val, "__name__", None), str):
         # name of a class, function, module, etc.
-        name = getattr(val, "__name__")  # type: str
-        return name
-    return str(argname) + str(idx)
+        actual_val = getattr(val, "__name__")
+
+    # Check if the post-checks value is greater than 100 chars in length and use auto id gen if so
+    # isinstance checks can return empty strings which is considered valid, so we explicitly check None on actual_val
+    # for example @pytest.mark.parametrize('x', ('', ' ')) is acceptable
+    if actual_val is None or len(actual_val) > 100:
+        return str(argname) + str(idx)
+    return actual_val
 
 
 def _idvalset(
@@ -1230,13 +1235,6 @@ def idmaker(
     resolved_ids = [
         _idvalset(valindex, parameterset, argnames, idfn, ids, config=config, item=item)
         for valindex, parameterset in enumerate(parametersets)
-    ]
-    # rewrite extremely long parametrized ids
-    limit = 100
-    rewrite_template = "auto-generated-{}"
-    resolved_ids = [
-        x if len(x) < limit else rewrite_template.format(uuid.uuid4())
-        for x in resolved_ids
     ]
 
     # All IDs must be unique!
