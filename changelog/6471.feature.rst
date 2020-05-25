@@ -1,0 +1,1 @@
+New flags --no-header and --no-summary added. The first one disables header, the second one disables summary. 
