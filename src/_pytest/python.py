@@ -1194,9 +1194,9 @@ def _idval(
         # name of a class, function, module, etc.
         modified_val = getattr(val, "__name__")
 
-    # Check if the post-checks value is greater than 100 chars in length and use auto id gen if so
-    # isinstance checks can return empty strings which is considered valid, so we explicitly check None on modified_val
-    # for example @pytest.mark.parametrize('x', ('', ' ')) is acceptable
+    # val does not always enter the isinstance checks due to its type
+    # when it does we will check the string length returned and use auto generation of ids when over 100 chars
+    # on types which do not match isinstance checks pytest uses auto generate of ids automatically anyway
     if modified_val is None or len(modified_val) > 100:
         return str(argname) + str(idx)
     return modified_val
