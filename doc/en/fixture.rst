@@ -434,8 +434,9 @@ The fixtures requested by ``test_order`` will be instantiated in the following o
 5. ``f1``: is the first ``function``-scoped fixture in ``test_order`` parameter list.
 6. ``f2``: is the last ``function``-scoped fixture in ``test_order`` parameter list.
 
-Something to be aware of, when passing autouse fixture(s) directly into tests, they are always executed first.
-Consider the example below where an autouse function scoped fixture is declared after a non auto use one:
+Something to be aware of, auto use fixtures are always called with priority over non auto use fixtures for the
+same scope.  For example if you pass 2 function scoped fixtures into a test with the non auto use fixture named first
+the autouse fixture will still be executed first.  This is outlined in the example below:
 
 .. literalinclude:: example/fixtures/test_fixtures_autouse_order.py
 
