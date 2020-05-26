@@ -29,7 +29,6 @@ from _pytest.mark.structures import Mark
 from _pytest.mark.structures import MarkDecorator
 from _pytest.mark.structures import NodeKeywords
 from _pytest.outcomes import fail
-from _pytest.outcomes import Failed
 from _pytest.store import Store
 
 if TYPE_CHECKING:
@@ -332,19 +331,15 @@ class Node(metaclass=NodeMeta):
         pass
 
     def _repr_failure_py(
-        self,
-        excinfo: ExceptionInfo[
-            Union[Failed, FixtureLookupError, ConftestImportFailure]
-        ],
-        style=None,
+        self, excinfo: ExceptionInfo[BaseException], style=None,
     ) -> Union[str, ReprExceptionInfo, ExceptionChainRepr, FixtureLookupErrorRepr]:
+        if isinstance(excinfo.value, ConftestImportFailure):
+            excinfo = ExceptionInfo(excinfo.value.excinfo)
         if isinstance(excinfo.value, fail.Exception):
             if not excinfo.value.pytrace:
                 return str(excinfo.value)
         if isinstance(excinfo.value, FixtureLookupError):
             return excinfo.value.formatrepr()
-        if isinstance(excinfo.value, ConftestImportFailure):
-            excinfo = ExceptionInfo(excinfo.value.excinfo)  # type: ignore
         if self.config.getoption("fulltrace", False):
             style = "long"
         else:

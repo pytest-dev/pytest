@@ -404,9 +404,7 @@ class TestReportSerialization:
         result.stdout.fnmatch_lines(
             ["E   ModuleNotFoundError: No module named 'unknown'"]
         )
-        result.stdout.no_fnmatch_line(
-            "ERROR  - _pytest.config.ConftestImportFailure: ModuleNotFoundError:*"
-        )
+        result.stdout.no_fnmatch_line("ERROR  - *ConftestImportFailure*")
 
 
 class TestHooks:
