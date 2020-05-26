@@ -12,7 +12,6 @@ INSTALL_REQUIRES = [
     'colorama;sys_platform=="win32"',
     "pluggy>=0.12,<1.0",
     'importlib-metadata>=0.12;python_version<"3.8"',
-    "wcwidth",
 ]
 
 

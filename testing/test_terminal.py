@@ -14,7 +14,9 @@ import pluggy
 import py
 
 import _pytest.config
+import _pytest.terminal
 import pytest
+from _pytest._io.wcwidth import wcswidth
 from _pytest.config import ExitCode
 from _pytest.pytester import Testdir
 from _pytest.reports import BaseReport
@@ -2027,9 +2029,6 @@ def test_skip_reasons_folding():
 
 
 def test_line_with_reprcrash(monkeypatch):
-    import _pytest.terminal
-    from wcwidth import wcswidth
-
     mocked_verbose_word = "FAILED"
 
     mocked_pos = "some::nodeid"
@@ -2079,19 +2078,19 @@ def test_line_with_reprcrash(monkeypatch):
     check("some\nmessage", 80, "FAILED some::nodeid - some")
 
     # Test unicode safety.
-    check("😄😄😄😄😄\n2nd line", 25, "FAILED some::nodeid - ...")
-    check("😄😄😄😄😄\n2nd line", 26, "FAILED some::nodeid - ...")
-    check("😄😄😄😄😄\n2nd line", 27, "FAILED some::nodeid - 😄...")
-    check("😄😄😄😄😄\n2nd line", 28, "FAILED some::nodeid - 😄...")
-    check("😄😄😄😄😄\n2nd line", 29, "FAILED some::nodeid - 😄😄...")
+    check("🉐🉐🉐🉐🉐\n2nd line", 25, "FAILED some::nodeid - ...")
+    check("🉐🉐🉐🉐🉐\n2nd line", 26, "FAILED some::nodeid - ...")
+    check("🉐🉐🉐🉐🉐\n2nd line", 27, "FAILED some::nodeid - 🉐...")
+    check("🉐🉐🉐🉐🉐\n2nd line", 28, "FAILED some::nodeid - 🉐...")
+    check("🉐🉐🉐🉐🉐\n2nd line", 29, "FAILED some::nodeid - 🉐🉐...")
 
     # NOTE: constructed, not sure if this is supported.
-    mocked_pos = "nodeid::😄::withunicode"
-    check("😄😄😄😄😄\n2nd line", 29, "FAILED nodeid::😄::withunicode")
-    check("😄😄😄😄😄\n2nd line", 40, "FAILED nodeid::😄::withunicode - 😄😄...")
-    check("😄😄😄😄😄\n2nd line", 41, "FAILED nodeid::😄::withunicode - 😄😄...")
-    check("😄😄😄😄😄\n2nd line", 42, "FAILED nodeid::😄::withunicode - 😄😄😄...")
-    check("😄😄😄😄😄\n2nd line", 80, "FAILED nodeid::😄::withunicode - 😄😄😄😄😄")
+    mocked_pos = "nodeid::🉐::withunicode"
+    check("🉐🉐🉐🉐🉐\n2nd line", 29, "FAILED nodeid::🉐::withunicode")
+    check("🉐🉐🉐🉐🉐\n2nd line", 40, "FAILED nodeid::🉐::withunicode - 🉐🉐...")
+    check("🉐🉐🉐🉐🉐\n2nd line", 41, "FAILED nodeid::🉐::withunicode - 🉐🉐...")
+    check("🉐🉐🉐🉐🉐\n2nd line", 42, "FAILED nodeid::🉐::withunicode - 🉐🉐🉐...")
+    check("🉐🉐🉐🉐🉐\n2nd line", 80, "FAILED nodeid::🉐::withunicode - 🉐🉐🉐🉐🉐")
 
 
 @pytest.mark.parametrize(
