@@ -202,10 +202,7 @@ class _NodeReporter:
         if hasattr(report, "wasxfail"):
             self._add_simple(Junit.skipped, "xfail-marked test passes unexpectedly")
         else:
-            if (
-                hasattr(report.longrepr, "reprcrash")
-                and report.longrepr.reprcrash is not None
-            ):
+            if getattr(report.longrepr, "reprcrash", None) is not None:
                 message = report.longrepr.reprcrash.message
             else:
                 message = str(report.longrepr)
