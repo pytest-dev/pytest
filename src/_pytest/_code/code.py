@@ -794,7 +794,7 @@ class FormattedExcinfo:
         else:
             if excinfo:
                 lines.extend(self.get_exconly(excinfo, indent=4))
-           return ReprEntry(lines, None, None, None, style)
+            return ReprEntry(lines, None, None, None, style)
 
     def _makepath(self, path):
         if not self.abspath:
