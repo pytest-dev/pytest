@@ -763,11 +763,7 @@ class FormattedExcinfo:
         self, entry: TracebackEntry, excinfo: Optional[ExceptionInfo] = None
     ) -> "ReprEntry":
         lines = []  # type: List[str]
-        style = (
-            entry._repr_style
-            if entry is not None and entry._repr_style is not None
-            else self.style
-        )
+        style = entry._repr_style if entry._repr_style is not None else self.style
         if style in ("short", "long"):
             source = self._getentrysource(entry)
             if source is None:
