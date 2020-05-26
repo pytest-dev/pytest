@@ -787,12 +787,14 @@ class FormattedExcinfo:
             reprfileloc = ReprFileLocation(path, entry.lineno + 1, message)
             localsrepr = self.repr_locals(entry.locals)
             return ReprEntry(lines, reprargs, localsrepr, reprfileloc, style)
-        if excinfo:
-            if style == "value":
+        elif style == "value":
+            if excinfo:
                 lines.extend(str(excinfo.value).split("\n"))
-            else:
+            return ReprEntry(lines, None, None, None, style)
+        else:
+            if excinfo:
                 lines.extend(self.get_exconly(excinfo, indent=4))
-        return ReprEntry(lines, None, None, None, style)
+           return ReprEntry(lines, None, None, None, style)
 
     def _makepath(self, path):
         if not self.abspath:
