@@ -4,6 +4,7 @@ import fnmatch
 import inspect
 import itertools
 import os
+import pathlib
 import sys
 import typing
 import warnings
@@ -571,7 +572,11 @@ class Package(Module):
         nodes.FSCollector.__init__(
             self, fspath, parent=parent, config=config, session=session, nodeid=nodeid
         )
-        self.name = os.path.basename(str(fspath.dirname))
+        self.name = str(
+            pathlib.Path(fspath.dirname).relative_to(
+                pathlib.Path(str(session.config.rootdir))
+            )
+        ).replace(os.sep, ".")
 
     def setup(self):
         # not using fixtures to call setup_module here because autouse fixtures

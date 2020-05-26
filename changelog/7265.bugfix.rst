@@ -1,0 +1,1 @@
+`_pytest.python.Package` instances now report the full package name instead of the top level package

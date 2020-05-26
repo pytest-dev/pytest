@@ -1058,6 +1058,72 @@ def test_collect_init_tests(testdir):
     result.stdout.no_fnmatch_line("*test_foo*")
 
 
+def test_collect_init_tests_nested_package(testdir):
+    """Check that we collect tests from nested packages and we report the right package name"""
+    p = testdir.copy_example("collect/collect_init_tests")
+    pkg_dir = p.join("tests").join("pkg").ensure(dir=1)
+    pkg_dir.join("__init__.py").write("")
+    p.join("tests").join("test_foo.py").copy(pkg_dir.join("test_foo.py"))
+    result = testdir.runpytest(p, "--collect-only")
+    result.stdout.fnmatch_lines(
+        [
+            "collected 3 items",
+            "<Package tests>",
+            "  <Module __init__.py>",
+            "    <Function test_init>",
+            "  <Module test_foo.py>",
+            "    <Function test_foo>",
+            "<Package tests.pkg>",
+            "  <Module test_foo.py>",
+            "    <Function test_foo>",
+        ]
+    )
+    result = testdir.runpytest("./tests", "--collect-only")
+    result.stdout.fnmatch_lines(
+        [
+            "collected 3 items",
+            "<Package tests>",
+            "  <Module __init__.py>",
+            "    <Function test_init>",
+            "  <Module test_foo.py>",
+            "    <Function test_foo>",
+            "<Package tests.pkg>",
+            "  <Module test_foo.py>",
+            "    <Function test_foo>",
+        ]
+    )
+    # Ignores duplicates with "." and pkginit (#4310).
+    result = testdir.runpytest("./tests", ".", "--collect-only")
+    result.stdout.fnmatch_lines(
+        [
+            "collected 3 items",
+            "<Package tests>",
+            "  <Module __init__.py>",
+            "    <Function test_init>",
+            "  <Module test_foo.py>",
+            "    <Function test_foo>",
+            "<Package tests.pkg>",
+            "  <Module test_foo.py>",
+            "    <Function test_foo>",
+        ]
+    )
+    # Same as before, but different order.
+    result = testdir.runpytest(".", "tests", "--collect-only")
+    result.stdout.fnmatch_lines(
+        [
+            "collected 3 items",
+            "<Package tests>",
+            "  <Module __init__.py>",
+            "    <Function test_init>",
+            "  <Module test_foo.py>",
+            "    <Function test_foo>",
+            "<Package tests.pkg>",
+            "  <Module test_foo.py>",
+            "    <Function test_foo>",
+        ]
+    )
+
+
 def test_collect_invalid_signature_message(testdir):
     """Check that we issue a proper message when we can't determine the signature of a test
     function (#4026).
