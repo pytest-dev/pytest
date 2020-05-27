@@ -1255,11 +1255,8 @@ def test_capsys_results_accessible_by_attribute(capsys):
     assert capture_result.err == "eggs"
 
 
-@pytest.mark.parametrize("use", [True, False])
-def test_fdcapture_tmpfile_remains_the_same(tmpfile, use):
-    if not use:
-        tmpfile = True
-    cap = StdCaptureFD(out=False, err=tmpfile)
+def test_fdcapture_tmpfile_remains_the_same() -> None:
+    cap = StdCaptureFD(out=False, err=True)
     try:
         cap.start_capturing()
         capfile = cap.err.tmpfile
