@@ -1,4 +1,5 @@
 import os
+import re
 import warnings
 
 import pytest
@@ -268,20 +269,49 @@ def test_warning_captured_hook(testdir):
     collected = []
 
     class WarningCollector:
-        def pytest_warning_recorded(self, warning_message, when, nodeid):
-            collected.append((str(warning_message.message), when, nodeid))
+        def pytest_warning_recorded(self, warning_message, when, nodeid, location):
+            collected.append((str(warning_message.message), when, nodeid, location))
 
     result = testdir.runpytest(plugins=[WarningCollector()])
     result.stdout.fnmatch_lines(["*1 passed*"])
 
     expected = [
-        ("config warning", "config", ""),
-        ("collect warning", "collect", ""),
-        ("setup warning", "runtest", "test_warning_captured_hook.py::test_func"),
-        ("call warning", "runtest", "test_warning_captured_hook.py::test_func"),
-        ("teardown warning", "runtest", "test_warning_captured_hook.py::test_func"),
+        (
+            "config warning",
+            "config",
+            "",
+            (
+                r"/tmp/pytest-of-.+/pytest-\d+/test_warning_captured_hook0/conftest.py",
+                3,
+                "pytest_configure",
+            ),
+        ),
+        ("collect warning", "collect", "", None),
+        ("setup warning", "runtest", "test_warning_captured_hook.py::test_func", None),
+        ("call warning", "runtest", "test_warning_captured_hook.py::test_func", None),
+        (
+            "teardown warning",
+            "runtest",
+            "test_warning_captured_hook.py::test_func",
+            None,
+        ),
     ]
-    assert collected == expected, str(collected)
+    for index in range(len(expected)):
+        collected_result = collected[index]
+        expected_result = expected[index]
+
+        assert collected_result[0] == expected_result[0], str(collected)
+        assert collected_result[1] == expected_result[1], str(collected)
+        assert collected_result[2] == expected_result[2], str(collected)
+
+        if expected_result[3] is not None:
+            assert re.match(expected_result[3][0], collected_result[3][0]), str(
+                collected
+            )
+            assert collected_result[3][1] == expected_result[3][1], str(collected)
+            assert collected_result[3][2] == expected_result[3][2], str(collected)
+        else:
+            assert expected_result[3] == collected_result[3], str(collected)
 
 
 @pytest.mark.filterwarnings("always")

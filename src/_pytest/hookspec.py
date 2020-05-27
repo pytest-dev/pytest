@@ -11,6 +11,7 @@ from .deprecated import COLLECT_DIRECTORY_HOOK
 from _pytest.compat import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    import warnings
     from _pytest.config import Config
     from _pytest.main import Session
     from _pytest.reports import BaseReport
@@ -653,7 +654,12 @@ def pytest_warning_captured(warning_message, when, item, location):
 
 
 @hookspec(historic=True)
-def pytest_warning_recorded(warning_message, when, nodeid, location):
+def pytest_warning_recorded(
+    warning_message: "warnings.WarningMessage",
+    when: str,
+    nodeid: str,
+    location: Tuple[str, int, str],
+):
     """
     Process a warning captured by the internal pytest warnings plugin.
 
