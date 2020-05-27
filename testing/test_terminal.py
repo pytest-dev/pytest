@@ -777,7 +777,7 @@ class TestTerminalFunctional:
                 assert false
         """
         )
-        result = testdir.runpytest("--no-summary")
+        result = testdir.runpytest(p1, "--no-summary")
         result.stdout.no_fnmatch_line("*= FAILURES =*")
 
     def test_showlocals(self, testdir):
