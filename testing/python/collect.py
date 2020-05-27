@@ -1225,7 +1225,7 @@ def test_syntax_error_with_non_ascii_chars(testdir):
     result.stdout.fnmatch_lines(["*ERROR collecting*", "*SyntaxError*", "*1 error in*"])
 
 
-def test_collecterror_with_fulltrace(testdir):
+def test_collect_error_with_fulltrace(testdir):
     testdir.makepyfile("assert 0")
     result = testdir.runpytest("--fulltrace")
     result.stdout.fnmatch_lines(
@@ -1233,15 +1233,12 @@ def test_collecterror_with_fulltrace(testdir):
             "collected 0 items / 1 error",
             "",
             "*= ERRORS =*",
-            "*_ ERROR collecting test_collecterror_with_fulltrace.py _*",
-            "",
-            "*/_pytest/python.py:*: ",
-            "_ _ _ _ _ _ _ _ *",
+            "*_ ERROR collecting test_collect_error_with_fulltrace.py _*",
             "",
             ">   assert 0",
             "E   assert 0",
             "",
-            "test_collecterror_with_fulltrace.py:1: AssertionError",
+            "test_collect_error_with_fulltrace.py:1: AssertionError",
             "*! Interrupted: 1 error during collection !*",
         ]
     )
