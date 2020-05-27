@@ -19,16 +19,28 @@ from _pytest.config import ExitCode
 # pylib 1.4.20.dev2 (rev 13d9af95547e)
 
 
-def StdCaptureFD(out=True, err=True, in_=True):
-    return capture.MultiCapture(out, err, in_, Capture=capture.FDCapture)
+def StdCaptureFD(out: bool = True, err: bool = True, in_: bool = True) -> MultiCapture:
+    return capture.MultiCapture(
+        in_=capture.FDCapture(0) if in_ else None,
+        out=capture.FDCapture(1) if out else None,
+        err=capture.FDCapture(2) if err else None,
+    )
 
 
-def StdCapture(out=True, err=True, in_=True):
-    return capture.MultiCapture(out, err, in_, Capture=capture.SysCapture)
+def StdCapture(out: bool = True, err: bool = True, in_: bool = True) -> MultiCapture:
+    return capture.MultiCapture(
+        in_=capture.SysCapture(0) if in_ else None,
+        out=capture.SysCapture(1) if out else None,
+        err=capture.SysCapture(2) if err else None,
+    )
 
 
-def TeeStdCapture(out=True, err=True, in_=True):
-    return capture.MultiCapture(out, err, in_, Capture=capture.TeeSysCapture)
+def TeeStdCapture(out: bool = True, err: bool = True, in_: bool = True) -> MultiCapture:
+    return capture.MultiCapture(
+        in_=capture.SysCapture(0, tee=True) if in_ else None,
+        out=capture.SysCapture(1, tee=True) if out else None,
+        err=capture.SysCapture(2, tee=True) if err else None,
+    )
 
 
 class TestCaptureManager:
@@ -866,9 +878,8 @@ class TestFDCapture:
         cap = capture.FDCapture(fd)
         data = b"hello"
         os.write(fd, data)
-        s = cap.snap()
+        pytest.raises(AssertionError, cap.snap)
         cap.done()
-        assert not s
         cap = capture.FDCapture(fd)
         cap.start()
         os.write(fd, data)
@@ -889,7 +900,7 @@ class TestFDCapture:
         fd = tmpfile.fileno()
         cap = capture.FDCapture(fd)
         cap.done()
-        pytest.raises(ValueError, cap.start)
+        pytest.raises(AssertionError, cap.start)
 
     def test_stderr(self):
         cap = capture.FDCapture(2)
@@ -940,7 +951,7 @@ class TestFDCapture:
             assert s == "but now yes\n"
             cap.suspend()
             cap.done()
-            pytest.raises(AttributeError, cap.suspend)
+            pytest.raises(AssertionError, cap.suspend)
 
             assert repr(cap) == (
                 "<FDCapture 1 oldfd={} _state='done' tmpfile={!r}>".format(
@@ -1142,6 +1153,7 @@ class TestStdCaptureFD(TestStdCapture):
         with lsof_check():
             for i in range(10):
                 cap = StdCaptureFD()
+                cap.start_capturing()
                 cap.stop_capturing()
 
 
@@ -1154,12 +1166,16 @@ class TestStdCaptureFDinvalidFD:
             from _pytest import capture
 
             def StdCaptureFD(out=True, err=True, in_=True):
-                return capture.MultiCapture(out, err, in_, Capture=capture.FDCapture)
+                return capture.MultiCapture(
+                    in_=capture.FDCapture(0) if in_ else None,
+                    out=capture.FDCapture(1) if out else None,
+                    err=capture.FDCapture(2) if err else None,
+                )
 
             def test_stdout():
                 os.close(1)
                 cap = StdCaptureFD(out=True, err=False, in_=False)
-                assert fnmatch(repr(cap.out), "<FDCapture 1 oldfd=* _state=None tmpfile=*>")
+                assert fnmatch(repr(cap.out), "<FDCapture 1 oldfd=* _state='initialized' tmpfile=*>")
                 cap.start_capturing()
                 os.write(1, b"stdout")
                 assert cap.readouterr() == ("stdout", "")
@@ -1168,7 +1184,7 @@ class TestStdCaptureFDinvalidFD:
             def test_stderr():
                 os.close(2)
                 cap = StdCaptureFD(out=False, err=True, in_=False)
-                assert fnmatch(repr(cap.err), "<FDCapture 2 oldfd=* _state=None tmpfile=*>")
+                assert fnmatch(repr(cap.err), "<FDCapture 2 oldfd=* _state='initialized' tmpfile=*>")
                 cap.start_capturing()
                 os.write(2, b"stderr")
                 assert cap.readouterr() == ("", "stderr")
@@ -1177,7 +1193,7 @@ class TestStdCaptureFDinvalidFD:
             def test_stdin():
                 os.close(0)
                 cap = StdCaptureFD(out=False, err=False, in_=True)
-                assert fnmatch(repr(cap.in_), "<FDCapture 0 oldfd=* _state=None tmpfile=*>")
+                assert fnmatch(repr(cap.in_), "<FDCapture 0 oldfd=* _state='initialized' tmpfile=*>")
                 cap.stop_capturing()
         """
         )
@@ -1239,11 +1255,8 @@ def test_capsys_results_accessible_by_attribute(capsys):
     assert capture_result.err == "eggs"
 
 
-@pytest.mark.parametrize("use", [True, False])
-def test_fdcapture_tmpfile_remains_the_same(tmpfile, use):
-    if not use:
-        tmpfile = True
-    cap = StdCaptureFD(out=False, err=tmpfile)
+def test_fdcapture_tmpfile_remains_the_same() -> None:
+    cap = StdCaptureFD(out=False, err=True)
     try:
         cap.start_capturing()
         capfile = cap.err.tmpfile
@@ -1276,16 +1289,21 @@ def test_close_and_capture_again(testdir):
     )
 
 
-@pytest.mark.parametrize("method", ["SysCapture", "FDCapture", "TeeSysCapture"])
-def test_capturing_and_logging_fundamentals(testdir, method):
+@pytest.mark.parametrize(
+    "method", ["SysCapture(2)", "SysCapture(2, tee=True)", "FDCapture(2)"]
+)
+def test_capturing_and_logging_fundamentals(testdir, method: str) -> None:
     # here we check a fundamental feature
     p = testdir.makepyfile(
         """
         import sys, os
         import py, logging
         from _pytest import capture
-        cap = capture.MultiCapture(out=False, in_=False,
-                                     Capture=capture.%s)
+        cap = capture.MultiCapture(
+            in_=None,
+            out=None,
+            err=capture.%s,
+        )
         cap.start_capturing()
 
         logging.warning("hello1")
