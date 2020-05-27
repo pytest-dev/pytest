@@ -401,9 +401,7 @@ class TestReportSerialization:
         sub_dir.join("conftest").new(ext=".py").write("import unknown")
 
         result = testdir.runpytest_subprocess(".")
-        result.stdout.fnmatch_lines(
-            ["E   ModuleNotFoundError: No module named 'unknown'"]
-        )
+        result.stdout.fnmatch_lines(["E   *Error: No module named 'unknown'"])
         result.stdout.no_fnmatch_line("ERROR  - *ConftestImportFailure*")
 
 
