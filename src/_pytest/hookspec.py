@@ -8,6 +8,7 @@ from typing import Union
 from pluggy import HookspecMarker
 
 from .deprecated import COLLECT_DIRECTORY_HOOK
+from .deprecated import WARNING_CAPTURED_HOOK
 from _pytest.compat import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -621,12 +622,7 @@ def pytest_terminal_summary(terminalreporter, exitstatus, config):
     """
 
 
-@hookspec(
-    historic=True,
-    warn_on_impl=DeprecationWarning(
-        "pytest_warning_captured is deprecated and will be removed soon"
-    ),
-)
+@hookspec(historic=True, warn_on_impl=WARNING_CAPTURED_HOOK)
 def pytest_warning_captured(warning_message, when, item, location):
     """(**Deprecated**) Process a warning captured by the internal pytest warnings plugin.
 

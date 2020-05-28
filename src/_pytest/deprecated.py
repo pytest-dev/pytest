@@ -80,3 +80,8 @@ MINUS_K_COLON = PytestDeprecationWarning(
     "The `-k 'expr:'` syntax to -k is deprecated.\n"
     "Please open an issue if you use this and want a replacement."
 )
+
+WARNING_CAPTURED_HOOK = PytestDeprecationWarning(
+    "The pytest_warning_captured is deprecated and will be removed in a future release.\n"
+    "Please use pytest_warning_recorded instead."
+)
