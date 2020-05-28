@@ -268,10 +268,6 @@ class TracebackEntry:
         return tbh
 
     def __str__(self) -> str:
-        try:
-            fn = str(self.path)
-        except py.error.Error:
-            fn = "???"
         name = self.frame.code.name
         try:
             line = str(self.statement).lstrip()
@@ -279,7 +275,7 @@ class TracebackEntry:
             raise
         except BaseException:
             line = "???"
-        return "  File %r:%d in %s\n  %s\n" % (fn, self.lineno + 1, name, line)
+        return "  File %r:%d in %s\n  %s\n" % (self.path, self.lineno + 1, name, line)
 
     @property
     def name(self) -> str:
