@@ -275,7 +275,7 @@ def test_warning_captured_hook(testdir):
     result.stdout.fnmatch_lines(["*1 passed*"])
 
     expected = [
-        ("config warning", "config", "",),
+        ("config warning", "config", ""),
         ("collect warning", "collect", ""),
         ("setup warning", "runtest", "test_warning_captured_hook.py::test_func"),
         ("call warning", "runtest", "test_warning_captured_hook.py::test_func"),
