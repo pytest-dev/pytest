@@ -29,6 +29,7 @@ from _pytest.mark.structures import Mark
 from _pytest.mark.structures import MarkDecorator
 from _pytest.mark.structures import NodeKeywords
 from _pytest.outcomes import fail
+from _pytest.pathlib import Path
 from _pytest.store import Store
 
 if TYPE_CHECKING:
@@ -361,9 +362,14 @@ class Node(metaclass=NodeMeta):
         else:
             truncate_locals = True
 
+        # excinfo.getrepr() formats paths relative to the CWD if `abspath` is False.
+        # It is possible for a fixture/test to change the CWD while this code runs, which
+        # would then result in the user seeing confusing paths in the failure message.
+        # To fix this, if the CWD changed, always display the full absolute path.
+        # It will be better to just always display paths relative to invocation_dir, but
+        # this requires a lot of plumbing (#6428).
         try:
-            os.getcwd()
-            abspath = False
+            abspath = Path(os.getcwd()) != Path(self.config.invocation_dir)
         except OSError:
             abspath = True
 
