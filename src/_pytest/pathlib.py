@@ -251,6 +251,7 @@ def register_cleanup_lock_removal(lock_path: Path, register=atexit.register):
 
 def maybe_delete_a_numbered_dir(path: Path) -> None:
     """removes a numbered directory if its lock can be obtained and it does not seem to be in use"""
+    path = ensure_extended_length_path(path)
     lock_path = None
     try:
         lock_path = create_cleanup_lock(path)
