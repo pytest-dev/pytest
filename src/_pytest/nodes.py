@@ -337,7 +337,7 @@ class Node(metaclass=NodeMeta):
             excinfo = ExceptionInfo(excinfo.value.excinfo)
         if isinstance(excinfo.value, fail.Exception):
             if not excinfo.value.pytrace:
-                return str(excinfo.value)
+                style = "value"
         if isinstance(excinfo.value, FixtureLookupError):
             return excinfo.value.formatrepr()
         if self.config.getoption("fulltrace", False):

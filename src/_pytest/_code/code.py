@@ -46,7 +46,7 @@ if TYPE_CHECKING:
     from typing_extensions import Literal
     from weakref import ReferenceType
 
-    _TracebackStyle = Literal["long", "short", "line", "no", "native"]
+    _TracebackStyle = Literal["long", "short", "line", "no", "native", "value"]
 
 
 class Code:
@@ -583,7 +583,7 @@ class ExceptionInfo(Generic[_E]):
             Show locals per traceback entry.
             Ignored if ``style=="native"``.
 
-        :param str style: long|short|no|native traceback style
+        :param str style: long|short|no|native|value traceback style
 
         :param bool abspath:
             If paths should be changed to absolute or left unchanged.
@@ -758,16 +758,15 @@ class FormattedExcinfo:
     def repr_traceback_entry(
         self, entry: TracebackEntry, excinfo: Optional[ExceptionInfo] = None
     ) -> "ReprEntry":
-        source = self._getentrysource(entry)
-        if source is None:
-            source = Source("???")
-            line_index = 0
-        else:
-            line_index = entry.lineno - entry.getfirstlinesource()
-
         lines = []  # type: List[str]
         style = entry._repr_style if entry._repr_style is not None else self.style
         if style in ("short", "long"):
+            source = self._getentrysource(entry)
+            if source is None:
+                source = Source("???")
+                line_index = 0
+            else:
+                line_index = entry.lineno - entry.getfirstlinesource()
             short = style == "short"
             reprargs = self.repr_args(entry) if not short else None
             s = self.get_source(source, line_index, excinfo, short=short)
@@ -780,9 +779,14 @@ class FormattedExcinfo:
             reprfileloc = ReprFileLocation(path, entry.lineno + 1, message)
             localsrepr = self.repr_locals(entry.locals)
             return ReprEntry(lines, reprargs, localsrepr, reprfileloc, style)
-        if excinfo:
-            lines.extend(self.get_exconly(excinfo, indent=4))
-        return ReprEntry(lines, None, None, None, style)
+        elif style == "value":
+            if excinfo:
+                lines.extend(str(excinfo.value).split("\n"))
+            return ReprEntry(lines, None, None, None, style)
+        else:
+            if excinfo:
+                lines.extend(self.get_exconly(excinfo, indent=4))
+            return ReprEntry(lines, None, None, None, style)
 
     def _makepath(self, path):
         if not self.abspath:
@@ -806,6 +810,11 @@ class FormattedExcinfo:
 
         last = traceback[-1]
         entries = []
+        if self.style == "value":
+            reprentry = self.repr_traceback_entry(last, excinfo)
+            entries.append(reprentry)
+            return ReprTraceback(entries, None, style=self.style)
+
         for index, entry in enumerate(traceback):
             einfo = (last == entry) and excinfo or None
             reprentry = self.repr_traceback_entry(entry, einfo)
@@ -865,7 +874,9 @@ class FormattedExcinfo:
             seen.add(id(e))
             if excinfo_:
                 reprtraceback = self.repr_traceback(excinfo_)
-                reprcrash = excinfo_._getreprcrash()  # type: Optional[ReprFileLocation]
+                reprcrash = (
+                    excinfo_._getreprcrash() if self.style != "value" else None
+                )  # type: Optional[ReprFileLocation]
             else:
                 # fallback to native repr if the exception doesn't have a traceback:
                 # ExceptionInfo objects require a full traceback to work
@@ -1048,8 +1059,11 @@ class ReprEntry(TerminalRepr):
                     "Unexpected failure lines between source lines:\n"
                     + "\n".join(self.lines)
                 )
-                indents.append(line[:indent_size])
-                source_lines.append(line[indent_size:])
+                if self.style == "value":
+                    source_lines.append(line)
+                else:
+                    indents.append(line[:indent_size])
+                    source_lines.append(line[indent_size:])
             else:
                 seeing_failures = True
                 failure_lines.append(line)
