@@ -8,9 +8,11 @@ from typing import Union
 from pluggy import HookspecMarker
 
 from .deprecated import COLLECT_DIRECTORY_HOOK
+from .deprecated import WARNING_CAPTURED_HOOK
 from _pytest.compat import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    import warnings
     from _pytest.config import Config
     from _pytest.main import Session
     from _pytest.reports import BaseReport
@@ -620,8 +622,40 @@ def pytest_terminal_summary(terminalreporter, exitstatus, config):
     """
 
 
-@hookspec(historic=True)
+@hookspec(historic=True, warn_on_impl=WARNING_CAPTURED_HOOK)
 def pytest_warning_captured(warning_message, when, item, location):
+    """(**Deprecated**) Process a warning captured by the internal pytest warnings plugin.
+
+    This hook is considered deprecated and will be removed in a future pytest version.
+    Use :func:`pytest_warning_recorded` instead.
+
+    :param warnings.WarningMessage warning_message:
+        The captured warning. This is the same object produced by :py:func:`warnings.catch_warnings`, and contains
+        the same attributes as the parameters of :py:func:`warnings.showwarning`.
+
+    :param str when:
+        Indicates when the warning was captured. Possible values:
+
+        * ``"config"``: during pytest configuration/initialization stage.
+        * ``"collect"``: during test collection.
+        * ``"runtest"``: during test execution.
+
+    :param pytest.Item|None item:
+        The item being executed if ``when`` is ``"runtest"``, otherwise ``None``.
+
+    :param tuple location:
+        Holds information about the execution context of the captured warning (filename, linenumber, function).
+        ``function`` evaluates to <module> when the execution context is at the module level.
+    """
+
+
+@hookspec(historic=True)
+def pytest_warning_recorded(
+    warning_message: "warnings.WarningMessage",
+    when: str,
+    nodeid: str,
+    location: Tuple[str, int, str],
+):
     """
     Process a warning captured by the internal pytest warnings plugin.
 
@@ -636,11 +670,7 @@ def pytest_warning_captured(warning_message, when, item, location):
         * ``"collect"``: during test collection.
         * ``"runtest"``: during test execution.
 
-    :param pytest.Item|None item:
-        **DEPRECATED**: This parameter is incompatible with ``pytest-xdist``, and will always receive ``None``
-        in a future release.
-
-        The item being executed if ``when`` is ``"runtest"``, otherwise ``None``.
+    :param str nodeid: full id of the item
 
     :param tuple location:
         Holds information about the execution context of the captured warning (filename, linenumber, function).
