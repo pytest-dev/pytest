@@ -173,6 +173,14 @@ def pytest_addoption(parser: Parser) -> None:
         default=False,
         help="Don't ignore tests in a local virtualenv directory",
     )
+    group.addoption(
+        "--import-mode",
+        default="prepend",
+        choices=["prepend", "append", "importlib"],
+        dest="importmode",
+        help="prepend/append to sys.path when importing test modules and conftest files, "
+        "default is to prepend.",
+    )
 
     group = parser.getgroup("debugconfig", "test session debugging and configuration")
     group.addoption(

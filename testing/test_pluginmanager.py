@@ -37,7 +37,7 @@ class TestPytestPluginInteractions:
         pm.hook.pytest_addhooks.call_historic(
             kwargs=dict(pluginmanager=config.pluginmanager)
         )
-        config.pluginmanager._importconftest(conf)
+        config.pluginmanager._importconftest(conf, importmode="prepend")
         # print(config.pluginmanager.get_plugins())
         res = config.hook.pytest_myhook(xyz=10)
         assert res == [11]
@@ -64,7 +64,7 @@ class TestPytestPluginInteractions:
                     default=True)
         """
         )
-        config.pluginmanager._importconftest(p)
+        config.pluginmanager._importconftest(p, importmode="prepend")
         assert config.option.test123
 
     def test_configure(self, testdir):
@@ -129,10 +129,10 @@ class TestPytestPluginInteractions:
         conftest1 = testdir.tmpdir.join("tests/conftest.py")
         conftest2 = testdir.tmpdir.join("tests/subdir/conftest.py")
 
-        config.pluginmanager._importconftest(conftest1)
+        config.pluginmanager._importconftest(conftest1, importmode="prepend")
         ihook_a = session.gethookproxy(testdir.tmpdir.join("tests"))
         assert ihook_a is not None
-        config.pluginmanager._importconftest(conftest2)
+        config.pluginmanager._importconftest(conftest2, importmode="prepend")
         ihook_b = session.gethookproxy(testdir.tmpdir.join("tests"))
         assert ihook_a is not ihook_b
 

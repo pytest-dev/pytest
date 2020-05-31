@@ -116,15 +116,6 @@ def pytest_addoption(parser: Parser) -> None:
         "side effects(use at your own risk)",
     )
 
-    group.addoption(
-        "--import-mode",
-        default="prepend",
-        choices=["prepend", "append", "importlib"],
-        dest="importmode",
-        help="prepend/append to sys.path when importing test modules, "
-        "default is to prepend.",
-    )
-
 
 def pytest_cmdline_main(config: Config) -> Optional[Union[int, ExitCode]]:
     if config.option.showfixtures:
