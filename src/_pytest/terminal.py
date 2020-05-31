@@ -27,6 +27,7 @@ from more_itertools import collapse
 import pytest
 from _pytest import nodes
 from _pytest._io import TerminalWriter
+from _pytest._io.wcwidth import wcswidth
 from _pytest.compat import order_preserving_dict
 from _pytest.config import Config
 from _pytest.config import ExitCode
@@ -1120,8 +1121,6 @@ def _get_pos(config, rep):
 
 def _get_line_with_reprcrash_message(config, rep, termwidth):
     """Get summary line for a report, trying to add reprcrash message."""
-    from wcwidth import wcswidth
-
     verbose_word = rep._get_verbose_word(config)
     pos = _get_pos(config, rep)
 

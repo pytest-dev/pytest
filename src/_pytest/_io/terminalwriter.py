@@ -2,11 +2,11 @@
 import os
 import shutil
 import sys
-import unicodedata
-from functools import lru_cache
 from typing import Optional
 from typing import Sequence
 from typing import TextIO
+
+from .wcwidth import wcswidth
 
 
 # This code was initially copied from py 1.8.1, file _io/terminalwriter.py.
@@ -20,17 +20,6 @@ def get_terminal_width() -> int:
         width = 80
 
     return width
-
-
-@lru_cache(100)
-def char_width(c: str) -> int:
-    # Fullwidth and Wide -> 2, all else (including Ambiguous) -> 1.
-    return 2 if unicodedata.east_asian_width(c) in ("F", "W") else 1
-
-
-def get_line_width(text: str) -> int:
-    text = unicodedata.normalize("NFC", text)
-    return sum(char_width(c) for c in text)
 
 
 def should_do_markup(file: TextIO) -> bool:
@@ -99,7 +88,7 @@ class TerminalWriter:
     @property
     def width_of_current_line(self) -> int:
         """Return an estimate of the width so far in the current line."""
-        return get_line_width(self._current_line)
+        return wcswidth(self._current_line)
 
     def markup(self, text: str, **markup: bool) -> str:
         for name in markup:
