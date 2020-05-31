@@ -623,9 +623,15 @@ def pytest_terminal_summary(terminalreporter, exitstatus, config):
 
 
 @hookspec(historic=True, warn_on_impl=WARNING_CAPTURED_HOOK)
-def pytest_warning_captured(warning_message, when, item, location):
+def pytest_warning_captured(
+    warning_message: "warnings.WarningMessage",
+    when: str,
+    item,
+    location: Optional[Tuple[str, int, str]],
+) -> None:
     """(**Deprecated**) Process a warning captured by the internal pytest warnings plugin.
 
+    .. deprecated:: 6.0
     This hook is considered deprecated and will be removed in a future pytest version.
     Use :func:`pytest_warning_recorded` instead.
 
@@ -644,8 +650,9 @@ def pytest_warning_captured(warning_message, when, item, location):
         The item being executed if ``when`` is ``"runtest"``, otherwise ``None``.
 
     :param tuple location:
-        Holds information about the execution context of the captured warning (filename, linenumber, function).
-        ``function`` evaluates to <module> when the execution context is at the module level.
+        When available, holds information about the execution context of the captured
+        warning (filename, linenumber, function). ``function`` evaluates to <module>
+        when the execution context is at the module level.
     """
 
 
@@ -654,8 +661,8 @@ def pytest_warning_recorded(
     warning_message: "warnings.WarningMessage",
     when: str,
     nodeid: str,
-    location: Tuple[str, int, str],
-):
+    location: Optional[Tuple[str, int, str]],
+) -> None:
     """
     Process a warning captured by the internal pytest warnings plugin.
 
@@ -672,9 +679,12 @@ def pytest_warning_recorded(
 
     :param str nodeid: full id of the item
 
-    :param tuple location:
-        Holds information about the execution context of the captured warning (filename, linenumber, function).
-        ``function`` evaluates to <module> when the execution context is at the module level.
+    :param tuple|None location:
+        When available, holds information about the execution context of the captured
+        warning (filename, linenumber, function). ``function`` evaluates to <module>
+        when the execution context is at the module level.
+
+    .. versionadded:: 6.0
     """
 
 
