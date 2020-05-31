@@ -147,6 +147,52 @@ class TestParseIni:
         result = testdir.inline_run("--confcutdir=.")
         assert result.ret == 0
 
+    @pytest.mark.parametrize(
+        "ini_file_text, invalid_keys, stderr_output",
+        [
+            (
+                """
+          [pytest]
+          unknown_ini = value1
+          another_unknown_ini = value2
+          """,
+                ["unknown_ini", "another_unknown_ini"],
+                [
+                    "WARNING: unknown config ini key: unknown_ini",
+                    "WARNING: unknown config ini key: another_unknown_ini",
+                ],
+            ),
+            (
+                """
+          [pytest]
+          unknown_ini = value1
+          minversion = 5.0.0
+          """,
+                ["unknown_ini"],
+                ["WARNING: unknown config ini key: unknown_ini"],
+            ),
+            (
+                """
+          [pytest]
+          minversion = 5.0.0
+          """,
+                [],
+                [],
+            ),
+        ],
+    )
+    def test_invalid_ini_keys_generate_warings(
+        self, testdir, ini_file_text, invalid_keys, stderr_output
+    ):
+        testdir.tmpdir.join("pytest.ini").write(textwrap.dedent(ini_file_text))
+        config = testdir.parseconfig()
+        assert config._get_unknown_ini_keys() == invalid_keys, str(
+            config._get_unknown_ini_keys()
+        )
+
+        result = testdir.runpytest()
+        result.stderr.fnmatch_lines(stderr_output)
+
 
 class TestConfigCmdlineParsing:
     def test_parsing_again_fails(self, testdir):

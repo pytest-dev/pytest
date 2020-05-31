@@ -1020,6 +1020,7 @@ class Config:
             )
 
         self._checkversion()
+        self._validatekeys()
         self._consider_importhook(args)
         self.pluginmanager.consider_preparse(args, exclude_only=False)
         if not os.environ.get("PYTEST_DISABLE_PLUGIN_AUTOLOAD"):
@@ -1071,6 +1072,14 @@ class Config:
                         pytest.__version__,
                     )
                 )
+
+    def _validatekeys(self):
+        for key in self._get_unknown_ini_keys():
+            sys.stderr.write("WARNING: unknown config ini key: {}\n".format(key))
+
+    def _get_unknown_ini_keys(self) -> List[str]:
+        parser_inicfg = self._parser._inidict
+        return [name for name in self.inicfg if name not in parser_inicfg]
 
     def parse(self, args: List[str], addopts: bool = True) -> None:
         # parse given cmdline arguments into this config object.
