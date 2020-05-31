@@ -446,7 +446,17 @@ def import_module(path, modname=None, ensuresyspath=True):
 
         if modname is None:
             modname = path.purebasename
-        spec = importlib.util.spec_from_file_location(modname, str(path))
+
+        for meta_importer in sys.meta_path:
+            loader = meta_importer.find_module(modname, str(path))
+            if loader is not None:
+                spec = importlib.util.spec_from_file_location(
+                    modname, str(path), loader=loader
+                )
+                break
+        else:
+            spec = importlib.util.spec_from_file_location(modname, str(path))
+
         if spec is None:
             raise ImportError(
                 "Can't find module {} at location {}".format(modname, str(path))
