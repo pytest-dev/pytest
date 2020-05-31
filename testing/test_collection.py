@@ -1380,3 +1380,42 @@ class TestImportModeImportlib:
         )
         result = testdir.runpytest("-v", "--import-mode=importlib")
         result.stdout.fnmatch_lines(["* 1 passed in *"])
+
+    def setup_conftest_and_foo(self, testdir):
+        """Setup a tests folder to be used to test if modules in that folder can be imported
+        due to side-effects of --import-mode or not."""
+        testdir.makepyfile(
+            **{
+                "tests/conftest.py": "",
+                "tests/foo.py": """
+                    def foo(): return 42
+                """,
+                "tests/test_foo.py": """
+                    def test_check():
+                        from foo import foo
+                        assert foo() == 42
+                """,
+            }
+        )
+
+    def test_modules_importable_as_side_effect(self, testdir):
+        """In import-modes `prepend` and `append`, we are able to import modules from folders
+        containing conftest.py files due to the side effect of changing sys.path."""
+        self.setup_conftest_and_foo(testdir)
+        result = testdir.runpytest("-v", "--import-mode=prepend")
+        result.stdout.fnmatch_lines(["* 1 passed in *"])
+
+    def test_modules_not_importable_as_side_effect(self, testdir):
+        """In import-mode `importlib`, modules in folders containing conftest.py are not
+        importable, as don't change sys.path or sys.modules as side effect of importing
+        the conftest.py file.
+        """
+        self.setup_conftest_and_foo(testdir)
+        result = testdir.runpytest("-v", "--import-mode=importlib")
+        result.stdout.fnmatch_lines(
+            [
+                "*ModuleNotFoundError: No module named 'foo'",
+                "tests?test_foo.py:2: ModuleNotFoundError",
+                "* 1 failed in *",
+            ]
+        )
