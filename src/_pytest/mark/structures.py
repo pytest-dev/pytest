@@ -37,7 +37,10 @@ def get_empty_parameterset_mark(config, argnames, func):
     if requested_mark in ("", None, "skip"):
         mark = MARK_GEN.skip
     elif requested_mark == "xfail":
-        mark = MARK_GEN.xfail(run=False)
+        if config.getoption("runxfail", default=False):
+            mark = MARK_GEN.skip
+        else:
+            mark = MARK_GEN.xfail(run=False)
     elif requested_mark == "fail_at_collect":
         f_name = func.__name__
         _, lineno = getfslineno(func)
