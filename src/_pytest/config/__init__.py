@@ -1020,7 +1020,7 @@ class Config:
             )
 
         self._checkversion()
-        self._validatekeys()
+        self._validatekeys(args)
         self._consider_importhook(args)
         self.pluginmanager.consider_preparse(args, exclude_only=False)
         if not os.environ.get("PYTEST_DISABLE_PLUGIN_AUTOLOAD"):
@@ -1073,9 +1073,12 @@ class Config:
                     )
                 )
 
-    def _validatekeys(self):
+    def _validatekeys(self, args: Sequence[str]):
         for key in self._get_unknown_ini_keys():
-            sys.stderr.write("WARNING: unknown config ini key: {}\n".format(key))
+            message = "Unknown config ini key: {}\n".format(key)
+            if "--strict-config" in args:
+                fail(message, pytrace=False)
+            sys.stderr.write("WARNING: {}".format(message))
 
     def _get_unknown_ini_keys(self) -> List[str]:
         parser_inicfg = self._parser._inidict

@@ -71,6 +71,11 @@ def pytest_addoption(parser):
         help="exit after first num failures or errors.",
     )
     group._addoption(
+        "--strict-config",
+        action="store_true",
+        help="invalid ini keys for the `pytest` section of the configuration file raise errors.",
+    )
+    group._addoption(
         "--strict-markers",
         "--strict",
         action="store_true",

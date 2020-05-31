@@ -148,7 +148,7 @@ class TestParseIni:
         assert result.ret == 0
 
     @pytest.mark.parametrize(
-        "ini_file_text, invalid_keys, stderr_output",
+        "ini_file_text, invalid_keys, stderr_output, exception_text",
         [
             (
                 """
@@ -158,9 +158,10 @@ class TestParseIni:
           """,
                 ["unknown_ini", "another_unknown_ini"],
                 [
-                    "WARNING: unknown config ini key: unknown_ini",
-                    "WARNING: unknown config ini key: another_unknown_ini",
+                    "WARNING: Unknown config ini key: unknown_ini",
+                    "WARNING: Unknown config ini key: another_unknown_ini",
                 ],
+                "Unknown config ini key: unknown_ini",
             ),
             (
                 """
@@ -169,7 +170,8 @@ class TestParseIni:
           minversion = 5.0.0
           """,
                 ["unknown_ini"],
-                ["WARNING: unknown config ini key: unknown_ini"],
+                ["WARNING: Unknown config ini key: unknown_ini"],
+                "Unknown config ini key: unknown_ini",
             ),
             (
                 """
@@ -180,6 +182,7 @@ class TestParseIni:
           """,
                 [],
                 [],
+                "",
             ),
             (
                 """
@@ -188,11 +191,12 @@ class TestParseIni:
           """,
                 [],
                 [],
+                "",
             ),
         ],
     )
-    def test_invalid_ini_keys_generate_warings(
-        self, testdir, ini_file_text, invalid_keys, stderr_output
+    def test_invalid_ini_keys(
+        self, testdir, ini_file_text, invalid_keys, stderr_output, exception_text
     ):
         testdir.tmpdir.join("pytest.ini").write(textwrap.dedent(ini_file_text))
         config = testdir.parseconfig()
@@ -202,6 +206,10 @@ class TestParseIni:
 
         result = testdir.runpytest()
         result.stderr.fnmatch_lines(stderr_output)
+
+        if stderr_output:
+            with pytest.raises(pytest.fail.Exception, match=exception_text):
+                testdir.runpytest("--strict-config")
 
 
 class TestConfigCmdlineParsing:
