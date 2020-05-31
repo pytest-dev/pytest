@@ -448,11 +448,8 @@ def import_module(path, modname=None, ensuresyspath=True):
             modname = path.purebasename
 
         for meta_importer in sys.meta_path:
-            loader = meta_importer.find_module(modname, str(path))
-            if loader is not None:
-                spec = importlib.util.spec_from_file_location(
-                    modname, str(path), loader=loader
-                )
+            spec = meta_importer.find_spec(modname, [path.dirname])
+            if spec is not None:
                 break
         else:
             spec = importlib.util.spec_from_file_location(modname, str(path))
