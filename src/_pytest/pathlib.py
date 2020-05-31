@@ -413,3 +413,98 @@ def symlink_or_skip(src, dst, **kwargs):
         os.symlink(str(src), str(dst), **kwargs)
     except OSError as e:
         skip("symlinks not supported: {}".format(e))
+
+
+def import_module(path, modname=None, ensuresyspath=True):
+    """ return path as an imported python module.
+
+    If modname is None, look for the containing package
+    and construct an according module name.
+    The module will be put/looked up in sys.modules.
+    if ensuresyspath is True then the root dir for importing
+    the file (taking __init__.py files into account) will
+    be prepended to sys.path if it isn't there already.
+    If ensuresyspath=="append" the root dir will be appended
+    if it isn't already contained in sys.path.
+    if ensuresyspath is False no modification of syspath happens.
+
+    Special value of ensuresyspath=="importlib" is intended
+    purely for using in pytest, it is capable only of importing
+    separate .py files outside packages, e.g. for test suite
+    without any __init__.py file. It effectively allows having
+    same-named test modules in different places and offers
+    mild opt-in via this option. Note that it works only in
+    recent versions of python.
+    """
+    import py.error
+
+    if not path.check():
+        raise py.error.ENOENT(path)
+
+    if ensuresyspath == "importlib":
+        import importlib.util
+
+        if modname is None:
+            modname = path.purebasename
+        spec = importlib.util.spec_from_file_location(modname, str(path))
+        if spec is None:
+            raise ImportError(
+                "Can't find module {} at location {}".format(modname, str(path))
+            )
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        return mod
+
+    pkgpath = None
+    if modname is None:
+        pkgpath = path.pypkgpath()
+        if pkgpath is not None:
+            pkgroot = pkgpath.dirpath()
+            names = path.new(ext="").relto(pkgroot).split(path.sep)
+            if names[-1] == "__init__":
+                names.pop()
+            modname = ".".join(names)
+        else:
+            pkgroot = path.dirpath()
+            modname = path.purebasename
+
+        path._ensuresyspath(ensuresyspath, pkgroot)
+        __import__(modname)
+        mod = sys.modules[modname]
+        if path.basename == "__init__.py":
+            return mod  # we don't check anything as we might
+            # be in a namespace package ... too icky to check
+        modfile = mod.__file__
+        if modfile[-4:] in (".pyc", ".pyo"):
+            modfile = modfile[:-1]
+        elif modfile.endswith("$py.class"):
+            modfile = modfile[:-9] + ".py"
+        if modfile.endswith(os.path.sep + "__init__.py"):
+            if path.basename != "__init__.py":
+                modfile = modfile[:-12]
+        try:
+            issame = path.samefile(modfile)
+        except py.error.ENOENT:
+            issame = False
+        if not issame:
+            ignore = os.getenv("PY_IGNORE_IMPORTMISMATCH")
+            if ignore != "1":
+                raise path.ImportMismatchError(modname, modfile, path)
+        return mod
+    else:
+        try:
+            return sys.modules[modname]
+        except KeyError:
+            # we have a custom modname, do a pseudo-import
+            import types
+
+            mod = types.ModuleType(modname)
+            mod.__file__ = str(path)
+            sys.modules[modname] = mod
+            try:
+                with open(str(path)) as f:
+                    exec(f.read(), mod.__dict__)
+            except:  # noqa: E722
+                del sys.modules[modname]
+                raise
+        return mod

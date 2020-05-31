@@ -1,6 +1,8 @@
 import os.path
 import sys
+
 import unittest.mock
+from textwrap import dedent
 
 import py
 
@@ -9,6 +11,7 @@ from _pytest.pathlib import ensure_deletable
 from _pytest.pathlib import fnmatch_ex
 from _pytest.pathlib import get_extended_length_path_str
 from _pytest.pathlib import get_lock_path
+from _pytest.pathlib import import_module
 from _pytest.pathlib import maybe_delete_a_numbered_dir
 from _pytest.pathlib import Path
 
@@ -77,6 +80,178 @@ class TestPort:
     )
     def test_not_matching(self, match, pattern, path):
         assert not match(pattern, path)
+
+
+class TestImport:
+    """Copied over from py lib.
+
+    Having our own pyimport function is inline with removing py.path dependency in the future.
+    """
+
+    @pytest.yield_fixture(scope="session")
+    def path1(self, tmpdir_factory):
+        path = tmpdir_factory.mktemp("path")
+        self.setuptestfs(path)
+        yield path
+        assert path.join("samplefile").check()
+
+    def setuptestfs(self, path):
+        if path.join("samplefile").check():
+            return
+        # print "setting up test fs for", repr(path)
+        samplefile = path.ensure("samplefile")
+        samplefile.write("samplefile\n")
+
+        execfile = path.ensure("execfile")
+        execfile.write("x=42")
+
+        execfilepy = path.ensure("execfile.py")
+        execfilepy.write("x=42")
+
+        d = {1: 2, "hello": "world", "answer": 42}
+        path.ensure("samplepickle").dump(d)
+
+        sampledir = path.ensure("sampledir", dir=1)
+        sampledir.ensure("otherfile")
+
+        otherdir = path.ensure("otherdir", dir=1)
+        otherdir.ensure("__init__.py")
+
+        module_a = otherdir.ensure("a.py")
+        module_a.write("from .b import stuff as result\n")
+        module_b = otherdir.ensure("b.py")
+        module_b.write('stuff="got it"\n')
+        module_c = otherdir.ensure("c.py")
+        module_c.write(
+            dedent(
+                """
+            import py;
+            import otherdir.a
+            value = otherdir.a.result
+        """
+            )
+        )
+        module_d = otherdir.ensure("d.py")
+        module_d.write(
+            dedent(
+                """
+            import py;
+            from otherdir import a
+            value2 = a.result
+        """
+            )
+        )
+
+    def test_pyimport(self, path1):
+        obj = path1.join("execfile.py").pyimport()
+        assert obj.x == 42
+        assert obj.__name__ == "execfile"
+
+    def test_pyimport_renamed_dir_creates_mismatch(self, tmpdir, monkeypatch):
+        p = tmpdir.ensure("a", "test_x123.py")
+        import_module(p)
+        tmpdir.join("a").move(tmpdir.join("b"))
+        with pytest.raises(tmpdir.ImportMismatchError):
+            import_module(tmpdir.join("b", "test_x123.py"))
+
+        # Errors can be ignored.
+        monkeypatch.setenv("PY_IGNORE_IMPORTMISMATCH", "1")
+        import_module(tmpdir.join("b", "test_x123.py"))
+
+        # PY_IGNORE_IMPORTMISMATCH=0 does not ignore error.
+        monkeypatch.setenv("PY_IGNORE_IMPORTMISMATCH", "0")
+        with pytest.raises(tmpdir.ImportMismatchError):
+            import_module(tmpdir.join("b", "test_x123.py"))
+
+    def test_pyimport_messy_name(self, tmpdir):
+        # http://bitbucket.org/hpk42/py-trunk/issue/129
+        path = tmpdir.ensure("foo__init__.py")
+        import_module(path)
+
+    def test_pyimport_dir(self, tmpdir):
+        p = tmpdir.join("hello_123")
+        p_init = p.ensure("__init__.py")
+        m = import_module(p)
+        assert m.__name__ == "hello_123"
+        m = import_module(p_init)
+        assert m.__name__ == "hello_123"
+
+    def test_pyimport_execfile_different_name(self, path1):
+        obj = import_module(path1.join("execfile.py"), modname="0x.y.z")
+        assert obj.x == 42
+        assert obj.__name__ == "0x.y.z"
+
+    def test_pyimport_a(self, path1):
+        otherdir = path1.join("otherdir")
+        mod = import_module(otherdir.join("a.py"))
+        assert mod.result == "got it"
+        assert mod.__name__ == "otherdir.a"
+
+    def test_pyimport_b(self, path1):
+        otherdir = path1.join("otherdir")
+        mod = import_module(otherdir.join("b.py"))
+        assert mod.stuff == "got it"
+        assert mod.__name__ == "otherdir.b"
+
+    def test_pyimport_c(self, path1):
+        otherdir = path1.join("otherdir")
+        mod = import_module(otherdir.join("c.py"))
+        assert mod.value == "got it"
+
+    def test_pyimport_d(self, path1):
+        otherdir = path1.join("otherdir")
+        mod = import_module(otherdir.join("d.py"))
+        assert mod.value2 == "got it"
+
+    def test_pyimport_and_import(self, tmpdir):
+        tmpdir.ensure("xxxpackage", "__init__.py")
+        mod1path = tmpdir.ensure("xxxpackage", "module1.py")
+        mod1 = import_module(mod1path)
+        assert mod1.__name__ == "xxxpackage.module1"
+        from xxxpackage import module1
+
+        assert module1 is mod1
+
+    def test_pyimport_check_filepath_consistency(self, monkeypatch, tmpdir):
+        name = "pointsback123"
+        ModuleType = type(os)
+        p = tmpdir.ensure(name + ".py")
+        for ending in (".pyc", "$py.class", ".pyo"):
+            mod = ModuleType(name)
+            pseudopath = tmpdir.ensure(name + ending)
+            mod.__file__ = str(pseudopath)
+            monkeypatch.setitem(sys.modules, name, mod)
+            newmod = import_module(p)
+            assert mod == newmod
+        monkeypatch.undo()
+        mod = ModuleType(name)
+        pseudopath = tmpdir.ensure(name + "123.py")
+        mod.__file__ = str(pseudopath)
+        monkeypatch.setitem(sys.modules, name, mod)
+        excinfo = pytest.raises(pseudopath.ImportMismatchError, import_module, p)
+        modname, modfile, orig = excinfo.value.args
+        assert modname == name
+        assert modfile == pseudopath
+        assert orig == p
+        assert issubclass(pseudopath.ImportMismatchError, ImportError)
+
+    def test_issue131_pyimport_on__init__(self, tmpdir):
+        # __init__.py files may be namespace packages, and thus the
+        # __file__ of an imported module may not be ourselves
+        # see issue
+        p1 = tmpdir.ensure("proja", "__init__.py")
+        p2 = tmpdir.ensure("sub", "proja", "__init__.py")
+        m1 = import_module(p1)
+        m2 = import_module(p2)
+        assert m1 == m2
+
+    def test_ensuresyspath_append(self, tmpdir):
+        root1 = tmpdir.mkdir("root1")
+        file1 = root1.ensure("x123.py")
+        assert str(root1) not in sys.path
+        import_module(file1, ensuresyspath="append")
+        assert str(root1) == sys.path[-1]
+        assert str(root1) not in sys.path[:-1]
 
 
 def test_access_denied_during_cleanup(tmp_path, monkeypatch):
