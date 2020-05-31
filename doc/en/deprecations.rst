@@ -25,7 +25,7 @@ The ``pytest_warning_captured`` hook
 
 .. deprecated:: 6.0
 
-This hook has an `item` parameter which cannot be serialized by `pytest-xdist`.
+This hook has an `item` parameter which cannot be serialized by ``pytest-xdist``.
 
 Use the ``pytest_warning_recored`` hook instead, which replaces the ``item`` parameter
 by a ``nodeid`` parameter.
