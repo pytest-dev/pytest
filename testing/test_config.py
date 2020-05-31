@@ -173,6 +173,16 @@ class TestParseIni:
             ),
             (
                 """
+          [some_other_header]
+          unknown_ini = value1
+          [pytest]
+          minversion = 5.0.0
+          """,
+                [],
+                [],
+            ),
+            (
+                """
           [pytest]
           minversion = 5.0.0
           """,
