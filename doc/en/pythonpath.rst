@@ -46,7 +46,10 @@ these values:
 * ``importlib``: new in pytest-6.0, this mode uses `importlib <https://docs.python.org/3/library/importlib.html>`__ to import test modules. This gives full control over the import process, and doesn't require
   changing ``sys.path`` or ``sys.modules`` at all.
 
-  For this reason this doesn't require test module names to be unique at all.
+  For this reason this doesn't require test module names to be unique at all, but also makes test
+  modules non-importable by each other. This was made possible in previous modes, for tests not residing
+  in Python packages, because of the side-effects of changing ``sys.path`` and ``sys.modules``
+  mentioned above. Users which require this should turn their tests into proper packages instead.
 
   We intend to make ``importlib`` the default in future releases.
 
