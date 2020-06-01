@@ -216,7 +216,7 @@ class TestGeneralUsage:
         )
         assert result.stdout.lines == []
         assert result.stderr.lines == [
-            "ModuleNotFoundError while loading conftest '{}'.".format(conftest),
+            "{} while loading conftest '{}'.".format(exc_name, conftest),
             "conftest.py:3: in <module>",
             "    foo()",
             "conftest.py:2: in foo",
