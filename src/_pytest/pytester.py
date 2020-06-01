@@ -22,6 +22,7 @@ from typing import Union
 from weakref import WeakKeyDictionary
 
 import py
+from iniconfig import IniConfig
 
 import pytest
 from _pytest._code import Source
@@ -683,7 +684,7 @@ class Testdir:
     def getinicfg(self, source):
         """Return the pytest section from the tox.ini config file."""
         p = self.makeini(source)
-        return py.iniconfig.IniConfig(p)["pytest"]
+        return IniConfig(p)["pytest"]
 
     def makepyfile(self, *args, **kwargs):
         r"""Shortcut for .makefile() with a .py extension.
