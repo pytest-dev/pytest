@@ -1,0 +1,1 @@
+The output if an exception occurs during the plugin import in conftest is now similar to the output if the exception is directly in conftest. All exceptions during conftest's startup are now ExitCode.INTERNAL_ERROR. Previously it was ExitCode.USAGE_ERROR.

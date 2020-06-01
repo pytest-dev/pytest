@@ -86,14 +86,27 @@ class ExitCode(enum.IntEnum):
 
 
 class ConftestImportFailure(Exception):
-    def __init__(self, path, excinfo):
+    def __init__(self, path, excinfo, plugin=None):
         super().__init__(path, excinfo)
         self.path = path
         self.excinfo = excinfo  # type: Tuple[Type[Exception], Exception, TracebackType]
+        self.plugin = plugin  # name of plugin if exception in plugin; None otherwise
 
     def __str__(self):
         return "{}: {} (from {})".format(
             self.excinfo[0].__name__, self.excinfo[1], self.path
+        )
+
+
+class PluginImportFailure(ImportError):
+    def __init__(self, plugin, excinfo):
+        super().__init__(plugin, excinfo)
+        self.plugin = plugin
+        self.excinfo = excinfo  # type: Tuple[Type[Exception], Exception, TracebackType]
+
+    def __str__(self):
+        return "{}: {} (from {})".format(
+            self.excinfo[0].__name__, self.excinfo[1], self.plugin
         )
 
 
@@ -112,8 +125,17 @@ def main(args=None, plugins=None) -> Union[int, ExitCode]:
             exc_info = ExceptionInfo(e.excinfo)
             tw = TerminalWriter(sys.stderr)
             tw.line(
-                "ImportError while loading conftest '{e.path}'.".format(e=e), red=True
+                "{} while loading conftest '{}'{}".format(
+                    str(type(e.excinfo[1]).__name__),
+                    e.path,
+                    ("." if e.plugin is None else ","),
+                ),
+                red=True,
             )
+            if e.plugin is not None:
+                tw.line(
+                    "    while importing plugin '{e.plugin}'.".format(e=e), red=True
+                )
             exc_info.traceback = exc_info.traceback.filter(filter_traceback)
             exc_repr = (
                 exc_info.getrepr(style="short", chain=False)
@@ -123,7 +145,7 @@ def main(args=None, plugins=None) -> Union[int, ExitCode]:
             formatted_tb = str(exc_repr)
             for line in formatted_tb.splitlines():
                 tw.line(line.rstrip(), red=True)
-            return ExitCode.USAGE_ERROR
+            return ExitCode.INTERNAL_ERROR
         else:
             try:
                 ret = config.hook.pytest_cmdline_main(
@@ -527,7 +549,10 @@ class PytestPluginManager(PluginManager):
                     assert mod not in mods
                     mods.append(mod)
         self.trace("loading conftestmodule {!r}".format(mod))
-        self.consider_conftest(mod)
+        try:
+            self.consider_conftest(mod)
+        except PluginImportFailure as e:
+            raise ConftestImportFailure(conftestpath, e.excinfo, e.plugin)
         return mod
 
     def _check_non_top_pytest_plugins(self, mod, conftestpath):
@@ -638,11 +663,6 @@ class PytestPluginManager(PluginManager):
 
         try:
             __import__(importspec)
-        except ImportError as e:
-            raise ImportError(
-                'Error importing plugin "{}": {}'.format(modname, str(e.args[0]))
-            ).with_traceback(e.__traceback__)
-
         except Skipped as e:
             from _pytest.warnings import _issue_warning_captured
 
@@ -651,6 +671,11 @@ class PytestPluginManager(PluginManager):
                 self.hook,
                 stacklevel=2,
             )
+        except Exception as e:
+            raise (PluginImportFailure(modname, sys.exc_info())).with_traceback(
+                e.__traceback__
+            ) from e
+
         else:
             mod = sys.modules[importspec]
             self.register(mod, modname)

@@ -216,7 +216,7 @@ class TestGeneralUsage:
         )
         assert result.stdout.lines == []
         assert result.stderr.lines == [
-            "ImportError while loading conftest '{}'.".format(conftest),
+            "ModuleNotFoundError while loading conftest '{}'.".format(conftest),
             "conftest.py:3: in <module>",
             "    foo()",
             "conftest.py:2: in foo",
@@ -302,7 +302,7 @@ class TestGeneralUsage:
         result = testdir.runpytest(p)
         assert result.ret == ExitCode.NO_TESTS_COLLECTED
         result = testdir.runpytest(sub1)
-        assert result.ret == ExitCode.USAGE_ERROR
+        assert result.ret == ExitCode.INTERNAL_ERROR
 
     def test_directory_skipped(self, testdir):
         testdir.makeconftest(

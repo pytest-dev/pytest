@@ -309,7 +309,7 @@ def test_no_conftest(testdir):
     assert result.ret == ExitCode.NO_TESTS_COLLECTED
 
     result = testdir.runpytest()
-    assert result.ret == ExitCode.USAGE_ERROR
+    assert result.ret == ExitCode.INTERNAL_ERROR
 
 
 def test_conftest_existing_resultlog(testdir):
@@ -610,7 +610,7 @@ def test_conftest_exception_handling(testdir):
         """
     )
     res = testdir.runpytest()
-    assert res.ret == 4
+    assert res.ret == 3
     assert "raise ValueError()" in [line.strip() for line in res.errlines]
 
 
@@ -650,3 +650,31 @@ def test_required_option_help(testdir):
     result = testdir.runpytest("-h", x)
     result.stdout.no_fnmatch_line("*argument --xyz is required*")
     assert "general:" in result.stdout.str()
+
+
+def test_plugin_error(testdir):
+    """Test that we match files correctly when they are marked for rewriting (#2939)."""
+    contents = {
+        "conftest.py": """\
+            pytest_plugins = "plugin"
+        """,
+        "plugin.py": """\
+            raise TypeError
+        """,
+        "test_foo.py": """\
+            def test_foo():
+                pass
+        """,
+    }
+    testdir.makepyfile(**contents)
+    result = testdir.runpytest()
+    result.stderr.fnmatch_lines(
+        [
+            "*TypeError while loading conftest*conftest.py',",
+            "*while importing plugin 'plugin'.*",
+            "*plugin.py:1*",
+            "*raise TypeError*",
+            "*E*TypeError*",
+        ]
+    )
+    assert result.ret == ExitCode.INTERNAL_ERROR
