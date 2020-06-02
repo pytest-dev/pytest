@@ -1,0 +1,1 @@
+Make dataclasses/attrs comparison recursive.
