@@ -1,1 +1,0 @@
-Prevent hiding the underlying exception when ``ConfTestImportFailure`` is raised.
