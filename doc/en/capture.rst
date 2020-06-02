@@ -145,8 +145,7 @@ The return value from ``readouterr`` changed to a ``namedtuple`` with two attrib
 
 If the code under test writes non-textual data, you can capture this using
 the ``capsysbinary`` fixture which instead returns ``bytes`` from
-the ``readouterr`` method.  The ``capsysbinary`` fixture is currently only
-available in Python 3.
+the ``readouterr`` method.
 
 
 
