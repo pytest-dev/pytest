@@ -128,8 +128,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    # For setuptools-scm.
-    - run: git fetch --prune --unshallow
+      with:
+        fetch-depth: 0
     - name: Set up Python ${{ matrix.python }}
       uses: actions/setup-python@v2
       if: matrix.python != '3.9-dev'
@@ -177,8 +177,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    # For setuptools-scm.
-    - run: git fetch --prune --unshallow
+      with:
+        fetch-depth: 0
     - name: Set up Python
       uses: actions/setup-python@v2
       with:
