@@ -1030,6 +1030,7 @@ class Config:
         self.known_args_namespace = ns = self._parser.parse_known_args(
             args, namespace=copy.copy(self.option)
         )
+        self._validatekeys()
         if self.known_args_namespace.confcutdir is None and self.inifile:
             confcutdir = py.path.local(self.inifile).dirname
             self.known_args_namespace.confcutdir = confcutdir
@@ -1071,6 +1072,17 @@ class Config:
                         pytest.__version__,
                     )
                 )
+
+    def _validatekeys(self):
+        for key in self._get_unknown_ini_keys():
+            message = "Unknown config ini key: {}\n".format(key)
+            if self.known_args_namespace.strict_config:
+                fail(message, pytrace=False)
+            sys.stderr.write("WARNING: {}".format(message))
+
+    def _get_unknown_ini_keys(self) -> List[str]:
+        parser_inicfg = self._parser._inidict
+        return [name for name in self.inicfg if name not in parser_inicfg]
 
     def parse(self, args: List[str], addopts: bool = True) -> None:
         # parse given cmdline arguments into this config object.
