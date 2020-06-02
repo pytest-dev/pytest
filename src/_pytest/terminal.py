@@ -643,7 +643,7 @@ class TerminalReporter:
         line = "rootdir: %s" % config.rootdir
 
         if config.inifile:
-            line += ", inifile: " + config.rootdir.bestrelpath(config.inifile)
+            line += ", configfile: " + config.rootdir.bestrelpath(config.inifile)
 
         testpaths = config.getini("testpaths")
         if testpaths and config.args == testpaths:
