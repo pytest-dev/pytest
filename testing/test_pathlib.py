@@ -5,6 +5,7 @@ import py
 
 import pytest
 from _pytest.pathlib import fnmatch_ex
+from _pytest.pathlib import get_extended_length_path_str
 from _pytest.pathlib import get_lock_path
 from _pytest.pathlib import maybe_delete_a_numbered_dir
 from _pytest.pathlib import Path
@@ -89,3 +90,26 @@ def test_access_denied_during_cleanup(tmp_path, monkeypatch):
     lock_path = get_lock_path(path)
     maybe_delete_a_numbered_dir(path)
     assert not lock_path.is_file()
+
+
+def test_long_path_during_cleanup(tmp_path):
+    """Ensure that deleting long path works (particularly on Windows (#6775))."""
+    path = (tmp_path / ("a" * 250)).resolve()
+    if sys.platform == "win32":
+        # make sure that the full path is > 260 characters without any
+        # component being over 260 characters
+        assert len(str(path)) > 260
+        extended_path = "\\\\?\\" + str(path)
+    else:
+        extended_path = str(path)
+    os.mkdir(extended_path)
+    assert os.path.isdir(extended_path)
+    maybe_delete_a_numbered_dir(path)
+    assert not os.path.isdir(extended_path)
+
+
+def test_get_extended_length_path_str():
+    assert get_extended_length_path_str(r"c:\foo") == r"\\?\c:\foo"
+    assert get_extended_length_path_str(r"\\share\foo") == r"\\?\UNC\share\foo"
+    assert get_extended_length_path_str(r"\\?\UNC\share\foo") == r"\\?\UNC\share\foo"
+    assert get_extended_length_path_str(r"\\?\c:\foo") == r"\\?\c:\foo"
