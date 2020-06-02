@@ -1113,7 +1113,7 @@ class Config:
         x.append(line)  # modifies the cached list inline
 
     def getini(self, name: str):
-        """ return configuration value from an :ref:`ini file <inifiles>`. If the
+        """ return configuration value from an :ref:`ini file <configfiles>`. If the
         specified name hasn't been registered through a prior
         :py:func:`parser.addini <_pytest.config.argparsing.Parser.addini>`
         call (usually from a plugin), a ValueError is raised. """

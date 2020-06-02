@@ -115,15 +115,13 @@ Changing naming conventions
 
 You can configure different naming conventions by setting
 the :confval:`python_files`, :confval:`python_classes` and
-:confval:`python_functions` configuration options.
+:confval:`python_functions` in your :ref:`configuration file <config file formats>`.
 Here is an example:
 
 .. code-block:: ini
 
     # content of pytest.ini
     # Example 1: have pytest look for "check" instead of "test"
-    # can also be defined in tox.ini or setup.cfg file, although the section
-    # name in setup.cfg files should be "tool:pytest"
     [pytest]
     python_files = check_*.py
     python_classes = Check
@@ -165,8 +163,7 @@ You can check for multiple glob patterns by adding a space between the patterns:
 .. code-block:: ini
 
     # Example 2: have pytest look for files with "test" and "example"
-    # content of pytest.ini, tox.ini, or setup.cfg file (replace "pytest"
-    # with "tool:pytest" for setup.cfg)
+    # content of pytest.ini
     [pytest]
     python_files = test_*.py example_*.py
 
