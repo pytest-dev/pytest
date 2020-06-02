@@ -1,1 +1,1 @@
-Replaced usages of py.iniconfig with iniconfig.
+Replaced ``py.iniconfig`` with `iniconfig <https://pypi.org/project/iniconfig/>`__.
