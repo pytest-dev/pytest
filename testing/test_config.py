@@ -158,10 +158,10 @@ class TestParseIni:
           """,
                 ["unknown_ini", "another_unknown_ini"],
                 [
-                    "WARNING: Unknown config ini key: unknown_ini",
                     "WARNING: Unknown config ini key: another_unknown_ini",
+                    "WARNING: Unknown config ini key: unknown_ini",
                 ],
-                "Unknown config ini key: unknown_ini",
+                "Unknown config ini key: another_unknown_ini",
             ),
             (
                 """
@@ -200,9 +200,7 @@ class TestParseIni:
     ):
         testdir.tmpdir.join("pytest.ini").write(textwrap.dedent(ini_file_text))
         config = testdir.parseconfig()
-        assert config._get_unknown_ini_keys() == invalid_keys, str(
-            config._get_unknown_ini_keys()
-        )
+        assert sorted(config._get_unknown_ini_keys()) == sorted(invalid_keys)
 
         result = testdir.runpytest()
         result.stderr.fnmatch_lines(stderr_output)

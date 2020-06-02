@@ -1074,7 +1074,7 @@ class Config:
                 )
 
     def _validatekeys(self):
-        for key in self._get_unknown_ini_keys():
+        for key in sorted(self._get_unknown_ini_keys()):
             message = "Unknown config ini key: {}\n".format(key)
             if self.known_args_namespace.strict_config:
                 fail(message, pytrace=False)
