@@ -84,19 +84,16 @@ def _get_ini_config_from_setup_cfg(path: py.path.local) -> Optional[Dict[str, An
 def _get_ini_config_from_pyproject_toml(
     path: py.path.local,
 ) -> Optional[Dict[str, Any]]:
-    """Parses and validates a 'setup.cfg' file for pytest configuration.
+    """Parses and validates a ``pyproject.toml`` file for pytest configuration.
 
-    'setup.cfg' files are only considered for pytest configuration if they contain a "[tool:pytest]"
-    section.
-
-    If a setup.cfg contains a "[pytest]" section, we raise a failure to indicate users that
-    plain "[pytest]" sections in setup.cfg files is no longer supported (#3086).
+    The ``[tool.pytest]`` table is used by pytest. If the file contains that section,
+    it is used as the config file.
     """
     import toml
 
     config = toml.load(path)
 
-    result = config.get("tool", {}).get("pytest", {}).get("ini", None)
+    result = config.get("tool", {}).get("pytest", {}).get("ini_options", None)
     if result is not None:
         # convert all scalar values to strings for compatibility with other ini formats
         # conversion to actual useful values is made by Config._getini
@@ -115,9 +112,9 @@ def getcfg(args):
     """
     ini_names_and_handlers = [
         ("pytest.ini", _get_ini_config_from_pytest_ini),
+        ("pyproject.toml", _get_ini_config_from_pyproject_toml),
         ("tox.ini", _get_ini_config_from_tox_ini),
         ("setup.cfg", _get_ini_config_from_setup_cfg),
-        ("pyproject.toml", _get_ini_config_from_pyproject_toml),
     ]
     args = [x for x in args if not str(x).startswith("-")]
     if not args:

@@ -112,7 +112,7 @@ class TestParseIni:
     def test_pyproject_toml(self, testdir):
         testdir.makepyprojecttoml(
             """
-            [tool.pytest.ini]
+            [tool.pytest.ini_options]
             minversion = "1.0"
         """
         )
@@ -382,7 +382,7 @@ class TestConfigAPI:
         self.make_conftest_for_pathlist(testdir)
         p = testdir.makepyprojecttoml(
             """
-            [tool.pytest.ini]
+            [tool.pytest.ini_options]
             paths=["hello", "world/sub.py"]
         """
         )
@@ -419,7 +419,7 @@ class TestConfigAPI:
         self.make_conftest_for_args(testdir)
         testdir.makepyprojecttoml(
             """
-            [tool.pytest.ini]
+            [tool.pytest.ini_options]
             args = ["123", "123 hello", "this"]
             """
         )
@@ -456,7 +456,7 @@ class TestConfigAPI:
         self.make_conftest_for_linelist(testdir)
         testdir.makepyprojecttoml(
             """
-            [tool.pytest.ini]
+            [tool.pytest.ini_options]
             xy = ["123 345", "second line"]
         """
         )
