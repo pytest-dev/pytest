@@ -632,7 +632,7 @@ def pytest_warning_captured(
     """(**Deprecated**) Process a warning captured by the internal pytest warnings plugin.
 
     .. deprecated:: 6.0
-    
+
     This hook is considered deprecated and will be removed in a future pytest version.
     Use :func:`pytest_warning_recorded` instead.
 
