@@ -7,7 +7,6 @@ import datetime
 import inspect
 import platform
 import sys
-import time
 import warnings
 from functools import partial
 from typing import Any
@@ -26,6 +25,7 @@ from more_itertools import collapse
 
 import pytest
 from _pytest import nodes
+from _pytest import timing
 from _pytest._io import TerminalWriter
 from _pytest._io.wcwidth import wcswidth
 from _pytest.compat import order_preserving_dict
@@ -552,7 +552,7 @@ class TerminalReporter:
         if self.isatty:
             if self.config.option.verbose >= 0:
                 self.write("collecting ... ", flush=True, bold=True)
-                self._collect_report_last_write = time.time()
+                self._collect_report_last_write = timing.time()
         elif self.config.option.verbose >= 1:
             self.write("collecting ... ", flush=True, bold=True)
 
@@ -572,7 +572,7 @@ class TerminalReporter:
 
         if not final:
             # Only write "collecting" report every 0.5s.
-            t = time.time()
+            t = timing.time()
             if (
                 self._collect_report_last_write is not None
                 and self._collect_report_last_write > t - REPORT_COLLECTING_RESOLUTION
@@ -609,7 +609,7 @@ class TerminalReporter:
     @pytest.hookimpl(trylast=True)
     def pytest_sessionstart(self, session: Session) -> None:
         self._session = session
-        self._sessionstarttime = time.time()
+        self._sessionstarttime = timing.time()
         if not self.showheader:
             return
         self.write_sep("=", "test session starts", bold=True)
@@ -964,7 +964,7 @@ class TerminalReporter:
         if self.verbosity < -1:
             return
 
-        session_duration = time.time() - self._sessionstarttime
+        session_duration = timing.time() - self._sessionstarttime
         (parts, main_color) = self.build_summary_stats_line()
         line_parts = []
 
