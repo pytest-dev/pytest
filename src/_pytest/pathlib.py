@@ -100,10 +100,41 @@ def on_rm_rf_error(func, path: str, exc, *, start_path: Path) -> bool:
     return True
 
 
+def ensure_extended_length_path(path: Path) -> Path:
+    """Get the extended-length version of a path (Windows).
+
+    On Windows, by default, the maximum length of a path (MAX_PATH) is 260
+    characters, and operations on paths longer than that fail. But it is possible
+    to overcome this by converting the path to "extended-length" form before
+    performing the operation:
+    https://docs.microsoft.com/en-us/windows/win32/fileio/naming-a-file#maximum-path-length-limitation
+
+    On Windows, this function returns the extended-length absolute version of path.
+    On other platforms it returns path unchanged.
+    """
+    if sys.platform.startswith("win32"):
+        path = path.resolve()
+        path = Path(get_extended_length_path_str(str(path)))
+    return path
+
+
+def get_extended_length_path_str(path: str) -> str:
+    """Converts to extended length path as a str"""
+    long_path_prefix = "\\\\?\\"
+    unc_long_path_prefix = "\\\\?\\UNC\\"
+    if path.startswith((long_path_prefix, unc_long_path_prefix)):
+        return path
+    # UNC
+    if path.startswith("\\\\"):
+        return unc_long_path_prefix + path[2:]
+    return long_path_prefix + path
+
+
 def rm_rf(path: Path) -> None:
     """Remove the path contents recursively, even if some elements
     are read-only.
     """
+    path = ensure_extended_length_path(path)
     onerror = partial(on_rm_rf_error, start_path=path)
     shutil.rmtree(str(path), onerror=onerror)
 
@@ -220,6 +251,7 @@ def register_cleanup_lock_removal(lock_path: Path, register=atexit.register):
 
 def maybe_delete_a_numbered_dir(path: Path) -> None:
     """removes a numbered directory if its lock can be obtained and it does not seem to be in use"""
+    path = ensure_extended_length_path(path)
     lock_path = None
     try:
         lock_path = create_cleanup_lock(path)
