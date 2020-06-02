@@ -4,6 +4,7 @@ import functools
 import sys
 
 from _pytest import outcomes
+from _pytest.config import ConftestImportFailure
 from _pytest.config import hookimpl
 from _pytest.config.exceptions import UsageError
 
@@ -338,6 +339,10 @@ def _postmortem_traceback(excinfo):
         # A doctest.UnexpectedException is not useful for post_mortem.
         # Use the underlying exception instead:
         return excinfo.value.exc_info[2]
+    elif isinstance(excinfo.value, ConftestImportFailure):
+        # A config.ConftestImportFailure is not useful for post_mortem.
+        # Use the underlying exception instead:
+        return excinfo.value.excinfo[2]
     else:
         return excinfo._excinfo[2]
 

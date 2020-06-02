@@ -711,6 +711,7 @@ Session related reporting hooks:
 .. autofunction:: pytest_fixture_setup
 .. autofunction:: pytest_fixture_post_finalizer
 .. autofunction:: pytest_warning_captured
+.. autofunction:: pytest_warning_recorded
 
 Central hook for reporting about test execution:
 
@@ -1446,6 +1447,11 @@ passed multiple times. The expected format is ``name=value``. For example::
         markers =
             slow
             serial
+
+    .. note::
+        The use of ``--strict-markers`` is highly preferred. ``--strict`` was kept for
+        backward compatibility only and may be confusing for others as it only applies to
+        markers and not to other options.
 
 .. confval:: minversion
 

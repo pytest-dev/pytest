@@ -94,7 +94,7 @@ jobs:
             os: ubuntu-latest
             tox_env: "py38-xdist"
           - name: "ubuntu-py39"
-            python: "3.8"
+            python: "3.9-dev"
             os: ubuntu-latest
             tox_env: "py39-xdist"
           - name: "ubuntu-pypy3"
@@ -128,18 +128,18 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    # For setuptools-scm.
-    - run: git fetch --prune --unshallow
+      with:
+        fetch-depth: 0
     - name: Set up Python ${{ matrix.python }}
       uses: actions/setup-python@v2
+      if: matrix.python != '3.9-dev'
       with:
         python-version: ${{ matrix.python }}
-    - name: install python3.9
-      if: matrix.tox_env == 'py39-xdist'
-      run: |
-        sudo add-apt-repository ppa:deadsnakes/nightly
-        sudo apt-get update
-        sudo apt-get install -y --no-install-recommends python3.9-dev python3.9-distutils
+    - name: Set up Python ${{ matrix.python }} (deadsnakes)
+      uses: deadsnakes/action@v1.0.0
+      if: matrix.python == '3.9-dev'
+      with:
+        python-version: ${{ matrix.python }}
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
@@ -177,8 +177,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    # For setuptools-scm.
-    - run: git fetch --prune --unshallow
+      with:
+        fetch-depth: 0
     - name: Set up Python
       uses: actions/setup-python@v2
       with:

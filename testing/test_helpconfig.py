@@ -2,16 +2,23 @@ import pytest
 from _pytest.config import ExitCode
 
 
-def test_version(testdir, pytestconfig):
+def test_version_verbose(testdir, pytestconfig):
     testdir.monkeypatch.delenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD")
-    result = testdir.runpytest("--version")
+    result = testdir.runpytest("--version", "--version")
     assert result.ret == 0
-    # p = py.path.local(py.__file__).dirpath()
     result.stderr.fnmatch_lines(
         ["*pytest*{}*imported from*".format(pytest.__version__)]
     )
     if pytestconfig.pluginmanager.list_plugin_distinfo():
         result.stderr.fnmatch_lines(["*setuptools registered plugins:", "*at*"])
+
+
+def test_version_less_verbose(testdir, pytestconfig):
+    testdir.monkeypatch.delenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD")
+    result = testdir.runpytest("--version")
+    assert result.ret == 0
+    # p = py.path.local(py.__file__).dirpath()
+    result.stderr.fnmatch_lines(["pytest {}".format(pytest.__version__)])
 
 
 def test_help(testdir):

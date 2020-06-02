@@ -1002,6 +1002,17 @@ class TestReportContents:
         assert rep.capstdout == ""
         assert rep.capstderr == ""
 
+    def test_longrepr_type(self, testdir) -> None:
+        reports = testdir.runitem(
+            """
+            import pytest
+            def test_func():
+                pytest.fail(pytrace=False)
+        """
+        )
+        rep = reports[1]
+        assert isinstance(rep.longrepr, _pytest._code.code.ExceptionRepr)
+
 
 def test_outcome_exception_bad_msg() -> None:
     """Check that OutcomeExceptions validate their input to prevent confusing errors (#5578)"""

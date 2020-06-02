@@ -27,6 +27,7 @@ import pytest
 from _pytest import nodes
 from _pytest import timing
 from _pytest._io import TerminalWriter
+from _pytest._io.wcwidth import wcswidth
 from _pytest.compat import order_preserving_dict
 from _pytest.config import Config
 from _pytest.config import ExitCode
@@ -227,7 +228,7 @@ def pytest_report_teststatus(report: TestReport) -> Tuple[str, str, str]:
 @attr.s
 class WarningReport:
     """
-    Simple structure to hold warnings information captured by ``pytest_warning_captured``.
+    Simple structure to hold warnings information captured by ``pytest_warning_recorded``.
 
     :ivar str message: user friendly message about the warning
     :ivar str|None nodeid: node id that generated the warning (see ``get_location``).
@@ -411,14 +412,12 @@ class TerminalReporter:
             self.write_line("INTERNALERROR> " + line)
         return 1
 
-    def pytest_warning_captured(self, warning_message, item):
-        # from _pytest.nodes import get_fslocation_from_item
+    def pytest_warning_recorded(self, warning_message, nodeid):
         from _pytest.warnings import warning_record_to_str
 
         fslocation = warning_message.filename, warning_message.lineno
         message = warning_record_to_str(warning_message)
 
-        nodeid = item.nodeid if item is not None else ""
         warning_report = WarningReport(
             fslocation=fslocation, message=message, nodeid=nodeid
         )
@@ -443,8 +442,7 @@ class TerminalReporter:
             self.write_ensure_prefix(line, "")
             self.flush()
         elif self.showfspath:
-            fsid = nodeid.split("::")[0]
-            self.write_fspath_result(fsid, "")
+            self.write_fspath_result(nodeid, "")
             self.flush()
 
     def pytest_runtest_logreport(self, report: TestReport) -> None:
@@ -474,10 +472,7 @@ class TerminalReporter:
             else:
                 markup = {}
         if self.verbosity <= 0:
-            if not running_xdist and self.showfspath:
-                self.write_fspath_result(rep.nodeid, letter, **markup)
-            else:
-                self._tw.write(letter, **markup)
+            self._tw.write(letter, **markup)
         else:
             self._progress_nodeids_reported.add(rep.nodeid)
             line = self._locationline(rep.nodeid, *rep.location)
@@ -1126,8 +1121,6 @@ def _get_pos(config, rep):
 
 def _get_line_with_reprcrash_message(config, rep, termwidth):
     """Get summary line for a report, trying to add reprcrash message."""
-    from wcwidth import wcswidth
-
     verbose_word = rep._get_verbose_word(config)
     pos = _get_pos(config, rep)
 

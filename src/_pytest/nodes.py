@@ -19,6 +19,7 @@ from _pytest._code.code import ReprExceptionInfo
 from _pytest.compat import cached_property
 from _pytest.compat import TYPE_CHECKING
 from _pytest.config import Config
+from _pytest.config import ConftestImportFailure
 from _pytest.config import PytestPluginManager
 from _pytest.deprecated import NODE_USE_FROM_PARENT
 from _pytest.fixtures import FixtureDef
@@ -28,7 +29,7 @@ from _pytest.mark.structures import Mark
 from _pytest.mark.structures import MarkDecorator
 from _pytest.mark.structures import NodeKeywords
 from _pytest.outcomes import fail
-from _pytest.outcomes import Failed
+from _pytest.pathlib import Path
 from _pytest.store import Store
 
 if TYPE_CHECKING:
@@ -331,11 +332,13 @@ class Node(metaclass=NodeMeta):
         pass
 
     def _repr_failure_py(
-        self, excinfo: ExceptionInfo[Union[Failed, FixtureLookupError]], style=None
+        self, excinfo: ExceptionInfo[BaseException], style=None,
     ) -> Union[str, ReprExceptionInfo, ExceptionChainRepr, FixtureLookupErrorRepr]:
+        if isinstance(excinfo.value, ConftestImportFailure):
+            excinfo = ExceptionInfo(excinfo.value.excinfo)
         if isinstance(excinfo.value, fail.Exception):
             if not excinfo.value.pytrace:
-                return str(excinfo.value)
+                style = "value"
         if isinstance(excinfo.value, FixtureLookupError):
             return excinfo.value.formatrepr()
         if self.config.getoption("fulltrace", False):
@@ -359,9 +362,14 @@ class Node(metaclass=NodeMeta):
         else:
             truncate_locals = True
 
+        # excinfo.getrepr() formats paths relative to the CWD if `abspath` is False.
+        # It is possible for a fixture/test to change the CWD while this code runs, which
+        # would then result in the user seeing confusing paths in the failure message.
+        # To fix this, if the CWD changed, always display the full absolute path.
+        # It will be better to just always display paths relative to invocation_dir, but
+        # this requires a lot of plumbing (#6428).
         try:
-            os.getcwd()
-            abspath = False
+            abspath = Path(os.getcwd()) != Path(self.config.invocation_dir)
         except OSError:
             abspath = True
 
@@ -456,10 +464,7 @@ def _check_initialpaths_for_relpath(session, fspath):
 
 
 class FSHookProxy:
-    def __init__(
-        self, fspath: py.path.local, pm: PytestPluginManager, remove_mods
-    ) -> None:
-        self.fspath = fspath
+    def __init__(self, pm: PytestPluginManager, remove_mods) -> None:
         self.pm = pm
         self.remove_mods = remove_mods
 
@@ -510,7 +515,7 @@ class FSCollector(Collector):
         remove_mods = pm._conftest_plugins.difference(my_conftestmodules)
         if remove_mods:
             # one or more conftests are not in use at this fspath
-            proxy = FSHookProxy(fspath, pm, remove_mods)
+            proxy = FSHookProxy(pm, remove_mods)
         else:
             # all plugins are active for this fspath
             proxy = self.config.hook
