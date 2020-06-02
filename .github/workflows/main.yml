@@ -39,7 +39,6 @@ jobs:
           "macos-py37",
           "macos-py38",
 
-          "linting",
           "docs",
           "doctesting",
         ]
@@ -112,10 +111,6 @@ jobs:
             tox_env: "py38-xdist"
             use_coverage: true
 
-          - name: "linting"
-            python: "3.7"
-            os: ubuntu-latest
-            tox_env: "linting"
           - name: "docs"
             python: "3.7"
             os: ubuntu-latest
@@ -167,6 +162,20 @@ jobs:
       env:
         CODECOV_NAME: ${{ matrix.name }}
       run: bash scripts/report-coverage.sh -F GHA,${{ runner.os }}
+
+  linting:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-python@v2
+    - name: set PY
+      run: echo "::set-env name=PY::$(python -c 'import hashlib, sys;print(hashlib.sha256(sys.version.encode()+sys.executable.encode()).hexdigest())')"
+    - uses: actions/cache@v1
+      with:
+        path: ~/.cache/pre-commit
+        key: pre-commit|${{ env.PY }}|${{ hashFiles('.pre-commit-config.yaml') }}
+    - run: pip install tox
+    - run: tox -e linting
 
   deploy:
     if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags') && github.repository == 'pytest-dev/pytest'
