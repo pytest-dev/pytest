@@ -506,9 +506,10 @@ def test_runtest_in_module_ordering(testdir) -> None:
             @pytest.fixture
             def mylist(self, request):
                 return request.function.mylist
-            def pytest_runtest_call(self, item, __multicall__):
+            @pytest.hookimpl(hookwrapper=True)
+            def pytest_runtest_call(self, item):
                 try:
-                    __multicall__.execute()
+                    (yield).get_result()
                 except ValueError:
                     pass
             def test_hello1(self, mylist):
