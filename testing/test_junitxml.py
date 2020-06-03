@@ -200,23 +200,23 @@ class TestPython:
         timestamp = datetime.strptime(node["timestamp"], "%Y-%m-%dT%H:%M:%S.%f")
         assert start_time <= timestamp < datetime.now()
 
-    def test_timing_function(self, testdir, run_and_parse):
+    def test_timing_function(self, testdir, run_and_parse, mock_timing):
         testdir.makepyfile(
             """
-            import time, pytest
+            from _pytest import timing
             def setup_module():
-                time.sleep(0.01)
+                timing.sleep(1)
             def teardown_module():
-                time.sleep(0.01)
+                timing.sleep(2)
             def test_sleep():
-                time.sleep(0.01)
+                timing.sleep(4)
         """
         )
         result, dom = run_and_parse()
         node = dom.find_first_by_tag("testsuite")
         tnode = node.find_first_by_tag("testcase")
         val = tnode["time"]
-        assert round(float(val), 2) >= 0.03
+        assert float(val) == 7.0
 
     @pytest.mark.parametrize("duration_report", ["call", "total"])
     def test_junit_duration_report(

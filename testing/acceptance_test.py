@@ -895,21 +895,20 @@ class TestInvocationVariants:
 
 class TestDurations:
     source = """
-        import time
-        frag = 0.002
+        from _pytest import timing
         def test_something():
             pass
         def test_2():
-            time.sleep(frag*5)
+            timing.sleep(0.010)
         def test_1():
-            time.sleep(frag)
+            timing.sleep(0.002)
         def test_3():
-            time.sleep(frag*10)
+            timing.sleep(0.020)
     """
 
-    def test_calls(self, testdir):
+    def test_calls(self, testdir, mock_timing):
         testdir.makepyfile(self.source)
-        result = testdir.runpytest("--durations=10")
+        result = testdir.runpytest_inprocess("--durations=10")
         assert result.ret == 0
         result.stdout.fnmatch_lines_random(
             ["*durations*", "*call*test_3*", "*call*test_2*"]
@@ -918,16 +917,17 @@ class TestDurations:
             ["(0.00 durations hidden.  Use -vv to show these durations.)"]
         )
 
-    def test_calls_show_2(self, testdir):
+    def test_calls_show_2(self, testdir, mock_timing):
+
         testdir.makepyfile(self.source)
-        result = testdir.runpytest("--durations=2")
+        result = testdir.runpytest_inprocess("--durations=2")
         assert result.ret == 0
         lines = result.stdout.get_lines_after("*slowest*durations*")
         assert "4 passed" in lines[2]
 
-    def test_calls_showall(self, testdir):
+    def test_calls_showall(self, testdir, mock_timing):
         testdir.makepyfile(self.source)
-        result = testdir.runpytest("--durations=0")
+        result = testdir.runpytest_inprocess("--durations=0")
         assert result.ret == 0
         for x in "23":
             for y in ("call",):  # 'setup', 'call', 'teardown':
@@ -937,9 +937,9 @@ class TestDurations:
                 else:
                     raise AssertionError("not found {} {}".format(x, y))
 
-    def test_calls_showall_verbose(self, testdir):
+    def test_calls_showall_verbose(self, testdir, mock_timing):
         testdir.makepyfile(self.source)
-        result = testdir.runpytest("--durations=0", "-vv")
+        result = testdir.runpytest_inprocess("--durations=0", "-vv")
         assert result.ret == 0
         for x in "123":
             for y in ("call",):  # 'setup', 'call', 'teardown':
@@ -949,13 +949,13 @@ class TestDurations:
                 else:
                     raise AssertionError("not found {} {}".format(x, y))
 
-    def test_with_deselected(self, testdir):
+    def test_with_deselected(self, testdir, mock_timing):
         testdir.makepyfile(self.source)
-        result = testdir.runpytest("--durations=2", "-k test_2")
+        result = testdir.runpytest_inprocess("--durations=2", "-k test_2")
         assert result.ret == 0
         result.stdout.fnmatch_lines(["*durations*", "*call*test_2*"])
 
-    def test_with_failing_collection(self, testdir):
+    def test_with_failing_collection(self, testdir, mock_timing):
         testdir.makepyfile(self.source)
         testdir.makepyfile(test_collecterror="""xyz""")
         result = testdir.runpytest("--durations=2", "-k test_1")
@@ -965,36 +965,35 @@ class TestDurations:
         # output
         result.stdout.no_fnmatch_line("*duration*")
 
-    def test_with_not(self, testdir):
+    def test_with_not(self, testdir, mock_timing):
         testdir.makepyfile(self.source)
-        result = testdir.runpytest("-k not 1")
+        result = testdir.runpytest_inprocess("-k not 1")
         assert result.ret == 0
 
 
 class TestDurationWithFixture:
     source = """
         import pytest
-        import time
-        frag = 0.01
+        from _pytest import timing
 
         @pytest.fixture
         def setup_fixt():
-            time.sleep(frag)
+            timing.sleep(2)
 
         def test_1(setup_fixt):
-            time.sleep(frag)
+            timing.sleep(5)
     """
 
-    def test_setup_function(self, testdir):
+    def test_setup_function(self, testdir, mock_timing):
         testdir.makepyfile(self.source)
-        result = testdir.runpytest("--durations=10")
+        result = testdir.runpytest_inprocess("--durations=10")
         assert result.ret == 0
 
         result.stdout.fnmatch_lines_random(
             """
             *durations*
-            * setup *test_1*
-            * call *test_1*
+            5.00s call *test_1*
+            2.00s setup *test_1*
         """
         )
 

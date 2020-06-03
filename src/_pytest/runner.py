@@ -2,7 +2,6 @@
 import bdb
 import os
 import sys
-from time import time
 from typing import Callable
 from typing import Dict
 from typing import List
@@ -14,6 +13,7 @@ import attr
 from .reports import CollectErrorRepr
 from .reports import CollectReport
 from .reports import TestReport
+from _pytest import timing
 from _pytest._code.code import ExceptionChainRepr
 from _pytest._code.code import ExceptionInfo
 from _pytest.compat import TYPE_CHECKING
@@ -238,8 +238,8 @@ class CallInfo:
     def from_call(cls, func, when, reraise=None) -> "CallInfo":
         #: context of invocation: one of "setup", "call",
         #: "teardown", "memocollect"
-        start = time()
         excinfo = None
+        start = timing.time()
         try:
             result = func()
         except:  # noqa
@@ -247,7 +247,7 @@ class CallInfo:
             if reraise is not None and excinfo.errisinstance(reraise):
                 raise
             result = None
-        stop = time()
+        stop = timing.time()
         return cls(start=start, stop=stop, when=when, result=result, excinfo=excinfo)
 
     def __repr__(self):

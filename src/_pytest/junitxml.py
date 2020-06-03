@@ -13,7 +13,6 @@ import os
 import platform
 import re
 import sys
-import time
 from datetime import datetime
 
 import py
@@ -21,6 +20,7 @@ import py
 import pytest
 from _pytest import deprecated
 from _pytest import nodes
+from _pytest import timing
 from _pytest.config import filename_arg
 from _pytest.store import StoreKey
 from _pytest.warnings import _issue_warning_captured
@@ -627,14 +627,14 @@ class LogXML:
         reporter._add_simple(Junit.error, "internal error", excrepr)
 
     def pytest_sessionstart(self):
-        self.suite_start_time = time.time()
+        self.suite_start_time = timing.time()
 
     def pytest_sessionfinish(self):
         dirname = os.path.dirname(os.path.abspath(self.logfile))
         if not os.path.isdir(dirname):
             os.makedirs(dirname)
         logfile = open(self.logfile, "w", encoding="utf-8")
-        suite_stop_time = time.time()
+        suite_stop_time = timing.time()
         suite_time_delta = suite_stop_time - self.suite_start_time
 
         numtests = (
@@ -662,7 +662,7 @@ class LogXML:
         logfile.close()
 
     def pytest_terminal_summary(self, terminalreporter):
-        terminalreporter.write_sep("-", "generated xml file: %s" % (self.logfile))
+        terminalreporter.write_sep("-", "generated xml file: {}".format(self.logfile))
 
     def add_global_property(self, name, value):
         __tracebackhide__ = True
