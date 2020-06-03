@@ -817,8 +817,7 @@ class TestAssert_reprcompare_dataclass:
                 "*Matching attributes:*",
                 "*['field_a']*",
                 "*Differing attributes:*",
-                "*field_b: SimpleDataObject(field_a=2, field_b='c') "
-                "!= SimpleDataObject(field_a=3, field_b='c')*",
+                "*field_b: SimpleDataObject(field_a=2, field_b='c') != SimpleDataObject(field_a=3, field_b='c')*",  # noqa
                 "*Matching attributes:*",
                 "*['field_b']*",
                 "*Differing attributes:*",
