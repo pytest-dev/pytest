@@ -74,6 +74,7 @@ class TerminalWriter:
         self.hasmarkup = should_do_markup(file)
         self._current_line = ""
         self._terminal_width = None  # type: Optional[int]
+        self.code_highlight = True
 
     @property
     def fullwidth(self) -> int:
@@ -180,7 +181,7 @@ class TerminalWriter:
 
     def _highlight(self, source: str) -> str:
         """Highlight the given source code if we have markup support."""
-        if not self.hasmarkup:
+        if not self.hasmarkup or not self.code_highlight:
             return source
         try:
             from pygments.formatters.terminal import TerminalFormatter

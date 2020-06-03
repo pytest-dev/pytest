@@ -1389,8 +1389,13 @@ def create_terminal_writer(
     tw = TerminalWriter(file=file)
     if config.option.color == "yes":
         tw.hasmarkup = True
-    if config.option.color == "no":
+    elif config.option.color == "no":
         tw.hasmarkup = False
+
+    if config.option.code_highlight == "yes":
+        tw.code_highlight = True
+    elif config.option.code_highlight == "no":
+        tw.code_highlight = False
     return tw
 
 
