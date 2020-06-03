@@ -6,6 +6,8 @@ from typing import Optional
 from typing import Tuple
 
 import py
+from iniconfig import IniConfig
+from iniconfig import ParseError
 
 from .exceptions import UsageError
 from _pytest.compat import TYPE_CHECKING
@@ -40,8 +42,8 @@ def getcfg(args, config=None):
                 p = base.join(inibasename)
                 if exists(p):
                     try:
-                        iniconfig = py.iniconfig.IniConfig(p)
-                    except py.iniconfig.ParseError as exc:
+                        iniconfig = IniConfig(p)
+                    except ParseError as exc:
                         raise UsageError(str(exc))
 
                     if (
@@ -119,7 +121,7 @@ def determine_setup(
 ) -> Tuple[py.path.local, Optional[str], Any]:
     dirs = get_dirs_from_args(args)
     if inifile:
-        iniconfig = py.iniconfig.IniConfig(inifile)
+        iniconfig = IniConfig(inifile)
         is_cfg_file = str(inifile).endswith(".cfg")
         sections = ["tool:pytest", "pytest"] if is_cfg_file else ["pytest"]
         for section in sections:
