@@ -179,6 +179,7 @@ def getreportopt(config):
 
 @pytest.hookimpl(trylast=True)  # after _pytest.runner
 def pytest_report_teststatus(report):
+    letter = "F"
     if report.passed:
         letter = "."
     elif report.skipped:
