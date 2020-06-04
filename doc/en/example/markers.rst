@@ -141,14 +141,14 @@ Or select multiple nodes:
 Using ``-k expr`` to select tests based on their name
 -------------------------------------------------------
 
-.. versionadded: 2.0/2.3.4
+.. versionadded:: 2.0/2.3.4
 
 You can use the ``-k`` command line option to specify an expression
 which implements a substring match on the test names instead of the
 exact match on markers that ``-m`` provides.  This makes it easy to
 select tests based on their names:
 
-.. versionadded: 5.4
+.. versionchanged:: 5.4
 
 The expression matching is now case-insensitive.
 
@@ -198,20 +198,8 @@ Or to select "http" and "quick" tests:
 
     ===================== 2 passed, 2 deselected in 0.12s ======================
 
-.. note::
+You can use ``and``, ``or``, ``not`` and parentheses.
 
-    If you are using expressions such as ``"X and Y"`` then both ``X`` and ``Y``
-    need to be simple non-keyword names. For example, ``"pass"`` or ``"from"``
-    will result in SyntaxErrors because ``"-k"`` evaluates the expression using
-    Python's `eval`_ function.
-
-.. _`eval`: https://docs.python.org/3.6/library/functions.html#eval
-
-
-    However, if the ``"-k"`` argument is a simple string, no such restrictions
-    apply. Also ``"-k 'not STRING'"`` has no restrictions.  You can also
-    specify numbers like ``"-k 1.3"`` to match tests which are parametrized
-    with the float ``"1.3"``.
 
 Registering markers
 -------------------------------------
@@ -715,6 +703,9 @@ We can now use the ``-m option`` to select one set:
     test_module.py:8: in test_interface_complex
         assert 0
     E   assert 0
+    ========================= short test summary info ==========================
+    FAILED test_module.py::test_interface_simple - assert 0
+    FAILED test_module.py::test_interface_complex - assert 0
     ===================== 2 failed, 2 deselected in 0.12s ======================
 
 or to select both "event" and "interface" tests:
@@ -743,4 +734,8 @@ or to select both "event" and "interface" tests:
     test_module.py:12: in test_event_simple
         assert 0
     E   assert 0
+    ========================= short test summary info ==========================
+    FAILED test_module.py::test_interface_simple - assert 0
+    FAILED test_module.py::test_interface_complex - assert 0
+    FAILED test_module.py::test_event_simple - assert 0
     ===================== 3 failed, 1 deselected in 0.12s ======================

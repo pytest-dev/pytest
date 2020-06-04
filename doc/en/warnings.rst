@@ -64,6 +64,8 @@ them into errors:
     E       UserWarning: api v1, should use functions from v2
 
     test_show_warnings.py:5: UserWarning
+    ========================= short test summary info ==========================
+    FAILED test_show_warnings.py::test_one - UserWarning: api v1, should use ...
     1 failed in 0.12s
 
 The same option can be set in the ``pytest.ini`` file using the ``filterwarnings`` ini option.
@@ -416,19 +418,28 @@ features.
 The following warning types are used by pytest and are part of the public API:
 
 .. autoclass:: pytest.PytestWarning
+   :show-inheritance:
 
 .. autoclass:: pytest.PytestAssertRewriteWarning
+   :show-inheritance:
 
 .. autoclass:: pytest.PytestCacheWarning
+   :show-inheritance:
 
 .. autoclass:: pytest.PytestCollectionWarning
+   :show-inheritance:
 
 .. autoclass:: pytest.PytestConfigWarning
+   :show-inheritance:
 
 .. autoclass:: pytest.PytestDeprecationWarning
+   :show-inheritance:
 
 .. autoclass:: pytest.PytestExperimentalApiWarning
+   :show-inheritance:
 
 .. autoclass:: pytest.PytestUnhandledCoroutineWarning
+   :show-inheritance:
 
 .. autoclass:: pytest.PytestUnknownMarkWarning
+   :show-inheritance:

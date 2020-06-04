@@ -10,8 +10,6 @@ import textwrap
 import zipfile
 from functools import partial
 
-import py
-
 import _pytest._code
 import pytest
 from _pytest.assertion import util
@@ -22,17 +20,9 @@ from _pytest.assertion.rewrite import PYC_TAIL
 from _pytest.assertion.rewrite import PYTEST_TAG
 from _pytest.assertion.rewrite import rewrite_asserts
 from _pytest.config import ExitCode
+from _pytest.pathlib import make_numbered_dir
 from _pytest.pathlib import Path
-
-
-def setup_module(mod):
-    mod._old_reprcompare = util._reprcompare
-    _pytest._code._reprcompare = None
-
-
-def teardown_module(mod):
-    util._reprcompare = mod._old_reprcompare
-    del mod._old_reprcompare
+from _pytest.pytester import Testdir
 
 
 def rewrite(src):
@@ -650,10 +640,10 @@ class TestAssertionRewrite:
 
         assert getmsg(f) == "assert 5 <= 4"
 
-    def test_assert_raising_nonzero_in_comparison(self):
+    def test_assert_raising__bool__in_comparison(self):
         def f():
             class A:
-                def __nonzero__(self):
+                def __bool__(self):
                     raise ValueError(42)
 
                 def __lt__(self, other):
@@ -832,9 +822,7 @@ def test_rewritten():
                 "hello"
                 assert test_optimized.__doc__ is None"""
         )
-        p = py.path.local.make_numbered_dir(
-            prefix="runpytest-", keep=None, rootdir=testdir.tmpdir
-        )
+        p = make_numbered_dir(root=Path(testdir.tmpdir), prefix="runpytest-")
         tmp = "--basetemp=%s" % p
         monkeypatch.setenv("PYTHONOPTIMIZE", "2")
         monkeypatch.delenv("PYTHONDONTWRITEBYTECODE", raising=False)
@@ -956,11 +944,11 @@ class TestAssertionRewriteHookDetails:
         )
         assert testdir.runpytest().ret == 0
 
-    def test_write_pyc(self, testdir, tmpdir, monkeypatch):
+    def test_write_pyc(self, testdir: Testdir, tmpdir, monkeypatch) -> None:
         from _pytest.assertion.rewrite import _write_pyc
         from _pytest.assertion import AssertionState
 
-        config = testdir.parseconfig([])
+        config = testdir.parseconfig()
         state = AssertionState(config, "rewrite")
         source_path = str(tmpdir.ensure("source.py"))
         pycpath = tmpdir.join("pyc").strpath
@@ -971,7 +959,7 @@ class TestAssertionRewriteHookDetails:
 
             @contextmanager
             def atomic_write_failed(fn, mode="r", overwrite=False):
-                e = IOError()
+                e = OSError()
                 e.errno = 10
                 raise e
                 yield
@@ -981,10 +969,10 @@ class TestAssertionRewriteHookDetails:
             )
         else:
 
-            def raise_ioerror(*args):
-                raise IOError()
+            def raise_oserror(*args):
+                raise OSError()
 
-            monkeypatch.setattr("os.rename", raise_ioerror)
+            monkeypatch.setattr("os.rename", raise_oserror)
 
         assert not _write_pyc(state, [1], os.stat(source_path), pycpath)
 
@@ -1040,74 +1028,36 @@ class TestAssertionRewriteHookDetails:
 
         assert _read_pyc(str(source), str(pyc)) is None  # no error
 
-    def test_reload_is_same(self, testdir):
-        # A file that will be picked up during collecting.
-        testdir.tmpdir.join("file.py").ensure()
-        testdir.tmpdir.join("pytest.ini").write(
-            textwrap.dedent(
-                """
+    def test_reload_is_same_and_reloads(self, testdir: Testdir) -> None:
+        """Reloading a (collected) module after change picks up the change."""
+        testdir.makeini(
+            """
             [pytest]
             python_files = *.py
-        """
-            )
-        )
-
-        testdir.makepyfile(
-            test_fun="""
-            import sys
-            try:
-                from imp import reload
-            except ImportError:
-                pass
-
-            def test_loader():
-                import file
-                assert sys.modules["file"] is reload(file)
             """
         )
-        result = testdir.runpytest("-s")
-        result.stdout.fnmatch_lines(["* 1 passed*"])
-
-    def test_reload_reloads(self, testdir):
-        """Reloading a module after change picks up the change."""
-        testdir.tmpdir.join("file.py").write(
-            textwrap.dedent(
-                """
+        testdir.makepyfile(
+            file="""
             def reloaded():
                 return False
 
             def rewrite_self():
                 with open(__file__, 'w') as self:
                     self.write('def reloaded(): return True')
-        """
-            )
-        )
-        testdir.tmpdir.join("pytest.ini").write(
-            textwrap.dedent(
-                """
-            [pytest]
-            python_files = *.py
-        """
-            )
-        )
-
-        testdir.makepyfile(
+            """,
             test_fun="""
             import sys
-            try:
-                from imp import reload
-            except ImportError:
-                pass
+            from importlib import reload
 
             def test_loader():
                 import file
                 assert not file.reloaded()
                 file.rewrite_self()
-                reload(file)
+                assert sys.modules["file"] is reload(file)
                 assert file.reloaded()
-            """
+            """,
         )
-        result = testdir.runpytest("-s")
+        result = testdir.runpytest()
         result.stdout.fnmatch_lines(["* 1 passed*"])
 
     def test_get_data_support(self, testdir):

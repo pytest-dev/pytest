@@ -14,7 +14,9 @@ import pluggy
 import py
 
 import _pytest.config
+import _pytest.terminal
 import pytest
+from _pytest._io.wcwidth import wcswidth
 from _pytest.config import ExitCode
 from _pytest.pytester import Testdir
 from _pytest.reports import BaseReport
@@ -306,6 +308,29 @@ class TestTerminal:
         tr.rewrite("hey", erase=True)
         assert f.getvalue() == "hello" + "\r" + "hey" + (6 * " ")
 
+    def test_report_teststatus_explicit_markup(
+        self, testdir: Testdir, color_mapping
+    ) -> None:
+        """Test that TerminalReporter handles markup explicitly provided by
+        a pytest_report_teststatus hook."""
+        testdir.monkeypatch.setenv("PY_COLORS", "1")
+        testdir.makeconftest(
+            """
+            def pytest_report_teststatus(report):
+                return 'foo', 'F', ('FOO', {'red': True})
+        """
+        )
+        testdir.makepyfile(
+            """
+            def test_foobar():
+                pass
+        """
+        )
+        result = testdir.runpytest("-v")
+        result.stdout.fnmatch_lines(
+            color_mapping.format_for_fnmatch(["*{red}FOO{reset}*"])
+        )
+
 
 class TestCollectonly:
     def test_collectonly_basic(self, testdir):
@@ -330,17 +355,33 @@ class TestCollectonly:
         result = testdir.runpytest("--collect-only", "-rs")
         result.stdout.fnmatch_lines(["*ERROR collecting*"])
 
-    def test_collectonly_display_test_description(self, testdir):
+    def test_collectonly_displays_test_description(
+        self, testdir: Testdir, dummy_yaml_custom_test
+    ) -> None:
+        """Used dummy_yaml_custom_test for an Item without ``obj``."""
         testdir.makepyfile(
             """
             def test_with_description():
-                \""" This test has a description.
-                \"""
-                assert True
-        """
+                '''  This test has a description.
+
+                  more1.
+                    more2.'''
+            """
         )
         result = testdir.runpytest("--collect-only", "--verbose")
-        result.stdout.fnmatch_lines(["    This test has a description."])
+        result.stdout.fnmatch_lines(
+            [
+                "<YamlFile test1.yaml>",
+                "  <YamlItem test1.yaml>",
+                "<Module test_collectonly_displays_test_description.py>",
+                "  <Function test_with_description>",
+                "    This test has a description.",
+                "    ",
+                "    more1.",
+                "      more2.",
+            ],
+            consecutive=True,
+        )
 
     def test_collectonly_failed_module(self, testdir):
         testdir.makepyfile("""raise ValueError(0)""")
@@ -1978,7 +2019,7 @@ def test_skip_reasons_folding():
     ev3.longrepr = longrepr
     ev3.skipped = True
 
-    values = _folded_skips([ev1, ev2, ev3])
+    values = _folded_skips(py.path.local(), [ev1, ev2, ev3])
     assert len(values) == 1
     num, fspath, lineno, reason = values[0]
     assert num == 3
@@ -1988,9 +2029,6 @@ def test_skip_reasons_folding():
 
 
 def test_line_with_reprcrash(monkeypatch):
-    import _pytest.terminal
-    from wcwidth import wcswidth
-
     mocked_verbose_word = "FAILED"
 
     mocked_pos = "some::nodeid"
@@ -2040,19 +2078,19 @@ def test_line_with_reprcrash(monkeypatch):
     check("some\nmessage", 80, "FAILED some::nodeid - some")
 
     # Test unicode safety.
-    check("😄😄😄😄😄\n2nd line", 25, "FAILED some::nodeid - ...")
-    check("😄😄😄😄😄\n2nd line", 26, "FAILED some::nodeid - ...")
-    check("😄😄😄😄😄\n2nd line", 27, "FAILED some::nodeid - 😄...")
-    check("😄😄😄😄😄\n2nd line", 28, "FAILED some::nodeid - 😄...")
-    check("😄😄😄😄😄\n2nd line", 29, "FAILED some::nodeid - 😄😄...")
+    check("🉐🉐🉐🉐🉐\n2nd line", 25, "FAILED some::nodeid - ...")
+    check("🉐🉐🉐🉐🉐\n2nd line", 26, "FAILED some::nodeid - ...")
+    check("🉐🉐🉐🉐🉐\n2nd line", 27, "FAILED some::nodeid - 🉐...")
+    check("🉐🉐🉐🉐🉐\n2nd line", 28, "FAILED some::nodeid - 🉐...")
+    check("🉐🉐🉐🉐🉐\n2nd line", 29, "FAILED some::nodeid - 🉐🉐...")
 
     # NOTE: constructed, not sure if this is supported.
-    mocked_pos = "nodeid::😄::withunicode"
-    check("😄😄😄😄😄\n2nd line", 29, "FAILED nodeid::😄::withunicode")
-    check("😄😄😄😄😄\n2nd line", 40, "FAILED nodeid::😄::withunicode - 😄😄...")
-    check("😄😄😄😄😄\n2nd line", 41, "FAILED nodeid::😄::withunicode - 😄😄...")
-    check("😄😄😄😄😄\n2nd line", 42, "FAILED nodeid::😄::withunicode - 😄😄😄...")
-    check("😄😄😄😄😄\n2nd line", 80, "FAILED nodeid::😄::withunicode - 😄😄😄😄😄")
+    mocked_pos = "nodeid::🉐::withunicode"
+    check("🉐🉐🉐🉐🉐\n2nd line", 29, "FAILED nodeid::🉐::withunicode")
+    check("🉐🉐🉐🉐🉐\n2nd line", 40, "FAILED nodeid::🉐::withunicode - 🉐🉐...")
+    check("🉐🉐🉐🉐🉐\n2nd line", 41, "FAILED nodeid::🉐::withunicode - 🉐🉐...")
+    check("🉐🉐🉐🉐🉐\n2nd line", 42, "FAILED nodeid::🉐::withunicode - 🉐🉐🉐...")
+    check("🉐🉐🉐🉐🉐\n2nd line", 80, "FAILED nodeid::🉐::withunicode - 🉐🉐🉐🉐🉐")
 
 
 @pytest.mark.parametrize(

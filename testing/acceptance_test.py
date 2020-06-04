@@ -9,6 +9,7 @@ import py
 import pytest
 from _pytest.compat import importlib_metadata
 from _pytest.config import ExitCode
+from _pytest.pytester import Testdir
 
 
 def prepend_pythonpath(*dirs):
@@ -221,7 +222,7 @@ class TestGeneralUsage:
             "E   {}: No module named 'qwerty'".format(exc_name),
         ]
 
-    @pytest.mark.filterwarnings("always::pytest.PytestDeprecationWarning")
+    @pytest.mark.filterwarnings("ignore::pytest.PytestDeprecationWarning")
     def test_early_skip(self, testdir):
         testdir.mkdir("xyz")
         testdir.makeconftest(
@@ -463,7 +464,7 @@ class TestGeneralUsage:
         p = testdir.makepyfile(
             """
             def raise_error(obj):
-                raise IOError('source code not available')
+                raise OSError('source code not available')
 
             import inspect
             inspect.getsourcelines = raise_error
@@ -895,41 +896,46 @@ class TestInvocationVariants:
 
 class TestDurations:
     source = """
-        import time
-        frag = 0.002
+        from _pytest import timing
         def test_something():
             pass
         def test_2():
-            time.sleep(frag*5)
+            timing.sleep(0.010)
         def test_1():
-            time.sleep(frag)
+            timing.sleep(0.002)
         def test_3():
-            time.sleep(frag*10)
+            timing.sleep(0.020)
     """
 
-    def test_calls(self, testdir):
+    def test_calls(self, testdir, mock_timing):
         testdir.makepyfile(self.source)
-        result = testdir.runpytest("--durations=10")
+        result = testdir.runpytest_inprocess("--durations=10")
         assert result.ret == 0
+
         result.stdout.fnmatch_lines_random(
             ["*durations*", "*call*test_3*", "*call*test_2*"]
         )
+
         result.stdout.fnmatch_lines(
-            ["(0.00 durations hidden.  Use -vv to show these durations.)"]
+            ["(8 durations < 0.005s hidden.  Use -vv to show these durations.)"]
         )
 
-    def test_calls_show_2(self, testdir):
+    def test_calls_show_2(self, testdir, mock_timing):
+
         testdir.makepyfile(self.source)
-        result = testdir.runpytest("--durations=2")
+        result = testdir.runpytest_inprocess("--durations=2")
         assert result.ret == 0
+
         lines = result.stdout.get_lines_after("*slowest*durations*")
         assert "4 passed" in lines[2]
 
-    def test_calls_showall(self, testdir):
+    def test_calls_showall(self, testdir, mock_timing):
         testdir.makepyfile(self.source)
-        result = testdir.runpytest("--durations=0")
+        result = testdir.runpytest_inprocess("--durations=0")
         assert result.ret == 0
-        for x in "23":
+
+        tested = "3"
+        for x in tested:
             for y in ("call",):  # 'setup', 'call', 'teardown':
                 for line in result.stdout.lines:
                     if ("test_%s" % x) in line and y in line:
@@ -937,10 +943,11 @@ class TestDurations:
                 else:
                     raise AssertionError("not found {} {}".format(x, y))
 
-    def test_calls_showall_verbose(self, testdir):
+    def test_calls_showall_verbose(self, testdir, mock_timing):
         testdir.makepyfile(self.source)
-        result = testdir.runpytest("--durations=0", "-vv")
+        result = testdir.runpytest_inprocess("--durations=0", "-vv")
         assert result.ret == 0
+
         for x in "123":
             for y in ("call",):  # 'setup', 'call', 'teardown':
                 for line in result.stdout.lines:
@@ -949,52 +956,53 @@ class TestDurations:
                 else:
                     raise AssertionError("not found {} {}".format(x, y))
 
-    def test_with_deselected(self, testdir):
+    def test_with_deselected(self, testdir, mock_timing):
         testdir.makepyfile(self.source)
-        result = testdir.runpytest("--durations=2", "-k test_2")
+        result = testdir.runpytest_inprocess("--durations=2", "-k test_3")
         assert result.ret == 0
-        result.stdout.fnmatch_lines(["*durations*", "*call*test_2*"])
 
-    def test_with_failing_collection(self, testdir):
+        result.stdout.fnmatch_lines(["*durations*", "*call*test_3*"])
+
+    def test_with_failing_collection(self, testdir, mock_timing):
         testdir.makepyfile(self.source)
         testdir.makepyfile(test_collecterror="""xyz""")
-        result = testdir.runpytest("--durations=2", "-k test_1")
+        result = testdir.runpytest_inprocess("--durations=2", "-k test_1")
         assert result.ret == 2
+
         result.stdout.fnmatch_lines(["*Interrupted: 1 error during collection*"])
         # Collection errors abort test execution, therefore no duration is
         # output
         result.stdout.no_fnmatch_line("*duration*")
 
-    def test_with_not(self, testdir):
+    def test_with_not(self, testdir, mock_timing):
         testdir.makepyfile(self.source)
-        result = testdir.runpytest("-k not 1")
+        result = testdir.runpytest_inprocess("-k not 1")
         assert result.ret == 0
 
 
-class TestDurationWithFixture:
+class TestDurationsWithFixture:
     source = """
         import pytest
-        import time
-        frag = 0.01
+        from _pytest import timing
 
         @pytest.fixture
         def setup_fixt():
-            time.sleep(frag)
+            timing.sleep(2)
 
         def test_1(setup_fixt):
-            time.sleep(frag)
+            timing.sleep(5)
     """
 
-    def test_setup_function(self, testdir):
+    def test_setup_function(self, testdir, mock_timing):
         testdir.makepyfile(self.source)
-        result = testdir.runpytest("--durations=10")
+        result = testdir.runpytest_inprocess("--durations=10")
         assert result.ret == 0
 
         result.stdout.fnmatch_lines_random(
             """
             *durations*
-            * setup *test_1*
-            * call *test_1*
+            5.00s call *test_1*
+            2.00s setup *test_1*
         """
         )
 
@@ -1308,7 +1316,25 @@ def test_tee_stdio_captures_and_live_prints(testdir):
     result.stderr.fnmatch_lines(["*@this is stderr@*"])
 
     # now ensure the output is in the junitxml
-    with open(os.path.join(testdir.tmpdir.strpath, "output.xml"), "r") as f:
+    with open(os.path.join(testdir.tmpdir.strpath, "output.xml")) as f:
         fullXml = f.read()
     assert "@this is stdout@\n" in fullXml
     assert "@this is stderr@\n" in fullXml
+
+
+@pytest.mark.skipif(
+    sys.platform == "win32",
+    reason="Windows raises `OSError: [Errno 22] Invalid argument` instead",
+)
+def test_no_brokenpipeerror_message(testdir: Testdir) -> None:
+    """Ensure that the broken pipe error message is supressed.
+
+    In some Python versions, it reaches sys.unraisablehook, in others
+    a BrokenPipeError exception is propagated, but either way it prints
+    to stderr on shutdown, so checking nothing is printed is enough.
+    """
+    popen = testdir.popen((*testdir._getpytestargs(), "--help"))
+    popen.stdout.close()
+    ret = popen.wait()
+    assert popen.stderr.read() == b""
+    assert ret == 1

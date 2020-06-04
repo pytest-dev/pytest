@@ -1,5 +1,6 @@
 """ submit failure or test session information to a pastebin service. """
 import tempfile
+from io import StringIO
 from typing import IO
 
 import pytest
@@ -99,11 +100,10 @@ def pytest_terminal_summary(terminalreporter):
                 msg = rep.longrepr.reprtraceback.reprentries[-1].reprfileloc
             except AttributeError:
                 msg = tr._getfailureheadline(rep)
-            tw = _pytest.config.create_terminal_writer(
-                terminalreporter.config, stringio=True
-            )
+            file = StringIO()
+            tw = _pytest.config.create_terminal_writer(terminalreporter.config, file)
             rep.toterminal(tw)
-            s = tw.stringio.getvalue()
+            s = file.getvalue()
             assert len(s)
             pastebinurl = create_new_paste(s)
             tr.write_line("{} --> {}".format(msg, pastebinurl))

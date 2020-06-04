@@ -6,6 +6,7 @@ import _pytest._code
 import pytest
 from _pytest.config import ExitCode
 from _pytest.nodes import Collector
+from _pytest.pytester import Testdir
 
 
 class TestModule:
@@ -293,9 +294,11 @@ class TestFunction:
         def func2():
             pass
 
-        f1 = self.make_function(testdir, name="name", args=(1,), callobj=func1)
+        f1 = self.make_function(testdir, name="name", callobj=func1)
         assert f1 == f1
-        f2 = self.make_function(testdir, name="name", callobj=func2)
+        f2 = self.make_function(
+            testdir, name="name", callobj=func2, originalname="foobar"
+        )
         assert f1 != f2
 
     def test_repr_produces_actual_test_id(self, testdir):
@@ -463,7 +466,7 @@ class TestFunction:
                return '3'
 
             @pytest.mark.parametrize('fix2', ['2'])
-            def test_it(fix1, fix2):
+            def test_it(fix1):
                assert fix1 == '21'
                assert not fix3_instantiated
         """
@@ -659,16 +662,39 @@ class TestFunction:
         result = testdir.runpytest()
         result.stdout.fnmatch_lines(["* 3 passed in *"])
 
-    def test_function_original_name(self, testdir):
+    def test_function_originalname(self, testdir: Testdir) -> None:
         items = testdir.getitems(
             """
             import pytest
+
             @pytest.mark.parametrize('arg', [1,2])
             def test_func(arg):
                 pass
+
+            def test_no_param():
+                pass
         """
         )
-        assert [x.originalname for x in items] == ["test_func", "test_func"]
+        assert [x.originalname for x in items] == [
+            "test_func",
+            "test_func",
+            "test_no_param",
+        ]
+
+    def test_function_with_square_brackets(self, testdir: Testdir) -> None:
+        """Check that functions with square brackets don't cause trouble."""
+        p1 = testdir.makepyfile(
+            """
+            locals()["test_foo[name]"] = lambda: None
+            """
+        )
+        result = testdir.runpytest("-v", str(p1))
+        result.stdout.fnmatch_lines(
+            [
+                "test_function_with_square_brackets.py::test_foo[[]name[]] PASSED *",
+                "*= 1 passed in *",
+            ]
+        )
 
 
 class TestSorting:
@@ -1225,7 +1251,7 @@ def test_syntax_error_with_non_ascii_chars(testdir):
     result.stdout.fnmatch_lines(["*ERROR collecting*", "*SyntaxError*", "*1 error in*"])
 
 
-def test_collecterror_with_fulltrace(testdir):
+def test_collect_error_with_fulltrace(testdir):
     testdir.makepyfile("assert 0")
     result = testdir.runpytest("--fulltrace")
     result.stdout.fnmatch_lines(
@@ -1233,15 +1259,12 @@ def test_collecterror_with_fulltrace(testdir):
             "collected 0 items / 1 error",
             "",
             "*= ERRORS =*",
-            "*_ ERROR collecting test_collecterror_with_fulltrace.py _*",
-            "",
-            "*/_pytest/python.py:*: ",
-            "_ _ _ _ _ _ _ _ *",
+            "*_ ERROR collecting test_collect_error_with_fulltrace.py _*",
             "",
             ">   assert 0",
             "E   assert 0",
             "",
-            "test_collecterror_with_fulltrace.py:1: AssertionError",
+            "test_collect_error_with_fulltrace.py:1: AssertionError",
             "*! Interrupted: 1 error during collection !*",
         ]
     )

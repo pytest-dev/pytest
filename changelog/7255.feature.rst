@@ -1,0 +1,3 @@
+Introduced a new hook named `pytest_warning_recorded` to convey information about warnings captured by the internal `pytest` warnings plugin.
+
+This hook is meant to replace `pytest_warning_captured`, which will be removed in a future release.

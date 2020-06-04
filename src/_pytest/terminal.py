@@ -3,11 +3,10 @@
 This is a good source for looking at the various reporting hooks.
 """
 import argparse
-import collections
 import datetime
+import inspect
 import platform
 import sys
-import time
 import warnings
 from functools import partial
 from typing import Any
@@ -26,9 +25,13 @@ from more_itertools import collapse
 
 import pytest
 from _pytest import nodes
+from _pytest import timing
 from _pytest._io import TerminalWriter
+from _pytest._io.wcwidth import wcswidth
+from _pytest.compat import order_preserving_dict
 from _pytest.config import Config
 from _pytest.config import ExitCode
+from _pytest.deprecated import TERMINALWRITER_WRITER
 from _pytest.main import Session
 from _pytest.reports import CollectReport
 from _pytest.reports import TestReport
@@ -225,7 +228,7 @@ def pytest_report_teststatus(report: TestReport) -> Tuple[str, str, str]:
 @attr.s
 class WarningReport:
     """
-    Simple structure to hold warnings information captured by ``pytest_warning_captured``.
+    Simple structure to hold warnings information captured by ``pytest_warning_recorded``.
 
     :ivar str message: user friendly message about the warning
     :ivar str|None nodeid: node id that generated the warning (see ``get_location``).
@@ -284,13 +287,13 @@ class TerminalReporter:
 
     @property
     def writer(self) -> TerminalWriter:
-        warnings.warn(
-            pytest.PytestDeprecationWarning(
-                "TerminalReporter.writer attribute is deprecated, use TerminalReporter._tw instead at your own risk.\n"
-                "See https://docs.pytest.org/en/latest/deprecations.html#terminalreporter-writer for more information."
-            )
-        )
+        warnings.warn(TERMINALWRITER_WRITER, stacklevel=2)
         return self._tw
+
+    @writer.setter
+    def writer(self, value: TerminalWriter):
+        warnings.warn(TERMINALWRITER_WRITER, stacklevel=2)
+        self._tw = value
 
     def _determine_show_progress_info(self):
         """Return True if we should display progress information based on the current config"""
@@ -342,7 +345,7 @@ class TerminalReporter:
             fspath = self.startdir.bestrelpath(fspath)
             self._tw.line()
             self._tw.write(fspath + " ")
-        self._tw.write(res, **markup)
+        self._tw.write(res, flush=True, **markup)
 
     def write_ensure_prefix(self, prefix, extra="", **kwargs):
         if self.currentfspath != prefix:
@@ -358,8 +361,11 @@ class TerminalReporter:
             self._tw.line()
             self.currentfspath = None
 
-    def write(self, content, **markup):
-        self._tw.write(content, **markup)
+    def write(self, content: str, *, flush: bool = False, **markup: bool) -> None:
+        self._tw.write(content, flush=flush, **markup)
+
+    def flush(self) -> None:
+        self._tw.flush()
 
     def write_line(self, line, **markup):
         if not isinstance(line, str):
@@ -406,14 +412,12 @@ class TerminalReporter:
             self.write_line("INTERNALERROR> " + line)
         return 1
 
-    def pytest_warning_captured(self, warning_message, item):
-        # from _pytest.nodes import get_fslocation_from_item
+    def pytest_warning_recorded(self, warning_message, nodeid):
         from _pytest.warnings import warning_record_to_str
 
         fslocation = warning_message.filename, warning_message.lineno
         message = warning_record_to_str(warning_message)
 
-        nodeid = item.nodeid if item is not None else ""
         warning_report = WarningReport(
             fslocation=fslocation, message=message, nodeid=nodeid
         )
@@ -436,9 +440,10 @@ class TerminalReporter:
         if self.showlongtestinfo:
             line = self._locationline(nodeid, *location)
             self.write_ensure_prefix(line, "")
+            self.flush()
         elif self.showfspath:
-            fsid = nodeid.split("::")[0]
-            self.write_fspath_result(fsid, "")
+            self.write_fspath_result(nodeid, "")
+            self.flush()
 
     def pytest_runtest_logreport(self, report: TestReport) -> None:
         self._tests_ran = True
@@ -467,10 +472,7 @@ class TerminalReporter:
             else:
                 markup = {}
         if self.verbosity <= 0:
-            if not running_xdist and self.showfspath:
-                self.write_fspath_result(rep.nodeid, letter, **markup)
-            else:
-                self._tw.write(letter, **markup)
+            self._tw.write(letter, **markup)
         else:
             self._progress_nodeids_reported.add(rep.nodeid)
             line = self._locationline(rep.nodeid, *rep.location)
@@ -480,7 +482,7 @@ class TerminalReporter:
                     self._write_progress_information_filling_space()
             else:
                 self.ensure_newline()
-                self._tw.write("[%s]" % rep.node.gateway.id)  # type: ignore
+                self._tw.write("[%s]" % rep.node.gateway.id)
                 if self._show_progress_info:
                     self._tw.write(
                         self._get_progress_information_message() + " ", cyan=True
@@ -490,6 +492,7 @@ class TerminalReporter:
                 self._tw.write(word, **markup)
                 self._tw.write(" " + line)
                 self.currentfspath = -2
+        self.flush()
 
     @property
     def _is_last_item(self):
@@ -538,24 +541,20 @@ class TerminalReporter:
         msg = self._get_progress_information_message()
         w = self._width_of_current_line
         fill = self._tw.fullwidth - w - 1
-        self.write(msg.rjust(fill), **{color: True})
+        self.write(msg.rjust(fill), flush=True, **{color: True})
 
     @property
     def _width_of_current_line(self):
         """Return the width of current line, using the superior implementation of py-1.6 when available"""
-        try:
-            return self._tw.width_of_current_line
-        except AttributeError:
-            # py < 1.6.0
-            return self._tw.chars_on_current_line
+        return self._tw.width_of_current_line
 
     def pytest_collection(self) -> None:
         if self.isatty:
             if self.config.option.verbose >= 0:
-                self.write("collecting ... ", bold=True)
-                self._collect_report_last_write = time.time()
+                self.write("collecting ... ", flush=True, bold=True)
+                self._collect_report_last_write = timing.time()
         elif self.config.option.verbose >= 1:
-            self.write("collecting ... ", bold=True)
+            self.write("collecting ... ", flush=True, bold=True)
 
     def pytest_collectreport(self, report: CollectReport) -> None:
         if report.failed:
@@ -573,7 +572,7 @@ class TerminalReporter:
 
         if not final:
             # Only write "collecting" report every 0.5s.
-            t = time.time()
+            t = timing.time()
             if (
                 self._collect_report_last_write is not None
                 and self._collect_report_last_write > t - REPORT_COLLECTING_RESOLUTION
@@ -610,7 +609,7 @@ class TerminalReporter:
     @pytest.hookimpl(trylast=True)
     def pytest_sessionstart(self, session: Session) -> None:
         self._session = session
-        self._sessionstarttime = time.time()
+        self._sessionstarttime = timing.time()
         if not self.showheader:
             return
         self.write_sep("=", "test session starts", bold=True)
@@ -660,15 +659,17 @@ class TerminalReporter:
     def pytest_collection_finish(self, session):
         self.report_collect(True)
 
-        if self.config.getoption("collectonly"):
-            self._printcollecteditems(session.items)
-
         lines = self.config.hook.pytest_report_collectionfinish(
             config=self.config, startdir=self.startdir, items=session.items
         )
         self._write_report_lines_from_hooks(lines)
 
         if self.config.getoption("collectonly"):
+            if session.items:
+                if self.config.option.verbose > -1:
+                    self._tw.line("")
+                self._printcollecteditems(session.items)
+
             failed = self.stats.get("failed")
             if failed:
                 self._tw.sep("!", "collection failures")
@@ -706,9 +707,14 @@ class TerminalReporter:
                 indent = (len(stack) - 1) * "  "
                 self._tw.line("{}{}".format(indent, col))
                 if self.config.option.verbose >= 1:
-                    if hasattr(col, "_obj") and col._obj.__doc__:
-                        for line in col._obj.__doc__.strip().splitlines():
-                            self._tw.line("{}{}".format(indent + "  ", line.strip()))
+                    try:
+                        obj = col.obj  # type: ignore
+                    except AttributeError:
+                        continue
+                    doc = inspect.getdoc(obj)
+                    if doc:
+                        for line in doc.splitlines():
+                            self._tw.line("{}{}".format(indent + "  ", line))
 
     @pytest.hookimpl(hookwrapper=True)
     def pytest_sessionfinish(self, session: Session, exitstatus: ExitCode):
@@ -832,14 +838,14 @@ class TerminalReporter:
                 return
 
             reports_grouped_by_message = (
-                collections.OrderedDict()
-            )  # type: collections.OrderedDict[str, List[WarningReport]]
+                order_preserving_dict()
+            )  # type: Dict[str, List[WarningReport]]
             for wr in warning_reports:
                 reports_grouped_by_message.setdefault(wr.message, []).append(wr)
 
             def collapsed_location_report(reports: List[WarningReport]):
                 locations = []
-                for w in warning_reports:
+                for w in reports:
                     location = w.get_location(self.config)
                     if location:
                         locations.append(location)
@@ -847,20 +853,19 @@ class TerminalReporter:
                 if len(locations) < 10:
                     return "\n".join(map(str, locations))
 
-                counts_by_filename = collections.Counter(
-                    str(loc).split("::", 1)[0] for loc in locations
-                )
+                counts_by_filename = order_preserving_dict()  # type: Dict[str, int]
+                for loc in locations:
+                    key = str(loc).split("::", 1)[0]
+                    counts_by_filename[key] = counts_by_filename.get(key, 0) + 1
                 return "\n".join(
-                    "{0}: {1} test{2} with warning{2}".format(
-                        k, v, "s" if v > 1 else ""
-                    )
+                    "{}: {} warning{}".format(k, v, "s" if v > 1 else "")
                     for k, v in counts_by_filename.items()
                 )
 
             title = "warnings summary (final)" if final else "warnings summary"
             self.write_sep("=", title, yellow=True, bold=False)
-            for message, warning_reports in reports_grouped_by_message.items():
-                maybe_location = collapsed_location_report(warning_reports)
+            for message, message_reports in reports_grouped_by_message.items():
+                maybe_location = collapsed_location_report(message_reports)
                 if maybe_location:
                     self._tw.line(maybe_location)
                     lines = message.splitlines()
@@ -959,7 +964,7 @@ class TerminalReporter:
         if self.verbosity < -1:
             return
 
-        session_duration = time.time() - self._sessionstarttime
+        session_duration = timing.time() - self._sessionstarttime
         (parts, main_color) = self.build_summary_stats_line()
         line_parts = []
 
@@ -1026,7 +1031,7 @@ class TerminalReporter:
 
         def show_skipped(lines: List[str]) -> None:
             skipped = self.stats.get("skipped", [])
-            fskips = _folded_skips(skipped) if skipped else []
+            fskips = _folded_skips(self.startdir, skipped) if skipped else []
             if not fskips:
                 return
             verbose_word = skipped[0]._get_verbose_word(self.config)
@@ -1116,8 +1121,6 @@ def _get_pos(config, rep):
 
 def _get_line_with_reprcrash_message(config, rep, termwidth):
     """Get summary line for a report, trying to add reprcrash message."""
-    from wcwidth import wcswidth
-
     verbose_word = rep._get_verbose_word(config)
     pos = _get_pos(config, rep)
 
@@ -1152,11 +1155,13 @@ def _get_line_with_reprcrash_message(config, rep, termwidth):
     return line
 
 
-def _folded_skips(skipped):
+def _folded_skips(startdir, skipped):
     d = {}
     for event in skipped:
-        key = event.longrepr
-        assert len(key) == 3, (event, key)
+        assert len(event.longrepr) == 3, (event, event.longrepr)
+        fspath, lineno, reason = event.longrepr
+        # For consistency, report all fspaths in relative form.
+        fspath = startdir.bestrelpath(py.path.local(fspath))
         keywords = getattr(event, "keywords", {})
         # folding reports with global pytestmark variable
         # this is workaround, because for now we cannot identify the scope of a skip marker
@@ -1166,7 +1171,9 @@ def _folded_skips(skipped):
             and "skip" in keywords
             and "pytestmark" not in keywords
         ):
-            key = (key[0], None, key[2])
+            key = (fspath, None, reason)
+        else:
+            key = (fspath, lineno, reason)
         d.setdefault(key, []).append(event)
     values = []
     for key, events in d.items():

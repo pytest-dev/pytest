@@ -122,7 +122,8 @@ def test_syntaxerror_rerepresentation() -> None:
     assert ex is not None
     assert ex.value.lineno == 1
     assert ex.value.offset in {5, 7}  # cpython: 7, pypy3.6 7.1.1: 5
-    assert ex.value.text == "xyz xyz\n"
+    assert ex.value.text
+    assert ex.value.text.rstrip("\n") == "xyz xyz"
 
 
 def test_isparseable() -> None:
@@ -521,7 +522,7 @@ def test_getfslineno() -> None:
     class B:
         pass
 
-    B.__name__ = "B2"
+    B.__name__ = B.__qualname__ = "B2"
     assert getfslineno(B)[1] == -1
 
     co = compile("...", "", "eval")
@@ -621,6 +622,31 @@ def test_comment_in_statement() -> None:
             str(getstatement(line, source))
             == "test(foo=1,\n    # comment 1\n    bar=2)"
         )
+
+
+def test_source_with_decorator() -> None:
+    """Test behavior with Source / Code().source with regard to decorators."""
+    from _pytest.compat import get_real_func
+
+    @pytest.mark.foo
+    def deco_mark():
+        assert False
+
+    src = inspect.getsource(deco_mark)
+    assert str(Source(deco_mark, deindent=False)) == src
+    assert src.startswith("    @pytest.mark.foo")
+
+    @pytest.fixture
+    def deco_fixture():
+        assert False
+
+    src = inspect.getsource(deco_fixture)
+    assert src == "    @pytest.fixture\n    def deco_fixture():\n        assert False\n"
+    # currenly Source does not unwrap decorators, testing the
+    # existing behavior here for explicitness, but perhaps we should revisit/change this
+    # in the future
+    assert str(Source(deco_fixture)).startswith("@functools.wraps(function)")
+    assert str(Source(get_real_func(deco_fixture), deindent=False)) == src
 
 
 def test_single_line_else() -> None:

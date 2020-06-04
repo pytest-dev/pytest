@@ -1,1 +1,0 @@
-``--trace`` now works with unittests.

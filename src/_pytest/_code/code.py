@@ -29,20 +29,24 @@ import pluggy
 import py
 
 import _pytest
+from _pytest._code.source import findsource
+from _pytest._code.source import getrawcode
+from _pytest._code.source import getstatementrange_ast
+from _pytest._code.source import Source
 from _pytest._io import TerminalWriter
 from _pytest._io.saferepr import safeformat
 from _pytest._io.saferepr import saferepr
+from _pytest.compat import ATTRS_EQ_FIELD
+from _pytest.compat import get_real_func
 from _pytest.compat import overload
 from _pytest.compat import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from typing import Type
     from typing_extensions import Literal
-    from weakref import ReferenceType  # noqa: F401
+    from weakref import ReferenceType
 
-    from _pytest._code import Source
-
-    _TracebackStyle = Literal["long", "short", "line", "no", "native"]
+    _TracebackStyle = Literal["long", "short", "line", "no", "native", "value"]
 
 
 class Code:
@@ -89,18 +93,14 @@ class Code:
     def fullsource(self) -> Optional["Source"]:
         """ return a _pytest._code.Source object for the full source file of the code
         """
-        from _pytest._code import source
-
-        full, _ = source.findsource(self.raw)
+        full, _ = findsource(self.raw)
         return full
 
     def source(self) -> "Source":
         """ return a _pytest._code.Source object for the code object's source only
         """
         # return source only for that part of code
-        import _pytest._code
-
-        return _pytest._code.Source(self.raw)
+        return Source(self.raw)
 
     def getargs(self, var: bool = False) -> Tuple[str, ...]:
         """ return a tuple with the argument names for the code object
@@ -131,10 +131,8 @@ class Frame:
     @property
     def statement(self) -> "Source":
         """ statement this frame is at """
-        import _pytest._code
-
         if self.code.fullsource is None:
-            return _pytest._code.Source("")
+            return Source("")
         return self.code.fullsource.getstatement(self.lineno)
 
     def eval(self, code, **vars):
@@ -230,8 +228,6 @@ class TracebackEntry:
         """ return failing source code. """
         # we use the passed in astcache to not reparse asttrees
         # within exception info printing
-        from _pytest._code.source import getstatementrange_ast
-
         source = self.frame.code.fullsource
         if source is None:
             return None
@@ -272,18 +268,14 @@ class TracebackEntry:
         return tbh
 
     def __str__(self) -> str:
-        try:
-            fn = str(self.path)
-        except py.error.Error:
-            fn = "???"
         name = self.frame.code.name
         try:
             line = str(self.statement).lstrip()
         except KeyboardInterrupt:
             raise
-        except:  # noqa
+        except BaseException:
             line = "???"
-        return "  File %r:%d in %s\n  %s\n" % (fn, self.lineno + 1, name, line)
+        return "  File %r:%d in %s\n  %s\n" % (self.path, self.lineno + 1, name, line)
 
     @property
     def name(self) -> str:
@@ -591,7 +583,7 @@ class ExceptionInfo(Generic[_E]):
             Show locals per traceback entry.
             Ignored if ``style=="native"``.
 
-        :param str style: long|short|no|native traceback style
+        :param str style: long|short|no|native|value traceback style
 
         :param bool abspath:
             If paths should be changed to absolute or left unchanged.
@@ -671,12 +663,12 @@ class FormattedExcinfo:
             s = str(source.getstatement(len(source) - 1))
         except KeyboardInterrupt:
             raise
-        except:  # noqa
+        except BaseException:
             try:
                 s = str(source[-1])
             except KeyboardInterrupt:
                 raise
-            except:  # noqa
+            except BaseException:
                 return 0
         return 4 + (len(s) - len(s.lstrip()))
 
@@ -702,11 +694,9 @@ class FormattedExcinfo:
         short: bool = False,
     ) -> List[str]:
         """ return formatted and marked up source lines. """
-        import _pytest._code
-
         lines = []
         if source is None or line_index >= len(source.lines):
-            source = _pytest._code.Source("???")
+            source = Source("???")
             line_index = 0
         if line_index < 0:
             line_index += len(source)
@@ -768,18 +758,15 @@ class FormattedExcinfo:
     def repr_traceback_entry(
         self, entry: TracebackEntry, excinfo: Optional[ExceptionInfo] = None
     ) -> "ReprEntry":
-        import _pytest._code
-
-        source = self._getentrysource(entry)
-        if source is None:
-            source = _pytest._code.Source("???")
-            line_index = 0
-        else:
-            line_index = entry.lineno - entry.getfirstlinesource()
-
         lines = []  # type: List[str]
         style = entry._repr_style if entry._repr_style is not None else self.style
         if style in ("short", "long"):
+            source = self._getentrysource(entry)
+            if source is None:
+                source = Source("???")
+                line_index = 0
+            else:
+                line_index = entry.lineno - entry.getfirstlinesource()
             short = style == "short"
             reprargs = self.repr_args(entry) if not short else None
             s = self.get_source(source, line_index, excinfo, short=short)
@@ -792,9 +779,14 @@ class FormattedExcinfo:
             reprfileloc = ReprFileLocation(path, entry.lineno + 1, message)
             localsrepr = self.repr_locals(entry.locals)
             return ReprEntry(lines, reprargs, localsrepr, reprfileloc, style)
-        if excinfo:
-            lines.extend(self.get_exconly(excinfo, indent=4))
-        return ReprEntry(lines, None, None, None, style)
+        elif style == "value":
+            if excinfo:
+                lines.extend(str(excinfo.value).split("\n"))
+            return ReprEntry(lines, None, None, None, style)
+        else:
+            if excinfo:
+                lines.extend(self.get_exconly(excinfo, indent=4))
+            return ReprEntry(lines, None, None, None, style)
 
     def _makepath(self, path):
         if not self.abspath:
@@ -818,6 +810,11 @@ class FormattedExcinfo:
 
         last = traceback[-1]
         entries = []
+        if self.style == "value":
+            reprentry = self.repr_traceback_entry(last, excinfo)
+            entries.append(reprentry)
+            return ReprTraceback(entries, None, style=self.style)
+
         for index, entry in enumerate(traceback):
             einfo = (last == entry) and excinfo or None
             reprentry = self.repr_traceback_entry(entry, einfo)
@@ -877,7 +874,9 @@ class FormattedExcinfo:
             seen.add(id(e))
             if excinfo_:
                 reprtraceback = self.repr_traceback(excinfo_)
-                reprcrash = excinfo_._getreprcrash()  # type: Optional[ReprFileLocation]
+                reprcrash = (
+                    excinfo_._getreprcrash() if self.style != "value" else None
+                )  # type: Optional[ReprFileLocation]
             else:
                 # fallback to native repr if the exception doesn't have a traceback:
                 # ExceptionInfo objects require a full traceback to work
@@ -911,7 +910,7 @@ class FormattedExcinfo:
         return ExceptionChainRepr(repr_chain)
 
 
-@attr.s
+@attr.s(**{ATTRS_EQ_FIELD: False})  # type: ignore
 class TerminalRepr:
     def __str__(self) -> str:
         # FYI this is called from pytest-xdist's serialization of exception
@@ -928,7 +927,7 @@ class TerminalRepr:
         raise NotImplementedError()
 
 
-@attr.s
+@attr.s(**{ATTRS_EQ_FIELD: False})  # type: ignore
 class ExceptionRepr(TerminalRepr):
     def __attrs_post_init__(self):
         self.sections = []  # type: List[Tuple[str, str, str]]
@@ -942,7 +941,7 @@ class ExceptionRepr(TerminalRepr):
             tw.line(content)
 
 
-@attr.s
+@attr.s(**{ATTRS_EQ_FIELD: False})  # type: ignore
 class ExceptionChainRepr(ExceptionRepr):
     chain = attr.ib(
         type=Sequence[
@@ -966,7 +965,7 @@ class ExceptionChainRepr(ExceptionRepr):
         super().toterminal(tw)
 
 
-@attr.s
+@attr.s(**{ATTRS_EQ_FIELD: False})  # type: ignore
 class ReprExceptionInfo(ExceptionRepr):
     reprtraceback = attr.ib(type="ReprTraceback")
     reprcrash = attr.ib(type="ReprFileLocation")
@@ -976,7 +975,7 @@ class ReprExceptionInfo(ExceptionRepr):
         super().toterminal(tw)
 
 
-@attr.s
+@attr.s(**{ATTRS_EQ_FIELD: False})  # type: ignore
 class ReprTraceback(TerminalRepr):
     reprentries = attr.ib(type=Sequence[Union["ReprEntry", "ReprEntryNative"]])
     extraline = attr.ib(type=Optional[str])
@@ -1010,7 +1009,7 @@ class ReprTracebackNative(ReprTraceback):
         self.extraline = None
 
 
-@attr.s
+@attr.s(**{ATTRS_EQ_FIELD: False})  # type: ignore
 class ReprEntryNative(TerminalRepr):
     lines = attr.ib(type=Sequence[str])
     style = "native"  # type: _TracebackStyle
@@ -1019,7 +1018,7 @@ class ReprEntryNative(TerminalRepr):
         tw.write("".join(self.lines))
 
 
-@attr.s
+@attr.s(**{ATTRS_EQ_FIELD: False})  # type: ignore
 class ReprEntry(TerminalRepr):
     lines = attr.ib(type=Sequence[str])
     reprfuncargs = attr.ib(type=Optional["ReprFuncArgs"])
@@ -1041,28 +1040,38 @@ class ReprEntry(TerminalRepr):
         character, as doing so might break line continuations.
         """
 
-        indent_size = 4
-
-        def is_fail(line):
-            return line.startswith("{}   ".format(FormattedExcinfo.fail_marker))
-
         if not self.lines:
             return
 
         # separate indents and source lines that are not failures: we want to
         # highlight the code but not the indentation, which may contain markers
         # such as ">   assert 0"
+        fail_marker = "{}   ".format(FormattedExcinfo.fail_marker)
+        indent_size = len(fail_marker)
         indents = []
         source_lines = []
+        failure_lines = []
+        seeing_failures = False
         for line in self.lines:
-            if not is_fail(line):
-                indents.append(line[:indent_size])
-                source_lines.append(line[indent_size:])
+            is_source_line = not line.startswith(fail_marker)
+            if is_source_line:
+                assert not seeing_failures, (
+                    "Unexpected failure lines between source lines:\n"
+                    + "\n".join(self.lines)
+                )
+                if self.style == "value":
+                    source_lines.append(line)
+                else:
+                    indents.append(line[:indent_size])
+                    source_lines.append(line[indent_size:])
+            else:
+                seeing_failures = True
+                failure_lines.append(line)
 
         tw._write_source(source_lines, indents)
 
         # failure lines are always completely red and bold
-        for line in (x for x in self.lines if is_fail(x)):
+        for line in failure_lines:
             tw.line(line, bold=True, red=True)
 
     def toterminal(self, tw: TerminalWriter) -> None:
@@ -1093,7 +1102,7 @@ class ReprEntry(TerminalRepr):
         )
 
 
-@attr.s
+@attr.s(**{ATTRS_EQ_FIELD: False})  # type: ignore
 class ReprFileLocation(TerminalRepr):
     path = attr.ib(type=str, converter=str)
     lineno = attr.ib(type=int)
@@ -1110,7 +1119,7 @@ class ReprFileLocation(TerminalRepr):
         tw.line(":{}: {}".format(self.lineno, msg))
 
 
-@attr.s
+@attr.s(**{ATTRS_EQ_FIELD: False})  # type: ignore
 class ReprLocals(TerminalRepr):
     lines = attr.ib(type=Sequence[str])
 
@@ -1119,7 +1128,7 @@ class ReprLocals(TerminalRepr):
             tw.line(indent + line)
 
 
-@attr.s
+@attr.s(**{ATTRS_EQ_FIELD: False})  # type: ignore
 class ReprFuncArgs(TerminalRepr):
     args = attr.ib(type=Sequence[Tuple[str, object]])
 
@@ -1142,19 +1151,37 @@ class ReprFuncArgs(TerminalRepr):
             tw.line("")
 
 
-def getrawcode(obj, trycall: bool = True):
-    """ return code object for given function. """
+def getfslineno(obj: Any) -> Tuple[Union[str, py.path.local], int]:
+    """ Return source location (path, lineno) for the given object.
+    If the source cannot be determined return ("", -1).
+
+    The line number is 0-based.
+    """
+    # xxx let decorators etc specify a sane ordering
+    # NOTE: this used to be done in _pytest.compat.getfslineno, initially added
+    #       in 6ec13a2b9.  It ("place_as") appears to be something very custom.
+    obj = get_real_func(obj)
+    if hasattr(obj, "place_as"):
+        obj = obj.place_as
+
     try:
-        return obj.__code__
-    except AttributeError:
-        obj = getattr(obj, "f_code", obj)
-        obj = getattr(obj, "__code__", obj)
-        if trycall and not hasattr(obj, "co_firstlineno"):
-            if hasattr(obj, "__call__") and not inspect.isclass(obj):
-                x = getrawcode(obj.__call__, trycall=False)
-                if hasattr(x, "co_firstlineno"):
-                    return x
-        return obj
+        code = Code(obj)
+    except TypeError:
+        try:
+            fn = inspect.getsourcefile(obj) or inspect.getfile(obj)
+        except TypeError:
+            return "", -1
+
+        fspath = fn and py.path.local(fn) or ""
+        lineno = -1
+        if fspath:
+            try:
+                _, lineno = findsource(obj)
+            except OSError:
+                pass
+        return fspath, lineno
+    else:
+        return code.path, code.firstlineno
 
 
 # relative paths that we use to filter traceback entries from appearing to the user;

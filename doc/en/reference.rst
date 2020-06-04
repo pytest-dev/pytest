@@ -126,7 +126,7 @@ Add warning filters to marked test items.
 
         .. code-block:: python
 
-            @pytest.mark.warnings("ignore:.*usage will be deprecated.*:DeprecationWarning")
+            @pytest.mark.filterwarnings("ignore:.*usage will be deprecated.*:DeprecationWarning")
             def test_foo():
                 ...
 
@@ -204,7 +204,8 @@ Marks a test function as *expected to fail*.
     :type condition: bool or str
     :param condition:
         Condition for marking the test function as xfail (``True/False`` or a
-        :ref:`condition string <string conditions>`).
+        :ref:`condition string <string conditions>`). If a bool, you also have
+        to specify ``reason`` (see :ref:`condition string <string conditions>`).
     :keyword str reason: Reason why the test function is marked as xfail.
     :keyword Exception raises: Exception subclass expected to be raised by the test function; other exceptions will fail the test.
     :keyword bool run:
@@ -284,7 +285,7 @@ For more details, consult the full :ref:`fixtures docs <fixture>`.
     :decorator:
 
 
-.. fixture:: config.cache
+.. fixture:: cache
 
 config.cache
 ~~~~~~~~~~~~
@@ -710,6 +711,7 @@ Session related reporting hooks:
 .. autofunction:: pytest_fixture_setup
 .. autofunction:: pytest_fixture_post_finalizer
 .. autofunction:: pytest_warning_captured
+.. autofunction:: pytest_warning_recorded
 
 Central hook for reporting about test execution:
 
@@ -881,13 +883,17 @@ TestReport
 
 .. autoclass:: _pytest.runner.TestReport()
     :members:
+    :show-inheritance:
     :inherited-members:
 
 _Result
 ~~~~~~~
 
+Result used within :ref:`hook wrappers <hookwrapper>`.
+
 .. autoclass:: pluggy.callers._Result
-    :members:
+.. automethod:: pluggy.callers._Result.get_result
+.. automethod:: pluggy.callers._Result.force_result
 
 Special Variables
 -----------------
@@ -972,19 +978,16 @@ Environment Variables
 
 Environment variables that can be used to change pytest's behavior.
 
-PYTEST_ADDOPTS
-~~~~~~~~~~~~~~
+.. envvar:: PYTEST_ADDOPTS
 
 This contains a command-line (parsed by the py:mod:`shlex` module) that will be **prepended** to the command line given
 by the user, see :ref:`adding default options` for more information.
 
-PYTEST_DEBUG
-~~~~~~~~~~~~
+.. envvar:: PYTEST_DEBUG
 
 When set, pytest will print tracing and debug information.
 
-PYTEST_PLUGINS
-~~~~~~~~~~~~~~
+.. envvar:: PYTEST_PLUGINS
 
 Contains comma-separated list of modules that should be loaded as plugins:
 
@@ -992,14 +995,12 @@ Contains comma-separated list of modules that should be loaded as plugins:
 
     export PYTEST_PLUGINS=mymodule.plugin,xdist
 
-PYTEST_DISABLE_PLUGIN_AUTOLOAD
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. envvar:: PYTEST_DISABLE_PLUGIN_AUTOLOAD
 
 When set, disables plugin auto-loading through setuptools entrypoints. Only explicitly specified plugins will be
 loaded.
 
-PYTEST_CURRENT_TEST
-~~~~~~~~~~~~~~~~~~~
+.. envvar:: PYTEST_CURRENT_TEST
 
 This is not meant to be set by users, but is set by pytest internally with the name of the current test so other
 processes can inspect it, see :ref:`pytest current test env` for more information.
@@ -1028,7 +1029,7 @@ file, usually located at the root of your repository. All options must be under 
     down problems.
     When possible, it is recommended to use the latter files to hold your pytest configuration.
 
-Configuration file options may be overwritten in the command-line by using ``-o/--override``, which can also be
+Configuration file options may be overwritten in the command-line by using ``-o/--override-ini``, which can also be
 passed multiple times. The expected format is ``name=value``. For example::
 
    pytest -o console_output_style=classic -o cache_dir=/tmp/mycache
@@ -1446,6 +1447,11 @@ passed multiple times. The expected format is ``name=value``. For example::
         markers =
             slow
             serial
+
+    .. note::
+        The use of ``--strict-markers`` is highly preferred. ``--strict`` was kept for
+        backward compatibility only and may be confusing for others as it only applies to
+        markers and not to other options.
 
 .. confval:: minversion
 

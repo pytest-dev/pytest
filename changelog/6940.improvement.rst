@@ -1,0 +1,1 @@
+When using the ``--duration`` option, the terminal message output is now more precise about the number and durations of hidden items.

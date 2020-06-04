@@ -1,5 +1,6 @@
 """ command line options, ini-file and conftest.py processing. """
 import argparse
+import contextlib
 import copy
 import enum
 import inspect
@@ -22,7 +23,6 @@ from typing import Union
 
 import attr
 import py
-from packaging.version import Version
 from pluggy import HookimplMarker
 from pluggy import HookspecMarker
 from pluggy import PluginManager
@@ -87,9 +87,14 @@ class ExitCode(enum.IntEnum):
 
 class ConftestImportFailure(Exception):
     def __init__(self, path, excinfo):
-        Exception.__init__(self, path, excinfo)
+        super().__init__(path, excinfo)
         self.path = path
         self.excinfo = excinfo  # type: Tuple[Type[Exception], Exception, TracebackType]
+
+    def __str__(self):
+        return "{}: {} (from {})".format(
+            self.excinfo[0].__name__, self.excinfo[1], self.path
+        )
 
 
 def main(args=None, plugins=None) -> Union[int, ExitCode]:
@@ -135,6 +140,24 @@ def main(args=None, plugins=None) -> Union[int, ExitCode]:
         for msg in e.args:
             tw.line("ERROR: {}\n".format(msg), red=True)
         return ExitCode.USAGE_ERROR
+
+
+def console_main() -> int:
+    """pytest's CLI entry point.
+
+    This function is not meant for programmable use; use `main()` instead.
+    """
+    # https://docs.python.org/3/library/signal.html#note-on-sigpipe
+    try:
+        code = main()
+        sys.stdout.flush()
+        return code
+    except BrokenPipeError:
+        # Python flushes standard streams on exit; redirect remaining output
+        # to devnull to avoid another BrokenPipeError at shutdown
+        devnull = os.open(os.devnull, os.O_WRONLY)
+        os.dup2(devnull, sys.stdout.fileno())
+        return 1  # Python exits with error code 1 on EPIPE
 
 
 class cmdline:  # compatibility namespace
@@ -262,19 +285,6 @@ def _prepareconfig(
         raise
 
 
-def _fail_on_non_top_pytest_plugins(conftestpath, confcutdir):
-    msg = (
-        "Defining 'pytest_plugins' in a non-top-level conftest is no longer supported:\n"
-        "It affects the entire test suite instead of just below the conftest as expected.\n"
-        "  {}\n"
-        "Please move it to a top level conftest file at the rootdir:\n"
-        "  {}\n"
-        "For more information, visit:\n"
-        "  https://docs.pytest.org/en/latest/deprecations.html#pytest-plugins-in-non-top-level-conftest-files"
-    )
-    fail(msg.format(conftestpath, confcutdir), pytrace=False)
-
-
 class PytestPluginManager(PluginManager):
     """
     Overwrites :py:class:`pluggy.PluginManager <pluggy.PluginManager>` to add pytest-specific
@@ -308,7 +318,9 @@ class PytestPluginManager(PluginManager):
             err = sys.stderr
             encoding = getattr(err, "encoding", "utf8")
             try:
-                err = py.io.dupfile(err, encoding=encoding)
+                err = open(
+                    os.dup(err.fileno()), mode=err.mode, buffering=1, encoding=encoding,
+                )
             except Exception:
                 pass
             self.trace.root.setwriter(err.write)
@@ -491,34 +503,49 @@ class PytestPluginManager(PluginManager):
         # Using Path().resolve() is better than py.path.realpath because
         # it resolves to the correct path/drive in case-insensitive file systems (#5792)
         key = Path(str(conftestpath)).resolve()
-        try:
-            return self._conftestpath2mod[key]
-        except KeyError:
-            pkgpath = conftestpath.pypkgpath()
-            if pkgpath is None:
-                _ensure_removed_sysmodule(conftestpath.purebasename)
-            try:
-                mod = conftestpath.pyimport()
-                if (
-                    hasattr(mod, "pytest_plugins")
-                    and self._configured
-                    and not self._using_pyargs
-                ):
-                    _fail_on_non_top_pytest_plugins(conftestpath, self._confcutdir)
-            except Exception:
-                raise ConftestImportFailure(conftestpath, sys.exc_info())
 
-            self._conftest_plugins.add(mod)
-            self._conftestpath2mod[key] = mod
-            dirpath = conftestpath.dirpath()
-            if dirpath in self._dirpath2confmods:
-                for path, mods in self._dirpath2confmods.items():
-                    if path and path.relto(dirpath) or path == dirpath:
-                        assert mod not in mods
-                        mods.append(mod)
-            self.trace("loading conftestmodule {!r}".format(mod))
-            self.consider_conftest(mod)
-            return mod
+        with contextlib.suppress(KeyError):
+            return self._conftestpath2mod[key]
+
+        pkgpath = conftestpath.pypkgpath()
+        if pkgpath is None:
+            _ensure_removed_sysmodule(conftestpath.purebasename)
+
+        try:
+            mod = conftestpath.pyimport()
+        except Exception as e:
+            raise ConftestImportFailure(conftestpath, sys.exc_info()) from e
+
+        self._check_non_top_pytest_plugins(mod, conftestpath)
+
+        self._conftest_plugins.add(mod)
+        self._conftestpath2mod[key] = mod
+        dirpath = conftestpath.dirpath()
+        if dirpath in self._dirpath2confmods:
+            for path, mods in self._dirpath2confmods.items():
+                if path and path.relto(dirpath) or path == dirpath:
+                    assert mod not in mods
+                    mods.append(mod)
+        self.trace("loading conftestmodule {!r}".format(mod))
+        self.consider_conftest(mod)
+        return mod
+
+    def _check_non_top_pytest_plugins(self, mod, conftestpath):
+        if (
+            hasattr(mod, "pytest_plugins")
+            and self._configured
+            and not self._using_pyargs
+        ):
+            msg = (
+                "Defining 'pytest_plugins' in a non-top-level conftest is no longer supported:\n"
+                "It affects the entire test suite instead of just below the conftest as expected.\n"
+                "  {}\n"
+                "Please move it to a top level conftest file at the rootdir:\n"
+                "  {}\n"
+                "For more information, visit:\n"
+                "  https://docs.pytest.org/en/latest/deprecations.html#pytest-plugins-in-non-top-level-conftest-files"
+            )
+            fail(msg.format(conftestpath, self._confcutdir), pytrace=False)
 
     #
     # API for bootstrapping plugin loading
@@ -612,13 +639,9 @@ class PytestPluginManager(PluginManager):
         try:
             __import__(importspec)
         except ImportError as e:
-            new_exc_message = 'Error importing plugin "{}": {}'.format(
-                modname, str(e.args[0])
-            )
-            new_exc = ImportError(new_exc_message)
-            tb = sys.exc_info()[2]
-
-            raise new_exc.with_traceback(tb)
+            raise ImportError(
+                'Error importing plugin "{}": {}'.format(modname, str(e.args[0]))
+            ).with_traceback(e.__traceback__)
 
         except Skipped as e:
             from _pytest.warnings import _issue_warning_captured
@@ -735,25 +758,18 @@ class Config:
     """
     Access to configuration values, pluginmanager and plugin hooks.
 
-    :ivar PytestPluginManager pluginmanager: the plugin manager handles plugin registration and hook invocation.
+    :param PytestPluginManager pluginmanager:
 
-    :ivar argparse.Namespace option: access to command line option as attributes.
-
-    :ivar InvocationParams invocation_params:
-
+    :param InvocationParams invocation_params:
         Object containing the parameters regarding the ``pytest.main``
         invocation.
-
-        Contains the following read-only attributes:
-
-        * ``args``: tuple of command-line arguments as passed to ``pytest.main()``.
-        * ``plugins``: list of extra plugins, might be None.
-        * ``dir``: directory where ``pytest.main()`` was invoked from.
     """
 
     @attr.s(frozen=True)
     class InvocationParams:
         """Holds parameters passed during ``pytest.main()``
+
+        The object attributes are read-only.
 
         .. versionadded:: 5.1
 
@@ -766,10 +782,18 @@ class Config:
         """
 
         args = attr.ib(converter=tuple)
+        """tuple of command-line arguments as passed to ``pytest.main()``."""
         plugins = attr.ib()
+        """list of extra plugins, might be `None`."""
         dir = attr.ib(type=Path)
+        """directory where ``pytest.main()`` was invoked from."""
 
-    def __init__(self, pluginmanager, *, invocation_params=None) -> None:
+    def __init__(
+        self,
+        pluginmanager: PytestPluginManager,
+        *,
+        invocation_params: Optional[InvocationParams] = None
+    ) -> None:
         from .argparsing import Parser, FILE_OR_DIR
 
         if invocation_params is None:
@@ -778,6 +802,10 @@ class Config:
             )
 
         self.option = argparse.Namespace()
+        """access to command line option as attributes.
+
+          :type: argparse.Namespace"""
+
         self.invocation_params = invocation_params
 
         _a = FILE_OR_DIR
@@ -786,6 +814,10 @@ class Config:
             processopt=self._processopt,
         )
         self.pluginmanager = pluginmanager
+        """the plugin manager handles plugin registration and hook invocation.
+
+          :type: PytestPluginManager"""
+
         self.trace = self.pluginmanager.trace.root.get("config")
         self.hook = self.pluginmanager.hook
         self._inicache = {}  # type: Dict[str, Any]
@@ -998,6 +1030,7 @@ class Config:
         self.known_args_namespace = ns = self._parser.parse_known_args(
             args, namespace=copy.copy(self.option)
         )
+        self._validatekeys()
         if self.known_args_namespace.confcutdir is None and self.inifile:
             confcutdir = py.path.local(self.inifile).dirname
             self.known_args_namespace.confcutdir = confcutdir
@@ -1026,6 +1059,9 @@ class Config:
 
         minver = self.inicfg.get("minversion", None)
         if minver:
+            # Imported lazily to improve start-up time.
+            from packaging.version import Version
+
             if Version(minver) > Version(pytest.__version__):
                 raise pytest.UsageError(
                     "%s:%d: requires pytest-%s, actual pytest-%s'"
@@ -1036,6 +1072,17 @@ class Config:
                         pytest.__version__,
                     )
                 )
+
+    def _validatekeys(self):
+        for key in sorted(self._get_unknown_ini_keys()):
+            message = "Unknown config ini key: {}\n".format(key)
+            if self.known_args_namespace.strict_config:
+                fail(message, pytrace=False)
+            sys.stderr.write("WARNING: {}".format(message))
+
+    def _get_unknown_ini_keys(self) -> List[str]:
+        parser_inicfg = self._parser._inidict
+        return [name for name in self.inicfg if name not in parser_inicfg]
 
     def parse(self, args: List[str], addopts: bool = True) -> None:
         # parse given cmdline arguments into this config object.

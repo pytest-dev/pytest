@@ -2,19 +2,28 @@ import os
 import warnings
 
 import pytest
+from _pytest.fixtures import FixtureRequest
+from _pytest.pytester import Testdir
 
 WARNINGS_SUMMARY_HEADER = "warnings summary"
 
 
 @pytest.fixture
-def pyfile_with_warnings(testdir, request):
+def pyfile_with_warnings(testdir: Testdir, request: FixtureRequest) -> str:
     """
     Create a test file which calls a function in a module which generates warnings.
     """
     testdir.syspathinsert()
     test_name = request.function.__name__
     module_name = test_name.lstrip("test_") + "_module"
-    testdir.makepyfile(
+    test_file = testdir.makepyfile(
+        """
+        import {module_name}
+        def test_func():
+            assert {module_name}.foo() == 1
+        """.format(
+            module_name=module_name
+        ),
         **{
             module_name: """
             import warnings
@@ -22,16 +31,10 @@ def pyfile_with_warnings(testdir, request):
                 warnings.warn(UserWarning("user warning"))
                 warnings.warn(RuntimeWarning("runtime warning"))
                 return 1
-        """,
-            test_name: """
-            import {module_name}
-            def test_func():
-                assert {module_name}.foo() == 1
-        """.format(
-                module_name=module_name
-            ),
-        }
+            """,
+        },
     )
+    return str(test_file)
 
 
 @pytest.mark.filterwarnings("default")
@@ -39,7 +42,7 @@ def test_normal_flow(testdir, pyfile_with_warnings):
     """
     Check that the warnings section is displayed.
     """
-    result = testdir.runpytest()
+    result = testdir.runpytest(pyfile_with_warnings)
     result.stdout.fnmatch_lines(
         [
             "*== %s ==*" % WARNINGS_SUMMARY_HEADER,
@@ -54,7 +57,7 @@ def test_normal_flow(testdir, pyfile_with_warnings):
 
 
 @pytest.mark.filterwarnings("always")
-def test_setup_teardown_warnings(testdir, pyfile_with_warnings):
+def test_setup_teardown_warnings(testdir):
     testdir.makepyfile(
         """
         import warnings
@@ -95,7 +98,7 @@ def test_as_errors(testdir, pyfile_with_warnings, method):
         )
     # Use a subprocess, since changing logging level affects other threads
     # (xdist).
-    result = testdir.runpytest_subprocess(*args)
+    result = testdir.runpytest_subprocess(*args, pyfile_with_warnings)
     result.stdout.fnmatch_lines(
         [
             "E       UserWarning: user warning",
@@ -116,15 +119,15 @@ def test_ignore(testdir, pyfile_with_warnings, method):
         """
         )
 
-    result = testdir.runpytest(*args)
+    result = testdir.runpytest(*args, pyfile_with_warnings)
     result.stdout.fnmatch_lines(["* 1 passed in *"])
     assert WARNINGS_SUMMARY_HEADER not in result.stdout.str()
 
 
 @pytest.mark.filterwarnings("always")
-def test_unicode(testdir, pyfile_with_warnings):
+def test_unicode(testdir):
     testdir.makepyfile(
-        """\
+        """
         import warnings
         import pytest
 
@@ -265,9 +268,8 @@ def test_warning_captured_hook(testdir):
     collected = []
 
     class WarningCollector:
-        def pytest_warning_captured(self, warning_message, when, item):
-            imge_name = item.name if item is not None else ""
-            collected.append((str(warning_message.message), when, imge_name))
+        def pytest_warning_recorded(self, warning_message, when, nodeid, location):
+            collected.append((str(warning_message.message), when, nodeid, location))
 
     result = testdir.runpytest(plugins=[WarningCollector()])
     result.stdout.fnmatch_lines(["*1 passed*"])
@@ -275,11 +277,27 @@ def test_warning_captured_hook(testdir):
     expected = [
         ("config warning", "config", ""),
         ("collect warning", "collect", ""),
-        ("setup warning", "runtest", "test_func"),
-        ("call warning", "runtest", "test_func"),
-        ("teardown warning", "runtest", "test_func"),
+        ("setup warning", "runtest", "test_warning_captured_hook.py::test_func"),
+        ("call warning", "runtest", "test_warning_captured_hook.py::test_func"),
+        ("teardown warning", "runtest", "test_warning_captured_hook.py::test_func"),
     ]
-    assert collected == expected
+    for index in range(len(expected)):
+        collected_result = collected[index]
+        expected_result = expected[index]
+
+        assert collected_result[0] == expected_result[0], str(collected)
+        assert collected_result[1] == expected_result[1], str(collected)
+        assert collected_result[2] == expected_result[2], str(collected)
+
+        # NOTE: collected_result[3] is location, which differs based on the platform you are on
+        #       thus, the best we can do here is assert the types of the paremeters match what we expect
+        #       and not try and preload it in the expected array
+        if collected_result[3] is not None:
+            assert type(collected_result[3][0]) is str, str(collected)
+            assert type(collected_result[3][1]) is int, str(collected)
+            assert type(collected_result[3][2]) is str, str(collected)
+        else:
+            assert collected_result[3] is None, str(collected)
 
 
 @pytest.mark.filterwarnings("always")
@@ -571,35 +589,54 @@ def test_group_warnings_by_message(testdir):
     result = testdir.runpytest()
     result.stdout.fnmatch_lines(
         [
-            "test_group_warnings_by_message.py::test_foo[0]",
-            "test_group_warnings_by_message.py::test_foo[1]",
-            "test_group_warnings_by_message.py::test_foo[2]",
-            "test_group_warnings_by_message.py::test_foo[3]",
-            "test_group_warnings_by_message.py::test_foo[4]",
-            "test_group_warnings_by_message.py::test_bar",
-        ]
+            "*== %s ==*" % WARNINGS_SUMMARY_HEADER,
+            "test_group_warnings_by_message.py::test_foo[[]0[]]",
+            "test_group_warnings_by_message.py::test_foo[[]1[]]",
+            "test_group_warnings_by_message.py::test_foo[[]2[]]",
+            "test_group_warnings_by_message.py::test_foo[[]3[]]",
+            "test_group_warnings_by_message.py::test_foo[[]4[]]",
+            "test_group_warnings_by_message.py::test_foo_1",
+            "  */test_group_warnings_by_message.py:*: UserWarning: foo",
+            "    warnings.warn(UserWarning(msg))",
+            "",
+            "test_group_warnings_by_message.py::test_bar[[]0[]]",
+            "test_group_warnings_by_message.py::test_bar[[]1[]]",
+            "test_group_warnings_by_message.py::test_bar[[]2[]]",
+            "test_group_warnings_by_message.py::test_bar[[]3[]]",
+            "test_group_warnings_by_message.py::test_bar[[]4[]]",
+            "  */test_group_warnings_by_message.py:*: UserWarning: bar",
+            "    warnings.warn(UserWarning(msg))",
+            "",
+            "-- Docs: *",
+            "*= 11 passed, 11 warnings *",
+        ],
+        consecutive=True,
     )
-    warning_code = 'warnings.warn(UserWarning("foo"))'
-    assert warning_code in result.stdout.str()
-    assert result.stdout.str().count(warning_code) == 1
 
 
 @pytest.mark.filterwarnings("ignore::pytest.PytestExperimentalApiWarning")
 @pytest.mark.filterwarnings("always")
 def test_group_warnings_by_message_summary(testdir):
-    testdir.copy_example("warnings/test_group_warnings_by_message_summary.py")
+    testdir.copy_example("warnings/test_group_warnings_by_message_summary")
+    testdir.syspathinsert()
     result = testdir.runpytest()
     result.stdout.fnmatch_lines(
         [
             "*== %s ==*" % WARNINGS_SUMMARY_HEADER,
-            "test_group_warnings_by_message_summary.py: 120 tests with warnings",
-            "*test_group_warnings_by_message_summary.py:7: UserWarning: foo",
+            "test_1.py: 21 warnings",
+            "test_2.py: 1 warning",
+            "  */test_1.py:7: UserWarning: foo",
+            "    warnings.warn(UserWarning(msg))",
+            "",
+            "test_1.py: 20 warnings",
+            "  */test_1.py:7: UserWarning: bar",
+            "    warnings.warn(UserWarning(msg))",
+            "",
+            "-- Docs: *",
+            "*= 42 passed, 42 warnings *",
         ],
         consecutive=True,
     )
-    warning_code = 'warnings.warn(UserWarning("foo"))'
-    assert warning_code in result.stdout.str()
-    assert result.stdout.str().count(warning_code) == 1
 
 
 def test_pytest_configure_warning(testdir, recwarn):
@@ -627,7 +664,7 @@ class TestStackLevel:
             captured = []
 
             @classmethod
-            def pytest_warning_captured(cls, warning_message, when, item, location):
+            def pytest_warning_recorded(cls, warning_message, when, nodeid, location):
                 cls.captured.append((warning_message, location))
 
         testdir.plugins = [CapturedWarnings()]

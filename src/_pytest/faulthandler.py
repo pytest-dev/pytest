@@ -13,8 +13,7 @@ fault_handler_stderr_key = StoreKey[TextIO]()
 def pytest_addoption(parser):
     help = (
         "Dump the traceback of all threads if a test takes "
-        "more than TIMEOUT seconds to finish.\n"
-        "Not available on Windows."
+        "more than TIMEOUT seconds to finish."
     )
     parser.addini("faulthandler_timeout", help, default=0.0)
 
@@ -80,7 +79,7 @@ class FaultHandlerHooks:
     def get_timeout_config_value(config):
         return float(config.getini("faulthandler_timeout") or 0.0)
 
-    @pytest.hookimpl(hookwrapper=True)
+    @pytest.hookimpl(hookwrapper=True, trylast=True)
     def pytest_runtest_protocol(self, item):
         timeout = self.get_timeout_config_value(item.config)
         stderr = item.config._store[fault_handler_stderr_key]

@@ -1,1 +1,0 @@
-Do not display empty lines inbetween traceback for unexpected exceptions with doctests.

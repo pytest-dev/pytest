@@ -27,11 +27,12 @@ def pytest_addoption(parser):
         choices=("rewrite", "plain"),
         default="rewrite",
         metavar="MODE",
-        help="""Control assertion debugging tools.  'plain'
-                            performs no assertion debugging.  'rewrite'
-                            (the default) rewrites assert statements in
-                            test modules on import to provide assert
-                            expression information.""",
+        help=(
+            "Control assertion debugging tools.\n"
+            "'plain' performs no assertion debugging.\n"
+            "'rewrite' (the default) rewrites assert statements in test modules"
+            " on import to provide assert expression information."
+        ),
     )
     parser.addini(
         "enable_assertion_pass_hook",
@@ -114,7 +115,7 @@ def pytest_collection(session: "Session") -> None:
 def pytest_runtest_protocol(item):
     """Setup the pytest_assertrepr_compare and pytest_assertion_pass hooks
 
-    The newinterpret and rewrite modules will use util._reprcompare if
+    The rewrite module will use util._reprcompare if
     it exists to use custom reporting via the
     pytest_assertrepr_compare hook.  This sets up this custom
     comparison for the test.

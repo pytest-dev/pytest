@@ -362,6 +362,7 @@ class TestReportSerialization:
             """
             )
 
+        testdir.syspathinsert()
         reprec = testdir.inline_run()
 
         reports = reprec.getreports("pytest_runtest_logreport")
@@ -394,6 +395,14 @@ class TestReportSerialization:
 
         # for same reasons as previous test, ensure we don't blow up here
         loaded_report.longrepr.toterminal(tw_mock)
+
+    def test_report_prevent_ConftestImportFailure_hiding_exception(self, testdir):
+        sub_dir = testdir.tmpdir.join("ns").ensure_dir()
+        sub_dir.join("conftest").new(ext=".py").write("import unknown")
+
+        result = testdir.runpytest_subprocess(".")
+        result.stdout.fnmatch_lines(["E   *Error: No module named 'unknown'"])
+        result.stdout.no_fnmatch_line("ERROR  - *ConftestImportFailure*")
 
 
 class TestHooks:

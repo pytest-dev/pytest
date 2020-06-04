@@ -194,7 +194,7 @@ class TestXFail:
         assert len(reports) == 3
         callreport = reports[1]
         assert callreport.failed
-        assert callreport.longrepr == "[XPASS(strict)] nope"
+        assert str(callreport.longrepr) == "[XPASS(strict)] nope"
         assert not hasattr(callreport, "wasxfail")
 
     def test_xfail_run_anyway(self, testdir):
@@ -758,7 +758,7 @@ def test_skipped_reasons_functional(testdir):
     result = testdir.runpytest("-rs")
     result.stdout.fnmatch_lines_random(
         [
-            "SKIPPED [[]2[]] */conftest.py:4: test",
+            "SKIPPED [[]2[]] conftest.py:4: test",
             "SKIPPED [[]1[]] test_one.py:14: via_decorator",
         ]
     )
@@ -1176,3 +1176,20 @@ def test_importorskip():
         match="^could not import 'doesnotexist': No module named .*",
     ):
         pytest.importorskip("doesnotexist")
+
+
+def test_relpath_rootdir(testdir):
+    testdir.makepyfile(
+        **{
+            "tests/test_1.py": """
+        import pytest
+        @pytest.mark.skip()
+        def test_pass():
+            pass
+            """,
+        }
+    )
+    result = testdir.runpytest("-rs", "tests/test_1.py", "--rootdir=tests")
+    result.stdout.fnmatch_lines(
+        ["SKIPPED [[]1[]] tests/test_1.py:2: unconditional skip"]
+    )

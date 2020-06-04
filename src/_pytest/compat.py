@@ -3,7 +3,6 @@ python version compatibility code
 """
 import functools
 import inspect
-import io
 import os
 import re
 import sys
@@ -13,7 +12,6 @@ from inspect import signature
 from typing import Any
 from typing import Callable
 from typing import Generic
-from typing import IO
 from typing import Optional
 from typing import overload
 from typing import Tuple
@@ -34,7 +32,7 @@ else:
 
 
 if TYPE_CHECKING:
-    from typing import Type  # noqa: F401 (used in type string)
+    from typing import Type
 
 
 _T = TypeVar("_T")
@@ -91,6 +89,13 @@ def iscoroutinefunction(func: object) -> bool:
     module as a side-effect (see issue #8).
     """
     return inspect.iscoroutinefunction(func) or getattr(func, "_is_coroutine", False)
+
+
+def is_async_function(func: object) -> bool:
+    """Return True if the given function seems to be an async function or async generator"""
+    return iscoroutinefunction(func) or (
+        sys.version_info >= (3, 6) and inspect.isasyncgenfunction(func)
+    )
 
 
 def getlocation(function, curdir=None) -> str:
@@ -336,49 +341,6 @@ def safe_isclass(obj: object) -> bool:
         return False
 
 
-COLLECT_FAKEMODULE_ATTRIBUTES = (
-    "Collector",
-    "Module",
-    "Function",
-    "Instance",
-    "Session",
-    "Item",
-    "Class",
-    "File",
-    "_fillfuncargs",
-)
-
-
-def _setup_collect_fakemodule() -> None:
-    from types import ModuleType
-    import pytest
-
-    # Types ignored because the module is created dynamically.
-    pytest.collect = ModuleType("pytest.collect")  # type: ignore
-    pytest.collect.__all__ = []  # type: ignore  # used for setns
-    for attr_name in COLLECT_FAKEMODULE_ATTRIBUTES:
-        setattr(pytest.collect, attr_name, getattr(pytest, attr_name))  # type: ignore
-
-
-class CaptureIO(io.TextIOWrapper):
-    def __init__(self) -> None:
-        super().__init__(io.BytesIO(), encoding="UTF-8", newline="", write_through=True)
-
-    def getvalue(self) -> str:
-        assert isinstance(self.buffer, io.BytesIO)
-        return self.buffer.getvalue().decode("UTF-8")
-
-
-class CaptureAndPassthroughIO(CaptureIO):
-    def __init__(self, other: IO) -> None:
-        self._other = other
-        super().__init__()
-
-    def write(self, s) -> int:
-        super().write(s)
-        return self._other.write(s)
-
-
 if sys.version_info < (3, 5, 2):
 
     def overload(f):  # noqa: F811
@@ -419,3 +381,15 @@ else:
                 return self
             value = instance.__dict__[self.func.__name__] = self.func(instance)
             return value
+
+
+# Sometimes an algorithm needs a dict which yields items in the order in which
+# they were inserted when iterated. Since Python 3.7, `dict` preserves
+# insertion order. Since `dict` is faster and uses less memory than
+# `OrderedDict`, prefer to use it if possible.
+if sys.version_info >= (3, 7):
+    order_preserving_dict = dict
+else:
+    from collections import OrderedDict
+
+    order_preserving_dict = OrderedDict

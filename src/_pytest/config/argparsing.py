@@ -15,12 +15,13 @@ from typing import Union
 
 import py
 
+import _pytest._io
 from _pytest.compat import TYPE_CHECKING
 from _pytest.config.exceptions import UsageError
 
 if TYPE_CHECKING:
     from typing import NoReturn
-    from typing_extensions import Literal  # noqa: F401
+    from typing_extensions import Literal
 
 FILE_OR_DIR = "file_or_dir"
 
@@ -466,7 +467,7 @@ class DropShorterLongHelpFormatter(argparse.HelpFormatter):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         """Use more accurate terminal width via pylib."""
         if "width" not in kwargs:
-            kwargs["width"] = py.io.get_terminal_width()
+            kwargs["width"] = _pytest._io.get_terminal_width()
         super().__init__(*args, **kwargs)
 
     def _format_action_invocation(self, action: argparse.Action) -> str:
@@ -508,3 +509,15 @@ class DropShorterLongHelpFormatter(argparse.HelpFormatter):
         formatted_action_invocation = ", ".join(return_list)
         action._formatted_action_invocation = formatted_action_invocation  # type: ignore
         return formatted_action_invocation
+
+    def _split_lines(self, text, width):
+        """Wrap lines after splitting on original newlines.
+
+        This allows to have explicit line breaks in the help text.
+        """
+        import textwrap
+
+        lines = []
+        for line in text.splitlines():
+            lines.extend(textwrap.wrap(line.strip(), width))
+        return lines

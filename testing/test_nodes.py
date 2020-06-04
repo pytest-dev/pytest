@@ -58,3 +58,30 @@ def test__check_initialpaths_for_relpath():
 
     outside = py.path.local("/outside")
     assert nodes._check_initialpaths_for_relpath(FakeSession, outside) is None
+
+
+def test_failure_with_changed_cwd(testdir):
+    """
+    Test failure lines should use absolute paths if cwd has changed since
+    invocation, so the path is correct (#6428).
+    """
+    p = testdir.makepyfile(
+        """
+        import os
+        import pytest
+
+        @pytest.fixture
+        def private_dir():
+            out_dir = 'ddd'
+            os.mkdir(out_dir)
+            old_dir = os.getcwd()
+            os.chdir(out_dir)
+            yield out_dir
+            os.chdir(old_dir)
+
+        def test_show_wrong_path(private_dir):
+            assert False
+    """
+    )
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines([str(p) + ":*: AssertionError", "*1 failed in *"])

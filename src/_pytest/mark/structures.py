@@ -2,15 +2,19 @@ import inspect
 import warnings
 from collections import namedtuple
 from collections.abc import MutableMapping
+from typing import Any
 from typing import Iterable
 from typing import List
+from typing import Mapping
 from typing import Optional
+from typing import Sequence
 from typing import Set
+from typing import Tuple
 from typing import Union
 
 import attr
 
-from .._code.source import getfslineno
+from .._code import getfslineno
 from ..compat import ascii_escaped
 from ..compat import NOTSET
 from _pytest.outcomes import fail
@@ -140,28 +144,32 @@ class ParameterSet(namedtuple("ParameterSet", "values, marks, id")):
 
 @attr.s(frozen=True)
 class Mark:
-    #: name of the mark
+    #: Name of the mark.
     name = attr.ib(type=str)
-    #: positional arguments of the mark decorator
-    args = attr.ib()  # List[object]
-    #: keyword arguments of the mark decorator
-    kwargs = attr.ib()  # Dict[str, object]
+    #: Positional arguments of the mark decorator.
+    args = attr.ib(type=Tuple[Any, ...])
+    #: Keyword arguments of the mark decorator.
+    kwargs = attr.ib(type=Mapping[str, Any])
 
-    #: source Mark for ids with parametrize Marks
+    #: Source Mark for ids with parametrize Marks.
     _param_ids_from = attr.ib(type=Optional["Mark"], default=None, repr=False)
-    #: resolved/generated ids with parametrize Marks
-    _param_ids_generated = attr.ib(type=Optional[List[str]], default=None, repr=False)
+    #: Resolved/generated ids with parametrize Marks.
+    _param_ids_generated = attr.ib(
+        type=Optional[Sequence[str]], default=None, repr=False
+    )
 
-    def _has_param_ids(self):
+    def _has_param_ids(self) -> bool:
         return "ids" in self.kwargs or len(self.args) >= 4
 
     def combined_with(self, other: "Mark") -> "Mark":
-        """
-        :param other: the mark to combine with
+        """Return a new Mark which is a combination of this
+        Mark and another Mark.
+
+        Combines by appending args and merging kwargs.
+
+        :param other: The mark to combine with.
         :type other: Mark
         :rtype: Mark
-
-        combines by appending args and merging the mappings
         """
         assert self.name == other.name
 
@@ -183,11 +191,12 @@ class Mark:
 
 @attr.s
 class MarkDecorator:
-    """ A decorator for test functions and test classes.  When applied
-    it will create :class:`Mark` objects which are often created like this::
+    """A decorator for applying a mark on test functions and classes.
 
-        mark1 = pytest.mark.NAME              # simple MarkDecorator
-        mark2 = pytest.mark.NAME(name1=value) # parametrized MarkDecorator
+    MarkDecorators are created with ``pytest.mark``::
+
+        mark1 = pytest.mark.NAME              # Simple MarkDecorator
+        mark2 = pytest.mark.NAME(name1=value) # Parametrized MarkDecorator
 
     and can then be applied as decorators to test functions::
 
@@ -195,64 +204,64 @@ class MarkDecorator:
         def test_function():
             pass
 
-    When a MarkDecorator instance is called it does the following:
+    When a MarkDecorator is called it does the following:
 
     1. If called with a single class as its only positional argument and no
-       additional keyword arguments, it attaches itself to the class so it
+       additional keyword arguments, it attaches the mark to the class so it
        gets applied automatically to all test cases found in that class.
+
     2. If called with a single function as its only positional argument and
-       no additional keyword arguments, it attaches a MarkInfo object to the
-       function, containing all the arguments already stored internally in
-       the MarkDecorator.
-    3. When called in any other case, it performs a 'fake construction' call,
-       i.e. it returns a new MarkDecorator instance with the original
-       MarkDecorator's content updated with the arguments passed to this
-       call.
+       no additional keyword arguments, it attaches the mark to the function,
+       containing all the arguments already stored internally in the
+       MarkDecorator.
 
-    Note: The rules above prevent MarkDecorator objects from storing only a
-    single function or class reference as their positional argument with no
-    additional keyword or positional arguments.
+    3. When called in any other case, it returns a new MarkDecorator instance
+       with the original MarkDecorator's content updated with the arguments
+       passed to this call.
 
+    Note: The rules above prevent MarkDecorators from storing only a single
+    function or class reference as their positional argument with no
+    additional keyword or positional arguments. You can work around this by
+    using `with_args()`.
     """
 
-    mark = attr.ib(validator=attr.validators.instance_of(Mark))
+    mark = attr.ib(type=Mark, validator=attr.validators.instance_of(Mark))
 
     @property
-    def name(self):
-        """alias for mark.name"""
+    def name(self) -> str:
+        """Alias for mark.name."""
         return self.mark.name
 
     @property
-    def args(self):
-        """alias for mark.args"""
+    def args(self) -> Tuple[Any, ...]:
+        """Alias for mark.args."""
         return self.mark.args
 
     @property
-    def kwargs(self):
-        """alias for mark.kwargs"""
+    def kwargs(self) -> Mapping[str, Any]:
+        """Alias for mark.kwargs."""
         return self.mark.kwargs
 
     @property
-    def markname(self):
+    def markname(self) -> str:
         return self.name  # for backward-compat (2.4.1 had this attr)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "<MarkDecorator {!r}>".format(self.mark)
 
-    def with_args(self, *args, **kwargs):
-        """ return a MarkDecorator with extra arguments added
+    def with_args(self, *args: object, **kwargs: object) -> "MarkDecorator":
+        """Return a MarkDecorator with extra arguments added.
 
-        unlike call this can be used even if the sole argument is a callable/class
+        Unlike calling the MarkDecorator, with_args() can be used even
+        if the sole argument is a callable/class.
 
         :return: MarkDecorator
         """
-
         mark = Mark(self.name, args, kwargs)
         return self.__class__(self.mark.combined_with(mark))
 
-    def __call__(self, *args, **kwargs):
-        """ if passed a single callable argument: decorate it with mark info.
-            otherwise add *args/**kwargs in-place to mark information. """
+    def __call__(self, *args: object, **kwargs: object):
+        """Call the MarkDecorator."""
         if args and not kwargs:
             func = args[0]
             is_class = inspect.isclass(func)
@@ -288,27 +297,31 @@ def normalize_mark_list(mark_list: Iterable[Union[Mark, MarkDecorator]]) -> List
     return [x for x in extracted if isinstance(x, Mark)]
 
 
-def store_mark(obj, mark):
-    """store a Mark on an object
-    this is used to implement the Mark declarations/decorators correctly
+def store_mark(obj, mark: Mark) -> None:
+    """Store a Mark on an object.
+
+    This is used to implement the Mark declarations/decorators correctly.
     """
     assert isinstance(mark, Mark), mark
-    # always reassign name to avoid updating pytestmark
-    # in a reference that was only borrowed
+    # Always reassign name to avoid updating pytestmark in a reference that
+    # was only borrowed.
     obj.pytestmark = get_unpacked_marks(obj) + [mark]
 
 
 class MarkGenerator:
-    """ Factory for :class:`MarkDecorator` objects - exposed as
-    a ``pytest.mark`` singleton instance.  Example::
+    """Factory for :class:`MarkDecorator` objects - exposed as
+    a ``pytest.mark`` singleton instance.
+
+    Example::
 
          import pytest
+
          @pytest.mark.slowtest
          def test_function():
             pass
 
-    will set a 'slowtest' :class:`MarkInfo` object
-    on the ``test_function`` object. """
+    applies a 'slowtest' :class:`Mark` on ``test_function``.
+    """
 
     _config = None
     _markers = set()  # type: Set[str]

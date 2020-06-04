@@ -20,16 +20,40 @@ Below is a complete list of all pytest features which are considered deprecated.
 :ref:`standard warning filters <warnings>`.
 
 
+The ``pytest_warning_captured`` hook
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 6.0
+
+This hook has an `item` parameter which cannot be serialized by ``pytest-xdist``.
+
+Use the ``pytest_warning_recored`` hook instead, which replaces the ``item`` parameter
+by a ``nodeid`` parameter.
+
+
+The ``pytest._fillfuncargs`` function
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 5.5
+
+This function was kept for backward compatibility with an older plugin.
+
+It's functionality is not meant to be used directly, but if you must replace
+it, use `function._request._fillfixtures()` instead, though note this is not
+a public API and may break in the future.
+
+
+
 ``--no-print-logs`` command-line option
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. deprecated:: 5.4
+.. versionremoved:: 6.0
 
 
-Option ``--no-print-logs`` is deprecated and meant to be removed in a future release. If you use ``--no-print-logs``, please try out ``--show-capture`` and
-provide feedback.
+Option ``--no-print-logs`` is removed. If you used ``--no-print-logs``, please use ``--show-capture`` instead.
 
-``--show-capture`` command-line option was added in ``pytest 3.5.0` and allows to specify how to
+``--show-capture`` command-line option was added in ``pytest 3.5.0`` and allows to specify how to
 display captured output when tests fail: ``no``, ``stdout``, ``stderr``, ``log`` or ``all`` (the default).
 
 
@@ -39,8 +63,27 @@ Node Construction changed to ``Node.from_parent``
 
 .. deprecated:: 5.4
 
-The construction of nodes new should use the named constructor ``from_parent``.
+The construction of nodes now should use the named constructor ``from_parent``.
 This limitation in api surface intends to enable better/simpler refactoring of the collection tree.
+
+This means that instead of :code:`MyItem(name="foo", parent=collector, obj=42)`
+one now has to invoke :code:`MyItem.from_parent(collector, name="foo")`.
+
+Plugins that wish to support older versions of pytest and suppress the warning can use
+`hasattr` to check if `from_parent` exists in that version:
+
+.. code-block:: python
+
+    def pytest_pycollect_makeitem(collector, name, obj):
+        if hasattr(MyItem, "from_parent"):
+            item = MyItem.from_parent(collector, name="foo")
+            item.obj = 42
+            return item
+        else:
+            return MyItem(name="foo", parent=collector, obj=42)
+
+Note that ``from_parent`` should only be called with keyword arguments for the parameters.
+
 
 
 ``junit_family`` default value change to "xunit2"
@@ -48,21 +91,39 @@ This limitation in api surface intends to enable better/simpler refactoring of t
 
 .. deprecated:: 5.2
 
-The default value of ``junit_family`` option will change to ``xunit2`` in pytest 6.0, given
-that this is the version supported by default in modern tools that manipulate this type of file.
+The default value of ``junit_family`` option will change to ``xunit2`` in pytest 6.0, which
+is an update of the old ``xunit1`` format and is supported by default in modern tools
+that manipulate this type of file (for example, Jenkins, Azure Pipelines, etc.).
 
-In order to smooth the transition, pytest will issue a warning in case the ``--junitxml`` option
-is given in the command line but ``junit_family`` is not explicitly configured in ``pytest.ini``::
+Users are recommended to try the new ``xunit2`` format and see if their tooling that consumes the JUnit
+XML file supports it.
 
-    PytestDeprecationWarning: The 'junit_family' default value will change to 'xunit2' in pytest 6.0.
-      Add 'junit_family=legacy' to your pytest.ini file to silence this warning and make your suite compatible.
+To use the new format, update your ``pytest.ini``:
 
-In order to silence this warning, users just need to configure the ``junit_family`` option explicitly:
+.. code-block:: ini
+
+    [pytest]
+    junit_family=xunit2
+
+If you discover that your tooling does not support the new format, and want to keep using the
+legacy version, set the option to ``legacy`` instead:
 
 .. code-block:: ini
 
     [pytest]
     junit_family=legacy
+
+By using ``legacy`` you will keep using the legacy/xunit1 format when upgrading to
+pytest 6.0, where the default format will be ``xunit2``.
+
+In order to let users know about the transition, pytest will issue a warning in case
+the ``--junitxml`` option is given in the command line but ``junit_family`` is not explicitly
+configured in ``pytest.ini``.
+
+Services known to support the ``xunit2`` format:
+
+* `Jenkins <https://www.jenkins.io/>`__ with the `JUnit <https://plugins.jenkins.io/junit>`__ plugin.
+* `Azure Pipelines <https://azure.microsoft.com/en-us/services/devops/pipelines>`__.
 
 
 ``funcargnames`` alias for ``fixturenames``
@@ -575,40 +636,3 @@ As a stopgap measure, plugin authors may still inject their names into pytest's 
 
     def pytest_configure():
         pytest.my_symbol = MySymbol()
-
-
-
-
-Reinterpretation mode (``--assert=reinterp``)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. versionremoved:: 3.0
-
-Reinterpretation mode has now been removed and only plain and rewrite
-mode are available, consequently the ``--assert=reinterp`` option is
-no longer available.  This also means files imported from plugins or
-``conftest.py`` will not benefit from improved assertions by
-default, you should use ``pytest.register_assert_rewrite()`` to
-explicitly turn on assertion rewriting for those files.
-
-Removed command-line options
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. versionremoved:: 3.0
-
-The following deprecated commandline options were removed:
-
-* ``--genscript``: no longer supported;
-* ``--no-assert``: use ``--assert=plain`` instead;
-* ``--nomagic``: use ``--assert=plain`` instead;
-* ``--report``: use ``-r`` instead;
-
-py.test-X* entry points
-~~~~~~~~~~~~~~~~~~~~~~~
-
-.. versionremoved:: 3.0
-
-Removed all ``py.test-X*`` entry points. The versioned, suffixed entry points
-were never documented and a leftover from a pre-virtualenv era. These entry
-points also created broken entry points in wheels, so removing them also
-removes a source of confusion for users.

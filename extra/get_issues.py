@@ -45,7 +45,7 @@ def main(args):
 
 
 def _get_kind(issue):
-    labels = [l["name"] for l in issue["labels"]]
+    labels = [label["name"] for label in issue["labels"]]
     for key in ("bug", "enhancement", "proposal"):
         if key in labels:
             return key

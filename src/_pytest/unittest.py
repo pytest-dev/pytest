@@ -1,11 +1,11 @@
 """ discovery and running of std-library "unittest" style tests. """
-import functools
 import sys
 import traceback
 
 import _pytest._code
 import pytest
 from _pytest.compat import getimfunc
+from _pytest.compat import is_async_function
 from _pytest.config import hookimpl
 from _pytest.outcomes import exit
 from _pytest.outcomes import fail
@@ -41,7 +41,7 @@ class UnitTestCase(Class):
         if not getattr(cls, "__test__", True):
             return
 
-        skipped = getattr(cls, "__unittest_skip__", False)
+        skipped = _is_skipped(cls)
         if not skipped:
             self._inject_setup_teardown_fixtures(cls)
             self._inject_setup_class_fixture()
@@ -89,7 +89,7 @@ def _make_xunit_fixture(obj, setup_name, teardown_name, scope, pass_self):
 
     @pytest.fixture(scope=scope, autouse=True)
     def fixture(self, request):
-        if getattr(self, "__unittest_skip__", None):
+        if _is_skipped(self):
             reason = self.__unittest_skip_why__
             pytest.skip(reason)
         if setup is not None:
@@ -113,15 +113,17 @@ class TestCaseFunction(Function):
     _testcase = None
 
     def setup(self):
-        self._needs_explicit_tearDown = False
+        # a bound method to be called during teardown() if set (see 'runtest()')
+        self._explicit_tearDown = None
         self._testcase = self.parent.obj(self.name)
         self._obj = getattr(self._testcase, self.name)
         if hasattr(self, "_request"):
             self._request._fillfixtures()
 
     def teardown(self):
-        if self._needs_explicit_tearDown:
-            self._testcase.tearDown()
+        if self._explicit_tearDown is not None:
+            self._explicit_tearDown()
+            self._explicit_tearDown = None
         self._testcase = None
         self._obj = None
 
@@ -149,7 +151,7 @@ class TestCaseFunction(Function):
                     fail("".join(values), pytrace=False)
                 except (fail.Exception, KeyboardInterrupt):
                     raise
-                except:  # noqa
+                except BaseException:
                     fail(
                         "ERROR: Unknown Incompatible Exception "
                         "representation:\n%r" % (rawexcinfo,),
@@ -204,36 +206,31 @@ class TestCaseFunction(Function):
         return bool(expecting_failure_class or expecting_failure_method)
 
     def runtest(self):
-        # TODO: move testcase reporter into separate class, this shouldnt be on item
-        import unittest
+        from _pytest.debugging import maybe_wrap_pytest_function_for_tracing
 
-        testMethod = getattr(self._testcase, self._testcase._testMethodName)
+        maybe_wrap_pytest_function_for_tracing(self)
 
-        class _GetOutOf_testPartExecutor(KeyboardInterrupt):
-            """Helper exception to get out of unittests's testPartExecutor (see TestCase.run)."""
+        # let the unittest framework handle async functions
+        if is_async_function(self.obj):
+            self._testcase(self)
+        else:
+            # when --pdb is given, we want to postpone calling tearDown() otherwise
+            # when entering the pdb prompt, tearDown() would have probably cleaned up
+            # instance variables, which makes it difficult to debug
+            # arguably we could always postpone tearDown(), but this changes the moment where the
+            # TestCase instance interacts with the results object, so better to only do it
+            # when absolutely needed
+            if self.config.getoption("usepdb") and not _is_skipped(self.obj):
+                self._explicit_tearDown = self._testcase.tearDown
+                setattr(self._testcase, "tearDown", lambda *args: None)
 
-        @functools.wraps(testMethod)
-        def wrapped_testMethod(*args, **kwargs):
-            """Wrap the original method to call into pytest's machinery, so other pytest
-            features can have a chance to kick in (notably --pdb)"""
+            # we need to update the actual bound method with self.obj, because
+            # wrap_pytest_function_for_tracing replaces self.obj by a wrapper
+            setattr(self._testcase, self.name, self.obj)
             try:
-                self.ihook.pytest_pyfunc_call(pyfuncitem=self)
-            except unittest.SkipTest:
-                raise
-            except Exception as exc:
-                expecting_failure = self._expecting_failure(testMethod)
-                if expecting_failure:
-                    raise
-                self._needs_explicit_tearDown = True
-                raise _GetOutOf_testPartExecutor(exc)
-
-        setattr(self._testcase, self._testcase._testMethodName, wrapped_testMethod)
-        try:
-            self._testcase(result=self)
-        except _GetOutOf_testPartExecutor as exc:
-            raise exc.args[0] from exc.args[0]
-        finally:
-            delattr(self._testcase, self._testcase._testMethodName)
+                self._testcase(result=self)
+            finally:
+                delattr(self._testcase, self.name)
 
     def _prunetraceback(self, excinfo):
         Function._prunetraceback(self, excinfo)
@@ -304,3 +301,8 @@ def check_testcase_implements_trial_reporter(done=[]):
 
     classImplements(TestCaseFunction, IReporter)
     done.append(1)
+
+
+def _is_skipped(obj) -> bool:
+    """Return True if the given object has been marked with @unittest.skip"""
+    return bool(getattr(obj, "__unittest_skip__", False))

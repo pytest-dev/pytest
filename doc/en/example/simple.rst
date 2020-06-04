@@ -65,6 +65,8 @@ Let's run this without supplying our new option:
     test_sample.py:6: AssertionError
     --------------------------- Captured stdout call ---------------------------
     first
+    ========================= short test summary info ==========================
+    FAILED test_sample.py::test_answer - assert 0
     1 failed in 0.12s
 
 And now with supplying a command line option:
@@ -89,6 +91,8 @@ And now with supplying a command line option:
     test_sample.py:6: AssertionError
     --------------------------- Captured stdout call ---------------------------
     second
+    ========================= short test summary info ==========================
+    FAILED test_sample.py::test_answer - assert 0
     1 failed in 0.12s
 
 You can see that the command line option arrived in our test.  This
@@ -218,8 +222,10 @@ Or run it including the ``slow`` marked test:
 
     ============================ 2 passed in 0.12s =============================
 
+.. _`__tracebackhide__`:
+
 Writing well integrated assertion helpers
---------------------------------------------------
+-----------------------------------------
 
 .. regendoc:wipe
 
@@ -261,6 +267,8 @@ Let's run our little function:
     E       Failed: not configured: 42
 
     test_checkconfig.py:11: Failed
+    ========================= short test summary info ==========================
+    FAILED test_checkconfig.py::test_something - Failed: not configured: 42
     1 failed in 0.12s
 
 If you only want to hide certain exceptions, you can set ``__tracebackhide__``
@@ -443,7 +451,7 @@ Now we can profile which test functions execute the slowest:
     ========================= slowest 3 test durations =========================
     0.30s call     test_some_are_slow.py::test_funcslow2
     0.20s call     test_some_are_slow.py::test_funcslow1
-    0.11s call     test_some_are_slow.py::test_funcfast
+    0.10s call     test_some_are_slow.py::test_funcfast
     ============================ 3 passed in 0.12s =============================
 
 incremental testing - test steps
@@ -460,6 +468,9 @@ an ``incremental`` marker which is to be used on classes:
 .. code-block:: python
 
     # content of conftest.py
+
+    from typing import Dict, Tuple
+    import pytest
 
     # store history of failures per test class name and per index in parametrize (if parametrize used)
     _test_failed_incremental: Dict[str, Dict[Tuple[int, ...], str]] = {}
@@ -669,6 +680,11 @@ We can run this:
     E       assert 0
 
     a/test_db2.py:2: AssertionError
+    ========================= short test summary info ==========================
+    FAILED test_step.py::TestUserHandling::test_modification - assert 0
+    FAILED a/test_db.py::test_a1 - AssertionError: <conftest.DB object at 0x7...
+    FAILED a/test_db2.py::test_a2 - AssertionError: <conftest.DB object at 0x...
+    ERROR b/test_error.py::test_root
     ============= 3 failed, 2 passed, 1 xfailed, 1 error in 0.12s ==============
 
 The two test modules in the ``a`` directory see the same ``db`` fixture instance
@@ -758,6 +774,9 @@ and run them:
     E       assert 0
 
     test_module.py:6: AssertionError
+    ========================= short test summary info ==========================
+    FAILED test_module.py::test_fail1 - assert 0
+    FAILED test_module.py::test_fail2 - assert 0
     ============================ 2 failed in 0.12s =============================
 
 you will have a "failures" file which contains the failing test ids:
@@ -873,6 +892,10 @@ and run it:
     E       assert 0
 
     test_module.py:19: AssertionError
+    ========================= short test summary info ==========================
+    FAILED test_module.py::test_call_fails - assert 0
+    FAILED test_module.py::test_fail2 - assert 0
+    ERROR test_module.py::test_setup_fails - assert 0
     ======================== 2 failed, 1 error in 0.12s ========================
 
 You'll see that the fixture finalizers could use the precise reporting
@@ -887,9 +910,9 @@ information.
 
 Sometimes a test session might get stuck and there might be no easy way to figure out
 which test got stuck, for example if pytest was run in quiet mode (``-q``) or you don't have access to the console
-output. This is particularly a problem if the problem helps only sporadically, the famous "flaky" kind of tests.
+output. This is particularly a problem if the problem happens only sporadically, the famous "flaky" kind of tests.
 
-``pytest`` sets a ``PYTEST_CURRENT_TEST`` environment variable when running tests, which can be inspected
+``pytest`` sets the :envvar:`PYTEST_CURRENT_TEST` environment variable when running tests, which can be inspected
 by process monitoring utilities or libraries like `psutil <https://pypi.org/project/psutil/>`_ to discover which
 test got stuck if necessary:
 
@@ -903,8 +926,8 @@ test got stuck if necessary:
             print(f'pytest process {pid} running: {environ["PYTEST_CURRENT_TEST"]}')
 
 During the test session pytest will set ``PYTEST_CURRENT_TEST`` to the current test
-:ref:`nodeid <nodeids>` and the current stage, which can be ``setup``, ``call``
-and ``teardown``.
+:ref:`nodeid <nodeids>` and the current stage, which can be ``setup``, ``call``,
+or ``teardown``.
 
 For example, when running a single test function named ``test_foo`` from ``foo_module.py``,
 ``PYTEST_CURRENT_TEST`` will be set to:

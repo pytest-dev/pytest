@@ -1,3 +1,4 @@
+import io
 import operator
 import os
 import queue
@@ -238,7 +239,7 @@ class TestTraceback_f_g_h:
         def f(n: int) -> None:
             try:
                 do_stuff()
-            except:  # noqa
+            except BaseException:
                 reraise_me()
 
         excinfo = pytest.raises(RuntimeError, f, 8)
@@ -444,7 +445,7 @@ class TestFormattedExcinfo:
             exec(source.compile())
         except KeyboardInterrupt:
             raise
-        except:  # noqa
+        except BaseException:
             return _pytest._code.ExceptionInfo.from_current()
         assert 0, "did not raise"
 
@@ -1037,10 +1038,11 @@ raise ValueError()
         """
         )
         excinfo = pytest.raises(ValueError, mod.f)
-        tw = TerminalWriter(stringio=True)
+        file = io.StringIO()
+        tw = TerminalWriter(file=file)
         repr = excinfo.getrepr(**reproptions)
         repr.toterminal(tw)
-        assert tw.stringio.getvalue()
+        assert file.getvalue()
 
     def test_traceback_repr_style(self, importasmod, tw_mock):
         mod = importasmod(
@@ -1255,11 +1257,12 @@ raise ValueError()
         getattr(excinfo.value, attr).__traceback__ = None
 
         r = excinfo.getrepr()
-        tw = TerminalWriter(stringio=True)
+        file = io.StringIO()
+        tw = TerminalWriter(file=file)
         tw.hasmarkup = False
         r.toterminal(tw)
 
-        matcher = LineMatcher(tw.stringio.getvalue().splitlines())
+        matcher = LineMatcher(file.getvalue().splitlines())
         matcher.fnmatch_lines(
             [
                 "ValueError: invalid value",

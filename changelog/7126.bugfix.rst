@@ -1,0 +1,2 @@
+``--setup-show`` now doesn't raise an error when a bytes value is used as a ``parametrize``
+parameter when Python is called with the ``-bb`` flag.

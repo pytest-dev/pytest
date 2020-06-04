@@ -3,11 +3,14 @@ import re
 import sys
 import textwrap
 
+import py.path
+
 import _pytest._code
 import pytest
 from _pytest.compat import importlib_metadata
 from _pytest.config import _iter_rewritable_modules
 from _pytest.config import Config
+from _pytest.config import ConftestImportFailure
 from _pytest.config import ExitCode
 from _pytest.config.exceptions import UsageError
 from _pytest.config.findpaths import determine_setup
@@ -143,6 +146,68 @@ class TestParseIni:
         )
         result = testdir.inline_run("--confcutdir=.")
         assert result.ret == 0
+
+    @pytest.mark.parametrize(
+        "ini_file_text, invalid_keys, stderr_output, exception_text",
+        [
+            (
+                """
+          [pytest]
+          unknown_ini = value1
+          another_unknown_ini = value2
+          """,
+                ["unknown_ini", "another_unknown_ini"],
+                [
+                    "WARNING: Unknown config ini key: another_unknown_ini",
+                    "WARNING: Unknown config ini key: unknown_ini",
+                ],
+                "Unknown config ini key: another_unknown_ini",
+            ),
+            (
+                """
+          [pytest]
+          unknown_ini = value1
+          minversion = 5.0.0
+          """,
+                ["unknown_ini"],
+                ["WARNING: Unknown config ini key: unknown_ini"],
+                "Unknown config ini key: unknown_ini",
+            ),
+            (
+                """
+          [some_other_header]
+          unknown_ini = value1
+          [pytest]
+          minversion = 5.0.0
+          """,
+                [],
+                [],
+                "",
+            ),
+            (
+                """
+          [pytest]
+          minversion = 5.0.0
+          """,
+                [],
+                [],
+                "",
+            ),
+        ],
+    )
+    def test_invalid_ini_keys(
+        self, testdir, ini_file_text, invalid_keys, stderr_output, exception_text
+    ):
+        testdir.tmpdir.join("pytest.ini").write(textwrap.dedent(ini_file_text))
+        config = testdir.parseconfig()
+        assert sorted(config._get_unknown_ini_keys()) == sorted(invalid_keys)
+
+        result = testdir.runpytest()
+        result.stderr.fnmatch_lines(stderr_output)
+
+        if stderr_output:
+            with pytest.raises(pytest.fail.Exception, match=exception_text):
+                testdir.runpytest("--strict-config")
 
 
 class TestConfigCmdlineParsing:
@@ -900,55 +965,55 @@ class TestRootdir:
             assert get_common_ancestor([no_path.join("a")]) == tmpdir
 
     @pytest.mark.parametrize("name", "setup.cfg tox.ini pytest.ini".split())
-    def test_with_ini(self, tmpdir, name) -> None:
+    def test_with_ini(self, tmpdir: py.path.local, name: str) -> None:
         inifile = tmpdir.join(name)
         inifile.write("[pytest]\n" if name != "setup.cfg" else "[tool:pytest]\n")
 
         a = tmpdir.mkdir("a")
         b = a.mkdir("b")
-        for args in ([tmpdir], [a], [b]):
+        for args in ([str(tmpdir)], [str(a)], [str(b)]):
             rootdir, parsed_inifile, _ = determine_setup(None, args)
             assert rootdir == tmpdir
             assert parsed_inifile == inifile
-        rootdir, parsed_inifile, _ = determine_setup(None, [b, a])
+        rootdir, parsed_inifile, _ = determine_setup(None, [str(b), str(a)])
         assert rootdir == tmpdir
         assert parsed_inifile == inifile
 
     @pytest.mark.parametrize("name", "setup.cfg tox.ini".split())
-    def test_pytestini_overrides_empty_other(self, tmpdir, name) -> None:
+    def test_pytestini_overrides_empty_other(self, tmpdir: py.path.local, name) -> None:
         inifile = tmpdir.ensure("pytest.ini")
         a = tmpdir.mkdir("a")
         a.ensure(name)
-        rootdir, parsed_inifile, _ = determine_setup(None, [a])
+        rootdir, parsed_inifile, _ = determine_setup(None, [str(a)])
         assert rootdir == tmpdir
         assert parsed_inifile == inifile
 
-    def test_setuppy_fallback(self, tmpdir) -> None:
+    def test_setuppy_fallback(self, tmpdir: py.path.local) -> None:
         a = tmpdir.mkdir("a")
         a.ensure("setup.cfg")
         tmpdir.ensure("setup.py")
-        rootdir, inifile, inicfg = determine_setup(None, [a])
+        rootdir, inifile, inicfg = determine_setup(None, [str(a)])
         assert rootdir == tmpdir
         assert inifile is None
         assert inicfg == {}
 
-    def test_nothing(self, tmpdir, monkeypatch) -> None:
+    def test_nothing(self, tmpdir: py.path.local, monkeypatch) -> None:
         monkeypatch.chdir(str(tmpdir))
-        rootdir, inifile, inicfg = determine_setup(None, [tmpdir])
+        rootdir, inifile, inicfg = determine_setup(None, [str(tmpdir)])
         assert rootdir == tmpdir
         assert inifile is None
         assert inicfg == {}
 
-    def test_with_specific_inifile(self, tmpdir) -> None:
+    def test_with_specific_inifile(self, tmpdir: py.path.local) -> None:
         inifile = tmpdir.ensure("pytest.ini")
-        rootdir, _, _ = determine_setup(inifile, [tmpdir])
+        rootdir, _, _ = determine_setup(str(inifile), [str(tmpdir)])
         assert rootdir == tmpdir
 
     def test_with_arg_outside_cwd_without_inifile(self, tmpdir, monkeypatch) -> None:
         monkeypatch.chdir(str(tmpdir))
         a = tmpdir.mkdir("a")
         b = tmpdir.mkdir("b")
-        rootdir, inifile, _ = determine_setup(None, [a, b])
+        rootdir, inifile, _ = determine_setup(None, [str(a), str(b)])
         assert rootdir == tmpdir
         assert inifile is None
 
@@ -956,7 +1021,7 @@ class TestRootdir:
         a = tmpdir.mkdir("a")
         b = tmpdir.mkdir("b")
         inifile = a.ensure("pytest.ini")
-        rootdir, parsed_inifile, _ = determine_setup(None, [a, b])
+        rootdir, parsed_inifile, _ = determine_setup(None, [str(a), str(b)])
         assert rootdir == a
         assert inifile == parsed_inifile
 
@@ -1240,9 +1305,7 @@ def test_help_and_version_after_argument_error(testdir):
     assert result.ret == ExitCode.USAGE_ERROR
 
     result = testdir.runpytest("--version")
-    result.stderr.fnmatch_lines(
-        ["*pytest*{}*imported from*".format(pytest.__version__)]
-    )
+    result.stderr.fnmatch_lines(["pytest {}".format(pytest.__version__)])
     assert result.ret == ExitCode.USAGE_ERROR
 
 
@@ -1253,7 +1316,7 @@ def test_help_formatter_uses_py_get_terminal_width(monkeypatch):
     formatter = DropShorterLongHelpFormatter("prog")
     assert formatter._width == 90
 
-    monkeypatch.setattr("py.io.get_terminal_width", lambda: 160)
+    monkeypatch.setattr("_pytest._io.get_terminal_width", lambda: 160)
     formatter = DropShorterLongHelpFormatter("prog")
     assert formatter._width == 160
 
@@ -1454,29 +1517,34 @@ class TestPytestPluginsVariable:
     def test_pytest_plugins_in_non_top_level_conftest_unsupported_no_false_positives(
         self, testdir
     ):
-        subdirectory = testdir.tmpdir.join("subdirectory")
-        subdirectory.mkdir()
-        testdir.makeconftest(
-            """
-            pass
-        """
-        )
-        testdir.tmpdir.join("conftest.py").move(subdirectory.join("conftest.py"))
-
-        testdir.makeconftest(
-            """
-            import warnings
-            warnings.filterwarnings('always', category=DeprecationWarning)
-            pytest_plugins=['capture']
-        """
-        )
         testdir.makepyfile(
-            """
-            def test_func():
-                pass
-        """
+            "def test_func(): pass",
+            **{
+                "subdirectory/conftest": "pass",
+                "conftest": """
+                    import warnings
+                    warnings.filterwarnings('always', category=DeprecationWarning)
+                    pytest_plugins=['capture']
+                    """,
+            },
         )
         res = testdir.runpytest_subprocess()
         assert res.ret == 0
         msg = "Defining 'pytest_plugins' in a non-top-level conftest is no longer supported"
         assert msg not in res.stdout.str()
+
+
+def test_conftest_import_error_repr(tmpdir):
+    """
+    ConftestImportFailure should use a short error message and readable path to the failed
+    conftest.py file
+    """
+    path = tmpdir.join("foo/conftest.py")
+    with pytest.raises(
+        ConftestImportFailure,
+        match=re.escape("RuntimeError: some error (from {})".format(path)),
+    ):
+        try:
+            raise RuntimeError("some error")
+        except Exception:
+            raise ConftestImportFailure(path, sys.exc_info())

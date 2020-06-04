@@ -9,13 +9,11 @@ from typing import cast
 from typing import Optional
 from typing import TypeVar
 
-from packaging.version import Version
-
 TYPE_CHECKING = False  # avoid circular import through compat
 
 if TYPE_CHECKING:
     from typing import NoReturn
-    from typing import Type  # noqa: F401 (Used in string type annotation.)
+    from typing import Type  # noqa: F401 (used in type string)
     from typing_extensions import Protocol
 else:
     # typing.Protocol is only available starting from Python 3.8. It is also
@@ -217,6 +215,9 @@ def importorskip(
         return mod
     verattr = getattr(mod, "__version__", None)
     if minversion is not None:
+        # Imported lazily to improve start-up time.
+        from packaging.version import Version
+
         if verattr is None or Version(verattr) < Version(minversion):
             raise Skipped(
                 "module %r has __version__ %r, required is: %r"

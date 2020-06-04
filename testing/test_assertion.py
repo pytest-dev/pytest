@@ -1,4 +1,4 @@
-import collections.abc as collections_abc
+import collections.abc
 import sys
 import textwrap
 from typing import Any
@@ -623,11 +623,8 @@ class TestAssert_reprcompare:
         assert len(expl) > 1
 
     def test_Sequence(self):
-        if not hasattr(collections_abc, "MutableSequence"):
-            pytest.skip("cannot import MutableSequence")
-        MutableSequence = collections_abc.MutableSequence
-
-        class TestSequence(MutableSequence):  # works with a Sequence subclass
+        # Test comparing with a Sequence subclass.
+        class TestSequence(collections.abc.MutableSequence):
             def __init__(self, iterable):
                 self.elements = list(iterable)
 
@@ -1264,6 +1261,7 @@ def test_exception_handling_no_traceback(testdir):
             multitask_job()
     """
     )
+    testdir.syspathinsert()
     result = testdir.runpytest(p1, "--tb=long")
     result.stdout.fnmatch_lines(
         [

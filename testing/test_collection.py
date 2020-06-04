@@ -53,8 +53,8 @@ class TestCollector:
     def test_getparent(self, testdir):
         modcol = testdir.getmodulecol(
             """
-            class TestClass(object):
-                 def test_foo():
+            class TestClass:
+                 def test_foo(self):
                      pass
         """
         )
@@ -1004,7 +1004,7 @@ def test_collect_init_tests(testdir):
     result.stdout.fnmatch_lines(
         [
             "collected 2 items",
-            "<Package *",
+            "<Package tests>",
             "  <Module __init__.py>",
             "    <Function test_init>",
             "  <Module test_foo.py>",
@@ -1015,7 +1015,7 @@ def test_collect_init_tests(testdir):
     result.stdout.fnmatch_lines(
         [
             "collected 2 items",
-            "<Package *",
+            "<Package tests>",
             "  <Module __init__.py>",
             "    <Function test_init>",
             "  <Module test_foo.py>",
@@ -1027,7 +1027,7 @@ def test_collect_init_tests(testdir):
     result.stdout.fnmatch_lines(
         [
             "collected 2 items",
-            "<Package */tests>",
+            "<Package tests>",
             "  <Module __init__.py>",
             "    <Function test_init>",
             "  <Module test_foo.py>",
@@ -1039,7 +1039,7 @@ def test_collect_init_tests(testdir):
     result.stdout.fnmatch_lines(
         [
             "collected 2 items",
-            "<Package */tests>",
+            "<Package tests>",
             "  <Module __init__.py>",
             "    <Function test_init>",
             "  <Module test_foo.py>",
@@ -1048,12 +1048,12 @@ def test_collect_init_tests(testdir):
     )
     result = testdir.runpytest("./tests/test_foo.py", "--collect-only")
     result.stdout.fnmatch_lines(
-        ["<Package */tests>", "  <Module test_foo.py>", "    <Function test_foo>"]
+        ["<Package tests>", "  <Module test_foo.py>", "    <Function test_foo>"]
     )
     result.stdout.no_fnmatch_line("*test_init*")
     result = testdir.runpytest("./tests/__init__.py", "--collect-only")
     result.stdout.fnmatch_lines(
-        ["<Package */tests>", "  <Module __init__.py>", "    <Function test_init>"]
+        ["<Package tests>", "  <Module __init__.py>", "    <Function test_init>"]
     )
     result.stdout.no_fnmatch_line("*test_foo*")
 
@@ -1332,3 +1332,24 @@ def test_does_not_put_src_on_path(testdir):
     )
     result = testdir.runpytest()
     assert result.ret == ExitCode.OK
+
+
+def test_fscollector_from_parent(tmpdir, request):
+    """Ensure File.from_parent can forward custom arguments to the constructor.
+
+    Context: https://github.com/pytest-dev/pytest-cpp/pull/47
+    """
+
+    class MyCollector(pytest.File):
+        def __init__(self, fspath, parent, x):
+            super().__init__(fspath, parent)
+            self.x = x
+
+        @classmethod
+        def from_parent(cls, parent, *, fspath, x):
+            return super().from_parent(parent=parent, fspath=fspath, x=x)
+
+    collector = MyCollector.from_parent(
+        parent=request.session, fspath=tmpdir / "foo", x=10
+    )
+    assert collector.x == 10

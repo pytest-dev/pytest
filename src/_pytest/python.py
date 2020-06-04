@@ -25,8 +25,8 @@ import _pytest
 from _pytest import fixtures
 from _pytest import nodes
 from _pytest._code import filter_traceback
+from _pytest._code import getfslineno
 from _pytest._code.code import ExceptionInfo
-from _pytest._code.source import getfslineno
 from _pytest._io import TerminalWriter
 from _pytest._io.saferepr import saferepr
 from _pytest.compat import ascii_escaped
@@ -34,8 +34,8 @@ from _pytest.compat import get_default_arg_names
 from _pytest.compat import get_real_func
 from _pytest.compat import getimfunc
 from _pytest.compat import getlocation
+from _pytest.compat import is_async_function
 from _pytest.compat import is_generator
-from _pytest.compat import iscoroutinefunction
 from _pytest.compat import NOTSET
 from _pytest.compat import REGEX_TYPE
 from _pytest.compat import safe_getattr
@@ -55,18 +55,6 @@ from _pytest.outcomes import skip
 from _pytest.pathlib import parts
 from _pytest.warning_types import PytestCollectionWarning
 from _pytest.warning_types import PytestUnhandledCoroutineWarning
-
-
-def pyobj_property(name):
-    def get(self):
-        node = self.getparent(getattr(__import__("pytest"), name))
-        if node is not None:
-            return node.obj
-
-    doc = "python {} object this node was collected from (can be None).".format(
-        name.lower()
-    )
-    return property(get, None, None, doc)
 
 
 def pytest_addoption(parser):
@@ -136,7 +124,7 @@ def pytest_cmdline_main(config):
 def pytest_generate_tests(metafunc: "Metafunc") -> None:
     for marker in metafunc.definition.iter_markers(name="parametrize"):
         # TODO: Fix this type-ignore (overlapping kwargs).
-        metafunc.parametrize(*marker.args, **marker.kwargs, _param_mark=marker)  # type: ignore[misc] # noqa: F821
+        metafunc.parametrize(*marker.args, **marker.kwargs, _param_mark=marker)  # type: ignore[misc]
 
 
 def pytest_configure(config):
@@ -159,7 +147,7 @@ def pytest_configure(config):
     )
 
 
-def async_warn(nodeid: str) -> None:
+def async_warn_and_skip(nodeid: str) -> None:
     msg = "async def functions are not natively supported and have been skipped.\n"
     msg += (
         "You need to install a suitable plugin for your async framework, for example:\n"
@@ -175,15 +163,13 @@ def async_warn(nodeid: str) -> None:
 @hookimpl(trylast=True)
 def pytest_pyfunc_call(pyfuncitem: "Function"):
     testfunction = pyfuncitem.obj
-    if iscoroutinefunction(testfunction) or (
-        sys.version_info >= (3, 6) and inspect.isasyncgenfunction(testfunction)
-    ):
-        async_warn(pyfuncitem.nodeid)
+    if is_async_function(testfunction):
+        async_warn_and_skip(pyfuncitem.nodeid)
     funcargs = pyfuncitem.funcargs
     testargs = {arg: funcargs[arg] for arg in pyfuncitem._fixtureinfo.argnames}
     result = testfunction(**testargs)
     if hasattr(result, "__await__") or hasattr(result, "__aiter__"):
-        async_warn(pyfuncitem.nodeid)
+        async_warn_and_skip(pyfuncitem.nodeid)
     return True
 
 
@@ -250,10 +236,25 @@ def pytest_pycollect_makeitem(collector, name, obj):
 
 
 class PyobjMixin:
-    module = pyobj_property("Module")
-    cls = pyobj_property("Class")
-    instance = pyobj_property("Instance")
     _ALLOW_MARKERS = True
+
+    @property
+    def module(self):
+        """Python module object this node was collected from (can be None)."""
+        node = self.getparent(Module)
+        return node.obj if node is not None else None
+
+    @property
+    def cls(self):
+        """Python class object this node was collected from (can be None)."""
+        node = self.getparent(Class)
+        return node.obj if node is not None else None
+
+    @property
+    def instance(self):
+        """Python instance object this node was collected from (can be None)."""
+        node = self.getparent(Instance)
+        return node.obj if node is not None else None
 
     @property
     def obj(self):
@@ -367,15 +368,17 @@ class PyCollector(PyobjMixin, nodes.Collector):
         # NB. we avoid random getattrs and peek in the __dict__ instead
         # (XXX originally introduced from a PyPy need, still true?)
         dicts = [getattr(self.obj, "__dict__", {})]
-        for basecls in inspect.getmro(self.obj.__class__):
+        for basecls in self.obj.__class__.__mro__:
             dicts.append(basecls.__dict__)
-        seen = {}
+        seen = set()
         values = []
         for dic in dicts:
+            # Note: seems like the dict can change during iteration -
+            # be careful not to remove the list() without consideration.
             for name, obj in list(dic.items()):
                 if name in seen:
                     continue
-                seen[name] = True
+                seen.add(name)
                 res = self._makeitem(name, obj)
                 if res is None:
                     continue
@@ -513,8 +516,7 @@ class Module(nodes.File, PyCollector):
             mod = self.fspath.pyimport(ensuresyspath=importmode)
         except SyntaxError:
             raise self.CollectError(ExceptionInfo.from_current().getrepr(style="short"))
-        except self.fspath.ImportMismatchError:
-            e = sys.exc_info()[1]
+        except self.fspath.ImportMismatchError as e:
             raise self.CollectError(
                 "import file mismatch:\n"
                 "imported module %r has this __file__ attribute:\n"
@@ -569,8 +571,7 @@ class Package(Module):
         nodes.FSCollector.__init__(
             self, fspath, parent=parent, config=config, session=session, nodeid=nodeid
         )
-
-        self.name = fspath.dirname
+        self.name = os.path.basename(str(fspath.dirname))
 
     def setup(self):
         # not using fixtures to call setup_module here because autouse fixtures
@@ -937,8 +938,6 @@ class Metafunc:
 
         arg_values_types = self._resolve_arg_value_types(argnames, indirect)
 
-        self._validate_explicit_parameters(argnames, indirect)
-
         # Use any already (possibly) generated ids with parametrize Marks.
         if _param_mark and _param_mark._param_ids_from:
             generated_ids = _param_mark._param_ids_from._param_ids_generated
@@ -1014,7 +1013,7 @@ class Metafunc:
         func_name: str,
     ) -> List[Union[None, str]]:
         try:
-            num_ids = len(ids)  # type: ignore[arg-type] # noqa: F821
+            num_ids = len(ids)  # type: ignore[arg-type]
         except TypeError:
             try:
                 iter(ids)
@@ -1110,39 +1109,6 @@ class Metafunc:
                         "In {}: function uses no {} '{}'".format(func_name, name, arg),
                         pytrace=False,
                     )
-
-    def _validate_explicit_parameters(
-        self,
-        argnames: typing.Sequence[str],
-        indirect: Union[bool, typing.Sequence[str]],
-    ) -> None:
-        """
-        The argnames in *parametrize* should either be declared explicitly via
-        indirect list or in the function signature
-
-        :param List[str] argnames: list of argument names passed to ``parametrize()``.
-        :param indirect: same ``indirect`` parameter of ``parametrize()``.
-        :raise ValueError: if validation fails
-        """
-        if isinstance(indirect, bool):
-            parametrized_argnames = [] if indirect else argnames
-        else:
-            parametrized_argnames = [arg for arg in argnames if arg not in indirect]
-
-        if not parametrized_argnames:
-            return
-
-        funcargnames = _pytest.compat.getfuncargnames(self.function)
-        usefixtures = fixtures.get_use_fixtures_for_node(self.definition)
-
-        for arg in parametrized_argnames:
-            if arg not in funcargnames and arg not in usefixtures:
-                func_name = self.function.__name__
-                msg = (
-                    'In function "{func_name}":\n'
-                    'Parameter "{arg}" should be declared explicitly via indirect or in function itself'
-                ).format(func_name=func_name, arg=arg)
-                fail(msg, pytrace=False)
 
 
 def _find_parametrized_scope(argnames, arg2fixturedefs, indirect):
@@ -1407,7 +1373,7 @@ def _showfixtures_main(config, session):
 
 def write_docstring(tw: TerminalWriter, doc: str, indent: str = "    ") -> None:
     for line in doc.split("\n"):
-        tw.write(indent + line + "\n")
+        tw.line(indent + line)
 
 
 class Function(PyobjMixin, nodes.Item):
@@ -1422,7 +1388,6 @@ class Function(PyobjMixin, nodes.Item):
         self,
         name,
         parent,
-        args=None,
         config=None,
         callspec: Optional[CallSpec2] = None,
         callobj=NOTSET,
@@ -1431,10 +1396,39 @@ class Function(PyobjMixin, nodes.Item):
         fixtureinfo: Optional[FuncFixtureInfo] = None,
         originalname=None,
     ) -> None:
+        """
+        param name: the full function name, including any decorations like those
+            added by parametrization (``my_func[my_param]``).
+        param parent: the parent Node.
+        param config: the pytest Config object
+        param callspec: if given, this is function has been parametrized and the callspec contains
+            meta information about the parametrization.
+        param callobj: if given, the object which will be called when the Function is invoked,
+            otherwise the callobj will be obtained from ``parent`` using ``originalname``
+        param keywords: keywords bound to the function object for "-k" matching.
+        param session: the pytest Session object
+        param fixtureinfo: fixture information already resolved at this fixture node.
+        param originalname:
+            The attribute name to use for accessing the underlying function object.
+            Defaults to ``name``. Set this if name is different from the original name,
+            for example when it contains decorations like those added by parametrization
+            (``my_func[my_param]``).
+        """
         super().__init__(name, parent, config=config, session=session)
-        self._args = args
+
         if callobj is not NOTSET:
             self.obj = callobj
+
+        #: Original function name, without any decorations (for example
+        #: parametrization adds a ``"[...]"`` suffix to function names), used to access
+        #: the underlying function object from ``parent`` (in case ``callobj`` is not given
+        #: explicitly).
+        #:
+        #: .. versionadded:: 3.0
+        self.originalname = originalname or name
+
+        # note: when FunctionDefinition is introduced, we should change ``originalname``
+        # to a readonly property that returns FunctionDefinition.name
 
         self.keywords.update(self.obj.__dict__)
         self.own_markers.extend(get_unpacked_marks(self.obj))
@@ -1470,12 +1464,6 @@ class Function(PyobjMixin, nodes.Item):
         self.fixturenames = fixtureinfo.names_closure
         self._initrequest()
 
-        #: original function name, without any decorations (for example
-        #: parametrization adds a ``"[...]"`` suffix to function names).
-        #:
-        #: .. versionadded:: 3.0
-        self.originalname = originalname
-
     @classmethod
     def from_parent(cls, parent, **kw):  # todo: determine sound type limitations
         """
@@ -1493,11 +1481,7 @@ class Function(PyobjMixin, nodes.Item):
         return getimfunc(self.obj)
 
     def _getobj(self):
-        name = self.name
-        i = name.find("[")  # parametrization
-        if i != -1:
-            name = name[:i]
-        return getattr(self.parent.obj, name)
+        return getattr(self.parent.obj, self.originalname)
 
     @property
     def _pyfuncitem(self):
@@ -1518,7 +1502,7 @@ class Function(PyobjMixin, nodes.Item):
         if isinstance(self.parent, Instance):
             self.parent.newinstance()
             self.obj = self._getobj()
-        fixtures.fillfixtures(self)
+        self._request._fillfixtures()
 
     def _prunetraceback(self, excinfo: ExceptionInfo) -> None:
         if hasattr(self, "_obj") and not self.config.getoption("fulltrace", False):

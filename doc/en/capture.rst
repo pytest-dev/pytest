@@ -100,6 +100,8 @@ of the failing function and hide the other one:
     test_module.py:12: AssertionError
     -------------------------- Captured stdout setup ---------------------------
     setting up <function test_func2 at 0xdeadbeef>
+    ========================= short test summary info ==========================
+    FAILED test_module.py::test_func2 - assert False
     ======================= 1 failed, 1 passed in 0.12s ========================
 
 Accessing captured output from a test function
@@ -143,8 +145,7 @@ The return value from ``readouterr`` changed to a ``namedtuple`` with two attrib
 
 If the code under test writes non-textual data, you can capture this using
 the ``capsysbinary`` fixture which instead returns ``bytes`` from
-the ``readouterr`` method.  The ``capfsysbinary`` fixture is currently only
-available in python 3.
+the ``readouterr`` method.
 
 
 

@@ -6,7 +6,6 @@ ignores the external pytest-cache
 """
 import json
 import os
-from collections import OrderedDict
 from typing import Dict
 from typing import Generator
 from typing import List
@@ -23,6 +22,7 @@ from .pathlib import rm_rf
 from .reports import CollectReport
 from _pytest import nodes
 from _pytest._io import TerminalWriter
+from _pytest.compat import order_preserving_dict
 from _pytest.config import Config
 from _pytest.main import Session
 from _pytest.python import Module
@@ -121,7 +121,7 @@ class Cache:
         try:
             with path.open("r") as f:
                 return json.load(f)
-        except (ValueError, IOError, OSError):
+        except (ValueError, OSError):
             return default
 
     def set(self, key, value):
@@ -140,7 +140,7 @@ class Cache:
             else:
                 cache_dir_exists_already = self._cachedir.exists()
                 path.parent.mkdir(exist_ok=True, parents=True)
-        except (IOError, OSError):
+        except OSError:
             self.warn("could not create cache path {path}", path=path)
             return
         if not cache_dir_exists_already:
@@ -148,7 +148,7 @@ class Cache:
         data = json.dumps(value, indent=2, sort_keys=True)
         try:
             f = path.open("w")
-        except (IOError, OSError):
+        except OSError:
             self.warn("cache could not write path {path}", path=path)
         else:
             with f:
@@ -183,27 +183,35 @@ class LFPluginCollWrapper:
             res.result = sorted(
                 res.result, key=lambda x: 0 if Path(str(x.fspath)) in lf_paths else 1,
             )
-            out.force_result(res)
             return
 
         elif isinstance(collector, Module):
             if Path(str(collector.fspath)) in self.lfplugin._last_failed_paths:
                 out = yield
                 res = out.get_result()
+                result = res.result
+                lastfailed = self.lfplugin.lastfailed
 
-                filtered_result = [
-                    x for x in res.result if x.nodeid in self.lfplugin.lastfailed
+                # Only filter with known failures.
+                if not self._collected_at_least_one_failure:
+                    if not any(x.nodeid in lastfailed for x in result):
+                        return
+                    self.lfplugin.config.pluginmanager.register(
+                        LFPluginCollSkipfiles(self.lfplugin), "lfplugin-collskip"
+                    )
+                    self._collected_at_least_one_failure = True
+
+                session = collector.session
+                result[:] = [
+                    x
+                    for x in result
+                    if x.nodeid in lastfailed
+                    # Include any passed arguments (not trivial to filter).
+                    or session.isinitpath(x.fspath)
+                    # Keep all sub-collectors.
+                    or isinstance(x, nodes.Collector)
                 ]
-                if filtered_result:
-                    res.result = filtered_result
-                    out.force_result(res)
-
-                    if not self._collected_at_least_one_failure:
-                        self.lfplugin.config.pluginmanager.register(
-                            LFPluginCollSkipfiles(self.lfplugin), "lfplugin-collskip"
-                        )
-                        self._collected_at_least_one_failure = True
-                return res
+                return
         yield
 
 
@@ -234,8 +242,8 @@ class LFPlugin:
         self.lastfailed = config.cache.get(
             "cache/lastfailed", {}
         )  # type: Dict[str, bool]
-        self._previously_failed_count = None
-        self._report_status = None
+        self._previously_failed_count = None  # type: Optional[int]
+        self._report_status = None  # type: Optional[str]
         self._skipped_files = 0  # count skipped files during collection due to --lf
 
         if config.getoption("lf"):
@@ -269,7 +277,12 @@ class LFPlugin:
         else:
             self.lastfailed[report.nodeid] = True
 
-    def pytest_collection_modifyitems(self, session, config, items):
+    @pytest.hookimpl(hookwrapper=True, tryfirst=True)
+    def pytest_collection_modifyitems(
+        self, config: Config, items: List[nodes.Item]
+    ) -> Generator[None, None, None]:
+        yield
+
         if not self.active:
             return
 
@@ -332,14 +345,17 @@ class NFPlugin:
     def __init__(self, config):
         self.config = config
         self.active = config.option.newfirst
-        self.cached_nodeids = config.cache.get("cache/nodeids", [])
+        self.cached_nodeids = set(config.cache.get("cache/nodeids", []))
 
+    @pytest.hookimpl(hookwrapper=True, tryfirst=True)
     def pytest_collection_modifyitems(
-        self, session: Session, config: Config, items: List[nodes.Item]
-    ) -> None:
-        new_items = OrderedDict()  # type: OrderedDict[str, nodes.Item]
+        self, items: List[nodes.Item]
+    ) -> Generator[None, None, None]:
+        yield
+
         if self.active:
-            other_items = OrderedDict()  # type: OrderedDict[str, nodes.Item]
+            new_items = order_preserving_dict()  # type: Dict[str, nodes.Item]
+            other_items = order_preserving_dict()  # type: Dict[str, nodes.Item]
             for item in items:
                 if item.nodeid not in self.cached_nodeids:
                     new_items[item.nodeid] = item
@@ -349,21 +365,21 @@ class NFPlugin:
             items[:] = self._get_increasing_order(
                 new_items.values()
             ) + self._get_increasing_order(other_items.values())
+            self.cached_nodeids.update(new_items)
         else:
-            for item in items:
-                if item.nodeid not in self.cached_nodeids:
-                    new_items[item.nodeid] = item
-        self.cached_nodeids.extend(new_items)
+            self.cached_nodeids.update(item.nodeid for item in items)
 
     def _get_increasing_order(self, items):
         return sorted(items, key=lambda item: item.fspath.mtime(), reverse=True)
 
-    def pytest_sessionfinish(self, session):
+    def pytest_sessionfinish(self) -> None:
         config = self.config
         if config.getoption("cacheshow") or hasattr(config, "slaveinput"):
             return
 
-        config.cache.set("cache/nodeids", self.cached_nodeids)
+        if config.getoption("collectonly"):
+            return
+        config.cache.set("cache/nodeids", sorted(self.cached_nodeids))
 
 
 def pytest_addoption(parser):
@@ -381,9 +397,9 @@ def pytest_addoption(parser):
         "--failed-first",
         action="store_true",
         dest="failedfirst",
-        help="run all tests but run the last failures first.  "
+        help="run all tests, but run the last failures first.\n"
         "This may re-order tests and thus lead to "
-        "repeated fixture setup/teardown",
+        "repeated fixture setup/teardown.",
     )
     group.addoption(
         "--nf",

@@ -1,1 +1,0 @@
-Use "yellow" main color with any XPASSED tests.

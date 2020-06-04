@@ -55,7 +55,7 @@ class BaseReport:
 
     def toterminal(self, out) -> None:
         if hasattr(self, "node"):
-            out.line(getslaveinfoline(self.node))  # type: ignore
+            out.line(getslaveinfoline(self.node))
 
         longrepr = self.longrepr
         if longrepr is None:
@@ -82,10 +82,11 @@ class BaseReport:
 
         .. versionadded:: 3.0
         """
-        tw = TerminalWriter(stringio=True)
+        file = StringIO()
+        tw = TerminalWriter(file)
         tw.hasmarkup = False
         self.toterminal(tw)
-        exc = tw.stringio.getvalue()
+        exc = file.getvalue()
         return exc.strip()
 
     @property
@@ -131,7 +132,7 @@ class BaseReport:
         """
         **Experimental**
 
-        Returns True if this report should be counted towards the totals shown at the end of the
+        ``True`` if this report should be counted towards the totals shown at the end of the
         test session: "1 passed, 1 failure, etc".
 
         .. note::
@@ -273,7 +274,7 @@ class TestReport(BaseReport):
         Factory method to create and fill a TestReport with standard item and call info.
         """
         when = call.when
-        duration = call.stop - call.start
+        duration = call.duration
         keywords = {x: 1 for x in item.keywords}
         excinfo = call.excinfo
         sections = []

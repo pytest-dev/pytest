@@ -423,27 +423,6 @@ class TestExecutionNonForked(BaseFunctionalTests):
             assert False, "did not raise"
 
 
-class TestExecutionForked(BaseFunctionalTests):
-    pytestmark = pytest.mark.skipif("not hasattr(os, 'fork')")
-
-    def getrunner(self):
-        # XXX re-arrange this test to live in pytest-xdist
-        boxed = pytest.importorskip("xdist.boxed")
-        return boxed.forked_run_report
-
-    def test_suicide(self, testdir) -> None:
-        reports = testdir.runitem(
-            """
-            def test_func():
-                import os
-                os.kill(os.getpid(), 15)
-        """
-        )
-        rep = reports[0]
-        assert rep.failed
-        assert rep.when == "???"
-
-
 class TestSessionReports:
     def test_collect_result(self, testdir) -> None:
         col = testdir.getmodulecol(
@@ -527,9 +506,10 @@ def test_runtest_in_module_ordering(testdir) -> None:
             @pytest.fixture
             def mylist(self, request):
                 return request.function.mylist
-            def pytest_runtest_call(self, item, __multicall__):
+            @pytest.hookimpl(hookwrapper=True)
+            def pytest_runtest_call(self, item):
                 try:
-                    __multicall__.execute()
+                    (yield).get_result()
                 except ValueError:
                     pass
             def test_hello1(self, mylist):
@@ -1022,6 +1002,17 @@ class TestReportContents:
         rep = reports[1]
         assert rep.capstdout == ""
         assert rep.capstderr == ""
+
+    def test_longrepr_type(self, testdir) -> None:
+        reports = testdir.runitem(
+            """
+            import pytest
+            def test_func():
+                pytest.fail(pytrace=False)
+        """
+        )
+        rep = reports[1]
+        assert isinstance(rep.longrepr, _pytest._code.code.ExceptionRepr)
 
 
 def test_outcome_exception_bad_msg() -> None:

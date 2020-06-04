@@ -7,7 +7,6 @@ import platform
 import re
 import subprocess
 import sys
-import time
 import traceback
 from fnmatch import fnmatch
 from io import StringIO
@@ -22,19 +21,22 @@ from typing import Union
 from weakref import WeakKeyDictionary
 
 import py
+from iniconfig import IniConfig
 
 import pytest
+from _pytest import timing
 from _pytest._code import Source
-from _pytest.capture import MultiCapture
-from _pytest.capture import SysCapture
+from _pytest.capture import _get_multicapture
 from _pytest.compat import TYPE_CHECKING
 from _pytest.config import _PluggyPlugin
+from _pytest.config import Config
 from _pytest.config import ExitCode
 from _pytest.fixtures import FixtureRequest
 from _pytest.main import Session
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.nodes import Collector
 from _pytest.nodes import Item
+from _pytest.pathlib import make_numbered_dir
 from _pytest.pathlib import Path
 from _pytest.python import Module
 from _pytest.reports import TestReport
@@ -357,16 +359,33 @@ class HookRecorder:
 
 @pytest.fixture
 def linecomp() -> "LineComp":
+    """
+    A :class: `LineComp` instance for checking that an input linearly
+    contains a sequence of strings.
+    """
     return LineComp()
 
 
 @pytest.fixture(name="LineMatcher")
 def LineMatcher_fixture(request: FixtureRequest) -> "Type[LineMatcher]":
+    """
+    A reference to the :class: `LineMatcher`.
+
+    This is instantiable with a list of lines (without their trailing newlines).
+    This is useful for testing large texts, such as the output of commands.
+    """
     return LineMatcher
 
 
 @pytest.fixture
 def testdir(request: FixtureRequest, tmpdir_factory) -> "Testdir":
+    """
+    A :class: `TestDir` instance, that can be used to run and test pytest itself.
+
+    It is particularly useful for testing plugins. It is similar to the `tmpdir` fixture
+    but provides methods which aid in testing pytest itself.
+
+    """
     return Testdir(request, tmpdir_factory)
 
 
@@ -395,19 +414,7 @@ rex_outcome = re.compile(r"(\d+) (\w+)")
 
 
 class RunResult:
-    """The result of running a command.
-
-    Attributes:
-
-    :ivar ret: the return value
-    :ivar outlines: list of lines captured from stdout
-    :ivar errlines: list of lines captured from stderr
-    :ivar stdout: :py:class:`LineMatcher` of stdout, use ``stdout.str()`` to
-       reconstruct stdout or the commonly used ``stdout.fnmatch_lines()``
-       method
-    :ivar stderr: :py:class:`LineMatcher` of stderr
-    :ivar duration: duration in seconds
-    """
+    """The result of running a command."""
 
     def __init__(
         self,
@@ -418,13 +425,23 @@ class RunResult:
     ) -> None:
         try:
             self.ret = pytest.ExitCode(ret)  # type: Union[int, ExitCode]
+            """the return value"""
         except ValueError:
             self.ret = ret
         self.outlines = outlines
+        """list of lines captured from stdout"""
         self.errlines = errlines
+        """list of lines captured from stderr"""
         self.stdout = LineMatcher(outlines)
+        """:class:`LineMatcher` of stdout.
+
+        Use e.g. :func:`stdout.str() <LineMatcher.str()>` to reconstruct stdout, or the commonly used
+        :func:`stdout.fnmatch_lines() <LineMatcher.fnmatch_lines()>` method.
+        """
         self.stderr = LineMatcher(errlines)
+        """:class:`LineMatcher` of stderr"""
         self.duration = duration
+        """duration in seconds"""
 
     def __repr__(self) -> str:
         return (
@@ -667,14 +684,44 @@ class Testdir:
     def getinicfg(self, source):
         """Return the pytest section from the tox.ini config file."""
         p = self.makeini(source)
-        return py.iniconfig.IniConfig(p)["pytest"]
+        return IniConfig(p)["pytest"]
 
     def makepyfile(self, *args, **kwargs):
-        """Shortcut for .makefile() with a .py extension."""
+        r"""Shortcut for .makefile() with a .py extension.
+        Defaults to the test name with a '.py' extension, e.g test_foobar.py, overwriting
+        existing files.
+
+        Examples:
+
+        .. code-block:: python
+
+            def test_something(testdir):
+                # initial file is created test_something.py
+                testdir.makepyfile("foobar")
+                # to create multiple files, pass kwargs accordingly
+                testdir.makepyfile(custom="foobar")
+                # at this point, both 'test_something.py' & 'custom.py' exist in the test directory
+
+        """
         return self._makefile(".py", args, kwargs)
 
     def maketxtfile(self, *args, **kwargs):
-        """Shortcut for .makefile() with a .txt extension."""
+        r"""Shortcut for .makefile() with a .txt extension.
+        Defaults to the test name with a '.txt' extension, e.g test_foobar.txt, overwriting
+        existing files.
+
+        Examples:
+
+        .. code-block:: python
+
+            def test_something(testdir):
+                # initial file is created test_something.txt
+                testdir.maketxtfile("foobar")
+                # to create multiple files, pass kwargs accordingly
+                testdir.maketxtfile(custom="foobar")
+                # at this point, both 'test_something.txt' & 'custom.txt' exist in the test directory
+
+        """
         return self._makefile(".txt", args, kwargs)
 
     def syspathinsert(self, path=None):
@@ -924,8 +971,8 @@ class Testdir:
 
         if syspathinsert:
             self.syspathinsert()
-        now = time.time()
-        capture = MultiCapture(Capture=SysCapture)
+        now = timing.time()
+        capture = _get_multicapture("sys")
         capture.start_capturing()
         try:
             try:
@@ -953,7 +1000,7 @@ class Testdir:
             sys.stderr.write(err)
 
         res = RunResult(
-            reprec.ret, out.splitlines(), err.splitlines(), time.time() - now
+            reprec.ret, out.splitlines(), err.splitlines(), timing.time() - now
         )
         res.reprec = reprec  # type: ignore
         return res
@@ -979,7 +1026,7 @@ class Testdir:
             args.append("--basetemp=%s" % self.tmpdir.dirpath("basetemp"))
         return args
 
-    def parseconfig(self, *args):
+    def parseconfig(self, *args: Union[str, py.path.local]) -> Config:
         """Return a new pytest Config instance from given commandline args.
 
         This invokes the pytest bootstrapping code in _pytest.config to create
@@ -995,7 +1042,7 @@ class Testdir:
 
         import _pytest.config
 
-        config = _pytest.config._prepareconfig(args, self.plugins)
+        config = _pytest.config._prepareconfig(args, self.plugins)  # type: Config
         # we don't know what the test will do with this half-setup config
         # object and thus we make sure it gets unconfigured properly in any
         # case (otherwise capturing could still be active, for example)
@@ -1154,7 +1201,7 @@ class Testdir:
         f1 = open(str(p1), "w", encoding="utf8")
         f2 = open(str(p2), "w", encoding="utf8")
         try:
-            now = time.time()
+            now = timing.time()
             popen = self.popen(
                 cmdargs,
                 stdin=stdin,
@@ -1187,8 +1234,8 @@ class Testdir:
         finally:
             f1.close()
             f2.close()
-        f1 = open(str(p1), "r", encoding="utf8")
-        f2 = open(str(p2), "r", encoding="utf8")
+        f1 = open(str(p1), encoding="utf8")
+        f2 = open(str(p2), encoding="utf8")
         try:
             out = f1.read().splitlines()
             err = f2.read().splitlines()
@@ -1201,7 +1248,7 @@ class Testdir:
             ret = ExitCode(ret)
         except ValueError:
             pass
-        return RunResult(ret, out, err, time.time() - now)
+        return RunResult(ret, out, err, timing.time() - now)
 
     def _dump_lines(self, lines, fp):
         try:
@@ -1241,9 +1288,7 @@ class Testdir:
         Returns a :py:class:`RunResult`.
         """
         __tracebackhide__ = True
-        p = py.path.local.make_numbered_dir(
-            prefix="runpytest-", keep=None, rootdir=self.tmpdir
-        )
+        p = make_numbered_dir(root=Path(self.tmpdir), prefix="runpytest-")
         args = ("--basetemp=%s" % p,) + args
         plugins = [x for x in self.plugins if isinstance(x, str)]
         if plugins:

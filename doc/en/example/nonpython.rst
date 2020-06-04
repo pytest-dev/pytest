@@ -41,6 +41,8 @@ now execute the test specification:
     usecase execution failed
        spec failed: 'some': 'other'
        no further details known at this point.
+    ========================= short test summary info ==========================
+    FAILED test_simple.yaml::hello
     ======================= 1 failed, 1 passed in 0.12s ========================
 
 .. regendoc:wipe
@@ -77,6 +79,8 @@ consulted when reporting in ``verbose`` mode:
     usecase execution failed
        spec failed: 'some': 'other'
        no further details known at this point.
+    ========================= short test summary info ==========================
+    FAILED test_simple.yaml::hello
     ======================= 1 failed, 1 passed in 0.12s ========================
 
 .. regendoc:wipe

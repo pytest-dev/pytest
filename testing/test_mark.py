@@ -197,15 +197,17 @@ def test_strict_prohibits_unregistered_markers(testdir, option_name):
 
 
 @pytest.mark.parametrize(
-    "spec",
+    ("expr", "expected_passed"),
     [
-        ("xyz", ("test_one",)),
-        ("xyz and xyz2", ()),
-        ("xyz2", ("test_two",)),
-        ("xyz or xyz2", ("test_one", "test_two")),
+        ("xyz", ["test_one"]),
+        ("(((  xyz))  )", ["test_one"]),
+        ("not not xyz", ["test_one"]),
+        ("xyz and xyz2", []),
+        ("xyz2", ["test_two"]),
+        ("xyz or xyz2", ["test_one", "test_two"]),
     ],
 )
-def test_mark_option(spec, testdir):
+def test_mark_option(expr: str, expected_passed: str, testdir) -> None:
     testdir.makepyfile(
         """
         import pytest
@@ -217,18 +219,17 @@ def test_mark_option(spec, testdir):
             pass
     """
     )
-    opt, passed_result = spec
-    rec = testdir.inline_run("-m", opt)
+    rec = testdir.inline_run("-m", expr)
     passed, skipped, fail = rec.listoutcomes()
     passed = [x.nodeid.split("::")[-1] for x in passed]
-    assert len(passed) == len(passed_result)
-    assert list(passed) == list(passed_result)
+    assert passed == expected_passed
 
 
 @pytest.mark.parametrize(
-    "spec", [("interface", ("test_interface",)), ("not interface", ("test_nointer",))]
+    ("expr", "expected_passed"),
+    [("interface", ["test_interface"]), ("not interface", ["test_nointer"])],
 )
-def test_mark_option_custom(spec, testdir):
+def test_mark_option_custom(expr: str, expected_passed: str, testdir) -> None:
     testdir.makeconftest(
         """
         import pytest
@@ -246,24 +247,25 @@ def test_mark_option_custom(spec, testdir):
             pass
     """
     )
-    opt, passed_result = spec
-    rec = testdir.inline_run("-m", opt)
+    rec = testdir.inline_run("-m", expr)
     passed, skipped, fail = rec.listoutcomes()
     passed = [x.nodeid.split("::")[-1] for x in passed]
-    assert len(passed) == len(passed_result)
-    assert list(passed) == list(passed_result)
+    assert passed == expected_passed
 
 
 @pytest.mark.parametrize(
-    "spec",
+    ("expr", "expected_passed"),
     [
-        ("interface", ("test_interface",)),
-        ("not interface", ("test_nointer", "test_pass")),
-        ("pass", ("test_pass",)),
-        ("not pass", ("test_interface", "test_nointer")),
+        ("interface", ["test_interface"]),
+        ("not interface", ["test_nointer", "test_pass", "test_1", "test_2"]),
+        ("pass", ["test_pass"]),
+        ("not pass", ["test_interface", "test_nointer", "test_1", "test_2"]),
+        ("not not not (pass)", ["test_interface", "test_nointer", "test_1", "test_2"]),
+        ("1 or 2", ["test_1", "test_2"]),
+        ("not (1 or 2)", ["test_interface", "test_nointer", "test_pass"]),
     ],
 )
-def test_keyword_option_custom(spec, testdir):
+def test_keyword_option_custom(expr: str, expected_passed: str, testdir) -> None:
     testdir.makepyfile(
         """
         def test_interface():
@@ -272,14 +274,16 @@ def test_keyword_option_custom(spec, testdir):
             pass
         def test_pass():
             pass
+        def test_1():
+            pass
+        def test_2():
+            pass
     """
     )
-    opt, passed_result = spec
-    rec = testdir.inline_run("-k", opt)
+    rec = testdir.inline_run("-k", expr)
     passed, skipped, fail = rec.listoutcomes()
     passed = [x.nodeid.split("::")[-1] for x in passed]
-    assert len(passed) == len(passed_result)
-    assert list(passed) == list(passed_result)
+    assert passed == expected_passed
 
 
 def test_keyword_option_considers_mark(testdir):
@@ -290,14 +294,14 @@ def test_keyword_option_considers_mark(testdir):
 
 
 @pytest.mark.parametrize(
-    "spec",
+    ("expr", "expected_passed"),
     [
-        ("None", ("test_func[None]",)),
-        ("1.3", ("test_func[1.3]",)),
-        ("2-3", ("test_func[2-3]",)),
+        ("None", ["test_func[None]"]),
+        ("[1.3]", ["test_func[1.3]"]),
+        ("2-3", ["test_func[2-3]"]),
     ],
 )
-def test_keyword_option_parametrize(spec, testdir):
+def test_keyword_option_parametrize(expr: str, expected_passed: str, testdir) -> None:
     testdir.makepyfile(
         """
         import pytest
@@ -306,12 +310,10 @@ def test_keyword_option_parametrize(spec, testdir):
             pass
     """
     )
-    opt, passed_result = spec
-    rec = testdir.inline_run("-k", opt)
+    rec = testdir.inline_run("-k", expr)
     passed, skipped, fail = rec.listoutcomes()
     passed = [x.nodeid.split("::")[-1] for x in passed]
-    assert len(passed) == len(passed_result)
-    assert list(passed) == list(passed_result)
+    assert passed == expected_passed
 
 
 def test_parametrize_with_module(testdir):
@@ -330,26 +332,40 @@ def test_parametrize_with_module(testdir):
 
 
 @pytest.mark.parametrize(
-    "spec",
+    ("expr", "expected_error"),
     [
         (
-            "foo or import",
-            "ERROR: Python keyword 'import' not accepted in expressions passed to '-k'",
+            "foo or",
+            "at column 7: expected not OR left parenthesis OR identifier; got end of input",
         ),
-        ("foo or", "ERROR: Wrong expression passed to '-k': foo or"),
+        (
+            "foo or or",
+            "at column 8: expected not OR left parenthesis OR identifier; got or",
+        ),
+        ("(foo", "at column 5: expected right parenthesis; got end of input",),
+        ("foo bar", "at column 5: expected end of input; got identifier",),
+        (
+            "or or",
+            "at column 1: expected not OR left parenthesis OR identifier; got or",
+        ),
+        (
+            "not or",
+            "at column 5: expected not OR left parenthesis OR identifier; got or",
+        ),
     ],
 )
-def test_keyword_option_wrong_arguments(spec, testdir, capsys):
+def test_keyword_option_wrong_arguments(
+    expr: str, expected_error: str, testdir, capsys
+) -> None:
     testdir.makepyfile(
         """
             def test_func(arg):
                 pass
         """
     )
-    opt, expected_result = spec
-    testdir.inline_run("-k", opt)
-    out = capsys.readouterr().err
-    assert expected_result in out
+    testdir.inline_run("-k", expr)
+    err = capsys.readouterr().err
+    assert expected_error in err
 
 
 def test_parametrized_collected_from_command_line(testdir):
@@ -533,10 +549,10 @@ class TestFunctional:
             @pytest.mark.c(location="class")
             class Test:
                 @pytest.mark.c(location="function")
-                def test_has_own():
+                def test_has_own(self):
                     pass
 
-                def test_has_inherited():
+                def test_has_inherited(self):
                     pass
 
         """
@@ -600,18 +616,6 @@ class TestFunctional:
         dlist = reprec.getcalls("pytest_deselected")
         deselected_tests = dlist[0].items
         assert len(deselected_tests) == 2
-
-    def test_invalid_m_option(self, testdir):
-        testdir.makepyfile(
-            """
-            def test_a():
-                pass
-        """
-        )
-        result = testdir.runpytest("-m bogus/")
-        result.stdout.fnmatch_lines(
-            ["INTERNALERROR> Marker expression must be valid Python!"]
-        )
 
     def test_keywords_at_node_level(self, testdir):
         testdir.makepyfile(
@@ -810,10 +814,12 @@ class TestKeywordSelection:
         passed, skipped, failed = reprec.countoutcomes()
         assert passed + skipped + failed == 0
 
-    def test_no_magic_values(self, testdir):
+    @pytest.mark.parametrize(
+        "keyword", ["__", "+", ".."],
+    )
+    def test_no_magic_values(self, testdir, keyword: str) -> None:
         """Make sure the tests do not match on magic values,
-        no double underscored values, like '__dict__',
-        and no instance values, like '()'.
+        no double underscored values, like '__dict__' and '+'.
         """
         p = testdir.makepyfile(
             """
@@ -821,16 +827,42 @@ class TestKeywordSelection:
         """
         )
 
-        def assert_test_is_not_selected(keyword):
-            reprec = testdir.inline_run("-k", keyword, p)
-            passed, skipped, failed = reprec.countoutcomes()
-            dlist = reprec.getcalls("pytest_deselected")
-            assert passed + skipped + failed == 0
-            deselected_tests = dlist[0].items
-            assert len(deselected_tests) == 1
+        reprec = testdir.inline_run("-k", keyword, p)
+        passed, skipped, failed = reprec.countoutcomes()
+        dlist = reprec.getcalls("pytest_deselected")
+        assert passed + skipped + failed == 0
+        deselected_tests = dlist[0].items
+        assert len(deselected_tests) == 1
 
-        assert_test_is_not_selected("__")
-        assert_test_is_not_selected("()")
+    def test_no_match_directories_outside_the_suite(self, testdir):
+        """
+        -k should not match against directories containing the test suite (#7040).
+        """
+        test_contents = """
+            def test_aaa(): pass
+            def test_ddd(): pass
+        """
+        testdir.makepyfile(
+            **{"ddd/tests/__init__.py": "", "ddd/tests/test_foo.py": test_contents}
+        )
+
+        def get_collected_names(*args):
+            _, rec = testdir.inline_genitems(*args)
+            calls = rec.getcalls("pytest_collection_finish")
+            assert len(calls) == 1
+            return [x.name for x in calls[0].session.items]
+
+        # sanity check: collect both tests in normal runs
+        assert get_collected_names() == ["test_aaa", "test_ddd"]
+
+        # do not collect anything based on names outside the collection tree
+        assert get_collected_names("-k", testdir.tmpdir.basename) == []
+
+        # "-k ddd" should only collect "test_ddd", but not
+        # 'test_aaa' just because one of its parent directories is named "ddd";
+        # this was matched previously because Package.name would contain the full path
+        # to the package
+        assert get_collected_names("-k", "ddd") == ["test_ddd"]
 
 
 class TestMarkDecorator:
@@ -1022,3 +1054,20 @@ def test_pytest_param_id_requires_string():
 @pytest.mark.parametrize("s", (None, "hello world"))
 def test_pytest_param_id_allows_none_or_string(s):
     assert pytest.param(id=s)
+
+
+@pytest.mark.parametrize("expr", ("NOT internal_err", "NOT (internal_err)", "bogus/"))
+def test_marker_expr_eval_failure_handling(testdir, expr):
+    foo = testdir.makepyfile(
+        """
+        import pytest
+
+        @pytest.mark.internal_err
+        def test_foo():
+            pass
+        """
+    )
+    expected = "ERROR: Wrong expression passed to '-m': {}: *".format(expr)
+    result = testdir.runpytest(foo, "-m", expr)
+    result.stderr.fnmatch_lines([expected])
+    assert result.ret == ExitCode.USAGE_ERROR

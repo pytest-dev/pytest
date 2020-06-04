@@ -442,8 +442,13 @@ additionally it is possible to copy examples for an example folder before runnin
       $REGENDOC_TMPDIR/test_example.py:4: PytestExperimentalApiWarning: testdir.copy_example is an experimental api that may change over time
         testdir.copy_example("test_example.py")
 
+    test_example.py::test_plugin
+      $PYTHON_PREFIX/lib/python3.8/site-packages/_pytest/compat.py:333: PytestDeprecationWarning: The TerminalReporter.writer attribute is deprecated, use TerminalReporter._tw instead at your own risk.
+      See https://docs.pytest.org/en/latest/deprecations.html#terminalreporter-writer for more information.
+        return getattr(object, name, default)
+
     -- Docs: https://docs.pytest.org/en/latest/warnings.html
-    ======================= 2 passed, 1 warning in 0.12s =======================
+    ====================== 2 passed, 2 warnings in 0.12s =======================
 
 For more information about the result object that ``runpytest()`` returns, and
 the methods that it provides please check out the :py:class:`RunResult
@@ -508,6 +513,7 @@ call only executes until the first of N registered functions returns a
 non-None result which is then taken as result of the overall hook call.
 The remaining hook functions will not be called in this case.
 
+.. _`hookwrapper`:
 
 hookwrapper: executing around other hooks
 -------------------------------------------------
@@ -552,8 +558,10 @@ perform tracing or other side effects around the actual hook implementations.
 If the result of the underlying hook is a mutable object, they may modify
 that result but it's probably better to avoid it.
 
-For more information, consult the `pluggy documentation <http://pluggy.readthedocs.io/en/latest/#wrappers>`_.
+For more information, consult the
+:ref:`pluggy documentation about hookwrappers <pluggy:hookwrappers>`.
 
+.. _plugin-hookorder:
 
 Hook function ordering / call example
 -------------------------------------

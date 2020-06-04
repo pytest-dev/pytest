@@ -192,6 +192,46 @@ def color_mapping():
                 output = result.stdout.str()
                 assert "test session starts" in output
                 assert "\x1b[1m" in output
-                pytest.skip("doing limited testing because lacking ordered markup")
+                pytest.skip(
+                    "doing limited testing because lacking ordered markup on py35"
+                )
 
     return ColorMapping
+
+
+@pytest.fixture
+def mock_timing(monkeypatch):
+    """Mocks _pytest.timing with a known object that can be used to control timing in tests
+    deterministically.
+
+    pytest itself should always use functions from `_pytest.timing` instead of `time` directly.
+
+    This then allows us more control over time during testing, if testing code also
+    uses `_pytest.timing` functions.
+
+    Time is static, and only advances through `sleep` calls, thus tests might sleep over large
+    numbers and obtain accurate time() calls at the end, making tests reliable and instant.
+    """
+    import attr
+
+    @attr.s
+    class MockTiming:
+
+        _current_time = attr.ib(default=1590150050.0)
+
+        def sleep(self, seconds):
+            self._current_time += seconds
+
+        def time(self):
+            return self._current_time
+
+        def patch(self):
+            from _pytest import timing
+
+            monkeypatch.setattr(timing, "sleep", self.sleep)
+            monkeypatch.setattr(timing, "time", self.time)
+            monkeypatch.setattr(timing, "perf_counter", self.time)
+
+    result = MockTiming()
+    result.patch()
+    return result

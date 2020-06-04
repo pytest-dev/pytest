@@ -3,7 +3,7 @@ import textwrap
 
 import pytest
 from _pytest import fixtures
-from _pytest.fixtures import FixtureLookupError
+from _pytest.config import ExitCode
 from _pytest.fixtures import FixtureRequest
 from _pytest.pathlib import Path
 from _pytest.pytester import get_public_names
@@ -110,7 +110,7 @@ class TestFillFixtures:
     def test_funcarg_basic(self, testdir):
         testdir.copy_example()
         item = testdir.getitem(Path("test_funcarg_basic.py"))
-        fixtures.fillfixtures(item)
+        item._request._fillfixtures()
         del item.funcargs["request"]
         assert len(get_public_names(item.funcargs)) == 2
         assert item.funcargs["some"] == "test_func"
@@ -654,7 +654,7 @@ class TestRequestBasic:
         )
         req = item._request
 
-        with pytest.raises(FixtureLookupError):
+        with pytest.raises(pytest.FixtureLookupError):
             req.getfixturevalue("notexists")
         val = req.getfixturevalue("something")
         assert val == 1
@@ -664,7 +664,7 @@ class TestRequestBasic:
         assert val2 == 2
         val2 = req.getfixturevalue("other")  # see about caching
         assert val2 == 2
-        pytest._fillfuncargs(item)
+        item._request._fillfixtures()
         assert item.funcargs["something"] == 1
         assert len(get_public_names(item.funcargs)) == 2
         assert "request" in item.funcargs
@@ -681,7 +681,7 @@ class TestRequestBasic:
         """
         )
         item.session._setupstate.prepare(item)
-        pytest._fillfuncargs(item)
+        item._request._fillfixtures()
         # successively check finalization calls
         teardownlist = item.getparent(pytest.Module).obj.teardownlist
         ss = item.session._setupstate
@@ -4287,7 +4287,7 @@ def test_fixture_named_request(testdir):
     )
 
 
-def test_fixture_duplicated_arguments():
+def test_fixture_duplicated_arguments() -> None:
     """Raise error if there are positional and keyword arguments for the same parameter (#1682)."""
     with pytest.raises(TypeError) as excinfo:
 
@@ -4301,8 +4301,31 @@ def test_fixture_duplicated_arguments():
         "Use only keyword arguments."
     )
 
+    with pytest.raises(TypeError) as excinfo:
 
-def test_fixture_with_positionals():
+        @pytest.fixture(
+            "function",
+            ["p1"],
+            True,
+            ["id1"],
+            "name",
+            scope="session",
+            params=["p1"],
+            autouse=True,
+            ids=["id1"],
+            name="name",
+        )
+        def arg2(request):
+            pass
+
+    assert (
+        str(excinfo.value)
+        == "The fixture arguments are defined as positional and keyword: scope, params, autouse, ids, name. "
+        "Use only keyword arguments."
+    )
+
+
+def test_fixture_with_positionals() -> None:
     """Raise warning, but the positionals should still works (#1682)."""
     from _pytest.deprecated import FIXTURE_POSITIONAL_ARGUMENTS
 
@@ -4317,6 +4340,18 @@ def test_fixture_with_positionals():
     assert fixture_with_positionals._pytestfixturefunction.scope == "function"
     assert fixture_with_positionals._pytestfixturefunction.params == (0,)
     assert fixture_with_positionals._pytestfixturefunction.autouse
+
+
+def test_fixture_with_too_many_positionals() -> None:
+    with pytest.raises(TypeError) as excinfo:
+
+        @pytest.fixture("function", [0], True, ["id"], "name", "extra")
+        def fixture_with_positionals():
+            pass
+
+    assert (
+        str(excinfo.value) == "fixture() takes 5 positional arguments but 6 were given"
+    )
 
 
 def test_indirect_fixture_does_not_break_scope(testdir):
@@ -4442,3 +4477,23 @@ class TestFinalizerOnlyAddedOnce:
     def test_a_only_finishes_one(self, request):
         a = request._get_active_fixturedef("a")
         assert len(a._finalizers)
+
+
+def test_yield_fixture_with_no_value(testdir):
+    testdir.makepyfile(
+        """
+        import pytest
+        @pytest.fixture(name='custom')
+        def empty_yield():
+            if False:
+                yield
+
+        def test_fixt(custom):
+            pass
+        """
+    )
+    expected = "E               ValueError: custom did not yield a value"
+    result = testdir.runpytest()
+    result.assert_outcomes(error=1)
+    result.stdout.fnmatch_lines([expected])
+    assert result.ret == ExitCode.TESTS_FAILED

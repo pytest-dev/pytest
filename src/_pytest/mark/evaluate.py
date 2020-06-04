@@ -38,8 +38,6 @@ class MarkEvaluator:
         # don't cache here to prevent staleness
         return bool(self._get_marks())
 
-    __nonzero__ = __bool__
-
     def wasvalid(self):
         return not hasattr(self, "exc")
 

@@ -1,5 +1,6 @@
 import functools
 import inspect
+import itertools
 import sys
 import warnings
 from collections import defaultdict
@@ -15,9 +16,9 @@ import attr
 import py
 
 import _pytest
+from _pytest._code import getfslineno
 from _pytest._code.code import FormattedExcinfo
 from _pytest._code.code import TerminalRepr
-from _pytest._code.source import getfslineno
 from _pytest._io import TerminalWriter
 from _pytest.compat import _format_args
 from _pytest.compat import _PytestWrapper
@@ -28,8 +29,10 @@ from _pytest.compat import getimfunc
 from _pytest.compat import getlocation
 from _pytest.compat import is_generator
 from _pytest.compat import NOTSET
+from _pytest.compat import order_preserving_dict
 from _pytest.compat import safe_getattr
 from _pytest.compat import TYPE_CHECKING
+from _pytest.deprecated import FILLFUNCARGS
 from _pytest.deprecated import FIXTURE_POSITIONAL_ARGUMENTS
 from _pytest.deprecated import FUNCARGNAMES
 from _pytest.mark import ParameterSet
@@ -221,12 +224,14 @@ def reorder_items(items):
         argkeys_cache[scopenum] = d = {}
         items_by_argkey[scopenum] = item_d = defaultdict(deque)
         for item in items:
-            keys = OrderedDict.fromkeys(get_parametrized_fixture_keys(item, scopenum))
+            keys = order_preserving_dict.fromkeys(
+                get_parametrized_fixture_keys(item, scopenum)
+            )
             if keys:
                 d[item] = keys
                 for key in keys:
                     item_d[key].append(item)
-    items = OrderedDict.fromkeys(items)
+    items = order_preserving_dict.fromkeys(items)
     return list(reorder_items_atscope(items, argkeys_cache, items_by_argkey, 0))
 
 
@@ -241,17 +246,17 @@ def reorder_items_atscope(items, argkeys_cache, items_by_argkey, scopenum):
         return items
     ignore = set()
     items_deque = deque(items)
-    items_done = OrderedDict()
+    items_done = order_preserving_dict()
     scoped_items_by_argkey = items_by_argkey[scopenum]
     scoped_argkeys_cache = argkeys_cache[scopenum]
     while items_deque:
-        no_argkey_group = OrderedDict()
+        no_argkey_group = order_preserving_dict()
         slicing_argkey = None
         while items_deque:
             item = items_deque.popleft()
             if item in items_done or item in no_argkey_group:
                 continue
-            argkeys = OrderedDict.fromkeys(
+            argkeys = order_preserving_dict.fromkeys(
                 k for k in scoped_argkeys_cache.get(item, []) if k not in ignore
             )
             if not argkeys:
@@ -278,6 +283,7 @@ def reorder_items_atscope(items, argkeys_cache, items_by_argkey, scopenum):
 
 def fillfixtures(function):
     """ fill missing funcargs for a test function. """
+    warnings.warn(FILLFUNCARGS, stacklevel=2)
     try:
         request = function._request
     except AttributeError:
@@ -484,6 +490,9 @@ class FixtureRequest:
         But if you can only decide whether to use another fixture at test
         setup time, you may use this function to retrieve it inside a fixture
         or test function body.
+
+        :raise pytest.FixtureLookupError:
+            If the given fixture could not be found.
         """
         return self._get_active_fixturedef(argname).cached_result[0]
 
@@ -717,7 +726,7 @@ class FixtureLookupError(LookupError):
             fspath, lineno = getfslineno(function)
             try:
                 lines, _ = inspect.getsourcelines(get_real_func(function))
-            except (IOError, IndexError, TypeError):
+            except (OSError, IndexError, TypeError):
                 error_msg = "file %s, line %s: source code not available"
                 addline(error_msg % (fspath, lineno + 1))
             else:
@@ -785,13 +794,18 @@ def fail_fixturefunc(fixturefunc, msg):
 def call_fixture_func(fixturefunc, request, kwargs):
     yieldctx = is_generator(fixturefunc)
     if yieldctx:
-        it = fixturefunc(**kwargs)
-        res = next(it)
-        finalizer = functools.partial(_teardown_yield_fixture, fixturefunc, it)
+        generator = fixturefunc(**kwargs)
+        try:
+            fixture_result = next(generator)
+        except StopIteration:
+            raise ValueError(
+                "{} did not yield a value".format(request.fixturename)
+            ) from None
+        finalizer = functools.partial(_teardown_yield_fixture, fixturefunc, generator)
         request.addfinalizer(finalizer)
     else:
-        res = fixturefunc(**kwargs)
-    return res
+        fixture_result = fixturefunc(**kwargs)
+    return fixture_result
 
 
 def _teardown_yield_fixture(fixturefunc, it):
@@ -864,19 +878,19 @@ class FixtureDef:
         self._finalizers.append(finalizer)
 
     def finish(self, request):
-        exceptions = []
+        exc = None
         try:
             while self._finalizers:
                 try:
                     func = self._finalizers.pop()
                     func()
-                except:  # noqa
-                    exceptions.append(sys.exc_info())
-            if exceptions:
-                _, val, tb = exceptions[0]
-                # Ensure to not keep frame references through traceback.
-                del exceptions
-                raise val.with_traceback(tb)
+                except BaseException as e:
+                    # XXX Only first exception will be seen by user,
+                    #     ideally all should be reported.
+                    if exc is None:
+                        exc = e
+            if exc:
+                raise exc
         finally:
             hook = self._fixturemanager.session.gethookproxy(request.node.fspath)
             hook.pytest_fixture_post_finalizer(fixturedef=self, request=request)
@@ -1107,50 +1121,8 @@ class FixtureFunctionMarker:
         return function
 
 
-FIXTURE_ARGS_ORDER = ("scope", "params", "autouse", "ids", "name")
-
-
-def _parse_fixture_args(callable_or_scope, *args, **kwargs):
-    arguments = {
-        "scope": "function",
-        "params": None,
-        "autouse": False,
-        "ids": None,
-        "name": None,
-    }
-    kwargs = {
-        key: value for key, value in kwargs.items() if arguments.get(key) != value
-    }
-
-    fixture_function = None
-    if isinstance(callable_or_scope, str):
-        args = list(args)
-        args.insert(0, callable_or_scope)
-    else:
-        fixture_function = callable_or_scope
-
-    positionals = set()
-    for positional, argument_name in zip(args, FIXTURE_ARGS_ORDER):
-        arguments[argument_name] = positional
-        positionals.add(argument_name)
-
-    duplicated_kwargs = {kwarg for kwarg in kwargs.keys() if kwarg in positionals}
-    if duplicated_kwargs:
-        raise TypeError(
-            "The fixture arguments are defined as positional and keyword: {}. "
-            "Use only keyword arguments.".format(", ".join(duplicated_kwargs))
-        )
-
-    if positionals:
-        warnings.warn(FIXTURE_POSITIONAL_ARGUMENTS, stacklevel=2)
-
-    arguments.update(kwargs)
-
-    return fixture_function, arguments
-
-
 def fixture(
-    callable_or_scope=None,
+    fixture_function=None,
     *args,
     scope="function",
     params=None,
@@ -1207,23 +1179,55 @@ def fixture(
                 ``fixture_<fixturename>`` and then use
                 ``@pytest.fixture(name='<fixturename>')``.
     """
+    # Positional arguments backward compatibility.
+    # If a kwarg is equal to its default, assume it was not explicitly
+    # passed, i.e. not duplicated. The more correct way is to use a
+    # **kwargs and check `in`, but that obfuscates the function signature.
+    if isinstance(fixture_function, str):
+        # It's actually the first positional argument, scope.
+        args = (fixture_function, *args)
+        fixture_function = None
+    duplicated_args = []
+    if len(args) > 0:
+        if scope == "function":
+            scope = args[0]
+        else:
+            duplicated_args.append("scope")
+    if len(args) > 1:
+        if params is None:
+            params = args[1]
+        else:
+            duplicated_args.append("params")
+    if len(args) > 2:
+        if autouse is False:
+            autouse = args[2]
+        else:
+            duplicated_args.append("autouse")
+    if len(args) > 3:
+        if ids is None:
+            ids = args[3]
+        else:
+            duplicated_args.append("ids")
+    if len(args) > 4:
+        if name is None:
+            name = args[4]
+        else:
+            duplicated_args.append("name")
+    if len(args) > 5:
+        raise TypeError(
+            "fixture() takes 5 positional arguments but {} were given".format(len(args))
+        )
+    if duplicated_args:
+        raise TypeError(
+            "The fixture arguments are defined as positional and keyword: {}. "
+            "Use only keyword arguments.".format(", ".join(duplicated_args))
+        )
+    if args:
+        warnings.warn(FIXTURE_POSITIONAL_ARGUMENTS, stacklevel=2)
+    # End backward compatiblity.
+
     if params is not None:
         params = list(params)
-
-    fixture_function, arguments = _parse_fixture_args(
-        callable_or_scope,
-        *args,
-        scope=scope,
-        params=params,
-        autouse=autouse,
-        ids=ids,
-        name=name,
-    )
-    scope = arguments.get("scope")
-    params = arguments.get("params")
-    autouse = arguments.get("autouse")
-    ids = arguments.get("ids")
-    name = arguments.get("name")
 
     if fixture_function and params is None and autouse is False:
         # direct decoration
@@ -1235,7 +1239,7 @@ def fixture(
 
 
 def yield_fixture(
-    callable_or_scope=None,
+    fixture_function=None,
     *args,
     scope="function",
     params=None,
@@ -1249,7 +1253,7 @@ def yield_fixture(
         Use :py:func:`pytest.fixture` directly instead.
     """
     return fixture(
-        callable_or_scope,
+        fixture_function,
         *args,
         scope=scope,
         params=params,
@@ -1257,9 +1261,6 @@ def yield_fixture(
         ids=ids,
         name=name,
     )
-
-
-defaultfuncargprefixmarker = fixture()
 
 
 @fixture(scope="session")
@@ -1353,8 +1354,10 @@ class FixtureManager:
         else:
             argnames = ()
 
-        usefixtures = get_use_fixtures_for_node(node)
-        initialnames = usefixtures + argnames
+        usefixtures = itertools.chain.from_iterable(
+            mark.args for mark in node.iter_markers(name="usefixtures")
+        )
+        initialnames = tuple(usefixtures) + argnames
         fm = node.session._fixturemanager
         initialnames, names_closure, arg2fixturedefs = fm.getfixtureclosure(
             initialnames, node, ignore_args=self._get_direct_parametrize_args(node)
@@ -1551,12 +1554,3 @@ class FixtureManager:
         for fixturedef in fixturedefs:
             if nodes.ischildnode(fixturedef.baseid, nodeid):
                 yield fixturedef
-
-
-def get_use_fixtures_for_node(node) -> Tuple[str, ...]:
-    """Returns the names of all the usefixtures() marks on the given node"""
-    return tuple(
-        str(name)
-        for mark in node.iter_markers(name="usefixtures")
-        for name in mark.args
-    )

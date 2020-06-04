@@ -12,13 +12,14 @@ from typing import Union
 import py
 
 import _pytest._code
+from _pytest._code import getfslineno
 from _pytest._code.code import ExceptionChainRepr
 from _pytest._code.code import ExceptionInfo
 from _pytest._code.code import ReprExceptionInfo
-from _pytest._code.source import getfslineno
 from _pytest.compat import cached_property
 from _pytest.compat import TYPE_CHECKING
 from _pytest.config import Config
+from _pytest.config import ConftestImportFailure
 from _pytest.config import PytestPluginManager
 from _pytest.deprecated import NODE_USE_FROM_PARENT
 from _pytest.fixtures import FixtureDef
@@ -28,12 +29,12 @@ from _pytest.mark.structures import Mark
 from _pytest.mark.structures import MarkDecorator
 from _pytest.mark.structures import NodeKeywords
 from _pytest.outcomes import fail
-from _pytest.outcomes import Failed
+from _pytest.pathlib import Path
 from _pytest.store import Store
 
 if TYPE_CHECKING:
     # Imported here due to circular import.
-    from _pytest.main import Session  # noqa: F401
+    from _pytest.main import Session
 
 SEP = "/"
 
@@ -90,6 +91,19 @@ class NodeMeta(type):
 class Node(metaclass=NodeMeta):
     """ base class for Collector and Item the test collection tree.
     Collector subclasses have children, Items are terminal nodes."""
+
+    # Use __slots__ to make attribute access faster.
+    # Note that __dict__ is still available.
+    __slots__ = (
+        "name",
+        "parent",
+        "config",
+        "session",
+        "fspath",
+        "_nodeid",
+        "_store",
+        "__dict__",
+    )
 
     def __init__(
         self,
@@ -216,7 +230,7 @@ class Node(metaclass=NodeMeta):
         return self._nodeid
 
     def __hash__(self):
-        return hash(self.nodeid)
+        return hash(self._nodeid)
 
     def setup(self):
         pass
@@ -318,11 +332,13 @@ class Node(metaclass=NodeMeta):
         pass
 
     def _repr_failure_py(
-        self, excinfo: ExceptionInfo[Union[Failed, FixtureLookupError]], style=None
+        self, excinfo: ExceptionInfo[BaseException], style=None,
     ) -> Union[str, ReprExceptionInfo, ExceptionChainRepr, FixtureLookupErrorRepr]:
+        if isinstance(excinfo.value, ConftestImportFailure):
+            excinfo = ExceptionInfo(excinfo.value.excinfo)
         if isinstance(excinfo.value, fail.Exception):
             if not excinfo.value.pytrace:
-                return str(excinfo.value)
+                style = "value"
         if isinstance(excinfo.value, FixtureLookupError):
             return excinfo.value.formatrepr()
         if self.config.getoption("fulltrace", False):
@@ -346,9 +362,14 @@ class Node(metaclass=NodeMeta):
         else:
             truncate_locals = True
 
+        # excinfo.getrepr() formats paths relative to the CWD if `abspath` is False.
+        # It is possible for a fixture/test to change the CWD while this code runs, which
+        # would then result in the user seeing confusing paths in the failure message.
+        # To fix this, if the CWD changed, always display the full absolute path.
+        # It will be better to just always display paths relative to invocation_dir, but
+        # this requires a lot of plumbing (#6428).
         try:
-            os.getcwd()
-            abspath = False
+            abspath = Path(os.getcwd()) != Path(self.config.invocation_dir)
         except OSError:
             abspath = True
 
@@ -364,6 +385,11 @@ class Node(metaclass=NodeMeta):
     def repr_failure(
         self, excinfo, style=None
     ) -> Union[str, ReprExceptionInfo, ExceptionChainRepr, FixtureLookupErrorRepr]:
+        """
+        Return a representation of a collection or test failure.
+
+        :param excinfo: Exception information for the failure.
+        """
         return self._repr_failure_py(excinfo, style)
 
 
@@ -403,7 +429,11 @@ class Collector(Node):
         raise NotImplementedError("abstract")
 
     def repr_failure(self, excinfo):
-        """ represent a collection failure. """
+        """
+        Return a representation of a collection failure.
+
+        :param excinfo: Exception information for the failure.
+        """
         if excinfo.errisinstance(self.CollectError) and not self.config.getoption(
             "fulltrace", False
         ):
@@ -434,10 +464,7 @@ def _check_initialpaths_for_relpath(session, fspath):
 
 
 class FSHookProxy:
-    def __init__(
-        self, fspath: py.path.local, pm: PytestPluginManager, remove_mods
-    ) -> None:
-        self.fspath = fspath
+    def __init__(self, pm: PytestPluginManager, remove_mods) -> None:
         self.pm = pm
         self.remove_mods = remove_mods
 
@@ -474,11 +501,11 @@ class FSCollector(Collector):
         self._norecursepatterns = self.config.getini("norecursedirs")
 
     @classmethod
-    def from_parent(cls, parent, *, fspath):
+    def from_parent(cls, parent, *, fspath, **kw):
         """
         The public constructor
         """
-        return super().from_parent(parent=parent, fspath=fspath)
+        return super().from_parent(parent=parent, fspath=fspath, **kw)
 
     def _gethookproxy(self, fspath: py.path.local):
         # check if we have the common case of running
@@ -488,7 +515,7 @@ class FSCollector(Collector):
         remove_mods = pm._conftest_plugins.difference(my_conftestmodules)
         if remove_mods:
             # one or more conftests are not in use at this fspath
-            proxy = FSHookProxy(fspath, pm, remove_mods)
+            proxy = FSHookProxy(pm, remove_mods)
         else:
             # all plugins are active for this fspath
             proxy = self.config.hook

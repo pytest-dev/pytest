@@ -1,8 +1,11 @@
+import copy
 import inspect
+from unittest import mock
 
 import pytest
 from _pytest import deprecated
 from _pytest import nodes
+from _pytest.config import Config
 
 
 @pytest.mark.filterwarnings("default")
@@ -25,7 +28,14 @@ def test_resultlog_is_deprecated(testdir):
     )
 
 
-def test_terminal_reporter_writer_attr(pytestconfig):
+@pytest.mark.parametrize("attribute", pytest.collect.__all__)  # type: ignore
+# false positive due to dynamic attribute
+def test_pytest_collect_module_deprecated(attribute):
+    with pytest.warns(DeprecationWarning, match=attribute):
+        getattr(pytest.collect, attribute)
+
+
+def test_terminal_reporter_writer_attr(pytestconfig: Config) -> None:
     """Check that TerminalReporter._tw is also available as 'writer' (#2984)
     This attribute has been deprecated in 5.4.
     """
@@ -36,8 +46,22 @@ def test_terminal_reporter_writer_attr(pytestconfig):
     except ImportError:
         pass
     terminal_reporter = pytestconfig.pluginmanager.get_plugin("terminalreporter")
-    with pytest.warns(pytest.PytestDeprecationWarning):
-        assert terminal_reporter.writer is terminal_reporter._tw
+    original_tw = terminal_reporter._tw
+
+    with pytest.warns(pytest.PytestDeprecationWarning) as cw:
+        assert terminal_reporter.writer is original_tw
+    assert len(cw) == 1
+    assert cw[0].filename == __file__
+
+    new_tw = copy.copy(original_tw)
+    with pytest.warns(pytest.PytestDeprecationWarning) as cw:
+        terminal_reporter.writer = new_tw
+        try:
+            assert terminal_reporter._tw is new_tw
+        finally:
+            terminal_reporter.writer = original_tw
+    assert len(cw) == 2
+    assert cw[0].filename == cw[1].filename == __file__
 
 
 @pytest.mark.parametrize("plugin", sorted(deprecated.DEPRECATED_EXTERNAL_PLUGINS))
@@ -86,49 +110,40 @@ def test_node_direct_ctor_warning():
     ms = MockConfig()
     with pytest.warns(
         DeprecationWarning,
-        match="direct construction of .* has been deprecated, please use .*.from_parent",
+        match="Direct construction of .* has been deprecated, please use .*.from_parent.*",
     ) as w:
         nodes.Node(name="test", config=ms, session=ms, nodeid="None")
     assert w[0].lineno == inspect.currentframe().f_lineno - 1
     assert w[0].filename == __file__
 
 
-def assert_no_print_logs(testdir, args):
-    result = testdir.runpytest(*args)
-    result.stdout.fnmatch_lines(
-        [
-            "*--no-print-logs is deprecated and scheduled for removal in pytest 6.0*",
-            "*Please use --show-capture instead.*",
-        ]
+def test__fillfuncargs_is_deprecated() -> None:
+    with pytest.warns(
+        pytest.PytestDeprecationWarning,
+        match="The `_fillfuncargs` function is deprecated",
+    ):
+        pytest._fillfuncargs(mock.Mock())
+
+
+def test_minus_k_dash_is_deprecated(testdir) -> None:
+    threepass = testdir.makepyfile(
+        test_threepass="""
+        def test_one(): assert 1
+        def test_two(): assert 1
+        def test_three(): assert 1
+    """
     )
+    result = testdir.runpytest("-k=-test_two", threepass)
+    result.stdout.fnmatch_lines(["*The `-k '-expr'` syntax*deprecated*"])
 
 
-@pytest.mark.filterwarnings("default")
-def test_noprintlogs_is_deprecated_cmdline(testdir):
-    testdir.makepyfile(
-        """
-        def test_foo():
-            pass
-        """
+def test_minus_k_colon_is_deprecated(testdir) -> None:
+    threepass = testdir.makepyfile(
+        test_threepass="""
+        def test_one(): assert 1
+        def test_two(): assert 1
+        def test_three(): assert 1
+    """
     )
-
-    assert_no_print_logs(testdir, ("--no-print-logs",))
-
-
-@pytest.mark.filterwarnings("default")
-def test_noprintlogs_is_deprecated_ini(testdir):
-    testdir.makeini(
-        """
-        [pytest]
-        log_print=False
-        """
-    )
-
-    testdir.makepyfile(
-        """
-        def test_foo():
-            pass
-        """
-    )
-
-    assert_no_print_logs(testdir, ())
+    result = testdir.runpytest("-k", "test_two:", threepass)
+    result.stdout.fnmatch_lines(["*The `-k 'expr:'` syntax*deprecated*"])

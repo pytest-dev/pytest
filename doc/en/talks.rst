@@ -42,7 +42,7 @@ Talks and blog postings
   <https://www.youtube.com/watch?v=P-AhpukDIik>`_
 
 - `3-part blog series about pytest from @pydanny alias Daniel Greenfeld (January
-  2014) <http://pydanny.com/pytest-no-boilerplate-testing.html>`_
+  2014) <https://daniel.roygreenfeld.com/pytest-no-boilerplate-testing.html>`_
 
 - `pytest: helps you write better Django apps, Andreas Pelme, DjangoCon
   Europe 2014 <https://www.youtube.com/watch?v=aaArYVh6XSM>`_.

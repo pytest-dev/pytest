@@ -2,7 +2,7 @@
 Contribution getting started
 ============================
 
-Contributions are highly welcomed and appreciated.  Every little help counts,
+Contributions are highly welcomed and appreciated.  Every little bit of help counts,
 so do not hesitate!
 
 .. contents::
@@ -86,9 +86,8 @@ without using a local copy.  This can be convenient for small fixes.
 
         $ tox -e docs
 
-    The built documentation should be available in ``doc/en/_build/html``.
-
-    Where 'en' refers to the documentation language.
+    The built documentation should be available in ``doc/en/_build/html``,
+    where 'en' refers to the documentation language.
 
 .. _submitplugin:
 
@@ -130,7 +129,7 @@ the following:
 
 - an issue tracker for bug reports and enhancement requests.
 
-- a `changelog <http://keepachangelog.com/>`_
+- a `changelog <http://keepachangelog.com/>`_.
 
 If no contributor strongly objects and two agree, the repository can then be
 transferred to the ``pytest-dev`` organisation.
@@ -213,9 +212,7 @@ Here is a simple overview, with pytest-specific bits:
    If you need some help with Git, follow this quick start
    guide: https://git.wiki.kernel.org/index.php/QuickStart
 
-#. Install `pre-commit <https://pre-commit.com>`_ and its hook on the pytest repo:
-
-   **Note: pre-commit must be installed as admin, as it will not function otherwise**::
+#. Install `pre-commit <https://pre-commit.com>`_ and its hook on the pytest repo::
 
      $ pip install --user pre-commit
      $ pre-commit install
@@ -332,13 +329,43 @@ should go into ``test_cacheprovider.py``, given that this option is implemented 
 If in doubt, go ahead and open a PR with your best guess and we can discuss this over the code.
 
 
+Backporting bug fixes for the next patch release
+------------------------------------------------
+
+Pytest makes feature release every few weeks or months. In between, patch releases
+are made to the previous feature release, containing bug fixes only. The bug fixes
+usually fix regressions, but may be any change that should reach users before the
+next feature release.
+
+Suppose for example that the latest release was 1.2.3, and you want to include
+a bug fix in 1.2.4 (check https://github.com/pytest-dev/pytest/releases for the
+actual latest release). The procedure for this is:
+
+#. First, make sure the bug is fixed the ``master`` branch, with a regular pull
+   request, as described above. An exception to this is if the bug fix is not
+   applicable to ``master`` anymore.
+
+#. ``git checkout origin/1.2.x -b backport-XXXX`` # use the master PR number here
+
+#. Locate the merge commit on the PR, in the *merged* message, for example:
+
+    nicoddemus merged commit 0f8b462 into pytest-dev:master
+
+#. ``git cherry-pick -x -m1 REVISION`` # use the revision you found above (``0f8b462``).
+
+#. Open a PR targeting ``1.2.x``:
+
+   * Prefix the message with ``[1.2.x]``.
+   * Delete the PR body, it usually contains a duplicate commit message.
+
+
 Joining the Development Team
 ----------------------------
 
 Anyone who has successfully seen through a pull request which did not
 require any extra work from the development team to merge will
 themselves gain commit access if they so wish (if we forget to ask please send a friendly
-reminder).  This does not mean your workflow to contribute changes,
+reminder).  This does not mean there is any change in your contribution workflow:
 everyone goes through the same pull-request-and-review process and
 no-one merges their own pull requests unless already approved.  It does however mean you can
 participate in the development process more fully since you can merge

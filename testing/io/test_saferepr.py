@@ -154,3 +154,20 @@ def test_pformat_dispatch():
     assert _pformat_dispatch("a") == "'a'"
     assert _pformat_dispatch("a" * 10, width=5) == "'aaaaaaaaaa'"
     assert _pformat_dispatch("foo bar", width=5) == "('foo '\n 'bar')"
+
+
+def test_broken_getattribute():
+    """saferepr() can create proper representations of classes with
+    broken __getattribute__ (#7145)
+    """
+
+    class SomeClass:
+        def __getattribute__(self, attr):
+            raise RuntimeError
+
+        def __repr__(self):
+            raise RuntimeError
+
+    assert saferepr(SomeClass()).startswith(
+        "<[RuntimeError() raised in repr()] SomeClass object at 0x"
+    )

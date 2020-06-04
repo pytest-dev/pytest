@@ -71,6 +71,11 @@ def pytest_addoption(parser):
         help="exit after first num failures or errors.",
     )
     group._addoption(
+        "--strict-config",
+        action="store_true",
+        help="invalid ini keys for the `pytest` section of the configuration file raise errors.",
+    )
+    group._addoption(
         "--strict-markers",
         "--strict",
         action="store_true",
@@ -206,7 +211,7 @@ def wrap_session(
                     )
             config.hook.pytest_keyboard_interrupt(excinfo=excinfo)
             session.exitstatus = exitstatus
-        except:  # noqa
+        except BaseException:
             session.exitstatus = ExitCode.INTERNAL_ERROR
             excinfo = _pytest._code.ExceptionInfo.from_current()
             try:
@@ -496,11 +501,11 @@ class Session(nodes.FSCollector):
             self.trace.root.indent += 1
             try:
                 yield from self._collect(fspath, parts)
-            except NoMatch:
+            except NoMatch as exc:
                 report_arg = "::".join((str(fspath), *parts))
                 # we are inside a make_report hook so
                 # we cannot directly pass through the exception
-                self._notfound.append((report_arg, sys.exc_info()[1]))
+                self._notfound.append((report_arg, exc))
 
             self.trace.root.indent -= 1
         self._collection_node_cache1.clear()

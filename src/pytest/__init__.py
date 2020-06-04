@@ -2,10 +2,11 @@
 """
 pytest: unit and functional testing with Python.
 """
+from . import collect
 from _pytest import __version__
 from _pytest.assertion import register_assert_rewrite
-from _pytest.compat import _setup_collect_fakemodule
 from _pytest.config import cmdline
+from _pytest.config import console_main
 from _pytest.config import ExitCode
 from _pytest.config import hookimpl
 from _pytest.config import hookspec
@@ -14,6 +15,7 @@ from _pytest.config import UsageError
 from _pytest.debugging import pytestPDB as __pytestPDB
 from _pytest.fixtures import fillfixtures as _fillfuncargs
 from _pytest.fixtures import fixture
+from _pytest.fixtures import FixtureLookupError
 from _pytest.fixtures import yield_fixture
 from _pytest.freeze_support import freeze_includes
 from _pytest.main import Session
@@ -46,7 +48,6 @@ from _pytest.warning_types import PytestUnhandledCoroutineWarning
 from _pytest.warning_types import PytestUnknownMarkWarning
 from _pytest.warning_types import PytestWarning
 
-
 set_trace = __pytestPDB.set_trace
 
 __all__ = [
@@ -55,13 +56,16 @@ __all__ = [
     "approx",
     "Class",
     "cmdline",
+    "collect",
     "Collector",
+    "console_main",
     "deprecated_call",
     "exit",
     "ExitCode",
     "fail",
     "File",
     "fixture",
+    "FixtureLookupError",
     "freeze_includes",
     "Function",
     "hookimpl",
@@ -93,7 +97,3 @@ __all__ = [
     "xfail",
     "yield_fixture",
 ]
-
-
-_setup_collect_fakemodule()
-del _setup_collect_fakemodule

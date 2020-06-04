@@ -284,8 +284,8 @@ if sys.platform == "win32":
         try:
             with atomic_write(fspath(pyc), mode="wb", overwrite=True) as fp:
                 _write_pyc_fp(fp, source_stat, co)
-        except EnvironmentError as e:
-            state.trace("error writing pyc file at {}: errno={}".format(pyc, e.errno))
+        except OSError as e:
+            state.trace("error writing pyc file at {}: {}".format(pyc, e))
             # we ignore any failure to write the cache file
             # there are many reasons, permission-denied, pycache dir being a
             # file etc.
@@ -299,7 +299,7 @@ else:
         proc_pyc = "{}.{}".format(pyc, os.getpid())
         try:
             fp = open(proc_pyc, "wb")
-        except EnvironmentError as e:
+        except OSError as e:
             state.trace(
                 "error writing pyc file at {}: errno={}".format(proc_pyc, e.errno)
             )
@@ -308,8 +308,8 @@ else:
         try:
             _write_pyc_fp(fp, source_stat, co)
             os.rename(proc_pyc, fspath(pyc))
-        except BaseException as e:
-            state.trace("error writing pyc file at {}: errno={}".format(pyc, e.errno))
+        except OSError as e:
+            state.trace("error writing pyc file at {}: {}".format(pyc, e))
             # we ignore any failure to write the cache file
             # there are many reasons, permission-denied, pycache dir being a
             # file etc.
@@ -338,7 +338,7 @@ def _read_pyc(source, pyc, trace=lambda x: None):
     """
     try:
         fp = open(fspath(pyc), "rb")
-    except IOError:
+    except OSError:
         return None
     with fp:
         try:
@@ -346,8 +346,8 @@ def _read_pyc(source, pyc, trace=lambda x: None):
             mtime = int(stat_result.st_mtime)
             size = stat_result.st_size
             data = fp.read(12)
-        except EnvironmentError as e:
-            trace("_read_pyc({}): EnvironmentError {}".format(source, e))
+        except OSError as e:
+            trace("_read_pyc({}): OSError {}".format(source, e))
             return None
         # Check for invalid or out of date pyc file.
         if (

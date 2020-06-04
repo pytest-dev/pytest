@@ -6,16 +6,18 @@ from typing import Optional
 from typing import Tuple
 
 import py
+from iniconfig import IniConfig
+from iniconfig import ParseError
 
 from .exceptions import UsageError
 from _pytest.compat import TYPE_CHECKING
 from _pytest.outcomes import fail
 
 if TYPE_CHECKING:
-    from . import Config  # noqa: F401
+    from . import Config
 
 
-def exists(path, ignore=EnvironmentError):
+def exists(path, ignore=OSError):
     try:
         return path.check()
     except ignore:
@@ -40,8 +42,8 @@ def getcfg(args, config=None):
                 p = base.join(inibasename)
                 if exists(p):
                     try:
-                        iniconfig = py.iniconfig.IniConfig(p)
-                    except py.iniconfig.ParseError as exc:
+                        iniconfig = IniConfig(p)
+                    except ParseError as exc:
                         raise UsageError(str(exc))
 
                     if (
@@ -86,14 +88,14 @@ def get_common_ancestor(paths: Iterable[py.path.local]) -> py.path.local:
     return common_ancestor
 
 
-def get_dirs_from_args(args):
-    def is_option(x):
-        return str(x).startswith("-")
+def get_dirs_from_args(args: Iterable[str]) -> List[py.path.local]:
+    def is_option(x: str) -> bool:
+        return x.startswith("-")
 
-    def get_file_part_from_node_id(x):
-        return str(x).split("::")[0]
+    def get_file_part_from_node_id(x: str) -> str:
+        return x.split("::")[0]
 
-    def get_dir_from_path(path):
+    def get_dir_from_path(path: py.path.local) -> py.path.local:
         if path.isdir():
             return path
         return py.path.local(path.dirname)
@@ -119,7 +121,7 @@ def determine_setup(
 ) -> Tuple[py.path.local, Optional[str], Any]:
     dirs = get_dirs_from_args(args)
     if inifile:
-        iniconfig = py.iniconfig.IniConfig(inifile)
+        iniconfig = IniConfig(inifile)
         is_cfg_file = str(inifile).endswith(".cfg")
         sections = ["tool:pytest", "pytest"] if is_cfg_file else ["pytest"]
         for section in sections:

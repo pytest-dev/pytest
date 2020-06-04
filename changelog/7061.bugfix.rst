@@ -1,0 +1,1 @@
+When a yielding fixture fails to yield a value, report a test setup error instead of crashing.

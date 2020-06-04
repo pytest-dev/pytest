@@ -1,7 +1,7 @@
 Installation and Getting Started
 ===================================
 
-**Pythons**: Python 3.5, 3.6, 3.7, PyPy3
+**Pythons**: Python 3.5, 3.6, 3.7, 3.8, 3.9, PyPy3
 
 **Platforms**: Linux and Windows
 
@@ -28,7 +28,7 @@ Install ``pytest``
 .. code-block:: bash
 
     $ pytest --version
-    This is pytest version 5.x.y, imported from $PYTHON_PREFIX/lib/python3.6/site-packages/pytest/__init__.py
+    This is pytest version 5.x.y, imported from $PYTHON_PREFIX/lib/python3.8/site-packages/pytest/__init__.py
 
 .. _`simpletest`:
 
@@ -69,9 +69,11 @@ That’s it. You can now execute the test function:
     E        +  where 4 = func(3)
 
     test_sample.py:6: AssertionError
+    ========================= short test summary info ==========================
+    FAILED test_sample.py::test_answer - assert 4 == 5
     ============================ 1 failed in 0.12s =============================
 
-This test returns a failure report because ``func(3)`` does not return ``5``.
+The ``[100%]`` refers to the overall progress of running all test cases. After it finishes, pytest then shows a failure report because ``func(3)`` does not return ``5``.
 
 .. note::
 
@@ -145,9 +147,62 @@ Once you develop multiple tests, you may want to group them into a class. pytest
     E        +  where False = hasattr('hello', 'check')
 
     test_class.py:8: AssertionError
+    ========================= short test summary info ==========================
+    FAILED test_class.py::TestClass::test_two - AssertionError: assert False
     1 failed, 1 passed in 0.12s
 
 The first test passed and the second failed. You can easily see the intermediate values in the assertion to help you understand the reason for the failure.
+
+Grouping tests in classes can be beneficial for the following reasons:
+
+ * Test organization
+ * Sharing fixtures for tests only in that particular class
+ * Applying marks at the class level and having them implicitly apply to all tests
+
+Something to be aware of when grouping tests inside classes is that each test has a unique instance of the class.
+Having each test share the same class instance would be very detrimental to test isolation and would promote poor test practices.
+This is outlined below:
+
+.. code-block:: python
+
+    class TestClassDemoInstance:
+        def test_one(self):
+            assert 0
+
+        def test_two(self):
+            assert 0
+
+
+.. code-block:: pytest
+
+    $ pytest -k TestClassDemoInstance -q
+
+    FF                                                                       [100%]
+    ================================== FAILURES ===================================
+    _______________________ TestClassDemoInstance.test_one ________________________
+
+    self = <test_example.TestClassDemoInstance object at 0x0000019BBB9EEDA0>
+    request = <FixtureRequest for <Function test_one>>
+
+        def test_one(self, request):
+    >       assert 0
+    E       assert 0
+
+    testing\test_example.py:4: AssertionError
+    _______________________ TestClassDemoInstance.test_two ________________________
+
+    self = <test_example.TestClassDemoInstance object at 0x0000019BBB9F3D68>
+    request = <FixtureRequest for <Function test_two>>
+
+        def test_two(self, request):
+    >       assert 0
+    E       assert 0
+
+    testing\test_example.py:7: AssertionError
+    =========================== short test summary info ===========================
+    FAILED testing/test_example.py::TestClassDemoInstance::test_one - assert 0
+    FAILED testing/test_example.py::TestClassDemoInstance::test_two - assert 0
+    2 failed in 0.11s
 
 Request a unique temporary directory for functional tests
 --------------------------------------------------------------
@@ -180,6 +235,8 @@ List the name ``tmpdir`` in the test function signature and ``pytest`` will look
     test_tmpdir.py:3: AssertionError
     --------------------------- Captured stdout call ---------------------------
     PYTEST_TMPDIR/test_needsfiles0
+    ========================= short test summary info ==========================
+    FAILED test_tmpdir.py::test_needsfiles - assert 0
     1 failed in 0.12s
 
 More info on tmpdir handling is available at :ref:`Temporary directories and files <tmpdir handling>`.

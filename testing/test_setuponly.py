@@ -1,3 +1,5 @@
+import sys
+
 import pytest
 from _pytest.config import ExitCode
 
@@ -146,10 +148,10 @@ def test_show_fixtures_with_parameters(testdir, mode):
 
     result.stdout.fnmatch_lines(
         [
-            "SETUP    S arg_same?foo?",
-            "TEARDOWN S arg_same?foo?",
-            "SETUP    S arg_same?bar?",
-            "TEARDOWN S arg_same?bar?",
+            "SETUP    S arg_same?'foo'?",
+            "TEARDOWN S arg_same?'foo'?",
+            "SETUP    S arg_same?'bar'?",
+            "TEARDOWN S arg_same?'bar'?",
         ]
     )
 
@@ -179,7 +181,7 @@ def test_show_fixtures_with_parameter_ids(testdir, mode):
     assert result.ret == 0
 
     result.stdout.fnmatch_lines(
-        ["SETUP    S arg_same?spam?", "SETUP    S arg_same?ham?"]
+        ["SETUP    S arg_same?'spam'?", "SETUP    S arg_same?'ham'?"]
     )
 
 
@@ -198,7 +200,9 @@ def test_show_fixtures_with_parameter_ids_function(testdir, mode):
     result = testdir.runpytest(mode, p)
     assert result.ret == 0
 
-    result.stdout.fnmatch_lines(["*SETUP    F foobar?FOO?", "*SETUP    F foobar?BAR?"])
+    result.stdout.fnmatch_lines(
+        ["*SETUP    F foobar?'FOO'?", "*SETUP    F foobar?'BAR'?"]
+    )
 
 
 def test_dynamic_fixture_request(testdir):
@@ -292,3 +296,20 @@ def test_setup_show_with_KeyboardInterrupt_in_test(testdir):
         ]
     )
     assert result.ret == ExitCode.INTERRUPTED
+
+
+def test_show_fixture_action_with_bytes(testdir):
+    # Issue 7126, BytesWarning when using --setup-show with bytes parameter
+    test_file = testdir.makepyfile(
+        """
+        import pytest
+
+        @pytest.mark.parametrize('data', [b'Hello World'])
+        def test_data(data):
+            pass
+        """
+    )
+    result = testdir.run(
+        sys.executable, "-bb", "-m", "pytest", "--setup-show", str(test_file)
+    )
+    assert result.ret == 0

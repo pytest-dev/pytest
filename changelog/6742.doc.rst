@@ -1,1 +1,0 @@
-Expand first sentence on fixtures into a paragraph.

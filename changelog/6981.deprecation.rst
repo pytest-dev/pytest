@@ -1,0 +1,1 @@
+Deprecate the ``pytest.collect`` module as it's just aliases into ``pytest``.
