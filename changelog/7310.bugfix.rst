@@ -1,0 +1,9 @@
+Fix ``UnboundLocalError: local variable 'letter' referenced before
+assignment`` in ``_pytest.terminal.pytest_report_teststatus()``
+when plugins return report objects in an unconventional state.
+
+This was making ``pytest_report_teststatus()`` skip
+entering if-block branches that declare the ``letter`` variable.
+
+The fix was to set the initial value of the ``letter`` before
+the if-block cascade so that it always has a value.

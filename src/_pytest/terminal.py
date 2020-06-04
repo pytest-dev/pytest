@@ -166,7 +166,11 @@ def getreportopt(config):
         reportchars += "w"
     elif config.option.disable_warnings and "w" in reportchars:
         reportchars = reportchars.replace("w", "")
+    aliases = {"F", "S"}
     for char in reportchars:
+        # handle old aliases
+        if char in aliases:
+            char = char.lower()
         if char == "a":
             reportopts = "sxXwEf"
         elif char == "A":
@@ -179,15 +183,18 @@ def getreportopt(config):
 
 @pytest.hookimpl(trylast=True)  # after _pytest.runner
 def pytest_report_teststatus(report):
+    letter = "F"
     if report.passed:
         letter = "."
     elif report.skipped:
         letter = "s"
-    elif report.failed:
-        letter = "F"
-        if report.when != "call":
-            letter = "f"
-    return report.outcome, letter, report.outcome.upper()
+
+    outcome = report.outcome
+    if report.when in ("collect", "setup", "teardown") and outcome == "failed":
+        outcome = "error"
+        letter = "E"
+
+    return outcome, letter, outcome.upper()
 
 
 @attr.s
@@ -935,9 +942,7 @@ class TerminalReporter(object):
             "x": show_xfailed,
             "X": show_xpassed,
             "f": partial(show_simple, "failed"),
-            "F": partial(show_simple, "failed"),
             "s": show_skipped,
-            "S": show_skipped,
             "p": partial(show_simple, "passed"),
             "E": partial(show_simple, "error"),
         }
