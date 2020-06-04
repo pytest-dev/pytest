@@ -38,77 +38,55 @@ def _parse_ini_config(path: py.path.local) -> py.iniconfig.IniConfig:
         raise UsageError(str(exc))
 
 
-def _parse_ini_config_from_pytest_ini(path: py.path.local) -> Optional[Dict[str, str]]:
-    """Parses and validates a 'pytest.ini' file.
-
-    If present, 'pytest.ini' files are always considered the source of truth of pytest
-    configuration, even if empty or without a "[pytest]" section.
-    """
-    iniconfig = _parse_ini_config(path)
-    if "pytest" in iniconfig:
-        return dict(iniconfig["pytest"].items())
-    else:
-        return {}
-
-
-def _parse_ini_config_from_tox_ini(path: py.path.local) -> Optional[Dict[str, str]]:
-    """Parses and validates a 'tox.ini' file for pytest configuration.
-
-    'tox.ini' files are only considered for pytest configuration if they contain a "[pytest]"
-    section.
-    """
-    iniconfig = _parse_ini_config(path)
-    if "pytest" in iniconfig:
-        return dict(iniconfig["pytest"].items())
-    else:
-        return None
-
-
-def _parse_ini_config_from_setup_cfg(path: py.path.local) -> Optional[Dict[str, str]]:
-    """Parses and validates a 'setup.cfg' file for pytest configuration.
-
-    'setup.cfg' files are only considered for pytest configuration if they contain a "[tool:pytest]"
-    section.
-
-    If a setup.cfg contains a "[pytest]" section, we raise a failure to indicate users that
-    plain "[pytest]" sections in setup.cfg files is no longer supported (#3086).
-    """
-    iniconfig = _parse_ini_config(path)
-
-    if "tool:pytest" in iniconfig.sections:
-        return dict(iniconfig["tool:pytest"].items())
-    elif "pytest" in iniconfig.sections:
-        fail(CFG_PYTEST_SECTION.format(filename="setup.cfg"), pytrace=False)
-    return None
-
-
-def _parse_ini_config_from_pyproject_toml(
-    path: py.path.local,
+def load_config_dict_from_file(
+    filepath: py.path.local,
 ) -> Optional[Dict[str, Union[str, List[str]]]]:
-    """Parses and validates a ``pyproject.toml`` file for pytest configuration.
+    """Loads pytest configuration from the given file path, if supported.
 
-    The ``[tool.pytest]`` table is used by pytest. If the file contains that section,
-    it is used as the config file.
-
-    Note: toml supports richer data types than ini files (strings, arrays, floats, ints, etc),
-        however we need to convert all scalar values to str for compatibility with the rest
-        of the configuration system, which expects strings only. We needed to change the
-        handling of ini values in Config as to at least leave lists intact.
+    Return None if the file does not contain valid pytest configuration.
     """
-    import toml
 
-    config = toml.load(path)
+    # configuration from ini files are obtained from the [pytest] section, if present.
+    if filepath.ext == ".ini":
+        iniconfig = _parse_ini_config(filepath)
 
-    result = config.get("tool", {}).get("pytest", {}).get("ini_options", None)
-    if result is not None:
-        # convert all scalar values to strings for compatibility with other ini formats;
-        # conversion to useful values is made by Config._getini
-        def make_scalar(v: Any) -> Union[str, List[str]]:
-            return v if isinstance(v, list) else str(v)
+        if "pytest" in iniconfig:
+            return dict(iniconfig["pytest"].items())
+        else:
+            # "pytest.ini" files are always the source of configuration, even if empty
+            return {} if filepath.basename == "pytest.ini" else None
 
-        return {k: make_scalar(v) for k, v in result.items()}
-    else:
+    # '.cfg' files are considered if they contain a "[tool:pytest]" section
+    elif filepath.ext == ".cfg":
+        iniconfig = _parse_ini_config(filepath)
+
+        if "tool:pytest" in iniconfig.sections:
+            return dict(iniconfig["tool:pytest"].items())
+        elif "pytest" in iniconfig.sections:
+            # If a setup.cfg contains a "[pytest]" section, we raise a failure to indicate users that
+            # plain "[pytest]" sections in setup.cfg files is no longer supported (#3086).
+            fail(CFG_PYTEST_SECTION.format(filename="setup.cfg"), pytrace=False)
         return None
+
+    # '.toml' files are considered if they contain a [tool.pytest.ini_options] table
+    elif filepath.ext == ".toml":
+        import toml
+
+        config = toml.load(filepath)
+
+        result = config.get("tool", {}).get("pytest", {}).get("ini_options", None)
+        if result is not None:
+            # TOML supports richer data types than ini files (strings, arrays, floats, ints, etc),
+            # however we need to convert all scalar values to str for compatibility with the rest
+            # of the configuration system, which expects strings only. We needed to change the
+            def make_scalar(v: Any) -> Union[str, List[str]]:
+                return v if isinstance(v, list) else str(v)
+
+            return {k: make_scalar(v) for k, v in result.items()}
+        else:
+            return None
+
+    return None
 
 
 def getcfg(args):
@@ -116,11 +94,11 @@ def getcfg(args):
     Search the list of arguments for a valid ini-file for pytest,
     and return a tuple of (rootdir, inifile, cfg-dict).
     """
-    ini_names_and_parsers = [
-        ("pytest.ini", _parse_ini_config_from_pytest_ini),
-        ("pyproject.toml", _parse_ini_config_from_pyproject_toml),
-        ("tox.ini", _parse_ini_config_from_tox_ini),
-        ("setup.cfg", _parse_ini_config_from_setup_cfg),
+    config_names = [
+        "pytest.ini",
+        "pyproject.toml",
+        "tox.ini",
+        "setup.cfg",
     ]
     args = [x for x in args if not str(x).startswith("-")]
     if not args:
@@ -128,10 +106,10 @@ def getcfg(args):
     for arg in args:
         arg = py.path.local(arg)
         for base in arg.parts(reverse=True):
-            for inibasename, parser in ini_names_and_parsers:
-                p = base.join(inibasename)
+            for config_name in config_names:
+                p = base.join(config_name)
                 if p.isfile():
-                    ini_config = parser(p)
+                    ini_config = load_config_dict_from_file(p)
                     if ini_config is not None:
                         return base, p, ini_config
     return None, None, None
@@ -191,23 +169,10 @@ def determine_setup(
     rootdir_cmd_arg: Optional[str] = None,
     config: Optional["Config"] = None,
 ) -> Tuple[py.path.local, Optional[str], Any]:
+    rootdir = None
     dirs = get_dirs_from_args(args)
     if inifile:
-        iniconfig = IniConfig(inifile)
-        is_cfg_file = str(inifile).endswith(".cfg")
-        sections = ["tool:pytest", "pytest"] if is_cfg_file else ["pytest"]
-        for section in sections:
-            try:
-                inicfg = iniconfig[
-                    section
-                ]  # type: Optional[py.iniconfig._SectionWrapper]
-                if is_cfg_file and section == "pytest" and config is not None:
-                    fail(
-                        CFG_PYTEST_SECTION.format(filename=str(inifile)), pytrace=False
-                    )
-                break
-            except KeyError:
-                inicfg = None
+        inicfg = load_config_dict_from_file(py.path.local(inifile)) or {}
         if rootdir_cmd_arg is None:
             rootdir = get_common_ancestor(dirs)
     else:

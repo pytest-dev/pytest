@@ -260,6 +260,18 @@ class TestConfigCmdlineParsing:
         config = testdir.parseconfig("-c", "custom_tool_pytest_section.cfg")
         assert config.getini("custom") == "1"
 
+        testdir.makefile(
+            ".toml",
+            custom="""
+                [tool.pytest.ini_options]
+                custom = 1
+                value = [
+                ]  # this is here on purpose, as it makes this an invalid '.ini' file
+            """,
+        )
+        config = testdir.parseconfig("-c", "custom.toml")
+        assert config.getini("custom") == "1"
+
     def test_absolute_win32_path(self, testdir):
         temp_ini_file = testdir.makefile(
             ".ini",
@@ -1023,10 +1035,20 @@ class TestRootdir:
             assert get_common_ancestor([no_path]) == tmpdir
             assert get_common_ancestor([no_path.join("a")]) == tmpdir
 
-    @pytest.mark.parametrize("name", "setup.cfg tox.ini pytest.ini".split())
-    def test_with_ini(self, tmpdir: py.path.local, name: str) -> None:
+    @pytest.mark.parametrize(
+        "name, contents",
+        [
+            pytest.param("pytest.ini", "[pytest]\nx=10", id="pytest.ini"),
+            pytest.param(
+                "pyproject.toml", "[tool.pytest.ini_options]\nx=10", id="pyproject.toml"
+            ),
+            pytest.param("tox.ini", "[pytest]\nx=10", id="tox.ini"),
+            pytest.param("setup.cfg", "[tool:pytest]\nx=10", id="setup.cfg"),
+        ],
+    )
+    def test_with_ini(self, tmpdir: py.path.local, name: str, contents: str) -> None:
         inifile = tmpdir.join(name)
-        inifile.write("[pytest]\n" if name != "setup.cfg" else "[tool:pytest]\n")
+        inifile.write(contents)
 
         a = tmpdir.mkdir("a")
         b = a.mkdir("b")
@@ -1034,9 +1056,10 @@ class TestRootdir:
             rootdir, parsed_inifile, _ = determine_setup(None, args)
             assert rootdir == tmpdir
             assert parsed_inifile == inifile
-        rootdir, parsed_inifile, _ = determine_setup(None, [str(b), str(a)])
+        rootdir, parsed_inifile, ini_config = determine_setup(None, [str(b), str(a)])
         assert rootdir == tmpdir
         assert parsed_inifile == inifile
+        assert ini_config == {"x": "10"}
 
     @pytest.mark.parametrize("name", "setup.cfg tox.ini".split())
     def test_pytestini_overrides_empty_other(self, tmpdir: py.path.local, name) -> None:
@@ -1063,10 +1086,26 @@ class TestRootdir:
         assert inifile is None
         assert inicfg == {}
 
-    def test_with_specific_inifile(self, tmpdir: py.path.local) -> None:
-        inifile = tmpdir.ensure("pytest.ini")
-        rootdir, _, _ = determine_setup(str(inifile), [str(tmpdir)])
+    @pytest.mark.parametrize(
+        "name, contents",
+        [
+            # pytest.param("pytest.ini", "[pytest]\nx=10", id="pytest.ini"),
+            pytest.param(
+                "pyproject.toml", "[tool.pytest.ini_options]\nx=10", id="pyproject.toml"
+            ),
+            # pytest.param("tox.ini", "[pytest]\nx=10", id="tox.ini"),
+            # pytest.param("setup.cfg", "[tool:pytest]\nx=10", id="setup.cfg"),
+        ],
+    )
+    def test_with_specific_inifile(
+        self, tmpdir: py.path.local, name: str, contents: str
+    ) -> None:
+        p = tmpdir.ensure(name)
+        p.write(contents)
+        rootdir, inifile, ini_config = determine_setup(str(p), [str(tmpdir)])
         assert rootdir == tmpdir
+        assert inifile == p
+        assert ini_config == {"x": "10"}
 
     def test_with_arg_outside_cwd_without_inifile(self, tmpdir, monkeypatch) -> None:
         monkeypatch.chdir(str(tmpdir))
