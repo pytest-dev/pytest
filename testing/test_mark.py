@@ -885,19 +885,15 @@ class TestMarkDecorator:
         assert md.kwargs == {"three": 3}
 
 
-@pytest.mark.parametrize(
-    "mark, addopts",
-    [(None, ""), ("", ""), ("skip", ""), ("xfail", ""), ("xfail", "--runxfail")],
-)
-def test_parameterset_for_parametrize_marks(testdir, mark, addopts):
+@pytest.mark.parametrize("mark", [None, "", "skip", "xfail"])
+def test_parameterset_for_parametrize_marks(testdir, mark):
     if mark is not None:
         testdir.makeini(
             """
         [pytest]
         {}={}
-        addopts={}
         """.format(
-                EMPTY_PARAMETERSET_OPTION, mark, addopts
+                EMPTY_PARAMETERSET_OPTION, mark
             )
         )
 
@@ -906,7 +902,7 @@ def test_parameterset_for_parametrize_marks(testdir, mark, addopts):
 
     pytest_configure(config)
     result_mark = get_empty_parameterset_mark(config, ["a"], all)
-    if mark in (None, "") or (mark == "xfail" and addopts == "--runxfail"):
+    if mark in (None, ""):
         # normalize to the requested name
         mark = "skip"
     assert result_mark.name == mark
@@ -959,7 +955,7 @@ def test_parameterset_for_fail_at_collect(testdir):
 
 def test_parameterset_for_parametrize_bad_markname(testdir):
     with pytest.raises(pytest.UsageError):
-        test_parameterset_for_parametrize_marks(testdir, "bad", False)
+        test_parameterset_for_parametrize_marks(testdir, "bad")
 
 
 def test_mark_expressions_no_smear(testdir):
