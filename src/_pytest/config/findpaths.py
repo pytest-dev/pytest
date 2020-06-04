@@ -7,9 +7,8 @@ from typing import Optional
 from typing import Tuple
 from typing import Union
 
+import iniconfig
 import py
-from iniconfig import IniConfig
-from iniconfig import ParseError
 
 from .exceptions import UsageError
 from _pytest.compat import TYPE_CHECKING
@@ -26,15 +25,15 @@ def exists(path, ignore=OSError):
         return False
 
 
-def _parse_ini_config(path: py.path.local) -> py.iniconfig.IniConfig:
+def _parse_ini_config(path: py.path.local) -> iniconfig.IniConfig:
     """Parses the given generic '.ini' file using legacy IniConfig parser, returning
     the parsed object.
 
     Raises UsageError if the file cannot be parsed.
     """
     try:
-        return py.iniconfig.IniConfig(path)
-    except py.iniconfig.ParseError as exc:
+        return iniconfig.IniConfig(path)
+    except iniconfig.ParseError as exc:
         raise UsageError(str(exc))
 
 
