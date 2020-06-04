@@ -1140,9 +1140,18 @@ class Config:
                 return []
         # coerce the values based on types
         # note: some coercions are only required if we are reading from .ini files, because
-        # the file format doesn't contain type information; toml files however support
-        # data types and complex types such as lists directly, so many conversions are not
-        # necessary
+        # the file format doesn't contain type information, but when reading from toml we will
+        # get either str or list of str values (see _parse_ini_config_from_pyproject_toml).
+        # for example:
+        #
+        #   ini:
+        #     a_line_list = "tests acceptance"
+        #   in this case, we need to split the string to obtain a list of strings
+        #
+        #   toml:
+        #     a_line_list = ["tests", "acceptance"]
+        #   in this case, we already have a list ready to use
+        #
         if type == "pathlist":
             dp = py.path.local(self.inifile).dirpath()
             input_values = shlex.split(value) if isinstance(value, str) else value

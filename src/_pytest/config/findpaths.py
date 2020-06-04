@@ -5,6 +5,7 @@ from typing import Iterable
 from typing import List
 from typing import Optional
 from typing import Tuple
+from typing import Union
 
 import py
 from iniconfig import IniConfig
@@ -37,7 +38,7 @@ def _parse_ini_config(path: py.path.local) -> py.iniconfig.IniConfig:
         raise UsageError(str(exc))
 
 
-def _get_ini_config_from_pytest_ini(path: py.path.local) -> Optional[Dict[str, Any]]:
+def _parse_ini_config_from_pytest_ini(path: py.path.local) -> Optional[Dict[str, str]]:
     """Parses and validates a 'pytest.ini' file.
 
     If present, 'pytest.ini' files are always considered the source of truth of pytest
@@ -50,7 +51,7 @@ def _get_ini_config_from_pytest_ini(path: py.path.local) -> Optional[Dict[str, A
         return {}
 
 
-def _get_ini_config_from_tox_ini(path: py.path.local) -> Optional[Dict[str, Any]]:
+def _parse_ini_config_from_tox_ini(path: py.path.local) -> Optional[Dict[str, str]]:
     """Parses and validates a 'tox.ini' file for pytest configuration.
 
     'tox.ini' files are only considered for pytest configuration if they contain a "[pytest]"
@@ -63,7 +64,7 @@ def _get_ini_config_from_tox_ini(path: py.path.local) -> Optional[Dict[str, Any]
         return None
 
 
-def _get_ini_config_from_setup_cfg(path: py.path.local) -> Optional[Dict[str, Any]]:
+def _parse_ini_config_from_setup_cfg(path: py.path.local) -> Optional[Dict[str, str]]:
     """Parses and validates a 'setup.cfg' file for pytest configuration.
 
     'setup.cfg' files are only considered for pytest configuration if they contain a "[tool:pytest]"
@@ -81,13 +82,18 @@ def _get_ini_config_from_setup_cfg(path: py.path.local) -> Optional[Dict[str, An
     return None
 
 
-def _get_ini_config_from_pyproject_toml(
+def _parse_ini_config_from_pyproject_toml(
     path: py.path.local,
-) -> Optional[Dict[str, Any]]:
+) -> Optional[Dict[str, Union[str, List[str]]]]:
     """Parses and validates a ``pyproject.toml`` file for pytest configuration.
 
     The ``[tool.pytest]`` table is used by pytest. If the file contains that section,
     it is used as the config file.
+
+    Note: toml supports richer data types than ini files (strings, arrays, floats, ints, etc),
+        however we need to convert all scalar values to str for compatibility with the rest
+        of the configuration system, which expects strings only. We needed to change the
+        handling of ini values in Config as to at least leave lists intact.
     """
     import toml
 
@@ -95,10 +101,10 @@ def _get_ini_config_from_pyproject_toml(
 
     result = config.get("tool", {}).get("pytest", {}).get("ini_options", None)
     if result is not None:
-        # convert all scalar values to strings for compatibility with other ini formats
-        # conversion to actual useful values is made by Config._getini
-        def make_scalar(v):
-            return v if isinstance(v, (list, tuple)) else str(v)
+        # convert all scalar values to strings for compatibility with other ini formats;
+        # conversion to useful values is made by Config._getini
+        def make_scalar(v: Any) -> Union[str, List[str]]:
+            return v if isinstance(v, list) else str(v)
 
         return {k: make_scalar(v) for k, v in result.items()}
     else:
@@ -110,11 +116,11 @@ def getcfg(args):
     Search the list of arguments for a valid ini-file for pytest,
     and return a tuple of (rootdir, inifile, cfg-dict).
     """
-    ini_names_and_handlers = [
-        ("pytest.ini", _get_ini_config_from_pytest_ini),
-        ("pyproject.toml", _get_ini_config_from_pyproject_toml),
-        ("tox.ini", _get_ini_config_from_tox_ini),
-        ("setup.cfg", _get_ini_config_from_setup_cfg),
+    ini_names_and_parsers = [
+        ("pytest.ini", _parse_ini_config_from_pytest_ini),
+        ("pyproject.toml", _parse_ini_config_from_pyproject_toml),
+        ("tox.ini", _parse_ini_config_from_tox_ini),
+        ("setup.cfg", _parse_ini_config_from_setup_cfg),
     ]
     args = [x for x in args if not str(x).startswith("-")]
     if not args:
@@ -122,10 +128,10 @@ def getcfg(args):
     for arg in args:
         arg = py.path.local(arg)
         for base in arg.parts(reverse=True):
-            for inibasename, handler in ini_names_and_handlers:
+            for inibasename, parser in ini_names_and_parsers:
                 p = base.join(inibasename)
                 if p.isfile():
-                    ini_config = handler(p)
+                    ini_config = parser(p)
                     if ini_config is not None:
                         return base, p, ini_config
     return None, None, None
