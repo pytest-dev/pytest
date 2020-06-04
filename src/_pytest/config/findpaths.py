@@ -89,9 +89,14 @@ def load_config_dict_from_file(
     return None
 
 
-def getcfg(args):
+LocatedConfig = Tuple[
+    Optional[py.path.local], Optional[py.path.local], Dict[str, Union[str, List[str]]],
+]
+
+
+def locate_config(args: List[Union[str, py.path.local]]) -> LocatedConfig:
     """
-    Search the list of arguments for a valid ini-file for pytest,
+    Search in the list of arguments for a valid ini-file for pytest,
     and return a tuple of (rootdir, inifile, cfg-dict).
     """
     config_names = [
@@ -112,7 +117,7 @@ def getcfg(args):
                     ini_config = load_config_dict_from_file(p)
                     if ini_config is not None:
                         return base, p, ini_config
-    return None, None, None
+    return None, None, {}
 
 
 def get_common_ancestor(paths: Iterable[py.path.local]) -> py.path.local:
@@ -177,7 +182,7 @@ def determine_setup(
             rootdir = get_common_ancestor(dirs)
     else:
         ancestor = get_common_ancestor(dirs)
-        rootdir, inifile, inicfg = getcfg([ancestor])
+        rootdir, inifile, inicfg = locate_config([ancestor])
         if rootdir is None and rootdir_cmd_arg is None:
             for possible_rootdir in ancestor.parts(reverse=True):
                 if possible_rootdir.join("setup.py").exists():
@@ -185,7 +190,7 @@ def determine_setup(
                     break
             else:
                 if dirs != [ancestor]:
-                    rootdir, inifile, inicfg = getcfg(dirs)
+                    rootdir, inifile, inicfg = locate_config(dirs)
                 if rootdir is None:
                     if config is not None:
                         cwd = config.invocation_dir

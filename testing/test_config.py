@@ -15,7 +15,7 @@ from _pytest.config import ExitCode
 from _pytest.config.exceptions import UsageError
 from _pytest.config.findpaths import determine_setup
 from _pytest.config.findpaths import get_common_ancestor
-from _pytest.config.findpaths import getcfg
+from _pytest.config.findpaths import locate_config
 from _pytest.pathlib import Path
 
 
@@ -36,14 +36,14 @@ class TestParseIni:
                 )
             )
         )
-        _, _, cfg = getcfg([sub])
+        _, _, cfg = locate_config([sub])
         assert cfg["name"] == "value"
         config = testdir.parseconfigure(sub)
         assert config.inicfg["name"] == "value"
 
     def test_getcfg_empty_path(self):
         """correctly handle zero length arguments (a la pytest '')"""
-        getcfg([""])
+        locate_config([""])
 
     def test_setupcfg_uses_toolpytest_with_pytest(self, testdir):
         p1 = testdir.makepyfile("def test(): pass")
