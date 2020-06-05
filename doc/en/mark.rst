@@ -16,7 +16,7 @@ Here are some of the builtin markers:
 * :ref:`skipif <skipif>` - skip a test function if a certain condition is met
 * :ref:`xfail <xfail>` - produce an "expected failure" outcome if a certain
   condition is met
-* :ref:`parametrize <parametrizemark>`: perform multiple calls
+* :ref:`parametrize <parametrizemark>` - perform multiple calls
   to the same test function.
 
 It's easy to create custom markers or to apply markers
