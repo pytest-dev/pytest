@@ -674,7 +674,7 @@ class PytestPluginManager(PluginManager):
         except Exception as e:
             raise (PluginImportFailure(modname, sys.exc_info())).with_traceback(
                 e.__traceback__
-            ) from e
+            )
 
         else:
             mod = sys.modules[importspec]

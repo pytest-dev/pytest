@@ -4,6 +4,7 @@ import types
 
 import pytest
 from _pytest.config import ExitCode
+from _pytest.config import PluginImportFailure
 from _pytest.config import PytestPluginManager
 from _pytest.config.exceptions import UsageError
 from _pytest.main import Session
@@ -185,12 +186,9 @@ def test_importplugin_error_message(testdir, pytestpm):
         test_traceback()
         """
     )
-    with pytest.raises(ImportError) as excinfo:
+    with pytest.raises(PluginImportFailure) as excinfo:
         pytestpm.import_plugin("qwe")
-
-    assert str(excinfo.value).find(
-        'Error importing plugin "qwe": Not possible to import: ☺'
-    )
+    assert str(excinfo.value) == "ImportError: Not possible to import: ☺ (from qwe)"
     assert "in test_traceback" in str(excinfo.traceback[-1])
 
 
