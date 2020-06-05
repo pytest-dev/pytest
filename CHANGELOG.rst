@@ -18,6 +18,28 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+pytest 4.6.11 (2020-06-04)
+==========================
+
+Bug Fixes
+---------
+
+- `#6334 <https://github.com/pytest-dev/pytest/issues/6334>`_: Fix summary entries appearing twice when ``f/F`` and ``s/S`` report chars were used at the same time in the ``-r`` command-line option (for example ``-rFf``).
+
+  The upper case variants were never documented and the preferred form should be the lower case.
+
+
+- `#7310 <https://github.com/pytest-dev/pytest/issues/7310>`_: Fix ``UnboundLocalError: local variable 'letter' referenced before
+  assignment`` in ``_pytest.terminal.pytest_report_teststatus()``
+  when plugins return report objects in an unconventional state.
+
+  This was making ``pytest_report_teststatus()`` skip
+  entering if-block branches that declare the ``letter`` variable.
+
+  The fix was to set the initial value of the ``letter`` before
+  the if-block cascade so that it always has a value.
+
+
 pytest 4.6.10 (2020-05-08)
 ==========================
 
